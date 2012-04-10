@@ -1,0 +1,112 @@
+ibrdtnd (0.8.0) stable; urgency=low
+
+  * PRoPHET Routing
+  * Bittorrent DHT used for EID Lookup through the internet
+  * Support for re-active and pro-active fragmentation
+  * Extended plaintext API
+  * New generic routing messages for all routing modules
+  * Add priorities for discovered neighbor entries
+  * SQLite Bundle Storage refactored
+  * Upgrade mechanism and version control for sqlite database
+  * Datagram Convergence Layer for generic communication with datagrams
+  
+  * New configuration options:
+    * Limit lifetime and pre-dated timestamps
+    * Fragmentation support
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 13 Apr 2012 12:00:00 +0200
+
+ibrdtnd (0.6.5) stable; urgency=low
+
+  * Common fixes
+    * Connection down deletes all static routes
+    * Reconnect mechnism tries to connect each second
+    * Some shutdown issues
+    * Extension block discard issue
+  
+  * Connection up now triggers all routing modules to look for bundles to transfer
+  * Disable autoconnect feature if not specified
+  * CBHE and group support for internal apps
+  * Configurable parallel event processing
+    Set the "-t" parameter on daemon startup to enable this feature.
+ 
+  * Extended API
+    * Plain text API for clients
+    * Some management routines
+    * Event / Log dumping
+    * Add and remove IP addresses dynamically via API for non-netlink systems
+   
+  * File Convergence Layer added. Use the USB Key as intermittent node!
+  * New LoWPAN CL architecture - Multiple connections, larger bundles and discovery
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Fri, 04 Nov 2011 12:00:00 +0200
+
+ibrdtnd (0.6.4) stable; urgency=low
+
+  * Support for the Scope Control Hop Limit Block added
+    http://tools.ietf.org/html/draft-fall-dtnrg-schl-00
+    (uses extension block id 199 since id 9 is already reserved by BSP)
+  * TLS for TCP convergence layer by Stephen Röttger
+  * New API framework (supports Groups)
+  * SQLiteStorage provides own BLOBs and uses hard-links to copy bundle payload
+  * SQLiteStorage expiration fix
+  * Disable tcp linger and keepalive option on tcp connections
+  * Now IPND binds on any interface instead on the broadcast/multicast address
+  * Retransmission Module: Exponential back-off fix
+  * Now a transfer is aborted if the node is gone
+  * Renamed CONN_ZIGBEE to CONN_LOWPAN
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Fri, 05 Aug 2011 12:00:00 +0200
+
+ibrdtnd (0.6.3) stable; urgency=low
+
+  * fd leak fixed
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Fri, 01 Jul 2011 12:00:00 +0200
+
+ibrdtnd (0.6.2) stable; urgency=low
+
+  * New features
+    * Experimental support for compressed bundle payload
+    * Bundle-in-Bundle support based on
+      http://tools.ietf.org/html/draft-irtf-dtnrg-bundle-encapsulation-06
+    * Added AgeBlock support to the SQLiteBundleStorage
+    * HTTPConvergenceLayer by Robert Heitz
+    * Define a logfile in the configuration with "logfile"
+    * Define a username with "user"
+    * Define user id and group id with "uid" and "gid"
+	
+  * Improvements
+    * Neighbor handling reworked
+    * Improved connection termination for API and TCP-CL for more stability
+    
+  * Fixes
+    * Epidemic routing combined with sqlite leads to 100% cpu usage
+    * Bundles are not retransmitted after a failed connection
+    * Failed TCPCL connections stay unconnected forever
+    * Logging to files
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Mon, 24 Jun 2011 12:00:00 +0200
+
+ibrdtnd (0.6.1) stable; urgency=low
+
+  * use libdaemon to daemonize into the background
+  * dynamic rebind for sockets bound on interfaces
+  * Fix: requeue bundles in transit on disconnection
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Mon, 21 Mar 2011 14:42:40 +0100
+
+ibrdtnd (0.6.0) stable; urgency=low
+
+  * Bundle Security Protocol
+  * IPv6 support
+  * Use regular expressions for static routes
+  * New routing messages for epidemic routing (not compatible with older versions)
+  * SQLite bundle storage will accept custody for bundles
+  * Deliver bundles according to their priority
+  * Static routing can be used with any other routing scheme
+  * Better handling of the same convergence layer on multiple interfaces
+  * DTN2 compatibility fix for discovery
+  * Bind on any interface is possible now
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 11 Mar 2011 09:47:16 +0100

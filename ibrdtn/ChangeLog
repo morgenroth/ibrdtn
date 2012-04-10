@@ -1,0 +1,255 @@
+2011-11-09
+--------------------------------------------------------
+ * Fixed bug in the reference counting pointer which could cause a dead-lock.
+ * Base64 decoder / encoder fixed.
+ * Improved data handling in several iostream implementations.
+
+2011-11-04
+--------------------------------------------------------
+ * Common fixes
+   * Connection down deletes all static routes
+   * Reconnect mechnism tries to connect each second
+   * Some shutdown issues
+   * Extension block discard issue
+   * Wrong CBHE parsing 
+
+ * Bundle Security Protocol
+   * Serialization fixed
+   * PCB: Store the integrity check value in the right TLV
+   * Handle the salt as binary not as string
+   
+ * Connection up now triggers all routing modules to look for bundles to transfer
+ * Disable autoconnect feature if not specified
+ * CBHE and group support for internal apps
+ * Configurable parallel event processing
+   Set the "-t" parameter on daemon startup to enable this feature.
+ 
+ * Extended API
+   * Plain text API for clients
+   * Some management routines
+   * Event / Log dumping
+   * Add and remove IP addresses dynamically via API for non-netlink systems
+   
+ * File Convergence Layer added. Use the USB Key as intermittent node!
+ * New LoWPAN CL architecture - Multiple connections, larger bundles and discovery
+ * C++ API: Added method to get the timestamp of a bundle
+
+2011-08-12
+--------------------------------------------------------
+ * New config option: "net_autoconnect" to keep up / reconnect
+   to available TCP connections
+ * Improved neighbor database
+ 
+2011-08-05
+--------------------------------------------------------
+ * Support for the Scope Control Hop Limit Block added
+   http://tools.ietf.org/html/draft-fall-dtnrg-schl-00
+   (uses extension block id 199 since number 9 is already reserved by BSP)
+
+2011-08-01
+--------------------------------------------------------
+ * BLOB Provider mechanism
+ * SQLiteStorage provides own BLOBs and uses hard-links to copy bundle payload
+ * SQLiteStorage expiration fix
+ * Disable tcp linger and keepalive option on tcp connections
+ * Now IPND binds on any interface instead on the broadcast/multicast address
+ * Retransmission Module: Exponential back-off fix
+ * Now a transfer is aborted if the node is gone
+ * Renamed CONN_ZIGBEE to CONN_LOWPAN
+ * Group support for dtnsend, dtnrecv and dtnstream
+ * Fix for dtnping with bundle sizes < 4
+ * New dtnstream options "-w" wait for the bundle with the seq. no. zero.
+    By default, the stream starts with the first received bundle.
+
+2011-07-20
+--------------------------------------------------------
+ * New API framework supports group destinations
+ * Support for groups in dtnsend / dtnrecv / dtnstream 
+ * TLS extension for TCPCL
+
+2011-05-26
+--------------------------------------------------------
+ * Neighbor handling reworked
+ * Improved connection termination for API and TCP-CL for more stability.
+ * Fix: Epidemic routing combined with sqlite leads to 100% cpu usage.
+
+2011-05-09
+--------------------------------------------------------
+ * Time synchronisation between nodes is configurable now.
+
+2011-05-05
+--------------------------------------------------------
+ * Modified precision of the AgeBlock to microseconds as proposed in the draft.
+ * Added AgeBlock support to the SQLiteBundleStorage.
+ * Changed method of AgeBlock from addAge() to addSeconds().
+ * Added DTNTP worker, but is disabled in the Main.cpp .
+ * Added getMicroseconds() and getNanoseconds() to TimeMeasurement class.
+ 
+2011-04-27
+--------------------------------------------------------
+ * Bundle-in-Bundle support based on
+   http://tools.ietf.org/html/draft-irtf-dtnrg-bundle-encapsulation-06
+
+2011-04-20
+--------------------------------------------------------
+ * Experimental support for compressed bundle payload
+ 
+2011-04-19
+--------------------------------------------------------
+ * HTTPConvergenceLayer by Robert Heitz
+ * Workaround for Logging to files
+ * Define a logfile in the configuration with "logfile"
+ * Define a username with "user"
+ * Define user id and group id with "uid" and "gid"
+
+2011-04-15
+--------------------------------------------------------
+ * Fix: Threading in ibrcommon (Thanks to Ke Meng)
+   * sometimes dtnsend do not return
+   * Failed connections stay unconnected forever
+   * Bundles are not retransmitted after a failed connection
+
+2011-03-25
+--------------------------------------------------------
+ * handle interface up/down or address change by dynamic bind on addresses
+ * Fix: requeue bundles in transit
+
+2011-03-23
+--------------------------------------------------------
+ * new tool: dtnstream... stream data across a DTN!
+
+2011-03-21
+--------------------------------------------------------
+ * release 0.6.1
+ * use libdaemon to daemonize on debian
+
+2011-03-10
+--------------------------------------------------------
+ * release 0.6
+
+2011-03-03
+--------------------------------------------------------
+ * discard unknown bundle block if requested
+ * custody acceptance with sqlite bundle storage
+
+2011-02-23
+--------------------------------------------------------
+ * deliver bundles according to their priority
+ 
+2011-01-31
+--------------------------------------------------------
+ * refactoring of all routing modules for more stability
+ * Use regex for static routing
+ * static routing can be used with any other routing scheme and works (disruption tolerant) with discovered nodes
+ * new routing messages for epidemic routing (not compatible with older versions)
+
+2011-01-14
+--------------------------------------------------------
+ * Bundle Security Protocol
+ * Some special uClibc related fixes
+
+2010-12-23
+--------------------------------------------------------
+ * Better handling of the same convergence layer on multiple interfaces
+
+2010-12-22
+--------------------------------------------------------
+ * libnl is no longer mandatory
+ * full IPv6 for inter-daemon connections
+ * asynchronous connection setup
+ * DTN2 compatibility fix for discovery
+ * Bind on any interface is possible now 
+ * Fix for epidemic/default routing mix
+
+2010-11-25
+--------------------------------------------------------
+ * Bugfix: TCP streams closes other filedescriptors
+     Bad error with persistent bundle storage.
+
+2010-11-19
+--------------------------------------------------------
+ * AgeBlock support and age tracking (draft-irtf-dtnrg-bundle-age-block-01)
+
+2010-11-11
+--------------------------------------------------------
+ * Release 0.4.3 (beta)
+
+2010-11-10
+--------------------------------------------------------
+ * Epidemic routing improved
+
+2010-11-08
+--------------------------------------------------------
+ * Friendly error messages in tools
+
+2010-10-26
+--------------------------------------------------------
+ * TCP reconnect
+ * dtnping improved
+ 
+2010-10-05
+--------------------------------------------------------
+ * Help output for daemon added
+ * New TCP tuning options added
+ * Improved API and TCPCL connections
+ * Added flooding for routing options
+
+2010-09-10
+--------------------------------------------------------
+ * Purge vector exchange added to epidemic routing
+
+2010-09-09
+--------------------------------------------------------
+ * DNS resolving for names of static tcp connections
+ * IPv6 support for outgoing TCP connections
+
+2010-09-08
+--------------------------------------------------------
+ * Fixed deletion of non-existing file in the storage caused a crash.
+ * Improved dtnping with reply and timeout checking.
+ * Improved flow control and error correction in epidemic routing.
+ 
+2010-08-23
+--------------------------------------------------------
+ * Discovery timeout is configurable now. (discovery_timeout)
+
+2010-08-20
+--------------------------------------------------------
+ * Fixes for compiling with older/more strict compilers
+ * Added IEEE 802.15.4 LoWPAN support in ibrcommon (Stefan Schmidt)
+ * Added IEEE 802.15.4 LoWPAN convergence layer (Stefan Schmidt)
+ * Fixed bug (not sending discovery) when the local clock is before the year 2000
+ * Release 0.4.2
+
+2010-08-17
+--------------------------------------------------------
+ * Simple bundle storage now closes file handles to stored bundles.
+ * Added priorisation in bundle storage. Now bundles with high prio are delivered first.
+ * Improved command argument parsing in dtnsend + priority parameter.
+ * Fixed priority reading in API.
+ * Fixed memory leak in embedded applications.
+
+2010-08-09
+--------------------------------------------------------
+ * dtnsend can read the bundle payload from stdin now
+
+2010-08-06
+--------------------------------------------------------
+ * Added CBHE capabilities. If the bundle match all requirements
+   (the scheme of all EIDs is 'ipn') then the bundle header will
+   be compressed.
+
+2010-08-04
+--------------------------------------------------------
+ * Release 0.4.1
+
+2010-08-03
+--------------------------------------------------------
+ * Bugfix: Reading block type fails with some values
+ * Autoconf build configuration improved
+ * OpenSSL library is now optional (use --with-openssl to enable it)
+ * SQLiteBundleStorage added (experimental, use --with-sqlite to enable it)
+ 
+2010-07-30
+--------------------------------------------------------
+ * Release 0.4.0

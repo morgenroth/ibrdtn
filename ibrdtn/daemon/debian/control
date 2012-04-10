@@ -1,0 +1,14 @@
+Source: ibrdtnd
+Section: net
+Priority: standard
+Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev (>= 0.6), ibrdtn-dev (>= 0.6), libsqlite3-dev, libcurl4-openssl-dev (>= 7.18), libdaemon-dev (>= 0.12), cdbs (>= 0.4), pkg-config, dtndht-dev (>=0.2.2)
+Standards-Version: 3.8.4
+Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
+
+Package: ibrdtnd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1 (>= 0.6), ibrdtn1 (>= 0.6), libsqlite3-0, libcurl3 (>= 7.18), libdaemon0 (>= 0.12), dtndht1 (>=0.2.2)
+Suggests: logrotate (>= 3.0.0)
+Description: The implementation of the bundle protocol of the IBR (TU Braunschweig).
+

@@ -1,0 +1,6 @@
+COPYING
+doc/BPSEC.txt
+doc/README.txt
+etc/ibrdtnd.conf
+scripts/dtndrive.sh
+scripts/genkey.sh

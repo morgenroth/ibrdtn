@@ -1,0 +1,6 @@
+# information about testcase: routing-02-epidemic
+#
+
+TITLE="routing-02-epidemic"
+DESCRIPTION="Test the epidemic routing module with three dtnd instances."
+

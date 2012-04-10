@@ -1,0 +1,3 @@
+/etc/ibrdtn/ibrdtnd.conf
+/etc/init.d/ibrdtnd
+/etc/default/ibrdtnd

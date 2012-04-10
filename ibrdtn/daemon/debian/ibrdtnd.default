@@ -1,0 +1,10 @@
+# Defaults for ibrdtnd initscript
+# sourced by /etc/init.d/ibrdtnd
+# installed at /etc/default/ibrdtnd by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# Additional options that are passed to the Daemon.
+DAEMON_OPTS="-c /etc/ibrdtnd.conf"

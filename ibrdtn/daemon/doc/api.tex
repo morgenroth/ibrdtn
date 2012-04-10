@@ -1,0 +1,479 @@
+\documentclass[12pt, a4paper]{scrartcl}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{parskip}
+
+\usepackage{hyperref}
+
+\begin{document}
+
+\section{Overview}
+A Command consists of multiple words on a single line and will be specified in the following format:
+\begin{quote}
+	payload [<block\_offset>] put [<payload\_offset>]
+\end{quote}
+In this example, `payload' and `put' specify the command.
+Arguments (block\_offset and payload\_offset in this example) are enclosed in angle brackets and additionally in square brackets, if they are optional.
+
+The responses of the DTN-Daemon are of the form:
+\begin{quote}
+	<status\_code> <message>
+\end{quote}
+
+If a command was successful, the DTN-Daemon responds with status code 200, which represents API\_STATUS\_OK.
+Some commands require additional information to be sent by the client or the server.
+If the client has to send more information, the server responds with the status code 100 (API\_STATUS\_CONTINUE) and waits for additional data from the client.
+Otherwise, if the server has to send additional information, he responds with the status code 200 (API\_STATUS\_OK) and continues sending the data.
+In these cases, the command specifies how the data is interpreted and how the end of the data can be recognized.
+
+Offsets into the bundle or data will always start at 0 if not stated otherwise, e.\,g., block~0 is the first block of the bundle.
+
+After the client established a connection, the DTN-Daemon will send its banner, for example:
+\begin{quote}
+IBR-DTN 0.6.4 (build 44739M) API 1.0
+\end{quote}
+To switch to the ExtendedAPI, the client sends the command:
+\begin{quote}
+	protocol extended
+\end{quote}
+and receives the answer:
+\begin{quote}
+	200 SWITCHED TO EXTENDED
+\end{quote}
+
+\subsection{Bundle Register}
+The DTN-Daemon holds a bundle register for the client.
+All commands starting with bundle and payload apply to the bundle in this register.
+For example, you can load a bundle into this register with the bundle load command, modify it and commit it for sending.
+\subsection{Bundle Notification}
+If the client has its endpoint set or created a registration, the DTN-Daemon will notify him if a bundle arrived for this registration and put it into the clients bundle queue.
+The notification is of the form:
+\begin{quote}
+	602 NOTIFY BUNDLE <timestamp> <seq\_nr> [<fragment\_offset>] <source\_eid>
+\end{quote}
+holding all information necessary to identify the bundle unambiguously.
+Note that this notification can also arrive at the client, between him sending a command and the daemon sending its answer.
+\subsection{Status Codes}
+\begin{description}
+\item[100] API\_STATUS\_CONTINUE
+\item[200] API\_STATUS\_OK
+\item[201] API\_STATUS\_CREATED
+\item[202] API\_STATUS\_ACCEPTED
+\item[302] API\_STATUS\_FOUND
+\item[400] API\_STATUS\_BAD\_REQUEST
+\item[401] API\_STATUS\_UNAUTHORIZED
+\item[403] API\_STATUS\_FORBIDDEN
+\item[404] API\_STATUS\_NOT\_FOUND
+\item[405] API\_STATUS\_NOT\_ALLOWED
+\item[406] API\_STATUS\_NOT\_ACCEPTABLE
+\item[409] API\_STATUS\_CONFLICT
+\item[500] API\_STATUS\_INTERNAL\_ERROR
+\item[501] API\_STATUS\_NOT\_IMPLEMENTED
+\item[503] API\_STATUS\_SERVICE\_UNAVAILABLE
+\item[505] API\_STATUS\_VERSION\_NOT\_SUPPORTED
+\end{description}
+
+\section{Commands}
+\subsection{set}
+\subsubsection*{set endpoint <endpoint\_affix>}
+Sets the nodes EID to a concatenation of the daemons EID and a given string.
+Subsequently, if a Bundle arrives for this EID the Client will be notified.
+\begin{description}
+\item[endpoint\_affix:] a string that will be concatenated to the EID of the DTN-Daemon
+\end{description}
+\subsection{registration}
+\subsubsection*{registration add <endpoint>}
+Creates a registration for a given EID.
+Subsequently, if a Bundle arrives for this EID the Client will be notified.
+\begin{description}
+\item[endpoint:] The EID to subscribe to.
+\end{description}
+\subsubsection*{registration del <endpoint>}
+Deletes a registration for a given EID.
+\begin{description}
+\item[endpoint:] The EID to unsubscribe from.
+\end{description}
+\subsubsection*{registration list}
+Sends a list with all registrations of the client.
+
+The first line of the daemons response starts with the API\_STATUS\_OK code.
+Subsequently, the daemon sends all of the clients registrations, each on a single line, terminated by an empty line.
+
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+registration list
+200 REGISTRATION LIST
+dtn://test/1
+dtn://abc
+
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+
+\subsubsection*{registration save <time>}
+Makes a registration persistent for a given time.
+
+The daemon responds with the API\_STATUS\_OK code, followed by the words `REGISTRATION SAVE' and a string of printable ASCII characters, that identifies the registration uniquely.
+\begin{description}
+\item[time:] The time in seconds that the registration shall be saved.
+\end{description}
+
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+registration save 60
+200 REGISTRATION SAVE pEOlcirMMTUVBZs
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\subsubsection*{registration load <id>}
+Loads a persistent registration by a given ID.
+The registration can only be loaded if it is not assigned to another client.
+\begin{description}
+\item[id:] The unique ID of the registration, that was returned by `registration save'.
+\end{description}
+\subsection{neighbor}
+\subsubsection*{neighbor list}
+Sends a list with all neighbors of the DTN-Daemon.
+
+The first line of the daemons response starts with the API\_STATUS\_OK code.
+Subsequently, the daemon sends all of its neighbors, each on a single line, terminated by an empty line.
+
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+neighbor list
+200 NEIGHBOR LIST
+dtn://test-server
+dtn://morpheus
+dtn://abc.dtn
+
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\subsection{bundle}
+\subsubsection*{bundle get [<format>]}
+Sends the content of the bundle register to the client in a chosen format (default: plain).
+The available data formats are described in section~\ref{sec:formats}.
+The daemon responds with the status code API\_STATUS\_OK on the first line and continues sending the whole bundle in the chosen format.
+\begin{description}
+\item[format:] Either `binary' or `plain'.
+\end{description}
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+bundle get plain
+200 BUNDLE GET PLAIN 374770842 4 dtn://test/1
+Processing flags: 16
+Timestamp: 374770842
+Sequencenumber: 4
+Source: dtn://test/1
+Destination: dtn://test/2
+Reportto: dtn:none
+Custodian: dtn:none
+Lifetime: 3600
+Blocks: 1
+
+Block: 1
+Flags: LAST_BLOCK
+Length: 4
+
+dGVzdA==
+
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\subsubsection*{bundle put [<format>]}
+Receives a bundle from the client in a given format (default: plain) and stores it in the bundle register.
+The daemon responds with the status code API\_STATUS\_CONTINUE and awaits a bundle in the given format.
+The available data formats are described in section~\ref{sec:formats}.
+After the whole bundle was transmitted the server sends the status code API\_STATUS\_OK to signal the success.
+\begin{description}
+\item[format:] Either `binary' or `plain'.
+\end{description}
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+bundle put plain
+100 PUT BUNDLE PLAIN
+Source: api:me
+Destination: dtn://test/2
+Processing flags: 16
+Blocks: 1
+
+Block: 1
+Flags: LAST_BLOCK
+Length: 4
+
+dGVzdA==
+
+200 BUNDLE IN REGISTER
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\subsubsection*{bundle load queue}
+Loads a bundle from the queue into the bundle register.
+\subsubsection*{bundle load <timestamp> <seq\_nr> [<fragment\_offset>] <source\_eid>}
+Loads a bundle, identified by the given parameters, into the bundle register.
+\begin{description}
+\item[timestamp:] The timestamp of the bundle to load.
+\item[seq\_nr:] The sequence number.
+\item[fragment\_offset:] The fragment offset.
+\item[source\_eid:] The sender EID.
+\end{description}
+\subsubsection*{bundle clear}
+Clears the bundle register.
+\subsubsection*{bundle free}
+Removes the bundle in the bundle register from the internal storage and clears the bundle register.
+\subsubsection*{bundle delivered <timestamp> <seq\_nr> [<fragment\_offset>] <source\_eid>}
+Marks the bundle, identified by the given parameters, as delivered.
+\begin{description}
+\item[timestamp:] The timestamp of the bundle.
+\item[seq\_nr:] The sequence number.
+\item[fragment\_offset:] The fragment offset.
+\item[source\_eid:] The sender EID.
+\end{description}
+\subsubsection*{bundle store}
+Stores the bundle in the bundle register in the internal storage.
+\subsubsection*{bundle send}
+Accept the content of the bundle register to be an outgoing bundle.
+\subsubsection*{bundle info}
+Send a summary of the bundle to the client.
+The summary corresponds to the plain format~(section~\ref{sec:plainformat}) with omitted payload.
+\subsubsection*{bundle block add [<block\_offset>]}
+Adds a new block to the bundle in the bundle register.
+If no offset is given, the block is appended to the bundle.
+The daemon responds with the status code API\_STATUS\_CONTINUE and awaits a bundle in the plain format~(section~\ref{sec:plainformat}).
+After the block was transmitted the server sends the status code API\_STATUS\_OK to signal the success.
+\begin{description}
+\item[block\_offset:] The offset where to insert the block.
+\end{description}
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+bundle block add 0
+100 BUNDLE BLOCK ADD
+Block: 1
+Length: 4
+
+dGVzdA==
+
+200 BUNDLE BLOCK ADD SUCCESSFUL
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\subsubsection*{bundle block del <block\_offset>}
+Removes a block from the bundle in the bundle register.
+\begin{description}
+\item[block\_offset:] The offset of the block that shall be removed.
+\end{description}
+\subsection{payload}
+\subsubsection*{payload [<block\_offset>] get [<data\_offset> [<length>]]}
+Sends data of a block to a client beginning at <data\_offset> (default: 0).
+If <length> is specified, the number of bytes that are send are limited, otherwise all bytes from <data\_offset> to the end of the block are sent.
+The daemon responds at first with the status code API\_STATUS\_OK and continues sending the block in question in plain format~(section~\ref{sec:plainformat}), while header fields except the length field  may be omitted.
+If <data\_offset> and/or <length> are given, a modified block is sent, that only hold the requested subset of the data.
+\begin{description}
+\item[block\_offset:] The offset of the block to get the data from.
+	If omitted, the payload block is used.
+\item[data\_offset:] Offset into the data that shall be returned.
+\item[length:] Length of the data that shall be returned.
+\end{description}
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+payload 0 get 1 2
+200 PAYLOAD GET
+Length: 2
+
+ZXM=
+
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\subsubsection*{payload [<block\_offset>] put [<data\_offset>]}
+Writes data into a block of the bundle register, beginning at offset <data\_offset> (default: 0).
+The server responds with the status code API\_STATUS\_CONTINUE and awaits a single Block in plain format~(section~\ref{sec:plainformat}), while header fields except the length field  may be omitted.
+On success, the server responds with the status code API\_STATUS\_OK.
+\begin{description}
+\item[block\_offset:] The offset of the block to write the data into.
+	If omitted, the payload block is used.
+\item[data\_offset:] Offset where to write the new data.
+\end{description}
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+payload 0 put 3
+100 PAYLOAD PUT
+Block: 1
+Length: 2
+
+ZXM=
+
+200 PAYLOAD PUT SUCCESSFUL
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\subsubsection*{payload [<block\_offset>] append}
+Appends data to a block of the bundle register.
+The server responds with the status code API\_STATUS\_CONTINUE and awaits a single Block in plain format~(section~\ref{sec:plainformat}).
+On success, the server responds with the status code API\_STATUS\_OK.
+
+\begin{description}
+\item[block\_offset:] The offset of the block to append the data to.
+	If omitted, the payload block is used.
+\end{description}
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+payload 0 append
+100 PAYLOAD APPEND
+Block: 1
+Length: 2
+
+ZXM=
+
+200 PAYLOAD APPEND SUCCESSFUL
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\subsubsection*{payload [<block\_offset>] clear}
+Clears the data of a block of the bundle register.
+\begin{description}
+\item[block\_offset:] The offset of the block that shall be cleared.
+	If omitted, the payload block is used.
+\end{description}
+\subsubsection*{payload [<block\_offset>] length}
+Returns the length of a block of the bundle register..
+\begin{description}
+\item[block\_offset:] The offset of the block whose length shall be returned.
+	If omitted, the payload block is used.
+\end{description}
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+payload 0 length
+200 PAYLOAD LENGTH
+Length: 7
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\section{Data Formats}
+\label{sec:formats}
+\subsection{Plain Format}
+\label{sec:plainformat}
+\begin{table}
+\centering
+\begin{tabular}{l|l}
+field specifier                    & value \\
+\hline
+Processing flags                   & unsigned decimal number\\
+Timestamp                          & unsigned decimal number\\
+Sequencenumber                     & unsigned decimal number\\
+Source                             & EID\\
+Destination                        & EID\\
+Reportto                           & EID\\
+Custodian                          & EID\\
+Lifetime                           & unsigned decimal number\\
+Fragment offset (optional)         & unsigned decimal number\\
+Application data length (optional) & unsigned decimal number
+\end{tabular}
+\caption{Field specifiers for the header of the primary bundle block.}
+\label{tab:pbb_fields}
+\end{table}
+\begin{table}
+\centering
+\begin{tabular}{l|l}
+field specifier                           & value \\
+\hline
+Block (the block type)                    & unsigned decimal number\\
+Flags (optional)                          & space seperated flag specifier according to table~\ref{tab:block_flags}\\
+EID (optional, can appear multiple times) & EID\\
+Length                                    & unsigned decimal number
+\end{tabular}
+\caption{Field Specifiers for the header of other blocks.}
+\label{tab:block_fields}
+\end{table}
+\begin{table}
+\centering
+\begin{itemize}
+\item LAST\_BLOCK
+\item REPLICATE\_IN\_EVERY\_FRAGMENT
+\item TRANSMIT\_STATUSREPORT\_IF\_NOT\_PROCESSED
+\item DELETE\_BUNDLE\_IF\_NOT\_PROCESSED
+\item DISCARD\_IF\_NOT\_PROCESSED
+\item FORWARDED\_WITHOUT\_PROCESSED
+\end{itemize}
+\caption{Specifier for the flags field of a block.}
+\label{tab:block_flags}
+\end{table}
+The plain data format is used to either transmit a whole bundle, the bundle with omitted payloads or single blocks.
+To transmit a bundle, all blocks are transmitted sequentially, starting with the primary bundle block.
+Each block consists of the block header, an empty line and its payload, followed by an additional empty line to mark its end.
+An exception to this is only the primary bundle block, which has no payload.
+If the payload for a block is not to be transmitted (in case of omitted payloads or for the primary bundle block), the payload and the second empty line are left out.
+The end of a bundle transmission is detected if the last processed block has its `last block' flag set.
+
+The header transmission consists of lines of the form:
+\begin{quote}
+	<field>: <value>
+\end{quote}
+where <field> specifies a field of the blocks header.
+The field specifiers for the primary bundle block are listed in table~\ref{tab:pbb_fields}, while the specifiers for other blocks are shown in table~\ref{tab:block_fields}.
+Field specifiers may appear in any order and some specifiers may be omitted.
+If the client sends `api:me' as an EID parameter, it will be replaced with the clients endpoint when `bundle send' is called.
+
+The block payloads are base64 encoded and can occupy multiple lines.
+
+Example for a bundle transmission:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+Processing flags: 16
+Timestamp: 375298751
+Sequencenumber: 3
+Source: dtn://tsrtp/1
+Destination: dtn://tsrtp/2
+Reportto: dtn:none
+Custodian: dtn:none
+Lifetime: 3600
+Blocks: 1
+
+Block: 1
+Flags: LAST_BLOCK
+Length: 64
+
+dGVzdHRlc3R0ZXN0dGVzdHRlc3R0ZXN0dGVzdHRlc3R0ZXN0dGVzdHRlc3R0ZXN0
+dGVzdHRlc3R0ZXN0dGVzdA==
+
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+
+Example for a bundle transmission with omitted payloads:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+Processing flags: 16
+Timestamp: 375298751
+Sequencenumber: 3
+Source: dtn://tsrtp/1
+Destination: dtn://tsrtp/2
+Reportto: dtn:none
+Custodian: dtn:none
+Lifetime: 3600
+Blocks: 1
+
+Block: 1
+Flags: LAST_BLOCK
+Length: 64
+
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+
+Example for the transmission of a single block:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+Block: 1
+Flags: LAST_BLOCK
+Length: 64
+
+dGVzdHRlc3R0ZXN0dGVzdHRlc3R0ZXN0dGVzdHRlc3R0ZXN0dGVzdHRlc3R0ZXN0
+dGVzdHRlc3R0ZXN0dGVzdA==
+
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\subsection{Binary Format}
+\label{sec:binaryformat}
+The binary format corresponds to the format used by the TCP convergence layer and is not specified further in this document.
+\end{document}

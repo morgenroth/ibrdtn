@@ -1,0 +1,7 @@
+#!/usr/bin/make -f
+
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/class/autotools.mk
+
+# extra configure flags
+DEB_CONFIGURE_EXTRA_FLAGS := --with-curl --with-sqlite --with-lowpan --with-dtnsec --with-compression --with-tls --with-dht --sysconfdir=/etc/ibrdtn

@@ -1,0 +1,13 @@
+/var/log/ibrdtn.log {
+	weekly
+	missingok
+	rotate 10
+	compress
+	delaycompress
+	notifempty
+	create 640 dtnd adm
+	sharedscripts
+	postrotate
+		/etc/init.d/ibrdtnd reload > /dev/null
+	endscript
+}

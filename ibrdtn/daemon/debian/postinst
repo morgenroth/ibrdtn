@@ -1,0 +1,26 @@
+#!/bin/sh
+
+DAEMON_USER="dtnd"
+
+case "$1" in
+  configure)
+	#Creating the user if it does not exist
+	adduser --system ${DAEMON_USER}
+	;;
+	
+  abort-upgrade)
+	;;
+	
+  abort-remove)
+	;;
+	
+  abort-deconfigure)
+	;;
+	
+  *)
+	echo "$0: didn't understand being called with \`$1'" 1>&2
+	exit 0
+	;;
+esac
+
+exit 0

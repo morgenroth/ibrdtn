@@ -1,0 +1,914 @@
+Index: configure-dev
+===================================================================
+--- configure-dev	(Revision 42692)
++++ configure-dev	(Arbeitskopie)
+@@ -1,16 +0,0 @@
+-#!/bin/bash
+-#
+-
+-CONF_PARAMS="--with-openssl --with-curl --with-lowpan --with-sqlite --with-dtnsec --with-compression --with-xml --with-tls"
+-
+-if [ -e .coverage ]; then
+-	export CXXFLAGS="-g -O0 -Wall -W -Wunused-variable -Wunused-parameter -Wunused-function -Wunused -Wno-system-headers -Wno-deprecated -Woverloaded-virtual -Wwrite-strings -fprofile-arcs -ftest-coverage"
+-	export CFLAGS="-g -O0 -Wall -W -fprofile-arcs -ftest-coverage"
+-	export LDFLAGS="-fprofile-arcs -ftest-coverage"
+-
+-	./configure $CONF_PARAMS $@
+-else
+-	# configures the project to be verbose and pedantic to coding errors and mistakes. Additionally, debugging symbols are enabled.
+-	./configure CXXFLAGS="-ggdb -g3 -Wall -Wextra -D__DEVELOPMENT_ASSERTIONS__" $CONF_PARAMS $@
+-fi
+-
+Index: contrib/default.conf
+===================================================================
+--- contrib/default.conf	(Revision 42692)
++++ contrib/default.conf	(Arbeitskopie)
+@@ -247,29 +247,3 @@
+ 
+ # set to 'yes' to disable encryption in the TLS streams
+ #security_tls_disable_encryption = yes
+-
+-
+-#####################################
+-# time synchronization              #
+-#####################################
+-
+-#
+-# set to yes if this node is connected to a high precision time reference
+-# like GPS, DCF77, NTP, etc.
+-#
+-#time_reference = yes
+-
+-#
+-# set the quality of time decrease tick
+-#
+-#time_qot_tick = 0
+-
+-#
+-# request time synchronization on discovery
+-#
+-#time_sync_on_discovery = yes
+-
+-#
+-# announce time sync capabilities in discovery messages
+-#
+-#time_discovery_announcements = yes
+Index: contrib/openwrt/files/build-config.sh
+===================================================================
+--- contrib/openwrt/files/build-config.sh	(Revision 42692)
++++ contrib/openwrt/files/build-config.sh	(Arbeitskopie)
+@@ -85,14 +85,7 @@
+ add_param $CONFFILE "ibrdtn.tls.required" "security_tls_required"
+ add_param $CONFFILE "ibrdtn.tls.noencryption" "security_tls_disable_encryption"
+ 
+-add_param $CONFFILE "ibrdtn.timesync.reference" "time_reference"
+-add_param $CONFFILE "ibrdtn.timesync.qot_tick" "time_qot_tick"
+-add_param $CONFFILE "ibrdtn.timesync.sync_on_discovery" "time_sync_on_discovery"
+-add_param $CONFFILE "ibrdtn.timesync.discovery_announcement" "time_discovery_announcements"
+-add_param $CONFFILE "ibrdtn.timesync.sigma" "time_sigma"
+-add_param $CONFFILE "ibrdtn.timesync.sync_level" "time_sync_level"
+ 
+-
+ # iterate through all network interfaces
+ iter=0
+ netinterfaces=
+Index: contrib/openwrt/files/ibrdtn.uci
+===================================================================
+--- contrib/openwrt/files/ibrdtn.uci	(Revision 42692)
++++ contrib/openwrt/files/ibrdtn.uci	(Arbeitskopie)
+@@ -151,16 +151,3 @@
+ #	option trustedpath	/path/to/tls-ca
+ #	option required		no
+ #	option noencryption no
+-
+-
+-#####################################
+-# time synchronization              #
+-#####################################
+-
+-#config 'daemon' 'timesync'
+-#	option reference			yes
+-#	option qot_tick				0
+-#	option sync_on_discovery	yes
+-#	option discovery_announcement	yes
+-#	option sigma				1.01
+-#	option sync_level			0.1
+Index: daemon/etc/ibrdtn.conf.example
+===================================================================
+--- daemon/etc/ibrdtn.conf.example	(Revision 42692)
++++ daemon/etc/ibrdtn.conf.example	(Arbeitskopie)
+@@ -247,29 +247,3 @@
+ 
+ # set to 'yes' to disable encryption in the TLS streams
+ #security_tls_disable_encryption = yes
+-
+-
+-#####################################
+-# time synchronization              #
+-#####################################
+-
+-#
+-# set to yes if this node is connected to a high precision time reference
+-# like GPS, DCF77, NTP, etc.
+-#
+-#time_reference = yes
+-
+-#
+-# set the quality of time decrease tick
+-#
+-#time_qot_tick = 0
+-
+-#
+-# request time synchronization on discovery
+-#
+-#time_sync_on_discovery = yes
+-
+-#
+-# announce time sync capabilities in discovery messages
+-#
+-#time_discovery_announcements = yes
+Index: daemon/src/Configuration.cpp
+===================================================================
+--- daemon/src/Configuration.cpp	(Revision 42692)
++++ daemon/src/Configuration.cpp	(Arbeitskopie)
+@@ -90,17 +90,12 @@
+ 		 : _daemonize(false), _kill(false)
+ 		{};
+ 
+-		Configuration::TimeSync::TimeSync()
+-		 : _reference(true), _sync(false), _discovery(false), _qot_tick(0)
+-		{};
+-
+ 		Configuration::Discovery::~Discovery() {};
+ 		Configuration::Statistic::~Statistic() {};
+ 		Configuration::Debug::~Debug() {};
+ 		Configuration::Logger::~Logger() {};
+ 		Configuration::Network::~Network() {};
+ 		Configuration::Daemon::~Daemon() {};
+-		Configuration::TimeSync::~TimeSync() {};
+ 
+ 		const Configuration::Discovery& Configuration::getDiscovery() const
+ 		{
+@@ -137,11 +132,6 @@
+ 			return _daemon;
+ 		}
+ 
+-		const Configuration::TimeSync& Configuration::getTimeSync() const
+-		{
+-			return _timesync;
+-		}
+-
+ 		Configuration& Configuration::getInstance()
+ 		{
+ 			static Configuration conf;
+@@ -309,7 +299,6 @@
+ 			_logger.load(_conf);
+ 			_network.load(_conf);
+ 			_security.load(_conf);
+-			_timesync.load(_conf);
+ 		}
+ 
+ 		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
+@@ -337,25 +326,6 @@
+ 		{
+ 		}
+ 
+-		void Configuration::TimeSync::load(const ibrcommon::ConfigFile &conf)
+-		{
+-			try {
+-				_reference = (conf.read<std::string>("time_reference") == "yes");
+-			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
+-
+-			try {
+-				_sync = (conf.read<std::string>("time_sync_on_discovery") == "yes");
+-			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
+-
+-			try {
+-				_discovery = (conf.read<std::string>("time_discovery_announcements") == "yes");
+-			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
+-
+-			_qot_tick = conf.read<int>("time_qot_tick", 0);
+-			_sigma = conf.read<float>("time_sigma", 1.001);
+-			_sync_level = conf.read<float>("time_sync_level", 0.15);
+-		}
+-
+ 		bool Configuration::Debug::quiet() const
+ 		{
+ 			return _quiet;
+@@ -1012,35 +982,5 @@
+ 			if (_pidfile == ibrcommon::File()) throw ParameterNotSetException();
+ 			return _pidfile;
+ 		}
+-
+-		bool Configuration::TimeSync::hasReference() const
+-		{
+-			return _reference;
+-		}
+-
+-		bool Configuration::TimeSync::syncOnDiscovery() const
+-		{
+-			return _sync;
+-		}
+-
+-		bool Configuration::TimeSync::sendDiscoveryAnnouncements() const
+-		{
+-			return _discovery;
+-		}
+-
+-		int Configuration::TimeSync::getQualityOfTimeTick() const
+-		{
+-			return _qot_tick;
+-		}
+-
+-		float Configuration::TimeSync::getSigma() const
+-		{
+-			return _sigma;
+-		}
+-
+-		float Configuration::TimeSync::getSyncLevel() const
+-		{
+-			return _sync_level;
+-		}
+ 	}
+ }
+Index: daemon/src/Configuration.h
+===================================================================
+--- daemon/src/Configuration.h	(Revision 42692)
++++ daemon/src/Configuration.h	(Arbeitskopie)
+@@ -463,31 +463,6 @@
+ 				bool kill_daemon() const;
+ 			};
+ 
+-			class TimeSync : public Configuration::Extension
+-			{
+-				friend class Configuration;
+-			protected:
+-				TimeSync();
+-				virtual ~TimeSync();
+-				void load(const ibrcommon::ConfigFile &conf);
+-
+-				bool _reference;
+-				bool _sync;
+-				bool _discovery;
+-				int _qot_tick;
+-				float _sigma;
+-				float _sync_level;
+-
+-			public:
+-				bool hasReference() const;
+-				bool syncOnDiscovery() const;
+-				bool sendDiscoveryAnnouncements() const;
+-				int getQualityOfTimeTick() const;
+-
+-				float getSigma() const;
+-				float getSyncLevel() const;
+-			};
+-
+ 			const Configuration::Discovery& getDiscovery() const;
+ 			const Configuration::Statistic& getStatistic() const;
+ 			const Configuration::Debug& getDebug() const;
+@@ -495,7 +470,6 @@
+ 			const Configuration::Network& getNetwork() const;
+ 			const Configuration::Security& getSecurity() const;
+ 			const Configuration::Daemon& getDaemon() const;
+-			const Configuration::TimeSync& getTimeSync() const;
+ 
+ 		private:
+ 			ibrcommon::ConfigFile _conf;
+@@ -506,7 +480,6 @@
+ 			Configuration::Network _network;
+ 			Configuration::Security _security;
+ 			Configuration::Daemon _daemon;
+-			Configuration::TimeSync _timesync;
+ 
+ 			std::string _filename;
+ 			bool _doapi;
+Index: daemon/src/DTNTPWorker.cpp
+===================================================================
+--- daemon/src/DTNTPWorker.cpp	(Revision 42692)
++++ daemon/src/DTNTPWorker.cpp	(Arbeitskopie)
+@@ -1,501 +0,0 @@
+-/*
+- * DTNTPWorker.cpp
+- *
+- *  Created on: 05.05.2011
+- *      Author: morgenro
+- */
+-
+-#include "DTNTPWorker.h"
+-#include "core/NodeEvent.h"
+-#include "core/BundleCore.h"
+-#include "core/TimeEvent.h"
+-#include <ibrdtn/utils/Clock.h>
+-#include <ibrdtn/utils/Utils.h>
+-#include <ibrdtn/data/AgeBlock.h>
+-#include <ibrdtn/data/PayloadBlock.h>
+-#include <ibrdtn/data/SDNV.h>
+-#include <ibrcommon/TimeMeasurement.h>
+-#include <ibrcommon/Logger.h>
+-
+-#include <sys/time.h>
+-
+-namespace dtn
+-{
+-	namespace daemon
+-	{
+-		const unsigned int DTNTPWorker::PROTO_VERSION = 1;
+-
+-		DTNTPWorker::DTNTPWorker()
+-		 : _conf(dtn::daemon::Configuration::getInstance().getTimeSync()), _qot_current_tic(0), _sigma(_conf.getSigma()),
+-		   _epsilon(1 / _sigma), _quality_diff(1 - _conf.getSyncLevel()), _sync_age(0)
+-		{
+-			AbstractWorker::initialize("/dtntp", true);
+-
+-			if (_conf.hasReference())
+-			{
+-				_last_sync.origin_quality = 0.0;
+-				_last_sync.peer_quality = 1.0;
+-				_last_sync.peer_timestamp = _last_sync.origin_timestamp;
+-			}
+-			else
+-			{
+-				_last_sync.origin_quality = 0.0;
+-				_last_sync.peer_quality = 0.0;
+-			}
+-
+-			// set current quality to last sync quality
+-			dtn::utils::Clock::quality = _last_sync.peer_quality;
+-
+-			if (_conf.syncOnDiscovery())
+-			{
+-				bindEvent(dtn::core::NodeEvent::className);
+-			}
+-
+-			bindEvent(dtn::core::TimeEvent::className);
+-
+-			// debug quality of time
+-			IBRCOMMON_LOGGER_DEBUG(10) << "quality of time is " << dtn::utils::Clock::quality << IBRCOMMON_LOGGER_ENDL;
+-		}
+-
+-		DTNTPWorker::~DTNTPWorker()
+-		{
+-			unbindEvent(dtn::core::NodeEvent::className);
+-			unbindEvent(dtn::core::TimeEvent::className);
+-		}
+-
+-		DTNTPWorker::TimeSyncMessage::TimeSyncMessage()
+-		 : type(TIMESYNC_REQUEST), origin_quality(dtn::utils::Clock::quality), peer_quality(0.0)
+-		{
+-			timerclear(&origin_timestamp);
+-			timerclear(&peer_timestamp);
+-
+-			struct timezone tz;
+-			gettimeofday(&origin_timestamp, &tz);
+-		}
+-
+-		DTNTPWorker::TimeSyncMessage::~TimeSyncMessage()
+-		{
+-		}
+-
+-		std::ostream &operator<<(std::ostream &stream, const DTNTPWorker::TimeSyncMessage &obj)
+-		{
+-			std::stringstream ss;
+-
+-			stream << (char)obj.type;
+-
+-			ss.clear(); ss.str(""); ss << obj.origin_quality;
+-			stream << dtn::data::BundleString(ss.str());
+-
+-			stream << dtn::data::SDNV(obj.origin_timestamp.tv_sec);
+-			stream << dtn::data::SDNV(obj.origin_timestamp.tv_usec);
+-
+-			ss.clear(); ss.str(""); ss << obj.peer_quality;
+-			stream << dtn::data::BundleString(ss.str());
+-
+-			stream << dtn::data::SDNV(obj.peer_timestamp.tv_sec);
+-			stream << dtn::data::SDNV(obj.peer_timestamp.tv_usec);
+-
+-			return stream;
+-		}
+-
+-		std::istream &operator>>(std::istream &stream, DTNTPWorker::TimeSyncMessage &obj)
+-		{
+-			char type = 0;
+-			std::stringstream ss;
+-			dtn::data::BundleString bs;
+-			dtn::data::SDNV sdnv;
+-
+-			stream >> type;
+-			obj.type = DTNTPWorker::TimeSyncMessage::MSG_TYPE(type);
+-
+-			stream >> bs;
+-			ss.clear();
+-			ss.str((const std::string&)bs);
+-			ss >> obj.origin_quality;
+-
+-			stream >> sdnv; obj.origin_timestamp.tv_sec = sdnv.getValue();
+-			stream >> sdnv; obj.origin_timestamp.tv_usec = sdnv.getValue();
+-
+-			stream >> bs;
+-			ss.clear();
+-			ss.str((const std::string&)bs);
+-			ss >> obj.peer_quality;
+-
+-			stream >> sdnv; obj.peer_timestamp.tv_sec = sdnv.getValue();
+-			stream >> sdnv; obj.peer_timestamp.tv_usec = sdnv.getValue();
+-
+-			return stream;
+-		}
+-
+-		void DTNTPWorker::raiseEvent(const dtn::core::Event *evt)
+-		{
+-			try {
+-				const dtn::core::TimeEvent &t = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+-
+-				if (t.getAction() == dtn::core::TIME_SECOND_TICK)
+-				{
+-					ibrcommon::MutexLock l(_sync_lock);
+-
+-					// remove outdated blacklist entries
+-					{
+-						ibrcommon::MutexLock l(_blacklist_lock);
+-						for (std::map<EID, size_t>::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); iter++)
+-						{
+-							size_t bl_age = (*iter).second;
+-
+-							// do not query again if the blacklist entry is valid
+-							if (bl_age < dtn::utils::Clock::getTime())
+-							{
+-								_sync_blacklist.erase((*iter).first);
+-							}
+-						}
+-					}
+-
+-					if ((_conf.getQualityOfTimeTick() > 0) && !_conf.hasReference())
+-					{
+-						/**
+-						 * decrease the quality of time each x tics
+-						 */
+-						if (_qot_current_tic == _conf.getQualityOfTimeTick())
+-						{
+-							// get current time values
+-							_sync_age++;
+-
+-							// adjust own quality of time
+-							dtn::utils::Clock::quality = _last_sync.peer_quality * (1 / ::pow(_sigma, _sync_age) );
+-
+-							// debug quality of time
+-							IBRCOMMON_LOGGER_DEBUG(25) << "new quality = " << _last_sync.peer_quality << " * (1 / (" << _sigma << " ^ " << _sync_age << "))" << IBRCOMMON_LOGGER_ENDL;
+-							IBRCOMMON_LOGGER_DEBUG(25) << "new quality of time is " << dtn::utils::Clock::quality << IBRCOMMON_LOGGER_ENDL;
+-
+-							// reset the tick counter
+-							_qot_current_tic = 0;
+-						}
+-						else
+-						{
+-							// increment the tick counter
+-							_qot_current_tic++;
+-						}
+-					}
+-					else
+-					{
+-						/**
+-						 * evaluate the current local time
+-						 */
+-						if (dtn::utils::Clock::quality == 0)
+-						{
+-							if (dtn::utils::Clock::getTime() > 0)
+-							{
+-								dtn::utils::Clock::quality = 1;
+-								IBRCOMMON_LOGGER(warning) << "The local clock seems to be okay again. Expiration enabled." << IBRCOMMON_LOGGER_ENDL;
+-							}
+-						}
+-					}
+-				}
+-			} catch (const std::bad_cast&) { };
+-
+-			try {
+-				const dtn::core::NodeEvent &n = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+-				const dtn::core::Node &node = n.getNode();
+-
+-				if (n.getAction() == dtn::core::NODE_INFO_UPDATED)
+-				{
+-					// only query for time sync if the other node supports this
+-					if (!node.has("dtntp")) return;
+-
+-					// get discovery attribute
+-					const std::list<dtn::core::Node::Attribute> attrs = node.get("dtntp");
+-
+-					// decode attribute parameter
+-					unsigned int version = 0;
+-					size_t timestamp = 0;
+-					float quality = 0.0;
+-					decode(attrs.front(), version, timestamp, quality);
+-
+-					// we do only support version = 1
+-					if (version != 1) return;
+-
+-					// do not sync if the quality is worse than ours
+-					if ((quality * _quality_diff) <= dtn::utils::Clock::quality) return;
+-
+-					// get the EID of the peer
+-					const dtn::data::EID &peer = n.getNode().getEID();
+-
+-					// check sync blacklist
+-					{
+-						ibrcommon::MutexLock l(_blacklist_lock);
+-						if (_sync_blacklist.find(peer) != _sync_blacklist.end())
+-						{
+-							size_t bl_age = _sync_blacklist[peer];
+-
+-							// do not query again if the blacklist entry is valid
+-							if (bl_age > dtn::utils::Clock::getTime())
+-							{
+-								return;
+-							}
+-						}
+-
+-						// create a new blacklist entry
+-						_sync_blacklist[peer] = dtn::utils::Clock::getTime() + 60;
+-					}
+-
+-					// send a time sync bundle
+-					dtn::data::Bundle b;
+-
+-					// add an age block
+-					b.push_back<dtn::data::AgeBlock>();
+-
+-					ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+-
+-					// create the payload of the message
+-					{
+-						ibrcommon::BLOB::iostream stream = ref.iostream();
+-
+-						// create a new timesync request
+-						TimeSyncMessage msg;
+-
+-						// write the message
+-						(*stream) << msg;
+-					}
+-
+-					// add the payload to the message
+-					b.push_back(ref);
+-
+-					// set the source and destination
+-					b._source = dtn::core::BundleCore::local + "/dtntp";
+-					b._destination = peer + "/dtntp";
+-
+-					// set high priority
+-					b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, true);
+-					b.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
+-
+-					// set the the destination as singleton receiver
+-					b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+-
+-					// set the lifetime of the bundle to 60 seconds
+-					b._lifetime = 60;
+-
+-					transmit(b);
+-				}
+-			} catch (const std::bad_cast&) { };
+-		}
+-
+-		void DTNTPWorker::update(const ibrcommon::vinterface&, std::string &name, std::string &data) throw(NoServiceHereException)
+-		{
+-			if (!_conf.sendDiscoveryAnnouncements()) throw NoServiceHereException("Discovery of time sync mechanisms disabled.");
+-
+-			std::stringstream ss;
+-			ss << "version=" << PROTO_VERSION << ";quality=" << dtn::utils::Clock::quality << ";timestamp=" << dtn::utils::Clock::getTime() << ";";
+-			name = "dtntp";
+-			data = ss.str();
+-		}
+-
+-		void DTNTPWorker::decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality)
+-		{
+-			// parse parameters
+-			std::vector<std::string> parameters = dtn::utils::Utils::tokenize(";", attr.value);
+-			std::vector<std::string>::const_iterator param_iter = parameters.begin();
+-
+-			while (param_iter != parameters.end())
+-			{
+-				std::vector<std::string> p = dtn::utils::Utils::tokenize("=", (*param_iter));
+-
+-				if (p[0].compare("version") == 0)
+-				{
+-					std::stringstream ss(p[1]);
+-					ss >> version;
+-				}
+-
+-				if (p[0].compare("timestamp") == 0)
+-				{
+-					std::stringstream ss(p[1]);
+-					ss >> timestamp;
+-				}
+-
+-				if (p[0].compare("quality") == 0)
+-				{
+-					std::stringstream ss(p[1]);
+-					ss >> quality;
+-				}
+-
+-				param_iter++;
+-			}
+-		}
+-
+-//		void DTNTPWorker::shared_sync(const TimeBeacon &beacon)
+-//		{
+-//			// do not sync if we are a reference
+-//			if (_conf.hasReference()) return;
+-//
+-//			// adjust own quality of time
+-//			TimeBeacon current; get_time(current);
+-//			long int tdiff = current.sec - _last_sync.sec;
+-//
+-//			ibrcommon::MutexLock l(_sync_lock);
+-//
+-//			// if we have no time, take it
+-//			if (_last_sync.quality == 0)
+-//			{
+-//				dtn::utils::Clock::quality = beacon.quality * _epsilon;
+-//			}
+-//			// if our last sync is older than one second...
+-//			else if (tdiff > 0)
+-//			{
+-//				// sync our clock
+-//				double ext_faktor = beacon.quality / (beacon.quality + dtn::utils::Clock::quality);
+-//				double int_faktor = dtn::utils::Clock::quality / (beacon.quality + dtn::utils::Clock::quality);
+-//
+-//				// set the new time values
+-//				set_time( 	(beacon.sec * ext_faktor) + (current.sec * int_faktor),
+-//							(beacon.usec * ext_faktor) + (current.usec * int_faktor)
+-//						);
+-//			}
+-//			else
+-//			{
+-//				return;
+-//			}
+-//		}
+-
+-		void DTNTPWorker::sync(const TimeSyncMessage &msg, struct timeval &tv)
+-		{
+-			// do not sync if we are a reference
+-			if (_conf.hasReference()) return;
+-
+-			ibrcommon::MutexLock l(_sync_lock);
+-
+-			// if the received quality of time is worse than ours, ignore it
+-			if (dtn::utils::Clock::quality >= msg.peer_quality) return;
+-
+-			// the values are better, adapt them
+-			dtn::utils::Clock::quality = msg.peer_quality * _epsilon;
+-
+-			// set the local clock to the new timestamp
+-			::settimeofday(&tv, NULL);
+-
+-			IBRCOMMON_LOGGER(info) << "time adjusted to " << msg.peer_timestamp.tv_sec << "." << msg.peer_timestamp.tv_usec << "; quality: " << dtn::utils::Clock::quality << IBRCOMMON_LOGGER_ENDL;
+-
+-			// remember the last sync
+-			_last_sync = msg;
+-			_sync_age = 0;
+-		}
+-
+-		void DTNTPWorker::callbackBundleReceived(const Bundle &b)
+-		{
+-			// do not sync with ourselves
+-			if (b._source.getNode() == dtn::core::BundleCore::local) return;
+-
+-			try {
+-				// read payload block
+-				const dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+-
+-				// read the type of the message
+-				char type = 0; (*p.getBLOB().iostream()).get(type);
+-
+-				switch (type)
+-				{
+-					case TimeSyncMessage::TIMESYNC_REQUEST:
+-					{
+-						dtn::data::Bundle response = b;
+-						response.relabel();
+-
+-						// set the lifetime of the bundle to 60 seconds
+-						response._lifetime = 60;
+-
+-						// switch the source and destination
+-						response._source = b._destination;
+-						response._destination = b._source;
+-						
+-						// set high priority
+-						response.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, true);
+-						response.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
+-
+-						// set the the destination as singleton receiver
+-						response.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+-
+-						// modify the payload - locked
+-						{
+-							ibrcommon::BLOB::Reference ref = p.getBLOB();
+-							ibrcommon::BLOB::iostream stream = ref.iostream();
+-
+-							// read the timesync message
+-							TimeSyncMessage msg;
+-							(*stream) >> msg;
+-
+-							// clear the payload
+-							stream.clear();
+-
+-							// fill in the own values
+-							msg.type = TimeSyncMessage::TIMESYNC_RESPONSE;
+-							msg.peer_quality = dtn::utils::Clock::quality;
+-							struct timezone tz;
+-							gettimeofday(&msg.peer_timestamp, &tz);
+-
+-							// write the response
+-							(*stream) << msg;
+-						}
+-
+-						// add a second age block
+-						response.push_front<dtn::data::AgeBlock>();
+-
+-						// send the response
+-						transmit(response);
+-						break;
+-					}
+-
+-					case TimeSyncMessage::TIMESYNC_RESPONSE:
+-					{
+-						// read the ageblock of the bundle
+-						const std::list<const dtn::data::AgeBlock*> ageblocks = b.getBlocks<dtn::data::AgeBlock>();
+-						const dtn::data::AgeBlock &peer_age = (*ageblocks.front());
+-						const dtn::data::AgeBlock &origin_age = (*ageblocks.back());
+-
+-						timeval tv_age; timerclear(&tv_age);
+-						tv_age.tv_usec = origin_age.getMicroseconds();
+-
+-						ibrcommon::BLOB::Reference ref = p.getBLOB();
+-						ibrcommon::BLOB::iostream stream = ref.iostream();
+-
+-						TimeSyncMessage msg; (*stream) >> msg;
+-
+-						timeval tv_local, rtt;
+-						struct timezone tz;
+-						gettimeofday(&tv_local, &tz);
+-
+-						// get the RTT
+-						timersub(&tv_local, &msg.origin_timestamp, &rtt);
+-
+-						// get the propagation delay
+-						timeval prop_delay;
+-						timersub(&rtt, &tv_age, &prop_delay);
+-
+-						// half the prop delay
+-						prop_delay.tv_sec /= 2;
+-						prop_delay.tv_usec /= 2;
+-
+-						timeval sync_delay;
+-						timerclear(&sync_delay);
+-						sync_delay.tv_usec = peer_age.getMicroseconds() + prop_delay.tv_usec;
+-
+-						timeval peer_timestamp;
+-						timeradd(&msg.peer_timestamp, &sync_delay, &peer_timestamp);
+-
+-						timeval offset;
+-						timersub(&tv_local, &peer_timestamp, &offset);
+-
+-						// print out offset to the local clock
+-						IBRCOMMON_LOGGER(info) << "DT-NTP bundle received; rtt = " << rtt.tv_sec << "s " << rtt.tv_usec << "us; prop. delay = " << prop_delay.tv_sec << "s " << prop_delay.tv_usec << "us; clock of " << b._source.getNode().getString() << " has a offset of " << offset.tv_sec << "s " << offset.tv_usec << "us" << IBRCOMMON_LOGGER_ENDL;
+-
+-						// sync to this time message
+-						sync(msg, peer_timestamp);
+-
+-						// remove the blacklist entry
+-						ibrcommon::MutexLock l(_blacklist_lock);
+-						_sync_blacklist.erase(b._source.getNode());
+-
+-						break;
+-					}
+-				}
+-			} catch (const ibrcommon::Exception&) { };
+-		}
+-	}
+-}
+Index: daemon/src/DTNTPWorker.h
+===================================================================
+--- daemon/src/DTNTPWorker.h	(Revision 42692)
++++ daemon/src/DTNTPWorker.h	(Arbeitskopie)
+@@ -1,80 +0,0 @@
+-/*
+- * DTNTPWorker.h
+- *
+- *  Created on: 05.05.2011
+- *      Author: morgenro
+- */
+-
+-#ifndef DTNTPWORKER_H_
+-#define DTNTPWORKER_H_
+-
+-#include "core/AbstractWorker.h"
+-#include "core/EventReceiver.h"
+-#include "net/DiscoveryServiceProvider.h"
+-#include "Configuration.h"
+-
+-namespace dtn
+-{
+-	namespace daemon
+-	{
+-		class DTNTPWorker : public dtn::core::AbstractWorker, public dtn::core::EventReceiver, public dtn::net::DiscoveryServiceProvider
+-		{
+-		public:
+-			DTNTPWorker();
+-			virtual ~DTNTPWorker();
+-
+-			void callbackBundleReceived(const Bundle &b);
+-			void raiseEvent(const dtn::core::Event *evt);
+-
+-			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data) throw(NoServiceHereException);
+-
+-			class TimeSyncMessage
+-			{
+-			public:
+-				enum MSG_TYPE
+-				{
+-					TIMESYNC_REQUEST = 1,
+-					TIMESYNC_RESPONSE = 2
+-				};
+-
+-				TimeSyncMessage();
+-				~TimeSyncMessage();
+-
+-				MSG_TYPE type;
+-
+-				timeval origin_timestamp;
+-				float origin_quality;
+-
+-				timeval peer_timestamp;
+-				float peer_quality;
+-
+-				friend std::ostream &operator<<(std::ostream &stream, const DTNTPWorker::TimeSyncMessage &obj);
+-				friend std::istream &operator>>(std::istream &stream, DTNTPWorker::TimeSyncMessage &obj);
+-			};
+-
+-		private:
+-			static const unsigned int PROTO_VERSION;
+-
+-			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality);
+-
+-//			void shared_sync(const TimeSyncMessage &msg);
+-			void sync(const TimeSyncMessage &msg, struct timeval &tv);
+-
+-			const dtn::daemon::Configuration::TimeSync &_conf;
+-			int _qot_current_tic;
+-			double _sigma;
+-			double _epsilon;
+-			float _quality_diff;
+-
+-			TimeSyncMessage _last_sync;
+-
+-			ibrcommon::Mutex _sync_lock;
+-			time_t _sync_age;
+-
+-			ibrcommon::Mutex _blacklist_lock;
+-			std::map<EID, size_t> _sync_blacklist;
+-		};
+-	}
+-}
+-
+-#endif /* DTNTPWORKER_H_ */
+Index: daemon/src/Main.cpp
+===================================================================
+--- daemon/src/Main.cpp	(Revision 42692)
++++ daemon/src/Main.cpp	(Arbeitskopie)
+@@ -49,7 +49,6 @@
+ #include "Configuration.h"
+ #include "EchoWorker.h"
+ #include "CapsuleWorker.h"
+-#include "DTNTPWorker.h"
+ #include "Notifier.h"
+ #include "DevNull.h"
+ #include "StatisticLogger.h"
+@@ -711,10 +710,6 @@
+ 	// add bundle-in-bundle endpoint
+ 	CapsuleWorker capsule;
+ 
+-	// add DT-NTP worker
+-	DTNTPWorker dtntp;
+-	if (ipnd != NULL) ipnd->addService(&dtntp);
+-
+ 	// add DevNull module
+ 	DevNull devnull;
+ 
+Index: daemon/src/Makefile.am
+===================================================================
+--- daemon/src/Makefile.am	(Revision 42692)
++++ daemon/src/Makefile.am	(Arbeitskopie)
+@@ -52,9 +52,7 @@
+ 				StatisticLogger.h \
+ 				StatisticLogger.cpp \
+ 				CapsuleWorker.cpp \
+-				CapsuleWorker.h \
+-				DTNTPWorker.cpp \
+-				DTNTPWorker.h
++				CapsuleWorker.h
+ 
+ 
+ noinst_LTLIBRARIES = libdtnd.la

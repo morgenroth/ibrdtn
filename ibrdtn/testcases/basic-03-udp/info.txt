@@ -1,0 +1,6 @@
+# information about testcase: basic-03-udp
+#
+
+TITLE="basic-03-udp"
+DESCRIPTION="Test the udp convergence layer with two dtnd instances."
+

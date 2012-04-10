@@ -1,0 +1,6 @@
+# information about testcase: routing-01-neighbor
+#
+
+TITLE="routing-01-neighbor"
+DESCRIPTION="Test the neighbor routing module with two dtnd instances."
+

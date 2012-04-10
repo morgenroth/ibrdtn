@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+
+CONF_PARAMS="--with-openssl --with-curl --with-lowpan --with-sqlite --with-dtnsec --with-compression --with-xml --with-tls --with-cppunit --with-dht"
+
+if [ -e .coverage ]; then
+	export CXXFLAGS="-g -O0 -Wall -W -Wunused-variable -Wunused-parameter -Wunused-function -Wunused -Wno-system-headers -Wno-deprecated -Woverloaded-virtual -Wwrite-strings -fprofile-arcs -ftest-coverage"
+	export CFLAGS="-g -O0 -Wall -W -fprofile-arcs -ftest-coverage"
+	export LDFLAGS="-fprofile-arcs -ftest-coverage"
+
+	./configure $CONF_PARAMS $@
+else
+	# configures the project to be verbose and pedantic to coding errors and mistakes. Additionally, debugging symbols are enabled.
+	./configure CXXFLAGS="-ggdb -g3 -Wall -Wextra -D__DEVELOPMENT_ASSERTIONS__" $CONF_PARAMS $@
+fi
+

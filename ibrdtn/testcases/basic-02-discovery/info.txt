@@ -1,0 +1,6 @@
+# information about testcase: basic-02-discovery
+#
+
+TITLE="basic-02-discovery"
+DESCRIPTION="Test the discovery mechanism."
+

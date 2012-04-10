@@ -1,0 +1,123 @@
+XML-API
+
+Example stream for client-server API.
+
+<?xml version="1.0"?>
+<stream:stream
+  xmlns:stream="http://etherx.jabber.org/streams"
+  version="1.0"
+  xmlns="ibrdtn:bundleapi"
+  xmlns:xml="http://www.w3.org/XML/1998/namespace" >
+
+  <stream:features>
+    <compression />
+  </stream:features>
+  
+  <register-endpoint name="echo-client">
+    <synchronous />
+  </register>
+
+  <!-- query for the current neighborhood -->
+  <iq type="get" id="1234">
+    <query xmlns="ibrdtn:iq:neighborhood" />
+  </iq>
+  
+  <!-- response of the current neighborhood -->
+  <iq type="get" id="1234">
+    <query xmlns="ibrdtn:iq:neighborhood">
+      <node name="dtn://test-node1">
+        <service name="service1" />
+        <service name="service2" />
+      </node>
+      <node name="dtn://test-node2">
+        <service name="service1" />
+      </node>
+    </query>
+  </iq>
+  
+  <!-- status update of a neighboring node -->
+  <presence from="dtn://test-node1">
+    <unavailable />
+  </presence>
+  
+  <!-- query for a waiting bundle -->
+  <iq type="get" id="1234">
+    <query xmlns="ibrdtn:iq:bundle" />
+  </iq>
+  
+  <!-- response of a bundle -->
+  <iq type="result" id="1234">
+    <query xmlns="ibrdtn:iq:bundle">
+      <bundle
+        from="dtn://test-node1/echo-client"
+        to="dtn://test-node2/echo"
+        timestamp="12345"
+        sequencenumber="1234"
+        lifetime="120" >
+
+<!--
+        <fragment />
+        <do-not-fragment />
+        <custody-requested custodian="dtn://test-node1" />
+        <destination-is-signleton />
+        <ack-of-app-requested />
+        <report to="dtn://test-node2">
+          <bundle-reception />
+          <custody-acceptance />
+          <forwarding />
+          <delivery />
+          <deletion />
+        </report>
+-->
+        <priority>0</priority>
+        <payload encoding="utf8">
+          jjdfhsdhf3h4f9whpw839hjr2qvp83r283rhvn7h4tqp374tqpvn37h2qp3rhuwepdvhnads
+        </payload>
+        <extension>
+          <!-- this block is a extension block -->
+        </extension>
+      </bundle>
+    </query>
+  </iq>
+  
+  <!-- sending a bundle -->
+  <iq type="set" id="1234">
+    <store xmlns="ibrdtn:iq:bundle">
+      <bundle
+        from="dtn://test-node1/echo-client"
+        to="dtn://test-node2/echo"
+        timestamp="12345"
+        sequencenumber="1234"
+        lifetime="120" >
+
+<!--
+        <fragment />
+        <do-not-fragment />
+        <custody-requested custodian="dtn://test-node1" />
+        <destination-is-signleton />
+        <ack-of-app-requested />
+        <report to="dtn://test-node2">
+          <bundle-reception />
+          <custody-acceptance />
+          <forwarding />
+          <delivery />
+          <deletion />
+        </report>
+-->
+        <priority>0</priority>
+<!--
+        <payload type="reference" length="1024354">
+          http://127.0.0.1:4552/jjdfhsdhf3h4f9whpw839hjr2qvp83r2
+        </payload>
+-->
+        <payload type="embedded" encoding="utf8" length="64">
+          jjdfhsdhf3h4f9whpw839hjr2qvp83r283rhvn7h4tqp374tqpvn37h2qp3rhuwepdvhnads
+        </payload>
+        <extension>
+          <!-- this block is a extension block -->
+        </extension>
+      </bundle>
+    </store>
+  </iq>
+
+</stream>

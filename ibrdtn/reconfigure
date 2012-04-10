@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+
+autoreconf -i
+
+RDIR=`pwd`
+for CS in `find -name config.status`; do
+	cd `dirname ${CS}`
+	./config.status
+	cd ${RDIR}
+done

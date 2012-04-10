@@ -1,0 +1,6 @@
+# information about testcase: basic-01-tcp
+#
+
+TITLE="basic-01-tcp"
+DESCRIPTION="Test the handshake of a tcp connection."
+

@@ -1,0 +1,187 @@
+#####################################
+# IBR-DTN daemon                    #
+#####################################
+
+config 'daemon' 'main'
+	# The local eid of the dtn node. Default is the hostname.
+#	option uri			dtn://node.dtn
+	
+	# timezone offset in hours
+#	option timezone		+1
+	
+	# logfile for standard output
+	option logfile		/tmp/ibrdtn.log
+	option errfile		/tmp/ibrdtn.err
+	
+	# debug level
+#	option debug		20
+
+	# block size limit
+#	option blocksize	512M
+
+
+#
+# If something bad happened, the safe mode will be activated.
+# These are the restrictions for safe mode only.
+#
+config 'daemon' 'safemode'
+	option forwarding	no
+	option storage		64M
+	option maxblock		16M
+#	option wait_mount	/dev/sda1
+
+
+#####################################
+# storage configuration             #
+#####################################
+
+config 'daemon' 'storage'
+	# possible engines are: simple, sqlite
+	option engine		simple
+	option blobs		/tmp/ibrdtn/blobs
+	option bundles		/tmp/ibrdtn/bundles
+#	option container	/tmp/ibrdtn/container.img
+#	option path			/tmp/ibrdtn/container
+#	option limit		1G
+
+
+#####################################
+# statistic logging                 #
+#####################################
+
+config 'daemon' 'statistic'
+	# types: stdout | syslog | plain | csv | stat | udp
+	option type			stat
+	option interval		2
+	option file			/tmp/ibrdtn.stats
+#	option address		127.0.0.1
+#	option port			1234
+
+
+#####################################
+# routing configuration             #
+#####################################
+
+#
+# In the "default" the daemon only delivers bundles to neighbors and static
+# available nodes. The alternative module "epidemic" spread all bundles to
+# all available neighbors.
+#
+config 'daemon' 'main'
+	# values: default | epidemic | flooding
+	option	routing		default
+#	option	forwarding	no
+
+#
+# static routing rules
+# - a rule is a regex pattern
+# - format is <target-scheme> <routing-node>
+#
+#config 'static-route'
+#	list pattern		^dtn://[[:alpha:]].moon.dtn/[[:alpha:]]
+#	option destination	dtn://router.dtn
+
+
+#####################################
+# static connections
+#####################################
+
+#config 'static-connection'
+#	option uri			dtn://node-five.dtn
+#	option address		10.0.0.5
+#	option port			4556
+#	option protocol		tcp
+#	option immediately	yes
+
+#config 'static-connection'
+#	option uri			dtn://node-ten
+#	option address		10.0.0.10
+#	option port			4556
+#	option protocol		udp
+#	option immediately	no
+
+
+#####################################
+# convergence layer configuration   #
+#####################################
+
+#
+# You can specify an address to listen to for discovery announcements.
+# Multicast addresses are supported. If no address is specified the default
+# broadcast address is used.
+#
+config 'daemon' 'discovery'
+	option address		225.0.12.5
+#	option timeout		5
+
+config 'daemon' 'tcptuning'
+#	option 'idle_timeout'	120
+#	option 'nodelay'		yes
+#	option 'chunksize'		4096
+
+config 'network'
+	option type			tcp
+	option interface	eth0
+	option port			4556
+#	option discovery	yes
+	
+#config 'network'
+#	option type			tcp
+#	option interface	wlan0
+#	option port			4556
+#	option discovery	no
+
+
+#####################################
+# bundle security protocol          #
+#####################################
+
+#
+# the level specifies the security constains
+#
+# 0 = no constrains (default)
+# 1 = accept only BAB authenticated bundles
+# 2 = accept only encrypted bundles
+# 3 = accept only BAB authenticated and encrypted bundles
+#
+
+#config 'daemon' 'security'
+#	option level		0
+#	option bab_key		/path/to/default-bab-key.mac
+#	option key_path		/path/to/security-keys
+	
+#config 'daemon' 'tls'
+#	option certificate	/path/to/tls-cert.crt
+#	option key			/path/to/tls-key.key
+#	option trustedpath	/path/to/tls-ca
+#	option required		no
+#	option noencryption no
+
+
+#####################################
+# time synchronization              #
+#####################################
+
+#config 'daemon' 'timesync'
+#	option reference			yes
+#	option qot_tick				0
+#	option sync_on_discovery	yes
+#	option discovery_announcement	yes
+#	option sigma				1.01
+#	option sync_level			0.1
+
+#####################################
+# DHT                               #
+#####################################
+
+config 'daemon' 'dht'
+	option 'enabled'		'yes'
+#	option 'id'				'<enter your unique id here>'
+	option 'bootstrap'		'yes'
+#	option 'nodesfile'		'/tmp/dht_nodes.dat'
+	option 'port' 			'9999'
+	option 'enable_ipv6'	'no'
+#	option 'enable_ipv4'	'no'
+#	option 'bind_ipv4'		'127.0.0.1'
+#	option 'bind_ipv6'		'::1'
+	option 'ignore_neighbour_informations'	'yes'

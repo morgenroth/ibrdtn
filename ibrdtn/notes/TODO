@@ -1,0 +1,42 @@
+*** IBR-DTN TODO ***
+
+TCPConvergenceLayer
+
+ -- Fragmentation --
+   Wenn eine Verbindung abbricht bzw. ein Timer abläuft bevor ein Bündel vollständig übertragen
+   werden konnte, muss dieses Bündel fragmentiert werden. Dazu wird auf Senderseite der bereits
+   erfolgreich übertragene Teil des Bündels abgeschnitten und aus dem Rest ein Fragment erzeugt.
+   Auf Empfängerseite wird aus dem empfangenen Bündel ebenfalls ein Fragment erzeugt. Bedingung
+   ist hierbei, dass mindestens der Header komplett übertragen wurde.
+
+SQLiteBundleStorage
+
+ -- Redesign --
+   Der Storage für Bündel auf einem nicht flüchtigem Speicher muss überarbeitet werden um mit
+   dem neuen Konzept von IBR-DTN 0.2 zusammenarbeiten zu können.
+
+
+Routing
+
+  Derzeit ist im IBR-DTN nur statisches Routing (Definition per Konfigurationsdatei) möglich.
+  Mit der Implementierung von Discovery wird auch eine dynamische Auslieferung möglich sein,
+  wenn sich der Zielknoten in der Nachbarschaft aufhält.
+
+ -- Dynamisches Routing --
+
+   Diplomarbeit von Tobias Pögel. Soll in Zukunft integriert werden.
+
+ -- PROPHET --
+
+   PROPHET ist ein relativ aufwendiges Routing Protokoll. Es sollte abgewägt werden, ob dieses
+   von Nutzen sein könnte.
+
+Security
+
+  Derzeit sind keine Security Features implementiert.
+  Das Dokument "Bundle Security Protocol Specification" definiert Regeln und Algorithmen um
+  Bündel zu verschlüsseln und zu signieren.
+
+  * http://tools.ietf.org/html/draft-irtf-dtnrg-bundle-security-08
+
+

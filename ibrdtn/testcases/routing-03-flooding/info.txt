@@ -1,0 +1,6 @@
+# information about testcase: routing-03-flooding
+#
+
+TITLE="routing-03-flooding"
+DESCRIPTION="Test the flooding routing module with three dtnd instances."
+
