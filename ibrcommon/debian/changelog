@@ -1,0 +1,52 @@
+ibrcommon (0.8.0) stable; urgency=low
+
+  * Base64 decoding / encoding refactored
+  * Added lowpanstream
+  * Fix for reference pointer assignment operator
+  * Extended recvfrom of udpsocket for ipv6
+  * Replaced SimpleTimer with Timer
+  * netlink 3.0 / 3.2 support
+  * RW locking features added
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 13 Apr 2012 12:00:00 +0200
+
+ibrcommon (0.6.5) stable; urgency=low
+
+  * Minor changes to work with ibrdtnd 0.6.5.
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Fri, 04 Nov 2011 12:00:00 +0200
+
+ibrcommon (0.6.4) stable; urgency=low
+
+  * TLS extension for C++ streams
+  * New BLOB Provider mechanism
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Fri, 05 Aug 2011 12:00:00 +0200
+
+ibrcommon (0.6.3) stable; urgency=low
+
+  * fd leak fixed
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Fri, 01 Jul 2011 12:00:00 +0200
+
+ibrcommon (0.6.2) stable; urgency=low
+
+  * Fix: Threading in ibrcommon (Thanks to Ke Meng)
+  * Added getMicroseconds() and getNanoseconds() to TimeMeasurement class.
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Mon, 24 Jun 2011 12:00:00 +0200
+
+ibrcommon (0.6.1) stable; urgency=low
+
+  * Dynamic rebind for sockets bound on interfaces.
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Tue, 29 Mar 2011 11:35:43 +0200
+
+ibrcommon (0.6.0) unstable; urgency=low
+
+  * IPv6 support
+  * libnl is no longer mandatory
+  * Some uClibc related fixes
+  * Bind on any interface is possible now
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 11 Mar 2011 09:16:12 +0100

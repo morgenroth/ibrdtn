@@ -1,0 +1,26 @@
+#to add your test to the Makefile.am, just write the test-name below the names in a new line without an ending. Then it should be in the Makefile, while not managed throught the script
+SyslogStreamTest
+BLOBTest
+TimeMeasurementTest
+SemaphoreTest
+BloomFilterTest
+NetAddressTest
+MulticastSocketTest
+QueueTest
+tcpstreamTest
+LoggerTest
+tcpclientTest
+tcpserverTest
+ConfigFileTest
+ConditionalTest
+udpsocketTest
+UnicastSocketTest
+AtomicCounterTest
+ThreadTest
+TimerTest
+UnicastSocketLowpanTest
+NetInterfaceTest
+BroadcastSocketTest
+FileTest
+refcnt_ptrTest
+lowpansocketTest

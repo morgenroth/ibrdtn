@@ -1,0 +1,61 @@
+/*
+ * iostreamBIO.h
+ *
+ *  Created on: Mar 25, 2011
+ *      Author: roettger
+ */
+
+#ifndef IOSTREAMBIO_H_
+#define IOSTREAMBIO_H_
+
+#include "ibrcommon/Exceptions.h"
+#include <openssl/bio.h>
+
+namespace ibrcommon
+{
+
+/*!
+ * \brief This class is a wrapper for iostreams to the OpenSSL Input Output abstraction Layer (called BIO)
+ */
+class iostreamBIO
+{
+public:
+	/*!
+	 * \brief A Exception that is thrown on BIO related errors.
+	 */
+	class BIOException : public ibrcommon::Exception
+	{
+	public:
+		BIOException(const std::string &what) throw() : Exception(what)
+		{
+		};
+	};
+
+	/*!
+	 * \brief Creates a new iostreamBIO from a given iostream
+	 * \param stream the iostream to use
+	 * \warning The iostream is not freed on destruction of this object.
+	 */
+	explicit iostreamBIO(iostream *stream);
+
+	/*!
+	 * \brief get the internal BIO pointer
+	 * \return the internal BIO (see OpenSSL documentation)
+	 *
+	 * \warning The BIO is freed on destruction of this object, dont use it afterwards (for example through an assigned SSL object or SSL_CTX)
+	 */
+	BIO *getBIO();
+
+	/// the name that will be included in the BIO_METHOD->name field
+	static const char * const name;
+	/// type in the BIO_METHOD->type field
+	static const int type = BIO_TYPE_SOURCE_SINK;
+
+private:
+	BIO *_bio;
+	iostream *_stream;
+};
+
+}
+
+#endif /* IOSTREAMBIO_H_ */

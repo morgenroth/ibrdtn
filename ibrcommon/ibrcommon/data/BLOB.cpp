@@ -1,0 +1,355 @@
+/*
+ * BLOB.cpp
+ *
+ *  Created on: 15.12.2009
+ *      Author: morgenro
+ */
+
+#include "ibrcommon/data/BLOB.h"
+#include "ibrcommon/thread/MutexLock.h"
+#include "ibrcommon/Exceptions.h"
+#include "ibrcommon/Logger.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <cstring>
+#include <cerrno>
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
+#include <cassert>
+#endif
+
+namespace ibrcommon
+{
+	// maximum of concurrent opened files
+	ibrcommon::Semaphore BLOB::_filelimit(10);
+
+	// default BLOB provider - memory based; auto deletion enabled
+	ibrcommon::BLOB::ProviderRef BLOB::provider(new ibrcommon::MemoryBLOBProvider(), true);
+
+	BLOB::BLOB()
+	{ }
+
+	BLOB::~BLOB()
+	{
+	}
+
+	std::ostream& BLOB::copy(std::ostream &output, std::istream &input, const size_t size, const size_t buffer_size)
+	{
+		// read payload
+		char buffer[buffer_size];
+		size_t remain = size;
+
+		while (remain > 0)
+		{
+			// something bad happened, abort!
+			if (input.bad())
+			{
+				std::stringstream errmsg; errmsg << "input stream went bad [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied";
+				throw ibrcommon::IOException(errmsg.str());
+			}
+
+			// reached EOF too early
+			if (input.eof())
+			{
+				std::stringstream errmsg; errmsg << "input stream reached EOF [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied";
+				throw ibrcommon::IOException(errmsg.str());
+			}
+
+			// check if the destination stream is ok
+			if (output.bad())
+			{
+				std::stringstream errmsg; errmsg << "output stream went bad [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied";
+				throw ibrcommon::IOException(errmsg.str());
+			}
+
+			// retry if the read failed
+			if (input.fail())
+			{
+				IBRCOMMON_LOGGER(warning) << "input stream failed [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied" << IBRCOMMON_LOGGER_ENDL;
+				input.clear();
+			}
+
+			// if the last write failed, then retry
+			if (output.fail())
+			{
+				IBRCOMMON_LOGGER(warning) << "output stream failed [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied" << IBRCOMMON_LOGGER_ENDL;
+				output.clear();
+			}
+			else
+			{
+				// read the full buffer size of less?
+				if (remain > buffer_size)
+				{
+					input.read(buffer, buffer_size);
+				}
+				else
+				{
+					input.read(buffer, remain);
+				}
+
+				// retry if the read failed
+				if (input.fail()) continue;
+			}
+
+			// write the bytes to the BLOB
+			output.write(buffer, input.gcount());
+
+			// shrink the remaining bytes by the red bytes
+			remain -= input.gcount();
+		}
+
+		return output;
+	}
+
+	ibrcommon::BLOB::Reference BLOB::create()
+	{
+		return ibrcommon::BLOB::provider.create();
+	}
+
+	ibrcommon::BLOB::Reference BLOB::open(const ibrcommon::File &f)
+	{
+		return ibrcommon::BLOB::Reference(new ibrcommon::FileBLOB(f));
+	}
+
+	void BLOB::changeProvider(BLOB::Provider *p, bool auto_delete)
+	{
+		ibrcommon::BLOB::provider.change(p, auto_delete);
+	}
+
+	BLOB::Provider::~Provider()
+	{ };
+
+	BLOB::ProviderRef::ProviderRef(Provider *provider, bool auto_delete)
+	 : _provider(provider), _auto_delete(auto_delete)
+	{
+	}
+
+	BLOB::ProviderRef::~ProviderRef()
+	{
+		if (_auto_delete)
+		{
+			delete _provider;
+		}
+	}
+
+	void BLOB::ProviderRef::change(BLOB::Provider *p, bool auto_delete)
+	{
+		if (_auto_delete)
+		{
+			delete _provider;
+		}
+
+		_provider = p;
+		_auto_delete = auto_delete;
+	}
+
+	BLOB::Reference BLOB::ProviderRef::create()
+	{
+		return _provider->create();
+	}
+
+	MemoryBLOBProvider::MemoryBLOBProvider()
+	{
+	}
+
+	MemoryBLOBProvider::~MemoryBLOBProvider()
+	{
+	}
+
+	ibrcommon::BLOB::Reference MemoryBLOBProvider::create()
+	{
+		return StringBLOB::create();
+	}
+
+	FileBLOBProvider::FileBLOBProvider(const File &path)
+	 : _tmppath(path)
+	{
+	}
+
+	FileBLOBProvider::~FileBLOBProvider()
+	{
+	}
+
+	ibrcommon::BLOB::Reference FileBLOBProvider::create()
+	{
+		return ibrcommon::BLOB::Reference(new TmpFileBLOB(_tmppath));
+	}
+
+	BLOB::Reference::Reference(const Reference &ref)
+	 : _blob(ref._blob)
+	{
+	}
+
+	BLOB::Reference::~Reference()
+	{
+	}
+
+	BLOB::iostream BLOB::Reference::iostream()
+	{
+		return BLOB::iostream(*_blob);
+	}
+
+	BLOB::Reference::Reference(BLOB *blob)
+	 : _blob(blob)
+	{
+	}
+
+	const BLOB& BLOB::Reference::operator*() const
+	{
+		return *_blob;
+	}
+
+	BLOB::Reference MemoryBLOBProvider::StringBLOB::create()
+	{
+		BLOB::Reference ref(new MemoryBLOBProvider::StringBLOB());
+		return ref;
+	}
+
+	void MemoryBLOBProvider::StringBLOB::clear()
+	{
+		_stringstream.str("");
+	}
+
+	MemoryBLOBProvider::StringBLOB::StringBLOB()
+	 : BLOB(), _stringstream()
+	{
+
+	}
+
+	MemoryBLOBProvider::StringBLOB::~StringBLOB()
+	{
+	}
+
+	void MemoryBLOBProvider::StringBLOB::open()
+	{
+		// set pointer to the beginning of the stream and remove any error flags
+		_stringstream.clear();
+		_stringstream.seekp(0);
+		_stringstream.seekg(0);
+	}
+
+	void MemoryBLOBProvider::StringBLOB::close()
+	{
+	}
+
+	size_t MemoryBLOBProvider::StringBLOB::__get_size()
+	{
+		// store current position
+		size_t pos = _stringstream.tellg();
+
+		_stringstream.seekg(0, std::ios_base::end);
+		size_t size = _stringstream.tellg();
+		_stringstream.seekg(pos);
+
+		return size;
+	}
+
+	void FileBLOB::clear()
+	{
+		throw ibrcommon::IOException("clear is not possible on a read only file");
+	}
+
+	FileBLOB::FileBLOB(const File &f)
+	 : ibrcommon::BLOB(), _filestream(), _file(f)
+	{
+		if (!f.exists())
+		{
+			throw ibrcommon::FileNotExistsException(f);
+		}
+	}
+
+	FileBLOB::~FileBLOB()
+	{
+	}
+
+	void FileBLOB::open()
+	{
+		BLOB::_filelimit.wait();
+
+		// open the file
+		_filestream.open(_file.getPath().c_str(), ios::in|ios::binary);
+
+		if (!_filestream.is_open())
+		{
+			throw ibrcommon::CanNotOpenFileException(_file);
+		}
+	}
+
+	void FileBLOB::close()
+	{
+		// close the file
+		_filestream.close();
+
+		BLOB::_filelimit.post();
+	}
+
+	size_t FileBLOB::__get_size()
+	{
+		return _file.size();
+	}
+
+	void FileBLOBProvider::TmpFileBLOB::clear()
+	{
+		// close the file
+		_filestream.close();
+
+		// open temporary file
+		_filestream.open(_tmpfile.getPath().c_str(), ios::in | ios::out | ios::trunc | ios::binary );
+
+		if (!_filestream.is_open())
+		{
+			IBRCOMMON_LOGGER(error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
+			throw ibrcommon::CanNotOpenFileException(_tmpfile);
+		}
+	}
+
+	FileBLOBProvider::TmpFileBLOB::TmpFileBLOB(const File &tmppath)
+	 : BLOB(), _filestream()
+	{
+		// check if path is a directory
+		if (!tmppath.isDirectory())
+		{
+			throw ibrcommon::IOException("BLOB::tmppath not initialized or path is not a directory.");
+		}
+
+		_tmpfile = ibrcommon::TemporaryFile(tmppath, "blob");
+		_tmpfile.update();
+	}
+
+	FileBLOBProvider::TmpFileBLOB::~TmpFileBLOB()
+	{
+		// delete the file if the last reference is destroyed
+		_tmpfile.remove();
+	}
+
+	void FileBLOBProvider::TmpFileBLOB::open()
+	{
+		BLOB::_filelimit.wait();
+
+		// open temporary file
+		_filestream.open(_tmpfile.getPath().c_str(), ios::in | ios::out | ios::binary );
+
+		if (!_filestream.is_open())
+		{
+			IBRCOMMON_LOGGER(error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
+			throw ibrcommon::CanNotOpenFileException(_tmpfile);
+		}
+	}
+
+	void FileBLOBProvider::TmpFileBLOB::close()
+	{
+		// flush the filestream
+		_filestream.flush();
+
+		// close the file
+		_filestream.close();
+
+		BLOB::_filelimit.post();
+	}
+
+	size_t FileBLOBProvider::TmpFileBLOB::__get_size()
+	{
+		return _tmpfile.size();
+	}
+}
