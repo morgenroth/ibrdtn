@@ -34,9 +34,29 @@ namespace dtn
 
 			std::string new_handle = rand.gen_chars(16);
 
+			// if the local host is configured with an IPN address
+			if (dtn::core::BundleCore::local.isCompressable())
+			{
+				// .. then use 32-bit numbers only
+				uint32_t *int_handle = (uint32_t*)new_handle.c_str();
+				std::stringstream ss;
+				ss << *int_handle;
+				new_handle = ss.str();
+			}
+
 			while (_handles.find(new_handle) != _handles.end())
 			{
 				new_handle = rand.gen_chars(16);
+
+				// if the local host is configured with an IPN address
+				if (dtn::core::BundleCore::local.isCompressable())
+				{
+					// .. then use 32-bit numbers only
+					uint32_t *int_handle = (uint32_t*)new_handle.c_str();
+					std::stringstream ss;
+					ss << *int_handle;
+					new_handle = ss.str();
+				}
 			}
 
 			Registration::_handles.insert(new_handle);
@@ -49,8 +69,10 @@ namespace dtn
 			Registration::_handles.erase(handle);
 		}
 
-		Registration::Registration() :
-				_handle(alloc_handle()), _persistent(false), _detached(false)
+		Registration::Registration()
+		 : _handle(alloc_handle()),
+		   _default_eid(core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + _handle),
+		   _persistent(false), _detached(false)
 		{
 		}
 
@@ -342,6 +364,11 @@ namespace dtn
 
 			ibrcommon::MutexLock l(_wait_for_cond);
 			_wait_for_cond.abort();
+		}
+
+		const dtn::data::EID& Registration::getDefaultEID() const
+		{
+			return _default_eid;
 		}
 
 		const std::string& Registration::getHandle() const

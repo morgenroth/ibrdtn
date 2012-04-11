@@ -56,7 +56,7 @@ namespace dtn
 			if (header._localeid.isNone())
 			{
 				// create an EID based on the registration handle
-				_eid = BundleCore::local + BundleCore::local.getDelimiter() + reg.getHandle();
+				_eid = reg.getDefaultEID();
 			}
 			else
 			{

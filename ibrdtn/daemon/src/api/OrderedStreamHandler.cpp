@@ -28,7 +28,7 @@ namespace dtn
 		OrderedStreamHandler::OrderedStreamHandler(ClientHandler &client, ibrcommon::tcpstream &stream)
 		 : ProtocolHandler(client, stream), _sender(*this), _streambuf(*this), _bundlestream(&_streambuf), _group(true), _lifetime(3600)
 		{
-			_endpoint = dtn::core::BundleCore::local + "/" + client.getRegistration().getHandle();
+			_endpoint = client.getRegistration().getDefaultEID();
 		}
 
 		OrderedStreamHandler::~OrderedStreamHandler()
@@ -66,7 +66,7 @@ namespace dtn
 			}
 
 			// raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local + _client.getRegistration().getHandle(), b, true, true);
+			dtn::net::BundleReceivedEvent::raise(_client.getRegistration().getDefaultEID(), b, true, true);
 		}
 
 		dtn::data::MetaBundle OrderedStreamHandler::get(size_t timeout)

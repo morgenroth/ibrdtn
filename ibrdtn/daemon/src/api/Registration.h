@@ -144,6 +144,12 @@ namespace dtn
 			void delivered(const dtn::data::MetaBundle &m);
 
 			/**
+			 * returns a default EID based on the registration handle
+			 * @return A EID object.
+			 */
+			const dtn::data::EID& getDefaultEID() const;
+
+			/**
 			 * returns the handle of this registration
 			 * @return
 			 */
@@ -209,6 +215,8 @@ namespace dtn
 		private:
 			ibrcommon::Queue<dtn::data::MetaBundle> _queue;
 			const std::string _handle;
+			const dtn::data::EID _default_eid;
+
 			ibrcommon::Mutex _endpoints_lock;
 			std::set<dtn::data::EID> _endpoints;
 			dtn::data::BundleList _received_bundles;

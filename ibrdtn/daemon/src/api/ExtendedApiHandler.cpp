@@ -32,7 +32,7 @@ namespace dtn
 	{
 		ExtendedApiHandler::ExtendedApiHandler(ClientHandler &client, ibrcommon::tcpstream &stream)
 		 : ProtocolHandler(client, stream), _sender(new Sender(*this)),
-		   _endpoint(core::BundleCore::local + "/" + _client.getRegistration().getHandle())
+		   _endpoint(_client.getRegistration().getDefaultEID())
 		{
 			_client.getRegistration().subscribe(_endpoint);
 		}
@@ -165,7 +165,7 @@ namespace dtn
 
 								if(_endpoint == del_endpoint)
 								{
-									_endpoint = core::BundleCore::local + "/" + _client.getRegistration().getHandle();
+									_endpoint = _client.getRegistration().getDefaultEID();
 									_client.getRegistration().subscribe(_endpoint);
 								}
 
@@ -217,7 +217,7 @@ namespace dtn
 								_client.getRegistration().unsubscribe(endpoint);
 								if(_endpoint == endpoint)
 								{
-									_endpoint = core::BundleCore::local + "/" + _client.getRegistration().getHandle();
+									_endpoint = _client.getRegistration().getDefaultEID();
 									_client.getRegistration().subscribe(_endpoint);
 								}
 
