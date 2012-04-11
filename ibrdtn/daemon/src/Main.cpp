@@ -366,15 +366,24 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 							filecl = new FileConvergenceLayer();
 							core.addConvergenceLayer(filecl);
 							components.push_back(filecl);
-#ifdef HAVE_SYS_INOTIFY_H
-							fm = new FileMonitor();
-							components.push_back(fm);
-#endif
 						}
 
 #ifdef HAVE_SYS_INOTIFY_H
-						ibrcommon::File path(net.url);
-						fm->watch(path);
+						if (net.url.size() > 0)
+						{
+							ibrcommon::File path(net.url);
+
+							if (path.exists())
+							{
+								if (fm == NULL)
+								{
+									fm = new FileMonitor();
+									components.push_back(fm);
+								}
+								ibrcommon::File path(net.url);
+								fm->watch(path);
+							}
+						}
 #endif
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER(error) << "Failed to add FileConvergenceLayer: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
