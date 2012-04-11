@@ -1,7 +1,7 @@
 Source: ibrdtn
 Priority: extra
 Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
-Build-Depends: debhelper (>= 7.0), autotools-dev, libssl-dev (>= 0.9.8), ibrcommon-dev (>= 0.6), cdbs (>= 0.4), pkg-config, zlib1g-dev
+Build-Depends: debhelper (>= 7.0), autotools-dev, libssl-dev (>= 0.9.8), ibrcommon-dev (>= 0.8), cdbs (>= 0.4), pkg-config, zlib1g-dev
 Standards-Version: 3.8.4
 Section: libs
 Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
@@ -9,7 +9,7 @@ Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
 Package: ibrdtn-dev
 Section: libdevel
 Architecture: any
-Depends: ibrdtn1 (= ${binary:Version}), libssl-dev (>= 0.9.8), ibrcommon-dev (>= 0.6), zlib1g-dev
+Depends: ibrdtn1 (= ${binary:Version}), libssl-dev (>= 0.9.8), ibrcommon-dev (>= 0.8), zlib1g-dev
 Description: Basic DTN library used by all IBR-DTN applications. This package contains the include files.
 
 
