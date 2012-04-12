@@ -109,10 +109,10 @@ unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG
 const unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
 
 // logging filter, everything but debug, err and crit
-const unsigned char logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
+const unsigned char logstd = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | logerr);
 
 // syslog filter, everything but DEBUG and NOTICE
-const unsigned char logsys = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
+const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
 
 // debug off by default
 bool _debug = false;
@@ -570,7 +570,7 @@ int __daemon_run(Configuration &conf)
 
 	try {
 		const ibrcommon::File &lf = conf.getLogger().getLogfile();
-		ibrcommon::Logger::setLogfile(lf, ~(ibrcommon::Logger::LOGGER_DEBUG), logopts);
+		ibrcommon::Logger::setLogfile(lf, ibrcommon::Logger::LOGGER_ALL ^ ibrcommon::Logger::LOGGER_DEBUG, logopts);
 	} catch (const Configuration::ParameterNotSetException&) { };
 
 	// greeting
