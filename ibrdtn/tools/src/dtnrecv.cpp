@@ -6,11 +6,12 @@
  */
 
 #include "config.h"
-#include "ibrdtn/api/Client.h"
-#include "ibrdtn/api/FileBundle.h"
-#include "ibrcommon/net/tcpclient.h"
-#include "ibrcommon/thread/Mutex.h"
-#include "ibrcommon/thread/MutexLock.h"
+#include <ibrdtn/api/Client.h>
+#include <ibrdtn/api/FileBundle.h>
+#include <ibrcommon/net/tcpclient.h>
+#include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/Logger.h>
 
 #include <csignal>
 #include <sys/types.h>
@@ -55,6 +56,12 @@ void term(int signal)
 
 int main(int argc, char *argv[])
 {
+	// logging options
+	const unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
+
+	// error filter
+	unsigned char loglevel = 0;
+
 	// catch process signals
 	signal(SIGINT, term);
 	signal(SIGTERM, term);
@@ -76,6 +83,16 @@ int main(int argc, char *argv[])
 		{
 			print_help();
 			return ret;
+		}
+
+		if (arg == "--logging")
+		{
+			loglevel |= ibrcommon::Logger::LOGGER_ALL ^ ibrcommon::Logger::LOGGER_DEBUG;
+		}
+
+		if (arg == "--debug")
+		{
+			loglevel |= ibrcommon::Logger::LOGGER_DEBUG;
 		}
 
 		if (arg == "--name" && argc > i)
@@ -114,6 +131,12 @@ int main(int argc, char *argv[])
 
 			unixdomain = ibrcommon::File(argv[i]);
 		}
+	}
+
+	if (loglevel > 0)
+	{
+		// add logging to the cerr
+		ibrcommon::Logger::addStream(std::cerr, loglevel, logopts);
 	}
 
 	try {
