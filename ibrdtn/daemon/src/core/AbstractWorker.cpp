@@ -11,6 +11,7 @@
 #include "routing/QueueBundleEvent.h"
 #include "core/BundleGeneratedEvent.h"
 #include "core/BundleEvent.h"
+#include "core/BundlePurgeEvent.h"
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
 #endif
@@ -90,7 +91,7 @@ namespace dtn
 						dtn::core::BundleEvent::raise(b, BUNDLE_DELIVERED);
 
 						// remove the bundle from the storage
-						storage.remove( id );
+						dtn::core::BundlePurgeEvent::raise(id);
 					} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
 
 					yield();

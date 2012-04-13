@@ -12,6 +12,7 @@
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/ConnectionEvent.h"
+#include "core/BundlePurgeEvent.h"
 #include "core/NodeEvent.h"
 #include "core/Node.h"
 #include "net/ConnectionManager.h"
@@ -208,9 +209,9 @@ namespace dtn
 
 						// bundle has been delivered to its destination
 						// delete it from our storage
-						storage.remove(meta);
+						dtn::core::BundlePurgeEvent::raise(meta);
 
-						IBRCOMMON_LOGGER(notice) << "singleton bundle delivered and removed: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// gen a report
 						dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
@@ -251,7 +252,7 @@ namespace dtn
 									&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 							{
 								// bundle is not deliverable
-								(**this).getStorage().remove(id);
+								dtn::core::BundlePurgeEvent::raise(id, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
 							}
 						} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
 					}

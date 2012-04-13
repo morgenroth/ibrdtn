@@ -11,6 +11,7 @@
 #include "net/TransferAbortedEvent.h"
 #include "core/TimeEvent.h"
 #include "core/NodeEvent.h"
+#include "core/BundlePurgeEvent.h"
 #include "core/BundleEvent.h"
 
 #include <ibrcommon/Logger.h>
@@ -173,7 +174,7 @@ namespace dtn
 				{
 					const dtn::data::MetaBundle &meta = (*it);
 
-					storage.remove(meta);
+					dtn::core::BundlePurgeEvent::raise(meta);
 
 					IBRCOMMON_LOGGER(notice) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 

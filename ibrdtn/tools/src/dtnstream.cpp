@@ -422,7 +422,7 @@ int main(int argc, char *argv[])
 	} catch (const ibrcommon::tcpclient::SocketException&) {
 		std::cerr << "Can not connect to the daemon. Does it run?" << std::endl;
 		return -1;
-	} catch (...) {
+	} catch (const std::exception&) {
 
 	}
 

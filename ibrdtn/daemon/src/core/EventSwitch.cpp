@@ -87,7 +87,7 @@ namespace dtn
 			try {
 				// execute the event
 				t->receiver->raiseEvent(t->event);
-			} catch (...) {};
+			} catch (const std::exception&) {};
 
 			// delete the Task
 			delete t;

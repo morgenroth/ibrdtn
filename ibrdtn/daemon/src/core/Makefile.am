@@ -36,7 +36,9 @@ core_SOURCES =	AbstractWorker.cpp \
 				TimeEvent.cpp \
 				TimeEvent.h \
 				FragmentManager.h \
-				FragmentManager.cpp
+				FragmentManager.cpp \
+				BundlePurgeEvent.h \
+				BundlePurgeEvent.cpp
 				
 noinst_LTLIBRARIES = libcore.la
 libcore_la_SOURCES= $(core_SOURCES)

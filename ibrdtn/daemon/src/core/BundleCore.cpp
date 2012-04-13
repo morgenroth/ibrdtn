@@ -2,6 +2,7 @@
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleEvent.h"
+#include "core/BundlePurgeEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include "routing/QueueBundleEvent.h"
@@ -66,11 +67,13 @@ namespace dtn
 			}
 
 			bindEvent(dtn::routing::QueueBundleEvent::className);
+			bindEvent(dtn::core::BundlePurgeEvent::className);
 		}
 
 		BundleCore::~BundleCore()
 		{
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
+			unbindEvent(dtn::core::BundlePurgeEvent::className);
 		}
 
 		void BundleCore::componentUp()
@@ -223,10 +226,24 @@ namespace dtn
 					}
 
 					// delete the bundle
-					getStorage().remove(meta);
+					dtn::core::BundlePurgeEvent::raise(meta);
 				}
+
+				return;
 			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
 			} catch (const std::bad_cast&) {}
+
+			try {
+				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
+
+				// get the global storage
+				dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
+
+				// delete the bundle
+				storage.remove(purge.bundle);
+
+				return;
+			} catch (const std::bad_cast&) { }
 		}
 
 		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)

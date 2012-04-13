@@ -178,18 +178,19 @@ namespace dtn
 
 			private:
 				TCPConnection &_connection;
-				dtn::data::BundleID _current_transfer;
+				//dtn::data::BundleID _current_transfer;
 			};
 
 			StreamContactHeader _peer;
 			dtn::core::Node _node;
 
 			std::auto_ptr<ibrcommon::tcpstream> _tcpstream;
-			StreamConnection _stream;
 
 #ifdef WITH_TLS
 			ibrcommon::TLSStream _tlsstream;
 #endif
+
+			StreamConnection _stream;
 
 			// This thread gets awaiting bundles of the queue
 			// and transmit them to the peer.

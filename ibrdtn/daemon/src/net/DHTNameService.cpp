@@ -177,7 +177,7 @@ void dtn::dht::DHTNameService::componentRun() {
 			clstruct->args = arg;
 			clstruct->next = _context.clayer;
 			_context.clayer = clstruct;
-		} catch (...) {
+		} catch (const std::exception&) {
 			continue;
 		}
 	}
@@ -472,7 +472,7 @@ std::string dtn::dht::DHTNameService::getConvergenceLayerName(
 		//		cltype_ = "http";
 		//		break;
 	default:
-		throw -1;
+		throw ibrcommon::Exception("type of convergence layer not supported");
 	}
 	return cltype_;
 }

@@ -486,7 +486,7 @@ namespace ibrcommon
 				while (!q.empty())
 				{
 					Logger &log = q.front();
-					try { log.flush(); } catch (...) {};
+					try { log.flush(); } catch (const std::exception&) {};
 
 					q.pop();
 				}

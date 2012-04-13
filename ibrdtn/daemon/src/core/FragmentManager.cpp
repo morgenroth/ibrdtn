@@ -9,6 +9,7 @@
 #include "core/BundleCore.h"
 #include "core/EventSwitch.h"
 #include "core/TimeEvent.h"
+#include "core/BundlePurgeEvent.h"
 #include "net/BundleReceivedEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include <ibrdtn/data/BundleMerger.h>
@@ -115,8 +116,7 @@ namespace dtn
 						// delete all fragments of the merged bundle
 						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 						{
-							// delete bundle
-							dtn::core::BundleCore::getInstance().getStorage().remove(*iter);
+							dtn::core::BundlePurgeEvent::raise(*iter);
 						}
 					}
 				}

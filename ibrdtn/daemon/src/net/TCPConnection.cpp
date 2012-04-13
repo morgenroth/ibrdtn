@@ -594,11 +594,11 @@ namespace dtn
 
 				while (_connection.good())
 				{
-					_current_transfer = ibrcommon::Queue<dtn::data::BundleID>::getnpop(true);
+					dtn::data::BundleID transfer = ibrcommon::Queue<dtn::data::BundleID>::getnpop(true);
 
 					try {
 						// read the bundle out of the storage
-						dtn::data::Bundle bundle = storage.get(_current_transfer);
+						dtn::data::Bundle bundle = storage.get(transfer);
 
 #ifdef WITH_BUNDLE_SECURITY
 						const dtn::daemon::Configuration::Security::Level seclevel =
@@ -618,11 +618,8 @@ namespace dtn
 						_connection << bundle;
 					} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
 						// send transfer aborted event
-						TransferAbortedEvent::raise(_connection._node.getEID(), _current_transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+						TransferAbortedEvent::raise(_connection._node.getEID(), transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 					}
-
-					// unset the current transfer
-					_current_transfer = dtn::data::BundleID();
 
 					// idle a little bit
 					yield();
@@ -700,11 +697,6 @@ namespace dtn
 
 		void TCPConnection::Sender::finally()
 		{
-			// notify the aborted transfer of the last bundle
-			if (_current_transfer != dtn::data::BundleID())
-			{
-				dtn::routing::RequeueBundleEvent::raise(_connection._node.getEID(), _current_transfer);
-			}
 		}
 
 		bool TCPConnection::match(const dtn::core::Node &n) const

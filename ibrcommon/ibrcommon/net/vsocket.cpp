@@ -563,7 +563,7 @@ namespace ibrcommon
 		// check for errors
 		if (_fd < 0) try {
 			check_socket_error( _fd );
-		} catch (...) {
+		} catch (const std::exception&) {
 			close();
 			throw;
 		}
@@ -577,7 +577,7 @@ namespace ibrcommon
 		// check for errors
 		if (_fd < 0) try {
 			check_socket_error( _fd );
-		} catch (...) {
+		} catch (const std::exception&) {
 			close();
 			throw;
 		}
@@ -591,7 +591,7 @@ namespace ibrcommon
 		// check for errors
 		if (_fd < 0) try {
 			check_socket_error( _fd );
-		} catch (...) {
+		} catch (const std::exception&) {
 			close();
 			throw;
 		}
@@ -605,7 +605,7 @@ namespace ibrcommon
 		// check for errors
 		if (_fd < 0) try {
 			check_socket_error( _fd );
-		} catch (...) {
+		} catch (const std::exception&) {
 			close();
 			throw;
 		}
@@ -619,7 +619,7 @@ namespace ibrcommon
 		// check for errors
 		if (_fd < 0) try {
 			check_socket_error( _fd );
-		} catch (...) {
+		} catch (const std::exception&) {
 			close();
 			throw;
 		}
@@ -633,7 +633,7 @@ namespace ibrcommon
 		// check for errors
 		if (_fd < 0) try {
 			check_socket_error( _fd );
-		} catch (...) {
+		} catch (const std::exception&) {
 			close();
 			throw;
 		}

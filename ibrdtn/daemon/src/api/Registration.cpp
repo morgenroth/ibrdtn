@@ -10,6 +10,7 @@
 #include "storage/BundleStorage.h"
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
+#include "core/BundlePurgeEvent.h"
 
 #ifdef HAVE_SQLITE
 #include "storage/SQLiteBundleStorage.h"
@@ -136,11 +137,7 @@ namespace dtn
 
 			if (m.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 			{
-				// get the global storage
-				dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
-
-				// delete the bundle
-				storage.remove(m);
+				dtn::core::BundlePurgeEvent::raise(m);
 			}
 		}
 
