@@ -5,7 +5,11 @@ DAEMON_USER="dtnd"
 case "$1" in
   configure)
 	#Creating the user if it does not exist
-	adduser --system ${DAEMON_USER}
+	if (id dtnd);then
+	echo "user exists";
+	else 	
+	adduser --system ${DAEMON_USER};
+	fi
 	;;
 	
   abort-upgrade)
