@@ -251,7 +251,7 @@ namespace dtn
 					dtn::data::Bundle bundle;
 					(*this) >> bundle;
 
-					// determine sender
+					// TODO: determine sender
 					EID sender;
 
 					// increment value in the scope control hop limit block
