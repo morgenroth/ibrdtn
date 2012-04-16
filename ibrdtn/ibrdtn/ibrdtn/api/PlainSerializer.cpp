@@ -355,6 +355,7 @@ namespace dtn
 				else if (values[0] == "EID")
 				{
 					obj.addEID(values[1]);
+					obj.set(dtn::data::Block::BLOCK_CONTAINS_EIDS, true);
 				}
 				else if (values[0] == "Length")
 				{
