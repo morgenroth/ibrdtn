@@ -12,6 +12,7 @@
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <iomanip>
+#include <unistd.h>
 
 
 namespace ibrcommon

@@ -83,6 +83,7 @@
 #include <syslog.h>
 #include <set>
 #include <pwd.h>
+#include <unistd.h>
 
 #ifdef WITH_DHT_NAMESERVICE
 #include "net/DHTNameService.h"

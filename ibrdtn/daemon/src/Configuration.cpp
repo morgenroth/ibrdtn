@@ -11,6 +11,7 @@
 #include <ibrcommon/Logger.h>
 
 #include <getopt.h>
+#include <unistd.h>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>

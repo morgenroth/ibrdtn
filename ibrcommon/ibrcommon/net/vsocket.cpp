@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 
 namespace ibrcommon
 {

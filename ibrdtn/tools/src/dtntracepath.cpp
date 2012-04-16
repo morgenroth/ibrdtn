@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <unistd.h>
 
 class ReportBundle : public dtn::api::Bundle
 {

@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <unistd.h>
 
 void print_help()
 {

@@ -10,6 +10,7 @@
 #include "ibrcommon/thread/MutexLock.h"
 #include <sys/socket.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 namespace ibrcommon
 {

@@ -23,6 +23,7 @@
 #include <vector>
 #include <csignal>
 #include <sys/types.h>
+#include <unistd.h>
 
 using namespace ibrcommon;
 

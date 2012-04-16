@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <string.h>
+#include <unistd.h>
 
 namespace ibrcommon
 {

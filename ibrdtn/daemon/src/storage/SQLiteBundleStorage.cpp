@@ -23,6 +23,7 @@
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/Logger.h>
 #include <memory>
+#include <unistd.h>
 
 namespace dtn
 {

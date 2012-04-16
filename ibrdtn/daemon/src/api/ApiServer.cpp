@@ -16,6 +16,7 @@
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <algorithm>
+#include <unistd.h>
 
 #ifdef WITH_COMPRESSION
 #include <ibrdtn/data/CompressedPayloadBlock.h>
