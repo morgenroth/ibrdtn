@@ -173,6 +173,7 @@ namespace dtn
 							}
 						}
 						else if (cmd[1] == "get")
+						{
 							_stream << ClientHandler::API_STATUS_OK << " ENDPOINT GET " << _endpoint.getString() << std::endl;
 						}
 						else
