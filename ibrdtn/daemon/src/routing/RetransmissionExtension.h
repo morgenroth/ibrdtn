@@ -9,8 +9,9 @@
 #define RETRANSMISSIONEXTENSION_H_
 
 #include "routing/BaseRouter.h"
-#include "ibrdtn/data/BundleID.h"
-#include "ibrdtn/data/EID.h"
+#include <ibrdtn/data/BundleID.h>
+#include <ibrdtn/data/EID.h>
+#include <ibrcommon/thread/Mutex.h>
 #include <queue>
 #include <set>
 
@@ -51,6 +52,7 @@ namespace dtn
 				const size_t retry;
 			};
 
+			ibrcommon::Mutex _mutex;
 			std::queue<RetransmissionData> _queue;
 			std::set<RetransmissionData> _set;
 		};

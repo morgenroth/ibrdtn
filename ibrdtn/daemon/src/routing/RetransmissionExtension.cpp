@@ -6,14 +6,17 @@
  */
 
 #include "routing/RetransmissionExtension.h"
-#include "core/TimeEvent.h"
 #include "routing/RequeueBundleEvent.h"
+#include "core/TimeEvent.h"
+#include "core/BundleCore.h"
+#include "core/BundleExpiredEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
-#include "core/BundleExpiredEvent.h"
-#include "ibrdtn/utils/Clock.h"
-#include "ibrdtn/data/Exceptions.h"
-#include "core/BundleCore.h"
+
+#include <ibrdtn/utils/Clock.h>
+#include <ibrdtn/data/Exceptions.h>
+#include <ibrcommon/thread/MutexLock.h>
+
 
 namespace dtn
 {
@@ -32,6 +35,7 @@ namespace dtn
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 
+				ibrcommon::MutexLock l(_mutex);
 				if (!_queue.empty())
 				{
 					const RetransmissionData &data = _queue.front();
@@ -72,6 +76,8 @@ namespace dtn
 				const dtn::routing::RequeueBundleEvent &requeue = dynamic_cast<const dtn::routing::RequeueBundleEvent&>(*evt);
 
 				const RetransmissionData data(requeue._bundle, requeue._peer);
+
+				ibrcommon::MutexLock l(_mutex);
 				std::set<RetransmissionData>::const_iterator iter = _set.find(data);
 
 				if (iter != _set.end())
@@ -108,6 +114,8 @@ namespace dtn
 				const dtn::core::BundleExpiredEvent &expired = dynamic_cast<const dtn::core::BundleExpiredEvent&>(*evt);
 
 				// delete all matching elements in the queue
+				ibrcommon::MutexLock l(_mutex);
+
 				size_t elements = _queue.size();
 				for (size_t i = 0; i < elements; i++)
 				{
