@@ -397,12 +397,12 @@ namespace dtn
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 				{
 					ibrcommon::MutexLock l(_known_bundles_lock);
-					_known_bundles.expire(time.getTimestamp());
+					_known_bundles.expire(time.getTimestamp() + 60);
 				}
 
 				{
 					ibrcommon::MutexLock l(_purged_bundles_lock);
-					_purged_bundles.expire(time.getTimestamp());
+					_purged_bundles.expire(time.getTimestamp() + 60);
 				}
 
 				{
