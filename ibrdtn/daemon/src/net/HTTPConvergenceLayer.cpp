@@ -8,6 +8,7 @@
  */
 
 #include "net/HTTPConvergenceLayer.h"
+#include "core/BundleCore.h"
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <memory>
 
@@ -252,6 +253,9 @@ namespace dtn
 					try  {
 						dtn::data::Bundle bundle;
 						dtn::data::DefaultDeserializer(_stream) >> bundle;
+						
+						// validate the bundle
+						dtn::core::BundleCore::getInstance().validate(bundle);
 
 						// increment value in the scope control hop limit block
 						try {
@@ -262,7 +266,7 @@ namespace dtn
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle, false, true);
 					} catch (const ibrcommon::Exception &ex) {
-							IBRCOMMON_LOGGER_DEBUG(10) << "http error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG(10) << "http error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					yield();

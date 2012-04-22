@@ -6,8 +6,9 @@
  */
 
 #include "CapsuleWorker.h"
-#include <ibrdtn/data/PayloadBlock.h>
 #include "net/BundleReceivedEvent.h"
+#include "core/BundleCore.h"
+#include <ibrdtn/data/PayloadBlock.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
@@ -50,6 +51,9 @@ namespace dtn
 					{
 						// deserialize the next bundle
 						deserializer >> b;
+
+						// validate the bundle
+						dtn::core::BundleCore::getInstance().validate(b);
 
 						// increment value in the scope control hop limit block
 						try {
