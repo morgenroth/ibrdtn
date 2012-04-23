@@ -29,6 +29,8 @@
 #include "routing/NodeHandshakeExtension.h"
 #include "routing/RetransmissionExtension.h"
 
+#include <ibrdtn/utils/Clock.h>
+
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
 
@@ -305,6 +307,9 @@ namespace dtn
 
 				// drop bundles to the NULL-destination
 				if (received.bundle._destination == EID("dtn:null")) return;
+
+				// drop expired bundles
+				if (dtn::utils::Clock::isExpired(received.bundle)) return;
 
 				// Store incoming bundles into the storage
 				try {
