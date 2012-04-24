@@ -253,7 +253,7 @@ namespace dtn
 				dtn::data::Bundle answer;
 
 				// set the source of the bundle
-				answer._source = dtn::core::BundleCore::local + "/routing";
+				answer._source = _endpoint.getWorkerURI();
 
 				// set the destination of the bundle
 				answer.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
