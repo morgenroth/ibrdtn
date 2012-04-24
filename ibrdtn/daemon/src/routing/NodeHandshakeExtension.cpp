@@ -192,7 +192,11 @@ namespace dtn
 
 			// set the destination of the bundle
 			req.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-			req._destination = origin + origin.getDelimiter() + getWorkerURI().getApplication();
+
+			if (origin.isCompressable())
+				req._destination = origin + origin.getDelimiter() + "50";
+			else
+				req._destination = origin + origin.getDelimiter() + "routing";
 
 			// limit the lifetime to 60 seconds
 			req._lifetime = 60;

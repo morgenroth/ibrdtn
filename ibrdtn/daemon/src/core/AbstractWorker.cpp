@@ -132,7 +132,7 @@ namespace dtn
 			if (BundleCore::local.getScheme() == dtn::data::EID::CBHE_SCHEME)
 			{
 				std::stringstream cbhe_id; cbhe_id << cbhe;
-				_eid = BundleCore::local + "." + cbhe_id.str();
+				_eid = BundleCore::local + BundleCore::local.getDelimiter() + cbhe_id.str();
 			}
 			else
 			{
