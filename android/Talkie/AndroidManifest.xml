@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="de.tubs.ibr.dtn.dtalkie"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk android:minSdkVersion="10" />
+    
+	<uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.dtn.permission.RECEIVE"/>
+
+    <application
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name" >
+        <activity
+            android:label="@string/app_name"
+            android:name=".DTalkieActivity" >
+            <intent-filter >
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter >
+                <action android:name="de.tubs.ibr.dtn.intent.DTNAPP" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
+		<service android:name=".service.DTalkieService" />
+		
+	    <!-- <receiver android:enabled="true" android:name=".service.EventReceiver" android:permission="android.dtn.permission.SEND">  -->
+	    <receiver android:enabled="true" android:name=".service.EventReceiver">
+	        <intent-filter>
+	            <action android:name="de.tubs.ibr.dtn.intent.STATE" />
+	            <category android:name="android.intent.category.DEFAULT" />
+	        </intent-filter>
+	        <intent-filter>
+				<action android:name="de.tubs.ibr.dtn.intent.REGISTRATION" />
+	            <category android:name="de.tubs.ibr.dtn.dtalkie" />
+	        </intent-filter>
+	        <intent-filter>
+	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
+	            <category android:name="de.tubs.ibr.dtn.dtalkie" />
+	        </intent-filter>
+	    </receiver>
+    </application>
+
+</manifest>

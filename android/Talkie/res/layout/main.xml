@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+	<ListView
+	    android:id="@+id/listMessage"
+	    android:layout_width="match_parent"
+	    android:layout_height="match_parent"
+	    android:layout_weight="1"
+	    android:background="@android:color/black">
+	
+	    <!-- Preview: listitem=@layout/message_item -->
+	</ListView>
+
+    <RelativeLayout
+        android:id="@+id/rowButton"
+        android:layout_width="match_parent"
+        android:layout_height="128dp"
+        android:layout_weight="0"
+        android:background="@drawable/background_toolbar"
+        android:baselineAligned="false" >
+
+        <ImageButton
+            android:id="@+id/buttonTalk"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_centerInParent="true"
+            android:background="@drawable/button_record"
+            android:src="@drawable/ic_mic" />
+
+        <ToggleButton
+            android:id="@+id/buttonSensor"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_margin="8dp"
+            android:textOn=""
+            android:textOff=""
+            android:background="@drawable/button_sensor" />
+
+        <ToggleButton
+            android:id="@+id/buttonAutoplay"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_margin="8dp"
+            android:textOn=""
+            android:textOff=""
+            android:background="@drawable/button_autoplay" />
+
+    </RelativeLayout>
+
+</LinearLayout>
