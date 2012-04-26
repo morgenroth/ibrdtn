@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="presence_tag_names">
+        <item>Automatic</item>
+        <item>Online</item>
+        <item>Chat</item>
+        <item>Away</item>
+        <item>Extended Away</item>
+        <item>Do Not Disturb</item>
+        <item>Offline</item>
+    </string-array>
+    <string-array name="presence_tag_values">
+        <item>auto</item>
+        <item>available</item>
+        <item>chat</item>
+        <item>away</item>
+        <item>xa</item>
+        <item>dnd</item>
+        <item>unavailable</item>
+    </string-array>    
+</resources>

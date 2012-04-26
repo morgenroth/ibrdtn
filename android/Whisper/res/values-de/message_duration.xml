@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="message_duration_names">
+        <item>Eine Stunde</item>
+        <item>Ein Tag</item>
+        <item>Drei Tage</item>
+        <item>Eine Woche</item>
+        <item>Zwei Wochen</item>
+    </string-array>
+    <string-array name="message_duration_values">
+        <item>3600</item>
+        <item>86400</item>
+        <item>259200</item>
+        <item>604800</item>
+        <item>1209600</item>
+    </string-array>    
+</resources>

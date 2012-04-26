@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Whisper</string>
+    <string name="strEmpty"></string>
+    <string name="send">Send</string>
+    <string name="list_messages">Messages</string>
+    <string name="example_text">This is an example text. It should be a little bit longer than normal texts to test out the wrap functionalities.</string>
+    <string name="close">Close</string>
+    <string name="clearmsg">Clear messages</string>
+    <string name="conversation_with">Conversation with</string>
+    <string name="remove">Remove</string>
+    <string name="nickname">Nickname</string>
+    <string name="broadcast_presence">Presence broadcast</string>
+    <string name="broadcast_presence_desc">Broadcast your own presence on startup</string>
+    <string name="preferences">Preferences</string>
+    <string name="you">You</string>
+    <string name="new_message_from">New message from</string>
+    <string name="new_message">New message</string>
+    <string name="presenceTag">Presence</string>
+    <string name="messageduration">Message expiration</string>
+    <string name="no_status_message">No status message</string>
+</resources>

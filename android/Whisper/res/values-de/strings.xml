@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="send">Abschicken</string>
+    <string name="list_messages">Nachrichten</string>
+    <string name="close">Schließen</string>
+    <string name="clearmsg">Nachrichten löschen</string>
+    <string name="conversation_with">Gespräch mit</string>
+    <string name="remove">Löschen</string>
+    <string name="broadcast_presence">Status Broadcast</string>
+    <string name="broadcast_presence_desc">Verteile deinen Status bei Programmstart</string>
+    <string name="you">Du</string>
+    <string name="new_message_from">Neue Nachricht von</string>
+    <string name="new_message">Neue Nachricht</string>
+    <string name="presenceTag">Status</string>
+    <string name="messageduration">Gültigkeit der Nachrichten</string>
+    <string name="no_status_message">Keine Statusmeldung</string>
+</resources>
