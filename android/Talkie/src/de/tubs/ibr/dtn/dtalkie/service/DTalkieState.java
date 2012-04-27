@@ -4,5 +4,6 @@ public enum DTalkieState {
 	UNINITIALIZED,
 	READY,
 	RECORDING,
+	STOPPING,
 	STOPPED
 }

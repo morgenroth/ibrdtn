@@ -9,13 +9,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import de.tubs.ibr.dtn.dtalkie.db.Message;
-import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase;
-import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
-
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
+import android.os.Binder;
+import android.os.Environment;
+import android.os.FileObserver;
+import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.CallbackMode;
@@ -24,16 +30,9 @@ import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.MediaRecorder;
-import android.os.AsyncTask;
-import android.os.Binder;
-import android.os.Environment;
-import android.os.IBinder;
-import android.os.ParcelFileDescriptor;
-import android.preference.PreferenceManager;
-import android.util.Log;
+import de.tubs.ibr.dtn.dtalkie.db.Message;
+import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase;
+import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
 
 public class DTalkieService extends Service {
 	
@@ -319,7 +318,7 @@ public class DTalkieService extends Service {
 		// init sound pool
 		soundManager = new SoundFXManager();
 		soundManager.initialize(AudioManager.STREAM_VOICE_CALL, 4);
-		soundManager.initialize(AudioManager.STREAM_SYSTEM, 4);
+		soundManager.initialize(AudioManager.STREAM_MUSIC, 4);
 		
 		soundManager.load(this, SOUND_BEEP);
 		soundManager.load(this, SOUND_CONFIRM);
@@ -388,7 +387,7 @@ public class DTalkieService extends Service {
 		if (_onEar) {
 			soundManager.play(this, AudioManager.STREAM_VOICE_CALL, s);
 		} else {
-			soundManager.play(this, AudioManager.STREAM_SYSTEM, s);
+			soundManager.play(this, AudioManager.STREAM_MUSIC, s);
 		}
 	}
 
@@ -418,32 +417,48 @@ public class DTalkieService extends Service {
         _state = DTalkieState.RECORDING;
         
         playSound(SOUND_BEEP);
+        
+    	FileObserver _observer = new FileObserver(current_record_file.getAbsolutePath(), FileObserver.CLOSE_WRITE) {
+			@Override
+			public void onEvent(int arg0, String arg1) {
+				if (arg0 == FileObserver.CLOSE_WRITE)
+				{
+					try {
+						finalizeRecording();
+						stopWatching();
+					} catch (Exception ex) { }
+				}
+			}
+    	};
+    	
+    	_observer.startWatching();
     }
     
     public synchronized void stopRecording() throws IOException
     {
     	// only stop recording in state RECORDING
     	if (_state != DTalkieState.RECORDING) return;
-    	Log.i(TAG, "stop recording audio"); 
+    	_state = DTalkieState.STOPPING;
     	
-    	if (current_record_file != null)
-    	{
-    		(new SendMessageTask()).execute(current_record_file);
-    		current_record_file = null;
-    	}
+    	Log.i(TAG, "stop recording audio");
+    	
+    	// stop the recorder
+    	recorder.stop();
     }
-    
-    private synchronized void stopRecordingDelayed() throws IOException, InterruptedException
+
+    private synchronized void finalizeRecording() throws Exception
     {
     	// only stop recording in state RECORDING
-    	if (_state != DTalkieState.RECORDING) return;
+    	if (_state != DTalkieState.STOPPING)
+    		throw new Exception("illegal state exception");
+
+    	if (current_record_file != null)
+    	{
+    		(new Thread(new SendMessageTask(current_record_file))).start();
+    		current_record_file = null;
+    	}
     	
-		wait(200);
-    	recorder.stop();
     	recorder.reset();
-    	
-    	Log.i(TAG, "delayed stop done"); 
-    	
     	_state = DTalkieState.STOPPED;
     	
     	playSound(SOUND_QUIT);
@@ -460,19 +475,23 @@ public class DTalkieService extends Service {
 		// requeue the message to the player
 		player.play(msg);
     }
-      
-	private class SendMessageTask extends AsyncTask<File, Integer, Integer> {
-		protected Integer doInBackground(File... files) {
-			
+    
+    private class SendMessageTask implements Runnable {
+    	private File msg = null;
+    	
+    	public SendMessageTask(File msg) {
+    		this.msg = msg;
+    	}
+    	
+		@Override
+		public void run() {
 			try {
-				DTalkieService.this.stopRecordingDelayed();
-				
 				DTalkieService.this.waitUntilConnected();
-				
+
 				try {
-					ParcelFileDescriptor fd = ParcelFileDescriptor.open(files[0], ParcelFileDescriptor.MODE_READ_ONLY);
-					_client.getSession().sendFileDescriptor(DTALKIE_GROUP_EID, 1800, fd, files[0].length());
-					files[0].delete();
+					ParcelFileDescriptor fd = ParcelFileDescriptor.open(this.msg, ParcelFileDescriptor.MODE_READ_ONLY);
+					_client.getSession().sendFileDescriptor(DTALKIE_GROUP_EID, 1800, fd, this.msg.length());
+					this.msg.delete();
 					Log.i(TAG, "Recording sent");
 				} catch (FileNotFoundException ex) {
 					Log.e(TAG, "Can not open message file for transmission", ex);
@@ -481,20 +500,11 @@ public class DTalkieService extends Service {
 				} catch (Exception e) {
 					Log.e(TAG, "Unexpected exception while transmit message.", e);
 				}
-				return 0;
-			} catch (InterruptedException e) {
-			} catch (IOException e) { }
+			} catch (InterruptedException e) { }
 			
-			return 1;
-		}
-
-		protected void onProgressUpdate(Integer... progress) {
-		}
-
-		protected void onPostExecute(Integer result) {
 			_state = DTalkieState.READY;
 		}
-	}
+    }
 	  
     private class QueuingMediaPlayer
     {
