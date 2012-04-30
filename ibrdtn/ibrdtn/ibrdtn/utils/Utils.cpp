@@ -42,25 +42,32 @@ namespace dtn
 			string value;
 
 			// Skip delimiters at beginning.
-			string::size_type lastPos = data.find_first_not_of(token, 0);
-			// Find first "non-delimiter".
-			string::size_type pos     = data.find_first_of(token, lastPos);
+			string::size_type pos = data.find_first_not_of(token, 0);
 
-			while (string::npos != pos || string::npos != lastPos)
+			while (pos != string::npos)
 			{
+				// Find first "non-delimiter".
+				string::size_type tokenPos = data.find_first_of(token, pos);
+
 				// Found a token, add it to the vector.
-				value = data.substr(lastPos, pos - lastPos);
-				l.push_back(value);
+				if(tokenPos == string::npos){
+					value = data.substr(pos);
+					l.push_back(value);
+					break;
+				} else {
+					value = data.substr(pos, tokenPos - pos);
+					l.push_back(value);
+				}
 				// Skip delimiters.  Note the "not_of"
-				lastPos = data.find_first_not_of(token, pos);
+				pos = data.find_first_not_of(token, tokenPos);
 				// Find next "non-delimiter"
-				pos = data.find_first_of(token, lastPos);
+				tokenPos = data.find_first_of(token, pos);
 
 				// if maximum reached
-				if (l.size() >= max)
+				if (l.size() >= max && pos != string::npos)
 				{
 					// add the remaining part to the vector as last element
-					l.push_back(data.substr(lastPos, data.length() - lastPos));
+					l.push_back(data.substr(pos, data.length() - pos));
 
 					// and break the search loop
 					break;
