@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content">
+    
+	<ImageView
+		android:layout_width="12dp"
+		android:layout_height="match_parent"
+		android:id="@+id/imageMark"
+		android:src="@drawable/colormark" />
+	
+	<RelativeLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:minHeight="48dp">
+
+	    <TextView
+	        android:id="@+id/textDate"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentTop="true"
+	        android:layout_alignParentLeft="true"
+	        android:layout_marginLeft="6dp"
+	        android:layout_marginRight="6dp"
+	        android:layout_marginTop="2dp"
+	        android:layout_marginBottom="2dp"
+	        android:text="TextView"
+	        android:textStyle="bold" />
+	    
+	    <TextView
+	        android:id="@+id/textTag"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentTop="true"
+	        android:layout_alignParentRight="true"
+	        android:layout_marginLeft="6dp"
+	        android:layout_marginRight="6dp"
+	        android:layout_marginTop="2dp"
+	        android:layout_marginBottom="2dp"
+	        android:text="TextView"
+	        android:textStyle="bold" />
+	
+	    <TextView
+	        android:id="@+id/textLog"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_below="@+id/textDate"
+	        android:layout_alignParentLeft="true"
+	        android:layout_marginLeft="6dp"
+	        android:layout_marginRight="6dp"
+	        android:layout_marginTop="2dp"
+	        android:layout_marginBottom="2dp"
+	        android:text="TextView" />
+
+	</RelativeLayout>
+</LinearLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="routing_scheme_names">
+        <item>Deaktiviert</item>
+        <item>Flooding</item>
+        <item>Epidemic Routing</item>
+        <item>PRoPHET Routing</item>
+    </string-array>
+    <string-array name="routing_scheme_values">
+        <item>default</item>
+        <item>flooding</item>
+        <item>epidemic</item>
+        <item>prophet</item>
+    </string-array>    
+</resources>
