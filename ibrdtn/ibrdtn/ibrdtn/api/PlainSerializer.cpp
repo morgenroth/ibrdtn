@@ -318,6 +318,10 @@ namespace dtn
 				// split header value
 				std::vector<std::string> values = dtn::utils::Utils::tokenize(":", data, 1);
 
+				// skip invalid lines
+				if(values.size() < 2)
+					continue;
+
 				// assign header value
 				if (values[0] == "Flags")
 				{
@@ -404,6 +408,10 @@ namespace dtn
 
 				// split header value
 				std::vector<std::string> values = dtn::utils::Utils::tokenize(":", data, 1);
+
+				// skip invalid lines
+				if(values.size() < 1)
+					continue;
 
 				// assign header value
 				if (values[0] == "Length")
