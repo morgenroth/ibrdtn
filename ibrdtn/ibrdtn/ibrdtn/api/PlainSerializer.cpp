@@ -72,7 +72,7 @@ namespace dtn
 
 		dtn::data::Serializer& PlainSerializer::operator<<(const dtn::data::Block &obj)
 		{
-			_stream << "Block: " << (int)obj.getType() << std::endl;
+			_stream << "Block: " << (int)((unsigned char)obj.getType()) << std::endl;
 
 			std::stringstream flags;
 
