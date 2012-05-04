@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 
-import de.tubs.ibr.dtn.service.DaemonService;
-
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -13,11 +11,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import de.tubs.ibr.dtn.DTNService;
-import de.tubs.ibr.dtn.DaemonState;
-import de.tubs.ibr.dtn.R;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -26,13 +23,21 @@ import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
+import android.preference.PreferenceManager;
+import android.provider.Settings.Secure;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
+import de.tubs.ibr.dtn.DTNService;
+import de.tubs.ibr.dtn.DaemonState;
+import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.service.DaemonService;
 
 public class Preferences extends PreferenceActivity {
+	
+	private final String TAG = "Preferences";
 	
 	private DTNService service = null;
 	
@@ -183,8 +188,40 @@ public class Preferences extends PreferenceActivity {
 	    }
 	}
 	
+	public static void initializeDefaultPreferences(Context context) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		
+		if (!prefs.contains("endpoint_id")) {
+			final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+		
+			Editor e = prefs.edit();
+			e.putString("endpoint_id", "dtn://android-" + androidId.substring(4, 12) + ".dtn");
+			
+			try {
+				// scan for known network devices
+				for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
+			    {
+		            NetworkInterface i = list.nextElement();
+		            String iface = i.getDisplayName();
+		            
+		            if (	iface.contains("wlan") ||
+		            		iface.contains("wifi") ||
+		            		iface.contains("eth")
+		            	) {
+		            	e.putBoolean("interface_" + iface, true);
+		            }
+			    }
+			} catch (IOException ex) { }
+			
+			e.commit();
+		}
+	}
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		// initialize default values if configured set already
+		initializeDefaultPreferences(this);
+		
 	    super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
 		

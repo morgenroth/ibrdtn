@@ -22,6 +22,7 @@ import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.res.AssetManager;
 import android.preference.PreferenceManager;
+import android.provider.Settings.Secure;
 import android.util.Log;
 
 public class DaemonProcess extends Thread {
@@ -278,9 +279,14 @@ public class DaemonProcess extends Thread {
 		try {
 			FileOutputStream writer = context.openFileOutput("config", Context.MODE_PRIVATE);
 			
+			// initialize default values if configured set already
+			de.tubs.ibr.dtn.daemon.Preferences.initializeDefaultPreferences(context);
+			
+			final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+			
 			// set EID
 			PrintStream p = new PrintStream(writer);
-			p.println("local_uri = " + preferences.getString("endpoint_id", "dtn://android.dtn"));
+			p.println("local_uri = " + preferences.getString("endpoint_id", "dtn://android-" + androidId.substring(4, 12) + ".dtn"));
 			p.println("routing = " + preferences.getString("routing", "default"));
 			
 			if (_use_unix_socket) {

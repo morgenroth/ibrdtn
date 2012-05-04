@@ -9,9 +9,9 @@
         <CheckBoxPreference android:summary="@string/runonboot_desc" android:title="@string/runonboot" android:defaultValue="false" android:key="runonboot"></CheckBoxPreference>    
 	</PreferenceCategory>
 	<PreferenceCategory android:title="@string/general">    
-        <EditTextPreference android:key="endpoint_id" android:title="@string/endpoint_id" android:summary="@string/eid_description" android:defaultValue="dtn://android.dtn" android:dependency="checkActivate"></EditTextPreference>
-        <ListPreference android:key="routing" android:title="@string/routing" android:summary="@string/routing_description" android:entries="@array/routing_scheme_names" android:entryValues="@array/routing_scheme_values" android:defaultValue="default" android:dependency="checkActivate"></ListPreference>
-        <CheckBoxPreference android:key="checkIdleTimeout" android:summary="@string/autodisconnect_desc" android:title="@string/autodisconnect" android:dependency="checkActivate"/>
+        <EditTextPreference android:key="endpoint_id" android:title="@string/endpoint_id" android:summary="@string/eid_description" android:dependency="checkActivate"></EditTextPreference>
+        <ListPreference android:key="routing" android:title="@string/routing" android:summary="@string/routing_description" android:entries="@array/routing_scheme_names" android:entryValues="@array/routing_scheme_values" android:defaultValue="prophet" android:dependency="checkActivate"></ListPreference>
+        <CheckBoxPreference android:key="checkIdleTimeout" android:summary="@string/autodisconnect_desc" android:defaultValue="true" android:title="@string/autodisconnect" android:dependency="checkActivate"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/discovery">
         <CheckBoxPreference android:summary="@string/discovery_announce_desc" android:title="@string/discovery_announce" android:key="discovery_announce" android:defaultValue="true" android:dependency="checkActivate"></CheckBoxPreference>
