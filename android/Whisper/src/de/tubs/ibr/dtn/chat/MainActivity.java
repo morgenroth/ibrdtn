@@ -1,15 +1,17 @@
 package de.tubs.ibr.dtn.chat;
 
-import de.tubs.ibr.dtn.chat.core.Buddy;
-import de.tubs.ibr.dtn.chat.core.Roster.RefreshCallback;
-import de.tubs.ibr.dtn.chat.core.Roster.ViewHolder;
-import de.tubs.ibr.dtn.chat.service.ChatService;
+import java.util.List;
+
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -26,6 +28,10 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import de.tubs.ibr.dtn.chat.core.Buddy;
+import de.tubs.ibr.dtn.chat.core.Roster.RefreshCallback;
+import de.tubs.ibr.dtn.chat.core.Roster.ViewHolder;
+import de.tubs.ibr.dtn.chat.service.ChatService;
 
 public class MainActivity extends ListActivity implements RefreshCallback {
 	
@@ -59,8 +65,10 @@ public class MainActivity extends ListActivity implements RefreshCallback {
 	protected void onDestroy() {
 	    super.onDestroy();
 	    
-        // Detach our existing connection.
-        unbindService(mConnection);
+	    if (mConnection != null) {
+	    	// Detach our existing connection.
+	    	unbindService(mConnection);
+	    }
 	}
 	
 	public void refreshCallback()
@@ -90,12 +98,43 @@ public class MainActivity extends ListActivity implements RefreshCallback {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.roster_main);
 		
-		// Establish a connection with the service.  We use an explicit
-		// class name because we want a specific service implementation that
-		// we know will be running in our own process (and thus won't be
-		// supporting component replacement by other applications).
-		bindService(new Intent(MainActivity.this, 
-		        ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+		Intent checkService = new Intent("de.tubs.ibr.dtn.DTNService");
+		List<ResolveInfo> list = getPackageManager().queryIntentServices(checkService, 0);    
+		if (list.size() > 0)
+		{
+			// Establish a connection with the service.  We use an explicit
+			// class name because we want a specific service implementation that
+			// we know will be running in our own process (and thus won't be
+			// supporting component replacement by other applications).
+			bindService(new Intent(MainActivity.this, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+		}
+		else
+		{
+			mConnection = null;
+			
+			DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+			    @Override
+			    public void onClick(DialogInterface dialog, int which) {
+			        switch (which){
+			        case DialogInterface.BUTTON_POSITIVE:
+						final Intent marketIntent = new Intent(Intent.ACTION_VIEW);
+						marketIntent.setData(Uri.parse("market://details?id=de.tubs.ibr.dtn"));
+						startActivity(marketIntent);
+			            break;
+
+			        case DialogInterface.BUTTON_NEGATIVE:
+			            break;
+			        }
+			        MainActivity.this.finish();
+			    }
+			};
+
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setMessage(getResources().getString(R.string.alert_missing_daemon));
+			builder.setPositiveButton(getResources().getString(R.string.alert_yes), dialogClickListener);
+			builder.setNegativeButton(getResources().getString(R.string.alert_no), dialogClickListener);
+			builder.show();
+		}
 		
 		ListView lv = getListView();
 		registerForContextMenu(lv);

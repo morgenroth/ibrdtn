@@ -20,4 +20,7 @@
     <string name="presenceTag">Presence</string>
     <string name="messageduration">Message expiration</string>
     <string name="no_status_message">No status message</string>
+    <string name="alert_missing_daemon">The DTN daemon is not installed. Would you like to install it now?</string>
+    <string name="alert_yes">Yes</string>
+    <string name="alert_no">No</string>
 </resources>
