@@ -3,27 +3,24 @@ package de.tubs.ibr.dtn.dtalkie;
 import java.io.IOException;
 import java.util.List;
 
-import de.tubs.ibr.dtn.dtalkie.db.Message;
-import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase;
-import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
-import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.OnUpdateListener;
-import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.ViewHolder;
-import de.tubs.ibr.dtn.dtalkie.service.DTalkieService;
-
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -44,6 +41,12 @@ import android.widget.BaseAdapter;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ToggleButton;
+import de.tubs.ibr.dtn.dtalkie.db.Message;
+import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase;
+import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
+import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.OnUpdateListener;
+import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.ViewHolder;
+import de.tubs.ibr.dtn.dtalkie.service.DTalkieService;
 
 public class DTalkieActivity extends Activity {
 	
@@ -118,12 +121,43 @@ public class DTalkieActivity extends Activity {
 			}
 		});
 		
-		// Establish a connection with the service.  We use an explicit
-		// class name because we want a specific service implementation that
-		// we know will be running in our own process (and thus won't be
-		// supporting component replacement by other applications).
-		bindService(new Intent(DTalkieActivity.this, 
-				DTalkieService.class), mConnection, Context.BIND_AUTO_CREATE);
+		Intent checkService = new Intent("de.tubs.ibr.dtn.DTNService");
+		List<ResolveInfo> list = getPackageManager().queryIntentServices(checkService, 0);    
+		if (list.size() > 0)
+		{
+			// Establish a connection with the service.  We use an explicit
+			// class name because we want a specific service implementation that
+			// we know will be running in our own process (and thus won't be
+			// supporting component replacement by other applications).
+			bindService(new Intent(DTalkieActivity.this, DTalkieService.class), mConnection, Context.BIND_AUTO_CREATE);
+		}
+		else
+		{
+			mConnection = null;
+			
+			DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+			    @Override
+			    public void onClick(DialogInterface dialog, int which) {
+			        switch (which){
+			        case DialogInterface.BUTTON_POSITIVE:
+						final Intent marketIntent = new Intent(Intent.ACTION_VIEW);
+						marketIntent.setData(Uri.parse("market://details?id=de.tubs.ibr.dtn"));
+						startActivity(marketIntent);
+			            break;
+
+			        case DialogInterface.BUTTON_NEGATIVE:
+			            break;
+			        }
+			        DTalkieActivity.this.finish();
+			    }
+			};
+
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setMessage(getResources().getString(R.string.alert_missing_daemon));
+			builder.setPositiveButton(getResources().getString(R.string.alert_yes), dialogClickListener);
+			builder.setNegativeButton(getResources().getString(R.string.alert_no), dialogClickListener);
+			builder.show();
+		}
     }
     
     @Override
@@ -346,7 +380,9 @@ public class DTalkieActivity extends Activity {
 		
 	    super.onDestroy();
 	    
-        // Detach our existing connection.
-        unbindService(mConnection);
+	    if (mConnection != null) {
+	    	// Detach our existing connection.
+	    	unbindService(mConnection);
+	    }
 	}
 }
