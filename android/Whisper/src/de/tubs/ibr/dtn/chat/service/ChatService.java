@@ -344,7 +344,7 @@ public class ChatService extends Service {
 		
 		SingletonEndpoint destination = new SingletonEndpoint(msg.getBuddy().getEndpoint());
 		
-		String lifetime = PreferenceManager.getDefaultSharedPreferences(this).getString("messageduration", "3600");
+		String lifetime = PreferenceManager.getDefaultSharedPreferences(this).getString("messageduration", "259200");
 		if (!s.send(destination, Integer.parseInt(lifetime), msg.getPayload()))
 		{
 			throw new Exception("could not send the message");
