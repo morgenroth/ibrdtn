@@ -1,5 +1,6 @@
 package de.tubs.ibr.dtn.api;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -11,13 +12,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import de.tubs.ibr.dtn.DTNService;
-import de.tubs.ibr.dtn.api.DTNSession;
+import android.content.pm.ResolveInfo;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.Log;
+import de.tubs.ibr.dtn.DTNService;
 
 public abstract class DTNClient {
 	
@@ -315,13 +316,17 @@ public abstract class DTNClient {
 		}
 	}
 
-	public synchronized void initialize(Context context, Registration reg)
+	public synchronized void initialize(Context context, Registration reg) throws ServiceNotAvailableException
 	{
 		// set the context
 		this.context = context;
 		
   		// store registration
   		_registration = reg;
+  		
+    	Intent bindIntent = new Intent(DTNService.class.getName());
+		List<ResolveInfo> list = context.getPackageManager().queryIntentServices(bindIntent, 0);    
+		if (list.size() == 0) throw new ServiceNotAvailableException();		
   		
 		// create new executor
 		executor = Executors.newSingleThreadScheduledExecutor();
@@ -337,26 +342,27 @@ public abstract class DTNClient {
 		context.registerReceiver(_state_receiver, rfilter );
   		
 		// Establish a connection with the service.
-    	Intent bindIntent = new Intent(DTNService.class.getName());
 		context.bindService(bindIntent, mConnection, Context.BIND_AUTO_CREATE);
 	}
 	
 	public synchronized void terminate()
 	{	
-		// shutdown the executor
-		executor.shutdown();
-		notifyAll();
-		
-		// unregister to daemon events
-		context.unregisterReceiver(_state_receiver);
-		
-        // Detach our existing connection.
-		context.unbindService(mConnection);
-		
-		// wait until all jobs are finished
-		try {
-			executor.awaitTermination(2, TimeUnit.SECONDS);
-		} catch (InterruptedException e) { }
+		if (executor != null) {
+			// shutdown the executor
+			executor.shutdown();
+			notifyAll();
+			
+			// unregister to daemon events
+			context.unregisterReceiver(_state_receiver);
+			
+	        // Detach our existing connection.
+			context.unbindService(mConnection);
+			
+			// wait until all jobs are finished
+			try {
+				executor.awaitTermination(2, TimeUnit.SECONDS);
+			} catch (InterruptedException e) { }
+		}
 		
 		Log.i(TAG, "BasicDTNClient terminated.");
 	}
