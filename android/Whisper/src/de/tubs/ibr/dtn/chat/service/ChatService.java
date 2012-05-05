@@ -14,6 +14,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.os.Binder;
+import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
+import android.os.PowerManager;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.CallbackMode;
@@ -22,18 +28,13 @@ import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.chat.MessageActivity;
+import de.tubs.ibr.dtn.chat.R;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Message;
 import de.tubs.ibr.dtn.chat.core.Roster;
-import de.tubs.ibr.dtn.chat.R;
-import android.os.Binder;
-import android.os.IBinder;
-import android.os.ParcelFileDescriptor;
-import android.os.PowerManager;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class ChatService extends Service {
 	
@@ -43,6 +44,7 @@ public class ChatService extends Service {
 	public static final String ACTION_OPENCHAT = "de.tubs.ibr.dtn.chat.OPENCHAT";
 	public static final GroupEndpoint PRESENCE_GROUP_EID = new GroupEndpoint("dtn://chat.dtn/presence");
 	private Registration _registration = null;
+	private Boolean _service_available = false;
 	
 	// executor to process local job queue
 	private ExecutorService _executor = null;
@@ -287,7 +289,17 @@ public class ChatService extends Service {
 		
 		// register own data handler for incoming bundles
 		_client.setDataHandler(_data_handler);
-		_client.initialize(this, _registration);
+		
+		try {
+			_client.initialize(this, _registration);
+			_service_available = true;
+		} catch (ServiceNotAvailableException e) {
+			_service_available = false;
+		}
+	}
+	
+	public Boolean isServiceAvailable() {
+		return _service_available;
 	}
 	
 	@Override

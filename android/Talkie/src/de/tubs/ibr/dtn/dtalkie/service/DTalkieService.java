@@ -20,8 +20,10 @@ import android.os.Environment;
 import android.os.FileObserver;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.CallbackMode;
@@ -29,6 +31,7 @@ import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.dtalkie.db.Message;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase;
@@ -41,6 +44,7 @@ public class DTalkieService extends Service {
 	
 	public static final GroupEndpoint DTALKIE_GROUP_EID = new GroupEndpoint("dtn://dtalkie.dtn/broadcast");
 	private Registration _registration = null;
+	private Boolean _service_available = false;
 	
 	private final MediaRecorder recorder = new MediaRecorder();
 	private final QueuingMediaPlayer player = new QueuingMediaPlayer();
@@ -334,7 +338,25 @@ public class DTalkieService extends Service {
 		// register own data handler for incoming bundles
     	_client = new LocalDTNClient();
 		_client.setDataHandler(_data_handler);
-		_client.initialize(this, _registration);
+		
+		try {
+			_client.initialize(this, _registration);
+			_service_available = true;
+		} catch (ServiceNotAvailableException e) {
+			_service_available = false;
+		}
+	}
+	
+	public Boolean isServiceAvailable() {
+		return _service_available;
+	}
+	
+	public Boolean isServiceRunning() {
+		try {
+			return (this._client.getDTNService().getState() == DaemonState.ONLINE);
+		} catch (RemoteException e) {
+			return false;
+		}
 	}
 	
 	@Override

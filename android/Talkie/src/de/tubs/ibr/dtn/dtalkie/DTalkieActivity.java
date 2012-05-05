@@ -245,6 +245,18 @@ public class DTalkieActivity extends Activity {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			DTalkieActivity.this.service = ((DTalkieService.LocalBinder)service).getService();
+			
+			if (!DTalkieActivity.this.service.isServiceAvailable()) {
+				showInstallServiceDialog();
+			}
+			
+			if (!DTalkieActivity.this.service.isServiceRunning()) {
+				// startup the daemon process
+				final Intent intent = new Intent("de.tubs.ibr.dtn.action.STARTUP");
+				//intent.setAction("de.tubs.ibr.dtn.action.STARTUP");
+				startService(intent);
+			}
+			
 			Log.i(TAG, "service connected");
 			
 			// set send handler
@@ -314,6 +326,31 @@ public class DTalkieActivity extends Activity {
 			service = null;
 		}
 	};
+	
+	private void showInstallServiceDialog() {
+		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+		    @Override
+		    public void onClick(DialogInterface dialog, int which) {
+		        switch (which){
+		        case DialogInterface.BUTTON_POSITIVE:
+					final Intent marketIntent = new Intent(Intent.ACTION_VIEW);
+					marketIntent.setData(Uri.parse("market://details?id=de.tubs.ibr.dtn"));
+					startActivity(marketIntent);
+		            break;
+
+		        case DialogInterface.BUTTON_NEGATIVE:
+		            break;
+		        }
+		        finish();
+		    }
+		};
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage(getResources().getString(R.string.alert_missing_daemon));
+		builder.setPositiveButton(getResources().getString(R.string.alert_yes), dialogClickListener);
+		builder.setNegativeButton(getResources().getString(R.string.alert_no), dialogClickListener);
+		builder.show();
+	}
 	
     public void startRecording(RecState type)
     {
