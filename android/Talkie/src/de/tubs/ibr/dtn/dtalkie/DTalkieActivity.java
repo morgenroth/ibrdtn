@@ -250,13 +250,6 @@ public class DTalkieActivity extends Activity {
 				showInstallServiceDialog();
 			}
 			
-			if (!DTalkieActivity.this.service.isServiceRunning()) {
-				// startup the daemon process
-				final Intent intent = new Intent("de.tubs.ibr.dtn.action.STARTUP");
-				//intent.setAction("de.tubs.ibr.dtn.action.STARTUP");
-				startService(intent);
-			}
-			
 			Log.i(TAG, "service connected");
 			
 			// set send handler

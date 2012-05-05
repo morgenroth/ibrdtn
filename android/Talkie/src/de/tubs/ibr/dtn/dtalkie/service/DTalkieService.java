@@ -20,10 +20,8 @@ import android.os.Environment;
 import android.os.FileObserver;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
-import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.CallbackMode;
@@ -349,14 +347,6 @@ public class DTalkieService extends Service {
 	
 	public Boolean isServiceAvailable() {
 		return _service_available;
-	}
-	
-	public Boolean isServiceRunning() {
-		try {
-			return (this._client.getDTNService().getState() == DaemonState.ONLINE);
-		} catch (RemoteException e) {
-			return false;
-		}
 	}
 	
 	@Override
