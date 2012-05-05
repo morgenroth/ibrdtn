@@ -8,10 +8,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
@@ -21,6 +24,7 @@ import de.tubs.ibr.dtn.api.CallbackMode;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.app.R;
 
@@ -113,10 +117,40 @@ public class DTNExampleAppActivity extends Activity {
         
         // set the data handler for incoming bundles
         _client.setDataHandler(_handler);
-        _client.initialize(this, reg);
+        
+		try {
+			_client.initialize(this, reg);
+		} catch (ServiceNotAvailableException e) {
+			showInstallServiceDialog();
+		}
         
 		Log.d(TAG, "activity created");
     }
+    
+	private void showInstallServiceDialog() {
+		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+		    @Override
+		    public void onClick(DialogInterface dialog, int which) {
+		        switch (which){
+		        case DialogInterface.BUTTON_POSITIVE:
+					final Intent marketIntent = new Intent(Intent.ACTION_VIEW);
+					marketIntent.setData(Uri.parse("market://details?id=de.tubs.ibr.dtn"));
+					startActivity(marketIntent);
+		            break;
+
+		        case DialogInterface.BUTTON_NEGATIVE:
+		            break;
+		        }
+		        finish();
+		    }
+		};
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage(getResources().getString(R.string.alert_missing_daemon));
+		builder.setPositiveButton(getResources().getString(R.string.alert_yes), dialogClickListener);
+		builder.setNegativeButton(getResources().getString(R.string.alert_no), dialogClickListener);
+		builder.show();
+	}
     
 	@Override
 	protected void onDestroy() {
