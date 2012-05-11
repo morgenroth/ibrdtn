@@ -244,7 +244,7 @@ public abstract class DTNClient {
 				if (destination instanceof GroupEndpoint)
 				{
 					// send the message to the daemon
-					session.sendGroup((GroupEndpoint)destination, lifetime, data);
+					return session.sendGroup((GroupEndpoint)destination, lifetime, data);
 				}
 
 				// send the message to the daemon
