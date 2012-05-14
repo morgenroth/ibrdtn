@@ -202,7 +202,7 @@ public class ChatService extends Service {
 				Log.e(TAG, "message source is null!");
 			}
 			
-			Buddy b = getRoster().getBuddy(source);
+			Buddy b = getRoster().get(source);
 			Message msg = new Message(true, created, new Date(), payload);
 			msg.setBuddy(b);
 			
@@ -368,7 +368,7 @@ public class ChatService extends Service {
 	public void eventBuddyInfo(Date timestamp, String source, String presence, String nickname, String status)
 	{
 		// get the buddy object
-		Buddy b = getRoster().getBuddy(source);
+		Buddy b = getRoster().get(source);
 		
 		// discard the buddy info, if it is too old
 		if (b.getLastSeen() != null)
@@ -386,7 +386,7 @@ public class ChatService extends Service {
 		b.setLastSeen(timestamp);
 		b.setStatus(status);
 		b.setPresence(presence);
-		getRoster().storeBuddyInfo(b);
+		getRoster().store(b);
 	}
 	
 	private class BroadcastPresence implements Runnable {

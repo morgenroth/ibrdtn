@@ -2,15 +2,12 @@ package de.tubs.ibr.dtn.chat;
 
 import java.util.Date;
 
-import de.tubs.ibr.dtn.chat.core.Buddy;
-import de.tubs.ibr.dtn.chat.core.Message;
-import de.tubs.ibr.dtn.chat.core.Roster.RefreshCallback;
-import de.tubs.ibr.dtn.chat.service.ChatService;
-
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -28,10 +25,15 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import de.tubs.ibr.dtn.chat.core.Buddy;
+import de.tubs.ibr.dtn.chat.core.Message;
+import de.tubs.ibr.dtn.chat.core.Roster;
+import de.tubs.ibr.dtn.chat.service.ChatService;
 
-public class MessageActivity extends ListActivity implements RefreshCallback {
+public class MessageActivity extends ListActivity {
 	
 	private final String TAG = "MessageActivity";
+	private MessageView view = null;
 	private Buddy buddy = null;
 	private static Buddy visibleBuddy = null; 
 	private ChatService service = null;
@@ -42,11 +44,22 @@ public class MessageActivity extends ListActivity implements RefreshCallback {
 			MessageActivity.this.service = ((ChatService.LocalBinder)service).getService();
 			Log.i(TAG, "service connected");
 			
-			// load messages and set current buddy
-			refresh();
+			// load buddy from roster
+			buddy = MessageActivity.this.service.getRoster().get( getIntent().getStringExtra("buddy") );
 			
-			// register myself for refresh callback
-			buddy.setRefreshCallback(MessageActivity.this);
+			if (buddy == null) {
+				Log.e(TAG, "Error buddy not found: " + getIntent().getStringExtra("buddy"));
+				return;
+			}
+			
+			// activate message view
+			MessageActivity.this.view = new MessageView(MessageActivity.this, MessageActivity.this.service.getRoster(), MessageActivity.this.buddy);
+			MessageActivity.this.setListAdapter(MessageActivity.this.view);
+			
+			IntentFilter i = new IntentFilter(Roster.REFRESH);
+			registerReceiver(notify_receiver, i);
+			
+			refresh();
 			
 			// set "enter" handler
 			EditText textedit = (EditText) findViewById(R.id.textMessage);
@@ -111,9 +124,22 @@ public class MessageActivity extends ListActivity implements RefreshCallback {
 
 	@Override
 	protected void onDestroy() {
+		unregisterReceiver(notify_receiver);
+		
+		MessageActivity.this.view.onDestroy(this);
+		MessageActivity.this.view = null;
 	    super.onDestroy();
 	    doUnbindService();
 	}
+	
+	private BroadcastReceiver notify_receiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent i) {
+			if (i.getStringExtra("buddy").equals(buddy.getEndpoint())) {
+				MessageActivity.this.refresh();
+			}
+		}
+	};
 	
 	public static Buddy getVisibleBuddy()
 	{
@@ -123,12 +149,6 @@ public class MessageActivity extends ListActivity implements RefreshCallback {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		
-		if (this.buddy != null)
-		{
-			this.buddy.setRefreshCallback(null);
-		}
-		
 		visibleBuddy = null;
 	}
 
@@ -139,9 +159,9 @@ public class MessageActivity extends ListActivity implements RefreshCallback {
 		// set the current visible buddy
 		visibleBuddy = buddy;
 		
-		if (this.buddy != null)
+		if (this.view != null)
 		{
-			this.buddy.setRefreshCallback(MessageActivity.this);
+			this.view.refresh();
 		}
 		
 		// refresh visible data
@@ -191,13 +211,8 @@ public class MessageActivity extends ListActivity implements RefreshCallback {
 	
 	private void refresh()
 	{
-		if (this.service == null) return;
-		buddy = this.service.getRoster().getBuddy( getIntent().getStringExtra("endpointid") );
-		
-		if (buddy == null) return;
+		if (buddy == null) 	return;
 
-		setListAdapter( buddy.getListAdapter(this) );
-		
 		setTitle(getResources().getString(R.string.conversation_with) + " " + buddy.getNickname());
 		
 		ImageView iconTitleBar = (ImageView) findViewById(R.id.iconTitleBar);
@@ -271,7 +286,6 @@ public class MessageActivity extends ListActivity implements RefreshCallback {
 	    		
 	    	case R.id.itemClearMessages:
 	    		this.service.getRoster().clearMessages(buddy);
-	    		buddy.clearMessages();
 	    		return true;
 	    	
 	    	default:

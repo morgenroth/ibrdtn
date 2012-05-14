@@ -25,14 +25,14 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import de.tubs.ibr.dtn.chat.RosterView.ViewHolder;
 import de.tubs.ibr.dtn.chat.core.Buddy;
-import de.tubs.ibr.dtn.chat.core.Roster.RefreshCallback;
-import de.tubs.ibr.dtn.chat.core.Roster.ViewHolder;
 import de.tubs.ibr.dtn.chat.service.ChatService;
 
-public class MainActivity extends ListActivity implements RefreshCallback {
+public class MainActivity extends ListActivity {
 	
 	private final String TAG = "MainActivity";
+	private RosterView view = null;
 	private ChatService service = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -46,12 +46,10 @@ public class MainActivity extends ListActivity implements RefreshCallback {
 			
 			Log.i(TAG, "service connected");
 			
-			// load buddies
-			refresh();
-			
-			// register myself for refresh callback
-			MainActivity.this.service.getRoster().setRefreshCallback(MainActivity.this);
-			
+			// activate roster view
+			MainActivity.this.view = new RosterView(MainActivity.this, MainActivity.this.service.getRoster());
+			MainActivity.this.setListAdapter(MainActivity.this.view);
+						
 			// set process bar to invisible
 			setProgressBarIndeterminateVisibility(false);
 		}
@@ -90,6 +88,8 @@ public class MainActivity extends ListActivity implements RefreshCallback {
 	
 	@Override
 	protected void onDestroy() {
+		MainActivity.this.view.onDestroy(this);
+		MainActivity.this.view = null;
 	    super.onDestroy();
 	    
 	    if (mConnection != null) {
@@ -195,9 +195,9 @@ public class MainActivity extends ListActivity implements RefreshCallback {
 			statusLabel.setText("<" + getResources().getString(R.string.no_status_message) + ">");
 		}
 		
-		if (this.service != null)
+		if (this.view != null)
 		{
-			setListAdapter( service.getRoster().getListAdapter() );
+			view.refresh();
 		}
 	}
 	
@@ -242,7 +242,7 @@ public class MainActivity extends ListActivity implements RefreshCallback {
 		switch (item.getItemId())
 		{
 		case R.id.itemDelete:
-			this.service.getRoster().removeBuddy(buddy);
+			this.service.getRoster().remove(buddy);
 			return true;
 		default:
 			return super.onContextItemSelected(item);
@@ -256,7 +256,7 @@ public class MainActivity extends ListActivity implements RefreshCallback {
 		ViewHolder holder = (ViewHolder)v.getTag();
 		
 		Intent i = new Intent(MainActivity.this, MessageActivity.class);
-		i.putExtra("endpointid", holder.buddy.getEndpoint());
+		i.putExtra("buddy", holder.buddy.getEndpoint());
 		startActivity(i);
 	}
 }

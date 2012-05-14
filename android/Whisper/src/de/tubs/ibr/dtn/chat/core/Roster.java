@@ -3,49 +3,33 @@ package de.tubs.ibr.dtn.chat.core;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import de.tubs.ibr.dtn.chat.R;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.ListAdapter;
-import android.widget.TextView;
 
 public class Roster extends LinkedList<Buddy> {
+	
+	public final static String REFRESH = "de.tubs.ibr.dtn.chat.ROSTER_REFRESH";
 	
 	private final String TAG = "Roster";
 	
 	private DBOpenHelper _helper = null;
 	private SQLiteDatabase database = null;
-	private SmartListAdapter smartAdapter = null;
-	private RefreshCallback refreshcallback = null;
-	
-	private Timer refresh_timer = null;
+	private Context context = null;
 
 	/**
 	 * unique serial id
 	 */
 	private static final long serialVersionUID = -2251362993764970200L;
-	
-	public interface RefreshCallback
-	{
-		public void refreshCallback();
-	}
 	
 	private class DBOpenHelper extends SQLiteOpenHelper {
 		
@@ -80,124 +64,13 @@ public class Roster extends LinkedList<Buddy> {
 		}
 	};
 
-	public class ViewHolder
-	{
-		public TextView text;
-		public TextView bottomText;
-		public Buddy buddy;
-		public ImageView icon;
-	}
-	
-	private class SmartListAdapter extends BaseAdapter {
-		
-		private LayoutInflater inflater = null;
-		private List<Buddy> list = null;
-
-		public SmartListAdapter(Context context, List<Buddy> list)
-		{
-			this.inflater = LayoutInflater.from(context);
-			this.list = list;
-			Collections.sort(this.list);
-		}
-		
-		public int getCount() {
-			return list.size();
-		}
-
-		public Object getItem(int position) {
-			return list.get(position);
-		}
-
-		public long getItemId(int position) {
-			return position;
-		}
-		
-		public View getView(int position, View convertView, ViewGroup parent) {
-			ViewHolder holder;
-			
-			if (convertView == null)
-			{
-				convertView = this.inflater.inflate(R.layout.roster_item, null, true);
-				holder = new ViewHolder();
-				holder.text = (TextView) convertView.findViewById(R.id.label);
-				holder.bottomText = (TextView) convertView.findViewById(R.id.bottomtext);
-				holder.icon = (ImageView) convertView.findViewById(R.id.icon);
-				convertView.setTag(holder);
-			} else {
-				holder = (ViewHolder) convertView.getTag();
-			}
-			
-			holder.buddy = list.get(position);
-			holder.icon.setImageResource(R.drawable.online);
-			holder.text.setText(holder.buddy.getNickname());
-			
-			String presence = holder.buddy.getPresence();
-				
-			if (presence != null)
-			{
-				if (presence.equalsIgnoreCase("unavailable"))
-				{
-					holder.icon.setImageResource(R.drawable.offline);
-				}
-				else if (presence.equalsIgnoreCase("xa"))
-				{
-					holder.icon.setImageResource(R.drawable.xa);
-				}
-				else if (presence.equalsIgnoreCase("away"))
-				{
-					holder.icon.setImageResource(R.drawable.away);
-				}
-				else if (presence.equalsIgnoreCase("dnd"))
-				{
-					holder.icon.setImageResource(R.drawable.busy);
-				}
-				else if (presence.equalsIgnoreCase("chat"))
-				{
-					holder.icon.setImageResource(R.drawable.online);
-				}
-			}
-			
-			// if the presence is older than 60 minutes then mark the buddy as offline
-			if (!holder.buddy.isOnline())
-			{
-				holder.icon.setImageResource(R.drawable.offline);
-			}
-			
-			if (holder.buddy.getStatus() != null)
-			{
-				if (holder.buddy.getStatus().length() > 0) { 
-					holder.bottomText.setText(holder.buddy.getStatus());
-				} else {
-					holder.bottomText.setText(holder.buddy.getEndpoint());
-				}
-			}
-			else
-			{
-				holder.bottomText.setText(holder.buddy.getEndpoint());
-			}
-			
-			return convertView;
-		}
-		
-		public void refresh()
-		{
-			Collections.sort(this.list);
-			if (refreshcallback != null)
-			{
-				refreshcallback.refreshCallback();
-			}
-		}
-	};
-	
 	public Roster()
 	{
-		refresh_timer = new Timer();
 	}
 
 	@Override
 	protected void finalize() throws Throwable {
 		close();
-		refresh_timer.cancel();
 		super.finalize();
 	}
 
@@ -205,6 +78,7 @@ public class Roster extends LinkedList<Buddy> {
 	{
 		final DateFormat formatter = new SimpleDateFormat("yyyy-M-d HH:mm:ss");
 		
+		this.context = context;
 		_helper = new DBOpenHelper(context);
 		database = _helper.getWritableDatabase();
 		
@@ -229,41 +103,15 @@ public class Roster extends LinkedList<Buddy> {
 			
 			this.add( buddy );
 			
-			// schedule new refresh task
-			scheduleRefresh(buddy.getExpiration());
-			
 			cur.moveToNext();
 		}
 		
 		cur.close();
-		smartAdapter = new SmartListAdapter(context, this);
-	}
-	
-	public ListAdapter getListAdapter()
-	{
-		return this.smartAdapter;
-	}
-	
-	public void setRefreshCallback(RefreshCallback cb) {
-		this.refreshcallback = cb;
 	}
 	
 	public void close()
 	{
 		_helper.close();
-	}
-	
-	private void scheduleRefresh(Date d)
-	{
-		refresh_timer.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				if (smartAdapter != null) {
-					// update smart list
-					smartAdapter.refresh();
-				}
-			}
-		}, d);
 	}
 	
 	public List<Message> getMessages(Buddy buddy)
@@ -273,7 +121,7 @@ public class Roster extends LinkedList<Buddy> {
 		
 		try {
 			// get buddy id
-			String buddyid = String.valueOf( getBuddyId(buddy) );
+			String buddyid = String.valueOf( getId(buddy) );
 
 			// load the last 20 messages
 			Cursor cur = database.query("messages", new String[] { "direction", "created", "received", "payload" }, "buddy = ?", new String[] { buddyid }, null, null, "created DESC", "0, 20");
@@ -317,7 +165,7 @@ public class Roster extends LinkedList<Buddy> {
 		database.insert("roster", null, values);
 	}
 	
-	public void storeBuddyInfo(Buddy buddy)
+	public void store(Buddy buddy)
 	{
 		ContentValues values = new ContentValues();
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -352,14 +200,11 @@ public class Roster extends LinkedList<Buddy> {
 		// update buddy data
 		database.update("roster", values, "endpoint = ?", new String[] { buddy.getEndpoint() });
 		
-		// schedule new refresh task
-		scheduleRefresh(buddy.getExpiration());
-		
-		// update smart list
-		smartAdapter.refresh();
+		// send refresh intent
+		notifyBuddyChanged(buddy);
 	}
 	
-	private int getBuddyId(Buddy buddy) throws Exception
+	private int getId(Buddy buddy) throws Exception
 	{
 		Cursor cur = database.query("roster", new String[] { "_id" }, "endpoint = ?", new String[] { buddy.getEndpoint() }, null, null, null);
 		
@@ -378,9 +223,12 @@ public class Roster extends LinkedList<Buddy> {
 	{
 		try {
 			// get buddy id
-			String buddyid = String.valueOf( getBuddyId(buddy) );
+			String buddyid = String.valueOf( getId(buddy) );
 		
 			database.delete("messages", "buddy = ?", new String[] { buddyid });
+			
+			// send refresh intent
+			notifyBuddyChanged(buddy);
 		} catch (Exception e) {
 			// buddy not found
 		}
@@ -402,7 +250,7 @@ public class Roster extends LinkedList<Buddy> {
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 		try {
-			values.put("buddy", getBuddyId(msg.getBuddy()));
+			values.put("buddy", getId(msg.getBuddy()));
 			values.put("created", dateFormat.format(msg.getCreated()));
 			values.put("received", dateFormat.format(msg.getReceived()));
 			values.put("payload", msg.getPayload());
@@ -411,21 +259,21 @@ public class Roster extends LinkedList<Buddy> {
 			// store the message in the database
 			database.insert("messages", null, values);
 			
-			// add message to the buddy object
-			msg.getBuddy().addMessage(msg);
+			// send refresh intent
+			notifyBuddyChanged(msg.getBuddy());
 		} catch (Exception e) {
 			// could not store buddy message
 		}
 	}
 	
-	public void removeBuddy(Buddy buddy)
+	public void remove(Buddy buddy)
 	{
 		// remove all messages first
 		clearMessages(buddy);
 		
 		try {
 			// get buddy id
-			String buddyid = String.valueOf( getBuddyId(buddy) );
+			String buddyid = String.valueOf( getId(buddy) );
 		
 			database.delete("roster", "_id = ?", new String[] { buddyid });
 		} catch (Exception e) {
@@ -435,11 +283,11 @@ public class Roster extends LinkedList<Buddy> {
 		// remove the buddy out of the list
 		this.remove(buddy);
 		
-		// update smart list
-		smartAdapter.refresh();
+		// send refresh intent
+		notifyBuddyChanged(buddy);
 	}
 	
-	public Buddy getBuddy(String endpointid)
+	public Buddy get(String endpointid)
 	{
 		for (Buddy b : this)
 		{
@@ -456,9 +304,17 @@ public class Roster extends LinkedList<Buddy> {
 		// create a new buddy in the database
 		createBuddy(endpointid);
 		
-		// update smart list
-		smartAdapter.refresh();
+		// send refresh intent
+		notifyBuddyChanged(buddy);
 		
 		return buddy;
+	}
+	
+	public void notifyBuddyChanged(Buddy buddy) {
+		if (context != null) {
+			Intent i = new Intent(Roster.REFRESH);
+			i.putExtra("buddy", buddy.getEndpoint());
+			context.sendBroadcast(i);
+		}
 	}
 }
