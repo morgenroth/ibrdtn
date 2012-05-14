@@ -49,7 +49,7 @@ public class Buddy implements Comparable<Buddy> {
 	{
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.HOUR, 1);
-		cal.add(Calendar.SECOND, 30);
+		cal.add(Calendar.MINUTE, 1);
 		return cal.getTime();
 	}
 	

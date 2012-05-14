@@ -6,6 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -25,6 +27,8 @@ public class Roster extends LinkedList<Buddy> {
 	private DBOpenHelper _helper = null;
 	private SQLiteDatabase database = null;
 	private Context context = null;
+	
+	private Timer refresh_timer = null;
 
 	/**
 	 * unique serial id
@@ -66,6 +70,7 @@ public class Roster extends LinkedList<Buddy> {
 
 	public Roster()
 	{
+		refresh_timer = new Timer();
 	}
 
 	@Override
@@ -103,10 +108,30 @@ public class Roster extends LinkedList<Buddy> {
 			
 			this.add( buddy );
 			
+			// schedule new refresh task
+			scheduleRefresh(buddy);
+			
 			cur.moveToNext();
 		}
 		
 		cur.close();
+	}
+	
+	private class RefreshScheduleTask extends TimerTask {
+		private Buddy buddy = null;
+		
+		public RefreshScheduleTask(Buddy buddy) {
+			this.buddy = buddy;
+		}
+		
+		public void run() {
+			Roster.this.notifyBuddyChanged(this.buddy);
+		}
+	}
+	
+	private void scheduleRefresh(Buddy buddy)
+	{
+		refresh_timer.schedule(new RefreshScheduleTask(buddy), buddy.getExpiration());
 	}
 	
 	public void close()
@@ -199,6 +224,9 @@ public class Roster extends LinkedList<Buddy> {
 		
 		// update buddy data
 		database.update("roster", values, "endpoint = ?", new String[] { buddy.getEndpoint() });
+		
+		// schedule new refresh task
+		scheduleRefresh(buddy);
 		
 		// send refresh intent
 		notifyBuddyChanged(buddy);
