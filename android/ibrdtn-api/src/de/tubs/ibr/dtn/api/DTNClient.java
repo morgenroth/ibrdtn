@@ -141,7 +141,6 @@ public abstract class DTNClient {
 				sessionConnected(this.session);
 			} catch (Exception e) {
 				register(reg);
-				
 			}
 		}
 	}

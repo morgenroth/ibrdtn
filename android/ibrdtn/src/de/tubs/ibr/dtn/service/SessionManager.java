@@ -75,6 +75,13 @@ public class SessionManager {
 				Log.e(TAG, "error on restore registrations", e);
 			} catch (IOException e) {
 				Log.e(TAG, "error on restore registrations", e);
+			} catch (java.lang.IllegalArgumentException e) {
+				Log.e(TAG, "error on restore registrations", e);
+				
+				// destroy all registrations
+				Editor ed = prefs.edit();
+				ed.clear();
+				ed.commit();
 			}
 		}
 	}
@@ -129,12 +136,34 @@ public class SessionManager {
 		// abort if the registration is already known
 		if (_registrations.containsKey(packageName))
 		{
-			return;
+			Registration previous_reg = _registrations.get(packageName);
+			
+			// abort if the registration has not been changed
+			if (previous_reg.equals(reg)) return;
+			
+			Log.d(TAG, "terminate and remove old registration");
+			
+			// remove previous registation
+			_registrations.remove(packageName);
+			
+			// add registration to the hashmap
+			_registrations.put(packageName, reg);
+			
+			// terminate the session if the daemon is running
+			if (_state)
+			{
+				// daemon is up
+				// destroy the session
+				_sessions.get(packageName).terminate();
+				_sessions.remove(packageName);
+			}
 		}
-		
-		// add registration to the hashmap
-		_registrations.put(packageName, reg);
-		
+		else
+		{
+			// add registration to the hashmap
+			_registrations.put(packageName, reg);
+		}
+
 		// save registration in the preferences
 		saveRegistration(context, packageName, reg);
 		

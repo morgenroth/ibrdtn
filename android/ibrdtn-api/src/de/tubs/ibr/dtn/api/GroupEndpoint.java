@@ -24,6 +24,14 @@ public class GroupEndpoint implements EID, Serializable {
 	}
 	
     @Override
+	public boolean equals(Object o) {
+		if (o instanceof GroupEndpoint) {
+			return this._eid.equals(((GroupEndpoint)o)._eid);
+		}
+		return super.equals(o);
+	}
+
+	@Override
     public int describeContents() {
         return 0;
     }
