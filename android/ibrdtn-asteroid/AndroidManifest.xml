@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="de.tubs.ibr.dtn"
+      android:versionCode="9"
+      android:versionName="0.7.154">
+    
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    
+    <uses-permission android:name="de.tubs.ibr.dtn.permission.SEND" />
+    <uses-permission android:name="de.tubs.ibr.dtn.permission.RECEIVE"/>
+    
+	<uses-sdk android:minSdkVersion="10" />
+
+    <application android:icon="@drawable/icon" android:label="@string/app_name">
+        <activity android:icon="@drawable/icon" android:label="@string/app_name" android:name=".daemon.Preferences">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+		<service android:name="de.tubs.ibr.dtn.service.DaemonService">
+			<intent-filter>
+				<action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
+				<action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
+				<action android:name="de.tubs.ibr.dtn.DTNService"></action>
+			</intent-filter>
+		</service>
+		<activity android:label="@string/list_neighbors" android:name=".daemon.NeighborList" />
+		<activity android:label="@string/list_logs" android:name=".daemon.LogActivity" />
+		<activity android:label="@string/applist" android:name="de.tubs.ibr.dtn.daemon.AppListActivity" android:theme="@android:style/Theme.NoTitleBar" />
+		
+		<receiver android:name="de.tubs.ibr.dtn.service.IntentReceiver" android:enabled="true" android:exported="false" android:label="IntentReceiver">
+	        <intent-filter>
+	            <action android:name="android.intent.action.BOOT_COMPLETED"></action>
+	        </intent-filter>
+		</receiver>
+    </application>
+</manifest>

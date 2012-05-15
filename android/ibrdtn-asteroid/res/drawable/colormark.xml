@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:maxLevel="0">
+	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	<solid android:color="@color/gray" />
+	</shape>
+  </item>
+  <item android:maxLevel="1">
+	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	    <solid android:color="@color/red" />
+	</shape>
+  </item>
+  <item android:maxLevel="2">
+	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	    <solid android:color="@color/blue" />
+	</shape>
+  </item>
+  <item android:maxLevel="3">
+	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	    <solid android:color="@color/violett" />
+	</shape>
+  </item>
+  <item android:maxLevel="4">
+	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	    <solid android:color="@color/green" />
+	</shape>
+  </item>
+  <item android:maxLevel="5">
+	<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+	    <solid android:color="@color/yellow" />
+	</shape>
+  </item>
+</level-list>
