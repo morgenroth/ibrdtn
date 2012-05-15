@@ -1,18 +1,11 @@
 package de.tubs.ibr.dtn.daemon;
 
-import java.io.IOException;
-import java.net.NetworkInterface;
-import java.util.Enumeration;
-
-import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
@@ -22,14 +15,10 @@ import android.os.RemoteException;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceCategory;
-import android.preference.PreferenceManager;
-import android.provider.Settings.Secure;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
@@ -41,14 +30,11 @@ public class Preferences extends PreferenceActivity {
 	
 	private DTNService service = null;
 	
-	// progress dialog for the send process
-	private ProgressDialog pd = null;
-	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Preferences.this.service = DTNService.Stub.asInterface(service);
-			Log.i("IBR-DTN", "Preferences: service connected");
+			Log.i(TAG, "Preferences: service connected");
 			
 			CheckBoxPreference checkActivate = (CheckBoxPreference) findPreference("checkActivate");
 			try {
@@ -62,7 +48,7 @@ public class Preferences extends PreferenceActivity {
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
-			Log.i("IBR-DTN", "Preferences: service disconnected");
+			Log.i(TAG, "Preferences: service disconnected");
 			service = null;
 		}
 	};
@@ -117,39 +103,6 @@ public class Preferences extends PreferenceActivity {
 		}
 	}
 	
-	private class ClearStorageTask extends AsyncTask<String, Integer, Boolean> {
-		protected Boolean doInBackground(String... files)
-		{
-			try {
-		    	if (service.isRunning())
-		    	{
-		    		return false;
-		    	}
-		    	service.clearStorage();
-				return true;
-			} catch (RemoteException e) {
-				return false;
-			}
-		}
-
-		protected void onProgressUpdate(Integer... progress) {
-		}
-
-		protected void onPostExecute(Boolean result)
-		{
-			if (result)
-			{
-				pd.dismiss();
-			}
-			else
-			{
-				pd.cancel();
-	    		Toast toast = Toast.makeText(Preferences.this, "Daemon is running! Please stop the daemon first.", Toast.LENGTH_LONG);
-	    		toast.show();
-			}
-		}
-	}
-	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
@@ -167,13 +120,6 @@ public class Preferences extends PreferenceActivity {
 			startActivity(i);
 	    	return true;
 	    }
-	    
-	    case R.id.itemClearStorage:
-	    {
-			pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.clearingstorage), true, false);
-			(new ClearStorageTask()).execute();
-	    	return true;
-	    }
 	        
 	    case R.id.itemNeighbors:
 	    {
@@ -188,40 +134,8 @@ public class Preferences extends PreferenceActivity {
 	    }
 	}
 	
-	public static void initializeDefaultPreferences(Context context) {
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		
-		if (!prefs.contains("endpoint_id")) {
-			final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
-		
-			Editor e = prefs.edit();
-			e.putString("endpoint_id", "dtn://android-" + androidId.substring(4, 12) + ".dtn");
-			
-			try {
-				// scan for known network devices
-				for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
-			    {
-		            NetworkInterface i = list.nextElement();
-		            String iface = i.getDisplayName();
-		            
-		            if (	iface.contains("wlan") ||
-		            		iface.contains("wifi") ||
-		            		iface.contains("eth")
-		            	) {
-		            	e.putBoolean("interface_" + iface, true);
-		            }
-			    }
-			} catch (IOException ex) { }
-			
-			e.commit();
-		}
-	}
-	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		// initialize default values if configured set already
-		initializeDefaultPreferences(this);
-		
 	    super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
 		
@@ -250,33 +164,6 @@ public class Preferences extends PreferenceActivity {
 				return true;
 			}
 		});
-		
-		try {
-			PreferenceCategory pc = (PreferenceCategory) findPreference("interfaces");
-			
-			for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
-		    {
-	            NetworkInterface i = list.nextElement();
-	            String iface = i.getDisplayName();
-	            CheckBoxPreference cb_i = new CheckBoxPreference(this);
-	            
-	            cb_i.setTitle(iface);
-	            
-	            if (i.isPointToPoint())
-	            {
-	            	cb_i.setSummary("Point-to-Point");
-	            }
-	            else if (i.isLoopback())
-	            {
-	            	
-	            	cb_i.setSummary("Loopback");
-	            }
-	            
-	            cb_i.setKey("interface_" + iface);
-	            pc.addPreference(cb_i);
-	            cb_i.setDependency(pc.getDependency());
-		    }
-		} catch (IOException e) { }
 		
 		// version information
 		Preference version = findPreference("system_version");

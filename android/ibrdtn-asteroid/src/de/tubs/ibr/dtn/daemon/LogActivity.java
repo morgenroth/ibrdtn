@@ -80,8 +80,10 @@ public class LogActivity extends ListActivity {
 				// clear all data
 				LogActivity.this.adapter.clear();
 				
-				for (String l : logs) {
-					LogActivity.this.adapter.add(new LogMessage(l));
+				if (logs != null) {
+					for (String l : logs) {
+						LogActivity.this.adapter.add(new LogMessage(l));
+					}
 				}
 		        
 				return true;

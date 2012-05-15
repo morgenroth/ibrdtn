@@ -61,7 +61,6 @@ public class DaemonService extends Service {
 
 		@Override
 		public void clearStorage() throws RemoteException {
-			DaemonManager.getInstance().clearStorage();
 		}
 
 		@Override
@@ -153,33 +152,27 @@ public class DaemonService extends Service {
 		// create a new executor
 		_executor = Executors.newSingleThreadExecutor();
 		
-		// terminate old running instances
-		_executor.execute(new Runnable() {
-			@Override
-			public void run() {
-				DaemonManager.getInstance().reset(DaemonService.this);
-			}
-		});
-		
 		// listen on daemon event broadcasts
 		IntentFilter event_filter = new IntentFilter(de.tubs.ibr.dtn.Intent.EVENT);
 		event_filter.addCategory(Intent.CATEGORY_DEFAULT);
   		registerReceiver(_event_receiver, event_filter );
 		
-		if (Log.isLoggable("IBR-DTN", Log.DEBUG)) Log.d(TAG, "DaemonService created");
+		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "DaemonService created");
 	}
 	
+	
+	
 	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
+	public void onStart(Intent intent, int startId) {
         if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received start id " + startId + ": " + intent);
         
-        if (intent == null) return START_NOT_STICKY;
+        if (intent == null) return;
         
         // get the action to do
         String action = intent.getAction();
         
         // if no action is set, just start as not sticky
-        if (action == null) return START_NOT_STICKY;
+        if (action == null) return;
         
         if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Action: " + action);
         
@@ -188,11 +181,8 @@ public class DaemonService extends Service {
         
         if (action.equals(ACTION_STARTUP))
         {
-			// create initial notification
-			Notification n = buildNotification(R.drawable.ic_notification, getResources().getString(R.string.service_running));
-			
     		// turn this to a foreground service (kill-proof)
-    		startForeground(1, n);
+    		this.setForeground(true);
     		
     		_executor.execute(new Runnable() {
     	        public void run() {
@@ -218,8 +208,6 @@ public class DaemonService extends Service {
     	    		}
     	        }
     		});
-    		
-            return START_STICKY;
         }
         else if (action.equals(ACTION_SHUTDOWN))
         {
@@ -232,7 +220,7 @@ public class DaemonService extends Service {
     	    		invoke_state_changed_intent();
     	    		
     	    		// stop foreground service
-    	        	stopForeground(true);
+    	    		DaemonService.this.setForeground(false);
     	    		
     	    		// remove notification
     	    		NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -242,8 +230,6 @@ public class DaemonService extends Service {
     	    		stopSelfResult(stopId);
     	        }
     		});
-        	
-            return START_STICKY;
         }
 		else if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.REGISTER))
 		{
@@ -260,8 +246,6 @@ public class DaemonService extends Service {
     	        	}
     	        }
     		});
-        	
-            return START_STICKY;
 		}
 		else if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.UNREGISTER))
 		{
@@ -277,12 +261,7 @@ public class DaemonService extends Service {
     	        	}
     	        }
     		});
-        	
-            return START_STICKY;
 		}
-
-        // return as not sticky if no one need another behavior
-		return START_NOT_STICKY;
 	}
 
 	@Override

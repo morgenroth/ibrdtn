@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="match_parent"
-  android:layout_height="match_parent" android:orientation="horizontal" android:baselineAligned="true">
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent" android:orientation="horizontal" android:baselineAligned="true">
     <ImageView android:src="@android:drawable/presence_online" android:id="@+id/imageIcon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="12px" android:layout_marginRight="12px" android:layout_marginTop="20px" android:layout_marginBottom="20px"></ImageView>
-    <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:text="TextView" android:layout_width="match_parent" android:layout_height="wrap_content" android:id="@+id/text1" android:layout_gravity="top" android:layout_marginRight="8px" android:layout_marginTop="16px" android:layout_marginBottom="16px"></TextView>
+    <TextView android:textAppearance="?android:attr/textAppearanceLarge" android:text="TextView" android:layout_width="fill_parent" android:layout_height="wrap_content" android:id="@+id/text1" android:layout_gravity="top" android:layout_marginRight="8px" android:layout_marginTop="16px" android:layout_marginBottom="16px"></TextView>
     
 </LinearLayout>

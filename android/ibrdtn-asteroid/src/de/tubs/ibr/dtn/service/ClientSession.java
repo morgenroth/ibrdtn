@@ -84,7 +84,7 @@ public class ClientSession {
 				Log.d(TAG, "try to create an API session with the daemon");
 				_session = new APISession(this);
 				
-				APIConnection socket = DaemonManager.getInstance().getDaemonConnection();
+				APIConnection socket = DaemonManager.getInstance().getAPIConnection(context);
 				if (socket == null) throw new IOException("daemon not running");
 				
 				_session.connect(socket);

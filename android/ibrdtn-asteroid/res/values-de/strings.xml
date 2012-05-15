@@ -47,6 +47,7 @@
     <string name="notify_neighbors">Sichtbare Nachbarn</string>
     <string name="notify_no_neighbors">Keine Nachbarn</string>
     <string name="statichost">Statische Verbindung</string>
+    <string name="daemon_connection">Daemon Verbindung</string>
     <string name="host_name">EID des Knoten</string>
     <string name="host_address">Adresse des Knoten</string>
     <string name="host_port">Port des Knoten </string>

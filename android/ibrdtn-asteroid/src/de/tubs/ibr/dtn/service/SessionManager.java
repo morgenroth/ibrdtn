@@ -2,10 +2,8 @@ package de.tubs.ibr.dtn.service;
 
 import ibrdtn.api.Base64;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.util.HashMap;
@@ -15,9 +13,8 @@ import java.util.Map.Entry;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import de.tubs.ibr.dtn.api.Registration;
-import android.util.Base64InputStream;
 import android.util.Log;
+import de.tubs.ibr.dtn.api.Registration;
 
 public class SessionManager {
 	
@@ -65,8 +62,7 @@ public class SessionManager {
 			String data = (String)entry.getValue();
 			
 			try {
-				ObjectInputStream ois = new ObjectInputStream(new Base64InputStream( new ByteArrayInputStream(data.getBytes()), android.util.Base64.DEFAULT ));
-				Registration reg = (Registration)ois.readObject();
+				Registration reg = (Registration)Base64.decodeToObject(data);
 				register(context, entry.getKey(), reg);
 				Log.d(TAG, "registration restored for " + entry.getKey());
 			} catch (OptionalDataException e) {

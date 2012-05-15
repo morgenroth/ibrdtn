@@ -69,11 +69,13 @@ public class NeighborList extends ListActivity {
 				// clear all data
 				_data.clear();
 				
-				for (String n : neighbors)
-				{
-					HashMap<String, String> m = new HashMap<String, String>();
-					m.put("eid", n);
-					_data.add( m );
+				if (neighbors != null) {
+					for (String n : neighbors)
+					{
+						HashMap<String, String> m = new HashMap<String, String>();
+						m.put("eid", n);
+						_data.add( m );
+					}
 				}
 		        
 				return true;
