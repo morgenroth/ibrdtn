@@ -463,7 +463,7 @@ public class ChatService extends Service {
 		Intent notificationIntent = new Intent(this, MessageActivity.class);
 		notificationIntent.setAction(ACTION_OPENCHAT);
 		notificationIntent.addCategory("android.intent.category.DEFAULT");
-		notificationIntent.putExtra("endpointid", b.getEndpoint());
+		notificationIntent.putExtra("buddy", b.getEndpoint());
 		
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 

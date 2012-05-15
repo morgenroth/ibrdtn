@@ -88,10 +88,21 @@ public class Buddy implements Comparable<Buddy> {
 	@Override
 	public int compareTo(Buddy another) {
 		if (isOnline() == another.isOnline())
-			return this.nickname.compareToIgnoreCase(another.nickname);
+			return this.toString().compareToIgnoreCase(another.toString());
 		
 		if (isOnline()) return -1;
 		
 		return 1;
+	}
+
+	@Override
+	public String toString() {
+		if (this.nickname != null)
+			return this.nickname;
+		
+		if (this.endpoint != null)
+			return this.endpoint;
+		
+		return super.toString();
 	}
 }

@@ -91,7 +91,7 @@ public class RosterView extends BaseAdapter {
 		
 		holder.buddy = this.buddies.get(position);
 		holder.icon.setImageResource(R.drawable.online);
-		holder.text.setText(holder.buddy.getNickname());
+		holder.text.setText(holder.buddy.toString());
 		
 		String presence = holder.buddy.getPresence();
 			
