@@ -45,12 +45,11 @@ public class Buddy implements Comparable<Buddy> {
 		return true;
 	}
 	
-	public Date getExpiration()
+	public Calendar getExpiration()
 	{
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.HOUR, 1);
-		cal.add(Calendar.MINUTE, 1);
-		return cal.getTime();
+		return cal;
 	}
 	
 	public String getPresence() {

@@ -3,6 +3,7 @@ package de.tubs.ibr.dtn.chat.core;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -131,7 +132,9 @@ public class Roster extends LinkedList<Buddy> {
 	
 	private void scheduleRefresh(Buddy buddy)
 	{
-		refresh_timer.schedule(new RefreshScheduleTask(buddy), buddy.getExpiration());
+		Calendar cal = buddy.getExpiration();
+		cal.add(Calendar.MINUTE, 1);
+		refresh_timer.schedule(new RefreshScheduleTask(buddy), cal.getTime());
 	}
 	
 	public void close()
