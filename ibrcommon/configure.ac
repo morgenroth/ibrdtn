@@ -120,6 +120,13 @@ PKG_CHECK_MODULES([NL], [libnl-3.0], [
 	], [
 		echo "netlink route module not found"
 	])
+	
+	# check for additional netlink modules
+	PKG_CHECK_MODULES([NL_GENL], [libnl-genl-3.0], [
+		AC_DEFINE(HAVE_LIBNL3_GENL, [1], ["netlink genl library 3.0 is available"])
+	], [
+		echo "netlink genl module not found"
+	])
 ], [
 	PKG_CHECK_MODULES([NL], [libnl-1], [
 		AC_DEFINE(HAVE_LIBNL, [1], ["netlink library is available"])
@@ -134,6 +141,8 @@ AC_SUBST(NL_CFLAGS)
 AC_SUBST(NL_LIBS)
 AC_SUBST(NL_ROUTE_CFLAGS)
 AC_SUBST(NL_ROUTE_LIBS)
+AC_SUBST(NL_GENL_CFLAGS)
+AC_SUBST(NL_GENL_LIBS)
 
 dnl -----------------------------------------------
 dnl check for pthread library
