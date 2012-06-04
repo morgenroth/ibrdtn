@@ -312,7 +312,7 @@ public class Roster extends LinkedList<Buddy> {
 		}
 		
 		// remove the buddy out of the list
-		this.remove(buddy);
+		super.remove(buddy);
 		
 		// send refresh intent
 		notifyBuddyChanged(buddy);
