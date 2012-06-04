@@ -66,9 +66,19 @@ public class SessionManager {
 			
 			try {
 				ObjectInputStream ois = new ObjectInputStream(new Base64InputStream( new ByteArrayInputStream(data.getBytes()), android.util.Base64.DEFAULT ));
-				Registration reg = (Registration)ois.readObject();
-				register(context, entry.getKey(), reg);
-				Log.d(TAG, "registration restored for " + entry.getKey());
+				Object regobj = ois.readObject();
+				
+				if (regobj instanceof Registration) {
+					// re-register registration
+					Registration reg = (Registration)regobj;
+					register(context, entry.getKey(), reg);
+					Log.d(TAG, "registration restored for " + entry.getKey());
+				} else {
+					// delete registration
+					Editor ed = prefs.edit();
+					ed.remove(entry.getKey());
+					ed.commit();
+				}
 			} catch (OptionalDataException e) {
 				Log.e(TAG, "error on restore registrations", e);
 			} catch (ClassNotFoundException e) {
