@@ -368,6 +368,9 @@ int main(int argc, char *argv[])
 							std::cout << payload_size << " bytes from " << response.getSource().getString() << ": seq=" << reply_seq << " ttl=" << response.getLifetime() << " time=" << tm << std::endl;
 							_received++;
 						} catch (const dtn::api::ConnectionTimeoutException &e) {
+							if (stop_after_first_fail)
+								throw dtn::api::ConnectionTimeoutException();
+
 							std::cout << "Timeout." << std::endl;
 						}
 
