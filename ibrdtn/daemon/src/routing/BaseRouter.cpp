@@ -352,6 +352,10 @@ namespace dtn
 						// raise the queued event to notify all receivers about the new bundle
 						QueueBundleEvent::raise(received.bundle, received.peer);
 					}
+					else
+					{
+						IBRCOMMON_LOGGER_DEBUG(5) << "Duplicate bundle " << received.bundle.toString() << " from " << received.peer.getString() << " ignored." << IBRCOMMON_LOGGER_ENDL;
+					}
 
 					// finally create a bundle received event
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_RECEIVED);
@@ -400,14 +404,18 @@ namespace dtn
 
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+				size_t expire_time = time.getTimestamp();
+				if (expire_time <= 60) expire_time = 0;
+				else expire_time -= 60;
+
 				{
 					ibrcommon::MutexLock l(_known_bundles_lock);
-					_known_bundles.expire(time.getTimestamp() + 60);
+					_known_bundles.expire(expire_time);
 				}
 
 				{
 					ibrcommon::MutexLock l(_purged_bundles_lock);
-					_purged_bundles.expire(time.getTimestamp() + 60);
+					_purged_bundles.expire(expire_time);
 				}
 
 				{
