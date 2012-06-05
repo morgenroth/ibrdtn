@@ -174,6 +174,7 @@ namespace dtn
 						}
 						else if (cmd[1] == "get")
 						{
+							ibrcommon::MutexLock l(_write_lock);
 							_stream << ClientHandler::API_STATUS_OK << " ENDPOINT GET " << _endpoint.getString() << std::endl;
 						}
 						else
@@ -732,6 +733,7 @@ namespace dtn
 					}
 					else if (cmd[0] == "nodename")
 					{
+						ibrcommon::MutexLock l(_write_lock);
 						_stream << ClientHandler::API_STATUS_OK << " NODENAME " << dtn::core::BundleCore::local.getString() << std::endl;
 					}
 					else
