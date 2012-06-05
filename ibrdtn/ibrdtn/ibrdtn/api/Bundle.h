@@ -59,6 +59,12 @@ namespace dtn
 			virtual ~Bundle();
 
 			/**
+			 * Returns the unique key of the bundle.
+			 * @return The key in string representation.
+			 */
+			std::string toString() const;
+
+			/**
 			 * Set the destination address as singleton or not.
 			 * @param val
 			 */

@@ -55,6 +55,11 @@ namespace dtn
 			return _b._timestamp;
 		}
 
+		std::string Bundle::toString() const
+		{
+			return _b.toString();
+		}
+
 		void Bundle::requestDeliveredReport()
 		{
 			_b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
