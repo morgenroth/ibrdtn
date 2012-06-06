@@ -210,10 +210,17 @@ public class APISession {
     		}
     		else
     		{
-    			return;
-    		}
+        		try {
+    				// check api connection
+    				this.client.noop();
+    				return;
+    			} catch (APIException ex) {
+        	    	// destroy connection
+        	    	disconnect();
+    			}
+    		}    		
     	}
-
+    	
     	session.invoke_reconnect();
     }
     

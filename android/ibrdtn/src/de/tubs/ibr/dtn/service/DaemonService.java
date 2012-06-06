@@ -30,6 +30,7 @@ public class DaemonService extends Service {
 	
 	private Object _notification_lock = new Object();
 	private boolean _notification_dirty = false;
+	private Integer _notification_last_size = 0;
 	
 	private ExecutorService _executor = null;
 	
@@ -116,6 +117,11 @@ public class DaemonService extends Service {
 			// state is online
 			Log.i(TAG, "Query neighbors");
 			List<String> neighbors = DaemonManager.getInstance().getNeighbors();
+			
+			synchronized(_notification_lock) {
+				if (_notification_last_size.equals(neighbors.size())) return;
+				_notification_last_size = neighbors.size();
+			}
 	
 			NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 			Notification n = null;
