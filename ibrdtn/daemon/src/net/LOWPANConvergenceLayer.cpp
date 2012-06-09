@@ -234,12 +234,14 @@ namespace dtn
 
 				char data[m_maxmsgsize];
 				char header;
-				unsigned short address;
+				uint16_t address = 0;
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::componentRun early" << IBRCOMMON_LOGGER_ENDL;
 
 				// Receive full frame from socket
-				int len = _socket->receive(data, m_maxmsgsize);
+				std::string hwaddress;
+				uint16_t pan_id = 0;
+				int len = _socket->receive(data, m_maxmsgsize, hwaddress, address, pan_id);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::componentRun" << IBRCOMMON_LOGGER_ENDL;
 
@@ -250,8 +252,8 @@ namespace dtn
 				// Retrieve header of frame
 				header = data[0];
 
-				// Retrieve sender address from the end of the frame
-				address = ((char)data[len-1] << 8) | data[len-2];
+//				// Retrieve sender address from the end of the frame
+//				address = ((char)data[len-1] << 8) | data[len-2];
 
 				// Check for extended header and retrieve if available
 				if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {

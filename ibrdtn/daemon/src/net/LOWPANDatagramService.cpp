@@ -208,7 +208,10 @@ namespace dtn
 				char tmp[length + 4];
 
 				// Receive full frame from socket
-				size_t ret = _socket->receive(tmp, length + 4);
+				std::string address;
+				uint16_t from = 0;
+				uint16_t pan_id = 0;
+				size_t ret = _socket->receive(tmp, length + 4, address, from, pan_id);
 
 				// decode type, flags and seqno
 				// extended mask are discovery and ACK datagrams
@@ -234,10 +237,10 @@ namespace dtn
 				flags = 0x0f & (tmp[0] >> 4);
 				seqno = 0x0f & tmp[0];
 
-				// Retrieve sender address from the end of the frame
-				uint16_t from = ((char)tmp[length-1] << 8) | tmp[length-2];
+//				// Retrieve sender address from the end of the frame
+//				uint16_t from = ((char)tmp[length-1] << 8) | tmp[length-2];
 
-				address = LOWPANDatagramService::encode(from, _panid);
+				address = LOWPANDatagramService::encode(from, pan_id);
 
 				IBRCOMMON_LOGGER_DEBUG(20) << "LOWPANDatagramService::recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << address << IBRCOMMON_LOGGER_ENDL;
 
