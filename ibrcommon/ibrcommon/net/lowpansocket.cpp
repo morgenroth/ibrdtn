@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sstream>
 
 #if defined HAVE_LIBNL || HAVE_LIBNL3
 #include <netlink/route/link.h>
@@ -58,7 +59,7 @@ namespace ibrcommon
 		_vsocket.close();
 	}
 
-	int lowpansocket::receive(char* data, size_t maxbuffer)
+	int lowpansocket::receive(char* data, size_t maxbuffer, std::string &address, uint16_t &shortaddr, uint16_t &pan_id)
 	{
 		struct sockaddr_ieee802154 clientAddress;
 		socklen_t clientAddressLength = sizeof(clientAddress);
@@ -68,6 +69,13 @@ namespace ibrcommon
 		int fd = fds.front();
 
 		int ret = recvfrom(fd, data, maxbuffer, MSG_WAITALL, (struct sockaddr *) &clientAddress, &clientAddressLength);
+
+		pan_id = ntohs(clientAddress.addr.pan_id);
+		shortaddr = ntohs(clientAddress.addr.short_addr);
+
+		std::stringstream ss; ss << shortaddr;
+		address = ss.str();
+
 		return ret;
 	}
 

@@ -45,7 +45,7 @@ namespace ibrcommon
 
 		virtual void shutdown();
 
-		int receive(char* data, size_t maxbuffer);
+		int receive(char* data, size_t maxbuffer, std::string &address, uint16_t &shortaddr, uint16_t &pan_id);
 
 		lowpansocket::peer getPeer(unsigned int address, const unsigned int panid);
 		static void getAddress(struct ieee802154_addr *ret, const vinterface &iface);
