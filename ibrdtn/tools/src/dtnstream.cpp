@@ -290,6 +290,7 @@ void print_help()
 	std::cout << " -d <destination> set the destination eid (e.g. dtn://node/stream)" << std::endl;
 	std::cout << " -G               destination is a group" << std::endl;
 	std::cout << " -c <bytes>       set the chunk size (max. size of each bundle)" << std::endl;
+	std::cout << " -p <0..2>        set the bundle priority (0 = low, 1 = normal, 2 = high)" << endl;
 	std::cout << " -l <seconds>     set the lifetime of stream chunks default: 30" << std::endl;
 	std::cout << " -E               request encryption on the bundle layer" << std::endl;
 	std::cout << " -S               request signature on the bundle layer" << std::endl;
@@ -306,6 +307,7 @@ int main(int argc, char *argv[])
 	int opt = 0;
 	dtn::data::EID _destination;
 	std::string _source = "stream";
+	int _priority = 1;
 	unsigned int _lifetime = 30;
 	size_t _chunk_size = 4096;
 	dtn::data::EID _group;
@@ -315,7 +317,7 @@ int main(int argc, char *argv[])
 	bool _wait_seq_zero = false;
 	ibrcommon::File _unixdomain;
 
-	while((opt = getopt(argc, argv, "hg:Gd:t:s:c:l:ESU:w")) != -1)
+	while((opt = getopt(argc, argv, "hg:Gd:t:s:c:p:l:ESU:w")) != -1)
 	{
 		switch (opt)
 		{
@@ -345,6 +347,10 @@ int main(int argc, char *argv[])
 
 		case 't':
 			__timeout_receive__ = atoi(optarg);
+			break;
+
+		case 'p':
+			_priority = atoi(optarg);
 			break;
 
 		case 'l':
@@ -403,6 +409,7 @@ int main(int argc, char *argv[])
 		if (_destination != dtn::data::EID())
 		{
 			bs.base().setDestination(_destination);
+			bs.base().setPriority(dtn::api::Bundle::BUNDLE_PRIORITY(_priority));
 			bs.base().setLifetime(_lifetime);
 			if (_bundle_encryption) bs.base().requestEncryption();
 			if (_bundle_signed) bs.base().requestSigned();
