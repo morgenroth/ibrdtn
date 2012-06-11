@@ -34,8 +34,8 @@ public class MessageActivity extends ListActivity {
 	
 	private final String TAG = "MessageActivity";
 	private MessageView view = null;
-	private Buddy buddy = null;
-	private static Buddy visibleBuddy = null; 
+	private String buddyId = null;
+	private static String visibleBuddy = null; 
 	private ChatService service = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -43,49 +43,7 @@ public class MessageActivity extends ListActivity {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			MessageActivity.this.service = ((ChatService.LocalBinder)service).getService();
 			Log.i(TAG, "service connected");
-			
-			// load buddy from roster
-			buddy = MessageActivity.this.service.getRoster().get( getIntent().getStringExtra("buddy") );
-			
-			if (buddy == null) {
-				Log.e(TAG, "Error buddy not found: " + getIntent().getStringExtra("buddy"));
-				return;
-			}
-			
-			// activate message view
-			MessageActivity.this.view = new MessageView(MessageActivity.this, MessageActivity.this.service.getRoster(), MessageActivity.this.buddy);
-			MessageActivity.this.setListAdapter(MessageActivity.this.view);
-			
-			IntentFilter i = new IntentFilter(Roster.REFRESH);
-			registerReceiver(notify_receiver, i);
-			
 			refresh();
-			
-			// set "enter" handler
-			EditText textedit = (EditText) findViewById(R.id.textMessage);
-			textedit.setOnKeyListener(new OnKeyListener() {
-				@Override
-				public boolean onKey(View v, int keycode, KeyEvent event) {
-					if ((KeyEvent.KEYCODE_ENTER == keycode) && (event.getAction() == KeyEvent.ACTION_DOWN))
-					{
-						flushTextBox();
-						return true;
-					}
-					return false;
-				}
-			});
-			
-			// set send handler
-			ImageButton buttonSend = (ImageButton) findViewById(R.id.buttonSend);
-			buttonSend.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					flushTextBox();
-				}
-			});
-			
-			// set the current visible buddy
-			visibleBuddy = buddy;
 		}
 
 		@Override
@@ -95,8 +53,100 @@ public class MessageActivity extends ListActivity {
 		}
 	};
 	
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+
+		// get ID of the buddy
+		refresh( intent.getStringExtra("buddy") );
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState)
+	{
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.chat_main);
+		
+		// get ID of the buddy
+		refresh( getIntent().getStringExtra("buddy") );
+		
+		// set "enter" handler
+		EditText textedit = (EditText) findViewById(R.id.textMessage);
+		textedit.setOnKeyListener(new OnKeyListener() {
+			@Override
+			public boolean onKey(View v, int keycode, KeyEvent event) {
+				if ((KeyEvent.KEYCODE_ENTER == keycode) && (event.getAction() == KeyEvent.ACTION_DOWN))
+				{
+					flushTextBox();
+					return true;
+				}
+				return false;
+			}
+		});
+		
+		// set send handler
+		ImageButton buttonSend = (ImageButton) findViewById(R.id.buttonSend);
+		buttonSend.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				flushTextBox();
+			}
+		});
+		
+	    // Establish a connection with the service.  We use an explicit
+	    // class name because we want a specific service implementation that
+	    // we know will be running in our own process (and thus won't be
+	    // supporting component replacement by other applications).
+	    bindService(new Intent(MessageActivity.this, 
+	            ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+	}
+
+	@Override
+	protected void onDestroy() {
+		if (this.view != null) {
+			this.view.onDestroy(this);
+			this.view = null;
+		}
+	    
+        // Detach our existing connection.
+        unbindService(mConnection);
+        
+	    super.onDestroy();
+	}
+	
+	@Override
+	protected void onPause() {
+		unregisterReceiver(notify_receiver);
+		visibleBuddy = null;
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		IntentFilter i = new IntentFilter(Roster.REFRESH);
+		registerReceiver(notify_receiver, i);
+		
+		// set the current visible buddy
+		MessageActivity.visibleBuddy = buddyId;
+
+		if (this.view != null)
+		{
+			this.view.refresh();
+		}
+		
+		// refresh visible data
+		refresh();
+	}
+	
 	private void flushTextBox()
 	{
+		if (service == null) return;
+		
+		// load buddy from roster
+		Buddy buddy = MessageActivity.this.service.getRoster().get( buddyId );
+		
 		EditText text = (EditText) findViewById(R.id.textMessage);
 		
 		if (text.getText().length() > 0) {
@@ -117,55 +167,19 @@ public class MessageActivity extends ListActivity {
 		}
 	}
 
-	void doUnbindService() {
-        // Detach our existing connection.
-        unbindService(mConnection);
-	}
-
-	@Override
-	protected void onDestroy() {
-		unregisterReceiver(notify_receiver);
-		
-		MessageActivity.this.view.onDestroy(this);
-		MessageActivity.this.view = null;
-	    super.onDestroy();
-	    doUnbindService();
-	}
-	
 	private BroadcastReceiver notify_receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent i) {
-			if (i.getStringExtra("buddy").equals(buddy.getEndpoint())) {
+			if (i.getStringExtra("buddy").equals(buddyId)) {
 				MessageActivity.this.refresh();
 			}
 		}
 	};
 	
-	public static Buddy getVisibleBuddy()
+	public static Boolean isVisible(String buddyId)
 	{
-		return visibleBuddy;
-	}
-	
-	@Override
-	protected void onPause() {
-		super.onPause();
-		visibleBuddy = null;
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		
-		// set the current visible buddy
-		visibleBuddy = buddy;
-		
-		if (this.view != null)
-		{
-			this.view.refresh();
-		}
-		
-		// refresh visible data
-		refresh();
+		if (visibleBuddy == null) return false;
+		return (visibleBuddy.equals(buddyId));
 	}
 
 	public void refreshCallback()
@@ -209,9 +223,39 @@ public class MessageActivity extends ListActivity {
 		}
 	}
 	
+	
+	private void refresh(String buddyId) {
+		if ((this.buddyId != buddyId) && (this.view != null)) {
+			this.view.onDestroy(this);
+			this.view = null;
+		}
+		
+		this.buddyId = buddyId;
+		
+		// set the current visible buddy
+		MessageActivity.visibleBuddy = buddyId;
+
+		refresh();
+	}
+	
 	private void refresh()
 	{
-		if (buddy == null) 	return;
+		if (buddyId == null) return;
+		if (service == null) return;
+		
+		// load buddy from roster
+		Buddy buddy = MessageActivity.this.service.getRoster().get( buddyId );
+		
+		if (buddy == null) {
+			Log.e(TAG, "Error buddy not found: " + getIntent().getStringExtra("buddy"));
+			return;
+		}
+		
+		if (this.view == null) {
+			// activate message view
+			this.view = new MessageView(this, this.service.getRoster(), buddy);
+			this.setListAdapter(this.view);
+		}
 
 		setTitle(getResources().getString(R.string.conversation_with) + " " + buddy.getNickname());
 		
@@ -285,26 +329,15 @@ public class MessageActivity extends ListActivity {
 	    		return true;
 	    		
 	    	case R.id.itemClearMessages:
-	    		this.service.getRoster().clearMessages(buddy);
+	    		if (service != null) {	    		
+		    		// load buddy from roster
+		    		Buddy buddy = MessageActivity.this.service.getRoster().get( buddyId );
+		    		this.service.getRoster().clearMessages(buddy);
+	    		}
 	    		return true;
 	    	
 	    	default:
 	    		return super.onOptionsItemSelected(item);
 	    }
 	}
-
-	@Override
-	public void onCreate(Bundle savedInstanceState)
-	{
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.chat_main);
-		
-	    // Establish a connection with the service.  We use an explicit
-	    // class name because we want a specific service implementation that
-	    // we know will be running in our own process (and thus won't be
-	    // supporting component replacement by other applications).
-	    bindService(new Intent(MessageActivity.this, 
-	            ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
-	}
-
 }

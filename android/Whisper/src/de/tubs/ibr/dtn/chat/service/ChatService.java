@@ -437,10 +437,7 @@ public class ChatService extends Service {
 	
 	private void createNotification(Buddy b, Message msg)
 	{
-		if (MessageActivity.getVisibleBuddy() != null)
-			Log.i(TAG, "active buddy: " + MessageActivity.getVisibleBuddy().getNickname());
-		
-		if (MessageActivity.getVisibleBuddy() == b)
+		if (MessageActivity.isVisible(b.getEndpoint()))
 		{
 			return;
 		}
@@ -461,14 +458,16 @@ public class ChatService extends Service {
 		CharSequence contentText = b.getNickname() + ":\n" + msg.getPayload();
 
 		Intent notificationIntent = new Intent(this, MessageActivity.class);
+		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		notificationIntent.setAction(ACTION_OPENCHAT);
 		notificationIntent.addCategory("android.intent.category.DEFAULT");
 		notificationIntent.putExtra("buddy", b.getEndpoint());
-		
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+		int requestID = (int) System.currentTimeMillis();
+		PendingIntent contentIntent = PendingIntent.getActivity(this, requestID, notificationIntent, PendingIntent.FLAG_ONE_SHOT);
 
 		notification.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
 
-		mNotificationManager.notify(MESSAGE_NOTIFICATION, notification);
+		mNotificationManager.notify(b.getEndpoint(), MESSAGE_NOTIFICATION, notification);
 	}
 }
