@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="de.tubs.ibr.dtn.chat"
-    android:versionCode="9"
+    android:versionCode="10"
     android:versionName="1.0" >
     
     <uses-sdk android:minSdkVersion="10" />
     
-	<uses-permission android:name="android.permission.VIBRATE"/>
 	<uses-permission android:name="de.tubs.ibr.dtn.permission.RECEIVE"/>
 
     <application
