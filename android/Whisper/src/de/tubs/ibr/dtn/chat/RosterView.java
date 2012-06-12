@@ -41,6 +41,7 @@ public class RosterView extends BaseAdapter {
 		public TextView text;
 		public TextView bottomText;
 		public Buddy buddy;
+		public ImageView drafticon;
 		public ImageView icon;
 	}
 	
@@ -84,6 +85,7 @@ public class RosterView extends BaseAdapter {
 			holder.text = (TextView) convertView.findViewById(R.id.label);
 			holder.bottomText = (TextView) convertView.findViewById(R.id.bottomtext);
 			holder.icon = (ImageView) convertView.findViewById(R.id.icon);
+			holder.drafticon = (ImageView) convertView.findViewById(R.id.drafticon);
 			convertView.setTag(holder);
 		} else {
 			holder = (ViewHolder) convertView.getTag();
@@ -136,6 +138,12 @@ public class RosterView extends BaseAdapter {
 		else
 		{
 			holder.bottomText.setText(holder.buddy.getEndpoint());
+		}
+		
+		if (holder.buddy.hasDraft()) {
+			holder.drafticon.setVisibility(View.VISIBLE);
+		} else {
+			holder.drafticon.setVisibility(View.GONE);
 		}
 		
 		return convertView;

@@ -163,7 +163,6 @@ public class MessageActivity extends ListActivity {
 		Buddy buddy = this.service.getRoster().get( buddyId );
 		String msg = buddy.getDraftMessage();
 		
-		
 		EditText text = (EditText) findViewById(R.id.textMessage);
 		text.setText("");
 		if (msg != null) text.append(msg);
