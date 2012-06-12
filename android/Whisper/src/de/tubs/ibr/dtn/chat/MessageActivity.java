@@ -118,6 +118,7 @@ public class MessageActivity extends ListActivity {
 	protected void onPause() {
 		unregisterReceiver(notify_receiver);
 		visibleBuddy = null;
+		saveDraftMessage();
 		super.onPause();
 	}
 
@@ -130,14 +131,44 @@ public class MessageActivity extends ListActivity {
 		
 		// set the current visible buddy
 		MessageActivity.visibleBuddy = buddyId;
-
-		if (this.view != null)
-		{
-			this.view.refresh();
-		}
 		
+		// load draft message
+		loadDraftMessage();
+
 		// refresh visible data
 		refresh();
+	}
+	
+	private void saveDraftMessage() {
+		if (service == null) return;
+		
+		// load buddy from roster
+		Buddy buddy = this.service.getRoster().get( buddyId );
+		
+		EditText text = (EditText) findViewById(R.id.textMessage);
+		String msg = text.getText().toString();
+		
+		if (msg.length() > 0)
+			buddy.setDraftMessage( msg );
+		else
+			buddy.setDraftMessage( null );
+		
+		this.service.getRoster().store(buddy);
+	}
+	
+	private void loadDraftMessage() {
+		if (service == null) return;
+		
+		// load buddy from roster
+		Buddy buddy = this.service.getRoster().get( buddyId );
+		String msg = buddy.getDraftMessage();
+		
+		
+		EditText text = (EditText) findViewById(R.id.textMessage);
+		text.setText("");
+		if (msg != null) text.append(msg);
+
+		text.requestFocus();
 	}
 	
 	private void flushTextBox()
@@ -145,7 +176,7 @@ public class MessageActivity extends ListActivity {
 		if (service == null) return;
 		
 		// load buddy from roster
-		Buddy buddy = MessageActivity.this.service.getRoster().get( buddyId );
+		Buddy buddy = this.service.getRoster().get( buddyId );
 		
 		EditText text = (EditText) findViewById(R.id.textMessage);
 		
@@ -223,9 +254,11 @@ public class MessageActivity extends ListActivity {
 		}
 	}
 	
-	
 	private void refresh(String buddyId) {
 		if ((this.buddyId != buddyId) && (this.view != null)) {
+			// save draft message
+			saveDraftMessage();
+			
 			this.view.onDestroy(this);
 			this.view = null;
 		}
@@ -255,6 +288,11 @@ public class MessageActivity extends ListActivity {
 			// activate message view
 			this.view = new MessageView(this, this.service.getRoster(), buddy);
 			this.setListAdapter(this.view);
+			
+			// load draft message
+			loadDraftMessage();
+		} else {
+			this.view.refresh();
 		}
 
 		setTitle(getResources().getString(R.string.conversation_with) + " " + buddy.getNickname());

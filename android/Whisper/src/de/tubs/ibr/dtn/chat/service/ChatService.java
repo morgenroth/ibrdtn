@@ -457,7 +457,8 @@ public class ChatService extends Service {
 		CharSequence contentText = b.getNickname() + ":\n" + msg.getPayload();
 
 		Intent notificationIntent = new Intent(this, MessageActivity.class);
-		notificationIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+		//notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		notificationIntent.setAction(ACTION_OPENCHAT);
 		notificationIntent.addCategory("android.intent.category.DEFAULT");
 		notificationIntent.putExtra("buddy", b.getEndpoint());

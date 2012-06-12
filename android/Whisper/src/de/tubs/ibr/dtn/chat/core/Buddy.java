@@ -10,14 +10,16 @@ public class Buddy implements Comparable<Buddy> {
 	private Date lastseen = null;
 	private String presence = null;
 	private String status = null;
+	private String draftmsg = null;
 
-	public Buddy(Roster roster, String nickname, String endpoint, String presence, String status)
+	public Buddy(Roster roster, String nickname, String endpoint, String presence, String status, String draftmsg)
 	{
 		this.nickname = nickname;
 		this.endpoint = endpoint;
 		this.lastseen = null;
 		this.presence = presence;
 		this.status = status;
+		this.draftmsg = draftmsg;
 	}
 
 	public Date getLastSeen() {
@@ -26,6 +28,18 @@ public class Buddy implements Comparable<Buddy> {
 
 	public void setLastSeen(Date lastseen) {
 		this.lastseen = lastseen;
+	}
+	
+	public String getDraftMessage() {
+		return this.draftmsg;
+	}
+	
+	public void setDraftMessage(String msg) {
+		this.draftmsg = msg;
+	}
+	
+	public Boolean hasDraft() {
+		return (this.draftmsg != null);
 	}
 	
 	public Boolean isOnline()

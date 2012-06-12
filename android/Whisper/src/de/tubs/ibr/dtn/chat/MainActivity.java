@@ -256,7 +256,8 @@ public class MainActivity extends ListActivity {
 		ViewHolder holder = (ViewHolder)v.getTag();
 		
 		Intent i = new Intent(MainActivity.this, MessageActivity.class);
-		i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//		i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		i.putExtra("buddy", holder.buddy.getEndpoint());
 		startActivity(i);
 	}

@@ -39,11 +39,11 @@ public class Roster extends LinkedList<Buddy> {
 	private class DBOpenHelper extends SQLiteOpenHelper {
 		
 		private static final String DATABASE_NAME = "dtnchat_user";
-		private static final int DATABASE_VERSION = 7;
+		private static final int DATABASE_VERSION = 8;
 		
 		// Database creation sql statement
 		private static final String DATABASE_CREATE_ROSTER = "create table roster (_id integer primary key autoincrement, "
-				+ "nickname text not null, endpoint text not null, lastseen text, presence text, status text);";
+				+ "nickname text not null, endpoint text not null, lastseen text, presence text, status text, draftmsg text);";
 		
 		private static final String DATABASE_CREATE_MESSAGES = "create table messages (_id integer primary key autoincrement, "
 				+ "buddy integer not null, direction text not null, created text not null, received text not null, payload text not null, flags integer not null);";
@@ -89,13 +89,13 @@ public class Roster extends LinkedList<Buddy> {
 		database = _helper.getWritableDatabase();
 		
 		// load all buddies
-		Cursor cur = database.query("roster", new String[] { "_id", "nickname", "endpoint", "presence", "status", "lastseen" }, null, null, null, null, null);
+		Cursor cur = database.query("roster", new String[] { "_id", "nickname", "endpoint", "presence", "status", "lastseen", "draftmsg" }, null, null, null, null, null, null);
 		Log.i(TAG, "query for buddies");
 		
 		cur.moveToFirst();
 		while (!cur.isAfterLast())
 		{
-			Buddy buddy = new Buddy(this, cur.getString(1), cur.getString(2), cur.getString(3), cur.getString(4) );
+			Buddy buddy = new Buddy(this, cur.getString(1), cur.getString(2), cur.getString(3), cur.getString(4), cur.getString(6) );
 			
 			// set the last seen parameter
 			if (!cur.isNull(5))
@@ -188,6 +188,7 @@ public class Roster extends LinkedList<Buddy> {
 		values.put("endpoint", endpointid);
 		values.putNull("presence");
 		values.putNull("status");
+		values.putNull("draftmsg");
 		
 		// store the new buddy
 		database.insert("roster", null, values);
@@ -223,6 +224,15 @@ public class Roster extends LinkedList<Buddy> {
 		else
 		{
 			values.putNull("status");
+		}
+		
+		if (buddy.getDraftMessage() != null)
+		{
+			values.put("draftmsg", buddy.getDraftMessage());
+		}
+		else
+		{
+			values.putNull("draftmsg");
 		}
 		
 		// update buddy data
@@ -329,7 +339,7 @@ public class Roster extends LinkedList<Buddy> {
 		}
 		
 		// buddy not found, create a new one
-		Buddy buddy = new Buddy(this, endpointid, endpointid, null, null);
+		Buddy buddy = new Buddy(this, endpointid, endpointid, null, null, null);
 		this.add(buddy);
 		
 		// create a new buddy in the database
