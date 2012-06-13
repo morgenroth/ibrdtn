@@ -1,4 +1,6 @@
 /*
+ * refcnt_ptr.h
+ *
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
  * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
