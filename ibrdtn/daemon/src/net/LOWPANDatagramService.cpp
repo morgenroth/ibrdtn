@@ -40,7 +40,7 @@ namespace dtn
 		 : _panid(panid), _iface(iface)
 		{
 			// set connection parameters
-			_params.max_msg_length = 111;
+			_params.max_msg_length = 113;
 			_params.max_seq_numbers = 8;
 			_params.flowcontrol = DatagramConnectionParameter::FLOW_NONE;
 
@@ -87,19 +87,11 @@ namespace dtn
 		void LOWPANDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const std::string &identifier, const char *buf, size_t length) throw (DatagramException)
 		{
 			try {
-				// Add own address at the end
-				struct sockaddr_ieee802154 sockaddr;
-				unsigned short local_addr;
-
 				if (length > _params.max_msg_length)
 				{
 					IBRCOMMON_LOGGER(error) << "LOWPANConvergenceLayer::send buffer to big to be transferred (" << length << ")."<< IBRCOMMON_LOGGER_ENDL;
 					throw DatagramException("send failed - buffer to big to be transferred");
 				}
-
-				// get the local address
-				_socket->getAddress(&sockaddr.addr, _iface);
-				local_addr = sockaddr.addr.short_addr;
 
 				// decode destination address
 				uint16_t addr = 0;
@@ -110,8 +102,8 @@ namespace dtn
 				// get a lowpan peer
 				ibrcommon::lowpansocket::peer p = _socket->getPeer(addr, panid);
 
-				// buffer for the datagram plus local address
-				char tmp[length + 4];
+				// buffer for the datagram
+				char tmp[length + 2];
 
 				// encode the flags (4-bit) + seqno (4-bit)
 				tmp[0] = (0x30 & (flags << 4)) | (0x0f & seqno);
@@ -137,11 +129,8 @@ namespace dtn
 					end_of_payload++;
 				}
 
-				// Add own address at the end
-				memcpy(&tmp[end_of_payload], &local_addr, 2);
-
 				// send converted line
-				if (p.send(buf, end_of_payload + 2) == -1)
+				if (p.send(buf, end_of_payload) == -1)
 				{
 					// CL is busy
 					throw DatagramException("send on socket failed");
@@ -159,19 +148,11 @@ namespace dtn
 		void LOWPANDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const char *buf, size_t length) throw (DatagramException)
 		{
 			try {
-				// Add own address at the end
-				struct sockaddr_ieee802154 sockaddr;
-				unsigned short local_addr;
-
 				if (length > _params.max_msg_length)
 				{
 					IBRCOMMON_LOGGER(error) << "LOWPANConvergenceLayer::send buffer to big to be transferred (" << length << ")."<< IBRCOMMON_LOGGER_ENDL;
 					throw DatagramException("send failed - buffer to big to be transferred");
 				}
-
-				// get the local address
-				_socket->getAddress(&sockaddr.addr, _iface);
-				local_addr = sockaddr.addr.short_addr;
 
 				// get a lowpan peer
 				ibrcommon::lowpansocket::peer p = _socket->getPeer(BROADCAST_ADDR, _panid);
@@ -180,7 +161,7 @@ namespace dtn
 				if (length == 0) length++;
 
 				// buffer for the datagram plus local address
-				char tmp[length + 4];
+				char tmp[length + 2];
 
 				// encode header: 2-bit unused, flags (2-bit) + seqno (4-bit)
 				tmp[0] = (0x30 & (flags << 4)) | (0x0f & seqno);
@@ -194,11 +175,8 @@ namespace dtn
 				// copy payload to the new buffer
 				::memcpy(&tmp[2], buf, length);
 
-				// Add own address at the end
-				memcpy(&tmp[length+2], &local_addr, 2);
-
 				// send converted line
-				if (p.send(buf, length + 4) == -1)
+				if (p.send(buf, length + 2) == -1)
 				{
 					// CL is busy
 					throw DatagramException("send on socket failed");
@@ -219,13 +197,13 @@ namespace dtn
 		size_t LOWPANDatagramService::recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (DatagramException)
 		{
 			try {
-				char tmp[length + 4];
+				char tmp[length + 2];
 
 				// Receive full frame from socket
-				std::string address;
+				std::string hwaddress;
 				uint16_t from = 0;
 				uint16_t pan_id = 0;
-				size_t ret = _socket->receive(tmp, length + 4, address, from, pan_id);
+				size_t ret = _socket->receive(tmp, length + 2, hwaddress, from, pan_id);
 
 				// decode type, flags and seqno
 				// extended mask are discovery and ACK datagrams
@@ -236,7 +214,8 @@ namespace dtn
 					type = tmp[1];
 
 					// copy payload to the destination buffer
-					::memcpy(buf, &tmp[2], ret - 4);
+					ret -= 2;
+					::memcpy(buf, &tmp[2], ret);
 				}
 				else
 				{
@@ -244,7 +223,8 @@ namespace dtn
 					type = DatagramConvergenceLayer::HEADER_SEGMENT;
 
 					// copy payload to the destination buffer
-					::memcpy(buf, &tmp[1], ret - 3);
+					ret -= 1;
+					::memcpy(buf, &tmp[1], ret);
 				}
 
 				// first byte contains flags (4-bit) + seqno (4-bit)
@@ -255,7 +235,7 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG(20) << "LOWPANDatagramService::recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << address << IBRCOMMON_LOGGER_ENDL;
 
-				return ret - 2;
+				return ret;
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("receive failed");
 			}
