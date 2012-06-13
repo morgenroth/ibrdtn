@@ -83,9 +83,19 @@ public class SessionManager {
 			String data = (String)entry.getValue();
 			
 			try {
-				Registration reg = (Registration)Base64.decodeToObject(data);
-				register(context, entry.getKey(), reg);
-				Log.d(TAG, "registration restored for " + entry.getKey());
+				Object regobj = Base64.decodeToObject(data);
+				
+				if (regobj instanceof Registration) {
+					// re-register registration
+					Registration reg = (Registration)regobj;
+					register(context, entry.getKey(), reg);
+					Log.d(TAG, "registration restored for " + entry.getKey());
+				} else {
+					// delete registration
+					Editor ed = prefs.edit();
+					ed.remove(entry.getKey());
+					ed.commit();
+				}
 			} catch (OptionalDataException e) {
 				Log.e(TAG, "error on restore registrations", e);
 			} catch (ClassNotFoundException e) {

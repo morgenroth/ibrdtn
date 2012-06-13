@@ -51,6 +51,7 @@ public class DaemonService extends Service {
 	
 	private Object _notification_lock = new Object();
 	private boolean _notification_dirty = false;
+	private Integer _notification_last_size = 0;
 	
 	private ExecutorService _executor = null;
 	
@@ -101,16 +102,8 @@ public class DaemonService extends Service {
 	private BroadcastReceiver _event_receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.EVENT)) {
-				if (intent.getStringExtra("name").equals("NodeEvent")) {
-					//Log.d(TAG, "NodeEvent: " + intent.getExtras().toString());
-					if ((intent.getStringExtra("action").equals("available")) ||
-							(intent.getStringExtra("action").equals("unavailable"))
-						)
-					{
-						updateNeighborNotification();
-					}
-				}
+			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.NEIGHBOR)) {
+				updateNeighborNotification();
 			}
 		}
 	};
@@ -136,6 +129,11 @@ public class DaemonService extends Service {
 			// state is online
 			Log.i(TAG, "Query neighbors");
 			List<String> neighbors = DaemonManager.getInstance().getNeighbors();
+			
+			synchronized(_notification_lock) {
+				if (_notification_last_size.equals(neighbors.size())) return;
+				_notification_last_size = neighbors.size();
+			}
 	
 			NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 			Notification n = null;
@@ -174,7 +172,7 @@ public class DaemonService extends Service {
 		_executor = Executors.newSingleThreadExecutor();
 		
 		// listen on daemon event broadcasts
-		IntentFilter event_filter = new IntentFilter(de.tubs.ibr.dtn.Intent.EVENT);
+		IntentFilter event_filter = new IntentFilter(de.tubs.ibr.dtn.Intent.NEIGHBOR);
 		event_filter.addCategory(Intent.CATEGORY_DEFAULT);
   		registerReceiver(_event_receiver, event_filter );
 		

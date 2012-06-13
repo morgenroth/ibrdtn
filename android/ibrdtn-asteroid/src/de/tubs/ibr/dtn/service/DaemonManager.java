@@ -123,23 +123,49 @@ public class DaemonManager {
 		public void eventRaised(Event evt)
 		{
 	        Intent event = new Intent(de.tubs.ibr.dtn.Intent.EVENT);
+	        Intent neighborIntent = null;
+	        
 	        event.addCategory(Intent.CATEGORY_DEFAULT);
 	        event.putExtra("name", evt.getName());
+	        
+	        if (evt.getName().equals("NodeEvent")) {
+	        	neighborIntent = new Intent(de.tubs.ibr.dtn.Intent.NEIGHBOR);
+	        	neighborIntent.addCategory(Intent.CATEGORY_DEFAULT);
+	        }
 	        
 	        // place the action into the intent
 	        if (evt.getAction() != null)
 	        {
 	        	event.putExtra("action", evt.getAction());
+	        	
+	        	if (neighborIntent != null) {
+		        	if (evt.getAction().equals("available")) {
+		        		neighborIntent.putExtra("action", "available");
+		        	}
+		        	else if (evt.getAction().equals("unavailable")) {
+		        		neighborIntent.putExtra("action", "unavailable");
+		        	}
+		        	else {
+		        		neighborIntent = null;
+		        	}
+	        	}
 	        }
 	        
 	        // put all attributes into the intent
 	        for (Map.Entry<String, String> entry : evt.getAttributes().entrySet())
 	        {
 	        	event.putExtra("attr:" + entry.getKey(), entry.getValue());
+	        	if (neighborIntent != null) {
+	        		neighborIntent.putExtra("attr:" + entry.getKey(), entry.getValue());
+	        	}
 	        }
 	        
 			// send event intent
 	        _context.sendBroadcast(event);
+	        
+	        if (neighborIntent != null) {
+	        	_context.sendBroadcast(neighborIntent);
+	        }
 	        
 	        if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "EVENT intent broadcasted: " + evt.getName() + "; Action: " + evt.getAction());
 		}

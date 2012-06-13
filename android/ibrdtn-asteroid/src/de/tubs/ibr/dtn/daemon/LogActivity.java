@@ -25,13 +25,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import de.tubs.ibr.dtn.DTNService;
 import android.graphics.Color;
-import de.tubs.ibr.dtn.R;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -42,21 +42,24 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
+import de.tubs.ibr.dtn.DTNService;
+import de.tubs.ibr.dtn.R;
 
 public class LogActivity extends ListActivity {
 	
 	private final static String TAG = "LogActivity"; 
 	private SmartListAdapter adapter = null;
 	private DTNService service = null;
-	
+
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			LogActivity.this.service = DTNService.Stub.asInterface(service);
 			Log.i(TAG, "service connected");
 			
-			(new LoadDataTask()).execute();
+			refreshView();
 		}
 
 		@Override
@@ -70,6 +73,9 @@ public class LogActivity extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
+		getListView().setStackFromBottom(true);
+
 		// create a new smart list adapter
 		adapter = new SmartListAdapter(this);
 		
@@ -87,41 +93,60 @@ public class LogActivity extends ListActivity {
 	protected void onDestroy() {
         // Detach our existing connection.
 		unbindService(mConnection);
-		
+
 		super.onDestroy();
 	}
+	
+	private void refreshView() {
+		if (LogActivity.this.service != null) {
+			(new LoadDataTask()).execute();
+		}
+	}
+	
+	@Override
+	protected void onPause() {
+		this.unregisterReceiver(_receiver);
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.EVENT);
+		filter.addCategory(Intent.CATEGORY_DEFAULT);
+		this.registerReceiver(_receiver, filter);
+		refreshView();
+	}
+
+	private BroadcastReceiver _receiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.EVENT)) {
+				refreshView();
+			}
+		}	
+	};
     
-	private class LoadDataTask extends AsyncTask<String, Integer, Boolean> {
-		protected Boolean doInBackground(String... data)
+	private class LoadDataTask extends AsyncTask<String, Integer, List<String>> {
+		protected List<String> doInBackground(String... data)
 		{
 			try {
 		        // query all logs
 				List<String> logs = service.getLog();
-				
-				// clear all data
-				LogActivity.this.adapter.clear();
-				
-				if (logs != null) {
-					for (String l : logs) {
-						LogActivity.this.adapter.add(new LogMessage(l));
-					}
-				}
 		        
-				return true;
+				return logs;
 			} catch (RemoteException e) {
-				return false;
+				return null;
 			}
 		}
 
 		protected void onProgressUpdate(Integer... progress) {
 		}
 
-		protected void onPostExecute(Boolean result)
+		protected void onPostExecute(List<String> logs)
 		{
-	        // refresh data view
-	        LogActivity.this.adapter.refresh();
-	        
-	        getListView().setSelection(adapter.getCount() - 1);
+			if (logs == null) return;
+			LogActivity.this.adapter.refresh(logs);
 		}
 	}
 	
@@ -220,6 +245,18 @@ public class LogActivity extends ListActivity {
 			holder.textTag.setText(holder.msg.tag);
 			
 			return convertView;
+		}
+		
+		public synchronized void refresh(List<String> logs) {
+			// clear all data
+			clear();
+			
+			for (String l : logs) {
+				add(new LogMessage(l));
+			}
+			
+	        // refresh data view
+	        refresh();
 		}
 		
 		public void refresh()

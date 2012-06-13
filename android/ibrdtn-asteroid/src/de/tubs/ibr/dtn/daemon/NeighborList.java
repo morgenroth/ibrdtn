@@ -27,18 +27,20 @@ import java.util.List;
 import java.util.Map;
 
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import de.tubs.ibr.dtn.DTNService;
-import de.tubs.ibr.dtn.R;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 import android.widget.ListAdapter;
 import android.widget.SimpleAdapter;
+import de.tubs.ibr.dtn.DTNService;
+import de.tubs.ibr.dtn.R;
 
 public class NeighborList extends ListActivity {
 	
@@ -51,7 +53,10 @@ public class NeighborList extends ListActivity {
 			NeighborList.this.service = DTNService.Stub.asInterface(service);
 			Log.i("IBR-DTN", "NeighborList: service connected");
 			
-			(new LoadNeighborList()).execute();
+			IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.NEIGHBOR);
+			filter.addCategory(Intent.CATEGORY_DEFAULT);
+			NeighborList.this.registerReceiver(_receiver, filter);
+			refreshView();
 		}
 
 		@Override
@@ -61,55 +66,59 @@ public class NeighborList extends ListActivity {
 		}
 	};
 	
+	private BroadcastReceiver _receiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.NEIGHBOR)) {
+				refreshView();
+			}
+		}	
+	};
+	
+	private void refreshView() {
+		if (NeighborList.this.service != null) {
+			(new LoadNeighborList()).execute();
+		}
+	}
+	
     @Override
 	protected void onPause() {
         // Detach our existing connection.
+    	NeighborList.this.unregisterReceiver(_receiver);
 		unbindService(mConnection);
-		
 		super.onPause();
 	}
 
 	@Override
 	protected void onResume() {
+		super.onResume();
+		
 		// Establish a connection with the service.  We use an explicit
 		// class name because we want a specific service implementation that
 		// we know will be running in our own process (and thus won't be
 		// supporting component replacement by other applications).
 		bindService(new Intent(DTNService.class.getName()), mConnection, Context.BIND_AUTO_CREATE);
-  		
-		super.onResume();
 	}
     
-	private class LoadNeighborList extends AsyncTask<String, Integer, Boolean> {
-		protected Boolean doInBackground(String... data)
+	private class LoadNeighborList extends AsyncTask<String, Integer, List<String>> {
+		protected List<String> doInBackground(String... data)
 		{
 			try {
 		        // query all neighbors
 				List<String> neighbors = service.getNeighbors();
-			
-				// clear all data
-				_data.clear();
-				
-				if (neighbors != null) {
-					for (String n : neighbors)
-					{
-						HashMap<String, String> m = new HashMap<String, String>();
-						m.put("eid", n);
-						_data.add( m );
-					}
-				}
-		        
-				return true;
+				return neighbors;
 			} catch (RemoteException e) {
-				return false;
+				return null;
 			}
 		}
 
 		protected void onProgressUpdate(Integer... progress) {
 		}
 
-		protected void onPostExecute(Boolean result)
+		protected void onPostExecute(List<String> neighbors)
 		{
+			if (neighbors == null) return;
+			
 	        // Now create a new list adapter bound to the cursor.
 	        // SimpleListAdapter is designed for binding to a Cursor.
 	        ListAdapter adapter = new SimpleAdapter(
@@ -119,9 +128,21 @@ public class NeighborList extends ListActivity {
 	                new String[] { "eid" },
 	                new int[] { R.id.text1 }
 	        );
+	        
+	        synchronized(_data) {
+				// clear all data
+				_data.clear();
+				
+				for (String n : neighbors)
+				{
+					HashMap<String, String> m = new HashMap<String, String>();
+					m.put("eid", n);
+					_data.add( m );
+				}
 
-	        // Bind to our new adapter.
-	        setListAdapter(adapter);
+				// Bind to our new adapter.
+				setListAdapter(adapter);
+	        }
 		}
 	}
 }
