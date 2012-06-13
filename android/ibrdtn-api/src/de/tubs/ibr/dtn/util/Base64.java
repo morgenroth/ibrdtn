@@ -1,5 +1,3 @@
-package de.tubs.ibr.dtn.util;
-
 /**
  * <p>Encodes and decodes to and from Base64 notation.</p>
  * <p>Homepage: <a href="http://iharder.net/base64">http://iharder.net/base64</a>.</p>
@@ -147,6 +145,9 @@ package de.tubs.ibr.dtn.util;
  * @author rob@iharder.net
  * @version 2.3.7
  */
+
+package de.tubs.ibr.dtn.util;
+
 public class Base64
 {
     
