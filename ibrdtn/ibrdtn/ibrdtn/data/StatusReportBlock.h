@@ -19,8 +19,6 @@
  *
  */
 
-
-
 #ifndef STATUSREPORTBLOCK_H_
 #define STATUSREPORTBLOCK_H_
 
