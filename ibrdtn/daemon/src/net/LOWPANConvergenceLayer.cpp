@@ -50,7 +50,7 @@ namespace dtn
 	{
 		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, unsigned int mtu)
 			: DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-			  _socket(NULL), _net(net), _panid(panid), _ipnd_buf(new char[BUFF_SIZE+2]), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
+			  _socket(NULL), _net(net), _panid(panid), _ipnd_buf(new char[BUFF_SIZE]), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
 		{
 			_socket = new ibrcommon::UnicastSocketLowpan();
 		}
@@ -103,17 +103,14 @@ namespace dtn
 
 			// get a lowpan peer
 			ibrcommon::lowpansocket::peer p = _socket->getPeer(address, _sockaddr.addr.pan_id);
-			if (len > 113)
+			if (len > 115)
 				IBRCOMMON_LOGGER(error) << "LOWPANConvergenceLayer::send_cb buffer to big to be transferred (" << len << ")."<< IBRCOMMON_LOGGER_ENDL;
-
-			// Add own address at the end
-			memcpy(&buf[len], &local_addr, 2);
 
 			// set write lock
 			ibrcommon::MutexLock l(m_writelock);
 
 			// send converted line
-			int ret = p.send(buf, len + 2);
+			int ret = p.send(buf, len);
 
 			if (ret == -1)
 			{
@@ -237,7 +234,7 @@ namespace dtn
 			ss << announcement;
 
 			int len = ss.str().size();
-			if (len > 111)
+			if (len > 113)
 				IBRCOMMON_LOGGER(error) << "Discovery announcement to big (" << len << ")" << IBRCOMMON_LOGGER_ENDL;
 
 			memcpy(_ipnd_buf+2, ss.str().c_str(), len);
@@ -257,14 +254,12 @@ namespace dtn
 				char header;
 				uint16_t address = 0;
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::componentRun early" << IBRCOMMON_LOGGER_ENDL;
-
 				// Receive full frame from socket
 				std::string hwaddress;
 				uint16_t pan_id = 0;
 				int len = _socket->receive(data, m_maxmsgsize, hwaddress, address, pan_id);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::componentRun" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(10) << "Received IEEE 802.15.4 frame from " << address << " (" << hwaddress << ")" << IBRCOMMON_LOGGER_ENDL;
 
 				// We got nothing from the socket, keep reading
 				if (len <= 0)
@@ -273,15 +268,11 @@ namespace dtn
 				// Retrieve header of frame
 				header = data[0];
 
-//				// Retrieve sender address from the end of the frame
-//				address = ((char)data[len-1] << 8) | data[len-2];
-
 				// Check for extended header and retrieve if available
 				if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {
-					IBRCOMMON_LOGGER_DEBUG(10) << "Received announcement for LoWPAN discovery: ADDRESS " << address << IBRCOMMON_LOGGER_ENDL;
 					DiscoveryAnnouncement announce;
 					stringstream ss;
-					ss.write(data+2, len-4);
+					ss.write(data+2, len-2);
 					ss >> announce;
 					DiscoveryAgent::received(announce, 30);
 					continue;
@@ -293,7 +284,7 @@ namespace dtn
 				LOWPANConnection* connection = getConnection(address);
 
 				// Decide in which queue to write based on the src address
-				connection->getStream().queue(data, len-2); // Cut off address from end
+				connection->getStream().queue(data, len);
 
 				yield();
 			}

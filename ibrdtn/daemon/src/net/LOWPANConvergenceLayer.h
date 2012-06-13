@@ -79,7 +79,7 @@ namespace dtn
 			 */
 			virtual void send_cb(char *buf, int len, unsigned int address);
 
-			static const size_t BUFF_SIZE = 113;
+			static const size_t BUFF_SIZE = 115;
 
 			void remove(const LOWPANConnection *conn);
 

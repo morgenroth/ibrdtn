@@ -251,9 +251,6 @@ namespace dtn
 				flags = 0x0f & (tmp[0] >> 4);
 				seqno = 0x0f & tmp[0];
 
-//				// Retrieve sender address from the end of the frame
-//				uint16_t from = ((char)tmp[length-1] << 8) | tmp[length-2];
-
 				address = LOWPANDatagramService::encode(from, pan_id);
 
 				IBRCOMMON_LOGGER_DEBUG(20) << "LOWPANDatagramService::recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << address << IBRCOMMON_LOGGER_ENDL;
@@ -262,6 +259,8 @@ namespace dtn
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("receive failed");
 			}
+
+			return 0;
 		}
 
 		/**

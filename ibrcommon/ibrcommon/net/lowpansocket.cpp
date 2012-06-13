@@ -29,6 +29,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sstream>
+#include <iomanip>
 
 #if defined HAVE_LIBNL || HAVE_LIBNL3
 #include <netlink/route/link.h>
@@ -84,11 +85,16 @@ namespace ibrcommon
 
 		int ret = recvfrom(fd, data, maxbuffer, MSG_WAITALL, (struct sockaddr *) &clientAddress, &clientAddressLength);
 
+		std::stringstream hwaddr;
+		hwaddr << setfill('0');
+		for (int i = 7; i >= 0; i--) {
+			if (i < 7) hwaddr << ":";
+			hwaddr << std::hex << setw(2) << (unsigned int)clientAddress.addr.hwaddr[i];
+		}
+
+		address = hwaddr.str();
 		pan_id = ntohs(clientAddress.addr.pan_id);
 		shortaddr = ntohs(clientAddress.addr.short_addr);
-
-		std::stringstream ss; ss << shortaddr;
-		address = ss.str();
 
 		return ret;
 	}
