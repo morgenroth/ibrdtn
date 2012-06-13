@@ -1,5 +1,3 @@
-package ibrdtn.api;
-
 /**
  * <p>Encodes and decodes to and from Base64 notation.</p>
  * <p>Homepage: <a href="http://iharder.net/base64">http://iharder.net/base64</a>.</p>
@@ -147,6 +145,8 @@ package ibrdtn.api;
  * @author rob@iharder.net
  * @version 2.3.7
  */
+package ibrdtn.api;
+
 public class Base64
 {
     
