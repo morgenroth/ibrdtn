@@ -360,7 +360,7 @@ namespace dtn
 			try {
 				dtn::security::SecurityManager::getInstance().fastverify(b);
 			} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
-				IBRCOMMON_LOGGER(notice) << "bundle rejected: security checks failed: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(5) << "[bundle rejected] security checks failed, reason: " << ex.what() << ", bundle: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("security checks failed");
 			}
 #endif
