@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="security_modes_names">
+        <item>Deaktiviert</item>
+        <item>Authentisierung erforderlich (BAB)</item>
+    </string-array>
+    <string-array name="security_modes_values">
+        <item>disabled</item>
+        <item>bab</item>
+    </string-array>    
+</resources>

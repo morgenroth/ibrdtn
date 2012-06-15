@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
-  xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 	<PreferenceScreen android:key="applist" android:title="@string/applist">
 	    <intent android:action="android.intent.action.VIEW" android:targetPackage="de.tubs.ibr.dtn" android:targetClass="de.tubs.ibr.dtn.daemon.AppListActivity" />
 	</PreferenceScreen>
@@ -15,7 +14,7 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/discovery">
         <CheckBoxPreference android:summary="@string/discovery_announce_desc" android:title="@string/discovery_announce" android:key="discovery_announce" android:defaultValue="true" android:dependency="checkActivate"></CheckBoxPreference>
-        <CheckBoxPreference android:key="discovery_multicast" android:summary="@string/discovery_multicast_desc" android:title="@string/discovery_multicast" android:dependency="checkActivate"></CheckBoxPreference>
+        <CheckBoxPreference android:key="discovery_multicast" android:summary="@string/discovery_multicast_desc" android:title="@string/discovery_multicast" android:dependency="checkActivate" android:defaultValue="true"></CheckBoxPreference>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/interfaces" android:key="interfaces" android:dependency="checkActivate">
     </PreferenceCategory>
@@ -27,9 +26,12 @@
     </PreferenceCategory>
  -->
  
-    <PreferenceCategory android:title="@string/constrains">
+    <PreferenceCategory android:title="@string/security">
         <CheckBoxPreference android:title="@string/pref_constrains_lifetime" android:key="constrains_lifetime" android:dependency="checkActivate" android:summary="@string/pref_constrains_lifetime_summary"/>
         <CheckBoxPreference android:title="@string/pref_constrains_timestamp" android:key="constrains_timestamp" android:dependency="checkActivate" android:summary="@string/pref_constrains_timestamp_summary"/>
+        <ListPreference android:summary="@string/pref_security_mode_desc" android:title="@string/pref_security_mode" android:key="security_mode" android:dependency="checkActivate" android:entries="@array/security_modes_names" android:entryValues="@array/security_modes_values" android:defaultValue="disabled"/><EditTextPreference android:summary="@string/pref_bab_key_desc" android:title="@string/pref_bab_key" android:key="security_bab_key" android:dependency="checkActivate"/>
+        
+        
     </PreferenceCategory>
     
     <PreferenceCategory android:title="System">

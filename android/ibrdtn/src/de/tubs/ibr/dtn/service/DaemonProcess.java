@@ -325,12 +325,45 @@ public class DaemonProcess extends Thread {
 				p.println("limit_predated_timestamp = 1209600");
 			}
 			
+			String secmode = preferences.getString("security_mode", "disabled");
+			
+			if (!secmode.equals("disabled")) {
+				File sec_folder = new File(context.getFilesDir().getPath() + "/bpsec");
+				if (!sec_folder.exists() || sec_folder.isDirectory()) {
+					p.println("security_path = " + sec_folder.getPath());
+				}
+			}
+			
+			if (secmode.equals("bab"))
+			{
+				// write default BAB key to file
+				String bab_key = preferences.getString("security_bab_key", "");
+				File bab_file = new File(context.getFilesDir().getPath() + "/default-bab-key.mac");
+
+				// remove old key file
+				if (bab_file.exists()) bab_file.delete();
+				
+				FileOutputStream bab_output = context.openFileOutput("default-bab-key.mac", Context.MODE_PRIVATE);
+				PrintStream bab_writer = new PrintStream(bab_output);
+				bab_writer.print(bab_key);
+				bab_writer.flush();
+				bab_writer.close();
+				
+				if (bab_key.length() > 0) {
+					// enable security extension: BAB
+					p.println("security_level = 1");
+					
+					// add BAB key to the configuration
+					p.println("security_bab_default_key = " + bab_file.getPath());
+				}
+			}
+			
 			if  (preferences.getBoolean("checkIdleTimeout", false))
 			{
 				p.println("tcp_idle_timeout = 30");
 			}
 			
-			if (preferences.getBoolean("discovery_multicast", false))
+			if (preferences.getBoolean("discovery_multicast", true))
 			{
 				p.println("discovery_address = 224.0.0.142");
 			}
