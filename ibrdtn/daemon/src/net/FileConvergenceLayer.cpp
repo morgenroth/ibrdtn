@@ -292,12 +292,6 @@ namespace dtn
 					// load meta data
 					d >> bundle;
 
-					// increment value in the scope control hop limit block
-					try {
-						dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
-						schl.increment();
-					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { }
-
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(n.getEID(), bundle, false, true);
 				}

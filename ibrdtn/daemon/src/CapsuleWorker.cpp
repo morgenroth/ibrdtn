@@ -23,7 +23,6 @@
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleCore.h"
 #include <ibrdtn/data/PayloadBlock.h>
-#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
 
@@ -68,12 +67,6 @@ namespace dtn
 
 						// validate the bundle
 						dtn::core::BundleCore::getInstance().validate(b);
-
-						// increment value in the scope control hop limit block
-						try {
-							dtn::data::ScopeControlHopLimitBlock &schl = b.getBlock<dtn::data::ScopeControlHopLimitBlock>();
-							schl.increment();
-						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(capsule._source, b, false, true);

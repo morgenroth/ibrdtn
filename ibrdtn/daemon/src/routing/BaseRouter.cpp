@@ -43,6 +43,7 @@
 #include "routing/NodeHandshakeExtension.h"
 #include "routing/RetransmissionExtension.h"
 
+#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 
 #include <ibrcommon/Logger.h>
@@ -341,12 +342,19 @@ namespace dtn
 					// if the bundle is not known
 					else if (!filterKnown(received.bundle))
 					{
-#ifdef WITH_BUNDLE_SECURITY
 						// security methods modifies the bundle, thus we need a copy of it
 						dtn::data::Bundle bundle = received.bundle;
 
+#ifdef WITH_BUNDLE_SECURITY
 						// lets see if signatures and hashes are correct and remove them if possible
 						dtn::security::SecurityManager::getInstance().verify(bundle);
+#endif
+
+						// increment value in the scope control hop limit block
+						try {
+							dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+							schl.increment();
+						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// prevent loops
 						{
@@ -358,10 +366,6 @@ namespace dtn
 
 						// store the bundle into a storage module
 						_storage.store(bundle);
-#else
-						// store the bundle into a storage module
-						_storage.store(received.bundle);
-#endif
 
 						// raise the queued event to notify all receivers about the new bundle
 						QueueBundleEvent::raise(received.bundle, received.peer);

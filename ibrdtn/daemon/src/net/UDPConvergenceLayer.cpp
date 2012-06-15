@@ -30,7 +30,6 @@
 
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/data/Serializer.h>
-#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 
 #include <ibrcommon/net/UnicastSocket.h>
 #include <ibrcommon/net/vaddress.h>
@@ -274,12 +273,6 @@ namespace dtn
 
 					// TODO: determine sender
 					EID sender;
-
-					// increment value in the scope control hop limit block
-					try {
-						dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
-						schl.increment();
-					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(sender, bundle, false, true);

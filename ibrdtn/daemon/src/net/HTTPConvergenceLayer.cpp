@@ -26,7 +26,6 @@
 
 #include "net/HTTPConvergenceLayer.h"
 #include "core/BundleCore.h"
-#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <memory>
 
 namespace dtn
@@ -273,12 +272,6 @@ namespace dtn
 						
 						// validate the bundle
 						dtn::core::BundleCore::getInstance().validate(bundle);
-
-						// increment value in the scope control hop limit block
-						try {
-							dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
-							schl.increment();
-						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle, false, true);
