@@ -6,7 +6,7 @@
      >
      
 	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	    android:id="@+id/layoutTitleBar"
+	    android:id="@+id/roster_layoutTitleBar"
 	    android:layout_width="fill_parent"
 	    android:layout_height="52dp"
 	    android:background="@null"
@@ -53,6 +53,7 @@
 	</LinearLayout>
 	
 	<View
+	    android:id="@+id/roster_titlebar_separator"
 	    android:layout_width="match_parent"
 	    android:layout_height="2dp"
 	    android:background="@color/blue"

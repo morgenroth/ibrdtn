@@ -28,6 +28,7 @@ import android.preference.PreferenceManager;
 import de.tubs.ibr.dtn.chat.service.EventReceiver;
 
 public class Preferences extends PreferenceActivity {
+	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 	    super.onCreate(savedInstanceState);

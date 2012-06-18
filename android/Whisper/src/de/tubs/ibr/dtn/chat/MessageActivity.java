@@ -23,6 +23,7 @@ package de.tubs.ibr.dtn.chat;
 
 import java.util.Date;
 
+import android.app.ActionBar;
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -33,6 +34,7 @@ import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -41,10 +43,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
+import android.view.Window;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Message;
@@ -85,6 +89,10 @@ public class MessageActivity extends ListActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
+		if (android.os.Build.VERSION.SDK_INT < 11) {
+			requestWindowFeature(Window.FEATURE_NO_TITLE);
+		}
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.chat_main);
 		
@@ -120,6 +128,18 @@ public class MessageActivity extends ListActivity {
 	    // supporting component replacement by other applications).
 	    bindService(new Intent(MessageActivity.this, 
 	            ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+	}
+	
+	@Override
+	protected void onPostCreate(Bundle savedInstanceState) {
+	    if (android.os.Build.VERSION.SDK_INT >= 11) {
+	    	RelativeLayout layout = (RelativeLayout)findViewById(R.id.layoutTitleBar);
+	    	View view = (View)findViewById(R.id.titlebar_separator);
+	    	view.setVisibility(View.GONE);
+	    	layout.setVisibility(View.GONE);
+	    }
+	    
+	    super.onPostCreate(savedInstanceState);
 	}
 
 	@Override
@@ -315,76 +335,77 @@ public class MessageActivity extends ListActivity {
 			this.view.refresh();
 		}
 
-		setTitle(getResources().getString(R.string.conversation_with) + " " + buddy.getNickname());
-		
-		ImageView iconTitleBar = (ImageView) findViewById(R.id.iconTitleBar);
-		TextView labelTitleBar = (TextView) findViewById(R.id.labelTitleBar);
-		TextView bottomtextTitleBar = (TextView) findViewById(R.id.bottomtextTitleBar);
-		
-		labelTitleBar.setText( buddy.getNickname() );
-		bottomtextTitleBar.setText( buddy.getStatus() );
-		
+	    String presence_tag = buddy.getPresence();
+	    String presence_nick = buddy.getNickname();
+	    String presence_text = buddy.getEndpoint();
+	    int presence_icon = R.drawable.offline;
+	    
 		if (buddy.getStatus() != null)
 		{
 			if (buddy.getStatus().length() > 0) { 
-				bottomtextTitleBar.setText(buddy.getStatus());
+				presence_text = buddy.getStatus();
 			} else {
-				bottomtextTitleBar.setText(buddy.getEndpoint());
+				presence_text = buddy.getEndpoint();
 			}
 		}
-		else
+		
+		if ((presence_tag != null) && buddy.isOnline())
 		{
-			bottomtextTitleBar.setText(buddy.getEndpoint());
-		}
-		
-		String presence = buddy.getPresence();
-		
-		iconTitleBar.setImageResource(R.drawable.online);
-		
-		if (presence != null)
-		{
-			if (presence.equalsIgnoreCase("unavailable"))
+			if (presence_tag.equalsIgnoreCase("unavailable"))
 			{
-				iconTitleBar.setImageResource(R.drawable.offline);
+				presence_icon = R.drawable.offline;
 			}
-			else if (presence.equalsIgnoreCase("xa"))
+			else if (presence_tag.equalsIgnoreCase("xa"))
 			{
-				iconTitleBar.setImageResource(R.drawable.xa);
+				presence_icon = R.drawable.xa;
 			}
-			else if (presence.equalsIgnoreCase("away"))
+			else if (presence_tag.equalsIgnoreCase("away"))
 			{
-				iconTitleBar.setImageResource(R.drawable.away);
+				presence_icon = R.drawable.away;
 			}
-			else if (presence.equalsIgnoreCase("dnd"))
+			else if (presence_tag.equalsIgnoreCase("dnd"))
 			{
-				iconTitleBar.setImageResource(R.drawable.busy);
+				presence_icon = R.drawable.busy;
 			}
-			else if (presence.equalsIgnoreCase("chat"))
+			else if (presence_tag.equalsIgnoreCase("chat"))
 			{
-				iconTitleBar.setImageResource(R.drawable.online);
+				presence_icon = R.drawable.online;
 			}
 		}
 		
-		// if the presence is older than 60 minutes then mark the buddy as offline
-		if (!buddy.isOnline())
-		{
-			iconTitleBar.setImageResource(R.drawable.offline);
-		}
+		this.setTitle(getResources().getString(R.string.conversation_with) + " " + presence_nick);
+		
+	    if (android.os.Build.VERSION.SDK_INT >= 11) {
+	    	ActionBar actionbar = getActionBar();
+	    	actionbar.setTitle(presence_nick);
+	    	actionbar.setSubtitle(presence_text);
+		    actionbar.setIcon(presence_icon);
+	    } else {
+			ImageView iconTitleBar = (ImageView) findViewById(R.id.iconTitleBar);
+			TextView labelTitleBar = (TextView) findViewById(R.id.labelTitleBar);
+			TextView bottomtextTitleBar = (TextView) findViewById(R.id.bottomtextTitleBar);
+		
+			labelTitleBar.setText( presence_nick );
+			bottomtextTitleBar.setText( presence_text );
+			iconTitleBar.setImageResource(presence_icon);
+	    }
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
 	    inflater.inflate(R.menu.message_menu, menu);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearMessages), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+//	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClose), MenuItemCompat.SHOW_AS_ACTION_ALWAYS);
 	    return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
-	    	case R.id.itemClose:
-	    		this.finish();
-	    		return true;
+//	    	case R.id.itemClose:
+//	    		this.finish();
+//	    		return true;
 	    		
 	    	case R.id.itemClearMessages:
 	    		if (service != null) {	    		

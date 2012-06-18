@@ -21,6 +21,7 @@
  */
 package de.tubs.ibr.dtn.chat;
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ComponentName;
@@ -34,6 +35,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -41,9 +43,11 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.RosterView.ViewHolder;
@@ -51,7 +55,6 @@ import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.service.ChatService;
 
 public class MainActivity extends ListActivity {
-	
 	private final String TAG = "MainActivity";
 	private RosterView view = null;
 	private ChatService service = null;
@@ -143,6 +146,10 @@ public class MainActivity extends ListActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
+		if (android.os.Build.VERSION.SDK_INT < 11) {
+			requestWindowFeature(Window.FEATURE_NO_TITLE);
+		}
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.roster_main);
 		
@@ -156,6 +163,19 @@ public class MainActivity extends ListActivity {
 		registerForContextMenu(lv);
 	}
 	
+	@Override
+	protected void onPostCreate(Bundle savedInstanceState) {
+		
+	    if (android.os.Build.VERSION.SDK_INT >= 11) {
+	    	LinearLayout layout = (LinearLayout)findViewById(R.id.roster_layoutTitleBar);
+	    	View view = (View)findViewById(R.id.roster_titlebar_separator);
+	    	view.setVisibility(View.GONE);
+	    	layout.setVisibility(View.GONE);
+	    }
+	    
+	    super.onPostCreate(savedInstanceState);
+	}
+	
 	private void refresh()
 	{
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -167,6 +187,11 @@ public class MainActivity extends ListActivity {
 	    String presence_tag = preferences.getString("presencetag", "auto");
 	    String presence_nick = preferences.getString("editNickname", "Nobody");
 	    String presence_text = preferences.getString("statustext", "");
+	    int presence_icon = R.drawable.online;
+	    
+	    if (presence_text.length() == 0) {
+	    	presence_text = "<" + getResources().getString(R.string.no_status_message) + ">";
+	    }
 	    
 	    if (presence_tag.equals("auto"))
 	    {
@@ -180,41 +205,44 @@ public class MainActivity extends ListActivity {
 		    }
 	    }
 	    
-	    ImageView icon = (ImageView)findViewById(R.id.iconTitleBar);
-	    
 		if (presence_tag != null)
 		{
 			if (presence_tag.equalsIgnoreCase("unavailable"))
 			{
-				icon.setImageResource(R.drawable.offline);
+				presence_icon = R.drawable.offline;
 			}
 			else if (presence_tag.equalsIgnoreCase("xa"))
 			{
-				icon.setImageResource(R.drawable.xa);
+				presence_icon = R.drawable.xa;
 			}
 			else if (presence_tag.equalsIgnoreCase("away"))
 			{
-				icon.setImageResource(R.drawable.away);
+				presence_icon = R.drawable.away;
 			}
 			else if (presence_tag.equalsIgnoreCase("dnd"))
 			{
-				icon.setImageResource(R.drawable.busy);
+				presence_icon = R.drawable.busy;
 			}
 			else if (presence_tag.equalsIgnoreCase("chat"))
 			{
-				icon.setImageResource(R.drawable.online);
+				presence_icon = R.drawable.online;
 			}
 		}
-		
-		TextView nicknameLabel = (TextView)findViewById(R.id.labelTitleBar);
-		TextView statusLabel = (TextView)findViewById(R.id.bottomtextTitleBar);
-		nicknameLabel.setText(presence_nick);
-		
-		if (presence_text.length() > 0) {
+	    
+	    if (android.os.Build.VERSION.SDK_INT >= 11) {
+	    	ActionBar actionbar = getActionBar();
+	    	actionbar.setTitle(presence_nick);
+	    	actionbar.setSubtitle(presence_text);
+		    actionbar.setIcon(presence_icon);
+	    } else {
+		    ImageView icon = (ImageView)findViewById(R.id.iconTitleBar);
+			TextView nicknameLabel = (TextView)findViewById(R.id.labelTitleBar);
+			TextView statusLabel = (TextView)findViewById(R.id.bottomtextTitleBar);
+			
+			icon.setImageResource(presence_icon);
+			nicknameLabel.setText(presence_nick);
 			statusLabel.setText(presence_text);
-		} else {
-			statusLabel.setText("<" + getResources().getString(R.string.no_status_message) + ">");
-		}
+	    }
 		
 		if (this.view != null)
 		{
@@ -226,6 +254,7 @@ public class MainActivity extends ListActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
 	    inflater.inflate(R.menu.buddy_menu, menu);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemPreferences), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    return true;
 	}
 	

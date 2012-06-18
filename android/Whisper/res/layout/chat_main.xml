@@ -47,6 +47,7 @@
 	</RelativeLayout>
 	
 	<View
+	    android:id="@+id/titlebar_separator"
 	    android:layout_width="match_parent"
 	    android:layout_height="2dp"
 	    android:background="@color/blue"
@@ -99,6 +100,7 @@
 	    </LinearLayout>
 
         <ImageButton
+            android:contentDescription="Send button"
             android:id="@+id/buttonSend"
             android:layout_width="48dp"
             android:layout_height="48dp"
