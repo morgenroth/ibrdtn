@@ -176,9 +176,9 @@ public class Preferences extends PreferenceActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
 	    inflater.inflate(R.menu.main_menu, menu);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemNeighbors), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemShowLog), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearStorage), MenuItemCompat.SHOW_AS_ACTION_NEVER);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemNeighbors), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemShowLog), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearStorage), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    return true;
 	}
 	
