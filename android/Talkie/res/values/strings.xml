@@ -8,6 +8,8 @@
     <string name="new_message_received">New message received</string>
     <string name="from">From</string>
     <string name="button_talk">Talk</string>
+    <string name="autorec">Auto-Record</string>
+    <string name="autoplay">Auto-Play</string>
     <string name="alert_missing_daemon">The DTN daemon is not installed. Would you like to install it now?</string>
     <string name="alert_yes">Yes</string>
     <string name="alert_no">No</string>

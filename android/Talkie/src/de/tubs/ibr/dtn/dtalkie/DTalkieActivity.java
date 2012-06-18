@@ -45,14 +45,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnCreateContextMenuListener;
 import android.view.View.OnTouchListener;
 import android.widget.AdapterView;
@@ -61,7 +62,6 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.ToggleButton;
 import de.tubs.ibr.dtn.dtalkie.db.Message;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
@@ -99,8 +99,8 @@ public class DTalkieActivity extends Activity {
 				if (far) {
 					stopRecording(RecState.SENSOR_RECORDING);
 				} else {
-					ToggleButton buttonSensor = (ToggleButton) findViewById(R.id.buttonSensor);
-					if (buttonSensor.isChecked()) startRecording(RecState.SENSOR_RECORDING);
+					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DTalkieActivity.this);
+					if (prefs.getBoolean("sensor", false)) startRecording(RecState.SENSOR_RECORDING);
 				}
 			}
 		}
@@ -118,30 +118,10 @@ public class DTalkieActivity extends Activity {
         setContentView(R.layout.main);
         
         manager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DTalkieActivity.this);
-        
+
         // set volume control to MUSIC
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
-        
-        // restore autoplay option
-        ToggleButton buttonAutoPlay = (ToggleButton) findViewById(R.id.buttonAutoplay);
-		buttonAutoPlay.setChecked(prefs.getBoolean("autoplay", false));
-		
-        // restore sensor option
-        final ToggleButton buttonSensor = (ToggleButton) findViewById(R.id.buttonSensor);
-        buttonSensor.setChecked(prefs.getBoolean("sensor", false));
-        
-		buttonSensor.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DTalkieActivity.this);
-				Editor edit = prefs.edit();
-				edit.putBoolean("sensor", prefs.getBoolean("sensor", false));
-				edit.commit();
-			}
-		});
-		
+        	
 		Intent checkService = new Intent("de.tubs.ibr.dtn.DTNService");
 		List<ResolveInfo> list = getPackageManager().queryIntentServices(checkService, 0);    
 		if (list.size() > 0)
@@ -187,11 +167,10 @@ public class DTalkieActivity extends Activity {
     	
     	MessageDatabase db = this.service.getDatabase();
     	
-    	Message msg = db.get(Folder.INBOX, info.position);
-    	
     	switch (item.getItemId())
     	{
     	case R.id.itemDelete:
+    		Message msg = db.get(Folder.INBOX, info.position);
     		db.remove(Folder.INBOX, msg);
     		return true;
     	case R.id.itemClearList:
@@ -217,6 +196,62 @@ public class DTalkieActivity extends Activity {
 			inflater.inflate(R.menu.message_menu, menu);
 		}
     };
+    
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.main_menu, menu);
+	    
+	    MenuItem autorec = menu.findItem(R.id.itemAutoRec);
+	    MenuItem autoplay = menu.findItem(R.id.itemAutoPlay);
+	    
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DTalkieActivity.this);
+
+        // restore autoplay option
+        autoplay.setChecked(prefs.getBoolean("autoplay", false));
+        autorec.setChecked(prefs.getBoolean("sensor", false));
+	    
+        MenuItemCompat.setShowAsAction(autoplay, MenuItemCompat.SHOW_AS_ACTION_NEVER);
+	    MenuItemCompat.setShowAsAction(autorec, MenuItemCompat.SHOW_AS_ACTION_NEVER);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearList), MenuItemCompat.SHOW_AS_ACTION_NEVER);
+	    return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DTalkieActivity.this);
+		
+	    switch (item.getItemId()) {
+		    case R.id.itemAutoPlay:
+		    {
+				Editor edit = prefs.edit();
+				Boolean newvalue = (!prefs.getBoolean("autoplay", false));
+				edit.putBoolean("autoplay", newvalue);
+				DTalkieActivity.this.service.setAutoPlay(newvalue);
+				item.setChecked(newvalue);
+				edit.commit();
+				return true;
+		    }
+				
+		    case R.id.itemAutoRec:
+		    {
+				Editor edit = prefs.edit();
+				Boolean newvalue = (!prefs.getBoolean("sensor", false));
+				edit.putBoolean("sensor", newvalue);
+				item.setChecked(newvalue);
+				edit.commit();
+				return true;
+		    }
+	    		
+	    	case R.id.itemClearList:
+	        	MessageDatabase db = this.service.getDatabase();
+	    		db.clear(Folder.INBOX);
+	    		return true;
+	    	
+	    	default:
+	    		return super.onOptionsItemSelected(item);
+	    }
+	}
     
 	@Override
 	protected void onPause() {
@@ -293,30 +328,7 @@ public class DTalkieActivity extends Activity {
 				    return true;
 				}
 			});
-			
-			// set auto-play handler
-			final ToggleButton buttonAutoPlay = (ToggleButton) findViewById(R.id.buttonAutoplay);
-			
-			buttonAutoPlay.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DTalkieActivity.this);
-					Editor edit = prefs.edit();
-					
-					if (prefs.getBoolean("autoplay", false))
-					{
-						edit.putBoolean("autoplay", false);
-						DTalkieActivity.this.service.setAutoPlay(false);
-					}
-					else
-					{
-						edit.putBoolean("autoplay", true);
-						DTalkieActivity.this.service.setAutoPlay(true);
-					}
-					edit.commit();
-				}
-			});
-			
+				
 			// assign update listener
 			DTalkieActivity.this.service.getDatabase().setOnUpdateListener(_update_listener);
 			
@@ -333,9 +345,6 @@ public class DTalkieActivity extends Activity {
 			
 			ImageButton buttonTalk = (ImageButton) findViewById(R.id.buttonTalk);
 			buttonTalk.setOnTouchListener(null);
-			
-			ImageButton buttonAutoPlay = (ImageButton) findViewById(R.id.buttonAutoplay);
-			buttonAutoPlay.setOnClickListener(null);
 			
 			service = null;
 		}
