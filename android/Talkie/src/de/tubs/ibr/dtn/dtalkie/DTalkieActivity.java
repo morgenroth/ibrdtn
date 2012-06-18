@@ -211,9 +211,9 @@ public class DTalkieActivity extends Activity {
         autoplay.setChecked(prefs.getBoolean("autoplay", false));
         autorec.setChecked(prefs.getBoolean("sensor", false));
 	    
-        MenuItemCompat.setShowAsAction(autoplay, MenuItemCompat.SHOW_AS_ACTION_NEVER);
-	    MenuItemCompat.setShowAsAction(autorec, MenuItemCompat.SHOW_AS_ACTION_NEVER);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearList), MenuItemCompat.SHOW_AS_ACTION_NEVER);
+        MenuItemCompat.setShowAsAction(autoplay, MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	    MenuItemCompat.setShowAsAction(autorec, MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearList), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    return true;
 	}
 	
