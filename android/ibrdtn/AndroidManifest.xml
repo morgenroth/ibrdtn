@@ -16,6 +16,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
     
 	<uses-sdk android:minSdkVersion="10" android:targetSdkVersion="15" />
 

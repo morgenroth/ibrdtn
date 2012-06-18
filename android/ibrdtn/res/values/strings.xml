@@ -7,7 +7,6 @@
     <string name="service_name">DTN Service</string>
     <string name="app_name">IBR-DTN</string>
     <string name="applist">Applications</string>
-    <string name="strEmpty"></string>
     <string name="launch_daemon">Enable service</string>
     <string name="endpoint_id">Endpoint ID</string>
     <string name="routing">Routing</string>

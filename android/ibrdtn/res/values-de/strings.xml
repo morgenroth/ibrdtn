@@ -5,6 +5,7 @@
     <string name="runonboot">Automatisch starten</string>
     <string name="runonboot_desc">Wenn aktiviert wird der Dienst automatisch beim Booten gestartet.</string>
     <string name="service_name">DTN Dienst</string>
+    <string name="app_name">IBR-DTN</string>
     <string name="applist">Anwendungen</string>
     <string name="launch_daemon">Dienst aktivieren</string>
     <string name="endpoint_id">Endpoint ID</string>
@@ -15,11 +16,13 @@
     <string name="routing_description">Der zu verwendende Wegewahl-Algorithmus.</string>
     <string name="configure">Konfiguration</string>
     <string name="list_neighbors">Nachbarn anzeigen</string>
+    <string name="list_logs">Logs</string>
     <string name="showlog">Log anzeigen</string>
     <string name="clearlog">Log löschen</string>
     <string name="clearstorage">Speicher leeren</string>
     <string name="service_started">DTN Dienst gestartet</string>
     <string name="service_stopped">DTN Dienst beendet</string>
+    <string name="discovery">Discovery</string>
     <string name="discovery_announce">Aktiv ankündigen</string>
     <string name="discovery_announce_desc">Wenn aktiviert werden jede Sekunde Discovery-Nachrichten ausgesendet.</string>
     <string name="interfaces">Schnittstellen</string>
@@ -52,6 +55,7 @@
     <string name="state_unkown">Unbekannt</string>
     <string name="notify_neighbors">Sichtbare Nachbarn</string>
     <string name="notify_no_neighbors">Keine Nachbarn</string>
+    <string name="system_version">Version</string>
     <string name="statichost">Statische Verbindung</string>
     <string name="host_name">EID des Knoten</string>
     <string name="host_address">Adresse des Knoten</string>
