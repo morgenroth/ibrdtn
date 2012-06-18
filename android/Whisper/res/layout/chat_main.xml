@@ -86,7 +86,8 @@
 	            android:layout_height="wrap_content"
 	            android:inputType="textMultiLine"
 	            android:singleLine="true"
-	            android:layout_weight="1">
+	            android:layout_weight="1"
+	            android:textColor="@color/messageInputText">
 	            <requestFocus />
 	        </EditText>
 	        

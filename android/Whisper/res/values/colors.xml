@@ -17,5 +17,5 @@
     <color name="dark_violett">#3c1450</color>
     <color name="dark_green">#233400</color>
     <color name="dark_yellow">#9c5300</color>
-
+	<color name="messageInputText">#000000</color>
 </resources>
