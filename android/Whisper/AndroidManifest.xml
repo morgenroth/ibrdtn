@@ -24,7 +24,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:icon="@android:drawable/ic_menu_preferences" android:name=".Preferences" android:label="@string/preferences" />
+        <activity android:icon="@drawable/ic_settings" android:name=".Preferences" android:label="@string/preferences" />
         <activity android:icon="@drawable/online" android:label="@string/list_messages" android:name=".MessageActivity" />
         
 		<service android:name=".service.ChatService" />
