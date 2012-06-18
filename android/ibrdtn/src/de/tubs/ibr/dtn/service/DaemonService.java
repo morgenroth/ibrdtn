@@ -26,8 +26,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import de.tubs.ibr.dtn.daemon.Preferences;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -36,14 +34,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import de.tubs.ibr.dtn.DTNService;
-import de.tubs.ibr.dtn.api.DTNSession;
-import de.tubs.ibr.dtn.DaemonState;
-import de.tubs.ibr.dtn.api.Registration;
-import de.tubs.ibr.dtn.R;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+import de.tubs.ibr.dtn.DTNService;
+import de.tubs.ibr.dtn.DaemonState;
+import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.api.DTNSession;
+import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.daemon.Preferences;
 
 public class DaemonService extends Service {
 	

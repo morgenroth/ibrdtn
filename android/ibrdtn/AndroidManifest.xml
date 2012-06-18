@@ -3,6 +3,12 @@
       package="de.tubs.ibr.dtn"
       android:versionCode="11"
       android:versionName="0.8.0">
+      
+	<permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
+	        android:label="@string/permlab_dtnCommunication"
+	        android:description="@string/permdesc_dtnCommunication"
+	        android:permissionGroup="android.permission-group.NETWORK"
+	        android:protectionLevel="normal" />
     
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
@@ -11,10 +17,7 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     
-    <uses-permission android:name="de.tubs.ibr.dtn.permission.SEND" />
-    <uses-permission android:name="de.tubs.ibr.dtn.permission.RECEIVE"/>
-    
-	<uses-sdk android:minSdkVersion="10" />
+	<uses-sdk android:minSdkVersion="10" android:targetSdkVersion="15" />
 
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:icon="@drawable/icon" android:label="@string/app_name" android:name=".daemon.Preferences">
@@ -24,7 +27,7 @@
             </intent-filter>
         </activity>
         
-		<service android:name="de.tubs.ibr.dtn.service.DaemonService">
+		<service android:name="de.tubs.ibr.dtn.service.DaemonService" android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION">
 			<intent-filter>
 				<action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
 				<action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />

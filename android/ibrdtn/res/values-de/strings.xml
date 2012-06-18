@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="permlab_dtnCommunication">DTN Kommunikation</string>
+    <string name="permdesc_dtnCommunication">Erlaubt eine Registrierung beim DTN Dienst und das senden/empfangen von Bündeln.</string>
     <string name="runonboot">Automatisch starten</string>
     <string name="runonboot_desc">Wenn aktiviert wird der Dienst automatisch beim Booten gestartet.</string>
     <string name="service_name">DTN Dienst</string>

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="permlab_dtnCommunication">DTN Communication</string>
+    <string name="permdesc_dtnCommunication">Allows to register to the DTN service and send/receive bundles.</string>
     <string name="runonboot">Run on boot</string>
     <string name="runonboot_desc">If checked the service is started on boot.</string>
     <string name="service_name">DTN Service</string>
