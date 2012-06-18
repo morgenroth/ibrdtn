@@ -46,6 +46,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
+import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -175,6 +176,9 @@ public class Preferences extends PreferenceActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
 	    inflater.inflate(R.menu.main_menu, menu);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemNeighbors), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemShowLog), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearStorage), MenuItemCompat.SHOW_AS_ACTION_NEVER);
 	    return true;
 	}
 	
