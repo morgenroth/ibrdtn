@@ -63,5 +63,6 @@
     <string name="connect_static">Connection active</string>
     <string name="apps">Apps</string>
     <string name="apps_subtitle">Installed DTN aware applications</string>
-    <string name="clouduplink">Cloud Uplink</string>
+    <string name="clouduplink_on">Connect to Cloud</string>
+    <string name="clouduplink_off">Disconnect from Cloud</string>
 </resources>

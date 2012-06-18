@@ -213,14 +213,27 @@ public class Preferences extends PreferenceActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
 	    inflater.inflate(R.menu.main_menu, menu);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemCloudUplink), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemNeighbors), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemShowLog), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearStorage), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemCloudUplink), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-	    menu.findItem(R.id.itemCloudUplink).setChecked(DaemonManager.getInstance().hasCloudUplink());
-	    return true;
+	    return super.onCreateOptionsMenu(menu);
 	}
 	
+	
+	
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		MenuItem cloud = menu.findItem(R.id.itemCloudUplink);
+		Boolean onoff = DaemonManager.getInstance().hasCloudUplink();
+		
+		cloud.setChecked(onoff);
+		cloud.setIcon(onoff ? R.drawable.ic_cloud_off : R.drawable.ic_cloud);
+		cloud.setTitle(onoff ? R.string.clouduplink_off : R.string.clouduplink_on);
+		
+		return super.onPrepareOptionsMenu(menu);
+	}
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    // Handle item selection
@@ -243,7 +256,11 @@ public class Preferences extends PreferenceActivity {
 	    {
 	    	pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.clearingstorage), true, false);
 	    	(new ModifyCloudUplink()).execute(!item.isChecked());
-    		item.setChecked(!item.isChecked());
+	    	
+	    	Boolean onoff = !item.isChecked();
+	    	item.setChecked(onoff);
+	    	item.setIcon(onoff ? R.drawable.ic_cloud_off : R.drawable.ic_cloud);
+	    	item.setTitle(onoff ? R.string.clouduplink_off : R.string.clouduplink_on);
 	    	return true;
 	    }
 	        
