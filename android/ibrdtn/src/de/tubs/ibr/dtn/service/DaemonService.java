@@ -36,6 +36,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
@@ -150,8 +151,15 @@ public class DaemonService extends Service {
 	};
 	
 	private Notification buildNotification(int icon, String text) {
-		Notification ret = new Notification(icon, getResources().getString(R.string.service_name), 0);
-		ret.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_NO_CLEAR;		
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+		
+		builder.setContentTitle(getResources().getString(R.string.service_name));
+		builder.setContentText(text);
+		builder.setSmallIcon(icon);
+		builder.setOngoing(true);
+		builder.setOnlyAlertOnce(true);
+		
+		Notification ret = builder.getNotification();
 		
 		Intent notifyIntent = new Intent(this, Preferences.class);
 		notifyIntent.setAction("android.intent.action.MAIN");
