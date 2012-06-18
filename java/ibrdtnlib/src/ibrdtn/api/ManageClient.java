@@ -20,6 +20,8 @@
  */
 package ibrdtn.api;
 
+import ibrdtn.api.object.SingletonEndpoint;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -104,6 +106,38 @@ public class ManageClient extends Client {
 	{
 		try {
 			_writer.write("interface address del " + iface + " ipv4 " + address);
+			_writer.newLine();
+			_writer.flush();
+
+			// read response
+			String line = _reader.readLine();
+
+			// throw exception if there is no response
+			if (line == null) throw new IOException("no return code received");
+			
+			if (!line.startsWith("200 ")) throw new IOException("wrong return code received");
+		} catch (IOException e) { }
+	}
+	
+	public void addConnection(SingletonEndpoint eid, String protocol, String address, String port) {
+		try {
+			_writer.write("connection " + eid.toString() + " " + protocol + " add " + address + " " + port);
+			_writer.newLine();
+			_writer.flush();
+
+			// read response
+			String line = _reader.readLine();
+
+			// throw exception if there is no response
+			if (line == null) throw new IOException("no return code received");
+			
+			if (!line.startsWith("200 ")) throw new IOException("wrong return code received");
+		} catch (IOException e) { }
+	}
+	
+	public void removeConnection(SingletonEndpoint eid, String protocol, String address, String port) {
+		try {
+			_writer.write("connection " + eid.toString() + " " + protocol + " del " + address + " " + port);
 			_writer.newLine();
 			_writer.flush();
 
