@@ -233,7 +233,9 @@ public class MainActivity extends ListActivity {
 	    	ActionBar actionbar = getActionBar();
 	    	actionbar.setTitle(presence_nick);
 	    	actionbar.setSubtitle(presence_text);
-		    actionbar.setIcon(presence_icon);
+	    	if (android.os.Build.VERSION.SDK_INT >= 14) {
+	    		actionbar.setIcon(presence_icon);
+	    	}
 	    } else {
 		    ImageView icon = (ImageView)findViewById(R.id.iconTitleBar);
 			TextView nicknameLabel = (TextView)findViewById(R.id.labelTitleBar);

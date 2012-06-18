@@ -379,7 +379,9 @@ public class MessageActivity extends ListActivity {
 	    	ActionBar actionbar = getActionBar();
 	    	actionbar.setTitle(presence_nick);
 	    	actionbar.setSubtitle(presence_text);
-		    actionbar.setIcon(presence_icon);
+	    	if (android.os.Build.VERSION.SDK_INT >= 14) {
+	    		actionbar.setIcon(presence_icon);
+	    	}
 	    } else {
 			ImageView iconTitleBar = (ImageView) findViewById(R.id.iconTitleBar);
 			TextView labelTitleBar = (TextView) findViewById(R.id.labelTitleBar);
