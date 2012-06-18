@@ -59,4 +59,5 @@
     <string name="connect_static">Verbindung aktiv</string>
     <string name="apps">Apps</string>
     <string name="apps_subtitle">Installierte DTN Anwendungen</string>
+    <string name="clouduplink">Cloud Anbindung</string>
 </resources>

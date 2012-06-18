@@ -57,6 +57,7 @@ public class DaemonService extends Service {
 	
 	public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
 	public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
+	public static final String ACTION_CLOUD_UPLINK = "de.tubs.ibr.dtn.action.CLOUD_UPLINK";
 	
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.

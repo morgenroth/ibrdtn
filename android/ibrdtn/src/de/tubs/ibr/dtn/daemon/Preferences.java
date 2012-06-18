@@ -55,6 +55,7 @@ import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.service.DaemonManager;
 import de.tubs.ibr.dtn.service.DaemonService;
 
 public class Preferences extends PreferenceActivity {
@@ -139,6 +140,42 @@ public class Preferences extends PreferenceActivity {
 		}
 	}
 	
+	private class ModifyCloudUplink extends AsyncTask<Boolean, Integer, Boolean> {
+		protected Boolean doInBackground(Boolean... args)
+		{
+			try {
+		    	if (!service.isRunning())
+		    	{
+		    		return false;
+		    	}
+		    	
+		    	if (args[0]) {
+		    		DaemonManager.getInstance().enableCloudUplink();
+		    	} else {
+		    		DaemonManager.getInstance().disableCloudUplink();
+		    	}
+		    	
+				return true;
+			} catch (RemoteException e) {
+				return false;
+			}
+		}
+
+		protected void onProgressUpdate(Integer... progress) {
+		}
+
+		protected void onPostExecute(Boolean result)
+		{
+			if (result) {
+				pd.dismiss();
+			} else {
+				pd.cancel();
+	    		Toast toast = Toast.makeText(Preferences.this, "Daemon is not running! Please start the daemon first.", Toast.LENGTH_LONG);
+	    		toast.show();
+			}
+		}
+	}
+	
 	private class ClearStorageTask extends AsyncTask<String, Integer, Boolean> {
 		protected Boolean doInBackground(String... files)
 		{
@@ -179,6 +216,8 @@ public class Preferences extends PreferenceActivity {
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemNeighbors), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemShowLog), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearStorage), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemCloudUplink), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	    menu.findItem(R.id.itemCloudUplink).setChecked(DaemonManager.getInstance().hasCloudUplink());
 	    return true;
 	}
 	
@@ -197,6 +236,14 @@ public class Preferences extends PreferenceActivity {
 	    {
 			pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.clearingstorage), true, false);
 			(new ClearStorageTask()).execute();
+	    	return true;
+	    }
+	    
+	    case R.id.itemCloudUplink:
+	    {
+	    	pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.clearingstorage), true, false);
+	    	(new ModifyCloudUplink()).execute(!item.isChecked());
+    		item.setChecked(!item.isChecked());
 	    	return true;
 	    }
 	        

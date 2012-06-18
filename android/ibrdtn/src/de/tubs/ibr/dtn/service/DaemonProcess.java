@@ -24,6 +24,7 @@ package de.tubs.ibr.dtn.service;
 import ibrdtn.api.APIConnection;
 import ibrdtn.api.ManageClient;
 import ibrdtn.api.SocketAPIConnection;
+import ibrdtn.api.object.SingletonEndpoint;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -507,5 +508,23 @@ public class DaemonProcess extends Thread {
 		}
 
 		return null;
+	}
+	
+	public void addConnection(SingletonEndpoint eid, String protocol, String address, String port) {
+		 try {
+			 ManageClient c = getConnection();
+			 c.addConnection(eid, protocol, address, port);
+		} catch (UnknownHostException e1) {
+		} catch (IOException e1) {
+		}
+	}
+	
+	public void removeConnection(SingletonEndpoint eid, String protocol, String address, String port) {
+		 try {
+			 ManageClient c = getConnection();
+			 c.removeConnection(eid, protocol, address, port);
+		} catch (UnknownHostException e1) {
+		} catch (IOException e1) {
+		}
 	}
 }

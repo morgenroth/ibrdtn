@@ -25,6 +25,7 @@ import ibrdtn.api.APIConnection;
 import ibrdtn.api.Event;
 import ibrdtn.api.EventClient;
 import ibrdtn.api.EventListener;
+import ibrdtn.api.object.SingletonEndpoint;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +41,12 @@ import android.os.Environment;
 import android.util.Log;
 
 public class DaemonManager {
+	// CloudUplink Parameter
+	private static final SingletonEndpoint __CLOUD_EID__ = new SingletonEndpoint("dtn://cloud.dtnbone.dtn");
+	private static final String __CLOUD_PROTOCOL__ = "tcp";
+	private static final String __CLOUD_ADDRESS__ = "134.169.35.130"; //quorra.ibr.cs.tu-bs.de";
+	private static final String __CLOUD_PORT__ = "4559";
+	
 	// reference to a singleton instance
 	private static final DaemonManager _this = new DaemonManager();
 	
@@ -57,6 +64,9 @@ public class DaemonManager {
 	
 	// state of the daemon
 	private DaemonState _state = DaemonState.UNKOWN;
+	
+	// state of the cloud uplink
+	private Boolean _cloud_uplink_initiated = false;
 	
 	// session manager for all active sessions
 	private SessionManager _session_manager = new SessionManager();
@@ -349,5 +359,31 @@ public class DaemonManager {
 		}
 		
 		return new LinkedList<String>();
+	}
+	
+	public synchronized Boolean hasCloudUplink() {
+		return _cloud_uplink_initiated;
+	}
+	
+	public synchronized void enableCloudUplink() {
+		if (_process != null)
+		{
+			if (_process.isRunning() && (!_cloud_uplink_initiated))
+			{
+				_process.addConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+				_cloud_uplink_initiated = true;
+			}
+		}
+	}
+	
+	public synchronized void disableCloudUplink() {
+		if (_process != null)
+		{
+			if (_process.isRunning() && _cloud_uplink_initiated)
+			{
+				_process.removeConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+				_cloud_uplink_initiated = false;
+			}
+		}
 	}
 }
