@@ -205,18 +205,29 @@ public class DTalkieActivity extends Activity {
 	    MenuItem autorec = menu.findItem(R.id.itemAutoRec);
 	    MenuItem autoplay = menu.findItem(R.id.itemAutoPlay);
 	    
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DTalkieActivity.this);
-
-        // restore autoplay option
-        autoplay.setChecked(prefs.getBoolean("autoplay", false));
-        autorec.setChecked(prefs.getBoolean("sensor", false));
-	    
-        MenuItemCompat.setShowAsAction(autoplay, MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-	    MenuItemCompat.setShowAsAction(autorec, MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+        MenuItemCompat.setShowAsAction(autoplay, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	    MenuItemCompat.setShowAsAction(autorec, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearList), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    return true;
 	}
 	
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+	    MenuItem autorec = menu.findItem(R.id.itemAutoRec);
+	    MenuItem autoplay = menu.findItem(R.id.itemAutoPlay);
+	    
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DTalkieActivity.this);
+
+        // restore autoplay option
+        autoplay.setIcon(prefs.getBoolean("autoplay", false) ? R.drawable.ic_autoplay_pause : R.drawable.ic_autoplay);
+        autoplay.setChecked(prefs.getBoolean("autoplay", false));
+        
+        autorec.setIcon(prefs.getBoolean("sensor", false) ? R.drawable.ic_autorec_on : R.drawable.ic_autorec_off);
+        autorec.setChecked(prefs.getBoolean("sensor", false));
+        
+		return true;
+	}
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DTalkieActivity.this);
@@ -229,6 +240,7 @@ public class DTalkieActivity extends Activity {
 				edit.putBoolean("autoplay", newvalue);
 				DTalkieActivity.this.service.setAutoPlay(newvalue);
 				item.setChecked(newvalue);
+				item.setIcon(newvalue ? R.drawable.ic_autoplay_pause : R.drawable.ic_autoplay);
 				edit.commit();
 				return true;
 		    }
@@ -239,6 +251,7 @@ public class DTalkieActivity extends Activity {
 				Boolean newvalue = (!prefs.getBoolean("sensor", false));
 				edit.putBoolean("sensor", newvalue);
 				item.setChecked(newvalue);
+				item.setIcon(newvalue ? R.drawable.ic_autorec_on : R.drawable.ic_autorec_off);
 				edit.commit();
 				return true;
 		    }
