@@ -40,6 +40,7 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
@@ -470,17 +471,28 @@ public class ChatService extends Service {
 		CharSequence tickerText = getString(R.string.new_message_from) + " " + b.getNickname();
 		long when = System.currentTimeMillis();
 
-		Notification notification = new Notification(icon, tickerText, when);
-		notification.defaults = Notification.DEFAULT_SOUND;
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		
-		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("vibrateOnMessage", true)) {
-			notification.defaults |= Notification.DEFAULT_VIBRATE;
-		}
-		
-		notification.flags |= Notification.FLAG_AUTO_CANCEL;
+		builder.setAutoCancel(true);
 		
 		CharSequence contentTitle = getString(R.string.new_message);
 		CharSequence contentText = b.getNickname() + ":\n" + msg.getPayload();
+		
+		int defaults = Notification.DEFAULT_SOUND;
+		
+		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("vibrateOnMessage", true)) {
+			defaults |= Notification.DEFAULT_VIBRATE;
+		}
+		
+		builder.setContentTitle(contentTitle);
+		builder.setContentText(contentText);
+		builder.setSmallIcon(icon);
+		builder.setTicker(tickerText);
+		builder.setDefaults(defaults);
+		//builder.setContentInfo(info);
+		builder.setWhen(when);
+		
+		Notification notification = builder.getNotification();
 
 		Intent notificationIntent = new Intent(this, MessageActivity.class);
 		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
