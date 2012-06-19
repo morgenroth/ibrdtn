@@ -114,7 +114,9 @@ public class MainActivity extends FragmentActivity {
 		// get ID of the buddy
 		if (getIntent() != null) {
 		    String buddyId = getIntent().getStringExtra("buddy");
-		    if (buddyId != null) selectBuddy(buddyId);
+		    if (buddyId != null) { 
+		    	selectBuddy(buddyId);
+		    }
 		}
 	}
 	

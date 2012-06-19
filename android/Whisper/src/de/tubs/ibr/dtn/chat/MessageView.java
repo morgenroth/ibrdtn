@@ -22,6 +22,7 @@
 package de.tubs.ibr.dtn.chat;
 
 import java.text.DateFormat;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.content.BroadcastReceiver;
@@ -53,7 +54,12 @@ public class MessageView extends BaseAdapter {
 		this.inflater = LayoutInflater.from(context);
 		this.roster = roster;
 		this.buddy = buddy;
-		this.messages = this.roster.getMessages(this.buddy);
+		
+		if (this.roster != null) {
+			this.messages = this.roster.getMessages(this.buddy);
+		} else {
+			this.messages = new LinkedList<Message>();
+		}
 		
 		IntentFilter i = new IntentFilter(Roster.REFRESH);
 		context.registerReceiver(notify_receiver, i);
@@ -69,6 +75,7 @@ public class MessageView extends BaseAdapter {
 	private BroadcastReceiver notify_receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent i) {
+			if (buddy == null) return;
 			if (i.getStringExtra("buddy").equals(buddy.getEndpoint())) {
 				MessageView.this.refresh();
 			}
@@ -81,8 +88,9 @@ public class MessageView extends BaseAdapter {
 	
 	public void refresh()
 	{
-		this.messages = this.roster.getMessages(this.buddy);
-		//Collections.sort(this.messages);
+		if (this.roster != null) {
+			this.messages = this.roster.getMessages(this.buddy);
+		}
 		
 		Log.d(TAG, "refresh requested...");
 		this.notifyDataSetChanged();

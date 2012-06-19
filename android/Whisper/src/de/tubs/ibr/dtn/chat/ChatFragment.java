@@ -142,20 +142,24 @@ public class ChatFragment extends ListFragment {
 	
 	private void refresh()
 	{
-		if (buddyId == null) return;
-		if (service == null) return;
+		Buddy buddy = null;
+		Roster roster = null;
 		
-		// load buddy from roster
-		Buddy buddy = this.service.getRoster().get( buddyId );
-		
-		if (buddy == null) {
-			Log.e(TAG, "Error buddy not found: " + getActivity().getIntent().getStringExtra("buddy"));
-			return;
+		if ((buddyId != null) && (service == null)) {
+			roster = this.service.getRoster();
+			
+			// load buddy from roster
+			buddy = roster.get( buddyId );
+			
+			if (buddy == null) {
+				Log.e(TAG, "Error buddy not found: " + getActivity().getIntent().getStringExtra("buddy"));
+				return;
+			}
 		}
 		
 		if (this.view == null) {
 			// activate message view
-			this.view = new MessageView(getActivity(), this.service.getRoster(), buddy);
+			this.view = new MessageView(getActivity(), roster, buddy);
 			this.setListAdapter(this.view);
 		} else {
 			this.view.refresh();

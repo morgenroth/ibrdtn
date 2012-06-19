@@ -191,7 +191,6 @@ public class InputFragment extends Fragment {
 		Buddy buddy = this.service.getRoster().get( this.buddyId );
 		String msg = buddy.getDraftMessage();
 		
-		
 		if (msg != null) text.append(msg);
 
 		text.setEnabled(true);
