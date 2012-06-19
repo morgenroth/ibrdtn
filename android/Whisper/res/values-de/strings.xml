@@ -25,4 +25,5 @@
     <string name="notification_settings">Benachrichtigungen</string>
     <string name="vibrate_on_message">Vibrieren</string>
     <string name="vibrate_on_message_desc">Vibriere beim Empfang einer Nachricht</string>
+    <string name="no_buddy_selected">Kein Gesprächspartner ausgewählt</string>
 </resources>

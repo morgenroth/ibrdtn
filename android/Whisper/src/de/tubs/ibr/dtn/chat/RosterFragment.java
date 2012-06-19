@@ -65,16 +65,6 @@ public class RosterFragment extends ListFragment {
 	    
 	    super.onDestroy();
 	}
-	
-//	public void refreshCallback()
-//	{
-//		getActivity().runOnUiThread(new Runnable() {
-//			@Override
-//			public void run() {
-//				((BaseAdapter)getListView().getAdapter()).notifyDataSetChanged();
-//			}
-//		});
-//	}
 
 	@Override
 	public void onResume() {

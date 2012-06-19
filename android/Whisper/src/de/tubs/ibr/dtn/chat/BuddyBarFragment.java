@@ -163,7 +163,7 @@ public class BuddyBarFragment extends Fragment {
 			return;
 		}
 		
-		labelTitleBar.setText( "No buddy selected" );
+		labelTitleBar.setText( getActivity().getResources().getString(R.string.no_buddy_selected) );
 		bottomtextTitleBar.setText( "" );
 		iconTitleBar.setImageResource(R.drawable.offline);
 	}

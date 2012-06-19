@@ -69,6 +69,8 @@ public class ChatService extends Service {
 	private Registration _registration = null;
 	private Boolean _service_available = false;
 	
+	private static String visibleBuddy = null;
+	
 	// executor to process local job queue
 	private ExecutorService _executor = null;
 	
@@ -458,9 +460,23 @@ public class ChatService extends Service {
 		}
 	}
 	
+	public synchronized static void setVisible(String buddyId) {
+		if (visibleBuddy != buddyId) visibleBuddy = buddyId;
+	}
+	
+	public synchronized static void setUnvisible(String buddyId) {
+		if (visibleBuddy == buddyId) visibleBuddy = null;
+	}
+	
+	public static Boolean isVisible(String buddyId)
+	{
+		if (visibleBuddy == null) return false;
+		return (visibleBuddy.equals(buddyId));
+	}
+	
 	private void createNotification(Buddy b, Message msg)
 	{
-		if (MessageActivity.isVisible(b.getEndpoint()))
+		if (ChatService.isVisible(b.getEndpoint()))
 		{
 			return;
 		}

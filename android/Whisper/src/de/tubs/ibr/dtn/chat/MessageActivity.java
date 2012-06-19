@@ -46,7 +46,6 @@ public class MessageActivity extends FragmentActivity {
 	
 	private final String TAG = "MessageActivity";
 	private String buddyId = null;
-	private static String visibleBuddy = null; 
 	private ChatService service = null;
 	
 	@Override
@@ -128,12 +127,6 @@ public class MessageActivity extends FragmentActivity {
 		bindService(new Intent(MessageActivity.this, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
 	}
 	
-	public static Boolean isVisible(String buddyId)
-	{
-		if (visibleBuddy == null) return false;
-		return (visibleBuddy.equals(buddyId));
-	}
-
 	private void refresh()
 	{
 		if (buddyId == null) return;

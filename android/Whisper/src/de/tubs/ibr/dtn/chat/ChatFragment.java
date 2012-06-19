@@ -20,13 +20,19 @@ public class ChatFragment extends ListFragment {
 	private final String TAG = "ChatFragment";
 	private MessageView view = null;
 	private String buddyId = null;
-//	private static String visibleBuddy = null;
 	private ChatService service = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			ChatFragment.this.service = ((ChatService.LocalBinder)service).getService();
+			
+			if (ChatFragment.this.view != null) {
+				ChatFragment.this.setListAdapter(null);
+				ChatFragment.this.view.onDestroy(getActivity());
+				ChatFragment.this.view = null;
+			}
+			
 			refresh();
 			Log.i(TAG, "service connected");
 		}
@@ -56,7 +62,10 @@ public class ChatFragment extends ListFragment {
 	@Override
 	public void onPause() {
 		getActivity().unregisterReceiver(notify_receiver);
-//		visibleBuddy = null;
+		
+		// set the current buddy to unvisible
+		ChatService.setUnvisible(this.buddyId);
+		
 		super.onPause();
 	}
 
@@ -67,8 +76,8 @@ public class ChatFragment extends ListFragment {
 		IntentFilter i = new IntentFilter(Roster.REFRESH);
 		getActivity().registerReceiver(notify_receiver, i);
 		
-//		// set the current visible buddy
-//		ChatFragment.visibleBuddy = buddyId;
+		// set the current visible buddy
+		ChatService.setVisible(this.buddyId);
 
 		// refresh visible data
 		refresh();
@@ -103,23 +112,6 @@ public class ChatFragment extends ListFragment {
 		}
 	};
 	
-//	public static Boolean isVisible(String buddyId)
-//	{
-//		if (visibleBuddy == null) return false;
-//		return (visibleBuddy.equals(buddyId));
-//	}
-
-//	public void refreshCallback()
-//	{
-//		ChatFragment.this.getActivity().runOnUiThread(new Runnable() {
-//			@Override
-//			public void run() {
-//				refresh();
-//				((BaseAdapter)getListView().getAdapter()).notifyDataSetChanged();
-//			}
-//		});
-//	}
-	
 	public void setBuddy(String buddyId) {
 		if ((this.buddyId != buddyId) && (this.view != null)) {
 			this.view.onDestroy(getActivity());
@@ -129,8 +121,8 @@ public class ChatFragment extends ListFragment {
 		
 		this.buddyId = buddyId;
 		
-//		// set the current visible buddy
-//		ChatFragment.visibleBuddy = buddyId;
+		// set the current visible buddy
+		ChatService.setVisible(this.buddyId);
 
 		refresh();
 	}

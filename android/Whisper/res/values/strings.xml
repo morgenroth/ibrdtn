@@ -23,4 +23,5 @@
     <string name="notification_settings">Notifications</string>
     <string name="vibrate_on_message">Vibrate</string>
     <string name="vibrate_on_message_desc">Vibrate on message reception</string>
+    <string name="no_buddy_selected">No buddy selected</string>
 </resources>
