@@ -73,6 +73,7 @@ public class Preferences extends PreferenceActivity {
 			Preferences.this.service = DTNService.Stub.asInterface(service);
 			Log.i("IBR-DTN", "Preferences: service connected");
 			
+			@SuppressWarnings("deprecation")
 			CheckBoxPreference checkActivate = (CheckBoxPreference) findPreference("checkActivate");
 			try {
 				checkActivate.setChecked(Preferences.this.service.getState() == DaemonState.ONLINE);
@@ -95,6 +96,7 @@ public class Preferences extends PreferenceActivity {
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.STATE))
 			{
+				@SuppressWarnings("deprecation")
 				CheckBoxPreference checkActivate = (CheckBoxPreference) findPreference("checkActivate");
 				
 				String state = intent.getStringExtra("state");
@@ -134,44 +136,50 @@ public class Preferences extends PreferenceActivity {
 
 		protected void onPostExecute(Boolean result)
 		{
+			@SuppressWarnings("deprecation")
 			CheckBoxPreference checkActivate = (CheckBoxPreference) findPreference("checkActivate");
 			checkActivate.setEnabled(true);
 			checkActivate.setChecked(result);
 		}
 	}
 	
-	private class ModifyCloudUplink extends AsyncTask<Boolean, Integer, Boolean> {
-		protected Boolean doInBackground(Boolean... args)
+	private class ModifyCloudUplink extends AsyncTask<MenuItem, Integer, MenuItem> {
+		protected MenuItem doInBackground(MenuItem... args)
 		{
 			try {
 		    	if (!service.isRunning())
 		    	{
-		    		return false;
+		    		return null;
 		    	}
 		    	
-		    	if (args[0]) {
-		    		DaemonManager.getInstance().enableCloudUplink();
-		    	} else {
+		    	if (args[0].isChecked()) {
 		    		DaemonManager.getInstance().disableCloudUplink();
+		    	} else {
+		    		DaemonManager.getInstance().enableCloudUplink();
 		    	}
 		    	
-				return true;
+				return args[0];
 			} catch (RemoteException e) {
-				return false;
+				return null;
 			}
 		}
 
 		protected void onProgressUpdate(Integer... progress) {
 		}
 
-		protected void onPostExecute(Boolean result)
+		protected void onPostExecute(MenuItem result)
 		{
-			if (result) {
-				pd.dismiss();
-			} else {
+			if (result == null) {
 				pd.cancel();
 	    		Toast toast = Toast.makeText(Preferences.this, "Daemon is not running! Please start the daemon first.", Toast.LENGTH_LONG);
 	    		toast.show();
+			} else {
+		    	Boolean onoff = !result.isChecked();
+		    	result.setChecked(onoff);
+		    	result.setIcon(onoff ? R.drawable.ic_cloud_off : R.drawable.ic_cloud);
+		    	result.setTitle(onoff ? R.string.clouduplink_off : R.string.clouduplink_on);
+		    	
+				pd.dismiss();
 			}
 		}
 	}
@@ -220,8 +228,6 @@ public class Preferences extends PreferenceActivity {
 	    return super.onCreateOptionsMenu(menu);
 	}
 	
-	
-	
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		MenuItem cloud = menu.findItem(R.id.itemCloudUplink);
@@ -255,12 +261,7 @@ public class Preferences extends PreferenceActivity {
 	    case R.id.itemCloudUplink:
 	    {
 	    	pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.clearingstorage), true, false);
-	    	(new ModifyCloudUplink()).execute(!item.isChecked());
-	    	
-	    	Boolean onoff = !item.isChecked();
-	    	item.setChecked(onoff);
-	    	item.setIcon(onoff ? R.drawable.ic_cloud_off : R.drawable.ic_cloud);
-	    	item.setTitle(onoff ? R.string.clouduplink_off : R.string.clouduplink_on);
+	    	(new ModifyCloudUplink()).execute(item);
 	    	return true;
 	    }
 	        
@@ -306,6 +307,7 @@ public class Preferences extends PreferenceActivity {
 		}
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		// initialize default values if configured set already
