@@ -58,6 +58,28 @@ public class BuddyBarFragment extends Fragment {
 	}
 	
 	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		
+		if (savedInstanceState != null) {
+			// restore buddy id
+			if (savedInstanceState.containsKey("buddyId")) {
+				buddyId = savedInstanceState.getString("buddyId");
+			}
+		}
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		
+		if (buddyId != null) {
+			// save buddy id
+			outState.putString("buddyId", buddyId);
+		}
+	}
+
+	@Override
 	public void onPause() {
 		getActivity().unregisterReceiver(notify_receiver);
 		super.onPause();

@@ -101,6 +101,29 @@ public class InputFragment extends Fragment {
 		getActivity().bindService(new Intent(activity, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
 	}
 	
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		
+		// restore buddy id
+		if (savedInstanceState != null) {
+			// restore buddy id
+			if (savedInstanceState.containsKey("buddyId")) {
+				buddyId = savedInstanceState.getString("buddyId");
+			}
+		}
+	}
+
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		
+		if (buddyId != null) {
+			// save buddy id
+			outState.putString("buddyId", buddyId);
+		}
+	}
+	
 	public void setBuddy(String buddyId) {
 		if (this.buddyId != buddyId) {
 			saveDraftMessage();
