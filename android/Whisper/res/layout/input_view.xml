@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:name="de.tubs.ibr.dtn.chat.InputFragment"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#fff"
+    android:layout_weight="0"
+    android:id="@+id/input_view">
+
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+		android:orientation="vertical"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_margin="12dp"
+		android:layout_weight="1">
+ 
+      <EditText
+          android:background="@null"
+          android:id="@+id/textMessage"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:inputType="textMultiLine"
+          android:singleLine="true"
+          android:layout_weight="1"
+          android:textColor="@color/messageInputText">
+          <requestFocus />
+      </EditText>
+      
+	<View
+	    android:layout_width="match_parent"
+	    android:layout_height="1px"
+	    android:layout_marginTop="2dp"
+	    android:background="@color/gray"
+	    android:layout_weight="0"
+	/>
+	</LinearLayout>
+
+	<ImageButton
+	    android:contentDescription="Send button"
+	    android:id="@+id/buttonSend"
+	    android:layout_width="48dp"
+	    android:layout_height="48dp"
+	    android:layout_weight="0"
+	    android:background="@drawable/button"
+	    android:src="@drawable/ic_send" />
+
+</LinearLayout>

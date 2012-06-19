@@ -52,6 +52,7 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.chat.MainActivity;
 import de.tubs.ibr.dtn.chat.MessageActivity;
 import de.tubs.ibr.dtn.chat.R;
 import de.tubs.ibr.dtn.chat.core.Buddy;
@@ -494,8 +495,8 @@ public class ChatService extends Service {
 		
 		Notification notification = builder.getNotification();
 
-		Intent notificationIntent = new Intent(this, MessageActivity.class);
-		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+		Intent notificationIntent = new Intent(this, MainActivity.class);
+		//notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
 		//notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		notificationIntent.setAction(ACTION_OPENCHAT);
 		notificationIntent.addCategory("android.intent.category.DEFAULT");

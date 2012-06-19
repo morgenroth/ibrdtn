@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+     android:orientation="vertical"
+     android:layout_width="match_parent"
+     android:layout_height="wrap_content"
+     android:id="@+id/actionbar_view"
+     android:layout_weight="0"
+     >
+     
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:id="@+id/actionbar_layout"
+	    android:layout_width="fill_parent"
+	    android:layout_height="52dp"
+	    android:background="@null"
+	    android:orientation="horizontal">
+	
+	    <ImageView
+	        android:contentDescription="Icon"
+	        android:id="@+id/actionbar_icon"
+	        android:layout_width="32dp"
+	        android:layout_height="32dp"
+	        android:layout_weight="0"
+	        android:layout_margin="8dp"
+	        android:src="@drawable/online" />
+	    
+	    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"
+	        android:padding="4dp"
+	        android:background="@null">
+		
+		    <TextView
+		        android:id="@+id/actionbar_title"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:layout_alignTop="@+id/actionbar_icon"
+		        android:layout_toRightOf="@+id/actionbar_icon"
+		        android:gravity="center_vertical"
+		        android:text="@string/nickname"
+		        android:textSize="18dp" />
+		
+		    <TextView
+		        android:id="@+id/actionbar_text"
+		        android:layout_width="match_parent"
+		        android:layout_height="wrap_content"
+		        android:layout_alignLeft="@+id/actionbar_title"
+		        android:layout_below="@+id/actionbar_title"
+		        android:ellipsize="marquee"
+		        android:singleLine="true"
+		        android:text="@string/example_text"
+		        android:textSize="12dp" />
+			    
+    	</RelativeLayout>
+	
+	</LinearLayout>
+	
+	<View
+	    android:id="@+id/actionbar_separator"
+	    android:layout_width="match_parent"
+	    android:layout_height="2dp"
+	    android:background="@color/blue"
+	/>
+</LinearLayout>

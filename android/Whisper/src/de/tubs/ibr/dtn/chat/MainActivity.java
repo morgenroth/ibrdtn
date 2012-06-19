@@ -22,167 +22,115 @@
 package de.tubs.ibr.dtn.chat;
 
 import android.app.ActionBar;
-import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.Window;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
-import de.tubs.ibr.dtn.chat.RosterView.ViewHolder;
-import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.service.ChatService;
+import de.tubs.ibr.dtn.chat.service.Utils;
 
-public class MainActivity extends ListActivity {
+public class MainActivity extends FragmentActivity {
 	private final String TAG = "MainActivity";
-	private RosterView view = null;
 	private ChatService service = null;
 	
+	private void selectBuddy(String buddyId) {
+		Fragment fragment = this.getSupportFragmentManager().findFragmentById(R.id.roster_fragment);
+		if (fragment != null) {
+			RosterFragment roster = (RosterFragment)fragment;
+			roster.selectBuddy(buddyId);
+		}
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+	    super.onCreate(savedInstanceState);
+	    
+	    if (android.os.Build.VERSION.SDK_INT < Utils.ANDROID_API_ACTIONBAR) {
+	    	requestWindowFeature(Window.FEATURE_NO_TITLE);
+	    }
+	    
+	    setContentView(R.layout.roster_main);
+	}
+
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			MainActivity.this.service = ((ChatService.LocalBinder)service).getService();
 			
 			if (!MainActivity.this.service.isServiceAvailable()) {
-				showInstallServiceDialog();
+				Utils.showInstallServiceDialog(MainActivity.this);
 			}
-			
+
 			Log.i(TAG, "service connected");
-			
-			// activate roster view
-			MainActivity.this.view = new RosterView(MainActivity.this, MainActivity.this.service.getRoster());
-			MainActivity.this.setListAdapter(MainActivity.this.view);
-						
-			// set process bar to invisible
-			setProgressBarIndeterminateVisibility(false);
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			Log.i(TAG, "service disconnected");
-			service = null;
+			MainActivity.this.service = null;
 		}
 	};
 	
-	private void showInstallServiceDialog() {
-		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-		    @Override
-		    public void onClick(DialogInterface dialog, int which) {
-		        switch (which){
-		        case DialogInterface.BUTTON_POSITIVE:
-					final Intent marketIntent = new Intent(Intent.ACTION_VIEW);
-					marketIntent.setData(Uri.parse("market://details?id=de.tubs.ibr.dtn"));
-					startActivity(marketIntent);
-		            break;
-
-		        case DialogInterface.BUTTON_NEGATIVE:
-		            break;
-		        }
-		        finish();
-		    }
-		};
-
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage(getResources().getString(R.string.alert_missing_daemon));
-		builder.setPositiveButton(getResources().getString(R.string.alert_yes), dialogClickListener);
-		builder.setNegativeButton(getResources().getString(R.string.alert_no), dialogClickListener);
-		builder.show();
-	}
-	
 	@Override
 	protected void onDestroy() {
-		MainActivity.this.view.onDestroy(this);
-		MainActivity.this.view = null;
-	    super.onDestroy();
-	    
 	    if (mConnection != null) {
 	    	// Detach our existing connection.
 	    	unbindService(mConnection);
 	    }
-	}
-	
-	public void refreshCallback()
-	{
-		MainActivity.this.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				((BaseAdapter)getListView().getAdapter()).notifyDataSetChanged();
-			}
-		});
+	    
+	    super.onDestroy();
 	}
 	
 	@Override
-	protected void onPause() {
-		super.onPause();
-	}
-
-	@Override
-	protected void onResume() {
+	public void onResume() {
 		refresh();
 		super.onResume();
 	}
 
 	@Override
-	public void onCreate(Bundle savedInstanceState)
-	{
-		if (android.os.Build.VERSION.SDK_INT < 11) {
-			requestWindowFeature(Window.FEATURE_NO_TITLE);
-		}
-		
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.roster_main);
-		
+	protected void onPostCreate(Bundle savedInstanceState) {		
+	    super.onPostCreate(savedInstanceState);
+	    
 		// Establish a connection with the service.  We use an explicit
 		// class name because we want a specific service implementation that
 		// we know will be running in our own process (and thus won't be
 		// supporting component replacement by other applications).
 		bindService(new Intent(MainActivity.this, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
 		
-		ListView lv = getListView();
-		registerForContextMenu(lv);
+		// get ID of the buddy
+		if (getIntent() != null) {
+		    String buddyId = getIntent().getStringExtra("buddy");
+		    if (buddyId != null) selectBuddy(buddyId);
+		}
 	}
 	
 	@Override
-	protected void onPostCreate(Bundle savedInstanceState) {
-		
-	    if (android.os.Build.VERSION.SDK_INT >= 11) {
-	    	LinearLayout layout = (LinearLayout)findViewById(R.id.roster_layoutTitleBar);
-	    	View view = (View)findViewById(R.id.roster_titlebar_separator);
-	    	view.setVisibility(View.GONE);
-	    	layout.setVisibility(View.GONE);
-	    }
-	    
-	    super.onPostCreate(savedInstanceState);
+	protected void onNewIntent(Intent intent) {
+		// get ID of the buddy
+		if (intent != null) {
+		    String buddyId = intent.getStringExtra("buddy");
+		    if (buddyId != null) selectBuddy(buddyId);
+		}
+		super.onNewIntent(intent);
 	}
-	
+
 	private void refresh()
 	{
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		
-		// check if the screen is active
-		PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-	    Boolean screenOn = pm.isScreenOn();
 		
 	    String presence_tag = preferences.getString("presencetag", "auto");
 	    String presence_nick = preferences.getString("editNickname", "Nobody");
@@ -191,18 +139,6 @@ public class MainActivity extends ListActivity {
 	    
 	    if (presence_text.length() == 0) {
 	    	presence_text = "<" + getResources().getString(R.string.no_status_message) + ">";
-	    }
-	    
-	    if (presence_tag.equals("auto"))
-	    {
-		    if (screenOn)
-		    {
-		    	presence_tag = "chat";
-		    }
-		    else
-		    {
-		    	presence_tag = "away";
-		    }
 	    }
 	    
 		if (presence_tag != null)
@@ -229,29 +165,24 @@ public class MainActivity extends ListActivity {
 			}
 		}
 	    
-	    if (android.os.Build.VERSION.SDK_INT >= 11) {
+	    if (android.os.Build.VERSION.SDK_INT >= Utils.ANDROID_API_ACTIONBAR) {
 	    	ActionBar actionbar = getActionBar();
 	    	actionbar.setTitle(presence_nick);
 	    	actionbar.setSubtitle(presence_text);
-	    	if (android.os.Build.VERSION.SDK_INT >= 14) {
+	    	if (android.os.Build.VERSION.SDK_INT >= Utils.ANDROID_API_ACTIONBAR_SETICON) {
 	    		actionbar.setIcon(presence_icon);
 	    	}
 	    } else {
-		    ImageView icon = (ImageView)findViewById(R.id.iconTitleBar);
-			TextView nicknameLabel = (TextView)findViewById(R.id.labelTitleBar);
-			TextView statusLabel = (TextView)findViewById(R.id.bottomtextTitleBar);
+		    ImageView icon = (ImageView)findViewById(R.id.actionbar_icon);
+			TextView nicknameLabel = (TextView)findViewById(R.id.actionbar_title);
+			TextView statusLabel = (TextView)findViewById(R.id.actionbar_text);
 			
 			icon.setImageResource(presence_icon);
 			nicknameLabel.setText(presence_nick);
 			statusLabel.setText(presence_text);
 	    }
-		
-		if (this.view != null)
-		{
-			view.refresh();
-		}
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
@@ -275,42 +206,5 @@ public class MainActivity extends ListActivity {
 	    default:
 	        return super.onOptionsItemSelected(item);
 	    }
-	}
-	
-	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-		super.onCreateContextMenu(menu, v, menuInfo);
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.buddycontext_menu, menu);
-	}
-	
-	@Override
-	public boolean onContextItemSelected(MenuItem item) {
-		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-
-		Buddy buddy = this.service.getRoster().get(info.position);
-		if (buddy == null) return false;
-
-		switch (item.getItemId())
-		{
-		case R.id.itemDelete:
-			this.service.getRoster().remove(buddy);
-			return true;
-		default:
-			return super.onContextItemSelected(item);
-		}
-	}
-	
-	@Override
-	protected void onListItemClick(ListView l, View v, int position, long id) {
-		super.onListItemClick(l, v, position, id);
-		
-		ViewHolder holder = (ViewHolder)v.getTag();
-		
-		Intent i = new Intent(MainActivity.this, MessageActivity.class);
-		i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//		i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-		i.putExtra("buddy", holder.buddy.getEndpoint());
-		startActivity(i);
 	}
 }

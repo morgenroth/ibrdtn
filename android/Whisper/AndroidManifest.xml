@@ -14,7 +14,7 @@
         android:icon="@drawable/chat"
         android:label="@string/app_name" >
         
-        <activity android:icon="@drawable/chat" android:label="@string/app_name" android:name=".MainActivity">
+        <activity android:icon="@drawable/chat" android:label="@string/app_name" android:name=".MainActivity" android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -25,7 +25,7 @@
             </intent-filter>
         </activity>
         <activity android:icon="@drawable/ic_settings" android:name=".Preferences" android:label="@string/preferences" />
-        <activity android:icon="@drawable/online" android:label="@string/list_messages" android:name=".MessageActivity" />
+        <activity android:icon="@drawable/online" android:label="@string/list_messages" android:name=".MessageActivity" android:launchMode="singleTask" />
         
 		<service android:name=".service.ChatService" />
 		
