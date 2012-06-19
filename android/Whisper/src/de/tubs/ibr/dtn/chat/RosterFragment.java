@@ -116,6 +116,7 @@ public class RosterFragment extends ListFragment {
 		switch (item.getItemId())
 		{
 		case R.id.itemDelete:
+			this.selectBuddy(null);
 			this.service.getRoster().remove(buddy);
 			return true;
 		default:
@@ -141,11 +142,11 @@ public class RosterFragment extends ListFragment {
 	public void selectBuddy(String buddyId) {
     	Fragment fragment = getActivity().getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
     	if ((fragment == null) || !fragment.isInLayout()) {
-    		Intent i = new Intent(getActivity(), MessageActivity.class);
-//    		i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//    		i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    		i.putExtra("buddy", buddyId);
-    		startActivity(i);
+    		if (buddyId != null) {
+    			Intent i = new Intent(getActivity(), MessageActivity.class);
+	    		i.putExtra("buddy", buddyId);
+	    		startActivity(i);
+    		}
     	} else {
     		ChatFragment chat = (ChatFragment)fragment;
     		chat.setBuddy(buddyId);

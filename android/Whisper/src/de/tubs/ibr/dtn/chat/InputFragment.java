@@ -177,19 +177,24 @@ public class InputFragment extends Fragment {
 	}
 	
 	private void loadDraftMessage() {
-		if (this.buddyId == null) return;
+		EditText text = (EditText) getView().findViewById(R.id.textMessage);
+		text.setText("");
+		
+		if (this.buddyId == null) {
+			text.setEnabled(false);
+			return;
+		}
+		
 		if (this.service == null) return;
 		
 		// load buddy from roster
 		Buddy buddy = this.service.getRoster().get( this.buddyId );
 		String msg = buddy.getDraftMessage();
 		
-		EditText text = (EditText) getView().findViewById(R.id.textMessage);
-		text.setText("");
+		
 		if (msg != null) text.append(msg);
 
-		EditText textedit = (EditText) getView().findViewById(R.id.textMessage);
-		textedit.setEnabled(true);
+		text.setEnabled(true);
 		
 		text.requestFocus();
 	}

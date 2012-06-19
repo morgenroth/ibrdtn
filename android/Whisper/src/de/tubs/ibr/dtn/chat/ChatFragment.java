@@ -129,6 +129,7 @@ public class ChatFragment extends ListFragment {
 		if ((this.buddyId != buddyId) && (this.view != null)) {
 			this.view.onDestroy(getActivity());
 			this.view = null;
+			this.setListAdapter(null);
 		}
 		
 		this.buddyId = buddyId;
