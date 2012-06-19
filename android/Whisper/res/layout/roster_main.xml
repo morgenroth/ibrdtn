@@ -9,9 +9,12 @@
 	    android:layout_height="match_parent"
 	    layout="@layout/actionbar_view" />
 
-	<include
-	    android:id="@+id/rosterFragment"
+	<fragment
+	    xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:name="de.tubs.ibr.dtn.chat.RosterFragment"
+	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
-	    layout="@layout/roster_fragment" />
+	    android:id="@+id/roster_fragment">
+	</fragment>
 
 </LinearLayout>

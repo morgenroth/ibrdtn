@@ -23,11 +23,6 @@ public class ChatFragment extends ListFragment {
 //	private static String visibleBuddy = null;
 	private ChatService service = null;
 	
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-	    super.onCreate(savedInstanceState);
-	}
-	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
@@ -145,7 +140,7 @@ public class ChatFragment extends ListFragment {
 		Buddy buddy = null;
 		Roster roster = null;
 		
-		if ((buddyId != null) && (service == null)) {
+		if ((buddyId != null) && (service != null)) {
 			roster = this.service.getRoster();
 			
 			// load buddy from roster

@@ -5,13 +5,24 @@
      android:layout_height="match_parent"
      >
 
-	<include
-	    android:id="@+id/chatFragment"
+	<fragment
+	    xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:name="de.tubs.ibr.dtn.chat.ChatFragment"
+	    android:layout_width="match_parent"
 	    android:layout_height="match_parent"
-	    layout="@layout/chat_fragment" />
+	    android:layout_weight="2"
+	    android:id="@+id/chat_fragment">
+	    
+	</fragment>
 	
-	<include
-	    android:id="@+id/inputFragment"
-	    layout="@layout/input_fragment" />
+	<fragment
+	    xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:name="de.tubs.ibr.dtn.chat.InputFragment"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_weight="0"
+	    android:id="@+id/input_fragment">
+	    
+	</fragment>
     
  </LinearLayout>

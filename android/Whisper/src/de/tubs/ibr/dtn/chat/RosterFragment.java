@@ -153,6 +153,9 @@ public class RosterFragment extends ListFragment {
     		
     		InputFragment input = (InputFragment)getActivity().getSupportFragmentManager().findFragmentById(R.id.input_fragment);
     		input.setBuddy(buddyId);
+    		
+    		BuddyBarFragment buddybar = (BuddyBarFragment)getActivity().getSupportFragmentManager().findFragmentById(R.id.buddybar_fragment);
+    		buddybar.setBuddy(buddyId);
     	}
 	}
 }

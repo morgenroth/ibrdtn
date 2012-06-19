@@ -22,6 +22,16 @@
 	     
 		<fragment
 		    xmlns:android="http://schemas.android.com/apk/res/android"
+		    android:name="de.tubs.ibr.dtn.chat.BuddyBarFragment"
+		    android:layout_width="match_parent"
+		    android:layout_height="wrap_content"
+		    android:layout_weight="0"
+		    android:id="@+id/buddybar_fragment">
+		    
+		</fragment>
+	     
+		<fragment
+		    xmlns:android="http://schemas.android.com/apk/res/android"
 		    android:name="de.tubs.ibr.dtn.chat.ChatFragment"
 		    android:layout_width="match_parent"
 		    android:layout_height="match_parent"

@@ -61,11 +61,6 @@ public class InputFragment extends Fragment {
 		
 		return v;
 	}
-
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-	    super.onCreate(savedInstanceState);
-	}
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
