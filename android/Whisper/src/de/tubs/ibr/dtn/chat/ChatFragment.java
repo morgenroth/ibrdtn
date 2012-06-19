@@ -10,7 +10,11 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.ListFragment;
+import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.ListView;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Roster;
@@ -44,6 +48,33 @@ public class ChatFragment extends ListFragment {
 		}
 	};
 	
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+	}
+
+	@Override
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+	    inflater.inflate(R.menu.message_menu, menu);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearMessages), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    switch (item.getItemId()) {
+    		case R.id.itemClearMessages:
+	    		if ((service != null) && (buddyId != null)) {	    		
+		    		// load buddy from roster
+		    		Buddy buddy = this.service.getRoster().get( buddyId );
+		    		this.service.getRoster().clearMessages(buddy);
+	    		}
+	    		return true;
+	    	
+	    	default:
+	    		return super.onOptionsItemSelected(item);
+	    }
+	}
+
 	@Override
 	public void onDestroy() {
 		if (this.view != null) {
@@ -119,6 +150,7 @@ public class ChatFragment extends ListFragment {
 			this.setListAdapter(null);
 		}
 		
+		this.setHasOptionsMenu(buddyId != null);
 		this.buddyId = buddyId;
 		
 		// set the current visible buddy
@@ -152,28 +184,4 @@ public class ChatFragment extends ListFragment {
 			this.view.refresh();
 		}
 	}
-
-//	@Override
-//	public boolean onCreateOptionsMenu(Menu menu) {
-//	    MenuInflater inflater = getMenuInflater();
-//	    inflater.inflate(R.menu.message_menu, menu);
-//	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearMessages), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-//	    return true;
-//	}
-//
-//	@Override
-//	public boolean onOptionsItemSelected(MenuItem item) {
-//	    switch (item.getItemId()) {
-//	    	case R.id.itemClearMessages:
-//	    		if (service != null) {	    		
-//		    		// load buddy from roster
-//		    		Buddy buddy = this.service.getRoster().get( buddyId );
-//		    		this.service.getRoster().clearMessages(buddy);
-//	    		}
-//	    		return true;
-//	    	
-//	    	default:
-//	    		return super.onOptionsItemSelected(item);
-//	    }
-//	}
 }

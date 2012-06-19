@@ -192,28 +192,4 @@ public class MessageActivity extends FragmentActivity {
 			iconTitleBar.setImageResource(presence_icon);
 	    }
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-	    MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.menu.message_menu, menu);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearMessages), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-	    return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-	    switch (item.getItemId()) {
-	    	case R.id.itemClearMessages:
-	    		if (service != null) {	    		
-		    		// load buddy from roster
-		    		Buddy buddy = MessageActivity.this.service.getRoster().get( buddyId );
-		    		this.service.getRoster().clearMessages(buddy);
-	    		}
-	    		return true;
-	    	
-	    	default:
-	    		return super.onOptionsItemSelected(item);
-	    }
-	}
 }
