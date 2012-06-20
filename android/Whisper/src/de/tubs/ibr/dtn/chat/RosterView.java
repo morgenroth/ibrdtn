@@ -66,7 +66,7 @@ public class RosterView extends BaseAdapter {
 		public Buddy buddy;
 		public ImageView hinticon;
 		public ImageView icon;
-		public LinearLayout layout;
+		public View layout;
 	}
 	
 	private BroadcastReceiver notify_receiver = new BroadcastReceiver() {
@@ -115,7 +115,7 @@ public class RosterView extends BaseAdapter {
 			holder.bottomText = (TextView) convertView.findViewById(R.id.bottomtext);
 			holder.icon = (ImageView) convertView.findViewById(R.id.icon);
 			holder.hinticon = (ImageView) convertView.findViewById(R.id.hinticon);
-			holder.layout = (LinearLayout) convertView.findViewById(R.id.roster_item_layout);
+			holder.layout = convertView.findViewById(R.id.roster_item_layout);
 			convertView.setTag(holder);
 		} else {
 			holder = (ViewHolder) convertView.getTag();
@@ -180,10 +180,11 @@ public class RosterView extends BaseAdapter {
 		if (selectedBuddy != null) {
 			if (selectedBuddy.equals(holder.buddy.getEndpoint())) {
 				holder.layout.setBackgroundColor(R.color.dark_blue);
-				
+				convertView.setActivated(true);
 				holder.hinticon.setVisibility(View.VISIBLE);
 				holder.hinticon.setImageResource(R.drawable.ic_selected);
 			} else {
+				convertView.setActivated(false);
 				holder.layout.setBackgroundColor(android.R.color.transparent);
 			}
 		}

@@ -84,7 +84,6 @@ public class RosterFragment extends ListFragment {
 	
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
-		this.getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 		this.getListView().setOnCreateContextMenuListener(this);
 		super.onViewCreated(view, savedInstanceState);
 	}
@@ -126,7 +125,6 @@ public class RosterFragment extends ListFragment {
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
 		ViewHolder holder = (ViewHolder)v.getTag();
-		v.setSelected(true);
 		selectBuddy(holder.buddy.getEndpoint());
 	}
 	
