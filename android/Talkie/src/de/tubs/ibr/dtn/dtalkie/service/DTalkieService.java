@@ -63,7 +63,7 @@ public class DTalkieService extends Service {
 	
 	public static final GroupEndpoint DTALKIE_GROUP_EID = new GroupEndpoint("dtn://dtalkie.dtn/broadcast");
 	private Registration _registration = null;
-	private Boolean _service_available = false;
+	private ServiceError _service_error = ServiceError.NO_ERROR;
 	
 	private final MediaRecorder recorder = new MediaRecorder();
 	private final QueuingMediaPlayer player = new QueuingMediaPlayer();
@@ -360,14 +360,16 @@ public class DTalkieService extends Service {
 		
 		try {
 			_client.initialize(this, _registration);
-			_service_available = true;
+			_service_error = ServiceError.NO_ERROR;
 		} catch (ServiceNotAvailableException e) {
-			_service_available = false;
+			_service_error = ServiceError.SERVICE_NOT_FOUND;
+		} catch (SecurityException ex) {
+			_service_error = ServiceError.PERMISSION_NOT_GRANTED;
 		}
 	}
 	
-	public Boolean isServiceAvailable() {
-		return _service_available;
+	public ServiceError getServiceError() {
+		return _service_error;
 	}
 	
 	@Override

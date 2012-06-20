@@ -53,7 +53,6 @@ import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.chat.MainActivity;
-import de.tubs.ibr.dtn.chat.MessageActivity;
 import de.tubs.ibr.dtn.chat.R;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Message;
@@ -67,7 +66,7 @@ public class ChatService extends Service {
 	public static final String ACTION_OPENCHAT = "de.tubs.ibr.dtn.chat.OPENCHAT";
 	public static final GroupEndpoint PRESENCE_GROUP_EID = new GroupEndpoint("dtn://chat.dtn/presence");
 	private Registration _registration = null;
-	private Boolean _service_available = false;
+	private ServiceError _service_error = ServiceError.NO_ERROR;
 	
 	private static String visibleBuddy = null;
 	
@@ -317,14 +316,16 @@ public class ChatService extends Service {
 		
 		try {
 			_client.initialize(this, _registration);
-			_service_available = true;
+			_service_error = ServiceError.NO_ERROR;
 		} catch (ServiceNotAvailableException e) {
-			_service_available = false;
+			_service_error = ServiceError.SERVICE_NOT_FOUND;
+		} catch (SecurityException ex) {
+			_service_error = ServiceError.PERMISSION_NOT_GRANTED;
 		}
 	}
 	
-	public Boolean isServiceAvailable() {
-		return _service_available;
+	public ServiceError getServiceError() {
+		return _service_error;
 	}
 	
 	@Override

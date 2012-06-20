@@ -25,10 +25,8 @@ import java.io.IOException;
 import java.util.List;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -41,7 +39,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -68,6 +65,7 @@ import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.OnUpdateListener;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.ViewHolder;
 import de.tubs.ibr.dtn.dtalkie.service.DTalkieService;
+import de.tubs.ibr.dtn.dtalkie.service.Utils;
 
 public class DTalkieActivity extends Activity {
 	
@@ -135,29 +133,7 @@ public class DTalkieActivity extends Activity {
 		else
 		{
 			mConnection = null;
-			
-			DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-			    @Override
-			    public void onClick(DialogInterface dialog, int which) {
-			        switch (which){
-			        case DialogInterface.BUTTON_POSITIVE:
-						final Intent marketIntent = new Intent(Intent.ACTION_VIEW);
-						marketIntent.setData(Uri.parse("market://details?id=de.tubs.ibr.dtn"));
-						startActivity(marketIntent);
-			            break;
-
-			        case DialogInterface.BUTTON_NEGATIVE:
-			            break;
-			        }
-			        DTalkieActivity.this.finish();
-			    }
-			};
-
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setMessage(getResources().getString(R.string.alert_missing_daemon));
-			builder.setPositiveButton(getResources().getString(R.string.alert_yes), dialogClickListener);
-			builder.setNegativeButton(getResources().getString(R.string.alert_no), dialogClickListener);
-			builder.show();
+			Utils.showInstallServiceDialog(DTalkieActivity.this);
 		}
     }
     
@@ -315,8 +291,18 @@ public class DTalkieActivity extends Activity {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			DTalkieActivity.this.service = ((DTalkieService.LocalBinder)service).getService();
 			
-			if (!DTalkieActivity.this.service.isServiceAvailable()) {
-				showInstallServiceDialog();
+			// check possible errors
+			switch ( DTalkieActivity.this.service.getServiceError() ) {
+			case NO_ERROR:
+				break;
+				
+			case SERVICE_NOT_FOUND:
+				Utils.showInstallServiceDialog(DTalkieActivity.this);
+				break;
+				
+			case PERMISSION_NOT_GRANTED:
+				Utils.showReinstallDialog(DTalkieActivity.this);
+				break;
 			}
 			
 			Log.i(TAG, "service connected");
@@ -362,31 +348,6 @@ public class DTalkieActivity extends Activity {
 			service = null;
 		}
 	};
-	
-	private void showInstallServiceDialog() {
-		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-		    @Override
-		    public void onClick(DialogInterface dialog, int which) {
-		        switch (which){
-		        case DialogInterface.BUTTON_POSITIVE:
-					final Intent marketIntent = new Intent(Intent.ACTION_VIEW);
-					marketIntent.setData(Uri.parse("market://details?id=de.tubs.ibr.dtn"));
-					startActivity(marketIntent);
-		            break;
-
-		        case DialogInterface.BUTTON_NEGATIVE:
-		            break;
-		        }
-		        finish();
-		    }
-		};
-
-		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage(getResources().getString(R.string.alert_missing_daemon));
-		builder.setPositiveButton(getResources().getString(R.string.alert_yes), dialogClickListener);
-		builder.setNegativeButton(getResources().getString(R.string.alert_no), dialogClickListener);
-		builder.show();
-	}
 	
     public void startRecording(RecState type)
     {

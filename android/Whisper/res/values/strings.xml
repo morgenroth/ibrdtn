@@ -16,7 +16,8 @@
     <string name="presenceTag">Presence</string>
     <string name="messageduration">Message expiration</string>
     <string name="no_status_message">No status message</string>
-    <string name="alert_missing_daemon">The DTN daemon is not installed. Would you like to install it now?</string>
+    <string name="alert_missing_daemon">The DTN daemon is not installed. You need to install it and then re-install this application. Would you like to install it now?</string>
+    <string name="alert_reinstall_app">You need to re-install this application to grant necessary permissions. Would you like to do this now?</string>
     <string name="alert_yes">Yes</string>
     <string name="alert_no">No</string>
     <string name="message_settings">Messages</string>

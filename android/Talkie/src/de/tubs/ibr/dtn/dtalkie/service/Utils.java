@@ -1,11 +1,11 @@
-package de.tubs.ibr.dtn.chat.service;
+package de.tubs.ibr.dtn.dtalkie.service;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
-import de.tubs.ibr.dtn.chat.R;
+import de.tubs.ibr.dtn.dtalkie.R;
 
 public class Utils {
 //	public static int ANDROID_API_ACTIONBAR = 16;

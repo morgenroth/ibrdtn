@@ -71,8 +71,18 @@ public class MainActivity extends FragmentActivity {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			MainActivity.this.service = ((ChatService.LocalBinder)service).getService();
 			
-			if (!MainActivity.this.service.isServiceAvailable()) {
+			// check possible errors
+			switch ( MainActivity.this.service.getServiceError() ) {
+			case NO_ERROR:
+				break;
+				
+			case SERVICE_NOT_FOUND:
 				Utils.showInstallServiceDialog(MainActivity.this);
+				break;
+				
+			case PERMISSION_NOT_GRANTED:
+				Utils.showReinstallDialog(MainActivity.this);
+				break;
 			}
 
 			Log.i(TAG, "service connected");

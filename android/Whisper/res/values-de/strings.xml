@@ -18,7 +18,8 @@
     <string name="presenceTag">Status</string>
     <string name="messageduration">Gültigkeit der Nachrichten</string>
     <string name="no_status_message">Keine Statusmeldung</string>
-    <string name="alert_missing_daemon">Der DTN Basisdienst ist nicht installiert. Möchten Sie diesen jetzt installieren?</string>
+    <string name="alert_missing_daemon">Der DTN Basisdienst ist nicht installiert. Sie müssen diesen Dienst installieren und dann diese Anwendung erneut installieren. Möchten Sie den Dienst jetzt installieren?</string>
+    <string name="alert_reinstall_app">Zur Gewährung von notwendigen Rechten müssen Sie diese Anwendung erneut installieren. Möchten Sie dies jetzt tun?</string>
     <string name="alert_yes">Ja</string>
     <string name="alert_no">Nein</string>
     <string name="message_settings">Nachrichten</string>
