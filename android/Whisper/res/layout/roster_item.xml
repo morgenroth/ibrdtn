@@ -2,9 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="?android:attr/listPreferredItemHeight"
-    android:background="@null"
+    android:background="@android:color/transparent"
     android:orientation="horizontal"
-    android:padding="4dp">
+    android:padding="4dp"
+    android:id="@+id/roster_item_layout">
 
     <ImageView
         android:id="@+id/icon"
@@ -18,8 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:padding="4dp"
-        android:background="@null">
+        android:padding="4dp">
 
 	    <TextView
 	        android:id="@+id/label"
@@ -46,11 +46,11 @@
     </RelativeLayout>
     
     <ImageView
-        android:id="@+id/drafticon"
-	    android:layout_width="24dp"
-	    android:layout_height="24dp"
-        android:layout_weight="0"
+        android:id="@+id/hinticon"
+        android:layout_width="24dp"
+        android:layout_height="match_parent"
         android:layout_margin="2dp"
+        android:layout_weight="0"
         android:src="@drawable/ic_draft" />
 
 </LinearLayout>

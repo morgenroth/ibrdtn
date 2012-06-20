@@ -34,6 +34,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Roster;
@@ -44,6 +45,7 @@ public class RosterView extends BaseAdapter {
 	private LayoutInflater inflater = null;
 //	private Roster roster = null;
 	private List<Buddy> buddies = null;
+	private String selectedBuddy = null;
 
 	public RosterView(Context context, Roster roster)
 	{
@@ -62,8 +64,9 @@ public class RosterView extends BaseAdapter {
 		public TextView text;
 		public TextView bottomText;
 		public Buddy buddy;
-		public ImageView drafticon;
+		public ImageView hinticon;
 		public ImageView icon;
+		public LinearLayout layout;
 	}
 	
 	private BroadcastReceiver notify_receiver = new BroadcastReceiver() {
@@ -89,6 +92,11 @@ public class RosterView extends BaseAdapter {
 		return position;
 	}
 	
+	public void setSelected(String buddyId) {
+		this.selectedBuddy = buddyId;
+		this.notifyDataSetChanged();
+	}
+	
 	public void refresh()
 	{
 		Log.d(TAG, "refresh requested...");
@@ -106,7 +114,8 @@ public class RosterView extends BaseAdapter {
 			holder.text = (TextView) convertView.findViewById(R.id.label);
 			holder.bottomText = (TextView) convertView.findViewById(R.id.bottomtext);
 			holder.icon = (ImageView) convertView.findViewById(R.id.icon);
-			holder.drafticon = (ImageView) convertView.findViewById(R.id.drafticon);
+			holder.hinticon = (ImageView) convertView.findViewById(R.id.hinticon);
+			holder.layout = (LinearLayout) convertView.findViewById(R.id.roster_item_layout);
 			convertView.setTag(holder);
 		} else {
 			holder = (ViewHolder) convertView.getTag();
@@ -162,9 +171,21 @@ public class RosterView extends BaseAdapter {
 		}
 		
 		if (holder.buddy.hasDraft()) {
-			holder.drafticon.setVisibility(View.VISIBLE);
+			holder.hinticon.setVisibility(View.VISIBLE);
+			holder.hinticon.setImageResource(R.drawable.ic_draft);
 		} else {
-			holder.drafticon.setVisibility(View.GONE);
+			holder.hinticon.setVisibility(View.GONE);
+		}
+		
+		if (selectedBuddy != null) {
+			if (selectedBuddy.equals(holder.buddy.getEndpoint())) {
+				holder.layout.setBackgroundColor(R.color.dark_blue);
+				
+				holder.hinticon.setVisibility(View.VISIBLE);
+				holder.hinticon.setImageResource(R.drawable.ic_selected);
+			} else {
+				holder.layout.setBackgroundColor(android.R.color.transparent);
+			}
 		}
 		
 		return convertView;

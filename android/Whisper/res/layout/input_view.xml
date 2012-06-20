@@ -4,7 +4,7 @@
     android:name="de.tubs.ibr.dtn.chat.InputFragment"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#fff"
+    android:background="@color/inputbox_background"
     android:layout_weight="0"
     android:id="@+id/input_view">
 
@@ -22,8 +22,7 @@
           android:layout_height="wrap_content"
           android:inputType="textMultiLine"
           android:singleLine="true"
-          android:layout_weight="1"
-          android:textColor="@color/messageInputText">
+          android:layout_weight="1">
           <requestFocus />
       </EditText>
       

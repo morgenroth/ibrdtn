@@ -16,7 +16,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.BaseAdapter;
 import android.widget.ListView;
 import de.tubs.ibr.dtn.chat.RosterView.ViewHolder;
 import de.tubs.ibr.dtn.chat.core.Buddy;
@@ -85,6 +84,7 @@ public class RosterFragment extends ListFragment {
 	
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
+		this.getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 		this.getListView().setOnCreateContextMenuListener(this);
 		super.onViewCreated(view, savedInstanceState);
 	}
@@ -126,6 +126,7 @@ public class RosterFragment extends ListFragment {
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
 		ViewHolder holder = (ViewHolder)v.getTag();
+		v.setSelected(true);
 		selectBuddy(holder.buddy.getEndpoint());
 	}
 	
@@ -138,14 +139,14 @@ public class RosterFragment extends ListFragment {
 	    		startActivity(i);
     		}
     	} else {
+    		// select the list item
+    		this.view.setSelected(buddyId);
+    		
     		ChatFragment chat = (ChatFragment)fragment;
     		chat.setBuddy(buddyId);
     		
     		InputFragment input = (InputFragment)getActivity().getSupportFragmentManager().findFragmentById(R.id.input_fragment);
     		input.setBuddy(buddyId);
-    		
-    		BuddyBarFragment buddybar = (BuddyBarFragment)getActivity().getSupportFragmentManager().findFragmentById(R.id.buddybar_fragment);
-    		buddybar.setBuddy(buddyId);
     	}
 	}
 }
