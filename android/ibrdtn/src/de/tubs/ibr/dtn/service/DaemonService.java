@@ -159,6 +159,7 @@ public class DaemonService extends Service {
 		builder.setSmallIcon(icon);
 		builder.setOngoing(true);
 		builder.setOnlyAlertOnce(true);
+		builder.setWhen(0);
 		
 		Notification ret = builder.getNotification();
 		
