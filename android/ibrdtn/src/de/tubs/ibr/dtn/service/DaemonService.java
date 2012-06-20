@@ -216,7 +216,7 @@ public class DaemonService extends Service {
         if (action.equals(ACTION_STARTUP))
         {
 			// create initial notification
-			Notification n = buildNotification(R.drawable.ic_notification, getResources().getString(R.string.service_running));
+			Notification n = buildNotification(R.drawable.ic_notification, getResources().getString(R.string.notify_no_neighbors));
 			
     		// turn this to a foreground service (kill-proof)
     		startForeground(1, n);
