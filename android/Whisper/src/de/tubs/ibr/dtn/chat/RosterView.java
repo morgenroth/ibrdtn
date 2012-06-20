@@ -91,7 +91,7 @@ public class RosterView extends BaseAdapter {
 		return position;
 	}
 	
-	public void setSelected(String buddyId) {
+	public synchronized void setSelected(String buddyId) {
 		this.selectedBuddy = buddyId;
 		this.notifyDataSetChanged();
 	}

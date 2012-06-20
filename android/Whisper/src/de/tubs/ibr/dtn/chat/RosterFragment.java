@@ -25,6 +25,7 @@ public class RosterFragment extends ListFragment {
 	private final String TAG = "RosterFragment";
 	private RosterView view = null;
 	private ChatService service = null;
+	private String selectedBuddy = null;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -39,6 +40,7 @@ public class RosterFragment extends ListFragment {
 			// activate roster view
 			RosterFragment.this.view = new RosterView(getActivity(), RosterFragment.this.service.getRoster());
 			RosterFragment.this.setListAdapter(RosterFragment.this.view);
+			RosterFragment.this.view.setSelected(selectedBuddy);
 			
 			Log.i(TAG, "service connected");
 		}
@@ -138,7 +140,8 @@ public class RosterFragment extends ListFragment {
     		}
     	} else {
     		// select the list item
-    		this.view.setSelected(buddyId);
+    		this.selectedBuddy = buddyId;
+    		if (this.view != null) this.view.setSelected(this.selectedBuddy);
     		
     		ChatFragment chat = (ChatFragment)fragment;
     		chat.setBuddy(buddyId);
