@@ -260,7 +260,7 @@ public class Preferences extends PreferenceActivity {
 	    
 	    case R.id.itemCloudUplink:
 	    {
-	    	pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.clearingstorage), true, false);
+	    	pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.alteratecloudstate), true, false);
 	    	(new ModifyCloudUplink()).execute(item);
 	    	return true;
 	    }

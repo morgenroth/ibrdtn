@@ -65,4 +65,5 @@
     <string name="apps_subtitle">Installierte DTN Anwendungen</string>
     <string name="clouduplink_on">Verbinde mit Cloud</string>
     <string name="clouduplink_off">Trenne Cloudverbindung</string>
+    <string name="alteratecloudstate">Verändere Cloudverbindung</string>
 </resources>

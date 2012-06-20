@@ -65,4 +65,5 @@
     <string name="apps_subtitle">Installed DTN aware applications</string>
     <string name="clouduplink_on">Connect to Cloud</string>
     <string name="clouduplink_off">Disconnect from Cloud</string>
+    <string name="alteratecloudstate">Alterate connection to the Cloud</string>
 </resources>
