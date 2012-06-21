@@ -34,8 +34,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
@@ -98,6 +100,17 @@ public class DaemonService extends Service {
 	@Override
 	public IBinder onBind(Intent intent)
 	{
+		// start the service if enabled and not running
+		if (!DaemonManager.getInstance().getState().equals(DaemonState.ONLINE)) {
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			if (prefs.getBoolean("enabledSwitch", false)) {
+				// startup the daemon process
+				final Intent startUpIntent = new Intent(this, DaemonService.class);
+				startUpIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+				startService(startUpIntent);
+			}
+		}
+		
 		return mBinder;
 	}
 	
@@ -161,16 +174,14 @@ public class DaemonService extends Service {
 		builder.setOnlyAlertOnce(true);
 		builder.setWhen(0);
 		
-		Notification ret = builder.getNotification();
-		
 		Intent notifyIntent = new Intent(this, Preferences.class);
 		notifyIntent.setAction("android.intent.action.MAIN");
 		notifyIntent.addCategory("android.intent.category.LAUNCHER");  
 		
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notifyIntent, 0);
-		ret.setLatestEventInfo(this, getResources().getString(R.string.service_name), text, contentIntent);
+		builder.setContentIntent(contentIntent);
 		
-		return ret;
+		return builder.getNotification();
 	}
 	
 	@Override

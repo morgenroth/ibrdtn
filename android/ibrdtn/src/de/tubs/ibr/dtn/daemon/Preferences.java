@@ -72,16 +72,6 @@ public class Preferences extends PreferenceActivity {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Preferences.this.service = DTNService.Stub.asInterface(service);
 			Log.i("IBR-DTN", "Preferences: service connected");
-			
-			@SuppressWarnings("deprecation")
-			CheckBoxPreference checkActivate = (CheckBoxPreference) findPreference("checkActivate");
-			try {
-				checkActivate.setChecked(Preferences.this.service.getState() == DaemonState.ONLINE);
-			} catch (RemoteException e) {
-				checkActivate.setChecked(false);
-			}
-			
-			(new CheckDaemonState()).execute();
 		}
 
 		@Override
@@ -97,51 +87,29 @@ public class Preferences extends PreferenceActivity {
 			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.STATE))
 			{
 				@SuppressWarnings("deprecation")
-				CheckBoxPreference checkActivate = (CheckBoxPreference) findPreference("checkActivate");
+				CheckBoxPreference enabledSwitch = (CheckBoxPreference) findPreference("enabledSwitch");
 				
 				String state = intent.getStringExtra("state");
 				DaemonState ds = DaemonState.valueOf(state);
 				switch (ds)
 				{
 				case ONLINE:
-					checkActivate.setChecked(true);
+					enabledSwitch.setChecked(true);
 					break;
 					
 				case OFFLINE:
-					checkActivate.setChecked(false);
+					enabledSwitch.setChecked(false);
 					break;
 					
 				case ERROR:
-					checkActivate.setChecked(false);
+					enabledSwitch.setChecked(false);
 					break;
 				}
 				
-				checkActivate.setEnabled(true);
+				enabledSwitch.setEnabled(true);
 			}
 		}
 	};
-	
-	private class CheckDaemonState extends AsyncTask<String, Integer, Boolean> {
-		protected Boolean doInBackground(String... data)
-		{
-			try {
-				return Preferences.this.service.isRunning();
-			} catch (Exception e) {
-				return false;
-			}
-		}
-
-		protected void onProgressUpdate(Integer... progress) {
-		}
-
-		protected void onPostExecute(Boolean result)
-		{
-			@SuppressWarnings("deprecation")
-			CheckBoxPreference checkActivate = (CheckBoxPreference) findPreference("checkActivate");
-			checkActivate.setEnabled(true);
-			checkActivate.setChecked(result);
-		}
-	}
 	
 	private class ModifyCloudUplink extends AsyncTask<MenuItem, Integer, MenuItem> {
 		protected MenuItem doInBackground(MenuItem... args)
@@ -317,9 +285,8 @@ public class Preferences extends PreferenceActivity {
 		addPreferencesFromResource(R.xml.preferences);
 		
 		// disable daemon controls
-		Preference checkActivate = (Preference) findPreference("checkActivate");
-		checkActivate.setEnabled(false);
-		checkActivate.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+		Preference enabledSwitch = (Preference) findPreference("enabledSwitch");
+		enabledSwitch.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			@Override
 			public boolean onPreferenceClick(Preference p) {
 				p.setEnabled(false);

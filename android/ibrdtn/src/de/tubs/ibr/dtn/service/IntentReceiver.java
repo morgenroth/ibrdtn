@@ -40,7 +40,7 @@ public class IntentReceiver extends BroadcastReceiver {
 		
 		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
 		{
-			if (preferences.getBoolean("runonboot", false))
+			if (preferences.getBoolean("enabledSwitch", false))
 			{
 				// start the dtnd service
 				Intent is = new Intent(context, DaemonService.class);
