@@ -265,6 +265,12 @@ public class DaemonManager {
 		// broadcast startup intent
 		setState(DaemonState.ONLINE);
 		
+		// enable-cloud uplink if configured
+		if (_cloud_uplink_initiated)
+		{
+			_process.addConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+		}
+		
 		// fire up the session mananger
 		_session_manager.initialize(context);
 		

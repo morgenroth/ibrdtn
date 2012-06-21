@@ -126,7 +126,7 @@ public class NeighborList extends ListActivity {
 	                _data,
 	                R.layout.neighborlist_item,
 	                new String[] { "eid" },
-	                new int[] { R.id.text1 }
+	                new int[] { R.id.textName }
 	        );
 	        
 	        synchronized(_data) {
