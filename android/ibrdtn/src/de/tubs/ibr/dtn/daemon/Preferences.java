@@ -71,12 +71,12 @@ public class Preferences extends PreferenceActivity {
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Preferences.this.service = DTNService.Stub.asInterface(service);
-			Log.i("IBR-DTN", "Preferences: service connected");
+			Log.i(TAG, "service connected");
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
-			Log.i("IBR-DTN", "Preferences: service disconnected");
+			Log.i(TAG, "service disconnected");
 			service = null;
 		}
 	};
@@ -115,15 +115,12 @@ public class Preferences extends PreferenceActivity {
 		protected MenuItem doInBackground(MenuItem... args)
 		{
 			try {
-		    	if (!service.isRunning())
-		    	{
-		    		return null;
-		    	}
-		    	
 		    	if (args[0].isChecked()) {
-		    		DaemonManager.getInstance().disableCloudUplink();
+		    		if (service.isRunning())
+		    			DaemonManager.getInstance().disableCloudUplink();
 		    	} else {
-		    		DaemonManager.getInstance().enableCloudUplink();
+		    		if (service.isRunning())
+		    			DaemonManager.getInstance().enableCloudUplink();
 		    	}
 		    	
 				return args[0];
@@ -139,10 +136,14 @@ public class Preferences extends PreferenceActivity {
 		{
 			if (result == null) {
 				pd.cancel();
-	    		Toast toast = Toast.makeText(Preferences.this, "Daemon is not running! Please start the daemon first.", Toast.LENGTH_LONG);
-	    		toast.show();
 			} else {
 		    	Boolean onoff = !result.isChecked();
+		    	
+		    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+		    	Editor edit = prefs.edit();
+		    	edit.putBoolean("cloud_uplink", onoff);
+		    	edit.apply();
+		    	
 		    	result.setChecked(onoff);
 		    	result.setIcon(onoff ? R.drawable.ic_cloud_off : R.drawable.ic_cloud);
 		    	result.setTitle(onoff ? R.string.clouduplink_off : R.string.clouduplink_on);
@@ -199,7 +200,9 @@ public class Preferences extends PreferenceActivity {
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		MenuItem cloud = menu.findItem(R.id.itemCloudUplink);
-		Boolean onoff = DaemonManager.getInstance().hasCloudUplink();
+		
+    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+    	Boolean onoff = prefs.getBoolean("cloud_uplink", false);
 		
 		cloud.setChecked(onoff);
 		cloud.setIcon(onoff ? R.drawable.ic_cloud_off : R.drawable.ic_cloud);

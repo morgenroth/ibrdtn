@@ -36,9 +36,11 @@ import java.util.Map;
 
 import android.content.Context;
 import android.content.Intent;
-import de.tubs.ibr.dtn.DaemonState;
+import android.content.SharedPreferences;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import de.tubs.ibr.dtn.DaemonState;
 
 public class DaemonManager {
 	// CloudUplink Parameter
@@ -266,9 +268,11 @@ public class DaemonManager {
 		setState(DaemonState.ONLINE);
 		
 		// enable-cloud uplink if configured
-		if (_cloud_uplink_initiated)
+    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
+		if (prefs.getBoolean("cloud_uplink", false))
 		{
 			_process.addConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+			_cloud_uplink_initiated = true;
 		}
 		
 		// fire up the session mananger
@@ -365,10 +369,6 @@ public class DaemonManager {
 		}
 		
 		return new LinkedList<String>();
-	}
-	
-	public synchronized Boolean hasCloudUplink() {
-		return _cloud_uplink_initiated;
 	}
 	
 	public synchronized void enableCloudUplink() {
