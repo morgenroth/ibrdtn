@@ -64,6 +64,7 @@ public class MainActivity extends FragmentActivity {
 	    }
 	    
 	    setContentView(R.layout.roster_main);
+	    refresh();
 	}
 
 	private ServiceConnection mConnection = new ServiceConnection() {

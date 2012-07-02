@@ -42,14 +42,12 @@ public class RosterView extends BaseAdapter {
 
 	private final static String TAG = "RosterView";
 	private LayoutInflater inflater = null;
-//	private Roster roster = null;
 	private List<Buddy> buddies = null;
 	private String selectedBuddy = null;
 
 	public RosterView(Context context, Roster roster)
 	{
 		this.inflater = LayoutInflater.from(context);
-//		this.roster = roster;
 		this.buddies = roster;
 		
 		refresh();
@@ -178,13 +176,13 @@ public class RosterView extends BaseAdapter {
 		
 		if (selectedBuddy != null) {
 			if (selectedBuddy.equals(holder.buddy.getEndpoint())) {
-				holder.layout.setBackgroundColor(R.color.dark_blue);
+				holder.layout.setBackgroundColor(convertView.getResources().getColor(R.color.dark_blue));
 				convertView.setActivated(true);
 				holder.hinticon.setVisibility(View.VISIBLE);
 				holder.hinticon.setImageResource(R.drawable.ic_selected);
 			} else {
 				convertView.setActivated(false);
-				holder.layout.setBackgroundColor(android.R.color.transparent);
+				holder.layout.setBackgroundColor(convertView.getResources().getColor(android.R.color.transparent));
 			}
 		}
 		

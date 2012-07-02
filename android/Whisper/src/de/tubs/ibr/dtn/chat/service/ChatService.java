@@ -31,10 +31,13 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
@@ -67,6 +70,7 @@ public class ChatService extends Service {
 	public static final GroupEndpoint PRESENCE_GROUP_EID = new GroupEndpoint("dtn://chat.dtn/presence");
 	private Registration _registration = null;
 	private ServiceError _service_error = ServiceError.NO_ERROR;
+	private Boolean _screen_off = false;
 	
 	private static String visibleBuddy = null;
 	
@@ -297,6 +301,11 @@ public class ChatService extends Service {
 		Log.i(TAG, "service created.");
 		super.onCreate();
 		
+		IntentFilter screen_filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+		screen_filter.addAction(Intent.ACTION_SCREEN_OFF);
+		registerReceiver(_screen_receiver, screen_filter);
+		_screen_off = false;
+		
 		// create a new executor for tasks
 		_executor = Executors.newSingleThreadExecutor();
 		
@@ -323,6 +332,24 @@ public class ChatService extends Service {
 			_service_error = ServiceError.PERMISSION_NOT_GRANTED;
 		}
 	}
+	
+	private BroadcastReceiver _screen_receiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+				_screen_off = true;
+			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
+				_screen_off = false;
+				
+				// clear notification
+				String visible = ChatService.getVisible();
+				if (visible != null) {
+					NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+					mNotificationManager.cancel(visible, MESSAGE_NOTIFICATION);
+				}
+			}
+		}
+	};
 	
 	public ServiceError getServiceError() {
 		return _service_error;
@@ -469,6 +496,10 @@ public class ChatService extends Service {
 		if (visibleBuddy == buddyId) visibleBuddy = null;
 	}
 	
+	private synchronized static String getVisible() {
+		return visibleBuddy;
+	}
+	
 	public static Boolean isVisible(String buddyId)
 	{
 		if (visibleBuddy == null) return false;
@@ -477,17 +508,15 @@ public class ChatService extends Service {
 	
 	private void createNotification(Buddy b, Message msg)
 	{
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		
 		if (ChatService.isVisible(b.getEndpoint()))
 		{
-			return;
+			if (!_screen_off) return;
 		}
-		
-		String ns = Context.NOTIFICATION_SERVICE;
-		NotificationManager mNotificationManager = (NotificationManager) getSystemService(ns);
 		
 		int icon = R.drawable.ic_message;
 		CharSequence tickerText = getString(R.string.new_message_from) + " " + b.getNickname();
-		long when = System.currentTimeMillis();
 
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 		
@@ -496,34 +525,34 @@ public class ChatService extends Service {
 		CharSequence contentTitle = getString(R.string.new_message);
 		CharSequence contentText = b.getNickname() + ":\n" + msg.getPayload();
 		
-		int defaults = Notification.DEFAULT_SOUND;
+		int defaults = 0;
 		
-		if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("vibrateOnMessage", true)) {
+		if (prefs.getBoolean("vibrateOnMessage", true)) {
 			defaults |= Notification.DEFAULT_VIBRATE;
 		}
 		
-		builder.setContentTitle(contentTitle);
-		builder.setContentText(contentText);
-		builder.setSmallIcon(icon);
-		builder.setTicker(tickerText);
-		builder.setDefaults(defaults);
-		//builder.setContentInfo(info);
-		builder.setWhen(when);
-		
-		Notification notification = builder.getNotification();
-
 		Intent notificationIntent = new Intent(this, MainActivity.class);
 		//notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
 		//notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		notificationIntent.setAction(ACTION_OPENCHAT);
 		notificationIntent.addCategory("android.intent.category.DEFAULT");
 		notificationIntent.putExtra("buddy", b.getEndpoint());
-
+		
 		int requestID = (int) System.currentTimeMillis();
 		PendingIntent contentIntent = PendingIntent.getActivity(this, requestID, notificationIntent, PendingIntent.FLAG_ONE_SHOT);
-
-		notification.setLatestEventInfo(this, contentTitle, contentText, contentIntent);
-
+		
+		builder.setContentTitle(contentTitle);
+		builder.setContentText(contentText);
+		builder.setSmallIcon(icon);
+		builder.setTicker(tickerText);
+		builder.setDefaults(defaults);
+		builder.setWhen( System.currentTimeMillis() );
+		builder.setContentIntent(contentIntent);
+		builder.setSound( Uri.parse( prefs.getString("ringtoneOnMessage", "content://settings/system/notification_sound") ) );
+		
+		Notification notification = builder.getNotification();
+		
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotificationManager.notify(b.getEndpoint(), MESSAGE_NOTIFICATION, notification);
 	}
 }

@@ -27,4 +27,6 @@
     <string name="vibrate_on_message">Vibrieren</string>
     <string name="vibrate_on_message_desc">Vibriere beim Empfang einer Nachricht</string>
     <string name="no_buddy_selected">Kein Gesprächspartner ausgewählt</string>
+    <string name="ringtone_on_message">Benachrichtungston</string>
+    <string name="ringtone_on_message_desc">Wählen Sie einen Benachrichtigungston für eingehende Nachrichten.</string>
 </resources>

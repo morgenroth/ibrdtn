@@ -25,4 +25,6 @@
     <string name="vibrate_on_message">Vibrate</string>
     <string name="vibrate_on_message_desc">Vibrate on message reception</string>
     <string name="no_buddy_selected">No buddy selected</string>
+    <string name="ringtone_on_message">Notification sound</string>
+    <string name="ringtone_on_message_desc">Choose a notification sound for incoming messages.</string>
 </resources>
