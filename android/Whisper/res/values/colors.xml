@@ -17,6 +17,8 @@
     <color name="dark_violett">#3c1450</color>
     <color name="dark_green">#233400</color>
     <color name="dark_yellow">#9c5300</color>
-    <color name="inputbox_background">#80333333</color>
-    <color name="send_button">#A0004c64</color>
+    <color name="inputbox_background">#FFFFFF</color>
+    <color name="inputbox_text">#FF000000</color>
+    <color name="chat_text">#FFFFFFFF</color>
+    <color name="send_button">#a1a1a1</color>
 </resources>

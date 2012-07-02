@@ -46,6 +46,7 @@ import de.tubs.ibr.dtn.chat.service.Utils;
 public class MainActivity extends FragmentActivity {
 	private final String TAG = "MainActivity";
 	private ChatService service = null;
+	private Boolean intent_handled;
 	
 	private void selectBuddy(String buddyId) {
 		Fragment fragment = this.getSupportFragmentManager().findFragmentById(R.id.roster_fragment);
@@ -57,6 +58,8 @@ public class MainActivity extends FragmentActivity {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		intent_handled = false;
+		
 	    super.onCreate(savedInstanceState);
 	    
 	    if (android.os.Build.VERSION.SDK_INT < Utils.ANDROID_API_ACTIONBAR) {
@@ -64,7 +67,6 @@ public class MainActivity extends FragmentActivity {
 	    }
 	    
 	    setContentView(R.layout.roster_main);
-	    refresh();
 	}
 
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -108,8 +110,8 @@ public class MainActivity extends FragmentActivity {
 	
 	@Override
 	public void onResume() {
-		refresh();
 		super.onResume();
+		refresh();
 	}
 
 	@Override
@@ -121,16 +123,22 @@ public class MainActivity extends FragmentActivity {
 		// we know will be running in our own process (and thus won't be
 		// supporting component replacement by other applications).
 		bindService(new Intent(MainActivity.this, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+	}
+	
+	@Override
+	protected void onStart() {
+		super.onStart();
 		
 		// get ID of the buddy
-		if (getIntent() != null) {
+		if ((getIntent() != null) && !intent_handled) {
+			intent_handled = true;
 		    String buddyId = getIntent().getStringExtra("buddy");
 		    if (buddyId != null) { 
 		    	selectBuddy(buddyId);
 		    }
 		}
 	}
-	
+
 	@Override
 	protected void onNewIntent(Intent intent) {
 		// get ID of the buddy
