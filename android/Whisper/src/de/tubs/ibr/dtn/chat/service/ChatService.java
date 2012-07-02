@@ -358,6 +358,8 @@ public class ChatService extends Service {
 	@Override
 	public void onDestroy()
 	{
+		unregisterReceiver(_screen_receiver);
+		
 		try {
 			// stop executor
 			_executor.shutdown();
