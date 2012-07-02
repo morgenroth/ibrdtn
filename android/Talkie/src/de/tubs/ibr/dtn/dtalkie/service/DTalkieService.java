@@ -451,6 +451,9 @@ public class DTalkieService extends Service {
         
         _state = DTalkieState.RECORDING;
         
+    	// pause the player
+    	player.pause();
+    	
         playSound(SOUND_BEEP);
         
     	FileObserver _observer = new FileObserver(current_record_file.getAbsolutePath(), FileObserver.CLOSE_WRITE) {
@@ -497,6 +500,9 @@ public class DTalkieService extends Service {
     	_state = DTalkieState.STOPPED;
     	
     	playSound(SOUND_QUIT);
+    	
+    	// resume player
+    	player.resume();
     }
     
     public void setAutoPlay(boolean val) {
@@ -549,6 +555,7 @@ public class DTalkieService extends Service {
     	private LinkedList<Message> play_queue = new LinkedList<Message>();
     	private Boolean autoplay = false;
     	private Boolean idle = true;
+    	private Boolean pause = false;
     	
         private void load(Message msg) throws IOException
         {
@@ -592,8 +599,20 @@ public class DTalkieService extends Service {
         	}
         }
         
+        public synchronized void pause() {
+        	pause = true;
+        }
+        
+        public synchronized void resume() {
+        	pause = false;
+        	next();
+        }
+        
         private synchronized void next()
         {
+        	// abort if set to pause but do not reset idle flag
+        	if (pause) return;
+        	
         	idle = true; notifyAll();
         	
         	if (current_message != null) {
