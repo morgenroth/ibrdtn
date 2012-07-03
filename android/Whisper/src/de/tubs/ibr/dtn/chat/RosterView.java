@@ -66,7 +66,7 @@ public class RosterView extends BaseAdapter {
 			if (showOffline) {
 				buddies_filtered.add(b);
 			} else {
-				if (b.isOnline()) {
+				if (b.isOnline() || b.getEndpoint().equals(selectedBuddy)) {
 					buddies_filtered.add(b);
 				}
 			}
