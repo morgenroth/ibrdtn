@@ -42,6 +42,8 @@ public class RosterFragment extends ListFragment {
 			// activate roster view
 			RosterFragment.this.view = new RosterView(getActivity(), RosterFragment.this.service.getRoster());
 			RosterFragment.this.setListAdapter(RosterFragment.this.view);
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(RosterFragment.this.getActivity());
+			RosterFragment.this.view.setShowOffline(!prefs.getBoolean("hideOffline", false));
 			RosterFragment.this.view.setSelected(selectedBuddy);
 			
 			Log.i(TAG, "service connected");
