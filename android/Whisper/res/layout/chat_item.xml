@@ -5,21 +5,22 @@
     android:layout_height="?android:attr/listPreferredItemHeight"
     android:background="@null"
     android:orientation="horizontal"
-    android:padding="1dp" >
+    android:padding="0dp"
+    android:layout_margin="0dp">
     
     <ImageView
         android:id="@+id/imageAvatar"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_weight="0"
-        android:src="@drawable/ic_contact_red" />
+        android:src="@drawable/ic_contact_foreign" />
     
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:padding="8dp"
-        android:background="@null">
+        android:background="@color/chat_background">
 
 	    <TextView
 	        android:id="@+id/text"
@@ -38,16 +39,16 @@
 	        android:layout_alignLeft="@+id/text"
 	        android:layout_below="@+id/text"
 	        android:text="TextView"
-	        android:textColor="@color/gray"
+	        android:textColor="@color/chat_label"
 	        android:textSize="10dp" />
     
     </RelativeLayout>
-
+    
     <ImageView
         android:id="@+id/imageAvatarRight"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_weight="0"
-        android:src="@drawable/ic_contact_blue" />
+        android:src="@drawable/ic_contact_self" />
 
 </LinearLayout>

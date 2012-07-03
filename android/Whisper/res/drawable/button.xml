@@ -2,17 +2,17 @@
     <!-- checked state -->
     <item android:state_pressed="false" android:state_checked="true">
 		<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-			<solid android:color="@color/red" />
+			<solid android:color="@color/button_checked" />
 		</shape>
     </item>
     <item android:state_pressed="true">
 		<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-			<solid android:color="@color/blue" />
+			<solid android:color="@color/button_pressed" />
 		</shape>
     </item>
     <item>
 		<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-			<solid android:color="@color/send_button" />
+			<solid android:color="@color/button_idle" />
 		</shape>
 	</item>
 </selector>

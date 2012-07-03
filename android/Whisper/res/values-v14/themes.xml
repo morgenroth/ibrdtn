@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="MainTheme" parent="@android:style/Theme.Holo.Light.DarkActionBar">
+        <!-- Any customizations for your app running on devices with Theme.Holo here -->
+        <!-- 
+		<item name="android:windowBackground">@color/list_background</item>
+		<item name="android:colorBackground">@color/list_background</item>
+		 -->
+    </style>
+</resources>

@@ -27,4 +27,6 @@
     <string name="no_buddy_selected">No buddy selected</string>
     <string name="ringtone_on_message">Notification sound</string>
     <string name="ringtone_on_message_desc">Choose a notification sound for incoming messages.</string>
+    <string name="hide_offline_contacts">Hide offline contacts</string>
+    <string name="hide_offline_contacts_desc">Show only contacts recognized as online.</string>
 </resources>

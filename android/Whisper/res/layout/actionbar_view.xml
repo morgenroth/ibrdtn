@@ -12,7 +12,7 @@
 	    android:id="@+id/actionbar_layout"
 	    android:layout_width="fill_parent"
 	    android:layout_height="52dp"
-	    android:background="@null"
+	    android:background="@color/actionbar_background"
 	    android:orientation="horizontal">
 	
 	    <ImageView
@@ -40,7 +40,7 @@
 		        android:gravity="center_vertical"
 		        android:text="@string/nickname"
 		        android:textSize="18dp"
-		        android:textColor="@android:color/white" />
+		        android:textColor="@color/actionbar_text" />
 		
 		    <TextView
 		        android:id="@+id/actionbar_text"
@@ -51,7 +51,8 @@
 		        android:ellipsize="marquee"
 		        android:singleLine="true"
 		        android:text="@string/example_text"
-		        android:textSize="12dp" />
+		        android:textSize="12dp"
+		        android:textColor="@color/actionbar_label" />
 			    
     	</RelativeLayout>
 	
@@ -61,6 +62,6 @@
 	    android:id="@+id/actionbar_separator"
 	    android:layout_width="match_parent"
 	    android:layout_height="2dp"
-	    android:background="@color/blue"
+	    android:background="@color/actionbar_underline"
 	/>
 </LinearLayout>

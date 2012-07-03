@@ -22,6 +22,7 @@
 package de.tubs.ibr.dtn.chat;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.content.BroadcastReceiver;
@@ -43,7 +44,10 @@ public class RosterView extends BaseAdapter {
 	private final static String TAG = "RosterView";
 	private LayoutInflater inflater = null;
 	private List<Buddy> buddies = null;
+	private List<Buddy> buddies_filtered = new LinkedList<Buddy>();
 	private String selectedBuddy = null;
+	
+	private Boolean showOffline = true;
 
 	public RosterView(Context context, Roster roster)
 	{
@@ -54,6 +58,27 @@ public class RosterView extends BaseAdapter {
 		
 		IntentFilter i = new IntentFilter(Roster.REFRESH);
 		context.registerReceiver(notify_receiver, i);
+	}
+	
+	private void filterBuddies() {
+		buddies_filtered.clear();
+		for (Buddy b : buddies) {
+			if (showOffline) {
+				buddies_filtered.add(b);
+			} else {
+				if (b.isOnline()) {
+					buddies_filtered.add(b);
+				}
+			}
+		}
+	}
+	
+	public void setShowOffline(Boolean val) {
+		if (this.showOffline != val) {
+			this.showOffline = val;
+			filterBuddies();
+			this.notifyDataSetChanged();
+		}
 	}
 	
 	public class ViewHolder
@@ -78,11 +103,11 @@ public class RosterView extends BaseAdapter {
 	}
 	
 	public int getCount() {
-		return buddies.size();
+		return buddies_filtered.size();
 	}
 
 	public Object getItem(int position) {
-		return buddies.get(position);
+		return buddies_filtered.get(position);
 	}
 
 	public long getItemId(int position) {
@@ -91,6 +116,7 @@ public class RosterView extends BaseAdapter {
 	
 	public synchronized void setSelected(String buddyId) {
 		this.selectedBuddy = buddyId;
+		filterBuddies();
 		this.notifyDataSetChanged();
 	}
 	
@@ -98,6 +124,7 @@ public class RosterView extends BaseAdapter {
 	{
 		Log.d(TAG, "refresh requested...");
 		Collections.sort(this.buddies);
+		filterBuddies();
 		this.notifyDataSetChanged();
 	}
 	
@@ -118,7 +145,7 @@ public class RosterView extends BaseAdapter {
 			holder = (ViewHolder) convertView.getTag();
 		}
 		
-		holder.buddy = this.buddies.get(position);
+		holder.buddy = this.buddies_filtered.get(position);
 		holder.icon.setImageResource(R.drawable.online);
 		holder.text.setText(holder.buddy.toString());
 		
@@ -176,7 +203,7 @@ public class RosterView extends BaseAdapter {
 		
 		if (selectedBuddy != null) {
 			if (selectedBuddy.equals(holder.buddy.getEndpoint())) {
-				holder.layout.setBackgroundColor(convertView.getResources().getColor(R.color.dark_blue));
+				holder.layout.setBackgroundColor(convertView.getResources().getColor(R.color.chat_active));
 				convertView.setActivated(true);
 				holder.hinticon.setVisibility(View.VISIBLE);
 				holder.hinticon.setImageResource(R.drawable.ic_selected);

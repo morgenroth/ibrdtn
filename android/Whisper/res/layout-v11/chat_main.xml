@@ -15,6 +15,12 @@
 	    
 	</fragment>
 	
+	<View
+	    android:id="@+id/inputbox_separator"
+	    android:layout_width="match_parent"
+	    android:layout_height="1px"
+	    android:background="@color/border_menu_seperator" />
+	
 	<fragment
 	    xmlns:android="http://schemas.android.com/apk/res/android"
 	    android:name="de.tubs.ibr.dtn.chat.InputFragment"

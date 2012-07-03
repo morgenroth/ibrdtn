@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<color name="actionbar_underline">#0099CC</color>
+ 	
+ 	<color name="button_checked">#CC0000</color>
+ 	<color name="button_pressed">#0099CC</color>
+ 	<color name="button_idle">#a1a1a1</color>
+ 	
+	<color name="contact_foreign">#CC0000</color>
+ 	<color name="contact_self">#0099CC</color>
+ 	
+ 	<color name="textbox_writeline">#a1a1a1</color>
+ 	
+    <color name="inputbox_background">#FFFFFF</color>
+    <color name="inputbox_text">#FF000000</color>
+    
+    <color name="chat_text">#000000</color>
+    <color name="chat_label">#a1a1a1</color>
+    <color name="chat_active">#80a1a1a1</color>
+    <color name="chat_background">#ffffff</color>
+    
+    <color name="border_top">#a1a1a1</color>
+    <color name="border_left">#a1a1a1</color>
+    <color name="border_chat">#a1a1a1</color>
+    
+    <color name="border_menu_seperator">#a1a1a1</color>
+</resources>

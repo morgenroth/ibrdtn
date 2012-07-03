@@ -13,12 +13,18 @@
 	    android:id="@+id/roster_fragment">
 	</fragment>
 	
+	<View
+	    android:id="@+id/menu_separator"
+	    android:layout_width="1px"
+	    android:layout_height="match_parent"
+	    android:background="@color/border_menu_seperator" />
+	
 	<LinearLayout
 	     android:orientation="vertical"
 	     android:layout_width="0dp"
 	     android:layout_height="match_parent"
 	     android:layout_weight="70"
-	     >
+	     android:paddingLeft="1dp">
 	     
 		<fragment
 		    xmlns:android="http://schemas.android.com/apk/res/android"
@@ -29,6 +35,12 @@
 		    android:id="@+id/chat_fragment">
 		    
 		</fragment>
+		
+		<View
+		    android:id="@+id/inputbox_separator"
+		    android:layout_width="match_parent"
+		    android:layout_height="1px"
+		    android:background="@color/border_menu_seperator" />
 		
 		<fragment
 		    xmlns:android="http://schemas.android.com/apk/res/android"
