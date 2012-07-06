@@ -30,11 +30,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -60,6 +56,12 @@ public class MessageActivity extends FragmentActivity {
 	    
 		// get ID of the buddy
 	    setBuddy(getIntent().getStringExtra("buddy"));
+	    
+		// Establish a connection with the service.  We use an explicit
+		// class name because we want a specific service implementation that
+		// we know will be running in our own process (and thus won't be
+		// supporting component replacement by other applications).
+		bindService(new Intent(MessageActivity.this, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
 	}
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -93,12 +95,6 @@ public class MessageActivity extends FragmentActivity {
 		super.onResume();
 	}
 	
-	@Override
-	protected void onNewIntent(Intent intent) {
-		super.onNewIntent(intent);
-		setBuddy(intent.getStringExtra("buddy"));
-	}
-	
 	private void setBuddy(String buddyId) {
 		this.buddyId = buddyId;
 		Log.d(TAG, "set buddy to " + buddyId);
@@ -114,17 +110,6 @@ public class MessageActivity extends FragmentActivity {
 			InputFragment input = (InputFragment)fragment;
 			input.setBuddy( buddyId );
 		}
-	}
-	
-	@Override
-	protected void onPostCreate(Bundle savedInstanceState) {		
-	    super.onPostCreate(savedInstanceState);
-	    
-		// Establish a connection with the service.  We use an explicit
-		// class name because we want a specific service implementation that
-		// we know will be running in our own process (and thus won't be
-		// supporting component replacement by other applications).
-		bindService(new Intent(MessageActivity.this, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
 	}
 	
 	private void refresh()

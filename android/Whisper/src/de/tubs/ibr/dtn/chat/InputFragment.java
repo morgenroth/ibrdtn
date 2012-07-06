@@ -2,7 +2,6 @@ package de.tubs.ibr.dtn.chat;
 
 import java.util.Date;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -81,6 +80,17 @@ public class InputFragment extends Fragment {
 	};
 	
 	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+		// Establish a connection with the service.  We use an explicit
+		// class name because we want a specific service implementation that
+		// we know will be running in our own process (and thus won't be
+		// supporting component replacement by other applications).
+		getActivity().bindService(new Intent(getActivity(), ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+	}
+
+	@Override
 	public void onDestroy() {
 	    if (mConnection != null) {
 	    	// Detach our existing connection.
@@ -88,17 +98,6 @@ public class InputFragment extends Fragment {
 	    }
 
 	    super.onDestroy();
-	}
-	
-	@Override
-	public void onAttach(Activity activity) {
-		super.onAttach(activity);
-		
-		// Establish a connection with the service.  We use an explicit
-		// class name because we want a specific service implementation that
-		// we know will be running in our own process (and thus won't be
-		// supporting component replacement by other applications).
-		getActivity().bindService(new Intent(activity, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
 	}
 	
 	@Override

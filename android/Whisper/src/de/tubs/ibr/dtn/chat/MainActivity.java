@@ -46,7 +46,7 @@ import de.tubs.ibr.dtn.chat.service.Utils;
 public class MainActivity extends FragmentActivity {
 	private final String TAG = "MainActivity";
 	private ChatService service = null;
-	private Boolean intent_handled;
+	private String _open_buddy = null;
 	
 	private void selectBuddy(String buddyId) {
 		Fragment fragment = this.getSupportFragmentManager().findFragmentById(R.id.roster_fragment);
@@ -58,7 +58,9 @@ public class MainActivity extends FragmentActivity {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		intent_handled = false;
+		if (getIntent() != null) {
+			_open_buddy = getIntent().getStringExtra("buddy");
+		}
 		
 	    super.onCreate(savedInstanceState);
 	    
@@ -67,6 +69,12 @@ public class MainActivity extends FragmentActivity {
 	    }
 	    
 	    setContentView(R.layout.roster_main);
+	    
+		// Establish a connection with the service.  We use an explicit
+		// class name because we want a specific service implementation that
+		// we know will be running in our own process (and thus won't be
+		// supporting component replacement by other applications).
+		bindService(new Intent(MainActivity.this, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
 	}
 
 	private ServiceConnection mConnection = new ServiceConnection() {
@@ -112,30 +120,11 @@ public class MainActivity extends FragmentActivity {
 	public void onResume() {
 		super.onResume();
 		refresh();
-	}
-
-	@Override
-	protected void onPostCreate(Bundle savedInstanceState) {		
-	    super.onPostCreate(savedInstanceState);
-	    
-		// Establish a connection with the service.  We use an explicit
-		// class name because we want a specific service implementation that
-		// we know will be running in our own process (and thus won't be
-		// supporting component replacement by other applications).
-		bindService(new Intent(MainActivity.this, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
-	}
-	
-	@Override
-	protected void onStart() {
-		super.onStart();
 		
 		// get ID of the buddy
-		if ((getIntent() != null) && !intent_handled) {
-			intent_handled = true;
-		    String buddyId = getIntent().getStringExtra("buddy");
-		    if (buddyId != null) { 
-		    	selectBuddy(buddyId);
-		    }
+		if (_open_buddy != null) {
+	    	selectBuddy(_open_buddy);
+	    	_open_buddy = null;
 		}
 	}
 
@@ -143,8 +132,7 @@ public class MainActivity extends FragmentActivity {
 	protected void onNewIntent(Intent intent) {
 		// get ID of the buddy
 		if (intent != null) {
-		    String buddyId = intent.getStringExtra("buddy");
-		    if (buddyId != null) selectBuddy(buddyId);
+			_open_buddy = intent.getStringExtra("buddy");
 		}
 		super.onNewIntent(intent);
 	}
