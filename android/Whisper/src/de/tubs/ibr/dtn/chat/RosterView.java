@@ -211,6 +211,8 @@ public class RosterView extends BaseAdapter {
 				convertView.setActivated(false);
 				holder.layout.setBackgroundColor(convertView.getResources().getColor(android.R.color.transparent));
 			}
+		} else {
+			holder.layout.setBackgroundColor(convertView.getResources().getColor(android.R.color.transparent));
 		}
 		
 		return convertView;

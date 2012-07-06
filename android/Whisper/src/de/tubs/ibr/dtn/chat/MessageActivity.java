@@ -138,7 +138,7 @@ public class MessageActivity extends FragmentActivity {
 	    String presence_tag = buddy.getPresence();
 	    String presence_nick = buddy.getNickname();
 	    String presence_text = buddy.getEndpoint();
-	    int presence_icon = R.drawable.offline;
+	    int presence_icon = R.drawable.online;
 	    
 		if (buddy.getStatus() != null)
 		{
@@ -171,6 +171,12 @@ public class MessageActivity extends FragmentActivity {
 			{
 				presence_icon = R.drawable.online;
 			}
+		}
+		
+		// if the presence is older than 60 minutes then mark the buddy as offline
+		if (!buddy.isOnline())
+		{
+			presence_icon = R.drawable.offline;
 		}
 		
 		this.setTitle(getResources().getString(R.string.conversation_with) + " " + presence_nick);
