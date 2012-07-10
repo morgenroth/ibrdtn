@@ -44,7 +44,7 @@ namespace ibrcommon
 		{
 			if (!EVP_VerifyInit_ex(&_ctx, EVP_sha256(), NULL))
 			{
-				IBRCOMMON_LOGGER(critical) << "failed to initialize the verfication function" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(critical) << "failed to initialize the verification function" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
 		}
