@@ -90,8 +90,9 @@ namespace dtn
 
 						IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConnection::run"<< IBRCOMMON_LOGGER_ENDL;
 
-						// TODO: determine sender
-						EID sender;
+						// determine sender
+						std::stringstream ss; ss << "lowpan:" << _address;
+						EID sender(ss.str());
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(sender, bundle, false, true);

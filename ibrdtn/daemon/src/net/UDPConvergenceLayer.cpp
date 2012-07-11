@@ -218,14 +218,19 @@ namespace dtn
 
 		}
 
-		UDPConvergenceLayer& UDPConvergenceLayer::operator>>(dtn::data::Bundle &bundle)
+		void UDPConvergenceLayer::receive(dtn::data::Bundle &bundle, dtn::data::EID &sender)
 		{
 			ibrcommon::MutexLock l(m_readlock);
 
 			char data[m_maxmsgsize];
 
 			// data waiting
-			int len = _socket->receive(data, m_maxmsgsize);
+			unsigned int udpport = 0;
+			std::string ipaddr;
+			int len = _socket->receive(data, m_maxmsgsize, ipaddr, udpport);
+
+			std::stringstream ss; ss << "udp://" << ipaddr + ":" << udpport;
+			sender = dtn::data::EID(ss.str());
 
 			if (len > 0)
 			{
@@ -236,8 +241,6 @@ namespace dtn
 				// get the bundle
 				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
 			}
-
-			return (*this);
 		}
 
 		void UDPConvergenceLayer::componentUp()
@@ -269,10 +272,9 @@ namespace dtn
 			{
 				try {
 					dtn::data::Bundle bundle;
-					(*this) >> bundle;
-
-					// TODO: determine sender
 					EID sender;
+
+					receive(bundle, sender);
 
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(sender, bundle, false, true);
