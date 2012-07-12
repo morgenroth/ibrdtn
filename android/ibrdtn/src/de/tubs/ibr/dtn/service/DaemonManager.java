@@ -264,9 +264,6 @@ public class DaemonManager {
 			}
 		}
 		
-		// broadcast startup intent
-		setState(DaemonState.ONLINE);
-		
 		// enable-cloud uplink if configured
     	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
 		if (prefs.getBoolean("cloud_uplink", false))
@@ -274,6 +271,9 @@ public class DaemonManager {
 			_process.addConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
 			_cloud_uplink_initiated = true;
 		}
+		
+		// broadcast startup intent
+		setState(DaemonState.ONLINE);
 		
 		// fire up the session mananger
 		_session_manager.initialize(context);
