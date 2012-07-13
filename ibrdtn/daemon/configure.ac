@@ -195,7 +195,7 @@ AC_ARG_WITH(dtnsec,
 	[
 	if test "x$with_dtnsec" = "xyes"; then
 		AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
-		CPPFLAGS+=" -DWITH_BUNDLE_SECURITY"
+		CPPFLAGS="$CPPFLAGS -DWITH_BUNDLE_SECURITY"
 	else
 		with_dtnsec="no"
 	fi
@@ -215,7 +215,7 @@ AC_ARG_WITH(tls,
 	[
 	if test "x$with_tls" = "xyes"; then
 		AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
-		CPPFLAGS+=" -DWITH_TLS"
+		CPPFLAGS="$CPPFLAGS -DWITH_TLS"
 	else
 		with_tls="no"
 	fi
