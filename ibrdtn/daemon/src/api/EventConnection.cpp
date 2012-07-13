@@ -25,6 +25,7 @@
 #include "core/GlobalEvent.h"
 #include "core/CustodyEvent.h"
 #include "routing/QueueBundleEvent.h"
+#include "net/BundleReceivedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/ConnectionEvent.h"
@@ -117,17 +118,123 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 
 			try {
+				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+
+				// start with the event tag
+				_stream << "Event: " << received.getName() << std::endl;
+				_stream << "Peer: " << received.peer.getString() << std::endl;
+				_stream << "Local: " << (received.fromlocal ? "true" : "false") << std::endl;
+
+				// write the bundle data
+				_stream << "Source: " << received.bundle._source.getString() << std::endl;
+				_stream << "Timestamp: " << received.bundle._timestamp << std::endl;
+				_stream << "Sequencenumber: " << received.bundle._sequencenumber << std::endl;
+				_stream << "Lifetime: " << received.bundle._lifetime << std::endl;
+				_stream << "Procflags: " << received.bundle._procflags << std::endl;
+
+				// write the destination eid
+				_stream << "Destination: " << received.bundle._destination.getString() << std::endl;
+
+				if (received.bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
+				{
+					// write fragmentation values
+					_stream << "Appdatalength: " << received.bundle._appdatalength << std::endl;
+					_stream << "Fragmentoffset: " << received.bundle._fragmentoffset << std::endl;
+				}
+
+				// close the event
+				_stream << std::endl;
+			} catch (const std::bad_cast&) { };
+
+			try {
 				const dtn::core::CustodyEvent &custody = dynamic_cast<const dtn::core::CustodyEvent&>(*evt);
 
+				_stream << "Event: " << custody.getName() << std::endl;
+				_stream << "Action: ";
+
+				switch (custody.getAction())
+				{
+				case dtn::core::CUSTODY_ACCEPT:
+					_stream << "accept";
+					break;
+				case dtn::core::CUSTODY_REJECT:
+					_stream << "reject";
+					break;
+				default:
+					break;
+				}
+				_stream << std::endl;
+
+				// write the bundle data
+				_stream << "Source: " << custody.getBundle().source.getString() << std::endl;
+				_stream << "Timestamp: " << custody.getBundle().timestamp << std::endl;
+				_stream << "Sequencenumber: " << custody.getBundle().sequencenumber << std::endl;
+				_stream << "Lifetime: " << custody.getBundle().lifetime << std::endl;
+				_stream << "Procflags: " << custody.getBundle().procflags << std::endl;
+
+				// write the destination eid
+				_stream << "Destination: " << custody.getBundle().destination.getString() << std::endl;
+
+				if (custody.getBundle().fragment)
+				{
+					// write fragmentation values
+					_stream << "Appdatalength: " << custody.getBundle().appdatalength << std::endl;
+					_stream << "Fragmentoffset: " << custody.getBundle().offset << std::endl;
+				}
+
+				// close the event
+				_stream << std::endl;
 			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
 
+				// start with the event tag
+				_stream << "Event: " << aborted.getName() << std::endl;
+				_stream << "Peer: " << aborted.getPeer().getString() << std::endl;
+
+				// write the bundle data
+				_stream << "Source: " << aborted.getBundleID().source.getString() << std::endl;
+				_stream << "Timestamp: " << aborted.getBundleID().timestamp << std::endl;
+				_stream << "Sequencenumber: " << aborted.getBundleID().sequencenumber << std::endl;
+
+				if (aborted.getBundleID().fragment)
+				{
+					// write fragmentation values
+					_stream << "Fragmentoffset: " << aborted.getBundleID().offset << std::endl;
+				}
+
+				// close the event
+				_stream << std::endl;
+
 			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+
+				// start with the event tag
+				_stream << "Event: " << completed.getName() << std::endl;
+				_stream << "Peer: " << completed.getPeer().getString() << std::endl;
+
+				// write the bundle data
+				_stream << "Source: " << completed.getBundle().source.getString() << std::endl;
+				_stream << "Timestamp: " << completed.getBundle().timestamp << std::endl;
+				_stream << "Sequencenumber: " << completed.getBundle().sequencenumber << std::endl;
+				_stream << "Lifetime: " << completed.getBundle().lifetime << std::endl;
+				_stream << "Procflags: " << completed.getBundle().procflags << std::endl;
+
+				// write the destination eid
+				_stream << "Destination: " << completed.getBundle().destination.getString() << std::endl;
+
+				if (completed.getBundle().fragment)
+				{
+					// write fragmentation values
+					_stream << "Appdatalength: " << completed.getBundle().appdatalength << std::endl;
+					_stream << "Fragmentoffset: " << completed.getBundle().offset << std::endl;
+				}
+
+				// close the event
+				_stream << std::endl;
 
 			} catch (const std::bad_cast&) { };
 
@@ -225,6 +332,7 @@ namespace dtn
 			bindEvent(dtn::core::NodeEvent::className);
 			bindEvent(dtn::core::GlobalEvent::className);
 			bindEvent(dtn::core::CustodyEvent::className);
+			bindEvent(dtn::net::BundleReceivedEvent::className);
 			bindEvent(dtn::net::TransferAbortedEvent::className);
 			bindEvent(dtn::net::TransferCompletedEvent::className);
 			bindEvent(dtn::net::ConnectionEvent::className);
@@ -237,6 +345,7 @@ namespace dtn
 			unbindEvent(dtn::core::NodeEvent::className);
 			unbindEvent(dtn::core::GlobalEvent::className);
 			unbindEvent(dtn::core::CustodyEvent::className);
+			unbindEvent(dtn::net::BundleReceivedEvent::className);
 			unbindEvent(dtn::net::TransferAbortedEvent::className);
 			unbindEvent(dtn::net::TransferCompletedEvent::className);
 			unbindEvent(dtn::net::ConnectionEvent::className);
