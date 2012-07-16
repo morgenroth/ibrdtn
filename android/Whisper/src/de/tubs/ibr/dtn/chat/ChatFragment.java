@@ -1,8 +1,10 @@
 package de.tubs.ibr.dtn.chat;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -90,15 +92,26 @@ public class ChatFragment extends ListFragment {
 	    inflater.inflate(R.menu.message_menu, menu);
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearMessages), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	}
+	
+	private DialogInterface.OnClickListener message_delete_dialog = new DialogInterface.OnClickListener() {
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+    		// load buddy from roster
+    		Buddy buddy = ChatFragment.this.service.getRoster().get( buddyId );
+    		ChatFragment.this.service.getRoster().clearMessages(buddy);
+		} 
+	};
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
     		case R.id.itemClearMessages:
-	    		if ((service != null) && (buddyId != null)) {	    		
-		    		// load buddy from roster
-		    		Buddy buddy = this.service.getRoster().get( buddyId );
-		    		this.service.getRoster().clearMessages(buddy);
+	    		if ((service != null) && (buddyId != null)) {
+	    			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+	    			builder.setMessage(getActivity().getResources().getString(R.string.question_delete_messages));
+	    			builder.setPositiveButton(getActivity().getResources().getString(android.R.string.yes), message_delete_dialog);
+	    			builder.setNegativeButton(getActivity().getResources().getString(android.R.string.no), null);
+	    			builder.show();
 	    		}
 	    		return true;
 	    	

@@ -29,4 +29,5 @@
     <string name="ringtone_on_message_desc">Choose a notification sound for incoming messages.</string>
     <string name="hide_offline_contacts">Hide offline contacts</string>
     <string name="hide_offline_contacts_desc">Show only contacts recognized as online.</string>
+    <string name="question_delete_messages">Do you really want to delete all messages sent to and received from this contact?</string>
 </resources>

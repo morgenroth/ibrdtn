@@ -527,6 +527,7 @@ public class ChatService extends Service {
 		CharSequence contentTitle = getString(R.string.new_message);
 		CharSequence contentText = b.getNickname() + ":\n" + msg.getPayload();
 		
+		//int defaults = Notification.DEFAULT_LIGHTS;
 		int defaults = 0;
 		
 		if (prefs.getBoolean("vibrateOnMessage", true)) {
@@ -550,6 +551,7 @@ public class ChatService extends Service {
 		builder.setDefaults(defaults);
 		builder.setWhen( System.currentTimeMillis() );
 		builder.setContentIntent(contentIntent);
+		builder.setLights(0xffff0000, 300, 1000);
 		builder.setSound( Uri.parse( prefs.getString("ringtoneOnMessage", "content://settings/system/notification_sound") ) );
 		
 		Notification notification = builder.getNotification();

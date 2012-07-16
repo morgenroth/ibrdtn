@@ -31,4 +31,5 @@
     <string name="ringtone_on_message_desc">Wählen Sie einen Benachrichtigungston für eingehende Nachrichten.</string>
     <string name="hide_offline_contacts">Verstecke Offline-Kontakte</string>
     <string name="hide_offline_contacts_desc">Zeige nur Kontakte die als Online markiert sind.</string>
+    <string name="question_delete_messages">Möchten Sie wirklich alle von diesem Kontakt empfangenen und an diesen gesendete Nachrichten löschen?</string>
 </resources>
