@@ -16,17 +16,19 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
+import android.widget.Toast;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.BundleID;
-import de.tubs.ibr.dtn.api.CallbackMode;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
-import de.tubs.ibr.dtn.app.R;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.api.TransferMode;
 
 public class DTNExampleAppActivity extends Activity {
 	
@@ -39,35 +41,13 @@ public class DTNExampleAppActivity extends Activity {
 	private LocalDTNClient _client = null;
 	
 	private class LocalDTNClient extends DTNClient {
-		
-		public LocalDTNClient() {
-			super(getApplicationInfo().packageName);
-		}
-
 		@Override
-		protected void sessionConnected(Session session) {
+		protected void onConnected(Session session) {
 			Log.d(TAG, "DTN session connected");
 			
 	        // check for bundles first
 	        _executor.execute(_query_task);
 		}
-
-		@Override
-		protected CallbackMode sessionMode() {
-			return CallbackMode.FILEDESCRIPTOR;
-			//return CallbackMode.SIMPLE;
-		}
-
-		@Override
-		protected void online() {
-			Log.i(TAG, "DTN is online.");
-		}
-
-		@Override
-		protected void offline() {
-			Log.i(TAG, "DTN is offline.");
-		}
-		
 	};
 	
 	private BroadcastReceiver _receiver = new BroadcastReceiver() {
@@ -85,7 +65,7 @@ public class DTNExampleAppActivity extends Activity {
 		@Override
 		public void run() {
 			try {
-				while (_client.query());
+				while (_client.getSession().queryNext());
 			} catch (SessionDestroyedException e) {
 				Log.d(TAG, null, e);
 			} catch (InterruptedException e) {
@@ -109,7 +89,7 @@ public class DTNExampleAppActivity extends Activity {
         
         // register to RECEIVE intent
 		IntentFilter receive_filter = new IntentFilter(de.tubs.ibr.dtn.Intent.RECEIVE);
-		receive_filter.addCategory(getApplicationInfo().packageName);
+		receive_filter.addCategory(getApplication().getPackageName());
         registerReceiver(_receiver, receive_filter);
         
         // create a new registration
@@ -215,10 +195,21 @@ public class DTNExampleAppActivity extends Activity {
 		}
 
 		@Override
-		public void startBlock(Block block) {
+		public TransferMode startBlock(Block block) {
 			if (block.type == 1)
 			{
-				File cachedir = getExternalCacheDir();
+				// use simple API if the payload is lower than 128 bytes
+				if (block.length < 128) {
+					return TransferMode.SIMPLE;
+				}
+				
+				// locate the external storage directory
+				File cachedir = Environment.getExternalStorageDirectory();
+				
+				if (cachedir == null) {
+					// if there is no external storage we discard this bundle
+					return TransferMode.NULL;
+				}
 				
 				// create a new temporary file
 				try {
@@ -227,6 +218,12 @@ public class DTNExampleAppActivity extends Activity {
 					Log.e(TAG, "Can not create temporary file.", e);
 					file = null;
 				}
+				
+				return TransferMode.FILEDESCRIPTOR;
+			}
+			else
+			{
+				return TransferMode.NULL;
 			}
 		}
 
@@ -245,8 +242,12 @@ public class DTNExampleAppActivity extends Activity {
 			
 			if (file != null)
 			{
-				// unset the payload file
 				Log.i(TAG, "File received: " + file.getAbsolutePath());
+				
+				// delete the file
+				file.delete();
+			
+				// unset the payload file
 				file = null;
 			}
 		}
@@ -275,6 +276,32 @@ public class DTNExampleAppActivity extends Activity {
 		@Override
 		public void payload(byte[] data) {
 			Log.i(TAG, "Received payload: " + new String(data));
+			final String msg = new String(data);
+			final SingletonEndpoint sender = new SingletonEndpoint(bundle.getSource());
+			
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					Toast t = Toast.makeText(DTNExampleAppActivity.this, msg, Toast.LENGTH_LONG);
+					t.show();
+				}
+			});
+			
+			// respond to 'hello' messages
+			if (msg.equalsIgnoreCase("hello")) {
+				_executor.execute(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							_client.getSession().send(sender, 60, new String("Welcome!").getBytes());
+						} catch (SessionDestroyedException e) {
+							e.printStackTrace();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				});
+			}
 		}
 
 		@Override
