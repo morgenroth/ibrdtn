@@ -46,6 +46,8 @@ public class RosterView extends BaseAdapter {
 	private List<Buddy> buddies = null;
 	private List<Buddy> buddies_filtered = new LinkedList<Buddy>();
 	private String selectedBuddy = null;
+	private Buddy me = null;
+	private Integer textDefaultColor = null;
 	
 	private Boolean showOffline = true;
 
@@ -60,8 +62,16 @@ public class RosterView extends BaseAdapter {
 		context.registerReceiver(notify_receiver, i);
 	}
 	
+	public void setMe(Buddy me) {
+		this.me = me;
+	}
+	
 	private void filterBuddies() {
 		buddies_filtered.clear();
+		
+		// add self buddy
+		buddies_filtered.add(null);
+		
 		for (Buddy b : buddies) {
 			if (showOffline) {
 				buddies_filtered.add(b);
@@ -141,78 +151,127 @@ public class RosterView extends BaseAdapter {
 			holder.hinticon = (ImageView) convertView.findViewById(R.id.hinticon);
 			holder.layout = convertView.findViewById(R.id.roster_item_layout);
 			convertView.setTag(holder);
+			if (textDefaultColor == null) textDefaultColor = holder.text.getTextColors().getDefaultColor();
 		} else {
 			holder = (ViewHolder) convertView.getTag();
 		}
+
+		final int defaultTextColor = textDefaultColor;
+		final int meTextColor = convertView.getResources().getColor(R.color.me_text);
 		
 		holder.buddy = this.buddies_filtered.get(position);
-		holder.icon.setImageResource(R.drawable.online);
-		holder.text.setText(holder.buddy.toString());
 		
-		String presence = holder.buddy.getPresence();
+		if (holder.buddy == null) {
+			if (me == null) {
+				holder.layout.setVisibility(View.GONE);
+			} else {
+				holder.layout.setVisibility(View.VISIBLE);
+			    int presence_icon = R.drawable.online;
+				if (me.getPresence() != null)
+				{
+					if (me.getPresence().equalsIgnoreCase("unavailable"))
+					{
+						presence_icon = R.drawable.offline;
+					}
+					else if (me.getPresence().equalsIgnoreCase("xa"))
+					{
+						presence_icon = R.drawable.xa;
+					}
+					else if (me.getPresence().equalsIgnoreCase("away"))
+					{
+						presence_icon = R.drawable.away;
+					}
+					else if (me.getPresence().equalsIgnoreCase("dnd"))
+					{
+						presence_icon = R.drawable.busy;
+					}
+					else if (me.getPresence().equalsIgnoreCase("chat"))
+					{
+						presence_icon = R.drawable.online;
+					}
+				}
+				
+				holder.text.setText(me.getNickname());
+				holder.bottomText.setText(me.getStatus());
+				holder.text.setTextColor(meTextColor);
+				holder.bottomText.setTextColor(meTextColor);
+
+				holder.icon.setImageResource(presence_icon);
+				holder.hinticon.setVisibility(View.VISIBLE);
+				holder.hinticon.setImageResource(R.drawable.ic_person);
+				holder.layout.setBackgroundColor(convertView.getResources().getColor(R.color.me_background));
+			}
+		} else {
+			holder.icon.setImageResource(R.drawable.online);
+			holder.text.setText(holder.buddy.toString());
+			holder.text.setTextColor(defaultTextColor);
+			holder.bottomText.setTextColor(defaultTextColor);
+		
+			String presence = holder.buddy.getPresence();
+				
+			if (presence != null)
+			{
+				if (presence.equalsIgnoreCase("unavailable"))
+				{
+					holder.icon.setImageResource(R.drawable.offline);
+				}
+				else if (presence.equalsIgnoreCase("xa"))
+				{
+					holder.icon.setImageResource(R.drawable.xa);
+				}
+				else if (presence.equalsIgnoreCase("away"))
+				{
+					holder.icon.setImageResource(R.drawable.away);
+				}
+				else if (presence.equalsIgnoreCase("dnd"))
+				{
+					holder.icon.setImageResource(R.drawable.busy);
+				}
+				else if (presence.equalsIgnoreCase("chat"))
+				{
+					holder.icon.setImageResource(R.drawable.online);
+				}
+			}
 			
-		if (presence != null)
-		{
-			if (presence.equalsIgnoreCase("unavailable"))
+			// if the presence is older than 60 minutes then mark the buddy as offline
+			if (!holder.buddy.isOnline())
 			{
 				holder.icon.setImageResource(R.drawable.offline);
 			}
-			else if (presence.equalsIgnoreCase("xa"))
+			
+			if (holder.buddy.getStatus() != null)
 			{
-				holder.icon.setImageResource(R.drawable.xa);
+				if (holder.buddy.getStatus().length() > 0) { 
+					holder.bottomText.setText(holder.buddy.getStatus());
+				} else {
+					holder.bottomText.setText(holder.buddy.getEndpoint());
+				}
 			}
-			else if (presence.equalsIgnoreCase("away"))
+			else
 			{
-				holder.icon.setImageResource(R.drawable.away);
-			}
-			else if (presence.equalsIgnoreCase("dnd"))
-			{
-				holder.icon.setImageResource(R.drawable.busy);
-			}
-			else if (presence.equalsIgnoreCase("chat"))
-			{
-				holder.icon.setImageResource(R.drawable.online);
-			}
-		}
-		
-		// if the presence is older than 60 minutes then mark the buddy as offline
-		if (!holder.buddy.isOnline())
-		{
-			holder.icon.setImageResource(R.drawable.offline);
-		}
-		
-		if (holder.buddy.getStatus() != null)
-		{
-			if (holder.buddy.getStatus().length() > 0) { 
-				holder.bottomText.setText(holder.buddy.getStatus());
-			} else {
 				holder.bottomText.setText(holder.buddy.getEndpoint());
 			}
-		}
-		else
-		{
-			holder.bottomText.setText(holder.buddy.getEndpoint());
-		}
-		
-		if (holder.buddy.hasDraft()) {
-			holder.hinticon.setVisibility(View.VISIBLE);
-			holder.hinticon.setImageResource(R.drawable.ic_draft);
-		} else {
-			holder.hinticon.setVisibility(View.GONE);
-		}
-		
-		if (selectedBuddy != null) {
-			if (selectedBuddy.equals(holder.buddy.getEndpoint())) {
-				holder.layout.setBackgroundColor(convertView.getResources().getColor(R.color.chat_active));
-				convertView.setActivated(true);
+			
+			if (holder.buddy.hasDraft()) {
 				holder.hinticon.setVisibility(View.VISIBLE);
-				holder.hinticon.setImageResource(R.drawable.ic_selected);
+				holder.hinticon.setImageResource(R.drawable.ic_draft);
 			} else {
-				convertView.setActivated(false);
+				holder.hinticon.setVisibility(View.GONE);
+			}
+			
+			if (selectedBuddy != null) {
+				if (selectedBuddy.equals(holder.buddy.getEndpoint())) {
+					holder.layout.setBackgroundColor(convertView.getResources().getColor(R.color.chat_active));
+					convertView.setActivated(true);
+					holder.hinticon.setVisibility(View.VISIBLE);
+					holder.hinticon.setImageResource(R.drawable.ic_selected);
+				} else {
+					convertView.setActivated(false);
+					holder.layout.setBackgroundColor(convertView.getResources().getColor(android.R.color.transparent));
+				}
+			} else {
 				holder.layout.setBackgroundColor(convertView.getResources().getColor(android.R.color.transparent));
 			}
-		} else {
-			holder.layout.setBackgroundColor(convertView.getResources().getColor(android.R.color.transparent));
 		}
 		
 		return convertView;

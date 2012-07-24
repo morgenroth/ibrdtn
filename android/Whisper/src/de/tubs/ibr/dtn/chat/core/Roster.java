@@ -116,7 +116,7 @@ public class Roster extends LinkedList<Buddy> {
 		cur.moveToFirst();
 		while (!cur.isAfterLast())
 		{
-			Buddy buddy = new Buddy(this, cur.getString(1), cur.getString(2), cur.getString(3), cur.getString(4), cur.getString(6) );
+			Buddy buddy = new Buddy(cur.getString(1), cur.getString(2), cur.getString(3), cur.getString(4), cur.getString(6) );
 			
 			// set the last seen parameter
 			if (!cur.isNull(5))
@@ -360,7 +360,7 @@ public class Roster extends LinkedList<Buddy> {
 		}
 		
 		// buddy not found, create a new one
-		Buddy buddy = new Buddy(this, endpointid, endpointid, null, null, null);
+		Buddy buddy = new Buddy(endpointid, endpointid, null, null, null);
 		this.add(buddy);
 		
 		// create a new buddy in the database

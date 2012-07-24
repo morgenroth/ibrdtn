@@ -21,15 +21,12 @@
  */
 package de.tubs.ibr.dtn.chat;
 
-import android.app.ActionBar;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.MenuItemCompat;
@@ -38,8 +35,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.Window;
-import android.widget.ImageView;
-import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.service.ChatService;
 import de.tubs.ibr.dtn.chat.service.Utils;
 
@@ -63,10 +58,6 @@ public class MainActivity extends FragmentActivity {
 		}
 		
 	    super.onCreate(savedInstanceState);
-	    
-	    if (android.os.Build.VERSION.SDK_INT < Utils.ANDROID_API_ACTIONBAR) {
-	    	requestWindowFeature(Window.FEATURE_NO_TITLE);
-	    }
 	    
 	    setContentView(R.layout.roster_main);
 	    
@@ -119,8 +110,7 @@ public class MainActivity extends FragmentActivity {
 	@Override
 	public void onResume() {
 		super.onResume();
-		refresh();
-		
+
 		// get ID of the buddy
 		if (_open_buddy != null) {
 	    	selectBuddy(_open_buddy);
@@ -135,61 +125,6 @@ public class MainActivity extends FragmentActivity {
 			_open_buddy = intent.getStringExtra("buddy");
 		}
 		super.onNewIntent(intent);
-	}
-
-	private void refresh()
-	{
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		
-	    String presence_tag = preferences.getString("presencetag", "auto");
-	    String presence_nick = preferences.getString("editNickname", "Nobody");
-	    String presence_text = preferences.getString("statustext", "");
-	    int presence_icon = R.drawable.online;
-	    
-	    if (presence_text.length() == 0) {
-	    	presence_text = "<" + getResources().getString(R.string.no_status_message) + ">";
-	    }
-	    
-		if (presence_tag != null)
-		{
-			if (presence_tag.equalsIgnoreCase("unavailable"))
-			{
-				presence_icon = R.drawable.offline;
-			}
-			else if (presence_tag.equalsIgnoreCase("xa"))
-			{
-				presence_icon = R.drawable.xa;
-			}
-			else if (presence_tag.equalsIgnoreCase("away"))
-			{
-				presence_icon = R.drawable.away;
-			}
-			else if (presence_tag.equalsIgnoreCase("dnd"))
-			{
-				presence_icon = R.drawable.busy;
-			}
-			else if (presence_tag.equalsIgnoreCase("chat"))
-			{
-				presence_icon = R.drawable.online;
-			}
-		}
-	    
-	    if (android.os.Build.VERSION.SDK_INT >= Utils.ANDROID_API_ACTIONBAR) {
-	    	ActionBar actionbar = getActionBar();
-	    	actionbar.setTitle(presence_nick);
-	    	actionbar.setSubtitle(presence_text);
-	    	if (android.os.Build.VERSION.SDK_INT >= Utils.ANDROID_API_ACTIONBAR_SETICON) {
-	    		actionbar.setIcon(presence_icon);
-	    	}
-	    } else {
-		    ImageView icon = (ImageView)findViewById(R.id.actionbar_icon);
-			TextView nicknameLabel = (TextView)findViewById(R.id.actionbar_title);
-			TextView statusLabel = (TextView)findViewById(R.id.actionbar_text);
-			
-			icon.setImageResource(presence_icon);
-			nicknameLabel.setText(presence_nick);
-			statusLabel.setText(presence_text);
-	    }
 	}
 
 	@Override

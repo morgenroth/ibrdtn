@@ -33,7 +33,10 @@
  	<color name="contact_self">#0099CC</color>
  	
  	<color name="textbox_writeline">#a1a1a1</color>
- 	
+
+	<color name="me_background">#0099CC</color>
+	<color name="me_text">#FFFFFFFF</color>
+		
     <color name="inputbox_background">#FFFFFF</color>
     <color name="inputbox_text">#FF000000</color>
     

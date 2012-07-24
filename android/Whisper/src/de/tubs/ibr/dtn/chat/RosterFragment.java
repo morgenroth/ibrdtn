@@ -50,6 +50,7 @@ public class RosterFragment extends ListFragment {
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(RosterFragment.this.getActivity());
 			RosterFragment.this.view.setShowOffline(!prefs.getBoolean("hideOffline", false));
 			RosterFragment.this.view.setSelected(selectedBuddy);
+			RosterFragment.this.refresh();
 			
 			Log.i(TAG, "service connected");
 		}
@@ -118,6 +119,15 @@ public class RosterFragment extends ListFragment {
 		if (this.view != null)
 		{
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+		    String presence_tag = prefs.getString("presencetag", "auto");
+		    String presence_nick = prefs.getString("editNickname", "Nobody");
+		    String presence_text = prefs.getString("statustext", "");
+
+		    if (presence_text.length() == 0) {
+		    	presence_text = "<" + getResources().getString(R.string.no_status_message) + ">";
+		    }
+
+		    view.setMe(new Buddy(presence_nick, null, presence_tag, presence_text, null));		    
 			view.setShowOffline(!prefs.getBoolean("hideOffline", false));
 			view.refresh();
 		}
@@ -127,7 +137,12 @@ public class RosterFragment extends ListFragment {
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
 		ViewHolder holder = (ViewHolder)v.getTag();
-		selectBuddy(holder.buddy.getEndpoint());
+		
+		if (holder.buddy != null) {
+			selectBuddy(holder.buddy.getEndpoint());
+		} else {
+			// TODO: open self options
+		}
 	}
 	
 	public void selectBuddy(String buddyId) {

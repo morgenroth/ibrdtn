@@ -33,7 +33,7 @@ public class Buddy implements Comparable<Buddy> {
 	private String status = null;
 	private String draftmsg = null;
 
-	public Buddy(Roster roster, String nickname, String endpoint, String presence, String status, String draftmsg)
+	public Buddy(String nickname, String endpoint, String presence, String status, String draftmsg)
 	{
 		this.nickname = nickname;
 		this.endpoint = endpoint;
