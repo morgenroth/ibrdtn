@@ -45,7 +45,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.BundleID;
-import de.tubs.ibr.dtn.api.CallbackMode;
+import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
@@ -69,7 +69,6 @@ public class DTalkieService extends Service {
 	private final QueuingMediaPlayer player = new QueuingMediaPlayer();
 	
 	private boolean _onEar = false;
-	private boolean connected = false;
 	private File current_record_file = null;
 
 	private DTalkieState _state = DTalkieState.UNINITIALIZED;
@@ -94,30 +93,10 @@ public class DTalkieService extends Service {
     private LocalDTNClient _client = null;
     
 	private class LocalDTNClient extends DTNClient {
-		
-		public LocalDTNClient() {
-			super(getApplicationInfo().packageName);
-		}
-		
 		@Override
-		protected void sessionConnected(Session session) {
+		protected void onConnected(Session session) {
 			Log.d(TAG, "DTN session connected");
 			_state = DTalkieState.READY;
-			DTalkieService.this.setConnected(true);
-		}
-
-		@Override
-		protected CallbackMode sessionMode() {
-			return CallbackMode.FILEDESCRIPTOR;
-		}
-
-		@Override
-		protected void online() {
-		}
-
-		@Override
-		protected void offline() {
-			DTalkieService.this.setConnected(false);
 		}
 	};
 
@@ -169,7 +148,7 @@ public class DTalkieService extends Service {
 		}
 
 		@Override
-		public void startBlock(Block block) {
+		public TransferMode startBlock(Block block) {
 			if ((block.type == 1) && (file == null))
 			{
 				File folder = DTalkieService.getStoragePath();
@@ -177,13 +156,13 @@ public class DTalkieService extends Service {
 				// create a new temporary file
 				try {
 					file = File.createTempFile("msg", ".3gp", folder);
+					return TransferMode.FILEDESCRIPTOR;
 				} catch (IOException e) {
 					Log.e(TAG, "Can not create temporary file.", e);
 					file = null;
 				}
 			}
-			
-			Log.d(TAG, "startBlock: " + String.valueOf(block.type));
+			return TransferMode.NULL;
 		}
 
 		@Override
@@ -253,22 +232,6 @@ public class DTalkieService extends Service {
             return DTalkieService.this;
         }
     }
-    
-	public synchronized void waitUntilConnected() throws InterruptedException
-	{
-		while (!connected) wait();
-	}
-	
-	public synchronized Boolean isConnected()
-	{
-		return connected;
-	}
-	
-	private synchronized void setConnected(Boolean val)
-	{
-		connected = val;
-		notifyAll();
-	}
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -290,7 +253,7 @@ public class DTalkieService extends Service {
         	executor.execute(new Runnable() {
 		        public void run() {
 			        try {
-		        		while (_client.query());
+		        		while (_client.getSession().queryNext());
 		        	} catch (Exception e) { };
 		        	
 		        	stopSelfResult(stopId);
@@ -527,21 +490,17 @@ public class DTalkieService extends Service {
 		@Override
 		public void run() {
 			try {
-				DTalkieService.this.waitUntilConnected();
-
-				try {
-					ParcelFileDescriptor fd = ParcelFileDescriptor.open(this.msg, ParcelFileDescriptor.MODE_READ_ONLY);
-					_client.getSession().sendFileDescriptor(DTALKIE_GROUP_EID, 1800, fd, this.msg.length());
-					this.msg.delete();
-					Log.i(TAG, "Recording sent");
-				} catch (FileNotFoundException ex) {
-					Log.e(TAG, "Can not open message file for transmission", ex);
-				} catch (SessionDestroyedException ex) {
-					Log.e(TAG, "DTN session has been destroyed.", ex);
-				} catch (Exception e) {
-					Log.e(TAG, "Unexpected exception while transmit message.", e);
-				}
-			} catch (InterruptedException e) { }
+				ParcelFileDescriptor fd = ParcelFileDescriptor.open(this.msg, ParcelFileDescriptor.MODE_READ_ONLY);
+				_client.getSession().send(DTALKIE_GROUP_EID, 1800, fd, this.msg.length());
+				this.msg.delete();
+				Log.i(TAG, "Recording sent");
+			} catch (FileNotFoundException ex) {
+				Log.e(TAG, "Can not open message file for transmission", ex);
+			} catch (SessionDestroyedException ex) {
+				Log.e(TAG, "DTN session has been destroyed.", ex);
+			} catch (Exception e) {
+				Log.e(TAG, "Unexpected exception while transmit message.", e);
+			}
 			
 			_state = DTalkieState.READY;
 		}

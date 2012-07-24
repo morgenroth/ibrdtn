@@ -47,7 +47,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
-import de.tubs.ibr.dtn.api.CallbackMode;
+import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
@@ -85,32 +85,7 @@ public class ChatService extends Service {
     private Roster roster = null;
     
 	// DTN client to talk with the DTN service
-	private LocalDTNClient _client = null;
-	
-	private class LocalDTNClient extends DTNClient {
-		
-		public LocalDTNClient() {
-			super(getApplicationInfo().packageName);
-		}
-
-		@Override
-		protected void sessionConnected(Session session) {
-			Log.d(TAG, "DTN session connected");
-		}
-
-		@Override
-		protected CallbackMode sessionMode() {
-			return CallbackMode.SIMPLE;
-		}
-
-		@Override
-		protected void online() {
-		}
-
-		@Override
-		protected void offline() {
-		}
-	};
+	private DTNClient _client = null;
 	
     private DataHandler _data_handler = new DataHandler()
     {
@@ -141,7 +116,10 @@ public class ChatService extends Service {
 		}
 
 		@Override
-		public void startBlock(Block block) {
+		public TransferMode startBlock(Block block) {
+			// ignore messages with a size larger than 8k
+			if (block.length > 8196) return TransferMode.NULL;
+			return TransferMode.SIMPLE;
 		}
 
 		@Override
@@ -282,7 +260,7 @@ public class ChatService extends Service {
         	_executor.execute(new Runnable() {
 		        public void run() {
 			        try {
-		        		while (_client.query());
+		        		while (_client.getSession().queryNext());
 		        	} catch (Exception e) { };
 		        	
 		        	stopSelfResult(stopId);
@@ -310,7 +288,7 @@ public class ChatService extends Service {
 		_executor = Executors.newSingleThreadExecutor();
 		
 		// create a new client object
-		_client = new LocalDTNClient();
+		_client = new DTNClient();
 
 		// create a roster object
 		this.roster = new Roster();
@@ -400,7 +378,7 @@ public class ChatService extends Service {
 		SingletonEndpoint destination = new SingletonEndpoint(msg.getBuddy().getEndpoint());
 		
 		String lifetime = PreferenceManager.getDefaultSharedPreferences(this).getString("messageduration", "259200");
-		if (!s.send(destination, Integer.parseInt(lifetime), msg.getPayload()))
+		if (!s.send(destination, Integer.parseInt(lifetime), msg.getPayload().getBytes()))
 		{
 			throw new Exception("could not send the message");
 		}
@@ -414,7 +392,7 @@ public class ChatService extends Service {
 				"Nickname: " + nickname + "\n" +
 				"Status: " + status;
 		
-		if (!s.send(ChatService.PRESENCE_GROUP_EID, 3600, presence_message))
+		if (!s.send(ChatService.PRESENCE_GROUP_EID, 3600, presence_message.getBytes()))
 		{
 			throw new Exception("could not send the message");
 		}
