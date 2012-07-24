@@ -35,6 +35,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +56,27 @@ public class DaemonProcess extends Thread {
 	private ProcessBuilder _builder = null;
 	private Process _proc = null;
 	private Context _context = null;
+	
+	private static String toHex(byte[] data) {
+		// Create Hex String
+		StringBuffer hexString = new StringBuffer();
+		for (int i=0; i < data.length; i++)
+		    hexString.append(Integer.toHexString(0xFF & data[i]));
+		return hexString.toString();
+	}
+	
+	public static SingletonEndpoint getUniqueEndpointID(Context context) {
+		final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("MD5");
+			byte[] digest = md.digest(androidId.getBytes());
+			return new SingletonEndpoint("dtn://android-" + toHex(digest).substring(4, 12) + ".dtn");
+		} catch (NoSuchAlgorithmException e) {
+			// md5 not available
+		}
+		return new SingletonEndpoint("dtn://android-" + androidId.substring(4, 12) + ".dtn");
+	}
 	
 	// if set to true, use unix domain sockets for API connections.
 	private final Boolean _use_unix_socket = false;
@@ -303,12 +326,10 @@ public class DaemonProcess extends Thread {
 			
 			// initialize default values if configured set already
 			de.tubs.ibr.dtn.daemon.Preferences.initializeDefaultPreferences(context);
-			
-			final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
-			
+
 			// set EID
 			PrintStream p = new PrintStream(writer);
-			p.println("local_uri = " + preferences.getString("endpoint_id", "dtn://android-" + androidId.substring(4, 12) + ".dtn"));
+			p.println("local_uri = " + preferences.getString("endpoint_id", DaemonProcess.getUniqueEndpointID(context).toString()));
 			p.println("routing = " + preferences.getString("routing", "default"));
 			
 			if (_use_unix_socket) {

@@ -45,7 +45,6 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
-import android.provider.Settings.Secure;
 import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.Menu;
@@ -56,6 +55,7 @@ import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonManager;
+import de.tubs.ibr.dtn.service.DaemonProcess;
 import de.tubs.ibr.dtn.service.DaemonService;
 
 public class Preferences extends PreferenceActivity {
@@ -253,10 +253,8 @@ public class Preferences extends PreferenceActivity {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		
 		if (!prefs.contains("endpoint_id")) {
-			final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
-		
 			Editor e = prefs.edit();
-			e.putString("endpoint_id", "dtn://android-" + androidId.substring(4, 12) + ".dtn");
+			e.putString("endpoint_id", DaemonProcess.getUniqueEndpointID(context).toString());
 			
 			try {
 				// scan for known network devices
