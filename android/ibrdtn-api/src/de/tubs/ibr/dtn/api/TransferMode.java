@@ -1,5 +1,5 @@
 /*
- * CallbackMode.java
+ * TransferMode.java
  * 
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
@@ -24,10 +24,11 @@ package de.tubs.ibr.dtn.api;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public enum CallbackMode implements Parcelable {
+public enum TransferMode implements Parcelable {
 	SIMPLE,
 	FILEDESCRIPTOR,
-	PASSTHROUGH;
+	PASSTHROUGH,
+	NULL;
 
     @Override
     public int describeContents() {
@@ -39,15 +40,15 @@ public enum CallbackMode implements Parcelable {
         dest.writeInt(ordinal());
     }
 
-    public static final Creator<CallbackMode> CREATOR = new Creator<CallbackMode>() {
+    public static final Creator<TransferMode> CREATOR = new Creator<TransferMode>() {
         @Override
-        public CallbackMode createFromParcel(final Parcel source) {
-            return CallbackMode.values()[source.readInt()];
+        public TransferMode createFromParcel(final Parcel source) {
+            return TransferMode.values()[source.readInt()];
         }
 
         @Override
-        public CallbackMode[] newArray(final int size) {
-            return new CallbackMode[size];
+        public TransferMode[] newArray(final int size) {
+            return new TransferMode[size];
         }
     };
 }

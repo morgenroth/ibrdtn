@@ -41,7 +41,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
 
-public abstract class DTNClient {
+public class DTNClient {
 	
 	private static final String TAG = "DTNClient";
 
@@ -61,29 +61,28 @@ public abstract class DTNClient {
     
     private ExecutorService executor = null;
     
-    private String packageName = null;
+    private String _packageName = null;
 	
-	protected abstract void sessionConnected(Session session);
-	protected abstract CallbackMode sessionMode();
-	protected abstract void online();
-	protected abstract void offline();
+    /**
+     * On every successful registration the sessionConnected() method is called.
+     * @param session The new initialized session.
+     */
+	protected void onConnected(Session session) { }
 	
-	public DTNClient(String packageName) {
-		this.packageName = packageName;
-	}
-	
-	public synchronized void setBlocking(Boolean val)
-	{
+	/**
+	 * If blocking is enabled, the getSession() method will block until a valid session
+	 * exists. If set to false, the method would return null if there is no active session.
+	 * @param val
+	 */
+	public synchronized void setBlocking(Boolean val) {
 		blocking = val;
 	}
 
-	public synchronized void setDataHandler(DataHandler handler)
-	{
+	public synchronized void setDataHandler(DataHandler handler) {
 		this._handler = handler;
 	}
 	
-	public synchronized Session getSession() throws SessionDestroyedException, InterruptedException
-	{
+	public synchronized Session getSession() throws SessionDestroyedException, InterruptedException {
 		if (blocking)
 		{
 			while (session == null)
@@ -106,7 +105,7 @@ public abstract class DTNClient {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			DTNClient.this.service = DTNService.Stub.asInterface(service);
 			
-			Session s = new Session(DTNClient.this.service, packageName);
+			Session s = new Session(DTNClient.this.service, _packageName);
 			executor.execute( new InitializeTask(s, _registration) );
 		}
 
@@ -119,22 +118,10 @@ public abstract class DTNClient {
 	private BroadcastReceiver _state_receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.STATE))
-			{
-				String state = intent.getStringExtra("state");
-				if (state.equals("ONLINE"))
-				{
-					online();
-				}
-				else if (state.equals("OFFLINE"))
-				{
-					offline();
-				}
-			}
-			else if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.REGISTRATION))
+			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.REGISTRATION))
 			{
 				Log.i(TAG, "registration successful");
-				Session s = new Session(DTNClient.this.service, packageName);
+				Session s = new Session(DTNClient.this.service, _packageName);
 				executor.execute( new InitializeTask(s, _registration) );
 			}
 		}
@@ -159,15 +146,14 @@ public abstract class DTNClient {
 					DTNClient.this.session = this.session;
 					DTNClient.this.notifyAll();
 				}
-				sessionConnected(this.session);
+				onConnected(this.session);
 			} catch (Exception e) {
 				register(reg);
 			}
 		}
 	}
 	
-	private de.tubs.ibr.dtn.api.DTNSessionCallback mCallback = new de.tubs.ibr.dtn.api.DTNSessionCallback.Stub()
-	{
+	private de.tubs.ibr.dtn.api.DTNSessionCallback mCallback = new de.tubs.ibr.dtn.api.DTNSessionCallback.Stub() {
 		@Override
 		public void startBundle(Bundle bundle) throws RemoteException {
 			if (_handler == null) return;
@@ -181,9 +167,9 @@ public abstract class DTNClient {
 		}
 
 		@Override
-		public void startBlock(Block block) throws RemoteException {
-			if (_handler == null) return;
-			_handler.startBlock(block);
+		public TransferMode startBlock(Block block) throws RemoteException {
+			if (_handler == null) return TransferMode.NULL;
+			return _handler.startBlock(block);
 		}
 
 		@Override
@@ -256,7 +242,7 @@ public abstract class DTNClient {
 		/**
 		 * Send a string as a bundle to the given destination.
 		 */
-		public boolean send(EID destination, int lifetime, String data) throws SessionDestroyedException
+		public boolean send(EID destination, int lifetime, byte[] data) throws SessionDestroyedException
 		{
 			if (this.session == null) new SessionDestroyedException("session is null");
 			
@@ -277,7 +263,7 @@ public abstract class DTNClient {
 		/**
 		 * Send the content of a file descriptor as bundle
 		 */
-		public boolean sendFileDescriptor(EID destination, int lifetime, ParcelFileDescriptor fd, Long length) throws SessionDestroyedException
+		public boolean send(EID destination, int lifetime, ParcelFileDescriptor fd, Long length) throws SessionDestroyedException
 		{
 			if (this.session == null)  new SessionDestroyedException("session is null");
 			
@@ -302,7 +288,7 @@ public abstract class DTNClient {
 			if (this.session == null) new SessionDestroyedException("session is null");
 			
 			try {
-				return this.session.queryNext(mCallback, sessionMode());
+				return this.session.queryNext(mCallback);
 			} catch (RemoteException e) {
 				new SessionDestroyedException("remote session error");
 			}
@@ -323,23 +309,19 @@ public abstract class DTNClient {
 	};
 	
 	/**
-	 * Check for new bundles in the queue.
+	 * This method initialize the DTNClient connection to the DTN service. Call this method in the
+	 * onCreate() method of your activity or service.
+	 * @param context The current context.
+	 * @param reg A registration object containing the application endpoint and all additional subscriptions.
+	 * @throws ServiceNotAvailableException is thrown if the DTN service is not available on this device.
 	 */
-	public Boolean query() throws SessionDestroyedException, InterruptedException
-	{
-		// query for the next bundle
-		try {
-			return getSession().queryNext();
-		} catch (SessionDestroyedException e) {
-			Log.e(TAG, "can not query for the next bundle", e);
-			throw e;
-		}
-	}
-
 	public synchronized void initialize(Context context, Registration reg) throws ServiceNotAvailableException
 	{
 		// set the context
 		this.context = context;
+		
+  		// get package name
+  		_packageName = context.getApplicationContext().getPackageName();
 		
   		// store registration
   		_registration = reg;
@@ -358,13 +340,17 @@ public abstract class DTNClient {
   		
 		// register to daemon events
 		IntentFilter rfilter = new IntentFilter(de.tubs.ibr.dtn.Intent.REGISTRATION);
-		rfilter.addCategory(packageName);
+		rfilter.addCategory(_packageName);
 		context.registerReceiver(_state_receiver, rfilter );
   		
 		// Establish a connection with the service.
 		context.bindService(bindIntent, mConnection, Context.BIND_AUTO_CREATE);
 	}
 	
+	/**
+	 * This method terminates the DTNClient and shutdown all running background tasks. Call this
+	 * method in the onDestroy() method of your activity or service.
+	 */
 	public synchronized void terminate()
 	{	
 		if (executor != null) {

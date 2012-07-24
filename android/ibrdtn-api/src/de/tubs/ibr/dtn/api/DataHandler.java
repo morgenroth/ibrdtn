@@ -26,7 +26,7 @@ import android.os.ParcelFileDescriptor;
 public interface DataHandler {
 	public void startBundle(Bundle bundle);
 	public void endBundle();
-	public void startBlock(Block block);
+	public TransferMode startBlock(Block block);
 	public void endBlock(); 
 	public void characters(String data);
 	public void payload(byte[] data);

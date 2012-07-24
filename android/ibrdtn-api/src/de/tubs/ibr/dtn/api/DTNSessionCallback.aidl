@@ -27,13 +27,14 @@ import de.tubs.ibr.dtn.Event;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.Block;
+import de.tubs.ibr.dtn.api.TransferMode;
 import android.os.ParcelFileDescriptor;
 
 interface DTNSessionCallback {
 	void startBundle(in de.tubs.ibr.dtn.api.Bundle bundle);
 	void endBundle();
 	
-	void startBlock(in de.tubs.ibr.dtn.api.Block block);
+	TransferMode startBlock(in de.tubs.ibr.dtn.api.Block block);
 	void endBlock();
 	
 	/**
