@@ -37,7 +37,7 @@ import java.io.OutputStreamWriter;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
-import de.tubs.ibr.dtn.api.CallbackMode;
+import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.api.DTNSessionCallback;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
@@ -58,7 +58,6 @@ public class APISession {
     
     // callback to the service-client
     private Object _callback_mutex = new Object();
-    private CallbackMode _callback_mode = null;
     
     // mutex for operation on the API
     private Object _api_mutex = new Object();
@@ -100,15 +99,16 @@ public class APISession {
 		}
 
 		@Override
-		public void startBlock(Block block) throws RemoteException {
+		public TransferMode startBlock(Block block) throws RemoteException {
 			synchronized(_callback_mutex) {
-				if (_callback_real == null) return;
+				if (_callback_real == null) return TransferMode.NULL;
 				try {
-					_callback_real.startBlock(block);
+					return _callback_real.startBlock(block);
 				} catch (Exception e) {
 					// remove the callback on error
 					_callback_real = null;
 					Log.e(TAG, "Error on callback [startBlock]", e);
+					return TransferMode.NULL;
 				}
 			}
 		}
@@ -341,7 +341,7 @@ public class APISession {
 	 * @param id
 	 * @throws SessionDestroyedException
 	 */
-    public Boolean query(DTNSessionCallback cb, CallbackMode mode, BundleID id) throws SessionDestroyedException
+    public Boolean query(DTNSessionCallback cb, BundleID id) throws SessionDestroyedException
 	{
 		if (!isConnected()) throw new SessionDestroyedException("not connected.");
 		ibrdtn.api.object.BundleID api_id = new ibrdtn.api.object.BundleID();
@@ -361,10 +361,9 @@ public class APISession {
 				// set callback and mode
 		    	synchronized(_callback_mutex) {
 		    		this._callback_real = cb;
-		    		this._callback_mode = mode;
 		    	}
 			
-		    	if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "get bundle: " + id.toString() + " [" + mode.toString() + "]");
+		    	if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "get bundle: " + id.toString());
 		    	client.getBundle();
 			}
 			
@@ -381,19 +380,18 @@ public class APISession {
 	 * Query for the next bundle in the queue.
 	 * @throws SessionDestroyedException
 	 */
-    public Boolean query(DTNSessionCallback cb, CallbackMode mode) throws SessionDestroyedException
+    public Boolean query(DTNSessionCallback cb) throws SessionDestroyedException
 	{
 		if (!isConnected()) throw new SessionDestroyedException("not connected.");
 		
 		try {
 			synchronized(_api_mutex) {
 				// load the next bundle
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load and get bundle [" + mode.toString() + "]");
+				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load and get bundle");
 
 				// set callback and mode
 		    	synchronized(_callback_mutex) {
 		    		this._callback_real = cb;
-		    		this._callback_mode = mode;
 		    	}
 	    	
 		    	// execute query
@@ -437,7 +435,7 @@ public class APISession {
 		};
 	}
 	
-    public Boolean send(de.tubs.ibr.dtn.api.EID destination, int lifetime, String data) throws SessionDestroyedException
+    public Boolean send(de.tubs.ibr.dtn.api.EID destination, int lifetime, byte[] data) throws SessionDestroyedException
 	{
 		if (!isConnected()) throw new SessionDestroyedException("not connected.");
 		
@@ -455,7 +453,7 @@ public class APISession {
 			
 			synchronized(_api_mutex) {
 				// send the message to the daemon
-				this.client.send(api_destination, lifetime, data.getBytes());
+				this.client.send(api_destination, lifetime, data);
 			}
 			
 			// debug
@@ -512,6 +510,7 @@ public class APISession {
 
 		Bundle current_bundle = null;
 		Block current_block = null;
+		TransferMode current_callback = TransferMode.NULL;
 		ParcelFileDescriptor fd = null;
 		ByteArrayOutputStream stream = null;
 		CountingOutputStream counter = null;
@@ -607,15 +606,15 @@ public class APISession {
 			current_block.type = type;
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "startBlock: " + String.valueOf(type));
 			
-			// announce this block
+			// announce this block and determine the payload transfer method
 			try {
-				_callback_wrapper.startBlock(current_block);
+				current_callback = _callback_wrapper.startBlock(current_block);
 			} catch (RemoteException e1) {
 				raise_callback_failure(e1);
 			}
 			
 			// request file descriptor if requested by client
-			if (_callback_mode == CallbackMode.FILEDESCRIPTOR)
+			if (current_callback == TransferMode.FILEDESCRIPTOR)
 			{
 				try {
 					fd = _callback_wrapper.fd();
@@ -639,7 +638,7 @@ public class APISession {
 				}
 			}
 			// in simple mode, we just create a bytearray stream
-			else if (_callback_mode == CallbackMode.SIMPLE)
+			else if (current_callback == TransferMode.SIMPLE)
 			{
 				stream = new ByteArrayOutputStream();
 				counter = new CountingOutputStream( stream );
@@ -741,7 +740,7 @@ public class APISession {
 		public void characters(String data) throws SABException {
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "characters: " + data);
 			
-			if (_callback_mode == CallbackMode.PASSTHROUGH)
+			if (current_callback == TransferMode.PASSTHROUGH)
 			{
 				try {
 					_callback_wrapper.characters(data);

@@ -28,17 +28,16 @@ import java.io.IOException;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
+import android.util.Log;
 import de.tubs.ibr.dtn.api.BundleID;
-import de.tubs.ibr.dtn.api.CallbackMode;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.DTNSessionCallback;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
-import android.os.ParcelFileDescriptor;
-import android.os.RemoteException;
-import android.util.Log;
 
 public class ClientSession {
 	
@@ -135,10 +134,10 @@ public class ClientSession {
     private final DTNSession.Stub mBinder = new DTNSession.Stub()
     {
 		@Override
-		public boolean query(DTNSessionCallback cb, CallbackMode mode, BundleID id) throws RemoteException {
+		public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException {
 			try {
 				APISession session = getSession();
-				session.query(cb, mode, id);
+				session.query(cb, id);
 				return true;
 			} catch (Exception e) {
 				Log.e(TAG, "query failed", e);
@@ -159,10 +158,10 @@ public class ClientSession {
 		}
 
 		@Override
-		public boolean queryNext(DTNSessionCallback cb, CallbackMode mode) throws RemoteException {
+		public boolean queryNext(DTNSessionCallback cb) throws RemoteException {
 			try {
 				APISession session = getSession();
-				return session.query(cb, mode);
+				return session.query(cb);
 			} catch (Exception e) {
 				Log.e(TAG, "queryNext failed", e);
 				return false;
@@ -171,7 +170,7 @@ public class ClientSession {
 
 		@Override
 		public boolean send(SingletonEndpoint destination,
-				int lifetime, String data) throws RemoteException {
+				int lifetime, byte[] data) throws RemoteException {
 			try {
 				APISession session = getSession();
 				return session.send(destination, lifetime, data);
@@ -183,7 +182,7 @@ public class ClientSession {
 
 		@Override
 		public boolean sendGroup(GroupEndpoint destination,
-				int lifetime, String data) throws RemoteException {
+				int lifetime, byte[] data) throws RemoteException {
 			try {
 				APISession session = getSession();
 				return session.send(destination, lifetime, data);
