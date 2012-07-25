@@ -113,6 +113,7 @@ namespace dtn
 		private:
 			static ibrcommon::Mutex __sequence_lock;
 			static size_t __sequencenumber;
+			static size_t __last_timestamp;
 		};
 	}
 }
