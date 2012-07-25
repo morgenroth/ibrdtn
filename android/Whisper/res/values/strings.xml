@@ -20,6 +20,7 @@
     <string name="alert_reinstall_app">You need to re-install this application to grant necessary permissions. Would you like to do this now?</string>
     <string name="alert_yes">Yes</string>
     <string name="alert_no">No</string>
+    <string name="dialog_me_title">My state</string>
     <string name="message_settings">Messages</string>
     <string name="notification_settings">Notifications</string>
     <string name="vibrate_on_message">Vibrate</string>

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -92,6 +93,10 @@ public class RosterFragment extends ListFragment {
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
+		
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+		if (info.position == 0) return;
+		
 		MenuInflater inflater = getActivity().getMenuInflater();
 		inflater.inflate(R.menu.buddycontext_menu, menu);
 	}
@@ -135,14 +140,39 @@ public class RosterFragment extends ListFragment {
 	
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		super.onListItemClick(l, v, position, id);
 		ViewHolder holder = (ViewHolder)v.getTag();
 		
 		if (holder.buddy != null) {
 			selectBuddy(holder.buddy.getEndpoint());
 		} else {
-			// TODO: open self options
+			showMeDialog();
 		}
+		
+		super.onListItemClick(l, v, position, id);
+	}
+	
+	private void showMeDialog() {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+	    String presence_tag = prefs.getString("presencetag", "auto");
+	    String presence_text = prefs.getString("statustext", "");
+	    
+		MeDialog dialog = MeDialog.newInstance(this.getActivity(), presence_tag, presence_text);
+
+		dialog.setOnChangeListener(new MeDialog.OnChangeListener() {
+			@Override
+			public void onStateChanged(String presence, String message) {
+				Log.d(TAG, "state changed: " + presence + ", " + message);
+				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+				Editor edit = prefs.edit();
+				edit.putString("presencetag", presence);
+				edit.putString("statustext", message);
+				edit.commit();
+				
+				RosterFragment.this.refresh();
+			}
+		});
+		
+		dialog.show(getActivity().getSupportFragmentManager(), "me");
 	}
 	
 	public void selectBuddy(String buddyId) {
