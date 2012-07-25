@@ -169,8 +169,10 @@ public class SessionManager {
 		{
 			Registration previous_reg = _registrations.get(packageName);
 			
-			// abort if the registration has not been changed
-			if (previous_reg.equals(reg)) return;
+			if (previous_reg != null) {
+				// abort if the registration has not been changed
+				if (previous_reg.equals(reg)) return;
+			}
 			
 			Log.d(TAG, "terminate and remove old registration");
 			
