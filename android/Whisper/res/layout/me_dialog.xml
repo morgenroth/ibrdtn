@@ -8,10 +8,7 @@
     <Spinner
         android:id="@+id/spinnerPresence"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:entries="@array/presence_tag_names"
-        android:prompt="@array/presence_tag_values"
-        tools:listitem="@android:layout/simple_spinner_dropdown_item" />
+        android:layout_height="wrap_content" />
 
     <EditText
         android:id="@+id/editTextStatus"

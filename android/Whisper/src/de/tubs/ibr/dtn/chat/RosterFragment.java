@@ -193,7 +193,7 @@ public class RosterFragment extends ListFragment {
 	    String presence_tag = prefs.getString("presencetag", "auto");
 	    String presence_text = prefs.getString("statustext", "");
 	    
-		MeDialog dialog = MeDialog.newInstance(this.getActivity(), presence_tag, presence_text);
+		MeDialog dialog = MeDialog.newInstance(presence_tag, presence_text);
 
 		dialog.setOnChangeListener(new MeDialog.OnChangeListener() {
 			@Override

@@ -3,20 +3,24 @@ package de.tubs.ibr.dtn.chat;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 public class MeDialog extends DialogFragment {
 	
 	private String TAG = "MeDialog";
 	private String presence = null;
 	private String status = null;
-	private Activity activity = null;
 	
 	public interface OnChangeListener {
 		void onStateChanged(String presence, String message);
@@ -28,9 +32,8 @@ public class MeDialog extends DialogFragment {
 		this.change_lister = val;
 	}
 	
-    public MeDialog(Activity activity) {
+    public MeDialog() {
         // Empty constructor required for DialogFragment
-    	this.activity = activity;
     }
 	
     @Override
@@ -40,8 +43,8 @@ public class MeDialog extends DialogFragment {
     	this.status = getArguments().getString("status");
 	}
 
-	static MeDialog newInstance(Activity activity, String presence, String status) {
-    	MeDialog m = new MeDialog(activity);
+	static MeDialog newInstance(String presence, String status) {
+    	MeDialog m = new MeDialog();
         Bundle args = new Bundle();
         args.putString("presence", presence);
         args.putString("status", status);
@@ -58,6 +61,10 @@ public class MeDialog extends DialogFragment {
         final EditText textedit = (EditText)v.findViewById(R.id.editTextStatus);
         
         final String[] spin_values = getResources().getStringArray(R.array.presence_tag_values);
+        final String[] spin_names = getResources().getStringArray(R.array.presence_tag_names);
+        final Integer[] images = { R.drawable.online, R.drawable.online, R.drawable.online, R.drawable.away, R.drawable.xa, R.drawable.busy, R.drawable.offline };
+        spin.setAdapter(new PresenceSpinnerAdapter(getActivity(), R.layout.spinner_presence, spin_names, images));
+        
         int i = 0; for (String val : spin_values) {
         	if (val.equals(this.presence)) {
         		spin.setSelection(i);
@@ -68,7 +75,7 @@ public class MeDialog extends DialogFragment {
 
         textedit.setText(this.status);
     	
-    	AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+    	AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
     	builder.setTitle(R.string.dialog_me_title);
     	builder.setView(v);
     	builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -87,5 +94,39 @@ public class MeDialog extends DialogFragment {
     	builder.setNegativeButton(android.R.string.cancel, null);
     	
     	return builder.create();
-	}    
+	}
+    
+    public class PresenceSpinnerAdapter extends ArrayAdapter<String> {
+
+    	private String[] objects = null;
+    	private Integer[] images = null;
+    	
+        public PresenceSpinnerAdapter(Context context, int textViewResourceId, String[] objects, Integer[] images) {
+            super(context, textViewResourceId, objects);
+            this.objects = objects;
+            this.images = images;
+        }
+
+        @Override
+        public View getDropDownView(int position, View convertView, ViewGroup parent) {
+            return getCustomView(position, convertView, parent);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            return getCustomView(position, convertView, parent);
+        }
+
+        public View getCustomView(int position, View convertView, ViewGroup parent) {
+            LayoutInflater inflater = getActivity().getLayoutInflater();
+            View row = inflater.inflate(R.layout.spinner_presence, parent, false);
+            TextView label = (TextView)row.findViewById(R.id.presence_text);
+            label.setText(objects[position]);
+            
+            ImageView icon = (ImageView)row.findViewById(R.id.presence_icon);
+            icon.setImageResource(images[position]);
+            
+            return row;
+        }    
+    }
 }
