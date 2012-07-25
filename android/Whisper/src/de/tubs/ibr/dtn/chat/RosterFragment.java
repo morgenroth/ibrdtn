@@ -216,9 +216,16 @@ public class RosterFragment extends ListFragment {
     	Fragment fragment = getActivity().getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
     	if ((fragment == null) || !fragment.isInLayout()) {
     		if (buddyId != null) {
-    			Intent i = new Intent(getActivity(), MessageActivity.class);
-	    		i.putExtra("buddy", buddyId);
-	    		startActivity(i);
+    			final String bid = buddyId;
+    			new Thread(new Runnable() {
+					@Override
+					public void run() {
+		    			Intent i = new Intent(getActivity(), MessageActivity.class);
+			    		i.putExtra("buddy", bid);
+			    		startActivity(i);
+					}
+    			}).start();
+
     		}
     	} else {
     		// select the list item
