@@ -18,7 +18,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.RosterView.ViewHolder;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.service.ChatService;
@@ -87,6 +89,10 @@ public class RosterFragment extends ListFragment {
 	@Override
 	public void onViewCreated(View view, Bundle savedInstanceState) {
 		this.getListView().setOnCreateContextMenuListener(this);
+		
+		View v = View.inflate(this.getActivity(), R.layout.roster_me, null);
+		this.getListView().addHeaderView(v, null, true);
+		
 		super.onViewCreated(view, savedInstanceState);
 	}
 
@@ -131,8 +137,39 @@ public class RosterFragment extends ListFragment {
 		    if (presence_text.length() == 0) {
 		    	presence_text = "<" + getResources().getString(R.string.no_status_message) + ">";
 		    }
-
-		    view.setMe(new Buddy(presence_nick, null, presence_tag, presence_text, null));		    
+		    
+		    ImageView iconPresence = (ImageView)getListView().findViewById(R.id.me_icon);
+		    TextView textNick = (TextView)getListView().findViewById(R.id.me_nickname);
+		    TextView textMessage = (TextView)getListView().findViewById(R.id.me_statusmessage);
+		    
+		    int presence_icon = R.drawable.online;
+			if (presence_tag != null)
+			{
+				if (presence_tag.equalsIgnoreCase("unavailable"))
+				{
+					presence_icon = R.drawable.offline;
+				}
+				else if (presence_tag.equalsIgnoreCase("xa"))
+				{
+					presence_icon = R.drawable.xa;
+				}
+				else if (presence_tag.equalsIgnoreCase("away"))
+				{
+					presence_icon = R.drawable.away;
+				}
+				else if (presence_tag.equalsIgnoreCase("dnd"))
+				{
+					presence_icon = R.drawable.busy;
+				}
+				else if (presence_tag.equalsIgnoreCase("chat"))
+				{
+					presence_icon = R.drawable.online;
+				}
+			}
+			iconPresence.setImageResource(presence_icon);
+			textNick.setText(presence_nick);
+			textMessage.setText(presence_text);
+    
 			view.setShowOffline(!prefs.getBoolean("hideOffline", false));
 			view.refresh();
 		}
@@ -142,10 +179,10 @@ public class RosterFragment extends ListFragment {
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		ViewHolder holder = (ViewHolder)v.getTag();
 		
-		if (holder.buddy != null) {
-			selectBuddy(holder.buddy.getEndpoint());
-		} else {
+		if (holder == null) {
 			showMeDialog();
+		} else if (holder.buddy != null) {
+			selectBuddy(holder.buddy.getEndpoint());
 		}
 		
 		super.onListItemClick(l, v, position, id);
