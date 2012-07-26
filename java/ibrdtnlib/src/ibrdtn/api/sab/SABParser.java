@@ -33,7 +33,8 @@ public class SABParser {
 	{
 		PARSER_RESPONSE,
 		PARSER_LIST,
-		PARSER_DATA,
+		PARSER_DATA_INITIAL,
+		PARSER_DATA_NEXT,
 		PARSER_BUNDLE,
 		PARSER_BLOCK
 	}
@@ -89,8 +90,9 @@ public class SABParser {
 		case PARSER_BUNDLE:
 			readBundle(reader, handler);
 			break;
-			
-		case PARSER_DATA:
+		
+		case PARSER_DATA_INITIAL:
+		case PARSER_DATA_NEXT:
 			readPayload(reader, handler);
 			break;
 			
@@ -216,7 +218,7 @@ public class SABParser {
 			if (data == null) throw new SABException("end of stream reached");
 			
 			// read the payload, if a empty line was received
-			if (data.length() == 0)
+			if ((data.length() == 0) && (this.state != State.PARSER_DATA_INITIAL))
 			{
 				handler.endBlock();
 				if (this.lastblock)
@@ -231,8 +233,11 @@ public class SABParser {
 				}
 				return;
 			}
-			
+
 			handler.characters(data);
+			
+			// next time we're reading not the first line of data
+			this.state = State.PARSER_DATA_NEXT;
 		} catch (IOException e) {
 			throw new SABException(e.toString());
 		}
@@ -249,7 +254,7 @@ public class SABParser {
 			// read the payload, if a empty line was received
 			if (data.length() == 0)
 			{
-				this.state = State.PARSER_DATA;
+				this.state = State.PARSER_DATA_INITIAL;
 				return;
 			}
 			
