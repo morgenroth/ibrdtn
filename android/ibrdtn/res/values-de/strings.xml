@@ -41,6 +41,8 @@
     <string name="pref_bab_key_desc">Legt den Schlüssel zur Authentisierung fest.</string>
     <string name="pref_security_mode">Sicherheitseinstellungen</string>
     <string name="pref_security_mode_desc">Legt die Sicherheitseinstellungen fest.</string>
+    <string name="pref_collect_stats">Statistische Daten sammeln</string>
+    <string name="pref_collect_stats_desc">Statistische Daten werden im Hintergrund gesammelt und an die DTN Forschungsgemeinschaft übermittelt</string>
     <string name="general">Allgemein</string>
     <string name="autodisconnect">Automatische Unterbrechung</string>
     <string name="autodisconnect_desc">Schließe ungenutzte Verbindungen automatisch.</string>

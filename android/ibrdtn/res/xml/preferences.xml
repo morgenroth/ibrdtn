@@ -36,6 +36,7 @@
     
     <PreferenceCategory android:title="System">
 <!--    <CheckBoxPreference android:summary="Enable debugging output" android:title="Debug" android:key="debug" android:dependency="enabledSwitch"/> -->
+		<CheckBoxPreference android:summary="@string/pref_collect_stats_desc" android:title="@string/pref_collect_stats" android:key="collect_stats" />
         <Preference android:title="@string/system_version" android:key="system_version"/>
 	</PreferenceCategory>
 </PreferenceScreen>

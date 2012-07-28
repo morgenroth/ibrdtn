@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="de.tubs.ibr.dtn"
-      android:versionCode="17"
+      android:versionCode="19"
       android:versionName="0.8.0">
       
 	<permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
@@ -28,7 +28,7 @@
             </intent-filter>
         </activity>
         
-		<service android:name="de.tubs.ibr.dtn.service.DaemonService" android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION">
+		<service android:name=".service.DaemonService" android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION">
 			<intent-filter>
 				<action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
 				<action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
@@ -39,9 +39,18 @@
 		<activity android:icon="@drawable/ic_log" android:label="@string/list_logs" android:name=".daemon.LogActivity" />
 		<activity android:label="@string/applist" android:name="de.tubs.ibr.dtn.daemon.AppListActivity" android:theme="@android:style/Theme.NoTitleBar" />
 		
-		<receiver android:name="de.tubs.ibr.dtn.service.IntentReceiver" android:enabled="true" android:exported="false" android:label="IntentReceiver">
+		<receiver android:name=".service.IntentReceiver" android:enabled="true" android:exported="false" android:label="IntentReceiver">
 	        <intent-filter>
 	            <action android:name="android.intent.action.BOOT_COMPLETED"></action>
+	        </intent-filter>
+		</receiver>
+		
+		<service android:name=".stats.CollectorService"></service>
+        
+		<receiver android:name=".stats.DataReceiver" android:enabled="true" android:label="DataReceiver">
+	        <intent-filter>
+	            <action android:name="de.tubs.ibr.dtn.intent.EVENT"></action>
+	            <category android:name="android.intent.category.DEFAULT" />
 	        </intent-filter>
 		</receiver>
     </application>

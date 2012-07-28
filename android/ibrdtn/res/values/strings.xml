@@ -41,6 +41,8 @@
     <string name="pref_bab_key_desc">Specify the authorization key.</string>
     <string name="pref_security_mode">Security Policy</string>
     <string name="pref_security_mode_desc">Specify the security policy for the network.</string>
+    <string name="pref_collect_stats">Collect statistic data</string>
+    <string name="pref_collect_stats_desc">Statistic data is collected in background and transmitted to the DTN research community</string>
     <string name="general">General</string>
     <string name="autodisconnect">Automatic disconnect</string>
     <string name="autodisconnect_desc">Shutdown idle links automatically.</string>
