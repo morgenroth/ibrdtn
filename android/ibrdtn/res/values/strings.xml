@@ -26,10 +26,10 @@
     <string name="interfaces">Interfaces</string>
     <string name="discovery_multicast">Multicast</string>
     <string name="discovery_multicast_desc">Use multicast UDP to discover your neighborhood.</string>
-    <string name="service_running">Service running...</string>
+    <string name="service_running">Service running</string>
     <string name="development">Development</string>
     <string name="runasbackgroundservice">Activate daemon</string>
-    <string name="wait">Please wait...</string>
+    <string name="wait">Please wait</string>
     <string name="clearingstorage">Clearing storage.</string>
     <string name="security">Security</string>
     <string name="constrains">Constrains</string>

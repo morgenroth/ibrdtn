@@ -26,10 +26,10 @@
     <string name="interfaces">Schnittstellen</string>
     <string name="discovery_multicast">Multicast</string>
     <string name="discovery_multicast_desc">Verwende Multicast zur Nachbarerkennung.</string>
-    <string name="service_running">Dienst gestartet...</string>
+    <string name="service_running">Dienst gestartet</string>
     <string name="development">Development</string>
     <string name="runasbackgroundservice">Daemon aktivieren</string>
-    <string name="wait">Bitte warten...</string>
+    <string name="wait">Bitte warten</string>
     <string name="clearingstorage">Speicher wird geleert.</string>
     <string name="security">Sicherheit</string>
     <string name="constrains">Beschränkungen</string>
