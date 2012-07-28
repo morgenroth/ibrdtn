@@ -8,6 +8,7 @@
     android:padding="2dp" >
   
     <ImageView
+        android:contentDescription="@string/content_neighbor_icon"
         android:id="@+id/imageIcon"
         android:layout_width="32dp"
         android:layout_height="32dp"

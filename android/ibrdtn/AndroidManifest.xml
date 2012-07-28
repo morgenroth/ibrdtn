@@ -47,7 +47,7 @@
 		
 		<service android:name=".stats.CollectorService"></service>
         
-		<receiver android:name=".stats.DataReceiver" android:enabled="true" android:label="DataReceiver">
+		<receiver android:name=".stats.DataReceiver" android:exported="false" android:label="DataReceiver">
 	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.intent.EVENT"></action>
 	            <category android:name="android.intent.category.DEFAULT" />

@@ -4,6 +4,7 @@
 	android:layout_height="wrap_content">
     
 	<ImageView
+	    android:contentDescription="@string/content_colormark"
 		android:layout_width="12dp"
 		android:layout_height="match_parent"
 		android:id="@+id/imageMark"
@@ -24,7 +25,7 @@
 	        android:layout_marginRight="6dp"
 	        android:layout_marginTop="2dp"
 	        android:layout_marginBottom="2dp"
-	        android:text="TextView"
+	        android:text="@string/example_item_title"
 	        android:textStyle="bold" />
 	    
 	    <TextView
@@ -37,7 +38,7 @@
 	        android:layout_marginRight="6dp"
 	        android:layout_marginTop="2dp"
 	        android:layout_marginBottom="2dp"
-	        android:text="TextView"
+	        android:text="@string/example_item_text"
 	        android:textStyle="bold" />
 	
 	    <TextView
@@ -50,7 +51,7 @@
 	        android:layout_marginRight="6dp"
 	        android:layout_marginTop="2dp"
 	        android:layout_marginBottom="2dp"
-	        android:text="TextView" />
+	        android:text="@string/example_item_text" />
 
 	</RelativeLayout>
 </LinearLayout>

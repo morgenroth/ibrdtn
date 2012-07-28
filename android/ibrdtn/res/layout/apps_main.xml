@@ -37,6 +37,7 @@
 	        android:textSize="12dp" />
 	    
 	    <ImageButton
+	        android:contentDescription="@string/content_titlebar_icon"
 	        android:id="@+id/iconTitleBar"
 	        android:layout_width="48dp"
 	        android:layout_height="48dp"
@@ -58,7 +59,7 @@
     <ListView  
         android:id="@android:id/list"
         android:layout_width="match_parent" 
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_weight="1"
         >
         <!-- Preview: listitem=@layout/app_item -->

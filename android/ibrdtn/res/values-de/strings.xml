@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="example_item_title">Beispiel Titel</string>
+    <string name="example_item_text">Beispiel Text</string>
+    <string name="content_colormark">Farbmarkierung eines Log-Eintrags</string>
+    <string name="content_titlebar_icon">Symbol der Toolbar</string>
+    <string name="content_app_icon">Anwendungssymbol</string>
+    <string name="content_neighbor_icon">Nachbarssymbol</string>
     <string name="permlab_dtnCommunication">DTN Kommunikation</string>
     <string name="permdesc_dtnCommunication">Erlaubt eine Registrierung beim DTN Dienst und das senden/empfangen von Bündeln.</string>
     <string name="service_name">DTN Dienst</string>
