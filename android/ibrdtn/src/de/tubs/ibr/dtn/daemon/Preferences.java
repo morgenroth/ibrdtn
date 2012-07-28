@@ -72,6 +72,8 @@ public class Preferences extends PreferenceActivity {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Preferences.this.service = DTNService.Stub.asInterface(service);
 			Log.i(TAG, "service connected");
+			
+			// TODO: on first startup ask for permissions to collect statistical data
 		}
 
 		@Override
