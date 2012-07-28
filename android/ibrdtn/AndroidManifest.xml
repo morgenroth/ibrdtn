@@ -18,7 +18,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
     
-	<uses-sdk android:minSdkVersion="10" android:targetSdkVersion="15" />
+	<uses-sdk android:minSdkVersion="10" android:targetSdkVersion="16" />
 
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:icon="@drawable/icon" android:label="@string/app_name" android:name=".daemon.Preferences">
