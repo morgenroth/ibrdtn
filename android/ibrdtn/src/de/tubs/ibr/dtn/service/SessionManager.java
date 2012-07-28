@@ -88,6 +88,7 @@ public class SessionManager {
 			try {
 				ObjectInputStream ois = new ObjectInputStream(new Base64InputStream( new ByteArrayInputStream(data.getBytes()), android.util.Base64.DEFAULT ));
 				Object regobj = ois.readObject();
+				ois.close();
 				
 				if (regobj instanceof Registration) {
 					// re-register registration

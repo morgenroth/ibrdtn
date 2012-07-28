@@ -106,6 +106,9 @@ public class Preferences extends PreferenceActivity {
 				case ERROR:
 					enabledSwitch.setChecked(false);
 					break;
+					
+				default:
+					break;
 				}
 				
 				enabledSwitch.setEnabled(true);
