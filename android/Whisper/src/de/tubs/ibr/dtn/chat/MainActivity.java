@@ -34,7 +34,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.Window;
 import de.tubs.ibr.dtn.chat.service.ChatService;
 import de.tubs.ibr.dtn.chat.service.Utils;
 

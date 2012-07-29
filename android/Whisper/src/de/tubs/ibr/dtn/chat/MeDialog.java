@@ -1,6 +1,5 @@
 package de.tubs.ibr.dtn.chat;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -18,7 +17,7 @@ import android.widget.TextView;
 
 public class MeDialog extends DialogFragment {
 	
-	private String TAG = "MeDialog";
+//	private String TAG = "MeDialog";
 	private String presence = null;
 	private String status = null;
 	
