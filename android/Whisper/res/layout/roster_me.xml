@@ -5,7 +5,7 @@
     android:background="@color/me_background"
     android:orientation="horizontal"
     android:padding="4dp"
-    android:id="@+id/roster_item_layout">
+    android:id="@+id/roster_me_display">
 
     <ImageView
         android:id="@+id/me_image"

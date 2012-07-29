@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Whisper</string>
+    <string name="desc_buddy_icon">Buddy icon</string>
+    <string name="desc_send_button">Send button</string>
     <string name="list_messages">Messages</string>
     <string name="example_text">This is an example text. It should be a little bit longer than normal texts to test out the wrap functionalities.</string>
     <string name="close">Close</string>

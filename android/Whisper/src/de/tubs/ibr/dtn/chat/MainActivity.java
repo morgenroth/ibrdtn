@@ -21,108 +21,96 @@
  */
 package de.tubs.ibr.dtn.chat;
 
-import android.content.ComponentName;
-import android.content.Context;
+import java.util.Date;
+
 import android.content.Intent;
-import android.content.ServiceConnection;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import de.tubs.ibr.dtn.chat.core.Buddy;
+import de.tubs.ibr.dtn.chat.core.Message;
+import de.tubs.ibr.dtn.chat.core.Roster;
 import de.tubs.ibr.dtn.chat.service.ChatService;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ChatServiceListener;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ServiceNotConnectedException;
 import de.tubs.ibr.dtn.chat.service.Utils;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends FragmentActivity 
+	implements RosterFragment.OnBuddySelectedListener,
+	ChatFragment.OnMessageListener,
+	ChatServiceListener {
+
+	private ChatServiceHelper service_helper = null;
 	private final String TAG = "MainActivity";
-	private ChatService service = null;
-	private String _open_buddy = null;
-	
-	private void selectBuddy(String buddyId) {
-		Fragment fragment = this.getSupportFragmentManager().findFragmentById(R.id.roster_fragment);
-		if (fragment != null) {
-			RosterFragment roster = (RosterFragment)fragment;
-			roster.selectBuddy(buddyId);
-		}
-	}
+	private Boolean hasLargeLayout = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		if (getIntent() != null) {
-			_open_buddy = getIntent().getStringExtra("buddy");
-		}
+		service_helper = new ChatServiceHelper(this, this);
 		
 	    super.onCreate(savedInstanceState);
-	    
-	    setContentView(R.layout.roster_main);
-	    
-		// Establish a connection with the service.  We use an explicit
-		// class name because we want a specific service implementation that
-		// we know will be running in our own process (and thus won't be
-		// supporting component replacement by other applications).
-		bindService(new Intent(MainActivity.this, ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
-	}
+	    setContentView(R.layout.main_layout);
 
-	private ServiceConnection mConnection = new ServiceConnection() {
-		@Override
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			MainActivity.this.service = ((ChatService.LocalBinder)service).getService();
-			
-			// check possible errors
-			switch ( MainActivity.this.service.getServiceError() ) {
-			case NO_ERROR:
-				break;
-				
-			case SERVICE_NOT_FOUND:
-				Utils.showInstallServiceDialog(MainActivity.this);
-				break;
-				
-			case PERMISSION_NOT_GRANTED:
-				Utils.showReinstallDialog(MainActivity.this);
-				break;
+	    // Check that the activity is using the layout version with
+	    // the fragment_container FrameLayout
+	    if (findViewById(R.id.fragment_container) != null) {
+	    	// remind that this is a large layout
+	    	hasLargeLayout = false;
+
+	    	// However, if we're being restored from a previous state,
+	    	// then we don't need to do anything and should return or else
+	    	// we could end up with overlapping fragments.
+	    	if (savedInstanceState != null) {
+	    		return;
+	    	}
+
+			// Create an instance of the roster fragment
+			RosterFragment roster = new RosterFragment();
+
+			// In case this activity was started with special instructions from an Intent,
+			// pass the Intent's extras to the fragment as arguments
+			Bundle args = getIntent().getExtras();
+			if (args == null) {
+				args = new Bundle();
 			}
+			args.putBoolean("persistantSelection", false);
+			roster.setArguments(args);
 
-			Log.i(TAG, "service connected");
-		}
-
-		@Override
-		public void onServiceDisconnected(ComponentName name) {
-			Log.i(TAG, "service disconnected");
-			MainActivity.this.service = null;
-		}
-	};
-	
-	@Override
-	protected void onDestroy() {
-	    if (mConnection != null) {
-	    	// Detach our existing connection.
-	    	unbindService(mConnection);
+			// Add the fragment to the 'fragment_container' FrameLayout
+			getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, roster).commit();
+	    }
+	    else
+	    {
+	    	hasLargeLayout = true;
 	    }
 	    
-	    super.onDestroy();
-	}
-	
-	@Override
-	public void onResume() {
-		super.onResume();
-
-		// get ID of the buddy
-		if (_open_buddy != null) {
-	    	selectBuddy(_open_buddy);
-	    	_open_buddy = null;
+	    service_helper.bind();
+	    
+		if ((getIntent() != null) && getIntent().hasExtra("buddy")) {
+			onBuddySelected( getIntent().getStringExtra("buddy") );
 		}
+	}
+
+	@Override
+	protected void onDestroy() {
+		service_helper.unbind();
+	    super.onDestroy();
 	}
 
 	@Override
 	protected void onNewIntent(Intent intent) {
 		// get ID of the buddy
-		if (intent != null) {
-			_open_buddy = intent.getStringExtra("buddy");
+		if ((intent != null) && intent.hasExtra("buddy")) {
+			onBuddySelected( intent.getStringExtra("buddy") );
 		}
+		
 		super.onNewIntent(intent);
 	}
 
@@ -149,5 +137,152 @@ public class MainActivity extends FragmentActivity {
 	    default:
 	        return super.onOptionsItemSelected(item);
 	    }
+	}
+
+	@Override
+	public void onBuddySelected(String buddyId) {
+        // The user selected the buddy from the RosterFragment
+        // Do something here to display that chat
+		ChatFragment chatFrag = (ChatFragment)
+                getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
+
+        if (chatFrag != null) {
+            // If chat frag is available, we're in two-pane layout...
+
+            // Call a method in the ChatFragment to update its content
+        	chatFrag.onBuddySelected(buddyId);
+        } else {
+            // Otherwise, we're in the one-pane layout and must swap frags...
+
+            // Create fragment and give it an argument for the selected article
+        	ChatFragment newFragment = new ChatFragment();
+            Bundle args = new Bundle();
+            args.putString("buddyId", buddyId);
+            args.putBoolean("large_layout", this.hasLargeLayout);
+            newFragment.setArguments(args);
+        
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+            // Replace whatever is in the fragment_container view with this fragment,
+            // and add the transaction to the back stack so the user can navigate back
+            transaction.replace(R.id.fragment_container, newFragment);
+            transaction.addToBackStack(null);
+
+            // Commit the transaction
+            transaction.commit();
+        }
+	}
+	
+	public Roster getRoster() throws ServiceNotConnectedException {
+		return this.service_helper.getService().getRoster();
+	}
+
+	@Override
+	public void onClearMessages(String buddyId) {
+		try {
+			// load buddy from roster
+			Buddy buddy = this.getRoster().get( buddyId );
+			this.getRoster().clearMessages(buddy);
+		} catch (ServiceNotConnectedException e) {
+			Log.e(TAG, "clear messages failed", e);
+		}
+	}
+
+	@Override
+	public void onMessage(String buddyId, String text) {
+		try {
+			// load buddy from roster
+			Buddy buddy = this.getRoster().get( buddyId );
+			Message msg = new Message(false, new Date(), new Date(), text);
+			msg.setBuddy(buddy);
+			
+			Log.i(TAG, "send text to " + buddy.getNickname() + ": " + msg.getPayload());
+			
+			// send the message
+			new SendChatMessageTask().execute(msg);
+			
+			// store the message in the database
+			this.getRoster().storeMessage(msg);
+		} catch (ServiceNotConnectedException e) {
+			Log.e(TAG, "failed to send message", e);
+		}
+	}
+
+	@Override
+	public void onSaveMessage(String buddyId, String msg) {
+		if (buddyId == null) return;
+
+		try {
+			// load buddy from roster
+			Buddy buddy = this.getRoster().get( buddyId );
+			
+			if (msg.length() > 0)
+				buddy.setDraftMessage( msg );
+			else
+				buddy.setDraftMessage( null );
+			
+			this.getRoster().store(buddy);
+		} catch (ServiceNotConnectedException e) {
+			Log.e(TAG, "failed to save draft message", e);
+		}
+	}
+	
+	private class SendChatMessageTask extends AsyncTask<Message, Integer, Integer> {
+		protected Integer doInBackground(Message... msgs) {
+			int count = msgs.length;
+			int totalSize = 0;
+			for (int i = 0; i < count; i++)
+			{
+				try {
+					MainActivity.this.service_helper.getService().sendMessage(msgs[i]);
+					
+					// update total size
+					totalSize += msgs[i].getPayload().length();
+					
+					// publish the progress
+					publishProgress((int) ((i / (float) count) * 100));
+				} catch (Exception e) {
+					Log.e(TAG, "could not send the message", e);
+				}
+			}
+			return totalSize;
+		}
+	
+		protected void onProgressUpdate(Integer... progress) {
+			//setProgressPercent(progress[0]);
+		}
+	
+		protected void onPostExecute(Integer result) {
+			//showDialog("Downloaded " + result + " bytes");
+		}
+	}
+
+	@Override
+	public void onContentChanged(String buddyId) {
+	}
+
+	@Override
+	public void onServiceConnected(ChatService service) {
+		try {
+			// check possible errors
+			switch ( MainActivity.this.service_helper.getService().getServiceError() ) {
+			case NO_ERROR:
+				break;
+				
+			case SERVICE_NOT_FOUND:
+				Utils.showInstallServiceDialog(MainActivity.this);
+				break;
+				
+			case PERMISSION_NOT_GRANTED:
+				Utils.showReinstallDialog(MainActivity.this);
+				break;
+			}
+		} catch (ServiceNotConnectedException e) {
+			Log.e(TAG, "failure while checking for service error", e);
+		}
+	}
+
+	@Override
+	public void onServiceDisconnected() {
 	}
 }

@@ -472,7 +472,7 @@ public class ChatService extends Service {
 		if (visibleBuddy != buddyId) visibleBuddy = buddyId;
 	}
 	
-	public synchronized static void setUnvisible(String buddyId) {
+	public synchronized static void setInvisible(String buddyId) {
 		if (visibleBuddy == buddyId) visibleBuddy = null;
 	}
 	

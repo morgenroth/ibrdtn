@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Whisper</string>
+    <string name="desc_buddy_icon">Freundstatus</string>
+    <string name="desc_send_button">Senden Knopf</string>
     <string name="send">Abschicken</string>
     <string name="example_text">Dies ist ein Beispieltext. Er sollte etwas länger sein als normale Texte um einen Zeilenumbruch zu provozieren.</string>
     <string name="list_messages">Nachrichten</string>

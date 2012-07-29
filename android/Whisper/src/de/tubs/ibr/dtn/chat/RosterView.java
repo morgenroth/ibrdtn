@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -129,6 +130,7 @@ public class RosterView extends BaseAdapter {
 		this.notifyDataSetChanged();
 	}
 	
+	@SuppressLint({ "NewApi", "NewApi" })
 	public View getView(int position, View convertView, ViewGroup parent) {
 		ViewHolder holder;
 		

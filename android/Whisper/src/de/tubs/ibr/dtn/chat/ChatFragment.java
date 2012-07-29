@@ -1,65 +1,104 @@
 package de.tubs.ibr.dtn.chat;
 
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.support.v4.app.ListFragment;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnKeyListener;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Roster;
 import de.tubs.ibr.dtn.chat.service.ChatService;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ChatServiceListener;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ServiceNotConnectedException;
 
-public class ChatFragment extends ListFragment {
+public class ChatFragment extends Fragment implements ChatServiceListener, RosterFragment.OnBuddySelectedListener {
+	private ChatServiceHelper service_helper = null;
 	private final String TAG = "ChatFragment";
+	
 	private MessageView view = null;
 	private String buddyId = null;
-	private ChatService service = null;
 	
-	private ServiceConnection mConnection = new ServiceConnection() {
-		@Override
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			ChatFragment.this.service = ((ChatService.LocalBinder)service).getService();
-			
-			if (ChatFragment.this.view != null) {
-				ChatFragment.this.setListAdapter(null);
-				ChatFragment.this.view.onDestroy(getActivity());
-				ChatFragment.this.view = null;
-			}
-			
-			refresh();
-			Log.i(TAG, "service connected");
-		}
-
-		@Override
-		public void onServiceDisconnected(ComponentName name) {
-			Log.i(TAG, "service disconnected");
-			ChatFragment.this.service = null;
-		}
-	};
+	private OnMessageListener mCallback = null;
 	
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		
-		// Establish a connection with the service.  We use an explicit
-		// class name because we want a specific service implementation that
-		// we know will be running in our own process (and thus won't be
-		// supporting component replacement by other applications).
-		getActivity().bindService(new Intent(getActivity(), ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+    @Override
+	public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, it throws an exception
+        try {
+            mCallback = (OnMessageListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnMessageListener");
+        }
 	}
-	
+
+	// Container Activity must implement this interface
+    public interface OnMessageListener {
+        public void onMessage(String buddyId, String text);
+        public void onSaveMessage(String buddyId, String text);
+        public void onClearMessages(String buddyId);
+    }
+    
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		View v = inflater.inflate(R.layout.chat_fragment, container, false);
+		
+		if ((this.getArguments() != null) && this.getArguments().containsKey("large_layout")) {
+			if (!this.getArguments().getBoolean("large_layout")) {
+				LinearLayout layout = (LinearLayout)v.findViewById(R.id.chat_buddy_display);
+				layout.setVisibility(View.VISIBLE);
+			}
+		}
+		
+		// set "enter" handler
+		EditText textedit = (EditText) v.findViewById(R.id.textMessage);
+		textedit.setEnabled(false);
+		
+		textedit.setOnKeyListener(new OnKeyListener() {
+			@Override
+			public boolean onKey(View v, int keycode, KeyEvent event) {
+				if ((KeyEvent.KEYCODE_ENTER == keycode) && (event.getAction() == KeyEvent.ACTION_DOWN))
+				{
+					flushTextBox();
+					return true;
+				}
+				return false;
+			}
+		});
+		
+		// set send handler
+		ImageButton buttonSend = (ImageButton) v.findViewById(R.id.buttonSend);
+		buttonSend.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				flushTextBox();
+			}
+		});
+		
+		return v;
+	}
+
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
@@ -72,11 +111,39 @@ public class ChatFragment extends ListFragment {
 			}
 		}
 		
-	    this.getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-	    this.getListView().setStackFromBottom(true);
-	    this.getListView().setEmptyView(null);
+		// select right buddy
+		Bundle args = this.getArguments();
+		if ((args != null) && args.containsKey("buddyId")) {
+			this.onBuddySelected(args.getString("buddyId"));
+		}
+		
+		service_helper.bind();
 	}
+	
+	private void restoreDraftMessage() {
+		EditText text = (EditText) getView().findViewById(R.id.textMessage);
+		text.setText("");
+		
+		if (this.buddyId == null) {
+			text.setEnabled(false);
+			return;
+		}
 
+		try {
+			// load buddy from roster
+			Buddy buddy = this.getRoster().get( this.buddyId );
+			String msg = buddy.getDraftMessage();
+			
+			if (msg != null) text.append(msg);
+	
+			text.setEnabled(true);
+			
+			text.requestFocus();
+		} catch (ServiceNotConnectedException e) {
+			Log.e(TAG, "failed to restore draft message", e);
+		}
+	}
+	
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
@@ -84,6 +151,19 @@ public class ChatFragment extends ListFragment {
 		if (buddyId != null) {
 			// save buddy id
 			outState.putString("buddyId", buddyId);
+		}
+	}
+	
+	private void flushTextBox()
+	{
+		EditText text = (EditText) getView().findViewById(R.id.textMessage);
+		
+		if (text.getText().length() > 0) {
+			mCallback.onMessage(buddyId, text.getText().toString());
+			
+			// clear the text field
+			text.setText("");
+			text.requestFocus();
 		}
 	}
 
@@ -96,9 +176,7 @@ public class ChatFragment extends ListFragment {
 	private DialogInterface.OnClickListener message_delete_dialog = new DialogInterface.OnClickListener() {
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
-    		// load buddy from roster
-    		Buddy buddy = ChatFragment.this.service.getRoster().get( buddyId );
-    		ChatFragment.this.service.getRoster().clearMessages(buddy);
+			mCallback.onClearMessages(buddyId);
 		} 
 	};
 
@@ -106,18 +184,37 @@ public class ChatFragment extends ListFragment {
 	public boolean onOptionsItemSelected(MenuItem item) {
 	    switch (item.getItemId()) {
     		case R.id.itemClearMessages:
-	    		if ((service != null) && (buddyId != null)) {
-	    			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-	    			builder.setMessage(getActivity().getResources().getString(R.string.question_delete_messages));
-	    			builder.setPositiveButton(getActivity().getResources().getString(android.R.string.yes), message_delete_dialog);
-	    			builder.setNegativeButton(getActivity().getResources().getString(android.R.string.no), null);
-	    			builder.show();
-	    		}
+    			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+    			builder.setMessage(getActivity().getResources().getString(R.string.question_delete_messages));
+    			builder.setPositiveButton(getActivity().getResources().getString(android.R.string.yes), message_delete_dialog);
+    			builder.setNegativeButton(getActivity().getResources().getString(android.R.string.no), null);
+    			builder.show();
 	    		return true;
 	    	
 	    	default:
 	    		return super.onOptionsItemSelected(item);
 	    }
+	}
+
+	@Override
+	public void onContentChanged(String buddyId) {
+		onContentChanged();
+	}
+
+	@Override
+	public void onServiceConnected(ChatService service) {
+		restoreDraftMessage();
+		onContentChanged();
+	}
+
+	@Override
+	public void onServiceDisconnected() {
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		service_helper = new ChatServiceHelper(getActivity(), this);		
+		super.onCreate(savedInstanceState);
 	}
 
 	@Override
@@ -127,20 +224,19 @@ public class ChatFragment extends ListFragment {
 			this.view = null;
 		}
 		
-	    if (mConnection != null) {
-	    	// Detach our existing connection.
-	    	getActivity().unbindService(mConnection);
-	    }
-
+		service_helper.unbind();
 	    super.onDestroy();
 	}
 	
 	@Override
 	public void onPause() {
-		getActivity().unregisterReceiver(notify_receiver);
+		// set the current buddy to invisible
+		ChatService.setInvisible(this.buddyId);
 		
-		// set the current buddy to unvisible
-		ChatService.setUnvisible(this.buddyId);
+		if (buddyId != null) {
+			EditText text = (EditText) getView().findViewById(R.id.textMessage);
+			mCallback.onSaveMessage(buddyId, text.getText().toString());
+		}
 		
 		super.onPause();
 	}
@@ -149,30 +245,115 @@ public class ChatFragment extends ListFragment {
 	public void onResume() {
 		super.onResume();
 		
-		IntentFilter i = new IntentFilter(Roster.REFRESH);
-		getActivity().registerReceiver(notify_receiver, i);
-		
 		// set the current visible buddy
 		ChatService.setVisible(this.buddyId);
 
 		// refresh visible data
-		refresh();
+		onContentChanged();
+	}
+	
+	public Roster getRoster() throws ServiceNotConnectedException {
+		return this.service_helper.getService().getRoster();
+	}
+	
+	private void onContentChanged()
+	{
+		Buddy buddy = null;
+		Roster roster = null;
+		
+		try {
+			if (buddyId != null) {
+				roster = this.getRoster();
+				
+				// load buddy from roster
+				buddy = roster.get( buddyId );
+				
+				if (buddy == null) {
+					Log.e(TAG, "Error buddy not found: " + getActivity().getIntent().getStringExtra("buddy"));
+					return;
+				}
+				
+			    String presence_tag = buddy.getPresence();
+			    String presence_nick = buddy.getNickname();
+			    String presence_text = buddy.getEndpoint();
+			    int presence_icon = R.drawable.online;
+			    
+				if (buddy.getStatus() != null)
+				{
+					if (buddy.getStatus().length() > 0) { 
+						presence_text = buddy.getStatus();
+					} else {
+						presence_text = buddy.getEndpoint();
+					}
+				}
+				
+				if ((presence_tag != null) && buddy.isOnline())
+				{
+					if (presence_tag.equalsIgnoreCase("unavailable"))
+					{
+						presence_icon = R.drawable.offline;
+					}
+					else if (presence_tag.equalsIgnoreCase("xa"))
+					{
+						presence_icon = R.drawable.xa;
+					}
+					else if (presence_tag.equalsIgnoreCase("away"))
+					{
+						presence_icon = R.drawable.away;
+					}
+					else if (presence_tag.equalsIgnoreCase("dnd"))
+					{
+						presence_icon = R.drawable.busy;
+					}
+					else if (presence_tag.equalsIgnoreCase("chat"))
+					{
+						presence_icon = R.drawable.online;
+					}
+				}
+				
+				// if the presence is older than 60 minutes then mark the buddy as offline
+				if (!buddy.isOnline())
+				{
+					presence_icon = R.drawable.offline;
+				}
+
+				ImageView iconTitleBar = (ImageView) this.getView().findViewById(R.id.buddy_icon);
+				TextView labelTitleBar = (TextView) this.getView().findViewById(R.id.buddy_nickname);
+				TextView bottomtextTitleBar = (TextView) this.getView().findViewById(R.id.buddy_statusmessage);
+			
+				labelTitleBar.setText( presence_nick );
+				bottomtextTitleBar.setText( presence_text );
+				iconTitleBar.setImageResource(presence_icon);
+			}
+			
+			if (this.view == null) {
+				// activate message view
+				this.view = new MessageView(getActivity(), roster, buddy);
+				
+				ListView lv = (ListView)this.getActivity().findViewById(R.id.list_messages);
+				lv.setAdapter(this.view);
+				
+				restoreDraftMessage();
+			} else {
+				this.view.refresh();
+			}
+		} catch (ServiceNotConnectedException e) {
+			Log.e(TAG, "update failed", e);
+		}
 	}
 
-	private BroadcastReceiver notify_receiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent i) {
-			if (i.getStringExtra("buddy").equals(buddyId)) {
-				ChatFragment.this.refresh();
-			}
-		}
-	};
-	
-	public void setBuddy(String buddyId) {
+	@Override
+	public void onBuddySelected(String buddyId) {
 		if ((this.buddyId != buddyId) && (this.view != null)) {
 			this.view.onDestroy(getActivity());
 			this.view = null;
-			this.setListAdapter(null);
+			ListView lv = (ListView)this.getActivity().findViewById(R.id.list_messages);
+			lv.setAdapter(null);
+			
+			if (this.buddyId != null) {
+				EditText text = (EditText) getView().findViewById(R.id.textMessage);
+				mCallback.onSaveMessage(this.buddyId, text.getText().toString());
+			}
 		}
 		
 		this.setHasOptionsMenu(buddyId != null);
@@ -180,33 +361,7 @@ public class ChatFragment extends ListFragment {
 		
 		// set the current visible buddy
 		ChatService.setVisible(this.buddyId);
-
-		refresh();
-	}
 	
-	private void refresh()
-	{
-		Buddy buddy = null;
-		Roster roster = null;
-		
-		if ((buddyId != null) && (service != null)) {
-			roster = this.service.getRoster();
-			
-			// load buddy from roster
-			buddy = roster.get( buddyId );
-			
-			if (buddy == null) {
-				Log.e(TAG, "Error buddy not found: " + getActivity().getIntent().getStringExtra("buddy"));
-				return;
-			}
-		}
-		
-		if (this.view == null) {
-			// activate message view
-			this.view = new MessageView(getActivity(), roster, buddy);
-			this.setListAdapter(this.view);
-		} else {
-			this.view.refresh();
-		}
+		onContentChanged();
 	}
 }

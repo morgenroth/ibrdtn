@@ -26,8 +26,7 @@
             </intent-filter>
         </activity>
         <activity android:icon="@drawable/ic_settings" android:name=".Preferences" android:label="@string/preferences" />
-        <activity android:icon="@drawable/online" android:label="@string/list_messages" android:name=".MessageActivity" android:launchMode="singleTask" />
-        
+
 		<service android:name=".service.ChatService" />
 		
 		<receiver android:process=":remote" android:name=".service.AlarmReceiver"></receiver>

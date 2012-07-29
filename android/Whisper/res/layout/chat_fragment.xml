@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     android:orientation="vertical"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     >
+     
+	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:background="@color/buddy_background"
+	    android:orientation="horizontal"
+	    android:padding="4dp"
+	    android:id="@+id/chat_buddy_display"
+	    android:visibility="gone">
+	
+	    <ImageView
+	        android:contentDescription="@string/desc_buddy_icon"
+	        android:id="@+id/buddy_icon"
+		    android:layout_width="24dp"
+			android:layout_height="24dp"
+	        android:layout_weight="0"
+	        android:layout_margin="8dp"
+	        android:src="@drawable/online" />
+	    
+	    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_weight="1"
+	        android:padding="4dp">
+	
+		    <TextView
+		        android:id="@+id/buddy_nickname"
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:layout_alignTop="@+id/buddy_icon"
+		        android:layout_toRightOf="@+id/buddy_icon"
+		        android:layout_weight="1"
+		        android:gravity="center_vertical"
+		        android:textColor="@color/buddy_text"
+		        android:text="@string/nickname"
+		        android:textSize="18dp" />
+		
+		    <TextView
+		        android:id="@+id/buddy_statusmessage"
+		        android:layout_width="fill_parent"
+		        android:layout_height="wrap_content"
+		        android:layout_alignLeft="@+id/buddy_nickname"
+		        android:layout_below="@+id/buddy_nickname"
+		        android:ellipsize="marquee"
+		        android:singleLine="true"
+		        android:textColor="@color/buddy_text"
+		        android:text="@string/example_text"
+		        android:textSize="12dp" />
+		    
+	    </RelativeLayout>
+	
+	</LinearLayout>
+
+    <ListView
+        android:id="@+id/list_messages"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:transcriptMode="alwaysScroll"
+        android:stackFromBottom="true">
+    </ListView>
+	
+	<View
+	    android:id="@+id/inputbox_separator"
+	    android:layout_width="match_parent"
+	    android:layout_height="1px"
+	    android:background="@color/border_menu_seperator" />
+	
+	<LinearLayout
+	    xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:name="de.tubs.ibr.dtn.chat.InputFragment"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:background="@color/inputbox_background"
+	    android:layout_weight="0"
+	    android:id="@+id/input_view">
+	
+		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_margin="12dp"
+			android:layout_weight="1">
+	 
+	      <EditText
+	          android:background="@null"
+	          android:id="@+id/textMessage"
+	          android:textColor="@color/inputbox_text"
+	          android:layout_width="match_parent"
+	          android:layout_height="wrap_content"
+	          android:inputType="textMultiLine"
+	          android:singleLine="true"
+	          android:layout_weight="1">
+	          <requestFocus />
+	      </EditText>
+	      
+		<View
+		    android:layout_width="match_parent"
+		    android:layout_height="1px"
+		    android:layout_marginTop="2dp"
+		    android:background="@color/textbox_writeline"
+		    android:layout_weight="0"
+		/>
+		</LinearLayout>
+	
+		<ImageButton
+		    android:contentDescription="@string/desc_send_button"
+		    android:id="@+id/buttonSend"
+		    android:layout_width="48dp"
+		    android:layout_height="48dp"
+		    android:layout_weight="0"
+		    android:background="@drawable/button"
+		    android:src="@drawable/ic_send" />
+	
+	</LinearLayout>
+    
+ </LinearLayout>

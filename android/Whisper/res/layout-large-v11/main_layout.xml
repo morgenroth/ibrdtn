@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <fragment android:name="de.tubs.ibr.dtn.chat.RosterFragment"
+              android:id="@+id/roster_fragment"
+              android:layout_weight="1"
+              android:layout_width="0dp"
+              android:layout_height="match_parent" />
+    
+	<View
+	    android:id="@+id/menu_separator"
+	    android:layout_width="1px"
+	    android:layout_height="match_parent"
+	    android:background="@color/border_menu_seperator" />
+
+    <fragment android:name="de.tubs.ibr.dtn.chat.ChatFragment"
+              android:id="@+id/chat_fragment"
+              android:layout_weight="2"
+              android:layout_width="0dp"
+              android:layout_height="match_parent" />
+
+</LinearLayout>

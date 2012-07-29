@@ -1,15 +1,10 @@
 package de.tubs.ibr.dtn.chat;
 
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -23,47 +18,56 @@ import android.widget.ListView;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.RosterView.ViewHolder;
 import de.tubs.ibr.dtn.chat.core.Buddy;
+import de.tubs.ibr.dtn.chat.core.Roster;
 import de.tubs.ibr.dtn.chat.service.ChatService;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ChatServiceListener;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ServiceNotConnectedException;
 
-public class RosterFragment extends ListFragment {
+public class RosterFragment extends ListFragment implements ChatServiceListener {
+	
+	private ChatServiceHelper service_helper = null;
 	private final String TAG = "RosterFragment";
 	private RosterView view = null;
-	private ChatService service = null;
-	private String selectedBuddy = null;
-	
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-	    super.onCreate(savedInstanceState);
-	    
-		// Establish a connection with the service.  We use an explicit
-		// class name because we want a specific service implementation that
-		// we know will be running in our own process (and thus won't be
-		// supporting component replacement by other applications).
-		getActivity().bindService(new Intent(this.getActivity(), ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
-	}
-	
-	private ServiceConnection mConnection = new ServiceConnection() {
-		@Override
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			RosterFragment.this.service = ((ChatService.LocalBinder)service).getService();
-			
-			// activate roster view
-			RosterFragment.this.view = new RosterView(getActivity(), RosterFragment.this.service.getRoster());
-			RosterFragment.this.setListAdapter(RosterFragment.this.view);
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(RosterFragment.this.getActivity());
-			RosterFragment.this.view.setShowOffline(!prefs.getBoolean("hideOffline", false));
-			RosterFragment.this.view.setSelected(selectedBuddy);
-			RosterFragment.this.refresh();
-			
-			Log.i(TAG, "service connected");
-		}
 
-		@Override
-		public void onServiceDisconnected(ComponentName name) {
-			Log.i(TAG, "service disconnected");
-			RosterFragment.this.service = null;
+	private String selectedBuddy = null;
+	private OnBuddySelectedListener mCallback = null;
+	private boolean persistantSelection = true;
+	
+	private boolean paused = false;
+	
+    @Override
+	public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, it throws an exception
+        try {
+            mCallback = (OnBuddySelectedListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnBuddySelectedListener");
+        }
+	}
+    
+    @Override
+	public void onCreate(Bundle savedInstanceState) {
+		service_helper = new ChatServiceHelper(getActivity(), this);
+		paused = false;
+		
+		super.onCreate(savedInstanceState);
+		
+		if ((this.getArguments() != null) && this.getArguments().containsKey("persistantSelection")) {
+			this.persistantSelection = this.getArguments().getBoolean("persistantSelection");
+		} else {
+			this.persistantSelection = true;
 		}
-	};
+	}
+
+	// Container Activity must implement this interface
+    public interface OnBuddySelectedListener {
+        public void onBuddySelected(String buddyId);
+    }
 
 	@Override
 	public void onDestroy() {
@@ -71,29 +75,40 @@ public class RosterFragment extends ListFragment {
 			this.view.onDestroy(getActivity());
 			this.view = null;
 		}
-		
-	    if (mConnection != null) {
-	    	// Detach our existing connection.
-	    	getActivity().unbindService(mConnection);
-	    }
 	    
+		service_helper.unbind();
 	    super.onDestroy();
 	}
 
 	@Override
+	public void onPause() {
+		paused = true;
+		super.onPause();
+	}
+
+	@Override
 	public void onResume() {
-		refresh();
+		paused = false;
+		onContentChanged();
 		super.onResume();
 	}
 	
 	@Override
-	public void onViewCreated(View view, Bundle savedInstanceState) {
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		
 		this.getListView().setOnCreateContextMenuListener(this);
+		
+		this.setListAdapter(null);
 		
 		View v = View.inflate(this.getActivity(), R.layout.roster_me, null);
 		this.getListView().addHeaderView(v, null, true);
 		
-		super.onViewCreated(view, savedInstanceState);
+		if (this.view != null) {
+			this.setListAdapter(this.view);
+		}
+		
+		service_helper.bind();
 	}
 
 	@Override
@@ -107,27 +122,38 @@ public class RosterFragment extends ListFragment {
 		inflater.inflate(R.menu.buddycontext_menu, menu);
 	}
 	
+	public Roster getRoster() throws ServiceNotConnectedException {
+		return this.service_helper.getService().getRoster();
+	}
+	
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 
-		Buddy buddy = this.service.getRoster().get(info.position);
-		if (buddy == null) return false;
-
-		switch (item.getItemId())
-		{
-		case R.id.itemDelete:
-			this.selectBuddy(null);
-			this.service.getRoster().remove(buddy);
-			return true;
-		default:
+		try {
+			Buddy buddy = this.getRoster().get(info.position);
+			if (buddy == null) return false;
+	
+			switch (item.getItemId())
+			{
+			case R.id.itemDelete:
+				this.selectBuddy(null);
+				this.getRoster().remove(buddy);
+				return true;
+			default:
+				return super.onContextItemSelected(item);
+			}
+		} catch (ServiceNotConnectedException e) {
+			Log.e(TAG, "context menu failed", e);
 			return super.onContextItemSelected(item);
 		}
 	}
 	
-	private void refresh()
+	private void onContentChanged()
 	{
-		if (this.view != null)
+		if (this.getView() == null) return;
+		
+		if ((this.view != null) && !paused)
 		{
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
 		    String presence_tag = prefs.getString("presencetag", "auto");
@@ -205,7 +231,7 @@ public class RosterFragment extends ListFragment {
 				edit.putString("statustext", message);
 				edit.commit();
 				
-				RosterFragment.this.refresh();
+				RosterFragment.this.onContentChanged();
 			}
 		});
 		
@@ -213,30 +239,34 @@ public class RosterFragment extends ListFragment {
 	}
 	
 	public void selectBuddy(String buddyId) {
-    	Fragment fragment = getActivity().getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
-    	if ((fragment == null) || !fragment.isInLayout()) {
-    		if (buddyId != null) {
-    			final String bid = buddyId;
-    			new Thread(new Runnable() {
-					@Override
-					public void run() {
-		    			Intent i = new Intent(getActivity(), MessageActivity.class);
-			    		i.putExtra("buddy", bid);
-			    		startActivity(i);
-					}
-    			}).start();
+		// select the list item
+		this.selectedBuddy = buddyId;
+		if ((this.view != null) && persistantSelection) this.view.setSelected(this.selectedBuddy);
 
-    		}
-    	} else {
-    		// select the list item
-    		this.selectedBuddy = buddyId;
-    		if (this.view != null) this.view.setSelected(this.selectedBuddy);
-    		
-    		ChatFragment chat = (ChatFragment)fragment;
-    		chat.setBuddy(buddyId);
-    		
-    		InputFragment input = (InputFragment)getActivity().getSupportFragmentManager().findFragmentById(R.id.input_fragment);
-    		input.setBuddy(buddyId);
-    	}
+		mCallback.onBuddySelected(buddyId);
+	}
+
+	@Override
+	public void onContentChanged(String buddyId) {
+		this.onContentChanged();
+	}
+
+	@Override
+	public void onServiceConnected(ChatService service) {
+		try {
+			// activate roster view
+			this.view = new RosterView(getActivity(), this.getRoster());
+			this.setListAdapter(this.view);
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+			this.view.setShowOffline(!prefs.getBoolean("hideOffline", false));
+			this.view.setSelected(selectedBuddy);
+			this.onContentChanged();
+		} catch (ServiceNotConnectedException e) {
+			Log.e(TAG, "failure while checking for service error", e);
+		}
+	}
+
+	@Override
+	public void onServiceDisconnected() {
 	}
 }
