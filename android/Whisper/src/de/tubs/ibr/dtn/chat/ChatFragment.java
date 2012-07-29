@@ -224,7 +224,10 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 			this.view = null;
 		}
 		
-		service_helper.unbind();
+		if (service_helper != null) {
+			service_helper.unbind();
+			service_helper = null;
+		}
 	    super.onDestroy();
 	}
 	

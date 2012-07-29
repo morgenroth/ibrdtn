@@ -76,7 +76,10 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 			this.view = null;
 		}
 	    
-		service_helper.unbind();
+		if (service_helper != null) {
+			service_helper.unbind();
+			service_helper = null;
+		}
 	    super.onDestroy();
 	}
 

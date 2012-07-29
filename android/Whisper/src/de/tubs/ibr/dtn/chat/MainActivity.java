@@ -55,8 +55,10 @@ public class MainActivity extends FragmentActivity
 	public void onCreate(Bundle savedInstanceState) {
 		service_helper = new ChatServiceHelper(this, this);
 		
-	    super.onCreate(savedInstanceState);
+		super.onCreate(savedInstanceState);
 	    setContentView(R.layout.main_layout);
+	    
+	    service_helper.bind();
 
 	    // Check that the activity is using the layout version with
 	    // the fragment_container FrameLayout
@@ -90,9 +92,7 @@ public class MainActivity extends FragmentActivity
 	    {
 	    	hasLargeLayout = true;
 	    }
-	    
-	    service_helper.bind();
-	    
+
 		if ((getIntent() != null) && getIntent().hasExtra("buddy")) {
 			onBuddySelected( getIntent().getStringExtra("buddy") );
 		}
@@ -100,7 +100,10 @@ public class MainActivity extends FragmentActivity
 
 	@Override
 	protected void onDestroy() {
-		service_helper.unbind();
+		if (service_helper != null) {
+			service_helper.unbind();
+			service_helper = null;
+		}
 	    super.onDestroy();
 	}
 
