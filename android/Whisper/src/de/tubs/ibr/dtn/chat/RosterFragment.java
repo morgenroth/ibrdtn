@@ -132,9 +132,10 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+		ViewHolder holder = (ViewHolder)info.targetView.getTag();
 
 		try {
-			Buddy buddy = this.getRoster().get(info.position);
+			Buddy buddy = holder.buddy;
 			if (buddy == null) return false;
 	
 			switch (item.getItemId())
@@ -246,7 +247,9 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		this.selectedBuddy = buddyId;
 		if ((this.view != null) && persistantSelection) this.view.setSelected(this.selectedBuddy);
 
-		mCallback.onBuddySelected(buddyId);
+		if (buddyId != null) {
+			mCallback.onBuddySelected(buddyId);
+		}
 	}
 
 	@Override
