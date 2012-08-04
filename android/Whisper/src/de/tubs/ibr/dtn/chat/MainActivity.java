@@ -50,6 +50,7 @@ public class MainActivity extends FragmentActivity
 	private ChatServiceHelper service_helper = null;
 	private final String TAG = "MainActivity";
 	private Boolean hasLargeLayout = false;
+	private String selectBuddy = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -57,8 +58,6 @@ public class MainActivity extends FragmentActivity
 		
 		super.onCreate(savedInstanceState);
 	    setContentView(R.layout.main_layout);
-	    
-	    service_helper.bind();
 
 	    // Check that the activity is using the layout version with
 	    // the fragment_container FrameLayout
@@ -94,27 +93,40 @@ public class MainActivity extends FragmentActivity
 	    }
 
 		if ((getIntent() != null) && getIntent().hasExtra("buddy")) {
-			onBuddySelected( getIntent().getStringExtra("buddy") );
+			selectBuddy = getIntent().getStringExtra("buddy");
 		}
 	}
 
 	@Override
 	protected void onDestroy() {
-		if (service_helper != null) {
-			service_helper.unbind();
-			service_helper = null;
-		}
+		service_helper = null;
 	    super.onDestroy();
 	}
 
 	@Override
-	protected void onNewIntent(Intent intent) {
-		// get ID of the buddy
-		if ((intent != null) && intent.hasExtra("buddy")) {
-			onBuddySelected( intent.getStringExtra("buddy") );
+	protected void onPause() {
+		if (service_helper != null) {
+			service_helper.unbind();
 		}
 		
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		service_helper.bind();
+	}
+	
+	@Override
+	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
+		
+		// get ID of the buddy
+		if ((intent != null) && intent.hasExtra("buddy")) {
+			selectBuddy = intent.getStringExtra("buddy");
+		}
 	}
 
 	@Override
@@ -156,6 +168,15 @@ public class MainActivity extends FragmentActivity
         	chatFrag.onBuddySelected(buddyId);
         } else {
             // Otherwise, we're in the one-pane layout and must swap frags...
+        	Object chatFragCandidate = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+        	if (chatFragCandidate instanceof ChatFragment) {
+	    		chatFrag = (ChatFragment)chatFragCandidate;
+	    		if (chatFrag != null) {
+	                // Call a method in the ChatFragment to update its content
+	            	chatFrag.onBuddySelected(buddyId);
+	            	return;
+	    		}
+        	}
 
             // Create fragment and give it an argument for the selected article
         	ChatFragment newFragment = new ChatFragment();
@@ -282,6 +303,11 @@ public class MainActivity extends FragmentActivity
 			}
 		} catch (ServiceNotConnectedException e) {
 			Log.e(TAG, "failure while checking for service error", e);
+		}
+		
+		if (selectBuddy != null) {
+			this.onBuddySelected(selectBuddy);
+			selectBuddy = null;
 		}
 	}
 

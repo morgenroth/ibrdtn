@@ -116,8 +116,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 		if ((args != null) && args.containsKey("buddyId")) {
 			this.onBuddySelected(args.getString("buddyId"));
 		}
-		
-		service_helper.bind();
 	}
 	
 	private void restoreDraftMessage() {
@@ -139,6 +137,8 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 			text.setEnabled(true);
 			
 			text.requestFocus();
+			
+			this.onContentChanged();
 		} catch (ServiceNotConnectedException e) {
 			Log.e(TAG, "failed to restore draft message", e);
 		}
@@ -203,7 +203,10 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 
 	@Override
 	public void onServiceConnected(ChatService service) {
+		// restore draft message
 		restoreDraftMessage();
+
+		// refresh visible data
 		onContentChanged();
 	}
 
@@ -225,7 +228,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 		}
 		
 		if (service_helper != null) {
-			service_helper.unbind();
 			service_helper = null;
 		}
 	    super.onDestroy();
@@ -241,6 +243,10 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 			mCallback.onSaveMessage(buddyId, text.getText().toString());
 		}
 		
+		if (service_helper != null) {
+			service_helper.unbind();
+		}
+		
 		super.onPause();
 	}
 
@@ -248,11 +254,10 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	public void onResume() {
 		super.onResume();
 		
+		service_helper.bind();
+		
 		// set the current visible buddy
 		ChatService.setVisible(this.buddyId);
-
-		// refresh visible data
-		onContentChanged();
 	}
 	
 	public Roster getRoster() throws ServiceNotConnectedException {
