@@ -202,8 +202,7 @@ public class ExtendedClient extends Client {
 		} catch (APIException ex) {
 			_writer.close();
 			_writer = null;
-			_receiver.abort();
-			_receiver = null;
+			if (_receiver != null) { _receiver.abort(); _receiver = null; }
 			setState(State.UNINITIALIZED);
 			throw new IOException(ex.getMessage());
 		} catch (UnknownHostException e) {
