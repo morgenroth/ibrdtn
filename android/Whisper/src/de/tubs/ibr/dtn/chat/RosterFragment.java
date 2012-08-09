@@ -141,7 +141,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 			switch (item.getItemId())
 			{
 			case R.id.itemDelete:
-				this.selectBuddy(null);
+				this.onBuddySelected(null);
 				this.getRoster().remove(buddy);
 				return true;
 			default:
@@ -212,7 +212,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		if (holder == null) {
 			showMeDialog();
 		} else if (holder.buddy != null) {
-			selectBuddy(holder.buddy.getEndpoint());
+			onBuddySelected(holder.buddy.getEndpoint());
 		}
 		
 		super.onListItemClick(l, v, position, id);
@@ -246,6 +246,11 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		// select the list item
 		this.selectedBuddy = buddyId;
 		if ((this.view != null) && persistantSelection) this.view.setSelected(this.selectedBuddy);
+	}
+	
+	public void onBuddySelected(String buddyId) {
+		// select the list item
+		selectBuddy(buddyId);
 
 		if (buddyId != null) {
 			mCallback.onBuddySelected(buddyId);

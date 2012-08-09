@@ -163,6 +163,15 @@ public class MainActivity extends FragmentActivity
 
         if (chatFrag != null) {
             // If chat frag is available, we're in two-pane layout...
+        	
+        	// get the roster list
+    		RosterFragment rosterFrag = (RosterFragment)
+                    getSupportFragmentManager().findFragmentById(R.id.roster_fragment);
+    		
+    		if (rosterFrag != null) {
+    			// select buddy on buddy list
+    			rosterFrag.selectBuddy(buddyId);
+    		}
 
             // Call a method in the ChatFragment to update its content
         	chatFrag.onBuddySelected(buddyId);
