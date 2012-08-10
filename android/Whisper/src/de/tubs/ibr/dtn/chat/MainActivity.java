@@ -153,6 +153,19 @@ public class MainActivity extends FragmentActivity
 	        return super.onOptionsItemSelected(item);
 	    }
 	}
+	
+	public void selectBuddy(String buddyId) {
+    	// get the roster list
+		RosterFragment rosterFrag = (RosterFragment)
+                getSupportFragmentManager().findFragmentById(R.id.roster_fragment);
+		
+		if (rosterFrag != null) {
+			// select buddy on buddy list
+			rosterFrag.onBuddySelected(buddyId);
+		} else {
+			onBuddySelected(buddyId);
+		}
+	}
 
 	@Override
 	public void onBuddySelected(String buddyId) {
@@ -163,15 +176,6 @@ public class MainActivity extends FragmentActivity
 
         if (chatFrag != null) {
             // If chat frag is available, we're in two-pane layout...
-        	
-        	// get the roster list
-    		RosterFragment rosterFrag = (RosterFragment)
-                    getSupportFragmentManager().findFragmentById(R.id.roster_fragment);
-    		
-    		if (rosterFrag != null) {
-    			// select buddy on buddy list
-    			rosterFrag.selectBuddy(buddyId);
-    		}
 
             // Call a method in the ChatFragment to update its content
         	chatFrag.onBuddySelected(buddyId);
@@ -195,6 +199,8 @@ public class MainActivity extends FragmentActivity
             newFragment.setArguments(args);
         
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.setTransition(FragmentTransaction.TRANSIT_NONE);
+            transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right);
 
             // Replace whatever is in the fragment_container view with this fragment,
             // and add the transaction to the back stack so the user can navigate back
@@ -315,7 +321,7 @@ public class MainActivity extends FragmentActivity
 		}
 		
 		if (selectBuddy != null) {
-			this.onBuddySelected(selectBuddy);
+			this.selectBuddy(selectBuddy);
 			selectBuddy = null;
 		}
 	}

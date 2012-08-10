@@ -242,15 +242,10 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		dialog.show(getActivity().getSupportFragmentManager(), "me");
 	}
 	
-	public void selectBuddy(String buddyId) {
+	public void onBuddySelected(String buddyId) {
 		// select the list item
 		this.selectedBuddy = buddyId;
 		if ((this.view != null) && persistantSelection) this.view.setSelected(this.selectedBuddy);
-	}
-	
-	public void onBuddySelected(String buddyId) {
-		// select the list item
-		selectBuddy(buddyId);
 
 		if (buddyId != null) {
 			mCallback.onBuddySelected(buddyId);
