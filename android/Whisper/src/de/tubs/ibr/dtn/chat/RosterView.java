@@ -26,10 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,8 +36,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Roster;
+import de.tubs.ibr.dtn.chat.service.ChatService;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ChatServiceListener;
+import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ServiceNotConnectedException;
 
-public class RosterView extends BaseAdapter {
+public class RosterView extends BaseAdapter implements ChatServiceListener {
 
 	private final static String TAG = "RosterView";
 	private LayoutInflater inflater = null;
@@ -48,17 +49,16 @@ public class RosterView extends BaseAdapter {
 	private List<Buddy> buddies_filtered = new LinkedList<Buddy>();
 	private String selectedBuddy = null;
 	
+	private ChatServiceHelper service_helper = null;
+	private ChatServiceListener listener = null;
+	
 	private Boolean showOffline = true;
 
-	public RosterView(Context context, Roster roster)
+	public RosterView(Context context, ChatServiceListener listener)
 	{
 		this.inflater = LayoutInflater.from(context);
-		this.buddies = roster;
-		
-		refresh();
-		
-		IntentFilter i = new IntentFilter(Roster.REFRESH);
-		context.registerReceiver(notify_receiver, i);
+		this.buddies = null;
+		this.listener = listener;
 	}
 	
 	private void filterBuddies() {
@@ -93,15 +93,24 @@ public class RosterView extends BaseAdapter {
 		public View layout;
 	}
 	
-	private BroadcastReceiver notify_receiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent i) {
-			RosterView.this.refresh();
-		}
-	};
+	protected void onCreate(Context context) {
+		service_helper = new ChatServiceHelper(context, this);
+	}
+	
+	protected void onPause(Context context) {
+		service_helper.unbind();
+	}
+	
+	protected void onResume(Context context) {
+		service_helper.bind();
+	}
 
 	protected void onDestroy(Context context) {
-		context.unregisterReceiver(notify_receiver);
+		service_helper = null;
+	}
+	
+	public Roster getRoster() throws ServiceNotConnectedException {
+		return this.service_helper.getService().getRoster();
 	}
 	
 	public int getCount() {
@@ -118,14 +127,6 @@ public class RosterView extends BaseAdapter {
 	
 	public synchronized void setSelected(String buddyId) {
 		this.selectedBuddy = buddyId;
-		filterBuddies();
-		this.notifyDataSetChanged();
-	}
-	
-	public void refresh()
-	{
-		Log.d(TAG, "refresh requested...");
-		Collections.sort(this.buddies);
 		filterBuddies();
 		this.notifyDataSetChanged();
 	}
@@ -219,5 +220,25 @@ public class RosterView extends BaseAdapter {
 		}
 		
 		return convertView;
+	}
+
+	@Override
+	public void onContentChanged(String buddyId) {
+		Log.d(TAG, "refresh requested...");
+		Collections.sort(this.buddies);
+		filterBuddies();
+		this.notifyDataSetChanged();
+		listener.onContentChanged(buddyId);
+	}
+
+	@Override
+	public void onServiceConnected(ChatService service) {
+		this.buddies = service.getRoster();
+		listener.onServiceConnected(service);
+	}
+
+	@Override
+	public void onServiceDisconnected() {
+		listener.onServiceDisconnected();
 	}
 }

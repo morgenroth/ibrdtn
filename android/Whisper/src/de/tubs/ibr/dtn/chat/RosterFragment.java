@@ -18,15 +18,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.RosterView.ViewHolder;
 import de.tubs.ibr.dtn.chat.core.Buddy;
-import de.tubs.ibr.dtn.chat.core.Roster;
 import de.tubs.ibr.dtn.chat.service.ChatService;
-import de.tubs.ibr.dtn.chat.service.ChatServiceHelper;
 import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ChatServiceListener;
 import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ServiceNotConnectedException;
 
 public class RosterFragment extends ListFragment implements ChatServiceListener {
-	
-	private ChatServiceHelper service_helper = null;
 	private final String TAG = "RosterFragment";
 	private RosterView view = null;
 
@@ -50,7 +46,8 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
     
     @Override
 	public void onCreate(Bundle savedInstanceState) {
-		service_helper = new ChatServiceHelper(getActivity(), this);
+    	this.view = new RosterView(getActivity(), this);
+    	this.view.onCreate(getActivity());
 
 		super.onCreate(savedInstanceState);
 		
@@ -68,25 +65,22 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 
 	@Override
 	public void onDestroy() {
-		if (this.view != null) {
-			this.view.onDestroy(getActivity());
-			this.view = null;
-		}
-	    
-		service_helper = null;
-	    super.onDestroy();
+		super.onDestroy(); 
+
+		this.view.onDestroy(getActivity());
+		this.view = null;
 	}
 
 	@Override
 	public void onPause() {
-		if (service_helper != null) service_helper.unbind();
 		super.onPause();
+		this.view.onPause(getActivity());
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		service_helper.bind();
+		this.view.onResume(getActivity());
 	}
 	
 	@Override
@@ -100,9 +94,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		View v = View.inflate(this.getActivity(), R.layout.roster_me, null);
 		this.getListView().addHeaderView(v, null, true);
 		
-		if (this.view != null) {
-			this.setListAdapter(this.view);
-		}
+		this.setListAdapter(this.view);
 	}
 
 	@Override
@@ -114,10 +106,6 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		
 		MenuInflater inflater = getActivity().getMenuInflater();
 		inflater.inflate(R.menu.buddycontext_menu, menu);
-	}
-	
-	public Roster getRoster() throws ServiceNotConnectedException {
-		return this.service_helper.getService().getRoster();
 	}
 	
 	@Override
@@ -133,7 +121,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 			{
 			case R.id.itemDelete:
 				this.onBuddySelected(null);
-				this.getRoster().remove(buddy);
+				this.view.getRoster().remove(buddy);
 				return true;
 			default:
 				return super.onContextItemSelected(item);
@@ -192,7 +180,6 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 			textMessage.setText(presence_text);
     
 			view.setShowOffline(!prefs.getBoolean("hideOffline", false));
-			view.refresh();
 		}
 	}
 	
@@ -250,17 +237,12 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 
 	@Override
 	public void onServiceConnected(ChatService service) {
-		try {
-			// activate roster view
-			this.view = new RosterView(getActivity(), this.getRoster());
-			this.setListAdapter(this.view);
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
-			this.view.setShowOffline(!prefs.getBoolean("hideOffline", false));
-			this.view.setSelected(selectedBuddy);
-			this.onContentChanged();
-		} catch (ServiceNotConnectedException e) {
-			Log.e(TAG, "failure while checking for service error", e);
-		}
+		// activate roster view
+		this.setListAdapter(this.view);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+		this.view.setShowOffline(!prefs.getBoolean("hideOffline", false));
+		this.view.setSelected(selectedBuddy);
+		this.onContentChanged();
 	}
 
 	@Override
