@@ -383,6 +383,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 		// set the current visible buddy
 		ChatService.setVisible(this.buddyId);
 	
-		onContentChanged();
+		if (this.service_helper.isConnected()) onContentChanged();
 	}
 }

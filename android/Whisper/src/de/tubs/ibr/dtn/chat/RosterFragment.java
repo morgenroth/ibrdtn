@@ -223,7 +223,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 	public void onBuddySelected(String buddyId) {
 		// select the list item
 		this.selectedBuddy = buddyId;
-		if ((this.view != null) && persistantSelection) this.view.setSelected(this.selectedBuddy);
+		if (persistantSelection) this.view.setSelected(this.selectedBuddy);
 
 		if (buddyId != null) {
 			mCallback.onBuddySelected(buddyId);
@@ -241,7 +241,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		this.setListAdapter(this.view);
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
 		this.view.setShowOffline(!prefs.getBoolean("hideOffline", false));
-		this.view.setSelected(selectedBuddy);
+		if (persistantSelection) this.view.setSelected(selectedBuddy);
 		this.onContentChanged();
 	}
 
