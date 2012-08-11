@@ -30,7 +30,8 @@
 	        android:layout_alignParentTop="true"
 	        android:text="@string/example_text"
 	        android:textColor="@color/chat_text"
-	        android:textSize="14dp" />
+	        android:textSize="14dp"
+	        android:autoLink="all" />
 	    
 	    <TextView
 	        android:id="@+id/label"

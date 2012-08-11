@@ -94,9 +94,9 @@
 	          android:textColor="@color/inputbox_text"
 	          android:layout_width="match_parent"
 	          android:layout_height="wrap_content"
-	          android:inputType="textMultiLine"
 	          android:singleLine="true"
-	          android:layout_weight="1">
+	          android:layout_weight="1"
+	          android:inputType="textShortMessage|textMultiLine|textAutoComplete|textAutoCorrect|textCapSentences">
 	          <requestFocus />
 	      </EditText>
 	      

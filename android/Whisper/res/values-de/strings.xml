@@ -25,6 +25,7 @@
     <string name="alert_yes">Ja</string>
     <string name="alert_no">Nein</string>
     <string name="dialog_me_title">Mein Status</string>
+    <string name="dialog_me_statushint">Deine Statusmeldung</string>
     <string name="message_settings">Nachrichten</string>
     <string name="notification_settings">Benachrichtigungen</string>
     <string name="vibrate_on_message">Vibrieren</string>
