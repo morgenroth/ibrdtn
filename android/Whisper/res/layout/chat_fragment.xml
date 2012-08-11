@@ -96,7 +96,8 @@
 	          android:layout_height="wrap_content"
 	          android:singleLine="true"
 	          android:layout_weight="1"
-	          android:inputType="textShortMessage|textMultiLine|textAutoComplete|textAutoCorrect|textCapSentences">
+	          android:inputType="textShortMessage|textMultiLine|textAutoCorrect|textCapSentences"
+	          android:imeOptions="actionSend">
 	          <requestFocus />
 	      </EditText>
 	      

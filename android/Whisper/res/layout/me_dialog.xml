@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:inputType="textMultiLine|textAutoComplete|textAutoCorrect|textCapSentences"
+        android:inputType="textMultiLine|textAutoCorrect|textCapSentences"
         android:hint="@string/dialog_me_statushint" >
 
         <requestFocus />

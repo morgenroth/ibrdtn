@@ -33,9 +33,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 	private String selectedBuddy = null;
 	private OnBuddySelectedListener mCallback = null;
 	private boolean persistantSelection = true;
-	
-	private boolean paused = false;
-	
+
     @Override
 	public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -53,8 +51,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
     @Override
 	public void onCreate(Bundle savedInstanceState) {
 		service_helper = new ChatServiceHelper(getActivity(), this);
-		paused = false;
-		
+
 		super.onCreate(savedInstanceState);
 		
 		if ((this.getArguments() != null) && this.getArguments().containsKey("persistantSelection")) {
@@ -76,24 +73,20 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 			this.view = null;
 		}
 	    
-		if (service_helper != null) {
-			service_helper.unbind();
-			service_helper = null;
-		}
+		service_helper = null;
 	    super.onDestroy();
 	}
 
 	@Override
 	public void onPause() {
-		paused = true;
+		if (service_helper != null) service_helper.unbind();
 		super.onPause();
 	}
 
 	@Override
 	public void onResume() {
-		paused = false;
-		onContentChanged();
 		super.onResume();
+		service_helper.bind();
 	}
 	
 	@Override
@@ -110,8 +103,6 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		if (this.view != null) {
 			this.setListAdapter(this.view);
 		}
-		
-		service_helper.bind();
 	}
 
 	@Override
@@ -157,7 +148,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 	{
 		if (this.getView() == null) return;
 		
-		if ((this.view != null) && !paused)
+		if (this.view != null)
 		{
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
 		    String presence_tag = prefs.getString("presencetag", "auto");
