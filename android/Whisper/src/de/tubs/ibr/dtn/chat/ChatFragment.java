@@ -247,10 +247,13 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	}
 	
 	@Override
-	public void onPause() {
-		// set the current buddy to invisible
-		ChatService.setInvisible(this.buddyId);
-		
+	public void onStart() {
+		super.onStart();
+		service_helper.bind();
+	}
+
+	@Override
+	public void onStop() {
 		if (buddyId != null) {
 			EditText text = (EditText) getView().findViewById(R.id.textMessage);
 			mCallback.onSaveMessage(buddyId, text.getText().toString());
@@ -259,16 +262,19 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 		if (service_helper != null) {
 			service_helper.unbind();
 		}
-		
+		super.onStop();
+	}
+
+	@Override
+	public void onPause() {
+		// set the current buddy to invisible
+		ChatService.setInvisible(this.buddyId);
 		super.onPause();
 	}
 
 	@Override
 	public void onResume() {
 		super.onResume();
-		
-		service_helper.bind();
-		
 		// set the current visible buddy
 		ChatService.setVisible(this.buddyId);
 	}

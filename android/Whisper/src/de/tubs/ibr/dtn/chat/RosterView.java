@@ -97,18 +97,18 @@ public class RosterView extends BaseAdapter implements ChatServiceListener {
 		service_helper = new ChatServiceHelper(context, this);
 	}
 	
-	protected void onPause(Context context) {
-		service_helper.unbind();
-	}
-	
-	protected void onResume(Context context) {
-		service_helper.bind();
-	}
-
 	protected void onDestroy(Context context) {
 		service_helper = null;
 	}
 	
+	protected void onStop(Context context) {
+		service_helper.unbind();
+	}
+	
+	protected void onStart(Context context) {
+		service_helper.bind();
+	}
+
 	public Roster getRoster() throws ServiceNotConnectedException {
 		return this.service_helper.getService().getRoster();
 	}

@@ -72,15 +72,15 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 	}
 
 	@Override
-	public void onPause() {
-		super.onPause();
-		this.view.onPause(getActivity());
+	public void onStart() {
+		super.onStart();
+		this.view.onStart(getActivity());
 	}
 
 	@Override
-	public void onResume() {
-		super.onResume();
-		this.view.onResume(getActivity());
+	public void onStop() {
+		this.view.onStop(getActivity());
+		super.onStop();
 	}
 	
 	@Override

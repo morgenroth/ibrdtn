@@ -104,19 +104,26 @@ public class MainActivity extends FragmentActivity
 	}
 
 	@Override
-	protected void onPause() {
+	protected void onStart() {
+		super.onStart();
+		service_helper.bind();
+	}
+
+	@Override
+	protected void onStop() {
 		if (service_helper != null) {
 			service_helper.unbind();
 		}
-		
-		super.onPause();
+		super.onStop();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
-		service_helper.bind();
+		if (selectBuddy != null) {
+			this.selectBuddy(selectBuddy);
+			selectBuddy = null;
+		}
 	}
 	
 	@Override
