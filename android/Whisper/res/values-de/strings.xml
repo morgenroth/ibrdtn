@@ -36,4 +36,6 @@
     <string name="hide_offline_contacts">Verstecke Offline-Kontakte</string>
     <string name="hide_offline_contacts_desc">Zeige nur Kontakte die als Online markiert sind.</string>
     <string name="question_delete_messages">Möchten Sie wirklich alle von diesem Kontakt empfangenen und an diesen gesendete Nachrichten löschen?</string>
+    <string name="tts_when_on_headset">Nachricht vorlesen</string>
+    <string name="tts_when_on_headset_desc">Spielt die Nachricht mittels TTS ab wenn ein Kopfhöhrer verbunden ist.</string>
 </resources>

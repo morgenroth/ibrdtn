@@ -37,6 +37,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
@@ -47,7 +48,6 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
-import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
@@ -55,6 +55,7 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.chat.MainActivity;
 import de.tubs.ibr.dtn.chat.R;
 import de.tubs.ibr.dtn.chat.core.Buddy;
@@ -486,6 +487,7 @@ public class ChatService extends Service {
 		return (visibleBuddy.equals(buddyId));
 	}
 	
+	@SuppressWarnings("deprecation")
 	private void createNotification(Buddy b, Message msg)
 	{
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -536,5 +538,17 @@ public class ChatService extends Service {
 		
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotificationManager.notify(b.getEndpoint(), MESSAGE_NOTIFICATION, notification);
+		
+		if (prefs.getBoolean("ttsWhenOnHeadset", false)) {
+			AudioManager am = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+			
+			if (am.isBluetoothA2dpOn() || am.isWiredHeadsetOn()) {
+				// speak the notification
+				Intent tts_intent = new Intent(this, TTSService.class);
+				tts_intent.setAction(TTSService.INTENT_SPEAK);
+				tts_intent.putExtra("speechText", tickerText + ": " + msg.getPayload());
+				startService(tts_intent);
+			}
+		}
 	}
 }
