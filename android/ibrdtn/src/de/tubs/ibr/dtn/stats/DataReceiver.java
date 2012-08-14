@@ -14,11 +14,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 public class DataReceiver extends BroadcastReceiver {
 	
+	private final static String TAG = "DataReceiver";
+	
 	private final long LIMIT_FILESIZE = 500000;
-//	private final static String TAG = "DataReceiver";
 	public static Object datalock = new Object(); 
 	
 	@Override
@@ -57,34 +59,32 @@ public class DataReceiver extends BroadcastReceiver {
 				FileOutputStream output = context.openFileOutput("events.dat", Context.MODE_PRIVATE | Context.MODE_APPEND);
 				output.write(data.getBytes());
 				output.close();
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			// check if the last statistic bundle was send at least two hours ago
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-			Calendar calendar = Calendar.getInstance();
-			calendar.roll(Calendar.HOUR, false);
-			
-			if (calendar.getTimeInMillis() < prefs.getLong("stats_timestamp", 0)) return;
-						
-			File ef = new File(context.getFilesDir().getPath() + File.separatorChar + "events.dat");
-			//if (ef.exists()) Log.d(TAG, "File size: " + Long.toString( ef.length() ));
-			
-			// compress and send the log file if the size is too large
-			if (ef.length() > LIMIT_FILESIZE) {
-				Calendar now = Calendar.getInstance();
-				prefs.edit().putLong("stats_timestamp", now.getTimeInMillis()).commit(); 
+				
+				// check if the last statistic bundle was send at least two hours ago
+				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+				Calendar calendar = Calendar.getInstance();
+				calendar.roll(Calendar.HOUR, false);
+				
+				if (calendar.getTimeInMillis() < prefs.getLong("stats_timestamp", 0)) return;
+							
+				File ef = new File(context.getFilesDir().getPath() + File.separatorChar + "events.dat");
+				//if (ef.exists()) Log.d(TAG, "File size: " + Long.toString( ef.length() ));
+				
+				// compress and send the log file if the size is too large
+				if (ef.length() > LIMIT_FILESIZE) {
+					Calendar now = Calendar.getInstance();
+					prefs.edit().putLong("stats_timestamp", now.getTimeInMillis()).commit(); 
 
-				// open activity
-				Intent i = new Intent(context, CollectorService.class);
-				i.setAction(CollectorService.DELIVER_DATA);
-				i.setData(Uri.fromFile(ef));
-				context.startService(i);
+					// open activity
+					Intent i = new Intent(context, CollectorService.class);
+					i.setAction(CollectorService.DELIVER_DATA);
+					i.setData(Uri.fromFile(ef));
+					context.startService(i);
+				}
+			} catch (FileNotFoundException e) {
+				Log.e(TAG, "Failed to open data file for statistic logging", e);
+			} catch (IOException e) {
+				Log.e(TAG, "Failed to open data file for statistic logging", e);
 			}
 		}
 	}

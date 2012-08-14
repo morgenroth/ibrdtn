@@ -25,10 +25,13 @@ import java.io.IOException;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -73,7 +76,11 @@ public class Preferences extends PreferenceActivity {
 			Preferences.this.service = DTNService.Stub.asInterface(service);
 			Log.i(TAG, "service connected");
 			
-			// TODO: on first startup ask for permissions to collect statistical data
+			// on first startup ask for permissions to collect statistical data
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+			if (!prefs.contains("collect_stats")) {
+				showStatisticLoggerDialog(Preferences.this);
+			}
 		}
 
 		@Override
@@ -82,6 +89,35 @@ public class Preferences extends PreferenceActivity {
 			service = null;
 		}
 	};
+	
+	public static void showStatisticLoggerDialog(final Activity activity) {
+		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+		    @Override
+		    public void onClick(DialogInterface dialog, int which) {
+		    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+		    	
+		        switch (which){
+		        case DialogInterface.BUTTON_POSITIVE:
+		        	prefs.edit().putBoolean("collect_stats", true).commit();
+		            break;
+
+		        case DialogInterface.BUTTON_NEGATIVE:
+		        	prefs.edit().putBoolean("collect_stats", false).commit();
+		            break;
+		        }
+		        
+		        activity.finish();
+		        activity.startActivity(new Intent(activity, Preferences.class));
+		    }
+		};
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+		builder.setTitle(R.string.alert_statistic_logger_title);
+		builder.setMessage(activity.getResources().getString(R.string.alert_statistic_logger_dialog));
+		builder.setPositiveButton(activity.getResources().getString(android.R.string.yes), dialogClickListener);
+		builder.setNegativeButton(activity.getResources().getString(android.R.string.no), dialogClickListener);
+		builder.show();
+	}
 	
 	private BroadcastReceiver _state_receiver = new BroadcastReceiver() {
 		@Override
