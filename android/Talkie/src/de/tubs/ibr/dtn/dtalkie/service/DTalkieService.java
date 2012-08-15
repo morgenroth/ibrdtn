@@ -242,11 +242,10 @@ public class DTalkieService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Received start id " + startId + ": " + intent);
         
-        if (intent == null) return START_NOT_STICKY;
-        if (intent.getAction() == null) return START_NOT_STICKY;
+        if (intent == null) return super.onStartCommand(intent, flags, startId);
 
         // create a task to check for messages
-        if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.RECEIVE)) {
+        if (de.tubs.ibr.dtn.Intent.RECEIVE.equals(intent.getAction())) {
         	final int stopId = startId;
         	
 			// schedule next bundle query
@@ -260,9 +259,9 @@ public class DTalkieService extends Service {
 		        }
 			});
 			
-			return START_STICKY;
+			return START_REDELIVER_INTENT;
         }
-        else if (intent.getAction().equals(ACTION_PLAY)) {
+        else if (ACTION_PLAY.equals(intent.getAction())) {
         	final int stopId = startId;
         	
 			// schedule next bundle query
@@ -283,10 +282,10 @@ public class DTalkieService extends Service {
 		        }
 			});
         	
-        	return START_STICKY;
+        	return START_REDELIVER_INTENT;
         }
         
-        return START_NOT_STICKY;
+        return super.onStartCommand(intent, flags, startId);
 	}
 	
 	@Override

@@ -243,14 +243,14 @@ public class ChatService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "Received start id " + startId + ": " + intent);
         
-        if (intent == null) return START_NOT_STICKY;
-        if (intent.getAction() == null) return START_NOT_STICKY;
+        if (intent == null) return super.onStartCommand(intent, flags, startId);
+        if (intent.getAction() == null) return super.onStartCommand(intent, flags, startId);
 
         // create a task to process concurrently
         if (intent.getAction().equals(AlarmReceiver.ACTION))
         {
         	_executor.execute(new BroadcastPresence(startId));
-			return START_STICKY;
+			return START_REDELIVER_INTENT;
         }
         // create a task to check for messages
         else if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.RECEIVE))
@@ -268,10 +268,10 @@ public class ChatService extends Service {
 		        }
 			});
 			
-        	return START_STICKY;
+        	return START_REDELIVER_INTENT;
         }
         
-        return START_NOT_STICKY;
+        return super.onStartCommand(intent, flags, startId);
 	}
 
 	@Override
