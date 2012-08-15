@@ -29,7 +29,7 @@ import de.tubs.ibr.dtn.api.SingletonEndpoint;
 
 public class CollectorService extends Service {
 	
-	public final static String DELIVER_DATA = "de.tubs.ibr.dtn.datacollector.DELIVER_DATA";
+	public final static String DELIVER_DATA = "de.tubs.ibr.dtn.stats.DELIVER_DATA";
 	private final static String TAG = "CollectorService";
 	private ExecutorService executor = null;
 	
@@ -90,7 +90,8 @@ public class CollectorService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		if (intent.getAction() != DELIVER_DATA) return Service.START_NOT_STICKY;
+		if (intent == null) return super.onStartCommand(intent, flags, startId);
+		if (!DELIVER_DATA.equals(intent.getAction())) return super.onStartCommand(intent, flags, startId);
 		
 		final int stopId = startId;
 
@@ -164,6 +165,6 @@ public class CollectorService extends Service {
 			}
 			
 		});
-		return Service.START_STICKY;
+		return Service.START_REDELIVER_INTENT;
 	}
 }

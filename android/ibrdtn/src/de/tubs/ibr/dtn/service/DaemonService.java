@@ -212,13 +212,13 @@ public class DaemonService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
         if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received start id " + startId + ": " + intent);
         
-        if (intent == null) return START_NOT_STICKY;
+        if (intent == null) return super.onStartCommand(intent, flags, startId);
         
         // get the action to do
         String action = intent.getAction();
         
         // if no action is set, just start as not sticky
-        if (action == null) return START_NOT_STICKY;
+        if (action == null) return super.onStartCommand(intent, flags, startId);
         
         if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Action: " + action);
         
@@ -321,7 +321,7 @@ public class DaemonService extends Service {
 		}
 
         // return as not sticky if no one need another behavior
-		return START_NOT_STICKY;
+		return super.onStartCommand(intent, flags, startId);
 	}
 
 	@Override
