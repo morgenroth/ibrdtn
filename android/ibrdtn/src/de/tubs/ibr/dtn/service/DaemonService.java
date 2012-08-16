@@ -233,54 +233,15 @@ public class DaemonService extends Service {
     		// turn this to a foreground service (kill-proof)
     		startForeground(1, n);
     		
-    		_executor.execute(new Runnable() {
-    	        public void run() {
-    	    		// start the daemon
-    	    		if (DaemonManager.getInstance().start(DaemonService.this) )
-    	    		{
-        	    		// broadcast state changed intent
-        	    		invoke_state_changed_intent();
-        	    		
-        	    		// update notification icon
-        	    		updateNeighborNotification();
-    	    		}
-    	    		else
-    	    		{
-        	    		// broadcast state changed intent
-        	    		invoke_state_changed_intent();
-        	    		
-        	    		// update notification icon
-        	    		updateNeighborNotification();
-        	    		
-    	    			// stop the service
-        	    		stopSelfResult(stopId);
-    	    		}
-    	        }
-    		});
+    		// start the daemon
+    		_executor.execute(new StartStopDaemonTask(startId, true));
     		
             return START_STICKY;
         }
         else if (action.equals(ACTION_SHUTDOWN))
         {
-        	_executor.execute(new Runnable() {
-    	        public void run() {
-    	    		// start the daemon
-    	    		DaemonManager.getInstance().stop();
-    	    		
-    	    		// broadcast state changed intent
-    	    		invoke_state_changed_intent();
-    	    		
-    	    		// stop foreground service
-    	        	stopForeground(true);
-    	    		
-    	    		// remove notification
-    	    		NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-    	    		nm.cancel(1);
-    	    		
-    	    		// stop the service
-    	    		stopSelfResult(stopId);
-    	        }
-    		});
+        	// stop the daemon
+        	_executor.execute(new StartStopDaemonTask(startId, false));
         	
             return START_STICKY;
         }
@@ -322,6 +283,59 @@ public class DaemonService extends Service {
 
         // return as not sticky if no one need another behavior
 		return super.onStartCommand(intent, flags, startId);
+	}
+	
+	private class StartStopDaemonTask implements Runnable {
+		
+		private int startId = 0;
+		private boolean startup = false;
+		
+		public StartStopDaemonTask(int startId, boolean start) {
+			this.startId = startId;
+			this.startup = start;
+		}
+
+		@Override
+		public void run() {
+			if (this.startup) {
+	    		// start the daemon
+	    		if (DaemonManager.getInstance().start(DaemonService.this) )
+	    		{
+		    		// broadcast state changed intent
+		    		invoke_state_changed_intent();
+		    		
+		    		// update notification icon
+		    		updateNeighborNotification();
+	    		}
+	    		else
+	    		{
+		    		// broadcast state changed intent
+		    		invoke_state_changed_intent();
+		    		
+		    		// update notification icon
+		    		updateNeighborNotification();
+		    		
+		    		// error
+		    		stopSelfResult(startId);
+	    		}
+			} else {
+				// stop the daemon
+	    		DaemonManager.getInstance().stop();
+	    		
+	    		// broadcast state changed intent
+	    		invoke_state_changed_intent();
+	    		
+	    		// stop foreground service
+	        	stopForeground(true);
+	    		
+	    		// remove notification
+	    		NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+	    		nm.cancel(1);
+	    		
+	    		// stop the service
+	    		stopSelfResult(startId);
+			}
+		}
 	}
 
 	@Override

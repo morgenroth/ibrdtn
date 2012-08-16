@@ -221,19 +221,9 @@ public class DaemonManager {
 		{
             // wait until the daemon is ready - up to 30 seconds
             try {
-	            for (int i = 0; i < 30; i++)
-	            {
+	            while (true) {
 	            	if (_process.isRunning()) break;
 					Thread.sleep(1000);
-					
-					if (i == 29)
-					{
-						// broadcast error intent
-						setState(DaemonState.ERROR);
-						
-						Log.e(TAG, "could not start event connection to the daemon due timeout");
-						return false;
-					}
 	            }
 			} catch (InterruptedException e) {
 				// broadcast error intent

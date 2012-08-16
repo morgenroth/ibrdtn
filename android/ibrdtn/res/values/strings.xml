@@ -74,4 +74,6 @@
     <string name="alteratecloudstate">Alterate connection to the Cloud</string>
     <string name="alert_statistic_logger_title">Thank you for using IBR-DTN</string>
     <string name="alert_statistic_logger_dialog">Since this is research related software we ask for your support and the permission to collect statistical data about exchanged bundles of this device. These data is transmitted via DTN to the researchers who made this software. Do you allow the collection and transmission of statistical data?</string>
+    <string name="dialog_wait_starting">Activating DTN stack. Please wait!</string>
+    <string name="dialog_wait_stopping">Deactivating DTN stack. Please wait!</string>
 </resources>

@@ -73,5 +73,7 @@
     <string name="clouduplink_off">Trenne Cloudverbindung</string>
     <string name="alteratecloudstate">Verändere Cloudverbindung</string>
     <string name="alert_statistic_logger_title">Danke dass Sie IBR-DTN verwenden</string>
-    <string name="alert_statistic_logger_dialog">Da es sich hierbei um Software aus der Forschung handelt bitten wir Sie um Unterstützung und hätten gerne die Erlaubnis statistische Daten über ausgetauschte Bündel zu sammeln. Diese Daten werden mittels DTN an die Forscher die diese Software entwickelt haben übertragen. Erlauben Sie die Sammlung und Übertragung von statistischen Daten?</string> 
+    <string name="alert_statistic_logger_dialog">Da es sich hierbei um Software aus der Forschung handelt bitten wir Sie um Unterstützung und hätten gerne die Erlaubnis statistische Daten über ausgetauschte Bündel zu sammeln. Diese Daten werden mittels DTN an die Forscher die diese Software entwickelt haben übertragen. Erlauben Sie die Sammlung und Übertragung von statistischen Daten?</string>
+	<string name="dialog_wait_starting">Aktiviere DTN Dienst. Bitte warten!</string>
+    <string name="dialog_wait_stopping">Deaktiviere DTN Dienst. Bitte warten!</string>
 </resources>
