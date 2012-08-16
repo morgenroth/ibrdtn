@@ -149,6 +149,13 @@ void dtn::dht::DHTNameService::componentUp() {
 	IBRCOMMON_LOGGER(info) << "DHT initialized on Port: " << _context.port
 				<< " with ID: " << myid << IBRCOMMON_LOGGER_ENDL;
 	this->_initialized = true;
+	// Warning about possibly wrong configuration
+	if(_config.isNeighbourAnnouncementEnabled() &&
+			!daemon::Configuration::getInstance().getNetwork().doForwarding()) {
+		IBRCOMMON_LOGGER(warning) << "DHT will not announce neighbor nodes: "
+				<<  "announcement enabled but routing forwarding is disabled"
+				<< IBRCOMMON_LOGGER_ENDL;
+	}
 }
 
 void dtn::dht::DHTNameService::componentRun() {
@@ -423,6 +430,12 @@ bool dtn::dht::DHTNameService::isNeighbourAnnouncable(
 		const dtn::core::Node &node) {
 	if (!_config.isNeighbourAnnouncementEnabled())
 		return false;
+	// If forwarding of bundles is disabled, do not announce the neighbors to
+	// prevent receiving bundles for neighbor EIDs, which would not be forwarded
+	if (!daemon::Configuration::getInstance().getNetwork().doForwarding()) {
+		return false;
+	}
+
 
 	// get the merged node object
 	const dtn::core::Node n = dtn::core::BundleCore::getInstance().getNeighbor(
