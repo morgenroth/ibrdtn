@@ -1,9 +1,5 @@
 package de.tubs.ibr.dtn.stats;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
@@ -12,16 +8,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 public class DataReceiver extends BroadcastReceiver {
-	
-	private final static String TAG = "DataReceiver";
-	
-	private final long LIMIT_FILESIZE = 500000;
-	public static Object datalock = new Object(); 
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {
@@ -49,43 +38,11 @@ public class DataReceiver extends BroadcastReceiver {
 			}			
 			
 			xmlData += "</event>";
-			storeData(context, xmlData);
-		}
-	}
-	
-	private void storeData(Context context, String data) {
-		synchronized(datalock) {
-			try {
-				FileOutputStream output = context.openFileOutput("events.dat", Context.MODE_PRIVATE | Context.MODE_APPEND);
-				output.write(data.getBytes());
-				output.close();
-				
-				// check if the last statistic bundle was send at least two hours ago
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-				Calendar calendar = Calendar.getInstance();
-				calendar.roll(Calendar.HOUR, false);
-				
-				if (calendar.getTimeInMillis() < prefs.getLong("stats_timestamp", 0)) return;
-							
-				File ef = new File(context.getFilesDir().getPath() + File.separatorChar + "events.dat");
-				//if (ef.exists()) Log.d(TAG, "File size: " + Long.toString( ef.length() ));
-				
-				// compress and send the log file if the size is too large
-				if (ef.length() > LIMIT_FILESIZE) {
-					Calendar now = Calendar.getInstance();
-					prefs.edit().putLong("stats_timestamp", now.getTimeInMillis()).commit(); 
-
-					// open activity
-					Intent i = new Intent(context, CollectorService.class);
-					i.setAction(CollectorService.DELIVER_DATA);
-					i.setData(Uri.fromFile(ef));
-					context.startService(i);
-				}
-			} catch (FileNotFoundException e) {
-				Log.e(TAG, "Failed to open data file for statistic logging", e);
-			} catch (IOException e) {
-				Log.e(TAG, "Failed to open data file for statistic logging", e);
-			}
+			
+			Intent i = new Intent(context, CollectorService.class);
+			i.setAction(CollectorService.REC_DATA);
+			i.putExtra("xmldata", xmlData);
+			context.startService(i);
 		}
 	}
 }
