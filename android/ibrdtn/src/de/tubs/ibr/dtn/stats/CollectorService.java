@@ -32,15 +32,33 @@ public class CollectorService extends Service {
 	public final static String DELIVER_DATA = "de.tubs.ibr.dtn.stats.DELIVER_DATA";
 	private final static String TAG = "CollectorService";
 	private ExecutorService executor = null;
+	private Boolean _connected = false;
 	
 	private final SingletonEndpoint deliver_endpoint = new SingletonEndpoint("dtn://quorra.ibr.cs.tu-bs.de/datacollector");
 	
 	// DTN client to talk with the DTN service
-	private DTNClient _client = null;
+	private LocalDTNClient _client = null;
+	
+	private class LocalDTNClient extends DTNClient {
+		@Override
+		protected void onConnected(Session session) {
+			super.onConnected(session);
+			setConnected(true);
+		}
+	};
 
 	@Override
 	public IBinder onBind(Intent arg0) {
 		return null;
+	}
+	
+	private synchronized void setConnected(Boolean val) {
+		_connected = val;
+		notifyAll();
+	}
+
+	private synchronized void waitConnected() throws InterruptedException {
+		while (!_connected) { this.wait(); }
 	}
 
 	@Override
@@ -51,8 +69,9 @@ public class CollectorService extends Service {
         Registration reg = new Registration("datacollector");
         
 		try {
+			setConnected(false);
 	        // create a new DTN client
-	        _client = new DTNClient();
+	        _client = new LocalDTNClient();
 			_client.initialize(this, reg);
 		} catch (ServiceNotAvailableException e) {
 			// error
@@ -101,17 +120,18 @@ public class CollectorService extends Service {
 			@Override
 			public void run() {
 				// wait until the DTN service is connected
+				try {
+					CollectorService.this.waitConnected();
 				
-				final String androidId = Secure.getString(getContentResolver(), Secure.ANDROID_ID);
-
-				Calendar gmt = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
-				String timestamp = Long.toString( gmt.getTimeInMillis() );
-				
-				String xmlHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><events device=\"" + androidId + "\" timestamp=\"" + timestamp + "\">";
-				String xmlFoooter = "</events>";
-
-				synchronized(DataReceiver.datalock) {				
-					try {
+					final String androidId = Secure.getString(getContentResolver(), Secure.ANDROID_ID);
+	
+					Calendar gmt = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+					String timestamp = Long.toString( gmt.getTimeInMillis() );
+					
+					String xmlHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><events device=\"" + androidId + "\" timestamp=\"" + timestamp + "\">";
+					String xmlFoooter = "</events>";
+	
+					synchronized(DataReceiver.datalock) {				
 						FileInputStream input = openFileInput("events.dat");
 						FileOutputStream output = openFileOutput("events.dat.gz", Context.MODE_PRIVATE);
 						GZIPOutputStream zos = new GZIPOutputStream(new BufferedOutputStream(output));
@@ -153,15 +173,16 @@ public class CollectorService extends Service {
 						
 						// delete compressed data file
 						efz.delete();
-						
-					} catch (FileNotFoundException e) {
-						// no data to send here
-					} catch (IOException e) {
-						e.printStackTrace();
 					};
-				};
-				
-				stopSelfResult(stopId);
+				} catch (FileNotFoundException e) {
+					// no data to send here
+				} catch (IOException e) {
+					Log.e(TAG, "error", e);
+				} catch (InterruptedException e) {
+					Log.e(TAG, "interrupted", e);
+				} finally {
+					stopSelfResult(stopId);
+				}
 			}
 			
 		});
