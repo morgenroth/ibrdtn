@@ -146,9 +146,6 @@ public class Preferences extends PreferenceActivity {
 				default:
 					break;
 				}
-				
-				enabledSwitch.setEnabled(true);
-				enabledSwitch.setSummary(null);
 			}
 		}
 	};
@@ -332,11 +329,7 @@ public class Preferences extends PreferenceActivity {
 		enabledSwitch.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			@Override
 			public boolean onPreferenceClick(Preference p) {
-				p.setEnabled(false);
-				
 				if (((CheckBoxPreference) p).isChecked()) {
-					((CheckBoxPreference) p).setSummary(R.string.dialog_wait_starting);
-					
 					// startup the daemon process
 					final Intent intent = new Intent(Preferences.this, DaemonService.class);
 					intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
@@ -344,8 +337,6 @@ public class Preferences extends PreferenceActivity {
 				}
 				else
 				{
-					((CheckBoxPreference) p).setSummary(R.string.dialog_wait_stopping);
-					
 					// shutdown the daemon
 					final Intent intent = new Intent(Preferences.this, DaemonService.class);
 					intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);

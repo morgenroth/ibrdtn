@@ -297,7 +297,11 @@ public class DaemonService extends Service {
 
 		@Override
 		public void run() {
+			NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+			
 			if (this.startup) {
+				nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.dialog_wait_starting)));
+				
 	    		// start the daemon
 	    		if (DaemonManager.getInstance().start(DaemonService.this) )
 	    		{
@@ -318,7 +322,11 @@ public class DaemonService extends Service {
 		    		// error
 		    		stopSelfResult(startId);
 	    		}
+	    		
+				nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.notify_no_neighbors)));
 			} else {
+				nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.dialog_wait_stopping)));
+				
 				// stop the daemon
 	    		DaemonManager.getInstance().stop();
 	    		
@@ -329,7 +337,6 @@ public class DaemonService extends Service {
 	        	stopForeground(true);
 	    		
 	    		// remove notification
-	    		NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 	    		nm.cancel(1);
 	    		
 	    		// stop the service
