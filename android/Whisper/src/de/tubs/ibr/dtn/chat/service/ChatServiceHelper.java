@@ -20,7 +20,7 @@ public class ChatServiceHelper {
 		this.callback = callback;
 	}
 	
-	public class ServiceNotConnectedException extends Exception {
+	public static class ServiceNotConnectedException extends Exception {
 		/**
 		 * 
 		 */
@@ -28,7 +28,7 @@ public class ChatServiceHelper {
 	};
 	
 	public ChatService getService() throws ServiceNotConnectedException {
-		if (!isConnected()) {
+		if (!isConnected() && (this.service != null)) {
 			throw new ServiceNotConnectedException();
 		}
 		return this.service;

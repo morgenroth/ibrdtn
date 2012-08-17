@@ -235,6 +235,7 @@ public class RosterView extends BaseAdapter implements ChatServiceListener {
 	public void onServiceConnected(ChatService service) {
 		this.buddies = service.getRoster();
 		listener.onServiceConnected(service);
+		onContentChanged(null);
 	}
 
 	@Override

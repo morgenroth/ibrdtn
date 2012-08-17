@@ -280,6 +280,7 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	}
 	
 	public Roster getRoster() throws ServiceNotConnectedException {
+		if (this.service_helper == null) throw new ServiceNotConnectedException();
 		return this.service_helper.getService().getRoster();
 	}
 	
