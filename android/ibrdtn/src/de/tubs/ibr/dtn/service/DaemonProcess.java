@@ -255,7 +255,10 @@ public class DaemonProcess extends Thread {
 			
 			if (prefs.getInt("binary_version", 0) == pinfo.versionCode)
 			{
-				if (check_binary_version(binary, pinfo.versionName))
+				// strip versionCode off the versionName
+				String[] daemonVersion = pinfo.versionName.split("-");
+				
+				if (check_binary_version(binary, daemonVersion[0]))
 				{
 					Log.i("IBR-DTN", "package version " + pinfo.versionName + " is up to date");
 					return;
