@@ -378,7 +378,7 @@ public class Preferences extends PreferenceActivity {
 		Preference version = findPreference("system_version");
 		try {
 			PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
-			version.setSummary(info.versionCode + "-" + info.versionName);
+			version.setSummary(info.versionName);
 		} catch (NameNotFoundException e) { };
 	}
 	
