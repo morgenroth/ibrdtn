@@ -75,7 +75,9 @@ public class ClientSession {
 						getSession();
 						break;
 					} catch (IOException e) {
-						wait(5000);
+						synchronized(ClientSession.this) {
+							wait(5000);
+						}
 					}
 				}
 			} catch (InterruptedException e1) {	}
