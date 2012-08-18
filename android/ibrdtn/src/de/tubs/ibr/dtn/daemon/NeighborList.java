@@ -112,9 +112,6 @@ public class NeighborList extends ListActivity {
 			}
 		}
 
-		protected void onProgressUpdate(Integer... progress) {
-		}
-
 		protected void onPostExecute(List<String> neighbors)
 		{
 			if (neighbors == null) return;
