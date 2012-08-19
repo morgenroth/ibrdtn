@@ -22,7 +22,6 @@
 package de.tubs.ibr.dtn.service;
 
 import ibrdtn.api.APIConnection;
-import ibrdtn.api.ManageClient;
 import ibrdtn.api.SocketAPIConnection;
 import ibrdtn.api.object.SingletonEndpoint;
 
@@ -34,10 +33,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 import java.util.Map;
 
 import android.content.Context;
@@ -51,11 +48,19 @@ import android.util.Log;
 
 public class DaemonProcess extends Thread {
 
-	private ManageClient _connection = null;
+	private final static String TAG = "DaemonProcess";
+	private ProcessListener _listener = null;
 	
 	private ProcessBuilder _builder = null;
 	private Process _proc = null;
 	private Context _context = null;
+	
+	public interface ProcessListener {
+		public void onProcessStart();
+		public void onProcessStop();
+		public void onProcessError();
+		public void onProcessLog(String log);
+	}
 	
 	private static String toHex(byte[] data) {
 		// Create Hex String
@@ -81,41 +86,10 @@ public class DaemonProcess extends Thread {
 	// if set to true, use unix domain sockets for API connections.
 	private final Boolean _use_unix_socket = false;
 	
-	public DaemonProcess(Context context)
+	public DaemonProcess(Context context, ProcessListener listener)
 	{
 		this._context = context;
-	}
-	
-	private synchronized ManageClient getConnection() throws UnknownHostException, IOException
-	{
-		// check existing connection first
-		if (_connection != null)
-		{
-			if (_connection.isClosed())
-			{
-				_connection.close();
-				_connection = null;
-				Log.i("DaemonProcess", "connection to daemon closed");
-			}
-		}
-		
-		if (_connection == null)
-		{
-			try {
-				_connection = new ManageClient();
-				_connection.setConnection( getAPIConnection() );
-				Log.i("DaemonProcess", "try to connect to daemon");
-				_connection.open();
-			} catch (UnknownHostException e) {
-				_connection = null;
-				throw e;
-			} catch (IOException e) {
-				_connection = null;
-				throw e;
-			}
-		}
-		
-		return _connection;
+		this._listener = listener;
 	}
 	
 	public APIConnection getAPIConnection()
@@ -127,32 +101,8 @@ public class DaemonProcess extends Thread {
 		}
 	}
 	
-	public Boolean isRunning()
-	{
-		 try {
-			getConnection();
-		} catch (UnknownHostException e1) {
-			return false;
-		} catch (IOException e1) {
-			return false;
-		}
-		
-		return true;
-	}
-	
 	public void kill()
 	{
-		try {
-			ManageClient c = getConnection();
-			c.shutdown();
-			Log.i("DaemonProcess", "Process closed.");
-			c.close();
-		} catch (UnknownHostException e) {
-		} catch (IOException e) {
-		} finally {
-			_connection = null;
-		}
-		
 		if (_proc != null)
 		{
 			_proc.destroy();
@@ -212,12 +162,16 @@ public class DaemonProcess extends Thread {
 		    
 		    BufferedReader input = new BufferedReader( new InputStreamReader( _proc.getInputStream() ) );
 	    
+		    if (_listener != null) _listener.onProcessStart();
 			while ((line = input.readLine()) != null)
 			{
+				if (_listener != null) _listener.onProcessLog(line);
 				if (Log.isLoggable("dtnd", Log.DEBUG)) Log.d("dtnd", line);
 			}
+			if (_listener != null) _listener.onProcessStop();
 		} catch (IOException e) {
-			Log.e("IBR-DTN", "Unable to run daemon: " + e.toString());
+			Log.e(TAG, "Unable to run daemon: " + e.toString());
+			if (_listener != null) _listener.onProcessError();
 		}
 	}
 	
@@ -349,6 +303,9 @@ public class DaemonProcess extends Thread {
 			{
 				p.println("limit_predated_timestamp = 1209600");
 			}
+			
+			// limit block size to 50 MB
+			p.println("limit_blocksize = 50M");
 			
 			String secmode = preferences.getString("security_mode", "disabled");
 			
@@ -488,67 +445,5 @@ public class DaemonProcess extends Thread {
 	   {
 	      out.write(buf, 0, len);
 	   }
-	}
-	
-	public void setSuspend()
-	{
-		try {
-			ManageClient c = getConnection();
-			c.suspend();
-		} catch (UnknownHostException e) {
-		} catch (IOException e) {
-		}
-	}
-	
-	public void setResume()
-	{
-		try {
-			ManageClient c = getConnection();
-			c.resume();
-		} catch (UnknownHostException e) {
-		} catch (IOException e) {
-		}
-	}
-	
-	public List<String> getLog()
-	{
-		 try {
-			 ManageClient c = getConnection();
-			 return c.getLog();
-		} catch (UnknownHostException e1) {
-		} catch (IOException e1) {
-		}
-
-		return null;
-	}
-	
-	public List<String> getNeighbors()
-	{
-		 try {
-			 ManageClient c = getConnection();
-			 return c.getNeighbors();
-		} catch (UnknownHostException e1) {
-		} catch (IOException e1) {
-		}
-
-		return null;
-	}
-	
-	public void addConnection(SingletonEndpoint eid, String protocol, String address, String port) {
-		 try {
-			 ManageClient c = getConnection();
-			 c.addConnection(eid, protocol, address, port);
-		} catch (UnknownHostException e1) {
-		} catch (IOException e1) {
-		}
-	}
-	
-	public void removeConnection(SingletonEndpoint eid, String protocol, String address, String port) {
-		 try {
-			 ManageClient c = getConnection();
-			 c.removeConnection(eid, protocol, address, port);
-		} catch (UnknownHostException e1) {
-		} catch (IOException e1) {
-		}
 	}
 }

@@ -36,29 +36,34 @@ import java.util.Map.Entry;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import de.tubs.ibr.dtn.api.Registration;
 import android.util.Base64InputStream;
 import android.util.Log;
+import de.tubs.ibr.dtn.api.Registration;
 
 public class SessionManager {
 	
 	private final String TAG = "SessionManager";
 	private Boolean _state = false;
 	
+	private Context _context = null;
+	private DaemonManager _manager = null;
+	
 	private HashMap<String, ClientSession> _sessions = new HashMap<String, ClientSession>();
 	private HashMap<String, Registration> _registrations = new HashMap<String, Registration>();
 	
-	public SessionManager()
+	public SessionManager(Context context, DaemonManager manager)
 	{
+		this._context = context;
+		this._manager = manager;
 	}
 	
-	public synchronized void initialize(Context context)
+	public synchronized void initialize()
 	{
 		// daemon goes up, create all sessions
 		for (Entry<String, Registration> entry : _registrations.entrySet())
 		{
 			// create a new session
-			ClientSession session = new ClientSession(context, entry.getValue(), entry.getKey());
+			ClientSession session = new ClientSession(this._context, this._manager, entry.getValue(), entry.getKey());
 			_sessions.put(entry.getKey(), session);
 			session.initialize();
 		}
@@ -77,9 +82,9 @@ public class SessionManager {
 		_state = false;
 	}
 	
-	public void restoreRegistrations(Context context)
+	public void restoreRegistrations()
 	{
-		SharedPreferences prefs = context.getSharedPreferences("registrations", Context.MODE_PRIVATE);
+		SharedPreferences prefs = this._context.getSharedPreferences("registrations", Context.MODE_PRIVATE);
 		Map<String, ?> m = prefs.getAll();
 		for (Entry<String, ?> entry : m.entrySet())
 		{
@@ -93,7 +98,7 @@ public class SessionManager {
 				if (regobj instanceof Registration) {
 					// re-register registration
 					Registration reg = (Registration)regobj;
-					register(context, entry.getKey(), reg);
+					register(entry.getKey(), reg);
 					Log.d(TAG, "registration restored for " + entry.getKey());
 				} else {
 					// delete registration
@@ -118,9 +123,9 @@ public class SessionManager {
 		}
 	}
 	
-	public void saveRegistrations(Context context)
+	public void saveRegistrations()
 	{
-		SharedPreferences prefs = context.getSharedPreferences("registrations", Context.MODE_PRIVATE);
+		SharedPreferences prefs = this._context.getSharedPreferences("registrations", Context.MODE_PRIVATE);
 		Editor edit = prefs.edit();
 		edit.clear();
 		
@@ -140,9 +145,9 @@ public class SessionManager {
 		edit.commit();
 	}
 	
-	public void saveRegistration(Context context, String packageName, Registration reg)
+	public void saveRegistration(String packageName, Registration reg)
 	{
-		SharedPreferences prefs = context.getSharedPreferences("registrations", Context.MODE_PRIVATE);
+		SharedPreferences prefs = this._context.getSharedPreferences("registrations", Context.MODE_PRIVATE);
 		Editor edit = prefs.edit();
 
 		try {
@@ -158,7 +163,7 @@ public class SessionManager {
 		edit.commit();
 	}
 	
-	public synchronized void register(Context context, String packageName, Registration reg)
+	public synchronized void register(String packageName, Registration reg)
 	{
     	// register an application
     	// - add it to the list of applications
@@ -199,19 +204,19 @@ public class SessionManager {
 		}
 
 		// save registration in the preferences
-		saveRegistration(context, packageName, reg);
+		saveRegistration(packageName, reg);
 		
 		if (_state)
 		{
 			// daemon is up
 			// create a new session
-			ClientSession session = new ClientSession(context, _registrations.get(packageName), packageName);
+			ClientSession session = new ClientSession(this._context, this._manager, _registrations.get(packageName), packageName);
 			_sessions.put(packageName, session);
 			session.initialize();
 		}
 	}
 	
-	public synchronized void unregister(Context context, String packageName)
+	public synchronized void unregister(String packageName)
 	{
     	// unregister an application
     	// - remove it from the list of application
@@ -232,7 +237,7 @@ public class SessionManager {
 		}
 		
 		// save current registration state
-		saveRegistrations(context);
+		saveRegistrations();
 	}
 	
 	public synchronized ClientSession getSession(String packageName)
@@ -247,16 +252,5 @@ public class SessionManager {
 	public synchronized void removeSession(String packageName)
 	{
 		_sessions.remove(packageName);
-	}
-	
-	public synchronized void destroySessions()
-	{
-		for (ClientSession cs : _sessions.values())
-		{
-			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Destroy session: " + cs.getPackageName());
-			cs.terminate();
-		}
-		
-		_sessions.clear();
 	}
 }

@@ -21,6 +21,10 @@
  */
 package de.tubs.ibr.dtn.service;
 
+import ibrdtn.api.ManageClient;
+
+import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,8 +50,9 @@ import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
+import de.tubs.ibr.dtn.service.DaemonManager.DaemonStateListener;
 
-public class DaemonService extends Service {
+public class DaemonService extends Service implements DaemonStateListener {
 	
 	private final String TAG = "DaemonService";
 	
@@ -56,6 +61,12 @@ public class DaemonService extends Service {
 	private Integer _notification_last_size = 0;
 	
 	private ExecutorService _executor = null;
+	
+	// control object for the launched daemon
+	private DaemonManager _daemon = null;
+	
+	// session manager for all active sessions
+	private SessionManager _session_manager = null;
 	
 	public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
 	public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
@@ -66,32 +77,32 @@ public class DaemonService extends Service {
     private final DTNService.Stub mBinder = new DTNService.Stub() {  	
 		@Override
 		public DaemonState getState() throws RemoteException {
-			return DaemonManager.getInstance().getState();
+			return _daemon.getState();
 		}
 
 		@Override
 		public boolean isRunning() throws RemoteException {
-			return DaemonManager.getInstance().isRunning();
+			return _daemon.getState().equals(DaemonState.ONLINE);
 		}
 
 		@Override
 		public List<String> getLog() throws RemoteException {
-			return DaemonManager.getInstance().getLog();
+			return _daemon.getLog();
 		}
 
 		@Override
 		public List<String> getNeighbors() throws RemoteException {
-			return DaemonManager.getInstance().getNeighbors();
+			return _daemon.getNeighbors();
 		}
 
 		@Override
 		public void clearStorage() throws RemoteException {
-			DaemonManager.getInstance().clearStorage();
+			_daemon.clearStorage();
 		}
 
 		@Override
 		public DTNSession getSession(String packageName) throws RemoteException {
-			ClientSession cs = DaemonManager.getInstance().getSession(packageName);
+			ClientSession cs = _session_manager.getSession(packageName);
 			if (cs == null) return null;
 			return cs.getBinder();
 		}
@@ -101,7 +112,7 @@ public class DaemonService extends Service {
 	public IBinder onBind(Intent intent)
 	{
 		// start the service if enabled and not running
-		if (!DaemonManager.getInstance().getState().equals(DaemonState.ONLINE)) {
+		if (!_daemon.getState().equals(DaemonState.ONLINE)) {
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 			if (prefs.getBoolean("enabledSwitch", false)) {
 				// startup the daemon process
@@ -114,11 +125,27 @@ public class DaemonService extends Service {
 		return mBinder;
 	}
 	
-	private BroadcastReceiver _event_receiver = new BroadcastReceiver() {
+	private BroadcastReceiver _intent_receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.NEIGHBOR)) {
-				updateNeighborNotification();
+			if (DaemonService.ACTION_CLOUD_UPLINK.equals(intent.getAction())) {
+				if (intent.hasExtra("enabled")) {
+					if (intent.getBooleanExtra("enabled", false)) {
+						_executor.execute(new Runnable() {
+							@Override
+							public void run() {
+								_daemon.enableCloudUplink();
+							}
+						});
+					} else {
+						_executor.execute(new Runnable() {
+							@Override
+							public void run() {
+								_daemon.disableCloudUplink();
+							}
+						});
+					}
+				}
 			}
 		}
 	};
@@ -134,7 +161,7 @@ public class DaemonService extends Service {
 	private Runnable _unn_task = new Runnable() {
 		@Override
 		public void run() {
-			if (!DaemonManager.getInstance().getState().equals(DaemonState.ONLINE)) return;
+			if (!_daemon.getState().equals(DaemonState.ONLINE)) return;
 			
 			synchronized(_notification_lock) {
 				if (!_notification_dirty) return;
@@ -143,7 +170,7 @@ public class DaemonService extends Service {
 
 			// state is online
 			Log.i(TAG, "Query neighbors");
-			List<String> neighbors = DaemonManager.getInstance().getNeighbors();
+			List<String> neighbors = _daemon.getNeighbors();
 			
 			synchronized(_notification_lock) {
 				if (_notification_last_size.equals(neighbors.size())) return;
@@ -189,23 +216,65 @@ public class DaemonService extends Service {
 	{
 		super.onCreate();
 		
+		// create a controllable daemon object
+		_daemon = new DaemonManager(this);
+		
+		// create a session manager
+		_session_manager = new SessionManager(this, _daemon);
+		
 		// create a new executor
 		_executor = Executors.newSingleThreadExecutor();
 		
-		// terminate old running instances
+		IntentFilter cloud_filter = new IntentFilter(DaemonService.ACTION_CLOUD_UPLINK);
+		cloud_filter.addCategory(Intent.CATEGORY_DEFAULT);
+  		registerReceiver(_intent_receiver, cloud_filter );
+		
+		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "DaemonService created");
+		
 		_executor.execute(new Runnable() {
 			@Override
 			public void run() {
-				DaemonManager.getInstance().reset(DaemonService.this);
+				// terminate a running daemon
+				terminateRunningDaemon();
 			}
 		});
 		
-		// listen on daemon event broadcasts
-		IntentFilter event_filter = new IntentFilter(de.tubs.ibr.dtn.Intent.NEIGHBOR);
-		event_filter.addCategory(Intent.CATEGORY_DEFAULT);
-  		registerReceiver(_event_receiver, event_filter );
+		// restore sessions
+		_session_manager.restoreRegistrations();
+	}
+	
+	@Override
+	public void onDestroy() {
+		// unregister intent receiver
+		unregisterReceiver(_intent_receiver);
 		
-		if (Log.isLoggable("IBR-DTN", Log.DEBUG)) Log.d(TAG, "DaemonService created");
+		// close all sessions
+		_session_manager.saveRegistrations();
+		
+		// stop the daemon
+    	_daemon.stop();
+		
+		try {
+			// stop executor
+			_executor.shutdown();
+			
+			// ... and wait until all jobs are done
+			if (!_executor.awaitTermination(30, TimeUnit.SECONDS)) {
+				_executor.shutdownNow();
+			}
+		} catch (InterruptedException e) {
+			Log.e(TAG, "Interrupted on service destruction.", e);
+		}
+		
+		// remove notification
+		NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+		nm.cancel(1);
+		
+		// dereference the daemon object
+		_daemon = null;
+		
+		// call super method
+		super.onDestroy();
 	}
 	
 	@Override
@@ -228,20 +297,37 @@ public class DaemonService extends Service {
         if (action.equals(ACTION_STARTUP))
         {
 			// create initial notification
-			Notification n = buildNotification(R.drawable.ic_notification, getResources().getString(R.string.notify_no_neighbors));
+			Notification n = buildNotification(R.drawable.ic_notification, getResources().getString(R.string.dialog_wait_starting));
 			
     		// turn this to a foreground service (kill-proof)
     		startForeground(1, n);
     		
-    		// start the daemon
-    		_executor.execute(new StartStopDaemonTask(startId, true));
+    		_executor.execute(new Runnable() {
+				@Override
+				public void run() {
+					_daemon.start(DaemonService.this, DaemonService.this);
+					
+					// wait until the daemon is online or in error state
+					while ( ! (_daemon.getState().equals(DaemonState.ONLINE) || _daemon.getState().equals(DaemonState.ERROR)) ) {
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) { }
+					}
+				}
+    		});
     		
             return START_STICKY;
         }
         else if (action.equals(ACTION_SHUTDOWN))
         {
-        	// stop the daemon
-        	_executor.execute(new StartStopDaemonTask(startId, false));
+    		_executor.execute(new Runnable() {
+				@Override
+				public void run() {
+					NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+					nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.dialog_wait_stopping)));
+					_daemon.stop();
+				}
+    		});
         	
             return START_STICKY;
         }
@@ -252,9 +338,9 @@ public class DaemonService extends Service {
 			
         	_executor.execute(new Runnable() {
     	        public void run() {
-    	        	DaemonManager.getInstance().getSessionManager().register(DaemonService.this, pi.getTargetPackage(), reg);
+    	        	_session_manager.register(pi.getTargetPackage(), reg);
     	    		
-    	        	if (!DaemonManager.getInstance().isRunning()) {
+    	        	if (!_daemon.isRunning()) {
 	    	    		// stop the service
 	    	    		stopSelfResult(stopId);
     	        	}
@@ -269,9 +355,9 @@ public class DaemonService extends Service {
 			
         	_executor.execute(new Runnable() {
     	        public void run() {
-    	        	DaemonManager.getInstance().getSessionManager().unregister(DaemonService.this, pi.getTargetPackage());
+    	        	_session_manager.unregister(pi.getTargetPackage());
     	    		
-    	        	if (!DaemonManager.getInstance().isRunning()) {
+    	        	if (!_daemon.isRunning()) {
 	    	    		// stop the service
 	    	    		stopSelfResult(stopId);
     	        	}
@@ -285,105 +371,80 @@ public class DaemonService extends Service {
 		return super.onStartCommand(intent, flags, startId);
 	}
 	
-	private class StartStopDaemonTask implements Runnable {
-		
-		private int startId = 0;
-		private boolean startup = false;
-		
-		public StartStopDaemonTask(int startId, boolean start) {
-			this.startId = startId;
-			this.startup = start;
-		}
-
-		@Override
-		public void run() {
-			NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-			
-			if (this.startup) {
-				nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.dialog_wait_starting)));
-				
-	    		// start the daemon
-	    		if (DaemonManager.getInstance().start(DaemonService.this) )
-	    		{
-		    		// broadcast state changed intent
-		    		invoke_state_changed_intent();
-		    		
-		    		// update notification icon
-		    		updateNeighborNotification();
-	    		}
-	    		else
-	    		{
-		    		// broadcast state changed intent
-		    		invoke_state_changed_intent();
-		    		
-		    		// update notification icon
-		    		updateNeighborNotification();
-		    		
-		    		// error
-		    		stopSelfResult(startId);
-	    		}
-	    		
-				nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.notify_no_neighbors)));
-			} else {
-				nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.dialog_wait_stopping)));
-				
-				// stop the daemon
-	    		DaemonManager.getInstance().stop();
-	    		
-	    		// broadcast state changed intent
-	    		invoke_state_changed_intent();
-	    		
-	    		// stop foreground service
-	        	stopForeground(true);
-	    		
-	    		// remove notification
-	    		nm.cancel(1);
-	    		
-	    		// stop the service
-	    		stopSelfResult(startId);
-			}
-		}
-	}
-
-	@Override
-	public void onDestroy() {
-		// unregister intent receiver
-		unregisterReceiver(_event_receiver);
-		
-    	_executor.execute(new Runnable() {
-	        public void run() {
-	    		// stop daemon if still running
-	    		DaemonManager.getInstance().stop();
-	        }
-		});
-		
-		try {
-			// stop executor
-			_executor.shutdown();
-			
-			// ... and wait until all jobs are done
-			if (!_executor.awaitTermination(30, TimeUnit.SECONDS)) {
-				_executor.shutdownNow();
-			}
-		} catch (InterruptedException e) {
-			Log.e(TAG, "Interrupted on service destruction.", e);
-		}
-		
-		// remove notification
-		NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-		nm.cancel(1);
-		
-		// call super method
-		super.onDestroy();
-	}
-	
 	private void invoke_state_changed_intent()
 	{
 		// broadcast shutdown intent
 		Intent broadcastIntent = new Intent();
 		broadcastIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
-		broadcastIntent.putExtra("state", DaemonManager.getInstance().getState().name());	
+		if (_daemon == null) {
+			broadcastIntent.putExtra("state", DaemonState.OFFLINE.name());
+		} else {
+			broadcastIntent.putExtra("state", _daemon.getState().name());
+		}
 		broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 		sendBroadcast(broadcastIntent);
+	}
+
+	@Override
+	public void onDaemonStateChanged(DaemonState state) {
+		NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+		
+		switch (state) {
+		case ERROR:
+			nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.notify_error)));
+			break;
+		case OFFLINE:
+			// close all sessions
+			_session_manager.terminate();
+			
+    		// broadcast state changed intent
+    		invoke_state_changed_intent();
+    		
+    		// stop foreground service
+        	stopForeground(true);
+    		
+    		// remove notification
+    		nm.cancel(1);
+			break;
+		case ONLINE:
+			nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.notify_no_neighbors)));
+			
+			// restore registrations
+			_session_manager.initialize();
+			
+			// update notification icon
+			updateNeighborNotification();
+			
+			break;
+		case SUSPENDED:
+			break;
+		case UNKOWN:
+			break;
+		default:
+			break;
+		
+		}
+		
+		// broadcast state changed intent
+		invoke_state_changed_intent();
+	}
+	
+	private void terminateRunningDaemon() {
+		ManageClient mc = new ManageClient();
+		mc.setConnection(_daemon.getAPIConnection());
+		try {
+			mc.open();
+			mc.shutdown();
+			mc.close();
+			Log.d(TAG, "shutdown sent to running daemon");
+		} catch (UnknownHostException e) {
+		} catch (IOException e) {
+			Log.d(TAG, "no running daemon found");
+		}
+	}
+
+	@Override
+	public void onNeighborhoodChanged() {
+		updateNeighborNotification();
 	}
 }

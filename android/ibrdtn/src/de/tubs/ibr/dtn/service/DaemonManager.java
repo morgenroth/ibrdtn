@@ -41,16 +41,14 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.DaemonState;
+import de.tubs.ibr.dtn.service.DaemonProcess.ProcessListener;
 
-public class DaemonManager {
+public class DaemonManager implements ProcessListener {
 	// CloudUplink Parameter
 	private static final SingletonEndpoint __CLOUD_EID__ = new SingletonEndpoint("dtn://cloud.dtnbone.dtn");
 	private static final String __CLOUD_PROTOCOL__ = "tcp";
 	private static final String __CLOUD_ADDRESS__ = "134.169.35.130"; //quorra.ibr.cs.tu-bs.de";
 	private static final String __CLOUD_PORT__ = "4559";
-	
-	// reference to a singleton instance
-	private static final DaemonManager _this = new DaemonManager();
 	
 	// local context for event listener
 	private Context _context = null;
@@ -61,6 +59,8 @@ public class DaemonManager {
 	// local object for the daemon process
 	private DaemonProcess _process = null;
 	
+	private DaemonController _controller = null;
+	
 	// event client for event reception
 	private EventClient _event_client = null;
 	
@@ -70,18 +70,22 @@ public class DaemonManager {
 	// state of the cloud uplink
 	private Boolean _cloud_uplink_initiated = false;
 	
-	// session manager for all active sessions
-	private SessionManager _session_manager = new SessionManager();
-	
-	public DaemonManager()
-	{
+	// report events to the DaemonService
+	private DaemonStateListener _daemon_state_listener = null;
+
+	// interface for the daemon states
+	public static interface DaemonStateListener {
+		public void onDaemonStateChanged(DaemonState state);
+		public void onNeighborhoodChanged();
 	}
 	
+	public DaemonManager(Context context) {
+		this._context = context;
+	}
+	
+	// close control connection to the daemon
 	public void destroy()
 	{
-		// close all sessions
-		_session_manager.destroySessions();
-		
 		if (_event_client != null)
 		{
 			try {
@@ -93,28 +97,19 @@ public class DaemonManager {
 		}
 	}
 	
-	public static DaemonManager getInstance()
-	{
-		return _this;
-	}
-	
-	public SessionManager getSessionManager()
-	{
-		return _session_manager;
-	}
-	
-	public ClientSession getSession(String packageName)
-	{
-		return _session_manager.getSession(packageName);
+	// create a new API connection to the daemon
+	public APIConnection getAPIConnection() {
+		if (_process == null) return null;
+		return _process.getAPIConnection();
 	}
 	
 	public synchronized boolean isRunning()
 	{
-		if (_process == null) return false;
+		//if (_process == null) return false;
 		//if (_state.equals(DaemonState.UNKOWN)) return _process.isRunning();
-		//return (_state.equals(DaemonState.ONLINE));
+		return (_state.equals(DaemonState.ONLINE));
 		
-		return _process.isRunning();
+		//return _process.isRunning();
 	}
 	
 	public DaemonState getState()
@@ -124,12 +119,13 @@ public class DaemonManager {
 	
 	private synchronized void setState(DaemonState state)
 	{
+		if (_state.equals(state)) return;
+		
 		Log.i(TAG, "Daemon state changed: " + state.name());
 		_state = state;
 		
-		if (_state.equals(DaemonState.OFFLINE))
-		{
-			_session_manager.terminate();
+		if (_daemon_state_listener != null) {
+			_daemon_state_listener.onDaemonStateChanged(_state);
 		}
 	}
 	
@@ -196,86 +192,32 @@ public class DaemonManager {
 		// if the process is known as running, just stop the process
 		if (isRunning()) stop();
 		
-		_process = new DaemonProcess(context);
+		_process = new DaemonProcess(context, this);
 		_process.kill();
 	}
 	
-	public synchronized Boolean start(Context context)
+	public synchronized void start(Context context, DaemonStateListener listener)
 	{
         // activate the daemon
-		if (isRunning()) return true;
+		if (isRunning()) return;
+		
+		_daemon_state_listener = listener;
+		
+		// save the context
+    	_context = context;
 		
 		if (_process == null)
 		{
 			// create a new process
-	    	_process = new DaemonProcess(context);
+	    	_process = new DaemonProcess(context, this);
 		}
-		
-		// restore registrations
-		_session_manager.restoreRegistrations(context);
 		
 		// startup the daemon
 		_process.start(context);
-        
-		if (_event_client == null)
-		{
-            // wait until the daemon is ready - up to 30 seconds
-            try {
-	            while (true) {
-	            	if (_process.isRunning()) break;
-					Thread.sleep(1000);
-	            }
-			} catch (InterruptedException e) {
-				// broadcast error intent
-				setState(DaemonState.ERROR);
-				return false;
-			}
-            
-            try {
-	    		// create a new event client
-            	_context = context;
-    			_event_client = new EventClient(_listener);
-    			_event_client.setConnection( _process.getAPIConnection() );
-				_event_client.open();
-			} catch (UnknownHostException e) {
-				// mark this task as finished
-				Log.e(TAG, "could not start event connection to the daemon: " + e.toString());
-				
-				// broadcast error intent
-				setState(DaemonState.ERROR);
-				return false;
-			} catch (IOException e) {
-				// mark this task as finished
-				Log.e(TAG, "could not start event connection to the daemon: " + e.toString());
-				
-				// broadcast error intent
-				setState(DaemonState.ERROR);
-				return false;
-			}
-		}
-		
-		// enable-cloud uplink if configured
-    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this._context);
-		if (prefs.getBoolean("cloud_uplink", false))
-		{
-			_process.addConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-			_cloud_uplink_initiated = true;
-		}
-		
-		// broadcast startup intent
-		setState(DaemonState.ONLINE);
-		
-		// fire up the session mananger
-		_session_manager.initialize(context);
-		
-		return true;
 	}
 
 	public synchronized void stop()
 	{
-		// close all sessions
-		_session_manager.destroySessions();
-		
     	if (_event_client != null)
     	{
     		try {
@@ -287,14 +229,16 @@ public class DaemonManager {
 			}
     	}
     	
+    	if (_controller != null) {
+    		_controller.terminate();
+    		_controller = null;
+    	}
+    	
     	// shutdown the daemon
     	if (_process != null) {
 	    	_process.kill();
 	    	_process = null;
     	}
-    	
-		// broadcast shutdown intent
-		setState(DaemonState.OFFLINE);
 	}
 	
 	public synchronized void clearStorage()
@@ -328,21 +272,11 @@ public class DaemonManager {
 		return null;
 	}
 	
-	public APIConnection getDaemonConnection()
-	{
-		// TODO: throw exception is daemon is not running
-		if (_process == null) return null;
-		return _process.getAPIConnection();
-	}
-
 	public synchronized List<String> getLog()
 	{
-		if (_process != null)
+		if (_controller != null)
 		{
-			if (_process.isRunning())
-			{
-				return _process.getLog();
-			}
+			return _controller.getLog();
 		}
 		
 		return new LinkedList<String>();
@@ -350,36 +284,126 @@ public class DaemonManager {
 	
 	public synchronized List<String> getNeighbors()
 	{
-		if (_process != null)
+		if (_controller != null)
 		{
-			if (_process.isRunning())
-			{
-				return _process.getNeighbors();
-			}
+			return _controller.getNeighbors();
 		}
 		
 		return new LinkedList<String>();
 	}
 	
 	public synchronized void enableCloudUplink() {
-		if (_process != null)
+		if (_controller != null)
 		{
-			if (_process.isRunning() && (!_cloud_uplink_initiated))
+			if (!_cloud_uplink_initiated)
 			{
-				_process.addConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+				_controller.addConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
 				_cloud_uplink_initiated = true;
 			}
 		}
 	}
 	
 	public synchronized void disableCloudUplink() {
-		if (_process != null)
+		if (_controller != null)
 		{
-			if (_process.isRunning() && _cloud_uplink_initiated)
+			if (_cloud_uplink_initiated)
 			{
-				_process.removeConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+				_controller.removeConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
 				_cloud_uplink_initiated = false;
 			}
 		}
+	}
+	
+	private Runnable _channel_setup_task = new Runnable() {
+
+		@Override
+		public void run() {
+			if (_event_client == null)
+			{
+	            // wait until the daemon is ready
+	            try {
+	            	EventClient ec = new EventClient(_listener);
+	            	
+		            while (!ec.isConnected()) {
+		            	if (_process == null) {
+							onProcessError();
+							return;
+		            	}
+		            	
+		    			ec.setConnection( _process.getAPIConnection() );
+		    			
+		    			try {
+		    				ec.open();
+		    				break;
+		    			} catch (UnknownHostException e) {
+							onProcessError();
+							return;
+		    			} catch (IOException e) {
+    						Thread.sleep(1000);
+    					}
+		            }
+		            
+		            _event_client = ec;
+				} catch (InterruptedException e) {
+					onProcessError();
+					return;
+				}
+			}
+			
+			// create a daemon controller
+			_controller = new DaemonController(_process.getAPIConnection());
+			
+			// enable-cloud uplink if configured
+	    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonManager.this._context);
+			if (prefs.getBoolean("cloud_uplink", false))
+			{
+				_controller.addConnection(__CLOUD_EID__, __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+				_cloud_uplink_initiated = true;
+			}
+			
+			// broadcast startup intent
+			setState(DaemonState.ONLINE);
+		}
+	};
+
+	@Override
+	public void onProcessStart() {
+		// daemon is starting...
+	}
+
+	@Override
+	public void onProcessStop() {
+		// do not overwrite a error state
+		if (getState().equals(DaemonState.ERROR)) return;
+		
+		// broadcast shutdown intent
+		setState(DaemonState.OFFLINE);
+	}
+
+	@Override
+	public void onProcessError() {
+		// stop all connections
+		stop();
+		
+		// broadcast error intent
+		setState(DaemonState.ERROR);
+	}
+
+	@Override
+	public void onProcessLog(String log) {
+		// is daemon ready to serve API connections?
+		if (log.contains("INFO: API initialized")) {
+			Thread cst = new Thread(_channel_setup_task);
+			cst.start();
+		}
+		// are there changes to the neighborhood
+		else if (log.contains("NodeEvent")) {
+			if (this._daemon_state_listener != null) {
+				this._daemon_state_listener.onNeighborhoodChanged();
+			}
+		}
+
+//		if (log.contains("Unable to bind to")) {
+//		}
 	}
 }

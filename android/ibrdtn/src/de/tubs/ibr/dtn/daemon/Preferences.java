@@ -57,7 +57,6 @@ import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
-import de.tubs.ibr.dtn.service.DaemonManager;
 import de.tubs.ibr.dtn.service.DaemonProcess;
 import de.tubs.ibr.dtn.service.DaemonService;
 
@@ -150,46 +149,29 @@ public class Preferences extends PreferenceActivity {
 		}
 	};
 	
-	private class ModifyCloudUplink extends AsyncTask<MenuItem, Integer, MenuItem> {
-		protected MenuItem doInBackground(MenuItem... args)
-		{
-			try {
-		    	if (args[0].isChecked()) {
-		    		if (service.isRunning())
-		    			DaemonManager.getInstance().disableCloudUplink();
-		    	} else {
-		    		if (service.isRunning())
-		    			DaemonManager.getInstance().enableCloudUplink();
-		    	}
-		    	
-				return args[0];
-			} catch (RemoteException e) {
-				return null;
-			}
-		}
-
-		protected void onProgressUpdate(Integer... progress) {
-		}
-
-		protected void onPostExecute(MenuItem result)
-		{
-			if (result == null) {
-				pd.cancel();
-			} else {
-		    	Boolean onoff = !result.isChecked();
-		    	
-		    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
-		    	Editor edit = prefs.edit();
-		    	edit.putBoolean("cloud_uplink", onoff);
-		    	edit.apply();
-		    	
-		    	result.setChecked(onoff);
-		    	result.setIcon(onoff ? R.drawable.ic_cloud_off : R.drawable.ic_cloud);
-		    	result.setTitle(onoff ? R.string.clouduplink_off : R.string.clouduplink_on);
-		    	
-				pd.dismiss();
-			}
-		}
+	private void toggleCloudUplink(MenuItem itm) {
+		Intent i = new Intent();
+		i.setAction(DaemonService.ACTION_CLOUD_UPLINK);
+		i.addCategory(Intent.CATEGORY_DEFAULT);
+		
+    	if (itm.isChecked()) {
+    		i.putExtra("enabled", false);
+    	} else {
+    		i.putExtra("enabled", true);
+    	}
+    	
+    	Preferences.this.sendBroadcast(i);
+    	
+    	Boolean onoff = !itm.isChecked();
+    	
+    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+    	Editor edit = prefs.edit();
+    	edit.putBoolean("cloud_uplink", onoff);
+    	edit.apply();
+    	
+    	itm.setChecked(onoff);
+    	itm.setIcon(onoff ? R.drawable.ic_cloud_off : R.drawable.ic_cloud);
+    	itm.setTitle(onoff ? R.string.clouduplink_off : R.string.clouduplink_on);
 	}
 	
 	private class ClearStorageTask extends AsyncTask<String, Integer, Boolean> {
@@ -270,8 +252,7 @@ public class Preferences extends PreferenceActivity {
 	    
 	    case R.id.itemCloudUplink:
 	    {
-	    	pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.alteratecloudstate), true, false);
-	    	(new ModifyCloudUplink()).execute(item);
+	    	toggleCloudUplink(item);
 	    	return true;
 	    }
 	        

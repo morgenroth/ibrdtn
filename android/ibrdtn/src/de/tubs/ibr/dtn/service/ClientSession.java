@@ -48,15 +48,17 @@ public class ClientSession {
 	private Context context = null;
     private APISession _session = null;
     private Registration _registration = null;
+    private DaemonManager _manager = null;
     
     private Boolean _daemon_online = false;
     
-	public ClientSession(Context context, Registration reg, String packageName)
+	public ClientSession(Context context, DaemonManager manager, Registration reg, String packageName)
 	{
 		// create a unique session key
 		this.context = context;
-		_package_name = packageName;
-		_registration = reg;
+		this._package_name = packageName;
+		this._registration = reg;
+		this._manager = manager;
 	}
 	
 	public synchronized void initialize()
@@ -106,7 +108,7 @@ public class ClientSession {
 				Log.d(TAG, "try to create an API session with the daemon");
 				_session = new APISession(this);
 				
-				APIConnection socket = DaemonManager.getInstance().getDaemonConnection();
+				APIConnection socket = this._manager.getAPIConnection();
 				if (socket == null) throw new IOException("daemon not running");
 				
 				_session.connect(socket);
