@@ -64,6 +64,8 @@ public class RosterView extends BaseAdapter implements ChatServiceListener {
 	private void filterBuddies() {
 		buddies_filtered.clear();
 		
+		if (buddies == null) return;
+		
 		for (Buddy b : buddies) {
 			if (showOffline) {
 				buddies_filtered.add(b);
@@ -224,6 +226,7 @@ public class RosterView extends BaseAdapter implements ChatServiceListener {
 
 	@Override
 	public void onContentChanged(String buddyId) {
+		if (this.buddies == null) return;
 		Log.d(TAG, "refresh requested...");
 		Collections.sort(this.buddies);
 		filterBuddies();
