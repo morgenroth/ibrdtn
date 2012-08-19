@@ -71,26 +71,32 @@ public class CollectorService extends Service {
 	@Override
 	public void onCreate() {
 		executor = Executors.newSingleThreadExecutor();
+		setConnected(false);
+		super.onCreate();
+	}
+	
+	private void createSession() {
+		if (_client != null) return;
 		
         // create a new registration
         Registration reg = new Registration("datacollector");
         
 		try {
-			setConnected(false);
 	        // create a new DTN client
 	        _client = new LocalDTNClient();
 			_client.initialize(this, reg);
 		} catch (ServiceNotAvailableException e) {
 			// error
 		}
-		
-		super.onCreate();
 	}
 
 	@Override
 	public void onDestroy() {
-		// unregister at the daemon
-		_client.unregister();
+		// destroy DTN client
+		if (_client != null) {
+			// unregister at the daemon
+			_client.unregister();
+		}
 		
 		try {
 			// stop executor
@@ -100,11 +106,12 @@ public class CollectorService extends Service {
 			if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
 				executor.shutdownNow();
 			}
-			
-			// destroy DTN client
-			_client.terminate();
 		} catch (InterruptedException e) {
 			Log.e(TAG, "Interrupted on service destruction.", e);
+		}
+		
+		if (_client != null) {		
+			_client.terminate();
 		}
 		
 		// clear all variables
@@ -225,6 +232,7 @@ public class CollectorService extends Service {
 
 		if ( DELIVER_DATA.equals( intent.getAction() ) ) {
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Compress and deliver");
+			if (_client == null) createSession();
 			executor.execute(new Runnable() {
 				@Override
 				public void run() {
