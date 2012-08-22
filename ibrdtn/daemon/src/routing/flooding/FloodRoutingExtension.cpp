@@ -140,7 +140,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return 10; };
+				virtual size_t limit() const { return dtn::core::BundleCore::max_bundles_in_transit; };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{

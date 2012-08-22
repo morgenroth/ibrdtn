@@ -20,6 +20,7 @@
  */
 
 #include "routing/NeighborDatabase.h"
+#include "core/BundleCore.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
 #include <limits>
@@ -29,11 +30,11 @@ namespace dtn
 	namespace routing
 	{
 		NeighborDatabase::NeighborEntry::NeighborEntry()
-		 : eid(), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED, FILTER_FINAL)
+		 : eid(), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED, FILTER_FINAL)
 		{};
 
 		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &e)
-		 : eid(e), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED, FILTER_FINAL)
+		 : eid(e), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED, FILTER_FINAL)
 		{ }
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
@@ -135,7 +136,7 @@ namespace dtn
 			if (_transit_bundles.find(id) != _transit_bundles.end()) throw AlreadyInTransitException();
 
 			// check if enough resources available to transfer the bundle
-			if (_transit_bundles.size() >= _transit_max) throw NoMoreTransfersAvailable();
+			if (_transit_bundles.size() >= dtn::core::BundleCore::max_bundles_in_transit) throw NoMoreTransfersAvailable();
 
 			// insert the bundle into the transit list
 			_transit_bundles.insert(id);

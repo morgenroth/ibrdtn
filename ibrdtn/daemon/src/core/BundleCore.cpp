@@ -63,6 +63,7 @@ namespace dtn
 		size_t BundleCore::blocksizelimit = 0;
 		size_t BundleCore::max_lifetime = 0;
 		size_t BundleCore::max_timestamp_future = 0;
+		size_t BundleCore::max_bundles_in_transit = 5;
 
 		bool BundleCore::forwarding = true;
 

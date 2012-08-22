@@ -126,7 +126,6 @@ namespace dtn
 				// stores bundle currently in transit
 				ibrcommon::Mutex _transit_lock;
 				std::set<dtn::data::BundleID> _transit_bundles;
-				size_t _transit_max;
 
 				// bloomfilter used as summary vector
 				ibrcommon::BloomFilter _filter;

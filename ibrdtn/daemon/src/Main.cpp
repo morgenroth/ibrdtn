@@ -238,6 +238,14 @@ void setGlobalVars(Configuration &config)
 	{
 		IBRCOMMON_LOGGER(info) << "Pre-dated timestamp limited to " << dtn::core::BundleCore::max_timestamp_future << " seconds in the future" << IBRCOMMON_LOGGER_ENDL;
 	}
+
+	// set the maximum count of bundles in transit (bundles to send to the CL queue)
+	size_t transit_limit = config.getLimit("bundles_in_transit");
+	if (transit_limit > 0)
+	{
+		dtn::core::BundleCore::max_bundles_in_transit = transit_limit;
+		IBRCOMMON_LOGGER(info) << "Limit the number of bundles in transit to " << dtn::core::BundleCore::max_bundles_in_transit << IBRCOMMON_LOGGER_ENDL;
+	}
 }
 
 void initialize_blobs(Configuration &config)

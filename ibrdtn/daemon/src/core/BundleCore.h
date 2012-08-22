@@ -134,6 +134,12 @@ namespace dtn
 			 */
 			static bool forwarding;
 
+
+			/**
+			 * Defines how many bundles should be in transit at once
+			 */
+			static size_t max_bundles_in_transit;
+
 			/**
 			 * @see Component::getName()
 			 */
