@@ -25,10 +25,7 @@ import java.text.DateFormat;
 import java.util.LinkedList;
 import java.util.List;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -45,24 +42,14 @@ public class MessageView extends BaseAdapter {
 
 	private final static String TAG = "MessageView";
 	private LayoutInflater inflater = null;
-	private Roster roster = null;
 	private Buddy buddy = null;
 	private List<Message> messages = null;
 
-	public MessageView(Context context, Roster roster, Buddy buddy)
+	public MessageView(Context context, Buddy buddy)
 	{
 		this.inflater = LayoutInflater.from(context);
-		this.roster = roster;
 		this.buddy = buddy;
-		
-		if (this.roster != null) {
-			this.messages = this.roster.getMessages(this.buddy);
-		} else {
-			this.messages = new LinkedList<Message>();
-		}
-		
-		IntentFilter i = new IntentFilter(Roster.REFRESH);
-		context.registerReceiver(notify_receiver, i);
+		this.messages = new LinkedList<Message>();
 	}
 	
 	public class ViewHolder
@@ -72,25 +59,9 @@ public class MessageView extends BaseAdapter {
 		public Message msg;
 	}
 	
-	private BroadcastReceiver notify_receiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent i) {
-			if (buddy == null) return;
-			if (i.getStringExtra("buddy").equals(buddy.getEndpoint())) {
-				MessageView.this.refresh();
-			}
-		}
-	};
-
-	protected void onDestroy(Context context) {
-		context.unregisterReceiver(notify_receiver);
-	}
-	
-	public void refresh()
+	public void refresh(Roster roster)
 	{
-		if (this.roster != null) {
-			this.messages = this.roster.getMessages(this.buddy);
-		}
+		this.messages = roster.getMessages(this.buddy);
 		
 		Log.d(TAG, "refresh requested...");
 		this.notifyDataSetChanged();

@@ -28,7 +28,7 @@ public class ChatServiceHelper {
 	};
 	
 	public ChatService getService() throws ServiceNotConnectedException {
-		if (!isConnected() && (this.service != null)) {
+		if (!isConnected() || (this.service == null)) {
 			throw new ServiceNotConnectedException();
 		}
 		return this.service;
@@ -48,6 +48,7 @@ public class ChatServiceHelper {
 	public void unbind() {
 		this.context.unregisterReceiver(notify_receiver);
 		this.context.unbindService(mConnection);
+		this.service = null;
 	}
 	
 	// Container Activity must implement this interface
@@ -74,6 +75,7 @@ public class ChatServiceHelper {
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			ChatServiceHelper.this.callback.onServiceDisconnected();
+			ChatServiceHelper.this.service = null;
 		}
 	};
 	

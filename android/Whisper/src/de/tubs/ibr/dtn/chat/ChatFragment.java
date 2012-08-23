@@ -115,15 +115,7 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		
-		// restore buddy id
-		if (savedInstanceState != null) {
-			// restore buddy id
-			if (savedInstanceState.containsKey("buddyId")) {
-				buddyId = savedInstanceState.getString("buddyId");
-			}
-		}
-		
+
 		// select right buddy
 		Bundle args = this.getArguments();
 		if ((args != null) && args.containsKey("buddyId")) {
@@ -231,14 +223,20 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	public void onCreate(Bundle savedInstanceState) {
 		service_helper = new ChatServiceHelper(getActivity(), this);		
 		super.onCreate(savedInstanceState);
+		
+		// restore buddy id
+		if (savedInstanceState != null) {
+			// restore buddy id
+			if (savedInstanceState.containsKey("buddyId")) {
+				buddyId = savedInstanceState.getString("buddyId");
+				Log.d(TAG, "buddy saved " + buddyId);
+			}
+		}
 	}
 
 	@Override
 	public void onDestroy() {
-		if (this.view != null) {
-			this.view.onDestroy(getActivity());
-			this.view = null;
-		}
+		this.view = null;
 		
 		if (service_helper != null) {
 			service_helper = null;
@@ -358,15 +356,15 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 			
 			if (this.view == null) {
 				// activate message view
-				this.view = new MessageView(getActivity(), roster, buddy);
+				this.view = new MessageView(getActivity(), buddy);
 				
 				ListView lv = (ListView)this.getActivity().findViewById(R.id.list_messages);
 				lv.setAdapter(this.view);
 				
 				restoreDraftMessage();
-			} else {
-				this.view.refresh();
 			}
+			
+			this.view.refresh(roster);
 		} catch (ServiceNotConnectedException e) {
 			Log.e(TAG, "update failed", e);
 		}
@@ -375,7 +373,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	@Override
 	public void onBuddySelected(String buddyId) {
 		if ((this.buddyId != buddyId) && (this.view != null)) {
-			this.view.onDestroy(getActivity());
 			this.view = null;
 			ListView lv = (ListView)this.getActivity().findViewById(R.id.list_messages);
 			lv.setAdapter(null);
