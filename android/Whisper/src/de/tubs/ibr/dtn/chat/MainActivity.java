@@ -111,10 +111,10 @@ public class MainActivity extends FragmentActivity
 
 	@Override
 	protected void onStop() {
+		super.onStop();
 		if (service_helper != null) {
 			service_helper.unbind();
 		}
-		super.onStop();
 	}
 
 	@Override
