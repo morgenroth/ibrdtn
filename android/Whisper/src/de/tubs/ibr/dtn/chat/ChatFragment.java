@@ -345,13 +345,15 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 					presence_icon = R.drawable.offline;
 				}
 
-				ImageView iconTitleBar = (ImageView) this.getView().findViewById(R.id.buddy_icon);
-				TextView labelTitleBar = (TextView) this.getView().findViewById(R.id.buddy_nickname);
-				TextView bottomtextTitleBar = (TextView) this.getView().findViewById(R.id.buddy_statusmessage);
-			
-				labelTitleBar.setText( presence_nick );
-				bottomtextTitleBar.setText( presence_text );
-				iconTitleBar.setImageResource(presence_icon);
+				if (this.getView() != null) {
+					ImageView iconTitleBar = (ImageView) this.getView().findViewById(R.id.buddy_icon);
+					TextView labelTitleBar = (TextView) this.getView().findViewById(R.id.buddy_nickname);
+					TextView bottomtextTitleBar = (TextView) this.getView().findViewById(R.id.buddy_statusmessage);
+				
+					labelTitleBar.setText( presence_nick );
+					bottomtextTitleBar.setText( presence_text );
+					iconTitleBar.setImageResource(presence_icon);
+				}
 			}
 			
 			if (this.view == null) {
