@@ -23,14 +23,11 @@ package de.tubs.ibr.dtn.chat.service;
 
 import java.util.Date;
 import java.util.StringTokenizer;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
+import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -54,6 +51,7 @@ import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
+import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.chat.MainActivity;
@@ -62,9 +60,12 @@ import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Message;
 import de.tubs.ibr.dtn.chat.core.Roster;
 
-public class ChatService extends Service {
+public class ChatService extends IntentService {
 	
 	private static final String TAG = "ChatService";
+	
+	// mark a specific bundle as delivered
+	private static final String  MARK_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.MARK_DELIVERED";
 	
 	private static final int MESSAGE_NOTIFICATION = 1;
 	public static final String ACTION_OPENCHAT = "de.tubs.ibr.dtn.chat.OPENCHAT";
@@ -75,9 +76,6 @@ public class ChatService extends Service {
 	
 	private static String visibleBuddy = null;
 	
-	// executor to process local job queue
-	private ExecutorService _executor = null;
-	
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
     private final IBinder mBinder = new LocalBinder();
@@ -87,6 +85,10 @@ public class ChatService extends Service {
     
 	// DTN client to talk with the DTN service
 	private DTNClient _client = null;
+	
+	public ChatService() {
+		super(TAG);
+	}
 	
     private DataHandler _data_handler = new DataHandler()
     {
@@ -99,20 +101,14 @@ public class ChatService extends Service {
 
 		@Override
 		public void endBundle() {
+			de.tubs.ibr.dtn.api.BundleID received = new de.tubs.ibr.dtn.api.BundleID(this.current);
 			
-			final de.tubs.ibr.dtn.api.BundleID received = new de.tubs.ibr.dtn.api.BundleID(this.current);
-
 			// run the queue and delivered process asynchronously
-			_executor.execute(new Runnable() {
-		        public void run() {
-					try {
-						_client.getSession().delivered(received);
-					} catch (Exception e) {
-						Log.e(TAG, "Can not mark bundle as delivered.", e);
-					}
-		        }
-			});
-			
+			Intent i = new Intent(ChatService.this, ChatService.class);
+			i.setAction(MARK_DELIVERED_INTENT);
+			i.putExtra("bundleid", received);
+			startService(i);
+
 			this.current = null;
 		}
 
@@ -238,41 +234,6 @@ public class ChatService extends Service {
 	public IBinder onBind(Intent intent) {
 		return mBinder;
 	}
-	
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(TAG, "Received start id " + startId + ": " + intent);
-        
-        if (intent == null) return super.onStartCommand(intent, flags, startId);
-        if (intent.getAction() == null) return super.onStartCommand(intent, flags, startId);
-
-        // create a task to process concurrently
-        if (intent.getAction().equals(AlarmReceiver.ACTION))
-        {
-        	_executor.execute(new BroadcastPresence(startId));
-			return START_REDELIVER_INTENT;
-        }
-        // create a task to check for messages
-        else if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.RECEIVE))
-        {
-        	final int stopId = startId;
-        	
-			// schedule next bundle query
-        	_executor.execute(new Runnable() {
-		        public void run() {
-			        try {
-		        		while (_client.getSession().queryNext());
-		        	} catch (Exception e) { };
-		        	
-		        	stopSelfResult(stopId);
-		        }
-			});
-			
-        	return START_REDELIVER_INTENT;
-        }
-        
-        return super.onStartCommand(intent, flags, startId);
-	}
 
 	@Override
 	public void onCreate()
@@ -284,9 +245,6 @@ public class ChatService extends Service {
 		screen_filter.addAction(Intent.ACTION_SCREEN_OFF);
 		registerReceiver(_screen_receiver, screen_filter);
 		_screen_off = false;
-		
-		// create a new executor for tasks
-		_executor = Executors.newSingleThreadExecutor();
 		
 		// create a new client object
 		_client = new DTNClient();
@@ -339,29 +297,16 @@ public class ChatService extends Service {
 	{
 		unregisterReceiver(_screen_receiver);
 		
-		try {
-			// stop executor
-			_executor.shutdown();
-			
-			// ... and wait until all jobs are done
-			if (!_executor.awaitTermination(10, TimeUnit.SECONDS)) {
-				_executor.shutdownNow();
-			}
-			
-			// destroy DTN client
-			_client.terminate();
-		} catch (InterruptedException e) {
-			Log.e(TAG, "Interrupted on service destruction.", e);
-		}
-		
 		// close the roster (plus db connection)
 		this.roster.close();
+		
+		// destroy DTN client
+		_client.terminate();
 		
 		// clear all variables
 		this.roster = null;
 		_client = null;
-		_executor = null;
-		
+
 		super.onDestroy();
 		
 		Log.i(TAG, "service destroyed.");
@@ -421,52 +366,6 @@ public class ChatService extends Service {
 		b.setStatus(status);
 		b.setPresence(presence);
 		getRoster().store(b);
-	}
-	
-	private class BroadcastPresence implements Runnable {
-		
-		private int startId = 0;
-		
-		public BroadcastPresence(int startId)
-		{
-			this.startId = startId;
-		}
-
-		@Override
-		public void run() {
-			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ChatService.this);
-			
-			// check if the screen is active
-			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		    Boolean screenOn = pm.isScreenOn();
-			
-		    String presence_tag = preferences.getString("presencetag", "auto");
-		    String presence_nick = preferences.getString("editNickname", "Nobody");
-		    String presence_text = preferences.getString("statustext", "");
-		    
-		    if (presence_tag.equals("auto"))
-		    {
-			    if (screenOn)
-			    {
-			    	presence_tag = "chat";
-			    }
-			    else
-			    {
-			    	presence_tag = "away";
-			    }
-		    }
-			
-			Log.i(TAG, "push out presence; " + presence_tag);
-			try {
-				sendPresence(presence_tag, presence_nick, presence_text);
-			} catch (Exception e) { }
-			
-			Editor edit = preferences.edit();
-			edit.putLong("lastpresenceupdate", (new Date().getTime()));
-			edit.commit();
-			
-			stopSelfResult(startId);
-		}
 	}
 	
 	public synchronized static void setVisible(String buddyId) {
@@ -550,5 +449,70 @@ public class ChatService extends Service {
 				startService(tts_intent);
 			}
 		}
+	}
+
+	@Override
+	protected void onHandleIntent(Intent intent) {
+		String action = intent.getAction();
+		
+        // create a task to process concurrently
+        if (AlarmReceiver.ACTION.equals(action))
+        {
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ChatService.this);
+			
+			// check if the screen is active
+			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		    Boolean screenOn = pm.isScreenOn();
+			
+		    String presence_tag = preferences.getString("presencetag", "auto");
+		    String presence_nick = preferences.getString("editNickname", "Nobody");
+		    String presence_text = preferences.getString("statustext", "");
+		    
+		    if (presence_tag.equals("auto"))
+		    {
+			    if (screenOn)
+			    {
+			    	presence_tag = "chat";
+			    }
+			    else
+			    {
+			    	presence_tag = "away";
+			    }
+		    }
+			
+			Log.i(TAG, "push out presence; " + presence_tag);
+			try {
+				sendPresence(presence_tag, presence_nick, presence_text);
+			} catch (Exception e) { }
+			
+			Editor edit = preferences.edit();
+			edit.putLong("lastpresenceupdate", (new Date().getTime()));
+			edit.commit();
+        }
+        // create a task to check for messages
+        else if (de.tubs.ibr.dtn.Intent.RECEIVE.equals(action))
+        {
+        	try {
+				while (_client.getSession().queryNext());
+			} catch (SessionDestroyedException e) {
+				Log.e(TAG, "Can not query for bundle", e);
+			} catch (InterruptedException e) {
+				Log.e(TAG, "Can not query for bundle", e);
+			}
+        }
+        else if (MARK_DELIVERED_INTENT.equals(action))
+        {
+        	de.tubs.ibr.dtn.api.BundleID bundleid = intent.getParcelableExtra("bundleid");
+        	if (bundleid == null) {
+        		Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
+        		return;
+        	}
+        	
+    		try {
+    			_client.getSession().delivered(bundleid);
+    		} catch (Exception e) {
+    			Log.e(TAG, "Can not mark bundle as delivered.", e);
+    		}	
+        }
 	}
 }

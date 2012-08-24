@@ -50,7 +50,7 @@ public class MainActivity extends FragmentActivity
 	private ChatServiceHelper service_helper = null;
 	private final String TAG = "MainActivity";
 	private Boolean hasLargeLayout = false;
-	private String selectBuddy = null;
+//	private String selectBuddy = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -91,10 +91,6 @@ public class MainActivity extends FragmentActivity
 	    {
 	    	hasLargeLayout = true;
 	    }
-
-		if ((getIntent() != null) && getIntent().hasExtra("buddy")) {
-			selectBuddy = getIntent().getStringExtra("buddy");
-		}
 	}
 
 	@Override
@@ -116,15 +112,6 @@ public class MainActivity extends FragmentActivity
 			service_helper.unbind();
 		}
 	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		if (selectBuddy != null) {
-			this.selectBuddy(selectBuddy);
-			selectBuddy = null;
-		}
-	}
 	
 	@Override
 	protected void onNewIntent(Intent intent) {
@@ -132,7 +119,7 @@ public class MainActivity extends FragmentActivity
 		
 		// get ID of the buddy
 		if ((intent != null) && intent.hasExtra("buddy")) {
-			selectBuddy = intent.getStringExtra("buddy");
+			this.selectBuddy(intent.getStringExtra("buddy"));
 		}
 	}
 
@@ -327,9 +314,8 @@ public class MainActivity extends FragmentActivity
 			Log.e(TAG, "failure while checking for service error", e);
 		}
 		
-		if (selectBuddy != null) {
-			this.selectBuddy(selectBuddy);
-			selectBuddy = null;
+		if (getIntent().hasExtra("buddy")) {
+			this.selectBuddy(getIntent().getStringExtra("buddy"));
 		}
 	}
 

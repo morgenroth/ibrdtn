@@ -8,12 +8,6 @@ import android.net.Uri;
 import de.tubs.ibr.dtn.chat.R;
 
 public class Utils {
-//	public static int ANDROID_API_ACTIONBAR = 16;
-//	public static int ANDROID_API_ACTIONBAR_SETICON = 17;
-	
-	public static int ANDROID_API_ACTIONBAR = 11;
-	public static int ANDROID_API_ACTIONBAR_SETICON = 14;
-	
 	public static void showInstallServiceDialog(final Activity activity) {
 		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
 		    @Override

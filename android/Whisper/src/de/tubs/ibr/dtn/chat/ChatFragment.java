@@ -285,12 +285,11 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	private void onContentChanged()
 	{
 		Buddy buddy = null;
-		Roster roster = null;
 		
 		try {
+			Roster roster = this.getRoster();
+			
 			if (buddyId != null) {
-				roster = this.getRoster();
-				
 				// load buddy from roster
 				buddy = roster.get( buddyId );
 				
