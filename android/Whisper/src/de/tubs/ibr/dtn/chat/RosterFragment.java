@@ -224,10 +224,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		// select the list item
 		this.selectedBuddy = buddyId;
 		if (persistantSelection) this.view.setSelected(this.selectedBuddy);
-
-		if (buddyId != null) {
-			mCallback.onBuddySelected(buddyId);
-		}
+		mCallback.onBuddySelected(buddyId);
 	}
 
 	@Override

@@ -173,7 +173,7 @@ public class MainActivity extends FragmentActivity
 
             // Call a method in the ChatFragment to update its content
         	chatFrag.onBuddySelected(buddyId);
-        } else {
+        } else if (buddyId != null) {
             // Otherwise, we're in the one-pane layout and must swap frags...
         	Object chatFragCandidate = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
         	if (chatFragCandidate instanceof ChatFragment) {
