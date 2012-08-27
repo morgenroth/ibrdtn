@@ -19,6 +19,8 @@
     <color name="dark_green">#233400</color>
     <color name="dark_yellow">#9c5300</color>
  -->
+ 	<color name="sidelist_background">#fff0f0f0</color>
+ 
  	<color name="list_background">#ff111111</color>
  	<color name="actionbar_text">#ffffffff</color>
  	<color name="actionbar_label">#ffDDDDDD</color>

@@ -5,14 +5,18 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ListFragment;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -22,13 +26,15 @@ import de.tubs.ibr.dtn.chat.service.ChatService;
 import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ChatServiceListener;
 import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ServiceNotConnectedException;
 
-public class RosterFragment extends ListFragment implements ChatServiceListener {
+public class RosterFragment extends Fragment implements ChatServiceListener {
 	private final String TAG = "RosterFragment";
 	private RosterView view = null;
 
 	private String selectedBuddy = null;
 	private OnBuddySelectedListener mCallback = null;
 	private boolean persistantSelection = true;
+	
+	private ListView lv = null;
 
     @Override
 	public void onAttach(Activity activity) {
@@ -56,6 +62,13 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		} else {
 			this.persistantSelection = true;
 		}
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		View v = inflater.inflate(R.layout.roster_fragment, container, false);
+		lv = (ListView)v.findViewById(R.id.list_buddies);
+		return v;
 	}
 
 	// Container Activity must implement this interface
@@ -87,14 +100,15 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		
-		this.getListView().setOnCreateContextMenuListener(this);
+		this.lv.setOnCreateContextMenuListener(this);
 		
-		this.setListAdapter(null);
+		this.lv.setAdapter(null);
 		
 		View v = View.inflate(this.getActivity(), R.layout.roster_me, null);
-		this.getListView().addHeaderView(v, null, true);
+		this.lv.addHeaderView(v, null, true);
 		
-		this.setListAdapter(this.view);
+		this.lv.setAdapter(this.view);
+		this.lv.setOnItemClickListener(_click_listener);
 	}
 
 	@Override
@@ -147,9 +161,9 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		    	presence_text = "<" + getResources().getString(R.string.no_status_message) + ">";
 		    }
 		    
-		    ImageView iconPresence = (ImageView)getListView().findViewById(R.id.me_icon);
-		    TextView textNick = (TextView)getListView().findViewById(R.id.me_nickname);
-		    TextView textMessage = (TextView)getListView().findViewById(R.id.me_statusmessage);
+		    ImageView iconPresence = (ImageView)lv.findViewById(R.id.me_icon);
+		    TextView textNick = (TextView)lv.findViewById(R.id.me_nickname);
+		    TextView textMessage = (TextView)lv.findViewById(R.id.me_statusmessage);
 		    
 		    int presence_icon = R.drawable.online;
 			if (presence_tag != null)
@@ -183,18 +197,18 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 		}
 	}
 	
-	@Override
-	public void onListItemClick(ListView l, View v, int position, long id) {
-		ViewHolder holder = (ViewHolder)v.getTag();
-		
-		if (holder == null) {
-			showMeDialog();
-		} else if (holder.buddy != null) {
-			onBuddySelected(holder.buddy.getEndpoint());
+	private OnItemClickListener _click_listener = new OnItemClickListener() {
+		@Override
+		public void onItemClick(AdapterView<?> arg0, View v, int arg2, long arg3) {
+			ViewHolder holder = (ViewHolder)v.getTag();
+			
+			if (holder == null) {
+				showMeDialog();
+			} else if (holder.buddy != null) {
+				onBuddySelected(holder.buddy.getEndpoint());
+			}
 		}
-		
-		super.onListItemClick(l, v, position, id);
-	}
+	};
 	
 	private void showMeDialog() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -235,7 +249,7 @@ public class RosterFragment extends ListFragment implements ChatServiceListener 
 	@Override
 	public void onServiceConnected(ChatService service) {
 		// activate roster view
-		this.setListAdapter(this.view);
+		this.lv.setAdapter(this.view);
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
 		this.view.setShowOffline(!prefs.getBoolean("hideOffline", false));
 		if (persistantSelection) this.view.setSelected(selectedBuddy);

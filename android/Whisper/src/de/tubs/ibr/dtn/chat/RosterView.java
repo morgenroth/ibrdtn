@@ -207,18 +207,12 @@ public class RosterView extends BaseAdapter implements ChatServiceListener {
 			holder.hinticon.setVisibility(View.GONE);
 		}
 		
-		if (selectedBuddy != null) {
-			if (selectedBuddy.equals(holder.buddy.getEndpoint())) {
-				holder.layout.setBackgroundColor(convertView.getResources().getColor(R.color.chat_active));
-				convertView.setActivated(true);
-				holder.hinticon.setVisibility(View.VISIBLE);
-				holder.hinticon.setImageResource(R.drawable.ic_selected);
-			} else {
-				convertView.setActivated(false);
-				holder.layout.setBackgroundColor(convertView.getResources().getColor(android.R.color.transparent));
-			}
-		} else {
-			holder.layout.setBackgroundColor(convertView.getResources().getColor(android.R.color.transparent));
+		convertView.setActivated(false);
+		
+		if ((selectedBuddy != null) && (selectedBuddy.equals(holder.buddy.getEndpoint()))) {
+			convertView.setActivated(true);
+			holder.hinticon.setVisibility(View.VISIBLE);
+			holder.hinticon.setImageResource(R.drawable.ic_selected);
 		}
 		
 		return convertView;
