@@ -50,7 +50,6 @@ public class MainActivity extends FragmentActivity
 	private ChatServiceHelper service_helper = null;
 	private final String TAG = "MainActivity";
 	private Boolean hasLargeLayout = false;
-//	private String selectBuddy = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
