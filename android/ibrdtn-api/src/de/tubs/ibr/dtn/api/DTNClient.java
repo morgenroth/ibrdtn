@@ -41,7 +41,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
 
-public class DTNClient {
+public final class DTNClient {
 	
 	private static final String TAG = "DTNClient";
 
@@ -62,12 +62,12 @@ public class DTNClient {
     private ExecutorService executor = null;
     
     private String _packageName = null;
-	
-    /**
-     * On every successful registration the sessionConnected() method is called.
-     * @param session The new initialized session.
-     */
-	protected void onConnected(Session session) { }
+    
+    private SessionConnection _session_handler = null;
+    
+    public DTNClient(SessionConnection handler) {
+    	this._session_handler = handler;
+    }
 	
 	/**
 	 * If blocking is enabled, the getSession() method will block until a valid session
@@ -111,6 +111,7 @@ public class DTNClient {
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
+			_session_handler.onSessionDisconnected();
 			DTNClient.this.service = null;
 		}
 	};
@@ -146,7 +147,7 @@ public class DTNClient {
 					DTNClient.this.session = this.session;
 					DTNClient.this.notifyAll();
 				}
-				onConnected(this.session);
+				_session_handler.onSessionConnected(this.session);
 			} catch (Exception e) {
 				register(reg);
 			}
@@ -332,11 +333,6 @@ public class DTNClient {
   		
 		// create new executor
 		executor = Executors.newSingleThreadScheduledExecutor();
-		
-		// register to daemon events
-		IntentFilter ifilter = new IntentFilter(de.tubs.ibr.dtn.Intent.STATE);
-		ifilter.addCategory(Intent.CATEGORY_DEFAULT);
-  		context.registerReceiver(_state_receiver, ifilter );
   		
 		// register to daemon events
 		IntentFilter rfilter = new IntentFilter(de.tubs.ibr.dtn.Intent.REGISTRATION);
