@@ -23,9 +23,11 @@ import android.widget.Toast;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
+import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
+import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
@@ -38,15 +40,19 @@ public class DTNExampleAppActivity extends Activity {
 	private ExecutorService _executor = null;
 	
 	// DTN client to talk with the DTN service
-	private LocalDTNClient _client = null;
+	private DTNClient _client = null;
 	
-	private class LocalDTNClient extends DTNClient {
+	private SessionConnection _session_listener = new SessionConnection() {
 		@Override
-		protected void onConnected(Session session) {
+		public void onSessionConnected(Session arg0) {
 			Log.d(TAG, "DTN session connected");
 			
 	        // check for bundles first
 	        _executor.execute(_query_task);
+		}
+
+		@Override
+		public void onSessionDisconnected() {
 		}
 	};
 	
@@ -85,7 +91,7 @@ public class DTNExampleAppActivity extends Activity {
         _executor = Executors.newSingleThreadExecutor();
         
         // create a new DTN client
-        _client = new LocalDTNClient();
+        _client = new DTNClient(_session_listener);
         
         // register to RECEIVE intent
 		IntentFilter receive_filter = new IntentFilter(de.tubs.ibr.dtn.Intent.RECEIVE);
