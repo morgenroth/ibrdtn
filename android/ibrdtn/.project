@@ -3,8 +3,6 @@
 	<name>ibrdtn</name>
 	<comment></comment>
 	<projects>
-		<project>android-ibrdtn-api</project>
-		<project>ibrdtnlib</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -27,9 +25,15 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
+		<buildCommand>
+			<name>org.eclipse.linuxtools.rpm.rpmlint.rpmlintBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.eclipse.linuxtools.rpm.rpmlint.rpmlintNature</nature>
 	</natures>
 </projectDescription>
