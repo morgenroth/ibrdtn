@@ -109,6 +109,16 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 		
 		this.lv.setAdapter(this.view);
 		this.lv.setOnItemClickListener(_click_listener);
+		
+		if ((savedInstanceState != null) && savedInstanceState.containsKey("selectedBuddy")) {
+			selectedBuddy = savedInstanceState.getString("selectedBuddy");
+		}
+	}
+	
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		outState.putString("selectedBuddy", selectedBuddy);
 	}
 
 	@Override
