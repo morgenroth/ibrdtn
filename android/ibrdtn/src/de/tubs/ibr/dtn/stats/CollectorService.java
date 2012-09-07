@@ -9,33 +9,30 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 
-import android.app.Service;
+import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.DTNClient;
+import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
+import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 
-public class CollectorService extends Service {
+public class CollectorService extends IntentService {
 	
 	public final static String DELIVER_DATA = "de.tubs.ibr.dtn.stats.DELIVER_DATA";
 	public final static String REC_DATA = "de.tubs.ibr.dtn.stats.REC_DATA";
 	private final static String TAG = "CollectorService";
-	private ExecutorService executor = null;
 	private Boolean _connected = false;
 	
 	private final long LIMIT_FILESIZE = 500000;
@@ -44,19 +41,21 @@ public class CollectorService extends Service {
 	private final SingletonEndpoint deliver_endpoint = new SingletonEndpoint("dtn://quorra.ibr.cs.tu-bs.de/datacollector");
 	
 	// DTN client to talk with the DTN service
-	private LocalDTNClient _client = null;
+	private DTNClient _client = null;
 	
-	private class LocalDTNClient extends DTNClient {
+	private SessionConnection _session_listener = new SessionConnection() {
 		@Override
-		protected void onConnected(Session session) {
-			super.onConnected(session);
+		public void onSessionConnected(Session session) {
 			setConnected(true);
 		}
-	};
 
-	@Override
-	public IBinder onBind(Intent arg0) {
-		return null;
+		@Override
+		public void onSessionDisconnected() {
+		}
+	};
+	
+	public CollectorService() {
+		super(TAG);
 	}
 	
 	private synchronized void setConnected(Boolean val) {
@@ -70,9 +69,8 @@ public class CollectorService extends Service {
 
 	@Override
 	public void onCreate() {
-		executor = Executors.newSingleThreadExecutor();
-		setConnected(false);
 		super.onCreate();
+		setConnected(false);
 	}
 	
 	private void createSession() {
@@ -83,7 +81,7 @@ public class CollectorService extends Service {
         
 		try {
 	        // create a new DTN client
-	        _client = new LocalDTNClient();
+	        _client = new DTNClient(_session_listener);
 			_client.initialize(this, reg);
 		} catch (ServiceNotAvailableException e) {
 			// error
@@ -98,30 +96,17 @@ public class CollectorService extends Service {
 			_client.unregister();
 		}
 		
-		try {
-			// stop executor
-			executor.shutdown();
-			
-			// ... and wait until all jobs are done
-			if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
-				executor.shutdownNow();
-			}
-		} catch (InterruptedException e) {
-			Log.e(TAG, "Interrupted on service destruction.", e);
-		}
-		
 		if (_client != null) {		
 			_client.terminate();
 		}
 		
 		// clear all variables
-		executor = null;
 		_client = null;
 		
 		super.onDestroy();
 	}
 	
-	private void performDataRecording(int startId, String data) {
+	private void performDataRecording(String data) {
 		synchronized(datalock) {
 			try {
 				FileOutputStream output = openFileOutput("events.dat", Context.MODE_PRIVATE | Context.MODE_APPEND);
@@ -155,11 +140,9 @@ public class CollectorService extends Service {
 				Log.e(TAG, "Failed to open data file for statistic logging", e);
 			}
 		}
-		
-		stopSelfResult(startId);
 	}
 	
-	private void performDataDelivery(int startId) {
+	private void performDataDelivery() {
 		// wait until the DTN service is connected
 		try {
 			CollectorService.this.waitConnected();
@@ -221,40 +204,23 @@ public class CollectorService extends Service {
 			Log.e(TAG, "error", e);
 		} catch (InterruptedException e) {
 			Log.e(TAG, "interrupted", e);
-		} finally {
-			stopSelfResult(startId);
 		}
 	}
 
 	@Override
-	public int onStartCommand(Intent intent, int flags, final int startId) {
-		if (intent == null) return super.onStartCommand(intent, flags, startId);
+	protected void onHandleIntent(Intent intent) {
+		if (intent == null) return;;
 
 		if ( DELIVER_DATA.equals( intent.getAction() ) ) {
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Compress and deliver");
 			if (_client == null) createSession();
-			executor.execute(new Runnable() {
-				@Override
-				public void run() {
-					performDataDelivery(startId);
-				}
-			});
-			return Service.START_REDELIVER_INTENT;
+			performDataDelivery();
 		} else if ( REC_DATA.equals( intent.getAction() ) ) {
 			if ( intent.hasExtra("xmldata") ) {
 				final String data = intent.getStringExtra("xmldata");
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Data recording: " + data);
-				
-				executor.execute(new Runnable() {
-					@Override
-					public void run() {
-						performDataRecording(startId, data);
-					}
-				});
-				return Service.START_REDELIVER_INTENT;
+				performDataRecording(data);
 			}
 		}
-		
-		return super.onStartCommand(intent, flags, startId);
 	}
 }
