@@ -50,6 +50,7 @@ public class MainActivity extends FragmentActivity
 	private ChatServiceHelper service_helper = null;
 	private final String TAG = "MainActivity";
 	private Boolean hasLargeLayout = false;
+	private String showContactEID = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -90,6 +91,10 @@ public class MainActivity extends FragmentActivity
 	    {
 	    	hasLargeLayout = true;
 	    }
+	    
+		if (getIntent().hasExtra("buddy")) {
+			showContactEID = getIntent().getStringExtra("buddy");
+		}
 	}
 
 	@Override
@@ -148,6 +153,8 @@ public class MainActivity extends FragmentActivity
 	}
 	
 	public void selectBuddy(String buddyId) {
+		showContactEID = null;
+		
     	// get the roster list
 		RosterFragment rosterFrag = (RosterFragment)
                 getSupportFragmentManager().findFragmentById(R.id.roster_fragment);
@@ -313,8 +320,8 @@ public class MainActivity extends FragmentActivity
 			Log.e(TAG, "failure while checking for service error", e);
 		}
 		
-		if (getIntent().hasExtra("buddy")) {
-			this.selectBuddy(getIntent().getStringExtra("buddy"));
+		if (showContactEID != null) {
+			this.selectBuddy(showContactEID);
 		}
 	}
 
