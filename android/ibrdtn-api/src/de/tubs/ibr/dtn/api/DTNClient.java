@@ -68,6 +68,17 @@ public final class DTNClient {
     public DTNClient(SessionConnection handler) {
     	this._session_handler = handler;
     }
+    
+    public DTNClient() {
+    	// add dummy handler
+    	this._session_handler = new SessionConnection() {
+			@Override
+			public void onSessionConnected(Session session) { }
+
+			@Override
+			public void onSessionDisconnected() { }
+    	};
+    }
 	
 	/**
 	 * If blocking is enabled, the getSession() method will block until a valid session
