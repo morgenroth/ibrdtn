@@ -45,6 +45,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.BundleID;
+import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DataHandler;
@@ -52,6 +53,7 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
+import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.dtalkie.db.Message;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
@@ -90,13 +92,17 @@ public class DTalkieService extends Service {
     private final IBinder mBinder = new LocalBinder();
     
     // basic dtn client
-    private LocalDTNClient _client = null;
-    
-	private class LocalDTNClient extends DTNClient {
+    private DTNClient _client = null;
+	
+	private SessionConnection _session_listener = new SessionConnection() {
 		@Override
-		protected void onConnected(Session session) {
+		public void onSessionConnected(Session arg0) {
 			Log.d(TAG, "DTN session connected");
 			_state = DTalkieState.READY;
+		}
+
+		@Override
+		public void onSessionDisconnected() {
 		}
 	};
 
@@ -317,7 +323,7 @@ public class DTalkieService extends Service {
     	_registration.add(DTALKIE_GROUP_EID);
 		
 		// register own data handler for incoming bundles
-    	_client = new LocalDTNClient();
+    	_client = new DTNClient(_session_listener);
 		_client.setDataHandler(_data_handler);
 		
 		try {

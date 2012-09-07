@@ -3,7 +3,6 @@
 	<name>Whisper</name>
 	<comment></comment>
 	<projects>
-		<project>android-ibrdtn-api</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
