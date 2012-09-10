@@ -27,6 +27,7 @@ import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -180,10 +181,14 @@ public class RosterView extends BaseAdapter {
 			holder.hinticon.setVisibility(View.GONE);
 		}
 		
-		convertView.setActivated(false);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			convertView.setActivated(false);
+		}
 		
 		if ((selectedBuddy != null) && (selectedBuddy.equals(holder.buddy.getEndpoint()))) {
-			convertView.setActivated(true);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				convertView.setActivated(true);
+			}
 			holder.hinticon.setVisibility(View.VISIBLE);
 			holder.hinticon.setImageResource(R.drawable.ic_selected);
 		}

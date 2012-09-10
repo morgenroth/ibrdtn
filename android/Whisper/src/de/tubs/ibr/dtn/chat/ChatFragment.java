@@ -358,7 +358,7 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 			
 			this.view.refresh(roster);
 		} catch (ServiceNotConnectedException e) {
-			Log.e(TAG, "Do not update the view due to missing service.");
+			// service not available yet
 		}
 	}
 	
