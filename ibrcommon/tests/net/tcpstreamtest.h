@@ -40,6 +40,7 @@ class tcpstreamtest : public CPPUNIT_NS :: TestFixture
 		StreamChecker(int chars = 10);
 		~StreamChecker();
 
+		virtual void setup();
 		virtual void run();
 		virtual void __cancellation();
 
@@ -59,9 +60,6 @@ class tcpstreamtest : public CPPUNIT_NS :: TestFixture
 	protected:
 		void baseTest (void);
 		void runTest (void);
-
-	private:
-		StreamChecker *_checker;
 };
 
 #endif /* TCPSTREAMTEST_H_ */

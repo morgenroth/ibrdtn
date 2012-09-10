@@ -44,7 +44,6 @@ void tcpstreamtest :: baseTest (void)
 tcpstreamtest::StreamChecker::StreamChecker(int chars)
  : _srv(), _chars(chars)
 {
-	_srv.bind(4343);
 }
 
 tcpstreamtest::StreamChecker::~StreamChecker()
@@ -54,12 +53,12 @@ tcpstreamtest::StreamChecker::~StreamChecker()
 
 void tcpstreamtest::runTest()
 {
-	_checker = new StreamChecker(10);
+	StreamChecker _checker(10);
 
 	char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
 	// start the streamchecker
-	_checker->start();
+	_checker.start();
 
 	try {
 		ibrcommon::tcpclient client("127.0.0.1", 4343);
@@ -80,16 +79,18 @@ void tcpstreamtest::runTest()
 		client.close();
 	} catch (const ibrcommon::tcpclient::SocketException&) { };
 
-	_checker->stop();
-	_checker->join();
-
-	delete _checker;
+	_checker.stop();
+	_checker.join();
 }
 
 void tcpstreamtest::StreamChecker::__cancellation()
 {
 	_srv.shutdown();
 	_srv.close();
+}
+
+void tcpstreamtest::StreamChecker::setup() {
+	_srv.bind(4343);
 }
 
 void tcpstreamtest::StreamChecker::run()
