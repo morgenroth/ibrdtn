@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
@@ -45,6 +46,7 @@ import de.tubs.ibr.dtn.chat.service.Utils;
 public class MainActivity extends FragmentActivity 
 	implements RosterFragment.OnBuddySelectedListener,
 	ChatFragment.OnMessageListener,
+	RosterProvider,
 	ChatServiceListener {
 
 	private ChatServiceHelper service_helper = null;
@@ -61,40 +63,58 @@ public class MainActivity extends FragmentActivity
 
 	    // Check that the activity is using the layout version with
 	    // the fragment_container FrameLayout
-	    if (findViewById(R.id.fragment_container) != null) {
-	    	// remind that this is a large layout
-	    	hasLargeLayout = false;
+	    hasLargeLayout = (findViewById(R.id.chat_fragment) != null);
 
-	    	// However, if we're being restored from a previous state,
-	    	// then we don't need to do anything and should return or else
-	    	// we could end up with overlapping fragments.
-	    	if (savedInstanceState != null) {
-	    		return;
-	    	}
-
-			// Create an instance of the roster fragment
-			RosterFragment roster = new RosterFragment();
-
-			// In case this activity was started with special instructions from an Intent,
-			// pass the Intent's extras to the fragment as arguments
-			Bundle args = getIntent().getExtras();
-			if (args == null) {
-				args = new Bundle();
-			}
-			args.putBoolean("persistantSelection", false);
-			roster.setArguments(args);
-
-			// Add the fragment to the 'fragment_container' FrameLayout
-			getSupportFragmentManager().beginTransaction().add(R.id.fragment_container, roster).commit();
-	    }
-	    else
-	    {
-	    	hasLargeLayout = true;
+	    RosterFragment roster = getRosterFragment();
+		if (roster == null) {
+			roster = new RosterFragment();
+			
+		    // clear the back stack
+		    FragmentManager fm = this.getSupportFragmentManager();
+		    for(int i = 0; i < fm.getBackStackEntryCount(); ++i) {    
+		        fm.popBackStack();
+		    }
+		    	
+			// add chat fragment to the activity
+			getSupportFragmentManager()
+				.beginTransaction()
+				.replace(R.id.fragment_container, roster)
+				.commit();
 	    }
 	    
+		// open the buddy directly if the intent has one specified
 		if (getIntent().hasExtra("buddy")) {
 			showContactEID = getIntent().getStringExtra("buddy");
 		}
+		else if (savedInstanceState != null) {
+			if (savedInstanceState.containsKey("selectedBuddy")) {
+				showContactEID = savedInstanceState.getString("selectedBuddy");
+			}
+		}
+	}
+	
+	public RosterFragment getRosterFragment() {
+		try {
+			return (RosterFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+		} catch (ClassCastException e) {
+			return null;
+		}
+	}
+	
+	public ChatFragment getChatFragment() {
+		try {
+			return (ChatFragment)getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+		} catch (ClassCastException e) { }
+
+		try {
+		    if (getSupportFragmentManager().findFragmentById(R.id.chat_fragment) != null) {
+		    	return (ChatFragment)getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
+		    }
+		} catch (ClassCastException e) {
+			return null;
+		}
+		
+		return null;
 	}
 
 	@Override
@@ -107,6 +127,12 @@ public class MainActivity extends FragmentActivity
 	protected void onStart() {
 		super.onStart();
 		service_helper.bind();
+		
+		// set the correct behavior of the roster
+		RosterFragment roster = getRosterFragment();
+		if (roster != null) {
+			roster.setPersistantSelection(hasLargeLayout);
+		}
 	}
 
 	@Override
@@ -152,67 +178,62 @@ public class MainActivity extends FragmentActivity
 	    }
 	}
 	
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		ChatFragment chat = getChatFragment();
+		if ((chat != null) && chat.isVisible()) {
+			if (chat.getSelectedBuddy() != null) {
+				outState.putString("selectedBuddy", chat.getSelectedBuddy());
+			}
+		}
+	}
+
 	public void selectBuddy(String buddyId) {
 		showContactEID = null;
 		
-    	// get the roster list
-		RosterFragment rosterFrag = (RosterFragment)
-                getSupportFragmentManager().findFragmentById(R.id.roster_fragment);
-		
-		if (rosterFrag != null) {
+		RosterFragment roster = getRosterFragment();
+		if (roster != null) {
 			// select buddy on buddy list
-			rosterFrag.onBuddySelected(buddyId);
-		} else {
-			onBuddySelected(buddyId);
+			roster.onBuddySelected(buddyId);
 		}
 	}
 
 	@Override
 	public void onBuddySelected(String buddyId) {
-        // The user selected the buddy from the RosterFragment
-        // Do something here to display that chat
-		ChatFragment chatFrag = (ChatFragment)
-                getSupportFragmentManager().findFragmentById(R.id.chat_fragment);
-
-        if (chatFrag != null) {
-            // If chat frag is available, we're in two-pane layout...
-
-            // Call a method in the ChatFragment to update its content
-        	chatFrag.onBuddySelected(buddyId);
-        } else if (buddyId != null) {
-            // Otherwise, we're in the one-pane layout and must swap frags...
-        	Object chatFragCandidate = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-        	if (chatFragCandidate instanceof ChatFragment) {
-	    		chatFrag = (ChatFragment)chatFragCandidate;
-	    		if (chatFrag != null) {
-	                // Call a method in the ChatFragment to update its content
-	            	chatFrag.onBuddySelected(buddyId);
-	            	return;
-	    		}
-        	}
-
-            // Create fragment and give it an argument for the selected article
-        	ChatFragment newFragment = new ChatFragment();
-            Bundle args = new Bundle();
-            args.putString("buddyId", buddyId);
-            args.putBoolean("large_layout", this.hasLargeLayout);
-            newFragment.setArguments(args);
-        
+        // Call a method in the ChatFragment to update its content
+        if ((buddyId != null) && !this.hasLargeLayout) {
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.setTransition(FragmentTransaction.TRANSIT_NONE);
             transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right);
 
             // Replace whatever is in the fragment_container view with this fragment,
             // and add the transaction to the back stack so the user can navigate back
-            transaction.replace(R.id.fragment_container, newFragment);
+            ChatFragment chat = new ChatFragment();
+            
+            Bundle args = new Bundle();
+            args.putString("buddyId", buddyId);
+            chat.setArguments(args);
+            
+            transaction.replace(R.id.fragment_container, chat);
             transaction.addToBackStack(null);
 
             // Commit the transaction
             transaction.commit();
         }
+        
+    	ChatFragment chat = this.getChatFragment();
+    	if (chat != null) {
+    		chat.onBuddySelected(buddyId);
+    	}
+    	
+    	// update the content views
+    	this.onContentChanged(buddyId);
 	}
 	
+	@Override
 	public Roster getRoster() throws ServiceNotConnectedException {
+		if (this.service_helper == null) throw new ServiceNotConnectedException();
 		return this.service_helper.getService().getRoster();
 	}
 
@@ -298,6 +319,15 @@ public class MainActivity extends FragmentActivity
 
 	@Override
 	public void onContentChanged(String buddyId) {
+	    RosterFragment roster = getRosterFragment();
+	    if (roster != null) {
+	    	roster.onContentChanged(buddyId);
+	    }
+	    
+	    ChatFragment chat = getChatFragment();
+	    if (chat != null) {
+	    	chat.onContentChanged(buddyId);
+	    }
 	}
 
 	@Override
@@ -320,12 +350,29 @@ public class MainActivity extends FragmentActivity
 			Log.e(TAG, "failure while checking for service error", e);
 		}
 		
-		if (showContactEID != null) {
-			this.selectBuddy(showContactEID);
-		}
+	    RosterFragment frag_roster = getRosterFragment();
+	    if (frag_roster != null) {
+	    	frag_roster.onServiceConnected(service);
+	    }
+	    
+	    ChatFragment chat = getChatFragment();
+	    if (chat != null) {
+	    	chat.onServiceConnected(service);
+	    }
+		
+		this.selectBuddy(showContactEID);
 	}
 
 	@Override
 	public void onServiceDisconnected() {
+	    RosterFragment roster = getRosterFragment();
+	    if (roster != null) {
+	    	roster.onServiceDisconnected();
+	    }
+	    
+	    ChatFragment chat = getChatFragment();
+	    if (chat != null) {
+	    	chat.onServiceDisconnected();
+	    }
 	}
 }

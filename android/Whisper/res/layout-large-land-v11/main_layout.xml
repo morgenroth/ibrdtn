@@ -3,9 +3,9 @@
     android:orientation="horizontal"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
-
-    <fragment android:name="de.tubs.ibr.dtn.chat.RosterFragment"
-              android:id="@+id/roster_fragment"
+    
+	<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    	  android:id="@+id/fragment_container"
               android:layout_weight="1"
               android:layout_width="0dp"
               android:layout_height="match_parent" />

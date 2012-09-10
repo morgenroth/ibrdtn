@@ -22,6 +22,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.RosterView.ViewHolder;
 import de.tubs.ibr.dtn.chat.core.Buddy;
+import de.tubs.ibr.dtn.chat.core.Roster;
 import de.tubs.ibr.dtn.chat.service.ChatService;
 import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ChatServiceListener;
 import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ServiceNotConnectedException;
@@ -32,7 +33,8 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 
 	private String selectedBuddy = null;
 	private OnBuddySelectedListener mCallback = null;
-	private boolean persistantSelection = true;
+	private boolean persistantSelection = false;
+	private RosterProvider rProvider = null;
 	
 	private ListView lv = null;
 
@@ -48,26 +50,58 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
             throw new ClassCastException(activity.toString()
                     + " must implement OnBuddySelectedListener");
         }
+        
+        // get connection to the roster provider
+        try {
+        	rProvider = (RosterProvider) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement RosterProvider");
+        }
 	}
     
     @Override
-	public void onCreate(Bundle savedInstanceState) {
-    	this.view = new RosterView(getActivity(), this);
-    	this.view.onCreate(getActivity());
+	public void onDetach() {
+		super.onDetach();
+		rProvider = null;
+		mCallback = null;
+	}
 
-		super.onCreate(savedInstanceState);
-		
-		if ((this.getArguments() != null) && this.getArguments().containsKey("persistantSelection")) {
-			this.persistantSelection = this.getArguments().getBoolean("persistantSelection");
-		} else {
-			this.persistantSelection = true;
-		}
+    private synchronized RosterView getRosterView() {
+    	if (this.view == null) {
+    		this.view = new RosterView(getActivity(), this);
+    	}
+    	
+    	return this.view;
+    }
+    
+	@Override
+	public void onResume() {
+		super.onResume();
+		this.onContentChanged(null);
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		this.selectedBuddy = null;
+		this.view = null;
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.roster_fragment, container, false);
-		lv = (ListView)v.findViewById(R.id.list_buddies);
+		this.lv = (ListView)v.findViewById(R.id.list_buddies);
+		
+		this.lv.setOnCreateContextMenuListener(this);
+		this.lv.setAdapter(null);
+		
+		View roster_view = View.inflate(this.getActivity(), R.layout.roster_me, null);
+		this.lv.addHeaderView(roster_view, null, true);
+		
+		this.lv.setAdapter(getRosterView());
+		this.lv.setOnItemClickListener(_click_listener);
+		
 		return v;
 	}
 
@@ -77,39 +111,10 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
     }
 
 	@Override
-	public void onDestroy() {
-		super.onDestroy(); 
-
-		this.view.onDestroy(getActivity());
-		this.view = null;
-	}
-
-	@Override
-	public void onStart() {
-		super.onStart();
-		this.view.onStart(getActivity());
-	}
-
-	@Override
-	public void onStop() {
-		this.view.onStop(getActivity());
-		super.onStop();
-	}
-	
-	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		
-		this.lv.setOnCreateContextMenuListener(this);
-		
-		this.lv.setAdapter(null);
-		
-		View v = View.inflate(this.getActivity(), R.layout.roster_me, null);
-		this.lv.addHeaderView(v, null, true);
-		
-		this.lv.setAdapter(this.view);
-		this.lv.setOnItemClickListener(_click_listener);
-		
+
+		// restore selected buddy
 		if ((savedInstanceState != null) && savedInstanceState.containsKey("selectedBuddy")) {
 			selectedBuddy = savedInstanceState.getString("selectedBuddy");
 		}
@@ -118,7 +123,11 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		outState.putString("selectedBuddy", selectedBuddy);
+		
+		// save selected buddy
+		if (selectedBuddy != null) {
+			outState.putString("selectedBuddy", selectedBuddy);
+		}
 	}
 
 	@Override
@@ -145,7 +154,7 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 			{
 			case R.id.itemDelete:
 				this.onBuddySelected(null);
-				this.view.getRoster().remove(buddy);
+				this.getRoster().remove(buddy);
 				return true;
 			default:
 				return super.onContextItemSelected(item);
@@ -156,55 +165,61 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 		}
 	}
 	
-	private void onContentChanged()
-	{
-		if (this.getView() == null) return;
+	@Override
+	public void onContentChanged(String buddyId) {
+		if (this.getActivity() == null) return;
 		
-		if (this.view != null)
-		{
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
-		    String presence_tag = prefs.getString("presencetag", "auto");
-		    String presence_nick = prefs.getString("editNickname", "Nobody");
-		    String presence_text = prefs.getString("statustext", "");
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
+	    String presence_tag = prefs.getString("presencetag", "auto");
+	    String presence_nick = prefs.getString("editNickname", "Nobody");
+	    String presence_text = prefs.getString("statustext", "");
 
-		    if (presence_text.length() == 0) {
-		    	presence_text = "<" + getResources().getString(R.string.no_status_message) + ">";
-		    }
-		    
-		    ImageView iconPresence = (ImageView)lv.findViewById(R.id.me_icon);
-		    TextView textNick = (TextView)lv.findViewById(R.id.me_nickname);
-		    TextView textMessage = (TextView)lv.findViewById(R.id.me_statusmessage);
-		    
-		    int presence_icon = R.drawable.online;
-			if (presence_tag != null)
+	    if (presence_text.length() == 0) {
+	    	presence_text = "<" + getResources().getString(R.string.no_status_message) + ">";
+	    }
+	    
+	    ImageView iconPresence = (ImageView)lv.findViewById(R.id.me_icon);
+	    TextView textNick = (TextView)lv.findViewById(R.id.me_nickname);
+	    TextView textMessage = (TextView)lv.findViewById(R.id.me_statusmessage);
+	    
+	    int presence_icon = R.drawable.online;
+		if (presence_tag != null)
+		{
+			if (presence_tag.equalsIgnoreCase("unavailable"))
 			{
-				if (presence_tag.equalsIgnoreCase("unavailable"))
-				{
-					presence_icon = R.drawable.offline;
-				}
-				else if (presence_tag.equalsIgnoreCase("xa"))
-				{
-					presence_icon = R.drawable.xa;
-				}
-				else if (presence_tag.equalsIgnoreCase("away"))
-				{
-					presence_icon = R.drawable.away;
-				}
-				else if (presence_tag.equalsIgnoreCase("dnd"))
-				{
-					presence_icon = R.drawable.busy;
-				}
-				else if (presence_tag.equalsIgnoreCase("chat"))
-				{
-					presence_icon = R.drawable.online;
-				}
+				presence_icon = R.drawable.offline;
 			}
-			iconPresence.setImageResource(presence_icon);
-			textNick.setText(presence_nick);
-			textMessage.setText(presence_text);
-    
-			view.setShowOffline(!prefs.getBoolean("hideOffline", false));
+			else if (presence_tag.equalsIgnoreCase("xa"))
+			{
+				presence_icon = R.drawable.xa;
+			}
+			else if (presence_tag.equalsIgnoreCase("away"))
+			{
+				presence_icon = R.drawable.away;
+			}
+			else if (presence_tag.equalsIgnoreCase("dnd"))
+			{
+				presence_icon = R.drawable.busy;
+			}
+			else if (presence_tag.equalsIgnoreCase("chat"))
+			{
+				presence_icon = R.drawable.online;
+			}
 		}
+		iconPresence.setImageResource(presence_icon);
+		textNick.setText(presence_nick);
+		textMessage.setText(presence_text);
+
+		getRosterView().setShowOffline(!prefs.getBoolean("hideOffline", false));
+		getRosterView().setSelected(persistantSelection ? this.selectedBuddy : null);
+		
+		// set roster to RosterView
+		try {
+			getRosterView().onRosterChanged(this.rProvider.getRoster());
+		} catch (ServiceNotConnectedException e) {	}
+		
+		// forward content update
+		getRosterView().onContentChanged(buddyId);
 	}
 	
 	private OnItemClickListener _click_listener = new OnItemClickListener() {
@@ -237,33 +252,32 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 				edit.putString("statustext", message);
 				edit.commit();
 				
-				RosterFragment.this.onContentChanged();
+				RosterFragment.this.onContentChanged(null);
 			}
 		});
 		
 		dialog.show(getActivity().getSupportFragmentManager(), "me");
 	}
 	
+	public Roster getRoster() throws ServiceNotConnectedException {
+		if (this.rProvider == null) throw new ServiceNotConnectedException();
+		return this.rProvider.getRoster();
+	}
+	
+	public void setPersistantSelection(Boolean val) {
+		persistantSelection = val;
+	}
+	
 	public void onBuddySelected(String buddyId) {
 		// select the list item
 		this.selectedBuddy = buddyId;
-		if (persistantSelection) this.view.setSelected(this.selectedBuddy);
+		if (persistantSelection) getRosterView().setSelected(this.selectedBuddy);
 		mCallback.onBuddySelected(buddyId);
 	}
 
 	@Override
-	public void onContentChanged(String buddyId) {
-		this.onContentChanged();
-	}
-
-	@Override
 	public void onServiceConnected(ChatService service) {
-		// activate roster view
-		this.lv.setAdapter(this.view);
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getActivity());
-		this.view.setShowOffline(!prefs.getBoolean("hideOffline", false));
-		if (persistantSelection) this.view.setSelected(selectedBuddy);
-		this.onContentChanged();
+		this.onContentChanged(null);
 	}
 
 	@Override

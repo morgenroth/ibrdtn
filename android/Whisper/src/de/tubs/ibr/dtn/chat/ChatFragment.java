@@ -20,25 +20,23 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.TextView.OnEditorActionListener;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Roster;
 import de.tubs.ibr.dtn.chat.service.ChatService;
-import de.tubs.ibr.dtn.chat.service.ChatServiceHelper;
 import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ChatServiceListener;
 import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ServiceNotConnectedException;
 
 public class ChatFragment extends Fragment implements ChatServiceListener, RosterFragment.OnBuddySelectedListener {
-	private ChatServiceHelper service_helper = null;
 	private final String TAG = "ChatFragment";
 	
 	private MessageView view = null;
 	private String buddyId = null;
 	
 	private OnMessageListener mCallback = null;
+	private RosterProvider rProvider = null;
 	
     @Override
 	public void onAttach(Activity activity) {
@@ -52,6 +50,21 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
             throw new ClassCastException(activity.toString()
                     + " must implement OnMessageListener");
         }
+        
+        // get connection to the roster provider
+        try {
+        	rProvider = (RosterProvider) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement RosterProvider");
+        }
+	}
+
+	@Override
+	public void onDetach() {
+		super.onDetach();
+		mCallback = null;
+		rProvider = null;
 	}
 
 	// Container Activity must implement this interface
@@ -65,13 +78,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
 		View v = inflater.inflate(R.layout.chat_fragment, container, false);
-		
-		if ((this.getArguments() != null) && this.getArguments().containsKey("large_layout")) {
-			if (!this.getArguments().getBoolean("large_layout")) {
-				LinearLayout layout = (LinearLayout)v.findViewById(R.id.chat_buddy_display);
-				layout.setVisibility(View.VISIBLE);
-			}
-		}
 		
 		// set "enter" handler
 		EditText textedit = (EditText) v.findViewById(R.id.textMessage);
@@ -124,6 +130,8 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	}
 	
 	private void restoreDraftMessage() {
+		if (getView() == null) return;
+		
 		EditText text = (EditText) getView().findViewById(R.id.textMessage);
 		text.setText("");
 		
@@ -221,7 +229,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		service_helper = new ChatServiceHelper(getActivity(), this);		
 		super.onCreate(savedInstanceState);
 		
 		// restore buddy id
@@ -229,7 +236,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 			// restore buddy id
 			if (savedInstanceState.containsKey("buddyId")) {
 				buddyId = savedInstanceState.getString("buddyId");
-				Log.d(TAG, "buddy saved " + buddyId);
 			}
 		}
 	}
@@ -237,17 +243,7 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	@Override
 	public void onDestroy() {
 		this.view = null;
-		
-		if (service_helper != null) {
-			service_helper = null;
-		}
 	    super.onDestroy();
-	}
-	
-	@Override
-	public void onStart() {
-		super.onStart();
-		service_helper.bind();
 	}
 
 	@Override
@@ -257,9 +253,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 			mCallback.onSaveMessage(buddyId, text.getText().toString());
 		}
 		
-		if (service_helper != null) {
-			service_helper.unbind();
-		}
 		super.onStop();
 	}
 
@@ -278,8 +271,8 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	}
 	
 	public Roster getRoster() throws ServiceNotConnectedException {
-		if (this.service_helper == null) throw new ServiceNotConnectedException();
-		return this.service_helper.getService().getRoster();
+		if (this.rProvider == null) throw new ServiceNotConnectedException();
+		return this.rProvider.getRoster();
 	}
 	
 	private void onContentChanged()
@@ -342,7 +335,7 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 					presence_icon = R.drawable.offline;
 				}
 
-				if (this.getView() != null) {
+				if ((this.getView() != null) && (this.getView().findViewById(R.id.chat_buddy_display) != null)) {
 					ImageView iconTitleBar = (ImageView) this.getView().findViewById(R.id.buddy_icon);
 					TextView labelTitleBar = (TextView) this.getView().findViewById(R.id.buddy_nickname);
 					TextView bottomtextTitleBar = (TextView) this.getView().findViewById(R.id.buddy_statusmessage);
@@ -368,6 +361,10 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 			Log.e(TAG, "Do not update the view due to missing service.");
 		}
 	}
+	
+	public String getSelectedBuddy() {
+		return this.buddyId;
+	}
 
 	@Override
 	public void onBuddySelected(String buddyId) {
@@ -388,6 +385,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 		// set the current visible buddy
 		ChatService.setVisible(this.buddyId);
 	
-		if (this.service_helper.isConnected()) onContentChanged();
+		onContentChanged();
 	}
 }

@@ -36,12 +36,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Roster;
-import de.tubs.ibr.dtn.chat.service.ChatService;
-import de.tubs.ibr.dtn.chat.service.ChatServiceHelper;
 import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ChatServiceListener;
-import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ServiceNotConnectedException;
 
-public class RosterView extends BaseAdapter implements ChatServiceListener {
+public class RosterView extends BaseAdapter {
 
 	private final static String TAG = "RosterView";
 	private LayoutInflater inflater = null;
@@ -49,16 +46,12 @@ public class RosterView extends BaseAdapter implements ChatServiceListener {
 	private List<Buddy> buddies_filtered = new LinkedList<Buddy>();
 	private String selectedBuddy = null;
 	
-	private ChatServiceHelper service_helper = null;
-	private ChatServiceListener listener = null;
-	
 	private Boolean showOffline = true;
 
 	public RosterView(Context context, ChatServiceListener listener)
 	{
 		this.inflater = LayoutInflater.from(context);
 		this.buddies = null;
-		this.listener = listener;
 	}
 	
 	private void filterBuddies() {
@@ -93,26 +86,6 @@ public class RosterView extends BaseAdapter implements ChatServiceListener {
 		public ImageView hinticon;
 		public ImageView icon;
 		public View layout;
-	}
-	
-	protected void onCreate(Context context) {
-		service_helper = new ChatServiceHelper(context, this);
-	}
-	
-	protected void onDestroy(Context context) {
-		service_helper = null;
-	}
-	
-	protected void onStop(Context context) {
-		service_helper.unbind();
-	}
-	
-	protected void onStart(Context context) {
-		service_helper.bind();
-	}
-
-	public Roster getRoster() throws ServiceNotConnectedException {
-		return this.service_helper.getService().getRoster();
 	}
 	
 	public int getCount() {
@@ -218,25 +191,16 @@ public class RosterView extends BaseAdapter implements ChatServiceListener {
 		return convertView;
 	}
 
-	@Override
 	public void onContentChanged(String buddyId) {
 		if (this.buddies == null) return;
 		Log.d(TAG, "refresh requested...");
 		Collections.sort(this.buddies);
 		filterBuddies();
 		this.notifyDataSetChanged();
-		listener.onContentChanged(buddyId);
 	}
 
-	@Override
-	public void onServiceConnected(ChatService service) {
-		this.buddies = service.getRoster();
-		listener.onServiceConnected(service);
+	public void onRosterChanged(Roster roster) {
+		this.buddies = roster;
 		onContentChanged(null);
-	}
-
-	@Override
-	public void onServiceDisconnected() {
-		listener.onServiceDisconnected();
 	}
 }
