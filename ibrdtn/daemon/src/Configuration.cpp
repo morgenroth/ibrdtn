@@ -394,6 +394,7 @@ namespace dtn
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 
 			_sigma = conf.read<float>("time_sigma", 1.001);
+			_psi = conf.read<float>("time_psi", 0.9);
 			_sync_level = conf.read<float>("time_sync_level", 0.15);
 
 			// enable the clock modify feature
@@ -1208,6 +1209,11 @@ namespace dtn
 		float Configuration::TimeSync::getSigma() const
 		{
 			return _sigma;
+		}
+
+		float Configuration::TimeSync::getPsi() const
+		{
+			return _psi;
 		}
 
 		float Configuration::TimeSync::getSyncLevel() const

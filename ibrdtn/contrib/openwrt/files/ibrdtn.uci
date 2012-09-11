@@ -166,7 +166,8 @@ config 'network'
 #	option reference			yes
 #	option sync_on_discovery	yes
 #	option discovery_announcement	yes
-#	option sigma				1.01
+#	option sigma				1.001
+#	option psi					0.9
 #	option sync_level			0.1
 
 #####################################

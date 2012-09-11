@@ -98,6 +98,7 @@ add_param $CONFFILE "ibrdtn.timesync.reference" "time_reference"
 add_param $CONFFILE "ibrdtn.timesync.sync_on_discovery" "time_sync_on_discovery"
 add_param $CONFFILE "ibrdtn.timesync.discovery_announcement" "time_discovery_announcements"
 add_param $CONFFILE "ibrdtn.timesync.sigma" "time_sigma"
+add_param $CONFFILE "ibrdtn.timesync.psi" "time_psi"
 add_param $CONFFILE "ibrdtn.timesync.sync_level" "time_sync_level"
 add_param $CONFFILE "ibrdtn.timesync.time_set_clock" "time_set_clock"
 

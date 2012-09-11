@@ -547,6 +547,7 @@ namespace dtn
 				bool _sync;
 				bool _discovery;
 				float _sigma;
+				float _psi;
 				float _sync_level;
 
 			public:
@@ -555,6 +556,7 @@ namespace dtn
 				bool sendDiscoveryAnnouncements() const;
 
 				float getSigma() const;
+				float getPsi() const;
 				float getSyncLevel() const;
 			};
 	

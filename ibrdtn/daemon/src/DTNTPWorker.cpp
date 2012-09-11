@@ -42,7 +42,7 @@ namespace dtn
 		const unsigned int DTNTPWorker::PROTO_VERSION = 1;
 
 		DTNTPWorker::DTNTPWorker()
-		 : _sync_threshold(0.15), _announce_rating(false), _base_rating(0.0), _psi(0.9), _sigma(1.0)
+		 : _sync_threshold(0.15), _announce_rating(false), _base_rating(0.0), _psi(0.99), _sigma(1.0)
 		{
 			AbstractWorker::initialize("/dtntp", 60, true);
 
@@ -51,11 +51,15 @@ namespace dtn
 
 			if (conf.hasReference())
 			{
-				// set sigma and rating to one -> no aging of the rating
-				_sigma = 1.0;
-				_base_rating = 1.0;
+				// evaluate the current local time
+				if (dtn::utils::Clock::getTime() > 0) {
+					_base_rating = 1.0;
+				} else {
+					IBRCOMMON_LOGGER(warning) << "The local clock seems to be wrong. Expiration disabled." << IBRCOMMON_LOGGER_ENDL;
+				}
 			} else {
 				_sigma = conf.getSigma();
+				_psi = conf.getPsi();
 			}
 
 			// check if we should announce our own rating via discovery
@@ -222,6 +226,9 @@ namespace dtn
 
 					// we do only support version = 1
 					if (version != 1) return;
+
+					// do not sync if the timestamps are equal in seconds
+					if (timestamp == dtn::utils::Clock::getTime()) return;
 
 					// do not sync if the quality is worse than ours
 					if ((quality * (1 - _sync_threshold)) <= dtn::utils::Clock::rating) return;

@@ -77,18 +77,6 @@ namespace dtn
 		BundleCore::BundleCore()
 		 : _clock(1), _storage(NULL), _router(NULL)
 		{
-			/**
-			 * evaluate the current local time
-			 */
-			if (dtn::utils::Clock::getTime() > 0)
-			{
-				dtn::utils::Clock::rating = 1;
-			}
-			else
-			{
-				IBRCOMMON_LOGGER(warning) << "The local clock seems to be wrong. Expiration disabled." << IBRCOMMON_LOGGER_ENDL;
-			}
-
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 			bindEvent(dtn::core::BundlePurgeEvent::className);
 			bindEvent(dtn::core::TimeAdjustmentEvent::className);
