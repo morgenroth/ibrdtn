@@ -53,9 +53,11 @@ public class MainActivity extends FragmentActivity
 	private final String TAG = "MainActivity";
 	private Boolean hasLargeLayout = false;
 	private String showContactEID = null;
+	private Boolean isConnected = false;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		isConnected = false;
 		service_helper = new ChatServiceHelper(this, this);
 		
 		super.onCreate(savedInstanceState);
@@ -120,12 +122,14 @@ public class MainActivity extends FragmentActivity
 	@Override
 	protected void onDestroy() {
 		service_helper = null;
+		isConnected = false;
 	    super.onDestroy();
 	}
 
 	@Override
 	protected void onStart() {
 		super.onStart();
+		isConnected = false;
 		service_helper.bind();
 		
 		// set the correct behavior of the roster
@@ -140,6 +144,7 @@ public class MainActivity extends FragmentActivity
 		super.onStop();
 		if (service_helper != null) {
 			service_helper.unbind();
+			isConnected = false;
 		}
 	}
 	
@@ -190,12 +195,23 @@ public class MainActivity extends FragmentActivity
 	}
 
 	public void selectBuddy(String buddyId) {
+		if (!isConnected) {
+			showContactEID = buddyId;
+			return;
+		}
+		
 		showContactEID = null;
 		
 		RosterFragment roster = getRosterFragment();
 		if (roster != null) {
 			// select buddy on buddy list
 			roster.onBuddySelected(buddyId);
+		}
+		else if (!this.hasLargeLayout) {
+			ChatFragment chat = getChatFragment();
+			if (chat != null) {
+				chat.onBuddySelected(buddyId);
+			}
 		}
 	}
 
@@ -332,6 +348,8 @@ public class MainActivity extends FragmentActivity
 
 	@Override
 	public void onServiceConnected(ChatService service) {
+		isConnected = true;
+		
 		try {
 			// check possible errors
 			switch ( MainActivity.this.service_helper.getService().getServiceError() ) {
@@ -350,21 +368,23 @@ public class MainActivity extends FragmentActivity
 			Log.e(TAG, "failure while checking for service error", e);
 		}
 		
-	    RosterFragment frag_roster = getRosterFragment();
-	    if (frag_roster != null) {
-	    	frag_roster.onServiceConnected(service);
+	    RosterFragment roster = getRosterFragment();
+	    if (roster != null) {
+	    	roster.onServiceConnected(service);
 	    }
 	    
 	    ChatFragment chat = getChatFragment();
 	    if (chat != null) {
 	    	chat.onServiceConnected(service);
 	    }
-		
-		this.selectBuddy(showContactEID);
+	    
+	    this.selectBuddy(showContactEID);
 	}
 
 	@Override
 	public void onServiceDisconnected() {
+		isConnected = false;
+		
 	    RosterFragment roster = getRosterFragment();
 	    if (roster != null) {
 	    	roster.onServiceDisconnected();

@@ -216,9 +216,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 
 	@Override
 	public void onServiceConnected(ChatService service) {
-		// restore draft message
-		restoreDraftMessage();
-
 		// refresh visible data
 		onContentChanged();
 	}
