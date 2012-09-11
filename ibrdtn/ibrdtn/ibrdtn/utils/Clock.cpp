@@ -29,7 +29,7 @@ namespace dtn
 	namespace utils
 	{
 		int Clock::timezone = 0;
-		float Clock::quality = 0;
+		float Clock::rating = 0;
 		bool Clock::badclock = false;
 
 		struct timeval Clock::_offset;
@@ -78,10 +78,10 @@ namespace dtn
 		size_t Clock::__getExpireTime(size_t timestamp, size_t lifetime)
 		{
 			// if the quality of time is zero, return standard expire time
-			if (Clock::quality == 0) return timestamp + lifetime;
+			if (Clock::rating == 0) return timestamp + lifetime;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			size_t sigma = lifetime * (1 - Clock::quality);
+			size_t sigma = lifetime * (1 - Clock::rating);
 
 			// expiration adjusted by quality of time
 			return timestamp + lifetime + sigma;
@@ -106,10 +106,10 @@ namespace dtn
 		bool Clock::__isExpired(size_t timestamp, size_t lifetime)
 		{
 			// if the quality of time is zero or the clock is bad, then never expire a bundle
-			if ((Clock::quality == 0) || dtn::utils::Clock::badclock) return false;
+			if ((Clock::rating == 0) || dtn::utils::Clock::badclock) return false;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			size_t sigma = lifetime * (1 - Clock::quality);
+			size_t sigma = lifetime * (1 - Clock::rating);
 
 			// expiration adjusted by quality of time
 			if ( Clock::getTime() > (timestamp + lifetime + sigma)) return true;

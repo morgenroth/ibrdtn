@@ -546,7 +546,6 @@ namespace dtn
 				bool _reference;
 				bool _sync;
 				bool _discovery;
-				int _qot_tick;
 				float _sigma;
 				float _sync_level;
 
@@ -554,7 +553,6 @@ namespace dtn
 				bool hasReference() const;
 				bool syncOnDiscovery() const;
 				bool sendDiscoveryAnnouncements() const;
-				int getQualityOfTimeTick() const;
 
 				float getSigma() const;
 				float getSyncLevel() const;

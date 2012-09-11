@@ -86,9 +86,9 @@ namespace dtn
 			/**
 			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
 			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives
-			 * an abstract knowledge about the quality of time.
+			 * an abstract knowledge about the rating of the local clock.
 			 */
-			static float quality;
+			static float rating;
 
 			/**
 			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms

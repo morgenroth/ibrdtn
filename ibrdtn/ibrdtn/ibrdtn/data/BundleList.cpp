@@ -82,7 +82,7 @@ namespace dtn
 			bool commit = false;
 
 			// we can not expire bundles if we have no idea of time
-			if (dtn::utils::Clock::quality == 0) return;
+			if (dtn::utils::Clock::rating == 0) return;
 
 			std::set<ExpiringBundle>::iterator iter = _bundles.begin();
 

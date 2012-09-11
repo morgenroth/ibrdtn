@@ -82,7 +82,7 @@ namespace dtn
 			 */
 			if (dtn::utils::Clock::getTime() > 0)
 			{
-				dtn::utils::Clock::quality = 1;
+				dtn::utils::Clock::rating = 1;
 			}
 			else
 			{
@@ -275,7 +275,6 @@ namespace dtn
 
 				// set the local clock to the new timestamp
 				dtn::utils::Clock::setOffset(timeadj.offset);
-				dtn::utils::Clock::quality = timeadj.rating;
 
 				IBRCOMMON_LOGGER(info) << "time adjusted by " << timeadj.offset.tv_sec << "." << timeadj.offset.tv_usec << "; new rating: " << timeadj.rating << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::bad_cast&) { }
@@ -320,7 +319,7 @@ namespace dtn
 			if (BundleCore::max_timestamp_future > 0)
 			{
 				// first check if the local clock is reliable
-				if (dtn::utils::Clock::quality > 0)
+				if (dtn::utils::Clock::rating > 0)
 					// then check the timestamp
 					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < p._timestamp)
 					{

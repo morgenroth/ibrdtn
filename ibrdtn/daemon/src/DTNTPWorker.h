@@ -34,14 +34,48 @@ namespace dtn
 		class DTNTPWorker : public dtn::core::AbstractWorker, public dtn::core::EventReceiver, public dtn::net::DiscoveryServiceProvider
 		{
 		public:
+			/**
+			 * Constructor
+			 */
 			DTNTPWorker();
+
+			/**
+			 * Destructor
+			 */
 			virtual ~DTNTPWorker();
 
+			/**
+			 * This method is called every time a bundles is received for this endpoint.
+			 * @param b
+			 */
 			void callbackBundleReceived(const Bundle &b);
+
+			/**
+			 * This method is called by the EventSwitch.
+			 * @param evt
+			 */
 			void raiseEvent(const dtn::core::Event *evt);
 
+			/**
+			 * This message is called by the discovery module.
+			 * @param iface
+			 * @param name
+			 * @param data
+			 */
 			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data) throw(NoServiceHereException);
 
+//			/**
+//			 * Determine the current local clock rating
+//			 * @return The rating as double value.
+//			 */
+//			double getClockRating() const;
+
+			/**
+			 * TimeSyncMessage
+			 * This class represent a sync message which is used to exchange data about
+			 * the current clock state. During a short request-response contact the offset
+			 * between two clock can be determined.
+			 */
 			class TimeSyncMessage
 			{
 			public:
@@ -57,10 +91,10 @@ namespace dtn
 				MSG_TYPE type;
 
 				timeval origin_timestamp;
-				float origin_quality;
+				float origin_rating;
 
 				timeval peer_timestamp;
-				float peer_quality;
+				float peer_rating;
 
 				friend std::ostream &operator<<(std::ostream &stream, const DTNTPWorker::TimeSyncMessage &obj);
 				friend std::istream &operator>>(std::istream &stream, DTNTPWorker::TimeSyncMessage &obj);
@@ -69,22 +103,57 @@ namespace dtn
 		private:
 			static const unsigned int PROTO_VERSION;
 
+			/**
+			 * Determine if this node is configured as reference or not
+			 * @return
+			 */
+			bool hasReference() const;
+
+			/**
+			 * this method decode neighbor data
+			 * @param attr
+			 * @param version
+			 * @param timestamp
+			 * @param quality
+			 */
 			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality);
 
-//			void shared_sync(const TimeSyncMessage &msg);
-			void sync(const TimeSyncMessage &msg, struct timeval &tv);
+			/**
+			 * Synchronize this clock with another one
+			 * @param msg
+			 * @param tv
+			 */
+			void sync(const TimeSyncMessage &msg, const struct timeval &tv, const struct timeval &local, const struct timeval &remote);
 
-			const dtn::daemon::Configuration::TimeSync &_conf;
-			int _qot_current_tic;
+			/**
+			 * Convert a timeval to a double value
+			 * @param val
+			 * @return
+			 */
+			double toDouble(const timeval &val) const;
+
+			// sync threshold
+			float _sync_threshold;
+
+			// send discovery announcements with the local clock rating
+			bool _announce_rating;
+
+			// the base rating used to determine the current clock rating
+			double _base_rating;
+
+			// the local rating is at least decremented by this value between each synchronization
+			double _psi;
+
+			// current value for sigma
 			double _sigma;
-			double _epsilon;
-			float _quality_diff;
 
-			TimeSyncMessage _last_sync;
+			// timestamp of the last synchronization with another (better) clock
+			timeval _last_sync_time;
 
+			// Mutex to lock the synchronization process
 			ibrcommon::Mutex _sync_lock;
-			time_t _sync_age;
 
+			// manage a list of recently sync'd nodes
 			ibrcommon::Mutex _blacklist_lock;
 			std::map<EID, size_t> _sync_blacklist;
 		};

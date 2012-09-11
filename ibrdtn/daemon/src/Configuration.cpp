@@ -114,7 +114,7 @@ namespace dtn
 		{};
 
 		Configuration::TimeSync::TimeSync()
-		 : _reference(true), _sync(false), _discovery(false), _qot_tick(0)
+		 : _reference(true), _sync(false), _discovery(false)
 		{};
 
 		Configuration::DHT::DHT()
@@ -393,7 +393,6 @@ namespace dtn
 				_discovery = (conf.read<std::string>("time_discovery_announcements") == "yes");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 
-			_qot_tick = conf.read<int>("time_qot_tick", 0);
 			_sigma = conf.read<float>("time_sigma", 1.001);
 			_sync_level = conf.read<float>("time_sync_level", 0.15);
 
@@ -1101,7 +1100,7 @@ namespace dtn
 		bool Configuration::Security::TLSRequired() const
 		{
 			// TLS is only required, if the clock is in sync
-			if ((dtn::utils::Clock::quality == 0) && _tlsOptionalOnBadClock) return false;
+			if ((dtn::utils::Clock::rating == 0) && _tlsOptionalOnBadClock) return false;
 			return _tlsRequired;
 		}
 
@@ -1204,11 +1203,6 @@ namespace dtn
 		bool Configuration::TimeSync::sendDiscoveryAnnouncements() const
 		{
 			return _discovery;
-		}
-
-		int Configuration::TimeSync::getQualityOfTimeTick() const
-		{
-			return _qot_tick;
 		}
 
 		float Configuration::TimeSync::getSigma() const

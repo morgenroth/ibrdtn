@@ -164,7 +164,6 @@ config 'network'
 
 #config 'daemon' 'timesync'
 #	option reference			yes
-#	option qot_tick				0
 #	option sync_on_discovery	yes
 #	option discovery_announcement	yes
 #	option sigma				1.01
