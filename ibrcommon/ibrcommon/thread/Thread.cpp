@@ -223,7 +223,7 @@ namespace ibrcommon
 		if ( (_state != THREAD_JOINED) && (_state != THREAD_ERROR) )
 		{
 			std::cerr << "FAILURE: Thread not joined! Current state:" << _state.get() << std::endl;
-			assert( (_state == THREAD_JOINED) || (_state == THREAD_ERROR) );
+			assert( (_state != THREAD_JOINED) && (_state != THREAD_ERROR) );
 		}
 #endif
 		join();
