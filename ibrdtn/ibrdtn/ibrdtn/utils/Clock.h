@@ -77,7 +77,7 @@ namespace dtn
 			 * set the local offset of the clock
 			 * @param tv
 			 */
-			static void setOffset(struct timeval &tv);
+			static void setOffset(const struct timeval &tv);
 
 			static int timezone;
 

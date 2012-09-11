@@ -145,7 +145,7 @@ namespace dtn
 			return now.tv_sec + offset;
 		}
 
-		void Clock::setOffset(struct timeval &tv)
+		void Clock::setOffset(const struct timeval &tv)
 		{
 			if (!modify_clock)
 			{

@@ -28,6 +28,7 @@
 #include "routing/RequeueBundleEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "routing/StaticRouteChangeEvent.h"
+#include "core/TimeAdjustmentEvent.h"
 
 #include <ibrcommon/data/BLOB.h>
 #include <ibrdtn/data/MetaBundle.h>
@@ -90,12 +91,14 @@ namespace dtn
 
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 			bindEvent(dtn::core::BundlePurgeEvent::className);
+			bindEvent(dtn::core::TimeAdjustmentEvent::className);
 		}
 
 		BundleCore::~BundleCore()
 		{
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
 			unbindEvent(dtn::core::BundlePurgeEvent::className);
+			unbindEvent(dtn::core::TimeAdjustmentEvent::className);
 		}
 
 		void BundleCore::componentUp()
@@ -265,6 +268,16 @@ namespace dtn
 				storage.remove(purge.bundle);
 
 				return;
+			} catch (const std::bad_cast&) { }
+
+			try {
+				const dtn::core::TimeAdjustmentEvent &timeadj = dynamic_cast<const dtn::core::TimeAdjustmentEvent&>(*evt);
+
+				// set the local clock to the new timestamp
+				dtn::utils::Clock::setOffset(timeadj.offset);
+				dtn::utils::Clock::quality = timeadj.rating;
+
+				IBRCOMMON_LOGGER(info) << "time adjusted by " << timeadj.offset.tv_sec << "." << timeadj.offset.tv_usec << "; new rating: " << timeadj.rating << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::bad_cast&) { }
 		}
 

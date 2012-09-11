@@ -23,6 +23,7 @@
 #include "core/NodeEvent.h"
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"
+#include "core/TimeAdjustmentEvent.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/data/AgeBlock.h>
@@ -385,12 +386,10 @@ namespace dtn
 			if (dtn::utils::Clock::quality >= msg.peer_quality) return;
 
 			// the values are better, adapt them
-			dtn::utils::Clock::quality = msg.peer_quality * _epsilon;
+			float rating = msg.peer_quality * _epsilon;
 
-			// set the local clock to the new timestamp
-			dtn::utils::Clock::setOffset(offset);
-
-			IBRCOMMON_LOGGER(info) << "time adjusted to " << msg.peer_timestamp.tv_sec << "." << msg.peer_timestamp.tv_usec << "; quality: " << dtn::utils::Clock::quality << IBRCOMMON_LOGGER_ENDL;
+			// trigger time adjustment event
+			dtn::core::TimeAdjustmentEvent::raise(offset, rating);
 
 			// remember the last sync
 			_last_sync = msg;
