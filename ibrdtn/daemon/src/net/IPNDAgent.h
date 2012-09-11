@@ -44,9 +44,10 @@ namespace dtn
 		class IPNDAgent : public DiscoveryAgent, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback
 		{
 		public:
-			IPNDAgent(int port, const ibrcommon::vaddress &address);
+			IPNDAgent(int port);
 			virtual ~IPNDAgent();
 
+			void add(const ibrcommon::vaddress &address);
 			void bind(const ibrcommon::vinterface &net);
 
 			/**
@@ -68,7 +69,7 @@ namespace dtn
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;
 			ibrcommon::vsocket _socket;
-			ibrcommon::vaddress _destination;
+			std::list<ibrcommon::vaddress> _destinations;
 			std::list<ibrcommon::vinterface> _interfaces;
 
 			int _port;

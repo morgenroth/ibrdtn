@@ -210,6 +210,7 @@ namespace dtn
 				bool shortbeacon() const;
 				char version() const;
 				const ibrcommon::vaddress address() const throw (ParameterNotFoundException);
+				const ibrcommon::vaddress address6() const throw (ParameterNotFoundException);
 				int port() const;
 				unsigned int timeout() const;
 			};

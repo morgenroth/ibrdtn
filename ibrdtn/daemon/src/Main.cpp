@@ -681,12 +681,14 @@ int __daemon_run(Configuration &conf)
 				interfaces.insert(net.interface);
 		}
 
+		ipnd = new dtn::net::IPNDAgent( disco_port );
+
 		try {
 			const ibrcommon::vaddress addr = conf.getDiscovery().address();
 			multicast = addr.isMulticast();
-			ipnd = new dtn::net::IPNDAgent( disco_port, addr );
+			ipnd->add(addr);
 		} catch (const Configuration::ParameterNotFoundException&) {
-			ipnd = new dtn::net::IPNDAgent( disco_port, ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET, "255.255.255.255") );
+			ipnd->add(ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET, "255.255.255.255"));
 		}
 
 		for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); iter++)

@@ -195,12 +195,16 @@ namespace ibrcommon
 	int vsocket::bind(const int port, unsigned int socktype)
 	{
 		vaddress addr;
+		vaddress addr6(vaddress::VADDRESS_INET6);
+		bind(addr6, port, socktype);
 		return bind( addr, port, socktype );
 	}
 
 	void vsocket::unbind(const int port)
 	{
 		vaddress addr;
+		vaddress addr6(vaddress::VADDRESS_INET6);
+		unbind( addr6, port );
 		unbind( addr, port );
 	}
 
@@ -811,11 +815,11 @@ namespace ibrcommon
 					throw vsocket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
 				}
 
-				u_char ttl = 255; // Multicast TTL
-				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0 )
-				{
-					throw vsocket_exception("setsockopt(IPV6_MULTICAST_HOPS)");
-				}
+//				u_char ttl = 255; // Multicast TTL
+//				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0 )
+//				{
+//					throw vsocket_exception("setsockopt(IPV6_MULTICAST_HOPS)");
+//				}
 #endif
 
 //				u_char ittl = 255; // IP TTL

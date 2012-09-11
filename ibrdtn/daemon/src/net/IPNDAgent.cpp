@@ -35,23 +35,12 @@ namespace dtn
 {
 	namespace net
 	{
-		IPNDAgent::IPNDAgent(int port, const ibrcommon::vaddress &address)
+		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _destination(address), _port(port)
+		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _port(port)
 		{
 			// broadcast addresses should be usable more than once.
 			_socket.set(ibrcommon::vsocket::VSOCKET_REUSEADDR);
-
-			if (_destination.isMulticast())
-			{
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: multicast mode " << address.toString() << ":" << port << IBRCOMMON_LOGGER_ENDL;
-				_socket.set(ibrcommon::vsocket::VSOCKET_MULTICAST);
-			}
-			else
-			{
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: broadcast mode " << address.toString() << ":" << port << IBRCOMMON_LOGGER_ENDL;
-				_socket.set(ibrcommon::vsocket::VSOCKET_BROADCAST);
-			}
 
 			switch (_config.version())
 			{
@@ -72,6 +61,26 @@ namespace dtn
 
 		IPNDAgent::~IPNDAgent()
 		{
+		}
+
+		void IPNDAgent::add(const ibrcommon::vaddress &address) {
+			if (address.getFamily() == ibrcommon::vaddress::VADDRESS_INET)
+				if (address.isMulticast())
+				{
+					IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add multicast address " << address.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
+					_socket.set(ibrcommon::vsocket::VSOCKET_MULTICAST);
+				}
+				else
+				{
+					IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add broadcast address " << address.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
+					_socket.set(ibrcommon::vsocket::VSOCKET_BROADCAST);
+				}
+			else {
+				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add IPv6 multicast address " << address.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
+				_socket.set(ibrcommon::vsocket::VSOCKET_MULTICAST_V6);
+			}
+
+			_destinations.push_back(address);
 		}
 
 		void IPNDAgent::bind(const ibrcommon::vinterface &net)
@@ -141,7 +150,9 @@ namespace dtn
 					}
 				}
 
-				send(announcement, iface, _destination, _port);
+				for (std::list<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {
+					send(announcement, iface, (*iter), _port);
+				}
 			}
 		}
 
@@ -149,10 +160,12 @@ namespace dtn
 		{
 			if (evt.getType() == ibrcommon::LinkManagerEvent::EVENT_ADDRESS_ADDED)
 			{
-				if (_destination.isMulticast())
-				{
-					ibrcommon::MulticastSocket ms(_fd);
-					ms.joinGroup(_destination, evt.getInterface());
+				for (std::list<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {
+					if ((*iter).isMulticast())
+					{
+						ibrcommon::MulticastSocket ms(_fd);
+						ms.joinGroup(*iter, evt.getInterface());
+					}
 				}
 			}
 		}
@@ -177,15 +190,17 @@ namespace dtn
 				// bind on ALL interfaces
 				_fd = _socket.bind(_port, SOCK_DGRAM);
 
-				// only if the destination is a multicast address
-				if (_destination.isMulticast())
-				{
-					// enable multicasting on the socket
-					ibrcommon::MulticastSocket ms(_fd);
-
-					for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
+				for (std::list<ibrcommon::vaddress>::iterator diter = _destinations.begin(); diter != _destinations.end(); diter++) {
+					// only if the destination is a multicast address
+					if ((*diter).isMulticast())
 					{
-						ms.joinGroup(_destination, *iter);
+						// enable multicasting on the socket
+						ibrcommon::MulticastSocket ms(_fd);
+
+						for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
+						{
+							ms.joinGroup((*diter), *iter);
+						}
 					}
 				}
 			} catch (const ibrcommon::Exception &ex) {
