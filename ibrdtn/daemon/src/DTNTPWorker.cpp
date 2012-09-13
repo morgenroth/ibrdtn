@@ -54,6 +54,7 @@ namespace dtn
 				// evaluate the current local time
 				if (dtn::utils::Clock::getTime() > 0) {
 					_base_rating = 1.0;
+					dtn::utils::Clock::rating = 1.0;
 				} else {
 					IBRCOMMON_LOGGER(warning) << "The local clock seems to be wrong. Expiration disabled." << IBRCOMMON_LOGGER_ENDL;
 				}
