@@ -145,17 +145,18 @@ namespace ibrcommon
 					vb.join(iter->first, *it_iface);
 				}
 			}
-
-			return vb._fd;
 		} catch (const vsocket_exception&) {
 			_binds.pop_back();
 			throw;
 		}
+
+		return vb._fd;
 	}
 
-	void vsocket::bind(const vinterface &iface, const int port, unsigned int socktype)
+	std::set<int> vsocket::bind(const vinterface &iface, const int port, unsigned int socktype)
 	{
-		if (iface.empty()) { bind(port); return; }
+		std::set<int> ret;
+		if (iface.empty()) { bind(port); return ret; }
 
 		// remember the port for dynamic bind/unbind
 		_portmap[iface] = port;
@@ -172,14 +173,16 @@ namespace ibrcommon
 			if (port == 0)
 			{
 				vsocket::vbind vb(iface, (*iter), socktype);
-				bind( vb );
+				ret.insert( bind( vb ) );
 			}
 			else
 			{
 				vsocket::vbind vb(iface, (*iter), port, socktype);
-				bind( vb );
+				ret.insert( bind( vb ) );
 			}
 		}
+
+		return ret;
 	}
 
 	void vsocket::unbind(const vinterface &iface, const int port)
@@ -196,32 +199,44 @@ namespace ibrcommon
 		}
 	}
 
-	int vsocket::bind(const int port, unsigned int socktype)
+	std::set<int> vsocket::bind(const int port, unsigned int socktype)
 	{
+		std::set<int> ret;
+
 		vaddress addr;
-		vaddress addr6(vaddress::VADDRESS_INET6);
-		bind(addr6, port, socktype);
-		return bind( addr, port, socktype );
+		std::set<int> addr_ret = bind( addr, port, socktype );
+		ret.insert( addr_ret.begin(), addr_ret.end() );
+
+//		vaddress addr6(vaddress::VADDRESS_INET6);
+//		std::set<int> addr6_ret = bind( addr6, port, socktype );
+//		ret.insert( addr6_ret.begin(), addr6_ret.end() );
+
+		return ret;
 	}
 
 	void vsocket::unbind(const int port)
 	{
 		vaddress addr;
-		vaddress addr6(vaddress::VADDRESS_INET6);
-		unbind( addr6, port );
 		unbind( addr, port );
+
+//		vaddress addr6(vaddress::VADDRESS_INET6);
+//		unbind( addr6, port );
 	}
 
-	int vsocket::bind(const vaddress &address, const int port, unsigned int socktype)
+	std::set<int> vsocket::bind(const vaddress &address, const int port, unsigned int socktype)
 	{
+		std::set<int> ret;
 		vsocket::vbind vb(address, port, socktype);
-		return bind( vb );
+		ret.insert( bind( vb ) );
+		return ret;
 	}
 
-	int vsocket::bind(const ibrcommon::File &file, unsigned int socktype)
+	std::set<int> vsocket::bind(const ibrcommon::File &file, unsigned int socktype)
 	{
+		std::set<int> ret;
 		vsocket::vbind vb(file, socktype);
-		return bind( vb );
+		ret.insert( bind( vb ) );
+		return ret;
 	}
 
 	void vsocket::unbind(const vaddress &address, const int port)
@@ -960,21 +975,31 @@ namespace ibrcommon
 	{
 		if (group.getFamily() != _vaddress.getFamily()) return;
 
-		// get the addresses of the interface
-		std::list<vaddress> addrs = iface.getAddresses(group.getFamily());
+		struct sockaddr_in mcast_addr;
+		::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
-		// stop here if there are not addresses
-		if (addrs.empty()) return;
+		// set the family of the multicast address
+		mcast_addr.sin_family = group.getFamily();
 
-		struct ip_mreq imr;
-		::memset(&imr, 0, sizeof(ip_mreq));
-
-		imr.imr_multiaddr.s_addr = inet_addr(group.get().c_str());
-		imr.imr_interface.s_addr = inet_addr(addrs.front().get().c_str());
-
-		if ( ::setsockopt(_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&imr, sizeof(struct ip_mreq)) < 0)
+		// convert the group address
+		if ( ::inet_pton(group.getFamily(), group.get().c_str(), &(mcast_addr.sin_addr)) < 0 )
 		{
-			throw vsocket_exception("setsockopt(IP_ADD_MEMBERSHIP)");
+			throw vsocket_exception("can not transform multicast address with inet_pton()");
+		}
+
+		struct group_req req;
+		::memset(&req, 0, sizeof(req));
+
+		// copy the address to the group request
+		::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
+
+		// set the right interface here
+		req.gr_interface = iface.getIndex();
+
+		if ( ::setsockopt(_fd, IPPROTO_IP, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
+		{
+			::perror("mcast");
+			throw vsocket_exception("setsockopt(MCAST_JOIN_GROUP)");
 		}
 
 		// successful!
@@ -985,21 +1010,31 @@ namespace ibrcommon
 	{
 		if (group.getFamily() != _vaddress.getFamily()) return;
 
-		// get the addresses of the interface
-		std::list<vaddress> addrs = iface.getAddresses(group.getFamily());
+		struct sockaddr_in mcast_addr;
+		::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
-		// stop here if there are not addresses
-		if (addrs.empty()) return;
+		// set the family of the multicast address
+		mcast_addr.sin_family = group.getFamily();
 
-		struct ip_mreq imr;
-		::memset(&imr, 0, sizeof(ip_mreq));
-
-		imr.imr_multiaddr.s_addr = inet_addr(group.get().c_str());
-		imr.imr_interface.s_addr = inet_addr(addrs.front().get().c_str());
-
-		if ( ::setsockopt(_fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (const char *)&imr, sizeof(struct ip_mreq)) < 0)
+		// convert the group address
+		if ( ::inet_pton(group.getFamily(), group.get().c_str(), &(mcast_addr.sin_addr)) < 0 )
 		{
-			throw vsocket_exception("setsockopt(IP_DROP_MEMBERSHIP)");
+			throw vsocket_exception("can not transform multicast address with inet_pton()");
+		}
+
+		struct group_req req;
+		::memset(&req, 0, sizeof(req));
+
+		// copy the address to the group request
+		::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
+
+		// set the right interface here
+		req.gr_interface = iface.getIndex();
+
+		if ( ::setsockopt(_fd, IPPROTO_IP, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
+		{
+			::perror("mcast");
+			throw vsocket_exception("setsockopt(MCAST_LEAVE_GROUP)");
 		}
 	}
 

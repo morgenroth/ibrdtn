@@ -45,6 +45,7 @@ namespace ibrcommon
 		vinterface(std::string name);
 		virtual ~vinterface();
 
+		uint32_t getIndex() const;
 		const std::list<vaddress> getAddresses(const vaddress::Family f = vaddress::VADDRESS_UNSPEC) const;
 		const std::string toString() const;
 		bool empty() const;

@@ -86,10 +86,10 @@ namespace ibrcommon
 		vsocket(bool sendonly = false);
 		virtual ~vsocket();
 
-		int bind(const vaddress &address, const int port, unsigned int socktype = SOCK_STREAM);
-		void bind(const vinterface &iface, const int port, unsigned int socktype = SOCK_STREAM);
-		int bind(const int port, unsigned int socktype = SOCK_STREAM);
-		int bind(const ibrcommon::File &file, unsigned int socktype = SOCK_STREAM);
+		std::set<int> bind(const vaddress &address, const int port, unsigned int socktype = SOCK_STREAM);
+		std::set<int> bind(const vinterface &iface, const int port, unsigned int socktype = SOCK_STREAM);
+		std::set<int> bind(const int port, unsigned int socktype = SOCK_STREAM);
+		std::set<int> bind(const ibrcommon::File &file, unsigned int socktype = SOCK_STREAM);
 
 		void unbind(const vaddress &address, const int port);
 		void unbind(const vinterface &iface, const int port);

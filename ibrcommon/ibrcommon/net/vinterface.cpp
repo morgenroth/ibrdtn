@@ -23,6 +23,7 @@
 #include "ibrcommon/net/vinterface.h"
 #include "ibrcommon/net/vsocket.h"
 #include "ibrcommon/net/LinkManager.h"
+#include <net/if.h>
 
 namespace ibrcommon
 {
@@ -44,6 +45,11 @@ namespace ibrcommon
 	{
 		if (_name.length() == 0) return "<any>";
 		return _name;
+	}
+
+	uint32_t vinterface::getIndex() const
+	{
+		return ::if_nametoindex(_name.c_str());
 	}
 
 	const std::list<vaddress> vinterface::getAddresses(const vaddress::Family f) const
