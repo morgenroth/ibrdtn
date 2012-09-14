@@ -181,7 +181,7 @@ void BundleSummaryTest::testGetSummaryVector()
 
 void BundleSummaryTest::setUp()
 {
-	dtn::utils::Clock::quality = 1;
+	dtn::utils::Clock::rating = 1;
 }
 
 void BundleSummaryTest::tearDown()

@@ -30,7 +30,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION (TestBundleList);
 
 void TestBundleList::setUp()
 {
-	dtn::utils::Clock::quality = 1;
+	dtn::utils::Clock::rating = 1;
 	list = new TestBundleList::DerivedBundleList();
 }
 
