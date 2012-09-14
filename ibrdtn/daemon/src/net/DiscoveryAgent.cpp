@@ -95,7 +95,7 @@ namespace dtn
 				// first check if another announcement was sent during the same seconds
 				if (_last_announce_sent != dtn::utils::Clock::getTime())
 				{
-					IBRCOMMON_LOGGER_DEBUG(25) << "reply with discovery announcement" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(55) << "reply with discovery announcement" << IBRCOMMON_LOGGER_ENDL;
 
 					sendAnnoucement(_sn, _services);
 
@@ -113,7 +113,7 @@ namespace dtn
 			// check if announcements are enabled
 			if (_config.announce())
 			{
-				IBRCOMMON_LOGGER_DEBUG(25) << "send discovery announcement" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(55) << "send discovery announcement" << IBRCOMMON_LOGGER_ENDL;
 
 				sendAnnoucement(_sn, _services);
 

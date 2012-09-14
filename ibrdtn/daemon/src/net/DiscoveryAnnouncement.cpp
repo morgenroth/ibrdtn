@@ -244,7 +244,7 @@ namespace dtn
 			{
 			case DiscoveryAnnouncement::DISCO_VERSION_00:
 			{
-				IBRCOMMON_LOGGER_DEBUG(15) << "beacon version 1 received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(60) << "beacon version 1 received" << IBRCOMMON_LOGGER_ENDL;
 
 				dtn::data::SDNV beacon_len;
 				dtn::data::SDNV eid_len;
@@ -283,11 +283,11 @@ namespace dtn
 
 			case DiscoveryAnnouncement::DISCO_VERSION_01:
 			{
-				IBRCOMMON_LOGGER_DEBUG(15) << "beacon version 2 received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(60) << "beacon version 2 received" << IBRCOMMON_LOGGER_ENDL;
 
 				stream.get((char&)announcement._flags);
 
-				IBRCOMMON_LOGGER_DEBUG(25) << "beacon flags: " << hex << (int)announcement._flags << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(65) << "beacon flags: " << hex << (int)announcement._flags << IBRCOMMON_LOGGER_ENDL;
 
 				u_int16_t sn = 0;
 				stream.read((char*)&sn, 2);
@@ -295,7 +295,7 @@ namespace dtn
 				// convert from network byte order
 				u_int16_t sequencenumber = ntohs(sn);
 
-				IBRCOMMON_LOGGER_DEBUG(25) << "beacon sequence number: " << sequencenumber << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(65) << "beacon sequence number: " << sequencenumber << IBRCOMMON_LOGGER_ENDL;
 
 				if (announcement._flags & DiscoveryAnnouncement::BEACON_CONTAINS_EID)
 				{
@@ -304,7 +304,7 @@ namespace dtn
 
 					announcement._canonical_eid = dtn::data::EID((std::string)eid);
 
-					IBRCOMMON_LOGGER_DEBUG(25) << "beacon eid: " << (std::string)eid << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(65) << "beacon eid: " << (std::string)eid << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				if (announcement._flags & DiscoveryAnnouncement::BEACON_SERVICE_BLOCK)
@@ -316,7 +316,7 @@ namespace dtn
 					dtn::data::SDNV num_services;
 					stream >> num_services;
 
-					IBRCOMMON_LOGGER_DEBUG(25) << "beacon services (" << num_services.getValue() << "): " << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(65) << "beacon services (" << num_services.getValue() << "): " << IBRCOMMON_LOGGER_ENDL;
 
 					// clear the services
 					services.clear();
@@ -328,7 +328,7 @@ namespace dtn
 						stream >> service;
 						services.push_back(service);
 
-						IBRCOMMON_LOGGER_DEBUG(25) << "\t " << service.getName() << " [" << service.getParameters() << "]" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG(65) << "\t " << service.getName() << " [" << service.getParameters() << "]" << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 
@@ -349,7 +349,7 @@ namespace dtn
 				u_int16_t inet_port;
 				u_int16_t eid_len;
 
-				IBRCOMMON_LOGGER_DEBUG(15) << "beacon IPDiscovery (DTN2) frame received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(60) << "beacon IPDiscovery (DTN2) frame received" << IBRCOMMON_LOGGER_ENDL;
 
 				stream.read((char*)&cl_type, 1);
 				stream.read((char*)&interval, 1);
@@ -368,7 +368,7 @@ namespace dtn
 			}
 
 			default:
-				IBRCOMMON_LOGGER_DEBUG(20) << "unknown beacon received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(60) << "unknown beacon received" << IBRCOMMON_LOGGER_ENDL;
 
 				// Error, throw Exception!
 				throw InvalidProtocolException("The received data does not match the discovery protocol.");
