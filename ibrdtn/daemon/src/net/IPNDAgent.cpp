@@ -25,7 +25,6 @@
 #include <sstream>
 #include <string.h>
 #include <ibrcommon/Logger.h>
-#include <ibrcommon/net/MulticastSocket.h>
 #include <ibrcommon/TimeMeasurement.h>
 #include "Configuration.h"
 #include <typeinfo>
@@ -37,10 +36,14 @@ namespace dtn
 	{
 		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _port(port)
+		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _port(port), _send_socket(true)
 		{
-			// broadcast addresses should be usable more than once.
-			_socket.set(ibrcommon::vsocket::VSOCKET_REUSEADDR);
+			// multicast addresses should be usable more than once.
+			_recv_socket.set(ibrcommon::vsocket::VSOCKET_REUSEADDR);
+
+			// enable multicast communication
+			_recv_socket.set(ibrcommon::vsocket::VSOCKET_MULTICAST);
+			_send_socket.set(ibrcommon::vsocket::VSOCKET_MULTICAST);
 
 			switch (_config.version())
 			{
@@ -64,28 +67,13 @@ namespace dtn
 		}
 
 		void IPNDAgent::add(const ibrcommon::vaddress &address) {
-			if (address.getFamily() == ibrcommon::vaddress::VADDRESS_INET)
-				if (address.isMulticast())
-				{
-					IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add multicast address " << address.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
-					_socket.set(ibrcommon::vsocket::VSOCKET_MULTICAST);
-				}
-				else
-				{
-					IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add broadcast address " << address.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
-					_socket.set(ibrcommon::vsocket::VSOCKET_BROADCAST);
-				}
-			else {
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add IPv6 multicast address " << address.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
-				_socket.set(ibrcommon::vsocket::VSOCKET_MULTICAST_V6);
-			}
-
+			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: listen to [" << address.toString() << "]:" << _port << IBRCOMMON_LOGGER_ENDL;
 			_destinations.push_back(address);
 		}
 
 		void IPNDAgent::bind(const ibrcommon::vinterface &net)
 		{
-			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: bind to interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			_interfaces.push_back(net);
 		}
 
@@ -95,11 +83,10 @@ namespace dtn
 			stringstream ss; ss << a;
 			const std::string data = ss.str();
 
-			std::list<int> fds = _socket.get(iface);
+			std::list<int> fds = _send_socket.get(iface);
 			for (std::list<int>::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
 			{
 				try {
-					size_t ret = 0;
 					int flags = 0;
 
 					struct addrinfo hints, *ainfo;
@@ -108,7 +95,7 @@ namespace dtn
 					hints.ai_socktype = SOCK_DGRAM;
 					ainfo = addr.addrinfo(&hints, port);
 
-					ret = sendto(*iter, data.c_str(), data.length(), flags, ainfo->ai_addr, ainfo->ai_addrlen);
+					::sendto(*iter, data.c_str(), data.length(), flags, ainfo->ai_addr, ainfo->ai_addrlen);
 
 					freeaddrinfo(ainfo);
 				} catch (const ibrcommon::vsocket_exception&) {
@@ -161,63 +148,52 @@ namespace dtn
 			if (evt.getType() == ibrcommon::LinkManagerEvent::EVENT_ADDRESS_ADDED)
 			{
 				for (std::list<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {
-					if ((*iter).isMulticast())
-					{
-						ibrcommon::MulticastSocket ms(_fd);
-						ms.joinGroup(*iter, evt.getInterface());
-					}
+					_recv_socket.join(*iter, evt.getInterface());
 				}
 			}
 		}
 
 		void IPNDAgent::componentUp()
 		{
-			// create one socket for each interface
+			// bind to receive socket
+			_recv_socket.bind(_port, SOCK_DGRAM);
+
+			// bind to all added interfaces for sending
 			for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
 			{
 				try {
 					const ibrcommon::vinterface &iface = *iter;
 					if (!iface.empty())
 					{
-						_socket.bind(iface, 0, SOCK_DGRAM);
+						// create one send socket for each interface
+						_send_socket.bind(iface, 0, SOCK_DGRAM);
 					}
 				} catch (const ibrcommon::Exception &ex) {
 					IBRCOMMON_LOGGER(error) << "[IPND] bind failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
-			try {
-				// bind on ALL interfaces
-				_fd = _socket.bind(_port, SOCK_DGRAM);
-
-				for (std::list<ibrcommon::vaddress>::iterator diter = _destinations.begin(); diter != _destinations.end(); diter++) {
-					// only if the destination is a multicast address
-					if ((*diter).isMulticast())
-					{
-						// enable multicasting on the socket
-						ibrcommon::MulticastSocket ms(_fd);
-
-						for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
-						{
-							ms.joinGroup((*diter), *iter);
-						}
-					}
+			// join multicast groups
+			for (std::list<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
+			{
+				for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
+				{
+					_recv_socket.join(*it_addr, *it_iface);
 				}
-			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER(error) << "[IPND] bind on broadcast address failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// set this socket as listener to socket events
-			_socket.setEventCallback(this);
+			_send_socket.setEventCallback(this);
 		}
 
 		void IPNDAgent::componentDown()
 		{
 			// unset this socket as listener to socket events
-			_socket.setEventCallback(NULL);
+			_send_socket.setEventCallback(NULL);
 
 			// shutdown the sockets
-			_socket.shutdown();
+			_recv_socket.close();
+			_send_socket.close();
 
 			stop();
 			join();
@@ -240,7 +216,7 @@ namespace dtn
 
 				try {
 					// select on all bound sockets
-					_socket.select(fds, &tv);
+					_recv_socket.select(fds, &tv);
 
 					// receive from all sockets
 					for (std::list<int>::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
@@ -251,16 +227,6 @@ namespace dtn
 
 						int len = ibrcommon::recvfrom(*iter, data, 1500, sender);
 
-						if (announce.isShort())
-						{
-							// TODO: generate name with the sender address
-						}
-
-						if (announce.getServices().empty())
-						{
-							announce.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender + ";port=4556;"));
-						}
-
 						if (len < 0) return;
 
 						stringstream ss;
@@ -268,6 +234,19 @@ namespace dtn
 
 						try {
 							ss >> announce;
+
+							if (announce.isShort())
+							{
+								// generate name with the sender address
+								dtn::data::EID gen_eid("ip://" + sender);
+								announce.setEID(gen_eid);
+							}
+
+							if (announce.getServices().empty())
+							{
+								announce.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender + ";port=4556;"));
+							}
+
 							received(announce);
 						} catch (const dtn::InvalidDataException&) {
 						} catch (const ibrcommon::IOException&) {
@@ -289,7 +268,7 @@ namespace dtn
 		void IPNDAgent::__cancellation()
 		{
 			// interrupt the receiving thread
-			_socket.close();
+			_recv_socket.close();
 		}
 
 		const std::string IPNDAgent::getName() const

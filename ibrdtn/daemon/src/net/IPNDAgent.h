@@ -68,12 +68,12 @@ namespace dtn
 			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr, const unsigned int port);
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;
-			ibrcommon::vsocket _socket;
+			ibrcommon::vsocket _recv_socket;
+			ibrcommon::vsocket _send_socket;
 			std::list<ibrcommon::vaddress> _destinations;
 			std::list<ibrcommon::vinterface> _interfaces;
 
 			int _port;
-			int _fd;
 		};
 	}
 }
