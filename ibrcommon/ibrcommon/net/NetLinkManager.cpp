@@ -108,17 +108,7 @@ namespace ibrcommon
 		{
 			int family = nl_addr_get_family(naddr);
 			nl_addr2str( naddr, buf, sizeof( buf ) );
-			vaddress vaddr(vaddress::Family(family), vaddress::strip_netmask(std::string(buf)), ifindex, false);
-			list->push_back( vaddr );
-		}
-
-		struct nl_addr *baddr = rtnl_addr_get_broadcast((struct rtnl_addr *) obj);
-
-		if (baddr)
-		{
-			int family = nl_addr_get_family(baddr);
-			nl_addr2str( baddr, buf, sizeof( buf ) );
-			vaddress vaddr(vaddress::Family(family), vaddress::strip_netmask(std::string(buf)), ifindex, true);
+			vaddress vaddr(vaddress::Family(family), vaddress::strip_netmask(std::string(buf)), ifindex);
 			list->push_back( vaddr );
 		}
 	}
