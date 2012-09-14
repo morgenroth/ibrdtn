@@ -284,7 +284,8 @@ namespace dtn
 			/**
 			 * this method updates the given values
 			 */
-			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
+			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
+				throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
 		protected:
 			void __cancellation();
@@ -313,7 +314,6 @@ namespace dtn
 			void connectionDown(TCPConnection *conn);
 
 			static const int DEFAULT_PORT;
-			bool _running;
 
 			ibrcommon::tcpserver _tcpsrv;
 

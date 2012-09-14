@@ -300,14 +300,13 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		void DTNTPWorker::update(const ibrcommon::vinterface&, std::string &name, std::string &data) throw(NoServiceHereException)
+		void DTNTPWorker::update(const ibrcommon::vinterface&, DiscoveryAnnouncement &announcement) throw(NoServiceHereException)
 		{
 			if (!_announce_rating) throw NoServiceHereException("Discovery of time sync mechanisms disabled.");
 
 			std::stringstream ss;
 			ss << "version=" << PROTO_VERSION << ";quality=" << dtn::utils::Clock::rating << ";timestamp=" << dtn::utils::Clock::getTime() << ";";
-			name = "dtntp";
-			data = ss.str();
+			announcement.addService( DiscoveryService("dtntp", ss.str()));
 		}
 
 		void DTNTPWorker::decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality)

@@ -66,11 +66,10 @@ namespace dtn
 			return dtn::core::Node::CONN_LOWPAN;
 		}
 
-		void LOWPANConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void LOWPANConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
 			if (iface == _net)
 			{
-				name = "lowpancl";
 				stringstream service;
 
 				struct sockaddr_ieee802154 address;
@@ -83,7 +82,7 @@ namespace dtn
 				//FIXME better naming for address and panid. This will need updates to the service parser.
 				service << "ip=" << address.addr.short_addr << ";port=" << _panid << ";";
 
-				params = service.str();
+				announcement.addService( DiscoveryService("lowpancl", service.str()));
 			}
 			else
 			{
@@ -197,7 +196,7 @@ namespace dtn
 			join();
 		}
 
-		void LOWPANConvergenceLayer::sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryService> &services)
+		void LOWPANConvergenceLayer::sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
 		{
 			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPAN IPND beacon send started" << IBRCOMMON_LOGGER_ENDL;
 
@@ -210,16 +209,13 @@ namespace dtn
 			announcement.clearServices();
 
 			// add services
-			for (std::list<DiscoveryService>::iterator iter = services.begin(); iter != services.end(); iter++)
+			for (std::list<dtn::net::DiscoveryServiceProvider*>::iterator iter = providers.begin(); iter != providers.end(); iter++)
 			{
-				DiscoveryService &service = (*iter);
+				dtn::net::DiscoveryServiceProvider &provider = (**iter);
 
 				try {
 					// update service information
-					service.update(_net);
-
-					// add service to discovery message
-					announcement.addService(service);
+					provider.update(_net, announcement);
 				} catch (const dtn::net::DiscoveryServiceProvider::NoServiceHereException&) {
 
 				}

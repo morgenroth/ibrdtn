@@ -81,28 +81,28 @@ namespace dtn
 			return dtn::core::Node::CONN_UDPIP;
 		}
 
-		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
 			if (iface == _net)
 			{
-				name = "udpcl";
-				stringstream service;
-
 				try {
-					std::list<ibrcommon::vaddress> list = _net.getAddresses(ibrcommon::vaddress::VADDRESS_INET);
-					if (!list.empty())
-					{
-						 service << "ip=" << list.front().get(false) << ";port=" << _port << ";";
-					}
-					else
-					{
-						service << "port=" << _port << ";";
-					}
-				} catch (const ibrcommon::vinterface::interface_not_set&) {
-					service << "port=" << _port << ";";
-				};
+					std::list<ibrcommon::vaddress> list = _net.getAddresses();
 
-				params = service.str();
+					// if no address is returned... (goto catch block)
+					if (list.empty()) throw ibrcommon::Exception("no address found");
+
+					for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
+					{
+						std::stringstream service;
+						// fill in the ip address
+						service << "ip=" << (*addr_it).get(false) << ";port=" << _port << ";";
+						announcement.addService( DiscoveryService("udpcl", service.str()));
+					}
+				} catch (const ibrcommon::Exception&) {
+					stringstream service;
+					service << "port=" << _port << ";";
+					announcement.addService( DiscoveryService("udpcl", service.str()));
+				};
 			}
 			else
 			{

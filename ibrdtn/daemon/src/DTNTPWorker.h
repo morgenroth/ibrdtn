@@ -62,7 +62,8 @@ namespace dtn
 			 * @param name
 			 * @param data
 			 */
-			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data) throw(NoServiceHereException);
+			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
+				throw(NoServiceHereException);
 
 //			/**
 //			 * Determine the current local clock rating

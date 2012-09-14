@@ -22,6 +22,7 @@
 #ifndef _DISCOVERYSERVICEPROVIDER_H
 #define	_DISCOVERYSERVICEPROVIDER_H
 
+#include "net/DiscoveryAnnouncement.h"
 #include <ibrcommon/net/vinterface.h>
 #include <string>
 
@@ -29,6 +30,12 @@ namespace dtn
 {
 	namespace net
 	{
+		class DiscoveryServiceEntry {
+		public:
+			std::string name;
+			std::string data;
+		};
+
 		class DiscoveryServiceProvider
 		{
 		public:
@@ -42,12 +49,14 @@ namespace dtn
 				virtual ~NoServiceHereException() throw() {};
 			};
 
+			virtual ~DiscoveryServiceProvider() {};
+
 			/**
 			 * Updates an discovery service block with current values
 			 * @param name
 			 * @param data
 			 */
-			virtual void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data)
+			virtual void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
 				throw(NoServiceHereException) = 0;
 		};
 	}

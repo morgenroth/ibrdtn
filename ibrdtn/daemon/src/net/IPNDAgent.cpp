@@ -104,7 +104,7 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::sendAnnoucement(const u_int16_t &sn, std::list<DiscoveryService> &services)
+		void IPNDAgent::sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
 		{
 			DiscoveryAnnouncement announcement(_version, dtn::core::BundleCore::local);
 
@@ -121,16 +121,13 @@ namespace dtn
 				if (!_config.shortbeacon())
 				{
 					// add services
-					for (std::list<DiscoveryService>::iterator iter = services.begin(); iter != services.end(); iter++)
+					for (std::list<DiscoveryServiceProvider*>::iterator iter = providers.begin(); iter != providers.end(); iter++)
 					{
-						DiscoveryService &service = (*iter);
+						DiscoveryServiceProvider &provider = (**iter);
 
 						try {
 							// update service information
-							service.update(iface);
-
-							// add service to discovery message
-							announcement.addService(service);
+							provider.update(iface, announcement);
 						} catch (const dtn::net::DiscoveryServiceProvider::NoServiceHereException&) {
 
 						}

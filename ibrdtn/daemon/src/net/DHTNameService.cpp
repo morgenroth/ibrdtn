@@ -745,21 +745,18 @@ void dtn::dht::DHTNameService::bootstrappingIPs() {
 
 // TODO Nur für Interfaces zulassen, auf denen ich gebunden bin!
 
-void dtn::dht::DHTNameService::update(const ibrcommon::vinterface &iface,
-		std::string &name, std::string &params)
+void dtn::dht::DHTNameService::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
 		throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException) {
 	if (this->_initialized) {
-		name = "dhtns";
 		stringstream service;
 		service << "port=" << this->_context.port << ";";
 		if (!this->_config.isNeighbourAllowedToAnnounceMe()) {
 			service << "proxy=false;";
 		}
-		params = service.str();
+		announcement.addService( DiscoveryService("dhtns", service.str()));
 	} else {
 		if(!this->_config.isNeighbourAllowedToAnnounceMe()) {
-			name = "dhtns";
-			params = "proxy=false;";
+			announcement.addService( DiscoveryService("dhtns", "proxy=false;"));
 		} else {
 			throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
 		}

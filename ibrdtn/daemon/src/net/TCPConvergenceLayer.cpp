@@ -67,11 +67,8 @@ namespace dtn
 			return dtn::core::Node::CONN_TCPIP;
 		}
 
-		void TCPConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void TCPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
-			name = "tcpcl";
-			stringstream service;
-
 			// TODO: get the main address of this host, if no interface is specified
 
 			// search for the matching interface
@@ -82,19 +79,24 @@ namespace dtn
 				{
 					try {
 						// get all addresses of this interface
-						std::list<vaddress> list = interface.getAddresses(ibrcommon::vaddress::VADDRESS_INET);
+						std::list<vaddress> list = interface.getAddresses();
 
 						// if no address is returned... (goto catch block)
 						if (list.empty()) throw ibrcommon::Exception("no address found");
 
-						// fill in the ip address
-						service << "ip=" << list.front().get(false) << ";port=" << _portmap[iface] << ";";
+						for (std::list<vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
+						{
+							std::stringstream service;
+							// fill in the ip address
+							service << "ip=" << (*addr_it).get(false) << ";port=" << _portmap[iface] << ";";
+							announcement.addService( DiscoveryService("tcpcl", service.str()));
+						}
 					} catch (const ibrcommon::Exception&) {
+						std::stringstream service;
 						// ... set the port only
 						service << "port=" << _portmap[iface] << ";";
+						announcement.addService( DiscoveryService("tcpcl", service.str()));
 					};
-
-					params = service.str();
 					return;
 				}
 			}

@@ -25,6 +25,7 @@
 #include "core/Node.h"
 #include "net/Neighbor.h"
 #include "net/DiscoveryAnnouncement.h"
+#include "net/DiscoveryServiceProvider.h"
 #include "net/DiscoveryService.h"
 #include "Configuration.h"
 
@@ -42,11 +43,10 @@ namespace dtn
 
 			void received(const dtn::net::DiscoveryAnnouncement &announcement, size_t timeout = 0);
 
-			void addService(string name, string parameters);
 			void addService(dtn::net::DiscoveryServiceProvider *provider);
 
 		protected:
-			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryService> &services) = 0;
+			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider) = 0;
 
 			void timeout();
 
@@ -55,7 +55,7 @@ namespace dtn
 		private:
 			std::list<Neighbor> _neighbors;
 			u_int16_t _sn;
-			std::list<dtn::net::DiscoveryService> _services;
+			std::list<dtn::net::DiscoveryServiceProvider*> _provider;
 			size_t _last_announce_sent;
 		};
 	}

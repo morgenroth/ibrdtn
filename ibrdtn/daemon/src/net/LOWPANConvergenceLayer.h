@@ -53,7 +53,8 @@ namespace dtn
 			/**
 			 * this method updates the given values
 			 */
-			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
+			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
+				throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
@@ -89,7 +90,7 @@ namespace dtn
 			virtual void componentDown();
 			void __cancellation();
 
-			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryService> &services);
+			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers);
 
 		private:
 			ibrcommon::lowpansocket *_socket;

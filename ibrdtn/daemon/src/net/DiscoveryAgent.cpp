@@ -44,16 +44,9 @@ namespace dtn
 		{
 		}
 
-		void DiscoveryAgent::addService(std::string name, std::string parameters)
-		{
-			DiscoveryService service(name, parameters);
-			_services.push_back(service);
-		}
-
 		void DiscoveryAgent::addService(DiscoveryServiceProvider *provider)
 		{
-			DiscoveryService service(provider);
-			_services.push_back(service);
+			_provider.push_back(provider);
 		}
 
 		void DiscoveryAgent::received(const DiscoveryAnnouncement &announcement, size_t timeout)
@@ -97,7 +90,7 @@ namespace dtn
 				{
 					IBRCOMMON_LOGGER_DEBUG(55) << "reply with discovery announcement" << IBRCOMMON_LOGGER_ENDL;
 
-					sendAnnoucement(_sn, _services);
+					sendAnnoucement(_sn, _provider);
 
 					// increment sequencenumber
 					_sn++;
@@ -115,7 +108,7 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER_DEBUG(55) << "send discovery announcement" << IBRCOMMON_LOGGER_ENDL;
 
-				sendAnnoucement(_sn, _services);
+				sendAnnoucement(_sn, _provider);
 
 				// increment sequencenumber
 				_sn++;

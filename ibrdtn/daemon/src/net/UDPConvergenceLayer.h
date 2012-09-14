@@ -60,7 +60,8 @@ namespace dtn
 			/**
 			 * this method updates the given values
 			 */
-			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
+			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
+				throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
