@@ -685,24 +685,18 @@ int __daemon_run(Configuration &conf)
 
 		try {
 			const ibrcommon::vaddress addr = conf.getDiscovery().address();
-			multicast = addr.isMulticast();
 			ipnd->add(addr);
 		} catch (const Configuration::ParameterNotFoundException&) {
-			ipnd->add(ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET, "255.255.255.255"));
+			// by default set multicast equivalent of broadcast
+			ipnd->add(ibrcommon::vaddress("224.0.0.1"));
 		}
 
 		for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); iter++)
 		{
 			const ibrcommon::vinterface &i = (*iter);
-			if (i.empty() && multicast)
-			{
-				IBRCOMMON_LOGGER(warning) << "Multicast discovery will not work with bind on ANY interfaces." << IBRCOMMON_LOGGER_ENDL;
-			}
-			else
-			{
-				// add interfaces to discovery
-				ipnd->bind(*iter);
-			}
+
+			// add interfaces to discovery
+			ipnd->bind(*iter);
 		}
 
 		components.push_back(ipnd);

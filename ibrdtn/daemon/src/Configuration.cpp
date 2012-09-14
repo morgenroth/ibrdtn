@@ -474,17 +474,7 @@ namespace dtn
 		{
 			try {
 				std::string address_str = Configuration::getInstance()._conf.read<string>("discovery_address");
-				return ibrcommon::vaddress( ibrcommon::vaddress::VADDRESS_INET, address_str);
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotFoundException();
-			}
-		}
-
-		const ibrcommon::vaddress Configuration::Discovery::address6() const throw (ParameterNotFoundException)
-		{
-			try {
-				std::string address_str = Configuration::getInstance()._conf.read<string>("discovery_address6");
-				return ibrcommon::vaddress( ibrcommon::vaddress::VADDRESS_INET6, address_str);
+				return ibrcommon::vaddress(address_str);
 			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotFoundException();
 			}

@@ -106,12 +106,11 @@ config 'daemon' 'main'
 #####################################
 
 #
-# You can specify an address to listen to for discovery announcements.
-# Multicast addresses are supported. If no address is specified the default
-# broadcast address is used.
+# You can specify an multicast address to listen to for discovery announcements.
+# If no address is specified the multicast equivalent of broadcast is used.
 #
 config 'daemon' 'discovery'
-	option address		225.0.12.5
+#	option address		224.0.0.1
 #	option timeout		5
 
 config 'daemon' 'tcptuning'
