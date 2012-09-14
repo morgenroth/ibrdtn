@@ -104,13 +104,16 @@ namespace ibrcommon
 		int stat = -1;
 
 		// iterate over all sockets
-		std::list<int> fds = _socket.get();
+		vsocket::fd_address_list fds = _socket.get();
 
-		for (std::list<int>::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+		for (vsocket::fd_address_list::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
 		{
+			vsocket::fd_address_entry e = (*iter);
+			
 			try {
 				ssize_t ret = 0;
 				int flags = 0;
+				int fd = e.second;
 
 				struct addrinfo hints, *ainfo;
 				memset(&hints, 0, sizeof hints);
@@ -118,7 +121,7 @@ namespace ibrcommon
 				hints.ai_socktype = SOCK_DGRAM;
 				ainfo = addr.addrinfo(&hints, port);
 
-				ret = ::sendto(*iter, data, length, flags, ainfo->ai_addr, ainfo->ai_addrlen);
+				ret = ::sendto(fd, data, length, flags, ainfo->ai_addr, ainfo->ai_addrlen);
 
 				freeaddrinfo(ainfo);
 

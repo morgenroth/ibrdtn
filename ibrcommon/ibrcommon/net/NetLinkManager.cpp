@@ -101,8 +101,14 @@ namespace ibrcommon
 		int ifindex = 0;
 		int scope = rtnl_addr_get_scope((struct rtnl_addr *) obj);
 
-		if (scope == rtnl_str2scope("link"))
+		vaddress::Scope sc = vaddress::SCOPE_UNKOWN;
+
+		if (scope == rtnl_str2scope("link")) {
 			ifindex = rtnl_addr_get_ifindex((struct rtnl_addr *) obj);
+			sc = vaddress::SCOPE_LINKLOCAL;
+		} else if (scope == rtnl_str2scope("global")) {
+			sc = vaddress::SCOPE_GLOBAL;
+		}
 
 		if (naddr)
 		{

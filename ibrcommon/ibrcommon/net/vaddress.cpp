@@ -39,12 +39,12 @@ namespace ibrcommon
 
 
 	vaddress::vaddress(const Family &family)
-	 : _family(family), _address(), _iface(0)
+	 : _family(family), _scope(SCOPE_UNKOWN), _address(), _iface(0)
 	{
 	}
 
 	vaddress::vaddress(const std::string &address)
-	 : _family(VADDRESS_UNSPEC), _address(address), _iface(0)
+	 : _family(VADDRESS_UNSPEC), _scope(SCOPE_UNKOWN), _address(address), _iface(0)
 	{
 		// guess the address family
 		regex_t re;
@@ -91,13 +91,13 @@ namespace ibrcommon
 		}
 	}
 
-	vaddress::vaddress(const Family &family, const std::string &address, const int iface)
-	 : _family(family), _address(address), _iface(iface)
+	vaddress::vaddress(const Family &family, const std::string &address, const int iface, const Scope scope)
+	 : _family(family), _scope(scope), _address(address), _iface(iface)
 	{
 	}
 
 	vaddress::vaddress(const Family &family, const std::string &address)
-	 : _family(family), _address(address), _iface(0)
+	 : _family(family), _scope(SCOPE_UNKOWN), _address(address), _iface(0)
 	{
 	}
 
@@ -126,6 +126,11 @@ namespace ibrcommon
 	vaddress::Family vaddress::getFamily() const
 	{
 		return _family;
+	}
+
+	vaddress::Scope vaddress::getScope() const
+	{
+		return _scope;
 	}
 
 	const std::string vaddress::get(bool internal) const

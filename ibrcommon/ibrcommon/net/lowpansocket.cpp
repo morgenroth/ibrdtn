@@ -115,16 +115,19 @@ namespace ibrcommon
 		int stat = -1;
 
 		// iterate over all sockets
-		std::list<int> fds = _socket._vsocket.get();
+		vsocket::fd_address_list fds = _socket._vsocket.get();
 
-		for (std::list<int>::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+		for (vsocket::fd_address_list::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
 		{
+			vsocket::fd_address_entry e = (*iter);
+			int fd = e.second;
+
 			ssize_t ret = 0;
 
 			::connect(_socket._vsocket.fd(), (struct sockaddr *) &_destaddress, sizeof(_destaddress));
 			//printf("lowpan send() address %04x, PAN %04x\n", _destaddress.addr.short_addr, _destaddress.addr.pan_id);
 			//return ::sendto(_socket._socket, data, length, 0, (struct sockaddr *) &_destaddress, sizeof(_destaddress));
-			ret = ::send(*iter, data, length, 0);
+			ret = ::send(fd, data, length, 0);
 
 			// if the send was successful, set the correct return value
 			if (ret != -1) stat = ret;

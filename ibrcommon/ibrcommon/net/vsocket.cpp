@@ -170,6 +170,9 @@ namespace ibrcommon
 
 		for (std::list<vaddress>::const_iterator iter = addrlist.begin(); iter != addrlist.end(); iter++)
 		{
+			if ((*iter).getFamily() == ibrcommon::vaddress::VADDRESS_INET6)
+				if ((_options & VSOCKET_LINKLOCAL) && ((*iter).getScope() != ibrcommon::vaddress::SCOPE_LINKLOCAL)) continue;
+
 			if (port == 0)
 			{
 				vsocket::vbind vb(iface, (*iter), socktype);
@@ -195,6 +198,8 @@ namespace ibrcommon
 
 		for (std::list<vaddress>::const_iterator iter = addrlist.begin(); iter != addrlist.end(); iter++)
 		{
+			if ((*iter).getFamily() == ibrcommon::vaddress::VADDRESS_INET6)
+				if ((_options & VSOCKET_LINKLOCAL) && ((*iter).getScope() != ibrcommon::vaddress::SCOPE_LINKLOCAL)) continue;
 			unbind( *iter, port );
 		}
 	}
@@ -436,9 +441,9 @@ namespace ibrcommon
 		_cb = cb;
 	}
 
-	const std::list<int> vsocket::get(const ibrcommon::vinterface &iface, const ibrcommon::vaddress::Family f)
+	const vsocket::fd_address_list vsocket::get(const ibrcommon::vinterface &iface)
 	{
-		std::list<int> ret;
+		fd_address_list ret;
 
 		ibrcommon::MutexLock l(_bind_lock);
 		for (std::list<ibrcommon::vsocket::vbind>::iterator iter = _binds.begin();
@@ -447,23 +452,23 @@ namespace ibrcommon
 			ibrcommon::vsocket::vbind &bind = (*iter);
 			if (bind._interface == iface)
 			{
-				if ((f == vaddress::VADDRESS_UNSPEC) || (f == bind._vaddress.getFamily())) ret.push_back(bind._fd);
+				ret.push_back( make_pair(bind._vaddress, bind._fd) );
 			}
 		}
 
 		return ret;
 	}
 
-	const std::list<int> vsocket::get(const ibrcommon::vaddress::Family f)
+	const vsocket::fd_address_list vsocket::get()
 	{
-		std::list<int> ret;
+		fd_address_list ret;
 
 		ibrcommon::MutexLock l(_bind_lock);
 		for (std::list<ibrcommon::vsocket::vbind>::iterator iter = _binds.begin();
 				iter != _binds.end(); iter++)
 		{
 			ibrcommon::vsocket::vbind &bind = (*iter);
-			if ((f == vaddress::VADDRESS_UNSPEC) || (f == bind._vaddress.getFamily())) ret.push_back(bind._fd);
+			ret.push_back( make_pair(bind._vaddress, bind._fd) );
 		}
 
 		return ret;

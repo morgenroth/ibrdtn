@@ -53,13 +53,21 @@ namespace ibrcommon
 				VADDRESS_UNIX = AF_UNIX
 			};
 
+			enum Scope
+			{
+				SCOPE_UNKOWN,
+				SCOPE_GLOBAL,
+				SCOPE_LINKLOCAL
+			};
+
 			vaddress(const std::string &address);
 			vaddress(const Family &family = VADDRESS_INET);
 			vaddress(const Family &family, const std::string &address);
-			vaddress(const Family &family, const std::string &address, const int iface);
+			vaddress(const Family &family, const std::string &address, const int iface, const Scope scope = SCOPE_UNKOWN);
 			virtual ~vaddress();
 
 			Family getFamily() const;
+			Scope getScope() const;
 			const std::string get(bool internal = true) const;
 
 			bool operator!=(const vaddress &obj) const;
@@ -79,6 +87,7 @@ namespace ibrcommon
 			static const std::string __REGEX_IPV4_ADDRESS__;
 
 			Family _family;
+			Scope _scope;
 			std::string _address;
 			int _iface;
 	};

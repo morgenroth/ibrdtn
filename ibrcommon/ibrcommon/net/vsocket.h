@@ -78,7 +78,8 @@ namespace ibrcommon
 			VSOCKET_NODELAY = 1 << 2,
 			VSOCKET_BROADCAST = 1 << 3,
 			VSOCKET_NONBLOCKING = 1 << 4,
-			VSOCKET_MULTICAST = 1 << 5
+			VSOCKET_MULTICAST = 1 << 5,
+			VSOCKET_LINKLOCAL = 1 << 6
 		};
 
 		static void set_non_blocking(int socket, bool nonblock = true);
@@ -98,8 +99,11 @@ namespace ibrcommon
 
 		void add(const int fd);
 
-		const std::list<int> get(const ibrcommon::vinterface &iface, const ibrcommon::vaddress::Family f = vaddress::VADDRESS_UNSPEC);
-		const std::list<int> get(const ibrcommon::vaddress::Family f = vaddress::VADDRESS_UNSPEC);
+		typedef std::pair<ibrcommon::vaddress, int> fd_address_entry;
+		typedef std::list<fd_address_entry> fd_address_list;
+
+		const fd_address_list get(const ibrcommon::vinterface &iface);
+		const fd_address_list get();
 
 		void listen(int connections);
 		void relisten();
