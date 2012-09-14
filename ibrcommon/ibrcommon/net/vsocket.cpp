@@ -95,8 +95,8 @@ namespace ibrcommon
 		}
 	}
 
-	vsocket::vsocket()
-	 : _options(0), _interrupt(false), _listen_connections(0), _cb(NULL)
+	vsocket::vsocket(bool sendonly)
+	 : _options(0), _interrupt(false), _listen_connections(0), _cb(NULL), _send_only(sendonly)
 	{
 		// create a pipe for interruption
 		if (pipe(_interrupt_pipe) < 0)
@@ -128,13 +128,23 @@ namespace ibrcommon
 			if (_options & VSOCKET_REUSEADDR) vb.set(VSOCKET_REUSEADDR);
 			if (_options & VSOCKET_BROADCAST) vb.set(VSOCKET_BROADCAST);
 			if (_options & VSOCKET_MULTICAST) vb.set(VSOCKET_MULTICAST);
-			if (_options & VSOCKET_MULTICAST_V6) vb.set(VSOCKET_MULTICAST_V6);
 
 			vb.bind();
 
 			if (_options & VSOCKET_LINGER) vb.set(VSOCKET_LINGER);
 			if (_options & VSOCKET_NODELAY) vb.set(VSOCKET_NODELAY);
 			if (_options & VSOCKET_NONBLOCKING) vb.set(VSOCKET_NONBLOCKING);
+
+			// join all already assigned groups
+			for (mcast_groups::iterator iter = _groups.begin();
+					iter != _groups.end(); iter++) {
+				std::set<ibrcommon::vinterface> ifaces = (*iter).second;
+
+				for (std::set<ibrcommon::vinterface>::iterator it_iface = ifaces.begin();
+						it_iface != ifaces.end(); it_iface++) {
+					vb.join(iter->first, *it_iface);
+				}
+			}
 
 			return vb._fd;
 		} catch (const vsocket_exception&) {
@@ -159,18 +169,15 @@ namespace ibrcommon
 
 		for (std::list<vaddress>::const_iterator iter = addrlist.begin(); iter != addrlist.end(); iter++)
 		{
-			if (!iter->isBroadcast())
+			if (port == 0)
 			{
-				if (port == 0)
-				{
-					vsocket::vbind vb(iface, (*iter), socktype);
-					bind( vb );
-				}
-				else
-				{
-					vsocket::vbind vb(iface, (*iter), port, socktype);
-					bind( vb );
-				}
+				vsocket::vbind vb(iface, (*iter), socktype);
+				bind( vb );
+			}
+			else
+			{
+				vsocket::vbind vb(iface, (*iter), port, socktype);
+				bind( vb );
 			}
 		}
 	}
@@ -185,10 +192,7 @@ namespace ibrcommon
 
 		for (std::list<vaddress>::const_iterator iter = addrlist.begin(); iter != addrlist.end(); iter++)
 		{
-			if (!iter->isBroadcast())
-			{
-				unbind( *iter, port );
-			}
+			unbind( *iter, port );
 		}
 	}
 
@@ -297,6 +301,37 @@ namespace ibrcommon
 		}
 	}
 
+	void vsocket::join(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface)
+	{
+		_groups[group].insert(iface);
+
+		for (std::list<ibrcommon::vsocket::vbind>::iterator iter = _binds.begin();
+				iter != _binds.end(); iter++)
+		{
+			ibrcommon::vsocket::vbind &bind = (*iter);
+			bind.join(group, iface);
+		}
+	}
+
+	void vsocket::leave(const ibrcommon::vaddress &group)
+	{
+		const std::set<ibrcommon::vinterface> &ifaces = _groups[group];
+
+		for (std::set<ibrcommon::vinterface>::const_iterator it_ifaces = ifaces.begin();
+				it_ifaces != ifaces.end(); it_ifaces++) {
+			const ibrcommon::vinterface &iface = (*it_ifaces);
+
+			for (std::list<ibrcommon::vsocket::vbind>::iterator it_bind = _binds.begin();
+					it_bind != _binds.end(); it_bind++)
+			{
+				ibrcommon::vsocket::vbind &bind = (*it_bind);
+				bind.leave(group, iface);
+			}
+		}
+
+		_groups.erase(group);
+	}
+
 	void vsocket::close()
 	{
 		ibrcommon::MutexLock l(_bind_lock);
@@ -344,8 +379,16 @@ namespace ibrcommon
 			case LinkManagerEvent::EVENT_ADDRESS_ADDED:
 			{
 				IBRCOMMON_LOGGER_DEBUG(10) << "dynamic address bind on: " << evt.getAddress().toString() << ":" << _portmap[iface] << IBRCOMMON_LOGGER_ENDL;
-				vsocket::vbind vb(iface, evt.getAddress(), _portmap[iface], _typemap[iface]);
-				bind( vb );
+				if (_portmap[iface] == 0)
+				{
+					vsocket::vbind vb(iface, evt.getAddress(), _typemap[iface]);
+					bind( vb );
+				}
+				else
+				{
+					vsocket::vbind vb(iface, evt.getAddress(), _portmap[iface], _typemap[iface]);
+					bind( vb );
+				}
 				break;
 			}
 
@@ -364,8 +407,13 @@ namespace ibrcommon
 		// forward the event to the listen callback class
 		if (_cb != NULL) _cb->eventNotify(evt);
 
-		// refresh the select call
-		refresh();
+		if (_send_only) {
+			// if this is send only socket, then process unbinds directly
+			process_unbind_queue();
+		} else {
+			// refresh the select call
+			refresh();
+		}
 	}
 
 	void vsocket::setEventCallback(ibrcommon::LinkManager::EventCallback *cb)
@@ -523,27 +571,8 @@ namespace ibrcommon
 				char buf[2];
 				::read(_interrupt_pipe[0], buf, 2);
 
-				if (!_unbind_queue.empty())
-				{
-					// unbind all removed sockets now
-					ibrcommon::Queue<vsocket::vbind>::Locked lq = _unbind_queue.exclusive();
-
-					vsocket::vbind &vb = lq.front();
-
-					for (std::list<vsocket::vbind>::iterator iter = _binds.begin(); iter != _binds.end(); iter++)
-					{
-						vsocket::vbind &i = (*iter);
-						if (i == vb)
-						{
-							IBRCOMMON_LOGGER_DEBUG(25) << "socket closed" << IBRCOMMON_LOGGER_ENDL;
-							i.close();
-							_binds.erase(iter);
-							break;
-						}
-					}
-
-					lq.pop();
-				}
+				// process the unbind queue
+				process_unbind_queue();
 
 				// listen on all new binds
 				relisten();
@@ -573,6 +602,31 @@ namespace ibrcommon
 			}
 
 			if (fds.size() > 0) return;
+		}
+	}
+
+	void vsocket::process_unbind_queue() {
+		if (!_unbind_queue.empty())
+		{
+			// unbind all removed sockets now
+			ibrcommon::Queue<vsocket::vbind>::Locked lq = _unbind_queue.exclusive();
+
+			vsocket::vbind &vb = lq.front();
+
+			for (std::list<vsocket::vbind>::iterator iter = _binds.begin(); iter != _binds.end(); iter++)
+			{
+				vsocket::vbind &i = (*iter);
+
+				if (i == vb)
+				{
+					IBRCOMMON_LOGGER_DEBUG(25) << "socket closed" << IBRCOMMON_LOGGER_ENDL;
+					i.close();
+					_binds.erase(iter);
+					break;
+				}
+			}
+
+			lq.pop();
 		}
 	}
 
@@ -784,49 +838,47 @@ namespace ibrcommon
 
 			case VSOCKET_MULTICAST:
 			{
+				if (_vaddress.getFamily() == ibrcommon::vaddress::VADDRESS_INET) {
 #ifdef HAVE_FEATURES_H
-				int val = 1;
-				if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
-				{
-					throw vsocket_exception("setsockopt(IP_MULTICAST_LOOP)");
-				}
+					int val = 1;
+					if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+					{
+						throw vsocket_exception("setsockopt(IP_MULTICAST_LOOP)");
+					}
 
-				u_char ttl = 255; // Multicast TTL
-				if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0 )
-				{
-					throw vsocket_exception("setsockopt(IP_MULTICAST_TTL)");
-				}
+					u_char ttl = 255; // Multicast TTL
+					if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0 )
+					{
+						throw vsocket_exception("setsockopt(IP_MULTICAST_TTL)");
+					}
 #endif
 
-//				u_char ittl = 255; // IP TTL
-//				if ( ::setsockopt(_fd, IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl)) < 0 )
-//				{
-//					throw vsocket_exception("setsockopt(IP_TTL)");
-//				}
-				break;
-			}
-
-			case VSOCKET_MULTICAST_V6:
-			{
+//					u_char ittl = 255; // IP TTL
+//					if ( ::setsockopt(_fd, IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl)) < 0 )
+//					{
+//						throw vsocket_exception("setsockopt(IP_TTL)");
+//					}
+				} else if (_vaddress.getFamily() == ibrcommon::vaddress::VADDRESS_INET6) {
 #ifdef HAVE_FEATURES_H
-				int val = 1;
-				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
-				{
-					throw vsocket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
-				}
+					int val = 1;
+					if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+					{
+						throw vsocket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
+					}
 
-//				u_char ttl = 255; // Multicast TTL
-//				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0 )
-//				{
-//					throw vsocket_exception("setsockopt(IPV6_MULTICAST_HOPS)");
-//				}
+//					u_char ttl = 255; // Multicast TTL
+//					if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0 )
+//					{
+//						throw vsocket_exception("setsockopt(IPV6_MULTICAST_HOPS)");
+//					}
 #endif
 
-//				u_char ittl = 255; // IP TTL
-//				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &ittl, sizeof(ittl)) < 0 )
-//				{
-//					throw vsocket_exception("setsockopt(IPV6_HOPLIMIT)");
-//				}
+//					u_char ittl = 255; // IP TTL
+//					if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &ittl, sizeof(ittl)) < 0 )
+//					{
+//						throw vsocket_exception("setsockopt(IPV6_HOPLIMIT)");
+//					}
+				}
 				break;
 			}
 		}
@@ -882,27 +934,72 @@ namespace ibrcommon
 
 			case VSOCKET_MULTICAST:
 			{
+				if (_vaddress.getFamily() == ibrcommon::vaddress::VADDRESS_INET) {
 #ifdef HAVE_FEATURES_H
-				int val = 0;
-				if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
-				{
-					throw vsocket_exception("setsockopt(IP_MULTICAST_LOOP)");
-				}
+					int val = 0;
+					if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+					{
+						throw vsocket_exception("setsockopt(IP_MULTICAST_LOOP)");
+					}
 #endif
+				} else if (_vaddress.getFamily() == ibrcommon::vaddress::VADDRESS_INET6) {
+#ifdef HAVE_FEATURES_H
+					int val = 0;
+					if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+					{
+						throw vsocket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
+					}
+#endif
+				}
 				break;
 			}
+		}
+	}
 
-			case VSOCKET_MULTICAST_V6:
-			{
-#ifdef HAVE_FEATURES_H
-				int val = 0;
-				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
-				{
-					throw vsocket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
-				}
-#endif
-				break;
-			}
+	void vsocket::vbind::join(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface)
+	{
+		if (group.getFamily() != _vaddress.getFamily()) return;
+
+		// get the addresses of the interface
+		std::list<vaddress> addrs = iface.getAddresses(group.getFamily());
+
+		// stop here if there are not addresses
+		if (addrs.empty()) return;
+
+		struct ip_mreq imr;
+		::memset(&imr, 0, sizeof(ip_mreq));
+
+		imr.imr_multiaddr.s_addr = inet_addr(group.get().c_str());
+		imr.imr_interface.s_addr = inet_addr(addrs.front().get().c_str());
+
+		if ( ::setsockopt(_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char *)&imr, sizeof(struct ip_mreq)) < 0)
+		{
+			throw vsocket_exception("setsockopt(IP_ADD_MEMBERSHIP)");
+		}
+
+		// successful!
+		IBRCOMMON_LOGGER_DEBUG(5) << "multicast join group successful to " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+	}
+
+	void vsocket::vbind::leave(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface)
+	{
+		if (group.getFamily() != _vaddress.getFamily()) return;
+
+		// get the addresses of the interface
+		std::list<vaddress> addrs = iface.getAddresses(group.getFamily());
+
+		// stop here if there are not addresses
+		if (addrs.empty()) return;
+
+		struct ip_mreq imr;
+		::memset(&imr, 0, sizeof(ip_mreq));
+
+		imr.imr_multiaddr.s_addr = inet_addr(group.get().c_str());
+		imr.imr_interface.s_addr = inet_addr(addrs.front().get().c_str());
+
+		if ( ::setsockopt(_fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (const char *)&imr, sizeof(struct ip_mreq)) < 0)
+		{
+			throw vsocket_exception("setsockopt(IP_DROP_MEMBERSHIP)");
 		}
 	}
 

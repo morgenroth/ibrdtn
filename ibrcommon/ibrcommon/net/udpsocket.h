@@ -43,9 +43,16 @@ namespace ibrcommon
 			{};
 		};
 
+		enum SEND_MODE {
+			SEND_ALL = 0,
+			SEND_STOP_ON_SUCCESS = 1
+		};
+
 		virtual ~udpsocket();
 
 		virtual void shutdown();
+
+		void setMode(const SEND_MODE mode);
 
 		int receive(char* data, size_t maxbuffer);
 		int receive(char* data, size_t maxbuffer, std::string &address, unsigned int &port);
@@ -56,6 +63,7 @@ namespace ibrcommon
 		udpsocket() throw (SocketException);
 		vsocket _socket;
 		struct sockaddr_in _sockaddr;
+		SEND_MODE _send_mode;
 	};
 }
 

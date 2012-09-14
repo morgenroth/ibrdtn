@@ -1,7 +1,7 @@
 ## sub directory
 
-h_sources = tcpclient.h tcpserver.h tcpstream.h udpsocket.h MulticastSocket.h UnicastSocket.h ieee802154.h nl802154.h stopandwait.h vsocket.h vinterface.h vaddress.h LinkManager.h
-cc_sources = tcpclient.cpp tcpserver.cpp tcpstream.cpp udpsocket.cpp MulticastSocket.cpp UnicastSocket.cpp stopandwait.cpp vsocket.cpp vinterface.cpp vaddress.cpp LinkManager.cpp
+h_sources = tcpclient.h tcpserver.h tcpstream.h udpsocket.h UnicastSocket.h ieee802154.h nl802154.h stopandwait.h vsocket.h vinterface.h vaddress.h LinkManager.h
+cc_sources = tcpclient.cpp tcpserver.cpp tcpstream.cpp udpsocket.cpp UnicastSocket.cpp stopandwait.cpp vsocket.cpp vinterface.cpp vaddress.cpp LinkManager.cpp
 
 if LOWPAN
 h_sources += lowpansocket.h UnicastSocketLowpan.h lowpanstream.h

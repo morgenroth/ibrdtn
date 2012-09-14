@@ -39,12 +39,12 @@ namespace ibrcommon
 
 
 	vaddress::vaddress(const Family &family)
-	 : _family(family), _address(), _broadcast(false), _iface(0)
+	 : _family(family), _address(), _iface(0)
 	{
 	}
 
 	vaddress::vaddress(const std::string &address)
-	 : _family(VADDRESS_UNSPEC), _address(address), _broadcast(false), _iface(0)
+	 : _family(VADDRESS_UNSPEC), _address(address), _iface(0)
 	{
 		// guess the address family
 		regex_t re;
@@ -91,18 +91,26 @@ namespace ibrcommon
 		}
 	}
 
-	vaddress::vaddress(const Family &family, const std::string &address, const int iface, const bool broadcast)
-	 : _family(family), _address(address), _broadcast(broadcast), _iface(iface)
+	vaddress::vaddress(const Family &family, const std::string &address, const int iface)
+	 : _family(family), _address(address), _iface(iface)
 	{
 	}
 
-	vaddress::vaddress(const Family &family, const std::string &address, const bool broadcast)
-	 : _family(family), _address(address), _broadcast(broadcast), _iface(0)
+	vaddress::vaddress(const Family &family, const std::string &address)
+	 : _family(family), _address(address), _iface(0)
 	{
 	}
 
 	vaddress::~vaddress()
 	{
+	}
+
+	bool vaddress::operator<(const ibrcommon::vaddress &dhs) const
+	{
+		if (_family < dhs._family) return true;
+		if (_address < dhs._address) return true;
+		if (_iface < dhs._iface) return true;
+		return false;
 	}
 
 	// strip off network mask
@@ -155,11 +163,6 @@ namespace ibrcommon
 		return true;
 	}
 
-	bool vaddress::isBroadcast() const
-	{
-		return _broadcast;
-	}
-
 	struct addrinfo* vaddress::addrinfo(struct addrinfo *hints) const
 	{
 		struct addrinfo *res;
@@ -196,27 +199,6 @@ namespace ibrcommon
 		}
 
 		return res;
-	}
-
-	bool vaddress::isMulticast() const
-	{
-		try {
-			struct sockaddr_in destination;
-			bzero(&destination, sizeof(destination));
-
-			// convert given address
-			if (inet_pton(AF_INET, get().c_str(), &destination.sin_addr) <= 0)
-			{
-					throw address_not_set("can not parse address");
-			}
-
-			// check if address is in a multicast range
-			uint32_t haddr = ntohl((uint32_t&)destination.sin_addr);
-
-			return (IN_MULTICAST(haddr));
-		} catch (const address_not_set&) {
-			return false;
-		}
 	}
 
 	const std::string vaddress::toString() const

@@ -36,6 +36,7 @@
 namespace ibrcommon
 {
 	udpsocket::udpsocket() throw (SocketException)
+	  : _send_mode(SEND_STOP_ON_SUCCESS)
 	{
 	}
 
@@ -122,15 +123,11 @@ namespace ibrcommon
 				freeaddrinfo(ainfo);
 
 				// if the send was successful, set the correct return value
-				if (ret != -1)
+				if ((ret != -1) && (stat == -1))
 				{
 					stat = ret;
 
-					if ((!addr.isBroadcast()) && (!addr.isMulticast()))
-					{
-						// stop here
-						break;
-					}
+					if (_send_mode == SEND_STOP_ON_SUCCESS) break;
 				}
 			} catch (const ibrcommon::vsocket_exception&) {
 				IBRCOMMON_LOGGER_DEBUG(5) << "can not send message to " << addr.toString() << IBRCOMMON_LOGGER_ENDL;
@@ -138,5 +135,10 @@ namespace ibrcommon
 		}
 
 		return stat;
+	}
+
+	void udpsocket::setMode(const SEND_MODE mode)
+	{
+		_send_mode = mode;
 	}
 }

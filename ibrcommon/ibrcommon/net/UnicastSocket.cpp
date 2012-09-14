@@ -38,10 +38,7 @@ namespace ibrcommon
 		std::list<vaddress> list = iface.getAddresses();
 		for (std::list<vaddress>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 		{
-			if (!iter->isBroadcast())
-			{
-				bind(port, *iter);
-			}
+			bind(port, *iter);
 		}
 	}
 

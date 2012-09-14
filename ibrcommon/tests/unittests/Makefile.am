@@ -11,7 +11,6 @@ noinst_HEADERS = \
 #	TimeMeasurementTest.hh \
 #	SemaphoreTest.hh \
 #	NetAddressTest.hh \
-#	MulticastSocketTest.hh \
 #	QueueTest.hh \
 #	tcpstreamTest.hh \
 #	LoggerTest.hh \
@@ -42,7 +41,6 @@ unittest_SOURCES = \
 #	TimeMeasurementTest.cpp \
 #	SemaphoreTest.cpp \
 #	NetAddressTest.cpp \
-#	MulticastSocketTest.cpp \
 #	QueueTest.cpp \
 #	tcpstreamTest.cpp \
 #	LoggerTest.cpp \

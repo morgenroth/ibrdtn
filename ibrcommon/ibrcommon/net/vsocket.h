@@ -78,13 +78,12 @@ namespace ibrcommon
 			VSOCKET_NODELAY = 1 << 2,
 			VSOCKET_BROADCAST = 1 << 3,
 			VSOCKET_NONBLOCKING = 1 << 4,
-			VSOCKET_MULTICAST = 1 << 5,
-			VSOCKET_MULTICAST_V6 = 1 << 6
+			VSOCKET_MULTICAST = 1 << 5
 		};
 
 		static void set_non_blocking(int socket, bool nonblock = true);
 
-		vsocket();
+		vsocket(bool sendonly = false);
 		virtual ~vsocket();
 
 		int bind(const vaddress &address, const int port, unsigned int socktype = SOCK_STREAM);
@@ -108,9 +107,28 @@ namespace ibrcommon
 		void set(const Option &o);
 		void unset(const Option &o);
 
+		/**
+		 * Join a multicast group
+		 * @param group
+		 */
+		void join(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface);
+
+		/**
+		 * Leave a multicast group
+		 * @param group
+		 */
+		void leave(const ibrcommon::vaddress &group);
+
+		/**
+		 * close all fds
+		 */
 		void close();
 		void shutdown();
 
+		/**
+		 * return the first fd
+		 * @return
+		 */
 		int fd();
 
 		void select(std::list<int> &fds, struct timeval *tv = NULL);
@@ -154,6 +172,18 @@ namespace ibrcommon
 			void set(const vsocket::Option &o);
 			void unset(const vsocket::Option &o);
 
+			/**
+			 * Join a multicast group
+			 * @param group
+			 */
+			void join(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface);
+
+			/**
+			 * Leave a multicast group
+			 * @param group
+			 */
+			void leave(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface);
+
 			void close();
 			void shutdown();
 
@@ -167,11 +197,16 @@ namespace ibrcommon
 		int bind(const vsocket::vbind &b);
 		void refresh();
 		void interrupt();
+		void process_unbind_queue();
 
 		ibrcommon::Mutex _bind_lock;
 		std::list<vsocket::vbind> _binds;
 		std::map<vinterface, unsigned int> _portmap;
 		std::map<vinterface, unsigned int> _typemap;
+
+		// multicast groups
+		typedef std::map< ibrcommon::vaddress, std::set<ibrcommon::vinterface> > mcast_groups;
+		mcast_groups _groups;
 
 		unsigned int _options;
 		bool _interrupt;
@@ -183,6 +218,9 @@ namespace ibrcommon
 
 		int _listen_connections;
 		ibrcommon::LinkManager::EventCallback *_cb;
+
+		// if the socket is used to send only, this parameter should set to true
+		bool _send_only;
 	};
 
 	int recvfrom(int fd, char* data, size_t maxbuffer, std::string &address);

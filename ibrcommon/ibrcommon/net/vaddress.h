@@ -55,20 +55,12 @@ namespace ibrcommon
 
 			vaddress(const std::string &address);
 			vaddress(const Family &family = VADDRESS_INET);
-			vaddress(const Family &family, const std::string &address, const bool broadcast = false);
-			vaddress(const Family &family, const std::string &address, const int iface, const bool broadcast = false);
+			vaddress(const Family &family, const std::string &address);
+			vaddress(const Family &family, const std::string &address, const int iface);
 			virtual ~vaddress();
 
 			Family getFamily() const;
 			const std::string get(bool internal = true) const;
-			bool isBroadcast() const;
-
-			/**
-			 * Checks whether a given address is a multicast address or not
-			 * @param address The address to check.
-			 * @return True, if the address is a multicast address.
-			 */
-			bool isMulticast() const;
 
 			bool operator!=(const vaddress &obj) const;
 			bool operator==(const vaddress &obj) const;
@@ -80,13 +72,14 @@ namespace ibrcommon
 
 			static const std::string strip_netmask(const std::string &data);
 
+			bool operator<(const ibrcommon::vaddress &dhs) const;
+
 		private:
 			static const std::string __REGEX_IPV6_ADDRESS__;
 			static const std::string __REGEX_IPV4_ADDRESS__;
 
 			Family _family;
 			std::string _address;
-			bool _broadcast;
 			int _iface;
 	};
 }
