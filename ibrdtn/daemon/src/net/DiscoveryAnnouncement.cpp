@@ -56,6 +56,11 @@ namespace dtn
 			return false;
 		}
 
+		void DiscoveryAnnouncement::setEID(const dtn::data::EID &eid)
+		{
+			_canonical_eid = eid;
+		}
+
 		dtn::data::EID DiscoveryAnnouncement::getEID() const
 		{
 			return _canonical_eid;

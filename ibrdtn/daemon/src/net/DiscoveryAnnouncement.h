@@ -60,6 +60,7 @@ namespace dtn
 
 			virtual ~DiscoveryAnnouncement();
 
+			void setEID(const dtn::data::EID &eid);
 			dtn::data::EID getEID() const;
 
 			const std::list<DiscoveryService> getServices() const;
