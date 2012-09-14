@@ -36,8 +36,12 @@ namespace dtn
 	{
 		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _port(port), _send_socket(true)
+		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _send_socket(true), _port(port)
 		{
+			// limit the socket to linklocal addresses only
+			_recv_socket.set(ibrcommon::vsocket::VSOCKET_LINKLOCAL);
+			_send_socket.set(ibrcommon::vsocket::VSOCKET_LINKLOCAL);
+
 			// multicast addresses should be usable more than once.
 			_recv_socket.set(ibrcommon::vsocket::VSOCKET_REUSEADDR);
 
@@ -83,10 +87,17 @@ namespace dtn
 			stringstream ss; ss << a;
 			const std::string data = ss.str();
 
-			std::list<int> fds = _send_socket.get(iface);
-			for (std::list<int>::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+			ibrcommon::vsocket::fd_address_list fds = _send_socket.get(iface);
+			for (ibrcommon::vsocket::fd_address_list::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
 			{
+				ibrcommon::vsocket::fd_address_entry e = (*iter);
+				ibrcommon::vaddress &sock_addr = e.first;
+
+				if (sock_addr.getFamily() == ibrcommon::vaddress::VADDRESS_INET6)
+					if (sock_addr.getScope() != ibrcommon::vaddress::SCOPE_LINKLOCAL) continue;
+
 				try {
+					int fd = e.second;
 					int flags = 0;
 
 					struct addrinfo hints, *ainfo;
@@ -95,7 +106,7 @@ namespace dtn
 					hints.ai_socktype = SOCK_DGRAM;
 					ainfo = addr.addrinfo(&hints, port);
 
-					::sendto(*iter, data.c_str(), data.length(), flags, ainfo->ai_addr, ainfo->ai_addrlen);
+					::sendto(fd, data.c_str(), data.length(), flags, ainfo->ai_addr, ainfo->ai_addrlen);
 
 					freeaddrinfo(ainfo);
 				} catch (const ibrcommon::vsocket_exception&) {

@@ -93,6 +93,9 @@ namespace dtn
 
 					for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
 					{
+						if ((*addr_it).getFamily() == ibrcommon::vaddress::VADDRESS_INET6)
+							if ((*addr_it).getScope() == ibrcommon::vaddress::SCOPE_LINKLOCAL) continue;
+
 						std::stringstream service;
 						// fill in the ip address
 						service << "ip=" << (*addr_it).get(false) << ";port=" << _port << ";";
