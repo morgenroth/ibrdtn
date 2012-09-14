@@ -684,8 +684,10 @@ int __daemon_run(Configuration &conf)
 		ipnd = new dtn::net::IPNDAgent( disco_port );
 
 		try {
-			const ibrcommon::vaddress addr = conf.getDiscovery().address();
-			ipnd->add(addr);
+			const std::set<ibrcommon::vaddress> addr = conf.getDiscovery().address();
+			for (std::set<ibrcommon::vaddress>::const_iterator iter = addr.begin(); iter != addr.end(); iter++) {
+				ipnd->add(*iter);
+			}
 		} catch (const Configuration::ParameterNotFoundException&) {
 			// by default set multicast equivalent of broadcast
 			ipnd->add(ibrcommon::vaddress("224.0.0.1"));

@@ -470,14 +470,19 @@ namespace dtn
 			return _interfaces;
 		}
 
-		const ibrcommon::vaddress Configuration::Discovery::address() const throw (ParameterNotFoundException)
+		const std::set<ibrcommon::vaddress> Configuration::Discovery::address() const throw (ParameterNotFoundException)
 		{
+			std::set<ibrcommon::vaddress> ret;
+
 			try {
 				std::string address_str = Configuration::getInstance()._conf.read<string>("discovery_address");
-				return ibrcommon::vaddress(address_str);
+				std::vector<std::string> addresses = dtn::utils::Utils::tokenize(" ", address_str);
+				ret.insert( addresses.begin(), addresses.end() );
 			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotFoundException();
 			}
+
+			return ret;
 		}
 
 		int Configuration::Discovery::port() const
