@@ -812,6 +812,9 @@ namespace ibrcommon
 	{
 		switch (o)
 		{
+			default:
+				break;
+
 			case VSOCKET_REUSEADDR:
 			{
 				int on = 1;
@@ -908,6 +911,9 @@ namespace ibrcommon
 	{
 		switch (o)
 		{
+			default:
+				break;
+
 			case VSOCKET_REUSEADDR:
 			{
 				int on = 0;
@@ -980,6 +986,9 @@ namespace ibrcommon
 	{
 		if (group.getFamily() != _vaddress.getFamily()) return;
 
+		// only join to this interface if it is up (has addresses available)
+		if (!iface.up(group.getFamily())) return;
+
 		switch (group.getFamily()) {
 			case ibrcommon::vaddress::VADDRESS_INET:
 			{
@@ -1006,7 +1015,6 @@ namespace ibrcommon
 
 				if ( ::setsockopt(_fd, IPPROTO_IP, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
 				{
-					::perror("mcast");
 					throw vsocket_exception("setsockopt(MCAST_JOIN_GROUP)");
 				}
 				break;
@@ -1037,7 +1045,6 @@ namespace ibrcommon
 
 				if ( ::setsockopt(_fd, IPPROTO_IPV6, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
 				{
-					::perror("mcast");
 					throw vsocket_exception("setsockopt(MCAST_JOIN_GROUP)");
 				}
 				break;
@@ -1054,6 +1061,9 @@ namespace ibrcommon
 	void vsocket::vbind::leave(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface)
 	{
 		if (group.getFamily() != _vaddress.getFamily()) return;
+
+		// only leave on this interface if it is up (has addresses available)
+                if (!iface.up(group.getFamily())) return;
 
 		switch (group.getFamily()) {
 			case ibrcommon::vaddress::VADDRESS_INET:
@@ -1081,7 +1091,6 @@ namespace ibrcommon
 
 				if ( ::setsockopt(_fd, IPPROTO_IP, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
 				{
-					::perror("mcast");
 					throw vsocket_exception("setsockopt(MCAST_LEAVE_GROUP)");
 				}
 				break;
@@ -1112,7 +1121,6 @@ namespace ibrcommon
 
 				if ( ::setsockopt(_fd, IPPROTO_IPV6, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
 				{
-					::perror("mcast");
 					throw vsocket_exception("setsockopt(MCAST_LEAVE_GROUP)");
 				}
 				break;

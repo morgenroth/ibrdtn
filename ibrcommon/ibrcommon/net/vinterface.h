@@ -49,6 +49,7 @@ namespace ibrcommon
 		const std::list<vaddress> getAddresses(const vaddress::Family f = vaddress::VADDRESS_UNSPEC) const;
 		const std::string toString() const;
 		bool empty() const;
+		bool up(const vaddress::Family f = vaddress::VADDRESS_UNSPEC) const;
 
 		bool operator<(const vinterface &obj) const;
 		bool operator==(const vinterface &obj) const;

@@ -58,6 +58,14 @@ namespace ibrcommon
 		return ibrcommon::LinkManager::getInstance().getAddressList(*this, f);
 	}
 
+	bool vinterface::up(const vaddress::Family f) const {
+		if (f == vaddress::VADDRESS_UNSPEC) {
+			return (!getAddresses().empty());
+		} else {
+			return (!getAddresses(f).empty());
+		}
+	}
+
 	bool vinterface::operator<(const vinterface &obj) const
 	{
 		return (_name < obj._name);
