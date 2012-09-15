@@ -186,7 +186,11 @@ namespace dtn
 			{
 				for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
 				{
-					_recv_socket.join(*it_addr, *it_iface);
+					try {
+						_recv_socket.join(*it_addr, *it_iface);
+					} catch (const ibrcommon::Exception&) {
+						IBRCOMMON_LOGGER(error) << "can not join " << (*it_addr).toString() << " on " << (*it_iface).toString() << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
 			}
 
