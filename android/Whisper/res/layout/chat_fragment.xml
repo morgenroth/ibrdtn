@@ -88,7 +88,6 @@
 	          android:inputType="textShortMessage|textMultiLine|textAutoCorrect|textCapSentences"
 	          android:text="@string/example_text"
 	          android:imeOptions="actionSend">
-	          <requestFocus />
 	      </EditText>
 	
 		<ImageButton
