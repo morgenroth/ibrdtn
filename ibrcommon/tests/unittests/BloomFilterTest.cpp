@@ -360,7 +360,7 @@ void BloomFilterTest::testGetAllocation()
 	float Result = FilterA.getAllocation();
 //	cout<<"result:"<<Result<<endl;
 //	cout<<"expected result:"<<expResult<<endl;
-	CPPUNIT_ASSERT_DOUBLES_EQUAL(Result, expResult,0.01);
+	CPPUNIT_ASSERT_DOUBLES_EQUAL(expResult, Result, 0.01);
 
 
 	ibrcommon::BloomFilter FilterB(10000,1);
@@ -380,7 +380,7 @@ void BloomFilterTest::testGetAllocation()
 	Result = FilterB.getAllocation();
 //	cout<<"result:"<<Result<<endl;
 //	cout<<"expected result:"<<expResult<<endl;
-	CPPUNIT_ASSERT_DOUBLES_EQUAL(Result, expResult,0.01);
+	CPPUNIT_ASSERT_DOUBLES_EQUAL(expResult, Result, 0.01);
 
 
 
@@ -401,7 +401,7 @@ void BloomFilterTest::testGetAllocation()
 	Result = FilterC.getAllocation();
 //	cout<<"result:"<<Result<<endl;
 //	cout<<"expected result:"<<expResult<<endl;
-	CPPUNIT_ASSERT_DOUBLES_EQUAL(Result, expResult,0.01);
+	CPPUNIT_ASSERT_DOUBLES_EQUAL(expResult, Result, 0.01);
 
 
 
@@ -422,13 +422,13 @@ void BloomFilterTest::testGetAllocation()
 	Result = FilterD.getAllocation();
 //	cout<<"result:"<<Result<<endl;
 //	cout<<"expected result:"<<expResult<<endl;
-	CPPUNIT_ASSERT_DOUBLES_EQUAL(Result, expResult,0.01);
+	CPPUNIT_ASSERT_DOUBLES_EQUAL(expResult, Result, 0.01);
 
 
 
 	ibrcommon::BloomFilter FilterF(100,2);
 	vector<char*> v5(50);
-	expResult = 0.4; //m/n=20  k=2
+	expResult = 0.383; //m/n=20  k=2
 	for(int j=0; j<51; j++)
 	{
 		char word[8];
@@ -443,7 +443,7 @@ void BloomFilterTest::testGetAllocation()
 	Result = FilterF.getAllocation();
 //	cout<<"result:"<<Result<<endl;
 //	cout<<"expected result:"<<expResult<<endl;
-	CPPUNIT_ASSERT_DOUBLES_EQUAL(Result, expResult,0.01);
+	CPPUNIT_ASSERT_DOUBLES_EQUAL(expResult, Result, 0.01);
 
 
 
@@ -464,7 +464,7 @@ void BloomFilterTest::testGetAllocation()
 	Result = FilterG.getAllocation();
 //	cout<<"result:"<<Result<<endl;
 //	cout<<"expected result:"<<expResult<<endl;
-	CPPUNIT_ASSERT_DOUBLES_EQUAL(Result, expResult,0.01);
+	CPPUNIT_ASSERT_DOUBLES_EQUAL(expResult, Result, 0.01);
 	/*
 	for(int l=10; l<21; l++)
 	{
@@ -509,6 +509,16 @@ void BloomFilterTest::testGetAllocation()
 */
 }
 
+
+void BloomFilterTest::testMemory()
+{
+	ibrcommon::BloomFilter Filter1(7,1);
+	Filter1.insert("test");
+	CPPUNIT_ASSERT(Filter1.contains("test"));
+	Filter1.clear();
+	CPPUNIT_ASSERT_EQUAL(false, Filter1.contains("test"));
+
+}
 /*=== END   tests for class 'BloomFilter' ===*/
 
 void BloomFilterTest::setUp()

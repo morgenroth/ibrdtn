@@ -79,7 +79,7 @@ namespace ibrcommon
 		static const unsigned char bit_mask[bits_per_char];
 
 	public:
-		BloomFilter(std::size_t table_size = 8196, std::size_t salt_count = 2);
+		BloomFilter(std::size_t table_size = 8192, std::size_t salt_count = 2);
 		BloomFilter(const BloomFilter& filter);
 		virtual ~BloomFilter();
 

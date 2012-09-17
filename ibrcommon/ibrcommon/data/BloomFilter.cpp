@@ -136,6 +136,11 @@ namespace ibrcommon
 	BloomFilter::BloomFilter(std::size_t table_size, std::size_t salt_count)
 	 : _hashp(salt_count), table_size_(table_size), _itemcount(0), salt_count_(salt_count)
 	{
+		// check if table_size_ is multiple of 8
+		if (table_size_ % bits_per_char != 0) {
+			table_size_ += bits_per_char - (table_size_ % bits_per_char);
+		}
+
 		bit_table_ = new cell_type[table_size_ / bits_per_char];
 		std::fill_n(bit_table_,(table_size_ / bits_per_char),0x00);
 	}
