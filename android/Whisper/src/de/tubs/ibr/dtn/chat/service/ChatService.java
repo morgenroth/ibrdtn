@@ -62,6 +62,10 @@ import de.tubs.ibr.dtn.chat.core.Roster;
 
 public class ChatService extends IntentService {
 	
+	public enum Debug {
+		NOTIFICATION
+	}
+	
 	private static final String TAG = "ChatService";
 	
 	// mark a specific bundle as delivered
@@ -514,5 +518,13 @@ public class ChatService extends IntentService {
     			Log.e(TAG, "Can not mark bundle as delivered.", e);
     		}	
         }
+	}
+	
+	public void startDebug(Debug d) {
+		switch (d) {
+		case NOTIFICATION:
+			createNotification(this.getRoster().getFirst(), new Message(true, new Date(), new Date(), "Debug message"));
+			break;
+		}
 	}
 }

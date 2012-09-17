@@ -365,7 +365,9 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 
 	@Override
 	public void onBuddySelected(String buddyId) {
-		if ((this.buddyId != buddyId) && (this.view != null)) {
+		if (this.buddyId == buddyId) return;
+		
+		if (this.view != null) {
 			this.view = null;
 			ListView lv = (ListView)this.getActivity().findViewById(R.id.list_messages);
 			lv.setAdapter(null);

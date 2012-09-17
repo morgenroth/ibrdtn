@@ -15,7 +15,7 @@
         android:icon="@drawable/chat"
         android:label="@string/app_name" >
         
-        <activity android:icon="@drawable/chat" android:label="@string/app_name" android:name=".MainActivity" android:launchMode="singleTask">
+        <activity android:icon="@drawable/chat" android:label="@string/app_name" android:name=".MainActivity" android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

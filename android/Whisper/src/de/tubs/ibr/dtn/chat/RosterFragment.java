@@ -31,7 +31,6 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 	private final String TAG = "RosterFragment";
 	private RosterView view = null;
 
-	private String selectedBuddy = null;
 	private OnBuddySelectedListener mCallback = null;
 	private boolean persistantSelection = false;
 	private RosterProvider rProvider = null;
@@ -84,7 +83,6 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		this.selectedBuddy = null;
 		this.view = null;
 	}
 
@@ -111,26 +109,6 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
     }
 
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
-		super.onActivityCreated(savedInstanceState);
-
-		// restore selected buddy
-		if ((savedInstanceState != null) && savedInstanceState.containsKey("selectedBuddy")) {
-			selectedBuddy = savedInstanceState.getString("selectedBuddy");
-		}
-	}
-	
-	@Override
-	public void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-		
-		// save selected buddy
-		if (selectedBuddy != null) {
-			outState.putString("selectedBuddy", selectedBuddy);
-		}
-	}
-
-	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		
@@ -153,7 +131,7 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 			switch (item.getItemId())
 			{
 			case R.id.itemDelete:
-				this.onBuddySelected(null);
+				mCallback.onBuddySelected(null);
 				this.getRoster().remove(buddy);
 				return true;
 			default:
@@ -211,7 +189,7 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 		textMessage.setText(presence_text);
 
 		getRosterView().setShowOffline(!prefs.getBoolean("hideOffline", false));
-		getRosterView().setSelected(persistantSelection ? this.selectedBuddy : null);
+		if (!persistantSelection) getRosterView().setSelected(null);
 		
 		// set roster to RosterView
 		try {
@@ -230,7 +208,7 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 			if (holder == null) {
 				showMeDialog();
 			} else if (holder.buddy != null) {
-				onBuddySelected(holder.buddy.getEndpoint());
+				mCallback.onBuddySelected(holder.buddy.getEndpoint());
 			}
 		}
 	};
@@ -269,10 +247,7 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 	}
 	
 	public void onBuddySelected(String buddyId) {
-		// select the list item
-		this.selectedBuddy = buddyId;
-		if (persistantSelection) getRosterView().setSelected(this.selectedBuddy);
-		mCallback.onBuddySelected(buddyId);
+		if (persistantSelection) getRosterView().setSelected(buddyId);
 	}
 
 	@Override
