@@ -23,6 +23,7 @@ package de.tubs.ibr.dtn.daemon;
 
 import java.io.IOException;
 import java.net.NetworkInterface;
+import java.util.Calendar;
 import java.util.Enumeration;
 
 import android.app.Activity;
@@ -37,6 +38,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.AsyncTask;
@@ -59,6 +61,7 @@ import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonProcess;
 import de.tubs.ibr.dtn.service.DaemonService;
+import de.tubs.ibr.dtn.stats.CollectorService;
 
 public class Preferences extends PreferenceActivity {
 	
@@ -215,6 +218,14 @@ public class Preferences extends PreferenceActivity {
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemNeighbors), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemShowLog), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearStorage), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemSendDataNow), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	    
+	    if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+	    	menu.findItem(R.id.itemSendDataNow).setVisible(true);
+	    } else {
+	    	menu.findItem(R.id.itemSendDataNow).setVisible(false);
+	    }
+	    
 	    return super.onCreateOptionsMenu(menu);
 	}
 	
@@ -247,6 +258,19 @@ public class Preferences extends PreferenceActivity {
 	    {
 			pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.clearingstorage), true, false);
 			(new ClearStorageTask()).execute();
+	    	return true;
+	    }
+	    
+	    case R.id.itemSendDataNow:
+	    {
+	    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			Calendar now = Calendar.getInstance();
+			prefs.edit().putLong("stats_timestamp", now.getTimeInMillis()).commit(); 
+
+			// open activity
+			Intent i = new Intent(this, CollectorService.class);
+			i.setAction(CollectorService.DELIVER_DATA);
+			startService(i);
 	    	return true;
 	    }
 	    

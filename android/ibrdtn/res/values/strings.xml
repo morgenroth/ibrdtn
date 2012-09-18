@@ -77,4 +77,5 @@
     <string name="dialog_wait_starting">Activating DTN stack</string>
     <string name="dialog_wait_stopping">Deactivating DTN stack</string>
     <string name="notify_error">Service failed</string>
+    <string name="senddatanow">Send collected data</string>
 </resources>

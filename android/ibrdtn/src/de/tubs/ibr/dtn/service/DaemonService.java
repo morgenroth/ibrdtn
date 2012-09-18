@@ -50,6 +50,7 @@ import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
+import de.tubs.ibr.dtn.p2p.P2PManager;
 import de.tubs.ibr.dtn.service.DaemonManager.DaemonStateListener;
 
 public class DaemonService extends Service implements DaemonStateListener {
@@ -67,6 +68,9 @@ public class DaemonService extends Service implements DaemonStateListener {
 	
 	// session manager for all active sessions
 	private SessionManager _session_manager = null;
+	
+	// the P2P manager used for wifi direct control
+	private P2PManager _p2p_manager = null;
 	
 	public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
 	public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
@@ -222,6 +226,9 @@ public class DaemonService extends Service implements DaemonStateListener {
 		// create a session manager
 		_session_manager = new SessionManager(this, _daemon);
 		
+		// create P2P Manager
+		_p2p_manager = new P2PManager(this, _p2p_listener, "my address");
+		
 		// create a new executor
 		_executor = Executors.newSingleThreadExecutor();
 		
@@ -272,6 +279,9 @@ public class DaemonService extends Service implements DaemonStateListener {
 		
 		// dereference the daemon object
 		_daemon = null;
+		
+		// dereference P2P Manager
+		_p2p_manager = null;
 		
 		// call super method
 		super.onDestroy();
@@ -391,9 +401,15 @@ public class DaemonService extends Service implements DaemonStateListener {
 		
 		switch (state) {
 		case ERROR:
+    		// disable P2P manager
+    		_p2p_manager.destroy();
+    		
 			nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.notify_error)));
 			break;
 		case OFFLINE:
+    		// disable P2P manager
+    		_p2p_manager.destroy();
+    		
 			// close all sessions
 			_session_manager.terminate();
 			
@@ -414,6 +430,9 @@ public class DaemonService extends Service implements DaemonStateListener {
 			
 			// update notification icon
 			updateNeighborNotification();
+			
+			// enable P2P manager
+			_p2p_manager.initialize();
 			
 			break;
 		case SUSPENDED:
@@ -447,4 +466,31 @@ public class DaemonService extends Service implements DaemonStateListener {
 	public void onNeighborhoodChanged() {
 		updateNeighborNotification();
 	}
+	
+	private P2PManager.P2PNeighborListener _p2p_listener = new P2PManager.P2PNeighborListener() {
+		
+		@Override
+		public void onNeighborDisconnected(String name, String iface) {
+			Log.d(TAG, "P2P neighbor has been disconnected");
+			// TODO: put here the right code to control the dtnd
+		}
+		
+		@Override
+		public void onNeighborDisappear(String name) {
+			Log.d(TAG, "P2P neighbor has been disappeared");
+			// TODO: put here the right code to control the dtnd
+		}
+		
+		@Override
+		public void onNeighborDetected(String name) {
+			Log.d(TAG, "P2P neighbor has been detected");
+			// TODO: put here the right code to control the dtnd
+		}
+		
+		@Override
+		public void onNeighborConnected(String name, String iface) {
+			Log.d(TAG, "P2P neighbor has been connected");
+			// TODO: put here the right code to control the dtnd
+		}
+	};
 }

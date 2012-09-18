@@ -13,7 +13,6 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/discovery">
         <CheckBoxPreference android:summary="@string/discovery_announce_desc" android:title="@string/discovery_announce" android:key="discovery_announce" android:defaultValue="true" android:dependency="enabledSwitch"></CheckBoxPreference>
-        <CheckBoxPreference android:key="discovery_multicast" android:summary="@string/discovery_multicast_desc" android:title="@string/discovery_multicast" android:dependency="enabledSwitch" android:defaultValue="true"></CheckBoxPreference>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/interfaces" android:key="interfaces" android:dependency="enabledSwitch">
     </PreferenceCategory>

@@ -344,15 +344,9 @@ public class DaemonProcess extends Thread {
 			{
 				p.println("tcp_idle_timeout = 30");
 			}
-			
-			if (preferences.getBoolean("discovery_multicast", true))
-			{
-				p.println("discovery_address = 224.0.0.142");
-			}
-			else
-			{
-				p.println("discovery_address = 255.255.255.255");				
-			}
+
+			// set multicast address for discovery
+			p.println("discovery_address = 224.0.0.142");
 			
 			if (preferences.getBoolean("discovery_announce", true))
 			{
