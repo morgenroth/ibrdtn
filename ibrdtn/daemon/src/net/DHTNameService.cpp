@@ -122,10 +122,40 @@ void dtn::dht::DHTNameService::componentUp() {
 
 	rc = dtn_dht_init_sockets(&_context);
 	if (rc != 0) {
-		IBRCOMMON_LOGGER(error) << "DHT Sockets couldn't be initialized"
+		if(_context.type == BINDBOTH) {
+			if(rc == -2){
+				IBRCOMMON_LOGGER(warning) << "DHT IPv6 socket couldn't be initialized"
+								<<IBRCOMMON_LOGGER_ENDL;
+			} else {
+				IBRCOMMON_LOGGER(warning) << "DHT socket(s) couldn't be initialized"
+												<<IBRCOMMON_LOGGER_ENDL;
+			}
+			dtn_dht_close_sockets(&_context);
+			// Try only IPv4
+			_context.type = IPV4ONLY;
+			rc = dtn_dht_init_sockets(&_context);
+			if(rc != 0){
+				IBRCOMMON_LOGGER(warning) << "DHT IPv4 socket couldn't be initialized"
+							<<IBRCOMMON_LOGGER_ENDL;
+				dtn_dht_close_sockets(&_context);
+				// Try only IPv6
+				_context.type = IPV6ONLY;
+				rc = dtn_dht_init_sockets(&_context);
+				if(rc!=0){
+					IBRCOMMON_LOGGER(warning) << "DHT IPv6 socket couldn't be initialized"
+								<<IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER(error) << "DHT Sockets couldn't be initialized"
+										<<IBRCOMMON_LOGGER_ENDL;
+					dtn_dht_close_sockets(&_context);
+					return;
+				}
+			}
+		} else {
+			IBRCOMMON_LOGGER(error) << "DHT Sockets couldn't be initialized"
 					<<IBRCOMMON_LOGGER_ENDL;
-		dtn_dht_close_sockets(&_context);
-		return;
+			dtn_dht_close_sockets(&_context);
+			return;
+		}
 	}
 	IBRCOMMON_LOGGER_DEBUG(50) << "Sockets for DHT initialized"
 				<<IBRCOMMON_LOGGER_ENDL;
