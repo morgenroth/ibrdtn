@@ -143,8 +143,8 @@ namespace dtn
 				throw SQLiteQueryException("failed to prepare statement: " + _query);
 		}
 
-		SQLiteDatabase::SQLiteDatabase(const ibrcommon::File &file, const size_t &size)
-		 : _file(file), _size(size), _next_expiration(0)
+		SQLiteDatabase::SQLiteDatabase(const ibrcommon::File &file)
+		 : _file(file), _next_expiration(0)
 		{
 		}
 

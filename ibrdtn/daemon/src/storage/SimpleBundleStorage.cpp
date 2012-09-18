@@ -30,6 +30,7 @@
 #include <ibrcommon/thread/RWLock.h>
 #include <ibrcommon/Logger.h>
 
+#include <memory>
 #include <string.h>
 #include <stdlib.h>
 #include <iostream>
@@ -42,7 +43,7 @@ namespace dtn
 	namespace storage
 	{
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize, size_t buffer_limit)
-		 : _datastore(*this, workdir, buffer_limit), _maxsize(maxsize), _currentsize(0)
+		 : BundleStorage(maxsize), _datastore(*this, workdir, buffer_limit)
 		{
 			// load persistent bundles
 			_datastore.iterateAll();
@@ -73,8 +74,8 @@ namespace dtn
 			const dtn::data::Bundle &b = _pending_bundles[hash];
 
 			// decrement the storage size
-			_currentsize -= _bundle_size[b];
-
+			freeSpace(_bundle_size[b]);
+			
 			// cleanup bundle sizes
 			_bundle_size.erase(b);
 
@@ -92,7 +93,7 @@ namespace dtn
 				if (iter->second == hash)
 				{
 					// decrement the storage size
-					_currentsize -= _bundle_size[iter->first];
+					freeSpace(_bundle_size[iter->first]);
 
 					_bundle_size.erase(iter->first);
 
@@ -115,6 +116,10 @@ namespace dtn
 
 				// load a bundle into the storage
 				ds >> bundle;
+				
+				// allocate space for the bundle
+				size_t bundle_size = (*stream).tellg();
+				allocSpace(bundle_size);
 
 				// extract meta data
 				dtn::data::MetaBundle meta(bundle);
@@ -126,8 +131,7 @@ namespace dtn
 				_stored_bundles[meta] = hash;
 
 				// increment the storage size
-				_bundle_size[meta] = (*stream).tellg();
-				_currentsize += (*stream).tellg();
+				_bundle_size[meta] = bundle_size;
 
 				// add it to the bundle list
 				dtn::data::BundleList::add(meta);
@@ -287,18 +291,17 @@ namespace dtn
 			// get the bundle size
 			dtn::data::DefaultSerializer s(std::cout);
 			size_t bundle_size = s.getLength(bundle);
+			
+			// allocate space for the bundle
+			allocSpace(bundle_size);
 
 			// store the bundle
-			BundleContainer *bc = new BundleContainer(bundle);
+			std::auto_ptr<BundleContainer> bc(new BundleContainer(bundle));
 			DataStorage::Hash hash(*bc);
 
 			// check if this container is too big for us.
 			{
 				ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
-				if ((_maxsize > 0) && (_currentsize + bundle_size > _maxsize))
-				{
-					throw StorageSizeExeededException();
-				}
 
 				// create meta data object
 				dtn::data::MetaBundle meta(bundle);
@@ -326,7 +329,6 @@ namespace dtn
 
 				// increment the storage size
 				_bundle_size[meta] = bundle_size;
-				_currentsize += bundle_size;
 
 				// add it to the bundle list
 				dtn::data::BundleList::add(meta);
@@ -334,7 +336,8 @@ namespace dtn
 			}
 
 			// put the bundle into the data store
-			_datastore.store(hash, bc);
+			_datastore.store(hash, bc.get());
+			bc.release();
 		}
 
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
@@ -391,11 +394,6 @@ namespace dtn
 			throw BundleStorage::NoBundleFoundException();
 		}
 
-		size_t SimpleBundleStorage::size() const
-		{
-			return _currentsize;
-		}
-
 		void SimpleBundleStorage::clear()
 		{
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
@@ -417,7 +415,7 @@ namespace dtn
 			dtn::data::BundleList::clear();
 
 			// set the storage size to zero
-			_currentsize = 0;
+			clearSpace();
 		}
 
 		void SimpleBundleStorage::eventBundleExpired(const ExpiringBundle &b)

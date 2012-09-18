@@ -61,7 +61,7 @@ namespace dtn
 			 * @param Dateiname der Datenbank
 			 * @param maximale Größe der Datenbank
 			 */
-			SQLiteBundleStorage(const ibrcommon::File &path, const size_t &size);
+			SQLiteBundleStorage(const ibrcommon::File &path, const size_t &maxsize);
 
 			/**
 			 * destructor

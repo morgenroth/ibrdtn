@@ -116,8 +116,8 @@ namespace dtn
 			return ibrcommon::BLOB::Reference(new SQLiteBLOB(_blobPath));
 		}
 
-		SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const size_t &size)
-		 : _database(path.get("sqlite.db"), size)
+		SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const size_t &maxsize)
+		 : BundleStorage(maxsize), _database(path.get("sqlite.db"))
 		{
 			// set the block path
 			_blockPath = path.get("blocks");

@@ -27,6 +27,7 @@
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrdtn/data/CustodySignalBlock.h>
 #include <ibrcommon/data/BloomFilter.h>
+#include <ibrcommon/thread/Mutex.h>
 
 #include <stdexcept>
 #include <iterator>
@@ -152,6 +153,11 @@ namespace dtn
 			virtual unsigned int count() { return 0; };
 
 			/**
+			 * Get the current size
+			 */
+			size_t size() const;
+
+			/**
 			 * This method is called if another node accepts custody for a
 			 * bundle of us.
 			 * @param bundle
@@ -177,7 +183,16 @@ namespace dtn
 			/**
 			 * constructor
 			 */
-			BundleStorage();
+			BundleStorage(size_t maxsize);
+
+			void allocSpace(size_t size) throw (StorageSizeExeededException);
+			void freeSpace(size_t size);
+			void clearSpace();
+
+		private:
+			ibrcommon::Mutex _sizelock;
+			size_t _maxsize;
+			size_t _currentsize;
 		};
 	}
 }

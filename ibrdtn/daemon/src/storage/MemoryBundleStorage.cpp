@@ -33,7 +33,7 @@ namespace dtn
 	namespace storage
 	{
 		MemoryBundleStorage::MemoryBundleStorage(size_t maxsize)
-		 : _maxsize(maxsize), _currentsize(0)
+		 : BundleStorage(maxsize)
 		{
 		}
 
@@ -157,14 +157,8 @@ namespace dtn
 			dtn::data::DefaultSerializer s(std::cout);
 			size_t size = s.getLength(bundle);
 
-			// check if this container is too big for us.
-			if ((_maxsize > 0) && (_currentsize + size > _maxsize))
-			{
-				throw StorageSizeExeededException();
-			}
-
 			// increment the storage size
-			_currentsize += size;
+			allocSpace(size);
 			_bundle_lengths[bundle] = size;
 
 			// insert Container
@@ -201,7 +195,7 @@ namespace dtn
 					size_t size = s.getLength(bundle);
 
 					// decrement the storage size
-					_currentsize -= size;
+					freeSpace(size);
 
 					// remove the container
 					_bundles.erase(iter);
@@ -233,7 +227,8 @@ namespace dtn
 					// decrement the storage size
 					ssize_t len = _bundle_lengths[bundle];
 					_bundle_lengths.erase(bundle);
-					_currentsize -= len;
+
+					freeSpace(len);
 
 					// remove the container
 					_bundles.erase(iter);
@@ -243,11 +238,6 @@ namespace dtn
 			}
 
 			throw BundleStorage::NoBundleFoundException();
-		}
-
-		size_t MemoryBundleStorage::size() const
-		{
-			return _currentsize;
 		}
 
 		void MemoryBundleStorage::clear()
@@ -260,7 +250,7 @@ namespace dtn
 			_bundle_lengths.clear();
 
 			// set the storage size to zero
-			_currentsize = 0;
+			clearSpace();
 		}
 
 		void MemoryBundleStorage::eventBundleExpired(const ExpiringBundle &b)
@@ -277,7 +267,8 @@ namespace dtn
 					// decrement the storage size
 					ssize_t len = _bundle_lengths[bundle];
 					_bundle_lengths.erase(bundle);
-					_currentsize -= len;
+
+					freeSpace(len);
 
 					_priority_index.erase(bundle);
 					_bundles.erase(iter);

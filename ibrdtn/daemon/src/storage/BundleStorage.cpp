@@ -24,12 +24,15 @@
 #include "core/CustodyEvent.h"
 #include "core/BundleGeneratedEvent.h"
 #include <ibrdtn/data/BundleID.h>
+#include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/Logger.h>
 
 namespace dtn
 {
 	namespace storage
 	{
-		BundleStorage::BundleStorage()
+		BundleStorage::BundleStorage(size_t maxsize)
+		 : _maxsize(maxsize), _currentsize(0)
 		{
 		}
 
@@ -112,6 +115,45 @@ namespace dtn
 
 			// raise the custody rejected event
 			dtn::core::CustodyEvent::raise(b, dtn::core::CUSTODY_REJECT);
+		}
+
+		size_t BundleStorage::size() const
+		{
+			return _currentsize;
+		}
+
+		void BundleStorage::allocSpace(size_t size) throw (StorageSizeExeededException)
+		{
+			ibrcommon::MutexLock l(_sizelock);
+
+			// check if this container is too big for us.
+			if ((_maxsize > 0) && (_currentsize + size > _maxsize))
+			{
+				throw StorageSizeExeededException();
+			}
+
+			// increment the storage size
+			_currentsize += size;
+		}
+
+		void BundleStorage::freeSpace(size_t size)
+		{
+			ibrcommon::MutexLock l(_sizelock);
+			if (size > _currentsize)
+			{
+				_currentsize = 0;
+				IBRCOMMON_LOGGER(critical) << "MemoryBundleStorage: More space to free than allocated." << IBRCOMMON_LOGGER_ENDL;
+			}
+			else
+			{
+				_currentsize -= size;
+			}
+		}
+
+		void BundleStorage::clearSpace()
+		{
+			ibrcommon::MutexLock l(_sizelock);
+			_currentsize = 0;
 		}
 	}
 }

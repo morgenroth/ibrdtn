@@ -118,11 +118,6 @@ namespace dtn
 			unsigned int count();
 
 			/**
-			 * Get the current size
-			 */
-			size_t size() const;
-
-			/**
 			 * @sa BundleStorage::releaseCustody();
 			 */
 			void releaseCustody(const dtn::data::EID &custodian, const dtn::data::BundleID &id);
@@ -186,9 +181,6 @@ namespace dtn
 			};
 
 			std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY> _priority_index;
-
-			size_t _maxsize;
-			size_t _currentsize;
 		};
 	}
 }

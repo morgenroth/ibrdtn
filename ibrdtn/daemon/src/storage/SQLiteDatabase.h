@@ -155,7 +155,7 @@ namespace dtn
 			typedef std::list<std::pair<int, const ibrcommon::File> > blocklist;
 			typedef std::pair<int, const ibrcommon::File> blocklist_entry;
 
-			SQLiteDatabase(const ibrcommon::File &file, const size_t &size);
+			SQLiteDatabase(const ibrcommon::File &file);
 			virtual ~SQLiteDatabase();
 
 			/**
@@ -305,7 +305,6 @@ namespace dtn
 			void doUpgrade(int oldVersion, int newVersion);
 
 			ibrcommon::File _file;
-			int _size;
 
 			// holds the database handle
 			sqlite3 *_database;
