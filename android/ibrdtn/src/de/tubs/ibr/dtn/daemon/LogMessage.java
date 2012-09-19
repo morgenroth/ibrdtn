@@ -21,6 +21,8 @@
  */
 package de.tubs.ibr.dtn.daemon;
 
+import android.util.Log;
+
 public class LogMessage {
 	
 	public String date;
@@ -28,8 +30,15 @@ public class LogMessage {
 	public String msg;
 
 	public LogMessage(String raw) {
-		date = raw.substring(0, 24).trim();
-		tag = raw.substring(24, raw.indexOf(':', 24)).trim();
-		msg = raw.substring(raw.indexOf(':', 24) + 2, raw.length());
+		try {
+			date = raw.substring(0, 24).trim();
+			tag = raw.substring(24, raw.indexOf(':', 24)).trim();
+			msg = raw.substring(raw.indexOf(':', 24) + 2, raw.length());
+		} catch (java.lang.StringIndexOutOfBoundsException e) {
+			Log.e("LogMessage", "Error while parsing the log messages", e);
+			if (date == null) date = "";
+			tag = "";
+			msg = raw;
+		}
 	}
 }
