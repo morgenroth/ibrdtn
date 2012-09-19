@@ -263,6 +263,10 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	@Override
 	public void onResume() {
 		super.onResume();
+		
+		// update the selected buddy
+		onBuddySelected(this.rProvider.getSelectedBuddy());
+		
 		// set the current visible buddy
 		ChatService.setVisible(this.buddyId);
 	}

@@ -24,6 +24,7 @@ package de.tubs.ibr.dtn.chat;
 import java.util.Date;
 
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -132,13 +133,7 @@ public class MainActivity extends FragmentActivity
 				// the activity is called by a notification
 				this.onBuddySelected( getIntent().getStringExtra("buddy") );
 				this.setIntent(null);
-			} else {
-			    // recall last selection
-			    this.onBuddySelected(this.selectedBuddy);				
 			}
-	    } else {
-		    // recall last selection
-		    this.onBuddySelected(this.selectedBuddy);
 	    }
 	}
 
@@ -177,6 +172,13 @@ public class MainActivity extends FragmentActivity
 	    MenuInflater inflater = getMenuInflater();
 	    inflater.inflate(R.menu.buddy_menu, menu);
 	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemPreferences), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+	    
+	    if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
+	    	menu.findItem(R.id.itemDebugNotification).setVisible(true);
+	    } else {
+	    	menu.findItem(R.id.itemDebugNotification).setVisible(false);
+	    }
+	    
 	    return true;
 	}
 	
@@ -192,7 +194,6 @@ public class MainActivity extends FragmentActivity
 	        return true;
 	    }
 	    
-/** DEBUG MENU ITEM **
 	    case R.id.itemDebugNotification:
 	    	try {
 				service_helper.getService().startDebug(ChatService.Debug.NOTIFICATION);
@@ -200,8 +201,7 @@ public class MainActivity extends FragmentActivity
 				Log.e(TAG, "Debug error", e);
 			}
 	    	return true;
-**/
-	    
+    
 	    default:
 	        return super.onOptionsItemSelected(item);
 	    }
@@ -415,5 +415,10 @@ public class MainActivity extends FragmentActivity
 	    if (chat != null) {
 	    	chat.onServiceDisconnected();
 	    }
+	}
+
+	@Override
+	public String getSelectedBuddy() {
+		return this.selectedBuddy;
 	}
 }

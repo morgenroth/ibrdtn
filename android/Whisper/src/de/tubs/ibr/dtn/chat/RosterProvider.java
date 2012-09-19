@@ -5,4 +5,5 @@ import de.tubs.ibr.dtn.chat.service.ChatServiceHelper.ServiceNotConnectedExcepti
 
 public interface RosterProvider {
 	public Roster getRoster() throws ServiceNotConnectedException;
+	public String getSelectedBuddy();
 }

@@ -189,7 +189,7 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 		textMessage.setText(presence_text);
 
 		getRosterView().setShowOffline(!prefs.getBoolean("hideOffline", false));
-		if (!persistantSelection) getRosterView().setSelected(null);
+		if (persistantSelection) getRosterView().setSelected(this.rProvider.getSelectedBuddy());
 		
 		// set roster to RosterView
 		try {
@@ -247,7 +247,6 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 	}
 	
 	public void onBuddySelected(String buddyId) {
-		if (persistantSelection) getRosterView().setSelected(buddyId);
 	}
 
 	@Override
