@@ -33,7 +33,7 @@ namespace dtn
 	namespace storage
 	{
 		MemoryBundleStorage::MemoryBundleStorage(size_t maxsize)
-		 : BundleStorage(maxsize)
+		 : BundleStorage(maxsize), _list(*this)
 		{
 		}
 
@@ -59,7 +59,7 @@ namespace dtn
 				{
 					// do expiration of bundles
 					ibrcommon::MutexLock l(_bundleslock);
-					dtn::data::BundleList::expire(time.getTimestamp());
+					_list.expire(time.getTimestamp());
 				}
 			} catch (const std::bad_cast&) { }
 		}
@@ -166,7 +166,7 @@ namespace dtn
 
 			if (ret.second)
 			{
-				dtn::data::BundleList::add(dtn::data::MetaBundle(bundle));
+				_list.add(dtn::data::MetaBundle(bundle));
 				_priority_index.insert( bundle );
 			}
 			else
@@ -188,7 +188,7 @@ namespace dtn
 
 					// remove it from the bundle list
 					_priority_index.erase(bundle);
-					dtn::data::BundleList::remove(bundle);
+					_list.remove(bundle);
 
 					// get size of the bundle
 					dtn::data::DefaultSerializer s(std::cout);
@@ -219,7 +219,7 @@ namespace dtn
 				{
 					// remove it from the bundle list
 					_priority_index.erase(bundle);
-					dtn::data::BundleList::remove(bundle);
+					_list.remove(bundle);
 
 					// get size of the bundle
 					dtn::data::DefaultSerializer s(std::cout);
@@ -246,14 +246,14 @@ namespace dtn
 
 			_bundles.clear();
 			_priority_index.clear();
-			dtn::data::BundleList::clear();
+			_list.clear();
 			_bundle_lengths.clear();
 
 			// set the storage size to zero
 			clearSpace();
 		}
 
-		void MemoryBundleStorage::eventBundleExpired(const ExpiringBundle &b)
+		void MemoryBundleStorage::eventBundleExpired(const dtn::data::BundleList::ExpiringBundle &b)
 		{
 			for (std::set<dtn::data::Bundle>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 			{

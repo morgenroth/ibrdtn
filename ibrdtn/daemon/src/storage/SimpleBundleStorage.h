@@ -51,7 +51,7 @@ namespace dtn
 		/**
 		 * This storage holds all bundles and fragments in the system memory.
 		 */
-		class SimpleBundleStorage : public DataStorage::Callback, public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, private dtn::data::BundleList
+		class SimpleBundleStorage : public DataStorage::Callback, public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, public BundleList::Listener
 		{
 		public:
 			/**
@@ -142,7 +142,7 @@ namespace dtn
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();
-			virtual void eventBundleExpired(const ExpiringBundle &b);
+			virtual void eventBundleExpired(const dtn::data::BundleList::ExpiringBundle &b);
 
 		private:
 			class BundleContainer : public DataStorage::Container
@@ -159,6 +159,9 @@ namespace dtn
 			};
 
 			dtn::data::Bundle __get(const dtn::data::MetaBundle&);
+
+			// bundle list
+			dtn::data::BundleList _list;
 
 			// This object manage data stored on disk
 			DataStorage _datastore;

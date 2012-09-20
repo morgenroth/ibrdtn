@@ -31,31 +31,29 @@ CPPUNIT_TEST_SUITE_REGISTRATION (TestBundleList);
 void TestBundleList::setUp()
 {
 	dtn::utils::Clock::rating = 1;
-	list = new TestBundleList::DerivedBundleList();
 }
 
 void TestBundleList::tearDown()
 {
-	delete list;
 }
 
-TestBundleList::DerivedBundleList::DerivedBundleList()
+TestBundleList::ExpiredBundleCounter::ExpiredBundleCounter()
  : counter(0)
 {
 
 }
 
-TestBundleList::DerivedBundleList::~DerivedBundleList()
+TestBundleList::ExpiredBundleCounter::~ExpiredBundleCounter()
 {
 }
 
-void TestBundleList::DerivedBundleList::eventBundleExpired(const ExpiringBundle&)
+void TestBundleList::ExpiredBundleCounter::eventBundleExpired(const dtn::data::BundleList::ExpiringBundle&)
 {
 	//std::cout << "Bundle expired " << b.bundle.toString() << std::endl;
 	counter++;
 }
 
-void TestBundleList::genbundles(DerivedBundleList &l, int number, int offset, int max)
+void TestBundleList::genbundles(dtn::data::BundleList &l, int number, int offset, int max)
 {
 	int range = max - offset;
 	dtn::data::Bundle b;
@@ -78,7 +76,8 @@ void TestBundleList::genbundles(DerivedBundleList &l, int number, int offset, in
 
 void TestBundleList::containTest(void)
 {
-	DerivedBundleList &l = (*list);
+	ExpiredBundleCounter ebc;
+	dtn::data::BundleList l(ebc);
 
 	dtn::data::Bundle b1;
 	b1._source = dtn::data::EID("dtn:test");
@@ -121,9 +120,10 @@ void TestBundleList::containTest(void)
 
 void TestBundleList::orderTest(void)
 {
-	DerivedBundleList &l = (*list);
+	ExpiredBundleCounter ebc;
+	dtn::data::BundleList l(ebc);
 
-	CPPUNIT_ASSERT(l.counter == 0);
+	CPPUNIT_ASSERT(ebc.counter == 0);
 
 	genbundles(l, 1000, 0, 500);
 	genbundles(l, 1000, 600, 1000);
@@ -133,13 +133,13 @@ void TestBundleList::orderTest(void)
 		l.expire(i);
 	}
 
-	CPPUNIT_ASSERT(l.counter == 1000);
+	CPPUNIT_ASSERT(ebc.counter == 1000);
 
 	for (int i = 0; i < 1050; i++)
 	{
 		l.expire(i);
 	}
 
-	CPPUNIT_ASSERT(l.counter == 2000);
+	CPPUNIT_ASSERT(ebc.counter == 2000);
 }
 

@@ -35,7 +35,7 @@ namespace dtn
 {
 	namespace core
 	{
-		class FragmentManager : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
+		class FragmentManager : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public dtn::data::BundleList::Listener
 		{
 		public:
 			FragmentManager();

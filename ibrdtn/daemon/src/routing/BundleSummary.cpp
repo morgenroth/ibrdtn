@@ -26,6 +26,7 @@ namespace dtn
 	namespace routing
 	{
 		BundleSummary::BundleSummary()
+		 : _list(*this)
 		{
 		}
 
@@ -36,22 +37,22 @@ namespace dtn
 		void BundleSummary::add(const dtn::data::MetaBundle bundle)
 		{
 			_vector.add(bundle);
-			dtn::data::BundleList::add(bundle);
+			_list.add(bundle);
 		}
 
 		void BundleSummary::remove(const dtn::data::MetaBundle bundle)
 		{
 			_vector.remove(bundle);
-			dtn::data::BundleList::remove(bundle);
+			_list.remove(bundle);
 		}
 
 		void BundleSummary::clear()
 		{
 			_vector.clear();
-			dtn::data::BundleList::clear();
+			_list.clear();
 		}
 
-		void BundleSummary::eventBundleExpired(const ExpiringBundle &bundle)
+		void BundleSummary::eventBundleExpired(const dtn::data::BundleList::ExpiringBundle &bundle)
 		{
 			_vector.remove(bundle.bundle);
 		}
@@ -67,10 +68,20 @@ namespace dtn
 			if (_vector.contains(bundle))
 			{
 				// do a deeper inspection
-				return dtn::data::BundleList::contains(bundle);
+				return _list.contains(bundle);
 			}
 
 			return false;
+		}
+
+		void BundleSummary::expire(const size_t timestamp)
+		{
+			_list.expire(timestamp);
+		}
+
+		size_t BundleSummary::count() const
+		{
+			return _list.size();
 		}
 
 		const SummaryVector& BundleSummary::getSummaryVector() const

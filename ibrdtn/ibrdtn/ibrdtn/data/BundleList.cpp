@@ -27,8 +27,10 @@ namespace dtn
 {
 	namespace data
 	{
-		BundleList::BundleList()
-		 : _version(0)
+		BundleList::Listener::~Listener() { };
+
+		BundleList::BundleList(BundleList::Listener &listener)
+		 : _version(0), _listener(listener)
 		{ }
 
 		BundleList::~BundleList()
@@ -93,7 +95,7 @@ namespace dtn
 				if ( b.expiretime >= timestamp ) break;
 
 				// raise expired event
-				eventBundleExpired( b );
+				_listener.eventBundleExpired( b );
 
 				// remove this item in public list
 				std::set<dtn::data::MetaBundle>::erase( b.bundle );
@@ -106,7 +108,7 @@ namespace dtn
 
 			if (commit)
 			{
-				eventCommitExpired();
+				_listener.eventCommitExpired();
 
 				// increment the version
 				_version++;

@@ -192,7 +192,7 @@ void BundleSummaryTest::expireTest(void)
 {
 	dtn::routing::BundleSummary l;
 
-	CPPUNIT_ASSERT(l.size() == 0);
+	CPPUNIT_ASSERT(l.count() == 0);
 
 	genbundles(l, 1000, 0, 500);
 	genbundles(l, 1000, 600, 1000);
@@ -202,14 +202,14 @@ void BundleSummaryTest::expireTest(void)
 		l.expire(i);
 	}
 
-	CPPUNIT_ASSERT(l.size() == 1000);
+	CPPUNIT_ASSERT(l.count() == 1000);
 
 	for (int i = 0; i < 1050; i++)
 	{
 		l.expire(i);
 	}
 
-	CPPUNIT_ASSERT(l.size() == 0);
+	CPPUNIT_ASSERT(l.count() == 0);
 }
 
 void BundleSummaryTest::genbundles(dtn::routing::BundleSummary &l, int number, int offset, int max)

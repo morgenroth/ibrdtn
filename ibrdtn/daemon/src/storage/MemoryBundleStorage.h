@@ -35,7 +35,7 @@ namespace dtn
 {
 	namespace storage
 	{
-		class MemoryBundleStorage : public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, private dtn::data::BundleList
+		class MemoryBundleStorage : public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, public BundleList::Listener
 		{
 		public:
 			MemoryBundleStorage(size_t maxsize = 0);
@@ -114,11 +114,12 @@ namespace dtn
 			virtual void componentUp();
 			virtual void componentDown();
 
-			virtual void eventBundleExpired(const ExpiringBundle &b);
+			virtual void eventBundleExpired(const dtn::data::BundleList::ExpiringBundle &b);
 
 		private:
 			ibrcommon::Mutex _bundleslock;
 			std::set<dtn::data::Bundle> _bundles;
+			dtn::data::BundleList _list;
 
 			struct CMP_BUNDLE_PRIORITY
 			{

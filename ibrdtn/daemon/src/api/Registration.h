@@ -35,7 +35,7 @@ namespace dtn
 {
 	namespace api
 	{
-		class Registration
+		class Registration : public dtn::data::BundleList::Listener
 		{
 		public:
 			enum NOTIFY_CALL

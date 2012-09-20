@@ -39,7 +39,7 @@ namespace dtn
 		std::set<FragmentManager::Transmission> FragmentManager::_offsets;
 
 		FragmentManager::FragmentManager()
-		 : _running(false)
+		 : _fragments(*this), _running(false)
 		{
 		}
 

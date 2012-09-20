@@ -44,20 +44,17 @@ protected:
 	void containTest(void);
 
 private:
-	class DerivedBundleList : public dtn::data::BundleList
+	class ExpiredBundleCounter : public dtn::data::BundleList::Listener
 	{
 	public:
-		DerivedBundleList();
-		virtual ~DerivedBundleList();
+		ExpiredBundleCounter();
+		virtual ~ExpiredBundleCounter();
 
-		void eventBundleExpired(const ExpiringBundle &b);
-
+		void eventBundleExpired(const dtn::data::BundleList::ExpiringBundle &b);
 		int counter;
 	};
 
-	void genbundles(DerivedBundleList &l, int number, int offset, int max);
-
-	DerivedBundleList *list;
+	void genbundles(dtn::data::BundleList &l, int number, int offset, int max);
 };
 
 #endif /* TESTBUNDLELIST_H_ */

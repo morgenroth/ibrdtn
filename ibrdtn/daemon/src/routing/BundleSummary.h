@@ -30,7 +30,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		class BundleSummary : public dtn::data::BundleList
+		class BundleSummary : public dtn::data::BundleList::Listener
 		{
 		public:
 			BundleSummary();
@@ -41,15 +41,18 @@ namespace dtn
 			void clear();
 
 			bool contains(const dtn::data::BundleID &bundle) const;
+			void expire(const size_t timestamp);
+			size_t count() const;
 
 			const SummaryVector& getSummaryVector() const;
 
 		protected:
-			void eventBundleExpired(const ExpiringBundle&);
+			void eventBundleExpired(const dtn::data::BundleList::ExpiringBundle&);
 			void eventCommitExpired();
 
 		private:
 			SummaryVector _vector;
+			dtn::data::BundleList _list;
 		};
 	}
 }

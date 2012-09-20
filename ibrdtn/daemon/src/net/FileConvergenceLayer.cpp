@@ -59,6 +59,7 @@ namespace dtn
 		}
 
 		FileConvergenceLayer::FileConvergenceLayer()
+		 : _blacklist(*this)
 		{
 		}
 
