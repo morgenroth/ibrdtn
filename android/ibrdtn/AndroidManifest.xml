@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="de.tubs.ibr.dtn"
-      android:versionCode="29"
-      android:versionName="0.8.0-29">
+      android:versionCode="30"
+      android:versionName="0.8.0-30">
       
 	<permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
 	        android:label="@string/permlab_dtnCommunication"
