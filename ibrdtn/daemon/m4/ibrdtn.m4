@@ -3,7 +3,11 @@ AC_DEFUN([LOCAL_CHECK_IBRDTN],
 	ibrdtn=notfound
 	
 	AC_ARG_WITH([ibrcommon],
-		AS_HELP_STRING([--with-ibrcommon=PATH], [set the ibrcommon source path]), [ibrcommon_path=${withval}]
+		AS_HELP_STRING([--with-ibrcommon=PATH], [set the ibrcommon source path]), [
+			ibrcommon_path=${withval}
+			ibrdtn_LIBS="${ibrdtn_LIBS} -L${ibrcommon_path}/ibrcommon/.libs"
+			ibrdtn_CFLAGS="${ibrdtn_CFLAGS} -I${ibrcommon_path}"
+		]
 	)
 	
 	AS_IF([test -z "${ibrcommon_path}" -a -e "$(pwd)/../configure.in" -a -d "$(pwd)/../ibrcommon"], [
