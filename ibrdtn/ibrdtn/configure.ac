@@ -74,7 +74,7 @@ AC_LANG_CPLUSPLUS
 AC_CHECK_LIB([rt], [clock_gettime])
 
 # check for ibrcommon library
-LOCAL_IBRCOMMON_VERSION=0.6
+LOCAL_IBRCOMMON_VERSION=0.8
 LOCAL_CHECK_IBRCOMMON
 AC_SUBST(ibrcommon_CFLAGS)
 AC_SUBST(ibrcommon_LIBS)
@@ -103,13 +103,14 @@ dnl -----------------------------------------------
 AC_ARG_WITH(dtnsec,
 	AS_HELP_STRING([--with-dtnsec], [build with DTNSEC support
 		@<:@default=no@:>@]),
-	[
-	if test "x$with_dtnsec" = "xyes"; then
+[
+	AS_IF([test "x$with_dtnsec" = "xyes"], [
 		PKG_CHECK_MODULES(OPENSSL, openssl, [
 			AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
 			AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
 			AC_SUBST(OPENSSL_CFLAGS)
 			AC_SUBST(OPENSSL_LIBS)
+			REQUIRES_LIBS="$REQUIRES_LIBS openssl"
 			
 			dnl -----------------------------------------------
 			dnl check for glib support
@@ -118,6 +119,7 @@ AC_ARG_WITH(dtnsec,
 				AC_SUBST(GLIB_CFLAGS)
 				AC_SUBST(GLIB_LIBS)
 				AC_DEFINE(HAVE_GLIB, [1], ["glib library is available"])
+				REQUIRES_LIBS="$REQUIRES_LIBS glib-2.0"
 			], [
 				# alternatively endian header is required
 				AC_CHECK_HEADERS([endian.h], [
@@ -131,10 +133,10 @@ AC_ARG_WITH(dtnsec,
 			with_dtnsec="no"
 			AC_MSG_WARN([DTNSEC enabled, but no openssl libraries are found. Security extensions are disabled.])
 		])
-	else
+	], [
 		with_dtnsec="no"
-	fi
-	],[
+	])
+],[
 	with_dtnsec="no"
 ])
 
@@ -145,13 +147,14 @@ dnl -----------------------------------------------
 AC_ARG_WITH(compression,
 	AS_HELP_STRING([--with-compression], [build with compression support
 		@<:@default=no@:>@]),
-	[
-	if test "x$with_compression" = "xyes"; then
+[
+	AS_IF([test "x$with_compression" = "xyes"], [
 		PKG_CHECK_MODULES(ZLIB, zlib, [
 			AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
 			AC_DEFINE(HAVE_ZLIB, [1], ["zlib library is available"])
 			AC_SUBST(ZLIB_CFLAGS)
 			AC_SUBST(ZLIB_LIBS)
+			REQUIRES_LIBS="$REQUIRES_LIBS zlib"
 		], [
 			AC_CHECK_LIB([z], [gzread],[
 				AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
@@ -160,20 +163,23 @@ AC_ARG_WITH(compression,
 				ZLIB_LIBS="-lz"
 				AC_SUBST(ZLIB_CFLAGS)
 				AC_SUBST(ZLIB_LIBS)
+				REQUIRES_LIBS="$REQUIRES_LIBS gzread"
 			] , [
 				with_compression="no"
 				AC_MSG_WARN([compression enabled, but zlib libraries are not found. Compression extensions are disabled.])
 			])
 		])
-	else
+	], [
 		with_compression="no"
-	fi
-	],[
+	])
+],[
 	with_compression="no"
 ])
 
 AM_CONDITIONAL(DTNSEC, test x$with_dtnsec = xyes)
 AM_CONDITIONAL(COMPRESSION, test x$with_compression = xyes)
+
+AC_SUBST(REQUIRES_LIBS)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts

@@ -5,7 +5,7 @@ includedir=@includedir@
 
 Name: ibrcommon
 Description: IBR Common C++ Library
-Requires: 
+Requires: @REQUIRES_LIBS@
 Version: @VERSION@
-Libs: -L${libdir} -l@GENERIC_LIBRARY_NAME@ @PTHREAD_LIBS@ @OPENSSL_LIBS@ @NL_LIBS@ @NL_ROUTE_LIBS@
-Cflags: -I${includedir}/@GENERIC_LIBRARY_NAME@-@GENERIC_API_VERSION@ -I${libdir}/@GENERIC_LIBRARY_NAME@-@GENERIC_API_VERSION@/include @PTHREAD_CFLAGS@ @OPENSSL_CFLAGS@ @NL_CFLAGS@ @NL_ROUTE_CFLAGS@
+Libs: -L${libdir} -l@GENERIC_LIBRARY_NAME@ @PTHREAD_LIBS@
+Cflags: -I${includedir}/@GENERIC_LIBRARY_NAME@-@GENERIC_API_VERSION@ @PTHREAD_CFLAGS@

@@ -37,7 +37,7 @@ AC_CHECK_LIB([rt], [clock_gettime])
 AC_CHECK_LIB([m], [pow])
 
 # check for ibrdtn library
-LOCAL_IBRDTN_VERSION=0.6
+LOCAL_IBRDTN_VERSION=0.8
 LOCAL_CHECK_IBRDTN
 AC_SUBST(ibrdtn_CFLAGS)
 AC_SUBST(ibrdtn_LIBS)

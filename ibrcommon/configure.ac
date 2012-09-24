@@ -110,6 +110,7 @@ dnl -----------------------------------------------
 dnl check for netlink library
 dnl -----------------------------------------------
 PKG_CHECK_MODULES([NL], [libnl-3.0], [
+	REQUIRES_LIBS="$REQUIRES_LIBS libnl-3.0"
 	AC_DEFINE(HAVE_LIBNL3, [1], ["netlink library 3.0 is available"])
 	use_netlink3="yes"
 	use_netlink="no"
@@ -117,6 +118,7 @@ PKG_CHECK_MODULES([NL], [libnl-3.0], [
 	# check for additional netlink modules
 	PKG_CHECK_MODULES([NL_ROUTE], [libnl-route-3.0], [
 		AC_DEFINE(HAVE_LIBNL3_ROUTE, [1], ["netlink route library 3.0 is available"])
+		REQUIRES_LIBS="$REQUIRES_LIBS libnl-route-3.0"
 	], [
 		echo "netlink route module not found"
 	])
@@ -124,12 +126,14 @@ PKG_CHECK_MODULES([NL], [libnl-3.0], [
 	# check for additional netlink modules
 	PKG_CHECK_MODULES([NL_GENL], [libnl-genl-3.0], [
 		AC_DEFINE(HAVE_LIBNL3_GENL, [1], ["netlink genl library 3.0 is available"])
+		REQUIRES_LIBS="$REQUIRES_LIBS libnl-genl-3.0"
 	], [
 		echo "netlink genl module not found"
 	])
 ], [
 	PKG_CHECK_MODULES([NL], [libnl-1], [
 		AC_DEFINE(HAVE_LIBNL, [1], ["netlink library is available"])
+		REQUIRES_LIBS="$REQUIRES_LIBS libnl-1"
 		use_netlink="yes"
 		use_netlink3="no"
 	], [
@@ -209,6 +213,7 @@ AC_ARG_WITH(openssl,
 			AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
 			AC_SUBST(OPENSSL_CFLAGS)
 			AC_SUBST(OPENSSL_LIBS)
+			REQUIRES_LIBS="$REQUIRES_LIBS openssl"
 		], [
 			use_openssl="no"
 			AC_MSG_WARN([openssl extension requested, but no openssl library is found. ssl extensions are disabled.])
@@ -224,19 +229,19 @@ AC_ARG_WITH(openssl,
 AC_ARG_WITH(lowpan,
 	AS_HELP_STRING([--with-lowpan], [Build with lowpan support (libnl needed)
 		@<:@default=no@:>@]),
-	[
-	if test "x$with_lowpan" = "xyes"; then
-		if test "x$use_netlink" = "xyes" -o "x$use_netlink3" = "xyes"; then
+[
+	AS_IF([test "x$with_lowpan" = "xyes"], [
+		AS_IF([test "x$use_netlink" = "xyes" -o "x$use_netlink3" = "xyes"], [
 			use_lowpan="yes"
 			AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], ["enable lowpan support"])
-		else
+		], [
 			use_lowpan="no"
 			AC_MSG_WARN([lowpan extension requested, but no libnl library is found. lowpan support is disabled.])
-		fi
-	else
+		])
+	], [
 		use_lowpan="no"
-	fi
-	],[
+	])
+],[
 	use_lowpan="no"
 ])
 
@@ -244,21 +249,22 @@ AC_ARG_WITH(lowpan,
 AC_ARG_WITH(xml,
 	AS_HELP_STRING([--with-xml], [Build with xml support
 		@<:@default=no@:>@]),
-	[
-	if test "x$with_xml" = "xyes"; then
+[
+	AS_IF([test "x$with_xml" = "xyes"], [
 		PKG_CHECK_MODULES(LIBXML, libxml-2.0, [
 			use_xml="yes"
 			AC_DEFINE(HAVE_LIBXML, [1], ["xml library is available"])
 			AC_SUBST(LIBXML_CFLAGS)
 			AC_SUBST(LIBXML_LIBS)
+			REQUIRES_LIBS="$REQUIRES_LIBS libxml-2.0"
 		], [
 			use_xml="no"
 			AC_MSG_WARN([xml extension requested, but no xml library is found. xml extensions are disabled.])
 		])
-	else
+	], [
 		use_xml="no"
-	fi
-	],[
+	])
+],[
 	use_xml="no"
 ])
 
@@ -267,6 +273,8 @@ AM_CONDITIONAL(LOWPAN, test x$use_lowpan = xyes)
 AM_CONDITIONAL(NETLINK, test x$use_netlink = xyes)
 AM_CONDITIONAL(NETLINK3, test x$use_netlink3 = xyes)
 AM_CONDITIONAL(LIBXML, test x$use_xml = xyes)
+
+AC_SUBST(REQUIRES_LIBS)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
