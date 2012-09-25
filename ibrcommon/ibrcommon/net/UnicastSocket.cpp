@@ -35,10 +35,10 @@ namespace ibrcommon
 
 	void UnicastSocket::bind(int port, const vinterface &iface)
 	{
-		std::list<vaddress> list = iface.getAddresses();
-		for (std::list<vaddress>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-		{
-			bind(port, *iter);
+		if (iface.empty()) {
+			_socket.bind(port, SOCK_DGRAM);
+		} else {
+			_socket.bind(iface, port, SOCK_DGRAM);
 		}
 	}
 

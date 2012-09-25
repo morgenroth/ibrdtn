@@ -49,8 +49,13 @@ namespace dtn
 		void UDPDatagramService::bind() throw (DatagramException)
 		{
 			try {
-				// bind socket to interface
-				_socket.bind(_iface, _bind_port, SOCK_DGRAM);
+				if (_iface.empty()) {
+					// bind socket to interface
+					_socket.bind(_bind_port, SOCK_DGRAM);
+				} else {
+					// bind socket to interface
+					_socket.bind(_iface, _bind_port, SOCK_DGRAM);
+				}
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("bind failed");
 			}

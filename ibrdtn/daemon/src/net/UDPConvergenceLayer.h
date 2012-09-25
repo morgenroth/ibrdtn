@@ -85,7 +85,6 @@ namespace dtn
 
 			ibrcommon::vinterface _net;
 			int _port;
-			int m_socket;
 
 			static const int DEFAULT_PORT;
 

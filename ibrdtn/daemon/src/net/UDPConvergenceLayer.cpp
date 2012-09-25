@@ -83,6 +83,15 @@ namespace dtn
 
 		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
+			// announce port only if we are bound to any interface
+			if (_net.empty()) {
+				std::stringstream service;
+				// ... set the port only
+				service << "port=" << _port << ";";
+				announcement.addService( DiscoveryService("udpcl", service.str()));
+				return;
+			}
+
 			// do not announce if this is not our interface
 			if (iface != _net) throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
 			
@@ -270,7 +279,7 @@ namespace dtn
 				} catch (const std::bad_cast&) {
 
 				}
-			} catch (const ibrcommon::udpsocket::SocketException &ex) {
+			} catch (const ibrcommon::vsocket_exception &ex) {
 				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
