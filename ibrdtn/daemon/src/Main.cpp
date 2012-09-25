@@ -443,28 +443,32 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 					// look for an earlier instance of
 					std::map<Configuration::NetConfig::NetType, dtn::net::ConvergenceLayer*>::iterator it = _cl_map.find(net.type);
 
-					if (it == _cl_map.end())
-					{
-						try {
-							TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer();
-							tcpcl->bind(net.interface, net.port);
+					TCPConvergenceLayer *tcpcl = NULL;
 
+					if (it == _cl_map.end()) {
+						tcpcl = new TCPConvergenceLayer();
+					} else {
+						tcpcl = dynamic_cast<TCPConvergenceLayer*>(it->second);
+					}
+
+					try {
+						tcpcl->bind(net.interface, net.port);
+
+						if (it == _cl_map.end()) {
 							core.addConvergenceLayer(tcpcl);
 							components.push_back(tcpcl);
 							if (standby != NULL) standby->adopt(tcpcl);
 							if (ipnd != NULL) ipnd->addService(tcpcl);
 							_cl_map[net.type] = tcpcl;
-							IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
-						} catch (const ibrcommon::Exception &ex) {
-							IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						}
-					}
-					else
-					{
-						ConvergenceLayer *cl = it->second;
-						TCPConvergenceLayer &tcpcl = dynamic_cast<TCPConvergenceLayer&>(*(cl));
-						tcpcl.bind(net.interface, net.port);
+
 						IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::Exception &ex) {
+						if (it == _cl_map.end()) {
+							delete tcpcl;
+						}
+
+						IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					break;
