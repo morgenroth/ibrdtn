@@ -76,8 +76,6 @@ namespace ibrcommon
 
 		// bind to the socket
 		_socket.bind(net, port);
-
-
 		_socket.listen(5);
 
 		// set linger socket option
