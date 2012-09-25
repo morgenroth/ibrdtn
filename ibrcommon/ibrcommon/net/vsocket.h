@@ -193,6 +193,13 @@ namespace ibrcommon
 
 			bool operator==(const vbind &obj) const;
 
+			/**
+			 * check if the given fd is part of this bind
+			 * @param fd
+			 * @return True if the fd matches.
+			 */
+			bool operator==(const int &fd) const;
+
 		private:
 			void check_socket_error(const int err) const;
 			void check_bind_error(const int err) const;

@@ -514,7 +514,7 @@ namespace ibrcommon
 		socklen_t clientAddressLength = sizeof(clientAddress);
 
 		// data waiting
-		int ret = recvfrom(fd, data, maxbuffer, MSG_WAITALL, (struct sockaddr *) &clientAddress, &clientAddressLength);
+		int ret = ::recvfrom(fd, data, maxbuffer, MSG_WAITALL, (struct sockaddr *) &clientAddress, &clientAddressLength);
 
 		char str[INET_ADDRSTRLEN];
 		inet_ntop(AF_INET, &(clientAddress.sin_addr), str, INET_ADDRSTRLEN);
@@ -1141,6 +1141,11 @@ namespace ibrcommon
 	void vsocket::vbind::shutdown()
 	{
 		::shutdown(_fd, SHUT_RDWR);
+	}
+
+	bool vsocket::vbind::operator==(const int &fd) const
+	{
+		return (fd == _fd);
 	}
 
 	bool vsocket::vbind::operator==(const vbind &obj) const
