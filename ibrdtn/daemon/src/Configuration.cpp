@@ -91,7 +91,7 @@ namespace dtn
 		{}
 
 		Configuration::Discovery::Discovery()
-		 : _enabled(true), _timeout(5) {};
+		 : _enabled(true), _timeout(5), _crosslayer(false) {};
 
 		Configuration::Statistic::Statistic() {};
 
@@ -357,6 +357,7 @@ namespace dtn
 		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
 		{
 			_timeout = conf.read<unsigned int>("discovery_timeout", 5);
+			_crosslayer = conf.read<bool>("discovery_crosslayer", true);
 		}
 
 		void Configuration::Statistic::load(const ibrcommon::ConfigFile&)
@@ -493,6 +494,11 @@ namespace dtn
 		unsigned int Configuration::Discovery::timeout() const
 		{
 			return _timeout;
+		}
+
+		bool Configuration::Discovery::enableCrosslayer() const
+		{
+			return _crosslayer;
 		}
 
 		Configuration::NetConfig Configuration::getAPIInterface()

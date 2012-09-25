@@ -203,6 +203,7 @@ namespace dtn
 
 				bool _enabled;
 				unsigned int _timeout;
+				bool _crosslayer;
 
 			public:
 				bool enabled() const;
@@ -212,6 +213,7 @@ namespace dtn
 				const std::set<ibrcommon::vaddress> address() const throw (ParameterNotFoundException);
 				int port() const;
 				unsigned int timeout() const;
+				bool enableCrosslayer() const;
 			};
 
 			class Statistic : public Configuration::Extension

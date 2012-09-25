@@ -83,33 +83,48 @@ namespace dtn
 
 		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
-			if (iface == _net)
-			{
-				try {
-					std::list<ibrcommon::vaddress> list = _net.getAddresses();
+			// do not announce if this is not our interface
+			if (iface != _net) throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+			
+			// determine if we should enable crosslayer discovery by sending out our own address
+			bool crosslayer = dtn::daemon::Configuration::getInstance().getDiscovery().enableCrosslayer();
 
-					// if no address is returned... (goto catch block)
-					if (list.empty()) throw ibrcommon::Exception("no address found");
+			// this marker should set to true if we added an service description
+			bool announced = false;
 
-					for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
-					{
-						if ((*addr_it).getFamily() == ibrcommon::vaddress::VADDRESS_INET6)
-							if ((*addr_it).getScope() == ibrcommon::vaddress::SCOPE_LINKLOCAL) continue;
+			try {
+				// check if cross layer discovery is disabled
+				if (!crosslayer) throw ibrcommon::Exception("crosslayer discovery disabled!");
 
-						std::stringstream service;
-						// fill in the ip address
-						service << "ip=" << (*addr_it).get(false) << ";port=" << _port << ";";
-						announcement.addService( DiscoveryService("udpcl", service.str()));
-					}
-				} catch (const ibrcommon::Exception&) {
-					stringstream service;
-					service << "port=" << _port << ";";
+				// get all global addresses of the interface
+				std::list<ibrcommon::vaddress> list = _net.getAddresses();
+
+				// if no address is returned... (goto catch block)
+				if (list.empty()) throw ibrcommon::Exception("no address found");
+
+				for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
+				{
+					// only announce global scope addresses
+					if ((*addr_it).getScope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
+
+					std::stringstream service;
+					// fill in the ip address
+					service << "ip=" << (*addr_it).get(false) << ";port=" << _port << ";";
 					announcement.addService( DiscoveryService("udpcl", service.str()));
-				};
+
+					// set the announce mark
+					announced = true;
+				}
+			} catch (const ibrcommon::Exception&) {
+				// address collection process aborted
 			}
-			else
-			{
-				 throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+
+			// if we still not announced anything...
+			if (!announced) {
+				// announce at least our local port
+				std::stringstream service;
+				service << "port=" << _port << ";";
+				announcement.addService( DiscoveryService("udpcl", service.str()));
 			}
 		}
 

@@ -49,12 +49,11 @@ namespace dtn
 			_provider.push_back(provider);
 		}
 
-		void DiscoveryAgent::received(const DiscoveryAnnouncement &announcement, size_t timeout)
+		void DiscoveryAgent::received(const dtn::data::EID &source, const std::list<DiscoveryService> &services, size_t timeout)
 		{
 			// convert the announcement into NodeEvents
-			Node n(announcement.getEID());
+			Node n(source);
 
-			const std::list<DiscoveryService> services = announcement.getServices();
 			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
 			{
 				size_t to_value = (timeout == 0) ? _config.timeout() : timeout;

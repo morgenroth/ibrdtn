@@ -76,6 +76,11 @@ namespace ibrcommon
 		return (obj._name == _name);
 	}
 
+	bool vinterface::operator!=(const vinterface &obj) const
+	{
+		return (obj._name != _name);
+	}
+
 	bool vinterface::empty() const
 	{
 		return (_name.length() == 0);

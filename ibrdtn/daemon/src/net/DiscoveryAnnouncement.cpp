@@ -66,7 +66,7 @@ namespace dtn
 			return _canonical_eid;
 		}
 
-		const list<DiscoveryService> DiscoveryAnnouncement::getServices() const
+		const std::list<DiscoveryService>& DiscoveryAnnouncement::getServices() const
 		{
 			return _services;
 		}

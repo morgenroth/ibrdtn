@@ -19,6 +19,7 @@
  *
  */
 
+#include "Configuration.h"
 #include "net/TCPConvergenceLayer.h"
 #include "net/ConnectionEvent.h"
 #include "routing/RequeueBundleEvent.h"
@@ -47,6 +48,7 @@ namespace dtn
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		TCPConvergenceLayer::TCPConvergenceLayer()
+		 : _any_port(0)
 		{
 		}
 
@@ -57,9 +59,18 @@ namespace dtn
 
 		void TCPConvergenceLayer::bind(const ibrcommon::vinterface &net, int port)
 		{
-			_interfaces.push_back(net);
-			_tcpsrv.bind(net, port);
-			_portmap[net] = port;
+			// do not allow any futher binding if we already bound to any interface
+			if (_any_port > 0) return;
+
+			if (net.empty()) {
+				// bind to any interface
+				_tcpsrv.bind(port);
+				_any_port = port;
+			} else {
+				_interfaces.push_back(net);
+				_tcpsrv.bind(net, port);
+				_portmap[net] = port;
+			}
 		}
 
 		dtn::core::Node::Protocol TCPConvergenceLayer::getDiscoveryProtocol() const
@@ -69,7 +80,20 @@ namespace dtn
 
 		void TCPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
-			// TODO: get the main address of this host, if no interface is specified
+			// announce port only if we are bound to any interface
+			if (_interfaces.empty() && (_any_port > 0)) {
+				std::stringstream service;
+				// ... set the port only
+				service << "port=" << _portmap[iface] << ";";
+				announcement.addService( DiscoveryService("tcpcl", service.str()));
+				return;
+			}
+
+			// determine if we should enable crosslayer discovery by sending out our own address
+			bool crosslayer = dtn::daemon::Configuration::getInstance().getDiscovery().enableCrosslayer();
+
+			// this marker should set to true if we added an service description
+			bool announced = false;
 
 			// search for the matching interface
 			for (std::list<ibrcommon::vinterface>::const_iterator it = _interfaces.begin(); it != _interfaces.end(); it++)
@@ -78,6 +102,9 @@ namespace dtn
 				if (interface == iface)
 				{
 					try {
+						// check if cross layer discovery is disabled
+						if (!crosslayer) throw ibrcommon::Exception("crosslayer discovery disabled!");
+
 						// get all addresses of this interface
 						std::list<vaddress> list = interface.getAddresses();
 
@@ -93,13 +120,21 @@ namespace dtn
 							// fill in the ip address
 							service << "ip=" << (*addr_it).get(false) << ";port=" << _portmap[iface] << ";";
 							announcement.addService( DiscoveryService("tcpcl", service.str()));
+
+							// set the announce mark
+							announced = true;
 						}
 					} catch (const ibrcommon::Exception&) {
+						// address collection process aborted
+					};
+
+					// if we still not announced anything...
+					if (!announced) {
 						std::stringstream service;
 						// ... set the port only
 						service << "port=" << _portmap[iface] << ";";
 						announcement.addService( DiscoveryService("tcpcl", service.str()));
-					};
+					}
 					return;
 				}
 			}

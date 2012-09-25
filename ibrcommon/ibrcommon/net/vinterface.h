@@ -53,6 +53,7 @@ namespace ibrcommon
 
 		bool operator<(const vinterface &obj) const;
 		bool operator==(const vinterface &obj) const;
+		bool operator!=(const vinterface &obj) const;
 
 		void eventNotify(const LinkManagerEvent &evt);
 

@@ -270,7 +270,7 @@ namespace dtn
 					stringstream ss;
 					ss.write(data+2, len-2);
 					ss >> announce;
-					DiscoveryAgent::received(announce, 30);
+					DiscoveryAgent::received(announce.getEID(), announce.getServices(), 30);
 					continue;
 				}
 

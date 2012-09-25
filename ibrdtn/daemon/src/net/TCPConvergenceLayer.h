@@ -321,6 +321,7 @@ namespace dtn
 			std::list<TCPConnection*> _connections;
 			std::list<ibrcommon::vinterface> _interfaces;
 			std::map<ibrcommon::vinterface, unsigned int> _portmap;
+			unsigned int _any_port;
 		};
 	}
 }

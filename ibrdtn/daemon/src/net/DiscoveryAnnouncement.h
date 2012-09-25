@@ -63,7 +63,7 @@ namespace dtn
 			void setEID(const dtn::data::EID &eid);
 			dtn::data::EID getEID() const;
 
-			const std::list<DiscoveryService> getServices() const;
+			const std::list<DiscoveryService>& getServices() const;
 			void clearServices();
 			void addService(DiscoveryService service);
 			const DiscoveryService& getService(string name) const;

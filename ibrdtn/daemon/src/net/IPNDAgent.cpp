@@ -237,6 +237,9 @@ namespace dtn
 						std::string sender;
 						DiscoveryAnnouncement announce(_version);
 
+						std::list<DiscoveryService> ret_services;
+						dtn::data::EID ret_source;
+
 						int len = ibrcommon::recvfrom(*iter, data, 1500, sender);
 
 						if (len < 0) return;
@@ -250,16 +253,43 @@ namespace dtn
 							if (announce.isShort())
 							{
 								// generate name with the sender address
-								dtn::data::EID gen_eid("ip://" + sender);
-								announce.setEID(gen_eid);
+								ret_source = dtn::data::EID("ip://" + sender);
 							}
-
-							if (announce.getServices().empty())
+							else
 							{
-								announce.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender + ";port=4556;"));
+								ret_source = announce.getEID();
 							}
 
-							received(announce);
+							// get the list of services
+							const std::list<DiscoveryService> &services = announce.getServices();
+
+							if (services.empty())
+							{
+								ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender + ";port=4556;"));
+							}
+
+							// add all services to the return set
+							for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++) {
+								const DiscoveryService &service = (*iter);
+
+								// add source address if not set
+								if ( (service.getParameters().find("port=") != std::string::npos) &&
+										(service.getParameters().find("ip=") == std::string::npos) ) {
+									// create a new service object
+									dtn::net::DiscoveryService ret_service(service.getName(), "ip=" + sender + ";" + service.getParameters());
+
+									// add service to the return set
+									ret_services.push_back(ret_service);
+								}
+								else
+								{
+									// add service to the return set
+									ret_services.push_back(service);
+								}
+							}
+
+							// announce the received services
+							received(ret_source, ret_services);
 						} catch (const dtn::InvalidDataException&) {
 						} catch (const ibrcommon::IOException&) {
 						}
