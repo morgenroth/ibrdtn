@@ -208,24 +208,24 @@ namespace ibrcommon
 	{
 		std::set<int> ret;
 
-		vaddress addr;
-		std::set<int> addr_ret = bind( addr, port, socktype );
-		ret.insert( addr_ret.begin(), addr_ret.end() );
-
 		vaddress addr6(vaddress::VADDRESS_INET6);
 		std::set<int> addr6_ret = bind( addr6, port, socktype );
 		ret.insert( addr6_ret.begin(), addr6_ret.end() );
+
+		vaddress addr(vaddress::VADDRESS_INET);
+		std::set<int> addr_ret = bind( addr, port, socktype );
+		ret.insert( addr_ret.begin(), addr_ret.end() );
 
 		return ret;
 	}
 
 	void vsocket::unbind(const int port)
 	{
-		vaddress addr;
-		unbind( addr, port );
-
 		vaddress addr6(vaddress::VADDRESS_INET6);
 		unbind( addr6, port );
+
+		vaddress addr(vaddress::VADDRESS_INET);
+		unbind( addr, port );
 	}
 
 	std::set<int> vsocket::bind(const vaddress &address, const int port, unsigned int socktype)
