@@ -510,14 +510,14 @@ namespace ibrcommon
 
 	int recvfrom(int fd, char* data, size_t maxbuffer, std::string &address)
 	{
-		struct sockaddr_in clientAddress;
+		struct sockaddr_storage clientAddress;
 		socklen_t clientAddressLength = sizeof(clientAddress);
 
 		// data waiting
 		int ret = ::recvfrom(fd, data, maxbuffer, MSG_WAITALL, (struct sockaddr *) &clientAddress, &clientAddressLength);
 
-		char str[INET_ADDRSTRLEN];
-		inet_ntop(AF_INET, &(clientAddress.sin_addr), str, INET_ADDRSTRLEN);
+		char str[256];
+		::getnameinfo((struct sockaddr *) &clientAddress, clientAddressLength, str, 256, 0, 0, NI_NUMERICHOST);
 
 		address = std::string(str);
 
