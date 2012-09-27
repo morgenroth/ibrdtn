@@ -825,14 +825,14 @@ namespace ibrcommon
 				break;
 			}
 
-			case VSOCKET_LINGER:
+			case VSOCKET_NODELAY:
 			{
 				int set = 1;
 				::setsockopt(_fd, IPPROTO_TCP, TCP_NODELAY, (char *)&set, sizeof(set));
 				break;
 			}
 
-			case VSOCKET_NODELAY:
+			case VSOCKET_LINGER:
 			{
 				// set linger option to the socket
 				struct linger linger;
@@ -924,14 +924,14 @@ namespace ibrcommon
 				break;
 			}
 
-			case VSOCKET_LINGER:
+			case VSOCKET_NODELAY:
 			{
 				int set = 0;
 				::setsockopt(_fd, IPPROTO_TCP, TCP_NODELAY, (char *)&set, sizeof(set));
 				break;
 			}
 
-			case VSOCKET_NODELAY:
+			case VSOCKET_LINGER:
 			{
 				// set linger option to the socket
 				struct linger linger;
