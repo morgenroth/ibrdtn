@@ -87,11 +87,10 @@ namespace ibrcommon
 
 	void lowpansocket::down() throw (socket_exception)
 	{
-		if (_state != SOCKET_UP)
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED))
 			throw socket_exception("socket is not up");
 
 		this->close();
-		_state = SOCKET_DOWN;
 	}
 
 //	int lowpansocket::receive(char* data, size_t maxbuffer, std::string &address, uint16_t &shortaddr, uint16_t &pan_id)

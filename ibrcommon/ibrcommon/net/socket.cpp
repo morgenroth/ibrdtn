@@ -99,7 +99,7 @@ namespace ibrcommon
 
 	int basesocket::fd() const throw (socket_exception)
 	{
-		if (_state == SOCKET_DOWN) throw socket_exception("fd not available");
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED)) throw socket_exception("fd not available");
 		return _fd;
 	}
 
@@ -109,7 +109,11 @@ namespace ibrcommon
 		int ret = ::close(this->fd());
 		if (ret == -1)
 			throw socket_exception("close error");
-		_state = SOCKET_DOWN;
+
+		if (_state == SOCKET_UNMANAGED)
+			_state = SOCKET_DESTROYED;
+		else
+			_state = SOCKET_DOWN;
 	}
 
 	void basesocket::shutdown(int how) throw (socket_exception)
@@ -117,7 +121,11 @@ namespace ibrcommon
 		int ret = ::shutdown(this->fd(), how);
 		if (ret == -1)
 			throw socket_exception("shutdown error");
-		_state = SOCKET_DOWN;
+
+		if (_state == SOCKET_UNMANAGED)
+			_state = SOCKET_DESTROYED;
+		else
+			_state = SOCKET_DOWN;
 	}
 
 	bool basesocket::ready() const
@@ -221,11 +229,10 @@ namespace ibrcommon
 
 	void clientsocket::down() throw (socket_exception)
 	{
-		if (_state != SOCKET_UP)
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED))
 			throw socket_exception("socket is not up");
 
 		this->close();
-		_state = SOCKET_DOWN;
 	}
 
 	int clientsocket::send(const char *data, size_t len, int flags) throw (socket_error)
@@ -447,7 +454,7 @@ namespace ibrcommon
 
 	void filesocket::down() throw (socket_exception)
 	{
-		if (_state != SOCKET_UP)
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED))
 			throw socket_exception("socket is not up");
 
 		this->close();
@@ -479,11 +486,10 @@ namespace ibrcommon
 
 	void fileserversocket::down() throw (socket_exception)
 	{
-		if (_state != SOCKET_UP)
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED))
 			throw socket_exception("socket is not up");
 
 		this->close();
-		_state = SOCKET_DOWN;
 	}
 
 	clientsocket* fileserversocket::accept(ibrcommon::vaddress &addr) throw (socket_exception)
@@ -556,11 +562,10 @@ namespace ibrcommon
 
 	void tcpserversocket::down() throw (socket_exception)
 	{
-		if (_state != SOCKET_UP)
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED))
 			throw socket_exception("socket is not up");
-		this->close();
 
-		_state = SOCKET_DOWN;
+		this->close();
 	}
 
 	void tcpserversocket::bind(const vaddress &addr, int port) throw (socket_exception, vaddress::address_not_set)
@@ -588,7 +593,7 @@ namespace ibrcommon
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
 
-		hints.ai_family = PF_UNSPEC;
+		hints.ai_family = AF_INET6;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_flags = AI_PASSIVE;
 
@@ -808,11 +813,10 @@ namespace ibrcommon
 
 	void tcpsocket::down() throw (socket_exception)
 	{
-		if (_state != SOCKET_UP)
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED))
 			throw socket_exception("socket is not up");
 
 		this->close();
-		_state = SOCKET_DOWN;
 	}
 
 	udpsocket::udpsocket(const int port)
@@ -868,11 +872,10 @@ namespace ibrcommon
 
 	void udpsocket::down() throw (socket_exception)
 	{
-		if (_state != SOCKET_UP)
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED))
 			throw socket_exception("socket is not up");
 
 		this->close();
-		_state = SOCKET_DOWN;
 	}
 
 	void udpsocket::bind(const vaddress &addr, int port) throw (socket_exception, vaddress::address_not_set)
@@ -1208,7 +1211,9 @@ namespace ibrcommon
 
 	void basesocket::check_bind_error(const int err) const throw (socket_exception)
 	{
-		switch ( err )
+		if (err != -1) return;
+
+		switch ( errno )
 		{
 		case EBADF:
 			throw socket_exception("sockfd ist kein gueltiger Deskriptor.");

@@ -140,9 +140,10 @@ namespace ibrcommon {
 		 * is usable or not.
 		 */
 		enum socketstate {
-			SOCKET_DOWN,    //!< SOCKET_DOWN
-			SOCKET_UP,      //!< SOCKET_UP
-			SOCKET_UNMANAGED//!< SOCKET_UNMANAGED
+			SOCKET_DOWN,     //!< SOCKET_DOWN
+			SOCKET_UP,       //!< SOCKET_UP
+			SOCKET_UNMANAGED,//!< SOCKET_UNMANAGED
+			SOCKET_DESTROYED //!< SOCKET_DESTROYED
 		};
 
 		/**

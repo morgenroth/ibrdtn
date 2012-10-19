@@ -105,7 +105,7 @@ namespace ibrcommon
 
 	void NetLink3Manager::netlinkcache::down() throw (socket_exception)
 	{
-		if (_state != SOCKET_UP)
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED))
 			throw socket_exception("socket is not up");
 
 		// delete the cache manager
@@ -115,7 +115,10 @@ namespace ibrcommon
 		nl_socket_free(_nl_socket);
 
 		// mark this socket as down
-		_state = SOCKET_DOWN;
+		if (_state == SOCKET_UNMANAGED)
+			_state = SOCKET_DESTROYED;
+		else
+			_state = SOCKET_DOWN;
 	}
 
 	int NetLink3Manager::netlinkcache::fd() const throw (socket_exception)
