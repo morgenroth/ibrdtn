@@ -111,17 +111,17 @@ namespace ibrcommon
 		/**
 		 * This method is called before the run.
 		 */
-		virtual void setup(void) { };
+		virtual void setup(void) throw ()  { };
 
 		/**
 		 * Abstract interface for thread context run method.
 		 */
-		virtual void run(void) = 0;
+		virtual void run(void) throw () = 0;
 
 		/**
 		 * This method is called when the run() method finishes.
 		 */
-		virtual void finally(void) { };
+		virtual void finally(void) throw () { };
 
 		/**
 		 * Exit the thread context.

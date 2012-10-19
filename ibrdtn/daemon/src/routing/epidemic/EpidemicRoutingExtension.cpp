@@ -139,12 +139,12 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		void EpidemicRoutingExtension::__cancellation()
+		void EpidemicRoutingExtension::__cancellation() throw ()
 		{
 			_taskqueue.abort();
 		}
 
-		void EpidemicRoutingExtension::run()
+		void EpidemicRoutingExtension::run() throw ()
 		{
 			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
 			{

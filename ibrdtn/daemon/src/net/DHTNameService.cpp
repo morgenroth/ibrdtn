@@ -54,7 +54,7 @@ const std::string dtn::dht::DHTNameService::getName() const {
 	return "DHT Naming Service";
 }
 
-void dtn::dht::DHTNameService::__cancellation() {
+void dtn::dht::DHTNameService::__cancellation() throw () {
 }
 
 bool dtn::dht::DHTNameService::setNonBlockingInterruptPipe() {

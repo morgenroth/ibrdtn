@@ -57,7 +57,7 @@ namespace ibrcommon
 		};
 
 	protected:
-		void run();
+		void run() throw ();
 		void __cancellation();
 
 	private:

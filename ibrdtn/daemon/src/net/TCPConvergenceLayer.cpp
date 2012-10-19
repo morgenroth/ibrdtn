@@ -349,7 +349,7 @@ namespace dtn
 			}
 		}
 
-		void TCPConvergenceLayer::__cancellation()
+		void TCPConvergenceLayer::__cancellation() throw ()
 		{
 			_vsocket.down();
 		}

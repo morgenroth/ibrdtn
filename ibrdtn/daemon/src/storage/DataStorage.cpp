@@ -184,12 +184,12 @@ namespace dtn
 			_tasks.push( new RemoveDataTask(hash) );
 		}
 
-		void DataStorage::__cancellation()
+		void DataStorage::__cancellation() throw ()
 		{
 			_tasks.abort();
 		}
 
-		void DataStorage::run()
+		void DataStorage::run() throw ()
 		{
 			try {
 				while (true)

@@ -289,7 +289,7 @@ namespace dtn
 			_socket_stream->close();
 		}
 
-		void TCPConnection::finally()
+		void TCPConnection::finally() throw ()
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "TCPConnection down" << IBRCOMMON_LOGGER_ENDL;
 
@@ -302,7 +302,7 @@ namespace dtn
 			} catch (const std::exception&) { };
 
 			// close the tcpstream
-			_socket_stream->close();
+			if (_socket_stream != NULL) _socket_stream->close();
 
 			try {
 				_callback.connectionDown(this);
@@ -312,7 +312,7 @@ namespace dtn
 			clearQueue();
 		}
 
-		void TCPConnection::setup()
+		void TCPConnection::setup() throw ()
 		{
 			_flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
 			_flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
@@ -406,12 +406,14 @@ namespace dtn
 			} catch (const ibrcommon::socket_exception&) {
 				// error on open, requeue all bundles in the queue
 				IBRCOMMON_LOGGER(warning) << "connection to " << _node.toString() << " failed" << IBRCOMMON_LOGGER_ENDL;
-				_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				if (_protocol_stream != NULL) {
+					_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				}
 				throw;
 			} catch (const bad_cast&) { };
 		}
 
-		void TCPConnection::run()
+		void TCPConnection::run() throw ()
 		{
 			try {
 				if (_socket == NULL) {
@@ -474,10 +476,10 @@ namespace dtn
 				}
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				if (_protocol_stream != NULL) _protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
-				_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				if (_protocol_stream != NULL) _protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			}
 		}
 
@@ -574,7 +576,7 @@ namespace dtn
 		{
 		}
 
-		void TCPConnection::KeepaliveSender::run()
+		void TCPConnection::KeepaliveSender::run() throw ()
 		{
 			try {
 				ibrcommon::MutexLock l(_wait);
@@ -597,7 +599,7 @@ namespace dtn
 			} catch (const std::exception&) { };
 		}
 
-		void TCPConnection::KeepaliveSender::__cancellation()
+		void TCPConnection::KeepaliveSender::__cancellation() throw ()
 		{
 			ibrcommon::MutexLock l(_wait);
 			_wait.abort();
@@ -612,13 +614,13 @@ namespace dtn
 		{
 		}
 
-		void TCPConnection::Sender::__cancellation()
+		void TCPConnection::Sender::__cancellation() throw ()
 		{
 			// cancel the main thread in here
 			ibrcommon::Queue<dtn::data::BundleID>::abort();
 		}
 
-		void TCPConnection::Sender::run()
+		void TCPConnection::Sender::run() throw ()
 		{
 			try {
 				dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
@@ -726,7 +728,7 @@ namespace dtn
 			return _socket_stream->good();
 		}
 
-		void TCPConnection::Sender::finally()
+		void TCPConnection::Sender::finally() throw ()
 		{
 		}
 

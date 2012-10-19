@@ -83,7 +83,7 @@ void TestStreamConnection::connectionUpDown()
 		unsigned int recv_bundles;
 
 	protected:
-		void run()
+		void run() throw ()
 		{
 			ibrcommon::vaddress peeraddr;
 
@@ -193,7 +193,7 @@ void TestStreamConnection::connectionUpDown()
 		}
 
 	protected:
-		void run()
+		void run() throw ()
 		{
 			while (_client.good())
 			{

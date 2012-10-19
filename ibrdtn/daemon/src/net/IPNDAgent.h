@@ -61,7 +61,7 @@ namespace dtn
 			virtual void componentRun();
 			virtual void componentUp();
 			virtual void componentDown();
-			void __cancellation();
+			void __cancellation() throw ();
 
 		private:
 			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);

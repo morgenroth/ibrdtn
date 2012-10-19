@@ -213,7 +213,7 @@ namespace dtn
 			ibrcommon::JoinableThread::join();
 		}
 
-		void BinaryStreamClient::Sender::__cancellation()
+		void BinaryStreamClient::Sender::__cancellation() throw ()
 		{
 			// cancel the main thread in here
 			this->abort();
@@ -222,7 +222,7 @@ namespace dtn
 			_client._client.getRegistration().abort();
 		}
 
-		void BinaryStreamClient::Sender::run()
+		void BinaryStreamClient::Sender::run() throw ()
 		{
 			Registration &reg = _client._client.getRegistration();
 

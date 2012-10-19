@@ -60,7 +60,7 @@ namespace dtn
 			JoinableThread::stop();
 		}
 
-		void IndependentComponent::run()
+		void IndependentComponent::run() throw ()
 		{
 			componentRun();
 		}

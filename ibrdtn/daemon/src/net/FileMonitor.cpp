@@ -150,7 +150,7 @@ namespace dtn
 			_socket.down();
 		}
 
-		void FileMonitor::__cancellation()
+		void FileMonitor::__cancellation() throw ()
 		{
 			_socket.down();
 		}

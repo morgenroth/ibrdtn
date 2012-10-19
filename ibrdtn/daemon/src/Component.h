@@ -78,8 +78,8 @@ namespace dtn
 			virtual void terminate();
 
 		protected:
-			void run();
-			virtual void __cancellation() = 0;
+			void run() throw ();
+			virtual void __cancellation() throw () = 0;
 
 			virtual void componentUp() = 0;
 			virtual void componentRun() = 0;

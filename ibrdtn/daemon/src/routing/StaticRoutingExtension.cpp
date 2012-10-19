@@ -62,12 +62,12 @@ namespace dtn
 			}
 		}
 
-		void StaticRoutingExtension::__cancellation()
+		void StaticRoutingExtension::__cancellation() throw ()
 		{
 			_taskqueue.abort();
 		}
 
-		void StaticRoutingExtension::run()
+		void StaticRoutingExtension::run() throw ()
 		{
 			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
 			{

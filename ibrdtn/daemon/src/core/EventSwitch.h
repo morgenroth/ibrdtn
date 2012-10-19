@@ -91,8 +91,8 @@ namespace dtn
 				~Worker();
 
 			protected:
-				void run();
-				virtual void __cancellation();
+				void run() throw ();
+				virtual void __cancellation() throw ();
 
 			private:
 				EventSwitch &_switch;

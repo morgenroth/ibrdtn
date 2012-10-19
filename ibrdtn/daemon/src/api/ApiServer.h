@@ -75,7 +75,7 @@ namespace dtn
 			virtual size_t timeout(ibrcommon::Timer*);
 
 		protected:
-			void __cancellation();
+			void __cancellation() throw ();
 
 			virtual void connectionUp(ClientHandler *conn);
 			virtual void connectionDown(ClientHandler *conn);

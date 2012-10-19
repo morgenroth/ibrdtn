@@ -96,7 +96,7 @@ namespace dtn
 				throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
 		protected:
-			void __cancellation();
+			void __cancellation() throw ();
 
 			void componentUp();
 			void componentRun();

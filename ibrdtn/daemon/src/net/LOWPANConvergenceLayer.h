@@ -88,7 +88,7 @@ namespace dtn
 			virtual void componentUp();
 			virtual void componentRun();
 			virtual void componentDown();
-			void __cancellation();
+			void __cancellation() throw ();
 
 			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers);
 

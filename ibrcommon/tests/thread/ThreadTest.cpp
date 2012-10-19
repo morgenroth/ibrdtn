@@ -44,18 +44,18 @@ ThreadTest::DetachedTestThread::~DetachedTestThread()
 
 }
 
-void ThreadTest::DetachedTestThread::run()
+void ThreadTest::DetachedTestThread::run() throw ()
 {
 	_run = true;
 	::usleep(_time);
 }
 
-void ThreadTest::DetachedTestThread::finally()
+void ThreadTest::DetachedTestThread::finally() throw ()
 {
 	_finally++;
 }
 
-void ThreadTest::DetachedTestThread::__cancellation()
+void ThreadTest::DetachedTestThread::__cancellation() throw ()
 {
 }
 
@@ -69,11 +69,11 @@ ThreadTest::TestThread::~TestThread()
 	join();
 }
 
-void ThreadTest::TestThread::__cancellation()
+void ThreadTest::TestThread::__cancellation() throw ()
 {
 }
 
-void ThreadTest::TestThread::run()
+void ThreadTest::TestThread::run() throw ()
 {
 	if (_time == 0)
 	{
@@ -86,7 +86,7 @@ void ThreadTest::TestThread::run()
 	}
 }
 
-void ThreadTest::TestThread::finally()
+void ThreadTest::TestThread::finally() throw ()
 {
 	_finally++;
 }

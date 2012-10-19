@@ -59,12 +59,12 @@ namespace dtn
 			join();
 		}
 
-		void NeighborRoutingExtension::__cancellation()
+		void NeighborRoutingExtension::__cancellation() throw ()
 		{
 			_taskqueue.abort();
 		}
 
-		void NeighborRoutingExtension::run()
+		void NeighborRoutingExtension::run() throw ()
 		{
 #ifdef HAVE_SQLITE
 			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback, public dtn::storage::SQLiteDatabase::SQLBundleQuery

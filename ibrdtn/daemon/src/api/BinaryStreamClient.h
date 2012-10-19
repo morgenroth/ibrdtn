@@ -64,8 +64,8 @@ namespace dtn
 					virtual ~Sender();
 
 				protected:
-					void run();
-					void __cancellation();
+					void run() throw ();
+					void __cancellation() throw ();
 
 					void received(const dtn::streams::StreamContactHeader &h);
 					bool good() const;

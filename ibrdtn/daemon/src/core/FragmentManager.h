@@ -43,7 +43,7 @@ namespace dtn
 
 			void signal(const dtn::data::MetaBundle &meta);
 
-			void __cancellation();
+			void __cancellation() throw ();
 
 			void componentUp();
 			void componentRun();

@@ -43,13 +43,13 @@ MutexTests::TestThread::~TestThread()
 	join();
 }
 
-void MutexTests::TestThread::run()
+void MutexTests::TestThread::run() throw ()
 {
 	ibrcommon::MutexLock l(_m);
 	_var = _value;
 }
 
-void MutexTests::TestThread::__cancellation()
+void MutexTests::TestThread::__cancellation() throw ()
 {
 }
 

@@ -236,18 +236,18 @@ namespace dtn
 			ibrcommon::JoinableThread::join();
 		}
 
-		void OrderedStreamHandler::Sender::__cancellation()
+		void OrderedStreamHandler::Sender::__cancellation() throw ()
 		{
 			// cancel the main thread in here
 			_handler._client.getRegistration().abort();
 		}
 
-		void OrderedStreamHandler::Sender::finally()
+		void OrderedStreamHandler::Sender::finally() throw ()
 		{
 			_handler._client.getRegistration().abort();
 		}
 
-		void OrderedStreamHandler::Sender::run()
+		void OrderedStreamHandler::Sender::run() throw ()
 		{
 			try {
 				_handler._stream << _handler._bundlestream.rdbuf() << std::flush;

@@ -43,7 +43,7 @@ QueueTest::TestThread::~TestThread()
 	join();
 }
 
-void QueueTest::TestThread::run()
+void QueueTest::TestThread::run() throw ()
 {
 	try {
 		while (true)
@@ -60,12 +60,12 @@ void QueueTest::TestThread::run()
 	}
 }
 
-void QueueTest::TestThread::__cancellation()
+void QueueTest::TestThread::__cancellation() throw ()
 {
 	_queue.abort();
 }
 
-void QueueTest::TestThread::finally()
+void QueueTest::TestThread::finally() throw ()
 {
 }
 

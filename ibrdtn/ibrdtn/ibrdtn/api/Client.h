@@ -113,13 +113,13 @@ namespace dtn
 				 * It aborts if the stream of the client went bad or an error occurred during
 				 * the deserialization.
 				 */
-				void run();
+				void run() throw ();
 
 				/**
 				 * Aborts the receiver thread
 				 * @return
 				 */
-				void __cancellation();
+				void __cancellation() throw ();
 
 			private:
 				// member variable for the reference to the client object

@@ -296,7 +296,7 @@ namespace ibrcommon
 
 		protected:
 			void flush();
-			void run();
+			void run() throw ();
 			void __cancellation();
 
 		private:

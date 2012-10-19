@@ -73,11 +73,11 @@ namespace dtn
 			_registration = &reg;
 		}
 
-		void ClientHandler::setup()
+		void ClientHandler::setup() throw ()
 		{
 		}
 
-		void ClientHandler::run()
+		void ClientHandler::run() throw ()
 		{
 			// signal the active connection to the server
 			_srv.connectionUp(this);
@@ -164,13 +164,13 @@ namespace dtn
 			(*_stream) << code << " " << msg << std::endl;
 		}
 
-		void ClientHandler::__cancellation()
+		void ClientHandler::__cancellation() throw ()
 		{
 			// close the stream
 			(*_stream).close();
 		}
 
-		void ClientHandler::finally()
+		void ClientHandler::finally() throw ()
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "ApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 

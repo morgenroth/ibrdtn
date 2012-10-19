@@ -55,7 +55,7 @@ namespace dtn
 			void componentRun();
 			void componentDown();
 
-			void __cancellation();
+			void __cancellation() throw ();
 
 		private:
 			class Task

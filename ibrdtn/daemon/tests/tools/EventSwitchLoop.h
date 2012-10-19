@@ -43,13 +43,13 @@ namespace ibrtest
 		};
 
 	protected:
-		void run()
+		void run() throw ()
 		{
 			dtn::core::EventSwitch &es = dtn::core::EventSwitch::getInstance();
 			es.loop();
 		}
 
-		void __cancellation()
+		void __cancellation() throw ()
 		{
 			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
 		}

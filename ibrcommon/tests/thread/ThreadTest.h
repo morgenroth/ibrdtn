@@ -46,9 +46,9 @@ public:
 		TestThread(size_t time = 0);
 		~TestThread();
 
-		void run();
-		void __cancellation();
-		void finally();
+		void run() throw ();
+		void __cancellation() throw ();
+		void finally() throw ();
 
 		size_t _finally;
 		size_t _time;
@@ -60,9 +60,9 @@ public:
 		DetachedTestThread(size_t &finally, bool &run, size_t time = 0);
 		~DetachedTestThread();
 
-		void run();
-		void __cancellation();
-		void finally();
+		void run() throw ();
+		void __cancellation() throw ();
+		void finally() throw ();
 
 	private:
 		size_t &_finally;

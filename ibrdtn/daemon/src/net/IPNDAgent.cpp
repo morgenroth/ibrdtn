@@ -29,6 +29,7 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/net/socket.h>
+#include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/link/LinkManager.h>
 
 #include <sstream>
@@ -78,14 +79,6 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			_interfaces.push_back(net);
-
-			// create sockets for all addresses on the interface
-			std::list<ibrcommon::vaddress> addrs = net.getAddresses();
-
-			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
-				ibrcommon::vaddress &addr = (*iter);
-				_send_socket.add(new ibrcommon::udpsocket(addr), net);
-			}
 		}
 
 		void IPNDAgent::send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr)
@@ -148,12 +141,23 @@ namespace dtn
 
 		void IPNDAgent::eventNotify(const ibrcommon::LinkEvent &evt)
 		{
-			if (evt.getAction() == ibrcommon::LinkEvent::ACTION_ADDRESS_ADDED)
+			switch (evt.getAction())
 			{
-				// TODO: add new udpsocket for the new address
-//				for (std::list<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {
-//					_recv_socket.join(*iter, evt.getInterface());
-//				}
+				case ibrcommon::LinkEvent::ACTION_ADDRESS_ADDED:
+				{
+					const ibrcommon::vaddress &bindaddr = evt.getAddress();
+					_send_socket.add(new ibrcommon::udpsocket(bindaddr), evt.getInterface());
+					break;
+				}
+
+				case ibrcommon::LinkEvent::ACTION_ADDRESS_REMOVED:
+				{
+					//_send_socket.add();
+					break;
+				}
+
+				default:
+					break;
 			}
 
 			// TODO: shutdown and remove sockets on EVENT_ADDRESS_REMOVED
@@ -177,15 +181,25 @@ namespace dtn
 
 				for (std::list<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
 				{
+					const ibrcommon::vinterface &iface = (*it_iface);
+
+					// create sockets for all addresses on the interface
+					std::list<ibrcommon::vaddress> addrs = iface.getAddresses();
+
+					for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+						ibrcommon::vaddress &addr = (*iter);
+						_send_socket.add(new ibrcommon::udpsocket(addr), iface);
+					}
+
 					// subscribe to NetLink events on our interfaces
-					ibrcommon::LinkManager::getInstance().registerInterfaceEvent(*it_iface, this);
+					ibrcommon::LinkManager::getInstance().addEventListener(iface, this);
 
 					for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
 					{
 						try {
-							msock.join(*it_addr, *it_iface);
+							msock.join(*it_addr, iface);
 						} catch (const ibrcommon::Exception&) {
-							IBRCOMMON_LOGGER(error) << "can not join " << (*it_addr).toString() << " on " << (*it_iface).toString() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER(error) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				}
@@ -197,7 +211,7 @@ namespace dtn
 		void IPNDAgent::componentDown()
 		{
 			// unsubscribe to NetLink events
-			ibrcommon::LinkManager::getInstance().unregisterAllEvents(this);
+			ibrcommon::LinkManager::getInstance().removeEventListener(this);
 
 			// shutdown the send socket
 			_send_socket.down();
@@ -307,7 +321,7 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::__cancellation()
+		void IPNDAgent::__cancellation() throw ()
 		{
 			// shutdown and interrupt the receiving thread
 			_recv_socket.down();

@@ -67,9 +67,9 @@ namespace dtn
 				virtual ~Sender();
 
 			protected:
-				void run();
-				void finally();
-				void __cancellation();
+				void run() throw ();
+				void finally() throw ();
+				void __cancellation() throw ();
 
 			private:
 				ExtendedApiHandler &_handler;

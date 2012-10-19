@@ -51,8 +51,8 @@ namespace dtn
 			};
 
 		protected:
-			void run();
-			void __cancellation();
+			void run() throw ();
+			void __cancellation() throw ();
 
 		private:
 			class RegexRoute : public StaticRoute

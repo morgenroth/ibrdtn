@@ -57,8 +57,8 @@ namespace dtn
 			virtual void requestHandshake(const dtn::data::EID&, NodeHandshake&) const;
 
 		protected:
-			void run();
-			void __cancellation();
+			void run() throw ();
+			void __cancellation() throw ();
 
 		private:
 			class Task

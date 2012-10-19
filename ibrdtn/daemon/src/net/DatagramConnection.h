@@ -63,11 +63,11 @@ namespace dtn
 			DatagramConnection(const std::string &identifier, const DatagramConnectionParameter &params, DatagramConnectionCallback &callback);
 			virtual ~DatagramConnection();
 
-			void run();
-			void setup();
-			void finally();
+			void run() throw ();
+			void setup() throw ();
+			void finally() throw ();
 
-			virtual void __cancellation();
+			virtual void __cancellation() throw ();
 
 			void shutdown();
 
@@ -177,9 +177,9 @@ namespace dtn
 				Sender(DatagramConnection &conn, Stream &stream);
 				~Sender();
 
-				void run();
-				void finally();
-				void __cancellation();
+				void run() throw ();
+				void finally() throw ();
+				void __cancellation() throw ();
 
 				void clearQueue();
 

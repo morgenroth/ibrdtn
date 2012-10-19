@@ -290,7 +290,7 @@ namespace dtn
 			{}
 		}
 
-		void DatagramConvergenceLayer::__cancellation()
+		void DatagramConvergenceLayer::__cancellation() throw ()
 		{
 			_running = false;
 			_service->shutdown();

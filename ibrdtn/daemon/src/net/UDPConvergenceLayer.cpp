@@ -340,7 +340,7 @@ namespace dtn
 			}
 		}
 
-		void UDPConvergenceLayer::__cancellation()
+		void UDPConvergenceLayer::__cancellation() throw ()
 		{
 			_running = false;
 

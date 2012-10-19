@@ -75,7 +75,7 @@ namespace dtn
 			_sockets.destroy();
 		}
 
-		void ApiServer::__cancellation()
+		void ApiServer::__cancellation() throw ()
 		{
 			// shut-down all server sockets
 			_sockets.down();

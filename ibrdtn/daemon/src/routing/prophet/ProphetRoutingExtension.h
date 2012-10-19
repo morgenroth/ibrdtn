@@ -179,8 +179,8 @@ namespace dtn
 			 */
 			ibrcommon::ThreadsafeReference<const AcknowledgementSet> getAcknowledgementSet() const;
 		protected:
-			virtual void run();
-			void __cancellation();
+			virtual void run() throw ();
+			void __cancellation() throw ();
 		private:
 			/*!
 			 * Updates the DeliveryPredictabilityMap with one recieved by a neighbor.

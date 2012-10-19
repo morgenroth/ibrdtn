@@ -61,12 +61,12 @@ namespace dtn
 			return _stream;
 		}
 
-		void LOWPANConnection::setup()
+		void LOWPANConnection::setup() throw ()
 		{
 			_sender.start();
 		}
 
-		void LOWPANConnection::finally()
+		void LOWPANConnection::finally() throw ()
 		{
 			_sender.stop();
 			_sender.join();
@@ -75,7 +75,7 @@ namespace dtn
 			_cl.remove(this);
 		}
 
-		void LOWPANConnection::run()
+		void LOWPANConnection::run() throw ()
 		{
 			try {
 				while(_stream.good())
@@ -108,7 +108,7 @@ namespace dtn
 			}
 		}
 
-		void LOWPANConnection::__cancellation()
+		void LOWPANConnection::__cancellation() throw ()
 		{
 			_sender.stop();
 		}
@@ -129,7 +129,7 @@ namespace dtn
 			_queue.push(job);
 		}
 
-		void LOWPANConnectionSender::run()
+		void LOWPANConnectionSender::run() throw ()
 		{
 			try {
 				while(_stream.good())
@@ -159,7 +159,7 @@ namespace dtn
 			}
 		}
 
-		void LOWPANConnectionSender::__cancellation()
+		void LOWPANConnectionSender::__cancellation() throw ()
 		{
 			_queue.abort();
 		}

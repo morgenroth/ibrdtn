@@ -158,7 +158,7 @@ protected:
 	/**
 	 * returns true
 	 */
-	void __cancellation();
+	void __cancellation() throw ();
 	/**
 	 * Reads the configured settings for the DHT and
 	 * initializes all needed sockets(IPv4&IPv6) for the DHT

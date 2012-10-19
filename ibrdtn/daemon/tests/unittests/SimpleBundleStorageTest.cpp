@@ -269,12 +269,12 @@ void SimpleBundleStorageTest::concurrentStoreGet(dtn::storage::BundleStorage &st
 			join();
 		};
 
-		void __cancellation()
+		void __cancellation() throw ()
 		{
 		}
 
 	protected:
-		void run()
+		void run() throw ()
 		{
 			for (std::list<dtn::data::Bundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
 			{

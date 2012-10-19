@@ -79,7 +79,7 @@ namespace dtn
 			unbindEvent(dtn::core::TimeEvent::className);
 		}
 
-		void FileConvergenceLayer::__cancellation()
+		void FileConvergenceLayer::__cancellation() throw ()
 		{
 			_tasks.abort();
 		}

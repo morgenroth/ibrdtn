@@ -472,7 +472,7 @@ namespace ibrcommon
 		}
 	}
 
-	void Logger::LogWriter::run()
+	void Logger::LogWriter::run() throw ()
 	{
 		try {
 			while (true)

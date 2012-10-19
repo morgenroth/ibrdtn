@@ -162,7 +162,7 @@ namespace dtn
 			virtual void componentUp();
 			virtual void componentRun();
 			virtual void componentDown();
-			void __cancellation();
+			void __cancellation() throw ();
 
 			void sendAnnoucement();
 

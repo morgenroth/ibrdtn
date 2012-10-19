@@ -89,17 +89,17 @@ void tcpstreamtest::runTest()
 	};
 }
 
-void tcpstreamtest::StreamChecker::__cancellation()
+void tcpstreamtest::StreamChecker::__cancellation() throw ()
 {
 	_running = false;
 	_sock.down();
 }
 
-void tcpstreamtest::StreamChecker::setup() {
+void tcpstreamtest::StreamChecker::setup() throw () {
 	_running = true;
 }
 
-void tcpstreamtest::StreamChecker::run()
+void tcpstreamtest::StreamChecker::run() throw ()
 {
 	char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 	ibrcommon::clientsocket *socket = NULL;

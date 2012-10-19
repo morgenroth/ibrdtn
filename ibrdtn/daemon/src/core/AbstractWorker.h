@@ -52,8 +52,8 @@ namespace dtn
 				virtual void raiseEvent(const dtn::core::Event *evt);
 
 			protected:
-				void run();
-				void __cancellation();
+				void run() throw ();
+				void __cancellation() throw ();
 
 			private:
 				void prepareBundle(dtn::data::Bundle &bundle) const;

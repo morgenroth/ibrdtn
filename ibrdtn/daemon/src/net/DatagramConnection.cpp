@@ -59,7 +59,7 @@ namespace dtn
 			}
 		}
 
-		void DatagramConnection::__cancellation()
+		void DatagramConnection::__cancellation() throw ()
 		{
 			// close the stream
 			try {
@@ -67,7 +67,7 @@ namespace dtn
 			} catch (const ibrcommon::Exception&) { };
 		}
 
-		void DatagramConnection::run()
+		void DatagramConnection::run() throw ()
 		{
 			try {
 				while(_stream.good())
@@ -95,13 +95,13 @@ namespace dtn
 			}
 		}
 
-		void DatagramConnection::setup()
+		void DatagramConnection::setup() throw ()
 		{
 			_callback.connectionUp(this);
 			_sender.start();
 		}
 
-		void DatagramConnection::finally()
+		void DatagramConnection::finally() throw ()
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "DatagramConnection down" << IBRCOMMON_LOGGER_ENDL;
 
@@ -415,7 +415,7 @@ namespace dtn
 		{
 		}
 
-		void DatagramConnection::Sender::run()
+		void DatagramConnection::Sender::run() throw ()
 		{
 			try {
 				while(_stream.good())
@@ -465,7 +465,7 @@ namespace dtn
 			}
 		}
 
-		void DatagramConnection::Sender::finally()
+		void DatagramConnection::Sender::finally() throw ()
 		{
 			// notify the aborted transfer of the last bundle
 			if (_current_job._bundle != dtn::data::BundleID())
@@ -478,7 +478,7 @@ namespace dtn
 			_stream.close();
 		}
 
-		void DatagramConnection::Sender::__cancellation()
+		void DatagramConnection::Sender::__cancellation() throw ()
 		{
 			_stream.close();
 			queue.abort();

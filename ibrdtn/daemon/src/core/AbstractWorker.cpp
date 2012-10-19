@@ -87,7 +87,7 @@ namespace dtn
 			join();
 		}
 
-		void AbstractWorker::AbstractWorkerAsync::run()
+		void AbstractWorker::AbstractWorkerAsync::run() throw ()
 		{
 			dtn::storage::BundleStorage &storage = BundleCore::getInstance().getStorage();
 
@@ -117,7 +117,7 @@ namespace dtn
 			}
 		}
 
-		void AbstractWorker::AbstractWorkerAsync::__cancellation()
+		void AbstractWorker::AbstractWorkerAsync::__cancellation() throw ()
 		{
 			// cancel the main thread in here
 			_receive_bundles.abort();

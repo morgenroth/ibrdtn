@@ -781,18 +781,18 @@ namespace dtn
 			ibrcommon::JoinableThread::join();
 		}
 
-		void ExtendedApiHandler::Sender::__cancellation()
+		void ExtendedApiHandler::Sender::__cancellation() throw ()
 		{
 			// abort all blocking calls on the registration object
 			_handler._client.getRegistration().abort();
 		}
 
-		void ExtendedApiHandler::Sender::finally()
+		void ExtendedApiHandler::Sender::finally() throw ()
 		{
 //			_handler._server.freeRegistration(_handler.getRegistration());
 		}
 
-		void ExtendedApiHandler::Sender::run()
+		void ExtendedApiHandler::Sender::run() throw ()
 		{
 			Registration &reg = _handler._client.getRegistration();
 			try{

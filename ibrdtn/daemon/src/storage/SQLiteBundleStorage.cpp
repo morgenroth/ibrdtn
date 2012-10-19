@@ -193,7 +193,7 @@ namespace dtn
 			_database.close();
 		};
 
-		void SQLiteBundleStorage::__cancellation()
+		void SQLiteBundleStorage::__cancellation() throw ()
 		{
 			_tasks.abort();
 		}

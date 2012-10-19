@@ -124,12 +124,12 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		void FloodRoutingExtension::__cancellation()
+		void FloodRoutingExtension::__cancellation() throw ()
 		{
 			_taskqueue.abort();
 		}
 
-		void FloodRoutingExtension::run()
+		void FloodRoutingExtension::run() throw ()
 		{
 			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
 			{

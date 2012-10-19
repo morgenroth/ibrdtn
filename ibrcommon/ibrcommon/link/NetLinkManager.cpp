@@ -345,7 +345,7 @@ typedef nl_object nl_object_header;
 		_sock.down();
 	}
 
-	void NetLinkManager::run()
+	void NetLinkManager::run() throw ()
 	{
 		// add netlink fd to vsocket
 		_sock.add(&_route_cache);

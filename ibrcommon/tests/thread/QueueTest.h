@@ -48,10 +48,10 @@ public:
 		TestThread(size_t time = 0, size_t max = 0);
 		~TestThread();
 
-		void run();
-		virtual void __cancellation();
+		void run() throw ();
+		virtual void __cancellation() throw ();
 
-		void finally();
+		void finally() throw ();
 
 		size_t _count;
 		size_t _time;

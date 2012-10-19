@@ -170,7 +170,6 @@ namespace dtn
 		{
 			bindEvent(dtn::core::TimeEvent::className);
 			try {
-				_vsocket.destroy();
 				_vsocket.add(new ibrcommon::lowpansocket(_panid, _net));
 				_vsocket.up();
 
@@ -186,7 +185,7 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::componentDown()
 		{
-			_vsocket.down();
+			_vsocket.destroy();
 			unbindEvent(dtn::core::TimeEvent::className);
 			stop();
 			join();
@@ -298,7 +297,7 @@ namespace dtn
 			{}
 		}
 
-		void LOWPANConvergenceLayer::__cancellation()
+		void LOWPANConvergenceLayer::__cancellation() throw ()
 		{
 			_running = false;
 			_vsocket.down();

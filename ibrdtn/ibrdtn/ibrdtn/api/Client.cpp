@@ -48,12 +48,12 @@ namespace dtn
 		{
 		}
 
-		void Client::AsyncReceiver::__cancellation()
+		void Client::AsyncReceiver::__cancellation() throw ()
 		{
 			_running = false;
 		}
 
-		void Client::AsyncReceiver::run()
+		void Client::AsyncReceiver::run() throw ()
 		{
 			try {
 				while (!_client.eof() && _running)

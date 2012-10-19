@@ -333,7 +333,7 @@ namespace dtn
 		EventSwitch::Worker::~Worker()
 		{}
 
-		void EventSwitch::Worker::run()
+		void EventSwitch::Worker::run() throw ()
 		{
 			try {
 				while (_running)
@@ -341,7 +341,7 @@ namespace dtn
 			} catch (const ibrcommon::Conditional::ConditionalAbortException&) { };
 		}
 
-		void EventSwitch::Worker::__cancellation()
+		void EventSwitch::Worker::__cancellation() throw ()
 		{
 			_running = false;
 		}

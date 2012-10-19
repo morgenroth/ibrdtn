@@ -261,7 +261,7 @@ namespace dtn
 		 * a BundleReceivedEvent will be raised.
 		 *
 		 */
-		void DownloadThread::run()
+		void DownloadThread::run() throw ()
 		{
 			try  {
 				while(_stream.good())
@@ -286,7 +286,7 @@ namespace dtn
 			}
 		}
 
-		void DownloadThread::__cancellation()
+		void DownloadThread::__cancellation() throw ()
 		{
 		}
 
@@ -524,7 +524,7 @@ namespace dtn
 		 * This method is from IndependentComponent interface. It could abort
 		 * the componentRun() thread on the hard way.
 		 */
-		void HTTPConvergenceLayer::__cancellation()
+		void HTTPConvergenceLayer::__cancellation() throw ()
 		{
 			_running = false;
 

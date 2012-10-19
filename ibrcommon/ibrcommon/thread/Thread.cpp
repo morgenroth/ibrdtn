@@ -74,38 +74,25 @@ namespace ibrcommon
 		pthread_cleanup_push(Thread::finalize_thread, (void *)th);
 
 		// set the state to RUNNING
-		try {
-			// enter the setup stage, if this thread is still in preparation state
+		// enter the setup stage, if this thread is still in preparation state
+		{
+			ibrcommon::ThreadsafeState<THREAD_STATE>::Locked ls = th->_state.lock();
+			if (ls != THREAD_PREPARE)
 			{
-				ibrcommon::ThreadsafeState<THREAD_STATE>::Locked ls = th->_state.lock();
-				if (ls != THREAD_PREPARE)
-				{
-					throw ibrcommon::Exception("Thread has been canceled.");
-				}
-
-				ls = THREAD_SETUP;
+				throw ibrcommon::Exception("Thread has been canceled.");
 			}
 
-			// call the setup method
-			th->setup();
-		} catch (const std::exception &ex) {
-			IBRCOMMON_LOGGER_DEBUG(40) << "Thread setup aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-
-			// exit this thread
-			Thread::exit();
+			ls = THREAD_SETUP;
 		}
 
-		try {
-			// set the state to running
-			th->_state = THREAD_RUNNING;
+		// call the setup method
+		th->setup();
 
-			// run threads run routine
-			th->run();
-		} catch (const std::exception &ex) {
-			// an exception occured in run() or ready(), but this is allowed
-			IBRCOMMON_LOGGER_DEBUG(40) << "Thread execution aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			Thread::exit();
-		}
+		// set the state to running
+		th->_state = THREAD_RUNNING;
+
+		// run threads run routine
+		th->run();
 
 		// remove cleanup-handler and call it
 		pthread_cleanup_pop(1);

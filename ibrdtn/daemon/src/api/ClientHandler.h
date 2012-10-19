@@ -91,10 +91,10 @@ namespace dtn
 			void eventNodeUnavailable(const dtn::core::Node &node);
 
 		protected:
-			void run();
-			void finally();
-			void setup();
-			void __cancellation();
+			void run() throw ();
+			void finally() throw ();
+			void setup() throw ();
+			void __cancellation() throw ();
 
 		private:
 			void error(STATUS_CODES code, const std::string &msg);

@@ -44,8 +44,8 @@ namespace dtn
 				 * @param job Reference to the job conatining EID and bundle
 				 */
 				void queue(const ConvergenceLayer::Job &job);
-				void run();
-				void __cancellation();
+				void run() throw ();
+				void __cancellation() throw ();
 
 			private:
 				ibrcommon::lowpanstream &_stream;
@@ -76,10 +76,10 @@ namespace dtn
 			 */
 			ibrcommon::lowpanstream& getStream();
 
-			void run();
-			void setup();
-			void finally();
-			void __cancellation();
+			void run() throw ();
+			void setup() throw ();
+			void finally() throw ();
+			void __cancellation() throw ();
 
 			/**
 			 * Instance of the LOWPANConnectionSender

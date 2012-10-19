@@ -52,7 +52,7 @@ namespace dtn
 			return "FragmentManager";
 		}
 
-		void FragmentManager::__cancellation()
+		void FragmentManager::__cancellation() throw ()
 		{
 			_running = false;
 			_incoming.abort();

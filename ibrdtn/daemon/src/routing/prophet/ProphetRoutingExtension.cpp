@@ -341,7 +341,7 @@ namespace dtn
 			return ibrcommon::ThreadsafeReference<const AcknowledgementSet>(_acknowledgementSet, const_cast<AcknowledgementSet&>(_acknowledgementSet));
 		}
 
-		void ProphetRoutingExtension::ProphetRoutingExtension::run()
+		void ProphetRoutingExtension::ProphetRoutingExtension::run() throw ()
 		{
 			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
 			{
@@ -516,7 +516,7 @@ namespace dtn
 			}
 		}
 
-		void ProphetRoutingExtension::__cancellation()
+		void ProphetRoutingExtension::__cancellation() throw ()
 		{
 			{
 				ibrcommon::MutexLock l(_next_exchange_mutex);

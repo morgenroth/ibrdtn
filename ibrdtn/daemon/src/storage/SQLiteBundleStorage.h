@@ -134,7 +134,7 @@ namespace dtn
 			virtual void componentRun();
 			virtual void componentUp();
 			virtual void componentDown();
-			void __cancellation();
+			void __cancellation() throw ();
 
 		private:
 //			enum Position

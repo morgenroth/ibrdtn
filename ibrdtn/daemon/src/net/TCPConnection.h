@@ -123,10 +123,10 @@ namespace dtn
 		protected:
 			void rejectTransmission();
 
-			void setup();
+			void setup() throw ();
 			void connect();
-			void run();
-			void finally();
+			void run() throw ();
+			void finally() throw ();
 			void __cancellation();
 
 			void clearQueue();
@@ -144,12 +144,12 @@ namespace dtn
 				/**
 				 * run method of the thread
 				 */
-				void run();
+				void run() throw ();
 
 				/**
 				 * soft-cancellation function
 				 */
-				void __cancellation();
+				void __cancellation() throw ();
 
 			private:
 				ibrcommon::Conditional _wait;
@@ -164,9 +164,9 @@ namespace dtn
 				virtual ~Sender();
 
 			protected:
-				void run();
-				void finally();
-				void __cancellation();
+				void run() throw ();
+				void finally() throw ();
+				void __cancellation() throw ();
 
 			private:
 				TCPConnection &_connection;
