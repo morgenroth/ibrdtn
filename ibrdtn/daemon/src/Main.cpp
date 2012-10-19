@@ -813,7 +813,7 @@ int __daemon_run(Configuration &conf)
 				// use unix domain sockets for API
 				components.push_back( new dtn::api::ApiServer(socket) );
 				IBRCOMMON_LOGGER(info) << "API initialized using unix domain socket: " << socket.getPath() << IBRCOMMON_LOGGER_ENDL;
-			} catch (const ibrcommon::vsocket_exception&) {
+			} catch (const ibrcommon::socket_exception&) {
 				IBRCOMMON_LOGGER(error) << "Unable to bind to unix domain socket " << socket.getPath() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 				exit(-1);
 			}
@@ -824,7 +824,7 @@ int __daemon_run(Configuration &conf)
 				// instance a API server, first create a socket
 				components.push_back( new dtn::api::ApiServer(lo.interface, lo.port) );
 				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << lo.interface.toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
-			} catch (const ibrcommon::vsocket_exception&) {
+			} catch (const ibrcommon::socket_exception&) {
 				IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.toString() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 				exit(-1);
 			}

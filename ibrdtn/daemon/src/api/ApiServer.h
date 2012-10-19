@@ -27,7 +27,7 @@
 #include "api/ClientHandler.h"
 #include "core/EventReceiver.h"
 #include <ibrcommon/net/vinterface.h>
-#include <ibrcommon/net/tcpserver.h>
+#include <ibrcommon/net/socket.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Timer.h>
 
@@ -97,7 +97,7 @@ namespace dtn
 			 */
 			size_t nextRegistrationExpiry();
 
-			ibrcommon::tcpserver _srv;
+			ibrcommon::vsocket _sockets;
 			bool _shutdown;
 			std::list<Registration> _registrations;
 			std::list<ClientHandler*> _connections;

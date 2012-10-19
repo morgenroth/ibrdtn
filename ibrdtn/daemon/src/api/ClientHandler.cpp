@@ -36,7 +36,7 @@ namespace dtn
 {
 	namespace api
 	{
-		ProtocolHandler::ProtocolHandler(ClientHandler &client, ibrcommon::tcpstream &stream)
+		ProtocolHandler::ProtocolHandler(ClientHandler &client, ibrcommon::socketstream &stream)
 		 : _client(client), _stream(stream)
 		{
 		}
@@ -44,13 +44,9 @@ namespace dtn
 		ProtocolHandler::~ProtocolHandler()
 		{}
 
-		ClientHandler::ClientHandler(ApiServerInterface &srv, Registration &registration, ibrcommon::tcpstream *conn)
+		ClientHandler::ClientHandler(ApiServerInterface &srv, Registration &registration, ibrcommon::socketstream *conn)
 		 : _srv(srv), _registration(&registration), _stream(conn), _endpoint(dtn::core::BundleCore::local), _handler(NULL)
 		{
-			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
-			{
-				_stream->enableNoDelay();
-			}
 		}
 
 		ClientHandler::~ClientHandler()
@@ -185,9 +181,7 @@ namespace dtn
 			_srv.freeRegistration(*_registration);
 
 			// close the stream
-			try {
-				(*_stream).close();
-			} catch (const ibrcommon::ConnectionClosedException&) { };
+			(*_stream).close();
 		}
 
 		void ClientHandler::eventNodeAvailable(const dtn::core::Node &node)

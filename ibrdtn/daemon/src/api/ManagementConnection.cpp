@@ -35,7 +35,7 @@ namespace dtn
 {
 	namespace api
 	{
-		ManagementConnection::ManagementConnection(ClientHandler &client, ibrcommon::tcpstream &stream)
+		ManagementConnection::ManagementConnection(ClientHandler &client, ibrcommon::socketstream &stream)
 		 : ProtocolHandler(client, stream)
 		{
 		}
@@ -131,14 +131,15 @@ namespace dtn
 					{
 						try {
 							ibrcommon::LinkManager &lm = ibrcommon::LinkManager::getInstance();
-
-							ibrcommon::vaddress::Family f = ibrcommon::vaddress::VADDRESS_UNSPEC;
-
-							if (cmd[4] == "ipv4")	f = ibrcommon::vaddress::VADDRESS_INET;
-							if (cmd[4] == "ipv6")	f = ibrcommon::vaddress::VADDRESS_INET6;
-
+							
+							// the interface is defined as the 3rd parameter
 							ibrcommon::vinterface iface(cmd[3]);
-							ibrcommon::vaddress addr(f, cmd[5]);
+							
+							// TODO: Throw out the 4th parameter. Previously used to define the
+							// address family.
+
+							// the new address is defined as 5th parameter
+							ibrcommon::vaddress addr(cmd[5]);
 
 							if (cmd[2] == "add")
 							{

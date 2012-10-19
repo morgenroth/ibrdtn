@@ -50,15 +50,13 @@ namespace dtn
 	{
 		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, unsigned int mtu)
 			: DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-			  _socket(NULL), _net(net), _panid(panid), _ipnd_buf(new char[BUFF_SIZE]), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
+			_net(net), _panid(panid), _ipnd_buf(new char[BUFF_SIZE]), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
 		{
-			_socket = new ibrcommon::UnicastSocketLowpan();
 		}
 
 		LOWPANConvergenceLayer::~LOWPANConvergenceLayer()
 		{
 			componentDown();
-			delete _socket;
 		}
 
 		dtn::core::Node::Protocol LOWPANConvergenceLayer::getDiscoveryProtocol() const
@@ -94,28 +92,24 @@ namespace dtn
 		{
 			// Add own address at the end
 			struct sockaddr_ieee802154 _sockaddr;
-			unsigned short local_addr;
 
-			_socket->getAddress(&_sockaddr.addr, _net);
+			ibrcommon::socketset socks = _vsocket.getAll();
+			if (socks.size() == 0) return;
+			ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**socks.begin());
 
-			local_addr = _sockaddr.addr.short_addr;
+			// get the local address data
+			sock.getAddress(&_sockaddr.addr, _net);
 
-			// get a lowpan peer
-			ibrcommon::lowpansocket::peer p = _socket->getPeer(address, _sockaddr.addr.pan_id);
-			if (len > 115)
-				IBRCOMMON_LOGGER(error) << "LOWPANConvergenceLayer::send_cb buffer to big to be transferred (" << len << ")."<< IBRCOMMON_LOGGER_ENDL;
+			// TODO: create vaddress out of the "address" and the own "_sockaddr.addr.pan_id"
+			std::stringstream ss;
+			ss << address << ":" << _sockaddr.addr.pan_id;
+			ibrcommon::vaddress addr(ss.str());
 
 			// set write lock
 			ibrcommon::MutexLock l(m_writelock);
 
 			// send converted line
-			int ret = p.send(buf, len);
-
-			if (ret == -1)
-			{
-				// CL is busy
-				throw(ibrcommon::Exception("Send on socket failed"));
-			}
+			sock.sendto(buf, len, 0, addr);
 		}
 
 		void LOWPANConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
@@ -175,22 +169,23 @@ namespace dtn
 		{
 			bindEvent(dtn::core::TimeEvent::className);
 			try {
-				try {
-					ibrcommon::UnicastSocketLowpan &sock = dynamic_cast<ibrcommon::UnicastSocketLowpan&>(*_socket);
-					sock.bind(_panid, _net);
+				_vsocket.destroy();
+				_vsocket.add(new ibrcommon::lowpansocket(_panid, _net));
+				_vsocket.up();
 
-					addService(this);
-				} catch (const std::bad_cast&) {
-
-				}
-			} catch (const ibrcommon::lowpansocket::SocketException &ex) {
+				addService(this);
+			} catch (const ibrcommon::socket_exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "Failed to add LOWPAN ConvergenceLayer on " << _net.toString() << ":" << _panid << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER_DEBUG(10) << "Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+			
+			// set component in running mode
+			_running = true;
 		}
 
 		void LOWPANConvergenceLayer::componentDown()
 		{
+			_vsocket.down();
 			unbindEvent(dtn::core::TimeEvent::className);
 			stop();
 			join();
@@ -240,47 +235,52 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::componentRun()
 		{
-			_running = true;
-
 			while (_running)
 			{
-				ibrcommon::MutexLock l(m_readlock);
+				ibrcommon::socketset readfds;
+				_vsocket.select(&readfds, NULL, NULL, NULL);
 
-				char data[m_maxmsgsize];
-				char header;
-				uint16_t address = 0;
+				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
+					ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**iter);
 
-				// Receive full frame from socket
-				std::string hwaddress;
-				uint16_t pan_id = 0;
-				int len = _socket->receive(data, m_maxmsgsize, hwaddress, address, pan_id);
+					char data[m_maxmsgsize];
+					char header;
+					uint16_t address = 0;
+					
+					// place to store the peer address
+					// TODO: check format of the peer address if it is enough to address the peer
+					ibrcommon::vaddress peeraddr;
+					
+					// Receive full frame from socket
+					int len = sock.recvfrom(data, m_maxmsgsize, 0, peeraddr);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "Received IEEE 802.15.4 frame from " << address << " (" << hwaddress << ")" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(40) << "Received IEEE 802.15.4 frame from " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
 
-				// We got nothing from the socket, keep reading
-				if (len <= 0)
-					continue;
+					// We got nothing from the socket, keep reading
+					if (len <= 0)
+						continue;
 
-				// Retrieve header of frame
-				header = data[0];
+					// Retrieve header of frame
+					header = data[0];
 
-				// Check for extended header and retrieve if available
-				if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {
-					DiscoveryAnnouncement announce;
-					stringstream ss;
-					ss.write(data+2, len-2);
-					ss >> announce;
-					DiscoveryAgent::received(announce.getEID(), announce.getServices(), 30);
-					continue;
+					// Check for extended header and retrieve if available
+					if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {
+						DiscoveryAnnouncement announce;
+						stringstream ss;
+						ss.write(data+2, len-2);
+						ss >> announce;
+						DiscoveryAgent::received(announce.getEID(), announce.getServices(), 30);
+						continue;
+					}
+
+					ibrcommon::MutexLock lc(_connection_lock);
+
+					// Connection instance for this address
+					LOWPANConnection* connection = getConnection(address);
+
+					// Decide in which queue to write based on the src address
+					connection->getStream().queue(data, len);
 				}
-
-				ibrcommon::MutexLock lc(_connection_lock);
-
-				// Connection instance for this address
-				LOWPANConnection* connection = getConnection(address);
-
-				// Decide in which queue to write based on the src address
-				connection->getStream().queue(data, len);
 
 				yield();
 			}
@@ -300,7 +300,7 @@ namespace dtn
 		void LOWPANConvergenceLayer::__cancellation()
 		{
 			_running = false;
-			_socket->shutdown();
+			_vsocket.down();
 		}
 
 		const std::string LOWPANConvergenceLayer::getName() const

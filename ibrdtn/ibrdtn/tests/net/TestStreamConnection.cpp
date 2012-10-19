@@ -21,8 +21,9 @@
 
 #include "net/TestStreamConnection.h"
 
-#include <ibrcommon/net/tcpserver.h>
-#include <ibrcommon/net/tcpclient.h>
+#include <ibrcommon/net/socket.h>
+#include <ibrcommon/net/vsocket.h>
+#include <ibrcommon/net/socketstream.h>
 #include <ibrdtn/streams/StreamConnection.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -42,31 +43,41 @@ void TestStreamConnection::tearDown()
 
 void TestStreamConnection::connectionUpDown()
 {
-	class testserver : public ibrcommon::tcpserver, public ibrcommon::JoinableThread, dtn::streams::StreamConnection::Callback
+	class testserver : public ibrcommon::JoinableThread, dtn::streams::StreamConnection::Callback
 	{
+	private:
+		ibrcommon::vsocket _sockets;
+		bool _running;
+
 	public:
-		testserver(ibrcommon::File &file) : ibrcommon::tcpserver(file), recv_bundles(0) {};
-		testserver(const ibrcommon::vinterface &net, int port) : ibrcommon::tcpserver(), recv_bundles(0)
+		testserver(ibrcommon::serversocket *sock)
+		: _running(true), recv_bundles(0)
 		{
-			bind(net, port);
-		};
-
-		virtual ~testserver() { join(); };
-
-		void __cancellation() {
-			close();
+			_sockets.add(sock);
+			_sockets.up();
 		}
 
-		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc) {};
+		virtual ~testserver() {
+			_sockets.down();
+			join();
+			_sockets.destroy();
+		};
+
+		void __cancellation() {
+			_running = false;
+			_sockets.down();
+		}
+
+		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) {};
 		void eventTimeout() {};
 		void eventError() {};
 		void eventBundleRefused() {};
 		void eventBundleForwarded() {};
 		void eventBundleAck(size_t ack)
 		{
-//			std::cout << "server: ack received, value: " << ack << std::endl;
+			std::cout << "server: ack received, value: " << ack << std::endl;
 		};
-		void eventConnectionUp(const dtn::streams::StreamContactHeader &header) {};
+		void eventConnectionUp(const dtn::streams::StreamContactHeader&) {};
 		void eventConnectionDown() {};
 
 		unsigned int recv_bundles;
@@ -74,55 +85,70 @@ void TestStreamConnection::connectionUpDown()
 	protected:
 		void run()
 		{
-			ibrcommon::tcpstream *conn = accept();
-			dtn::streams::StreamConnection stream(*this, *conn);
+			ibrcommon::vaddress peeraddr;
 
-			// do the handshake
-			stream.handshake(dtn::data::EID("dtn:server"), 0, dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS);
+			while (_running) {
+				ibrcommon::socketset fds;
+				_sockets.select(&fds, NULL, NULL, NULL);
 
-			try {
-				while (conn->good())
+				for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
 				{
-					dtn::data::Bundle b;
-					dtn::data::DefaultDeserializer(stream) >> b;
-//				std::cout << "server: bundle received" << std::endl;
-					recv_bundles++;
-				}
-			} catch (std::exception &e) {
-				delete conn;
-				return;
-			}
+					ibrcommon::serversocket &servsock = dynamic_cast<ibrcommon::serversocket&>(**iter);
 
-			delete conn;
+					try {
+						ibrcommon::clientsocket *sock = servsock.accept(peeraddr);
+						ibrcommon::socketstream conn(sock);
+						dtn::streams::StreamConnection stream(*this, conn);
+
+						// do the handshake
+						stream.handshake(dtn::data::EID("dtn:server"), 0, dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS);
+
+						while (conn.good())
+						{
+							dtn::data::Bundle b;
+							dtn::data::DefaultDeserializer(stream) >> b;
+							// std::cout << "server: bundle received" << std::endl;
+							recv_bundles++;
+						}
+					} catch (std::exception &e) {
+						CPPUNIT_FAIL(std::string("server error: ") + e.what());
+					}
+				}
+			}
 		}
 	};
 
 	class testclient : public ibrcommon::JoinableThread, dtn::streams::StreamConnection::Callback
 	{
 	private:
-		ibrcommon::tcpclient &_client;
+		ibrcommon::socketstream &_client;
 		dtn::streams::StreamConnection _stream;
 
 	public:
-		testclient(ibrcommon::tcpclient &client) : _client(client), _stream(*this, _client)
+		testclient(ibrcommon::socketstream &client)
+		: _client(client), _stream(*this, _client)
 		{ }
-		virtual ~testclient() { join(); };
+
+		virtual ~testclient() {
+			join();
+		};
 
 		void __cancellation() {
+			_stream.shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			_client.close();
 		}
 
-		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc) {};
+		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) {};
 		void eventTimeout() {};
 		void eventError() {};
 		void eventBundleRefused() {};
 		void eventBundleForwarded() {};
 		void eventBundleAck(size_t ack)
 		{
-//			std::cout << "client: ack received, value: " << ack << std::endl;
+			// std::cout << "client: ack received, value: " << ack << std::endl;
 		};
 
-		void eventConnectionUp(const dtn::streams::StreamContactHeader &header) {};
+		void eventConnectionUp(const dtn::streams::StreamContactHeader&) {};
 		void eventConnectionDown() {};
 
 		void handshake()
@@ -138,9 +164,8 @@ void TestStreamConnection::connectionUpDown()
 
 			{
 				ibrcommon::BLOB::iostream stream = ref.iostream();
-				(*stream) << "Hallo Welt" << std::endl;
 
-				// create testing pattern, chunkwise to ocnserve memory
+				// create testing pattern, chunk-wise to conserve memory
 				char pattern[2048];
 				for (size_t i = 0; i < sizeof(pattern); i++)
 				{
@@ -156,8 +181,9 @@ void TestStreamConnection::connectionUpDown()
 				(*stream) << chunk.substr(0,size);
 			}
 
-			dtn::data::PayloadBlock &payload = b.push_back(ref);
-			dtn::data::DefaultSerializer(_stream) << b; _stream << std::flush;
+			b.push_back(ref);
+			dtn::data::DefaultSerializer(_stream) << b;
+			_stream << std::flush;
 		}
 
 		void close()
@@ -173,28 +199,46 @@ void TestStreamConnection::connectionUpDown()
 			{
 				dtn::data::Bundle b;
 				dtn::data::DefaultDeserializer(_stream) >> b;
-//				std::cout << "client: bundle received" << std::endl;
+				// std::cout << "client: bundle received" << std::endl;
 			}
 		}
 	};
 
-	ibrcommon::vinterface net("lo");
-	ibrcommon::File socket("/tmp/testsuite.sock");
-	testserver srv(net, 1234); srv.start();
+	//ibrcommon::File socket("/tmp/testsuite.sock");
+	//testserver srv(new ibrcommon::fileserversocket(file));
 
-	ibrcommon::tcpclient conn("127.0.0.1", 1234);
+	// create a new server bound to tcp port 1234
+	testserver srv(new ibrcommon::tcpserversocket(1234));
+
+	// start the server thread
+	srv.start();
+
+	ibrcommon::vaddress addr("::1");
+	ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr, 1234));
 	testclient cl(conn);
+
+	// do client-server handshake
 	cl.handshake();
+
+	// start client receiver
 	cl.start();
 
-	for (int i = 0; i < 2000; i++)
-	{
-		cl.send(8192);
+	try {
+		for (int i = 0; i < 2000; i++)
+		{
+			cl.send(8192);
+		}
+
+		// close the client
+		cl.close();
+	} catch (const std::exception &e) {
+		cl.stop();
+		CPPUNIT_FAIL(std::string("client error: ") + e.what());
 	}
 
-	cl.close();
-	conn.close();
-	srv.close();
+	cl.join();
+
+	srv.stop();
 	srv.join();
 
 	CPPUNIT_ASSERT_EQUAL((unsigned int) 2000, srv.recv_bundles);

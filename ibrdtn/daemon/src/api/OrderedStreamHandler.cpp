@@ -39,7 +39,7 @@ namespace dtn
 {
 	namespace api
 	{
-		OrderedStreamHandler::OrderedStreamHandler(ClientHandler &client, ibrcommon::tcpstream &stream)
+		OrderedStreamHandler::OrderedStreamHandler(ClientHandler &client, ibrcommon::socketstream &stream)
 		 : ProtocolHandler(client, stream), _sender(*this), _streambuf(*this), _bundlestream(&_streambuf), _group(true), _lifetime(3600)
 		{
 			_endpoint = client.getRegistration().getDefaultEID();
@@ -111,9 +111,7 @@ namespace dtn
 		void OrderedStreamHandler::__cancellation()
 		{
 			// close the stream
-			try {
-				_stream.close();
-			} catch (const ibrcommon::ConnectionClosedException&) { };
+			_stream.close();
 		}
 
 		void OrderedStreamHandler::finally()
@@ -123,9 +121,7 @@ namespace dtn
 			_client.getRegistration().abort();
 
 			// close the stream
-			try {
-				_stream.close();
-			} catch (const ibrcommon::ConnectionClosedException&) { };
+			_stream.close();
 
 			try {
 				// shutdown the sender thread

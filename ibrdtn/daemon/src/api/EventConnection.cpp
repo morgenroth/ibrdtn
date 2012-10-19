@@ -36,7 +36,7 @@ namespace dtn
 {
 	namespace api
 	{
-		EventConnection::EventConnection(ClientHandler &client, ibrcommon::tcpstream &stream)
+		EventConnection::EventConnection(ClientHandler &client, ibrcommon::socketstream &stream)
 		 : ProtocolHandler(client, stream), _running(true)
 		{
 		}

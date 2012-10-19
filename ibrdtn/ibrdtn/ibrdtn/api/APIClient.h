@@ -24,7 +24,7 @@
 
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/BundleID.h"
-#include <ibrcommon/net/tcpstream.h>
+#include <ibrcommon/net/socketstream.h>
 #include <ibrcommon/Exceptions.h>
 
 namespace dtn
@@ -76,7 +76,7 @@ namespace dtn
 				const std::string msg;
 			};
 
-			APIClient(ibrcommon::tcpstream &stream);
+			APIClient(ibrcommon::socketstream &stream);
 
 			/**
 			 * Virtual destructor for this class.
@@ -169,7 +169,7 @@ namespace dtn
 			static dtn::data::BundleID readBundleID(const std::string &data);
 
 			// tcp stream reference to send/receive data to the daemon
-			ibrcommon::tcpstream &_stream;
+			ibrcommon::socketstream &_stream;
 
 			// notify queue
 			ibrcommon::Conditional _queue_cond;

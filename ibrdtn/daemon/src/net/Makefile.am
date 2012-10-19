@@ -24,6 +24,7 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 				Neighbor.cpp \
 				Neighbor.h \
 				TCPConnection.cpp \
+				TCPConnection.h \
 				TCPConvergenceLayer.cpp \
 				TCPConvergenceLayer.h \
 				TransferAbortedEvent.cpp \

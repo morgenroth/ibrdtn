@@ -80,8 +80,8 @@ namespace dtn
 
 			if (_type == LOGGER_UDP)
 			{
-				_sock = new ibrcommon::UnicastSocket();
-				_sock->bind();
+				_sock = new ibrcommon::udpsocket();
+				_sock->up();
 			}
 		}
 
@@ -132,6 +132,7 @@ namespace dtn
 
 			if (_type == LOGGER_UDP)
 			{
+				_sock->down();
 				delete _sock;
 			}
 		}
@@ -264,7 +265,7 @@ namespace dtn
 			_fileout.close();
 		}
 
-		void StatisticLogger::writeUDPLog(ibrcommon::UnicastSocket &socket)
+		void StatisticLogger::writeUDPLog(ibrcommon::udpsocket &socket)
 		{
 			std::stringstream ss;
 
@@ -282,7 +283,7 @@ namespace dtn
 
 			std::string data = ss.str();
 			ibrcommon::vaddress addr(_address);
-			socket.send(addr, _port, data.c_str(), data.length());
+			socket.sendto(data.c_str(), data.length(), 0, addr, _port);
 		}
 
 		const std::string StatisticLogger::getName() const

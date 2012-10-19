@@ -24,14 +24,14 @@
 
 #include "net/DatagramConvergenceLayer.h"
 #include "net/DatagramConnectionParameter.h"
-#include <ibrcommon/net/udpsocket.h>
+#include <ibrcommon/net/vsocket.h>
 #include <ibrcommon/net/vinterface.h>
 
 namespace dtn
 {
 	namespace net
 	{
-		class UDPDatagramService : public dtn::net::DatagramService, protected ibrcommon::udpsocket
+		class UDPDatagramService : public dtn::net::DatagramService
 		{
 		public:
 			UDPDatagramService(const ibrcommon::vinterface &iface, int port, size_t mtu = 1280);
@@ -108,6 +108,7 @@ namespace dtn
 			static const std::string encode(const ibrcommon::vaddress &address, const unsigned int &port);
 			static void decode(const std::string &identifier, std::string &address, unsigned int &port);
 
+			ibrcommon::vsocket _vsocket;
 
 			const static int BROADCAST_PORT = 5551;
 			const ibrcommon::vinterface _iface;

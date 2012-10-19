@@ -38,11 +38,11 @@
 #include "core/BundleCore.h"
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/thread/Timer.h>
+#include <ibrcommon/net/socket.h>
 #include <list>
 #include <string>
 #include <fstream>
 #include <iostream>
-#include <ibrcommon/net/UnicastSocket.h>
 
 namespace dtn
 {
@@ -83,7 +83,7 @@ namespace dtn
 			void writeCsvLog(std::ostream &stream);
 			void writeStatLog();
 
-			void writeUDPLog(ibrcommon::UnicastSocket &socket);
+			void writeUDPLog(ibrcommon::udpsocket &socket);
 
 			ibrcommon::Timer _timer;
 			ibrcommon::File _file;
@@ -96,7 +96,7 @@ namespace dtn
 
 			dtn::core::BundleCore &_core;
 
-			ibrcommon::UnicastSocket *_sock;
+			ibrcommon::udpsocket *_sock;
 			std::string _address;
 			unsigned int _port;
 		};

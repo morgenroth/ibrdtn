@@ -28,7 +28,7 @@
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
-#include <ibrcommon/net/tcpclient.h>
+#include <ibrcommon/net/socket.h>
 #include <ibrcommon/Logger.h>
 
 #include <streambuf>
@@ -36,7 +36,9 @@
 #include <list>
 #include <algorithm>
 
-using namespace ibrcommon;
+#ifdef WITH_TLS
+#include <ibrcommon/ssl/TLSStream.h>
+#endif
 
 namespace dtn
 {
@@ -64,11 +66,13 @@ namespace dtn
 
 			if (net.empty()) {
 				// bind to any interface
-				_tcpsrv.bind(port);
+				_vsocket.add(new ibrcommon::tcpserversocket(port));
 				_any_port = port;
 			} else {
+				// TODO: bind on all addresses on this interface
 				_interfaces.push_back(net);
-				_tcpsrv.bind(net, port);
+				_vsocket.add(new ibrcommon::tcpserversocket(port));
+				//_tcpsrv.bind(net, port);
 				_portmap[net] = port;
 			}
 		}
@@ -106,19 +110,18 @@ namespace dtn
 						if (!crosslayer) throw ibrcommon::Exception("crosslayer discovery disabled!");
 
 						// get all addresses of this interface
-						std::list<vaddress> list = interface.getAddresses();
+						std::list<ibrcommon::vaddress> list = interface.getAddresses();
 
 						// if no address is returned... (goto catch block)
 						if (list.empty()) throw ibrcommon::Exception("no address found");
 
-						for (std::list<vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
+						for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
 						{
-							if ((*addr_it).getFamily() == ibrcommon::vaddress::VADDRESS_INET6)
-								if ((*addr_it).getScope() != ibrcommon::vaddress::SCOPE_LINKLOCAL) continue;
+							if ((*addr_it).getScope() != ibrcommon::vaddress::SCOPE_LINKLOCAL) continue;
 
 							std::stringstream service;
 							// fill in the ip address
-							service << "ip=" << (*addr_it).get(false) << ";port=" << _portmap[iface] << ";";
+							service << "ip=" << (*addr_it).get() << ";port=" << _portmap[iface] << ";";
 							announcement.addService( DiscoveryService("tcpcl", service.str()));
 
 							// set the announce mark
@@ -164,7 +167,7 @@ namespace dtn
 
 			try {
 				// create a connection
-				TCPConnection *conn = new TCPConnection(*this, n, dtn::core::BundleCore::local, 10);
+				TCPConnection *conn = new TCPConnection(*this, n, NULL, 10);
 
 #ifdef WITH_TLS
 				// enable TLS Support
@@ -210,7 +213,7 @@ namespace dtn
 
 			try {
 				// create a connection
-				TCPConnection *conn = new TCPConnection(*this, n, dtn::core::BundleCore::local, 10);
+				TCPConnection *conn = new TCPConnection(*this, n, NULL, 10);
 
 #ifdef WITH_TLS
 				// enable TLS Support
@@ -284,25 +287,44 @@ namespace dtn
 			try {
 				while (true)
 				{
+					ibrcommon::socketset readfds;
+					
 					// wait for incoming connections
-					tcpstream *stream = _tcpsrv.accept();
+					_vsocket.select(&readfds, NULL, NULL, NULL);
 
-					// create a new TCPConnection and return the pointer
-					TCPConnection *obj = new TCPConnection(*this, stream, dtn::core::BundleCore::local, 10);
+					for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
+						try {
+							// assume that all sockets are serversockets
+							ibrcommon::serversocket &sock = dynamic_cast<ibrcommon::serversocket&>(**iter);
+
+							// wait for incoming connections
+							ibrcommon::vaddress peeraddr;
+							ibrcommon::clientsocket *client = sock.accept(peeraddr);
+
+							// create a new node object
+							dtn::core::Node node;
+							// TODO: create a EID based on the peer address
+
+							// create a new TCPConnection and return the pointer
+							TCPConnection *obj = new TCPConnection(*this, node, client, 10);
 
 #ifdef WITH_TLS
-					// enable TLS Support
-					if ( ibrcommon::TLSStream::isInitialized() )
-					{
-						obj->enableTLS();
-					}
+							// enable TLS Support
+							if ( ibrcommon::TLSStream::isInitialized() )
+							{
+								obj->enableTLS();
+							}
 #endif
 
-					// add the connection to the connection list
-					connectionUp(obj);
+							// add the connection to the connection list
+							connectionUp(obj);
 
-					// initialize the object
-					obj->initialize();
+							// initialize the object
+							obj->initialize();
+						} catch (const std::bad_cast&) {
+
+						}
+					}
 
 					// breakpoint
 					ibrcommon::Thread::yield();
@@ -315,8 +337,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::__cancellation()
 		{
-			_tcpsrv.shutdown();
-			_tcpsrv.close();
+			_vsocket.down();
 		}
 
 		void TCPConvergenceLayer::closeAll()
@@ -335,14 +356,13 @@ namespace dtn
 		void TCPConvergenceLayer::componentUp()
 		{
 			// listen on the socket, max. 5 concurrent awaiting connections
-			_tcpsrv.listen(5);
+			_vsocket.up();
 		}
 
 		void TCPConvergenceLayer::componentDown()
 		{
-			// shutdown the TCP server
-			_tcpsrv.shutdown();
-			_tcpsrv.close();
+			// shutdown all sockets
+			_vsocket.down();
 
 			// close all active connections
 			closeAll();

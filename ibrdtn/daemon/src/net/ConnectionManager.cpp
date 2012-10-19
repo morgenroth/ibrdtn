@@ -33,7 +33,6 @@
 #include "routing/RequeueBundleEvent.h"
 
 #include <ibrdtn/utils/Clock.h>
-#include <ibrcommon/net/tcpserver.h>
 #include <ibrcommon/Logger.h>
 
 #include <iostream>

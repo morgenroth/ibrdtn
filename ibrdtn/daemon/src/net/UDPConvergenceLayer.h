@@ -27,9 +27,9 @@
 #include <ibrcommon/Exceptions.h>
 #include "net/DiscoveryServiceProvider.h"
 #include <ibrcommon/net/vinterface.h>
-#include <ibrcommon/net/udpsocket.h>
+#include <ibrcommon/net/socket.h>
+#include <ibrcommon/net/vsocket.h>
 
-using namespace dtn::data;
 
 
 namespace dtn
@@ -81,8 +81,8 @@ namespace dtn
 		private:
 			void receive(dtn::data::Bundle&, dtn::data::EID &sender);
 
-			ibrcommon::udpsocket *_socket;
-
+			ibrcommon::udpsocket _sock;
+			ibrcommon::vsocket _vsocket;
 			ibrcommon::vinterface _net;
 			int _port;
 

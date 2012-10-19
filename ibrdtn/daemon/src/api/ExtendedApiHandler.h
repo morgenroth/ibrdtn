@@ -30,7 +30,7 @@
 #include <ibrdtn/data/Bundle.h>
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Queue.h>
-#include <ibrcommon/net/tcpstream.h>
+#include <ibrcommon/net/socketstream.h>
 
 
 namespace dtn
@@ -47,7 +47,7 @@ namespace dtn
 				API_STATUS_NOTIFY_BUNDLE = 602
 			};
 
-			ExtendedApiHandler(ClientHandler &client, ibrcommon::tcpstream &stream);
+			ExtendedApiHandler(ClientHandler &client, ibrcommon::socketstream &stream);
 			virtual ~ExtendedApiHandler();
 
 			virtual void run();

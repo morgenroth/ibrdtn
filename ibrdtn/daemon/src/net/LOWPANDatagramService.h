@@ -24,7 +24,7 @@
 
 #include "net/DatagramConvergenceLayer.h"
 #include "net/DatagramConnectionParameter.h"
-#include <ibrcommon/net/lowpansocket.h>
+#include <ibrcommon/net/vsocket.h>
 
 namespace dtn
 {
@@ -112,7 +112,7 @@ namespace dtn
 			const ibrcommon::vinterface _iface;
 			DatagramConnectionParameter _params;
 
-			ibrcommon::lowpansocket *_socket;
+			ibrcommon::vsocket _vsocket;
 		};
 	} /* namespace net */
 } /* namespace dtn */

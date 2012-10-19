@@ -28,7 +28,7 @@
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryServiceProvider.h"
 #include <ibrcommon/net/vinterface.h>
-#include <ibrcommon/net/lowpansocket.h>
+#include <ibrcommon/net/vsocket.h>
 #include <ibrcommon/net/lowpanstream.h>
 
 #include <list>
@@ -93,7 +93,7 @@ namespace dtn
 			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers);
 
 		private:
-			ibrcommon::lowpansocket *_socket;
+			ibrcommon::vsocket _vsocket;
 
 			ibrcommon::vinterface _net;
 			int _panid;
@@ -107,7 +107,6 @@ namespace dtn
 			unsigned int m_maxmsgsize;
 
 			ibrcommon::Mutex m_writelock;
-			ibrcommon::Mutex m_readlock;
 
 			bool _running;
 		};

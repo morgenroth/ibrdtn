@@ -45,7 +45,7 @@ namespace dtn
 {
 	namespace api
 	{
-		ExtendedApiHandler::ExtendedApiHandler(ClientHandler &client, ibrcommon::tcpstream &stream)
+		ExtendedApiHandler::ExtendedApiHandler(ClientHandler &client, ibrcommon::socketstream &stream)
 		 : ProtocolHandler(client, stream), _sender(new Sender(*this)),
 		   _endpoint(_client.getRegistration().getDefaultEID())
 		{
@@ -65,9 +65,7 @@ namespace dtn
 		void ExtendedApiHandler::__cancellation()
 		{
 			// close the stream
-			try {
-				_stream.close();
-			} catch (const ibrcommon::ConnectionClosedException&) { };
+			_stream.close();
 		}
 
 		void ExtendedApiHandler::finally()
@@ -77,9 +75,7 @@ namespace dtn
 			_client.getRegistration().abort();
 
 			// close the stream
-			try {
-				_stream.close();
-			} catch (const ibrcommon::ConnectionClosedException&) { };
+			_stream.close();
 
 			try {
 				// shutdown the sender thread

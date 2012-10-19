@@ -33,7 +33,7 @@
 #include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
 
-#include <ibrcommon/net/tcpclient.h>
+#include <ibrcommon/net/socket.h>
 #include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/thread/Conditional.h>
@@ -41,11 +41,13 @@
 
 #include <iostream>
 #include <iomanip>
+#include <memory>
 
 #ifdef WITH_TLS
-#include <openssl/x509.h>
 #include "security/SecurityCertificateManager.h"
+#include <openssl/x509.h>
 #include <ibrcommon/TLSExceptions.h>
+#include <ibrcommon/ssl/TLSStream.h>
 #endif
 
 #ifdef WITH_BUNDLE_SECURITY
@@ -59,58 +61,12 @@ namespace dtn
 		/*
 		 * class TCPConnection
 		 */
-		TCPConnection::TCPConnection(TCPConvergenceLayer & tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID & name, const size_t timeout)
-#ifdef WITH_TLS
-		 : _peer(), _node(name), _tcpstream(stream), _tlsstream(stream), _stream(*this, _tlsstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
-		   _sender(*this), _keepalive_sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0), _aborted(false)
-#else
-		 : _peer(), _node(name), _tcpstream(stream), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
-		   _sender(*this), _keepalive_sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0), _aborted(false)
-#endif
+		TCPConnection::TCPConnection(TCPConvergenceLayer &tcpsrv, const dtn::core::Node &node, ibrcommon::clientsocket *sock, const size_t timeout)
+		 : _peer(), _node(node), _socket(sock), _socket_stream(NULL), _sec_stream(NULL), _protocol_stream(NULL), _sender(*this),
+		   _keepalive_sender(*this, _keepalive_timeout), _timeout(timeout), _lastack(0), _keepalive_timeout(0),
+		   _callback(tcpsrv), _flags(0), _aborted(false)
 		{
-			_stream.exceptions(std::ios::badbit | std::ios::eofbit);
-
-			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
-			{
-				stream->enableNoDelay();
-			}
-
-			// add default TCP connection
-			_node.clear();
-			_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, "0.0.0.0", 0, 30) );
-
-			_flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
-			_flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
-
-			if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation())
-			{
-				_flags |= dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION;
-			}
-
-#ifdef WITH_TLS
-			// set tls mode to server
-			_tlsstream.setServer(true);
-#endif
-		}
-
-		TCPConnection::TCPConnection(TCPConvergenceLayer &tcpsrv, const dtn::core::Node &node, const dtn::data::EID &name, const size_t timeout)
-#ifdef WITH_TLS
-		 : _peer(), _node(node), _tcpstream(new ibrcommon::tcpclient()), _tlsstream(_tcpstream.get()), _stream(*this, _tlsstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
-		   _sender(*this), _keepalive_sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0), _aborted(false)
-#else
-		 : _peer(), _node(node), _tcpstream(new ibrcommon::tcpclient()), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
-		   _sender(*this), _keepalive_sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0), _aborted(false)
-#endif
-		{
-			_stream.exceptions(std::ios::badbit | std::ios::eofbit);
-
-			_flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
-			_flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
-
-			if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation())
-			{
-				_flags |= dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION;
-			}
+			// if sock if set to NULL, then we are the server
 		}
 
 		TCPConnection::~TCPConnection()
@@ -127,7 +83,7 @@ namespace dtn
 			_sender.push(bundle);
 		}
 
-		const StreamContactHeader& TCPConnection::getHeader() const
+		const dtn::streams::StreamContactHeader& TCPConnection::getHeader() const
 		{
 			return _peer;
 		}
@@ -139,10 +95,10 @@ namespace dtn
 
 		void TCPConnection::rejectTransmission()
 		{
-			_stream.reject();
+			_protocol_stream->reject();
 		}
 
-		void TCPConnection::eventShutdown(StreamConnection::ConnectionShutdownCases)
+		void TCPConnection::eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases)
 		{
 		}
 
@@ -159,7 +115,7 @@ namespace dtn
 		{
 		}
 
-		void TCPConnection::eventConnectionUp(const StreamContactHeader &header)
+		void TCPConnection::eventConnectionUp(const dtn::streams::StreamContactHeader &header)
 		{
 			_peer = header;
 
@@ -175,12 +131,13 @@ namespace dtn
 			if((_peer._flags & dtn::streams::StreamContactHeader::REQUEST_TLS)
 					&& (_flags & dtn::streams::StreamContactHeader::REQUEST_TLS)){
 				try{
-					X509 *peer_cert = _tlsstream.activate();
+					ibrcommon::TLSStream &tls = dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream);
+					X509 *peer_cert = tls.activate();
 					if(!dtn::security::SecurityCertificateManager::validateSubject(peer_cert, _peer.getEID())){
 						IBRCOMMON_LOGGER(warning) << "TCPConnection: certificate does not fit the EID." << IBRCOMMON_LOGGER_ENDL;
 						throw ibrcommon::TLSCertificateVerificationException("certificate does not fit the EID");
 					}
-				} catch(...){
+				} catch (const std::exception&) {
 					if(dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
 						/* close the connection */
 						IBRCOMMON_LOGGER(notice) << "TCPConnection: TLS failed, closing the connection." << IBRCOMMON_LOGGER_ENDL;
@@ -206,14 +163,17 @@ namespace dtn
 			if (_peer._keepalive > 0)
 			{
 				// set the timer
-				_tcpstream->setTimeout(header._keepalive * 2);
+				timeval timeout;
+				timerclear(&timeout);
+				timeout.tv_sec = header._keepalive * 2;
+				_socket_stream->setTimeout(timeout);
 			}
 
 			// enable idle timeout
 			size_t _idle_timeout = dtn::daemon::Configuration::getInstance().getNetwork().getTCPIdleTimeout();
 			if (_idle_timeout > 0)
 			{
-				_stream.enableIdleTimeout(_idle_timeout);
+				_protocol_stream->enableIdleTimeout(_idle_timeout);
 			}
 
 			// raise up event
@@ -295,7 +255,7 @@ namespace dtn
 		void TCPConnection::shutdown()
 		{
 			// shutdown
-			_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 
 			try {
 				// abort the connection thread
@@ -311,9 +271,7 @@ namespace dtn
 			_aborted = true;
 
 			// close the stream
-			try {
-				(*_tcpstream).close();
-			} catch (const ibrcommon::ConnectionClosedException&) { };
+			_socket_stream->close();
 		}
 
 		void TCPConnection::finally()
@@ -329,9 +287,7 @@ namespace dtn
 			} catch (const std::exception&) { };
 
 			// close the tcpstream
-			try {
-				_tcpstream->close();
-			} catch (const ibrcommon::ConnectionClosedException&) { };
+			_socket_stream->close();
 
 			try {
 				_callback.connectionDown(this);
@@ -343,11 +299,48 @@ namespace dtn
 
 		void TCPConnection::setup()
 		{
-			// nothing to do here
+			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
+			{
+				_socket->set(ibrcommon::clientsocket::NO_DELAY, true);
+			}
+
+			_socket_stream = new ibrcommon::socketstream(_socket.get());
+			_socket.release();
+
+#ifdef WITH_TLS
+			// initialize security layer if available
+//			_sec_stream = new ibrcommon::TLSStream(connection);
+			dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream).setServer(true);
+#endif
+
+			// create a new stream connection
+			int chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
+			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
+
+			_protocol_stream->exceptions(std::ios::badbit | std::ios::eofbit);
+
+			// add default TCP connection
+			_node.clear();
+			_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, "0.0.0.0", 0, 30) );
+
+			_flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+			_flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
+
+			if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation())
+			{
+				_flags |= dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION;
+			}
 		}
 
 		void TCPConnection::connect()
 		{
+#ifdef WITH_TLS
+			try {
+				// set tls mode to client
+				dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream).setServer(false);
+			} catch (const std::bad_cast&) { };
+#endif
+
 			// variables for address and port
 			std::string address = "0.0.0.0";
 			unsigned int port = 0;
@@ -359,21 +352,26 @@ namespace dtn
 				for (std::list<dtn::core::Node::URI>::const_iterator iter = uri_list.begin(); iter != uri_list.end(); iter++)
 				{
 					// break-out if the connection has been aborted
-					if (_aborted) throw ibrcommon::tcpclient::SocketException("connection has been aborted");
+					if (_aborted) throw ibrcommon::socket_exception("connection has been aborted");
 
 					try {
 						// decode address and port
 						const dtn::core::Node::URI &uri = (*iter);
 						uri.decode(address, port);
 
-						ibrcommon::tcpclient &client = dynamic_cast<ibrcommon::tcpclient&>(*_tcpstream);
-
 						IBRCOMMON_LOGGER_DEBUG(15) << "Initiate TCP connection to " << address << ":" << port << IBRCOMMON_LOGGER_ENDL;
-						client.open(address, port, _timeout);
+
+						// create a new tcpsocket
+						timeval tv;
+						timerclear(&tv);
+						tv.tv_sec = _timeout;
+
+						ibrcommon::tcpsocket *client = new ibrcommon::tcpsocket(address, port, &tv);
+						client->up();
 
 						if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
 						{
-							_tcpstream->enableNoDelay();
+							client->set(ibrcommon::clientsocket::NO_DELAY, true);
 						}
 
 						// add TCP connection descriptor to the node object
@@ -382,16 +380,16 @@ namespace dtn
 
 						// connection successful
 						return;
-					} catch (const ibrcommon::tcpclient::SocketException&) { };
+					} catch (const ibrcommon::socket_exception&) { };
 				}
 
 				// no connection has been established
-				throw ibrcommon::tcpclient::SocketException("no address available to connect");
+				throw ibrcommon::socket_exception("no address available to connect");
 
-			} catch (const ibrcommon::tcpclient::SocketException&) {
+			} catch (const ibrcommon::socket_exception&) {
 				// error on open, requeue all bundles in the queue
 				IBRCOMMON_LOGGER(warning) << "connection to " << _node.toString() << " failed" << IBRCOMMON_LOGGER_ENDL;
-				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 				throw;
 			} catch (const bad_cast&) { };
 		}
@@ -403,7 +401,7 @@ namespace dtn
 				connect();
 
 				// do the handshake
-				_stream.handshake(_name, _timeout, _flags);
+				_protocol_stream->handshake(dtn::core::BundleCore::local, _timeout, _flags);
 
 				// start the sender
 				_sender.start();
@@ -411,7 +409,7 @@ namespace dtn
 				// start keepalive sender
 				_keepalive_sender.start();
 
-				while (!_stream.eof())
+				while (!_protocol_stream->eof())
 				{
 					try {
 						// create a new empty bundle
@@ -450,17 +448,17 @@ namespace dtn
 				}
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
-				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			}
 		}
 
 
 		TCPConnection& operator>>(TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
-			std::iostream &stream = conn._stream;
+			std::iostream &stream = (*conn._protocol_stream);
 
 			// check if the stream is still good
 			if (!stream.good()) throw ibrcommon::IOException("stream went bad");
@@ -469,7 +467,7 @@ namespace dtn
 			dtn::data::DefaultDeserializer deserializer(stream, dtn::core::BundleCore::getInstance());
 
 			// enable/disable fragmentation support according to the contact header.
-			deserializer.setFragmentationSupport(conn._peer._flags & StreamContactHeader::REQUEST_FRAGMENTATION);
+			deserializer.setFragmentationSupport(conn._peer._flags & dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION);
 
 			// read the bundle (or the fragment if fragmentation is enabled)
 			deserializer >> bundle;
@@ -482,7 +480,7 @@ namespace dtn
 			// prepare a measurement
 			ibrcommon::TimeMeasurement m;
 
-			std::iostream &stream = conn._stream;
+			std::iostream &stream = (*conn._protocol_stream);
 
 			// get the offset, if this bundle has been reactively fragmented before
 			size_t offset = 0;
@@ -694,12 +692,12 @@ namespace dtn
 
 		void TCPConnection::keepalive()
 		{
-			_stream.keepalive();
+			_protocol_stream->keepalive();
 		}
 
 		bool TCPConnection::good() const
 		{
-			return _tcpstream->good();
+			return _socket_stream->good();
 		}
 
 		void TCPConnection::Sender::finally()

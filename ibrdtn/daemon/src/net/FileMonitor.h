@@ -23,6 +23,7 @@
 #include "core/Node.h"
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/net/vsocket.h>
+#include <ibrcommon/net/socket.h>
 #include <map>
 
 #ifndef FILEMONITOR_H_
@@ -32,6 +33,25 @@ namespace dtn
 {
 	namespace net
 	{
+		class inotifysocket : ibrcommon::basesocket
+		{
+		public:
+			inotifysocket();
+			virtual ~inotifysocket();
+
+			virtual void up() throw (ibrcommon::socket_exception);
+			virtual void down() throw (ibrcommon::socket_exception);
+
+			void watch(const ibrcommon::File &path, int opts) throw (ibrcommon::socket_exception);
+
+			int read(char *data, size_t len) throw (ibrcommon::socket_exception);
+
+		private:
+
+			typedef std::map<int, ibrcommon::File> watch_map;
+			watch_map _watch_map;
+		};
+
 		class FileMonitor : public dtn::daemon::IndependentComponent
 		{
 		public:
@@ -57,9 +77,10 @@ namespace dtn
 
 			ibrcommon::File _watch;
 			ibrcommon::vsocket _socket;
-			int _inotify_sock;
-			typedef std::map<int, ibrcommon::File> watch_map;
-			watch_map _watch_map;
+
+			typedef std::set<ibrcommon::File> watch_set;
+			watch_set _watchset;
+
 			bool _running;
 
 			std::map<ibrcommon::File, dtn::core::Node> _active_paths;

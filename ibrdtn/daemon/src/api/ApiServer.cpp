@@ -44,15 +44,17 @@ namespace dtn
 {
 	namespace api
 	{
-		ApiServer::ApiServer(const ibrcommon::File &socket)
-		 : _srv(socket), _shutdown(false), _garbage_collector(*this)
+		ApiServer::ApiServer(const ibrcommon::File &socketfile)
+		 : _shutdown(false), _garbage_collector(*this)
 		{
+			_sockets.add(new ibrcommon::fileserversocket(socketfile));
 		}
 
 		ApiServer::ApiServer(const ibrcommon::vinterface &net, int port)
-		 : _srv(), _shutdown(false), _garbage_collector(*this)
+		 : _shutdown(false), _garbage_collector(*this)
 		{
-			_srv.bind(net, port);
+			// TODO: add a socket for each address on the interface, listen = 5
+			_sockets.add(new ibrcommon::tcpserversocket(port));
 		}
 
 		ApiServer::~ApiServer()
@@ -64,12 +66,15 @@ namespace dtn
 
 		void ApiServer::__cancellation()
 		{
-			_srv.shutdown();
+			// shut-down all server sockets
+			_sockets.down();
 		}
 
 		void ApiServer::componentUp()
 		{
-			_srv.listen(5);
+			// bring up all server sockets
+			_sockets.up();
+			
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 			bindEvent(dtn::core::NodeEvent::className);
 			startGarbageCollector();
@@ -80,38 +85,77 @@ namespace dtn
 			try {
 				while (!_shutdown)
 				{
-					// accept the next client
-					ibrcommon::tcpstream *conn = _srv.accept();
+					// create a socket set to do select on all sockets
+					ibrcommon::socketset fds;
 
-					if (_shutdown)
+					// do select on all socket and find all readable ones
+					_sockets.select(&fds, NULL, NULL, NULL);
+
+					// iterate through all readable sockets
+					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
 					{
-						conn->close();
-						delete conn;
-						return;
+						// we assume all the sockets in _sockets are server sockets
+						// so cast this one to the right class
+						ibrcommon::serversocket &sock = dynamic_cast<ibrcommon::serversocket&>(**iter);
+
+						// variable to store the peer address on the next accept call
+						ibrcommon::vaddress peeraddr;
+						
+						// accept the next client
+						ibrcommon::clientsocket *peersock = sock.accept(peeraddr);
+
+						// set the no delay option for the new socket if configured
+						if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
+						{
+							peersock->set(ibrcommon::clientsocket::NO_DELAY, true);
+						}
+
+						// create a new socket stream using the new client socket
+						// now the socket stream is responsible for the client socket
+						// and will destroy the instance on its own destruction
+						ibrcommon::socketstream *conn = new ibrcommon::socketstream(peersock);
+
+						// if we are already in shutdown state
+						if (_shutdown)
+						{
+							// close the new socket
+							conn->close();
+							
+							// and free the object
+							delete conn;
+							return;
+						}
+
+						// generate some output
+						IBRCOMMON_LOGGER_DEBUG(5) << "new connected client at the extended API server" << IBRCOMMON_LOGGER_ENDL;
+
+						// send welcome banner
+						(*conn) << "IBR-DTN " << dtn::daemon::Configuration::getInstance().version() << " API 1.0" << std::endl;
+
+						// the new client object will be hold here
+						ClientHandler *obj = NULL;
+						
+						// in locked state we create a new registration for the new connection
+						{
+							ibrcommon::MutexLock l1(_registration_lock);
+							
+							// create a new registration
+							Registration reg; _registrations.push_back(reg);
+							IBRCOMMON_LOGGER_DEBUG(5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
+
+							// create a new clienthandler for the new registration
+							obj  = new ClientHandler(*this, _registrations.back(), conn);
+						}
+
+						// one again in locked state we push the new connection in the connection list
+						{
+							ibrcommon::MutexLock l2(_connection_lock);
+							_connections.push_back(obj);
+						}
+
+						// start the client handler
+						obj->start();
 					}
-
-					// generate some output
-					IBRCOMMON_LOGGER_DEBUG(5) << "new connected client at the extended API server" << IBRCOMMON_LOGGER_ENDL;
-
-					// send welcome banner
-					(*conn) << "IBR-DTN " << dtn::daemon::Configuration::getInstance().version() << " API 1.0" << std::endl;
-
-
-					ClientHandler *obj;
-					{
-						ibrcommon::MutexLock l1(_registration_lock);
-						// create a new registration
-						Registration reg; _registrations.push_back(reg);
-						IBRCOMMON_LOGGER_DEBUG(5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
-
-						obj  = new ClientHandler(*this, _registrations.back(), conn);
-					}
-
-					ibrcommon::MutexLock l2(_connection_lock);
-					_connections.push_back(obj);
-
-					// start the client handler
-					obj->start();
 
 					// breakpoint
 					ibrcommon::Thread::yield();
@@ -127,12 +171,16 @@ namespace dtn
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
 			unbindEvent(dtn::core::NodeEvent::className);
 
-			// close the listen API socket
-			_srv.close();
+			// put the server into shutdown mode
 			_shutdown = true;
+			
+			// close the listen API socket
+			_sockets.down();
 
+			// pause the garbage collection
 			_garbage_collector.pause();
 
+			// stop/close all connections in locked state
 			{
 				ibrcommon::MutexLock l(_connection_lock);
 

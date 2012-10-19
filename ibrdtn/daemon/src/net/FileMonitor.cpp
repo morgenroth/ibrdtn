@@ -34,12 +34,59 @@ namespace dtn
 {
 	namespace net
 	{
-		FileMonitor::FileMonitor()
-		 : _inotify_sock(0), _running(true)
+		inotifysocket::inotifysocket()
+		{
+		}
+
+		inotifysocket::~inotifysocket()
+		{
+		}
+
+		void inotifysocket::up() throw (ibrcommon::socket_exception)
+		{
+			if (_state != SOCKET_DOWN)
+				throw ibrcommon::socket_exception("socket is already up");
+
+			// initialize fd
+			_fd = inotify_init();
+
+			_state = SOCKET_UP;
+		}
+
+		void inotifysocket::down() throw (ibrcommon::socket_exception)
+		{
+			if (_state != SOCKET_UP)
+				throw ibrcommon::socket_exception("socket is not up");
+
+#ifdef HAVE_SYS_INOTIFY_H
+			for (watch_map::iterator iter = _watch_map.begin(); iter != _watch_map.end(); iter++)
+			{
+				const int wd = (*iter).first;
+				inotify_rm_watch(this->fd(), wd);
+			}
+#endif
+			_watch_map.clear();
+
+			this->close();
+			_state = SOCKET_DOWN;
+		}
+
+		void inotifysocket::watch(const ibrcommon::File &path, int opts) throw (ibrcommon::socket_exception)
 		{
 #ifdef HAVE_SYS_INOTIFY_H
-			_inotify_sock = inotify_init();
+			int wd = inotify_add_watch(this->fd(), path.getPath().c_str(), opts);
+			_watch_map[wd] = path;
 #endif
+		}
+
+		int inotifysocket::read(char *data, size_t len) throw (ibrcommon::socket_exception)
+		{
+			return ::read(this->fd(), data, len);
+		}
+
+		FileMonitor::FileMonitor()
+		 : _running(true)
+		{
 		}
 
 		FileMonitor::~FileMonitor()
@@ -54,17 +101,19 @@ namespace dtn
 			if (!watch.isDirectory())
 				throw ibrcommon::Exception("can not watch files, please specify a directory");
 
+			ibrcommon::socketset socks = _socket.getAll();
+			if (socks.size() == 0) return;
+			inotifysocket &sock = dynamic_cast<inotifysocket&>(**socks.begin());
+
 #ifdef HAVE_SYS_INOTIFY_H
-			int wd = inotify_add_watch(_inotify_sock, watch.getPath().c_str(), IN_CREATE | IN_DELETE);
-			_watch_map[wd] = watch;
+			sock.watch(watch, IN_CREATE | IN_DELETE);
 #endif
+			_watchset.insert(watch);
 		}
 
 		void FileMonitor::componentUp()
 		{
-#ifdef HAVE_SYS_INOTIFY_H
-			_socket.add(_inotify_sock);
-#endif
+			_socket.up();
 		}
 
 		void FileMonitor::componentRun()
@@ -72,22 +121,22 @@ namespace dtn
 #ifdef HAVE_SYS_INOTIFY_H
 			while (_running)
 			{
-				std::list<int> fds;
+				ibrcommon::socketset fds;
 
 				// scan for mounts
 				scan();
 
 				try {
-					// select on all bound sockets
-					_socket.select(fds);
+					char buf[1024];
 
-					unsigned char buf[1024];
+					// select on all bound sockets
+					_socket.select(&fds, NULL, NULL, NULL);
 
 					// receive from all sockets
-					for (std::list<int>::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
 					{
-						int fd = (*iter);
-						::read(fd, &buf, 1024);
+						inotifysocket &sock = dynamic_cast<inotifysocket&>(**iter);
+						sock.read((char*)&buf, 1024);
 					}
 
 					::sleep(2);
@@ -98,21 +147,12 @@ namespace dtn
 
 		void FileMonitor::componentDown()
 		{
-#ifdef HAVE_SYS_INOTIFY_H
-			for (watch_map::iterator iter = _watch_map.begin(); iter != _watch_map.end(); iter++)
-			{
-				const int wd = (*iter).first;
-				inotify_rm_watch(_inotify_sock, wd);
-			}
-#endif
-			_watch_map.clear();
+			_socket.down();
 		}
 
 		void FileMonitor::__cancellation()
 		{
-#ifdef HAVE_SYS_INOTIFY_H
-			_socket.close();
-#endif
+			_socket.down();
 		}
 
 		void FileMonitor::scan()
@@ -121,9 +161,9 @@ namespace dtn
 
 			std::set<ibrcommon::File> watch_set;
 
-			for (watch_map::iterator iter = _watch_map.begin(); iter != _watch_map.end(); iter++)
+			for (watch_set::iterator iter = _watchset.begin(); iter != _watchset.end(); iter++)
 			{
-				const ibrcommon::File &path = (*iter).second;
+				const ibrcommon::File &path = (*iter);
 				std::list<ibrcommon::File> files;
 
 				if (path.getFiles(files) == 0)

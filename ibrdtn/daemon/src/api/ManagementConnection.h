@@ -31,7 +31,7 @@ namespace dtn
 		class ManagementConnection : public ProtocolHandler
 		{
 		public:
-			ManagementConnection(ClientHandler &client, ibrcommon::tcpstream &stream);
+			ManagementConnection(ClientHandler &client, ibrcommon::socketstream &stream);
 			virtual ~ManagementConnection();
 
 			void run();

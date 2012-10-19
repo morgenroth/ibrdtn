@@ -29,7 +29,6 @@
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryAnnouncement.h"
 #include <ibrcommon/net/vinterface.h>
-#include <ibrcommon/net/udpsocket.h>
 #include <ibrcommon/net/vsocket.h>
 #include <ibrcommon/net/LinkManager.h>
 #include <list>

@@ -19,14 +19,19 @@
  *
  */
 
+#include "Configuration.h"
+
 #include "net/IPNDAgent.h"
 #include "core/BundleCore.h"
+
 #include <ibrdtn/data/Exceptions.h>
-#include <sstream>
-#include <string.h>
+
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/TimeMeasurement.h>
-#include "Configuration.h"
+#include <ibrcommon/net/socket.h>
+
+#include <sstream>
+#include <string.h>
 #include <typeinfo>
 #include <time.h>
 
@@ -36,18 +41,10 @@ namespace dtn
 	{
 		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _send_socket(true), _port(port)
+		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _port(port)
 		{
-			// limit the socket to linklocal addresses only
-			_recv_socket.set(ibrcommon::vsocket::VSOCKET_LINKLOCAL);
-			_send_socket.set(ibrcommon::vsocket::VSOCKET_LINKLOCAL);
-
-			// multicast addresses should be usable more than once.
-			_recv_socket.set(ibrcommon::vsocket::VSOCKET_REUSEADDR);
-
-			// enable multicast communication
-			_recv_socket.set(ibrcommon::vsocket::VSOCKET_MULTICAST);
-			_send_socket.set(ibrcommon::vsocket::VSOCKET_MULTICAST);
+			// bind to receive socket
+			_recv_socket.add(new ibrcommon::multicastsocket(_port));
 
 			switch (_config.version())
 			{
@@ -73,12 +70,32 @@ namespace dtn
 		void IPNDAgent::add(const ibrcommon::vaddress &address) {
 			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: listen to [" << address.toString() << "]:" << _port << IBRCOMMON_LOGGER_ENDL;
 			_destinations.push_back(address);
+
+			// add new socket for this address
+			_send_socket.add(new ibrcommon::udpsocket(address));
 		}
 
 		void IPNDAgent::bind(const ibrcommon::vinterface &net)
 		{
 			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			_interfaces.push_back(net);
+
+			// TODO: create sockets for all addresses on the interface
+
+//			// bind to all added interfaces for sending
+//			for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
+//			{
+//				try {
+//					const ibrcommon::vinterface &iface = *iter;
+//					if (!iface.empty())
+//					{
+//						// create one send socket for each interface
+//						_send_socket.bind(iface, 0, SOCK_DGRAM);
+//					}
+//				} catch (const ibrcommon::Exception &ex) {
+//					IBRCOMMON_LOGGER(error) << "[IPND] bind failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+//				}
+//			}
 		}
 
 		void IPNDAgent::send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr, const unsigned int port)
@@ -87,29 +104,17 @@ namespace dtn
 			stringstream ss; ss << a;
 			const std::string data = ss.str();
 
-			ibrcommon::vsocket::fd_address_list fds = _send_socket.get(iface);
-			for (ibrcommon::vsocket::fd_address_list::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+			ibrcommon::socketset fds = _send_socket.get(iface);
+
+			// send out discovery announcements on all bound sockets
+			// (hopefully only one per interface)
+			for (ibrcommon::socketset::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
 			{
-				ibrcommon::vsocket::fd_address_entry e = (*iter);
-				ibrcommon::vaddress &sock_addr = e.first;
-
-				if (sock_addr.getFamily() == ibrcommon::vaddress::VADDRESS_INET6)
-					if (sock_addr.getScope() != ibrcommon::vaddress::SCOPE_LINKLOCAL) continue;
-
 				try {
-					int fd = e.second;
-					int flags = 0;
+					ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
+					sock.sendto(data.c_str(), data.length(), 0, addr, port);
 
-					struct addrinfo hints, *ainfo;
-					memset(&hints, 0, sizeof hints);
-
-					hints.ai_socktype = SOCK_DGRAM;
-					ainfo = addr.addrinfo(&hints, port);
-
-					::sendto(fd, data.c_str(), data.length(), flags, ainfo->ai_addr, ainfo->ai_addrlen);
-
-					freeaddrinfo(ainfo);
-				} catch (const ibrcommon::vsocket_exception&) {
+				} catch (const ibrcommon::socket_exception&) {
 					IBRCOMMON_LOGGER_DEBUG(5) << "can not send message to " << addr.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
@@ -155,57 +160,58 @@ namespace dtn
 		{
 			if (evt.getType() == ibrcommon::LinkManagerEvent::EVENT_ADDRESS_ADDED)
 			{
-				for (std::list<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {
-					_recv_socket.join(*iter, evt.getInterface());
-				}
+				// TODO: add new udpsocket for the new address
+//				for (std::list<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {
+//					_recv_socket.join(*iter, evt.getInterface());
+//				}
 			}
+
+			// TODO: shutdown and remove sockets on EVENT_ADDRESS_REMOVED
+			
+			// TODO: join/leave interfaces if a interface is totally new / gone
 		}
 
 		void IPNDAgent::componentUp()
 		{
-			// bind to receive socket
-			_recv_socket.bind(_port, SOCK_DGRAM);
+			// setup the receive socket
+			_recv_socket.up();
 
-			// bind to all added interfaces for sending
-			for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
-			{
-				try {
-					const ibrcommon::vinterface &iface = *iter;
-					if (!iface.empty())
-					{
-						// create one send socket for each interface
-						_send_socket.bind(iface, 0, SOCK_DGRAM);
-					}
-				} catch (const ibrcommon::Exception &ex) {
-					IBRCOMMON_LOGGER(error) << "[IPND] bind failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
+			// setup all send sockets
+			_send_socket.up();
 
 			// join multicast groups
-			for (std::list<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
-			{
-				for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
+			try {
+				ibrcommon::socketset socks = _recv_socket.getAll();
+				if (socks.size() == 0) throw ibrcommon::socket_exception("no multicast socket found");
+				ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**socks.begin());
+
+				for (std::list<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
 				{
-					try {
-						_recv_socket.join(*it_addr, *it_iface);
-					} catch (const ibrcommon::Exception&) {
-						IBRCOMMON_LOGGER(error) << "can not join " << (*it_addr).toString() << " on " << (*it_iface).toString() << IBRCOMMON_LOGGER_ENDL;
+					for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
+					{
+						try {
+							msock.join(*it_addr, *it_iface);
+						} catch (const ibrcommon::Exception&) {
+							IBRCOMMON_LOGGER(error) << "can not join " << (*it_addr).toString() << " on " << (*it_iface).toString() << IBRCOMMON_LOGGER_ENDL;
+						}
 					}
 				}
+			} catch (std::bad_cast&) {
+				throw ibrcommon::socket_exception("no multicast socket found");
 			}
 
-			// set this socket as listener to socket events
-			_send_socket.setEventCallback(this);
+			// TODO: subscribe to NetLink events on our interfaces
 		}
 
 		void IPNDAgent::componentDown()
 		{
-			// unset this socket as listener to socket events
-			_send_socket.setEventCallback(NULL);
+			// TODO: unsubscribe to NetLink events
 
-			// shutdown the sockets
-			_recv_socket.close();
-			_send_socket.close();
+			// shutdown the send socket
+			_send_socket.down();
+
+			// shutdown the receive socket
+			_recv_socket.down();
 
 			stop();
 			join();
@@ -218,7 +224,7 @@ namespace dtn
 
 			while (true)
 			{
-				std::list<int> fds;
+				ibrcommon::socketset fds;
 
 				struct timeval tv;
 
@@ -228,19 +234,21 @@ namespace dtn
 
 				try {
 					// select on all bound sockets
-					_recv_socket.select(fds, &tv);
+					_recv_socket.select(&fds, NULL, NULL, &tv);
 
 					// receive from all sockets
-					for (std::list<int>::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+					for (ibrcommon::socketset::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
 					{
+						ibrcommon::multicastsocket &sock = dynamic_cast<ibrcommon::multicastsocket&>(**iter);
+
 						char data[1500];
-						std::string sender;
+						ibrcommon::vaddress sender;
 						DiscoveryAnnouncement announce(_version);
 
 						std::list<DiscoveryService> ret_services;
 						dtn::data::EID ret_source;
 
-						int len = ibrcommon::recvfrom(*iter, data, 1500, sender);
+						int len = sock.recvfrom(data, 1500, 0, sender);
 
 						if (len < 0) return;
 
@@ -253,7 +261,8 @@ namespace dtn
 							if (announce.isShort())
 							{
 								// generate name with the sender address
-								ret_source = dtn::data::EID("ip://" + sender);
+								// TODO: check format returned by sender.get()
+								ret_source = dtn::data::EID("udp://" + sender.get());
 							}
 							else
 							{
@@ -265,7 +274,8 @@ namespace dtn
 
 							if (services.empty())
 							{
-								ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender + ";port=4556;"));
+								// TODO: check format returned by sender.get()
+								ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.get() + ";port=4556;"));
 							}
 
 							// add all services to the return set
@@ -276,7 +286,8 @@ namespace dtn
 								if ( (service.getParameters().find("port=") != std::string::npos) &&
 										(service.getParameters().find("ip=") == std::string::npos) ) {
 									// create a new service object
-									dtn::net::DiscoveryService ret_service(service.getName(), "ip=" + sender + ";" + service.getParameters());
+									// TODO: check format returned by sender.get()
+									dtn::net::DiscoveryService ret_service(service.getName(), "ip=" + sender.get() + ";" + service.getParameters());
 
 									// add service to the return set
 									ret_services.push_back(ret_service);
@@ -309,8 +320,8 @@ namespace dtn
 
 		void IPNDAgent::__cancellation()
 		{
-			// interrupt the receiving thread
-			_recv_socket.close();
+			// shutdown and interrupt the receiving thread
+			_recv_socket.down();
 		}
 
 		const std::string IPNDAgent::getName() const

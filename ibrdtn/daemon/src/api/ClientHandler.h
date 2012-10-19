@@ -26,7 +26,7 @@
 #include "core/EventReceiver.h"
 #include "core/Node.h"
 #include <ibrcommon/thread/Thread.h>
-#include <ibrcommon/net/tcpstream.h>
+#include <ibrcommon/net/socketstream.h>
 #include <string>
 
 namespace dtn
@@ -47,9 +47,9 @@ namespace dtn
 			virtual void __cancellation() = 0;
 
 		protected:
-			ProtocolHandler(ClientHandler &client, ibrcommon::tcpstream &stream);
+			ProtocolHandler(ClientHandler &client, ibrcommon::socketstream &stream);
 			ClientHandler &_client;
-			ibrcommon::tcpstream &_stream;
+			ibrcommon::socketstream &_stream;
 		};
 
 		class ClientHandler : public ibrcommon::DetachedThread
@@ -75,7 +75,7 @@ namespace dtn
 				API_STATUS_VERSION_NOT_SUPPORTED = 505
 			};
 
-			ClientHandler(ApiServerInterface &srv, Registration &registration, ibrcommon::tcpstream *conn);
+			ClientHandler(ApiServerInterface &srv, Registration &registration, ibrcommon::socketstream *conn);
 			virtual ~ClientHandler();
 
 			Registration& getRegistration();
@@ -103,7 +103,7 @@ namespace dtn
 			ApiServerInterface &_srv;
 			Registration *_registration;
 			ibrcommon::Mutex _write_lock;
-			ibrcommon::tcpstream *_stream;
+			ibrcommon::socketstream *_stream;
 			dtn::data::EID _endpoint;
 
 			ProtocolHandler *_handler;

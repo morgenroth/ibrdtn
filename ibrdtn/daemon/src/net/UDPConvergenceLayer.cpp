@@ -31,7 +31,7 @@
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/data/Serializer.h>
 
-#include <ibrcommon/net/UnicastSocket.h>
+#include <ibrcommon/net/socket.h>
 #include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/data/BLOB.h>
@@ -65,15 +65,13 @@ namespace dtn
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, unsigned int mtu)
-			: _socket(NULL), _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
+			: _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
 		{
-			_socket = new ibrcommon::UnicastSocket();
 		}
 
 		UDPConvergenceLayer::~UDPConvergenceLayer()
 		{
 			componentDown();
-			delete _socket;
 		}
 
 		dtn::core::Node::Protocol UDPConvergenceLayer::getDiscoveryProtocol() const
@@ -113,12 +111,14 @@ namespace dtn
 
 				for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
 				{
+					const ibrcommon::vaddress &addr = (*addr_it);
+
 					// only announce global scope addresses
-					if ((*addr_it).getScope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
+					if (addr.getScope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
 
 					std::stringstream service;
 					// fill in the ip address
-					service << "ip=" << (*addr_it).get(false) << ";port=" << _port << ";";
+					service << "ip=" << addr.get() << ";port=" << _port << ";";
 					announcement.addService( DiscoveryService("udpcl", service.str()));
 
 					// set the announce mark
@@ -197,14 +197,13 @@ namespace dtn
 						serializer << fragment;
 						string data = ss.str();
 
-						// set write lock
-						ibrcommon::MutexLock l(m_writelock);
+						try {
+							// set write lock
+							ibrcommon::MutexLock l(m_writelock);
 
-						// send converted line back to client.
-						int ret = _socket->send(addr, port, data.c_str(), data.length());
-
-						if (ret == -1)
-						{
+							// send converted line back to client.
+							_sock.sendto(data.c_str(), data.length(), 0, addr, port);
+						} catch (const ibrcommon::socket_exception&) {
 							// CL is busy, requeue bundle
 							dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
 
@@ -220,17 +219,15 @@ namespace dtn
 					serializer << bundle;
 					string data = ss.str();
 
-					// set write lock
-					ibrcommon::MutexLock l(m_writelock);
+					try {
+						// set write lock
+						ibrcommon::MutexLock l(m_writelock);
 
-					// send converted line back to client.
-					int ret = _socket->send(addr, port, data.c_str(), data.length());
-
-					if (ret == -1)
-					{
+						// send converted line back to client.
+						_sock.sendto(data.c_str(), data.length(), 0, addr, port);
+					} catch (const ibrcommon::socket_exception&) {
 						// CL is busy, requeue bundle
 						dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-
 						return;
 					}
 				}
@@ -252,41 +249,55 @@ namespace dtn
 			char data[m_maxmsgsize];
 
 			// data waiting
-			unsigned int udpport = 0;
-			std::string ipaddr;
-			int len = _socket->receive(data, m_maxmsgsize, ipaddr, udpport);
+			ibrcommon::socketset readfds;
 
-			std::stringstream ss; ss << "udp://" << ipaddr + ":" << udpport;
-			sender = dtn::data::EID(ss.str());
+			try {
+				// wait for incoming messages
+				_vsocket.select(&readfds, NULL, NULL, NULL);
 
-			if (len > 0)
-			{
-				// read all data into a stream
-				stringstream ss;
-				ss.write(data, len);
+				if (readfds.size() > 0) {
+					ibrcommon::datagramsocket *sock = static_cast<ibrcommon::datagramsocket*>(*readfds.begin());
 
-				// get the bundle
-				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
+					ibrcommon::vaddress fromaddr;
+					size_t len = sock->recvfrom(data, m_maxmsgsize, 0, fromaddr);
+
+					std::stringstream ss; ss << "udp://" << fromaddr.toString();
+					sender = dtn::data::EID(ss.str());
+
+					if (len > 0)
+					{
+						// read all data into a stream
+						stringstream ss;
+						ss.write(data, len);
+
+						// get the bundle
+						dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
+					}
+				}
+			} catch (const ibrcommon::socket_exception&) {
+
 			}
 		}
 
 		void UDPConvergenceLayer::componentUp()
 		{
 			try {
-				try {
-					ibrcommon::UnicastSocket &sock = dynamic_cast<ibrcommon::UnicastSocket&>(*_socket);
-					sock.bind(_port, _net);
-				} catch (const std::bad_cast&) {
+				// create main socket for all send actions
+				_sock.up();
 
-				}
-			} catch (const ibrcommon::vsocket_exception &ex) {
-				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
-				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				// TODO: add one udpsocket for each address on the interface (_net)
+				_vsocket.add(new ibrcommon::udpsocket(_port), _net);
+
+				_vsocket.up();
+			} catch (const ibrcommon::socket_exception&) {
+
 			}
 		}
 
 		void UDPConvergenceLayer::componentDown()
 		{
+			_sock.down();
+			_vsocket.destroy();
 			stop();
 			join();
 		}
@@ -318,7 +329,8 @@ namespace dtn
 		void UDPConvergenceLayer::__cancellation()
 		{
 			_running = false;
-			_socket->shutdown();
+			_sock.down();
+			_vsocket.down();
 		}
 
 		const std::string UDPConvergenceLayer::getName() const

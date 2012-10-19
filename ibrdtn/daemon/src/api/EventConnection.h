@@ -32,7 +32,7 @@ namespace dtn
 		class EventConnection : public ProtocolHandler, public dtn::core::EventReceiver
 		{
 		public:
-			EventConnection(ClientHandler &client, ibrcommon::tcpstream &stream);
+			EventConnection(ClientHandler &client, ibrcommon::socketstream &stream);
 			virtual ~EventConnection();
 
 			void run();

@@ -29,7 +29,7 @@
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 
-#include <ibrcommon/net/tcpstream.h>
+#include <ibrcommon/net/socketstream.h>
 #include <ibrcommon/Logger.h>
 
 #include <iostream>
@@ -81,12 +81,12 @@ namespace dtn
 			}
 		}
 
-		Client::Client(const std::string &app, const dtn::data::EID &group, ibrcommon::tcpstream &stream, const COMMUNICATION_MODE mode)
+		Client::Client(const std::string &app, const dtn::data::EID &group, ibrcommon::socketstream &stream, const COMMUNICATION_MODE mode)
 		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _group(group), _receiver(*this)
 		{
 		}
 
-		Client::Client(const std::string &app, ibrcommon::tcpstream &stream, const COMMUNICATION_MODE mode)
+		Client::Client(const std::string &app, ibrcommon::socketstream &stream, const COMMUNICATION_MODE mode)
 		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _receiver(*this)
 		{
 		}

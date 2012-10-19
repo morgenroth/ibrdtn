@@ -43,13 +43,10 @@ namespace dtn
 			_params.max_msg_length = 113;
 			_params.max_seq_numbers = 8;
 			_params.flowcontrol = DatagramConnectionParameter::FLOW_NONE;
-
-			_socket = new ibrcommon::UnicastSocketLowpan();
 		}
 
 		LOWPANDatagramService::~LOWPANDatagramService()
 		{
-			delete _socket;
 		}
 
 		/**
@@ -59,9 +56,9 @@ namespace dtn
 		void LOWPANDatagramService::bind() throw (DatagramException)
 		{
 			try {
-				// bind socket to interface
-				ibrcommon::UnicastSocketLowpan &sock = dynamic_cast<ibrcommon::UnicastSocketLowpan&>(*_socket);
-				sock.bind(_panid, _iface);
+				_vsocket.destroy();
+				_vsocket.add(new ibrcommon::lowpansocket(_panid, _iface));
+				_vsocket.up();
 			} catch (const std::bad_cast&) {
 				throw DatagramException("bind failed");
 			} catch (const ibrcommon::Exception&) {
@@ -75,7 +72,7 @@ namespace dtn
 		void LOWPANDatagramService::shutdown()
 		{
 			// abort socket operations
-			_socket->shutdown();
+			_vsocket.down();
 		}
 
 		/**
@@ -93,14 +90,20 @@ namespace dtn
 					throw DatagramException("send failed - buffer to big to be transferred");
 				}
 
+				ibrcommon::socketset socks = _vsocket.getAll();
+				if (socks.size() == 0) return;
+				ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**socks.begin());
+
 				// decode destination address
 				uint16_t addr = 0;
 				int panid = 0;
 				size_t end_of_payload = length + 1;
 				LOWPANDatagramService::decode(identifier, addr, panid);
 
-				// get a lowpan peer
-				ibrcommon::lowpansocket::peer p = _socket->getPeer(addr, panid);
+				// TODO: create vaddress out of the "address" and the "panid"
+				std::stringstream ss;
+				ss << addr << ":" << panid;
+				ibrcommon::vaddress destaddr(ss.str());
 
 				// buffer for the datagram
 				char tmp[length + 2];
@@ -130,11 +133,7 @@ namespace dtn
 				}
 
 				// send converted line
-				if (p.send(buf, end_of_payload) == -1)
-				{
-					// CL is busy
-					throw DatagramException("send on socket failed");
-				}
+				sock.sendto(buf, end_of_payload, 0, destaddr);
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("send failed");
 			}
@@ -154,8 +153,14 @@ namespace dtn
 					throw DatagramException("send failed - buffer to big to be transferred");
 				}
 
-				// get a lowpan peer
-				ibrcommon::lowpansocket::peer p = _socket->getPeer(BROADCAST_ADDR, _panid);
+				ibrcommon::socketset socks = _vsocket.getAll();
+				if (socks.size() == 0) return;
+				ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**socks.begin());
+
+				// TODO: create vaddress out of the "address" and the "_panid"
+				std::stringstream ss;
+				ss << BROADCAST_ADDR << ":" << _panid;
+				ibrcommon::vaddress destaddr(ss.str());
 
 				// extend the buffer if the len is zero (ACKs)
 				if (length == 0) length++;
@@ -176,11 +181,7 @@ namespace dtn
 				::memcpy(&tmp[2], buf, length);
 
 				// send converted line
-				if (p.send(buf, length + 2) == -1)
-				{
-					// CL is busy
-					throw DatagramException("send on socket failed");
-				}
+				sock.sendto(buf, length + 2, 0, destaddr);
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("send failed");
 			}
@@ -197,45 +198,53 @@ namespace dtn
 		size_t LOWPANDatagramService::recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (DatagramException)
 		{
 			try {
-				char tmp[length + 2];
+				ibrcommon::socketset readfds;
+				_vsocket.select(&readfds, NULL, NULL, NULL);
 
-				// Receive full frame from socket
-				std::string hwaddress;
-				uint16_t from = 0;
-				uint16_t pan_id = 0;
-				size_t ret = _socket->receive(tmp, length + 2, hwaddress, from, pan_id);
+				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
+					ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**iter);
 
-				// decode type, flags and seqno
-				// extended mask are discovery and ACK datagrams
-				if (tmp[0] & EXTENDED_MASK)
-				{
-					// in extended frames the second byte
-					// contains the real type
-					type = tmp[1];
+					char tmp[length + 2];
 
-					// copy payload to the destination buffer
-					ret -= 2;
-					::memcpy(buf, &tmp[2], ret);
+					// Receive full frame from socket
+					ibrcommon::vaddress fromaddr;
+
+					size_t ret = sock.recvfrom(tmp, length + 2, 0, fromaddr);
+
+					// decode type, flags and seqno
+					// extended mask are discovery and ACK datagrams
+					if (tmp[0] & EXTENDED_MASK)
+					{
+						// in extended frames the second byte
+						// contains the real type
+						type = tmp[1];
+
+						// copy payload to the destination buffer
+						ret -= 2;
+						::memcpy(buf, &tmp[2], ret);
+					}
+					else
+					{
+						// no extended mask means "segment"
+						type = DatagramConvergenceLayer::HEADER_SEGMENT;
+
+						// copy payload to the destination buffer
+						ret -= 1;
+						::memcpy(buf, &tmp[1], ret);
+					}
+
+					// first byte contains flags (4-bit) + seqno (4-bit)
+					flags = 0x0f & (tmp[0] >> 4);
+					seqno = 0x0f & tmp[0];
+
+					// TODO: encode into the right format
+					//address = LOWPANDatagramService::encode(from, pan_id);
+					address = fromaddr.toString();
+
+					IBRCOMMON_LOGGER_DEBUG(20) << "LOWPANDatagramService::recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << address << IBRCOMMON_LOGGER_ENDL;
+
+					return ret;
 				}
-				else
-				{
-					// no extended mask means "segment"
-					type = DatagramConvergenceLayer::HEADER_SEGMENT;
-
-					// copy payload to the destination buffer
-					ret -= 1;
-					::memcpy(buf, &tmp[1], ret);
-				}
-
-				// first byte contains flags (4-bit) + seqno (4-bit)
-				flags = 0x0f & (tmp[0] >> 4);
-				seqno = 0x0f & tmp[0];
-
-				address = LOWPANDatagramService::encode(from, pan_id);
-
-				IBRCOMMON_LOGGER_DEBUG(20) << "LOWPANDatagramService::recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << address << IBRCOMMON_LOGGER_ENDL;
-
-				return ret;
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("receive failed");
 			}

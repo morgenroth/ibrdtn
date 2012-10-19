@@ -26,7 +26,7 @@
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/streams/StreamConnection.h"
-#include <ibrcommon/net/tcpstream.h>
+#include <ibrcommon/net/socketstream.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Exceptions.h>
@@ -159,8 +159,8 @@ namespace dtn
 			 * @param stream TCP stream object.
 			 * @param mode Communication mode. Default is bidirectional communication.
 			 */
-			Client(const std::string &app, ibrcommon::tcpstream &stream, const COMMUNICATION_MODE mode = MODE_BIDIRECTIONAL);
-			Client(const std::string &app, const dtn::data::EID &group, ibrcommon::tcpstream &stream, const COMMUNICATION_MODE mode = MODE_BIDIRECTIONAL);
+			Client(const std::string &app, ibrcommon::socketstream &stream, const COMMUNICATION_MODE mode = MODE_BIDIRECTIONAL);
+			Client(const std::string &app, const dtn::data::EID &group, ibrcommon::socketstream &stream, const COMMUNICATION_MODE mode = MODE_BIDIRECTIONAL);
 
 			/**
 			 * Virtual destructor for this class.
@@ -263,7 +263,7 @@ namespace dtn
 
 		private:
 			// tcp stream reference to send/receive data to the daemon
-			ibrcommon::tcpstream &_stream;
+			ibrcommon::socketstream &_stream;
 
 			// communication mode flags
 			COMMUNICATION_MODE _mode;

@@ -35,7 +35,7 @@ namespace dtn
 {
 	namespace api
 	{
-		BinaryStreamClient::BinaryStreamClient(ClientHandler &client, ibrcommon::tcpstream &stream)
+		BinaryStreamClient::BinaryStreamClient(ClientHandler &client, ibrcommon::socketstream &stream)
 		 : ProtocolHandler(client, stream), _sender(*this), _connection(*this, _stream)
 		{
 		}
@@ -136,9 +136,7 @@ namespace dtn
 			_connection.shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 
 			// close the stream
-			try {
-				_stream.close();
-			} catch (const ibrcommon::ConnectionClosedException&) { };
+			_stream.close();
 		}
 
 		void BinaryStreamClient::finally()
@@ -149,9 +147,7 @@ namespace dtn
 			_client.getRegistration().abort();
 
 			// close the stream
-			try {
-				_stream.close();
-			} catch (const ibrcommon::ConnectionClosedException&) { };
+			_stream.close();
 
 			try {
 				// shutdown the sender thread

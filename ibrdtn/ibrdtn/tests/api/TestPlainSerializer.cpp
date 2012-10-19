@@ -48,7 +48,6 @@ void TestPlainSerializer::plain_serializer_inversion(void)
 	dtn::api::PlainSerializer serializer(ss);
 	dtn::api::PlainDeserializer deserializer(ss);
 	dtn::data::Bundle b1, b2;
-	dtn::data::PrimaryBlock& pb1 = b1;
 
 	/* create Bundle */
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();

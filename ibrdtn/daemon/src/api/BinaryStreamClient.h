@@ -33,7 +33,7 @@ namespace dtn
 		class BinaryStreamClient : public dtn::streams::StreamConnection::Callback, public ProtocolHandler
 		{
 			public:
-				BinaryStreamClient(ClientHandler &client, ibrcommon::tcpstream &stream);
+				BinaryStreamClient(ClientHandler &client, ibrcommon::socketstream &stream);
 				virtual ~BinaryStreamClient();
 
 				virtual void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc);

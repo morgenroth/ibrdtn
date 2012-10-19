@@ -39,7 +39,7 @@ namespace dtn
 		APIClient::Message::~Message()
 		{}
 
-		APIClient::APIClient(ibrcommon::tcpstream &stream)
+		APIClient::APIClient(ibrcommon::socketstream &stream)
 		  : _stream(stream), _get_busy(false)
 		{
 		}

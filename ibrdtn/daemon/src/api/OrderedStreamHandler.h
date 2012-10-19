@@ -35,7 +35,7 @@ namespace dtn
 		class OrderedStreamHandler : public ProtocolHandler, public BundleStreamBufCallback
 		{
 		public:
-			OrderedStreamHandler(ClientHandler &client, ibrcommon::tcpstream &stream);
+			OrderedStreamHandler(ClientHandler &client, ibrcommon::socketstream &stream);
 			virtual ~OrderedStreamHandler();
 
 			virtual void run();
