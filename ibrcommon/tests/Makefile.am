@@ -1,15 +1,19 @@
 ## Source directory
 
-SUBDIRS= unittests stress
+#SUBDIRS=unittests stress
 
-h_sources = thread/MutexTests.h \
+h_sources = \
+		link/netlinktest.h \
+		thread/MutexTests.h \
 		thread/ThreadTest.h \
 		thread/TimerTest.h \
 		thread/QueueTest.h \
 		net/tcpstreamtest.h \
 		net/tcpclienttest.h
 
-cc_sources = 	thread/MutexTests.cpp \
+cc_sources = \
+		link/netlinktest.cpp \
+		thread/MutexTests.cpp \
 		thread/ThreadTest.cpp \
 		thread/TimerTest.cpp \
 		thread/QueueTest.cpp \
