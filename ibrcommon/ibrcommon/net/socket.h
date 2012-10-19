@@ -303,6 +303,8 @@ namespace ibrcommon {
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
+		const vaddress& get_address() const;
+
 		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception);
 
 	protected:

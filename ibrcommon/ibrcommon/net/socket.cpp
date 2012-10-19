@@ -624,6 +624,11 @@ namespace ibrcommon
 		return new tcpsocket(_accept_fd(addr));
 	}
 
+	const vaddress& tcpserversocket::get_address() const
+	{
+		return _address;
+	}
+
 	tcpsocket::tcpsocket(int fd)
 	 : clientsocket(fd)
 	{
