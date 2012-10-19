@@ -28,6 +28,9 @@ namespace ibrcommon
 	socketstream::socketstream(clientsocket *sock, size_t buffer_size)
 	 : std::iostream(this), errmsg(ERROR_NONE), _bufsize(buffer_size), in_buf_(NULL), out_buf_(NULL)
 	{
+		// clear the local timer
+		timerclear(&_timeout);
+
 		in_buf_ = new char[_bufsize];
 		out_buf_ = new char[_bufsize];
 
