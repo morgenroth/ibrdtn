@@ -1008,141 +1008,61 @@ namespace ibrcommon
 
 	void multicastsocket::join(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-		switch (group.family()) {
-			case AF_INET:
-			{
-				struct sockaddr_in mcast_addr;
-				::memset(&mcast_addr, 0, sizeof(mcast_addr));
-
-				// set the family of the multicast address
-				mcast_addr.sin_family = group.family();
-
-				// convert the group address
-				if ( ::inet_pton(group.family(), group.address().c_str(), &(mcast_addr.sin_addr)) < 0 )
-				{
-					throw socket_exception("can not transform multicast address with inet_pton()");
-				}
-
-				struct group_req req;
-				::memset(&req, 0, sizeof(req));
-
-				// copy the address to the group request
-				::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
-
-				// set the right interface here
-				req.gr_interface = iface.getIndex();
-
-				if ( ::setsockopt(this->fd(), IPPROTO_IP, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
-				{
-					throw socket_exception("setsockopt(MCAST_JOIN_GROUP)");
-				}
-				break;
-			}
-
-			case AF_INET6:
-			{
-				struct sockaddr_in6 mcast_addr;
-				::memset(&mcast_addr, 0, sizeof(mcast_addr));
-
-				// set the family of the multicast address
-				mcast_addr.sin6_family = group.family();
-
-				// convert the group address
-				if ( ::inet_pton(group.family(), group.address().c_str(), &(mcast_addr.sin6_addr)) < 0 )
-				{
-					throw socket_exception("can not transform multicast address with inet_pton()");
-				}
-
-				struct group_req req;
-				::memset(&req, 0, sizeof(req));
-
-				// copy the address to the group request
-				::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
-
-				// set the right interface here
-				req.gr_interface = iface.getIndex();
-
-				if ( ::setsockopt(this->fd(), IPPROTO_IPV6, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
-				{
-					throw socket_exception("setsockopt(MCAST_JOIN_GROUP)");
-				}
-				break;
-			}
-
-			default:
-				return;
-		}
-
-		// successful!
-		IBRCOMMON_LOGGER_DEBUG(5) << "multicast join group successful to " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+		mcast_op(MCAST_JOIN_GROUP, group, iface);
 	}
 
 	void multicastsocket::leave(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
+		mcast_op(MCAST_LEAVE_GROUP, group, iface);
+	}
+
+	void multicastsocket::mcast_op(int optname, const vaddress &group, const vinterface &iface) throw (socket_exception)
+	{
+		struct sockaddr_storage mcast_addr;
+		::memset(&mcast_addr, 0, sizeof(mcast_addr));
+
+		mcast_addr.ss_family = group.family();
+		int level = 0;
+
 		switch (group.family()) {
-			case AF_INET:
+		case AF_INET:
+			// convert the group address
+			if ( ::inet_pton(group.family(), group.address().c_str(), &((struct sockaddr_in*)&mcast_addr)->sin_addr) < 0 )
 			{
-				struct sockaddr_in mcast_addr;
-				::memset(&mcast_addr, 0, sizeof(mcast_addr));
-
-				// set the family of the multicast address
-				mcast_addr.sin_family = group.family();
-
-				// convert the group address
-				if ( ::inet_pton(group.family(), group.address().c_str(), &(mcast_addr.sin_addr)) < 0 )
-				{
-					throw socket_exception("can not transform multicast address with inet_pton()");
-				}
-
-				struct group_req req;
-				::memset(&req, 0, sizeof(req));
-
-				// copy the address to the group request
-				::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
-
-				// set the right interface here
-				req.gr_interface = iface.getIndex();
-
-				if ( ::setsockopt(this->fd(), IPPROTO_IP, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
-				{
-					throw socket_exception("setsockopt(MCAST_LEAVE_GROUP)");
-				}
-				break;
+				throw socket_exception("can not transform ipv4 multicast address with inet_pton()");
 			}
+			level = IPPROTO_IP;
+			break;
 
-			case AF_INET6:
+		case AF_INET6:
+			// convert the group address
+			if ( ::inet_pton(group.family(), group.address().c_str(), &((struct sockaddr_in6*)&mcast_addr)->sin6_addr) < 0 )
 			{
-				struct sockaddr_in6 mcast_addr;
-				::memset(&mcast_addr, 0, sizeof(mcast_addr));
-
-				// set the family of the multicast address
-				mcast_addr.sin6_family = group.family();
-
-				// convert the group address
-				if ( ::inet_pton(group.family(), group.address().c_str(), &(mcast_addr.sin6_addr)) < 0 )
-				{
-					throw socket_exception("can not transform multicast address with inet_pton()");
-				}
-
-				struct group_req req;
-				::memset(&req, 0, sizeof(req));
-
-				// copy the address to the group request
-				::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
-
-				// set the right interface here
-				req.gr_interface = iface.getIndex();
-
-				if ( ::setsockopt(this->fd(), IPPROTO_IPV6, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
-				{
-					throw socket_exception("setsockopt(MCAST_LEAVE_GROUP)");
-				}
-				break;
+				throw socket_exception("can not transform ipv6 multicast address with inet_pton()");
 			}
+			level = IPPROTO_IPV6;
+			break;
 
-			default:
-				return;
+		default:
+			throw socket_exception("address family not supported");
 		}
+
+		struct group_req req;
+		::memset(&req, 0, sizeof(req));
+
+		// copy the address to the group request
+		::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
+
+		// set the right interface here
+		req.gr_interface = iface.getIndex();
+
+		if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
+		{
+			throw socket_raw_error(errno, "setsockopt()");
+		}
+
+		// successful!
+		IBRCOMMON_LOGGER_DEBUG(5) << "multicast operation (" << optname << ") successful  with " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	void basesocket::check_socket_error(const int err) const throw (socket_exception)

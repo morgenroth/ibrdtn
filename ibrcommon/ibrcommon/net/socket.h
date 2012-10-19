@@ -342,6 +342,9 @@ namespace ibrcommon {
 
 		void join(const vaddress &group, const vinterface &iface) throw (socket_exception);
 		void leave(const vaddress &group, const vinterface &iface) throw (socket_exception);
+
+	private:
+		void mcast_op(int optname, const vaddress &group, const vinterface &iface) throw (socket_exception);
 	};
 
 	/**
