@@ -548,7 +548,11 @@ namespace dtn
 			}
 
 			// size of the payload in the block
-			len += obj.getLength();
+			size_t payload_size = obj.getLength();
+			len += payload_size;
+
+			// size of the payload size
+			len += SDNV(payload_size).getLength();
 
 			return len;
 		}
