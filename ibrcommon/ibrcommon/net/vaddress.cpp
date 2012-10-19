@@ -28,6 +28,9 @@
 
 namespace ibrcommon
 {
+	const std::string vaddress::SCOPE_GLOBAL = "global";
+	const std::string vaddress::SCOPE_LINKLOCAL = "local";
+
 	vaddress::vaddress()
 	 : _address(), _scope()
 	{

@@ -44,12 +44,8 @@ namespace ibrcommon
 				{};
 			};
 
-			enum Scope
-			{
-				SCOPE_UNKOWN,
-				SCOPE_GLOBAL,
-				SCOPE_LINKLOCAL
-			};
+			const static std::string SCOPE_GLOBAL;
+			const static std::string SCOPE_LINKLOCAL;
 
 			vaddress();
 			vaddress(const std::string &address, const std::string &scope = "");
