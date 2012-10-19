@@ -27,7 +27,7 @@
 #include <ibrdtn/api/Client.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/PayloadBlock.h>
-#include <ibrcommon/net/tcpclient.h>
+#include <ibrcommon/net/socket.h>
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/TimeMeasurement.h>
 #include <iostream>
@@ -269,7 +269,7 @@ bool BundleStreamBuf::Chunk::operator<(const Chunk& other) const
 	return (_seq < other._seq);
 }
 
-BundleStream::BundleStream(ibrcommon::tcpstream &stream, size_t chunk_size, const std::string &app, const dtn::data::EID &group, bool wait_seq_zero)
+BundleStream::BundleStream(ibrcommon::socketstream &stream, size_t chunk_size, const std::string &app, const dtn::data::EID &group, bool wait_seq_zero)
  : dtn::api::Client(app, group, stream), _stream(stream), _buf(*this, _chunk, chunk_size, wait_seq_zero)
 {};
 
@@ -395,22 +395,22 @@ int main(int argc, char *argv[])
 
 	try {
 		// Create a stream to the server using TCP.
-		ibrcommon::tcpclient conn;
+		ibrcommon::clientsocket *sock = NULL;
 
 		// check if the unixdomain socket exists
 		if (_unixdomain.exists())
 		{
 			// connect to the unix domain socket
-			conn.open(_unixdomain);
+			sock = new ibrcommon::filesocket(_unixdomain);
 		}
 		else
 		{
 			// connect to the standard local api port
-			conn.open("127.0.0.1", 4550);
-
-			// enable nodelay option
-			conn.enableNoDelay();
+			ibrcommon::vaddress addr("localhost");
+			sock = new ibrcommon::tcpsocket(addr, 4550);
 		}
+
+		ibrcommon::socketstream conn(sock);
 
 		// Initiate a derivated client
 		BundleStream bs(conn, _chunk_size, _source, _group, _wait_seq_zero);
@@ -441,7 +441,7 @@ int main(int argc, char *argv[])
 		// Shutdown the client connection.
 		bs.close();
 		conn.close();
-	} catch (const ibrcommon::tcpclient::SocketException&) {
+	} catch (const ibrcommon::socket_exception&) {
 		std::cerr << "Can not connect to the daemon. Does it run?" << std::endl;
 		return -1;
 	} catch (const std::exception&) {

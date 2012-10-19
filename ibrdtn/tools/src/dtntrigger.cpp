@@ -21,7 +21,7 @@
 
 #include "config.h"
 #include <ibrdtn/api/Client.h>
-#include <ibrcommon/net/tcpclient.h>
+#include <ibrcommon/net/socket.h>
 #include <ibrcommon/data/File.h>
 
 #include <csignal>
@@ -35,7 +35,7 @@
 bool _running = true;
 
 // global connection
-ibrcommon::tcpclient *_conn = NULL;
+ibrcommon::socketstream *_conn = NULL;
 
 std::string _appname = "trigger";
 std::string _script = "";
@@ -158,10 +158,8 @@ int main(int argc, char** argv)
 	{
 		try {
 			// Create a stream to the server using TCP.
-			ibrcommon::tcpclient conn("127.0.0.1", 4550);
-
-			// enable nodelay option
-			conn.enableNoDelay();
+			ibrcommon::vaddress addr("localhost");
+			ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr, 4550));
 
 			// set the connection globally
 			_conn = &conn;
@@ -214,7 +212,7 @@ int main(int argc, char** argv)
 
 			// set the global connection to NULL
 			_conn = NULL;
-		} catch (const ibrcommon::tcpclient::SocketException&) {
+		} catch (const ibrcommon::socket_exception&) {
 			// set the global connection to NULL
 			_conn = NULL;
 

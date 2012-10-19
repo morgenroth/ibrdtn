@@ -42,8 +42,8 @@
 // Container for bundles carrying strings.
 #include "ibrdtn/api/StringBundle.h"
 
-//  TCP client implemeted as a stream.
-#include "ibrcommon/net/tcpclient.h"
+//  TCP client implemented as a stream.
+#include <ibrcommon/net/socket.h>
 
 // Some classes to be thread-safe.
 #include "ibrcommon/thread/Mutex.h"
@@ -157,11 +157,9 @@ int tap_open(char *dev) { return tun_open_common(dev, 0); }
 class TUN2BundleGateway : public dtn::api::Client
 {
 	public:
-		TUN2BundleGateway(int fd, string app, string address = "127.0.0.1", int port = 4550)
-		: dtn::api::Client(app, _tcpclient), _fd(fd), _tcpclient(address, port)
+		TUN2BundleGateway(int fd, string app, ibrcommon::socketstream &stream)
+		: dtn::api::Client(app, _stream), _fd(fd), _stream(stream)
 		{
-			// enable nodelay option
-			_tcpclient.enableNoDelay();
 		};
 
 		/**
@@ -170,7 +168,7 @@ class TUN2BundleGateway : public dtn::api::Client
 		virtual ~TUN2BundleGateway()
 		{
 			// Close the tcp connection.
-			_tcpclient.close();
+			_stream.close();
 		};
 
 	private:
@@ -195,7 +193,7 @@ class TUN2BundleGateway : public dtn::api::Client
 			}
 		}
 
-		ibrcommon::tcpclient _tcpclient;
+		ibrcommon::socketstream &_stream;
 };
 
 bool m_running = true;
@@ -238,7 +236,9 @@ int main(int argc, char *argv[])
 	}
 
 	// create a connection to the dtn daemon
-	TUN2BundleGateway gateway(tunnel_fd, "tun");
+	ibrcommon::vaddress addr("localhost");
+	ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr, 4550));
+	TUN2BundleGateway gateway(tunnel_fd, "tun", conn);
 
 	// set the interface addresses
 	stringstream ifconfig;

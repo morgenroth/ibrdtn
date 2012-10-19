@@ -22,7 +22,7 @@
 #include "config.h"
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/StringBundle.h"
-#include "ibrcommon/net/tcpclient.h"
+#include "ibrcommon/net/socket.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/TimeMeasurement.h"
@@ -36,8 +36,8 @@
 class EchoClient : public dtn::api::Client
 {
 	public:
-		EchoClient(dtn::api::Client::COMMUNICATION_MODE mode, string app,  ibrcommon::tcpstream &stream)
-		 : dtn::api::Client(app, stream, mode), _stream(stream)
+		EchoClient(dtn::api::Client::COMMUNICATION_MODE mode, string app, ibrcommon::socketstream &stream)
+		 : dtn::api::Client(app, _stream, mode), _stream(stream)
 		{
 			seq=0;
 		}
@@ -130,7 +130,7 @@ class EchoClient : public dtn::api::Client
 		}
 
 	private:
-		ibrcommon::tcpstream &_stream;
+		ibrcommon::socketstream &_stream;
 		uint32_t seq;
 		string lastdestination;
 };
@@ -311,22 +311,22 @@ int main(int argc, char *argv[])
 	
 	try {
 		// Create a stream to the server using TCP.
-		ibrcommon::tcpclient conn;
+		ibrcommon::clientsocket *sock = NULL;
 
 		// check if the unixdomain socket exists
 		if (unixdomain.exists())
 		{
 			// connect to the unix domain socket
-			conn.open(unixdomain);
+			sock = new ibrcommon::filesocket(unixdomain);
 		}
 		else
 		{
 			// connect to the standard local api port
-			conn.open("127.0.0.1", 4550);
-
-			// enable nodelay option
-			conn.enableNoDelay();
+			ibrcommon::vaddress addr("localhost");
+			sock = new ibrcommon::tcpsocket(addr, 4550);
 		}
+
+		ibrcommon::socketstream conn(sock);
 
 		// Initiate a derivated client
 		EchoClient client(mode, ping_source, conn);
@@ -421,8 +421,7 @@ int main(int argc, char *argv[])
 		// Shutdown the client connection.
 		client.close();
 		conn.close();
-
-	} catch (const ibrcommon::tcpclient::SocketException&) {
+	} catch (const ibrcommon::socket_exception&) {
 		std::cerr << "Can not connect to the daemon. Does it run?" << std::endl;
 		return -1;
 	} catch (const std::exception&) {

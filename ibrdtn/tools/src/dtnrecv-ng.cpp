@@ -22,7 +22,8 @@
 #include "config.h"
 #include "ibrdtn/api/APIClient.h"
 #include "ibrdtn/api/FileBundle.h"
-#include "ibrcommon/net/tcpclient.h"
+#include <ibrcommon/net/socket.h>
+#include <ibrcommon/net/socketstream.h>
 
 #include <csignal>
 #include <sys/types.h>
@@ -42,7 +43,7 @@ void print_help()
 }
 
 dtn::api::APIClient *_client = NULL;
-ibrcommon::tcpclient *_conn = NULL;
+ibrcommon::socketstream *_conn = NULL;
 
 int h = 0;
 bool _stdout = true;
@@ -123,22 +124,22 @@ int main(int argc, char *argv[])
 
 	try {
 		// Create a stream to the server using TCP.
-		ibrcommon::tcpclient conn;
+		ibrcommon::clientsocket *sock = NULL;
 
 		// check if the unixdomain socket exists
 		if (unixdomain.exists())
 		{
 			// connect to the unix domain socket
-			conn.open(unixdomain);
+			sock = new ibrcommon::filesocket(unixdomain);
 		}
 		else
 		{
 			// connect to the standard local api port
-			conn.open("127.0.0.1", 4550);
-
-			// enable nodelay option
-			conn.enableNoDelay();
+			ibrcommon::vaddress addr("localhost");
+			sock = new ibrcommon::tcpsocket(addr, 4550);
 		}
+
+		ibrcommon::socketstream conn(sock);
 
 		// Initiate a client for synchronous receiving
 		dtn::api::APIClient client(conn);

@@ -22,7 +22,7 @@
 #include "config.h"
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/FileBundle.h"
-#include "ibrcommon/net/tcpclient.h"
+#include "ibrcommon/net/socket.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrdtn/data/PayloadBlock.h"
@@ -86,7 +86,7 @@ map<string,string> readconfiguration(int argc, char** argv)
 bool _running = true;
 
 // global connection
-ibrcommon::tcpclient *_conn = NULL;
+ibrcommon::socketstream *_conn = NULL;
 
 void term(int signal)
 {
@@ -131,10 +131,8 @@ int main(int argc, char** argv)
     {
         try {
         	// Create a stream to the server using TCP.
-        	ibrcommon::tcpclient conn("127.0.0.1", 4550);
-
-    		// enable nodelay option
-    		conn.enableNoDelay();
+        	ibrcommon::vaddress addr("localhost");
+        	ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr, 4550));
 
         	// set the connection globally
         	_conn = &conn;
@@ -180,7 +178,7 @@ int main(int argc, char** argv)
 
             // set the global connection to NULL
             _conn = NULL;
-        } catch (const ibrcommon::tcpclient::SocketException&) {
+        } catch (const ibrcommon::socket_exception&) {
         	// set the global connection to NULL
         	_conn = NULL;
 

@@ -27,7 +27,7 @@
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/SDNV.h>
 #include <ibrdtn/data/StreamBlock.h>
-#include <ibrcommon/net/tcpclient.h>
+#include <ibrcommon/net/socketstream.h>
 
 class StreamBundle : public dtn::api::Bundle
 {
@@ -110,7 +110,7 @@ private:
 class BundleStream : public dtn::api::Client
 {
 public:
-	BundleStream(ibrcommon::tcpstream &stream, size_t chunk_size, const std::string &app = "stream", const dtn::data::EID &group = dtn::data::EID(), bool wait_seq_zero = false);
+	BundleStream(ibrcommon::socketstream &stream, size_t chunk_size, const std::string &app = "stream", const dtn::data::EID &group = dtn::data::EID(), bool wait_seq_zero = false);
 	virtual ~BundleStream();
 
 	BundleStreamBuf& rdbuf();
@@ -120,7 +120,7 @@ protected:
 	virtual void received(const dtn::api::Bundle &b);
 
 private:
-	ibrcommon::tcpstream &_stream;
+	ibrcommon::socketstream &_stream;
 
 	BundleStreamBuf _buf;
 	StreamBundle _chunk;

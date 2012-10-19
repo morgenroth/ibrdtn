@@ -23,7 +23,8 @@
 #include <ibrdtn/data/StatusReportBlock.h>
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/StringBundle.h"
-#include "ibrcommon/net/tcpclient.h"
+#include <ibrcommon/net/socket.h>
+#include <ibrcommon/net/socketstream.h>
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/TimeMeasurement.h"
@@ -53,7 +54,7 @@ public:
 class Tracer : public dtn::api::Client
 {
 	public:
-		Tracer(dtn::api::Client::COMMUNICATION_MODE mode, ibrcommon::tcpstream &stream)
+		Tracer(dtn::api::Client::COMMUNICATION_MODE mode, ibrcommon::socketstream &stream)
 		 : dtn::api::Client("", stream, mode), _stream(stream)
 		{
 		}
@@ -226,7 +227,7 @@ class Tracer : public dtn::api::Client
 		}
 
 	private:
-		ibrcommon::tcpstream &_stream;
+		ibrcommon::socketstream &_stream;
 };
 
 void print_help()
@@ -293,10 +294,8 @@ int main(int argc, char *argv[])
 
 	try {
 		// Create a stream to the server using TCP.
-		ibrcommon::tcpclient conn("127.0.0.1", 4550);
-
-		// enable nodelay option
-		conn.enableNoDelay();
+		ibrcommon::vaddress addr("localhost");
+		ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr, 4550));
 
 		// Initiate a derivated client
 		Tracer tracer(mode, conn);
@@ -312,7 +311,7 @@ int main(int argc, char *argv[])
 		tracer.close();
 		conn.close();
 
-	} catch (const ibrcommon::tcpclient::SocketException&) {
+	} catch (const ibrcommon::socket_exception&) {
 		std::cerr << "Can not connect to the daemon. Does it run?" << std::endl;
 		return -1;
 	} catch (const std::exception &e) {
