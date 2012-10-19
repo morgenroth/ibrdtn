@@ -149,7 +149,7 @@ void TestStreamConnection::connectionUpDown()
 		void eventError() {};
 		void eventBundleRefused() {};
 		void eventBundleForwarded() {};
-		void eventBundleAck(size_t ack)
+		void eventBundleAck(size_t)
 		{
 			// std::cout << "client: ack received, value: " << ack << std::endl;
 		};

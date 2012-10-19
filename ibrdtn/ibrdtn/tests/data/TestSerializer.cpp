@@ -27,6 +27,7 @@
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/BundleFragment.h>
+#include <ibrdtn/data/AgeBlock.h>
 #include <iostream>
 #include <sstream>
 
@@ -122,6 +123,70 @@ void TestSerializer::serializer_cbhe02(void)
 	CPPUNIT_ASSERT_EQUAL((size_t)33, ss.str().length());
 }
 
+void TestSerializer::serializer_primaryblock_length(void)
+{
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://node1/app1");
+	b._destination = dtn::data::EID("dtn://node2/app2");
+	b._lifetime = 3600;
+	b._timestamp = 12345678;
+	b._sequencenumber = 1234;
+
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	{
+		ibrcommon::BLOB::iostream stream = ref.iostream();
+		for (int i = 0; i < 10; i++)
+			(*stream) << "hello world" << std::flush;
+	}
+
+	b.push_back(ref);
+	b.push_front<dtn::data::AgeBlock>();
+
+	std::stringstream ss;
+	dtn::data::DefaultSerializer ds(ss);
+	ds << (dtn::data::PrimaryBlock&)b;
+
+	size_t written_len = ss.tellp();
+	size_t calc_len = ds.getLength((dtn::data::PrimaryBlock&)b);
+
+	CPPUNIT_ASSERT_EQUAL(written_len, calc_len);
+}
+
+void TestSerializer::serializer_block_length(void)
+{
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://node1/app1");
+	b._destination = dtn::data::EID("dtn://node2/app2");
+	b._lifetime = 3600;
+	b._timestamp = 12345678;
+	b._sequencenumber = 1234;
+
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	{
+		ibrcommon::BLOB::iostream stream = ref.iostream();
+		for (int i = 0; i < 10; i++)
+			(*stream) << "hello world" << std::flush;
+	}
+
+	b.push_back(ref);
+	b.push_front<dtn::data::AgeBlock>();
+
+	const std::list<const dtn::data::Block*> blocks = b.getBlocks();
+	for (std::list<const dtn::data::Block*>::const_iterator iter = blocks.begin(); iter != blocks.end(); iter++)
+	{
+		const dtn::data::Block &block = (**iter);
+
+		std::stringstream ss;
+		dtn::data::DefaultSerializer ds(ss);
+		ds << block;
+
+		size_t written_len = ss.tellp();
+		size_t calc_len = ds.getLength(block);
+
+		CPPUNIT_ASSERT_EQUAL(written_len, calc_len);
+	}
+}
+
 void TestSerializer::serializer_bundle_length(void)
 {
 	dtn::data::Bundle b;
@@ -131,11 +196,24 @@ void TestSerializer::serializer_bundle_length(void)
 	b._timestamp = 12345678;
 	b._sequencenumber = 1234;
 
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	{
+		ibrcommon::BLOB::iostream stream = ref.iostream();
+		for (int i = 0; i < 10; i++)
+			(*stream) << "hello world" << std::flush;
+	}
+
+	b.push_back(ref);
+	b.push_front<dtn::data::AgeBlock>();
+
 	std::stringstream ss;
 	dtn::data::DefaultSerializer ds(ss);
 	ds << b;
 
-	CPPUNIT_ASSERT_EQUAL(ds.getLength(b), ss.str().length());
+	size_t written_len = ss.tellp();
+	size_t calc_len = ds.getLength(b);
+
+	CPPUNIT_ASSERT_EQUAL(written_len, calc_len);
 }
 
 void TestSerializer::serializer_fragment_one(void)
@@ -180,4 +258,33 @@ void TestSerializer::serializer_fragment_one(void)
 		CPPUNIT_ASSERT(fb.get(dtn::data::PrimaryBlock::FRAGMENT));
 		CPPUNIT_ASSERT_EQUAL(fb.getBlock<dtn::data::PayloadBlock>().getLength(), (size_t)100);
 	}
+}
+
+void TestSerializer::serializer_ipn_compression_length(void)
+{
+	dtn::data::Bundle ipnbundle;
+	ipnbundle._source = dtn::data::EID("ipn:5.2");
+	ipnbundle._destination = dtn::data::EID("ipn:1.2");
+
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	{
+		ibrcommon::BLOB::iostream stream = ref.iostream();
+		for (int i = 0; i < 10; i++)
+			(*stream) << "hello world" << std::flush;
+	}
+
+	ipnbundle.push_back(ref);
+
+	ipnbundle._lifetime = 3600;
+
+	ipnbundle.push_front<dtn::data::AgeBlock>();
+
+	std::stringstream ss;
+	dtn::data::DefaultSerializer ds(ss);
+	ds << ipnbundle;
+
+	size_t written_len = ss.tellp();
+	size_t calc_len = ds.getLength(ipnbundle);
+
+	CPPUNIT_ASSERT_EQUAL(written_len, calc_len);
 }
