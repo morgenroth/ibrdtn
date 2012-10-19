@@ -46,9 +46,9 @@ private:
 		BLOBWorker(const size_t count, const size_t size);
 		virtual ~BLOBWorker();
 
-		void run();
+		void run() throw ();
 		bool check();
-		void __cancellation();
+		void __cancellation() throw ();
 
 	private:
 		size_t _count;
