@@ -156,7 +156,7 @@ namespace dtn
 						NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
 						// check if enough transfer slots available (threadhold reached)
-						if (entry.isTransferThresholdReached())
+						if (!entry.isTransferThresholdReached())
 							throw NeighborDatabase::NoMoreTransfersAvailable();
 
 						// create a new bundle filter
