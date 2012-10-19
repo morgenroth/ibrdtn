@@ -47,7 +47,7 @@ namespace ibrcommon
 		virtual ~vinterface();
 
 		uint32_t getIndex() const;
-		const std::list<vaddress> getAddresses() const;
+		const std::list<vaddress> getAddresses(const std::string &scope = "") const;
 		const std::string toString() const;
 		bool empty() const;
 		bool up() const;

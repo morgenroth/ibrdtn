@@ -133,6 +133,10 @@ namespace ibrcommon
 		return _service;
 	}
 
+	void vaddress::setService(const std::string &service)
+	{
+		_service = service;
+	}
 
 	const std::string vaddress::toString() const
 	{

@@ -51,10 +51,10 @@ namespace ibrcommon
 		return ::if_nametoindex(_name.c_str());
 	}
 
-	const std::list<vaddress> vinterface::getAddresses() const
+	const std::list<vaddress> vinterface::getAddresses(const std::string &scope) const
 	{
 		if (empty()) throw interface_not_set();
-		return ibrcommon::LinkManager::getInstance().getAddressList(*this);
+		return ibrcommon::LinkManager::getInstance().getAddressList(*this, scope);
 	}
 
 	bool vinterface::up() const {

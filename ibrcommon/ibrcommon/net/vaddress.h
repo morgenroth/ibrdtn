@@ -72,6 +72,8 @@ namespace ibrcommon
 			const std::string address() const throw (address_not_set);
 			const std::string service() const throw (service_not_set);
 
+			void setService(const std::string &service);
+
 			bool operator<(const vaddress &dhs) const;
 			bool operator!=(const vaddress &obj) const;
 			bool operator==(const vaddress &obj) const;
