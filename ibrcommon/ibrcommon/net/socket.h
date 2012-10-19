@@ -190,7 +190,7 @@ namespace ibrcommon {
 		virtual void down() throw (socket_exception) = 0;
 
 		void recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
-		void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
+		void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr, const int port) throw (socket_exception);
 
 	protected:
 		datagramsocket();
@@ -289,6 +289,10 @@ namespace ibrcommon {
 		virtual void down() throw (socket_exception);
 
 	protected:
+		void bind(int port) throw (socket_exception);
+		void bind(const vaddress &addr) throw (socket_exception, vaddress::address_not_set);
+		void bind(const vaddress &addr, int port) throw (socket_exception, vaddress::address_not_set);
+
 		const vaddress _address;
 		const int _port;
 	};

@@ -301,7 +301,11 @@ namespace ibrcommon
 			throw socket_exception("accept failed");
 		}
 
-		// TODO: set source to addr
+		// set source to addr
+		char str[256];
+		if (::getnameinfo((struct sockaddr *) &cliaddr, len, str, 256, 0, 0, NI_NUMERICHOST) == 0) {
+			addr = ibrcommon::vaddress(std::string(str));
+		}
 
 		return new_fd;
 	}
@@ -321,16 +325,45 @@ namespace ibrcommon
 
 	void datagramsocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
 	{
-		//int ret = ::recvfrom(this->fd(),  __buf, size_t __n, int __flags, __SOCKADDR_ARG __addr, socklen_t *__restrict __addr_len);
-		//if (ret == -1)
-		//	throw socket_exception("recvfrom error");
+		struct sockaddr_storage clientAddress;
+		socklen_t clientAddressLength = sizeof(clientAddress);
+
+		// data waiting
+		ssize_t ret = ::recvfrom(_fd, buf, buflen, flags, (struct sockaddr *) &clientAddress, &clientAddressLength);
+
+		if (ret == -1) {
+			throw socket_exception("recvfrom error");
+		}
+
+		char str[256];
+		if (::getnameinfo((struct sockaddr *) &clientAddress, clientAddressLength, str, 256, 0, 0, NI_NUMERICHOST) == 0) {
+			addr = ibrcommon::vaddress(std::string(str));
+		}
 	}
 
-	void datagramsocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception)
+	void datagramsocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr, const int port) throw (socket_exception)
 	{
-		//int ret = ::sendto(this->fd(), __const void *__buf, size_t __n, int __flags, __CONST_SOCKADDR_ARG __addr, socklen_t __addr_len);
-		//if (ret == -1)
-		//	throw socket_exception("sendto error");
+		ssize_t ret = 0;
+		struct addrinfo hints, *res;
+		memset(&hints, 0, sizeof hints);
+
+		hints.ai_socktype = SOCK_DGRAM;
+
+		std::stringstream ss; ss << port; std::string port_string = ss.str();
+
+		if ((ret = ::getaddrinfo(addr.get().c_str(), port_string.c_str(), &hints, &res)) != 0)
+		{
+			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
+		}
+
+		ret = ::sendto(_fd, buf, buflen, flags, res->ai_addr, res->ai_addrlen);
+
+		// free the addrinfo struct
+		freeaddrinfo(res);
+
+		if (ret == -1) {
+			throw socket_raw_error(errno, "sendto error");
+		}
 	}
 
 	filesocket::filesocket(int fd)
@@ -771,7 +804,31 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		// TODO: initialize socket
+		try {
+			_fd = ::socket(_address.getFamily(), SOCK_DGRAM, 0);
+		} catch (const vaddress::address_exception&) {
+			// address not set, use IPv6 as default family
+			_fd = ::socket(AF_INET6, SOCK_DGRAM, 0);
+		}
+
+		if (_port == 0) {
+			try {
+				// try to bind on address
+				this->bind(_address);
+			} catch (const vaddress::address_exception&) {
+				// address not set, do not bind to anything
+			}
+		} else {
+			this->set_reuseaddr(true);
+
+			try {
+				// try to bind on port + address
+				this->bind(_address, _port);
+			} catch (const vaddress::address_exception&) {
+				// address not set, bind to port only
+				this->bind(_port);
+			}
+		}
 
 		_state = SOCKET_UP;
 	}
@@ -783,6 +840,61 @@ namespace ibrcommon
 
 		this->close();
 		_state = SOCKET_DOWN;
+	}
+
+	void udpsocket::bind(const vaddress &addr, int port) throw (socket_exception, vaddress::address_not_set)
+	{
+		struct addrinfo hints, *res;
+		memset(&hints, 0, sizeof hints);
+
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_DGRAM;
+
+		std::stringstream port_ss; port_ss << port;
+
+		if (0 != ::getaddrinfo(addr.get().c_str(), port_ss.str().c_str(), &hints, &res))
+			throw socket_exception("failed to getaddrinfo with address: " + addr.toString() + " and port " + port_ss.str());
+
+		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
+		freeaddrinfo(res);
+
+		check_bind_error(ret);
+	}
+
+	void udpsocket::bind(int port) throw (socket_exception)
+	{
+		struct addrinfo hints, *res;
+		memset(&hints, 0, sizeof hints);
+
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_DGRAM;
+
+		std::stringstream port_ss; port_ss << port;
+
+		if (0 != ::getaddrinfo(NULL, port_ss.str().c_str(), &hints, &res))
+			throw socket_exception("failed to getaddrinfo with port " + port_ss.str());
+
+		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
+		freeaddrinfo(res);
+
+		check_bind_error(ret);
+	}
+
+	void udpsocket::bind(const vaddress &addr) throw (socket_exception, vaddress::address_not_set)
+	{
+		struct addrinfo hints, *res;
+		memset(&hints, 0, sizeof hints);
+
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_DGRAM;
+
+		if (0 != ::getaddrinfo(addr.get().c_str(), NULL, &hints, &res))
+			throw socket_exception("failed to getaddrinfo with address: " + addr.toString());
+
+		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
+		freeaddrinfo(res);
+
+		check_bind_error(ret);
 	}
 
 	multicastsocket::multicastsocket(const int port)
