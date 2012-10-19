@@ -65,7 +65,7 @@ namespace dtn
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, unsigned int mtu)
-		 : _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
+		 : _sock(port), _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
 		{
 		}
 
@@ -305,7 +305,12 @@ namespace dtn
 
 		void UDPConvergenceLayer::componentDown()
 		{
-			_sock.down();
+			try {
+				_sock.down();
+			} catch (ibrcommon::socket_exception&) {
+				// catch double exception
+			};
+
 			_vsocket.destroy();
 			stop();
 			join();
@@ -338,7 +343,13 @@ namespace dtn
 		void UDPConvergenceLayer::__cancellation()
 		{
 			_running = false;
-			_sock.down();
+
+			try {
+				_sock.down();
+			} catch (ibrcommon::socket_exception&) {
+				// catch double exception
+			};
+
 			_vsocket.down();
 		}
 
