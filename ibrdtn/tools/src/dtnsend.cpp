@@ -212,10 +212,10 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
-			ibrcommon::vaddress addr("localhost");
+			ibrcommon::vaddress addr("localhost", 4550);
 
 			// connect to the standard local api port
-			sock = new ibrcommon::tcpsocket(addr, 4550);
+			sock = new ibrcommon::tcpsocket(addr);
 		}
 
 		ibrcommon::socketstream conn(sock);

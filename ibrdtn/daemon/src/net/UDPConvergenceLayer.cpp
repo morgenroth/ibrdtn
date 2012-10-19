@@ -65,7 +65,7 @@ namespace dtn
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, unsigned int mtu)
-			: _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
+		 : _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
 		{
 		}
 
@@ -114,11 +114,11 @@ namespace dtn
 					const ibrcommon::vaddress &addr = (*addr_it);
 
 					// only announce global scope addresses
-					if (addr.getScope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
+					if (addr.scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
 
 					std::stringstream service;
 					// fill in the ip address
-					service << "ip=" << addr.get() << ";port=" << _port << ";";
+					service << "ip=" << addr.address() << ";port=" << _port << ";";
 					announcement.addService( DiscoveryService("udpcl", service.str()));
 
 					// set the announce mark
@@ -157,7 +157,7 @@ namespace dtn
 			uri.decode(address, port);
 
 			// get the address of the node
-			ibrcommon::vaddress addr(address);
+			ibrcommon::vaddress addr(address, port);
 
 			try {
 				// read the bundle out of the storage
@@ -202,7 +202,7 @@ namespace dtn
 							ibrcommon::MutexLock l(m_writelock);
 
 							// send converted line back to client.
-							_sock.sendto(data.c_str(), data.length(), 0, addr, port);
+							_sock.sendto(data.c_str(), data.length(), 0, addr);
 						} catch (const ibrcommon::socket_exception&) {
 							// CL is busy, requeue bundle
 							dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
@@ -224,7 +224,7 @@ namespace dtn
 						ibrcommon::MutexLock l(m_writelock);
 
 						// send converted line back to client.
-						_sock.sendto(data.c_str(), data.length(), 0, addr, port);
+						_sock.sendto(data.c_str(), data.length(), 0, addr);
 					} catch (const ibrcommon::socket_exception&) {
 						// CL is busy, requeue bundle
 						dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);

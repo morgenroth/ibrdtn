@@ -294,8 +294,8 @@ int main(int argc, char *argv[])
 
 	try {
 		// Create a stream to the server using TCP.
-		ibrcommon::vaddress addr("localhost");
-		ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr, 4550));
+		ibrcommon::vaddress addr("localhost", 4550);
+		ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr));
 
 		// Initiate a derivated client
 		Tracer tracer(mode, conn);

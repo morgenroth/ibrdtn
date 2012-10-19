@@ -282,8 +282,8 @@ namespace dtn
 			ss << std::flush;
 
 			std::string data = ss.str();
-			ibrcommon::vaddress addr(_address);
-			socket.sendto(data.c_str(), data.length(), 0, addr, _port);
+			ibrcommon::vaddress addr(_address, _port);
+			socket.sendto(data.c_str(), data.length(), 0, addr);
 		}
 
 		const std::string StatisticLogger::getName() const

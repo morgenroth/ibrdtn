@@ -236,8 +236,8 @@ int main(int argc, char *argv[])
 	}
 
 	// create a connection to the dtn daemon
-	ibrcommon::vaddress addr("localhost");
-	ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr, 4550));
+	ibrcommon::vaddress addr("localhost", 4550);
+	ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr));
 	TUN2BundleGateway gateway(tunnel_fd, "tun", conn);
 
 	// set the interface addresses

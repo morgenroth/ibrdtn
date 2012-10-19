@@ -478,7 +478,10 @@ namespace dtn
 			try {
 				std::string address_str = Configuration::getInstance()._conf.read<string>("discovery_address");
 				std::vector<std::string> addresses = dtn::utils::Utils::tokenize(" ", address_str);
-				ret.insert( addresses.begin(), addresses.end() );
+
+				for (std::vector<std::string>::iterator iter = addresses.begin(); iter != addresses.end(); iter++) {
+					ret.insert( ibrcommon::vaddress(*iter, port()) );
+				}
 			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotFoundException();
 			}

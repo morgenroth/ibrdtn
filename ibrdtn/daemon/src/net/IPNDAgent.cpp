@@ -41,10 +41,10 @@ namespace dtn
 	{
 		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _port(port)
+		   _version(DiscoveryAnnouncement::DISCO_VERSION_01)
 		{
 			// bind to receive socket
-			_recv_socket.add(new ibrcommon::multicastsocket(_port));
+			_recv_socket.add(new ibrcommon::multicastsocket(port));
 
 			switch (_config.version())
 			{
@@ -68,14 +68,14 @@ namespace dtn
 		}
 
 		void IPNDAgent::add(const ibrcommon::vaddress &address) {
-			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: listen to [" << address.toString() << "]:" << _port << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: listen to " << address.toString() << IBRCOMMON_LOGGER_ENDL;
 			_destinations.push_back(address);
 
 			// add new socket for this address
 			_send_socket.add(new ibrcommon::udpsocket(address));
 		}
 
-		void IPNDAgent::bind(const ibrcommon::vinterface &net)
+		void IPNDAgent::bind(const ibrcommon::vinterface &net, int port)
 		{
 			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			_interfaces.push_back(net);
@@ -98,7 +98,7 @@ namespace dtn
 //			}
 		}
 
-		void IPNDAgent::send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr, const unsigned int port)
+		void IPNDAgent::send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr)
 		{
 			// serialize announcement
 			stringstream ss; ss << a;
@@ -112,7 +112,7 @@ namespace dtn
 			{
 				try {
 					ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
-					sock.sendto(data.c_str(), data.length(), 0, addr, port);
+					sock.sendto(data.c_str(), data.length(), 0, addr);
 
 				} catch (const ibrcommon::socket_exception&) {
 					IBRCOMMON_LOGGER_DEBUG(5) << "can not send message to " << addr.toString() << IBRCOMMON_LOGGER_ENDL;
@@ -151,7 +151,7 @@ namespace dtn
 				}
 
 				for (std::list<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {
-					send(announcement, iface, (*iter), _port);
+					send(announcement, iface, (*iter));
 				}
 			}
 		}
@@ -261,8 +261,7 @@ namespace dtn
 							if (announce.isShort())
 							{
 								// generate name with the sender address
-								// TODO: check format returned by sender.get()
-								ret_source = dtn::data::EID("udp://" + sender.get());
+								ret_source = dtn::data::EID("udp://[" + sender.address() + "]:4556");
 							}
 							else
 							{
@@ -275,7 +274,7 @@ namespace dtn
 							if (services.empty())
 							{
 								// TODO: check format returned by sender.get()
-								ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.get() + ";port=4556;"));
+								ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
 							}
 
 							// add all services to the return set
@@ -287,7 +286,7 @@ namespace dtn
 										(service.getParameters().find("ip=") == std::string::npos) ) {
 									// create a new service object
 									// TODO: check format returned by sender.get()
-									dtn::net::DiscoveryService ret_service(service.getName(), "ip=" + sender.get() + ";" + service.getParameters());
+									dtn::net::DiscoveryService ret_service(service.getName(), "ip=" + sender.address() + ";" + service.getParameters());
 
 									// add service to the return set
 									ret_services.push_back(ret_service);

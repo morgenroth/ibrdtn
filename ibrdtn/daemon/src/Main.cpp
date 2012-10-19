@@ -702,7 +702,7 @@ int __daemon_run(Configuration &conf)
 			const ibrcommon::vinterface &i = (*iter);
 
 			// add interfaces to discovery
-			ipnd->bind(*iter);
+			ipnd->bind(*iter, disco_port);
 		}
 
 		components.push_back(ipnd);

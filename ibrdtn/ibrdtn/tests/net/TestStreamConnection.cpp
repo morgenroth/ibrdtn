@@ -213,8 +213,8 @@ void TestStreamConnection::connectionUpDown()
 	// start the server thread
 	srv.start();
 
-	ibrcommon::vaddress addr("::1");
-	ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr, 1234));
+	ibrcommon::vaddress addr("::1", 1234);
+	ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr));
 	testclient cl(conn);
 
 	// do client-server handshake

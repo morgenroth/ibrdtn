@@ -359,6 +359,9 @@ namespace dtn
 						const dtn::core::Node::URI &uri = (*iter);
 						uri.decode(address, port);
 
+						// create a virtual address to connect to
+						ibrcommon::vaddress addr(address, port);
+
 						IBRCOMMON_LOGGER_DEBUG(15) << "Initiate TCP connection to " << address << ":" << port << IBRCOMMON_LOGGER_ENDL;
 
 						// create a new tcpsocket
@@ -366,7 +369,7 @@ namespace dtn
 						timerclear(&tv);
 						tv.tv_sec = _timeout;
 
-						ibrcommon::tcpsocket *client = new ibrcommon::tcpsocket(address, port, &tv);
+						ibrcommon::tcpsocket *client = new ibrcommon::tcpsocket(addr, &tv);
 						client->up();
 
 						if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )

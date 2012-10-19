@@ -109,12 +109,12 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(20) << "UDPDatagramService::send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: [" << address << "]:" << std::dec << port << IBRCOMMON_LOGGER_ENDL;
 
 				// create vaddress
-				const ibrcommon::vaddress destination(address);
+				const ibrcommon::vaddress destination(address, port);
 				ibrcommon::socketset sockset = _vsocket.getAll();
 				if (sockset.size() > 0) {
 					try {
 						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**sockset.begin());
-						sock.sendto(tmp, length + 2, 0, destination, port);
+						sock.sendto(tmp, length + 2, 0, destination);
 					} catch (const std::bad_cast&) {
 
 					}
@@ -146,13 +146,13 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(20) << "UDPDatagramService::send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << std::dec << seqno << IBRCOMMON_LOGGER_ENDL;
 
 				// create broadcast address
-				const ibrcommon::vaddress broadcast("ff02::1");
+				const ibrcommon::vaddress broadcast("ff02::1", BROADCAST_PORT);
 
 				ibrcommon::socketset sockset = _vsocket.getAll();
 				if (sockset.size() > 0) {
 					try {
 						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**sockset.begin());
-						sock.sendto(tmp, length + 2, 0, broadcast, BROADCAST_PORT);
+						sock.sendto(tmp, length + 2, 0, broadcast);
 					} catch (const std::bad_cast&) {
 
 					}
@@ -182,7 +182,6 @@ namespace dtn
 
 						char tmp[length + 2];
 						ibrcommon::vaddress peeraddr;
-						unsigned int port;
 						size_t ret = sock.recvfrom(tmp, length + 2, 0, peeraddr);
 
 						// first byte if the type
@@ -194,7 +193,7 @@ namespace dtn
 
 						// TODO: return the encoded format
 						//address = UDPDatagramService::encode(from, port);
-						address = peeraddr.get();
+						address = peeraddr.address();
 
 						// copy payload to the destination buffer
 						::memcpy(buf, &tmp[2], ret - 2);

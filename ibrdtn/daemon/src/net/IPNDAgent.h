@@ -47,7 +47,7 @@ namespace dtn
 			virtual ~IPNDAgent();
 
 			void add(const ibrcommon::vaddress &address);
-			void bind(const ibrcommon::vinterface &net);
+			void bind(const ibrcommon::vinterface &net, int port);
 
 			/**
 			 * @see Component::getName()
@@ -64,15 +64,13 @@ namespace dtn
 			void __cancellation();
 
 		private:
-			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr, const unsigned int port);
+			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;
 			ibrcommon::vsocket _recv_socket;
 			ibrcommon::vsocket _send_socket;
 			std::list<ibrcommon::vaddress> _destinations;
 			std::list<ibrcommon::vinterface> _interfaces;
-
-			int _port;
 		};
 	}
 }

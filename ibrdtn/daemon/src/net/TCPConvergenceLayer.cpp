@@ -117,11 +117,11 @@ namespace dtn
 
 						for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
 						{
-							if ((*addr_it).getScope() != ibrcommon::vaddress::SCOPE_LINKLOCAL) continue;
+							if ((*addr_it).scope() != ibrcommon::vaddress::SCOPE_LINKLOCAL) continue;
 
 							std::stringstream service;
 							// fill in the ip address
-							service << "ip=" << (*addr_it).get() << ";port=" << _portmap[iface] << ";";
+							service << "ip=" << (*addr_it).address() << ";port=" << _portmap[iface] << ";";
 							announcement.addService( DiscoveryService("tcpcl", service.str()));
 
 							// set the announce mark
