@@ -319,6 +319,7 @@ namespace ibrcommon {
 	 */
 	class udpsocket : public datagramsocket {
 	public:
+		udpsocket();
 		udpsocket(const vaddress &address);
 		virtual ~udpsocket();
 		virtual void up() throw (socket_exception);

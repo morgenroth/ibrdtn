@@ -818,6 +818,10 @@ namespace ibrcommon
 		this->close();
 	}
 
+	udpsocket::udpsocket()
+	{
+	}
+
 	udpsocket::udpsocket(const vaddress &address)
 	 : _address(address)
 	{
