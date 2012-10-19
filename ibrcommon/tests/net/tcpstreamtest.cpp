@@ -47,10 +47,12 @@ void tcpstreamtest :: baseTest (void)
 
 	_checker.stop();
 	_checker.join();
+
+	CPPUNIT_ASSERT(!_checker._error);
 }
 
 tcpstreamtest::StreamChecker::StreamChecker(int port, int chars)
- : _running(true), _chars(chars)
+ : _error(false), _running(true), _chars(chars)
 {
 	_sock.add(new ibrcommon::tcpserversocket(port));
 	_sock.up();
@@ -84,6 +86,8 @@ void tcpstreamtest::runTest()
 
 		client.flush();
 		client.close();
+	} catch (const ibrcommon::vsocket_interrupt &e) {
+		// select interrupted
 	} catch (const ibrcommon::socket_exception &e) {
 		CPPUNIT_FAIL(std::string("client error: ") + e.what());
 	};
@@ -101,54 +105,61 @@ void tcpstreamtest::StreamChecker::setup() throw () {
 
 void tcpstreamtest::StreamChecker::run() throw ()
 {
-	char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-	ibrcommon::clientsocket *socket = NULL;
+	try {
+		char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+		ibrcommon::clientsocket *socket = NULL;
 
-	while (_running) {
-		try {
-			ibrcommon::socketset fds;
-			_sock.select(&fds, NULL, NULL, NULL);
+		while (_running) {
+			try {
+				ibrcommon::socketset fds;
+				_sock.select(&fds, NULL, NULL, NULL);
 
-			for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
-			{
-				ibrcommon::serversocket &srv = dynamic_cast<ibrcommon::serversocket&>(**iter);
-				ibrcommon::vaddress source;
-				socket = srv.accept(source);
-
-//				std::cout << "connection accepted from " << source.toString() << std::endl;
-
-				CPPUNIT_ASSERT(socket != NULL);
-
-				int byte = 0;
-
-				// create a new stream
-				ibrcommon::socketstream stream(socket);
-
-				while (stream.good())
+				for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
 				{
-					char value;
+					ibrcommon::serversocket &srv = dynamic_cast<ibrcommon::serversocket&>(**iter);
+					ibrcommon::vaddress source;
+					socket = srv.accept(source);
 
-					// read one char
-					stream.get(value);
+//					std::cout << "connection accepted from " << source.toString() << std::endl;
 
-					if ((value != values[byte % _chars]) && stream.good())
+					CPPUNIT_ASSERT(socket != NULL);
+
+					int byte = 0;
+
+					// create a new stream
+					ibrcommon::socketstream stream(socket);
+
+					while (stream.good())
 					{
-						cout << "error in byte " << byte << ", " << value << " != " << values[byte % _chars] << endl;
-						break;
+						char value;
+
+						// read one char
+						stream.get(value);
+
+						if ((value != values[byte % _chars]) && stream.good())
+						{
+							cout << "error in byte " << byte << ", " << value << " != " << values[byte % _chars] << endl;
+							break;
+						}
+
+						byte++;
 					}
 
-					byte++;
+					// connection should be closed
+					CPPUNIT_ASSERT(stream.errmsg == ibrcommon::ERROR_CLOSED);
+
+					stream.close();
+
+					CPPUNIT_ASSERT(byte == 20000001);
 				}
-
-				// connection should be closed
-				CPPUNIT_ASSERT(stream.errmsg == ibrcommon::ERROR_CLOSED);
-
-				stream.close();
-
-				CPPUNIT_ASSERT(byte == 20000001);
-			}
-		} catch (const ibrcommon::Exception &e) {
-			CPPUNIT_FAIL(std::string("server error: ") + e.what());
-		};
+			} catch (const ibrcommon::vsocket_interrupt &e) {
+				// regular interrupt
+				return;
+			} catch (const ibrcommon::Exception &e) {
+				CPPUNIT_FAIL(std::string("server error: ") + e.what());
+			};
+		}
+	} catch (const CppUnit::Exception &e) {
+		_error = true;
 	}
 }

@@ -48,10 +48,11 @@ void TestStreamConnection::connectionUpDown()
 	private:
 		ibrcommon::vsocket _sockets;
 		bool _running;
+		bool _error;
 
 	public:
 		testserver(ibrcommon::serversocket *sock)
-		: _running(true), recv_bundles(0)
+		: _running(true), _error(false), recv_bundles(0)
 		{
 			_sockets.add(sock);
 			_sockets.up();
@@ -88,31 +89,36 @@ void TestStreamConnection::connectionUpDown()
 			ibrcommon::vaddress peeraddr;
 
 			while (_running) {
-				ibrcommon::socketset fds;
-				_sockets.select(&fds, NULL, NULL, NULL);
+				try {
+					ibrcommon::socketset fds;
+					_sockets.select(&fds, NULL, NULL, NULL);
 
-				for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
-				{
-					ibrcommon::serversocket &servsock = dynamic_cast<ibrcommon::serversocket&>(**iter);
+					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
+					{
+						ibrcommon::serversocket &servsock = dynamic_cast<ibrcommon::serversocket&>(**iter);
 
-					try {
-						ibrcommon::clientsocket *sock = servsock.accept(peeraddr);
-						ibrcommon::socketstream conn(sock);
-						dtn::streams::StreamConnection stream(*this, conn);
+						try {
+							ibrcommon::clientsocket *sock = servsock.accept(peeraddr);
+							ibrcommon::socketstream conn(sock);
+							dtn::streams::StreamConnection stream(*this, conn);
 
-						// do the handshake
-						stream.handshake(dtn::data::EID("dtn:server"), 0, dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS);
+							// do the handshake
+							stream.handshake(dtn::data::EID("dtn:server"), 0, dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS);
 
-						while (conn.good())
-						{
-							dtn::data::Bundle b;
-							dtn::data::DefaultDeserializer(stream) >> b;
-							// std::cout << "server: bundle received" << std::endl;
-							recv_bundles++;
+							while (conn.good())
+							{
+								dtn::data::Bundle b;
+								dtn::data::DefaultDeserializer(stream) >> b;
+								// std::cout << "server: bundle received" << std::endl;
+								recv_bundles++;
+							}
+						} catch (std::exception &e) {
+							//CPPUNIT_FAIL(std::string("server error: ") + e.what());
+							_error = true;
 						}
-					} catch (std::exception &e) {
-						CPPUNIT_FAIL(std::string("server error: ") + e.what());
 					}
+				} catch (const ibrcommon::vsocket_interrupt &e) {
+					// excepted interruption
 				}
 			}
 		}
@@ -195,11 +201,15 @@ void TestStreamConnection::connectionUpDown()
 	protected:
 		void run() throw ()
 		{
-			while (_client.good())
-			{
-				dtn::data::Bundle b;
-				dtn::data::DefaultDeserializer(_stream) >> b;
-				// std::cout << "client: bundle received" << std::endl;
+			try {
+				while (_client.good())
+				{
+					dtn::data::Bundle b;
+					dtn::data::DefaultDeserializer(_stream) >> b;
+					// std::cout << "client: bundle received" << std::endl;
+				}
+			} catch (dtn::InvalidProtocolException &e) {
+				// allowed protocol exception on termination
 			}
 		}
 	};

@@ -43,6 +43,8 @@ class tcpstreamtest : public CPPUNIT_NS :: TestFixture
 		virtual void run() throw ();
 		virtual void __cancellation() throw ();
 
+		bool _error;
+
 	private:
 		bool _running;
 		ibrcommon::vsocket _sock;
