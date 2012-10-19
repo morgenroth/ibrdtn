@@ -83,16 +83,30 @@ typedef nl_object nl_object_header;
 
 		struct sockaddr_storage sa_addr;
 		socklen_t sa_len = sizeof(sockaddr_storage);
+		::memset(&sa_addr, 0, sa_len);
 
-		nl_addr_fill_sockaddr(naddr, (struct sockaddr*)&sa_addr, &sa_len);
+		if (nl_addr_fill_sockaddr(naddr, (struct sockaddr*)&sa_addr, &sa_len) < 0) {
+			return vaddress();
+		}
 
 		char addr_buf[256];
-		if (::getnameinfo((struct sockaddr *) &sa_addr, sa_len, addr_buf, sizeof addr_buf, 0, 0, NI_NUMERICHOST) != 0) {
+		if (::getnameinfo((struct sockaddr *) &sa_addr, sa_len, addr_buf, sizeof addr_buf, NULL, 0, NI_NUMERICHOST) != 0) {
 			// error
 			return vaddress();
 		}
 
 		std::string addrname(addr_buf);
+
+		/*
+		 * nl_addr_fill_sockaddr is does not copy the right scope id for ipv6 sockets
+		 * which is necessary for link local-local addresses. Thus we add the interface suffix to
+		 * all link-local IPv6 addresses.
+		 */
+		if ((sa_addr.ss_family == AF_INET6) && (scopename == vaddress::SCOPE_LINKLOCAL)) {
+			int ifindex = rtnl_addr_get_ifindex((struct rtnl_addr *) obj);
+			vinterface iface = LinkManager::getInstance().getInterface(ifindex);
+			addrname += "%" + iface.toString();
+		}
 
 		return vaddress(addrname, "", scopename);
 	}
