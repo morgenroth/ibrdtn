@@ -41,7 +41,6 @@ namespace ibrcommon {
 	 */
 	class basesocket {
 	public:
-		basesocket();
 		virtual ~basesocket() = 0;
 
 		/**
@@ -62,17 +61,13 @@ namespace ibrcommon {
 		 * Return the file descriptor for this socket.
 		 * @throw socket_exception if no file descriptor is available
 		 */
-		virtual int fd() const throw (socket_exception) = 0;
+		virtual int fd() const throw (socket_exception);
 
 		/**
 		 * Standard socket calls
 		 */
 		void close() throw (socket_exception);
 		void shutdown(int how) throw (socket_exception);
-		void listen(int connections) throw (socket_exception);
-//		void bind() throw (socket_exception);
-		void recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
-		void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
 
 		void set_blocking_mode(bool val) const throw (socket_exception);
 		void set_keepalive(bool val) const throw (socket_exception);
@@ -81,11 +76,22 @@ namespace ibrcommon {
 		void set_nodelay(bool val) const throw (socket_exception);
 
 	protected:
+		/**
+		 * The socket state determine if the socket file descriptor
+		 * is usable or not.
+		 */
 		enum socketstate {
-			SOCKET_DOWN,
-			SOCKET_UP,
-			SOCKET_UNMANAGED
+			SOCKET_DOWN,    //!< SOCKET_DOWN
+			SOCKET_UP,      //!< SOCKET_UP
+			SOCKET_UNMANAGED//!< SOCKET_UNMANAGED
 		};
+
+		/**
+		 * This is a protected constructor to prevent any
+		 * direct instantiation.
+		 * @param fd An existing file descriptor to use.
+		 */
+		basesocket(int fd = -1);
 
 		/**
 		 * Error check methods
@@ -93,7 +99,11 @@ namespace ibrcommon {
 		void check_socket_error(const int err) const throw (socket_exception);
 		void check_bind_error(const int err) const throw (socket_exception);
 
+		// contains the current socket state
 		socketstate _state;
+
+		// contains the file descriptor if one is available
+		int _fd;
 	};
 
 	/**
@@ -102,18 +112,39 @@ namespace ibrcommon {
 	 */
 	class clientsocket : public basesocket {
 	public:
-		clientsocket();
-		clientsocket(int fd);
+		clientsocket(int fd = -1);
 		~clientsocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
-		int fd() const throw (socket_exception);
+
+		void send(const char *data, size_t len, int flags = 0) throw (socket_exception);
+		void recv(char *data, size_t len, int flags = 0) throw (socket_exception);
+	};
+
+	class serversocket : public basesocket {
+	public:
+		~serversocket();
+		virtual void up() throw (socket_exception) = 0;
+		virtual void down() throw (socket_exception) = 0;
+
+		void listen(int connections) throw (socket_exception);
+		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception);
 
 	protected:
-		void fd(int fd);
+		serversocket(int fd = -1);
+	};
 
-	private:
-		int _fd;
+	class datagramsocket : public basesocket {
+	public:
+		~datagramsocket();
+		virtual void up() throw (socket_exception) = 0;
+		virtual void down() throw (socket_exception) = 0;
+
+		void recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
+		void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
+
+	protected:
+		datagramsocket(int fd = -1);
 	};
 
 	/**
@@ -124,8 +155,8 @@ namespace ibrcommon {
 		filesocket(int fd);
 		filesocket(const File &file);
 		~filesocket();
-		void up() throw (socket_exception);
-		void down() throw (socket_exception);
+		virtual void up() throw (socket_exception);
+		virtual void down() throw (socket_exception);
 
 	private:
 		const File _filename;
@@ -135,15 +166,12 @@ namespace ibrcommon {
 	 * A fileserversocket is bound to a specific socket
 	 * file waiting for incoming connections.
 	 */
-	class fileserversocket : public basesocket {
+	class fileserversocket : public serversocket {
 	public:
 		fileserversocket(const File &file, int listen = 0);
 		~fileserversocket();
-		void up() throw (socket_exception);
-		void down() throw (socket_exception);
-		int fd() const throw (socket_exception);
-
-		filesocket* accept() throw (socket_exception);
+		virtual void up() throw (socket_exception);
+		virtual void down() throw (socket_exception);
 
 	private:
 		const File _filename;
@@ -158,10 +186,8 @@ namespace ibrcommon {
 		tcpsocket(int fd);
 		tcpsocket(const vaddress &destination, const int port, int timeout = 0);
 		~tcpsocket();
-		void up() throw (socket_exception);
-		void down() throw (socket_exception);
-
-		void enableNoDelay() const throw (socket_exception);
+		virtual void up() throw (socket_exception);
+		virtual void down() throw (socket_exception);
 
 	private:
 		const vaddress _address;
@@ -174,45 +200,47 @@ namespace ibrcommon {
 	 * listen for incoming connections. It binds on the ANY
 	 * or a specific address.
 	 */
-	class tcpserversocket : public basesocket {
+	class tcpserversocket : public serversocket {
 	public:
 		tcpserversocket(const int port, int listen = 0);
 		tcpserversocket(const vaddress &address, const int port, int listen = 0);
 		~tcpserversocket();
-		void up() throw (socket_exception);
-		void down() throw (socket_exception);
-		int fd() const throw (socket_exception);
-
-		tcpsocket* accept() throw (socket_exception);
+		virtual void up() throw (socket_exception);
+		virtual void down() throw (socket_exception);
 
 	private:
 		const vaddress _address;
 		const int _port;
 		const int _listen;
-		int _fd;
 	};
 
 	/**
 	 * A udpsocket allows to send and receive UDP datagrams
 	 * with a bound or non-bound file descriptor.
 	 */
-	class udpsocket : public basesocket {
+	class udpsocket : public clientsocket {
 	public:
 		udpsocket(const int port = 0);
 		udpsocket(const vaddress &address, const int port = 0);
 		~udpsocket();
-		void up() throw (socket_exception);
-		void down() throw (socket_exception);
-		int fd() const throw (socket_exception);
+		virtual void up() throw (socket_exception);
+		virtual void down() throw (socket_exception);
+
+	protected:
+		const vaddress _address;
+		const int _port;
+	};
+
+	class multicastsocket : public udpsocket {
+	public:
+		multicastsocket(const int port = 0);
+		multicastsocket(const vaddress &address, const int port = 0);
+		~multicastsocket();
+		virtual void up() throw (socket_exception);
+		virtual void down() throw (socket_exception);
 
 		void join(const vaddress &group, const vinterface &iface);
 		void leave(const vaddress &group);
-
-	private:
-		const vaddress _address;
-		const int _port;
-		const int _listen;
-		int _fd;
 	};
 
 	/**
@@ -226,8 +254,6 @@ namespace ibrcommon {
 	 * @return
 	 */
 	int __linux_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
-
-	void set_fd_non_blocking(int socket, bool nonblock = true);
 }
 
 #endif /* IBRCOMMON_SOCKET_H_ */

@@ -42,7 +42,7 @@ namespace ibrcommon
 			ERROR_RESET = 5
 		};
 
-		socketstream(basesocket *sock, size_t buffer_size = 5120);
+		socketstream(clientsocket *sock, size_t buffer_size = 5120);
 		virtual ~socketstream();
 
 		void close();

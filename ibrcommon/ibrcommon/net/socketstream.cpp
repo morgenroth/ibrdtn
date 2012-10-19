@@ -23,7 +23,7 @@
 
 namespace ibrcommon
 {
-	socketstream::socketstream(basesocket *sock, size_t buffer_size)
+	socketstream::socketstream(clientsocket *sock, size_t buffer_size)
 	 : std::iostream(this), errmsg(ERROR_NONE), _bufsize(buffer_size), in_buf_(new char[buffer_size]), out_buf_(new char[buffer_size])
 	{
 		_socket.add(sock);

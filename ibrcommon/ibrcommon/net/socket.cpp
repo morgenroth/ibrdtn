@@ -81,47 +81,35 @@ namespace ibrcommon
 		return ret;
 	}
 
-	void set_fd_non_blocking(int fd, bool nonblock)
+	basesocket::basesocket(int fd)
+	 : _state(SOCKET_DOWN), _fd(fd)
 	{
-		int opts;
-		opts = fcntl(fd,F_GETFL);
-		if (opts < 0) {
-			throw socket_exception("cannot set non-blocking");
-		}
-
-		if (nonblock)
-			opts |= O_NONBLOCK;
-		else
-			opts &= ~(O_NONBLOCK);
-
-		if (fcntl(fd,F_SETFL,opts) < 0) {
-			throw socket_exception("cannot set non-blocking");
+		if (_fd <= 0) {
+			_state = SOCKET_UNMANAGED;
 		}
 	}
 
-	basesocket::basesocket()
-	 : _state(SOCKET_DOWN)
-	{ }
-
 	basesocket::~basesocket()
 	{ }
+
+	int basesocket::fd() const throw (socket_exception)
+	{
+		if (_state == SOCKET_DOWN) throw socket_exception("fd not available");
+		return _fd;
+	}
 
 	void basesocket::close() throw (socket_exception)
 	{
 		int ret = ::close(this->fd());
 		check_socket_error(ret);
+		_state = SOCKET_DOWN;
 	}
 
 	void basesocket::shutdown(int how) throw (socket_exception)
 	{
 		int ret = ::shutdown(this->fd(), how);
 		check_socket_error(ret);
-	}
-
-	void basesocket::listen(int connections) throw (socket_exception)
-	{
-		int ret = ::listen(this->fd(), connections);
-		check_socket_error(ret);
+		_state = SOCKET_DOWN;
 	}
 
 //	void basesocket::bind(const ibrcommon::vaddress &addr) throw (socket_exception)
@@ -130,21 +118,22 @@ namespace ibrcommon
 //		check_socket_error(ret);
 //	}
 
-	void basesocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
-	{
-		//int ret = ::recvfrom(this->fd(),  __buf, size_t __n, int __flags, __SOCKADDR_ARG __addr, socklen_t *__restrict __addr_len);
-		//check_socket_error(ret);
-	}
-
-	void basesocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception)
-	{
-		//int ret = ::sendto(this->fd(), __const void *__buf, size_t __n, int __flags, __CONST_SOCKADDR_ARG __addr, socklen_t __addr_len);
-		//check_socket_error(ret);
-	}
-
 	void basesocket::set_blocking_mode(bool val) const throw (socket_exception)
 	{
-		set_fd_non_blocking(this->fd(), !val);
+		int opts;
+		opts = fcntl(this->fd(), F_GETFL);
+		if (opts < 0) {
+			throw socket_exception("cannot set non-blocking");
+		}
+
+		if (val)
+			opts &= ~(O_NONBLOCK);
+		else
+			opts |= O_NONBLOCK;
+
+		if (fcntl(this->fd() ,F_SETFL,opts) < 0) {
+			throw socket_exception("cannot set non-blocking");
+		}
 	}
 
 	void basesocket::set_keepalive(bool val) const throw (socket_exception)
@@ -185,16 +174,9 @@ namespace ibrcommon
 		}
 	}
 
-	clientsocket::clientsocket()
-	 : _fd(-1)
-	{
-		_state = SOCKET_DOWN;
-	}
-
 	clientsocket::clientsocket(int fd)
-	 : _fd(fd)
+	 : basesocket(fd)
 	{
-		_state = SOCKET_UNMANAGED;
 	}
 
 	clientsocket::~clientsocket()
@@ -218,10 +200,70 @@ namespace ibrcommon
 		_state = SOCKET_DOWN;
 	}
 
-	int clientsocket::fd() const throw (socket_exception)
+	void clientsocket::send(const char *data, size_t len, int flags) throw (socket_exception)
 	{
-		if (_state == SOCKET_DOWN) throw socket_exception("fd not available");
-		return _fd;
+		int ret = ::send(this->fd(), data, len, flags);
+		check_socket_error(ret);
+	}
+
+	void clientsocket::recv(char *data, size_t len, int flags) throw (socket_exception)
+	{
+		int ret = ::recv(this->fd(), data, len, flags);
+		check_socket_error(ret);
+	}
+
+	serversocket::serversocket(int fd)
+	 : basesocket(fd)
+	{
+	}
+
+	serversocket::~serversocket()
+	{
+	}
+
+	void serversocket::listen(int connections) throw (socket_exception)
+	{
+		int ret = ::listen(this->fd(), connections);
+		check_socket_error(ret);
+	}
+
+	clientsocket* serversocket::accept(ibrcommon::vaddress &addr) throw (socket_exception)
+	{
+		int fd = this->fd();
+
+		struct sockaddr_storage cliaddr;
+		socklen_t len = sizeof(cliaddr);
+
+		int new_fd = ::accept(fd, (struct sockaddr *) &cliaddr, &len);
+
+		if (new_fd <= 0) {
+			throw socket_exception("accept failed");
+		}
+
+		// TODO: set source to addr
+
+		return new clientsocket(new_fd);
+	}
+
+	datagramsocket::datagramsocket(int fd)
+	 : basesocket(fd)
+	{
+	}
+
+	datagramsocket::~datagramsocket()
+	{
+	}
+
+	void datagramsocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
+	{
+		//int ret = ::recvfrom(this->fd(),  __buf, size_t __n, int __flags, __SOCKADDR_ARG __addr, socklen_t *__restrict __addr_len);
+		//check_socket_error(ret);
+	}
+
+	void datagramsocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception)
+	{
+		//int ret = ::sendto(this->fd(), __const void *__buf, size_t __n, int __flags, __CONST_SOCKADDR_ARG __addr, socklen_t __addr_len);
+		//check_socket_error(ret);
 	}
 
 	fileserversocket::fileserversocket(const ibrcommon::File &file, int listen)
@@ -253,35 +295,14 @@ namespace ibrcommon
 		_state = SOCKET_DOWN;
 	}
 
-	int fileserversocket::fd() const throw (socket_exception)
-	{
-		throw socket_exception("fd not available");
-	}
-
-	filesocket* fileserversocket::accept() throw (socket_exception)
-	{
-		int fd = this->fd();
-
-		struct sockaddr_storage cliaddr;
-		socklen_t len = sizeof(cliaddr);
-
-		int new_fd = ::accept(fd, (struct sockaddr *) &cliaddr, &len);
-
-		if (new_fd <= 0) {
-			throw socket_exception("accept failed");
-		}
-
-		return new filesocket(new_fd);
-	}
-
 	tcpserversocket::tcpserversocket(const int port, int listen)
-	 : _address(), _port(port), _listen(listen), _fd(-1)
+	 : _address(), _port(port), _listen(listen)
 	{
 
 	}
 
 	tcpserversocket::tcpserversocket(const ibrcommon::vaddress &address, const int port, int listen)
-	 : _address(address), _port(port), _listen(listen), _fd(-1)
+	 : _address(address), _port(port), _listen(listen)
 	{
 	}
 
@@ -313,30 +334,6 @@ namespace ibrcommon
 		this->close();
 
 		_state = SOCKET_DOWN;
-	}
-
-	int tcpserversocket::fd() const throw (socket_exception)
-	{
-		if (_state == SOCKET_DOWN)
-			throw socket_exception("fd not available");
-
-		return _fd;
-	}
-
-	tcpsocket* tcpserversocket::accept() throw (socket_exception)
-	{
-		int fd = this->fd();
-
-		struct sockaddr_storage cliaddr;
-		socklen_t len = sizeof(cliaddr);
-
-		int new_fd = ::accept(fd, (struct sockaddr *) &cliaddr, &len);
-
-		if (new_fd <= 0) {
-			throw socket_exception("accept failed");
-		}
-
-		return new tcpsocket(new_fd);
 	}
 
 	tcpsocket::tcpsocket(int fd)
@@ -403,7 +400,7 @@ namespace ibrcommon
 				}
 
 				// set the socket to non-blocking
-				ibrcommon::set_fd_non_blocking(fd);
+				this->set_blocking_mode(false);
 
 				// connect to the current address using the created socket
 				if (::connect(fd, walk->ai_addr, walk->ai_addrlen) != 0) {
@@ -426,7 +423,7 @@ namespace ibrcommon
 			//probesocket.select();
 
 			// remember the fasted socket
-			//this->fd(fd);
+			//_fd = fd;
 
 			// close all other sockets
 
@@ -448,13 +445,6 @@ namespace ibrcommon
 
 		this->close();
 		_state = SOCKET_DOWN;
-	}
-
-
-	void tcpsocket::enableNoDelay() const throw (socket_exception)
-	{
-		int set = 1;
-		::setsockopt(this->fd(), IPPROTO_TCP, TCP_NODELAY, (char *)&set, sizeof(set));
 	}
 
 	filesocket::filesocket(int fd)
@@ -486,12 +476,10 @@ namespace ibrcommon
 		 * be in the UNIX domain, and will be a
 		 * stream socket.
 		 */
-		int fd;
-		if ((fd = ::socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-			::close(fd);
+		if ((_fd = ::socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+			::close(_fd);
 			throw socket_exception("Could not create a socket.");
 		}
-		this->fd(fd);
 
 		/*
 		 * Create the address we will be connecting to.
@@ -525,7 +513,6 @@ namespace ibrcommon
 			throw socket_exception("socket is not up");
 
 		this->close();
-		_state = SOCKET_DOWN;
 	}
 
 
