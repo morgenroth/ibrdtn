@@ -44,16 +44,33 @@ namespace ibrcommon
 				{};
 			};
 
+			class service_not_set : public address_exception
+			{
+			public:
+				service_not_set(string error = "service is not specified") : address_exception(error)
+				{};
+			};
+
+			class scope_not_set : public address_exception
+			{
+			public:
+				scope_not_set(string error = "scope is not specified") : address_exception(error)
+				{};
+			};
+
 			const static std::string SCOPE_GLOBAL;
 			const static std::string SCOPE_LINKLOCAL;
 
 			vaddress();
-			vaddress(const std::string &address, const std::string &scope = "");
+			vaddress(const int port);
+			vaddress(const std::string &address, const int port);
+			vaddress(const std::string &address, const std::string &service = "", const std::string &scope = "");
 			virtual ~vaddress();
 
-			sa_family_t getFamily() const throw (address_exception);
-			std::string getScope() const throw (address_exception);
-			const std::string get() const throw (address_not_set);
+			sa_family_t family() const throw (address_exception);
+			std::string scope() const throw (scope_not_set);
+			const std::string address() const throw (address_not_set);
+			const std::string service() const throw (service_not_set);
 
 			bool operator<(const vaddress &dhs) const;
 			bool operator!=(const vaddress &obj) const;
@@ -63,6 +80,7 @@ namespace ibrcommon
 
 		private:
 			std::string _address;
+			std::string _service;
 			std::string _scope;
 	};
 }

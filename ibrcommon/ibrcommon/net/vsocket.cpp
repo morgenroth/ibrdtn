@@ -199,7 +199,7 @@ namespace ibrcommon
 		}
 	}
 
-	void vsocket::down() throw (socket_exception)
+	void vsocket::down() throw ()
 	{
 		ibrcommon::MutexLock l(_socket_lock);
 		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {

@@ -32,12 +32,28 @@ namespace ibrcommon
 	const std::string vaddress::SCOPE_LINKLOCAL = "local";
 
 	vaddress::vaddress()
-	 : _address(), _scope()
+	 : _address(), _service(), _scope()
 	{
 	}
 
-	vaddress::vaddress(const std::string &address, const std::string &scope)
-	 : _address(address), _scope(scope)
+	vaddress::vaddress(const int port)
+	 : _address(), _service(), _scope()
+	{
+		std::stringstream ss;
+		ss << port;
+		_service = ss.str();
+	}
+
+	vaddress::vaddress(const std::string &address, const int port)
+	 : _address(address), _service(), _scope()
+	{
+		std::stringstream ss;
+		ss << port;
+		_service = ss.str();
+	}
+
+	vaddress::vaddress(const std::string &address, const std::string &service, const std::string &scope)
+	 : _address(address), _service(service), _scope(scope)
 	{
 	}
 
@@ -67,7 +83,7 @@ namespace ibrcommon
 		return true;
 	}
 
-	sa_family_t vaddress::getFamily() const throw (address_exception)
+	sa_family_t vaddress::family() const throw (address_exception)
 	{
 		struct addrinfo hints;
 		memset(&hints, 0, sizeof(struct addrinfo));
@@ -77,7 +93,18 @@ namespace ibrcommon
 		struct addrinfo *res;
 		int ret = 0;
 
-		if ((ret = ::getaddrinfo(get().c_str(), NULL, &hints, &res)) != 0)
+		const char *address = NULL;
+		const char *service = NULL;
+
+		try {
+			address = this->address().c_str();
+		} catch (const vaddress::address_not_set&) { };
+
+		try {
+			service = this->service().c_str();
+		} catch (const vaddress::service_not_set&) { };
+
+		if ((ret = ::getaddrinfo(address, service, &hints, &res)) != 0)
 		{
 			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 		}
@@ -88,20 +115,45 @@ namespace ibrcommon
 		return fam;
 	}
 
-	std::string vaddress::getScope() const throw (address_exception)
+	std::string vaddress::scope() const throw (scope_not_set)
 	{
+		if (_scope.length() == 0) throw scope_not_set();
 		return _scope;
 	}
 
-	const std::string vaddress::get() const throw (address_not_set)
+	const std::string vaddress::address() const throw (address_not_set)
 	{
 		if (_address.length() == 0) throw address_not_set();
 		return _address;
 	}
 
+	const std::string vaddress::service() const throw (service_not_set)
+	{
+		if (_service.length() == 0) throw address_not_set();
+		return _service;
+	}
+
+
 	const std::string vaddress::toString() const
 	{
-		if (_address.length() == 0) return "<any>";
-		return _address;
+		std::stringstream ss;
+
+		try {
+			try {
+				std::string service = this->service();
+				ss << "[" << this->address() << "]:" + service;
+			} catch (const service_not_set&) {
+				ss << this->address();
+			}
+
+			try {
+				std::string scope = this->scope();
+				ss << " (" << scope << ")";
+			} catch (const scope_not_set&) { }
+		} catch (const address_not_set&) {
+			ss << "<any>";
+		}
+
+		return ss.str();
 	}
 }

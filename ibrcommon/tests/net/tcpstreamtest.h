@@ -27,7 +27,7 @@
 #include "ibrcommon/thread/Thread.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/thread/Conditional.h>
-#include <ibrcommon/net/socket.h>
+#include <ibrcommon/net/vsocket.h>
 
 using namespace std;
 
@@ -45,7 +45,7 @@ class tcpstreamtest : public CPPUNIT_NS :: TestFixture
 
 	private:
 		bool _running;
-		ibrcommon::tcpserversocket _srv;
+		ibrcommon::vsocket _sock;
 		int _chars;
 	};
 

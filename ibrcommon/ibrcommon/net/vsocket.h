@@ -127,7 +127,7 @@ namespace ibrcommon
 		/**
 		 * Disable all sockets and turn into the down state.
 		 */
-		void down() throw (socket_exception);
+		void down() throw ();
 
 		/**
 		 * Execute a select on all associated sockets.

@@ -37,8 +37,8 @@ void tcpclienttest :: tearDown (void)
 
 void tcpclienttest :: baseTest (void)
 {
-	ibrcommon::vaddress addr("www.google.de");
-	ibrcommon::socketstream client(new ibrcommon::tcpsocket(addr, 80));
+	ibrcommon::vaddress addr("www.google.de", 80);
+	ibrcommon::socketstream client(new ibrcommon::tcpsocket(addr));
 
 	client << "GET /" << std::flush;
 

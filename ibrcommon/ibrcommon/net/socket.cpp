@@ -326,9 +326,10 @@ namespace ibrcommon
 		}
 
 		// set source to addr
-		char str[256];
-		if (::getnameinfo((struct sockaddr *) &cliaddr, len, str, 256, 0, 0, NI_NUMERICHOST) == 0) {
-			addr = ibrcommon::vaddress(std::string(str));
+		char address[256];
+		char service[256];
+		if (::getnameinfo((struct sockaddr *) &cliaddr, len, address, sizeof address, service, sizeof service, NI_NUMERICHOST) == 0) {
+			addr = ibrcommon::vaddress(std::string(address), std::string(service));
 		}
 
 		return new_fd;
@@ -376,7 +377,7 @@ namespace ibrcommon
 		return ret;
 	}
 
-	void datagramsocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr, const int port) throw (socket_exception)
+	void datagramsocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		ssize_t ret = 0;
 		struct addrinfo hints, *res;
@@ -384,9 +385,18 @@ namespace ibrcommon
 
 		hints.ai_socktype = SOCK_DGRAM;
 
-		std::stringstream ss; ss << port; std::string port_string = ss.str();
+		const char *address = NULL;
+		const char *service = NULL;
 
-		if ((ret = ::getaddrinfo(addr.get().c_str(), port_string.c_str(), &hints, &res)) != 0)
+		try {
+			address = addr.address().c_str();
+		} catch (const vaddress::address_not_set&) { };
+
+		try {
+			service = addr.service().c_str();
+		} catch (const vaddress::address_not_set&) { };
+
+		if ((ret = ::getaddrinfo(address, service, &hints, &res)) != 0)
 		{
 			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 		}
@@ -527,12 +537,12 @@ namespace ibrcommon
 	}
 
 	tcpserversocket::tcpserversocket(const int port, int listen)
-	 : _address(), _port(port), _listen(listen)
+	 : _address(port), _listen(listen)
 	{
 	}
 
-	tcpserversocket::tcpserversocket(const ibrcommon::vaddress &address, const int port, int listen)
-	 : _address(address), _port(port), _listen(listen)
+	tcpserversocket::tcpserversocket(const ibrcommon::vaddress &address, int listen)
+	 : _address(address), _listen(listen)
 	{
 	}
 
@@ -549,7 +559,7 @@ namespace ibrcommon
 			throw socket_exception("socket is already up");
 
 		try {
-			_fd = ::socket(_address.getFamily(), SOCK_STREAM, 0);
+			_fd = ::socket(_address.family(), SOCK_STREAM, 0);
 		} catch (const vaddress::address_exception&) {
 			// address not set, use IPv6 as default family
 			_fd = ::socket(AF_INET6, SOCK_STREAM, 0);
@@ -559,13 +569,8 @@ namespace ibrcommon
 		//this->set_blocking_mode(false);
 		//this->set_linger(true);
 
-		try {
-			// try to bind on port + address
-			this->bind(_address, _port);
-		} catch (const vaddress::address_exception&) {
-			// address not set, bind to port only
-			this->bind(_port);
-		}
+		// try to bind on port and/or address
+		this->bind(_address);
 
 		this->listen(_listen);
 
@@ -580,7 +585,7 @@ namespace ibrcommon
 		this->close();
 	}
 
-	void tcpserversocket::bind(const vaddress &addr, int port) throw (socket_exception, vaddress::address_not_set)
+	void tcpserversocket::bind(const vaddress &addr) throw (socket_exception)
 	{
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
@@ -589,47 +594,18 @@ namespace ibrcommon
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_flags = AI_PASSIVE;
 
-		std::stringstream port_ss; port_ss << port;
+		const char *address = NULL;
+		const char *service = NULL;
 
-		if (0 != ::getaddrinfo(addr.get().c_str(), port_ss.str().c_str(), &hints, &res))
-			throw socket_exception("failed to getaddrinfo with address: " + addr.toString() + " and port " + port_ss.str());
+		try {
+			address = addr.address().c_str();
+		} catch (const vaddress::address_not_set&) { };
 
-		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
+		try {
+			service = addr.service().c_str();
+		} catch (const vaddress::address_not_set&) { };
 
-		check_bind_error(ret);
-	}
-
-	void tcpserversocket::bind(int port) throw (socket_exception)
-	{
-		struct addrinfo hints, *res;
-		memset(&hints, 0, sizeof hints);
-
-		hints.ai_family = AF_INET6;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_PASSIVE;
-
-		std::stringstream port_ss; port_ss << port;
-
-		if (0 != ::getaddrinfo(NULL, port_ss.str().c_str(), &hints, &res))
-			throw socket_exception("failed to getaddrinfo with port " + port_ss.str());
-
-		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
-
-		check_bind_error(ret);
-	}
-
-	void tcpserversocket::bind(const vaddress &addr) throw (socket_exception, vaddress::address_not_set)
-	{
-		struct addrinfo hints, *res;
-		memset(&hints, 0, sizeof hints);
-
-		hints.ai_family = PF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_PASSIVE;
-
-		if (0 != ::getaddrinfo(addr.get().c_str(), NULL, &hints, &res))
+		if (0 != ::getaddrinfo(address, service, &hints, &res))
 			throw socket_exception("failed to getaddrinfo with address: " + addr.toString());
 
 		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
@@ -644,13 +620,13 @@ namespace ibrcommon
 	}
 
 	tcpsocket::tcpsocket(int fd)
-	 : clientsocket(fd), _port(0)
+	 : clientsocket(fd)
 	{
 		timerclear(&_timeout);
 	}
 
-	tcpsocket::tcpsocket(const ibrcommon::vaddress &destination, const int port, const timeval *timeout)
-	 : _address(destination), _port(port)
+	tcpsocket::tcpsocket(const ibrcommon::vaddress &destination, const timeval *timeout)
+	 : _address(destination)
 	{
 		if (timeout != NULL) {
 			::memcpy(&_timeout, timeout, sizeof _timeout);
@@ -678,9 +654,18 @@ namespace ibrcommon
 		struct addrinfo *res;
 		int ret;
 
-		std::stringstream ss; ss << _port; std::string port_string = ss.str();
+		const char *address = NULL;
+		const char *service = NULL;
 
-		if ((ret = ::getaddrinfo(_address.get().c_str(), port_string.c_str(), &hints, &res)) != 0)
+		try {
+			address = _address.address().c_str();
+		} catch (const vaddress::address_not_set&) { };
+
+		try {
+			service = _address.service().c_str();
+		} catch (const vaddress::service_not_set&) { };
+
+		if ((ret = ::getaddrinfo(address, service, &hints, &res)) != 0)
 		{
 			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 		}
@@ -828,13 +813,8 @@ namespace ibrcommon
 		this->close();
 	}
 
-	udpsocket::udpsocket(const int port)
-	 : _port(port)
-	{
-	}
-
-	udpsocket::udpsocket(const vaddress &address, const int port)
-	 : _address(address), _port(port)
+	udpsocket::udpsocket(const vaddress &address)
+	 : _address(address)
 	{
 	}
 
@@ -851,30 +831,22 @@ namespace ibrcommon
 			throw socket_exception("socket is already up");
 
 		try {
-			_fd = ::socket(_address.getFamily(), SOCK_DGRAM, 0);
+			_fd = ::socket(_address.family(), SOCK_DGRAM, 0);
 		} catch (const vaddress::address_exception&) {
 			// address not set, use IPv6 as default family
 			_fd = ::socket(AF_INET6, SOCK_DGRAM, 0);
 		}
 
-		if (_port == 0) {
-			try {
-				// try to bind on address
-				this->bind(_address);
-			} catch (const vaddress::address_exception&) {
-				// address not set, do not bind to anything
-			}
-		} else {
-			this->set_reuseaddr(true);
+		try {
+			// test if the service is defined
+			std::string service = _address.service();
 
-			try {
-				// try to bind on port + address
-				this->bind(_address, _port);
-			} catch (const vaddress::address_exception&) {
-				// address not set, bind to port only
-				this->bind(_port);
-			}
-		}
+			// service is defined, enable reuseaddr option
+			this->set_reuseaddr(true);
+		} catch (const vaddress::address_exception&) { }
+
+		// try to bind on port and/or address
+		this->bind(_address);
 
 		_state = SOCKET_UP;
 	}
@@ -887,7 +859,7 @@ namespace ibrcommon
 		this->close();
 	}
 
-	void udpsocket::bind(const vaddress &addr, int port) throw (socket_exception, vaddress::address_not_set)
+	void udpsocket::bind(const vaddress &addr) throw (socket_exception)
 	{
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
@@ -895,45 +867,18 @@ namespace ibrcommon
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
 
-		std::stringstream port_ss; port_ss << port;
+		const char *address = NULL;
+		const char *service = NULL;
 
-		if (0 != ::getaddrinfo(addr.get().c_str(), port_ss.str().c_str(), &hints, &res))
-			throw socket_exception("failed to getaddrinfo with address: " + addr.toString() + " and port " + port_ss.str());
+		try {
+			address = _address.address().c_str();
+		} catch (const vaddress::address_not_set&) { };
 
-		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
+		try {
+			service = _address.service().c_str();
+		} catch (const vaddress::service_not_set&) { };
 
-		check_bind_error(ret);
-	}
-
-	void udpsocket::bind(int port) throw (socket_exception)
-	{
-		struct addrinfo hints, *res;
-		memset(&hints, 0, sizeof hints);
-
-		hints.ai_family = PF_UNSPEC;
-		hints.ai_socktype = SOCK_DGRAM;
-
-		std::stringstream port_ss; port_ss << port;
-
-		if (0 != ::getaddrinfo(NULL, port_ss.str().c_str(), &hints, &res))
-			throw socket_exception("failed to getaddrinfo with port " + port_ss.str());
-
-		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
-
-		check_bind_error(ret);
-	}
-
-	void udpsocket::bind(const vaddress &addr) throw (socket_exception, vaddress::address_not_set)
-	{
-		struct addrinfo hints, *res;
-		memset(&hints, 0, sizeof hints);
-
-		hints.ai_family = PF_UNSPEC;
-		hints.ai_socktype = SOCK_DGRAM;
-
-		if (0 != ::getaddrinfo(addr.get().c_str(), NULL, &hints, &res))
+		if (0 != ::getaddrinfo(address, service, &hints, &res))
 			throw socket_exception("failed to getaddrinfo with address: " + addr.toString());
 
 		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
@@ -942,13 +887,8 @@ namespace ibrcommon
 		check_bind_error(ret);
 	}
 
-	multicastsocket::multicastsocket(const int port)
-	 : udpsocket(port)
-	{
-	}
-
-	multicastsocket::multicastsocket(const vaddress &address, const int port)
-	 : udpsocket(address, port)
+	multicastsocket::multicastsocket(const vaddress &address)
+	 : udpsocket(address)
 	{
 	}
 
@@ -1044,20 +984,20 @@ namespace ibrcommon
 
 	void multicastsocket::join(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-		if (get_family() != group.getFamily())
+		if (get_family() != group.family())
 			throw socket_exception("family does not match");
 
-		switch (group.getFamily()) {
+		switch (group.family()) {
 			case AF_INET:
 			{
 				struct sockaddr_in mcast_addr;
 				::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
 				// set the family of the multicast address
-				mcast_addr.sin_family = group.getFamily();
+				mcast_addr.sin_family = group.family();
 
 				// convert the group address
-				if ( ::inet_pton(group.getFamily(), group.get().c_str(), &(mcast_addr.sin_addr)) < 0 )
+				if ( ::inet_pton(group.family(), group.address().c_str(), &(mcast_addr.sin_addr)) < 0 )
 				{
 					throw socket_exception("can not transform multicast address with inet_pton()");
 				}
@@ -1084,10 +1024,10 @@ namespace ibrcommon
 				::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
 				// set the family of the multicast address
-				mcast_addr.sin6_family = group.getFamily();
+				mcast_addr.sin6_family = group.family();
 
 				// convert the group address
-				if ( ::inet_pton(group.getFamily(), group.get().c_str(), &(mcast_addr.sin6_addr)) < 0 )
+				if ( ::inet_pton(group.family(), group.address().c_str(), &(mcast_addr.sin6_addr)) < 0 )
 				{
 					throw socket_exception("can not transform multicast address with inet_pton()");
 				}
@@ -1118,20 +1058,20 @@ namespace ibrcommon
 
 	void multicastsocket::leave(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-		if (get_family() != group.getFamily())
+		if (get_family() != group.family())
 			throw socket_exception("family does not match");
 
-		switch (group.getFamily()) {
+		switch (group.family()) {
 			case AF_INET:
 			{
 				struct sockaddr_in mcast_addr;
 				::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
 				// set the family of the multicast address
-				mcast_addr.sin_family = group.getFamily();
+				mcast_addr.sin_family = group.family();
 
 				// convert the group address
-				if ( ::inet_pton(group.getFamily(), group.get().c_str(), &(mcast_addr.sin_addr)) < 0 )
+				if ( ::inet_pton(group.family(), group.address().c_str(), &(mcast_addr.sin_addr)) < 0 )
 				{
 					throw socket_exception("can not transform multicast address with inet_pton()");
 				}
@@ -1158,10 +1098,10 @@ namespace ibrcommon
 				::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
 				// set the family of the multicast address
-				mcast_addr.sin6_family = group.getFamily();
+				mcast_addr.sin6_family = group.family();
 
 				// convert the group address
-				if ( ::inet_pton(group.getFamily(), group.get().c_str(), &(mcast_addr.sin6_addr)) < 0 )
+				if ( ::inet_pton(group.family(), group.address().c_str(), &(mcast_addr.sin6_addr)) < 0 )
 				{
 					throw socket_exception("can not transform multicast address with inet_pton()");
 				}

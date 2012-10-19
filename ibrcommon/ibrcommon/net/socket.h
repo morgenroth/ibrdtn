@@ -229,7 +229,7 @@ namespace ibrcommon {
 		virtual void down() throw (socket_exception) = 0;
 
 		size_t recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
-		void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr, const int port = 0) throw (socket_exception);
+		void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
 
 	protected:
 		datagramsocket();
@@ -278,14 +278,13 @@ namespace ibrcommon {
 	class tcpsocket : public clientsocket {
 	public:
 		tcpsocket(int fd);
-		tcpsocket(const vaddress &destination, const int port, const timeval *timeout = NULL);
+		tcpsocket(const vaddress &destination, const timeval *timeout = NULL);
 		virtual ~tcpsocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
 	private:
 		const vaddress _address;
-		const int _port;
 		timeval _timeout;
 	};
 
@@ -297,7 +296,7 @@ namespace ibrcommon {
 	class tcpserversocket : public serversocket {
 	public:
 		tcpserversocket(const int port, int listen = 0);
-		tcpserversocket(const vaddress &address, const int port, int listen = 0);
+		tcpserversocket(const vaddress &address, int listen = 0);
 		virtual ~tcpserversocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
@@ -305,13 +304,10 @@ namespace ibrcommon {
 		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception);
 
 	protected:
-		void bind(int port) throw (socket_exception);
-		void bind(const vaddress &addr) throw (socket_exception, vaddress::address_not_set);
-		void bind(const vaddress &addr, int port) throw (socket_exception, vaddress::address_not_set);
+		void bind(const vaddress &addr) throw (socket_exception);
 
 	private:
 		const vaddress _address;
-		const int _port;
 		const int _listen;
 	};
 
@@ -321,25 +317,20 @@ namespace ibrcommon {
 	 */
 	class udpsocket : public datagramsocket {
 	public:
-		udpsocket(const int port = 0);
-		udpsocket(const vaddress &address, const int port = 0);
+		udpsocket(const vaddress &address);
 		virtual ~udpsocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
 	protected:
-		void bind(int port) throw (socket_exception);
-		void bind(const vaddress &addr) throw (socket_exception, vaddress::address_not_set);
-		void bind(const vaddress &addr, int port) throw (socket_exception, vaddress::address_not_set);
+		void bind(const vaddress &addr) throw (socket_exception);
 
 		const vaddress _address;
-		const int _port;
 	};
 
 	class multicastsocket : public udpsocket {
 	public:
-		multicastsocket(const int port = 0);
-		multicastsocket(const vaddress &address, const int port = 0);
+		multicastsocket(const vaddress &address);
 		virtual ~multicastsocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);

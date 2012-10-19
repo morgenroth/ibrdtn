@@ -35,34 +35,39 @@ void tcpstreamtest :: tearDown (void)
 
 void tcpstreamtest :: baseTest (void)
 {
+	StreamChecker _checker(4343, 10);
+
+	// start the streamchecker
+	_checker.start();
+
 	for (int i = 0; i < 10; i++)
 	{
 		runTest();
 	}
+
+	_checker.stop();
+	_checker.join();
 }
 
 tcpstreamtest::StreamChecker::StreamChecker(int port, int chars)
- : _running(true), _srv(port), _chars(chars)
+ : _running(true), _chars(chars)
 {
+	_sock.add(new ibrcommon::tcpserversocket(port));
 }
 
 tcpstreamtest::StreamChecker::~StreamChecker()
 {
 	join();
+	_sock.destroy();
 }
 
 void tcpstreamtest::runTest()
 {
-	StreamChecker _checker(4343, 10);
-
 	char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
-	// start the streamchecker
-	_checker.start();
-
 	try {
-		ibrcommon::vaddress addr("localhost");
-		ibrcommon::socketstream client(new ibrcommon::tcpsocket(addr, 4343));
+		ibrcommon::vaddress addr("::1", 4343);
+		ibrcommon::socketstream client(new ibrcommon::tcpsocket(addr));
 
 		// send some data
 		for (size_t j = 0; j < 20; j++)
@@ -78,63 +83,72 @@ void tcpstreamtest::runTest()
 
 		client.flush();
 		client.close();
-	} catch (const ibrcommon::socket_exception&) { };
-
-	_checker.stop();
-	_checker.join();
+	} catch (const ibrcommon::socket_exception &e) {
+		CPPUNIT_FAIL(std::string("client error: ") + e.what());
+	};
 }
 
 void tcpstreamtest::StreamChecker::__cancellation()
 {
 	_running = false;
-	try {
-		_srv.close();
-	} catch (const ibrcommon::socket_exception&) {};
+	_sock.down();
 }
 
 void tcpstreamtest::StreamChecker::setup() {
-	_srv.up();
+	_running = true;
+	_sock.up();
 }
 
 void tcpstreamtest::StreamChecker::run()
 {
 	char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-	int byte = 0;
-
 	ibrcommon::clientsocket *socket = NULL;
 
 	while (_running) {
 		try {
-			ibrcommon::vaddress source;
-			socket = _srv.accept(source);
+			ibrcommon::socketset fds;
+			_sock.select(&fds, NULL, NULL, NULL);
 
-			CPPUNIT_ASSERT(socket != NULL);
-
-			// create a new stream
-			ibrcommon::socketstream stream(socket);
-
-			while (stream.good())
+			for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
 			{
-				char value;
+				ibrcommon::serversocket &srv = dynamic_cast<ibrcommon::serversocket&>(**iter);
+				ibrcommon::vaddress source;
+				socket = srv.accept(source);
 
-				// read one char
-				stream.get(value);
+				std::cout << "connection accepted from " << source.toString() << std::endl;
 
-				if ((value != values[byte % _chars]) && stream.good())
+				CPPUNIT_ASSERT(socket != NULL);
+
+				int byte = 0;
+
+				// create a new stream
+				ibrcommon::socketstream stream(socket);
+
+				while (stream.good())
 				{
-					cout << "error in byte " << byte << ", " << value << " != " << values[byte % _chars] << endl;
-					break;
+					char value;
+
+					// read one char
+					stream.get(value);
+
+					if ((value != values[byte % _chars]) && stream.good())
+					{
+						cout << "error in byte " << byte << ", " << value << " != " << values[byte % _chars] << endl;
+						break;
+					}
+
+					byte++;
 				}
 
-				byte++;
+				// connection should be closed
+				CPPUNIT_ASSERT(stream.errmsg == ibrcommon::ERROR_CLOSED);
+
+				stream.close();
+
+				CPPUNIT_ASSERT(byte == 20000001);
 			}
-
-			// connection should be closed
-			CPPUNIT_ASSERT(stream.errmsg == ibrcommon::ERROR_CLOSED);
-
-			stream.close();
-		} catch (const ibrcommon::Exception&) { };
+		} catch (const ibrcommon::Exception &e) {
+			CPPUNIT_FAIL(std::string("server error: ") + e.what());
+		};
 	}
-
-	CPPUNIT_ASSERT(byte == 20000001);
 }
