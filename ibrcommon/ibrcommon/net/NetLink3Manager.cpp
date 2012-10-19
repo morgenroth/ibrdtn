@@ -68,44 +68,87 @@ namespace ibrcommon
 		}
 	}
 
+	NetLink3Manager::netlink_socket::netlink_socket()
+	 : _nl_socket(NULL)
+	{
+	}
+
+	NetLink3Manager::netlink_socket::~netlink_socket()
+	{
+	}
+
+	void NetLink3Manager::netlink_socket::up() throw (socket_exception)
+	{
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up");
+
+		_nl_socket = nl_socket_alloc();
+		if (_nl_socket == NULL)
+			throw socket_exception("netlink initialisation failed");
+
+		_state = SOCKET_UP;
+	}
+
+	void NetLink3Manager::netlink_socket::down() throw (socket_exception)
+	{
+		if (_state != SOCKET_UP)
+			throw socket_exception("socket is not up");
+
+		nl_socket_free(_nl_socket);
+
+		_state = SOCKET_DOWN;
+	}
+
+	int NetLink3Manager::netlink_socket::fd() const throw (socket_exception)
+	{
+		if (_state == SOCKET_DOWN) throw socket_exception("fd not available");
+		return nl_socket_get_fd(_nl_socket);
+	}
+
+	struct nl_sock* NetLink3Manager::netlink_socket::operator*() throw (socket_exception)
+	{
+		if (_state == SOCKET_DOWN) throw socket_exception("socket not available");
+		return _nl_socket;
+	}
+
 	NetLink3Manager::NetLink3Manager()
 	 : _refresh_cache(false), _running(true), _sock(NULL)
 	{
 		// initialize the sockets
-		_nl_notify_sock = nl_socket_alloc();
-		_nl_query_sock = nl_socket_alloc();
+		_nl_notify_sock.up();
+		_nl_query_sock.up();
 
 		// disable seq check for notify socket
-		nl_socket_disable_seq_check(_nl_notify_sock);
+		nl_socket_disable_seq_check(*_nl_notify_sock);
 
 		// define callback method
-		nl_socket_modify_cb(_nl_notify_sock, NL_CB_VALID, NL_CB_CUSTOM, nl3_callback, this);
+		nl_socket_modify_cb(*_nl_notify_sock, NL_CB_VALID, NL_CB_CUSTOM, nl3_callback, this);
 
 		// connect to routing netlink protocol
-		nl_connect(_nl_notify_sock, NETLINK_ROUTE);
-		nl_connect(_nl_query_sock, NETLINK_ROUTE);
+		nl_connect(*_nl_notify_sock, NETLINK_ROUTE);
+		nl_connect(*_nl_query_sock, NETLINK_ROUTE);
 
 		// init route messages
-		nl_socket_add_memberships(_nl_notify_sock, RTNLGRP_IPV4_IFADDR);
+		nl_socket_add_memberships(*_nl_notify_sock, RTNLGRP_IPV4_IFADDR);
 
 //		IPv6 requires further support in the parsing procedures!
 //		nl_socket_add_membership(_nl_notify_sock, RTNLGRP_IPV6_IFADDR);
-		nl_socket_add_memberships(_nl_notify_sock, RTNLGRP_LINK);
+		nl_socket_add_memberships(*_nl_notify_sock, RTNLGRP_LINK);
 
 		// create a cache for the links
-		if (rtnl_link_alloc_cache(_nl_query_sock, AF_UNSPEC, &_link_cache) < 0)
+		if (rtnl_link_alloc_cache(*_nl_query_sock, AF_UNSPEC, &_link_cache) < 0)
 		{
-			nl_socket_free(_nl_notify_sock);
-			nl_socket_free(_nl_query_sock);
+			_nl_notify_sock.down();
+			_nl_query_sock.down();
 			// error
 			throw ibrcommon::socket_exception("netlink cache allocation failed");
 		}
 
 		// create a cache for addresses
-		if (rtnl_addr_alloc_cache(_nl_query_sock, &_addr_cache) < 0)
+		if (rtnl_addr_alloc_cache(*_nl_query_sock, &_addr_cache) < 0)
 		{
-			nl_socket_free(_nl_notify_sock);
-			nl_socket_free(_nl_query_sock);
+			_nl_notify_sock.down();
+			_nl_query_sock.down();
 			// error
 			nl_cache_free(_link_cache);
 			_link_cache = NULL;
@@ -127,8 +170,8 @@ namespace ibrcommon
 		nl_cache_free(_addr_cache);
 		nl_cache_free(_link_cache);
 
-		nl_socket_free(_nl_notify_sock);
-		nl_socket_free(_nl_query_sock);
+		_nl_notify_sock.down();
+		_nl_query_sock.down();
 	}
 
 	const std::string NetLink3Manager::getInterface(int index) const
@@ -148,14 +191,14 @@ namespace ibrcommon
 			nl_cache_free(_link_cache);
 
 			// create a cache for the links
-			if (rtnl_link_alloc_cache(_nl_query_sock, AF_UNSPEC, &_link_cache) < 0)
+			if (rtnl_link_alloc_cache(*_nl_query_sock, AF_UNSPEC, &_link_cache) < 0)
 			{
 				// error
 				throw ibrcommon::socket_exception("netlink cache allocation failed");
 			}
 
 			// create a cache for addresses
-			if (rtnl_addr_alloc_cache(_nl_query_sock, &_addr_cache) < 0)
+			if (rtnl_addr_alloc_cache(*_nl_query_sock, &_addr_cache) < 0)
 			{
 				// error
 				nl_cache_free(_link_cache);
@@ -219,15 +262,15 @@ namespace ibrcommon
 	void NetLink3Manager::run()
 	{
 		// add netlink fd to vsocket
-		_sock->add(new clientsocket(nl_socket_get_fd(_nl_notify_sock)));
+		_sock->add(&_nl_notify_sock);
 
 		try {
 			while (_running)
 			{
-				std::list<basesocket*> socks;
-				_sock->select(socks, NULL);
+				std::set<basesocket*> socks;
+				_sock->select(&socks, NULL, NULL, NULL);
 
-				nl_recvmsgs_default(_nl_notify_sock);
+				nl_recvmsgs_default(*_nl_notify_sock);
 			}
 		} catch (const socket_exception&) {
 			// stopped / interrupted

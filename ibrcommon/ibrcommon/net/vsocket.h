@@ -116,10 +116,10 @@ namespace ibrcommon
 
 		/**
 		 * Execute a select on all associated sockets.
-		 * @param fds
+		 * @param callback
 		 * @param tv
 		 */
-		void select(std::list<basesocket*> &sockets, struct timeval *tv = NULL);
+		void select(std::set<basesocket*> *readset, std::set<basesocket*> *writeset, std::set<basesocket*> *errorset, struct timeval *tv = NULL) throw (socket_exception);
 
 //
 //		std::set<int> bind(const vaddress &address, const int port, unsigned int socktype = SOCK_STREAM);
@@ -177,7 +177,24 @@ namespace ibrcommon
 //
 //		void setEventCallback(ibrcommon::LinkManager::EventCallback *cb);
 //
-//	private:
+	private:
+		class pipesocket : public basesocket
+		{
+		public:
+			pipesocket();
+			virtual ~pipesocket();
+			virtual void up() throw (socket_exception);
+			virtual void down() throw (socket_exception);
+
+			void read(char *buf, size_t len) throw (socket_exception);
+			void write(const char *buf, size_t len) throw (socket_exception);
+
+			int getOutput() const throw (socket_exception);
+
+		private:
+			int _output_fd;
+		};
+
 //		class vbind
 //		{
 //		public:
@@ -242,7 +259,7 @@ namespace ibrcommon
 //
 //		int bind(const vsocket::vbind &b);
 //		void refresh();
-//		void interrupt();
+		void interrupt();
 //		void process_unbind_queue();
 //
 //		ibrcommon::Mutex _bind_lock;
@@ -258,7 +275,17 @@ namespace ibrcommon
 //		bool _interrupt;
 //
 		//bool rebind;
-		int _interrupt_pipe[2];
+
+
+		ibrcommon::Mutex _socket_lock;
+		std::set<basesocket*> _sockets;
+
+		pipesocket _pipe;
+
+		// if this flag is set all selects call
+		// will be aborted
+		bool _interrupt_flag;
+
 //
 //		ibrcommon::Queue<vbind> _unbind_queue;
 //

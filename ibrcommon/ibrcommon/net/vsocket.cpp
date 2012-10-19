@@ -41,27 +41,81 @@
 
 namespace ibrcommon
 {
-	vsocket::vsocket()
+	vsocket::pipesocket::pipesocket()
+	 : _output_fd(-1)
+	{ }
+
+	vsocket::pipesocket::~pipesocket()
 	{
+	}
+
+	int vsocket::pipesocket::getOutput() const throw (socket_exception)
+	{
+		if (_state == SOCKET_DOWN) throw socket_exception("output fd not available");
+		return _output_fd;
+	}
+
+	void vsocket::pipesocket::up() throw (socket_exception)
+	{
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up");
+
+		int pipe_fds[2];
+
 		// create a pipe for interruption
-		if (pipe(_interrupt_pipe) < 0)
+		if (::pipe(pipe_fds) < 0)
 		{
 			IBRCOMMON_LOGGER(error) << "Error " << errno << " creating pipe" << IBRCOMMON_LOGGER_ENDL;
-			throw vsocket_exception("failed to create pipe");
+			throw socket_exception("failed to create pipe");
 		}
 
-		// set the pipe to non-blocking
-		vsocket::set_non_blocking(_interrupt_pipe[0]);
-		vsocket::set_non_blocking(_interrupt_pipe[1]);
+		_fd = pipe_fds[0];
+		_output_fd = pipe_fds[1];
+
+		this->set_blocking_mode(false);
+		this->set_blocking_mode(false, _output_fd);
+
+		_state = SOCKET_UP;
+	}
+
+	void vsocket::pipesocket::down() throw (socket_exception)
+	{
+		if (_state != SOCKET_UP)
+			throw socket_exception("socket is not up");
+
+		this->close();
+		::close(_output_fd);
+		_state = SOCKET_DOWN;
+	}
+
+	void vsocket::pipesocket::read(char *buf, size_t len) throw (socket_exception)
+	{
+		int ret = ::read(this->fd(), buf, len);
+		if (ret == -1)
+			throw socket_exception("read error");
+		if (ret == 0)
+			throw socket_exception("end of file");
+	}
+
+	void vsocket::pipesocket::write(const char *buf, size_t len) throw (socket_exception)
+	{
+		int ret = ::write(_output_fd, buf, len);
+		if (ret == -1)
+			throw socket_exception("write error");
+	}
+
+
+	vsocket::vsocket()
+	 : _interrupt_flag(false)
+	{
+		_pipe.up();
 	}
 
 	vsocket::~vsocket()
 	{
 		ibrcommon::LinkManager::getInstance().unregisterAllEvents(this);
 
-		// close all used pipes
-		::close(_interrupt_pipe[0]);
-		::close(_interrupt_pipe[1]);
+		_pipe.down();
 	}
 
 //	int vsocket::bind(const vsocket::vbind &b)
@@ -297,19 +351,18 @@ namespace ibrcommon
 //		_groups.erase(group);
 //	}
 //
-//	void vsocket::close()
-//	{
-//		ibrcommon::MutexLock l(_bind_lock);
-//		for (std::list<ibrcommon::vsocket::vbind>::iterator iter = _binds.begin();
-//				iter != _binds.end(); iter++)
-//		{
-//			ibrcommon::vsocket::vbind &bind = (*iter);
-//			bind.close();
-//			_binds.erase(iter++);
-//		}
-//
-//		interrupt();
-//	}
+	void vsocket::close()
+	{
+		ibrcommon::MutexLock l(_socket_lock);
+		for (std::set<basesocket*>::iterator iter = _sockets.begin();
+				iter != _sockets.end(); iter++)
+		{
+			basesocket *sock = (*iter);
+			sock->down();
+		}
+
+		interrupt();
+	}
 //
 //	void vsocket::shutdown()
 //	{
@@ -474,98 +527,121 @@ namespace ibrcommon
 //		::write(_interrupt_pipe[1], "i", 1);
 //	}
 //
-//	void vsocket::interrupt()
-//	{
-//		_interrupt = true;
-//		::write(_interrupt_pipe[1], "i", 1);
-//	}
-//
-//	void vsocket::select(std::list<int> &fds, struct timeval *tv)
-//	{
-//		fd_set fds_read;
-//
-//		int high_fd = 0;
-//		int fd_count = 0;
-//
-//		// clear the fds list
-//		fds.clear();
-//
-//		while (true)
-//		{
-//			FD_ZERO(&fds_read);
-//
-//			// add the self-pipe-trick interrupt fd
-//			FD_SET(_interrupt_pipe[0], &fds_read);
-//			high_fd = _interrupt_pipe[0];
-//
-//			{
-//				ibrcommon::MutexLock l(_bind_lock);
-//				std::list<ibrcommon::vsocket::vbind> &socks = _binds;
-//				for (std::list<ibrcommon::vsocket::vbind>::iterator iter = socks.begin();
-//						iter != socks.end(); iter++)
-//				{
-//					ibrcommon::vsocket::vbind &bind = (*iter);
-//
-//					FD_SET(bind._fd, &fds_read);
-//					if (high_fd < bind._fd) high_fd = bind._fd;
-//
-//					fd_count++;
-//				}
-//			}
-//
-//			if (fd_count == 0)
-//				throw vsocket_exception("select error");
-//
-//			int res = __linux_select(high_fd + 1, &fds_read, NULL, NULL, tv);
-//
-//			if (res < 0)
-//				throw vsocket_exception("select error");
-//
-//			if (res == 0)
-//				throw vsocket_timeout("select timeout");
-//
-//			if (FD_ISSET(_interrupt_pipe[0], &fds_read))
-//			{
-//				IBRCOMMON_LOGGER_DEBUG(25) << "unblocked by self-pipe-trick" << IBRCOMMON_LOGGER_ENDL;
-//
-//				// this was an interrupt with the self-pipe-trick
-//				char buf[2];
-//				::read(_interrupt_pipe[0], buf, 2);
-//
+	void vsocket::interrupt()
+	{
+		_interrupt_flag = true;
+		_pipe.write("i", 1);
+	}
+
+	void vsocket::select(std::set<basesocket*> *readset, std::set<basesocket*> *writeset, std::set<basesocket*> *errorset, struct timeval *tv) throw (socket_exception)
+	{
+		fd_set fds_read;
+		fd_set fds_write;
+		fd_set fds_error;
+
+		int high_fd = 0;
+
+		while (true)
+		{
+			FD_ZERO(&fds_read);
+			FD_ZERO(&fds_write);
+			FD_ZERO(&fds_error);
+
+			// add the self-pipe-trick interrupt fd
+			FD_SET(_pipe.fd(), &fds_read);
+			high_fd = _pipe.fd();
+
+			{
+				ibrcommon::MutexLock l(_socket_lock);
+				for (std::set<basesocket*>::iterator iter = _sockets.begin();
+						iter != _sockets.end(); iter++)
+				{
+					basesocket &sock = (**iter);
+
+					if (readset != NULL) {
+						FD_SET(sock.fd(), &fds_read);
+						if (high_fd < sock.fd()) high_fd = sock.fd();
+					}
+
+					if (writeset != NULL) {
+						FD_SET(sock.fd(), &fds_write);
+						if (high_fd < sock.fd()) high_fd = sock.fd();
+					}
+
+					if (errorset != NULL) {
+						FD_SET(sock.fd(), &fds_error);
+						if (high_fd < sock.fd()) high_fd = sock.fd();
+					}
+				}
+			}
+
+			// call the linux-like select with given timeout
+			int res = __linux_select(high_fd + 1, &fds_read, &fds_write, &fds_error, tv);
+
+			if (res < 0)
+				throw socket_exception("select error");
+
+			if (res == 0)
+				throw vsocket_timeout("select timeout");
+
+			if (FD_ISSET(_pipe.fd(), &fds_read))
+			{
+				IBRCOMMON_LOGGER_DEBUG(25) << "unblocked by self-pipe-trick" << IBRCOMMON_LOGGER_ENDL;
+
+				// this was an interrupt with the self-pipe-trick
+				char buf[2];
+				_pipe.read(buf, 2);
+
 //				// process the unbind queue
 //				process_unbind_queue();
 //
 //				// listen on all new binds
 //				relisten();
-//
-//				// interrupt the method if requested
-//				if (_interrupt)
-//				{
-//					_interrupt = false;
-//					throw vsocket_interrupt("select interrupted");
-//				}
-//
-//				// start over with the select call
-//				continue;
-//			}
-//
-//			ibrcommon::MutexLock l(_bind_lock);
-//			std::list<ibrcommon::vsocket::vbind> &socks = _binds;
-//			for (std::list<ibrcommon::vsocket::vbind>::iterator iter = socks.begin();
-//					iter != socks.end(); iter++)
-//			{
-//				ibrcommon::vsocket::vbind &bind = (*iter);
-//
-//				if (FD_ISSET(bind._fd, &fds_read))
-//				{
-//					fds.push_back(bind._fd);
-//				}
-//			}
-//
-//			if (fds.size() > 0) return;
-//		}
-//	}
-//
+
+				// interrupt the method if requested
+				if (_interrupt_flag)
+				{
+					// clear the abort flag
+					_interrupt_flag = false;
+					throw vsocket_interrupt("select interrupted");
+				}
+
+				// start over with the select call
+				continue;
+			}
+
+			ibrcommon::MutexLock l(_socket_lock);
+			for (std::set<basesocket*>::iterator iter = _sockets.begin();
+					iter != _sockets.end(); iter++)
+			{
+				basesocket *sock = (*iter);
+
+				if (readset != NULL) {
+					if (FD_ISSET(sock->fd(), &fds_read))
+					{
+						readset->insert(sock);
+					}
+				}
+
+				if (writeset != NULL) {
+					if (FD_ISSET(sock->fd(), &fds_write))
+					{
+						writeset->insert(sock);
+					}
+				}
+
+				if (errorset != NULL) {
+					if (FD_ISSET(sock->fd(), &fds_error))
+					{
+						errorset->insert(sock);
+					}
+				}
+			}
+
+			break;
+		}
+	}
+
 //	void vsocket::process_unbind_queue() {
 //		if (!_unbind_queue.empty())
 //		{

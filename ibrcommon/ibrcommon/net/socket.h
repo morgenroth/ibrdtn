@@ -69,12 +69,6 @@ namespace ibrcommon {
 		void close() throw (socket_exception);
 		void shutdown(int how) throw (socket_exception);
 
-		void set_blocking_mode(bool val) const throw (socket_exception);
-		void set_keepalive(bool val) const throw (socket_exception);
-		void set_linger(bool val, int l = 1) const throw (socket_exception);
-		void set_reuseaddr(bool val) const throw (socket_exception);
-		void set_nodelay(bool val) const throw (socket_exception);
-
 	protected:
 		/**
 		 * The socket state determine if the socket file descriptor
@@ -99,6 +93,12 @@ namespace ibrcommon {
 		void check_socket_error(const int err) const throw (socket_exception);
 		void check_bind_error(const int err) const throw (socket_exception);
 
+		void set_blocking_mode(bool val, int fd = -1) const throw (socket_exception);
+		void set_keepalive(bool val, int fd = -1) const throw (socket_exception);
+		void set_linger(bool val, int l = 1, int fd = -1) const throw (socket_exception);
+		void set_reuseaddr(bool val, int fd = -1) const throw (socket_exception);
+		void set_nodelay(bool val, int fd = -1) const throw (socket_exception);
+
 		// contains the current socket state
 		socketstate _state;
 
@@ -112,31 +112,35 @@ namespace ibrcommon {
 	 */
 	class clientsocket : public basesocket {
 	public:
-		clientsocket(int fd = -1);
-		~clientsocket();
+		virtual ~clientsocket() = 0;
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
 		void send(const char *data, size_t len, int flags = 0) throw (socket_exception);
 		void recv(char *data, size_t len, int flags = 0) throw (socket_exception);
+
+	protected:
+		clientsocket(int fd = -1);
 	};
 
 	class serversocket : public basesocket {
 	public:
-		~serversocket();
+		virtual ~serversocket() = 0;
 		virtual void up() throw (socket_exception) = 0;
 		virtual void down() throw (socket_exception) = 0;
 
 		void listen(int connections) throw (socket_exception);
-		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception);
+		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception) = 0;
 
 	protected:
 		serversocket(int fd = -1);
+
+		int _accept_fd(ibrcommon::vaddress &addr) throw (socket_exception);
 	};
 
 	class datagramsocket : public basesocket {
 	public:
-		~datagramsocket();
+		virtual ~datagramsocket() = 0;
 		virtual void up() throw (socket_exception) = 0;
 		virtual void down() throw (socket_exception) = 0;
 
@@ -154,7 +158,7 @@ namespace ibrcommon {
 	public:
 		filesocket(int fd);
 		filesocket(const File &file);
-		~filesocket();
+		virtual ~filesocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
@@ -169,9 +173,11 @@ namespace ibrcommon {
 	class fileserversocket : public serversocket {
 	public:
 		fileserversocket(const File &file, int listen = 0);
-		~fileserversocket();
+		virtual ~fileserversocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
+
+		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception);
 
 	private:
 		const File _filename;
@@ -185,7 +191,7 @@ namespace ibrcommon {
 	public:
 		tcpsocket(int fd);
 		tcpsocket(const vaddress &destination, const int port, int timeout = 0);
-		~tcpsocket();
+		virtual ~tcpsocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
@@ -204,9 +210,11 @@ namespace ibrcommon {
 	public:
 		tcpserversocket(const int port, int listen = 0);
 		tcpserversocket(const vaddress &address, const int port, int listen = 0);
-		~tcpserversocket();
+		virtual ~tcpserversocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
+
+		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception);
 
 	private:
 		const vaddress _address;
@@ -222,7 +230,7 @@ namespace ibrcommon {
 	public:
 		udpsocket(const int port = 0);
 		udpsocket(const vaddress &address, const int port = 0);
-		~udpsocket();
+		virtual ~udpsocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
@@ -235,7 +243,7 @@ namespace ibrcommon {
 	public:
 		multicastsocket(const int port = 0);
 		multicastsocket(const vaddress &address, const int port = 0);
-		~multicastsocket();
+		virtual ~multicastsocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 

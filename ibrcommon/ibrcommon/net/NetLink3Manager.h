@@ -85,8 +85,24 @@ namespace ibrcommon
 	private:
 		NetLink3Manager();
 
-		struct nl_sock *_nl_notify_sock;
-		struct nl_sock *_nl_query_sock;
+		class netlink_socket : public basesocket
+		{
+		public:
+			netlink_socket();
+			virtual ~netlink_socket();
+			virtual void up() throw (socket_exception);
+			virtual void down() throw (socket_exception);
+
+			virtual int fd() const throw (socket_exception);
+
+			struct nl_sock* operator*() throw (socket_exception);
+
+		private:
+			struct nl_sock *_nl_socket;
+		};
+
+		netlink_socket _nl_notify_sock;
+		netlink_socket _nl_query_sock;
 
 		// local link cache
 		struct nl_cache *_link_cache;

@@ -101,14 +101,16 @@ namespace ibrcommon
 	void basesocket::close() throw (socket_exception)
 	{
 		int ret = ::close(this->fd());
-		check_socket_error(ret);
+		if (ret == -1)
+			throw socket_exception("close error");
 		_state = SOCKET_DOWN;
 	}
 
 	void basesocket::shutdown(int how) throw (socket_exception)
 	{
 		int ret = ::shutdown(this->fd(), how);
-		check_socket_error(ret);
+		if (ret == -1)
+			throw socket_exception("shutdown error");
 		_state = SOCKET_DOWN;
 	}
 
@@ -118,10 +120,10 @@ namespace ibrcommon
 //		check_socket_error(ret);
 //	}
 
-	void basesocket::set_blocking_mode(bool val) const throw (socket_exception)
+	void basesocket::set_blocking_mode(bool val, int fd) const throw (socket_exception)
 	{
 		int opts;
-		opts = fcntl(this->fd(), F_GETFL);
+		opts = fcntl((fd == -1) ? this->fd() : fd, F_GETFL);
 		if (opts < 0) {
 			throw socket_exception("cannot set non-blocking");
 		}
@@ -131,45 +133,45 @@ namespace ibrcommon
 		else
 			opts |= O_NONBLOCK;
 
-		if (fcntl(this->fd() ,F_SETFL,opts) < 0) {
+		if (fcntl((fd == -1) ? this->fd() : fd, F_SETFL, opts) < 0) {
 			throw socket_exception("cannot set non-blocking");
 		}
 	}
 
-	void basesocket::set_keepalive(bool val) const throw (socket_exception)
+	void basesocket::set_keepalive(bool val, int fd) const throw (socket_exception)
 	{
 		/* Set the option active */
 		int optval = (val ? 1 : 0);
-		if (::setsockopt(this->fd(), SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
+		if (::setsockopt((fd == -1) ? this->fd() : fd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
 			throw ibrcommon::socket_exception("can not activate keepalives");
 		}
 	}
 
-	void basesocket::set_linger(bool val, int l) const throw (socket_exception)
+	void basesocket::set_linger(bool val, int l, int fd) const throw (socket_exception)
 	{
 		// set linger option to the socket
 		struct linger linger;
 
 		linger.l_onoff = (val ? 1 : 0);
 		linger.l_linger = l;
-		if (::setsockopt(this->fd(), SOL_SOCKET, SO_LINGER, &linger, sizeof(linger)) < 0) {
+		if (::setsockopt((fd == -1) ? this->fd() : fd, SOL_SOCKET, SO_LINGER, &linger, sizeof(linger)) < 0) {
 			throw ibrcommon::socket_exception("can not set linger option");
 		}
 	}
 
-	void basesocket::set_reuseaddr(bool val) const throw (socket_exception)
+	void basesocket::set_reuseaddr(bool val, int fd) const throw (socket_exception)
 	{
 		int on = (val ? 1: 0);
-		if (::setsockopt(this->fd(), SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
+		if (::setsockopt((fd == -1) ? this->fd() : fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
 		{
 			throw socket_exception("setsockopt(SO_REUSEADDR) failed");
 		}
 	}
 
-	void basesocket::set_nodelay(bool val) const throw (socket_exception)
+	void basesocket::set_nodelay(bool val, int fd) const throw (socket_exception)
 	{
 		int set = (val ? 1 : 0);
-		if (::setsockopt(this->fd(), IPPROTO_TCP, TCP_NODELAY, (char *)&set, sizeof(set)) < 0) {
+		if (::setsockopt((fd == -1) ? this->fd() : fd, IPPROTO_TCP, TCP_NODELAY, (char *)&set, sizeof(set)) < 0) {
 			throw socket_exception("set no delay option failed");
 		}
 	}
@@ -203,13 +205,15 @@ namespace ibrcommon
 	void clientsocket::send(const char *data, size_t len, int flags) throw (socket_exception)
 	{
 		int ret = ::send(this->fd(), data, len, flags);
-		check_socket_error(ret);
+		if (ret == -1)
+			throw socket_exception("send error");
 	}
 
 	void clientsocket::recv(char *data, size_t len, int flags) throw (socket_exception)
 	{
 		int ret = ::recv(this->fd(), data, len, flags);
-		check_socket_error(ret);
+		if (ret == -1)
+			throw socket_exception("recv error");
 	}
 
 	serversocket::serversocket(int fd)
@@ -224,10 +228,11 @@ namespace ibrcommon
 	void serversocket::listen(int connections) throw (socket_exception)
 	{
 		int ret = ::listen(this->fd(), connections);
-		check_socket_error(ret);
+		if (ret == -1)
+			throw socket_exception("listen failed");
 	}
 
-	clientsocket* serversocket::accept(ibrcommon::vaddress &addr) throw (socket_exception)
+	int serversocket::_accept_fd(ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		int fd = this->fd();
 
@@ -242,7 +247,7 @@ namespace ibrcommon
 
 		// TODO: set source to addr
 
-		return new clientsocket(new_fd);
+		return new_fd;
 	}
 
 	datagramsocket::datagramsocket(int fd)
@@ -257,13 +262,15 @@ namespace ibrcommon
 	void datagramsocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		//int ret = ::recvfrom(this->fd(),  __buf, size_t __n, int __flags, __SOCKADDR_ARG __addr, socklen_t *__restrict __addr_len);
-		//check_socket_error(ret);
+		//if (ret == -1)
+		//	throw socket_exception("recvfrom error");
 	}
 
 	void datagramsocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		//int ret = ::sendto(this->fd(), __const void *__buf, size_t __n, int __flags, __CONST_SOCKADDR_ARG __addr, socklen_t __addr_len);
-		//check_socket_error(ret);
+		//if (ret == -1)
+		//	throw socket_exception("sendto error");
 	}
 
 	fileserversocket::fileserversocket(const ibrcommon::File &file, int listen)
@@ -293,6 +300,11 @@ namespace ibrcommon
 
 		this->close();
 		_state = SOCKET_DOWN;
+	}
+
+	clientsocket* fileserversocket::accept(ibrcommon::vaddress &addr) throw (socket_exception)
+	{
+		return new filesocket(_accept_fd(addr));
 	}
 
 	tcpserversocket::tcpserversocket(const int port, int listen)
@@ -334,6 +346,11 @@ namespace ibrcommon
 		this->close();
 
 		_state = SOCKET_DOWN;
+	}
+
+	clientsocket* tcpserversocket::accept(ibrcommon::vaddress &addr) throw (socket_exception)
+	{
+		return new tcpsocket(_accept_fd(addr));
 	}
 
 	tcpsocket::tcpsocket(int fd)
@@ -416,7 +433,7 @@ namespace ibrcommon
 				}
 
 				// add the current socket to the probe-socket for later select-call
-				probesocket.add( new clientsocket(fd) );
+				probesocket.add( new tcpsocket(fd) );
 			}
 
 			// TODO:
