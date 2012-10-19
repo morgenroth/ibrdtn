@@ -316,13 +316,11 @@ namespace ibrcommon
 
 	int serversocket::_accept_fd(ibrcommon::vaddress &addr) throw (socket_exception)
 	{
-		int fd = _fd;
-
 		struct sockaddr_storage cliaddr;
 		socklen_t len = sizeof(cliaddr);
 		::memset(&cliaddr, 0, len);
 
-		int new_fd = ::accept(fd, (struct sockaddr *) &cliaddr, &len);
+		int new_fd = ::accept(this->fd(), (struct sockaddr *) &cliaddr, &len);
 
 		if (new_fd <= 0) {
 			throw socket_exception("accept failed");
@@ -367,7 +365,7 @@ namespace ibrcommon
 		::memset(&clientAddress, 0, clientAddressLength);
 
 		// data waiting
-		ssize_t ret = ::recvfrom(_fd, buf, buflen, flags, (struct sockaddr *) &clientAddress, &clientAddressLength);
+		ssize_t ret = ::recvfrom(this->fd(), buf, buflen, flags, (struct sockaddr *) &clientAddress, &clientAddressLength);
 
 		if (ret == -1) {
 			throw socket_exception("recvfrom error");
@@ -406,7 +404,7 @@ namespace ibrcommon
 			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 		}
 
-		ret = ::sendto(_fd, buf, buflen, flags, res->ai_addr, res->ai_addrlen);
+		ret = ::sendto(this->fd(), buf, buflen, flags, res->ai_addr, res->ai_addrlen);
 
 		// free the addrinfo struct
 		freeaddrinfo(res);
@@ -471,7 +469,7 @@ namespace ibrcommon
 		 */
 		len = sizeof(saun.sun_family) + strlen(saun.sun_path);
 
-		if (::connect(this->fd(), (struct sockaddr *)&saun, len) < 0) {
+		if (::connect(_fd, (struct sockaddr *)&saun, len) < 0) {
 			this->close();
 			throw socket_exception("Could not connect to the named socket.");
 		}
@@ -811,7 +809,7 @@ namespace ibrcommon
 
 			// set the current state to UP
 			_state = SOCKET_UP;
-		} catch (ibrcommon::Exception&) {
+		} catch (const std::exception&) {
 			freeaddrinfo(res);
 			throw;
 		}
@@ -839,6 +837,11 @@ namespace ibrcommon
 		try {
 			down();
 		} catch (const socket_exception&) { }
+	}
+
+	const vaddress& udpsocket::get_address() const
+	{
+		return _address;
 	}
 
 	void udpsocket::up() throw (socket_exception)
@@ -1029,7 +1032,7 @@ namespace ibrcommon
 				// set the right interface here
 				req.gr_interface = iface.getIndex();
 
-				if ( ::setsockopt(_fd, IPPROTO_IP, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
+				if ( ::setsockopt(this->fd(), IPPROTO_IP, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
 				{
 					throw socket_exception("setsockopt(MCAST_JOIN_GROUP)");
 				}
@@ -1059,7 +1062,7 @@ namespace ibrcommon
 				// set the right interface here
 				req.gr_interface = iface.getIndex();
 
-				if ( ::setsockopt(_fd, IPPROTO_IPV6, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
+				if ( ::setsockopt(this->fd(), IPPROTO_IPV6, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
 				{
 					throw socket_exception("setsockopt(MCAST_JOIN_GROUP)");
 				}
@@ -1100,7 +1103,7 @@ namespace ibrcommon
 				// set the right interface here
 				req.gr_interface = iface.getIndex();
 
-				if ( ::setsockopt(_fd, IPPROTO_IP, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
+				if ( ::setsockopt(this->fd(), IPPROTO_IP, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
 				{
 					throw socket_exception("setsockopt(MCAST_LEAVE_GROUP)");
 				}
@@ -1130,7 +1133,7 @@ namespace ibrcommon
 				// set the right interface here
 				req.gr_interface = iface.getIndex();
 
-				if ( ::setsockopt(_fd, IPPROTO_IPV6, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
+				if ( ::setsockopt(this->fd(), IPPROTO_IPV6, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
 				{
 					throw socket_exception("setsockopt(MCAST_LEAVE_GROUP)");
 				}

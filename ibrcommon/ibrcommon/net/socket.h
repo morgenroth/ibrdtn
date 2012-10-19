@@ -325,6 +325,8 @@ namespace ibrcommon {
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
+		const vaddress& get_address() const;
+
 	protected:
 		void bind(const vaddress &addr) throw (socket_exception);
 
