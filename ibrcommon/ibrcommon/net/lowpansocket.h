@@ -31,43 +31,47 @@
 
 namespace ibrcommon
 {
-	class lowpansocket
+	class lowpansocket : public basesocket
 	{
 	public:
-		class SocketException : public ibrcommon::Exception
-		{
-		public:
-			SocketException(string error) : ibrcommon::Exception(error)
-			{};
-		};
+		lowpansocket(int panid, const vinterface &iface);
+		~lowpansocket();
+		void up() throw (socket_exception);
+		void down() throw (socket_exception);
+		int fd() const throw (socket_exception);
 
-		class peer
-		{
-			friend class lowpansocket;
-
-		protected:
-			peer(lowpansocket &socket, const struct sockaddr_ieee802154 &dest, const unsigned int panid);
-
-			struct sockaddr_ieee802154 _destaddress;
-			lowpansocket &_socket;
-
-		public:
-			int send(const char *data, const size_t length);
-		};
-
-		virtual ~lowpansocket();
-
-		virtual void shutdown();
-
-		int receive(char* data, size_t maxbuffer, std::string &address, uint16_t &shortaddr, uint16_t &pan_id);
-
-		lowpansocket::peer getPeer(unsigned int address, const unsigned int panid);
-		static void getAddress(struct ieee802154_addr *ret, const vinterface &iface);
+//		class peer
+//		{
+//			friend class lowpansocket;
+//
+//		protected:
+//			peer(lowpansocket &socket, const struct sockaddr_ieee802154 &dest, const unsigned int panid);
+//
+//			struct sockaddr_ieee802154 _destaddress;
+//			lowpansocket &_socket;
+//
+//		public:
+//			int send(const char *data, const size_t length);
+//		};
+//
+//		virtual ~lowpansocket();
+//
+//		virtual void shutdown();
+//
+//		int receive(char* data, size_t maxbuffer, std::string &address, uint16_t &shortaddr, uint16_t &pan_id);
+//
+//		lowpansocket::peer getPeer(unsigned int address, const unsigned int panid);
+//		static void getAddress(struct ieee802154_addr *ret, const vinterface &iface);
 
 	protected:
-		lowpansocket(u_char proto = 0) throw (SocketException);
-		ibrcommon::vsocket _vsocket;
-		struct sockaddr_ieee802154 _sockaddr;
+//		lowpansocket(u_char proto = 0) throw (SocketException);
+//		ibrcommon::vsocket _vsocket;
+//		struct sockaddr_ieee802154 _sockaddr;
+
+	private:
+		const int _panid;
+		const vinterface _iface;
+		int _fd;
 
 	};
 }

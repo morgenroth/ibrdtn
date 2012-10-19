@@ -19,7 +19,7 @@
  *
  */
 
-#include "iostreamBIO.h"
+#include "ibrcommon/ssl/iostreamBIO.h"
 
 #include "ibrcommon/Logger.h"
 

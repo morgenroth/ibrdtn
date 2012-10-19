@@ -60,10 +60,11 @@ namespace ibrcommon
 				SCOPE_LINKLOCAL
 			};
 
+			vaddress();
 			vaddress(const std::string &address);
-			vaddress(const Family &family = VADDRESS_INET);
-			vaddress(const Family &family, const std::string &address);
-			vaddress(const Family &family, const std::string &address, const int iface, const Scope scope = SCOPE_UNKOWN);
+//			vaddress(const Family &family = VADDRESS_INET);
+//			vaddress(const Family &family, const std::string &address);
+//			vaddress(const Family &family, const std::string &address, const int iface, const Scope scope = SCOPE_UNKOWN);
 			virtual ~vaddress();
 
 			Family getFamily() const;
@@ -75,21 +76,21 @@ namespace ibrcommon
 
 			const std::string toString() const;
 
-			struct addrinfo* addrinfo(struct addrinfo *hints) const;
-			struct addrinfo* addrinfo(struct addrinfo *hints, unsigned int port) const;
+//			struct addrinfo* addrinfo(struct addrinfo *hints) const;
+//			struct addrinfo* addrinfo(struct addrinfo *hints, unsigned int port) const;
 
-			static const std::string strip_netmask(const std::string &data);
+//			static const std::string strip_netmask(const std::string &data);
 
 			bool operator<(const ibrcommon::vaddress &dhs) const;
 
 		private:
-			static const std::string __REGEX_IPV6_ADDRESS__;
-			static const std::string __REGEX_IPV4_ADDRESS__;
+//			static const std::string __REGEX_IPV6_ADDRESS__;
+//			static const std::string __REGEX_IPV4_ADDRESS__;
 
-			Family _family;
-			Scope _scope;
+//			Family _family;
+//			Scope _scope;
 			std::string _address;
-			int _iface;
+//			int _iface;
 	};
 }
 

@@ -19,14 +19,14 @@
  *
  */
 
-#include "TLSStream.h"
+#include "ibrcommon/ssl/TLSStream.h"
 
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 
 #include "ibrcommon/Logger.h"
 
-#include "ibrcommon/net/iostreamBIO.h"
+#include "ibrcommon/ssl/iostreamBIO.h"
 #include "ibrcommon/TLSExceptions.h"
 
 #include "ibrcommon/data/File.h"
@@ -43,9 +43,9 @@ namespace ibrcommon
 	bool TLSStream::_SSL_initialized = false;
 	ibrcommon::Mutex TLSStream::_initialization_lock;
 
-	TLSStream::TLSStream(std::iostream *stream) :
-		_stream(stream), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]),
-		_server(false), _activated(false), iostream(this), _ssl(NULL), _iostreamBIO(NULL)
+	TLSStream::TLSStream(std::iostream *stream)
+	  : iostream(this), _activated(false), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]),
+	    _stream(stream), _server(false), _ssl(NULL), _peer_cert(NULL), _iostreamBIO(NULL)
 	{
 		/* basic_streambuf related initialization */
 		// Initialize get pointer.  This should be zero so that underflow is called upon first read.

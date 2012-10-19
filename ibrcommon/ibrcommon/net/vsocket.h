@@ -24,6 +24,7 @@
 
 #include <ibrcommon/data/File.h>
 #include "ibrcommon/net/LinkManager.h"
+#include <ibrcommon/net/socket.h>
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -35,206 +36,240 @@
 
 namespace ibrcommon
 {
-	/**
-	 * This select emulated the linux behavior of a select.
-	 * It measures the time being in the select call and decrement the given timeout value.
-	 * @param nfds
-	 * @param readfds
-	 * @param writefds
-	 * @param exceptfds
-	 * @param timeout
-	 * @return
-	 */
-	int __nonlinux_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
-
-	class vsocket_exception : public Exception
+	class vsocket_timeout : public socket_exception
 	{
 	public:
-		vsocket_exception(string error) : Exception(error)
+		vsocket_timeout(string error) : socket_exception(error)
 		{};
 	};
 
-	class vsocket_timeout : public vsocket_exception
+	class vsocket_interrupt : public socket_exception
 	{
 	public:
-		vsocket_timeout(string error) : vsocket_exception(error)
-		{};
-	};
-
-	class vsocket_interrupt : public vsocket_exception
-	{
-	public:
-		vsocket_interrupt(string error) : vsocket_exception(error)
+		vsocket_interrupt(string error) : socket_exception(error)
 		{};
 	};
 
 	class vsocket : public ibrcommon::LinkManager::EventCallback
 	{
 	public:
-		enum Option
-		{
-			VSOCKET_REUSEADDR = 1 << 0,
-			VSOCKET_LINGER = 1 << 1,
-			VSOCKET_NODELAY = 1 << 2,
-			VSOCKET_BROADCAST = 1 << 3,
-			VSOCKET_NONBLOCKING = 1 << 4,
-			VSOCKET_MULTICAST = 1 << 5,
-			VSOCKET_LINKLOCAL = 1 << 6
-		};
+//		enum Option
+//		{
+//			VSOCKET_REUSEADDR = 1 << 0,
+//			VSOCKET_LINGER = 1 << 1,
+//			VSOCKET_NODELAY = 1 << 2,
+//			VSOCKET_BROADCAST = 1 << 3,
+//			VSOCKET_NONBLOCKING = 1 << 4,
+//			VSOCKET_MULTICAST = 1 << 5,
+//			VSOCKET_LINKLOCAL = 1 << 6
+//		};
+//
+//
 
-		static void set_non_blocking(int socket, bool nonblock = true);
+		/**
+		 * Constructor
+		 */
+		vsocket();
 
-		vsocket(bool sendonly = false);
+		/**
+		 * Destructor
+		 */
 		virtual ~vsocket();
 
-		std::set<int> bind(const vaddress &address, const int port, unsigned int socktype = SOCK_STREAM);
-		std::set<int> bind(const vinterface &iface, const int port, unsigned int socktype = SOCK_STREAM);
-		std::set<int> bind(const int port, unsigned int socktype = SOCK_STREAM);
-		std::set<int> bind(const ibrcommon::File &file, unsigned int socktype = SOCK_STREAM);
-
-		void unbind(const vaddress &address, const int port);
-		void unbind(const vinterface &iface, const int port);
-		void unbind(const int port);
-		void unbind(const ibrcommon::File &file);
-
-		void add(const int fd);
-
-		typedef std::pair<ibrcommon::vaddress, int> fd_address_entry;
-		typedef std::list<fd_address_entry> fd_address_list;
-
-		const fd_address_list get(const ibrcommon::vinterface &iface);
-		const fd_address_list get();
-
-		void listen(int connections);
-		void relisten();
-
-		void set(const Option &o);
-		void unset(const Option &o);
-
 		/**
-		 * Join a multicast group
-		 * @param group
+		 * Add a socket to the list monitored sockets. This socket instance
+		 * will be adapted and destroyed on the destruction of the vsocket instance.
+		 * @param socket Socket object to add
 		 */
-		void join(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface);
+		void add(ibrcommon::basesocket *socket);
 
 		/**
-		 * Leave a multicast group
-		 * @param group
+		 * Add a socket to the list monitored sockets. This socket instance
+		 * will be adapted and destroyed on the destruction of the vsocket instance.
+		 * The socket will be shutdown if the state of the given interface changes.
+		 * @param socket Socket object to add
+		 * @param iface The interface to connect this socket to
 		 */
-		void leave(const ibrcommon::vaddress &group);
+		void add(ibrcommon::basesocket *socket, const ibrcommon::vinterface &iface);
 
 		/**
-		 * close all fds
+		 * Remove the socket from the socket list.
+		 * @param socket Pointer to the socket in the list
+		 */
+		void remove(const ibrcommon::basesocket *socket);
+
+		/**
+		 * Enable all sockets and turn into the up state.
+		 */
+		void up() throw (socket_exception);
+
+		/**
+		 * Disable all sockets and turn into the down state.
+		 */
+		void down() throw (socket_exception);
+
+		/**
+		 * close all sockets in this vsocket
 		 */
 		void close();
 		void shutdown();
 
 		/**
-		 * return the first fd
-		 * @return
+		 * Execute a select on all associated sockets.
+		 * @param fds
+		 * @param tv
 		 */
-		int fd();
+		void select(std::list<basesocket*> &sockets, struct timeval *tv = NULL);
 
-		void select(std::list<int> &fds, struct timeval *tv = NULL);
-		int sendto(const void *buf, size_t n, const ibrcommon::vaddress &address, const unsigned int port);
-
+//
+//		std::set<int> bind(const vaddress &address, const int port, unsigned int socktype = SOCK_STREAM);
+//		std::set<int> bind(const vinterface &iface, const int port, unsigned int socktype = SOCK_STREAM);
+//		std::set<int> bind(const int port, unsigned int socktype = SOCK_STREAM);
+//		std::set<int> bind(const ibrcommon::File &file, unsigned int socktype = SOCK_STREAM);
+//
+//		void unbind(const vaddress &address, const int port);
+//		void unbind(const vinterface &iface, const int port);
+//		void unbind(const int port);
+//		void unbind(const ibrcommon::File &file);
+//
+//		void add(const int fd);
+//
+//		typedef std::pair<ibrcommon::vaddress, int> fd_address_entry;
+//		typedef std::list<fd_address_entry> fd_address_list;
+//
+//		const fd_address_list get(const ibrcommon::vinterface &iface);
+//		const fd_address_list get();
+//
+//		void listen(int connections);
+//		void relisten();
+//
+//		void set(const Option &o);
+//		void unset(const Option &o);
+//
+//		/**
+//		 * Join a multicast group
+//		 * @param group
+//		 */
+//		void join(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface);
+//
+//		/**
+//		 * Leave a multicast group
+//		 * @param group
+//		 */
+//		void leave(const ibrcommon::vaddress &group);
+//
+//		/**
+//		 * close all fds
+//		 */
+//		void close();
+//		void shutdown();
+//
+//		/**
+//		 * return the first fd
+//		 * @return
+//		 */
+//		int fd();
+//
+//		void select(std::list<int> &fds, struct timeval *tv = NULL);
+//		int sendto(const void *buf, size_t n, const ibrcommon::vaddress &address, const unsigned int port);
+//
 		void eventNotify(const LinkManagerEvent &evt);
-
-		void setEventCallback(ibrcommon::LinkManager::EventCallback *cb);
-
-	private:
-		class vbind
-		{
-		public:
-			enum bind_type
-			{
-				BIND_ADDRESS,
-				BIND_FILE,
-				BIND_CUSTOM,
-				BIND_ADDRESS_NOPORT
-			};
-
-			const bind_type _type;
-			const vaddress _vaddress;
-			const int _port;
-			const ibrcommon::File _file;
-			const ibrcommon::vinterface _interface;
-
-			int _fd;
-
-			vbind(int fd);
-			vbind(const vaddress &address, unsigned int socktype);
-			vbind(const vaddress &address, const int port, unsigned int socktype);
-			vbind(const ibrcommon::vinterface &iface, const vaddress &address, unsigned int socktype);
-			vbind(const ibrcommon::vinterface &iface, const vaddress &address, const int port, unsigned int socktype);
-			vbind(const ibrcommon::File &file, unsigned int socktype);
-			virtual ~vbind();
-
-			void bind();
-			void listen(int connections);
-
-			void set(const vsocket::Option &o);
-			void unset(const vsocket::Option &o);
-
-			/**
-			 * Join a multicast group
-			 * @param group
-			 */
-			void join(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface);
-
-			/**
-			 * Leave a multicast group
-			 * @param group
-			 */
-			void leave(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface);
-
-			void close();
-			void shutdown();
-
-			bool operator==(const vbind &obj) const;
-
-			/**
-			 * check if the given fd is part of this bind
-			 * @param fd
-			 * @return True if the fd matches.
-			 */
-			bool operator==(const int &fd) const;
-
-		private:
-			void check_socket_error(const int err) const;
-			void check_bind_error(const int err) const;
-		};
-
-		int bind(const vsocket::vbind &b);
-		void refresh();
-		void interrupt();
-		void process_unbind_queue();
-
-		ibrcommon::Mutex _bind_lock;
-		std::list<vsocket::vbind> _binds;
-		std::map<vinterface, unsigned int> _portmap;
-		std::map<vinterface, unsigned int> _typemap;
-
-		// multicast groups
-		typedef std::map< ibrcommon::vaddress, std::set<ibrcommon::vinterface> > mcast_groups;
-		mcast_groups _groups;
-
-		unsigned int _options;
-		bool _interrupt;
-
+//
+//		void setEventCallback(ibrcommon::LinkManager::EventCallback *cb);
+//
+//	private:
+//		class vbind
+//		{
+//		public:
+//			enum bind_type
+//			{
+//				BIND_ADDRESS,
+//				BIND_FILE,
+//				BIND_CUSTOM,
+//				BIND_ADDRESS_NOPORT
+//			};
+//
+//			const bind_type _type;
+//			const vaddress _vaddress;
+//			const int _port;
+//			const ibrcommon::File _file;
+//			const ibrcommon::vinterface _interface;
+//
+//			int _fd;
+//
+//			vbind(int fd);
+//			vbind(const vaddress &address, unsigned int socktype);
+//			vbind(const vaddress &address, const int port, unsigned int socktype);
+//			vbind(const ibrcommon::vinterface &iface, const vaddress &address, unsigned int socktype);
+//			vbind(const ibrcommon::vinterface &iface, const vaddress &address, const int port, unsigned int socktype);
+//			vbind(const ibrcommon::File &file, unsigned int socktype);
+//			virtual ~vbind();
+//
+//			void bind();
+//			void listen(int connections);
+//
+//			void set(const vsocket::Option &o);
+//			void unset(const vsocket::Option &o);
+//
+//			/**
+//			 * Join a multicast group
+//			 * @param group
+//			 */
+//			void join(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface);
+//
+//			/**
+//			 * Leave a multicast group
+//			 * @param group
+//			 */
+//			void leave(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface);
+//
+//			void close();
+//			void shutdown();
+//
+//			bool operator==(const vbind &obj) const;
+//
+//			/**
+//			 * check if the given fd is part of this bind
+//			 * @param fd
+//			 * @return True if the fd matches.
+//			 */
+//			bool operator==(const int &fd) const;
+//
+//		private:
+//			void check_socket_error(const int err) const;
+//			void check_bind_error(const int err) const;
+//		};
+//
+//		int bind(const vsocket::vbind &b);
+//		void refresh();
+//		void interrupt();
+//		void process_unbind_queue();
+//
+//		ibrcommon::Mutex _bind_lock;
+//		std::list<vsocket::vbind> _binds;
+//		std::map<vinterface, unsigned int> _portmap;
+//		std::map<vinterface, unsigned int> _typemap;
+//
+//		// multicast groups
+//		typedef std::map< ibrcommon::vaddress, std::set<ibrcommon::vinterface> > mcast_groups;
+//		mcast_groups _groups;
+//
+//		unsigned int _options;
+//		bool _interrupt;
+//
 		//bool rebind;
 		int _interrupt_pipe[2];
-
-		ibrcommon::Queue<vbind> _unbind_queue;
-
-		int _listen_connections;
-		ibrcommon::LinkManager::EventCallback *_cb;
-
-		// if the socket is used to send only, this parameter should set to true
-		bool _send_only;
+//
+//		ibrcommon::Queue<vbind> _unbind_queue;
+//
+//		int _listen_connections;
+//		ibrcommon::LinkManager::EventCallback *_cb;
+//
+//		// if the socket is used to send only, this parameter should set to true
+//		bool _send_only;
 	};
-
-	int recvfrom(int fd, char* data, size_t maxbuffer, std::string &address);
+//
+//	int recvfrom(int fd, char* data, size_t maxbuffer, std::string &address);
 }
 
 #endif /* VSOCKET_H_ */

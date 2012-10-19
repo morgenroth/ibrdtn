@@ -64,8 +64,7 @@ namespace ibrcommon
 		{
 			int family = nl_addr_get_family(naddr);
 			nl_addr2str( naddr, buf, sizeof( buf ) );
-			vaddress vaddr(vaddress::Family(family), vaddress::strip_netmask(std::string(buf)), ifindex, sc);
-			list->push_back( vaddr );
+			list->push_back( ibrcommon::vaddress(std::string(buf)) );
 		}
 	}
 
@@ -99,7 +98,7 @@ namespace ibrcommon
 			nl_socket_free(_nl_notify_sock);
 			nl_socket_free(_nl_query_sock);
 			// error
-			throw ibrcommon::vsocket_exception("netlink cache allocation failed");
+			throw ibrcommon::socket_exception("netlink cache allocation failed");
 		}
 
 		// create a cache for addresses
@@ -110,7 +109,7 @@ namespace ibrcommon
 			// error
 			nl_cache_free(_link_cache);
 			_link_cache = NULL;
-			throw ibrcommon::vsocket_exception("netlink cache allocation failed");
+			throw ibrcommon::socket_exception("netlink cache allocation failed");
 		}
 
 		// create a new socket for the netlink interface
@@ -152,7 +151,7 @@ namespace ibrcommon
 			if (rtnl_link_alloc_cache(_nl_query_sock, AF_UNSPEC, &_link_cache) < 0)
 			{
 				// error
-				throw ibrcommon::vsocket_exception("netlink cache allocation failed");
+				throw ibrcommon::socket_exception("netlink cache allocation failed");
 			}
 
 			// create a cache for addresses
@@ -161,7 +160,7 @@ namespace ibrcommon
 				// error
 				nl_cache_free(_link_cache);
 				_link_cache = NULL;
-				throw ibrcommon::vsocket_exception("netlink cache allocation failed");
+				throw ibrcommon::socket_exception("netlink cache allocation failed");
 			}
 
 			// mark the cache as refreshed
@@ -220,17 +219,17 @@ namespace ibrcommon
 	void NetLink3Manager::run()
 	{
 		// add netlink fd to vsocket
-		_sock->add(nl_socket_get_fd(_nl_notify_sock));
+		_sock->add(new clientsocket(nl_socket_get_fd(_nl_notify_sock)));
 
 		try {
 			while (_running)
 			{
-				std::list<int> fds;
-				_sock->select(fds, NULL);
+				std::list<basesocket*> socks;
+				_sock->select(socks, NULL);
 
 				nl_recvmsgs_default(_nl_notify_sock);
 			}
-		} catch (const vsocket_exception&) {
+		} catch (const socket_exception&) {
 			// stopped / interrupted
 			IBRCOMMON_LOGGER(error) << "NetLink connection stopped" << IBRCOMMON_LOGGER_ENDL;
 		}
@@ -322,7 +321,7 @@ namespace ibrcommon
 							uint32_t ipaddr = htonl(*((uint32_t *)RTA_DATA(rth)));
 							sprintf(address, "%d.%d.%d.%d", (ipaddr >> 24) & 0xff, (ipaddr >> 16) & 0xff, (ipaddr >> 8) & 0xff, ipaddr & 0xff);
 
-							_address = ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET, std::string(address));
+							_address = ibrcommon::vaddress(std::string(address));
 							_type = EVENT_ADDRESS_ADDED;
 							break;
 						}
@@ -360,7 +359,7 @@ namespace ibrcommon
 							uint32_t ipaddr = htonl(*((uint32_t *)RTA_DATA(rth)));
 							sprintf(address, "%d.%d.%d.%d", (ipaddr >> 24) & 0xff, (ipaddr >> 16) & 0xff, (ipaddr >> 8) & 0xff, ipaddr & 0xff);
 
-							_address = ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET, std::string(address));
+							_address = ibrcommon::vaddress(std::string(address));
 							_type = EVENT_ADDRESS_REMOVED;
 							break;
 						}

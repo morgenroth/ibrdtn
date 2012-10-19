@@ -1,11 +1,11 @@
 ## sub directory
 
-h_sources = tcpclient.h tcpserver.h tcpstream.h udpsocket.h UnicastSocket.h ieee802154.h nl802154.h stopandwait.h vsocket.h vinterface.h vaddress.h LinkManager.h
-cc_sources = tcpclient.cpp tcpserver.cpp tcpstream.cpp udpsocket.cpp UnicastSocket.cpp stopandwait.cpp vsocket.cpp vinterface.cpp vaddress.cpp LinkManager.cpp
+h_sources = socket.h socketstream.h ieee802154.h nl802154.h stopandwait.h vsocket.h vinterface.h vaddress.h LinkManager.h
+cc_sources = socket.cpp socketstream.h stopandwait.cpp vsocket.cpp vinterface.cpp vaddress.cpp LinkManager.cpp
 
 if LOWPAN
-h_sources += lowpansocket.h UnicastSocketLowpan.h lowpanstream.h
-cc_sources += lowpansocket.cpp UnicastSocketLowpan.cpp nl_policy.c lowpanstream.cpp
+h_sources += lowpansocket.h lowpanstream.h
+cc_sources += lowpansocket.cpp nl_policy.c lowpanstream.cpp
 endif
 
 if NETLINK
@@ -16,11 +16,6 @@ endif
 if NETLINK3
 h_sources += NetLink3Manager.h
 cc_sources += NetLink3Manager.cpp
-endif
-
-if OPENSSL
-h_sources += TLSStream.h iostreamBIO.h
-cc_sources += TLSStream.cpp iostreamBIO.cpp
 endif
 
 #Install the headers in a versioned directory

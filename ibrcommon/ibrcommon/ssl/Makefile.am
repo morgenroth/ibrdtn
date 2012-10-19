@@ -2,8 +2,8 @@
 
 SUBDIRS = gcm
 
-h_sources = CipherStream.h HashStream.h HMacStream.h XORStream.h RSASHA256Stream.h AES128Stream.h 
-cc_sources = CipherStream.cpp HashStream.cpp HMacStream.cpp XORStream.cpp RSASHA256Stream.cpp AES128Stream.cpp
+h_sources = CipherStream.h HashStream.h HMacStream.h XORStream.h RSASHA256Stream.h AES128Stream.h TLSStream.h iostreamBIO.h
+cc_sources = CipherStream.cpp HashStream.cpp HMacStream.cpp XORStream.cpp RSASHA256Stream.cpp AES128Stream.cpp TLSStream.cpp iostreamBIO.cpp
 
 #Install the headers in a versioned directory
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/ssl

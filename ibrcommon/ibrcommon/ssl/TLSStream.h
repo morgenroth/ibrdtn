@@ -28,7 +28,7 @@
 #include <openssl/ssl.h>
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/data/File.h"
-#include "ibrcommon/net/iostreamBIO.h"
+#include "ibrcommon/ssl/iostreamBIO.h"
 
 namespace ibrcommon
 {
