@@ -419,12 +419,6 @@ namespace ibrcommon
 	{
 		SafeLock l(_state, *this);
 		_sockets.insert(socket);
-
-		try {
-			socket->up();
-		} catch (const socket_exception&) {
-			// up failed
-		}
 	}
 
 	void vsocket::add(basesocket *socket, const vinterface &iface)
@@ -432,12 +426,6 @@ namespace ibrcommon
 		SafeLock l(_state, *this);
 		_sockets.insert(socket);
 		_socket_map[iface].insert(socket);
-
-		try {
-			if (!socket->ready()) socket->up();
-		} catch (const socket_exception&) {
-			// up failed
-		}
 	}
 
 	void vsocket::remove(basesocket *socket)

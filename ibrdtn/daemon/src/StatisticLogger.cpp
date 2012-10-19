@@ -81,7 +81,12 @@ namespace dtn
 			if (_type == LOGGER_UDP)
 			{
 				_sock = new ibrcommon::udpsocket();
-				_sock->up();
+				try {
+					_sock->up();
+				} catch (const ibrcommon::socket_exception&) {
+					delete _sock;
+					_sock = NULL;
+				}
 			}
 		}
 

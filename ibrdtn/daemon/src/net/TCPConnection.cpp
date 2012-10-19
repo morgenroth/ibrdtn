@@ -385,18 +385,22 @@ namespace dtn
 						// create a new tcp connection via the tcpsocket object
 						ibrcommon::tcpsocket *client = new ibrcommon::tcpsocket(addr, &tv);
 
-						// connect to the node
-						client->up();
+						try {
+							// connect to the node
+							client->up();
 
-						// setup a new tcp connection
-						__setup_socket(client, false);
+							// setup a new tcp connection
+							__setup_socket(client, false);
 
-						// add TCP connection descriptor to the node object
-						_node.clear();
-						_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, uri.value, 0, 30) );
+							// add TCP connection descriptor to the node object
+							_node.clear();
+							_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, uri.value, 0, 30) );
 
-						// connection successful
-						return;
+							// connection successful
+							return;
+						} catch (const ibrcommon::socket_exception&) {
+							delete client;
+						}
 					} catch (const ibrcommon::socket_exception&) { };
 				}
 

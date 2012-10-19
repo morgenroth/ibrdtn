@@ -201,8 +201,14 @@ namespace dtn
 				case ibrcommon::LinkEvent::ACTION_ADDRESS_ADDED:
 				{
 					const ibrcommon::vaddress &bindaddr = evt.getAddress();
-					_send_socket.add(new ibrcommon::udpsocket(bindaddr), evt.getInterface());
-					join_interface(evt.getInterface());
+					ibrcommon::udpsocket *sock = new ibrcommon::udpsocket(bindaddr);
+					try {
+						sock->up();
+						_send_socket.add(sock, evt.getInterface());
+						join_interface(evt.getInterface());
+					} catch (const ibrcommon::socket_exception&) {
+						delete sock;
+					}
 					break;
 				}
 
@@ -236,9 +242,6 @@ namespace dtn
 			// setup the receive socket
 			_recv_socket.up();
 
-			// setup all send sockets
-			_send_socket.up();
-
 			// join multicast groups
 			try {
 				ibrcommon::socketset socks = _recv_socket.getAll();
@@ -266,6 +269,9 @@ namespace dtn
 			} catch (std::bad_cast&) {
 				throw ibrcommon::socket_exception("no multicast socket found");
 			}
+
+			// setup all send sockets
+			_send_socket.up();
 		}
 
 		void IPNDAgent::componentDown() throw ()

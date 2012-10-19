@@ -183,7 +183,13 @@ namespace dtn
 					// convert the port into a string
 					std::stringstream ss; ss << _portmap[evt.getInterface()];
 					bindaddr.setService(ss.str());
-					_vsocket.add(new ibrcommon::tcpserversocket(bindaddr), evt.getInterface());
+					ibrcommon::tcpserversocket *sock = new ibrcommon::tcpserversocket(bindaddr);
+					try {
+						sock->up();
+						_vsocket.add(sock, evt.getInterface());
+					} catch (const ibrcommon::socket_exception&) {
+						delete sock;
+					}
 					break;
 				}
 

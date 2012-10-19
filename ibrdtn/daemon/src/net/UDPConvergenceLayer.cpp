@@ -305,7 +305,13 @@ namespace dtn
 					// convert the port into a string
 					std::stringstream ss; ss << _port;
 					bindaddr.setService(ss.str());
-					_vsocket.add(new ibrcommon::udpsocket(bindaddr), evt.getInterface());
+					ibrcommon::udpsocket *sock = new ibrcommon::udpsocket(bindaddr);
+					try {
+						sock->up();
+						_vsocket.add(sock, evt.getInterface());
+					} catch (const ibrcommon::socket_exception&) {
+						delete sock;
+					}
 					break;
 				}
 

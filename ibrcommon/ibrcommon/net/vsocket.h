@@ -218,10 +218,6 @@ namespace ibrcommon
 
 		pipesocket _pipe;
 
-		// if this flag is set all selects call
-		// will be aborted
-//		bool _interrupt_flag;
-
 		SocketState _state;
 		int _select_count;
 	};
