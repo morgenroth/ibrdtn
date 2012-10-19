@@ -239,7 +239,7 @@ namespace ibrcommon {
 	class tcpsocket : public clientsocket {
 	public:
 		tcpsocket(int fd);
-		tcpsocket(const vaddress &destination, const int port, int timeout = 0);
+		tcpsocket(const vaddress &destination, const int port, const timeval *timeout = NULL);
 		virtual ~tcpsocket();
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
@@ -247,7 +247,7 @@ namespace ibrcommon {
 	private:
 		const vaddress _address;
 		const int _port;
-		const int _timeout;
+		timeval _timeout;
 	};
 
 	/**

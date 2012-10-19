@@ -32,6 +32,7 @@
 #include <netinet/tcp.h>
 #include <sys/un.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 #include <sstream>
 
@@ -611,13 +612,17 @@ namespace ibrcommon
 	}
 
 	tcpsocket::tcpsocket(int fd)
-	 : clientsocket(fd), _port(0), _timeout(0)
+	 : clientsocket(fd), _port(0)
 	{
+		timerclear(&_timeout);
 	}
 
-	tcpsocket::tcpsocket(const ibrcommon::vaddress &destination, const int port, int timeout)
-	 : _address(destination), _port(port), _timeout(timeout)
+	tcpsocket::tcpsocket(const ibrcommon::vaddress &destination, const int port, const timeval *timeout)
+	 : _address(destination), _port(port)
 	{
+		if (timeout != NULL) {
+			::memcpy(&_timeout, timeout, sizeof _timeout);
+		}
 	}
 
 	tcpsocket::~tcpsocket()
@@ -704,14 +709,21 @@ namespace ibrcommon
 			// later this will be the fastest socket
 			basesocket *fastest = NULL;
 
-			// TODO: check timeout value
-			while (true && (fastest == NULL)) {
-				if (_timeout == 0) {
-					// probe for the first open socket
-					probesocket.select(NULL, &probeset, NULL, NULL);
+			timeval timeout_value;
+			::memcpy(&timeout_value, &_timeout, sizeof timeout_value);
+
+			while (fastest == NULL) {
+				if (timerisset(&_timeout)) {
+					// check timeout value
+					if (!timerisset(&timeout_value)) {
+						// timeout reached abort this
+						break;
+					}
+
+					// probe for the first open socket using a timer value
+					probesocket.select(NULL, &probeset, NULL, &timeout_value);
 				} else {
-					// TODO: use timeout value
-					// probe for the first open socket
+					// probe for the first open socket without any timer
 					probesocket.select(NULL, &probeset, NULL, NULL);
 				}
 
@@ -747,8 +759,10 @@ namespace ibrcommon
 				}
 			}
 
-			// assign the fasted fd
-			_fd = fastest->fd();
+			if (fastest != NULL) {
+				// assign the fasted fd
+				_fd = fastest->fd();
+			}
 
 			socketset fds = probesocket.getAll();
 			for (socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
@@ -760,6 +774,10 @@ namespace ibrcommon
 					} catch (const socket_exception&) { };
 				}
 				delete current;
+			}
+
+			if (fastest == NULL) {
+				throw socket_exception("connection setup timed out");
 			}
 
 			// free the address
