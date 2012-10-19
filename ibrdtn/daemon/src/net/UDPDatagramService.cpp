@@ -108,16 +108,14 @@ namespace dtn
 				// copy payload to the new buffer
 				::memcpy(&tmp[2], buf, length);
 
-				unsigned int port = 0;
-				std::string address;
+				ibrcommon::vaddress destination;
 
 				// decode address
-				UDPDatagramService::decode(identifier, address, port);
+				UDPDatagramService::decode(identifier, destination);
 
-				IBRCOMMON_LOGGER_DEBUG(20) << "UDPDatagramService::send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: [" << address << "]:" << std::dec << port << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(20) << "UDPDatagramService::send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << destination.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				// create vaddress
-				const ibrcommon::vaddress destination(address, port);
 				ibrcommon::socketset sockset = _vsocket.getAll();
 				if (sockset.size() > 0) {
 					try {
@@ -199,9 +197,8 @@ namespace dtn
 						flags = 0x0f & (tmp[1] >> 4);
 						seqno = 0x0f & tmp[1];
 
-						// TODO: return the encoded format
-						//address = UDPDatagramService::encode(from, port);
-						address = peeraddr.address();
+						// return the encoded format
+						address = UDPDatagramService::encode(peeraddr);
 
 						// copy payload to the destination buffer
 						::memcpy(buf, &tmp[2], ret - 2);
@@ -270,15 +267,23 @@ namespace dtn
 			return _params;
 		}
 
-		const std::string UDPDatagramService::encode(const ibrcommon::vaddress &address, const unsigned int &port)
+		const std::string UDPDatagramService::encode(const ibrcommon::vaddress &address, const int port)
 		{
 			std::stringstream ss;
-			ss << "ip=" << address.toString() << ";port=" << port << ";";
+			ss << "ip=" << address.address() << ";port=";
+
+			if (port == 0) ss << address.service();
+			else ss << port;
+
+			ss << ";";
 			return ss.str();
 		}
 
-		void UDPDatagramService::decode(const std::string &identifier, std::string &address, unsigned int &port)
+		void UDPDatagramService::decode(const std::string &identifier, ibrcommon::vaddress &address)
 		{
+			std::string addr;
+			std::string port;
+
 			// parse parameters
 			std::vector<string> parameters = dtn::utils::Utils::tokenize(";", identifier);
 			std::vector<string>::const_iterator param_iter = parameters.begin();
@@ -289,18 +294,18 @@ namespace dtn
 
 				if (p[0].compare("ip") == 0)
 				{
-					address = p[1];
+					addr = p[1];
 				}
 
 				if (p[0].compare("port") == 0)
 				{
-					std::stringstream port_stream;
-					port_stream << p[1];
-					port_stream >> port;
+					port = p[1];
 				}
 
 				param_iter++;
 			}
+
+			address = ibrcommon::vaddress(addr, port);
 		}
 	} /* namespace net */
 } /* namespace dtn */

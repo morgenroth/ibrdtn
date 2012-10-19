@@ -105,8 +105,8 @@ namespace dtn
 			virtual const DatagramConnectionParameter& getParameter() const;
 
 		private:
-			static const std::string encode(const ibrcommon::vaddress &address, const unsigned int &port);
-			static void decode(const std::string &identifier, std::string &address, unsigned int &port);
+			static const std::string encode(const ibrcommon::vaddress &address, const int port = 0);
+			static void decode(const std::string &identifier, ibrcommon::vaddress &address);
 
 			ibrcommon::vsocket _vsocket;
 
