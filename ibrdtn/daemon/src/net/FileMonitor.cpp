@@ -140,6 +140,8 @@ namespace dtn
 					}
 
 					::sleep(2);
+				} catch (const ibrcommon::vsocket_interrupt&) {
+					return;
 				} catch (const ibrcommon::vsocket_timeout&) { };
 			}
 #endif

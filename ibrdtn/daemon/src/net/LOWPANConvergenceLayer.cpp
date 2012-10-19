@@ -239,47 +239,51 @@ namespace dtn
 		{
 			while (_running)
 			{
-				ibrcommon::socketset readfds;
-				_vsocket.select(&readfds, NULL, NULL, NULL);
+				try {
+					ibrcommon::socketset readfds;
+					_vsocket.select(&readfds, NULL, NULL, NULL);
 
-				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
-					ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**iter);
+					for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
+						ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**iter);
 
-					char data[m_maxmsgsize];
-					char header;
-					
-					// place to store the peer address
-					ibrcommon::vaddress peeraddr;
-					
-					// Receive full frame from socket
-					int len = sock.recvfrom(data, m_maxmsgsize, 0, peeraddr);
+						char data[m_maxmsgsize];
+						char header;
 
-					IBRCOMMON_LOGGER_DEBUG(40) << "Received IEEE 802.15.4 frame from " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
+						// place to store the peer address
+						ibrcommon::vaddress peeraddr;
 
-					// We got nothing from the socket, keep reading
-					if (len <= 0)
-						continue;
+						// Receive full frame from socket
+						int len = sock.recvfrom(data, m_maxmsgsize, 0, peeraddr);
 
-					// Retrieve header of frame
-					header = data[0];
+						IBRCOMMON_LOGGER_DEBUG(40) << "Received IEEE 802.15.4 frame from " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
 
-					// Check for extended header and retrieve if available
-					if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {
-						DiscoveryAnnouncement announce;
-						stringstream ss;
-						ss.write(data+2, len-2);
-						ss >> announce;
-						DiscoveryAgent::received(announce.getEID(), announce.getServices(), 30);
-						continue;
+						// We got nothing from the socket, keep reading
+						if (len <= 0)
+							continue;
+
+						// Retrieve header of frame
+						header = data[0];
+
+						// Check for extended header and retrieve if available
+						if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {
+							DiscoveryAnnouncement announce;
+							stringstream ss;
+							ss.write(data+2, len-2);
+							ss >> announce;
+							DiscoveryAgent::received(announce.getEID(), announce.getServices(), 30);
+							continue;
+						}
+
+						ibrcommon::MutexLock lc(_connection_lock);
+
+						// Connection instance for this address
+						LOWPANConnection* connection = getConnection(peeraddr);
+
+						// Decide in which queue to write based on the src address
+						connection->getStream().queue(data, len);
 					}
-
-					ibrcommon::MutexLock lc(_connection_lock);
-
-					// Connection instance for this address
-					LOWPANConnection* connection = getConnection(peeraddr);
-
-					// Decide in which queue to write based on the src address
-					connection->getStream().queue(data, len);
+				} catch (const ibrcommon::vsocket_interrupt&) {
+					return;
 				}
 
 				yield();

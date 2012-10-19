@@ -310,6 +310,8 @@ namespace dtn
 
 						yield();
 					}
+				} catch (const ibrcommon::vsocket_interrupt&) {
+					return;
 				} catch (const ibrcommon::vsocket_timeout&) { };
 
 				// trigger timeout, if one second is elapsed
