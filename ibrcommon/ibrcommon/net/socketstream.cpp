@@ -46,8 +46,8 @@ namespace ibrcommon
 	{
 		_socket.destroy();
 
-		delete in_buf_;
-		delete out_buf_;
+		delete[] in_buf_;
+		delete[] out_buf_;
 	}
 
 	void socketstream::close()

@@ -25,6 +25,7 @@
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/BundleID.h"
 #include <ibrcommon/net/socketstream.h>
+#include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/Exceptions.h>
 
 namespace dtn

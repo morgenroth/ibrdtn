@@ -71,6 +71,8 @@ namespace dtn
 			_garbage_collector.stop();
 			_garbage_collector.join();
 			join();
+
+			_sockets.destroy();
 		}
 
 		void ApiServer::__cancellation()

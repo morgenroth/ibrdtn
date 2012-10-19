@@ -66,6 +66,7 @@ namespace dtn
 
 		IPNDAgent::~IPNDAgent()
 		{
+			_recv_socket.destroy();
 		}
 
 		void IPNDAgent::add(const ibrcommon::vaddress &address) {
