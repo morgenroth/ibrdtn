@@ -26,6 +26,8 @@
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/net/vinterface.h>
+#include <sstream>
+#include <string.h>
 
 namespace ibrcommon {
 	enum socket_error_code
@@ -42,6 +44,9 @@ namespace ibrcommon {
 	class socket_exception : public Exception
 	{
 	public:
+		socket_exception() : Exception()
+		{};
+
 		socket_exception(string error) : Exception(error)
 		{};
 	};
@@ -62,12 +67,32 @@ namespace ibrcommon {
 	{
 	public:
 		socket_raw_error(int error, string description) : socket_exception(description), _errno(error)
+		{
+			std::stringstream ss;
+			ss << error << ": " << socket_exception::what();
+			__what = ss.str();
+		};
+
+		socket_raw_error(int error) : socket_exception(), _errno(error)
+		{
+			std::stringstream ss;
+			ss << error << ": " << ::strerror(error);
+			__what = ss.str();
+		};
+
+		virtual ~socket_raw_error() throw()
 		{};
+
+		virtual const char* what() const throw()
+		{
+			return __what.c_str();
+		}
 
 		int error() const { return _errno; }
 
 	private:
 		int _errno;
+		std::string __what;
 	};
 
 	/**

@@ -105,6 +105,7 @@ namespace ibrcommon
 
 	void basesocket::close() throw (socket_exception)
 	{
+		// TODO: what about close() of UNMANAGED sockets like (tcpsocket of serversocket::accept())
 		int ret = ::close(this->fd());
 		if (ret == -1)
 			throw socket_exception("close error");
@@ -377,7 +378,7 @@ namespace ibrcommon
 		freeaddrinfo(res);
 
 		if (ret == -1) {
-			throw socket_raw_error(errno, "sendto error");
+			throw socket_raw_error(errno);
 		}
 	}
 
@@ -707,7 +708,7 @@ namespace ibrcommon
 						/* Hier kann eine Fehlermeldung hin, z.B. mit warn() */
 						if ((walk->ai_next == NULL) && (probesocket.size() == 0))
 						{
-							throw socket_raw_error(errno, "Could not connect to the server.");
+							throw socket_raw_error(errno);
 						}
 						continue;
 					}
@@ -766,7 +767,7 @@ namespace ibrcommon
 
 						// if this was the last socket then abort with an exception
 						if (probesocket.size() == 0) {
-							throw socket_raw_error(err, "Could not connect to the server.");
+							throw socket_raw_error(err);
 						}
 						break;
 					}
