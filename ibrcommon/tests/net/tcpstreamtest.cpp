@@ -42,7 +42,7 @@ void tcpstreamtest :: baseTest (void)
 }
 
 tcpstreamtest::StreamChecker::StreamChecker(int port, int chars)
- : _srv(port), _chars(chars)
+ : _running(true), _srv(port), _chars(chars)
 {
 }
 
@@ -86,6 +86,7 @@ void tcpstreamtest::runTest()
 
 void tcpstreamtest::StreamChecker::__cancellation()
 {
+	_running = false;
 	try {
 		_srv.close();
 	} catch (const ibrcommon::socket_exception&) {};
@@ -102,36 +103,38 @@ void tcpstreamtest::StreamChecker::run()
 
 	ibrcommon::clientsocket *socket = NULL;
 
-	try {
-		ibrcommon::vaddress source;
-		socket = _srv.accept(source);
+	while (_running) {
+		try {
+			ibrcommon::vaddress source;
+			socket = _srv.accept(source);
 
-		CPPUNIT_ASSERT(socket != NULL);
+			CPPUNIT_ASSERT(socket != NULL);
 
-		// create a new stream
-		ibrcommon::socketstream stream(socket);
+			// create a new stream
+			ibrcommon::socketstream stream(socket);
 
-		while (stream.good())
-		{
-			char value;
-
-			// read one char
-			stream.get(value);
-
-			if ((value != values[byte % _chars]) && stream.good())
+			while (stream.good())
 			{
-				cout << "error in byte " << byte << ", " << value << " != " << values[byte % _chars] << endl;
-				break;
+				char value;
+
+				// read one char
+				stream.get(value);
+
+				if ((value != values[byte % _chars]) && stream.good())
+				{
+					cout << "error in byte " << byte << ", " << value << " != " << values[byte % _chars] << endl;
+					break;
+				}
+
+				byte++;
 			}
 
-			byte++;
-		}
+			// connection should be closed
+			CPPUNIT_ASSERT(stream.errmsg == ibrcommon::ERROR_CLOSED);
 
-		// connection should be closed
-		CPPUNIT_ASSERT(stream.errmsg == ibrcommon::ERROR_CLOSED);
-
-		stream.close();
-	} catch (const ibrcommon::Exception&) { };
+			stream.close();
+		} catch (const ibrcommon::Exception&) { };
+	}
 
 	CPPUNIT_ASSERT(byte == 20000001);
 }

@@ -44,6 +44,7 @@ class tcpstreamtest : public CPPUNIT_NS :: TestFixture
 		virtual void __cancellation();
 
 	private:
+		bool _running;
 		ibrcommon::tcpserversocket _srv;
 		int _chars;
 	};
