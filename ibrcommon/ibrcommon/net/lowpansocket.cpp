@@ -142,6 +142,19 @@ namespace ibrcommon
 		}
 	}
 
+	void lowpansocket::getAddress(const vinterface &iface, const std::string &panid, ibrcommon::vaddress &addr)
+	{
+		struct sockaddr_ieee802154 address;
+		address.addr.addr_type = IEEE802154_ADDR_SHORT;
+
+		lowpansocket::getAddress(&address.addr, iface);
+
+		std::stringstream ss_pan; ss_pan << address.addr.pan_id;
+		std::stringstream ss_addr; ss_addr << address.addr.short_addr;
+
+		addr = ibrcommon::vaddress(ss_addr.str(), panid);
+	}
+
 	void lowpansocket::getAddress(struct ieee802154_addr *ret, const vinterface &iface)
 	{
 #if defined HAVE_LIBNL || HAVE_LIBNL3
