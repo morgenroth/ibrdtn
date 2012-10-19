@@ -113,11 +113,9 @@ namespace ibrcommon
 
 	vsocket::~vsocket()
 	{
-		ibrcommon::LinkManager::getInstance().unregisterAllEvents(this);
+		//ibrcommon::LinkManager::getInstance().unregisterAllEvents(this);
 
 		_pipe.down();
-
-		// TODO: delete all associated sockets
 	}
 
 	void vsocket::add(basesocket *socket)
@@ -135,260 +133,52 @@ namespace ibrcommon
 		_sockets.erase(socket);
 	}
 
-//	int vsocket::bind(const vsocket::vbind &b)
-//	{
-//		_binds.push_back(b);
-//		vsocket::vbind &vb = _binds.back();
-//
-//		try {
-//			if (_options & VSOCKET_REUSEADDR) vb.set(VSOCKET_REUSEADDR);
-//			if (_options & VSOCKET_BROADCAST) vb.set(VSOCKET_BROADCAST);
-//			if (_options & VSOCKET_MULTICAST) vb.set(VSOCKET_MULTICAST);
-//
-//			vb.bind();
-//
-//			if (_options & VSOCKET_LINGER) vb.set(VSOCKET_LINGER);
-//			if (_options & VSOCKET_NODELAY) vb.set(VSOCKET_NODELAY);
-//			if (_options & VSOCKET_NONBLOCKING) vb.set(VSOCKET_NONBLOCKING);
-//
-//			// join all already assigned groups
-//			for (mcast_groups::iterator iter = _groups.begin();
-//					iter != _groups.end(); iter++) {
-//				std::set<ibrcommon::vinterface> ifaces = (*iter).second;
-//
-//				for (std::set<ibrcommon::vinterface>::iterator it_iface = ifaces.begin();
-//						it_iface != ifaces.end(); it_iface++) {
-//					vb.join(iter->first, *it_iface);
-//				}
-//			}
-//		} catch (const vsocket_exception&) {
-//			_binds.pop_back();
-//			throw;
-//		}
-//
-//		return vb._fd;
-//	}
-//
-//	std::set<int> vsocket::bind(const vinterface &iface, const int port, unsigned int socktype)
-//	{
-//		std::set<int> ret;
-//		if (iface.empty()) { bind(port); return ret; }
-//
-//		// remember the port for dynamic bind/unbind
-//		_portmap[iface] = port;
-//		_typemap[iface] = socktype;
-//
-//		// watch at events on this interface
-//		ibrcommon::LinkManager::getInstance().registerInterfaceEvent(iface, this);
-//
-//		// bind on all interfaces of "iface"!
-//		const std::list<vaddress> addrlist = iface.getAddresses();
-//
-//		for (std::list<vaddress>::const_iterator iter = addrlist.begin(); iter != addrlist.end(); iter++)
-//		{
-//			if ((*iter).getFamily() == ibrcommon::vaddress::VADDRESS_INET6)
-//				if ((_options & VSOCKET_LINKLOCAL) && ((*iter).getScope() != ibrcommon::vaddress::SCOPE_LINKLOCAL)) continue;
-//
-//			if (port == 0)
-//			{
-//				vsocket::vbind vb(iface, (*iter), socktype);
-//				ret.insert( bind( vb ) );
-//			}
-//			else
-//			{
-//				vsocket::vbind vb(iface, (*iter), port, socktype);
-//				ret.insert( bind( vb ) );
-//			}
-//		}
-//
-//		return ret;
-//	}
-//
-//	void vsocket::unbind(const vinterface &iface, const int port)
-//	{
-//		// delete the watch at events on this interface
-//		ibrcommon::LinkManager::getInstance().unregisterInterfaceEvent(iface, this);
-//
-//		// unbind all interfaces on interface "iface"!
-//		const std::list<vaddress> addrlist = iface.getAddresses();
-//
-//		for (std::list<vaddress>::const_iterator iter = addrlist.begin(); iter != addrlist.end(); iter++)
-//		{
-//			if ((*iter).getFamily() == ibrcommon::vaddress::VADDRESS_INET6)
-//				if ((_options & VSOCKET_LINKLOCAL) && ((*iter).getScope() != ibrcommon::vaddress::SCOPE_LINKLOCAL)) continue;
-//			unbind( *iter, port );
-//		}
-//	}
-//
-//	std::set<int> vsocket::bind(const int port, unsigned int socktype)
-//	{
-//		std::set<int> ret;
-//
-//		vaddress addr6(vaddress::VADDRESS_INET6);
-//		std::set<int> addr6_ret = bind( addr6, port, socktype );
-//		ret.insert( addr6_ret.begin(), addr6_ret.end() );
-//
-//		vaddress addr(vaddress::VADDRESS_INET);
-//		std::set<int> addr_ret = bind( addr, port, socktype );
-//		ret.insert( addr_ret.begin(), addr_ret.end() );
-//
-//		return ret;
-//	}
-//
-//	void vsocket::unbind(const int port)
-//	{
-//		vaddress addr6(vaddress::VADDRESS_INET6);
-//		unbind( addr6, port );
-//
-//		vaddress addr(vaddress::VADDRESS_INET);
-//		unbind( addr, port );
-//	}
-//
-//	std::set<int> vsocket::bind(const vaddress &address, const int port, unsigned int socktype)
-//	{
-//		std::set<int> ret;
-//		vsocket::vbind vb(address, port, socktype);
-//		ret.insert( bind( vb ) );
-//		return ret;
-//	}
-//
-//	std::set<int> vsocket::bind(const ibrcommon::File &file, unsigned int socktype)
-//	{
-//		std::set<int> ret;
-//		vsocket::vbind vb(file, socktype);
-//		ret.insert( bind( vb ) );
-//		return ret;
-//	}
-//
-//	void vsocket::unbind(const vaddress &address, const int port)
-//	{
-//		for (std::list<vsocket::vbind>::iterator iter = _binds.begin(); iter != _binds.end(); iter++)
-//		{
-//			vsocket::vbind &b = (*iter);
-//			if ((b._vaddress == address) && (b._port == port))
-//			{
-//				_unbind_queue.push(b);
-//			}
-//		}
-//	}
-//
-//	void vsocket::unbind(const ibrcommon::File &file)
-//	{
-//		for (std::list<vsocket::vbind>::iterator iter = _binds.begin(); iter != _binds.end(); iter++)
-//		{
-//			vsocket::vbind &b = (*iter);
-//			if (b._file == file)
-//			{
-//				_unbind_queue.push(b);
-//			}
-//		}
-//	}
-//
-//	void vsocket::add(const int fd)
-//	{
-//		vsocket::vbind vb(fd);
-//		bind(vb);
-//	}
-//
-//	void vsocket::listen(int connections)
-//	{
-//		ibrcommon::MutexLock l(_bind_lock);
-//		for (std::list<ibrcommon::vsocket::vbind>::iterator iter = _binds.begin();
-//				iter != _binds.end(); iter++)
-//		{
-//			ibrcommon::vsocket::vbind &bind = (*iter);
-//			bind.listen(connections);
-//		}
-//
-//		_listen_connections = connections;
-//	}
-//
-//	void vsocket::relisten()
-//	{
-//		if (_listen_connections > 0)
-//			listen(_listen_connections);
-//	}
-//
-//	void vsocket::set(const Option &o)
-//	{
-//		// set options
-//		_options |= o;
-//
-//		ibrcommon::MutexLock l(_bind_lock);
-//		for (std::list<ibrcommon::vsocket::vbind>::iterator iter = _binds.begin();
-//				iter != _binds.end(); iter++)
-//		{
-//			ibrcommon::vsocket::vbind &bind = (*iter);
-//			bind.set(o);
-//		}
-//	}
-//
-//	void vsocket::unset(const Option &o)
-//	{
-//		// unset options
-//		_options &= ~(o);
-//
-//		ibrcommon::MutexLock l(_bind_lock);
-//		for (std::list<ibrcommon::vsocket::vbind>::iterator iter = _binds.begin();
-//				iter != _binds.end(); iter++)
-//		{
-//			ibrcommon::vsocket::vbind &bind = (*iter);
-//			bind.unset(o);
-//		}
-//	}
-//
-//	void vsocket::join(const ibrcommon::vaddress &group, const ibrcommon::vinterface &iface)
-//	{
-//		_groups[group].insert(iface);
-//
-//		for (std::list<ibrcommon::vsocket::vbind>::iterator iter = _binds.begin();
-//				iter != _binds.end(); iter++)
-//		{
-//			ibrcommon::vsocket::vbind &bind = (*iter);
-//			bind.join(group, iface);
-//		}
-//	}
-//
-//	void vsocket::leave(const ibrcommon::vaddress &group)
-//	{
-//		const std::set<ibrcommon::vinterface> &ifaces = _groups[group];
-//
-//		for (std::set<ibrcommon::vinterface>::const_iterator it_ifaces = ifaces.begin();
-//				it_ifaces != ifaces.end(); it_ifaces++) {
-//			const ibrcommon::vinterface &iface = (*it_ifaces);
-//
-//			for (std::list<ibrcommon::vsocket::vbind>::iterator it_bind = _binds.begin();
-//					it_bind != _binds.end(); it_bind++)
-//			{
-//				ibrcommon::vsocket::vbind &bind = (*it_bind);
-//				bind.leave(group, iface);
-//			}
-//		}
-//
-//		_groups.erase(group);
-//	}
-
-	void vsocket::close()
+	size_t vsocket::size() const
 	{
-		ibrcommon::MutexLock l(_socket_lock);
-		for (std::set<basesocket*>::iterator iter = _sockets.begin();
-				iter != _sockets.end(); iter++)
-		{
-			basesocket *sock = (*iter);
-			sock->down();
-		}
-
-		interrupt();
+		return _sockets.size();
 	}
 
-	void vsocket::shutdown(int how)
+	void vsocket::clear()
 	{
-		ibrcommon::MutexLock l(_socket_lock);
-		for (std::set<basesocket*>::iterator iter = _sockets.begin();
-				iter != _sockets.end(); iter++)
+		_sockets.clear();
+	}
+
+	void vsocket::destroy()
+	{
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++)
 		{
 			basesocket *sock = (*iter);
-			sock->shutdown(how);
+			delete sock;
+		}
+		_sockets.clear();
+	}
+
+	socketset vsocket::getAll() const
+	{
+		return _sockets;
+	}
+
+	void vsocket::up() throw (socket_exception) {
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {
+			try {
+				if (!(*iter)->ready()) (*iter)->up();
+			} catch (const socket_exception&) {
+				// rewind all previously up'ped sockets
+				for (socketset::iterator riter = _sockets.begin(); riter != iter; riter++) {
+					(*riter)->down();
+				}
+				throw;
+			}
+		}
+	}
+
+	void vsocket::down() throw (socket_exception)
+	{
+		ibrcommon::MutexLock l(_socket_lock);
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {
+			try {
+				(*iter)->down();
+			} catch (const socket_exception&) { }
 		}
 
 		interrupt();
@@ -544,7 +334,7 @@ namespace ibrcommon
 		_pipe.write("i", 1);
 	}
 
-	void vsocket::select(std::set<basesocket*> *readset, std::set<basesocket*> *writeset, std::set<basesocket*> *errorset, struct timeval *tv) throw (socket_exception)
+	void vsocket::select(socketset *readset, socketset *writeset, socketset *errorset, struct timeval *tv) throw (socket_exception)
 	{
 		fd_set fds_read;
 		fd_set fds_write;
@@ -564,7 +354,7 @@ namespace ibrcommon
 
 			{
 				ibrcommon::MutexLock l(_socket_lock);
-				for (std::set<basesocket*>::iterator iter = _sockets.begin();
+				for (socketset::iterator iter = _sockets.begin();
 						iter != _sockets.end(); iter++)
 				{
 					basesocket &sock = (**iter);
@@ -622,7 +412,7 @@ namespace ibrcommon
 			}
 
 			ibrcommon::MutexLock l(_socket_lock);
-			for (std::set<basesocket*>::iterator iter = _sockets.begin();
+			for (socketset::iterator iter = _sockets.begin();
 					iter != _sockets.end(); iter++)
 			{
 				basesocket *sock = (*iter);
@@ -676,175 +466,5 @@ namespace ibrcommon
 //
 //			lq.pop();
 //		}
-//	}
-//
-//	vsocket::vbind::vbind(const int fd)
-//	 : _type(BIND_CUSTOM), _vaddress(), _port(), _fd(fd)
-//	{
-//		// check for errors
-//		if (_fd < 0) try {
-//			check_socket_error( _fd );
-//		} catch (const std::exception&) {
-//			close();
-//			throw;
-//		}
-//	}
-//
-//	vsocket::vbind::vbind(const vaddress &address, unsigned int socktype)
-//	 : _type(BIND_ADDRESS_NOPORT), _vaddress(address), _port(0), _fd(0)
-//	{
-//		_fd = socket(address.getFamily(), socktype, 0);
-//
-//		// check for errors
-//		if (_fd < 0) try {
-//			check_socket_error( _fd );
-//		} catch (const std::exception&) {
-//			close();
-//			throw;
-//		}
-//	}
-//
-//	vsocket::vbind::vbind(const vaddress &address, const int port, unsigned int socktype)
-//	 : _type(BIND_ADDRESS), _vaddress(address), _port(port), _fd(0)
-//	{
-//		_fd = socket(address.getFamily(), socktype, 0);
-//
-//		// check for errors
-//		if (_fd < 0) try {
-//			check_socket_error( _fd );
-//		} catch (const std::exception&) {
-//			close();
-//			throw;
-//		}
-//	}
-//
-//	vsocket::vbind::vbind(const ibrcommon::vinterface &iface, const vaddress &address, unsigned int socktype)
-//	 : _type(BIND_ADDRESS_NOPORT), _vaddress(address), _port(0), _interface(iface), _fd(0)
-//	{
-//		_fd = socket(address.getFamily(), socktype, 0);
-//
-//		// check for errors
-//		if (_fd < 0) try {
-//			check_socket_error( _fd );
-//		} catch (const std::exception&) {
-//			close();
-//			throw;
-//		}
-//	}
-//
-//	vsocket::vbind::vbind(const ibrcommon::vinterface &iface, const vaddress &address, const int port, unsigned int socktype)
-//	 : _type(BIND_ADDRESS), _vaddress(address), _port(port), _interface(iface), _fd(0)
-//	{
-//		_fd = socket(address.getFamily(), socktype, 0);
-//
-//		// check for errors
-//		if (_fd < 0) try {
-//			check_socket_error( _fd );
-//		} catch (const std::exception&) {
-//			close();
-//			throw;
-//		}
-//	}
-//
-//	vsocket::vbind::vbind(const ibrcommon::File &file, unsigned int socktype)
-//	 : _type(BIND_FILE), _port(0), _file(file), _fd(0)
-//	{
-//		_fd = socket(AF_UNIX, socktype, 0);
-//
-//		// check for errors
-//		if (_fd < 0) try {
-//			check_socket_error( _fd );
-//		} catch (const std::exception&) {
-//			close();
-//			throw;
-//		}
-//	}
-//
-//	vsocket::vbind::~vbind()
-//	{
-//	}
-//
-//	void vsocket::vbind::bind()
-//	{
-//		int bind_ret = 0;
-//
-//		switch (_type)
-//		{
-//			case BIND_CUSTOM:
-//			{
-//				// custom fd, do nothing
-//				break;
-//			}
-//
-//			case BIND_ADDRESS_NOPORT:
-//			{
-//				struct addrinfo hints, *res;
-//				memset(&hints, 0, sizeof hints);
-//
-//				hints.ai_family = _vaddress.getFamily();
-//				hints.ai_socktype = SOCK_STREAM;
-//				hints.ai_flags = AI_PASSIVE;
-//
-//				res = _vaddress.addrinfo(&hints);
-//				bind_ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
-//				freeaddrinfo(res);
-//				break;
-//			}
-//
-//			case BIND_ADDRESS:
-//			{
-//				struct addrinfo hints, *res;
-//				memset(&hints, 0, sizeof hints);
-//
-//				hints.ai_family = _vaddress.getFamily();
-//				hints.ai_socktype = SOCK_STREAM;
-//				hints.ai_flags = AI_PASSIVE;
-//
-//				res = _vaddress.addrinfo(&hints, _port);
-//				bind_ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
-//				freeaddrinfo(res);
-//				break;
-//			}
-//
-//			case BIND_FILE:
-//			{
-//				// remove old sockets
-//				unlink(_file.getPath().c_str());
-//
-//				struct sockaddr_un address;
-//				size_t address_length;
-//
-//				address.sun_family = AF_UNIX;
-//				strcpy(address.sun_path, _file.getPath().c_str());
-//				address_length = sizeof(address.sun_family) + strlen(address.sun_path);
-//
-//				// bind to the socket
-//				bind_ret = ::bind(_fd, (struct sockaddr *) &address, address_length);
-//
-//				break;
-//			}
-//		}
-//
-//		if ( bind_ret < 0) check_bind_error( errno );
-//	}
-
-//	void vsocket::vbind::shutdown()
-//	{
-//		::shutdown(_fd, SHUT_RDWR);
-//	}
-//
-//	bool vsocket::vbind::operator==(const int &fd) const
-//	{
-//		return (fd == _fd);
-//	}
-//
-//	bool vsocket::vbind::operator==(const vbind &obj) const
-//	{
-//		if (obj._type != _type) return false;
-//		if (obj._port != _port) return false;
-//		if (obj._vaddress != _vaddress) return false;
-//		if (obj._file.getPath() != _file.getPath()) return false;
-//
-//		return true;
 //	}
 }

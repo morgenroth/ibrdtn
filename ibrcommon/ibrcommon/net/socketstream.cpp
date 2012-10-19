@@ -26,19 +26,34 @@
 namespace ibrcommon
 {
 	socketstream::socketstream(clientsocket *sock, size_t buffer_size)
-	 : std::iostream(this), errmsg(ERROR_NONE), _bufsize(buffer_size), in_buf_(new char[buffer_size]), out_buf_(new char[buffer_size])
+	 : std::iostream(this), errmsg(ERROR_NONE), _bufsize(buffer_size), in_buf_(NULL), out_buf_(NULL)
 	{
+		in_buf_ = new char[_bufsize];
+		out_buf_ = new char[_bufsize];
+
+		// mark the buffer as free
+		setp(out_buf_, out_buf_ + _bufsize - 1);
+		setg(0, 0, 0);
+
 		_socket.add(sock);
+		_socket.up();
 	}
 
 	socketstream::~socketstream()
 	{
-		close();
+		try {
+			close();
+		} catch (const socket_exception&) { };
+
+		_socket.destroy();
+
+		delete in_buf_;
+		delete out_buf_;
 	}
 
 	void socketstream::close()
 	{
-		_socket.close();
+		_socket.down();
 	}
 
 	int socketstream::sync()
@@ -71,7 +86,7 @@ namespace ibrcommon
 		}
 
 		try {
-			std::set<basesocket*> writeset;
+			socketset writeset;
 			_socket.select(NULL, &writeset, NULL, NULL);
 
 			// error checking
@@ -137,7 +152,7 @@ namespace ibrcommon
 	std::char_traits<char>::int_type socketstream::underflow()
 	{
 		try {
-			std::set<basesocket*> readset;
+			socketset readset;
 			_socket.select(&readset, NULL, NULL, NULL);
 
 			// error checking

@@ -263,10 +263,10 @@ namespace ibrcommon
 		try {
 			while (_running)
 			{
-				std::set<basesocket*> socks;
+				socketset socks;
 				_sock.select(&socks, NULL, NULL, NULL);
 
-				for (std::set<basesocket*>::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+				for (socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
 					try {
 						netlinkcache &cache = dynamic_cast<netlinkcache&>(**iter);
 						cache.receive();
@@ -282,7 +282,7 @@ namespace ibrcommon
 	void NetLink3Manager::__cancellation()
 	{
 		_running = false;
-		_sock.close();
+		_sock.down();
 	}
 
 	/** read a netlink message from the socket and create a new netlink event object **/

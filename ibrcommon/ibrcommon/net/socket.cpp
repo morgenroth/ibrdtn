@@ -82,12 +82,14 @@ namespace ibrcommon
 		return ret;
 	}
 
-	basesocket::basesocket(int fd)
-	 : _state(SOCKET_DOWN), _fd(fd)
+	basesocket::basesocket()
+	 : _state(SOCKET_DOWN), _fd(-1)
 	{
-		if (_fd >= 0) {
-			_state = SOCKET_UNMANAGED;
-		}
+	}
+
+	basesocket::basesocket(int fd)
+	 : _state(SOCKET_UNMANAGED), _fd(fd)
+	{
 	}
 
 	basesocket::~basesocket()
@@ -113,6 +115,11 @@ namespace ibrcommon
 		if (ret == -1)
 			throw socket_exception("shutdown error");
 		_state = SOCKET_DOWN;
+	}
+
+	bool basesocket::ready() const
+	{
+		return ((_state == SOCKET_UP) || (_state == SOCKET_UNMANAGED));
 	}
 
 	void basesocket::set_blocking_mode(bool val, int fd) const throw (socket_exception)
@@ -185,6 +192,10 @@ namespace ibrcommon
 		return bound_addr.ss_family;
 	}
 
+	clientsocket::clientsocket()
+	{
+	}
+
 	clientsocket::clientsocket(int fd)
 	 : basesocket(fd)
 	{
@@ -192,6 +203,9 @@ namespace ibrcommon
 
 	clientsocket::~clientsocket()
 	{
+		try {
+			down();
+		} catch (const socket_exception&) { }
 	}
 
 	void clientsocket::up() throw (socket_exception)
@@ -254,6 +268,10 @@ namespace ibrcommon
 		return ret;
 	}
 
+	serversocket::serversocket()
+	{
+	}
+
 	serversocket::serversocket(int fd)
 	 : basesocket(fd)
 	{
@@ -286,6 +304,10 @@ namespace ibrcommon
 		// TODO: set source to addr
 
 		return new_fd;
+	}
+
+	datagramsocket::datagramsocket()
+	{
 	}
 
 	datagramsocket::datagramsocket(int fd)
@@ -325,6 +347,9 @@ namespace ibrcommon
 
 	filesocket::~filesocket()
 	{
+		try {
+			down();
+		} catch (const socket_exception&) { }
 	}
 
 	void filesocket::up() throw (socket_exception)
@@ -386,7 +411,9 @@ namespace ibrcommon
 
 	fileserversocket::~fileserversocket()
 	{
-
+		try {
+			down();
+		} catch (const socket_exception&) { }
 	}
 
 	void fileserversocket::up() throw (socket_exception)
@@ -444,6 +471,9 @@ namespace ibrcommon
 
 	tcpserversocket::~tcpserversocket()
 	{
+		try {
+			down();
+		} catch (const socket_exception&) { }
 	}
 
 	void tcpserversocket::up() throw (socket_exception)
@@ -559,6 +589,9 @@ namespace ibrcommon
 
 	tcpsocket::~tcpsocket()
 	{
+		try {
+			down();
+		} catch (const socket_exception&) { }
 	}
 
 	void tcpsocket::up() throw (socket_exception)
@@ -603,7 +636,7 @@ namespace ibrcommon
 				if (fd < 0) {
 					/* Hier kann eine Fehlermeldung hin, z.B. mit warn() */
 
-					if (walk->ai_next ==  NULL)
+					if ((walk->ai_next ==  NULL) && (probesocket.size() == 0))
 					{
 						throw socket_exception("Could not create a socket.");
 					}
@@ -611,32 +644,90 @@ namespace ibrcommon
 				}
 
 				// set the socket to non-blocking
-				this->set_blocking_mode(false);
+				this->set_blocking_mode(false, fd);
 
 				// connect to the current address using the created socket
 				if (::connect(fd, walk->ai_addr, walk->ai_addrlen) != 0) {
-					// the connect failed, so we close the socket immediately
-					::close(fd);
+					if (errno != EINPROGRESS) {
+						// the connect failed, so we close the socket immediately
+						::close(fd);
 
-					/* Hier kann eine Fehlermeldung hin, z.B. mit warn() */
-					if (walk->ai_next ==  NULL)
-					{
-						throw socket_exception("Could not connect to the server.");
+						/* Hier kann eine Fehlermeldung hin, z.B. mit warn() */
+						if ((walk->ai_next == NULL) && (probesocket.size() == 0))
+						{
+							throw socket_raw_error(errno, "Could not connect to the server.");
+						}
+						continue;
 					}
-					continue;
 				}
 
 				// add the current socket to the probe-socket for later select-call
 				probesocket.add( new tcpsocket(fd) );
 			}
 
-			// TODO:
-			//probesocket.select();
+			// create a probe set
+			socketset probeset;
 
-			// remember the fasted socket
-			//_fd = fd;
+			// later this will be the fastest socket
+			basesocket *fastest = NULL;
 
-			// close all other sockets
+			// TODO: check timeout value
+			while (true && (fastest == NULL)) {
+				if (_timeout == 0) {
+					// probe for the first open socket
+					probesocket.select(NULL, &probeset, NULL, NULL);
+				} else {
+					// TODO: use timeout value
+					// probe for the first open socket
+					probesocket.select(NULL, &probeset, NULL, NULL);
+				}
+
+				// error checking for all returned sockets
+				for (socketset::iterator iter = probeset.begin(); iter != probeset.end(); iter++) {
+					basesocket *current = (*iter);
+					int err = 0;
+					socklen_t len = sizeof(err);
+					::getsockopt(current->fd(), SOL_SOCKET, SO_ERROR, &err, &len);
+
+					switch (err) {
+					case 0:
+						// we got a winner!
+						fastest = current;
+						break;
+
+					case EINPROGRESS:
+						// wait another round
+						break;
+
+					default:
+						// error, remove the socket out of the probeset
+						probesocket.remove(current);
+						current->close();
+						delete current;
+
+						// if this was the last socket then abort with an exception
+						if (probesocket.size() == 0) {
+							throw socket_raw_error(err, "Could not connect to the server.");
+						}
+						break;
+					}
+				}
+			}
+
+			// assign the fasted fd
+			_fd = fastest->fd();
+
+			socketset fds = probesocket.getAll();
+			for (socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
+			{
+				basesocket *current = (*iter);
+				if (current != fastest) {
+					try {
+						current->close();
+					} catch (const socket_exception&) { };
+				}
+				delete current;
+			}
 
 			// free the address
 			freeaddrinfo(res);
@@ -670,6 +761,9 @@ namespace ibrcommon
 
 	udpsocket::~udpsocket()
 	{
+		try {
+			down();
+		} catch (const socket_exception&) { }
 	}
 
 	void udpsocket::up() throw (socket_exception)

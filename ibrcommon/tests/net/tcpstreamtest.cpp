@@ -61,7 +61,7 @@ void tcpstreamtest::runTest()
 	_checker.start();
 
 	try {
-		ibrcommon::vaddress addr("127.0.0.1");
+		ibrcommon::vaddress addr("localhost");
 		ibrcommon::socketstream client(new ibrcommon::tcpsocket(addr, 4343));
 
 		// send some data

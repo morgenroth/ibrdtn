@@ -58,6 +58,18 @@ namespace ibrcommon {
 		socket_error_code _code;
 	};
 
+	class socket_raw_error : public socket_exception
+	{
+	public:
+		socket_raw_error(int error, string description) : socket_exception(description), _errno(error)
+		{};
+
+		int error() const { return _errno; }
+
+	private:
+		int _errno;
+	};
+
 	/**
 	 * The basesocket is an interface for all kinds of sockets. The
 	 * methods allows to bring the socket up or down.
@@ -92,6 +104,11 @@ namespace ibrcommon {
 		void close() throw (socket_exception);
 		void shutdown(int how) throw (socket_exception);
 
+		/**
+		 * @return True, if this socket is up and ready.
+		 */
+		bool ready() const;
+
 	protected:
 		/**
 		 * The socket state determine if the socket file descriptor
@@ -108,7 +125,8 @@ namespace ibrcommon {
 		 * direct instantiation.
 		 * @param fd An existing file descriptor to use.
 		 */
-		basesocket(int fd = -1);
+		basesocket();
+		basesocket(int fd);
 
 		/**
 		 * Error check methods
@@ -145,7 +163,8 @@ namespace ibrcommon {
 		int recv(char *data, size_t len, int flags = 0) throw (socket_error);
 
 	protected:
-		clientsocket(int fd = -1);
+		clientsocket();
+		clientsocket(int fd);
 	};
 
 	class serversocket : public basesocket {
@@ -158,7 +177,8 @@ namespace ibrcommon {
 		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception) = 0;
 
 	protected:
-		serversocket(int fd = -1);
+		serversocket();
+		serversocket(int fd);
 
 		int _accept_fd(ibrcommon::vaddress &addr) throw (socket_exception);
 	};
@@ -173,7 +193,8 @@ namespace ibrcommon {
 		void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
 
 	protected:
-		datagramsocket(int fd = -1);
+		datagramsocket();
+		datagramsocket(int fd);
 	};
 
 	/**
