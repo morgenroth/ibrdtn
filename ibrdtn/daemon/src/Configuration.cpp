@@ -755,11 +755,6 @@ namespace dtn
 			_tcp_idle_timeout = conf.read<unsigned int>("tcp_idle_timeout", 0);
 
 			/**
-			 * dynamic rebind
-			 */
-			_dynamic_rebind = (conf.read<std::string>("net_rebind", "no") == "yes");
-
-			/**
 			 * auto connect interval
 			 */
 			_auto_connect = conf.read<size_t>("net_autoconnect", 0);
@@ -894,11 +889,6 @@ namespace dtn
 			return _tcp_idle_timeout;
 		}
 
-		bool Configuration::Network::doDynamicRebind() const
-		{
-			return _dynamic_rebind;
-		}
-
 		size_t Configuration::Network::getAutoConnect() const
 		{
 			return _auto_connect;
@@ -908,7 +898,6 @@ namespace dtn
 		{
 			return _prophet_config;
 		}
-
 
 		bool Configuration::Statistic::enabled() const
 		{

@@ -367,7 +367,6 @@ namespace dtn
 				size_t _tcp_idle_timeout;
 				ibrcommon::vinterface _default_net;
 				bool _use_default_net;
-				bool _dynamic_rebind;
 				size_t _auto_connect;
 				bool _fragmentation;
 				ProphetConfig _prophet_config;
@@ -413,11 +412,6 @@ namespace dtn
 				 * @return The idle timeout for TCP connections in seconds.
 				 */
 				size_t getTCPIdleTimeout() const;
-
-				/**
-				 * @return True, if the dynamic rebind feature is requested.
-				 */
-				bool doDynamicRebind() const;
 
 				/**
 				 * @return Each x seconds try to connect to all available nodes.
