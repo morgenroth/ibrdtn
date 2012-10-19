@@ -22,7 +22,6 @@
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/vinterface.h"
 #include "ibrcommon/net/vsocket.h"
-#include "ibrcommon/net/LinkManager.h"
 #include <net/if.h>
 
 namespace ibrcommon

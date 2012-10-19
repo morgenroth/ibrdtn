@@ -370,9 +370,10 @@ namespace ibrcommon
 			throw socket_exception("recvfrom error");
 		}
 
-		char str[256];
-		if (::getnameinfo((struct sockaddr *) &clientAddress, clientAddressLength, str, 256, 0, 0, NI_NUMERICHOST) == 0) {
-			addr = ibrcommon::vaddress(std::string(str));
+		char address[256];
+		char service[256];
+		if (::getnameinfo((struct sockaddr *) &clientAddress, clientAddressLength, address, sizeof address, service, sizeof service, NI_NUMERICHOST) == 0) {
+			addr = ibrcommon::vaddress(std::string(address), std::string(service));
 		}
 
 		return ret;

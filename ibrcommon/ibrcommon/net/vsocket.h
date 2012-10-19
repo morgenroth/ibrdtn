@@ -23,7 +23,7 @@
 #define VSOCKET_H_
 
 #include <ibrcommon/data/File.h>
-#include "ibrcommon/net/LinkManager.h"
+#include "ibrcommon/link/LinkManager.h"
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vaddress.h>
@@ -136,7 +136,7 @@ namespace ibrcommon
 		 */
 		void select(socketset *readset, socketset *writeset, socketset *errorset, struct timeval *tv = NULL) throw (socket_exception);
 
-		void eventNotify(const LinkManagerEvent &evt);
+		void eventNotify(const LinkEvent &evt);
 
 	private:
 		class pipesocket : public basesocket

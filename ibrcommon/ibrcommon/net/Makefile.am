@@ -1,21 +1,11 @@
 ## sub directory
 
-h_sources = socket.h socketstream.h ieee802154.h nl802154.h stopandwait.h vsocket.h vinterface.h vaddress.h LinkManager.h
-cc_sources = socket.cpp socketstream.cpp stopandwait.cpp vsocket.cpp vinterface.cpp vaddress.cpp LinkManager.cpp
+h_sources = socket.h socketstream.h ieee802154.h stopandwait.h vsocket.h vinterface.h vaddress.h
+cc_sources = socket.cpp socketstream.cpp stopandwait.cpp vsocket.cpp vinterface.cpp vaddress.cpp
 
 if LOWPAN
 h_sources += lowpansocket.h lowpanstream.h
-cc_sources += lowpansocket.cpp nl_policy.c lowpanstream.cpp
-endif
-
-if NETLINK
-h_sources += NetLinkManager.h
-cc_sources += NetLinkManager.cpp
-endif
-
-if NETLINK3
-h_sources += NetLink3Manager.h
-cc_sources += NetLink3Manager.cpp
+cc_sources += lowpansocket.cpp lowpanstream.cpp
 endif
 
 #Install the headers in a versioned directory

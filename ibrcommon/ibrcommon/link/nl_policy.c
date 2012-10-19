@@ -20,7 +20,7 @@
 
 #include <netlink/netlink.h>
 #include <netlink/attr.h>
-#include "ibrcommon/net/nl802154.h"
+#include "ibrcommon/link/nl802154.h"
 
 #define NLA_HW_ADDR NLA_U64
 

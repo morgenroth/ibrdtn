@@ -40,7 +40,7 @@
 
 extern "C" {
 #include "ibrcommon/net/ieee802154.h"
-#include "ibrcommon/net/nl802154.h"
+#include "ibrcommon/link/nl802154.h"
 extern struct nla_policy ieee802154_policy[IEEE802154_ATTR_MAX + 1];
 };
 

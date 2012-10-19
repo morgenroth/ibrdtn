@@ -22,46 +22,22 @@
 #ifndef NETLINKMANAGER_H_
 #define NETLINKMANAGER_H_
 
-#include "ibrcommon/net/LinkManager.h"
+#include "ibrcommon/link/LinkManager.h"
+#include "ibrcommon/net/socket.h"
 #include "ibrcommon/net/vsocket.h"
 #include "ibrcommon/net/vinterface.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/Conditional.h"
 #include "ibrcommon/thread/Thread.h"
 
-//#include <netinet/in.h>
 #include <netlink/netlink.h>
-#include <netlink/attr.h>
+#include <netlink/cache.h>
+
 
 #include <map>
 
 namespace ibrcommon
 {
-	class NetLinkManagerEvent : public LinkManagerEvent
-	{
-	public:
-		NetLinkManagerEvent(int fd);
-		virtual ~NetLinkManagerEvent();
-
-		virtual const ibrcommon::vinterface& getInterface() const;
-		virtual const ibrcommon::vaddress& getAddress() const;
-		virtual unsigned int getState() const;
-		virtual EventType getType() const;
-
-		virtual bool isWirelessExtension() const;
-
-		void debug() const;
-		const std::string toString() const;
-
-	private:
-		EventType _type;
-		unsigned int _state;
-		bool _wireless;
-		ibrcommon::vinterface _interface;
-		ibrcommon::vaddress _address;
-		std::map<int, std::string> _attributes;
-	};
-
 	class NetLinkManager : public ibrcommon::LinkManager, public ibrcommon::JoinableThread
 	{
 		friend class LinkManager;
@@ -69,8 +45,8 @@ namespace ibrcommon
 	public:
 		virtual ~NetLinkManager();
 
-		const std::string getInterface(int index) const;
-		const std::list<vaddress> getAddressList(const vinterface &iface, const vaddress::Family f);
+		const vinterface getInterface(int index) const;
+		const std::list<vaddress> getAddressList(const vinterface &iface);
 
 		class parse_exception : public Exception
 		{
@@ -86,18 +62,35 @@ namespace ibrcommon
 	private:
 		NetLinkManager();
 
-		std::map<int, std::string> read_nlmsg(int fd);
+		class netlinkcache : public basesocket
+		{
+		public:
+			netlinkcache(int protocol);
+			virtual ~netlinkcache();
+			virtual void up() throw (socket_exception);
+			virtual void down() throw (socket_exception);
 
-		ibrcommon::Mutex _call_mutex;
+			virtual int fd() const throw (socket_exception);
 
-		struct nl_handle *_handle;
-		struct nl_cache *_link_cache;
-		struct nl_cache *_addr_cache;
+			struct nl_cache* operator*() const throw (socket_exception);
 
-		bool _initialized;
-		ibrcommon::vsocket *_sock;
+			void receive() throw (socket_exception);
 
-		bool _refresh_cache;
+		private:
+			const int _protocol;
+
+			struct nl_handle *_nl_handle;
+			struct nl_cache_mngr *_mngr;
+			struct nl_cache *_link_cache;
+			struct nl_cache *_addr_cache;
+		};
+
+		ibrcommon::Mutex _cache_mutex;
+		netlinkcache _route_cache;
+
+		bool _running;
+
+		ibrcommon::vsocket _sock;
 	};
 }
 

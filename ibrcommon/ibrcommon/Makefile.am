@@ -1,6 +1,6 @@
 ## Source directory
 
-SUBDIRS = data net thread
+SUBDIRS = data link net thread
 
 if OPENSSL
   SUBDIRS += ssl
@@ -23,7 +23,7 @@ AM_LDFLAGS = $(PTHREAD_LIBS) $(NL_LIBS) $(NL_ROUTE_LIBS) $(NL_GENL_LIBS)
 
 lib_LTLIBRARIES= libibrcommon.la
 libibrcommon_la_SOURCES= $(h_sources) $(cc_sources)
-libibrcommon_la_LIBADD= data/libdata.la net/libnet.la thread/libthread.la
+libibrcommon_la_LIBADD= data/libdata.la link/liblink.la net/libnet.la thread/libthread.la
 libibrcommon_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
 
 if OPENSSL

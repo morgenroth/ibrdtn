@@ -211,7 +211,7 @@ namespace ibrcommon
 		interrupt();
 	}
 
-	void vsocket::eventNotify(const LinkManagerEvent &evt)
+	void vsocket::eventNotify(const LinkEvent &evt)
 	{
 //		const ibrcommon::vinterface &iface = evt.getInterface();
 //		IBRCOMMON_LOGGER_DEBUG(5) << "update socket cause of event on interface " << iface.toString() << IBRCOMMON_LOGGER_ENDL;

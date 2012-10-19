@@ -22,10 +22,11 @@
 #ifndef NETLINK3MANAGER_H_
 #define NETLINK3MANAGER_H_
 
-#include "ibrcommon/net/LinkManager.h"
+#include "ibrcommon/link/LinkManager.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/Thread.h"
 #include "ibrcommon/net/vsocket.h"
+#include "ibrcommon/net/socket.h"
 
 #include <netlink/netlink.h>
 #include <netlink/socket.h>
@@ -40,30 +41,6 @@ namespace ibrcommon
 		virtual void parse(struct nl_object *obj, int action) = 0;
 	};
 
-	class NetLink3ManagerEvent : public LinkManagerEvent
-	{
-	public:
-		NetLink3ManagerEvent(EventType type, unsigned int state,
-				ibrcommon::vinterface iface, ibrcommon::vaddress addr, bool wireless = false);
-		virtual ~NetLink3ManagerEvent();
-
-		virtual const ibrcommon::vinterface& getInterface() const;
-		virtual const ibrcommon::vaddress& getAddress() const;
-		virtual unsigned int getState() const;
-		virtual EventType getType() const;
-
-		virtual bool isWirelessExtension() const;
-
-		const std::string toString() const;
-
-	private:
-		EventType _type;
-		unsigned int _state;
-		bool _wireless;
-		ibrcommon::vinterface _interface;
-		ibrcommon::vaddress _address;
-	};
-
 	class NetLink3Manager : public ibrcommon::LinkManager, public ibrcommon::JoinableThread
 	{
 		friend class LinkManager;
@@ -71,7 +48,10 @@ namespace ibrcommon
 	public:
 		virtual ~NetLink3Manager();
 
-		const std::string getInterface(int index) const;
+		void up() throw ();
+		void down() throw ();
+
+		const vinterface getInterface(int index) const;
 		const std::list<vaddress> getAddressList(const vinterface &iface);
 
 		class parse_exception : public Exception
@@ -81,7 +61,7 @@ namespace ibrcommon
 			{};
 		};
 
-		void callback(const NetLink3ManagerEvent &evt);
+		void callback(const LinkEvent &evt);
 
 	protected:
 		void run();
@@ -93,7 +73,7 @@ namespace ibrcommon
 		class netlinkcache : public basesocket, public netlink_callback
 		{
 		public:
-			netlinkcache(int protocol, const std::string &name);
+			netlinkcache(int protocol);
 			virtual ~netlinkcache();
 			virtual void up() throw (socket_exception);
 			virtual void down() throw (socket_exception);
@@ -108,7 +88,7 @@ namespace ibrcommon
 
 		private:
 			const int _protocol;
-			const std::string _name;
+
 			struct nl_sock *_nl_socket;
 			struct nl_cache_mngr *_mngr;
 			struct nl_cache *_cache;
