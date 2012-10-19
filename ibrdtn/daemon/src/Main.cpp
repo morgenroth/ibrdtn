@@ -694,7 +694,7 @@ int __daemon_run(Configuration &conf)
 			}
 		} catch (const Configuration::ParameterNotFoundException&) {
 			// by default set multicast equivalent of broadcast
-			ipnd->add(ibrcommon::vaddress("224.0.0.1"));
+			ipnd->add(ibrcommon::vaddress("224.0.0.1", disco_port));
 		}
 
 		for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); iter++)
