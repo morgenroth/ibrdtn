@@ -92,7 +92,7 @@ void tcpstreamtest::StreamChecker::__cancellation()
 }
 
 void tcpstreamtest::StreamChecker::setup() {
-	_srv.bind(4343);
+	_srv.up();
 }
 
 void tcpstreamtest::StreamChecker::run()

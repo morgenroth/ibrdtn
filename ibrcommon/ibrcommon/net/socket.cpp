@@ -401,6 +401,8 @@ namespace ibrcommon
 			throw socket_exception("socket is already up");
 
 		this->set_blocking_mode(false);
+		
+		this->bind(_filename);
 		this->listen(_listen);
 		_state = SOCKET_UP;
 	}
@@ -417,6 +419,23 @@ namespace ibrcommon
 	clientsocket* fileserversocket::accept(ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		return new filesocket(_accept_fd(addr));
+	}
+
+	void fileserversocket::bind(const File &file) throw (socket_exception)
+	{
+		// remove old sockets
+		unlink(file.getPath().c_str());
+
+		struct sockaddr_un address;
+		size_t address_length;
+
+		address.sun_family = AF_UNIX;
+		strcpy(address.sun_path, file.getPath().c_str());
+		address_length = sizeof(address.sun_family) + strlen(address.sun_path);
+
+		// bind to the socket
+		int ret = ::bind(_fd, (struct sockaddr *) &address, address_length);
+		check_bind_error(ret);
 	}
 
 	tcpserversocket::tcpserversocket(const int port, int listen)
@@ -445,7 +464,7 @@ namespace ibrcommon
 		this->set_blocking_mode(false);
 		this->set_linger(true);
 
-//		this->bind(_address, _port);
+		this->bind(_address, _port);
 		this->listen(_listen);
 
 		_state = SOCKET_UP;
@@ -458,6 +477,44 @@ namespace ibrcommon
 		this->close();
 
 		_state = SOCKET_DOWN;
+	}
+
+	void tcpserversocket::bind(const vaddress &addr, int port) throw (socket_exception)
+	{
+		struct addrinfo hints, *res;
+		memset(&hints, 0, sizeof hints);
+
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_PASSIVE;
+
+		std::stringstream port_ss; port_ss << port;
+
+		if (0 != ::getaddrinfo(addr.get().c_str(), port_ss.str().c_str(), &hints, &res))
+			throw socket_exception("failed to getaddrinfo with address: " + addr.toString() + " and port " + port_ss.str());
+
+		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
+		freeaddrinfo(res);
+
+		check_bind_error(ret);
+	}
+
+	void tcpserversocket::bind(const vaddress &addr) throw (socket_exception)
+	{
+		struct addrinfo hints, *res;
+		memset(&hints, 0, sizeof hints);
+
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_PASSIVE;
+
+		if (0 != ::getaddrinfo(addr.get().c_str(), NULL, &hints, &res))
+			throw socket_exception("failed to getaddrinfo with address: " + addr.toString());
+
+		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
+		freeaddrinfo(res);
+
+		check_bind_error(ret);
 	}
 
 	clientsocket* tcpserversocket::accept(ibrcommon::vaddress &addr) throw (socket_exception)

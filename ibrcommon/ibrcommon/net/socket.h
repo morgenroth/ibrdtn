@@ -205,6 +205,9 @@ namespace ibrcommon {
 		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception);
 
 	private:
+		void bind(const File &file) throw (socket_exception);
+
+	private:
 		const File _filename;
 		const int _listen;
 	};
@@ -240,6 +243,10 @@ namespace ibrcommon {
 		virtual void down() throw (socket_exception);
 
 		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception);
+
+	protected:
+		void bind(const vaddress &addr) throw (socket_exception);
+		void bind(const vaddress &addr, int port) throw (socket_exception);
 
 	private:
 		const vaddress _address;
