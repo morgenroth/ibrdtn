@@ -126,6 +126,11 @@ namespace ibrcommon
 				// mark the buffer as free
 				setp(buffer_begin, out_buf_ + _bufsize - 1);
 			}
+		} catch (const vsocket_interrupt &e) {
+			errmsg = ERROR_CLOSED;
+			close();
+			IBRCOMMON_LOGGER_DEBUG(40) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+			throw e;
 		} catch (const socket_error &err) {
 			if (err.code() == ERROR_AGAIN) {
 				return overflow(c);
@@ -192,6 +197,11 @@ namespace ibrcommon
 			setg(in_buf_, in_buf_, in_buf_ + bytes);
 
 			return std::char_traits<char>::not_eof((unsigned char) in_buf_[0]);
+		} catch (const vsocket_interrupt &e) {
+			errmsg = ERROR_CLOSED;
+			close();
+			IBRCOMMON_LOGGER_DEBUG(40) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+			return std::char_traits<char>::eof();
 		} catch (const socket_error &err) {
 			// set the last error code
 			errmsg = err.code();
