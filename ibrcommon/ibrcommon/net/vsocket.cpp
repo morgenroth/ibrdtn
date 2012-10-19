@@ -116,6 +116,8 @@ namespace ibrcommon
 		ibrcommon::LinkManager::getInstance().unregisterAllEvents(this);
 
 		_pipe.down();
+
+		// TODO: delete all associated sockets
 	}
 
 	void vsocket::add(basesocket *socket)

@@ -217,18 +217,47 @@ namespace ibrcommon
 		_state = SOCKET_DOWN;
 	}
 
-	void clientsocket::send(const char *data, size_t len, int flags) throw (socket_exception)
+	int clientsocket::send(const char *data, size_t len, int flags) throw (socket_error)
 	{
 		int ret = ::send(this->fd(), data, len, flags);
-		if (ret == -1)
-			throw socket_exception("send error");
+		if (ret == -1) {
+			switch (errno)
+			{
+			case EPIPE:
+				// connection has been reset
+				throw socket_error(ERROR_EPIPE, "connection has been reset");
+
+			case ECONNRESET:
+				// Connection reset by peer
+				throw socket_error(ERROR_RESET, "Connection reset by peer");
+
+			case EAGAIN:
+				// sent failed but we should retry again
+				throw socket_error(ERROR_AGAIN, "sent failed but we should retry again");
+
+			default:
+				throw socket_error(ERROR_WRITE, "send error");
+			}
+		}
+		return ret;
 	}
 
-	void clientsocket::recv(char *data, size_t len, int flags) throw (socket_exception)
+	int clientsocket::recv(char *data, size_t len, int flags) throw (socket_error)
 	{
 		int ret = ::recv(this->fd(), data, len, flags);
-		if (ret == -1)
-			throw socket_exception("recv error");
+		if (ret == -1) {
+			switch (errno)
+			{
+			case EPIPE:
+				// connection has been reset
+				throw socket_error(ERROR_EPIPE, "connection has been reset");
+
+			default:
+				throw socket_error(ERROR_READ, "read error");
+			}
+		}
+
+		return ret;
 	}
 
 	serversocket::serversocket(int fd)

@@ -21,7 +21,9 @@
 
 #include "net/tcpclienttest.h"
 #include "ibrcommon/thread/MutexLock.h"
-#include "ibrcommon/net/tcpclient.h"
+#include "ibrcommon/net/vaddress.h"
+#include "ibrcommon/net/socketstream.h"
+#include "ibrcommon/net/socket.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION (tcpclienttest);
 
@@ -35,7 +37,8 @@ void tcpclienttest :: tearDown (void)
 
 void tcpclienttest :: baseTest (void)
 {
-	ibrcommon::tcpclient client("www.google.de", 80);
+	ibrcommon::vaddress addr("www.google.de");
+	ibrcommon::socketstream client(new ibrcommon::tcpsocket(addr, 80));
 
 	client << "GET /" << std::flush;
 

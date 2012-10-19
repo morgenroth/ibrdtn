@@ -53,7 +53,7 @@ namespace ibrcommon
 			};
 
 			vaddress();
-			vaddress(const std::string &address, const std::string &scope);
+			vaddress(const std::string &address, const std::string &scope = "");
 //			vaddress(const Family &family = VADDRESS_INET);
 //			vaddress(const Family &family, const std::string &address);
 //			vaddress(const Family &family, const std::string &address, const int iface, const Scope scope = SCOPE_UNKOWN);

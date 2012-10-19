@@ -20,6 +20,8 @@
  */
 
 #include "ibrcommon/net/socketstream.h"
+#include "ibrcommon/Logger.h"
+#include <string.h>
 
 namespace ibrcommon
 {
@@ -54,7 +56,7 @@ namespace ibrcommon
 		char *iend = pptr();
 
 		// mark the buffer as free
-		setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
+		setp(out_buf_, out_buf_ + _bufsize - 1);
 
 		if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 		{
@@ -69,70 +71,64 @@ namespace ibrcommon
 		}
 
 		try {
-			bool read = false, write = true, error = false;
-			select(_interrupt_pipe_write[0], read, write, error, _timeout);
+			std::set<basesocket*> writeset;
+			_socket.select(NULL, &writeset, NULL, NULL);
+
+			// error checking
+			if (writeset.size() == 0) {
+				throw socket_exception("no select result returned");
+			}
 
 			// bytes to send
 			size_t bytes = (iend - ibegin);
 
 			// send the data
-			ssize_t ret = ::send(_socket, out_buf_, (iend - ibegin), 0);
+			clientsocket &sock = static_cast<clientsocket&>(**(writeset.begin()));
 
-			if (ret < 0)
+			int ret = sock.send(out_buf_, (iend - ibegin), 0);
+
+			// check how many bytes are sent
+			if ((size_t)ret < bytes)
 			{
-				switch (errno)
-				{
-				case EPIPE:
-					// connection has been reset
-					errmsg = ERROR_EPIPE;
-					break;
+				// we did not sent all bytes
+				char *resched_begin = ibegin + ret;
+				char *resched_end = iend;
 
-				case ECONNRESET:
-					// Connection reset by peer
-					errmsg = ERROR_RESET;
-					break;
+				// bytes left to send
+				size_t bytes_left = resched_end - resched_begin;
 
-				case EAGAIN:
-					// sent failed but we should retry again
-					return overflow(c);
+				// move the data to the begin of the buffer
+				::memcpy(ibegin, resched_begin, bytes_left);
 
-				default:
-					errmsg = ERROR_WRITE;
-					break;
-				}
+				// new free buffer
+				char *buffer_begin = ibegin + bytes_left;
 
-				// failure
-				close();
-				std::stringstream ss; ss << "<tcpstream> send() in tcpstream failed: " << errno;
-				throw ConnectionClosedException(ss.str());
+				// mark the buffer as free
+				setp(buffer_begin, out_buf_ + _bufsize - 1);
 			}
-			else
-			{
-				// check how many bytes are sent
-				if ((size_t)ret < bytes)
-				{
-					// we did not sent all bytes
-					char *resched_begin = ibegin + ret;
-					char *resched_end = iend;
-
-					// bytes left to send
-					size_t bytes_left = resched_end - resched_begin;
-
-					// move the data to the begin of the buffer
-					::memcpy(ibegin, resched_begin, bytes_left);
-
-					// new free buffer
-					char *buffer_begin = ibegin + bytes_left;
-
-					// mark the buffer as free
-					setp(buffer_begin, out_buf_ + BUFF_SIZE - 1);
-				}
+		} catch (const socket_error &err) {
+			if (err.code() == ERROR_AGAIN) {
+				return overflow(c);
 			}
-		} catch (const select_exception &ex) {
-			// send timeout
-			errmsg = ERROR_WRITE;
+
+			// set the last error code
+			errmsg = err.code();
+
+			// close the stream/socket due to failures
 			close();
-			throw ConnectionClosedException("<tcpstream> send() timed out");
+
+			// create a detailed exception message
+			std::stringstream ss; ss << "<tcpstream> send() in tcpstream failed: " << err.code();
+			throw stream_exception(ss.str());
+		} catch (const socket_exception &ex) {
+			// set the last error code
+			errmsg = ERROR_WRITE;
+
+			// close the stream/socket due to failures
+			close();
+
+			// create a detailed exception message
+			throw stream_exception("<tcpstream> send() timed out");
 		}
 
 		return std::char_traits<char>::not_eof(c);
@@ -141,14 +137,19 @@ namespace ibrcommon
 	std::char_traits<char>::int_type socketstream::underflow()
 	{
 		try {
-			bool read = true;
-			bool write = false;
-			bool error = false;
+			std::set<basesocket*> readset;
+			_socket.select(&readset, NULL, NULL, NULL);
 
-			select(_interrupt_pipe_read[0], read, write, error, _timeout);
+			// error checking
+			if (readset.size() == 0) {
+				throw socket_exception("no select result returned");
+			}
+
+			// send the data
+			clientsocket &sock = static_cast<clientsocket&>(**(readset.begin()));
 
 			// read some bytes
-			int bytes = ::recv(_socket, in_buf_, BUFF_SIZE, 0);
+			int bytes = sock.recv(in_buf_, _bufsize, 0);
 
 			// end of stream
 			if (bytes == 0)
@@ -158,32 +159,24 @@ namespace ibrcommon
 				IBRCOMMON_LOGGER_DEBUG(40) << "<tcpstream> recv() returned zero: " << errno << IBRCOMMON_LOGGER_ENDL;
 				return std::char_traits<char>::eof();
 			}
-			else if (bytes < 0)
-			{
-				switch (errno)
-				{
-				case EPIPE:
-					// connection has been reset
-					errmsg = ERROR_EPIPE;
-					break;
-
-				default:
-					errmsg = ERROR_READ;
-					break;
-				}
-
-				close();
-				IBRCOMMON_LOGGER_DEBUG(40) << "<tcpstream> recv() failed: " << errno << IBRCOMMON_LOGGER_ENDL;
-				return std::char_traits<char>::eof();
-			}
 
 			// Since the input buffer content is now valid (or is new)
 			// the get pointer should be initialized (or reset).
 			setg(in_buf_, in_buf_, in_buf_ + bytes);
 
 			return std::char_traits<char>::not_eof((unsigned char) in_buf_[0]);
-		} catch (const select_exception &ex) {
-			return std::char_traits<char>::eof();
+		} catch (const socket_error &err) {
+			// set the last error code
+			errmsg = err.code();
+
+			// close the stream/socket due to failures
+			close();
+
+			IBRCOMMON_LOGGER_DEBUG(40) << "<tcpstream> recv() failed: " << err.code() << IBRCOMMON_LOGGER_ENDL;
+		} catch (const socket_exception &ex) {
+			IBRCOMMON_LOGGER_DEBUG(40) << "<tcpstream> recv() failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 		}
+
+		return std::char_traits<char>::eof();
 	}
 } /* namespace ibrcommon */

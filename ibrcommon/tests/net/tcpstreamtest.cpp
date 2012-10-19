@@ -21,7 +21,7 @@
 
 #include "net/tcpstreamtest.h"
 #include "ibrcommon/thread/MutexLock.h"
-#include "ibrcommon/net/tcpclient.h"
+#include "ibrcommon/net/socketstream.h"
 
 CPPUNIT_TEST_SUITE_REGISTRATION (tcpstreamtest);
 
@@ -41,8 +41,8 @@ void tcpstreamtest :: baseTest (void)
 	}
 }
 
-tcpstreamtest::StreamChecker::StreamChecker(int chars)
- : _srv(), _chars(chars)
+tcpstreamtest::StreamChecker::StreamChecker(int port, int chars)
+ : _srv(port), _chars(chars)
 {
 }
 
@@ -53,7 +53,7 @@ tcpstreamtest::StreamChecker::~StreamChecker()
 
 void tcpstreamtest::runTest()
 {
-	StreamChecker _checker(10);
+	StreamChecker _checker(4343, 10);
 
 	char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
@@ -61,7 +61,8 @@ void tcpstreamtest::runTest()
 	_checker.start();
 
 	try {
-		ibrcommon::tcpclient client("127.0.0.1", 4343);
+		ibrcommon::vaddress addr("127.0.0.1");
+		ibrcommon::socketstream client(new ibrcommon::tcpsocket(addr, 4343));
 
 		// send some data
 		for (size_t j = 0; j < 20; j++)
@@ -77,7 +78,7 @@ void tcpstreamtest::runTest()
 
 		client.flush();
 		client.close();
-	} catch (const ibrcommon::tcpclient::SocketException&) { };
+	} catch (const ibrcommon::socket_exception&) { };
 
 	_checker.stop();
 	_checker.join();
@@ -85,8 +86,9 @@ void tcpstreamtest::runTest()
 
 void tcpstreamtest::StreamChecker::__cancellation()
 {
-	_srv.shutdown();
-	_srv.close();
+	try {
+		_srv.close();
+	} catch (const ibrcommon::socket_exception&) {};
 }
 
 void tcpstreamtest::StreamChecker::setup() {
@@ -98,21 +100,25 @@ void tcpstreamtest::StreamChecker::run()
 	char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 	int byte = 0;
 
-	ibrcommon::tcpstream *stream = NULL;
+	ibrcommon::clientsocket *socket = NULL;
 
 	try {
-		stream = _srv.accept();
+		ibrcommon::vaddress source;
+		socket = _srv.accept(source);
 
-		CPPUNIT_ASSERT(stream != NULL);
+		CPPUNIT_ASSERT(socket != NULL);
 
-		while (stream->good())
+		// create a new stream
+		ibrcommon::socketstream stream(socket);
+
+		while (stream.good())
 		{
 			char value;
 
 			// read one char
-			stream->get(value);
+			stream.get(value);
 
-			if ((value != values[byte % _chars]) && stream->good())
+			if ((value != values[byte % _chars]) && stream.good())
 			{
 				cout << "error in byte " << byte << ", " << value << " != " << values[byte % _chars] << endl;
 				break;
@@ -122,12 +128,10 @@ void tcpstreamtest::StreamChecker::run()
 		}
 
 		// connection should be closed
-		CPPUNIT_ASSERT(stream->errmsg == ibrcommon::tcpstream::ERROR_CLOSED);
+		CPPUNIT_ASSERT(stream.errmsg == ibrcommon::ERROR_CLOSED);
 
-		stream->close();
+		stream.close();
 	} catch (const ibrcommon::Exception&) { };
 
 	CPPUNIT_ASSERT(byte == 20000001);
-
-	delete stream;
 }

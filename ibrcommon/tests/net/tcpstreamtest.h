@@ -24,11 +24,10 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "ibrcommon/net/tcpserver.h"
-#include "ibrcommon/net/tcpstream.h"
 #include "ibrcommon/thread/Thread.h"
 #include <ibrcommon/net/vinterface.h>
-#include "ibrcommon/thread/Conditional.h"
+#include <ibrcommon/thread/Conditional.h>
+#include <ibrcommon/net/socket.h>
 
 using namespace std;
 
@@ -37,7 +36,7 @@ class tcpstreamtest : public CPPUNIT_NS :: TestFixture
 	class StreamChecker : public ibrcommon::JoinableThread
 	{
 	public:
-		StreamChecker(int chars = 10);
+		StreamChecker(int port, int chars = 10);
 		~StreamChecker();
 
 		virtual void setup();
@@ -45,7 +44,7 @@ class tcpstreamtest : public CPPUNIT_NS :: TestFixture
 		virtual void __cancellation();
 
 	private:
-		ibrcommon::tcpserver _srv;
+		ibrcommon::tcpserversocket _srv;
 		int _chars;
 	};
 

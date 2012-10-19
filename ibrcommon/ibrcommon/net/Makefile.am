@@ -1,7 +1,7 @@
 ## sub directory
 
 h_sources = socket.h socketstream.h ieee802154.h nl802154.h stopandwait.h vsocket.h vinterface.h vaddress.h LinkManager.h
-cc_sources = socket.cpp socketstream.h stopandwait.cpp vsocket.cpp vinterface.cpp vaddress.cpp LinkManager.cpp
+cc_sources = socket.cpp socketstream.cpp stopandwait.cpp vsocket.cpp vinterface.cpp vaddress.cpp LinkManager.cpp
 
 if LOWPAN
 h_sources += lowpansocket.h lowpanstream.h

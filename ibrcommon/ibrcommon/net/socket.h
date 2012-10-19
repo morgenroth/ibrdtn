@@ -28,11 +28,34 @@
 #include <ibrcommon/net/vinterface.h>
 
 namespace ibrcommon {
+	enum socket_error_code
+	{
+		ERROR_NONE = 0,
+		ERROR_EPIPE = 1,
+		ERROR_CLOSED = 2,
+		ERROR_WRITE = 3,
+		ERROR_READ = 4,
+		ERROR_RESET = 5,
+		ERROR_AGAIN = 6
+	};
+
 	class socket_exception : public Exception
 	{
 	public:
 		socket_exception(string error) : Exception(error)
 		{};
+	};
+
+	class socket_error : public socket_exception
+	{
+	public:
+		socket_error(socket_error_code code, string error) : socket_exception(error), _code(code)
+		{};
+
+		socket_error_code code() const { return _code; }
+
+	private:
+		socket_error_code _code;
 	};
 
 	/**
@@ -118,8 +141,8 @@ namespace ibrcommon {
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
-		void send(const char *data, size_t len, int flags = 0) throw (socket_exception);
-		void recv(char *data, size_t len, int flags = 0) throw (socket_exception);
+		int send(const char *data, size_t len, int flags = 0) throw (socket_error);
+		int recv(char *data, size_t len, int flags = 0) throw (socket_error);
 
 	protected:
 		clientsocket(int fd = -1);

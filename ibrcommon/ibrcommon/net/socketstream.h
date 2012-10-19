@@ -29,25 +29,22 @@
 
 namespace ibrcommon
 {
+	class stream_exception : public Exception
+	{
+	public:
+		stream_exception(string error) : Exception(error)
+		{};
+	};
+
 	class socketstream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
 	{
 	public:
-		enum stream_error
-		{
-			ERROR_NONE = 0,
-			ERROR_EPIPE = 1,
-			ERROR_CLOSED = 2,
-			ERROR_WRITE = 3,
-			ERROR_READ = 4,
-			ERROR_RESET = 5
-		};
-
 		socketstream(clientsocket *sock, size_t buffer_size = 5120);
 		virtual ~socketstream();
 
 		void close();
 
-		stream_error errmsg;
+		socket_error_code errmsg;
 
 	protected:
 		virtual int sync();
