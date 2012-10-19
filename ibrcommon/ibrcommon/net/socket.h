@@ -182,7 +182,8 @@ namespace ibrcommon {
 	class clientsocket : public basesocket {
 	public:
 		enum CLIENT_OPTION {
-			NO_DELAY = 0
+			NO_DELAY = 0,
+			BLOCKING = 1
 		};
 
 		virtual ~clientsocket() = 0;
@@ -201,12 +202,18 @@ namespace ibrcommon {
 
 	class serversocket : public basesocket {
 	public:
+		enum SERVER_OPTION {
+			BLOCKING = 0
+		};
+
 		virtual ~serversocket() = 0;
 		virtual void up() throw (socket_exception) = 0;
 		virtual void down() throw (socket_exception) = 0;
 
 		void listen(int connections) throw (socket_exception);
 		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception) = 0;
+
+		void set(SERVER_OPTION opt, bool val);
 
 	protected:
 		serversocket();

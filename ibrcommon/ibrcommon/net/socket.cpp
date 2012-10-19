@@ -284,6 +284,9 @@ namespace ibrcommon
 		case NO_DELAY:
 			set_nodelay(val);
 			break;
+		case BLOCKING:
+			set_blocking_mode(val);
+			break;
 		default:
 			break;
 		}
@@ -329,6 +332,15 @@ namespace ibrcommon
 		}
 
 		return new_fd;
+	}
+
+	void serversocket::set(SERVER_OPTION opt, bool val)
+	{
+		switch (opt) {
+		case BLOCKING:
+			set_blocking_mode(val);
+			break;
+		}
 	}
 
 	datagramsocket::datagramsocket()
@@ -477,7 +489,7 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		this->set_blocking_mode(false);
+		//this->set_blocking_mode(false);
 		
 		this->bind(_filename);
 		this->listen(_listen);
@@ -544,8 +556,8 @@ namespace ibrcommon
 		}
 
 		this->set_reuseaddr(true);
-		this->set_blocking_mode(false);
-		this->set_linger(true);
+		//this->set_blocking_mode(false);
+		//this->set_linger(true);
 
 		try {
 			// try to bind on port + address
@@ -758,6 +770,7 @@ namespace ibrcommon
 					case 0:
 						// we got a winner!
 						fastest = current;
+						probesocket.remove(fastest);
 						break;
 
 					case EINPROGRESS:
@@ -776,25 +789,21 @@ namespace ibrcommon
 						}
 						break;
 					}
+
+					if (fastest != NULL) break;
 				}
 			}
 
 			if (fastest != NULL) {
 				// assign the fasted fd
 				_fd = fastest->fd();
+
+				// switch back to standard blocking mode
+				this->set_blocking_mode(true);
 			}
 
-			socketset fds = probesocket.getAll();
-			for (socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
-			{
-				basesocket *current = (*iter);
-				if (current != fastest) {
-					try {
-						current->close();
-					} catch (const socket_exception&) { };
-				}
-				delete current;
-			}
+			// bring all other sockets down and clean-up
+			probesocket.destroy();
 
 			if (fastest == NULL) {
 				throw socket_exception("connection setup timed out");
