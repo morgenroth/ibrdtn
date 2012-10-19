@@ -1002,9 +1002,6 @@ namespace ibrcommon
 
 	void multicastsocket::join(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-		if (get_family() != group.family())
-			throw socket_exception("family does not match");
-
 		switch (group.family()) {
 			case AF_INET:
 			{
@@ -1076,9 +1073,6 @@ namespace ibrcommon
 
 	void multicastsocket::leave(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-		if (get_family() != group.family())
-			throw socket_exception("family does not match");
-
 		switch (group.family()) {
 			case AF_INET:
 			{
