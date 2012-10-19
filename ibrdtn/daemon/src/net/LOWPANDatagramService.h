@@ -104,10 +104,12 @@ namespace dtn
 			virtual const DatagramConnectionParameter& getParameter() const;
 
 		private:
-			static const std::string encode(const uint16_t &addr, const int &panid);
-			static void decode(const std::string &identifier, uint16_t &addr, int &panid);
+			static const std::string encode(const ibrcommon::vaddress &addr);
+			static void decode(const std::string &identifier, ibrcommon::vaddress &addr);
 
-			const static uint16_t BROADCAST_ADDR = 0;
+			//const static uint16_t BROADCAST_ADDR = 0;
+			ibrcommon::vaddress _addr_broadcast;
+
 			int _panid;
 			const ibrcommon::vinterface _iface;
 			DatagramConnectionParameter _params;

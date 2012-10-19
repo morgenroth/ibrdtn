@@ -22,8 +22,8 @@
 #include "net/LOWPANDatagramService.h"
 #include <ibrdtn/utils/Utils.h>
 
+#include <ibrcommon/net/lowpansocket.h>
 #include <ibrcommon/net/lowpanstream.h>
-#include <ibrcommon/net/UnicastSocketLowpan.h>
 
 #include <ibrcommon/Logger.h>
 
@@ -43,6 +43,13 @@ namespace dtn
 			_params.max_msg_length = 113;
 			_params.max_seq_numbers = 8;
 			_params.flowcontrol = DatagramConnectionParameter::FLOW_NONE;
+
+			// convert the panid into a string
+			std::stringstream ss;
+			ss << _panid;
+
+			// assign the broadcast address
+			_addr_broadcast = ibrcommon::vaddress("0xffff", ss.str());
 		}
 
 		LOWPANDatagramService::~LOWPANDatagramService()
@@ -95,15 +102,9 @@ namespace dtn
 				ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**socks.begin());
 
 				// decode destination address
-				uint16_t addr = 0;
-				int panid = 0;
+				ibrcommon::vaddress destaddr;
 				size_t end_of_payload = length + 1;
-				LOWPANDatagramService::decode(identifier, addr, panid);
-
-				// TODO: create vaddress out of the "address" and the "panid"
-				std::stringstream ss;
-				ss << addr << ":" << panid;
-				ibrcommon::vaddress destaddr(ss.str());
+				LOWPANDatagramService::decode(identifier, destaddr);
 
 				// buffer for the datagram
 				char tmp[length + 2];
@@ -157,11 +158,6 @@ namespace dtn
 				if (socks.size() == 0) return;
 				ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**socks.begin());
 
-				// TODO: create vaddress out of the "address" and the "_panid"
-				std::stringstream ss;
-				ss << BROADCAST_ADDR << ":" << _panid;
-				ibrcommon::vaddress destaddr(ss.str());
-
 				// extend the buffer if the len is zero (ACKs)
 				if (length == 0) length++;
 
@@ -181,7 +177,7 @@ namespace dtn
 				::memcpy(&tmp[2], buf, length);
 
 				// send converted line
-				sock.sendto(buf, length + 2, 0, destaddr);
+				sock.sendto(buf, length + 2, 0, _addr_broadcast);
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("send failed");
 			}
@@ -237,9 +233,8 @@ namespace dtn
 					flags = 0x0f & (tmp[0] >> 4);
 					seqno = 0x0f & tmp[0];
 
-					// TODO: encode into the right format
-					//address = LOWPANDatagramService::encode(from, pan_id);
-					address = fromaddr.toString();
+					// encode into the right format
+					address = LOWPANDatagramService::encode(fromaddr);
 
 					IBRCOMMON_LOGGER_DEBUG(20) << "LOWPANDatagramService::recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << address << IBRCOMMON_LOGGER_ENDL;
 
@@ -268,14 +263,13 @@ namespace dtn
 		 */
 		const std::string LOWPANDatagramService::getServiceDescription() const
 		{
-			struct sockaddr_ieee802154 address;
-			address.addr.addr_type = IEEE802154_ADDR_SHORT;
-			address.addr.pan_id = _panid;
+			std::stringstream ss_pan; ss_pan << _panid;
 
 			// Get address via netlink
-			ibrcommon::lowpansocket::getAddress(&address.addr, _iface);
+			ibrcommon::vaddress addr;
+			ibrcommon::lowpansocket::getAddress(_iface, ss_pan.str(), addr);
 
-			return LOWPANDatagramService::encode(address.addr.short_addr, _panid);
+			return LOWPANDatagramService::encode(addr);
 		}
 
 		/**
@@ -301,15 +295,18 @@ namespace dtn
 			return _params;
 		}
 
-		const std::string LOWPANDatagramService::encode(const uint16_t &addr, const int &panid)
+		const std::string LOWPANDatagramService::encode(const ibrcommon::vaddress &addr)
 		{
 			std::stringstream ss;
-			ss << "addr=" << addr << ";pan=" << panid << ";";
+			ss << "addr=" << addr.address() << ";pan=" << addr.service() << ";";
 			return ss.str();
 		}
 
-		void LOWPANDatagramService::decode(const std::string &identifier, uint16_t &addr, int &panid)
+		void LOWPANDatagramService::decode(const std::string &identifier, ibrcommon::vaddress &addr)
 		{
+			std::string address;
+			std::string service;
+
 			// parse parameters
 			std::vector<string> parameters = dtn::utils::Utils::tokenize(";", identifier);
 			std::vector<string>::const_iterator param_iter = parameters.begin();
@@ -320,20 +317,18 @@ namespace dtn
 
 				if (p[0].compare("addr") == 0)
 				{
-					std::stringstream port_stream;
-					port_stream << p[1];
-					port_stream >> addr;
+					address = p[1];
 				}
 
 				if (p[0].compare("pan") == 0)
 				{
-					std::stringstream port_stream;
-					port_stream << p[1];
-					port_stream >> panid;
+					service = p[1];
 				}
 
 				param_iter++;
 			}
+
+			addr = ibrcommon::vaddress(address, service);
 		}
 	} /* namespace net */
 } /* namespace dtn */

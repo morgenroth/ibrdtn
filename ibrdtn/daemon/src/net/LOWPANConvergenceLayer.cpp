@@ -52,7 +52,7 @@ namespace dtn
 			: DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
 			_net(net), _panid(panid), _ipnd_buf(new char[BUFF_SIZE]), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
 		{
-			// create vaddress out of the "address" and the own "_sockaddr.addr.pan_id"
+			// convert the panid into a string
 			std::stringstream ss;
 			ss << _panid;
 
