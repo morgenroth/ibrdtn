@@ -49,6 +49,7 @@ namespace ibrcommon
 
 	void socketstream::close()
 	{
+		this->flush();
 		_socket.down();
 	}
 
