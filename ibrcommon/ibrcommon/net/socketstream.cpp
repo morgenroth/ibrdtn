@@ -41,10 +41,6 @@ namespace ibrcommon
 
 	socketstream::~socketstream()
 	{
-		try {
-			close();
-		} catch (const socket_exception&) { };
-
 		_socket.destroy();
 
 		delete in_buf_;
@@ -54,6 +50,11 @@ namespace ibrcommon
 	void socketstream::close()
 	{
 		_socket.down();
+	}
+
+	void socketstream::setTimeout(const timeval &val)
+	{
+		::memcpy(&_timeout, &val, sizeof _timeout);
 	}
 
 	int socketstream::sync()
@@ -153,7 +154,14 @@ namespace ibrcommon
 	{
 		try {
 			socketset readset;
-			_socket.select(&readset, NULL, NULL, NULL);
+
+			if (timerisset(&_timeout)) {
+				timeval to_copy;
+				::memcpy(&to_copy, &_timeout, sizeof to_copy);
+				_socket.select(&readset, NULL, NULL, &to_copy);
+			} else {
+				_socket.select(&readset, NULL, NULL, NULL);
+			}
 
 			// error checking
 			if (readset.size() == 0) {

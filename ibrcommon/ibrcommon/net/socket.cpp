@@ -270,6 +270,17 @@ namespace ibrcommon
 		return ret;
 	}
 
+	void clientsocket::set(CLIENT_OPTION opt, bool val) throw (socket_error)
+	{
+		switch (opt) {
+		case NO_DELAY:
+			set_nodelay(val);
+			break;
+		default:
+			break;
+		}
+	}
+
 	serversocket::serversocket()
 	{
 	}
@@ -325,7 +336,7 @@ namespace ibrcommon
 	{
 	}
 
-	void datagramsocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
+	size_t datagramsocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		struct sockaddr_storage clientAddress;
 		socklen_t clientAddressLength = sizeof(clientAddress);
@@ -341,6 +352,8 @@ namespace ibrcommon
 		if (::getnameinfo((struct sockaddr *) &clientAddress, clientAddressLength, str, 256, 0, 0, NI_NUMERICHOST) == 0) {
 			addr = ibrcommon::vaddress(std::string(str));
 		}
+
+		return ret;
 	}
 
 	void datagramsocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr, const int port) throw (socket_exception)

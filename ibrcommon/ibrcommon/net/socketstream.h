@@ -42,6 +42,7 @@ namespace ibrcommon
 		socketstream(clientsocket *sock, size_t buffer_size = 5120);
 		virtual ~socketstream();
 
+		void setTimeout(const timeval &val);
 		void close();
 
 		socket_error_code errmsg;
@@ -59,6 +60,8 @@ namespace ibrcommon
 		char *in_buf_;
 		// Output buffer
 		char *out_buf_;
+
+		timeval _timeout;
 	};
 } /* namespace ibrcommon */
 #endif /* SOCKETSTREAM_H_ */

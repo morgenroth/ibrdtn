@@ -155,12 +155,18 @@ namespace ibrcommon {
 	 */
 	class clientsocket : public basesocket {
 	public:
+		enum CLIENT_OPTION {
+			NO_DELAY = 0
+		};
+
 		virtual ~clientsocket() = 0;
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
 		int send(const char *data, size_t len, int flags = 0) throw (socket_error);
 		int recv(char *data, size_t len, int flags = 0) throw (socket_error);
+
+		void set(CLIENT_OPTION opt, bool val) throw (socket_error);
 
 	protected:
 		clientsocket();
@@ -189,7 +195,7 @@ namespace ibrcommon {
 		virtual void up() throw (socket_exception) = 0;
 		virtual void down() throw (socket_exception) = 0;
 
-		void recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
+		size_t recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
 		void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr, const int port) throw (socket_exception);
 
 	protected:
@@ -280,7 +286,7 @@ namespace ibrcommon {
 	 * A udpsocket allows to send and receive UDP datagrams
 	 * with a bound or non-bound file descriptor.
 	 */
-	class udpsocket : public clientsocket {
+	class udpsocket : public datagramsocket {
 	public:
 		udpsocket(const int port = 0);
 		udpsocket(const vaddress &address, const int port = 0);

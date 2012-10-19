@@ -148,6 +148,11 @@ namespace ibrcommon
 		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++)
 		{
 			basesocket *sock = (*iter);
+
+			try {
+				sock->down();
+			} catch (const socket_exception&) { }
+
 			delete sock;
 		}
 		_sockets.clear();

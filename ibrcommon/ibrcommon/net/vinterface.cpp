@@ -52,19 +52,15 @@ namespace ibrcommon
 		return ::if_nametoindex(_name.c_str());
 	}
 
-//	const std::list<vaddress> vinterface::getAddresses() const
-//	{
-//		if (empty()) throw interface_not_set();
-//		return ibrcommon::LinkManager::getInstance().getAddressList(*this);
-//	}
-//
-//	bool vinterface::up(const vaddress::Family f) const {
-//		if (f == vaddress::VADDRESS_UNSPEC) {
-//			return (!getAddresses().empty());
-//		} else {
-//			return (!getAddresses(f).empty());
-//		}
-//	}
+	const std::list<vaddress> vinterface::getAddresses() const
+	{
+		if (empty()) throw interface_not_set();
+		return ibrcommon::LinkManager::getInstance().getAddressList(*this);
+	}
+
+	bool vinterface::up() const {
+		return !getAddresses().empty();
+	}
 
 	bool vinterface::operator<(const vinterface &obj) const
 	{
