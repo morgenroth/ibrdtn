@@ -87,7 +87,7 @@ namespace dtn
 		Registration::Registration()
 		 : _handle(alloc_handle()),
 		   _default_eid(core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + _handle),
-		   _received_bundles(*this), _persistent(false), _detached(false)
+		   _received_bundles(*this), _persistent(false), _detached(false), _expiry(0)
 		{
 		}
 

@@ -949,9 +949,6 @@ int __daemon_run(Configuration &conf)
 
 	IBRCOMMON_LOGGER(info) << "shutdown dtn node" << IBRCOMMON_LOGGER_ENDL;
 
-	// send shutdown signal to unbound threads
-	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
-
 	/**
 	 * terminate all components!
 	 */

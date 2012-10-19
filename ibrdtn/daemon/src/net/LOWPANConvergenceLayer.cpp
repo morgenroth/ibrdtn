@@ -63,6 +63,7 @@ namespace dtn
 		LOWPANConvergenceLayer::~LOWPANConvergenceLayer()
 		{
 			componentDown();
+			delete[] _ipnd_buf;
 		}
 
 		dtn::core::Node::Protocol LOWPANConvergenceLayer::getDiscoveryProtocol() const

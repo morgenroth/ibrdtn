@@ -60,6 +60,9 @@ namespace dtn
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
 
 			join();
+
+			// delete all sockets
+			_vsocket.destroy();
 		}
 
 		void TCPConvergenceLayer::bind(const ibrcommon::vinterface &net, int port)

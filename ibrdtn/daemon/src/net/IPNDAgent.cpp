@@ -67,6 +67,7 @@ namespace dtn
 
 		IPNDAgent::~IPNDAgent()
 		{
+			_send_socket.destroy();
 			_recv_socket.destroy();
 		}
 
@@ -294,7 +295,7 @@ namespace dtn
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
 
 			// shutdown the send socket
-			_send_socket.down();
+			_send_socket.destroy();
 
 			// shutdown the receive socket
 			_recv_socket.down();

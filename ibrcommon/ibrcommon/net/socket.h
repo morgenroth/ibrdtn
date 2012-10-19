@@ -126,6 +126,14 @@ namespace ibrcommon {
 		virtual int fd() const throw (socket_exception);
 
 		/**
+		 * Return the file descriptor and bring the socket into the down state
+		 * to keep the file descriptor alive even if the socket object gets
+		 * destroyed.
+		 * @return The file descriptor of this socket.
+		 */
+		virtual int release() throw (socket_exception);
+
+		/**
 		 * Standard socket calls
 		 */
 		void close() throw (socket_exception);

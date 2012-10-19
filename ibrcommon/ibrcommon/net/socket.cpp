@@ -101,8 +101,22 @@ namespace ibrcommon
 
 	int basesocket::fd() const throw (socket_exception)
 	{
-		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED)) throw socket_exception("fd not available");
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED) || (_fd == -1)) throw socket_exception("fd not available");
 		return _fd;
+	}
+
+	int basesocket::release() throw (socket_exception)
+	{
+		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED)) throw socket_exception("fd not available");
+		int fd = _fd;
+		_fd = -1;
+
+		if (_state == SOCKET_UP)
+			_state = SOCKET_DOWN;
+		else
+			_state = SOCKET_DESTROYED;
+
+		return fd;
 	}
 
 	void basesocket::close() throw (socket_exception)
@@ -738,13 +752,12 @@ namespace ibrcommon
 			// create a probe set
 			socketset probeset;
 
-			// later this will be the fastest socket
-			basesocket *fastest = NULL;
-
 			timeval timeout_value;
 			::memcpy(&timeout_value, &_timeout, sizeof timeout_value);
 
-			while (fastest == NULL) {
+			bool fastest_found = false;
+
+			while (fastest_found) {
 				if (timerisset(&_timeout)) {
 					// check timeout value
 					if (!timerisset(&timeout_value)) {
@@ -769,8 +782,13 @@ namespace ibrcommon
 					switch (err) {
 					case 0:
 						// we got a winner!
-						fastest = current;
-						probesocket.remove(fastest);
+						fastest_found = true;
+
+						// assign the fasted fd
+						_fd = current->release();
+
+						// switch back to standard blocking mode
+						this->set_blocking_mode(true);
 						break;
 
 					case EINPROGRESS:
@@ -790,22 +808,11 @@ namespace ibrcommon
 						break;
 					}
 
-					if (fastest != NULL) break;
+					if (fastest_found) break;
 				}
 			}
 
-			if (fastest != NULL) {
-				// assign the fasted fd
-				_fd = fastest->fd();
-
-				// switch back to standard blocking mode
-				this->set_blocking_mode(true);
-			}
-
-			// bring all other sockets down and clean-up
-			probesocket.destroy();
-
-			if (fastest == NULL) {
+			if (fastest_found == false) {
 				throw socket_exception("connection setup timed out");
 			}
 
@@ -816,8 +823,12 @@ namespace ibrcommon
 			_state = SOCKET_UP;
 		} catch (const std::exception&) {
 			freeaddrinfo(res);
+			probesocket.destroy();
 			throw;
 		}
+
+		// bring all other sockets down and clean-up
+		probesocket.destroy();
 	}
 
 	void tcpsocket::down() throw (socket_exception)

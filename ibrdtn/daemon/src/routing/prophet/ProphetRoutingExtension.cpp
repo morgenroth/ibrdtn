@@ -49,7 +49,7 @@ namespace dtn
 								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ,
 								 ibrcommon::Timer::time_t next_exchange_timeout)
 			: _forwardingStrategy(strategy), _next_exchange_timeout(next_exchange_timeout), _p_encounter_max(p_encounter_max), _p_encounter_first(p_encounter_first),
-			  _p_first_threshold(p_first_threshold), _beta(beta), _gamma(gamma), _delta(delta), _time_unit(time_unit), _i_typ(i_typ)
+			  _p_first_threshold(p_first_threshold), _beta(beta), _gamma(gamma), _delta(delta), _lastAgingTime(0), _time_unit(time_unit), _i_typ(i_typ)
 		{
 			// assign myself to the forwarding strategy
 			strategy->setProphetRouter(this);
