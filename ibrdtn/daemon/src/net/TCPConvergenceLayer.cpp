@@ -208,6 +208,18 @@ namespace dtn
 					break;
 				}
 
+				case ibrcommon::LinkEvent::ACTION_LINK_DOWN:
+				{
+					ibrcommon::socketset socks = _vsocket.get(evt.getInterface());
+					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+						ibrcommon::tcpserversocket *sock = dynamic_cast<ibrcommon::tcpserversocket*>(*iter);
+						_vsocket.remove(sock);
+						sock->down();
+						delete sock;
+					}
+					break;
+				}
+
 				default:
 					break;
 			}

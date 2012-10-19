@@ -232,6 +232,20 @@ namespace dtn
 					break;
 				}
 
+				case ibrcommon::LinkEvent::ACTION_LINK_DOWN:
+				{
+					leave_interface(evt.getInterface());
+
+					ibrcommon::socketset socks = _send_socket.get(evt.getInterface());
+					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+						ibrcommon::udpsocket *sock = dynamic_cast<ibrcommon::udpsocket*>(*iter);
+						_send_socket.remove(sock);
+						sock->down();
+						delete sock;
+					}
+					break;
+				}
+
 				default:
 					break;
 			}
