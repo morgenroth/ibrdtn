@@ -757,7 +757,7 @@ namespace ibrcommon
 
 			bool fastest_found = false;
 
-			while (fastest_found) {
+			while (!fastest_found) {
 				if (timerisset(&_timeout)) {
 					// check timeout value
 					if (!timerisset(&timeout_value)) {
