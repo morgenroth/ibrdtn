@@ -89,6 +89,10 @@ namespace dtn
 			{
 				try {
 					msock.leave(*it_addr, iface);
+				} catch (const ibrcommon::socket_raw_error &e) {
+					if (e.error() != EADDRNOTAVAIL) {
+						IBRCOMMON_LOGGER(error) << "leave failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 				} catch (const ibrcommon::Exception&) {
 					IBRCOMMON_LOGGER(error) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
@@ -101,10 +105,30 @@ namespace dtn
 
 			for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
 			{
+				bool found = false;
+
+				// check first if the interface has addresses of the same family
+				std::list<ibrcommon::vaddress> addrs = iface.getAddresses();
+				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++)
+				{
+					const ibrcommon::vaddress &addr = (*iter);
+					if (addr.family() == (*it_addr).family())
+					{
+						found = true;
+						break;
+					}
+				}
+
 				try {
-					msock.join(*it_addr, iface);
-				} catch (const ibrcommon::Exception&) {
-					IBRCOMMON_LOGGER(error) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+					if (found) {
+						msock.join(*it_addr, iface);
+					}
+				} catch (const ibrcommon::socket_raw_error &e) {
+					if (e.error() != EADDRINUSE) {
+						IBRCOMMON_LOGGER(error) << "join failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+					}
+				} catch (const ibrcommon::socket_exception &e) {
+					IBRCOMMON_LOGGER(error) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}
@@ -178,11 +202,7 @@ namespace dtn
 				{
 					const ibrcommon::vaddress &bindaddr = evt.getAddress();
 					_send_socket.add(new ibrcommon::udpsocket(bindaddr), evt.getInterface());
-
-					// join interfaces if a interface is totally new
-					if (_send_socket.get(evt.getInterface()).size() == 1) {
-						join_interface(evt.getInterface());
-					}
+					join_interface(evt.getInterface());
 					break;
 				}
 
