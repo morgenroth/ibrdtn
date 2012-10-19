@@ -1,6 +1,6 @@
 ## Source directory
 
-#SUBDIRS=unittests stress
+SUBDIRS=unittests stress
 
 h_sources = \
 		link/netlinktest.h \
