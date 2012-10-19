@@ -779,11 +779,8 @@ int __daemon_run(Configuration &conf)
 		BundleCore::forwarding = false;
 	}
 
-	// enable netlink manager (watchdog for network interfaces)
-	if (conf.getNetwork().doDynamicRebind())
-	{
-		ibrcommon::LinkManager::initialize();
-	}
+	// enable link manager
+	ibrcommon::LinkManager::initialize();
 
 #ifdef WITH_TLS
 	/* enable TLS support */
