@@ -108,6 +108,16 @@ namespace dtn
 				void acquireTransfer(const dtn::data::BundleID &id) throw (NoMoreTransfersAvailable, AlreadyInTransitException);
 
 				/**
+				 * @return the number of free transfer slots
+				 */
+				size_t getFreeTransferSlots() const;
+				
+				/**
+				 * @return True, if the threshold of free transfer slots is reached.
+				 */
+				bool isTransferThresholdReached() const;
+
+				/**
 				 * Release a transfer resource, but never exceed the maxium
 				 * resource limit.
 				 */

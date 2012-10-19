@@ -155,7 +155,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return dtn::core::BundleCore::max_bundles_in_transit; };
+				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
@@ -235,6 +235,10 @@ namespace dtn
 
 							ibrcommon::MutexLock l(db);
 							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+
+							// check if enough transfer slots available (threadhold reached)
+							if (entry.isTransferThresholdReached())
+								throw NeighborDatabase::NoMoreTransfersAvailable();
 
 							try {
 								// get the bundle filter of the neighbor
