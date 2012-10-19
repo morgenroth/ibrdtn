@@ -84,6 +84,8 @@ namespace ibrcommon
 		return ret;
 	}
 
+	const int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
+
 	basesocket::basesocket()
 	 : _state(SOCKET_DOWN), _fd(-1)
 	{
@@ -105,7 +107,6 @@ namespace ibrcommon
 
 	void basesocket::close() throw (socket_exception)
 	{
-		// TODO: what about close() of UNMANAGED sockets like (tcpsocket of serversocket::accept())
 		int ret = ::close(this->fd());
 		if (ret == -1)
 			throw socket_exception("close error");
@@ -561,8 +562,8 @@ namespace ibrcommon
 		try {
 			_fd = ::socket(_address.family(), SOCK_STREAM, 0);
 		} catch (const vaddress::address_exception&) {
-			// address not set, use IPv6 as default family
-			_fd = ::socket(AF_INET6, SOCK_STREAM, 0);
+			// address not set, use DEFAULT_SOCKET_FAMILY as default family
+			_fd = ::socket(DEFAULT_SOCKET_FAMILY, SOCK_STREAM, 0);
 		}
 
 		this->set_reuseaddr(true);
@@ -599,7 +600,9 @@ namespace ibrcommon
 
 		try {
 			address = addr.address().c_str();
-		} catch (const vaddress::address_not_set&) { };
+		} catch (const vaddress::address_not_set&) {
+			hints.ai_family = DEFAULT_SOCKET_FAMILY;
+		};
 
 		try {
 			service = addr.service().c_str();
@@ -659,7 +662,9 @@ namespace ibrcommon
 
 		try {
 			address = _address.address().c_str();
-		} catch (const vaddress::address_not_set&) { };
+		} catch (const vaddress::address_not_set&) {
+			throw socket_exception("need at least an address to connect to");
+		};
 
 		try {
 			service = _address.service().c_str();
@@ -833,8 +838,8 @@ namespace ibrcommon
 		try {
 			_fd = ::socket(_address.family(), SOCK_DGRAM, 0);
 		} catch (const vaddress::address_exception&) {
-			// address not set, use IPv6 as default family
-			_fd = ::socket(AF_INET6, SOCK_DGRAM, 0);
+			// address not set, use DEFAULT_SOCKET_FAMILY as default family
+			_fd = ::socket(DEFAULT_SOCKET_FAMILY, SOCK_DGRAM, 0);
 		}
 
 		try {
@@ -872,7 +877,9 @@ namespace ibrcommon
 
 		try {
 			address = _address.address().c_str();
-		} catch (const vaddress::address_not_set&) { };
+		} catch (const vaddress::address_not_set&) {
+			hints.ai_family = DEFAULT_SOCKET_FAMILY;
+		};
 
 		try {
 			service = _address.service().c_str();

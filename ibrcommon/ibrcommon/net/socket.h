@@ -101,6 +101,8 @@ namespace ibrcommon {
 	 */
 	class basesocket {
 	public:
+		static const int DEFAULT_SOCKET_FAMILY;
+
 		virtual ~basesocket() = 0;
 
 		/**

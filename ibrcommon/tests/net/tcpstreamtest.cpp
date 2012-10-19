@@ -53,6 +53,7 @@ tcpstreamtest::StreamChecker::StreamChecker(int port, int chars)
  : _running(true), _chars(chars)
 {
 	_sock.add(new ibrcommon::tcpserversocket(port));
+	_sock.up();
 }
 
 tcpstreamtest::StreamChecker::~StreamChecker()
@@ -96,7 +97,6 @@ void tcpstreamtest::StreamChecker::__cancellation()
 
 void tcpstreamtest::StreamChecker::setup() {
 	_running = true;
-	_sock.up();
 }
 
 void tcpstreamtest::StreamChecker::run()
@@ -115,7 +115,7 @@ void tcpstreamtest::StreamChecker::run()
 				ibrcommon::vaddress source;
 				socket = srv.accept(source);
 
-				std::cout << "connection accepted from " << source.toString() << std::endl;
+//				std::cout << "connection accepted from " << source.toString() << std::endl;
 
 				CPPUNIT_ASSERT(socket != NULL);
 
