@@ -30,7 +30,7 @@
 #include "core/BundleCore.h"
 #include <ibrcommon/Logger.h>
 #include <ibrdtn/utils/Utils.h>
-#include <ibrcommon/net/LinkManager.h>
+#include <ibrcommon/link/LinkManager.h>
 
 namespace dtn
 {

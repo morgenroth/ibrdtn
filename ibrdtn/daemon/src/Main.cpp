@@ -25,7 +25,7 @@
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/Logger.h>
-#include <ibrcommon/net/LinkManager.h>
+#include <ibrcommon/link/LinkManager.h>
 #include <ibrdtn/utils/Clock.h>
 #include <list>
 

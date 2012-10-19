@@ -29,6 +29,7 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/net/socket.h>
+#include <ibrcommon/link/LinkManager.h>
 
 #include <sstream>
 #include <string.h>
@@ -156,9 +157,9 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::eventNotify(const ibrcommon::LinkManagerEvent &evt)
+		void IPNDAgent::eventNotify(const ibrcommon::LinkEvent &evt)
 		{
-			if (evt.getType() == ibrcommon::LinkManagerEvent::EVENT_ADDRESS_ADDED)
+			if (evt.getAction() == ibrcommon::LinkEvent::ACTION_ADDRESS_ADDED)
 			{
 				// TODO: add new udpsocket for the new address
 //				for (std::list<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {

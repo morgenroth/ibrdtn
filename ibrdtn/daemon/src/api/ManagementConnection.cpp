@@ -29,7 +29,8 @@
 #include <ibrdtn/utils/Utils.h>
 
 #include <ibrcommon/Logger.h>
-#include <ibrcommon/net/LinkManager.h>
+#include <ibrcommon/link/LinkManager.h>
+#include <ibrcommon/link/LinkEvent.h>
 
 namespace dtn
 {
@@ -143,13 +144,14 @@ namespace dtn
 
 							if (cmd[2] == "add")
 							{
-								lm.addressAdded(iface, addr);
+								ibrcommon::LinkEvent evt(ibrcommon::LinkEvent::ACTION_ADDRESS_ADDED, iface, addr);
+								lm.raiseEvent(evt);
 								_stream << ClientHandler::API_STATUS_OK << " ADDRESS ADDED" << std::endl;
-
 							}
 							else if (cmd[2] == "del")
 							{
-								lm.addressRemoved(iface, addr);
+								ibrcommon::LinkEvent evt(ibrcommon::LinkEvent::ACTION_ADDRESS_REMOVED, iface, addr);
+								lm.raiseEvent(evt);
 								_stream << ClientHandler::API_STATUS_OK << " ADDRESS REMOVED" << std::endl;
 							}
 							else

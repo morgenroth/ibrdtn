@@ -30,7 +30,7 @@
 #include "net/DiscoveryAnnouncement.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vsocket.h>
-#include <ibrcommon/net/LinkManager.h>
+#include <ibrcommon/link/LinkEvent.h>
 #include <list>
 #include <map>
 
@@ -54,7 +54,7 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
-			void eventNotify(const ibrcommon::LinkManagerEvent &evt);
+			void eventNotify(const ibrcommon::LinkEvent &evt);
 
 		protected:
 			void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider);
