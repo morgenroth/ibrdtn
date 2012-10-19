@@ -22,8 +22,6 @@
 #ifndef TCPCONNECTION_H_
 #define TCPCONNECTION_H_
 
-#include "config.h"
-
 #include "core/NodeEvent.h"
 
 #include <ibrdtn/data/Bundle.h>
@@ -58,16 +56,6 @@ namespace dtn
 			 * @return
 			 */
 			TCPConnection(TCPConvergenceLayer &tcpsrv, const dtn::core::Node &node, ibrcommon::clientsocket *sock, const size_t timeout = 10);
-
-//			/**
-//			 * Constructor for a new TCPConnection object.
-//			 * @param tcpsrv
-//			 * @param node The node to talk to.
-//			 * @param name
-//			 * @param timeout
-//			 * @return
-//			 */
-//			TCPConnection(TCPConvergenceLayer &tcpsrv, const dtn::core::Node &node, const dtn::data::EID &name, const size_t timeout = 10);
 
 			/**
 			 * Destructor
@@ -185,16 +173,14 @@ namespace dtn
 				//dtn::data::BundleID _current_transfer;
 			};
 
+			void __setup_socket(ibrcommon::clientsocket *sock, bool server);
+
 			dtn::streams::StreamContactHeader _peer;
 			dtn::core::Node _node;
 
-			std::auto_ptr<ibrcommon::clientsocket> _socket;
+			ibrcommon::clientsocket *_socket;
 
 			ibrcommon::socketstream *_socket_stream;
-
-//#ifdef WITH_TLS
-//			ibrcommon::TLSStream _tlsstream;
-//#endif
 
 			// optional security layer between socketstream and bundle protocol layer
 			std::iostream *_sec_stream;

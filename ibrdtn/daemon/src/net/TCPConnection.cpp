@@ -66,7 +66,7 @@ namespace dtn
 		   _keepalive_sender(*this, _keepalive_timeout), _timeout(timeout), _lastack(0), _keepalive_timeout(0),
 		   _callback(tcpsrv), _flags(0), _aborted(false)
 		{
-			// if sock if set to NULL, then we are the server
+			// if _socket is set to NULL, then we are the server
 		}
 
 		TCPConnection::~TCPConnection()
@@ -76,6 +76,21 @@ namespace dtn
 
 			// wait until the sender thread is finished
 			_sender.join();
+
+			// clean-up
+			if (_protocol_stream != NULL) {
+				delete _protocol_stream;
+			}
+
+			if (_sec_stream != NULL) {
+				delete _sec_stream;
+			}
+
+			if ((_socket != NULL) && (_socket_stream == NULL)) {
+				delete _socket;
+			} else if (_socket_stream != NULL) {
+				delete _socket_stream;
+			}
 		}
 
 		void TCPConnection::queue(const dtn::data::BundleID &bundle)
@@ -299,30 +314,6 @@ namespace dtn
 
 		void TCPConnection::setup()
 		{
-			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
-			{
-				_socket->set(ibrcommon::clientsocket::NO_DELAY, true);
-			}
-
-			_socket_stream = new ibrcommon::socketstream(_socket.get());
-			_socket.release();
-
-#ifdef WITH_TLS
-			// initialize security layer if available
-//			_sec_stream = new ibrcommon::TLSStream(connection);
-			dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream).setServer(true);
-#endif
-
-			// create a new stream connection
-			int chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
-			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
-
-			_protocol_stream->exceptions(std::ios::badbit | std::ios::eofbit);
-
-			// add default TCP connection
-			_node.clear();
-			_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, "0.0.0.0", 0, 30) );
-
 			_flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
 			_flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
 
@@ -332,14 +323,36 @@ namespace dtn
 			}
 		}
 
+		void TCPConnection::__setup_socket(ibrcommon::clientsocket *sock, bool server)
+		{
+			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
+			{
+				sock->set(ibrcommon::clientsocket::NO_DELAY, true);
+			}
+
+			_socket_stream = new ibrcommon::socketstream(sock);
+
+#ifdef WITH_TLS
+			// initialize security layer if available
+			_sec_stream = new ibrcommon::TLSStream(_socket_stream);
+			if (server) dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream).setServer(true);
+			else dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream).setServer(false);
+#endif
+
+			// create a new stream connection
+			int chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
+			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
+
+			_protocol_stream->exceptions(std::ios::badbit | std::ios::eofbit);
+		}
+
 		void TCPConnection::connect()
 		{
-#ifdef WITH_TLS
-			try {
-				// set tls mode to client
-				dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream).setServer(false);
-			} catch (const std::bad_cast&) { };
-#endif
+			// do not connect to other hosts if we are in server
+			if (_socket != NULL) return;
+
+			// do not connect to anyone if we are already connected
+			if (_socket_stream != NULL) return;
 
 			// variables for address and port
 			std::string address = "0.0.0.0";
@@ -369,13 +382,14 @@ namespace dtn
 						timerclear(&tv);
 						tv.tv_sec = _timeout;
 
+						// create a new tcp connection via the tcpsocket object
 						ibrcommon::tcpsocket *client = new ibrcommon::tcpsocket(addr, &tv);
+
+						// connect to the node
 						client->up();
 
-						if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
-						{
-							client->set(ibrcommon::clientsocket::NO_DELAY, true);
-						}
+						// setup a new tcp connection
+						__setup_socket(client, false);
 
 						// add TCP connection descriptor to the node object
 						_node.clear();
@@ -400,8 +414,17 @@ namespace dtn
 		void TCPConnection::run()
 		{
 			try {
-				// connect to the peer
-				connect();
+				if (_socket == NULL) {
+					// connect to the peer
+					connect();
+				} else {
+					// accept remote connection as server
+					__setup_socket(_socket, true);
+
+					// add default TCP connection
+					_node.clear();
+					_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, "0.0.0.0", 0, 30) );
+				}
 
 				// do the handshake
 				_protocol_stream->handshake(dtn::core::BundleCore::local, _timeout, _flags);
