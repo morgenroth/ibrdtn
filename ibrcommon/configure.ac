@@ -284,6 +284,7 @@ AC_CONFIG_FILES([Makefile \
 	ibrcommon.pc \
 	ibrcommon/Makefile \
 	ibrcommon/data/Makefile \
+	ibrcommon/link/Makefile \
 	ibrcommon/net/Makefile \
 	ibrcommon/thread/Makefile \
 	ibrcommon/ssl/Makefile \
