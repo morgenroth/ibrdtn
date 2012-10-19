@@ -30,7 +30,7 @@
 #include "net/DiscoveryAnnouncement.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vsocket.h>
-#include <ibrcommon/link/LinkEvent.h>
+#include <ibrcommon/link/LinkManager.h>
 #include <list>
 #include <map>
 

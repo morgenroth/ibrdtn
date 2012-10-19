@@ -65,7 +65,7 @@ namespace dtn
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, unsigned int mtu)
-		 : _sock(port), _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
+		 : _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
 		{
 		}
 
@@ -201,8 +201,17 @@ namespace dtn
 							// set write lock
 							ibrcommon::MutexLock l(m_writelock);
 
-							// send converted line back to client.
-							_sock.sendto(data.c_str(), data.length(), 0, addr);
+							// get the first global scope socket
+							ibrcommon::socketset socks = _vsocket.getAll();
+							for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+								ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
+								if (sock.get_address().scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
+
+								// send converted line back to client.
+								sock.sendto(data.c_str(), data.length(), 0, addr);
+								return;
+							}
+							dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 						} catch (const ibrcommon::socket_exception&) {
 							// CL is busy, requeue bundle
 							dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
@@ -223,8 +232,17 @@ namespace dtn
 						// set write lock
 						ibrcommon::MutexLock l(m_writelock);
 
-						// send converted line back to client.
-						_sock.sendto(data.c_str(), data.length(), 0, addr);
+						// get the first global scope socket
+						ibrcommon::socketset socks = _vsocket.getAll();
+						for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+							ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
+							if (sock.get_address().scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
+
+							// send converted line back to client.
+							sock.sendto(data.c_str(), data.length(), 0, addr);
+							return;
+						}
+						dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 					} catch (const ibrcommon::socket_exception&) {
 						// CL is busy, requeue bundle
 						dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
@@ -242,7 +260,7 @@ namespace dtn
 
 		}
 
-		void UDPConvergenceLayer::receive(dtn::data::Bundle &bundle, dtn::data::EID &sender)
+		void UDPConvergenceLayer::receive(dtn::data::Bundle &bundle, dtn::data::EID &sender) throw (ibrcommon::socket_exception)
 		{
 			ibrcommon::MutexLock l(m_readlock);
 
@@ -251,40 +269,69 @@ namespace dtn
 			// data waiting
 			ibrcommon::socketset readfds;
 
-			try {
-				// wait for incoming messages
-				_vsocket.select(&readfds, NULL, NULL, NULL);
+			// wait for incoming messages
+			_vsocket.select(&readfds, NULL, NULL, NULL);
 
-				if (readfds.size() > 0) {
-					ibrcommon::datagramsocket *sock = static_cast<ibrcommon::datagramsocket*>(*readfds.begin());
+			if (readfds.size() > 0) {
+				ibrcommon::datagramsocket *sock = static_cast<ibrcommon::datagramsocket*>(*readfds.begin());
 
-					ibrcommon::vaddress fromaddr;
-					size_t len = sock->recvfrom(data, m_maxmsgsize, 0, fromaddr);
+				ibrcommon::vaddress fromaddr;
+				size_t len = sock->recvfrom(data, m_maxmsgsize, 0, fromaddr);
 
-					std::stringstream ss; ss << "udp://" << fromaddr.toString();
-					sender = dtn::data::EID(ss.str());
+				std::stringstream ss; ss << "udp://" << fromaddr.toString();
+				sender = dtn::data::EID(ss.str());
 
-					if (len > 0)
-					{
-						// read all data into a stream
-						stringstream ss;
-						ss.write(data, len);
+				if (len > 0)
+				{
+					// read all data into a stream
+					stringstream ss;
+					ss.write(data, len);
 
-						// get the bundle
-						dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
-					}
+					// get the bundle
+					dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
 				}
-			} catch (const ibrcommon::socket_exception&) {
+			}
+		}
 
+		void UDPConvergenceLayer::eventNotify(const ibrcommon::LinkEvent &evt)
+		{
+			if (evt.getInterface() != _net) return;
+
+			switch (evt.getAction())
+			{
+				case ibrcommon::LinkEvent::ACTION_ADDRESS_ADDED:
+				{
+					ibrcommon::vaddress bindaddr = evt.getAddress();
+					// convert the port into a string
+					std::stringstream ss; ss << _port;
+					bindaddr.setService(ss.str());
+					_vsocket.add(new ibrcommon::udpsocket(bindaddr), evt.getInterface());
+					break;
+				}
+
+				case ibrcommon::LinkEvent::ACTION_ADDRESS_REMOVED:
+				{
+					ibrcommon::socketset socks = _vsocket.getAll();
+					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+						ibrcommon::udpsocket *sock = dynamic_cast<ibrcommon::udpsocket*>(*iter);
+						if (sock->get_address().address() == evt.getAddress().address()) {
+							_vsocket.remove(sock);
+							sock->down();
+							delete sock;
+							break;
+						}
+					}
+					break;
+				}
+
+				default:
+					break;
 			}
 		}
 
 		void UDPConvergenceLayer::componentUp() throw ()
 		{
 			try {
-				// create main socket for all send actions
-				_sock.up();
-
 				// create sockets for all addresses on the interface
 				std::list<ibrcommon::vaddress> addrs = _net.getAddresses();
 
@@ -298,6 +345,9 @@ namespace dtn
 				}
 
 				_vsocket.up();
+
+				// subscribe to NetLink events on our interfaces
+				ibrcommon::LinkManager::getInstance().addEventListener(_net, this);
 			} catch (const ibrcommon::socket_exception&) {
 
 			}
@@ -305,11 +355,8 @@ namespace dtn
 
 		void UDPConvergenceLayer::componentDown() throw ()
 		{
-			try {
-				_sock.down();
-			} catch (ibrcommon::socket_exception&) {
-				// catch double exception
-			};
+			// unsubscribe to NetLink events
+			ibrcommon::LinkManager::getInstance().removeEventListener(this);
 
 			_vsocket.destroy();
 			stop();
@@ -333,7 +380,7 @@ namespace dtn
 
 				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER(warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				} catch (const ibrcommon::IOException &ex) {
+				} catch (const std::exception &ex) {
 
 				}
 				yield();
@@ -343,13 +390,6 @@ namespace dtn
 		void UDPConvergenceLayer::__cancellation() throw ()
 		{
 			_running = false;
-
-			try {
-				_sock.down();
-			} catch (ibrcommon::socket_exception&) {
-				// catch double exception
-			};
-
 			_vsocket.down();
 		}
 

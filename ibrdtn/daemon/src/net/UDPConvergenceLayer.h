@@ -29,7 +29,7 @@
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/net/vsocket.h>
-
+#include <ibrcommon/link/LinkManager.h>
 
 
 namespace dtn
@@ -40,7 +40,7 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for UDP/IP.
 		 * Each bundle is sent in exact one UDP datagram.
 		 */
-		class UDPConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryServiceProvider
+		class UDPConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryServiceProvider, public ibrcommon::LinkManager::EventCallback
 		{
 		public:
 			/**
@@ -72,6 +72,8 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
+			void eventNotify(const ibrcommon::LinkEvent &evt);
+
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentRun() throw ();;
@@ -79,9 +81,8 @@ namespace dtn
 			void __cancellation() throw ();
 
 		private:
-			void receive(dtn::data::Bundle&, dtn::data::EID &sender);
+			void receive(dtn::data::Bundle&, dtn::data::EID &sender) throw (ibrcommon::socket_exception);
 
-			ibrcommon::udpsocket _sock;
 			ibrcommon::vsocket _vsocket;
 			ibrcommon::vinterface _net;
 			int _port;
