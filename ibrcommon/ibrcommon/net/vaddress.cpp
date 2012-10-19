@@ -127,17 +127,39 @@ namespace ibrcommon
 //
 //		return data.substr(0, pos);
 //	}
-//
-//	vaddress::Family vaddress::getFamily() const
-//	{
-//		return _family;
-//	}
-//
-//	vaddress::Scope vaddress::getScope() const
-//	{
-//		return _scope;
-//	}
-//
+
+	sa_family_t vaddress::getFamily() const throw (address_exception)
+	{
+		struct addrinfo hints;
+		memset(&hints, 0, sizeof(struct addrinfo));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_flags = AI_NUMERICHOST;
+
+		struct addrinfo *res;
+		int ret = 0;
+
+		if ((ret = ::getaddrinfo(get().c_str(), NULL, &hints, &res)) != 0)
+		{
+			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
+		}
+
+		sa_family_t fam = res->ai_family;
+		freeaddrinfo(res);
+
+		return fam;
+	}
+
+	std::string vaddress::getScope() const throw (address_exception)
+	{
+		return _scope;
+	}
+
+	const std::string vaddress::get() const throw (address_not_set)
+	{
+		if (get().length() == 0) throw address_not_set();
+		return _address;
+	}
+
 //	const std::string vaddress::get(bool internal) const
 //	{
 //		if (_address.length() == 0) throw address_not_set();
@@ -210,17 +232,10 @@ namespace ibrcommon
 //
 //		return res;
 //	}
-//
-//	const std::string vaddress::toString() const
-//	{
-//		if (_address.length() == 0) return "<any>";
-//
-//		if (_iface > 0)
-//		{
-//			stringstream ss; ss << _address << "%" << ibrcommon::LinkManager::getInstance().getInterface(_iface);
-//			return ss.str();
-//		}
-//
-//		return _address;
-//	}
+
+	const std::string vaddress::toString() const
+	{
+		if (_address.length() == 0) return "<any>";
+		return _address;
+	}
 }

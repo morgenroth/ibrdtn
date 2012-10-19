@@ -547,6 +547,39 @@ namespace ibrcommon
 		_state = SOCKET_DOWN;
 	}
 
+	udpsocket::udpsocket(const int port)
+	 : _port(port)
+	{
+	}
+
+	udpsocket::udpsocket(const vaddress &address, const int port)
+	 : _address(address), _port(port)
+	{
+	}
+
+	udpsocket::~udpsocket()
+	{
+	}
+
+	void udpsocket::up() throw (socket_exception)
+	{
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up");
+
+		// TODO: initialize socket
+
+		_state = SOCKET_UP;
+	}
+
+	void udpsocket::down() throw (socket_exception)
+	{
+		if (_state != SOCKET_UP)
+			throw socket_exception("socket is not up");
+
+		this->close();
+		_state = SOCKET_DOWN;
+	}
+
 	multicastsocket::multicastsocket(const int port)
 	 : udpsocket(port)
 	{

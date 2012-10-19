@@ -68,7 +68,7 @@ namespace ibrcommon
 		 * will be adapted and destroyed on the destruction of the vsocket instance.
 		 * @param socket Socket object to add
 		 */
-		void add(ibrcommon::basesocket *socket);
+		void add(basesocket *socket);
 
 		/**
 		 * Add a socket to the list monitored sockets. This socket instance
@@ -77,13 +77,13 @@ namespace ibrcommon
 		 * @param socket Socket object to add
 		 * @param iface The interface to connect this socket to
 		 */
-		void add(ibrcommon::basesocket *socket, const ibrcommon::vinterface &iface);
+		void add(basesocket *socket, const vinterface &iface);
 
 		/**
 		 * Remove the socket from the socket list.
 		 * @param socket Pointer to the socket in the list
 		 */
-		void remove(const ibrcommon::basesocket *socket);
+		void remove(basesocket *socket);
 
 		/**
 		 * Enable all sockets and turn into the up state.

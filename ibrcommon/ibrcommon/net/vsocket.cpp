@@ -118,6 +118,21 @@ namespace ibrcommon
 		_pipe.down();
 	}
 
+	void vsocket::add(basesocket *socket)
+	{
+		_sockets.insert(socket);
+	}
+
+	void vsocket::add(basesocket *socket, const vinterface &iface)
+	{
+		_sockets.insert(socket);
+	}
+
+	void vsocket::remove(basesocket *socket)
+	{
+		_sockets.erase(socket);
+	}
+
 //	int vsocket::bind(const vsocket::vbind &b)
 //	{
 //		_binds.push_back(b);

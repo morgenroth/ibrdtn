@@ -31,17 +31,17 @@ namespace ibrcommon
 	class vaddress
 	{
 		public:
-			class address_not_set : public Exception
+			class address_exception : public Exception
 			{
 			public:
-				address_not_set(string error = "address is not specified") : Exception(error)
+				address_exception(string error = "unspecific address error") : Exception(error)
 				{};
 			};
 
-			class family_not_set : public Exception
+			class address_not_set : public address_exception
 			{
 			public:
-				family_not_set(string error = "family is not specified") : Exception(error)
+				address_not_set(string error = "address is not specified") : address_exception(error)
 				{};
 			};
 
@@ -59,9 +59,9 @@ namespace ibrcommon
 //			vaddress(const Family &family, const std::string &address, const int iface, const Scope scope = SCOPE_UNKOWN);
 			virtual ~vaddress();
 
-			sa_family_t getFamily() const;
-			Scope getScope() const;
-			const std::string get(bool internal = true) const;
+			sa_family_t getFamily() const throw (address_exception);
+			std::string getScope() const throw (address_exception);
+			const std::string get() const throw (address_not_set);
 
 			bool operator!=(const vaddress &obj) const;
 			bool operator==(const vaddress &obj) const;
