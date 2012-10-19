@@ -112,8 +112,7 @@ dnl -----------------------------------------------
 PKG_CHECK_MODULES([NL], [libnl-3.0], [
 	REQUIRES_LIBS="$REQUIRES_LIBS libnl-3.0"
 	AC_DEFINE(HAVE_LIBNL3, [1], ["netlink library 3.0 is available"])
-	use_netlink3="yes"
-	use_netlink="no"
+	use_netlink="yes"
 	
 	# check for additional netlink modules
 	PKG_CHECK_MODULES([NL_ROUTE], [libnl-route-3.0], [
@@ -135,10 +134,8 @@ PKG_CHECK_MODULES([NL], [libnl-3.0], [
 		AC_DEFINE(HAVE_LIBNL, [1], ["netlink library is available"])
 		REQUIRES_LIBS="$REQUIRES_LIBS libnl-1"
 		use_netlink="yes"
-		use_netlink3="no"
 	], [
 		use_netlink="no"
-		use_netlink3="no"
 	])
 ])
 AC_SUBST(NL_CFLAGS)
@@ -231,7 +228,7 @@ AC_ARG_WITH(lowpan,
 		@<:@default=no@:>@]),
 [
 	AS_IF([test "x$with_lowpan" = "xyes"], [
-		AS_IF([test "x$use_netlink" = "xyes" -o "x$use_netlink3" = "xyes"], [
+		AS_IF([test "x$use_netlink" = "xyes"], [
 			use_lowpan="yes"
 			AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], ["enable lowpan support"])
 		], [
@@ -271,7 +268,6 @@ AC_ARG_WITH(xml,
 AM_CONDITIONAL(OPENSSL, test x$use_openssl = xyes)
 AM_CONDITIONAL(LOWPAN, test x$use_lowpan = xyes)
 AM_CONDITIONAL(NETLINK, test x$use_netlink = xyes)
-AM_CONDITIONAL(NETLINK3, test x$use_netlink3 = xyes)
 AM_CONDITIONAL(LIBXML, test x$use_xml = xyes)
 
 AC_SUBST(REQUIRES_LIBS)

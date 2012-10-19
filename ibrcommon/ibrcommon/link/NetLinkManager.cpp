@@ -19,13 +19,18 @@
  *
  */
 
+#include "ibrcommon/config.h"
 #include "ibrcommon/link/NetLinkManager.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Logger.h"
 
+#include <netlink/netlink.h>
 #include <netlink/route/addr.h>
 #include <netlink/route/link.h>
 #include <netlink/route/rtnl.h>
+#include <netlink/socket.h>
+#include <netlink/msg.h>
+#include <netlink/object-api.h>
 
 #include <netdb.h>
 #include <sys/socket.h>
@@ -38,39 +43,37 @@
 #include <signal.h>
 #include <arpa/inet.h>
 
+#ifndef HAVE_LIBNL3
+#include <net/if.h>
+#endif
+
 #include <iostream>
 #include <sstream>
 #include <typeinfo>
 
 namespace ibrcommon
 {
-	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action)
-	{
-		if (obj == NULL) return;
+#ifdef HAVE_LIBNL3
+typedef nl_object nl_object_header;
+#else
+	struct nl_object_header {
+		NLHDR_COMMON
+	};
+#endif
 
-		// TODO: parse nl_objects
-		struct nl_dump_params dp;
-		memset(&dp, 0, sizeof(struct nl_dump_params));
-		dp.dp_type = NL_DUMP_BRIEF;
-		dp.dp_fd = stdout;
+	vaddress nl_addr_get_vaddress(struct nl_addr *naddr) {
+		if (!naddr) return vaddress();
 
-		if (action == NL_ACT_NEW)
-			printf("NEW ");
-		else if (action == NL_ACT_DEL)
-			printf("DEL ");
-		else if (action == NL_ACT_CHANGE)
-			printf("CHANGE ");
+		char addr_buf[256];
+		nl_addr2str( naddr, addr_buf, sizeof( addr_buf ));
+		std::string addrname(addr_buf);
 
-		nl_object_dump(obj, &dp);
+		return vaddress(addrname);
 	}
 
-	void add_addr_to_list(struct nl_object *obj, void *data)
-	{
-		std::list<vaddress> *list = static_cast<std::list<vaddress>*>(data);
-
-		struct nl_addr *naddr = rtnl_addr_get_local((struct rtnl_addr *) obj);
-
-		if (!naddr) return;
+	vaddress rtnl_addr_get_local_vaddress(struct rtnl_addr *obj) {
+		struct nl_addr *naddr = rtnl_addr_get_local(obj);
+		if (!naddr) return vaddress();
 
 		int scope = rtnl_addr_get_scope((struct rtnl_addr *) obj);
 
@@ -82,11 +85,93 @@ namespace ibrcommon
 		nl_addr2str( naddr, addr_buf, sizeof( addr_buf ));
 		std::string addrname(addr_buf);
 
-		list->push_back( ibrcommon::vaddress(addrname, "", scopename) );
+		return vaddress(addrname, "", scopename);
+	}
+
+#ifdef HAVE_LIBNL3
+	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action, void *data)
+#else
+	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action)
+#endif
+	{
+		if (obj == NULL) return;
+
+		// get the header of the nl_object first
+		nl_object_header *header = (nl_object_header*)nl_object_priv(obj);
+
+		switch (header->ce_msgtype) {
+			case RTM_NEWLINK: {
+				LinkEvent::Action evt_action = LinkEvent::ACTION_UNKOWN;
+
+				struct rtnl_link *link = (struct rtnl_link *) obj;
+
+				int ifindex = rtnl_link_get_ifindex(link);
+				vinterface iface = LinkManager::getInstance().getInterface(ifindex);
+
+				struct nl_addr *naddr = rtnl_link_get_addr(link);
+				vaddress addr = nl_addr_get_vaddress(naddr);
+
+				unsigned int flags = rtnl_link_get_flags(link);
+
+				if (flags & IFF_RUNNING) {
+					evt_action = LinkEvent::ACTION_LINK_RUNNING;
+				} else if (flags & IFF_UP) {
+					evt_action = LinkEvent::ACTION_LINK_UP;
+				} else {
+					evt_action = LinkEvent::ACTION_LINK_DOWN;
+				}
+
+				LinkEvent lme(evt_action, iface, addr);;
+				LinkManager::getInstance().raiseEvent(lme);
+				break;
+			}
+
+			case RTM_NEWADDR: {
+				LinkEvent::Action evt_action = LinkEvent::ACTION_UNKOWN;
+
+				if (action == NL_ACT_NEW)
+					evt_action = LinkEvent::ACTION_ADDRESS_ADDED;
+				else if (action == NL_ACT_DEL)
+					evt_action = LinkEvent::ACTION_ADDRESS_REMOVED;
+
+				int ifindex = rtnl_addr_get_ifindex((struct rtnl_addr *) obj);
+				vinterface iface = LinkManager::getInstance().getInterface(ifindex);
+
+				vaddress addr = rtnl_addr_get_local_vaddress((struct rtnl_addr *) obj);
+
+				LinkEvent lme(evt_action, iface, addr);;
+				LinkManager::getInstance().raiseEvent(lme);
+				break;
+			}
+
+			default:
+				struct nl_dump_params dp;
+				memset(&dp, 0, sizeof(struct nl_dump_params));
+#ifdef HAVE_LIBNL3
+				dp.dp_type = NL_DUMP_LINE;
+#else
+				dp.dp_type = NL_DUMP_BRIEF;
+#endif
+				dp.dp_fd = stdout;
+				nl_object_dump(obj, &dp);
+				break;
+		}
+	}
+
+	void add_addr_to_list(struct nl_object *obj, void *data)
+	{
+		std::list<vaddress> *list = static_cast<std::list<vaddress>*>(data);
+		vaddress addr = rtnl_addr_get_local_vaddress((struct rtnl_addr *) obj);
+
+		try {
+			addr.address();
+			list->push_back( addr );
+		} catch (const vaddress::address_not_set&) {
+		}
 	}
 
 	NetLinkManager::netlinkcache::netlinkcache(int protocol)
-	 : _protocol(protocol), _nl_handle(NULL), _mngr(NULL), _link_cache(NULL), _addr_cache(NULL)
+	 : _protocol(protocol), _nl_handle(NULL), _mngr(NULL)
 	{
 	}
 
@@ -96,34 +181,42 @@ namespace ibrcommon
 
 	void NetLinkManager::netlinkcache::up() throw (socket_exception)
 	{
-		int ret = 0;
-
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
+		// create netlink handle
+#ifdef HAVE_LIBNL3
+		int ret = 0;
+		_nl_handle = nl_socket_alloc();
+#else
 		_nl_handle = nl_handle_alloc();
-
-//		// Disables checking of sequence numbers on the netlink socket
-//		nl_socket_disable_seq_check(_nl_handle);
-
-//		// connect the socket to ROUTE
-//		ret = nl_connect(_nl_handle, _protocol);
+#endif
 
 		// allocate a cache manager for ROUTE
-		_mngr = nl_cache_mngr_alloc(_nl_handle, _protocol, NL_AUTO_PROVIDE);
+#ifdef HAVE_LIBNL3
+		ret = nl_cache_mngr_alloc((struct nl_sock*)_nl_handle, _protocol, NL_AUTO_PROVIDE, &_mngr);
+#else
+		_mngr = nl_cache_mngr_alloc((struct nl_handle*)_nl_handle, _protocol, NL_AUTO_PROVIDE);
+#endif
 
 		if (_mngr == NULL)
 			throw socket_exception("can not allocate netlink cache manager");
 
-		_link_cache = nl_cache_mngr_add(_mngr, "route/link", &nl_cache_callback);
+		for (std::map<std::string, struct nl_cache*>::iterator iter = _caches.begin(); iter != _caches.end(); iter++)
+		{
+			const std::string &cachename = (*iter).first;
+#ifdef HAVE_LIBNL3
+			struct nl_cache *c;
+			ret = nl_cache_mngr_add(_mngr, cachename.c_str(), &nl_cache_callback, this, &c);
+#else
+			struct nl_cache *c = nl_cache_mngr_add(_mngr, cachename.c_str(), &nl_cache_callback);
+#endif
 
-		if (_link_cache == NULL)
-			throw socket_exception("can not allocate netlink cache route/link");
+			if (c == NULL)
+				throw socket_exception(std::string("can not allocate netlink cache ") + cachename);
 
-		_addr_cache = nl_cache_mngr_add(_mngr, "route/addr", &nl_cache_callback);
-
-		if (_addr_cache == NULL)
-			throw socket_exception("can not allocate netlink cache route/addr");
+			(*iter).second = c;
+		}
 
 		// mark this socket as up
 		_state = SOCKET_UP;
@@ -134,14 +227,22 @@ namespace ibrcommon
 		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED))
 			throw socket_exception("socket is not up");
 
-		nl_cache_free(_link_cache);
-		nl_cache_free(_addr_cache);
+		for (std::map<std::string, struct nl_cache*>::iterator iter = _caches.begin(); iter != _caches.end(); iter++)
+		{
+			nl_cache_free((*iter).second);
+			(*iter).second = NULL;
+		}
 
 		// delete the cache manager
 		nl_cache_mngr_free(_mngr);
 
-		nl_close(_nl_handle);
-		nl_handle_destroy(_nl_handle);
+#ifdef HAVE_LIBNL3
+		// delete the socket
+		nl_socket_free((struct nl_sock*)_nl_handle);
+#else
+		nl_close((struct nl_handle*)_nl_handle);
+		nl_handle_destroy((struct nl_handle*)_nl_handle);
+#endif
 
 		// mark this socket as down
 		if (_state == SOCKET_UNMANAGED)
@@ -164,15 +265,35 @@ namespace ibrcommon
 			throw socket_exception("can not receive data from netlink manager");
 	}
 
-	struct nl_cache* NetLinkManager::netlinkcache::operator*() const throw (socket_exception)
+	void NetLinkManager::netlinkcache::add(const std::string &cachename) throw (socket_exception)
+	{
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up; adding not possible");
+
+		std::map<std::string, struct nl_cache*>::const_iterator iter = _caches.find(cachename);
+		if (iter != _caches.end()) throw socket_exception("cache already added");
+
+		// add placeholder to the map
+		_caches[cachename] = NULL;
+	}
+
+	struct nl_cache* NetLinkManager::netlinkcache::get(const std::string &cachename) const throw (socket_exception)
 	{
 		if (_state == SOCKET_DOWN) throw socket_exception("socket not available");
-		return _addr_cache;
+
+		std::map<std::string, struct nl_cache*>::const_iterator iter = _caches.find(cachename);
+		if (iter == _caches.end()) throw socket_exception("cache not available");
+
+		return (*iter).second;
 	}
 
 	NetLinkManager::NetLinkManager()
 	 : _route_cache(NETLINK_ROUTE), _running(true)
 	{
+		// add cache types to the route cache
+		_route_cache.add("route/link");
+		_route_cache.add("route/addr");
+
 		// initialize the netlink cache
 		_route_cache.up();
 	}
@@ -227,7 +348,7 @@ namespace ibrcommon
 		}
 	}
 
-	const std::list<vaddress> NetLinkManager::getAddressList(const vinterface &iface)
+	const std::list<vaddress> NetLinkManager::getAddressList(const vinterface &iface, const std::string &scope)
 	{
 		ibrcommon::MutexLock l(_cache_mutex);
 
@@ -235,15 +356,19 @@ namespace ibrcommon
 
 		struct rtnl_addr *filter = rtnl_addr_alloc();
 		const std::string i = iface.toString();
-		rtnl_addr_set_ifindex(filter, rtnl_link_name2i(*_route_cache, i.c_str()));
+		int ifindex = rtnl_link_name2i(_route_cache.get("route/link"), i.c_str());
 
-//		rtnl_addr_set_family(filter, AF_INET6);
-		nl_cache_foreach_filter(*_route_cache, (struct nl_object *) filter, add_addr_to_list, &addresses);
+		rtnl_addr_set_ifindex(filter, ifindex);
 
-//		rtnl_addr_set_family(filter, AF_INET);
-//		nl_cache_foreach_filter(_addr_cache, (struct nl_object *) filter,
-//								add_addr_to_list, &addresses);
+		// set scope if requested
+		if (scope.length() > 0) {
+			rtnl_addr_set_scope(filter, rtnl_str2scope(scope.c_str()));
+		}
 
+		// query the netlink cache for all known addresses
+		nl_cache_foreach_filter(_route_cache.get("route/addr"), (struct nl_object *) filter, add_addr_to_list, &addresses);
+
+		// free the filter address
 		rtnl_addr_put(filter);
 
 		return addresses;
@@ -252,7 +377,7 @@ namespace ibrcommon
 	const vinterface NetLinkManager::getInterface(const int ifindex) const
 	{
 		char buf[256];
-		rtnl_link_i2name(*_route_cache, ifindex, (char*)&buf, sizeof buf);
+		rtnl_link_i2name(_route_cache.get("route/link"), ifindex, (char*)&buf, sizeof buf);
 		return std::string((char*)&buf);
 	}
 }

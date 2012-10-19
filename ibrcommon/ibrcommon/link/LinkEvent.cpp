@@ -10,37 +10,32 @@
 
 namespace ibrcommon
 {
-	ManualLinkEvent::ManualLinkEvent(EventType type, const vinterface &iface, const vaddress &addr, unsigned int state)
-	 : _type(type), _iface(iface), _addr(addr), _state(state)
+	LinkEvent::LinkEvent(Action action, const vinterface &iface, const vaddress &addr)
+	 : _action(action), _iface(iface), _addr(addr)
 	{ };
 
-	ManualLinkEvent::~ManualLinkEvent()
+	LinkEvent::~LinkEvent()
 	{ };
 
-	const vinterface& ManualLinkEvent::getInterface() const
+	const vinterface& LinkEvent::getInterface() const
 	{
 		return _iface;
 	};
 
-	const vaddress& ManualLinkEvent::getAddress() const
+	const vaddress& LinkEvent::getAddress() const
 	{
 		return _addr;
 	};
 
-	unsigned int ManualLinkEvent::getState() const
+	LinkEvent::Action LinkEvent::getAction() const
 	{
-		return _state;
+		return _action;
 	};
 
-	LinkEvent::EventType ManualLinkEvent::getType() const
-	{
-		return _type;
-	};
-
-	std::string ManualLinkEvent::toString() const
+	std::string LinkEvent::toString() const
 	{
 		std::stringstream ss;
-		ss << "Event on " << _iface.toString() << ", type: " << _type << ", state: " << _state << ", " << _addr.toString();
+		ss << "interface: " << _iface.toString() << ", action: " << _action << ", address: " << _addr.toString();
 		return ss.str();
 	};
 } /* namespace ibrcommon */

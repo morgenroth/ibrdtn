@@ -32,8 +32,6 @@
 
 #include <netlink/netlink.h>
 #include <netlink/cache.h>
-
-
 #include <map>
 
 namespace ibrcommon
@@ -49,7 +47,7 @@ namespace ibrcommon
 		void down() throw ();
 
 		const vinterface getInterface(int index) const;
-		const std::list<vaddress> getAddressList(const vinterface &iface);
+		const std::list<vaddress> getAddressList(const vinterface &iface, const std::string &scope = "");
 
 		class parse_exception : public Exception
 		{
@@ -70,22 +68,24 @@ namespace ibrcommon
 		public:
 			netlinkcache(int protocol);
 			virtual ~netlinkcache();
+
 			virtual void up() throw (socket_exception);
 			virtual void down() throw (socket_exception);
 
 			virtual int fd() const throw (socket_exception);
 
-			struct nl_cache* operator*() const throw (socket_exception);
+			void add(const std::string &cachename) throw (socket_exception);
+			struct nl_cache* get(const std::string &cachename) const throw (socket_exception);
 
 			void receive() throw (socket_exception);
 
 		private:
 			const int _protocol;
 
-			struct nl_handle *_nl_handle;
+			void *_nl_handle;
 			struct nl_cache_mngr *_mngr;
-			struct nl_cache *_link_cache;
-			struct nl_cache *_addr_cache;
+
+			std::map<std::string, struct nl_cache*> _caches;
 		};
 
 		ibrcommon::Mutex _cache_mutex;

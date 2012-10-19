@@ -22,7 +22,7 @@ namespace ibrcommon
 		virtual ~PosixLinkManager();
 
 		const vinterface getInterface(int index) const;
-		const std::list<vaddress> getAddressList(const vinterface &iface);
+		const std::list<vaddress> getAddressList(const vinterface &iface, const std::string &scope = "");
 	};
 } /* namespace ibrcommon */
 #endif /* DEFAULTLINKMANAGER_H_ */

@@ -48,21 +48,18 @@ namespace ibrcommon
 		virtual void down() throw () { };
 
 		virtual const ibrcommon::vinterface getInterface(int index) const = 0;
-		virtual const std::list<vaddress> getAddressList(const vinterface &iface) = 0;
+		virtual const std::list<vaddress> getAddressList(const vinterface &iface, const std::string &scope = "") = 0;
 
 		virtual void registerInterfaceEvent(const vinterface&, LinkManager::EventCallback*);
 		virtual void unregisterInterfaceEvent(const vinterface&, LinkManager::EventCallback*);
 		virtual void unregisterAllEvents(LinkManager::EventCallback*);
 
-		void addressAdded(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
-		void addressRemoved(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
+		void raiseEvent(const LinkEvent &lme);
 
 		static LinkManager& getInstance();
 		static void initialize();
 
 	protected:
-		void raiseEvent(const LinkEvent &lme);
-
 		ibrcommon::Mutex _listener_mutex;
 		std::map<ibrcommon::vinterface, std::set<LinkManager::EventCallback* > > _listener;
 	};

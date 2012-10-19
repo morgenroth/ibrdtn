@@ -27,28 +27,20 @@
 #include <string>
 #include <typeinfo>
 
-#ifdef HAVE_LIBNL
+#if defined HAVE_LIBNL || HAVE_LIBNL3
 #include "ibrcommon/link/NetLinkManager.h"
 #else
-#ifdef HAVE_LIBNL3
-#include "ibrcommon/link/NetLink3Manager.h"
-#else
 #include "ibrcommon/link/PosixLinkManager.h"
-#endif
 #endif
 
 namespace ibrcommon
 {
 	LinkManager& LinkManager::getInstance()
 	{
-#ifdef HAVE_LIBNL
+#if defined HAVE_LIBNL || HAVE_LIBNL3
 		static NetLinkManager lm;
 #else
-#ifdef HAVE_LIBNL3
-		static NetLink3Manager lm;
-#else
 		static PosixLinkManager lm;
-#endif
 #endif
 
 		return lm;
@@ -116,17 +108,5 @@ namespace ibrcommon
 				(*iter)->eventNotify((LinkEvent&)lme);
 			} catch (const std::exception&) { };
 		}
-	}
-
-	void LinkManager::addressRemoved(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr)
-	{
-		ManualLinkEvent evt(LinkEvent::EVENT_ADDRESS_REMOVED, iface, addr);
-		raiseEvent(evt);
-	}
-
-	void LinkManager::addressAdded(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr)
-	{
-		ManualLinkEvent evt(LinkEvent::EVENT_ADDRESS_ADDED, iface, addr);
-		raiseEvent(evt);
 	}
 }

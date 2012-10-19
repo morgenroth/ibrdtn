@@ -61,7 +61,7 @@ namespace ibrcommon
 		return ret;
 	}
 
-	const std::list<vaddress> PosixLinkManager::getAddressList(const vinterface &iface)
+	const std::list<vaddress> PosixLinkManager::getAddressList(const vinterface &iface, const std::string &scope)
 	{
 		std::list<vaddress> ret;
 
@@ -89,8 +89,23 @@ namespace ibrcommon
 			// cast to a sockaddr
 			sockaddr *ifaceaddr = iter->ifa_addr;
 
+			if (scope.length() > 0) {
+				// scope filter only available with IPv6
+				if (ifaceaddr->sa_family == AF_INET6) {
+					// get ipv6 specific address
+					sockaddr_in6 *addr6 = (sockaddr_in6*)ifaceaddr;
+
+					// if the id is set, then this scope is link-local
+					if (addr6->sin6_scope_id == 0) {
+						if (scope != vaddress::SCOPE_GLOBAL) continue;
+					} else {
+						if (scope != vaddress::SCOPE_LINKLOCAL) continue;
+					}
+				}
+			}
+
 			char address[256];
-			if (::getnameinfo((struct sockaddr *) &ifaceaddr, sizeof ifaceaddr, address, sizeof address, 0, 0, NI_NUMERICHOST) == 0) {
+			if (::getnameinfo((struct sockaddr *) ifaceaddr, sizeof (struct sockaddr_storage), address, sizeof address, 0, 0, NI_NUMERICHOST) == 0) {
 				ret.push_back( vaddress(std::string(address)) );
 			}
 		}
