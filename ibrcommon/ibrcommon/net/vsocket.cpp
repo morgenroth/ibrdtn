@@ -126,11 +126,19 @@ namespace ibrcommon
 	void vsocket::add(basesocket *socket, const vinterface &iface)
 	{
 		_sockets.insert(socket);
+		_socket_map[iface].insert(socket);
 	}
 
 	void vsocket::remove(basesocket *socket)
 	{
 		_sockets.erase(socket);
+
+		// search for the same socket in the map
+		for (std::map<vinterface, socketset>::iterator iter = _socket_map.begin(); iter != _socket_map.end(); iter++)
+		{
+			socketset &set = (*iter).second;
+			set.erase(socket);
+		}
 	}
 
 	size_t vsocket::size() const
@@ -141,6 +149,7 @@ namespace ibrcommon
 	void vsocket::clear()
 	{
 		_sockets.clear();
+		_socket_map.clear();
 	}
 
 	void vsocket::destroy()
@@ -156,11 +165,24 @@ namespace ibrcommon
 			delete sock;
 		}
 		_sockets.clear();
+		_socket_map.clear();
 	}
 
 	socketset vsocket::getAll() const
 	{
 		return _sockets;
+	}
+
+	socketset vsocket::get(const vinterface &iface) const
+	{
+		std::map<vinterface, socketset>::const_iterator iter = _socket_map.find(iface);
+
+		if (iter == _socket_map.end()) {
+			socketset empty;
+			return empty;
+		}
+
+		return (*iter).second;
 	}
 
 	void vsocket::up() throw (socket_exception) {

@@ -33,6 +33,7 @@
 #include <string>
 #include <list>
 #include <set>
+#include <map>
 
 namespace ibrcommon
 {
@@ -102,6 +103,13 @@ namespace ibrcommon
 		socketset getAll() const;
 
 		/**
+		 * Get all sockets bound to a specific interface
+		 * @param iface The selected interface
+		 * @return A socketset with all sockets bound to a specific interface
+		 */
+		socketset get(const vinterface &iface) const;
+
+		/**
 		 * delete all sockets in the socketset
 		 */
 		void destroy();
@@ -152,6 +160,7 @@ namespace ibrcommon
 
 		ibrcommon::Mutex _socket_lock;
 		socketset _sockets;
+		std::map<vinterface, socketset> _socket_map;
 
 		pipesocket _pipe;
 
