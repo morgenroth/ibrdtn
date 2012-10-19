@@ -194,6 +194,7 @@ namespace ibrcommon
 	{
 		struct sockaddr_storage bound_addr;
 		socklen_t bound_len = sizeof(bound_addr);
+		::memset(&bound_addr, 0, bound_len);
 
 		// get the socket family
 		int ret = ::getsockname(_fd, (struct sockaddr*)&bound_addr, &bound_len);
@@ -319,6 +320,7 @@ namespace ibrcommon
 
 		struct sockaddr_storage cliaddr;
 		socklen_t len = sizeof(cliaddr);
+		::memset(&cliaddr, 0, len);
 
 		int new_fd = ::accept(fd, (struct sockaddr *) &cliaddr, &len);
 
@@ -329,7 +331,7 @@ namespace ibrcommon
 		// set source to addr
 		char address[256];
 		char service[256];
-		if (::getnameinfo((struct sockaddr *) &cliaddr, len, address, sizeof address, service, sizeof service, NI_NUMERICHOST) == 0) {
+		if (::getnameinfo((struct sockaddr *) &cliaddr, len, address, sizeof address, service, sizeof service, NI_NUMERICHOST | NI_NUMERICSERV) == 0) {
 			addr = ibrcommon::vaddress(std::string(address), std::string(service));
 		}
 
@@ -362,6 +364,7 @@ namespace ibrcommon
 	{
 		struct sockaddr_storage clientAddress;
 		socklen_t clientAddressLength = sizeof(clientAddress);
+		::memset(&clientAddress, 0, clientAddressLength);
 
 		// data waiting
 		ssize_t ret = ::recvfrom(_fd, buf, buflen, flags, (struct sockaddr *) &clientAddress, &clientAddressLength);
@@ -372,7 +375,7 @@ namespace ibrcommon
 
 		char address[256];
 		char service[256];
-		if (::getnameinfo((struct sockaddr *) &clientAddress, clientAddressLength, address, sizeof address, service, sizeof service, NI_NUMERICHOST) == 0) {
+		if (::getnameinfo((struct sockaddr *) &clientAddress, clientAddressLength, address, sizeof address, service, sizeof service, NI_NUMERICHOST | NI_NUMERICSERV) == 0) {
 			addr = ibrcommon::vaddress(std::string(address), std::string(service));
 		}
 
@@ -594,7 +597,6 @@ namespace ibrcommon
 
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_PASSIVE;
 
 		const char *address = NULL;
 		const char *service = NULL;
@@ -603,6 +605,7 @@ namespace ibrcommon
 			address = addr.address().c_str();
 		} catch (const vaddress::address_not_set&) {
 			hints.ai_family = DEFAULT_SOCKET_FAMILY;
+			hints.ai_flags = AI_PASSIVE;
 		};
 
 		try {
@@ -884,11 +887,14 @@ namespace ibrcommon
 			address = _address.address().c_str();
 		} catch (const vaddress::address_not_set&) {
 			hints.ai_family = DEFAULT_SOCKET_FAMILY;
+			hints.ai_flags = AI_PASSIVE;
 		};
 
 		try {
 			service = _address.service().c_str();
 		} catch (const vaddress::service_not_set&) { };
+
+		std::string errinfo = "with address: " + addr.toString();
 
 		if (0 != ::getaddrinfo(address, service, &hints, &res))
 			throw socket_exception("failed to getaddrinfo with address: " + addr.toString());
@@ -896,7 +902,7 @@ namespace ibrcommon
 		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
 
-		check_bind_error(ret);
+		check_bind_error(ret, errinfo);
 	}
 
 	multicastsocket::multicastsocket(const vaddress &address)
@@ -1170,7 +1176,7 @@ namespace ibrcommon
 		}
 	}
 
-	void basesocket::check_bind_error(const int err) const throw (socket_exception)
+	void basesocket::check_bind_error(const int err, const std::string &msg) const throw (socket_exception)
 	{
 		if (err != -1) return;
 
@@ -1209,7 +1215,7 @@ namespace ibrcommon
 			throw socket_exception("my_addr enthlt eine Kreis-Referenz (zum  Beispiel  durch  einen symbolischen Link)");
 
 		default:
-			throw socket_exception("cannot bind socket");
+			throw socket_exception("cannot bind socket " + msg);
 		}
 	}
 }

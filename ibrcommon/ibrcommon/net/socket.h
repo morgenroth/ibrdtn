@@ -160,7 +160,7 @@ namespace ibrcommon {
 		 * Error check methods
 		 */
 		void check_socket_error(const int err) const throw (socket_exception);
-		void check_bind_error(const int err) const throw (socket_exception);
+		void check_bind_error(const int err, const std::string &msg = "") const throw (socket_exception);
 
 		void set_blocking_mode(bool val, int fd = -1) const throw (socket_exception);
 		void set_keepalive(bool val, int fd = -1) const throw (socket_exception);
