@@ -28,8 +28,7 @@
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/thread/Mutex.h>
-#include <ibrcommon/thread/Thread.h>
-#include <ibrcommon/thread/Queue.h>
+#include <ibrcommon/thread/Conditional.h>
 #include <string>
 #include <list>
 #include <set>
@@ -56,7 +55,7 @@ namespace ibrcommon
 		{};
 	};
 
-	class vsocket : public ibrcommon::LinkManager::EventCallback
+	class vsocket
 	{
 	public:
 		/**
@@ -136,8 +135,6 @@ namespace ibrcommon
 		 */
 		void select(socketset *readset, socketset *writeset, socketset *errorset, struct timeval *tv = NULL) throw (socket_exception);
 
-		void eventNotify(const LinkEvent &evt);
-
 	private:
 		class pipesocket : public basesocket
 		{
@@ -156,6 +153,63 @@ namespace ibrcommon
 			int _output_fd;
 		};
 
+		class SocketState : public ibrcommon::Conditional {
+		public:
+			class state_exception : public Exception
+			{
+			public:
+				state_exception(string error) : Exception(error)
+				{};
+			};
+
+			enum STATE {
+				NONE,
+				SAFE_DOWN,
+				DOWN,
+				DOWN_REQUEST,
+				PENDING_DOWN,
+				PENDING_UP,
+				IDLE,
+				SELECT,
+				SAFE_REQUEST,
+				SAFE
+			};
+
+			SocketState(STATE initial);
+			virtual ~SocketState();
+
+			STATE get() const;
+
+			void set(STATE s) throw (state_exception);
+			void wait(STATE s, STATE abortstate = NONE) throw (state_exception);
+			void setwait(STATE s, STATE abortstate = NONE) throw (state_exception);
+
+		private:
+			void __change(STATE s);
+			std::string __getname(STATE s) const;
+
+			STATE _state;
+		};
+
+		class SafeLock
+		{
+		public:
+			SafeLock(SocketState &state);
+			virtual ~SafeLock();
+		private:
+			SocketState &_state;
+		};
+
+		class SelectGuard
+		{
+		public:
+			SelectGuard(SocketState &state, int &counter);
+			virtual ~SelectGuard();
+		private:
+			SocketState &_state;
+			int &_counter;
+		};
+
 		void interrupt();
 
 		ibrcommon::Mutex _socket_lock;
@@ -167,6 +221,9 @@ namespace ibrcommon
 		// if this flag is set all selects call
 		// will be aborted
 		bool _interrupt_flag;
+
+		SocketState _state;
+		int _select_count;
 	};
 }
 

@@ -104,33 +104,343 @@ namespace ibrcommon
 			throw socket_exception("write error");
 	}
 
+	vsocket::SocketState::SocketState(STATE initial)
+	 : _state(initial)
+	{
+	}
+
+	vsocket::SocketState::~SocketState()
+	{
+	}
+
+	vsocket::SocketState::STATE vsocket::SocketState::get() const
+	{
+		return _state;
+	}
+
+	void vsocket::SocketState::set(STATE s) throw (state_exception)
+	{
+		try {
+			// try to get into state "s" and wait until this is possible
+			switch (s) {
+			case NONE:
+				throw state_exception("illegal state requested");
+			case SAFE_DOWN:
+				// throw exception if not (DOWN or PENDING DOWN)
+				if ((_state != DOWN) && (_state != PENDING_UP))
+					throw state_exception("state is not DOWN");
+				__change(s);
+				break;
+
+			case DOWN:
+				// throw exception if not (PENDING_DOWN or SAFE_DOWN)
+				if ((_state != PENDING_DOWN) && (_state != SAFE_DOWN) && (_state != PENDING_UP))
+					throw state_exception("state is not PENDING_DOWN, PENDING_UP or SAFE_DOWN");
+				__change(s);
+				break;
+
+			case PENDING_UP:
+				// throw exception if not (DOWN)
+				if (_state != DOWN)
+					throw state_exception("state is not DOWN");
+				__change(s);
+				break;
+
+			case PENDING_DOWN:
+				// throw exception if not (IDLE, DOWN_REQUEST)
+				if ((_state != IDLE) && (_state != DOWN_REQUEST))
+					throw state_exception("state is not IDLE or DOWN_REQUEST");
+				__change(s);
+				break;
+
+			case IDLE:
+				// throw exception if not (PENDING_UP, SAFE, SELECT)
+				if ((_state != PENDING_UP) && (_state != SAFE) && (_state != SELECT))
+					throw state_exception("state is not PENDING_UP, SAFE or SELECT");
+				__change(s);
+				break;
+
+			case SELECT:
+				// throw exception if not (IDLE, SELECT)
+				if ((_state != IDLE) && (_state != SELECT))
+					throw state_exception("state is not IDLE or SELECT");
+				__change(s);
+				break;
+
+			case DOWN_REQUEST:
+			case SAFE_REQUEST:
+				// throw exception if not (SELECT, DOWN_REQUEST)
+				if (_state != SELECT)
+					throw state_exception("state is not SELECT or DOWN_REQUEST");
+				__change(s);
+				break;
+
+			case SAFE:
+				// throw exception if not (SAFE_REQUEST, IDLE)
+				if ((_state != SAFE_REQUEST) && (_state != IDLE))
+					throw state_exception("state is not SAFE_REQUEST or IDLE");
+				__change(s);
+				break;
+			}
+		} catch (const Conditional::ConditionalAbortException &e) {
+			throw state_exception(e.what());
+		}
+	}
+
+	void vsocket::SocketState::setwait(STATE s, STATE abortstate) throw (state_exception)
+	{
+		try {
+			// try to get into state "s" and wait until this is possible
+			switch (s) {
+			case NONE:
+				throw state_exception("illegal state requested");
+			case SAFE_DOWN:
+				// throw exception if not (DOWN or PENDING_UP)
+				while ((_state != DOWN) && (_state != PENDING_UP)) {
+					if (_state == abortstate)
+						throw state_exception("abort state " + __getname(abortstate) + " reached");
+					ibrcommon::Conditional::wait();
+				}
+				__change(s);
+				break;
+
+			case DOWN:
+				// throw exception if not (PENDING_DOWN or SAFE_DOWN)
+				while ((_state != PENDING_DOWN) && (_state != SAFE_DOWN)) {
+					if (_state == abortstate)
+						throw state_exception("abort state " + __getname(abortstate) + " reached");
+					ibrcommon::Conditional::wait();
+				}
+				__change(s);
+				break;
+
+			case PENDING_UP:
+				// throw exception if not (DOWN)
+				while (_state != DOWN) {
+					if (_state == abortstate)
+						throw state_exception("abort state " + __getname(abortstate) + " reached");
+					ibrcommon::Conditional::wait();
+				}
+				__change(s);
+				break;
+
+			case PENDING_DOWN:
+				// throw exception if not (IDLE, DOWN_REQUEST)
+				while ((_state != IDLE) && (_state != DOWN_REQUEST)) {
+					if (_state == abortstate)
+						throw state_exception("abort state " + __getname(abortstate) + " reached");
+					ibrcommon::Conditional::wait();
+				}
+				__change(s);
+				break;
+
+			case IDLE:
+				// throw exception if not (PENDING_UP, SAFE, SELECT)
+				while ((_state != PENDING_UP) && (_state != SAFE) && (_state != SELECT)) {
+					if (_state == abortstate)
+						throw state_exception("abort state " + __getname(abortstate) + " reached");
+					ibrcommon::Conditional::wait();
+				}
+				__change(s);
+				break;
+
+			case SELECT:
+				// throw exception if not (IDLE, SELECT)
+				while ((_state != IDLE) && (_state != SELECT)) {
+					if (_state == abortstate)
+						throw state_exception("abort state " + __getname(abortstate) + " reached");
+					ibrcommon::Conditional::wait();
+				}
+				__change(s);
+				break;
+
+			case DOWN_REQUEST:
+			case SAFE_REQUEST:
+				// throw exception if not (SELECT)
+				while (_state != SELECT) {
+					if (_state == abortstate)
+						throw state_exception("abort state " + __getname(abortstate) + " reached");
+					ibrcommon::Conditional::wait();
+				}
+				__change(s);
+				break;
+
+			case SAFE:
+				// throw exception if not (SAFE_REQUEST, IDLE)
+				while ((_state != SAFE_REQUEST) && (_state != IDLE)) {
+					if (_state == abortstate)
+						throw state_exception("abort state " + __getname(abortstate) + " reached");
+					ibrcommon::Conditional::wait();
+				}
+				__change(s);
+				break;
+			}
+		} catch (const Conditional::ConditionalAbortException &e) {
+			throw state_exception(e.what());
+		}
+	}
+
+	void vsocket::SocketState::wait(STATE s, STATE abortstate) throw (state_exception)
+	{
+		try {
+			while (_state != s) {
+				if (_state == abortstate)
+					throw state_exception("abort state " + __getname(abortstate) + " reached");
+				ibrcommon::Conditional::wait();
+			}
+		} catch (const Conditional::ConditionalAbortException &e) {
+			throw state_exception(e.what());
+		}
+	}
+
+	void vsocket::SocketState::__change(STATE s)
+	{
+		IBRCOMMON_LOGGER_DEBUG(66) << "SocketState transition: " << __getname(_state) << " -> " << __getname(s) << IBRCOMMON_LOGGER_ENDL;
+		_state = s;
+		ibrcommon::Conditional::signal(true);
+	}
+
+	std::string vsocket::SocketState::__getname(STATE s) const
+	{
+		switch (s) {
+		case NONE:
+			return "NONE";
+		case SAFE_DOWN:
+			return "SAFE_DOWN";
+		case DOWN:
+			return "DOWN";
+		case PENDING_UP:
+			return "PENDING_UP";
+		case PENDING_DOWN:
+			return "PENDING_DOWN";
+		case IDLE:
+			return "IDLE";
+		case SELECT:
+			return "SELECT";
+		case SAFE_REQUEST:
+			return "SAFE_REQUEST";
+		case DOWN_REQUEST:
+			return "DOWN_REQUEST";
+		case SAFE:
+			return "SAFE";
+		}
+
+		return "<unkown>";
+	}
+
+	vsocket::SafeLock::SafeLock(SocketState &state)
+	 : _state(state)
+	{
+		// request safe-state
+		ibrcommon::MutexLock l(_state);
+
+		while ( (_state.get() != SocketState::DOWN) && (_state.get() != SocketState::IDLE) && (_state.get() != SocketState::SELECT) ) {
+			((ibrcommon::Conditional&)_state).wait();
+		}
+
+		if (_state.get() == SocketState::SELECT) {
+			_state.set(SocketState::SAFE_REQUEST);
+			_state.wait(SocketState::SAFE);
+		} else if (_state.get() == SocketState::DOWN) {
+			_state.set(SocketState::SAFE_DOWN);
+		} else {
+			_state.set(SocketState::SAFE);
+		}
+	}
+
+	vsocket::SafeLock::~SafeLock()
+	{
+		// release safe-state
+		ibrcommon::MutexLock l(_state);
+		if (_state.get() == SocketState::SAFE)
+		{
+			_state.set(SocketState::IDLE);
+		}
+		else if (_state.get() == SocketState::SAFE_DOWN)
+		{
+			_state.set(SocketState::DOWN);
+		}
+		else
+		{
+			throw SocketState::state_exception("socket not in safe state");
+		}
+	}
+
+	vsocket::SelectGuard::SelectGuard(SocketState &state, int &counter)
+	 : _state(state), _counter(counter)
+	{
+		// set the current state to SELECT
+		try {
+			ibrcommon::MutexLock l(_state);
+			_state.setwait(SocketState::SELECT, SocketState::DOWN);
+			_counter++;
+			IBRCOMMON_LOGGER_DEBUG(66) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
+		} catch (const SocketState::state_exception&) {
+			throw vsocket_interrupt("select interrupted while waiting for IDLE socket");
+		}
+	}
+
+	vsocket::SelectGuard::~SelectGuard()
+	{
+		// set the current state to SELECT
+		try {
+			ibrcommon::MutexLock l(_state);
+			_counter--;
+			IBRCOMMON_LOGGER_DEBUG(66) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
+
+			if (_counter == 0) {
+				if (_state.get() == SocketState::SAFE_REQUEST) {
+					_state.set(SocketState::SAFE);
+				} else if (_state.get() == SocketState::DOWN_REQUEST) {
+					_state.set(SocketState::PENDING_DOWN);
+				} else {
+					_state.set(SocketState::IDLE);
+				}
+			}
+		} catch (const ibrcommon::Conditional::ConditionalAbortException&) {
+			throw vsocket_interrupt("select interrupted while checking SAFE_REQUEST state");
+		}
+	}
 
 	vsocket::vsocket()
-	 : _interrupt_flag(false)
+	 : _interrupt_flag(false), _state(SocketState::DOWN), _select_count(0)
 	{
 		_pipe.up();
 	}
 
 	vsocket::~vsocket()
 	{
-		//ibrcommon::LinkManager::getInstance().unregisterAllEvents(this);
-
 		_pipe.down();
 	}
 
 	void vsocket::add(basesocket *socket)
 	{
+		SafeLock l(_state);
 		_sockets.insert(socket);
+
+		try {
+			socket->up();
+		} catch (const socket_exception&) {
+			// up failed
+		}
 	}
 
 	void vsocket::add(basesocket *socket, const vinterface &iface)
 	{
+		SafeLock l(_state);
 		_sockets.insert(socket);
 		_socket_map[iface].insert(socket);
+
+		try {
+			if (!socket->ready()) socket->up();
+		} catch (const socket_exception&) {
+			// up failed
+		}
 	}
 
 	void vsocket::remove(basesocket *socket)
 	{
+		SafeLock l(_state);
 		_sockets.erase(socket);
 
 		// search for the same socket in the map
@@ -148,20 +458,18 @@ namespace ibrcommon
 
 	void vsocket::clear()
 	{
+		SafeLock l(_state);
 		_sockets.clear();
 		_socket_map.clear();
 	}
 
 	void vsocket::destroy()
 	{
+		down();
+
 		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++)
 		{
 			basesocket *sock = (*iter);
-
-			try {
-				sock->down();
-			} catch (const socket_exception&) { }
-
 			delete sock;
 		}
 		_sockets.clear();
@@ -185,7 +493,14 @@ namespace ibrcommon
 		return (*iter).second;
 	}
 
-	void vsocket::up() throw (socket_exception) {
+	void vsocket::up() throw (socket_exception)
+	{
+		{
+			ibrcommon::MutexLock l(_state);
+			// wait until we can get into PENDING_UP state
+			_state.setwait(SocketState::PENDING_UP, SocketState::IDLE);
+		}
+		
 		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {
 			try {
 				if (!(*iter)->ready()) (*iter)->up();
@@ -194,84 +509,47 @@ namespace ibrcommon
 				for (socketset::iterator riter = _sockets.begin(); riter != iter; riter++) {
 					(*riter)->down();
 				}
+
+				ibrcommon::MutexLock l(_state);
+				_state.set(SocketState::DOWN);
 				throw;
 			}
 		}
+
+		// set state to IDLE
+		ibrcommon::MutexLock l(_state);
+		_state.set(SocketState::IDLE);
 	}
 
 	void vsocket::down() throw ()
 	{
+		try {
+			ibrcommon::MutexLock l(_state);
+			if (_state.get() == SocketState::SELECT) {
+				_state.setwait(SocketState::DOWN_REQUEST, SocketState::DOWN);
+				interrupt();
+				// wait for PENDING_DOWN state
+				_state.wait(SocketState::PENDING_DOWN);
+			} else {
+				// enter PENDING_DOWN state
+				_state.setwait(SocketState::PENDING_DOWN, SocketState::DOWN);
+			}
+		} catch (SocketState::state_exception&) {
+			return;
+		}
+
+		// shut-down all the sockets
 		ibrcommon::MutexLock l(_socket_lock);
 		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {
 			try {
-				(*iter)->down();
+				if ((*iter)->ready()) (*iter)->down();
 			} catch (const socket_exception&) { }
 		}
 
-		interrupt();
+		ibrcommon::MutexLock sl(_state);
+		_state.set(SocketState::DOWN);
 	}
 
-	void vsocket::eventNotify(const LinkEvent &evt)
-	{
-//		const ibrcommon::vinterface &iface = evt.getInterface();
-//		IBRCOMMON_LOGGER_DEBUG(5) << "update socket cause of event on interface " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
-//
-//		// check if the portmap for this interface is available
-//		if (_portmap.find(evt.getInterface()) == _portmap.end()) return;
-//
-//		try {
-//			switch (evt.getType())
-//			{
-//			case LinkManagerEvent::EVENT_ADDRESS_ADDED:
-//			{
-//				IBRCOMMON_LOGGER_DEBUG(10) << "dynamic address bind on: " << evt.getAddress().toString() << ":" << _portmap[iface] << IBRCOMMON_LOGGER_ENDL;
-//				if (_portmap[iface] == 0)
-//				{
-//					vsocket::vbind vb(iface, evt.getAddress(), _typemap[iface]);
-//					bind( vb );
-//				}
-//				else
-//				{
-//					vsocket::vbind vb(iface, evt.getAddress(), _portmap[iface], _typemap[iface]);
-//					bind( vb );
-//				}
-//				break;
-//			}
-//
-//			case LinkManagerEvent::EVENT_ADDRESS_REMOVED:
-//				IBRCOMMON_LOGGER_DEBUG(10) << "dynamic address unbind on: " << evt.getAddress().toString() << ":" << _portmap[iface] << IBRCOMMON_LOGGER_ENDL;
-//				unbind(evt.getAddress(), _portmap[iface]);
-//				break;
-//
-//			default:
-//				break;
-//			}
-//		} catch (const ibrcommon::Exception &ex) {
-//			IBRCOMMON_LOGGER(warning) << "dynamic bind process failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-//		}
-//
-//		// forward the event to the listen callback class
-//		if (_cb != NULL) _cb->eventNotify(evt);
-//
-//		if (_send_only) {
-//			// if this is send only socket, then process unbinds directly
-//			process_unbind_queue();
-//		} else {
-//			// refresh the select call
-//			refresh();
-//		}
-	}
-//
-//	void vsocket::setEventCallback(ibrcommon::LinkManager::EventCallback *cb)
-//	{
-//		_cb = cb;
-//	}
-//
-//	void vsocket::refresh()
-//	{
-//		::write(_interrupt_pipe[1], "i", 1);
-//	}
-//
 	void vsocket::interrupt()
 	{
 		_interrupt_flag = true;
@@ -288,6 +566,8 @@ namespace ibrcommon
 
 		while (true)
 		{
+			SelectGuard guard(_state, _select_count);
+
 			FD_ZERO(&fds_read);
 			FD_ZERO(&fds_write);
 			FD_ZERO(&fds_error);
@@ -337,12 +617,6 @@ namespace ibrcommon
 				char buf[2];
 				_pipe.read(buf, 2);
 
-//				// process the unbind queue
-//				process_unbind_queue();
-//
-//				// listen on all new binds
-//				relisten();
-
 				// interrupt the method if requested
 				if (_interrupt_flag)
 				{
@@ -386,29 +660,4 @@ namespace ibrcommon
 			break;
 		}
 	}
-
-//	void vsocket::process_unbind_queue() {
-//		if (!_unbind_queue.empty())
-//		{
-//			// unbind all removed sockets now
-//			ibrcommon::Queue<vsocket::vbind>::Locked lq = _unbind_queue.exclusive();
-//
-//			vsocket::vbind &vb = lq.front();
-//
-//			for (std::list<vsocket::vbind>::iterator iter = _binds.begin(); iter != _binds.end(); iter++)
-//			{
-//				vsocket::vbind &i = (*iter);
-//
-//				if (i == vb)
-//				{
-//					IBRCOMMON_LOGGER_DEBUG(25) << "socket closed" << IBRCOMMON_LOGGER_ENDL;
-//					i.close();
-//					_binds.erase(iter);
-//					break;
-//				}
-//			}
-//
-//			lq.pop();
-//		}
-//	}
 }
