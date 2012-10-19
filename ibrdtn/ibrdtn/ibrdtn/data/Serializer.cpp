@@ -70,15 +70,15 @@ namespace dtn
 				const Block &b = (*(*iter));
 				_dictionary.add( b.getEIDList() );
 			}
+
+			// check if the bundle header could be compressed
+			_compressable = isCompressable(obj);
 		}
 
 		Serializer& DefaultSerializer::operator <<(const dtn::data::Bundle& obj)
 		{
 			// rebuild the dictionary
 			rebuildDictionary(obj);
-
-			// check if the bundle header could be compressed
-			_compressable = isCompressable(obj);
 
 			// serialize the primary block
 			(*this) << (PrimaryBlock&)obj;
@@ -99,9 +99,6 @@ namespace dtn
 		{
 			// rebuild the dictionary
 			rebuildDictionary(obj._bundle);
-
-			// check if the bundle header could be compressed
-			_compressable = isCompressable(obj._bundle);
 
 			PrimaryBlock prim = obj._bundle;
 			prim.set(dtn::data::PrimaryBlock::FRAGMENT, true);
