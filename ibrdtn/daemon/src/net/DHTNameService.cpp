@@ -242,6 +242,7 @@ void dtn::dht::DHTNameService::componentRun() {
 	time_t tosleep = 0;
 	struct sockaddr_storage from;
 	socklen_t fromlen;
+	::memset(&from, 0, fromlen);
 	while (!this->_exiting) {
 		if (this->_foundNodes == 0) {
 			bootstrapping();
