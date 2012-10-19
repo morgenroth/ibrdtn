@@ -47,13 +47,15 @@ namespace dtn
 
 		void ManagementConnection::run()
 		{
-			std::string buffer;
+			std::string buffer = "";
 			_stream << ClientHandler::API_STATUS_OK << " SWITCHED TO MANAGEMENT" << std::endl;
 
 			// run as long the stream is ok
 			while (_stream.good())
 			{
 				getline(_stream, buffer);
+
+				if (buffer.length() == 0) continue;
 
 				// search for '\r\n' and remove the '\r'
 				std::string::reverse_iterator iter = buffer.rbegin();
