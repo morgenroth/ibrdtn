@@ -26,6 +26,7 @@
 
 #include <list>
 #include <string>
+#include <stdint.h>
 
 namespace ibrcommon
 {

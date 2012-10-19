@@ -24,7 +24,6 @@
 
 #include "ibrcommon/Exceptions.h"
 #include <sys/socket.h>
-#include <netdb.h>
 
 namespace ibrcommon
 {
@@ -54,36 +53,21 @@ namespace ibrcommon
 
 			vaddress();
 			vaddress(const std::string &address, const std::string &scope = "");
-//			vaddress(const Family &family = VADDRESS_INET);
-//			vaddress(const Family &family, const std::string &address);
-//			vaddress(const Family &family, const std::string &address, const int iface, const Scope scope = SCOPE_UNKOWN);
 			virtual ~vaddress();
 
 			sa_family_t getFamily() const throw (address_exception);
 			std::string getScope() const throw (address_exception);
 			const std::string get() const throw (address_not_set);
 
+			bool operator<(const vaddress &dhs) const;
 			bool operator!=(const vaddress &obj) const;
 			bool operator==(const vaddress &obj) const;
 
 			const std::string toString() const;
 
-//			struct addrinfo* addrinfo(struct addrinfo *hints) const;
-//			struct addrinfo* addrinfo(struct addrinfo *hints, unsigned int port) const;
-
-//			static const std::string strip_netmask(const std::string &data);
-
-			bool operator<(const ibrcommon::vaddress &dhs) const;
-
 		private:
-//			static const std::string __REGEX_IPV6_ADDRESS__;
-//			static const std::string __REGEX_IPV4_ADDRESS__;
-
-//			Family _family;
-//			Scope _scope;
 			std::string _address;
 			std::string _scope;
-//			int _iface;
 	};
 }
 
