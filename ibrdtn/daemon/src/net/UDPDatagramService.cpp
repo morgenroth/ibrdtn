@@ -59,9 +59,17 @@ namespace dtn
 					// bind socket to interface
 					_vsocket.add(new ibrcommon::udpsocket(_bind_port));
 				} else {
-					// bind socket to interface
-					// TODO: bind to all addresses on this interface
-					//_vsocket.add(new ibrcommon::udpsocket(_bind_port));
+					// create sockets for all addresses on the interface
+					std::list<ibrcommon::vaddress> addrs = _iface.getAddresses();
+
+					// convert the port into a string
+					std::stringstream ss; ss << _bind_port;
+
+					for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+						ibrcommon::vaddress &addr = (*iter);
+						addr.setService(ss.str());
+						_vsocket.add(new ibrcommon::udpsocket(addr), _iface);
+					}
 				}
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("bind failed");

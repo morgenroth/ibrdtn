@@ -69,9 +69,21 @@ namespace dtn
 				_vsocket.add(new ibrcommon::tcpserversocket(port));
 				_any_port = port;
 			} else {
-				// TODO: bind on all addresses on this interface
+				// bind on all addresses on this interface
 				_interfaces.push_back(net);
-				_vsocket.add(new ibrcommon::tcpserversocket(port));
+
+				// create sockets for all addresses on the interface
+				std::list<ibrcommon::vaddress> addrs = net.getAddresses();
+
+				// convert the port into a string
+				std::stringstream ss; ss << port;
+
+				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+					ibrcommon::vaddress &addr = (*iter);
+					addr.setService(ss.str());
+					_vsocket.add(new ibrcommon::tcpserversocket(addr), net);
+				}
+
 				//_tcpsrv.bind(net, port);
 				_portmap[net] = port;
 			}

@@ -285,8 +285,17 @@ namespace dtn
 				// create main socket for all send actions
 				_sock.up();
 
-				// TODO: add one udpsocket for each address on the interface (_net)
-				_vsocket.add(new ibrcommon::udpsocket(_port), _net);
+				// create sockets for all addresses on the interface
+				std::list<ibrcommon::vaddress> addrs = _net.getAddresses();
+
+				// convert the port into a string
+				std::stringstream ss; ss << _port;
+
+				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+					ibrcommon::vaddress &addr = (*iter);
+					addr.setService(ss.str());
+					_vsocket.add(new ibrcommon::udpsocket(addr), _net);
+				}
 
 				_vsocket.up();
 			} catch (const ibrcommon::socket_exception&) {

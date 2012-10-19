@@ -81,22 +81,17 @@ namespace dtn
 			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			_interfaces.push_back(net);
 
-			// TODO: create sockets for all addresses on the interface
+			// create sockets for all addresses on the interface
+			std::list<ibrcommon::vaddress> addrs = net.getAddresses();
 
-//			// bind to all added interfaces for sending
-//			for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
-//			{
-//				try {
-//					const ibrcommon::vinterface &iface = *iter;
-//					if (!iface.empty())
-//					{
-//						// create one send socket for each interface
-//						_send_socket.bind(iface, 0, SOCK_DGRAM);
-//					}
-//				} catch (const ibrcommon::Exception &ex) {
-//					IBRCOMMON_LOGGER(error) << "[IPND] bind failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-//				}
-//			}
+			// convert the port into a string
+			std::stringstream ss; ss << port;
+
+			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+				ibrcommon::vaddress &addr = (*iter);
+				addr.setService(ss.str());
+				_send_socket.add(new ibrcommon::udpsocket(addr), net);
+			}
 		}
 
 		void IPNDAgent::send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr)
@@ -188,6 +183,9 @@ namespace dtn
 
 				for (std::list<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
 				{
+					// subscribe to NetLink events on our interfaces
+					ibrcommon::LinkManager::getInstance().registerInterfaceEvent(*it_iface, this);
+
 					for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
 					{
 						try {
@@ -200,13 +198,12 @@ namespace dtn
 			} catch (std::bad_cast&) {
 				throw ibrcommon::socket_exception("no multicast socket found");
 			}
-
-			// TODO: subscribe to NetLink events on our interfaces
 		}
 
 		void IPNDAgent::componentDown()
 		{
-			// TODO: unsubscribe to NetLink events
+			// unsubscribe to NetLink events
+			ibrcommon::LinkManager::getInstance().unregisterAllEvents(this);
 
 			// shutdown the send socket
 			_send_socket.down();
@@ -274,7 +271,6 @@ namespace dtn
 
 							if (services.empty())
 							{
-								// TODO: check format returned by sender.get()
 								ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
 							}
 
@@ -286,7 +282,6 @@ namespace dtn
 								if ( (service.getParameters().find("port=") != std::string::npos) &&
 										(service.getParameters().find("ip=") == std::string::npos) ) {
 									// create a new service object
-									// TODO: check format returned by sender.get()
 									dtn::net::DiscoveryService ret_service(service.getName(), "ip=" + sender.address() + ";" + service.getParameters());
 
 									// add service to the return set

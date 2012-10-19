@@ -27,9 +27,11 @@
 #include "net/BundleReceivedEvent.h"
 #include "core/NodeEvent.h"
 #include <ibrdtn/data/AgeBlock.h>
+#include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <algorithm>
+#include <sstream>
 #include <unistd.h>
 
 #ifdef WITH_COMPRESSION
@@ -53,8 +55,15 @@ namespace dtn
 		ApiServer::ApiServer(const ibrcommon::vinterface &net, int port)
 		 : _shutdown(false), _garbage_collector(*this)
 		{
-			// TODO: add a socket for each address on the interface, listen = 5
-			_sockets.add(new ibrcommon::tcpserversocket(port));
+			// add a socket for each address on the interface
+			std::list<ibrcommon::vaddress> addrs = net.getAddresses();
+
+			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+				ibrcommon::vaddress &addr = (*iter);
+				std::stringstream ss; ss << port;
+				addr.setService(ss.str());
+				_sockets.add(new ibrcommon::tcpserversocket(addr, 5), net);
+			}
 		}
 
 		ApiServer::~ApiServer()
@@ -319,7 +328,7 @@ namespace dtn
 			return "ApiServer";
 		}
 
-		void ApiServer::connectionUp(ClientHandler *obj)
+		void ApiServer::connectionUp(ClientHandler*)
 		{
 			// generate some output
 			IBRCOMMON_LOGGER_DEBUG(5) << "api connection up" << IBRCOMMON_LOGGER_ENDL;
