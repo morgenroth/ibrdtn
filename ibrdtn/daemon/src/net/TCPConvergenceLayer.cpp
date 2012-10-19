@@ -313,9 +313,11 @@ namespace dtn
 							ibrcommon::vaddress peeraddr;
 							ibrcommon::clientsocket *client = sock.accept(peeraddr);
 
+							// create a EID based on the peer address
+							dtn::data::EID source("tcp://" + peeraddr.address() + ":" + peeraddr.service());
+
 							// create a new node object
-							dtn::core::Node node;
-							// TODO: create a EID based on the peer address
+							dtn::core::Node node(source);
 
 							// create a new TCPConnection and return the pointer
 							TCPConnection *obj = new TCPConnection(*this, node, client, 10);
