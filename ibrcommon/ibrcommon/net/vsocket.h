@@ -194,7 +194,7 @@ namespace ibrcommon
 		class SafeLock
 		{
 		public:
-			SafeLock(SocketState &state);
+			SafeLock(SocketState &state, vsocket &sock);
 			virtual ~SafeLock();
 		private:
 			SocketState &_state;
@@ -220,7 +220,7 @@ namespace ibrcommon
 
 		// if this flag is set all selects call
 		// will be aborted
-		bool _interrupt_flag;
+//		bool _interrupt_flag;
 
 		SocketState _state;
 		int _select_count;

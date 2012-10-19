@@ -328,7 +328,7 @@ namespace ibrcommon
 		return "<unkown>";
 	}
 
-	vsocket::SafeLock::SafeLock(SocketState &state)
+	vsocket::SafeLock::SafeLock(SocketState &state, vsocket &sock)
 	 : _state(state)
 	{
 		// request safe-state
@@ -340,6 +340,8 @@ namespace ibrcommon
 
 		if (_state.get() == SocketState::SELECT) {
 			_state.set(SocketState::SAFE_REQUEST);
+			// send interrupt
+			sock.interrupt();
 			_state.wait(SocketState::SAFE);
 		} else if (_state.get() == SocketState::DOWN) {
 			_state.set(SocketState::SAFE_DOWN);
@@ -403,7 +405,7 @@ namespace ibrcommon
 	}
 
 	vsocket::vsocket()
-	 : _interrupt_flag(false), _state(SocketState::DOWN), _select_count(0)
+	 : _state(SocketState::DOWN), _select_count(0)
 	{
 		_pipe.up();
 	}
@@ -415,7 +417,7 @@ namespace ibrcommon
 
 	void vsocket::add(basesocket *socket)
 	{
-		SafeLock l(_state);
+		SafeLock l(_state, *this);
 		_sockets.insert(socket);
 
 		try {
@@ -427,7 +429,7 @@ namespace ibrcommon
 
 	void vsocket::add(basesocket *socket, const vinterface &iface)
 	{
-		SafeLock l(_state);
+		SafeLock l(_state, *this);
 		_sockets.insert(socket);
 		_socket_map[iface].insert(socket);
 
@@ -440,7 +442,7 @@ namespace ibrcommon
 
 	void vsocket::remove(basesocket *socket)
 	{
-		SafeLock l(_state);
+		SafeLock l(_state, *this);
 		_sockets.erase(socket);
 
 		// search for the same socket in the map
@@ -458,7 +460,7 @@ namespace ibrcommon
 
 	void vsocket::clear()
 	{
-		SafeLock l(_state);
+		SafeLock l(_state, *this);
 		_sockets.clear();
 		_socket_map.clear();
 	}
@@ -552,7 +554,6 @@ namespace ibrcommon
 
 	void vsocket::interrupt()
 	{
-		_interrupt_flag = true;
 		_pipe.write("i", 1);
 	}
 
@@ -582,6 +583,7 @@ namespace ibrcommon
 						iter != _sockets.end(); iter++)
 				{
 					basesocket &sock = (**iter);
+					if (!sock.ready()) continue;
 
 					if (readset != NULL) {
 						FD_SET(sock.fd(), &fds_read);
@@ -614,16 +616,9 @@ namespace ibrcommon
 				IBRCOMMON_LOGGER_DEBUG(25) << "unblocked by self-pipe-trick" << IBRCOMMON_LOGGER_ENDL;
 
 				// this was an interrupt with the self-pipe-trick
+				ibrcommon::MutexLock l(_socket_lock);
 				char buf[2];
 				_pipe.read(buf, 2);
-
-				// interrupt the method if requested
-				if (_interrupt_flag)
-				{
-					// clear the abort flag
-					_interrupt_flag = false;
-					throw vsocket_interrupt("select interrupted");
-				}
 
 				// start over with the select call
 				continue;
