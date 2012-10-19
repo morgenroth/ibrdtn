@@ -81,8 +81,17 @@ typedef nl_object nl_object_header;
 		rtnl_scope2str(scope, scope_buf, sizeof( scope_buf ));
 		std::string scopename(scope_buf);
 
+		struct sockaddr_storage sa_addr;
+		socklen_t sa_len = sizeof(sockaddr_storage);
+
+		nl_addr_fill_sockaddr(naddr, (struct sockaddr*)&sa_addr, &sa_len);
+
 		char addr_buf[256];
-		nl_addr2str( naddr, addr_buf, sizeof( addr_buf ));
+		if (::getnameinfo((struct sockaddr *) &sa_addr, sa_len, addr_buf, sizeof addr_buf, 0, 0, NI_NUMERICHOST) != 0) {
+			// error
+			return vaddress();
+		}
+
 		std::string addrname(addr_buf);
 
 		return vaddress(addrname, "", scopename);
@@ -226,12 +235,6 @@ typedef nl_object nl_object_header;
 	{
 		if ((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED))
 			throw socket_exception("socket is not up");
-
-		for (std::map<std::string, struct nl_cache*>::iterator iter = _caches.begin(); iter != _caches.end(); iter++)
-		{
-			nl_cache_free((*iter).second);
-			(*iter).second = NULL;
-		}
 
 		// delete the cache manager
 		nl_cache_mngr_free(_mngr);
