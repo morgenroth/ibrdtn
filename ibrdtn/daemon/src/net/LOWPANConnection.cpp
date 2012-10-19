@@ -47,7 +47,7 @@ namespace dtn
 {
 	namespace net
 	{
-		LOWPANConnection::LOWPANConnection(unsigned short address, LOWPANConvergenceLayer &cl)
+		LOWPANConnection::LOWPANConnection(const ibrcommon::vaddress &address, LOWPANConvergenceLayer &cl)
 			: _address(address), _stream(cl, address), _sender(_stream), _cl(cl)
 		{
 		}
@@ -91,7 +91,7 @@ namespace dtn
 						IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConnection::run"<< IBRCOMMON_LOGGER_ENDL;
 
 						// determine sender
-						std::stringstream ss; ss << "lowpan:" << _address;
+						std::stringstream ss; ss << "lowpan:" << _address.address() << ":" << _address.service();
 						EID sender(ss.str());
 
 						// raise default bundle received event

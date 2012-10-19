@@ -61,14 +61,14 @@ namespace dtn
 			 * @param _address IEEE 802.15.4 short address to identfy the connection
 			 * @param LOWPANConvergenceLayer reference
 			 */
-			LOWPANConnection(unsigned short _address, LOWPANConvergenceLayer &cl);
+			LOWPANConnection(const ibrcommon::vaddress &_address, LOWPANConvergenceLayer &cl);
 
 			virtual ~LOWPANConnection();
 
 			/**
 			 * IEEE 802.15.4 short address of the node this connection handles data for.
 			 */
-			unsigned short _address;
+			const ibrcommon::vaddress _address;
 
 			/**
 			 * Getting the lowpanstream connected with the LOWPANConnection

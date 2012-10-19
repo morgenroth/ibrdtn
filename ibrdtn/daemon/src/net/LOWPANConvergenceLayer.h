@@ -78,7 +78,7 @@ namespace dtn
 			 * @param len Length of the buffer
 			 * @param address IEEE 802.15.4 short address of the destination
 			 */
-			virtual void send_cb(char *buf, int len, unsigned int address);
+			virtual void send_cb(char *buf, int len, const ibrcommon::vaddress &addr);
 
 			static const size_t BUFF_SIZE = 115;
 
@@ -95,6 +95,7 @@ namespace dtn
 		private:
 			ibrcommon::vsocket _vsocket;
 
+			ibrcommon::vaddress _addr_broadcast;
 			ibrcommon::vinterface _net;
 			int _panid;
 			char *_ipnd_buf;
@@ -102,7 +103,7 @@ namespace dtn
 
 			ibrcommon::Mutex _connection_lock;
 			std::list<LOWPANConnection*> ConnectionList;
-			LOWPANConnection* getConnection(unsigned short address);
+			LOWPANConnection* getConnection(const ibrcommon::vaddress &addr);
 
 			unsigned int m_maxmsgsize;
 

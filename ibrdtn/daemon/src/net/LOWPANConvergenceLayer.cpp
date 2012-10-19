@@ -52,6 +52,12 @@ namespace dtn
 			: DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
 			_net(net), _panid(panid), _ipnd_buf(new char[BUFF_SIZE]), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
 		{
+			// create vaddress out of the "address" and the own "_sockaddr.addr.pan_id"
+			std::stringstream ss;
+			ss << _panid;
+
+			// assign the broadcast address
+			_addr_broadcast = ibrcommon::vaddress("0xffff", ss.str());
 		}
 
 		LOWPANConvergenceLayer::~LOWPANConvergenceLayer()
@@ -88,22 +94,11 @@ namespace dtn
 			}
 		}
 
-		void LOWPANConvergenceLayer::send_cb(char *buf, int len, unsigned int address)
+		void LOWPANConvergenceLayer::send_cb(char *buf, int len, const ibrcommon::vaddress &addr)
 		{
-			// Add own address at the end
-			struct sockaddr_ieee802154 _sockaddr;
-
 			ibrcommon::socketset socks = _vsocket.getAll();
 			if (socks.size() == 0) return;
 			ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**socks.begin());
-
-			// get the local address data
-			sock.getAddress(&_sockaddr.addr, _net);
-
-			// TODO: create vaddress out of the "address" and the own "_sockaddr.addr.pan_id"
-			std::stringstream ss;
-			ss << address << ":" << _sockaddr.addr.pan_id;
-			ibrcommon::vaddress addr(ss.str());
 
 			// set write lock
 			ibrcommon::MutexLock l(m_writelock);
@@ -130,22 +125,24 @@ namespace dtn
 			getConnection(atoi(address.c_str()))->_sender.queue(job);
 		}
 
-		LOWPANConnection* LOWPANConvergenceLayer::getConnection(unsigned short address)
+		LOWPANConnection* LOWPANConvergenceLayer::getConnection(const ibrcommon::vaddress &addr)
 		{
 			// Test if connection for this address already exist
-			std::list<LOWPANConnection*>::iterator i;
-			for(i = ConnectionList.begin(); i != ConnectionList.end(); ++i)
+			for(std::list<LOWPANConnection*>::iterator i = ConnectionList.begin(); i != ConnectionList.end(); ++i)
 			{
-				IBRCOMMON_LOGGER_DEBUG(10) << "Connection address: " << hex << (*i)->_address << IBRCOMMON_LOGGER_ENDL;
-				if ((*i)->_address == address)
+				LOWPANConnection &conn = dynamic_cast<LOWPANConnection&>(**i);
+
+				IBRCOMMON_LOGGER_DEBUG(10) << "Connection address: " << conn._address.toString() << IBRCOMMON_LOGGER_ENDL;
+
+				if (conn._address == addr)
 					return (*i);
 			}
 
 			// Connection does not exist, create one and put it into the list
-			LOWPANConnection *connection = new LOWPANConnection(address, (*this));
+			LOWPANConnection *connection = new LOWPANConnection(addr, (*this));
 
 			ConnectionList.push_back(connection);
-			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::getConnection "<< connection->_address << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::getConnection "<< connection->_address.toString() << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
 			return connection;
 		}
@@ -228,9 +225,11 @@ namespace dtn
 			if (len > 113)
 				IBRCOMMON_LOGGER(error) << "Discovery announcement to big (" << len << ")" << IBRCOMMON_LOGGER_ENDL;
 
+			// copy data infront of the 2 byte header
 			memcpy(_ipnd_buf+2, ss.str().c_str(), len);
 
-			send_cb(_ipnd_buf, len + 2, 0xffff);
+			// send out broadcast frame
+			send_cb(_ipnd_buf, len + 2, _addr_broadcast);
 		}
 
 		void LOWPANConvergenceLayer::componentRun()
@@ -245,10 +244,8 @@ namespace dtn
 
 					char data[m_maxmsgsize];
 					char header;
-					uint16_t address = 0;
 					
 					// place to store the peer address
-					// TODO: check format of the peer address if it is enough to address the peer
 					ibrcommon::vaddress peeraddr;
 					
 					// Receive full frame from socket
@@ -276,7 +273,7 @@ namespace dtn
 					ibrcommon::MutexLock lc(_connection_lock);
 
 					// Connection instance for this address
-					LOWPANConnection* connection = getConnection(address);
+					LOWPANConnection* connection = getConnection(peeraddr);
 
 					// Decide in which queue to write based on the src address
 					connection->getStream().queue(data, len);
