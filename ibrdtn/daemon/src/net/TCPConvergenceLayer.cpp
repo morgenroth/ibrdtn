@@ -129,7 +129,7 @@ namespace dtn
 
 						for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
 						{
-							if ((*addr_it).scope() != ibrcommon::vaddress::SCOPE_LINKLOCAL) continue;
+							if ((*addr_it).scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
 
 							std::stringstream service;
 							// fill in the ip address
