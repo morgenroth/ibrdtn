@@ -34,6 +34,11 @@
 
 namespace ibrcommon
 {
+	class netlink_callback {
+	public:
+		virtual void parse(struct nl_object *obj, int action) = 0;
+	};
+
 	class NetLink3ManagerEvent : public LinkManagerEvent
 	{
 	public:
@@ -84,7 +89,7 @@ namespace ibrcommon
 	private:
 		NetLink3Manager();
 
-		class netlinkcache : public basesocket
+		class netlinkcache : public basesocket, public netlink_callback
 		{
 		public:
 			netlinkcache(int protocol, const std::string &name);
@@ -97,6 +102,8 @@ namespace ibrcommon
 			struct nl_cache* operator*() const throw (socket_exception);
 
 			void receive() throw (socket_exception);
+
+			virtual void parse(struct nl_object *obj, int flags);
 
 		private:
 			const int _protocol;

@@ -35,13 +35,11 @@
 
 namespace ibrcommon
 {
-//	static int nl3_callback(struct nl_msg *msg, void *arg)
-//	{
-//		NetLink3Manager *m = static_cast<NetLink3Manager *>(arg);
-//		NetLink3ManagerEvent evt(msg);
-//		m->callback(evt);
-//		return 0;
-//	}
+	static void nl3_cache_callback(struct nl_cache*, struct nl_object *obj, int action, void *data)
+	{
+		netlink_callback *c = static_cast<netlink_callback *>(data);
+		c->parse(obj, action);
+	}
 
 	void add_addr_to_list(struct nl_object *obj, void *data)
 	{
@@ -96,7 +94,8 @@ namespace ibrcommon
 			throw socket_exception("can not allocate netlink cache manager");
 
 		// add route/link filter to the cache manager
-		ret = nl_cache_mngr_add(_mngr, _name.c_str(), NULL, NULL, &_cache);
+		ret = nl_cache_mngr_add(_mngr, "route/link", &nl3_cache_callback, this, &_cache);
+		ret = nl_cache_mngr_add(_mngr, "route/addr", &nl3_cache_callback, this, &_cache);
 
 		// mark this socket as up
 		_state = SOCKET_UP;
@@ -129,6 +128,23 @@ namespace ibrcommon
 		int ret = nl_cache_mngr_data_ready(_mngr);
 		if (ret < 0)
 			throw socket_exception("can not receive data from netlink manager");
+	}
+
+	void NetLink3Manager::netlinkcache::parse(struct nl_object *obj, int action)
+	{
+		// TODO: parse nl_objects
+		struct nl_dump_params dp;
+		dp.dp_type = NL_DUMP_LINE;
+		dp.dp_fd = stdout;
+
+		if (action == NL_ACT_NEW)
+			printf("NEW ");
+		else if (action == NL_ACT_DEL)
+			printf("DEL ");
+		else if (action == NL_ACT_CHANGE)
+			printf("CHANGE ");
+
+		nl_object_dump(obj, &dp);
 	}
 
 	struct nl_cache* NetLink3Manager::netlinkcache::operator*() const throw (socket_exception)
