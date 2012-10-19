@@ -23,6 +23,7 @@
 #include "ibrcommon/link/LinkManager.h"
 #include "ibrcommon/link/LinkEvent.h"
 #include "ibrcommon/thread/MutexLock.h"
+#include "ibrcommon/Logger.h"
 #include <list>
 #include <string>
 #include <typeinfo>
@@ -95,6 +96,8 @@ namespace ibrcommon
 
 	void LinkManager::raiseEvent(const LinkEvent &lme)
 	{
+		IBRCOMMON_LOGGER_DEBUG(67) << "LinkManager: event raised " << lme.toString() << IBRCOMMON_LOGGER_ENDL;
+
 		// get the corresponding interface
 		const vinterface &iface = lme.getInterface();
 

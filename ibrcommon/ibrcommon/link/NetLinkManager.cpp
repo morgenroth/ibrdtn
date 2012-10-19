@@ -330,11 +330,18 @@ typedef nl_object nl_object_header;
 
 	void NetLinkManager::up() throw ()
 	{
+		// add netlink fd to vsocket
+		_sock.add(&_route_cache);
+		_sock.up();
+
 		this->start();
 	}
 
 	void NetLinkManager::down() throw ()
 	{
+		_sock.down();
+		_sock.clear();
+
 		this->stop();
 		this->join();
 	}
@@ -347,9 +354,6 @@ typedef nl_object nl_object_header;
 
 	void NetLinkManager::run() throw ()
 	{
-		// add netlink fd to vsocket
-		_sock.add(&_route_cache);
-
 		try {
 			while (_running)
 			{
