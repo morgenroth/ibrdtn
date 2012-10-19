@@ -81,6 +81,34 @@ namespace dtn
 			_interfaces.push_back(net);
 		}
 
+		void IPNDAgent::leave_interface(const ibrcommon::vinterface &iface)
+		{
+			ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**_recv_socket.getAll().begin());
+
+			for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
+			{
+				try {
+					msock.leave(*it_addr, iface);
+				} catch (const ibrcommon::Exception&) {
+					IBRCOMMON_LOGGER(error) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+		}
+
+		void IPNDAgent::join_interface(const ibrcommon::vinterface &iface)
+		{
+			ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**_recv_socket.getAll().begin());
+
+			for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
+			{
+				try {
+					msock.join(*it_addr, iface);
+				} catch (const ibrcommon::Exception&) {
+					IBRCOMMON_LOGGER(error) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+		}
+
 		void IPNDAgent::send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr)
 		{
 			// serialize announcement
@@ -93,12 +121,15 @@ namespace dtn
 			// (hopefully only one per interface)
 			for (ibrcommon::socketset::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
 			{
-				try {
-					ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
-					sock.sendto(data.c_str(), data.length(), 0, addr);
+				ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
-				} catch (const ibrcommon::socket_exception&) {
-					IBRCOMMON_LOGGER_DEBUG(5) << "can not send message to " << addr.toString() << IBRCOMMON_LOGGER_ENDL;
+				// prevent broadcasting in the wrong address family
+				if (addr.family() != sock.get_address().family()) continue;
+
+				try {
+					sock.sendto(data.c_str(), data.length(), 0, addr);
+				} catch (const ibrcommon::socket_exception &e) {
+					IBRCOMMON_LOGGER_DEBUG(5) << "can not send message to " << addr.toString() << " via " << sock.get_address().toString() << "/" << iface.toString() << "; socket exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}
@@ -147,22 +178,37 @@ namespace dtn
 				{
 					const ibrcommon::vaddress &bindaddr = evt.getAddress();
 					_send_socket.add(new ibrcommon::udpsocket(bindaddr), evt.getInterface());
+
+					// join interfaces if a interface is totally new
+					if (_send_socket.get(evt.getInterface()).size() == 1) {
+						join_interface(evt.getInterface());
+					}
 					break;
 				}
 
 				case ibrcommon::LinkEvent::ACTION_ADDRESS_REMOVED:
 				{
-					//_send_socket.add();
+					ibrcommon::socketset socks = _send_socket.get(evt.getInterface());
+					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+						ibrcommon::udpsocket *sock = dynamic_cast<ibrcommon::udpsocket*>(*iter);
+						if (sock->get_address().address() == evt.getAddress().address()) {
+							// leave interfaces if a interface is totally gone
+							if (socks.size() == 1) {
+								leave_interface(evt.getInterface());
+							}
+
+							_send_socket.remove(sock);
+							sock->down();
+							delete sock;
+							break;
+						}
+					}
 					break;
 				}
 
 				default:
 					break;
 			}
-
-			// TODO: shutdown and remove sockets on EVENT_ADDRESS_REMOVED
-			
-			// TODO: join/leave interfaces if a interface is totally new / gone
 		}
 
 		void IPNDAgent::componentUp() throw ()
@@ -194,14 +240,8 @@ namespace dtn
 					// subscribe to NetLink events on our interfaces
 					ibrcommon::LinkManager::getInstance().addEventListener(iface, this);
 
-					for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
-					{
-						try {
-							msock.join(*it_addr, iface);
-						} catch (const ibrcommon::Exception&) {
-							IBRCOMMON_LOGGER(error) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
-						}
-					}
+					// join to all multicast addresses on this interface
+					join_interface(iface);
 				}
 			} catch (std::bad_cast&) {
 				throw ibrcommon::socket_exception("no multicast socket found");

@@ -64,6 +64,8 @@ namespace dtn
 			void __cancellation() throw ();
 
 		private:
+			void leave_interface(const ibrcommon::vinterface &iface);
+			void join_interface(const ibrcommon::vinterface &iface);
 			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;
