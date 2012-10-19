@@ -83,11 +83,11 @@ namespace ibrcommon
 		// create netlink socket
 		_nl_socket = nl_socket_alloc();
 
-		// Disables checking of sequence numbers on the netlink socket
-		nl_socket_disable_seq_check(_nl_socket);
+//		// Disables checking of sequence numbers on the netlink socket
+//		nl_socket_disable_seq_check(_nl_socket);
 
-		// connect the socket to ROUTE
-		ret = nl_connect(_nl_socket, _protocol);
+//		// connect the socket to ROUTE
+//		ret = nl_connect(_nl_socket, _protocol);
 
 		// allocate a cache manager for ROUTE
 		ret = nl_cache_mngr_alloc(_nl_socket, _protocol, NL_AUTO_PROVIDE, &_mngr);
@@ -139,6 +139,8 @@ namespace ibrcommon
 	{
 		// TODO: parse nl_objects
 		struct nl_dump_params dp;
+		memset(&dp, 0, sizeof(struct nl_dump_params));
+
 		dp.dp_type = NL_DUMP_LINE;
 		dp.dp_fd = stdout;
 

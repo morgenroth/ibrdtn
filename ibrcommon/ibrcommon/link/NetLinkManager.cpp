@@ -46,7 +46,11 @@ namespace ibrcommon
 {
 	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action)
 	{
+		if (obj == NULL) return;
+
+		// TODO: parse nl_objects
 		struct nl_dump_params dp;
+		memset(&dp, 0, sizeof(struct nl_dump_params));
 		dp.dp_type = NL_DUMP_BRIEF;
 		dp.dp_fd = stdout;
 
@@ -102,8 +106,8 @@ namespace ibrcommon
 //		// Disables checking of sequence numbers on the netlink socket
 //		nl_socket_disable_seq_check(_nl_handle);
 
-		// connect the socket to ROUTE
-		ret = nl_connect(_nl_handle, _protocol);
+//		// connect the socket to ROUTE
+//		ret = nl_connect(_nl_handle, _protocol);
 
 		// allocate a cache manager for ROUTE
 		_mngr = nl_cache_mngr_alloc(_nl_handle, _protocol, NL_AUTO_PROVIDE);
@@ -180,6 +184,17 @@ namespace ibrcommon
 
 		// destroy netlink cache
 		_route_cache.down();
+	}
+
+	void NetLinkManager::up() throw ()
+	{
+		this->start();
+	}
+
+	void NetLinkManager::down() throw ()
+	{
+		this->stop();
+		this->join();
 	}
 
 	void NetLinkManager::__cancellation()

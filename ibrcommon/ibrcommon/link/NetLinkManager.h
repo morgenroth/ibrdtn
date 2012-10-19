@@ -45,6 +45,9 @@ namespace ibrcommon
 	public:
 		virtual ~NetLinkManager();
 
+		void up() throw ();
+		void down() throw ();
+
 		const vinterface getInterface(int index) const;
 		const std::list<vaddress> getAddressList(const vinterface &iface);
 
