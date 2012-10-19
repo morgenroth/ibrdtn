@@ -150,6 +150,7 @@ typedef nl_object nl_object_header;
 			}
 
 			case RTM_NEWADDR: {
+#ifdef HAVE_LIBNL3
 				LinkEvent::Action evt_action = LinkEvent::ACTION_UNKOWN;
 
 				if (action == NL_ACT_NEW)
@@ -165,6 +166,7 @@ typedef nl_object nl_object_header;
 				LinkEvent lme(evt_action, iface, addr);;
 				LinkManager::getInstance().raiseEvent(lme);
 				break;
+#endif
 			}
 
 			default:
