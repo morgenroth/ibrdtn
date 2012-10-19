@@ -109,31 +109,10 @@ namespace ibrcommon
 
 		struct sockaddr_ieee802154 *addr154 = (struct sockaddr_ieee802154*)&clientAddress;
 
-//		std::stringstream hwaddr;
-//		hwaddr << setfill('0');
-//		for (int i = 7; i >= 0; i--) {
-//			if (i < 7) hwaddr << ":";
-//			hwaddr << std::hex << setw(2) << (unsigned int)clientAddress.addr.hwaddr[i];
-//		}
-//
-//		address = hwaddr.str();
-
-		std::stringstream ss_pan; ss_pan << ntohs(addr154->addr.pan_id);
-		std::stringstream ss_short; ss_short << ntohs(addr154->addr.short_addr);
+		std::stringstream ss_pan; ss_pan << addr154->addr.pan_id;
+		std::stringstream ss_short; ss_short << addr154->addr.short_addr;
 
 		addr = ibrcommon::vaddress(ss_short.str(), ss_pan.str());
-
-		///// TESTING /////
-		char address[256];
-		char service[256];
-		if (::getnameinfo((struct sockaddr *) &clientAddress, clientAddressLength, address, sizeof address, service, sizeof service, NI_NUMERICHOST | NI_NUMERICSERV) == 0) {
-			//addr = ibrcommon::vaddress(std::string(address), std::string(service));
-			std::string addr_str(address);
-			std::string service_str(service);
-			ibrcommon::vaddress getnameinfo_addr(addr_str, service_str);
-			IBRCOMMON_LOGGER(notice) << "lowpan frame received from: " << getnameinfo_addr.toString() << IBRCOMMON_LOGGER_ENDL;
-		}
-		///// TESTING /////
 
 		return ret;
 	}
@@ -141,32 +120,6 @@ namespace ibrcommon
 	void lowpansocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		ssize_t ret = 0;
-//		struct addrinfo hints, *res;
-//		memset(&hints, 0, sizeof hints);
-//
-//		hints.ai_socktype = SOCK_DGRAM;
-//
-//		const char *address = NULL;
-//		const char *service = NULL;
-//
-//		try {
-//			address = addr.address().c_str();
-//		} catch (const vaddress::address_not_set&) { };
-//
-//		try {
-//			service = addr.service().c_str();
-//		} catch (const vaddress::address_not_set&) { };
-//
-//		if ((ret = ::getaddrinfo(address, service, &hints, &res)) != 0)
-//		{
-//			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
-//		}
-//
-//		ret = ::sendto(_fd, buf, buflen, flags, res->ai_addr, res->ai_addrlen);
-//
-//		// free the addrinfo struct
-//		freeaddrinfo(res);
-
 		struct sockaddr_ieee802154 sockaddr;
 		bzero(&sockaddr, sizeof(sockaddr));
 
