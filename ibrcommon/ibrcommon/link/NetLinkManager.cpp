@@ -258,9 +258,6 @@ typedef nl_object nl_object_header;
 #ifdef HAVE_LIBNL3
 		// delete the socket
 		nl_socket_free((struct nl_sock*)_nl_handle);
-#else
-		nl_close((struct nl_handle*)_nl_handle);
-		nl_handle_destroy((struct nl_handle*)_nl_handle);
 #endif
 
 		// mark this socket as down
