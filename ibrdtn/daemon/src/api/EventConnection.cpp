@@ -108,6 +108,12 @@ namespace dtn
 				case dtn::core::GlobalEvent::GLOBAL_SUSPEND:
 					_stream << "suspend";
 					break;
+				case dtn::core::GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
+					_stream << "internet available";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
+					_stream << "internet unavailable";
+					break;
 				default:
 					break;
 				}

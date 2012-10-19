@@ -479,7 +479,7 @@ bool dtn::dht::DHTNameService::isNeighbourAnnouncable(
 	// This prevents the node to be announced by all neighbours, how found this node
 	std::set<dtn::core::Node::Type> types = n.getTypes();
 	if (types.find(dtn::core::Node::NODE_DISCOVERED) == types.end()
-			&& (types.find(dtn::core::Node::NODE_STATIC) == types.end())) {
+			&& (types.find(dtn::core::Node::NODE_STATIC_GLOBAL) == types.end())) {
 		return false;
 	}
 	// Proof, if the neighbour has told us, that he don't want to be published on the DHT

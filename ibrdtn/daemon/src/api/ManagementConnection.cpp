@@ -173,15 +173,24 @@ namespace dtn
 				{
 					// need to process the connection arguments
 					// the arguments look like:
-					// <eid> [tcp] [add|del] <ip> <port>
+					// <eid> [tcp|udp|file] [add|del] <ip> <port> <global|local>
 					dtn::core::Node n(cmd[1]);
+					dtn::core::Node::Type t = dtn::core::Node::NODE_STATIC_GLOBAL;
+
+					if (cmd.size() > 6) {
+						if (cmd[6] == "global") {
+							t = dtn::core::Node::NODE_STATIC_GLOBAL;
+						} else {
+							t = dtn::core::Node::NODE_STATIC_LOCAL;
+						}
+					}
 
 					if (cmd[2] == "tcp")
 					{
 						if (cmd[3] == "add")
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
-							n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC, dtn::core::Node::CONN_TCPIP, uri, 0, 10));
+							n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_TCPIP, uri, 0, 10));
 							dtn::core::BundleCore::getInstance().addConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION ADDED" << std::endl;
@@ -189,7 +198,7 @@ namespace dtn
 						else if (cmd[3] == "del")
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
-							n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC, dtn::core::Node::CONN_TCPIP, uri, 0, 10));
+							n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_TCPIP, uri, 0, 10));
 							dtn::core::BundleCore::getInstance().removeConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION REMOVED" << std::endl;
@@ -200,7 +209,7 @@ namespace dtn
 						if (cmd[3] == "add")
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
-							n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC, dtn::core::Node::CONN_UDPIP, uri, 0, 10));
+							n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_UDPIP, uri, 0, 10));
 							dtn::core::BundleCore::getInstance().addConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION ADDED" << std::endl;
@@ -208,7 +217,7 @@ namespace dtn
 						else if (cmd[3] == "del")
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
-							n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC, dtn::core::Node::CONN_UDPIP, uri, 0, 10));
+							n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_UDPIP, uri, 0, 10));
 							dtn::core::BundleCore::getInstance().removeConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION REMOVED" << std::endl;
@@ -218,14 +227,14 @@ namespace dtn
 					{
 						if (cmd[3] == "add")
 						{
-							n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC, dtn::core::Node::CONN_FILE, cmd[4], 0, 10));
+							n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC_LOCAL, dtn::core::Node::CONN_FILE, cmd[4], 0, 10));
 							dtn::core::BundleCore::getInstance().addConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION ADDED" << std::endl;
 						}
 						else if (cmd[3] == "del")
 						{
-							n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC, dtn::core::Node::CONN_FILE, cmd[4], 0, 10));
+							n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC_LOCAL, dtn::core::Node::CONN_FILE, cmd[4], 0, 10));
 							dtn::core::BundleCore::getInstance().removeConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION REMOVED" << std::endl;

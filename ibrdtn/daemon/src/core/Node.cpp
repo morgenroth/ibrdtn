@@ -20,6 +20,7 @@
  */
 
 #include "core/Node.h"
+#include "core/BundleCore.h"
 #include "net/ConvergenceLayer.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Utils.h>
@@ -135,12 +136,12 @@ namespace dtn
 		}
 
 		Node::Node()
-		: _connect_immediately(false), _id()
+		: _connect_immediately(false), _id(), _announced_mark(false)
 		{
 		}
 
 		Node::Node(const dtn::data::EID &id)
-		: _connect_immediately(false), _id(id)
+		: _connect_immediately(false), _id(id), _announced_mark(false)
 		{
 		}
 
@@ -158,8 +159,11 @@ namespace dtn
 			case Node::NODE_DISCOVERED:
 				return "discovered";
 
-			case Node::NODE_STATIC:
-				return "static";
+			case Node::NODE_STATIC_GLOBAL:
+				return "static global";
+
+			case Node::NODE_STATIC_LOCAL:
+				return "static local";
 
 			case Node::NODE_CONNECTED:
 				return "connected";
@@ -439,7 +443,34 @@ namespace dtn
 
 		bool Node::isAvailable() const
 		{
-			return !_uri_list.empty();
+			if (dtn::core::BundleCore::getInstance().isGloballyConnected()) {
+				return !_uri_list.empty();
+			} else {
+				// filter for global addresses when internet is not available
+				for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+				{
+					const Node::URI &u = (*iter);
+
+					switch (u.type) {
+					case NODE_CONNECTED: return true;
+					case NODE_DISCOVERED: return true;
+					case NODE_STATIC_LOCAL: return true;
+					default: break;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		void Node::setAnnounced(bool val)
+		{
+			_announced_mark = val;
+		}
+
+		bool Node::isAnnounced() const
+		{
+			return _announced_mark;
 		}
 
 		std::ostream& operator<<(std::ostream &stream, const Node &node)

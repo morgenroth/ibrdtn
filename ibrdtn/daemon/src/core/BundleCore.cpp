@@ -75,7 +75,7 @@ namespace dtn
 		}
 
 		BundleCore::BundleCore()
-		 : _clock(1), _storage(NULL), _router(NULL)
+		 : _clock(1), _storage(NULL), _router(NULL), _globally_connected(true)
 		{
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 			bindEvent(dtn::core::BundlePurgeEvent::className);
@@ -91,6 +91,15 @@ namespace dtn
 
 		void BundleCore::componentUp() throw ()
 		{
+			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
+			for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); iter++)
+			{
+				ibrcommon::LinkManager::getInstance().addEventListener(*iter, this);
+			}
+
+			// check connection state
+			check_connection_state();
+
 			_connectionmanager.initialize();
 			_clock.initialize();
 
@@ -100,6 +109,8 @@ namespace dtn
 
 		void BundleCore::componentDown() throw ()
 		{
+			ibrcommon::LinkManager::getInstance().removeEventListener(this);
+
 			_connectionmanager.terminate();
 			_clock.terminate();
 		}
@@ -176,6 +187,11 @@ namespace dtn
 		void BundleCore::removeRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop)
 		{
 			dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_DEL, nexthop, destination);
+		}
+
+		bool BundleCore::isGloballyConnected() const
+		{
+			return _globally_connected;
 		}
 
 		const std::set<dtn::core::Node> BundleCore::getNeighbors()
@@ -431,6 +447,48 @@ namespace dtn
 					}
 #endif
 				}
+			}
+		}
+
+		void BundleCore::eventNotify(const ibrcommon::LinkEvent &evt)
+		{
+			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
+			if (global_nets.find(evt.getInterface()) != global_nets.end()) {
+				check_connection_state();
+			}
+		}
+
+		void BundleCore::setGloballyConnected(bool val)
+		{
+			if (val == _globally_connected) return;
+
+			if (val) {
+				dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_INTERNET_AVAILABLE);
+			} else {
+				dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE);
+			}
+
+			_globally_connected = val;
+		}
+
+		void BundleCore::check_connection_state()
+		{
+			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
+
+			if (global_nets.empty()) {
+				// no configured internet devices
+				// assume we are connected globally
+				setGloballyConnected(true);
+			} else {
+				bool found = false;
+				for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); iter++)
+				{
+					const ibrcommon::vinterface &iface = (*iter);
+					if (!iface.getAddresses(ibrcommon::vaddress::SCOPE_GLOBAL).empty()) {
+						found = true;
+					}
+				}
+				setGloballyConnected(found);
 			}
 		}
 	}

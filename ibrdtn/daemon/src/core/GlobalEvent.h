@@ -39,7 +39,9 @@ namespace dtn
 				GLOBAL_BUSY = 3,
 				GLOBAL_SUSPEND = 4,
 				GLOBAL_POWERSAVE = 5,
-				GLOBAL_WAKEUP = 6
+				GLOBAL_WAKEUP = 6,
+				GLOBAL_INTERNET_AVAILABLE = 7,
+				GLOBAL_INTERNET_UNAVAILABLE = 8
 			};
 
 			virtual ~GlobalEvent();

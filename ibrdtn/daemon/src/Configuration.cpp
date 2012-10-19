@@ -593,6 +593,9 @@ namespace dtn
 
 				bool node_exists = false;
 
+				dtn::core::Node::Type t = (conf.read<std::string>(prefix + "global", "no") == "yes") ?
+						dtn::core::Node::NODE_STATIC_GLOBAL : dtn::core::Node::NODE_STATIC_LOCAL;
+
 				// get node
 				for (std::list<Node>::iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
 				{
@@ -600,7 +603,7 @@ namespace dtn
 
 					if (n.getEID() == node_eid)
 					{
-						n.add( dtn::core::Node::URI( dtn::core::Node::NODE_STATIC, p, ss.str(), 0, 10 ) );
+						n.add( dtn::core::Node::URI( t, p, ss.str(), 0, 10 ) );
 						n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
 						node_exists = true;
 						break;
@@ -610,7 +613,7 @@ namespace dtn
 				if (!node_exists)
 				{
 					Node n(node_eid);
-					n.add( dtn::core::Node::URI( dtn::core::Node::NODE_STATIC, p, ss.str(), 0, 10 ) );
+					n.add( dtn::core::Node::URI( t, p, ss.str(), 0, 10 ) );
 					n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
 					_nodes.push_back(n);
 				}
@@ -763,6 +766,16 @@ namespace dtn
 			 * fragmentation support
 			 */
 			_fragmentation = (conf.read<std::string>("fragmentation", "no") == "yes");
+
+			/**
+			 * read internet devices
+			 */
+			std::vector<string> inets = dtn::utils::Utils::tokenize(" ", conf.read<string>("net_internet") );
+			for (std::vector<string>::const_iterator iter = inets.begin(); iter != inets.end(); iter++)
+			{
+				ibrcommon::vinterface inet_dev(*iter);
+				_internet_devices.insert(inet_dev);
+			}
 		}
 
 		const std::multimap<std::string, std::string>& Configuration::Network::getStaticRoutes() const
@@ -897,6 +910,11 @@ namespace dtn
 		Configuration::Network::ProphetConfig Configuration::Network::getProphetConfig() const
 		{
 			return _prophet_config;
+		}
+
+		std::set<ibrcommon::vinterface> Configuration::Network::getInternetDevices() const
+		{
+			return _internet_devices;
 		}
 
 		bool Configuration::Statistic::enabled() const

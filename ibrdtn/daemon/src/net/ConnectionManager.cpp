@@ -30,6 +30,7 @@
 #include "core/BundleCore.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
+#include "core/GlobalEvent.h"
 #include "routing/RequeueBundleEvent.h"
 
 #include <ibrdtn/utils/Clock.h>
@@ -68,6 +69,7 @@ namespace dtn
 			bindEvent(TimeEvent::className);
 			bindEvent(NodeEvent::className);
 			bindEvent(ConnectionEvent::className);
+			bindEvent(GlobalEvent::className);
 
 			// set next auto connect
 			const dtn::daemon::Configuration::Network &nc = dtn::daemon::Configuration::getInstance().getNetwork();
@@ -88,6 +90,7 @@ namespace dtn
 			unbindEvent(NodeEvent::className);
 			unbindEvent(TimeEvent::className);
 			unbindEvent(ConnectionEvent::className);
+			unbindEvent(GlobalEvent::className);
 		}
 
 		void ConnectionManager::raiseEvent(const dtn::core::Event *evt)
@@ -113,6 +116,7 @@ namespace dtn
 					default:
 						break;
 				}
+				return;
 			} catch (const std::bad_cast&) { }
 
 			try {
@@ -123,6 +127,7 @@ namespace dtn
 					check_unavailable();
 					check_autoconnect();
 				}
+				return;
 			} catch (const std::bad_cast&) { }
 
 			try {
@@ -169,10 +174,24 @@ namespace dtn
 					default:
 						break;
 				}
+				return;
+			} catch (const std::bad_cast&) { }
 
-			} catch (const std::bad_cast&) {
+			try {
+				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
+				switch (global.getAction()) {
+				case GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
+					check_available();
+					break;
 
-			}
+				case GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
+					check_unavailable();
+					break;
+
+				default:
+					break;
+				}
+			} catch (const std::bad_cast&) { };
 		}
 
 		void ConnectionManager::addConnection(const dtn::core::Node &n)
@@ -184,14 +203,27 @@ namespace dtn
 				// add all attributes to the node in the database
 				db += n;
 
+				if (db.isAvailable() && !db.isAnnounced()) {
+					db.setAnnounced(true);
+
+					// announce the new node
+					dtn::core::NodeEvent::raise(db, dtn::core::NODE_AVAILABLE);
+				}
+
 				IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes added: " << db << IBRCOMMON_LOGGER_ENDL;
 
 			} catch (const ibrcommon::Exception&) {
 				_nodes.push_back(n);
 
-				// announce the new node
-				dtn::core::NodeEvent::raise(n, dtn::core::NODE_AVAILABLE);
-				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << n << IBRCOMMON_LOGGER_ENDL;
+				dtn::core::Node &db = getNode(n.getEID());
+
+				if (db.isAvailable()) {
+					db.setAnnounced(true);
+
+					// announce the new node
+					dtn::core::NodeEvent::raise(db, dtn::core::NODE_AVAILABLE);
+				}
+				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -227,13 +259,45 @@ namespace dtn
 				// add all attributes to the node in the database
 				db += node;
 
+				if (db.isAvailable() && !db.isAnnounced()) {
+					db.setAnnounced(true);
+
+					// announce the new node
+					dtn::core::NodeEvent::raise(db, dtn::core::NODE_AVAILABLE);
+				}
+
 				IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes added: " << db << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) {
 				_nodes.push_back(node);
 
-				// announce the new node
-				dtn::core::NodeEvent::raise(node, dtn::core::NODE_AVAILABLE);
-				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << node << IBRCOMMON_LOGGER_ENDL;
+				dtn::core::Node &db = getNode(node.getEID());
+
+				if (db.isAvailable()) {
+					db.setAnnounced(true);
+
+					// announce the new node
+					dtn::core::NodeEvent::raise(db, dtn::core::NODE_AVAILABLE);
+				}
+				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		void ConnectionManager::check_available()
+		{
+			ibrcommon::MutexLock l(_node_lock);
+
+			// search for outdated nodes
+			for (std::list<dtn::core::Node>::iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+			{
+				dtn::core::Node &n = (*iter);
+				if (n.isAnnounced()) continue;
+
+				if (n.isAvailable()) {
+					n.setAnnounced(true);
+
+					// announce the unavailable event
+					dtn::core::NodeEvent::raise(n, dtn::core::NODE_AVAILABLE);
+				}
 			}
 		}
 
@@ -246,11 +310,24 @@ namespace dtn
 			while ( iter != _nodes.end() )
 			{
 				dtn::core::Node &n = (*iter);
+				if (!n.isAnnounced()) {
+					iter++;
+					continue;
+				}
+
+				if ( !n.isAvailable() ) {
+					n.setAnnounced(false);
+
+					// announce the unavailable event
+					dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
+				}
 
 				if ( n.expire() )
 				{
-					// announce the unavailable event
-					dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
+					if (n.isAnnounced()) {
+						// announce the unavailable event
+						dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
+					}
 
 					// remove the element
 					_nodes.erase( iter++ );

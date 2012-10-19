@@ -37,6 +37,8 @@
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/CustodySignalBlock.h>
 
+#include <ibrcommon/link/LinkManager.h>
+
 #include <vector>
 #include <set>
 #include <map>
@@ -50,7 +52,7 @@ namespace dtn
 		/**
 		 * The BundleCore manage the Bundle Protocol basics
 		 */
-		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver, public dtn::data::Validator
+		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver, public dtn::data::Validator, public ibrcommon::LinkManager::EventCallback
 		{
 		public:
 			static dtn::data::EID local;
@@ -86,6 +88,12 @@ namespace dtn
 			 * @param nexthop
 			 */
 			void removeRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop);
+
+			/**
+			 * Determine if this daemon is globally connected.
+			 * @return True, if the daemon is globally connected.
+			 */
+			bool isGloballyConnected() const;
 
 			/**
 			 * get a set with all neighbors
@@ -147,6 +155,10 @@ namespace dtn
 
 			static void processBlocks(dtn::data::Bundle &b);
 
+			void setGloballyConnected(bool val);
+
+			void eventNotify(const ibrcommon::LinkEvent &evt);
+
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
@@ -161,6 +173,11 @@ namespace dtn
 			 * destructor
 			 */
 			virtual ~BundleCore();
+
+			/**
+			 * Check if we are connected to the internet.
+			 */
+			void check_connection_state();
 
 			/**
 			 * Forbidden copy constructor
@@ -180,6 +197,12 @@ namespace dtn
 
 			// manager class for connections
 			dtn::net::ConnectionManager _connectionmanager;
+
+			/**
+			 * In this boolean we store the connection state.
+			 * The variable is true if we are connected via a global address.
+			 */
+			bool _globally_connected;
 		};
 	}
 }

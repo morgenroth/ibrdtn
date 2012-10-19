@@ -130,6 +130,11 @@ namespace dtn
 			void check_unavailable();
 
 			/**
+			 * check for available nodes and announce them
+			 */
+			void check_available();
+
+			/**
 			 * auto connect to available nodes
 			 */
 			void check_autoconnect();

@@ -226,7 +226,7 @@ namespace dtn
 					dtn::core::Node n(eid);
 					const std::string uri = "file://" + path.getPath() + "/" + cf.read<std::string>("PATH");
 
-					n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC, dtn::core::Node::CONN_FILE, uri, 0, 10));
+					n.add(dtn::core::Node::URI(dtn::core::Node::NODE_DISCOVERED, dtn::core::Node::CONN_FILE, uri, 0, 10));
 					dtn::core::BundleCore::getInstance().addConnection(n);
 
 					_active_paths[path] = n;

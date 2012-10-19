@@ -69,8 +69,9 @@ namespace dtn
 				NODE_UNAVAILABLE = 0,
 				NODE_CONNECTED = 1,
 				NODE_DISCOVERED = 2,
-				NODE_STATIC = 3,
-				NODE_DHT_DISCOVERED = 4
+				NODE_STATIC_GLOBAL = 3,
+				NODE_STATIC_LOCAL = 4,
+				NODE_DHT_DISCOVERED = 5
 			};
 
 			class URI
@@ -210,9 +211,19 @@ namespace dtn
 			void setConnectImmediately(bool val);
 
 			/**
-			 * returns true, if at least one connection is available
+			 * @return true, if at least one connection is available
 			 */
 			bool isAvailable() const;
+
+			/**
+			 * @return true, if this node has been announced before
+			 */
+			bool isAnnounced() const;
+
+			/**
+			 * Mark this node as announced or not
+			 */
+			void setAnnounced(bool val);
 
 			friend std::ostream& operator<<(std::ostream&, const Node&);
 
@@ -222,6 +233,8 @@ namespace dtn
 
 			std::set<URI> _uri_list;
 			std::set<Attribute> _attr_list;
+
+			bool _announced_mark;
 		};
 	}
 }

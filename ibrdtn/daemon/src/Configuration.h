@@ -370,6 +370,7 @@ namespace dtn
 				size_t _auto_connect;
 				bool _fragmentation;
 				ProphetConfig _prophet_config;
+				std::set<ibrcommon::vinterface> _internet_devices;
 
 			public:
 				/**
@@ -427,6 +428,11 @@ namespace dtn
 				 * @return a struct containing the prophet configuration parameters
 				 */
 				ProphetConfig getProphetConfig() const;
+
+				/**
+				 * @return The interfaces which are potentially connected to the internet
+				 */
+				std::set<ibrcommon::vinterface> getInternetDevices() const;
 			};
 
 			class Security : public Configuration::Extension
