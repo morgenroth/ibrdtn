@@ -245,8 +245,9 @@ namespace ibrcommon {
 		virtual clientsocket* accept(ibrcommon::vaddress &addr) throw (socket_exception);
 
 	protected:
-		void bind(const vaddress &addr) throw (socket_exception);
-		void bind(const vaddress &addr, int port) throw (socket_exception);
+		void bind(int port) throw (socket_exception);
+		void bind(const vaddress &addr) throw (socket_exception, vaddress::address_not_set);
+		void bind(const vaddress &addr, int port) throw (socket_exception, vaddress::address_not_set);
 
 	private:
 		const vaddress _address;

@@ -156,7 +156,7 @@ namespace ibrcommon
 
 	const std::string vaddress::get() const throw (address_not_set)
 	{
-		if (get().length() == 0) throw address_not_set();
+		if (_address.length() == 0) throw address_not_set();
 		return _address;
 	}
 
