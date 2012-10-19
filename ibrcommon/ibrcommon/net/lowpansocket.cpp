@@ -21,6 +21,7 @@
 
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/lowpansocket.h"
+#include "ibrcommon/Logger.h"
 #include <sys/socket.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -93,17 +94,21 @@ namespace ibrcommon
 		this->close();
 	}
 
-//	int lowpansocket::receive(char* data, size_t maxbuffer, std::string &address, uint16_t &shortaddr, uint16_t &pan_id)
-//	{
-//		struct sockaddr_ieee802154 clientAddress;
-//		socklen_t clientAddressLength = sizeof(clientAddress);
-//
-//		std::list<int> fds;
-//		_vsocket.select(fds, NULL);
-//		int fd = fds.front();
-//
-//		int ret = recvfrom(fd, data, maxbuffer, MSG_WAITALL, (struct sockaddr *) &clientAddress, &clientAddressLength);
-//
+	size_t lowpansocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
+	{
+		struct sockaddr_storage clientAddress;
+		socklen_t clientAddressLength = sizeof(clientAddress);
+		::memset(&clientAddress, 0, clientAddressLength);
+
+		// data waiting
+		ssize_t ret = ::recvfrom(_fd, buf, buflen, flags, (struct sockaddr *) &clientAddress, &clientAddressLength);
+
+		if (ret == -1) {
+			throw socket_exception("recvfrom error");
+		}
+
+		struct sockaddr_ieee802154 *addr154 = (struct sockaddr_ieee802154*)&clientAddress;
+
 //		std::stringstream hwaddr;
 //		hwaddr << setfill('0');
 //		for (int i = 7; i >= 0; i--) {
@@ -112,56 +117,77 @@ namespace ibrcommon
 //		}
 //
 //		address = hwaddr.str();
-//		pan_id = ntohs(clientAddress.addr.pan_id);
-//		shortaddr = ntohs(clientAddress.addr.short_addr);
+
+		std::stringstream ss_pan; ss_pan << ntohs(addr154->addr.pan_id);
+		std::stringstream ss_short; ss_short << ntohs(addr154->addr.short_addr);
+
+		addr = ibrcommon::vaddress(ss_short.str(), ss_pan.str());
+
+		///// TESTING /////
+		char address[256];
+		char service[256];
+		if (::getnameinfo((struct sockaddr *) &clientAddress, clientAddressLength, address, sizeof address, service, sizeof service, NI_NUMERICHOST | NI_NUMERICSERV) == 0) {
+			//addr = ibrcommon::vaddress(std::string(address), std::string(service));
+			std::string addr_str(address);
+			std::string service_str(service);
+			ibrcommon::vaddress getnameinfo_addr(addr_str, service_str);
+			IBRCOMMON_LOGGER(notice) << "lowpan frame received from: " << getnameinfo_addr.toString() << IBRCOMMON_LOGGER_ENDL;
+		}
+		///// TESTING /////
+
+		return ret;
+	}
+
+	void lowpansocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception)
+	{
+		ssize_t ret = 0;
+//		struct addrinfo hints, *res;
+//		memset(&hints, 0, sizeof hints);
 //
-//		return ret;
-//	}
+//		hints.ai_socktype = SOCK_DGRAM;
 //
-//	lowpansocket::peer::peer(lowpansocket &socket, const struct sockaddr_ieee802154 &dest, const unsigned int panid)
-//	 : _socket(socket)
-//	{
-//		bzero(&_destaddress, sizeof(_destaddress));
-//		_destaddress.family = AF_IEEE802154;
-//		_destaddress.addr.addr_type = IEEE802154_ADDR_SHORT;
+//		const char *address = NULL;
+//		const char *service = NULL;
 //
-//		memcpy(&_destaddress.addr.short_addr, &dest.addr.short_addr, sizeof(_destaddress.addr.short_addr));
-//		_destaddress.addr.pan_id = panid;
-//	}
+//		try {
+//			address = addr.address().c_str();
+//		} catch (const vaddress::address_not_set&) { };
 //
-//	int lowpansocket::peer::send(const char *data, const size_t length)
-//	{
-//		int stat = -1;
+//		try {
+//			service = addr.service().c_str();
+//		} catch (const vaddress::address_not_set&) { };
 //
-//		// iterate over all sockets
-//		vsocket::fd_address_list fds = _socket._vsocket.get();
-//
-//		for (vsocket::fd_address_list::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+//		if ((ret = ::getaddrinfo(address, service, &hints, &res)) != 0)
 //		{
-//			vsocket::fd_address_entry e = (*iter);
-//			int fd = e.second;
-//
-//			ssize_t ret = 0;
-//
-//			::connect(_socket._vsocket.fd(), (struct sockaddr *) &_destaddress, sizeof(_destaddress));
-//			//printf("lowpan send() address %04x, PAN %04x\n", _destaddress.addr.short_addr, _destaddress.addr.pan_id);
-//			//return ::sendto(_socket._socket, data, length, 0, (struct sockaddr *) &_destaddress, sizeof(_destaddress));
-//			ret = ::send(fd, data, length, 0);
-//
-//			// if the send was successful, set the correct return value
-//			if (ret != -1) stat = ret;
+//			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 //		}
 //
-//		return stat;
-//	}
+//		ret = ::sendto(_fd, buf, buflen, flags, res->ai_addr, res->ai_addrlen);
 //
-//	lowpansocket::peer lowpansocket::getPeer(unsigned int address, const unsigned int panid)
-//	{
-//		struct sockaddr_ieee802154 destaddress;
-//
-//		destaddress.addr.short_addr = address;
-//		return lowpansocket::peer(*this, destaddress, panid);
-//	}
+//		// free the addrinfo struct
+//		freeaddrinfo(res);
+
+		struct sockaddr_ieee802154 sockaddr;
+		bzero(&sockaddr, sizeof(sockaddr));
+
+		sockaddr.family = AF_IEEE802154;
+		sockaddr.addr.addr_type = IEEE802154_ADDR_SHORT;
+
+		std::stringstream ss_pan(addr.service());
+		ss_pan >> sockaddr.addr.pan_id;
+
+		std::stringstream ss_short(addr.address());
+		ss_short >> sockaddr.addr.short_addr;
+
+		::connect(_fd, (struct sockaddr *) &sockaddr, sizeof(sockaddr));
+		//printf("lowpan send() address %04x, PAN %04x\n", _destaddress.addr.short_addr, _destaddress.addr.pan_id);
+		//return ::sendto(_socket._socket, data, length, 0, (struct sockaddr *) &_destaddress, sizeof(_destaddress));
+		ret = ::send(_fd, buf, buflen, flags);
+
+		if (ret == -1) {
+			throw socket_raw_error(errno);
+		}
+	}
 
 	void lowpansocket::getAddress(struct ieee802154_addr *ret, const vinterface &iface)
 	{

@@ -24,6 +24,7 @@
 
 #include "ibrcommon/net/vinterface.h"
 #include "ibrcommon/net/vsocket.h"
+#include "ibrcommon/net/vaddress.h"
 #include "ibrcommon/Exceptions.h"
 
 /* Move to a better place */
@@ -39,34 +40,10 @@ namespace ibrcommon
 		void up() throw (socket_exception);
 		void down() throw (socket_exception);
 
-//		class peer
-//		{
-//			friend class lowpansocket;
-//
-//		protected:
-//			peer(lowpansocket &socket, const struct sockaddr_ieee802154 &dest, const unsigned int panid);
-//
-//			struct sockaddr_ieee802154 _destaddress;
-//			lowpansocket &_socket;
-//
-//		public:
-//			int send(const char *data, const size_t length);
-//		};
-//
-//		virtual ~lowpansocket();
-//
-//		virtual void shutdown();
-//
-//		int receive(char* data, size_t maxbuffer, std::string &address, uint16_t &shortaddr, uint16_t &pan_id);
-//
-//		lowpansocket::peer getPeer(unsigned int address, const unsigned int panid);
+		virtual size_t recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
+		virtual void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
 
 		static void getAddress(struct ieee802154_addr *ret, const vinterface &iface);
-
-	protected:
-//		lowpansocket(u_char proto = 0) throw (SocketException);
-//		ibrcommon::vsocket _vsocket;
-//		struct sockaddr_ieee802154 _sockaddr;
 
 	private:
 		const int _panid;

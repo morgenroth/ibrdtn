@@ -22,7 +22,8 @@
 #ifndef LOWPANSTREAM_H_
 #define LOWPANSTREAM_H_
 
-#include <ibrcommon/thread/Conditional.h>
+#include "ibrcommon/thread/Conditional.h"
+#include "ibrcommon/net/vaddress.h"
 #include <streambuf>
 #include <iostream>
 #include <stdint.h>
@@ -37,7 +38,7 @@ namespace ibrcommon
 		 * Callback interface implementation from LoWPAN CL
 		 * @see LOWPANConvergenceLayer
 		 */
-		virtual void send_cb(char *buf, int len, unsigned int address) = 0;
+		virtual void send_cb(char *buf, int len, const ibrcommon::vaddress &address) = 0;
 	};
 
 	class lowpanstream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
@@ -48,7 +49,7 @@ namespace ibrcommon
 		 */
 		static const size_t BUFF_SIZE = 113;
 
-		lowpanstream(lowpanstream_callback &callback, unsigned int address);
+		lowpanstream(lowpanstream_callback &callback, const ibrcommon::vaddress &address);
 		virtual ~lowpanstream();
 
 		/**
@@ -65,7 +66,7 @@ namespace ibrcommon
 		virtual std::char_traits<char>::int_type overflow(std::char_traits<char>::int_type = std::char_traits<char>::eof());
 		virtual std::char_traits<char>::int_type underflow();
 
-		unsigned int _address;
+		const ibrcommon::vaddress _address;
 
 	private:
 		bool _in_first_segment;

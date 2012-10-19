@@ -62,7 +62,7 @@
 
 namespace ibrcommon
 {
-	lowpanstream::lowpanstream(lowpanstream_callback &callback, unsigned int address) :
+	lowpanstream::lowpanstream(lowpanstream_callback &callback, const ibrcommon::vaddress &address) :
 		std::iostream(this), _address(address), _in_first_segment(true), _out_stat(SEGMENT_FIRST), in_buf_(new char[BUFF_SIZE]),
 		in_buf_len(0), in_buf_free(true), out_buf_(new char[BUFF_SIZE+2]), out2_buf_(new char[BUFF_SIZE]),
 		in_seq_num_(0), out_seq_num_(0), out_seq_num_global(0), _abort(false), callback(callback)
