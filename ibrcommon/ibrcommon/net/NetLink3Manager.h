@@ -36,6 +36,7 @@ namespace ibrcommon
 {
 	class netlink_callback {
 	public:
+		virtual ~netlink_callback() = 0;
 		virtual void parse(struct nl_object *obj, int action) = 0;
 	};
 

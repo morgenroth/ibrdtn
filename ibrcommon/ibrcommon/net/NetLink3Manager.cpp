@@ -35,6 +35,8 @@
 
 namespace ibrcommon
 {
+	netlink_callback::~netlink_callback() { };
+
 	static void nl3_cache_callback(struct nl_cache*, struct nl_object *obj, int action, void *data)
 	{
 		netlink_callback *c = static_cast<netlink_callback *>(data);
