@@ -31,7 +31,7 @@ namespace ibrcommon
 
 	socketstream::~socketstream()
 	{
-		_socket.close();
+		close();
 	}
 
 	void socketstream::close()

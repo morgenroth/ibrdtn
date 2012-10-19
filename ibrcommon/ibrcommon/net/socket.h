@@ -25,12 +25,13 @@
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/net/vaddress.h>
+#include <ibrcommon/net/vinterface.h>
 
 namespace ibrcommon {
-	class socket_exception : public ibrcommon::Exception
+	class socket_exception : public Exception
 	{
 	public:
-		socket_exception(string error) : ibrcommon::Exception(error)
+		socket_exception(string error) : Exception(error)
 		{};
 	};
 
@@ -40,6 +41,7 @@ namespace ibrcommon {
 	 */
 	class basesocket {
 	public:
+		basesocket();
 		virtual ~basesocket() = 0;
 
 		/**
@@ -61,6 +63,37 @@ namespace ibrcommon {
 		 * @throw socket_exception if no file descriptor is available
 		 */
 		virtual int fd() const throw (socket_exception) = 0;
+
+		/**
+		 * Standard socket calls
+		 */
+		void close() throw (socket_exception);
+		void shutdown(int how) throw (socket_exception);
+		void listen(int connections) throw (socket_exception);
+//		void bind() throw (socket_exception);
+		void recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
+		void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
+
+		void set_blocking_mode(bool val) const throw (socket_exception);
+		void set_keepalive(bool val) const throw (socket_exception);
+		void set_linger(bool val, int l = 1) const throw (socket_exception);
+		void set_reuseaddr(bool val) const throw (socket_exception);
+		void set_nodelay(bool val) const throw (socket_exception);
+
+	protected:
+		enum socketstate {
+			SOCKET_DOWN,
+			SOCKET_UP,
+			SOCKET_UNMANAGED
+		};
+
+		/**
+		 * Error check methods
+		 */
+		void check_socket_error(const int err) const throw (socket_exception);
+		void check_bind_error(const int err) const throw (socket_exception);
+
+		socketstate _state;
 	};
 
 	/**
@@ -76,9 +109,6 @@ namespace ibrcommon {
 		virtual void down() throw (socket_exception);
 		int fd() const throw (socket_exception);
 
-		void enableKeepalive() const throw (socket_exception);
-		void enableLinger(int l) const throw (socket_exception);
-
 	protected:
 		void fd(int fd);
 
@@ -92,13 +122,13 @@ namespace ibrcommon {
 	class filesocket : public clientsocket {
 	public:
 		filesocket(int fd);
-		filesocket(const ibrcommon::File &file);
+		filesocket(const File &file);
 		~filesocket();
 		void up() throw (socket_exception);
 		void down() throw (socket_exception);
 
 	private:
-		const ibrcommon::File _filename;
+		const File _filename;
 	};
 
 	/**
@@ -107,7 +137,7 @@ namespace ibrcommon {
 	 */
 	class fileserversocket : public basesocket {
 	public:
-		fileserversocket(const ibrcommon::File &file, int listen = 0);
+		fileserversocket(const File &file, int listen = 0);
 		~fileserversocket();
 		void up() throw (socket_exception);
 		void down() throw (socket_exception);
@@ -116,7 +146,7 @@ namespace ibrcommon {
 		filesocket* accept() throw (socket_exception);
 
 	private:
-		const ibrcommon::File _filename;
+		const File _filename;
 		const int _listen;
 	};
 
@@ -126,7 +156,7 @@ namespace ibrcommon {
 	class tcpsocket : public clientsocket {
 	public:
 		tcpsocket(int fd);
-		tcpsocket(const ibrcommon::vaddress &destination, const int port, int timeout = 0);
+		tcpsocket(const vaddress &destination, const int port, int timeout = 0);
 		~tcpsocket();
 		void up() throw (socket_exception);
 		void down() throw (socket_exception);
@@ -134,7 +164,7 @@ namespace ibrcommon {
 		void enableNoDelay() const throw (socket_exception);
 
 	private:
-		const ibrcommon::vaddress _address;
+		const vaddress _address;
 		const int _port;
 		const int _timeout;
 	};
@@ -147,7 +177,7 @@ namespace ibrcommon {
 	class tcpserversocket : public basesocket {
 	public:
 		tcpserversocket(const int port, int listen = 0);
-		tcpserversocket(const ibrcommon::vaddress &address, const int port, int listen = 0);
+		tcpserversocket(const vaddress &address, const int port, int listen = 0);
 		~tcpserversocket();
 		void up() throw (socket_exception);
 		void down() throw (socket_exception);
@@ -156,9 +186,10 @@ namespace ibrcommon {
 		tcpsocket* accept() throw (socket_exception);
 
 	private:
-		const ibrcommon::vaddress _address;
+		const vaddress _address;
 		const int _port;
 		const int _listen;
+		int _fd;
 	};
 
 	/**
@@ -168,14 +199,17 @@ namespace ibrcommon {
 	class udpsocket : public basesocket {
 	public:
 		udpsocket(const int port = 0);
-		udpsocket(const ibrcommon::vaddress &address, const int port = 0);
+		udpsocket(const vaddress &address, const int port = 0);
 		~udpsocket();
 		void up() throw (socket_exception);
 		void down() throw (socket_exception);
 		int fd() const throw (socket_exception);
 
+		void join(const vaddress &group, const vinterface &iface);
+		void leave(const vaddress &group);
+
 	private:
-		const ibrcommon::vaddress _address;
+		const vaddress _address;
 		const int _port;
 		const int _listen;
 		int _fd;

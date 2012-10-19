@@ -21,6 +21,7 @@
 
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/socket.h"
+#include "ibrcommon/net/vsocket.h"
 #include "ibrcommon/TimeMeasurement.h"
 
 #include <arpa/inet.h>
@@ -28,6 +29,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <netinet/tcp.h>
+#include <sys/un.h>
+#include <sys/socket.h>
 
 #include <sstream>
 
@@ -96,17 +99,102 @@ namespace ibrcommon
 		}
 	}
 
+	basesocket::basesocket()
+	 : _state(SOCKET_DOWN)
+	{ }
+
 	basesocket::~basesocket()
 	{ }
+
+	void basesocket::close() throw (socket_exception)
+	{
+		int ret = ::close(this->fd());
+		check_socket_error(ret);
+	}
+
+	void basesocket::shutdown(int how) throw (socket_exception)
+	{
+		int ret = ::shutdown(this->fd(), how);
+		check_socket_error(ret);
+	}
+
+	void basesocket::listen(int connections) throw (socket_exception)
+	{
+		int ret = ::listen(this->fd(), connections);
+		check_socket_error(ret);
+	}
+
+//	void basesocket::bind(const ibrcommon::vaddress &addr) throw (socket_exception)
+//	{
+//		int ret = ::bind(this->fd(), sock, len);
+//		check_socket_error(ret);
+//	}
+
+	void basesocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
+	{
+		//int ret = ::recvfrom(this->fd(),  __buf, size_t __n, int __flags, __SOCKADDR_ARG __addr, socklen_t *__restrict __addr_len);
+		//check_socket_error(ret);
+	}
+
+	void basesocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception)
+	{
+		//int ret = ::sendto(this->fd(), __const void *__buf, size_t __n, int __flags, __CONST_SOCKADDR_ARG __addr, socklen_t __addr_len);
+		//check_socket_error(ret);
+	}
+
+	void basesocket::set_blocking_mode(bool val) const throw (socket_exception)
+	{
+		set_fd_non_blocking(this->fd(), !val);
+	}
+
+	void basesocket::set_keepalive(bool val) const throw (socket_exception)
+	{
+		/* Set the option active */
+		int optval = (val ? 1 : 0);
+		if (::setsockopt(this->fd(), SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
+			throw ibrcommon::socket_exception("can not activate keepalives");
+		}
+	}
+
+	void basesocket::set_linger(bool val, int l) const throw (socket_exception)
+	{
+		// set linger option to the socket
+		struct linger linger;
+
+		linger.l_onoff = (val ? 1 : 0);
+		linger.l_linger = l;
+		if (::setsockopt(this->fd(), SOL_SOCKET, SO_LINGER, &linger, sizeof(linger)) < 0) {
+			throw ibrcommon::socket_exception("can not set linger option");
+		}
+	}
+
+	void basesocket::set_reuseaddr(bool val) const throw (socket_exception)
+	{
+		int on = (val ? 1: 0);
+		if (::setsockopt(this->fd(), SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
+		{
+			throw socket_exception("setsockopt(SO_REUSEADDR) failed");
+		}
+	}
+
+	void basesocket::set_nodelay(bool val) const throw (socket_exception)
+	{
+		int set = (val ? 1 : 0);
+		if (::setsockopt(this->fd(), IPPROTO_TCP, TCP_NODELAY, (char *)&set, sizeof(set)) < 0) {
+			throw socket_exception("set no delay option failed");
+		}
+	}
 
 	clientsocket::clientsocket()
 	 : _fd(-1)
 	{
+		_state = SOCKET_DOWN;
 	}
 
 	clientsocket::clientsocket(int fd)
 	 : _fd(fd)
 	{
+		_state = SOCKET_UNMANAGED;
 	}
 
 	clientsocket::~clientsocket()
@@ -115,39 +203,25 @@ namespace ibrcommon
 
 	void clientsocket::up() throw (socket_exception)
 	{
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up");
+
+		_state = SOCKET_UP;
 	}
 
 	void clientsocket::down() throw (socket_exception)
 	{
-		::close(fd());
-		_fd = 0;
+		if (_state != SOCKET_UP)
+			throw socket_exception("socket is not up");
+
+		this->close();
+		_state = SOCKET_DOWN;
 	}
 
 	int clientsocket::fd() const throw (socket_exception)
 	{
-		if (_fd < 0)
-			throw socket_exception("fd not available");
-
+		if (_state == SOCKET_DOWN) throw socket_exception("fd not available");
 		return _fd;
-	}
-
-	void clientsocket::enableKeepalive() const throw (socket_exception)
-	{
-		/* Set the option active */
-		int optval = 1;
-		if(setsockopt(this->fd(), SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
-			throw ibrcommon::socket_exception("can not activate keepalives");
-		}
-	}
-
-	void clientsocket::enableLinger(int l) const throw (socket_exception)
-	{
-		// set linger option to the socket
-		struct linger linger;
-
-		linger.l_onoff = 1;
-		linger.l_linger = l;
-		::setsockopt(this->fd(), SOL_SOCKET, SO_LINGER, &linger, sizeof(linger));
 	}
 
 	fileserversocket::fileserversocket(const ibrcommon::File &file, int listen)
@@ -162,13 +236,21 @@ namespace ibrcommon
 
 	void fileserversocket::up() throw (socket_exception)
 	{
-//		set(vsocket::VSOCKET_NONBLOCKING);
-//		listen(_listen);
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up");
+
+		this->set_blocking_mode(false);
+		this->listen(_listen);
+		_state = SOCKET_UP;
 	}
 
 	void fileserversocket::down() throw (socket_exception)
 	{
-		::close(fd());
+		if (_state != SOCKET_UP)
+			throw socket_exception("socket is not up");
+
+		this->close();
+		_state = SOCKET_DOWN;
 	}
 
 	int fileserversocket::fd() const throw (socket_exception)
@@ -193,13 +275,13 @@ namespace ibrcommon
 	}
 
 	tcpserversocket::tcpserversocket(const int port, int listen)
-	 : _address(), _port(port), _listen(listen)
+	 : _address(), _port(port), _listen(listen), _fd(-1)
 	{
 
 	}
 
 	tcpserversocket::tcpserversocket(const ibrcommon::vaddress &address, const int port, int listen)
-	 : _address(address), _port(port), _listen(listen)
+	 : _address(address), _port(port), _listen(listen), _fd(-1)
 	{
 	}
 
@@ -209,21 +291,36 @@ namespace ibrcommon
 
 	void tcpserversocket::up() throw (socket_exception)
 	{
-//		set(vsocket::VSOCKET_REUSEADDR);
-//		set(vsocket::VSOCKET_LINGER);
-//		set(vsocket::VSOCKET_NONBLOCKING);
-//		bind(_address, _port);
-//		listen(_listen);
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up");
+
+		_fd = ::socket(_address.getFamily(), SOCK_STREAM, 0);
+
+		this->set_reuseaddr(true);
+		this->set_blocking_mode(false);
+		this->set_linger(true);
+
+//		this->bind(_address, _port);
+		this->listen(_listen);
+
+		_state = SOCKET_UP;
 	}
 
 	void tcpserversocket::down() throw (socket_exception)
 	{
-		::close(fd());
+		if (_state != SOCKET_UP)
+			throw socket_exception("socket is not up");
+		this->close();
+
+		_state = SOCKET_DOWN;
 	}
 
 	int tcpserversocket::fd() const throw (socket_exception)
 	{
-		throw socket_exception("fd not available");
+		if (_state == SOCKET_DOWN)
+			throw socket_exception("fd not available");
+
+		return _fd;
 	}
 
 	tcpsocket* tcpserversocket::accept() throw (socket_exception)
@@ -258,99 +355,99 @@ namespace ibrcommon
 
 	void tcpsocket::up() throw (socket_exception)
 	{
-//		struct addrinfo hints;
-//		struct addrinfo *walk;
-//		memset(&hints, 0, sizeof(struct addrinfo));
-//		hints.ai_family = PF_UNSPEC;
-//		hints.ai_socktype = SOCK_STREAM;
-//
-//		struct addrinfo *res;
-//		int ret;
-//
-//		std::stringstream ss; ss << _port; std::string port_string = ss.str();
-//
-//		if ((ret = getaddrinfo(address.c_str(), port_string.c_str(), &hints, &res)) != 0)
-//		{
-//			throw SocketException("getaddrinfo(): " + std::string(gai_strerror(ret)));
-//		}
-//
-//		if (res == NULL)
-//		{
-//			throw SocketException("Could not connect to the server.");
-//		}
-//
-//		try {
-//			for (walk = res; walk != NULL; walk = walk->ai_next) {
-//				_socket = socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol);
-//				if (_socket < 0){
-//					/* Hier kann eine Fehlermeldung hin, z.B. mit warn() */
-//
-//					if (walk->ai_next ==  NULL)
-//					{
-//						throw SocketException("Could not create a socket.");
-//					}
-//					continue;
-//				}
-//
-//				if (timeout == 0)
-//				{
-//					if (connect(_socket, walk->ai_addr, walk->ai_addrlen) != 0) {
-//						::close(_socket);
-//						_socket = -1;
-//						/* Hier kann eine Fehlermeldung hin, z.B. mit warn() */
-//						if (walk->ai_next ==  NULL)
-//						{
-//							throw SocketException("Could not connect to the server.");
-//						}
-//						continue;
-//					}
-//				}
-//				else
-//				{
-//					// timeout is requested, set socket to non-blocking
-//					ibrcommon::set_fd_non_blocking(_socket);
-//
-//					// now connect to the host (this returns immediately
-//					::connect(_socket, walk->ai_addr, walk->ai_addrlen);
-//
-//					try {
-//						bool read = false;
-//						bool write = true;
-//						bool error = false;
-//
-//						// now wait until we could write on this socket
-//						tcpstream::select(_interrupt_pipe_read[1], read, write, error, timeout);
-//
-//						// set the socket to blocking again
-//						ibrcommon::set_fd_non_blocking(_socket, false);
-//
-//						// check if the attempt was successful
-//						int err = 0;
-//						socklen_t err_len = sizeof(err_len);
-//						::getsockopt(_socket, SOL_SOCKET, SO_ERROR, &err, &err_len);
-//
-//						if (err != 0)
-//						{
-//							throw SocketException("Could not connect to the server.");
-//						}
-//					} catch (const select_exception &ex) {
-//						throw SocketException("Could not connect to the server.");
-//					}
-//				}
-//				break;
-//			}
-//
-//			freeaddrinfo(res);
-//		} catch (ibrcommon::Exception&) {
-//			freeaddrinfo(res);
-//			throw;
-//		}
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up");
+
+		struct addrinfo hints;
+		struct addrinfo *walk;
+		memset(&hints, 0, sizeof(struct addrinfo));
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+
+		struct addrinfo *res;
+		int ret;
+
+		std::stringstream ss; ss << _port; std::string port_string = ss.str();
+
+		if ((ret = ::getaddrinfo(_address.get().c_str(), port_string.c_str(), &hints, &res)) != 0)
+		{
+			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
+		}
+
+		if (res == NULL)
+		{
+			throw socket_exception("Could not connect to the server.");
+		}
+
+		// create a vsocket for concurrent connection setup
+		ibrcommon::vsocket probesocket;
+
+		try {
+			// walk through all the returned addresses and try to connect to all of them
+			for (walk = res; walk != NULL; walk = walk->ai_next) {
+				// mark the socket as invalid first
+				int fd = -1;
+
+				// create a matching socket
+				fd = ::socket(walk->ai_family, walk->ai_socktype, walk->ai_protocol);
+
+				// if the socket is invalid we proceed with the next address
+				if (fd < 0) {
+					/* Hier kann eine Fehlermeldung hin, z.B. mit warn() */
+
+					if (walk->ai_next ==  NULL)
+					{
+						throw socket_exception("Could not create a socket.");
+					}
+					continue;
+				}
+
+				// set the socket to non-blocking
+				ibrcommon::set_fd_non_blocking(fd);
+
+				// connect to the current address using the created socket
+				if (::connect(fd, walk->ai_addr, walk->ai_addrlen) != 0) {
+					// the connect failed, so we close the socket immediately
+					::close(fd);
+
+					/* Hier kann eine Fehlermeldung hin, z.B. mit warn() */
+					if (walk->ai_next ==  NULL)
+					{
+						throw socket_exception("Could not connect to the server.");
+					}
+					continue;
+				}
+
+				// add the current socket to the probe-socket for later select-call
+				probesocket.add( new clientsocket(fd) );
+			}
+
+			// TODO:
+			//probesocket.select();
+
+			// remember the fasted socket
+			//this->fd(fd);
+
+			// close all other sockets
+
+			// free the address
+			freeaddrinfo(res);
+
+			// set the current state to UP
+			_state = SOCKET_UP;
+		} catch (ibrcommon::Exception&) {
+			freeaddrinfo(res);
+			throw;
+		}
 	}
 
 	void tcpsocket::down() throw (socket_exception)
 	{
-		::close(fd());
-		this->fd(0);
+		if (_state != SOCKET_UP)
+			throw socket_exception("socket is not up");
+
+		this->close();
+		_state = SOCKET_DOWN;
 	}
 
 
@@ -363,11 +460,13 @@ namespace ibrcommon
 	filesocket::filesocket(int fd)
 	 : clientsocket(fd)
 	{
+		_state = SOCKET_UNMANAGED;
 	}
 
 	filesocket::filesocket(const ibrcommon::File &file)
 	 : _filename(file)
 	{
+		_state = SOCKET_DOWN;
 	}
 
 	filesocket::~filesocket()
@@ -376,44 +475,129 @@ namespace ibrcommon
 
 	void filesocket::up() throw (socket_exception)
 	{
-//		int len = 0;
-//		struct sockaddr_un saun;
-//
-//		/*
-//		 * Get a socket to work with.  This socket will
-//		 * be in the UNIX domain, and will be a
-//		 * stream socket.
-//		 */
-//		if ((_socket = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-//			throw SocketException("Could not create a socket.");
-//		}
-//
-//		/*
-//		 * Create the address we will be connecting to.
-//		 */
-//		saun.sun_family = AF_UNIX;
-//		strcpy(saun.sun_path, s.getPath().c_str());
-//
-//		/*
-//		 * Try to connect to the address.  For this to
-//		 * succeed, the server must already have bound
-//		 * this address, and must have issued a listen()
-//		 * request.
-//		 *
-//		 * The third argument indicates the "length" of
-//		 * the structure, not just the length of the
-//		 * socket name.
-//		 */
-//		len = sizeof(saun.sun_family) + strlen(saun.sun_path);
-//
-//		if (connect(_socket, (struct sockaddr *)&saun, len) < 0) {
-//			throw SocketException("Could not connect to the named socket.");
-//		}
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up");
+
+		int len = 0;
+		struct sockaddr_un saun;
+
+		/*
+		 * Get a socket to work with.  This socket will
+		 * be in the UNIX domain, and will be a
+		 * stream socket.
+		 */
+		int fd;
+		if ((fd = ::socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+			::close(fd);
+			throw socket_exception("Could not create a socket.");
+		}
+		this->fd(fd);
+
+		/*
+		 * Create the address we will be connecting to.
+		 */
+		saun.sun_family = AF_UNIX;
+		::strcpy(saun.sun_path, _filename.getPath().c_str());
+
+		/*
+		 * Try to connect to the address.  For this to
+		 * succeed, the server must already have bound
+		 * this address, and must have issued a listen()
+		 * request.
+		 *
+		 * The third argument indicates the "length" of
+		 * the structure, not just the length of the
+		 * socket name.
+		 */
+		len = sizeof(saun.sun_family) + strlen(saun.sun_path);
+
+		if (::connect(this->fd(), (struct sockaddr *)&saun, len) < 0) {
+			this->close();
+			throw socket_exception("Could not connect to the named socket.");
+		}
+
+		_state = SOCKET_UP;
 	}
 
 	void filesocket::down() throw (socket_exception)
 	{
-		::close(fd());
-		this->fd(0);
+		if (_state != SOCKET_UP)
+			throw socket_exception("socket is not up");
+
+		this->close();
+		_state = SOCKET_DOWN;
+	}
+
+
+	void basesocket::check_socket_error(const int err) const throw (socket_exception)
+	{
+		switch (err)
+		{
+		case EACCES:
+			throw socket_exception("Permission  to create a socket of the specified type and/or protocol is denied.");
+
+		case EAFNOSUPPORT:
+			throw socket_exception("The implementation does not support the specified address family.");
+
+		case EINVAL:
+			throw socket_exception("Unknown protocol, or protocol family not available.");
+
+		case EMFILE:
+			throw socket_exception("Process file table overflow.");
+
+		case ENFILE:
+			throw socket_exception("The system limit on the total number of open files has been reached.");
+
+		case ENOBUFS:
+		case ENOMEM:
+			throw socket_exception("Insufficient memory is available. The socket cannot be created until sufficient resources are freed.");
+
+		case EPROTONOSUPPORT:
+			throw socket_exception("The protocol type or the specified protocol is not supported within this domain.");
+
+		default:
+			throw socket_exception("cannot create socket");
+		}
+	}
+
+	void basesocket::check_bind_error(const int err) const throw (socket_exception)
+	{
+		switch ( err )
+		{
+		case EBADF:
+			throw socket_exception("sockfd ist kein gueltiger Deskriptor.");
+
+		// Die  folgenden  Fehlermeldungen  sind  spezifisch fr UNIX-Domnensockets (AF_UNIX)
+
+		case EINVAL:
+			throw socket_exception("Die addr_len war  falsch  oder  der  Socket  gehrte  nicht  zur AF_UNIX Familie.");
+
+		case EROFS:
+			throw socket_exception("Die Socket \"Inode\" sollte auf einem schreibgeschtzten Dateisystem residieren.");
+
+		case EFAULT:
+			throw socket_exception("my_addr  weist  auf  eine  Adresse  auerhalb  des  erreichbaren Adressraumes zu.");
+
+		case ENAMETOOLONG:
+			throw socket_exception("my_addr ist zu lang.");
+
+		case ENOENT:
+			throw socket_exception("Die Datei existiert nicht.");
+
+		case ENOMEM:
+			throw socket_exception("Nicht genug Kernelspeicher vorhanden.");
+
+		case ENOTDIR:
+			throw socket_exception("Eine Komponente des Pfad-Prfixes ist kein Verzeichnis.");
+
+		case EACCES:
+			throw socket_exception("Keine  berechtigung  um  eine  Komponente  des Pfad-prefixes zu durchsuchen.");
+
+		case ELOOP:
+			throw socket_exception("my_addr enthlt eine Kreis-Referenz (zum  Beispiel  durch  einen symbolischen Link)");
+
+		default:
+			throw socket_exception("cannot bind socket");
+		}
 	}
 }
