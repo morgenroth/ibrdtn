@@ -58,6 +58,9 @@ namespace ibrcommon
 
 	void lowpansocket::up() throw (socket_exception)
 	{
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up");
+
 		// Create socket for listening for client connection requests.
 		if ((_fd = ::socket(PF_IEEE802154, SOCK_DGRAM, 0)) < 0) // Ignoring proto for now
 		{
@@ -71,22 +74,24 @@ namespace ibrcommon
 		sockaddr.addr.addr_type = IEEE802154_ADDR_SHORT;
 		sockaddr.addr.pan_id = _panid;
 
-		// TODO: Get address via netlink
-		// getAddress(&sockaddr.addr, _iface);
+		// Get address via netlink
+		getAddress(&sockaddr.addr, _iface);
 
 		if ( ::bind(_fd, (struct sockaddr *) &sockaddr, sizeof(sockaddr)) < 0 )
 		{
 			throw socket_exception("cannot bind socket");
 		}
+
+		_state = SOCKET_UP;
 	}
 
 	void lowpansocket::down() throw (socket_exception)
 	{
-	}
+		if (_state != SOCKET_UP)
+			throw socket_exception("socket is not up");
 
-	int lowpansocket::fd() const throw (socket_exception)
-	{
-		throw socket_exception("fd not available");
+		this->close();
+		_state = SOCKET_DOWN;
 	}
 
 //	int lowpansocket::receive(char* data, size_t maxbuffer, std::string &address, uint16_t &shortaddr, uint16_t &pan_id)
@@ -158,57 +163,57 @@ namespace ibrcommon
 //		destaddress.addr.short_addr = address;
 //		return lowpansocket::peer(*this, destaddress, panid);
 //	}
-//
-//	void lowpansocket::getAddress(struct ieee802154_addr *ret, const vinterface &iface)
-//	{
-//#if defined HAVE_LIBNL || HAVE_LIBNL3
-//#ifdef HAVE_LIBNL3
-//		struct nl_sock *nl = nl_socket_alloc();
-//#else
-//		struct nl_handle *nl = nl_handle_alloc();
-//#endif
-//		unsigned char *buf = NULL;
-//		struct sockaddr_nl nla;
-//		struct nlattr *attrs[IEEE802154_ATTR_MAX+1];
-//		struct genlmsghdr *ghdr;
-//		struct nlmsghdr *nlh;
-//		struct nl_msg *msg;
-//		int family;
-//
-//		if (!nl)
-//		        return;
-//
-//		genl_connect(nl);
-//
-//		/* Build and send message */
-//		msg = nlmsg_alloc();
-//		family = genl_ctrl_resolve(nl, "802.15.4 MAC");
-//		genlmsg_put(msg, NL_AUTO_PID, NL_AUTO_SEQ, family, 0, NLM_F_ECHO, IEEE802154_LIST_IFACE, 1);
-//		nla_put_string(msg, IEEE802154_ATTR_DEV_NAME, iface.toString().c_str());
-//		nl_send_auto_complete(nl, msg);
-//		nlmsg_free(msg);
-//
-//		/* Receive and parse answer */
-//		nl_recv(nl, &nla, &buf, NULL);
-//		nlh = (struct nlmsghdr*)buf;
-//		genlmsg_parse(nlh, 0, attrs, IEEE802154_ATTR_MAX, ieee802154_policy);
-//		ghdr = (genlmsghdr*)nlmsg_data(nlh);
-//		if (!attrs[IEEE802154_ATTR_SHORT_ADDR] || !attrs[IEEE802154_ATTR_SHORT_ADDR])
-//		        return;
-//
-//		// We only handle short addresses right now
-//		ret->addr_type = IEEE802154_ADDR_SHORT;
-//		ret->pan_id = nla_get_u16(attrs[IEEE802154_ATTR_PAN_ID]);
-//		ret->short_addr = nla_get_u16(attrs[IEEE802154_ATTR_SHORT_ADDR]);
-//
-//		free(buf);
-//		nl_close(nl);
-//
-//#ifdef HAVE_LIBNL3
-//		nl_socket_free(nl);
-//#else
-//		nl_handle_destroy(nl);
-//#endif
-//#endif
-//	}
+
+	void lowpansocket::getAddress(struct ieee802154_addr *ret, const vinterface &iface)
+	{
+#if defined HAVE_LIBNL || HAVE_LIBNL3
+#ifdef HAVE_LIBNL3
+		struct nl_sock *nl = nl_socket_alloc();
+#else
+		struct nl_handle *nl = nl_handle_alloc();
+#endif
+		unsigned char *buf = NULL;
+		struct sockaddr_nl nla;
+		struct nlattr *attrs[IEEE802154_ATTR_MAX+1];
+		struct genlmsghdr *ghdr;
+		struct nlmsghdr *nlh;
+		struct nl_msg *msg;
+		int family;
+
+		if (!nl)
+			return;
+
+		genl_connect(nl);
+
+		/* Build and send message */
+		msg = nlmsg_alloc();
+		family = genl_ctrl_resolve(nl, "802.15.4 MAC");
+		genlmsg_put(msg, NL_AUTO_PID, NL_AUTO_SEQ, family, 0, NLM_F_ECHO, IEEE802154_LIST_IFACE, 1);
+		nla_put_string(msg, IEEE802154_ATTR_DEV_NAME, iface.toString().c_str());
+		nl_send_auto_complete(nl, msg);
+		nlmsg_free(msg);
+
+		/* Receive and parse answer */
+		nl_recv(nl, &nla, &buf, NULL);
+		nlh = (struct nlmsghdr*)buf;
+		genlmsg_parse(nlh, 0, attrs, IEEE802154_ATTR_MAX, ieee802154_policy);
+		ghdr = (genlmsghdr*)nlmsg_data(nlh);
+		if (!attrs[IEEE802154_ATTR_SHORT_ADDR] || !attrs[IEEE802154_ATTR_SHORT_ADDR])
+			return;
+
+		// We only handle short addresses right now
+		ret->addr_type = IEEE802154_ADDR_SHORT;
+		ret->pan_id = nla_get_u16(attrs[IEEE802154_ATTR_PAN_ID]);
+		ret->short_addr = nla_get_u16(attrs[IEEE802154_ATTR_SHORT_ADDR]);
+
+		free(buf);
+		nl_close(nl);
+
+#ifdef HAVE_LIBNL3
+		nl_socket_free(nl);
+#else
+		nl_handle_destroy(nl);
+#endif
+#endif
+	}
 }
