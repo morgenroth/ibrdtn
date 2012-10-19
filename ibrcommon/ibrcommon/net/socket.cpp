@@ -23,6 +23,7 @@
 #include "ibrcommon/net/socket.h"
 #include "ibrcommon/net/vsocket.h"
 #include "ibrcommon/TimeMeasurement.h"
+#include "ibrcommon/Logger.h"
 
 #include <arpa/inet.h>
 #include <sys/select.h>
@@ -176,6 +177,20 @@ namespace ibrcommon
 		}
 	}
 
+	sa_family_t basesocket::get_family() const throw (socket_exception)
+	{
+		struct sockaddr_storage bound_addr;
+		socklen_t bound_len = sizeof(bound_addr);
+
+		// get the socket family
+		int ret = ::getsockname(this->fd(), (struct sockaddr*)&bound_addr, &bound_len);
+		if (ret == -1) {
+			throw socket_exception("socket is not bound");
+		}
+
+		return bound_addr.ss_family;
+	}
+
 	clientsocket::clientsocket(int fd)
 	 : basesocket(fd)
 	{
@@ -271,6 +286,74 @@ namespace ibrcommon
 		//int ret = ::sendto(this->fd(), __const void *__buf, size_t __n, int __flags, __CONST_SOCKADDR_ARG __addr, socklen_t __addr_len);
 		//if (ret == -1)
 		//	throw socket_exception("sendto error");
+	}
+
+	filesocket::filesocket(int fd)
+	 : clientsocket(fd)
+	{
+		_state = SOCKET_UNMANAGED;
+	}
+
+	filesocket::filesocket(const ibrcommon::File &file)
+	 : _filename(file)
+	{
+		_state = SOCKET_DOWN;
+	}
+
+	filesocket::~filesocket()
+	{
+	}
+
+	void filesocket::up() throw (socket_exception)
+	{
+		if (_state != SOCKET_DOWN)
+			throw socket_exception("socket is already up");
+
+		int len = 0;
+		struct sockaddr_un saun;
+
+		/*
+		 * Get a socket to work with.  This socket will
+		 * be in the UNIX domain, and will be a
+		 * stream socket.
+		 */
+		if ((_fd = ::socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+			::close(_fd);
+			throw socket_exception("Could not create a socket.");
+		}
+
+		/*
+		 * Create the address we will be connecting to.
+		 */
+		saun.sun_family = AF_UNIX;
+		::strcpy(saun.sun_path, _filename.getPath().c_str());
+
+		/*
+		 * Try to connect to the address.  For this to
+		 * succeed, the server must already have bound
+		 * this address, and must have issued a listen()
+		 * request.
+		 *
+		 * The third argument indicates the "length" of
+		 * the structure, not just the length of the
+		 * socket name.
+		 */
+		len = sizeof(saun.sun_family) + strlen(saun.sun_path);
+
+		if (::connect(this->fd(), (struct sockaddr *)&saun, len) < 0) {
+			this->close();
+			throw socket_exception("Could not connect to the named socket.");
+		}
+
+		_state = SOCKET_UP;
+	}
+
+	void filesocket::down() throw (socket_exception)
+	{
+		if (_state != SOCKET_UP)
+			throw socket_exception("socket is not up");
+
+		this->close();
 	}
 
 	fileserversocket::fileserversocket(const ibrcommon::File &file, int listen)
@@ -464,74 +547,250 @@ namespace ibrcommon
 		_state = SOCKET_DOWN;
 	}
 
-	filesocket::filesocket(int fd)
-	 : clientsocket(fd)
-	{
-		_state = SOCKET_UNMANAGED;
-	}
-
-	filesocket::filesocket(const ibrcommon::File &file)
-	 : _filename(file)
-	{
-		_state = SOCKET_DOWN;
-	}
-
-	filesocket::~filesocket()
+	multicastsocket::multicastsocket(const int port)
+	 : udpsocket(port)
 	{
 	}
 
-	void filesocket::up() throw (socket_exception)
+	multicastsocket::multicastsocket(const vaddress &address, const int port)
+	 : udpsocket(address, port)
 	{
-		if (_state != SOCKET_DOWN)
-			throw socket_exception("socket is already up");
+	}
 
-		int len = 0;
-		struct sockaddr_un saun;
+	multicastsocket::~multicastsocket()
+	{
+	}
 
-		/*
-		 * Get a socket to work with.  This socket will
-		 * be in the UNIX domain, and will be a
-		 * stream socket.
-		 */
-		if ((_fd = ::socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-			::close(_fd);
-			throw socket_exception("Could not create a socket.");
+	void multicastsocket::up() throw (socket_exception)
+	{
+		udpsocket::up();
+
+		try {
+			switch (get_family()) {
+			case AF_INET: {
+#ifdef HAVE_FEATURES_H
+				int val = 1;
+				if ( ::setsockopt(this->fd(), IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+				{
+					throw socket_exception("setsockopt(IP_MULTICAST_LOOP)");
+				}
+
+				u_char ttl = 255; // Multicast TTL
+				if ( ::setsockopt(this->fd(), IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0 )
+				{
+					throw socket_exception("setsockopt(IP_MULTICAST_TTL)");
+				}
+#endif
+//				u_char ittl = 255; // IP TTL
+//				if ( ::setsockopt(this->fd(), IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl)) < 0 )
+//				{
+//					throw socket_exception("setsockopt(IP_TTL)");
+//				}
+				break;
+			}
+
+			case AF_INET6: {
+#ifdef HAVE_FEATURES_H
+				int val = 1;
+				if ( ::setsockopt(this->fd(), IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+				{
+					throw socket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
+				}
+
+//				u_char ttl = 255; // Multicast TTL
+//				if ( ::setsockopt(this->fd(), IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0 )
+//				{
+//					throw socket_exception("setsockopt(IPV6_MULTICAST_HOPS)");
+//				}
+#endif
+
+//				u_char ittl = 255; // IP TTL
+//				if ( ::setsockopt(this->fd(), IPPROTO_IPV6, IPV6_HOPLIMIT, &ittl, sizeof(ittl)) < 0 )
+//				{
+//					throw socket_exception("setsockopt(IPV6_HOPLIMIT)");
+//				}
+				break;
+			}
+			}
+		} catch (const socket_exception&) {
+			udpsocket::down();
+			throw;
+		}
+	}
+
+	void multicastsocket::down() throw (socket_exception)
+	{
+		switch (get_family()) {
+		case AF_INET: {
+#ifdef HAVE_FEATURES_H
+			int val = 0;
+			if ( ::setsockopt(this->fd(), IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+			{
+				throw socket_exception("setsockopt(IP_MULTICAST_LOOP)");
+			}
+#endif
+			break;
 		}
 
-		/*
-		 * Create the address we will be connecting to.
-		 */
-		saun.sun_family = AF_UNIX;
-		::strcpy(saun.sun_path, _filename.getPath().c_str());
-
-		/*
-		 * Try to connect to the address.  For this to
-		 * succeed, the server must already have bound
-		 * this address, and must have issued a listen()
-		 * request.
-		 *
-		 * The third argument indicates the "length" of
-		 * the structure, not just the length of the
-		 * socket name.
-		 */
-		len = sizeof(saun.sun_family) + strlen(saun.sun_path);
-
-		if (::connect(this->fd(), (struct sockaddr *)&saun, len) < 0) {
-			this->close();
-			throw socket_exception("Could not connect to the named socket.");
+		case AF_INET6: {
+#ifdef HAVE_FEATURES_H
+			int val = 0;
+			if ( ::setsockopt(this->fd(), IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+			{
+				throw socket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
+			}
+#endif
+			break;
+		}
 		}
 
-		_state = SOCKET_UP;
+		udpsocket::down();
 	}
 
-	void filesocket::down() throw (socket_exception)
+	void multicastsocket::join(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-		if (_state != SOCKET_UP)
-			throw socket_exception("socket is not up");
+		if (get_family() != group.getFamily())
+			throw socket_exception("family does not match");
 
-		this->close();
+		switch (group.getFamily()) {
+			case AF_INET:
+			{
+				struct sockaddr_in mcast_addr;
+				::memset(&mcast_addr, 0, sizeof(mcast_addr));
+
+				// set the family of the multicast address
+				mcast_addr.sin_family = group.getFamily();
+
+				// convert the group address
+				if ( ::inet_pton(group.getFamily(), group.get().c_str(), &(mcast_addr.sin_addr)) < 0 )
+				{
+					throw socket_exception("can not transform multicast address with inet_pton()");
+				}
+
+				struct group_req req;
+				::memset(&req, 0, sizeof(req));
+
+				// copy the address to the group request
+				::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
+
+				// set the right interface here
+				req.gr_interface = iface.getIndex();
+
+				if ( ::setsockopt(_fd, IPPROTO_IP, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
+				{
+					throw socket_exception("setsockopt(MCAST_JOIN_GROUP)");
+				}
+				break;
+			}
+
+			case AF_INET6:
+			{
+				struct sockaddr_in6 mcast_addr;
+				::memset(&mcast_addr, 0, sizeof(mcast_addr));
+
+				// set the family of the multicast address
+				mcast_addr.sin6_family = group.getFamily();
+
+				// convert the group address
+				if ( ::inet_pton(group.getFamily(), group.get().c_str(), &(mcast_addr.sin6_addr)) < 0 )
+				{
+					throw socket_exception("can not transform multicast address with inet_pton()");
+				}
+
+				struct group_req req;
+				::memset(&req, 0, sizeof(req));
+
+				// copy the address to the group request
+				::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
+
+				// set the right interface here
+				req.gr_interface = iface.getIndex();
+
+				if ( ::setsockopt(_fd, IPPROTO_IPV6, MCAST_JOIN_GROUP, &req, sizeof(req)) == -1 )
+				{
+					throw socket_exception("setsockopt(MCAST_JOIN_GROUP)");
+				}
+				break;
+			}
+
+			default:
+				return;
+		}
+
+		// successful!
+		IBRCOMMON_LOGGER_DEBUG(5) << "multicast join group successful to " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 	}
 
+	void multicastsocket::leave(const vaddress &group, const vinterface &iface) throw (socket_exception)
+	{
+		if (get_family() != group.getFamily())
+			throw socket_exception("family does not match");
+
+		switch (group.getFamily()) {
+			case AF_INET:
+			{
+				struct sockaddr_in mcast_addr;
+				::memset(&mcast_addr, 0, sizeof(mcast_addr));
+
+				// set the family of the multicast address
+				mcast_addr.sin_family = group.getFamily();
+
+				// convert the group address
+				if ( ::inet_pton(group.getFamily(), group.get().c_str(), &(mcast_addr.sin_addr)) < 0 )
+				{
+					throw socket_exception("can not transform multicast address with inet_pton()");
+				}
+
+				struct group_req req;
+				::memset(&req, 0, sizeof(req));
+
+				// copy the address to the group request
+				::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
+
+				// set the right interface here
+				req.gr_interface = iface.getIndex();
+
+				if ( ::setsockopt(_fd, IPPROTO_IP, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
+				{
+					throw socket_exception("setsockopt(MCAST_LEAVE_GROUP)");
+				}
+				break;
+			}
+
+			case AF_INET6:
+			{
+				struct sockaddr_in6 mcast_addr;
+				::memset(&mcast_addr, 0, sizeof(mcast_addr));
+
+				// set the family of the multicast address
+				mcast_addr.sin6_family = group.getFamily();
+
+				// convert the group address
+				if ( ::inet_pton(group.getFamily(), group.get().c_str(), &(mcast_addr.sin6_addr)) < 0 )
+				{
+					throw socket_exception("can not transform multicast address with inet_pton()");
+				}
+
+				struct group_req req;
+				::memset(&req, 0, sizeof(req));
+
+				// copy the address to the group request
+				::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
+
+				// set the right interface here
+				req.gr_interface = iface.getIndex();
+
+				if ( ::setsockopt(_fd, IPPROTO_IPV6, MCAST_LEAVE_GROUP, &req, sizeof(req)) == -1 )
+				{
+					throw socket_exception("setsockopt(MCAST_LEAVE_GROUP)");
+				}
+				break;
+			}
+
+			default:
+				return;
+		}
+	}
 
 	void basesocket::check_socket_error(const int err) const throw (socket_exception)
 	{

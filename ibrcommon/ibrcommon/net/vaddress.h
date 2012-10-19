@@ -45,14 +45,6 @@ namespace ibrcommon
 				{};
 			};
 
-			enum Family
-			{
-				VADDRESS_UNSPEC = AF_UNSPEC,
-				VADDRESS_INET = AF_INET,
-				VADDRESS_INET6 = AF_INET6,
-				VADDRESS_UNIX = AF_UNIX
-			};
-
 			enum Scope
 			{
 				SCOPE_UNKOWN,
@@ -61,13 +53,13 @@ namespace ibrcommon
 			};
 
 			vaddress();
-			vaddress(const std::string &address);
+			vaddress(const std::string &address, const std::string &scope);
 //			vaddress(const Family &family = VADDRESS_INET);
 //			vaddress(const Family &family, const std::string &address);
 //			vaddress(const Family &family, const std::string &address, const int iface, const Scope scope = SCOPE_UNKOWN);
 			virtual ~vaddress();
 
-			Family getFamily() const;
+			sa_family_t getFamily() const;
 			Scope getScope() const;
 			const std::string get(bool internal = true) const;
 
@@ -90,6 +82,7 @@ namespace ibrcommon
 //			Family _family;
 //			Scope _scope;
 			std::string _address;
+			std::string _scope;
 //			int _iface;
 	};
 }

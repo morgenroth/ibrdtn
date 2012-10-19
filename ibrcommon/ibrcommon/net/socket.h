@@ -99,6 +99,8 @@ namespace ibrcommon {
 		void set_reuseaddr(bool val, int fd = -1) const throw (socket_exception);
 		void set_nodelay(bool val, int fd = -1) const throw (socket_exception);
 
+		sa_family_t get_family() const throw (socket_exception);
+
 		// contains the current socket state
 		socketstate _state;
 
@@ -247,8 +249,8 @@ namespace ibrcommon {
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
-		void join(const vaddress &group, const vinterface &iface);
-		void leave(const vaddress &group);
+		void join(const vaddress &group, const vinterface &iface) throw (socket_exception);
+		void leave(const vaddress &group, const vinterface &iface) throw (socket_exception);
 	};
 
 	/**

@@ -37,7 +37,8 @@ namespace ibrcommon
 	class NetLink3ManagerEvent : public LinkManagerEvent
 	{
 	public:
-		NetLink3ManagerEvent(struct nl_msg *msg);
+		NetLink3ManagerEvent(EventType type, unsigned int state,
+				ibrcommon::vinterface iface, ibrcommon::vaddress addr, bool wireless = false);
 		virtual ~NetLink3ManagerEvent();
 
 		virtual const ibrcommon::vinterface& getInterface() const;
@@ -47,7 +48,6 @@ namespace ibrcommon
 
 		virtual bool isWirelessExtension() const;
 
-		void debug() const;
 		const std::string toString() const;
 
 	private:
@@ -56,7 +56,6 @@ namespace ibrcommon
 		bool _wireless;
 		ibrcommon::vinterface _interface;
 		ibrcommon::vaddress _address;
-		std::map<int, std::string> _attributes;
 	};
 
 	class NetLink3Manager : public ibrcommon::LinkManager, public ibrcommon::JoinableThread
@@ -67,7 +66,7 @@ namespace ibrcommon
 		virtual ~NetLink3Manager();
 
 		const std::string getInterface(int index) const;
-		const std::list<vaddress> getAddressList(const vinterface &iface, const vaddress::Family f);
+		const std::list<vaddress> getAddressList(const vinterface &iface);
 
 		class parse_exception : public Exception
 		{
@@ -85,36 +84,34 @@ namespace ibrcommon
 	private:
 		NetLink3Manager();
 
-		class netlink_socket : public basesocket
+		class netlinkcache : public basesocket
 		{
 		public:
-			netlink_socket();
-			virtual ~netlink_socket();
+			netlinkcache(int protocol, const std::string &name);
+			virtual ~netlinkcache();
 			virtual void up() throw (socket_exception);
 			virtual void down() throw (socket_exception);
 
 			virtual int fd() const throw (socket_exception);
 
-			struct nl_sock* operator*() throw (socket_exception);
+			struct nl_cache* operator*() const throw (socket_exception);
+
+			void receive() throw (socket_exception);
 
 		private:
+			const int _protocol;
+			const std::string _name;
 			struct nl_sock *_nl_socket;
+			struct nl_cache_mngr *_mngr;
+			struct nl_cache *_cache;
 		};
 
-		netlink_socket _nl_notify_sock;
-		netlink_socket _nl_query_sock;
+		ibrcommon::Mutex _cache_mutex;
+		netlinkcache _route_cache;
 
-		// local link cache
-		struct nl_cache *_link_cache;
-		struct nl_cache *_addr_cache;
-
-		// mutex for the link cache
-		ibrcommon::Mutex _call_mutex;
-
-		bool _refresh_cache;
 		bool _running;
 
-		ibrcommon::vsocket *_sock;
+		ibrcommon::vsocket _sock;
 	};
 } /* namespace ibrcommon */
 #endif /* NETLINK3MANAGER_H_ */

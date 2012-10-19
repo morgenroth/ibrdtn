@@ -81,7 +81,7 @@ namespace ibrcommon
 		virtual ~LinkManager() {};
 
 		virtual const std::string getInterface(int index) const = 0;
-		virtual const std::list<vaddress> getAddressList(const vinterface &iface, const vaddress::Family f) = 0;
+		virtual const std::list<vaddress> getAddressList(const vinterface &iface) = 0;
 
 		virtual void registerInterfaceEvent(const vinterface&, LinkManager::EventCallback*);
 		virtual void unregisterInterfaceEvent(const vinterface&, LinkManager::EventCallback*);
@@ -107,7 +107,7 @@ namespace ibrcommon
 		virtual ~DefaultLinkManager();
 
 		const std::string getInterface(int index) const;
-		const std::list<vaddress> getAddressList(const vinterface &iface, const vaddress::Family f);
+		const std::list<vaddress> getAddressList(const vinterface &iface);
 	};
 }
 

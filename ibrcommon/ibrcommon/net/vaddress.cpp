@@ -42,12 +42,12 @@ namespace ibrcommon
 //	}
 
 	vaddress::vaddress()
-	 : _address()
+	 : _address(), _scope()
 	{
 	}
 
-	vaddress::vaddress(const std::string &address)
-	 : _address(address)
+	vaddress::vaddress(const std::string &address, const std::string &scope)
+	 : _address(address), _scope(scope)
 	{
 		// TODO: use addrinfo to resolve the address at runtime
 

@@ -260,7 +260,7 @@ namespace ibrcommon
 	}
 #endif
 
-	const std::list<vaddress> DefaultLinkManager::getAddressList(const vinterface &iface, const vaddress::Family f)
+	const std::list<vaddress> DefaultLinkManager::getAddressList(const vinterface &iface)
 	{
 		std::list<vaddress> ret;
 

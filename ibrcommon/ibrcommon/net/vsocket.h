@@ -53,19 +53,6 @@ namespace ibrcommon
 	class vsocket : public ibrcommon::LinkManager::EventCallback
 	{
 	public:
-//		enum Option
-//		{
-//			VSOCKET_REUSEADDR = 1 << 0,
-//			VSOCKET_LINGER = 1 << 1,
-//			VSOCKET_NODELAY = 1 << 2,
-//			VSOCKET_BROADCAST = 1 << 3,
-//			VSOCKET_NONBLOCKING = 1 << 4,
-//			VSOCKET_MULTICAST = 1 << 5,
-//			VSOCKET_LINKLOCAL = 1 << 6
-//		};
-//
-//
-
 		/**
 		 * Constructor
 		 */
@@ -112,7 +99,7 @@ namespace ibrcommon
 		 * close all sockets in this vsocket
 		 */
 		void close();
-		void shutdown();
+		void shutdown(int how);
 
 		/**
 		 * Execute a select on all associated sockets.
