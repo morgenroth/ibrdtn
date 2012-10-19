@@ -208,9 +208,11 @@ void BaseRouterTest::testGetSummaryVector()
 void BaseRouterTest::setUp()
 {
 	_storage.clear();
+	dtn::core::BundleCore::getInstance().setStorage(&_storage);
 }
 
 void BaseRouterTest::tearDown()
 {
+	dtn::core::BundleCore::getInstance().setStorage(NULL);
 }
 
