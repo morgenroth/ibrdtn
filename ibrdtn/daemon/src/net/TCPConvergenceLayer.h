@@ -31,8 +31,13 @@
 #include "net/DiscoveryService.h"
 #include "net/DiscoveryServiceProvider.h"
 
+#include <ibrcommon/link/LinkManager.h>
 #include <ibrcommon/net/vsocket.h>
 #include <ibrcommon/net/vinterface.h>
+
+#include <set>
+#include <list>
+#include <map>
 
 namespace dtn
 {
@@ -42,7 +47,7 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for TCP/IP.
 		 * http://tools.ietf.org/html/draft-irtf-dtnrg-tcp-clayer-02
 		 */
-		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public ConvergenceLayer, public DiscoveryServiceProvider
+		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public ConvergenceLayer, public DiscoveryServiceProvider, public ibrcommon::LinkManager::EventCallback
 		{
 			friend class TCPConnection;
 		public:
@@ -95,6 +100,8 @@ namespace dtn
 			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
 				throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
+			void eventNotify(const ibrcommon::LinkEvent &evt);
+
 		protected:
 			void __cancellation() throw ();
 
@@ -127,7 +134,7 @@ namespace dtn
 
 			ibrcommon::Conditional _connections_cond;
 			std::list<TCPConnection*> _connections;
-			std::list<ibrcommon::vinterface> _interfaces;
+			std::set<ibrcommon::vinterface> _interfaces;
 			std::map<ibrcommon::vinterface, unsigned int> _portmap;
 			unsigned int _any_port;
 		};

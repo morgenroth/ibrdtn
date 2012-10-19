@@ -56,6 +56,9 @@ namespace dtn
 
 		TCPConvergenceLayer::~TCPConvergenceLayer()
 		{
+			// unsubscribe to NetLink events
+			ibrcommon::LinkManager::getInstance().removeEventListener(this);
+
 			join();
 		}
 
@@ -70,7 +73,7 @@ namespace dtn
 				_any_port = port;
 			} else {
 				// bind on all addresses on this interface
-				_interfaces.push_back(net);
+				_interfaces.insert(net);
 
 				// create sockets for all addresses on the interface
 				std::list<ibrcommon::vaddress> addrs = net.getAddresses();
@@ -83,6 +86,9 @@ namespace dtn
 					addr.setService(ss.str());
 					_vsocket.add(new ibrcommon::tcpserversocket(addr), net);
 				}
+
+				// subscribe to NetLink events on our interfaces
+				ibrcommon::LinkManager::getInstance().addEventListener(net, this);
 
 				//_tcpsrv.bind(net, port);
 				_portmap[net] = port;
@@ -112,7 +118,7 @@ namespace dtn
 			bool announced = false;
 
 			// search for the matching interface
-			for (std::list<ibrcommon::vinterface>::const_iterator it = _interfaces.begin(); it != _interfaces.end(); it++)
+			for (std::set<ibrcommon::vinterface>::const_iterator it = _interfaces.begin(); it != _interfaces.end(); it++)
 			{
 				const ibrcommon::vinterface &interface = *it;
 				if (interface == iface)
@@ -160,6 +166,45 @@ namespace dtn
 		const std::string TCPConvergenceLayer::getName() const
 		{
 			return "TCPConvergenceLayer";
+		}
+
+		void TCPConvergenceLayer::eventNotify(const ibrcommon::LinkEvent &evt)
+		{
+			// do not do anything if we are bound on all interfaces
+			if (_any_port > 0) return;
+
+			if (_interfaces.find(evt.getInterface()) == _interfaces.end()) return;
+
+			switch (evt.getAction())
+			{
+				case ibrcommon::LinkEvent::ACTION_ADDRESS_ADDED:
+				{
+					ibrcommon::vaddress bindaddr = evt.getAddress();
+					// convert the port into a string
+					std::stringstream ss; ss << _portmap[evt.getInterface()];
+					bindaddr.setService(ss.str());
+					_vsocket.add(new ibrcommon::tcpserversocket(bindaddr), evt.getInterface());
+					break;
+				}
+
+				case ibrcommon::LinkEvent::ACTION_ADDRESS_REMOVED:
+				{
+					ibrcommon::socketset socks = _vsocket.getAll();
+					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+						ibrcommon::tcpserversocket *sock = dynamic_cast<ibrcommon::tcpserversocket*>(*iter);
+						if (sock->get_address().address() == evt.getAddress().address()) {
+							_vsocket.remove(sock);
+							sock->down();
+							delete sock;
+							break;
+						}
+					}
+					break;
+				}
+
+				default:
+					break;
+			}
 		}
 
 		void TCPConvergenceLayer::open(const dtn::core::Node &n)
