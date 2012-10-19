@@ -119,10 +119,14 @@ namespace dtn
 
 			uri.decode(address, pan);
 
+			std::stringstream ss_pan; ss_pan << pan;
+			ibrcommon::vaddress addr( address, ss_pan.str() );
+
 			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::queue"<< IBRCOMMON_LOGGER_ENDL;
 
 			ibrcommon::MutexLock lc(_connection_lock);
-			getConnection(atoi(address.c_str()))->_sender.queue(job);
+			LOWPANConnection *connection = getConnection(addr);
+			connection->_sender.queue(job);
 		}
 
 		LOWPANConnection* LOWPANConvergenceLayer::getConnection(const ibrcommon::vaddress &addr)
