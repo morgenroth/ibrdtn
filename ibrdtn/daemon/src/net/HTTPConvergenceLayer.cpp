@@ -406,7 +406,7 @@ namespace dtn
 		 * Method from IndependentComponent interface, this method is called before
 		 * the componentRun() method is called. At time here is nothing to do.
 		 */
-		void HTTPConvergenceLayer::componentUp()
+		void HTTPConvergenceLayer::componentUp() throw ()
 		{
 		}
 
@@ -421,7 +421,7 @@ namespace dtn
 		 * DownloadThread the iobuffer will be initialize, when disconnecting the iobuffer
 		 * will finalize.
 		 */
-		void HTTPConvergenceLayer::componentRun()
+		void HTTPConvergenceLayer::componentRun() throw ()
 		{
 
 			std::string url = _server + "?eid=" + dtn::core::BundleCore::local.getString();
@@ -516,7 +516,7 @@ namespace dtn
 		 * the IBR-DTN is shutting down. This method trys to stop the DownloadThread
 		 * and to finalize the iobuffer, for a clean shut down.
 		 */
-		void HTTPConvergenceLayer::componentDown()
+		void HTTPConvergenceLayer::componentDown() throw ()
 		{
 		}
 

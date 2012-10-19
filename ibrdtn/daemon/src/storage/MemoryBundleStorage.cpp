@@ -41,12 +41,12 @@ namespace dtn
 		{
 		}
 
-		void MemoryBundleStorage::componentUp()
+		void MemoryBundleStorage::componentUp() throw ()
 		{
 			bindEvent(dtn::core::TimeEvent::className);
 		}
 
-		void MemoryBundleStorage::componentDown()
+		void MemoryBundleStorage::componentDown() throw ()
 		{
 			unbindEvent(dtn::core::TimeEvent::className);
 		}

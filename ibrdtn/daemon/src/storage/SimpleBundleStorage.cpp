@@ -184,13 +184,13 @@ namespace dtn
 			}
 		}
 
-		void SimpleBundleStorage::componentUp()
+		void SimpleBundleStorage::componentUp() throw ()
 		{
 			bindEvent(dtn::core::TimeEvent::className);
 			_datastore.start();
 		}
 
-		void SimpleBundleStorage::componentDown()
+		void SimpleBundleStorage::componentDown() throw ()
 		{
 			unbindEvent(dtn::core::TimeEvent::className);
 			_datastore.stop();

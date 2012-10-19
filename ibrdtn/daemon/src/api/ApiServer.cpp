@@ -81,7 +81,7 @@ namespace dtn
 			_sockets.down();
 		}
 
-		void ApiServer::componentUp()
+		void ApiServer::componentUp() throw ()
 		{
 			// bring up all server sockets
 			_sockets.up();
@@ -91,7 +91,7 @@ namespace dtn
 			startGarbageCollector();
 		}
 
-		void ApiServer::componentRun()
+		void ApiServer::componentRun() throw ()
 		{
 			try {
 				while (!_shutdown)
@@ -177,7 +177,7 @@ namespace dtn
 			}
 		}
 
-		void ApiServer::componentDown()
+		void ApiServer::componentDown() throw ()
 		{
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
 			unbindEvent(dtn::core::NodeEvent::className);

@@ -130,7 +130,7 @@ namespace dtn
 			join();
 		}
 
-		void SQLiteBundleStorage::componentRun()
+		void SQLiteBundleStorage::componentRun() throw ()
 		{
 			// loop until aborted
 			try {
@@ -160,7 +160,7 @@ namespace dtn
 			}
 		}
 
-		void SQLiteBundleStorage::componentUp()
+		void SQLiteBundleStorage::componentUp() throw ()
 		{
 			//register Events
 			bindEvent(dtn::core::TimeEvent::className);
@@ -181,7 +181,7 @@ namespace dtn
 			_database.open();
 		};
 
-		void SQLiteBundleStorage::componentDown()
+		void SQLiteBundleStorage::componentDown() throw ()
 		{
 			//unregister Events
 			unbindEvent(dtn::core::TimeEvent::className);

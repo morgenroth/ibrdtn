@@ -163,18 +163,18 @@ protected:
 	 * Reads the configured settings for the DHT and
 	 * initializes all needed sockets(IPv4&IPv6) for the DHT
 	 */
-	void componentUp();
+	void componentUp() throw ();
 	/**
 	 * Runs the bootstrapping method and starts the DHT.
 	 * Executes the main loop with dtn_dht_periodic.
 	 * After exiting the main loop, the DHT is shut down.
 	 */
-	void componentRun();
+	void componentRun() throw ();;
 	/**
 	 * Calls the interrupt pipe to exit the main loop.
 	 * And so ends up the main loop indirectly
 	 */
-	void componentDown();
+	void componentDown() throw ();
 };
 }
 }

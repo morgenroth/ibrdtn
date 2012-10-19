@@ -294,7 +294,7 @@ namespace dtn
 			}
 		}
 
-		void TCPConvergenceLayer::componentRun()
+		void TCPConvergenceLayer::componentRun() throw ()
 		{
 			try {
 				while (true)
@@ -367,13 +367,13 @@ namespace dtn
 			}
 		}
 
-		void TCPConvergenceLayer::componentUp()
+		void TCPConvergenceLayer::componentUp() throw ()
 		{
 			// listen on the socket, max. 5 concurrent awaiting connections
 			_vsocket.up();
 		}
 
-		void TCPConvergenceLayer::componentDown()
+		void TCPConvergenceLayer::componentDown() throw ()
 		{
 			// shutdown all sockets
 			_vsocket.down();

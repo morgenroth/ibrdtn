@@ -51,9 +51,9 @@ namespace dtn
 			const std::string getName() const;
 
 		protected:
-			void componentUp();
-			void componentRun();
-			void componentDown();
+			void componentUp() throw ();
+			void componentRun() throw ();;
+			void componentDown() throw ();
 
 			void __cancellation() throw ();
 

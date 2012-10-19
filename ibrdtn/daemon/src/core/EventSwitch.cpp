@@ -42,11 +42,11 @@ namespace dtn
 			componentDown();
 		}
 
-		void EventSwitch::componentUp()
+		void EventSwitch::componentUp() throw ()
 		{
 		}
 
-		void EventSwitch::componentDown()
+		void EventSwitch::componentDown() throw ()
 		{
 			try {
 				ibrcommon::MutexLock l(_queue_cond);

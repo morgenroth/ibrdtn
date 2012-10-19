@@ -63,7 +63,7 @@ namespace dtn
 		{
 		}
 
-		void ConnectionManager::componentUp()
+		void ConnectionManager::componentUp() throw ()
 		{
 			bindEvent(TimeEvent::className);
 			bindEvent(NodeEvent::className);
@@ -77,7 +77,7 @@ namespace dtn
 			}
 		}
 
-		void ConnectionManager::componentDown()
+		void ConnectionManager::componentDown() throw ()
 		{
 			{
 				ibrcommon::MutexLock l(_cl_lock);

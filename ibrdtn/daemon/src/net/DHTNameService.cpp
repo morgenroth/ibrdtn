@@ -72,7 +72,7 @@ bool dtn::dht::DHTNameService::setNonBlockingInterruptPipe() {
 	return true;
 }
 
-void dtn::dht::DHTNameService::componentUp() {
+void dtn::dht::DHTNameService::componentUp() throw () {
 	std::string eid = dtn::core::BundleCore::local.getNode().getString();
 	// creating interrupt pipe
 	if (pipe(_interrupt_pipe) < 0) {
@@ -188,7 +188,7 @@ void dtn::dht::DHTNameService::componentUp() {
 	}
 }
 
-void dtn::dht::DHTNameService::componentRun() {
+void dtn::dht::DHTNameService::componentRun() throw () {
 	if (!this->_initialized) {
 		IBRCOMMON_LOGGER(error) << "DHT is not initialized"
 					<<IBRCOMMON_LOGGER_ENDL;
@@ -417,7 +417,7 @@ void dtn::dht::DHTNameService::componentRun() {
 	::close(_interrupt_pipe[1]);
 }
 
-void dtn::dht::DHTNameService::componentDown() {
+void dtn::dht::DHTNameService::componentDown() throw () {
 	this->_exiting = true;
 	IBRCOMMON_LOGGER_DEBUG(25) << "DHT will be shut down"
 				<< IBRCOMMON_LOGGER_ENDL;

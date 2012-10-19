@@ -183,7 +183,7 @@ namespace dtn
 			return _extensions;
 		}
 
-		void BaseRouter::componentUp()
+		void BaseRouter::componentUp() throw ()
 		{
 			bindEvent(dtn::net::TransferAbortedEvent::className);
 			bindEvent(dtn::net::TransferCompletedEvent::className);
@@ -214,7 +214,7 @@ namespace dtn
 			}
 		}
 
-		void BaseRouter::componentDown()
+		void BaseRouter::componentDown() throw ()
 		{
 			unbindEvent(dtn::net::TransferAbortedEvent::className);
 			unbindEvent(dtn::net::TransferCompletedEvent::className);

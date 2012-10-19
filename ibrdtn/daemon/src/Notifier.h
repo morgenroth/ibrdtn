@@ -46,8 +46,8 @@ namespace dtn
 			virtual const std::string getName() const;
 
 		protected:
-			virtual void componentUp();
-			virtual void componentDown();
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
 
 		private:
 			std::string _cmd;

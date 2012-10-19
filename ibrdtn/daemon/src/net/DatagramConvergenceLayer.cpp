@@ -142,7 +142,7 @@ namespace dtn
 			IBRCOMMON_LOGGER(error) << "DatagramConvergenceLayer::connectionDown: " << conn->getIdentifier() << " not found!" << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		void DatagramConvergenceLayer::componentUp()
+		void DatagramConvergenceLayer::componentUp() throw ()
 		{
 			bindEvent(dtn::core::TimeEvent::className);
 			try {
@@ -153,7 +153,7 @@ namespace dtn
 			}
 		}
 
-		void DatagramConvergenceLayer::componentDown()
+		void DatagramConvergenceLayer::componentDown() throw ()
 		{
 			unbindEvent(dtn::core::TimeEvent::className);
 
@@ -195,7 +195,7 @@ namespace dtn
 			};
 		}
 
-		void DatagramConvergenceLayer::componentRun()
+		void DatagramConvergenceLayer::componentRun() throw ()
 		{
 			_running = true;
 

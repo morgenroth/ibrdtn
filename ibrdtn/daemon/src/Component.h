@@ -81,9 +81,9 @@ namespace dtn
 			void run() throw ();
 			virtual void __cancellation() throw () = 0;
 
-			virtual void componentUp() = 0;
-			virtual void componentRun() = 0;
-			virtual void componentDown() = 0;
+			virtual void componentUp() throw () = 0;
+			virtual void componentRun() throw () = 0;
+			virtual void componentDown() throw () = 0;
 		};
 
 		class IntegratedComponent : public Component

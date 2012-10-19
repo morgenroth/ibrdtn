@@ -58,14 +58,14 @@ namespace dtn
 			_incoming.abort();
 		}
 
-		void FragmentManager::componentUp()
+		void FragmentManager::componentUp() throw ()
 		{
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 			bindEvent(dtn::core::TimeEvent::className);
 			_running = true;
 		}
 
-		void FragmentManager::componentRun()
+		void FragmentManager::componentRun() throw ()
 		{
 			// TODO: scan storage for fragments to reassemble on startup
 
@@ -137,7 +137,7 @@ namespace dtn
 			} catch (const ibrcommon::QueueUnblockedException&) { }
 		}
 
-		void FragmentManager::componentDown()
+		void FragmentManager::componentDown() throw ()
 		{
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
 			unbindEvent(dtn::core::TimeEvent::className);

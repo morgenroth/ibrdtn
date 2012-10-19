@@ -39,12 +39,12 @@ namespace dtn
 		{
 		}
 
-		void Notifier::componentUp()
+		void Notifier::componentUp() throw ()
 		{
 			bindEvent(NodeEvent::className);
 		}
 
-		void Notifier::componentDown()
+		void Notifier::componentDown() throw ()
 		{
 			unbindEvent(NodeEvent::className);
 		}

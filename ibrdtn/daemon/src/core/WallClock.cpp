@@ -46,7 +46,7 @@ namespace dtn
 			}
 		}
 
-		void WallClock::componentUp()
+		void WallClock::componentUp() throw ()
 		{
 			if(_timer.isRunning())
 			{
@@ -58,7 +58,7 @@ namespace dtn
 			}
 		}
 
-		void WallClock::componentDown()
+		void WallClock::componentDown() throw ()
 		{
 			_timer.pause();
 		}

@@ -279,7 +279,7 @@ namespace dtn
 			}
 		}
 
-		void UDPConvergenceLayer::componentUp()
+		void UDPConvergenceLayer::componentUp() throw ()
 		{
 			try {
 				// create main socket for all send actions
@@ -303,7 +303,7 @@ namespace dtn
 			}
 		}
 
-		void UDPConvergenceLayer::componentDown()
+		void UDPConvergenceLayer::componentDown() throw ()
 		{
 			try {
 				_sock.down();
@@ -316,7 +316,7 @@ namespace dtn
 			join();
 		}
 
-		void UDPConvergenceLayer::componentRun()
+		void UDPConvergenceLayer::componentRun() throw ()
 		{
 			_running = true;
 

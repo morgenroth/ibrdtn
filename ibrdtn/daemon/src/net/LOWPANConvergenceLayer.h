@@ -85,9 +85,9 @@ namespace dtn
 			void remove(const LOWPANConnection *conn);
 
 		protected:
-			virtual void componentUp();
-			virtual void componentRun();
-			virtual void componentDown();
+			virtual void componentUp() throw ();
+			virtual void componentRun() throw ();;
+			virtual void componentDown() throw ();
 			void __cancellation() throw ();
 
 			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers);

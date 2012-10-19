@@ -111,12 +111,12 @@ namespace dtn
 			_watchset.insert(watch);
 		}
 
-		void FileMonitor::componentUp()
+		void FileMonitor::componentUp() throw ()
 		{
 			_socket.up();
 		}
 
-		void FileMonitor::componentRun()
+		void FileMonitor::componentRun() throw ()
 		{
 #ifdef HAVE_SYS_INOTIFY_H
 			while (_running)
@@ -145,7 +145,7 @@ namespace dtn
 #endif
 		}
 
-		void FileMonitor::componentDown()
+		void FileMonitor::componentDown() throw ()
 		{
 			_socket.down();
 		}

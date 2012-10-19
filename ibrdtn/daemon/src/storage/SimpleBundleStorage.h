@@ -140,8 +140,8 @@ namespace dtn
 			virtual void iterateDataStorage(const dtn::storage::DataStorage::Hash &hash, dtn::storage::DataStorage::istream &stream);
 
 		protected:
-			virtual void componentUp();
-			virtual void componentDown();
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
 			virtual void eventBundleExpired(const dtn::data::BundleList::ExpiringBundle &b);
 
 		private:

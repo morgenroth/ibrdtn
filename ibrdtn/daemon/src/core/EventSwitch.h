@@ -116,8 +116,8 @@ namespace dtn
 			void unregister(std::string eventName, EventReceiver *receiver);
 
 		protected:
-			virtual void componentUp();
-			virtual void componentDown();
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
 
 			friend class Event;
 			friend class EventReceiver;

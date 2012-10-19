@@ -67,13 +67,13 @@ namespace dtn
 		{
 		}
 
-		void FileConvergenceLayer::componentUp()
+		void FileConvergenceLayer::componentUp() throw ()
 		{
 			bindEvent(dtn::core::NodeEvent::className);
 			bindEvent(dtn::core::TimeEvent::className);
 		}
 
-		void FileConvergenceLayer::componentDown()
+		void FileConvergenceLayer::componentDown() throw ()
 		{
 			unbindEvent(dtn::core::NodeEvent::className);
 			unbindEvent(dtn::core::TimeEvent::className);
@@ -84,7 +84,7 @@ namespace dtn
 			_tasks.abort();
 		}
 
-		void FileConvergenceLayer::componentRun()
+		void FileConvergenceLayer::componentRun() throw ()
 		{
 			try {
 				while (true)

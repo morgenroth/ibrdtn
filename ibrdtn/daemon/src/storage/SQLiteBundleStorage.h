@@ -131,9 +131,9 @@ namespace dtn
 			void raiseEvent(const dtn::core::Event *evt);
 
 		protected:
-			virtual void componentRun();
-			virtual void componentUp();
-			virtual void componentDown();
+			virtual void componentRun() throw ();;
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
 			void __cancellation() throw ();
 
 		private:

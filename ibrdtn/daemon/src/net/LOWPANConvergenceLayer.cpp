@@ -166,7 +166,7 @@ namespace dtn
 			}
 		}
 
-		void LOWPANConvergenceLayer::componentUp()
+		void LOWPANConvergenceLayer::componentUp() throw ()
 		{
 			bindEvent(dtn::core::TimeEvent::className);
 			try {
@@ -183,7 +183,7 @@ namespace dtn
 			_running = true;
 		}
 
-		void LOWPANConvergenceLayer::componentDown()
+		void LOWPANConvergenceLayer::componentDown() throw ()
 		{
 			_vsocket.destroy();
 			unbindEvent(dtn::core::TimeEvent::className);
@@ -235,7 +235,7 @@ namespace dtn
 			send_cb(_ipnd_buf, len + 2, _addr_broadcast);
 		}
 
-		void LOWPANConvergenceLayer::componentRun()
+		void LOWPANConvergenceLayer::componentRun() throw ()
 		{
 			while (_running)
 			{

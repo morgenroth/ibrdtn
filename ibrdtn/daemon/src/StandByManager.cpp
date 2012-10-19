@@ -101,13 +101,13 @@ namespace dtn {
 			_suspended = true;
 		}
 
-		void StandByManager::componentUp()
+		void StandByManager::componentUp() throw ()
 		{
 			bindEvent(dtn::core::GlobalEvent::className);
 			_enabled = true;
 		}
 
-		void StandByManager::componentDown()
+		void StandByManager::componentDown() throw ()
 		{
 			unbindEvent(dtn::core::GlobalEvent::className);
 			_enabled = false;

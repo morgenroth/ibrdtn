@@ -258,8 +258,8 @@ namespace dtn
 			NeighborDatabase& getNeighborDB();
 
 		protected:
-			virtual void componentUp();
-			virtual void componentDown();
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
 
 		private:
 			ibrcommon::Mutex _known_bundles_lock;

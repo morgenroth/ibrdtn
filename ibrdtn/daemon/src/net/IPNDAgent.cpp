@@ -165,7 +165,7 @@ namespace dtn
 			// TODO: join/leave interfaces if a interface is totally new / gone
 		}
 
-		void IPNDAgent::componentUp()
+		void IPNDAgent::componentUp() throw ()
 		{
 			// setup the receive socket
 			_recv_socket.up();
@@ -208,7 +208,7 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::componentDown()
+		void IPNDAgent::componentDown() throw ()
 		{
 			// unsubscribe to NetLink events
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
@@ -223,7 +223,7 @@ namespace dtn
 			join();
 		}
 
-		void IPNDAgent::componentRun()
+		void IPNDAgent::componentRun() throw ()
 		{
 			ibrcommon::TimeMeasurement tm;
 			tm.start();

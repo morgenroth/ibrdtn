@@ -80,9 +80,9 @@ namespace dtn
 			virtual void connectionUp(ClientHandler *conn);
 			virtual void connectionDown(ClientHandler *conn);
 
-			void componentUp();
-			void componentRun();
-			void componentDown();
+			void componentUp() throw ();
+			void componentRun() throw ();;
+			void componentDown() throw ();
 
 		private:
 

@@ -148,8 +148,8 @@ namespace dtn
 			static void processBlocks(dtn::data::Bundle &b);
 
 		protected:
-			virtual void componentUp();
-			virtual void componentDown();
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
 
 		private:
 			/**

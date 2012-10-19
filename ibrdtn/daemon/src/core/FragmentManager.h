@@ -45,9 +45,9 @@ namespace dtn
 
 			void __cancellation() throw ();
 
-			void componentUp();
-			void componentRun();
-			void componentDown();
+			void componentUp() throw ();
+			void componentRun() throw ();
+			void componentDown() throw ();
 
 			void raiseEvent(const Event *evt);
 

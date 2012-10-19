@@ -65,8 +65,8 @@ namespace dtn
 			StatisticLogger(LoggerType type, unsigned int interval, ibrcommon::File file);
 			virtual ~StatisticLogger();
 
-			void componentUp();
-			void componentDown();
+			void componentUp() throw ();
+			void componentDown() throw ();
 
 			size_t timeout(ibrcommon::Timer*);
 			void raiseEvent(const dtn::core::Event *evt);

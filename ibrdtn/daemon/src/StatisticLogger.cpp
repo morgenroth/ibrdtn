@@ -50,7 +50,7 @@ namespace dtn
 
 		}
 
-		void StatisticLogger::componentUp()
+		void StatisticLogger::componentUp() throw ()
 		{
 			if ((_type == LOGGER_FILE_PLAIN) || (_type == LOGGER_FILE_CSV))
 			{
@@ -117,7 +117,7 @@ namespace dtn
 			return _interval;
 		}
 
-		void StatisticLogger::componentDown()
+		void StatisticLogger::componentDown() throw ()
 		{
 			unbindEvent(dtn::core::NodeEvent::className);
 			unbindEvent(dtn::core::BundleEvent::className);

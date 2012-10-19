@@ -115,8 +115,8 @@ namespace dtn
 			 */
 			void discovered(const dtn::core::Node &node);
 
-			virtual void componentUp();
-			virtual void componentDown();
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
 
 		private:
 			/**

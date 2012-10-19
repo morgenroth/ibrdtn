@@ -89,7 +89,7 @@ namespace dtn
 			unbindEvent(dtn::core::TimeAdjustmentEvent::className);
 		}
 
-		void BundleCore::componentUp()
+		void BundleCore::componentUp() throw ()
 		{
 			_connectionmanager.initialize();
 			_clock.initialize();
@@ -98,7 +98,7 @@ namespace dtn
 			_clock.startup();
 		}
 
-		void BundleCore::componentDown()
+		void BundleCore::componentDown() throw ()
 		{
 			_connectionmanager.terminate();
 			_clock.terminate();
