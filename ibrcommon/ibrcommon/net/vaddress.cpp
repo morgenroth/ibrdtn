@@ -28,8 +28,8 @@
 
 namespace ibrcommon
 {
-	const std::string vaddress::SCOPE_GLOBAL = "global";
-	const std::string vaddress::SCOPE_LINKLOCAL = "local";
+	const std::string vaddress::SCOPE_GLOBAL = "universe";
+	const std::string vaddress::SCOPE_LINKLOCAL = "link";
 
 	vaddress::vaddress()
 	 : _address(), _service(), _scope()
@@ -129,7 +129,7 @@ namespace ibrcommon
 
 	const std::string vaddress::service() const throw (service_not_set)
 	{
-		if (_service.length() == 0) throw address_not_set();
+		if (_service.length() == 0) throw service_not_set();
 		return _service;
 	}
 
