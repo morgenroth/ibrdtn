@@ -47,7 +47,7 @@ namespace dtn
 			virtual ~IPNDAgent();
 
 			void add(const ibrcommon::vaddress &address);
-			void bind(const ibrcommon::vinterface &net, int port);
+			void bind(const ibrcommon::vinterface &net);
 
 			/**
 			 * @see Component::getName()

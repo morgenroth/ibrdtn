@@ -71,12 +71,9 @@ namespace dtn
 		void IPNDAgent::add(const ibrcommon::vaddress &address) {
 			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: listen to " << address.toString() << IBRCOMMON_LOGGER_ENDL;
 			_destinations.push_back(address);
-
-			// add new socket for this address
-			_send_socket.add(new ibrcommon::udpsocket(address));
 		}
 
-		void IPNDAgent::bind(const ibrcommon::vinterface &net, int port)
+		void IPNDAgent::bind(const ibrcommon::vinterface &net)
 		{
 			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			_interfaces.push_back(net);
@@ -84,12 +81,8 @@ namespace dtn
 			// create sockets for all addresses on the interface
 			std::list<ibrcommon::vaddress> addrs = net.getAddresses();
 
-			// convert the port into a string
-			std::stringstream ss; ss << port;
-
 			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 				ibrcommon::vaddress &addr = (*iter);
-				addr.setService(ss.str());
 				_send_socket.add(new ibrcommon::udpsocket(addr), net);
 			}
 		}
