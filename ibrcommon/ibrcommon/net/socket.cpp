@@ -729,6 +729,9 @@ namespace ibrcommon
 				probesocket.add( new tcpsocket(fd) );
 			}
 
+			// bring probesocket into UP state
+			probesocket.up();
+
 			// create a probe set
 			socketset probeset;
 
