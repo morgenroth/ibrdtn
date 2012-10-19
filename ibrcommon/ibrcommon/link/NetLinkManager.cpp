@@ -320,8 +320,12 @@ typedef nl_object nl_object_header;
 		stop();
 		join();
 
-		// destroy netlink cache
-		_route_cache.down();
+		try {
+			_route_cache.down();
+		} catch (const socket_exception&) {
+			// catch socket exception caused by double down()
+			// __cancellation() + destructor
+		}
 	}
 
 	void NetLinkManager::up() throw ()
