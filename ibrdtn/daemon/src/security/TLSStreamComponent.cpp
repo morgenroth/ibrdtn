@@ -23,7 +23,7 @@
 
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
-#include <ibrcommon/net/TLSStream.h>
+#include <ibrcommon/ssl/TLSStream.h>
 #include "SecurityCertificateManager.h"
 #include "Configuration.h"
 

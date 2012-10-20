@@ -24,7 +24,6 @@
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"
 #include <ibrcommon/net/lowpanstream.h>
-#include <ibrcommon/net/UnicastSocketLowpan.h>
 #include <ibrcommon/net/lowpansocket.h>
 
 #include <ibrcommon/Logger.h>
