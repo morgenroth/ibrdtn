@@ -43,7 +43,7 @@ void NodeTest::testGetProtocol()
 {
 	dtn::core::Node n(dtn::data::EID("dtn://test"));
 
-	n.add( dtn::core::Node::URI(dtn::core::Node::NODE_STATIC, dtn::core::Node::CONN_TCPIP, "ip=0.0.0.0;port=1234;", 0, 10) );
+	n.add( dtn::core::Node::URI(dtn::core::Node::NODE_STATIC_LOCAL, dtn::core::Node::CONN_TCPIP, "ip=0.0.0.0;port=1234;", 0, 10) );
 	n.add( dtn::core::Node::URI(dtn::core::Node::NODE_DISCOVERED, dtn::core::Node::CONN_TCPIP, "ip=0.0.0.0;port=1234;", 0, 20) );
 	n.add( dtn::core::Node::URI(dtn::core::Node::NODE_CONNECTED, dtn::core::Node::CONN_TCPIP, "ip=0.0.0.0;port=1234;") );
 
@@ -54,7 +54,7 @@ void NodeTest::testGetProtocol()
 	CPPUNIT_ASSERT_EQUAL((*iter).type, dtn::core::Node::NODE_DISCOVERED);
 	iter++;
 
-	CPPUNIT_ASSERT_EQUAL((*iter).type, dtn::core::Node::NODE_STATIC);
+	CPPUNIT_ASSERT_EQUAL((*iter).type, dtn::core::Node::NODE_STATIC_LOCAL);
 	iter++;
 
 	CPPUNIT_ASSERT_EQUAL((*iter).type, dtn::core::Node::NODE_CONNECTED);

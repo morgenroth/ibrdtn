@@ -770,12 +770,14 @@ namespace dtn
 			/**
 			 * read internet devices
 			 */
-			std::vector<string> inets = dtn::utils::Utils::tokenize(" ", conf.read<string>("net_internet") );
-			for (std::vector<string>::const_iterator iter = inets.begin(); iter != inets.end(); iter++)
-			{
-				ibrcommon::vinterface inet_dev(*iter);
-				_internet_devices.insert(inet_dev);
-			}
+			try {
+				std::vector<string> inets = dtn::utils::Utils::tokenize(" ", conf.read<string>("net_internet") );
+				for (std::vector<string>::const_iterator iter = inets.begin(); iter != inets.end(); iter++)
+				{
+					ibrcommon::vinterface inet_dev(*iter);
+					_internet_devices.insert(inet_dev);
+				}
+			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 		}
 
 		const std::multimap<std::string, std::string>& Configuration::Network::getStaticRoutes() const
