@@ -30,10 +30,9 @@
 class ThreadTest : public CPPUNIT_NS :: TestFixture
 {
 	CPPUNIT_TEST_SUITE (ThreadTest);
-//	CPPUNIT_TEST (thread_test01);
+	CPPUNIT_TEST (thread_test01);
 	CPPUNIT_TEST (thread_test02);
 	CPPUNIT_TEST (thread_test03);
-//	CPPUNIT_TEST (thread_test04);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -50,6 +49,7 @@ public:
 		void __cancellation() throw ();
 		void finally() throw ();
 
+		bool _running;
 		size_t _finally;
 		size_t _time;
 	};
@@ -57,7 +57,7 @@ public:
 	class DetachedTestThread : public ibrcommon::DetachedThread
 	{
 	public:
-		DetachedTestThread(size_t &finally, bool &run, size_t time = 0);
+		DetachedTestThread(ibrcommon::Conditional &cond, bool &run, size_t time = 0);
 		~DetachedTestThread();
 
 		void run() throw ();
@@ -65,7 +65,7 @@ public:
 		void finally() throw ();
 
 	private:
-		size_t &_finally;
+		ibrcommon::Conditional &_cond;
 		bool &_run;
 		size_t _time;
 	};
@@ -74,7 +74,6 @@ protected:
 	void thread_test01();
 	void thread_test02();
 	void thread_test03();
-	void thread_test04();
 };
 
 #endif /* THREADTEST_H_ */

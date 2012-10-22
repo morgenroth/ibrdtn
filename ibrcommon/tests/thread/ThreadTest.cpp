@@ -33,8 +33,8 @@ void ThreadTest::tearDown()
 {
 }
 
-ThreadTest::DetachedTestThread::DetachedTestThread(size_t &finally, bool &run, size_t time)
- : _finally(finally), _run(run), _time(time)
+ThreadTest::DetachedTestThread::DetachedTestThread(ibrcommon::Conditional &cond, bool &run, size_t time)
+ : _cond(cond), _run(run), _time(time)
 {
 
 }
@@ -46,21 +46,31 @@ ThreadTest::DetachedTestThread::~DetachedTestThread()
 
 void ThreadTest::DetachedTestThread::run() throw ()
 {
-	_run = true;
-	::usleep(_time);
+	// set run to true
+	{
+		ibrcommon::MutexLock l(_cond);
+		_run = true;
+		_cond.signal(true);
+	}
+
+	while (_run) {
+		::usleep(_time);
+	}
 }
 
 void ThreadTest::DetachedTestThread::finally() throw ()
 {
-	_finally++;
 }
 
 void ThreadTest::DetachedTestThread::__cancellation() throw ()
 {
+	ibrcommon::MutexLock l(_cond);
+	_run = false;
+	_cond.signal(true);
 }
 
 ThreadTest::TestThread::TestThread(size_t time)
- : _finally(0), _time(time)
+ : _running(true), _finally(0), _time(time)
 {
 }
 
@@ -71,13 +81,14 @@ ThreadTest::TestThread::~TestThread()
 
 void ThreadTest::TestThread::__cancellation() throw ()
 {
+	_running = false;
 }
 
 void ThreadTest::TestThread::run() throw ()
 {
 	if (_time == 0)
 	{
-		while (true) ::usleep(1000);
+		while (_running) ::usleep(1000);
 	}
 	else
 	{
@@ -119,30 +130,25 @@ void ThreadTest::thread_test02()
 void ThreadTest::thread_test03()
 {
 	bool run = false;
-	size_t finally = 0;
+	ibrcommon::Conditional cond;
 
-	DetachedTestThread *t = new DetachedTestThread(finally, run, 10);
+	DetachedTestThread *t = new DetachedTestThread(cond, run, 100);
 	t->start();
 
-	::usleep(2000);
+	// wait until the run variable is true
+	{
+		ibrcommon::MutexLock l(cond);
+		while (!run) { cond.wait(10); }
+	}
 
-	CPPUNIT_ASSERT_EQUAL(1, (int)finally);
-	CPPUNIT_ASSERT_EQUAL(true, run);
-}
-
-void ThreadTest::thread_test04()
-{
-	bool run = false;
-	size_t finally = 0;
-
-	DetachedTestThread *t = new DetachedTestThread(finally, run, 1000);
-	t->start();
-
-	::usleep(100);
+	// stop the thread
 	t->stop();
 
-	::usleep(2000);
+	// wait until the run variable is false
+	{
+		ibrcommon::MutexLock l(cond);
+		while (run) { cond.wait(10); }
+	}
 
-	CPPUNIT_ASSERT_EQUAL(1, (int)finally);
-	CPPUNIT_ASSERT_EQUAL(true, run);
+	CPPUNIT_ASSERT_EQUAL(false, run);
 }

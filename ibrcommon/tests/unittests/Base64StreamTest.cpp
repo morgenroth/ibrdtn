@@ -87,7 +87,7 @@ void Base64StreamTest::testFileReference()
 
 void Base64StreamTest::testReader()
 {
-	for (int j = 43000; j < 43512; j++)
+	for (int j = 43000; j < 43010; j++)
 	{
 		std::cout << "+" << std::flush;
 //	int j = 42690;
