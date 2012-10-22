@@ -652,7 +652,9 @@ namespace ibrcommon
 	tcpsocket::tcpsocket(const ibrcommon::vaddress &destination, const timeval *timeout)
 	 : _address(destination)
 	{
-		if (timeout != NULL) {
+		if (timeout == NULL) {
+			timerclear(&_timeout);
+		} else {
 			::memcpy(&_timeout, timeout, sizeof _timeout);
 		}
 	}
