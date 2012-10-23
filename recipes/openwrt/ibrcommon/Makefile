@@ -14,7 +14,7 @@ PKG_VERSION_MICRO:=0
 
 PKG_VERSION:=$(PKG_VERSION_MAJOR).$(PKG_VERSION_MINOR).$(PKG_VERSION_MICRO)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=http://jenkins.ibr.cs.tu-bs.de/download
+PKG_SOURCE_URL:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 
 PKG_INSTALL:=1
 PKG_FIXUP:=libtool
