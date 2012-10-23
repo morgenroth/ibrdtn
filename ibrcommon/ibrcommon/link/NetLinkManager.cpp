@@ -43,7 +43,7 @@
 #include <signal.h>
 #include <arpa/inet.h>
 
-#ifndef HAVE_LIBNL3
+#ifndef IFF_UP
 #include <net/if.h>
 #endif
 

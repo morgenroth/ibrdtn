@@ -1,10 +1,9 @@
 docdir = $(datadir)/doc/@PACKAGE@
 
-docfiles = api.tex
+docfiles = api.tex BPSEC.txt
 
 if HAVE_PDFLATEX
 doc_DATA = api.pdf
-#docfiles += api.pdf
 MANNAME = api
 MANTEXSRC = $(MANNAME).tex
 MANAUX = $(MANNAME).aux
