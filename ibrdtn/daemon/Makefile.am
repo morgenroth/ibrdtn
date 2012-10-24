@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src etc doc man tests
+SUBDIRS = src etc doc man scripts tests
 ACLOCAL_AMFLAGS = -I m4
 
 # debian files for package building

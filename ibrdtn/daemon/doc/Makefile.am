@@ -1,6 +1,6 @@
 docdir = $(datadir)/doc/@PACKAGE@
 
-docfiles = api.tex BPSEC.txt README.txt genkeys.sh
+docfiles = api.tex BPSEC.txt README.txt
 
 if HAVE_PDFLATEX
 doc_DATA = api.pdf

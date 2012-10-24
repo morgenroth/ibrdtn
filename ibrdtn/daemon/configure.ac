@@ -262,6 +262,7 @@ AC_CONFIG_FILES([Makefile \
 	etc/Makefile \
 	doc/Makefile \
 	man/Makefile \
+	scripts/Makefile \
 	tests/Makefile \
 	tests/unittests/Makefile])
 	
