@@ -184,6 +184,11 @@ namespace dtn
 			_tasks.push( new RemoveDataTask(hash) );
 		}
 
+		void DataStorage::wait()
+		{
+			_tasks.wait(ibrcommon::Queue< Task* >::QUEUE_EMPTY);
+		}
+
 		void DataStorage::__cancellation() throw ()
 		{
 			_tasks.abort();

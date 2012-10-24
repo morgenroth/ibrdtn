@@ -103,6 +103,11 @@ namespace dtn
 			DataStorage::istream retrieve(const Hash &hash) throw (DataNotAvailableException);
 			void remove(const Hash &hash);
 
+			/**
+			 * wait until all tasks are completed
+			 */
+			void wait();
+
 			void iterateAll();
 
 		protected:

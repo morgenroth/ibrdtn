@@ -193,6 +193,7 @@ namespace dtn
 		void SimpleBundleStorage::componentDown() throw ()
 		{
 			unbindEvent(dtn::core::TimeEvent::className);
+			_datastore.wait();
 			_datastore.stop();
 			_datastore.join();
 		}
