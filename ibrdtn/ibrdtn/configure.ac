@@ -163,7 +163,6 @@ AC_ARG_WITH(compression,
 				ZLIB_LIBS="-lz"
 				AC_SUBST(ZLIB_CFLAGS)
 				AC_SUBST(ZLIB_LIBS)
-				REQUIRES_LIBS="$REQUIRES_LIBS gzread"
 			] , [
 				with_compression="no"
 				AC_MSG_WARN([compression enabled, but zlib libraries are not found. Compression extensions are disabled.])
