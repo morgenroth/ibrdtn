@@ -170,6 +170,7 @@ typedef nl_object nl_object_header;
 			}
 
 			default:
+				if (IBRCOMMON_LOGGER_LEVEL > 50) {
 				struct nl_dump_params dp;
 				memset(&dp, 0, sizeof(struct nl_dump_params));
 #ifdef HAVE_LIBNL3
@@ -179,6 +180,7 @@ typedef nl_object nl_object_header;
 #endif
 				dp.dp_fd = stdout;
 				nl_object_dump(obj, &dp);
+				}
 				break;
 		}
 	}
