@@ -94,7 +94,7 @@ namespace ibrcommon
 		struct addrinfo hints;
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_family = PF_UNSPEC;
-		hints.ai_flags = AI_NUMERICHOST;
+		hints.ai_flags = AI_NUMERICSERV;
 
 		struct addrinfo *res;
 		int ret = 0;
@@ -104,7 +104,10 @@ namespace ibrcommon
 
 		try {
 			address = this->address().c_str();
-		} catch (const vaddress::address_not_set&) { };
+		} catch (const vaddress::address_not_set&) {
+			hints.ai_family = basesocket::DEFAULT_SOCKET_FAMILY;
+			hints.ai_flags |= AI_PASSIVE;
+		};
 
 		try {
 			service = this->service().c_str();

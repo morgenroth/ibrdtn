@@ -400,14 +400,18 @@ namespace ibrcommon
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
 
+		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_flags = AI_NUMERICSERV;
 
 		const char *address = NULL;
 		const char *service = NULL;
 
 		try {
 			address = addr.address().c_str();
-		} catch (const vaddress::address_not_set&) { };
+		} catch (const vaddress::address_not_set&) {
+			throw socket_exception("need at least an address to send to");
+		};
 
 		try {
 			service = addr.service().c_str();
@@ -609,6 +613,7 @@ namespace ibrcommon
 
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_NUMERICSERV;
 
 		const char *address = NULL;
 		const char *service = NULL;
@@ -617,7 +622,7 @@ namespace ibrcommon
 			address = addr.address().c_str();
 		} catch (const vaddress::address_not_set&) {
 			hints.ai_family = DEFAULT_SOCKET_FAMILY;
-			hints.ai_flags = AI_PASSIVE;
+			hints.ai_flags |= AI_PASSIVE;
 		};
 
 		try {
@@ -676,6 +681,7 @@ namespace ibrcommon
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_flags = AI_NUMERICSERV;
 
 		struct addrinfo *res;
 		int ret;
@@ -903,6 +909,7 @@ namespace ibrcommon
 
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_flags = AI_NUMERICSERV;
 
 		const char *address = NULL;
 		const char *service = NULL;
@@ -911,7 +918,7 @@ namespace ibrcommon
 			address = _address.address().c_str();
 		} catch (const vaddress::address_not_set&) {
 			hints.ai_family = DEFAULT_SOCKET_FAMILY;
-			hints.ai_flags = AI_PASSIVE;
+			hints.ai_flags |= AI_PASSIVE;
 		};
 
 		try {
