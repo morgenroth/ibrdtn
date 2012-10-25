@@ -95,6 +95,7 @@ namespace ibrcommon
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_flags = AI_NUMERICSERV;
+		hints.ai_socktype = SOCK_DGRAM;
 
 		struct addrinfo *res;
 		int ret = 0;
