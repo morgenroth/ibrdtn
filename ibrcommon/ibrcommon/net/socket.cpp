@@ -85,7 +85,11 @@ namespace ibrcommon
 		return ret;
 	}
 
-	const int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
+	int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
+
+	void basesocket::prefer_legacy_ip() {
+		DEFAULT_SOCKET_FAMILY = AF_INET;
+	}
 
 	basesocket::basesocket()
 	 : _state(SOCKET_DOWN), _fd(-1)

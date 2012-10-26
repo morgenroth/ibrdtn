@@ -101,7 +101,9 @@ namespace ibrcommon {
 	 */
 	class basesocket {
 	public:
-		static const int DEFAULT_SOCKET_FAMILY;
+		static int DEFAULT_SOCKET_FAMILY;
+
+		static void prefer_legacy_ip();
 
 		virtual ~basesocket() = 0;
 
