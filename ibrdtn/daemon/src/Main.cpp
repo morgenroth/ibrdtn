@@ -23,6 +23,7 @@
 
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/data/File.h>
+#include <ibrcommon/net/socket.h>
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/link/LinkManager.h>
@@ -645,6 +646,9 @@ int __daemon_run(Configuration &conf)
 	} catch (const Configuration::ParameterNotSetException&) {
 
 	}
+
+	// prefer legacy IP if requested
+	if (conf.getNetwork().preferLegacyIP()) ibrcommon::basesocket::prefer_legacy_ip();
 
 	// create the bundle core object
 	BundleCore &core = BundleCore::getInstance();
