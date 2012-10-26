@@ -106,7 +106,6 @@ namespace ibrcommon
 		try {
 			address = this->address().c_str();
 		} catch (const vaddress::address_not_set&) {
-			hints.ai_family = basesocket::DEFAULT_SOCKET_FAMILY;
 			hints.ai_flags |= AI_PASSIVE;
 		};
 
