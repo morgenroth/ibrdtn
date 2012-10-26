@@ -89,12 +89,12 @@ namespace ibrcommon
 	int basesocket::DEFAULT_SOCKET_FAMILY_ALTERNATIVE = AF_INET;
 
 	basesocket::basesocket()
-	 : _state(SOCKET_DOWN), _fd(-1)
+	 : _state(SOCKET_DOWN), _fd(-1), _family(PF_UNSPEC)
 	{
 	}
 
 	basesocket::basesocket(int fd)
-	 : _state(SOCKET_UNMANAGED), _fd(fd)
+	 : _state(SOCKET_UNMANAGED), _fd(fd), _family(PF_UNSPEC)
 	{
 	}
 
@@ -208,12 +208,17 @@ namespace ibrcommon
 
 	sa_family_t basesocket::get_family() const throw (socket_exception)
 	{
+		return _family;
+	}
+	
+	sa_family_t basesocket::get_family(int fd) throw (socket_exception)
+	{
 		struct sockaddr_storage bound_addr;
 		socklen_t bound_len = sizeof(bound_addr);
 		::memset(&bound_addr, 0, bound_len);
 
 		// get the socket family
-		int ret = ::getsockname(_fd, (struct sockaddr*)&bound_addr, &bound_len);
+		int ret = ::getsockname(fd, (struct sockaddr*)&bound_addr, &bound_len);
 		if (ret == -1) {
 			throw socket_exception("socket is not bound");
 		}
@@ -224,27 +229,53 @@ namespace ibrcommon
 	void basesocket::init_socket(const vaddress &addr, int type, int protocol) throw (socket_exception)
 	{
 		try {
-			if ((_fd = ::socket(addr.family(), type, protocol)) < 0) {
+			_family = addr.family();
+			if ((_fd = ::socket(_family, type, protocol)) < 0) {
 				throw socket_raw_error(errno, "cannot create socket");
 			}
 		} catch (const vaddress::address_exception&) {
 			// if not address is set use DEFAULT_SOCKET_FAMILY
-			if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY, type, protocol)) < 0) {
-				// if that fails switch to the alternative SOCKET_FAMILY
-				if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY_ALTERNATIVE, type, protocol)) < 0) {
-					throw socket_raw_error(errno, "cannot create socket");
-				}
+			if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY, type, protocol)) > -1) {
+				_family = DEFAULT_SOCKET_FAMILY;
+			}
+			// if that fails switch to the alternative SOCKET_FAMILY
+			else if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY_ALTERNATIVE, type, protocol)) > -1) {
+				_family = DEFAULT_SOCKET_FAMILY_ALTERNATIVE;
 
 				// set the alternative socket family as default
 				DEFAULT_SOCKET_FAMILY = DEFAULT_SOCKET_FAMILY_ALTERNATIVE;
+			}
+			else
+			{
+				throw socket_raw_error(errno, "cannot create socket");
 			}
 		}
 	}
 
 	void basesocket::init_socket(int domain, int type, int protocol) throw (socket_exception)
 	{
+		_family = domain;
 		if ((_fd = ::socket(domain, type, protocol)) < 0) {
 			throw socket_raw_error(errno, "cannot create socket");
+		}
+	}
+
+	void basesocket::bind(int fd, struct sockaddr *addr, socklen_t len) throw (socket_exception)
+	{
+		int ret = ::bind(fd, addr, len);
+
+		if (ret < 0) {
+			// error
+			int bind_err = errno;
+
+			char addr_str[256];
+			char serv_str[256];
+			::getnameinfo(addr, len, (char*)&addr_str, 256, (char*)&serv_str, 256, NI_NUMERICHOST | NI_NUMERICSERV);
+			std::stringstream ss;
+			vaddress vaddr(addr_str, serv_str);
+			ss << "with address " << vaddr.toString();
+
+			check_bind_error(bind_err, ss.str());
 		}
 	}
 
@@ -429,9 +460,9 @@ namespace ibrcommon
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
 
-		hints.ai_family = PF_UNSPEC;
+		hints.ai_family = _family;
 		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_flags = AI_NUMERICSERV;
+		hints.ai_flags = AI_NUMERICSERV | AI_V4MAPPED | AI_ADDRCONFIG;
 
 		const char *address = NULL;
 		const char *service = NULL;
@@ -579,8 +610,7 @@ namespace ibrcommon
 		address_length = sizeof(address.sun_family) + strlen(address.sun_path);
 
 		// bind to the socket
-		int ret = ::bind(_fd, (struct sockaddr *) &address, address_length);
-		check_bind_error(ret);
+		basesocket::bind(_fd, (struct sockaddr *) &address, address_length);
 	}
 
 	tcpserversocket::tcpserversocket(const int port, int listen)
@@ -632,19 +662,16 @@ namespace ibrcommon
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
 
-		hints.ai_family = PF_UNSPEC;
+		hints.ai_family = _family;
 		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_NUMERICSERV;
+		hints.ai_flags = AI_NUMERICSERV | AI_V4MAPPED | AI_ADDRCONFIG | AI_PASSIVE;
 
 		const char *address = NULL;
 		const char *service = NULL;
 
 		try {
 			address = addr.address().c_str();
-		} catch (const vaddress::address_not_set&) {
-			hints.ai_family = DEFAULT_SOCKET_FAMILY;
-			hints.ai_flags |= AI_PASSIVE;
-		};
+		} catch (const vaddress::address_not_set&) { };
 
 		try {
 			service = addr.service().c_str();
@@ -653,10 +680,13 @@ namespace ibrcommon
 		if (0 != ::getaddrinfo(address, service, &hints, &res))
 			throw socket_exception("failed to getaddrinfo with address: " + addr.toString());
 
-		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
-
-		check_bind_error(ret);
+		try {
+			basesocket::bind(_fd, res->ai_addr, res->ai_addrlen);
+			freeaddrinfo(res);
+		} catch (const socket_exception&) {
+			freeaddrinfo(res);
+			throw;
+		}
 	}
 
 	clientsocket* tcpserversocket::accept(ibrcommon::vaddress &addr) throw (socket_exception)
@@ -702,7 +732,7 @@ namespace ibrcommon
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_NUMERICSERV;
+		hints.ai_flags = AI_NUMERICSERV | AI_V4MAPPED | AI_ADDRCONFIG;
 
 		struct addrinfo *res;
 		int ret;
@@ -923,22 +953,19 @@ namespace ibrcommon
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
 
-		hints.ai_family = PF_UNSPEC;
+		hints.ai_family = _family;
 		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_flags = AI_NUMERICSERV;
+		hints.ai_flags = AI_NUMERICSERV | AI_V4MAPPED | AI_ADDRCONFIG | AI_PASSIVE;
 
 		const char *address = NULL;
 		const char *service = NULL;
 
 		try {
-			address = _address.address().c_str();
-		} catch (const vaddress::address_not_set&) {
-			hints.ai_family = DEFAULT_SOCKET_FAMILY;
-			hints.ai_flags |= AI_PASSIVE;
-		};
+			address = addr.address().c_str();
+		} catch (const vaddress::address_not_set&) { };
 
 		try {
-			service = _address.service().c_str();
+			service = addr.service().c_str();
 		} catch (const vaddress::service_not_set&) { };
 
 		std::string errinfo = "with address: " + addr.toString();
@@ -946,10 +973,13 @@ namespace ibrcommon
 		if (0 != ::getaddrinfo(address, service, &hints, &res))
 			throw socket_exception("failed to getaddrinfo with address: " + addr.toString());
 
-		int ret = ::bind(_fd, res->ai_addr, res->ai_addrlen);
-		freeaddrinfo(res);
-
-		check_bind_error(ret, errinfo);
+		try {
+			basesocket::bind(_fd, res->ai_addr, res->ai_addrlen);
+			freeaddrinfo(res);
+		} catch (const socket_exception&) {
+			freeaddrinfo(res);
+			throw;
+		}
 	}
 
 	multicastsocket::multicastsocket(const vaddress &address)
@@ -1059,16 +1089,23 @@ namespace ibrcommon
 
 	void multicastsocket::mcast_op(int optname, const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
+		try {
+			// check the group family
+			if (group.family() != this->get_family()) return;
+		} catch (const vaddress::address_exception&) {
+			return;
+		}
+
 		struct sockaddr_storage mcast_addr;
 		::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
-		mcast_addr.ss_family = group.family();
+		mcast_addr.ss_family = this->get_family();
 		int level = 0;
 
-		switch (group.family()) {
+		switch (this->get_family()) {
 		case AF_INET:
 			// convert the group address
-			if ( ::inet_pton(group.family(), group.address().c_str(), &((struct sockaddr_in*)&mcast_addr)->sin_addr) < 0 )
+			if ( ::inet_pton(this->get_family(), group.address().c_str(), &((struct sockaddr_in*)&mcast_addr)->sin_addr) < 0 )
 			{
 				throw socket_exception("can not transform ipv4 multicast address with inet_pton()");
 			}
@@ -1077,7 +1114,7 @@ namespace ibrcommon
 
 		case AF_INET6:
 			// convert the group address
-			if ( ::inet_pton(group.family(), group.address().c_str(), &((struct sockaddr_in6*)&mcast_addr)->sin6_addr) < 0 )
+			if ( ::inet_pton(this->get_family(), group.address().c_str(), &((struct sockaddr_in6*)&mcast_addr)->sin6_addr) < 0 )
 			{
 				throw socket_exception("can not transform ipv6 multicast address with inet_pton()");
 			}
@@ -1139,9 +1176,7 @@ namespace ibrcommon
 
 	void basesocket::check_bind_error(const int err, const std::string &msg) const throw (socket_exception)
 	{
-		if (err != -1) return;
-
-		switch ( errno )
+		switch ( err )
 		{
 		case EBADF:
 			throw socket_exception("sockfd ist kein gueltiger Deskriptor.");

@@ -101,6 +101,9 @@ namespace ibrcommon {
 	 */
 	class basesocket {
 	public:
+		static int DEFAULT_SOCKET_FAMILY;
+		static int DEFAULT_SOCKET_FAMILY_ALTERNATIVE;
+
 		virtual ~basesocket() = 0;
 
 		/**
@@ -142,6 +145,13 @@ namespace ibrcommon {
 		 */
 		bool ready() const;
 
+		/**
+		 * return the family of a socket
+		 * @return
+		 */
+		sa_family_t get_family() const throw (socket_exception);
+		static sa_family_t get_family(int fd) throw (socket_exception);
+
 	protected:
 		/**
 		 * The socket state determine if the socket file descriptor
@@ -174,19 +184,19 @@ namespace ibrcommon {
 		void set_reuseaddr(bool val, int fd = -1) const throw (socket_exception);
 		void set_nodelay(bool val, int fd = -1) const throw (socket_exception);
 
-		sa_family_t get_family() const throw (socket_exception);
-
 		void init_socket(const vaddress &addr, int type, int protocol) throw (socket_exception);
 		void init_socket(int domain, int type, int protocol) throw (socket_exception);
 
-		static int DEFAULT_SOCKET_FAMILY;
-		static int DEFAULT_SOCKET_FAMILY_ALTERNATIVE;
+		void bind(int fd, struct sockaddr *addr, socklen_t len) throw (socket_exception);
 
 		// contains the current socket state
 		socketstate _state;
 
 		// contains the file descriptor if one is available
 		int _fd;
+
+		// stores the socket family
+		sa_family_t _family;
 	};
 
 	/**

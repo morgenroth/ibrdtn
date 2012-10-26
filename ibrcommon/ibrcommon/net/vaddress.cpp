@@ -103,11 +103,9 @@ namespace ibrcommon
 		const char *address = NULL;
 		const char *service = NULL;
 
-		try {
-			address = this->address().c_str();
-		} catch (const vaddress::address_not_set&) {
-			hints.ai_flags |= AI_PASSIVE;
-		};
+		// throw exception if the address is not set.
+		// without an address we can not determine the address family
+		address = this->address().c_str();
 
 		try {
 			service = this->service().c_str();
@@ -165,6 +163,10 @@ namespace ibrcommon
 			} catch (const scope_not_set&) { }
 		} catch (const address_not_set&) {
 			ss << "<any>";
+			try {
+				std::string service = this->service();
+				ss << ":" + service;
+			} catch (const service_not_set&) { }
 		}
 
 		return ss.str();
