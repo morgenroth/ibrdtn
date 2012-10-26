@@ -371,7 +371,6 @@ namespace dtn
 				bool _fragmentation;
 				ProphetConfig _prophet_config;
 				std::set<ibrcommon::vinterface> _internet_devices;
-				bool _prefer_legacy_ip;
 
 			public:
 				/**
@@ -434,13 +433,6 @@ namespace dtn
 				 * @return The interfaces which are potentially connected to the internet
 				 */
 				std::set<ibrcommon::vinterface> getInternetDevices() const;
-
-				/**
-				 * If true, the socket stack will be set to prefer legacy IP protocol (IPv4) instead
-				 * of IPv6.
-				 * @return True, if IPv4 is preferred to IPv6.
-				 */
-				bool preferLegacyIP() const;
 			};
 
 			class Security : public Configuration::Extension

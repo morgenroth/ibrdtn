@@ -102,7 +102,7 @@ namespace dtn
 		 : _quiet(false), _options(0), _timestamps(false) {};
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _prefer_legacy_ip(false)
+		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false)
 		{};
 
 		Configuration::Security::Security()
@@ -778,11 +778,6 @@ namespace dtn
 					_internet_devices.insert(inet_dev);
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
-
-			/**
-			 * check if legacy IP is preferred
-			 */
-			_prefer_legacy_ip = (conf.read<std::string>("net_prefer_ipv4", "no") == "yes");
 		}
 
 		const std::multimap<std::string, std::string>& Configuration::Network::getStaticRoutes() const
@@ -922,11 +917,6 @@ namespace dtn
 		std::set<ibrcommon::vinterface> Configuration::Network::getInternetDevices() const
 		{
 			return _internet_devices;
-		}
-
-		bool Configuration::Network::preferLegacyIP() const
-		{
-			return _prefer_legacy_ip;
 		}
 
 		bool Configuration::Statistic::enabled() const
