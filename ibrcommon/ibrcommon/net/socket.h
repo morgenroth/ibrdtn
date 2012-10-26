@@ -101,10 +101,6 @@ namespace ibrcommon {
 	 */
 	class basesocket {
 	public:
-		static int DEFAULT_SOCKET_FAMILY;
-
-		static void prefer_legacy_ip();
-
 		virtual ~basesocket() = 0;
 
 		/**
@@ -179,6 +175,12 @@ namespace ibrcommon {
 		void set_nodelay(bool val, int fd = -1) const throw (socket_exception);
 
 		sa_family_t get_family() const throw (socket_exception);
+
+		void init_socket(const vaddress &addr, int type, int protocol) throw (socket_exception);
+		void init_socket(int domain, int type, int protocol) throw (socket_exception);
+
+		static int DEFAULT_SOCKET_FAMILY;
+		static int DEFAULT_SOCKET_FAMILY_ALTERNATIVE;
 
 		// contains the current socket state
 		socketstate _state;

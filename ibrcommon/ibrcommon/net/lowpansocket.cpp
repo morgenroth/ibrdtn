@@ -63,10 +63,7 @@ namespace ibrcommon
 			throw socket_exception("socket is already up");
 
 		// Create socket for listening for client connection requests.
-		if ((_fd = ::socket(PF_IEEE802154, SOCK_DGRAM, 0)) < 0) // Ignoring proto for now
-		{
-			throw socket_exception("lowpansocket: cannot create listen socket");
-		}
+		init_socket(PF_IEEE802154, SOCK_DGRAM, 0);
 
 		struct sockaddr_ieee802154 sockaddr;
 		bzero(&sockaddr, sizeof(sockaddr));

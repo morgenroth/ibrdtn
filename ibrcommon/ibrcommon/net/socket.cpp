@@ -86,10 +86,7 @@ namespace ibrcommon
 	}
 
 	int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
-
-	void basesocket::prefer_legacy_ip() {
-		DEFAULT_SOCKET_FAMILY = AF_INET;
-	}
+	int basesocket::DEFAULT_SOCKET_FAMILY_ALTERNATIVE = AF_INET;
 
 	basesocket::basesocket()
 	 : _state(SOCKET_DOWN), _fd(-1)
@@ -222,6 +219,33 @@ namespace ibrcommon
 		}
 
 		return bound_addr.ss_family;
+	}
+
+	void basesocket::init_socket(const vaddress &addr, int type, int protocol) throw (socket_exception)
+	{
+		try {
+			if ((_fd = ::socket(addr.family(), type, protocol)) < 0) {
+				throw socket_raw_error(errno, "cannot create socket");
+			}
+		} catch (const vaddress::address_exception&) {
+			// if not address is set use DEFAULT_SOCKET_FAMILY
+			if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY, type, protocol)) < 0) {
+				// if that fails switch to the alternative SOCKET_FAMILY
+				if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY_ALTERNATIVE, type, protocol)) < 0) {
+					throw socket_raw_error(errno, "cannot create socket");
+				}
+
+				// set the alternative socket family as default
+				DEFAULT_SOCKET_FAMILY = DEFAULT_SOCKET_FAMILY_ALTERNATIVE;
+			}
+		}
+	}
+
+	void basesocket::init_socket(int domain, int type, int protocol) throw (socket_exception)
+	{
+		if ((_fd = ::socket(domain, type, protocol)) < 0) {
+			throw socket_raw_error(errno, "cannot create socket");
+		}
 	}
 
 	clientsocket::clientsocket()
@@ -469,10 +493,7 @@ namespace ibrcommon
 		 * be in the UNIX domain, and will be a
 		 * stream socket.
 		 */
-		if ((_fd = ::socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-			::close(_fd);
-			throw socket_exception("Could not create a socket.");
-		}
+		init_socket(AF_UNIX, SOCK_STREAM, 0);
 
 		/*
 		 * Create the address we will be connecting to.
@@ -584,12 +605,7 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		try {
-			_fd = ::socket(_address.family(), SOCK_STREAM, 0);
-		} catch (const vaddress::address_exception&) {
-			// address not set, use DEFAULT_SOCKET_FAMILY as default family
-			_fd = ::socket(DEFAULT_SOCKET_FAMILY, SOCK_STREAM, 0);
-		}
+		init_socket(_address, SOCK_STREAM, 0);
 
 		this->set_reuseaddr(true);
 		//this->set_blocking_mode(false);
@@ -878,12 +894,7 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		try {
-			_fd = ::socket(_address.family(), SOCK_DGRAM, 0);
-		} catch (const vaddress::address_exception&) {
-			// address not set, use DEFAULT_SOCKET_FAMILY as default family
-			_fd = ::socket(DEFAULT_SOCKET_FAMILY, SOCK_DGRAM, 0);
-		}
+		init_socket(_address, SOCK_DGRAM, 0);
 
 		try {
 			// test if the service is defined
