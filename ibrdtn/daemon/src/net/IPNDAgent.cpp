@@ -149,7 +149,7 @@ namespace dtn
 				ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
 				// prevent broadcasting in the wrong address family
-				if (addr.family() != sock.get_address().family()) continue;
+				if (addr.family() != sock.get_family()) continue;
 
 				try {
 					sock.sendto(data.c_str(), data.length(), 0, addr);
