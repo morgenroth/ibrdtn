@@ -39,6 +39,7 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <string.h>
+#include <unistd.h>
 
 dtn::dht::DHTNameService::DHTNameService() :
 	_exiting(false), _initialized(false), _announced(false), _foundNodes(-1),

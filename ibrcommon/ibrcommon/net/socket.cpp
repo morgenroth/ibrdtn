@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netdb.h>
+#include <unistd.h>
 
 #include <sstream>
 
