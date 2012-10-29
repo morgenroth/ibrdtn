@@ -1,4 +1,4 @@
-/var/log/ibrdtn.log {
+/var/log/ibrdtn/ibrdtn.log {
 	weekly
 	missingok
 	rotate 10

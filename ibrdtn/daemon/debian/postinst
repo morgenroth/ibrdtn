@@ -5,11 +5,12 @@ DAEMON_USER="dtnd"
 case "$1" in
   configure)
 	#Creating the user if it does not exist
-	if (id dtnd);then
-	echo "user exists";
-	else 	
-	adduser --system ${DAEMON_USER};
-	fi
+	adduser --ingroup daemon --system ${DAEMON_USER};
+        if [ ! -d "/var/log/ibrdtn" ]; then
+          mkdir -p /var/log/ibrdtn
+          chown dtnd.adm /var/log/ibrdtn
+          chmod 775 /var/log/ibrdtn
+        fi
 	;;
 	
   abort-upgrade)
