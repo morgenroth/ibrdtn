@@ -1,0 +1,5 @@
+config BR2_PACKAGE_DTNDHT
+	bool "dtndht"
+	help
+	  Library to query and register to a DTN DHT.
+

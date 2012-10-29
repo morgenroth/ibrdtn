@@ -1,0 +1,7 @@
+config BR2_PACKAGE_IBRDTN
+	bool "ibrdtn"
+	help
+	  IBR-DTN Base Library
+
+	  http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
+

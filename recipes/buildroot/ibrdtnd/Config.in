@@ -1,0 +1,7 @@
+config BR2_PACKAGE_IBRDTND
+	bool "ibrdtnd"
+	help
+	  IBR-DTN Daemon
+
+	  http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
+
