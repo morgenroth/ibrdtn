@@ -22,6 +22,7 @@
 #include "thread/MutexTests.h"
 #include <stdlib.h>
 #include <iostream>
+#include <unistd.h>
 
 CPPUNIT_TEST_SUITE_REGISTRATION (MutexTests);
 
