@@ -593,8 +593,14 @@ namespace ibrcommon
 			// call the linux-like select with given timeout
 			int res = __linux_select(high_fd + 1, &fds_read, &fds_write, &fds_error, tv);
 
-			if (res < 0)
-				throw socket_exception("select error");
+			if (res < 0) {
+				if (errno == EINTR) {
+					// signal has been caught - handle it as interruption
+					continue;
+				}
+				throw socket_raw_error(errno, "unknown select error");
+			}
+
 
 			if (res == 0)
 				throw vsocket_timeout("select timeout");
