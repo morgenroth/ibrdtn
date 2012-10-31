@@ -91,12 +91,6 @@ namespace ibrcommon
 
 	sa_family_t vaddress::family() const throw (address_exception)
 	{
-		struct addrinfo hints;
-		memset(&hints, 0, sizeof(struct addrinfo));
-		hints.ai_family = PF_UNSPEC;
-		hints.ai_flags = AI_NUMERICSERV;
-		hints.ai_socktype = SOCK_DGRAM;
-
 		struct addrinfo *res;
 		int ret = 0;
 
@@ -111,7 +105,7 @@ namespace ibrcommon
 			service = this->service().c_str();
 		} catch (const vaddress::service_not_set&) { };
 
-		if ((ret = ::getaddrinfo(address, service, &hints, &res)) != 0)
+		if ((ret = ::getaddrinfo(address, service, NULL, &res)) != 0)
 		{
 			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 		}

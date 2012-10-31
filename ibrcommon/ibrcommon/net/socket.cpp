@@ -462,7 +462,7 @@ namespace ibrcommon
 
 		hints.ai_family = _family;
 		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_flags = AI_NUMERICSERV | AI_V4MAPPED | AI_ADDRCONFIG;
+		hints.ai_flags = AI_ADDRCONFIG;
 
 		const char *address = NULL;
 		const char *service = NULL;
@@ -664,7 +664,7 @@ namespace ibrcommon
 
 		hints.ai_family = _family;
 		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_NUMERICSERV | AI_V4MAPPED | AI_ADDRCONFIG | AI_PASSIVE;
+		hints.ai_flags = AI_ADDRCONFIG | AI_PASSIVE;
 
 		const char *address = NULL;
 		const char *service = NULL;
@@ -732,7 +732,7 @@ namespace ibrcommon
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_NUMERICSERV | AI_V4MAPPED | AI_ADDRCONFIG;
+		hints.ai_flags = AI_ADDRCONFIG | AI_ADDRCONFIG;
 
 		struct addrinfo *res;
 		int ret;
@@ -955,7 +955,7 @@ namespace ibrcommon
 
 		hints.ai_family = _family;
 		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_flags = AI_NUMERICSERV | AI_V4MAPPED | AI_ADDRCONFIG | AI_PASSIVE;
+		hints.ai_flags = AI_ADDRCONFIG | AI_PASSIVE;
 
 		const char *address = NULL;
 		const char *service = NULL;
