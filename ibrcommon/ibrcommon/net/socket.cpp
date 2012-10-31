@@ -732,7 +732,7 @@ namespace ibrcommon
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_ADDRCONFIG | AI_ADDRCONFIG;
+		hints.ai_flags = AI_ADDRCONFIG;
 
 		struct addrinfo *res;
 		int ret;
