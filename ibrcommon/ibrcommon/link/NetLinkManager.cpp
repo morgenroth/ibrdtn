@@ -365,6 +365,8 @@ typedef nl_object nl_object_header;
 					try {
 						netlinkcache &cache = dynamic_cast<netlinkcache&>(**iter);
 						cache.receive();
+					} catch (const socket_exception &e) {
+						IBRCOMMON_LOGGER(error) << "NetLink error during message receive: " << e.what() << IBRCOMMON_LOGGER_ENDL;
 					} catch (const bad_cast&) { };
 				}
 			}
