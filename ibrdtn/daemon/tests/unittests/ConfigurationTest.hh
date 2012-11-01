@@ -39,8 +39,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 		void testGetNodename();
 		void testGetTimezone();
 		void testGetPath();
-		void testGetUID();
-		void testGetGID();
 		void testDoAPI();
 		void testGetAPIInterface();
 		void testGetAPISocket();
@@ -105,8 +103,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testGetNodename);
 			CPPUNIT_TEST(testGetTimezone);
 			CPPUNIT_TEST(testGetPath);
-			CPPUNIT_TEST(testGetUID);
-			CPPUNIT_TEST(testGetGID);
 			CPPUNIT_TEST(testDoAPI);
 			CPPUNIT_TEST(testGetAPIInterface);
 			CPPUNIT_TEST(testGetAPISocket);

@@ -78,20 +78,6 @@ void ConfigurationTest::testGetPath()
 	CPPUNIT_ASSERT_EQUAL(ibrcommon::File("/tmp").getPath(), conf.getPath("blob").getPath());
 }
 
-void ConfigurationTest::testGetUID()
-{
-	/* test signature () */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_THROW(conf.getUID(), dtn::daemon::Configuration::ParameterNotSetException);
-}
-
-void ConfigurationTest::testGetGID()
-{
-	/* test signature () */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_THROW(conf.getGID(), dtn::daemon::Configuration::ParameterNotSetException);
-}
-
 void ConfigurationTest::testDoAPI()
 {
 	/* test signature () */
