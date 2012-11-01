@@ -28,6 +28,8 @@ cc_sources += ssl/HashStreamTest.cpp \
 		ssl/CipherStreamTest.cpp
 endif
 
+EXTRA_DIST = base64-dec.dat base64-enc.dat
+
 AM_CPPFLAGS = $(DEBUG_CFLAGS)
 AM_LDFLAGS = -L@top_srcdir@/ibrcommon/.libs -librcommon
 
