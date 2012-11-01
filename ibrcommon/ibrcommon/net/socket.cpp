@@ -1089,23 +1089,17 @@ namespace ibrcommon
 
 	void multicastsocket::mcast_op(int optname, const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-		try {
-			// check the group family
-			if (group.family() != this->get_family()) return;
-		} catch (const vaddress::address_exception&) {
-			return;
-		}
-
 		struct sockaddr_storage mcast_addr;
 		::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
-		mcast_addr.ss_family = this->get_family();
 		int level = 0;
 
-		switch (this->get_family()) {
+		switch (group.family()) {
 		case AF_INET:
+			mcast_addr.ss_family = AF_INET;
+
 			// convert the group address
-			if ( ::inet_pton(this->get_family(), group.address().c_str(), &((struct sockaddr_in*)&mcast_addr)->sin_addr) < 0 )
+			if ( ::inet_pton(AF_INET, group.address().c_str(), &((struct sockaddr_in*)&mcast_addr)->sin_addr) < 0 )
 			{
 				throw socket_exception("can not transform ipv4 multicast address with inet_pton()");
 			}
@@ -1113,8 +1107,15 @@ namespace ibrcommon
 			break;
 
 		case AF_INET6:
+			// check if this is a IPv6 socket
+			if (this->get_family() != AF_INET6) {
+				throw socket_exception("address family not supported on this socket");
+			}
+
+			mcast_addr.ss_family = AF_INET6;
+
 			// convert the group address
-			if ( ::inet_pton(this->get_family(), group.address().c_str(), &((struct sockaddr_in6*)&mcast_addr)->sin6_addr) < 0 )
+			if ( ::inet_pton(AF_INET6, group.address().c_str(), &((struct sockaddr_in6*)&mcast_addr)->sin6_addr) < 0 )
 			{
 				throw socket_exception("can not transform ipv6 multicast address with inet_pton()");
 			}
