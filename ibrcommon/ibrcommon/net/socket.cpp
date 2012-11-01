@@ -1079,12 +1079,28 @@ namespace ibrcommon
 
 	void multicastsocket::join(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
+#ifndef MCAST_JOIN_GROUP
+		if (group.family() == AF_INET6) {
+			mcast_op(IPV6_JOIN_GROUP, group, iface);
+		} else {
+			mcast_op(IP_ADD_MEMBERSHIP, group, iface);
+		}
+#else
 		mcast_op(MCAST_JOIN_GROUP, group, iface);
+#endif
 	}
 
 	void multicastsocket::leave(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
+#ifndef MCAST_LEAVE_GROUP
+		if (group.family() == AF_INET6) {
+			mcast_op(IPV6_LEAVE_GROUP, group, iface);
+		} else {
+			mcast_op(IP_DROP_MEMBERSHIP, group, iface);
+		}
+#else
 		mcast_op(MCAST_LEAVE_GROUP, group, iface);
+#endif
 	}
 
 	void multicastsocket::mcast_op(int optname, const vaddress &group, const vinterface &iface) throw (socket_exception)
@@ -1126,6 +1142,35 @@ namespace ibrcommon
 			throw socket_exception("address family not supported");
 		}
 
+#ifndef group_req
+		if (level == IPPROTO_IP) {
+			struct ip_mreq req;
+			::memset(&req, 0, sizeof(req));
+	
+			// copy the address to the group request
+			::memcpy(&req.imr_multiaddr, &mcast_addr, sizeof(mcast_addr));
+
+			// TODO: missing support to set the right interface
+
+			if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
+			{
+				throw socket_raw_error(errno, "setsockopt()");
+			}
+		} else {
+			struct ipv6_mreq req;
+			::memset(&req, 0, sizeof(req));
+
+			// copy the address to the group request
+			::memcpy(&req.ipv6mr_multiaddr, &mcast_addr, sizeof(mcast_addr));
+
+			// TODO: missing support to set the right interface
+
+			if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
+			{
+				throw socket_raw_error(errno, "setsockopt()");
+			}
+		}
+#else
 		struct group_req req;
 		::memset(&req, 0, sizeof(req));
 
@@ -1139,6 +1184,7 @@ namespace ibrcommon
 		{
 			throw socket_raw_error(errno, "setsockopt()");
 		}
+#endif
 
 		// successful!
 		IBRCOMMON_LOGGER_DEBUG(5) << "multicast operation (" << optname << ") successful  with " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
