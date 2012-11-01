@@ -279,8 +279,15 @@ typedef nl_object nl_object_header;
 	{
 		if (_state == SOCKET_DOWN) throw socket_exception("socket not connected");
 		int ret = nl_cache_mngr_data_ready(_mngr);
+#if 0
+		/*
+		 * Some implementations always return an error code, because they reached
+		 * the last message. In that cases we should not throw an exception. Since
+		 * error checking here is not so important we disable this feature.
+		 */
 		if (ret < 0)
 			throw socket_exception("can not receive data from netlink manager");
+#endif
 	}
 
 	void NetLinkManager::netlinkcache::add(const std::string &cachename) throw (socket_exception)
@@ -365,8 +372,6 @@ typedef nl_object nl_object_header;
 					try {
 						netlinkcache &cache = dynamic_cast<netlinkcache&>(**iter);
 						cache.receive();
-					} catch (const socket_exception &e) {
-						IBRCOMMON_LOGGER(error) << "NetLink error during message receive: " << e.what() << IBRCOMMON_LOGGER_ENDL;
 					} catch (const bad_cast&) { };
 				}
 			}
