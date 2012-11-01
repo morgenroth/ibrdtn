@@ -598,6 +598,9 @@ namespace ibrcommon
 					// signal has been caught - handle it as interruption
 					continue;
 				}
+				else if (errno == 0) {
+					throw vsocket_interrupt("select call has been interrupted");
+				}
 				throw socket_raw_error(errno, "unknown select error");
 			}
 
