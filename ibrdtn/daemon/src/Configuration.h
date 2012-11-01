@@ -120,30 +120,6 @@ namespace dtn
 			ibrcommon::File getPath(string name);
 
 			/**
-			 * The "uid" keyword in the configuration can define
-			 * a user to work as. If this daemon is started as root
-			 * the daemon will switch to the defined user on startup.
-			 * @return The UID of the user.
-			 */
-			unsigned int getUID() const;
-
-			/**
-			 * The "gid" keyword in the configuration can define
-			 * a group to work as. If this daemon is started as root
-			 * the daemon will switch to the defined group on startup.
-			 * @return The  GID of the group.
-			 */
-			unsigned int getGID() const;
-
-			/**
-			 * The "user" keyword in the configuration can define
-			 * a user to work as. If this daemon is started as root
-			 * the daemon will switch to the defined user on startup.
-			 * @return The name of the user.
-			 */
-			const std::string getUser() const;
-
-			/**
 			 * Enable/Disable the API interface.
 			 * @return True, if the API interface should be enabled.
 			 */

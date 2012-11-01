@@ -4,13 +4,24 @@ DAEMON_USER="dtnd"
 
 case "$1" in
   configure)
-	#Creating the user if it does not exist
+	# Creating the user if it does not exist
 	adduser --ingroup daemon --system ${DAEMON_USER};
-        if [ ! -d "/var/log/ibrdtn" ]; then
-          mkdir -p /var/log/ibrdtn
-          chown dtnd.adm /var/log/ibrdtn
-          chmod 775 /var/log/ibrdtn
-        fi
+	
+	# create a log directory for the daemon process
+	LOG_DIR="/var/log/ibrdtn"
+	if [ ! -d "${LOG_DIR}" ]; then
+		mkdir -p ${LOG_DIR}
+		chown dtnd.adm ${LOG_DIR}
+		chmod 775 ${LOG_DIR}
+	fi
+	
+	# create a pid directory for the daemon process
+	PID_DIR="/var/run/ibrdtn"
+	if [ ! -d "${PID_DIR}" ]; then
+		mkdir -p ${PID_DIR}
+		chown dtnd.adm ${PID_DIR}
+		chmod 775 ${PID_DIR}
+	fi
 	;;
 	
   abort-upgrade)

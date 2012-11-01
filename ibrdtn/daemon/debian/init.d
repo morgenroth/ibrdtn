@@ -13,13 +13,13 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC=ibrdtnd             # Introduce a short description here
-NAME=ibrdtnd             # Introduce the short server's name here
-PNAME=dtnd               # Introduce the process name
-DAEMON=/usr/sbin/dtnd    # Introduce the server's location here
-DAEMON_ARGS="-D"	 # Arguments to run the daemon with
-PIDFILE=/var/run/$PNAME.pid
-SCRIPTNAME=/etc/init.d/$NAME
+DESC=ibrdtnd             		# Introduce a short description here
+NAME=ibrdtnd             		# Introduce the short server's name here
+PNAME=dtnd               		# Introduce the process name
+DAEMON=/usr/sbin/dtnd    		# Introduce the server's location here
+PIDFILE=/var/run/ibrdtn/$PNAME.pid	# Path where the pid file is stored
+SCRIPTNAME=/etc/init.d/$NAME		# Name of this script
+DAEMON_ARGS="-D -p ${PIDFILE}"	 	# Arguments to run the daemon with
 
 # Exit if the package is not installed
 [ -x $DAEMON ] || exit 0
@@ -29,6 +29,10 @@ SCRIPTNAME=/etc/init.d/$NAME
 
 # set quiet option if requested
 [ -n "${DAEMON_OPTS}" ] && DAEMON_ARGS="${DAEMON_ARGS} ${DAEMON_OPTS}"
+
+# set user if specified in defaults
+[ -n "${DAEMON_USER}" ] && DAEMON_USER_START_ARGS="--chuid ${DAEMON_USER}"
+[ -n "${DAEMON_USER}" ] && DAEMON_USER_STOP_ARGS="--user ${DAEMON_USER}"
 
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
@@ -46,9 +50,9 @@ do_start()
 	#   0 if daemon has been started
 	#   1 if daemon was already running
 	#   2 if daemon could not be started
-	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
+	start-stop-daemon --start --quiet ${DAEMON_USER_START_ARGS} --exec $DAEMON --test > /dev/null \
 		|| return 1
-	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
+	start-stop-daemon --start --quiet ${DAEMON_USER_START_ARGS} --exec $DAEMON -- \
 		$DAEMON_ARGS \
 		|| return 2
 	# Add code here, if necessary, that waits for the process to be ready
@@ -66,7 +70,7 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $PNAME
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $PNAME ${DAEMON_USER_STOP_ARGS}
 	RETVAL="$?"
 	[ "$RETVAL" = 2 ] && return 2
 	# Wait for children to finish too if this is a daemon that forks
@@ -75,7 +79,7 @@ do_stop()
 	# that waits for the process to drop all resources that could be
 	# needed by services started subsequently.  A last resort is to
 	# sleep for some time.
-	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON
+	start-stop-daemon --stop --quiet --oknodo --retry=0/30/KILL/5 --exec $DAEMON ${DAEMON_USER_STOP_ARGS}
 	[ "$?" = 2 ] && return 2
 	# Many daemons don't delete their pidfiles when they exit.
 	rm -f $PIDFILE
@@ -91,7 +95,7 @@ do_reload() {
 	# restarting (for example, when it is sent a SIGHUP),
 	# then implement that here.
 	#
-	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $PNAME
+	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $PNAME ${DAEMON_USER_STOP_ARGS}
 	return 0
 }
 
@@ -148,5 +152,3 @@ case "$1" in
 	exit 3
 	;;
 esac
-
-:

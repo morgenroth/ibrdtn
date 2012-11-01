@@ -179,36 +179,6 @@ void sighandler(int signal)
 	}
 }
 
-void switchUser(Configuration &config)
-{
-	try {
-		// get the username if set
-		std::string username = config.getUser();
-
-		// resolve the username to a valid user id
-		struct passwd *pw = getpwnam(username.c_str());
-
-		if (pw != NULL)
-		{
-			if (setuid( pw->pw_uid ) < 0) return;
-			setgid( pw->pw_gid );
-
-			IBRCOMMON_LOGGER(info) << "Switching user to " << username << IBRCOMMON_LOGGER_ENDL;
-			return;
-		}
-	} catch (const Configuration::ParameterNotSetException&) { }
-
-	try {
-		setuid( config.getUID() );
-		IBRCOMMON_LOGGER(info) << "Switching UID to " << config.getUID() << IBRCOMMON_LOGGER_ENDL;
-	} catch (const Configuration::ParameterNotSetException&) { }
-
-	try {
-		setgid( config.getGID() );
-		IBRCOMMON_LOGGER(info) << "Switching GID to " << config.getGID() << IBRCOMMON_LOGGER_ENDL;
-	} catch (const Configuration::ParameterNotSetException&) { }
-}
-
 void setGlobalVars(Configuration &config)
 {
 	// set the timezone
@@ -619,9 +589,6 @@ int __daemon_run(Configuration &conf)
 		const ibrcommon::File &lf = conf.getLogger().getLogfile();
 		IBRCOMMON_LOGGER(info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
 	} catch (const Configuration::ParameterNotSetException&) { };
-
-	// switch the user is requested
-	switchUser(conf);
 
 	// set global vars
 	setGlobalVars(conf);

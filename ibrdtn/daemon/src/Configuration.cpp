@@ -808,34 +808,6 @@ namespace dtn
 			}
 		}
 
-		const std::string Configuration::getUser() const
-		{
-			try {
-				return _conf.read<std::string>("user");
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
-		}
-
-		unsigned int Configuration::getUID() const
-		{
-			try {
-				return _conf.read<unsigned int>("uid");
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
-		}
-
-		unsigned int Configuration::getGID() const
-		{
-			try {
-				return _conf.read<unsigned int>("gid");
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
-		}
-
-
 		bool Configuration::Discovery::enabled() const
 		{
 			return _enabled;

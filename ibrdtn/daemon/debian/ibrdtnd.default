@@ -8,3 +8,6 @@
 
 # Additional options that are passed to the Daemon.
 DAEMON_OPTS="-c /etc/ibrdtn/ibrdtnd.conf"
+
+# Run the daemon as this specific user
+DAEMON_USER="dtnd"
