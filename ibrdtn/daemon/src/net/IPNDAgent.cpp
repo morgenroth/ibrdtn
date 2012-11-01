@@ -94,6 +94,8 @@ namespace dtn
 					if (e.error() != EADDRNOTAVAIL) {
 						IBRCOMMON_LOGGER(error) << "leave failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 					}
+				} catch (const ibrcommon::socket_exception &e) {
+					IBRCOMMON_LOGGER_DEBUG(10) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const ibrcommon::Exception&) {
 					IBRCOMMON_LOGGER(error) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
@@ -106,30 +108,14 @@ namespace dtn
 
 			for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
 			{
-				bool found = false;
-
-				// check first if the interface has addresses of the same family
-				std::list<ibrcommon::vaddress> addrs = iface.getAddresses();
-				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++)
-				{
-					const ibrcommon::vaddress &addr = (*iter);
-					if (addr.family() == (*it_addr).family())
-					{
-						found = true;
-						break;
-					}
-				}
-
 				try {
-					if (found) {
-						msock.join(*it_addr, iface);
-					}
+					msock.join(*it_addr, iface);
 				} catch (const ibrcommon::socket_raw_error &e) {
 					if (e.error() != EADDRINUSE) {
 						IBRCOMMON_LOGGER(error) << "join failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::socket_exception &e) {
-					IBRCOMMON_LOGGER(error) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(10) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}
@@ -259,10 +245,6 @@ namespace dtn
 
 			// join multicast groups
 			try {
-				ibrcommon::socketset socks = _recv_socket.getAll();
-				if (socks.size() == 0) throw ibrcommon::socket_exception("no multicast socket found");
-				ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**socks.begin());
-
 				for (std::list<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
 				{
 					const ibrcommon::vinterface &iface = (*it_iface);
