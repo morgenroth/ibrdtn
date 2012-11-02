@@ -47,8 +47,10 @@ namespace dtn
 			if (_state != SOCKET_DOWN)
 				throw ibrcommon::socket_exception("socket is already up");
 
+#ifdef HAVE_SYS_INOTIFY_H
 			// initialize fd
 			_fd = inotify_init();
+#endif
 
 			_state = SOCKET_UP;
 		}
@@ -64,10 +66,11 @@ namespace dtn
 				const int wd = (*iter).first;
 				inotify_rm_watch(this->fd(), wd);
 			}
-#endif
 			_watch_map.clear();
 
 			this->close();
+#endif
+
 			_state = SOCKET_DOWN;
 		}
 
@@ -81,7 +84,11 @@ namespace dtn
 
 		int inotifysocket::read(char *data, size_t len) throw (ibrcommon::socket_exception)
 		{
+#ifdef HAVE_SYS_INOTIFY_H
 			return ::read(this->fd(), data, len);
+#else
+			return 0;
+#endif
 		}
 
 		FileMonitor::FileMonitor()
