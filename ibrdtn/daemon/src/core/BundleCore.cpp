@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "Configuration.h"
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleEvent.h"
