@@ -1079,7 +1079,7 @@ namespace ibrcommon
 
 	void multicastsocket::join(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-#ifdef MCAST_JOIN_GROUP
+#ifndef MCAST_JOIN_GROUP
 		if (group.family() == AF_INET6) {
 			mcast_op(IPV6_JOIN_GROUP, group, iface);
 		} else {
@@ -1092,7 +1092,7 @@ namespace ibrcommon
 
 	void multicastsocket::leave(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-#ifdef MCAST_LEAVE_GROUP
+#ifndef MCAST_LEAVE_GROUP
 		if (group.family() == AF_INET6) {
 			mcast_op(IPV6_LEAVE_GROUP, group, iface);
 		} else {
@@ -1103,7 +1103,7 @@ namespace ibrcommon
 #endif
 	}
 
-#ifdef MCAST_JOIN_GROUP
+#ifndef MCAST_JOIN_GROUP
 	void __copy_device_address(struct in_addr *inaddr, const vinterface &iface) {
 		ssize_t ret = 0;
 		struct addrinfo hints, *res;
@@ -1168,7 +1168,7 @@ namespace ibrcommon
 			throw socket_exception("address family not supported");
 		}
 
-#ifdef MCAST_JOIN_GROUP
+#ifndef MCAST_JOIN_GROUP
 		if (res->ai_family == AF_INET) {
 			struct ip_mreq req;
 			::memset(&req, 0, sizeof(req));
