@@ -664,7 +664,7 @@ namespace ibrcommon
 
 		hints.ai_family = _family;
 		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_ADDRCONFIG | AI_PASSIVE;
+		hints.ai_flags = AI_PASSIVE;
 
 		const char *address = NULL;
 		const char *service = NULL;
@@ -955,7 +955,7 @@ namespace ibrcommon
 
 		hints.ai_family = _family;
 		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_flags = AI_ADDRCONFIG | AI_PASSIVE;
+		hints.ai_flags = AI_PASSIVE;
 
 		const char *address = NULL;
 		const char *service = NULL;
@@ -1079,7 +1079,7 @@ namespace ibrcommon
 
 	void multicastsocket::join(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-#ifndef MCAST_JOIN_GROUP
+#ifdef MCAST_JOIN_GROUP
 		if (group.family() == AF_INET6) {
 			mcast_op(IPV6_JOIN_GROUP, group, iface);
 		} else {
@@ -1092,7 +1092,7 @@ namespace ibrcommon
 
 	void multicastsocket::leave(const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
-#ifndef MCAST_LEAVE_GROUP
+#ifdef MCAST_LEAVE_GROUP
 		if (group.family() == AF_INET6) {
 			mcast_op(IPV6_LEAVE_GROUP, group, iface);
 		} else {
@@ -1103,54 +1103,84 @@ namespace ibrcommon
 #endif
 	}
 
+#ifdef MCAST_JOIN_GROUP
+	void __copy_device_address(struct in_addr *inaddr, const vinterface &iface) {
+		ssize_t ret = 0;
+		struct addrinfo hints, *res;
+		memset(&hints, 0, sizeof hints);
+
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_DGRAM;
+
+		// determine interface address
+		struct sockaddr_storage iface_addr;
+		::memset(&iface_addr, 0, sizeof(iface_addr));
+
+		const std::list<vaddress> iface_addrs = iface.getAddresses();
+		for (std::list<vaddress>::const_iterator iter = iface_addrs.begin(); iter != iface_addrs.end(); iter++) {
+			const vaddress &addr = (*iter);
+
+			if ((ret = ::getaddrinfo(addr.address().c_str(), NULL, &hints, &res)) == 0) {
+				// address found
+				::memcpy(inaddr, &((struct sockaddr_in*)res->ai_addr)->sin_addr, sizeof(struct sockaddr_in));
+
+				// free the addrinfo struct
+				freeaddrinfo(res);
+
+				break;
+			}
+		}
+	}
+#endif
+
 	void multicastsocket::mcast_op(int optname, const vaddress &group, const vinterface &iface) throw (socket_exception)
 	{
 		struct sockaddr_storage mcast_addr;
 		::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
 		int level = 0;
+		ssize_t ret = 0;
 
-		switch (group.family()) {
+		struct addrinfo hints, *res;
+		memset(&hints, 0, sizeof hints);
+
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_flags = AI_ADDRCONFIG;
+
+		if ((ret = ::getaddrinfo(group.address().c_str(), NULL, &hints, &res)) != 0) {
+			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
+		}
+
+		switch (res->ai_family) {
 		case AF_INET:
-			mcast_addr.ss_family = AF_INET;
-
-			// convert the group address
-			if ( ::inet_pton(AF_INET, group.address().c_str(), &((struct sockaddr_in*)&mcast_addr)->sin_addr) < 0 )
-			{
-				throw socket_exception("can not transform ipv4 multicast address with inet_pton()");
-			}
 			level = IPPROTO_IP;
 			break;
 
 		case AF_INET6:
-			// check if this is a IPv6 socket
-			if (this->get_family() != AF_INET6) {
-				throw socket_exception("address family not supported on this socket");
-			}
-
-			mcast_addr.ss_family = AF_INET6;
-
-			// convert the group address
-			if ( ::inet_pton(AF_INET6, group.address().c_str(), &((struct sockaddr_in6*)&mcast_addr)->sin6_addr) < 0 )
-			{
-				throw socket_exception("can not transform ipv6 multicast address with inet_pton()");
-			}
 			level = IPPROTO_IPV6;
 			break;
 
 		default:
+			// free the addrinfo struct
+			freeaddrinfo(res);
+
 			throw socket_exception("address family not supported");
 		}
 
-#ifndef group_req
-		if (level == IPPROTO_IP) {
+#ifdef MCAST_JOIN_GROUP
+		if (res->ai_family == AF_INET) {
 			struct ip_mreq req;
 			::memset(&req, 0, sizeof(req));
-	
-			// copy the address to the group request
-			::memcpy(&req.imr_multiaddr, &mcast_addr, sizeof(mcast_addr));
 
-			// TODO: missing support to set the right interface
+			// copy the address to the group request
+			req.imr_multiaddr = ((struct sockaddr_in*)res->ai_addr)->sin_addr;
+
+			// free the addrinfo struct
+			freeaddrinfo(res);
+
+			// set the right interface
+			__copy_device_address(&req.imr_interface, iface);
 
 			if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
@@ -1161,9 +1191,13 @@ namespace ibrcommon
 			::memset(&req, 0, sizeof(req));
 
 			// copy the address to the group request
-			::memcpy(&req.ipv6mr_multiaddr, &mcast_addr, sizeof(mcast_addr));
+			req.ipv6mr_multiaddr = ((struct sockaddr_in6*)res->ai_addr)->sin6_addr;
 
-			// TODO: missing support to set the right interface
+			// free the addrinfo struct
+			freeaddrinfo(res);
+
+			// set the right interface
+			req.ipv6mr_interface = iface.getIndex();
 
 			if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
@@ -1175,7 +1209,10 @@ namespace ibrcommon
 		::memset(&req, 0, sizeof(req));
 
 		// copy the address to the group request
-		::memcpy(&req.gr_group, &mcast_addr, sizeof(mcast_addr));
+		::memcpy(&req.gr_group, res->ai_addr, res->ai_addrlen);
+
+		// free the addrinfo struct
+		freeaddrinfo(res);
 
 		// set the right interface here
 		req.gr_interface = iface.getIndex();
