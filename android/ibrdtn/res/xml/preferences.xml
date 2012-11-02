@@ -1,40 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-	<PreferenceScreen android:key="applist" android:title="@string/applist">
-	    <intent android:action="android.intent.action.VIEW" android:targetPackage="de.tubs.ibr.dtn" android:targetClass="de.tubs.ibr.dtn.daemon.AppListActivity" />
-	</PreferenceScreen>
     <PreferenceCategory android:title="@string/service">
         <CheckBoxPreference android:key="enabledSwitch" android:title="@string/runasbackgroundservice" android:disableDependentsState="true"/>
 	</PreferenceCategory>
-	<PreferenceCategory android:title="@string/general">    
-        <EditTextPreference android:key="endpoint_id" android:title="@string/endpoint_id" android:summary="@string/eid_description" android:dependency="enabledSwitch"></EditTextPreference>
-        <ListPreference android:key="routing" android:title="@string/routing" android:summary="@string/routing_description" android:entries="@array/routing_scheme_names" android:entryValues="@array/routing_scheme_values" android:defaultValue="prophet" android:dependency="enabledSwitch"></ListPreference>
-        <CheckBoxPreference android:key="checkIdleTimeout" android:summary="@string/autodisconnect_desc" android:defaultValue="true" android:title="@string/autodisconnect" android:dependency="enabledSwitch"/>
+	<PreferenceCategory android:title="@string/general" android:key="prefcat_general">    
+        <EditTextPreference android:key="endpoint_id" android:title="@string/endpoint_id" android:summary="@string/eid_description"></EditTextPreference>
+        <ListPreference android:key="routing" android:title="@string/routing" android:summary="@string/routing_description" android:entries="@array/routing_scheme_names" android:entryValues="@array/routing_scheme_values" android:defaultValue="prophet"></ListPreference>
+        <CheckBoxPreference android:key="checkIdleTimeout" android:summary="@string/autodisconnect_desc" android:defaultValue="true" android:title="@string/autodisconnect"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/discovery">
-        <CheckBoxPreference android:summary="@string/discovery_announce_desc" android:title="@string/discovery_announce" android:key="discovery_announce" android:defaultValue="true" android:dependency="enabledSwitch"></CheckBoxPreference>
+    <PreferenceCategory android:title="@string/discovery" android:key="prefcat_disco">
+        <CheckBoxPreference android:summary="@string/discovery_announce_desc" android:title="@string/discovery_announce" android:key="discovery_announce" android:defaultValue="true"></CheckBoxPreference>
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/interfaces" android:key="interfaces" android:dependency="enabledSwitch">
+    <PreferenceCategory android:title="@string/interfaces" android:key="prefcat_interfaces">
     </PreferenceCategory>
     
 <!-- 
     <PreferenceCategory android:title="@string/statichost">
-        <CheckBoxPreference android:key="connect_static" android:title="@string/connect_static" android:dependency="enabledSwitch"/><EditTextPreference android:title="@string/host_name" android:key="host_name" android:dependency="enabledSwitch" android:defaultValue="dtn://"/><EditTextPreference android:title="@string/host_address" android:key="host_address" android:dependency="enabledSwitch" android:defaultValue="0.0.0.0"/>
-        <EditTextPreference android:title="@string/host_port" android:key="host_port" android:dependency="enabledSwitch" android:defaultValue="4556"/>
+        <CheckBoxPreference android:key="connect_static" android:title="@string/connect_static"/><EditTextPreference android:title="@string/host_name" android:key="host_name" android:defaultValue="dtn://"/><EditTextPreference android:title="@string/host_address" android:key="host_address" android:defaultValue="0.0.0.0"/>
+        <EditTextPreference android:title="@string/host_port" android:key="host_port" android:defaultValue="4556"/>
     </PreferenceCategory>
  -->
  
-    <PreferenceCategory android:title="@string/security">
-        <CheckBoxPreference android:title="@string/pref_constrains_lifetime" android:key="constrains_lifetime" android:dependency="enabledSwitch" android:summary="@string/pref_constrains_lifetime_summary"/>
-        <CheckBoxPreference android:title="@string/pref_constrains_timestamp" android:key="constrains_timestamp" android:dependency="enabledSwitch" android:summary="@string/pref_constrains_timestamp_summary"/>
-        <!-- Disabled until version 0.8.1 
-        <ListPreference android:summary="@string/pref_security_mode_desc" android:title="@string/pref_security_mode" android:key="security_mode" android:dependency="enabledSwitch" android:entries="@array/security_modes_names" android:entryValues="@array/security_modes_values" android:defaultValue="disabled"/>
-        <EditTextPreference android:summary="@string/pref_bab_key_desc" android:title="@string/pref_bab_key" android:key="security_bab_key" android:dependency="enabledSwitch"/>
-         -->
+    <PreferenceCategory android:title="@string/security" android:key="prefcat_security">
+        <CheckBoxPreference android:title="@string/pref_constrains_lifetime" android:key="constrains_lifetime" android:summary="@string/pref_constrains_lifetime_summary"/>
+        <CheckBoxPreference android:title="@string/pref_constrains_timestamp" android:key="constrains_timestamp" android:summary="@string/pref_constrains_timestamp_summary"/>
+        <ListPreference android:summary="@string/pref_security_mode_desc" android:title="@string/pref_security_mode" android:key="security_mode" android:entries="@array/security_modes_names" android:entryValues="@array/security_modes_values" android:defaultValue="disabled"/>
+        <EditTextPreference android:summary="@string/pref_bab_key_desc" android:title="@string/pref_bab_key" android:key="security_bab_key"/>
     </PreferenceCategory>
     
     <PreferenceCategory android:title="System">
-<!--    <CheckBoxPreference android:summary="Enable debugging output" android:title="Debug" android:key="debug" android:dependency="enabledSwitch"/> -->
+<!--    <CheckBoxPreference android:summary="Enable debugging output" android:title="Debug" android:key="debug"/> -->
 		<CheckBoxPreference android:summary="@string/pref_collect_stats_desc" android:title="@string/pref_collect_stats" android:key="collect_stats" />
         <Preference android:title="@string/system_version" android:key="system_version"/>
 	</PreferenceCategory>

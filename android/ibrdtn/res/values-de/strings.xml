@@ -78,4 +78,5 @@
     <string name="dialog_wait_stopping">Deaktiviere DTN Stack</string>
     <string name="notify_error">Dienst fehlgeschlagen</string>
     <string name="senddatanow">Gesammelte Daten übertragen</string>
+    <string name="list_apps">DTN Anwendungen</string>
 </resources>

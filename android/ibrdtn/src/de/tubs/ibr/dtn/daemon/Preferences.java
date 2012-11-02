@@ -26,6 +26,8 @@ import java.net.NetworkInterface;
 import java.util.Calendar;
 import java.util.Enumeration;
 
+import android.annotation.TargetApi;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -50,11 +52,14 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
-import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.Switch;
 import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
@@ -71,6 +76,9 @@ public class Preferences extends PreferenceActivity {
 	
 	// progress dialog for the send process
 	private ProgressDialog pd = null;
+	
+	private Switch actionBarSwitch = null;
+	private CheckBoxPreference checkBoxPreference = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		@Override
@@ -121,28 +129,46 @@ public class Preferences extends PreferenceActivity {
 		builder.show();
 	}
 	
+	@TargetApi(14)
+	private void setDaemonSwitch(boolean val) {
+		if (actionBarSwitch != null) {
+			actionBarSwitch.setChecked(val);
+		} else if (checkBoxPreference != null) {
+			checkBoxPreference.setChecked(val);
+		}
+		
+		setPrefsEnabled(!val);
+	}
+	
+	@SuppressWarnings("deprecation")
+	private void setPrefsEnabled(boolean val) {
+		// enable / disable depending elements
+		String[] prefcats = { "prefcat_disco", "prefcat_general", "prefcat_interfaces", "prefcat_security" };
+		for (String pcat : prefcats) {
+			PreferenceCategory pc = (PreferenceCategory) findPreference(pcat);
+			pc.setEnabled(val);
+		}
+	}
+	
 	private BroadcastReceiver _state_receiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.STATE))
 			{
-				@SuppressWarnings("deprecation")
-				CheckBoxPreference enabledSwitch = (CheckBoxPreference) findPreference("enabledSwitch");
-				
 				String state = intent.getStringExtra("state");
 				DaemonState ds = DaemonState.valueOf(state);
 				switch (ds)
 				{
 				case ONLINE:
-					enabledSwitch.setChecked(true);
+					Preferences.this.setDaemonSwitch(true);
 					break;
 					
 				case OFFLINE:
-					enabledSwitch.setChecked(false);
+					Preferences.this.setDaemonSwitch(false);
 					break;
 					
 				case ERROR:
-					enabledSwitch.setChecked(false);
+					Preferences.this.setDaemonSwitch(false);
 					break;
 					
 				default:
@@ -214,11 +240,6 @@ public class Preferences extends PreferenceActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 	    MenuInflater inflater = getMenuInflater();
 	    inflater.inflate(R.menu.main_menu, menu);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemCloudUplink), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemNeighbors), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemShowLog), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearStorage), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemSendDataNow), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
 	    
 	    if (0 != (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
 	    	menu.findItem(R.id.itemSendDataNow).setVisible(true);
@@ -274,6 +295,13 @@ public class Preferences extends PreferenceActivity {
 	    	return true;
 	    }
 	    
+	    case R.id.itemApps:
+	    {
+			Intent i = new Intent(Preferences.this, AppListActivity.class);
+			startActivity(i);
+	    	return true;
+	    }
+	    
 	    case R.id.itemCloudUplink:
 	    {
 	    	toggleCloudUplink(item);
@@ -320,6 +348,7 @@ public class Preferences extends PreferenceActivity {
 		}
 	}
 	
+	@TargetApi(14)
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -329,12 +358,15 @@ public class Preferences extends PreferenceActivity {
 	    super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
 		
-		// disable daemon controls
-		Preference enabledSwitch = (Preference) findPreference("enabledSwitch");
-		enabledSwitch.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+		// connect daemon controls
+        checkBoxPreference = (CheckBoxPreference) findPreference("enabledSwitch");
+		if (checkBoxPreference != null) {
+			checkBoxPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			@Override
 			public boolean onPreferenceClick(Preference p) {
 				if (((CheckBoxPreference) p).isChecked()) {
+					Preferences.this.setPrefsEnabled(false);
+					
 					// startup the daemon process
 					final Intent intent = new Intent(Preferences.this, DaemonService.class);
 					intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
@@ -350,10 +382,50 @@ public class Preferences extends PreferenceActivity {
 				
 				return true;
 			}
-		});
+			});
+		} else {
+			// use custom actionbar switch
+	        actionBarSwitch = new Switch(this);
+
+	        PreferenceActivity preferenceActivity = (PreferenceActivity) this;
+	        if (preferenceActivity.onIsHidingHeaders() || !preferenceActivity.onIsMultiPane()) {
+	            final int padding = this.getResources().getDimensionPixelSize(
+	                    R.dimen.action_bar_switch_padding);
+	            actionBarSwitch.setPadding(0, 0, padding, 0);
+	            this.getActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM,
+	                    ActionBar.DISPLAY_SHOW_CUSTOM);
+	            this.getActionBar().setCustomView(actionBarSwitch, new ActionBar.LayoutParams(
+	                    ActionBar.LayoutParams.WRAP_CONTENT,
+	                    ActionBar.LayoutParams.WRAP_CONTENT,
+	                    Gravity.CENTER_VERTICAL | Gravity.RIGHT));
+	        }
+	        
+	        actionBarSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+				@Override
+				public void onCheckedChanged(CompoundButton arg0, boolean val) {
+					Preferences.this.setPrefsEnabled(!val);
+					
+					if (val) {
+						Preferences.this.setPrefsEnabled(false);
+						
+						// startup the daemon process
+						final Intent intent = new Intent(Preferences.this, DaemonService.class);
+						intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+						startService(intent);
+					}
+					else
+					{
+						// shutdown the daemon
+						final Intent intent = new Intent(Preferences.this, DaemonService.class);
+						intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
+						startService(intent);
+					}
+				}
+	        });
+		}
 		
 		try {
-			PreferenceCategory pc = (PreferenceCategory) findPreference("interfaces");
+			PreferenceCategory pc = (PreferenceCategory) findPreference("prefcat_interfaces");
 			
 			for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
 		    {

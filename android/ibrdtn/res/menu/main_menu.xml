@@ -2,10 +2,11 @@
 <menu
   xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:checkableBehavior="all">
-        <item android:id="@+id/itemCloudUplink" android:title="@string/clouduplink_on" android:icon="@drawable/ic_cloud"></item>    
+        <item android:id="@+id/itemCloudUplink" android:title="@string/clouduplink_on" android:icon="@drawable/ic_cloud" android:showAsAction="ifRoom|withText"></item>    
     </group>
-    <item android:title="@string/list_neighbors" android:id="@+id/itemNeighbors" android:alphabeticShortcut="@string/list_neighbors" android:icon="@drawable/ic_neighbors"></item>
-    <item android:id="@+id/itemShowLog" android:icon="@drawable/ic_log" android:title="@string/showlog" android:alphabeticShortcut="@string/showlog"></item>
-    <item android:id="@+id/itemClearStorage" android:icon="@drawable/ic_clear" android:title="@string/clearstorage" android:alphabeticShortcut="@string/clearstorage"></item>
-    <item android:id="@+id/itemSendDataNow" android:title="@string/senddatanow" android:alphabeticShortcut="@string/senddatanow"></item>
+    <item android:title="@string/list_neighbors" android:id="@+id/itemNeighbors" android:alphabeticShortcut="@string/list_neighbors" android:icon="@drawable/ic_neighbors" android:showAsAction="ifRoom|withText"></item>
+    <item android:id="@+id/itemShowLog" android:icon="@drawable/ic_log" android:title="@string/showlog" android:alphabeticShortcut="@string/showlog" android:showAsAction="ifRoom|withText"></item>
+    <item android:id="@+id/itemApps" android:title="@string/list_apps" android:alphabeticShortcut="@string/list_apps" android:icon="@drawable/ic_apps" android:showAsAction="ifRoom|withText"></item>
+    <item android:id="@+id/itemClearStorage" android:icon="@drawable/ic_clear" android:title="@string/clearstorage" android:alphabeticShortcut="@string/clearstorage" android:showAsAction="never"></item>
+    <item android:id="@+id/itemSendDataNow" android:title="@string/senddatanow" android:alphabeticShortcut="@string/senddatanow" android:showAsAction="never"></item>   
 </menu>
