@@ -278,6 +278,18 @@ namespace dtn
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_WAKEUP);
 						_stream << ClientHandler::API_STATUS_OK << " WAKEUP" << std::endl;
 					}
+					else if (cmd[1] == "internet_off")
+					{
+						// send internet off signal
+						dtn::core::BundleCore::getInstance().setGloballyConnected(false);
+						_stream << ClientHandler::API_STATUS_OK << " INTERNET OFF" << std::endl;
+					}
+					else if (cmd[1] == "internet_on")
+					{
+						// send internet off signal
+						dtn::core::BundleCore::getInstance().setGloballyConnected(true);
+						_stream << ClientHandler::API_STATUS_OK << " INTERNET ON" << std::endl;
+					}
 				}
 				else if (cmd[0] == "bundle")
 				{
