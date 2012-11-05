@@ -864,8 +864,6 @@ int ibrdtn_daemon_main_loop()
 		esw.loop();
 	}
 
-	IBRCOMMON_LOGGER(info) << "shutdown dtn node" << IBRCOMMON_LOGGER_ENDL;
-
 	/**
 	 * terminate all components!
 	 */
@@ -886,6 +884,8 @@ int ibrdtn_daemon_main_loop()
 	{
 		delete (*iter);
 	}
+
+	IBRCOMMON_LOGGER(info) << "shutdown complete" << IBRCOMMON_LOGGER_ENDL;
 
 	return 0;
 }
