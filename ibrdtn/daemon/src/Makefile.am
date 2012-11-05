@@ -61,7 +61,9 @@ daemon_SOURCES = \
 				DTNTPWorker.cpp \
 				DTNTPWorker.h \
 				StandByManager.h \
-				StandByManager.cpp
+				StandByManager.cpp \
+				ibrdtnd.h \
+				ibrdtnd.cpp
 
 
 noinst_LTLIBRARIES = libdtnd.la
