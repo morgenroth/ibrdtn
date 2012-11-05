@@ -139,13 +139,20 @@ const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger:
 // debug off by default
 bool _debug = false;
 
+// marker if the shutdown was called
+bool _shutdown = false;
+
 // on interruption do this!
 void sighandler(int signal)
 {
+	// do not handle further signals if the shutdown is in progress
+	if (_shutdown) return;
+
 	switch (signal)
 	{
 	case SIGTERM:
 	case SIGINT:
+		_shutdown = true;
 		dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
 		break;
 	case SIGUSR1:
