@@ -356,8 +356,8 @@ public class Preferences extends PreferenceActivity {
 			// use custom actionbar switch
 	        actionBarSwitch = new Switch(this);
 
-	        PreferenceActivity preferenceActivity = (PreferenceActivity) this;
-	        if (preferenceActivity.onIsHidingHeaders() || !preferenceActivity.onIsMultiPane()) {
+	        //PreferenceActivity preferenceActivity = (PreferenceActivity) this;
+	        //if (preferenceActivity.onIsHidingHeaders() || !preferenceActivity.onIsMultiPane()) {
 	            final int padding = this.getResources().getDimensionPixelSize(
 	                    R.dimen.action_bar_switch_padding);
 	            actionBarSwitch.setPadding(0, 0, padding, 0);
@@ -367,7 +367,7 @@ public class Preferences extends PreferenceActivity {
 	                    ActionBar.LayoutParams.WRAP_CONTENT,
 	                    ActionBar.LayoutParams.WRAP_CONTENT,
 	                    Gravity.CENTER_VERTICAL | Gravity.RIGHT));
-	        }
+	        //}
 	        
 	        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 	        
