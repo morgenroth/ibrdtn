@@ -369,6 +369,12 @@ public class Preferences extends PreferenceActivity {
 	                    Gravity.CENTER_VERTICAL | Gravity.RIGHT));
 	        }
 	        
+	        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+	        
+	        // read initial state of the switch
+	        actionBarSwitch.setChecked( prefs.getBoolean("enabledSwitch", false) );
+	        setPrefsEnabled( !prefs.getBoolean("enabledSwitch", false) );
+	        
 	        actionBarSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 				@Override
 				public void onCheckedChanged(CompoundButton arg0, boolean val) {
@@ -377,6 +383,10 @@ public class Preferences extends PreferenceActivity {
 					if (val) {
 						Preferences.this.setPrefsEnabled(false);
 						
+						// set "enabledSwitch" preference to true
+						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+						prefs.edit().putBoolean("enabledSwitch", true).commit();
+						
 						// startup the daemon process
 						final Intent intent = new Intent(Preferences.this, DaemonService.class);
 						intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
@@ -384,6 +394,10 @@ public class Preferences extends PreferenceActivity {
 					}
 					else
 					{
+						// set "enabledSwitch" preference to false
+						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+						prefs.edit().putBoolean("enabledSwitch", false).commit();
+						
 						// shutdown the daemon
 						final Intent intent = new Intent(Preferences.this, DaemonService.class);
 						intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
