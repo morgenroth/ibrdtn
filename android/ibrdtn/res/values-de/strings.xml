@@ -79,4 +79,7 @@
     <string name="notify_error">Dienst fehlgeschlagen</string>
     <string name="senddatanow">Gesammelte Daten übertragen</string>
     <string name="list_apps">DTN Anwendungen</string>
+    <string name="pref_cloudconnect_title">Cloud connect</string>
+    <string name="pref_cloudconnect_summary">Verwendet eine statische Verbindung zum DTN bone</string>
+    <string name="pref_connection">Verbindung</string>
 </resources>

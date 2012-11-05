@@ -143,10 +143,16 @@ public class Preferences extends PreferenceActivity {
 	@SuppressWarnings("deprecation")
 	private void setPrefsEnabled(boolean val) {
 		// enable / disable depending elements
-		String[] prefcats = { "prefcat_disco", "prefcat_general", "prefcat_interfaces", "prefcat_security" };
+		String[] prefcats = { "prefcat_general", "prefcat_interfaces", "prefcat_security" };
 		for (String pcat : prefcats) {
 			PreferenceCategory pc = (PreferenceCategory) findPreference(pcat);
 			pc.setEnabled(val);
+		}
+		
+		String[] prefs = { "discovery_announce", "checkIdleTimeout" };
+		for (String p : prefs) {
+			Preference pobj = (Preference) findPreference(p);
+			pobj.setEnabled(val);
 		}
 	}
 	
@@ -178,29 +184,12 @@ public class Preferences extends PreferenceActivity {
 		}
 	};
 	
-	private void toggleCloudUplink(MenuItem itm) {
+	private void setCloudUplink(boolean val) {
 		Intent i = new Intent();
 		i.setAction(DaemonService.ACTION_CLOUD_UPLINK);
 		i.addCategory(Intent.CATEGORY_DEFAULT);
-		
-    	if (itm.isChecked()) {
-    		i.putExtra("enabled", false);
-    	} else {
-    		i.putExtra("enabled", true);
-    	}
-    	
-    	Preferences.this.sendBroadcast(i);
-    	
-    	Boolean onoff = !itm.isChecked();
-    	
-    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
-    	Editor edit = prefs.edit();
-    	edit.putBoolean("cloud_uplink", onoff);
-    	edit.apply();
-    	
-    	itm.setChecked(onoff);
-    	itm.setIcon(onoff ? R.drawable.ic_cloud_off : R.drawable.ic_cloud);
-    	itm.setTitle(onoff ? R.string.clouduplink_off : R.string.clouduplink_on);
+		i.putExtra("enabled", val);
+    	this.sendBroadcast(i);
 	}
 	
 	private class ClearStorageTask extends AsyncTask<String, Integer, Boolean> {
@@ -249,20 +238,6 @@ public class Preferences extends PreferenceActivity {
 	    
 	    return super.onCreateOptionsMenu(menu);
 	}
-	
-	@Override
-	public boolean onPrepareOptionsMenu(Menu menu) {
-		MenuItem cloud = menu.findItem(R.id.itemCloudUplink);
-		
-    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
-    	Boolean onoff = prefs.getBoolean("cloud_uplink", false);
-		
-		cloud.setChecked(onoff);
-		cloud.setIcon(onoff ? R.drawable.ic_cloud_off : R.drawable.ic_cloud);
-		cloud.setTitle(onoff ? R.string.clouduplink_off : R.string.clouduplink_on);
-		
-		return super.onPrepareOptionsMenu(menu);
-	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -301,13 +276,7 @@ public class Preferences extends PreferenceActivity {
 			startActivity(i);
 	    	return true;
 	    }
-	    
-	    case R.id.itemCloudUplink:
-	    {
-	    	toggleCloudUplink(item);
-	    	return true;
-	    }
-	        
+	     
 	    case R.id.itemNeighbors:
 	    {
 	    	// open neighbor list activity
@@ -424,12 +393,35 @@ public class Preferences extends PreferenceActivity {
 	        });
 		}
 		
+		// add handle for cloud connect checkbox
+		CheckBoxPreference cbCloudConnect = (CheckBoxPreference) findPreference("cloud_uplink");
+		if (cbCloudConnect != null) {
+			cbCloudConnect.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+			@Override
+			public boolean onPreferenceClick(Preference p) {
+				setCloudUplink(((CheckBoxPreference) p).isChecked());
+				return true;
+			}
+			});
+		}
+		
+		// list all network interfaces
 		try {
 			PreferenceCategory pc = (PreferenceCategory) findPreference("prefcat_interfaces");
 			
 			for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
 		    {
 	            NetworkInterface i = list.nextElement();
+	            
+	            // skip virtual interfaces
+	            if (i.isVirtual()) continue;
+	            
+	            // do not work on non-multicast interfaces
+	            if (!i.supportsMulticast()) continue;
+	            
+	            // skip loopback device
+	            if (i.isLoopback()) continue;
+	            
 	            String iface = i.getDisplayName();
 	            CheckBoxPreference cb_i = new CheckBoxPreference(this);
 	            
@@ -441,7 +433,6 @@ public class Preferences extends PreferenceActivity {
 	            }
 	            else if (i.isLoopback())
 	            {
-	            	
 	            	cb_i.setSummary("Loopback");
 	            }
 	            

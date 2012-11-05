@@ -79,4 +79,7 @@
     <string name="notify_error">Service failed</string>
     <string name="senddatanow">Send collected data</string>
     <string name="list_apps">Show DTN apps</string>
+    <string name="pref_cloudconnect_title">Cloud connect</string>
+    <string name="pref_cloudconnect_summary">Enable a static uplink to the DTN bone</string>
+    <string name="pref_connection">Connection</string>
 </resources>
