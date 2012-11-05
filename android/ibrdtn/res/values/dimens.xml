@@ -1,0 +1,3 @@
+<resources>
+    <dimen name="action_bar_switch_padding">16dip</dimen>
+</resources>
