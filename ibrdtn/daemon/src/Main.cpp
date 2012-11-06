@@ -26,13 +26,14 @@
 
 #ifdef HAVE_LIBDAEMON
 #include <libdaemon/daemon.h>
-#include <string.h>
 #endif
 
+#include <string.h>
 #include <csignal>
+#include <set>
+
 #include <sys/types.h>
 #include <syslog.h>
-#include <set>
 #include <pwd.h>
 #include <unistd.h>
 

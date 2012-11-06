@@ -782,10 +782,10 @@ int ibrdtn_daemon_initialize() {
 	// create dht naming service if configured
 	if (conf.getDHT().enabled()){
 		IBRCOMMON_LOGGER_DEBUG(50) << "DHT: is enabled!" << IBRCOMMON_LOGGER_ENDL;
-		DHTNameService* dhtns = new DHTNameService();
+		dtn::dht::DHTNameService* dhtns = new dtn::dht::DHTNameService();
 		components.push_back(dhtns);
-		if (standby_manager != NULL) standby_manager->adopt(dhtns);
-		if (ipnd != NULL) ipnd->addService(dhtns);
+		if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(dhtns);
+		if (__ibrdtn_daemon_ipnd != NULL) __ibrdtn_daemon_ipnd->addService(dhtns);
 	}
 #endif
 
