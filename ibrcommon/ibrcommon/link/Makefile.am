@@ -1,7 +1,7 @@
 ## sub directory
 
-h_sources = nl802154.h LinkManager.h LinkEvent.h PosixLinkManager.h
-cc_sources = LinkManager.cpp LinkEvent.cpp PosixLinkManager.cpp
+h_sources = nl802154.h LinkManager.h LinkEvent.h
+cc_sources = LinkManager.cpp LinkEvent.cpp
 
 if LOWPAN
 cc_sources += nl_policy.c
@@ -10,6 +10,9 @@ endif
 if NETLINK
 h_sources += NetLinkManager.h
 cc_sources += NetLinkManager.cpp
+else
+h_sources += PosixLinkManager.h
+cc_sources += PosixLinkManager.cpp
 endif
 
 #Install the headers in a versioned directory
