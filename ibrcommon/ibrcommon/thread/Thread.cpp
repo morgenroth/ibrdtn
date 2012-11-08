@@ -36,7 +36,7 @@
 
 namespace ibrcommon
 {
-	void Thread::finalize_thread(void *obj)
+	void* Thread::__execute__(void *obj) throw ()
 	{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 		// the given object should never be null
@@ -44,49 +44,6 @@ namespace ibrcommon
 #endif
 		// cast the thread object
 		Thread *th = static_cast<Thread *>(obj);
-
-		// set the state to finalizing, blocking all threads until this is done
-		th->_state = THREAD_FINALIZING;
-
-		// call the finally method
-		th->finally();
-
-		// set the state to DONE
-		th->_state = THREAD_FINALIZED;
-
-		// delete the thread-object is requested
-		if (th->__delete_on_exit)
-		{
-			delete th;
-		}
-	}
-
-	void* Thread::exec_thread(void *obj)
-	{
-#ifdef __DEVELOPMENT_ASSERTIONS__
-		// the given object should never be null
-		assert(obj != NULL);
-#endif
-		// cast the thread object
-		Thread *th = static_cast<Thread *>(obj);
-
-		// add cleanup-handler to finalize threads
-		pthread_cleanup_push(Thread::finalize_thread, (void *)th);
-
-		// set the state to RUNNING
-		// enter the setup stage, if this thread is still in preparation state
-		{
-			ibrcommon::ThreadsafeState<THREAD_STATE>::Locked ls = th->_state.lock();
-			if (ls != THREAD_PREPARE)
-			{
-				throw ibrcommon::Exception("Thread has been canceled.");
-			}
-
-			ls = THREAD_SETUP;
-		}
-
-		// call the setup method
-		th->setup();
 
 		// set the state to running
 		th->_state = THREAD_RUNNING;
@@ -94,17 +51,29 @@ namespace ibrcommon
 		// run threads run routine
 		th->run();
 
-		// remove cleanup-handler and call it
-		pthread_cleanup_pop(1);
+		// set the state to finalizing, blocking all threads until this is done
+		th->_state = THREAD_FINALIZING;
+
+		// call the finally method
+		th->finally();
+
+		// delete the thread-object is requested
+		if (dynamic_cast<DetachedThread*>(th) != NULL)
+		{
+			th->_state = THREAD_FINALIZED;
+			delete th;
+			return NULL;
+		}
+
+		// set the state to JOINABLE
+		th->_state = THREAD_JOINABLE;
 
 		// exit the thread
-		Thread::exit();
-
 		return NULL;
 	}
 
-	Thread::Thread(size_t size, bool delete_on_exit)
-	 : _state(THREAD_INITIALIZED, THREAD_JOINED), tid(0), stack(size), priority(0), __delete_on_exit(delete_on_exit)
+	Thread::Thread(size_t size)
+	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), priority(0)
 	{
 		pthread_attr_init(&attr);
 	}
@@ -146,41 +115,29 @@ namespace ibrcommon
 		pthread_attr_destroy(&attr);
 	}
 
-	void Thread::detach(void)
-	{
-		pthread_detach(tid);
-	}
-
-	void Thread::exit(void)
-	{
-		pthread_exit(NULL);
-	}
-
 	int Thread::kill(int sig)
 	{
 		if (tid == 0) return -1;
 		return pthread_kill(tid, sig);
 	}
 
-	void Thread::cancel() throw (ThreadException)
+	void Thread::cancel() throw ()
 	{
 		// block multiple cancel calls
 		{
 			ibrcommon::ThreadsafeState<THREAD_STATE>::Locked ls = _state.lock();
 
-			// is this thread running?
-			if (ls == THREAD_INITIALIZED)
+			// if the thread never has been started: exit and deny any further startup
+			if (ls == THREAD_CREATED)
 			{
-				// deny any futher startup of this thread
-				ls = THREAD_JOINED;
+				ls = THREAD_FINALIZED;
 				return;
 			}
 
-			if ( (ls == THREAD_PREPARE) || (ls == THREAD_SETUP) )
-			{
-				// wait until RUNNING, ERROR, JOINED or FINALIZED is reached
-				ls.wait(THREAD_RUNNING | THREAD_JOINED | THREAD_ERROR | THREAD_FINALIZED | THREAD_CANCELLED);
-			}
+			if ((ls == THREAD_CANCELLED) || (ls == THREAD_FINALIZED) || (ls == THREAD_JOINABLE)) return;
+
+			// wait until a state is reached where cancellation is possible
+			ls.wait(THREAD_RUNNING | THREAD_JOINABLE | THREAD_FINALIZED);
 
 			// exit if the thread is not running
 			if (ls != THREAD_RUNNING) return;
@@ -199,7 +156,7 @@ namespace ibrcommon
 	}
 
 	JoinableThread::JoinableThread(size_t size)
-	 : Thread(size, false)
+	 : Thread(size)
 	{
 	}
 
@@ -207,10 +164,10 @@ namespace ibrcommon
 	{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 		// every thread should be joined, when the destructor is called.
-		if ( (_state != THREAD_JOINED) && (_state != THREAD_ERROR) )
+		if ( _state != THREAD_FINALIZED )
 		{
-			std::cerr << "FAILURE: Thread not joined! Current state:" << _state.get() << std::endl;
-			assert( (_state != THREAD_JOINED) && (_state != THREAD_ERROR) );
+			std::cerr << "FAILURE: Thread not finalized before! Current state:" << _state.get() << std::endl;
+			assert( _state != THREAD_FINALIZED );
 		}
 #endif
 		join();
@@ -220,14 +177,25 @@ namespace ibrcommon
 	{
 		int ret;
 
-		ibrcommon::ThreadsafeState<THREAD_STATE>::Locked ls = _state.lock();
-		if (ls != THREAD_INITIALIZED) return;
+		// switch to STARTED only if this is a fresh thread
+		{
+			ibrcommon::ThreadsafeState<THREAD_STATE>::Locked ls = _state.lock();
 
-		// set the thread state to PREPARE
-		ls = THREAD_PREPARE;
+			// only start once
+			if (ls != THREAD_CREATED) return;
+
+			// set the thread state to STARTED
+			ls = THREAD_STARTED;
+		}
 
 		// set priority
 		priority = adj;
+
+		// call the setup method
+		setup();
+
+		// set the state to running
+		_state = THREAD_INITIALIZED;
 
 #ifndef	__PTH__
 		// modify the threads attributes - set as joinable thread
@@ -255,7 +223,7 @@ namespace ibrcommon
 
 #ifdef	__PTH__
 		// spawn a new thread
-		tid = pth_spawn(PTH_ATTR_DEFAULT, &Thread::exec_thread, this);
+		tid = pth_spawn(PTH_ATTR_DEFAULT, &Thread::__execute__, this);
 #else
 		// if the stack size is specified (> 0)
 		if (stack)
@@ -265,83 +233,67 @@ namespace ibrcommon
 		}
 
 		// spawn a new thread
-		ret = pthread_create(&tid, &attr, &Thread::exec_thread, this);
+		ret = pthread_create(&tid, &attr, &Thread::__execute__, this);
 
-		
 		switch (ret)
 		{
 		case EAGAIN:
-			ls = THREAD_ERROR;
+			_state = THREAD_FINALIZED;
 			throw ThreadException(ret, "The system lacked the necessary resources to create another thread, or the system-imposed limit on the total number of threads in a process PTHREAD_THREADS_MAX would be exceeded.");
 		case EINVAL:
-			ls = THREAD_ERROR;
+			_state = THREAD_FINALIZED;
 			throw ThreadException(ret, "The value specified by attr is invalid.");
 		case EPERM:
-			ls = THREAD_ERROR;
+			_state = THREAD_FINALIZED;
 			throw ThreadException(ret, "The caller does not have appropriate permission to set the required scheduling parameters or scheduling policy.");
 		}
 #endif
 	}
 
-	void JoinableThread::stop() throw (ThreadException)
+	void JoinableThread::stop() throw ()
 	{
-		// Cancel throws the exception of the terminated thread
-		// so we have to catch any possible exception here
-		try {
-			Thread::cancel();
-		} catch (const ThreadException&) {
-			throw;
-		} catch (const std::exception&) {
-		}
+		Thread::cancel();
 	}
 
-	void JoinableThread::join(void)
+	void JoinableThread::join(void) throw (ThreadException)
 	{
-		// first to some state checking
+		ibrcommon::ThreadsafeState<THREAD_STATE>::Locked ls = _state.lock();
+
+		// if the thread never has been started: exit and deny any further startup
+		if (ls == THREAD_CREATED)
 		{
-			ibrcommon::ThreadsafeState<THREAD_STATE>::Locked ls = _state.lock();
-
-			// if the thread never has been started: exit and deny any further startup
-			if (ls == THREAD_INITIALIZED)
-			{
-				ls = THREAD_JOINED;
-				return;
-			}
-
-			// wait until the finalized state is reached
-			ls.wait(THREAD_FINALIZED | THREAD_JOINED | THREAD_ERROR);
-
-			// do not join if an error occured
-			if (ls == THREAD_ERROR) return;
-
-			// if the thread has been joined already: exit
-			if (ls == THREAD_JOINED) return;
-
-			// get the thread-id of the calling thread
-			pthread_t self = pthread_self();
-
-			// if we try to join our own thread, just call Thread::exit()
-			if (equal(tid, self))
-			{
-				Thread::exit();
-				return;
-			}
+			ls = THREAD_FINALIZED;
+			return;
 		}
 
+		// wait until the finalized state is reached
+		ls.wait(THREAD_JOINABLE | THREAD_FINALIZED);
+
+		// if the thread has been joined already: exit
+		if (ls == THREAD_FINALIZED) return;
+
+		// get the thread-id of the calling thread
+		pthread_t self = pthread_self();
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
+			// never try to join our own thread, check this here
+			assert( !equal(tid, self) );
+#endif
+
 		// if the thread has been started, do join
-		if (pthread_join(tid, NULL) == 0)
+		int ret = 0;
+		if ((ret = pthread_join(tid, NULL)) == 0)
 		{
 			// set the state to joined
-			_state = THREAD_JOINED;
+			ls = THREAD_FINALIZED;
 		}
 		else
 		{
-			IBRCOMMON_LOGGER(error) << "Join on a thread failed[" << tid << "]" << IBRCOMMON_LOGGER_ENDL;
-			_state = THREAD_ERROR;
+			throw ThreadException(ret, "Join on a thread failed");
 		}
 	}
 
-	DetachedThread::DetachedThread(size_t size) : Thread(size, true)
+	DetachedThread::DetachedThread(size_t size) : Thread(size)
 	{
 	}
 
@@ -353,14 +305,25 @@ namespace ibrcommon
 	{
 		int ret = 0;
 
-		ibrcommon::ThreadsafeState<THREAD_STATE>::Locked ls = _state.lock();
-		if (ls != THREAD_INITIALIZED) return;
+		// switch to STARTED only if this is a fresh thread
+		{
+			ibrcommon::ThreadsafeState<THREAD_STATE>::Locked ls = _state.lock();
 
-		// set the thread state to PREPARE
-		ls = THREAD_PREPARE;
+			// only start once
+			if (ls != THREAD_CREATED) return;
+
+			// set the thread state to STARTED
+			ls = THREAD_STARTED;
+		}
 
 		// set the priority
 		priority = adj;
+
+		// call the setup method
+		setup();
+
+		// set the state to running
+		_state = THREAD_INITIALIZED;
 
 #ifndef	__PTH__
 		// modify the threads attributes - set as detached thread
@@ -388,7 +351,7 @@ namespace ibrcommon
 
 #ifdef	__PTH__
 		// spawn a new thread
-		tid = pth_spawn(PTH_ATTR_DEFAULT, &Thread::exec_thread, this);
+		tid = pth_spawn(PTH_ATTR_DEFAULT, &Thread::__execute__, this);
 #else
 		// if the stack size is specified (> 0)
 		if (stack)
@@ -398,19 +361,19 @@ namespace ibrcommon
 		}
 
 		// spawn a new thread
-		ret = pthread_create(&tid, &attr, &Thread::exec_thread, this);
+		ret = pthread_create(&tid, &attr, &Thread::__execute__, this);
 
 		// check for errors
 		switch (ret)
 		{
 		case EAGAIN:
-			ls = THREAD_ERROR;
+			_state = THREAD_FINALIZED;
 			throw ThreadException(ret, "The system lacked the necessary resources to create another thread, or the system-imposed limit on the total number of threads in a process PTHREAD_THREADS_MAX would be exceeded.");
 		case EINVAL:
-			ls = THREAD_ERROR;
+			_state = THREAD_FINALIZED;
 			throw ThreadException(ret, "The value specified by attr is invalid.");
 		case EPERM:
-			ls = THREAD_ERROR;
+			_state = THREAD_FINALIZED;
 			throw ThreadException(ret, "The caller does not have appropriate permission to set the required scheduling parameters or scheduling policy.");
 		}
 #endif
@@ -418,13 +381,6 @@ namespace ibrcommon
 
 	void DetachedThread::stop() throw (ThreadException)
 	{
-		// Cancel throws the exception of the terminated thread
-		// so we have to catch any possible exception here
-		try {
-			Thread::cancel();
-		} catch (const ThreadException&) {
-			throw;
-		} catch (const std::exception&) {
-		}
+		Thread::cancel();
 	}
 }

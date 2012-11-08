@@ -58,15 +58,14 @@ namespace ibrcommon
 	protected:
 		enum THREAD_STATE
 		{
-			THREAD_INITIALIZED = 1 << 0,
-			THREAD_PREPARE = 1 << 1,
-			THREAD_SETUP = 1 << 2,
+			THREAD_CREATED = 1 << 0,
+			THREAD_STARTED = 1 << 1,
+			THREAD_INITIALIZED = 1 << 2,
 			THREAD_RUNNING = 1 << 3,
 			THREAD_CANCELLED = 1 << 4,
 			THREAD_FINALIZING = 1 << 5,
-			THREAD_FINALIZED = 1 << 6,
-			THREAD_JOINED = 1 << 7,
-			THREAD_ERROR = 1 << 8
+			THREAD_JOINABLE = 1 << 6,
+			THREAD_FINALIZED = 1 << 7
 		};
 		
 		ibrcommon::ThreadsafeState<THREAD_STATE> _state;
@@ -88,7 +87,7 @@ namespace ibrcommon
 		 * is used, then the stack size is os defined/default.
 		 * @param stack size to use or 0 for default.
 		 */
-		Thread(size_t stack = DEFAULT_STACKSIZE, bool delete_on_exit = false);
+		Thread(size_t stack = DEFAULT_STACKSIZE);
 
 	public:
 		/**
@@ -124,16 +123,6 @@ namespace ibrcommon
 		virtual void finally(void) throw () { };
 
 		/**
-		 * Exit the thread context.
-		 */
-		static void exit(void);
-
-		/**
-		 * detach this thread
-		 */
-		void detach(void);
-
-		/**
 		 * Set concurrency level of process.  This is essentially a portable
 		 * wrapper for pthread_setconcurrency.
 		 */
@@ -160,7 +149,7 @@ namespace ibrcommon
 		/**
 		 * Cancel the running thread context.
 		 */
-		void cancel() throw (ThreadException);
+		void cancel() throw ();
 		virtual void __cancellation() = 0;
 
 		/**
@@ -174,20 +163,9 @@ namespace ibrcommon
 		/**
 		 * static execute thread method
 		 */
-		static void* exec_thread(void *obj);
-
-		/**
-		 * this method finalizes a thread. If the thread is self-deleting, the object
-		 * will be invalid after exection.
-		 */
-		static void finalize_thread(void *obj);
+		static void* __execute__(void *obj) throw ();
 
 	private:
-		/**
-		 * if this variable is set, the thread will delete itself
-		 */
-		const bool __delete_on_exit;
-
 		/**
 		 * variables to store signal masks, used by enable/disable_interruption
 		 */
@@ -225,7 +203,7 @@ namespace ibrcommon
 		 * now depreciated behavior and in the future will not be supported.
 		 * Threads should always return through their run() method.
 		 */
-		void join(void);
+		void join(void) throw (ThreadException);
 
 		/**
 		 * Test if thread is currently running.
@@ -247,7 +225,7 @@ namespace ibrcommon
 		/**
 		 * Stop the execution of child context.
 		 */
-		void stop() throw (ThreadException);
+		void stop() throw ();
 	};
 
 	/**
