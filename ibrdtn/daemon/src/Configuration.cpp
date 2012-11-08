@@ -387,7 +387,7 @@ namespace dtn
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 
 			try {
-				_sync = (conf.read<std::string>("time_sync_on_discovery") == "yes");
+				_sync = (conf.read<std::string>("time_synchronize") == "yes");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 
 			try {
@@ -1181,7 +1181,7 @@ namespace dtn
 			return _reference;
 		}
 
-		bool Configuration::TimeSync::syncOnDiscovery() const
+		bool Configuration::TimeSync::doSync() const
 		{
 			return _sync;
 		}

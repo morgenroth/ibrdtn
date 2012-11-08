@@ -105,6 +105,18 @@ namespace dtn
 			static const unsigned int PROTO_VERSION;
 
 			/**
+			 * check if we should sync with another node
+			 * @param node
+			 */
+			bool shouldSyncWith(const dtn::core::Node &node) const;
+
+			/**
+			 * Start sync'ing with another node
+			 * @param node
+			 */
+			void syncWith(const dtn::core::Node &node);
+
+			/**
 			 * Determine if this node is configured as reference or not
 			 * @return
 			 */
@@ -117,7 +129,7 @@ namespace dtn
 			 * @param timestamp
 			 * @param quality
 			 */
-			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality);
+			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality) const;
 
 			/**
 			 * Synchronize this clock with another one
@@ -147,6 +159,9 @@ namespace dtn
 
 			// current value for sigma
 			double _sigma;
+
+			// synchronize with other nodes
+			bool _sync;
 
 			// timestamp of the last synchronization with another (better) clock
 			timeval _last_sync_time;

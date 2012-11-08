@@ -42,7 +42,7 @@ namespace dtn
 		const unsigned int DTNTPWorker::PROTO_VERSION = 1;
 
 		DTNTPWorker::DTNTPWorker()
-		 : _sync_threshold(0.15), _announce_rating(false), _base_rating(0.0), _psi(0.99), _sigma(1.0)
+		 : _sync_threshold(0.15), _announce_rating(false), _base_rating(0.0), _psi(0.99), _sigma(1.0), _sync(false)
 		{
 			AbstractWorker::initialize("/dtntp", 60, true);
 
@@ -69,11 +69,8 @@ namespace dtn
 			// store the sync threshold locally
 			_sync_threshold = conf.getSyncLevel();
 
-			// subscribe to NodeEvent is we have to react on discovered nodes
-			if (conf.syncOnDiscovery())
-			{
-				bindEvent(dtn::core::NodeEvent::className);
-			}
+			// synchronize with other nodes
+			_sync  = conf.doSync();
 
 			bindEvent(dtn::core::TimeEvent::className);
 
@@ -83,7 +80,6 @@ namespace dtn
 
 		DTNTPWorker::~DTNTPWorker()
 		{
-			unbindEvent(dtn::core::NodeEvent::className);
 			unbindEvent(dtn::core::TimeEvent::className);
 		}
 
@@ -155,150 +151,164 @@ namespace dtn
 			try {
 				const dtn::core::TimeEvent &t = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 
-				if (t.getAction() == dtn::core::TIME_SECOND_TICK)
+				if (t.getAction() != dtn::core::TIME_SECOND_TICK) return;
+
+				ibrcommon::MutexLock l(_sync_lock);
+
+				// remove outdated blacklist entries
 				{
-					ibrcommon::MutexLock l(_sync_lock);
-
-					// remove outdated blacklist entries
+					ibrcommon::MutexLock l(_blacklist_lock);
+					for (std::map<EID, size_t>::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); iter++)
 					{
-						ibrcommon::MutexLock l(_blacklist_lock);
-						for (std::map<EID, size_t>::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); iter++)
+						size_t bl_age = (*iter).second;
+
+						// do not query again if the blacklist entry is valid
+						if (bl_age < t.getUnixTimestamp())
 						{
-							size_t bl_age = (*iter).second;
-
-							// do not query again if the blacklist entry is valid
-							if (bl_age < t.getUnixTimestamp())
-							{
-								_sync_blacklist.erase((*iter).first);
-							}
-						}
-					}
-
-					// if we are a reference node, we have to watch on our clock
-					// do some plausibility checks here
-					if (hasReference())
-					{
-						/**
-						 * evaluate the current local time
-						 */
-						if (dtn::utils::Clock::rating == 0)
-						{
-							if (t.getTimestamp() > 0)
-							{
-								dtn::utils::Clock::rating = 1;
-								IBRCOMMON_LOGGER(warning) << "The local clock seems to be okay again. Expiration enabled." << IBRCOMMON_LOGGER_ENDL;
-							}
-						}
-					}
-					// if we are not a reference then update the local rating if we're not a reference node
-					else
-					{
-						ssize_t now = dtn::utils::Clock::getTime();
-
-						// before we can age our rating we should have been synchronized at least one time
-						if ((_last_sync_time.tv_sec > 0) && (_last_sync_time.tv_sec < now)) {
-							// calculate the new clock rating
-							dtn::utils::Clock::rating = _base_rating * (1.0 / (::pow(_sigma, now - _last_sync_time.tv_sec)));
-
-							// debug quality of time
-							IBRCOMMON_LOGGER_DEBUG(25) << "clock rating is " << dtn::utils::Clock::rating << IBRCOMMON_LOGGER_ENDL;
+							_sync_blacklist.erase((*iter).first);
 						}
 					}
 				}
-			} catch (const std::bad_cast&) { };
 
-			try {
-				const dtn::core::NodeEvent &n = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-				const dtn::core::Node &node = n.getNode();
-
-				if (n.getAction() == dtn::core::NODE_INFO_UPDATED)
+				// if we are a reference node, we have to watch on our clock
+				// do some plausibility checks here
+				if (hasReference())
 				{
-					// only query for time sync if the other node supports this
-					if (!node.has("dtntp")) return;
-
-					// get discovery attribute
-					const std::list<dtn::core::Node::Attribute> attrs = node.get("dtntp");
-
-					// decode attribute parameter
-					unsigned int version = 0;
-					size_t timestamp = 0;
-					float quality = 0.0;
-					decode(attrs.front(), version, timestamp, quality);
-
-					// we do only support version = 1
-					if (version != 1) return;
-
-					// do not sync if the timestamps are equal in seconds
-					if (timestamp == dtn::utils::Clock::getTime()) return;
-
-					// do not sync if the quality is worse than ours
-					if ((quality * (1 - _sync_threshold)) <= dtn::utils::Clock::rating) return;
-
-					// get the EID of the peer
-					const dtn::data::EID &peer = n.getNode().getEID();
-
-					// check sync blacklist
+					/**
+					 * evaluate the current local time
+					 */
+					if (dtn::utils::Clock::rating == 0)
 					{
-						ibrcommon::MutexLock l(_blacklist_lock);
-						if (_sync_blacklist.find(peer) != _sync_blacklist.end())
+						if (t.getTimestamp() > 0)
 						{
-							size_t bl_age = _sync_blacklist[peer];
-
-							// do not query again if the blacklist entry is valid
-							if (bl_age > dtn::utils::Clock::getUnixTimestamp())
-							{
-								return;
-							}
+							dtn::utils::Clock::rating = 1;
+							IBRCOMMON_LOGGER(warning) << "The local clock seems to be okay again. Expiration enabled." << IBRCOMMON_LOGGER_ENDL;
 						}
-
-						// create a new blacklist entry
-						_sync_blacklist[peer] = dtn::utils::Clock::getUnixTimestamp() + 60;
 					}
+				}
+				// if we are not a reference then update the local rating if we're not a reference node
+				else
+				{
+					ssize_t now = dtn::utils::Clock::getTime();
 
-					// send a time sync bundle
-					dtn::data::Bundle b;
+					// before we can age our rating we should have been synchronized at least one time
+					if ((_last_sync_time.tv_sec > 0) && (_last_sync_time.tv_sec < now)) {
+						// calculate the new clock rating
+						dtn::utils::Clock::rating = _base_rating * (1.0 / (::pow(_sigma, now - _last_sync_time.tv_sec)));
 
-					// add an age block
-					b.push_back<dtn::data::AgeBlock>();
-
-					ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
-
-					// create the payload of the message
-					{
-						ibrcommon::BLOB::iostream stream = ref.iostream();
-
-						// create a new timesync request
-						TimeSyncMessage msg;
-
-						// write the message
-						(*stream) << msg;
+						// debug quality of time
+						IBRCOMMON_LOGGER_DEBUG(25) << "clock rating is " << dtn::utils::Clock::rating << IBRCOMMON_LOGGER_ENDL;
 					}
+				}
 
-					// add the payload to the message
-					b.push_back(ref);
-
-					// set the source and destination
-					b._source = dtn::core::BundleCore::local + "/dtntp";
-					b._destination = peer + "/dtntp";
-
-					// set high priority
-					b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
-					b.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
-
-					// set the the destination as singleton receiver
-					b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-
-					// set the lifetime of the bundle to 60 seconds
-					b._lifetime = 60;
-
-					// add a schl block
-					dtn::data::ScopeControlHopLimitBlock &schl = b.push_front<dtn::data::ScopeControlHopLimitBlock>();
-					schl.setLimit(1);
-
-					transmit(b);
+				// if synchronization is enabled
+				if (_sync)
+				{
+					// search for other nodes with better credentials
+					const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+					for (std::set<dtn::core::Node>::const_iterator iter = nodes.begin(); iter != nodes.end(); iter++) {
+						if (shouldSyncWith(*iter)) {
+							syncWith(*iter);
+						}
+					}
 				}
 			} catch (const std::bad_cast&) { };
 		}
+
+		bool DTNTPWorker::shouldSyncWith(const dtn::core::Node &node) const
+		{
+			// only query for time sync if the other node supports this
+			if (!node.has("dtntp")) return false;
+
+			// get discovery attribute
+			const std::list<dtn::core::Node::Attribute> attrs = node.get("dtntp");
+
+			if (attrs.empty()) return false;
+
+			// decode attribute parameter
+			unsigned int version = 0;
+			size_t timestamp = 0;
+			float quality = 0.0;
+			decode(attrs.front(), version, timestamp, quality);
+
+			// we do only support version = 1
+			if (version != 1) return false;
+
+			// do not sync if the timestamps are equal in seconds
+			if (timestamp == dtn::utils::Clock::getTime()) return false;
+
+			// do not sync if the quality is worse than ours
+			if ((quality * (1 - _sync_threshold)) <= dtn::utils::Clock::rating) return false;
+
+			return true;
+		}
+
+		void DTNTPWorker::syncWith(const dtn::core::Node &node)
+		{
+			// get the EID of the peer
+			const dtn::data::EID &peer = node.getEID();
+
+			// check sync blacklist
+			{
+				ibrcommon::MutexLock l(_blacklist_lock);
+				if (_sync_blacklist.find(peer) != _sync_blacklist.end())
+				{
+					size_t bl_age = _sync_blacklist[peer];
+
+					// do not query again if the blacklist entry is valid
+					if (bl_age > dtn::utils::Clock::getUnixTimestamp())
+					{
+						return;
+					}
+				}
+
+				// create a new blacklist entry
+				_sync_blacklist[peer] = dtn::utils::Clock::getUnixTimestamp() + 60;
+			}
+
+			// send a time sync bundle
+			dtn::data::Bundle b;
+
+			// add an age block
+			b.push_back<dtn::data::AgeBlock>();
+
+			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+
+			// create the payload of the message
+			{
+				ibrcommon::BLOB::iostream stream = ref.iostream();
+
+				// create a new timesync request
+				TimeSyncMessage msg;
+
+				// write the message
+				(*stream) << msg;
+			}
+
+			// add the payload to the message
+			b.push_back(ref);
+
+			// set the source and destination
+			b._source = dtn::core::BundleCore::local + "/dtntp";
+			b._destination = peer + "/dtntp";
+
+			// set high priority
+			b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
+			b.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
+
+			// set the the destination as singleton receiver
+			b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+
+			// set the lifetime of the bundle to 60 seconds
+			b._lifetime = 60;
+
+			// add a schl block
+			dtn::data::ScopeControlHopLimitBlock &schl = b.push_front<dtn::data::ScopeControlHopLimitBlock>();
+			schl.setLimit(1);
+
+			transmit(b);
+		}
+
 
 		void DTNTPWorker::update(const ibrcommon::vinterface&, DiscoveryAnnouncement &announcement) throw(NoServiceHereException)
 		{
@@ -309,7 +319,7 @@ namespace dtn
 			announcement.addService( DiscoveryService("dtntp", ss.str()));
 		}
 
-		void DTNTPWorker::decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality)
+		void DTNTPWorker::decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality) const
 		{
 			// parse parameters
 			std::vector<std::string> parameters = dtn::utils::Utils::tokenize(";", attr.value);

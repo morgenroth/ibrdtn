@@ -95,7 +95,7 @@ add_param $CONFFILE "ibrdtn.tls.noencryption" "security_tls_disable_encryption"
 add_param $CONFFILE "ibrdtn.tls.fallback_badclock" "security_tls_fallback_badclock"
 
 add_param $CONFFILE "ibrdtn.timesync.reference" "time_reference"
-add_param $CONFFILE "ibrdtn.timesync.sync_on_discovery" "time_sync_on_discovery"
+add_param $CONFFILE "ibrdtn.timesync.synchronize" "time_synchronize"
 add_param $CONFFILE "ibrdtn.timesync.discovery_announcement" "time_discovery_announcements"
 add_param $CONFFILE "ibrdtn.timesync.sigma" "time_sigma"
 add_param $CONFFILE "ibrdtn.timesync.psi" "time_psi"

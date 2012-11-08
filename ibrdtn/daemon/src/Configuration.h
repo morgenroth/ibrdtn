@@ -529,7 +529,7 @@ namespace dtn
 
 			public:
 				bool hasReference() const;
-				bool syncOnDiscovery() const;
+				bool doSync() const;
 				bool sendDiscoveryAnnouncements() const;
 
 				float getSigma() const;
