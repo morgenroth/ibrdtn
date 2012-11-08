@@ -53,9 +53,6 @@ namespace dtn
 			try {
 				const dtn::core::NodeEvent &node = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
 
-				// ignore NODE_INFO_UPDATED
-				if (node.getAction() == dtn::core::NODE_INFO_UPDATED) return;
-
 				// start with the event tag
 				_stream << "Event: " << node.getName() << std::endl;
 				_stream << "Action: ";

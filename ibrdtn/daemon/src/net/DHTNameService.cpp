@@ -263,7 +263,7 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 			for (iterator = eids_.begin(); iterator != eids_.end(); iterator++) {
 				lookup(*iterator);
 			}
-			std::set<dtn::core::Node> neighbours_ = core.getNeighbors();
+			std::set<dtn::core::Node> neighbours_ = core.getConnectionManager().getNeighbors();
 			std::set<dtn::core::Node>::iterator neighbouriterator;
 			for (neighbouriterator = neighbours_.begin(); neighbouriterator
 					!= neighbours_.end(); neighbouriterator++) {
@@ -471,7 +471,7 @@ bool dtn::dht::DHTNameService::isNeighbourAnnouncable(
 
 
 	// get the merged node object
-	const dtn::core::Node n = dtn::core::BundleCore::getInstance().getNeighbor(
+	const dtn::core::Node n = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbor(
 			node.getEID());
 
 	// Ignore all none discovered and none static nodes
@@ -555,7 +555,6 @@ void dtn::dht::DHTNameService::raiseEvent(const dtn::core::Event *evt) {
 		if (n.getEID() != dtn::core::BundleCore::local.getNode()) {
 			switch (nodeevent.getAction()) {
 			case NODE_AVAILABLE:
-			case NODE_INFO_UPDATED:
 				if (isNeighbourAnnouncable(n))
 					announce(n, NEIGHBOUR);
 				pingNode(n);
@@ -869,7 +868,7 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 	dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
 	if (hasCL) {
 		IBRCOMMON_LOGGER(info) << ss.str() << IBRCOMMON_LOGGER_ENDL;
-		core.addConnection(node);
+		core.getConnectionManager().addConnection(node);
 	}
 
 	// Extracting all neighbours of the new node if usage is allowed
@@ -884,7 +883,7 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 			dtn::data::EID n(neighbour__);
 			dtn::core::Node neighbourNode(n);
 			if (dtn::core::BundleCore::local != n.getNode()
-					&& !core.isNeighbor(n)) {
+					&& !core.getConnectionManager().isNeighbor(n)) {
 				dtn::core::BundleCore::getInstance().addRoute(n, node.getEID(),
 						DHT_PATH_EXPIRE_TIMEOUT);
 			}

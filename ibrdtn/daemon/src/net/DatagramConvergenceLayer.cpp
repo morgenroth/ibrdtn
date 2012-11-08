@@ -247,8 +247,8 @@ namespace dtn
 						n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));
 					}
 
-					// create and raise a new event
-					dtn::core::NodeEvent::raise(n, dtn::core::NODE_INFO_UPDATED);
+					// announce NodeInfo to ConnectionManager
+					dtn::core::BundleCore::getInstance().getConnectionManager().updateNeighbor(n);
 
 					continue;
 				}

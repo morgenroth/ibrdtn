@@ -208,7 +208,7 @@ namespace dtn
 
 				if (watch_set.find(path) == watch_set.end())
 				{
-					dtn::core::BundleCore::getInstance().removeConnection(node);
+					dtn::core::BundleCore::getInstance().getConnectionManager().removeConnection(node);
 					IBRCOMMON_LOGGER_DEBUG(5) << "Node on drive gone: " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 					_active_paths.erase(iter++);
 				}
@@ -234,7 +234,7 @@ namespace dtn
 					const std::string uri = "file://" + path.getPath() + "/" + cf.read<std::string>("PATH");
 
 					n.add(dtn::core::Node::URI(dtn::core::Node::NODE_DISCOVERED, dtn::core::Node::CONN_FILE, uri, 0, 10));
-					dtn::core::BundleCore::getInstance().addConnection(n);
+					dtn::core::BundleCore::getInstance().getConnectionManager().addConnection(n);
 
 					_active_paths[path] = n;
 

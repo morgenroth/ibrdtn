@@ -145,14 +145,6 @@ namespace dtn
 		void StatisticLogger::raiseEvent(const dtn::core::Event *evt)
 		{
 			try {
-				const dtn::core::NodeEvent &node = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-
-				// do not announce on node info updated
-				if (node.getAction() == dtn::core::NODE_INFO_UPDATED) return;
-			} catch (const std::bad_cast&) {
-			}
-
-			try {
 				const dtn::core::BundleEvent &bundle = dynamic_cast<const dtn::core::BundleEvent&>(*evt);
 
 				switch (bundle.getAction())
@@ -184,7 +176,7 @@ namespace dtn
 
 		void StatisticLogger::writeSyslog(std::ostream &stream)
 		{
-			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getConnectionManager().getNeighbors();
 			dtn::storage::BundleStorage &storage = _core.getStorage();
 
 			stream	<< "DTN-Stats: CurNeighbors " << neighbors.size()
@@ -196,7 +188,7 @@ namespace dtn
 
 		void StatisticLogger::writeStdLog(std::ostream &stream)
 		{
-			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getConnectionManager().getNeighbors();
 			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::storage::BundleStorage &storage = _core.getStorage();
 
@@ -210,7 +202,7 @@ namespace dtn
 
 		void StatisticLogger::writePlainLog(std::ostream &stream)
 		{
-			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getConnectionManager().getNeighbors();
 			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::storage::BundleStorage &storage = _core.getStorage();
 
@@ -223,7 +215,7 @@ namespace dtn
 
 		void StatisticLogger::writeCsvLog(std::ostream &stream)
 		{
-			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getConnectionManager().getNeighbors();
 			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::storage::BundleStorage &storage = _core.getStorage();
 
@@ -239,7 +231,7 @@ namespace dtn
 			// open statistic file
 			_fileout.open(_file.getPath().c_str(), ios_base::trunc);
 
-			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getConnectionManager().getNeighbors();
 			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::storage::BundleStorage &storage = _core.getStorage();
 
@@ -278,7 +270,7 @@ namespace dtn
 
 			writeCsvLog(ss);
 
-			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getConnectionManager().getNeighbors();
 			for (std::set<dtn::core::Node>::const_iterator iter = neighbors.begin(); iter != neighbors.end(); iter++)
 			{
 				ss << (*iter).toString() << "\n";

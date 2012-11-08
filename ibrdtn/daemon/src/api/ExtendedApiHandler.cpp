@@ -325,7 +325,7 @@ namespace dtn
 						if (cmd[1] == "list")
 						{
 							ibrcommon::MutexLock l(_write_lock);
-							const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getNeighbors();
+							const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
 							_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
 							for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)

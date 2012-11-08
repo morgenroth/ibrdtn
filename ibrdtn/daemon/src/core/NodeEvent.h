@@ -34,8 +34,7 @@ namespace dtn
 		enum EventNodeAction
 		{
 			NODE_UNAVAILABLE = 0,
-			NODE_AVAILABLE = 1,
-			NODE_INFO_UPDATED = 2
+			NODE_AVAILABLE = 1
 		};
 
 		class NodeEvent : public Event

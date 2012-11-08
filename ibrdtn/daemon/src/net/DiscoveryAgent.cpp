@@ -23,6 +23,7 @@
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryService.h"
 #include "net/DiscoveryAnnouncement.h"
+#include "core/BundleCore.h"
 #include "core/TimeEvent.h"
 #include "core/NodeEvent.h"
 #include <ibrdtn/utils/Utils.h>
@@ -78,8 +79,8 @@ namespace dtn
 				}
 			}
 
-			// create and raise a new event
-			dtn::core::NodeEvent::raise(n, NODE_INFO_UPDATED);
+			// announce NodeInfo to ConnectionManager
+			dtn::core::BundleCore::getInstance().getConnectionManager().updateNeighbor(n);
 
 			// if continuous announcements are disabled, then reply to this message
 			if (!_config.announce())

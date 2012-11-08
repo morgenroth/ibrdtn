@@ -165,19 +165,9 @@ namespace dtn
 			}
 		}
 
-		void BundleCore::addConvergenceLayer(dtn::net::ConvergenceLayer *cl)
+		dtn::net::ConnectionManager& BundleCore::getConnectionManager()
 		{
-			_connectionmanager.addConvergenceLayer(cl);
-		}
-
-		void BundleCore::addConnection(const dtn::core::Node &n)
-		{
-			_connectionmanager.addConnection(n);
-		}
-
-		void BundleCore::removeConnection(const dtn::core::Node &n)
-		{
-			_connectionmanager.removeConnection(n);
+			return _connectionmanager;
 		}
 
 		void BundleCore::addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, size_t timeout)
@@ -193,21 +183,6 @@ namespace dtn
 		bool BundleCore::isGloballyConnected() const
 		{
 			return _globally_connected;
-		}
-
-		const std::set<dtn::core::Node> BundleCore::getNeighbors()
-		{
-			return _connectionmanager.getNeighbors();
-		}
-
-		bool BundleCore::isNeighbor(const dtn::core::Node &node)
-		{
-			return _connectionmanager.isNeighbor(node);
-		}
-
-		const dtn::core::Node BundleCore::getNeighbor(const dtn::data::EID &eid)
-		{
-			return _connectionmanager.getNeighbor(eid);
 		}
 
 		void BundleCore::raiseEvent(const dtn::core::Event *evt)

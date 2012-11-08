@@ -104,6 +104,12 @@ namespace dtn
 			const dtn::core::Node getNeighbor(const dtn::data::EID &eid);
 
 			/**
+			 * Add collected data about a neighbor to the neighbor database.
+			 * @param n The node object of the neighbor
+			 */
+			void updateNeighbor(const dtn::core::Node &n);
+
+			/**
 			 * @see Component::getName()
 			 */
 			virtual const std::string getName() const;

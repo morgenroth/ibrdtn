@@ -101,10 +101,6 @@ namespace dtn
 
 				switch (nodeevent.getAction())
 				{
-					case NODE_INFO_UPDATED:
-						discovered(n);
-						break;
-
 					case NODE_AVAILABLE:
 						if (n.doConnectImmediately())
 						{
@@ -489,6 +485,11 @@ namespace dtn
 			}
 
 			return false;
+		}
+
+		void ConnectionManager::updateNeighbor(const Node &n)
+		{
+			discovered(n);
 		}
 
 		const std::string ConnectionManager::getName() const

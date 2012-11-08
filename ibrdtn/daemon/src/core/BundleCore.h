@@ -69,10 +69,11 @@ namespace dtn
 
 			void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle);
 
-			void addConvergenceLayer(dtn::net::ConvergenceLayer *cl);
-
-			void addConnection(const dtn::core::Node &n);
-			void removeConnection(const dtn::core::Node &n);
+			/**
+			 * Make the connection manager available to other modules.
+			 * @return The connection manager reference
+			 */
+			dtn::net::ConnectionManager& getConnectionManager();
 
 			/**
 			 * Add a static route to the static routing module.
@@ -94,27 +95,6 @@ namespace dtn
 			 * @return True, if the daemon is globally connected.
 			 */
 			bool isGloballyConnected() const;
-
-			/**
-			 * get a set with all neighbors
-			 * @return
-			 */
-			const std::set<dtn::core::Node> getNeighbors();
-
-			/**
-			 * Checks if a node is already known as neighbor.
-			 * @param
-			 * @return
-			 */
-			bool isNeighbor(const dtn::core::Node &node);
-
-			/**
-			 * Get the neighbor with the given EID.
-			 * @throw dtn::net::NeighborNotAvailableException if the neighbor is not available.
-			 * @param eid The EID of the neighbor.
-			 * @return A node object with all neighbor data.
-			 */
-			const dtn::core::Node getNeighbor(const dtn::data::EID &eid);
 
 			void raiseEvent(const dtn::core::Event *evt);
 

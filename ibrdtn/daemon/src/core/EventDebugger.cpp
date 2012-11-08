@@ -101,9 +101,6 @@ namespace dtn
 
 				switch (node.getAction())
 				{
-				case NODE_INFO_UPDATED:
-					IBRCOMMON_LOGGER_DEBUG(40) << node.getName() << ": Info updated for " << node.getNode().toString() << IBRCOMMON_LOGGER_ENDL;
-					break;
 				case NODE_AVAILABLE:
 					IBRCOMMON_LOGGER(notice) << node.getName() << ": Node " << node.getNode().toString() << " available " << IBRCOMMON_LOGGER_ENDL;
 					break;

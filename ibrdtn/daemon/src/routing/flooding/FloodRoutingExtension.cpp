@@ -67,7 +67,7 @@ namespace dtn
 				dynamic_cast<const QueueBundleEvent&>(*evt);
 
 				// new bundles are forwarded to all neighbors
-				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getNeighbors();
+				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
 				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); iter++)
 				{

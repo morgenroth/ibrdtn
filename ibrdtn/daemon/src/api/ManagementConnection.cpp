@@ -114,7 +114,7 @@ namespace dtn
 
 					if (cmd[1] == "list")
 					{
-						const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getNeighbors();
+						const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
 						_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
 						for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
@@ -191,7 +191,7 @@ namespace dtn
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
 							n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_TCPIP, uri, 0, 10));
-							dtn::core::BundleCore::getInstance().addConnection(n);
+							dtn::core::BundleCore::getInstance().getConnectionManager().addConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION ADDED" << std::endl;
 						}
@@ -199,7 +199,7 @@ namespace dtn
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
 							n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_TCPIP, uri, 0, 10));
-							dtn::core::BundleCore::getInstance().removeConnection(n);
+							dtn::core::BundleCore::getInstance().getConnectionManager().removeConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION REMOVED" << std::endl;
 						}
@@ -210,7 +210,7 @@ namespace dtn
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
 							n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_UDPIP, uri, 0, 10));
-							dtn::core::BundleCore::getInstance().addConnection(n);
+							dtn::core::BundleCore::getInstance().getConnectionManager().addConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION ADDED" << std::endl;
 						}
@@ -218,7 +218,7 @@ namespace dtn
 						{
 							std::string uri = "ip=" + cmd[4] + ";port=" + cmd[5] + ";";
 							n.add(dtn::core::Node::URI(t, dtn::core::Node::CONN_UDPIP, uri, 0, 10));
-							dtn::core::BundleCore::getInstance().removeConnection(n);
+							dtn::core::BundleCore::getInstance().getConnectionManager().removeConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION REMOVED" << std::endl;
 						}
@@ -228,14 +228,14 @@ namespace dtn
 						if (cmd[3] == "add")
 						{
 							n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC_LOCAL, dtn::core::Node::CONN_FILE, cmd[4], 0, 10));
-							dtn::core::BundleCore::getInstance().addConnection(n);
+							dtn::core::BundleCore::getInstance().getConnectionManager().addConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION ADDED" << std::endl;
 						}
 						else if (cmd[3] == "del")
 						{
 							n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC_LOCAL, dtn::core::Node::CONN_FILE, cmd[4], 0, 10));
-							dtn::core::BundleCore::getInstance().removeConnection(n);
+							dtn::core::BundleCore::getInstance().getConnectionManager().removeConnection(n);
 
 							_stream << ClientHandler::API_STATUS_OK << " CONNECTION REMOVED" << std::endl;
 						}
