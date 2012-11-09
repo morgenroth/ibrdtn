@@ -48,6 +48,7 @@ namespace dtn
 				unsigned int max_seq_numbers;
 				size_t max_msg_length;
 				size_t initial_timeout;
+				bool seq_check;
 			};
 
 			virtual ~DatagramService() = 0;

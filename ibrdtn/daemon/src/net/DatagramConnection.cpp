@@ -271,7 +271,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::queue(): Received frame sequence number: " << seqno << IBRCOMMON_LOGGER_ENDL;
 
 			// Check if the sequence number is what we expect
-			if (in_seq_num_ != seqno)
+			if ((_callback._params.seq_check) && (in_seq_num_ != seqno))
 			{
 				IBRCOMMON_LOGGER(error) << "Received frame with out of bound sequence number (" << seqno << " expected " << in_seq_num_ << ")"<< IBRCOMMON_LOGGER_ENDL;
 				_abort = true;
