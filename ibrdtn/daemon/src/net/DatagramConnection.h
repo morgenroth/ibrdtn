@@ -23,7 +23,7 @@
 #define DATAGRAMCONNECTION_H_
 
 #include "net/ConvergenceLayer.h"
-#include "net/DatagramConnectionParameter.h"
+#include "net/DatagramService.h"
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Conditional.h>
@@ -35,15 +35,6 @@ namespace dtn
 {
 	namespace net
 	{
-		class DatagramException : public ibrcommon::Exception
-		{
-		public:
-			DatagramException(const std::string &what) : ibrcommon::Exception(what)
-			{};
-
-			virtual ~DatagramException() throw() {};
-		};
-
 		class DatagramConnection;
 
 		class DatagramConnectionCallback
@@ -60,7 +51,7 @@ namespace dtn
 		class DatagramConnection : public ibrcommon::DetachedThread
 		{
 		public:
-			DatagramConnection(const std::string &identifier, const DatagramConnectionParameter &params, DatagramConnectionCallback &callback);
+			DatagramConnection(const std::string &identifier, const DatagramService::Parameter &params, DatagramConnectionCallback &callback);
 			virtual ~DatagramConnection();
 
 			void run() throw ();
@@ -205,7 +196,7 @@ namespace dtn
 			size_t _last_ack;
 			size_t _wait_ack;
 
-			const DatagramConnectionParameter _params;
+			const DatagramService::Parameter _params;
 		};
 	} /* namespace data */
 } /* namespace dtn */

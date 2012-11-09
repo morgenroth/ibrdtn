@@ -36,7 +36,7 @@ namespace dtn
 	namespace net
 	{
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
-		 : _service(ds), _discovery_sn(0)
+		 : _service(ds), _running(false), _discovery_sn(0)
 		{
 		}
 
@@ -151,6 +151,9 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(10) << "Failed to add DatagramConvergenceLayer on " << _service->getInterface().toString() << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER_DEBUG(10) << "Exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+
+			// set the running variable
+			_running = true;
 		}
 
 		void DatagramConvergenceLayer::componentDown() throw ()
@@ -197,8 +200,6 @@ namespace dtn
 
 		void DatagramConvergenceLayer::componentRun() throw ()
 		{
-			_running = true;
-
 			size_t maxlen = _service->getParameter().max_msg_length;
 			std::string address;
 			unsigned int seqno = 0;

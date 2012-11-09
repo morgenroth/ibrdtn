@@ -36,7 +36,7 @@ namespace dtn
 			// set connection parameters
 			_params.max_msg_length = mtu - 2;	// minus 2 bytes because we encode seqno and flags into 2 bytes
 			_params.max_seq_numbers = 8;		// seqno 0..7
-			_params.flowcontrol = DatagramConnectionParameter::FLOW_STOPNWAIT;
+			_params.flowcontrol = DatagramService::FLOW_STOPNWAIT;
 		}
 
 		UDPDatagramService::~UDPDatagramService()
@@ -262,7 +262,7 @@ namespace dtn
 			return dtn::core::Node::CONN_DGRAM_UDP;
 		}
 
-		const DatagramConnectionParameter& UDPDatagramService::getParameter() const
+		const DatagramService::Parameter& UDPDatagramService::getParameter() const
 		{
 			return _params;
 		}

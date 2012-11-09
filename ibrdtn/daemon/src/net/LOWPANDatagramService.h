@@ -23,7 +23,7 @@
 #define LOWPANDATAGRAMSERVICE_H_
 
 #include "net/DatagramConvergenceLayer.h"
-#include "net/DatagramConnectionParameter.h"
+#include "net/DatagramService.h"
 #include <ibrcommon/net/vsocket.h>
 
 namespace dtn
@@ -101,18 +101,17 @@ namespace dtn
 			 * Returns the parameter for the connection.
 			 * @return
 			 */
-			virtual const DatagramConnectionParameter& getParameter() const;
+			virtual const DatagramService::Parameter& getParameter() const;
 
 		private:
 			static const std::string encode(const ibrcommon::vaddress &addr);
 			static void decode(const std::string &identifier, ibrcommon::vaddress &addr);
 
-			//const static uint16_t BROADCAST_ADDR = 0;
 			ibrcommon::vaddress _addr_broadcast;
 
 			int _panid;
 			const ibrcommon::vinterface _iface;
-			DatagramConnectionParameter _params;
+			DatagramService::Parameter _params;
 
 			ibrcommon::vsocket _vsocket;
 		};

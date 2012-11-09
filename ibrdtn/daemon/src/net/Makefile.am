@@ -35,11 +35,12 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 				UDPConvergenceLayer.h \
 				FileConvergenceLayer.cpp \
 				FileConvergenceLayer.h \
-				DatagramConnectionParameter.h \
 				DatagramConvergenceLayer.h \
 				DatagramConnection.h \
 				DatagramConvergenceLayer.cpp \
 				DatagramConnection.cpp \
+				DatagramService.h \
+				DatagramService.cpp \
 				UDPDatagramService.h \
 				UDPDatagramService.cpp \
 				FileMonitor.h \

@@ -42,7 +42,7 @@ namespace dtn
 			// set connection parameters
 			_params.max_msg_length = 113;
 			_params.max_seq_numbers = 8;
-			_params.flowcontrol = DatagramConnectionParameter::FLOW_NONE;
+			_params.flowcontrol = DatagramService::FLOW_NONE;
 
 			// convert the panid into a string
 			std::stringstream ss;
@@ -290,7 +290,7 @@ namespace dtn
 			return dtn::core::Node::CONN_DGRAM_LOWPAN;
 		}
 
-		const DatagramConnectionParameter& LOWPANDatagramService::getParameter() const
+		const DatagramService::Parameter& LOWPANDatagramService::getParameter() const
 		{
 			return _params;
 		}

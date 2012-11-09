@@ -37,7 +37,7 @@ namespace dtn
 {
 	namespace net
 	{
-		DatagramConnection::DatagramConnection(const std::string &identifier, const DatagramConnectionParameter &params, DatagramConnectionCallback &callback)
+		DatagramConnection::DatagramConnection(const std::string &identifier, const DatagramService::Parameter &params, DatagramConnectionCallback &callback)
 		 : _callback(callback), _identifier(identifier), _stream(*this, params.max_msg_length, params.max_seq_numbers), _sender(*this, _stream), _last_ack(-1), _wait_ack(-1), _params(params)
 		{
 		}
@@ -151,7 +151,7 @@ namespace dtn
 		{
 			_stream.queue(flags, seqno, buf, len);
 
-			if (_params.flowcontrol == DatagramConnectionParameter::FLOW_STOPNWAIT)
+			if (_params.flowcontrol == DatagramService::FLOW_STOPNWAIT)
 			{
 				// send ack for this message
 				_callback.callback_ack(*this, seqno, getIdentifier());
@@ -179,7 +179,7 @@ namespace dtn
 				// send the datagram
 				_callback.callback_send(*this, flags, seqno, getIdentifier(), buf, len);
 
-				if (_params.flowcontrol == DatagramConnectionParameter::FLOW_STOPNWAIT)
+				if (_params.flowcontrol == DatagramService::FLOW_STOPNWAIT)
 				{
 					// set timeout to 200 ms
 					struct timespec ts;
