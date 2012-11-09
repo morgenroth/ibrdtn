@@ -30,15 +30,18 @@
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/data/Serializer.h>
 
+#include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/Logger.h>
 #include <string.h>
+
+#define AVG_RTT_WEIGHT 0.875
 
 namespace dtn
 {
 	namespace net
 	{
 		DatagramConnection::DatagramConnection(const std::string &identifier, const DatagramService::Parameter &params, DatagramConnectionCallback &callback)
-		 : _callback(callback), _identifier(identifier), _stream(*this, params.max_msg_length, params.max_seq_numbers), _sender(*this, _stream), _last_ack(-1), _wait_ack(-1), _params(params)
+		 : _callback(callback), _identifier(identifier), _stream(*this, params.max_msg_length, params.max_seq_numbers), _sender(*this, _stream), _last_ack(-1), _wait_ack(-1), _params(params), _avg_rtt(params.initial_timeout)
 		{
 		}
 
@@ -171,6 +174,9 @@ namespace dtn
 
 		void DatagramConnection::stream_send(const char &flags, const unsigned int &seqno, const char *buf, int len) throw (DatagramException)
 		{
+			// measure the time until the ack is received
+			ibrcommon::TimeMeasurement tm;
+
 			_wait_ack = seqno;
 
 			// max. 5 retries
@@ -181,9 +187,11 @@ namespace dtn
 
 				if (_params.flowcontrol == DatagramService::FLOW_STOPNWAIT)
 				{
-					// set timeout to 200 ms
+					tm.start();
+
+					// set timeout to twice the average round-trip-time
 					struct timespec ts;
-					ibrcommon::Conditional::gettimeout(200, &ts);
+					ibrcommon::Conditional::gettimeout(_avg_rtt * 2, &ts);
 
 					try {
 						// wait here for an ACK
@@ -194,9 +202,19 @@ namespace dtn
 						}
 
 						// success!
+						// stop the measurement
+						tm.stop();
+
+						// adjust the average rtt
+						adjust_rtt(tm.getMilliseconds());
+
 						return;
+					} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
+						// fail -> increment the future timeout
+						adjust_rtt(_avg_rtt * 2);
+
+						// retransmit the frame
 					}
-					catch (const ibrcommon::Conditional::ConditionalAbortException &e) { };
 				}
 				else
 				{
@@ -208,6 +226,18 @@ namespace dtn
 			// transmission failed - abort the stream
 			IBRCOMMON_LOGGER_DEBUG(20) << "DatagramConnection::stream_send: transmission failed - abort the stream" << IBRCOMMON_LOGGER_ENDL;
 			throw DatagramException("transmission failed - abort the stream");
+		}
+
+		void DatagramConnection::adjust_rtt(float value)
+		{
+			// convert current avg to float
+			float new_rtt = _avg_rtt;
+
+			// calculate average
+			new_rtt = (new_rtt * (1 - AVG_RTT_WEIGHT)) + (AVG_RTT_WEIGHT * value);
+
+			// assign the new value
+			_avg_rtt = new_rtt;
 		}
 
 		DatagramConnection::Stream::Stream(DatagramConnection &conn, const size_t maxmsglen, const unsigned int maxseqno)

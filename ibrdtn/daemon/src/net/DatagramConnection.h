@@ -179,6 +179,8 @@ namespace dtn
 
 			void stream_send(const char &flags, const unsigned int &seqno, const char *buf, int len) throw (DatagramException);
 
+			void adjust_rtt(float value);
+
 			DatagramConnectionCallback &_callback;
 			bool _running;
 			const std::string _identifier;
@@ -190,6 +192,8 @@ namespace dtn
 			size_t _wait_ack;
 
 			const DatagramService::Parameter _params;
+
+			size_t _avg_rtt;
 		};
 	} /* namespace data */
 } /* namespace dtn */
