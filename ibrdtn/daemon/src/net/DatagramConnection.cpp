@@ -82,17 +82,13 @@ namespace dtn
 					// validate the bundle
 					dtn::core::BundleCore::getInstance().validate(bundle);
 
-
 					IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::run"<< IBRCOMMON_LOGGER_ENDL;
 
-					// determine sender
-					EID sender;
-
 					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(sender, bundle, false, true);
+					dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false, true);
 				}
 			} catch (const dtn::InvalidDataException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(10) << "Received an invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -170,6 +166,11 @@ namespace dtn
 				_ack_cond.signal(true);
 				IBRCOMMON_LOGGER_DEBUG(20) << "DatagramConnection: ack received " << _last_ack << IBRCOMMON_LOGGER_ENDL;
 			}
+		}
+
+		void DatagramConnection::setPeerEID(const dtn::data::EID &peer)
+		{
+			_peer_eid = peer;
 		}
 
 		void DatagramConnection::stream_send(const char &flags, const unsigned int &seqno, const char *buf, int len) throw (DatagramException)

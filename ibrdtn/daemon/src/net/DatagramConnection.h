@@ -83,6 +83,12 @@ namespace dtn
 			 */
 			void ack(const unsigned int &seqno);
 
+			/**
+			 * Assign a peer EID to this connection
+			 * @param peer The EID of this peer.
+			 */
+			void setPeerEID(const dtn::data::EID &peer);
+
 		private:
 			class Stream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
 			{
@@ -194,6 +200,8 @@ namespace dtn
 			const DatagramService::Parameter _params;
 
 			size_t _avg_rtt;
+
+			dtn::data::EID _peer_eid;
 		};
 	} /* namespace data */
 } /* namespace dtn */

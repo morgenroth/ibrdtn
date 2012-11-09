@@ -248,6 +248,10 @@ namespace dtn
 						n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));
 					}
 
+					// Connection instance for this address
+					DatagramConnection& connection = getConnection(address);
+					connection.setPeerEID(announce.getEID());
+
 					// announce NodeInfo to ConnectionManager
 					dtn::core::BundleCore::getInstance().getConnectionManager().updateNeighbor(n);
 
