@@ -211,7 +211,7 @@ namespace dtn
 		}
 
 		DatagramConnection::Stream::Stream(DatagramConnection &conn, const size_t maxmsglen, const unsigned int maxseqno)
-		 : std::iostream(this), _buf_size(maxmsglen), _maxseqno(maxseqno), _in_state(SEGMENT_FIRST), _out_state(SEGMENT_FIRST),
+		 : std::iostream(this), _buf_size(maxmsglen), _maxseqno(maxseqno), _in_state(DatagramService::SEGMENT_FIRST), _out_state(DatagramService::SEGMENT_FIRST),
 		   _queue_buf(new char[_buf_size]), _queue_buf_len(0), _out_buf(new char[_buf_size]), _in_buf(new char[_buf_size]),
 		   in_seq_num_(0), out_seq_num_(0), _abort(false), _callback(conn)
 		{
@@ -246,7 +246,7 @@ namespace dtn
 				_abort = true;
 				_queue_buf_cond.signal();
 
-				if (flags & SEGMENT_FIRST)
+				if (flags & DatagramService::SEGMENT_FIRST)
 				{
 					throw DatagramException("out of bound exception - re-initiate the connection");
 				}
@@ -254,7 +254,7 @@ namespace dtn
 			}
 
 			// check if this is the first segment since we expect a first segment
-			if ((_in_state & SEGMENT_FIRST) && (!(flags & SEGMENT_FIRST)))
+			if ((_in_state & DatagramService::SEGMENT_FIRST) && (!(flags & DatagramService::SEGMENT_FIRST)))
 			{
 				IBRCOMMON_LOGGER(error) << "Received frame with wrong segment mark"<< IBRCOMMON_LOGGER_ENDL;
 				_abort = true;
@@ -262,7 +262,7 @@ namespace dtn
 				return;
 			}
 			// check if this is a second first segment without any previous last segment
-			else if ((_in_state == SEGMENT_MIDDLE) && (flags & SEGMENT_FIRST))
+			else if ((_in_state == DatagramService::SEGMENT_MIDDLE) && (flags & DatagramService::SEGMENT_FIRST))
 			{
 				IBRCOMMON_LOGGER(error) << "Received frame with wrong segment mark"<< IBRCOMMON_LOGGER_ENDL;
 				_abort = true;
@@ -270,24 +270,24 @@ namespace dtn
 				return;
 			}
 
-			if (flags & SEGMENT_FIRST)
+			if (flags & DatagramService::SEGMENT_FIRST)
 			{
 				IBRCOMMON_LOGGER_DEBUG(45) << "DatagramConnection: first segment received" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// if this is the last segment then...
-			if (flags & SEGMENT_LAST)
+			if (flags & DatagramService::SEGMENT_LAST)
 			{
 				IBRCOMMON_LOGGER_DEBUG(45) << "DatagramConnection: last segment received" << IBRCOMMON_LOGGER_ENDL;
 
 				// ... expect a first segment as next
-				_in_state = SEGMENT_FIRST;
+				_in_state = DatagramService::SEGMENT_FIRST;
 			}
 			else
 			{
 				// if this is not the last segment we expect everything
 				// but a first segment
-				_in_state = SEGMENT_MIDDLE;
+				_in_state = DatagramService::SEGMENT_MIDDLE;
 			}
 
 			// increment the sequence number
@@ -327,14 +327,14 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::sync" << IBRCOMMON_LOGGER_ENDL;
 
 			// Here we know we get the last segment. Mark it so.
-			_out_state |= SEGMENT_LAST;
+			_out_state |= DatagramService::SEGMENT_LAST;
 
 			int ret = std::char_traits<char>::eq_int_type(this->overflow(
 					std::char_traits<char>::eof()), std::char_traits<char>::eof()) ? -1
 					: 0;
 
 			// initialize the first byte with SEGMENT_FIRST flag
-			_out_state = SEGMENT_FIRST;
+			_out_state = DatagramService::SEGMENT_FIRST;
 
 			return ret;
 		}
@@ -375,7 +375,7 @@ namespace dtn
 			out_seq_num_ = (out_seq_num_ + 1) % _maxseqno;
 
 			// set the segment state to middle
-			_out_state = SEGMENT_MIDDLE;
+			_out_state = DatagramService::SEGMENT_MIDDLE;
 
 			return std::char_traits<char>::not_eof(c);
 		}

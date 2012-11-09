@@ -34,6 +34,13 @@ namespace dtn
 				FLOW_STOPNWAIT = 1
 			};
 
+			enum HEADER_FLAGS
+			{
+				SEGMENT_FIRST = 0x02,
+				SEGMENT_LAST = 0x01,
+				SEGMENT_MIDDLE = 0x00
+			};
+
 			class Parameter
 			{
 			public:

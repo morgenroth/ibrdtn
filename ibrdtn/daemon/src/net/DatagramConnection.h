@@ -87,13 +87,6 @@ namespace dtn
 			class Stream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
 			{
 			public:
-				enum HEADER_FLAGS
-				{
-					SEGMENT_FIRST = 0x02,
-					SEGMENT_LAST = 0x01,
-					SEGMENT_MIDDLE = 0x00
-				};
-
 				Stream(DatagramConnection &conn, const size_t maxmsglen, const unsigned int maxseqno);
 				virtual ~Stream();
 

@@ -44,7 +44,8 @@ namespace dtn
 				HEADER_UNKOWN = 0,
 				HEADER_BROADCAST = 1,
 				HEADER_SEGMENT = 2,
-				HEADER_ACK = 4
+				HEADER_ACK = 4,
+				HEADER_NACK = 8
 			};
 
 			DatagramConvergenceLayer(DatagramService *ds);
