@@ -40,9 +40,9 @@ namespace dtn
 		 : _panid(panid), _iface(iface)
 		{
 			// set connection parameters
-			_params.max_msg_length = 113;
-			_params.max_seq_numbers = 8;
-			_params.flowcontrol = DatagramService::FLOW_NONE;
+			_params.max_msg_length = 114;
+			_params.max_seq_numbers = 4;
+			_params.flowcontrol = DatagramService::FLOW_STOPNWAIT;
 
 			// convert the panid into a string
 			std::stringstream ss;
@@ -103,38 +103,37 @@ namespace dtn
 
 				// decode destination address
 				ibrcommon::vaddress destaddr;
-				size_t end_of_payload = length + 1;
 				LOWPANDatagramService::decode(identifier, destaddr);
 
 				// buffer for the datagram
-				char tmp[length + 2];
+				char tmp[length + 1];
 
-				// encode the flags (4-bit) + seqno (4-bit)
-				tmp[0] = (0x30 & (flags << 4)) | (0x0f & seqno);
+				// encode the header (1 byte)
+				tmp[0] = 0;
 
-				// Need to encode flags, type and seqno into the message
-				if (type == DatagramConvergenceLayer::HEADER_SEGMENT)
-				{
+				// compat: 00
+				tmp[0] |= 1 << 6;
+
+				// type: 01 = DATA, 10 = DISCO, 11 = ACK, 00 = NACK
+				if (type == DatagramConvergenceLayer::HEADER_SEGMENT) tmp[0] |= 0x01 << 4;
+				else if (type == DatagramConvergenceLayer::HEADER_BROADCAST) tmp[0] |= 0x02 << 4;
+				else if (type == DatagramConvergenceLayer::HEADER_ACK) tmp[0] |= 0x03 << 4;
+				else if (type == DatagramConvergenceLayer::HEADER_NACK) tmp[0] |= 0x00 << 4;
+
+				// seq.no: xx (2 bit)
+				tmp[0] |= (0x03 & seqno) << 2;
+
+				// flags: 10 = first, 00 = middle, 01 = last, 11 = both
+				if (flags & DatagramService::SEGMENT_FIRST) tmp[0] |= 0x2;
+				if (flags & DatagramService::SEGMENT_LAST) tmp[0] |= 0x1;
+
+				if (length > 0) {
 					// copy payload to the new buffer
 					::memcpy(&tmp[1], buf, length);
 				}
-				else
-				{
-					// set datagram to extended
-					tmp[0] |= EXTENDED_MASK;
-
-					// encode the type into the second byte
-					tmp[1] = type;
-
-					// copy payload to the new buffer
-					::memcpy(&tmp[2], buf, length);
-
-					// payload will be one byte longer with extended header
-					end_of_payload++;
-				}
 
 				// send converted line
-				sock.sendto(buf, end_of_payload, 0, destaddr);
+				sock.sendto(tmp, length + 1, 0, destaddr);
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("send failed");
 			}
@@ -158,26 +157,35 @@ namespace dtn
 				if (socks.size() == 0) return;
 				ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**socks.begin());
 
-				// extend the buffer if the len is zero (ACKs)
-				if (length == 0) length++;
+				// buffer for the datagram
+				char tmp[length + 1];
 
-				// buffer for the datagram plus local address
-				char tmp[length + 2];
+				// encode the header (1 byte)
+				tmp[0] = 0;
 
-				// encode header: 2-bit unused, flags (2-bit) + seqno (4-bit)
-				tmp[0] = (0x30 & (flags << 4)) | (0x0f & seqno);
+				// compat: 00
+				tmp[0] |= 1 << 6;
 
-				// set datagram to extended
-				tmp[0] |= EXTENDED_MASK;
+				// type: 01 = DATA, 10 = DISCO, 11 = ACK, 00 = NACK
+				if (type == DatagramConvergenceLayer::HEADER_SEGMENT) tmp[0] |= 0x01 << 4;
+				else if (type == DatagramConvergenceLayer::HEADER_BROADCAST) tmp[0] |= 0x02 << 4;
+				else if (type == DatagramConvergenceLayer::HEADER_ACK) tmp[0] |= 0x03 << 4;
+				else if (type == DatagramConvergenceLayer::HEADER_NACK) tmp[0] |= 0x00 << 4;
 
-				// encode the type into the second byte
-				tmp[1] = type;
+				// seq.no: xx (2 bit)
+				tmp[0] |= (0x03 & seqno) << 2;
 
-				// copy payload to the new buffer
-				::memcpy(&tmp[2], buf, length);
+				// flags: 10 = first, 00 = middle, 01 = last, 11 = both
+				if (flags & DatagramService::SEGMENT_FIRST) tmp[0] |= 0x2;
+				if (flags & DatagramService::SEGMENT_LAST) tmp[0] |= 0x1;
+
+				if (length > 0) {
+					// copy payload to the new buffer
+					::memcpy(&tmp[1], buf, length);
+				}
 
 				// send converted line
-				sock.sendto(buf, length + 2, 0, _addr_broadcast);
+				sock.sendto(tmp, length + 1, 0, _addr_broadcast);
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("send failed");
 			}
@@ -200,38 +208,35 @@ namespace dtn
 				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
 					ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**iter);
 
-					char tmp[length + 2];
+					char tmp[length + 1];
 
-					// Receive full frame from socket
+					// from address of the received frame
 					ibrcommon::vaddress fromaddr;
 
-					size_t ret = sock.recvfrom(tmp, length + 2, 0, fromaddr);
+					// Receive full frame from socket
+					size_t ret = sock.recvfrom(tmp, length + 1, 0, fromaddr);
 
-					// decode type, flags and seqno
-					// extended mask are discovery and ACK datagrams
-					if (tmp[0] & EXTENDED_MASK)
-					{
-						// in extended frames the second byte
-						// contains the real type
-						type = tmp[1];
+					// decode the header (1 byte)
+					// IGNORE: compat: 00
 
-						// copy payload to the destination buffer
-						ret -= 2;
-						::memcpy(buf, &tmp[2], ret);
-					}
-					else
-					{
-						// no extended mask means "segment"
-						type = DatagramConvergenceLayer::HEADER_SEGMENT;
+					// type: 01 = DATA, 10 = DISCO, 11 = ACK, 00 = NACK
+					if (tmp[0] & (0x01 << 4)) type = DatagramConvergenceLayer::HEADER_SEGMENT;
+					else if (tmp[0] & (0x02 << 4)) type = DatagramConvergenceLayer::HEADER_BROADCAST;
+					else if (tmp[0] & (0x03 << 4)) type = DatagramConvergenceLayer::HEADER_ACK;
+					else if (tmp[0] & (0x00 << 4)) type = DatagramConvergenceLayer::HEADER_NACK;
 
-						// copy payload to the destination buffer
-						ret -= 1;
+					// seq.no: xx (2 bit)
+					seqno = (tmp[0] & (0x03 << 2)) >> 2;
+
+					// flags: 10 = first, 00 = middle, 01 = last, 11 = both
+					flags = 0;
+					if (tmp[0] & 0x02) flags |= DatagramService::SEGMENT_FIRST;
+					if (tmp[0] & 0x01) flags |= DatagramService::SEGMENT_LAST;
+
+					if (ret > 1) {
+						// copy payload into the buffer
 						::memcpy(buf, &tmp[1], ret);
 					}
-
-					// first byte contains flags (4-bit) + seqno (4-bit)
-					flags = 0x0f & (tmp[0] >> 4);
-					seqno = 0x0f & tmp[0];
 
 					// encode into the right format
 					address = LOWPANDatagramService::encode(fromaddr);
