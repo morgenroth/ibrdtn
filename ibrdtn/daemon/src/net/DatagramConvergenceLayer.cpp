@@ -226,34 +226,43 @@ namespace dtn
 				// Check for extended header and retrieve if available
 				if (type == HEADER_BROADCAST)
 				{
-					IBRCOMMON_LOGGER(notice) << "Received announcement for DatagramConvergenceLayer discovery" << IBRCOMMON_LOGGER_ENDL;
-					DiscoveryAnnouncement announce;
-					stringstream ss;
-					ss.write(data, len);
-					ss >> announce;
+					try {
+						IBRCOMMON_LOGGER_DEBUG(10) << "Received announcement for DatagramConvergenceLayer discovery" << IBRCOMMON_LOGGER_ENDL;
+						DiscoveryAnnouncement announce;
+						stringstream ss;
+						ss.write(data, len);
+						ss >> announce;
 
-					// convert the announcement into NodeEvents
-					Node n(announce.getEID());
+						// convert the announcement into NodeEvents
+						Node n(announce.getEID());
 
-					// timeout value
-					size_t to_value = 30;
+						// timeout value
+						size_t to_value = 30;
 
-					// add
-					n.add(Node::URI(Node::NODE_DISCOVERED, _service->getProtocol(), address, to_value, 20));
+						// add
+						n.add(Node::URI(Node::NODE_DISCOVERED, _service->getProtocol(), address, to_value, 20));
 
-					const std::list<DiscoveryService> services = announce.getServices();
-					for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
-					{
-						const DiscoveryService &s = (*iter);
-						n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));
+						const std::list<DiscoveryService> services = announce.getServices();
+						for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+						{
+							const DiscoveryService &s = (*iter);
+							n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));
+						}
+
+						{
+							// lock the connection list while working with it
+							ibrcommon::MutexLock lc(_connection_cond);
+
+							// Connection instance for this address
+							DatagramConnection& connection = getConnection(address);
+							connection.setPeerEID(announce.getEID());
+						}
+
+						// announce NodeInfo to ConnectionManager
+						dtn::core::BundleCore::getInstance().getConnectionManager().updateNeighbor(n);
+					} catch (const ibrcommon::Exception&) {
+						// catch wrong formats
 					}
-
-					// Connection instance for this address
-					DatagramConnection& connection = getConnection(address);
-					connection.setPeerEID(announce.getEID());
-
-					// announce NodeInfo to ConnectionManager
-					dtn::core::BundleCore::getInstance().getConnectionManager().updateNeighbor(n);
 
 					continue;
 				}
