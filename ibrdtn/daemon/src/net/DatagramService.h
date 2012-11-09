@@ -47,6 +47,7 @@ namespace dtn
 				FLOWCONTROL flowcontrol;
 				unsigned int max_seq_numbers;
 				size_t max_msg_length;
+				size_t initial_timeout;
 			};
 
 			virtual ~DatagramService() = 0;

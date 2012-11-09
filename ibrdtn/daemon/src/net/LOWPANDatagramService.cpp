@@ -40,6 +40,7 @@ namespace dtn
 			_params.max_msg_length = 114;
 			_params.max_seq_numbers = 4;
 			_params.flowcontrol = DatagramService::FLOW_STOPNWAIT;
+			_params.initial_timeout = 2000;		// initial timeout 2 seconds
 
 			// convert the panid into a string
 			std::stringstream ss;

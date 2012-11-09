@@ -37,6 +37,7 @@ namespace dtn
 			_params.max_msg_length = mtu - 2;	// minus 2 bytes because we encode seqno and flags into 2 bytes
 			_params.max_seq_numbers = 8;		// seqno 0..7
 			_params.flowcontrol = DatagramService::FLOW_STOPNWAIT;
+			_params.initial_timeout = 50;		// initial timeout 50ms
 		}
 
 		UDPDatagramService::~UDPDatagramService()
