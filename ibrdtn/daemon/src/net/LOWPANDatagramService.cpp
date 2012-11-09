@@ -111,7 +111,6 @@ namespace dtn
 				tmp[0] = 0;
 
 				// compat: 00
-				tmp[0] |= 1 << 6;
 
 				// type: 01 = DATA, 10 = DISCO, 11 = ACK, 00 = NACK
 				if (type == DatagramConvergenceLayer::HEADER_SEGMENT) tmp[0] |= 0x01 << 4;
@@ -163,7 +162,6 @@ namespace dtn
 				tmp[0] = 0;
 
 				// compat: 00
-				tmp[0] |= 1 << 6;
 
 				// type: 01 = DATA, 10 = DISCO, 11 = ACK, 00 = NACK
 				if (type == DatagramConvergenceLayer::HEADER_SEGMENT) tmp[0] |= 0x01 << 4;
