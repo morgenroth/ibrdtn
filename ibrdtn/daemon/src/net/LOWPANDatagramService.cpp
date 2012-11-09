@@ -29,9 +29,6 @@
 
 #include <string.h>
 
-#define EXTENDED_MASK	0x40
-#define SEQ_NUM_MASK	0x07
-
 namespace dtn
 {
 	namespace net
