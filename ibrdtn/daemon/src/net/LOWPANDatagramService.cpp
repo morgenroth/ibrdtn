@@ -217,10 +217,20 @@ namespace dtn
 					// IGNORE: compat: 00
 
 					// type: 01 = DATA, 10 = DISCO, 11 = ACK, 00 = NACK
-					if (tmp[0] & (0x01 << 4)) type = DatagramConvergenceLayer::HEADER_SEGMENT;
-					else if (tmp[0] & (0x02 << 4)) type = DatagramConvergenceLayer::HEADER_BROADCAST;
-					else if (tmp[0] & (0x03 << 4)) type = DatagramConvergenceLayer::HEADER_ACK;
-					else if (tmp[0] & (0x00 << 4)) type = DatagramConvergenceLayer::HEADER_NACK;
+					switch (tmp[0] & (0x03 << 4)) {
+					case (0x01 << 4):
+						type = DatagramConvergenceLayer::HEADER_SEGMENT;
+						break;
+					case (0x02 << 4):
+						type = DatagramConvergenceLayer::HEADER_BROADCAST;
+						break;
+					case (0x03 << 4):
+						type = DatagramConvergenceLayer::HEADER_ACK;
+						break;
+					default:
+						type = DatagramConvergenceLayer::HEADER_NACK;
+						break;
+					}
 
 					// seq.no: xx (2 bit)
 					seqno = (tmp[0] & (0x03 << 2)) >> 2;
