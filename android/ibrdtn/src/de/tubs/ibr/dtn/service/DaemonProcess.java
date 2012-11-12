@@ -365,7 +365,7 @@ public class DaemonProcess extends Thread {
 			}
 
 			// set multicast address for discovery
-			p.println("discovery_address = 224.0.0.142");
+			p.println("discovery_address = ff02::142 224.0.0.142");
 			
 			if (preferences.getBoolean("discovery_announce", true))
 			{
