@@ -357,7 +357,7 @@ namespace dtn
 		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
 		{
 			_timeout = conf.read<unsigned int>("discovery_timeout", 5);
-			_crosslayer = conf.read<bool>("discovery_crosslayer", true);
+			_crosslayer = (conf.read<std::string>("discovery_crosslayer", "no") == "yes");
 		}
 
 		void Configuration::Statistic::load(const ibrcommon::ConfigFile&)
@@ -401,7 +401,7 @@ namespace dtn
 			// enable the clock modify feature
 			dtn::utils::Clock::modify_clock = (conf.read<std::string>("time_set_clock", "no") == "yes");
 		}
-		
+
 		void Configuration::DHT::load(const ibrcommon::ConfigFile &conf)
 		{
 			_enabled = (conf.read<std::string> ("dht_enabled", "no") == "yes");
@@ -423,7 +423,7 @@ namespace dtn
 			_allowNeighbourToAnnounceMe = (conf.read<std::string> ("dht_allow_neighbours_to_announce_me", "yes") == "yes");
 			_allowNeighbourAnnouncement = (conf.read<std::string> ("dht_allow_neighbour_announcement", "yes") == "yes");
 			_ignoreDHTNeighbourInformations = (conf.read<std::string> ("dht_ignore_neighbour_informations", "no") == "yes");
-			
+
 			if (_minRating < 0)	_minRating = 0;
 		}
 
@@ -1299,7 +1299,7 @@ namespace dtn
 		{
 			return _blacklist;
 		}
-		
+
 		bool Configuration::DHT::ignoreDHTNeighbourInformations() const
 		{
 			return _ignoreDHTNeighbourInformations;
