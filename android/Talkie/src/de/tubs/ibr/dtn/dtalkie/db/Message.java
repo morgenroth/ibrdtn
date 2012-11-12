@@ -112,7 +112,6 @@ public class Message implements Comparable<Message> {
 		this.id = id;
 	}
 
-	@Override
 	public int compareTo(Message arg0) {
 		if (this.created != null)
 		{

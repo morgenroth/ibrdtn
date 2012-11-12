@@ -43,7 +43,6 @@ public class DTNExampleAppActivity extends Activity {
 	private DTNClient _client = null;
 	
 	private SessionConnection _session_listener = new SessionConnection() {
-		@Override
 		public void onSessionConnected(Session arg0) {
 			Log.d(TAG, "DTN session connected");
 			
@@ -51,7 +50,6 @@ public class DTNExampleAppActivity extends Activity {
 	        _executor.execute(_query_task);
 		}
 
-		@Override
 		public void onSessionDisconnected() {
 		}
 	};
@@ -68,7 +66,6 @@ public class DTNExampleAppActivity extends Activity {
 	};
 
 	private Runnable _query_task = new Runnable() {
-		@Override
 		public void run() {
 			try {
 				while (_client.getSession().queryNext());
@@ -115,7 +112,6 @@ public class DTNExampleAppActivity extends Activity {
     
 	private void showInstallServiceDialog() {
 		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-		    @Override
 		    public void onClick(DialogInterface dialog, int which) {
 		        switch (which){
 		        case DialogInterface.BUTTON_POSITIVE:
@@ -176,12 +172,10 @@ public class DTNExampleAppActivity extends Activity {
 		private File file = null;
 		private ParcelFileDescriptor fd = null;
 
-		@Override
 		public void startBundle(de.tubs.ibr.dtn.api.Bundle bundle) {
 			this.bundle = new BundleID( bundle );
 		}
 
-		@Override
 		public void endBundle() {
 			
 			final de.tubs.ibr.dtn.api.BundleID received = this.bundle;
@@ -200,7 +194,6 @@ public class DTNExampleAppActivity extends Activity {
 			this.bundle = null;
 		}
 
-		@Override
 		public TransferMode startBlock(Block block) {
 			if (block.type == 1)
 			{
@@ -233,7 +226,6 @@ public class DTNExampleAppActivity extends Activity {
 			}
 		}
 
-		@Override
 		public void endBlock() {
 			if (fd != null)
 			{
@@ -258,12 +250,10 @@ public class DTNExampleAppActivity extends Activity {
 			}
 		}
 
-		@Override
 		public void characters(String data) {
 			Log.i(TAG, "Received characters: " + new String(data));
 		}
 
-		@Override
 		public ParcelFileDescriptor fd() {
 			// create new filedescriptor
 			try {
@@ -279,14 +269,12 @@ public class DTNExampleAppActivity extends Activity {
 			return null;
 		}
 
-		@Override
 		public void payload(byte[] data) {
 			Log.i(TAG, "Received payload: " + new String(data));
 			final String msg = new String(data);
 			final SingletonEndpoint sender = new SingletonEndpoint(bundle.getSource());
 			
 			runOnUiThread(new Runnable() {
-				@Override
 				public void run() {
 					Toast t = Toast.makeText(DTNExampleAppActivity.this, msg, Toast.LENGTH_LONG);
 					t.show();
@@ -296,7 +284,6 @@ public class DTNExampleAppActivity extends Activity {
 			// respond to 'hello' messages
 			if (msg.equalsIgnoreCase("hello")) {
 				_executor.execute(new Runnable() {
-					@Override
 					public void run() {
 						try {
 							_client.getSession().send(sender, 60, new String("Welcome!").getBytes());
@@ -310,12 +297,10 @@ public class DTNExampleAppActivity extends Activity {
 			}
 		}
 
-		@Override
 		public void progress(long current, long length) {
 			Log.i(TAG, "Payload: " + current + " of " + length + " bytes.");
 		}
 
-		@Override
 		public void finished(int startId) {
 		}		
 	};

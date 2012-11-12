@@ -99,7 +99,6 @@ public class AppListActivity extends ListActivity {
 			marketButton.setImageDrawable( info.activityInfo.loadIcon(getPackageManager()) );
 			
 			marketButton.setOnClickListener(new OnClickListener() {
-				@Override
 				public void onClick(View v) {
 					final Intent marketIntent = new Intent(Intent.ACTION_VIEW);
 					//marketIntent.setData(Uri.parse("market://search?q=de.tubs.ibr.dtn.*"));

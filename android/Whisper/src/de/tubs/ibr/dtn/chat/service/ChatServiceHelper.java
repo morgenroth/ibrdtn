@@ -66,13 +66,11 @@ public class ChatServiceHelper {
 	};
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
-		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			ChatServiceHelper.this.service = ((ChatService.LocalBinder)service).getService();
 			ChatServiceHelper.this.callback.onServiceConnected(ChatServiceHelper.this.service);
 		}
 
-		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			ChatServiceHelper.this.callback.onServiceDisconnected();
 			ChatServiceHelper.this.service = null;

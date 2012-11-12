@@ -88,7 +88,6 @@ public class TTSService extends Service {
 	}
 	
 	private TextToSpeech.OnInitListener _tts_init_listener = new TextToSpeech.OnInitListener() {
-		@Override
 		public void onInit(int status) {
 	        if (status == TextToSpeech.SUCCESS) {
 				_tts_initialized = true;
@@ -100,14 +99,12 @@ public class TTSService extends Service {
 	};
 	
 	private TextToSpeech.OnUtteranceCompletedListener _tts_complete_listener = new TextToSpeech.OnUtteranceCompletedListener() {
-		@Override
 		public void onUtteranceCompleted(String utteranceId) {
 			TTSService.this.stopSelfResult(Integer.valueOf(utteranceId));
 		}
 	};
 	
 	private Runnable speechNow = new Runnable() {
-		@Override
 		public void run() {
 			SpeechTask data = _tts_queue.poll();
 			if (data != null) {

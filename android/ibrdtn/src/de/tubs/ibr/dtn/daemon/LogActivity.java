@@ -54,7 +54,6 @@ public class LogActivity extends ListActivity {
 	private DTNService service = null;
 
 	private ServiceConnection mConnection = new ServiceConnection() {
-		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			LogActivity.this.service = DTNService.Stub.asInterface(service);
 			Log.i(TAG, "service connected");
@@ -62,7 +61,6 @@ public class LogActivity extends ListActivity {
 			refreshView();
 		}
 
-		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			Log.i(TAG, "service disconnected");
 			service = null;

@@ -98,12 +98,10 @@ public class ChatService extends IntentService {
     {
     	Bundle current;
 
-		@Override
 		public void startBundle(Bundle bundle) {
 			this.current = bundle;
 		}
 
-		@Override
 		public void endBundle() {
 			de.tubs.ibr.dtn.api.BundleID received = new de.tubs.ibr.dtn.api.BundleID(this.current);
 			
@@ -116,22 +114,18 @@ public class ChatService extends IntentService {
 			this.current = null;
 		}
 
-		@Override
 		public TransferMode startBlock(Block block) {
 			// ignore messages with a size larger than 8k
 			if (block.length > 8196) return TransferMode.NULL;
 			return TransferMode.SIMPLE;
 		}
 
-		@Override
 		public void endBlock() {
 		}
 
-		@Override
 		public void characters(String data) {
 		}
 
-		@Override
 		public void payload(byte[] data) {
 			String msg = new String(data);
 			
@@ -145,16 +139,13 @@ public class ChatService extends IntentService {
 			}
 		}
 
-		@Override
 		public ParcelFileDescriptor fd() {
 			return null;
 		}
 
-		@Override
 		public void progress(long current, long length) {
 		}
 
-		@Override
 		public void finished(int startId) {
 		}
     

@@ -78,7 +78,6 @@ public class MeDialog extends DialogFragment {
     	builder.setTitle(R.string.dialog_me_title);
     	builder.setView(v);
     	builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				if (change_lister != null) {
 					String new_presence = spin_values[spin.getSelectedItemPosition()];

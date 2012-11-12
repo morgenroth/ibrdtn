@@ -48,7 +48,6 @@ public class NeighborList extends ListActivity {
 	private List<Map<String, String>> _data = new LinkedList<Map<String, String>>();
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
-		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			NeighborList.this.service = DTNService.Stub.asInterface(service);
 			Log.i("IBR-DTN", "NeighborList: service connected");
@@ -59,7 +58,6 @@ public class NeighborList extends ListActivity {
 			refreshView();
 		}
 
-		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			Log.i("IBR-DTN", "NeighborList: service disconnected");
 			service = null;

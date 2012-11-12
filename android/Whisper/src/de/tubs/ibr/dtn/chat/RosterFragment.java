@@ -143,7 +143,6 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 		}
 	}
 	
-	@Override
 	public void onContentChanged(String buddyId) {
 		if (this.getActivity() == null) return;
 		
@@ -201,7 +200,6 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 	}
 	
 	private OnItemClickListener _click_listener = new OnItemClickListener() {
-		@Override
 		public void onItemClick(AdapterView<?> arg0, View v, int arg2, long arg3) {
 			ViewHolder holder = (ViewHolder)v.getTag();
 			
@@ -221,7 +219,6 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 		MeDialog dialog = MeDialog.newInstance(presence_tag, presence_text);
 
 		dialog.setOnChangeListener(new MeDialog.OnChangeListener() {
-			@Override
 			public void onStateChanged(String presence, String message) {
 				Log.d(TAG, "state changed: " + presence + ", " + message);
 				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
@@ -249,12 +246,10 @@ public class RosterFragment extends Fragment implements ChatServiceListener {
 	public void onBuddySelected(String buddyId) {
 	}
 
-	@Override
 	public void onServiceConnected(ChatService service) {
 		this.onContentChanged(null);
 	}
 
-	@Override
 	public void onServiceDisconnected() {
 	}
 }

@@ -30,23 +30,19 @@ public enum TransferMode implements Parcelable {
 	PASSTHROUGH,
 	NULL;
 
-    @Override
     public int describeContents() {
         return 0;
     }
 
-    @Override
     public void writeToParcel(final Parcel dest, final int flags) {
         dest.writeInt(ordinal());
     }
 
     public static final Creator<TransferMode> CREATOR = new Creator<TransferMode>() {
-        @Override
         public TransferMode createFromParcel(final Parcel source) {
             return TransferMode.values()[source.readInt()];
         }
 
-        @Override
         public TransferMode[] newArray(final int size) {
             return new TransferMode[size];
         }

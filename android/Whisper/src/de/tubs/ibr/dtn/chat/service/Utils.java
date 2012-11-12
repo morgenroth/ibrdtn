@@ -10,7 +10,6 @@ import de.tubs.ibr.dtn.chat.R;
 public class Utils {
 	public static void showInstallServiceDialog(final Activity activity) {
 		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-		    @Override
 		    public void onClick(DialogInterface dialog, int which) {
 		        switch (which){
 		        case DialogInterface.BUTTON_POSITIVE:
@@ -35,7 +34,6 @@ public class Utils {
 	
 	public static void showReinstallDialog(final Activity activity) {
 		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-		    @Override
 		    public void onClick(DialogInterface dialog, int which) {
 		        switch (which){
 		        case DialogInterface.BUTTON_POSITIVE:

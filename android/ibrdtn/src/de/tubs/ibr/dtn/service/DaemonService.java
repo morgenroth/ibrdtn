@@ -79,32 +79,26 @@ public class DaemonService extends Service implements DaemonStateListener {
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
     private final DTNService.Stub mBinder = new DTNService.Stub() {  	
-		@Override
 		public DaemonState getState() throws RemoteException {
 			return _daemon.getState();
 		}
 
-		@Override
 		public boolean isRunning() throws RemoteException {
 			return _daemon.getState().equals(DaemonState.ONLINE);
 		}
 
-		@Override
 		public List<String> getLog() throws RemoteException {
 			return _daemon.getLog();
 		}
 
-		@Override
 		public List<String> getNeighbors() throws RemoteException {
 			return _daemon.getNeighbors();
 		}
 
-		@Override
 		public void clearStorage() throws RemoteException {
 			_daemon.clearStorage();
 		}
 
-		@Override
 		public DTNSession getSession(String packageName) throws RemoteException {
 			ClientSession cs = _session_manager.getSession(packageName);
 			if (cs == null) return null;
@@ -136,14 +130,12 @@ public class DaemonService extends Service implements DaemonStateListener {
 				if (intent.hasExtra("enabled")) {
 					if (intent.getBooleanExtra("enabled", false)) {
 						_executor.execute(new Runnable() {
-							@Override
 							public void run() {
 								_daemon.enableCloudUplink();
 							}
 						});
 					} else {
 						_executor.execute(new Runnable() {
-							@Override
 							public void run() {
 								_daemon.disableCloudUplink();
 							}
@@ -163,7 +155,6 @@ public class DaemonService extends Service implements DaemonStateListener {
 	}
 	
 	private Runnable _unn_task = new Runnable() {
-		@Override
 		public void run() {
 			if (!_daemon.getState().equals(DaemonState.ONLINE)) return;
 			
@@ -239,7 +230,6 @@ public class DaemonService extends Service implements DaemonStateListener {
 		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "DaemonService created");
 		
 		_executor.execute(new Runnable() {
-			@Override
 			public void run() {
 				// terminate a running daemon
 				terminateRunningDaemon();
@@ -313,7 +303,6 @@ public class DaemonService extends Service implements DaemonStateListener {
     		startForeground(1, n);
     		
     		_executor.execute(new Runnable() {
-				@Override
 				public void run() {
 					_daemon.start(DaemonService.this, DaemonService.this);
 					
@@ -331,7 +320,6 @@ public class DaemonService extends Service implements DaemonStateListener {
         else if (action.equals(ACTION_SHUTDOWN))
         {
     		_executor.execute(new Runnable() {
-				@Override
 				public void run() {
 					NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 					nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.dialog_wait_stopping)));
@@ -395,7 +383,6 @@ public class DaemonService extends Service implements DaemonStateListener {
 		sendBroadcast(broadcastIntent);
 	}
 
-	@Override
 	public void onDaemonStateChanged(DaemonState state) {
 		NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 		
@@ -462,32 +449,27 @@ public class DaemonService extends Service implements DaemonStateListener {
 		}
 	}
 
-	@Override
 	public void onNeighborhoodChanged() {
 		updateNeighborNotification();
 	}
 	
 	private P2PManager.P2PNeighborListener _p2p_listener = new P2PManager.P2PNeighborListener() {
 		
-		@Override
 		public void onNeighborDisconnected(String name, String iface) {
 			Log.d(TAG, "P2P neighbor has been disconnected");
 			// TODO: put here the right code to control the dtnd
 		}
 		
-		@Override
 		public void onNeighborDisappear(String name) {
 			Log.d(TAG, "P2P neighbor has been disappeared");
 			// TODO: put here the right code to control the dtnd
 		}
 		
-		@Override
 		public void onNeighborDetected(String name) {
 			Log.d(TAG, "P2P neighbor has been detected");
 			// TODO: put here the right code to control the dtnd
 		}
 		
-		@Override
 		public void onNeighborConnected(String name, String iface) {
 			Log.d(TAG, "P2P neighbor has been connected");
 			// TODO: put here the right code to control the dtnd

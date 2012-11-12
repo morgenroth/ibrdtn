@@ -74,7 +74,6 @@ public class Registration implements Parcelable, Serializable {
 	}
 	
     public static final Creator<Registration> CREATOR = new Creator<Registration>() {
-        @Override
         public Registration createFromParcel(final Parcel source) {
         	Registration r = new Registration(source.readString());
         	
@@ -85,18 +84,15 @@ public class Registration implements Parcelable, Serializable {
             return r;
         }
 
-        @Override
         public Registration[] newArray(final int size) {
             return new Registration[size];
         }
     };
 
-	@Override
 	public int describeContents() {
 		return 0;
 	}
 
-	@Override
 	public void writeToParcel(Parcel dest, int flags) {
 		dest.writeString(this.endpoint);
 		LinkedList<GroupEndpoint> groups = new LinkedList<GroupEndpoint>();

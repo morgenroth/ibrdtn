@@ -96,12 +96,10 @@ public class BundleID implements Parcelable {
 		this.sequencenumber = sequencenumber;
 	}
 	
-	@Override
 	public int describeContents() {
 		return 0;
 	}
 
-	@Override
 	public void writeToParcel(Parcel dest, int flags) {
 		dest.writeString(source);
 		dest.writeLong( (timestamp == null) ? 0L : timestamp.getTime() );
@@ -111,7 +109,6 @@ public class BundleID implements Parcelable {
 	}
 	
     public static final Creator<BundleID> CREATOR = new Creator<BundleID>() {
-        @Override
         public BundleID createFromParcel(final Parcel source) {
         	BundleID id = new BundleID();
         	id.source = source.readString();
@@ -125,7 +122,6 @@ public class BundleID implements Parcelable {
         	return id;
         }
 
-        @Override
         public BundleID[] newArray(final int size) {
             return new BundleID[size];
         }

@@ -84,7 +84,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 		textedit.setEnabled(false);
 		
 		textedit.setOnKeyListener(new OnKeyListener() {
-			@Override
 			public boolean onKey(View v, int keycode, KeyEvent event) {
 				if ((KeyEvent.KEYCODE_ENTER == keycode) && (event.getAction() == KeyEvent.ACTION_DOWN))
 				{
@@ -96,7 +95,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 		});
 		
 		textedit.setOnEditorActionListener(new OnEditorActionListener() {
-		    @Override
 		    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
 		        if (actionId == EditorInfo.IME_ACTION_SEND) {
 					flushTextBox();
@@ -109,7 +107,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 		// set send handler
 		ImageButton buttonSend = (ImageButton) v.findViewById(R.id.buttonSend);
 		buttonSend.setOnClickListener(new OnClickListener() {
-			@Override
 			public void onClick(View v) {
 				flushTextBox();
 			}
@@ -187,7 +184,6 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	}
 	
 	private DialogInterface.OnClickListener message_delete_dialog = new DialogInterface.OnClickListener() {
-		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			mCallback.onClearMessages(buddyId);
 		} 
@@ -209,18 +205,15 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	    }
 	}
 
-	@Override
 	public void onContentChanged(String buddyId) {
 		onContentChanged();
 	}
 
-	@Override
 	public void onServiceConnected(ChatService service) {
 		// refresh visible data
 		onContentChanged();
 	}
 
-	@Override
 	public void onServiceDisconnected() {
 	}
 
@@ -366,8 +359,7 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 	public String getSelectedBuddy() {
 		return this.buddyId;
 	}
-
-	@Override
+	
 	public void onBuddySelected(String buddyId) {
 		if (this.buddyId == buddyId) return;
 		

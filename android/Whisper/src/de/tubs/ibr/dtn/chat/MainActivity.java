@@ -226,7 +226,6 @@ public class MainActivity extends FragmentActivity
 		}
 	}
 
-	@Override
 	public void onBuddySelected(String buddyId) {
 		this.selectedBuddy = buddyId;
 		
@@ -274,13 +273,11 @@ public class MainActivity extends FragmentActivity
     	this.onContentChanged(buddyId);
 	}
 	
-	@Override
 	public Roster getRoster() throws ServiceNotConnectedException {
 		if (this.service_helper == null) throw new ServiceNotConnectedException();
 		return this.service_helper.getService().getRoster();
 	}
 
-	@Override
 	public void onClearMessages(String buddyId) {
 		try {
 			// load buddy from roster
@@ -291,7 +288,6 @@ public class MainActivity extends FragmentActivity
 		}
 	}
 
-	@Override
 	public void onMessage(String buddyId, String text) {
 		try {
 			// load buddy from roster
@@ -311,7 +307,6 @@ public class MainActivity extends FragmentActivity
 		}
 	}
 
-	@Override
 	public void onSaveMessage(String buddyId, String msg) {
 		if (buddyId == null) return;
 
@@ -360,7 +355,6 @@ public class MainActivity extends FragmentActivity
 		}
 	}
 
-	@Override
 	public void onContentChanged(String buddyId) {
 	    RosterFragment roster = getRosterFragment();
 	    if (roster != null) {
@@ -373,7 +367,6 @@ public class MainActivity extends FragmentActivity
 	    }
 	}
 
-	@Override
 	public void onServiceConnected(ChatService service) {
 		try {
 			// check possible errors
@@ -404,7 +397,6 @@ public class MainActivity extends FragmentActivity
 	    }
 	}
 
-	@Override
 	public void onServiceDisconnected() {
 	    RosterFragment roster = getRosterFragment();
 	    if (roster != null) {
@@ -417,7 +409,6 @@ public class MainActivity extends FragmentActivity
 	    }
 	}
 
-	@Override
 	public String getSelectedBuddy() {
 		return this.selectedBuddy;
 	}

@@ -131,7 +131,6 @@ public class DaemonManager implements ProcessListener {
 	
 	private EventListener _listener = new EventListener()
 	{
-		@Override
 		public void eventRaised(Event evt)
 		{
 	        Intent event = new Intent(de.tubs.ibr.dtn.Intent.EVENT);
@@ -316,7 +315,6 @@ public class DaemonManager implements ProcessListener {
 	
 	private Runnable _channel_setup_task = new Runnable() {
 
-		@Override
 		public void run() {
 			if (_event_client == null)
 			{
@@ -366,12 +364,10 @@ public class DaemonManager implements ProcessListener {
 		}
 	};
 
-	@Override
 	public void onProcessStart() {
 		// daemon is starting...
 	}
 
-	@Override
 	public void onProcessStop() {
 		// do not overwrite a error state
 		if (getState().equals(DaemonState.ERROR)) return;
@@ -380,7 +376,6 @@ public class DaemonManager implements ProcessListener {
 		setState(DaemonState.OFFLINE);
 	}
 
-	@Override
 	public void onProcessError() {
 		// stop all connections
 		stop();
@@ -389,7 +384,6 @@ public class DaemonManager implements ProcessListener {
 		setState(DaemonState.ERROR);
 	}
 
-	@Override
 	public void onProcessLog(String log) {
 		// is daemon ready to serve API connections?
 		if (log.contains("INFO: API initialized")) {

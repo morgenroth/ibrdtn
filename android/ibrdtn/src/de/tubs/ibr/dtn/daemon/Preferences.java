@@ -81,7 +81,6 @@ public class Preferences extends PreferenceActivity {
 	private CheckBoxPreference checkBoxPreference = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
-		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Preferences.this.service = DTNService.Stub.asInterface(service);
 			Log.i(TAG, "service connected");
@@ -93,7 +92,6 @@ public class Preferences extends PreferenceActivity {
 			}
 		}
 
-		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			Log.i(TAG, "service disconnected");
 			service = null;
@@ -102,7 +100,6 @@ public class Preferences extends PreferenceActivity {
 	
 	public static void showStatisticLoggerDialog(final Activity activity) {
 		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-		    @Override
 		    public void onClick(DialogInterface dialog, int which) {
 		    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
 		    	
@@ -331,7 +328,6 @@ public class Preferences extends PreferenceActivity {
         checkBoxPreference = (CheckBoxPreference) findPreference("enabledSwitch");
 		if (checkBoxPreference != null) {
 			checkBoxPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-			@Override
 			public boolean onPreferenceClick(Preference p) {
 				if (((CheckBoxPreference) p).isChecked()) {
 					Preferences.this.setPrefsEnabled(false);
@@ -376,7 +372,6 @@ public class Preferences extends PreferenceActivity {
 	        setPrefsEnabled( !prefs.getBoolean("enabledSwitch", false) );
 	        
 	        actionBarSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-				@Override
 				public void onCheckedChanged(CompoundButton arg0, boolean val) {
 					Preferences.this.setPrefsEnabled(!val);
 					
@@ -411,7 +406,6 @@ public class Preferences extends PreferenceActivity {
 		CheckBoxPreference cbCloudConnect = (CheckBoxPreference) findPreference("cloud_uplink");
 		if (cbCloudConnect != null) {
 			cbCloudConnect.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-			@Override
 			public boolean onPreferenceClick(Preference p) {
 				setCloudUplink(((CheckBoxPreference) p).isChecked());
 				return true;

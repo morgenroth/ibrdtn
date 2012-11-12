@@ -29,12 +29,10 @@ public class Block implements Parcelable {
 	public Long procflags = null;
 	public Long length = null;
 	
-	@Override
 	public int describeContents() {
 		return 0;
 	}
 
-	@Override
 	public void writeToParcel(Parcel dest, int flags) {
 		dest.writeInt( (type == null) ? 0 : type );
 		dest.writeLong( (procflags == null) ? 0L : procflags );
@@ -42,7 +40,6 @@ public class Block implements Parcelable {
 	}
 	
     public static final Creator<Block> CREATOR = new Creator<Block>() {
-        @Override
         public Block createFromParcel(final Parcel source) {
         	Block b = new Block();
         	b.type = source.readInt();
@@ -51,7 +48,6 @@ public class Block implements Parcelable {
         	return b;
         }
 
-        @Override
         public Block[] newArray(final int size) {
             return new Block[size];
         }

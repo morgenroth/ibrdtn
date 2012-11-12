@@ -119,7 +119,6 @@ public class Buddy implements Comparable<Buddy> {
 		this.nickname = nickname;
 	}
 	
-	@Override
 	public int compareTo(Buddy another) {
 		if (isOnline() == another.isOnline())
 			return this.toString().compareToIgnoreCase(another.toString());
@@ -129,7 +128,6 @@ public class Buddy implements Comparable<Buddy> {
 		return 1;
 	}
 
-	@Override
 	public String toString() {
 		if (this.nickname != null)
 			return this.nickname;

@@ -85,7 +85,6 @@ public class DTalkieActivity extends Activity {
 	};
 	
 	private SensorEventListener listener = new SensorEventListener() {
-		@Override
 		public void onSensorChanged(SensorEvent event) {
 			if (event.values.length > 0) {
 				float current = event.values[0];
@@ -103,7 +102,6 @@ public class DTalkieActivity extends Activity {
 			}
 		}
 
-		@Override
 		public void onAccuracyChanged(Sensor sensor, int accuracy) {
 		}
 	};
@@ -158,7 +156,6 @@ public class DTalkieActivity extends Activity {
 	}
 
 	private OnItemClickListener _messages_click = new OnItemClickListener() {
-		@Override
 		public void onItemClick(AdapterView<?> arg0, View v, int position, long id) {
 			de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.ViewHolder holder = (ViewHolder)v.getTag();
 			DTalkieActivity.this.service.play(Folder.INBOX, holder.msg);
@@ -166,7 +163,6 @@ public class DTalkieActivity extends Activity {
     };
     
     private OnCreateContextMenuListener _messages_menu = new OnCreateContextMenuListener() {
-		@Override
 		public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 			MenuInflater inflater = getMenuInflater();
 			inflater.inflate(R.menu.message_menu, menu);
@@ -274,10 +270,8 @@ public class DTalkieActivity extends Activity {
 	}
 	
 	private OnUpdateListener _update_listener = new OnUpdateListener() {
-		@Override
 		public void update(Folder folder) {
 			DTalkieActivity.this.runOnUiThread(new Runnable() {
-				@Override
 				public void run() {
 					ListView listMessages = (ListView) findViewById(R.id.listMessage);
 					((BaseAdapter)listMessages.getAdapter()).notifyDataSetChanged();
@@ -287,7 +281,6 @@ public class DTalkieActivity extends Activity {
 	};
 	  
 	private ServiceConnection mConnection = new ServiceConnection() {
-		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			DTalkieActivity.this.service = ((DTalkieService.LocalBinder)service).getService();
 			
@@ -310,7 +303,6 @@ public class DTalkieActivity extends Activity {
 			// set send handler
 			ImageButton buttonTalk = (ImageButton) findViewById(R.id.buttonTalk);
 			buttonTalk.setOnTouchListener(new OnTouchListener() {
-				@Override
 				public boolean onTouch( View yourButton , MotionEvent theMotion ) {
 					ImageButton btn = (ImageButton)yourButton;
 					
@@ -338,7 +330,6 @@ public class DTalkieActivity extends Activity {
 			listMessages.setOnItemClickListener(_messages_click);
 		}
 
-		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			Log.i(TAG, "service disconnected");
 			

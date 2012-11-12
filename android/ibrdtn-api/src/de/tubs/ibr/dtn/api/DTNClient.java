@@ -72,10 +72,8 @@ public final class DTNClient {
     public DTNClient() {
     	// add dummy handler
     	this._session_handler = new SessionConnection() {
-			@Override
 			public void onSessionConnected(Session session) { }
 
-			@Override
 			public void onSessionDisconnected() { }
     	};
     }
@@ -112,7 +110,6 @@ public final class DTNClient {
 	}
 	   
 	private ServiceConnection mConnection = new ServiceConnection() {
-		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			DTNClient.this.service = DTNService.Stub.asInterface(service);
 			
@@ -120,7 +117,6 @@ public final class DTNClient {
 			executor.execute( new InitializeTask(s, _registration) );
 		}
 
-		@Override
 		public void onServiceDisconnected(ComponentName name) {
 			_session_handler.onSessionDisconnected();
 			DTNClient.this.service = null;
@@ -150,7 +146,6 @@ public final class DTNClient {
 			this.session = session;
 		}
 
-		@Override
 		public void run() {
 			try {
 				this.session.initialize();
@@ -166,49 +161,41 @@ public final class DTNClient {
 	}
 	
 	private de.tubs.ibr.dtn.api.DTNSessionCallback mCallback = new de.tubs.ibr.dtn.api.DTNSessionCallback.Stub() {
-		@Override
 		public void startBundle(Bundle bundle) throws RemoteException {
 			if (_handler == null) return;
 			_handler.startBundle(bundle);
 		}
 
-		@Override
 		public void endBundle() throws RemoteException {
 			if (_handler == null) return;
 			_handler.endBundle();
 		}
 
-		@Override
 		public TransferMode startBlock(Block block) throws RemoteException {
 			if (_handler == null) return TransferMode.NULL;
 			return _handler.startBlock(block);
 		}
 
-		@Override
 		public void endBlock() throws RemoteException {
 			if (_handler == null) return;
 			_handler.endBlock();
 		}
 
-		@Override
 		public void characters(String data) throws RemoteException {
 			if (_handler == null) return;
 			_handler.characters(data);
 		}
 
-		@Override
 		public ParcelFileDescriptor fd() throws RemoteException {
 			if (_handler == null) return null;
 			return _handler.fd();
 		}
 
-		@Override
 		public void progress(long current, long length) throws RemoteException {
 			if (_handler == null) return;
 			_handler.progress(current, length);
 		}
 
-		@Override
 		public void payload(byte[] data) throws RemoteException {
 			if (_handler == null) return;
 			_handler.payload(data);

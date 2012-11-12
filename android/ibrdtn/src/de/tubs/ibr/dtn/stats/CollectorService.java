@@ -44,12 +44,10 @@ public class CollectorService extends IntentService {
 	private DTNClient _client = null;
 	
 	private SessionConnection _session_listener = new SessionConnection() {
-		@Override
 		public void onSessionConnected(Session session) {
 			setConnected(true);
 		}
 
-		@Override
 		public void onSessionDisconnected() {
 		}
 	};

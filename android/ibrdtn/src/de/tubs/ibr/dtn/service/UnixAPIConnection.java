@@ -40,13 +40,11 @@ public class UnixAPIConnection implements ibrdtn.api.APIConnection {
 		this._path = path;
 	}
 
-	@Override
 	public synchronized Boolean isConnected() {
 		if (_closed) return false;
 		return _socket.isConnected();
 	}
 
-	@Override
 	public synchronized Boolean isClosed() {
 		if (_closed) return true;
 		try {
@@ -56,24 +54,20 @@ public class UnixAPIConnection implements ibrdtn.api.APIConnection {
 		}
 	}
 
-	@Override
 	public OutputStream getOutputStream() throws IOException {
 		return _socket.getOutputStream();
 	}
 
-	@Override
 	public InputStream getInputStream() throws IOException {
 		return _socket.getInputStream();
 	}
 
-	@Override
 	public synchronized void close() throws IOException {
 		if (_closed) return;
 		_closed = true;
 		_socket.close();
 	}
 
-	@Override
 	public synchronized void open() throws IOException {
 		this._socket.connect( new LocalSocketAddress(this._path, LocalSocketAddress.Namespace.FILESYSTEM) );
 		this._closed = false;

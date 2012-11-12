@@ -284,7 +284,6 @@ public class MessageDatabase {
 	}
 	
 	private static final Comparator<Message> _list_sorter = new Comparator<Message>() {
-		@Override
 		public int compare(Message arg0, Message arg1) {
 			return arg1.compareTo(arg0);
 		}	

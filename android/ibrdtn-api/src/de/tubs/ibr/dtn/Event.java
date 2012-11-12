@@ -56,12 +56,10 @@ public class Event implements Parcelable {
 		this._attributes = attributes;
 	}
 
-	@Override
 	public int describeContents() {
 		return 0;
 	}
 
-	@Override
 	public void writeToParcel(Parcel dest, int flags) {
 		dest.writeString(_name);
 		dest.writeString(_action);
@@ -69,7 +67,6 @@ public class Event implements Parcelable {
 	}
 	
     public static final Creator<Event> CREATOR = new Creator<Event>() {
-        @Override
         public Event createFromParcel(final Parcel source) {
         	String name = source.readString();
         	String action = source.readString();
@@ -79,7 +76,6 @@ public class Event implements Parcelable {
         	return new Event(name, action, attrs);
         }
 
-        @Override
         public Event[] newArray(final int size) {
             return new Event[size];
         }

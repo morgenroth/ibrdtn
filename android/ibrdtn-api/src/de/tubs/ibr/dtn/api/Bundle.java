@@ -38,12 +38,10 @@ public class Bundle implements Parcelable {
 	public Long app_data_length = null;
 	public Long fragment_offset = null;
 	
-	@Override
 	public int describeContents() {
 		return 0;
 	}
 
-	@Override
 	public void writeToParcel(Parcel dest, int flags) {
 		dest.writeString(destination);
 		dest.writeString(source);
@@ -58,7 +56,6 @@ public class Bundle implements Parcelable {
 	}
 	
     public static final Creator<Bundle> CREATOR = new Creator<Bundle>() {
-        @Override
         public Bundle createFromParcel(final Parcel source) {
         	Bundle b = new Bundle();
         	b.destination = source.readString();
@@ -75,7 +72,6 @@ public class Bundle implements Parcelable {
         	return b;
         }
 
-        @Override
         public Bundle[] newArray(final int size) {
             return new Bundle[size];
         }

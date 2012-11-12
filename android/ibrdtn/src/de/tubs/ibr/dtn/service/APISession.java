@@ -65,12 +65,10 @@ public class APISession {
     private DTNSessionCallback _callback_real = null;
     private DTNSessionCallback _callback_wrapper = new DTNSessionCallback() {
 
-		@Override
 		public IBinder asBinder() {
 			return null;
 		}
 
-		@Override
 		public void startBundle(Bundle bundle) throws RemoteException {
 			synchronized(_callback_mutex) {
 				if (_callback_real == null) return;
@@ -84,7 +82,6 @@ public class APISession {
 			}
 		}
 
-		@Override
 		public void endBundle() throws RemoteException {
 			synchronized(_callback_mutex) {
 				if (_callback_real == null) return;
@@ -98,7 +95,6 @@ public class APISession {
 			}
 		}
 
-		@Override
 		public TransferMode startBlock(Block block) throws RemoteException {
 			synchronized(_callback_mutex) {
 				if (_callback_real == null) return TransferMode.NULL;
@@ -113,7 +109,6 @@ public class APISession {
 			}
 		}
 
-		@Override
 		public void endBlock() throws RemoteException {
 			synchronized(_callback_mutex) {
 				if (_callback_real == null) return;
@@ -127,7 +122,6 @@ public class APISession {
 			}
 		}
 
-		@Override
 		public ParcelFileDescriptor fd() throws RemoteException {
 			synchronized(_callback_mutex) {
 				if (_callback_real == null) return null;
@@ -143,7 +137,6 @@ public class APISession {
 			}
 		}
 
-		@Override
 		public void progress(long current, long length) throws RemoteException {
 			synchronized(_callback_mutex) {
 				if (_callback_real == null) return;
@@ -157,7 +150,6 @@ public class APISession {
 			}
 		}
 
-		@Override
 		public void payload(byte[] data) throws RemoteException {
 			synchronized(_callback_mutex) {
 				if (_callback_real == null) return;
@@ -171,7 +163,6 @@ public class APISession {
 			}
 		}
 
-		@Override
 		public void characters(String data) throws RemoteException {
 			synchronized(_callback_mutex) {
 				if (_callback_real == null) return;

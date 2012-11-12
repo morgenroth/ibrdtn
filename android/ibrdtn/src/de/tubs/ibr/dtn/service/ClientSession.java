@@ -137,7 +137,6 @@ public class ClientSession {
     
     private final DTNSession.Stub mBinder = new DTNSession.Stub()
     {
-		@Override
 		public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException {
 			try {
 				APISession session = getSession();
@@ -149,7 +148,6 @@ public class ClientSession {
 			}
 		}
 
-		@Override
 		public boolean delivered(BundleID id) throws RemoteException {
 			try {
 				APISession session = getSession();
@@ -161,7 +159,6 @@ public class ClientSession {
 			}
 		}
 
-		@Override
 		public boolean queryNext(DTNSessionCallback cb) throws RemoteException {
 			try {
 				APISession session = getSession();
@@ -172,7 +169,6 @@ public class ClientSession {
 			}
 		}
 
-		@Override
 		public boolean send(SingletonEndpoint destination,
 				int lifetime, byte[] data) throws RemoteException {
 			try {
@@ -184,7 +180,6 @@ public class ClientSession {
 			}
 		}
 
-		@Override
 		public boolean sendGroup(GroupEndpoint destination,
 				int lifetime, byte[] data) throws RemoteException {
 			try {
@@ -196,7 +191,6 @@ public class ClientSession {
 			}
 		}
 
-		@Override
 		public boolean sendFileDescriptor(SingletonEndpoint destination, int lifetime,
 				ParcelFileDescriptor fd, long length) throws RemoteException {
 			try {
@@ -208,7 +202,6 @@ public class ClientSession {
 			}
 		}
 
-		@Override
 		public boolean sendGroupFileDescriptor(GroupEndpoint destination, int lifetime,
 				ParcelFileDescriptor fd, long length) throws RemoteException {
 			try {

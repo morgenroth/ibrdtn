@@ -95,13 +95,11 @@ public class DTalkieService extends Service {
     private DTNClient _client = null;
 	
 	private SessionConnection _session_listener = new SessionConnection() {
-		@Override
 		public void onSessionConnected(Session arg0) {
 			Log.d(TAG, "DTN session connected");
 			_state = DTalkieState.READY;
 		}
 
-		@Override
 		public void onSessionDisconnected() {
 		}
 	};
@@ -112,12 +110,10 @@ public class DTalkieService extends Service {
 		private File file = null;
 		private ParcelFileDescriptor fd = null;
 
-		@Override
 		public void startBundle(de.tubs.ibr.dtn.api.Bundle bundle) {
 			this.bundle = bundle;
 		}
 
-		@Override
 		public void endBundle() {
 			if (file != null)
 			{
@@ -153,7 +149,6 @@ public class DTalkieService extends Service {
 			bundle = null;
 		}
 
-		@Override
 		public TransferMode startBlock(Block block) {
 			if ((block.type == 1) && (file == null))
 			{
@@ -171,7 +166,6 @@ public class DTalkieService extends Service {
 			return TransferMode.NULL;
 		}
 
-		@Override
 		public void endBlock() {
 			if (fd != null)
 			{
@@ -191,17 +185,14 @@ public class DTalkieService extends Service {
 			}
 		}
 
-		@Override
 		public void characters(String data) {
 			// nothing to do here, since we using FILEDESCRIPTOR mode
 		}
 
-		@Override
 		public void payload(byte[] data) {
 			// nothing to do here, since we using FILEDESCRIPTOR mode
 		}
 
-		@Override
 		public ParcelFileDescriptor fd() {
 			// create new filedescriptor
 			try {
@@ -217,12 +208,10 @@ public class DTalkieService extends Service {
 			return null;
 		}
 
-		@Override
 		public void progress(long current, long length) {
 			Log.i(TAG, "Payload: " + current + " of " + length + " bytes.");
 		}
 
-		@Override
 		public void finished(int startId) {
 			stopSelfResult(startId);
 		}
@@ -492,7 +481,6 @@ public class DTalkieService extends Service {
     		this.msg = msg;
     	}
     	
-		@Override
 		public void run() {
 			try {
 				ParcelFileDescriptor fd = ParcelFileDescriptor.open(this.msg, ParcelFileDescriptor.MODE_READ_ONLY);
@@ -607,7 +595,6 @@ public class DTalkieService extends Service {
         
         private MediaPlayer.OnPreparedListener playerPrepareListener = new MediaPlayer.OnPreparedListener() {
 
-    		@Override
     		public void onPrepared(MediaPlayer mp) {
     			playSound(SOUND_BEEP);
     			player.start();
@@ -616,7 +603,6 @@ public class DTalkieService extends Service {
         };
         
         private MediaPlayer.OnCompletionListener playerCompletionListener = new MediaPlayer.OnCompletionListener() {
-    		@Override
     		public void onCompletion(MediaPlayer arg0) {
     			playSound(SOUND_CONFIRM);   			
     			next();

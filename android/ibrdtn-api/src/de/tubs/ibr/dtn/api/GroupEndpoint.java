@@ -44,7 +44,6 @@ public class GroupEndpoint implements EID, Serializable {
 		return _eid;
 	}
 	
-    @Override
 	public boolean equals(Object o) {
 		if (o instanceof GroupEndpoint) {
 			return this._eid.equals(((GroupEndpoint)o)._eid);
@@ -52,23 +51,19 @@ public class GroupEndpoint implements EID, Serializable {
 		return super.equals(o);
 	}
 
-	@Override
     public int describeContents() {
         return 0;
     }
 
-    @Override
     public void writeToParcel(final Parcel dest, final int flags) {
         dest.writeString(_eid);
     }
 
     public static final Creator<GroupEndpoint> CREATOR = new Creator<GroupEndpoint>() {
-        @Override
         public GroupEndpoint createFromParcel(final Parcel source) {
             return new GroupEndpoint(source.readString());
         }
 
-        @Override
         public GroupEndpoint[] newArray(final int size) {
             return new GroupEndpoint[size];
         }

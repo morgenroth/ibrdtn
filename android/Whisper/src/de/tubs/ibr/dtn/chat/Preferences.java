@@ -46,7 +46,6 @@ public class Preferences extends PreferenceActivity {
 	}
 
 	SharedPreferences.OnSharedPreferenceChangeListener pref_listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-		@Override
 		public void onSharedPreferenceChanged(SharedPreferences prefs, String text) {
 			if (text.equals("checkBroadcastPresence")) {
 				if (prefs.getBoolean(text, false)) {
