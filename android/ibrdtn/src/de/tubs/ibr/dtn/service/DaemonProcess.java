@@ -376,6 +376,7 @@ public class DaemonProcess extends Thread {
 				p.println("discovery_announce = 0");
 			}
 			
+			String internet_ifaces = "";
 			String ifaces = "";
 			
 			Map<String, ?> prefs = preferences.getAll();
@@ -393,13 +394,15 @@ public class DaemonProcess extends Thread {
 	    	
 	    		    		p.println("net_" + iface + "_type = tcp");
 	    		            p.println("net_" + iface + "_interface = " + iface);
-	    		            p.println("net_" + iface + "_port = 4556");	            			
+	    		            p.println("net_" + iface + "_port = 4556");
+	    		            internet_ifaces += iface + " ";
 	            		}
 	            	}
 	            }
 		    }
 			
 			p.println("net_interfaces = " + ifaces);
+			p.println("net_internet = " + internet_ifaces);
 			
 			// storage path
 			File blobPath = DaemonManager.getStoragePath("blob");
