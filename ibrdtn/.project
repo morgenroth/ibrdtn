@@ -3,6 +3,7 @@
 	<name>ibrdtn-trunk</name>
 	<comment></comment>
 	<projects>
+		<project>ibrcommon</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
