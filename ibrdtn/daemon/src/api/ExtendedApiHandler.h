@@ -56,9 +56,6 @@ namespace dtn
 
 			bool good() const;
 
-//			void eventNodeAvailable(const dtn::core::Node &node);
-//			void eventNodeUnavailable(const dtn::core::Node &node);
-
 		private:
 			class Sender : public ibrcommon::JoinableThread
 			{

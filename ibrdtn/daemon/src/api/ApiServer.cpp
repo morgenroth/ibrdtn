@@ -88,7 +88,6 @@ namespace dtn
 			_sockets.up();
 			
 			bindEvent(dtn::routing::QueueBundleEvent::className);
-			bindEvent(dtn::core::NodeEvent::className);
 			startGarbageCollector();
 		}
 
@@ -181,7 +180,6 @@ namespace dtn
 		void ApiServer::componentDown() throw ()
 		{
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
-			unbindEvent(dtn::core::NodeEvent::className);
 
 			// put the server into shutdown mode
 			_shutdown = true;
@@ -393,25 +391,6 @@ namespace dtn
 					if (conn.getRegistration().hasSubscribed(queued.bundle.destination))
 					{
 						conn.getRegistration().notify(Registration::NOTIFY_BUNDLE_AVAILABLE);
-					}
-				}
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::core::NodeEvent &ne = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-
-				ibrcommon::MutexLock l(_connection_lock);
-				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
-				{
-					ClientHandler &conn = **iter;
-
-					if (ne.getAction() == NODE_AVAILABLE)
-					{
-						conn.eventNodeAvailable(ne.getNode());
-					}
-					else if (ne.getAction() == NODE_UNAVAILABLE)
-					{
-						conn.eventNodeUnavailable(ne.getNode());
 					}
 				}
 			} catch (const std::bad_cast&) { };

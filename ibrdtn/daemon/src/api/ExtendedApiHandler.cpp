@@ -759,18 +759,6 @@ namespace dtn
 			}
 		}
 
-//		void ExtendedApiConnection::eventNodeAvailable(const dtn::core::Node &node)
-//		{
-//			ibrcommon::MutexLock l(_write_lock);
-//			_stream << API_STATUS_NOTIFY_NEIGHBOR << " NOTIFY NODE AVAILABLE " << node.getEID().getString() << std::endl;
-//		}
-
-//		void ExtendedApiConnection::eventNodeUnavailable(const dtn::core::Node &node)
-//		{
-//			ibrcommon::MutexLock l(_write_lock);
-//			_stream << API_STATUS_NOTIFY_NEIGHBOR << " NOTIFY NODE UNAVAILABLE " << node.getEID().getString() << std::endl;
-//		}
-
 		ExtendedApiHandler::Sender::Sender(ExtendedApiHandler &conn)
 		 : _handler(conn)
 		{
@@ -789,7 +777,6 @@ namespace dtn
 
 		void ExtendedApiHandler::Sender::finally() throw ()
 		{
-//			_handler._server.freeRegistration(_handler.getRegistration());
 		}
 
 		void ExtendedApiHandler::Sender::run() throw ()

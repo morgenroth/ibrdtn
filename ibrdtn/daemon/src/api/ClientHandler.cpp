@@ -184,14 +184,6 @@ namespace dtn
 			(*_stream).close();
 		}
 
-		void ClientHandler::eventNodeAvailable(const dtn::core::Node &node)
-		{
-		}
-
-		void ClientHandler::eventNodeUnavailable(const dtn::core::Node &node)
-		{
-		}
-
 		void ClientHandler::processCommand(const std::vector<std::string> &cmd)
 		{
 			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
