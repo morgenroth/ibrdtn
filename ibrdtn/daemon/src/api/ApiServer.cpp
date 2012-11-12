@@ -33,6 +33,7 @@
 #include <algorithm>
 #include <sstream>
 #include <unistd.h>
+#include <list>
 
 #ifdef WITH_COMPRESSION
 #include <ibrdtn/data/CompressedPayloadBlock.h>
