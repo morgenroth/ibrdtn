@@ -250,7 +250,7 @@ namespace dtn
 
 					IBRCOMMON_LOGGER_DEBUG(20) << "LOWPANDatagramService::recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << address << IBRCOMMON_LOGGER_ENDL;
 
-					return ret;
+					return ret - 1;
 				}
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("receive failed");
