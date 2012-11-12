@@ -37,6 +37,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
+import de.tubs.ibr.dtn.service.StreamLogger.StreamLoggerListener;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -156,22 +158,39 @@ public class DaemonProcess extends Thread {
 			
 			// run the daemon
 			_proc = _builder.start();
-			
-			// buffer for a line
-		    String line = null;
+
+		    StreamLoggerListener log_listener = new StreamLoggerListener() {
+				public void onLog(String TAG, String log) {
+					if (_listener != null) _listener.onProcessLog(log);
+				}
+		    };
 		    
-		    BufferedReader input = new BufferedReader( new InputStreamReader( _proc.getInputStream() ) );
-	    
+		    StreamLogger std_logger = new StreamLogger("dtnd", _proc.getInputStream(), log_listener);
+		    StreamLogger err_logger = new StreamLogger("dtnd_error", _proc.getErrorStream(), log_listener);
+		    
 		    if (_listener != null) _listener.onProcessStart();
-			while ((line = input.readLine()) != null)
-			{
-				if (_listener != null) _listener.onProcessLog(line);
-				if (Log.isLoggable("dtnd", Log.DEBUG)) Log.d("dtnd", line);
-			}
-			if (_listener != null) _listener.onProcessStop();
+		    
+		    Thread std_log_thread = new Thread(std_logger);
+		    Thread err_log_thread = new Thread(err_logger);
+		    
+		    // start logging processes
+		    std_log_thread.start();
+		    err_log_thread.start();
+		    
+		    // wait until the logging processes are finished
+		    std_log_thread.join();
+		    err_log_thread.join();
+		    
+		    if (std_logger.hasErrorOnExit() || err_logger.hasErrorOnExit()) {
+		    	if (_listener != null) _listener.onProcessError();
+		    } else {
+		    	if (_listener != null) _listener.onProcessStop();		    	
+		    }
 		} catch (IOException e) {
 			Log.e(TAG, "Unable to run daemon: " + e.toString());
 			if (_listener != null) _listener.onProcessError();
+		} catch (InterruptedException e) {
+			// join has been interrupted
 		}
 	}
 	
