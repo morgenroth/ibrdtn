@@ -210,7 +210,7 @@ namespace ibrcommon
 	{
 		return _family;
 	}
-	
+
 	sa_family_t basesocket::get_family(int fd) throw (socket_exception)
 	{
 		struct sockaddr_storage bound_addr;
@@ -578,7 +578,7 @@ namespace ibrcommon
 			throw socket_exception("socket is already up");
 
 		//this->set_blocking_mode(false);
-		
+
 		this->bind(_filename);
 		this->listen(_listen);
 		_state = SOCKET_UP;
@@ -1224,7 +1224,7 @@ namespace ibrcommon
 #endif
 
 		// successful!
-		IBRCOMMON_LOGGER_DEBUG(5) << "multicast operation (" << optname << ") successful  with " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG(5) << "multicast operation (" << optname << ") successful with " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	void basesocket::check_socket_error(const int err) const throw (socket_exception)
