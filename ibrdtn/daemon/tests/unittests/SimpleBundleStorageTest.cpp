@@ -31,17 +31,17 @@
  */
 
 #include "SimpleBundleStorageTest.hh"
-#include "tests/tools/EventSwitchLoop.h"
+#include "../tools/EventSwitchLoop.h"
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrcommon/thread/Thread.h>
-#include "src/core/TimeEvent.h"
+#include "core/TimeEvent.h"
 #include <ibrdtn/utils/Clock.h>
-#include "src/core/BundleCore.h"
+#include "core/BundleCore.h"
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrdtn/data/PayloadBlock.h>
-#include <src/Component.h>
+#include "Component.h"
 
 
 CPPUNIT_TEST_SUITE_REGISTRATION(SimpleBundleStorageTest);

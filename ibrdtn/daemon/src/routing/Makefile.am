@@ -1,36 +1,56 @@
 ## sub directory
 SUBDIRS = epidemic flooding prophet
 
-AM_CPPFLAGS = -I$(top_srcdir) @ibrdtn_CFLAGS@
-AM_LDFLAGS = @ibrdtn_LIBS@
+routing_SOURCES = \
+	BaseRouter.cpp \
+	BaseRouter.h \
+	BundleSummary.cpp \
+	BundleSummary.h \
+	NeighborDatabase.cpp \
+	NeighborDatabase.h \
+	NeighborRoutingExtension.cpp \
+	NeighborRoutingExtension.h \
+	QueueBundleEvent.cpp \
+	QueueBundleEvent.h \
+	RequeueBundleEvent.cpp \
+	RequeueBundleEvent.h \
+	RetransmissionExtension.cpp \
+	RetransmissionExtension.h \
+	StaticRoutingExtension.cpp \
+	StaticRoutingExtension.h \
+	StaticRouteChangeEvent.cpp \
+	StaticRouteChangeEvent.h \
+	SummaryVector.cpp \
+	SummaryVector.h \
+	NodeHandshake.h \
+	NodeHandshake.cpp \
+	NodeHandshakeEvent.h \
+	NodeHandshakeEvent.cpp \
+	NodeHandshakeExtension.h \
+	NodeHandshakeExtension.cpp
 
-routing_SOURCES = BaseRouter.cpp \
-				BaseRouter.h \
-				BundleSummary.cpp \
-				BundleSummary.h \
-				NeighborDatabase.cpp \
-				NeighborDatabase.h \
-				NeighborRoutingExtension.cpp \
-				NeighborRoutingExtension.h \
-				QueueBundleEvent.cpp \
-				QueueBundleEvent.h \
-				RequeueBundleEvent.cpp \
-				RequeueBundleEvent.h \
-				RetransmissionExtension.cpp \
-				RetransmissionExtension.h \
-				StaticRoutingExtension.cpp \
-				StaticRoutingExtension.h \
-				StaticRouteChangeEvent.cpp \
-				StaticRouteChangeEvent.h \
-				SummaryVector.cpp \
-				SummaryVector.h \
-				NodeHandshake.h \
-				NodeHandshake.cpp \
-				NodeHandshakeEvent.h \
-				NodeHandshakeEvent.cpp \
-				NodeHandshakeExtension.h \
-				NodeHandshakeExtension.cpp
-				
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS)
+
+librouting_la_LIBADD = flooding/librtflooding.la epidemic/librtepidemic.la prophet/librtprophet.la
+
+if ANDROID
+noinst_PROGRAMS = Android.mk
+CLEANFILES = Android.mk
+else
 noinst_LTLIBRARIES = librouting.la
 librouting_la_SOURCES= $(routing_SOURCES)
-librouting_la_LIBADD = flooding/librtflooding.la epidemic/librtepidemic.la prophet/librtprophet.la
+endif
+
+Android.mk: Makefile.am
+	$(ANDROGENIZER) -:PROJECT dtnd \
+		-:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
+		-:STATIC libdtnd_routing \
+		-:SOURCES $(routing_SOURCES) \
+		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
+		-:LDFLAGS $(AM_LDFLAGS) \
+			$(subst lib,libdtnd_, $(librouting_la_LIBADD)) \
+		-:LIBFILTER_STATIC ibrdtn \
+		-:LIBFILTER_WHOLE dtnd_rtflooding dtnd_rtepidemic dtnd_rtprophet \
+		-:SUBDIR $(patsubst %,src/routing/%, $(SUBDIRS)) \
+		> $@

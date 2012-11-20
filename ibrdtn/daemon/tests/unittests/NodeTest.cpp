@@ -31,7 +31,7 @@
  */
 
 #include "NodeTest.hh"
-#include "src/core/Node.h"
+#include "core/Node.h"
 
 
 CPPUNIT_TEST_SUITE_REGISTRATION(NodeTest);

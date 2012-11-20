@@ -39,8 +39,13 @@
 // needed for Debian Lenny whichs older clibrary does not provide htobe64(x)
 #include <endian.h>
 #if __BYTE_ORDER == __LITTLE_ENDIAN
+#ifdef ANDROID
+#include <byteswap.h>
+#define GUINT64_TO_BE(x)  bswap_64(x)
+#else
 #include <bits/byteswap.h>
 #define GUINT64_TO_BE(x)  __bswap_64(x)
+#endif
 #else
 #define GUINT64_TO_BE(x) (x)
 #endif

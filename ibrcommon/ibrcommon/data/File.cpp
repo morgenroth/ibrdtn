@@ -32,7 +32,7 @@
 #include <cstring>
 #include <cerrno>
 
-#ifndef HAVE_FEATURES_H
+#if !defined(HAVE_FEATURES_H) || defined(ANDROID)
 #include <libgen.h>
 #endif
 
@@ -170,7 +170,7 @@ namespace ibrcommon
 
 	std::string File::getBasename() const
 	{
-#ifdef HAVE_FEATURES_H
+#if !defined(ANDROID) && defined(HAVE_FEATURES_H)
 		return std::string(basename(_path.c_str()));
 #else
 		char path[_path.length()];

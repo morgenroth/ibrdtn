@@ -14,7 +14,7 @@
  
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "src/routing/BundleSummary.h"
+#include "routing/BundleSummary.h"
 #include <iostream>
 
 #ifndef BUNDLESUMMARYTEST_HH

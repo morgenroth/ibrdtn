@@ -24,7 +24,7 @@
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrdtn/data/EID.h>
-#include "src/core/TimeEvent.h"
+#include "core/TimeEvent.h"
 #include <ibrcommon/TimeMeasurement.h>
 #include <sqlite3.h>
 

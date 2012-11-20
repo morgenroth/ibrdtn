@@ -14,7 +14,7 @@
  
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "src/storage/MemoryBundleStorage.h"
+#include "storage/MemoryBundleStorage.h"
 
 #ifndef BASEROUTERTEST_HH
 #define BASEROUTERTEST_HH

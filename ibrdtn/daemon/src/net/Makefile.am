@@ -1,50 +1,47 @@
 ## sub directory
 
-AM_CPPFLAGS = -I$(top_srcdir) @ibrdtn_CFLAGS@
-AM_LDFLAGS = @ibrdtn_LIBS@
-
 net_SOURCES = 	BundleReceivedEvent.cpp \
-				BundleReceivedEvent.h \
-				BundleReceiver.h \
-				ConnectionEvent.cpp \
-				ConnectionEvent.h \
-				ConnectionManager.cpp \
-				ConnectionManager.h \
-				ConvergenceLayer.cpp \
-				ConvergenceLayer.h \
-				DiscoveryAgent.cpp \
-				DiscoveryAgent.h \
-				DiscoveryAnnouncement.cpp \
-				DiscoveryAnnouncement.h \
-				DiscoveryService.cpp \
-				DiscoveryService.h \
-				DiscoveryServiceProvider.h \
-				IPNDAgent.cpp \
-				IPNDAgent.h \
-				Neighbor.cpp \
-				Neighbor.h \
-				TCPConnection.cpp \
-				TCPConnection.h \
-				TCPConvergenceLayer.cpp \
-				TCPConvergenceLayer.h \
-				TransferAbortedEvent.cpp \
-				TransferAbortedEvent.h \
-				TransferCompletedEvent.cpp \
-				TransferCompletedEvent.h \
-				UDPConvergenceLayer.cpp \
-				UDPConvergenceLayer.h \
-				FileConvergenceLayer.cpp \
-				FileConvergenceLayer.h \
-				DatagramConvergenceLayer.h \
-				DatagramConnection.h \
-				DatagramConvergenceLayer.cpp \
-				DatagramConnection.cpp \
-				DatagramService.h \
-				DatagramService.cpp \
-				UDPDatagramService.h \
-				UDPDatagramService.cpp \
-				FileMonitor.h \
-				FileMonitor.cpp
+	BundleReceivedEvent.h \
+	BundleReceiver.h \
+	ConnectionEvent.cpp \
+	ConnectionEvent.h \
+	ConnectionManager.cpp \
+	ConnectionManager.h \
+	ConvergenceLayer.cpp \
+	ConvergenceLayer.h \
+	DiscoveryAgent.cpp \
+	DiscoveryAgent.h \
+	DiscoveryAnnouncement.cpp \
+	DiscoveryAnnouncement.h \
+	DiscoveryService.cpp \
+	DiscoveryService.h \
+	DiscoveryServiceProvider.h \
+	IPNDAgent.cpp \
+	IPNDAgent.h \
+	Neighbor.cpp \
+	Neighbor.h \
+	TCPConnection.cpp \
+	TCPConnection.h \
+	TCPConvergenceLayer.cpp \
+	TCPConvergenceLayer.h \
+	TransferAbortedEvent.cpp \
+	TransferAbortedEvent.h \
+	TransferCompletedEvent.cpp \
+	TransferCompletedEvent.h \
+	UDPConvergenceLayer.cpp \
+	UDPConvergenceLayer.h \
+	FileConvergenceLayer.cpp \
+	FileConvergenceLayer.h \
+	DatagramConvergenceLayer.h \
+	DatagramConnection.h \
+	DatagramConvergenceLayer.cpp \
+	DatagramConnection.cpp \
+	DatagramService.h \
+	DatagramService.cpp \
+	UDPDatagramService.h \
+	UDPDatagramService.cpp \
+	FileMonitor.h \
+	FileMonitor.cpp
 
 if LOWPAN
 net_SOURCES += LOWPANConvergenceLayer.cpp LOWPANConvergenceLayer.h LOWPANConnection.cpp LOWPANConnection.h
@@ -53,15 +50,29 @@ endif
 				
 if CURL
 net_SOURCES += HTTPConvergenceLayer.cpp HTTPConvergenceLayer.h
-AM_CPPFLAGS += @CURL_CFLAGS@
-AM_LDFLAGS += @CURL_LIBS@
 endif
 
 if DTNDHT
 net_SOURCES += DHTNameService.cpp DHTNameService.h
-AM_CPPFLAGS += @DTNDHT_CFLAGS@
-AM_LDFLAGS += @DTNDHT_LIBS@
 endif
 
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(DTNDHT_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(DTNDHT_LIBS)
+
+if ANDROID
+noinst_PROGRAMS = Android.mk
+CLEANFILES = Android.mk
+else
 noinst_LTLIBRARIES = libnet.la
 libnet_la_SOURCES= $(net_SOURCES)
+endif
+
+Android.mk: Makefile.am
+	$(ANDROGENIZER) -:PROJECT dtnd \
+		-:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
+		-:STATIC libdtnd_net \
+		-:SOURCES $(net_SOURCES) \
+		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
+		-:LDFLAGS $(AM_LDFLAGS) \
+		-:LIBFILTER_STATIC ibrdtn \
+		> $@

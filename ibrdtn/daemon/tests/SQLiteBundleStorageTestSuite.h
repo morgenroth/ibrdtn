@@ -25,7 +25,7 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "src/core/SQLiteBundleStorage.h"
+#include "core/SQLiteBundleStorage.h"
 
 namespace dtn
 {

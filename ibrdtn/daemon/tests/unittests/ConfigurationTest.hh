@@ -14,7 +14,7 @@
  
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "src/Configuration.h"
+#include "Configuration.h"
 #include <ibrcommon/data/File.h>
 
 #ifndef CONFIGURATIONTEST_HH

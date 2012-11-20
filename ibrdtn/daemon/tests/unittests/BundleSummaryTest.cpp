@@ -32,7 +32,7 @@
 
 #include "BundleSummaryTest.hh"
 #include <ibrdtn/utils/Clock.h>
-#include "src/routing/BundleSummary.h"
+#include "routing/BundleSummary.h"
 #include <sstream>
 
 CPPUNIT_TEST_SUITE_REGISTRATION(BundleSummaryTest);

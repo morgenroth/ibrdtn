@@ -31,11 +31,11 @@
  */
 
 #include "BaseRouterTest.hh"
-#include "src/routing/BaseRouter.h"
-#include "src/storage/BundleStorage.h"
-#include "src/core/Node.h"
-#include "tests/tools/EventSwitchLoop.h"
-#include "src/net/BundleReceivedEvent.h"
+#include "routing/BaseRouter.h"
+#include "storage/BundleStorage.h"
+#include "core/Node.h"
+#include "../tools/EventSwitchLoop.h"
+#include "net/BundleReceivedEvent.h"
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrcommon/thread/Thread.h>

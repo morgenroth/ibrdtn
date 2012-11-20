@@ -19,8 +19,8 @@
  *
  */
 
-#include "src/core/EventSwitch.h"
-#include "src/core/GlobalEvent.h"
+#include "core/EventSwitch.h"
+#include "core/GlobalEvent.h"
 #include <ibrcommon/thread/Thread.h>
 
 #ifndef EVENTSWITCHLOOP_H_

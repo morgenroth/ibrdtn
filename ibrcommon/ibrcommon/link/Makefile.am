@@ -1,7 +1,13 @@
 ## sub directory
 
-h_sources = nl802154.h LinkManager.h LinkEvent.h
-cc_sources = LinkManager.cpp LinkEvent.cpp
+h_sources = \
+	nl802154.h \
+	LinkManager.h \
+	LinkEvent.h
+
+cc_sources = \
+	LinkManager.cpp \
+	LinkEvent.cpp
 
 if LOWPAN
 cc_sources += nl_policy.c
@@ -16,11 +22,26 @@ cc_sources += PosixLinkManager.cpp
 endif
 
 #Install the headers in a versioned directory
-library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/link
+library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/link
 library_include_HEADERS = $(h_sources)
 
 AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(NL_CFLAGS) $(NL_ROUTE_CFLAGS) $(NL_GENL_CFLAGS)
 AM_LDFLAGS = $(PTHREAD_LIBS) $(NL_LIBS) $(NL_ROUTE_LIBS) $(NL_GENL_LIBS)
 
-noinst_LTLIBRARIES= liblink.la
-liblink_la_SOURCES= $(h_sources) $(cc_sources)
+if ANDROID
+noinst_PROGRAMS = Android.mk
+CLEANFILES = Android.mk
+else
+noinst_LTLIBRARIES = liblink.la
+liblink_la_SOURCES = $(h_sources) $(cc_sources)
+endif
+
+Android.mk: Makefile.am
+	$(ANDROGENIZER) -:PROJECT $(GENERIC_LIBRARY_NAME) \
+		-:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
+		-:STATIC libibrcommon_link \
+		-:SOURCES $(h_sources) $(cc_sources) \
+		-:CPPFLAGS $(AM_CPPFLAGS) \
+		-:LDFLAGS $(AM_LDFLAGS) \
+		-:LIBFILTER_STATIC nl-3 nl-genl-3 nl-route-3 \
+		> $@

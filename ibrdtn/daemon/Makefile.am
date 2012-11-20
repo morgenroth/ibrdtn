@@ -1,6 +1,14 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src etc doc man scripts tests
-ACLOCAL_AMFLAGS = -I m4
+
+SUBDIRS = src
+
+if ANDROID
+noinst_PROGRAMS = Android.mk
+CLEANFILES = Android.mk
+else
+SUBDIRS += etc doc man scripts tests
+DIST_SUBDIRS = etc doc man scripts tests
+endif
 
 # debian files for package building
 EXTRA_DIST= \
@@ -18,3 +26,10 @@ EXTRA_DIST= \
 	debian/source \
 	debian/source/format
 
+ACLOCAL_AMFLAGS = -I m4
+
+Android.mk: Makefile.am
+	$(ANDROGENIZER) -:PROJECT dtnd \
+		-:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
+		-:SUBDIR $(SUBDIRS) \
+		> $@

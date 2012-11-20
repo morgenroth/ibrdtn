@@ -16,7 +16,7 @@ endif
 AM_CPPFLAGS = $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS)
 AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) -L@top_srcdir@/ibrdtn/.libs -librcommon -librdtn
 
-INCLUDES = -I@top_srcdir@ -I@top_srcdir@/tests
+AM_CPPFLAGS += -I@top_srcdir@ -I@top_srcdir@/tests
 
 check_PROGRAMS = testsuite
 testsuite_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -I../../src -Wall

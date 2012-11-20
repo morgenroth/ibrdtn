@@ -30,6 +30,10 @@
 #include <unistd.h>
 #include <signal.h>
 
+#ifdef ANDROID
+#define PAGE_SIZE sysconf(_SC_PAGESIZE)
+#endif
+
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
 #endif
@@ -201,8 +205,10 @@ namespace ibrcommon
 		// modify the threads attributes - set as joinable thread
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
+#ifndef ANDROID
 		// ignore scheduling policy and use the same as the parent
 		pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED);
+#endif
 #endif
 		// we typically use "stack 1" for min stack...
 #ifdef	PTHREAD_STACK_MIN
@@ -329,8 +335,10 @@ namespace ibrcommon
 		// modify the threads attributes - set as detached thread
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
+#ifndef ANDROID
 		// ignore scheduling policy and use the same as the parent
 		pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED);
+#endif
 #endif
 		// we typically use "stack 1" for min stack...
 #ifdef	PTHREAD_STACK_MIN

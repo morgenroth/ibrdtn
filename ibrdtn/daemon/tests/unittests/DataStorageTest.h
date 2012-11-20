@@ -21,7 +21,7 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "src/storage/DataStorage.h"
+#include "storage/DataStorage.h"
 
 #ifndef DATASTORAGETEST_H_
 #define DATASTORAGETEST_H_

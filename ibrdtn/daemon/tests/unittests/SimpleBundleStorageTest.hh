@@ -14,8 +14,8 @@
  
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "src/storage/SimpleBundleStorage.h"
-#include "src/storage/MemoryBundleStorage.h"
+#include "storage/SimpleBundleStorage.h"
+#include "storage/MemoryBundleStorage.h"
 
 #ifndef SIMPLEBUNDLESTORAGETEST_HH
 #define SIMPLEBUNDLESTORAGETEST_HH
