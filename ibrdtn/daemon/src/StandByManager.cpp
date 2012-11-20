@@ -44,7 +44,7 @@ namespace dtn {
 			IBRCOMMON_LOGGER(info) << "StandByManager: " << c->getName() << " adopted" << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		void StandByManager::raiseEvent(const dtn::core::Event *evt)
+		void StandByManager::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);

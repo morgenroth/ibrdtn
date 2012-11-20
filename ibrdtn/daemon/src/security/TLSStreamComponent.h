@@ -43,7 +43,7 @@ public:
 	 * \brief callback function that is called if an event happened.
 	 * \param evt the event
 	 */
-	virtual void raiseEvent(const dtn::core::Event *evt);
+	virtual void raiseEvent(const dtn::core::Event *evt) throw ();
 
     /* functions from Component */
     virtual void initialize();

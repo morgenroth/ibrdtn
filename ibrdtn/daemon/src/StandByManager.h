@@ -36,7 +36,7 @@ namespace dtn {
 
 			void adopt(Component *c);
 
-			virtual void raiseEvent(const dtn::core::Event *evt);
+			virtual void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();

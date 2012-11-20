@@ -49,7 +49,7 @@ namespace dtn
 			unbindEvent(NodeEvent::className);
 		}
 
-		void Notifier::raiseEvent(const dtn::core::Event *evt)
+		void Notifier::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
 

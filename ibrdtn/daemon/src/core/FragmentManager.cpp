@@ -143,7 +143,7 @@ namespace dtn
 			unbindEvent(dtn::core::TimeEvent::className);
 		}
 
-		void FragmentManager::raiseEvent(const Event *evt)
+		void FragmentManager::raiseEvent(const Event *evt) throw ()
 		{
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);

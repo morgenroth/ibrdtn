@@ -36,7 +36,7 @@ namespace dtn
 			Notifier(std::string cmd);
 			virtual ~Notifier();
 
-			void raiseEvent(const dtn::core::Event *evt);
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			void notify(std::string title, std::string msg);
 

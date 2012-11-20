@@ -376,7 +376,7 @@ namespace dtn
 			}
 		}
 
-		void ApiServer::raiseEvent(const dtn::core::Event *evt)
+		void ApiServer::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);

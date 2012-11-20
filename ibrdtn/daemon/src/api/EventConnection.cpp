@@ -45,7 +45,7 @@ namespace dtn
 		{
 		}
 
-		void EventConnection::raiseEvent(const dtn::core::Event *evt)
+		void EventConnection::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			ibrcommon::MutexLock l(_mutex);
 			if (!_running) return;

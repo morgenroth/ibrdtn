@@ -43,7 +43,7 @@ namespace dtn
 		{
 		}
 
-		void EventDebugger::raiseEvent(const Event *evt)
+		void EventDebugger::raiseEvent(const Event *evt) throw ()
 		{
 			try {
 				const CustodyEvent &custody = dynamic_cast<const CustodyEvent&>(*evt);

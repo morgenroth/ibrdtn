@@ -197,7 +197,7 @@ namespace dtn
 			} catch (const ibrcommon::QueueUnblockedException &ex) { };
 		}
 
-		void FileConvergenceLayer::raiseEvent(const dtn::core::Event *evt)
+		void FileConvergenceLayer::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::NodeEvent &node = dynamic_cast<const dtn::core::NodeEvent&>(*evt);

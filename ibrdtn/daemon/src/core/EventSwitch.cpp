@@ -98,10 +98,8 @@ namespace dtn
 				_active_cond.signal(true);
 			}
 
-			try {
-				// execute the event
-				t->receiver->raiseEvent(t->event);
-			} catch (const std::exception&) {};
+			// execute the event
+			t->receiver->raiseEvent(t->event);
 
 			// delete the Task
 			delete t;
@@ -140,7 +138,7 @@ namespace dtn
 				delete w;
 			}
 		}
-		
+
 		void EventSwitch::pause()
 		{
 			// wait until all workers are done

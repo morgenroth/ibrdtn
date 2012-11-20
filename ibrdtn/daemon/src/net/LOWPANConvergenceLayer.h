@@ -70,7 +70,7 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
-			virtual void raiseEvent(const Event *evt);
+			virtual void raiseEvent(const Event *evt) throw ();
 
 			/**
 			 * Callback interface for sending data back from the lowpanstream to the CL

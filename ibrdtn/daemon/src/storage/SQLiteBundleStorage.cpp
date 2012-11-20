@@ -403,7 +403,7 @@ namespace dtn
 			return _database.count();
 		}
 
-		void SQLiteBundleStorage::raiseEvent(const dtn::core::Event *evt)
+		void SQLiteBundleStorage::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);

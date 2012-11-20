@@ -293,7 +293,7 @@ namespace dtn
 			}
 		}
 
-		void DatagramConvergenceLayer::raiseEvent(const Event *evt)
+		void DatagramConvergenceLayer::raiseEvent(const Event *evt) throw ()
 		{
 			try {
 				const TimeEvent &time=dynamic_cast<const TimeEvent&>(*evt);

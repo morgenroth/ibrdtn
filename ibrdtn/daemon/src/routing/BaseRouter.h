@@ -190,7 +190,7 @@ namespace dtn
 			/**
 			 * method to receive new events from the EventSwitch
 			 */
-			void raiseEvent(const dtn::core::Event *evt);
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			/**
 			 * Get a bundle out of the storage.

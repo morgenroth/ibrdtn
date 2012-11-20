@@ -185,7 +185,7 @@ namespace dtn
 			return _globally_connected;
 		}
 
-		void BundleCore::raiseEvent(const dtn::core::Event *evt)
+		void BundleCore::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);

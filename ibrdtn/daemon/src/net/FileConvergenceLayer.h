@@ -41,7 +41,7 @@ namespace dtn
 			FileConvergenceLayer();
 			virtual ~FileConvergenceLayer();
 
-			void raiseEvent(const dtn::core::Event *evt);
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 

@@ -34,7 +34,7 @@ namespace dtn
 		{
 		public:
 			virtual ~EventReceiver() = 0;
-			virtual void raiseEvent(const Event *evt) = 0;
+			virtual void raiseEvent(const Event *evt) throw () = 0;
 
 		protected:
 			void bindEvent(std::string eventName);

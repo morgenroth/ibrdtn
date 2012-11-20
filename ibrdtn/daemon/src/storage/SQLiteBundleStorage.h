@@ -128,7 +128,7 @@ namespace dtn
 			 * This method is used to receive events.
 			 * @param evt
 			 */
-			void raiseEvent(const dtn::core::Event *evt);
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 		protected:
 			virtual void componentRun() throw ();;

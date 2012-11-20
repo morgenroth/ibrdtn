@@ -68,7 +68,7 @@ namespace dtn
 			/**
 			 * method to receive new events from the EventSwitch
 			 */
-			void raiseEvent(const dtn::core::Event *evt);
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			class ShutdownException : public ibrcommon::Exception
 			{

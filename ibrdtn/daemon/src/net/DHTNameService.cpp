@@ -537,7 +537,7 @@ std::string dtn::dht::DHTNameService::getConvergenceLayerName(
 	return cltype_;
 }
 
-void dtn::dht::DHTNameService::raiseEvent(const dtn::core::Event *evt) {
+void dtn::dht::DHTNameService::raiseEvent(const dtn::core::Event *evt) throw () {
 	try {
 		const dtn::routing::QueueBundleEvent &event =
 				dynamic_cast<const dtn::routing::QueueBundleEvent&> (*evt);

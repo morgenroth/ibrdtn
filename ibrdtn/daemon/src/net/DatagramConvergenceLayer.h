@@ -74,7 +74,7 @@ namespace dtn
 			 * Public method for event callbacks
 			 * @param evt
 			 */
-			virtual void raiseEvent(const dtn::core::Event *evt);
+			virtual void raiseEvent(const dtn::core::Event *evt) throw ();
 
 		protected:
 			virtual void componentUp() throw ();

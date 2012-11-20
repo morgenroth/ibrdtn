@@ -52,7 +52,7 @@ namespace dtn
 
 			void freeRegistration(Registration &reg);
 
-			void raiseEvent(const dtn::core::Event *evt);
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			void processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle);
 

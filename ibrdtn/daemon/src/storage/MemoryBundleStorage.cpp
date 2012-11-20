@@ -51,7 +51,7 @@ namespace dtn
 			unbindEvent(dtn::core::TimeEvent::className);
 		}
 
-		void MemoryBundleStorage::raiseEvent(const dtn::core::Event *evt)
+		void MemoryBundleStorage::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);

@@ -40,7 +40,7 @@ namespace dtn
 		}
 
 		void
-		TLSStreamComponent::raiseEvent(const dtn::core::Event *evt)
+		TLSStreamComponent::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			if(evt->getName() == CertificateManagerInitEvent::className)
 			{

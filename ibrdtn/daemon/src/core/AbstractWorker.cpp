@@ -52,7 +52,7 @@ namespace dtn
 			shutdown();
 		}
 
-		void AbstractWorker::AbstractWorkerAsync::raiseEvent(const dtn::core::Event *evt)
+		void AbstractWorker::AbstractWorkerAsync::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);

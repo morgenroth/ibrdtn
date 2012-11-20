@@ -145,7 +145,7 @@ public:
 	 * 	dtn::routing::QueueBundleEvent
 	 * 	dtn::core::NodeEvent
 	 */
-	void raiseEvent(const dtn::core::Event *evt);
+	void raiseEvent(const dtn::core::Event *evt) throw ();
 	/**
 	 * this method updates the given values for discovery service
 	 * It publishes the port number of the DHT instance

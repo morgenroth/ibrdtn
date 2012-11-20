@@ -69,7 +69,7 @@ namespace dtn
 			void componentDown() throw ();
 
 			size_t timeout(ibrcommon::Timer*);
-			void raiseEvent(const dtn::core::Event *evt);
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			/**
 			 * @see Component::getName()

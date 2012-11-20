@@ -49,7 +49,7 @@ namespace dtn
 				virtual ~AbstractWorkerAsync();
 				void shutdown();
 
-				virtual void raiseEvent(const dtn::core::Event *evt);
+				virtual void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			protected:
 				void run() throw ();

@@ -40,7 +40,7 @@ namespace dtn
 			void setup();
 			void __cancellation();
 
-			void raiseEvent(const dtn::core::Event *evt);
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 		private:
 			ibrcommon::Mutex _mutex;

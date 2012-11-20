@@ -34,7 +34,7 @@ namespace dtn
 			EventDebugger();
 			virtual ~EventDebugger();
 
-			void raiseEvent(const Event *evt);
+			void raiseEvent(const Event *evt) throw ();
 		};
 	}
 }

@@ -250,7 +250,7 @@ namespace dtn
 		/**
 		 * method to receive new events from the EventSwitch
 		 */
-		void BaseRouter::raiseEvent(const dtn::core::Event *evt)
+		void BaseRouter::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			// If a new neighbor comes available, send him a request for the summary vector
 			// If a neighbor went away we can free the stored database

@@ -290,7 +290,7 @@ namespace dtn
 			}
 		}
 
-		void LOWPANConvergenceLayer::raiseEvent(const Event *evt)
+		void LOWPANConvergenceLayer::raiseEvent(const Event *evt) throw ()
 		{
 			try {
 				const TimeEvent &time=dynamic_cast<const TimeEvent&>(*evt);

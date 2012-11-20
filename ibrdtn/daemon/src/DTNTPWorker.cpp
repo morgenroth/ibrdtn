@@ -146,7 +146,7 @@ namespace dtn
 			return stream;
 		}
 
-		void DTNTPWorker::raiseEvent(const dtn::core::Event *evt)
+		void DTNTPWorker::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::TimeEvent &t = dynamic_cast<const dtn::core::TimeEvent&>(*evt);

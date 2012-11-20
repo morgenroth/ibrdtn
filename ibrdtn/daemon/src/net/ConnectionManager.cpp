@@ -93,7 +93,7 @@ namespace dtn
 			unbindEvent(GlobalEvent::className);
 		}
 
-		void ConnectionManager::raiseEvent(const dtn::core::Event *evt)
+		void ConnectionManager::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const NodeEvent &nodeevent = dynamic_cast<const NodeEvent&>(*evt);

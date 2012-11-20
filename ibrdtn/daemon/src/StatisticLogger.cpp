@@ -142,7 +142,7 @@ namespace dtn
 			}
 		}
 
-		void StatisticLogger::raiseEvent(const dtn::core::Event *evt)
+		void StatisticLogger::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::BundleEvent &bundle = dynamic_cast<const dtn::core::BundleEvent&>(*evt);
