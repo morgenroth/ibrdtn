@@ -118,7 +118,11 @@ namespace dtn
 						// set the no delay option for the new socket if configured
 						if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
 						{
-							peersock->set(ibrcommon::clientsocket::NO_DELAY, true);
+							// check if the socket is a tcpsocket
+							if ( dynamic_cast<ibrcommon::tcpsocket*>(peersock) != NULL )
+							{
+								peersock->set(ibrcommon::clientsocket::NO_DELAY, true);
+							}
 						}
 
 						// create a new socket stream using the new client socket

@@ -577,7 +577,12 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		//this->set_blocking_mode(false);
+		/*
+		 * Get a socket to work with.  This socket will
+		 * be in the UNIX domain, and will be a
+		 * stream socket.
+		 */
+		init_socket(AF_UNIX, SOCK_STREAM, 0);
 
 		this->bind(_filename);
 		this->listen(_listen);
@@ -637,9 +642,8 @@ namespace ibrcommon
 
 		init_socket(_address, SOCK_STREAM, 0);
 
+		// enable reuse to avoid delay on process restart
 		this->set_reuseaddr(true);
-		//this->set_blocking_mode(false);
-		//this->set_linger(true);
 
 		// try to bind on port and/or address
 		this->bind(_address);
