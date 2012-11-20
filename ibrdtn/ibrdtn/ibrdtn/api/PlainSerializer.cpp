@@ -19,7 +19,6 @@
  *
  */
 
-#include "config.h"
 #include "ibrdtn/api/PlainSerializer.h"
 #include "ibrdtn/utils/Utils.h"
 #include <ibrcommon/refcnt_ptr.h>
