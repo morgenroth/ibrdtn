@@ -190,12 +190,22 @@ AS_IF([test "x$enable_android" = "xyes"], [
 				AC_DEFINE(HAVE_ZLIB, [1], ["zlib library is available"])
 				AC_SUBST(ZLIB_CFLAGS)
 				AC_SUBST(ZLIB_LIBS)
-				
-				ZLIB_LIBS_EXTRA="-lz"
-				AC_SUBST(ZLIB_LIBS_EXTRA)
+				REQUIRES_LIBS="$REQUIRES_LIBS zlib"
 			] , [
-				with_compression="no"
-				AC_MSG_WARN([compression enabled, but zlib libraries are not found. Compression extensions are disabled.])
+				AC_CHECK_LIB([z], [gzread],[
+					AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
+					AC_DEFINE(HAVE_ZLIB, [1], ["zlib library is available"])
+					ZLIB_CFLAGS=""
+					ZLIB_LIBS="-lz"
+					AC_SUBST(ZLIB_CFLAGS)
+					AC_SUBST(ZLIB_LIBS)
+					
+					ZLIB_LIBS_EXTRA="-lz"
+					AC_SUBST(ZLIB_LIBS_EXTRA)
+				] , [
+					with_compression="no"
+					AC_MSG_ERROR([compression enabled, but zlib libraries are not found.])
+				])
 			])
 		], [
 			with_compression="no"
