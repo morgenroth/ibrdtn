@@ -44,7 +44,7 @@ core_SOURCES = \
 	TimeAdjustmentEvent.cpp
 
 if ANDROID
-noinst_PROGRAMS = Android.mk
+noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 noinst_LTLIBRARIES = libcore.la

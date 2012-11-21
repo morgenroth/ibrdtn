@@ -24,7 +24,7 @@ api_SOURCES = \
 	BundleStreamBuf.cpp
 
 if ANDROID
-noinst_PROGRAMS = Android.mk
+noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 noinst_LTLIBRARIES = libapi.la

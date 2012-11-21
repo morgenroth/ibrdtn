@@ -19,7 +19,7 @@ AM_CPPFLAGS = -I$(top_srcdir) $(ibrcommon_CFLAGS)
 AM_LDFLAGS = $(ibrcommon_LIBS)
 
 if ANDROID
-noinst_PROGRAMS = Android.mk
+noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 noinst_LTLIBRARIES= libstreams.la

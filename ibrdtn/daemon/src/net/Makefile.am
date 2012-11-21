@@ -60,7 +60,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(DTNDHT_CFLAG
 AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(DTNDHT_LIBS)
 
 if ANDROID
-noinst_PROGRAMS = Android.mk
+noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 noinst_LTLIBRARIES = libnet.la

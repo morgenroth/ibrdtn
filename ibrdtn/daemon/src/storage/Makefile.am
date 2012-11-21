@@ -19,7 +19,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(SQLITE_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS) $(SQLITE_LIBS)
 
 if ANDROID
-noinst_PROGRAMS = Android.mk
+noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 noinst_LTLIBRARIES = libstorage.la

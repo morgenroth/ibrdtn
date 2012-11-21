@@ -51,7 +51,7 @@ endif
 endif
 
 if ANDROID
-noinst_PROGRAMS = Android.mk
+noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 # this lists the binaries to produce, the (non-PHONY, binary) targets in

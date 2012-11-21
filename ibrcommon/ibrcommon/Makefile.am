@@ -45,7 +45,7 @@ ibrcommon_libs += xml/libxml.la
 endif
 
 if ANDROID
-noinst_PROGRAMS = Android.mk
+noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 lib_LTLIBRARIES = libibrcommon.la

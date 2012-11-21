@@ -30,7 +30,7 @@ AM_CPPFLAGS = -I$(top_srcdir) $(OPENSSL_CFLAGS)
 AM_LDFLAGS = $(OPENSSL_LIBS)
 
 if ANDROID
-noinst_PROGRAMS = Android.mk
+noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 noinst_LTLIBRARIES = libssl.la

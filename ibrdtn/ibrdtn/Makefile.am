@@ -7,7 +7,7 @@ SUBDIRS = $(GENERIC_LIBRARY_NAME)
 DIST_SUBDIRS = $(GENERIC_LIBRARY_NAME)
 
 if ANDROID
-noinst_PROGRAMS = Android.mk
+noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 SUBDIRS += tests
