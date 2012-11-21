@@ -78,7 +78,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	# Check for presence of androgenizer
 	AC_CHECK_PROG(ANDROGENIZER, androgenizer, androgenizer)
 	AS_IF([test -z "$ANDROGENIZER"], [
-		AC_MSG_ERROR("Unable to find androgenizer in your PATH.")
+		AC_MSG_ERROR(Unable to find androgenizer in your PATH.)
 	])
 
 	# Headers are defined in Application.mk, as it is impossible to link from here
@@ -160,10 +160,9 @@ AS_IF([test "x$enable_android" = "xyes"], [
 				], [
 					# alternatively endian header is required
 					AC_CHECK_HEADERS([endian.h], [
-						echo "use endian.h instead of glib."
+						AC_MSG_NOTICE([use endian.h instead of glib.])
 					], [
-						echo "glib or endian.h is necessary to include bundle security protocol!"
-						exit 1
+						AC_MSG_ERROR([glib or endian.h is necessary to include bundle security protocol!])
 					])
 				])
 			], [

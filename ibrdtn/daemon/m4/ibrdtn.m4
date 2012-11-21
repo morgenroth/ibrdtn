@@ -43,9 +43,9 @@ AC_DEFUN([LOCAL_CHECK_IBRDTN],
 			ibrdtn_CFLAGS="-I${ibrdtn_path} ${ibrdtn_CFLAGS} $(pkg-config --cflags ibrdtn)"
 			
 			# some output
-			echo "using ibrdtn library in ${ibrdtn_path}"
-			echo " with CFLAGS: $ibrdtn_CFLAGS"
-			echo " with LIBS: $ibrdtn_LIBS"
+			AC_MSG_NOTICE([using ibrdtn library in ${ibrdtn_path}])
+			AC_MSG_NOTICE([  with CFLAGS: $ibrdtn_CFLAGS])
+			AC_MSG_NOTICE([  with LIBS: $ibrdtn_LIBS])
 			
 			# set ibrdtn as available
 			ibrdtn=yes
@@ -55,11 +55,11 @@ AC_DEFUN([LOCAL_CHECK_IBRDTN],
 	AS_IF([test "x$ibrdtn" = "xnotfound"], [
 		# check for ibrdtn library
 		PKG_CHECK_MODULES([ibrdtn], [ibrdtn >= $LOCAL_IBRDTN_VERSION], [
-			echo "using ibrdtn with CFLAGS: $ibrdtn_CFLAGS"
-			echo "using ibrdtn with LIBS: $ibrdtn_LIBS"
+			AC_MSG_NOTICE([using ibrdtn])
+			AC_MSG_NOTICE([  with CFLAGS: $ibrdtn_CFLAGS])
+			AC_MSG_NOTICE([  with LIBS: $ibrdtn_LIBS])
 		], [
-			echo "ibrdtn library not found!"
-			exit 1
+			AC_MSG_ERROR([ibrdtn library not found!])
 		])
 	])
 ])

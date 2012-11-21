@@ -27,9 +27,9 @@ AC_DEFUN([LOCAL_CHECK_IBRCOMMON],
 			ibrcommon_CFLAGS="-I${ibrcommon_path} $(pkg-config --cflags ibrcommon)"
 			
 			# some output
-			echo "using ibrcommon library in ${ibrcommon_path}"
-			echo " with CFLAGS: $ibrcommon_CFLAGS"
-			echo " with LIBS: $ibrcommon_LIBS"
+			AC_MSG_NOTICE([using ibrcommon library in ${ibrcommon_path}])
+			AC_MSG_NOTICE([  with CFLAGS: $ibrcommon_CFLAGS])
+			AC_MSG_NOTICE([  with LIBS: $ibrcommon_LIBS])
 			
 			# set ibrcommon as available
 			ibrcommon=yes
@@ -39,11 +39,11 @@ AC_DEFUN([LOCAL_CHECK_IBRCOMMON],
 	AS_IF([test "x${ibrcommon}" = "xnotfound"], [
 		# check for ibrcommon library
 		PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= $LOCAL_IBRCOMMON_VERSION], [
-			echo "using ibrcommon with CFLAGS: $ibrcommon_CFLAGS"
-			echo "using ibrcommon with LIBS: $ibrcommon_LIBS"
+			AC_MSG_NOTICE([using ibrcommon])
+			AC_MSG_NOTICE([  with CFLAGS: $ibrcommon_CFLAGS])
+			AC_MSG_NOTICE([  with LIBS: $ibrcommon_LIBS])
 		], [
-			echo "ibrcommon library not found!"
-			exit 1
+			AC_MSG_ERROR([ibrcommon library not found!])
 		])
 	])
 ])
