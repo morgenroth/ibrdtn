@@ -3,15 +3,11 @@
 #Build in these directories:
 SUBDIRS = $(GENERIC_LIBRARY_NAME)
 
-#Distribute these directories:
-DIST_SUBDIRS = $(GENERIC_LIBRARY_NAME)
-
 if ANDROID
 noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 SUBDIRS += tests
-DIST_SUBDIRS += tests
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig

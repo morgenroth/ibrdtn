@@ -7,7 +7,6 @@ noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
 SUBDIRS += etc doc man scripts tests
-DIST_SUBDIRS = etc doc man scripts tests
 endif
 
 # debian files for package building
