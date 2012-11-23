@@ -17,8 +17,13 @@ if NETLINK
 h_sources += NetLinkManager.h
 cc_sources += NetLinkManager.cpp
 else
+if WIN32
+h_sources += Win32LinkManager.h
+cc_sources += Win32LinkManager.cpp
+else
 h_sources += PosixLinkManager.h
 cc_sources += PosixLinkManager.cpp
+endif
 endif
 
 #Install the headers in a versioned directory
