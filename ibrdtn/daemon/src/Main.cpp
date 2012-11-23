@@ -80,7 +80,7 @@ void sighandler(int signal)
 		_shutdown_cond.signal(true);
 		break;
 	}
-
+#ifndef WIN32
 	case SIGUSR1:
 		if (!_debug)
 		{
@@ -96,6 +96,7 @@ void sighandler(int signal)
 	case SIGHUP:
 		_dtnd.reload();
 		break;
+#endif
 	default:
 		// dummy handler
 		break;
