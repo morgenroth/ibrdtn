@@ -103,7 +103,11 @@ namespace ibrcommon
 	}
 
 	Thread::Thread(size_t size)
+#ifdef WIN32
+	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(), stack(size), priority(0), _detached(false)
+#else
 	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), priority(0), _detached(false)
+#endif
 	{
 		pthread_attr_init(&attr);
 	}
