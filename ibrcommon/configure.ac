@@ -67,6 +67,17 @@ AM_SANITY_CHECK
 
 AC_LANG_CPLUSPLUS
 
+# Option to build for win32
+AC_ARG_ENABLE([win32],
+	AS_HELP_STRING([--enable-win32], [Enable compile switches for win32 systems]), [
+		AC_DEFINE(WIN32, [1], [Compiling for Win32!])
+		AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
+		AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
+
+		# do win32 related library checking
+		AC_CHECK_LIB(ws2_32, WSAStartup, [])
+	])
+
 # ANDROID configuration
 # We generate a mostly static configuration for Android as PKG_CHECK_MODULES obviously does not work with the Android NDK
 AC_ARG_ENABLE([android],
@@ -226,7 +237,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_ARG_WITH([mingw32-pthread],
 		AS_HELP_STRING([--with-mingw32-pthread=PATH], [Build with ming32-pthread support]),
 		[
-			PTHREAD_LIBS="-L${withval} -lpthread"
+			PTHREAD_LIBS="-L${withval} -lpthreadGC2"
 			PTHREAD_CFLAGS="-I${withval}"
 			AC_MSG_NOTICE([using mingw32-pthread library in ${withval}])
 		], [
@@ -359,6 +370,7 @@ AM_CONDITIONAL(LOWPAN, test x$use_lowpan = xyes)
 AM_CONDITIONAL(NETLINK, test x$use_netlink = xyes)
 AM_CONDITIONAL(LIBXML, test x$use_xml = xyes)
 AM_CONDITIONAL(ANDROID, test x$enable_android = xyes)
+AM_CONDITIONAL(WIN32, test x$enable_win32 = xyes)
 
 
 dnl -----------------------------------------------
