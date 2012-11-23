@@ -306,7 +306,8 @@ namespace ibrcommon
 			if (_options & LOG_DATETIME)
 			{
 				// get timestamp
-				std::string timestamp(asctime( localtime(&log._logtime.tv_sec) ));
+				time_t secs = log._logtime.tv_sec;
+				std::string timestamp(asctime( localtime(&secs) ));
 				timestamp.erase(std::remove(timestamp.begin(), timestamp.end(), '\n'), timestamp.end());
 				prefixes.push_back(timestamp);
 			}
