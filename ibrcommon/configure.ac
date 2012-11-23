@@ -75,7 +75,11 @@ AC_ARG_ENABLE([win32],
 		AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
 
 		# do win32 related library checking
-		AC_CHECK_LIB(ws2_32, WSAStartup, [])
+		AC_CHECK_LIB([ws2_32], [main], [
+			LIBS="$LIBS -lws2_32"
+			WIN32_LIBS_EXTRA="-lws2_32"
+			AC_SUBST(WIN32_LIBS_EXTRA)
+		], AC_ERROR([lib ws2_32 not found]))
 	])
 
 # ANDROID configuration

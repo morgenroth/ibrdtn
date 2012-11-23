@@ -7,5 +7,5 @@ Name: ibrcommon
 Description: IBR Common C++ Library
 Requires: @REQUIRES_LIBS@
 Version: @VERSION@
-Libs: -L${libdir} -l@GENERIC_LIBRARY_NAME@ @PTHREAD_LIBS@
+Libs: -L${libdir} -l@GENERIC_LIBRARY_NAME@ @PTHREAD_LIBS@ @WIN32_LIBS_EXTRA@
 Cflags: -I${includedir}/@GENERIC_LIBRARY_NAME@-@GENERIC_API_VERSION@ @PTHREAD_CFLAGS@
