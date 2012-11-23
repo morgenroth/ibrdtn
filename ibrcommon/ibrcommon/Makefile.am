@@ -17,7 +17,6 @@ h_sources = \
 	appstreambuf.h \
 	Exceptions.h \
 	refcnt_ptr.h \
-	SyslogStream.h \
 	TimeMeasurement.h \
 	Logger.h \
 	TLSExceptions.h \
@@ -25,9 +24,13 @@ h_sources = \
 
 cc_sources = \
 	appstreambuf.cpp \
-	SyslogStream.cpp \
 	TimeMeasurement.cpp \
 	Logger.cpp
+
+if ! WIN32
+h_sources += SyslogStream.h
+cc_sources += SyslogStream.cpp
+endif
 
 library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
