@@ -24,6 +24,7 @@
 #include <iostream>
 #include <iomanip>
 #include <stdio.h>
+#include <time.h>
 
 #ifdef HAVE_FEATURES_H
 #include <features.h>
@@ -146,6 +147,11 @@ namespace ibrcommon
 
 	void TimeMeasurement::gettime(struct timespec *ts)
 	{
+		
+#ifdef WIN32
+		// TODO: implement win32 specific method
+		uint64_t start = clock();
+#else
 #ifdef HAVE_MACH_MACH_TIME_H // OS X does not have clock_gettime, use clock_get_time
 		clock_serv_t cclock;
 		mach_timespec_t mts;
@@ -156,6 +162,7 @@ namespace ibrcommon
 		ts->tv_nsec = mts.tv_nsec;
 #else
 		::clock_gettime(CLOCK_MONOTONIC, ts);
+#endif
 #endif
 	}
 }
