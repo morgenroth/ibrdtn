@@ -28,18 +28,24 @@
 #include "ibrcommon/TimeMeasurement.h"
 #endif
 
-#include <algorithm>
-#include <netdb.h>
+#ifdef WIN32
+#include <winsock2.h>
+#include <windows.h>
+#else
 #include <sys/socket.h>
-#include <sys/types.h>
+#include <netdb.h>
 #include <netinet/tcp.h>
 #include <sys/un.h>
+#include <arpa/inet.h>
+#endif
+
+#include <algorithm>
+#include <sys/types.h>
 #include <errno.h>
 #include <sstream>
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <arpa/inet.h>
 #include <unistd.h>
 
 namespace ibrcommon
@@ -103,6 +109,8 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
+		// TODO: implement pipesocket for WIN32
+#ifndef WIN32
 		int pipe_fds[2];
 
 		// create a pipe for interruption
@@ -117,6 +125,7 @@ namespace ibrcommon
 
 		this->set_blocking_mode(false);
 		this->set_blocking_mode(false, _output_fd);
+#endif
 
 		_state = SOCKET_UP;
 	}
@@ -126,8 +135,11 @@ namespace ibrcommon
 		if (_state != SOCKET_UP)
 			throw socket_exception("socket is not up");
 
+#ifndef WIN32
 		this->close();
 		::close(_output_fd);
+#endif
+
 		_state = SOCKET_DOWN;
 	}
 

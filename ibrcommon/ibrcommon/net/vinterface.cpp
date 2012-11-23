@@ -22,7 +22,11 @@
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/vinterface.h"
 #include "ibrcommon/net/vsocket.h"
+
+#ifdef WIN32
+#else
 #include <net/if.h>
+#endif
 
 namespace ibrcommon
 {
@@ -61,7 +65,12 @@ namespace ibrcommon
 
 	uint32_t vinterface::getIndex() const
 	{
-		return ::if_nametoindex(_name.c_str());
+#ifdef WIN32
+		// TODO: return index of this interface
+		return 0;
+#else
+		return if_nametoindex(_name.c_str());
+#endif
 	}
 
 	const std::list<vaddress> vinterface::getAddresses(const std::string &scope) const
