@@ -240,7 +240,7 @@ namespace dtn
 			}
 
 			// wait until all clients are down
-			while (_connections.size() > 0) ::sleep(1);
+			while (_connections.size() > 0) ::usleep(1000000);
 		}
 
 		Registration& ApiServer::getRegistration(const std::string &handle)
