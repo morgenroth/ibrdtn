@@ -45,6 +45,15 @@ namespace ibrcommon
 	class File
 	{
 	public:
+#ifdef __WIN32__
+		enum FILE_TYPE {
+			DT_REG,
+			DT_LNK,
+			DT_DIR,
+			DT_UNKNOWN
+		};
+#endif
+
 		/**
 		 * Instantiate a File object without a reference to a file.
 		 */
@@ -67,7 +76,7 @@ namespace ibrcommon
 		 * @see update()
 		 * @return The filetype of the file (e.g. DT_REG, DT_LNK, DT_DIR, DT_UNKNOWN)
 		 */
-		unsigned char getType() const;
+		FILE_TYPE getType() const;
 
 		/**
 		 * Get all files in the directory. The given path in the constructor
@@ -163,11 +172,11 @@ namespace ibrcommon
 		bool operator<(const ibrcommon::File &other) const;
 
 	private:
-		File(const std::string &path, const unsigned char t);
+		File(const std::string &path, const FILE_TYPE t);
 		void resolveAbsolutePath();
 		void removeSlash();
 		std::string _path;
-		unsigned char _type;
+		FILE_TYPE _type;
 	};
 
 	/**

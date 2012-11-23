@@ -36,6 +36,14 @@
 #include <libgen.h>
 #endif
 
+#ifdef WIN32
+#define FILE_DELIMITER_CHAR '\\'
+#define FILE_DELIMITER "\\"
+#else
+#define FILE_DELIMITER_CHAR '/'
+#define FILE_DELIMITER "/"
+#endif
+
 namespace ibrcommon
 {
 	File::File()
@@ -43,7 +51,7 @@ namespace ibrcommon
 	{
 	}
 
-	File::File(const std::string &path, const unsigned char t)
+	File::File(const std::string &path, const FILE_TYPE t)
 	 : _path(path), _type(t)
 	{
 		resolveAbsolutePath();
@@ -62,7 +70,7 @@ namespace ibrcommon
 	{
 		std::string::iterator iter = _path.end(); --iter;
 
-		if ((*iter) == '/')
+		if ((*iter) == FILE_DELIMITER_CHAR)
 		{
 			_path.erase(iter);
 		}
@@ -72,9 +80,9 @@ namespace ibrcommon
 	{
 		std::string::iterator iter = _path.begin();
 
-		if ((*iter) != '/')
+		if ((*iter) != FILE_DELIMITER_CHAR)
 		{
-			_path = "./" + _path;
+			_path = "." + std::string(FILE_DELIMITER) + _path;
 		}
 	}
 
@@ -101,9 +109,11 @@ namespace ibrcommon
 					_type = DT_REG;
 					break;
 
+#ifndef WIN32
 				case S_IFLNK:
 					_type = DT_LNK;
 					break;
+#endif
 
 				case S_IFDIR:
 					_type = DT_DIR;
@@ -119,7 +129,7 @@ namespace ibrcommon
 	File::~File()
 	{}
 
-	unsigned char File::getType() const
+	File::FILE_TYPE File::getType() const
 	{
 		return _type;
 	}
@@ -143,7 +153,7 @@ namespace ibrcommon
 			// std::string name = std::string(dirp->d_name, dirp->d_reclen);
 
 			std::string name = std::string(dirp->d_name);
-			std::stringstream ss; ss << getPath() << "/" << name;
+			std::stringstream ss; ss << getPath() << FILE_DELIMITER_CHAR << name;
 			File file(ss.str(), dirp->d_type);
 			files.push_back(file);
 		}
@@ -182,7 +192,7 @@ namespace ibrcommon
 
 	File File::get(string filename) const
 	{
-		stringstream ss; ss << getPath() << "/" << filename;
+		stringstream ss; ss << getPath() << FILE_DELIMITER_CHAR << filename;
 		File file(ss.str());
 
 		return file;
@@ -241,7 +251,11 @@ namespace ibrcommon
 			File::createDirectory(parent);
 
 			// create path
+#ifdef WIN32
+			::mkdir(path.getPath().c_str());
+#else
 			::mkdir(path.getPath().c_str(), 0700);
+#endif
 
 			// update file information
 			path.update();
@@ -303,12 +317,17 @@ namespace ibrcommon
 			throw ibrcommon::IOException("given path is not a directory.");
 		}
 
-		std::string pattern = path.getPath() + "/" + prefix + "XXXXXX";
+		std::string pattern = path.getPath() + FILE_DELIMITER_CHAR + prefix + "XXXXXX";
 
 		std::vector<char> name(pattern.length() + 1);
 		::strcpy(&name[0], pattern.c_str());
 
+#ifdef WIN32
+		// TODO: create temporary file - win32 style
+		int fd = 0;
+#else
 		int fd = mkstemp(&name[0]);
+#endif
 		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
 		::close(fd);
 
