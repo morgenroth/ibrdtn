@@ -375,6 +375,7 @@ AM_CONDITIONAL(REGEX, test x$have_regex = xyes)
 AM_CONDITIONAL(ANDROID, test x$enable_android = xyes)
 AM_CONDITIONAL(WIFIP2P, test x$with_wifi_p2p = xyes)
 AM_CONDITIONAL(VMIME, test x$with_vmime = xyes)
+AM_CONDITIONAL(WIN32, test x$enable_win32 = xyes)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
