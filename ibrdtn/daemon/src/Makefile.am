@@ -60,6 +60,9 @@ else
 dtnd_SOURCES = Main.cpp
 endif
 dtnd_LDADD = libdtnd.la
+if WIN32
+dtnd_LDFLAGS = -static-libgcc -static-libstdc++
+endif
 endif
 
 Android.mk: Makefile.am
