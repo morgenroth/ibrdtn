@@ -49,6 +49,8 @@ AC_ARG_ENABLE([win32],
 
 		# do win32 related library checking
 		AC_CHECK_LIB([ws2_32], [main],[LIBS="$LIBS -lws2_32"], AC_ERROR([lib ws2_32 not found]))
+
+		AC_ARG_ENABLE([ntservice], AS_HELP_STRING([--enable-ntservice], [Build an NT Service (requires --enable-win32)]))
 	])
 
 # ANDROID configuration
@@ -376,6 +378,7 @@ AM_CONDITIONAL(ANDROID, test x$enable_android = xyes)
 AM_CONDITIONAL(WIFIP2P, test x$with_wifi_p2p = xyes)
 AM_CONDITIONAL(VMIME, test x$with_vmime = xyes)
 AM_CONDITIONAL(WIN32, test x$enable_win32 = xyes)
+AM_CONDITIONAL(WIN32_NTSERVICE, test x$enable_ntservice = xyes)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts

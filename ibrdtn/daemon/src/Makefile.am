@@ -54,7 +54,11 @@ sbin_PROGRAMS = dtnd
 noinst_LTLIBRARIES = libdtnd.la
 libdtnd_la_SOURCES = $(dtnd_sources)
 libdtnd_la_LIBADD = $(dtnd_libs)
+if WIN32_NTSERVICE
+dtnd_SOURCES = NTService.cpp
+else
 dtnd_SOURCES = Main.cpp
+endif
 dtnd_LDADD = libdtnd.la
 endif
 
