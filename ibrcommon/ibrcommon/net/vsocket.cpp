@@ -109,12 +109,14 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		// TODO: implement pipesocket for WIN32
-#ifndef WIN32
 		int pipe_fds[2];
 
 		// create a pipe for interruption
+#ifdef WIN32
+		if (::_pipe(pipe_fds, 1, _O_BINARY) < 0)
+#else
 		if (::pipe(pipe_fds) < 0)
+#endif
 		{
 			IBRCOMMON_LOGGER_TAG("pipesocket", error) << "Error " << errno << " creating pipe" << IBRCOMMON_LOGGER_ENDL;
 			throw socket_exception("failed to create pipe");
@@ -125,7 +127,6 @@ namespace ibrcommon
 
 		this->set_blocking_mode(false);
 		this->set_blocking_mode(false, _output_fd);
-#endif
 
 		_state = SOCKET_UP;
 	}
