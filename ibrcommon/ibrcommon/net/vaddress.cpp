@@ -22,9 +22,16 @@
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/vaddress.h"
 #include "ibrcommon/net/socket.h"
+
+#ifdef WIN32
+#include <winsock2.h>
+#include <wspiapi.h>
+#else
 #include <arpa/inet.h>
-#include <string.h>
 #include <netdb.h>
+#endif
+
+#include <string.h>
 
 namespace ibrcommon
 {
