@@ -20,13 +20,20 @@
  */
 
 #include "ibrcommon/config.h"
-#include "ibrcommon/net/vinterface.h"
-#include "ibrcommon/net/vsocket.h"
 
 #ifdef WIN32
+#include <winsock2.h>
+#include <windows.h>
+#include <ntddndis.h>
+#include <ws2ipdef.h>
+#include <naptypes.h>
+#include <iphlpapi.h>
 #else
 #include <net/if.h>
 #endif
+
+#include "ibrcommon/net/vinterface.h"
+#include "ibrcommon/net/vsocket.h"
 
 namespace ibrcommon
 {
@@ -66,8 +73,9 @@ namespace ibrcommon
 	uint32_t vinterface::getIndex() const
 	{
 #ifdef WIN32
-		// TODO: return index of this interface
-		return 0;
+		PULONG index = 0;
+		GetAdapterIndex(LPWSTR(_name.c_str()), index);
+		return (uint32_t)index;
 #else
 		return if_nametoindex(_name.c_str());
 #endif

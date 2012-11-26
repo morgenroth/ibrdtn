@@ -80,6 +80,12 @@ AC_ARG_ENABLE([win32],
 			WIN32_LIBS_EXTRA="-lws2_32"
 			AC_SUBST(WIN32_LIBS_EXTRA)
 		], AC_ERROR([lib ws2_32 not found]))
+
+		AC_CHECK_LIB([iphlpapi], [main], [
+			LIBS="$LIBS -liphlpapi"
+			WIN32_LIBS_EXTRA="-liphlpapi"
+			AC_SUBST(WIN32_LIBS_EXTRA)
+		], AC_ERROR([lib iphlpapi not found]))
 	])
 
 # ANDROID configuration
