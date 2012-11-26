@@ -48,48 +48,48 @@ const unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::
 // logging filter, everything but debug, err and crit
 const unsigned char logstd = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | logerr);
 
-SERVICE_STATUS          ServiceStatus; 
-SERVICE_STATUS_HANDLE   hStatus; 
- 
+SERVICE_STATUS          ServiceStatus;
+SERVICE_STATUS_HANDLE   hStatus;
+
 int InitService() {
-        // create a configuration
-        dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	// create a configuration
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
 	// TODO: need to initialize the configuration here
 
 	return 0;
 
 	// return -1 on failure
-	// return -1; 
+	// return -1;
 }
 
-void ControlHandler(DWORD request) 
-{ 
-	switch(request) 
-	{ 
+void ControlHandler(DWORD request)
+{
+	switch(request)
+	{
 	case SERVICE_CONTROL_STOP:
-		ibrdtn_daemon_shutdown(); 
-		return; 
- 
-	case SERVICE_CONTROL_SHUTDOWN: 
-		ibrdtn_daemon_shutdown():
-		return; 
-	
+		ibrdtn_daemon_shutdown();
+		return;
+
+	case SERVICE_CONTROL_SHUTDOWN:
+		ibrdtn_daemon_shutdown();
+		return;
+
 	default:
 		break;
-	} 
- 
+	}
+
 	// Report current status
 	SetServiceStatus (hStatus, &ServiceStatus);
- 
-	return; 
+
+	return;
 }
 
 void ServiceMain(int argc, char** argv) {
 	int error = 0;
-	
-	ServiceStatus.dwServiceType = SERVICE_WIN32; 
-	ServiceStatus.dwCurrentState = SERVICE_START_PENDING; 
+
+	ServiceStatus.dwServiceType = SERVICE_WIN32;
+	ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
 	ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
 	ServiceStatus.dwWin32ExitCode = 0;
 	ServiceStatus.dwServiceSpecificExitCode = 0;
@@ -107,19 +107,19 @@ void ServiceMain(int argc, char** argv) {
 	// initialize the service
 	error = InitService();
 
-	if (error) 
+	if (error)
 	{
 		// Initialization failed; we stop the service
-		ServiceStatus.dwCurrentState = SERVICE_STOPPED; 
-		ServiceStatus.dwWin32ExitCode = error; 
-		SetServiceStatus(hStatus, &ServiceStatus); 
+		ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+		ServiceStatus.dwWin32ExitCode = error;
+		SetServiceStatus(hStatus, &ServiceStatus);
 
 		// exit ServiceMain
 		return;
 	}
 
-        // create a configuration
-        dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	// create a configuration
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
 	// enable ring-buffer
 	ibrcommon::Logger::enableBuffer(200);
@@ -142,8 +142,8 @@ void ServiceMain(int argc, char** argv) {
 		IBRCOMMON_LOGGER(info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
 
-	// We report the running status to SCM. 
-	ServiceStatus.dwCurrentState = SERVICE_RUNNING; 
+	// We report the running status to SCM.
+	ServiceStatus.dwCurrentState = SERVICE_RUNNING;
 	SetServiceStatus (hStatus, &ServiceStatus);
 
 	ibrdtn_daemon_initialize();
@@ -154,21 +154,22 @@ void ServiceMain(int argc, char** argv) {
 	ibrcommon::Logger::stop();
 
 	// report the stop of the service to SCM
-	ServiceStatus.dwWin32ExitCode = 0;  
+	ServiceStatus.dwWin32ExitCode = 0;
 	ServiceStatus.dwCurrentState = SERVICE_STOPPED;
 	SetServiceStatus (hStatus, &ServiceStatus);
 }
 
-void main() 
-{ 
+int main()
+{
 	SERVICE_TABLE_ENTRY ServiceTable[2];
-	ServiceTable[0].lpServiceName = "IBR-DTN";
+	ServiceTable[0].lpServiceName = LPSTR("IBR-DTN");
 	ServiceTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
 
 	ServiceTable[1].lpServiceName = NULL;
 	ServiceTable[1].lpServiceProc = NULL;
 
 	// Start the control dispatcher thread for our service
-	StartServiceCtrlDispatcher(ServiceTable);  
+	StartServiceCtrlDispatcher(ServiceTable);
+	return 0;
 }
 
