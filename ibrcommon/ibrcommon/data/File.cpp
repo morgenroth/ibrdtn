@@ -37,6 +37,7 @@
 #endif
 
 #ifdef WIN32
+#include <io.h>
 #define FILE_DELIMITER_CHAR '\\'
 #define FILE_DELIMITER "\\"
 #else
@@ -323,8 +324,11 @@ namespace ibrcommon
 		::strcpy(&name[0], pattern.c_str());
 
 #ifdef WIN32
-		// TODO: create temporary file - win32 style
-		int fd = 0;
+		// create temporary file - win32 style
+		int fd = -1;
+		if (_mktemp_s(&name[0], pattern.length() + 1) == 0) {
+			fd = open(filename, O_CREAT, S_IREAD | S_IWRITE);
+		}
 #else
 		int fd = mkstemp(&name[0]);
 #endif
