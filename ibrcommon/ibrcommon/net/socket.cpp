@@ -519,6 +519,9 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
+#ifdef WIN32
+		throw socket_exception("socket type not supported");
+#else
 		size_t len = 0;
 		struct sockaddr_un saun;
 
@@ -551,6 +554,7 @@ namespace ibrcommon
 			this->close();
 			throw socket_exception("Could not connect to the named socket.");
 		}
+#endif
 
 		_state = SOCKET_UP;
 	}
@@ -615,6 +619,7 @@ namespace ibrcommon
 
 	void fileserversocket::bind(const File &file) throw (socket_exception)
 	{
+#ifndef WIN32
 		// remove old sockets
 		unlink(file.getPath().c_str());
 
@@ -627,6 +632,7 @@ namespace ibrcommon
 
 		// bind to the socket
 		basesocket::bind(_fd, (struct sockaddr *) &address, static_cast<socklen_t>(address_length));
+#endif
 	}
 
 	tcpserversocket::tcpserversocket(const int port, int listen)
