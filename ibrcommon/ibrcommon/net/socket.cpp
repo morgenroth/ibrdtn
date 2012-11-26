@@ -24,15 +24,21 @@
 #include "ibrcommon/net/vsocket.h"
 #include "ibrcommon/Logger.h"
 
+#ifdef WIN32
+#include <windows.h>
+#include <ws2tcpip.h>
+#else
 #include <arpa/inet.h>
 #include <sys/select.h>
-#include <string.h>
-#include <fcntl.h>
 #include <netinet/tcp.h>
 #include <sys/un.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <netdb.h>
+#endif
+
+#include <string.h>
+#include <fcntl.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include <sstream>
@@ -43,19 +49,40 @@
 #define bzero(s,n) (memset((s), '\0', (n)), (void) 0)
 #endif
 
+#ifdef WIN32
+#define EINPROGRESS WSAEINPROGRESS
+#define ECONNRESET WSAECONNRESET
+#define EAFNOSUPPORT WSAEAFNOSUPPORT
+#define ENOBUFS WSAENOBUFS
+#define EPROTONOSUPPORT WSAEPROTONOSUPPORT
+#define ELOOP WSAELOOP
+#endif
+
 namespace ibrcommon
 {
+	int __init_sockets()
+	{
+#ifdef WIN32
+		static bool initialized = false;
+		if (initialized) return 0;
+		WSADATA wsa;
+		return WSAStartup(MAKEWORD(2,0),&wsa);
+#endif
+	}
+
 	int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
 	int basesocket::DEFAULT_SOCKET_FAMILY_ALTERNATIVE = AF_INET;
 
 	basesocket::basesocket()
 	 : _state(SOCKET_DOWN), _fd(-1), _family(PF_UNSPEC)
 	{
+		__init_sockets();
 	}
 
 	basesocket::basesocket(int fd)
 	 : _state(SOCKET_UNMANAGED), _fd(fd), _family(PF_UNSPEC)
 	{
+		__init_sockets();
 	}
 
 	basesocket::~basesocket()
