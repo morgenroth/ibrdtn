@@ -60,15 +60,26 @@
 
 namespace ibrcommon
 {
+#ifdef WIN32
+	/**
+	 * wrapper to translate win32 method signature into linux/posix signature
+	 */
+	int __compat_setsockopt(int __fd, int __level, int __optname, __const void *__optval, socklen_t __optlen)
+	{
+		return ::setsockopt(__fd, __level, __optname, (char*)__optval, __optlen);
+	}
+
 	int __init_sockets()
 	{
-#ifdef WIN32
 		static bool initialized = false;
 		if (initialized) return 0;
 		WSADATA wsa;
 		return WSAStartup(MAKEWORD(2,0),&wsa);
-#endif
 	}
+#else
+#define __compat_setsockopt ::setsockopt
+#define __init_sockets
+#endif
 
 	int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
 	int basesocket::DEFAULT_SOCKET_FAMILY_ALTERNATIVE = AF_INET;
@@ -146,6 +157,11 @@ namespace ibrcommon
 
 	void basesocket::set_blocking_mode(bool val, int fd) const throw (socket_exception)
 	{
+#ifdef WIN32
+		// set blocking mode - the win32 way
+		unsigned long block_mode = (val) ? 1 : 0;
+		ioctlsocket((fd == -1) ? _fd : fd, FIONBIO, &block_mode);
+#else
 		int opts;
 		opts = fcntl((fd == -1) ? _fd : fd, F_GETFL);
 		if (opts < 0) {
@@ -160,13 +176,14 @@ namespace ibrcommon
 		if (fcntl((fd == -1) ? _fd : fd, F_SETFL, opts) < 0) {
 			throw socket_exception("cannot set non-blocking");
 		}
+#endif
 	}
 
 	void basesocket::set_keepalive(bool val, int fd) const throw (socket_exception)
 	{
 		/* Set the option active */
 		int optval = (val ? 1 : 0);
-		if (::setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
+		if (__compat_setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
 			throw ibrcommon::socket_exception("can not activate keepalives");
 		}
 	}
@@ -178,7 +195,7 @@ namespace ibrcommon
 
 		linger.l_onoff = (val ? 1 : 0);
 		linger.l_linger = l;
-		if (::setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_LINGER, &linger, sizeof(linger)) < 0) {
+		if (__compat_setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_LINGER, &linger, sizeof(linger)) < 0) {
 			throw ibrcommon::socket_exception("can not set linger option");
 		}
 	}
@@ -186,7 +203,7 @@ namespace ibrcommon
 	void basesocket::set_reuseaddr(bool val, int fd) const throw (socket_exception)
 	{
 		int on = (val ? 1: 0);
-		if (::setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
+		if (__compat_setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
 		{
 			throw socket_exception("setsockopt(SO_REUSEADDR) failed");
 		}
@@ -195,7 +212,7 @@ namespace ibrcommon
 	void basesocket::set_nodelay(bool val, int fd) const throw (socket_exception)
 	{
 		int set = (val ? 1 : 0);
-		if (::setsockopt((fd == -1) ? _fd : fd, IPPROTO_TCP, TCP_NODELAY, (char *)&set, sizeof(set)) < 0) {
+		if (__compat_setsockopt((fd == -1) ? _fd : fd, IPPROTO_TCP, TCP_NODELAY, &set, sizeof(set)) < 0) {
 			throw socket_exception("set no delay option failed");
 		}
 	}
@@ -874,7 +891,11 @@ namespace ibrcommon
 					basesocket *current = (*iter);
 					int err = 0;
 					socklen_t len = sizeof(err);
+#ifdef WIN32
+					::getsockopt(current->fd(), SOL_SOCKET, SO_ERROR, (char*)&err, &len);
+#else
 					::getsockopt(current->fd(), SOL_SOCKET, SO_ERROR, &err, &len);
+#endif
 
 					switch (err) {
 					case 0:
@@ -1051,19 +1072,19 @@ namespace ibrcommon
 			case AF_INET: {
 #ifdef HAVE_FEATURES_H
 				int val = 1;
-				if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+				if ( __compat_setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 				{
 					throw socket_exception("setsockopt(IP_MULTICAST_LOOP)");
 				}
 
 				unsigned char ttl = 255; // Multicast TTL
-				if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0 )
+				if ( __compat_setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0 )
 				{
 					throw socket_exception("setsockopt(IP_MULTICAST_TTL)");
 				}
 #endif
 //				unsigned char ittl = 255; // IP TTL
-//				if ( ::setsockopt(this->fd(), IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl)) < 0 )
+//				if ( __compat_setsockopt(this->fd(), IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl)) < 0 )
 //				{
 //					throw socket_exception("setsockopt(IP_TTL)");
 //				}
@@ -1073,20 +1094,20 @@ namespace ibrcommon
 			case AF_INET6: {
 #ifdef HAVE_FEATURES_H
 				int val = 1;
-				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+				if ( __compat_setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 				{
 					throw socket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
 				}
 
 //				unsigned char ttl = 255; // Multicast TTL
-//				if ( ::setsockopt(this_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0 )
+//				if ( __compat_setsockopt(this_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0 )
 //				{
 //					throw socket_exception("setsockopt(IPV6_MULTICAST_HOPS)");
 //				}
 #endif
 
 //				unsigned char ittl = 255; // IP TTL
-//				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &ittl, sizeof(ittl)) < 0 )
+//				if ( __compat_setsockopt(_fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &ittl, sizeof(ittl)) < 0 )
 //				{
 //					throw socket_exception("setsockopt(IPV6_HOPLIMIT)");
 //				}
@@ -1105,7 +1126,7 @@ namespace ibrcommon
 		case AF_INET: {
 #ifdef HAVE_FEATURES_H
 			int val = 0;
-			if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+			if ( __compat_setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 			{
 				throw socket_exception("setsockopt(IP_MULTICAST_LOOP)");
 			}
@@ -1116,7 +1137,7 @@ namespace ibrcommon
 		case AF_INET6: {
 #ifdef HAVE_FEATURES_H
 			int val = 0;
-			if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+			if ( __compat_setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 			{
 				throw socket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
 			}
@@ -1233,7 +1254,7 @@ namespace ibrcommon
 			// set the right interface
 			__copy_device_address(&req.imr_interface, iface);
 
-			if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
+			if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
 				throw socket_raw_error(errno, "setsockopt()");
 			}
@@ -1250,7 +1271,7 @@ namespace ibrcommon
 			// set the right interface
 			req.ipv6mr_interface = iface.getIndex();
 
-			if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
+			if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
 				throw socket_raw_error(errno, "setsockopt()");
 			}
@@ -1268,7 +1289,7 @@ namespace ibrcommon
 		// set the right interface here
 		req.gr_interface = iface.getIndex();
 
-		if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
+		if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 		{
 			throw socket_raw_error(errno, "setsockopt()");
 		}
