@@ -3,6 +3,9 @@
 
 DESTDIR="$(pwd)/win32-inst"
 
+# set default for clean command
+[ -z "${CLEAN}" ] && CLEAN=1
+
 # clean destdir
 rm -rf ${DESTDIR}
 
@@ -22,32 +25,38 @@ if [ ! -e "libs/pthreads-w32" ]; then
 fi
 
 cd libs/pthreads-w32
-make clean
+[ ${CLEAN} -eq 1 ] && make clean
 make LFLAGS="${STATIC_OPTS}" CROSS=${CROSSARCH}- clean GC-inlined
 mkdir -p ${DESTDIR}/bin
 cp `find -name *.dll` ${DESTDIR}/bin
 cd ../..
 
 cd ibrcommon
-make clean
-bash autogen.sh
-./configure --build=x86_64-unknown-linux-gnu --host=${CROSSARCH} --with-mingw32-pthread=/home/morgenro/sources/ibrdtn-windows.git/libs/pthreads-w32 --disable-netlink --enable-win32 --prefix=${DESTDIR} --enable-shared --enable-static
+if [ ${CLEAN} -eq 1 ]; then
+    make clean
+    bash autogen.sh
+    ./configure --build=x86_64-unknown-linux-gnu --host=${CROSSARCH} --with-mingw32-pthread=/home/morgenro/sources/ibrdtn-windows.git/libs/pthreads-w32 --disable-netlink --enable-win32 --prefix=${DESTDIR} --enable-shared --enable-static
+fi
 make -j
 make install
 cd ..
 
 cd ibrdtn/ibrdtn
-make clean
-bash autogen.sh
-./configure --build=x86_64-unknown-linux-gnu --host=${CROSSARCH} --enable-win32 --prefix=${DESTDIR} --enable-shared --enable-static
+if [ ${CLEAN} -eq 1 ]; then
+    make clean
+    bash autogen.sh
+    ./configure --build=x86_64-unknown-linux-gnu --host=${CROSSARCH} --enable-win32 --prefix=${DESTDIR} --enable-shared --enable-static
+fi
 make -j
 make install
 cd ..
 
 cd daemon
-make clean
-bash autogen.sh
-./configure --build=x86_64-unknown-linux-gnu --host=${CROSSARCH} --enable-win32 --enable-ntservice --disable-dtndht --disable-libdaemon --prefix=${DESTDIR}
+if [ ${CLEAN} -eq 1 ]; then
+    make clean
+    bash autogen.sh
+    ./configure --build=x86_64-unknown-linux-gnu --host=${CROSSARCH} --enable-win32 --enable-ntservice --disable-dtndht --disable-libdaemon --prefix=${DESTDIR}
+fi
 make -j
 make install
 cd ..
