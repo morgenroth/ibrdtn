@@ -19,6 +19,7 @@
  *
  */
 
+#include "config.h"
 #include "net/DiscoveryAnnouncement.h"
 #include <ibrdtn/data/Exceptions.h>
 #include <ibrdtn/data/Number.h>
@@ -26,7 +27,12 @@
 #include <typeinfo>
 #include <iostream>
 #include <vector>
+
+#ifdef WIN32
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
 
 using namespace dtn::data;
 

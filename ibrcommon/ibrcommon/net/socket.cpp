@@ -78,7 +78,7 @@ namespace ibrcommon
 	}
 #else
 #define __compat_setsockopt ::setsockopt
-#define __init_sockets
+#define __init_sockets int a
 #endif
 
 	int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
