@@ -19,6 +19,7 @@
  *
  */
 
+#include "config.h"
 #include "DTNTPWorker.h"
 #include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"
@@ -564,6 +565,9 @@ namespace dtn
 						tv_sync_delay.tv_sec = peer_age.getSeconds().get<time_t>();
 						tv_sync_delay.tv_usec = peer_age.getMicroseconds().get<suseconds_t>() % 1000000;
 
+#ifdef WIN32
+						// TODO: implement win32 version
+#else
 						// add sync delay to the peer timestamp
 						timeradd(&msg.peer_timestamp, &tv_sync_delay, &tv_peer_timestamp);
 
@@ -572,6 +576,7 @@ namespace dtn
 
 						// calculate offset
 						timersub(&tv_local_timestamp, &tv_peer_timestamp, &tv_offset);
+#endif
 
 						// print out offset to the local clock
 						IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, info) << "DT-NTP bundle received; rtt = " << rtt << "s; prop. delay = " << prop_delay << "s; clock of " << b.source.getNode().getString() << " has a offset of " << dtn::utils::Clock::toDouble(tv_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
