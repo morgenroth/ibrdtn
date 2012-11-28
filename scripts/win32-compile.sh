@@ -3,8 +3,15 @@
 
 DESTDIR="$(pwd)/win32-inst"
 
-# set default for clean command
+# set defaults
 [ -z "${CLEAN}" ] && CLEAN=1
+[ -z "${STRIP}" ] && STRIP=1
+[ -z "${DEBUG}" ] && DEBUG=0
+
+if [ ${DEBUG} -eq 1 ]; then
+    CXXFLAGS="-ggdb -g3 -Wall"
+    STRIP=0
+fi
 
 # clean destdir
 rm -rf ${DESTDIR}
@@ -62,9 +69,11 @@ make install
 cd ..
 cd ..
 
+if [ ${STRIP} -eq 1 ]; then
 # strip binaries
 BINARIES="sbin/dtnd.exe sbin/dtnserv.exe"
 for BINARY in ${BINARIES}; do
     ${CROSSARCH}-strip ${DESTDIR}/${BINARY}
 done
+fi
 
