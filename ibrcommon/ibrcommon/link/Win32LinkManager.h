@@ -13,6 +13,12 @@
 #include "ibrcommon/net/vaddress.h"
 #include <list>
 
+#include <winsock2.h>
+#include <ntddndis.h>
+#include <ws2ipdef.h>
+#include <naptypes.h>
+#include <iphlpapi.h>
+
 namespace ibrcommon
 {
 	class Win32LinkManager : public LinkManager
@@ -23,6 +29,11 @@ namespace ibrcommon
 
 		const vinterface getInterface(int index) const;
 		const std::list<vaddress> getAddressList(const vinterface &iface, const std::string &scope = "");
+
+	private:
+		void freeAdapterInfo(IP_ADAPTER_ADDRESSES *pAddresses) const;
+		IP_ADAPTER_ADDRESSES* getAdapterInfo() const;
+		vaddress getAddress(SOCKET_ADDRESS &address) const;
 	};
 } /* namespace ibrcommon */
 #endif /* DEFAULTLINKMANAGER_H_ */
