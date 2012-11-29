@@ -28,6 +28,7 @@
 #include <ibrcommon/net/vinterface.h>
 #include <sstream>
 #include <string.h>
+#include <sys/time.h>
 
 namespace ibrcommon {
 	enum socket_error_code
