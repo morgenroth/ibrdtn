@@ -41,6 +41,46 @@
 
 namespace ibrcommon
 {
+#ifdef HAVE_FEATURES_H
+#define __compat_select ::select
+#else
+	int __compat_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)
+	{
+		if (timeout == NULL)
+		{
+			return ::select(nfds, readfds, writefds, exceptfds, NULL);
+		}
+
+		TimeMeasurement tm;
+
+		struct timeval to_copy;
+		::memcpy(&to_copy, timeout, sizeof to_copy);
+
+		tm.start();
+		int ret = ::select(nfds, readfds, writefds, exceptfds, &to_copy);
+		tm.stop();
+
+		uint64_t us = tm.getMicroseconds();
+
+		while ((us > 1000000) && (timeout->tv_sec > 0))
+		{
+			us -= 1000000;
+			timeout->tv_sec--;
+		}
+
+		if (us >= (uint64_t)timeout->tv_usec)
+		{
+			timeout->tv_usec = 0;
+		}
+		else
+		{
+			timeout->tv_usec -= us;
+		}
+
+		return ret;
+	}
+#endif
+
 	vsocket::pipesocket::pipesocket()
 	 : _output_fd(-1)
 	{ }
@@ -591,7 +631,7 @@ namespace ibrcommon
 			}
 
 			// call the linux-like select with given timeout
-			int res = __linux_select(high_fd + 1, &fds_read, &fds_write, &fds_error, tv);
+			int res = __compat_select(high_fd + 1, &fds_read, &fds_write, &fds_error, tv);
 
 			if (res < 0) {
 				if (errno == EINTR) {

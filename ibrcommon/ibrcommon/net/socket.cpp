@@ -44,47 +44,6 @@
 
 namespace ibrcommon
 {
-	int __linux_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)
-	{
-#ifdef HAVE_FEATURES_H
-		// on linux platform we can use the native select method
-		return ::select(nfds, readfds, writefds, exceptfds, timeout);
-#endif
-
-		if (timeout == NULL)
-		{
-			return ::select(nfds, readfds, writefds, exceptfds, NULL);
-		}
-
-		TimeMeasurement tm;
-
-		struct timeval to_copy;
-		::memcpy(&to_copy, timeout, sizeof to_copy);
-
-		tm.start();
-		int ret = ::select(nfds, readfds, writefds, exceptfds, &to_copy);
-		tm.stop();
-
-		uint64_t us = tm.getMicroseconds();
-
-		while ((us > 1000000) && (timeout->tv_sec > 0))
-		{
-			us -= 1000000;
-			timeout->tv_sec--;
-		}
-
-		if (us >= (uint64_t)timeout->tv_usec)
-		{
-			timeout->tv_usec = 0;
-		}
-		else
-		{
-			timeout->tv_usec -= us;
-		}
-
-		return ret;
-	}
-
 	int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
 	int basesocket::DEFAULT_SOCKET_FAMILY_ALTERNATIVE = AF_INET;
 

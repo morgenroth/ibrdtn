@@ -370,18 +370,6 @@ namespace ibrcommon {
 	private:
 		void mcast_op(int optname, const vaddress &group, const vinterface &iface) throw (socket_exception);
 	};
-
-	/**
-	 * This select emulated the linux behavior of a select.
-	 * It measures the time being in the select call and decrement the given timeout value.
-	 * @param nfds
-	 * @param readfds
-	 * @param writefds
-	 * @param exceptfds
-	 * @param timeout
-	 * @return
-	 */
-	int __linux_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 }
 
 #endif /* IBRCOMMON_SOCKET_H_ */
