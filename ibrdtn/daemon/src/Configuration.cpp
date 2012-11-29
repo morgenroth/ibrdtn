@@ -504,28 +504,25 @@ namespace dtn
 			return _crosslayer;
 		}
 
-		Configuration::NetConfig Configuration::getAPIInterface()
+		Configuration::NetConfig Configuration::getAPIInterface() const
 		{
-			size_t port = 4550;
-			std::string interface_name = "lo";
+			size_t port = _conf.read<size_t>("api_port", 4550);
 
 			try {
-				port = _conf.read<size_t>("api_port");
-			} catch (const ConfigFile::key_not_found&) { };
+				std::string interface_name = _conf.read<std::string>("api_interface");
 
-			try {
-				interface_name = _conf.read<std::string>("api_interface");
-			} catch (const ConfigFile::key_not_found&) { };
+				if (interface_name == "any")
+				{
+					return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::ANY), port);
+				}
 
-			if (interface_name == "any")
-			{
-				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(), port);
+				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(interface_name), port);
+			} catch (const ConfigFile::key_not_found&) {
+				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK), port);
 			}
-
-			return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(interface_name), port);
 		}
 
-		ibrcommon::File Configuration::getAPISocket()
+		ibrcommon::File Configuration::getAPISocket() const
 		{
 			try {
 				return ibrcommon::File(_conf.read<std::string>("api_socket"));

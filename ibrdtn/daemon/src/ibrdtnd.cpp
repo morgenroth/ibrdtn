@@ -627,31 +627,29 @@ int ibrdtn_daemon_initialize_api() {
 
 	if (conf.doAPI())
 	{
-		dtn::daemon::Configuration::NetConfig lo = conf.getAPIInterface();
-
  		try {
 			ibrcommon::File socket = conf.getAPISocket();
 
 			try {
 				// use unix domain sockets for API
-				components.push_back( new dtn::api::ApiServer(socket) );
+				components.push_back(new dtn::api::ApiServer(socket));
 				IBRCOMMON_LOGGER(info) << "API initialized using unix domain socket: " << socket.getPath() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::socket_exception&) {
 				IBRCOMMON_LOGGER(error) << "Unable to bind to unix domain socket " << socket.getPath() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 				exit(-1);
 			}
-		}
- 		catch (const dtn::daemon::Configuration::ParameterNotSetException&)
-		{
+		} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
+			dtn::daemon::Configuration::NetConfig apiconf = conf.getAPIInterface();
+
 			try {
 				// instance a API server, first create a socket
-				components.push_back( new dtn::api::ApiServer(lo.iface, lo.port) );
-				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << lo.iface.toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
+				components.push_back(new dtn::api::ApiServer(apiconf.iface, apiconf.port));
+				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << apiconf.iface.toString() << ":" << apiconf.port << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::socket_exception&) {
-				IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.iface.toString() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "Unable to bind to " << apiconf.iface.toString() << ":" << apiconf.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 				exit(-1);
 			}
-		}
+		};
 	}
 	else
 	{

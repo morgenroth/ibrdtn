@@ -627,14 +627,22 @@ namespace ibrcommon
 
 		hints.ai_family = _family;
 		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_PASSIVE;
+		hints.ai_flags = 0;
 
 		const char *address = NULL;
 		const char *service = NULL;
 
-		try {
-			address = addr.address().c_str();
-		} catch (const vaddress::address_not_set&) { };
+		if (addr.isAny()) {
+			hints.ai_flags |= AI_PASSIVE;
+			address = NULL;
+		} else if (addr.isLocal()) {
+			address = NULL;
+		} else {
+			hints.ai_flags |= AI_PASSIVE;
+			try {
+				address = addr.address().c_str();
+			} catch (const vaddress::address_not_set&) { };
+		}
 
 		try {
 			service = addr.service().c_str();
@@ -918,14 +926,22 @@ namespace ibrcommon
 
 		hints.ai_family = _family;
 		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_flags = AI_PASSIVE;
+		hints.ai_flags = 0;
 
 		const char *address = NULL;
 		const char *service = NULL;
 
-		try {
-			address = addr.address().c_str();
-		} catch (const vaddress::address_not_set&) { };
+		if (addr.isAny()) {
+			hints.ai_flags |= AI_PASSIVE;
+			address = NULL;
+		} else if (addr.isLocal()) {
+			address = NULL;
+		} else {
+			hints.ai_flags |= AI_PASSIVE;
+			try {
+				address = addr.address().c_str();
+			} catch (const vaddress::address_not_set&) { };
+		}
 
 		try {
 			service = addr.service().c_str();

@@ -37,13 +37,16 @@ namespace ibrcommon
 #endif
 	const std::string vaddress::SCOPE_LINKLOCAL = "link";
 
+	const std::string vaddress::VADDR_LOCALHOST = "localhost";
+	const std::string vaddress::VADDR_ANY = "any";
+
 	vaddress::vaddress()
-	 : _address(), _service(), _scope()
+	 : _address(VADDR_ANY), _service(), _scope()
 	{
 	}
 
 	vaddress::vaddress(const int port)
-	 : _address(), _service(), _scope()
+	 : _address(VADDR_ANY), _service(), _scope()
 	{
 		std::stringstream ss;
 		ss << port;
@@ -89,6 +92,16 @@ namespace ibrcommon
 		return true;
 	}
 
+	bool vaddress::isLocal() const
+	{
+		return (_address == VADDR_LOCALHOST);
+	}
+
+	bool vaddress::isAny() const
+	{
+		return (_address == VADDR_ANY);
+	}
+
 	sa_family_t vaddress::family() const throw (address_exception)
 	{
 		struct addrinfo hints;
@@ -130,6 +143,7 @@ namespace ibrcommon
 	const std::string vaddress::address() const throw (address_not_set)
 	{
 		if (_address.length() == 0) throw address_not_set();
+		if (isAny()) throw address_not_set();
 		return _address;
 	}
 

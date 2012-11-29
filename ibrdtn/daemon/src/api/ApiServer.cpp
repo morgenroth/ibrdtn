@@ -56,14 +56,24 @@ namespace dtn
 		ApiServer::ApiServer(const ibrcommon::vinterface &net, int port)
 		 : _shutdown(false), _garbage_collector(*this)
 		{
-			// add a socket for each address on the interface
-			std::list<ibrcommon::vaddress> addrs = net.getAddresses();
+			if (net.isLoopback()) {
+				ibrcommon::vaddress addr(ibrcommon::vaddress::VADDR_LOCALHOST, port);
+				_sockets.add(new ibrcommon::tcpserversocket(addr, 5));
+			}
+			else if (net.isAny()) {
+				ibrcommon::vaddress addr(ibrcommon::vaddress::VADDR_ANY, port);
+				_sockets.add(new ibrcommon::tcpserversocket(addr, 5));
+			}
+			else {
+				// add a socket for each address on the interface
+				std::list<ibrcommon::vaddress> addrs = net.getAddresses();
 
-			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
-				ibrcommon::vaddress &addr = (*iter);
-				std::stringstream ss; ss << port;
-				addr.setService(ss.str());
-				_sockets.add(new ibrcommon::tcpserversocket(addr, 5), net);
+				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+					ibrcommon::vaddress &addr = (*iter);
+					std::stringstream ss; ss << port;
+					addr.setService(ss.str());
+					_sockets.add(new ibrcommon::tcpserversocket(addr, 5), net);
+				}
 			}
 		}
 

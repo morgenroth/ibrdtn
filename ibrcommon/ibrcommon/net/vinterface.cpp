@@ -26,6 +26,9 @@
 
 namespace ibrcommon
 {
+	const std::string vinterface::LOOPBACK = "loopback";
+	const std::string vinterface::ANY = "any";
+
 	vinterface::vinterface()
 	 : _name()
 	{
@@ -44,6 +47,16 @@ namespace ibrcommon
 	{
 		if (_name.length() == 0) return "<any>";
 		return _name;
+	}
+
+	bool vinterface::isLoopback() const
+	{
+		return (_name == LOOPBACK);
+	}
+
+	bool vinterface::isAny() const
+	{
+		return (_name == ANY);
 	}
 
 	uint32_t vinterface::getIndex() const

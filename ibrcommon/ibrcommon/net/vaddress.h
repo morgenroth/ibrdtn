@@ -61,11 +61,17 @@ namespace ibrcommon
 			const static std::string SCOPE_GLOBAL;
 			const static std::string SCOPE_LINKLOCAL;
 
+			const static std::string VADDR_LOCALHOST;
+			const static std::string VADDR_ANY;
+
 			vaddress();
 			vaddress(const int port);
 			vaddress(const std::string &address, const int port);
 			vaddress(const std::string &address, const std::string &service = "", const std::string &scope = "");
 			virtual ~vaddress();
+
+			bool isLocal() const;
+			bool isAny() const;
 
 			sa_family_t family() const throw (address_exception);
 			std::string scope() const throw (scope_not_set);

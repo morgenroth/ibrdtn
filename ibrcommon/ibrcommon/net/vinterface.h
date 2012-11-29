@@ -42,9 +42,15 @@ namespace ibrcommon
 			{};
 		};
 
+		const static std::string LOOPBACK;
+		const static std::string ANY;
+
 		vinterface();
 		vinterface(std::string name);
 		virtual ~vinterface();
+
+		bool isLoopback() const;
+		bool isAny() const;
 
 		uint32_t getIndex() const;
 		const std::list<vaddress> getAddresses(const std::string &scope = "") const;
