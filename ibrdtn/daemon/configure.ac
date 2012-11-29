@@ -80,6 +80,10 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	CPPFLAGS="$CPPFLAGS -DWITH_TLS"
 	with_tls="yes"
 
+	# REGEX
+	AC_DEFINE(HAVE_REGEX_H, [1] ["Define to 1 if you have the <regex.h> header file."])
+	have_regex="yes"
+
 	# disabled:
 	#AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
 	#AC_DEFINE(HAVE_LIBCURL, [1], ["curl library is available"])
@@ -289,6 +293,15 @@ AS_IF([test "x$enable_android" = "xyes"], [
 				AC_MSG_WARN([dtndht library not found. dht support is disabled.])
 			])
 
+	dnl -----------------------------------------------
+	dnl check for regex capabilities
+	dnl -----------------------------------------------
+	AC_CHECK_HEADERS([regex.h], [
+		have_regex="yes"
+	], [
+		have_regex="no"
+	])
+
 #ANDROID else end
 ])
 
@@ -301,6 +314,7 @@ AM_CONDITIONAL(DAEMON, test x$use_daemon = xyes)
 AM_CONDITIONAL(DTNSEC, test x$with_dtnsec = xyes)
 AM_CONDITIONAL(TLS, test x$with_tls = xyes)
 AM_CONDITIONAL(DTNDHT, test x$with_dht = xyes)
+AM_CONDITIONAL(REGEX, test x$have_regex = xyes)
 AM_CONDITIONAL(ANDROID, test x$enable_android = xyes)
 
 dnl -----------------------------------------------

@@ -18,6 +18,8 @@ routing_SOURCES = \
 	RetransmissionExtension.h \
 	StaticRoutingExtension.cpp \
 	StaticRoutingExtension.h \
+	StaticRoute.h \
+	StaticRoute.cpp \
 	StaticRouteChangeEvent.cpp \
 	StaticRouteChangeEvent.h \
 	SummaryVector.cpp \
@@ -33,6 +35,10 @@ AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS)
 
 librouting_la_LIBADD = flooding/librtflooding.la epidemic/librtepidemic.la prophet/librtprophet.la
+
+if REGEX
+routing_SOURCES += StaticRegexRoute.h StaticRegexRoute.cpp
+endif
 
 if ANDROID
 noinst_DATA = Android.mk

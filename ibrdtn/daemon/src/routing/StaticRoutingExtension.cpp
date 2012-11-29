@@ -19,6 +19,7 @@
  *
  */
 
+#include "config.h"
 #include "Configuration.h"
 #include "routing/StaticRoutingExtension.h"
 #include "routing/QueueBundleEvent.h"
@@ -30,6 +31,10 @@
 #include "core/NodeEvent.h"
 #include "storage/SimpleBundleStorage.h"
 #include "core/TimeEvent.h"
+
+#ifdef HAVE_REGEX_H
+#include <routing/StaticRegexRoute.h>
+#endif
 
 #include <ibrdtn/utils/Clock.h>
 
@@ -226,10 +231,10 @@ namespace dtn
 						IBRCOMMON_LOGGER_DEBUG(50) << "search static route for " << task.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// look for routes to this node
-						for (std::list<StaticRoutingExtension::StaticRoute*>::const_iterator iter = _routes.begin();
+						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
 								iter != _routes.end(); iter++)
 						{
-							const StaticRoutingExtension::StaticRoute &route = (**iter);
+							const StaticRoute &route = (**iter);
 							IBRCOMMON_LOGGER_DEBUG(50) << "check static route: " << route.toString() << IBRCOMMON_LOGGER_ENDL;
 							try {
 								if (route.match(task.bundle.destination))
@@ -411,7 +416,12 @@ namespace dtn
 
 				if (route.pattern.length() > 0)
 				{
-					r = new RegexRoute(route.pattern, route.nexthop);
+#ifdef HAVE_REGEX_H
+					r = new StaticRegexRoute(route.pattern, route.nexthop);
+#else
+					size_t et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
+					r = new EIDRoute(route.pattern, route.nexthop, et);
+#endif
 				}
 				else
 				{
@@ -435,97 +445,6 @@ namespace dtn
 
 				return;
 			} catch (const bad_cast&) { };
-		}
-
-		// virtual destructor
-		StaticRoutingExtension::StaticRoute::~StaticRoute() {};
-
-		StaticRoutingExtension::RegexRoute::RegexRoute(const std::string &regex, const dtn::data::EID &dest)
-			: _dest(dest), _regex_str(regex), _invalid(false)
-		{
-			if ( regcomp(&_regex, regex.c_str(), 0) )
-			{
-				IBRCOMMON_LOGGER(error) << "Could not compile regex: " << regex << IBRCOMMON_LOGGER_ENDL;
-				_invalid = true;
-			}
-		}
-
-		StaticRoutingExtension::RegexRoute::~RegexRoute()
-		{
-			if (!_invalid)
-				regfree(&_regex);
-		}
-
-		StaticRoutingExtension::RegexRoute::RegexRoute(const StaticRoutingExtension::RegexRoute &obj)
-			: _dest(obj._dest), _regex_str(obj._regex_str), _invalid(obj._invalid)
-		{
-			if ( regcomp(&_regex, _regex_str.c_str(), 0) )
-			{
-				_invalid = true;
-			}
-		}
-
-		StaticRoutingExtension::RegexRoute& StaticRoutingExtension::RegexRoute::operator=(const StaticRoutingExtension::RegexRoute &obj)
-		{
-			if (!_invalid)
-			{
-				regfree(&_regex);
-			}
-
-			_dest = obj._dest;
-			_regex_str = obj._regex_str;
-			_invalid = obj._invalid;
-
-			if (!_invalid)
-			{
-				if ( regcomp(&_regex, obj._regex_str.c_str(), 0) )
-				{
-					IBRCOMMON_LOGGER(error) << "Could not compile regex: " << _regex_str << IBRCOMMON_LOGGER_ENDL;
-					_invalid = true;
-				}
-			}
-
-			return *this;
-		}
-
-		bool StaticRoutingExtension::RegexRoute::match(const dtn::data::EID &eid) const
-		{
-			if (_invalid) return false;
-
-			const std::string dest = eid.getString();
-
-			// test against the regular expression
-			int reti = regexec(&_regex, dest.c_str(), 0, NULL, 0);
-
-			if( !reti )
-			{
-				// the expression match
-				return true;
-			}
-			else if( reti == REG_NOMATCH )
-			{
-				// the expression not match
-				return false;
-			}
-			else
-			{
-				char msgbuf[100];
-				regerror(reti, &_regex, msgbuf, sizeof(msgbuf));
-				IBRCOMMON_LOGGER(error) << "Regex match failed: " << std::string(msgbuf) << IBRCOMMON_LOGGER_ENDL;
-				return false;
-			}
-		}
-
-		const dtn::data::EID& StaticRoutingExtension::RegexRoute::getDestination() const
-		{
-			return _dest;
-		}
-
-		const std::string StaticRoutingExtension::RegexRoute::toString() const
-		{
-			std::stringstream ss;
-			ss << _regex_str << " => " << _dest.getString();
-			return ss.str();
 		}
 
 		StaticRoutingExtension::EIDRoute::EIDRoute(const dtn::data::EID &match, const dtn::data::EID &nexthop, size_t et)
