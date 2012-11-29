@@ -164,35 +164,44 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	dnl -----------------------------------------------
 	dnl check for netlink library
 	dnl -----------------------------------------------
-	PKG_CHECK_MODULES([NL], [libnl-3.0], [
-		REQUIRES_LIBS="$REQUIRES_LIBS libnl-3.0"
-		AC_DEFINE(HAVE_LIBNL3, [1], ["netlink library 3.0 is available"])
-		use_netlink="yes"
-		
-		# check for additional netlink modules
-		PKG_CHECK_MODULES([NL_ROUTE], [libnl-route-3.0], [
-			AC_DEFINE(HAVE_LIBNL3_ROUTE, [1], ["netlink route library 3.0 is available"])
-			REQUIRES_LIBS="$REQUIRES_LIBS libnl-route-3.0"
-		], [
-			echo "netlink route module not found"
-		])
-		
-		# check for additional netlink modules
-		PKG_CHECK_MODULES([NL_GENL], [libnl-genl-3.0], [
-			AC_DEFINE(HAVE_LIBNL3_GENL, [1], ["netlink genl library 3.0 is available"])
-			REQUIRES_LIBS="$REQUIRES_LIBS libnl-genl-3.0"
-		], [
-			echo "netlink genl module not found"
-		])
-	], [
-		PKG_CHECK_MODULES([NL], [libnl-1], [
-			AC_DEFINE(HAVE_LIBNL, [1], ["netlink library is available"])
-			REQUIRES_LIBS="$REQUIRES_LIBS libnl-1"
-			use_netlink="yes"
-		], [
+	AC_ARG_ENABLE([netlink],
+		AS_HELP_STRING([--disable-netlink], [Build without netlink support]),
+		[
 			use_netlink="no"
-		])
-	])
+			AC_MSG_NOTICE([Netlink support disabled])
+		], [
+			PKG_CHECK_MODULES([NL], [libnl-3.0], [
+				REQUIRES_LIBS="$REQUIRES_LIBS libnl-3.0"
+				AC_DEFINE(HAVE_LIBNL3, [1], ["netlink library 3.0 is available"])
+				use_netlink="yes"
+
+				# check for additional netlink modules
+				PKG_CHECK_MODULES([NL_ROUTE], [libnl-route-3.0], [
+					AC_DEFINE(HAVE_LIBNL3_ROUTE, [1], ["netlink route library 3.0 is available"])
+					REQUIRES_LIBS="$REQUIRES_LIBS libnl-route-3.0"
+				], [
+					echo "netlink route module not found"
+				])
+
+				# check for additional netlink modules
+				PKG_CHECK_MODULES([NL_GENL], [libnl-genl-3.0], [
+					AC_DEFINE(HAVE_LIBNL3_GENL, [1], ["netlink genl library 3.0 is available"])
+					REQUIRES_LIBS="$REQUIRES_LIBS libnl-genl-3.0"
+				], [
+					echo "netlink genl module not found"
+				])
+			], [
+				PKG_CHECK_MODULES([NL], [libnl-1], [
+					AC_DEFINE(HAVE_LIBNL, [1], ["netlink library is available"])
+					REQUIRES_LIBS="$REQUIRES_LIBS libnl-1"
+					use_netlink="yes"
+				], [
+					use_netlink="no"
+				])
+			])
+		]
+	)
+
 	AC_SUBST(NL_CFLAGS)
 	AC_SUBST(NL_LIBS)
 	AC_SUBST(NL_ROUTE_CFLAGS)
