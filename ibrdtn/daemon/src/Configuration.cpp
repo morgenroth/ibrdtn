@@ -53,17 +53,17 @@ namespace dtn
 		}
 
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vinterface &i, int p, bool d)
-		 : name(n), type(t), interface(i), port(p), discovery(d)
+		 : name(n), type(t), iface(i), port(p), discovery(d)
 		{
 		}
 
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vaddress &a, int p, bool d)
-		 : name(n), type(t), interface(), address(a), port(p), discovery(d)
+		 : name(n), type(t), iface(), address(a), port(p), discovery(d)
 		{
 		}
 
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, int p, bool d)
-		 : name(n), type(t), interface(), port(p), discovery(d)
+		 : name(n), type(t), iface(), port(p), discovery(d)
 		{
 		}
 
@@ -731,8 +731,8 @@ namespace dtn
 							int mtu = conf.read<int>(key_mtu, 1280);
 
 							try {
-								ibrcommon::vinterface interface(conf.read<std::string>(key_interface));
-								Configuration::NetConfig nc(netname, type, interface, port, discovery);
+								ibrcommon::vinterface iface(conf.read<std::string>(key_interface));
+								Configuration::NetConfig nc(netname, type, iface, port, discovery);
 								nc.mtu = mtu;
 								_interfaces.push_back(nc);
 							} catch (const ConfigFile::key_not_found&) {

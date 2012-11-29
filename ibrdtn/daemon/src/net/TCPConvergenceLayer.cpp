@@ -123,15 +123,15 @@ namespace dtn
 			// search for the matching interface
 			for (std::set<ibrcommon::vinterface>::const_iterator it = _interfaces.begin(); it != _interfaces.end(); it++)
 			{
-				const ibrcommon::vinterface &interface = *it;
-				if (interface == iface)
+				const ibrcommon::vinterface &it_iface = *it;
+				if (it_iface == iface)
 				{
 					try {
 						// check if cross layer discovery is disabled
 						if (!crosslayer) throw ibrcommon::Exception("crosslayer discovery disabled!");
 
 						// get all addresses of this interface
-						std::list<ibrcommon::vaddress> list = interface.getAddresses();
+						std::list<ibrcommon::vaddress> list = it_iface.getAddresses();
 
 						// if no address is returned... (goto catch block)
 						if (list.empty()) throw ibrcommon::Exception("no address found");

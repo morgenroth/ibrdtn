@@ -74,7 +74,7 @@ namespace dtn
 				std::string name;
 				NetType type;
 				std::string url;
-				ibrcommon::vinterface interface;
+				ibrcommon::vinterface iface;
 				ibrcommon::vaddress address;
 				int mtu;
 				int port;

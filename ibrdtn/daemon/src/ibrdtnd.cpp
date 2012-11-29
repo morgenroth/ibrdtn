@@ -286,15 +286,15 @@ int ibrdtn_daemon_initialize_convergencelayer()
 				case dtn::daemon::Configuration::NetConfig::NETWORK_UDP:
 				{
 					try {
-						UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net.interface, net.port, net.mtu );
+						UDPConvergenceLayer *udpcl = new dtn::net::UDPConvergenceLayer( net.iface, net.port, net.mtu );
 						core.getConnectionManager().addConvergenceLayer(udpcl);
 						components.push_back(udpcl);
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(udpcl);
 						if (__ibrdtn_daemon_ipnd != NULL) 		__ibrdtn_daemon_ipnd->addService(udpcl);
 
-						IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					break;
@@ -314,7 +314,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 					}
 
 					try {
-						tcpcl->bind(net.interface, net.port);
+						tcpcl->bind(net.iface, net.port);
 
 						if (it == _cl_map.end()) {
 							core.getConnectionManager().addConvergenceLayer(tcpcl);
@@ -324,13 +324,13 @@ int ibrdtn_daemon_initialize_convergencelayer()
 							_cl_map[net.type] = tcpcl;
 						}
 
-						IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
 						if (it == _cl_map.end()) {
 							delete tcpcl;
 						}
 
-						IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					break;
@@ -357,15 +357,15 @@ int ibrdtn_daemon_initialize_convergencelayer()
 				case dtn::daemon::Configuration::NetConfig::NETWORK_LOWPAN:
 				{
 					try {
-						LOWPANConvergenceLayer *lowpancl = new LOWPANConvergenceLayer( net.interface, net.port );
+						LOWPANConvergenceLayer *lowpancl = new LOWPANConvergenceLayer( net.iface, net.port );
 						core.getConnectionManager().addConvergenceLayer(lowpancl);
 						components.push_back(lowpancl);
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(lowpancl);
 						if (__ibrdtn_daemon_ipnd != NULL) __ibrdtn_daemon_ipnd->addService(lowpancl);
 
-						IBRCOMMON_LOGGER(info) << "LOWPAN ConvergenceLayer added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "LOWPAN ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					break;
@@ -374,15 +374,15 @@ int ibrdtn_daemon_initialize_convergencelayer()
 				case dtn::daemon::Configuration::NetConfig::NETWORK_DGRAM_LOWPAN:
 				{
 					try {
-						LOWPANDatagramService *lowpan_service = new LOWPANDatagramService( net.interface, net.port );
+						LOWPANDatagramService *lowpan_service = new LOWPANDatagramService( net.iface, net.port );
 						DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(lowpan_service);
 						core.getConnectionManager().addConvergenceLayer(dgram_cl);
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(dgram_cl);
 						components.push_back(dgram_cl);
 
-						IBRCOMMON_LOGGER(info) << "Datagram ConvergenceLayer (LowPAN) added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "Datagram ConvergenceLayer (LowPAN) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add Datagram ConvergenceLayer (LowPAN) on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(error) << "Failed to add Datagram ConvergenceLayer (LowPAN) on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					break;
 				}
@@ -391,15 +391,15 @@ int ibrdtn_daemon_initialize_convergencelayer()
 				case dtn::daemon::Configuration::NetConfig::NETWORK_DGRAM_UDP:
 				{
 					try {
-						UDPDatagramService *dgram_service = new UDPDatagramService( net.interface, net.port, net.mtu );
+						UDPDatagramService *dgram_service = new UDPDatagramService( net.iface, net.port, net.mtu );
 						DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(dgram_service);
 						core.getConnectionManager().addConvergenceLayer(dgram_cl);
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(dgram_cl);
 						components.push_back(dgram_cl);
 
-						IBRCOMMON_LOGGER(info) << "Datagram ConvergenceLayer (UDP) added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "Datagram ConvergenceLayer (UDP) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add Datagram ConvergenceLayer (UDP) on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(error) << "Failed to add Datagram ConvergenceLayer (UDP) on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					break;
 				}
@@ -512,8 +512,8 @@ int ibrdtn_daemon_initialize_discovery() {
 		for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
 		{
 			const dtn::daemon::Configuration::NetConfig &net = (*iter);
-			if (!net.interface.empty())
-				interfaces.insert(net.interface);
+			if (!net.iface.empty())
+				interfaces.insert(net.iface);
 		}
 
 		__ibrdtn_daemon_ipnd = new dtn::net::IPNDAgent( disco_port );
@@ -645,10 +645,10 @@ int ibrdtn_daemon_initialize_api() {
 		{
 			try {
 				// instance a API server, first create a socket
-				components.push_back( new dtn::api::ApiServer(lo.interface, lo.port) );
-				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << lo.interface.toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
+				components.push_back( new dtn::api::ApiServer(lo.iface, lo.port) );
+				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << lo.iface.toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::socket_exception&) {
-				IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.toString() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.iface.toString() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 				exit(-1);
 			}
 		}
