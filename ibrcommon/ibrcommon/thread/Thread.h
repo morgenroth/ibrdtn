@@ -67,7 +67,7 @@ namespace ibrcommon
 			THREAD_JOINABLE = 1 << 6,
 			THREAD_FINALIZED = 1 << 7
 		};
-		
+
 		ibrcommon::ThreadsafeState<THREAD_STATE> _state;
 
 		// thread's id
@@ -164,12 +164,6 @@ namespace ibrcommon
 		 * static execute thread method
 		 */
 		static void* __execute__(void *obj) throw ();
-
-	private:
-		/**
-		 * variables to store signal masks, used by enable/disable_interruption
-		 */
-		sigset_t mask, orig_mask;
 	};
 
 	/**
