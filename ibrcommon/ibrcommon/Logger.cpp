@@ -19,6 +19,7 @@
  *
  */
 
+#include "config.h"
 #include "ibrcommon/Logger.h"
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -28,6 +29,9 @@
 #include <iomanip>
 #include <unistd.h>
 
+#ifdef HAVE_SYSLOG_H
+#include <syslog.h>
+#endif
 
 namespace ibrcommon
 {

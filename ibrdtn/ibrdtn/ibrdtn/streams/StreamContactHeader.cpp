@@ -24,6 +24,7 @@
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/BundleString.h"
 #include <typeinfo>
+#include <netinet/in.h>
 
 using namespace dtn::data;
 

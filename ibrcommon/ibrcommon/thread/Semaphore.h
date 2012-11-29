@@ -22,6 +22,8 @@
 #ifndef IBRCOMMON_SEMAPHORE_H_
 #define IBRCOMMON_SEMAPHORE_H_
 
+#include <sys/types.h>
+
 #ifdef HAVE_SYS_SEMAPHORE_H
 #include <sys/semaphore.h>
 #else

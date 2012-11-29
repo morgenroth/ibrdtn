@@ -25,6 +25,7 @@
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <iostream>
+#include <netinet/in.h>
 
 using namespace dtn::data;
 

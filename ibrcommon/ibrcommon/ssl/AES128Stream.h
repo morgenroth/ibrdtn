@@ -25,6 +25,7 @@
 #include <streambuf>
 #include <ostream>
 #include <sys/types.h>
+#include <stdint.h>
 #include "ibrcommon/ssl/CipherStream.h"
 #include "ibrcommon/ssl/gcm/gcm.h"
 
