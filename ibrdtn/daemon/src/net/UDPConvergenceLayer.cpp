@@ -38,13 +38,7 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
 
-#include <sys/socket.h>
-#include <poll.h>
-#include <errno.h>
-
 #include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>

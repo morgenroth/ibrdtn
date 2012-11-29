@@ -25,7 +25,6 @@
 #include "ibrcommon/Logger.h"
 #include <stdexcept>
 #include <pthread.h>
-#include <sys/times.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>

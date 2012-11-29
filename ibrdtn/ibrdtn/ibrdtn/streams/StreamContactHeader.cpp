@@ -23,7 +23,6 @@
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/BundleString.h"
-#include <netinet/in.h>
 #include <typeinfo>
 
 using namespace dtn::data;

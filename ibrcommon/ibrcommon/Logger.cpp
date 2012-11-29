@@ -20,11 +20,11 @@
  */
 
 #include "ibrcommon/Logger.h"
-#include "ibrcommon/SyslogStream.h"
-#include <algorithm>
-#include <sys/time.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
+
+#include <algorithm>
+#include <sys/time.h>
 #include <iomanip>
 #include <unistd.h>
 

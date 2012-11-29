@@ -23,7 +23,6 @@
 #include <ibrdtn/data/Exceptions.h>
 #include <ibrdtn/data/SDNV.h>
 #include <ibrcommon/Logger.h>
-#include <netinet/in.h>
 #include <typeinfo>
 #include <iostream>
 
