@@ -28,9 +28,7 @@
 
 namespace ibrcommon
 {
-#ifdef HAVE_LIBNL3
-	const std::string vaddress::SCOPE_GLOBAL = "global";
-#elif HAVE_LIBNL
+#if (defined HAVE_LIBNL3) || (defined HAVE_LIBNL)
 	const std::string vaddress::SCOPE_GLOBAL = "global";
 #else
 	const std::string vaddress::SCOPE_GLOBAL = "universe";
