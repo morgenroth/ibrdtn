@@ -1,5 +1,5 @@
 /*
- * DefaultLinkManager.cpp
+ * PosixLinkManager.cpp
  *
  *  Created on: 11.10.2012
  *      Author: morgenro

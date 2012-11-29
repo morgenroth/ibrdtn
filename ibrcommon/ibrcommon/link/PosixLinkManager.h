@@ -1,12 +1,12 @@
 /*
- * DefaultLinkManager.h
+ * PosixLinkManager.h
  *
  *  Created on: 11.10.2012
  *      Author: morgenro
  */
 
-#ifndef DEFAULTLINKMANAGER_H_
-#define DEFAULTLINKMANAGER_H_
+#ifndef POSIXLINKMANAGER_H_
+#define POSIXLINKMANAGER_H_
 
 #include "ibrcommon/link/LinkManager.h"
 #include "ibrcommon/net/vinterface.h"
@@ -25,4 +25,4 @@ namespace ibrcommon
 		const std::list<vaddress> getAddressList(const vinterface &iface, const std::string &scope = "");
 	};
 } /* namespace ibrcommon */
-#endif /* DEFAULTLINKMANAGER_H_ */
+#endif /* POSIXLINKMANAGER_H_ */
