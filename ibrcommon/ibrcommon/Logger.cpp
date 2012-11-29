@@ -139,10 +139,12 @@ namespace ibrcommon
 
 	void Logger::LogWriter::enableSyslog(const char *name, int option, int facility, const unsigned char logmask)
 	{
+#ifdef HAVE_SYSLOG_H
 		// init syslog
 		::openlog(name, option, facility);
 		_syslog = true;
 		_syslog_mask = logmask;
+#endif
 	}
 
 	void Logger::LogWriter::flush(const Logger &logger)
@@ -164,6 +166,7 @@ namespace ibrcommon
 				}
 			}
 
+#ifdef HAVE_SYSLOG_H
 			// additionally log to the syslog
 			if (_syslog)
 			{
@@ -209,6 +212,7 @@ namespace ibrcommon
 					}
 				}
 			}
+#endif
 		}
 	}
 
