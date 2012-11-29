@@ -81,7 +81,7 @@ namespace dtn
 
 			static int timezone;
 
-			static u_int32_t TIMEVAL_CONVERSION;
+			static uint32_t TIMEVAL_CONVERSION;
 
 			/**
 			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong

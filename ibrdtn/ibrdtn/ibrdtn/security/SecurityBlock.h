@@ -237,13 +237,13 @@ namespace dtn
 		protected:
 			/** the ciphersuite id tells what type of encryption, signature or MAC
 			is used */
-			u_int64_t _ciphersuite_id;
+			uint64_t _ciphersuite_id;
 			/** the ciphersuite flags tell if security result or parameters are
 			used, if the security destination or source is set and if a correlator
 			is used */
-			u_int64_t _ciphersuite_flags;
+			uint64_t _ciphersuite_flags;
 			/** a correlator binds several security blocks in a bundle together */
-			u_int64_t _correlator;
+			uint64_t _correlator;
 
 			/** you can find e.g. key information, tags, salts,
 			initialization_vectors stored als TLVs here */
@@ -286,7 +286,7 @@ namespace dtn
 			Sets the correlator
 			@param corr correlator value
 			*/
-			void setCorrelator(const u_int64_t corr);
+			void setCorrelator(const uint64_t corr);
 
 			/**
 			Checks if the given correlator value is used in the bundle
@@ -294,7 +294,7 @@ namespace dtn
 			@param correlator the correlator to be tested for uniqueness
 			@return false if correlator is unique, true otherwise
 			*/
-			static bool isCorrelatorPresent(const dtn::data::Bundle &bundle, const u_int64_t correlator);
+			static bool isCorrelatorPresent(const dtn::data::Bundle &bundle, const uint64_t correlator);
 
 			/**
 			Creates a unique correlatorvalue for bundle
@@ -302,7 +302,7 @@ namespace dtn
 			created
 			@return a unique correlator
 			*/
-			static u_int64_t createCorrelatorValue(const dtn::data::Bundle &bundle);
+			static uint64_t createCorrelatorValue(const dtn::data::Bundle &bundle);
 
 			/**
 			Canonicalizes the block into the stream.
@@ -329,7 +329,7 @@ namespace dtn
 			@param key pointer to key
 			@param key_size size of key
 			*/
-			static void createSaltAndKey(u_int32_t& salt, unsigned char * key, size_t key_size);
+			static void createSaltAndKey(uint32_t& salt, unsigned char * key, size_t key_size);
 
 			/**
 			Adds a key as a TLV to a string. The key is encrypted using the public
@@ -359,13 +359,13 @@ namespace dtn
 			@param security_parameters the string
 			@param salt the salt which shall be added
 			*/
-			static void addSalt(TLVList& security_parameters, const u_int32_t &salt);
+			static void addSalt(TLVList& security_parameters, const uint32_t &salt);
 
 			/**
 			Reads a salt TLV from a string containing TLVs
 			@param security_parameters string containing TLVs
 			*/
-			static u_int32_t getSalt(const TLVList& security_parameters);
+			static uint32_t getSalt(const TLVList& security_parameters);
 
 			/**
 			Copys all EIDs from one block to another and skips the first skip EIDs
@@ -389,7 +389,7 @@ namespace dtn
 			@return the Security Block which replaced block
 			*/
 			template <class T>
-			static T& encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
+			static T& encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
 			/**
 			Decrypts the block which is held in the SecurityBlock replaces it.
@@ -402,7 +402,7 @@ namespace dtn
 			@param ephemeral_key the key
 			@return true if tag verification succeeded, false if not
 			*/
-			static void decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
+			static void decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
 			/**
 			Calculates the Size of the stream and adds a fragment range item to ciphersuite_params
@@ -419,7 +419,7 @@ namespace dtn
 		};
 
 		template <class T>
-		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
+		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
 			// insert ESB, block can be removed after encryption, because bundle will destroy it
 			T& esb = bundle.insert<T>(block);

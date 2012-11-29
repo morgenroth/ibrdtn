@@ -101,7 +101,7 @@ namespace dtn
 				@param salt the salt
 				@return true if tag verification succeeded, false otherwise
 				*/
-				static bool decryptPayload(dtn::data::Bundle& bundle, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes], const u_int32_t salt);
+				static bool decryptPayload(dtn::data::Bundle& bundle, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes], const uint32_t salt);
 		};
 
 		/**

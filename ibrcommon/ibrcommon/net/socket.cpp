@@ -1009,13 +1009,13 @@ namespace ibrcommon
 					throw socket_exception("setsockopt(IP_MULTICAST_LOOP)");
 				}
 
-				u_char ttl = 255; // Multicast TTL
+				unsigned char ttl = 255; // Multicast TTL
 				if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0 )
 				{
 					throw socket_exception("setsockopt(IP_MULTICAST_TTL)");
 				}
 #endif
-//				u_char ittl = 255; // IP TTL
+//				unsigned char ittl = 255; // IP TTL
 //				if ( ::setsockopt(this->fd(), IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl)) < 0 )
 //				{
 //					throw socket_exception("setsockopt(IP_TTL)");
@@ -1031,14 +1031,14 @@ namespace ibrcommon
 					throw socket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
 				}
 
-//				u_char ttl = 255; // Multicast TTL
+//				unsigned char ttl = 255; // Multicast TTL
 //				if ( ::setsockopt(this_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0 )
 //				{
 //					throw socket_exception("setsockopt(IPV6_MULTICAST_HOPS)");
 //				}
 #endif
 
-//				u_char ittl = 255; // IP TTL
+//				unsigned char ittl = 255; // IP TTL
 //				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &ittl, sizeof(ittl)) < 0 )
 //				{
 //					throw socket_exception("setsockopt(IPV6_HOPLIMIT)");

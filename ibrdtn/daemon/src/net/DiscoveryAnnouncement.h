@@ -70,7 +70,7 @@ namespace dtn
 
 			string toString() const;
 
-			void setSequencenumber(u_int16_t sequence);
+			void setSequencenumber(uint16_t sequence);
 
 			bool isShort();
 
@@ -81,7 +81,7 @@ namespace dtn
 			unsigned int _version;
 			unsigned char _flags;
 			dtn::data::EID _canonical_eid;
-			u_int16_t _sn;
+			uint16_t _sn;
 			dtn::data::BundleString _bloomfilter;
 
 			std::list<DiscoveryService> _services;

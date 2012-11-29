@@ -145,7 +145,7 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
+		void IPNDAgent::sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
 		{
 			DiscoveryAnnouncement announcement(_version, dtn::core::BundleCore::local);
 

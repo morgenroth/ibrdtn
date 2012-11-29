@@ -50,7 +50,7 @@ namespace dtn
 
 		void ExtensionSecurityBlock::encrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::data::Block &block, const dtn::data::EID& source, const dtn::data::EID& destination)
 		{
-			u_int32_t salt = 0;
+			uint32_t salt = 0;
 
 			// load the rsa key
 			RSA *rsa_key = key.getRSA();
@@ -89,12 +89,12 @@ namespace dtn
 			}
 
 			// get salt, convert with stringstream
-			u_int32_t salt = getSalt(block._ciphersuite_params);
+			uint32_t salt = getSalt(block._ciphersuite_params);
 
 			SecurityBlock::decryptBlock(bundle, block, salt, keydata);
 		}
 
-		void ExtensionSecurityBlock::decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, u_int64_t correlator)
+		void ExtensionSecurityBlock::decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, uint64_t correlator)
 		{
 			const std::list<const dtn::security::ExtensionSecurityBlock*> blocks = bundle.getBlocks<ExtensionSecurityBlock>();
 

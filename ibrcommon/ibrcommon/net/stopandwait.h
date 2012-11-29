@@ -19,10 +19,11 @@
  *
  */
 
-#include <ibrcommon/thread/Conditional.h>
-
 #ifndef STOPANDWAIT_H_
 #define STOPANDWAIT_H_
+
+#include <ibrcommon/thread/Conditional.h>
+#include <stdint.h>
 
 namespace ibrcommon
 {
@@ -43,9 +44,9 @@ namespace ibrcommon
 
 	private:
 		size_t _maxretry;
-		u_int8_t _out_seqno;
-		u_int8_t _in_seqno;
-		u_int8_t _ack_seqno;
+		uint8_t _out_seqno;
+		uint8_t _in_seqno;
+		uint8_t _ack_seqno;
 
 		unsigned int _count;
 		size_t _timeout;

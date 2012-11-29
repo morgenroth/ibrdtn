@@ -46,7 +46,7 @@ namespace dtn
 			void addService(dtn::net::DiscoveryServiceProvider *provider);
 
 		protected:
-			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider) = 0;
+			virtual void sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider) = 0;
 
 			void timeout();
 
@@ -54,7 +54,7 @@ namespace dtn
 
 		private:
 			std::list<Neighbor> _neighbors;
-			u_int16_t _sn;
+			uint16_t _sn;
 			std::list<dtn::net::DiscoveryServiceProvider*> _provider;
 			size_t _last_announce_sent;
 		};

@@ -262,16 +262,16 @@ namespace dtn
 
 		void SecurityBlock::setCiphersuiteId(const CIPHERSUITE_IDS id)
 		{
-			_ciphersuite_id = static_cast<u_int64_t>(id);
+			_ciphersuite_id = static_cast<uint64_t>(id);
 		}
 
-		void SecurityBlock::setCorrelator(const u_int64_t corr)
+		void SecurityBlock::setCorrelator(const uint64_t corr)
 		{
 			_correlator = corr;
 			_ciphersuite_flags |= SecurityBlock::CONTAINS_CORRELATOR;
 		}
 
-		bool SecurityBlock::isCorrelatorPresent(const dtn::data::Bundle& bundle, const u_int64_t correlator)
+		bool SecurityBlock::isCorrelatorPresent(const dtn::data::Bundle& bundle, const uint64_t correlator)
 		{
 			std::list<const dtn::data::Block *> blocks = bundle.getBlocks();
 			bool return_val = false;
@@ -287,9 +287,9 @@ namespace dtn
 			return return_val;
 		}
 
-		u_int64_t SecurityBlock::createCorrelatorValue(const dtn::data::Bundle& bundle)
+		uint64_t SecurityBlock::createCorrelatorValue(const dtn::data::Bundle& bundle)
 		{
-			u_int64_t corr = random();
+			uint64_t corr = random();
 			while (isCorrelatorPresent(bundle, corr))
 				corr = random();
 			return corr;
@@ -514,10 +514,10 @@ namespace dtn
 			return _security_result.getLength();
 		}
 
-		void SecurityBlock::createSaltAndKey(u_int32_t& salt, unsigned char* key, size_t key_size)
+		void SecurityBlock::createSaltAndKey(uint32_t& salt, unsigned char* key, size_t key_size)
 		{
 
-			if (!RAND_bytes(reinterpret_cast<unsigned char *>(&salt), sizeof(u_int32_t)))
+			if (!RAND_bytes(reinterpret_cast<unsigned char *>(&salt), sizeof(uint32_t)))
 			{
 				IBRCOMMON_LOGGER_ex(critical) << "failed to generate salt. maybe /dev/urandom is missing for seeding the PRNG" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
@@ -583,20 +583,20 @@ namespace dtn
 				to.addEID(*it);
 		}
 
-		void SecurityBlock::addSalt(TLVList& security_parameters, const u_int32_t &salt)
+		void SecurityBlock::addSalt(TLVList& security_parameters, const uint32_t &salt)
 		{
-			u_int32_t nsalt = htonl(salt);
+			uint32_t nsalt = htonl(salt);
 			security_parameters.set(SecurityBlock::salt, (const unsigned char*)&nsalt, sizeof(nsalt));
 		}
 
-		u_int32_t SecurityBlock::getSalt(const TLVList& security_parameters)
+		uint32_t SecurityBlock::getSalt(const TLVList& security_parameters)
 		{
-			u_int32_t nsalt = 0;
+			uint32_t nsalt = 0;
 			security_parameters.get(SecurityBlock::salt, (unsigned char*)&nsalt, sizeof(nsalt));
 			return ntohl(nsalt);
 		}
 
-		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
+		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
 			// the array for the extracted tag
 			unsigned char tag[ibrcommon::AES128Stream::tag_len];

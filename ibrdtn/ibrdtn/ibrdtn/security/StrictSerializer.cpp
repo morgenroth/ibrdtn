@@ -29,7 +29,7 @@ namespace dtn
 {
 	namespace security
 	{
-		StrictSerializer::StrictSerializer(std::ostream& stream, const dtn::security::SecurityBlock::BLOCK_TYPES type, const bool with_correlator, const u_int64_t correlator)
+		StrictSerializer::StrictSerializer(std::ostream& stream, const dtn::security::SecurityBlock::BLOCK_TYPES type, const bool with_correlator, const uint64_t correlator)
 		 : DefaultSerializer(stream), _block_type(type), _with_correlator(with_correlator), _correlator(correlator)
 		{
 		}

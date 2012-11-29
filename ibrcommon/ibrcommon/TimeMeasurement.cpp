@@ -68,7 +68,7 @@ namespace ibrcommon
 	float TimeMeasurement::getMilliseconds() const
 	{
 		// calc difference
-		u_int64_t timeElapsed = getNanoseconds();
+		uint64_t timeElapsed = getNanoseconds();
 
 		// make it readable
 		float delay_ms = (float)timeElapsed / 1000000;
@@ -76,7 +76,7 @@ namespace ibrcommon
 		return delay_ms;
 	}
 
-	u_int64_t TimeMeasurement::getNanoseconds() const
+	uint64_t TimeMeasurement::getNanoseconds() const
 	{
 		// calc difference
 #ifdef HAVE_MACH_MACH_TIME_H
@@ -92,7 +92,7 @@ namespace ibrcommon
 	float TimeMeasurement::getMicroseconds() const
 	{
 		// calc difference
-		u_int64_t timeElapsed = getNanoseconds();
+		uint64_t timeElapsed = getNanoseconds();
 
 		// make it readable
 		float delay_m = (float)timeElapsed / 1000;
@@ -121,9 +121,9 @@ namespace ibrcommon
 	{
 		// calc difference
 #ifdef HAVE_MACH_MACH_TIME_H
-		u_int64_t timeElapsed = TimeMeasurement::timespecDiff(measurement._uint64_end, measurement._uint64_start);
+		uint64_t timeElapsed = TimeMeasurement::timespecDiff(measurement._uint64_end, measurement._uint64_start);
 #else
-		u_int64_t timeElapsed = TimeMeasurement::timespecDiff(&(measurement._end), &(measurement._start));
+		uint64_t timeElapsed = TimeMeasurement::timespecDiff(&(measurement._end), &(measurement._start));
 #endif
 
 		// make it readable

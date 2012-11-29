@@ -47,7 +47,7 @@ void IPNDAgentTest::testBind()
 
 void IPNDAgentTest::testSendAnnoucement()
 {
-	/* test signature (const u_int16_t &sn, const std::list<DiscoveryService> &services) */
+	/* test signature (const uint16_t &sn, const std::list<DiscoveryService> &services) */
 	CPPUNIT_FAIL("not implemented");
 }
 

@@ -26,7 +26,7 @@
 
 namespace ibrcommon
 {
-	AES128Stream::AES128Stream(const CipherMode mode, std::ostream& output, const unsigned char key[key_size_in_bytes], const u_int32_t salt)
+	AES128Stream::AES128Stream(const CipherMode mode, std::ostream& output, const unsigned char key[key_size_in_bytes], const uint32_t salt)
 		: CipherStream(output, mode)
 	{
 		// init gcm and load the key into the context
@@ -48,7 +48,7 @@ namespace ibrcommon
 		gcm_init_message(reinterpret_cast<unsigned char *>(&_gcm_iv), sizeof(gcm_iv), &_ctx);
 	}
 
-	AES128Stream::AES128Stream(const CipherMode mode, std::ostream& output, const unsigned char key[key_size_in_bytes], const u_int32_t salt, const unsigned char iv[iv_len])
+	AES128Stream::AES128Stream(const CipherMode mode, std::ostream& output, const unsigned char key[key_size_in_bytes], const uint32_t salt, const unsigned char iv[iv_len])
 		: CipherStream(output, mode)
 	{
 		// init gcm and load the key into the context

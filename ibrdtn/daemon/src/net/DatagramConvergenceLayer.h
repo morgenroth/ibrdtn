@@ -110,7 +110,7 @@ namespace dtn
 
 			bool _running;
 
-			u_int16_t _discovery_sn;
+			uint16_t _discovery_sn;
 		};
 	} /* namespace data */
 } /* namespace dtn */

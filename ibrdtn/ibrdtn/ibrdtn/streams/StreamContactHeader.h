@@ -28,6 +28,7 @@
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Exceptions.h"
 #include <sys/types.h>
+#include <stdint.h>
 
 
 using namespace dtn::data;
@@ -60,7 +61,7 @@ namespace dtn
 
 			EID _localeid;
 			char _flags;
-			u_int16_t _keepalive;
+			uint16_t _keepalive;
 
 			friend std::ostream &operator<<(std::ostream &stream, const StreamContactHeader &h);
 			friend std::istream &operator>>(std::istream &stream, StreamContactHeader &h);

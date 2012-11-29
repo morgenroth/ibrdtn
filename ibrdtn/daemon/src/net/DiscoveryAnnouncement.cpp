@@ -94,7 +94,7 @@ namespace dtn
 			_services.push_back(service);
 		}
 
-		void DiscoveryAnnouncement::setSequencenumber(u_int16_t sequence)
+		void DiscoveryAnnouncement::setSequencenumber(uint16_t sequence)
 		{
 			_sn = sequence;
 		}
@@ -155,7 +155,7 @@ namespace dtn
 					stream << flags;
 
 					// sequencenumber
-					u_int16_t sn = htons(announcement._sn);
+					uint16_t sn = htons(announcement._sn);
 					stream.write( (char*)&sn, 2 );
 
 					if ( flags && DiscoveryAnnouncement::BEACON_CONTAINS_EID )
@@ -179,15 +179,15 @@ namespace dtn
 
 				case DiscoveryAnnouncement::DTND_IPDISCOVERY:
 				{
-					u_int8_t cl_type = 1;
+					uint8_t cl_type = 1;
 					char zero = '\0';
-					u_int8_t interval = 10;
-					// u_int32_t inet_addr;
-					u_int16_t inet_port = htons(4556);
+					uint8_t interval = 10;
+					// uint32_t inet_addr;
+					uint16_t inet_port = htons(4556);
 					std::string eid = announcement._canonical_eid.getString();
-					u_int16_t eid_len = htons(eid.length());
+					uint16_t eid_len = htons(eid.length());
 					unsigned int add_zeros = (4 - (eid.length() % 4)) % 4;
-					u_int16_t length = htons(12 + eid.length() + add_zeros);
+					uint16_t length = htons(12 + eid.length() + add_zeros);
 
 
 					stream << (unsigned char)cl_type;
@@ -289,11 +289,11 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG(65) << "beacon flags: " << hex << (int)announcement._flags << IBRCOMMON_LOGGER_ENDL;
 
-				u_int16_t sn = 0;
+				uint16_t sn = 0;
 				stream.read((char*)&sn, 2);
 
 				// convert from network byte order
-				u_int16_t sequencenumber = ntohs(sn);
+				uint16_t sequencenumber = ntohs(sn);
 
 				IBRCOMMON_LOGGER_DEBUG(65) << "beacon sequence number: " << sequencenumber << IBRCOMMON_LOGGER_ENDL;
 
@@ -342,12 +342,12 @@ namespace dtn
 
 			case DiscoveryAnnouncement::DTND_IPDISCOVERY:
 			{
-				u_int8_t cl_type;
-				u_int8_t interval;
-				u_int16_t length;
-				u_int32_t inet_addr;
-				u_int16_t inet_port;
-				u_int16_t eid_len;
+				uint8_t cl_type;
+				uint8_t interval;
+				uint16_t length;
+				uint32_t inet_addr;
+				uint16_t inet_port;
+				uint16_t eid_len;
 
 				IBRCOMMON_LOGGER_DEBUG(60) << "beacon IPDiscovery (DTN2) frame received" << IBRCOMMON_LOGGER_ENDL;
 

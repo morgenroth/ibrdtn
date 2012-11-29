@@ -25,6 +25,7 @@
 
 #include <stdlib.h>
 #include <iostream>
+#include <stdint.h>
 
 namespace dtn
 {
@@ -65,7 +66,7 @@ namespace dtn
 			size_t _value;
 			SegmentType _type;
 			ShutdownReason _reason;
-			u_int8_t _flags;
+			uint8_t _flags;
 
 			friend std::ostream &operator<<(std::ostream &stream, const StreamDataSegment &seg);
 			friend std::istream &operator>>(std::istream &stream, StreamDataSegment &seg);

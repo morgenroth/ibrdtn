@@ -77,7 +77,7 @@ namespace dtn
 			(*this) << dtn::data::SDNV(obj._procflags & 0x0000000007C1BE);
 
 			// length of header
-			(*this) << (u_int32_t)getLength(obj);
+			(*this) << (uint32_t)getLength(obj);
 
 			// dest, source, report to id
 			(*this) << obj._destination;
@@ -164,7 +164,7 @@ namespace dtn
 			// starting with the fields after the length field
 
 			// dest id length
-			u_int32_t length = 4;
+			uint32_t length = 4;
 			// dest id
 			length += obj._destination.getString().size();
 			// source id length
@@ -219,16 +219,16 @@ namespace dtn
 		}
 
 
-		dtn::data::Serializer& MutualSerializer::operator<<(const u_int32_t value)
+		dtn::data::Serializer& MutualSerializer::operator<<(const uint32_t value)
 		{
-			u_int32_t be = htonl(value);
-			_stream.write(reinterpret_cast<char*>(&be), sizeof(u_int32_t));
+			uint32_t be = htonl(value);
+			_stream.write(reinterpret_cast<char*>(&be), sizeof(uint32_t));
 			return *this;
 		}
 
 		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::EID& value)
 		{
-			u_int32_t length = value.getString().length();
+			uint32_t length = value.getString().length();
 			(*this) << length;
 			_stream << value.getString();
 
@@ -239,8 +239,8 @@ namespace dtn
 		{
 			// endianess muahahaha ...
 			// and now we are gcc centric, even older versions work
-			u_int64_t be = GUINT64_TO_BE(value.getValue());
-			_stream.write(reinterpret_cast<char*>(&be), sizeof(u_int64_t));
+			uint64_t be = GUINT64_TO_BE(value.getValue());
+			_stream.write(reinterpret_cast<char*>(&be), sizeof(uint64_t));
 			return *this;
 		}
 

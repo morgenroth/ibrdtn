@@ -33,7 +33,7 @@ namespace dtn
 	namespace data
 	{
 
-		SDNV::SDNV(const u_int64_t value) : _value(value)
+		SDNV::SDNV(const uint64_t value) : _value(value)
 		{}
 
 		SDNV::SDNV() : _value(0)
@@ -47,7 +47,7 @@ namespace dtn
 			return getLength(_value);
 		}
 
-		size_t SDNV::getLength(const u_int64_t &value)
+		size_t SDNV::getLength(const uint64_t &value)
 		{
 			return encoding_len(value);
 		}
@@ -57,7 +57,7 @@ namespace dtn
 			return len(data);
 		}
 
-		u_int64_t SDNV::getValue() const
+		uint64_t SDNV::getValue() const
 		{
 			return _value;
 		}
@@ -175,12 +175,12 @@ namespace dtn
 		*
 		* @return The number of bytes used, or -1 on ERROR(SDNV).
 		*/
-		int SDNV::encode(float val_f, u_char* bp, size_t len){
+		int SDNV::encode(float val_f, unsigned char* bp, size_t len){
 		  // Convert the float to an int and call the encoding_len(int) function
-		  u_int32_t val_i;
-		  memcpy(&val_i, &val_f, sizeof(u_int32_t));
+		  uint32_t val_i;
+		  memcpy(&val_i, &val_f, sizeof(uint32_t));
 
-		  return encode((u_int64_t)val_i, bp, len);
+		  return encode((uint64_t)val_i, bp, len);
 		}
 
 		/**
@@ -188,12 +188,12 @@ namespace dtn
 		*
 		* @return The number of bytes used, or -1 on ERROR(SDNV).
 		*/
-		int SDNV::encode(u_int64_t val, u_char* bp, size_t len){
-		  u_char* start = bp;
+		int SDNV::encode(uint64_t val, unsigned char* bp, size_t len){
+		  unsigned char* start = bp;
 
 		  //Figure out how many bytes we need for the encoding.
 		  size_t val_len = 0;
-		  u_int64_t tmp = val;
+		  uint64_t tmp = val;
 
 		  do {
 			tmp = tmp >> 7;
@@ -209,10 +209,10 @@ namespace dtn
 
 		  // Now advance bp to the last byte and fill it in backwards with the value bytes.
 		  bp += val_len;
-		  u_char high_bit = 0; // for the last octet
+		  unsigned char high_bit = 0; // for the last octet
 		  do {
 			--bp;
-			*bp = (u_char)(high_bit | (val & 0x7f));
+			*bp = (unsigned char)(high_bit | (val & 0x7f));
 			high_bit = (1 << 7); // for all but the last octet
 			val = val >> 7;
 		  } while (val != 0);
@@ -226,8 +226,8 @@ namespace dtn
 		/**
 		* Return the number of bytes needed to encode the given value.
 		*/
-		size_t SDNV::encoding_len(u_int64_t val){
-		  u_char buf[16];
+		size_t SDNV::encoding_len(uint64_t val){
+		  unsigned char buf[16];
 		  int ret = encode(val, buf, sizeof(buf));
 		  if (!(ret != -1 && ret != 0)) throw InvalidDataException("ERROR(SDNV): !(ret != -1 && ret != 0)");
 		  return ret;
@@ -238,8 +238,8 @@ namespace dtn
 		*/
 		size_t SDNV::encoding_len(float val_f){
 		  // Convert the float to an int and call the encoding_len(int) function
-		  u_int32_t val_i;
-		  memcpy(&val_i, &val_f, sizeof(u_int32_t));
+		  uint32_t val_i;
+		  memcpy(&val_i, &val_f, sizeof(uint32_t));
 
 		  return encoding_len(val_i);
 		}
@@ -250,8 +250,8 @@ namespace dtn
 		*
 		* @return The number of bytes of bp consumed, or -1 on ERROR(SDNV).
 		*/
-		int SDNV::decode(const u_char* bp, size_t len, u_int64_t* val){
-		  const u_char* start = bp;
+		int SDNV::decode(const unsigned char* bp, size_t len, uint64_t* val){
+		  const unsigned char* start = bp;
 
 		  if (!val) {
 			throw InvalidDataException();
@@ -296,15 +296,15 @@ namespace dtn
 		*
 		* @return The number of bytes of bp consumed, or -1 on ERROR(SDNV).
 		*/
-		int SDNV::decode(const u_char* bp, size_t len, u_int32_t* val){
-		  u_int64_t lval;
+		int SDNV::decode(const unsigned char* bp, size_t len, uint32_t* val){
+		  uint64_t lval;
 		  int ret = decode(bp, len, &lval);
 
 		  if (lval > 0xffffffffLL) {
 			throw InvalidDataException();
 		  }
 
-		  *val = (u_int32_t)lval;
+		  *val = (uint32_t)lval;
 
 		  return ret;
 		}
@@ -315,15 +315,15 @@ namespace dtn
 		*
 		* @return The number of bytes of bp consumed, or -1 on ERROR(SDNV).
 		*/
-		int SDNV::decode(const u_char* bp, size_t len, u_int16_t* val){
-		  u_int64_t lval;
+		int SDNV::decode(const unsigned char* bp, size_t len, uint16_t* val){
+		  uint64_t lval;
 		  int ret = decode(bp, len, &lval);
 
 		  if (lval > 0xffffffffLL) {
 			throw InvalidDataException();
 		  }
 
-		  *val = (u_int16_t)lval;
+		  *val = (uint16_t)lval;
 
 		  return ret;
 		}
@@ -334,8 +334,8 @@ namespace dtn
 		*
 		* @return The number of bytes of bp consumed, or -1 on ERROR(SDNV).
 		*/
-		int SDNV::decode(const u_char* bp, size_t len, float* val){
-		  u_int64_t lval;
+		int SDNV::decode(const unsigned char* bp, size_t len, float* val){
+		  uint64_t lval;
 		  int ret = decode(bp, len, &lval);
 
 		  if (lval > 0xffffffffLL) {
@@ -343,8 +343,8 @@ namespace dtn
 		  }
 
 		  float fval;
-		  u_int32_t ival = (u_int32_t)lval;
-		  memcpy(&fval, &ival, sizeof(u_int32_t));
+		  uint32_t ival = (uint32_t)lval;
+		  memcpy(&fval, &ival, sizeof(uint32_t));
 
 		  *val = fval;
 
@@ -355,7 +355,7 @@ namespace dtn
 		* Return the number of bytes which comprise the given value.
 		* Assumes that bp points to a valid encoded SDNV.
 		*/
-		size_t SDNV::len(const u_char* bp){
+		size_t SDNV::len(const unsigned char* bp){
 		  size_t val_len = 1;
 
 		  for ( ; *bp++ & 0x80; ++val_len )

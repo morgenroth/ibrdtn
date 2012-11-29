@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <iostream>
 #include <stdio.h>
+#include <stdint.h>
 
 #ifndef _SDNV_H_
 #define _SDNV_H_
@@ -41,7 +42,7 @@
  * the last one.
  *
  * Note that this implementation only handles values up to 64-bits in
- * length (since the conversion is between a u_int64_t and the encoded
+ * length (since the conversion is between a uint64_t and the encoded
  * byte sequence).
  */
 
@@ -62,7 +63,7 @@ namespace dtn
 			 * Constructor for a SDNV object
 			 * @param value The new value of the SDNV
 			 */
-			SDNV(const u_int64_t value);
+			SDNV(const uint64_t value);
 
 			/**
 			 * Empty constructor for a SDNV object
@@ -81,14 +82,14 @@ namespace dtn
 			 */
 			size_t getLength() const;
 
-			static size_t getLength(const u_int64_t &value);
+			static size_t getLength(const uint64_t &value);
 			static size_t getLength(const unsigned char *data);
 
 			/**
 			 * Returns the decoded value.
 			 * @return The decoded value.
 			 */
-			u_int64_t getValue() const;
+			uint64_t getValue() const;
 
 			/**
 			 * Decode a SDNV out of a existing char array.
@@ -129,26 +130,26 @@ namespace dtn
 			friend std::istream &operator>>(std::istream &stream, dtn::data::SDNV &obj);
 
 			// INLINE-FUNCTIONS
-			inline static size_t encoding_len(u_int16_t val){ return encoding_len((u_int64_t)val); }
-			inline static size_t encoding_len(u_int32_t val){ return encoding_len((u_int64_t)val); }
-			inline static int encode(u_int16_t val, char* bp, size_t len){ return encode((u_int64_t)val, (u_char*)bp, len); }
-			inline static int encode(u_int32_t val, char* bp, size_t len){ return encode((u_int64_t)val, (u_char*)bp, len); }
-			inline static int encode(u_int64_t val, char* bp, size_t len){ return encode(val, (u_char*)bp, len); }
-			inline static int encode(float val, char* bp, size_t len){ return encode(val, (u_char*)bp, len); }
-			inline static int decode(char* bp, size_t len, u_int64_t* val){ return decode((u_char*)bp, len, val); }
-			inline static int decode(char* bp, size_t len, u_int32_t* val){ return decode((u_char*)bp, len, val); }
+			inline static size_t encoding_len(uint16_t val){ return encoding_len((uint64_t)val); }
+			inline static size_t encoding_len(uint32_t val){ return encoding_len((uint64_t)val); }
+			inline static int encode(uint16_t val, char* bp, size_t len){ return encode((uint64_t)val, (unsigned char*)bp, len); }
+			inline static int encode(uint32_t val, char* bp, size_t len){ return encode((uint64_t)val, (unsigned char*)bp, len); }
+			inline static int encode(uint64_t val, char* bp, size_t len){ return encode(val, (unsigned char*)bp, len); }
+			inline static int encode(float val, char* bp, size_t len){ return encode(val, (unsigned char*)bp, len); }
+			inline static int decode(char* bp, size_t len, uint64_t* val){ return decode((unsigned char*)bp, len, val); }
+			inline static int decode(char* bp, size_t len, uint32_t* val){ return decode((unsigned char*)bp, len, val); }
 
-			static size_t encoding_len(u_int64_t val);
+			static size_t encoding_len(uint64_t val);
 			static size_t encoding_len(float val_f);
-			static int encode(u_int64_t val, u_char* bp, size_t len);
-			static int encode(float val_f, u_char* bp, size_t len);
-			static int decode(const u_char* bp, size_t len, float* val_f);
-			static int decode(const u_char* bp, size_t len, u_int64_t* val);
-			static int decode(const u_char* bp, size_t len, u_int32_t* val);
-			static int decode(const u_char* bp, size_t len, u_int16_t* val);
-			static size_t len(const u_char* bp);
+			static int encode(uint64_t val, unsigned char* bp, size_t len);
+			static int encode(float val_f, unsigned char* bp, size_t len);
+			static int decode(const unsigned char* bp, size_t len, float* val_f);
+			static int decode(const unsigned char* bp, size_t len, uint64_t* val);
+			static int decode(const unsigned char* bp, size_t len, uint32_t* val);
+			static int decode(const unsigned char* bp, size_t len, uint16_t* val);
+			static size_t len(const unsigned char* bp);
 
-			u_int64_t _value;
+			uint64_t _value;
 		};
 	}
 }

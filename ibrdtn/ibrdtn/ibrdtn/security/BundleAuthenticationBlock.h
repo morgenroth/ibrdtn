@@ -113,7 +113,7 @@ namespace dtn
 				@param correlator the correlator which shall be used
 				@return a string containing the MAC
 				*/
-				static std::string calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator = false, const u_int64_t correlator = 0);
+				static std::string calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator = false, const uint64_t correlator = 0);
 
 				/**
 				Tries to verify the bundle using the given key. If a BAB-pair is found,
@@ -126,7 +126,7 @@ namespace dtn
 				the matching pair. otherwise the first is false, if there was no
 				matching
 				*/
-				static void verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, u_int64_t &correlator) throw (ibrcommon::Exception);
+				static void verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, uint64_t &correlator) throw (ibrcommon::Exception);
 
 				/**
 				Returns the size of the security result field. This is used for strict 

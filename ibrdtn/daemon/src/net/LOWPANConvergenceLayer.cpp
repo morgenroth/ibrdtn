@@ -191,7 +191,7 @@ namespace dtn
 			join();
 		}
 
-		void LOWPANConvergenceLayer::sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
+		void LOWPANConvergenceLayer::sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
 		{
 			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPAN IPND beacon send started" << IBRCOMMON_LOGGER_ENDL;
 

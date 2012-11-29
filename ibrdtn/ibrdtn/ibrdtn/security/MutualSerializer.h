@@ -97,12 +97,12 @@ namespace dtn
 				virtual size_t getLength(const dtn::data::Block &obj) const;
 
 				/**
-				Writes a u_int32_t into stream in network byte order.
+				Writes a uint32_t into stream in network byte order.
 				@param stream the stream in which shall be written
 				@param value the value to be written in network byte order
 				@return the stream in which shall be written
 				*/
-				virtual Serializer &operator<<(const u_int32_t value);
+				virtual Serializer &operator<<(const uint32_t value);
 				
 				/**
 				Writes an EID to a stream in mutable form.

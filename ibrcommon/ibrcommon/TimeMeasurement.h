@@ -38,7 +38,7 @@ namespace ibrcommon
 		void start();
 		void stop();
 
-		u_int64_t getNanoseconds() const;
+		uint64_t getNanoseconds() const;
 		float getMicroseconds() const;
 		float getMilliseconds() const;
 		float getSeconds() const;

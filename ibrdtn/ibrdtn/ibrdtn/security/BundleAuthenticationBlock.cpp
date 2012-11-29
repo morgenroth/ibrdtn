@@ -57,7 +57,7 @@ namespace dtn
 			// set security source
 			if (key.reference != bundle._source.getNode()) bab_begin.setSecuritySource( key.reference );
 
-			u_int64_t correlator = createCorrelatorValue(bundle);
+			uint64_t correlator = createCorrelatorValue(bundle);
 			bab_begin.setCorrelator(correlator);
 			bab_begin.setCiphersuiteId(BAB_HMAC);
 
@@ -74,7 +74,7 @@ namespace dtn
 		void BundleAuthenticationBlock::verify(const dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key) throw (ibrcommon::Exception)
 		{
 			// store the correlator of the verified BABs
-			u_int64_t correlator;
+			uint64_t correlator;
 
 			// verify the babs of the bundle
 			verify(bundle, key, correlator);
@@ -83,7 +83,7 @@ namespace dtn
 		void BundleAuthenticationBlock::strip(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key)
 		{
 			// store the correlator of the verified BABs
-			u_int64_t correlator;
+			uint64_t correlator;
 
 			// verify the babs of the bundle
 			verify(bundle, key, correlator);
@@ -114,12 +114,12 @@ namespace dtn
 			}
 		}
 
-		void BundleAuthenticationBlock::verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, u_int64_t &correlator) throw (ibrcommon::Exception)
+		void BundleAuthenticationBlock::verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, uint64_t &correlator) throw (ibrcommon::Exception)
 		{
 			std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
 
 			// get the blocks, with which the key should match
-			std::set<u_int64_t> correlators;
+			std::set<uint64_t> correlators;
 
 			// calculate the MAC of this bundle
 			std::string our_hash_string = calcMAC(bundle, key);
@@ -161,7 +161,7 @@ namespace dtn
 			throw ibrcommon::Exception("verification failed");
 		}
 
-		std::string BundleAuthenticationBlock::calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator, const u_int64_t correlator)
+		std::string BundleAuthenticationBlock::calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator, const uint64_t correlator)
 		{
 			std::string hmac_key = key.getData();
 			ibrcommon::HMacStream hms((const unsigned char*)hmac_key.c_str(), hmac_key.length());

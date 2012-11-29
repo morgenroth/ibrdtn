@@ -90,7 +90,7 @@ namespace dtn
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();
 
-			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers);
+			virtual void sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers);
 
 		private:
 			ibrcommon::vsocket _vsocket;

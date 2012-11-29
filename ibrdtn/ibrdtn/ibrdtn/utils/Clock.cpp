@@ -40,7 +40,7 @@ namespace dtn
 		/**
 		 * The number of seconds between 1/1/1970 and 1/1/2000.
 		 */
-		u_int32_t Clock::TIMEVAL_CONVERSION = 946684800;
+		uint32_t Clock::TIMEVAL_CONVERSION = 946684800;
 
 		Clock::Clock()
 		{

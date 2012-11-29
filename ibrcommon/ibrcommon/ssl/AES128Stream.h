@@ -45,7 +45,7 @@ namespace ibrcommon
 			/** the number of bytes of 128 bit */
 			static const size_t key_size_in_bytes = 16;
 			/** the number of bytes of the salt */
-			static const size_t salt_len = sizeof(u_int32_t);
+			static const size_t salt_len = sizeof(uint32_t);
 			/** the number of bytes of the initialisation vector */
 			static const size_t iv_len = 8;
 			/** the number of bytes of the verification tag */
@@ -69,8 +69,8 @@ namespace ibrcommon
 			@param tag if used for decryption, this is the authentication tag, which
 			was created at encryption. The size of this array is tag_len.
 			*/
-			AES128Stream(const CipherMode mode, std::ostream& output, const unsigned char key[key_size_in_bytes], const u_int32_t salt);
-			AES128Stream(const CipherMode mode, std::ostream& output, const unsigned char key[key_size_in_bytes], const u_int32_t salt, const unsigned char iv[iv_len]);
+			AES128Stream(const CipherMode mode, std::ostream& output, const unsigned char key[key_size_in_bytes], const uint32_t salt);
+			AES128Stream(const CipherMode mode, std::ostream& output, const unsigned char key[key_size_in_bytes], const uint32_t salt, const unsigned char iv[iv_len]);
 
 			/** cleans the output buffer and the context */
 			virtual ~AES128Stream();
@@ -102,7 +102,7 @@ namespace ibrcommon
 			TODO it needs to be tested if this behave on little and big endian
 			equally*/
 			typedef struct {
-				u_int32_t salt;
+				uint32_t salt;
 				unsigned char initialisation_vector[iv_len];
 			} gcm_iv;
 

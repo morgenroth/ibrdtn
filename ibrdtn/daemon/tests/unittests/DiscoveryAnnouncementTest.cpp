@@ -77,7 +77,7 @@ void DiscoveryAnnouncementTest::testToString()
 
 void DiscoveryAnnouncementTest::testSetSequencenumber()
 {
-	/* test signature (u_int16_t sequence) */
+	/* test signature (uint16_t sequence) */
 	CPPUNIT_FAIL("not implemented");
 }
 

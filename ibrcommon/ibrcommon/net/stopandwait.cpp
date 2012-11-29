@@ -108,7 +108,7 @@ namespace ibrcommon
 			char msgtype = *bufferptr; bufferptr++;
 
 			// read seqnr
-			u_int8_t seqno = *bufferptr; bufferptr++;
+			uint8_t seqno = *bufferptr; bufferptr++;
 
 			// check for double received messages
 			if (seqno > _in_seqno)

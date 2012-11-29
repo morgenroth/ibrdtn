@@ -57,7 +57,7 @@ namespace dtn
 			void eventNotify(const ibrcommon::LinkEvent &evt);
 
 		protected:
-			void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider);
+			void sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider);
 			virtual void componentRun() throw ();;
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();

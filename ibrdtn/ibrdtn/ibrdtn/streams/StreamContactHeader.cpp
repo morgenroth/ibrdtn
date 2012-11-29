@@ -65,7 +65,7 @@ namespace dtn
 			stream << "dtn!" << TCPCL_VERSION << h._flags;
 
 			// convert to network byte order
-			u_int16_t ka = htons(h._keepalive);
+			uint16_t ka = htons(h._keepalive);
 			stream.write( (char*)&ka, 2 );
 
 			dtn::data::BundleString eid(h._localeid.getString());
@@ -97,7 +97,7 @@ namespace dtn
 			// flags
 			stream.get(h._flags);
 
-			u_int16_t ka = 0;
+			uint16_t ka = 0;
 			stream.read((char*)&ka, 2);
 
 			// convert from network byte order

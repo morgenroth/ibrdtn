@@ -57,7 +57,7 @@ namespace dtn
 		void PayloadConfidentialBlock::encrypt(dtn::data::Bundle& bundle, const dtn::security::SecurityKey &long_key, const dtn::data::EID& source)
 		{
 			// contains the random salt
-			u_int32_t salt;
+			uint32_t salt;
 
 			// contains the random key
 			unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes];
@@ -129,7 +129,7 @@ namespace dtn
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
 
 			// create correlator
-			u_int64_t correlator = createCorrelatorValue(bundle);
+			uint64_t correlator = createCorrelatorValue(bundle);
 
 			if (pcbs.size() > 0 || pibs.size() > 0)
 				pcb.setCorrelator(correlator);
@@ -175,7 +175,7 @@ namespace dtn
 						const PayloadConfidentialBlock &pcb = dynamic_cast<const PayloadConfidentialBlock&>(**it);
 
 						// get salt and key
-						u_int32_t salt = getSalt(pcb._ciphersuite_params);
+						uint32_t salt = getSalt(pcb._ciphersuite_params);
 
 						// decrypt related blocks
 						if (decrypt_related)
@@ -254,7 +254,7 @@ namespace dtn
 			long_key.free(rsa_key);
 		}
 
-		bool PayloadConfidentialBlock::decryptPayload(dtn::data::Bundle& bundle, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes], const u_int32_t salt)
+		bool PayloadConfidentialBlock::decryptPayload(dtn::data::Bundle& bundle, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes], const uint32_t salt)
 		{
 			// TODO handle fragmentation
 			PayloadConfidentialBlock& pcb = bundle.getBlock<PayloadConfidentialBlock>();
