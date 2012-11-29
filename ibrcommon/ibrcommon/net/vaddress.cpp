@@ -125,7 +125,7 @@ namespace ibrcommon
 
 		if ((ret = ::getaddrinfo(address, service, &hints, &res)) != 0)
 		{
-			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
+			throw address_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 		}
 
 		sa_family_t fam = res->ai_family;
