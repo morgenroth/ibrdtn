@@ -245,8 +245,10 @@ namespace dtn
 				// get the global storage
 				dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
-				// delete the bundle
-				storage.remove(purge.bundle);
+				try {
+					// delete the bundle
+					storage.remove(purge.bundle);
+				} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
 
 				return;
 			} catch (const std::bad_cast&) { }
