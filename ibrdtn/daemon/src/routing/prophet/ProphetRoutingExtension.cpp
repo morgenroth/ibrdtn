@@ -759,6 +759,7 @@ namespace dtn
 		}
 
 		ProphetRoutingExtension::Acknowledgement::Acknowledgement()
+		 : expire_time(0)
 		{
 		}
 
@@ -909,23 +910,18 @@ namespace dtn
 
 		bool ProphetRoutingExtension::ForwardingStrategy::neighborDPIsGreater(const dtn::data::EID& neighbor, const dtn::data::EID& destination) const
 		{
-			bool ret = false;
 			const DeliveryPredictabilityMap& dp_map = _prophet_router->_deliveryPredictabilityMap;
 
-			DeliveryPredictabilityMap::const_iterator neighborIT = dp_map.find(neighbor);
 			DeliveryPredictabilityMap::const_iterator destinationIT = dp_map.find(destination);
 
-			if(destinationIT == dp_map.end()) {
-				ret = true;
-			} else {
-				float neighbor_dp = _prophet_router->_p_first_threshold;
-				if(neighborIT != dp_map.end()) {
-					neighbor_dp = neighborIT->second;
-				}
-				ret = (neighbor_dp > destinationIT->second);
-			}
+			if(destinationIT == dp_map.end()) return true;
 
-			return ret;
+			DeliveryPredictabilityMap::const_iterator neighborIT = dp_map.find(neighbor);
+
+			if(neighborIT != dp_map.end())
+				return (neighborIT->second > destinationIT->second);
+
+			return (_prophet_router->_p_first_threshold > destinationIT->second);
 		}
 
 		void ProphetRoutingExtension::ForwardingStrategy::setProphetRouter(ProphetRoutingExtension *router)
