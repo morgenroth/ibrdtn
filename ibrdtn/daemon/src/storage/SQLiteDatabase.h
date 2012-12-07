@@ -198,7 +198,7 @@ namespace dtn
 			 * @param cb
 			 * @return
 			 */
-			const std::list<dtn::data::MetaBundle> get(dtn::storage::BundleStorage::BundleFilterCallback &cb) const;
+			void get(dtn::storage::BundleStorage::BundleFilterCallback &cb, BundleResult &result) throw (dtn::storage::BundleStorage::NoBundleFoundException);
 
 			/**
 			 * Retrieve the meta data of a given bundle
@@ -259,7 +259,7 @@ namespace dtn
 			 * @param bind_offset
 			 * @param limit
 			 */
-			void __get(const dtn::storage::BundleStorage::BundleFilterCallback &cb, Statement &st, std::list<dtn::data::MetaBundle> &ret, size_t bind_offset, size_t offset) const;
+			void __get(const dtn::storage::BundleStorage::BundleFilterCallback &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const;
 
 //			/**
 //			 * Checks the files on the filesystem against the filenames in the database

@@ -88,25 +88,25 @@ namespace dtn
 			return _bundles.size();
 		}
 
-		const std::list<dtn::data::MetaBundle> MemoryBundleStorage::get(BundleFilterCallback &cb)
+		void MemoryBundleStorage::get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException)
 		{
-			// result list
-			std::list<dtn::data::MetaBundle> result;
+			size_t items_added = 0;
 
 			// we have to iterate through all bundles
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (result.size() < cb.limit())); iter++)
+			for (std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); iter++)
 			{
 				const dtn::data::MetaBundle &bundle = (*iter);
 
 				if ( cb.shouldAdd(bundle) )
 				{
-					result.push_back(bundle);
+					result.put(bundle);
+					items_added++;
 				}
 			}
 
-			return result;
+			if (items_added == 0) throw NoBundleFoundException();
 		}
 
 		dtn::data::Bundle MemoryBundleStorage::get(const dtn::data::BundleID &id)

@@ -234,25 +234,25 @@ namespace dtn
 			return _list.size();
 		}
 
-		const std::list<dtn::data::MetaBundle> SimpleBundleStorage::get(BundleFilterCallback &cb)
+		void SimpleBundleStorage::get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException)
 		{
-			// result list
-			std::list<dtn::data::MetaBundle> result;
+			size_t items_added = 0;
 
 			// we have to iterate through all bundles
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READONLY);
 
-			for (std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (result.size() < cb.limit())); iter++)
+			for (std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); iter++)
 			{
 				const dtn::data::MetaBundle &meta = (*iter);
 
 				if ( cb.shouldAdd(meta) )
 				{
-					result.push_back(meta);
+					result.put(meta);
+					items_added++;
 				}
 			}
 
-			return result;
+			if (items_added == 0) throw NoBundleFoundException();
 		}
 
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::BundleID &id)

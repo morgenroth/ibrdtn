@@ -22,6 +22,7 @@
 #ifndef BUNDLESTORAGE_H_
 #define BUNDLESTORAGE_H_
 
+#include <storage/BundleResult.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/MetaBundle.h>
@@ -108,7 +109,7 @@ namespace dtn
 			 * @param cb The instance of the callback filter class.
 			 * @return A list of bundles.
 			 */
-			virtual const std::list<dtn::data::MetaBundle> get(BundleFilterCallback &cb) = 0;
+			virtual void get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException) = 0;
 
 			/**
 			 * Return a set of distinct destinations for all bundles in the storage.

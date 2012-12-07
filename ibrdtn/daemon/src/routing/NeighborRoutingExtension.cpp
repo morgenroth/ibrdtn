@@ -132,6 +132,7 @@ namespace dtn
 			};
 
 			dtn::storage::BundleStorage &storage = (**this).getStorage();
+			dtn::storage::BundleResultList list;
 
 			while (true)
 			{
@@ -163,7 +164,8 @@ namespace dtn
 						BundleFilter filter(entry);
 
 						// query an unknown bundle from the storage, the list contains max. 10 items.
-						const std::list<dtn::data::MetaBundle> list = storage.get(filter);
+						list.clear();
+						storage.get(filter, list);
 
 						IBRCOMMON_LOGGER_DEBUG(5) << "got " << list.size() << " items to transfer to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -177,6 +179,7 @@ namespace dtn
 						}
 					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 					} catch (const NeighborDatabase::NeighborNotAvailableException&) {
+					} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
 					} catch (const std::bad_cast&) { };
 
 					/**

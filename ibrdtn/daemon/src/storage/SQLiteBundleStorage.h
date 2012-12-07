@@ -85,7 +85,7 @@ namespace dtn
 			/**
 			 * @see BundleStorage::get(BundleFilterCallback &cb)
 			 */
-			const std::list<dtn::data::MetaBundle> get(BundleFilterCallback &cb);
+			void get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException);
 
 			/**
 			 * @see BundleStorage::getDistinctDestinations()

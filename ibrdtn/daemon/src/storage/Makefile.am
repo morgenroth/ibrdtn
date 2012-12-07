@@ -8,7 +8,9 @@ storage_SOURCES = \
 	SimpleBundleStorage.cpp \
 	SimpleBundleStorage.h \
 	DataStorage.h \
-	DataStorage.cpp
+	DataStorage.cpp \
+	BundleResult.h \
+	BundleResult.cpp
 	
 
 if SQLITE

@@ -209,6 +209,9 @@ namespace dtn
 
 			dtn::storage::BundleStorage &storage = (**this).getStorage();
 
+			// list for bundles
+			dtn::storage::BundleResultList list;
+
 			while (true)
 			{
 				try {
@@ -241,8 +244,9 @@ namespace dtn
 								// some debug output
 								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-								// query some unknown bundle from the storage, the list contains max. 10 items.
-								const std::list<dtn::data::MetaBundle> list = storage.get(filter);
+								// query some unknown bundle from the storage
+								list.clear();
+								storage.get(filter, list);
 
 								// send the bundles as long as we have resources
 								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
@@ -258,6 +262,7 @@ namespace dtn
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
+						} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
 						} catch (const std::bad_cast&) { };
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in EpidemicRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

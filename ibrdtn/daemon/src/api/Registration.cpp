@@ -87,7 +87,7 @@ namespace dtn
 		Registration::Registration()
 		 : _handle(alloc_handle()),
 		   _default_eid(core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + _handle),
-		   _received_bundles(*this), _persistent(false), _detached(false), _expiry(0)
+		   _queue(*this), _persistent(false), _detached(false), _expiry(0)
 		{
 		}
 
@@ -208,7 +208,7 @@ namespace dtn
 		void Registration::underflow()
 		{
 			// expire outdated bundles in the list
-			_received_bundles.expire(dtn::utils::Clock::getTime());
+			_queue.getReceivedBundles().expire(dtn::utils::Clock::getTime());
 
 			/**
 			 * search for bundles in the storage
@@ -298,31 +298,44 @@ namespace dtn
 				const std::set<dtn::data::EID> _endpoints;
 				const dtn::data::BundleList &_blist;
 				const bool _loopback;
-			} filter(_endpoints, _received_bundles, false);
+			} filter(_endpoints, _queue.getReceivedBundles(), false);
 
 			// get the global storage
 			dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 			// query the database for more bundles
 			ibrcommon::MutexLock l(_endpoints_lock);
-			const std::list<dtn::data::MetaBundle> list = storage.get( filter );
-
-			if (list.size() == 0)
-			{
-				ibrcommon::MutexLock l(_wait_for_cond);
-				_no_more_bundles = true;
-				throw dtn::storage::BundleStorage::NoBundleFoundException();
-			}
 
 			try {
-				for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-				{
-					_queue.push(*iter);
+				storage.get( filter, _queue );
+			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+				_no_more_bundles = true;
+				throw;
+			}
+		}
 
-					IBRCOMMON_LOGGER_DEBUG(10) << "add bundle to list of delivered bundles: " << (*iter).toString() << IBRCOMMON_LOGGER_ENDL;
-					_received_bundles.add(*iter);
-				}
+		Registration::RegistrationQueue::RegistrationQueue(dtn::data::BundleList::Listener &listener)
+		 : _list(listener)
+		{
+		}
+
+		Registration::RegistrationQueue::~RegistrationQueue()
+		{
+		}
+
+		void Registration::RegistrationQueue::put(const dtn::data::MetaBundle &bundle) throw ()
+		{
+			try {
+				_list.add(bundle);
+				this->push(bundle);
+
+				IBRCOMMON_LOGGER_DEBUG(10) << "add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) { }
+		}
+
+		dtn::data::BundleList& Registration::RegistrationQueue::getReceivedBundles()
+		{
+			return _list;
 		}
 
 		void Registration::subscribe(const dtn::data::EID &endpoint)

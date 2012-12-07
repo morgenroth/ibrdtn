@@ -24,6 +24,7 @@
 
 #include "Component.h"
 #include "core/EventReceiver.h"
+#include "storage/BundleResult.h"
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrdtn/data/BundleList.h>
 #include <ibrcommon/thread/Queue.h>
@@ -89,7 +90,7 @@ namespace dtn
 			static size_t get_payload_offset(const dtn::data::Bundle &bundle, size_t abs_offset);
 
 			// search for similar bundles in the storage
-			const std::list<dtn::data::MetaBundle> search(const dtn::data::MetaBundle &meta);
+			void search(const dtn::data::MetaBundle &meta, dtn::storage::BundleResult &list);
 
 			ibrcommon::Queue<dtn::data::MetaBundle> _incoming;
 			dtn::data::BundleList _fragments;

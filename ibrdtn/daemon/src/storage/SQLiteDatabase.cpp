@@ -519,9 +519,9 @@ namespace dtn
 			}
 		}
 
-		const std::list<dtn::data::MetaBundle> SQLiteDatabase::get(dtn::storage::BundleStorage::BundleFilterCallback &cb) const
+		void SQLiteDatabase::get(dtn::storage::BundleStorage::BundleFilterCallback &cb, BundleResult &ret) throw (dtn::storage::BundleStorage::NoBundleFoundException)
 		{
-			std::list<dtn::data::MetaBundle> ret;
+			size_t items_added = 0;
 
 			const std::string base_query =
 					"SELECT source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, payloadlength FROM " + _tables[SQL_TABLE_BUNDLE];
@@ -540,13 +540,13 @@ namespace dtn
 					// create statement for custom query
 					Statement st(_database, query_string);
 
-					while (unlimited || (ret.size() < query_limit))
+					while (unlimited || (items_added < query_limit))
 					{
 						// bind the statement parameter
 						size_t bind_offset = query.bind(*st, 1);
 
 						// query the database
-						__get(cb, st, ret, bind_offset, offset);
+						__get(cb, st, ret, items_added, bind_offset, offset);
 
 						// increment the offset, because we might not have enough
 						offset += query_limit;
@@ -554,10 +554,10 @@ namespace dtn
 				} catch (const std::bad_cast&) {
 					Statement st(_database, _sql_queries[BUNDLE_GET_FILTER]);
 
-					while (unlimited || (ret.size() < query_limit))
+					while (unlimited || (items_added < query_limit))
 					{
 						// query the database
-						__get(cb, st, ret, 1, offset);
+						__get(cb, st, ret, items_added, 1, offset);
 
 						// increment the offset, because we might not have enough
 						offset += query_limit;
@@ -565,10 +565,10 @@ namespace dtn
 				}
 			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { }
 
-			return ret;
+			if (items_added == 0) throw dtn::storage::BundleStorage::NoBundleFoundException();
 		}
 
-		void SQLiteDatabase::__get(const dtn::storage::BundleStorage::BundleFilterCallback &cb, Statement &st, std::list<dtn::data::MetaBundle> &ret, size_t bind_offset, size_t offset) const
+		void SQLiteDatabase::__get(const dtn::storage::BundleStorage::BundleFilterCallback &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const
 		{
 			bool unlimited = (cb.limit() <= 0);
 			size_t query_limit = (cb.limit() > 0) ? cb.limit() : 10;
@@ -582,7 +582,7 @@ namespace dtn
 				throw dtn::storage::BundleStorage::NoBundleFoundException();
 
 			// abort if enough bundles are found
-			while (unlimited || (ret.size() < query_limit))
+			while (unlimited || (items_added < query_limit))
 			{
 				dtn::data::MetaBundle m;
 
@@ -598,7 +598,8 @@ namespace dtn
 						IBRCOMMON_LOGGER_DEBUG(40) << "add bundle to query selection list: " << m.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// add the bundle to the list
-						ret.push_back(m);
+						ret.put(m);
+						items_added++;
 					}
 				}
 

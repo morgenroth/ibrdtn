@@ -22,6 +22,7 @@
 #include "config.h"
 #include "Configuration.h"
 #include "ManagementConnection.h"
+#include "storage/BundleResult.h"
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "routing/prophet/ProphetRoutingExtension.h"
@@ -300,13 +301,17 @@ namespace dtn
 						BundleFilter filter;
 
 						_stream << ClientHandler::API_STATUS_OK << " BUNDLE LIST" << std::endl;
-						std::list<dtn::data::MetaBundle> blist = bcore.getStorage().get(filter);
+						dtn::storage::BundleResultList blist;
+						
+						try {
+							bcore.getStorage().get(filter, blist);
 
-						for (std::list<dtn::data::MetaBundle>::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
-						{
-							const dtn::data::MetaBundle &b = *iter;
-							_stream << b.toString() << ";" << b.destination.getString() << ";" << std::endl;
-						}
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
+							{
+								const dtn::data::MetaBundle &b = *iter;
+								_stream << b.toString() << ";" << b.destination.getString() << ";" << std::endl;
+							}
+						} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { }
 
 						// last line empty
 						_stream << std::endl;

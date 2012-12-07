@@ -23,6 +23,7 @@
 #define REGISTRATION_H_
 
 #include "storage/BundleStorage.h"
+#include "storage/BundleResult.h"
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/BundleList.h>
 #include <ibrcommon/thread/Queue.h>
@@ -227,13 +228,25 @@ namespace dtn
 			void underflow();
 
 		private:
-			ibrcommon::Queue<dtn::data::MetaBundle> _queue;
+			class RegistrationQueue : public dtn::storage::BundleResult, public ibrcommon::Queue<dtn::data::MetaBundle> {
+			public:
+				RegistrationQueue(dtn::data::BundleList::Listener &listener);
+				virtual ~RegistrationQueue();
+
+				virtual void put(const dtn::data::MetaBundle &bundle) throw ();
+
+				dtn::data::BundleList& getReceivedBundles();
+
+			private:
+				dtn::data::BundleList _list;
+			};
+
 			const std::string _handle;
 			const dtn::data::EID _default_eid;
 
 			ibrcommon::Mutex _endpoints_lock;
 			std::set<dtn::data::EID> _endpoints;
-			dtn::data::BundleList _received_bundles;
+			RegistrationQueue _queue;
 
 			ibrcommon::Mutex _receive_lock;
 			ibrcommon::Conditional _wait_for_cond;

@@ -189,7 +189,8 @@ namespace dtn
 					const AcknowledgementSet& _entry;
 				} filter(_acknowledgementSet);
 
-				const std::list<dtn::data::MetaBundle> removeList = storage.get(filter);
+				dtn::storage::BundleResultList removeList;
+				storage.get(filter, removeList);
 
 				for (std::list<dtn::data::MetaBundle>::const_iterator it = removeList.begin(); it != removeList.end(); ++it)
 				{
@@ -202,6 +203,7 @@ namespace dtn
 					/* generate a report */
 					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				}
+			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
 			} catch (std::exception&) { }
 		}
 
@@ -412,6 +414,7 @@ namespace dtn
 			};
 
 			dtn::storage::BundleStorage &storage = (**this).getStorage();
+			dtn::storage::BundleResultList list;
 
 			{
 				ibrcommon::MutexLock l(_next_exchange_mutex);
@@ -452,7 +455,8 @@ namespace dtn
 								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 								// query some unknown bundle from the storage, the list contains max. 10 items.
-								const std::list<dtn::data::MetaBundle> list = storage.get(filter);
+								list.clear();
+								storage.get(filter, list);
 
 								// send the bundles as long as we have resources
 								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
@@ -469,6 +473,7 @@ namespace dtn
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
+						} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
 						} catch (const std::bad_cast&) { }
 
 						/**

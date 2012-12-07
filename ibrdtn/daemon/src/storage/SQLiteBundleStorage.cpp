@@ -205,10 +205,10 @@ namespace dtn
 			return _database.getDistinctDestinations();
 		}
 
-		const std::list<dtn::data::MetaBundle> SQLiteBundleStorage::get(BundleFilterCallback &cb)
+		void SQLiteBundleStorage::get(BundleFilterCallback &cb, BundleResult &result) throw (dtn::storage::BundleStorage::NoBundleFoundException)
 		{
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
-			return _database.get(cb);
+			_database.get(cb, result);
 		}
 
 		dtn::data::Bundle SQLiteBundleStorage::get(const dtn::data::BundleID &id)

@@ -69,6 +69,8 @@ namespace dtn
 		{
 			// TODO: scan storage for fragments to reassemble on startup
 
+			dtn::storage::BundleResultList list;
+
 			// create a task loop to reassemble fragments asynchronously
 			try {
 				while (_running)
@@ -76,7 +78,8 @@ namespace dtn
 					dtn::data::MetaBundle meta = _incoming.getnpop(true);
 
 					// search for matching bundles
-					const std::list<dtn::data::MetaBundle> list = search(meta);
+					list.clear();
+					search(meta, list);
 
 					IBRCOMMON_LOGGER_DEBUG(20) << "found " << list.size() << " fragments similar to bundle " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -175,7 +178,7 @@ namespace dtn
 			_incoming.push(meta);
 		}
 
-		const std::list<dtn::data::MetaBundle> FragmentManager::search(const dtn::data::MetaBundle &meta)
+		void FragmentManager::search(const dtn::data::MetaBundle &meta, dtn::storage::BundleResult &list)
 		{
 			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
 			{
@@ -208,7 +211,10 @@ namespace dtn
 			// create a bundle filter
 			BundleFilter filter(meta);
 			dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
-			return storage.get(filter);
+			
+			try {
+				storage.get(filter, list);
+			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { }
 		}
 
 		void FragmentManager::setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, size_t abs_offset)
