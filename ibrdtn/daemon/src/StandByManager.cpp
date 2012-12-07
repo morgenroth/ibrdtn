@@ -20,6 +20,7 @@
  */
 
 #include "StandByManager.h"
+#include "core/EventDispatcher.h"
 #include "core/GlobalEvent.h"
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
@@ -103,13 +104,13 @@ namespace dtn {
 
 		void StandByManager::componentUp() throw ()
 		{
-			bindEvent(dtn::core::GlobalEvent::className);
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
 			_enabled = true;
 		}
 
 		void StandByManager::componentDown() throw ()
 		{
-			unbindEvent(dtn::core::GlobalEvent::className);
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
 			_enabled = false;
 		}
 

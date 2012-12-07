@@ -21,6 +21,7 @@
 
 #include "net/TransferCompletedEvent.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 
 namespace dtn
 {
@@ -40,7 +41,7 @@ namespace dtn
 		void TransferCompletedEvent::raise(const dtn::data::EID peer, const dtn::data::MetaBundle &bundle)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new TransferCompletedEvent(peer, bundle) );
+			dtn::core::EventDispatcher<TransferCompletedEvent>::raise( new TransferCompletedEvent(peer, bundle) );
 		}
 
 		const string TransferCompletedEvent::getName() const

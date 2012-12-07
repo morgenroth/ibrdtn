@@ -19,6 +19,7 @@
  *
  */
 
+#include "core/EventDispatcher.h"
 #include "core/StatusReportGenerator.h"
 #include "core/BundleEvent.h"
 #include "core/BundleGeneratedEvent.h"
@@ -33,12 +34,12 @@ namespace dtn
 
 		StatusReportGenerator::StatusReportGenerator()
 		{
-			bindEvent(BundleEvent::className);
+			dtn::core::EventDispatcher<BundleEvent>::add(this);
 		}
 
 		StatusReportGenerator::~StatusReportGenerator()
 		{
-			unbindEvent(BundleEvent::className);
+			dtn::core::EventDispatcher<BundleEvent>::remove(this);
 		}
 
 		void StatusReportGenerator::createStatusReport(const dtn::data::MetaBundle &b, StatusReportBlock::TYPE type, StatusReportBlock::REASON_CODE reason)

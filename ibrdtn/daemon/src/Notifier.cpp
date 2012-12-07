@@ -20,6 +20,7 @@
  */
 
 #include "Notifier.h"
+#include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"
 #include <stdlib.h>
 
@@ -41,12 +42,12 @@ namespace dtn
 
 		void Notifier::componentUp() throw ()
 		{
-			bindEvent(NodeEvent::className);
+			dtn::core::EventDispatcher<NodeEvent>::add(this);
 		}
 
 		void Notifier::componentDown() throw ()
 		{
-			unbindEvent(NodeEvent::className);
+			dtn::core::EventDispatcher<NodeEvent>::remove(this);
 		}
 
 		void Notifier::raiseEvent(const dtn::core::Event *evt) throw ()

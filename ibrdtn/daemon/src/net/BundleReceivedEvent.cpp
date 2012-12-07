@@ -21,6 +21,7 @@
 
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 #include <ibrcommon/Logger.h>
 
 namespace dtn
@@ -41,7 +42,7 @@ namespace dtn
 		void BundleReceivedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local, const bool &wait)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new BundleReceivedEvent(peer, bundle, local), wait );
+			dtn::core::EventDispatcher<BundleReceivedEvent>::raise( new BundleReceivedEvent(peer, bundle, local), !wait );
 		}
 
 		const std::string BundleReceivedEvent::getName() const

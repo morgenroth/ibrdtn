@@ -310,7 +310,7 @@ void SimpleBundleStorageTest::concurrentStoreGet(dtn::storage::BundleStorage &st
 		b._lifetime = 1;
 		b._source = dtn::data::EID("dtn://node-two/foo");
 		ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
-		dtn::data::PayloadBlock &payload = b.push_back(ref);
+		b.push_back(ref);
 
 		(*ref.iostream()) << "Hallo Welt" << std::endl;
 
@@ -366,7 +366,7 @@ void SimpleBundleStorageTest::testDiskRestore()
 			b._lifetime = 1;
 			b._source = dtn::data::EID("dtn://node-two/foo");
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
-			dtn::data::PayloadBlock &payload = b.push_back(ref);
+			b.push_back(ref);
 
 			(*ref.iostream()) << "Hallo Welt" << std::endl;
 

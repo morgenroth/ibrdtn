@@ -22,6 +22,7 @@
 
 
 #include "storage/SQLiteBundleStorage.h"
+#include "core/EventDispatcher.h"
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleCore.h"
@@ -163,8 +164,8 @@ namespace dtn
 		void SQLiteBundleStorage::componentUp() throw ()
 		{
 			//register Events
-			bindEvent(dtn::core::TimeEvent::className);
-			bindEvent(dtn::core::GlobalEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
 
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 
@@ -184,8 +185,8 @@ namespace dtn
 		void SQLiteBundleStorage::componentDown() throw ()
 		{
 			//unregister Events
-			unbindEvent(dtn::core::TimeEvent::className);
-			unbindEvent(dtn::core::GlobalEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
 
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 

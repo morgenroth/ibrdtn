@@ -5,7 +5,8 @@
  *      Author: morgenro
  */
 
-#include "TimeAdjustmentEvent.h"
+#include "core/TimeAdjustmentEvent.h"
+#include "core/EventDispatcher.h"
 
 namespace dtn
 {
@@ -22,7 +23,7 @@ namespace dtn
 
 		void TimeAdjustmentEvent::raise(const timeval &offset, const float &rating)
 		{
-			raiseEvent( new TimeAdjustmentEvent(offset, rating) );
+			dtn::core::EventDispatcher<TimeAdjustmentEvent>::raise( new TimeAdjustmentEvent(offset, rating) );
 		}
 
 		const std::string TimeAdjustmentEvent::getName() const

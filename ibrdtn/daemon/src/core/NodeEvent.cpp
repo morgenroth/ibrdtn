@@ -20,6 +20,7 @@
  */
 
 #include "core/NodeEvent.h"
+#include "core/EventDispatcher.h"
 
 using namespace dtn::core;
 using namespace std;
@@ -34,7 +35,7 @@ namespace dtn
 
 		void NodeEvent::raise(const Node &n, const EventNodeAction action)
 		{
-			raiseEvent( new NodeEvent(n, action) );
+			dtn::core::EventDispatcher<NodeEvent>::raise( new NodeEvent(n, action) );
 		}
 
 		NodeEvent::~NodeEvent()

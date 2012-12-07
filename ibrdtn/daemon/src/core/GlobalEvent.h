@@ -52,8 +52,6 @@ namespace dtn
 
 			static void raise(const Action a);
 
-			std::string toString() const;
-
 			static const std::string className;
 
 		private:

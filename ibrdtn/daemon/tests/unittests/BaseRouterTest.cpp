@@ -111,7 +111,9 @@ void BaseRouterTest::testTransferTo()
 	dtn::routing::NeighborDatabase::NeighborEntry n(dtn::data::EID("dtn://no-neighbor"));
 	ExtensionTest *ex = new ExtensionTest();
 	router.addExtension(ex);
+	router.initialize();
 	ex->transferTo(n, b);
+	router.terminate();
 }
 
 void BaseRouterTest::testRaiseEvent()
@@ -133,7 +135,7 @@ void BaseRouterTest::testRaiseEvent()
 	// this bundle has to be known in future
 	CPPUNIT_ASSERT_EQUAL(true, router.isKnown(b));
 
-	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+	esl.stop();
 	esl.join();
 
 	router.terminate();

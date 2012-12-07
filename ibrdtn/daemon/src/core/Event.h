@@ -22,9 +22,7 @@
 #ifndef EVENT_H_
 #define EVENT_H_
 
-#include "core/EventReceiver.h"
-#include <ibrcommon/thread/Mutex.h>
-#include <ibrcommon/thread/Conditional.h>
+#include <string>
 
 namespace dtn
 {
@@ -34,28 +32,32 @@ namespace dtn
 		{
 		public:
 			virtual ~Event() = 0;
+
+			/**
+			 * Get the name of this event.
+			 */
 			virtual const std::string getName() const = 0;
 
-			virtual std::string toString() const = 0;
+			/**
+			 * Get a string representation of this event.
+			 */
+			virtual std::string toString() const;
 
-			void set_ref_count(size_t c);
-			bool decrement_ref_count();
-
+			/**
+			 * Contains the priority of this event.
+			 */
 			const int prio;
 
 		protected:
 			Event(int prio = 0);
-			static void raiseEvent(Event *evt, bool block_until_processed = false);
 
 		private:
-			ibrcommon::Conditional _ref_count_mutex;
-			size_t _ref_count;
+		};
 
-			// mark the event for auto deletion if the last reference is gone
-			bool _auto_delete;
-
-			// mark the event as processed
-			bool _processed;
+		class EventProcessor {
+		public:
+			virtual ~EventProcessor() { };
+			virtual void process(const Event *evt) = 0;
 		};
 	}
 }

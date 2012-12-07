@@ -22,23 +22,17 @@
 #ifndef EVENTRECEIVER_H_
 #define EVENTRECEIVER_H_
 
-#include <string>
+#include "core/Event.h"
 
 namespace dtn
 {
 	namespace core
 	{
-		class Event;
-
 		class EventReceiver
 		{
 		public:
 			virtual ~EventReceiver() = 0;
 			virtual void raiseEvent(const Event *evt) throw () = 0;
-
-		protected:
-			void bindEvent(std::string eventName);
-			void unbindEvent(std::string eventName);
 		};
 	}
 }

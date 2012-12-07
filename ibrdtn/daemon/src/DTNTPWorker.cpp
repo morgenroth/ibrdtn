@@ -20,6 +20,7 @@
  */
 
 #include "DTNTPWorker.h"
+#include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"
@@ -72,7 +73,7 @@ namespace dtn
 			// synchronize with other nodes
 			_sync  = conf.doSync();
 
-			bindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 
 			// debug quality of time
 			IBRCOMMON_LOGGER_DEBUG(10) << "quality of time is " << dtn::utils::Clock::rating << IBRCOMMON_LOGGER_ENDL;
@@ -80,7 +81,7 @@ namespace dtn
 
 		DTNTPWorker::~DTNTPWorker()
 		{
-			unbindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
 
 		DTNTPWorker::TimeSyncMessage::TimeSyncMessage()

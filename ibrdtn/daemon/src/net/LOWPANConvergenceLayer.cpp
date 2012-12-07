@@ -21,6 +21,7 @@
 
 #include "net/LOWPANConvergenceLayer.h"
 #include "net/LOWPANConnection.h"
+#include "core/EventDispatcher.h"
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"
 #include <ibrcommon/net/lowpanstream.h>
@@ -168,7 +169,7 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::componentUp() throw ()
 		{
-			bindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			try {
 				_vsocket.add(new ibrcommon::lowpansocket(_panid, _net));
 				_vsocket.up();
@@ -186,7 +187,7 @@ namespace dtn
 		void LOWPANConvergenceLayer::componentDown() throw ()
 		{
 			_vsocket.destroy();
-			unbindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			stop();
 			join();
 		}

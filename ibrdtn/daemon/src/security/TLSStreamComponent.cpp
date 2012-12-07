@@ -19,13 +19,15 @@
  *
  */
 
+#include "Configuration.h"
+#include "core/EventDispatcher.h"
+#include "security/SecurityCertificateManager.h"
 #include "security/TLSStreamComponent.h"
 
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/ssl/TLSStream.h>
-#include "SecurityCertificateManager.h"
-#include "Configuration.h"
+
 
 namespace dtn
 {
@@ -58,7 +60,7 @@ namespace dtn
 		void
 		TLSStreamComponent::initialize()
 		{
-			bindEvent(CertificateManagerInitEvent::className);
+			dtn::core::EventDispatcher<CertificateManagerInitEvent>::add(this);
 		}
 
 		void
@@ -70,7 +72,7 @@ namespace dtn
 		void
 		TLSStreamComponent::terminate()
 		{
-			unbindEvent(CertificateManagerInitEvent::className);
+			dtn::core::EventDispatcher<CertificateManagerInitEvent>::remove(this);
 		}
 
 		const std::string

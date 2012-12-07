@@ -20,6 +20,7 @@
  */
 
 #include "StatisticLogger.h"
+#include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"
 #include "core/BundleEvent.h"
 #include <ibrdtn/utils/Clock.h>
@@ -75,8 +76,8 @@ namespace dtn
 			}
 
 			// register at the events
-			bindEvent(dtn::core::NodeEvent::className);
-			bindEvent(dtn::core::BundleEvent::className);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundleEvent>::add(this);
 
 			if (_type == LOGGER_UDP)
 			{
@@ -124,8 +125,8 @@ namespace dtn
 
 		void StatisticLogger::componentDown() throw ()
 		{
-			unbindEvent(dtn::core::NodeEvent::className);
-			unbindEvent(dtn::core::BundleEvent::className);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundleEvent>::remove(this);
 
 			_timer.pause();
 

@@ -25,6 +25,7 @@
 #include "net/TCPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
 #include "net/ConnectionEvent.h"
+#include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundleCore.h"
@@ -66,10 +67,10 @@ namespace dtn
 
 		void ConnectionManager::componentUp() throw ()
 		{
-			bindEvent(TimeEvent::className);
-			bindEvent(NodeEvent::className);
-			bindEvent(ConnectionEvent::className);
-			bindEvent(GlobalEvent::className);
+			dtn::core::EventDispatcher<TimeEvent>::add(this);
+			dtn::core::EventDispatcher<NodeEvent>::add(this);
+			dtn::core::EventDispatcher<ConnectionEvent>::add(this);
+			dtn::core::EventDispatcher<GlobalEvent>::add(this);
 
 			// set next auto connect
 			const dtn::daemon::Configuration::Network &nc = dtn::daemon::Configuration::getInstance().getNetwork();
@@ -87,10 +88,10 @@ namespace dtn
 				_cl.clear();
 			}
 
-			unbindEvent(NodeEvent::className);
-			unbindEvent(TimeEvent::className);
-			unbindEvent(ConnectionEvent::className);
-			unbindEvent(GlobalEvent::className);
+			dtn::core::EventDispatcher<NodeEvent>::remove(this);
+			dtn::core::EventDispatcher<TimeEvent>::remove(this);
+			dtn::core::EventDispatcher<ConnectionEvent>::remove(this);
+			dtn::core::EventDispatcher<GlobalEvent>::remove(this);
 		}
 
 		void ConnectionManager::raiseEvent(const dtn::core::Event *evt) throw ()

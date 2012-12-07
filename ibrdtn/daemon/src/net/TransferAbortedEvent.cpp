@@ -20,6 +20,7 @@
  */
 
 #include "net/TransferAbortedEvent.h"
+#include "core/EventDispatcher.h"
 
 namespace dtn
 {
@@ -43,13 +44,13 @@ namespace dtn
 		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason r)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new TransferAbortedEvent(peer, bundle, r) );
+			dtn::core::EventDispatcher<TransferAbortedEvent>::raise( new TransferAbortedEvent(peer, bundle, r) );
 		}
 
 		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason r)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new TransferAbortedEvent(peer, id, r) );
+			dtn::core::EventDispatcher<TransferAbortedEvent>::raise( new TransferAbortedEvent(peer, id, r) );
 		}
 
 		const std::string TransferAbortedEvent::getName() const

@@ -23,6 +23,7 @@
 #include "net/DatagramConnection.h"
 
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 #include "core/TimeEvent.h"
 #include "core/NodeEvent.h"
 
@@ -144,7 +145,7 @@ namespace dtn
 
 		void DatagramConvergenceLayer::componentUp() throw ()
 		{
-			bindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			try {
 				_service->bind();
 			} catch (const std::exception &e) {
@@ -158,7 +159,7 @@ namespace dtn
 
 		void DatagramConvergenceLayer::componentDown() throw ()
 		{
-			unbindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 
 			// shutdown all connections
 			{

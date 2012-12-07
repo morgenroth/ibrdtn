@@ -22,13 +22,11 @@
 #ifndef EVENTSWITCH_H_
 #define EVENTSWITCH_H_
 
-#include "core/Event.h"
-#include "core/EventReceiver.h"
 #include "Component.h"
+#include "core/Event.h"
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Conditional.h>
-#include "core/EventDebugger.h"
 
 #include <list>
 #include <map>
@@ -37,20 +35,7 @@ namespace dtn
 {
 	namespace core
 	{
-		class EventException : public ibrcommon::Exception
-		{
-
-		};
-
-		class NoSuchEventException : public EventException
-		{
-
-		};
-
-		class NoReceiverFoundException : public ibrcommon::Exception
-		{
-
-		};
+		class EventReceiver;
 
 		class EventSwitch : public dtn::daemon::IntegratedComponent
 		{
@@ -58,15 +43,8 @@ namespace dtn
 			EventSwitch();
 			virtual ~EventSwitch();
 
-			ibrcommon::Mutex _receiverlock;
-			std::map<std::string, std::list<EventReceiver*> > _list;
-
 			bool _running;
-
-			// create event debugger
-			EventDebugger _debugger;
-
-			const std::list<EventReceiver*>& getReceivers(std::string eventName) const;
+			bool _shutdown;
 
 			/**
 			 * @see Component::getName()
@@ -76,11 +54,10 @@ namespace dtn
 			class Task
 			{
 			public:
-				Task();
-				Task(EventReceiver *er, dtn::core::Event *evt);
+				Task(EventProcessor &proc, dtn::core::Event *evt);
 				~Task();
 
-				EventReceiver *receiver;
+				EventProcessor &processor;
 				dtn::core::Event *event;
 			};
 
@@ -99,37 +76,34 @@ namespace dtn
 				bool _running;
 			};
 
+			/**
+			 * checks if all the queues are empty
+			 */
+			bool empty();
+
 			ibrcommon::Conditional _queue_cond;
 			std::list<Task*> _queue;
 			std::list<Task*> _prio_queue;
 			std::list<Task*> _low_queue;
 
-			ibrcommon::Conditional _active_cond;
-			size_t _active_worker;
-			bool _pause;
-
 			void process();
-
-			void pause();
-			void unpause();
-
-			void unregister(std::string eventName, EventReceiver *receiver);
 
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
 
-			friend class Event;
-			friend class EventReceiver;
-
-			static void registerEventReceiver(string eventName, EventReceiver *receiver);
-			static void unregisterEventReceiver(string eventName, EventReceiver *receiver);
-			static void raiseEvent(Event *evt);
-
 		public:
 			static EventSwitch& getInstance();
 			void loop(size_t threads = 0);
-			void clear();
+
+			/**
+			 * Bring down the EventSwitch.
+			 * Do not accept any further events, but deliver all events in the queue.
+			 */
+			void shutdown();
+
+			//static void raiseEvent(Event *evt);
+			static void queue(EventProcessor &proc, Event *evt);
 
 			friend class Worker;
 		};

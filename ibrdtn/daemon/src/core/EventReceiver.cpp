@@ -20,7 +20,6 @@
  */
 
 #include "core/EventReceiver.h"
-#include "core/EventSwitch.h"
 
 namespace dtn
 {
@@ -28,15 +27,5 @@ namespace dtn
 	{
 		EventReceiver::~EventReceiver()
 		{ };
-
-		void EventReceiver::bindEvent(std::string eventName)
-		{
-			dtn::core::EventSwitch::registerEventReceiver(eventName, this);
-		}
-
-		void EventReceiver::unbindEvent(std::string eventName)
-		{
-			dtn::core::EventSwitch::unregisterEventReceiver(eventName, this);
-		}
 	}
 }

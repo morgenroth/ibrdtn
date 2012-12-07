@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "core/EventDispatcher.h"
 #include "core/AbstractWorker.h"
 #include "core/BundleCore.h"
 #include "routing/QueueBundleEvent.h"
@@ -43,12 +44,12 @@ namespace dtn
 		AbstractWorker::AbstractWorkerAsync::AbstractWorkerAsync(AbstractWorker &worker)
 		 : _worker(worker), _running(true)
 		{
-			bindEvent(dtn::routing::QueueBundleEvent::className);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 		}
 
 		AbstractWorker::AbstractWorkerAsync::~AbstractWorkerAsync()
 		{
-			unbindEvent(dtn::routing::QueueBundleEvent::className);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 			shutdown();
 		}
 

@@ -20,6 +20,8 @@
  */
 
 #include "core/EventSwitch.h"
+#include "core/EventReceiver.h"
+#include "core/EventDispatcher.h"
 
 #include <ibrcommon/thread/MutexLock.h>
 #include "core/GlobalEvent.h"
@@ -33,7 +35,7 @@ namespace dtn
 	namespace core
 	{
 		EventSwitch::EventSwitch()
-		 : _running(true), _active_worker(0), _pause(false)
+		 : _running(true), _shutdown(false)
 		{
 		}
 
@@ -50,16 +52,23 @@ namespace dtn
 		{
 			try {
 				ibrcommon::MutexLock l(_queue_cond);
-				_running = false;
 
-				// wait until the queue is empty
-				while (!_queue.empty())
+				// stop receiving events
+				_shutdown = true;
+
+				// wait until all queues are empty
+				while (!this->empty())
 				{
 					_queue_cond.wait();
 				}
 
 				_queue_cond.abort();
 			} catch (const ibrcommon::Conditional::ConditionalAbortException&) {};
+		}
+
+		bool EventSwitch::empty()
+		{
+			return (_low_queue.empty() && _queue.empty() && _prio_queue.empty());
 		}
 
 		void EventSwitch::process()
@@ -69,7 +78,7 @@ namespace dtn
 			// just look for an event to process
 			{
 				ibrcommon::MutexLock l(_queue_cond);
-				while (_queue.empty() && _prio_queue.empty() && _low_queue.empty())
+				while (this->empty() && !_shutdown)
 				{
 					_queue_cond.wait();
 				}
@@ -92,24 +101,25 @@ namespace dtn
 				}
 
 				_queue_cond.signal(true);
-
-				ibrcommon::MutexLock la(_active_cond);
-				_active_worker++;
-				_active_cond.signal(true);
 			}
 
-			// execute the event
-			t->receiver->raiseEvent(t->event);
+			if (t != NULL)
+			{
+				// execute the event
+				t->processor.process(t->event);
 
-			// delete the Task
-			delete t;
+				// delete the Task
+				delete t;
+			}
 
-			ibrcommon::MutexLock l(_active_cond);
-			_active_worker--;
-			_active_cond.signal(true);
+			// on shutdown - check if the queue is empty
+			if (_shutdown && this->empty()) {
+				// set running mode to false
+				_running = false;
 
-			// wait while pause is enabled
-			while (_pause) _active_cond.wait();
+				// abort the conditional to release all blocking threads
+				_queue_cond.abort();
+			}
 		}
 
 		void EventSwitch::loop(size_t threads)
@@ -125,7 +135,7 @@ namespace dtn
 			}
 
 			try {
-				while (_running || (!_queue.empty()))
+				while (_running)
 				{
 					process();
 				}
@@ -139,151 +149,47 @@ namespace dtn
 			}
 		}
 
-		void EventSwitch::pause()
-		{
-			// wait until all workers are done
-			ibrcommon::MutexLock la(_active_cond);
-			_pause = true;
-			while (_active_worker != 0) { _active_cond.wait(); };
-		}
-
-		void EventSwitch::unpause()
-		{
-			ibrcommon::MutexLock la(_active_cond);
-			_pause = false;
-			_active_cond.signal();
-		}
-
-		const list<EventReceiver*>& EventSwitch::getReceivers(string eventName) const
-		{
-			map<string,list<EventReceiver*> >::const_iterator iter = _list.find(eventName);
-
-			if (iter == _list.end())
-			{
-				throw NoReceiverFoundException();
-			}
-
-			return iter->second;
-		}
-
-		void EventSwitch::registerEventReceiver(string eventName, EventReceiver *receiver)
-		{
-			// get the list for this event
-			EventSwitch &s = EventSwitch::getInstance();
-			ibrcommon::MutexLock l(s._receiverlock);
-			s._list[eventName].push_back(receiver);
-		}
-
-		void EventSwitch::unregisterEventReceiver(string eventName, EventReceiver *receiver)
-		{
-			// unregister the receiver
-			EventSwitch::getInstance().unregister(eventName, receiver);
-		}
-
-		void EventSwitch::unregister(std::string eventName, EventReceiver *receiver)
-		{
-			{
-				// remove the receiver from the list
-				ibrcommon::MutexLock lr(_receiverlock);
-				std::list<EventReceiver*> &rlist = _list[eventName];
-				for (std::list<EventReceiver*>::iterator iter = rlist.begin(); iter != rlist.end(); iter++)
-				{
-					if ((*iter) == receiver)
-					{
-						rlist.erase(iter);
-						break;
-					}
-				}
-			}
-
-			// set the event switch into pause mode and wait
-			// until all threads are on hold
-			pause();
-
-			{
-				// freeze the queue
-				ibrcommon::MutexLock lq(_queue_cond);
-
-				// remove all elements with this receiver from the queue
-				for (std::list<Task*>::iterator iter = _queue.begin(); iter != _queue.end();)
-				{
-					EventSwitch::Task &t = (**iter);
-					std::list<Task*>::iterator current = iter++;
-					if (t.receiver == receiver)
-					{
-						_queue.erase(current);
-					}
-				}
-			}
-
-			// resume all threads
-			unpause();
-		}
-
-		void EventSwitch::raiseEvent(Event *evt)
+		void EventSwitch::queue(EventProcessor &proc, Event *evt)
 		{
 			EventSwitch &s = EventSwitch::getInstance();
+
+			ibrcommon::MutexLock l(s._queue_cond);
 
 			// do not process any event if the system is going down
+			if (s._shutdown)
 			{
-				ibrcommon::MutexLock l(s._queue_cond);
-				if (!s._running)
-				{
-					if (evt->decrement_ref_count())
-					{
-						delete evt;
-					}
-
-					return;
-				}
+				delete evt;
+				return;
 			}
 
-			// forward to debugger
-			s._debugger.raiseEvent(evt);
+			EventSwitch::Task *t = new EventSwitch::Task(proc, evt);
 
-			try {
-				dtn::core::GlobalEvent &global = dynamic_cast<dtn::core::GlobalEvent&>(*evt);
-
-				if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
-				{
-					// stop receiving events
-					try {
-						ibrcommon::MutexLock l(s._queue_cond);
-						s._running = false;
-						s._queue_cond.abort();
-					} catch (const ibrcommon::Conditional::ConditionalAbortException&) {};
-				}
-			} catch (const std::bad_cast&) { }
-
-			try {
-				ibrcommon::MutexLock reglock(s._receiverlock);
-
-				// get the list for this event
-				const std::list<EventReceiver*> receivers = s.getReceivers(evt->getName());
-				evt->set_ref_count(receivers.size());
-
-				for (list<EventReceiver*>::const_iterator iter = receivers.begin(); iter != receivers.end(); iter++)
-				{
-					Task *t = new Task(*iter, evt);
-					ibrcommon::MutexLock l(s._queue_cond);
-
-					if (evt->prio > 0)
-					{
-						s._prio_queue.push_back(t);
-					}
-					else if (evt->prio < 0)
-					{
-						s._low_queue.push_back(t);
-					}
-					else
-					{
-						s._queue.push_back(t);
-					}
-					s._queue_cond.signal();
-				}
-			} catch (const NoReceiverFoundException&) {
-				// No receiver available!
+			if (evt->prio > 0)
+			{
+				s._prio_queue.push_back(t);
 			}
+			else if (evt->prio < 0)
+			{
+				s._low_queue.push_back(t);
+			}
+			else
+			{
+				s._queue.push_back(t);
+			}
+			s._queue_cond.signal();
+		}
+
+		void EventSwitch::shutdown()
+		{
+			try {
+				ibrcommon::MutexLock l(_queue_cond);
+
+				// stop receiving events
+				_shutdown = true;
+
+				// signal all blocking thread to check _shutdown variable
+				_queue_cond.signal(true);
+			} catch (const ibrcommon::Conditional::ConditionalAbortException&) {};
 		}
 
 		EventSwitch& EventSwitch::getInstance()
@@ -297,19 +203,8 @@ namespace dtn
 			return "EventSwitch";
 		}
 
-		void EventSwitch::clear()
-		{
-			ibrcommon::MutexLock l(_receiverlock);
-			_list.clear();
-		}
-
-		EventSwitch::Task::Task()
-		 : receiver(NULL), event(NULL)
-		{
-		}
-
-		EventSwitch::Task::Task(EventReceiver *er, dtn::core::Event *evt)
-		 : receiver(er), event(evt)
+		EventSwitch::Task::Task(EventProcessor &proc, dtn::core::Event *evt)
+		 : processor(proc), event(evt)
 		{
 		}
 
@@ -317,10 +212,7 @@ namespace dtn
 		{
 			if (event != NULL)
 			{
-				if (event->decrement_ref_count())
-				{
-					delete event;
-				}
+				delete event;
 			}
 		}
 

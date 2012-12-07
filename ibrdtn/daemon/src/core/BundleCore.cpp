@@ -21,6 +21,7 @@
 
 #include "config.h"
 #include "Configuration.h"
+#include "core/EventDispatcher.h"
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleEvent.h"
@@ -78,16 +79,16 @@ namespace dtn
 		BundleCore::BundleCore()
 		 : _clock(1), _storage(NULL), _router(NULL), _globally_connected(true)
 		{
-			bindEvent(dtn::routing::QueueBundleEvent::className);
-			bindEvent(dtn::core::BundlePurgeEvent::className);
-			bindEvent(dtn::core::TimeAdjustmentEvent::className);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::add(this);
 		}
 
 		BundleCore::~BundleCore()
 		{
-			unbindEvent(dtn::routing::QueueBundleEvent::className);
-			unbindEvent(dtn::core::BundlePurgeEvent::className);
-			unbindEvent(dtn::core::TimeAdjustmentEvent::className);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::remove(this);
 		}
 
 		void BundleCore::componentUp() throw ()

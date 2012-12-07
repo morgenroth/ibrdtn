@@ -20,6 +20,7 @@
  */
 
 #include "core/BundlePurgeEvent.h"
+#include "core/EventDispatcher.h"
 
 namespace dtn
 {
@@ -37,7 +38,7 @@ namespace dtn
 		void BundlePurgeEvent::raise(const dtn::data::BundleID &id, dtn::data::StatusReportBlock::REASON_CODE reason)
 		{
 			// raise the new event
-			raiseEvent( new BundlePurgeEvent(id, reason) );
+			dtn::core::EventDispatcher<BundlePurgeEvent>::raise( new BundlePurgeEvent(id, reason) );
 		}
 
 		const std::string BundlePurgeEvent::getName() const

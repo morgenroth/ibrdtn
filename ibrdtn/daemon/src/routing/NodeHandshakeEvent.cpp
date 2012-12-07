@@ -20,6 +20,7 @@
  */
 
 #include "routing/NodeHandshakeEvent.h"
+#include "core/EventDispatcher.h"
 
 namespace dtn
 {
@@ -59,7 +60,7 @@ namespace dtn
 
 		void NodeHandshakeEvent::raiseEvent(HANDSHAKE_STATE state, const dtn::data::EID &peer)
 		{
-			dtn::core::Event::raiseEvent( new NodeHandshakeEvent(state, peer) );
+			dtn::core::EventDispatcher<NodeHandshakeEvent>::raise( new NodeHandshakeEvent(state, peer) );
 		}
 
 		const string NodeHandshakeEvent::className = "NodeHandshakeEvent";

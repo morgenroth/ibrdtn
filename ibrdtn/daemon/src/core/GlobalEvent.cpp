@@ -20,6 +20,7 @@
  */
 
 #include "core/GlobalEvent.h"
+#include "core/EventDispatcher.h"
 using namespace std;
 
 namespace dtn
@@ -40,7 +41,7 @@ namespace dtn
 			return _action;
 		}
 
-		const string GlobalEvent::getName() const
+		const std::string GlobalEvent::getName() const
 		{
 			return GlobalEvent::className;
 		}
@@ -48,14 +49,9 @@ namespace dtn
 		void GlobalEvent::raise(const Action a)
 		{
 			// raise the new event
-			raiseEvent( new GlobalEvent(a) );
+			dtn::core::EventDispatcher<GlobalEvent>::raise( new GlobalEvent(a) );
 		}
 
-		string GlobalEvent::toString() const
-		{
-			return className;
-		}
-
-		const string GlobalEvent::className = "GlobalEvent";
+		const std::string GlobalEvent::className = "GlobalEvent";
 	}
 }

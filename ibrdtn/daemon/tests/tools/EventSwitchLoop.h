@@ -33,8 +33,6 @@ namespace ibrtest
 	public:
 		EventSwitchLoop()
 		{
-			dtn::core::EventSwitch &es = dtn::core::EventSwitch::getInstance();
-			es.clear();
 		};
 
 		virtual ~EventSwitchLoop()
@@ -51,7 +49,8 @@ namespace ibrtest
 
 		void __cancellation() throw ()
 		{
-			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+			dtn::core::EventSwitch &es = dtn::core::EventSwitch::getInstance();
+			es.shutdown();
 		}
 	};
 }

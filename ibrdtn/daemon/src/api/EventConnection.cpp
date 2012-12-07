@@ -21,6 +21,7 @@
 
 #include "EventConnection.h"
 
+#include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
 #include "core/CustodyEvent.h"
@@ -332,27 +333,27 @@ namespace dtn
 		void EventConnection::setup()
 		{
 			// bind to several events
-			bindEvent(dtn::core::NodeEvent::className);
-			bindEvent(dtn::core::GlobalEvent::className);
-			bindEvent(dtn::core::CustodyEvent::className);
-			bindEvent(dtn::net::BundleReceivedEvent::className);
-			bindEvent(dtn::net::TransferAbortedEvent::className);
-			bindEvent(dtn::net::TransferCompletedEvent::className);
-			bindEvent(dtn::net::ConnectionEvent::className);
-			bindEvent(dtn::routing::QueueBundleEvent::className);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::CustodyEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 		}
 
 		void EventConnection::finally()
 		{
 			// unbind to events
-			unbindEvent(dtn::core::NodeEvent::className);
-			unbindEvent(dtn::core::GlobalEvent::className);
-			unbindEvent(dtn::core::CustodyEvent::className);
-			unbindEvent(dtn::net::BundleReceivedEvent::className);
-			unbindEvent(dtn::net::TransferAbortedEvent::className);
-			unbindEvent(dtn::net::TransferCompletedEvent::className);
-			unbindEvent(dtn::net::ConnectionEvent::className);
-			unbindEvent(dtn::routing::QueueBundleEvent::className);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::CustodyEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 		}
 
 		void EventConnection::__cancellation()

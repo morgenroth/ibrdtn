@@ -20,6 +20,7 @@
  */
 
 #include "storage/SimpleBundleStorage.h"
+#include "core/EventDispatcher.h"
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleExpiredEvent.h"
@@ -186,13 +187,13 @@ namespace dtn
 
 		void SimpleBundleStorage::componentUp() throw ()
 		{
-			bindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			_datastore.start();
 		}
 
 		void SimpleBundleStorage::componentDown() throw ()
 		{
-			unbindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			_datastore.wait();
 			_datastore.stop();
 			_datastore.join();

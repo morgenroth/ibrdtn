@@ -17,13 +17,13 @@
 #include <list>
 
 #include "StandByManager.h"
-#include "core/BundleCore.h"
-#include "core/FragmentManager.h"
-#include "core/EventSwitch.h"
+
 #include "storage/BundleStorage.h"
 #include "storage/MemoryBundleStorage.h"
 #include "storage/SimpleBundleStorage.h"
 
+#include "core/BundleCore.h"
+#include "core/FragmentManager.h"
 #include "core/Node.h"
 #include "core/EventSwitch.h"
 #include "core/GlobalEvent.h"
@@ -86,6 +86,7 @@
 #endif
 
 #include "Debugger.h"
+#include "core/EventDebugger.h"
 
 #define UNIT_MB * 1048576
 
@@ -824,6 +825,9 @@ int ibrdtn_daemon_main_loop()
 		(*iter)->startup();
 	}
 
+	// create event debugger
+	dtn::core::EventDebugger event_debugger;
+
 	// Debugger
 	dtn::daemon::Debugger debugger;
 
@@ -891,6 +895,7 @@ int ibrdtn_daemon_main_loop()
 
 int ibrdtn_daemon_shutdown() {
 	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+	dtn::core::EventSwitch::getInstance().shutdown();
 	return 0;
 }
 

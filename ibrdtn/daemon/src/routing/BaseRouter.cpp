@@ -22,6 +22,7 @@
 #include "config.h"
 #include "routing/BaseRouter.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
@@ -185,18 +186,18 @@ namespace dtn
 
 		void BaseRouter::componentUp() throw ()
 		{
-			bindEvent(dtn::net::TransferAbortedEvent::className);
-			bindEvent(dtn::net::TransferCompletedEvent::className);
-			bindEvent(dtn::net::BundleReceivedEvent::className);
-			bindEvent(dtn::routing::QueueBundleEvent::className);
-			bindEvent(dtn::routing::RequeueBundleEvent::className);
-			bindEvent(dtn::routing::NodeHandshakeEvent::className);
-			bindEvent(dtn::routing::StaticRouteChangeEvent::className);
-			bindEvent(dtn::core::NodeEvent::className);
-			bindEvent(dtn::core::BundleExpiredEvent::className);
-			bindEvent(dtn::core::TimeEvent::className);
-			bindEvent(dtn::core::BundleGeneratedEvent::className);
-			bindEvent(dtn::net::ConnectionEvent::className);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
 
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
@@ -216,18 +217,18 @@ namespace dtn
 
 		void BaseRouter::componentDown() throw ()
 		{
-			unbindEvent(dtn::net::TransferAbortedEvent::className);
-			unbindEvent(dtn::net::TransferCompletedEvent::className);
-			unbindEvent(dtn::net::BundleReceivedEvent::className);
-			unbindEvent(dtn::routing::QueueBundleEvent::className);
-			unbindEvent(dtn::routing::RequeueBundleEvent::className);
-			unbindEvent(dtn::routing::NodeHandshakeEvent::className);
-			unbindEvent(dtn::routing::StaticRouteChangeEvent::className);
-			unbindEvent(dtn::core::NodeEvent::className);
-			unbindEvent(dtn::core::BundleExpiredEvent::className);
-			unbindEvent(dtn::core::TimeEvent::className);
-			unbindEvent(dtn::core::BundleGeneratedEvent::className);
-			unbindEvent(dtn::net::ConnectionEvent::className);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
 
 			// stop all extensions
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)

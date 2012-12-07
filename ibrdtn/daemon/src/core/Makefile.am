@@ -41,7 +41,8 @@ core_SOURCES = \
 	BundlePurgeEvent.h \
 	BundlePurgeEvent.cpp \
 	TimeAdjustmentEvent.h \
-	TimeAdjustmentEvent.cpp
+	TimeAdjustmentEvent.cpp \
+	EventDispatcher.h
 
 if ANDROID
 noinst_DATA = Android.mk

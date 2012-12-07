@@ -21,6 +21,7 @@
 
 #include "core/BundleExpiredEvent.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 
 namespace dtn
 {
@@ -46,13 +47,13 @@ namespace dtn
 		void BundleExpiredEvent::raise(const dtn::data::Bundle &bundle)
 		{
 			// raise the new event
-			raiseEvent( new BundleExpiredEvent(bundle) );
+			dtn::core::EventDispatcher<BundleExpiredEvent>::raise( new BundleExpiredEvent(bundle) );
 		}
 
 		void BundleExpiredEvent::raise(const dtn::data::BundleID &bundle)
 		{
 			// raise the new event
-			raiseEvent( new BundleExpiredEvent(bundle) );
+			dtn::core::EventDispatcher<BundleExpiredEvent>::raise( new BundleExpiredEvent(bundle) );
 		}
 
 		const string BundleExpiredEvent::getName() const

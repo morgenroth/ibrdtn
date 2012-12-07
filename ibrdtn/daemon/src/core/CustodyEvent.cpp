@@ -20,6 +20,7 @@
  */
 
 #include "core/CustodyEvent.h"
+#include "core/EventDispatcher.h"
 #include "ibrdtn/data/Exceptions.h"
 
 namespace dtn
@@ -57,7 +58,7 @@ namespace dtn
 
 		void CustodyEvent::raise(const dtn::data::MetaBundle &bundle, const EventCustodyAction action)
 		{
-			raiseEvent( new CustodyEvent(bundle, action) );
+			dtn::core::EventDispatcher<CustodyEvent>::raise( new CustodyEvent(bundle, action) );
 		}
 
 		const std::string CustodyEvent::className = "CustodyEvent";

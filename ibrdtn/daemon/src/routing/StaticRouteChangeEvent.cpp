@@ -20,6 +20,7 @@
  */
 
 #include "routing/StaticRouteChangeEvent.h"
+#include "core/EventDispatcher.h"
 #include <sstream>
 
 namespace dtn
@@ -102,17 +103,17 @@ namespace dtn
 
 		void StaticRouteChangeEvent::raiseEvent(CHANGE_TYPE t)
 		{
-			dtn::core::Event::raiseEvent( new StaticRouteChangeEvent(t) );
+			dtn::core::EventDispatcher<StaticRouteChangeEvent>::raise( new StaticRouteChangeEvent(t) );
 		}
 
 		void StaticRouteChangeEvent::raiseEvent(CHANGE_TYPE t, const dtn::data::EID &n, const std::string p, size_t to)
 		{
-			dtn::core::Event::raiseEvent( new StaticRouteChangeEvent(t, n, p, to) );
+			dtn::core::EventDispatcher<StaticRouteChangeEvent>::raise( new StaticRouteChangeEvent(t, n, p, to) );
 		}
 
 		void StaticRouteChangeEvent::raiseEvent(CHANGE_TYPE t, const dtn::data::EID &n, const dtn::data::EID &d, size_t to)
 		{
-			dtn::core::Event::raiseEvent( new StaticRouteChangeEvent(t, n, d, to) );
+			dtn::core::EventDispatcher<StaticRouteChangeEvent>::raise( new StaticRouteChangeEvent(t, n, d, to) );
 		}
 
 		const string StaticRouteChangeEvent::className = "StaticRouteChangeEvent";

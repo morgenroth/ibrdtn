@@ -23,6 +23,7 @@
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/BundleReceivedEvent.h"
+#include "core/EventDispatcher.h"
 #include "core/BundleEvent.h"
 #include "core/BundleCore.h"
 #include "core/NodeEvent.h"
@@ -69,14 +70,14 @@ namespace dtn
 
 		void FileConvergenceLayer::componentUp() throw ()
 		{
-			bindEvent(dtn::core::NodeEvent::className);
-			bindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 		}
 
 		void FileConvergenceLayer::componentDown() throw ()
 		{
-			unbindEvent(dtn::core::NodeEvent::className);
-			unbindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
 
 		void FileConvergenceLayer::__cancellation() throw ()

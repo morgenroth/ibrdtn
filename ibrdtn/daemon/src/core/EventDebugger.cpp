@@ -20,16 +20,28 @@
  */
 
 #include "core/EventDebugger.h"
+#include "core/EventDispatcher.h"
+
 #include "core/NodeEvent.h"
 #include "core/CustodyEvent.h"
 #include "core/BundleEvent.h"
-#include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
+#include "core/BundlePurgeEvent.h"
+#include "core/BundleExpiredEvent.h"
+#include "core/BundleGeneratedEvent.h"
+#include "core/TimeAdjustmentEvent.h"
+
+#include "net/ConnectionEvent.h"
+#include "net/TransferAbortedEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/BundleReceivedEvent.h"
+
+#include "routing/StaticRouteChangeEvent.h"
+#include "routing/QueueBundleEvent.h"
+#include "routing/RequeueBundleEvent.h"
+
 #include <ibrcommon/Logger.h>
 #include <iostream>
-
-using namespace std;
-using namespace ibrcommon;
 
 namespace dtn
 {
@@ -37,10 +49,52 @@ namespace dtn
 	{
 		EventDebugger::EventDebugger()
 		{
+			dtn::core::EventDispatcher<dtn::core::CustodyEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundleEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
+			
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::add(this);
+
+			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::add(this);
+
+			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::add(this);
+
+			/**
+				NodeHandshakeEvent
+				TimeEvent
+				CertificateManagerInitEvent
+			*/
 		}
 
 		EventDebugger::~EventDebugger()
 		{
+			dtn::core::EventDispatcher<dtn::core::CustodyEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundleEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
+			
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::remove(this);
+
+			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::remove(this);
+
+			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::remove(this);
 		}
 
 		void EventDebugger::raiseEvent(const Event *evt) throw ()
@@ -111,12 +165,6 @@ namespace dtn
 					IBRCOMMON_LOGGER(notice) << node.getName() << ": unknown" << IBRCOMMON_LOGGER_ENDL;
 					break;
 				}
-				return;
-			} catch (const std::bad_cast&) { }
-
-			try {
-				const TimeEvent &time = dynamic_cast<const TimeEvent&>(*evt);
-				// do not debug print time events
 				return;
 			} catch (const std::bad_cast&) { }
 

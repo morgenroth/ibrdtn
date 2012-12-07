@@ -21,6 +21,7 @@
 
 #include "routing/RequeueBundleEvent.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 
 namespace dtn
 {
@@ -40,7 +41,7 @@ namespace dtn
 		void RequeueBundleEvent::raise(const dtn::data::EID peer, const dtn::data::BundleID &id)
 		{
 			// raise the new event
-			raiseEvent( new RequeueBundleEvent(peer, id) );
+			dtn::core::EventDispatcher<RequeueBundleEvent>::raise( new RequeueBundleEvent(peer, id) );
 		}
 
 		const string RequeueBundleEvent::getName() const

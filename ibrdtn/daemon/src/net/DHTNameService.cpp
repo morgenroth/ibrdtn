@@ -23,6 +23,7 @@
 
 #include "DHTNameService.h"
 #include "ibrcommon/net/vsocket.h"
+#include "core/EventDispatcher.h"
 #include "core/BundleCore.h"
 #include "core/NodeEvent.h"
 #include "routing/QueueBundleEvent.h"
@@ -236,8 +237,8 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 
 	// Bootstrapping the DHT
 	int rc, numberOfRandomRequests = 0;
-	bindEvent(dtn::routing::QueueBundleEvent::className);
-	bindEvent(dtn::core::NodeEvent::className);
+	dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+	dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
 
 	// DHT main loop
 	time_t tosleep = 0;
@@ -389,8 +390,8 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 			}
 		}
 	}
-	unbindEvent(dtn::routing::QueueBundleEvent::className);
-	unbindEvent(dtn::core::NodeEvent::className);
+	dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
+	dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
 	this->_initialized = false;
 	if (_config.getPathToNodeFiles().size() > 0) {
 		ibrcommon::MutexLock l(this->_libmutex);

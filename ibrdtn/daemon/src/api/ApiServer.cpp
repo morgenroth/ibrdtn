@@ -22,6 +22,7 @@
 #include "config.h"
 #include "Configuration.h"
 #include "api/ApiServer.h"
+#include "core/EventDispatcher.h"
 #include "core/BundleCore.h"
 #include "routing/QueueBundleEvent.h"
 #include "net/BundleReceivedEvent.h"
@@ -97,7 +98,7 @@ namespace dtn
 			// bring up all server sockets
 			_sockets.up();
 			
-			bindEvent(dtn::routing::QueueBundleEvent::className);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			startGarbageCollector();
 		}
 
@@ -193,7 +194,7 @@ namespace dtn
 
 		void ApiServer::componentDown() throw ()
 		{
-			unbindEvent(dtn::routing::QueueBundleEvent::className);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 
 			// put the server into shutdown mode
 			_shutdown = true;

@@ -21,6 +21,7 @@
 
 #include "routing/QueueBundleEvent.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 
 namespace dtn
 {
@@ -40,7 +41,7 @@ namespace dtn
 		void QueueBundleEvent::raise(const dtn::data::MetaBundle &bundle, const dtn::data::EID &origin)
 		{
 			// raise the new event
-			raiseEvent( new QueueBundleEvent(bundle, origin) );
+			dtn::core::EventDispatcher<QueueBundleEvent>::raise( new QueueBundleEvent(bundle, origin) );
 		}
 
 		const string QueueBundleEvent::getName() const

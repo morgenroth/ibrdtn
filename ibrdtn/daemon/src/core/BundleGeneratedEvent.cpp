@@ -21,6 +21,7 @@
 
 #include "core/BundleGeneratedEvent.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 #include <ibrcommon/Logger.h>
 
 namespace dtn
@@ -42,7 +43,7 @@ namespace dtn
 		void BundleGeneratedEvent::raise(const dtn::data::Bundle &bundle)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new BundleGeneratedEvent(bundle) );
+			dtn::core::EventDispatcher<BundleGeneratedEvent>::raise( new BundleGeneratedEvent(bundle) );
 		}
 
 		const string BundleGeneratedEvent::getName() const

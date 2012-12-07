@@ -19,9 +19,9 @@
  *
  */
 
+#include "core/EventDispatcher.h"
 #include "core/FragmentManager.h"
 #include "core/BundleCore.h"
-#include "core/EventSwitch.h"
 #include "core/TimeEvent.h"
 #include "core/BundlePurgeEvent.h"
 #include "net/BundleReceivedEvent.h"
@@ -60,8 +60,8 @@ namespace dtn
 
 		void FragmentManager::componentUp() throw ()
 		{
-			bindEvent(dtn::routing::QueueBundleEvent::className);
-			bindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			_running = true;
 		}
 
@@ -139,8 +139,8 @@ namespace dtn
 
 		void FragmentManager::componentDown() throw ()
 		{
-			unbindEvent(dtn::routing::QueueBundleEvent::className);
-			unbindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
 
 		void FragmentManager::raiseEvent(const Event *evt) throw ()

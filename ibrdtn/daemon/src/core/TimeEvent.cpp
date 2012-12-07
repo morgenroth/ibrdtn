@@ -20,6 +20,7 @@
  */
 
 #include "core/TimeEvent.h"
+#include "core/EventDispatcher.h"
 
 namespace dtn
 {
@@ -59,7 +60,7 @@ namespace dtn
 		void TimeEvent::raise(const size_t timestamp, const size_t unixtimestamp, const TimeEventAction action)
 		{
 			// raise the new event
-			raiseEvent( new TimeEvent(timestamp, unixtimestamp, action) );
+			dtn::core::EventDispatcher<TimeEvent>::raise( new TimeEvent(timestamp, unixtimestamp, action) );
 		}
 
 		std::string TimeEvent::toString() const

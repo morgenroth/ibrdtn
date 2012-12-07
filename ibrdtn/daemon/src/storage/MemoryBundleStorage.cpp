@@ -20,6 +20,7 @@
  */
 
 #include "storage/MemoryBundleStorage.h"
+#include "core/EventDispatcher.h"
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleExpiredEvent.h"
@@ -43,12 +44,12 @@ namespace dtn
 
 		void MemoryBundleStorage::componentUp() throw ()
 		{
-			bindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 		}
 
 		void MemoryBundleStorage::componentDown() throw ()
 		{
-			unbindEvent(dtn::core::TimeEvent::className);
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
 
 		void MemoryBundleStorage::raiseEvent(const dtn::core::Event *evt) throw ()

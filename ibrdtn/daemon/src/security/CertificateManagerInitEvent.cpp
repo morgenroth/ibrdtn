@@ -20,6 +20,7 @@
  */
 
 #include "SecurityCertificateManager.h"
+#include "core/EventDispatcher.h"
 
 namespace dtn {
 
@@ -51,7 +52,7 @@ const std::string CertificateManagerInitEvent::className = "CertificateManagerIn
 void
 CertificateManagerInitEvent::raise(X509 * certificate, EVP_PKEY * privateKey, const ibrcommon::File &trustedCAPath)
 {
-	dtn::core::Event::raiseEvent( new CertificateManagerInitEvent(certificate, privateKey, trustedCAPath) );
+	dtn::core::EventDispatcher<CertificateManagerInitEvent>::raise( new CertificateManagerInitEvent(certificate, privateKey, trustedCAPath) );
 }
 
 }
