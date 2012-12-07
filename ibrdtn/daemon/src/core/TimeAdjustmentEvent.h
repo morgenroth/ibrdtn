@@ -10,7 +10,7 @@
 
 #include "core/Node.h"
 #include "core/Event.h"
-#include <time.h>
+#include <sys/time.h>
 
 namespace dtn
 {
