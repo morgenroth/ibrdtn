@@ -383,9 +383,9 @@ namespace dtn
 						return false;
 					}
 
-					// do not forward to any blacklisted destination
-					const dtn::data::EID dest = meta.destination.getNode();
-					if (_blacklist.find(dest) != _blacklist.end())
+					// do not forward bundles addressed to this neighbor,
+					// because this is handled by neighbor routing extension
+					if (_entry.eid == meta.destination.getNode())
 					{
 						return false;
 					}
@@ -406,13 +406,7 @@ namespace dtn
 					return true;
 				}
 
-				void blacklist(const dtn::data::EID& id)
-				{
-					_blacklist.insert(id);
-				}
-
 			private:
-				std::set<dtn::data::EID> _blacklist;
 				const NeighborDatabase::NeighborEntry &_entry;
 				const ForwardingStrategy &_strategy;
 			};
@@ -456,9 +450,6 @@ namespace dtn
 
 								// some debug output
 								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
-
-								// blacklist the neighbor itself, because this is handled by neighbor routing extension
-								filter.blacklist(task.eid);
 
 								// query some unknown bundle from the storage, the list contains max. 10 items.
 								const std::list<dtn::data::MetaBundle> list = storage.get(filter);

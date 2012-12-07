@@ -114,9 +114,9 @@ namespace dtn
 						return false;
 					}
 
-					// do not forward to any blacklisted destination
-					const dtn::data::EID dest = meta.destination.getNode();
-					if (_blacklist.find(dest) != _blacklist.end())
+					// do not forward bundles addressed to this neighbor,
+					// because this is handled by neighbor routing extension
+					if (_entry.eid == meta.destination.getNode())
 					{
 						return false;
 					}
@@ -142,15 +142,9 @@ namespace dtn
 					return false;
 				};
 
-				void blacklist(const dtn::data::EID& id)
-				{
-					_blacklist.insert(id);
-				};
-
 			private:
-				std::set<dtn::data::EID> _blacklist;
 				const NeighborDatabase::NeighborEntry &_entry;
-				const std::list<const StaticRoute*> _routes;
+				const std::list<const StaticRoute*> &_routes;
 			};
 
 			// announce static routes here
@@ -167,6 +161,7 @@ namespace dtn
 			while (true)
 			{
 				NeighborDatabase &db = (**this).getNeighborDB();
+				std::list<const StaticRoute*> routes;
 
 				try {
 					Task *t = _taskqueue.getnpop(true);
@@ -177,7 +172,8 @@ namespace dtn
 					try {
 						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
 
-						std::list<const StaticRoute*> routes;
+						// remove all routes of the previous round
+						routes.clear();
 
 						// look for routes to this node
 						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
@@ -206,9 +202,6 @@ namespace dtn
 
 							// some debug
 							IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
-
-							// blacklist the neighbor itself, because this is handled by neighbor routing extension
-							filter.blacklist(task.eid);
 
 							// query all bundles from the storage
 							const std::list<dtn::data::MetaBundle> list = storage.get(filter);
