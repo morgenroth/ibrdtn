@@ -46,6 +46,14 @@ DAEMON_ARGS="-D -p ${PIDFILE}"	 	# Arguments to run the daemon with
 #
 do_start()
 {
+	# create the PID directory
+	PIDDIR=`dirname ${PIDFILE}`
+	if [ ! -d ${PIDDIR} ]; then
+		mkdir -p ${PIDDIR}
+		chown ${DAEMON_USER} ${PIDDIR}
+		chgrp ${DAEMON_USER} ${PIDDIR}
+	fi
+
 	# Return
 	#   0 if daemon has been started
 	#   1 if daemon was already running
