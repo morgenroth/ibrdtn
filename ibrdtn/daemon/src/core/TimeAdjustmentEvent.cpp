@@ -8,6 +8,8 @@
 #include "core/TimeAdjustmentEvent.h"
 #include "core/EventDispatcher.h"
 
+#include <sys/time.h>
+
 namespace dtn
 {
 	namespace core
