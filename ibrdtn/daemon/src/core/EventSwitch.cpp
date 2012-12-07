@@ -118,6 +118,7 @@ namespace dtn
 				_running = false;
 
 				// abort the conditional to release all blocking threads
+				ibrcommon::MutexLock l(_queue_cond);
 				_queue_cond.abort();
 			}
 		}
