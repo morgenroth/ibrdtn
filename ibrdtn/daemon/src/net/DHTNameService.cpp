@@ -869,7 +869,7 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 	dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
 	if (hasCL) {
 		IBRCOMMON_LOGGER(info) << ss.str() << IBRCOMMON_LOGGER_ENDL;
-		core.getConnectionManager().addConnection(node);
+		core.getConnectionManager().add(node);
 	}
 
 	// Extracting all neighbours of the new node if usage is allowed

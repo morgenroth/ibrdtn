@@ -70,12 +70,6 @@ void BundleCoreTest::testAddConvergenceLayer()
 	CPPUNIT_FAIL("not implemented");
 }
 
-void BundleCoreTest::testAddConnection()
-{
-	/* test signature (const dtn::core::Node &n) */
-	CPPUNIT_FAIL("not implemented");
-}
-
 void BundleCoreTest::testGetNeighbors()
 {
 	/* test signature () */

@@ -849,7 +849,7 @@ int ibrdtn_daemon_main_loop()
 
 	for (list<Node>::iterator iter = static_nodes.begin(); iter != static_nodes.end(); iter++)
 	{
-		core.getConnectionManager().addConnection(*iter);
+		core.getConnectionManager().add(*iter);
 	}
 
 	IBRCOMMON_LOGGER(info) << "daemon ready" << IBRCOMMON_LOGGER_ENDL;

@@ -26,7 +26,6 @@ class BundleCoreTest : public CppUnit::TestFixture {
 		void testGetSetStorage();
 		void testTransferTo();
 		void testAddConvergenceLayer();
-		void testAddConnection();
 		void testGetNeighbors();
 		void testRaiseEvent();
 		/*=== END   tests for class 'BundleCore' ===*/
@@ -41,7 +40,6 @@ class BundleCoreTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testGetSetStorage);
 			CPPUNIT_TEST(testTransferTo);
 			CPPUNIT_TEST(testAddConvergenceLayer);
-			CPPUNIT_TEST(testAddConnection);
 			CPPUNIT_TEST(testGetNeighbors);
 			CPPUNIT_TEST(testRaiseEvent);
 		CPPUNIT_TEST_SUITE_END();

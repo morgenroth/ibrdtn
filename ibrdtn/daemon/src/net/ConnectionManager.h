@@ -58,8 +58,8 @@ namespace dtn
 			ConnectionManager();
 			virtual ~ConnectionManager();
 
-			void addConnection(const dtn::core::Node &n);
-			void removeConnection(const dtn::core::Node &n);
+			void add(const dtn::core::Node &n);
+			void remove(const dtn::core::Node &n);
 
 			void addConvergenceLayer(ConvergenceLayer *cl);
 
@@ -101,7 +101,7 @@ namespace dtn
 			 * @param eid The EID of the neighbor.
 			 * @return A node object with all neighbor data.
 			 */
-			const dtn::core::Node getNeighbor(const dtn::data::EID &eid);
+			const dtn::core::Node getNeighbor(const dtn::data::EID &eid) throw (NeighborNotAvailableException);
 
 			/**
 			 * Add collected data about a neighbor to the neighbor database.
@@ -148,7 +148,7 @@ namespace dtn
 			/**
 			 * get node
 			 */
-			dtn::core::Node& getNode(const dtn::data::EID &eid);
+			dtn::core::Node& getNode(const dtn::data::EID &eid) throw (NeighborNotAvailableException);
 
 			// if set to true, this module will shutdown
 			bool _shutdown;
@@ -163,7 +163,8 @@ namespace dtn
 			ibrcommon::Mutex _node_lock;
 
 			// contains all nodes
-			std::list<dtn::core::Node> _nodes;
+			typedef std::map<dtn::data::EID, dtn::core::Node> nodemap;
+			nodemap _nodes;
 
 			// next timestamp for autoconnect check
 			size_t _next_autoconnect;

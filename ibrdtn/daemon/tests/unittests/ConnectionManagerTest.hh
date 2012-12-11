@@ -21,7 +21,7 @@ class ConnectionManagerTest : public CppUnit::TestFixture {
 	private:
 	public:
 		/*=== BEGIN tests for class 'ConnectionManager' ===*/
-		void testAddConnection();
+		void testAdd();
 		void testAddConvergenceLayer();
 		void testQueue();
 		void testRaiseEvent();
@@ -36,7 +36,7 @@ class ConnectionManagerTest : public CppUnit::TestFixture {
 
 
 		CPPUNIT_TEST_SUITE(ConnectionManagerTest);
-			CPPUNIT_TEST(testAddConnection);
+			CPPUNIT_TEST(testAdd);
 			CPPUNIT_TEST(testAddConvergenceLayer);
 			CPPUNIT_TEST(testQueue);
 			CPPUNIT_TEST(testRaiseEvent);

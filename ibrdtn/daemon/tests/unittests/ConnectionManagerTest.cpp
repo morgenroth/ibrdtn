@@ -39,7 +39,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(ConnectionManagerTest);
 /*========================== tests below ==========================*/
 
 /*=== BEGIN tests for class 'ConnectionManager' ===*/
-void ConnectionManagerTest::testAddConnection()
+void ConnectionManagerTest::testAdd()
 {
 	/* test signature (const dtn::core::Node &n) */
 	CPPUNIT_FAIL("not implemented");
