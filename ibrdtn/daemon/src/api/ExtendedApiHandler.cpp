@@ -23,7 +23,6 @@
 #include "config.h"
 #include "Configuration.h"
 #include "api/ExtendedApiHandler.h"
-#include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
 #include <ibrcommon/Logger.h>
 #include <ibrdtn/api/PlainSerializer.h>

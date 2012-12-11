@@ -23,7 +23,6 @@
 #include "net/ConnectionManager.h"
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
-#include "net/BundleReceivedEvent.h"
 #include "net/ConnectionEvent.h"
 #include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"

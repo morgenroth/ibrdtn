@@ -24,7 +24,6 @@
 #include "api/BinaryStreamClient.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleCore.h"
-#include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
 #include <ibrdtn/streams/StreamContactHeader.h>
 #include <ibrdtn/data/Serializer.h>
