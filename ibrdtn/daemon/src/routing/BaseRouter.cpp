@@ -268,6 +268,10 @@ namespace dtn
 					ibrcommon::MutexLock l(_neighbor_database);
 					_neighbor_database.reset( event.getNode().getEID() );
 				}
+
+				// pass event to all extensions
+				__forward_event(evt);
+				return;
 			} catch (const std::bad_cast&) { };
 
 			try {
@@ -275,17 +279,16 @@ namespace dtn
 
 				// if a transfer is completed, then release the transfer resource of the peer
 				try {
-					try {
-						// add this bundle to the purge vector if it is delivered to its destination
-						if (( event.getPeer().getNode() == event.getBundle().destination.getNode() ) && (event.getBundle().procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
-						{
-							IBRCOMMON_LOGGER(notice) << "singleton bundle added to purge vector: " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
+					// add this bundle to the purge vector if it is delivered to its destination
+					if ((event.getBundle().procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)
+							&& ( event.getPeer().getNode() == event.getBundle().destination.getNode() ))
+					{
+						IBRCOMMON_LOGGER_DEBUG(20) << "singleton bundle added to purge vector: " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
 
-							// add it to the purge vector
-							ibrcommon::MutexLock l(_purged_bundles_lock);
-							_purged_bundles.add(event.getBundle());
-						}
-					} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
+						// add it to the purge vector
+						ibrcommon::MutexLock l(_purged_bundles_lock);
+						_purged_bundles.add(event.getBundle());
+					}
 
 					// lock the list of neighbors
 					ibrcommon::MutexLock l(_neighbor_database);
@@ -296,12 +299,15 @@ namespace dtn
 					_neighbor_database.addBundle(event.getPeer(), event.getBundle());
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
+				// pass event to all extensions
+				__forward_event(evt);
+				return;
 			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::TransferAbortedEvent &event = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
 
-				// if a tranfer is aborted, then release the transfer resource of the peer
+				// if a transfer is aborted, then release the transfer resource of the peer
 				try {
 					// lock the list of neighbors
 					ibrcommon::MutexLock l(_neighbor_database);
@@ -313,19 +319,17 @@ namespace dtn
 						const dtn::data::MetaBundle meta = _storage.get(event.getBundleID());
 
 						// add the transferred bundle to the bloomfilter of the receiver
-						_neighbor_database.addBundle(event.getPeer(), meta);
+						entry.add(meta);
 					}
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+
+				// pass event to all extensions
+				__forward_event(evt);
+				return;
 			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
-
-				// drop bundles to the NULL-destination
-				if (received.bundle._destination == EID("dtn:null")) return;
-
-				// drop expired bundles
-				if (dtn::utils::Clock::isExpired(received.bundle)) return;
 
 				// Store incoming bundles into the storage
 				try {
@@ -394,9 +398,10 @@ namespace dtn
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				}
 
+				// pass event to all extensions
+				__forward_event(evt);
 				return;
-			} catch (const std::bad_cast&) {
-			}
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::core::BundleGeneratedEvent &generated = dynamic_cast<const dtn::core::BundleGeneratedEvent&>(*evt);
@@ -417,9 +422,9 @@ namespace dtn
 					IBRCOMMON_LOGGER(notice) << "No space left for bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 
+				// do not pass this event to any extension
 				return;
-			} catch (const std::bad_cast&) {
-			}
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
@@ -441,11 +446,20 @@ namespace dtn
 					ibrcommon::MutexLock l(_neighbor_database);
 					_neighbor_database.expire(time.getTimestamp());
 				}
-			} catch (const std::bad_cast&) {
-			}
 
+				// pass event to all extensions
+				__forward_event(evt);
+				return;
+			} catch (const std::bad_cast&) { };
+
+			// pass event to all extensions
+			__forward_event(evt);
+		}
+
+		void BaseRouter::__forward_event(const dtn::core::Event *evt) const throw ()
+		{
 			// notify all underlying extensions
-			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			for (std::list<BaseRouter::Extension*>::const_iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
 				(*iter)->notify(evt);
 			}

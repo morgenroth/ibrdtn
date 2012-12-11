@@ -262,6 +262,8 @@ namespace dtn
 			virtual void componentDown() throw ();
 
 		private:
+			void __forward_event(const dtn::core::Event *evt) const throw ();
+
 			ibrcommon::Mutex _known_bundles_lock;
 			dtn::routing::BundleSummary _known_bundles;
 
