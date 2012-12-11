@@ -224,75 +224,19 @@ namespace dtn
 
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-				const dtn::data::MetaBundle &meta = completed.getBundle();
-				const dtn::data::EID &peer = completed.getPeer();
-
-				if ((meta.destination.getNode() == peer.getNode())
-						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
-				{
-					try {
-						dtn::storage::BundleStorage &storage = (**this).getStorage();
-
-						// bundle has been delivered to its destination
-						// delete it from our storage
-						dtn::core::BundlePurgeEvent::raise(meta);
-
-						IBRCOMMON_LOGGER(notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
-
-						// gen a report
-						dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
-					} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
-
-					// transfer the next bundle to this destination
-					_taskqueue.push( new SearchNextBundleTask( peer ) );
-				}
+				// transfer the next bundle to this destination
+				_taskqueue.push( new SearchNextBundleTask( completed.getPeer() ) );
 				return;
 			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-				const dtn::data::EID &peer = aborted.getPeer();
-				const dtn::data::BundleID &id = aborted.getBundleID();
-
-				switch (aborted.reason)
-				{
-					case dtn::net::TransferAbortedEvent::REASON_UNDEFINED:
-						break;
-
-					case dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED:
-						break;
-
-					case dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED:
-						break;
-
-					case dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN:
-						return;
-
-					case dtn::net::TransferAbortedEvent::REASON_REFUSED:
-					{
-						try {
-							const dtn::data::MetaBundle meta = (**this).getStorage().get(id);
-
-							// if the bundle has been sent by this module delete it
-							if ((meta.destination.getNode() == peer.getNode())
-									&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
-							{
-								// bundle is not deliverable
-								dtn::core::BundlePurgeEvent::raise(id, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
-							}
-						} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
-					}
-					break;
-				}
-
 				// transfer the next bundle to this destination
-				_taskqueue.push( new SearchNextBundleTask( peer ) );
+				_taskqueue.push( new SearchNextBundleTask( aborted.getPeer() ) );
 
 				return;
 			} catch (const std::bad_cast&) { };
 
-			// If a new neighbor comes available, send him a request for the summary vector
-			// If a neighbor went away we can free the stored summary vector
 			try {
 				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
 				const dtn::core::Node &n = nodeevent.getNode();

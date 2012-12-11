@@ -26,6 +26,7 @@
 #include "core/GlobalEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundlePurgeEvent.h"
+#include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include "routing/QueueBundleEvent.h"
@@ -82,6 +83,8 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
 		}
 
 		BundleCore::~BundleCore()
@@ -89,6 +92,8 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
 		}
 
 		void BundleCore::componentUp() throw ()
@@ -238,6 +243,51 @@ namespace dtn
 				return;
 			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
 			} catch (const std::bad_cast&) {}
+
+			try {
+				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+				const dtn::data::MetaBundle &meta = completed.getBundle();
+				const dtn::data::EID &peer = completed.getPeer();
+
+				if ((meta.destination.getNode() == peer.getNode())
+						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
+				{
+					// bundle has been delivered to its destination
+					// delete it from our storage
+					dtn::core::BundlePurgeEvent::raise(meta);
+
+					IBRCOMMON_LOGGER(notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+
+					// gen a report
+					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+				}
+
+				return;
+			} catch (const std::bad_cast&) { }
+
+			try {
+				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+
+				if (aborted.reason != dtn::net::TransferAbortedEvent::REASON_REFUSED) return;
+
+				const dtn::data::EID &peer = aborted.getPeer();
+				const dtn::data::BundleID &id = aborted.getBundleID();
+
+				try {
+					const dtn::data::MetaBundle meta = this->getStorage().get(id);;
+
+					if (!(meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)) return;
+
+					// if the bundle has been sent by this module delete it
+					if (meta.destination.getNode() == peer.getNode())
+					{
+						// bundle is not deliverable
+						dtn::core::BundlePurgeEvent::raise(id, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
+					}
+				} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
+
+				return;
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
