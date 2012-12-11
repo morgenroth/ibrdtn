@@ -55,7 +55,7 @@ namespace dtn
 				}
 
 				// create a deserializer for all bundles
-				dtn::data::DefaultDeserializer deserializer(*stream);
+				dtn::data::DefaultDeserializer deserializer(*stream, dtn::core::BundleCore::getInstance());
 				dtn::data::Bundle b;
 
 				try {
@@ -64,9 +64,6 @@ namespace dtn
 					{
 						// deserialize the next bundle
 						deserializer >> b;
-
-						// validate the bundle
-						dtn::core::BundleCore::getInstance().validate(b);
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(capsule._source, b, false, true);

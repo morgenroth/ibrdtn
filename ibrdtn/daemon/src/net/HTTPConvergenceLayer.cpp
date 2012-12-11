@@ -268,10 +268,7 @@ namespace dtn
 				{
 					try  {
 						dtn::data::Bundle bundle;
-						dtn::data::DefaultDeserializer(_stream) >> bundle;
-						
-						// validate the bundle
-						dtn::core::BundleCore::getInstance().validate(bundle);
+						dtn::data::DefaultDeserializer(_stream, dtn::core::BundleCore::getInstance()) >> bundle;
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle, false, true);

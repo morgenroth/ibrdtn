@@ -81,12 +81,9 @@ namespace dtn
 				while(_stream.good())
 				{
 					try {
-						dtn::data::DefaultDeserializer deserializer(_stream);
+						dtn::data::DefaultDeserializer deserializer(_stream, dtn::core::BundleCore::getInstance());
 						dtn::data::Bundle bundle;
 						deserializer >> bundle;
-						
-						// validate the bundle
-						dtn::core::BundleCore::getInstance().validate(bundle);
 
 						IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConnection::run"<< IBRCOMMON_LOGGER_ENDL;
 

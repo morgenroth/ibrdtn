@@ -394,6 +394,13 @@ namespace dtn
 			 *
 			 */
 
+			// drop bundles to the NULL-destination
+			if (b._destination == EID("dtn:null"))
+			{
+				IBRCOMMON_LOGGER(warning) << "bundle rejected: the destination is null" << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("bundle destination is null");
+			}
+
 			// check if the bundle is expired
 			if (dtn::utils::Clock::isExpired(b))
 			{
