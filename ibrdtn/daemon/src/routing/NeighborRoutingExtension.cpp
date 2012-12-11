@@ -103,6 +103,11 @@ namespace dtn
 							return false;
 						}
 					}
+					else
+					{
+						// do not forward non-singleton bundles
+						return false;
+					}
 
 					// do not forward bundles already known by the destination
 					if (_entry.has(meta))
