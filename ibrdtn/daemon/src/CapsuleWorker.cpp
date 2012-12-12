@@ -19,6 +19,7 @@
  *
  */
 
+#include "Configuration.h"
 #include "CapsuleWorker.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleCore.h"
@@ -66,7 +67,8 @@ namespace dtn
 						deserializer >> b;
 
 						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(capsule._source, b, false, true);
+						bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("capsule");
+						dtn::net::BundleReceivedEvent::raise(capsule._source, b, false, backp);
 					}
 				}
 				catch (const dtn::InvalidDataException &ex) {

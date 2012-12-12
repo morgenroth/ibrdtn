@@ -922,7 +922,7 @@ namespace dtn
 			return Configuration::getInstance()._conf.read<unsigned int>("statistic_port", 1234);
 		}
 
-		size_t Configuration::getLimit(std::string suffix)
+		size_t Configuration::getLimit(const std::string &suffix) const
 		{
 			std::string unparsed = _conf.read<std::string>("limit_" + suffix, "0");
 
@@ -951,6 +951,11 @@ namespace dtn
 			}
 
 			return 0;
+		}
+
+		bool Configuration::isBackpressureEnabled(const std::string &suffix) const
+		{
+			return (_conf.read<std::string>("backpressure_" + suffix, "yes") == "yes");
 		}
 
 		void Configuration::Security::load(const ibrcommon::ConfigFile &conf)

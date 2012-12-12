@@ -19,6 +19,7 @@
  *
  */
 
+#include "Configuration.h"
 #include "net/DatagramConnection.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
@@ -82,7 +83,8 @@ namespace dtn
 					IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::run"<< IBRCOMMON_LOGGER_ENDL;
 
 					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false, true);
+					bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("cl");
+					dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false, backp);
 				}
 			} catch (const dtn::InvalidDataException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "Received an invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

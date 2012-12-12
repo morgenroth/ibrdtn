@@ -287,7 +287,8 @@ namespace dtn
 #endif
 
 			// raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(source, bundle, true, true);
+			bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("api");
+			dtn::net::BundleReceivedEvent::raise(source, bundle, true, backp);
 		}
 
 		Registration& ApiServer::getRegistration(const std::string &handle)

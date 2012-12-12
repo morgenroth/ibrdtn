@@ -19,6 +19,7 @@
  *
  */
 
+#include "Configuration.h"
 #include "net/FileConvergenceLayer.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
@@ -295,7 +296,8 @@ namespace dtn
 					d >> bundle;
 
 					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(n.getEID(), bundle, false, true);
+					bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("cl");
+					dtn::net::BundleReceivedEvent::raise(n.getEID(), bundle, false, backp);
 				}
 				catch (const dtn::data::Validator::RejectedException &ex)
 				{
@@ -452,7 +454,8 @@ namespace dtn
 				schl.setLimit(1);
 
 				// raise default bundle received event
-				dtn::net::BundleReceivedEvent::raise(bundle._destination.getNode(), answer, false, true);
+				bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("cl");
+				dtn::net::BundleReceivedEvent::raise(bundle._destination.getNode(), answer, false, backp);
 			}
 		}
 	} /* namespace net */

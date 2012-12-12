@@ -161,7 +161,17 @@ namespace dtn
 			 * If the string is "block", then the value of "limit_block" is returned.
 			 * @return A limit in bytes.
 			 */
-			size_t getLimit(std::string);
+			size_t getLimit(const std::string&) const;
+
+			/**
+			 * Check if the back-pressure feature is enabled for a specific module
+			 * Possible modules:
+			 *  "api": For incoming bundles through the API
+			 *  "fragment": For bundles generated through the fragment manager
+			 *  "capsule": For bundles extracted by the CapsuleWorker
+			 *  "cl": For incoming bundles through the convergence layers
+			 */
+			bool isBackpressureEnabled(const std::string&) const;
 
 			class Extension
 			{

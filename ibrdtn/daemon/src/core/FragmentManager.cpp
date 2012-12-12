@@ -19,6 +19,7 @@
  *
  */
 
+#include "Configuration.h"
 #include "core/EventDispatcher.h"
 #include "core/FragmentManager.h"
 #include "core/BundleCore.h"
@@ -128,7 +129,8 @@ namespace dtn
 						dtn::data::Bundle &merged = c.getBundle();
 
 						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true, true);
+						bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("fragment");
+						dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true, backp);
 
 						// delete all fragments of the merged bundle
 						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)

@@ -458,7 +458,8 @@ namespace dtn
 						}
 
 						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle, false, true);
+						bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("cl");
+						dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle, false, backp);
 					}
 					catch (const dtn::data::Validator::RejectedException &ex)
 					{
