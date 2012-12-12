@@ -149,6 +149,8 @@ namespace dtn
 
 			size_t blockCount() const;
 
+			bool allEIDsInCBHE() const;
+
 		private:
 			BlockList _blocks;
 		};

@@ -287,6 +287,36 @@ namespace dtn
 			return _blocks.size();
 		}
 
+		bool Bundle::allEIDsInCBHE() const
+		{
+			if(    _destination.isCompressable()
+			    && _source.isCompressable()
+			    && _reportto.isCompressable()
+			    && _custodian.isCompressable()
+			  )
+			{
+				std::list< Block const * > blocks = _blocks.getList();
+				for( std::list< Block const * >::const_iterator it = blocks.begin(); it != blocks.end(); it++ ) {
+					if( (*it)->get( Block::BLOCK_CONTAINS_EIDS ) )
+					{
+						std::list< EID > blockEIDs = (*it)->getEIDList();
+						for( std::list< EID >::const_iterator itBlockEID = blockEIDs.begin(); itBlockEID != blockEIDs.end(); itBlockEID++ )
+						{
+							if( ! itBlockEID->isCompressable() )
+							{
+								return false;
+							}
+						}
+					}
+				}
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
 		size_t Bundle::BlockList::size() const
 		{
 			return _blocks.size();
