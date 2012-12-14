@@ -228,7 +228,7 @@ namespace dtn
 
 				virtual size_t limit() const { return dtn::core::BundleCore::max_bundles_in_transit; };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
 				{
 					if (_endpoints.find(meta.destination) == _endpoints.end())
 					{

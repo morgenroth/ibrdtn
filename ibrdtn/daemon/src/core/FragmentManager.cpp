@@ -193,7 +193,7 @@ namespace dtn
 
 				virtual size_t limit() const { return 0; };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
 				{
 					// fragments only
 					if (!meta.fragment) return false;

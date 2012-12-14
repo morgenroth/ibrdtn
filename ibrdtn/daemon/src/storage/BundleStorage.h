@@ -65,6 +65,14 @@ namespace dtn
 				};
 			};
 
+			class BundleFilterException : public ibrcommon::Exception
+			{
+			public:
+				BundleFilterException(string what = "Bundle query aborted.") throw() : ibrcommon::Exception(what)
+				{
+				}
+			};
+
 			class BundleFilterCallback
 			{
 			public:
@@ -82,7 +90,7 @@ namespace dtn
 				 * @param id The bundle id of the bundle to select.
 				 * @return True, if the bundle should be added to the set.
 				 */
-				virtual bool shouldAdd(const dtn::data::MetaBundle&) const { return false; };
+				virtual bool shouldAdd(const dtn::data::MetaBundle&) const throw (BundleFilterException) { return false; };
 			};
 
 			/**
@@ -109,7 +117,7 @@ namespace dtn
 			 * @param cb The instance of the callback filter class.
 			 * @return A list of bundles.
 			 */
-			virtual void get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException) = 0;
+			virtual void get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException, BundleFilterException) = 0;
 
 			/**
 			 * Return a set of distinct destinations for all bundles in the storage.

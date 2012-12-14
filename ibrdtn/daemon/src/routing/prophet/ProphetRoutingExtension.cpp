@@ -173,7 +173,7 @@ namespace dtn
 
 					virtual size_t limit() const { return 0; }
 
-					virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
+					virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
 					{
 						// do not delete any bundles with
 						if ((meta.destination.getNode() == dtn::core::BundleCore::local) || (meta.custodian.getNode() == dtn::core::BundleCore::local))
@@ -356,7 +356,7 @@ namespace dtn
 
 				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
 				{
 					// check Scope Control Block - do not forward bundles with hop limit == 0
 					if (meta.hopcount == 0)
@@ -394,9 +394,13 @@ namespace dtn
 
 					// do not forward bundles already known by the destination
 					// throws BloomfilterNotAvailableException if no filter is available or it is expired
-					if (_entry.has(meta, true))
-					{
-						return false;
+					try {
+						if (_entry.has(meta, true))
+						{
+							return false;
+						}
+					} catch (const dtn::routing::NeighborDatabase::BloomfilterNotAvailableException&) {
+						throw dtn::storage::BundleStorage::BundleFilterException();
 					}
 
 					// ask the routing strategy if this bundle should be selected
@@ -467,7 +471,7 @@ namespace dtn
 										transferTo(entry, meta);
 									} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 								}
-							} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
+							} catch (const dtn::storage::BundleStorage::BundleFilterException&) {
 								// query a new summary vector from this neighbor
 								(**this).doHandshake(task.eid);
 							}

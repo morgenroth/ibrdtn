@@ -81,7 +81,7 @@ namespace dtn
 			/**
 			 * @see BundleStorage::get(BundleFilterCallback &cb)
 			 */
-			virtual void get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException);
+			virtual void get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException, BundleFilterException);
 
 			/**
 			 * @see BundleStorage::getDistinctDestinations()

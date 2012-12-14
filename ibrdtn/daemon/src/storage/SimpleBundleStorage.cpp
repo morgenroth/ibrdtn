@@ -234,7 +234,7 @@ namespace dtn
 			return _list.size();
 		}
 
-		void SimpleBundleStorage::get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException)
+		void SimpleBundleStorage::get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException, BundleFilterException)
 		{
 			size_t items_added = 0;
 

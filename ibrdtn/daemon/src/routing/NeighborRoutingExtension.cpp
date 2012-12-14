@@ -81,7 +81,7 @@ namespace dtn
 
 				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
 				{
 					// check Scope Control Block - do not forward bundles with hop limit == 0
 					if (meta.hopcount == 0)

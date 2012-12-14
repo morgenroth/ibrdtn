@@ -205,7 +205,7 @@ namespace dtn
 			return _database.getDistinctDestinations();
 		}
 
-		void SQLiteBundleStorage::get(BundleFilterCallback &cb, BundleResult &result) throw (dtn::storage::BundleStorage::NoBundleFoundException)
+		void SQLiteBundleStorage::get(BundleFilterCallback &cb, BundleResult &result) throw (dtn::storage::BundleStorage::NoBundleFoundException, BundleFilterException)
 		{
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
 			_database.get(cb, result);
