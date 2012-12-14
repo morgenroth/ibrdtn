@@ -37,7 +37,7 @@ public class StreamLogger implements Runnable {
 			while ((line = input.readLine()) != null)
 			{
 				if (listener != null) listener.onLog(TAG, line);
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, line);
+				Log.v(TAG, line);
 			}
 		} catch (IOException e) {
 			this.errorOnExit = true;
