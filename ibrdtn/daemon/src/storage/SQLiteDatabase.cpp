@@ -519,7 +519,7 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::get(dtn::storage::BundleStorage::BundleFilterCallback &cb, BundleResult &ret) throw (dtn::storage::BundleStorage::NoBundleFoundException)
+		void SQLiteDatabase::get(dtn::storage::BundleStorage::BundleFilterCallback &cb, BundleResult &ret) throw (dtn::storage::BundleStorage::NoBundleFoundException, dtn::storage::BundleStorage::BundleFilterException)
 		{
 			size_t items_added = 0;
 

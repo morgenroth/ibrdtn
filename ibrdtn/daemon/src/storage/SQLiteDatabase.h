@@ -198,7 +198,7 @@ namespace dtn
 			 * @param cb
 			 * @return
 			 */
-			void get(dtn::storage::BundleStorage::BundleFilterCallback &cb, BundleResult &result) throw (dtn::storage::BundleStorage::NoBundleFoundException);
+			void get(dtn::storage::BundleStorage::BundleFilterCallback &cb, BundleResult &result) throw (dtn::storage::BundleStorage::NoBundleFoundException, dtn::storage::BundleStorage::BundleFilterException);
 
 			/**
 			 * Retrieve the meta data of a given bundle
