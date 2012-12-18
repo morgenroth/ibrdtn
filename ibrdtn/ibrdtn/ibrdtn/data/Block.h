@@ -73,6 +73,7 @@ namespace dtn
 
 			void set(ProcFlags flag, const bool &value);
 			bool get(ProcFlags flag) const;
+			size_t getProcessingFlags() const;
 
 			/**
 			 * Serialize the derived block payload.

@@ -68,6 +68,11 @@ namespace dtn
 			return (_procflags & flag);
 		}
 
+		size_t Block::getProcessingFlags() const
+		{
+			return _procflags;
+		}
+
 		size_t Block::getLength_strict() const
 		{
 			return getLength();
