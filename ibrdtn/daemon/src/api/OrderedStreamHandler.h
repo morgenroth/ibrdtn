@@ -40,7 +40,7 @@ namespace dtn
 
 			virtual void run();
 			virtual void finally();
-			virtual void __cancellation();
+			virtual void __cancellation() throw ();
 
 			virtual void put(dtn::data::Bundle &b);
 			virtual dtn::data::MetaBundle get(size_t timeout = 0);

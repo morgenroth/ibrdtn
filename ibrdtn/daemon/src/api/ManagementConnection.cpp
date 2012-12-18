@@ -86,7 +86,7 @@ namespace dtn
 		{
 		}
 
-		void ManagementConnection::__cancellation()
+		void ManagementConnection::__cancellation() throw ()
 		{
 		}
 

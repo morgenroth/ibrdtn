@@ -81,7 +81,7 @@ void EpidemicRoutingExtensionTest::testRun()
 	CPPUNIT_FAIL("not implemented");
 }
 
-void EpidemicRoutingExtensionTest::test__cancellation()
+void EpidemicRoutingExtensionTest::test__cancellation() throw ()
 {
 	/* test signature () */
 	CPPUNIT_FAIL("not implemented");

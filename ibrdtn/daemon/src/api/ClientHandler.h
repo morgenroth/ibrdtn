@@ -44,7 +44,7 @@ namespace dtn
 			virtual void run() = 0;
 			virtual void finally() = 0;
 			virtual void setup() {};
-			virtual void __cancellation() = 0;
+			virtual void __cancellation() throw () = 0;
 
 		protected:
 			ProtocolHandler(ClientHandler &client, ibrcommon::socketstream &stream);

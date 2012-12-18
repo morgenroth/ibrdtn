@@ -354,7 +354,7 @@ typedef nl_object nl_object_header;
 		this->join();
 	}
 
-	void NetLinkManager::__cancellation()
+	void NetLinkManager::__cancellation() throw ()
 	{
 		_running = false;
 		_sock.down();

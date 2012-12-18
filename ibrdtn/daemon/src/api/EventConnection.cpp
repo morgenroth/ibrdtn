@@ -356,7 +356,7 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 		}
 
-		void EventConnection::__cancellation()
+		void EventConnection::__cancellation() throw ()
 		{
 		}
 	} /* namespace api */

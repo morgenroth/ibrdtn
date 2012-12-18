@@ -58,7 +58,7 @@ namespace ibrcommon
 
 	protected:
 		void run() throw ();
-		void __cancellation();
+		void __cancellation() throw ();
 
 	private:
 		NetLinkManager();

@@ -52,7 +52,7 @@ namespace dtn
 
 			virtual void run();
 			virtual void finally();
-			virtual void __cancellation();
+			virtual void __cancellation() throw ();
 
 			bool good() const;
 

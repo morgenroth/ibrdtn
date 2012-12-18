@@ -53,7 +53,7 @@ namespace dtn
 				void received(const dtn::streams::StreamContactHeader &h);
 				void run();
 				void finally();
-				void __cancellation();
+				void __cancellation() throw ();
 				bool good() const;
 
 			private:

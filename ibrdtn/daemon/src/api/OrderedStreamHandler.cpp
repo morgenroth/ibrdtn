@@ -109,7 +109,7 @@ namespace dtn
 			}
 		}
 
-		void OrderedStreamHandler::__cancellation()
+		void OrderedStreamHandler::__cancellation() throw ()
 		{
 			// close the stream
 			_stream.close();

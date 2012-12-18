@@ -38,7 +38,7 @@ namespace dtn
 			void run();
 			void finally();
 			void setup();
-			void __cancellation();
+			void __cancellation() throw ();
 
 			void raiseEvent(const dtn::core::Event *evt) throw ();
 

@@ -127,7 +127,7 @@ namespace dtn
 			void connect();
 			void run() throw ();
 			void finally() throw ();
-			void __cancellation();
+			void __cancellation() throw ();
 
 			void clearQueue();
 

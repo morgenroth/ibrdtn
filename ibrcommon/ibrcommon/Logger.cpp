@@ -519,7 +519,7 @@ namespace ibrcommon
 		}
 	}
 
-	void Logger::LogWriter::__cancellation()
+	void Logger::LogWriter::__cancellation() throw ()
 	{
 		// cancel the main thread in here
 		_queue.abort();

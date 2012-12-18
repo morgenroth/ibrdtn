@@ -61,7 +61,7 @@ namespace dtn
 			return _stream.good();
 		}
 
-		void ExtendedApiHandler::__cancellation()
+		void ExtendedApiHandler::__cancellation() throw ()
 		{
 			// close the stream
 			_stream.close();

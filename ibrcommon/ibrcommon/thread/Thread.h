@@ -150,7 +150,7 @@ namespace ibrcommon
 		 * Cancel the running thread context.
 		 */
 		void cancel() throw ();
-		virtual void __cancellation() = 0;
+		virtual void __cancellation() throw () = 0;
 
 		/**
 		 * Determine if two thread identifiers refer to the same thread.

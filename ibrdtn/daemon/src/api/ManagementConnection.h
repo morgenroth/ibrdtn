@@ -37,7 +37,7 @@ namespace dtn
 			void run();
 			void finally();
 			void setup();
-			void __cancellation();
+			void __cancellation() throw ();
 
 		private:
 			void processCommand(const std::vector<std::string> &cmd);

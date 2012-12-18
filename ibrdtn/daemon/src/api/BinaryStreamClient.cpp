@@ -129,7 +129,7 @@ namespace dtn
 			_lastack = ack;
 		}
 
-		void BinaryStreamClient::__cancellation()
+		void BinaryStreamClient::__cancellation() throw ()
 		{
 			// shutdown
 			_connection.shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);

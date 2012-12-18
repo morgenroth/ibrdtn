@@ -280,7 +280,7 @@ namespace dtn
 			}
 		}
 
-		void TCPConnection::__cancellation()
+		void TCPConnection::__cancellation() throw ()
 		{
 			// mark the connection as aborted
 			_aborted = true;

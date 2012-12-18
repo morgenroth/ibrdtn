@@ -64,7 +64,7 @@ void TestStreamConnection::connectionUpDown()
 			_sockets.destroy();
 		};
 
-		void __cancellation() {
+		void __cancellation() throw () {
 			_running = false;
 			_sockets.down();
 		}
@@ -139,7 +139,7 @@ void TestStreamConnection::connectionUpDown()
 			join();
 		};
 
-		void __cancellation() {
+		void __cancellation() throw () {
 			_stream.shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			_client.close();
 		}
