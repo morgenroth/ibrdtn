@@ -333,7 +333,7 @@ namespace dtn
 						{
 							try
 							{
-								dtn::routing::ProphetRoutingExtension& prophet_extension = dynamic_cast<dtn::routing::ProphetRoutingExtension&>(**it);
+								const dtn::routing::ProphetRoutingExtension& prophet_extension = dynamic_cast<const dtn::routing::ProphetRoutingExtension&>(**it);
 
 								if ( cmd[2] == "info" ){
 									ibrcommon::ThreadsafeReference<dtn::routing::ProphetRoutingExtension::DeliveryPredictabilityMap> dp_map = prophet_extension.getDeliveryPredictabilityMap();

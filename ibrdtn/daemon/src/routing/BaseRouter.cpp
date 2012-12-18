@@ -398,8 +398,8 @@ namespace dtn
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				}
 
-				// pass event to all extensions
-				__forward_event(evt);
+				// no routing extension should be interested in this event
+				// everybody should listen to QueueBundleEvent instead
 				return;
 			} catch (const std::bad_cast&) { };
 
