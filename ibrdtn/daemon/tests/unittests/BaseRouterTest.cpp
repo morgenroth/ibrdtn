@@ -130,13 +130,16 @@ void BaseRouterTest::testRaiseEvent()
 	CPPUNIT_ASSERT_EQUAL(false, router.isKnown(b));
 
 	// send a bundle
-	dtn::net::BundleReceivedEvent::raise(eid, b, false, true);
+	dtn::net::BundleReceivedEvent::raise(eid, b, false);
+
+	// stop the event switch
+	esl.stop();
+
+	// ... and wait until all events are processed
+	esl.join();
 
 	// this bundle has to be known in future
 	CPPUNIT_ASSERT_EQUAL(true, router.isKnown(b));
-
-	esl.stop();
-	esl.join();
 
 	router.terminate();
 }

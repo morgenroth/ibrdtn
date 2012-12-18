@@ -78,6 +78,8 @@ namespace dtn
 			// just look for an event to process
 			{
 				ibrcommon::MutexLock l(_queue_cond);
+				if (!_running) return;
+
 				while (this->empty() && !_shutdown)
 				{
 					_queue_cond.wait();
@@ -94,10 +96,21 @@ namespace dtn
 					t = _queue.front();
 					_queue.pop_front();
 				}
-				else
+				else if (!_low_queue.empty())
 				{
 					t = _low_queue.front();
 					_low_queue.pop_front();
+				}
+				else if (_shutdown)
+				{
+					// if all queues are empty and shutdown is requested
+					// set running mode to false
+					_running = false;
+
+					// abort the conditional to release all blocking threads
+					_queue_cond.abort();
+
+					return;
 				}
 
 				_queue_cond.signal(true);
@@ -110,16 +123,6 @@ namespace dtn
 
 				// delete the Task
 				delete t;
-			}
-
-			// on shutdown - check if the queue is empty
-			if (_shutdown && this->empty()) {
-				// set running mode to false
-				_running = false;
-
-				// abort the conditional to release all blocking threads
-				ibrcommon::MutexLock l(_queue_cond);
-				_queue_cond.abort();
 			}
 		}
 
