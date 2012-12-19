@@ -8,6 +8,7 @@ h_sources = \
 	Bundle.h \
 	BundleID.h \
 	BundleList.h \
+	BundleSet.h \
 	BundleMerger.h \
 	BundleString.h \
 	CustodySignalBlock.h \
@@ -32,6 +33,7 @@ cc_sources = \
 	Bundle.cpp \
 	BundleID.cpp \
 	BundleList.cpp \
+	BundleSet.cpp \
 	BundleMerger.cpp \
 	BundleString.cpp \
 	CustodySignalBlock.cpp \
