@@ -501,7 +501,7 @@ public class APISession {
 
 		Bundle current_bundle = null;
 		Block current_block = null;
-		TransferMode current_callback = TransferMode.NULL;
+		TransferMode current_callback = null;
 		ParcelFileDescriptor fd = null;
 		ByteArrayOutputStream stream = null;
 		CountingOutputStream counter = null;
@@ -597,16 +597,25 @@ public class APISession {
 			current_block.type = type;
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "startBlock: " + String.valueOf(type));
 			
+			// set callback to null. This results in a query for the right
+			// callback strategy at the beginning of the payload.
+			current_callback = null;
+		}
+
+		private void initializeBlock() {
 			// announce this block and determine the payload transfer method
 			try {
 				current_callback = _callback_wrapper.startBlock(current_block);
 			} catch (RemoteException e1) {
 				raise_callback_failure(e1);
 			}
-			
-			// request file descriptor if requested by client
-			if (current_callback == TransferMode.FILEDESCRIPTOR)
-			{
+
+			switch (current_callback) {
+			default:
+				break;
+
+			case FILEDESCRIPTOR:
+				// request file descriptor if requested by client
 				try {
 					fd = _callback_wrapper.fd();
 				} catch (RemoteException e1) {
@@ -627,10 +636,10 @@ public class APISession {
 									)
 								);
 				}
-			}
-			// in simple mode, we just create a bytearray stream
-			else if (current_callback == TransferMode.SIMPLE)
-			{
+				break;
+
+			case SIMPLE:
+				// in simple mode, we just create a bytearray stream
 				stream = new ByteArrayOutputStream();
 				counter = new CountingOutputStream( stream );
 				output = new BufferedWriter( 
@@ -641,6 +650,7 @@ public class APISession {
 								)
 							)
 						);
+				break;
 			}
 		}
 
@@ -731,16 +741,22 @@ public class APISession {
 		public void characters(String data) throws SABException {
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "characters: " + data);
 			
-			if (current_callback == TransferMode.PASSTHROUGH)
+			// if the current callback strategy is set to null
+			// then announce the block via the startBlock() callback and
+			// ask for the right callback strategy.
+			if (current_callback == null) initializeBlock();
+
+			switch (current_callback)
 			{
+			case PASSTHROUGH:
 				try {
 					_callback_wrapper.characters(data);
 				} catch (RemoteException e1) {
 					raise_callback_failure(e1);
 				}
-			}
-			else
-			{
+				break;
+
+			default:
 				if (output != null)
 				{
 					try {
@@ -749,6 +765,7 @@ public class APISession {
 						if (Log.isLoggable(TAG, Log.DEBUG)) Log.e(TAG, "Can not write data to output stream.", e);
 					}
 				}
+				break;
 			}
 			
 			// update progress stats
