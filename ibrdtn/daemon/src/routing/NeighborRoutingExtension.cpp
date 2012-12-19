@@ -22,6 +22,7 @@
 #include "config.h"
 #include "routing/NeighborRoutingExtension.h"
 #include "routing/QueueBundleEvent.h"
+#include "core/BundleCore.h"
 #include "core/TimeEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
@@ -31,7 +32,7 @@
 #include "core/Node.h"
 #include "net/ConnectionManager.h"
 #include "ibrcommon/thread/MutexLock.h"
-#include "storage/SimpleBundleStorage.h"
+#include "storage/BundleStorage.h"
 #include "core/BundleEvent.h"
 #include <ibrcommon/Logger.h>
 
