@@ -296,8 +296,7 @@ namespace dtn
 					d >> bundle;
 
 					// raise default bundle received event
-					bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("cl");
-					dtn::net::BundleReceivedEvent::raise(n.getEID(), bundle, false, backp);
+					dtn::net::BundleReceivedEvent::raise(n.getEID(), bundle, false);
 				}
 				catch (const dtn::data::Validator::RejectedException &ex)
 				{
@@ -454,8 +453,7 @@ namespace dtn
 				schl.setLimit(1);
 
 				// raise default bundle received event
-				bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("cl");
-				dtn::net::BundleReceivedEvent::raise(bundle._destination.getNode(), answer, false, backp);
+				dtn::net::BundleReceivedEvent::raise(bundle._destination.getNode(), answer, false);
 			}
 		}
 	} /* namespace net */

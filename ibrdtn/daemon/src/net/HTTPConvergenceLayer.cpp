@@ -272,8 +272,7 @@ namespace dtn
 						dtn::data::DefaultDeserializer(_stream, dtn::core::BundleCore::getInstance()) >> bundle;
 
 						// raise default bundle received event
-						bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("cl");
-						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle, false, backp);
+						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle, false);
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG(10) << "http error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}

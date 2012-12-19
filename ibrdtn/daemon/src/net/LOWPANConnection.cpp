@@ -92,8 +92,7 @@ namespace dtn
 						EID sender(ss.str());
 
 						// raise default bundle received event
-						bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("cl");
-						dtn::net::BundleReceivedEvent::raise(sender, bundle, false, backp);
+						dtn::net::BundleReceivedEvent::raise(sender, bundle, false);
 
 					} catch (const dtn::InvalidDataException &ex) {
 						IBRCOMMON_LOGGER_DEBUG(10) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

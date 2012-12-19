@@ -25,6 +25,7 @@
 #include "core/Event.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/EID.h"
+#include <ibrcommon/thread/Semaphore.h>
 
 namespace dtn
 {
@@ -41,7 +42,7 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local = false, const bool &wait = false);
+			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local = false);
 
 			const dtn::data::EID peer;
 			const dtn::data::Bundle bundle;
@@ -49,6 +50,8 @@ namespace dtn
 
 		private:
 			BundleReceivedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local);
+
+			static ibrcommon::Semaphore _sem;
 		};
 	}
 }

@@ -953,11 +953,6 @@ namespace dtn
 			return 0;
 		}
 
-		bool Configuration::isBackpressureEnabled(const std::string &suffix) const
-		{
-			return (_conf.read<std::string>("backpressure_" + suffix, "yes") == "yes");
-		}
-
 		void Configuration::Security::load(const ibrcommon::ConfigFile &conf)
 		{
 			bool withTLS = false;

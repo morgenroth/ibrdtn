@@ -80,8 +80,7 @@ namespace dtn
 			}
 
 			// raise default bundle received event
-			bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("api");
-			dtn::net::BundleReceivedEvent::raise(_client.getRegistration().getDefaultEID(), b, true, backp);
+			dtn::net::BundleReceivedEvent::raise(_client.getRegistration().getDefaultEID(), b, true);
 		}
 
 		dtn::data::MetaBundle OrderedStreamHandler::get(size_t timeout)

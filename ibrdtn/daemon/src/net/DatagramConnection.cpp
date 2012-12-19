@@ -83,8 +83,7 @@ namespace dtn
 					IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::run"<< IBRCOMMON_LOGGER_ENDL;
 
 					// raise default bundle received event
-					bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("cl");
-					dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false, backp);
+					dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false);
 				}
 			} catch (const dtn::InvalidDataException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "Received an invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

@@ -67,8 +67,7 @@ namespace dtn
 						deserializer >> b;
 
 						// raise default bundle received event
-						bool backp = dtn::daemon::Configuration::getInstance().isBackpressureEnabled("capsule");
-						dtn::net::BundleReceivedEvent::raise(capsule._source, b, false, backp);
+						dtn::net::BundleReceivedEvent::raise(capsule._source, b, false);
 					}
 				}
 				catch (const dtn::InvalidDataException &ex) {
