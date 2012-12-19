@@ -142,7 +142,7 @@ namespace dtn
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
-			virtual void eventBundleExpired(const dtn::data::BundleList::ExpiringBundle &b);
+			virtual void eventBundleExpired(const dtn::data::MetaBundle &b);
 
 		private:
 			class BundleContainer : public DataStorage::Container

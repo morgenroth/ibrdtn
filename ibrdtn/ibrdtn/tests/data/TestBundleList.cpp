@@ -22,7 +22,6 @@
 #include "data/TestBundleList.h"
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
-#include <ibrdtn/utils/Clock.h>
 #include <iostream>
 #include <cstdlib>
 
@@ -30,7 +29,6 @@ CPPUNIT_TEST_SUITE_REGISTRATION (TestBundleList);
 
 void TestBundleList::setUp()
 {
-	dtn::utils::Clock::rating = 1;
 }
 
 void TestBundleList::tearDown()
@@ -47,7 +45,7 @@ TestBundleList::ExpiredBundleCounter::~ExpiredBundleCounter()
 {
 }
 
-void TestBundleList::ExpiredBundleCounter::eventBundleExpired(const dtn::data::BundleList::ExpiringBundle&)
+void TestBundleList::ExpiredBundleCounter::eventBundleExpired(const dtn::data::MetaBundle&)
 {
 	//std::cout << "Bundle expired " << b.bundle.toString() << std::endl;
 	counter++;
@@ -74,54 +72,10 @@ void TestBundleList::genbundles(dtn::data::BundleList &l, int number, int offset
 	}
 }
 
-void TestBundleList::containTest(void)
-{
-	ExpiredBundleCounter ebc;
-	dtn::data::BundleList l(ebc);
-
-	dtn::data::Bundle b1;
-	b1._source = dtn::data::EID("dtn:test");
-	b1._timestamp = 1;
-	b1._sequencenumber = 1;
-
-	dtn::data::Bundle b2;
-	b2._source = dtn::data::EID("dtn:test");
-	b2._timestamp = 2;
-	b2._sequencenumber = 3;
-
-	CPPUNIT_ASSERT(l.contains(b1) == false);
-	CPPUNIT_ASSERT(l.contains(b2) == false);
-
-	l.add(b1);
-
-	CPPUNIT_ASSERT(l.contains(b1) == true);
-	CPPUNIT_ASSERT(l.contains(b2) == false);
-
-	l.add(b2);
-
-	CPPUNIT_ASSERT(l.contains(b1) == true);
-	CPPUNIT_ASSERT(l.contains(b2) == true);
-
-	l.remove(b1);
-
-	CPPUNIT_ASSERT(l.contains(b1) == false);
-	CPPUNIT_ASSERT(l.contains(b2) == true);
-
-	l.add(b1);
-
-	CPPUNIT_ASSERT(l.contains(b1) == true);
-	CPPUNIT_ASSERT(l.contains(b2) == true);
-
-	l.remove(b2);
-
-	CPPUNIT_ASSERT(l.contains(b1) == true);
-	CPPUNIT_ASSERT(l.contains(b2) == false);
-}
-
 void TestBundleList::orderTest(void)
 {
 	ExpiredBundleCounter ebc;
-	dtn::data::BundleList l(ebc);
+	dtn::data::BundleList l(&ebc);
 
 	CPPUNIT_ASSERT(ebc.counter == 0);
 

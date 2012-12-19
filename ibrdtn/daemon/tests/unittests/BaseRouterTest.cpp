@@ -205,7 +205,7 @@ void BaseRouterTest::testGetSummaryVector()
 
 	router.setKnown(b);
 
-	CPPUNIT_ASSERT_EQUAL(true, router.getSummaryVector().contains(b));
+	CPPUNIT_ASSERT_EQUAL(true, router.getKnownBundles().has(b));
 }
 
 /*=== END   tests for class 'BaseRouter' ===*/

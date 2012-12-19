@@ -22,7 +22,7 @@
 #ifndef NODEHANDSHAKE_H_
 #define NODEHANDSHAKE_H_
 
-#include "routing/SummaryVector.h"
+#include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/SDNV.h>
 #include <iostream>
 #include <sstream>
@@ -56,7 +56,7 @@ namespace dtn
 		{
 		public:
 			BloomFilterSummaryVector();
-			BloomFilterSummaryVector(const SummaryVector &vector);
+			BloomFilterSummaryVector(const dtn::data::BundleSet &vector);
 			virtual ~BloomFilterSummaryVector();
 			size_t getIdentifier() const;
 			size_t getLength() const;
@@ -64,17 +64,17 @@ namespace dtn
 			std::istream& deserialize(std::istream&);
 			static size_t identifier;
 
-			const SummaryVector& getVector() const;
+			const dtn::data::BundleSet& getVector() const;
 
 		private:
-			SummaryVector _vector;
+			dtn::data::BundleSet _vector;
 		};
 
 		class BloomFilterPurgeVector : public NodeHandshakeItem
 		{
 		public:
 			BloomFilterPurgeVector();
-			BloomFilterPurgeVector(const SummaryVector &vector);
+			BloomFilterPurgeVector(const dtn::data::BundleSet &vector);
 			virtual ~BloomFilterPurgeVector();
 			size_t getIdentifier() const;
 			size_t getLength() const;
@@ -82,10 +82,10 @@ namespace dtn
 			std::istream& deserialize(std::istream&);
 			static size_t identifier;
 
-			const SummaryVector& getVector() const;
+			const dtn::data::BundleSet& getVector() const;
 
 		private:
-			SummaryVector _vector;
+			dtn::data::BundleSet _vector;
 		};
 
 		class NodeHandshake

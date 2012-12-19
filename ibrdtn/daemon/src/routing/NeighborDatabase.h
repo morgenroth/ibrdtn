@@ -22,8 +22,7 @@
 #ifndef NEIGHBORDATABASE_H_
 #define NEIGHBORDATABASE_H_
 
-#include "routing/BundleSummary.h"
-
+#include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrcommon/data/BloomFilter.h>
@@ -139,7 +138,7 @@ namespace dtn
 
 				// bloomfilter used as summary vector
 				ibrcommon::BloomFilter _filter;
-				BundleSummary _summary;
+				dtn::data::BundleSet _summary;
 				size_t _filter_expire;
 
 				enum FILTER_REQUEST_STATE

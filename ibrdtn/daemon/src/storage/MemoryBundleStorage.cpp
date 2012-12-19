@@ -34,7 +34,7 @@ namespace dtn
 	namespace storage
 	{
 		MemoryBundleStorage::MemoryBundleStorage(size_t maxsize)
-		 : BundleStorage(maxsize), _list(*this)
+		 : BundleStorage(maxsize), _list(this)
 		{
 		}
 
@@ -254,11 +254,11 @@ namespace dtn
 			clearSpace();
 		}
 
-		void MemoryBundleStorage::eventBundleExpired(const dtn::data::BundleList::ExpiringBundle &b)
+		void MemoryBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b)
 		{
 			for (std::set<dtn::data::Bundle>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 			{
-				if ( b.bundle == (*iter) )
+				if ( b == (*iter) )
 				{
 					dtn::data::Bundle bundle = (*iter);
 
@@ -278,10 +278,10 @@ namespace dtn
 			}
 
 			// raise bundle event
-			dtn::core::BundleEvent::raise( b.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
+			dtn::core::BundleEvent::raise( b, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
 
 			// raise an event
-			dtn::core::BundleExpiredEvent::raise( b.bundle );
+			dtn::core::BundleExpiredEvent::raise( b );
 		}
 	}
 }

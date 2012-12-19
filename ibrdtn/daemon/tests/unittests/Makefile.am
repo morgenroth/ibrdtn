@@ -1,6 +1,5 @@
 
 noinst_HEADERS = \
-	BundleSummaryTest.hh \
 	ConfigurationTest.hh \
 	BaseRouterTest.hh \
 	SimpleBundleStorageTest.hh \
@@ -21,7 +20,6 @@ noinst_HEADERS = \
 #	ClientHandlerTest.hh \
 #	CustodyEventTest.hh \
 #	FloodRoutingExtensionTest.hh \
-#	SummaryVectorTest.hh \
 #	EventDebuggerTest.hh \
 #	WallClockTest.hh \
 #	BundleStorageTest.hh \
@@ -57,7 +55,6 @@ noinst_HEADERS = \
 
 unittest_SOURCES = \
 	Main.cpp \
-	BundleSummaryTest.cpp \
 	BaseRouterTest.cpp \
 	ConfigurationTest.cpp \
 	SimpleBundleStorageTest.cpp \
@@ -78,7 +75,6 @@ unittest_SOURCES = \
 #	ClientHandlerTest.cpp \
 #	CustodyEventTest.cpp \
 #	FloodRoutingExtensionTest.cpp \
-#	SummaryVectorTest.cpp \
 #	EventDebuggerTest.cpp \
 #	WallClockTest.cpp \
 #	BundleStorageTest.cpp \

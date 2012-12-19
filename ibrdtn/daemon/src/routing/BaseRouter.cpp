@@ -495,7 +495,7 @@ namespace dtn
 		bool BaseRouter::isKnown(const dtn::data::BundleID &id)
 		{
 			ibrcommon::MutexLock l(_known_bundles_lock);
-			return _known_bundles.contains(id);
+			return _known_bundles.has(id);
 		}
 
 		// check if a bundle is known
@@ -504,16 +504,16 @@ namespace dtn
 		bool BaseRouter::filterKnown(const dtn::data::MetaBundle &meta)
 		{
 			ibrcommon::MutexLock l(_known_bundles_lock);
-			bool ret = _known_bundles.contains(meta);
+			bool ret = _known_bundles.has(meta);
 			if (!ret) _known_bundles.add(meta);
 
 			return ret;
 		}
 
-		const SummaryVector BaseRouter::getSummaryVector()
+		const dtn::data::BundleSet BaseRouter::getKnownBundles()
 		{
 			ibrcommon::MutexLock l(_known_bundles_lock);
-			return _known_bundles.getSummaryVector();
+			return _known_bundles;
 		}
 
 		void BaseRouter::addPurgedBundle(const dtn::data::MetaBundle &meta)
@@ -522,10 +522,10 @@ namespace dtn
 			return _purged_bundles.add(meta);
 		}
 
-		const SummaryVector BaseRouter::getPurgedBundles()
+		const dtn::data::BundleSet BaseRouter::getPurgedBundles()
 		{
 			ibrcommon::MutexLock l(_purged_bundles_lock);
-			return _purged_bundles.getSummaryVector();
+			return _purged_bundles;
 		}
 
 		const std::string BaseRouter::getName() const

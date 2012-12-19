@@ -32,7 +32,6 @@ class TestBundleList: public CPPUNIT_NS :: TestFixture
 {
 	CPPUNIT_TEST_SUITE (TestBundleList);
 	CPPUNIT_TEST (orderTest);
-	CPPUNIT_TEST (containTest);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -50,7 +49,7 @@ private:
 		ExpiredBundleCounter();
 		virtual ~ExpiredBundleCounter();
 
-		void eventBundleExpired(const dtn::data::BundleList::ExpiringBundle &b);
+		void eventBundleExpired(const dtn::data::MetaBundle &b);
 		int counter;
 	};
 

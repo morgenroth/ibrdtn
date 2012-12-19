@@ -40,7 +40,7 @@ namespace dtn
 		std::set<FragmentManager::Transmission> FragmentManager::_offsets;
 
 		FragmentManager::FragmentManager()
-		 : _fragments(*this), _running(false)
+		 : _running(false)
 		{
 		}
 
@@ -62,7 +62,6 @@ namespace dtn
 		void FragmentManager::componentUp() throw ()
 		{
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
-			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			_running = true;
 		}
 
@@ -144,17 +143,10 @@ namespace dtn
 		void FragmentManager::componentDown() throw ()
 		{
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
-			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
 
 		void FragmentManager::raiseEvent(const Event *evt) throw ()
 		{
-			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-				_fragments.expire(time.getTimestamp());
-				FragmentManager::expire_offsets(time.getTimestamp());
-			} catch (const std::bad_cast&) {}
-
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 

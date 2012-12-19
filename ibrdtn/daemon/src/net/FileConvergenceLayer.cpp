@@ -32,6 +32,7 @@
 #include "routing/BaseRouter.h"
 #include "routing/NodeHandshake.h"
 #include "routing/RequeueBundleEvent.h"
+#include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/data/File.h>
@@ -61,7 +62,6 @@ namespace dtn
 		}
 
 		FileConvergenceLayer::FileConvergenceLayer()
-		 : _blacklist(*this)
 		{
 		}
 
@@ -398,7 +398,7 @@ namespace dtn
 				if (request.hasRequest(dtn::routing::BloomFilterSummaryVector::identifier))
 				{
 					// add own summary vector to the message
-					dtn::routing::SummaryVector vec;
+					dtn::data::BundleSet vec;
 
 					// add bundles in the path
 					for (std::list<dtn::data::MetaBundle>::const_iterator iter = bl.begin(); iter != bl.end(); iter++)

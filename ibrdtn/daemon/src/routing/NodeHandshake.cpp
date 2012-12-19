@@ -250,7 +250,7 @@ namespace dtn
 			_map.clear();
 		}
 
-		BloomFilterSummaryVector::BloomFilterSummaryVector(const SummaryVector &vector)
+		BloomFilterSummaryVector::BloomFilterSummaryVector(const dtn::data::BundleSet &vector)
 		 : _vector(vector)
 		{
 		}
@@ -273,7 +273,7 @@ namespace dtn
 			return _vector.getLength();
 		}
 
-		const SummaryVector& BloomFilterSummaryVector::getVector() const
+		const dtn::data::BundleSet& BloomFilterSummaryVector::getVector() const
 		{
 			return _vector;
 		}
@@ -292,7 +292,7 @@ namespace dtn
 
 		size_t BloomFilterSummaryVector::identifier = NodeHandshakeItem::BLOOM_FILTER_SUMMARY_VECTOR;
 
-		BloomFilterPurgeVector::BloomFilterPurgeVector(const SummaryVector &vector)
+		BloomFilterPurgeVector::BloomFilterPurgeVector(const dtn::data::BundleSet &vector)
 		 : _vector(vector)
 		{
 		}
@@ -315,7 +315,7 @@ namespace dtn
 			return _vector.getLength();
 		}
 
-		const SummaryVector& BloomFilterPurgeVector::getVector() const
+		const dtn::data::BundleSet& BloomFilterPurgeVector::getVector() const
 		{
 			return _vector;
 		}

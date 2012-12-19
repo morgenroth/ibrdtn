@@ -24,7 +24,6 @@
 
 #include "core/Node.h"
 
-#include "routing/SummaryVector.h"
 #include "routing/BaseRouter.h"
 #include "routing/NeighborDatabase.h"
 

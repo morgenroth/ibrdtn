@@ -87,7 +87,7 @@ namespace dtn
 		Registration::Registration()
 		 : _handle(alloc_handle()),
 		   _default_eid(core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + _handle),
-		   _queue(*this), _persistent(false), _detached(false), _expiry(0)
+		   _persistent(false), _detached(false), _expiry(0)
 		{
 		}
 
@@ -220,8 +220,8 @@ namespace dtn
 #endif
 			{
 			public:
-				BundleFilter(const std::set<dtn::data::EID> endpoints, const dtn::data::BundleList &blist, bool loopback)
-				 : _endpoints(endpoints), _blist(blist), _loopback(loopback)
+				BundleFilter(const std::set<dtn::data::EID> endpoints, const dtn::data::BundleSet &bundles, bool loopback)
+				 : _endpoints(endpoints), _bundles(bundles), _loopback(loopback)
 				{};
 
 				virtual ~BundleFilter() {};
@@ -246,7 +246,7 @@ namespace dtn
 
 					IBRCOMMON_LOGGER_DEBUG(10) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-					if (_blist.contains(meta))
+					if (_bundles.has(meta))
 					{
 						return false;
 					}
@@ -296,7 +296,7 @@ namespace dtn
 
 			private:
 				const std::set<dtn::data::EID> _endpoints;
-				const dtn::data::BundleList &_blist;
+				const dtn::data::BundleSet &_bundles;
 				const bool _loopback;
 			} filter(_endpoints, _queue.getReceivedBundles(), false);
 
@@ -314,8 +314,7 @@ namespace dtn
 			}
 		}
 
-		Registration::RegistrationQueue::RegistrationQueue(dtn::data::BundleList::Listener &listener)
-		 : _list(listener)
+		Registration::RegistrationQueue::RegistrationQueue()
 		{
 		}
 
@@ -326,16 +325,16 @@ namespace dtn
 		void Registration::RegistrationQueue::put(const dtn::data::MetaBundle &bundle) throw ()
 		{
 			try {
-				_list.add(bundle);
+				_recv_bundles.add(bundle);
 				this->push(bundle);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) { }
 		}
 
-		dtn::data::BundleList& Registration::RegistrationQueue::getReceivedBundles()
+		dtn::data::BundleSet& Registration::RegistrationQueue::getReceivedBundles()
 		{
-			return _list;
+			return _recv_bundles;
 		}
 
 		void Registration::subscribe(const dtn::data::EID &endpoint)

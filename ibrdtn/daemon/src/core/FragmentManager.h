@@ -26,7 +26,6 @@
 #include "core/EventReceiver.h"
 #include "storage/BundleResult.h"
 #include <ibrdtn/data/MetaBundle.h>
-#include <ibrdtn/data/BundleList.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <list>
@@ -36,7 +35,7 @@ namespace dtn
 {
 	namespace core
 	{
-		class FragmentManager : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public dtn::data::BundleList::Listener
+		class FragmentManager : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
 		{
 		public:
 			FragmentManager();
@@ -93,7 +92,6 @@ namespace dtn
 			void search(const dtn::data::MetaBundle &meta, dtn::storage::BundleResult &list);
 
 			ibrcommon::Queue<dtn::data::MetaBundle> _incoming;
-			dtn::data::BundleList _fragments;
 			bool _running;
 
 			static ibrcommon::Mutex _offsets_mutex;

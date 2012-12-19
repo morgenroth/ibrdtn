@@ -35,7 +35,7 @@ namespace dtn
 	namespace net
 	{
 
-		class FileConvergenceLayer : public dtn::net::ConvergenceLayer, public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public dtn::data::BundleList::Listener
+		class FileConvergenceLayer : public dtn::net::ConvergenceLayer, public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
 		{
 		public:
 			FileConvergenceLayer();

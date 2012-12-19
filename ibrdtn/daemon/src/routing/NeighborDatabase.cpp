@@ -83,7 +83,7 @@ namespace dtn
 					return true;
 			}
 
-			if (_summary.contains(id))
+			if (_summary.has(id))
 				return true;
 
 			return false;

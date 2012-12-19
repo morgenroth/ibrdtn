@@ -24,11 +24,11 @@
 
 #include "Component.h"
 #include "routing/NeighborDatabase.h"
-#include "routing/BundleSummary.h"
 #include "routing/NodeHandshake.h"
 #include "core/EventReceiver.h"
 #include "storage/BundleStorage.h"
 
+#include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/DTNTime.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/MetaBundle.h>
@@ -232,13 +232,13 @@ namespace dtn
 			 * Get a vector (bloomfilter) of all known bundles.
 			 * @return
 			 */
-			const SummaryVector getSummaryVector();
+			const dtn::data::BundleSet getKnownBundles();
 
 			/**
 			 * Get a vector (bloomfilter) of all purged bundles.
 			 * @return
 			 */
-			const SummaryVector getPurgedBundles();
+			const dtn::data::BundleSet getPurgedBundles();
 
 			/**
 			 * Add a bundle to the purge vector of this daemon.
@@ -265,10 +265,10 @@ namespace dtn
 			void __forward_event(const dtn::core::Event *evt) const throw ();
 
 			ibrcommon::Mutex _known_bundles_lock;
-			dtn::routing::BundleSummary _known_bundles;
+			dtn::data::BundleSet _known_bundles;
 
 			ibrcommon::Mutex _purged_bundles_lock;
-			dtn::routing::BundleSummary _purged_bundles;
+			dtn::data::BundleSet _purged_bundles;
 
 			dtn::storage::BundleStorage &_storage;
 			std::list<BaseRouter::Extension*> _extensions;

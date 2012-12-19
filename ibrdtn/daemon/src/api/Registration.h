@@ -25,7 +25,7 @@
 #include "storage/BundleStorage.h"
 #include "storage/BundleResult.h"
 #include <ibrdtn/data/BundleID.h>
-#include <ibrdtn/data/BundleList.h>
+#include <ibrdtn/data/BundleSet.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Timer.h>
@@ -36,7 +36,7 @@ namespace dtn
 {
 	namespace api
 	{
-		class Registration : public dtn::data::BundleList::Listener
+		class Registration
 		{
 		public:
 			enum NOTIFY_CALL
@@ -230,15 +230,15 @@ namespace dtn
 		private:
 			class RegistrationQueue : public dtn::storage::BundleResult, public ibrcommon::Queue<dtn::data::MetaBundle> {
 			public:
-				RegistrationQueue(dtn::data::BundleList::Listener &listener);
+				RegistrationQueue();
 				virtual ~RegistrationQueue();
 
 				virtual void put(const dtn::data::MetaBundle &bundle) throw ();
 
-				dtn::data::BundleList& getReceivedBundles();
+				dtn::data::BundleSet& getReceivedBundles();
 
 			private:
-				dtn::data::BundleList _list;
+				dtn::data::BundleSet _recv_bundles;
 			};
 
 			const std::string _handle;

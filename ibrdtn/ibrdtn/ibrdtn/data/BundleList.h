@@ -32,6 +32,22 @@ namespace dtn
 		class BundleList : public std::set<dtn::data::MetaBundle>
 		{
 		public:
+			class Listener {
+			public:
+				virtual ~Listener() = 0;
+				virtual void eventBundleExpired(const dtn::data::MetaBundle&) = 0;
+			};
+
+			BundleList(BundleList::Listener *listener = NULL);
+			virtual ~BundleList();
+
+			virtual void add(const dtn::data::MetaBundle &bundle);
+			virtual void remove(const dtn::data::MetaBundle &bundle);
+			virtual void clear();
+
+			virtual void expire(const size_t timestamp);
+
+		private:
 			class ExpiringBundle
 			{
 			public:
@@ -43,37 +59,12 @@ namespace dtn
 				bool operator<(const ExpiringBundle& other) const;
 				bool operator>(const ExpiringBundle& other) const;
 
-				const MetaBundle bundle;
-				const size_t expiretime;
+				const MetaBundle &bundle;
 			};
 
-			class Listener {
-			public:
-				virtual ~Listener() = 0;
-				virtual void eventBundleExpired(const ExpiringBundle&) {};
-				virtual void eventCommitExpired() {};
-			};
-
-			BundleList(BundleList::Listener &listener);
-			virtual ~BundleList();
-
-			virtual void add(const dtn::data::MetaBundle &bundle);
-			virtual void remove(const dtn::data::MetaBundle &bundle);
-			virtual void clear();
-			virtual bool contains(const dtn::data::BundleID &bundle) const;
-
-			virtual void expire(const size_t timestamp);
-
-			bool operator==(const size_t version) const;
-			size_t getVersion() const;
-
-		private:
 			std::set<ExpiringBundle> _bundles;
 
-			// the version value gets incremented on every change
-			size_t _version;
-
-			BundleList::Listener &_listener;
+			BundleList::Listener *_listener;
 		};
 
 	}

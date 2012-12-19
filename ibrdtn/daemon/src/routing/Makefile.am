@@ -4,8 +4,6 @@ SUBDIRS = epidemic flooding prophet
 routing_SOURCES = \
 	BaseRouter.cpp \
 	BaseRouter.h \
-	BundleSummary.cpp \
-	BundleSummary.h \
 	NeighborDatabase.cpp \
 	NeighborDatabase.h \
 	NeighborRoutingExtension.cpp \
@@ -22,8 +20,6 @@ routing_SOURCES = \
 	StaticRoute.cpp \
 	StaticRouteChangeEvent.cpp \
 	StaticRouteChangeEvent.h \
-	SummaryVector.cpp \
-	SummaryVector.h \
 	NodeHandshake.h \
 	NodeHandshake.cpp \
 	NodeHandshakeEvent.h \

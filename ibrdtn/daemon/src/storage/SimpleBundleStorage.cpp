@@ -44,7 +44,7 @@ namespace dtn
 	namespace storage
 	{
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize, size_t buffer_limit)
-		 : BundleStorage(maxsize), _list(*this), _datastore(*this, workdir, buffer_limit)
+		 : BundleStorage(maxsize), _list(this), _datastore(*this, workdir, buffer_limit)
 		{
 			// load persistent bundles
 			_datastore.iterateAll();
@@ -419,11 +419,11 @@ namespace dtn
 			clearSpace();
 		}
 
-		void SimpleBundleStorage::eventBundleExpired(const dtn::data::BundleList::ExpiringBundle &b)
+		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b)
 		{
 			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
 			{
-				if ((*iter) == b.bundle)
+				if ((*iter) == b)
 				{
 					// remove the bundle
 					const dtn::data::MetaBundle &meta = (*iter);
@@ -441,10 +441,10 @@ namespace dtn
 			}
 
 			// raise bundle event
-			dtn::core::BundleEvent::raise( b.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
+			dtn::core::BundleEvent::raise( b, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
 
 			// raise an event
-			dtn::core::BundleExpiredEvent::raise( b.bundle );
+			dtn::core::BundleExpiredEvent::raise( b );
 		}
 
 		SimpleBundleStorage::BundleContainer::BundleContainer(const dtn::data::Bundle &b)

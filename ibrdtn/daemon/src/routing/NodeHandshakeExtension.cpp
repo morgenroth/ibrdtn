@@ -57,7 +57,7 @@ namespace dtn
 			if (request.hasRequest(BloomFilterSummaryVector::identifier))
 			{
 				// add own summary vector to the message
-				const SummaryVector vec = (**this).getSummaryVector();
+				const dtn::data::BundleSet vec = (**this).getKnownBundles();
 
 				// create an item
 				BloomFilterSummaryVector *item = new BloomFilterSummaryVector(vec);
@@ -69,7 +69,7 @@ namespace dtn
 			if (request.hasRequest(BloomFilterPurgeVector::identifier))
 			{
 				// add own purge vector to the message
-				const SummaryVector vec = (**this).getPurgedBundles();
+				const dtn::data::BundleSet vec = (**this).getPurgedBundles();
 
 				// create an item
 				BloomFilterSummaryVector *item = new BloomFilterSummaryVector(vec);
