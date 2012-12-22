@@ -550,8 +550,16 @@ namespace ibrcommon
 		 */
 		init_socket(AF_UNIX, SOCK_STREAM, 0);
 
-		this->bind(_filename);
-		this->listen(_listen);
+		try {
+			this->bind(_filename);
+			this->listen(_listen);
+		} catch (const socket_exception&) {
+			// clean-up socket
+			::close(_fd);
+			_fd = -1;
+			throw;
+		};
+
 		_state = SOCKET_UP;
 	}
 
@@ -611,10 +619,16 @@ namespace ibrcommon
 		// enable reuse to avoid delay on process restart
 		this->set_reuseaddr(true);
 
-		// try to bind on port and/or address
-		this->bind(_address);
-
-		this->listen(_listen);
+		try {
+			// try to bind on port and/or address
+			this->bind(_address);
+			this->listen(_listen);
+		} catch (const socket_exception&) {
+			// clean-up socket
+			::close(_fd);
+			_fd = -1;
+			throw;
+		};
 
 		_state = SOCKET_UP;
 	}
@@ -912,8 +926,15 @@ namespace ibrcommon
 			this->set_reuseaddr(true);
 		} catch (const vaddress::address_exception&) { }
 
-		// try to bind on port and/or address
-		this->bind(_address);
+		try {
+			// try to bind on port and/or address
+			this->bind(_address);
+		} catch (const socket_exception&) {
+			// clean-up socket
+			::close(_fd);
+			_fd = -1;
+			throw;
+		};
 
 		_state = SOCKET_UP;
 	}
