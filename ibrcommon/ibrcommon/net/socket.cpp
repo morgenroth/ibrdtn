@@ -463,13 +463,11 @@ namespace ibrcommon
 	filesocket::filesocket(int fd)
 	 : clientsocket(fd)
 	{
-		_state = SOCKET_UNMANAGED;
 	}
 
 	filesocket::filesocket(const ibrcommon::File &file)
 	 : _filename(file)
 	{
-		_state = SOCKET_DOWN;
 	}
 
 	filesocket::~filesocket()
@@ -908,7 +906,7 @@ namespace ibrcommon
 
 		try {
 			// test if the service is defined
-			std::string service = _address.service();
+			_address.service();
 
 			// service is defined, enable reuseaddr option
 			this->set_reuseaddr(true);
