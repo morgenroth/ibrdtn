@@ -61,22 +61,20 @@ namespace ibrcommon
 		th->finally();
 
 		// delete the thread-object is requested
-		if (dynamic_cast<DetachedThread*>(th) != NULL)
-		{
+		if (th->_detached) {
 			th->_state = THREAD_FINALIZED;
 			delete th;
-			return NULL;
+		} else {
+			// set the state to JOINABLE
+			th->_state = THREAD_JOINABLE;
 		}
-
-		// set the state to JOINABLE
-		th->_state = THREAD_JOINABLE;
 
 		// exit the thread
 		return NULL;
 	}
 
 	Thread::Thread(size_t size)
-	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), priority(0)
+	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), priority(0), _detached(false)
 	{
 		pthread_attr_init(&attr);
 	}
@@ -366,6 +364,9 @@ namespace ibrcommon
 			// set the stack size attribute
 			pthread_attr_setstacksize(&attr, stack);
 		}
+
+		// set this thread as detached
+		_detached = true;
 
 		// spawn a new thread
 		ret = pthread_create(&tid, &attr, &Thread::__execute__, this);

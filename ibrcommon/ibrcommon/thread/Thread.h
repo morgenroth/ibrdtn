@@ -82,6 +82,9 @@ namespace ibrcommon
 		// thread's attributes
 		pthread_attr_t attr;
 
+		// thread is detached
+		bool _detached;
+
 		/**
 		 * Create a thread object that will have a preset stack size.  If 0
 		 * is used, then the stack size is os defined/default.
