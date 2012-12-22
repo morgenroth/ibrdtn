@@ -38,6 +38,8 @@
 
 #include <sstream>
 
+#include <cassert>
+
 #ifndef HAVE_BZERO
 #define bzero(s,n) (memset((s), '\0', (n)), (void) 0)
 #endif
@@ -58,7 +60,12 @@ namespace ibrcommon
 	}
 
 	basesocket::~basesocket()
-	{ }
+	{
+#ifdef __DEVELOPMENT_ASSERTIONS__
+		assert((_state == SOCKET_DOWN) || (_state == SOCKET_DESTROYED));
+		assert(_fd == -1);
+#endif
+	}
 
 	int basesocket::fd() const throw (socket_exception)
 	{
@@ -85,6 +92,8 @@ namespace ibrcommon
 		int ret = ::close(this->fd());
 		if (ret == -1)
 			throw socket_exception("close error");
+
+		_fd = -1;
 
 		if (_state == SOCKET_UNMANAGED)
 			_state = SOCKET_DESTROYED;
