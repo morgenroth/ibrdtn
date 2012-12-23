@@ -296,7 +296,7 @@ namespace dtn
 					entry.releaseTransfer(event.getBundle());
 
 					// add the bundle to the summary vector of the neighbor
-					_neighbor_database.addBundle(event.getPeer(), event.getBundle());
+					entry.add(event.getBundle());
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 				// pass event to all extensions
@@ -363,12 +363,12 @@ namespace dtn
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// prevent loops
-						{
+						try {
 							ibrcommon::MutexLock l(_neighbor_database);
 
 							// add the bundle to the summary vector of the neighbor
-							_neighbor_database.addBundle(received.peer, received.bundle);
-						}
+							_neighbor_database.get(received.peer).add(received.bundle);
+						} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 						// store the bundle into a storage module
 						_storage.store(bundle);

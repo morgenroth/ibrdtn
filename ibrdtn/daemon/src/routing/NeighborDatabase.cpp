@@ -111,7 +111,7 @@ namespace dtn
 
 		void NeighborDatabase::expire(const size_t timestamp)
 		{
-			for (std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* >::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
 			{
 				(*iter).second->expire(timestamp);
 			}
@@ -171,7 +171,7 @@ namespace dtn
 		{
 			std::set<dtn::data::EID> ret;
 
-			for (std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* >::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
 			{
 				delete (*iter).second;
 			}
@@ -179,43 +179,52 @@ namespace dtn
 
 		NeighborDatabase::NeighborEntry& NeighborDatabase::create(const dtn::data::EID &eid)
 		{
-			if (_entries.find(eid) == _entries.end())
+			neighbor_map::iterator iter = _entries.find(eid);
+			if (iter == _entries.end())
 			{
 				NeighborEntry *entry = new NeighborEntry(eid);
-				_entries[eid] = entry;
+				pair<neighbor_map::iterator,bool> itm = _entries.insert( pair<dtn::data::EID, NeighborDatabase::NeighborEntry*>(eid, entry) );
+				iter = itm.first;
 			}
 
-			return (*_entries[eid]);
+			return *(*iter).second;
 		}
 
 		NeighborDatabase::NeighborEntry& NeighborDatabase::get(const dtn::data::EID &eid) throw (NeighborNotAvailableException)
 		{
-			if (_entries.find(eid) == _entries.end())
+			if (!dtn::core::BundleCore::getInstance().getConnectionManager().isNeighbor(eid))
+				throw NeighborDatabase::NeighborNotAvailableException();
+
+			neighbor_map::iterator iter = _entries.find(eid);
+			if (iter == _entries.end())
 			{
 				throw NeighborNotAvailableException();
 			}
 
-			return (*_entries[eid]);
+			return *(*iter).second;
 		}
 
-		NeighborDatabase::NeighborEntry& NeighborDatabase::reset(const dtn::data::EID &eid)
+		void NeighborDatabase::reset(const dtn::data::EID &eid) throw ()
 		{
-			NeighborDatabase::NeighborEntry &e = get(eid);
-			e.reset();
-			return e;
+			neighbor_map::iterator iter = _entries.find(eid);
+			if (iter != _entries.end())
+			{
+				iter->second->reset();
+			}
+		}
+
+		void NeighborDatabase::update(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf, const size_t lifetime) throw ()
+		{
+			neighbor_map::iterator iter = _entries.find(eid);
+			if (iter != _entries.end())
+			{
+				iter->second->update(bf, lifetime);
+			}
 		}
 
 		void NeighborDatabase::remove(const dtn::data::EID &eid)
 		{
 			_entries.erase(eid);
-		}
-
-		void NeighborDatabase::addBundle(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &b)
-		{
-			try {
-				NeighborDatabase::NeighborEntry &entry = get(neighbor);
-				entry.add(b);
-			} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 		}
 	}
 }

@@ -94,8 +94,7 @@ namespace dtn
 				 */
 				NeighborDatabase &db = (**this).getNeighborDB();
 				ibrcommon::MutexLock l(db);
-				NeighborDatabase::NeighborEntry &entry = db.get(source.getNode());
-				entry.update(filter, answer.getLifetime());
+				db.update(source.getNode(), filter, answer.getLifetime());
 			} catch (std::exception&) { };
 
 			try {

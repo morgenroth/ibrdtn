@@ -174,9 +174,13 @@ namespace dtn
 			/**
 			 * reset bloom filter of this neighbor
 			 * @param eid
-			 * @return
 			 */
-			NeighborDatabase::NeighborEntry& reset(const dtn::data::EID &eid);
+			void reset(const dtn::data::EID &eid) throw ();
+
+			/**
+			 * update the bloom filter of this neighbor
+			 */
+			void update(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf, const size_t lifetime) throw ();
 
 			/**
 			 * Remove an entry of the database.
@@ -185,18 +189,14 @@ namespace dtn
 			void remove(const dtn::data::EID &eid);
 
 			/**
-			 * Add a bundle id to the bloomfilter of a neighbor
-			 */
-			void addBundle(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &b);
-
-			/**
 			 * trigger expire mechanisms for bloomfilter and bundle summary
 			 * @param timestamp
 			 */
 			void expire(const size_t timestamp);
 
 		private:
-			std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* > _entries;
+			typedef std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* > neighbor_map;
+			neighbor_map _entries;
 		};
 	}
 }
