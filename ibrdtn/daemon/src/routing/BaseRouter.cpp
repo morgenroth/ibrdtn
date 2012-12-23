@@ -321,7 +321,8 @@ namespace dtn
 						// add the transferred bundle to the bloomfilter of the receiver
 						entry.add(meta);
 					}
-				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+				} catch (const NeighborDatabase::NeighborNotAvailableException&) {
+				} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
 
 				// pass event to all extensions
 				__forward_event(evt);
