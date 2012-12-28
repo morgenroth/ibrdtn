@@ -809,6 +809,9 @@ namespace ibrcommon
 			bool fastest_found = false;
 
 			while (!fastest_found) {
+				// clear the probe-set
+				probeset.clear();
+
 				if (timerisset(&_timeout)) {
 					// check timeout value
 					if (!timerisset(&timeout_value)) {
