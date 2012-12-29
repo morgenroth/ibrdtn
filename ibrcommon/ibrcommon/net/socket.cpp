@@ -724,7 +724,7 @@ namespace ibrcommon
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_ADDRCONFIG;
+		hints.ai_flags = 0;
 
 		struct addrinfo *res;
 		int ret;
@@ -1156,7 +1156,7 @@ namespace ibrcommon
 
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = SOCK_DGRAM;
-		hints.ai_flags = AI_ADDRCONFIG;
+		hints.ai_flags = 0;
 
 		if ((ret = ::getaddrinfo(group.address().c_str(), NULL, &hints, &res)) != 0) {
 			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
