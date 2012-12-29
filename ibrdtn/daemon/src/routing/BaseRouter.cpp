@@ -266,7 +266,7 @@ namespace dtn
 				else if (event.getAction() == NODE_UNAVAILABLE)
 				{
 					ibrcommon::MutexLock l(_neighbor_database);
-					_neighbor_database.reset( event.getNode().getEID() );
+					_neighbor_database.create( event.getNode().getEID() ).reset();
 				}
 
 				// pass event to all extensions
@@ -311,7 +311,7 @@ namespace dtn
 				try {
 					// lock the list of neighbors
 					ibrcommon::MutexLock l(_neighbor_database);
-					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
+					NeighborDatabase::NeighborEntry &entry = _neighbor_database.create(event.getPeer());
 					entry.releaseTransfer(event.getBundleID());
 
 					if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
@@ -321,7 +321,6 @@ namespace dtn
 						// add the transferred bundle to the bloomfilter of the receiver
 						entry.add(meta);
 					}
-				} catch (const NeighborDatabase::NeighborNotAvailableException&) {
 				} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
 
 				// pass event to all extensions

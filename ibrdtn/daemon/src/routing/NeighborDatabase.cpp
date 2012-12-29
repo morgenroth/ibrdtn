@@ -177,7 +177,7 @@ namespace dtn
 			}
 		}
 
-		NeighborDatabase::NeighborEntry& NeighborDatabase::create(const dtn::data::EID &eid)
+		NeighborDatabase::NeighborEntry& NeighborDatabase::create(const dtn::data::EID &eid) throw ()
 		{
 			neighbor_map::iterator iter = _entries.find(eid);
 			if (iter == _entries.end())
@@ -202,24 +202,6 @@ namespace dtn
 			}
 
 			return *(*iter).second;
-		}
-
-		void NeighborDatabase::reset(const dtn::data::EID &eid) throw ()
-		{
-			neighbor_map::iterator iter = _entries.find(eid);
-			if (iter != _entries.end())
-			{
-				iter->second->reset();
-			}
-		}
-
-		void NeighborDatabase::update(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf, const size_t lifetime) throw ()
-		{
-			neighbor_map::iterator iter = _entries.find(eid);
-			if (iter != _entries.end())
-			{
-				iter->second->update(bf, lifetime);
-			}
 		}
 
 		void NeighborDatabase::remove(const dtn::data::EID &eid)

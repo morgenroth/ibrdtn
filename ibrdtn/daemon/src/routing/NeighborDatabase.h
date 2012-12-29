@@ -169,18 +169,7 @@ namespace dtn
 			 * @param eid The EID of the neighbor.
 			 * @return The neighbor entry reference.
 			 */
-			NeighborDatabase::NeighborEntry& create(const dtn::data::EID &eid);
-
-			/**
-			 * reset bloom filter of this neighbor
-			 * @param eid
-			 */
-			void reset(const dtn::data::EID &eid) throw ();
-
-			/**
-			 * update the bloom filter of this neighbor
-			 */
-			void update(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf, const size_t lifetime) throw ();
+			NeighborDatabase::NeighborEntry& create(const dtn::data::EID &eid) throw ();
 
 			/**
 			 * Remove an entry of the database.
