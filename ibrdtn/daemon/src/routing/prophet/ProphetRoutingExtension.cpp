@@ -107,8 +107,6 @@ namespace dtn
 			if (request.hasRequest(AcknowledgementSet::identifier))
 			{
 				ibrcommon::MutexLock l(_acknowledgementSet);
-
-				_acknowledgementSet.purge();
 				response.addItem(new AcknowledgementSet(_acknowledgementSet));
 			}
 		}
@@ -746,18 +744,6 @@ namespace dtn
 			return  stream;
 		}
 
-		std::ostream& operator<<(std::ostream& stream, const ProphetRoutingExtension::AcknowledgementSet& ack_set)
-		{
-			std::set<ProphetRoutingExtension::Acknowledgement>::const_iterator it;
-			for(it = ack_set._ackSet.begin(); it != ack_set._ackSet.end(); ++it)
-			{
-				stream << it->bundleID.toString() << std::endl;
-				stream << it->expire_time << std::endl;
-			}
-
-			return stream;
-		}
-
 		ProphetRoutingExtension::Acknowledgement::Acknowledgement()
 		 : expire_time(0)
 		{
@@ -791,6 +777,11 @@ namespace dtn
 			_ackSet.insert(ack);
 		}
 
+		void ProphetRoutingExtension::AcknowledgementSet::clear()
+		{
+			_ackSet.clear();
+		}
+
 		void ProphetRoutingExtension::AcknowledgementSet::purge()
 		{
 			std::set<Acknowledgement>::iterator it;
@@ -808,7 +799,10 @@ namespace dtn
 			std::set<Acknowledgement>::iterator it;
 			for(it = other._ackSet.begin(); it != other._ackSet.end(); ++it)
 			{
-				_ackSet.insert(*it);
+				const Acknowledgement &ack = (*it);
+				if (!dtn::utils::Clock::isExpired(ack.expire_time)) {
+					_ackSet.insert(ack);
+				}
 			}
 		}
 
@@ -821,6 +815,12 @@ namespace dtn
 		{
 			return identifier;
 		}
+
+		size_t ProphetRoutingExtension::AcknowledgementSet::size() const
+		{
+			return _ackSet.size();
+		}
+
 		size_t ProphetRoutingExtension::AcknowledgementSet::getLength() const
 		{
 			std::stringstream ss;
@@ -830,47 +830,61 @@ namespace dtn
 
 		std::ostream& ProphetRoutingExtension::AcknowledgementSet::serialize(std::ostream& stream) const
 		{
-			stream << dtn::data::SDNV(_ackSet.size());
-			std::set<Acknowledgement>::const_iterator it;
-			for(it = _ackSet.begin(); it != _ackSet.end(); ++it)
-			{
-				it->serialize(stream);
-			}
+			stream << (*this);
 			return stream;
 		}
 
 		std::istream& ProphetRoutingExtension::AcknowledgementSet::deserialize(std::istream& stream)
 		{
+			stream >> (*this);
+			return stream;
+		}
+
+		const std::set<ProphetRoutingExtension::Acknowledgement>& ProphetRoutingExtension::AcknowledgementSet::operator*() const
+		{
+			return _ackSet;
+		}
+
+		std::ostream& operator<<(std::ostream& stream, const ProphetRoutingExtension::AcknowledgementSet& ack_set)
+		{
+			stream << dtn::data::SDNV(ack_set.size());
+			for (std::set<ProphetRoutingExtension::Acknowledgement>::const_iterator it = ack_set._ackSet.begin(); it != ack_set._ackSet.end(); ++it)
+			{
+				const ProphetRoutingExtension::Acknowledgement &ack = (*it);
+				stream << ack;
+			}
+
+			return stream;
+		}
+
+		std::istream& operator>>(std::istream &stream, ProphetRoutingExtension::AcknowledgementSet &ack_set)
+		{
+			// clear the ack set first
+			ack_set.clear();
+						
 			dtn::data::SDNV size;
 			stream >> size;
 
-			for(dtn::data::SDNV i = 0; i < size; i += 1)
+			for(size_t i = 0; i < size.getValue(); i++)
 			{
-				Acknowledgement ack;
-				ack.deserialize(stream);
-				_ackSet.insert(ack);
+				ProphetRoutingExtension::Acknowledgement ack;
+				stream >> ack;
+				ack_set.insert(ack);
 			}
 			return stream;
 		}
 
-		std::ostream& ProphetRoutingExtension::Acknowledgement::serialize(std::ostream& stream) const
-		{
-			stream << bundleID;
-			stream << dtn::data::SDNV(expire_time);
+		std::ostream& operator<<(std::ostream &stream, const ProphetRoutingExtension::Acknowledgement &ack) {
+			stream << ack.bundleID;
+			stream << dtn::data::SDNV(ack.expire_time);
 			return stream;
 		}
 
-		std::istream& ProphetRoutingExtension::Acknowledgement::deserialize(std::istream& stream)
-		{
+		std::istream& operator>>(std::istream &stream, ProphetRoutingExtension::Acknowledgement &ack) {
 			dtn::data::SDNV expire_time;
-			stream >> bundleID;
+			stream >> ack.bundleID;
 			stream >> expire_time;
-			this->expire_time = expire_time.getValue();
-			/* TODO only accept entries with bundles that we routed ourselves? */
-
-			if (BundleCore::max_lifetime > 0 && this->expire_time > BundleCore::max_lifetime)
-				this->expire_time = BundleCore::max_lifetime;
-
+			ack.expire_time = expire_time.getValue();
 			return stream;
 		}
 

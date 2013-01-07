@@ -344,7 +344,12 @@ namespace dtn
 									ibrcommon::ThreadsafeReference<const dtn::routing::ProphetRoutingExtension::AcknowledgementSet> ack_set = prophet_extension.getAcknowledgementSet();
 
 									_stream << ClientHandler::API_STATUS_OK << " ROUTING PROPHET ACKNOWLEDGEMENTS" << std::endl;
-									_stream << *ack_set << std::endl;
+									for (std::set<dtn::routing::ProphetRoutingExtension::Acknowledgement>::const_iterator iter = (**ack_set).begin(); iter != (**ack_set).end(); iter++)
+									{
+										const dtn::routing::ProphetRoutingExtension::Acknowledgement &ack = (*iter);
+										_stream << ack.bundleID.toString() << " | " << ack.expire_time << std::endl;
+									}
+									_stream << std::endl;
 								} else {
 									throw ibrcommon::Exception("malformed command");
 								}

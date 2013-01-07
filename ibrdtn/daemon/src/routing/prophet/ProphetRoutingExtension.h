@@ -112,8 +112,8 @@ namespace dtn
 				Acknowledgement();
 				Acknowledgement(const dtn::data::BundleID&, size_t expire_time);
 				virtual ~Acknowledgement();
-				std::ostream& serialize(std::ostream& stream) const;
-				std::istream& deserialize(std::istream& stream);
+				friend std::ostream& operator<<(ostream&, const Acknowledgement&);
+				friend std::istream& operator>>(istream&, Acknowledgement&);
 
 				bool operator<(const Acknowledgement &other) const;
 
@@ -134,16 +134,21 @@ namespace dtn
 				void purge(); ///< purge the set, i.e. remove acknowledgements that have expired
 				void merge(const AcknowledgementSet&); ///< merge the set with a second AcknowledgementSet
 				bool has(const dtn::data::BundleID &bundle) const; ///< check if an acknowledgement exists for the bundle
+				void clear();
 
 				/* virtual methods from NodeHandshakeItem */
 				virtual size_t getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
+				virtual size_t size() const;
 				virtual size_t getLength() const; ///< \see NodeHandshakeItem::getLength
 				virtual std::ostream& serialize(std::ostream& stream) const; ///< \see NodeHandshakeItem::serialize
 				virtual std::istream& deserialize(std::istream& stream); ///< \see NodeHandshakeItem::deserialize
 				static const size_t identifier;
 
-				/* TODO: move this to a deserializer or toString? */
 				friend std::ostream& operator<<(ostream&, const AcknowledgementSet&);
+				friend std::istream& operator>>(istream&, AcknowledgementSet&);
+
+				const std::set<Acknowledgement>& operator*() const;
+
 			private:
 				std::set<Acknowledgement> _ackSet;
 			};
