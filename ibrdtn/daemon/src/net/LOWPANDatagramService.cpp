@@ -53,6 +53,8 @@ namespace dtn
 
 		LOWPANDatagramService::~LOWPANDatagramService()
 		{
+			// destroy all socket objects
+			_vsocket.destroy();
 		}
 
 		/**
