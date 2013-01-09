@@ -22,6 +22,7 @@
 #ifndef NEIGHBORDATABASE_H_
 #define NEIGHBORDATABASE_H_
 
+#include "routing/NeighborDataset.h"
 #include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/BundleID.h>
@@ -72,6 +73,13 @@ namespace dtn
 			public:
 				NeighborNotAvailableException() : ibrcommon::Exception("Entry for this neighbor not found.") { };
 				virtual ~NeighborNotAvailableException() throw () { };
+			};
+
+			class DatasetNotAvailableException : public ibrcommon::Exception
+			{
+			public:
+				DatasetNotAvailableException() : ibrcommon::Exception("Dataset not found.") { };
+				virtual ~DatasetNotAvailableException() throw () { };
 			};
 
 			class NeighborEntry
@@ -131,6 +139,43 @@ namespace dtn
 				 */
 				void expire(const size_t timestamp);
 
+				/**
+				 * Retrieve a specific data-set.
+				 */
+				template <class T>
+				T& getDataset() const throw (DatasetNotAvailableException)
+				{
+					dataset_map::const_iterator iter = _datasets.find(T::identifier);
+
+					if (iter == _datasets.end()) throw DatasetNotAvailableException();
+
+					try {
+						return dynamic_cast<T&>(*(*iter).second);
+					} catch (const std::bad_cast&) {
+						throw DatasetNotAvailableException();
+					}
+				}
+
+				/**
+				 * Put a data-set into the entry.
+				 * The old data-set gets replaced.
+				 */
+				void putDataset(NeighborDataset *dset);
+
+				/**
+				 * Remove a data-set.
+				 */
+				template <class T>
+				void removeDataset()
+				{
+					dataset_map::iterator it = _datasets.find(T::identifier);
+
+					if (it == _datasets.end()) return;
+
+					delete it->second;
+					_datasets.erase(it);
+				}
+
 			private:
 				// stores bundle currently in transit
 				ibrcommon::Mutex _transit_lock;
@@ -140,6 +185,11 @@ namespace dtn
 				ibrcommon::BloomFilter _filter;
 				dtn::data::BundleSet _summary;
 				size_t _filter_expire;
+
+				// extended neighbor data
+				typedef std::map<size_t, NeighborDataset*> dataset_map;
+				typedef pair<size_t, NeighborDataset*> dataset_pair;
+				dataset_map _datasets;
 
 				enum FILTER_REQUEST_STATE
 				{

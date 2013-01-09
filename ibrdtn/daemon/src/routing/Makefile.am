@@ -6,6 +6,8 @@ routing_SOURCES = \
 	BaseRouter.h \
 	NeighborDatabase.cpp \
 	NeighborDatabase.h \
+	NeighborDataset.h \
+	NeighborDataset.cpp \
 	NeighborRoutingExtension.cpp \
 	NeighborRoutingExtension.h \
 	QueueBundleEvent.cpp \
