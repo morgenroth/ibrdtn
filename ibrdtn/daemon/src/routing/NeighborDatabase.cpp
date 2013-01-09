@@ -80,19 +80,17 @@ namespace dtn
 
 		bool NeighborDatabase::NeighborEntry::has(const dtn::data::BundleID &id, const bool require_bloomfilter) const
 		{
-			if (require_bloomfilter && (_filter_state != FILTER_AVAILABLE))
-				throw BloomfilterNotAvailableException(eid);
-
 			if (_filter_state == FILTER_AVAILABLE)
 			{
 				if (_filter.contains(id.toString()))
 					return true;
 			}
+			else if (require_bloomfilter)
+			{
+				throw BloomfilterNotAvailableException(eid);
+			}
 
-			if (_summary.has(id))
-				return true;
-
-			return false;
+			return _summary.has(id);
 		}
 
 		void NeighborDatabase::NeighborEntry::expire(const size_t timestamp)
