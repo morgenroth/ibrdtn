@@ -87,6 +87,9 @@ namespace dtn
 
 				// remove this item in private list
 				_expire.erase( iter++ );
+
+				// set commit to true (triggers bloom-filter rebuild)
+				commit = true;
 			}
 
 			if (commit)
