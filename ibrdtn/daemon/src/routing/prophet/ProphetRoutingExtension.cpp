@@ -86,28 +86,8 @@ namespace dtn
 			if (request.hasRequest(DeliveryPredictabilityMap::identifier))
 			{
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
-
-#ifndef DISABLE_MAP_STORE
-				/* check if a saved predictablity map exists */
-				map_store::iterator it;
-				if((it = _mapStore.find(neighbor_node)) != _mapStore.end())
-				{
-					/* the map has already been aged by processHandshake */
-					response.addItem(new DeliveryPredictabilityMap(it->second));
-				}
-				else
-				{
-					age();
-
-					/* copy the map to the map_store so that processHandshakes knows that it was already aged */
-					_mapStore[neighbor_node] = _deliveryPredictabilityMap;
-
-					response.addItem(new DeliveryPredictabilityMap(_deliveryPredictabilityMap));
-				}
-#else
 				age();
 				response.addItem(new DeliveryPredictabilityMap(_deliveryPredictabilityMap));
-#endif
 			}
 			if (request.hasRequest(AcknowledgementSet::identifier))
 			{
@@ -147,17 +127,6 @@ namespace dtn
 				}
 
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
-
-#ifndef DISABLE_MAP_STORE
-				/* save the current map for this neighbor */
-				map_store::iterator it;
-				if((it = _mapStore.find(neighbor_node)) == _mapStore.end())
-				{
-					/* the map has not been aged yet */
-					age();
-				}
-				_mapStore[neighbor_node] = _deliveryPredictabilityMap;
-#endif
 
 				/* update the dp_map */
 				_deliveryPredictabilityMap.update(neighbor_node, neighbor_dp_map, _p_encounter_first);
@@ -237,21 +206,6 @@ namespace dtn
 				}
 				return;
 			} catch (const std::bad_cast&) { };
-
-#ifndef DISABLE_MAP_STORE
-			/* in case of timer or node disconnect event, remove corresponding _mapStore items */
-			try {
-				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-				const dtn::data::EID &neighbor = nodeevent.getNode().getEID().getNode();
-
-				if (nodeevent.getAction() == NODE_UNAVAILABLE)
-				{
-					ibrcommon::MutexLock l(_deliveryPredictabilityMap);
-					_mapStore.erase(neighbor);
-				}
-				return;
-			} catch (const std::bad_cast&) { };
-#endif
 
 			// If an incoming bundle is received, forward it to all connected neighbors
 			try {
@@ -506,14 +460,6 @@ namespace dtn
 						 */
 						try {
 							dynamic_cast<NextExchangeTask&>(*t);
-
-#ifndef DISABLE_MAP_STORE
-							{
-								/* lock the dp map when accessing the mapStore */
-								ibrcommon::MutexLock l(_deliveryPredictabilityMap);
-								_mapStore.clear();
-							}
-#endif
 
 							std::set<dtn::core::Node> neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 							std::set<dtn::core::Node>::const_iterator it;

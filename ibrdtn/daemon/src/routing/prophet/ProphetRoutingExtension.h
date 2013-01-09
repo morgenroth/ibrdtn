@@ -31,8 +31,6 @@
 #include <map>
 #include <list>
 
-#define DISABLE_MAP_STORE 1
-
 namespace dtn
 {
 	namespace routing
@@ -181,16 +179,6 @@ namespace dtn
 			DeliveryPredictabilityMap _deliveryPredictabilityMap;
 			ForwardingStrategy *_forwardingStrategy;
 			AcknowledgementSet _acknowledgementSet;
-
-#ifndef DISABLE_MAP_STORE
-			typedef std::map<dtn::data::EID, DeliveryPredictabilityMap> map_store;
-			/*!
-			 * Store for old DeliveryPredictabilityMaps.
-			 * This is needed in the two-way-handshake, to guarantee that both nodes receive the
-			 * versions of the maps before they have been updated in this encounter.
-			 */
-			map_store _mapStore;
-#endif
 
 			ibrcommon::Mutex _next_exchange_mutex; ///< Mutex for the _next_exchange_timestamp.
 			size_t _next_exchange_timeout; ///< Interval in seconds how often Handshakes should be executed on longer connections.
