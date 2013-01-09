@@ -19,7 +19,8 @@
  *
  */
 
-#include "ProphetRoutingExtension.h"
+#include "routing/prophet/ProphetRoutingExtension.h"
+#include "routing/prophet/DeliveryPredictabilityMap.h"
 
 #include "core/BundleCore.h"
 
@@ -48,13 +49,17 @@ namespace dtn
 		ProphetRoutingExtension::ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
 								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ,
 								 ibrcommon::Timer::time_t next_exchange_timeout)
-			: _forwardingStrategy(strategy), _next_exchange_timeout(next_exchange_timeout), _p_encounter_max(p_encounter_max), _p_encounter_first(p_encounter_first),
-			  _p_first_threshold(p_first_threshold), _beta(beta), _gamma(gamma), _delta(delta), _lastAgingTime(0), _time_unit(time_unit), _i_typ(i_typ)
+			: _deliveryPredictabilityMap(time_unit, beta, gamma),
+			  _forwardingStrategy(strategy), _next_exchange_timeout(next_exchange_timeout), _next_exchange_timestamp(0),
+			  _p_encounter_max(p_encounter_max), _p_encounter_first(p_encounter_first),
+			  _p_first_threshold(p_first_threshold), _delta(delta), _i_typ(i_typ)
 		{
 			// assign myself to the forwarding strategy
 			strategy->setProphetRouter(this);
 
-			_deliveryPredictabilityMap[core::BundleCore::local] = 1.0;
+			// set value for local EID to 1.0
+			_deliveryPredictabilityMap.set(core::BundleCore::local, 1.0);
+
 			// write something to the syslog
 			IBRCOMMON_LOGGER(info) << "Initializing PRoPHET routing module" << IBRCOMMON_LOGGER_ENDL;
 		}
@@ -132,6 +137,15 @@ namespace dtn
 			try {
 				const DeliveryPredictabilityMap& neighbor_dp_map = response.get<DeliveryPredictabilityMap>();
 
+				// store a copy of the map in the neighbor database
+				{
+					NeighborDatabase &db = (**this).getNeighborDB();
+					DeliveryPredictabilityMap *dpm = new DeliveryPredictabilityMap(neighbor_dp_map);
+
+					ibrcommon::MutexLock l(db);
+					db.create(neighbor_node).putDataset(dpm);
+				}
+
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
 
 #ifndef DISABLE_MAP_STORE
@@ -146,7 +160,7 @@ namespace dtn
 #endif
 
 				/* update the dp_map */
-				update(neighbor_dp_map, neighbor_node);
+				_deliveryPredictabilityMap.update(neighbor_node, neighbor_dp_map, _p_encounter_first);
 
 			} catch (std::exception&) { }
 
@@ -322,7 +336,7 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		ibrcommon::ThreadsafeReference<ProphetRoutingExtension::DeliveryPredictabilityMap> ProphetRoutingExtension::getDeliveryPredictabilityMap()
+		ibrcommon::ThreadsafeReference<DeliveryPredictabilityMap> ProphetRoutingExtension::getDeliveryPredictabilityMap()
 		{
 			{
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
@@ -331,7 +345,7 @@ namespace dtn
 			return ibrcommon::ThreadsafeReference<DeliveryPredictabilityMap>(_deliveryPredictabilityMap, _deliveryPredictabilityMap);
 		}
 
-		ibrcommon::ThreadsafeReference<const ProphetRoutingExtension::DeliveryPredictabilityMap> ProphetRoutingExtension::getDeliveryPredictabilityMap() const
+		ibrcommon::ThreadsafeReference<const DeliveryPredictabilityMap> ProphetRoutingExtension::getDeliveryPredictabilityMap() const
 		{
 			return ibrcommon::ThreadsafeReference<const DeliveryPredictabilityMap>(_deliveryPredictabilityMap, const_cast<DeliveryPredictabilityMap&>(_deliveryPredictabilityMap));
 		}
@@ -346,9 +360,9 @@ namespace dtn
 			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
 			{
 			public:
-				BundleFilter(const NeighborDatabase::NeighborEntry &entry, ForwardingStrategy &strategy)
-				 : _entry(entry), _strategy(strategy)
-				{};
+				BundleFilter(const NeighborDatabase::NeighborEntry &entry, ForwardingStrategy &strategy, const DeliveryPredictabilityMap &dpm)
+				 : _entry(entry), _strategy(strategy), _dpm(dpm)
+				{ };
 
 				virtual ~BundleFilter() {};
 
@@ -404,7 +418,7 @@ namespace dtn
 					// ask the routing strategy if this bundle should be selected
 					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 					{
-						return _strategy.shallForward(_entry.eid, meta);
+						return _strategy.shallForward(_dpm, meta);
 					}
 
 					return true;
@@ -413,6 +427,7 @@ namespace dtn
 			private:
 				const NeighborDatabase::NeighborEntry &_entry;
 				const ForwardingStrategy &_strategy;
+				const DeliveryPredictabilityMap &_dpm;
 			};
 
 			dtn::storage::BundleStorage &storage = (**this).getStorage();
@@ -445,13 +460,16 @@ namespace dtn
 							ibrcommon::MutexLock l(db);
 							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
-							// check if enough transfer slots available (threadhold reached)
+							// check if enough transfer slots available (threshold reached)
 							if (!entry.isTransferThresholdReached())
 								throw NeighborDatabase::NoMoreTransfersAvailable();
 
 							try {
+								// get the DeliveryPredictabilityMap of the potentially next hop
+								DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
+
 								// get the bundle filter of the neighbor
-								BundleFilter filter(entry, *_forwardingStrategy);
+								BundleFilter filter(entry, *_forwardingStrategy, dpm);
 
 								// some debug output
 								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
@@ -469,6 +487,10 @@ namespace dtn
 										transferTo(entry, meta);
 									} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 								}
+							} catch (const NeighborDatabase::DatasetNotAvailableException&) {
+								// if there is no DeliveryPredictabilityMap for the next hop
+								// perform a routing handshake with the peer
+								(**this).doHandshake(task.eid);
 							} catch (const dtn::storage::BundleStorage::BundleFilterException&) {
 								// query a new summary vector from this neighbor
 								(**this).doHandshake(task.eid);
@@ -547,201 +569,36 @@ namespace dtn
 			}
 		}
 
-		const size_t ProphetRoutingExtension::DeliveryPredictabilityMap::identifier = NodeHandshakeItem::DELIVERY_PREDICTABILITY_MAP;
 		const size_t ProphetRoutingExtension::AcknowledgementSet::identifier = NodeHandshakeItem::PROPHET_ACKNOWLEDGEMENT_SET;
-
-		size_t ProphetRoutingExtension::DeliveryPredictabilityMap::DeliveryPredictabilityMap::getIdentifier() const
-		{
-			return identifier;
-		}
-
-		size_t ProphetRoutingExtension::DeliveryPredictabilityMap::getLength() const
-		{
-			size_t len = 0;
-			for(const_iterator it = begin(); it != end(); ++it)
-			{
-				/* calculate length of the EID */
-				const std::string eid = it->first.getString();
-				size_t eid_len = eid.length();
-				len += data::SDNV(eid_len).getLength() + eid_len;
-
-				/* calculate length of the float in fixed notation */
-				const float& f = it->second;
-				std::stringstream ss;
-				ss << f << std::flush;
-
-				size_t float_len = ss.str().length();
-				len += data::SDNV(float_len).getLength() + float_len;
-			}
-			return data::SDNV(size()).getLength() + len;
-		}
-
-		std::ostream& ProphetRoutingExtension::DeliveryPredictabilityMap::serialize(std::ostream& stream) const
-		{
-			stream << data::SDNV(size());
-			for(const_iterator it = begin(); it != end(); ++it)
-			{
-				const std::string eid = it->first.getString();
-				stream << data::SDNV(eid.length()) << eid;
-
-				const float& f = it->second;
-				/* write f into a stringstream to get final length */
-				std::stringstream ss;
-				ss << f << std::flush;
-
-				stream << data::SDNV(ss.str().length());
-				stream << ss.str();
-			}
-			IBRCOMMON_LOGGER_DEBUG(20) << "ProphetRouting: Serialized DeliveryPredictabilityMap with " << size() << " items." << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(60) << *this << IBRCOMMON_LOGGER_ENDL;
-			return stream;
-		}
-
-		std::istream& ProphetRoutingExtension::DeliveryPredictabilityMap::deserialize(std::istream& stream)
-		{
-			data::SDNV elements_read(0);
-			data::SDNV map_size;
-			stream >> map_size;
-
-			while(elements_read < map_size)
-			{
-				/* read the EID */
-				data::SDNV eid_len;
-				stream >> eid_len;
-				char eid_cstr[eid_len.getValue()+1];
-				stream.read(eid_cstr, sizeof(eid_cstr)-1);
-				eid_cstr[sizeof(eid_cstr)-1] = 0;
-				data::EID eid(eid_cstr);
-				if(eid == data::EID())
-					throw dtn::InvalidDataException("EID could not be casted, while parsing a dp_map.");
-
-				/* read the probability (float) */
-				float f;
-				data::SDNV float_len;
-				stream >> float_len;
-				char f_cstr[float_len.getValue()+1];
-				stream.read(f_cstr, sizeof(f_cstr)-1);
-				f_cstr[sizeof(f_cstr)-1] = 0;
-
-				std::stringstream ss(f_cstr);
-				ss >> f;
-				if(ss.fail())
-					throw dtn::InvalidDataException("Float could not be casted, while parsing a dp_map.");
-
-				/* check if f is in a proper range */
-				if(f < 0 || f > 1)
-					continue;
-
-				/* insert the data into the map */
-				(*this)[eid] = f;
-
-				elements_read += 1;
-			}
-
-			IBRCOMMON_LOGGER_DEBUG(20) << "ProphetRouting: Deserialized DeliveryPredictabilityMap with " << size() << " items." << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(60) << *this << IBRCOMMON_LOGGER_ENDL;
-			return stream;
-		}
 
 		void ProphetRoutingExtension::updateNeighbor(const dtn::data::EID &neighbor)
 		{
 			/**
 			 * Calculate new value for this encounter
 			 */
-			DeliveryPredictabilityMap::const_iterator it;
-			float neighbor_dp = _p_encounter_first;
+			try {
+				float neighbor_dp = _deliveryPredictabilityMap.get(neighbor);
 
-			if ((it = _deliveryPredictabilityMap.find(neighbor)) != _deliveryPredictabilityMap.end())
-			{
-				neighbor_dp = it->second;
-
-				if(it->second < _p_first_threshold)
+				if (neighbor_dp < _p_first_threshold)
 				{
 					neighbor_dp = _p_encounter_first;
 				}
 				else
 				{
-					neighbor_dp += (1 - _delta - it->second) * p_encounter(neighbor);
+					neighbor_dp += (1 - _delta - neighbor_dp) * p_encounter(neighbor);
 				}
+
+				_deliveryPredictabilityMap.set(neighbor, neighbor_dp);
+			} catch (const DeliveryPredictabilityMap::ValueNotFoundException&) {
+				_deliveryPredictabilityMap.set(neighbor, _p_encounter_first);
 			}
 
-			_deliveryPredictabilityMap[neighbor] = neighbor_dp;
 			_ageMap[neighbor] = dtn::utils::Clock::getUnixTimestamp();
-		}
-
-		void ProphetRoutingExtension::update(const DeliveryPredictabilityMap& neighbor_dp_map, const dtn::data::EID& neighbor)
-		{
-			DeliveryPredictabilityMap::const_iterator it;
-			float neighbor_dp = _p_encounter_first;
-
-			if ((it = _deliveryPredictabilityMap.find(neighbor)) != _deliveryPredictabilityMap.end())
-			{
-				neighbor_dp = it->second;
-			}
-
-			/**
-			 * Calculate transitive values
-			 */
-			for (it = neighbor_dp_map.begin(); it != neighbor_dp_map.end(); ++it)
-			{
-				if ((it->first != neighbor) && (it->first != dtn::core::BundleCore::local))
-				{
-					float dp = 0;
-
-					DeliveryPredictabilityMap::iterator dp_it;
-					if((dp_it = _deliveryPredictabilityMap.find(it->first)) != _deliveryPredictabilityMap.end())
-						dp = dp_it->second;
-
-					dp = max(dp, neighbor_dp * it->second * _beta);
-
-					if(dp_it != _deliveryPredictabilityMap.end())
-						dp_it->second = dp;
-					else
-						_deliveryPredictabilityMap[it->first] = dp;
-				}
-			}
 		}
 
 		void ProphetRoutingExtension::age()
 		{
-			size_t current_time = dtn::utils::Clock::getUnixTimestamp();
-
-			// prevent double aging
-			if (current_time <= _lastAgingTime) return;
-
-			unsigned int k = (current_time - _lastAgingTime) / _time_unit;
-
-			DeliveryPredictabilityMap::iterator it;
-			for(it = _deliveryPredictabilityMap.begin(); it != _deliveryPredictabilityMap.end();)
-			{
-				if(it->first == dtn::core::BundleCore::local)
-				{
-					++it;
-					continue;
-				}
-
-				it->second *= pow(_gamma, (int)k);
-
-				if(it->second < _p_first_threshold)
-				{
-					_deliveryPredictabilityMap.erase(it++);
-				} else {
-					++it;
-				}
-			}
-
-			_lastAgingTime = current_time;
-		}
-
-		std::ostream& operator<<(std::ostream& stream, const ProphetRoutingExtension::DeliveryPredictabilityMap& map)
-		{
-			ProphetRoutingExtension::DeliveryPredictabilityMap::const_iterator it;
-			for(it = map.begin(); it != map.end(); ++it)
-			{
-				stream << it->first.getString() << ": " << it->second << std::endl;
-			}
-
-			return  stream;
+			_deliveryPredictabilityMap.age(_p_first_threshold);
 		}
 
 		ProphetRoutingExtension::Acknowledgement::Acknowledgement()
@@ -922,20 +779,29 @@ namespace dtn
 		ProphetRoutingExtension::ForwardingStrategy::~ForwardingStrategy()
 		{}
 
-		bool ProphetRoutingExtension::ForwardingStrategy::neighborDPIsGreater(const dtn::data::EID& neighbor, const dtn::data::EID& destination) const
+		bool ProphetRoutingExtension::ForwardingStrategy::neighborDPIsGreater(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::EID& destination) const
 		{
 			const DeliveryPredictabilityMap& dp_map = _prophet_router->_deliveryPredictabilityMap;
+			const dtn::data::EID destnode = destination.getNode();
 
-			DeliveryPredictabilityMap::const_iterator destinationIT = dp_map.find(destination);
+			try {
+				float local_pv = dp_map.get(destnode);
 
-			if(destinationIT == dp_map.end()) return true;
+				try {
+					// retrieve the value from the DeliveryPredictabilityMap of the neighbor
+					float foreign_pv = neighbor_dpm.get(destnode);
 
-			DeliveryPredictabilityMap::const_iterator neighborIT = dp_map.find(neighbor);
+					return (foreign_pv > local_pv);
+				} catch (const DeliveryPredictabilityMap::ValueNotFoundException&) {
+					// if the foreign router has no entry for the destination
+					// then compare the local value with a fictitious initial value
+					return (_prophet_router->_p_first_threshold > local_pv);
+				}
+			} catch (const DeliveryPredictabilityMap::ValueNotFoundException&) {
+				// always forward if the destination is not in our own predictability map
+			}
 
-			if(neighborIT != dp_map.end())
-				return (neighborIT->second > destinationIT->second);
-
-			return (_prophet_router->_p_first_threshold > destinationIT->second);
+			return false;
 		}
 
 		void ProphetRoutingExtension::ForwardingStrategy::setProphetRouter(ProphetRoutingExtension *router)
@@ -951,9 +817,9 @@ namespace dtn
 		{
 		}
 
-		bool ProphetRoutingExtension::GRTR_Strategy::shallForward(const dtn::data::EID& neighbor, const dtn::data::MetaBundle& bundle) const
+		bool ProphetRoutingExtension::GRTR_Strategy::shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const
 		{
-			return neighborDPIsGreater(neighbor, bundle.destination);
+			return neighborDPIsGreater(neighbor_dpm, bundle.destination);
 		}
 
 		ProphetRoutingExtension::GTMX_Strategy::GTMX_Strategy(unsigned int NF_max)
@@ -976,7 +842,7 @@ namespace dtn
 			++nf_it->second;
 		}
 
-		bool ProphetRoutingExtension::GTMX_Strategy::shallForward(const dtn::data::EID &neighbor, const dtn::data::MetaBundle& bundle) const
+		bool ProphetRoutingExtension::GTMX_Strategy::shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const
 		{
 			unsigned int NF = 0;
 
@@ -987,7 +853,7 @@ namespace dtn
 
 			if (NF > _NF_max) return false;
 
-			return neighborDPIsGreater(neighbor, bundle.destination);
+			return neighborDPIsGreater(neighbor_dpm, bundle.destination);
 		}
 
 	} // namespace routing

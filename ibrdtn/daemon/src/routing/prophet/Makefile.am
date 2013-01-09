@@ -2,7 +2,9 @@
 
 routing_SOURCES = \
 	ProphetRoutingExtension.cpp \
-	ProphetRoutingExtension.h
+	ProphetRoutingExtension.h \
+	DeliveryPredictabilityMap.h \
+	DeliveryPredictabilityMap.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS)

@@ -23,6 +23,7 @@
 #define PROPHETROUTINGEXTENSION_H_
 
 #include "routing/BaseRouter.h"
+#include "routing/prophet/DeliveryPredictabilityMap.h"
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/ThreadsafeReference.h>
@@ -49,28 +50,6 @@ namespace dtn
 		class ProphetRoutingExtension : public BaseRouter::ThreadedExtension
 		{
 		public:
-
-			/*!
-			 * \brief This class keeps track of the predictablities to see a specific EID
-			 *
-			 * This class can be used as a map from EID to float.
-			 * Also, it can be serialized as a NodeHandshakeItem to be exchanged with neighbors.
-			 */
-			class DeliveryPredictabilityMap : public std::map<dtn::data::EID, float>, public NodeHandshakeItem, public ibrcommon::Mutex
-			{
-			public:
-				/* virtual methods from NodeHandshakeItem */
-
-				virtual size_t getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
-				virtual size_t getLength() const; ///< \see NodeHandshakeItem::getLength
-				virtual std::ostream& serialize(std::ostream& stream) const; ///< \see NodeHandshakeItem::serialize
-				virtual std::istream& deserialize(std::istream& stream); ///< \see NodeHandshakeItem::deserialize
-				static const size_t identifier;
-
-				/* TODO: move this to a deserializer or toString? */
-				friend std::ostream& operator<<(ostream&, const DeliveryPredictabilityMap&);
-			};
-
 			/*!
 			 * \brief This class is a abstract base class for all prophet forwarding strategies.
 			 */
@@ -87,11 +66,11 @@ namespace dtn
 				 * \param prophet_router Reference to the ProphetRoutingExtension to access its parameters
 				 * \return true if the bundle should be forwarded
 				 */
-				virtual bool shallForward(const dtn::data::EID& neighbor, const dtn::data::MetaBundle& bundle) const = 0;
+				virtual bool shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const = 0;
 				/*!
 				 * checks if the deliveryPredictability of the neighbor is higher than that of the destination of the bundle.
 				 */
-				bool neighborDPIsGreater(const dtn::data::EID& neighbor, const dtn::data::EID& destination) const;
+				bool neighborDPIsGreater(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::EID& destination) const;
 
 				/**
 				 * Set back-reference to the prophet router
@@ -188,14 +167,6 @@ namespace dtn
 			void __cancellation() throw ();
 		private:
 			/*!
-			 * Updates the DeliveryPredictabilityMap with one recieved by a neighbor.
-			 * \param neighbor_dp_map the DeliveryPredictabilityMap recieved from the neighbor
-			 * \param neighbor EID of the neighbor
-			 * \warning The _deliveryPredictabilityMap has to be locked before calling this function
-			 */
-			void update(const DeliveryPredictabilityMap& neighbor_dp_map, const dtn::data::EID& neighbor);
-
-			/*!
 			 * Updates the DeliveryPredictabilityMap in the event that a neighbor has been encountered.
 			 * \warning The _deliveryPredictabilityMap has to be locked before calling this function
 			 */
@@ -233,11 +204,7 @@ namespace dtn
 			float _p_encounter_max; ///< Maximum value returned by p_encounter. \see p_encounter
 			float _p_encounter_first; ///< Value to which the predictability is set on the first encounter.
 			float _p_first_threshold; ///< If the predictability falls below this value, it is erased from the map and _p_encounter_first will be used on the next encounter.
-			float _beta; ///< Weight of the transitive property of prophet.
-			float _gamma; ///< Determines how quickly predictabilities age.
 			float _delta; ///< Maximum predictability is (1-delta).
-			size_t _lastAgingTime; ///< Timestamp when the map has been aged the last time.
-			size_t _time_unit; ///< time unit to be used in the network
 			size_t _i_typ; ///< time interval that is characteristic for the network
 
 			typedef std::map<dtn::data::EID, size_t> age_map;
@@ -283,7 +250,7 @@ namespace dtn
 			public:
 				explicit GRTR_Strategy();
 				virtual ~GRTR_Strategy();
-				virtual bool shallForward(const dtn::data::EID& neighbor, const dtn::data::MetaBundle& bundle) const;
+				virtual bool shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const;
 			};
 
 			/*!
@@ -297,7 +264,7 @@ namespace dtn
 			public:
 				explicit GTMX_Strategy(unsigned int NF_max);
 				virtual ~GTMX_Strategy();
-				virtual bool shallForward(const dtn::data::EID& neighbor, const dtn::data::MetaBundle& bundle) const;
+				virtual bool shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const;
 
 				void addForward(const dtn::data::BundleID &id);
 

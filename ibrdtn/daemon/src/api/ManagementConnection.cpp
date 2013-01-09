@@ -26,6 +26,7 @@
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "routing/prophet/ProphetRoutingExtension.h"
+#include "routing/prophet/DeliveryPredictabilityMap.h"
 
 #include <ibrdtn/utils/Utils.h>
 
@@ -336,7 +337,7 @@ namespace dtn
 								const dtn::routing::ProphetRoutingExtension& prophet_extension = dynamic_cast<const dtn::routing::ProphetRoutingExtension&>(**it);
 
 								if ( cmd[2] == "info" ){
-									ibrcommon::ThreadsafeReference<const dtn::routing::ProphetRoutingExtension::DeliveryPredictabilityMap> dp_map = prophet_extension.getDeliveryPredictabilityMap();
+									ibrcommon::ThreadsafeReference<const dtn::routing::DeliveryPredictabilityMap> dp_map = prophet_extension.getDeliveryPredictabilityMap();
 
 									_stream << ClientHandler::API_STATUS_OK << " ROUTING PROPHET INFO" << std::endl;
 									_stream << *dp_map << std::endl;
