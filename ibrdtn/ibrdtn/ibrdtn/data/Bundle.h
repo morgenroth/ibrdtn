@@ -45,7 +45,7 @@ namespace dtn
 
 		class Bundle : public PrimaryBlock
 		{
-			friend BundleBuilder;
+			friend class BundleBuilder;
 
 		public:
 			class NoSuchBlockFoundException : public ibrcommon::Exception
@@ -60,7 +60,7 @@ namespace dtn
 
 			class BlockList
 			{
-				friend BundleBuilder;
+				friend class BundleBuilder;
 
 			public:
 				BlockList();
