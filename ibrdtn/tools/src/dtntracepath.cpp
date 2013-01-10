@@ -183,7 +183,7 @@ class Tracer : public dtn::api::Client
 						formattedLog(i, recv, tm);
 					}
 				} catch (const std::exception &e) {
-					std::cout << e.what() << std::endl;
+					// error or timeout
 				}
 
 				std::cout << std::endl;
