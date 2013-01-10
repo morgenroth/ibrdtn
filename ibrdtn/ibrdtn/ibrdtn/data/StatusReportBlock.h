@@ -22,7 +22,7 @@
 #ifndef STATUSREPORTBLOCK_H_
 #define STATUSREPORTBLOCK_H_
 
-#include "ibrdtn/data/Block.h"
+#include "ibrdtn/data/AdministrativeBlock.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/DTNTime.h"
@@ -31,7 +31,7 @@ namespace dtn
 {
 	namespace data
 	{
-		class StatusReportBlock : public Block
+		class StatusReportBlock : public AdministrativeBlock
 		{
 		public:
 			enum TYPE
@@ -59,9 +59,8 @@ namespace dtn
 			StatusReportBlock();
 			virtual ~StatusReportBlock();
 
-			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual void read(const dtn::data::PayloadBlock &p) throw (WrongRecordException);
+			virtual void write(dtn::data::PayloadBlock &p) const;
 
 			char _admfield;
 			char _status;

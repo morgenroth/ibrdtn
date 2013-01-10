@@ -22,11 +22,9 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-
 #include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/data/CustodySignalBlock.h"
-#include "ibrdtn/data/StatusReportBlock.h"
-#include "ibrdtn/data/PayloadBlock.h"
+#include <ibrcommon/data/BLOB.h>
+#include <list>
 
 namespace dtn
 {

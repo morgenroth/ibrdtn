@@ -46,6 +46,11 @@ namespace dtn
 			_procflags |= Block::BLOCK_CONTAINS_EIDS;
 		}
 
+		void Block::clearEIDs()
+		{
+			_eids.clear();
+		}
+
 		const Block::eid_list& Block::getEIDList() const
 		{
 			return _eids;

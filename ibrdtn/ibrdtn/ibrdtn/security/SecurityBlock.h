@@ -39,6 +39,9 @@ namespace dtn
 {
 	namespace security
 	{
+		class MutualSerializer;
+		class StrictSerializer;
+
 		/**
 		Abstract base class for BundleAuthenticationBlock, PayloadIntegrityBlock,
 		PayloadConfidentialBlock and ExtensionSecurityBlock. It provides definitions
@@ -309,8 +312,8 @@ namespace dtn
 			@param stream the stream to be written into
 			@return the same stream as the parameter for chaining
 			*/
-			virtual dtn::security::MutualSerializer &serialize_mutable(dtn::security::MutualSerializer &serializer) const;
-			virtual dtn::security::MutualSerializer &serialize_mutable_without_security_result(dtn::security::MutualSerializer &serializer) const;
+			virtual MutualSerializer &serialize_mutable(MutualSerializer &serializer) const;
+			virtual MutualSerializer &serialize_mutable_without_security_result(MutualSerializer &serializer) const;
 
 			/**
 			Returns the size of the security result if it would be serialized, even

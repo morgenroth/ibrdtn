@@ -23,6 +23,7 @@
 #include "storage/BundleStorage.h"
 #include "core/CustodyEvent.h"
 #include "core/BundleGeneratedEvent.h"
+#include <ibrdtn/data/PayloadBlock.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
@@ -65,8 +66,8 @@ namespace dtn
 			custody_bundle.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
 			custody_bundle.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
 
-			// send a custody signal with accept flag
-			CustodySignalBlock &signal = custody_bundle.push_back<CustodySignalBlock>();
+			// create a custody signal with accept flag
+			CustodySignalBlock signal;
 
 			// set the bundle to match
 			signal.setMatch(meta);
@@ -74,6 +75,11 @@ namespace dtn
 			// set accepted
 			signal._custody_accepted = true;
 
+			// write the custody data to a payload block
+			dtn::data::PayloadBlock &payload = custody_bundle.push_back<dtn::data::PayloadBlock>();
+			signal.write(payload);
+
+			custody_bundle.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 			custody_bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 			custody_bundle._destination = meta.custodian;
 			custody_bundle._source = dtn::core::BundleCore::local;
@@ -98,8 +104,8 @@ namespace dtn
 			// create a new bundle
 			Bundle b;
 
-			// send a custody signal with reject flag
-			CustodySignalBlock &signal = b.push_back<CustodySignalBlock>();
+			// create a custody signal with reject flag
+			CustodySignalBlock signal;
 
 			// set the bundle to match
 			signal.setMatch(meta);
@@ -107,6 +113,11 @@ namespace dtn
 			// set reason code
 			signal._reason = reason;
 
+			// write the custody data to a payload block
+			dtn::data::PayloadBlock &payload = b.push_back<dtn::data::PayloadBlock>();
+			signal.write(payload);
+
+			b.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 			b._destination = meta.custodian;
 			b._source = dtn::core::BundleCore::local;
 

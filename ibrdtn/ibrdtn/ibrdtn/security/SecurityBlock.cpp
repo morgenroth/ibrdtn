@@ -649,7 +649,7 @@ namespace dtn
 					dtn::data::Block &plaintext_block = bundle.insert(f, block);
 					ddser >> plaintext_block;
 
-					plaintext_block.getEIDList().clear();
+					plaintext_block.clearEIDs();
 
 					// copy eids
 					// remove security_source and destination
@@ -664,7 +664,7 @@ namespace dtn
 					dtn::data::ExtensionBlock &plaintext_block = bundle.insert<dtn::data::ExtensionBlock>(block);
 					ddser >> plaintext_block;
 
-					plaintext_block.getEIDList().clear();
+					plaintext_block.clearEIDs();
 
 					// copy eids
 					// remove security_source and destination

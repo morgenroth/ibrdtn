@@ -35,7 +35,6 @@
 
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/EID.h>
-#include <ibrdtn/data/CustodySignalBlock.h>
 
 #include <ibrcommon/link/LinkManager.h>
 

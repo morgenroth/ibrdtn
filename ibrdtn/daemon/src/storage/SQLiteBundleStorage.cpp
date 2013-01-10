@@ -232,8 +232,7 @@ namespace dtn
 				// load block from file
 				std::ifstream is(file.getPath().c_str(), std::ios::binary | std::ios::in);
 
-				if ((blocktyp == dtn::data::PayloadBlock::BLOCK_TYPE) &&
-						(!bundle.get(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD)))
+				if (blocktyp == dtn::data::PayloadBlock::BLOCK_TYPE)
 				{
 					// create a new BLOB object
 					SQLiteBLOB *blob = new SQLiteBLOB(_blobPath);

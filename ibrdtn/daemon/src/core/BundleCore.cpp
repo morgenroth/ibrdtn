@@ -34,6 +34,7 @@
 #include "core/TimeAdjustmentEvent.h"
 
 #include <ibrcommon/data/BLOB.h>
+#include <ibrdtn/data/CustodySignalBlock.h>
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrdtn/data/Exceptions.h>
 #include <ibrdtn/data/EID.h>
@@ -212,17 +213,24 @@ namespace dtn
 					// process this bundle locally
 					dtn::data::Bundle bundle = getStorage().get(meta);
 
+					if (bundle.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
 					try {
 						// check for a custody signal
-						dtn::data::CustodySignalBlock custody = bundle.getBlock<dtn::data::CustodySignalBlock>();
+						dtn::data::PayloadBlock &payload = bundle.getBlock<dtn::data::PayloadBlock>();
+
+						CustodySignalBlock custody;
+						custody.read(payload);
+
 						dtn::data::BundleID id(custody._source, custody._bundle_timestamp.getValue(), custody._bundle_sequence.getValue(), (custody._fragment_length.getValue() > 0), custody._fragment_offset.getValue());
 						getStorage().releaseCustody(bundle._source, id);
 
 						IBRCOMMON_LOGGER_DEBUG(5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						delivered = true;
-					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+					} catch (const AdministrativeBlock::WrongRecordException&) {
 						// no custody signal available
+					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+						// no payload block available
 					}
 
 					if (delivered)

@@ -34,20 +34,21 @@
 #include <sstream>
 #include <unistd.h>
 
-class ReportBundle : public dtn::api::Bundle
+class ReportBundle : public dtn::api::Bundle, public dtn::data::StatusReportBlock
 {
 public:
 	ReportBundle(const dtn::api::Bundle &apib)
-	 : Bundle(apib) {
+	 : Bundle(apib)
+	{
+		if (_b.get(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD)) {
+			StatusReportBlock srb;
+			dtn::data::PayloadBlock &payload = _b.getBlock<dtn::data::PayloadBlock>();
+			read(payload);
+		}
 	}
 
 	virtual ~ReportBundle() {
 
-	}
-
-	const dtn::data::StatusReportBlock& extract()
-	{
-		return _b.getBlock<dtn::data::StatusReportBlock>();
 	}
 };
 
@@ -96,8 +97,7 @@ class Tracer : public dtn::api::Client
 
 		void formattedLog(size_t i, const dtn::api::Bundle &b, const ibrcommon::TimeMeasurement &tm)
 		{
-			ReportBundle report(b);
-			const dtn::data::StatusReportBlock &sr = report.extract();
+			ReportBundle sr(b);
 
 			const std::string source = b.getSource().getString();
 
@@ -182,8 +182,8 @@ class Tracer : public dtn::api::Client
 						i++;
 						formattedLog(i, recv, tm);
 					}
-				} catch (const std::exception&) {
-
+				} catch (const std::exception &e) {
+					std::cout << e.what() << std::endl;
 				}
 
 				std::cout << std::endl;

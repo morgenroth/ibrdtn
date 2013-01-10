@@ -23,7 +23,8 @@ h_sources = \
 	SDNV.h \
 	StatusReportBlock.h \
 	BundleFragment.h \
-	StreamBlock.h
+	StreamBlock.h \
+	AdministrativeBlock.h
 
 cc_sources = \
 	Serializer.cpp \
@@ -47,7 +48,8 @@ cc_sources = \
 	SDNV.cpp \
 	StatusReportBlock.cpp \
 	BundleFragment.cpp \
-	StreamBlock.cpp
+	StreamBlock.cpp \
+	AdministrativeBlock.cpp
 
 if COMPRESSION
 h_sources += CompressedPayloadBlock.h

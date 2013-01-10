@@ -89,18 +89,20 @@ namespace dtn
 
 		dtn::data::Serializer& StrictSerializer::operator<<(const dtn::data::Block &obj)
 		{
-			_stream << obj._blocktype;
-			_stream << dtn::data::SDNV(obj._procflags);
+			_stream << obj.getType();
+			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+
+			const dtn::data::Block::eid_list &eids = obj.getEIDList();
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS) || (eids.size() > 0));
 #endif
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << dtn::data::SDNV(obj._eids.size());
-				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				_stream << dtn::data::SDNV(eids.size());
+				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
 				{
 					pair<size_t, size_t> offsets;
 

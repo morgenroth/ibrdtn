@@ -22,13 +22,12 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
-#include "ibrdtn/data/Dictionary.h"
-#include "ibrdtn/data/PrimaryBlock.h"
-#include "ibrdtn/data/Block.h"
-#include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/EID.h"
+#include "ibrdtn/data/Block.h"
+#include "ibrdtn/data/PrimaryBlock.h"
+#include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/ExtensionBlock.h"
-#include "ibrcommon/refcnt_ptr.h"
+#include <ibrcommon/refcnt_ptr.h>
 #include <ostream>
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -36,26 +35,17 @@
 #include <set>
 #include <map>
 #include <typeinfo>
+#include <list>
 
 namespace dtn
 {
-	namespace security
-	{
-		class StrictSerializer;
-		class MutualSerializer;
-	}
-
 	namespace data
 	{
-		class CustodySignalBlock;
-		class StatusReportBlock;
+		class BundleBuilder;
 
 		class Bundle : public PrimaryBlock
 		{
-			friend class DefaultSerializer;
-			friend class DefaultDeserializer;
-			friend class dtn::security::StrictSerializer;
-			friend class dtn::security::MutualSerializer;
+			friend BundleBuilder;
 
 		public:
 			class NoSuchBlockFoundException : public ibrcommon::Exception
@@ -66,12 +56,11 @@ namespace dtn
 					};
 			};
 
+			typedef std::list<refcnt_ptr<Block> > block_list;
+
 			class BlockList
 			{
-				friend class DefaultSerializer;
-				friend class DefaultDeserializer;
-				friend class dtn::security::StrictSerializer;
-				friend class dtn::security::MutualSerializer;
+				friend BundleBuilder;
 
 			public:
 				BlockList();
@@ -173,24 +162,12 @@ namespace dtn
 			return _blocks.get<T>();
 		}
 
-		template<>
-		CustodySignalBlock& Bundle::BlockList::get<CustodySignalBlock>();
-
-		template<>
-		const CustodySignalBlock& Bundle::BlockList::get<const CustodySignalBlock>() const;
-
-		template<>
-		StatusReportBlock& Bundle::BlockList::get<StatusReportBlock> ();
-
-		template<>
-		const StatusReportBlock& Bundle::BlockList::get<const StatusReportBlock>() const;
-
 		template<class T>
 		const T& Bundle::BlockList::get() const
 		{
 			try {
 				// copy all blocks to the list
-				for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				for (Bundle::block_list::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 				{
 					if ((*iter)->getType() == T::BLOCK_TYPE)
 					{
@@ -210,7 +187,7 @@ namespace dtn
 		{
 			try {
 				// copy all blocks to the list
-				for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				for (Bundle::block_list::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 				{
 					if ((*iter)->getType() == T::BLOCK_TYPE)
 					{
@@ -232,7 +209,7 @@ namespace dtn
 			std::list<const T*> ret;
 
 			// copy all blocks to the list
-			for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+			for (Bundle::block_list::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 			{
 				if ((*(*iter)).getType() == T::BLOCK_TYPE)
 				{

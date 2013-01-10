@@ -31,7 +31,7 @@ namespace dtn
 	namespace data
 	{
 		StatusReportBlock::StatusReportBlock()
-		 : Block(dtn::data::PayloadBlock::BLOCK_TYPE), _admfield(16), _status(0), _reasoncode(0),
+		 : _admfield(16), _status(0), _reasoncode(0),
 		 _fragment_offset(0), _fragment_length(0), _timeof_receipt(),
 		 _timeof_custodyaccept(), _timeof_forwarding(), _timeof_delivery(),
 		 _timeof_deletion(), _bundle_timestamp(0), _bundle_sequence(0)
@@ -42,116 +42,84 @@ namespace dtn
 		{
 		}
 
-		size_t StatusReportBlock::getLength() const
+		void StatusReportBlock::write(dtn::data::PayloadBlock &p) const
 		{
-			// determine the block size
-			size_t len = 0;
-			len += sizeof(_admfield);
-			len += sizeof(_status);
-			len += sizeof(_reasoncode);
+			ibrcommon::BLOB::Reference r = p.getBLOB();
+			ibrcommon::BLOB::iostream stream = r.iostream();
+
+			// clear the whole data first
+			stream.clear();
+
+			(*stream) << _admfield;
+			(*stream) << _status;
+			(*stream) << _reasoncode;
 
 			if ( _admfield & 0x01 )
 			{
-				len += _fragment_offset.getLength();
-				len += _fragment_length.getLength();
+				(*stream) << _fragment_offset;
+				(*stream) << _fragment_length;
 			}
 
 			if (_status & RECEIPT_OF_BUNDLE)
-				len += _timeof_receipt.getLength();
+				(*stream) << _timeof_receipt;
 
 			if (_status & CUSTODY_ACCEPTANCE_OF_BUNDLE)
-				len += _timeof_custodyaccept.getLength();
+				(*stream) << _timeof_custodyaccept;
 
 			if (_status & FORWARDING_OF_BUNDLE)
-				len += _timeof_forwarding.getLength();
+				(*stream) << _timeof_forwarding;
 
 			if (_status & DELIVERY_OF_BUNDLE)
-				len += _timeof_delivery.getLength();
+				(*stream) << _timeof_delivery;
 
 			if (_status & DELETION_OF_BUNDLE)
-				len += _timeof_deletion.getLength();
+				(*stream) << _timeof_deletion;
 
-			len += _bundle_timestamp.getLength();
-			len += _bundle_sequence.getLength();
-
-			BundleString sourceid(_source.getString());
-			len += sourceid.getLength();
-
-			return len;
+			(*stream) << _bundle_timestamp;
+			(*stream) << _bundle_sequence;
+			(*stream) << BundleString(_source.getString());
 		}
 
-		std::ostream& StatusReportBlock::serialize(std::ostream &stream, size_t &length) const
+		void StatusReportBlock::read(const dtn::data::PayloadBlock &p) throw (WrongRecordException)
 		{
-			stream << _admfield;
-			stream << _status;
-			stream << _reasoncode;
+			ibrcommon::BLOB::Reference r = p.getBLOB();
+			ibrcommon::BLOB::iostream stream = r.iostream();
+
+			(*stream) >> _admfield;
+
+			// check type field
+			if ((_admfield >> 4) != 1) throw WrongRecordException();
+
+			(*stream) >> _status;
+			(*stream) >> _reasoncode;
 
 			if ( _admfield & 0x01 )
 			{
-				stream << _fragment_offset;
-				stream << _fragment_length;
+				(*stream) >> _fragment_offset;
+				(*stream) >> _fragment_length;
 			}
 
 			if (_status & RECEIPT_OF_BUNDLE)
-				stream << _timeof_receipt;
+				(*stream) >> _timeof_receipt;
 
 			if (_status & CUSTODY_ACCEPTANCE_OF_BUNDLE)
-				stream << _timeof_custodyaccept;
+				(*stream) >> _timeof_custodyaccept;
 
 			if (_status & FORWARDING_OF_BUNDLE)
-				stream << _timeof_forwarding;
+				(*stream) >> _timeof_forwarding;
 
 			if (_status & DELIVERY_OF_BUNDLE)
-				stream << _timeof_delivery;
+				(*stream) >> _timeof_delivery;
 
 			if (_status & DELETION_OF_BUNDLE)
-				stream << _timeof_deletion;
+				(*stream) >> _timeof_deletion;
 
-			stream << _bundle_timestamp;
-			stream << _bundle_sequence;
-			stream << BundleString(_source.getString());
-
-			return stream;
-		}
-
-		std::istream& StatusReportBlock::deserialize(std::istream &stream, const size_t length)
-		{
-			stream >> _admfield;
-			stream >> _status;
-			stream >> _reasoncode;
-
-			if ( _admfield & 0x01 )
-			{
-				stream >> _fragment_offset;
-				stream >> _fragment_length;
-			}
-
-			if (_status & RECEIPT_OF_BUNDLE)
-				stream >> _timeof_receipt;
-
-			if (_status & CUSTODY_ACCEPTANCE_OF_BUNDLE)
-				stream >> _timeof_custodyaccept;
-
-			if (_status & FORWARDING_OF_BUNDLE)
-				stream >> _timeof_forwarding;
-
-			if (_status & DELIVERY_OF_BUNDLE)
-				stream >> _timeof_delivery;
-
-			if (_status & DELETION_OF_BUNDLE)
-				stream >> _timeof_deletion;
-
-			stream >> _bundle_timestamp;
-			stream >> _bundle_sequence;
+			(*stream) >> _bundle_timestamp;
+			(*stream) >> _bundle_sequence;
 
 			BundleString source;
-			stream >> source;
+			(*stream) >> source;
 			_source = EID(source);
-
-			// unset block not processed bit
-			set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, false);
-
-			return stream;
 		}
 
 	}

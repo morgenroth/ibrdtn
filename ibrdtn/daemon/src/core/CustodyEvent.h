@@ -26,7 +26,6 @@
 #include "core/Event.h"
 
 #include <ibrdtn/data/MetaBundle.h>
-#include <ibrdtn/data/CustodySignalBlock.h>
 
 namespace dtn
 {

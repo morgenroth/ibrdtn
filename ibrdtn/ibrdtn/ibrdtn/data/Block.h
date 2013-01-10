@@ -32,25 +32,13 @@
 
 namespace dtn
 {
-	namespace security
-	{
-		class StrictSerializer;
-		class MutualSerializer;
-	}
-
 	namespace data
 	{
-		class Bundle;
+		class BundleBuilder;
 
 		class Block
 		{
-			friend class Bundle;
-			friend class DefaultSerializer;
-			friend class dtn::security::StrictSerializer;
-			friend class dtn::security::MutualSerializer;
-			friend class DefaultDeserializer;
-			friend class SeparateSerializer;
-			friend class SeparateDeserializer;
+			friend class BundleBuilder;
 
 		public:
 			enum ProcFlags
@@ -69,6 +57,7 @@ namespace dtn
 			virtual ~Block();
 
 			virtual void addEID(const dtn::data::EID &eid);
+			virtual void clearEIDs();
 			virtual const eid_list& getEIDList() const;
 
 			const char& getType() const { return _blocktype; }
@@ -97,13 +86,6 @@ namespace dtn
 			 */
 			virtual size_t getLength() const = 0;
 
-		protected:
-			/**
-			 * The constructor of this class is protected to prevent instantiation of this abstract class.
-			 * @param blocktype The type of the block.
-			 */
-			Block(char blocktype);
-
 			/**
 			 * Return the length of the payload in strict format
 			 */
@@ -115,6 +97,13 @@ namespace dtn
 			@return the same stream as the parameter for chaining
 			*/
 			virtual std::ostream &serialize_strict(std::ostream &stream, size_t &length) const;
+
+		protected:
+			/**
+			 * The constructor of this class is protected to prevent instantiation of this abstract class.
+			 * @param blocktype The type of the block.
+			 */
+			Block(char blocktype);
 
 			// block type of this block
 			char _blocktype;

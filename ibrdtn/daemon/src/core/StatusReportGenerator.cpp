@@ -48,7 +48,7 @@ namespace dtn
 			Bundle bundle;
 
 			// create a new statusreport block
-			StatusReportBlock &report = bundle.push_back<StatusReportBlock>();
+			StatusReportBlock report;
 
 			bundle.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 
@@ -101,6 +101,9 @@ namespace dtn
 			report._bundle_timestamp = b.timestamp;
 			report._bundle_sequence = b.sequencenumber;
 			report._source = b.source;
+
+			dtn::data::PayloadBlock &payload = bundle.push_back<dtn::data::PayloadBlock>();
+			report.write(payload);
 
 			dtn::core::BundleGeneratedEvent::raise(bundle);
 		}

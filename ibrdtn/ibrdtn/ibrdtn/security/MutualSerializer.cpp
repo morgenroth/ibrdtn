@@ -115,16 +115,18 @@ namespace dtn
 				return *this;
 			}
 
-			_stream << obj._blocktype;
-			(*this) << dtn::data::SDNV(obj._procflags & 0x0000000000000077);
+			_stream << obj.getType();
+			(*this) << dtn::data::SDNV(obj.getProcessingFlags() & 0x0000000000000077);
+
+			const dtn::data::Block::eid_list &eids = obj.getEIDList();
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS) || (eids.size() > 0));
 #endif
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
-				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
 					(*this) << (*it);
 
 			try {
@@ -189,17 +191,19 @@ namespace dtn
 		{
 			size_t len = 0;
 
-			len += sizeof(obj._blocktype);
+			len += sizeof(obj.getType());
 			// proc flags
 			len += sdnv_size;
 
+			const dtn::data::Block::eid_list &eids = obj.getEIDList();
+
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS) || (eids.size() > 0));
 #endif
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
-				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
 					len += it->getString().size();
 
 			// size-field of the size of the payload in the block

@@ -30,7 +30,7 @@ namespace dtn
 	namespace data
 	{
 		CustodySignalBlock::CustodySignalBlock()
-		 : Block(dtn::data::PayloadBlock::BLOCK_TYPE), _admfield(32), _custody_accepted(false), _reason(NO_ADDITIONAL_INFORMATION), _fragment_offset(0),
+		 : _admfield(32), _custody_accepted(false), _reason(NO_ADDITIONAL_INFORMATION), _fragment_offset(0),
 		 _fragment_length(0), _timeofsignal(), _bundle_timestamp(0), _bundle_sequence(0)
 		{
 		}
@@ -39,34 +39,16 @@ namespace dtn
 		{
 		}
 
-		size_t CustodySignalBlock::getLength() const
+		void CustodySignalBlock::read(const dtn::data::PayloadBlock &p) throw (WrongRecordException)
 		{
-			// determine the block size
-			size_t len = 0;
-			len += sizeof(_admfield);
-			len += sizeof(char); // status
+			ibrcommon::BLOB::Reference r = p.getBLOB();
+			ibrcommon::BLOB::iostream stream = r.iostream();
+			(*stream) >> _admfield;
 
-			if ( _admfield & 0x01 )
-			{
-				len += _fragment_offset.getLength();
-				len += _fragment_length.getLength();
-			}
+			// check type field
+			if ((_admfield >> 4) != 2) throw WrongRecordException();
 
-			len += _timeofsignal.getLength();
-			len += _bundle_timestamp.getLength();
-			len += _bundle_sequence.getLength();
-
-			BundleString sourceid(_source.getString());
-			len += sourceid.getLength();
-
-			return len;
-		}
-
-		std::istream& CustodySignalBlock::deserialize(std::istream &stream, const size_t length)
-		{
-			stream >> _admfield;
-
-			char status; stream >> status;
+			char status; (*stream) >> status;
 
 			// decode custody acceptance
 			_custody_accepted = (status & 0x01);
@@ -76,28 +58,29 @@ namespace dtn
 
 			if ( _admfield & 0x01 )
 			{
-				stream >> _fragment_offset;
-				stream >> _fragment_length;
+				(*stream) >> _fragment_offset;
+				(*stream) >> _fragment_length;
 			}
 
-			stream >> _timeofsignal;
-			stream >> _bundle_timestamp;
-			stream >> _bundle_sequence;
+			(*stream) >> _timeofsignal;
+			(*stream) >> _bundle_timestamp;
+			(*stream) >> _bundle_sequence;
 
 			BundleString source;
-			stream >> source;
+			(*stream) >> source;
 			_source = EID(source);
-
-			// unset block not processed bit
-			set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, false);
-
-			return stream;
 		}
 
-		std::ostream& CustodySignalBlock::serialize(std::ostream &stream, size_t &length) const
+		void CustodySignalBlock::write(dtn::data::PayloadBlock &p) const
 		{
+			ibrcommon::BLOB::Reference r = p.getBLOB();
+			ibrcommon::BLOB::iostream stream = r.iostream();
+
+			// clear the whole data first
+			stream.clear();
+
 			// write the content
-			stream << _admfield;
+			(*stream) << _admfield;
 
 			// encode reason flag
 			char status = (_reason << 1);
@@ -106,22 +89,20 @@ namespace dtn
 			if (_custody_accepted) status |= 0x01;
 
 			// write the status byte
-			stream << status;
+			(*stream) << status;
 
 			if ( _admfield & 0x01 )
 			{
-				stream << _fragment_offset;
-				stream << _fragment_length;
+				(*stream) << _fragment_offset;
+				(*stream) << _fragment_length;
 			}
 
 			BundleString sourceid(_source.getString());
 
-			stream << _timeofsignal
+			(*stream) << _timeofsignal
 			   << _bundle_timestamp
 			   << _bundle_sequence
 			   << sourceid;
-
-			return stream;
 		}
 
 		void CustodySignalBlock::setMatch(const dtn::data::MetaBundle& other)

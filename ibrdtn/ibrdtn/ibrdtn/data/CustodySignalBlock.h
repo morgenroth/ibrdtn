@@ -24,6 +24,7 @@
 #ifndef CUSTODYSIGNALBLOCK_H_
 #define CUSTODYSIGNALBLOCK_H_
 
+#include "ibrdtn/data/AdministrativeBlock.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/MetaBundle.h"
@@ -34,7 +35,7 @@ namespace dtn
 {
 	namespace data
 	{
-		class CustodySignalBlock : public Block
+		class CustodySignalBlock : public AdministrativeBlock
 		{
 		public:
 			enum REASON_CODE
@@ -57,9 +58,8 @@ namespace dtn
 			void setMatch(const Bundle& other);
 			bool match(const Bundle& other) const;
 
-			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual void read(const dtn::data::PayloadBlock &p) throw (WrongRecordException);
+			virtual void write(dtn::data::PayloadBlock &p) const;
 
 			char _admfield;
 			//char _status;
