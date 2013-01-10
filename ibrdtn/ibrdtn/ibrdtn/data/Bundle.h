@@ -93,14 +93,14 @@ namespace dtn
 				template<class T> const T& get() const;
 
 				template<class T>
-				const std::list<const T*> getList() const;
+				const std::list<const T*> getAll() const;
 
-				const std::list<const Block*> getList() const;
+				const block_list& getAll() const;
 
 				size_t size() const;
 
 			private:
-				std::list<refcnt_ptr<Block> > _blocks;
+				block_list _blocks;
 			};
 
 			Bundle();
@@ -111,7 +111,7 @@ namespace dtn
 			bool operator<(const Bundle& other) const;
 			bool operator>(const Bundle& other) const;
 
-			const std::list<const dtn::data::Block*> getBlocks() const;
+			const block_list& getBlocks() const;
 
 			dtn::data::Block& getBlock(int index);
 			const dtn::data::Block& getBlock(int index) const;
@@ -158,7 +158,7 @@ namespace dtn
 		template<class T>
 		const std::list<const T*> Bundle::getBlocks() const
 		{
-			return _blocks.getList<T>();
+			return _blocks.getAll<T>();
 		}
 
 		template<class T>
@@ -226,7 +226,7 @@ namespace dtn
 		}
 
 		template<class T>
-		const std::list<const T*> Bundle::BlockList::getList() const
+		const std::list<const T*> Bundle::BlockList::getAll() const
 		{
 			// create a list of blocks
 			std::list<const T*> ret;

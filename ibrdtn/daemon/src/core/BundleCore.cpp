@@ -419,8 +419,8 @@ namespace dtn
 #endif
 
 			// check for invalid blocks
-			const std::list<const dtn::data::Block*> bl = b.getBlocks();
-			for (std::list<const dtn::data::Block*>::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
+			const dtn::data::Bundle::block_list &bl = b.getBlocks();
+			for (dtn::data::Bundle::block_list::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
 			{
 				try {
 					const dtn::data::ExtensionBlock &e = dynamic_cast<const dtn::data::ExtensionBlock&>(**iter);
@@ -448,9 +448,9 @@ namespace dtn
 		void BundleCore::processBlocks(dtn::data::Bundle &b)
 		{
 			// walk through the block and process them when needed
-			const std::list<const dtn::data::Block*> blist = b.getBlocks();
+			const dtn::data::Bundle::block_list &blist = b.getBlocks();
 
-			for (std::list<const dtn::data::Block*>::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
+			for (dtn::data::Bundle::block_list::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
 			{
 				const dtn::data::Block &block = (**iter);
 				switch (block.getType())

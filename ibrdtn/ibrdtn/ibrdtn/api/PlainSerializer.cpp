@@ -46,12 +46,12 @@ namespace dtn
 			(*this) << (dtn::data::PrimaryBlock&)obj;
 
 			// serialize all secondary blocks
-			const std::list<const dtn::data::Block*> list = obj.getBlocks();
+			const dtn::data::Bundle::block_list &list = obj.getBlocks();
 
 			// block count
 			_stream << "Blocks: " << list.size() << std::endl;
 
-			for (std::list<const dtn::data::Block*>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (dtn::data::Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
 			{
 				const dtn::data::Block &b = (*(*iter));
 				_stream << std::endl;

@@ -46,7 +46,7 @@ namespace dtn
 			_procflags |= Block::BLOCK_CONTAINS_EIDS;
 		}
 
-		std::list<dtn::data::EID> Block::getEIDList() const
+		const Block::eid_list& Block::getEIDList() const
 		{
 			return _eids;
 		}
@@ -68,7 +68,7 @@ namespace dtn
 			return (_procflags & flag);
 		}
 
-		size_t Block::getProcessingFlags() const
+		const size_t& Block::getProcessingFlags() const
 		{
 			return _procflags;
 		}

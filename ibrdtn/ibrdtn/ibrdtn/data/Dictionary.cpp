@@ -50,9 +50,9 @@ namespace data
 		add(bundle._custodian);
 
 		// add EID of all secondary blocks
-		const std::list<const dtn::data::Block*> list = bundle.getBlocks();
+		const Bundle::block_list &list = bundle.getBlocks();
 
-		for (std::list<const dtn::data::Block*>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+		for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
 		{
 			const Block &b = (*(*iter));
 			add( b.getEIDList() );

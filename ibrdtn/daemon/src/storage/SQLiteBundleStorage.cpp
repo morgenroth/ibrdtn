@@ -296,7 +296,7 @@ namespace dtn
 				const dtn::data::BundleID id(bundle);
 
 				// get all blocks of the bundle
-				const list<const dtn::data::Block*> blocklist = bundle.getBlocks();
+				const dtn::data::Bundle::block_list &blocklist = bundle.getBlocks();
 
 				// index number for order of the blocks
 				int index = 1;
@@ -304,7 +304,7 @@ namespace dtn
 				// number of bytes stored
 				int storedBytes = 0;
 
-				for(std::list<const dtn::data::Block*>::const_iterator it = blocklist.begin() ;it != blocklist.end(); it++)
+				for(dtn::data::Bundle::block_list::const_iterator it = blocklist.begin() ;it != blocklist.end(); it++)
 				{
 					const dtn::data::Block &block = (**it);
 

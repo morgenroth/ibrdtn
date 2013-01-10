@@ -171,8 +171,8 @@ void TestSerializer::serializer_block_length(void)
 	b.push_back(ref);
 	b.push_front<dtn::data::AgeBlock>();
 
-	const std::list<const dtn::data::Block*> blocks = b.getBlocks();
-	for (std::list<const dtn::data::Block*>::const_iterator iter = blocks.begin(); iter != blocks.end(); iter++)
+	const dtn::data::Bundle::block_list blocks = b.getBlocks();
+	for (dtn::data::Bundle::block_list::const_iterator iter = blocks.begin(); iter != blocks.end(); iter++)
 	{
 		const dtn::data::Block &block = (**iter);
 

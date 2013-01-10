@@ -47,8 +47,8 @@ namespace dtn
 			(dtn::data::DefaultSerializer&)(*this) << static_cast<const dtn::data::PrimaryBlock&>(bundle);
 
 			// serialize all secondary blocks
-			std::list<refcnt_ptr<dtn::data::Block> > list = bundle._blocks._blocks;
-			std::list<refcnt_ptr<dtn::data::Block> >::const_iterator iter = list.begin();
+			const dtn::data::Bundle::block_list &list = bundle.getBlocks();
+			dtn::data::Bundle::block_list::const_iterator iter = list.begin();
 
 			// skip all blocks before the correlator
 			for (; _with_correlator && iter != list.end(); iter++)

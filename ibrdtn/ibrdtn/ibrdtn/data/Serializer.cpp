@@ -63,11 +63,11 @@ namespace dtn
 			_dictionary.add(obj._custodian);
 
 			// add EID of all secondary blocks
-			std::list<refcnt_ptr<Block> > list = obj._blocks._blocks;
+			const Bundle::block_list &list = obj.getBlocks();
 
-			for (std::list<refcnt_ptr<Block> >::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
 			{
-				const Block &b = (*(*iter));
+				const Block &b = (**iter);
 				_dictionary.add( b.getEIDList() );
 			}
 
@@ -84,11 +84,11 @@ namespace dtn
 			(*this) << (PrimaryBlock&)obj;
 
 			// serialize all secondary blocks
-			std::list<refcnt_ptr<Block> > list = obj._blocks._blocks;
+			const Bundle::block_list &list = obj.getBlocks();
 			
-			for (std::list<refcnt_ptr<Block> >::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
 			{
-				const Block &b = (*(*iter));
+				const Block &b = (**iter);
 				(*this) << b;
 			}
 
@@ -118,12 +118,12 @@ namespace dtn
 			(*this) << prim;
 
 			// serialize all secondary blocks
-			std::list<refcnt_ptr<Block> > list = obj._bundle._blocks._blocks;
+			const Bundle::block_list &list = obj._bundle.getBlocks();
 			bool post_payload = false;
 
-			for (std::list<refcnt_ptr<Block> >::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
 			{
-				const Block &b = (*(*iter));
+				const Block &b = (**iter);
 
 				try {
 					// test if this is the payload block
@@ -159,11 +159,11 @@ namespace dtn
 			if (compressable)
 			{
 				// add EID of all secondary blocks
-				std::list<refcnt_ptr<Block> > list = obj._blocks._blocks;
+				const Bundle::block_list &list = obj.getBlocks();
 
-				for (std::list<refcnt_ptr<Block> >::const_iterator iter = list.begin(); iter != list.end(); iter++)
+				for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
 				{
-					const Block &b = (*(*iter));
+					const Block &b = (**iter);
 					const std::list<dtn::data::EID> eids = b.getEIDList();
 
 					for (std::list<dtn::data::EID>::const_iterator eit = eids.begin(); eit != eids.end(); eit++)
@@ -295,18 +295,20 @@ namespace dtn
 
 		Serializer& DefaultSerializer::operator <<(const dtn::data::Block& obj)
 		{
-			_stream << obj._blocktype;
-			_stream << dtn::data::SDNV(obj._procflags);
+			_stream << obj.getType();
+			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+
+			const Block::eid_list &eids = obj.getEIDList();
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			// test: BLOCK_CONTAINS_EIDS => (eids.size() > 0)
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (eids.size() > 0));
 #endif
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << SDNV(obj._eids.size());
-				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				_stream << SDNV(eids.size());
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
 				{
 					pair<size_t, size_t> offsets;
 
@@ -336,18 +338,20 @@ namespace dtn
 
 		Serializer& DefaultSerializer::serialize(const dtn::data::PayloadBlock& obj, size_t clip_offset, size_t clip_length)
 		{
-			_stream << obj._blocktype;
-			_stream << dtn::data::SDNV(obj._procflags);
+			_stream << obj.getType();
+			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+
+			const Block::eid_list &eids = obj.getEIDList();
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			// test: BLOCK_CONTAINS_EIDS => (eids.size() > 0)
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (eids.size() > 0));
 #endif
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << SDNV(obj._eids.size());
-				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				_stream << SDNV(eids.size());
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
 				{
 					pair<size_t, size_t> offsets;
 
@@ -408,11 +412,11 @@ namespace dtn
 			len += getLength( (PrimaryBlock&)obj );
 			
 			// add size of all blocks
-			std::list<refcnt_ptr<Block> > list = obj._blocks._blocks;
+			const Bundle::block_list &list = obj.getBlocks();
 
-			for (std::list<refcnt_ptr<Block> >::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
 			{
-				const Block &b = (*(*iter));
+				const Block &b = (**iter);
 				len += getLength( b );
 			}
 
@@ -525,18 +529,20 @@ namespace dtn
 		{
 			size_t len = 0;
 
-			len += sizeof(obj._blocktype);
-			len += dtn::data::SDNV(obj._procflags).getLength();
+			len += sizeof(obj.getType());
+			len += dtn::data::SDNV(obj.getProcessingFlags()).getLength();
+
+			const Block::eid_list &eids = obj.getEIDList();
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			// test: BLOCK_CONTAINS_EIDS => (eids.size() > 0)
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (eids.size() > 0));
 #endif
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				len += dtn::data::SDNV(obj._eids.size()).getLength();
-				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				len += dtn::data::SDNV(eids.size()).getLength();
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
 				{
 					pair<size_t, size_t> offsets = _dictionary.getRef(*it);
 					len += SDNV(offsets.first).getLength();
@@ -893,18 +899,20 @@ namespace dtn
 
 		Serializer& SeparateSerializer::operator <<(const dtn::data::Block& obj)
 		{
-			_stream << obj._blocktype;
-			_stream << dtn::data::SDNV(obj._procflags);
+			_stream << obj.getType();
+			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+
+			const Block::eid_list &eids = obj.getEIDList();
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			// test: BLOCK_CONTAINS_EIDS => (_ids.size() > 0)
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (eids.size() > 0));
 #endif
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << SDNV(obj._eids.size());
-				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				_stream << SDNV(eids.size());
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
 				{
 					dtn::data::BundleString str((*it).getString());
 					_stream << str;
@@ -925,18 +933,20 @@ namespace dtn
 		{
 			size_t len = 0;
 
-			len += sizeof(obj._blocktype);
-			len += dtn::data::SDNV(obj._procflags).getLength();
+			len += sizeof(obj.getType());
+			len += dtn::data::SDNV(obj.getProcessingFlags()).getLength();
+
+			const Block::eid_list &eids = obj.getEIDList();
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			// test: BLOCK_CONTAINS_EIDS => (eids.size() > 0)
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (eids.size() > 0));
 #endif
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				len += dtn::data::SDNV(obj._eids.size()).getLength();
-				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				len += dtn::data::SDNV(eids.size()).getLength();
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
 				{
 					dtn::data::BundleString str((*it).getString());
 					len += str.getLength();

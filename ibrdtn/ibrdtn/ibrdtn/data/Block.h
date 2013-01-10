@@ -64,16 +64,18 @@ namespace dtn
 				BLOCK_CONTAINS_EIDS = 1 << 0x06						// 6 - Block contains an EID-reference field.
 			};
 
+			typedef std::list<dtn::data::EID> eid_list;
+
 			virtual ~Block();
 
 			virtual void addEID(const dtn::data::EID &eid);
-			virtual std::list<dtn::data::EID> getEIDList() const;
+			virtual const eid_list& getEIDList() const;
 
-			char getType() const { return _blocktype; }
+			const char& getType() const { return _blocktype; }
 
 			void set(ProcFlags flag, const bool &value);
 			bool get(ProcFlags flag) const;
-			size_t getProcessingFlags() const;
+			const size_t& getProcessingFlags() const;
 
 			/**
 			 * Serialize the derived block payload.
@@ -118,7 +120,7 @@ namespace dtn
 			char _blocktype;
 
 			// the list of EID references embedded in this block
-			std::list<dtn::data::EID> _eids;
+			eid_list _eids;
 
 		private:
 			// block processing flags

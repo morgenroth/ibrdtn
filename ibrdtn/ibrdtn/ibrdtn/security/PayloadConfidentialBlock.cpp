@@ -159,16 +159,16 @@ namespace dtn
 				bool decrypt_related = false;
 
 				// get all blocks of this bundle
-				const std::list<const dtn::data::Block*> blocks = bundle.getBlocks();
+				const dtn::data::Bundle::block_list &blocks = bundle.getBlocks();
 
 				// iterate through all blocks
-				for (std::list<const dtn::data::Block* >::const_iterator it = blocks.begin(); it != blocks.end(); it++)
+				for (dtn::data::Bundle::block_list::const_iterator it = blocks.begin(); it != blocks.end(); it++)
 				{
 					try {
 						dynamic_cast<const PayloadIntegrityBlock&>(**it);
 
 						// add this block to the erasure list for later deletion
-						erasure_list.push_back(*it);
+						erasure_list.push_back((*it).getPointer());
 					} catch (const std::bad_cast&) { };
 
 					try {
@@ -185,7 +185,7 @@ namespace dtn
 								decryptBlock(bundle, (dtn::security::SecurityBlock&)**it, salt, key);
 
 								// success! add this block to the erasue list
-								erasure_list.push_back(*it);
+								erasure_list.push_back((*it).getPointer());
 							} catch (const ibrcommon::Exception&) {
 								IBRCOMMON_LOGGER(critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
 								decryptBlock(bundle, (dtn::security::SecurityBlock&)**it, salt, key);
@@ -215,7 +215,7 @@ namespace dtn
 							}
 
 							// success! add this block to the erasue list
-							erasure_list.push_back(*it);
+							erasure_list.push_back((*it).getPointer());
 
 							// check if first PCB has a correlator
 							if (pcb._ciphersuite_flags & CONTAINS_CORRELATOR)

@@ -251,14 +251,14 @@ namespace dtn
 			dtn::data::DefaultSerializer serializer(std::cout);
 			size_t header = serializer.getLength((dtn::data::PrimaryBlock&)bundle);
 
-			const std::list<const dtn::data::Block*> blocks = bundle.getBlocks();
-			for (std::list<const dtn::data::Block*>::const_iterator iter = blocks.begin(); iter != blocks.end(); iter++)
+			const dtn::data::Bundle::block_list &blocks = bundle.getBlocks();
+			for (dtn::data::Bundle::block_list::const_iterator iter = blocks.begin(); iter != blocks.end(); iter++)
 			{
-				const dtn::data::Block *b = (*iter);
-				header += serializer.getLength(*b);
+				const dtn::data::Block &b = (**iter);
+				header += serializer.getLength(b);
 
 				try {
-					const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(*b);
+					const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(b);
 					header -= payload.getLength();
 					if (abs_offset < header) return 0;
 					return abs_offset - header;

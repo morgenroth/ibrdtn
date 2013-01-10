@@ -128,16 +128,9 @@ namespace dtn
 			_blocks.clear();
 		}
 
-		const std::list<const Block*> Bundle::BlockList::getList() const
+		const Bundle::block_list& Bundle::BlockList::getAll() const
 		{
-			std::list<const dtn::data::Block*> ret;
-
-			for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
-			{
-				ret.push_back( (*iter).getPointer() );
-			}
-
-			return ret;
+			return _blocks;
 		}
 
 		const std::set<dtn::data::EID> Bundle::BlockList::getEIDs() const
@@ -177,9 +170,9 @@ namespace dtn
 			return PrimaryBlock(*this) > other;
 		}
 
-		const std::list<const dtn::data::Block*> Bundle::getBlocks() const
+		const Bundle::block_list& Bundle::getBlocks() const
 		{
-			return _blocks.getList();
+			return _blocks.getAll();
 		}
 
 		dtn::data::Block& Bundle::getBlock(int index)
@@ -295,8 +288,8 @@ namespace dtn
 			    && _custodian.isCompressable()
 			  )
 			{
-				std::list< Block const * > blocks = _blocks.getList();
-				for( std::list< Block const * >::const_iterator it = blocks.begin(); it != blocks.end(); it++ ) {
+				const block_list &blocks = _blocks.getAll();
+				for( block_list::const_iterator it = blocks.begin(); it != blocks.end(); it++ ) {
 					if( (*it)->get( Block::BLOCK_CONTAINS_EIDS ) )
 					{
 						std::list< EID > blockEIDs = (*it)->getEIDList();

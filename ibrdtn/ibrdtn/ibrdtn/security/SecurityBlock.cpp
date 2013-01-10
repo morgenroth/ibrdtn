@@ -273,16 +273,17 @@ namespace dtn
 
 		bool SecurityBlock::isCorrelatorPresent(const dtn::data::Bundle& bundle, const uint64_t correlator)
 		{
-			std::list<const dtn::data::Block *> blocks = bundle.getBlocks();
+			const dtn::data::Bundle::block_list &blocks = bundle.getBlocks();
 			bool return_val = false;
-			for (std::list<const dtn::data::Block *>::const_iterator it = blocks.begin(); it != blocks.end() && !return_val; it++)
+			for (dtn::data::Bundle::block_list::const_iterator it = blocks.begin(); it != blocks.end() && !return_val; it++)
 			{
-				char type = (*it)->getType();
+				const dtn::data::Block &b = (**it);
+				const char type = b.getType();
 				if (type == BUNDLE_AUTHENTICATION_BLOCK
 					|| type == PAYLOAD_INTEGRITY_BLOCK
 					|| type == PAYLOAD_CONFIDENTIAL_BLOCK
 					|| type == EXTENSION_SECURITY_BLOCK)
-				return_val = static_cast<const SecurityBlock*>(*it)->_correlator == correlator;
+				return_val = static_cast<const SecurityBlock&>(b)._correlator == correlator;
 			}
 			return return_val;
 		}
