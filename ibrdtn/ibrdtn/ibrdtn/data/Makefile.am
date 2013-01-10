@@ -24,6 +24,7 @@ h_sources = \
 	StatusReportBlock.h \
 	BundleFragment.h \
 	StreamBlock.h \
+	BundleBuilder.h \
 	AdministrativeBlock.h
 
 cc_sources = \
@@ -49,6 +50,7 @@ cc_sources = \
 	StatusReportBlock.cpp \
 	BundleFragment.cpp \
 	StreamBlock.cpp \
+	BundleBuilder.cpp \
 	AdministrativeBlock.cpp
 
 if COMPRESSION

@@ -20,11 +20,10 @@
  */
 
 #include "ibrdtn/data/Serializer.h"
+#include "ibrdtn/data/BundleBuilder.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/BundleString.h"
-#include "ibrdtn/data/StatusReportBlock.h"
-#include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/ExtensionBlock.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/MetaBundle.h"
@@ -591,133 +590,49 @@ namespace dtn
 			// read until the last block
 			bool lastblock = false;
 
+			char block_type;
+			dtn::data::SDNV procflags_sdnv;
+
+			// create a bundle builder
+			dtn::data::BundleBuilder builder(obj);
+
 			// read all BLOCKs
 			while (!_stream.eof() && !lastblock)
 			{
-				char block_type;
-
 				// BLOCK_TYPE
-				block_type = _stream.peek();
+				_stream.get(block_type);
 
-				switch (block_type)
-				{
-					case 0:
+				// read processing flags
+				_stream >> procflags_sdnv;
+
+				// create a block object
+				dtn::data::Block &block = builder.insert(block_type, procflags_sdnv.getValue());
+
+				try {
+					(*this) >> block;
+				} catch (dtn::PayloadReceptionInterrupted &ex) {
+					// some debugging
+					IBRCOMMON_LOGGER_DEBUG(15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
+
+					// interrupted transmission
+					if (!obj.get(dtn::data::PrimaryBlock::DONT_FRAGMENT) && (block.getLength() > 0) && _fragmentation)
 					{
-						throw dtn::InvalidDataException("block type is zero");
-						break;
+						IBRCOMMON_LOGGER_DEBUG(25) << "Create a fragment." << IBRCOMMON_LOGGER_ENDL;
+
+						if ( !obj.get(dtn::data::PrimaryBlock::FRAGMENT) )
+						{
+							obj.set(dtn::data::PrimaryBlock::FRAGMENT, true);
+							obj._appdatalength = ex.length;
+							obj._fragmentoffset = 0;
+						}
 					}
-
-					case dtn::data::PayloadBlock::BLOCK_TYPE:
+					else
 					{
-						if (obj.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
-						{
-							// create a temporary block
-							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
-
-							// read the block data
-							(*this) >> block;
-
-							// access the payload to get the first byte
-							char admfield;
-							ibrcommon::BLOB::Reference ref = block.getBLOB();
-							ref.iostream()->get(admfield);
-
-							// write the block into a temporary stream
-							stringstream ss;
-							DefaultSerializer serializer(ss, _dictionary);
-							DefaultDeserializer deserializer(ss, _dictionary);
-
-							serializer << block;
-
-							// remove the temporary block
-							obj.remove(block);
-
-							switch (admfield >> 4)
-							{
-								case 1:
-								{
-									dtn::data::StatusReportBlock &block = obj.push_back<dtn::data::StatusReportBlock>();
-									deserializer >> block;
-									lastblock = block.get(Block::LAST_BLOCK);
-									break;
-								}
-
-								case 2:
-								{
-									dtn::data::CustodySignalBlock &block = obj.push_back<dtn::data::CustodySignalBlock>();
-									deserializer >> block;
-									lastblock = block.get(Block::LAST_BLOCK);
-									break;
-								}
-
-								default:
-								{
-									// drop unknown administrative block
-									break;
-								}
-							}
-
-						}
-						else
-						{
-							dtn::data::PayloadBlock &block = obj.push_back<dtn::data::PayloadBlock>();
-
-							try {
-								(*this) >> block;
-							} catch (dtn::PayloadReceptionInterrupted &ex) {
-								// some debugging
-								IBRCOMMON_LOGGER_DEBUG(15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
-
-								// interrupted transmission
-								if (!obj.get(dtn::data::PrimaryBlock::DONT_FRAGMENT) && (block.getLength() > 0) && _fragmentation)
-								{
-									IBRCOMMON_LOGGER_DEBUG(25) << "Create a fragment." << IBRCOMMON_LOGGER_ENDL;
-
-									if ( !obj.get(dtn::data::PrimaryBlock::FRAGMENT) )
-									{
-										obj.set(dtn::data::PrimaryBlock::FRAGMENT, true);
-										obj._appdatalength = ex.length;
-										obj._fragmentoffset = 0;
-									}
-								}
-								else
-								{
-									throw ex;
-								}
-							}
-
-							lastblock = block.get(Block::LAST_BLOCK);
-						}
-						break;
-					}
-
-					default:
-					{
-						// get a extension block factory
-						try {
-							ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
-
-							dtn::data::Block &block = obj.push_back(f);
-							(*this) >> block;
-							lastblock = block.get(Block::LAST_BLOCK);
-						}
-						catch (const ibrcommon::Exception &ex)
-						{
-							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
-							(*this) >> block;
-							lastblock = block.get(Block::LAST_BLOCK);
-
-							if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
-							{
-								IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
-
-								// remove the block
-								obj.remove(block);
-							}
-						}
-						break;
+						throw ex;
 					}
 				}
+
+				lastblock = (procflags_sdnv.getValue() & Block::LAST_BLOCK);
 			}
 
 			// validate this bundle
@@ -823,13 +738,6 @@ namespace dtn
 
 		Deserializer& DefaultDeserializer::operator >>(dtn::data::Block& obj)
 		{
-			dtn::data::SDNV procflags_sdnv;
-			_stream.get(obj._blocktype);
-			_stream >> procflags_sdnv;
-
-			// set the processing flags but do not overwrite the lastblock bit
-			obj._procflags = procflags_sdnv.getValue() & (~(dtn::data::Block::LAST_BLOCK) | obj._procflags);
-
 			// read EIDs
 			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
@@ -970,101 +878,19 @@ namespace dtn
 
 		dtn::data::Block& SeparateDeserializer::readBlock()
 		{
+			BundleBuilder builder(_bundle);
+
 			char block_type;
+			dtn::data::SDNV procflags_sdnv;
 
 			// BLOCK_TYPE
-			block_type = _stream.peek();
+			_stream.get(block_type);
 
-			switch (block_type)
-			{
-				case 0:
-				{
-					throw dtn::InvalidDataException("block type is zero");
-					break;
-				}
-
-				case dtn::data::PayloadBlock::BLOCK_TYPE:
-				{
-					if (_bundle.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
-					{
-						// create a temporary block
-						dtn::data::ExtensionBlock &block = _bundle.push_back<dtn::data::ExtensionBlock>();
-
-						// remember the current read position
-						int blockbegin = _stream.tellg();
-
-						// read the block data
-						(*this) >> block;
-
-						// access the payload to get the first byte
-						char admfield;
-						ibrcommon::BLOB::Reference ref = block.getBLOB();
-						ref.iostream()->get(admfield);
-
-						// remove the temporary block
-						_bundle.remove(block);
-
-						// reset the read pointer
-						// BEWARE: this will not work on non-buffered streams like TCP!
-						_stream.seekg(blockbegin);
-
-						switch (admfield >> 4)
-						{
-							case 1:
-							{
-								dtn::data::StatusReportBlock &block = _bundle.push_back<dtn::data::StatusReportBlock>();
-								(*this) >> block;
-								return block;
-							}
-
-							case 2:
-							{
-								dtn::data::CustodySignalBlock &block = _bundle.push_back<dtn::data::CustodySignalBlock>();
-								(*this) >> block;
-								return block;
-							}
-
-							default:
-							{
-								// drop unknown administrative block
-								return block;
-							}
-						}
-
-					}
-					else
-					{
-						dtn::data::PayloadBlock &block = _bundle.push_back<dtn::data::PayloadBlock>();
-						(*this) >> block;
-						return block;
-					}
-					break;
-				}
-
-				default:
-				{
-					// get a extension block factory
-					try {
-						ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
-						dtn::data::Block &block = _bundle.push_back(f);
-						(*this) >> block;
-						return block;
-					} catch (const ibrcommon::Exception &ex) {
-						dtn::data::ExtensionBlock &block = _bundle.push_back<dtn::data::ExtensionBlock>();
-						(*this) >> block;
-						return block;
-					}
-					break;
-				}
-			}
-		}
-
-		Deserializer&  SeparateDeserializer::operator >>(dtn::data::Block& obj)
-		{
-			dtn::data::SDNV procflags_sdnv;
-			_stream.get(obj._blocktype);
+			// read processing flags
 			_stream >> procflags_sdnv;
-			obj._procflags = procflags_sdnv.getValue();
+
+			// create a block object
+			dtn::data::Block &obj = builder.insert(block_type, procflags_sdnv.getValue());
 
 			// read EIDs
 			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
@@ -1091,7 +917,7 @@ namespace dtn
 			// read the payload of the block
 			obj.deserialize(_stream, block_size.getValue());
 
-			return (*this);
+			return obj;
 		}
 	}
 }

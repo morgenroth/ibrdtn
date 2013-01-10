@@ -25,6 +25,7 @@
 #include "api/ExtendedApiHandler.h"
 #include "core/BundleEvent.h"
 #include <ibrcommon/Logger.h>
+#include <ibrdtn/data/BundleBuilder.h>
 #include <ibrdtn/api/PlainSerializer.h>
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/utils/Utils.h>
@@ -516,7 +517,7 @@ namespace dtn
 
 							if (cmd[2] == "add")
 							{
-								PlainDeserializer::BlockInserter inserter(_bundle_reg, PlainDeserializer::BlockInserter::END);
+								dtn::data::BundleBuilder inserter(_bundle_reg, dtn::data::BundleBuilder::END);
 
 								/* parse an optional offset, where to insert the block */
 								if (cmd.size() > 3)
@@ -529,15 +530,15 @@ namespace dtn
 
 									if (offset >= _bundle_reg.blockCount())
 									{
-										inserter = PlainDeserializer::BlockInserter(_bundle_reg, PlainDeserializer::BlockInserter::END);
+										inserter = dtn::data::BundleBuilder(_bundle_reg, dtn::data::BundleBuilder::END);
 									}
 									else if(offset <= 0)
 									{
-										inserter = PlainDeserializer::BlockInserter(_bundle_reg, PlainDeserializer::BlockInserter::FRONT);
+										inserter = dtn::data::BundleBuilder(_bundle_reg, dtn::data::BundleBuilder::FRONT);
 									}
 									else
 									{
-										inserter = PlainDeserializer::BlockInserter(_bundle_reg, PlainDeserializer::BlockInserter::MIDDLE, offset);
+										inserter = dtn::data::BundleBuilder(_bundle_reg, dtn::data::BundleBuilder::MIDDLE, offset);
 									}
 								}
 
@@ -546,8 +547,8 @@ namespace dtn
 
 								try
 								{
-									dtn::data::Block &block = PlainDeserializer(_stream).readBlock(inserter, _bundle_reg.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD));
-									if (inserter.getAlignment() == PlainDeserializer::BlockInserter::END)
+									dtn::data::Block &block = PlainDeserializer(_stream).readBlock(inserter);
+									if (inserter.getAlignment() == dtn::data::BundleBuilder::END)
 									{
 										block.set(dtn::data::Block::LAST_BLOCK, true);
 									}

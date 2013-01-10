@@ -78,6 +78,8 @@ namespace dtn
 				};
 			};
 
+			virtual ~Validator() {};
+
 			virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException) = 0;
 			virtual void validate(const dtn::data::Block&, const size_t) const throw (RejectedException) = 0;
 			virtual void validate(const dtn::data::Bundle&) const throw (RejectedException) = 0;
@@ -208,8 +210,6 @@ namespace dtn
 			virtual ~SeparateDeserializer();
 
 			dtn::data::Block& readBlock();
-
-			virtual Deserializer &operator>>(dtn::data::Block &obj);
 
 		private:
 			Bundle &_bundle;

@@ -55,7 +55,6 @@ namespace dtn
 		class PlainDeserializer : public dtn::data::Deserializer
 		{
 		public:
-			class BlockInserter;
 			class UnknownBlockException;
 			class BlockNotProcessableException;
 
@@ -69,10 +68,10 @@ namespace dtn
 
 			/**
 			 * read a block from _stream and add it to a bundle using a given BlockInserter
-			 * @param inserter the inserter that is used to insert the block into the bundle
+			 * @param builder Use this builder to insert the block
 			 * @return the block that was inserted
 			 */
-			dtn::data::Block& readBlock(BlockInserter inserter, bool payload_is_adm);
+			dtn::data::Block& readBlock(dtn::data::BundleBuilder &builder);
 
 		private:
 			/**
@@ -81,33 +80,9 @@ namespace dtn
 			dtn::data::Deserializer &operator>>(std::ostream &stream);
 
 			std::istream &_stream;
+			bool _lastblock;
 
 		public:
-
-			class BlockInserter
-			{
-			public:
-				enum POSITION
-				{
-					FRONT,
-					MIDDLE,
-					END
-				};
-
-				BlockInserter(dtn::data::Bundle &bundle, POSITION alignment, int pos = 0);
-
-				template <class T>
-				T& insert();
-				POSITION getAlignment() const;
-
-				dtn::data::Block &insert(dtn::data::ExtensionBlock::Factory &f);
-
-			private:
-				dtn::data::Bundle *_bundle;
-				POSITION _alignment;
-				int _pos;
-			};
-
 			class PlainDeserializerException : public ibrcommon::Exception
 			{
 				public:
@@ -133,31 +108,6 @@ namespace dtn
 			};
 
 		};
-
-		template <class T>
-		T& PlainDeserializer::BlockInserter::insert()
-		{
-			switch (_alignment)
-			{
-			case FRONT:
-				return _bundle->push_front<T>();
-			case END:
-				return _bundle->push_back<T>();
-			default:
-				if(_pos <= 0)
-					return _bundle->push_front<T>();
-
-				try
-				{
-					dtn::data::Block &prev_block = _bundle->getBlock(_pos-1);
-					return _bundle->insert<T>(prev_block);
-				}
-				catch (const std::exception &ex)
-				{
-					return _bundle->push_back<T>();
-				}
-			}
-		}
 	}
 }
 

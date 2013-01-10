@@ -20,6 +20,8 @@
  */
 
 #include "ibrdtn/api/PlainSerializer.h"
+#include "ibrdtn/data/BundleBuilder.h"
+#include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/utils/Utils.h"
 #include <ibrcommon/refcnt_ptr.h>
 #include <ibrcommon/data/Base64Stream.h>
@@ -192,7 +194,7 @@ namespace dtn
 		}
 
 		PlainDeserializer::PlainDeserializer(std::istream &stream)
-		 : _stream(stream)
+		 : _stream(stream), _lastblock(false)
 		{
 		}
 
@@ -202,6 +204,8 @@ namespace dtn
 
 		dtn::data::Deserializer& PlainDeserializer::operator>>(dtn::data::Bundle &obj)
 		{
+			dtn::data::BundleBuilder builder(obj);
+
 			// clear all blocks
 			obj.clearBlocks();
 
@@ -209,22 +213,16 @@ namespace dtn
 			(*this) >> (dtn::data::PrimaryBlock&)obj;
 
 			// read until the last block
-			bool lastblock = false;
+			_lastblock = false;
 
 			// read all BLOCKs
-			while (!_stream.eof() && !lastblock)
+			while (!_stream.eof() && !_lastblock)
 			{
-				try
-				{
-					dtn::data::Block& block = readBlock(BlockInserter(obj, BlockInserter::END), obj.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD));
-					lastblock = block.get(dtn::data::Block::LAST_BLOCK);
-				}
-				catch (const UnknownBlockException &ex)
-				{
+				try {
+					readBlock(builder);
+				} catch (const UnknownBlockException &ex) {
 					IBRCOMMON_LOGGER_DEBUG(5) << "unknown administrative block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
-				}
-				catch (const BlockNotProcessableException &ex)
-				{
+				} catch (const BlockNotProcessableException &ex) {
 					IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
@@ -346,6 +344,7 @@ namespace dtn
 						if (value == "LAST_BLOCK")
 						{
 							obj.set(dtn::data::Block::LAST_BLOCK, true);
+							_lastblock = true;
 						}
 						else if (value == "FORWARDED_WITHOUT_PROCESSED")
 						{
@@ -483,7 +482,7 @@ namespace dtn
 			return (*this);
 		}
 
-		dtn::data::Block& PlainDeserializer::readBlock(BlockInserter inserter, bool payload_is_adm)
+		dtn::data::Block& PlainDeserializer::readBlock(dtn::data::BundleBuilder &builder)
 		{
 			std::string buffer;
 			int block_type;
@@ -510,149 +509,10 @@ namespace dtn
 				throw dtn::InvalidDataException("need block type as first header");
 			}
 
-			switch (block_type)
-			{
-				case 0:
-				{
-					throw dtn::InvalidDataException("block type is zero");
-					break;
-				}
+			dtn::data::Block &block = builder.insert(block_type, 0);
+			(*this) >> block;
 
-				case dtn::data::PayloadBlock::BLOCK_TYPE:
-				{
-					//if (payload_is_adm)
-					if (payload_is_adm)
-					{
-						// create a temporary block
-						dtn::data::ExtensionBlock block;
-						block.set(dtn::data::Block::LAST_BLOCK, false);
-
-						// read the block data
-						(*this) >> block;
-
-						// access the payload to get the first byte
-						char admfield;
-						ibrcommon::BLOB::Reference ref = block.getBLOB();
-						ref.iostream()->get(admfield);
-
-						// write the block into a temporary stream
-						stringstream ss;
-						PlainSerializer serializer(ss);
-						PlainDeserializer deserializer(ss);
-
-						serializer << block;
-
-						switch (admfield >> 4)
-						{
-							case 1:
-							{
-								dtn::data::StatusReportBlock &block = inserter.insert<dtn::data::StatusReportBlock>();
-								block.set(dtn::data::Block::LAST_BLOCK, false);
-								deserializer >> block;
-								//lastblock = block.get(dtn::data::Block::LAST_BLOCK);
-								return block;
-							}
-
-							case 2:
-							{
-								dtn::data::CustodySignalBlock &block = inserter.insert<dtn::data::CustodySignalBlock>();
-								block.set(dtn::data::Block::LAST_BLOCK, false);
-								deserializer >> block;
-								//lastblock = block.get(dtn::data::Block::LAST_BLOCK);
-								//break;
-								return block;
-							}
-
-							default:
-							{
-								// drop unknown administrative block
-								throw UnknownBlockException("unknown administrative record");
-								break;
-							}
-						}
-
-					}
-					else
-					{
-						dtn::data::PayloadBlock &block = inserter.insert<dtn::data::PayloadBlock>();
-						block.set(dtn::data::Block::LAST_BLOCK, false);
-						(*this) >> block;
-
-						return block;
-					}
-				}
-
-				default:
-				{
-					// get a extension block factory
-					try {
-						dtn::data::ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get((char) block_type);
-
-						dtn::data::Block &block = inserter.insert(f);
-						block.set(dtn::data::Block::LAST_BLOCK, false);
-						(*this) >> block;
-
-						if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
-						{
-							//IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
-
-							throw BlockNotProcessableException();
-						}
-						return block;
-					}
-					catch (const BlockNotProcessableException &ex){
-						throw ex;
-					}
-					catch (const ibrcommon::Exception &ex)
-					{
-						dtn::data::ExtensionBlock &block = inserter.insert<dtn::data::ExtensionBlock>();
-						block.set(dtn::data::Block::LAST_BLOCK, false);
-						(*this) >> block;
-
-						if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
-						{
-							//IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
-
-							throw BlockNotProcessableException();
-						}
-						return block;
-					}
-				}
-			}
-		}
-
-		PlainDeserializer::BlockInserter::BlockInserter(dtn::data::Bundle &bundle, POSITION alignment, int pos)
-			:	_bundle(&bundle), _alignment(alignment), _pos(pos)
-		{
-		}
-
-		dtn::data::Block &PlainDeserializer::BlockInserter::insert(dtn::data::ExtensionBlock::Factory &f)
-		{
-			switch (_alignment)
-			{
-			case FRONT:
-				return _bundle->push_front(f);
-			case END:
-				return _bundle->push_back(f);
-			default:
-				if(_pos <= 0)
-					return _bundle->push_front(f);
-
-				try
-				{
-					dtn::data::Block &prev_block = _bundle->getBlock(_pos-1);
-					return _bundle->insert(f, prev_block);
-				}
-				catch (const std::exception &ex)
-				{
-					return _bundle->push_back(f);
-				}
-			}
-		}
-
-		PlainDeserializer::BlockInserter::POSITION PlainDeserializer::BlockInserter::getAlignment() const
-		{
-			return _alignment;
+			return block;
 		}
 	}
 }
