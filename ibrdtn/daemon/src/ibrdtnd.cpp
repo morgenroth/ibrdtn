@@ -581,7 +581,7 @@ int ibrdtn_daemon_initialize_routing() {
 	{
 		dtn::daemon::Configuration::Network::ProphetConfig prophet_config = conf.getNetwork().getProphetConfig();
 		std::string strategy_name = prophet_config.forwarding_strategy;
-		dtn::routing::ProphetRoutingExtension::ForwardingStrategy *forwarding_strategy;
+		dtn::routing::ForwardingStrategy *forwarding_strategy;
 		if(strategy_name == "GRTR"){
 			forwarding_strategy = new dtn::routing::ProphetRoutingExtension::GRTR_Strategy();
 		}

@@ -60,6 +60,9 @@ namespace dtn
 			// set value for local EID to 1.0
 			_deliveryPredictabilityMap.set(core::BundleCore::local, 1.0);
 
+			// define the first exchange timestamp
+			_next_exchange_timestamp = dtn::utils::Clock::getUnixTimestamp() + _next_exchange_timeout;
+
 			// write something to the syslog
 			IBRCOMMON_LOGGER(info) << "Initializing PRoPHET routing module" << IBRCOMMON_LOGGER_ENDL;
 		}
@@ -304,7 +307,7 @@ namespace dtn
 			return ibrcommon::ThreadsafeReference<const DeliveryPredictabilityMap>(_deliveryPredictabilityMap, const_cast<DeliveryPredictabilityMap&>(_deliveryPredictabilityMap));
 		}
 
-		ibrcommon::ThreadsafeReference<const ProphetRoutingExtension::AcknowledgementSet> ProphetRoutingExtension::getAcknowledgementSet() const
+		ibrcommon::ThreadsafeReference<const AcknowledgementSet> ProphetRoutingExtension::getAcknowledgementSet() const
 		{
 			return ibrcommon::ThreadsafeReference<const AcknowledgementSet>(_acknowledgementSet, const_cast<AcknowledgementSet&>(_acknowledgementSet));
 		}
@@ -386,12 +389,6 @@ namespace dtn
 
 			dtn::storage::BundleStorage &storage = (**this).getStorage();
 			dtn::storage::BundleResultList list;
-
-			{
-				ibrcommon::MutexLock l(_next_exchange_mutex);
-				// define the next exchange timestamp
-				_next_exchange_timestamp = dtn::utils::Clock::getUnixTimestamp() + _next_exchange_timeout;
-			}
 
 			while (true)
 			{
@@ -484,10 +481,6 @@ namespace dtn
 
 		void ProphetRoutingExtension::__cancellation() throw ()
 		{
-			{
-				ibrcommon::MutexLock l(_next_exchange_mutex);
-				_next_exchange_timestamp = 0;
-			}
 			_taskqueue.abort();
 		}
 
@@ -514,8 +507,6 @@ namespace dtn
 				return _p_encounter_max * ((float) time_diff / _i_typ);
 			}
 		}
-
-		const size_t ProphetRoutingExtension::AcknowledgementSet::identifier = NodeHandshakeItem::PROPHET_ACKNOWLEDGEMENT_SET;
 
 		void ProphetRoutingExtension::updateNeighbor(const dtn::data::EID &neighbor)
 		{
@@ -547,150 +538,6 @@ namespace dtn
 			_deliveryPredictabilityMap.age(_p_first_threshold);
 		}
 
-		ProphetRoutingExtension::Acknowledgement::Acknowledgement()
-		 : expire_time(0)
-		{
-		}
-
-		ProphetRoutingExtension::Acknowledgement::Acknowledgement(const dtn::data::BundleID &bundleID, size_t expire_time)
-			: bundleID(bundleID), expire_time(expire_time)
-		{
-		}
-
-		ProphetRoutingExtension::Acknowledgement::~Acknowledgement()
-		{
-		}
-
-		bool ProphetRoutingExtension::Acknowledgement::operator<(const Acknowledgement &other) const
-		{
-			return (bundleID < other.bundleID);
-		}
-
-		ProphetRoutingExtension::AcknowledgementSet::AcknowledgementSet()
-		{
-		}
-
-		ProphetRoutingExtension::AcknowledgementSet::AcknowledgementSet(const AcknowledgementSet &other)
-			: ibrcommon::Mutex(), _ackSet(other._ackSet)
-		{
-		}
-
-		void ProphetRoutingExtension::AcknowledgementSet::insert(const Acknowledgement& ack)
-		{
-			_ackSet.insert(ack);
-		}
-
-		void ProphetRoutingExtension::AcknowledgementSet::clear()
-		{
-			_ackSet.clear();
-		}
-
-		void ProphetRoutingExtension::AcknowledgementSet::purge()
-		{
-			std::set<Acknowledgement>::iterator it;
-			for(it = _ackSet.begin(); it != _ackSet.end();)
-			{
-				if(dtn::utils::Clock::isExpired(it->expire_time))
-					_ackSet.erase(it++);
-				else
-					++it;
-			}
-		}
-
-		void ProphetRoutingExtension::AcknowledgementSet::merge(const AcknowledgementSet &other)
-		{
-			std::set<Acknowledgement>::iterator it;
-			for(it = other._ackSet.begin(); it != other._ackSet.end(); ++it)
-			{
-				const Acknowledgement &ack = (*it);
-				if (!dtn::utils::Clock::isExpired(ack.expire_time)) {
-					_ackSet.insert(ack);
-				}
-			}
-		}
-
-		bool ProphetRoutingExtension::AcknowledgementSet::has(const dtn::data::BundleID &bundle) const
-		{
-			return _ackSet.find(Acknowledgement(bundle, 0)) != _ackSet.end();
-		}
-
-		size_t ProphetRoutingExtension::AcknowledgementSet::getIdentifier() const
-		{
-			return identifier;
-		}
-
-		size_t ProphetRoutingExtension::AcknowledgementSet::size() const
-		{
-			return _ackSet.size();
-		}
-
-		size_t ProphetRoutingExtension::AcknowledgementSet::getLength() const
-		{
-			std::stringstream ss;
-			serialize(ss);
-			return ss.str().length();
-		}
-
-		std::ostream& ProphetRoutingExtension::AcknowledgementSet::serialize(std::ostream& stream) const
-		{
-			stream << (*this);
-			return stream;
-		}
-
-		std::istream& ProphetRoutingExtension::AcknowledgementSet::deserialize(std::istream& stream)
-		{
-			stream >> (*this);
-			return stream;
-		}
-
-		const std::set<ProphetRoutingExtension::Acknowledgement>& ProphetRoutingExtension::AcknowledgementSet::operator*() const
-		{
-			return _ackSet;
-		}
-
-		std::ostream& operator<<(std::ostream& stream, const ProphetRoutingExtension::AcknowledgementSet& ack_set)
-		{
-			stream << dtn::data::SDNV(ack_set.size());
-			for (std::set<ProphetRoutingExtension::Acknowledgement>::const_iterator it = ack_set._ackSet.begin(); it != ack_set._ackSet.end(); ++it)
-			{
-				const ProphetRoutingExtension::Acknowledgement &ack = (*it);
-				stream << ack;
-			}
-
-			return stream;
-		}
-
-		std::istream& operator>>(std::istream &stream, ProphetRoutingExtension::AcknowledgementSet &ack_set)
-		{
-			// clear the ack set first
-			ack_set.clear();
-						
-			dtn::data::SDNV size;
-			stream >> size;
-
-			for(size_t i = 0; i < size.getValue(); i++)
-			{
-				ProphetRoutingExtension::Acknowledgement ack;
-				stream >> ack;
-				ack_set.insert(ack);
-			}
-			return stream;
-		}
-
-		std::ostream& operator<<(std::ostream &stream, const ProphetRoutingExtension::Acknowledgement &ack) {
-			stream << ack.bundleID;
-			stream << dtn::data::SDNV(ack.expire_time);
-			return stream;
-		}
-
-		std::istream& operator>>(std::istream &stream, ProphetRoutingExtension::Acknowledgement &ack) {
-			dtn::data::SDNV expire_time;
-			stream >> ack.bundleID;
-			stream >> expire_time;
-			ack.expire_time = expire_time.getValue();
-			return stream;
-		}
-
 		ProphetRoutingExtension::SearchNextBundleTask::SearchNextBundleTask(const dtn::data::EID &eid)
 			: eid(eid)
 		{
@@ -716,43 +563,6 @@ namespace dtn
 		std::string ProphetRoutingExtension::NextExchangeTask::toString() const
 		{
 			return "NextExchangeTask";
-		}
-
-		ProphetRoutingExtension::ForwardingStrategy::ForwardingStrategy()
-		 : _prophet_router(NULL)
-		{}
-
-		ProphetRoutingExtension::ForwardingStrategy::~ForwardingStrategy()
-		{}
-
-		bool ProphetRoutingExtension::ForwardingStrategy::neighborDPIsGreater(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::EID& destination) const
-		{
-			const DeliveryPredictabilityMap& dp_map = _prophet_router->_deliveryPredictabilityMap;
-			const dtn::data::EID destnode = destination.getNode();
-
-			try {
-				float local_pv = dp_map.get(destnode);
-
-				try {
-					// retrieve the value from the DeliveryPredictabilityMap of the neighbor
-					float foreign_pv = neighbor_dpm.get(destnode);
-
-					return (foreign_pv > local_pv);
-				} catch (const DeliveryPredictabilityMap::ValueNotFoundException&) {
-					// if the foreign router has no entry for the destination
-					// then compare the local value with a fictitious initial value
-					return (_prophet_router->_p_first_threshold > local_pv);
-				}
-			} catch (const DeliveryPredictabilityMap::ValueNotFoundException&) {
-				// always forward if the destination is not in our own predictability map
-			}
-
-			return false;
-		}
-
-		void ProphetRoutingExtension::ForwardingStrategy::setProphetRouter(ProphetRoutingExtension *router)
-		{
-			_prophet_router = router;
 		}
 
 		ProphetRoutingExtension::GRTR_Strategy::GRTR_Strategy()

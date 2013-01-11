@@ -22,8 +22,12 @@
 #ifndef PROPHETROUTINGEXTENSION_H_
 #define PROPHETROUTINGEXTENSION_H_
 
-#include "routing/BaseRouter.h"
 #include "routing/prophet/DeliveryPredictabilityMap.h"
+#include "routing/prophet/ForwardingStrategy.h"
+#include "routing/prophet/AcknowledgementSet.h"
+#include "routing/prophet/Acknowledgement.h"
+
+#include "routing/BaseRouter.h"
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/ThreadsafeReference.h>
@@ -47,89 +51,9 @@ namespace dtn
 		 */
 		class ProphetRoutingExtension : public BaseRouter::ThreadedExtension
 		{
+			friend class ForwardingStrategy;
+
 		public:
-			/*!
-			 * \brief This class is a abstract base class for all prophet forwarding strategies.
-			 */
-			class ForwardingStrategy
-			{
-			public:
-				ForwardingStrategy();
-				virtual ~ForwardingStrategy() = 0;
-				/*!
-				 * The prophetRoutingExtension calls this function for every bundle that can be forwarded to a neighbor
-				 * and forwards it depending on the return value.
-				 * \param neighbor the neighbor to forward to
-				 * \param bundle the bundle that can be forwarded
-				 * \param prophet_router Reference to the ProphetRoutingExtension to access its parameters
-				 * \return true if the bundle should be forwarded
-				 */
-				virtual bool shallForward(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::MetaBundle& bundle) const = 0;
-				/*!
-				 * checks if the deliveryPredictability of the neighbor is higher than that of the destination of the bundle.
-				 */
-				bool neighborDPIsGreater(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::EID& destination) const;
-
-				/**
-				 * Set back-reference to the prophet router
-				 */
-				void setProphetRouter(ProphetRoutingExtension *router);
-
-			protected:
-				ProphetRoutingExtension *_prophet_router;
-			};
-
-			/*!
-			 * \brief Represents an Acknowledgement, i.e. the bundleID that is acknowledged
-			 * and the lifetime of the acknowledgement
-			 */
-			class Acknowledgement
-			{
-			public:
-				Acknowledgement();
-				Acknowledgement(const dtn::data::BundleID&, size_t expire_time);
-				virtual ~Acknowledgement();
-				friend std::ostream& operator<<(ostream&, const Acknowledgement&);
-				friend std::istream& operator>>(istream&, Acknowledgement&);
-
-				bool operator<(const Acknowledgement &other) const;
-
-				dtn::data::BundleID bundleID; ///< The BundleID that is acknowledged
-				size_t expire_time; ///< The expire time of the acknowledgement, given in the same format as the bundle timestamps
-			};
-
-			/*!
-			 * \brief Set of Acknowledgements, that can be serialized in node handshakes.
-			 */
-			class AcknowledgementSet : public NodeHandshakeItem, public ibrcommon::Mutex
-			{
-			public:
-				AcknowledgementSet();
-				AcknowledgementSet(const AcknowledgementSet&);
-
-				void insert(const Acknowledgement&); ///< Insert an Acknowledgement into the set
-				void purge(); ///< purge the set, i.e. remove acknowledgements that have expired
-				void merge(const AcknowledgementSet&); ///< merge the set with a second AcknowledgementSet
-				bool has(const dtn::data::BundleID &bundle) const; ///< check if an acknowledgement exists for the bundle
-				void clear();
-
-				/* virtual methods from NodeHandshakeItem */
-				virtual size_t getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
-				virtual size_t size() const;
-				virtual size_t getLength() const; ///< \see NodeHandshakeItem::getLength
-				virtual std::ostream& serialize(std::ostream& stream) const; ///< \see NodeHandshakeItem::serialize
-				virtual std::istream& deserialize(std::istream& stream); ///< \see NodeHandshakeItem::deserialize
-				static const size_t identifier;
-
-				friend std::ostream& operator<<(ostream&, const AcknowledgementSet&);
-				friend std::istream& operator>>(istream&, AcknowledgementSet&);
-
-				const std::set<Acknowledgement>& operator*() const;
-
-			private:
-				std::set<Acknowledgement> _ackSet;
-			};
-
 			ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first,
 						float p_first_threshold, float beta, float gamma, float delta,
 						size_t time_unit, size_t i_typ,
@@ -263,9 +187,6 @@ namespace dtn
 				nf_map _NF_map; ///< Map where the number of forwards are saved.
 			};
 		};
-
-		std::ostream& operator<<(std::ostream&, const ProphetRoutingExtension::AcknowledgementSet&);
-
 	} // namespace routing
 } // namespace dtn
 
