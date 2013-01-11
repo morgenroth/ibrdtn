@@ -139,9 +139,11 @@ namespace dtn
 			try {
 				const AcknowledgementSet& neighbor_ack_set = response.get<AcknowledgementSet>();
 
-				ibrcommon::MutexLock l(_acknowledgementSet);
-
-				_acknowledgementSet.merge(neighbor_ack_set);
+				// merge the received ack set with the local one
+				{
+					ibrcommon::MutexLock l(_acknowledgementSet);
+					_acknowledgementSet.merge(neighbor_ack_set);
+				}
 
 				/* remove acknowledged bundles from bundle store if we do not have custody */
 				dtn::storage::BundleStorage &storage = (**this).getStorage();
@@ -149,8 +151,8 @@ namespace dtn
 				class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
 				{
 				public:
-					BundleFilter(const AcknowledgementSet& entry)
-					 : _entry(entry)
+					BundleFilter(const AcknowledgementSet& ack_set)
+					 : _ack_set(ack_set)
 					{}
 
 					virtual ~BundleFilter() {}
@@ -160,18 +162,18 @@ namespace dtn
 					virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
 					{
 						// do not delete any bundles with
-						if ((meta.destination.getNode() == dtn::core::BundleCore::local) || (meta.custodian.getNode() == dtn::core::BundleCore::local))
+						if (meta.destination.getNode() == dtn::core::BundleCore::local)
 							return false;
 
-						if(!_entry.has(meta))
+						if(!_ack_set.has(meta))
 							return false;
 
 						return true;
 					}
 
 				private:
-					const AcknowledgementSet& _entry;
-				} filter(_acknowledgementSet);
+					const AcknowledgementSet& _ack_set;
+				} filter(neighbor_ack_set);
 
 				dtn::storage::BundleResultList removeList;
 				storage.get(filter, removeList);
@@ -205,7 +207,7 @@ namespace dtn
 					_next_exchange_timestamp = time.getUnixTimestamp() + _next_exchange_timeout;
 
 					ibrcommon::MutexLock l(_acknowledgementSet);
-					_acknowledgementSet.purge();
+					_acknowledgementSet.expire(time.getUnixTimestamp());
 				}
 				return;
 			} catch (const std::bad_cast&) { };
@@ -278,7 +280,7 @@ namespace dtn
 				{
 					/* the bundle was transferred, mark it as acknowledged */
 					ibrcommon::MutexLock l(_acknowledgementSet);
-					_acknowledgementSet.insert(Acknowledgement(meta, meta.expiretime));
+					_acknowledgementSet.add(meta);
 				}
 
 				// add forwarded entry to GTMX strategy

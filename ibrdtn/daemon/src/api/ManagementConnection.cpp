@@ -345,10 +345,10 @@ namespace dtn
 									ibrcommon::ThreadsafeReference<const dtn::routing::AcknowledgementSet> ack_set = prophet_extension.getAcknowledgementSet();
 
 									_stream << ClientHandler::API_STATUS_OK << " ROUTING PROPHET ACKNOWLEDGEMENTS" << std::endl;
-									for (std::set<dtn::routing::Acknowledgement>::const_iterator iter = (**ack_set).begin(); iter != (**ack_set).end(); iter++)
+									for (dtn::routing::AcknowledgementSet::const_iterator iter = (*ack_set).begin(); iter != (*ack_set).end(); iter++)
 									{
-										const dtn::routing::Acknowledgement &ack = (*iter);
-										_stream << ack.bundleID.toString() << " | " << ack.expire_time << std::endl;
+										const dtn::data::MetaBundle &ack = (*iter);
+										_stream << ack.toString() << " | " << ack.expiretime << std::endl;
 									}
 									_stream << std::endl;
 								} else {

@@ -19,58 +19,29 @@ namespace dtn
 		}
 
 		AcknowledgementSet::AcknowledgementSet(const AcknowledgementSet &other)
-			: ibrcommon::Mutex(), _ackSet(other._ackSet)
+		 : ibrcommon::Mutex(), dtn::data::BundleList((const dtn::data::BundleList&)other)
 		{
-		}
-
-		void AcknowledgementSet::insert(const Acknowledgement& ack)
-		{
-			_ackSet.insert(ack);
-		}
-
-		void AcknowledgementSet::clear()
-		{
-			_ackSet.clear();
-		}
-
-		void AcknowledgementSet::purge()
-		{
-			std::set<Acknowledgement>::iterator it;
-			for(it = _ackSet.begin(); it != _ackSet.end();)
-			{
-				const Acknowledgement &ack = (*it);
-				if(dtn::utils::Clock::isExpired(ack.expire_time))
-					_ackSet.erase(it++);
-				else
-					++it;
-			}
 		}
 
 		void AcknowledgementSet::merge(const AcknowledgementSet &other)
 		{
-			std::set<Acknowledgement>::iterator it;
-			for(it = other._ackSet.begin(); it != other._ackSet.end(); ++it)
+			for(AcknowledgementSet::const_iterator it = other.begin(); it != other.end(); ++it)
 			{
-				const Acknowledgement &ack = (*it);
-				if (!dtn::utils::Clock::isExpired(ack.expire_time)) {
-					_ackSet.insert(ack);
+				const dtn::data::MetaBundle &ack = (*it);
+				if (!dtn::utils::Clock::isExpired(ack.expiretime)) {
+					add(ack);
 				}
 			}
 		}
 
 		bool AcknowledgementSet::has(const dtn::data::BundleID &bundle) const
 		{
-			return _ackSet.find(Acknowledgement(bundle, 0)) != _ackSet.end();
+			return find(bundle) != end();
 		}
 
 		size_t AcknowledgementSet::getIdentifier() const
 		{
 			return identifier;
-		}
-
-		size_t AcknowledgementSet::size() const
-		{
-			return _ackSet.size();
 		}
 
 		size_t AcknowledgementSet::getLength() const
@@ -92,18 +63,14 @@ namespace dtn
 			return stream;
 		}
 
-		const std::set<Acknowledgement>& AcknowledgementSet::operator*() const
-		{
-			return _ackSet;
-		}
-
 		std::ostream& operator<<(std::ostream& stream, const AcknowledgementSet& ack_set)
 		{
 			stream << dtn::data::SDNV(ack_set.size());
-			for (std::set<Acknowledgement>::const_iterator it = ack_set._ackSet.begin(); it != ack_set._ackSet.end(); ++it)
+			for (dtn::data::BundleList::const_iterator it = ack_set.begin(); it != ack_set.end(); ++it)
 			{
-				const Acknowledgement &ack = (*it);
-				stream << ack;
+				const dtn::data::MetaBundle &ack = (*it);
+				stream << (const dtn::data::BundleID&)ack;
+				stream << dtn::data::SDNV(ack.expiretime);
 			}
 
 			return stream;
@@ -119,9 +86,13 @@ namespace dtn
 
 			for(size_t i = 0; i < size.getValue(); i++)
 			{
-				Acknowledgement ack;
-				stream >> ack;
-				ack_set.insert(ack);
+				dtn::data::MetaBundle ack;
+				dtn::data::SDNV expire_time;
+				stream >> (dtn::data::BundleID&)ack;
+				stream >> expire_time;
+				ack.expiretime = expire_time.getValue();
+
+				ack_set.add(ack);
 			}
 			return stream;
 		}

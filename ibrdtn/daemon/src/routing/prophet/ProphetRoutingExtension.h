@@ -25,7 +25,6 @@
 #include "routing/prophet/DeliveryPredictabilityMap.h"
 #include "routing/prophet/ForwardingStrategy.h"
 #include "routing/prophet/AcknowledgementSet.h"
-#include "routing/prophet/Acknowledgement.h"
 
 #include "routing/BaseRouter.h"
 #include <ibrcommon/thread/Mutex.h>

@@ -7,8 +7,6 @@ routing_SOURCES = \
 	DeliveryPredictabilityMap.cpp \
 	AcknowledgementSet.h \
 	AcknowledgementSet.cpp \
-	Acknowledgement.h \
-	Acknowledgement.cpp \
 	ForwardingStrategy.h \
 	ForwardingStrategy.cpp
 
