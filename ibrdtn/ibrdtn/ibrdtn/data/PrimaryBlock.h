@@ -37,9 +37,6 @@ namespace dtn
 
 		class PrimaryBlock
 		{
-			friend class DefaultSerializer;
-			friend class DefaultDeserializer;
-
 		public:
 			enum FLAGS
 			{
