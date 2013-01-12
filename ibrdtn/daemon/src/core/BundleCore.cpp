@@ -456,7 +456,7 @@ namespace dtn
 		void BundleCore::processBlocks(dtn::data::Bundle &b)
 		{
 			// walk through the block and process them when needed
-			const dtn::data::Bundle::block_list &blist = b.getBlocks();
+			const dtn::data::Bundle::block_list blist = b.getBlocks();
 
 			for (dtn::data::Bundle::block_list::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
 			{
