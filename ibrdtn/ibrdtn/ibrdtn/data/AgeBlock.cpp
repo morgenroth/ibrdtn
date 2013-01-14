@@ -53,10 +53,17 @@ namespace dtn
 
 		size_t AgeBlock::getSeconds() const
 		{
-			ibrcommon::TimeMeasurement time = this->_time;
-			time.stop();
+			return (getMicroseconds()) / 1000000;
+		}
 
-			return (_age.getValue() + time.getMicroseconds()) / 1000000;
+		void AgeBlock::addMicroseconds(size_t value)
+		{
+			_age += value;
+		}
+
+		void AgeBlock::setMicroseconds(size_t value)
+		{
+			_age = value;
 		}
 
 		void AgeBlock::addSeconds(size_t value)

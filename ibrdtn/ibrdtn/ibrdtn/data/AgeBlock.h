@@ -67,6 +67,16 @@ namespace dtn
 			 */
 			void addSeconds(size_t value);
 
+			/**
+			 * set the age
+			 */
+			void setMicroseconds(size_t value);
+
+			/**
+			 * add microseconds to the ageblock
+			 */
+			void addMicroseconds(size_t value);
+
 		private:
 			dtn::data::SDNV _age;
 			ibrcommon::TimeMeasurement _time;
