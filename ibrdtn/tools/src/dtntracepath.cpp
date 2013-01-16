@@ -21,6 +21,7 @@
 
 #include "config.h"
 #include <ibrdtn/data/StatusReportBlock.h>
+#include <ibrdtn/data/TrackingBlock.h>
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/StringBundle.h"
 #include <ibrcommon/net/socket.h>
@@ -34,21 +35,46 @@
 #include <sstream>
 #include <unistd.h>
 
-class ReportBundle : public dtn::api::Bundle, public dtn::data::StatusReportBlock
+class ProbeBundle : public dtn::api::StringBundle
 {
 public:
-	ReportBundle(const dtn::api::Bundle &apib)
-	 : Bundle(apib)
+	ProbeBundle(const dtn::data::EID &destination, bool tracking)
+	 : dtn::api::StringBundle(destination)
 	{
-		if (_b.get(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD)) {
-			StatusReportBlock srb;
-			dtn::data::PayloadBlock &payload = _b.getBlock<dtn::data::PayloadBlock>();
-			read(payload);
+		if (tracking) {
+			_b.push_back<dtn::data::TrackingBlock>();
 		}
 	}
 
-	virtual ~ReportBundle() {
+	virtual ~ProbeBundle()
+	{
+	}
+};
 
+class TrackingBundle : public dtn::api::Bundle
+{
+public:
+	TrackingBundle(const dtn::api::Bundle &apib)
+	 : Bundle(apib)
+	{
+	}
+
+	virtual ~TrackingBundle() {
+	}
+
+	bool isAdmRecord() {
+		return (_b.get(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD));
+	}
+
+	dtn::data::StatusReportBlock getStatusReport() const {
+		StatusReportBlock srb;
+		const dtn::data::PayloadBlock &payload = _b.getBlock<dtn::data::PayloadBlock>();
+		srb.read(payload);
+		return srb;
+	}
+
+	const dtn::data::TrackingBlock& getTrackingBlock() const {
+		return _b.getBlock<dtn::data::TrackingBlock>();
 	}
 };
 
@@ -97,7 +123,7 @@ class Tracer : public dtn::api::Client
 
 		void formattedLog(size_t i, const dtn::api::Bundle &b, const ibrcommon::TimeMeasurement &tm)
 		{
-			ReportBundle sr(b);
+			TrackingBundle tb(b);
 
 			const std::string source = b.getSource().getString();
 
@@ -105,41 +131,62 @@ class Tracer : public dtn::api::Client
 			std::stringstream time;
 			time << tm;
 
-			if (sr._status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE) {
-				std::stringstream type;
-				type << "forwarded";
-				::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-				printReason(sr._reasoncode);
-			}
+			if (tb.isAdmRecord()) {
+				dtn::data::StatusReportBlock sr = tb.getStatusReport();
 
-			if (sr._status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE) {
-				std::stringstream type;
-				type << "reception";
-				::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-				printReason(sr._reasoncode);
-			}
+				if (sr._status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE) {
+					std::stringstream type;
+					type << "forwarded";
+					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
+					printReason(sr._reasoncode);
+				}
 
-			if (sr._status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE) {
-				std::stringstream type;
-				type << "delivery";
-				::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-				printReason(sr._reasoncode);
-			}
+				if (sr._status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE) {
+					std::stringstream type;
+					type << "reception";
+					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
+					printReason(sr._reasoncode);
+				}
 
-			if (sr._status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE) {
+				if (sr._status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE) {
+					std::stringstream type;
+					type << "delivery";
+					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
+					printReason(sr._reasoncode);
+				}
+
+				if (sr._status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE) {
+					std::stringstream type;
+					type << "deletion";
+					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
+					printReason(sr._reasoncode);
+				}
+			} else {
 				std::stringstream type;
-				type << "deletion";
+				type << "ECHO";
+
 				::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-				printReason(sr._reasoncode);
+
+				try {
+					const dtn::data::TrackingBlock &track_block = tb.getTrackingBlock();
+					const dtn::data::TrackingBlock::tracking_list &list = track_block.getTrack();
+
+					for (dtn::data::TrackingBlock::tracking_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+					{
+						const dtn::data::TrackingBlock::TrackingEntry &entry = (*iter);
+						::printf("       # %s\n", entry.endpoint.getString().c_str());
+					}
+
+				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 			}
 
 			::fflush(stdout);
 		}
 
-		void tracepath(const dtn::data::EID &destination, size_t timeout, unsigned char options)
+		void tracepath(const dtn::data::EID &destination, size_t timeout, unsigned char options, bool tracking)
 		{
 			// create a bundle
-			dtn::api::StringBundle b(destination);
+			ProbeBundle b(destination, tracking);
 
 			// set lifetime
 			b.setLifetime(timeout);
@@ -241,6 +288,7 @@ void print_help()
 	cout << " -d              request deletion report" << endl;
 	cout << " -f              request forward report" << endl;
 	cout << " -r              request reception report" << endl;
+	cout << " -p              add tracking block to record the bundle path" << endl;
 }
 
 int main(int argc, char *argv[])
@@ -251,6 +299,7 @@ int main(int argc, char *argv[])
 	// reception = 0x04
 	// deletion = 0x08
 	unsigned char report_options = 0x02;
+	bool tracking = false;
 
 	size_t timeout = 10;
 	int opt = 0;
@@ -263,7 +312,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	while ((opt = getopt(argc, argv, "ht:fdr")) != -1)
+	while ((opt = getopt(argc, argv, "ht:fdrp")) != -1)
 	{
 		switch (opt)
 		{
@@ -286,6 +335,10 @@ int main(int argc, char *argv[])
 		case 'r':
 			report_options |= 0x04;
 			break;
+
+		case 'p':
+			tracking = true;
+			break;
 		}
 	}
 
@@ -305,7 +358,7 @@ int main(int argc, char *argv[])
 		tracer.connect();
 
 		// target address
-		tracer.tracepath(trace_destination, timeout, report_options);
+		tracer.tracepath(trace_destination, timeout, report_options, tracking);
 
 		// Shutdown the client connection.
 		tracer.close();
