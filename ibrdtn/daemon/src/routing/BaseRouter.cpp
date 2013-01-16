@@ -44,6 +44,7 @@
 #include "routing/NodeHandshakeExtension.h"
 #include "routing/RetransmissionExtension.h"
 
+#include <ibrdtn/data/TrackingBlock.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 
@@ -359,6 +360,12 @@ namespace dtn
 						try {
 							dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
 							schl.increment();
+						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+
+						// modify TrackingBlock
+						try {
+							dtn::data::TrackingBlock &track = bundle.getBlock<dtn::data::TrackingBlock>();
+							track.append(dtn::core::BundleCore::local);
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// prevent loops

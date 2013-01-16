@@ -22,6 +22,7 @@
 #include "EchoWorker.h"
 #include "net/ConvergenceLayer.h"
 #include "ibrdtn/utils/Utils.h"
+#include <ibrdtn/data/TrackingBlock.h>
 #include <ibrcommon/Logger.h>
 
 using namespace dtn::core;
@@ -57,6 +58,14 @@ namespace dtn
 
 				// set the lifetime to the same value as the received bundle
 				echo._lifetime = b._lifetime;
+
+				try {
+					const dtn::data::TrackingBlock &tracking = b.getBlock<dtn::data::TrackingBlock>();
+					dtn::data::TrackingBlock &target = echo.push_back<dtn::data::TrackingBlock>();
+
+					// copy tracking block
+					target = tracking;
+				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 				IBRCOMMON_LOGGER_DEBUG(5) << "echo request received, replying!" << IBRCOMMON_LOGGER_ENDL;
 
