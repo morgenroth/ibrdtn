@@ -27,7 +27,6 @@
 #include "routing/QueueBundleEvent.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/NodeEvent.h"
-#include "core/FragmentManager.h"
 #include <ibrdtn/data/TrackingBlock.h>
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrcommon/net/vaddress.h>
@@ -294,32 +293,6 @@ namespace dtn
 			}
 #endif
 
-			//check if fragmentation is enabled
-			if(dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation())
-			{
-				IBRCOMMON_LOGGER_DEBUG(1) << "Fragmentation is used"  << IBRCOMMON_LOGGER_ENDL;
-
-				//get the payload size maximum
-				size_t maxPayloadLength = dtn::daemon::Configuration::getInstance().getLimit("payload");
-
-				std::list<dtn::data::Bundle> fragments;
-
-				if(dtn::core::FragmentManager::fragmentBundle(bundle, maxPayloadLength, fragments))
-				{
-
-					std::list<dtn::data::Bundle>::iterator iterator;
-
-					//for each fragment raise bundle received event
-					for(iterator = fragments.begin(); iterator != fragments.end(); ++iterator)
-					{
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(source, *iterator, true);
-					}
-					return;
-				}
-			}
-
-			//old only this
 			// raise default bundle received event
 			dtn::net::BundleReceivedEvent::raise(source, bundle, true);
 		}
