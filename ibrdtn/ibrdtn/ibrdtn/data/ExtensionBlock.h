@@ -54,6 +54,8 @@ namespace dtn
 
 			ibrcommon::BLOB::Reference getBLOB() const;
 
+			void setType(char type);
+
 			virtual size_t getLength() const;
 			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
 			virtual std::istream &deserialize(std::istream &stream, const size_t length);

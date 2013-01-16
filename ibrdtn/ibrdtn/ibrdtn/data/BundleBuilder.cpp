@@ -90,6 +90,9 @@ namespace dtn
 					} catch (const ibrcommon::Exception &ex) {
 						dtn::data::ExtensionBlock &block = insert<dtn::data::ExtensionBlock>(procflags);
 
+						// set block type of this unknown block
+						block.setType(block_type);
+
 						if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
 						{
 							// remove the block

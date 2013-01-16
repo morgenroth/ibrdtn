@@ -111,6 +111,11 @@ namespace dtn
 			return _blobref;
 		}
 
+		void ExtensionBlock::setType(char type)
+		{
+			_blocktype = type;
+		}
+
 		size_t ExtensionBlock::getLength() const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
