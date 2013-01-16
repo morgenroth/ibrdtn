@@ -25,7 +25,8 @@ h_sources = \
 	BundleFragment.h \
 	StreamBlock.h \
 	BundleBuilder.h \
-	AdministrativeBlock.h
+	AdministrativeBlock.h \
+	TrackingBlock.h
 
 cc_sources = \
 	Serializer.cpp \
@@ -51,7 +52,8 @@ cc_sources = \
 	BundleFragment.cpp \
 	StreamBlock.cpp \
 	BundleBuilder.cpp \
-	AdministrativeBlock.cpp
+	AdministrativeBlock.cpp \
+	TrackingBlock.cpp
 
 if COMPRESSION
 h_sources += CompressedPayloadBlock.h
