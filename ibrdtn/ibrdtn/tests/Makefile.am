@@ -1,7 +1,7 @@
 ## Source directory
 
-h_sources = data/TestBundleList.h data/TestBundleSet.h data/TestDictionary.h data/TestSerializer.h net/TestStreamConnection.h api/TestPlainSerializer.h utils/TestUtils.h
-cc_sources = data/TestBundleList.cpp data/TestBundleSet.cpp data/TestDictionary.cpp data/TestSerializer.cpp net/TestStreamConnection.cpp api/TestPlainSerializer.cpp utils/TestUtils.cpp Main.cpp
+h_sources = data/TestBundleList.h data/TestBundleSet.h data/TestDictionary.h data/TestSerializer.h net/TestStreamConnection.h api/TestPlainSerializer.h utils/TestUtils.h data/TestExtensionBlock.h
+cc_sources = data/TestBundleList.cpp data/TestBundleSet.cpp data/TestDictionary.cpp data/TestSerializer.cpp net/TestStreamConnection.cpp api/TestPlainSerializer.cpp utils/TestUtils.cpp data/TestExtensionBlock.cpp Main.cpp
 
 if DTNSEC
 h_sources += security/TestSecurityBlock.h security/PayloadConfidentialBlockTest.h
