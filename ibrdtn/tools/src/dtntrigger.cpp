@@ -45,17 +45,20 @@ ibrcommon::File blob_path("/tmp");
 
 dtn::data::EID group;
 
+bool signed_only = false;
+
 void print_help()
 {
 	cout << "-- dtntrigger (IBR-DTN) --" << endl;
 	cout << "Syntax: dtntrigger [options] <name> <shell> [trigger-script]"  << endl;
-	cout << "<name>            the application name" << endl;
-	cout << "<shell>           shell to execute the trigger script" << endl;
+	cout << "<name>        the application name" << endl;
+	cout << "<shell>       shell to execute the trigger script" << endl;
 	cout << "[trigger-script]  optional: the trigger script to execute on incoming bundle" << endl;
 	cout << "* optional parameters *" << endl;
-	cout << " -h|--help        display this text" << endl;
-	cout << " -g <group>       join a group" << endl;
-	cout << " -w|--workdir     temporary work directory" << endl;
+	cout << " -h           display this text" << endl;
+	cout << " -g <group>   join a group" << endl;
+	cout << " -w           temporary work directory" << endl;
+	cout << " -s           process signed bundles only" << endl;
 }
 
 int init(int argc, char** argv)
@@ -65,7 +68,7 @@ int init(int argc, char** argv)
 
 	opterr = 0;
 
-	while ((c = getopt (argc, argv, "hw:g:")) != -1)
+	while ((c = getopt (argc, argv, "hw:g:s")) != -1)
 	switch (c)
 	{
 		case 'w':
@@ -87,10 +90,13 @@ int init(int argc, char** argv)
 					 optopt);
 			return 1;
 
+		case 's':
+			signed_only = true;
+			break;
+
 		default:
 			print_help();
-			abort();
-			break;
+			return 1;
 	}
 
 	int optindex = 0;
@@ -179,6 +185,9 @@ int main(int argc, char** argv)
 			{
 				// receive the bundle
 				dtn::api::Bundle b = client.getBundle();
+
+				// skip non-signed bundles if we should accept signed bundles only
+				if (signed_only && !b.statusVerified()) continue;
 
 				// get the reference to the blob
 				ibrcommon::BLOB::Reference ref = b.getData();
