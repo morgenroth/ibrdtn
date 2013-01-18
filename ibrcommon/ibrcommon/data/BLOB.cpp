@@ -103,7 +103,7 @@ namespace ibrcommon
 				}
 
 				// retry if the read failed
-				if (input.fail()) continue;
+				if (!input.eof() && input.fail()) continue;
 			}
 
 			// write the bytes to the BLOB
