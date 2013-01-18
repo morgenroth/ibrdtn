@@ -32,7 +32,7 @@ namespace dtn
 	namespace data
 	{
 		BundleMerger::Container::Container(ibrcommon::BLOB::Reference &ref)
-		 : _bundle(), _blob(ref), _initialized(false), _appdatalength(0)
+		 : _bundle(), _blob(ref), _initialized(false), _hasFirstFragBlocksAdded(false), _hasLastFragBlocksAdded(false), _appdatalength(0)
 		{
 		}
 
@@ -107,6 +107,9 @@ namespace dtn
 				// add a new payloadblock
 				c._bundle.push_back(c._blob);
 
+				c._hasFirstFragBlocksAdded = false;
+				c._hasLastFragBlocksAdded = false;
+
 				c._initialized = true;
 			}
 
@@ -127,6 +130,92 @@ namespace dtn
 
 			// add the chunk to the list of chunks
 			c.add(obj._fragmentoffset, plength);
+
+			//check if fragment is the first one
+			//add blocks only once
+			if(!c._hasFirstFragBlocksAdded && obj._fragmentoffset == 0)
+			{
+				c._hasFirstFragBlocksAdded = true;
+
+				Block &bundle_payloadBlock = c._bundle.getBlock<dtn::data::PayloadBlock>();
+
+				for(size_t i = 0; i < obj.blockCount(); ++i)
+				{
+					//get the current block and type
+					Block &current_block = obj.getBlock(i);
+					char block_type = current_block.getType();
+
+					if(block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
+					{
+						//leave loop when payloadblock is reached
+						break;
+					}
+					else
+					{
+						try
+						{
+							ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+
+							//insert new Block before payload block and copy block
+							dtn::data::Block &block = c._bundle.insert(f,bundle_payloadBlock);
+							block = current_block;
+
+							IBRCOMMON_LOGGER_DEBUG(5) << "Reassemble: Added Block before Payload: " << obj.toString()<< "  " << block_type << "Blocklist-Position:  " << i << IBRCOMMON_LOGGER_ENDL;
+						}
+						catch(const ibrcommon::Exception &ex)
+						{
+							//insert new Block before payload block and copy block
+							dtn::data::Block &block = c._bundle.insert<dtn::data::ExtensionBlock>(bundle_payloadBlock);
+							block = current_block;
+
+							IBRCOMMON_LOGGER_DEBUG(5) << "Reassemble: Added Block before Payload: " << obj.toString()<< "  " << block_type << "Blocklist-Position:  " << i << IBRCOMMON_LOGGER_ENDL;
+						}
+					}
+				}
+
+			}
+
+			//check if fragment is the last one
+			//add blocks only once
+			if(!c._hasLastFragBlocksAdded && obj._fragmentoffset + plength == obj._appdatalength)
+			{
+				c._hasLastFragBlocksAdded = true;
+
+				bool isAfterPayload = false;
+
+				for(size_t i = 0; i < obj.blockCount(); ++i)
+				{
+					//get the current block and type
+					Block &current_block = obj.getBlock(i);
+					char block_type = current_block.getType();
+
+					if(block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
+					{
+						isAfterPayload = true;
+					}
+					else if(isAfterPayload)
+					{
+						try
+						{
+							ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+
+							//push back new Block after payload block and copy block
+							dtn::data::Block &block = c._bundle.push_back(f);
+							block = current_block;
+
+							IBRCOMMON_LOGGER_DEBUG(5) << "Reassemble: Added Block after Payload: " << obj.toString()<< "  " << block_type << "Blocklist-Position:  " << i << IBRCOMMON_LOGGER_ENDL;
+						}
+						catch(const ibrcommon::Exception &ex)
+						{
+							//push back new Block after payload block and copy block
+							dtn::data::Block &block = c._bundle.push_back<dtn::data::ExtensionBlock>();
+							block = current_block;
+
+							IBRCOMMON_LOGGER_DEBUG(5) << "Reassemble: Added Block after Payload: " << obj.toString()<< "  " << block_type << "Blocklist-Position:  " << i << IBRCOMMON_LOGGER_ENDL;
+						}
+					}
+				}
+			}
 
 			return c;
 		}

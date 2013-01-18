@@ -65,6 +65,8 @@ namespace dtn
 				dtn::data::Bundle _bundle;
 				ibrcommon::BLOB::Reference _blob;
 				bool _initialized;
+				bool _hasFirstFragBlocksAdded;
+				bool _hasLastFragBlocksAdded;
 
 				std::set<Chunk> _chunks;
 				size_t _appdatalength;
