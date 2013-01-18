@@ -46,11 +46,6 @@ namespace dtn
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize, size_t buffer_limit)
 		 : BundleStorage(maxsize), _list(this), _datastore(*this, workdir, buffer_limit)
 		{
-			// load persistent bundles
-			_datastore.iterateAll();
-
-			// some output
-			IBRCOMMON_LOGGER(info) << _list.size() << " Bundles restored." << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
@@ -187,6 +182,12 @@ namespace dtn
 
 		void SimpleBundleStorage::componentUp() throw ()
 		{
+			// load persistent bundles
+			_datastore.iterateAll();
+
+			// some output
+			IBRCOMMON_LOGGER(info) << _list.size() << " Bundles restored." << IBRCOMMON_LOGGER_ENDL;
+
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			_datastore.start();
 		}
