@@ -279,6 +279,177 @@ namespace dtn
 			}
 		}
 
+		void FragmentManager::split(const dtn::data::Bundle &bundle, size_t maxPayloadLength, std::list<dtn::data::Bundle> &fragments) throw (FragmentationAbortedException)
+		{
+			// get bundle DONT_FRAGMENT Flag
+			if (bundle.get(dtn::data::PrimaryBlock::DONT_FRAGMENT))
+				throw FragmentationProhibitedException("Bundle fragmentation is restricted by do-not-fragment bit.");
+
+			try {
+				const dtn::data::PayloadBlock &payloadBlock = bundle.getBlock<dtn::data::PayloadBlock>();
+
+				// get bundle payload length
+				size_t payloadLength = payloadBlock.getLength();
+
+				// check if fragmentation needed
+				if (payloadLength <= maxPayloadLength)
+					throw FragmentationNotNecessaryException("Fragmentation not necessary. The payload block is smaller than the max. payload length.");
+
+				ibrcommon::BLOB::Reference ref = payloadBlock.getBLOB();
+				ibrcommon::BLOB::iostream stream = ref.iostream();
+
+				bool isFirstFragment = true;
+				size_t offset = 0;
+
+				while (!(*stream).eof() && (payloadLength > offset))
+				{
+					// copy the origin bundle as template for the new fragment
+					Bundle fragment = bundle;
+
+					// clear all the blocks
+					fragment.clearBlocks();
+
+					// set bundle is fragment flag
+					fragment.set(dtn::data::Bundle::FRAGMENT, true);
+
+					// set application data length
+					fragment._appdatalength = payloadLength;
+
+					// set fragment offset
+					fragment._fragmentoffset = offset;
+
+					// create new blob for fragment payload
+					ibrcommon::BLOB::Reference fragment_ref = ibrcommon::BLOB::create();
+
+					// copy partial payload to the payload of the fragment
+					{
+						ibrcommon::BLOB::iostream fragment_stream = fragment_ref.iostream();
+
+						try {
+							if ((offset + maxPayloadLength) > payloadLength) {
+								// copy payload to the fragment
+								ibrcommon::BLOB::copy(*fragment_stream, *stream, payloadLength - offset, 65535);
+							} else {
+								// copy payload to the fragment
+								ibrcommon::BLOB::copy(*fragment_stream, *stream, maxPayloadLength, 65535);
+							}
+						} catch (const ibrcommon::IOException &ex) {
+							IBRCOMMON_LOGGER_DEBUG(5) << "error while splitting bundle into fragments: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						}
+
+						// set new offset position
+						offset += fragment_stream.size();
+					}
+
+					// create fragment payload block
+					dtn::data::PayloadBlock &fragment_payloadBlock = fragment.push_back(fragment_ref);
+
+					// add all necessary blocks from the bundle to the fragment
+					addBlocksFromBundleToFragment(bundle, fragment, fragment_payloadBlock, isFirstFragment, payloadLength == offset);
+
+					// add current fragment to fragments list
+					fragments.push_back(fragment);
+
+					if (isFirstFragment) isFirstFragment = false;
+
+					IBRCOMMON_LOGGER_DEBUG(5) << "Fragment created: " << fragment.toString() << IBRCOMMON_LOGGER_ENDL;
+				}
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+				// bundle has no payload
+				throw FragmentationAbortedException("Fragmentation aborted. No payload block found.");
+			}
+		}
+
+		void FragmentManager::addBlocksFromBundleToFragment(const dtn::data::Bundle &bundle, dtn::data::Bundle &fragment, dtn::data::PayloadBlock &fragment_payloadBlock, bool isFirstFragment, bool isLastFragment)
+		{
+			bool isAfterPayload = false;
+			bool isReplicateInEveryBundle = false;
+
+			char block_type = 0;
+
+			IBRCOMMON_LOGGER_DEBUG(5) << "Fragment original bundle block count: " << fragment.toString() << "  " << bundle.blockCount() << IBRCOMMON_LOGGER_ENDL;
+
+			//check for each block if it has to be added to the fragment
+			for(size_t pos = 0; pos < bundle.blockCount(); ++pos)
+			{
+				//get the current block
+				const Block &current_block = bundle.getBlock(pos);
+
+				block_type = current_block.getType();
+
+				IBRCOMMON_LOGGER_DEBUG(5) << "Fragment Block found: " << fragment.toString() << "  " << (unsigned int)block_type << IBRCOMMON_LOGGER_ENDL;
+
+
+				if (block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
+				{
+					isAfterPayload = true;
+				}
+				else
+				{
+					isReplicateInEveryBundle = current_block.get(dtn::data::Block::REPLICATE_IN_EVERY_FRAGMENT);
+
+					//if block is before payload
+					//add if fragment is the first one
+					//or if ReplicateInEveryBundle Flag is set
+					if (!isAfterPayload && (isFirstFragment || isReplicateInEveryBundle))
+					{
+						try
+						{	//get factory
+							ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+
+							//insert new Block before payload block
+							dtn::data::Block &fragment_block = fragment.insert(f, fragment_payloadBlock);
+
+							//copy block
+							fragment_block = current_block;
+
+							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << "Blocklist-Position:  " << pos << IBRCOMMON_LOGGER_ENDL;
+						}
+						catch(const ibrcommon::Exception &ex)
+						{
+							//insert new Block before payload block
+							dtn::data::Block &fragment_block = fragment.insert<dtn::data::ExtensionBlock>(fragment_payloadBlock);
+
+							//copy block
+							fragment_block = current_block;
+
+							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << "Blocklist-Position:  " << pos << IBRCOMMON_LOGGER_ENDL;
+						}
+
+					}
+					//if block is after payload
+					//add if fragment is the last one
+					//or if ReplicateInEveryBundle Flag is set
+					else if (isAfterPayload && (isLastFragment || isReplicateInEveryBundle))
+					{
+						try
+						{	//get factory
+							ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+
+							//push back new Block after payload block
+							dtn::data::Block &fragment_block = fragment.push_back(f);
+
+							//copy block
+							fragment_block = current_block;
+
+							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << "Blocklist-Position:  " << pos << IBRCOMMON_LOGGER_ENDL;
+						}
+						catch (const ibrcommon::Exception &ex)
+						{
+							//push back new Block after payload block
+							dtn::data::Block &fragment_block = fragment.push_back<dtn::data::ExtensionBlock>();
+
+							//copy block
+							fragment_block = current_block;
+
+							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << "Blocklist-Position:  " << pos << IBRCOMMON_LOGGER_ENDL;
+						}
+					}
+				}
+			}
+
+		}
+
 		FragmentManager::Transmission::Transmission()
 		 : offset(0), expires(0)
 		{

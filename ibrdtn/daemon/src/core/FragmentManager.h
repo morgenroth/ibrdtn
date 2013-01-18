@@ -35,6 +35,30 @@ namespace dtn
 {
 	namespace core
 	{
+		class FragmentationAbortedException : public ibrcommon::Exception
+		{
+		public:
+			FragmentationAbortedException(string what = "Fragmentation aborted.") throw() : ibrcommon::Exception(what)
+			{
+			}
+		};
+
+		class FragmentationProhibitedException : public FragmentationAbortedException
+		{
+		public:
+			FragmentationProhibitedException(string what = "Fragmentation is prohibited.") throw() : FragmentationAbortedException(what)
+			{
+			}
+		};
+
+		class FragmentationNotNecessaryException : public FragmentationAbortedException
+		{
+		public:
+			FragmentationNotNecessaryException(string what = "Fragmentation is not necessary.") throw() : FragmentationAbortedException(what)
+			{
+			}
+		};
+
 		class FragmentManager : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
 		{
 		public:
@@ -69,6 +93,14 @@ namespace dtn
 			 */
 			static size_t getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id);
 
+			/**
+			 * Split-up a bundle into several pieces
+			 * @param bundle the original bundle
+			 * @param maxPayloadLength payload length maximum per fragment
+			 * @param fragments list of all fragments
+			 */
+			static void split(const dtn::data::Bundle &bundle, const size_t maxPayloadLength, std::list<dtn::data::Bundle> &fragments) throw (FragmentationAbortedException);
+
 		private:
 			class Transmission
 			{
@@ -87,6 +119,16 @@ namespace dtn
 
 			static void expire_offsets(size_t timestamp);
 			static size_t get_payload_offset(const dtn::data::Bundle &bundle, size_t abs_offset);
+
+			/**
+			 * adds all necessary blocks from the bundle to the fragment
+			 * @param bundle the original bundle
+			 * @param fragment the current fragment
+			 * @param fragment_payloadBlock payload block of the current fragment
+			 * @param isFirstFragment
+			 * @param isLastFragment
+			 */
+			static void addBlocksFromBundleToFragment(const dtn::data::Bundle &bundle, dtn::data::Bundle &fragment, dtn::data::PayloadBlock &fragment_payloadBlock, bool isFirstFragment, bool isLastFragment);
 
 			// search for similar bundles in the storage
 			void search(const dtn::data::MetaBundle &meta, dtn::storage::BundleResult &list);
