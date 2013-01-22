@@ -27,7 +27,9 @@ routing_SOURCES = \
 	NodeHandshakeEvent.h \
 	NodeHandshakeEvent.cpp \
 	NodeHandshakeExtension.h \
-	NodeHandshakeExtension.cpp
+	NodeHandshakeExtension.cpp \
+	SchedulingBundleIndex.h \
+	SchedulingBundleIndex.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS)
