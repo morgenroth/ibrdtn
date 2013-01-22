@@ -22,6 +22,7 @@
 #include "storage/SQLiteDatabase.h"
 #include "storage/SQLiteConfigure.h"
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
+#include <ibrdtn/data/SchedulingBlock.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
 
@@ -35,14 +36,14 @@ namespace dtn
 		}
 
 		const std::string SQLiteDatabase::_select_names[2] = {
-				"source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, payloadlength",
+				"source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, payloadlength, netpriority",
 				"source, timestamp, sequencenumber, fragmentoffset, procflags"
 		};
 
 		const std::string SQLiteDatabase::_tables[SQL_TABLE_END] =
 				{ "bundles", "blocks", "routing", "routing_bundles", "routing_nodes", "properties" };
 
-		const int SQLiteDatabase::DBSCHEMA_VERSION = 1;
+		const int SQLiteDatabase::DBSCHEMA_VERSION = 2;
 		const std::string SQLiteDatabase::QUERY_SCHEMAVERSION = "SELECT `value` FROM " + SQLiteDatabase::_tables[SQLiteDatabase::SQL_TABLE_PROPERTIES] + " WHERE `key` = 'version' LIMIT 0,1;";
 		const std::string SQLiteDatabase::SET_SCHEMAVERSION = "INSERT INTO " + SQLiteDatabase::_tables[SQLiteDatabase::SQL_TABLE_PROPERTIES] + " (`key`, `value`) VALUES ('version', ?);";
 
@@ -65,7 +66,7 @@ namespace dtn
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +";",
-			"INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (source_id, timestamp, sequencenumber, fragmentoffset, source, destination, reportto, custodian, procflags, lifetime, appdatalength, expiretime, priority, hopcount, payloadlength) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
+			"INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (source_id, timestamp, sequencenumber, fragmentoffset, source, destination, reportto, custodian, procflags, lifetime, appdatalength, expiretime, priority, hopcount, payloadlength, netpriority) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
 			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET custodian = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL;",
 			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET custodian = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 
@@ -238,6 +239,18 @@ namespace dtn
 					setVersion(1);
 
 					break;
+
+				case 1:
+					Statement st(_database, "ALTER TABLE " + _tables[SQL_TABLE_BUNDLE] + " ADD `netpriority` INTEGER NOT NULL DEFAULT 0;");
+					int err = st.step();
+					if(err != SQLITE_DONE)
+					{
+						IBRCOMMON_LOGGER(error) << "SQLiteDatabase: failed to alter table " << _tables[SQL_TABLE_BUNDLE] << "; err: " << err << IBRCOMMON_LOGGER_ENDL;
+					}
+
+					// set new database version
+					setVersion(2);
+					break;
 				}
 			}
 		}
@@ -272,7 +285,8 @@ namespace dtn
 				{
 					doUpgrade(version, DBSCHEMA_VERSION);
 				}
-			} catch (const SQLiteQueryException&) {
+			} catch (const SQLiteQueryException &ex) {
+				IBRCOMMON_LOGGER(warning) << "SQLiteDatabase: upgrade failed, start-over with a fresh database" << IBRCOMMON_LOGGER_ENDL;
 				doUpgrade(0, DBSCHEMA_VERSION);
 			}
 
@@ -507,6 +521,9 @@ namespace dtn
 			}
 
 			bundle.payloadlength = sqlite3_column_int64(*st, 11);
+
+			// restore net priority
+			bundle.net_priority = sqlite3_column_int64(*st, 12);
 		}
 
 		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, size_t offset) const
@@ -749,6 +766,13 @@ namespace dtn
 				sqlite3_bind_int64(*st, 15, pblock.getLength() );
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				sqlite3_bind_int64(*st, 15, 0 );
+			};
+
+			try {
+				const dtn::data::SchedulingBlock &sched = bundle.getBlock<const dtn::data::SchedulingBlock>();
+				sqlite3_bind_int64(*st, 16, sched.getPriority() );
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+				sqlite3_bind_int64(*st, 16, 0 );
 			};
 
 			err = st.step();
