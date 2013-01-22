@@ -276,15 +276,6 @@ namespace dtn
 			 */
 			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const;
 
-//			/**
-//			 * Checks the files on the filesystem against the filenames in the database
-//			 */
-//			void check_consistency();
-//
-//			void check_fragments(set<string> &payloadFiles);
-//
-//			void check_bundles(set<string> &blockFiles);
-
 			/**
 			 * updates the nextExpiredTime. The calling function has to have the databaselock.
 			 */
