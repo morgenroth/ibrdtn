@@ -118,7 +118,9 @@ namespace dtn
 
 		private:
 			ibrcommon::Mutex _bundleslock;
-			std::set<dtn::data::Bundle> _bundles;
+
+			typedef std::set<dtn::data::Bundle> bundle_list;
+			bundle_list _bundles;
 			dtn::data::BundleList _list;
 
 			struct CMP_BUNDLE_PRIORITY

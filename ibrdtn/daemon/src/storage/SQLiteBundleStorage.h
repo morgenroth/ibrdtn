@@ -46,7 +46,7 @@ namespace dtn
 {
 	namespace storage
 	{
-		class SQLiteBundleStorage: public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::BLOB::Provider
+		class SQLiteBundleStorage: public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::BLOB::Provider, public SQLiteDatabase::DatabaseListener
 		{
 		public:
 			/**
@@ -129,6 +129,12 @@ namespace dtn
 			 * @param evt
 			 */
 			void raiseEvent(const dtn::core::Event *evt) throw ();
+
+			/**
+			 * callbacks for the sqlite database
+			 */
+			void eventBundleExpired(const dtn::data::BundleID &id);
+			void iterateDatabase(const dtn::data::MetaBundle &bundle);
 
 		protected:
 			virtual void componentRun() throw ();;

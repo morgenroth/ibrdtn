@@ -118,7 +118,7 @@ namespace dtn
 		}
 
 		SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const size_t &maxsize)
-		 : BundleStorage(maxsize), _database(path.get("sqlite.db"))
+		 : BundleStorage(maxsize), _database(path.get("sqlite.db"), *this)
 		{
 			// set the block path
 			_blockPath = path.get("blocks");
@@ -133,6 +133,9 @@ namespace dtn
 
 		void SQLiteBundleStorage::componentRun() throw ()
 		{
+			// iterate through all bundles to generate indexes
+			_database.iterateAll();
+
 			// loop until aborted
 			try {
 				while (true)
@@ -359,6 +362,9 @@ namespace dtn
 				}
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "bundle " << bundle.toString() << " stored" << IBRCOMMON_LOGGER_ENDL;
+
+				// raise bundle added event
+				eventBundleAdded(bundle);
 			} catch (const ibrcommon::Exception&) {
 				_database.rollback();
 			}
@@ -371,8 +377,14 @@ namespace dtn
 
 		void SQLiteBundleStorage::TaskRemove::run(SQLiteBundleStorage &storage)
 		{
-			ibrcommon::RWLock l(storage._global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
-			storage._database.remove(_id);
+			// remove the bundle in locked state
+			{
+				ibrcommon::RWLock l(storage._global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				storage._database.remove(_id);
+			}
+
+			// raise bundle removed event
+			storage.eventBundleRemoved(_id);
 		}
 
 		void SQLiteBundleStorage::clearAll()
@@ -481,6 +493,18 @@ namespace dtn
 			// it is safe to delete this bundle now. (depending on the routing algorithm.)
 			// update the custodian of this bundle with the new one
 			_database.update(SQLiteDatabase::UPDATE_CUSTODIAN, id, custodian);
+		}
+
+		void SQLiteBundleStorage::iterateDatabase(const dtn::data::MetaBundle &bundle)
+		{
+			// raise bundle added event
+			eventBundleAdded(bundle);
+		}
+
+		void SQLiteBundleStorage::eventBundleExpired(const dtn::data::BundleID &id)
+		{
+			// raise bundle removed event
+			eventBundleRemoved(id);
 		}
 	}
 }

@@ -166,5 +166,37 @@ namespace dtn
 			ibrcommon::MutexLock l(_sizelock);
 			_currentsize = 0;
 		}
+
+		void BundleStorage::eventBundleAdded(const dtn::data::MetaBundle &b)
+		{
+			IBRCOMMON_LOGGER_DEBUG(2) << "add bundle to index: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
+
+			for (index_list::iterator it = _indexes.begin(); it != _indexes.end(); it++) {
+				BundleIndex &index = (**it);
+				index.add(b);
+			}
+		}
+
+		void BundleStorage::eventBundleRemoved(const dtn::data::BundleID &id)
+		{
+			IBRCOMMON_LOGGER_DEBUG(2) << "remove bundle from index: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+
+			for (index_list::iterator it = _indexes.begin(); it != _indexes.end(); it++) {
+				BundleIndex &index = (**it);
+				index.remove(id);
+			}
+		}
+
+		void BundleStorage::attach(dtn::storage::BundleIndex *index)
+		{
+			ibrcommon::MutexLock l(_index_lock);
+			_indexes.insert(index);
+		}
+
+		void BundleStorage::detach(dtn::storage::BundleIndex *index)
+		{
+			ibrcommon::MutexLock l(_index_lock);
+			_indexes.erase(index);
+		}
 	}
 }

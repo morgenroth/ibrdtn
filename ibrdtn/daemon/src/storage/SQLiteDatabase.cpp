@@ -34,6 +34,11 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(50) << "sqlite trace: " << pQuery << IBRCOMMON_LOGGER_ENDL;
 		}
 
+		const std::string SQLiteDatabase::_select_names[2] = {
+				"source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, payloadlength",
+				"source, timestamp, sequencenumber, fragmentoffset, procflags"
+		};
+
 		const std::string SQLiteDatabase::_tables[SQL_TABLE_END] =
 				{ "bundles", "blocks", "routing", "routing_bundles", "routing_nodes", "properties" };
 
@@ -43,12 +48,13 @@ namespace dtn
 
 		const std::string SQLiteDatabase::_sql_queries[SQL_QUERIES_END] =
 		{
-			"SELECT source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, payloadlength FROM " + _tables[SQL_TABLE_BUNDLE] + " ORDER BY priority DESC LIMIT ?,?;",
-			"SELECT source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, payloadlength FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL LIMIT 1;",
-			"SELECT source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, payloadlength FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
+			"SELECT " + _select_names[0] + " FROM " + _tables[SQL_TABLE_BUNDLE],
+			"SELECT " + _select_names[0] + " FROM " + _tables[SQL_TABLE_BUNDLE] + " ORDER BY priority DESC LIMIT ?,?;",
+			"SELECT " + _select_names[0] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL LIMIT 1;",
+			"SELECT " + _select_names[0] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
 			"SELECT * FROM " + _tables[SQL_TABLE_BUNDLE] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset != NULL ORDER BY fragmentoffset ASC;",
 
-			"SELECT source, timestamp, sequencenumber, fragmentoffset, procflags FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE expiretime <= ?;",
+			"SELECT " + _select_names[1] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE expiretime <= ?;",
 			"SELECT filename FROM "+ _tables[SQL_TABLE_BUNDLE] +" as a, "+ _tables[SQL_TABLE_BLOCK] +" as b WHERE a.source_id = b.source_id AND a.timestamp = b.timestamp AND a.sequencenumber = b.sequencenumber AND ((a.fragmentoffset = b.fragmentoffset) OR ((a.fragmentoffset IS NULL) AND (b.fragmentoffset IS NULL))) AND a.expiretime <= ?;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE expiretime <= ?;",
 			"SELECT expiretime FROM "+ _tables[SQL_TABLE_BUNDLE] +" ORDER BY expiretime ASC LIMIT 1;",
@@ -143,8 +149,10 @@ namespace dtn
 				throw SQLiteQueryException("failed to prepare statement: " + _query);
 		}
 
-		SQLiteDatabase::SQLiteDatabase(const ibrcommon::File &file)
-		 : _file(file), _next_expiration(0)
+		SQLiteDatabase::DatabaseListener::~DatabaseListener() {}
+
+		SQLiteDatabase::SQLiteDatabase(const ibrcommon::File &file, DatabaseListener &listener)
+		 : _file(file), _database(NULL), _next_expiration(0), _listener(listener)
 		{
 		}
 
@@ -519,12 +527,31 @@ namespace dtn
 			}
 		}
 
+		void SQLiteDatabase::iterateAll()
+		{
+			Statement st(_database, _sql_queries[BUNDLE_GET_ITERATOR]);
+
+			// abort if enough bundles are found
+			while (st.step() == SQLITE_ROW)
+			{
+				dtn::data::MetaBundle m;
+
+				// extract the primary values and set them in the bundle object
+				get(st, m, 0);
+
+				// call iteration callback
+				_listener.iterateDatabase(m);
+			}
+
+			st.reset();
+		}
+
 		void SQLiteDatabase::get(dtn::storage::BundleStorage::BundleFilterCallback &cb, BundleResult &ret) throw (dtn::storage::BundleStorage::NoBundleFoundException, dtn::storage::BundleStorage::BundleFilterException)
 		{
 			size_t items_added = 0;
 
 			const std::string base_query =
-					"SELECT source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, payloadlength FROM " + _tables[SQL_TABLE_BUNDLE];
+					"SELECT " + _select_names[0] + " FROM " + _tables[SQL_TABLE_BUNDLE];
 
 			size_t offset = 0;
 			bool unlimited = (cb.limit() <= 0);
@@ -946,6 +973,9 @@ namespace dtn
 					dtn::data::BundleID id;
 					get_bundleid(st, id);
 					dtn::core::BundleExpiredEvent::raise(id);
+
+					// raise bundle removed event
+					_listener.eventBundleExpired(id);
 				}
 			}
 

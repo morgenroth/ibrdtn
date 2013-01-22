@@ -108,6 +108,9 @@ namespace dtn
 			 */
 			void wait();
 
+			/**
+			 * iterate through all the data and call the iterateDataStorage() on each dataset
+			 */
 			void iterateAll();
 
 		protected:

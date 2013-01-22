@@ -52,6 +52,7 @@ namespace dtn
 			// enum of all possible statements
 			enum STORAGE_STMT
 			{
+				BUNDLE_GET_ITERATOR,
 				BUNDLE_GET_FILTER,
 				BUNDLE_GET_ID,
 				FRAGMENT_GET_ID,
@@ -89,6 +90,8 @@ namespace dtn
 			static const std::string QUERY_SCHEMAVERSION;
 			static const std::string SET_SCHEMAVERSION;
 
+			static const std::string _select_names[2];
+
 			static const std::string _tables[SQL_TABLE_END];
 
 			// array of sql queries
@@ -101,6 +104,14 @@ namespace dtn
 			enum UPDATE_VALUES
 			{
 				UPDATE_CUSTODIAN
+			};
+
+			class DatabaseListener
+			{
+			public:
+				virtual ~DatabaseListener() = 0;
+				virtual void eventBundleExpired(const dtn::data::BundleID&) = 0;
+				virtual void iterateDatabase(const dtn::data::MetaBundle&) = 0;
 			};
 
 			class SQLBundleQuery
@@ -155,7 +166,7 @@ namespace dtn
 			typedef std::list<std::pair<int, const ibrcommon::File> > blocklist;
 			typedef std::pair<int, const ibrcommon::File> blocklist_entry;
 
-			SQLiteDatabase(const ibrcommon::File &file);
+			SQLiteDatabase(const ibrcommon::File &file, DatabaseListener &listener);
 			virtual ~SQLiteDatabase();
 
 			/**
@@ -234,6 +245,11 @@ namespace dtn
 			 * @see BundleStorage::getDistinctDestinations()
 			 */
 			virtual const std::set<dtn::data::EID> getDistinctDestinations();
+
+			/**
+			 * iterate through all the bundles and call the iterateDatabase() on each bundle
+			 */
+			void iterateAll();
 
 		private:
 			/**
@@ -318,6 +334,9 @@ namespace dtn
 
 			// set of bundles to delete
 			std::set<dtn::data::BundleID> _deletion_list;
+
+			// listener for events on the database
+			DatabaseListener &_listener;
 		};
 	} /* namespace storage */
 } /* namespace dtn */

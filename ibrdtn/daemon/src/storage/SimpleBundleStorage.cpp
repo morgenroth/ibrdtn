@@ -75,6 +75,9 @@ namespace dtn
 			// cleanup bundle sizes
 			_bundle_size.erase(b);
 
+			// raise bundle removed event
+			eventBundleRemoved(b);
+
 			// delete the pending bundle
 			_pending_bundles.erase(hash);
 		}
@@ -86,14 +89,21 @@ namespace dtn
 			for (std::map<dtn::data::MetaBundle, DataStorage::Hash>::iterator iter = _stored_bundles.begin();
 					iter != _stored_bundles.end(); iter++)
 			{
-				if (iter->second == hash)
+				const DataStorage::Hash &it_hash = iter->second;
+				const dtn::data::MetaBundle it_bundle = iter->first;
+
+				if (it_hash == hash)
 				{
 					// decrement the storage size
-					freeSpace(_bundle_size[iter->first]);
+					freeSpace(_bundle_size[it_bundle]);
 
-					_bundle_size.erase(iter->first);
+					_bundle_size.erase(it_bundle);
+
+					// raise bundle removed event
+					eventBundleRemoved(it_bundle);
 
 					_stored_bundles.erase(iter);
+
 					return;
 				}
 			}
@@ -133,6 +143,8 @@ namespace dtn
 				_list.add(meta);
 				_priority_index.insert(meta);
 
+				// raise bundle added event
+				eventBundleAdded(bundle);
 			} catch (const std::exception&) {
 				// report this error to the console
 				IBRCOMMON_LOGGER(error) << "Error: Unable to restore bundle in file " << hash.value << IBRCOMMON_LOGGER_ENDL;
@@ -175,9 +187,9 @@ namespace dtn
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 				return bundle;
-			} catch (const DataStorage::DataNotAvailableException&) {
-				throw BundleStorage::NoBundleFoundException();
-			}
+			} catch (const DataStorage::DataNotAvailableException&) { }
+
+			throw BundleStorage::NoBundleFoundException();
 		}
 
 		void SimpleBundleStorage::componentUp() throw ()
@@ -338,6 +350,9 @@ namespace dtn
 				_priority_index.insert(meta);
 			}
 
+			// raise bundle added event
+			eventBundleAdded(bundle);
+
 			// put the bundle into the data store
 			_datastore.store(hash, bc.get());
 			bc.release();
@@ -411,6 +426,9 @@ namespace dtn
 
 				// create a background task for removing the bundle
 				_datastore.remove(hash);
+
+				// raise bundle removed event
+				eventBundleRemoved(meta);
 			}
 
 			_priority_index.clear();

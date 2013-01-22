@@ -23,6 +23,7 @@
 #define BUNDLESTORAGE_H_
 
 #include <storage/BundleResult.h>
+#include <storage/BundleIndex.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/MetaBundle.h>
@@ -188,6 +189,16 @@ namespace dtn
 			 */
 			void rejectCustody(const dtn::data::MetaBundle &meta, dtn::data::CustodySignalBlock::REASON_CODE reason = dtn::data::CustodySignalBlock::NO_ADDITIONAL_INFORMATION);
 
+			/**
+			 * attach an index to this storage
+			 */
+			void attach(dtn::storage::BundleIndex *index);
+
+			/**
+			 * detach a specific bundle index
+			 */
+			void detach(dtn::storage::BundleIndex *index);
+
 		protected:
 			/**
 			 * constructor
@@ -198,10 +209,17 @@ namespace dtn
 			void freeSpace(size_t size);
 			void clearSpace();
 
+			void eventBundleAdded(const dtn::data::MetaBundle &b);
+			void eventBundleRemoved(const dtn::data::BundleID &id);
+
 		private:
 			ibrcommon::Mutex _sizelock;
 			size_t _maxsize;
 			size_t _currentsize;
+
+			ibrcommon::Mutex _index_lock;
+			typedef std::set<dtn::storage::BundleIndex*> index_list;
+			index_list _indexes;
 		};
 	}
 }

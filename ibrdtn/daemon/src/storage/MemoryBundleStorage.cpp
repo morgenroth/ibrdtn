@@ -114,7 +114,7 @@ namespace dtn
 			try {
 				ibrcommon::MutexLock l(_bundleslock);
 
-				for (std::set<dtn::data::Bundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+				for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 				{
 					const dtn::data::Bundle &bundle = (*iter);
 					if (id == bundle)
@@ -141,7 +141,7 @@ namespace dtn
 
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (std::set<dtn::data::Bundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 			{
 				const dtn::data::Bundle &bundle = (*iter);
 				ret.insert(bundle._destination);
@@ -169,6 +169,9 @@ namespace dtn
 			{
 				_list.add(dtn::data::MetaBundle(bundle));
 				_priority_index.insert( bundle );
+
+				// raise bundle added event
+				eventBundleAdded(bundle);
 			}
 			else
 			{
@@ -180,7 +183,7 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (std::set<dtn::data::Bundle>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 			{
 				if ( id == (*iter) )
 				{
@@ -201,6 +204,9 @@ namespace dtn
 					// remove the container
 					_bundles.erase(iter);
 
+					// raise bundle removed event
+					eventBundleRemoved(bundle);
+
 					return;
 				}
 			}
@@ -212,7 +218,7 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (std::set<dtn::data::Bundle>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 			{
 				const dtn::data::Bundle &bundle = (*iter);
 
@@ -234,6 +240,9 @@ namespace dtn
 					// remove the container
 					_bundles.erase(iter);
 
+					// raise bundle removed event
+					eventBundleRemoved(bundle);
+
 					return (MetaBundle)bundle;
 				}
 			}
@@ -244,6 +253,14 @@ namespace dtn
 		void MemoryBundleStorage::clear()
 		{
 			ibrcommon::MutexLock l(_bundleslock);
+
+			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			{
+				const dtn::data::Bundle bundle = (*iter);
+
+				// raise bundle removed event
+				eventBundleRemoved(bundle);
+			}
 
 			_bundles.clear();
 			_priority_index.clear();
@@ -256,7 +273,7 @@ namespace dtn
 
 		void MemoryBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b)
 		{
-			for (std::set<dtn::data::Bundle>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 			{
 				if ( b == (*iter) )
 				{
@@ -273,6 +290,9 @@ namespace dtn
 
 					_priority_index.erase(bundle);
 					_bundles.erase(iter);
+
+					// raise bundle removed event
+					eventBundleRemoved(bundle);
 					break;
 				}
 			}
