@@ -279,9 +279,11 @@ namespace dtn
 			std::list<URI> ret;
 			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
 			{
-				if ((*iter) == proto)
+				const URI &uri = (*iter);
+
+				if ((uri == proto) && isAvailable(uri))
 				{
-					ret.push_back(*iter);
+					ret.push_back(uri);
 				}
 			}
 
@@ -294,7 +296,22 @@ namespace dtn
 			std::list<URI> ret;
 			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
 			{
-				if (((*iter) == proto) && ((*iter) == type)) ret.push_back(*iter);
+				const URI &uri = (*iter);
+
+				if ((uri == proto) && (uri == type) && isAvailable(uri)) ret.push_back(uri);
+			}
+			ret.sort(compare_uri_priority);
+			return ret;
+		}
+
+		std::list<Node::URI> Node::getAll() const
+		{
+			std::list<Node::URI> ret;
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			{
+				const URI &uri = (*iter);
+
+				if (isAvailable(uri)) ret.push_back(uri);
 			}
 			ret.sort(compare_uri_priority);
 			return ret;
@@ -461,6 +478,28 @@ namespace dtn
 			}
 
 			return false;
+		}
+
+		bool Node::isAvailable(const Node::URI &uri) const
+		{
+			if (dtn::core::BundleCore::getInstance().isGloballyConnected()) {
+				return true;
+			} else {
+				switch (uri.type)
+				{
+				case NODE_CONNECTED:
+					return true;
+
+				case NODE_DISCOVERED:
+					return true;
+
+				case NODE_STATIC_LOCAL:
+					return true;
+
+				default:
+					return false;
+				}
+			}
 		}
 
 		void Node::setAnnounced(bool val)

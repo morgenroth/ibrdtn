@@ -169,6 +169,11 @@ namespace dtn
 			std::list<URI> get(Node::Type type, Node::Protocol proto) const;
 
 			/**
+			 * Returns a ordered list of all available URIs
+			 */
+			std::list<Node::URI> getAll() const;
+
+			/**
 			 * Returns a set of all available types
 			 */
 			std::set<Node::Type> getTypes() const;
@@ -228,6 +233,8 @@ namespace dtn
 			friend std::ostream& operator<<(std::ostream&, const Node&);
 
 		private:
+			bool isAvailable(const Node::URI &uri) const;
+
 			bool _connect_immediately;
 			dtn::data::EID _id;
 
