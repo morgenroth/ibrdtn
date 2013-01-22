@@ -202,13 +202,13 @@ namespace dtn
 			_tasks.abort();
 		}
 
-		const std::set<dtn::data::EID> SQLiteBundleStorage::getDistinctDestinations()
+		const SQLiteBundleStorage::eid_set SQLiteBundleStorage::getDistinctDestinations()
 		{
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
 			return _database.getDistinctDestinations();
 		}
 
-		void SQLiteBundleStorage::get(BundleFilterCallback &cb, BundleResult &result) throw (dtn::storage::BundleStorage::NoBundleFoundException, BundleFilterException)
+		void SQLiteBundleStorage::get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
 			_database.get(cb, result);

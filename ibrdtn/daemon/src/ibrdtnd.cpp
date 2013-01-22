@@ -19,6 +19,7 @@
 #include "StandByManager.h"
 
 #include "storage/BundleStorage.h"
+#include "storage/BundleSeeker.h"
 #include "storage/MemoryBundleStorage.h"
 #include "storage/SimpleBundleStorage.h"
 
@@ -30,6 +31,9 @@
 #include "core/NodeEvent.h"
 
 #include "routing/BaseRouter.h"
+#include "routing/StaticRoutingExtension.h"
+#include "routing/NeighborRoutingExtension.h"
+#include "routing/SchedulingBundleIndex.h"
 #include "routing/epidemic/EpidemicRoutingExtension.h"
 #include "routing/prophet/ProphetRoutingExtension.h"
 #include "routing/flooding/FloodRoutingExtension.h"
@@ -98,6 +102,9 @@ dtn::daemon::StandByManager *__ibrdtn_daemon_standby_manager = NULL;
 
 // IP neighbor discovery process
 dtn::net::IPNDAgent *__ibrdtn_daemon_ipnd = NULL;
+
+// bundle index used to search for new bundles in the routing modules
+dtn::storage::BundleIndex *_bundle_index = NULL;
 
 int ibrdtn_daemon_initialize_blob_storage() {
 	dtn::daemon::Configuration &config = dtn::daemon::Configuration::getInstance();
@@ -557,23 +564,50 @@ int ibrdtn_daemon_initialize_routing() {
 	// create the base router
 	dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
 
+	// get the storage
+	dtn::storage::BundleStorage &storage = core.getStorage();
+
 	// make the router globally available
 	core.setRouter(router);
 
-	// add routing extensions
+	// use scheduling?
+	if (dtn::daemon::Configuration::getInstance().getNetwork().doScheduling())
+	{
+		// create a new bundle index
+		_bundle_index = new dtn::routing::SchedulingBundleIndex();
+
+		// attach index to the storage
+		storage.attach(_bundle_index);
+
+		IBRCOMMON_LOGGER(info) << "Scheduling: yes" << IBRCOMMON_LOGGER_ENDL;
+	} else {
+		IBRCOMMON_LOGGER(info) << "Scheduling: no" << IBRCOMMON_LOGGER_ENDL;
+	}
+
+	// add default routing extensions
+	// bundle seeker which is used to find bundles to transfer
+	dtn::storage::BundleSeeker *seeker = (_bundle_index == NULL) ? &storage : static_cast<dtn::storage::BundleSeeker*>(_bundle_index);
+
+	// add static routing extension
+	router->addExtension( new dtn::routing::StaticRoutingExtension(*seeker) );
+
+	// add neighbor routing (direct-delivery) extension
+	router->addExtension( new dtn::routing::NeighborRoutingExtension(*seeker) );
+
+	// add other routing extensions depending on the configuration
 	switch (conf.getNetwork().getRoutingExtension())
 	{
 	case dtn::daemon::Configuration::FLOOD_ROUTING:
 	{
 		IBRCOMMON_LOGGER(info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
-		router->addExtension( new dtn::routing::FloodRoutingExtension() );
+		router->addExtension( new dtn::routing::FloodRoutingExtension(*seeker) );
 		break;
 	}
 
 	case dtn::daemon::Configuration::EPIDEMIC_ROUTING:
 	{
 		IBRCOMMON_LOGGER(info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
-		router->addExtension( new dtn::routing::EpidemicRoutingExtension() );
+		router->addExtension( new dtn::routing::EpidemicRoutingExtension(*seeker) );
 		break;
 	}
 
@@ -593,7 +627,7 @@ int ibrdtn_daemon_initialize_routing() {
 			forwarding_strategy = new dtn::routing::ProphetRoutingExtension::GRTR_Strategy();
 		}
 		IBRCOMMON_LOGGER(info) << "Using prophet routing extensions with " << strategy_name << " as forwarding strategy." << IBRCOMMON_LOGGER_ENDL;
-		router->addExtension( new dtn::routing::ProphetRoutingExtension(forwarding_strategy, prophet_config.p_encounter_max,
+		router->addExtension( new dtn::routing::ProphetRoutingExtension(*seeker, forwarding_strategy, prophet_config.p_encounter_max,
 										prophet_config.p_encounter_first, prophet_config.p_first_threshold,
 										prophet_config.beta, prophet_config.gamma, prophet_config.delta,
 										prophet_config.time_unit, prophet_config.i_typ,
@@ -881,6 +915,13 @@ int ibrdtn_daemon_main_loop()
 
 	// terminate core component
 	core.terminate();
+
+	// delete bundle index
+	if (_bundle_index != NULL)
+	{
+		core.getStorage().detach(_bundle_index);
+		delete _bundle_index;
+	}
 
 	// delete all components
 	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )

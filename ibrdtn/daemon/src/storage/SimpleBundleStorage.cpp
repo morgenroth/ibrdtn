@@ -189,7 +189,7 @@ namespace dtn
 				return bundle;
 			} catch (const DataStorage::DataNotAvailableException&) { }
 
-			throw BundleStorage::NoBundleFoundException();
+			throw NoBundleFoundException();
 		}
 
 		void SimpleBundleStorage::componentUp() throw ()
@@ -247,7 +247,7 @@ namespace dtn
 			return _list.size();
 		}
 
-		void SimpleBundleStorage::get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException, BundleFilterException)
+		void SimpleBundleStorage::get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 
@@ -291,10 +291,10 @@ namespace dtn
 				throw BundleStorage::BundleLoadException();
 			}
 
-			throw BundleStorage::NoBundleFoundException();
+			throw NoBundleFoundException();
 		}
 
-		const std::set<dtn::data::EID> SimpleBundleStorage::getDistinctDestinations()
+		const SimpleBundleStorage::eid_set SimpleBundleStorage::getDistinctDestinations()
 		{
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READONLY);
 			std::set<dtn::data::EID> ret;
@@ -382,7 +382,7 @@ namespace dtn
 				}
 			}
 
-			throw BundleStorage::NoBundleFoundException();
+			throw NoBundleFoundException();
 		}
 
 		dtn::data::MetaBundle SimpleBundleStorage::remove(const ibrcommon::BloomFilter &filter)
@@ -409,7 +409,7 @@ namespace dtn
 				}
 			}
 
-			throw BundleStorage::NoBundleFoundException();
+			throw NoBundleFoundException();
 		}
 
 		void SimpleBundleStorage::clear()

@@ -54,7 +54,8 @@ namespace dtn
 {
 	namespace routing
 	{
-		EpidemicRoutingExtension::EpidemicRoutingExtension()
+		EpidemicRoutingExtension::EpidemicRoutingExtension(dtn::storage::BundleSeeker &seeker)
+		 : Extension(seeker)
 		{
 			// write something to the syslog
 			IBRCOMMON_LOGGER(info) << "Initializing epidemic routing module" << IBRCOMMON_LOGGER_ENDL;
@@ -62,7 +63,6 @@ namespace dtn
 
 		EpidemicRoutingExtension::~EpidemicRoutingExtension()
 		{
-			stop();
 			join();
 		}
 
@@ -71,7 +71,7 @@ namespace dtn
 			request.addRequest(BloomFilterSummaryVector::identifier);
 		}
 
-		void EpidemicRoutingExtension::notify(const dtn::core::Event *evt)
+		void EpidemicRoutingExtension::notify(const dtn::core::Event *evt) throw ()
 		{
 			// If an incoming bundle is received, forward it to all connected neighbors
 			try {
@@ -139,6 +139,27 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
+		void EpidemicRoutingExtension::componentUp() throw ()
+		{
+			try {
+				// run the thread
+				start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		void EpidemicRoutingExtension::componentDown() throw ()
+		{
+			try {
+				// run the thread
+				stop();
+				join();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
 		void EpidemicRoutingExtension::__cancellation() throw ()
 		{
 			_taskqueue.abort();
@@ -146,7 +167,7 @@ namespace dtn
 
 		void EpidemicRoutingExtension::run() throw ()
 		{
-			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
+			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
 				BundleFilter(const NeighborDatabase::NeighborEntry &entry)
@@ -157,7 +178,7 @@ namespace dtn
 
 				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// check Scope Control Block - do not forward bundles with hop limit == 0
 					if (meta.hopcount == 0)
@@ -201,7 +222,7 @@ namespace dtn
 							return false;
 						}
 					} catch (const dtn::routing::NeighborDatabase::BloomfilterNotAvailableException&) {
-						throw dtn::storage::BundleStorage::BundleFilterException();
+						throw dtn::storage::BundleSelectorException();
 					}
 
 					return true;
@@ -210,8 +231,6 @@ namespace dtn
 			private:
 				const NeighborDatabase::NeighborEntry &_entry;
 			};
-
-			dtn::storage::BundleStorage &storage = (**this).getStorage();
 
 			// list for bundles
 			dtn::storage::BundleResultList list;
@@ -250,7 +269,7 @@ namespace dtn
 
 								// query some unknown bundle from the storage
 								list.clear();
-								storage.get(filter, list);
+								_seeker.get(filter, list);
 
 								// send the bundles as long as we have resources
 								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
@@ -260,13 +279,13 @@ namespace dtn
 										transferTo(entry, *iter);
 									} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 								}
-							} catch (const dtn::storage::BundleStorage::BundleFilterException&) {
+							} catch (const dtn::storage::BundleSelectorException&) {
 								// query a new summary vector from this neighbor
 								(**this).doHandshake(task.eid);
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-						} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+						} catch (const dtn::storage::NoBundleFoundException&) {
 						} catch (const std::bad_cast&) { };
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in EpidemicRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

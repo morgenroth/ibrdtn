@@ -49,13 +49,13 @@ namespace dtn
 {
 	namespace routing
 	{
-		NeighborRoutingExtension::NeighborRoutingExtension()
+		NeighborRoutingExtension::NeighborRoutingExtension(dtn::storage::BundleSeeker &seeker)
+		 : Extension(seeker)
 		{
 		}
 
 		NeighborRoutingExtension::~NeighborRoutingExtension()
 		{
-			stop();
 			join();
 		}
 
@@ -67,9 +67,9 @@ namespace dtn
 		void NeighborRoutingExtension::run() throw ()
 		{
 #ifdef HAVE_SQLITE
-			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback, public dtn::storage::SQLiteDatabase::SQLBundleQuery
+			class BundleFilter : public dtn::storage::BundleSelector, public dtn::storage::SQLiteDatabase::SQLBundleQuery
 #else
-			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
+			class BundleFilter : public dtn::storage::BundleSelector
 #endif
 			{
 			public:
@@ -81,7 +81,7 @@ namespace dtn
 
 				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// check Scope Control Block - do not forward bundles with hop limit == 0
 					if (meta.hopcount == 0)
@@ -136,7 +136,6 @@ namespace dtn
 				const NeighborDatabase::NeighborEntry &_entry;
 			};
 
-			dtn::storage::BundleStorage &storage = (**this).getStorage();
 			dtn::storage::BundleResultList list;
 
 			while (true)
@@ -170,7 +169,7 @@ namespace dtn
 
 						// query an unknown bundle from the storage, the list contains max. 10 items.
 						list.clear();
-						storage.get(filter, list);
+						_seeker.get(filter, list);
 
 						IBRCOMMON_LOGGER_DEBUG(5) << "got " << list.size() << " items to transfer to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -184,7 +183,7 @@ namespace dtn
 						}
 					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 					} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-					} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+					} catch (const dtn::storage::NoBundleFoundException&) {
 					} catch (const std::bad_cast&) { };
 
 					/**
@@ -214,7 +213,7 @@ namespace dtn
 			}
 		}
 
-		void NeighborRoutingExtension::notify(const dtn::core::Event *evt)
+		void NeighborRoutingExtension::notify(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
@@ -259,6 +258,27 @@ namespace dtn
 				}
 				return;
 			} catch (const std::bad_cast&) { };
+		}
+
+		void NeighborRoutingExtension::componentUp() throw ()
+		{
+			try {
+				// run the thread
+				start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		void NeighborRoutingExtension::componentDown() throw ()
+		{
+			try {
+				// run the thread
+				stop();
+				join();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		/****************************************/

@@ -101,7 +101,7 @@ namespace dtn
 					}
 
 					return bundle;
-				} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+				} catch (const dtn::storage::NoBundleFoundException&) {
 					IBRCOMMON_LOGGER_DEBUG(30) << "OrderedStreamHandler: get(): no bundle found wait for notify" << IBRCOMMON_LOGGER_ENDL;
 					reg.wait_for_bundle(timeout);
 				}

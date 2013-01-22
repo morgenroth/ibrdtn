@@ -117,7 +117,7 @@ namespace dtn
 
 								// merge the bundle
 								c << bundle;
-							} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+							} catch (const dtn::storage::NoBundleFoundException&) {
 								IBRCOMMON_LOGGER(error) << "could not load fragment to merge bundle" << IBRCOMMON_LOGGER_ENDL;
 							};
 						}
@@ -173,7 +173,7 @@ namespace dtn
 
 		void FragmentManager::search(const dtn::data::MetaBundle &meta, dtn::storage::BundleResult &list)
 		{
-			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
+			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
 				BundleFilter(const dtn::data::MetaBundle &meta)
@@ -184,7 +184,7 @@ namespace dtn
 
 				virtual size_t limit() const { return 0; };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// fragments only
 					if (!meta.fragment) return false;
@@ -207,7 +207,7 @@ namespace dtn
 			
 			try {
 				storage.get(filter, list);
-			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { }
+			} catch (const dtn::storage::NoBundleFoundException&) { }
 		}
 
 		void FragmentManager::setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, size_t abs_offset)
@@ -229,7 +229,7 @@ namespace dtn
 				ibrcommon::MutexLock l(_offsets_mutex);
 				_offsets.erase(t);
 				_offsets.insert(t);
-			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
+			} catch (const dtn::storage::NoBundleFoundException&) { };
 		}
 
 		size_t FragmentManager::getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id)

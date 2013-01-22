@@ -385,7 +385,7 @@ namespace dtn
 
 					curl_easy_cleanup(curl_up);
 				}
-			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+			} catch (const dtn::storage::NoBundleFoundException&) {
 				// send transfer aborted event
 				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			}

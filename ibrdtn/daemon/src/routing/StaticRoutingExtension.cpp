@@ -48,14 +48,13 @@ namespace dtn
 {
 	namespace routing
 	{
-		StaticRoutingExtension::StaticRoutingExtension()
-		 : next_expire(0)
+		StaticRoutingExtension::StaticRoutingExtension(dtn::storage::BundleSeeker &seeker)
+		 : Extension(seeker), next_expire(0)
 		{
 		}
 
 		StaticRoutingExtension::~StaticRoutingExtension()
 		{
-			stop();
 			join();
 
 			// delete all static routes
@@ -74,7 +73,7 @@ namespace dtn
 
 		void StaticRoutingExtension::run() throw ()
 		{
-			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
+			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
 				BundleFilter(const NeighborDatabase::NeighborEntry &entry, const std::list<const StaticRoute*> &routes)
@@ -85,7 +84,7 @@ namespace dtn
 
 				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// check Scope Control Block - do not forward bundles with hop limit == 0
 					if (meta.hopcount == 0)
@@ -156,7 +155,6 @@ namespace dtn
 				dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_ADD, nexthop, (*iter).first);
 			}
 
-			dtn::storage::BundleStorage &storage = (**this).getStorage();
 			dtn::storage::BundleResultList list;
 
 			while (true)
@@ -206,7 +204,7 @@ namespace dtn
 
 							// query all bundles from the storage
 							list.clear();
-							storage.get(filter, list);
+							_seeker.get(filter, list);
 
 							// send the bundles as long as we have resources
 							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
@@ -219,7 +217,7 @@ namespace dtn
 						}
 					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 					} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-					} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+					} catch (const dtn::storage::NoBundleFoundException&) {
 					} catch (const std::bad_cast&) { };
 
 					try {
@@ -342,7 +340,7 @@ namespace dtn
 			}
 		}
 
-		void StaticRoutingExtension::notify(const dtn::core::Event *evt)
+		void StaticRoutingExtension::notify(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
@@ -441,6 +439,27 @@ namespace dtn
 
 				return;
 			} catch (const bad_cast&) { };
+		}
+
+		void StaticRoutingExtension::componentUp() throw ()
+		{
+			try {
+				// run the thread
+				start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		void StaticRoutingExtension::componentDown() throw ()
+		{
+			try {
+				// run the thread
+				stop();
+				join();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		StaticRoutingExtension::EIDRoute::EIDRoute(const dtn::data::EID &match, const dtn::data::EID &nexthop, size_t et)

@@ -155,7 +155,7 @@ namespace dtn
 			}
 		}
 
-		dtn::data::Bundle Registration::receive() throw (dtn::storage::BundleStorage::NoBundleFoundException)
+		dtn::data::Bundle Registration::receive() throw (dtn::storage::NoBundleFoundException)
 		{
 			ibrcommon::MutexLock l(_receive_lock);
 
@@ -176,13 +176,13 @@ namespace dtn
 						// query for new bundles
 						underflow();
 					}
-				} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { }
+				} catch (const dtn::storage::NoBundleFoundException&) { }
 			}
 
-			throw dtn::storage::BundleStorage::NoBundleFoundException();
+			throw dtn::storage::NoBundleFoundException();
 		}
 
-		dtn::data::MetaBundle Registration::receiveMetaBundle() throw (dtn::storage::BundleStorage::NoBundleFoundException)
+		dtn::data::MetaBundle Registration::receiveMetaBundle() throw (dtn::storage::NoBundleFoundException)
 		{
 			ibrcommon::MutexLock l(_receive_lock);
 			while(true)
@@ -198,11 +198,11 @@ namespace dtn
 						underflow();
 					}
 				}
-				catch(const dtn::storage::BundleStorage::NoBundleFoundException & ){
+				catch(const dtn::storage::NoBundleFoundException & ){
 				}
 			}
 
-			throw dtn::storage::BundleStorage::NoBundleFoundException();
+			throw dtn::storage::NoBundleFoundException();
 		}
 
 		void Registration::underflow()
@@ -214,9 +214,9 @@ namespace dtn
 			 * search for bundles in the storage
 			 */
 #ifdef HAVE_SQLITE
-			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback, public dtn::storage::SQLiteDatabase::SQLBundleQuery
+			class BundleFilter : public dtn::storage::BundleSelector, public dtn::storage::SQLiteDatabase::SQLBundleQuery
 #else
-			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
+			class BundleFilter : public dtn::storage::BundleSelector
 #endif
 			{
 			public:
@@ -228,7 +228,7 @@ namespace dtn
 
 				virtual size_t limit() const { return dtn::core::BundleCore::max_bundles_in_transit; };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					if (_endpoints.find(meta.destination) == _endpoints.end())
 					{
@@ -308,7 +308,7 @@ namespace dtn
 
 			try {
 				storage.get( filter, _queue );
-			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+			} catch (const dtn::storage::NoBundleFoundException&) {
 				_no_more_bundles = true;
 				throw;
 			}

@@ -653,7 +653,7 @@ namespace dtn
 #endif
 						// send bundle
 						_connection << bundle;
-					} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+					} catch (const dtn::storage::NoBundleFoundException&) {
 						// send transfer aborted event
 						TransferAbortedEvent::raise(_connection._node.getEID(), transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 					}

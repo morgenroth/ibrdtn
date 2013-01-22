@@ -22,6 +22,7 @@
 #ifndef BUNDLEINDEX_H_
 #define BUNDLEINDEX_H_
 
+#include "storage/BundleSeeker.h"
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrdtn/data/BundleID.h>
 
@@ -29,7 +30,7 @@ namespace dtn
 {
 	namespace storage
 	{
-		class BundleIndex {
+		class BundleIndex : public dtn::storage::BundleSeeker {
 		public:
 			BundleIndex();
 			virtual ~BundleIndex() = 0;

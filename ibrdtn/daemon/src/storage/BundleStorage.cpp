@@ -48,7 +48,7 @@ namespace dtn
 
 		dtn::data::MetaBundle BundleStorage::remove(const ibrcommon::BloomFilter&)
 		{
-			throw dtn::storage::BundleStorage::NoBundleFoundException();
+			throw dtn::storage::NoBundleFoundException();
 		};
 
 		const dtn::data::EID BundleStorage::acceptCustody(const dtn::data::MetaBundle &meta)

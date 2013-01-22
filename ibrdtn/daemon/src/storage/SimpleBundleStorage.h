@@ -79,14 +79,14 @@ namespace dtn
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
 
 			/**
-			 * @see BundleStorage::get(BundleFilterCallback &cb)
+			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			virtual void get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException, BundleFilterException);
+			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException);
 
 			/**
-			 * @see BundleStorage::getDistinctDestinations()
+			 * @see BundleSeeker::getDistinctDestinations()
 			 */
-			virtual const std::set<dtn::data::EID> getDistinctDestinations();
+			virtual const eid_set getDistinctDestinations();
 
 			/**
 			 * This method deletes a specific bundle in the storage.

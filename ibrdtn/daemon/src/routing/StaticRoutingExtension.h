@@ -32,13 +32,15 @@ namespace dtn
 {
 	namespace routing
 	{
-		class StaticRoutingExtension : public BaseRouter::ThreadedExtension
+		class StaticRoutingExtension : public BaseRouter::Extension, public ibrcommon::JoinableThread
 		{
 		public:
-			StaticRoutingExtension();
+			StaticRoutingExtension(dtn::storage::BundleSeeker &seeker);
 			virtual ~StaticRoutingExtension();
 
-			void notify(const dtn::core::Event *evt);
+			void notify(const dtn::core::Event *evt) throw ();
+			void componentUp() throw ();
+			void componentDown() throw ();
 
 		protected:
 			void run() throw ();

@@ -48,12 +48,12 @@ namespace dtn
 		 * predictabilityMaps with neighbors.
 		 * For a detailed description of the protocol, see draft-irtf-dtnrg-prophet-09
 		 */
-		class ProphetRoutingExtension : public BaseRouter::ThreadedExtension
+		class ProphetRoutingExtension : public BaseRouter::Extension, public ibrcommon::JoinableThread
 		{
 			friend class ForwardingStrategy;
 
 		public:
-			ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first,
+			ProphetRoutingExtension(dtn::storage::BundleSeeker &seeker, ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first,
 						float p_first_threshold, float beta, float gamma, float delta,
 						size_t time_unit, size_t i_typ,
 						size_t next_exchange_timeout);
@@ -63,7 +63,9 @@ namespace dtn
 			virtual void requestHandshake(const dtn::data::EID&, NodeHandshake&) const; ///< \see BaseRouter::Extension::requestHandshake
 			virtual void responseHandshake(const dtn::data::EID&, const NodeHandshake&, NodeHandshake&); ///< \see BaseRouter::Extension::responseHandshake
 			virtual void processHandshake(const dtn::data::EID&, NodeHandshake&); ///< \see BaseRouter::Extension::processHandshake
-			virtual void notify(const dtn::core::Event *evt);///< \see BaseRouter::Extension::notifiy
+			virtual void notify(const dtn::core::Event *evt) throw ();///< \see BaseRouter::Extension::notify
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
 
 			/*!
 			 * Returns a threadsafe reference to the DeliveryPredictabilityMap. I.e. the corresponding

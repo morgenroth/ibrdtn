@@ -186,7 +186,7 @@ namespace dtn
 
 		void ClientHandler::processCommand(const std::vector<std::string> &cmd)
 		{
-			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
+			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
 				BundleFilter()
@@ -196,7 +196,7 @@ namespace dtn
 
 				virtual size_t limit() const { return 0; };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					return true;
 				}

@@ -40,13 +40,15 @@ namespace dtn
 {
 	namespace routing
 	{
-		class FloodRoutingExtension : public BaseRouter::ThreadedExtension
+		class FloodRoutingExtension : public BaseRouter::Extension, public ibrcommon::JoinableThread
 		{
 		public:
-			FloodRoutingExtension();
+			FloodRoutingExtension(dtn::storage::BundleSeeker &seeker);
 			virtual ~FloodRoutingExtension();
 
-			void notify(const dtn::core::Event *evt);
+			void notify(const dtn::core::Event *evt) throw ();
+			void componentUp() throw ();
+			void componentDown() throw ();
 
 		protected:
 			void run() throw ();

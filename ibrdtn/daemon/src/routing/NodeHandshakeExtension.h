@@ -36,10 +36,12 @@ namespace dtn
 		class NodeHandshakeExtension : public BaseRouter::Extension
 		{
 		public:
-			NodeHandshakeExtension();
+			NodeHandshakeExtension(dtn::storage::BundleSeeker &seeker);
 			virtual ~NodeHandshakeExtension();
 
-			void notify(const dtn::core::Event *evt);
+			void notify(const dtn::core::Event *evt) throw ();
+			void componentUp() throw () {}
+			void componentDown() throw () {}
 
 			void doHandshake(const dtn::data::EID &eid);
 

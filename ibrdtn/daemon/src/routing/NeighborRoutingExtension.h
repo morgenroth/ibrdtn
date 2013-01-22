@@ -37,13 +37,15 @@ namespace dtn
 {
 	namespace routing
 	{
-		class NeighborRoutingExtension : public BaseRouter::ThreadedExtension
+		class NeighborRoutingExtension : public BaseRouter::Extension, public ibrcommon::JoinableThread
 		{
 		public:
-			NeighborRoutingExtension();
+			NeighborRoutingExtension(dtn::storage::BundleSeeker &seeker);
 			virtual ~NeighborRoutingExtension();
 
-			void notify(const dtn::core::Event *evt);
+			void notify(const dtn::core::Event *evt) throw ();
+			void componentUp() throw ();
+			void componentDown() throw ();
 
 		protected:
 			void run() throw ();

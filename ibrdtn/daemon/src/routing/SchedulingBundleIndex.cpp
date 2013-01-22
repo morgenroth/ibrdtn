@@ -36,7 +36,7 @@ namespace dtn
 			}
 		}
 
-		void SchedulingBundleIndex::get(dtn::storage::BundleFilterCallback &cb, dtn::storage::BundleResult &result) throw (dtn::storage::NoBundleFoundException, dtn::storage::BundleFilterException)
+		void SchedulingBundleIndex::get(dtn::storage::BundleSelector &cb, dtn::storage::BundleResult &result) throw (dtn::storage::NoBundleFoundException, dtn::storage::BundleSelectorException)
 		{
 			bool unlimited = (cb.limit() <= 0);
 			size_t added = 0;

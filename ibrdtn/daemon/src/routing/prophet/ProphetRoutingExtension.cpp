@@ -46,10 +46,10 @@ namespace dtn
 {
 	namespace routing
 	{
-		ProphetRoutingExtension::ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
+		ProphetRoutingExtension::ProphetRoutingExtension(dtn::storage::BundleSeeker &seeker, ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
 								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ,
 								 ibrcommon::Timer::time_t next_exchange_timeout)
-			: _deliveryPredictabilityMap(time_unit, beta, gamma),
+			: Extension(seeker), _deliveryPredictabilityMap(time_unit, beta, gamma),
 			  _forwardingStrategy(strategy), _next_exchange_timeout(next_exchange_timeout), _next_exchange_timestamp(0),
 			  _p_encounter_max(p_encounter_max), _p_encounter_first(p_encounter_first),
 			  _p_first_threshold(p_first_threshold), _delta(delta), _i_typ(i_typ)
@@ -148,7 +148,7 @@ namespace dtn
 				/* remove acknowledged bundles from bundle store if we do not have custody */
 				dtn::storage::BundleStorage &storage = (**this).getStorage();
 
-				class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
+				class BundleFilter : public dtn::storage::BundleSelector
 				{
 				public:
 					BundleFilter(const AcknowledgementSet& ack_set)
@@ -159,7 +159,7 @@ namespace dtn
 
 					virtual size_t limit() const { return 0; }
 
-					virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
+					virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 					{
 						// do not delete any bundles with
 						if (meta.destination.getNode() == dtn::core::BundleCore::local)
@@ -189,11 +189,11 @@ namespace dtn
 					/* generate a report */
 					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				}
-			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+			} catch (const dtn::storage::NoBundleFoundException&) {
 			} catch (std::exception&) { }
 		}
 
-		void ProphetRoutingExtension::notify(const dtn::core::Event *evt)
+		void ProphetRoutingExtension::notify(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
@@ -295,6 +295,27 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
+		void ProphetRoutingExtension::componentUp() throw ()
+		{
+			try {
+				// run the thread
+				start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		void ProphetRoutingExtension::componentDown() throw ()
+		{
+			try {
+				// run the thread
+				stop();
+				join();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
 		ibrcommon::ThreadsafeReference<DeliveryPredictabilityMap> ProphetRoutingExtension::getDeliveryPredictabilityMap()
 		{
 			{
@@ -316,7 +337,7 @@ namespace dtn
 
 		void ProphetRoutingExtension::ProphetRoutingExtension::run() throw ()
 		{
-			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
+			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
 				BundleFilter(const NeighborDatabase::NeighborEntry &entry, ForwardingStrategy &strategy, const DeliveryPredictabilityMap &dpm)
@@ -327,7 +348,7 @@ namespace dtn
 
 				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// check Scope Control Block - do not forward bundles with hop limit == 0
 					if (meta.hopcount == 0)
@@ -371,7 +392,7 @@ namespace dtn
 							return false;
 						}
 					} catch (const dtn::routing::NeighborDatabase::BloomfilterNotAvailableException&) {
-						throw dtn::storage::BundleStorage::BundleFilterException();
+						throw dtn::storage::BundleSelectorException();
 					}
 
 					// ask the routing strategy if this bundle should be selected
@@ -389,7 +410,6 @@ namespace dtn
 				const DeliveryPredictabilityMap &_dpm;
 			};
 
-			dtn::storage::BundleStorage &storage = (**this).getStorage();
 			dtn::storage::BundleResultList list;
 
 			while (true)
@@ -429,7 +449,7 @@ namespace dtn
 
 								// query some unknown bundle from the storage, the list contains max. 10 items.
 								list.clear();
-								storage.get(filter, list);
+								_seeker.get(filter, list);
 
 								// send the bundles as long as we have resources
 								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
@@ -444,13 +464,13 @@ namespace dtn
 								// if there is no DeliveryPredictabilityMap for the next hop
 								// perform a routing handshake with the peer
 								(**this).doHandshake(task.eid);
-							} catch (const dtn::storage::BundleStorage::BundleFilterException&) {
+							} catch (const dtn::storage::BundleSelectorException&) {
 								// query a new summary vector from this neighbor
 								(**this).doHandshake(task.eid);
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-						} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+						} catch (const dtn::storage::NoBundleFoundException&) {
 						} catch (const std::bad_cast&) { }
 
 						/**

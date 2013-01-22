@@ -148,9 +148,9 @@ namespace dtn
 			 * and the queue is empty an exception is thrown.
 			 * @return
 			 */
-			dtn::data::Bundle receive() throw (dtn::storage::BundleStorage::NoBundleFoundException);
+			dtn::data::Bundle receive() throw (dtn::storage::NoBundleFoundException);
 
-			dtn::data::MetaBundle receiveMetaBundle() throw (dtn::storage::BundleStorage::NoBundleFoundException);
+			dtn::data::MetaBundle receiveMetaBundle() throw (dtn::storage::NoBundleFoundException);
 
 			/**
 			 * notify a bundle as delivered (and delete it if singleton destination)

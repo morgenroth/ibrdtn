@@ -459,7 +459,7 @@ namespace dtn
 		void SQLiteDatabase::get(const dtn::data::BundleID &id, dtn::data::MetaBundle &meta) const
 		{
 			// check if the bundle is already on the deletion list
-			if (contains_deletion(id)) throw dtn::storage::BundleStorage::NoBundleFoundException();
+			if (contains_deletion(id)) throw dtn::storage::NoBundleFoundException();
 
 			size_t stmt_key = BUNDLE_GET_ID;
 			if (id.fragment) stmt_key = FRAGMENT_GET_ID;
@@ -546,7 +546,7 @@ namespace dtn
 			st.reset();
 		}
 
-		void SQLiteDatabase::get(dtn::storage::BundleStorage::BundleFilterCallback &cb, BundleResult &ret) throw (dtn::storage::BundleStorage::NoBundleFoundException, dtn::storage::BundleStorage::BundleFilterException)
+		void SQLiteDatabase::get(BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 
@@ -590,12 +590,12 @@ namespace dtn
 						offset += query_limit;
 					}
 				}
-			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { }
+			} catch (const dtn::storage::NoBundleFoundException&) { }
 
-			if (items_added == 0) throw dtn::storage::BundleStorage::NoBundleFoundException();
+			if (items_added == 0) throw dtn::storage::NoBundleFoundException();
 		}
 
-		void SQLiteDatabase::__get(const dtn::storage::BundleStorage::BundleFilterCallback &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const
+		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const
 		{
 			bool unlimited = (cb.limit() <= 0);
 			size_t query_limit = (cb.limit() > 0) ? cb.limit() : 10;
@@ -606,7 +606,7 @@ namespace dtn
 
 			// returned no result
 			if (st.step() == SQLITE_DONE)
-				throw dtn::storage::BundleStorage::NoBundleFoundException();
+				throw dtn::storage::NoBundleFoundException();
 
 			// abort if enough bundles are found
 			while (unlimited || (items_added < query_limit))
@@ -643,7 +643,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(25) << "get bundle from sqlite storage " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// if bundle is deleted?
-			if (contains_deletion(id)) throw dtn::storage::BundleStorage::NoBundleFoundException();
+			if (contains_deletion(id)) throw dtn::storage::NoBundleFoundException();
 
 			size_t stmt_key = BUNDLE_GET_ID;
 			if (id.fragment) stmt_key = FRAGMENT_GET_ID;
@@ -658,7 +658,7 @@ namespace dtn
 			if ((err = st.step()) != SQLITE_ROW)
 			{
 				IBRCOMMON_LOGGER_DEBUG(15) << "sql error: " << err << "; No bundle found with id: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
-				throw dtn::storage::BundleStorage::NoBundleFoundException();
+				throw dtn::storage::NoBundleFoundException();
 			}
 
 			// read bundle data
@@ -702,7 +702,7 @@ namespace dtn
 
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER(error) << "could not get bundle blocks: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				throw dtn::storage::BundleStorage::NoBundleFoundException();
+				throw dtn::storage::NoBundleFoundException();
 			}
 		}
 

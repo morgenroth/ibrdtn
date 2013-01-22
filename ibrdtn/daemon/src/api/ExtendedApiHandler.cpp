@@ -792,7 +792,7 @@ namespace dtn
 						sayBundleID(_handler._stream, id);
 						_handler._stream << std::endl;
 
-					} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+					} catch (const dtn::storage::NoBundleFoundException&) {
 						reg.wait_for_bundle();
 					}
 

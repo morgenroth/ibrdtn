@@ -34,6 +34,7 @@
 #include <ibrdtn/data/ExtensionBlock.h>
 
 #include <ibrcommon/thread/Queue.h>
+#include <ibrcommon/thread/Thread.h>
 
 #include <list>
 #include <queue>
@@ -42,13 +43,15 @@ namespace dtn
 {
 	namespace routing
 	{
-		class EpidemicRoutingExtension : public BaseRouter::ThreadedExtension
+		class EpidemicRoutingExtension : public BaseRouter::Extension, public ibrcommon::JoinableThread
 		{
 		public:
-			EpidemicRoutingExtension();
+			EpidemicRoutingExtension(dtn::storage::BundleSeeker &seeker);
 			virtual ~EpidemicRoutingExtension();
 
-			void notify(const dtn::core::Event *evt);
+			void notify(const dtn::core::Event *evt) throw ();
+			void componentUp() throw ();
+			void componentDown() throw ();
 
 			/**
 			 * @see BaseRouter::requestHandshake()

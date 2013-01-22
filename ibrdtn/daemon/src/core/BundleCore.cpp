@@ -249,7 +249,7 @@ namespace dtn
 				}
 
 				return;
-			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+			} catch (const dtn::storage::NoBundleFoundException&) {
 			} catch (const std::bad_cast&) {}
 
 			try {
@@ -292,7 +292,7 @@ namespace dtn
 						// bundle is not deliverable
 						dtn::core::BundlePurgeEvent::raise(id, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
 					}
-				} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
+				} catch (const dtn::storage::NoBundleFoundException&) { };
 
 				return;
 			} catch (const std::bad_cast&) { };
@@ -306,7 +306,7 @@ namespace dtn
 				try {
 					// delete the bundle
 					storage.remove(purge.bundle);
-				} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
+				} catch (const dtn::storage::NoBundleFoundException&) { };
 
 				return;
 			} catch (const std::bad_cast&) { }

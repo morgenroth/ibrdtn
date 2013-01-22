@@ -12,7 +12,9 @@ storage_SOURCES = \
 	BundleResult.h \
 	BundleResult.cpp \
 	BundleIndex.h \
-	BundleIndex.cpp
+	BundleIndex.cpp \
+	BundleSeeker.h \
+	BundleSelector.h
 	
 
 if SQLITE

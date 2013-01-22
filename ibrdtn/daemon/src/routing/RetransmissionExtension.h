@@ -36,10 +36,12 @@ namespace dtn
 		class RetransmissionExtension : public BaseRouter::Extension
 		{
 		public:
-			RetransmissionExtension();
+			RetransmissionExtension(dtn::storage::BundleSeeker &seeker);
 			virtual ~RetransmissionExtension();
 
-			void notify(const dtn::core::Event *evt);
+			void notify(const dtn::core::Event *evt) throw ();
+			void componentUp() throw () {};
+			void componentDown() throw () {};
 
 		private:
 			class RetransmissionData : public dtn::data::BundleID

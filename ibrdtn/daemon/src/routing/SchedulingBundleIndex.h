@@ -24,12 +24,12 @@ namespace dtn
 			virtual void remove(const dtn::data::BundleID &id);
 
 			/**
-			 * Query the database for a number of bundles. The bundles are selected with the BundleFilterCallback
+			 * Query the database for a number of bundles. The bundles are selected with the BundleSelector
 			 * class which is to implement by the user of this method.
 			 * @param cb The instance of the callback filter class.
 			 * @return A list of bundles.
 			 */
-			virtual void get(dtn::storage::BundleFilterCallback &cb, dtn::storage::BundleResult &result) throw (dtn::storage::NoBundleFoundException, dtn::storage::BundleFilterException);
+			virtual void get(dtn::storage::BundleSelector &cb, dtn::storage::BundleResult &result) throw (dtn::storage::NoBundleFoundException, dtn::storage::BundleSelectorException);
 
 			/**
 			 * Return a set of distinct destinations for all bundles in the storage.

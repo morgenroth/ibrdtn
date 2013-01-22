@@ -93,7 +93,7 @@ namespace dtn
 
 		void ManagementConnection::processCommand(const std::vector<std::string> &cmd)
 		{
-			class BundleFilter : public dtn::storage::BundleStorage::BundleFilterCallback
+			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
 				BundleFilter()
@@ -103,7 +103,7 @@ namespace dtn
 
 				virtual size_t limit() const { return 0; };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleStorage::BundleFilterException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					return true;
 				}
@@ -312,7 +312,7 @@ namespace dtn
 								const dtn::data::MetaBundle &b = *iter;
 								_stream << b.toString() << ";" << b.destination.getString() << ";" << std::endl;
 							}
-						} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { }
+						} catch (const dtn::storage::NoBundleFoundException&) { }
 
 						// last line empty
 						_stream << std::endl;

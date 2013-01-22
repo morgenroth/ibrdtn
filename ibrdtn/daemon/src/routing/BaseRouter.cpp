@@ -24,6 +24,7 @@
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
 
+#include "Configuration.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/BundleReceivedEvent.h"
@@ -39,8 +40,6 @@
 #include "routing/NodeHandshakeEvent.h"
 #include "routing/StaticRouteChangeEvent.h"
 
-#include "routing/StaticRoutingExtension.h"
-#include "routing/NeighborRoutingExtension.h"
 #include "routing/NodeHandshakeExtension.h"
 #include "routing/RetransmissionExtension.h"
 
@@ -62,20 +61,10 @@ namespace dtn
 		BaseRouter *BaseRouter::Extension::_router = NULL;
 
 		/**
-		 * base implementation of the ThreadedExtension class
-		 */
-		BaseRouter::ThreadedExtension::ThreadedExtension()
-		{ }
-
-		BaseRouter::ThreadedExtension::~ThreadedExtension()
-		{
-			join();
-		}
-
-		/**
 		 * base implementation of the Extension class
 		 */
-		BaseRouter::Extension::Extension()
+		BaseRouter::Extension::Extension(dtn::storage::BundleSeeker &s)
+		 : _seeker(s)
 		{ }
 
 		BaseRouter::Extension::~Extension()
@@ -154,12 +143,12 @@ namespace dtn
 			// register myself for all extensions
 			Extension::_router = this;
 
-			// add standard routing modules
-			_nh_extension = new dtn::routing::NodeHandshakeExtension();
+			// add node handshake module
+			_nh_extension = new dtn::routing::NodeHandshakeExtension(_storage);
 			addExtension( _nh_extension );
-			addExtension( new dtn::routing::StaticRoutingExtension() );
-			addExtension( new dtn::routing::NeighborRoutingExtension() );
-			addExtension( new dtn::routing::RetransmissionExtension() );
+
+			// add retransmission module
+			addExtension( new dtn::routing::RetransmissionExtension(_storage) );
 		}
 
 		BaseRouter::~BaseRouter()
@@ -202,17 +191,8 @@ namespace dtn
 
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
-				ThreadedExtension *thread = dynamic_cast<ThreadedExtension*>(*iter);
-
-				if (thread != NULL)
-				{
-					try {
-						// run the thread
-						thread->start();
-					} catch (const ibrcommon::ThreadException &ex) {
-						IBRCOMMON_LOGGER(error) << "failed to start component in BaseRouter\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
-					}
-				}
+				BaseRouter::Extension &ex = (**iter);
+				ex.componentUp();
 			}
 		}
 
@@ -234,18 +214,8 @@ namespace dtn
 			// stop all extensions
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
-				ThreadedExtension *thread = dynamic_cast<ThreadedExtension*>(*iter);
-
-				if (thread != NULL)
-				{
-					try {
-						// run the thread
-						thread->stop();
-						thread->join();
-					} catch (const ibrcommon::ThreadException &ex) {
-						IBRCOMMON_LOGGER(error) << "failed to stop component in BaseRouter\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
-					}
-				}
+				BaseRouter::Extension &ex = (**iter);
+				ex.componentDown();
 			}
 		}
 
@@ -322,7 +292,7 @@ namespace dtn
 						// add the transferred bundle to the bloomfilter of the receiver
 						entry.add(meta);
 					}
-				} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) { };
+				} catch (const dtn::storage::NoBundleFoundException&) { };
 
 				// pass event to all extensions
 				__forward_event(evt);

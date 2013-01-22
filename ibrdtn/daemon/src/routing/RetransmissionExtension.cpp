@@ -36,7 +36,8 @@ namespace dtn
 {
 	namespace routing
 	{
-		RetransmissionExtension::RetransmissionExtension()
+		RetransmissionExtension::RetransmissionExtension(dtn::storage::BundleSeeker &seeker)
+		 : Extension(seeker)
 		{
 		}
 
@@ -44,7 +45,7 @@ namespace dtn
 		{
 		}
 
-		void RetransmissionExtension::notify(const dtn::core::Event *evt)
+		void RetransmissionExtension::notify(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);

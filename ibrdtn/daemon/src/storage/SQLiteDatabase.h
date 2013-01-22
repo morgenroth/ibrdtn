@@ -23,7 +23,8 @@
 #define SQLITEDATABASE_H_
 
 #include "core/BundleExpiredEvent.h"
-#include "storage/BundleStorage.h"
+#include "storage/BundleSeeker.h"
+#include "storage/BundleSelector.h"
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/data/File.h>
@@ -36,7 +37,7 @@ namespace dtn
 {
 	namespace storage
 	{
-		class SQLiteDatabase
+		class SQLiteDatabase : public BundleSeeker
 		{
 			enum SQL_TABLES
 			{
@@ -205,11 +206,9 @@ namespace dtn
 			void remove(const dtn::data::BundleID &id);
 
 			/**
-			 * Get meta data of several bundles using a callback filter.
-			 * @param cb
-			 * @return
+			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			void get(dtn::storage::BundleStorage::BundleFilterCallback &cb, BundleResult &result) throw (dtn::storage::BundleStorage::NoBundleFoundException, dtn::storage::BundleStorage::BundleFilterException);
+			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException);
 
 			/**
 			 * Retrieve the meta data of a given bundle
@@ -242,9 +241,9 @@ namespace dtn
 			void clear();
 
 			/**
-			 * @see BundleStorage::getDistinctDestinations()
+			 * @see BundleSeeker::getDistinctDestinations()
 			 */
-			virtual const std::set<dtn::data::EID> getDistinctDestinations();
+			virtual const eid_set getDistinctDestinations();
 
 			/**
 			 * iterate through all the bundles and call the iterateDatabase() on each bundle
@@ -275,7 +274,7 @@ namespace dtn
 			 * @param bind_offset
 			 * @param limit
 			 */
-			void __get(const dtn::storage::BundleStorage::BundleFilterCallback &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const;
+			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const;
 
 //			/**
 //			 * Checks the files on the filesystem against the filenames in the database

@@ -247,7 +247,7 @@ namespace dtn
 				// raise bundle event
 				dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
 				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
-			} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+			} catch (const dtn::storage::NoBundleFoundException&) {
 				// send transfer aborted event
 				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			}

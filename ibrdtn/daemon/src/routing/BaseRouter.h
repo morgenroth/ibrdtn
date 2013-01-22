@@ -27,6 +27,7 @@
 #include "routing/NodeHandshake.h"
 #include "core/EventReceiver.h"
 #include "storage/BundleStorage.h"
+#include "storage/BundleSeeker.h"
 
 #include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/DTNTime.h>
@@ -79,10 +80,12 @@ namespace dtn
 			class Extension
 			{
 			public:
-				Extension();
+				Extension(dtn::storage::BundleSeeker &seeker);
 				virtual ~Extension() = 0;
 
-				virtual void notify(const dtn::core::Event *evt) = 0;
+				virtual void notify(const dtn::core::Event *evt) throw () = 0;
+				virtual void componentUp() throw () = 0;
+				virtual void componentDown() throw () = 0;
 
 				enum CALLBACK_ACTION
 				{
@@ -134,19 +137,11 @@ namespace dtn
 
 			protected:
 				BaseRouter& operator*();
+				dtn::storage::BundleSeeker &_seeker;
 
 			private:
 				friend class BaseRouter;
 				static BaseRouter *_router;
-			};
-
-			class ThreadedExtension : public Extension, public ibrcommon::JoinableThread
-			{
-			public:
-				ThreadedExtension();
-				virtual ~ThreadedExtension() = 0;
-
-				virtual void notify(const dtn::core::Event *evt) = 0;
 			};
 
 			class Endpoint
@@ -199,6 +194,9 @@ namespace dtn
 			 */
 			dtn::data::Bundle getBundle(const dtn::data::BundleID &id);
 
+			/**
+			 * provides direct access to the bundle storage
+			 */
 			dtn::storage::BundleStorage &getStorage();
 
 			/**

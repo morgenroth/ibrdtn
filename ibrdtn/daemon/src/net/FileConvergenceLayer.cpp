@@ -179,7 +179,7 @@ namespace dtn
 											filename.remove();
 											throw;
 										}
-									} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+									} catch (const dtn::storage::NoBundleFoundException&) {
 										// send transfer aborted event
 										dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 									} catch (const ibrcommon::Exception&) {

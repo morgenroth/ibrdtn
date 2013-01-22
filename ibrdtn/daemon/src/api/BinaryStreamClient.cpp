@@ -242,7 +242,7 @@ namespace dtn
 
 						// mark the end of the bundle
 						_client._connection << std::flush;
-					} catch (const dtn::storage::BundleStorage::NoBundleFoundException&) {
+					} catch (const dtn::storage::NoBundleFoundException&) {
 						reg.wait_for_bundle();
 					}
 

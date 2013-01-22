@@ -38,8 +38,8 @@ namespace dtn
 {
 	namespace routing
 	{
-		NodeHandshakeExtension::NodeHandshakeExtension()
-		 : _endpoint(*this)
+		NodeHandshakeExtension::NodeHandshakeExtension(dtn::storage::BundleSeeker &seeker)
+		 : Extension(seeker), _endpoint(*this)
 		{
 		}
 
@@ -127,7 +127,7 @@ namespace dtn
 			_endpoint.query(eid);
 		}
 
-		void NodeHandshakeExtension::notify(const dtn::core::Event *evt)
+		void NodeHandshakeExtension::notify(const dtn::core::Event *evt) throw ()
 		{
 			// If a new neighbor comes available, send him a request for the summary vector
 			// If a neighbor went away we can free the stored summary vector

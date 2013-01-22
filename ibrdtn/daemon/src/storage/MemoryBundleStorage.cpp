@@ -88,14 +88,14 @@ namespace dtn
 			return _bundles.size();
 		}
 
-		void MemoryBundleStorage::get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException, BundleFilterException)
+		void MemoryBundleStorage::get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 
 			// we have to iterate through all bundles
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); iter++)
+			for (prio_bundle_set::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); iter++)
 			{
 				const dtn::data::MetaBundle &bundle = (*iter);
 
@@ -132,10 +132,10 @@ namespace dtn
 				throw BundleStorage::BundleLoadException();
 			}
 
-			throw BundleStorage::NoBundleFoundException();
+			throw NoBundleFoundException();
 		}
 
-		const std::set<dtn::data::EID> MemoryBundleStorage::getDistinctDestinations()
+		const MemoryBundleStorage::eid_set MemoryBundleStorage::getDistinctDestinations()
 		{
 			std::set<dtn::data::EID> ret;
 
@@ -211,7 +211,7 @@ namespace dtn
 				}
 			}
 
-			throw BundleStorage::NoBundleFoundException();
+			throw NoBundleFoundException();
 		}
 
 		dtn::data::MetaBundle MemoryBundleStorage::remove(const ibrcommon::BloomFilter &filter)
@@ -247,7 +247,7 @@ namespace dtn
 				}
 			}
 
-			throw BundleStorage::NoBundleFoundException();
+			throw NoBundleFoundException();
 		}
 
 		void MemoryBundleStorage::clear()

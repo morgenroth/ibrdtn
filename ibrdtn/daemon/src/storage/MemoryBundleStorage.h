@@ -56,14 +56,14 @@ namespace dtn
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
 
 			/**
-			 * @see BundleStorage::get(BundleFilterCallback &cb)
+			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			virtual void get(BundleFilterCallback &cb, BundleResult &result) throw (NoBundleFoundException, BundleFilterException);
+			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException);
 
 			/**
-			 * @see BundleStorage::getDistinctDestinations()
+			 * @see BundleSeeker::getDistinctDestinations()
 			 */
-			virtual const std::set<dtn::data::EID> getDistinctDestinations();
+			virtual const eid_set getDistinctDestinations();
 
 			/**
 			 * This method deletes a specific bundle in the storage.
@@ -134,8 +134,11 @@ namespace dtn
 				}
 			};
 
-			std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY> _priority_index;
-			std::map<dtn::data::BundleID, ssize_t> _bundle_lengths;
+			typedef std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY> prio_bundle_set;
+			prio_bundle_set _priority_index;
+
+			typedef std::map<dtn::data::BundleID, ssize_t> size_map;
+			size_map _bundle_lengths;
 		};
 	}
 }
