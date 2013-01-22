@@ -345,6 +345,7 @@ namespace dtn
 				bool _use_default_net;
 				size_t _auto_connect;
 				bool _fragmentation;
+				bool _scheduling;
 				ProphetConfig _prophet_config;
 				std::set<ibrcommon::vinterface> _internet_devices;
 
@@ -404,6 +405,11 @@ namespace dtn
 				 * @return a struct containing the prophet configuration parameters
 				 */
 				ProphetConfig getProphetConfig() const;
+
+				/**
+				 * @return True, if scheduling is used.
+				 */
+				bool doScheduling() const;
 
 				/**
 				 * @return The interfaces which are potentially connected to the internet

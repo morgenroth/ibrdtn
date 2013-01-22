@@ -775,6 +775,11 @@ namespace dtn
 					_internet_devices.insert(inet_dev);
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
+
+			/**
+			 * scheduling support
+			 */
+			_scheduling = (conf.read<std::string>("scheduling", "no") == "yes");
 		}
 
 		const std::multimap<std::string, std::string>& Configuration::Network::getStaticRoutes() const
@@ -856,6 +861,11 @@ namespace dtn
 		bool Configuration::Network::doFragmentation() const
 		{
 			return _fragmentation;
+		}
+
+		bool Configuration::Network::doScheduling() const
+		{
+			return _scheduling;
 		}
 
 		bool Configuration::Network::getTCPOptionNoDelay() const
