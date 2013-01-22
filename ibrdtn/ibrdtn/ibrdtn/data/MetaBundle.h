@@ -52,6 +52,7 @@ namespace dtn
 			size_t expiretime;
 			size_t hopcount;
 			size_t payloadlength;
+			int8_t net_priority;
 		};
 	}
 }
