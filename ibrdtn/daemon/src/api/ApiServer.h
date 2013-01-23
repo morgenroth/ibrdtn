@@ -26,6 +26,7 @@
 #include "api/Registration.h"
 #include "api/ClientHandler.h"
 #include "core/EventReceiver.h"
+#include "storage/BundleSeeker.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -41,8 +42,8 @@ namespace dtn
 		class ApiServer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ApiServerInterface, public ibrcommon::TimerCallback
 		{
 		public:
-			ApiServer(const ibrcommon::File &socket);
-			ApiServer(const ibrcommon::vinterface &net, int port = 4550);
+			ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::File &socket);
+			ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::vinterface &net, int port = 4550);
 			virtual ~ApiServer();
 
 			/**
@@ -104,6 +105,8 @@ namespace dtn
 			ibrcommon::Mutex _connection_lock;
 			ibrcommon::Mutex _registration_lock;
 			ibrcommon::Timer _garbage_collector;
+
+			dtn::storage::BundleSeeker &_seeker;
 		};
 	}
 }

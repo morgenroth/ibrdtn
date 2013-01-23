@@ -50,14 +50,14 @@ namespace dtn
 {
 	namespace api
 	{
-		ApiServer::ApiServer(const ibrcommon::File &socketfile)
-		 : _shutdown(false), _garbage_collector(*this)
+		ApiServer::ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::File &socketfile)
+		 : _shutdown(false), _garbage_collector(*this), _seeker(seeker)
 		{
 			_sockets.add(new ibrcommon::fileserversocket(socketfile));
 		}
 
-		ApiServer::ApiServer(const ibrcommon::vinterface &net, int port)
-		 : _shutdown(false), _garbage_collector(*this)
+		ApiServer::ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::vinterface &net, int port)
+		 : _shutdown(false), _garbage_collector(*this), _seeker(seeker)
 		{
 			if (net.isLoopback()) {
 				ibrcommon::vaddress addr(ibrcommon::vaddress::VADDR_LOCALHOST, port);
@@ -168,7 +168,8 @@ namespace dtn
 							ibrcommon::MutexLock l1(_registration_lock);
 							
 							// create a new registration
-							Registration reg; _registrations.push_back(reg);
+							Registration reg(_seeker);
+							_registrations.push_back(reg);
 							IBRCOMMON_LOGGER_DEBUG(5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
 
 							// create a new clienthandler for the new registration

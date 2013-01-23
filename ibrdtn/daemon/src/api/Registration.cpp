@@ -84,10 +84,10 @@ namespace dtn
 			Registration::_handles.erase(handle);
 		}
 
-		Registration::Registration()
+		Registration::Registration(dtn::storage::BundleSeeker &seeker)
 		 : _handle(alloc_handle()),
 		   _default_eid(core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + _handle),
-		   _persistent(false), _detached(false), _expiry(0)
+		   _persistent(false), _detached(false), _expiry(0), _seeker(seeker)
 		{
 		}
 
@@ -300,14 +300,11 @@ namespace dtn
 				const bool _loopback;
 			} filter(_endpoints, _queue.getReceivedBundles(), false);
 
-			// get the global storage
-			dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
-
 			// query the database for more bundles
 			ibrcommon::MutexLock l(_endpoints_lock);
 
 			try {
-				storage.get( filter, _queue );
+				_seeker.get( filter, _queue );
 			} catch (const dtn::storage::NoBundleFoundException&) {
 				_no_more_bundles = true;
 				throw;

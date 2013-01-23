@@ -105,6 +105,7 @@ dtn::net::IPNDAgent *__ibrdtn_daemon_ipnd = NULL;
 
 // bundle index used to search for new bundles in the routing modules
 dtn::storage::BundleIndex *_bundle_index = NULL;
+dtn::storage::BundleSeeker *_bundle_seeker = NULL;
 
 int ibrdtn_daemon_initialize_blob_storage() {
 	dtn::daemon::Configuration &config = dtn::daemon::Configuration::getInstance();
@@ -226,6 +227,24 @@ int ibrdtn_daemon_initialize_bundle_storage()
 
 	// set the storage in the core
 	dtn::core::BundleCore::getInstance().setStorage(storage);
+
+	// use scheduling?
+	if (dtn::daemon::Configuration::getInstance().getNetwork().doScheduling())
+	{
+		// create a new bundle index
+		_bundle_index = new dtn::routing::SchedulingBundleIndex();
+
+		// attach index to the storage
+		storage->attach(_bundle_index);
+
+		// set this bundle index as default bundle seeker which is used to find bundles to transfer
+		_bundle_seeker = static_cast<dtn::storage::BundleSeeker*>(_bundle_index);
+
+		IBRCOMMON_LOGGER(info) << "Enable extended bundle index for scheduling" << IBRCOMMON_LOGGER_ENDL;
+	} else {
+		// use default bundle seeker which is used to find bundles to transfer
+		_bundle_seeker = storage;
+	}
 
 	return 0;
 }
@@ -564,35 +583,14 @@ int ibrdtn_daemon_initialize_routing() {
 	// create the base router
 	dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
 
-	// get the storage
-	dtn::storage::BundleStorage &storage = core.getStorage();
-
 	// make the router globally available
 	core.setRouter(router);
 
-	// use scheduling?
-	if (dtn::daemon::Configuration::getInstance().getNetwork().doScheduling())
-	{
-		// create a new bundle index
-		_bundle_index = new dtn::routing::SchedulingBundleIndex();
-
-		// attach index to the storage
-		storage.attach(_bundle_index);
-
-		IBRCOMMON_LOGGER(info) << "Scheduling: yes" << IBRCOMMON_LOGGER_ENDL;
-	} else {
-		IBRCOMMON_LOGGER(info) << "Scheduling: no" << IBRCOMMON_LOGGER_ENDL;
-	}
-
-	// add default routing extensions
-	// bundle seeker which is used to find bundles to transfer
-	dtn::storage::BundleSeeker *seeker = (_bundle_index == NULL) ? &storage : static_cast<dtn::storage::BundleSeeker*>(_bundle_index);
-
 	// add static routing extension
-	router->addExtension( new dtn::routing::StaticRoutingExtension(*seeker) );
+	router->addExtension( new dtn::routing::StaticRoutingExtension(*_bundle_seeker) );
 
 	// add neighbor routing (direct-delivery) extension
-	router->addExtension( new dtn::routing::NeighborRoutingExtension(*seeker) );
+	router->addExtension( new dtn::routing::NeighborRoutingExtension(*_bundle_seeker) );
 
 	// add other routing extensions depending on the configuration
 	switch (conf.getNetwork().getRoutingExtension())
@@ -600,14 +598,14 @@ int ibrdtn_daemon_initialize_routing() {
 	case dtn::daemon::Configuration::FLOOD_ROUTING:
 	{
 		IBRCOMMON_LOGGER(info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
-		router->addExtension( new dtn::routing::FloodRoutingExtension(*seeker) );
+		router->addExtension( new dtn::routing::FloodRoutingExtension(*_bundle_seeker) );
 		break;
 	}
 
 	case dtn::daemon::Configuration::EPIDEMIC_ROUTING:
 	{
 		IBRCOMMON_LOGGER(info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
-		router->addExtension( new dtn::routing::EpidemicRoutingExtension(*seeker) );
+		router->addExtension( new dtn::routing::EpidemicRoutingExtension(*_bundle_seeker) );
 		break;
 	}
 
@@ -627,7 +625,7 @@ int ibrdtn_daemon_initialize_routing() {
 			forwarding_strategy = new dtn::routing::ProphetRoutingExtension::GRTR_Strategy();
 		}
 		IBRCOMMON_LOGGER(info) << "Using prophet routing extensions with " << strategy_name << " as forwarding strategy." << IBRCOMMON_LOGGER_ENDL;
-		router->addExtension( new dtn::routing::ProphetRoutingExtension(*seeker, forwarding_strategy, prophet_config.p_encounter_max,
+		router->addExtension( new dtn::routing::ProphetRoutingExtension(*_bundle_seeker, forwarding_strategy, prophet_config.p_encounter_max,
 										prophet_config.p_encounter_first, prophet_config.p_first_threshold,
 										prophet_config.beta, prophet_config.gamma, prophet_config.delta,
 										prophet_config.time_unit, prophet_config.i_typ,
@@ -668,7 +666,7 @@ int ibrdtn_daemon_initialize_api() {
 
 			try {
 				// use unix domain sockets for API
-				components.push_back(new dtn::api::ApiServer(socket));
+				components.push_back(new dtn::api::ApiServer(*_bundle_seeker, socket));
 				IBRCOMMON_LOGGER(info) << "API initialized using unix domain socket: " << socket.getPath() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::socket_exception&) {
 				IBRCOMMON_LOGGER(error) << "Unable to bind to unix domain socket " << socket.getPath() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
@@ -679,7 +677,7 @@ int ibrdtn_daemon_initialize_api() {
 
 			try {
 				// instance a API server, first create a socket
-				components.push_back(new dtn::api::ApiServer(apiconf.iface, apiconf.port));
+				components.push_back(new dtn::api::ApiServer(*_bundle_seeker, apiconf.iface, apiconf.port));
 				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << apiconf.iface.toString() << ":" << apiconf.port << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::socket_exception&) {
 				IBRCOMMON_LOGGER(error) << "Unable to bind to " << apiconf.iface.toString() << ":" << apiconf.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
@@ -921,6 +919,8 @@ int ibrdtn_daemon_main_loop()
 	{
 		core.getStorage().detach(_bundle_index);
 		delete _bundle_index;
+		_bundle_index = NULL;
+		_bundle_seeker = NULL;
 	}
 
 	// delete all components

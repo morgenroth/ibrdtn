@@ -82,7 +82,7 @@ namespace dtn
 			/**
 			 * constructor of the registration
 			 */
-			Registration();
+			Registration(dtn::storage::BundleSeeker &seeker);
 
 			/**
 			 * destructor of the registration
@@ -263,6 +263,8 @@ namespace dtn
 			bool _detached;
 			ibrcommon::Mutex _attach_lock;
 			ibrcommon::Timer::time_t _expiry;
+
+			dtn::storage::BundleSeeker &_seeker;
 		};
 	}
 }
