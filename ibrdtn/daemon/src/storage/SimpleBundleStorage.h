@@ -170,7 +170,8 @@ namespace dtn
 			std::map<DataStorage::Hash, dtn::data::Bundle> _pending_bundles;
 			std::map<dtn::data::MetaBundle, DataStorage::Hash> _stored_bundles;
 
-			std::map<dtn::data::MetaBundle, size_t> _bundle_size;
+			typedef std::map<dtn::data::BundleID, size_t> size_map;
+			size_map _bundle_lengths;
 
 			struct CMP_BUNDLE_PRIORITY
 			{

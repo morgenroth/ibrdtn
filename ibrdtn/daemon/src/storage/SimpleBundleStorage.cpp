@@ -70,10 +70,10 @@ namespace dtn
 			const dtn::data::Bundle &b = _pending_bundles[hash];
 
 			// decrement the storage size
-			freeSpace(_bundle_size[b]);
+			freeSpace(_bundle_lengths[b]);
 			
 			// cleanup bundle sizes
-			_bundle_size.erase(b);
+			_bundle_lengths.erase(b);
 
 			// raise bundle removed event
 			eventBundleRemoved(b);
@@ -95,9 +95,9 @@ namespace dtn
 				if (it_hash == hash)
 				{
 					// decrement the storage size
-					freeSpace(_bundle_size[it_bundle]);
+					freeSpace(_bundle_lengths[it_bundle]);
 
-					_bundle_size.erase(it_bundle);
+					_bundle_lengths.erase(it_bundle);
 
 					// raise bundle removed event
 					eventBundleRemoved(it_bundle);
@@ -137,7 +137,7 @@ namespace dtn
 				_stored_bundles[meta] = hash;
 
 				// increment the storage size
-				_bundle_size[meta] = bundle_size;
+				_bundle_lengths[meta] = bundle_size;
 
 				// add it to the bundle list
 				_list.add(meta);
@@ -343,7 +343,7 @@ namespace dtn
 				}
 
 				// increment the storage size
-				_bundle_size[meta] = bundle_size;
+				_bundle_lengths[meta] = bundle_size;
 
 				// add it to the bundle list
 				_list.add(meta);

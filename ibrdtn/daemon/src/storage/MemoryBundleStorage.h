@@ -137,7 +137,7 @@ namespace dtn
 			typedef std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY> prio_bundle_set;
 			prio_bundle_set _priority_index;
 
-			typedef std::map<dtn::data::BundleID, ssize_t> size_map;
+			typedef std::map<dtn::data::BundleID, size_t> size_map;
 			size_map _bundle_lengths;
 		};
 	}

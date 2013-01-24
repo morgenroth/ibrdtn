@@ -224,17 +224,17 @@ namespace dtn
 
 				if ( filter.contains(bundle.toString()) )
 				{
-					// remove it from the bundle list
+					// erase the bundle out of the priority index
 					_priority_index.erase(bundle);
+
+					// remove it from the bundle list
 					_list.remove(bundle);
 
-					// get size of the bundle
-					dtn::data::DefaultSerializer s(std::cout);
-
-					// decrement the storage size
-					ssize_t len = _bundle_lengths[bundle];
+					// get the storage size of this bundle
+					size_t len = _bundle_lengths[bundle];
 					_bundle_lengths.erase(bundle);
 
+					// decrement the storage size
 					freeSpace(len);
 
 					// remove the container
@@ -279,16 +279,16 @@ namespace dtn
 				{
 					dtn::data::Bundle bundle = (*iter);
 
-					// get size of the bundle
-					dtn::data::DefaultSerializer s(std::cout);
+					// erase the bundle out of the priority index
+					_priority_index.erase(bundle);
 
-					// decrement the storage size
-					ssize_t len = _bundle_lengths[bundle];
+					// get the storage size of this bundle
+					size_t len = _bundle_lengths[bundle];
 					_bundle_lengths.erase(bundle);
 
+					// decrement the storage size
 					freeSpace(len);
 
-					_priority_index.erase(bundle);
 					_bundles.erase(iter);
 
 					// raise bundle removed event
