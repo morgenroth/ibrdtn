@@ -42,7 +42,7 @@ namespace dtn
 			{
 				bool operator() (const dtn::data::MetaBundle& lhs, const dtn::data::MetaBundle& rhs) const
 				{
-					if (lhs.net_priority < rhs.net_priority)
+					if (lhs.net_priority > rhs.net_priority)
 						return true;
 					if (lhs.net_priority != rhs.net_priority)
 						return false;
