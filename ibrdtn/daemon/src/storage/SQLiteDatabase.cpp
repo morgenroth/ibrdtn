@@ -50,7 +50,7 @@ namespace dtn
 		const std::string SQLiteDatabase::_sql_queries[SQL_QUERIES_END] =
 		{
 			"SELECT " + _select_names[0] + " FROM " + _tables[SQL_TABLE_BUNDLE],
-			"SELECT " + _select_names[0] + " FROM " + _tables[SQL_TABLE_BUNDLE] + " ORDER BY priority DESC LIMIT ?,?;",
+			"SELECT " + _select_names[0] + " FROM " + _tables[SQL_TABLE_BUNDLE] + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset LIMIT ?,?;",
 			"SELECT " + _select_names[0] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL LIMIT 1;",
 			"SELECT " + _select_names[0] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
 			"SELECT * FROM " + _tables[SQL_TABLE_BUNDLE] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset != NULL ORDER BY fragmentoffset ASC;",
@@ -424,7 +424,7 @@ namespace dtn
 					SQLBundleQuery &query = dynamic_cast<SQLBundleQuery&>(cb);
 
 					// custom query string
-					std::string query_string = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC LIMIT ?,?;";
+					std::string query_string = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset LIMIT ?,?;";
 
 					// create statement for custom query
 					Statement st(_database, query_string);
