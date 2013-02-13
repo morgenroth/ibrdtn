@@ -64,7 +64,7 @@ endif
 Android.mk: Makefile.am
 	$(ANDROGENIZER) -:PROJECT dtnd \
 		-:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
-		-:EXECUTABLE dtnd \
+		-:SHARED dtnd \
 		-:SOURCES $(dtnd_sources) \
 			Main.cpp \
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
