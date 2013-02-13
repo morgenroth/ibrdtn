@@ -68,13 +68,19 @@ Implementation details
       PAGE_SIZE not defined in Android: http://stackoverflow.com/questions/11444169/error-while-compiling-boost-in-android)
 
 
-Debugging
----------
+Resolve stacktraces
+-------------------
 
    o Symbols are stripped from the compiled binaries, but available under obj/local/armearbi.
 
    o Android's ndk_stack tool can be used to resolve stack traces logged to logcat by invoking:
      "adb logcat | $ANDROID_NDK/ndk-stack -sym $PROJECT_DIR/android/ndk_build/obj/local/armeabi/"
+
+
+Debugging with GDB
+------------------
+
+   o Before compiling set debuggable=true in AndroidManifest.xml
 
    o To start GDB go to ibrdtn project directory and execute "$ANDROID_NDK/ndk-gdb"
 
