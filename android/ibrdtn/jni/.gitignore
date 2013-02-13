@@ -1,0 +1,8 @@
+# ignore symlinked folders
+dtnd
+ibrcommon
+ibrdtn
+
+# ignore folders from external git repos
+nl-3
+openssl
