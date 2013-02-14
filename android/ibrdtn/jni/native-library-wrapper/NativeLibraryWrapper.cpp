@@ -28,7 +28,8 @@ JNIEXPORT void JNICALL
 Java_de_tubs_ibr_dtn_service_NativeLibraryWrapper_daemonInitialize(JNIEnv * env, jobject obj)
 {
 	LOGI("TEST");
-// 	ibrdtn_daemon_initialize();
+ 	ibrdtn_daemon_initialize();
+	LOGI("TEST after");
 }
 
 #ifdef __cplusplus

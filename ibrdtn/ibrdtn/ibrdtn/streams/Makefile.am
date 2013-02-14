@@ -33,5 +33,4 @@ Android.mk: Makefile.am
 		-:SOURCES $(h_sources) $(cc_sources) \
 		-:CPPFLAGS $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
-		-:LIBFILTER_STATIC ibrcommon \
 		> $@

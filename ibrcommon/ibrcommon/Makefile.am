@@ -55,11 +55,10 @@ libibrcommon_la_LIBADD = $(ibrcommon_libs)
 libibrcommon_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
 endif
 
-# include libnl as static lib
 Android.mk: Makefile.am
 	$(ANDROGENIZER) -:PROJECT $(GENERIC_LIBRARY_NAME) \
 		-:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
-		-:STATIC ibrcommon \
+		-:SHARED ibrcommon \
 		-:SOURCES $(h_sources) $(cc_sources) \
 		-:CPPFLAGS $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \

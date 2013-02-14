@@ -40,5 +40,4 @@ Android.mk: Makefile.am
 		-:SOURCES $(api_SOURCES) \
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
-		-:LIBFILTER_STATIC ibrdtn \
 		> $@

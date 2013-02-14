@@ -71,14 +71,16 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	with_compression="yes"
 
 	# DTNSec
-	AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
-	CPPFLAGS="$CPPFLAGS -DWITH_BUNDLE_SECURITY"
-	with_dtnsec="yes"
+	#AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
+	#CPPFLAGS="$CPPFLAGS -DWITH_BUNDLE_SECURITY"
+	#with_dtnsec="yes"
+	with_dtnsec="no"
 
 	# TLS
-	AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
-	CPPFLAGS="$CPPFLAGS -DWITH_TLS"
-	with_tls="yes"
+	#AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
+	#CPPFLAGS="$CPPFLAGS -DWITH_TLS"
+	#with_tls="yes"
+	with_tls="no"
 
 	# REGEX
 	AC_DEFINE(HAVE_REGEX_H, [1] ["Define to 1 if you have the <regex.h> header file."])

@@ -6,7 +6,7 @@ ibrdtn_TOP:=$(abspath $(LOCAL_PATH))/ibrdtn
 dtnd_TOP:=$(abspath $(LOCAL_PATH))/dtnd
 
 # force old gcc
-NDK_TOOLCHAIN_VERSION=4.4.3
+#NDK_TOOLCHAIN_VERSION=4.4.3
 
 # Optimizations
 #APP_OPTIM:=release
@@ -25,7 +25,7 @@ APP_PLATFORM:=android-9
 
 # See for documentation on Androids c++ support: $(NDK_PATH)/docs/CPLUSPLUS-SUPPORT.html
 # select c++ gnu stl, because we need exception support
-APP_STL:=gnustl_static
+APP_STL:=gnustl_shared
 
 #system          -> Use the default minimal system C++ runtime library.
 #gabi++_static   -> Use the GAbi++ runtime as a static library.
@@ -54,7 +54,8 @@ APP_CPPFLAGS+=-I$(abspath $(LOCAL_PATH))/ibrdtn
 
 
 # If APP_MODULES is not set, all modules are compiled!
-APP_MODULES:=native-library-wrapper
+APP_MODULES:=ibrcommon ibrdtn dtnd native-library-wrapper
+#APP_MODULES:=native-library-wrapper
 #APP_MODULES:=ibrcommon ibrdtn dtnd
 #APP_MODULES:=all
 

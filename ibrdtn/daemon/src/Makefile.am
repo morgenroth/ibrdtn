@@ -60,20 +60,18 @@ dtnd_SOURCES = Main.cpp
 dtnd_LDADD = libdtnd.la
 endif
 
-# include openssl used by ibrcommon and zlib
 Android.mk: Makefile.am
 	$(ANDROGENIZER) -:PROJECT dtnd \
 		-:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
 		-:SHARED dtnd \
 		-:SOURCES $(dtnd_sources) \
-			Main.cpp \
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
 			$(subst lib,libdtnd_, $(dtnd_libs)) \
-			-lssl -lcrypto \
 			-lz \
+			-lgnustl_shared \
+			-librcommon \
 		-:LIBFILTER_WHOLE dtnd_core dtnd_storage dtnd_net dtnd_routing dtnd_api \
-			ibrdtn \
 		-:SUBDIR $(patsubst %,src/%, $(SUBDIRS)) \
 		> $@
 

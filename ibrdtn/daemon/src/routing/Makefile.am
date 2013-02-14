@@ -56,7 +56,6 @@ Android.mk: Makefile.am
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
 			$(subst lib,libdtnd_, $(librouting_la_LIBADD)) \
-		-:LIBFILTER_STATIC ibrdtn \
 		-:LIBFILTER_WHOLE dtnd_rtflooding dtnd_rtepidemic dtnd_rtprophet \
 		-:SUBDIR $(patsubst %,src/routing/%, $(SUBDIRS)) \
 		> $@
