@@ -522,7 +522,7 @@ namespace dtn
 								/* parse an optional offset, where to insert the block */
 								if (cmd.size() > 3)
 								{
-									int offset;
+									size_t offset;
 									istringstream ss(cmd[3]);
 
 									ss >> offset;
@@ -532,7 +532,7 @@ namespace dtn
 									{
 										inserter = dtn::data::BundleBuilder(_bundle_reg, dtn::data::BundleBuilder::END);
 									}
-									else if(offset <= 0)
+									else if(offset == 0)
 									{
 										inserter = dtn::data::BundleBuilder(_bundle_reg, dtn::data::BundleBuilder::FRONT);
 									}
@@ -591,7 +591,7 @@ namespace dtn
 					}
 					else if (cmd[0] == "payload")
 					{
-						int block_offset;
+						size_t block_offset;
 						int cmd_index = 1;
 						dtn::data::Block& b = _bundle_reg.getBlock<dtn::data::PayloadBlock>();
 
@@ -604,7 +604,7 @@ namespace dtn
 							cmd_index++;
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
-							if(block_offset < 0 || block_offset >= _bundle_reg.getBlocks().size()){
+							if (block_offset >= _bundle_reg.getBlocks().size()) {
 								throw ibrcommon::Exception("invalid offset");
 							}
 
@@ -617,20 +617,15 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 							_stream << ClientHandler::API_STATUS_OK << " PAYLOAD GET" << std::endl;
 
-							int payload_offset = 0;
-							int length = 0;
+							size_t payload_offset = 0;
+							size_t length = 0;
 
-							if(cmd_remaining > 0)
+							if (cmd_remaining > 0)
 							{
-
 								/* read the payload offset */
 								ss.clear(); ss.str(cmd[cmd_index+1]); ss >> payload_offset;
-								if(payload_offset < 0)
-								{
-									payload_offset = 0;
-								}
 
-								if(cmd_remaining > 1)
+								if (cmd_remaining > 1)
 								{
 									ss.clear(); ss.str(cmd[cmd_index+2]); ss >> length;
 								}
@@ -645,7 +640,7 @@ namespace dtn
 								/* serialize the payload of the bundle into the blob */
 								b.serialize(*blob_stream, slength);
 
-								if(length <= 0 || (length + payload_offset) > slength)
+								if ((length + payload_offset) > slength)
 								{
 									length = slength - payload_offset;
 								}
@@ -665,16 +660,11 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 							_stream << ClientHandler::API_STATUS_CONTINUE << " PAYLOAD PUT" << std::endl;
 
-							int payload_offset = 0;
-							if(cmd_remaining > 0)
+							size_t payload_offset = 0;
+							if (cmd_remaining > 0)
 							{
-
 								/* read the payload offset */
 								ss.clear(); ss.str(cmd[cmd_index+1]); ss >> payload_offset;
-								if(payload_offset < 0)
-								{
-									payload_offset = 0;
-								}
 							}
 
 							try
@@ -688,7 +678,7 @@ namespace dtn
 								b.serialize(*blob_stream, slength);
 
 								/* move the streams put pointer to the given offset */
-								if(payload_offset < slength){
+								if (payload_offset < slength) {
 									blob_stream->seekp(payload_offset, ios_base::beg);
 								}
 
