@@ -30,7 +30,7 @@ namespace dtn
 	namespace data
 	{
 		CustodySignalBlock::CustodySignalBlock()
-		 : _admfield(32), _custody_accepted(false), _reason(NO_ADDITIONAL_INFORMATION), _fragment_offset(0),
+		 : AdministrativeBlock(32), _custody_accepted(false), _reason(NO_ADDITIONAL_INFORMATION), _fragment_offset(0),
 		 _fragment_length(0), _timeofsignal(), _bundle_timestamp(0), _bundle_sequence(0)
 		{
 		}
@@ -56,7 +56,7 @@ namespace dtn
 			// decode reason flag
 			_reason = REASON_CODE(status >> 1);
 
-			if ( _admfield & 0x01 )
+			if ( refsFragment() )
 			{
 				(*stream) >> _fragment_offset;
 				(*stream) >> _fragment_length;
@@ -91,7 +91,7 @@ namespace dtn
 			// write the status byte
 			(*stream) << status;
 
-			if ( _admfield & 0x01 )
+			if ( refsFragment() )
 			{
 				(*stream) << _fragment_offset;
 				(*stream) << _fragment_length;

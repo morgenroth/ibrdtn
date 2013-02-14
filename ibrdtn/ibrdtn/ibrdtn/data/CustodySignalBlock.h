@@ -61,8 +61,6 @@ namespace dtn
 			virtual void read(const dtn::data::PayloadBlock &p) throw (WrongRecordException);
 			virtual void write(dtn::data::PayloadBlock &p) const;
 
-			char _admfield;
-			//char _status;
 			bool _custody_accepted;
 			REASON_CODE _reason;
 			SDNV _fragment_offset;
