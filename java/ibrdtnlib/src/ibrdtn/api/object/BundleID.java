@@ -20,49 +20,83 @@
  */
 package ibrdtn.api.object;
 
+import ibrdtn.api.object.Bundle.Flags;
+import ibrdtn.api.object.Bundle.Priority;
+
 public class BundleID {
-	
-	private String source = null;
-	private Long timestamp = null;
-	private Long sequencenumber = null;
 
-	public BundleID()
-	{
-	}
-	
-	public BundleID(String source, Long timestamp, Long sequencenumber)
-	{
-		this.source = source;
-		this.timestamp = timestamp;
-		this.sequencenumber = sequencenumber;
-	}
+    private String source = null;
+    private String destination = null;
+    private Long timestamp = null;
+    private Long sequencenumber = null;
+    private Long procflags = null;
 
-	public String getSource() {
-		return source;
-	}
+    public BundleID() {
+    }
 
-	public void setSource(String source) {
-		this.source = source;
-	}
+    public BundleID(String source, Long timestamp, Long sequencenumber) {
+        this.source = source;
+        this.timestamp = timestamp;
+        this.sequencenumber = sequencenumber;
+    }
 
-	@Override
-	public String toString() {
-		return String.valueOf(this.timestamp) + " " + String.valueOf(this.sequencenumber) + " " + this.source;
-	}
+    public String getSource() {
+        return source;
+    }
 
-	public Long getTimestamp() {
-		return timestamp;
-	}
+    public void setSource(String source) {
+        this.source = source;
+    }
 
-	public void setTimestamp(Long timestamp) {
-		this.timestamp = timestamp;
-	}
+    public String getDestination() {
+        return destination;
+    }
 
-	public Long getSequencenumber() {
-		return sequencenumber;
-	}
+    public void setDestination(String destination) {
+        this.destination = destination;
+    }
 
-	public void setSequencenumber(Long sequencenumber) {
-		this.sequencenumber = sequencenumber;
-	}
+    public Long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public Long getSequencenumber() {
+        return sequencenumber;
+    }
+
+    public void setSequencenumber(Long sequencenumber) {
+        this.sequencenumber = sequencenumber;
+    }
+
+    public Priority getPriority() {
+        int priority = (int) (procflags >> Flags.PRIORITY.getOffset()) & 0b11;
+        // reduce the priority by modulo 3 since value 3 is not a valid priority
+        return Priority.values()[priority % Priority.values().length];
+    }
+
+    public boolean isSingleton() {
+        int single = (int) (procflags >> Flags.DESTINATION_IS_SINGLETON.getOffset()) & 0b11;
+        if (single == 0) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public long getProcflags() {
+        return procflags;
+    }
+
+    public void setProcflags(Long procflags) {
+        this.procflags = procflags;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(this.timestamp) + " " + String.valueOf(this.sequencenumber) + " " + this.source;
+    }
 }

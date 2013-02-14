@@ -953,7 +953,7 @@ public class ExtendedClient extends Client {
 			try {
 				p.parse(istream, this);
 			} catch (SABException e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 				client.mark_error();
 			}
 		}
