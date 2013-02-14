@@ -1,0 +1,89 @@
+                        IBR-DTN for Android
+
+How to compile IBR-DTN for Android?
+-----------------------------------
+
+   1. Install Android NDK:
+      Get NEWEST (at least 8d) official Android NDK from http://developer.android.com/tools/sdk/ndk/index.html
+      (For Windows, Cygwin 1.7 or higher is required)
+      Add the root directory of the unpacked Android NDK to your PATH variable (http://wiki.ubuntuusers.de/Umgebungsvariable)
+ 
+   2. Install androgenizer:
+      Get androgenizer from http://cgit.collabora.com/git/android/androgenizer.git/
+      Build it with "make all"
+      Add androgenizer executable to your PATH variable
+
+   3. Generate symlinks to C++ sources:
+      This links the c++ sources into the jni subdirectory
+      "cd jni"
+      "./generate_symlinks.sh"
+
+   4. Checkout other libraries used in IBR-DTN
+      Install git.
+      "cd jni"
+      "./checkout_libs.sh"
+
+   5. Make Android makefiles:
+      We use Autotools in conjunction with androgenizer to generate specific Android Makefiles (Android.mk files).
+      You need to do the following in "ibrcommon", "ibrdtn", and "daemon":
+      "./autogen.sh"
+      "./configure --enable-android" (--enable-android disables all other parameters)
+      "make"
+
+   6. Build IBR-DTN with Android NDK
+      Start compiling by executing
+      "ndk-build"
+
+   7. OpenSSL (libssl, libcrypto) is compiled as a shared library, but it does not have to be packaged into the APK as it is already included in Android OS.
+      We can not include it with LDLIBS as it is not part of the stable API and thus not part of the official Android NDK.
+
+FAQ
+---
+
+   o More Android NDK parameters:
+     "ndk-build clean" (delete generated libs)
+     "ndk-build -B V=1 NDK_DEBUG=1 NDK_LOG=1" (force complete rebuild (-B), showing commands and enable debug and logs from android ndk)
+
+
+Implementation details
+----------------------
+
+   o Libraries are cloned from:
+     nl-3: https://github.com/dschuermann/libnl
+     openssl: https://github.com/guardianproject/openssl-android
+
+   o OpenSSL is compiled but not bundled into the application as we use already existing OpenSSL shared library included in Android OS
+
+   o Androgenizer currently throws away -version-info but not -release, which result in an error, thus we omit libibrcommon_la_LDFLAGS for Android.mk
+
+   o Subdirs are compiled as whole static libraries included in the main static library, they are defined as LOCAL_WHOLE_STATIC_LIBRARIES
+     to include all functions even when they are not used.
+     Because ibrcommon and ibrdtn share subdirs named the same (e.g. data), we have to prefix those subdir static libs
+     to avoid conflicts when compiling with ndk-build
+
+   o Changes to C++ sources:
+     ibrcommon/ibrcommon/data/File.cpp
+     ibrcommon/ibrcommon/thread/Thread.cpp
+     (pthread_attr_setinheritsched not implemented in Android, see https://groups.google.com/forum/?fromgroups=#!topic/android-porting/--xz_KlGZXk
+      PAGE_SIZE not defined in Android: http://stackoverflow.com/questions/11444169/error-while-compiling-boost-in-android)
+
+
+Resolve stacktraces
+-------------------
+
+   o Symbols are stripped from the compiled binaries, but available under obj/local/armearbi.
+
+   o Android's ndk_stack tool can be used to resolve stack traces logged to logcat by invoking:
+     "adb logcat | $ANDROID_NDK/ndk-stack -sym $PROJECT_DIR/android/ibrdtn/obj/local/armeabi/"
+
+
+Debugging with GDB
+------------------
+
+   o Before compiling set debuggable=true in AndroidManifest.xml
+
+   o To start GDB go to ibrdtn project directory and execute "$ANDROID_NDK/ndk-gdb --launch=de.tubs.ibr.dtn.daemon.Preferences --start --force"
+
+   o See $ANDROID_NDK/docs/NDK-GDB.html for more information
+
+
