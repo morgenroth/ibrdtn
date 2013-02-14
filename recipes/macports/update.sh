@@ -6,8 +6,6 @@ if [ $# -lt 1 ]; then
   exit 1
 fi
 
-
-
 # packages URL should be the first parameter
 PACKAGES_URL="${1}"
 
@@ -48,7 +46,7 @@ do
 
         # prepare patch file for ibrdtnd configuration
         if [ "${PKG_NAME}" = "ibrdtnd" ]; then
-            PATCH_FILE=$(find gen/recipes/ ${WORKSPACE} -name ibrdtnd.conf.patch)
+            PATCH_FILE=$(find gen/recipes/ -name ibrdtnd.conf.patch)
 
             tar xvzf dl/${PKG_ARCHIVE}
 
