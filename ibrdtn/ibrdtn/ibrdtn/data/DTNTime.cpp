@@ -60,9 +60,14 @@ namespace dtn
 			return _seconds.getLength() + _nanoseconds.getLength();
 		}
 
-		SDNV DTNTime::getTimestamp() const
+		const SDNV& DTNTime::getTimestamp() const
 		{
 			return _seconds;
+		}
+
+		const SDNV& DTNTime::getNanoseconds() const
+		{
+			return _nanoseconds;
 		}
 
 		void DTNTime::operator+=(const size_t value)
