@@ -33,18 +33,27 @@ patchfiles      ibrdtnd.conf.patch
 #StartupItem for IBR DTN 
 startupitem.create       yes
 startupitem.name         ibrdtn
-startupitem.logfile      /var/log/ibrdtnd.log
+startupitem.pidfile      manual /var/run/ibrdtnd.pid
 startupitem.logevents    yes
 startupitem.netchange    no
-startupitem.executable   ${prefix}/sbin/dtnd -c ${prefix}/etc/ibrdtnd.conf
+startupitem.executable   ${prefix}/sbin/dtnd -c ${prefix}/etc/ibrdtnd.conf yes
 
 post-destroot {
     file rename ${destroot}${prefix}/etc/ibrdtnd.conf ${destroot}${prefix}/etc/ibrdtnd.conf.dist
 }
 
 post-activate {
-    if {![file exists ${prefix}/etc/ibrdtnd.conf]} {
+    if { ![file exists ${prefix}/etc/ibrdtnd.conf] } {
         file copy ${prefix}/etc/ibrdtnd.conf.dist \
         ${prefix}/etc/ibrdtnd.conf
     }
+    file mkdir /var/log/ibrdtn
+    if { ![file exists /etc/newsyslog.d/ibrdtnd.conf] } {
+        set  logrotateFile [open "/etc/newsyslog.d/ibrdtnd.conf" w]
+        puts ${logrotateFile} "# logfilename          \[owner:group\]    mode count size when  flags \[/pid_file\] \[sig_num\]"
+        puts ${logrotateFile} "/var/log/ibrdtn/ibrdtn.log               640  10     10000       *     CJ     /var/run/ibrdtnd.pid 1"
+        close ${logrotateFile}
+        #As this seems to be the first time we install a build with logrotate we WILL change the running configuration
+        reinplace -E "s|#?logfile = .*$|logfile = \/var\/log\/ibrdtn\/ibrdtn.log|g" ${prefix}/etc/ibrdtnd.conf
+    }
 }
