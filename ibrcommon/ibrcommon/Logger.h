@@ -68,13 +68,24 @@
 
 #define IBRCOMMON_LOGGER(level) \
 	{ \
-		ibrcommon::Logger log = ibrcommon::Logger::level(); \
+		ibrcommon::Logger log = ibrcommon::Logger::level(""); \
+		log
+
+#define IBRCOMMON_LOGGER_TAG(tag, level) \
+	{ \
+		ibrcommon::Logger log = ibrcommon::Logger::level(tag); \
 		log
 
 #define IBRCOMMON_LOGGER_DEBUG(verbosity) \
 	if (ibrcommon::Logger::getVerbosity() >= verbosity) \
 	{ \
-		ibrcommon::Logger log = ibrcommon::Logger::debug(verbosity); \
+		ibrcommon::Logger log = ibrcommon::Logger::debug("", verbosity); \
+		log
+
+#define IBRCOMMON_LOGGER_DEBUG_TAG(tag, verbosity) \
+	if (ibrcommon::Logger::getVerbosity() >= verbosity) \
+	{ \
+		ibrcommon::Logger log = ibrcommon::Logger::debug(tag, verbosity); \
 		log
 
 #define IBRCOMMON_LOGGER_ENDL \
@@ -104,7 +115,8 @@ namespace ibrcommon
 			LOG_DATETIME =	1 << 0,	/* print date/time on log messages */
 			LOG_HOSTNAME = 	1 << 1, /* print hostname on log messages */
 			LOG_LEVEL =		1 << 2,	/* print the log level on log messages */
-			LOG_TIMESTAMP =	1 << 3	/* print timestamp on log messages */
+			LOG_TIMESTAMP =	1 << 3,	/* print timestamp on log messages */
+			LOG_TAG = 		1 << 4  /* print tag on log messages */
 		};
 
 		enum LogLevel
@@ -123,14 +135,14 @@ namespace ibrcommon
 		Logger(const Logger&);
 		virtual ~Logger();
 
-		static Logger emergency();
-		static Logger alert();
-		static Logger critical();
-		static Logger error();
-		static Logger warning();
-		static Logger notice();
-		static Logger info();
-		static Logger debug(int verbosity);
+		static Logger emergency(const std::string &tag);
+		static Logger alert(const std::string &tag);
+		static Logger critical(const std::string &tag);
+		static Logger error(const std::string &tag);
+		static Logger warning(const std::string &tag);
+		static Logger notice(const std::string &tag);
+		static Logger info(const std::string &tag);
+		static Logger debug(const std::string &tag, int verbosity);
 
 		/**
 		 * Set the global verbosity of the logger.
@@ -208,7 +220,7 @@ namespace ibrcommon
 		static void reload();
 
 	private:
-		Logger(LogLevel level, int debug_verbosity = 0);
+		Logger(LogLevel level, const std::string &tag, int debug_verbosity = 0);
 
 		class LoggerOutput
 		{
@@ -326,6 +338,7 @@ namespace ibrcommon
 		};
 
 		LogLevel _level;
+		const std::string _tag;
 		int _debug_verbosity;
 		struct timeval _logtime;
 
