@@ -52,7 +52,7 @@ namespace dtn
 			const dtn::data::MetaBundle& getBundle() const;
 			const std::string getName() const;
 			
-			std::string toString() const;
+			std::string getMessage() const;
 
 			static void raise(const dtn::data::MetaBundle &bundle, EventBundleAction action, dtn::data::StatusReportBlock::REASON_CODE reason = dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 

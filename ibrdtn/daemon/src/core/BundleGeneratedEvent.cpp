@@ -46,14 +46,14 @@ namespace dtn
 			dtn::core::EventDispatcher<BundleGeneratedEvent>::raise( new BundleGeneratedEvent(bundle) );
 		}
 
-		const string BundleGeneratedEvent::getName() const
+		const std::string BundleGeneratedEvent::getName() const
 		{
 			return BundleGeneratedEvent::className;
 		}
 
-		string BundleGeneratedEvent::toString() const
+		std::string BundleGeneratedEvent::getMessage() const
 		{
-			return className + ": Bundle generated " + bundle.toString();
+			return "Bundle generated " + bundle.toString();
 		}
 
 		const string BundleGeneratedEvent::className = "BundleGeneratedEvent";

@@ -49,9 +49,9 @@ namespace dtn
 			return QueueBundleEvent::className;
 		}
 
-		string QueueBundleEvent::toString() const
+		string QueueBundleEvent::getMessage() const
 		{
-			return className + ": New bundle queued " + bundle.toString();
+			return "New bundle queued " + bundle.toString();
 		}
 
 		const string QueueBundleEvent::className = "QueueBundleEvent";

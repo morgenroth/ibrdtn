@@ -91,9 +91,9 @@ namespace dtn
 			return "undefined";
 		}
 
-		string TransferAbortedEvent::toString() const
+		string TransferAbortedEvent::getMessage() const
 		{
-			return className + ": transfer of bundle " + _bundle.toString() + " to " + _peer.getString() + " aborted. (" + getReason(reason) + ")";
+			return "transfer of bundle " + _bundle.toString() + " to " + _peer.getString() + " aborted. (" + getReason(reason) + ")";
 		}
 
 		const std::string TransferAbortedEvent::className = "TransferAbortedEvent";

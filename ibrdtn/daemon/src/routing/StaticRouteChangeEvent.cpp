@@ -51,10 +51,9 @@ namespace dtn
 			return StaticRouteChangeEvent::className;
 		}
 
-		std::string StaticRouteChangeEvent::toString() const
+		std::string StaticRouteChangeEvent::getMessage() const
 		{
 			std::stringstream ss;
-			ss << getName() << ": ";
 
 			switch (type)
 			{

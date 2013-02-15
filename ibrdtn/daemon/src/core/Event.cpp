@@ -29,7 +29,7 @@ namespace dtn
 		Event::~Event() {};
 
 		std::string Event::toString() const {
-			return this->getName();
+			return this->getName() + ": " + this->getMessage();
 		}
 	}
 }

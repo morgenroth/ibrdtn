@@ -56,9 +56,19 @@ namespace dtn
 			return NodeEvent::className;
 		}
 
-		string NodeEvent::toString() const
+		string NodeEvent::getMessage() const
 		{
-			return className;
+			switch (getAction())
+			{
+			case NODE_AVAILABLE:
+				return "Node " + getNode().toString() + " available ";
+			case NODE_UNAVAILABLE:
+				return "Node " + getNode().toString() + " unavailable";
+			default:
+				return "unknown";
+			}
+
+			return "unknown";
 		}
 
 		const string NodeEvent::className = "NodeEvent";

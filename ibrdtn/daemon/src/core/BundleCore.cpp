@@ -264,7 +264,7 @@ namespace dtn
 					// delete it from our storage
 					dtn::core::BundlePurgeEvent::raise(meta);
 
-					IBRCOMMON_LOGGER(notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("BundleCore", notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// gen a report
 					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);

@@ -49,9 +49,9 @@ namespace dtn
 			return RequeueBundleEvent::className;
 		}
 
-		string RequeueBundleEvent::toString() const
+		string RequeueBundleEvent::getMessage() const
 		{
-			return className + ": Bundle requeued " + _bundle.toString();
+			return "Bundle requeued " + _bundle.toString();
 		}
 
 		const string RequeueBundleEvent::className = "RequeueBundleEvent";

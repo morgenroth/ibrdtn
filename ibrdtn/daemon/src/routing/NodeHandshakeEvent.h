@@ -43,7 +43,7 @@ namespace dtn
 
 			const std::string getName() const;
 
-			std::string toString() const;
+			std::string getMessage() const;
 
 			static void raiseEvent(HANDSHAKE_STATE state, const dtn::data::EID &peer);
 

@@ -52,9 +52,27 @@ namespace dtn
 			return BundleEvent::className;
 		}
 
-		std::string BundleEvent::toString() const
+		std::string BundleEvent::getMessage() const
 		{
-			return className;
+			switch (getAction())
+			{
+			case BUNDLE_DELETED:
+				return "bundle " + getBundle().toString() + " deleted";
+			case BUNDLE_CUSTODY_ACCEPTED:
+				return "custody accepted for " + getBundle().toString();
+			case BUNDLE_FORWARDED:
+				return "bundle " + getBundle().toString() + " forwarded";
+			case BUNDLE_DELIVERED:
+				return "bundle " + getBundle().toString() + " delivered";
+			case BUNDLE_RECEIVED:
+				return "bundle " + getBundle().toString() + " received";
+			case BUNDLE_STORED:
+				return "bundle " + getBundle().toString() + " stored";
+			default:
+				break;
+			}
+
+			return "unkown";
 		}
 
 		void BundleEvent::raise(const dtn::data::MetaBundle &bundle, EventBundleAction action, dtn::data::StatusReportBlock::REASON_CODE reason)

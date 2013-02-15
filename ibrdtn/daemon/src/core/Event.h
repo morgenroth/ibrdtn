@@ -44,6 +44,11 @@ namespace dtn
 			virtual std::string toString() const;
 
 			/**
+			 * Get a describing message for this event
+			 */
+			virtual std::string getMessage() const = 0;
+
+			/**
 			 * Contains the priority of this event.
 			 */
 			const int prio;
