@@ -71,14 +71,14 @@ namespace dtn
 
 			ibrcommon::MutexLock l(_initialization_lock);
 			if(_initialized){
-				IBRCOMMON_LOGGER(info) << "SecurityCertificateManager: already initialized." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", info) << "already initialized." << IBRCOMMON_LOGGER_ENDL;
 				return;
 			}
 
 			/* read the certificate */
 			fp = fopen(certificate.getPath().c_str(), "r");
 			if(!fp || !PEM_read_X509(fp, &cert, NULL, NULL)){
-				IBRCOMMON_LOGGER(error) << "SecurityCertificateManager: Could not read the certificate File: " << certificate.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "Could not read the certificate File: " << certificate.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
 				if(fp){
 					fclose(fp);
 				}
@@ -89,7 +89,7 @@ namespace dtn
 			/* read the private key */
 			fp = fopen(privateKey.getPath().c_str(), "r");
 			if(!fp || !PEM_read_PrivateKey(fp, &key, NULL, NULL)){
-				IBRCOMMON_LOGGER(error) << "SecurityCertificateManager: Could not read the PrivateKey File: " << privateKey.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "Could not read the PrivateKey File: " << privateKey.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
 				if(fp){
 					fclose(fp);
 				}
@@ -99,7 +99,7 @@ namespace dtn
 
 			/* check trustedCAPath */
 			if(!trustedCAPath.isDirectory()){
-				IBRCOMMON_LOGGER(error) << "SecurityCertificateManager: the trustedCAPath is not valid: " << trustedCAPath.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "the trustedCAPath is not valid: " << trustedCAPath.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
 				throw ibrcommon::IOException("Invalid trustedCAPath.");
 			}
 
@@ -108,7 +108,7 @@ namespace dtn
 			_trustedCAPath = trustedCAPath;
 			_initialized = true;
 
-			IBRCOMMON_LOGGER(info) << "SecurityCertificateManager: Initialization succeeded." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", info) << "Initialization succeeded." << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void
@@ -154,7 +154,7 @@ namespace dtn
 			/* convert the eid to an ASN1_STRING, it is needed later for comparison. */
 			eid_string = ASN1_STRING_type_new(V_ASN1_PRINTABLESTRING);
 			if(!eid_string){
-				IBRCOMMON_LOGGER(error) << "SecurityCertificateManager: Error while creating an ASN1_STRING." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "Error while creating an ASN1_STRING." << IBRCOMMON_LOGGER_ENDL;
 				return false;
 			}
 			/* TODO this function returns an int, but the return value is undocumented */
@@ -163,7 +163,7 @@ namespace dtn
 
 			utf8_eid_len = ASN1_STRING_to_UTF8(&utf8_eid, eid_string);
 			if(utf8_eid_len <= 0){
-				IBRCOMMON_LOGGER(error) << "SecurityCertificateManager: ASN1_STRING_to_UTF8() returned " << utf8_eid_len << "." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "ASN1_STRING_to_UTF8() returned " << utf8_eid_len << "." << IBRCOMMON_LOGGER_ENDL;
 				return false;
 			}
 
@@ -177,14 +177,14 @@ namespace dtn
 				/* get the NAME_ENTRY structure */
 				name_entry = X509_NAME_get_entry(cert_name, lastpos);
 				if(!name_entry){
-					IBRCOMMON_LOGGER(error) << "SecurityCertificateManager: X509_NAME_get_entry returned NULL unexpectedly." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "X509_NAME_get_entry returned NULL unexpectedly." << IBRCOMMON_LOGGER_ENDL;
 					continue;
 				}
 
 				/* retrieve the string */
 				ASN1_STRING *asn1 = X509_NAME_ENTRY_get_data(name_entry);
 				if(!asn1){
-					IBRCOMMON_LOGGER(error) << "SecurityCertificateManager: X509_NAME_ENTRY_get_data returned NULL unexpectedly." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "X509_NAME_ENTRY_get_data returned NULL unexpectedly." << IBRCOMMON_LOGGER_ENDL;
 					continue;
 				}
 
@@ -192,7 +192,7 @@ namespace dtn
 				int utf8_cert_len;
 				utf8_cert_len = ASN1_STRING_to_UTF8(&utf8_cert_name, asn1);
 				if(utf8_cert_len <= 0){
-					IBRCOMMON_LOGGER(error) << "SecurityCertificateManager: ASN1_STRING_to_UTF8() returned " << utf8_cert_len << "." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "ASN1_STRING_to_UTF8() returned " << utf8_cert_len << "." << IBRCOMMON_LOGGER_ENDL;
 					continue;
 				}
 
@@ -212,7 +212,7 @@ namespace dtn
 
 			char *subject_line = X509_NAME_oneline(cert_name, NULL, 0);
 			if(subject_line){
-				IBRCOMMON_LOGGER(warning) << "SecurityCertificateManager: Certificate does not fit. EID: " << eid.getString() << ", Certificate Subject: " << subject_line << "." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", warning) << "Certificate does not fit. EID: " << eid.getString() << ", Certificate Subject: " << subject_line << "." << IBRCOMMON_LOGGER_ENDL;
 				delete subject_line;
 			}
 			return false;

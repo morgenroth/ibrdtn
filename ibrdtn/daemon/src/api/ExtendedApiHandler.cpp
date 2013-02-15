@@ -390,7 +390,7 @@ namespace dtn
 									PlainDeserializer(_stream) >> _bundle_reg;
 									_stream << ClientHandler::API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
 								} catch (const std::exception &ex) {
-									IBRCOMMON_LOGGER_DEBUG(20) << "API put failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 20) << "put failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 									_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
 
 								}
@@ -403,7 +403,7 @@ namespace dtn
 									dtn::data::DefaultDeserializer(_stream) >> _bundle_reg;
 									_stream << ClientHandler::API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
 								} catch (const std::exception &ex) {
-									IBRCOMMON_LOGGER_DEBUG(20) << "API put failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 20) << "put failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 									_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
 								}
 							}
@@ -794,21 +794,21 @@ namespace dtn
 					yield();
 				}
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(40) << "ExtendedApiHandler::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 40) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				return;
 			} catch (const ibrcommon::IOException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException says " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::InvalidDataException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException says " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			try {
 				//FIXME
 //				_handler.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::run(): ThreadException (" << ex.what() << ") on termination" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 50) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

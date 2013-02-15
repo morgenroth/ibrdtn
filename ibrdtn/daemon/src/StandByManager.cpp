@@ -42,7 +42,7 @@ namespace dtn {
 			ibrcommon::MutexLock l(_lock);
 			_components.push_back(c);
 
-			IBRCOMMON_LOGGER(info) << "StandByManager: " << c->getName() << " adopted" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("StandByManager", info) << c->getName() << " adopted" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void StandByManager::raiseEvent(const dtn::core::Event *evt) throw ()
@@ -70,7 +70,7 @@ namespace dtn {
 		{
 			ibrcommon::MutexLock l(_lock);
 			if ((!_suspended) || (!_enabled)) return;
-			IBRCOMMON_LOGGER(info) << "StandByManager: wake-up components" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("StandByManager", info) << "wake-up components" << IBRCOMMON_LOGGER_ENDL;
 
 			for (std::list<Component*>::const_iterator iter = _components.begin(); iter != _components.end(); iter++)
 			{
@@ -91,7 +91,7 @@ namespace dtn {
 		{
 			ibrcommon::MutexLock l(_lock);
 			if (_suspended || (!_enabled)) return;
-			IBRCOMMON_LOGGER(info) << "StandByManager: suspend components" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("StandByManager", info) << "suspend components" << IBRCOMMON_LOGGER_ENDL;
 
 			for (std::list<Component*>::const_iterator iter = _components.begin(); iter != _components.end(); iter++)
 			{

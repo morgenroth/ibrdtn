@@ -115,7 +115,7 @@ namespace dtn
 				// decode address
 				UDPDatagramService::decode(identifier, destination);
 
-				IBRCOMMON_LOGGER_DEBUG(20) << "UDPDatagramService::send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << destination.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 20) << "send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << destination.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				// create vaddress
 				ibrcommon::socketset sockset = _vsocket.getAll();
@@ -151,7 +151,7 @@ namespace dtn
 				// copy payload to the new buffer
 				::memcpy(&tmp[2], buf, length);
 
-				IBRCOMMON_LOGGER_DEBUG(20) << "UDPDatagramService::send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << std::dec << seqno << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 20) << "send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << std::dec << seqno << IBRCOMMON_LOGGER_ENDL;
 
 				// create broadcast address
 				const ibrcommon::vaddress broadcast("ff02::1", BROADCAST_PORT);
@@ -205,7 +205,7 @@ namespace dtn
 						// copy payload to the destination buffer
 						::memcpy(buf, &tmp[2], ret - 2);
 
-						IBRCOMMON_LOGGER_DEBUG(20) << "UDPDatagramService::recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 20) << "recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						return ret - 2;
 					} catch (const std::bad_cast&) {

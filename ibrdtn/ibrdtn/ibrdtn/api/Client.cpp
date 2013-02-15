@@ -64,19 +64,19 @@ namespace dtn
 					yield();
 				}
 			} catch (const dtn::api::ConnectionException &ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - ConnectionException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "ConnectionException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (const dtn::streams::StreamConnection::StreamErrorException &ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - StreamErrorException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "StreamErrorException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (const ibrcommon::IOException &ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - IOException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "IOException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (const dtn::InvalidDataException &ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - InvalidDataException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "InvalidDataException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
-			} catch (const std::exception&) {
-				IBRCOMMON_LOGGER(error) << "error" << IBRCOMMON_LOGGER_ENDL;
+			} catch (const std::exception &ex) {
+				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
 		}

@@ -59,7 +59,7 @@ namespace dtn
 				break;
 
 			case 0:
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
 				_version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
 				break;
 			};
@@ -72,13 +72,13 @@ namespace dtn
 		}
 
 		void IPNDAgent::add(const ibrcommon::vaddress &address) {
-			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: listen to " << address.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "listen to " << address.toString() << IBRCOMMON_LOGGER_ENDL;
 			_destinations.push_back(address);
 		}
 
 		void IPNDAgent::bind(const ibrcommon::vinterface &net)
 		{
-			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			_interfaces.push_back(net);
 		}
 

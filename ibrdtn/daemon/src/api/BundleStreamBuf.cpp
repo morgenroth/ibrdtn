@@ -150,14 +150,14 @@ namespace dtn
 				// request the next bundle
 				dtn::data::MetaBundle b = _callback.get();
 
-				IBRCOMMON_LOGGER_DEBUG(40) << "BundleStreamBuf::underflow(): bundle received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BundleStreamBuf", 40) << "bundle received" << IBRCOMMON_LOGGER_ENDL;
 
 				// create a chunk object
 				Chunk c(b);
 
 				if (c._seq >= _in_seq)
 				{
-					IBRCOMMON_LOGGER_DEBUG(40) << "BundleStreamBuf::underflow(): bundle accepted, seq. no. " << c._seq << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("BundleStreamBuf", 40) << "bundle accepted, seq. no. " << c._seq << IBRCOMMON_LOGGER_ENDL;
 					_chunks.insert(c);
 				}
 			}
@@ -171,14 +171,14 @@ namespace dtn
 				try {
 					// request the next bundle
 					dtn::data::MetaBundle b = _callback.get(_timeout_receive);
-					IBRCOMMON_LOGGER_DEBUG(40) << "BundleStreamBuf::underflow(): bundle received" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("BundleStreamBuf", 40) << "bundle received" << IBRCOMMON_LOGGER_ENDL;
 
 					// create a chunk object
 					Chunk c(b);
 
 					if (c._seq >= _in_seq)
 					{
-						IBRCOMMON_LOGGER_DEBUG(40) << "BundleStreamBuf::underflow(): bundle accepted, seq. no. " << c._seq << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("BundleStreamBuf", 40) << "bundle accepted, seq. no. " << c._seq << IBRCOMMON_LOGGER_ENDL;
 						_chunks.insert(c);
 					}
 				} catch (std::exception&) {
@@ -196,7 +196,7 @@ namespace dtn
 				}
 			}
 
-			IBRCOMMON_LOGGER_DEBUG(40) << "BundleStreamBuf::underflow(): read the payload" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BundleStreamBuf", 40) << "read the payload" << IBRCOMMON_LOGGER_ENDL;
 
 			// get the first chunk in the buffer
 			const Chunk &c = (*_chunks.begin());

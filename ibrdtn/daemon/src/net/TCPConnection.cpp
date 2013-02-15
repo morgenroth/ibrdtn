@@ -482,7 +482,7 @@ namespace dtn
 				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				if (_protocol_stream != NULL) _protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 10) << "run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 				if (_protocol_stream != NULL) _protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			}
 		}
@@ -662,10 +662,10 @@ namespace dtn
 					yield();
 				}
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 50) << "Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
 				return;
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 10) << "Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			_connection.stop();

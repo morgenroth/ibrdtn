@@ -59,7 +59,7 @@ namespace dtn
 				// abort the connection thread
 				ibrcommon::DetachedThread::stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "DatagramConnection::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection", 50) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -162,7 +162,7 @@ namespace dtn
 			{
 				_last_ack = seqno;
 				_ack_cond.signal(true);
-				IBRCOMMON_LOGGER_DEBUG(20) << "DatagramConnection: ack received " << _last_ack << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection", 20) << "ack received " << _last_ack << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -223,7 +223,7 @@ namespace dtn
 			}
 
 			// transmission failed - abort the stream
-			IBRCOMMON_LOGGER_DEBUG(20) << "DatagramConnection::stream_send: transmission failed - abort the stream" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection", 20) << "transmission failed - abort the stream" << IBRCOMMON_LOGGER_ENDL;
 			throw DatagramException("transmission failed - abort the stream");
 		}
 
@@ -266,7 +266,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_queue_buf_cond);
 			if (_abort) throw DatagramException("stream aborted");
 
-			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::queue(): Received frame sequence number: " << seqno << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection", 10) << "Received frame sequence number: " << seqno << IBRCOMMON_LOGGER_ENDL;
 
 			// Check if the sequence number is what we expect
 			if ((_callback._params.seq_check) && (in_seq_num_ != seqno))
@@ -301,13 +301,13 @@ namespace dtn
 
 			if (flags & DatagramService::SEGMENT_FIRST)
 			{
-				IBRCOMMON_LOGGER_DEBUG(45) << "DatagramConnection: first segment received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection", 45) << "first segment received" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// if this is the last segment then...
 			if (flags & DatagramService::SEGMENT_LAST)
 			{
-				IBRCOMMON_LOGGER_DEBUG(45) << "DatagramConnection: last segment received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection", 45) << "last segment received" << IBRCOMMON_LOGGER_ENDL;
 
 				// ... expect a first segment as next
 				_in_state = DatagramService::SEGMENT_FIRST;
@@ -469,10 +469,10 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Sender::run stream destroyed"<< IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "DatagramConnection::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection", 50) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				return;
 			} catch (std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			_connection.stop();

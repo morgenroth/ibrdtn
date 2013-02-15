@@ -257,7 +257,7 @@ namespace dtn
 						}
 					}
 
-					IBRCOMMON_LOGGER_DEBUG(10) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("Registration", 10) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					if (_bundles.has(meta))
 					{
@@ -338,7 +338,7 @@ namespace dtn
 				_recv_bundles.add(bundle);
 				this->push(bundle);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("RegistrationQueue", 10) << "add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) { }
 		}
 

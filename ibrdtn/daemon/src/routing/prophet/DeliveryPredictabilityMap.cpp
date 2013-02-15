@@ -71,8 +71,8 @@ namespace dtn
 				stream << data::SDNV(ss.str().length());
 				stream << ss.str();
 			}
-			IBRCOMMON_LOGGER_DEBUG(20) << "ProphetRouting: Serialized DeliveryPredictabilityMap with " << _predictmap.size() << " items." << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(60) << *this << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("DeliveryPredictabilityMap", 20) << "Serialized with " << _predictmap.size() << " items." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("DeliveryPredictabilityMap", 60) << *this << IBRCOMMON_LOGGER_ENDL;
 			return stream;
 		}
 
@@ -117,8 +117,8 @@ namespace dtn
 				elements_read += 1;
 			}
 
-			IBRCOMMON_LOGGER_DEBUG(20) << "ProphetRouting: Deserialized DeliveryPredictabilityMap with " << _predictmap.size() << " items." << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(60) << *this << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("DeliveryPredictabilityMap", 20) << "Deserialized with " << _predictmap.size() << " items." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("DeliveryPredictabilityMap", 60) << *this << IBRCOMMON_LOGGER_ENDL;
 			return stream;
 		}
 
