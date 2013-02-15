@@ -498,7 +498,7 @@ namespace dtn
 							_bundle_reg.relabel();
 
 							// forward the bundle to the storage processing
-							_client.getAPIServer().processIncomingBundle(_endpoint, _bundle_reg);
+							dtn::api::Registration::processIncomingBundle(_endpoint, _bundle_reg);
 
 							ibrcommon::MutexLock l(_write_lock);
 							_stream << ClientHandler::API_STATUS_OK << " BUNDLE SENT" << std::endl;

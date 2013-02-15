@@ -177,7 +177,7 @@ namespace dtn
 					bundle.relabel();
 
 					// process the new bundle
-					_client.getAPIServer().processIncomingBundle(_eid, bundle);
+					dtn::api::Registration::processIncomingBundle(_eid, bundle);
 				}
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER(error) << "failed to start thread in BinaryStreamClient\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;

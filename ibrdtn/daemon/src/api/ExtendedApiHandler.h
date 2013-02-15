@@ -87,11 +87,6 @@ namespace dtn
 			 */
 			void notifyAdministrativeRecord(dtn::data::MetaBundle &bundle);
 
-			/**
-			 * Process a bundle received by the API
-			 */
-			void processIncomingBundle(dtn::data::Bundle &b);
-
 			ibrcommon::Mutex _write_lock;
 
 			dtn::data::Bundle _bundle_reg;

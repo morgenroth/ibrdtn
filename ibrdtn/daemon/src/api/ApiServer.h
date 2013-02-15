@@ -55,8 +55,6 @@ namespace dtn
 
 			void raiseEvent(const dtn::core::Event *evt) throw ();
 
-			void processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle);
-
 			/**
 			 * retrieve a registration for a given handle from the ApiServers registration list
 			 * the registration is automatically set into the attached state

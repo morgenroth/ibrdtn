@@ -224,6 +224,11 @@ namespace dtn
 			 */
 			void detach();
 
+			/**
+			 *
+			 */
+			static void processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle);
+
 		protected:
 			void underflow();
 
