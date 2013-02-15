@@ -7,6 +7,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 /*
  * Class:     de_tubs_ibr_dtn_service_NativeLibraryWrapper
  * Method:    daemonInitialize

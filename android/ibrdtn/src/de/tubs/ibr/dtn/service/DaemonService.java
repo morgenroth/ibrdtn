@@ -307,15 +307,7 @@ public class DaemonService extends Service implements DaemonStateListener {
     		_executor.execute(new Runnable() {
 				public void run() {
 					
-					NativeLibraryWrapper wrapper = new NativeLibraryWrapper();
-					
-					try {
-						wrapper.start();
-					} catch (Exception e) {
-						Log.e(TAG, "Exception on start", e);
-					}
-					
-//					_daemon.start(DaemonService.this, DaemonService.this);
+					_daemon.start(DaemonService.this, DaemonService.this);
 //					
 //					// wait until the daemon is online or in error state
 //					while ( ! (_daemon.getState().equals(DaemonState.ONLINE) || _daemon.getState().equals(DaemonState.ERROR)) ) {
@@ -334,7 +326,7 @@ public class DaemonService extends Service implements DaemonStateListener {
 				public void run() {
 					NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 					nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.dialog_wait_stopping)));
-//					_daemon.stop();
+					_daemon.stop();
 				}
     		});
         	
