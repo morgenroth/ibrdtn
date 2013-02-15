@@ -63,6 +63,7 @@ Android.mk: Makefile.am
 		-:CPPFLAGS $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
 			$(subst lib,libibrcommon_, $(ibrcommon_libs)) \
+			-llog \
 		-:LIBFILTER_WHOLE ibrcommon_data ibrcommon_link ibrcommon_net ibrcommon_thread ibrcommon_ssl ibrcommon_gcm ibrcommon_xml \
 			nl-3 nl-genl-3 nl-route-3 \
 		-:SUBDIR $(patsubst %,ibrcommon/%, $(SUBDIRS)) \
