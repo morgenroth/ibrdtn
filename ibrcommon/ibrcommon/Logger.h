@@ -210,6 +210,11 @@ namespace ibrcommon
 		static void stop();
 
 		/**
+		 * Set the default tag for untagged logging
+		 */
+		static void setDefaultTag(const std::string &tag);
+
+		/**
 		 * Print the log message to the log output (or queue it in the writer)
 		 */
 		void print();
@@ -342,6 +347,7 @@ namespace ibrcommon
 		int _debug_verbosity;
 		struct timeval _logtime;
 
+		static std::string _default_tag;
 		static LogWriter _logwriter;
 	};
 }

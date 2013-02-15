@@ -35,6 +35,7 @@
 
 namespace ibrcommon
 {
+	std::string Logger::_default_tag = "Core";
 	Logger::LogWriter Logger::_logwriter;
 
 	Logger::Logger(LogLevel level, const std::string &tag, int debug_verbosity)
@@ -301,7 +302,9 @@ namespace ibrcommon
 			if (_options & LOG_TAG)
 			{
 				if (log._tag.length() > 0) {
-					prefixes.push_back("(" + log._tag + ")");
+					prefixes.push_back(log._tag);
+				} else {
+					prefixes.push_back(_default_tag);
 				}
 			}
 
@@ -364,6 +367,11 @@ namespace ibrcommon
 		}
 	}
 	
+	void Logger::setDefaultTag(const std::string &tag)
+	{
+		Logger::_default_tag = tag;
+	}
+
 	void Logger::stop()
 	{
 		// stop the LogWriter::run() thread (this is needed with uclibc)
