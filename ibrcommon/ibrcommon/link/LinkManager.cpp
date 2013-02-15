@@ -52,7 +52,7 @@ namespace ibrcommon
 		getInstance().up();
 	}
 
-	void LinkManager::addEventListener(const vinterface &iface, LinkManager::EventCallback *cb)
+	void LinkManager::addEventListener(const vinterface &iface, LinkManager::EventCallback *cb) throw ()
 	{
 		if (cb == NULL) return;
 		ibrcommon::MutexLock l(_listener_mutex);
@@ -61,7 +61,7 @@ namespace ibrcommon
 		ss.insert(cb);
 	}
 
-	void LinkManager::removeEventListener(const vinterface &iface, LinkManager::EventCallback *cb)
+	void LinkManager::removeEventListener(const vinterface &iface, LinkManager::EventCallback *cb) throw ()
 	{
 		if (cb == NULL) return;
 		ibrcommon::MutexLock l(_listener_mutex);
@@ -76,7 +76,7 @@ namespace ibrcommon
 		}
 	}
 
-	void LinkManager::removeEventListener(LinkManager::EventCallback *cb)
+	void LinkManager::removeEventListener(LinkManager::EventCallback *cb) throw ()
 	{
 		if (cb == NULL) return;
 
