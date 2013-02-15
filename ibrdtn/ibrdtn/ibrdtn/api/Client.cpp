@@ -164,18 +164,18 @@ namespace dtn
 			shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 		}
 
-		void Client::eventConnectionDown()
+		void Client::eventConnectionDown() throw ()
 		{
 			_inqueue.abort();
 
 			try {
 				_receiver.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(20) << "ThreadException in Client::eventConnectionDown: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void Client::eventBundleAck(size_t ack)
+		void Client::eventBundleAck(size_t ack) throw ()
 		{
 			lastack = ack;
 		}

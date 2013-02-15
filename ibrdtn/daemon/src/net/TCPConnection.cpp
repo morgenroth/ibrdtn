@@ -113,24 +113,63 @@ namespace dtn
 			_protocol_stream->reject();
 		}
 
-		void TCPConnection::eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases)
+		void TCPConnection::eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) throw ()
 		{
 		}
 
-		void TCPConnection::eventTimeout()
+		void TCPConnection::eventTimeout() throw ()
 		{
 			// event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _node);
 
-			// stop the receiver thread
-			this->stop();
+			try {
+				// stop the receiver thread
+				this->stop();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
-		void TCPConnection::eventError()
+		void TCPConnection::eventError() throw ()
 		{
 		}
 
-		void TCPConnection::eventConnectionUp(const dtn::streams::StreamContactHeader &header)
+		void TCPConnection::initiateExtendedHandshake() throw (ibrcommon::Exception)
+		{
+#ifdef WITH_TLS
+			/* if both nodes support TLS, activate it */
+			if ((_peer._flags & dtn::streams::StreamContactHeader::REQUEST_TLS)
+					&& (_flags & dtn::streams::StreamContactHeader::REQUEST_TLS))
+			{
+				try{
+					ibrcommon::TLSStream &tls = dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream);
+					X509 *peer_cert = tls.activate();
+					if (!dtn::security::SecurityCertificateManager::validateSubject(peer_cert, _peer.getEID())) {
+						throw ibrcommon::TLSCertificateVerificationException("certificate does not fit the EID");
+					}
+				} catch (const std::exception&) {
+					if (dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
+						/* close the connection */
+						IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 20) << "TLS failed, closing the connection." << IBRCOMMON_LOGGER_ENDL;
+						throw;
+					} else {
+						IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 20) << "TLS failed, continuing unauthenticated." << IBRCOMMON_LOGGER_ENDL;
+					}
+				}
+			} else {
+				/* TLS not supported by both Nodes, check if its required */
+				if (dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
+					/* close the connection */
+					throw ibrcommon::TLSException("TLS not supported by peer.");
+				} else if(_flags & dtn::streams::StreamContactHeader::REQUEST_TLS){
+					IBRCOMMON_LOGGER_TAG("TCPConnection", notice) << "TLS not supported by peer. Continuing without TLS." << IBRCOMMON_LOGGER_ENDL;
+				}
+				/* else: this node does not support TLS, should have already printed a warning */
+			}
+#endif
+		}
+
+		void TCPConnection::eventConnectionUp(const dtn::streams::StreamContactHeader &header) throw ()
 		{
 			_peer = header;
 
@@ -141,38 +180,16 @@ namespace dtn
 
 			_keepalive_timeout = header._keepalive * 1000;
 
-#ifdef WITH_TLS
-			/* if both nodes support TLS, activate it */
-			if((_peer._flags & dtn::streams::StreamContactHeader::REQUEST_TLS)
-					&& (_flags & dtn::streams::StreamContactHeader::REQUEST_TLS)){
-				try{
-					ibrcommon::TLSStream &tls = dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream);
-					X509 *peer_cert = tls.activate();
-					if(!dtn::security::SecurityCertificateManager::validateSubject(peer_cert, _peer.getEID())){
-						IBRCOMMON_LOGGER(warning) << "TCPConnection: certificate does not fit the EID." << IBRCOMMON_LOGGER_ENDL;
-						throw ibrcommon::TLSCertificateVerificationException("certificate does not fit the EID");
-					}
-				} catch (const std::exception&) {
-					if(dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
-						/* close the connection */
-						IBRCOMMON_LOGGER(notice) << "TCPConnection: TLS failed, closing the connection." << IBRCOMMON_LOGGER_ENDL;
-						throw;
-					} else {
-						IBRCOMMON_LOGGER(notice) << "TCPConnection: TLS failed, continuing unauthenticated." << IBRCOMMON_LOGGER_ENDL;
-					}
-				}
-			} else {
-				/* TLS not supported by both Nodes, check if its required */
-				if(dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
-					/* close the connection */
-					IBRCOMMON_LOGGER(notice) << "TCPConnection: TLS not supported by both Peers. Closing the connection." << IBRCOMMON_LOGGER_ENDL;
-					throw ibrcommon::TLSException("TLS not supported by peer.");
-				} else if(_flags & dtn::streams::StreamContactHeader::REQUEST_TLS){
-					IBRCOMMON_LOGGER(notice) << "TCPConnection: TLS not supported by peer. Continuing without TLS." << IBRCOMMON_LOGGER_ENDL;
-				}
-				/* else: this node does not support TLS, should have already printed a warning */
+			try {
+				// initiate extended handshake (e.g. TLS)
+				initiateExtendedHandshake();
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG("TCPConnection", warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+				// abort the connection
+				shutdown();
+				return;
 			}
-#endif
 
 			// set the incoming timer if set (> 0)
 			if (_peer._keepalive > 0)
@@ -195,9 +212,9 @@ namespace dtn
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
 		}
 
-		void TCPConnection::eventConnectionDown()
+		void TCPConnection::eventConnectionDown() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(40) << "TCPConnection::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 40) << "eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				// shutdown the keepalive sender thread
@@ -206,7 +223,7 @@ namespace dtn
 				// stop the sender
 				_sender.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::eventConnectionDown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (_peer._localeid != dtn::data::EID())
@@ -216,7 +233,7 @@ namespace dtn
 			}
 		}
 
-		void TCPConnection::eventBundleRefused()
+		void TCPConnection::eventBundleRefused() throw ()
 		{
 			try {
 				const dtn::data::BundleID bundle = _sentqueue.getnpop();
@@ -229,11 +246,11 @@ namespace dtn
 
 			} catch (const ibrcommon::QueueUnblockedException&) {
 				// pop on empty queue!
-				IBRCOMMON_LOGGER(error) << "transfer refused without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << "transfer refused without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void TCPConnection::eventBundleForwarded()
+		void TCPConnection::eventBundleForwarded() throw ()
 		{
 			try {
 				const dtn::data::MetaBundle bundle = _sentqueue.getnpop();
@@ -248,26 +265,26 @@ namespace dtn
 				_lastack = 0;
 			} catch (const ibrcommon::QueueUnblockedException&) {
 				// pop on empty queue!
-				IBRCOMMON_LOGGER(error) << "transfer completed without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << "transfer completed without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void TCPConnection::eventBundleAck(size_t ack)
+		void TCPConnection::eventBundleAck(size_t ack) throw ()
 		{
 			_lastack = ack;
 		}
 
-		void TCPConnection::initialize()
+		void TCPConnection::initialize() throw ()
 		{
 			// start the receiver for incoming bundles + handshake
 			try {
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void TCPConnection::shutdown()
+		void TCPConnection::shutdown() throw ()
 		{
 			// shutdown
 			_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
@@ -276,7 +293,7 @@ namespace dtn
 				// abort the connection thread
 				ibrcommon::DetachedThread::stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << "shutdown failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

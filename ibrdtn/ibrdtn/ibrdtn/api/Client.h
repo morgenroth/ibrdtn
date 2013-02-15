@@ -188,51 +188,51 @@ namespace dtn
 			 * aborts the blocking getBundle() method. If a client is working synchonous
 			 * this method should not be overloaded!
 			 */
-			virtual void eventConnectionDown();
+			virtual void eventConnectionDown() throw ();
 
 			/**
 			 * The bundle ack event is called by the StreamConnection object and stores
 			 * the last ACK'd bundle size in the lastack variable.
 			 * @param ack ACK'd bundle size
 			 */
-			virtual void eventBundleAck(size_t ack);
+			virtual void eventBundleAck(size_t ack) throw ();
 
 			/**
 			 * The shutdown event callback method can overloaded to handle shutdown
 			 * events.
 			 */
-			virtual void eventShutdown(StreamConnection::ConnectionShutdownCases) {};
+			virtual void eventShutdown(StreamConnection::ConnectionShutdownCases) throw () {};
 
 			/**
 			 * The timeout event callback method can overloaded to handle timeouts
 			 * occurring in the API protocol.
 			 */
-			virtual void eventTimeout() {};
+			virtual void eventTimeout() throw () {};
 
 			/**
 			 * The error event callback method can overloaded to handle errors
 			 * occurring in the API protocol.
 			 */
-			virtual void eventError() {};
+			virtual void eventError() throw () {};
 
 			/**
 			 * The connection up event callback method can overloaded to handle
 			 * a successful connection handshake. In this call the header of the
 			 * corresponding daemon is available.
 			 */
-			virtual void eventConnectionUp(const StreamContactHeader&) {};
+			virtual void eventConnectionUp(const StreamContactHeader&) throw () {};
 
 			/**
 			 * The bundle refused event callback method can overloaded to handle
 			 * a bundle refused by the porresponding daemon.
 			 */
-			virtual void eventBundleRefused() {};
+			virtual void eventBundleRefused() throw () {};
 
 			/**
 			 * The bundle forwarded event callback method can overloaded to determine
 			 * when a bundle is forwarded to the daemon.
 			 */
-			virtual void eventBundleForwarded() {};
+			virtual void eventBundleForwarded() throw () {};
 
 			/**
 			 * This method is for synchronous API usage only. It blocks until a bundle

@@ -99,42 +99,42 @@ namespace dtn
 				 * This method is called if a SHUTDOWN message is
 				 * received.
 				 */
-				virtual void eventShutdown(StreamConnection::ConnectionShutdownCases csc) = 0;
+				virtual void eventShutdown(StreamConnection::ConnectionShutdownCases csc) throw () = 0;
 
 				/**
 				 * This method is called if the stream is closed
 				 * by a TIMEOUT.
 				 */
-				virtual void eventTimeout() = 0;
+				virtual void eventTimeout() throw () = 0;
 
 				/**
 				 * This method is called if a error occured in the stream.
 				 */
-				virtual void eventError() = 0;
+				virtual void eventError() throw () = 0;
 
 				/**
 				 * This method is called if a bundle is refused by the peer.
 				 */
-				virtual void eventBundleRefused() = 0;
+				virtual void eventBundleRefused() throw () = 0;
 				/**
 				 * This method is called if a bundle is refused by the peer.
 				 */
-				virtual void eventBundleForwarded() = 0;
+				virtual void eventBundleForwarded() throw () = 0;
 				/**
 				 * This method is called if a ACK is received.
 				 */
-				virtual void eventBundleAck(size_t ack) = 0;
+				virtual void eventBundleAck(size_t ack) throw () = 0;
 
 				/**
 				 * This method is called if a handshake was successful.
 				 * @param header
 				 */
-				virtual void eventConnectionUp(const StreamContactHeader &header) = 0;
+				virtual void eventConnectionUp(const StreamContactHeader &header) throw () = 0;
 
 				/**
 				 * This method is called if a connection went down.
 				 */
-				virtual void eventConnectionDown() = 0;
+				virtual void eventConnectionDown() throw () = 0;
 			};
 
 			/**

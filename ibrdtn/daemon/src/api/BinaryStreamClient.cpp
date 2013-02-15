@@ -50,19 +50,19 @@ namespace dtn
 			return _eid;
 		}
 
-		void BinaryStreamClient::eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases)
+		void BinaryStreamClient::eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) throw ()
 		{
 		}
 
-		void BinaryStreamClient::eventTimeout()
+		void BinaryStreamClient::eventTimeout() throw ()
 		{
 		}
 
-		void BinaryStreamClient::eventError()
+		void BinaryStreamClient::eventError() throw ()
 		{
 		}
 
-		void BinaryStreamClient::eventConnectionUp(const dtn::streams::StreamContactHeader &header)
+		void BinaryStreamClient::eventConnectionUp(const dtn::streams::StreamContactHeader &header) throw ()
 		{
 			Registration &reg = _client.getRegistration();
 
@@ -77,12 +77,12 @@ namespace dtn
 				_eid = BundleCore::local + BundleCore::local.getDelimiter() + header._localeid.getSSP();
 			}
 
-			IBRCOMMON_LOGGER_DEBUG(20) << "new client connected, handle: " << reg.getHandle() << "; eid: "<< _eid.getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 20) << "new client connected, handle: " << reg.getHandle() << "; eid: "<< _eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 			reg.subscribe(_eid);
 		}
 
-		void BinaryStreamClient::eventConnectionDown()
+		void BinaryStreamClient::eventConnectionDown() throw ()
 		{
 			IBRCOMMON_LOGGER_DEBUG(40) << "BinaryStreamClient::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
@@ -92,11 +92,11 @@ namespace dtn
 				// stop the sender
 				_sender.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "BinaryStreamClient::eventConnectionDown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BinaryStreamClient", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void BinaryStreamClient::eventBundleRefused()
+		void BinaryStreamClient::eventBundleRefused() throw ()
 		{
 			try {
 				const dtn::data::Bundle bundle = _sentqueue.getnpop();
@@ -109,7 +109,7 @@ namespace dtn
 			}
 		}
 
-		void BinaryStreamClient::eventBundleForwarded()
+		void BinaryStreamClient::eventBundleForwarded() throw ()
 		{
 			try {
 				const dtn::data::Bundle bundle = _sentqueue.getnpop();
@@ -124,7 +124,7 @@ namespace dtn
 			}
 		}
 
-		void BinaryStreamClient::eventBundleAck(size_t ack)
+		void BinaryStreamClient::eventBundleAck(size_t ack) throw ()
 		{
 			_lastack = ack;
 		}

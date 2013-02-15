@@ -515,7 +515,7 @@ namespace dtn
 			_globally_connected = val;
 		}
 
-		void BundleCore::check_connection_state()
+		void BundleCore::check_connection_state() throw ()
 		{
 			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
 

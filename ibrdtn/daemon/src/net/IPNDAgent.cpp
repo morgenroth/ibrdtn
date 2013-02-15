@@ -82,7 +82,7 @@ namespace dtn
 			_interfaces.push_back(net);
 		}
 
-		void IPNDAgent::leave_interface(const ibrcommon::vinterface &iface)
+		void IPNDAgent::leave_interface(const ibrcommon::vinterface &iface) throw ()
 		{
 			ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**_recv_socket.getAll().begin());
 
@@ -92,17 +92,17 @@ namespace dtn
 					msock.leave(*it_addr, iface);
 				} catch (const ibrcommon::socket_raw_error &e) {
 					if (e.error() != EADDRNOTAVAIL) {
-						IBRCOMMON_LOGGER(error) << "leave failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "leave failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::socket_exception &e) {
-					IBRCOMMON_LOGGER_DEBUG(10) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const ibrcommon::Exception&) {
-					IBRCOMMON_LOGGER(error) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}
 
-		void IPNDAgent::join_interface(const ibrcommon::vinterface &iface)
+		void IPNDAgent::join_interface(const ibrcommon::vinterface &iface) throw ()
 		{
 			ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**_recv_socket.getAll().begin());
 
@@ -112,10 +112,10 @@ namespace dtn
 					msock.join(*it_addr, iface);
 				} catch (const ibrcommon::socket_raw_error &e) {
 					if (e.error() != EADDRINUSE) {
-						IBRCOMMON_LOGGER(error) << "join failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "join failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::socket_exception &e) {
-					IBRCOMMON_LOGGER_DEBUG(10) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}

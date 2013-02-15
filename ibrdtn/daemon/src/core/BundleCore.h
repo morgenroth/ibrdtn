@@ -156,7 +156,7 @@ namespace dtn
 			/**
 			 * Check if we are connected to the internet.
 			 */
-			void check_connection_state();
+			void check_connection_state() throw ();
 
 			/**
 			 * Forbidden copy constructor
