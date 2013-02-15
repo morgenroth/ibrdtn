@@ -522,7 +522,7 @@ namespace dtn
 								/* parse an optional offset, where to insert the block */
 								if (cmd.size() > 3)
 								{
-									int offset;
+									size_t offset;
 									istringstream ss(cmd[3]);
 
 									ss >> offset;
@@ -532,7 +532,7 @@ namespace dtn
 									{
 										inserter = dtn::data::BundleBuilder(_bundle_reg, dtn::data::BundleBuilder::END);
 									}
-									else if(offset <= 0)
+									else if(offset == 0)
 									{
 										inserter = dtn::data::BundleBuilder(_bundle_reg, dtn::data::BundleBuilder::FRONT);
 									}
@@ -591,7 +591,7 @@ namespace dtn
 					}
 					else if (cmd[0] == "payload")
 					{
-						int block_offset;
+						size_t block_offset;
 						int cmd_index = 1;
 						dtn::data::Block& b = _bundle_reg.getBlock<dtn::data::PayloadBlock>();
 
@@ -604,7 +604,7 @@ namespace dtn
 							cmd_index++;
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
-							if(block_offset < 0 || block_offset >= _bundle_reg.getBlocks().size()){
+							if (block_offset >= _bundle_reg.getBlocks().size()) {
 								throw ibrcommon::Exception("invalid offset");
 							}
 
@@ -617,20 +617,15 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 							_stream << ClientHandler::API_STATUS_OK << " PAYLOAD GET" << std::endl;
 
-							int payload_offset = 0;
-							int length = 0;
+							size_t payload_offset = 0;
+							size_t length = 0;
 
-							if(cmd_remaining > 0)
+							if (cmd_remaining > 0)
 							{
-
 								/* read the payload offset */
 								ss.clear(); ss.str(cmd[cmd_index+1]); ss >> payload_offset;
-								if(payload_offset < 0)
-								{
-									payload_offset = 0;
-								}
 
-								if(cmd_remaining > 1)
+								if (cmd_remaining > 1)
 								{
 									ss.clear(); ss.str(cmd[cmd_index+2]); ss >> length;
 								}
@@ -645,7 +640,7 @@ namespace dtn
 								/* serialize the payload of the bundle into the blob */
 								b.serialize(*blob_stream, slength);
 
-								if(length <= 0 || (length + payload_offset) > slength)
+								if ((length + payload_offset) > slength)
 								{
 									length = slength - payload_offset;
 								}
@@ -665,16 +660,11 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 							_stream << ClientHandler::API_STATUS_CONTINUE << " PAYLOAD PUT" << std::endl;
 
-							int payload_offset = 0;
-							if(cmd_remaining > 0)
+							size_t payload_offset = 0;
+							if (cmd_remaining > 0)
 							{
-
 								/* read the payload offset */
 								ss.clear(); ss.str(cmd[cmd_index+1]); ss >> payload_offset;
-								if(payload_offset < 0)
-								{
-									payload_offset = 0;
-								}
 							}
 
 							try
@@ -688,7 +678,7 @@ namespace dtn
 								b.serialize(*blob_stream, slength);
 
 								/* move the streams put pointer to the given offset */
-								if(payload_offset < slength){
+								if (payload_offset < slength) {
 									blob_stream->seekp(payload_offset, ios_base::beg);
 								}
 
@@ -786,12 +776,17 @@ namespace dtn
 				while(_handler.good()){
 					try{
 						dtn::data::MetaBundle id = reg.receiveMetaBundle();
-						_handler._bundle_queue.push(id);
-						ibrcommon::MutexLock l(_handler._write_lock);
-						_handler._stream << API_STATUS_NOTIFY_BUNDLE << " NOTIFY BUNDLE ";
-						sayBundleID(_handler._stream, id);
-						_handler._stream << std::endl;
 
+						if (id.procflags & dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD) {
+							// transform custody signals & status reports into notifies
+							_handler.notifyAdministrativeRecord(id);
+
+							// announce the delivery of this bundle
+							_handler._client.getRegistration().delivered(id);
+						} else {
+							// notify the client about the new bundle
+							_handler.notifyBundle(id);
+						}
 					} catch (const dtn::storage::NoBundleFoundException&) {
 						reg.wait_for_bundle();
 					}
@@ -814,6 +809,127 @@ namespace dtn
 //				_handler.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::run(): ThreadException (" << ex.what() << ") on termination" << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		void ExtendedApiHandler::notifyBundle(dtn::data::MetaBundle &bundle)
+		{
+			// put the bundle into the API queue
+			_bundle_queue.push(bundle);
+
+			// lock the API channel
+			ibrcommon::MutexLock l(_write_lock);
+
+			// write notification header to API channel
+			_stream << API_STATUS_NOTIFY_BUNDLE << " NOTIFY BUNDLE ";
+
+			// format the bundle ID and write it to the stream
+			sayBundleID(_stream, bundle);
+
+			// finalize statement with a line-break
+			_stream << std::endl;
+		}
+
+		void ExtendedApiHandler::notifyAdministrativeRecord(dtn::data::MetaBundle &bundle)
+		{
+			// load the whole bundle
+			const dtn::data::Bundle b = dtn::core::BundleCore::getInstance().getStorage().get(bundle);
+
+			// get the payload block of the bundle
+			const dtn::data::PayloadBlock &payload = b.getBlock<dtn::data::PayloadBlock>();
+
+			try {
+				// try to decode as status report
+				dtn::data::StatusReportBlock report;
+				report.read(payload);
+
+				// lock the API channel
+				ibrcommon::MutexLock l(_write_lock);
+
+				// write notification header to API channel
+				_stream << API_STATUS_NOTIFY_REPORT << " NOTIFY REPORT ";
+
+				// format the bundle ID and write it to the stream
+				_stream << report._bundle_timestamp.getValue() << "." << report._bundle_sequence.getValue();
+
+				if (report.refsFragment()) {
+					_stream << "." << report._fragment_offset.getValue() << ":" << report._fragment_length.getValue() << " ";
+				} else {
+					_stream << " ";
+				}
+
+				// origin source
+				_stream << report._source.getString() << " ";
+
+				// reason code
+				_stream << (int)report._reasoncode << " ";
+
+				if (report._status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE)
+					_stream << "RECEIPT[" << report._timeof_receipt.getTimestamp().getValue() << "."
+						<< report._timeof_receipt.getNanoseconds().getValue() << "] ";
+
+				if (report._status & dtn::data::StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE)
+					_stream << "CUSTODY-ACCEPTANCE[" << report._timeof_custodyaccept.getTimestamp().getValue() << "."
+						<< report._timeof_custodyaccept.getNanoseconds().getValue() << "] ";
+
+				if (report._status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE)
+					_stream << "FORWARDING[" << report._timeof_forwarding.getTimestamp().getValue() << "."
+						<< report._timeof_forwarding.getNanoseconds().getValue() << "] ";
+
+				if (report._status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE)
+					_stream << "DELIVERY[" << report._timeof_delivery.getTimestamp().getValue() << "."
+						<< report._timeof_delivery.getNanoseconds().getValue() << "] ";
+
+				if (report._status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE)
+					_stream << "DELETION[" << report._timeof_deletion.getTimestamp().getValue() << "."
+						<< report._timeof_deletion.getNanoseconds().getValue() << "] ";
+
+				// finalize statement with a line-break
+				_stream << std::endl;
+
+				return;
+			} catch (const dtn::data::StatusReportBlock::WrongRecordException&) {
+				// this is not a status report
+			}
+
+			try {
+				// try to decode as custody signal
+				dtn::data::CustodySignalBlock custody;
+				custody.read(payload);
+
+				// lock the API channel
+				ibrcommon::MutexLock l(_write_lock);
+
+				// write notification header to API channel
+				_stream << API_STATUS_NOTIFY_CUSTODY << " NOTIFY CUSTODY ";
+
+				// format the bundle ID and write it to the stream
+				_stream << custody._bundle_timestamp.getValue() << "." << custody._bundle_sequence.getValue();
+
+				if (custody.refsFragment()) {
+					_stream << "." << custody._fragment_offset.getValue() << ":" << custody._fragment_length.getValue() << " ";
+				} else {
+					_stream << " ";
+				}
+
+				// origin source
+				_stream << custody._source.getString() << " ";
+
+				if (custody._custody_accepted) {
+					_stream << "ACCEPTED ";
+				} else {
+					_stream << "REJECTED(" << (int)custody._reason << ") ";
+				}
+
+				// add time of signal to the message
+				_stream << custody._timeofsignal.getTimestamp().getValue() << "." << custody._timeofsignal.getNanoseconds().getValue();
+
+				// finalize statement with a line-break
+				_stream << std::endl;
+
+				return;
+			} catch (const dtn::data::CustodySignalBlock::WrongRecordException&) {
+				// this is not a custody report
 			}
 		}
 

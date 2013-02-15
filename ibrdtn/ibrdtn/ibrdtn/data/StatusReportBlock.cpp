@@ -31,7 +31,7 @@ namespace dtn
 	namespace data
 	{
 		StatusReportBlock::StatusReportBlock()
-		 : _admfield(16), _status(0), _reasoncode(0),
+		 : AdministrativeBlock(16), _status(0), _reasoncode(0),
 		 _fragment_offset(0), _fragment_length(0), _timeof_receipt(),
 		 _timeof_custodyaccept(), _timeof_forwarding(), _timeof_delivery(),
 		 _timeof_deletion(), _bundle_timestamp(0), _bundle_sequence(0)
@@ -54,7 +54,7 @@ namespace dtn
 			(*stream) << _status;
 			(*stream) << _reasoncode;
 
-			if ( _admfield & 0x01 )
+			if ( refsFragment() )
 			{
 				(*stream) << _fragment_offset;
 				(*stream) << _fragment_length;
@@ -93,7 +93,7 @@ namespace dtn
 			(*stream) >> _status;
 			(*stream) >> _reasoncode;
 
-			if ( _admfield & 0x01 )
+			if ( refsFragment() )
 			{
 				(*stream) >> _fragment_offset;
 				(*stream) >> _fragment_length;

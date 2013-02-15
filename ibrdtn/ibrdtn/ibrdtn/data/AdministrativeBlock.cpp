@@ -11,10 +11,14 @@ namespace dtn
 {
 	namespace data
 	{
-		AdministrativeBlock::AdministrativeBlock() {
+		AdministrativeBlock::AdministrativeBlock(char admfield) : _admfield(admfield) {
 		}
 
 		AdministrativeBlock::~AdministrativeBlock() {
+		}
+
+		bool AdministrativeBlock::refsFragment() const {
+			return (_admfield & 0x01);
 		}
 	} /* namespace data */
 } /* namespace dtn */

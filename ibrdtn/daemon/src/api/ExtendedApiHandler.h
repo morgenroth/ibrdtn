@@ -44,7 +44,9 @@ namespace dtn
 			{
 				API_STATUS_NOTIFY_COMMON = 600,
 				API_STATUS_NOTIFY_NEIGHBOR = 601,
-				API_STATUS_NOTIFY_BUNDLE = 602
+				API_STATUS_NOTIFY_BUNDLE = 602,
+				API_STATUS_NOTIFY_REPORT = 603,
+				API_STATUS_NOTIFY_CUSTODY = 604
 			};
 
 			ExtendedApiHandler(ClientHandler &client, ibrcommon::socketstream &stream);
@@ -75,6 +77,19 @@ namespace dtn
 			static void sayBundleID(ostream &stream, const dtn::data::BundleID &id);
 			static dtn::data::BundleID readBundleID(const std::vector<std::string>&, const size_t start);
 
+			/**
+			 * Announce a new bundle in the queue
+			 */
+			void notifyBundle(dtn::data::MetaBundle &bundle);
+
+			/**
+			 * Transform a administrative record into a notification
+			 */
+			void notifyAdministrativeRecord(dtn::data::MetaBundle &bundle);
+
+			/**
+			 * Process a bundle received by the API
+			 */
 			void processIncomingBundle(dtn::data::Bundle &b);
 
 			ibrcommon::Mutex _write_lock;

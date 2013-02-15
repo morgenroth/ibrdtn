@@ -1,0 +1,21 @@
+# -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4; truncate-lines: t -*- vim:fenc=utf-8:et:sw=4:ts=4:sts=4
+# $Id$
+
+PortSystem         1.0
+name               ibrdtn-tools
+version            ${PKG_VERSION}
+categories         net
+platforms          darwin
+license            APACHE
+maintainers        ${PKG_MAINTAINER}
+description        Toos for IBR-DTN daemon
+long_description   This package contains IBR-DTN standard tools such as dtnping.
+homepage           http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
+master_sites       ${PKG_URL}
+checksums          ${PKG_CHECKSUMS}
+depends_lib     \
+                port:pkgconfig \
+                port:ibrdtn \
+                port:ibrcommon 
+configure.args   \
+                --mandir=${prefix}/share/man 
