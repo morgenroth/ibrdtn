@@ -73,9 +73,9 @@ namespace dtn
 			IndependentComponent();
 			virtual ~IndependentComponent();
 
-			virtual void initialize();
-			virtual void startup();
-			virtual void terminate();
+			virtual void initialize() throw ();
+			virtual void startup() throw ();
+			virtual void terminate() throw ();
 
 		protected:
 			void run() throw ();
@@ -92,13 +92,13 @@ namespace dtn
 			IntegratedComponent();
 			virtual ~IntegratedComponent();
 
-			virtual void initialize();
-			virtual void startup();
-			virtual void terminate();
+			virtual void initialize() throw ();
+			virtual void startup() throw ();
+			virtual void terminate() throw ();
 
 		protected:
-			virtual void componentUp() = 0;
-			virtual void componentDown() = 0;
+			virtual void componentUp() throw () = 0;
+			virtual void componentDown() throw () = 0;
 		};
 	}
 }
