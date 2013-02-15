@@ -343,6 +343,7 @@ namespace dtn
 
 		void UDPConvergenceLayer::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			try {
 				// create sockets for all addresses on the interface
 				std::list<ibrcommon::vaddress> addrs = _net.getAddresses();
@@ -360,8 +361,8 @@ namespace dtn
 
 				// subscribe to NetLink events on our interfaces
 				ibrcommon::LinkManager::getInstance().addEventListener(_net, this);
-			} catch (const ibrcommon::socket_exception&) {
-
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG("UDPConvergenceLayer", error) << "bind failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

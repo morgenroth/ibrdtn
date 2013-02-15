@@ -166,35 +166,47 @@ namespace dtn
 
 		void SQLiteBundleStorage::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
+
 			//register Events
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
 
-			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+			try {
+				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 
-			// delete all old BLOB container
-			_blobPath.remove(true);
+				// delete all old BLOB container
+				_blobPath.remove(true);
 
-			// create BLOB folder
-			ibrcommon::File::createDirectory( _blobPath );
+				// create BLOB folder
+				ibrcommon::File::createDirectory( _blobPath );
 
-			// create the bundle folder
-			ibrcommon::File::createDirectory( _blockPath );
+				// create the bundle folder
+				ibrcommon::File::createDirectory( _blockPath );
 
-			// open the database and create all folders and files if needed
-			_database.open();
+				// open the database and create all folders and files if needed
+				_database.open();
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		};
 
 		void SQLiteBundleStorage::componentDown() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
+
 			//unregister Events
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
 
-			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+			try {
+				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 
-			// close the database
-			_database.close();
+				// close the database
+				_database.close();
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		};
 
 		void SQLiteBundleStorage::__cancellation() throw ()

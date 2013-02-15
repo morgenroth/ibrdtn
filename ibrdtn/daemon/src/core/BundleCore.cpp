@@ -99,6 +99,7 @@ namespace dtn
 
 		void BundleCore::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
 			for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); iter++)
 			{

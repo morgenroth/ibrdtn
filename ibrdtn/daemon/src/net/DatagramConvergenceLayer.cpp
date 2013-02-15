@@ -145,12 +145,12 @@ namespace dtn
 
 		void DatagramConvergenceLayer::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			try {
 				_service->bind();
 			} catch (const std::exception &e) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "Failed to add DatagramConvergenceLayer on " << _service->getInterface().toString() << IBRCOMMON_LOGGER_ENDL;
-				IBRCOMMON_LOGGER_DEBUG(10) << "Exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("DatagramConvergenceLayer", error) << "bind to " << _service->getInterface().toString() << " failed (" << e.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// set the running variable

@@ -66,6 +66,7 @@ namespace dtn
 
 		void ConnectionManager::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<TimeEvent>::add(this);
 			dtn::core::EventDispatcher<NodeEvent>::add(this);
 			dtn::core::EventDispatcher<ConnectionEvent>::add(this);

@@ -44,11 +44,13 @@ namespace dtn
 
 		void MemoryBundleStorage::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 		}
 
 		void MemoryBundleStorage::componentDown() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
 

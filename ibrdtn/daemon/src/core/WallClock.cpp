@@ -23,6 +23,7 @@
 #include "core/TimeEvent.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/Logger.h>
 
 namespace dtn
 {
@@ -48,13 +49,18 @@ namespace dtn
 
 		void WallClock::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			if(_timer.isRunning())
 			{
 				_timer.reset();
 			}
 			else
 			{
-				_timer.start();
+				try {
+					_timer.start();
+				} catch (const ibrcommon::ThreadException &ex) {
+					IBRCOMMON_LOGGER_TAG("WallClock", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				}
 			}
 		}
 

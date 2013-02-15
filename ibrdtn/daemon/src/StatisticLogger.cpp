@@ -53,6 +53,8 @@ namespace dtn
 
 		void StatisticLogger::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
+
 			if ((_type == LOGGER_FILE_PLAIN) || (_type == LOGGER_FILE_CSV))
 			{
 				// open statistic file
@@ -72,7 +74,7 @@ namespace dtn
 			try {
 				_timer.start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start StatisticLogger\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("StatisticLogger", error) << "failed to start (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// register at the events
@@ -84,7 +86,8 @@ namespace dtn
 				_sock = new ibrcommon::udpsocket();
 				try {
 					_sock->up();
-				} catch (const ibrcommon::socket_exception&) {
+				} catch (const ibrcommon::socket_exception &ex) {
+					IBRCOMMON_LOGGER_TAG("StatisticLogger", error) << "udp bind failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 					delete _sock;
 					_sock = NULL;
 				}

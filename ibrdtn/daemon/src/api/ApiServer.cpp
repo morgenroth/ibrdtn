@@ -40,6 +40,8 @@ namespace dtn
 {
 	namespace api
 	{
+		const std::string ApiServer::TAG = "ApiServer";
+
 		ApiServer::ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::File &socketfile)
 		 : _shutdown(false), _garbage_collector(*this), _seeker(seeker)
 		{
@@ -87,8 +89,13 @@ namespace dtn
 
 		void ApiServer::componentUp() throw ()
 		{
-			// bring up all server sockets
-			_sockets.up();
+			// routine checked for throw() on 15.02.2013
+			try {
+				// bring up all server sockets
+				_sockets.up();
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG(ApiServer::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 			
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			startGarbageCollector();

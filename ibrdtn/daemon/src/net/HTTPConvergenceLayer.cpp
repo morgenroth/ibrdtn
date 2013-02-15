@@ -406,6 +406,7 @@ namespace dtn
 		 */
 		void HTTPConvergenceLayer::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 		}
 
 		/**

@@ -169,15 +169,16 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+
 			try {
 				_vsocket.add(new ibrcommon::lowpansocket(_panid, _net));
 				_vsocket.up();
 
 				addService(this);
 			} catch (const ibrcommon::socket_exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "Failed to add LOWPAN ConvergenceLayer on " << _net.toString() << ":" << _panid << IBRCOMMON_LOGGER_ENDL;
-				IBRCOMMON_LOGGER_DEBUG(10) << "Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("LOWPANConvergenceLayer", error) << "bind to " << _net.toString() << ":" << _panid << " failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 			
 			// set component in running mode

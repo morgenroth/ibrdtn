@@ -43,6 +43,8 @@ namespace dtn
 		class IPNDAgent : public DiscoveryAgent, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback
 		{
 		public:
+			static const std::string TAG;
+
 			IPNDAgent(int port);
 			virtual ~IPNDAgent();
 

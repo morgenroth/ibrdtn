@@ -61,6 +61,7 @@ namespace dtn
 
 		void FragmentManager::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			_running = true;
 		}

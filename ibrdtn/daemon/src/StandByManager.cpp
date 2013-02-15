@@ -104,12 +104,14 @@ namespace dtn {
 
 		void StandByManager::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
 			_enabled = true;
 		}
 
 		void StandByManager::componentDown() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
 			_enabled = false;
 		}

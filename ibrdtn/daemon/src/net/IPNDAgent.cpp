@@ -41,6 +41,8 @@ namespace dtn
 {
 	namespace net
 	{
+		const std::string IPNDAgent::TAG = "IPNDAgent";
+
 		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
 		   _version(DiscoveryAnnouncement::DISCO_VERSION_01)
@@ -240,8 +242,14 @@ namespace dtn
 
 		void IPNDAgent::componentUp() throw ()
 		{
-			// setup the receive socket
-			_recv_socket.up();
+			// routine checked for throw() on 15.02.2013
+
+			try {
+				// setup the receive socket
+				_recv_socket.up();
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 
 			// join multicast groups
 			try {
@@ -267,8 +275,12 @@ namespace dtn
 				throw ibrcommon::socket_exception("no multicast socket found");
 			}
 
-			// setup all send sockets
-			_send_socket.up();
+			try {
+				// setup all send sockets
+				_send_socket.up();
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void IPNDAgent::componentDown() throw ()

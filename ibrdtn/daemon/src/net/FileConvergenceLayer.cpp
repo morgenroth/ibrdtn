@@ -71,12 +71,14 @@ namespace dtn
 
 		void FileConvergenceLayer::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 		}
 
 		void FileConvergenceLayer::componentDown() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
