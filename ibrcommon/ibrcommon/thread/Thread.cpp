@@ -37,10 +37,6 @@
 #include <unistd.h>
 #endif
 
-#ifdef ANDROID
-#define PAGE_SIZE sysconf(_SC_PAGESIZE)
-#endif
-
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
 #endif
