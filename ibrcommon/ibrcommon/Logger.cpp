@@ -36,7 +36,6 @@
 
 #ifdef ANDROID
 #include <android/log.h>
-#define LOG_TAG "IBR-DTN Native"
 #endif
 
 namespace ibrcommon
@@ -195,12 +194,57 @@ namespace ibrcommon
 				}
 			}
 
-#ifdef HAVE_SYSLOG_H
+#if ( defined HAVE_SYSLOG_H || defined ANDROID )
 			// additionally log to the syslog
 			if (_syslog)
 			{
 				if (logger._level & _syslog_mask)
 				{
+#ifdef ANDROID
+					std::string log_tag = Logger::_default_tag;
+					if (logger._tag.length() > 0) {
+						log_tag = logger._tag;
+					}
+
+					switch (logger._level)
+					{
+					case LOGGER_EMERG:
+						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_ALERT:
+						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_CRIT:
+						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_ERR:
+						__android_log_print(ANDROID_LOG_ERROR, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_WARNING:
+						__android_log_print(ANDROID_LOG_WARN, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_NOTICE:
+						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_INFO:
+						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_DEBUG:
+						__android_log_print(ANDROID_LOG_DEBUG, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					default:
+						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+					}
+#else
 					switch (logger._level)
 					{
 					case LOGGER_EMERG:
@@ -239,56 +283,9 @@ namespace ibrcommon
 						::syslog( LOG_NOTICE, "%s", logger.str().c_str() );
 						break;
 					}
+#endif
 				}
 			}
-#endif
-
-#ifdef ANDROID
-			// additionally log to the Android's logcat
-			//if (_syslog)
-			//{
-				if (logger._level)
-				{
-					switch (logger._level)
-					{
-					case LOGGER_EMERG:
-						__android_log_print(ANDROID_LOG_FATAL, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_ALERT:
-						__android_log_print(ANDROID_LOG_FATAL, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_CRIT:
-						__android_log_print(ANDROID_LOG_FATAL, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_ERR:
-						__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_WARNING:
-						__android_log_print(ANDROID_LOG_WARN, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_NOTICE:
-						__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_INFO:
-						__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_DEBUG:
-						__android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					default:
-						__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s", logger.str().c_str());
-						break;
-					}
-				}
-			//}
 #endif
 		}
 	}
@@ -378,7 +375,7 @@ namespace ibrcommon
 				if (log._tag.length() > 0) {
 					prefixes.push_back(log._tag);
 				} else {
-					prefixes.push_back(_default_tag);
+					prefixes.push_back(Logger::_default_tag);
 				}
 			}
 
