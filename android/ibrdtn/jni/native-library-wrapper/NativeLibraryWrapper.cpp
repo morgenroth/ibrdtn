@@ -32,19 +32,19 @@ Java_de_tubs_ibr_dtn_service_NativeLibraryWrapper_daemonInitialize(JNIEnv * env,
 {
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
-// 	// enable ring-buffer
-// 	ibrcommon::Logger::enableBuffer(200);
-// 
+ 	// enable ring-buffer
+ 	ibrcommon::Logger::enableBuffer(200);
+ 
 // 	// enable timestamps in logging if requested
 // 	if (conf.getLogger().display_timestamps())
 // 	{
 // 		logopts = (~(ibrcommon::Logger::LOG_DATETIME) & logopts) | ibrcommon::Logger::LOG_TIMESTAMP;
 // 	}
-// 
-// 	// init syslog
-// 	ibrcommon::Logger::enableAsync(); // enable asynchronous logging feature (thread-safe)
-// 	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, logsys);
-// 
+ 
+ 	// init syslog
+ 	ibrcommon::Logger::enableAsync(); // enable asynchronous logging feature (thread-safe)
+ 	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, logsys);
+ 
 // 	if (!conf.getDebug().quiet())
 // 	{
 // 		// add logging to the cout
@@ -66,18 +66,16 @@ Java_de_tubs_ibr_dtn_service_NativeLibraryWrapper_daemonInitialize(JNIEnv * env,
 // 	}
 
 	// load the configuration file
-// 	conf.load();
-	
 	conf.load("/data/data/de.tubs.ibr.dtn/files/config");
 
 // 	try {
 // 		const ibrcommon::File &lf = conf.getLogger().getLogfile();
 // 		ibrcommon::Logger::setLogfile(lf, ibrcommon::Logger::LOGGER_ALL ^ ibrcommon::Logger::LOGGER_DEBUG, logopts);
 // 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
-// 
-// 	// greeting
-// 	IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
-// 
+ 
+ 	// greeting
+ 	IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
+ 
 // 	if (conf.getDebug().enabled())
 // 	{
 // 		IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebug().level() << IBRCOMMON_LOGGER_ENDL;
@@ -102,7 +100,7 @@ Java_de_tubs_ibr_dtn_service_NativeLibraryWrapper_daemonMainLoop(JNIEnv * env, j
 	LOGI("After ibrdtn_daemon_main_loop");
 
 	// stop the asynchronous logger
-// 	ibrcommon::Logger::stop();
+ 	ibrcommon::Logger::stop();
 }
 
 
