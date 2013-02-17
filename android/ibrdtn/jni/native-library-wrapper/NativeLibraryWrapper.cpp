@@ -84,10 +84,10 @@ Java_de_tubs_ibr_dtn_service_NativeLibraryWrapper_daemonInitialize(JNIEnv * env,
 	// load the configuration file
 	conf.load("/data/data/de.tubs.ibr.dtn/files/config");
 
-// 	try {
-// 		const ibrcommon::File &lf = conf.getLogger().getLogfile();
-// 		ibrcommon::Logger::setLogfile(lf, ibrcommon::Logger::LOGGER_ALL ^ ibrcommon::Logger::LOGGER_DEBUG, logopts);
-// 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
+ 	try {
+ 		const ibrcommon::File &lf = conf.getLogger().getLogfile();
+ 		ibrcommon::Logger::setLogfile(lf, ibrcommon::Logger::LOGGER_ALL ^ ibrcommon::Logger::LOGGER_DEBUG, logopts);
+ 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
  
  	// greeting
  	IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
@@ -97,10 +97,10 @@ Java_de_tubs_ibr_dtn_service_NativeLibraryWrapper_daemonInitialize(JNIEnv * env,
 // 		IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebug().level() << IBRCOMMON_LOGGER_ENDL;
 // 	}
 
-// 	try {
-// 		const ibrcommon::File &lf = conf.getLogger().getLogfile();
-// 		IBRCOMMON_LOGGER(info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
-// 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
+ 	try {
+ 		const ibrcommon::File &lf = conf.getLogger().getLogfile();
+ 		IBRCOMMON_LOGGER(info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
+ 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
 
 	LOGI("Before ibrdtn_daemon_initialize");
  	ibrdtn_daemon_initialize();
