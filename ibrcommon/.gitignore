@@ -31,3 +31,6 @@ version.m4
 *.o
 *.lo
 *.la
+
+Android.mk
+
