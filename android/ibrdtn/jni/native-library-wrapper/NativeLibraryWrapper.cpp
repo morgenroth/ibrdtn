@@ -17,11 +17,11 @@
 // static JavaVM *gJavaVM;
 // const char *kInterfacePath = "de/tubs/ibr/dtn/service/NativeLibraryWrapper";
 
-#define  LOG_TAG "IBR-DTN NativeLibraryWrapper"
-#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define  LOGW(...)  __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
-#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define  ANDROID_LOG_TAG "IBR-DTN NativeLibraryWrapper"
+#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, ANDROID_LOG_TAG, __VA_ARGS__)
+#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, ANDROID_LOG_TAG, __VA_ARGS__)
+#define  LOGW(...)  __android_log_print(ANDROID_LOG_WARN, ANDROID_LOG_TAG, __VA_ARGS__)
+#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, ANDROID_LOG_TAG, __VA_ARGS__)
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,6 +30,22 @@ extern "C" {
 JNIEXPORT void JNICALL 
 Java_de_tubs_ibr_dtn_service_NativeLibraryWrapper_daemonInitialize(JNIEnv * env, jobject obj)
 {
+	/**
+	 * setup logging capabilities
+	 */
+
+	// logging options
+	unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL | ibrcommon::Logger::LOG_TAG;
+
+	// error filter
+	const unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
+
+	// logging filter, everything but debug, err and crit
+	const unsigned char logstd = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | logerr);
+
+	// syslog filter, everything but DEBUG and NOTICE
+	const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
+
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
  	// enable ring-buffer
@@ -43,7 +59,7 @@ Java_de_tubs_ibr_dtn_service_NativeLibraryWrapper_daemonInitialize(JNIEnv * env,
  
  	// init syslog
  	ibrcommon::Logger::enableAsync(); // enable asynchronous logging feature (thread-safe)
- 	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, logsys);
+ 	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", 0, 0, logsys);
  
 // 	if (!conf.getDebug().quiet())
 // 	{
