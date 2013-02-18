@@ -287,54 +287,6 @@ namespace ibrcommon
 				}
 			}
 #endif
-
-#ifdef ANDROID
-			// additionally log to the Android's logcat
-			//if (_syslog)
-			//{
-				if (logger._level)
-				{
-					switch (logger._level)
-					{
-					case LOGGER_EMERG:
-						__android_log_print(ANDROID_LOG_FATAL, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_ALERT:
-						__android_log_print(ANDROID_LOG_FATAL, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_CRIT:
-						__android_log_print(ANDROID_LOG_FATAL, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_ERR:
-						__android_log_print(ANDROID_LOG_ERROR, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_WARNING:
-						__android_log_print(ANDROID_LOG_WARN, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_NOTICE:
-						__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_INFO:
-						__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					case LOGGER_DEBUG:
-						__android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, "%s", logger.str().c_str());
-						break;
-
-					default:
-						__android_log_print(ANDROID_LOG_INFO, LOG_TAG, "%s", logger.str().c_str());
-						break;
-					}
-				}
-			//}
-#endif
 		}
 	}
 
