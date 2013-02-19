@@ -33,8 +33,8 @@ AC_PROG_LIBTOOL
 AC_LANG_CPLUSPLUS
 
 # Checks for libraries.
-AC_CHECK_LIB([rt], [clock_gettime])
-AC_CHECK_LIB([m], [pow])
+AC_CHECK_LIB([rt], [clock_gettime], [])
+AC_CHECK_LIB([m], [pow], [])
 
 # check for ibrdtn library
 LOCAL_IBRDTN_VERSION=0.8
