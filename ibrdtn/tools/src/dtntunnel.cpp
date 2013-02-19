@@ -122,11 +122,7 @@ class TUN2BundleGateway : public dtn::api::Client
 			tun_device = tun_name;
 
 			if (_fd == -1)
-			{
-				std::cerr << "Error: failed to open tun device" << std::endl;
-				return;
-				// TODO: throw exception
-			}
+				throw ibrcommon::Exception("Error: failed to open tun device");
 
 			// connect the API
 			this->connect();
@@ -148,13 +144,12 @@ class TUN2BundleGateway : public dtn::api::Client
 			_fd = -1;
 		}
 
-		void process(const dtn::data::EID &endpoint) {
+		void process(const dtn::data::EID &endpoint, unsigned int lifetime = 60) {
 			char data[65536];
 			int ret = ::read(_fd, data, sizeof(data));
 
 			if (ret == -1) {
-				// TODO: throw exception
-				return;
+				throw ibrcommon::Exception("Error: failed to read from tun device");
 			}
 
 			// create a blob
@@ -165,10 +160,16 @@ class TUN2BundleGateway : public dtn::api::Client
 
 			// create a new bundle
 			dtn::api::BLOBBundle b(endpoint, blob);
+			b.setLifetime(lifetime);
 
 			// transmit the packet
 			(*this) << b;
 			flush();
+		}
+
+		const std::string& getDeviceName() const
+		{
+			return tun_device;
 		}
 
 	private:
@@ -215,8 +216,10 @@ void print_help(const char *argv0)
 {
 	cout << "-- dtntunnel (IBR-DTN) --" << endl;
 	cout << "Syntax: " << argv0 << " [options] <endpoint>" << endl;
-	cout << " -d <dev>   Virtual network device to create (default: tun0)" << endl;
-	cout << " -s <name>  Application suffix of the local endpoint (default: tunnel)" << endl;
+	cout << " -h            Display help message" << endl;
+	cout << " -d <dev>      Virtual network device to create (default: tun0)" << endl;
+	cout << " -s <name>     Application suffix of the local endpoint (default: tunnel)" << endl;
+	cout << " -l <seconds>  Lifetime of each packet (default: 60)" << endl;
 }
 
 int main(int argc, char *argv[])
@@ -227,12 +230,13 @@ int main(int argc, char *argv[])
 	std::string ptp_dev("tun0");
 	std::string app_name("tunnel");
 	std::string endpoint("dtn:none");
+	unsigned int lifetime = 60;
 
 	// catch process signals
 	signal(SIGINT, term);
 	signal(SIGTERM, term);
 
-	while ((c = getopt (argc, argv, "d:")) != -1)
+	while ((c = getopt (argc, argv, "d:s:l:h")) != -1)
 	switch (c)
 	{
 		case 'd':
@@ -241,6 +245,10 @@ int main(int argc, char *argv[])
 
 		case 's':
 			app_name = optarg;
+			break;
+
+		case 'l':
+			lifetime = atoi(optarg);
 			break;
 
 		default:
@@ -266,57 +274,62 @@ int main(int argc, char *argv[])
 
 	std::cout << "IBR-DTN IP <-> Bundle Tunnel" << std::endl;
 	std::cout << "----------------------------" << std::endl;
-	std::cout << "Local App. Suffix: " << app_name << std::endl;
-	std::cout << "Peer: " << endpoint << std::endl;
-	std::cout << "Tun device: " << ptp_dev << std::endl;
-	std::cout << std::endl;
 
 	// create a connection to the dtn daemon
 	ibrcommon::vaddress addr("localhost", 4550);
 	ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr));
 
-	// set-up tun2bundle gateway
-	TUN2BundleGateway gateway(app_name, conn, ptp_dev);
-	_gateway = &gateway;
+	try {
+		// set-up tun2bundle gateway
+		TUN2BundleGateway gateway(app_name, conn, ptp_dev);
+		_gateway = &gateway;
 
-	std::cout << "Now you need to set-up the ip tunnel. You can use commands like this:" << std::endl;
-	std::cout << "# sudo ip link set " << ptp_dev << " up" << std::endl;
-	std::cout << "# sudo ip addr add 10.0.0.1/24 dev " << ptp_dev << std::endl;
-	std::cout << std::endl;
+		std::cout << "Local:  " << app_name << std::endl;
+		std::cout << "Peer:   " << endpoint << std::endl;
+		std::cout << "Device: " << gateway.getDeviceName() << std::endl;
+		std::cout << std::endl;
+		std::cout << "Now you need to set-up the ip tunnel. You can use commands like this:" << std::endl;
+		std::cout << "# sudo ip link set " << gateway.getDeviceName() << " up" << std::endl;
+		std::cout << "# sudo ip addr add 10.0.0.1/24 dev " << gateway.getDeviceName() << std::endl;
+		std::cout << std::endl;
 
-	std::cout << "Tunnel up ...  " << std::flush;
-	int display_state = 0;
+		std::cout << "Processing [o] " << std::flush;
+		int display_state = 0;
 
-	// destination
-	dtn::data::EID eid(endpoint);
+		// destination
+		dtn::data::EID eid(endpoint);
 
-	while (m_running)
-	{
-		switch (display_state) {
-		case 0:
-			std::cout << "\b" << "-" << std::flush;
-			display_state++;
-			break;
-		case 1:
-			std::cout << "\b" << "\\" << std::flush;
-			display_state++;
-			break;
-		case 2:
-			std::cout << "\b" << "|" << std::flush;
-			display_state++;
-			break;
-		case 3:
-			std::cout << "\b" << "/" << std::flush;
-			display_state = 0;
-			break;
-		default:
-			display_state = 0;
-			break;
+		while (m_running)
+		{
+			switch (display_state) {
+			case 0:
+				std::cout << "\b\b\b" << "-] " << std::flush;
+				display_state++;
+				break;
+			case 1:
+				std::cout << "\b\b\b" << "\\] " << std::flush;
+				display_state++;
+				break;
+			case 2:
+				std::cout << "\b\b\b" << "|] " << std::flush;
+				display_state++;
+				break;
+			case 3:
+				std::cout << "\b\b\b" << "/] " << std::flush;
+				display_state = 0;
+				break;
+			default:
+				display_state = 0;
+				break;
+			}
+			gateway.process(eid, lifetime);
 		}
-		gateway.process(eid);
-	}
 
-	gateway.shutdown();
+		gateway.shutdown();
+	} catch (const ibrcommon::Exception &ex) {
+		std::cerr << ex.what() << std::endl;
+		return -1;
+	}
 
 	std::cout << std::endl;
 
