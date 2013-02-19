@@ -1,7 +1,7 @@
 /*
  * dtntunnel.cpp
  *
- * Copyright (C) 2011 IBR, TU Braunschweig
+ * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
@@ -18,14 +18,6 @@
  * limitations under the License.
  *
  */
-
-//============================================================================
-// Name        : IPtunnel.cpp
-// Author      : IBR, TU Braunschweig
-// Version     :
-// Copyright   :
-// Description : Hello World in C++, Ansi-style
-//============================================================================
 
 #include "config.h"
 
@@ -67,100 +59,78 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <linux/if.h>
-
-using namespace std;
-
-/*
- * Allocate TUN device, returns opened fd.
- * Stores dev name in the first arg(must be large enough).
- */
-static int tun_open_common0(char *dev, int istun)
-{
-    char tunname[14];
-    int i, fd, err;
-
-    if( *dev ) {
-       sprintf(tunname, "/dev/%s", dev);
-       return open(tunname, O_RDWR);
-    }
-
-    sprintf(tunname, "/dev/%s", istun ? "tun" : "tap");
-    err = 0;
-    for(i=0; i < 255; i++){
-       sprintf(tunname + 8, "%d", i);
-       /* Open device */
-       if( (fd=open(tunname, O_RDWR)) > 0 ) {
-          strcpy(dev, tunname + 5);
-          return fd;
-       }
-       else if (errno != ENOENT)
-          err = errno;
-       else if (i)	/* don't try all 256 devices */
-          break;
-    }
-    if (err)
-	errno = err;
-    return -1;
-}
-
-#ifdef HAVE_LINUX_IF_TUN_H /* New driver support */
 #include <linux/if_tun.h>
 
-#ifndef OTUNSETNOCSUM
-/* pre 2.4.6 compatibility */
-#define OTUNSETNOCSUM  (('T'<< 8) | 200)
-#define OTUNSETDEBUG   (('T'<< 8) | 201)
-#define OTUNSETIFF     (('T'<< 8) | 202)
-#define OTUNSETPERSIST (('T'<< 8) | 203)
-#define OTUNSETOWNER   (('T'<< 8) | 204)
-#endif
+int tun_alloc(char *dev, int flags) {
 
-static int tun_open_common(char *dev, int istun)
-{
-    struct ifreq ifr;
-    int fd;
+  struct ifreq ifr;
+  int fd, err;
+  char clonedev[] = "/dev/net/tun";
 
-    if ((fd = open("/dev/net/tun", O_RDWR)) < 0)
-       return tun_open_common0(dev, istun);
+  /* Arguments taken by the function:
+   *
+   * char *dev: the name of an interface (or '\0'). MUST have enough
+   *   space to hold the interface name if '\0' is passed
+   * int flags: interface flags (eg, IFF_TUN etc.)
+   */
 
-    memset(&ifr, 0, sizeof(ifr));
-    ifr.ifr_flags = (istun ? IFF_TUN : IFF_TAP) | IFF_NO_PI;
-    if (*dev)
-       strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+   /* open the clone device */
+   if( (fd = open(clonedev, O_RDWR)) < 0 ) {
+     return fd;
+   }
 
-    if (ioctl(fd, TUNSETIFF, (void *) &ifr) < 0) {
-       if (errno == EBADFD) {
-	  /* Try old ioctl */
- 	  if (ioctl(fd, OTUNSETIFF, (void *) &ifr) < 0)
-	     goto failed;
-       } else
-          goto failed;
-    }
+   /* preparation of the struct ifr, of type "struct ifreq" */
+   memset(&ifr, 0, sizeof(ifr));
 
-    strcpy(dev, ifr.ifr_name);
-    return fd;
+   ifr.ifr_flags = flags;   /* IFF_TUN or IFF_TAP, plus maybe IFF_NO_PI */
 
-failed:
-    close(fd);
-    return -1;
+   if (*dev) {
+     /* if a device name was specified, put it in the structure; otherwise,
+      * the kernel will try to allocate the "next" device of the
+      * specified type */
+     strncpy(ifr.ifr_name, dev, IFNAMSIZ);
+   }
+
+   /* try to create the device */
+   if( (err = ioctl(fd, TUNSETIFF, (void *) &ifr)) < 0 ) {
+     close(fd);
+     return err;
+   }
+
+  /* if the operation was successful, write back the name of the
+   * interface to the variable "dev", so the caller can know
+   * it. Note that the caller MUST reserve space in *dev (see calling
+   * code below) */
+  strcpy(dev, ifr.ifr_name);
+
+  /* this is the special file descriptor that the caller will use to talk
+   * with the virtual interface */
+  return fd;
 }
-
-#else
-
-# define tun_open_common(dev, type) tun_open_common0(dev, type)
-
-#endif /* New driver support */
-
-int tun_open(char *dev) { return tun_open_common(dev, 1); }
-int tap_open(char *dev) { return tun_open_common(dev, 0); }
 
 class TUN2BundleGateway : public dtn::api::Client
 {
 	public:
-		TUN2BundleGateway(int fd, string app, ibrcommon::socketstream &stream)
-		: dtn::api::Client(app, _stream), _fd(fd), _stream(stream)
+		TUN2BundleGateway(const std::string &app, ibrcommon::socketstream &stream, const std::string &ptp_dev)
+		: dtn::api::Client(app, stream), _stream(stream), _fd(-1)
 		{
-		};
+			char tun_name[IFNAMSIZ];
+
+			strcpy(tun_name, ptp_dev.c_str());
+			_fd = tun_alloc(tun_name, IFF_TUN);  /* tun interface */
+
+			tun_device = tun_name;
+
+			if (_fd == -1)
+			{
+				std::cerr << "Error: failed to open tun device" << std::endl;
+				return;
+				// TODO: throw exception
+			}
+
+			// connect the API
+			this->connect();
+		}
 
 		/**
 		 * Destructor of the connection.
@@ -171,9 +141,43 @@ class TUN2BundleGateway : public dtn::api::Client
 			_stream.close();
 		};
 
+		void shutdown() {
+			if (_fd < 0) return;
+			// close socket
+			::close(_fd);
+			_fd = -1;
+		}
+
+		void process(const dtn::data::EID &endpoint) {
+			char data[65536];
+			int ret = ::read(_fd, data, sizeof(data));
+
+			if (ret == -1) {
+				// TODO: throw exception
+				return;
+			}
+
+			// create a blob
+			ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
+
+			// add the data
+			blob.iostream()->write(data, ret);
+
+			// create a new bundle
+			dtn::api::BLOBBundle b(endpoint, blob);
+
+			// transmit the packet
+			(*this) << b;
+			flush();
+		}
+
 	private:
+		ibrcommon::socketstream &_stream;
+
 		// file descriptor for the tun device
 		int _fd;
+
+		std::string tun_device;
 
 		/**
 		 * In this API bundles are received asynchronous. To receive bundles it is necessary
@@ -192,91 +196,129 @@ class TUN2BundleGateway : public dtn::api::Client
 				std::cerr << "error while writing" << std::endl;
 			}
 		}
-
-		ibrcommon::socketstream &_stream;
 };
 
 bool m_running = true;
-int tunnel_fd = -1;
+TUN2BundleGateway *_gateway = NULL;
 
 void term(int signal)
 {
 	if (signal >= 1)
 	{
 		m_running = false;
-		::close(tunnel_fd);
-		tunnel_fd = -1;
+		if (_gateway != NULL)
+			_gateway->shutdown();
 	}
+}
+
+void print_help(const char *argv0)
+{
+	cout << "-- dtntunnel (IBR-DTN) --" << endl;
+	cout << "Syntax: " << argv0 << " [options] <name> <endpoint>" << endl;
+	cout << " -d <dev>   Virtual network device to create (default: tun0)" << endl;
+	cout << " -s <name>  Application suffix of the local endpoint (default: tunnel)" << endl;
 }
 
 int main(int argc, char *argv[])
 {
+	int index;
+	int c;
+
+	std::string ptp_dev("tun0");
+	std::string app_name("tunnel");
+	std::string endpoint("dtn:none");
+
 	// catch process signals
 	signal(SIGINT, term);
 	signal(SIGTERM, term);
 
-	cout << "IBR-DTN IP <-> Bundle Tunnel" << endl;
-
-	if (argc < 5)
+	while ((c = getopt (argc, argv, "d:")) != -1)
+	switch (c)
 	{
-		cout << "Syntax: " << argv[0] << " <dev> <ip> <ptp> <dst>" << endl;
-		cout << "  <dev>   Virtual network device to create" << endl;
-		cout << "  <ip>    Own IP address to set" << endl;
-		cout << "  <ptp>   IP address of the Point-To-Point partner" << endl;
-		cout << "  <dst>   EID of the destination" << endl;
-		return -1;
+		case 'd':
+			ptp_dev = optarg;
+			break;
+
+		case 's':
+			app_name = optarg;
+			break;
+
+		default:
+			print_help(argv[0]);
+			return 1;
 	}
 
-	int tunnel_fd = tun_open(argv[1]);
-
-	if (tunnel_fd == -1)
+	int optindex = 0;
+	for (index = optind; index < argc; index++)
 	{
-		cerr << "Error: failed to open tun device" << endl;
-		return -1;
+		switch (optindex)
+		{
+		case 0:
+			endpoint = std::string(argv[index]);
+			break;
+		}
+
+		optindex++;
 	}
+
+	// print help if not enough parameters are set
+	if (optindex < 1) { print_help(argv[0]); exit(0); }
+
+	std::cout << "IBR-DTN IP <-> Bundle Tunnel" << std::endl;
+	std::cout << "----------------------------" << std::endl;
+	std::cout << "Local App. Suffix: " << app_name << std::endl;
+	std::cout << "Peer: " << endpoint << std::endl;
+	std::cout << "Tun device: " << ptp_dev << std::endl;
+	std::cout << std::endl;
 
 	// create a connection to the dtn daemon
 	ibrcommon::vaddress addr("localhost", 4550);
 	ibrcommon::socketstream conn(new ibrcommon::tcpsocket(addr));
-	TUN2BundleGateway gateway(tunnel_fd, "tun", conn);
 
-	// set the interface addresses
-	stringstream ifconfig;
-	ifconfig << "ifconfig " << argv[1] << " -pointopoint " << argv[2] << " dstaddr " << argv[3];
-	if ( system(ifconfig.str().c_str()) > 0 )
-	{
-		std::cerr << "can not the interface address" << std::endl;
-	}
+	// set-up tun2bundle gateway
+	TUN2BundleGateway gateway(app_name, conn, ptp_dev);
+	_gateway = &gateway;
 
-	gateway.connect();
+	std::cout << "Now you need to set-up the ip tunnel. You can use commands like this:" << std::endl;
+	std::cout << "# sudo ip link set " << ptp_dev << " up" << std::endl;
+	std::cout << "# sudo ip addr add 10.0.0.1/24 dev " << ptp_dev << std::endl;
+	std::cout << std::endl;
 
-	cout << "ready" << endl;
+	std::cout << "Tunnel up ...  " << std::flush;
+	int display_state = 0;
+
+	// destination
+	dtn::data::EID eid(endpoint);
 
 	while (m_running)
 	{
-		char data[65536];
-		int ret = ::read(tunnel_fd, data, sizeof(data));
-
-		cout << "received " << ret << " bytes" << endl;
-
-		// create a blob
-		ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
-
-		// add the data
-		blob.iostream()->write(data, ret);
-
-		// create a new bundle
-		dtn::api::BLOBBundle b(dtn::data::EID(argv[4]), blob);
-
-		// transmit the packet
-		gateway << b;
-		gateway.flush();
+		switch (display_state) {
+		case 0:
+			std::cout << "\b" << "-" << std::flush;
+			display_state++;
+			break;
+		case 1:
+			std::cout << "\b" << "\\" << std::flush;
+			display_state++;
+			break;
+		case 2:
+			std::cout << "\b" << "|" << std::flush;
+			display_state++;
+			break;
+		case 3:
+			std::cout << "\b" << "/" << std::flush;
+			display_state = 0;
+			break;
+		default:
+			display_state = 0;
+			break;
+		}
+		gateway.process(eid);
 	}
 
-	gateway.close();
+	gateway.shutdown();
 
-	::close(tunnel_fd);
-	tunnel_fd = -1;
+	std::cout << std::endl;
 
 	return 0;
 }

@@ -10,7 +10,7 @@ INCLUDES = -I@top_srcdir@/src
 # the previous manual Makefile
 bin_PROGRAMS = dtnping dtninbox dtnoutbox dtnrecv dtnsend dtntracepath dtntrigger dtnconvert dtnstream dtnrecv-ng
 
-if LINUX
+if TUNNEL
 sbin_PROGRAMS = dtntunnel
 endif
 

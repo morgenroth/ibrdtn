@@ -43,12 +43,9 @@ AC_SUBST(ibrdtn_CFLAGS)
 AC_SUBST(ibrdtn_LIBS)
 
 # Checks for header files required by dtntunnel
-AC_CHECK_HEADERS([arpa/inet.h])
-AC_CHECK_HEADERS([fcntl.h])
-AC_CHECK_HEADERS([sys/ioctl.h])
-AC_CHECK_HEADERS([sys/socket.h])
-AC_CHECK_HEADER([linux/types.h], [
-        is_linux="yes"
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h sys/ioctl.h sys/socket.h])
+AC_CHECK_HEADER([linux/if_tun.h], [
+		has_tun="yes"
 ])
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -64,7 +61,7 @@ AC_TYPE_UINT8_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([memset])
 
-AM_CONDITIONAL([LINUX], [test x$is_linux = xyes])
+AM_CONDITIONAL([TUNNEL], [test x$has_tun = xyes])
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts

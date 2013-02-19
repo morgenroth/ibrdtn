@@ -87,7 +87,7 @@ namespace dtn
 		}
 
 		Client::Client(const std::string &app, ibrcommon::socketstream &stream, const COMMUNICATION_MODE mode)
-		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _receiver(*this)
+		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _group(), _receiver(*this)
 		{
 		}
 
