@@ -214,7 +214,7 @@ void term(int signal)
 void print_help(const char *argv0)
 {
 	cout << "-- dtntunnel (IBR-DTN) --" << endl;
-	cout << "Syntax: " << argv0 << " [options] <name> <endpoint>" << endl;
+	cout << "Syntax: " << argv0 << " [options] <endpoint>" << endl;
 	cout << " -d <dev>   Virtual network device to create (default: tun0)" << endl;
 	cout << " -s <name>  Application suffix of the local endpoint (default: tunnel)" << endl;
 }
