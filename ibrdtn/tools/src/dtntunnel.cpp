@@ -508,7 +508,7 @@ int main(int argc, char *argv[])
 		IBRCOMMON_LOGGER_TAG("Core", info) << "Device: " << gateway.getDeviceName() << IBRCOMMON_LOGGER_ENDL;
 		IBRCOMMON_LOGGER_TAG("Core", notice) << IBRCOMMON_LOGGER_ENDL;
 		IBRCOMMON_LOGGER_TAG("Core", notice) << "Now you need to set-up the ip tunnel. You can use commands like this:" << IBRCOMMON_LOGGER_ENDL;
-		IBRCOMMON_LOGGER_TAG("Core", notice) << "# sudo ip link set " << gateway.getDeviceName() << " up" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Core", notice) << "# sudo ip link set " << gateway.getDeviceName() << " up mtu 65535" << IBRCOMMON_LOGGER_ENDL;
 		IBRCOMMON_LOGGER_TAG("Core", notice) << "# sudo ip addr add 10.0.0.1/24 dev " << gateway.getDeviceName() << IBRCOMMON_LOGGER_ENDL;
 		IBRCOMMON_LOGGER_TAG("Core", notice) << IBRCOMMON_LOGGER_ENDL;
 
