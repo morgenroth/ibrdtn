@@ -230,7 +230,7 @@ class TUN2BundleGateway : public dtn::api::Client
 		 * to overload the Client::received()-method. This will be call on a incoming bundles
 		 * by another thread.
 		 */
-		void received(dtn::api::Bundle &b)
+		void received(const dtn::api::Bundle &b)
 		{
 			ibrcommon::BLOB::Reference ref = b.getData();
 			ibrcommon::BLOB::iostream stream = ref.iostream();
