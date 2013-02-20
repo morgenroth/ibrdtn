@@ -73,8 +73,10 @@ namespace dtn
 				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "IOException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (const dtn::InvalidDataException &ex) {
-				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "InvalidDataException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
+				if (_running) {
+					IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "InvalidDataException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
+				}
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
