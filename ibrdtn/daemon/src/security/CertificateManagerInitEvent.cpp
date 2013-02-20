@@ -42,9 +42,9 @@ CertificateManagerInitEvent::getName() const
 }
 
 std::string
-CertificateManagerInitEvent::toString() const
+CertificateManagerInitEvent::getMessage() const
 {
-	return getName();
+	return "initialized";
 }
 
 const std::string CertificateManagerInitEvent::className = "CertificateManagerInitEvent";

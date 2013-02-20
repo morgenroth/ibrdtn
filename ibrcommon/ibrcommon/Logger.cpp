@@ -35,16 +35,17 @@
 
 namespace ibrcommon
 {
+	std::string Logger::_default_tag = "Core";
 	Logger::LogWriter Logger::_logwriter;
 
-	Logger::Logger(LogLevel level, int debug_verbosity)
-	 : _level(level), _debug_verbosity(debug_verbosity)
+	Logger::Logger(LogLevel level, const std::string &tag, int debug_verbosity)
+	 : _level(level), _tag(tag), _debug_verbosity(debug_verbosity)
 	{
 		::gettimeofday(&_logtime, NULL);
 	}
 
 	Logger::Logger(const Logger &obj)
-	 : std::stringstream(obj.str()), _level(obj._level), _debug_verbosity(obj._debug_verbosity), _logtime(obj._logtime)
+	 : std::stringstream(obj.str()), _level(obj._level), _tag(obj._tag), _debug_verbosity(obj._debug_verbosity), _logtime(obj._logtime)
 	{
 	}
 
@@ -52,44 +53,44 @@ namespace ibrcommon
 	{
 	}
 
-	Logger Logger::emergency()
+	Logger Logger::emergency(const std::string &tag)
 	{
-		return Logger(LOGGER_EMERG);
+		return Logger(LOGGER_EMERG, tag);
 	}
 
-	Logger Logger::alert()
+	Logger Logger::alert(const std::string &tag)
 	{
-		return Logger(LOGGER_ALERT);
+		return Logger(LOGGER_ALERT, tag);
 	}
 
-	Logger Logger::critical()
+	Logger Logger::critical(const std::string &tag)
 	{
-		return Logger(LOGGER_CRIT);
+		return Logger(LOGGER_CRIT, tag);
 	}
 
-	Logger Logger::error()
+	Logger Logger::error(const std::string &tag)
 	{
-		return Logger(LOGGER_ERR);
+		return Logger(LOGGER_ERR, tag);
 	}
 
-	Logger Logger::warning()
+	Logger Logger::warning(const std::string &tag)
 	{
-		return Logger(LOGGER_WARNING);
+		return Logger(LOGGER_WARNING, tag);
 	}
 
-	Logger Logger::notice()
+	Logger Logger::notice(const std::string &tag)
 	{
-		return Logger(LOGGER_NOTICE);
+		return Logger(LOGGER_NOTICE, tag);
 	}
 
-	Logger Logger::info()
+	Logger Logger::info(const std::string &tag)
 	{
-		return Logger(LOGGER_INFO);
+		return Logger(LOGGER_INFO, tag);
 	}
 
-	Logger Logger::debug(int verbosity)
+	Logger Logger::debug(const std::string &tag, int verbosity)
 	{
-		return Logger(LOGGER_DEBUG, verbosity);
+		return Logger(LOGGER_DEBUG, tag, verbosity);
 	}
 
 	void Logger::setVerbosity(const int verbosity)
@@ -298,6 +299,15 @@ namespace ibrcommon
 				delete[] hostname_array;
 			}
 
+			if (_options & LOG_TAG)
+			{
+				if (log._tag.length() > 0) {
+					prefixes.push_back(log._tag);
+				} else {
+					prefixes.push_back(_default_tag);
+				}
+			}
+
 			// print prefixes
 			for (std::list<std::string>::const_iterator iter = prefixes.begin(); iter != prefixes.end(); iter++)
 			{
@@ -357,6 +367,11 @@ namespace ibrcommon
 		}
 	}
 	
+	void Logger::setDefaultTag(const std::string &tag)
+	{
+		Logger::_default_tag = tag;
+	}
+
 	void Logger::stop()
 	{
 		// stop the LogWriter::run() thread (this is needed with uclibc)

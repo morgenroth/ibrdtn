@@ -58,7 +58,7 @@ namespace dtn
 
 		void OrderedStreamHandler::put(dtn::data::Bundle &b)
 		{
-			IBRCOMMON_LOGGER_DEBUG(20) << "OrderedStreamHandler: put()" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 20) << "put()" << IBRCOMMON_LOGGER_ENDL;
 
 			// set destination EID
 			b._destination = _peer;
@@ -86,7 +86,7 @@ namespace dtn
 		dtn::data::MetaBundle OrderedStreamHandler::get(size_t timeout)
 		{
 			Registration &reg = _client.getRegistration();
-			IBRCOMMON_LOGGER_DEBUG(20) << "OrderedStreamHandler: get()" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 20) << "get()" << IBRCOMMON_LOGGER_ENDL;
 
 			while (true)
 			{
@@ -96,13 +96,13 @@ namespace dtn
 					// discard bundle if they are not from the specified peer
 					if ((!_group) && (bundle.source != _peer))
 					{
-						IBRCOMMON_LOGGER_DEBUG(30) << "OrderedStreamHandler: get(): bundle source " << bundle.source.getString() << " not expected - discard" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 30) << "get(): bundle source " << bundle.source.getString() << " not expected - discard" << IBRCOMMON_LOGGER_ENDL;
 						continue;
 					}
 
 					return bundle;
 				} catch (const dtn::storage::NoBundleFoundException&) {
-					IBRCOMMON_LOGGER_DEBUG(30) << "OrderedStreamHandler: get(): no bundle found wait for notify" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 30) << "get(): no bundle found wait for notify" << IBRCOMMON_LOGGER_ENDL;
 					reg.wait_for_bundle(timeout);
 				}
 			}

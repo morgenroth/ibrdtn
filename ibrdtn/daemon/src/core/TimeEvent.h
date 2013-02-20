@@ -45,7 +45,7 @@ namespace dtn
 
 			static void raise(const size_t timestamp, const size_t unixtimestamp, const TimeEventAction action);
 
-			std::string toString() const;
+			std::string getMessage() const;
 
 			static const std::string className;
 

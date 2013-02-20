@@ -59,9 +59,9 @@ namespace dtn
 			return _bundle;
 		}
 
-		string TransferCompletedEvent::toString() const
+		string TransferCompletedEvent::getMessage() const
 		{
-			return className + ": transfer of bundle " + _bundle.toString() + " to " + _peer.getString() + " completed";
+			return "transfer of bundle " + _bundle.toString() + " to " + _peer.getString() + " completed";
 		}
 
 		const string TransferCompletedEvent::className = "TransferCompletedEvent";

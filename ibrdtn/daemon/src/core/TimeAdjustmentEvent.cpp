@@ -7,7 +7,7 @@
 
 #include "core/TimeAdjustmentEvent.h"
 #include "core/EventDispatcher.h"
-
+#include <sstream>
 #include <sys/time.h>
 
 namespace dtn
@@ -33,9 +33,11 @@ namespace dtn
 			return className;
 		}
 
-		std::string TimeAdjustmentEvent::toString() const
+		std::string TimeAdjustmentEvent::getMessage() const
 		{
-			return className;
+			std::stringstream ss;
+			ss << "time adjusted by " << offset.tv_sec << "." << offset.tv_usec << ", new rating is " << rating;
+			return ss.str();
 		}
 
 		const std::string TimeAdjustmentEvent::className = "TimeAdjustmentEvent";

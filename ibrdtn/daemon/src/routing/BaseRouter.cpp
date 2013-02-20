@@ -176,6 +176,7 @@ namespace dtn
 
 		void BaseRouter::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::add(this);
@@ -198,6 +199,7 @@ namespace dtn
 
 		void BaseRouter::componentDown() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::remove(this);

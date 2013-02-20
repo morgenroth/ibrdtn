@@ -46,6 +46,7 @@ namespace dtn
 
 		void EventSwitch::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 		}
 
 		void EventSwitch::componentDown() throw ()

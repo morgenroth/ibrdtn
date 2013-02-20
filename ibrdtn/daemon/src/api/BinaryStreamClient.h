@@ -36,15 +36,15 @@ namespace dtn
 				BinaryStreamClient(ClientHandler &client, ibrcommon::socketstream &stream);
 				virtual ~BinaryStreamClient();
 
-				virtual void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc);
-				virtual void eventTimeout();
-				virtual void eventError();
-				virtual void eventConnectionDown();
-				virtual void eventConnectionUp(const dtn::streams::StreamContactHeader &header);
+				virtual void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc) throw ();
+				virtual void eventTimeout() throw ();
+				virtual void eventError() throw ();
+				virtual void eventConnectionDown() throw ();
+				virtual void eventConnectionUp(const dtn::streams::StreamContactHeader &header) throw ();
 
-				virtual void eventBundleRefused();
-				virtual void eventBundleForwarded();
-				virtual void eventBundleAck(size_t ack);
+				virtual void eventBundleRefused() throw ();
+				virtual void eventBundleForwarded() throw ();
+				virtual void eventBundleAck(size_t ack) throw ();
 
 				const dtn::data::EID& getPeer() const;
 

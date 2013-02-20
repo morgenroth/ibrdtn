@@ -46,7 +46,7 @@ public:
 
 	/* from Event */
 	virtual const std::string getName() const;
-	virtual std::string toString() const;
+	std::string getMessage() const;
 
 	static const std::string className;
 

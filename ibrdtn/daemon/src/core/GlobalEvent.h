@@ -47,6 +47,7 @@ namespace dtn
 			virtual ~GlobalEvent();
 
 			const std::string getName() const;
+			std::string getMessage() const;
 
 			Action getAction() const;
 

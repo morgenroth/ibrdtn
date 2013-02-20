@@ -120,7 +120,7 @@ namespace dtn
 
 		void DatagramConvergenceLayer::connectionUp(const DatagramConnection *conn)
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::connectionUp: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer", 10) << "Up: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void DatagramConvergenceLayer::connectionDown(const DatagramConnection *conn)
@@ -132,7 +132,7 @@ namespace dtn
 			{
 				if ((*i) == conn)
 				{
-					IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::connectionDown: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer", 10) << "Down: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 
 					_connections.erase(i);
 					_connection_cond.signal(true);
@@ -140,17 +140,17 @@ namespace dtn
 				}
 			}
 
-			IBRCOMMON_LOGGER(error) << "DatagramConvergenceLayer::connectionDown: " << conn->getIdentifier() << " not found!" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("DatagramConvergenceLayer", error) << "Error in " << conn->getIdentifier() << " not found!" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void DatagramConvergenceLayer::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			try {
 				_service->bind();
 			} catch (const std::exception &e) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "Failed to add DatagramConvergenceLayer on " << _service->getInterface().toString() << IBRCOMMON_LOGGER_ENDL;
-				IBRCOMMON_LOGGER_DEBUG(10) << "Exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("DatagramConvergenceLayer", error) << "bind to " << _service->getInterface().toString() << " failed (" << e.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// set the running variable
@@ -221,8 +221,7 @@ namespace dtn
 					break;
 				}
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::componentRun" << IBRCOMMON_LOGGER_ENDL;
-				IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::componentRun: ADDRESS " << address << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer", 10) << "componentRun: ADDRESS " << address << IBRCOMMON_LOGGER_ENDL;
 
 				// Check for extended header and retrieve if available
 				if (type == HEADER_BROADCAST)

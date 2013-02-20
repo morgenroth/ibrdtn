@@ -44,7 +44,7 @@
  */
 
 // logging options
-unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
+unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL | ibrcommon::Logger::LOG_TAG;
 
 // error filter
 const unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
@@ -111,6 +111,9 @@ int __daemon_run()
 	::sigprocmask(SIG_BLOCK, &blockset, NULL);
 
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+
+	// set default logging tag
+	ibrcommon::Logger::setDefaultTag("DTNEngine");
 
 	// enable ring-buffer
 	ibrcommon::Logger::enableBuffer(200);

@@ -49,18 +49,18 @@ namespace dtn
 		}
 
 
-		std::string ConnectionEvent::toString() const
+		std::string ConnectionEvent::getMessage() const
 		{
 			switch (state)
 			{
 			case CONNECTION_UP:
-				return className + ": connection up " + peer.getString();
+				return "connection up " + peer.getString();
 			case CONNECTION_DOWN:
-				return className + ": connection down " + peer.getString();
+				return "connection down " + peer.getString();
 			case CONNECTION_TIMEOUT:
-				return className + ": connection timeout " + peer.getString();
+				return "connection timeout " + peer.getString();
 			case CONNECTION_SETUP:
-				return className + ": connection setup " + peer.getString();
+				return "connection setup " + peer.getString();
 			}
 
 		}

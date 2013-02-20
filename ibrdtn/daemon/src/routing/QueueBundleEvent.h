@@ -38,7 +38,7 @@ namespace dtn
 
 			const string getName() const;
 
-			string toString() const;
+			std::string getMessage() const;
 
 			static const string className;
 

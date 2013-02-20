@@ -194,7 +194,7 @@ namespace dtn
 			int err = st.step();
 			if(err != SQLITE_DONE)
 			{
-				IBRCOMMON_LOGGER(error) << "SQLiteDatabase: failed to set version " << err << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "failed to set version " << err << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -202,11 +202,11 @@ namespace dtn
 		{
 			if (oldVersion > newVersion)
 			{
-				IBRCOMMON_LOGGER(error) << "SQLiteDatabase: Downgrade from version " << oldVersion << " to version " << newVersion << " is not possible." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "Downgrade from version " << oldVersion << " to version " << newVersion << " is not possible." << IBRCOMMON_LOGGER_ENDL;
 				throw ibrcommon::Exception("Downgrade not possible.");
 			}
 
-			IBRCOMMON_LOGGER(info) << "SQLiteDatabase: Upgrade from version " << oldVersion << " to version " << newVersion << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("SQLiteDatabase", info) << "Upgrade from version " << oldVersion << " to version " << newVersion << IBRCOMMON_LOGGER_ENDL;
 
 			for (int i = oldVersion; i < newVersion; i++)
 			{
@@ -220,7 +220,7 @@ namespace dtn
 						int err = st.step();
 						if(err != SQLITE_DONE)
 						{
-							IBRCOMMON_LOGGER(error) << "SQLiteDatabase: drop table " << _tables[i] << " failed " << err << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "drop table " << _tables[i] << " failed " << err << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 
@@ -231,7 +231,7 @@ namespace dtn
 						int err = st.step();
 						if(err != SQLITE_DONE)
 						{
-							IBRCOMMON_LOGGER(error) << "SQLiteDatabase: failed to create table " << _tables[i] << "; err: " << err << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "failed to create table " << _tables[i] << "; err: " << err << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 
@@ -245,7 +245,7 @@ namespace dtn
 					int err = st.step();
 					if(err != SQLITE_DONE)
 					{
-						IBRCOMMON_LOGGER(error) << "SQLiteDatabase: failed to alter table " << _tables[SQL_TABLE_BUNDLE] << "; err: " << err << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "failed to alter table " << _tables[SQL_TABLE_BUNDLE] << "; err: " << err << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					// set new database version
@@ -270,7 +270,7 @@ namespace dtn
 			//open the database
 			if (sqlite3_open_v2(_file.getPath().c_str(), &_database,  SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL))
 			{
-				IBRCOMMON_LOGGER(error) << "Can't open database: " << sqlite3_errmsg(_database) << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "Can't open database: " << sqlite3_errmsg(_database) << IBRCOMMON_LOGGER_ENDL;
 				sqlite3_close(_database);
 				throw ibrcommon::Exception("Unable to open sqlite database");
 			}
@@ -279,14 +279,14 @@ namespace dtn
 				// check database version and upgrade if necessary
 				int version = getVersion();
 
-				IBRCOMMON_LOGGER(info) << "SQLiteDatabase: Database version " << version << " found." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", info) << "Database version " << version << " found." << IBRCOMMON_LOGGER_ENDL;
 
 				if (version != DBSCHEMA_VERSION)
 				{
 					doUpgrade(version, DBSCHEMA_VERSION);
 				}
 			} catch (const SQLiteQueryException &ex) {
-				IBRCOMMON_LOGGER(warning) << "SQLiteDatabase: upgrade failed, start-over with a fresh database" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", warning) << "upgrade failed, start-over with a fresh database" << IBRCOMMON_LOGGER_ENDL;
 				doUpgrade(0, DBSCHEMA_VERSION);
 			}
 
@@ -333,8 +333,8 @@ namespace dtn
 			if (st.step() != SQLITE_ROW)
 			{
 				stringstream error;
-				error << "SQLiteDatabase: No Bundle found with BundleID: " << id.toString();
-				IBRCOMMON_LOGGER_DEBUG(15) << error.str() << IBRCOMMON_LOGGER_ENDL;
+				error << "No Bundle found with BundleID: " << id.toString();
+				IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 15) << error.str() << IBRCOMMON_LOGGER_ENDL;
 				throw SQLiteQueryException(error.str());
 			}
 
@@ -519,7 +519,7 @@ namespace dtn
 			// execute the query and check for error
 			if ((err = st.step()) != SQLITE_ROW)
 			{
-				IBRCOMMON_LOGGER_DEBUG(15) << "sql error: " << err << "; No bundle found with id: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 15) << "sql error: " << err << "; No bundle found with id: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::storage::NoBundleFoundException();
 			}
 
@@ -624,17 +624,17 @@ namespace dtn
 
 			if (err == SQLITE_CONSTRAINT)
 			{
-				IBRCOMMON_LOGGER(warning) << "Bundle is already in the storage" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", warning) << "Bundle is already in the storage" << IBRCOMMON_LOGGER_ENDL;
 
 				stringstream error;
-				error << "SQLiteDatabase: store() failure: " << err << " " <<  sqlite3_errmsg(_database);
+				error << "store() failure: " << err << " " <<  sqlite3_errmsg(_database);
 				throw SQLiteQueryException(error.str());
 			}
 			else if (err != SQLITE_DONE)
 			{
 				stringstream error;
-				error << "SQLiteDatabase: store() failure: " << err << " " <<  sqlite3_errmsg(_database);
-				IBRCOMMON_LOGGER(error) << error.str() << IBRCOMMON_LOGGER_ENDL;
+				error << "store() failure: " << err << " " <<  sqlite3_errmsg(_database);
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << error.str() << IBRCOMMON_LOGGER_ENDL;
 
 				throw SQLiteQueryException(error.str());
 			}
@@ -776,8 +776,8 @@ namespace dtn
 			else
 			{
 				stringstream error;
-				error << "SQLiteDatabase: count: failure " << err << " " << sqlite3_errmsg(_database);
-				IBRCOMMON_LOGGER(error) << error.str() << IBRCOMMON_LOGGER_ENDL;
+				error << "count: failure " << err << " " << sqlite3_errmsg(_database);
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << error.str() << IBRCOMMON_LOGGER_ENDL;
 				throw SQLiteQueryException(error.str());
 			}
 
@@ -885,8 +885,8 @@ namespace dtn
 				if (err != SQLITE_DONE)
 				{
 					stringstream error;
-					error << "SQLiteDatabase: update_custodian() failure: " << err << " " <<  sqlite3_errmsg(_database);
-					IBRCOMMON_LOGGER(error) << error.str() << IBRCOMMON_LOGGER_ENDL;
+					error << "update_custodian() failure: " << err << " " <<  sqlite3_errmsg(_database);
+					IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << error.str() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}

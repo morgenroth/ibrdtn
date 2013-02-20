@@ -108,7 +108,7 @@ namespace dtn
 						// remove the bundle from the storage
 						dtn::core::BundlePurgeEvent::raise(id);
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_DEBUG(15) << "Error while processing a bundle in a worker: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("AbstractWorker", 15) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					};
 
 					yield();

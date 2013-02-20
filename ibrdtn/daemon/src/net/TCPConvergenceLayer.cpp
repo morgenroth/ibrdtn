@@ -435,14 +435,24 @@ namespace dtn
 
 		void TCPConvergenceLayer::componentUp() throw ()
 		{
-			// listen on the socket, max. 5 concurrent awaiting connections
-			_vsocket.up();
+			// routine checked for throw() on 15.02.2013
+			try {
+				// listen on the socket
+				_vsocket.up();
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", error) << "bind failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void TCPConvergenceLayer::componentDown() throw ()
 		{
-			// shutdown all sockets
-			_vsocket.down();
+			// routine checked for throw() on 15.02.2013
+			try {
+				// shutdown all sockets
+				_vsocket.down();
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", error) << "shutdown failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+			}
 
 			// close all active connections
 			closeAll();

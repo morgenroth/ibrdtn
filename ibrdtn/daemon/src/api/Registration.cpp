@@ -20,15 +20,29 @@
  */
 
 #include "config.h"
+#include "Configuration.h"
 #include "api/Registration.h"
 #include "storage/BundleStorage.h"
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
 #include "core/BundlePurgeEvent.h"
+#include "core/FragmentManager.h"
+#include "net/BundleReceivedEvent.h"
 
 #ifdef HAVE_SQLITE
 #include "storage/SQLiteBundleStorage.h"
 #endif
+
+#ifdef WITH_COMPRESSION
+#include <ibrdtn/data/CompressedPayloadBlock.h>
+#endif
+
+#ifdef WITH_BUNDLE_SECURITY
+#include "security/SecurityManager.h"
+#endif
+
+#include <ibrdtn/data/TrackingBlock.h>
+#include <ibrdtn/data/AgeBlock.h>
 
 #include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Random.h>
@@ -244,7 +258,7 @@ namespace dtn
 						}
 					}
 
-					IBRCOMMON_LOGGER_DEBUG(10) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("Registration", 10) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					if (_bundles.has(meta))
 					{
@@ -325,7 +339,7 @@ namespace dtn
 				_recv_bundles.add(bundle);
 				this->push(bundle);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("RegistrationQueue", 10) << "add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) { }
 		}
 
@@ -454,6 +468,110 @@ namespace dtn
 			_notify_queue.reset();
 
 			_wait_for_cond.reset();
+		}
+
+		void Registration::processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle)
+		{
+			// check address fields for "api:me", this has to be replaced
+			static const dtn::data::EID clienteid("api:me");
+
+			// set the source address to the sending EID
+			bundle._source = source;
+
+			if (bundle._destination == clienteid) bundle._destination = source;
+			if (bundle._reportto == clienteid) bundle._reportto = source;
+			if (bundle._custodian == clienteid) bundle._custodian = source;
+
+			// if the timestamp is not set, add a ageblock
+			if (bundle._timestamp == 0)
+			{
+				// check for ageblock
+				try {
+					bundle.getBlock<dtn::data::AgeBlock>();
+				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+					// add a new ageblock
+					bundle.push_front<dtn::data::AgeBlock>();
+				}
+			}
+
+			// modify TrackingBlock
+			try {
+				dtn::data::TrackingBlock &track = bundle.getBlock<dtn::data::TrackingBlock>();
+				track.append(dtn::core::BundleCore::local);
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+
+#ifdef WITH_COMPRESSION
+			// if the compression bit is set, then compress the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION))
+			{
+				try {
+					dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
+				} catch (const ibrcommon::Exception &ex) {
+					IBRCOMMON_LOGGER(warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				};
+			}
+#endif
+
+#ifdef WITH_BUNDLE_SECURITY
+			// if the encrypt bit is set, then try to encrypt the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
+			{
+				try {
+					dtn::security::SecurityManager::getInstance().encrypt(bundle);
+
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
+				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+					// sign requested, but no key is available
+					IBRCOMMON_LOGGER(warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
+				} catch (const dtn::security::SecurityManager::EncryptException&) {
+					IBRCOMMON_LOGGER(warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+
+			// if the sign bit is set, then try to sign the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN))
+			{
+				try {
+					dtn::security::SecurityManager::getInstance().sign(bundle);
+
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
+				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+					// sign requested, but no key is available
+					IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+#endif
+
+			// get the payload size maximum
+			size_t maxPayloadLength = dtn::daemon::Configuration::getInstance().getLimit("payload");
+
+			// check if fragmentation is enabled
+			// do not try pro-active fragmentation if the payload length is not limited
+			if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation() && (maxPayloadLength > 0))
+			{
+				try {
+					std::list<dtn::data::Bundle> fragments;
+
+					dtn::core::FragmentManager::split(bundle, maxPayloadLength, fragments);
+
+					//for each fragment raise bundle received event
+					for(std::list<dtn::data::Bundle>::iterator it = fragments.begin(); it != fragments.end(); ++it)
+					{
+						// raise default bundle received event
+						dtn::net::BundleReceivedEvent::raise(source, *it, true);
+					}
+
+					return;
+				} catch (const FragmentationProhibitedException&) {
+				} catch (const FragmentationNotNecessaryException&) {
+				} catch (const FragmentationAbortedException&) {
+					// drop the bundle
+					return;
+				}
+			}
+
+			// raise default bundle received event
+			dtn::net::BundleReceivedEvent::raise(source, bundle, true);
 		}
 	}
 }

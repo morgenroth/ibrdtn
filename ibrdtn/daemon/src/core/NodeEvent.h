@@ -46,7 +46,7 @@ namespace dtn
 			const Node& getNode() const;
 			const std::string getName() const;
 
-			std::string toString() const;
+			std::string getMessage() const;
 
 			static void raise(const Node &n, const EventNodeAction action);
 

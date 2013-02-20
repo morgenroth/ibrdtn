@@ -120,7 +120,12 @@ namespace dtn
 
 		void FileMonitor::componentUp() throw ()
 		{
-			_socket.up();
+			// routine checked for throw() on 15.02.2013
+			try {
+				_socket.up();
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG("FileMonitor", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void FileMonitor::componentRun() throw ()

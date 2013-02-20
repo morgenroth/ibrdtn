@@ -192,10 +192,10 @@ namespace dtn
 			return _b._custodian;
 		}
 
-		ibrcommon::BLOB::Reference Bundle::getData() throw (dtn::MissingObjectException)
+		ibrcommon::BLOB::Reference Bundle::getData() const throw (dtn::MissingObjectException)
 		{
 			try {
-				dtn::data::PayloadBlock &p = _b.getBlock<dtn::data::PayloadBlock>();
+				const dtn::data::PayloadBlock &p = _b.getBlock<dtn::data::PayloadBlock>();
 				return p.getBLOB();
 			} catch(const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				throw dtn::MissingObjectException("No payload block exists!");

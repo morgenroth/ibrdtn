@@ -211,7 +211,7 @@ namespace ibrcommon
 	{
 		ibrcommon::MutexLock l(in_buf_cond);
 
-		IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream::underflow"<< IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 10) << "underflow"<< IBRCOMMON_LOGGER_ENDL;
 
 		while (in_buf_free)
 		{
@@ -220,7 +220,7 @@ namespace ibrcommon
 		}
 		memcpy(out2_buf_ ,in_buf_, in_buf_len);
 		in_buf_free = true;
-		IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream::underflow in_buf_free: " << in_buf_free << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 10) << "underflow in_buf_free: " << in_buf_free << IBRCOMMON_LOGGER_ENDL;
 		in_buf_cond.signal();
 
 		// Since the input buffer content is now valid (or is new)

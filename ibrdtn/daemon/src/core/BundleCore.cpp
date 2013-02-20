@@ -99,6 +99,7 @@ namespace dtn
 
 		void BundleCore::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
 			for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); iter++)
 			{
@@ -264,7 +265,7 @@ namespace dtn
 					// delete it from our storage
 					dtn::core::BundlePurgeEvent::raise(meta);
 
-					IBRCOMMON_LOGGER(notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("BundleCore", notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// gen a report
 					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
@@ -515,7 +516,7 @@ namespace dtn
 			_globally_connected = val;
 		}
 
-		void BundleCore::check_connection_state()
+		void BundleCore::check_connection_state() throw ()
 		{
 			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
 

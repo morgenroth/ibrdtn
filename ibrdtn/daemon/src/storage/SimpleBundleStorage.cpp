@@ -194,6 +194,8 @@ namespace dtn
 
 		void SimpleBundleStorage::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
+
 			// load persistent bundles
 			_datastore.iterateAll();
 
@@ -201,15 +203,26 @@ namespace dtn
 			IBRCOMMON_LOGGER(info) << _list.size() << " Bundles restored." << IBRCOMMON_LOGGER_ENDL;
 
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
-			_datastore.start();
+
+			try {
+				_datastore.start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_TAG("SimpleBundleStorage", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void SimpleBundleStorage::componentDown() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
+
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
-			_datastore.wait();
-			_datastore.stop();
-			_datastore.join();
+			try {
+				_datastore.wait();
+				_datastore.stop();
+				_datastore.join();
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG("SimpleBundleStorage", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void SimpleBundleStorage::raiseEvent(const dtn::core::Event *evt) throw ()

@@ -64,19 +64,21 @@ namespace dtn
 					yield();
 				}
 			} catch (const dtn::api::ConnectionException &ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - ConnectionException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "ConnectionException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (const dtn::streams::StreamConnection::StreamErrorException &ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - StreamErrorException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "StreamErrorException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (const ibrcommon::IOException &ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - IOException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "IOException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (const dtn::InvalidDataException &ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - InvalidDataException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
-			} catch (const std::exception&) {
-				IBRCOMMON_LOGGER(error) << "error" << IBRCOMMON_LOGGER_ENDL;
+				if (_running) {
+					IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << "InvalidDataException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
+				}
+			} catch (const std::exception &ex) {
+				IBRCOMMON_LOGGER_TAG("Client::AsyncReceiver", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
 		}
@@ -87,7 +89,7 @@ namespace dtn
 		}
 
 		Client::Client(const std::string &app, ibrcommon::socketstream &stream, const COMMUNICATION_MODE mode)
-		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _receiver(*this)
+		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _group(), _receiver(*this)
 		{
 		}
 
@@ -164,18 +166,18 @@ namespace dtn
 			shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 		}
 
-		void Client::eventConnectionDown()
+		void Client::eventConnectionDown() throw ()
 		{
 			_inqueue.abort();
 
 			try {
 				_receiver.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(20) << "ThreadException in Client::eventConnectionDown: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void Client::eventBundleAck(size_t ack)
+		void Client::eventBundleAck(size_t ack) throw ()
 		{
 			lastack = ack;
 		}

@@ -51,9 +51,26 @@ namespace dtn
 			return CustodyEvent::className;
 		}
 
-		std::string CustodyEvent::toString() const
+		std::string CustodyEvent::getMessage() const
 		{
-			return className;
+			switch (getAction())
+			{
+				case CUSTODY_ACCEPT:
+					if (getBundle().procflags & dtn::data::Bundle::CUSTODY_REQUESTED)
+					{
+						return "custody acceptance";
+					}
+					break;
+
+				case CUSTODY_REJECT:
+					if (getBundle().procflags & dtn::data::Bundle::CUSTODY_REQUESTED)
+					{
+						return "custody reject";
+					}
+					break;
+			};
+
+			return "unknown";
 		}
 
 		void CustodyEvent::raise(const dtn::data::MetaBundle &bundle, const EventCustodyAction action)

@@ -61,9 +61,9 @@ namespace dtn
 			return BundleExpiredEvent::className;
 		}
 
-		string BundleExpiredEvent::toString() const
+		std::string BundleExpiredEvent::getMessage() const
 		{
-			return className + ": Bundle has been expired " + _bundle.toString();
+			return "Bundle has been expired " + _bundle.toString();
 		}
 
 		const string BundleExpiredEvent::className = "BundleExpiredEvent";

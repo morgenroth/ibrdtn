@@ -1,8 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
 
 # what flags you want to pass to the C compiler & linker
-AM_CPPFLAGS = @ibrdtn_CFLAGS@
-AM_LDFLAGS = @ibrdtn_LIBS@
+AM_CPPFLAGS = @ibrdtn_CFLAGS@ @DAEMON_CFLAGS@
+AM_LDFLAGS = @ibrdtn_LIBS@ @DAEMON_LIBS@
 
 INCLUDES = -I@top_srcdir@/src
 
@@ -10,7 +10,7 @@ INCLUDES = -I@top_srcdir@/src
 # the previous manual Makefile
 bin_PROGRAMS = dtnping dtninbox dtnoutbox dtnrecv dtnsend dtntracepath dtntrigger dtnconvert dtnstream dtnrecv-ng
 
-if LINUX
+if TUNNEL
 sbin_PROGRAMS = dtntunnel
 endif
 

@@ -21,6 +21,7 @@
 
 #include "core/TimeEvent.h"
 #include "core/EventDispatcher.h"
+#include <sstream>
 
 namespace dtn
 {
@@ -63,9 +64,13 @@ namespace dtn
 			dtn::core::EventDispatcher<TimeEvent>::raise( new TimeEvent(timestamp, unixtimestamp, action) );
 		}
 
-		std::string TimeEvent::toString() const
+		std::string TimeEvent::getMessage() const
 		{
-			return TimeEvent::className;
+			if (getAction() == TIME_SECOND_TICK) {
+				std::stringstream ss; ss << getTimestamp();
+				return "new timestamp is " + ss.str();
+			}
+			return "unknown";
 		}
 
 		const std::string TimeEvent::className = "TimeEvent";

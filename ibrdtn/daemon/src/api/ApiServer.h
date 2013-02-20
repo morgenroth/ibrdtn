@@ -42,6 +42,8 @@ namespace dtn
 		class ApiServer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ApiServerInterface, public ibrcommon::TimerCallback
 		{
 		public:
+			static const std::string TAG;
+
 			ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::File &socket);
 			ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::vinterface &net, int port = 4550);
 			virtual ~ApiServer();
@@ -54,8 +56,6 @@ namespace dtn
 			void freeRegistration(Registration &reg);
 
 			void raiseEvent(const dtn::core::Event *evt) throw ();
-
-			void processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle);
 
 			/**
 			 * retrieve a registration for a given handle from the ApiServers registration list

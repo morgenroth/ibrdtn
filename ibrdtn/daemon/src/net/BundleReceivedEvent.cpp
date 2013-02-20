@@ -55,12 +55,12 @@ namespace dtn
 			return BundleReceivedEvent::className;
 		}
 
-		std::string BundleReceivedEvent::toString() const
+		std::string BundleReceivedEvent::getMessage() const
 		{
 			if (fromlocal) {
-				return className + ": Bundle received " + bundle.toString() + " (local)";
+				return "Bundle received " + bundle.toString() + " (local)";
 			} else {
-				return className + ": Bundle received " + bundle.toString() + " from " + peer.getString();
+				return "Bundle received " + bundle.toString() + " from " + peer.getString();
 			}
 		}
 

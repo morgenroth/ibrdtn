@@ -50,9 +50,9 @@ namespace ibrcommon
 		virtual const ibrcommon::vinterface getInterface(int index) const = 0;
 		virtual const std::list<vaddress> getAddressList(const vinterface &iface, const std::string &scope = "") = 0;
 
-		virtual void addEventListener(const vinterface&, LinkManager::EventCallback*);
-		virtual void removeEventListener(const vinterface&, LinkManager::EventCallback*);
-		virtual void removeEventListener(LinkManager::EventCallback*);
+		virtual void addEventListener(const vinterface&, LinkManager::EventCallback*) throw ();
+		virtual void removeEventListener(const vinterface&, LinkManager::EventCallback*) throw ();
+		virtual void removeEventListener(LinkManager::EventCallback*) throw ();
 
 		void raiseEvent(const LinkEvent &lme);
 

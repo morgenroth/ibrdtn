@@ -42,11 +42,13 @@ namespace dtn
 
 		void Notifier::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<NodeEvent>::add(this);
 		}
 
 		void Notifier::componentDown() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<NodeEvent>::remove(this);
 		}
 

@@ -69,17 +69,17 @@ void TestStreamConnection::connectionUpDown()
 			_sockets.down();
 		}
 
-		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) {};
-		void eventTimeout() {};
-		void eventError() {};
-		void eventBundleRefused() {};
-		void eventBundleForwarded() {};
-		void eventBundleAck(size_t ack)
+		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) throw () {};
+		void eventTimeout() throw () {};
+		void eventError() throw () {};
+		void eventBundleRefused() throw () {};
+		void eventBundleForwarded() throw () {};
+		void eventBundleAck(size_t ack) throw ()
 		{
 			std::cout << "server: ack received, value: " << ack << std::endl;
 		};
-		void eventConnectionUp(const dtn::streams::StreamContactHeader&) {};
-		void eventConnectionDown() {};
+		void eventConnectionUp(const dtn::streams::StreamContactHeader&) throw () {};
+		void eventConnectionDown() throw () {};
 
 		unsigned int recv_bundles;
 
@@ -144,18 +144,18 @@ void TestStreamConnection::connectionUpDown()
 			_client.close();
 		}
 
-		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) {};
-		void eventTimeout() {};
-		void eventError() {};
-		void eventBundleRefused() {};
-		void eventBundleForwarded() {};
-		void eventBundleAck(size_t)
+		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) throw () {};
+		void eventTimeout() throw () {};
+		void eventError() throw () {};
+		void eventBundleRefused() throw () {};
+		void eventBundleForwarded() throw () {};
+		void eventBundleAck(size_t) throw ()
 		{
 			// std::cout << "client: ack received, value: " << ack << std::endl;
 		};
 
-		void eventConnectionUp(const dtn::streams::StreamContactHeader&) {};
-		void eventConnectionDown() {};
+		void eventConnectionUp(const dtn::streams::StreamContactHeader&) throw () {};
+		void eventConnectionDown() throw () {};
 
 		void handshake()
 		{

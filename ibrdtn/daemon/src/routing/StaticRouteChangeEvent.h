@@ -44,7 +44,7 @@ namespace dtn
 
 			const std::string getName() const;
 
-			std::string toString() const;
+			std::string getMessage() const;
 
 			static void raiseEvent(CHANGE_TYPE type);
 			static void raiseEvent(CHANGE_TYPE type, const dtn::data::EID &nexthop, const std::string pattern, size_t timeout = 0);

@@ -66,12 +66,12 @@ namespace dtn
 			/**
 			 * This method is called after accept()
 			 */
-			virtual void initialize();
+			virtual void initialize() throw ();
 
 			/**
 			 * shutdown the whole tcp connection
 			 */
-			void shutdown();
+			void shutdown() throw ();
 
 			/**
 			 * Get the header of this connection
@@ -88,15 +88,15 @@ namespace dtn
 			/**
 			 * callback methods for tcpstream
 			 */
-			virtual void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc);
-			virtual void eventTimeout();
-			virtual void eventError();
-			virtual void eventConnectionUp(const dtn::streams::StreamContactHeader &header);
-			virtual void eventConnectionDown();
+			virtual void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc) throw ();
+			virtual void eventTimeout() throw ();
+			virtual void eventError() throw ();
+			virtual void eventConnectionUp(const dtn::streams::StreamContactHeader &header) throw ();
+			virtual void eventConnectionDown() throw ();
 
-			virtual void eventBundleRefused();
-			virtual void eventBundleForwarded();
-			virtual void eventBundleAck(size_t ack);
+			virtual void eventBundleRefused() throw ();
+			virtual void eventBundleForwarded() throw ();
+			virtual void eventBundleAck(size_t ack) throw ();
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
@@ -133,6 +133,8 @@ namespace dtn
 
 			void keepalive();
 			bool good() const;
+
+			void initiateExtendedHandshake() throw (ibrcommon::Exception);
 
 		private:
 			class KeepaliveSender : public ibrcommon::JoinableThread

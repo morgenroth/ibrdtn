@@ -443,22 +443,24 @@ namespace dtn
 
 		void StaticRoutingExtension::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			try {
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("StaticRoutingExtension", error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		void StaticRoutingExtension::componentDown() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			try {
-				// run the thread
+				// stop the thread
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("StaticRoutingExtension", error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

@@ -43,6 +43,8 @@ namespace dtn
 		class IPNDAgent : public DiscoveryAgent, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback
 		{
 		public:
+			static const std::string TAG;
+
 			IPNDAgent(int port);
 			virtual ~IPNDAgent();
 
@@ -64,8 +66,8 @@ namespace dtn
 			void __cancellation() throw ();
 
 		private:
-			void leave_interface(const ibrcommon::vinterface &iface);
-			void join_interface(const ibrcommon::vinterface &iface);
+			void leave_interface(const ibrcommon::vinterface &iface) throw ();
+			void join_interface(const ibrcommon::vinterface &iface) throw ();
 			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;

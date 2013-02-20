@@ -41,6 +41,8 @@ namespace dtn
 {
 	namespace net
 	{
+		const std::string IPNDAgent::TAG = "IPNDAgent";
+
 		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
 		   _version(DiscoveryAnnouncement::DISCO_VERSION_01)
@@ -59,7 +61,7 @@ namespace dtn
 				break;
 
 			case 0:
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
 				_version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
 				break;
 			};
@@ -72,17 +74,17 @@ namespace dtn
 		}
 
 		void IPNDAgent::add(const ibrcommon::vaddress &address) {
-			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: listen to " << address.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "listen to " << address.toString() << IBRCOMMON_LOGGER_ENDL;
 			_destinations.push_back(address);
 		}
 
 		void IPNDAgent::bind(const ibrcommon::vinterface &net)
 		{
-			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			_interfaces.push_back(net);
 		}
 
-		void IPNDAgent::leave_interface(const ibrcommon::vinterface &iface)
+		void IPNDAgent::leave_interface(const ibrcommon::vinterface &iface) throw ()
 		{
 			ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**_recv_socket.getAll().begin());
 
@@ -92,17 +94,17 @@ namespace dtn
 					msock.leave(*it_addr, iface);
 				} catch (const ibrcommon::socket_raw_error &e) {
 					if (e.error() != EADDRNOTAVAIL) {
-						IBRCOMMON_LOGGER(error) << "leave failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "leave failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::socket_exception &e) {
-					IBRCOMMON_LOGGER_DEBUG(10) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const ibrcommon::Exception&) {
-					IBRCOMMON_LOGGER(error) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "can not leave " << (*it_addr).toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}
 
-		void IPNDAgent::join_interface(const ibrcommon::vinterface &iface)
+		void IPNDAgent::join_interface(const ibrcommon::vinterface &iface) throw ()
 		{
 			ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**_recv_socket.getAll().begin());
 
@@ -112,10 +114,10 @@ namespace dtn
 					msock.join(*it_addr, iface);
 				} catch (const ibrcommon::socket_raw_error &e) {
 					if (e.error() != EADDRINUSE) {
-						IBRCOMMON_LOGGER(error) << "join failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "join failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::socket_exception &e) {
-					IBRCOMMON_LOGGER_DEBUG(10) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}
@@ -240,8 +242,14 @@ namespace dtn
 
 		void IPNDAgent::componentUp() throw ()
 		{
-			// setup the receive socket
-			_recv_socket.up();
+			// routine checked for throw() on 15.02.2013
+
+			try {
+				// setup the receive socket
+				_recv_socket.up();
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 
 			// join multicast groups
 			try {
@@ -267,8 +275,12 @@ namespace dtn
 				throw ibrcommon::socket_exception("no multicast socket found");
 			}
 
-			// setup all send sockets
-			_send_socket.up();
+			try {
+				// setup all send sockets
+				_send_socket.up();
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void IPNDAgent::componentDown() throw ()
