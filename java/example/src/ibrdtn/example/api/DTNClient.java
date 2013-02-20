@@ -7,12 +7,9 @@ import ibrdtn.api.EventClient;
 import ibrdtn.api.ExtendedClient;
 import ibrdtn.api.ExtendedClient.APIException;
 import ibrdtn.api.object.Bundle;
-import ibrdtn.api.object.EID;
-import ibrdtn.api.object.GroupEndpoint;
 import ibrdtn.api.object.PayloadBlock;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -122,96 +119,6 @@ public class DTNClient {
         send(bundle);
     }
 
-    /**
-     * Adds a registration of the form '$node/$id' to the client connection. The registration will not be used as the
-     * source when sending bundles,
-     *
-     * @see setEndpoint for this purpose
-     *
-     * @param id the application name that will be concatenated to the daemons EID
-     * @throws APIException If the request fails.
-     */
-    public void addEndpoint(String id) throws APIException {
-        exClient.addEndpoint(id);
-        logger.log(Level.INFO, "Endpoint ''{0}'' registered.", id);
-    }
-
-    /**
-     * Gets the primary endpoint for this client connection in the form 'dtn://$node/$id'.
-     *
-     * @return the primary EID (dtn://$node/$id)
-     * @throws ibrdtn.api.ExtendedClient.APIException
-     */
-    public EID getEndpoint() throws APIException {
-        EID eid = exClient.getEndpoint();
-        logger.log(Level.INFO, "Endpoint ''{0}''", eid);
-        return eid;
-    }
-
-    /**
-     * Removes a registration of the form '$node/$id' from the client connection.
-     *
-     * @param id the application name
-     * @throws APIException If the request fails.
-     */
-    public void removeEndpoint(String id) throws APIException {
-        exClient.removeEndpoint(id);
-        logger.log(Level.INFO, "Endpoint ''{0}'' removed.", id);
-    }
-
-    /**
-     * Registers a group endpoint in the form gid = 'dtn://$name[/$id]'. This registration therefore is independent from
-     * the node name and can be used for group communications.
-     *
-     * @param gid The GID to register ('dtn://$name[/$id]').
-     * @throws APIException If the request fails.
-     */
-    public void addGID(String gid) throws APIException {
-        exClient.addRegistration(new GroupEndpoint(gid));
-        logger.log(Level.INFO, "GroupEndpoint ''{0}'' registered.", gid);
-    }
-
-    /**
-     * Removes a group endpoint registration in the form gid = 'dtn://$name[/$id]' of this client connection.
-     *
-     * @param gid The GID to remove ('dtn://$name[/$id]').
-     * @throws APIException If the request fails.
-     */
-    public void removeGID(String gid) throws APIException {
-        exClient.removeRegistration(new GroupEndpoint(gid));
-        logger.log(Level.INFO, "GroupEndpoint ''{0}'' removed.", gid);
-    }
-
-    /**
-     * Gets all neighbors available to the daemon.
-     *
-     * @return A list of EIDs. Each of them is an available neighbor.
-     * @throws APIException If the request fails.
-     */
-    public List<String> getNeighbors() throws APIException {
-        return exClient.getNeighbors();
-    }
-
-    /**
-     * Gets the EID of the dtn daemon in the form 'dtn://$name'.
-     *
-     * @return The daemons EID
-     * @throws APIException If the request fails.
-     */
-    public EID getNodeName() throws APIException {
-        return exClient.getNodeName();
-    }
-
-    /**
-     * Gets all registrations of this connection, including group endpoints.
-     *
-     * @return A list with EIDs.
-     * @throws APIException If the request fails.
-     */
-    public List<String> getRegistrations() throws APIException {
-        return exClient.getRegistration();
-    }
-
     public void shutdown() {
 
         logger.log(Level.SEVERE, "Shutting down {0}", endpoint);
@@ -260,5 +167,9 @@ public class DTNClient {
 
     public String getConfiguration() {
         return "DTN Client: " + endpoint + " [" + Constants.HOST + ":" + Constants.PORT + "] \r\n";
+    }
+
+    public ExtendedClient getEC() {
+        return this.exClient;
     }
 }

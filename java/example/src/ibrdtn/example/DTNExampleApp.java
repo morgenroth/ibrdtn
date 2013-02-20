@@ -545,10 +545,11 @@ public class DTNExampleApp extends javax.swing.JFrame {
     }//GEN-LAST:event_btnSendActionPerformed
 
     private void btnAddGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddGIDActionPerformed
-        String gid = tfGid.getText();
-        if (gid != null && gid.length() > 3) {
+        String group = tfGid.getText();
+        if (group != null && group.length() > 3) {
+            GroupEndpoint gid = new GroupEndpoint(group);
             try {
-                dtnClient.addGID(gid);
+                dtnClient.getEC().addRegistration(gid);
                 print("INFO: GID '" + gid + "' added");
             } catch (APIException ex) {
                 logger.log(Level.SEVERE, null, ex);
@@ -560,7 +561,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         String eid = tfEid.getText();
         if (eid != null && eid.length() > 3) {
             try {
-                dtnClient.addEndpoint(eid);
+                dtnClient.getEC().addEndpoint(eid);
                 print("INFO: Endpoint '" + eid + "' added");
             } catch (APIException ex) {
                 logger.log(Level.SEVERE, null, ex);
@@ -577,7 +578,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         String eid = tfEid.getText();
         if (eid != null && eid.length() > 3) {
             try {
-                dtnClient.removeEndpoint(eid);
+                dtnClient.getEC().removeEndpoint(eid);
                 print("INFO: Endpoint '" + eid + "' removed");
             } catch (APIException ex) {
                 logger.log(Level.SEVERE, null, ex);
@@ -586,11 +587,12 @@ public class DTNExampleApp extends javax.swing.JFrame {
     }//GEN-LAST:event_btnRemoveEIDActionPerformed
 
     private void btnRemoveGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveGIDActionPerformed
-        String gid = tfGid.getText();
-        if (gid != null && gid.length() > 3) {
+        String group = tfGid.getText();
+        if (group != null && group.length() > 3) {
+            GroupEndpoint eid = new GroupEndpoint(group);
             try {
-                dtnClient.removeGID(gid);
-                print("INFO: GID '" + gid + "' removed");
+                dtnClient.getEC().removeRegistration(eid);
+                print("INFO: GID '" + group + "' removed");
             } catch (APIException ex) {
                 logger.log(Level.SEVERE, null, ex);
             }
@@ -601,16 +603,16 @@ public class DTNExampleApp extends javax.swing.JFrame {
         try {
             switch ((String) cbOutput.getSelectedItem()) {
                 case "Primary EID":
-                    print(dtnClient.getEndpoint().toString());
+                    print(dtnClient.getEC().getEndpoint().toString());
                     break;
                 case "Node Name":
-                    print(dtnClient.getNodeName().toString());
+                    print(dtnClient.getEC().getNodeName().toString());
                     break;
                 case "Registrations":
-                    print(dtnClient.getRegistrations().toString());
+                    print(dtnClient.getEC().getRegistrations().toString());
                     break;
                 case "Neighbors":
-                    print(dtnClient.getNeighbors().toString());
+                    print(dtnClient.getEC().getNeighbors().toString());
                     break;
                 default:
                     logger.log(Level.WARNING, "Selected printing paramter unknown!");

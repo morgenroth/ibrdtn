@@ -153,23 +153,28 @@ public class MySABHandler implements SABHandler {
 
     @Override
     public void notify(Integer type, String data) {
-        logger.log(Level.FINE, "New bundle notification {0}", String.valueOf(type));
 
-        if (type == 602) {
+        switch (type) {
+            case 602:
+                logger.log(Level.FINE, "New bundle notification {0}", String.valueOf(type));
 
-            final ExtendedClient exClient = this.client;
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        // load the next bundle
-                        exClient.loadAndGetBundle();
-                        logger.log(Level.FINE, "New bundle loaded");
-                    } catch (ExtendedClient.APIException e) {
-                        logger.log(Level.WARNING, "Failed to load next bundle");
+                final ExtendedClient exClient = this.client;
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            // load the next bundle
+                            exClient.loadAndGetBundle();
+                            logger.log(Level.FINE, "New bundle loaded");
+                        } catch (ExtendedClient.APIException e) {
+                            logger.log(Level.WARNING, "Failed to load next bundle");
+                        }
                     }
-                }
-            });
+                });
+                break;
+            case 603:
+                logger.log(Level.SEVERE, "New notification {0}", String.valueOf(type));
+                break;
         }
     }
 
