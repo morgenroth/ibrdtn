@@ -213,7 +213,7 @@ namespace dtn
 			 * If no payload block is attached to this bundle an MissingObjectException is thrown.
 			 * @return A reference to the payload block of this bundle.
 			 */
-			ibrcommon::BLOB::Reference getData() throw (dtn::MissingObjectException);
+			ibrcommon::BLOB::Reference getData() const throw (dtn::MissingObjectException);
 
 			/**
 			 * This method set the destination of a bundle. By default a destination of a bundle is a singleton, but
