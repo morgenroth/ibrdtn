@@ -61,6 +61,17 @@ AC_TYPE_UINT8_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([memset])
 
+PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
+	AC_SUBST(DAEMON_CFLAGS)
+	AC_SUBST(DAEMON_LIBS)
+	AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
+	AC_CHECK_LIB(daemon, daemon_reset_sigs, [
+		AC_DEFINE(HAVE_DAEMON_RESET_SIGS, [1], ["daemon library has daemon_reset_sigs() and daemon_unblock_sigs() functions"])
+	])
+], [
+	AC_MSG_WARN([daemon library not found, daemonize features disabled])
+])
+
 AM_CONDITIONAL([TUNNEL], [test x$has_tun = xyes])
 
 dnl -----------------------------------------------

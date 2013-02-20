@@ -22,7 +22,12 @@
 #include "config.h"
 
 #include <iostream>
+#include <iomanip>
 #include <stdlib.h>
+
+#ifdef HAVE_LIBDAEMON
+#include <libdaemon/daemon.h>
+#endif
 
 // Base for send and receive bundle to/from the IBR-DTN daemon.
 #include "ibrdtn/api/Client.h"
@@ -40,6 +45,7 @@
 // Some classes to be thread-safe.
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
+#include <ibrcommon/Logger.h>
 
 // Basic functionalities for streaming.
 #include <iostream>
@@ -108,6 +114,37 @@ int tun_alloc(char *dev, int flags) {
   return fd;
 }
 
+size_t throughput_data_up[5] = { 0, 0, 0, 0, 0 };
+size_t throughput_data_down[5] = { 0, 0, 0, 0, 0 };
+int throughput_pos = 0;
+
+void add_throughput_data(size_t amount, int updown) {
+	if (updown == 0) {
+		throughput_data_down[throughput_pos] += amount;
+	} else {
+		throughput_data_up[throughput_pos] += amount;
+	}
+}
+
+void timer_display_throughput(int) {
+	float throughput_sum_up = 0;
+	float throughput_sum_down = 0;
+
+	for (int i = 0; i < 5; i++) {
+		throughput_sum_up += throughput_data_up[i];
+		throughput_sum_down += throughput_data_down[i];
+	}
+
+	std::cout << "  up: " << setiosflags(ios::right) << setw(12) << setiosflags(ios::fixed) << setprecision(2) << (throughput_sum_up/1024) << " kB/s ";
+	std::cout << "  down: " << setiosflags(ios::right) << setw(12) << setiosflags(ios::fixed) << setprecision(2) << (throughput_sum_down/1024) << " kB/s\r" << std::flush;
+
+	throughput_pos++;
+	if (throughput_pos > 4) throughput_pos = 0;
+
+	throughput_data_up[throughput_pos] = 0;
+	throughput_data_down[throughput_pos] = 0;
+}
+
 class TUN2BundleGateway : public dtn::api::Client
 {
 	public:
@@ -139,14 +176,22 @@ class TUN2BundleGateway : public dtn::api::Client
 
 		void shutdown() {
 			if (_fd < 0) return;
+
+			// close client connection
+			this->close();
+
 			// close socket
 			::close(_fd);
 			_fd = -1;
 		}
 
 		void process(const dtn::data::EID &endpoint, unsigned int lifetime = 60) {
+			if (_fd == -1) throw ibrcommon::Exception("Tunnel closed.");
+
 			char data[65536];
 			int ret = ::read(_fd, data, sizeof(data));
+
+			add_throughput_data(ret, 1);
 
 			if (ret == -1) {
 				throw ibrcommon::Exception("Error: failed to read from tun device");
@@ -192,10 +237,13 @@ class TUN2BundleGateway : public dtn::api::Client
 			char data[65536];
 			stream->read(data, sizeof(data));
 			size_t ret = stream->gcount();
+
 			if (::write(_fd, data, ret) < 0)
 			{
-				std::cerr << "error while writing" << std::endl;
+				IBRCOMMON_LOGGER_TAG("Core", error) << "Error while writing" << IBRCOMMON_LOGGER_ENDL;
 			}
+
+			add_throughput_data(ret, 0);
 		}
 };
 
@@ -214,13 +262,27 @@ void term(int signal)
 
 void print_help(const char *argv0)
 {
-	cout << "-- dtntunnel (IBR-DTN) --" << endl;
-	cout << "Syntax: " << argv0 << " [options] <endpoint>" << endl;
-	cout << " -h            Display help message" << endl;
-	cout << " -d <dev>      Virtual network device to create (default: tun0)" << endl;
-	cout << " -s <name>     Application suffix of the local endpoint (default: tunnel)" << endl;
-	cout << " -l <seconds>  Lifetime of each packet (default: 60)" << endl;
+	std::cout << "-- dtntunnel (IBR-DTN) --" << std::endl;
+	std::cout << "Syntax: " << argv0 << " [options] <endpoint>" << std::endl;
+	std::cout << " -h            Display help message" << std::endl;
+	std::cout << " -d <dev>      Virtual network device to create (default: tun0)" << std::endl;
+	std::cout << " -s <name>     Application suffix of the local endpoint (default: tunnel)" << std::endl;
+	std::cout << " -l <seconds>  Lifetime of each packet (default: 60)" << std::endl;
+	std::cout << " -t            Show throughput" << std::endl;
+#ifdef HAVE_LIBDAEMON
+	std::cout << " -D            Daemonize the process" << std::endl;
+	std::cout << " -k            Stop the running daemon" << std::endl;
+	std::cout << " -p <file>     Store the pid in this pidfile" << std::endl;
+#endif
 }
+
+#ifdef HAVE_LIBDAEMON
+static char* __daemon_pidfile__ = NULL;
+
+static const char* __daemon_pid_file_proc__(void) {
+	return __daemon_pidfile__;
+}
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -231,16 +293,43 @@ int main(int argc, char *argv[])
 	std::string app_name("tunnel");
 	std::string endpoint("dtn:none");
 	unsigned int lifetime = 60;
+	bool daemonize = false;
+	bool stop_daemon = false;
+	std::string pidfile;
+	bool throughput = false;
 
 	// catch process signals
 	signal(SIGINT, term);
 	signal(SIGTERM, term);
+	signal(SIGQUIT, term);
 
-	while ((c = getopt (argc, argv, "d:s:l:h")) != -1)
+#ifdef HAVE_LIBDAEMON
+	while ((c = getopt (argc, argv, "td:s:l:hDkp:")) != -1)
+#else
+	while ((c = getopt (argc, argv, "td:s:l:h")) != -1)
+#endif
 	switch (c)
 	{
+#ifdef HAVE_LIBDAEMON
+		case 'D':
+			daemonize = true;
+			break;
+
+		case 'k':
+			daemonize = true;
+			stop_daemon = true;
+			break;
+
+		case 'p':
+			pidfile = optarg;
+			break;
+#endif
 		case 'd':
 			ptp_dev = optarg;
+			break;
+
+		case 't':
+			throughput = true;
 			break;
 
 		case 's':
@@ -270,10 +359,140 @@ int main(int argc, char *argv[])
 	}
 
 	// print help if not enough parameters are set
-	if (optindex < 1) { print_help(argv[0]); exit(0); }
+	if (!stop_daemon && (optindex < 1)) { print_help(argv[0]); exit(0); }
 
-	std::cout << "IBR-DTN IP <-> Bundle Tunnel" << std::endl;
-	std::cout << "----------------------------" << std::endl;
+	// logging options
+	//const unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
+	const unsigned char logopts = 0;
+
+	// error filter
+	const unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
+
+	// logging filter, everything but debug, err and crit
+	const unsigned char logstd = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | logerr);
+
+	// syslog filter, everything but DEBUG and NOTICE
+	const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
+
+	if (daemonize) {
+		// enable syslog logging
+		ibrcommon::Logger::enableSyslog(argv[0], LOG_PID, LOG_DAEMON, logsys);
+	} else {
+		// add logging to the cout
+		ibrcommon::Logger::addStream(std::cout, logstd, logopts);
+
+		// add logging to the cerr
+		ibrcommon::Logger::addStream(std::cerr, logerr, logopts);
+	}
+
+#ifdef HAVE_LIBDAEMON
+	if (daemonize)
+	{
+#ifdef HAVE_DAEMON_RESET_SIGS
+		/* Reset signal handlers */
+		if (daemon_reset_sigs(-1) < 0) {
+			IBRCOMMON_LOGGER_TAG("Core", error) << "Failed to reset all signal handlers: " << strerror(errno) << IBRCOMMON_LOGGER_ENDL;
+			return 1;
+		}
+
+		/* Unblock signals */
+		if (daemon_unblock_sigs(-1) < 0) {
+			IBRCOMMON_LOGGER_TAG("Core", error) << "Failed to unblock all signals: " << strerror(errno) << IBRCOMMON_LOGGER_ENDL;
+			return 1;
+		}
+#endif
+		pid_t pid;
+
+		/* Set identification string for the daemon for both syslog and PID file */
+		daemon_pid_file_ident = daemon_log_ident = daemon_ident_from_argv0(argv[0]);
+
+		/* set the pid file path */
+		if (pidfile.length() > 0) {
+			__daemon_pidfile__ = new char[pidfile.length() + 1];
+			::strcpy(__daemon_pidfile__, pidfile.c_str());
+			daemon_pid_file_proc = __daemon_pid_file_proc__;
+		}
+
+		/* Check if we are called with -k parameter */
+		if (stop_daemon)
+		{
+			int ret;
+
+			/* Kill daemon with SIGTERM */
+
+			/* Check if the new function daemon_pid_file_kill_wait() is available, if it is, use it. */
+			if ((ret = daemon_pid_file_kill_wait(SIGTERM, 5)) < 0)
+				IBRCOMMON_LOGGER_TAG("Core", warning) << "Failed to kill daemon: " << strerror(errno) << IBRCOMMON_LOGGER_ENDL;
+
+			return ret < 0 ? 1 : 0;
+		}
+
+		/* Check that the daemon is not rung twice a the same time */
+		if ((pid = daemon_pid_file_is_running()) >= 0) {
+			IBRCOMMON_LOGGER_TAG("Core", error) << "Daemon already running on PID file " << pid << IBRCOMMON_LOGGER_ENDL;
+			return 1;
+		}
+
+		/* Prepare for return value passing from the initialization procedure of the daemon process */
+		if (daemon_retval_init() < 0) {
+			IBRCOMMON_LOGGER_TAG("Core", error) << "Failed to create pipe." << IBRCOMMON_LOGGER_ENDL;
+			return 1;
+		}
+
+		/* Do the fork */
+		if ((pid = daemon_fork()) < 0) {
+
+			/* Exit on error */
+			daemon_retval_done();
+			return 1;
+
+		} else if (pid) { /* The parent */
+			int ret;
+
+			/* Wait for 20 seconds for the return value passed from the daemon process */
+			if ((ret = daemon_retval_wait(20)) < 0) {
+				IBRCOMMON_LOGGER_TAG("Core", error) << "Could not recieve return value from daemon process: " << strerror(errno) << IBRCOMMON_LOGGER_ENDL;
+				return 255;
+			}
+
+			return ret;
+
+		} else { /* The daemon */
+			/* Close FDs */
+			if (daemon_close_all(-1) < 0) {
+				IBRCOMMON_LOGGER_TAG("Core", error) << "Failed to close all file descriptors: " << strerror(errno) << IBRCOMMON_LOGGER_ENDL;
+
+				/* Send the error condition to the parent process */
+				daemon_retval_send(1);
+
+				/* Do a cleanup */
+				daemon_retval_send(255);
+				daemon_signal_done();
+				daemon_pid_file_remove();
+
+				return -1;
+			}
+
+			/* Create the PID file */
+			if (daemon_pid_file_create() < 0) {
+				IBRCOMMON_LOGGER_TAG("Core", error) << "Could not create PID file ( " << strerror(errno) << ")." << IBRCOMMON_LOGGER_ENDL;
+				daemon_retval_send(2);
+
+				/* Do a cleanup */
+				daemon_retval_send(255);
+				daemon_signal_done();
+				daemon_pid_file_remove();
+
+				return -1;
+			}
+
+	        /* Send OK to parent process */
+	        daemon_retval_send(0);
+		}
+	}
+#endif
+
+	IBRCOMMON_LOGGER_TAG("Core", info) << "IBR-DTN IP <-> Bundle Tunnel" << IBRCOMMON_LOGGER_ENDL;
 
 	// create a connection to the dtn daemon
 	ibrcommon::vaddress addr("localhost", 4550);
@@ -284,54 +503,67 @@ int main(int argc, char *argv[])
 		TUN2BundleGateway gateway(app_name, conn, ptp_dev);
 		_gateway = &gateway;
 
-		std::cout << "Local:  " << app_name << std::endl;
-		std::cout << "Peer:   " << endpoint << std::endl;
-		std::cout << "Device: " << gateway.getDeviceName() << std::endl;
-		std::cout << std::endl;
-		std::cout << "Now you need to set-up the ip tunnel. You can use commands like this:" << std::endl;
-		std::cout << "# sudo ip link set " << gateway.getDeviceName() << " up" << std::endl;
-		std::cout << "# sudo ip addr add 10.0.0.1/24 dev " << gateway.getDeviceName() << std::endl;
-		std::cout << std::endl;
+		IBRCOMMON_LOGGER_TAG("Core", info) << "Local:  " << app_name << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Core", info) << "Peer:   " << endpoint << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Core", info) << "Device: " << gateway.getDeviceName() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Core", notice) << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Core", notice) << "Now you need to set-up the ip tunnel. You can use commands like this:" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Core", notice) << "# sudo ip link set " << gateway.getDeviceName() << " up" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Core", notice) << "# sudo ip addr add 10.0.0.1/24 dev " << gateway.getDeviceName() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Core", notice) << IBRCOMMON_LOGGER_ENDL;
 
-		std::cout << "Processing [o] " << std::flush;
-		int display_state = 0;
+		timer_t timerid;
+		struct sigevent sev;
+
+		if (!daemonize && throughput) {
+			// enable throughput timer
+			signal(SIGRTMIN, timer_display_throughput);
+
+			sev.sigev_notify = SIGEV_SIGNAL;
+			sev.sigev_signo = SIGRTMIN;
+			sev.sigev_value.sival_ptr = &timerid;
+
+			// create a timer
+			timer_create(CLOCK_MONOTONIC, &sev, &timerid);
+
+			// arm the timer
+			struct itimerspec its;
+			size_t freq_nanosecs = 200000000;
+			its.it_value.tv_sec = freq_nanosecs / 1000000000;;
+			its.it_value.tv_nsec = freq_nanosecs % 1000000000;
+			its.it_interval.tv_sec = its.it_value.tv_sec;
+			its.it_interval.tv_nsec = its.it_value.tv_nsec;
+
+			if (timer_settime(timerid, 0, &its, NULL) == -1) {
+				IBRCOMMON_LOGGER_TAG("Core", error) << "Timer set failed." << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
 
 		// destination
 		dtn::data::EID eid(endpoint);
 
 		while (m_running)
 		{
-			switch (display_state) {
-			case 0:
-				std::cout << "\b\b\b" << "-] " << std::flush;
-				display_state++;
-				break;
-			case 1:
-				std::cout << "\b\b\b" << "\\] " << std::flush;
-				display_state++;
-				break;
-			case 2:
-				std::cout << "\b\b\b" << "|] " << std::flush;
-				display_state++;
-				break;
-			case 3:
-				std::cout << "\b\b\b" << "/] " << std::flush;
-				display_state = 0;
-				break;
-			default:
-				display_state = 0;
-				break;
-			}
 			gateway.process(eid, lifetime);
 		}
 
 		gateway.shutdown();
 	} catch (const ibrcommon::Exception &ex) {
-		std::cerr << ex.what() << std::endl;
-		return -1;
+		if (m_running) {
+			IBRCOMMON_LOGGER_TAG("Core", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			return -1;
+		}
 	}
 
-	std::cout << std::endl;
+	if (daemonize) {
+		/* Do a cleanup */
+		IBRCOMMON_LOGGER_TAG("Core", info) << "Stopped" << app_name << IBRCOMMON_LOGGER_ENDL;
+		daemon_retval_send(255);
+		daemon_signal_done();
+		daemon_pid_file_remove();
+	} else {
+		std::cout << std::endl;
+	}
 
 	return 0;
 }
