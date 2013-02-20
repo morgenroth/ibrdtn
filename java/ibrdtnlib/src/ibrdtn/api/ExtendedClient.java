@@ -51,11 +51,11 @@ import java.util.logging.Logger;
 public class ExtendedClient extends Client {
 
     private static final Logger logger = Logger.getLogger(ExtendedClient.class.getName());
-    private Object connection_mutex = new Object();
+    private final Object connection_mutex = new Object();
     private BufferedWriter _writer = null;
     private DataReceiver _receiver = null;
     private Boolean _debug = false;
-    private Object handler_mutex = new Object();
+    private final Object handler_mutex = new Object();
     protected SABHandler handler = null;
     private EID remoteEID = null;
 
@@ -68,7 +68,7 @@ public class ExtendedClient extends Client {
         CLOSING,
         FAILED
     }
-    private Object state_mutex = new Object();
+    private final Object state_mutex = new Object();
     private State state = State.UNINITIALIZED;
 
     private void setState(State s) {
@@ -490,7 +490,7 @@ public class ExtendedClient extends Client {
                     output.write(buf, 0, len);
                 }
             }
-        };
+        }
 
         send(destination, lifetime, new ImplSelfEncodingObject(stream, length));
     }
