@@ -63,11 +63,23 @@ namespace dtn
 				// add a socket for each address on the interface
 				std::list<ibrcommon::vaddress> addrs = net.getAddresses();
 
+				// convert the port into a string
+				std::stringstream ss; ss << port;
+
 				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 					ibrcommon::vaddress &addr = (*iter);
-					std::stringstream ss; ss << port;
-					addr.setService(ss.str());
-					_sockets.add(new ibrcommon::tcpserversocket(addr, 5), net);
+
+					// handle the addresses according to their family
+					switch (addr.family()) {
+					case AF_INET:
+					case AF_INET6:
+						addr.setService(ss.str());
+						_sockets.add(new ibrcommon::tcpserversocket(addr, 5), net);
+						break;
+
+					default:
+						break;
+					}
 				}
 			}
 		}

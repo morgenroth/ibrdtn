@@ -86,8 +86,17 @@ namespace dtn
 
 				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 					ibrcommon::vaddress &addr = (*iter);
-					addr.setService(ss.str());
-					_vsocket.add(new ibrcommon::tcpserversocket(addr), net);
+
+					// handle the addresses according to their family
+					switch (addr.family()) {
+					case AF_INET:
+					case AF_INET6:
+						addr.setService(ss.str());
+						_vsocket.add(new ibrcommon::tcpserversocket(addr), net);
+						break;
+					default:
+						break;
+					}
 				}
 
 				// subscribe to NetLink events on our interfaces
@@ -138,11 +147,17 @@ namespace dtn
 
 						for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
 						{
-							if ((*addr_it).scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
+							const ibrcommon::vaddress &addr = (*addr_it);
+
+							if (addr.scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
+
+							// do not announce non-IP addresses
+							sa_family_t f = addr.family();
+							if ((f != AF_INET) && (f != AF_INET6)) continue;
 
 							std::stringstream service;
 							// fill in the ip address
-							service << "ip=" << (*addr_it).address() << ";port=" << _portmap[iface] << ";";
+							service << "ip=" << addr.address() << ";port=" << _portmap[iface] << ";";
 							announcement.addService( DiscoveryService("tcpcl", service.str()));
 
 							// set the announce mark

@@ -69,8 +69,17 @@ namespace dtn
 
 					for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 						ibrcommon::vaddress &addr = (*iter);
-						addr.setService(ss.str());
-						_vsocket.add(new ibrcommon::udpsocket(addr), _iface);
+
+						// handle the addresses according to their family
+						switch (addr.family()) {
+						case AF_INET:
+						case AF_INET6:
+							addr.setService(ss.str());
+							_vsocket.add(new ibrcommon::udpsocket(addr), _iface);
+							break;
+						default:
+							break;
+						}
 					}
 				}
 			} catch (const ibrcommon::Exception&) {
@@ -238,12 +247,22 @@ namespace dtn
 			// get all addresses
 			std::list<ibrcommon::vaddress> addrs = _iface.getAddresses();
 
+			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+				ibrcommon::vaddress &addr = (*iter);
+
+				// handle the addresses according to their family
+				switch (addr.family()) {
+				case AF_INET:
+				case AF_INET6:
+					return UDPDatagramService::encode(addr, _bind_port);
+					break;
+				default:
+					break;
+				}
+			}
+
 			// no addresses available, return empty string
-			if (addrs.size() == 0) return "";
-
-			const ibrcommon::vaddress &addr = addrs.front();
-
-			return UDPDatagramService::encode(addr, _bind_port);
+			return "";
 		}
 
 		/**

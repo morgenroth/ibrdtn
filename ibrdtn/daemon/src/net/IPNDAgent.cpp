@@ -262,7 +262,16 @@ namespace dtn
 
 					for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 						ibrcommon::vaddress &addr = (*iter);
-						_send_socket.add(new ibrcommon::udpsocket(addr), iface);
+
+						// handle the addresses according to their family
+						switch (addr.family()) {
+						case AF_INET:
+						case AF_INET6:
+							_send_socket.add(new ibrcommon::udpsocket(addr), iface);
+							break;
+						default:
+							break;
+						}
 					}
 
 					// subscribe to NetLink events on our interfaces
