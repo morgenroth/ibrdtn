@@ -374,10 +374,13 @@ int main(int argc, char *argv[])
 	// syslog filter, everything but DEBUG and NOTICE
 	const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
 
+#ifdef HAVE_LIBDAEMON
 	if (daemonize) {
 		// enable syslog logging
 		ibrcommon::Logger::enableSyslog(argv[0], LOG_PID, LOG_DAEMON, logsys);
-	} else {
+	} else
+#endif
+	{
 		// add logging to the cout
 		ibrcommon::Logger::addStream(std::cout, logstd, logopts);
 
@@ -555,13 +558,16 @@ int main(int argc, char *argv[])
 		}
 	}
 
+#ifdef HAVE_LIBDAEMON
 	if (daemonize) {
 		/* Do a cleanup */
 		IBRCOMMON_LOGGER_TAG("Core", info) << "Stopped" << app_name << IBRCOMMON_LOGGER_ENDL;
 		daemon_retval_send(255);
 		daemon_signal_done();
 		daemon_pid_file_remove();
-	} else {
+	} else
+#endif
+	{
 		std::cout << std::endl;
 	}
 
