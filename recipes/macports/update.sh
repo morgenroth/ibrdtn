@@ -45,7 +45,7 @@ do
 	PKG_CHECKSUMS="${PKG_ARCHIVE} md5 ${MD5SUM} sha1 ${SHA1SUM}"
 
         # prepare patch file for ibrdtnd configuration
-        if [ "${PKG_NAME}" = "ibrdtnd" ]; then
+        #if [ "${PKG_NAME}" = "ibrdtnd" ]; then
             #PATCH_FILE=$(find gen/recipes/ -name ibrdtnd.conf.patch)
 
             #tar xvzf dl/${PKG_ARCHIVE}
@@ -66,7 +66,7 @@ do
 
             # remove folder
             #rm -r ${PKG_NAME}-${PKG_VERSION}
-        fi
+        #fi
 
         PKG_VERSION_KEYWORD='${PKG_VERSION}'
         PKG_MAINTAINER_KEYWORD='${PKG_MAINTAINER}'
