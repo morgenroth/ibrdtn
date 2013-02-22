@@ -46,26 +46,26 @@ do
 
         # prepare patch file for ibrdtnd configuration
         if [ "${PKG_NAME}" = "ibrdtnd" ]; then
-            PATCH_FILE=$(find gen/recipes/ -name ibrdtnd.conf.patch)
+            #PATCH_FILE=$(find gen/recipes/ -name ibrdtnd.conf.patch)
 
-            tar xvzf dl/${PKG_ARCHIVE}
+            #tar xvzf dl/${PKG_ARCHIVE}
 
-            DTND_CONFIG="${PKG_NAME}-${PKG_VERSION}/etc/ibrdtnd.conf"
-            mv ${DTND_CONFIG} ${DTND_CONFIG}.orig
+            #DTND_CONFIG="${PKG_NAME}-${PKG_VERSION}/etc/ibrdtnd.conf"
+            #mv ${DTND_CONFIG} ${DTND_CONFIG}.orig
 
-            cat ${DTND_CONFIG}.orig | sed 's/eth0/en0/' | \
-                sed 's/#api_interface = any/api_interface = lo0/' | \
-                sed 's/^user = dtnd/#user = dtnd/' > ${DTND_CONFIG}
+            #cat ${DTND_CONFIG}.orig | sed 's/eth0/en0/' | \
+            #    sed 's/#api_interface = any/api_interface = lo0/' | \
+            #    sed 's/^user = dtnd/#user = dtnd/' > ${DTND_CONFIG}
 
-            echo "diff -rupN ${DTND_CONFIG}.orig ${DTND_CONFIG}; exit 0;" | bash > ${PATCH_FILE}
+            #echo "diff -rupN ${DTND_CONFIG}.orig ${DTND_CONFIG}; exit 0;" | bash > ${PATCH_FILE}
 
             # add hash sums for diff file
-            SHA1SUM=$(sha1sum ${PATCH_FILE} | awk '{print $1}')
-            MD5SUM=$(md5sum ${PATCH_FILE} | awk '{print $1}')
-            PKG_CHECKSUMS="${PKG_CHECKSUMS} ibrdtnd.conf.patch md5 ${MD5SUM} sha1 ${SHA1SUM}"
+            #SHA1SUM=$(sha1sum ${PATCH_FILE} | awk '{print $1}')
+            #MD5SUM=$(md5sum ${PATCH_FILE} | awk '{print $1}')
+            #PKG_CHECKSUMS="${PKG_CHECKSUMS} ibrdtnd.conf.patch md5 ${MD5SUM} sha1 ${SHA1SUM}"
 
             # remove folder
-            rm -r ${PKG_NAME}-${PKG_VERSION}
+            #rm -r ${PKG_NAME}-${PKG_VERSION}
         fi
 
         PKG_VERSION_KEYWORD='${PKG_VERSION}'
