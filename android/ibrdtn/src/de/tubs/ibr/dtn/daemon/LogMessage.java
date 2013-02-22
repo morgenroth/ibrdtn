@@ -1,9 +1,10 @@
 /*
  * LogMessage.java
  * 
- * Copyright (C) 2011 IBR, TU Braunschweig
- *
- * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+ * Copyright (C) 2013 IBR, TU Braunschweig
+ * 
+ * Written-by: Dominik Schürmann <dominik@dominikschuermann.de>
+ * 	           Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,24 +22,42 @@
  */
 package de.tubs.ibr.dtn.daemon;
 
+import java.util.HashMap;
+
 import android.util.Log;
 
 public class LogMessage {
-	
+	public static HashMap<String, String> TAG_LABELS;
+
+	static
+	{
+		TAG_LABELS = new HashMap<String, String>();
+		TAG_LABELS.put("E", "Exception");
+		TAG_LABELS.put("W", "Warning");
+		TAG_LABELS.put("I", "Information");
+		TAG_LABELS.put("D", "Debug");
+		TAG_LABELS.put("V", "Verbose");
+	}
+
 	public String date;
 	public String tag;
 	public String msg;
 
 	public LogMessage(String raw) {
-		try {
-			date = raw.substring(0, 24).trim();
-			tag = raw.substring(24, raw.indexOf(':', 24)).trim();
-			msg = raw.substring(raw.indexOf(':', 24) + 2, raw.length());
-		} catch (java.lang.StringIndexOutOfBoundsException e) {
+		try
+		{
+			int secondSpace = raw.indexOf(' ', raw.indexOf(' ', 0) + 1);
+
+			date = raw.substring(0, secondSpace).trim();
+			tag = raw.substring(secondSpace, raw.indexOf('/', 0)).trim();
+			msg = raw.substring(raw.indexOf(':', secondSpace) + 1, raw.length()).trim();
+		} catch (StringIndexOutOfBoundsException e)
+		{
 			Log.e("LogMessage", "Error while parsing the log messages", e);
 			if (date == null) date = "";
 			tag = "";
 			msg = raw;
 		}
 	}
+
 }

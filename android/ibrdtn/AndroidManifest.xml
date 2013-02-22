@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="de.tubs.ibr.dtn"
-      android:versionCode="31"
-      android:versionName="0.8.0-31">
-      
-	<permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
-	        android:label="@string/permlab_dtnCommunication"
-	        android:description="@string/permdesc_dtnCommunication"
-	        android:permissionGroup="android.permission-group.NETWORK"
-	        android:protectionLevel="normal" />
-    
+    package="de.tubs.ibr.dtn"
+    android:versionCode="31"
+    android:versionName="0.8.0-31" >
+
+    <permission
+        android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
+        android:description="@string/permdesc_dtnCommunication"
+        android:label="@string/permlab_dtnCommunication"
+        android:permissionGroup="android.permission-group.NETWORK"
+        android:protectionLevel="normal" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -17,42 +18,79 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
-    
-	<uses-sdk android:minSdkVersion="10" android:targetSdkVersion="17" />
+    <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
 
-    <application android:icon="@drawable/icon" android:label="@string/app_name" android:allowBackup="true" android:debuggable="true">
-        <activity android:icon="@drawable/icon" android:label="@string/app_name" android:name=".daemon.Preferences" android:uiOptions="splitActionBarWhenNarrow">
+    <uses-sdk
+        android:minSdkVersion="10"
+        android:targetSdkVersion="17" />
+
+    <application
+        android:allowBackup="true"
+        android:debuggable="true"
+        android:icon="@drawable/icon"
+        android:label="@string/app_name" >
+        <activity
+            android:name=".daemon.Preferences"
+            android:icon="@drawable/icon"
+            android:label="@string/app_name"
+            android:uiOptions="splitActionBarWhenNarrow" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-		<service android:name=".service.DaemonService" android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION">
-			<intent-filter>
-				<action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
-				<action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
-				<action android:name="de.tubs.ibr.dtn.DTNService"></action>
-			</intent-filter>
-		</service>
-		<activity android:icon="@drawable/ic_neighbors" android:label="@string/list_neighbors" android:name=".daemon.NeighborList" />
-		<activity android:icon="@drawable/ic_log" android:label="@string/list_logs" android:name=".daemon.LogActivity" />
-		<activity android:label="@string/applist" android:name="de.tubs.ibr.dtn.daemon.AppListActivity" android:theme="@android:style/Theme.NoTitleBar" />
-		
-		<receiver android:name=".service.IntentReceiver" android:enabled="true" android:exported="false" android:label="IntentReceiver">
-	        <intent-filter>
-	            <action android:name="android.intent.action.BOOT_COMPLETED"></action>
-	        </intent-filter>
-		</receiver>
-		
-		<service android:name=".stats.CollectorService"></service>
-        
-		<receiver android:name=".stats.DataReceiver" android:exported="false" android:label="DataReceiver">
-	        <intent-filter>
-	            <action android:name="de.tubs.ibr.dtn.intent.EVENT"></action>
-	            <category android:name="android.intent.category.DEFAULT" />
-	        </intent-filter>
-		</receiver>
+
+        <service
+            android:name=".service.DaemonService"
+            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" >
+            <intent-filter>
+                <action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
+                <action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
+                <action android:name="de.tubs.ibr.dtn.DTNService" >
+                </action>
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name=".daemon.NeighborList"
+            android:icon="@drawable/ic_neighbors"
+            android:label="@string/list_neighbors" />
+        <activity
+            android:name=".daemon.LogActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:icon="@drawable/ic_log"
+            android:label="@string/list_logs" />
+        <activity
+            android:name="de.tubs.ibr.dtn.daemon.AppListActivity"
+            android:label="@string/applist"
+            android:theme="@android:style/Theme.NoTitleBar" />
+
+        <receiver
+            android:name=".service.IntentReceiver"
+            android:enabled="true"
+            android:exported="false"
+            android:label="IntentReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" >
+                </action>
+            </intent-filter>
+        </receiver>
+
+        <service android:name=".stats.CollectorService" >
+        </service>
+
+        <receiver
+            android:name=".stats.DataReceiver"
+            android:exported="false"
+            android:label="DataReceiver" >
+            <intent-filter>
+                <action android:name="de.tubs.ibr.dtn.intent.EVENT" >
+                </action>
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
     </application>
+
 </manifest>

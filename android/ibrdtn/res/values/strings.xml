@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="example_item_title">Example Item Title</string>
     <string name="example_item_text">Example Item Text</string>
     <string name="content_colormark">Colormark of the log entry</string>
@@ -21,10 +22,11 @@
     <string name="configure">Configuration</string>
     <string name="list_neighbors">List neighbors</string>
     <string name="list_logs">Logs</string>
+    <string name="list_logs_paused">Logs (PAUSED)</string>
     <string name="showlog">Show log</string>
     <string name="clearlog">Clear log</string>
     <string name="clearstorage">Clear storage</string>
-	<string name="service_stopped">DTN Service stopped</string>
+    <string name="service_stopped">DTN Service stopped</string>
     <string name="service_started">DTN Service started</string>
     <string name="discovery">Discovery</string>
     <string name="discovery_announce">Announce</string>
@@ -57,7 +59,7 @@
     <string name="toast_startup_completed">Daemon startup completed!</string>
     <string name="state_disabled">Disabled</string>
     <string name="state_enabled">Enabled</string>
-	<string name="state_suspended">Suspended</string>
+    <string name="state_suspended">Suspended</string>
     <string name="state_unkown">Unknown</string>
     <string name="notify_neighbors">Available neighbors</string>
     <string name="notify_no_neighbors">No neighbors</string>
@@ -82,4 +84,7 @@
     <string name="pref_cloudconnect_title">Cloud connect</string>
     <string name="pref_cloudconnect_summary">Enable a static uplink to the DTN bone</string>
     <string name="pref_connection">Connection</string>
+    <string name="log_play">Play logcat</string>
+    <string name="log_pause">Pause logcat</string>
+
 </resources>
