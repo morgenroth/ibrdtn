@@ -69,16 +69,20 @@ namespace dtn
 				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 					ibrcommon::vaddress &addr = (*iter);
 
-					// handle the addresses according to their family
-					switch (addr.family()) {
-					case AF_INET:
-					case AF_INET6:
-						addr.setService(ss.str());
-						_sockets.add(new ibrcommon::tcpserversocket(addr, 5), net);
-						break;
+					try {
+						// handle the addresses according to their family
+						switch (addr.family()) {
+						case AF_INET:
+						case AF_INET6:
+							addr.setService(ss.str());
+							_sockets.add(new ibrcommon::tcpserversocket(addr, 5), net);
+							break;
 
-					default:
-						break;
+						default:
+							break;
+						}
+					} catch (const ibrcommon::vaddress::address_exception &ex) {
+						IBRCOMMON_LOGGER_TAG(ApiServer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 			}

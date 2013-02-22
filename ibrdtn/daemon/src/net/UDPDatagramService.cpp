@@ -250,14 +250,18 @@ namespace dtn
 			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 				ibrcommon::vaddress &addr = (*iter);
 
-				// handle the addresses according to their family
-				switch (addr.family()) {
-				case AF_INET:
-				case AF_INET6:
-					return UDPDatagramService::encode(addr, _bind_port);
-					break;
-				default:
-					break;
+				try {
+					// handle the addresses according to their family
+					switch (addr.family()) {
+					case AF_INET:
+					case AF_INET6:
+						return UDPDatagramService::encode(addr, _bind_port);
+						break;
+					default:
+						break;
+					}
+				} catch (const ibrcommon::vaddress::address_exception &ex) {
+					IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 25) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 

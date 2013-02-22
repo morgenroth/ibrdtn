@@ -136,13 +136,15 @@ namespace dtn
 			{
 				ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
-				// prevent broadcasting in the wrong address family
-				if (addr.family() != sock.get_family()) continue;
-
 				try {
+					// prevent broadcasting in the wrong address family
+					if (addr.family() != sock.get_family()) continue;
+
 					sock.sendto(data.c_str(), data.length(), 0, addr);
 				} catch (const ibrcommon::socket_exception &e) {
-					IBRCOMMON_LOGGER_DEBUG(5) << "can not send message to " << addr.toString() << " via " << sock.get_address().toString() << "/" << iface.toString() << "; socket exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 5) << "can not send message to " << addr.toString() << " via " << sock.get_address().toString() << "/" << iface.toString() << "; socket exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+				} catch (const ibrcommon::vaddress::address_exception &ex) {
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}
@@ -263,14 +265,18 @@ namespace dtn
 					for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 						ibrcommon::vaddress &addr = (*iter);
 
-						// handle the addresses according to their family
-						switch (addr.family()) {
-						case AF_INET:
-						case AF_INET6:
-							_send_socket.add(new ibrcommon::udpsocket(addr), iface);
-							break;
-						default:
-							break;
+						try {
+							// handle the addresses according to their family
+							switch (addr.family()) {
+							case AF_INET:
+							case AF_INET6:
+								_send_socket.add(new ibrcommon::udpsocket(addr), iface);
+								break;
+							default:
+								break;
+							}
+						} catch (const ibrcommon::vaddress::address_exception &ex) {
+							IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 
