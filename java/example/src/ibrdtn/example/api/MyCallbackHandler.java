@@ -117,12 +117,12 @@ public class MyCallbackHandler implements ibrdtn.api.sab.CallbackHandler {
             public void run() {
                 try {
                     // Load the next bundle
-                    exClient.loadAndGetBundle();
+                    //exClient.loadAndGetBundle();
                     /*
                      * Or get bundle info and manually select/omit payload.
                      */
-                    // exClient.loadBundle();
-                    // exClient.getBundleInfo();
+                    exClient.loadBundle();
+                    exClient.getBundleInfo();
                     logger.log(Level.FINE, "New bundle loaded");
                 } catch (APIException e) {
                     logger.log(Level.WARNING, "Failed to load next bundle");
