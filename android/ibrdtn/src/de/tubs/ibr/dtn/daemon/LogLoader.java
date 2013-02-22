@@ -43,7 +43,7 @@ public class LogLoader extends Loader<LogMessage> {
 		@Override
 		protected Void doInBackground(Void... params)
 		{
-			Log.e(TAG, "LogcatTask doInBackground!");
+			Log.d(TAG, "LogcatTask doInBackground!");
 
 			Process process = null;
 			try
@@ -68,7 +68,7 @@ public class LogLoader extends Loader<LogMessage> {
 
 				}
 
-				Log.i(TAG, "Close reader and destroy process");
+				Log.d(TAG, "Close reader and destroy process");
 				reader.close();
 				process.destroy();
 				process = null;
