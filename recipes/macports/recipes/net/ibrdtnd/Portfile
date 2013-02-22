@@ -42,7 +42,7 @@ post-destroot {
     reinplace -E "s|eth0|en0|g" ${destroot}${prefix}/etc/ibrdtnd.conf
     file rename ${destroot}${prefix}/etc/ibrdtnd.conf ${destroot}${prefix}/etc/ibrdtnd.conf.dist
 }
-
+ 
 post-activate {
     if {![file exists ${prefix}/etc/ibrdtnd.conf]} {
         file copy ${prefix}/etc/ibrdtnd.conf.dist ${prefix}/etc/ibrdtnd.conf
