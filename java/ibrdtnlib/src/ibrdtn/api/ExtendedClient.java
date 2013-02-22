@@ -3,7 +3,9 @@
  * 
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
- * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+ * Written-by: 
+ *  Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+ *  Julian Timpner <timpner@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +32,8 @@ import ibrdtn.api.object.PlainSerializer;
 import ibrdtn.api.object.SelfEncodingObject;
 import ibrdtn.api.object.SelfEncodingObjectBlockData;
 import ibrdtn.api.object.SingletonEndpoint;
+import ibrdtn.api.sab.CallbackHandler;
 import ibrdtn.api.sab.Response;
-import ibrdtn.api.sab.SABException;
-import ibrdtn.api.sab.SABHandler;
-import ibrdtn.api.sab.SABParser;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -43,8 +43,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.SynchronousQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,12 +50,14 @@ public class ExtendedClient extends Client {
 
     private static final Logger logger = Logger.getLogger(ExtendedClient.class.getName());
     private final Object connection_mutex = new Object();
+    private final Object state_mutex = new Object();
+    private final Object handler_mutex = new Object();
+    private State state = State.UNINITIALIZED;
     private BufferedWriter _writer = null;
     private DataReceiver _receiver = null;
     private Boolean _debug = false;
-    private final Object handler_mutex = new Object();
-    protected SABHandler handler = null;
     private EID remoteEID = null;
+    protected CallbackHandler handler = null;
 
     private enum State {
 
@@ -68,63 +68,19 @@ public class ExtendedClient extends Client {
         CLOSING,
         FAILED
     }
-    private final Object state_mutex = new Object();
-    private State state = State.UNINITIALIZED;
-
-    private void setState(State s) {
-        synchronized (state_mutex) {
-            state = s;
-            state_mutex.notifyAll();
-        }
-    }
-
-    @Override
-    public synchronized Boolean isConnected() {
-        synchronized (state_mutex) {
-            try {
-                while (state == State.CONNECTING) {
-                    state_mutex.wait();
-                }
-            } catch (InterruptedException e) {
-                return false;
-            }
-
-            return (state == State.CONNECTED);
-        }
-    }
-
-    @Override
-    public synchronized Boolean isClosed() {
-        synchronized (state_mutex) {
-            try {
-                while (state == State.CONNECTING) {
-                    state_mutex.wait();
-                }
-            } catch (InterruptedException e) {
-                return false;
-            }
-
-            return (state != State.CONNECTED);
-        }
-    }
-
-    /**
-     * This exception is thrown if something went wrong during an API call.
-     */
-    public class APIException extends Exception {
-
-        private static final long serialVersionUID = 7146079367557056047L;
-
-        public APIException(String what) {
-            super(what);
-        }
-    }
 
     /**
      * Creates an instance of the extended client interface. By default this is not connected to a daemon.
      */
     public ExtendedClient() {
         super();
+    }
+
+    private void setState(State s) {
+        synchronized (state_mutex) {
+            state = s;
+            state_mutex.notifyAll();
+        }
     }
 
     /**
@@ -136,28 +92,25 @@ public class ExtendedClient extends Client {
         this._debug = val;
     }
 
-    private void debug(String msg) {
+    protected void debug(String msg) {
         if (!this._debug) {
             return;
         }
         logger.log(Level.INFO, msg);
     }
 
-//	/**
-//	 * Get the assigned handler for incoming API events.
-//	 * @return The assigned handler of this instance. Null, if no handler is set.
-//	 */
-//	public SABHandler getHandler() {
-//		return handler;
-//	}
     /**
      * Sets the handler for incoming API events.
      *
      * @param handler the handler object derived from SABHandler
      */
-    public void setHandler(SABHandler handler) {
+    public void setHandler(CallbackHandler handler) {
         synchronized (handler_mutex) {
             this.handler = handler;
+            if (_receiver != null) {
+                _receiver.abort();
+            }
+            _receiver = new DataReceiver(this, handler_mutex, handler);
         }
     }
 
@@ -183,10 +136,12 @@ public class ExtendedClient extends Client {
             }
 
             // run the notify receiver
-            _receiver = new DataReceiver(this);
+            if (handler == null) {
+                _receiver = new DataReceiver(this, handler_mutex, handler);
+            }
             _receiver.start();
 
-            // switch to event protocol
+            // switch to extended protocol
             if (query("protocol extended") != 200) {
                 // error
                 throw new APIException("protocol switch failed");
@@ -255,7 +210,37 @@ public class ExtendedClient extends Client {
         setState(State.CLOSED);
     }
 
-    private void mark_error() {
+    @Override
+    public synchronized Boolean isConnected() {
+        synchronized (state_mutex) {
+            try {
+                while (state == State.CONNECTING) {
+                    state_mutex.wait();
+                }
+            } catch (InterruptedException e) {
+                return false;
+            }
+
+            return (state == State.CONNECTED);
+        }
+    }
+
+    @Override
+    public synchronized Boolean isClosed() {
+        synchronized (state_mutex) {
+            try {
+                while (state == State.CONNECTING) {
+                    state_mutex.wait();
+                }
+            } catch (InterruptedException e) {
+                return false;
+            }
+
+            return (state != State.CONNECTED);
+        }
+    }
+
+    protected void mark_error() {
         setState(State.FAILED);
 
         try {
@@ -441,11 +426,11 @@ public class ExtendedClient extends Client {
     /**
      * Sends a bundle directly to the daemon. The given object has to encode its own payload into base64 data.
      *
-     * @param destination The destination of the bundle.
-     * @param lifetime The lifetime of the bundle.
-     * @param obj The self-encoding object.
-     * @param priority The priority of the bundle
-     * @throws APIException If the transmission fails.
+     * @param destination the destination of the bundle
+     * @param lifetime the lifetime of the bundle
+     * @param obj the self-encoding object
+     * @param priority the priority of the bundle
+     * @throws APIException if the transmission fails
      */
     public void send(EID destination, Integer lifetime, SelfEncodingObject obj, Bundle.Priority priority) throws APIException {
         // wrapper to the send(Bundle) function
@@ -456,13 +441,13 @@ public class ExtendedClient extends Client {
     }
 
     /**
-     * Send a bundle directly to the daemon. The given stream has to provide already base64 encoded data.
+     * Sends a bundle directly to the daemon. The given stream has to provide already base64 encoded data.
      *
-     * @param destination The destination of the bundle.
-     * @param lifetime The lifetime of the bundle.
-     * @param stream The stream containing the encoded payload data.
-     * @param length The length of the un-encoded payload.
-     * @throws APIException If the transmission fails.
+     * @param destination the destination of the bundle
+     * @param lifetime the lifetime of the bundle
+     * @param stream the stream containing the encoded payload data
+     * @param length the length of the un-encoded payload
+     * @throws APIException if the transmission fails
      */
     @Deprecated
     public void sendBase64(EID destination, Integer lifetime, InputStream stream, Long length) throws APIException {
@@ -496,13 +481,13 @@ public class ExtendedClient extends Client {
     }
 
     /**
-     * Send a bundle directly to the daemon. The given stream is used as payload of the bundle.
+     * Sends a bundle directly to the daemon. The given stream is used as payload of the bundle.
      *
-     * @param destination The destination of the bundle.
-     * @param lifetime The lifetime of the bundle.
-     * @param stream The stream containing the payload data.
-     * @param length The length of the payload.
-     * @throws APIException If the transmission fails.
+     * @param destination the destination of the bundle
+     * @param lifetime the lifetime of the bundle
+     * @param stream the stream containing the payload data
+     * @param length the length of the payload
+     * @throws APIException if the transmission fails
      */
     public void send(EID destination, Integer lifetime, InputStream stream, Long length) throws APIException {
         send(destination, lifetime, stream, length, Bundle.Priority.NORMAL);
@@ -511,12 +496,12 @@ public class ExtendedClient extends Client {
     /**
      * Send a bundle directly to the daemon. The given stream is used as payload of the bundle.
      *
-     * @param destination The destination of the bundle.
-     * @param lifetime The lifetime of the bundle.
-     * @param stream The stream containing the payload data.
-     * @param length The length of the payload.
-     * @param priority The priority of the bundle
-     * @throws APIException If the transmission fails.
+     * @param destination the destination of the bundle
+     * @param lifetime the lifetime of the bundle
+     * @param stream the stream containing the payload data
+     * @param length the length of the payload
+     * @param priority the priority of the bundle
+     * @throws APIException if the transmission fails
      */
     public void send(EID destination, Integer lifetime, InputStream stream, Long length, Bundle.Priority priority) throws APIException {
         Bundle bundle = new Bundle(destination, lifetime);
@@ -528,10 +513,10 @@ public class ExtendedClient extends Client {
     /**
      * Send a bundle directly to the daemon. The given java object gets serialized and the data used as payload.
      *
-     * @param destination The destination of the bundle
-     * @param lifetime The lifetime of the bundle
-     * @param obj The java object to serialize
-     * @throws APIException If the transmission fails
+     * @param destination the destination of the bundle
+     * @param lifetime the lifetime of the bundle
+     * @param obj the java object to serialize
+     * @throws APIException if the transmission fails
      */
     public void send(EID destination, Integer lifetime, Object obj) throws APIException {
         send(destination, lifetime, obj, Bundle.Priority.NORMAL);
@@ -540,11 +525,11 @@ public class ExtendedClient extends Client {
     /**
      * Send a bundle directly to the daemon. The given java object gets serialized and the data used as payload.
      *
-     * @param destination The destination of the bundle
-     * @param lifetime The lifetime of the bundle
-     * @param obj The java object to serialize
-     * @param priority The priority of the bundle
-     * @throws APIException If the transmission fails
+     * @param destination the destination of the bundle
+     * @param lifetime the lifetime of the bundle
+     * @param obj the java object to serialize
+     * @param priority the priority of the bundle
+     * @throws APIException if the transmission fails
      */
     public void send(EID destination, Integer lifetime, Object obj, Bundle.Priority priority) throws APIException {
         Bundle bundle = new Bundle(destination, lifetime);
@@ -595,10 +580,10 @@ public class ExtendedClient extends Client {
     }
 
     /**
-     * Sets the application endpoint ID for this client connection. This EID will be used as source address of outgoing
-     * bundles.
+     * Sets the application endpoint ID for this client connection to a concatenation of the daemons EID and the given
+     * string. This EID will be used as source address of outgoing bundles.
      *
-     * @param id the application name to set
+     * @param id the application name that will be concatenated to the daemon's EID
      * @throws APIException if the request fails
      */
     public synchronized void setEndpoint(String id) throws APIException {
@@ -615,12 +600,12 @@ public class ExtendedClient extends Client {
     }
 
     /**
-     * Adds a registration to this client connection of the form '$nodename/$id'. The registration will not be used as
-     * the source when sending bundles,
+     * Adds a registration to the client connection. The registration will not be used as the source when sending
+     * bundles,
      *
      * @see setEndpoint for this purpose
      *
-     * @param id the application name that will be concatenated to the daemons EID
+     * @param id the application name that will be concatenated to the daemon's EID
      * @throws APIException if the request fails
      */
     public synchronized void addEndpoint(String id) throws APIException {
@@ -641,7 +626,7 @@ public class ExtendedClient extends Client {
     /**
      * Returns the primary endpoint for this client connection in the form 'dtn://$nodename/$id'.
      *
-     * @return the primary EID (dtn://$nodename/$id)
+     * @return the primary EID ('dtn://$nodename/$id')
      * @throws APIException if the request fails
      */
     public synchronized EID getEndpoint() throws APIException {
@@ -665,7 +650,7 @@ public class ExtendedClient extends Client {
     }
 
     /**
-     * Removes a registration of the form '$nodename/$id'.
+     * Removes a registration from the client connection.
      *
      * @param id the application name that will be concatenated to the daemons EID
      * @throws APIException if the request fails
@@ -690,7 +675,7 @@ public class ExtendedClient extends Client {
      *
      * This registration therefore is independent from the node name and can be used for group communications.
      *
-     * @param eid The EID to register
+     * @param eid the EID to subscribe to
      * @throws APIException if the request fails
      */
     public synchronized void addRegistration(GroupEndpoint eid) throws APIException {
@@ -711,7 +696,7 @@ public class ExtendedClient extends Client {
     /**
      * Removes a group endpoint registration in the form 'dtn://$name[/$id]' from this client connection.
      *
-     * @param eid The EID to remove
+     * @param eid the EID to unsubscribe from
      * @throws APIException if the request fails
      */
     public synchronized void removeRegistration(GroupEndpoint eid) throws APIException {
@@ -733,7 +718,27 @@ public class ExtendedClient extends Client {
     }
 
     /**
-     * Get all neighbors available to the daemon.
+     * Returns all registrations of this connection, including group endpoints.
+     *
+     * @return a list of all the application's registered EIDs
+     * @throws APIException if the request fails
+     */
+    public synchronized List<String> getRegistrations() throws APIException {
+        // throw exception if not connected
+        if (state != State.CONNECTED) {
+            throw new APIException("not connected");
+        }
+
+        // query for registration list
+        if (query("registration list") != 200) {
+            throw new APIException("registration get failed");
+        }
+
+        return _receiver.getList();
+    }
+
+    /**
+     * Gets all neighbors of the daemon.
      *
      * @return A list of EIDs. Each of them is an available neighbor.
      * @throws APIException if the request fails
@@ -747,26 +752,6 @@ public class ExtendedClient extends Client {
         // query for registration list
         if (query("neighbor list") != 200) {
             throw new APIException("neighbor list failed");
-        }
-
-        return _receiver.getList();
-    }
-
-    /**
-     * Returns all registrations of this connection, including group endpoints.
-     *
-     * @return a list with EIDs
-     * @throws APIException if the request fails
-     */
-    public synchronized List<String> getRegistrations() throws APIException {
-        // throw exception if not connected
-        if (state != State.CONNECTED) {
-            throw new APIException("not connected");
-        }
-
-        // query for registration list
-        if (query("registration list") != 200) {
-            throw new APIException("registration get failed");
         }
 
         return _receiver.getList();
@@ -844,7 +829,25 @@ public class ExtendedClient extends Client {
     }
 
     /**
-     * Loads the next bundle in the queue into the remote register and start the API transfer of the bundle.
+     * Sends a summary of the bundle without payload in remote register to the client (in plain text format).
+     *
+     * @throws APIException if the request fails
+     */
+    public synchronized void getBundleInfo() throws APIException {
+        // throw exception if not connected
+        if (state != State.CONNECTED) {
+            throw new APIException("not connected");
+        }
+
+        // query bundle
+        if (query("bundle info") != 200) {
+            // error
+            throw new APIException("bundle info failed");
+        }
+    }
+
+    /**
+     * Loads the next bundle in the queue into the remote register and starts the API transfer of the bundle.
      *
      * @throws APIException if the request fails
      */
@@ -874,11 +877,11 @@ public class ExtendedClient extends Client {
     }
 
     /**
-     * Starts the API transfer of the bundle in the remote register.
+     * Starts the API transfer of the bundle in the remote register to the client (in plain text format).
      *
      * @throws APIException if the request fails
      */
-    public synchronized Bundle getBundle() throws APIException {
+    public synchronized void getBundle() throws APIException {
         // throw exception if not connected
         if (state != State.CONNECTED) {
             throw new APIException("not connected");
@@ -889,8 +892,6 @@ public class ExtendedClient extends Client {
             // error
             throw new APIException("bundle get failed");
         }
-
-        return null;
     }
 
     /**
@@ -916,14 +917,14 @@ public class ExtendedClient extends Client {
      *
      * @throws APIException if the request fails
      */
-    public synchronized void markDelivered(BundleID bundle) throws APIException {
+    public synchronized void markDelivered(BundleID id) throws APIException {
         // throw exception if not connected
         if (state != State.CONNECTED) {
             throw new APIException("not connected");
         }
 
         // query bundle
-        if (query("bundle delivered " + bundle.toString()) != 200) {
+        if (query("bundle delivered " + id.toString()) != 200) {
             // error
             throw new APIException("bundle delivered failed");
         }
@@ -968,158 +969,4 @@ public class ExtendedClient extends Client {
             throw new APIException("query failed: " + cmd);
         }
     }
-
-    private class DataReceiver extends Thread implements SABHandler {
-
-        private final Logger logger = Logger.getLogger(DataReceiver.class.getName());
-        private BlockingQueue<Response> queue = new SynchronousQueue<Response>();
-        private BlockingQueue<List<String>> listqueue = new SynchronousQueue<List<String>>();
-        private SABParser p = new SABParser();
-        private ExtendedClient client = null;
-
-        public DataReceiver(ExtendedClient client) {
-            this.client = client;
-        }
-
-        @Override
-        public void run() {
-            try {
-                p.parse(istream, this);
-            } catch (SABException e) {
-                logger.log(Level.SEVERE, "Parsing input stream failed", e);
-                client.mark_error();
-            }
-        }
-
-        public void abort() {
-            p.abort();
-            queue.offer(new Response(-1, ""));
-            debug("abort queued");
-        }
-
-        /**
-         * Reads the response to a command. If a notify is received first, it will call the listener to process the
-         * notify message.
-         *
-         * @return the received return code
-         * @throws IOException
-         */
-        public Response getResponse() throws APIException {
-            try {
-                Response obj = queue.take();
-                if (obj.getCode() == -1) {
-                    throw new APIException("getResponse() failed: response was -1");
-                }
-                return obj;
-            } catch (InterruptedException e) {
-                throw new APIException("Interrupted");
-            }
-        }
-
-        public List<String> getList() throws APIException {
-            try {
-                return listqueue.take();
-            } catch (InterruptedException e) {
-                throw new APIException("Interrupted");
-            }
-        }
-
-        @Override
-        public void startStream() {
-            synchronized (handler_mutex) {
-                if (handler != null) {
-                    handler.startStream();
-                }
-            }
-        }
-
-        @Override
-        public void endStream() {
-            synchronized (handler_mutex) {
-                if (handler != null) {
-                    handler.endStream();
-                }
-            }
-        }
-
-        @Override
-        public void startBundle() {
-            synchronized (handler_mutex) {
-                if (handler != null) {
-                    handler.startBundle();
-                }
-            }
-        }
-
-        @Override
-        public void endBundle() {
-            synchronized (handler_mutex) {
-                if (handler != null) {
-                    handler.endBundle();
-                }
-            }
-        }
-
-        @Override
-        public void startBlock(Integer type) {
-            synchronized (handler_mutex) {
-                if (handler != null) {
-                    handler.startBlock(type);
-                }
-            }
-        }
-
-        @Override
-        public void endBlock() {
-            synchronized (handler_mutex) {
-                if (handler != null) {
-                    handler.endBlock();
-                }
-            }
-        }
-
-        @Override
-        public void attribute(String keyword, String value) {
-            synchronized (handler_mutex) {
-                if (handler != null) {
-                    handler.attribute(keyword, value);
-                }
-            }
-        }
-
-        @Override
-        public void characters(String data) throws SABException {
-            synchronized (handler_mutex) {
-                if (handler != null) {
-                    handler.characters(data);
-                }
-            }
-        }
-
-        @Override
-        public void notify(Integer type, String data) {
-            synchronized (handler_mutex) {
-                if (handler != null) {
-                    handler.notify(type, data);
-                }
-            }
-        }
-
-        @Override
-        public void response(Integer type, String data) {
-            debug("[Response] " + String.valueOf(type) + ", " + data);
-            try {
-                queue.put(new Response(type, data));
-            } catch (InterruptedException e) {
-            }
-        }
-
-        @Override
-        public void response(List<String> data) {
-            try {
-                listqueue.put(data);
-            } catch (InterruptedException e) {
-            }
-        }
-    };
 }

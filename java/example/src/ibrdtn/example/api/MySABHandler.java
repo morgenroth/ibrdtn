@@ -1,5 +1,6 @@
 package ibrdtn.example.api;
 
+import ibrdtn.api.APIException;
 import ibrdtn.example.Envelope;
 import ibrdtn.example.MessageData;
 import ibrdtn.example.callback.CallbackHandler;
@@ -136,7 +137,7 @@ public class MySABHandler implements SABHandler {
                 bundleID.setTimestamp(Long.parseLong(value));
                 timestamp = new Timestamp(Long.parseLong(value));
             } else if (keyword.equalsIgnoreCase("sequencenumber")) {
-                bundleID.setSequencenumber(Long.parseLong(value));
+                bundleID.setSequenceNumber(Long.parseLong(value));
             } else if (keyword.equalsIgnoreCase("Processing flags")) {
                 logger.log(Level.INFO, "Processing flags: {0}", value);
                 bundleID.setProcflags(Long.parseLong(value));
@@ -166,7 +167,7 @@ public class MySABHandler implements SABHandler {
                             // load the next bundle
                             exClient.loadAndGetBundle();
                             logger.log(Level.FINE, "New bundle loaded");
-                        } catch (ExtendedClient.APIException e) {
+                        } catch (APIException e) {
                             logger.log(Level.WARNING, "Failed to load next bundle");
                         }
                     }

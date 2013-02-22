@@ -26,10 +26,11 @@ import ibrdtn.api.object.Bundle.Priority;
 public class BundleID {
 
     private String source = null;
-    private String destination = null;
     private Long timestamp = null;
-    private Long sequencenumber = null;
+    private Long sequenceNumber = null;
     private Long procflags = null;
+    private Long fragOffset = null;
+    private String destination = null;
 
     public BundleID() {
     }
@@ -37,7 +38,7 @@ public class BundleID {
     public BundleID(String source, Long timestamp, Long sequencenumber) {
         this.source = source;
         this.timestamp = timestamp;
-        this.sequencenumber = sequencenumber;
+        this.sequenceNumber = sequencenumber;
     }
 
     public String getSource() {
@@ -64,12 +65,28 @@ public class BundleID {
         this.timestamp = timestamp;
     }
 
-    public Long getSequencenumber() {
-        return sequencenumber;
+    public Long getSequenceNumber() {
+        return sequenceNumber;
     }
 
-    public void setSequencenumber(Long sequencenumber) {
-        this.sequencenumber = sequencenumber;
+    public void setSequenceNumber(Long seq) {
+        this.sequenceNumber = seq;
+    }
+
+    public long getProcflags() {
+        return procflags;
+    }
+
+    public void setProcflags(Long procflags) {
+        this.procflags = procflags;
+    }
+
+    public void setFragOffset(long fragOffset) {
+        this.fragOffset = fragOffset;
+    }
+
+    public Long getFragOffset() {
+        return fragOffset;
     }
 
     public Priority getPriority() {
@@ -87,16 +104,12 @@ public class BundleID {
         }
     }
 
-    public long getProcflags() {
-        return procflags;
-    }
-
-    public void setProcflags(Long procflags) {
-        this.procflags = procflags;
-    }
-
     @Override
     public String toString() {
-        return String.valueOf(this.timestamp) + " " + String.valueOf(this.sequencenumber) + " " + this.source;
+        String fragString = " ";
+        if (fragOffset != null) {
+            fragString += String.valueOf(this.fragOffset) + " ";
+        }
+        return String.valueOf(this.timestamp) + " " + String.valueOf(this.sequenceNumber) + fragString + this.source;
     }
 }

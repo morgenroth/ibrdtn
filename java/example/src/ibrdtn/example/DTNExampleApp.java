@@ -1,6 +1,6 @@
 package ibrdtn.example;
 
-import ibrdtn.api.ExtendedClient.APIException;
+import ibrdtn.api.APIException;
 import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.EID;
 import ibrdtn.api.object.GroupEndpoint;
@@ -29,7 +29,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
     public DTNExampleApp() {
         initComponents();
 
-        dtnClient = new DTNClient(tfEndpoint.getText(), true);
+        dtnClient = new DTNClient(tfEndpoint.getText(), false);
         dtnClient.addStaticCallback(Envelope.class.getCanonicalName(), new DisplayCallback(this));
         logger.log(Level.INFO, dtnClient.getConfiguration());
         print("INFO: " + dtnClient.getConfiguration());

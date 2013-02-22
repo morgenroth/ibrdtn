@@ -3,7 +3,9 @@
  * 
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
- * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+ * Written-by: 
+ *  Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+ *  Julian Timpner<timpner@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +87,7 @@ public class Bundle {
         }
     }
 
-    protected Bundle() {
+    public Bundle() {
     }
 
     public void setPriority(Priority p) {
@@ -99,6 +101,15 @@ public class Bundle {
         return Priority.values()[priority % Priority.values().length];
     }
 
+    public boolean isSingleton() {
+        int single = (int) (procflags >> Flags.DESTINATION_IS_SINGLETON.getOffset()) & 0b11;
+        if (single == 0) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     /**
      * Set a flag in the bundle
      *
@@ -106,17 +117,20 @@ public class Bundle {
      * @param value true to set the flag, false to clear it
      */
     public void setFlag(Flags flag, boolean value) {
-        logger.log(Level.SEVERE, "Setting {0}", flag.toString());
+        logger.log(Level.FINE, "Setting {0}", flag.toString());
         if (value) {
             procflags |= 0b1L << flag.getOffset();
         } else {
             procflags &= ~(0b1L << flag.getOffset());
         }
-        logger.log(Level.INFO, "Send procflags {0}", procflags);
     }
 
     public long getProcflags() {
         return procflags;
+    }
+
+    public void setProcflags(long procflags) {
+        this.procflags = procflags;
     }
 
     /**
@@ -162,6 +176,30 @@ public class Bundle {
 
     public void setReportto(EID reportto) {
         this.reportto = reportto;
+    }
+
+    public long getLifetime() {
+        return lifetime;
+    }
+
+    public void setLifetime(long lifetime) {
+        this.lifetime = lifetime;
+    }
+
+    public Long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public Long getSequencenumber() {
+        return sequencenumber;
+    }
+
+    public void setSequencenumber(Long sequencenumber) {
+        this.sequencenumber = sequencenumber;
     }
 
     @Override

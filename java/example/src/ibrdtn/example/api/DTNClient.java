@@ -1,13 +1,13 @@
 package ibrdtn.example.api;
 
+import ibrdtn.api.APIException;
+import ibrdtn.api.EventClient;
+import ibrdtn.api.ExtendedClient;
+import ibrdtn.api.object.Bundle;
+import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.example.MessageData;
 import ibrdtn.example.callback.CallbackHandler;
 import ibrdtn.example.callback.ICallback;
-import ibrdtn.api.EventClient;
-import ibrdtn.api.ExtendedClient;
-import ibrdtn.api.ExtendedClient.APIException;
-import ibrdtn.api.object.Bundle;
-import ibrdtn.api.object.PayloadBlock;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
@@ -28,7 +28,7 @@ public class DTNClient {
     private ExecutorService executor;
     private ExtendedClient exClient = null;
     private EventClient eventClient = null;
-    private MySABHandler sabHandler = null;
+    private MyCallbackHandler sabHandler = null;
     private String endpoint = null;
 
     /**
@@ -43,7 +43,7 @@ public class DTNClient {
 
         exClient = new ExtendedClient();
 
-        sabHandler = new MySABHandler(exClient, executor);
+        sabHandler = new MyCallbackHandler(exClient, executor);
 
         exClient.setHandler(sabHandler);
         exClient.setHost(Constants.HOST);
@@ -89,8 +89,6 @@ public class DTNClient {
     }
 
     public void send(Bundle bundle) {
-
-        logger.log(Level.INFO, "Send procflags {0}", bundle.getProcflags());
 
         final Bundle finalBundle = bundle;
         final ExtendedClient finalClient = this.exClient;
