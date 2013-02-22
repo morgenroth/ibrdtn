@@ -3,8 +3,8 @@ AUTOMAKE_OPTIONS = foreign
 
 SUBDIRS = unittests
 
-h_sources = SQLiteBundleStorageTestSuite.h tools/BundleCreator.h tools/EventSwitchLoop.h
-cc_sources = SQLiteBundleStorageTestSuite.cpp tools/BundleCreator.cpp
+h_sources = tools/BundleCreator.h tools/EventSwitchLoop.h
+cc_sources = tools/BundleCreator.cpp
 
 # what flags you want to pass to the C compiler & linker
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CPPUNIT_CFLAGS) -Wall $(CURL_CFLAGS) $(SQLITE_CFLAGS)
