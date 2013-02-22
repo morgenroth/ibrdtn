@@ -3,8 +3,8 @@ AUTOMAKE_OPTIONS = foreign
 
 SUBDIRS = unittests
 
-h_sources = tools/BundleCreator.h tools/EventSwitchLoop.h
-cc_sources = tools/BundleCreator.cpp
+h_sources = tools/EventSwitchLoop.h
+cc_sources = 
 
 # what flags you want to pass to the C compiler & linker
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CPPUNIT_CFLAGS) -Wall $(CURL_CFLAGS) $(SQLITE_CFLAGS)
