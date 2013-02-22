@@ -106,7 +106,7 @@ namespace ibrcommon
 
 			char address[256];
 			if (::getnameinfo((struct sockaddr *) ifaceaddr, sizeof (struct sockaddr_storage), address, sizeof address, 0, 0, NI_NUMERICHOST) == 0) {
-				ret.push_back( vaddress(std::string(address)) );
+				ret.push_back( vaddress(std::string(address), "", ifaceaddr->sa_family) );
 			}
 		}
 		freeifaddrs(ifap);

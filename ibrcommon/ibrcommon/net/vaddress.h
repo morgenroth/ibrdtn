@@ -65,9 +65,10 @@ namespace ibrcommon
 			const static std::string VADDR_ANY;
 
 			vaddress();
-			vaddress(const int port);
-			vaddress(const std::string &address, const int port);
-			vaddress(const std::string &address, const std::string &service = "", const std::string &scope = "");
+			vaddress(const int port, sa_family_t family = AF_UNSPEC);
+			vaddress(const std::string &address, const int port, sa_family_t family = AF_UNSPEC);
+			vaddress(const std::string &address, const std::string &service, sa_family_t family = AF_UNSPEC);
+			vaddress(const std::string &address, const std::string &service, const std::string &scope, sa_family_t family = AF_UNSPEC);
 			virtual ~vaddress();
 
 			bool isLocal() const;
@@ -90,6 +91,7 @@ namespace ibrcommon
 			std::string _address;
 			std::string _service;
 			std::string _scope;
+			sa_family_t _family;
 	};
 }
 

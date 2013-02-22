@@ -109,7 +109,7 @@ namespace ibrcommon
 		std::stringstream ss_pan; ss_pan << addr154->addr.pan_id;
 		std::stringstream ss_short; ss_short << addr154->addr.short_addr;
 
-		addr = ibrcommon::vaddress(ss_short.str(), ss_pan.str());
+		addr = ibrcommon::vaddress(ss_short.str(), ss_pan.str(), clientAddress.ss_family);
 
 		return ret;
 	}
@@ -149,7 +149,7 @@ namespace ibrcommon
 		std::stringstream ss_pan; ss_pan << address.addr.pan_id;
 		std::stringstream ss_addr; ss_addr << address.addr.short_addr;
 
-		addr = ibrcommon::vaddress(ss_addr.str(), panid);
+		addr = ibrcommon::vaddress(ss_addr.str(), panid, address.family);
 	}
 
 	void lowpansocket::getAddress(struct ieee802154_addr *ret, const vinterface &iface)

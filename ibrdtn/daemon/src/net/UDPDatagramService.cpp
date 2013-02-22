@@ -163,7 +163,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 20) << "send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << std::dec << seqno << IBRCOMMON_LOGGER_ENDL;
 
 				// create broadcast address
-				const ibrcommon::vaddress broadcast("ff02::1", BROADCAST_PORT);
+				const ibrcommon::vaddress broadcast("ff02::1", BROADCAST_PORT, AF_INET6);
 
 				ibrcommon::socketset sockset = _vsocket.getAll();
 				if (sockset.size() > 0) {
