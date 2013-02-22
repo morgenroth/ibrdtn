@@ -110,6 +110,10 @@ namespace dtn
 					// only announce global scope addresses
 					if (addr.scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
 
+					// do not announce non-IP addresses
+					sa_family_t f = addr.family();
+					if ((f != AF_INET) && (f != AF_INET6)) continue;
+
 					std::stringstream service;
 					// fill in the ip address
 					service << "ip=" << addr.address() << ";port=" << _port << ";";
@@ -353,8 +357,17 @@ namespace dtn
 
 				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 					ibrcommon::vaddress &addr = (*iter);
-					addr.setService(ss.str());
-					_vsocket.add(new ibrcommon::udpsocket(addr), _net);
+
+					// handle the addresses according to their family
+					switch (addr.family()) {
+					case AF_INET:
+					case AF_INET6:
+						addr.setService(ss.str());
+						_vsocket.add(new ibrcommon::udpsocket(addr), _net);
+						break;
+					default:
+						break;
+					}
 				}
 
 				_vsocket.up();

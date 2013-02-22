@@ -166,20 +166,15 @@ int main(int argc, char** argv)
 
             	stringstream file_list;
 
-            	int prefix_length = outbox.getPath().length() + 1;
-
             	for (list<File>::iterator iter = files.begin(); iter != files.end(); iter++)
             	{
-            		File &f = (*iter);
+					File &f = (*iter);
 
-            		// skip system files ("." and "..")
-            		if (f.isSystem()) continue;
+					// skip system files ("." and "..")
+					if (f.isSystem()) continue;
 
-					// remove the prefix of the outbox path
-            		string rpath = f.getPath();
-            		rpath = rpath.substr(prefix_length, rpath.length() - prefix_length);
-
-            		file_list << rpath << " ";
+					// add the file to the filelist
+					file_list << f.getBasename() << " ";
             	}
 
             	// output of all files to send
