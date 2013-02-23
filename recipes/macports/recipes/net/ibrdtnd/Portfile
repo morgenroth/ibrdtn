@@ -35,7 +35,7 @@ startupitem.name         ibrdtn
 startupitem.pidfile      manual /var/run/ibrdtnd.pid
 startupitem.logevents    yes
 startupitem.netchange    no
-startupitem.executable   ${prefix}/sbin/dtnd -c ${prefix}/etc/ibrdtnd.conf yes
+startupitem.executable   ${prefix}/sbin/dtnd -c ${prefix}/etc/ibrdtnd.conf -q
 
 post-destroot {
     reinplace -E "s|#api_interface = any|api_interface = lo0|g" ${destroot}${prefix}/etc/ibrdtnd.conf
