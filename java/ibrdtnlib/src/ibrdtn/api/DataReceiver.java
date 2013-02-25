@@ -57,11 +57,12 @@ public class DataReceiver extends Thread implements SABHandler {
     private final CallbackHandler handler;
     private Bundle current_bundle = null;
     private Block current_block = null;
-    OutputStream stream = null;
+    OutputStream outputStream = null;
+    BufferedWriter outputWriter = null;
     CountingOutputStream counter = null;
-    BufferedWriter output = null;
     Long progress_last = 0L;
     private ProgressState progress_state = ProgressState.INITIAL;
+    private boolean startBlockSent;
 
     public DataReceiver(ExtendedClient client, Object handler_mutex, CallbackHandler handler) {
         this.client = client;
@@ -134,23 +135,29 @@ public class DataReceiver extends Thread implements SABHandler {
     @Override
     public void endBundle() {
         logger.log(Level.SEVERE, "Ending bundle.");
-        current_bundle = null;
         synchronized (handler_mutex) {
             if (handler != null) {
                 handler.endBundle();
             }
         }
+
+        current_bundle = null;
     }
 
     @Override
     public void startBlock(Integer type) {
         logger.log(Level.SEVERE, "Starting block (type: {0})", type);
 
-        current_block = Block.createBlock(type);
+        /*
+         * Current bundle is null if only the payload was requested
+         */
+        if (current_bundle != null) {
+            current_block = Block.createBlock(type);
 
-        synchronized (handler_mutex) {
-            if (handler != null) {
-                handler.startBundle(current_bundle);
+            synchronized (handler_mutex) {
+                if (handler != null) {
+                    handler.startBundle(current_bundle);
+                }
             }
         }
     }
@@ -158,34 +165,52 @@ public class DataReceiver extends Thread implements SABHandler {
     @Override
     public void endBlock() {
         logger.log(Level.SEVERE, "Ending block.");
-        current_block = null;
 
-        // close output stream of the last block
-        if (output != null) {
+        if (!startBlockSent && current_block != null) {
+            synchronized (handler_mutex) {
+                if (handler != null) {
+                    handler.startBlock(current_block);
+                }
+            }
+        }
+
+        // close outputWriter of the current block
+        if (outputWriter != null) {
             try {
-                output.flush();
-                output.close();
+                outputWriter.flush();
+                outputWriter.close();
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Failed to flush output stream", e);
+                logger.log(Level.WARNING, "Failed to flush output writer", e);
             }
 
-            output = null;
+            outputWriter = null;
             counter = null;
         }
 
-        if (stream != null) {
+        if (outputStream != null) {
             try {
-                stream.close();
+                outputStream.close();
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Failed to close output stream", e);
             }
 
-            stream = null;
+            synchronized (handler_mutex) {
+                if (handler != null) {
+                    handler.endPayload();
+                }
+            }
+
+            outputStream = null;
         }
 
-        synchronized (handler_mutex) {
-            if (handler != null) {
-                handler.endBlock();
+        /*
+         * Current block is null if only the payload was requested
+         */
+        if (current_block != null) {
+            synchronized (handler_mutex) {
+                if (handler != null) {
+                    handler.endBlock();
+                }
             }
         }
 
@@ -194,6 +219,7 @@ public class DataReceiver extends Thread implements SABHandler {
         updateProgress();
 
         current_block = null;
+        startBlockSent = false;
     }
 
     @Override
@@ -247,29 +273,50 @@ public class DataReceiver extends Thread implements SABHandler {
         }
     }
 
+    private void initializeBlock() {
+        /*
+         * Current block is null if only the payload was requested
+         */
+        if (current_block != null) {
+            synchronized (handler_mutex) {
+                if (handler != null) {
+                    handler.startBlock(current_block);
+                }
+            }
+            startBlockSent = true;
+        }
+
+        synchronized (handler_mutex) {
+            if (handler != null) {
+                outputStream = handler.startPayload();
+            }
+        }
+
+        /*
+         * If outputStream is null it is assumed that the payload data is to be ignored.
+         */
+        if (outputStream != null) {
+            counter = new CountingOutputStream(outputStream);
+            outputWriter = new BufferedWriter(
+                    new OutputStreamWriter(
+                    new Base64.OutputStream(
+                    counter,
+                    Base64.DECODE)));
+        }
+    }
+
     @Override
     public void characters(String data) throws SABException {
 
         logger.log(Level.WARNING, "Characters: {0}", data);
 
-        synchronized (handler_mutex) {
-            if (handler != null) {
-                stream = handler.startBlock(current_block);
-            }
+        if (!startBlockSent) {
+            initializeBlock();
         }
-        counter = new CountingOutputStream(stream);
-        output = new BufferedWriter(
-                new OutputStreamWriter(
-                new Base64.OutputStream(
-                counter,
-                Base64.DECODE)));
 
-        /*
-         * If stream is null it is assumed that the payload data is to be ignored.
-         */
-        if (stream != null && output != null) {
+        if (outputWriter != null) {
             try {
-                output.append(data);
+                outputWriter.append(data);
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Cannot write data to output stream.", e);
             }

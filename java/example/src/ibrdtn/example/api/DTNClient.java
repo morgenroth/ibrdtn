@@ -28,7 +28,7 @@ public class DTNClient {
     private ExecutorService executor;
     private ExtendedClient exClient = null;
     private EventClient eventClient = null;
-    private MyCallbackHandler sabHandler = null;
+    private SelectiveCallbackHandler sabHandler = null;
     private String endpoint = null;
 
     /**
@@ -43,7 +43,7 @@ public class DTNClient {
 
         exClient = new ExtendedClient();
 
-        sabHandler = new MyCallbackHandler(exClient, executor);
+        sabHandler = new SelectiveCallbackHandler(exClient, executor);
 
         exClient.setHandler(sabHandler);
         exClient.setHost(Constants.HOST);

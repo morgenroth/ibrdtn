@@ -34,7 +34,7 @@ public class ExtensionBlock extends Block {
     }
 
     @Override
-    Data getData() {
+    public Data getData() {
         return _data;
     }
 

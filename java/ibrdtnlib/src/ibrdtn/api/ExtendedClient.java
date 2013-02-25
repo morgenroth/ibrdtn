@@ -829,7 +829,7 @@ public class ExtendedClient extends Client {
     }
 
     /**
-     * Sends a summary of the bundle without payload in remote register to the client (in plain text format).
+     * Sends a summary (without payload) of the bundle in the remote register to the client (in plain text format).
      *
      * @throws APIException if the request fails
      */
@@ -891,6 +891,43 @@ public class ExtendedClient extends Client {
         if (query("bundle get") != 200) {
             // error
             throw new APIException("bundle get failed");
+        }
+    }
+
+    /**
+     * Starts the API transfer of the payload in the remote register to the client (in plain text format).
+     *
+     * @throws APIException if the request fails
+     */
+    public void getPayload() throws APIException {
+        getPayload(0, 0, 0);
+    }
+
+    /**
+     * Starts the API transfer of the bundle in the remote register to the client (in plain text format).
+     *
+     * @throws APIException if the request fails
+     */
+    public synchronized void getPayload(int blockOffset, int dataOffset, int length) throws APIException {
+        // throw exception if not connected
+        if (state != State.CONNECTED) {
+            throw new APIException("not connected");
+        }
+
+        StringBuilder sb = new StringBuilder("payload ");
+        sb.append(blockOffset).append(" ");
+        sb.append("get");
+        if (dataOffset != 0) {
+            sb.append(" ").append(dataOffset);
+        }
+        if (length != 0) {
+            sb.append(" ").append(length);
+        }
+
+        // query payload
+        if (query(sb.toString()) != 200) {
+            // error
+            throw new APIException("payload get failed");
         }
     }
 

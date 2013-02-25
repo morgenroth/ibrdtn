@@ -5,6 +5,7 @@ import ibrdtn.api.ExtendedClient;
 import ibrdtn.api.object.Block;
 import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.BundleID;
+import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.sab.Custody;
 import ibrdtn.api.sab.StatusReport;
 import java.io.ByteArrayOutputStream;
@@ -18,29 +19,29 @@ import java.util.logging.Logger;
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
-public class MyCallbackHandler implements ibrdtn.api.sab.CallbackHandler {
+public class PassthroughCallbackHandler implements ibrdtn.api.sab.CallbackHandler {
 
-    private static final Logger logger = Logger.getLogger(MyCallbackHandler.class.getName());
+    private static final Logger logger = Logger.getLogger(PassthroughCallbackHandler.class.getName());
     private BundleID bundleID = new BundleID();
     private Bundle bundle = null;
     private ExtendedClient client;
     private ExecutorService executor;
     private OutputStream stream;
 
-    public MyCallbackHandler(ExtendedClient client, ExecutorService executor) {
+    public PassthroughCallbackHandler(ExtendedClient client, ExecutorService executor) {
         this.client = client;
         this.executor = executor;
     }
 
     @Override
-    public void startBundle(Bundle b) {
-        logger.log(Level.SEVERE, "Starting bundle: {0}", b);
-        this.bundle = b;
+    public void startBundle(Bundle bundle) {
+        logger.log(Level.SEVERE, "Receiving new bundle: {0}", bundle);
+        this.bundle = bundle;
     }
 
     @Override
     public void endBundle() {
-        logger.log(Level.FINE, "Ending bundle.");
+        logger.log(Level.FINE, "Bundle received");
 
         final BundleID finalBundleID = this.bundleID;
         final ExtendedClient finalClient = this.client;
@@ -56,49 +57,56 @@ public class MyCallbackHandler implements ibrdtn.api.sab.CallbackHandler {
                 // _database.put(Folder.INBOX, msg);
 
                 try {
+                    /*
+                     * Mark bundle as delivered...
+                     */
                     finalClient.markDelivered(finalBundleID);
+                    /*
+                     * or, get payload.
+                     */
+                    //finalClient.getPayload(0, 2, 4);
+
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Unable to mark bundle as delivered.", e);
                 }
             }
         });
-//
-//            if (receivedObject != null) {
-//                if (receivedObject instanceof MessageData) {
-//                    MessageData messageData = (MessageData) receivedObject;
-//
-//                    Envelope envelope = new Envelope();
-//                    envelope.setData(messageData);
-//                    envelope.setBundleID(bundleID);
-//
-//                    logger.log(Level.FINE, "New bundle received and successfully converted: {0}", envelope);
-//
-//                    CallbackHandler.getInstance().forwardMessage(envelope);
-//                } else {
-//                    logger.log(Level.WARNING, "Received unknown data type.");
-//                }
-//            }
-//        }
     }
 
     @Override
-    public OutputStream startBlock(Block block) {
-        logger.log(Level.SEVERE, "New block: {0}", block.toString());
-        stream = new ByteArrayOutputStream();
-
-        return stream;
+    public void startBlock(Block block) {
+        logger.log(Level.SEVERE, "Receiving new block: {0}", block.toString());
+        bundle.appendBlock(block);
     }
 
     @Override
     public void endBlock() {
-        logger.log(Level.SEVERE, "Ending block.");
+        logger.log(Level.SEVERE, "Block received");
+    }
 
-        try {
-            ByteArrayOutputStream baos = (ByteArrayOutputStream) stream;
-            logger.log(Level.SEVERE, "Payload: {0}", baos.toString());
+    @Override
+    public OutputStream startPayload() {
+        logger.log(Level.SEVERE, "Receiving payload");
+        /*
+         * For example, use a byte array stream to transfer the data. Alternatively, object streams or file streams 
+         * can be used, too.
+         */
+        stream = new ByteArrayOutputStream();
+        return stream;
+    }
 
-        } catch (Exception e) {
-            logger.log(Level.WARNING, "Unable to decode bundle.");
+    @Override
+    public void endPayload() {
+        if (stream != null) {
+            try {
+                ByteArrayOutputStream baos = (ByteArrayOutputStream) stream;
+                PayloadBlock payloadBlock = (PayloadBlock) bundle.getBlocks().getLast();
+                payloadBlock.setData(baos.toByteArray());
+
+                logger.log(Level.SEVERE, "Payload received: {0}", payloadBlock.getData().size() + " bytes: " + baos.toString());
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Unable to decode payload");
+            }
         }
     }
 
@@ -116,13 +124,15 @@ public class MyCallbackHandler implements ibrdtn.api.sab.CallbackHandler {
             @Override
             public void run() {
                 try {
-                    // Load the next bundle
-                    //exClient.loadAndGetBundle();
                     /*
-                     * Or get bundle info and manually select/omit payload.
+                     * Load the next bundle...
                      */
-                    exClient.loadBundle();
-                    exClient.getBundleInfo();
+                    exClient.loadAndGetBundle();
+                    /*
+                     * or, get bundle info and manually select/omit payload.
+                     */
+                    //exClient.loadBundle();
+                    //exClient.getBundleInfo();
                     logger.log(Level.FINE, "New bundle loaded");
                 } catch (APIException e) {
                     logger.log(Level.WARNING, "Failed to load next bundle");

@@ -36,11 +36,14 @@ public interface CallbackHandler {
 
     public void endBundle();
 
-    public OutputStream startBlock(Block block);
+    public void startBlock(Block block);
 
     public void endBlock();
 
-    // public OutputStream ppppp();
+    public OutputStream startPayload();
+
+    public void endPayload();
+
     public void progress(long pos, long total);
 
     public void notify(BundleID id);

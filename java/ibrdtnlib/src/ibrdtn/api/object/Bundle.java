@@ -134,7 +134,7 @@ public class Bundle {
     }
 
     /**
-     * Append a new Block to this bundle
+     * Appends a new Block to this bundle
      *
      * @param block the block to append
      */
@@ -144,6 +144,10 @@ public class Bundle {
         }
         block.procflags |= (1 << Block.FlagOffset.LAST_BLOCK.ordinal());
         blocks.addLast(block);
+    }
+
+    public LinkedList<Block> getBlocks() {
+        return blocks;
     }
 
     public EID getDestination() {

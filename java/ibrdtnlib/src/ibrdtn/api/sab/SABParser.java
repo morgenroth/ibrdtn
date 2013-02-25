@@ -35,10 +35,13 @@ public class SABParser {
         PARSER_LIST,
         PARSER_DATA_INITIAL,
         PARSER_DATA_NEXT,
+        PARSER_DATA_INITIAL_PAYLOAD,
+        PARSER_DATA_NEXT_PAYLOAD,
         PARSER_BUNDLE,
         PARSER_BUNDLE_INFO,
         PARSER_BLOCK,
-        PARSER_BLOCK_INFO
+        PARSER_BLOCK_INFO,
+        PARSER_BLOCK_PAYLOAD
     }
     private State state = State.PARSER_RESPONSE;
     private Boolean lastblock = false;
@@ -78,6 +81,7 @@ public class SABParser {
                 handler.response(ret);
                 break;
 
+            case PARSER_BLOCK_PAYLOAD:
             case PARSER_BLOCK_INFO:
             case PARSER_BLOCK:
                 readBlock(reader, handler);
@@ -88,6 +92,8 @@ public class SABParser {
                 readBundle(reader, handler);
                 break;
 
+            case PARSER_DATA_INITIAL_PAYLOAD:
+            case PARSER_DATA_NEXT_PAYLOAD:
             case PARSER_DATA_INITIAL:
             case PARSER_DATA_NEXT:
                 readPayload(reader, handler);
@@ -163,12 +169,14 @@ public class SABParser {
             } else if ((code == 200) && values[1].startsWith("BUNDLE INFO")) {
                 this.state = State.PARSER_BUNDLE_INFO;
                 handler.startBundle();
+            } else if ((code == 200) && values[1].startsWith("PAYLOAD GET")) {
+                this.state = State.PARSER_BLOCK_PAYLOAD;
             }
         } catch (IOException e) {
             throw new SABException(e.toString());
         } catch (NumberFormatException e) {
             throw new SABException("invalid data received - could not parse number");
-        };
+        }
     }
 
     private void readBundle(BufferedReader reader, SABHandler handler) throws SABException {
@@ -180,7 +188,7 @@ public class SABParser {
                 throw new SABException("end of stream reached");
             }
 
-            // read the block, if a empty line was received
+            // read the block, if an empty line was received
             if (data.length() == 0) {
                 switch (this.state) {
                     case PARSER_BUNDLE:
@@ -212,37 +220,6 @@ public class SABParser {
         }
     }
 
-    private void readPayload(BufferedReader reader, SABHandler handler) throws SABException {
-        try {
-            String data = reader.readLine();
-
-            // if the data is null throw exception
-            if (data == null) {
-                throw new SABException("end of stream reached");
-            }
-
-            // read the payload, if a empty line was received
-            if ((data.length() == 0) && (this.state != State.PARSER_DATA_INITIAL)) {
-                handler.endBlock();
-                if (this.lastblock) {
-                    handler.endBundle();
-                    this.lastblock = false;
-                    this.state = State.PARSER_RESPONSE;
-                } else {
-                    this.state = State.PARSER_BLOCK;
-                }
-                return;
-            }
-
-            handler.characters(data);
-
-            // next time we're reading not the first line of data
-            this.state = State.PARSER_DATA_NEXT;
-        } catch (IOException e) {
-            throw new SABException(e.toString());
-        }
-    }
-
     private void readBlock(BufferedReader reader, SABHandler handler) throws SABException {
         try {
             String data = reader.readLine();
@@ -252,9 +229,12 @@ public class SABParser {
                 throw new SABException("end of stream reached");
             }
 
-            // read the payload, if a empty line was received
+            // read the payload, if an empty line was received
             if (data.length() == 0) {
                 switch (this.state) {
+                    case PARSER_BLOCK_PAYLOAD:
+                        this.state = State.PARSER_DATA_INITIAL_PAYLOAD;
+                        break;
                     case PARSER_BLOCK:
                         this.state = State.PARSER_DATA_INITIAL;
                         break;
@@ -296,6 +276,53 @@ public class SABParser {
                 if (keyword.equalsIgnoreCase("flags")) {
                     lastblock = value.contains("LAST_BLOCK");
                 }
+            }
+        } catch (IOException e) {
+            throw new SABException(e.toString());
+        }
+    }
+
+    private void readPayload(BufferedReader reader, SABHandler handler) throws SABException {
+        try {
+            String data = reader.readLine();
+
+            // if the data is null throw exception
+            if (data == null) {
+                throw new SABException("end of stream reached");
+            }
+
+            // read the payload, if an empty line was received
+            if ((data.length() == 0)
+                    && (this.state != State.PARSER_DATA_INITIAL)
+                    && (this.state != State.PARSER_DATA_INITIAL_PAYLOAD)) {
+                handler.endBlock();
+                switch (state) {
+                    case PARSER_DATA_NEXT_PAYLOAD:
+                        this.state = State.PARSER_RESPONSE;
+                        break;
+                    case PARSER_DATA_NEXT:
+                        if (this.lastblock) {
+                            handler.endBundle();
+                            this.lastblock = false;
+                            this.state = State.PARSER_RESPONSE;
+                        } else {
+                            this.state = State.PARSER_BLOCK;
+                        }
+                        break;
+                }
+                return;
+            }
+
+            handler.characters(data);
+
+            // next time we're reading not the first line of data
+            switch (state) {
+                case PARSER_DATA_INITIAL_PAYLOAD:
+                    this.state = State.PARSER_DATA_NEXT_PAYLOAD;
+                    break;
+                case PARSER_DATA_INITIAL:
+                    this.state = State.PARSER_DATA_NEXT;
+                    break;
             }
         } catch (IOException e) {
             throw new SABException(e.toString());

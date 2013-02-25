@@ -44,13 +44,25 @@ public class PayloadBlock extends Block {
         _data = new ByteArrayBlockData(data);
     }
 
+    public void setData(byte[] data) {
+        _data = new ByteArrayBlockData(data);
+    }
+
+    public void setData(Object data) {
+        _data = new ObjectBlockData(data);
+    }
+
     @Override
-    Data getData() {
+    public Data getData() {
         return _data;
     }
 
     @Override
     public String toString() {
-        return "PayloadBlock: length=" + getLength();
+        StringBuilder sb = new StringBuilder("PayloadBlock");
+        if (getLength() != null) {
+            sb.append(": length=").append(getLength());
+        }
+        return sb.toString();
     }
 }

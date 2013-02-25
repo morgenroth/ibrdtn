@@ -126,7 +126,7 @@ public abstract class Block extends BlockHeader {
         super(type);
     }
 
-    abstract Data getData();
+    public abstract Data getData();
 
     public class InvalidDataException extends Exception {
 
