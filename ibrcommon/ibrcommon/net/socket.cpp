@@ -240,7 +240,7 @@ namespace ibrcommon
 			char serv_str[256];
 			::getnameinfo(addr, len, (char*)&addr_str, 256, (char*)&serv_str, 256, NI_NUMERICHOST | NI_NUMERICSERV);
 			std::stringstream ss;
-			vaddress vaddr(addr_str, serv_str);
+			vaddress vaddr(addr_str, serv_str, addr->sa_family);
 			ss << "with address " << vaddr.toString();
 
 			check_bind_error(bind_err, ss.str());
@@ -372,7 +372,7 @@ namespace ibrcommon
 		char address[256];
 		char service[256];
 		if (::getnameinfo((struct sockaddr *) &cliaddr, len, address, sizeof address, service, sizeof service, NI_NUMERICHOST | NI_NUMERICSERV) == 0) {
-			addr = ibrcommon::vaddress(std::string(address), std::string(service));
+			addr = ibrcommon::vaddress(std::string(address), std::string(service), cliaddr.ss_family);
 		}
 
 		return new_fd;
@@ -416,7 +416,7 @@ namespace ibrcommon
 		char address[256];
 		char service[256];
 		if (::getnameinfo((struct sockaddr *) &clientAddress, clientAddressLength, address, sizeof address, service, sizeof service, NI_NUMERICHOST | NI_NUMERICSERV) == 0) {
-			addr = ibrcommon::vaddress(std::string(address), std::string(service));
+			addr = ibrcommon::vaddress(std::string(address), std::string(service), clientAddress.ss_family);
 		}
 
 		return ret;

@@ -151,17 +151,21 @@ namespace dtn
 
 							if (addr.scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
 
-							// do not announce non-IP addresses
-							sa_family_t f = addr.family();
-							if ((f != AF_INET) && (f != AF_INET6)) continue;
+							try {
+								// do not announce non-IP addresses
+								sa_family_t f = addr.family();
+								if ((f != AF_INET) && (f != AF_INET6)) continue;
 
-							std::stringstream service;
-							// fill in the ip address
-							service << "ip=" << addr.address() << ";port=" << _portmap[iface] << ";";
-							announcement.addService( DiscoveryService("tcpcl", service.str()));
+								std::stringstream service;
+								// fill in the ip address
+								service << "ip=" << addr.address() << ";port=" << _portmap[iface] << ";";
+								announcement.addService( DiscoveryService("tcpcl", service.str()));
 
-							// set the announce mark
-							announced = true;
+								// set the announce mark
+								announced = true;
+							} catch (const ibrcommon::vaddress::address_exception &ex) {
+								IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 25) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+							}
 						}
 					} catch (const ibrcommon::Exception&) {
 						// address collection process aborted

@@ -480,7 +480,7 @@ namespace dtn
 				std::vector<std::string> addresses = dtn::utils::Utils::tokenize(" ", address_str);
 
 				for (std::vector<std::string>::iterator iter = addresses.begin(); iter != addresses.end(); iter++) {
-					ret.insert( ibrcommon::vaddress(*iter, port()) );
+					ret.insert( ibrcommon::vaddress(*iter, port(), AF_UNSPEC) );
 				}
 			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotFoundException();

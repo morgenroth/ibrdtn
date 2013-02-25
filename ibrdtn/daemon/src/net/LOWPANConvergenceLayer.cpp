@@ -57,7 +57,7 @@ namespace dtn
 			ss << _panid;
 
 			// assign the broadcast address
-			_addr_broadcast = ibrcommon::vaddress("0xffff", ss.str());
+			_addr_broadcast = ibrcommon::vaddress("0xffff", ss.str(), AF_IEEE802154);
 		}
 
 		LOWPANConvergenceLayer::~LOWPANConvergenceLayer()
@@ -121,7 +121,8 @@ namespace dtn
 			uri.decode(address, pan);
 
 			std::stringstream ss_pan; ss_pan << pan;
-			ibrcommon::vaddress addr( address, ss_pan.str() );
+
+			ibrcommon::vaddress addr( address, ss_pan.str(), AF_IEEE802154 );
 
 			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::queue"<< IBRCOMMON_LOGGER_ENDL;
 

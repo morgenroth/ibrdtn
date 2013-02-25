@@ -61,16 +61,6 @@ typedef nl_object nl_object_header;
 	};
 #endif
 
-	vaddress nl_addr_get_vaddress(struct nl_addr *naddr) {
-		if (!naddr) return vaddress();
-
-		char addr_buf[256];
-		nl_addr2str( naddr, addr_buf, sizeof( addr_buf ));
-		std::string addrname(addr_buf);
-
-		return vaddress(addrname);
-	}
-
 	vaddress rtnl_addr_get_local_vaddress(struct rtnl_addr *obj) {
 		struct nl_addr *naddr = rtnl_addr_get_local(obj);
 		if (!naddr) return vaddress();
@@ -108,7 +98,7 @@ typedef nl_object nl_object_header;
 			addrname += "%" + iface.toString();
 		}
 
-		return vaddress(addrname, "", scopename);
+		return vaddress(addrname, "", scopename, sa_addr.ss_family);
 	}
 
 #ifdef HAVE_LIBNL3
@@ -132,7 +122,17 @@ typedef nl_object nl_object_header;
 				vinterface iface = LinkManager::getInstance().getInterface(ifindex);
 
 				struct nl_addr *naddr = rtnl_link_get_addr(link);
-				vaddress addr = nl_addr_get_vaddress(naddr);
+
+				// default empty address
+				vaddress addr;
+
+				if (naddr) {
+					char addr_buf[256];
+					nl_addr2str( naddr, addr_buf, sizeof( addr_buf ));
+					std::string addrname(addr_buf);
+
+					addr = vaddress(addrname, "", nl_addr_guess_family(naddr));
+				}
 
 				unsigned int flags = rtnl_link_get_flags(link);
 

@@ -110,17 +110,21 @@ namespace dtn
 					// only announce global scope addresses
 					if (addr.scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
 
-					// do not announce non-IP addresses
-					sa_family_t f = addr.family();
-					if ((f != AF_INET) && (f != AF_INET6)) continue;
+					try {
+						// do not announce non-IP addresses
+						sa_family_t f = addr.family();
+						if ((f != AF_INET) && (f != AF_INET6)) continue;
 
-					std::stringstream service;
-					// fill in the ip address
-					service << "ip=" << addr.address() << ";port=" << _port << ";";
-					announcement.addService( DiscoveryService("udpcl", service.str()));
+						std::stringstream service;
+						// fill in the ip address
+						service << "ip=" << addr.address() << ";port=" << _port << ";";
+						announcement.addService( DiscoveryService("udpcl", service.str()));
 
-					// set the announce mark
-					announced = true;
+						// set the announce mark
+						announced = true;
+					} catch (const ibrcommon::vaddress::address_exception &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG("UDPConvergenceLayer", 25) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
 			} catch (const ibrcommon::Exception&) {
 				// address collection process aborted
@@ -358,15 +362,19 @@ namespace dtn
 				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 					ibrcommon::vaddress &addr = (*iter);
 
-					// handle the addresses according to their family
-					switch (addr.family()) {
-					case AF_INET:
-					case AF_INET6:
-						addr.setService(ss.str());
-						_vsocket.add(new ibrcommon::udpsocket(addr), _net);
-						break;
-					default:
-						break;
+					try {
+						// handle the addresses according to their family
+						switch (addr.family()) {
+						case AF_INET:
+						case AF_INET6:
+							addr.setService(ss.str());
+							_vsocket.add(new ibrcommon::udpsocket(addr), _net);
+							break;
+						default:
+							break;
+						}
+					} catch (const ibrcommon::vaddress::address_exception &ex) {
+						IBRCOMMON_LOGGER_TAG("UDPConvergenceLayer", warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 

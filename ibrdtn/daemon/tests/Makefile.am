@@ -3,7 +3,7 @@ AUTOMAKE_OPTIONS = foreign
 
 SUBDIRS = unittests
 
-h_sources = 
+h_sources = tools/EventSwitchLoop.h
 cc_sources = 
 
 # what flags you want to pass to the C compiler & linker

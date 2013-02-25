@@ -48,7 +48,7 @@ namespace dtn
 			ss << _panid;
 
 			// assign the broadcast address
-			_addr_broadcast = ibrcommon::vaddress("65535", ss.str());
+			_addr_broadcast = ibrcommon::vaddress("65535", ss.str(), AF_IEEE802154);
 		}
 
 		LOWPANDatagramService::~LOWPANDatagramService()
@@ -342,7 +342,7 @@ namespace dtn
 				param_iter++;
 			}
 
-			addr = ibrcommon::vaddress(address, service);
+			addr = ibrcommon::vaddress(address, service, AF_IEEE802154);
 		}
 	} /* namespace net */
 } /* namespace dtn */

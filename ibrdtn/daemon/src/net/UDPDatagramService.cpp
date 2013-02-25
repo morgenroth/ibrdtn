@@ -163,7 +163,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 20) << "send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << std::dec << seqno << IBRCOMMON_LOGGER_ENDL;
 
 				// create broadcast address
-				const ibrcommon::vaddress broadcast("ff02::1", BROADCAST_PORT);
+				const ibrcommon::vaddress broadcast("ff02::1", BROADCAST_PORT, AF_INET6);
 
 				ibrcommon::socketset sockset = _vsocket.getAll();
 				if (sockset.size() > 0) {
@@ -250,14 +250,18 @@ namespace dtn
 			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
 				ibrcommon::vaddress &addr = (*iter);
 
-				// handle the addresses according to their family
-				switch (addr.family()) {
-				case AF_INET:
-				case AF_INET6:
-					return UDPDatagramService::encode(addr, _bind_port);
-					break;
-				default:
-					break;
+				try {
+					// handle the addresses according to their family
+					switch (addr.family()) {
+					case AF_INET:
+					case AF_INET6:
+						return UDPDatagramService::encode(addr, _bind_port);
+						break;
+					default:
+						break;
+					}
+				} catch (const ibrcommon::vaddress::address_exception &ex) {
+					IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 25) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 

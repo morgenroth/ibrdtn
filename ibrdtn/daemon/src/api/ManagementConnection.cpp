@@ -144,7 +144,7 @@ namespace dtn
 							// address family.
 
 							// the new address is defined as 5th parameter
-							ibrcommon::vaddress addr(cmd[5]);
+							ibrcommon::vaddress addr(cmd[5], "");
 
 							if (cmd[2] == "add")
 							{
