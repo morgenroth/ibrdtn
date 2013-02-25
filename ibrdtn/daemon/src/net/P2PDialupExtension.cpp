@@ -8,6 +8,7 @@
 #include "net/P2PDialupExtension.h"
 #include "net/P2PDialupEvent.h"
 #include "core/BundleCore.h"
+#include "core/NodeEvent.h"
 
 namespace dtn
 {
@@ -42,6 +43,9 @@ namespace dtn
 			dtn::core::Node n(eid);
 			n.add(uri);
 			cm.add(n);
+
+			// announce the new node
+			dtn::core::NodeEvent::raise(n, dtn::core::NODE_UPDATED);
 		}
 
 		void P2PDialupExtension::fireInterfaceUp(const ibrcommon::vinterface &iface) const

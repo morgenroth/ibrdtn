@@ -21,7 +21,9 @@ api_SOURCES = \
 	OrderedStreamHandler.h \
 	OrderedStreamHandler.cpp \
 	BundleStreamBuf.h \
-	BundleStreamBuf.cpp
+	BundleStreamBuf.cpp \
+	ApiP2PExtensionHandler.h \
+	ApiP2PExtensionHandler.cpp
 
 if ANDROID
 noinst_DATA = Android.mk
