@@ -202,10 +202,16 @@ namespace dtn
 			} catch (const NeighborNotAvailableException&) { };
 		}
 
-		void ConnectionManager::addConvergenceLayer(ConvergenceLayer *cl)
+		void ConnectionManager::add(ConvergenceLayer *cl)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
 			_cl.insert( cl );
+		}
+
+		void ConnectionManager::remove(ConvergenceLayer *cl)
+		{
+			ibrcommon::MutexLock l(_cl_lock);
+			_cl.erase( cl );
 		}
 
 		void ConnectionManager::discovered(const dtn::core::Node &node)

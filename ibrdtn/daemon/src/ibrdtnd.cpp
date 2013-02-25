@@ -283,7 +283,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 						if (filecl == NULL)
 						{
 							filecl = new FileConvergenceLayer();
-							core.getConnectionManager().addConvergenceLayer(filecl);
+							core.getConnectionManager().add(filecl);
 							components.push_back(filecl);
 						}
 
@@ -314,7 +314,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 				{
 					try {
 						UDPConvergenceLayer *udpcl = new dtn::net::UDPConvergenceLayer( net.iface, net.port, net.mtu );
-						core.getConnectionManager().addConvergenceLayer(udpcl);
+						core.getConnectionManager().add(udpcl);
 						components.push_back(udpcl);
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(udpcl);
 						if (__ibrdtn_daemon_ipnd != NULL) 		__ibrdtn_daemon_ipnd->addService(udpcl);
@@ -344,7 +344,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 						tcpcl->bind(net.iface, net.port);
 
 						if (it == _cl_map.end()) {
-							core.getConnectionManager().addConvergenceLayer(tcpcl);
+							core.getConnectionManager().add(tcpcl);
 							components.push_back(tcpcl);
 							if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(tcpcl);
 							if (__ibrdtn_daemon_ipnd != NULL) __ibrdtn_daemon_ipnd->addService(tcpcl);
@@ -368,7 +368,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 				{
 					try {
 						HTTPConvergenceLayer *httpcl = new HTTPConvergenceLayer( net.url );
-						core.getConnectionManager().addConvergenceLayer(httpcl);
+						core.getConnectionManager().add(httpcl);
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(httpcl);
 						components.push_back(httpcl);
 
@@ -385,7 +385,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 				{
 					try {
 						LOWPANConvergenceLayer *lowpancl = new LOWPANConvergenceLayer( net.iface, net.port );
-						core.getConnectionManager().addConvergenceLayer(lowpancl);
+						core.getConnectionManager().add(lowpancl);
 						components.push_back(lowpancl);
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(lowpancl);
 						if (__ibrdtn_daemon_ipnd != NULL) __ibrdtn_daemon_ipnd->addService(lowpancl);
@@ -403,7 +403,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 					try {
 						LOWPANDatagramService *lowpan_service = new LOWPANDatagramService( net.iface, net.port );
 						DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(lowpan_service);
-						core.getConnectionManager().addConvergenceLayer(dgram_cl);
+						core.getConnectionManager().add(dgram_cl);
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(dgram_cl);
 						components.push_back(dgram_cl);
 
@@ -420,7 +420,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 					try {
 						UDPDatagramService *dgram_service = new UDPDatagramService( net.iface, net.port, net.mtu );
 						DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(dgram_service);
-						core.getConnectionManager().addConvergenceLayer(dgram_cl);
+						core.getConnectionManager().add(dgram_cl);
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(dgram_cl);
 						components.push_back(dgram_cl);
 
