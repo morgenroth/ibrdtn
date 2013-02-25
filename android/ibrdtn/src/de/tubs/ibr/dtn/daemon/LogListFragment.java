@@ -26,8 +26,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 import de.tubs.ibr.dtn.R;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -93,7 +95,6 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		super.onCreateOptionsMenu(menu, inflater);
 		inflater.inflate(R.menu.log_menu, menu);
 		mPlayItem = menu.findItem(R.id.itemPlayPauseLog);
-		setPlayMenuItem();
 	}
 
 	@Override
@@ -117,7 +118,13 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		}
 	}
 
-	public void setPlayMenuItem()
+	/**
+	 * On Android < 3 this is called every time the menu is opened
+	 * 
+	 * On Android >= 3 invalidateOptionsMenu() has to be called to execute this
+	 */
+	@Override
+	public void onPrepareOptionsMenu(Menu menu)
 	{
 		if (mPlayLog)
 		{
@@ -128,8 +135,10 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 			mPlayItem.setTitle(R.string.log_play);
 			mPlayItem.setIcon(android.R.drawable.ic_media_play);
 		}
+		super.onPrepareOptionsMenu(menu);
 	}
 
+	@SuppressLint("NewApi")
 	private void pauseLog()
 	{
 		mPlayLog = false;
@@ -137,9 +146,15 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		getLoaderManager().destroyLoader(0);
 
 		getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs_paused));
-		setPlayMenuItem();
+		
+		// change menu item to indicate pause
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+		{
+			getActivity().invalidateOptionsMenu();
+		}
 	}
 
+	@SuppressLint("NewApi")
 	private void playLog()
 	{
 		mPlayLog = true;
@@ -147,7 +162,12 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		getLoaderManager().initLoader(0, null, this);
 
 		getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs));
-		setPlayMenuItem();
+		
+		// change menu item to indicate play
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+		{
+			getActivity().invalidateOptionsMenu();
+		}
 	}
 
 	private void scrollToBottom()
