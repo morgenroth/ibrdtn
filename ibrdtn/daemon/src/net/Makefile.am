@@ -41,7 +41,9 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 	UDPDatagramService.h \
 	UDPDatagramService.cpp \
 	FileMonitor.h \
-	FileMonitor.cpp
+	FileMonitor.cpp \
+	P2PDialupExtension.h \
+	P2PDialupExtension.cpp
 
 if LOWPAN
 net_SOURCES += LOWPANConvergenceLayer.cpp LOWPANConvergenceLayer.h LOWPANConnection.cpp LOWPANConnection.h

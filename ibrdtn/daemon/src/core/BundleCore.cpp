@@ -158,7 +158,7 @@ namespace dtn
 			return _clock;
 		}
 
-		void BundleCore::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle)
+		void BundleCore::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle) throw (P2PDialupException)
 		{
 			try {
 				_connectionmanager.queue(destination, bundle);
@@ -168,6 +168,9 @@ namespace dtn
 			} catch (const dtn::net::ConnectionNotAvailableException &ex) {
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
+			} catch (const P2PDialupException&) {
+				// re-throw the P2PDialupException
+				throw;
 			} catch (const ibrcommon::Exception&) {
 				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
 			}

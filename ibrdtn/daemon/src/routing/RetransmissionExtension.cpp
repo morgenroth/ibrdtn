@@ -57,8 +57,12 @@ namespace dtn
 
 					if ( data.getTimestamp() <= time.getTimestamp() )
 					{
-						// retransmit the bundle
-						dtn::core::BundleCore::getInstance().transferTo(data.destination, data);
+						try {
+							// retransmit the bundle
+							dtn::core::BundleCore::getInstance().transferTo(data.destination, data);
+						} catch (const dtn::core::P2PDialupException&) {
+							// do nothing here
+						}
 
 						// remove the item off the queue
 						_queue.pop();

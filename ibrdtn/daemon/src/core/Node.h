@@ -55,7 +55,9 @@ namespace dtn
 				CONN_FILE = 6,
 				CONN_DGRAM_UDP = 7,
 				CONN_DGRAM_LOWPAN = 8,
-				CONN_DGRAM_ETHERNET = 9
+				CONN_DGRAM_ETHERNET = 9,
+				CONN_P2P_WIFI = 10,
+				CONN_P2P_BT = 11
 			};
 
 			/**
@@ -71,7 +73,8 @@ namespace dtn
 				NODE_DISCOVERED = 2,
 				NODE_STATIC_GLOBAL = 3,
 				NODE_STATIC_LOCAL = 4,
-				NODE_DHT_DISCOVERED = 5
+				NODE_DHT_DISCOVERED = 5,
+				NODE_P2P_DIALUP = 6
 			};
 
 			class URI
@@ -166,6 +169,7 @@ namespace dtn
 			 * @return
 			 */
 			std::list<URI> get(Node::Protocol proto) const;
+			std::list<URI> get(Node::Type type) const;
 			std::list<URI> get(Node::Type type, Node::Protocol proto) const;
 
 			/**
@@ -214,6 +218,11 @@ namespace dtn
 
 			bool doConnectImmediately() const;
 			void setConnectImmediately(bool val);
+
+			/**
+			 * @return true, if there is at least one dial-up connection
+			 */
+			bool hasDialup() const;
 
 			/**
 			 * @return true, if at least one connection is available

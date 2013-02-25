@@ -170,6 +170,9 @@ namespace dtn
 
 			case Node::NODE_DHT_DISCOVERED:
 				return "dht discovered";
+
+			case Node::NODE_P2P_DIALUP:
+				return "p2p dialup";
 			}
 
 			return "unknown";
@@ -211,6 +214,12 @@ namespace dtn
 
 			case Node::CONN_DGRAM_LOWPAN:
 				return "DGRAM:LOWPAN";
+
+			case Node::CONN_P2P_WIFI:
+				return "P2P:WIFI";
+
+			case Node::CONN_P2P_BT:
+				return "P2P:BT";
 			}
 
 			return "unknown";
@@ -282,6 +291,23 @@ namespace dtn
 				const URI &uri = (*iter);
 
 				if ((uri == proto) && isAvailable(uri))
+				{
+					ret.push_back(uri);
+				}
+			}
+
+			ret.sort(compare_uri_priority);
+			return ret;
+		}
+
+		std::list<Node::URI> Node::get(Node::Type type) const
+		{
+			std::list<URI> ret;
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			{
+				const URI &uri = (*iter);
+
+				if (uri == type)
 				{
 					ret.push_back(uri);
 				}
@@ -456,6 +482,17 @@ namespace dtn
 		void Node::setConnectImmediately(bool val)
 		{
 			_connect_immediately = val;
+		}
+
+		bool Node::hasDialup() const
+		{
+			for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			{
+				const Node::URI &u = (*iter);
+				if (u.type == NODE_P2P_DIALUP) return true;
+			}
+
+			return false;
 		}
 
 		bool Node::isAvailable() const

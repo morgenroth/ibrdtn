@@ -1,0 +1,56 @@
+/*
+ * P2PDialupExtension.cpp
+ *
+ *  Created on: 25.02.2013
+ *      Author: morgenro
+ */
+
+#include "net/P2PDialupExtension.h"
+#include "core/BundleCore.h"
+
+namespace dtn
+{
+	namespace net
+	{
+
+		P2PDialupExtension::P2PDialupExtension() {
+		}
+
+		P2PDialupExtension::~P2PDialupExtension() {
+		}
+
+		void P2PDialupExtension::fireDiscovered(const dtn::data::EID &eid, const dtn::core::Node::URI &uri) const
+		{
+			dtn::net::ConnectionManager &cm = dtn::core::BundleCore::getInstance().getConnectionManager();
+			dtn::core::Node n(eid);
+			n.add(uri);
+			cm.add(n);
+		}
+
+		void P2PDialupExtension::fireDisconnected(const dtn::data::EID &eid, const dtn::core::Node::URI &uri) const
+		{
+			dtn::net::ConnectionManager &cm = dtn::core::BundleCore::getInstance().getConnectionManager();
+			dtn::core::Node n(eid);
+			n.add(uri);
+			cm.remove(n);
+		}
+
+		void P2PDialupExtension::fireConnected(const dtn::data::EID &eid, const dtn::core::Node::URI &uri) const
+		{
+			dtn::net::ConnectionManager &cm = dtn::core::BundleCore::getInstance().getConnectionManager();
+			dtn::core::Node n(eid);
+			n.add(uri);
+			cm.add(n);
+		}
+
+		void P2PDialupExtension::fireInterfaceUp(const ibrcommon::vinterface &iface) const
+		{
+
+		}
+
+		void P2PDialupExtension::fireInterfaceDown(const ibrcommon::vinterface &iface) const
+		{
+
+		}
+	} /* namespace routing */
+} /* namespace dtn */
