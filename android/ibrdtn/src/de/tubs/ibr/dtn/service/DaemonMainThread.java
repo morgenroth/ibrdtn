@@ -1,9 +1,10 @@
 /*
- * NativeLibraryWrapper.java
+ * DaemonMainThread.java
  * 
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
- * Written-by: Dominik Schürmann dominik@dominikschuermann.de
+ * Written-by: Dominik Schürmann <dominik@dominikschuermann.de>
+ * 	           Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +22,6 @@
  */
 package de.tubs.ibr.dtn.service;
 
-import ibrdtn.api.APIConnection;
-import ibrdtn.api.SocketAPIConnection;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,163 +29,79 @@ import java.io.PrintStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 import android.util.Log;
+import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 
-public class NativeLibraryProcess extends Thread {
-	private final static String TAG = "NativeLibraryProcess";
+public class DaemonMainThread extends Thread {
+	private final static String TAG = "DaemonMainThread";
 
-	private ProcessListener _listener = null;
-	private Context _context = null;
+	private DaemonService mService;
+	private final CountDownLatch mDoneSignal;
 
-	/**
-	 * Copy from DaemonProcess.java
-	 */
-	public interface ProcessListener {
-		public void onProcessStart();
-
-		public void onProcessStop();
-
-		public void onProcessError();
-
-		public void onProcessLog(String log);
-	}
-
-	public NativeLibraryProcess(Context context, ProcessListener listener) {
-		this._context = context;
-		this._listener = listener;
-	}
-
-	// public NativeLibraryProcess(Handler h) {
-	// this.h = h;
-	// }
-
-	public void kill()
-	{
-		// if (_proc != null) {
-		// _proc.destroy();
-		// _proc = null;
-		// }
-
-		NativeLibraryWrapper.daemonShutdown();
-	}
-
-	//
-	public void start(Context context)
-	{
-		// // return if no builder was created
-		// if (_builder != null) return;
-		//
-		// // check for mandatory dtnd binaries
-		// check_executables(context);
-		//
-		// create configuration file
-		create_config(context);
-		//
-		// // instantiate a new process builder for the daemon
-		// _builder = new ProcessBuilder();
-		//
-		// // set executable and command line args
-		// SharedPreferences preferences =
-		// PreferenceManager.getDefaultSharedPreferences(context);
-		// if (preferences.getBoolean("debug", false))
-		// {
-		// _builder.command(context.getFilesDir().getPath() + "/dtnd", "-c",
-		// context.getFilesDir().getPath() + "/config", "-d", "99");
-		// }
-		// else
-		// {
-		// _builder.command(context.getFilesDir().getPath() + "/dtnd", "-c",
-		// context.getFilesDir().getPath() + "/config");
-		// }
-		//
-		// // redirect error messages to the standard output
-		// _builder.redirectErrorStream(true);
-		//
-		// // start this thread
-		start();
+	public DaemonMainThread(DaemonService context, CountDownLatch doneSignal) {
+		this.mService = context;
+		this.mDoneSignal = doneSignal;
 	}
 
 	public void run()
 	{
-		if (!NativeLibraryWrapper.loadLibraries())
+		// lower priority of this thread
+		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+
+		String configPath = mService.getFilesDir().getPath() + "/" + "config";
+
+		// create configuration file
+		createConfig(mService, configPath);
+
+		// enable debug based on prefs
+		boolean debug = false;
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mService);
+		if (preferences.getBoolean("debug", false))
 		{
-			Log.e(TAG, "Libraries not loaded!");
+			debug = true;
 		}
 
 		// loads config and initializes daemon
-		NativeLibraryWrapper.daemonInitialize();
+		NativeDaemonWrapper.daemonInitialize(configPath, debug);
 
-		if (_listener != null)
-			_listener.onProcessStart();
+		// broadcast online state
+		//TODO: better get callback when its really online
+		Intent broadcastOnlineIntent = new Intent();
+		broadcastOnlineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
+		broadcastOnlineIntent.putExtra("state", DaemonState.ONLINE.name());
+		broadcastOnlineIntent.addCategory(Intent.CATEGORY_DEFAULT);
+		mService.sendBroadcast(broadcastOnlineIntent);
 
-		NativeLibraryWrapper.daemonMainLoop();
-		// // return if no builder was created
-		// if (_builder == null) return;
-		//
-		// try {
-		// // lower the thread priority
-		// setPriority(MIN_PRIORITY);
-		//
-		// // kill previous process
-		// kill();
-		//
-		// // run the daemon
-		// _proc = _builder.start();
-		//
-		// StreamLoggerListener log_listener = new StreamLoggerListener() {
-		// public void onLog(String TAG, String log) {
-		// if (_listener != null) _listener.onProcessLog(log);
-		// }
-		// };
-		//
-		// StreamLogger std_logger = new StreamLogger("dtnd",
-		// _proc.getInputStream(), log_listener);
-		// StreamLogger err_logger = new StreamLogger("dtnd_error",
-		// _proc.getErrorStream(), log_listener);
-		//
-		// if (_listener != null) _listener.onProcessStart();
-		//
-		// Thread std_log_thread = new Thread(std_logger);
-		// Thread err_log_thread = new Thread(err_logger);
-		//
-		// // start logging processes
-		// std_log_thread.start();
-		// err_log_thread.start();
-		//
-		// // wait until the logging processes are finished
-		// std_log_thread.join();
-		// err_log_thread.join();
-		//
-		// if (std_logger.hasErrorOnExit() || err_logger.hasErrorOnExit()) {
-		// if (_listener != null) _listener.onProcessError();
-		// } else {
-		if (_listener != null)
-			_listener.onProcessStop();
-		// }
-		// } catch (IOException e) {
-		// Log.e(TAG, "Unable to run daemon: " + e.toString());
-		// if (_listener != null) _listener.onProcessError();
-		// } catch (InterruptedException e) {
-		// // join has been interrupted
-		// }
+		// blocking main loop
+		NativeDaemonWrapper.daemonMainLoop();
+
+		// broadcast offline state
+		Intent broadcastOfflineIntent = new Intent();
+		broadcastOfflineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
+		broadcastOfflineIntent.putExtra("state", DaemonState.ONLINE.name());
+		broadcastOfflineIntent.addCategory(Intent.CATEGORY_DEFAULT);
+		mService.sendBroadcast(broadcastOfflineIntent);
+
+		// signal that this thread is done
+		mDoneSignal.countDown();
 	}
 
 	/**
-	 * Copy from DaemonProcess.java
+	 * Create Hex String from byte array
 	 * 
 	 * @param data
 	 * @return
 	 */
 	private static String toHex(byte[] data)
 	{
-		// Create Hex String
 		StringBuffer hexString = new StringBuffer();
 		for (int i = 0; i < data.length; i++)
 			hexString.append(Integer.toHexString(0xFF & data[i]));
@@ -195,7 +109,7 @@ public class NativeLibraryProcess extends Thread {
 	}
 
 	/**
-	 * Copy from DaemonProcess.java
+	 * Build unique endpoint id from Secure.ANDROID_ID
 	 * 
 	 * @param context
 	 * @return
@@ -211,36 +125,21 @@ public class NativeLibraryProcess extends Thread {
 			return new SingletonEndpoint("dtn://android-" + toHex(digest).substring(4, 12) + ".dtn");
 		} catch (NoSuchAlgorithmException e)
 		{
-			// md5 not available
+			Log.e(TAG, "md5 not available");
 		}
 		return new SingletonEndpoint("dtn://android-" + androidId.substring(4, 12) + ".dtn");
 	}
 
 	/**
-	 * Copy from DaemonProcess.java
-	 * 
-	 * @return
-	 */
-	public APIConnection getAPIConnection()
-	{
-		// if (_use_unix_socket) {
-		// return new UnixAPIConnection(_context.getFilesDir().getPath()
-		// + "/ibrdtn.sock");
-		// } else {
-		return new SocketAPIConnection();
-		// }
-	}
-
-	/**
-	 * Copy from DaemonProcess.java
+	 * Creates config for dtnd in specified path
 	 * 
 	 * @param context
 	 */
-	private void create_config(Context context)
+	private void createConfig(Context context, String configPath)
 	{
 		// load preferences
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-		File config = new File(context.getFilesDir().getPath() + "/" + "config");
+		File config = new File(configPath);
 
 		// remove old config file
 		if (config.exists())
@@ -259,12 +158,6 @@ public class NativeLibraryProcess extends Thread {
 			PrintStream p = new PrintStream(writer);
 			p.println("local_uri = " + preferences.getString("endpoint_id", getUniqueEndpointID(context).toString()));
 			p.println("routing = " + preferences.getString("routing", "default"));
-
-			// if (_use_unix_socket) {
-			// // configure local API interface
-			// p.println("api_socket = " + _context.getFilesDir().getPath()
-			// + "/ibrdtn.sock");
-			// }
 
 			if (preferences.getBoolean("constrains_lifetime", false))
 			{
@@ -297,8 +190,7 @@ public class NativeLibraryProcess extends Thread {
 				File bab_file = new File(context.getFilesDir().getPath() + "/default-bab-key.mac");
 
 				// remove old key file
-				if (bab_file.exists())
-					bab_file.delete();
+				if (bab_file.exists()) bab_file.delete();
 
 				FileOutputStream bab_output = context.openFileOutput("default-bab-key.mac", Context.MODE_PRIVATE);
 				PrintStream bab_writer = new PrintStream(bab_output);
@@ -361,7 +253,7 @@ public class NativeLibraryProcess extends Thread {
 			p.println("net_internet = " + internet_ifaces);
 
 			// storage path
-			File blobPath = DaemonManager.getStoragePath("blob");
+			File blobPath = DaemonStorageUtils.getStoragePath("blob");
 			if (blobPath != null)
 			{
 				p.println("blob_path = " + blobPath.getPath());
@@ -377,7 +269,7 @@ public class NativeLibraryProcess extends Thread {
 				}
 			}
 
-			File bundlePath = DaemonManager.getStoragePath("bundles");
+			File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
 			if (bundlePath != null)
 			{
 				p.println("storage_path = " + bundlePath.getPath());

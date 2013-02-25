@@ -48,23 +48,25 @@ public class ClientSession {
 	private Context context = null;
     private APISession _session = null;
     private Registration _registration = null;
-    private DaemonManager _manager = null;
     
     private Boolean _daemon_online = false;
     
-	public ClientSession(Context context, DaemonManager manager, Registration reg, String packageName)
+	public ClientSession(Context context, Registration reg, String packageName)
 	{
 		// create a unique session key
 		this.context = context;
 		this._package_name = packageName;
 		this._registration = reg;
-		this._manager = manager;
 	}
 	
 	public synchronized void initialize()
 	{
 		_daemon_online = true;
 		_initialize_process.start();
+		
+		//TODO: We need to register!
+		// this was done by _session.register(_registration);
+//		invoke_registration_intent();
 	}
 	
 	private Thread _initialize_process = new Thread() {
@@ -108,10 +110,11 @@ public class ClientSession {
 				Log.d(TAG, "try to create an API session with the daemon");
 				_session = new APISession(this);
 				
-				APIConnection socket = this._manager.getAPIConnection();
-				if (socket == null) throw new IOException("daemon not running");
+//				APIConnection socket = this._manager.getAPIConnection();
+//				if (socket == null) throw new IOException("daemon not running");
 				
-				_session.connect(socket);
+//				_session.connect(socket);
+				_session.connect();
 				_session.register(_registration);
 				
 				invoke_registration_intent();
@@ -129,9 +132,6 @@ public class ClientSession {
 		} catch (APIException e) {
 			_session = null;
 			throw new IOException("api error");
-		} catch (SessionDestroyedException e) {
-			_session = null;
-			throw new IOException("not connected");
 		}
 	}
     
@@ -224,10 +224,10 @@ public class ClientSession {
 		return _package_name;
 	}
 	
-	public synchronized void invoke_reconnect()
-	{
-		_session = null;
-	}
+//	public synchronized void invoke_reconnect()
+//	{
+//		_session = null;
+//	}
 	
 	public void invoke_receive_intent(BundleID id)
 	{

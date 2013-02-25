@@ -5,7 +5,7 @@ ibrcommon_TOP:=$(abspath $(LOCAL_PATH))/ibrcommon
 ibrdtn_TOP:=$(abspath $(LOCAL_PATH))/ibrdtn
 dtnd_TOP:=$(abspath $(LOCAL_PATH))/dtnd
 
-# force old gcc
+# force old gcc for openssl
 #NDK_TOOLCHAIN_VERSION=4.4.3
 
 # Optimizations
@@ -27,14 +27,6 @@ APP_PLATFORM:=android-9
 # select c++ gnu stl, because we need exception support
 APP_STL:=gnustl_shared
 
-#system          -> Use the default minimal system C++ runtime library.
-#gabi++_static   -> Use the GAbi++ runtime as a static library.
-#gabi++_shared   -> Use the GAbi++ runtime as a shared library.
-#stlport_static  -> Use the STLport runtime as a static library.
-#stlport_shared  -> Use the STLport runtime as a shared library.
-#gnustl_static   -> Use the GNU STL as a static library.
-#gnustl_shared   -> Use the GNU STL as a shared library.
-
 # enable exceptions and rtti (information about data types at runtime)
 APP_CPPFLAGS:=-fexceptions -frtti
 APP_CFLAGS:=
@@ -52,10 +44,7 @@ APP_CPPFLAGS+=-I$(abspath $(LOCAL_PATH))/ibrcommon
 # also include ibrdtn headers
 APP_CPPFLAGS+=-I$(abspath $(LOCAL_PATH))/ibrdtn
 
-
 # If APP_MODULES is not set, all modules are compiled!
 APP_MODULES:=ibrcommon ibrdtn dtnd native-library-wrapper
-#APP_MODULES:=native-library-wrapper
-#APP_MODULES:=ibrcommon ibrdtn dtnd
 #APP_MODULES:=all
 

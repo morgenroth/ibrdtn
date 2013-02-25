@@ -64,8 +64,8 @@ import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.service.DaemonMainThread;
 import de.tubs.ibr.dtn.service.DaemonService;
-import de.tubs.ibr.dtn.service.NativeLibraryProcess;
 import de.tubs.ibr.dtn.stats.CollectorService;
 
 public class Preferences extends PreferenceActivity {
@@ -182,11 +182,11 @@ public class Preferences extends PreferenceActivity {
 	};
 	
 	private void setCloudUplink(boolean val) {
-		Intent i = new Intent();
-		i.setAction(DaemonService.ACTION_CLOUD_UPLINK);
-		i.addCategory(Intent.CATEGORY_DEFAULT);
-		i.putExtra("enabled", val);
-    	this.sendBroadcast(i);
+		Intent intent = new Intent(Preferences.this, DaemonService.class);
+		intent.setAction(DaemonService.ACTION_CLOUD_UPLINK);
+		intent.addCategory(Intent.CATEGORY_DEFAULT);
+		intent.putExtra("enabled", val);
+		startService(intent);
 	}
 	
 	private class ClearStorageTask extends AsyncTask<String, Integer, Boolean> {
@@ -292,8 +292,7 @@ public class Preferences extends PreferenceActivity {
 		
 		if (!prefs.contains("endpoint_id")) {
 			Editor e = prefs.edit();
-//			e.putString("endpoint_id", DaemonProcess.getUniqueEndpointID(context).toString());
-			e.putString("endpoint_id", NativeLibraryProcess.getUniqueEndpointID(context).toString());
+			e.putString("endpoint_id", DaemonMainThread.getUniqueEndpointID(context).toString());
 			
 			try {
 				// scan for known network devices

@@ -46,15 +46,15 @@ public class SessionManager {
 	private Boolean _state = false;
 	
 	private Context _context = null;
-	private DaemonManager _manager = null;
+//	private DaemonManager _manager = null;
 	
 	private HashMap<String, ClientSession> _sessions = new HashMap<String, ClientSession>();
 	private HashMap<String, Registration> _registrations = new HashMap<String, Registration>();
 	
-	public SessionManager(Context context, DaemonManager manager)
+	public SessionManager(Context context)
 	{
 		this._context = context;
-		this._manager = manager;
+//		this._manager = manager;
 	}
 	
 	public synchronized void initialize()
@@ -63,7 +63,7 @@ public class SessionManager {
 		for (Entry<String, Registration> entry : _registrations.entrySet())
 		{
 			// create a new session
-			ClientSession session = new ClientSession(this._context, this._manager, entry.getValue(), entry.getKey());
+			ClientSession session = new ClientSession(this._context, entry.getValue(), entry.getKey());
 			_sessions.put(entry.getKey(), session);
 			session.initialize();
 		}
@@ -73,10 +73,10 @@ public class SessionManager {
 	public synchronized void terminate()
 	{
 		// daemon goes down, destroy all sessions
-		for (ClientSession session : _sessions.values())
-		{
-			session.terminate();
-		}
+//		for (ClientSession session : _sessions.values())
+//		{
+//			session.terminate();
+//		}
 		
 		_sessions.clear();
 		_state = false;
@@ -193,7 +193,7 @@ public class SessionManager {
 			{
 				// daemon is up
 				// destroy the session
-				_sessions.get(packageName).terminate();
+//				_sessions.get(packageName).terminate();
 				_sessions.remove(packageName);
 			}
 		}
@@ -210,7 +210,7 @@ public class SessionManager {
 		{
 			// daemon is up
 			// create a new session
-			ClientSession session = new ClientSession(this._context, this._manager, _registrations.get(packageName), packageName);
+			ClientSession session = new ClientSession(this._context, _registrations.get(packageName), packageName);
 			_sessions.put(packageName, session);
 			session.initialize();
 		}
@@ -232,7 +232,7 @@ public class SessionManager {
 		{
 			// daemon is up
 			// destroy the session
-			_sessions.get(packageName).terminate();
+//			_sessions.get(packageName).terminate();
 			_sessions.remove(packageName);
 		}
 		

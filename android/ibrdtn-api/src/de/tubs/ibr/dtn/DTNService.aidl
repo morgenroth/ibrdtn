@@ -35,11 +35,6 @@ interface DTNService {
 	boolean isRunning();
 	
 	/**
-	 * Returns the log in the ring-buffer of the service.
-	 */
-	List<String> getLog();
-	
-	/**
 	 * Returns the available neighbors of the daemon.
 	 */
 	List<String> getNeighbors();

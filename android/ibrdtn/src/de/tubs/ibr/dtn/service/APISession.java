@@ -52,7 +52,7 @@ public class APISession {
 	private final String TAG = "APISession";
 
     // client connection which is connected to the local daemon
-    private ExtendedClient client = null;
+//    private ExtendedClient client = null;
     
     private ClientSession session = null;
     
@@ -207,118 +207,120 @@ public class APISession {
     	Log.e(TAG, "Callback failure", e);
     }
     
-    private void raise_connection_failure(Exception e)
-    {
-    	Log.d(TAG, "connection exception raised: " + e.getMessage());
-    	
-    	if (client != null)
-    	{
-    		if (!client.isConnected())
-    		{
-    			Log.d(TAG, "client is no longer connected");
-    			
-    	    	// destroy connection
-    	    	disconnect();
-    		}
-    		else
-    		{
-        		try {
-    				// check api connection
-    				this.client.noop();
-    				return;
-    			} catch (APIException ex) {
-        	    	// destroy connection
-        	    	disconnect();
-    			}
-    		}    		
-    	}
-    	
-    	session.invoke_reconnect();
-    }
+//    private void raise_connection_failure(Exception e)
+//    {
+//    	Log.d(TAG, "connection exception raised: " + e.getMessage());
+//    	
+//    	if (client != null)
+//    	{
+//    		if (!client.isConnected())
+//    		{
+//    			Log.d(TAG, "client is no longer connected");
+//    			
+//    	    	// destroy connection
+//    	    	disconnect();
+//    		}
+//    		else
+//    		{
+//        		try {
+//    				// check api connection
+//    				this.client.noop();
+//    				return;
+//    			} catch (APIException ex) {
+//        	    	// destroy connection
+//        	    	disconnect();
+//    			}
+//    		}    		
+//    	}
+//    	
+////    	session.invoke_reconnect();
+//    }
     
-    public void connect(APIConnection conn) throws SessionDestroyedException
+    public void connect()
     {
-    	synchronized(_state_mutex) {
-    		if ((_state == SessionState.DISCONNECTED) || (_state == SessionState.FAILED)) throw new SessionDestroyedException();
-    		if (_state != SessionState.UNINITIALIZED)
-    		{
-    			Log.e(TAG, "APISession in invalid state (" + _state.toString() + ") for connect()");
-    			return;
-    		}
-    		setState(SessionState.CONNECTING);
-    	}
-
-    	synchronized(_api_mutex) {
-	    	// create a new extended client (connection to the daemon)
-			this.client = new ExtendedClient();
-			this.client.setConnection( conn );
-			this.client.setHandler(sabhandler);
-			this.client.setDebug( Log.isLoggable(TAG, Log.DEBUG) );
-			
-			try {
-				this.client.open();
+//    	synchronized(_state_mutex) {
+//    		if ((_state == SessionState.DISCONNECTED) || (_state == SessionState.FAILED)) throw new SessionDestroyedException();
+//    		if (_state != SessionState.UNINITIALIZED)
+//    		{
+//    			Log.e(TAG, "APISession in invalid state (" + _state.toString() + ") for connect()");
+//    			return;
+//    		}
+//    		setState(SessionState.CONNECTING);
+//    	}
+//
+//    	synchronized(_api_mutex) {
+//	    	// create a new extended client (connection to the daemon)
+//			this.client = new ExtendedClient();
+//			this.client.setConnection( conn );
+//			this.client.setHandler(sabhandler);
+//			this.client.setDebug( Log.isLoggable(TAG, Log.DEBUG) );
+//			
+//			try {
+//				this.client.open();
 				setState(SessionState.CONNECTED);
-			} catch (IOException e) {
-				setState(SessionState.FAILED);
-				raise_connection_failure(e);
-			}
-    	}
+//			} catch (IOException e) {
+//				setState(SessionState.FAILED);
+//				raise_connection_failure(e);
+//			}
+//    	}
     }
     
     public void disconnect()
     {
-    	synchronized(_state_mutex) {
-    		try {
-	    		while (_state == SessionState.CONNECTING)
-	    		{
-	    			_state_mutex.wait();
-	    		}
-    		} catch (InterruptedException e) {
-    			setState(SessionState.FAILED);
-    			return;
-    		}
-    		
-			// just return if the connection is not open
-			if (_state != SessionState.CONNECTED) return;
-			setState(SessionState.DISCONNECTING);
-    	}
-    	
-		try {
-			this.client.close();
-		} catch (IOException e) { }
+//    	synchronized(_state_mutex) {
+//    		try {
+//	    		while (_state == SessionState.CONNECTING)
+//	    		{
+//	    			_state_mutex.wait();
+//	    		}
+//    		} catch (InterruptedException e) {
+//    			setState(SessionState.FAILED);
+//    			return;
+//    		}
+//    		
+//			// just return if the connection is not open
+//			if (_state != SessionState.CONNECTED) return;
+//			setState(SessionState.DISCONNECTING);
+//    	}
+//    	
+//		try {
+//			this.client.close();
+//		} catch (IOException e) { }
 		
 		setState(SessionState.DISCONNECTED);
     }
     
     public void register(Registration reg) throws APIException
     {
-		try {
+//		try {
 			synchronized(_api_mutex) {
 				// set endpoint id
-				client.setEndpoint(reg.getEndpoint());
+//				client.setEndpoint(reg.getEndpoint());
+				NativeDaemonWrapper.setEndpoint(reg.getEndpoint());
 			}
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "endpoint registered: " + reg.getEndpoint());
-		} catch (APIException e) {
-			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "endpoint registration failed: " + reg.getEndpoint());
-			raise_connection_failure(e);
-			throw e;
-		}
+//		} catch (APIException e) {
+//			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "endpoint registration failed: " + reg.getEndpoint());
+//			raise_connection_failure(e);
+//			throw e;
+//		}
 		
 		for (GroupEndpoint group : reg.getGroups())
 		{
 			ibrdtn.api.object.GroupEndpoint eid = new ibrdtn.api.object.GroupEndpoint( group.toString() );
 			
 			// register to presence messages
-			try {
+//			try {
 				synchronized(_api_mutex) {
-					client.addRegistration(eid);
+//					client.addRegistration(eid);
+					NativeDaemonWrapper.addRegistration(eid.toString());
 				}
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + eid);
-			} catch (APIException e) {
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration add failed: " + eid);
-				raise_connection_failure(e);
-				throw e;
-			}
+//			} catch (APIException e) {
+//				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration add failed: " + eid);
+//				raise_connection_failure(e);
+//				throw e;
+//			}
 		}
     }
     
@@ -343,11 +345,12 @@ public class APISession {
 		
 		id.setSequencenumber(id.getSequencenumber());
 		
-		try {
+//		try {
 			synchronized(_api_mutex) {
 				// load the next bundle
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load bundle: " + id.toString());
-				client.loadBundle(api_id);
+//				client.loadBundle(api_id);
+				NativeDaemonWrapper.loadBundle(api_id.toString());
 			
 				// set callback and mode
 		    	synchronized(_callback_mutex) {
@@ -355,16 +358,17 @@ public class APISession {
 		    	}
 			
 		    	if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "get bundle: " + id.toString());
-		    	client.getBundle();
+//		    	client.getBundle();
+		    	NativeDaemonWrapper.getBundle();
 			}
 			
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load successful");
 			return true;
-		} catch (APIException e) {
-			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load failed");
-			raise_connection_failure(e);
-			return false;
-		}
+//		} catch (APIException e) {
+//			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load failed");
+//			raise_connection_failure(e);
+//			return false;
+//		}
 	}
     
 	/**
@@ -375,7 +379,7 @@ public class APISession {
 	{
 		if (!isConnected()) throw new SessionDestroyedException("not connected.");
 		
-		try {
+//		try {
 			synchronized(_api_mutex) {
 				// load the next bundle
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load and get bundle");
@@ -386,15 +390,16 @@ public class APISession {
 		    	}
 	    	
 		    	// execute query
-				this.client.loadAndGetBundle();
+//				this.client.loadAndGetBundle();
+				NativeDaemonWrapper.loadAndGetBundle();
 			}
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load successful");
 			return true;
-		} catch (APIException e) {
-			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load failed");
-			raise_connection_failure(e);
-			return false;
-		}
+//		} catch (APIException e) {
+//			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load failed");
+//			raise_connection_failure(e);
+//			return false;
+//		}
 	}
 	
 	/**
@@ -406,7 +411,7 @@ public class APISession {
 	{
 		if (!isConnected()) throw new SessionDestroyedException("not connected.");
 		
-		try {
+//		try {
 			ibrdtn.api.object.BundleID api_id = new ibrdtn.api.object.BundleID();
 			api_id.setSource(id.getSource());
 			
@@ -419,18 +424,19 @@ public class APISession {
 				// check for bundle to ack
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "ack bundle: " + id.toString());
 
-				client.markDelivered(api_id);
+//				client.markDelivered(api_id);
+				NativeDaemonWrapper.markDelivered(api_id.toString());
 			}
-		} catch (APIException e) {
-			raise_connection_failure(e);
-		};
+//		} catch (APIException e) {
+//			raise_connection_failure(e);
+//		};
 	}
 	
     public Boolean send(de.tubs.ibr.dtn.api.EID destination, int lifetime, byte[] data) throws SessionDestroyedException
 	{
 		if (!isConnected()) throw new SessionDestroyedException("not connected.");
 		
-		try {
+//		try {
 			ibrdtn.api.object.EID api_destination = null;
 			
 			if (destination instanceof de.tubs.ibr.dtn.api.SingletonEndpoint)
@@ -444,20 +450,21 @@ public class APISession {
 			
 			synchronized(_api_mutex) {
 				// send the message to the daemon
-				this.client.send(api_destination, lifetime, data);
+//				this.client.send(api_destination, lifetime, data);
+				NativeDaemonWrapper.send(api_destination, lifetime, data);
 			}
 			
 			// debug
 			Log.i(TAG, "Message sent: " + data);
-		} catch (APIException e) {
-			Log.e(TAG, "could not send the message: ", e);
-			raise_connection_failure(e);
-			return false;
-		} catch (Exception e) {
-			Log.e(TAG, "could not send the message: ", e);
-			raise_connection_failure(e);
-			return false;
-		}
+//		} catch (APIException e) {
+//			Log.e(TAG, "could not send the message: ", e);
+//			raise_connection_failure(e);
+//			return false;
+//		} catch (Exception e) {
+//			Log.e(TAG, "could not send the message: ", e);
+//			raise_connection_failure(e);
+//			return false;
+//		}
 		
 		return true;
 	}
@@ -482,13 +489,14 @@ public class APISession {
 		FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
 		try {
 			synchronized(_api_mutex) {
-				this.client.send(api_destination, lifetime, stream, length);
+//				this.client.send(api_destination, lifetime, stream, length);
+				NativeDaemonWrapper.send(api_destination, lifetime, stream, length);
 			}
 			return true;
-		} catch (APIException e) {
-			Log.e(TAG, "Sending file descriptor content failed: ", e);
-			raise_connection_failure(e);
-			return false;
+//		} catch (APIException e) {
+//			Log.e(TAG, "Sending file descriptor content failed: ", e);
+//			raise_connection_failure(e);
+//			return false;
 		} finally {
 			try {
 				stream.close();
