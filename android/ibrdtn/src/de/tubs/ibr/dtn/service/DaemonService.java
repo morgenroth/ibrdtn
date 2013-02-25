@@ -134,7 +134,7 @@ public class DaemonService extends Service {
 		@Override
 		public List<String> getLog() throws RemoteException
 		{
-			// TODO: recompile ibrdtnlib.jar. This method is removed in current
+			// TODO: recompile ibr-dtn-api.jar. This method is removed in current
 			// DTNService aidl
 			return null;
 		}

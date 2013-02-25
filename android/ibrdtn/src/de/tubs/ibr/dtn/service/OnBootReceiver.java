@@ -28,7 +28,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-public class IntentReceiver extends BroadcastReceiver {
+public class OnBootReceiver extends BroadcastReceiver {
 	
 	private final static String TAG = "IntentReceiver";
 

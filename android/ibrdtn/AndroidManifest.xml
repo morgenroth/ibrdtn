@@ -67,7 +67,7 @@
             android:theme="@android:style/Theme.NoTitleBar" />
 
         <receiver
-            android:name=".service.IntentReceiver"
+            android:name=".service.OnBootReceiver"
             android:enabled="true"
             android:exported="false"
             android:label="IntentReceiver" >
