@@ -6,6 +6,7 @@
  */
 
 #include "net/P2PDialupExtension.h"
+#include "net/P2PDialupEvent.h"
 #include "core/BundleCore.h"
 
 namespace dtn
@@ -45,12 +46,12 @@ namespace dtn
 
 		void P2PDialupExtension::fireInterfaceUp(const ibrcommon::vinterface &iface) const
 		{
-
+			P2PDialupEvent::raise(P2PDialupEvent::INTERFACE_UP, iface);
 		}
 
 		void P2PDialupExtension::fireInterfaceDown(const ibrcommon::vinterface &iface) const
 		{
-
+			P2PDialupEvent::raise(P2PDialupEvent::INTERFACE_DOWN, iface);
 		}
 	} /* namespace routing */
 } /* namespace dtn */
