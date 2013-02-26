@@ -156,7 +156,7 @@ namespace dtn
 				sqlite3_stmt* operator*();
 				void prepare();
 				void reset();
-				int step();
+				int step() throw (SQLiteQueryException);
 
 			private:
 				sqlite3 *_database;

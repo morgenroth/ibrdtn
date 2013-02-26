@@ -131,12 +131,30 @@ namespace dtn
 			}
 		}
 
-		int SQLiteDatabase::Statement::step()
+		int SQLiteDatabase::Statement::step() throw (SQLiteQueryException)
 		{
 			if (_st == NULL)
 				throw SQLiteQueryException("statement not prepared");
 
-			return sqlite3_step(_st);
+			int ret = sqlite3_step(_st);
+
+			// check if the return value signals an error
+			switch (ret)
+			{
+			case SQLITE_CORRUPT:
+				throw SQLiteQueryException("Database is corrupt.");
+
+			case SQLITE_INTERRUPT:
+				throw SQLiteQueryException("Database interrupt.");
+
+			case SQLITE_SCHEMA:
+				throw SQLiteQueryException("Database schema error.");
+
+			case SQLITE_ERROR:
+				throw SQLiteQueryException("Database error.");
+			default:
+				return ret;
+			}
 		}
 
 		void SQLiteDatabase::Statement::prepare()
@@ -452,6 +470,8 @@ namespace dtn
 						offset += query_limit;
 					}
 				}
+			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::storage::NoBundleFoundException&) { }
 
 			if (items_added == 0) throw dtn::storage::NoBundleFoundException();
@@ -787,6 +807,7 @@ namespace dtn
 		const std::set<dtn::data::EID> SQLiteDatabase::getDistinctDestinations()
 		{
 			std::set<dtn::data::EID> ret;
+			// TODO: implement this method!
 			return ret;
 		}
 
