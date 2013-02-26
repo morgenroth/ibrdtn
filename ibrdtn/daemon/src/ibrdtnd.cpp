@@ -339,7 +339,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 					}
 
 					try {
-						tcpcl->bind(net.iface, net.port);
+						tcpcl->add(net.iface, net.port);
 
 						if (it == _cl_map.end()) {
 							core.getConnectionManager().add(tcpcl);

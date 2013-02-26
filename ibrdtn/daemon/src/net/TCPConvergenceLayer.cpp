@@ -20,10 +20,12 @@
  */
 
 #include "Configuration.h"
+#include "net/P2PDialupEvent.h"
 #include "net/TCPConvergenceLayer.h"
 #include "net/ConnectionEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -50,7 +52,7 @@ namespace dtn
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		TCPConvergenceLayer::TCPConvergenceLayer()
-		 : _any_port(0)
+		 : _vsocket_state(false), _any_port(0)
 		{
 		}
 
@@ -65,7 +67,7 @@ namespace dtn
 			_vsocket.destroy();
 		}
 
-		void TCPConvergenceLayer::bind(const ibrcommon::vinterface &net, int port)
+		void TCPConvergenceLayer::add(const ibrcommon::vinterface &net, int port) throw ()
 		{
 			// do not allow any futher binding if we already bound to any interface
 			if (_any_port > 0) return;
@@ -75,11 +77,22 @@ namespace dtn
 				_vsocket.add(new ibrcommon::tcpserversocket(port));
 				_any_port = port;
 			} else {
-				// bind on all addresses on this interface
-				_interfaces.insert(net);
+				listen(net, port);
+			}
+		}
 
+		void TCPConvergenceLayer::listen(const ibrcommon::vinterface &net, int port) throw ()
+		{
+			try {
 				// create sockets for all addresses on the interface
+				// may throw "interface_not_set"
 				std::list<ibrcommon::vaddress> addrs = net.getAddresses();
+
+				{
+					ibrcommon::MutexLock l(_interface_lock);
+					// bind on all addresses on this interface
+					_interfaces.insert(net);
+				}
 
 				// convert the port into a string
 				std::stringstream ss; ss << port;
@@ -88,22 +101,48 @@ namespace dtn
 					ibrcommon::vaddress &addr = (*iter);
 
 					// handle the addresses according to their family
-					switch (addr.family()) {
-					case AF_INET:
-					case AF_INET6:
-						addr.setService(ss.str());
-						_vsocket.add(new ibrcommon::tcpserversocket(addr), net);
-						break;
-					default:
-						break;
+					// may throw "address_exception"
+					try {
+						switch (addr.family()) {
+						case AF_INET:
+						case AF_INET6:
+						{
+							addr.setService(ss.str());
+							ibrcommon::tcpserversocket *sock = new ibrcommon::tcpserversocket(addr);
+							if (_vsocket_state) sock->up();
+							_vsocket.add(sock, net);
+							break;
+						}
+						default:
+							break;
+						}
+					} catch (const ibrcommon::vaddress::address_exception &ex) {
+						IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 
 				// subscribe to NetLink events on our interfaces
 				ibrcommon::LinkManager::getInstance().addEventListener(net, this);
 
-				//_tcpsrv.bind(net, port);
+				ibrcommon::MutexLock l(_portmap_lock);
 				_portmap[net] = port;
+			} catch (const ibrcommon::vinterface::interface_not_set &ex) {
+				IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		void TCPConvergenceLayer::unlisten(const ibrcommon::vinterface &iface) throw ()
+		{
+			ibrcommon::socketset socks = _vsocket.get(iface);
+			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+				ibrcommon::tcpserversocket *sock = dynamic_cast<ibrcommon::tcpserversocket*>(*iter);
+				_vsocket.remove(sock);
+				try {
+					sock->down();
+				} catch (const ibrcommon::socket_exception &ex) {
+					IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				}
+				delete sock;
 			}
 		}
 
@@ -114,10 +153,13 @@ namespace dtn
 
 		void TCPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
+			ibrcommon::MutexLock l(_interface_lock);
+
 			// announce port only if we are bound to any interface
 			if (_interfaces.empty() && (_any_port > 0)) {
 				std::stringstream service;
 				// ... set the port only
+				ibrcommon::MutexLock l(_portmap_lock);
 				service << "port=" << _portmap[iface] << ";";
 				announcement.addService( DiscoveryService("tcpcl", service.str()));
 				return;
@@ -158,6 +200,7 @@ namespace dtn
 
 								std::stringstream service;
 								// fill in the ip address
+								ibrcommon::MutexLock l(_portmap_lock);
 								service << "ip=" << addr.address() << ";port=" << _portmap[iface] << ";";
 								announcement.addService( DiscoveryService("tcpcl", service.str()));
 
@@ -176,6 +219,7 @@ namespace dtn
 					if (!announced) {
 						std::stringstream service;
 						// ... set the port only
+						ibrcommon::MutexLock l(_portmap_lock);
 						service << "port=" << _portmap[iface] << ";";
 						announcement.addService( DiscoveryService("tcpcl", service.str()));
 					}
@@ -191,12 +235,39 @@ namespace dtn
 			return "TCPConvergenceLayer";
 		}
 
+		void TCPConvergenceLayer::raiseEvent(const Event *evt) throw ()
+		{
+			try {
+				const dtn::net::P2PDialupEvent &dialup = dynamic_cast<const dtn::net::P2PDialupEvent&>(*evt);
+
+				switch (dialup.type)
+				{
+					case dtn::net::P2PDialupEvent::INTERFACE_UP:
+					{
+						listen(dialup.iface, 4556);
+						break;
+					}
+
+					case dtn::net::P2PDialupEvent::INTERFACE_DOWN:
+					{
+						unlisten(dialup.iface);
+						break;
+					}
+				}
+			} catch (std::bad_cast&) {
+
+			}
+		}
+
 		void TCPConvergenceLayer::eventNotify(const ibrcommon::LinkEvent &evt)
 		{
 			// do not do anything if we are bound on all interfaces
 			if (_any_port > 0) return;
 
-			if (_interfaces.find(evt.getInterface()) == _interfaces.end()) return;
+			{
+				ibrcommon::MutexLock l(_interface_lock);
+				if (_interfaces.find(evt.getInterface()) == _interfaces.end()) return;
+			}
 
 			switch (evt.getAction())
 			{
@@ -204,6 +275,7 @@ namespace dtn
 				{
 					ibrcommon::vaddress bindaddr = evt.getAddress();
 					// convert the port into a string
+					ibrcommon::MutexLock l(_portmap_lock);
 					std::stringstream ss; ss << _portmap[evt.getInterface()];
 					bindaddr.setService(ss.str());
 					ibrcommon::tcpserversocket *sock = new ibrcommon::tcpserversocket(bindaddr);
@@ -233,13 +305,8 @@ namespace dtn
 
 				case ibrcommon::LinkEvent::ACTION_LINK_DOWN:
 				{
-					ibrcommon::socketset socks = _vsocket.get(evt.getInterface());
-					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
-						ibrcommon::tcpserversocket *sock = dynamic_cast<ibrcommon::tcpserversocket*>(*iter);
-						_vsocket.remove(sock);
-						sock->down();
-						delete sock;
-					}
+					ibrcommon::MutexLock l(_interface_lock);
+					unlisten(evt.getInterface());
 					break;
 				}
 
@@ -361,10 +428,16 @@ namespace dtn
 			_connections_cond.signal(true);
 
 			IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection added (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+
+			// listen on P2P dial-up events
+			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::add(this);
 		}
 
 		void TCPConvergenceLayer::connectionDown(TCPConnection *conn)
 		{
+			// un-listen on P2P dial-up events
+			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::remove(this);
+
 			ibrcommon::MutexLock l(_connections_cond);
 			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
@@ -463,6 +536,7 @@ namespace dtn
 			try {
 				// listen on the socket
 				_vsocket.up();
+				_vsocket_state = true;
 			} catch (const ibrcommon::socket_exception &ex) {
 				IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", error) << "bind failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -474,6 +548,7 @@ namespace dtn
 			try {
 				// shutdown all sockets
 				_vsocket.down();
+				_vsocket_state = false;
 			} catch (const ibrcommon::socket_exception &ex) {
 				IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", error) << "shutdown failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
