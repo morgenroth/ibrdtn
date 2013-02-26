@@ -52,10 +52,12 @@ namespace dtn
 				dtn::data::EID _destination;
 			};
 
+			ConvergenceLayer();
+
 			/**
 			 * destructor
 			 */
-			virtual ~ConvergenceLayer() {};
+			virtual ~ConvergenceLayer() = 0;
 
 			virtual dtn::core::Node::Protocol getDiscoveryProtocol() const = 0;
 
