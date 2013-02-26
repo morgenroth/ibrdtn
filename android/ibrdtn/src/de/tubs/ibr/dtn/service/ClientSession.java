@@ -23,8 +23,15 @@ package de.tubs.ibr.dtn.service;
 
 import ibrdtn.api.APIConnection;
 import ibrdtn.api.ExtendedClient.APIException;
+import ibrdtn.api.object.Bundle;
+import ibrdtn.api.object.EID;
+import ibrdtn.api.object.InputStreamBlockData;
+import ibrdtn.api.object.PayloadBlock;
+import ibrdtn.api.object.PlainSerializer;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import android.content.Context;
 import android.content.Intent;
@@ -57,6 +64,149 @@ public class ClientSession {
 		this.context = context;
 		this._package_name = packageName;
 		this._registration = reg;
+	}
+	
+	public native void setEndpoint(String id);
+
+	public native void addRegistration(String eid);
+
+	public native void loadBundle(String id);
+
+	public native void getBundle();
+
+	public native void loadAndGetBundle();
+
+	public native void markDelivered(String bundleId);
+
+	public native void sendBundle(byte[] output);
+
+	/**
+	 * Send a bundle directly to the daemon.
+	 * 
+	 * @param bundle
+	 *            The bundle to send.
+	 * @throws APIException
+	 *             If the transmission fails.
+	 */
+	public synchronized void send(Bundle bundle)
+	{
+		// TODO: implement native
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+		// // clear the previous bundle first
+		// if (query("bundle clear") != 200) throw new
+		// APIException("bundle clear failed");
+		//
+		// // announce a proceeding plain bundle
+		// if (query("bundle put plain") != 100) throw new
+		// APIException("bundle put failed");
+
+		PlainSerializer serializer = new PlainSerializer(out);
+
+		try
+		{
+			serializer.serialize(bundle);
+		} catch (IOException e)
+		{
+			// throw new APIException("serialization of bundle failed.");
+		}
+
+		sendBundle(out.toByteArray());
+
+		// if (_receiver.getResponse().getCode() != 200)
+		// {
+		// throw new APIException("bundle rejected or put failed");
+		// }
+
+		// send the bundle away
+		// if (query("bundle send") != 200) throw new
+		// APIException("bundle send failed");
+	}
+
+	/**
+	 * Send a bundle directly to the daemon.
+	 * 
+	 * @param destination
+	 *            The destination of the bundle.
+	 * @param lifetime
+	 *            The lifetime of the bundle.
+	 * @param data
+	 *            The payload as byte-array.
+	 * @throws APIException
+	 *             If the transmission fails.
+	 */
+	public void send(EID destination, Integer lifetime, byte[] data)
+	{
+		send(destination, lifetime, data, Bundle.Priority.NORMAL);
+	}
+
+	/**
+	 * Send a bundle directly to the daemon.
+	 * 
+	 * @param destination
+	 *            The destination of the bundle.
+	 * @param lifetime
+	 *            The lifetime of the bundle.
+	 * @param data
+	 *            The payload as byte-array.
+	 * @param priority
+	 *            The priority of the bundle
+	 * @throws APIException
+	 *             If the transmission fails.
+	 */
+	public void send(EID destination, Integer lifetime, byte[] data, Bundle.Priority priority)
+	{
+		// wrapper to the send(Bundle) function
+		Bundle bundle = new Bundle(destination, lifetime);
+		bundle.appendBlock(new PayloadBlock(data));
+		bundle.setPriority(priority);
+		send(bundle);
+	}
+
+	/**
+	 * Send a bundle directly to the daemon. The given stream is used as payload
+	 * of the bundle.
+	 * 
+	 * @param destination
+	 *            The destination of the bundle.
+	 * @param lifetime
+	 *            The lifetime of the bundle.
+	 * @param stream
+	 *            The stream containing the payload data.
+	 * @param length
+	 *            The length of the payload.
+	 * @throws APIException
+	 *             If the transmission fails.
+	 */
+	public void send(EID destination, Integer lifetime, InputStream stream, Long length)
+	{
+		send(destination, lifetime, stream, length, Bundle.Priority.NORMAL);
+	}
+
+	/**
+	 * Send a bundle directly to the daemon. The given stream is used as payload
+	 * of the bundle.
+	 * 
+	 * @param destination
+	 *            The destination of the bundle.
+	 * @param lifetime
+	 *            The lifetime of the bundle.
+	 * @param stream
+	 *            The stream containing the payload data.
+	 * @param length
+	 *            The length of the payload.
+	 * @param priority
+	 *            The priority of the bundle
+	 * @throws APIException
+	 *             If the transmission fails.
+	 */
+	public void send(EID destination, Integer lifetime, InputStream stream, Long length, Bundle.Priority priority)
+	{
+		Bundle bundle = new Bundle(destination, lifetime);
+		bundle.appendBlock(new PayloadBlock(new InputStreamBlockData(stream, length)));
+		bundle.setPriority(priority);
+		send(bundle);
 	}
 	
 	public synchronized void initialize()

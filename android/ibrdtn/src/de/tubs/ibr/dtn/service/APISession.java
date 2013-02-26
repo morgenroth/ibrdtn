@@ -296,7 +296,7 @@ public class APISession {
 			synchronized(_api_mutex) {
 				// set endpoint id
 //				client.setEndpoint(reg.getEndpoint());
-				NativeDaemonWrapper.setEndpoint(reg.getEndpoint());
+				session.setEndpoint(reg.getEndpoint());
 			}
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "endpoint registered: " + reg.getEndpoint());
 //		} catch (APIException e) {
@@ -313,7 +313,7 @@ public class APISession {
 //			try {
 				synchronized(_api_mutex) {
 //					client.addRegistration(eid);
-					NativeDaemonWrapper.addRegistration(eid.toString());
+					session.addRegistration(eid.toString());
 				}
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + eid);
 //			} catch (APIException e) {
@@ -350,7 +350,7 @@ public class APISession {
 				// load the next bundle
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load bundle: " + id.toString());
 //				client.loadBundle(api_id);
-				NativeDaemonWrapper.loadBundle(api_id.toString());
+				session.loadBundle(api_id.toString());
 			
 				// set callback and mode
 		    	synchronized(_callback_mutex) {
@@ -359,7 +359,7 @@ public class APISession {
 			
 		    	if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "get bundle: " + id.toString());
 //		    	client.getBundle();
-		    	NativeDaemonWrapper.getBundle();
+		    	session.getBundle();
 			}
 			
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load successful");
@@ -391,7 +391,7 @@ public class APISession {
 	    	
 		    	// execute query
 //				this.client.loadAndGetBundle();
-				NativeDaemonWrapper.loadAndGetBundle();
+		    	session.loadAndGetBundle();
 			}
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load successful");
 			return true;
@@ -425,7 +425,7 @@ public class APISession {
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "ack bundle: " + id.toString());
 
 //				client.markDelivered(api_id);
-				NativeDaemonWrapper.markDelivered(api_id.toString());
+				session.markDelivered(api_id.toString());
 			}
 //		} catch (APIException e) {
 //			raise_connection_failure(e);
@@ -451,7 +451,7 @@ public class APISession {
 			synchronized(_api_mutex) {
 				// send the message to the daemon
 //				this.client.send(api_destination, lifetime, data);
-				NativeDaemonWrapper.send(api_destination, lifetime, data);
+				session.send(api_destination, lifetime, data);
 			}
 			
 			// debug
@@ -490,7 +490,7 @@ public class APISession {
 		try {
 			synchronized(_api_mutex) {
 //				this.client.send(api_destination, lifetime, stream, length);
-				NativeDaemonWrapper.send(api_destination, lifetime, stream, length);
+				session.send(api_destination, lifetime, stream, length);
 			}
 			return true;
 //		} catch (APIException e) {
