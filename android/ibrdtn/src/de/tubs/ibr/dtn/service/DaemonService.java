@@ -24,7 +24,6 @@ package de.tubs.ibr.dtn.service;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
@@ -38,7 +37,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -86,7 +88,6 @@ public class DaemonService extends Service {
 	private P2PManager _p2p_manager = null;
 
 	private DaemonMainThread mDaemonMainThread;
-	private final CountDownLatch mDaemonMainThreadDoneSignal = new CountDownLatch(1);
 
 	public DaemonState getState()
 	{
@@ -134,7 +135,8 @@ public class DaemonService extends Service {
 		@Override
 		public List<String> getLog() throws RemoteException
 		{
-			// TODO: recompile ibr-dtn-api.jar. This method is removed in current
+			// TODO: recompile ibr-dtn-api.jar. This method is removed in
+			// current
 			// DTNService aidl
 			return null;
 		}
@@ -143,18 +145,21 @@ public class DaemonService extends Service {
 	@Override
 	public IBinder onBind(Intent intent)
 	{
+		//TODO: Do we really need to start the service when binding to it? This seems redundant.
 		// start the service if enabled and not running
-		if (!getState().equals(DaemonState.ONLINE))
-		{
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-			if (prefs.getBoolean("enabledSwitch", false))
-			{
-				// startup the daemon process
-				final Intent startUpIntent = new Intent(this, DaemonService.class);
-				startUpIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-				startService(startUpIntent);
-			}
-		}
+		// if (!getState().equals(DaemonState.ONLINE))
+		// {
+		// SharedPreferences prefs =
+		// PreferenceManager.getDefaultSharedPreferences(this);
+		// if (prefs.getBoolean("enabledSwitch", false))
+		// {
+		// Log.d(TAG, "Startup daemon on bind");
+		// // startup the daemon process
+		// final Intent startUpIntent = new Intent(this, DaemonService.class);
+		// startUpIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+		// startService(startUpIntent);
+		// }
+		// }
 
 		return mBinder;
 	}
@@ -172,6 +177,53 @@ public class DaemonService extends Service {
 			startService(neighborIntent);
 		}
 	}
+
+	/**
+	 * Gets broadcasted intent when main thread gets online or offline
+	 */
+	private BroadcastReceiver mDaemonStateReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent)
+		{
+			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.STATE))
+			{
+				String state = intent.getStringExtra("state");
+				DaemonState ds = DaemonState.valueOf(state);
+				switch (ds)
+				{
+				case ONLINE:
+					Log.d(TAG, "mDaemonStateReceiver: DaemonState: ONLINE");
+
+					NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+					nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.notify_no_neighbors)));
+
+					// restore registrations
+					_session_manager.initialize();
+
+					// update notification icon
+					updateNeighborNotification();
+
+					// enable P2P manager
+					_p2p_manager.initialize();
+					break;
+
+				case OFFLINE:
+					Log.d(TAG, "mDaemonStateReceiver: DaemonState: OFFLINE");
+
+					// stop service
+					stopSelf();
+					break;
+
+				case ERROR:
+
+					break;
+
+				default:
+					break;
+				}
+			}
+		}
+	};
 
 	private final class ServiceHandler extends Handler {
 		public ServiceHandler(Looper looper) {
@@ -202,21 +254,9 @@ public class DaemonService extends Service {
 			// turn this to a foreground service (kill-proof)
 			startForeground(1, n);
 
-			mDaemonMainThread = new DaemonMainThread(this, mDaemonMainThreadDoneSignal);
+			mDaemonMainThread = new DaemonMainThread(this);
 			mDaemonMainThread.start();
 			Log.d(TAG, "Started mDaemonMainThread");
-
-			NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-			nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.notify_no_neighbors)));
-
-			// restore registrations
-			_session_manager.initialize();
-
-			// update notification icon
-			updateNeighborNotification();
-
-			// enable P2P manager
-			_p2p_manager.initialize();
 
 		} else if (ACTION_SHUTDOWN.equals(action))
 		{
@@ -238,8 +278,6 @@ public class DaemonService extends Service {
 			// remove notification
 			nm.cancel(1);
 
-			// stop service
-			stopSelf();
 		} else if (ACTION_CLOUD_UPLINK.equals(action))
 		{
 			if (intent.hasExtra("enabled"))
@@ -314,6 +352,10 @@ public class DaemonService extends Service {
 	{
 		super.onCreate();
 
+		IntentFilter ifilter = new IntentFilter(de.tubs.ibr.dtn.Intent.STATE);
+		ifilter.addCategory(Intent.CATEGORY_DEFAULT);
+		registerReceiver(mDaemonStateReceiver, ifilter);
+
 		/*
 		 * incoming Intents will be processed by ServiceHandler and queued in
 		 * HandlerThread
@@ -335,9 +377,49 @@ public class DaemonService extends Service {
 		_session_manager.restoreRegistrations();
 	}
 
+	/**
+	 * Called on stopSelf() or stopService()
+	 */
+	@Override
+	public void onDestroy()
+	{
+
+		unregisterReceiver(mDaemonStateReceiver);
+
+		// stop looper that handles incoming intents
+		mServiceLooper.quit();
+
+		// close all sessions
+		_session_manager.saveRegistrations();
+
+		// remove notification
+		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		nm.cancel(1);
+
+		// dereference P2P Manager
+		_p2p_manager = null;
+
+		// call super method
+		super.onDestroy();
+	}
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId)
 	{
+
+		/*
+		 * If no explicit intent is given start as ACTION_STARTUP.
+		 * 
+		 * When this service crashes, Android restarts it without an Intent.
+		 * Thus ACTION_STARTUP is executed!
+		 */
+		if (intent == null || intent.getAction() == null)
+		{
+			Log.d(TAG, "intent == null or intent.getAction() == null -> default to ACTION_STARTUP");
+
+			intent = new Intent(ACTION_STARTUP);
+		}
+
 		String action = intent.getAction();
 
 		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received start id " + startId + ": " + intent);
@@ -368,38 +450,6 @@ public class DaemonService extends Service {
 		}
 
 		return START_STICKY;
-	}
-
-	/**
-	 * Called on stopSelf() or stopService()
-	 */
-	@Override
-	public void onDestroy()
-	{
-		// stop looper that handles incoming intents
-		mServiceLooper.quit();
-
-		// close all sessions
-		_session_manager.saveRegistrations();
-
-		// wait for daemon main loop
-		try
-		{
-			mDaemonMainThreadDoneSignal.await();
-		} catch (InterruptedException e)
-		{
-			Log.e(TAG, "Waiting for daemon thread interrupt!", e);
-		}
-
-		// remove notification
-		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		nm.cancel(1);
-
-		// dereference P2P Manager
-		_p2p_manager = null;
-
-		// call super method
-		super.onDestroy();
 	}
 
 	// TODO: Not used currently!

@@ -44,11 +44,9 @@ public class DaemonMainThread extends Thread {
 	private final static String TAG = "DaemonMainThread";
 
 	private DaemonService mService;
-	private final CountDownLatch mDoneSignal;
 
-	public DaemonMainThread(DaemonService context, CountDownLatch doneSignal) {
+	public DaemonMainThread(DaemonService context) {
 		this.mService = context;
-		this.mDoneSignal = doneSignal;
 	}
 
 	public void run()
@@ -68,12 +66,14 @@ public class DaemonMainThread extends Thread {
 		{
 			debug = true;
 		}
+		
+		NativeDaemonWrapper.daemonReload();
 
 		// loads config and initializes daemon
 		NativeDaemonWrapper.daemonInitialize(configPath, debug);
 
 		// broadcast online state
-		//TODO: better get callback when its really online
+		// TODO: better get callback when its really online
 		Intent broadcastOnlineIntent = new Intent();
 		broadcastOnlineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
 		broadcastOnlineIntent.putExtra("state", DaemonState.ONLINE.name());
@@ -86,12 +86,9 @@ public class DaemonMainThread extends Thread {
 		// broadcast offline state
 		Intent broadcastOfflineIntent = new Intent();
 		broadcastOfflineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
-		broadcastOfflineIntent.putExtra("state", DaemonState.ONLINE.name());
+		broadcastOfflineIntent.putExtra("state", DaemonState.OFFLINE.name());
 		broadcastOfflineIntent.addCategory(Intent.CATEGORY_DEFAULT);
 		mService.sendBroadcast(broadcastOfflineIntent);
-
-		// signal that this thread is done
-		mDoneSignal.countDown();
 	}
 
 	/**
