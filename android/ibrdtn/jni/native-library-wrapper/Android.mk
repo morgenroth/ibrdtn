@@ -3,7 +3,11 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := native-library-wrapper
 LOCAL_SRC_FILES = \
-	NativeDaemonWrapper.cpp
+	JNIHelp.cpp \
+	Helper.cpp \
+	JNI_OnLoad.cpp \
+	NativeDaemonWrapper.cpp \
+	ClientSession.cpp
 
 LOCAL_C_INCLUDES :=\
 	$(LOCAL_PATH) \

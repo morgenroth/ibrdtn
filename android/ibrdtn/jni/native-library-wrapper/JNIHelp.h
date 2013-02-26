@@ -169,17 +169,17 @@ inline void jniLogException(JNIEnv* env, int priority, const char* tag, jthrowab
  */
 #define LOG_EX(env, priority, tag, ...) \
     IF_ALOG(priority, tag) jniLogException(env, ANDROID_##priority, tag, ##__VA_ARGS__)
-#define LOGV_EX(env, ...) LOG_EX(env, LOG_VERBOSE, LOG_TAG, ##__VA_ARGS__)
-#define LOGD_EX(env, ...) LOG_EX(env, LOG_DEBUG, LOG_TAG, ##__VA_ARGS__)
-#define LOGI_EX(env, ...) LOG_EX(env, LOG_INFO, LOG_TAG, ##__VA_ARGS__)
-#define LOGW_EX(env, ...) LOG_EX(env, LOG_WARN, LOG_TAG, ##__VA_ARGS__)
-#define LOGE_EX(env, ...) LOG_EX(env, LOG_ERROR, LOG_TAG, ##__VA_ARGS__)
+#define LOGV_EX(env, ...) LOG_EX(env, LOG_VERBOSE, THIS_LOG_TAG, ##__VA_ARGS__)
+#define LOGD_EX(env, ...) LOG_EX(env, LOG_DEBUG, THIS_LOG_TAG, ##__VA_ARGS__)
+#define LOGI_EX(env, ...) LOG_EX(env, LOG_INFO, THIS_LOG_TAG, ##__VA_ARGS__)
+#define LOGW_EX(env, ...) LOG_EX(env, LOG_WARN, THIS_LOG_TAG, ##__VA_ARGS__)
+#define LOGE_EX(env, ...) LOG_EX(env, LOG_ERROR, THIS_LOG_TAG, ##__VA_ARGS__)
 
-#define  LOGV(...)  __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
-#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define  LOGW(...)  __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
-#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define  LOGV(...)  __android_log_print(ANDROID_LOG_VERBOSE, THIS_LOG_TAG, __VA_ARGS__)
+#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, THIS_LOG_TAG, __VA_ARGS__)
+#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, THIS_LOG_TAG, __VA_ARGS__)
+#define  LOGW(...)  __android_log_print(ANDROID_LOG_WARN, THIS_LOG_TAG, __VA_ARGS__)
+#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, THIS_LOG_TAG, __VA_ARGS__)
 
 /*
  * TEMP_FAILURE_RETRY is defined by some, but not all, versions of

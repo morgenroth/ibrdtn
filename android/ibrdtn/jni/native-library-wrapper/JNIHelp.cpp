@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "JNIHelp"
+#define THIS_LOG_TAG "JNIHelp"
 
 #include "JNIHelp.h"
 
@@ -69,16 +69,16 @@ extern "C" int jniRegisterNativeMethods(C_JNIEnv* env, const char* className,
 {
     JNIEnv* e = reinterpret_cast<JNIEnv*>(env);
 
-    ALOGV("Registering %s natives", className);
+    LOGV("Registering %s natives", className);
 
     scoped_local_ref<jclass> c(env, findClass(env, className));
     if (c.get() == NULL) {
-        ALOGE("Native registration unable to find class '%s', aborting", className);
+        LOGE("Native registration unable to find class '%s', aborting", className);
         abort();
     }
 
     if ((*env)->RegisterNatives(e, c.get(), gMethods, numMethods) < 0) {
-        ALOGE("RegisterNatives failed for '%s', aborting", className);
+        LOGE("RegisterNatives failed for '%s', aborting", className);
         abort();
     }
 
@@ -214,20 +214,20 @@ extern "C" int jniThrowException(C_JNIEnv* env, const char* className, const cha
 
         if (exception.get() != NULL) {
             char* text = getExceptionSummary(env, exception.get());
-            ALOGW("Discarding pending exception (%s) to throw %s", text, className);
+            LOGW("Discarding pending exception (%s) to throw %s", text, className);
             free(text);
         }
     }
 
     scoped_local_ref<jclass> exceptionClass(env, findClass(env, className));
     if (exceptionClass.get() == NULL) {
-        ALOGE("Unable to find exception class %s", className);
+        LOGE("Unable to find exception class %s", className);
         /* ClassNotFoundException now pending */
         return -1;
     }
 
     if ((*env)->ThrowNew(e, exceptionClass.get(), msg) != JNI_OK) {
-        ALOGE("Failed throwing '%s' '%s'", className, msg);
+        LOGE("Failed throwing '%s' '%s'", className, msg);
         /* an exception, most likely OOM, will now be pending */
         return -1;
     }
@@ -311,32 +311,27 @@ static struct CachedFields {
     jfieldID descriptorField;
 } gCachedFields;
 
-jint JNI_OnLoad(JavaVM* vm, void*) {
-    JNIEnv* env;
-    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
-        ALOGE("JavaVM::GetEnv() failed");
-        abort();
-    }
+int registerJniHelp(JNIEnv* env) {
+	gCachedFields.fileDescriptorClass =
+			reinterpret_cast<jclass>(env->NewGlobalRef(
+					env->FindClass("java/io/FileDescriptor")));
+	if (gCachedFields.fileDescriptorClass == NULL) {
+		return -1;
+	}
 
-    gCachedFields.fileDescriptorClass =
-            reinterpret_cast<jclass>(env->NewGlobalRef(env->FindClass("java/io/FileDescriptor")));
-    if (gCachedFields.fileDescriptorClass == NULL) {
-        abort();
-    }
+	gCachedFields.fileDescriptorCtor = env->GetMethodID(
+			gCachedFields.fileDescriptorClass, "<init>", "()V");
+	if (gCachedFields.fileDescriptorCtor == NULL) {
+		return -1;
+	}
 
-    gCachedFields.fileDescriptorCtor =
-            env->GetMethodID(gCachedFields.fileDescriptorClass, "<init>", "()V");
-    if (gCachedFields.fileDescriptorCtor == NULL) {
-        abort();
-    }
+	gCachedFields.descriptorField = env->GetFieldID(
+			gCachedFields.fileDescriptorClass, "descriptor", "I");
+	if (gCachedFields.descriptorField == NULL) {
+		return -1;
+	}
 
-    gCachedFields.descriptorField =
-            env->GetFieldID(gCachedFields.fileDescriptorClass, "descriptor", "I");
-    if (gCachedFields.descriptorField == NULL) {
-        abort();
-    }
-
-    return JNI_VERSION_1_6;
+	return 0;
 }
 
 jobject jniCreateFileDescriptor(C_JNIEnv* env, int fd) {

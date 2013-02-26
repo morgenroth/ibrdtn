@@ -1,65 +1,28 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
 #include <unistd.h>
 #include <pthread.h>
+#include <string>
 
-#include <jni.h>
-#include <android/log.h>
+#include <iostream>
+#include <exception>
 
-#include "NativeDaemonWrapper.h"
-#include "Configuration.h"
+// local helper
+#include "JNIHelp.h"
+#include "Helper.h"
+
+// ibrcommon
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/data/File.h>
 
-// dtnd core
+// dtnd
+#include "ibrdtnd.h"
+#include "Configuration.h"
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "core/Node.h"
 
-#include "ibrdtnd.h"
-
-#define  ANDROID_LOG_TAG "IBR-DTN NativeLibraryWrapper Native"
-#define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG, ANDROID_LOG_TAG, __VA_ARGS__)
-#define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO, ANDROID_LOG_TAG, __VA_ARGS__)
-#define  LOGW(...)  __android_log_print(ANDROID_LOG_WARN, ANDROID_LOG_TAG, __VA_ARGS__)
-#define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, ANDROID_LOG_TAG, __VA_ARGS__)
-
-static JavaVM *gJavaVM;
-const char *kLogAdapterPath = "de/tubs/ibr/dtn/daemon/LogAdapter";
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*
- * Helper methods
- */
-bool checkException(JNIEnv* env) {
-	if (env->ExceptionCheck() != 0) {
-		LOGE("Uncaught exception returned from Java call!");
-		env->ExceptionDescribe();
-		return true;
-	}
-	return false;
-}
-
-std::string jstringToStdString(JNIEnv* env, jstring jstr) {
-	if (!jstr || !env)
-		return std::string();
-
-	const char* s = env->GetStringUTFChars(jstr, 0);
-	if (!s)
-		return std::string();
-	std::string str(s);
-	env->ReleaseStringUTFChars(jstr, s);
-	checkException(env);
-	return str;
-}
-
-jstring stdStringToJstring(JNIEnv* env, std::string str) {
-	return env->NewStringUTF(str.c_str());
-}
+#define THIS_LOG_TAG "IBR-DTN Native NativeDaemonWrapper"
 
 /**
  * Helper to init static global objects
@@ -84,33 +47,10 @@ jstring stdStringToJstring(JNIEnv* env, std::string str) {
 
  }*/
 
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
-	LOGD("JNI_OnLoad");
-
-	JNIEnv *env;
-	gJavaVM = vm;
-
-	if (vm->GetEnv((void**) &env, JNI_VERSION_1_4) != JNI_OK) {
-		LOGE("Failed to get the environment using GetEnv()");
-		return -1;
-	}
-
-	// init static objects
-	//initClassHelper(env, kLogAdapterPath, &gLogAdapterObject);
-
-	return JNI_VERSION_1_4;
-}
-
-JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
-{
-	LOGD("JNI_OnLoad");
-}
-
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_daemonInitialize(JNIEnv *env, jclass thisClass, jstring jConfigPath, jboolean jEnableDebug)
+static void daemonInitialize(JNIEnv *env, jclass thisClass, jstring jConfigPath, jboolean jEnableDebug)
 {
 	//Get the native string from java string
-	const char *configPath = env->GetStringUTFChars(jConfigPath, 0);
+	std::string configPath = jstringToStdString(env, jConfigPath);
 	bool enableDebug = (bool) jEnableDebug;
 
 	/**
@@ -160,15 +100,15 @@ Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_daemonInitialize(JNIEnv *env, j
 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {};
 
 	LOGI("Before ibrdtn_daemon_initialize");
-	ibrdtn_daemon_initialize();
+	try {
+		ibrdtn_daemon_initialize();
+	} catch (std::exception& e) {
+		LOGE("what %s", e.what());
+	}
 	LOGI("After ibrdtn_daemon_initialize");
-
-	// free memory
-	env->ReleaseStringUTFChars(jConfigPath, configPath);
 }
 
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_daemonMainLoop(JNIEnv *env, jclass thisClass)
+static void daemonMainLoop(JNIEnv *env, jclass thisClass)
 {
 	LOGI("Before ibrdtn_daemon_main_loop");
 	ibrdtn_daemon_main_loop();
@@ -178,12 +118,18 @@ Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_daemonMainLoop(JNIEnv *env, jcl
 	ibrcommon::Logger::stop();
 }
 
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_daemonShutdown(JNIEnv *env, jclass thisClass)
+static void daemonShutdown(JNIEnv *env, jclass thisClass)
 {
 	LOGI("Before ibrdtn_daemon_shutdown");
 	ibrdtn_daemon_shutdown();
 	LOGI("After ibrdtn_daemon_shutdown");
+}
+
+static void daemonReload(JNIEnv *env, jclass thisClass)
+{
+	LOGI("Before ibrdtn_daemon_reload");
+	ibrdtn_daemon_reload();
+	LOGI("After ibrdtn_daemon_reload");
 }
 
 /*static void loggingCallback(const char *s) {
@@ -238,8 +184,7 @@ Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_daemonShutdown(JNIEnv *env, jcl
  loggingCallback("test");
  }*/
 
-JNIEXPORT jobjectArray JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_getNeighbors(JNIEnv *env, jclass thisClass)
+static jobjectArray getNeighbors(JNIEnv *env, jclass thisClass)
 {
 	// get neighbors
 	const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
@@ -256,8 +201,7 @@ Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_getNeighbors(JNIEnv *env, jclas
 	return(returnArray);
 }
 
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_addConnection(JNIEnv *env, jclass thisClass, jstring jEid, jstring jProtocol, jstring jAddress, jstring jPort)
+static void addConnection(JNIEnv *env, jclass thisClass, jstring jEid, jstring jProtocol, jstring jAddress, jstring jPort)
 {
 	// convert java strings to std::string
 	std::string eid = jstringToStdString(env, jEid);
@@ -291,8 +235,7 @@ Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_addConnection(JNIEnv *env, jcla
 	LOGI("CONNECTION ADDED");
 }
 
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_removeConnection(JNIEnv *env, jclass thisClass, jstring jEid, jstring jProtocol, jstring jAddress, jstring jPort)
+static void removeConnection(JNIEnv *env, jclass thisClass, jstring jEid, jstring jProtocol, jstring jAddress, jstring jPort)
 {
 	// convert java strings to std::string
 	std::string eid = jstringToStdString(env, jEid);
@@ -326,41 +269,23 @@ Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_removeConnection(JNIEnv *env, j
 	LOGI("CONNECTION REMOVED");
 }
 
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_setEndpoint(JNIEnv *env, jclass thisClass, jstring jId) {
+static JNINativeMethod sMethods[] = {
+		{ "daemonInitialize", "(Ljava/lang/String;Z)V", (void *) daemonInitialize },
+		{ "daemonMainLoop", "()V", (void *) daemonMainLoop },
+		{ "daemonShutdown", "()V", (void *) daemonShutdown },
+		{ "daemonReload", "()V", (void *) daemonReload },
+		{ "getNeighbors", "()[Ljava/lang/String;", (void *) getNeighbors },
+		{ "addConnection", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", (void *) addConnection },
+		{ "removeConnection", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", (void *) removeConnection },
+};
 
+int register_de_tubs_ibr_dtn_service_NativeDaemonWrapper(JNIEnv* env) {
+    jclass cls;
+
+    cls = env->FindClass("de/tubs/ibr/dtn/service/NativeDaemonWrapper");
+    if (cls == NULL) {
+        LOGE("Can't find de/tubs/ibr/dtn/service/NativeDaemonWrapper\n");
+        return -1;
+    }
+    return env->RegisterNatives(cls, sMethods, NELEM(sMethods));
 }
-
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_addRegistration(JNIEnv *env, jclass thisClass, jstring jEid) {
-
-}
-
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_loadBundle(JNIEnv *env, jclass thisClass, jstring jId) {
-
-}
-
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_getBundle(JNIEnv *env, jclass thisClass) {
-
-}
-
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_loadAndGetBundle(JNIEnv *env, jclass thisClass) {
-
-}
-
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_markDelivered(JNIEnv *env, jclass thisClass, jstring jId) {
-
-}
-
-JNIEXPORT void JNICALL
-Java_de_tubs_ibr_dtn_service_NativeDaemonWrapper_send(JNIEnv *env, jclass thisClass, jbyteArray jOutput) {
-
-}
-
-#ifdef __cplusplus
-}
-#endif
