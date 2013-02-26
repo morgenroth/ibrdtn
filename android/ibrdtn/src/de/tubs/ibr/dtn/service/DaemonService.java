@@ -41,14 +41,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
@@ -406,7 +404,6 @@ public class DaemonService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId)
 	{
-
 		/*
 		 * If no explicit intent is given start as ACTION_STARTUP.
 		 * 

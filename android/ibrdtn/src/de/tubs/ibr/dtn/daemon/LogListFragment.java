@@ -48,7 +48,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 
 public class LogListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<LogMessage> {
-	private final static String TAG = "LogActivity";
 	private LogListAdapter mAdapter = null;
 	private boolean mPlayLog = true;
 	private MenuItem mPlayItem;
@@ -146,7 +145,7 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		getLoaderManager().destroyLoader(0);
 
 		getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs_paused));
-		
+
 		// change menu item to indicate pause
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
 		{
@@ -162,7 +161,7 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		getLoaderManager().initLoader(0, null, this);
 
 		getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs));
-		
+
 		// change menu item to indicate play
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
 		{

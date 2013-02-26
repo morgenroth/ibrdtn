@@ -29,7 +29,6 @@ import java.io.PrintStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 import android.content.Context;
 import android.content.Intent;
@@ -66,14 +65,15 @@ public class DaemonMainThread extends Thread {
 		{
 			debug = true;
 		}
-		
-		NativeDaemonWrapper.daemonReload();
+
+		//TODO: test
+		// NativeDaemonWrapper.daemonReload();
 
 		// loads config and initializes daemon
 		NativeDaemonWrapper.daemonInitialize(configPath, debug);
 
 		// broadcast online state
-		// TODO: better get callback when its really online
+		// TODO: better get callback when its really online?
 		Intent broadcastOnlineIntent = new Intent();
 		broadcastOnlineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
 		broadcastOnlineIntent.putExtra("state", DaemonState.ONLINE.name());

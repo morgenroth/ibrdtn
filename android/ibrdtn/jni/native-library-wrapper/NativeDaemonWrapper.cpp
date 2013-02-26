@@ -24,29 +24,6 @@
 
 #define THIS_LOG_TAG "IBR-DTN Native NativeDaemonWrapper"
 
-/**
- * Helper to init static global objects
- */
-/*void initClassHelper(JNIEnv *env, const char *path, jobject *objptr) {
- jclass cls = env->FindClass(path);
- if (!cls) {
- LOGE("initClassHelper: failed to get %s class reference", path);
- return;
- }
- jmethodID constr = env->GetMethodID(cls, "<init>", "()V");
- if (!constr) {
- LOGE("initClassHelper: failed to get %s constructor", path);
- return;
- }
- jobject obj = env->NewObject(cls, constr);
- if (!obj) {
- LOGE("initClassHelper: failed to create a %s object", path);
- return;
- }
- (*objptr) = env->NewGlobalRef(obj);
-
- }*/
-
 static void daemonInitialize(JNIEnv *env, jclass thisClass, jstring jConfigPath, jboolean jEnableDebug)
 {
 	//Get the native string from java string
@@ -198,7 +175,7 @@ static jobjectArray getNeighbors(JNIEnv *env, jclass thisClass)
 		env->SetObjectArrayElement(returnArray, i, neighbor);
 	}
 
-	return(returnArray);
+	return returnArray;
 }
 
 static void addConnection(JNIEnv *env, jclass thisClass, jstring jEid, jstring jProtocol, jstring jAddress, jstring jPort)
