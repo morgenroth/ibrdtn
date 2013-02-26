@@ -23,9 +23,9 @@
 #ifndef NATIVEHELPER_JNIHELP_H_
 #define NATIVEHELPER_JNIHELP_H_
 
-#include "jni.h"
-#include "cutils/log.h"
+#include <jni.h>
 #include <unistd.h>
+#include <android/log.h>
 
 #ifndef NELEM
 # define NELEM(x) ((int) (sizeof(x) / sizeof((x)[0])))

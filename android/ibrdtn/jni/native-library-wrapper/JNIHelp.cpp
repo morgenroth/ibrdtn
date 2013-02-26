@@ -17,9 +17,10 @@
 #define LOG_TAG "JNIHelp"
 
 #include "JNIHelp.h"
-#include "cutils/log.h"
 
+#include <android/log.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
