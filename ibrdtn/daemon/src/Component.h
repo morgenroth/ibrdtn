@@ -79,10 +79,30 @@ namespace dtn
 
 		protected:
 			void run() throw ();
+
+			/**
+			 * This method is called after componentDown() and should
+			 * should guarantee that blocking calls in componentRun()
+			 * will unblock.
+			 */
 			virtual void __cancellation() throw () = 0;
 
+			/**
+			 * Is called in preparation of the component.
+			 * Before componentRun() is called.
+			 */
 			virtual void componentUp() throw () = 0;
+
+			/**
+			 * This is the run method. The component should loop in there
+			 * until componentDown() or __cancellation() is called.
+			 */
 			virtual void componentRun() throw () = 0;
+
+			/**
+			 * This method is called if the component should stop. Clean-up
+			 * code should be inserted here.
+			 */
 			virtual void componentDown() throw () = 0;
 		};
 
