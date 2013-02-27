@@ -23,7 +23,9 @@ api_SOURCES = \
 	BundleStreamBuf.h \
 	BundleStreamBuf.cpp \
 	ApiP2PExtensionHandler.h \
-	ApiP2PExtensionHandler.cpp
+	ApiP2PExtensionHandler.cpp \
+	NativeSession.h \
+	NativeSession.cpp
 
 if ANDROID
 noinst_DATA = Android.mk
