@@ -71,6 +71,9 @@ namespace dtn
 			void setStorage(dtn::storage::BundleStorage *storage);
 			dtn::storage::BundleStorage& getStorage();
 
+			void setSeeker(dtn::storage::BundleSeeker *seeker);
+			dtn::storage::BundleSeeker& getSeeker();
+
 			void setRouter(dtn::routing::BaseRouter *router);
 			dtn::routing::BaseRouter& getRouter() const;
 
@@ -177,6 +180,7 @@ namespace dtn
 			WallClock _clock;
 
 			dtn::storage::BundleStorage *_storage;
+			dtn::storage::BundleSeeker *_seeker;
 			dtn::routing::BaseRouter *_router;
 
 			// generator for statusreports

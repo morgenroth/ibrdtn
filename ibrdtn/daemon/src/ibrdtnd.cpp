@@ -244,6 +244,9 @@ int ibrdtn_daemon_initialize_bundle_storage()
 		_bundle_seeker = storage;
 	}
 
+	// set the default seeker in the core
+	dtn::core::BundleCore::getInstance().setSeeker(_bundle_seeker);
+
 	return 0;
 }
 

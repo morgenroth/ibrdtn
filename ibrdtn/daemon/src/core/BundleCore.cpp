@@ -79,7 +79,7 @@ namespace dtn
 		}
 
 		BundleCore::BundleCore()
-		 : _clock(1), _storage(NULL), _router(NULL), _globally_connected(true)
+		 : _clock(1), _storage(NULL), _seeker(NULL), _router(NULL), _globally_connected(true)
 		{
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
@@ -129,6 +129,11 @@ namespace dtn
 			_storage = storage;
 		}
 
+		void BundleCore::setSeeker(dtn::storage::BundleSeeker *seeker)
+		{
+			_seeker = seeker;
+		}
+
 		void BundleCore::setRouter(dtn::routing::BaseRouter *router)
 		{
 			_router = router;
@@ -151,6 +156,15 @@ namespace dtn
 				throw ibrcommon::Exception("No bundle storage is set! Use BundleCore::setStorage() to set a storage.");
 			}
 			return *_storage;
+		}
+
+		dtn::storage::BundleSeeker& BundleCore::getSeeker()
+		{
+			if (_seeker == NULL)
+			{
+				throw ibrcommon::Exception("No bundle seeker is set! Use BundleCore::setSeeker() to set a seeker.");
+			}
+			return *_seeker;
 		}
 
 		WallClock& BundleCore::getClock()
