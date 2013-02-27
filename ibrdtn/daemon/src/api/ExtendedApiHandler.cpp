@@ -56,6 +56,7 @@ namespace dtn
 		{
 			_client.getRegistration().abort();
 			_sender->join();
+			delete _sender;
 		}
 
 		bool ExtendedApiHandler::good() const{
