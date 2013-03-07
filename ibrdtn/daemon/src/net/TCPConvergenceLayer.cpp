@@ -167,8 +167,9 @@ namespace dtn
 								IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 25) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 						}
-					} catch (const ibrcommon::Exception&) {
+					} catch (const ibrcommon::Exception &ex) {
 						// address collection process aborted
+						IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 65) << "Address collection aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					};
 
 					// if we still not announced anything...
