@@ -188,7 +188,6 @@ namespace dtn
 			void adjust_rtt(float value);
 
 			DatagramConnectionCallback &_callback;
-			bool _running;
 			const std::string _identifier;
 			DatagramConnection::Stream _stream;
 			DatagramConnection::Sender _sender;
