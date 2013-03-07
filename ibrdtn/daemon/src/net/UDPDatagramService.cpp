@@ -30,8 +30,10 @@ namespace dtn
 {
 	namespace net
 	{
+		const ibrcommon::vaddress UDPDatagramService::BROADCAST_ADDR("ff02::1", UDPDatagramService::BROADCAST_PORT, AF_INET6);
+
 		UDPDatagramService::UDPDatagramService(const ibrcommon::vinterface &iface, int port, size_t mtu)
-		 : _iface(iface), _bind_port(port)
+		 : _msock(NULL), _iface(iface), _bind_port(port)
 		{
 			// set connection parameters
 			_params.max_msg_length = mtu - 2;	// minus 2 bytes because we encode seqno and flags into 2 bytes
@@ -57,6 +59,22 @@ namespace dtn
 			_vsocket.destroy();
 
 			try {
+				// bind socket to the multicast port
+				_msock = new ibrcommon::multicastsocket(BROADCAST_PORT);
+
+				try {
+					_msock->join(BROADCAST_ADDR, _iface);
+				} catch (const ibrcommon::socket_raw_error &e) {
+					if (e.error() != EADDRINUSE) {
+						IBRCOMMON_LOGGER_TAG("UDPDatagramService", error) << "join failed on " << _iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+					}
+				} catch (const ibrcommon::socket_exception &e) {
+					IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 10) << "can not join " << BROADCAST_ADDR.toString() << " on " << _iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+				}
+
+				// add multicast socket to receiver sockets
+				_vsocket.add(_msock);
+
 				if (_iface.empty()) {
 					// bind socket to interface
 					_vsocket.add(new ibrcommon::udpsocket(_bind_port));
@@ -128,14 +146,18 @@ namespace dtn
 
 				// create vaddress
 				ibrcommon::socketset sockset = _vsocket.getAll();
-				if (sockset.size() > 0) {
+				for (ibrcommon::socketset::iterator iter = sockset.begin(); iter != sockset.end(); iter++) {
+					if ((*iter) == _msock) continue;
 					try {
-						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**sockset.begin());
+						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 						sock.sendto(tmp, length + 2, 0, destination);
-					} catch (const std::bad_cast&) {
-
-					}
+						return;
+					} catch (const ibrcommon::Exception&) {
+					} catch (const std::bad_cast&) { }
 				}
+
+				// throw exception if all sends failed
+				throw DatagramException("send failed");
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("send failed");
 			}
@@ -162,18 +184,18 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 20) << "send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << std::dec << seqno << IBRCOMMON_LOGGER_ENDL;
 
-				// create broadcast address
-				const ibrcommon::vaddress broadcast("ff02::1", BROADCAST_PORT, AF_INET6);
-
 				ibrcommon::socketset sockset = _vsocket.getAll();
-				if (sockset.size() > 0) {
+				for (ibrcommon::socketset::iterator iter = sockset.begin(); iter != sockset.end(); iter++) {
 					try {
-						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**sockset.begin());
-						sock.sendto(tmp, length + 2, 0, broadcast);
-					} catch (const std::bad_cast&) {
-
-					}
+						ibrcommon::multicastsocket &sock = dynamic_cast<ibrcommon::multicastsocket&>(**iter);
+						sock.sendto(tmp, length + 2, 0, BROADCAST_ADDR);
+						return;
+					} catch (const ibrcommon::Exception&) {
+					} catch (const std::bad_cast&) { }
 				}
+
+				// throw exception if all sends failed
+				throw DatagramException("send failed");
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("send failed");
 			}

@@ -111,6 +111,10 @@ namespace dtn
 			ibrcommon::vsocket _vsocket;
 
 			const static int BROADCAST_PORT = 5551;
+			const static ibrcommon::vaddress BROADCAST_ADDR;
+
+			ibrcommon::multicastsocket *_msock;
+
 			const ibrcommon::vinterface _iface;
 			const int _bind_port;
 
