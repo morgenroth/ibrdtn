@@ -462,7 +462,7 @@ int ibrdtn_daemon_initialize_global_variables() {
 	dtn::daemon::Configuration &config = dtn::daemon::Configuration::getInstance();
 
 	// set the timezone
-	dtn::utils::Clock::timezone = config.getTimezone();
+	dtn::utils::Clock::setTimezone(config.getTimezone());
 
 	// set local eid
 	dtn::core::BundleCore::local = config.getNodename();

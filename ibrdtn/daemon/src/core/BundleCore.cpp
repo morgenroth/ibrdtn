@@ -361,7 +361,7 @@ namespace dtn
 			if (BundleCore::max_timestamp_future > 0)
 			{
 				// first check if the local clock is reliable
-				if (dtn::utils::Clock::rating > 0)
+				if (dtn::utils::Clock::getRating() > 0)
 					// then check the timestamp
 					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < p._timestamp)
 					{

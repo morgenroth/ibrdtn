@@ -188,7 +188,7 @@ namespace dtn
 			int c;
 			int doapi = _doapi;
 			int disco = _disco._enabled;
-			int badclock = dtn::utils::Clock::badclock;
+			int badclock = dtn::utils::Clock::isBad();
 			int timestamp = _logger._timestamps;
 
 			while (1)
@@ -318,7 +318,7 @@ namespace dtn
 
 			_doapi = doapi;
 			_disco._enabled = disco;
-			dtn::utils::Clock::badclock = badclock;
+			dtn::utils::Clock::setBad(badclock);
 			_logger._timestamps = timestamp;
 		}
 
@@ -399,7 +399,7 @@ namespace dtn
 			_sync_level = conf.read<float>("time_sync_level", 0.15);
 
 			// enable the clock modify feature
-			dtn::utils::Clock::modify_clock = (conf.read<std::string>("time_set_clock", "no") == "yes");
+			dtn::utils::Clock::setModifyClock(conf.read<std::string>("time_set_clock", "no") == "yes");
 		}
 
 		void Configuration::DHT::load(const ibrcommon::ConfigFile &conf)
@@ -1093,7 +1093,7 @@ namespace dtn
 		bool Configuration::Security::TLSRequired() const
 		{
 			// TLS is only required, if the clock is in sync
-			if ((dtn::utils::Clock::rating == 0) && _tlsOptionalOnBadClock) return false;
+			if ((dtn::utils::Clock::getRating() == 0) && _tlsOptionalOnBadClock) return false;
 			return _tlsRequired;
 		}
 

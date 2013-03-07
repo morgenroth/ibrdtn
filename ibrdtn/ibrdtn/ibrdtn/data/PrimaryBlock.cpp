@@ -127,7 +127,7 @@ namespace dtn
 
 		void PrimaryBlock::relabel()
 		{
-			if (dtn::utils::Clock::badclock)
+			if (dtn::utils::Clock::isBad())
 			{
 				_timestamp = 0;
 			}
