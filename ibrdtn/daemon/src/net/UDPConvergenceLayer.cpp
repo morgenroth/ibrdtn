@@ -197,29 +197,10 @@ namespace dtn
 						dtn::data::DefaultSerializer serializer(ss);
 
 						serializer << fragment;
-						string data = ss.str();
+						std::string data = ss.str();
 
-						try {
-							// set write lock
-							ibrcommon::MutexLock l(m_writelock);
-
-							// get the first global scope socket
-							ibrcommon::socketset socks = _vsocket.getAll();
-							for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
-								ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
-								if (sock.get_address().scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
-
-								// send converted line back to client.
-								sock.sendto(data.c_str(), data.length(), 0, addr);
-								return;
-							}
-							dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
-						} catch (const ibrcommon::socket_exception&) {
-							// CL is busy, requeue bundle
-							dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-
-							return;
-						}
+						// send out the bundle data
+						send(addr, data);
 					}
 				}
 				else
@@ -228,41 +209,50 @@ namespace dtn
 					dtn::data::DefaultSerializer serializer(ss);
 
 					serializer << bundle;
-					string data = ss.str();
+					std::string data = ss.str();
 
-					try {
-						// set write lock
-						ibrcommon::MutexLock l(m_writelock);
-
-						// get the first global scope socket
-						ibrcommon::socketset socks = _vsocket.getAll();
-						for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
-							ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
-							if (sock.get_address().scope() != ibrcommon::vaddress::SCOPE_GLOBAL) continue;
-
-							// send converted line back to client.
-							sock.sendto(data.c_str(), data.length(), 0, addr);
-							return;
-						}
-						dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
-					} catch (const ibrcommon::socket_exception&) {
-						// CL is busy, requeue bundle
-						dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-						return;
-					}
+					// send out the bundle data
+					send(addr, data);
 				}
 
-				// raise bundle event
+				// success - raise bundle event
 				dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
 				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 			} catch (const dtn::storage::NoBundleFoundException&) {
 				// send transfer aborted event
 				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+			} catch (const ibrcommon::socket_exception&) {
+				// CL is busy, requeue bundle
+				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+			} catch (const NoAddressFoundException &ex) {
+				// no connection available
+				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}
 
 		}
 
-		void UDPConvergenceLayer::receive(dtn::data::Bundle &bundle, dtn::data::EID &sender) throw (ibrcommon::socket_exception)
+		void UDPConvergenceLayer::send(const ibrcommon::vaddress &addr, const std::string &data) throw (ibrcommon::socket_exception, NoAddressFoundException)
+		{
+			// set write lock
+			ibrcommon::MutexLock l(m_writelock);
+
+			// get the first global scope socket
+			ibrcommon::socketset socks = _vsocket.getAll();
+			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+				ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
+
+				// send converted line back to client.
+				sock.sendto(data.c_str(), data.length(), 0, addr);
+
+				// success
+				return;
+			}
+
+			// failure
+			throw NoAddressFoundException("no valid address found");
+		}
+
+		void UDPConvergenceLayer::receive(dtn::data::Bundle &bundle, dtn::data::EID &sender) throw (ibrcommon::socket_exception, dtn::InvalidDataException)
 		{
 			ibrcommon::MutexLock l(m_readlock);
 

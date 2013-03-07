@@ -33,6 +33,14 @@ namespace dtn
 	{
 		class BundleReceiver;
 
+		class NoAddressFoundException : public ibrcommon::Exception
+		{
+		public:
+			NoAddressFoundException(string what = "There is no address available for this peer.") throw() : ibrcommon::Exception(what)
+			{
+			};
+		};
+
 		/**
 		 * Ist für die Zustellung von Bundles verantwortlich.
 		 */
