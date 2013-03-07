@@ -78,6 +78,7 @@ add_param $CONFFILE "ibrdtn.statistic.port" "statistic_port"
 add_param $CONFFILE "ibrdtn.discovery.address" "discovery_address"
 add_param $CONFFILE "ibrdtn.discovery.timeout" "discovery_timeout"
 add_param $CONFFILE "ibrdtn.discovery.version" "discovery_version"
+add_param $CONFFILE "ibrdtn.discovery.crosslayer" "discovery_crosslayer"
 
 add_param $CONFFILE "ibrdtn.tcptuning.idle_timeout" "tcp_idle_timeout"
 add_param $CONFFILE "ibrdtn.tcptuning.nodelay" "tcp_nodelay"
