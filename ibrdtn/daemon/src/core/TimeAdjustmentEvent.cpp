@@ -7,6 +7,7 @@
 
 #include "core/TimeAdjustmentEvent.h"
 #include "core/EventDispatcher.h"
+#include <ibrdtn/utils/Clock.h>
 #include <sstream>
 #include <sys/time.h>
 
@@ -36,7 +37,7 @@ namespace dtn
 		std::string TimeAdjustmentEvent::getMessage() const
 		{
 			std::stringstream ss;
-			ss << "time adjusted by " << offset.tv_sec << "." << offset.tv_usec << ", new rating is " << rating;
+			ss << "time adjusted by " << dtn::utils::Clock::toDouble(offset) << "s, new rating is " << rating;
 			return ss.str();
 		}
 

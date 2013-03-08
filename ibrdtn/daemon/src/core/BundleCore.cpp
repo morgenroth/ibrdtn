@@ -318,7 +318,7 @@ namespace dtn
 				// set the local clock to the new timestamp
 				dtn::utils::Clock::setOffset(timeadj.offset);
 
-				IBRCOMMON_LOGGER(info) << "time adjusted by " << timeadj.offset.tv_sec << "." << timeadj.offset.tv_usec << "; new rating: " << timeadj.rating << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(info) << "time adjusted by " << dtn::utils::Clock::toDouble(timeadj.offset) << "s; new rating: " << timeadj.rating << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::bad_cast&) { }
 		}
 
