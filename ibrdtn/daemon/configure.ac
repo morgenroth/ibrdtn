@@ -20,8 +20,8 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 dnl -----------------------------------------------
 dnl define SVN revision
 dnl -----------------------------------------------
-define([svnversion], esyscmd([sh -c "svnversion|tr -d '\n'"]))dnl
-AC_DEFINE(SVN_REVISION, "svnversion", [SVN Revision])
+define([buildnumber], esyscmd([sh -c "git rev-parse --short HEAD|tr -d '\n'"]))dnl
+AC_DEFINE(BUILD_NUMBER, "buildnumber", [build number based on the version control system])
 
 dnl -----------------------------------------------
 dnl Checks for programs.

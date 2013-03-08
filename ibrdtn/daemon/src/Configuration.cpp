@@ -75,8 +75,8 @@ namespace dtn
 		{
 			std::stringstream ss;
 			ss << PACKAGE_VERSION;
-		#ifdef SVN_REVISION
-			ss << " (build " << SVN_REVISION << ")";
+		#ifdef BUILD_NUMBER
+			ss << " (build " << BUILD_NUMBER << ")";
 		#endif
 
 			return ss.str();
