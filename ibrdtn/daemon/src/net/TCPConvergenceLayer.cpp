@@ -84,15 +84,29 @@ namespace dtn
 		void TCPConvergenceLayer::listen(const ibrcommon::vinterface &net, int port) throw ()
 		{
 			try {
+				// add the new interface to internal data-structures
+				{
+					ibrcommon::MutexLock l(_interface_lock);
+
+					// only add the interface once
+					if (_interfaces.find(net) != _interfaces.end()) return;
+
+					// store the new interface in the list of interfaces
+					_interfaces.insert(net);
+				}
+
+				// subscribe to NetLink events on our interfaces
+				ibrcommon::LinkManager::getInstance().addEventListener(net, this);
+
+				// store port of the interface
+				{
+					ibrcommon::MutexLock l(_portmap_lock);
+					_portmap[net] = port;
+				}
+
 				// create sockets for all addresses on the interface
 				// may throw "interface_not_set"
 				std::list<ibrcommon::vaddress> addrs = net.getAddresses();
-
-				{
-					ibrcommon::MutexLock l(_interface_lock);
-					// bind on all addresses on this interface
-					_interfaces.insert(net);
-				}
 
 				// convert the port into a string
 				std::stringstream ss; ss << port;
@@ -121,11 +135,7 @@ namespace dtn
 					}
 				}
 
-				// subscribe to NetLink events on our interfaces
-				ibrcommon::LinkManager::getInstance().addEventListener(net, this);
-
-				ibrcommon::MutexLock l(_portmap_lock);
-				_portmap[net] = port;
+				IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 25) << "bound to " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::vinterface::interface_not_set &ex) {
 				IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -133,6 +143,20 @@ namespace dtn
 
 		void TCPConvergenceLayer::unlisten(const ibrcommon::vinterface &iface) throw ()
 		{
+			// check if the interface is bound by us
+			{
+				ibrcommon::MutexLock l(_interface_lock);
+
+				// only remove the interface if it exists
+				if (_interfaces.find(iface) == _interfaces.end()) return;
+
+				// remove the interface from the stored set
+				_interfaces.erase(iface);
+			}
+
+			// un-subscribe to NetLink events on our interfaces
+			ibrcommon::LinkManager::getInstance().removeEventListener(iface, this);
+
 			ibrcommon::socketset socks = _vsocket.get(iface);
 			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
 				ibrcommon::tcpserversocket *sock = dynamic_cast<ibrcommon::tcpserversocket*>(*iter);
@@ -144,6 +168,13 @@ namespace dtn
 				}
 				delete sock;
 			}
+
+			{
+				ibrcommon::MutexLock l(_portmap_lock);
+				_portmap.erase(iface);
+			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 25) << "unbound from " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		dtn::core::Node::Protocol TCPConvergenceLayer::getDiscoveryProtocol() const
@@ -370,7 +401,7 @@ namespace dtn
 				if (conn.match(n))
 				{
 					conn.queue(job._bundle);
-					IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an existing tcp connection (" << conn.getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 15) << "queued bundle to an existing tcp connection (" << conn.getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 
 					return;
 				}
@@ -403,7 +434,7 @@ namespace dtn
 				// signal that there is a new connection
 				_connections_cond.signal(true);
 
-				IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an new tcp connection (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 15) << "queued bundle to an new tcp connection (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) {
 				// raise transfer abort event for all bundles without an ACK
 				dtn::routing::RequeueBundleEvent::raise(n.getEID(), job._bundle);
@@ -427,24 +458,18 @@ namespace dtn
 			// signal that there is a new connection
 			_connections_cond.signal(true);
 
-			IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection added (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
-
-			// listen on P2P dial-up events
-			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::add(this);
+			IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 15) << "tcp connection added (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void TCPConvergenceLayer::connectionDown(TCPConnection *conn)
 		{
-			// un-listen on P2P dial-up events
-			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::remove(this);
-
 			ibrcommon::MutexLock l(_connections_cond);
 			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
 				if (conn == (*iter))
 				{
 					_connections.erase(iter);
-					IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection removed (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 15) << "tcp connection removed (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 
 					// signal that there is a connection less
 					_connections_cond.signal(true);
@@ -532,6 +557,9 @@ namespace dtn
 
 		void TCPConvergenceLayer::componentUp() throw ()
 		{
+			// listen on P2P dial-up events
+			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::add(this);
+
 			// routine checked for throw() on 15.02.2013
 			try {
 				// listen on the socket
@@ -544,6 +572,9 @@ namespace dtn
 
 		void TCPConvergenceLayer::componentDown() throw ()
 		{
+			// un-listen on P2P dial-up events
+			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::remove(this);
+
 			// routine checked for throw() on 15.02.2013
 			try {
 				// shutdown all sockets

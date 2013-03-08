@@ -84,7 +84,13 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 
+			// add the interface to the stored set
 			ibrcommon::MutexLock l(_interface_lock);
+
+			// only add the interface once
+			if (_interfaces.find(net) != _interfaces.end()) return;
+
+			// store the new interface in the list of interfaces
 			_interfaces.insert(net);
 		}
 
@@ -245,27 +251,38 @@ namespace dtn
 				{
 					case dtn::net::P2PDialupEvent::INTERFACE_UP:
 					{
-						listen(dialup.iface);
+						// add the interface to the stored set
+						{
+							ibrcommon::MutexLock l(_interface_lock);
+
+							// only add the interface once
+							if (_interfaces.find(dialup.iface) != _interfaces.end()) break;
+
+							// store the new interface in the list of interfaces
+							_interfaces.insert(dialup.iface);
+						}
 
 						// subscribe to NetLink events on our interfaces
 						ibrcommon::LinkManager::getInstance().addEventListener(dialup.iface, this);
 
+						// listen to the new interface
+						listen(dialup.iface);
+
 						// join to all multicast addresses on this interface
 						join_interface(dialup.iface);
-
-						// add the interface to the stored set
-						{
-							ibrcommon::MutexLock l(_interface_lock);
-							_interfaces.insert(dialup.iface);
-						}
 						break;
 					}
 
 					case dtn::net::P2PDialupEvent::INTERFACE_DOWN:
 					{
-						// remove the interface from the stored set
+						// check if the interface is bound by us
 						{
 							ibrcommon::MutexLock l(_interface_lock);
+
+							// only remove the interface if it exists
+							if (_interfaces.find(dialup.iface) == _interfaces.end()) break;
+
+							// remove the interface from the stored set
 							_interfaces.erase(dialup.iface);
 						}
 
@@ -357,11 +374,11 @@ namespace dtn
 				{
 					const ibrcommon::vinterface &iface = (*it_iface);
 
-					// listen on the interface
-					listen(iface);
-
 					// subscribe to NetLink events on our interfaces
 					ibrcommon::LinkManager::getInstance().addEventListener(iface, this);
+
+					// listen on the interface
+					listen(iface);
 
 					// join to all multicast addresses on this interface
 					join_interface(iface);
