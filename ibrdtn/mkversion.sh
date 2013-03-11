@@ -2,7 +2,7 @@
 #
 
 # extract the latest version
-VERSION=`cat daemon/debian/changelog | head -n 1 | sed 's/[a-z\-\_]* (\(.*\)) .*$/\1/'`
+VERSION=`cat daemon/debian/changelog | head -n 1 | sed 's/[a-z\-]* (\(.*\)) .*$/\1/'`
 
 # ... and set it as default
 MAJOR=`echo ${VERSION} | sed 's/^\([0-9]*\).[0-9]*.[0-9]*$/\1/'`

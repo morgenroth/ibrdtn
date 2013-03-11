@@ -2,7 +2,7 @@
 #
 
 # extract the latest version
-VERSION=`cat debian/changelog | head -n 1 | sed 's/ibrdtn-tools (\(.*\)) .*$/\1/'`
+VERSION=`cat debian/changelog | head -n 1 | sed 's/[a-z\-]* (\(.*\)) .*$/\1/'`
 
 # ... and set it as default
 MAJOR=`echo ${VERSION} | sed 's/^\([0-9]*\).[0-9]*.[0-9]*$/\1/'`
