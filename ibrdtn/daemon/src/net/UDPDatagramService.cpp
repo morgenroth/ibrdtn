@@ -130,7 +130,7 @@ namespace dtn
 			UDPDatagramService::decode(identifier, destination);
 
 			// forward to actually send method
-			send(type, flags, seqno, BROADCAST_ADDR, buf, length);
+			send(type, flags, seqno, destination, buf, length);
 		}
 
 		/**
