@@ -87,7 +87,6 @@ namespace dtn
 			LOWPANConnectionSender _sender;
 
 		private:
-			bool _running;
 			ibrcommon::lowpanstream _stream;
 			LOWPANConvergenceLayer &_cl;
 		};
