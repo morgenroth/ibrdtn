@@ -91,6 +91,14 @@ namespace ibrcommon
 		this->close();
 	}
 
+	void lowpansocket::setAutoAck(bool enable) throw (socket_exception)
+	{
+		int optval = (enable ? 1 : 0);
+		if (::setsockopt(_fd, SOL_IEEE802154, WPAN_WANTACK, &optval, sizeof(optval)) < 0) {
+			throw ibrcommon::socket_exception("can not set auto-ack feature");
+		}
+	}
+
 	size_t lowpansocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		struct sockaddr_storage clientAddress;

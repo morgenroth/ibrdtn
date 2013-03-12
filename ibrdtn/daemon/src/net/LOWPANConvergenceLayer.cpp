@@ -104,8 +104,19 @@ namespace dtn
 			// set write lock
 			ibrcommon::MutexLock l(m_writelock);
 
-			// send converted line
-			sock.sendto(buf, len, 0, addr);
+			if (_addr_broadcast == addr) {
+				// disable auto-ack feature for broadcast
+				sock.setAutoAck(false);
+
+				// send converted line
+				sock.sendto(buf, len, 0, _addr_broadcast);
+
+				// re-enable auto-ack feature
+				sock.setAutoAck(true);
+			} else {
+				// send converted line
+				sock.sendto(buf, len, 0, addr);
+			}
 		}
 
 		void LOWPANConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
