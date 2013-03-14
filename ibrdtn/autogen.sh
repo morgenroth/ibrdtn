@@ -4,6 +4,8 @@
 #
 #
 
+set -e
+
 LOCALDIR=`pwd`
 SUBDIRS="./ ibrcommon ibrdtn daemon tools"
 
