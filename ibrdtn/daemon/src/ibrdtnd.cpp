@@ -119,12 +119,12 @@ int ibrdtn_daemon_initialize_blob_storage() {
 		{
 			if (blob_path.isDirectory())
 			{
-				IBRCOMMON_LOGGER(info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Init", info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
 				ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), false);
 			}
 			else
 			{
-				IBRCOMMON_LOGGER(warning) << "BLOB path exists, but is not a directory! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Init", warning) << "BLOB path exists, but is not a directory! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 		else
@@ -134,12 +134,12 @@ int ibrdtn_daemon_initialize_blob_storage() {
 
 			if (blob_path.exists())
 			{
-				IBRCOMMON_LOGGER(info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Init", info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
 				ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), false);
 			}
 			else
 			{
-				IBRCOMMON_LOGGER(warning) << "Could not create BLOB path! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Init", warning) << "Could not create BLOB path! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
@@ -168,7 +168,7 @@ int ibrdtn_daemon_initialize_bundle_storage()
 				ibrcommon::File::createDirectory(path);
 			}
 
-			IBRCOMMON_LOGGER(info) << "using sqlite bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("Init", info) << "using sqlite bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 			dtn::storage::SQLiteBundleStorage *sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage") );
 
@@ -178,7 +178,7 @@ int ibrdtn_daemon_initialize_bundle_storage()
 			components.push_back(sbs);
 			storage = sbs;
 		} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-			IBRCOMMON_LOGGER(error) << "storage for bundles" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("Init", error) << "storage for bundles" << IBRCOMMON_LOGGER_ENDL;
 			return -1;
 		}
 	}
@@ -197,7 +197,7 @@ int ibrdtn_daemon_initialize_bundle_storage()
 				ibrcommon::File::createDirectory(path);
 			}
 
-			IBRCOMMON_LOGGER(info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("Init", info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 			dtn::storage::SimpleBundleStorage *sbs = new dtn::storage::SimpleBundleStorage(path, conf.getLimit("storage"), conf.getLimit("storage_buffer"));
 
@@ -207,7 +207,7 @@ int ibrdtn_daemon_initialize_bundle_storage()
 			components.push_back(sbs);
 			storage = sbs;
 		} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-			IBRCOMMON_LOGGER(info) << "using bundle storage in memory-only mode" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("Init", info) << "using bundle storage in memory-only mode" << IBRCOMMON_LOGGER_ENDL;
 
 			dtn::storage::MemoryBundleStorage *sbs = new dtn::storage::MemoryBundleStorage(conf.getLimit("storage"));
 
@@ -221,7 +221,7 @@ int ibrdtn_daemon_initialize_bundle_storage()
 
 	if (storage == NULL)
 	{
-		IBRCOMMON_LOGGER(error) << "bundle storage module \"" << conf.getStorage() << "\" do not exists!" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", error) << "bundle storage module \"" << conf.getStorage() << "\" do not exists!" << IBRCOMMON_LOGGER_ENDL;
 		return -1;
 	}
 
@@ -240,7 +240,7 @@ int ibrdtn_daemon_initialize_bundle_storage()
 		// set this bundle index as default bundle seeker which is used to find bundles to transfer
 		_bundle_seeker = static_cast<dtn::storage::BundleSeeker*>(_bundle_index);
 
-		IBRCOMMON_LOGGER(info) << "Enable extended bundle index for scheduling" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Enable extended bundle index for scheduling" << IBRCOMMON_LOGGER_ENDL;
 	} else {
 		// use default bundle seeker which is used to find bundles to transfer
 		_bundle_seeker = storage;
@@ -305,7 +305,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 						}
 #endif
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add FileConvergenceLayer: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add FileConvergenceLayer: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					break;
 				}
@@ -319,9 +319,9 @@ int ibrdtn_daemon_initialize_convergencelayer()
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(udpcl);
 						if (__ibrdtn_daemon_ipnd != NULL) 		__ibrdtn_daemon_ipnd->addService(udpcl);
 
-						IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", info) << "UDP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add UDP ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					break;
@@ -351,13 +351,13 @@ int ibrdtn_daemon_initialize_convergencelayer()
 							_cl_map[net.type] = tcpcl;
 						}
 
-						IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", info) << "TCP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
 						if (it == _cl_map.end()) {
 							delete tcpcl;
 						}
 
-						IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add TCP ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					break;
@@ -372,9 +372,9 @@ int ibrdtn_daemon_initialize_convergencelayer()
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(httpcl);
 						components.push_back(httpcl);
 
-						IBRCOMMON_LOGGER(info) << "HTTP ConvergenceLayer added, Server: " << net.url << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", info) << "HTTP ConvergenceLayer added, Server: " << net.url << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add HTTP ConvergenceLayer, Server: " << net.url << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add HTTP ConvergenceLayer, Server: " << net.url << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					break;
 				}
@@ -390,9 +390,9 @@ int ibrdtn_daemon_initialize_convergencelayer()
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(lowpancl);
 						if (__ibrdtn_daemon_ipnd != NULL) __ibrdtn_daemon_ipnd->addService(lowpancl);
 
-						IBRCOMMON_LOGGER(info) << "LOWPAN ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", info) << "LOWPAN ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add LOWPAN ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					break;
@@ -407,9 +407,9 @@ int ibrdtn_daemon_initialize_convergencelayer()
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(dgram_cl);
 						components.push_back(dgram_cl);
 
-						IBRCOMMON_LOGGER(info) << "Datagram ConvergenceLayer (LowPAN) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", info) << "Datagram ConvergenceLayer (LowPAN) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add Datagram ConvergenceLayer (LowPAN) on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add Datagram ConvergenceLayer (LowPAN) on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					break;
 				}
@@ -424,9 +424,9 @@ int ibrdtn_daemon_initialize_convergencelayer()
 						if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(dgram_cl);
 						components.push_back(dgram_cl);
 
-						IBRCOMMON_LOGGER(info) << "Datagram ConvergenceLayer (UDP) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", info) << "Datagram ConvergenceLayer (UDP) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add Datagram ConvergenceLayer (UDP) on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add Datagram ConvergenceLayer (UDP) on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					break;
 				}
@@ -435,7 +435,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 					break;
 			}
 		} catch (const std::exception &ex) {
-			IBRCOMMON_LOGGER(error) << "Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("Init", error) << "Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 
@@ -466,27 +466,27 @@ int ibrdtn_daemon_initialize_global_variables() {
 
 	// set local eid
 	dtn::core::BundleCore::local = config.getNodename();
-	IBRCOMMON_LOGGER(info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
+	IBRCOMMON_LOGGER_TAG("Init", info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
 
 	// set block size limit
 	dtn::core::BundleCore::blocksizelimit = config.getLimit("blocksize");
 	if (dtn::core::BundleCore::blocksizelimit > 0)
 	{
-		IBRCOMMON_LOGGER(info) << "Block size limited to " << dtn::core::BundleCore::blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Block size limited to " << dtn::core::BundleCore::blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	// set the lifetime limit
 	dtn::core::BundleCore::max_lifetime = config.getLimit("lifetime");
 	if (dtn::core::BundleCore::max_lifetime > 0)
 	{
-		IBRCOMMON_LOGGER(info) << "Lifetime limited to " << dtn::core::BundleCore::max_lifetime << " seconds" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Lifetime limited to " << dtn::core::BundleCore::max_lifetime << " seconds" << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	// set the timestamp limit
 	dtn::core::BundleCore::max_timestamp_future = config.getLimit("predated_timestamp");
 	if (dtn::core::BundleCore::max_timestamp_future > 0)
 	{
-		IBRCOMMON_LOGGER(info) << "Pre-dated timestamp limited to " << dtn::core::BundleCore::max_timestamp_future << " seconds in the future" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Pre-dated timestamp limited to " << dtn::core::BundleCore::max_timestamp_future << " seconds in the future" << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	// set the maximum count of bundles in transit (bundles to send to the CL queue)
@@ -494,7 +494,7 @@ int ibrdtn_daemon_initialize_global_variables() {
 	if (transit_limit > 0)
 	{
 		dtn::core::BundleCore::max_bundles_in_transit = transit_limit;
-		IBRCOMMON_LOGGER(info) << "Limit the number of bundles in transit to " << dtn::core::BundleCore::max_bundles_in_transit << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Limit the number of bundles in transit to " << dtn::core::BundleCore::max_bundles_in_transit << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	return 0;
@@ -569,7 +569,7 @@ int ibrdtn_daemon_initialize_discovery() {
 	}
 	else
 	{
-		IBRCOMMON_LOGGER(info) << "Discovery disabled" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Discovery disabled" << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	return 0;
@@ -597,14 +597,14 @@ int ibrdtn_daemon_initialize_routing() {
 	{
 	case dtn::daemon::Configuration::FLOOD_ROUTING:
 	{
-		IBRCOMMON_LOGGER(info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
 		router->addExtension( new dtn::routing::FloodRoutingExtension(*_bundle_seeker) );
 		break;
 	}
 
 	case dtn::daemon::Configuration::EPIDEMIC_ROUTING:
 	{
-		IBRCOMMON_LOGGER(info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
 		router->addExtension( new dtn::routing::EpidemicRoutingExtension(*_bundle_seeker) );
 		break;
 	}
@@ -621,10 +621,10 @@ int ibrdtn_daemon_initialize_routing() {
 			forwarding_strategy = new dtn::routing::ProphetRoutingExtension::GTMX_Strategy(prophet_config.gtmx_nf_max);
 		}
 		else{
-			IBRCOMMON_LOGGER(error) << "Prophet forwarding strategy " << strategy_name << " not found. Using GRTR as fallback." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("Init", error) << "Prophet forwarding strategy " << strategy_name << " not found. Using GRTR as fallback." << IBRCOMMON_LOGGER_ENDL;
 			forwarding_strategy = new dtn::routing::ProphetRoutingExtension::GRTR_Strategy();
 		}
-		IBRCOMMON_LOGGER(info) << "Using prophet routing extensions with " << strategy_name << " as forwarding strategy." << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Using prophet routing extensions with " << strategy_name << " as forwarding strategy." << IBRCOMMON_LOGGER_ENDL;
 		router->addExtension( new dtn::routing::ProphetRoutingExtension(*_bundle_seeker, forwarding_strategy, prophet_config.p_encounter_max,
 										prophet_config.p_encounter_first, prophet_config.p_first_threshold,
 										prophet_config.beta, prophet_config.gamma, prophet_config.delta,
@@ -634,7 +634,7 @@ int ibrdtn_daemon_initialize_routing() {
 	}
 
 	default:
-		IBRCOMMON_LOGGER(info) << "Using default routing extensions" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Using default routing extensions" << IBRCOMMON_LOGGER_ENDL;
 		break;
 	}
 
@@ -643,12 +643,12 @@ int ibrdtn_daemon_initialize_routing() {
 	// enable or disable forwarding of bundles
 	if (conf.getNetwork().doForwarding())
 	{
-		IBRCOMMON_LOGGER(info) << "Forwarding of bundles enabled." << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Forwarding of bundles enabled." << IBRCOMMON_LOGGER_ENDL;
 		BundleCore::forwarding = true;
 	}
 	else
 	{
-		IBRCOMMON_LOGGER(info) << "Forwarding of bundles disabled." << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Forwarding of bundles disabled." << IBRCOMMON_LOGGER_ENDL;
 		BundleCore::forwarding = false;
 	}
 
@@ -667,9 +667,9 @@ int ibrdtn_daemon_initialize_api() {
 			try {
 				// use unix domain sockets for API
 				components.push_back(new dtn::api::ApiServer(*_bundle_seeker, socket));
-				IBRCOMMON_LOGGER(info) << "API initialized using unix domain socket: " << socket.getPath() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Init", info) << "API initialized using unix domain socket: " << socket.getPath() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::socket_exception&) {
-				IBRCOMMON_LOGGER(error) << "Unable to bind to unix domain socket " << socket.getPath() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Init", error) << "Unable to bind to unix domain socket " << socket.getPath() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 				exit(-1);
 			}
 		} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
@@ -678,16 +678,16 @@ int ibrdtn_daemon_initialize_api() {
 			try {
 				// instance a API server, first create a socket
 				components.push_back(new dtn::api::ApiServer(*_bundle_seeker, apiconf.iface, apiconf.port));
-				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << apiconf.iface.toString() << ":" << apiconf.port << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Init", info) << "API initialized using tcp socket: " << apiconf.iface.toString() << ":" << apiconf.port << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::socket_exception&) {
-				IBRCOMMON_LOGGER(error) << "Unable to bind to " << apiconf.iface.toString() << ":" << apiconf.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Init", error) << "Unable to bind to " << apiconf.iface.toString() << ":" << apiconf.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 				exit(-1);
 			}
 		};
 	}
 	else
 	{
-		IBRCOMMON_LOGGER(info) << "API disabled" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "API disabled" << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	return 0;
@@ -726,7 +726,7 @@ int ibrdtn_daemon_initialize_stat_logging() {
 				components.push_back( new dtn::daemon::StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_UDP, conf.getStatistic().interval(), conf.getStatistic().address(), conf.getStatistic().port() ) );
 			}
 		} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-			IBRCOMMON_LOGGER(error) << "StatisticLogger: Parameter statistic_file is not set! Fallback to stdout logging." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("Init", error) << "StatisticLogger: Parameter statistic_file is not set! Fallback to stdout logging." << IBRCOMMON_LOGGER_ENDL;
 			components.push_back( new dtn::daemon::StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatistic().interval() ) );
 		}
 	}
@@ -788,7 +788,7 @@ int ibrdtn_daemon_initialize() {
 	{
 		components.push_back(new dtn::security::TLSStreamComponent());
 		components.push_back(new dtn::security::SecurityCertificateManager());
-		IBRCOMMON_LOGGER(info) << "TLS security for TCP convergence layer enabled" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "TLS security for TCP convergence layer enabled" << IBRCOMMON_LOGGER_ENDL;
 	}
 #endif
 
@@ -813,7 +813,7 @@ int ibrdtn_daemon_initialize() {
 #ifdef WITH_DHT_NAMESERVICE
 	// create dht naming service if configured
 	if (conf.getDHT().enabled()){
-		IBRCOMMON_LOGGER_DEBUG(50) << "DHT: is enabled!" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("Init", 50) << "DHT: is enabled!" << IBRCOMMON_LOGGER_ENDL;
 		dtn::dht::DHTNameService* dhtns = new dtn::dht::DHTNameService();
 		components.push_back(dhtns);
 		if (__ibrdtn_daemon_standby_manager != NULL) __ibrdtn_daemon_standby_manager->adopt(dhtns);
@@ -832,7 +832,7 @@ int ibrdtn_daemon_initialize() {
 	 */
 	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
 	{
-		IBRCOMMON_LOGGER_DEBUG(20) << "Initialize component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("Init", 20) << "Initialize component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
 		(*iter)->initialize();
 	}
 
@@ -853,7 +853,7 @@ int ibrdtn_daemon_main_loop()
 	 */
 	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
 	{
-		IBRCOMMON_LOGGER_DEBUG(20) << "Startup component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("Init", 20) << "Startup component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
 		(*iter)->startup();
 	}
 
@@ -904,7 +904,7 @@ int ibrdtn_daemon_main_loop()
 	 */
 	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
 	{
-		IBRCOMMON_LOGGER_DEBUG(20) << "Terminate component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("shutdown", 20) << "Terminate component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
 		(*iter)->terminate();
 	}
 
@@ -929,7 +929,7 @@ int ibrdtn_daemon_main_loop()
 		delete (*iter);
 	}
 
-	IBRCOMMON_LOGGER(info) << "shutdown complete" << IBRCOMMON_LOGGER_ENDL;
+	IBRCOMMON_LOGGER_TAG("shutdown", info) << "shutdown complete" << IBRCOMMON_LOGGER_ENDL;
 
 	return 0;
 }
@@ -944,11 +944,11 @@ int ibrdtn_daemon_runtime_debug(bool val) {
 	if (val) {
 		// activate debugging
 		ibrcommon::Logger::setVerbosity(99);
-		IBRCOMMON_LOGGER(info) << "debug level set to 99" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "debug level set to 99" << IBRCOMMON_LOGGER_ENDL;
 	} else {
 		// de-activate debugging
 		ibrcommon::Logger::setVerbosity(0);
-		IBRCOMMON_LOGGER(info) << "debug level set to 0" << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "debug level set to 0" << IBRCOMMON_LOGGER_ENDL;
 	}
 	return 0;
 }
