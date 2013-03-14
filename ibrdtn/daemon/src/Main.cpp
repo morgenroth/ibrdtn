@@ -157,16 +157,16 @@ int __daemon_run()
 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
 
 	// greeting
-	IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
+	IBRCOMMON_LOGGER_TAG("Init", info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
 
 	if (conf.getDebug().enabled())
 	{
-		IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebug().level() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "debug level set to " << conf.getDebug().level() << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	try {
 		const ibrcommon::File &lf = conf.getLogger().getLogfile();
-		IBRCOMMON_LOGGER(info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("Init", info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
 
 	ibrdtn_daemon_initialize();

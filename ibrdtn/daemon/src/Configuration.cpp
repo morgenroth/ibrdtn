@@ -337,9 +337,9 @@ namespace dtn
 				_conf = ibrcommon::ConfigFile(filename);
 				_filename = filename;
 
-				IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Configuration", info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::ConfigFile::file_not_found&) {
-				IBRCOMMON_LOGGER(info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Configuration", info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
 				_conf = ConfigFile();
 
 				// set the default user to nobody
@@ -980,7 +980,7 @@ namespace dtn
 
 				if (!_cert.exists())
 				{
-					IBRCOMMON_LOGGER(warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					activateTLS = false;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
@@ -993,7 +993,7 @@ namespace dtn
 
 				if (!_key.exists())
 				{
-					IBRCOMMON_LOGGER(warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					activateTLS = false;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
@@ -1004,7 +1004,7 @@ namespace dtn
 			try{
 				_trustedCAPath = conf.read<std::string>("security_trusted_ca_path");
 				if(!_trustedCAPath.isDirectory()){
-					IBRCOMMON_LOGGER(warning) << "Trusted CA Path " << _trustedCAPath.getPath() << " does not exists or is no directory!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "Trusted CA Path " << _trustedCAPath.getPath() << " does not exists or is no directory!" << IBRCOMMON_LOGGER_ENDL;
 					activateTLS = false;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
@@ -1053,7 +1053,7 @@ namespace dtn
 
 					if (!_cert.exists())
 					{
-						IBRCOMMON_LOGGER(warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Configuration", warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::ConfigFile::key_not_found&) { }
 
@@ -1063,7 +1063,7 @@ namespace dtn
 
 					if (!_key.exists())
 					{
-						IBRCOMMON_LOGGER(warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Configuration", warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::ConfigFile::key_not_found&) { }
 			}
@@ -1074,7 +1074,7 @@ namespace dtn
 
 				if (!_bab_default_key.exists())
 				{
-					IBRCOMMON_LOGGER(warning) << "KEY file " << _bab_default_key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "KEY file " << _bab_default_key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
 			}
