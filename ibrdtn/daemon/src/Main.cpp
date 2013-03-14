@@ -49,8 +49,8 @@ unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG
 // error filter
 const unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
 
-// logging filter, everything but debug, err and crit
-const unsigned char logstd = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | logerr);
+// logging filter, everything but debug, notice, err and crit
+const unsigned char logstd = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE | logerr);
 
 // syslog filter, everything but DEBUG and NOTICE
 const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
@@ -130,8 +130,13 @@ int __daemon_run()
 
 	if (!conf.getDebug().quiet())
 	{
-		// add logging to the cout
-		ibrcommon::Logger::addStream(std::cout, logstd, logopts);
+		if (conf.getLogger().verbose()) {
+			// add logging to the cout
+			ibrcommon::Logger::addStream(std::cout, logstd | ibrcommon::Logger::LOGGER_NOTICE, logopts);
+		} else {
+			// add logging to the cout
+			ibrcommon::Logger::addStream(std::cout, logstd, logopts);
+		}
 
 		// add logging to the cerr
 		ibrcommon::Logger::addStream(std::cerr, logerr, logopts);

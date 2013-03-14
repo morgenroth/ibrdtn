@@ -103,12 +103,22 @@ namespace ibrcommon
 		_verbosity = verbosity;
 	}
 
+	unsigned char Logger::getLogMask()
+	{
+		return Logger::_logwriter.getLogMask();
+	}
+
 	int Logger::getVerbosity()
 	{
 		return Logger::_logwriter.getVerbosity();
 	}
 
-	int Logger::LogWriter::getVerbosity()
+	unsigned char Logger::LogWriter::getLogMask() const
+	{
+		return _global_logmask;
+	}
+
+	int Logger::LogWriter::getVerbosity() const
 	{
 		return _verbosity;
 	}
@@ -125,6 +135,7 @@ namespace ibrcommon
 
 	void Logger::LogWriter::addStream(std::ostream &stream, const unsigned char logmask, const unsigned char options)
 	{
+		_global_logmask |= logmask;
 		_logger.push_back( Logger::LoggerOutput(stream, logmask, options) );
 	}
 
@@ -145,6 +156,7 @@ namespace ibrcommon
 		::openlog(name, option, facility);
 		_syslog = true;
 		_syslog_mask = logmask;
+		_global_logmask |= logmask;
 #endif
 	}
 
@@ -385,7 +397,7 @@ namespace ibrcommon
 	}
 
 	Logger::LogWriter::LogWriter()
-	 : _verbosity(0), _syslog(0), _syslog_mask(0), _queue(50), _use_queue(false), _buffer_size(0), _buffer(NULL),
+	 : _global_logmask(0), _verbosity(0), _syslog(0), _syslog_mask(0), _queue(50), _use_queue(false), _buffer_size(0), _buffer(NULL),
 	   _logfile_output(NULL), _logfile_logmask(0), _logfile_options(0)
 	// limit queue to 50 entries
 	{
@@ -427,6 +439,7 @@ namespace ibrcommon
 		_logfile = logfile;
 		_logfile_logmask = logmask;
 		_logfile_options = options;
+		_global_logmask |= logmask;
 
 		// open the new logfile
 		_logfile_stream.open(_logfile.getPath().c_str(), std::ios::out | std::ios::app);

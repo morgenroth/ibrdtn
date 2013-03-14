@@ -99,7 +99,7 @@ namespace dtn
 		 : _enabled(false), _quiet(false), _level(0) {};
 
 		Configuration::Logger::Logger()
-		 : _quiet(false), _options(0), _timestamps(false) {};
+		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {};
 
 		Configuration::Network::Network()
 		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false)
@@ -190,6 +190,7 @@ namespace dtn
 			int disco = _disco._enabled;
 			int badclock = dtn::utils::Clock::isBad();
 			int timestamp = _logger._timestamps;
+			int showversion = 0;
 
 			// set number of threads to the number of available cpus
 			_daemon._threads = ibrcommon::Thread::getNumberOfProcessors();
@@ -203,6 +204,7 @@ namespace dtn
 						{"nodiscovery", no_argument, &disco, 0},
 						{"badclock", no_argument, &badclock, 1},
 						{"timestamp", no_argument, &timestamp, 1},
+						{"version", no_argument, &showversion, 1},
 
 						/* These options don't set a flag. We distinguish them by their indices. */
 						{"help", no_argument, 0, 'h'},
@@ -213,7 +215,6 @@ namespace dtn
 #endif
 
 						{"quiet", no_argument, 0, 'q'},
-						{"version", no_argument, 0, 'v'},
 						{"interface", required_argument, 0, 'i'},
 						{"configuration", required_argument, 0, 'c'},
 						{"debug", required_argument, 0, 'd'},
@@ -261,6 +262,8 @@ namespace dtn
 					std::cout << " -d <level>      enable debugging and set a verbose level" << std::endl;
 					std::cout << " -q              enables the quiet mode (no logging to the console)" << std::endl;
 					std::cout << " -t <threads>    specify a number of threads for parallel event processing" << std::endl;
+					std::cout << " -v              be verbose - show NOTICE log messages" << std::endl;
+					std::cout << " --version       show version and exit" << std::endl;
 					std::cout << " --noapi         disable API module" << std::endl;
 					std::cout << " --nodiscovery   disable discovery module" << std::endl;
 					std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
@@ -269,8 +272,7 @@ namespace dtn
 					break;
 
 				case 'v':
-					std::cout << "IBR-DTN version: " << version() << std::endl;
-					exit(0);
+					_logger._verbose = true;
 					break;
 
 				case 'q':
@@ -317,6 +319,11 @@ namespace dtn
 					abort();
 					break;
 				}
+			}
+
+			if (showversion == 1) {
+				std::cout << "IBR-DTN version: " << version() << std::endl;
+				exit(0);
 			}
 
 			_doapi = doapi;
@@ -1149,6 +1156,11 @@ namespace dtn
 		{
 			if (_logfile.getPath() == "") throw Configuration::ParameterNotSetException();
 			return _logfile;
+		}
+
+		bool Configuration::Logger::verbose() const
+		{
+			return _verbose;
 		}
 
 		bool Configuration::Logger::display_timestamps() const

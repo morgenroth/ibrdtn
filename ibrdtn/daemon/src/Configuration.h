@@ -274,6 +274,7 @@ namespace dtn
 				unsigned int _options;
 				bool _timestamps;
 				ibrcommon::File _logfile;
+				bool _verbose;
 
 			public:
 				/**
@@ -308,6 +309,11 @@ namespace dtn
 				 * Returns true if the logger display timestamp instead of datetime values.
 				 */
 				bool display_timestamps() const;
+
+				/**
+				 * Returns true if verbose logging is activated
+				 */
+				bool verbose() const;
 			};
 
 			class Network :  public Configuration::Extension
