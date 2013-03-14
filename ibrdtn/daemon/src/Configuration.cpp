@@ -53,17 +53,17 @@ namespace dtn
 		}
 
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vinterface &i, int p, bool d)
-		 : name(n), type(t), iface(i), port(p), discovery(d)
+		 : name(n), type(t), iface(i), mtu(1500), port(p), discovery(d)
 		{
 		}
 
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vaddress &a, int p, bool d)
-		 : name(n), type(t), iface(), address(a), port(p), discovery(d)
+		 : name(n), type(t), iface(), address(a), mtu(1500), port(p), discovery(d)
 		{
 		}
 
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, int p, bool d)
-		 : name(n), type(t), iface(), port(p), discovery(d)
+		 : name(n), type(t), iface(), mtu(1500), port(p), discovery(d)
 		{
 		}
 
@@ -102,11 +102,11 @@ namespace dtn
 		 : _quiet(false), _options(0), _timestamps(false) {};
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false)
+		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false)
 		{};
 
 		Configuration::Security::Security()
-		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false)
+		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false), _tlsOptionalOnBadClock(false), _level(SECURITY_LEVEL_NONE), _disableEncryption(false)
 		{};
 
 		Configuration::Daemon::Daemon()
@@ -114,11 +114,11 @@ namespace dtn
 		{};
 
 		Configuration::TimeSync::TimeSync()
-		 : _reference(true), _sync(false), _discovery(false)
+		 : _reference(true), _sync(false), _discovery(false), _sigma(1.001), _psi(0.8), _sync_level(0.10)
 		{};
 
 		Configuration::DHT::DHT()
-		 : _enabled(true), _port(0), _ipv4(true), _ipv6(true), _blacklist(true),
+		 : _enabled(true), _port(0), _dnsbootstrapping(true), _ipv4(true), _ipv6(true), _blacklist(true), _selfannounce(true),
 			_minRating(1), _allowNeighbourToAnnounceMe(true), _allowNeighbourAnnouncement(true),
 			_ignoreDHTNeighbourInformations(false)
 		{};
@@ -467,6 +467,7 @@ namespace dtn
 
 				return hostname;
 			}
+			return "noname";
 		}
 
 		const std::list<Configuration::NetConfig>& Configuration::Network::getInterfaces() const
@@ -520,9 +521,9 @@ namespace dtn
 				}
 
 				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(interface_name), port);
-			} catch (const ConfigFile::key_not_found&) {
-				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK), port);
-			}
+			} catch (const ConfigFile::key_not_found&) { }
+
+			return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK), port);
 		}
 
 		ibrcommon::File Configuration::getAPISocket() const
@@ -808,9 +809,9 @@ namespace dtn
 
 			try {
 				return ibrcommon::File(_conf.read<string>(key));
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
+			} catch (const ConfigFile::key_not_found&) { }
+
+			throw ParameterNotSetException();
 		}
 
 		bool Configuration::Discovery::enabled() const
@@ -838,13 +839,13 @@ namespace dtn
 			return _doapi;
 		}
 
-		string Configuration::getNotifyCommand()
+		std::string Configuration::getNotifyCommand()
 		{
 			try {
 				return _conf.read<string>("notify_cmd");
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
+			} catch (const ConfigFile::key_not_found&) { }
+
+			throw ParameterNotSetException();
 		}
 
 		Configuration::RoutingExtension Configuration::Network::getRoutingExtension() const
@@ -910,9 +911,9 @@ namespace dtn
 		{
 			try {
 				return ibrcommon::File(Configuration::getInstance()._conf.read<std::string>("statistic_file"));
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
+			} catch (const ConfigFile::key_not_found&) { }
+
+			throw ParameterNotSetException();
 		}
 
 		std::string Configuration::Statistic::type() const
