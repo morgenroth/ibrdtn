@@ -191,6 +191,9 @@ namespace dtn
 			int badclock = dtn::utils::Clock::isBad();
 			int timestamp = _logger._timestamps;
 
+			// set number of threads to the number of available cpus
+			_daemon._threads = ibrcommon::Thread::getNumberOfProcessors();
+
 			while (1)
 			{
 				static struct option long_options[] =

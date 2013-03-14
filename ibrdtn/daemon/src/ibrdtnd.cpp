@@ -884,13 +884,18 @@ int ibrdtn_daemon_main_loop()
 		core.getConnectionManager().add(*iter);
 	}
 
-	IBRCOMMON_LOGGER(info) << "daemon ready" << IBRCOMMON_LOGGER_ENDL;
+	if (conf.getDaemon().getThreads() > 1)
+	{
+		IBRCOMMON_LOGGER_TAG("Init", info) << "Parallel event processing enabled using " << conf.getDaemon().getThreads() << " processes." << IBRCOMMON_LOGGER_ENDL;
+	}
+
+	IBRCOMMON_LOGGER_TAG("Init", info) << "daemon ready" << IBRCOMMON_LOGGER_ENDL;
 
 	// create the event switch object
 	dtn::core::EventSwitch &esw = dtn::core::EventSwitch::getInstance();
 
 	// run the event switch loop forever
-	if (conf.getDaemon().getThreads() > 0)
+	if (conf.getDaemon().getThreads() > 1)
 	{
 		esw.loop( conf.getDaemon().getThreads() );
 	}
