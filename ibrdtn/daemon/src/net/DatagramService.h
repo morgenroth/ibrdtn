@@ -25,6 +25,18 @@ namespace dtn
 			virtual ~DatagramException() throw() {};
 		};
 
+		class WrongSeqNoException : public DatagramException
+		{
+		public:
+			WrongSeqNoException(int exp_seqno)
+			: DatagramException("Wrong sequence number received"), expected_seqno(exp_seqno)
+			{};
+
+			virtual ~WrongSeqNoException() throw() {};
+
+			const int expected_seqno;
+		};
+
 		class DatagramService
 		{
 		public:
