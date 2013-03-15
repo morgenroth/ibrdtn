@@ -1,5 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 #
+
+set -e
 
 # create version file
 . mkversion.sh $@

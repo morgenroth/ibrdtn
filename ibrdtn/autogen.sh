@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # This script generate all missing files.
 #
