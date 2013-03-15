@@ -443,10 +443,6 @@ namespace dtn
 				} else {
 					// accept remote connection as server
 					__setup_socket(_socket, true);
-
-					// add default TCP connection
-					_node.clear();
-					_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, "0.0.0.0", 0, 30) );
 				}
 
 				// do the handshake
