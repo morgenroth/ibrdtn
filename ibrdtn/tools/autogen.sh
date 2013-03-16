@@ -4,12 +4,7 @@
 set -e
 
 # create version file
-. mkversion.sh $@
-
-# run libtool
-libtoolize -i -c
+./mkversion.sh $@
 
 # run autotools
-aclocal
-automake --add-missing -c
 autoreconf -i

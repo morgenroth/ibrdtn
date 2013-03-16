@@ -1,6 +1,8 @@
 #!/bin/sh
 #
 
+set -e
+
 # extract the latest version
 VERSION=$(cat debian/changelog | head -n 1 | sed 's/[a-z\-]* (\(.*\)) .*$/\1/')
 
