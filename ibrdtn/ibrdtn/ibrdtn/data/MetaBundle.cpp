@@ -81,12 +81,12 @@ namespace dtn
 		int MetaBundle::getPriority() const
 		{
 			// read priority
-			if (procflags & dtn::data::Bundle::PRIORITY_BIT1)
+			if (procflags & dtn::data::PrimaryBlock::PRIORITY_BIT1)
 			{
 				return 0;
 			}
 
-			if (procflags & dtn::data::Bundle::PRIORITY_BIT2)
+			if (procflags & dtn::data::PrimaryBlock::PRIORITY_BIT2)
 			{
 				return 1;
 			}

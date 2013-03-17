@@ -59,6 +59,43 @@ namespace dtn
 			return (_procflags & flag);
 		}
 
+		PrimaryBlock::PRIORITY PrimaryBlock::getPriority() const
+		{
+			if (get(PRIORITY_BIT1))
+			{
+				return PRIO_MEDIUM;
+			}
+
+			if (get(PRIORITY_BIT2))
+			{
+				return PRIO_HIGH;
+			}
+
+			return PRIO_LOW;
+		}
+
+		void PrimaryBlock::setPriority(PrimaryBlock::PRIORITY p)
+		{
+			// set the priority to the real bundle
+			switch (p)
+			{
+			case PRIO_LOW:
+				set(PRIORITY_BIT1, false);
+				set(PRIORITY_BIT2, false);
+				break;
+
+			case PRIO_HIGH:
+				set(PRIORITY_BIT1, false);
+				set(PRIORITY_BIT2, true);
+				break;
+
+			case PRIO_MEDIUM:
+				set(PRIORITY_BIT1, true);
+				set(PRIORITY_BIT2, false);
+				break;
+			}
+		}
+
 		bool PrimaryBlock::operator!=(const PrimaryBlock& other) const
 		{
 			return !((*this) == other);
