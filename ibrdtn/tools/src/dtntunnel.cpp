@@ -32,13 +32,6 @@
 // Base for send and receive bundle to/from the IBR-DTN daemon.
 #include "ibrdtn/api/Client.h"
 
-// Container for bundles.
-#include "ibrdtn/api/Bundle.h"
-#include "ibrdtn/api/BLOBBundle.h"
-
-// Container for bundles carrying strings.
-#include "ibrdtn/api/StringBundle.h"
-
 //  TCP client implemented as a stream.
 #include <ibrcommon/net/socket.h>
 
@@ -204,8 +197,11 @@ class TUN2BundleGateway : public dtn::api::Client
 			blob.iostream()->write(data, ret);
 
 			// create a new bundle
-			dtn::api::BLOBBundle b(endpoint, blob);
-			b.setLifetime(lifetime);
+			dtn::data::Bundle b;
+
+			b._destination = endpoint;
+			b.push_back(blob);
+			b._lifetime = lifetime;
 
 			// transmit the packet
 			(*this) << b;
@@ -230,9 +226,9 @@ class TUN2BundleGateway : public dtn::api::Client
 		 * to overload the Client::received()-method. This will be call on a incoming bundles
 		 * by another thread.
 		 */
-		void received(const dtn::api::Bundle &b)
+		void received(const dtn::data::Bundle &b)
 		{
-			ibrcommon::BLOB::Reference ref = b.getData();
+			ibrcommon::BLOB::Reference ref = b.getBlock<dtn::data::PayloadBlock>().getBLOB();
 			ibrcommon::BLOB::iostream stream = ref.iostream();
 			char data[65536];
 			stream->read(data, sizeof(data));

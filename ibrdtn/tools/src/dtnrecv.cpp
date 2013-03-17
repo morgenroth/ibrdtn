@@ -21,7 +21,6 @@
 
 #include "config.h"
 #include <ibrdtn/api/Client.h>
-#include <ibrdtn/api/FileBundle.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/net/socketstream.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -196,10 +195,10 @@ int main(int argc, char *argv[])
 		for(h = 0; h < count; h++)
 		{
 			// receive the bundle
-			dtn::api::Bundle b = client.getBundle(timeout);
+			dtn::data::Bundle b = client.getBundle(timeout);
 
 			// get the reference to the blob
-			ibrcommon::BLOB::Reference ref = b.getData();
+			ibrcommon::BLOB::Reference ref = b.getBlock<dtn::data::PayloadBlock>().getBLOB();
 
 			// write the data to output
 			if (_stdout)
