@@ -36,6 +36,9 @@ namespace dtn
 		 : _procflags(0), _timestamp(0), _sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
 		{
 			relabel();
+
+			// by default set destination as singleton bit
+			set(DESTINATION_IS_SINGLETON, true);
 		}
 
 		PrimaryBlock::~PrimaryBlock()
