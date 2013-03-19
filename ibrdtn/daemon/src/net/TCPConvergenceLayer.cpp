@@ -134,6 +134,8 @@ namespace dtn
 						}
 					} catch (const ibrcommon::vaddress::address_exception &ex) {
 						IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::socket_exception &ex) {
+						IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 
