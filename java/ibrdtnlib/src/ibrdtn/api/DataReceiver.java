@@ -332,8 +332,10 @@ public class DataReceiver extends Thread implements SABHandler {
 
         switch (type) {
             case 600: //COMMON
+                logger.log(Level.SEVERE, "600 COMMON notification {0}", String.valueOf(type));
                 break;
             case 601: // NEIGHBOR 
+                logger.log(Level.SEVERE, "601 NEIGHBOR notification {0}", String.valueOf(type));
                 break;
             case 602: // BUNDLE
                 logger.log(Level.FINE, "New bundle notification {0}", String.valueOf(type));
@@ -356,7 +358,8 @@ public class DataReceiver extends Thread implements SABHandler {
                     }
                 }
                 break;
-            case 604: // CUSTODY
+            case 604: // CUSTODY                
+                logger.log(Level.SEVERE, "604 CUSTODY notification {0}", String.valueOf(type));
                 break;
         }
     }

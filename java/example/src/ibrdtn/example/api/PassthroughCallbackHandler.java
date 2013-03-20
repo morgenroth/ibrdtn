@@ -61,10 +61,6 @@ public class PassthroughCallbackHandler implements ibrdtn.api.sab.CallbackHandle
                      * Mark bundle as delivered...
                      */
                     finalClient.markDelivered(finalBundleID);
-                    /*
-                     * or, get payload.
-                     */
-                    //finalClient.getPayload(0, 2, 4);
 
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Unable to mark bundle as delivered.", e);
@@ -103,7 +99,8 @@ public class PassthroughCallbackHandler implements ibrdtn.api.sab.CallbackHandle
                 PayloadBlock payloadBlock = (PayloadBlock) bundle.getBlocks().getLast();
                 payloadBlock.setData(baos.toByteArray());
 
-                logger.log(Level.SEVERE, "Payload received: {0}", payloadBlock.getData().size() + " bytes: " + baos.toString());
+                logger.log(Level.SEVERE, "Payload received: {0}\n{1}", 
+                        new Object[]{payloadBlock.getData().size() + " bytes", baos.toString()});
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Unable to decode payload");
             }
@@ -125,14 +122,9 @@ public class PassthroughCallbackHandler implements ibrdtn.api.sab.CallbackHandle
             public void run() {
                 try {
                     /*
-                     * Load the next bundle...
+                     * Load the next bundle
                      */
                     exClient.loadAndGetBundle();
-                    /*
-                     * or, get bundle info and manually select/omit payload.
-                     */
-                    //exClient.loadBundle();
-                    //exClient.getBundleInfo();
                     logger.log(Level.FINE, "New bundle loaded");
                 } catch (APIException e) {
                     logger.log(Level.WARNING, "Failed to load next bundle");

@@ -4,6 +4,7 @@ import ibrdtn.api.APIException;
 import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.EID;
 import ibrdtn.api.object.GroupEndpoint;
+import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.object.SingletonEndpoint;
 import ibrdtn.example.api.Constants;
 import ibrdtn.example.api.DTNClient;
@@ -539,9 +540,13 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 callback = new DisplayCallback(this);
             }
         }
+        
+        String test = "Hallo!";
+        bundle.appendBlock(new PayloadBlock(test.getBytes()));
 
         print("Sending message to ''" + eid + "''");
-        dtnClient.send(bundle, data, callback);
+//        dtnClient.send(bundle, data, callback);
+        dtnClient.send(bundle);
     }//GEN-LAST:event_btnSendActionPerformed
 
     private void btnAddGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddGIDActionPerformed

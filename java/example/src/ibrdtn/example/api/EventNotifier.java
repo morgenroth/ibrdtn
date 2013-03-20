@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Receives events from the daemon, such as new neighbors.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */

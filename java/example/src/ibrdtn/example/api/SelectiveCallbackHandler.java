@@ -43,21 +43,16 @@ public class SelectiveCallbackHandler implements ibrdtn.api.sab.CallbackHandler 
     public void endBundle() {
         logger.log(Level.FINE, "Bundle received");
 
-        final BundleID finalBundleID = this.bundleID;
         final ExtendedClient finalClient = this.client;
-
-        // run the queue and delivered process asynchronously
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     /*
-                     * Mark bundle as delivered...
+                     * Decide if payload is interesting, based on Bundle meta data, e.g., payload length of the 
+                     * individual block. If applicable, partial payloads can be requested, as well.
                      */
-//                    finalClient.markDelivered(finalBundleID);
-                    /*
-                     * or, get payload.
-                     */
+                    logger.log(Level.SEVERE, "Requesting payload");
                     finalClient.getPayload();
 
                 } catch (Exception e) {
@@ -142,15 +137,12 @@ public class SelectiveCallbackHandler implements ibrdtn.api.sab.CallbackHandler 
             public void run() {
                 try {
                     /*
-                     * Load the next bundle...
-                     */
-                    //exClient.loadAndGetBundle();
-                    /*
-                     * or, get bundle info and manually select/omit payload.
+                     * Load bundle into queue and manually inspect bundle info to decide whether or not 
+                     * to get the payload.
                      */
                     exClient.loadBundle();
                     exClient.getBundleInfo();
-                    logger.log(Level.FINE, "New bundle loaded");
+                    logger.log(Level.SEVERE, "New bundle loaded, getting meta data");
                 } catch (APIException e) {
                     logger.log(Level.WARNING, "Failed to load next bundle");
                 }

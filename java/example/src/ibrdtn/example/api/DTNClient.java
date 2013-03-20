@@ -9,7 +9,6 @@ import ibrdtn.example.MessageData;
 import ibrdtn.example.callback.CallbackHandler;
 import ibrdtn.example.callback.ICallback;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +27,7 @@ public class DTNClient {
     private ExecutorService executor;
     private ExtendedClient exClient = null;
     private EventClient eventClient = null;
-    private SelectiveCallbackHandler sabHandler = null;
+    private ibrdtn.api.sab.CallbackHandler sabHandler = null;
     private String endpoint = null;
 
     /**
@@ -63,10 +62,8 @@ public class DTNClient {
             eventClient = new EventClient(notifier);
             try {
                 eventClient.open();
-            } catch (UnknownHostException e) {
-                logger.log(Level.WARNING, "Could not connect to DTN daemon: {0}", e.getMessage());
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "Connection to DTN daemon failed!");
+                logger.log(Level.WARNING, "Could not connect to DTN daemon: {0}", e.getMessage());
             }
         }
     }
@@ -81,10 +78,8 @@ public class DTNClient {
 
         } catch (APIException e) {
             logger.log(Level.WARNING, "API error: {0}", e.toString());
-        } catch (UnknownHostException e) {
-            logger.log(Level.WARNING, "Could not connect to DTN daemon: {0}", e.getMessage());
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Connection to DTN daemon failed!");
+            logger.log(Level.WARNING, "Could not connect to DTN daemon: {0}", e.getMessage());
         }
     }
 
