@@ -133,7 +133,7 @@ namespace dtn
 			/**
 			 * callbacks for the sqlite database
 			 */
-			void eventBundleExpired(const dtn::data::BundleID &id);
+			void eventBundleExpired(const dtn::data::BundleID &id) throw ();
 			void iterateDatabase(const dtn::data::MetaBundle &bundle);
 
 		protected:

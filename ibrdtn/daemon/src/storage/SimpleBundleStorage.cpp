@@ -451,7 +451,7 @@ namespace dtn
 			clearSpace();
 		}
 
-		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b)
+		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
 		{
 			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
 			{

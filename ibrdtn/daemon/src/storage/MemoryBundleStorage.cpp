@@ -273,7 +273,7 @@ namespace dtn
 			clearSpace();
 		}
 
-		void MemoryBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b)
+		void MemoryBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
 		{
 			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 			{

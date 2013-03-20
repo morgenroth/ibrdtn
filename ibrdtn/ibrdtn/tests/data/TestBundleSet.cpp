@@ -46,7 +46,7 @@ TestBundleSet::ExpiredBundleCounter::~ExpiredBundleCounter()
 {
 }
 
-void TestBundleSet::ExpiredBundleCounter::eventBundleExpired(const dtn::data::MetaBundle&)
+void TestBundleSet::ExpiredBundleCounter::eventBundleExpired(const dtn::data::MetaBundle&) throw ()
 {
 	//std::cout << "Bundle expired " << b.bundle.toString() << std::endl;
 	counter++;

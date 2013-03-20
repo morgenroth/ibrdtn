@@ -114,7 +114,7 @@ namespace dtn
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
 
-			virtual void eventBundleExpired(const dtn::data::MetaBundle &b);
+			virtual void eventBundleExpired(const dtn::data::MetaBundle &b) throw ();
 
 		private:
 			ibrcommon::Mutex _bundleslock;

@@ -49,7 +49,7 @@ private:
 		ExpiredBundleCounter();
 		virtual ~ExpiredBundleCounter();
 
-		void eventBundleExpired(const dtn::data::MetaBundle &b);
+		void eventBundleExpired(const dtn::data::MetaBundle &b) throw ();
 		int counter;
 	};
 

@@ -35,7 +35,7 @@ namespace dtn
 		BundleList::~BundleList()
 		{ }
 
-		void BundleList::add(const dtn::data::MetaBundle &bundle)
+		void BundleList::add(const dtn::data::MetaBundle &bundle) throw ()
 		{
 			// insert the bundle to the public list
 			pair<std::set<dtn::data::MetaBundle>::iterator,bool> ret = std::set<dtn::data::MetaBundle>::insert(bundle);
@@ -44,7 +44,7 @@ namespace dtn
 			_bundles.insert(exb);
 		}
 
-		void BundleList::remove(const dtn::data::MetaBundle &bundle)
+		void BundleList::remove(const dtn::data::MetaBundle &bundle) throw ()
 		{
 			// delete bundle id in the private list
 			_bundles.erase(bundle);
@@ -53,13 +53,13 @@ namespace dtn
 			std::set<dtn::data::MetaBundle>::erase(bundle);
 		}
 
-		void BundleList::clear()
+		void BundleList::clear() throw ()
 		{
 			_bundles.clear();
 			std::set<dtn::data::MetaBundle>::clear();
 		}
 
-		void BundleList::expire(const size_t timestamp)
+		void BundleList::expire(const size_t timestamp) throw ()
 		{
 			// we can not expire bundles if we have no idea of time
 			if (timestamp == 0) return;

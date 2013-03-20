@@ -554,7 +554,7 @@ namespace dtn
 			eventBundleAdded(bundle);
 		}
 
-		void SQLiteBundleStorage::eventBundleExpired(const dtn::data::BundleID &id)
+		void SQLiteBundleStorage::eventBundleExpired(const dtn::data::BundleID &id) throw ()
 		{
 			// raise bundle removed event
 			eventBundleRemoved(id);
