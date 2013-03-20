@@ -232,6 +232,9 @@ namespace dtn
 						ss.write(data, len);
 						ss >> announce;
 
+						// ignore own beacons
+						if (announce.getEID() == dtn::core::BundleCore::local) continue;
+
 						// convert the announcement into NodeEvents
 						Node n(announce.getEID());
 
