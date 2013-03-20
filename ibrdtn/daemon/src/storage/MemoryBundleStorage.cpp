@@ -275,11 +275,11 @@ namespace dtn
 
 		void MemoryBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b)
 		{
-			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 			{
 				if ( b == (*iter) )
 				{
-					dtn::data::Bundle bundle = (*iter);
+					const dtn::data::Bundle &bundle = (*iter);
 
 					// erase the bundle out of the priority index
 					_priority_index.erase(bundle);
@@ -294,7 +294,7 @@ namespace dtn
 					_bundles.erase(iter);
 
 					// raise bundle removed event
-					eventBundleRemoved(bundle);
+					eventBundleRemoved(b);
 					break;
 				}
 			}
