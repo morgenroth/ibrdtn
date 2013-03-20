@@ -304,6 +304,12 @@ namespace dtn
 
 		void IPNDAgent::eventNotify(const ibrcommon::LinkEvent &evt)
 		{
+			// check first if we are really bound to the interface
+			{
+				ibrcommon::MutexLock l(_interface_lock);
+				if (_interfaces.find(evt.getInterface()) == _interfaces.end()) return;
+			}
+
 			switch (evt.getAction())
 			{
 				case ibrcommon::LinkEvent::ACTION_ADDRESS_ADDED:

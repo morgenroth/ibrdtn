@@ -143,20 +143,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::unlisten(const ibrcommon::vinterface &iface) throw ()
 		{
-			// check if the interface is bound by us
-			{
-				ibrcommon::MutexLock l(_interface_lock);
-
-				// only remove the interface if it exists
-				if (_interfaces.find(iface) == _interfaces.end()) return;
-
-				// remove the interface from the stored set
-				_interfaces.erase(iface);
-			}
-
-			// un-subscribe to NetLink events on our interfaces
-			ibrcommon::LinkManager::getInstance().removeEventListener(iface, this);
-
 			ibrcommon::socketset socks = _vsocket.get(iface);
 			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
 				ibrcommon::tcpserversocket *sock = dynamic_cast<ibrcommon::tcpserversocket*>(*iter);
@@ -275,12 +261,28 @@ namespace dtn
 				{
 					case dtn::net::P2PDialupEvent::INTERFACE_UP:
 					{
+						// listen to the new interface
 						listen(dialup.iface, 4556);
 						break;
 					}
 
 					case dtn::net::P2PDialupEvent::INTERFACE_DOWN:
 					{
+						// check if the interface is bound by us
+						{
+							ibrcommon::MutexLock l(_interface_lock);
+
+							// only remove the interface if it exists
+							if (_interfaces.find(dialup.iface) == _interfaces.end()) return;
+
+							// remove the interface from the stored set
+							_interfaces.erase(dialup.iface);
+						}
+
+						// un-subscribe to NetLink events on our interfaces
+						ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
+
+						// remove all sockets on this interface
 						unlisten(dialup.iface);
 						break;
 					}
@@ -336,7 +338,7 @@ namespace dtn
 
 				case ibrcommon::LinkEvent::ACTION_LINK_DOWN:
 				{
-					ibrcommon::MutexLock l(_interface_lock);
+					// remove all sockets on this interface
 					unlisten(evt.getInterface());
 					break;
 				}
