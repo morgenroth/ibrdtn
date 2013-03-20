@@ -21,7 +21,6 @@
 
 #include "config.h"
 #include "ibrdtn/api/Client.h"
-#include "ibrdtn/api/StringBundle.h"
 #include "ibrcommon/net/socket.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
@@ -46,7 +45,7 @@ class EchoClient : public dtn::api::Client
 		{
 		}
 
-		const dtn::api::Bundle waitForReply(const int timeout)
+		const dtn::data::Bundle waitForReply(const int timeout)
 		{
 			double wait=(timeout*1000);
 			ibrcommon::TimeMeasurement tm;
@@ -54,7 +53,7 @@ class EchoClient : public dtn::api::Client
 			{
 				try {
 					tm.start();
-					dtn::api::Bundle b = this->getBundle((int)(wait/1000));
+					dtn::data::Bundle b = this->getBundle((int)(wait/1000));
 					tm.stop();
 					checkReply(b);
 					return b;
@@ -72,38 +71,52 @@ class EchoClient : public dtn::api::Client
 			seq++;
 			
 			// create a bundle
-			dtn::api::StringBundle b(destination);
+			dtn::data::Bundle b;
+
+			// set bundle destination
+			b._destination = destination;
 
 			// enable encryption if requested
-			if (encryption) b.requestEncryption();
+			if (encryption) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, true);
 
 			// enable signature if requested
-			if (sign) b.requestSigned();
+			if (sign) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 			// set lifetime
-			b.setLifetime(lifetime);
+			b._lifetime = lifetime;
 			
-			//Add magic seqnr. Hmm, how to to do this without string?
-			b.append(string((char *)(&seq),4));
-			
-			if (size > 4)
+			// create a new blob
+			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+
+			// append the blob as payload block to the bundle
+			b.push_back(ref);
+
+			// open the iostream
 			{
-				size-=4;
+				ibrcommon::BLOB::iostream stream = ref.iostream();
 
-				// create testing pattern, chunkwise to ocnserve memory
-				char pattern[CREATE_CHUNK_SIZE];
-				for (size_t i = 0; i < sizeof(pattern); i++)
+				// Add magic seqno
+				(*stream).write((char*)&seq, 4);
+
+				if (size > 4)
 				{
-					pattern[i] = '0';
-					pattern[i] += i % 10;
-				}
-				string chunk=string(pattern,CREATE_CHUNK_SIZE);
+					size-=4;
 
-				while (size > CREATE_CHUNK_SIZE) {
-					b.append(chunk);
-					size-=CREATE_CHUNK_SIZE;
+					// create testing pattern, chunkwise to ocnserve memory
+					char pattern[CREATE_CHUNK_SIZE];
+					for (size_t i = 0; i < sizeof(pattern); i++)
+					{
+						pattern[i] = '0';
+						pattern[i] += i % 10;
+					}
+
+					while (size > CREATE_CHUNK_SIZE) {
+						(*stream).write(pattern, CREATE_CHUNK_SIZE);
+						size -= CREATE_CHUNK_SIZE;
+					}
+
+					(*stream).write(pattern, size);
 				}
-				b.append(chunk.substr(0,size));
 			}
 
 			// send the bundle
@@ -114,9 +127,9 @@ class EchoClient : public dtn::api::Client
 			
 		}
 		
-		void checkReply(dtn::api::Bundle &bundle) {
+		void checkReply(dtn::data::Bundle &bundle) {
 			size_t reply_seq = 0;
-			ibrcommon::BLOB::Reference blob = bundle.getData();
+			ibrcommon::BLOB::Reference blob = bundle.getBlock<dtn::data::PayloadBlock>().getBLOB();
 			blob.iostream()->read((char *)(&reply_seq),4 );
 
 			if (reply_seq != seq) {
@@ -124,8 +137,8 @@ class EchoClient : public dtn::api::Client
 				ss << "sequence number mismatch, awaited " << seq << ", got " << reply_seq;
 				throw ss.str();
 			}
-			if (bundle.getSource().getString() != lastdestination) {
-				throw std::string("ignoring bundle from source " + bundle.getSource().getString() + " awaited " + lastdestination);
+			if (bundle._source.getString() != lastdestination) {
+				throw std::string("ignoring bundle from source " + bundle._source.getString() + " awaited " + lastdestination);
 			}
 		}
 
@@ -360,7 +373,7 @@ int main(int argc, char *argv[])
 				{
 					try {
 						try {
-							dtn::api::Bundle response = client.waitForReply(2*lifetime);
+							dtn::data::Bundle response = client.waitForReply(2*lifetime);
 
 							// print out measurement result
 							tm.stop();
@@ -374,12 +387,12 @@ int main(int argc, char *argv[])
 							if ((_max < tm.getMilliseconds()) || _max == 0) _max = tm.getMilliseconds();
 
 							{
-								ibrcommon::BLOB::Reference blob = response.getData();
+								ibrcommon::BLOB::Reference blob = response.getBlock<dtn::data::PayloadBlock>().getBLOB();
 								blob.iostream()->read((char *)(&reply_seq),4 );
 								payload_size = blob.iostream().size();
 							}
 
-							std::cout << payload_size << " bytes from " << response.getSource().getString() << ": seq=" << reply_seq << " ttl=" << response.getLifetime() << " time=" << tm << std::endl;
+							std::cout << payload_size << " bytes from " << response._source.getString() << ": seq=" << reply_seq << " ttl=" << response._lifetime << " time=" << tm << std::endl;
 							_received++;
 						} catch (const dtn::api::ConnectionTimeoutException &e) {
 							if (stop_after_first_fail)

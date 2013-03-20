@@ -81,7 +81,8 @@ namespace dtn
 			void __cancellation() throw ();
 
 		private:
-			void receive(dtn::data::Bundle&, dtn::data::EID &sender) throw (ibrcommon::socket_exception);
+			void receive(dtn::data::Bundle&, dtn::data::EID &sender) throw (ibrcommon::socket_exception, dtn::InvalidDataException);
+			void send(const ibrcommon::vaddress &addr, const std::string &data) throw (ibrcommon::socket_exception, NoAddressFoundException);
 
 			ibrcommon::vsocket _vsocket;
 			ibrcommon::vinterface _net;

@@ -167,8 +167,9 @@ namespace dtn
 								IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 25) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 						}
-					} catch (const ibrcommon::Exception&) {
+					} catch (const ibrcommon::Exception &ex) {
 						// address collection process aborted
+						IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 65) << "Address collection aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					};
 
 					// if we still not announced anything...
@@ -403,6 +404,10 @@ namespace dtn
 
 							// create a new node object
 							dtn::core::Node node(source);
+
+							// add TCP connection
+							const std::string uri = "ip=" + peeraddr.address() + ";port=" + peeraddr.service() + ";";
+							node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, uri, 0, 30) );
 
 							// create a new TCPConnection and return the pointer
 							TCPConnection *obj = new TCPConnection(*this, node, client, 10);

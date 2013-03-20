@@ -40,6 +40,11 @@ namespace ibrcommon
 		void up() throw (socket_exception);
 		void down() throw (socket_exception);
 
+		/**
+		 * If set to true, the auto-ack request is set on each message
+		 */
+		void setAutoAck(bool enable) throw (socket_exception);
+
 		virtual size_t recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
 		virtual void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
 

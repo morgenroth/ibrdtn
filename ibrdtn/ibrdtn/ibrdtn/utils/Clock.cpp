@@ -23,24 +23,25 @@
 #include "ibrdtn/data/AgeBlock.h"
 
 #include <ibrcommon/Logger.h>
+#include <iomanip>
 
 namespace dtn
 {
 	namespace utils
 	{
-		int Clock::timezone = 0;
-		float Clock::rating = 0;
-		bool Clock::badclock = false;
+		int Clock::_timezone = 0;
+		double Clock::_rating = 0;
+		bool Clock::_badclock = false;
 
 		struct timeval Clock::_offset;
 		bool Clock::_offset_init = false;
 
-		bool Clock::modify_clock = false;
+		bool Clock::_modify_clock = false;
 
 		/**
 		 * The number of seconds between 1/1/1970 and 1/1/2000.
 		 */
-		uint32_t Clock::TIMEVAL_CONVERSION = 946684800;
+		const uint32_t Clock::TIMEVAL_CONVERSION = 946684800;
 
 		Clock::Clock()
 		{
@@ -50,9 +51,52 @@ namespace dtn
 		{
 		}
 
+		bool Clock::isBad()
+		{
+			return _badclock;
+		}
+
+		void Clock::setBad(bool val)
+		{
+			_badclock = val;
+		}
+
+		int Clock::getTimezone()
+		{
+			return _timezone;
+		}
+
+		void Clock::setTimezone(int val)
+		{
+			_timezone = val;
+		}
+
+		double Clock::getRating()
+		{
+			return _rating;
+		}
+
+		void Clock::setRating(double val)
+		{
+			_rating = val;
+
+			// debug quality of time
+			IBRCOMMON_LOGGER_DEBUG_TAG("Clock", 25) << "new clock rating is " << std::setprecision(16) << val << IBRCOMMON_LOGGER_ENDL;
+		}
+
+		bool Clock::shouldModifyClock()
+		{
+			return _modify_clock;
+		}
+
+		void Clock::setModifyClock(bool val)
+		{
+			_modify_clock = val;
+		}
+
 		size_t Clock::getExpireTime(const dtn::data::Bundle &b)
 		{
-			if ((b._timestamp == 0) || dtn::utils::Clock::badclock)
+			if ((b._timestamp == 0) || dtn::utils::Clock::isBad())
 			{
 				// use the AgeBlock to verify the age
 				try {
@@ -78,10 +122,10 @@ namespace dtn
 		size_t Clock::__getExpireTime(size_t timestamp, size_t lifetime)
 		{
 			// if the quality of time is zero, return standard expire time
-			if (Clock::rating == 0) return timestamp + lifetime;
+			if (Clock::getRating() == 0) return timestamp + lifetime;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			size_t sigma = lifetime * (1 - Clock::rating);
+			size_t sigma = lifetime * (1 - Clock::getRating());
 
 			// expiration adjusted by quality of time
 			return timestamp + lifetime + sigma;
@@ -106,10 +150,10 @@ namespace dtn
 		bool Clock::__isExpired(size_t timestamp, size_t lifetime)
 		{
 			// if the quality of time is zero or the clock is bad, then never expire a bundle
-			if ((Clock::rating == 0) || dtn::utils::Clock::badclock) return false;
+			if ((Clock::getRating() == 0) || dtn::utils::Clock::isBad()) return false;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			size_t sigma = lifetime * (1 - Clock::rating);
+			size_t sigma = lifetime * (1 - Clock::getRating());
 
 			// expiration adjusted by quality of time
 			if ( Clock::getTime() > (timestamp + lifetime + sigma)) return true;
@@ -123,7 +167,7 @@ namespace dtn
 			Clock::gettimeofday(&now);
 
 			// timezone
-			int offset = Clock::timezone * 3600;
+			int offset = Clock::getTimezone() * 3600;
 
 			// do we believe we are before the year 2000?
 			if ((u_int)now.tv_sec < TIMEVAL_CONVERSION)
@@ -140,14 +184,14 @@ namespace dtn
 			Clock::gettimeofday(&now);
 
 			// timezone
-			int offset = Clock::timezone * 3600;
+			int offset = Clock::getTimezone() * 3600;
 
 			return now.tv_sec + offset;
 		}
 
 		void Clock::setOffset(const struct timeval &tv)
 		{
-			if (!modify_clock)
+			if (!Clock::shouldModifyClock())
 			{
 				if (!Clock::_offset_init)
 				{
@@ -155,7 +199,7 @@ namespace dtn
 					Clock::_offset_init = true;
 				}
 				timeradd(&Clock::_offset, &tv, &Clock::_offset);
-				IBRCOMMON_LOGGER(info) << "[Clock] new local offset: " << _offset.tv_sec << " seconds and " << _offset.tv_usec << " microseconds" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Clock", info) << "new local offset: " << Clock::toDouble(_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 			}
 			else
 			{
@@ -177,7 +221,7 @@ namespace dtn
 			struct timeval now;
 			::gettimeofday(&now, &tz);
 
-			if (!modify_clock)
+			if (!Clock::shouldModifyClock())
 			{
 				if (!Clock::_offset_init)
 				{
@@ -185,7 +229,7 @@ namespace dtn
 					Clock::_offset_init = true;
 				}
 				timersub(&now, tv, &Clock::_offset);
-				IBRCOMMON_LOGGER(info) << "[Clock] new local offset: " << _offset.tv_sec << " seconds and " << _offset.tv_usec << " microseconds" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Clock", info) << "new local offset: " << Clock::toDouble(_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 			}
 			else
 			{
@@ -200,7 +244,7 @@ namespace dtn
 			::gettimeofday(tv, &tz);
 
 			// correct by the local offset
-			if (!modify_clock)
+			if (!Clock::shouldModifyClock())
 			{
 				if (!Clock::_offset_init)
 				{
@@ -210,6 +254,10 @@ namespace dtn
 				// add offset
 				timersub(tv, &Clock::_offset, tv);
 			}
+		}
+
+		double Clock::toDouble(const timeval &val) {
+			return val.tv_sec + (val.tv_usec / 1000000.0);
 		}
 	}
 }

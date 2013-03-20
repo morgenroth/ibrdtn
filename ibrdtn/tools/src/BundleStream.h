@@ -22,18 +22,17 @@
 #ifndef BUNDLESTREAM_H_
 #define BUNDLESTREAM_H_
 
-#include <ibrdtn/api/Bundle.h>
 #include <ibrdtn/api/Client.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/SDNV.h>
 #include <ibrdtn/data/StreamBlock.h>
 #include <ibrcommon/net/socketstream.h>
 
-class StreamBundle : public dtn::api::Bundle
+class StreamBundle : public dtn::data::Bundle
 {
 public:
 	StreamBundle();
-	StreamBundle(const dtn::api::Bundle &b);
+	StreamBundle(const dtn::data::Bundle &b);
 	virtual ~StreamBundle();
 
 	/**
@@ -68,7 +67,7 @@ public:
 	BundleStreamBuf(dtn::api::Client &client, StreamBundle &chunk, size_t buffer = 4096, bool wait_seq_zero = false);
 	virtual ~BundleStreamBuf();
 
-	virtual void received(const dtn::api::Bundle &b);
+	virtual void received(const dtn::data::Bundle &b);
 
 protected:
 	virtual int sync();
@@ -80,13 +79,13 @@ private:
 	class Chunk
 	{
 	public:
-		Chunk(const dtn::api::Bundle &b);
+		Chunk(const dtn::data::Bundle &b);
 		virtual ~Chunk();
 
 		bool operator==(const Chunk& other) const;
 		bool operator<(const Chunk& other) const;
 
-		dtn::api::Bundle _bundle;
+		dtn::data::Bundle _bundle;
 		size_t _seq;
 	};
 
@@ -114,10 +113,10 @@ public:
 	virtual ~BundleStream();
 
 	BundleStreamBuf& rdbuf();
-	dtn::api::Bundle& base();
+	dtn::data::Bundle& base();
 
 protected:
-	virtual void received(const dtn::api::Bundle &b);
+	virtual void received(const dtn::data::Bundle &b);
 
 private:
 	ibrcommon::socketstream &_stream;

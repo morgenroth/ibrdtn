@@ -36,6 +36,9 @@ namespace dtn
 		 : _procflags(0), _timestamp(0), _sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
 		{
 			relabel();
+
+			// by default set destination as singleton bit
+			set(DESTINATION_IS_SINGLETON, true);
 		}
 
 		PrimaryBlock::~PrimaryBlock()
@@ -57,6 +60,43 @@ namespace dtn
 		bool PrimaryBlock::get(FLAGS flag) const
 		{
 			return (_procflags & flag);
+		}
+
+		PrimaryBlock::PRIORITY PrimaryBlock::getPriority() const
+		{
+			if (get(PRIORITY_BIT1))
+			{
+				return PRIO_MEDIUM;
+			}
+
+			if (get(PRIORITY_BIT2))
+			{
+				return PRIO_HIGH;
+			}
+
+			return PRIO_LOW;
+		}
+
+		void PrimaryBlock::setPriority(PrimaryBlock::PRIORITY p)
+		{
+			// set the priority to the real bundle
+			switch (p)
+			{
+			case PRIO_LOW:
+				set(PRIORITY_BIT1, false);
+				set(PRIORITY_BIT2, false);
+				break;
+
+			case PRIO_HIGH:
+				set(PRIORITY_BIT1, false);
+				set(PRIORITY_BIT2, true);
+				break;
+
+			case PRIO_MEDIUM:
+				set(PRIORITY_BIT1, true);
+				set(PRIORITY_BIT2, false);
+				break;
+			}
 		}
 
 		bool PrimaryBlock::operator!=(const PrimaryBlock& other) const
@@ -127,7 +167,7 @@ namespace dtn
 
 		void PrimaryBlock::relabel()
 		{
-			if (dtn::utils::Clock::badclock)
+			if (dtn::utils::Clock::isBad())
 			{
 				_timestamp = 0;
 			}

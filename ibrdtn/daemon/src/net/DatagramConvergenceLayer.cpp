@@ -85,7 +85,7 @@ namespace dtn
 			const dtn::core::Node::URI &uri = uri_list.front();
 
 			// some debugging
-			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::queue"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer", 10) << "job queued to " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// lock the connection list while working with it
 			ibrcommon::MutexLock lc(_connection_cond);
@@ -102,7 +102,6 @@ namespace dtn
 			// Test if connection for this address already exist
 			for(std::list<DatagramConnection*>::iterator i = _connections.begin(); i != _connections.end(); ++i)
 			{
-				IBRCOMMON_LOGGER_DEBUG(10) << "Connection identifier: " << (*i)->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 				if ((*i)->getIdentifier() == identifier)
 					return *(*i);
 			}
@@ -113,7 +112,7 @@ namespace dtn
 			_connections.push_back(connection);
 			_connection_cond.signal(true);
 
-			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::getConnection "<< connection->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer", 10) << "Selected identifier: " << connection->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
 			return *connection;
 		}
@@ -209,10 +208,10 @@ namespace dtn
 			char data[maxlen];
 			size_t len = 0;
 
+			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer::componentRun()", 10) << "entered" << IBRCOMMON_LOGGER_ENDL;
+
 			while (_running)
 			{
-				IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::componentRun early" << IBRCOMMON_LOGGER_ENDL;
-
 				try {
 					// Receive full frame from socket
 					len = _service->recvfrom(data, maxlen, type, flags, seqno, address);
@@ -221,13 +220,13 @@ namespace dtn
 					break;
 				}
 
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer", 10) << "componentRun: ADDRESS " << address << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer::componentRun()", 10) << "Address: " << address << IBRCOMMON_LOGGER_ENDL;
 
 				// Check for extended header and retrieve if available
 				if (type == HEADER_BROADCAST)
 				{
 					try {
-						IBRCOMMON_LOGGER_DEBUG(10) << "Received announcement for DatagramConvergenceLayer discovery" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer::componentRun()", 10) << "Announcement received" << IBRCOMMON_LOGGER_ENDL;
 						DiscoveryAnnouncement announce;
 						stringstream ss;
 						ss.write(data, len);
@@ -276,7 +275,10 @@ namespace dtn
 					try {
 						// Decide in which queue to write based on the src address
 						connection.queue(flags, seqno, data, len);
-					} catch (const ibrcommon::Exception&) { };
+					} catch (const ibrcommon::Exception &ex) {
+						IBRCOMMON_LOGGER_TAG("DatagramConvergenceLayer", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						connection.shutdown();
+					};
 				}
 				else if ( type == HEADER_ACK )
 				{

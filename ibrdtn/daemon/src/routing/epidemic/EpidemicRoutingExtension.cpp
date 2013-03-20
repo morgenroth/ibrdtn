@@ -28,6 +28,7 @@
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 #include "core/Node.h"
+#include "net/ConnectionEvent.h"
 #include "net/ConnectionManager.h"
 #include "Configuration.h"
 #include "core/BundleCore.h"
@@ -100,6 +101,17 @@ namespace dtn
 					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 				}
 
+				return;
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
+
+				if (ce.state == dtn::net::ConnectionEvent::CONNECTION_UP)
+				{
+					// send all (multi-hop) bundles in the storage to the neighbor
+					_taskqueue.push( new SearchNextBundleTask(ce.peer) );
+				}
 				return;
 			} catch (const std::bad_cast&) { };
 

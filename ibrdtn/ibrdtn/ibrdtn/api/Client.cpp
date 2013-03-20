@@ -19,11 +19,7 @@
  *
  */
 
-
-
-
 #include "ibrdtn/api/Client.h"
-#include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/streams/StreamDataSegment.h"
@@ -58,8 +54,13 @@ namespace dtn
 			try {
 				while (!_client.eof() && _running)
 				{
-					dtn::api::Bundle b;
-					_client >> b;
+					dtn::data::Bundle b;
+
+					// To receive a bundle, we construct a default deserializer. Such a deserializer
+					// convert a byte stream into a bundle object. If this deserialization fails
+					// an exception will be thrown.
+					dtn::data::DefaultDeserializer(_client) >> b;
+
 					_client.received(b);
 					yield();
 				}
@@ -84,12 +85,12 @@ namespace dtn
 		}
 
 		Client::Client(const std::string &app, const dtn::data::EID &group, ibrcommon::socketstream &stream, const COMMUNICATION_MODE mode)
-		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _group(group), _receiver(*this)
+		  : StreamConnection(*this, stream), lastack(0), _stream(stream), _mode(mode), _app(app), _group(group), _receiver(*this)
 		{
 		}
 
 		Client::Client(const std::string &app, ibrcommon::socketstream &stream, const COMMUNICATION_MODE mode)
-		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _group(), _receiver(*this)
+		  : StreamConnection(*this, stream), lastack(0), _stream(stream), _mode(mode), _app(app), _group(), _receiver(*this)
 		{
 		}
 
@@ -182,7 +183,7 @@ namespace dtn
 			lastack = ack;
 		}
 
-		void Client::received(const dtn::api::Bundle &b)
+		void Client::received(const dtn::data::Bundle &b)
 		{
 			// if we are in send only mode...
 			if (_mode != dtn::api::Client::MODE_SENDONLY)
@@ -193,7 +194,19 @@ namespace dtn
 			// ... then discard the received bundle
 		}
 
-		dtn::api::Bundle Client::getBundle(size_t timeout) throw (ConnectionException)
+		void Client::operator<<(const dtn::data::Bundle &b)
+		{
+			// To send a bundle, we construct a default serializer. Such a serializer convert
+			// the bundle data to the standardized form as byte stream.
+			dtn::data::DefaultSerializer(*this) << b;
+
+			// Since this method is used to serialize bundles into an StreamConnection, we need to call
+			// a flush on the StreamConnection. This signals the stream to set the bundle end flag on
+			// the last segment of streaming.
+			flush();
+		}
+
+		dtn::data::Bundle Client::getBundle(size_t timeout) throw (ConnectionException)
 		{
 			try {
 				return _inqueue.getnpop(true, timeout * 1000);

@@ -21,8 +21,6 @@
 
 #include "config.h"
 #include <ibrdtn/api/Client.h>
-#include <ibrdtn/api/FileBundle.h>
-#include <ibrdtn/api/BLOBBundle.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -243,28 +241,34 @@ int main(int argc, char *argv[])
 					(*ref.iostream()) << cin.rdbuf();
 
 					for(int u=0; u<copies; u++){
-						dtn::api::BLOBBundle b(file_destination, ref);
+						dtn::data::Bundle b;
+
+						// set the destination
+						b._destination = file_destination;
+
+						// add payload block with the reference
+						b.push_back(ref);
 
 						// set destination address to non-singleton
-						if (bundle_group) b.setSingleton(false);
+						if (bundle_group) b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, false);
 
 						// enable encryption if requested
-						if (bundle_encryption) b.requestEncryption();
+						if (bundle_encryption) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, true);
 
 						// enable signature if requested
-						if (bundle_signed) b.requestSigned();
+						if (bundle_signed) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 						// enable custody transfer if requested
-						if (bundle_custody) b.requestCustodyTransfer();
+						if (bundle_custody) b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
 
 						// enable compression
-						if (bundle_compression) b.requestCompression();
+						if (bundle_compression) b.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, true);
 
 						// set the lifetime
-						b.setLifetime(lifetime);
+						b._lifetime = lifetime;
 
 						// set the bundles priority
-						b.setPriority(dtn::api::Bundle::BUNDLE_PRIORITY(priority));
+						b.setPriority(dtn::data::PrimaryBlock::PRIORITY(priority));
 
 						// send the bundle
 						client << b;
@@ -279,30 +283,39 @@ int main(int argc, char *argv[])
 				{
 					cout << "Transfer file \"" << filename << "\" to " << addr.getString() << endl;
 					
+					// open file as read-only BLOB
+					ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::open(filename);
+
 					for(int u=0; u<copies; u++){
 						// create a bundle from the file
-						dtn::api::FileBundle b(file_destination, filename);
+						dtn::data::Bundle b;
+
+						// set the destination
+						b._destination = file_destination;
+
+						// add payload block with the reference
+						b.push_back(ref);
 
 						// set destination address to non-singleton
-						if (bundle_group) b.setSingleton(false);
+						if (bundle_group) b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, false);
 
 						// enable encryption if requested
-						if (bundle_encryption) b.requestEncryption();
+						if (bundle_encryption) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, true);
 
 						// enable signature if requested
-						if (bundle_signed) b.requestSigned();
+						if (bundle_signed) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 						// enable custody transfer if requested
-						if (bundle_custody) b.requestCustodyTransfer();
+						if (bundle_custody) b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
 
 						// enable compression
-						if (bundle_compression) b.requestCompression();
+						if (bundle_compression) b.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, true);
 
 						// set the lifetime
-						b.setLifetime(lifetime);
+						b._lifetime = lifetime;
 
 						// set the bundles priority
-						b.setPriority(dtn::api::Bundle::BUNDLE_PRIORITY(priority));
+						b.setPriority(dtn::data::PrimaryBlock::PRIORITY(priority));
 
 						// send the bundle
 						client << b;

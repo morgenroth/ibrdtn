@@ -53,17 +53,17 @@ namespace dtn
 		}
 
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vinterface &i, int p, bool d)
-		 : name(n), type(t), iface(i), port(p), discovery(d)
+		 : name(n), type(t), iface(i), mtu(1500), port(p), discovery(d)
 		{
 		}
 
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vaddress &a, int p, bool d)
-		 : name(n), type(t), iface(), address(a), port(p), discovery(d)
+		 : name(n), type(t), iface(), address(a), mtu(1500), port(p), discovery(d)
 		{
 		}
 
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, int p, bool d)
-		 : name(n), type(t), iface(), port(p), discovery(d)
+		 : name(n), type(t), iface(), mtu(1500), port(p), discovery(d)
 		{
 		}
 
@@ -75,8 +75,8 @@ namespace dtn
 		{
 			std::stringstream ss;
 			ss << PACKAGE_VERSION;
-		#ifdef SVN_REVISION
-			ss << " (build " << SVN_REVISION << ")";
+		#ifdef BUILD_NUMBER
+			ss << " (build " << BUILD_NUMBER << ")";
 		#endif
 
 			return ss.str();
@@ -99,14 +99,14 @@ namespace dtn
 		 : _enabled(false), _quiet(false), _level(0) {};
 
 		Configuration::Logger::Logger()
-		 : _quiet(false), _options(0), _timestamps(false) {};
+		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {};
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false)
+		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false)
 		{};
 
 		Configuration::Security::Security()
-		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false)
+		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false), _tlsOptionalOnBadClock(false), _level(SECURITY_LEVEL_NONE), _disableEncryption(false)
 		{};
 
 		Configuration::Daemon::Daemon()
@@ -114,11 +114,11 @@ namespace dtn
 		{};
 
 		Configuration::TimeSync::TimeSync()
-		 : _reference(true), _sync(false), _discovery(false)
+		 : _reference(true), _sync(false), _discovery(false), _sigma(1.001), _psi(0.8), _sync_level(0.10)
 		{};
 
 		Configuration::DHT::DHT()
-		 : _enabled(true), _port(0), _ipv4(true), _ipv6(true), _blacklist(true),
+		 : _enabled(true), _port(0), _dnsbootstrapping(true), _ipv4(true), _ipv6(true), _blacklist(true), _selfannounce(true),
 			_minRating(1), _allowNeighbourToAnnounceMe(true), _allowNeighbourAnnouncement(true),
 			_ignoreDHTNeighbourInformations(false)
 		{};
@@ -188,8 +188,12 @@ namespace dtn
 			int c;
 			int doapi = _doapi;
 			int disco = _disco._enabled;
-			int badclock = dtn::utils::Clock::badclock;
+			int badclock = dtn::utils::Clock::isBad();
 			int timestamp = _logger._timestamps;
+			int showversion = 0;
+
+			// set number of threads to the number of available cpus
+			_daemon._threads = ibrcommon::Thread::getNumberOfProcessors();
 
 			while (1)
 			{
@@ -200,6 +204,7 @@ namespace dtn
 						{"nodiscovery", no_argument, &disco, 0},
 						{"badclock", no_argument, &badclock, 1},
 						{"timestamp", no_argument, &timestamp, 1},
+						{"version", no_argument, &showversion, 1},
 
 						/* These options don't set a flag. We distinguish them by their indices. */
 						{"help", no_argument, 0, 'h'},
@@ -210,7 +215,6 @@ namespace dtn
 #endif
 
 						{"quiet", no_argument, 0, 'q'},
-						{"version", no_argument, 0, 'v'},
 						{"interface", required_argument, 0, 'i'},
 						{"configuration", required_argument, 0, 'c'},
 						{"debug", required_argument, 0, 'd'},
@@ -258,6 +262,8 @@ namespace dtn
 					std::cout << " -d <level>      enable debugging and set a verbose level" << std::endl;
 					std::cout << " -q              enables the quiet mode (no logging to the console)" << std::endl;
 					std::cout << " -t <threads>    specify a number of threads for parallel event processing" << std::endl;
+					std::cout << " -v              be verbose - show NOTICE log messages" << std::endl;
+					std::cout << " --version       show version and exit" << std::endl;
 					std::cout << " --noapi         disable API module" << std::endl;
 					std::cout << " --nodiscovery   disable discovery module" << std::endl;
 					std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
@@ -266,8 +272,7 @@ namespace dtn
 					break;
 
 				case 'v':
-					std::cout << "IBR-DTN version: " << version() << std::endl;
-					exit(0);
+					_logger._verbose = true;
 					break;
 
 				case 'q':
@@ -316,9 +321,14 @@ namespace dtn
 				}
 			}
 
+			if (showversion == 1) {
+				std::cout << "IBR-DTN version: " << version() << std::endl;
+				exit(0);
+			}
+
 			_doapi = doapi;
 			_disco._enabled = disco;
-			dtn::utils::Clock::badclock = badclock;
+			dtn::utils::Clock::setBad(badclock);
 			_logger._timestamps = timestamp;
 		}
 
@@ -334,9 +344,9 @@ namespace dtn
 				_conf = ibrcommon::ConfigFile(filename);
 				_filename = filename;
 
-				IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Configuration", info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::ConfigFile::file_not_found&) {
-				IBRCOMMON_LOGGER(info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Configuration", info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
 				_conf = ConfigFile();
 
 				// set the default user to nobody
@@ -399,7 +409,7 @@ namespace dtn
 			_sync_level = conf.read<float>("time_sync_level", 0.15);
 
 			// enable the clock modify feature
-			dtn::utils::Clock::modify_clock = (conf.read<std::string>("time_set_clock", "no") == "yes");
+			dtn::utils::Clock::setModifyClock(conf.read<std::string>("time_set_clock", "no") == "yes");
 		}
 
 		void Configuration::DHT::load(const ibrcommon::ConfigFile &conf)
@@ -464,6 +474,7 @@ namespace dtn
 
 				return hostname;
 			}
+			return "noname";
 		}
 
 		const std::list<Configuration::NetConfig>& Configuration::Network::getInterfaces() const
@@ -517,9 +528,9 @@ namespace dtn
 				}
 
 				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(interface_name), port);
-			} catch (const ConfigFile::key_not_found&) {
-				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK), port);
-			}
+			} catch (const ConfigFile::key_not_found&) { }
+
+			return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK), port);
 		}
 
 		ibrcommon::File Configuration::getAPISocket() const
@@ -805,9 +816,9 @@ namespace dtn
 
 			try {
 				return ibrcommon::File(_conf.read<string>(key));
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
+			} catch (const ConfigFile::key_not_found&) { }
+
+			throw ParameterNotSetException();
 		}
 
 		bool Configuration::Discovery::enabled() const
@@ -835,13 +846,13 @@ namespace dtn
 			return _doapi;
 		}
 
-		string Configuration::getNotifyCommand()
+		std::string Configuration::getNotifyCommand()
 		{
 			try {
 				return _conf.read<string>("notify_cmd");
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
+			} catch (const ConfigFile::key_not_found&) { }
+
+			throw ParameterNotSetException();
 		}
 
 		Configuration::RoutingExtension Configuration::Network::getRoutingExtension() const
@@ -907,9 +918,9 @@ namespace dtn
 		{
 			try {
 				return ibrcommon::File(Configuration::getInstance()._conf.read<std::string>("statistic_file"));
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
+			} catch (const ConfigFile::key_not_found&) { }
+
+			throw ParameterNotSetException();
 		}
 
 		std::string Configuration::Statistic::type() const
@@ -977,7 +988,7 @@ namespace dtn
 
 				if (!_cert.exists())
 				{
-					IBRCOMMON_LOGGER(warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					activateTLS = false;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
@@ -990,7 +1001,7 @@ namespace dtn
 
 				if (!_key.exists())
 				{
-					IBRCOMMON_LOGGER(warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					activateTLS = false;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
@@ -1001,7 +1012,7 @@ namespace dtn
 			try{
 				_trustedCAPath = conf.read<std::string>("security_trusted_ca_path");
 				if(!_trustedCAPath.isDirectory()){
-					IBRCOMMON_LOGGER(warning) << "Trusted CA Path " << _trustedCAPath.getPath() << " does not exists or is no directory!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "Trusted CA Path " << _trustedCAPath.getPath() << " does not exists or is no directory!" << IBRCOMMON_LOGGER_ENDL;
 					activateTLS = false;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
@@ -1050,7 +1061,7 @@ namespace dtn
 
 					if (!_cert.exists())
 					{
-						IBRCOMMON_LOGGER(warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Configuration", warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::ConfigFile::key_not_found&) { }
 
@@ -1060,7 +1071,7 @@ namespace dtn
 
 					if (!_key.exists())
 					{
-						IBRCOMMON_LOGGER(warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Configuration", warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::ConfigFile::key_not_found&) { }
 			}
@@ -1071,7 +1082,7 @@ namespace dtn
 
 				if (!_bab_default_key.exists())
 				{
-					IBRCOMMON_LOGGER(warning) << "KEY file " << _bab_default_key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "KEY file " << _bab_default_key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
 			}
@@ -1093,7 +1104,7 @@ namespace dtn
 		bool Configuration::Security::TLSRequired() const
 		{
 			// TLS is only required, if the clock is in sync
-			if ((dtn::utils::Clock::rating == 0) && _tlsOptionalOnBadClock) return false;
+			if ((dtn::utils::Clock::getRating() == 0) && _tlsOptionalOnBadClock) return false;
 			return _tlsRequired;
 		}
 
@@ -1145,6 +1156,11 @@ namespace dtn
 		{
 			if (_logfile.getPath() == "") throw Configuration::ParameterNotSetException();
 			return _logfile;
+		}
+
+		bool Configuration::Logger::verbose() const
+		{
+			return _verbose;
 		}
 
 		bool Configuration::Logger::display_timestamps() const

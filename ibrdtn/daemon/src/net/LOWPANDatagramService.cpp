@@ -183,8 +183,14 @@ namespace dtn
 					::memcpy(&tmp[1], buf, length);
 				}
 
+				// disable auto-ack feature for broadcast
+				sock.setAutoAck(false);
+
 				// send converted line
 				sock.sendto(tmp, length + 1, 0, _addr_broadcast);
+
+				// re-enable auto-ack feature
+				sock.setAutoAck(true);
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("send failed");
 			}

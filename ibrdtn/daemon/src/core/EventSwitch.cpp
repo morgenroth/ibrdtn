@@ -149,6 +149,7 @@ namespace dtn
 			for (std::list<Worker*>::iterator iter = wlist.begin(); iter != wlist.end(); iter++)
 			{
 				Worker *w = (*iter);
+				w->stop();
 				w->join();
 				delete w;
 			}

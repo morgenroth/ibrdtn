@@ -1,16 +1,50 @@
-#!/bin/bash
+#!/bin/sh
 #
 
-CONF_PARAMS="--with-openssl --with-curl --with-lowpan --with-sqlite --with-dtnsec --with-compression --with-xml --with-tls --with-cppunit --with-dht"
+set -e
+
+# by default cppunit framework is included for unit testing
+CONF_PARAMS="--with-cppunit"
+
+# include openssl library
+CONF_PARAMS="${CONF_PARAMS} --with-openssl"
+
+# include curl library
+CONF_PARAMS="${CONF_PARAMS} --with-curl"
+
+# include lowpan (IEEE 802.15.4) features
+CONF_PARAMS="${CONF_PARAMS} --with-lowpan"
+
+# include sqlite library
+CONF_PARAMS="${CONF_PARAMS} --with-sqlite"
+
+# include support for the bundle security protocol
+CONF_PARAMS="${CONF_PARAMS} --with-dtnsec"
+
+# include compression support (zlib)
+CONF_PARAMS="${CONF_PARAMS} --with-compression"
+
+# include xml support (ibrcommon only)
+CONF_PARAMS="${CONF_PARAMS} --with-xml"
+
+# include tls support using openssl
+CONF_PARAMS="${CONF_PARAMS} --with-tls"
+
+# include dtndht library
+CONF_PARAMS="${CONF_PARAMS} --with-dht"
+
+# configures the project to be verbose and pedantic to coding errors and mistakes.
+DEVFLAGS="-Wall -Wextra -pedantic -D__DEVELOPMENT_ASSERTIONS__"
 
 if [ -e .coverage ]; then
-	export CXXFLAGS="-g -O0 -Wall -W -Wunused-variable -Wunused-parameter -Wunused-function -Wunused -Wno-system-headers -Wno-deprecated -Woverloaded-virtual -Wwrite-strings -fprofile-arcs -ftest-coverage"
-	export CFLAGS="-g -O0 -Wall -W -fprofile-arcs -ftest-coverage"
+	# enable debugging symbols and code coverage testing
+	export CXXFLAGS="-g -O0 ${DEVFLAGS} -fprofile-arcs -ftest-coverage"
+	export CFLAGS="-g -O0 ${DEVFLAGS} -fprofile-arcs -ftest-coverage"
 	export LDFLAGS="-fprofile-arcs -ftest-coverage"
 
 	./configure $CONF_PARAMS $@
 else
-	# configures the project to be verbose and pedantic to coding errors and mistakes. Additionally, debugging symbols are enabled.
-	./configure CXXFLAGS="-ggdb -g3 -Wall -Wextra -D__DEVELOPMENT_ASSERTIONS__" $CONF_PARAMS $@
+	# enable debugging symbols
+	./configure CXXFLAGS="-ggdb -g3 ${DEVFLAGS}" $CONF_PARAMS $@
 fi
 

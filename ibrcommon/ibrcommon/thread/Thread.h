@@ -93,6 +93,8 @@ namespace ibrcommon
 		Thread(size_t stack = DEFAULT_STACKSIZE);
 
 	public:
+		static size_t getNumberOfProcessors();
+
 		/**
 		 * Destroy thread object, thread-specific data, and execution context.
 		 */

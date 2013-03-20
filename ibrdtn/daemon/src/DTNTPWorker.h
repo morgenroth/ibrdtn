@@ -103,6 +103,7 @@ namespace dtn
 
 		private:
 			static const unsigned int PROTO_VERSION;
+			static const std::string TAG;
 
 			/**
 			 * check if we should sync with another node
@@ -137,13 +138,6 @@ namespace dtn
 			 * @param tv
 			 */
 			void sync(const TimeSyncMessage &msg, const struct timeval &tv, const struct timeval &local, const struct timeval &remote);
-
-			/**
-			 * Convert a timeval to a double value
-			 * @param val
-			 * @return
-			 */
-			double toDouble(const timeval &val) const;
 
 			// sync threshold
 			float _sync_threshold;

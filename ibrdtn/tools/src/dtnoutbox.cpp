@@ -21,12 +21,10 @@
 
 #include "config.h"
 #include "ibrdtn/api/Client.h"
-#include "ibrdtn/api/FileBundle.h"
 #include "ibrcommon/net/socket.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrdtn/data/PayloadBlock.h"
-#include "ibrdtn/api/BLOBBundle.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
@@ -195,7 +193,15 @@ int main(int argc, char** argv)
 
             	// create a new bundle
     			dtn::data::EID destination = EID(conf["destination"]);
-    			dtn::api::BLOBBundle b(destination, blob);
+
+    			// create a new bundle
+    			dtn::data::Bundle b;
+
+    			// set destination
+    			b._destination = destination;
+
+    			// add payload block using the blob
+    			b.push_back(blob);
 
                 // send the bundle
     			client << b; client.flush();

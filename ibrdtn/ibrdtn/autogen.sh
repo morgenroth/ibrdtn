@@ -1,13 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 #
 
-# create version file
-. mkversion.sh $@
+set -e
 
-# run libtool
-libtoolize -i -c
+# create version file
+./mkversion.sh $@
 
 # run autotools
-aclocal
-automake --add-missing -c
 autoreconf -i

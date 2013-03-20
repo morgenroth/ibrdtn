@@ -34,7 +34,7 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryAnnouncement::DiscoveryAnnouncement(const DiscoveryVersion version, dtn::data::EID eid)
-		 : _version(version), _flags(BEACON_NO_FLAGS), _canonical_eid(eid)
+		 : _version(version), _flags(BEACON_NO_FLAGS), _canonical_eid(eid), _sn(0)
 		{
 		}
 
@@ -50,7 +50,7 @@ namespace dtn
 				return (_flags & DiscoveryAnnouncement::BEACON_SHORT);
 
 			case DISCO_VERSION_01:
-				return !(_flags & DiscoveryAnnouncement::BEACON_SERVICE_BLOCK);
+				return !(_flags & DiscoveryAnnouncement::BEACON_CONTAINS_EID);
 			};
 
 			return false;

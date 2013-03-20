@@ -30,8 +30,10 @@ namespace dtn
 {
 	namespace net
 	{
+		const ibrcommon::vaddress UDPDatagramService::BROADCAST_ADDR("ff02::1", UDPDatagramService::BROADCAST_PORT, AF_INET6);
+
 		UDPDatagramService::UDPDatagramService(const ibrcommon::vinterface &iface, int port, size_t mtu)
-		 : _iface(iface), _bind_port(port)
+		 : _msock(NULL), _iface(iface), _bind_port(port)
 		{
 			// set connection parameters
 			_params.max_msg_length = mtu - 2;	// minus 2 bytes because we encode seqno and flags into 2 bytes
@@ -57,6 +59,22 @@ namespace dtn
 			_vsocket.destroy();
 
 			try {
+				// bind socket to the multicast port
+				_msock = new ibrcommon::multicastsocket(BROADCAST_PORT);
+
+				try {
+					_msock->join(BROADCAST_ADDR, _iface);
+				} catch (const ibrcommon::socket_raw_error &e) {
+					if (e.error() != EADDRINUSE) {
+						IBRCOMMON_LOGGER_TAG("UDPDatagramService", error) << "join failed on " << _iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+					}
+				} catch (const ibrcommon::socket_exception &e) {
+					IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 10) << "can not join " << BROADCAST_ADDR.toString() << " on " << _iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+				}
+
+				// add multicast socket to receiver sockets
+				_vsocket.add(_msock);
+
 				if (_iface.empty()) {
 					// bind socket to interface
 					_vsocket.add(new ibrcommon::udpsocket(_bind_port));
@@ -107,6 +125,27 @@ namespace dtn
 		 */
 		void UDPDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const std::string &identifier, const char *buf, size_t length) throw (DatagramException)
 		{
+			// decode address identifier
+			ibrcommon::vaddress destination;
+			UDPDatagramService::decode(identifier, destination);
+
+			// forward to actually send method
+			send(type, flags, seqno, destination, buf, length);
+		}
+
+		/**
+		 * Send the payload as datagram to all neighbors (broadcast)
+		 * @param buf The buffer to send.
+		 * @param length The number of available bytes in the buffer.
+		 */
+		void UDPDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const char *buf, size_t length) throw (DatagramException)
+		{
+			// forward to actually send method using the broadcast address
+			send(type, flags, seqno, BROADCAST_ADDR, buf, length);
+		}
+
+		void UDPDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const ibrcommon::vaddress &destination, const char *buf, size_t length) throw (DatagramException)
+		{
 			try {
 				char tmp[length + 2];
 
@@ -119,61 +158,22 @@ namespace dtn
 				// copy payload to the new buffer
 				::memcpy(&tmp[2], buf, length);
 
-				ibrcommon::vaddress destination;
-
-				// decode address
-				UDPDatagramService::decode(identifier, destination);
-
-				IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 20) << "send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << destination.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 20) << "send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << std::dec << seqno << "; address: " << destination.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				// create vaddress
 				ibrcommon::socketset sockset = _vsocket.getAll();
-				if (sockset.size() > 0) {
+				for (ibrcommon::socketset::iterator iter = sockset.begin(); iter != sockset.end(); iter++) {
+					if ((*iter) == _msock) continue;
 					try {
-						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**sockset.begin());
+						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 						sock.sendto(tmp, length + 2, 0, destination);
-					} catch (const std::bad_cast&) {
-
-					}
+						return;
+					} catch (const ibrcommon::Exception&) {
+					} catch (const std::bad_cast&) { }
 				}
-			} catch (const ibrcommon::Exception&) {
+
+				// throw exception if all sends failed
 				throw DatagramException("send failed");
-			}
-		}
-
-		/**
-		 * Send the payload as datagram to all neighbors (broadcast)
-		 * @param buf The buffer to send.
-		 * @param length The number of available bytes in the buffer.
-		 */
-		void UDPDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const char *buf, size_t length) throw (DatagramException)
-		{
-			try {
-				char tmp[length];
-
-				// add a 2-byte header - type of frame first
-				tmp[0] = type;
-
-				// flags (4-bit) + seqno (4-bit)
-				tmp[1] = (0xf0 & (flags << 4)) | (0x0f & seqno);
-
-				// copy payload to the new buffer
-				::memcpy(&tmp[2], buf, length);
-
-				IBRCOMMON_LOGGER_DEBUG_TAG("UDPDatagramService", 20) << "send() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << std::dec << seqno << IBRCOMMON_LOGGER_ENDL;
-
-				// create broadcast address
-				const ibrcommon::vaddress broadcast("ff02::1", BROADCAST_PORT, AF_INET6);
-
-				ibrcommon::socketset sockset = _vsocket.getAll();
-				if (sockset.size() > 0) {
-					try {
-						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**sockset.begin());
-						sock.sendto(tmp, length + 2, 0, broadcast);
-					} catch (const std::bad_cast&) {
-
-					}
-				}
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("send failed");
 			}
@@ -224,6 +224,8 @@ namespace dtn
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("receive failed");
 			}
+
+			return 0;
 		}
 
 		/**

@@ -61,7 +61,15 @@ namespace dtn
 			void add(const dtn::core::Node &n);
 			void remove(const dtn::core::Node &n);
 
-			void addConvergenceLayer(ConvergenceLayer *cl);
+			/**
+			 * Add a convergence layer
+			 */
+			void add(ConvergenceLayer *cl);
+
+			/**
+			 * Remove a convergence layer
+			 */
+			void remove(ConvergenceLayer *cl);
 
 			void queue(const dtn::data::EID &eid, const dtn::data::BundleID &b);
 

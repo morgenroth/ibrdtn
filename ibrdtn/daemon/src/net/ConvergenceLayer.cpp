@@ -26,6 +26,14 @@ namespace dtn
 {
 	namespace net
 	{
+		ConvergenceLayer::ConvergenceLayer()
+		{
+		}
+
+		ConvergenceLayer::~ConvergenceLayer()
+		{
+		}
+
 		ConvergenceLayer::Job::Job()
 		{
 		}

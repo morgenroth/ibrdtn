@@ -112,6 +112,7 @@ config 'daemon' 'main'
 config 'daemon' 'discovery'
 #	option address		224.0.0.1
 #	option timeout		5
+#	option crosslayer	yes
 
 config 'daemon' 'tcptuning'
 #	option 'idle_timeout'	120

@@ -67,12 +67,12 @@
 	ibrcommon::Logger::getVerbosity()
 
 #define IBRCOMMON_LOGGER(level) \
-	{ \
+	if (ibrcommon::LogLevel::level & ibrcommon::Logger::getLogMask()) { \
 		ibrcommon::Logger log = ibrcommon::Logger::level(""); \
 		log
 
 #define IBRCOMMON_LOGGER_TAG(tag, level) \
-	{ \
+	if (ibrcommon::LogLevel::level & ibrcommon::Logger::getLogMask()) { \
 		ibrcommon::Logger log = ibrcommon::Logger::level(tag); \
 		log
 
@@ -101,6 +101,20 @@
 
 namespace ibrcommon
 {
+	namespace LogLevel {
+		enum LogLevel
+		{
+			emergency =	1 << 0,	/* system is unusable */
+			alert =		1 << 1,	/* action must be taken immediately */
+			critical =	1 << 2,	/* critical conditions */
+			error =		1 << 3,	/* error conditions */
+			warning = 	1 << 4,	/* warning conditions */
+			notice = 	1 << 5,	/* normal but significant condition */
+			info = 		1 << 6,	/* informational */
+			debug =		1 << 7,	/* debug-level messages */
+		};
+	};
+
 	/**
 	 * @class Logger
 	 *
@@ -149,6 +163,11 @@ namespace ibrcommon
 		 * @param verbosity A verbosity level as number. Higher value leads to more output.
 		 */
 		static void setVerbosity(const int verbosity);
+
+		/**
+		 * Returns the global logging mask
+		 */
+		static unsigned char getLogMask();
 
 		/**
 		 * Get the global verbosity of the logger.
@@ -258,7 +277,10 @@ namespace ibrcommon
 			 * Get the global verbosity of the logger.
 			 * @return The verbosity level as number. Higher value leads to more output.
 			 */
-			int getVerbosity();
+			int getVerbosity() const;
+
+
+			unsigned char getLogMask() const;
 
 			/**
 			 * Add a standard output stream to the logging framework.
@@ -322,6 +344,7 @@ namespace ibrcommon
 			 */
 			void flush(const Logger &logger);
 
+			unsigned char _global_logmask;
 			int _verbosity;
 			bool _syslog;
 			unsigned char _syslog_mask;

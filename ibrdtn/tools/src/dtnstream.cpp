@@ -38,14 +38,14 @@ unsigned int __timeout_receive__ = 0;
 StreamBundle::StreamBundle()
  : _ref(ibrcommon::BLOB::create())
 {
-	StreamBlock &block = _b.push_front<StreamBlock>();
+	StreamBlock &block = push_front<StreamBlock>();
 	block.setSequenceNumber(0);
 
-	_b.push_back(_ref);
+	push_back(_ref);
 }
 
-StreamBundle::StreamBundle(const dtn::api::Bundle &b)
- : dtn::api::Bundle(b), _ref(getData())
+StreamBundle::StreamBundle(const dtn::data::Bundle &b)
+ : dtn::data::Bundle(b), _ref(getBlock<dtn::data::PayloadBlock>().getBLOB())
 {
 }
 
@@ -67,7 +67,7 @@ void StreamBundle::clear()
 
 	// increment the sequence number
 	try {
-		StreamBlock &block = _b.getBlock<StreamBlock>();
+		StreamBlock &block = getBlock<StreamBlock>();
 		block.setSequenceNumber(block.getSequenceNumber() + 1);
 	} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 }
@@ -81,7 +81,7 @@ size_t StreamBundle::size()
 size_t StreamBundle::getSequenceNumber(const StreamBundle &b)
 {
 	try {
-		const StreamBlock &block = b._b.getBlock<StreamBlock>();
+		const StreamBlock &block = b.getBlock<StreamBlock>();
 		return block.getSequenceNumber();
 	} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { }
 
@@ -95,13 +95,13 @@ BundleStreamBuf::BundleStreamBuf(dtn::api::Client &client, StreamBundle &chunk, 
 	// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 	setg(0, 0, 0);
 	setp(_in_buf, _in_buf + BUFF_SIZE - 1);
-};
+}
 
 BundleStreamBuf::~BundleStreamBuf()
 {
 	delete[] _in_buf;
 	delete[] _out_buf;
-};
+}
 
 int BundleStreamBuf::sync()
 {
@@ -148,7 +148,7 @@ std::char_traits<char>::int_type BundleStreamBuf::overflow(std::char_traits<char
 	return std::char_traits<char>::not_eof(c);
 }
 
-void BundleStreamBuf::received(const dtn::api::Bundle &b)
+void BundleStreamBuf::received(const dtn::data::Bundle &b)
 {
 	ibrcommon::MutexLock l(_chunks_cond);
 
@@ -202,8 +202,8 @@ std::char_traits<char>::int_type BundleStreamBuf::__underflow()
 	// get the first chunk in the buffer
 	const Chunk &c = (*_chunks.begin());
 
-	dtn::api::Bundle b = c._bundle;
-	ibrcommon::BLOB::Reference r = b.getData();
+	dtn::data::Bundle b = c._bundle;
+	ibrcommon::BLOB::Reference r = b.getBlock<dtn::data::PayloadBlock>().getBLOB();
 
 	// get stream lock
 	ibrcommon::BLOB::iostream stream = r.iostream();
@@ -250,7 +250,7 @@ std::char_traits<char>::int_type BundleStreamBuf::__underflow()
 	return std::char_traits<char>::not_eof((unsigned char) _out_buf[0]);
 }
 
-BundleStreamBuf::Chunk::Chunk(const dtn::api::Bundle &b)
+BundleStreamBuf::Chunk::Chunk(const dtn::data::Bundle &b)
  : _bundle(b), _seq(StreamBundle::getSequenceNumber(b))
 {
 }
@@ -271,21 +271,21 @@ bool BundleStreamBuf::Chunk::operator<(const Chunk& other) const
 
 BundleStream::BundleStream(ibrcommon::socketstream &stream, size_t chunk_size, const std::string &app, const dtn::data::EID &group, bool wait_seq_zero)
  : dtn::api::Client(app, group, stream), _stream(stream), _buf(*this, _chunk, chunk_size, wait_seq_zero)
-{};
+{}
 
-BundleStream::~BundleStream() {};
+BundleStream::~BundleStream() {}
 
 BundleStreamBuf& BundleStream::rdbuf()
 {
 	return _buf;
 }
 
-dtn::api::Bundle& BundleStream::base()
+dtn::data::Bundle& BundleStream::base()
 {
 	return _chunk;
 }
 
-void BundleStream::received(const dtn::api::Bundle &b)
+void BundleStream::received(const dtn::data::Bundle &b)
 {
 	_buf.received(b);
 }
@@ -422,12 +422,12 @@ int main(int argc, char *argv[])
 		// transmitter mode
 		if (_destination != dtn::data::EID())
 		{
-			bs.base().setDestination(_destination);
-			bs.base().setPriority(dtn::api::Bundle::BUNDLE_PRIORITY(_priority));
-			bs.base().setLifetime(_lifetime);
-			if (_bundle_encryption) bs.base().requestEncryption();
-			if (_bundle_signed) bs.base().requestSigned();
-			if (_bundle_group) bs.base().setSingleton(false);
+			bs.base()._destination = _destination;
+			bs.base().setPriority(dtn::data::PrimaryBlock::PRIORITY(_priority));
+			bs.base()._lifetime = _lifetime;
+			if (_bundle_encryption) bs.base().set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, true);
+			if (_bundle_signed) bs.base().set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
+			if (_bundle_group) bs.base().set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, false);
 			std::ostream stream(&bs.rdbuf());
 			stream << std::cin.rdbuf() << std::flush;
 		}

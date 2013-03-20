@@ -102,7 +102,7 @@ typedef nl_object nl_object_header;
 	}
 
 #ifdef HAVE_LIBNL3
-	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action, void *data)
+	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action, void*)
 #else
 	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action)
 #endif

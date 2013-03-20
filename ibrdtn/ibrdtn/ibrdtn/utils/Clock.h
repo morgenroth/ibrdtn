@@ -34,9 +34,22 @@ namespace dtn
 		class Clock
 		{
 		public:
+			/**
+			 * Return the current unix timestamp adjusted by
+			 * the configured timezone offset
+			 */
 			static size_t getUnixTimestamp();
+
+			/**
+			 * Return the current DTN timestamp adjusted by
+			 * the configured timezone offset
+			 */
 			static size_t getTime();
 
+			/**
+			 * Check if a bundle is expired
+			 * @return True if the bundle is expired
+			 */
 			static bool isExpired(const dtn::data::Bundle &b);
 
 			/**
@@ -45,6 +58,9 @@ namespace dtn
 			 */
 			static bool isExpired(size_t timestamp, size_t lifetime = 0) __attribute__ ((deprecated));
 
+			/**
+			 * Return the time of expiration of the given bundle
+			 */
 			static size_t getExpireTime(const dtn::data::Bundle &b);
 
 			/**
@@ -79,30 +95,83 @@ namespace dtn
 			 */
 			static void setOffset(const struct timeval &tv);
 
-			static int timezone;
+			static const uint32_t TIMEVAL_CONVERSION;
 
-			static uint32_t TIMEVAL_CONVERSION;
+			/**
+			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
+			 * to detect expiration.
+			 * @return True, if the local clock is marked as bad
+			 */
+			static bool isBad();
+
+			/**
+			 * Set the bad state of the clock returned by Clock::isBad()
+			 */
+			static void setBad(bool val);
+
+			/**
+			 * Specify a timezone offset in hours
+			 */
+			static int getTimezone();
+
+			/**
+			 * Set a timezone offset in hours
+			 */
+			static void setTimezone(int val);
 
 			/**
 			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
 			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives
 			 * an abstract knowledge about the rating of the local clock.
 			 */
-			static float rating;
+			static double getRating();
 
 			/**
-			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
-			 * to detect expiration.
+			 * Set the rating returned by Clock::getRating()
 			 */
-			static bool badclock;
+			static void setRating(double val);
 
 			/**
 			 * if set to true, the function settimeofday() and setOffset() will modify the clock of the host
 			 * instead of storing the local offset.
 			 */
-			static bool modify_clock;
+			static bool shouldModifyClock();
+
+			/**
+			 * Set the clock modification parameter returned by Clock::shouldModifyClock()
+			 */
+			static void setModifyClock(bool val);
+
+			/**
+			 * Converts a timeval to a double value
+			 */
+			static double toDouble(const timeval &val);
 
 		private:
+			/**
+			 * Timezone offset in hours
+			 */
+			static int _timezone;
+
+			/**
+			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
+			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives
+			 * an abstract knowledge about the rating of the local clock.
+			 */
+			static double _rating;
+
+			/**
+			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
+			 * to detect expiration.
+			 */
+			static bool _badclock;
+
+			/**
+			 * if set to true, the function settimeofday() and setOffset() will modify the clock of the host
+			 * instead of storing the local offset.
+			 */
+			static bool _modify_clock;
+
 			Clock();
 			virtual ~Clock();
 
