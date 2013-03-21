@@ -545,8 +545,11 @@ namespace dtn
 			}
 		}
 
-		void DatagramConnection::Sender::clearQueue()
+		void DatagramConnection::Sender::clearQueue() throw ()
 		{
+			// reset the previously aborted queue
+			queue.reset();
+
 			// requeue all bundles still queued
 			try {
 				while (true)
@@ -559,6 +562,9 @@ namespace dtn
 			} catch (const ibrcommon::QueueUnblockedException&) {
 				// queue empty
 			}
+
+			// abort all operations on the queue again
+			queue.abort();
 		}
 
 		void DatagramConnection::Sender::finally() throw ()

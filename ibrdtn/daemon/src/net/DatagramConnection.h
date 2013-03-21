@@ -176,7 +176,7 @@ namespace dtn
 				void finally() throw ();
 				void __cancellation() throw ();
 
-				void clearQueue();
+				void clearQueue() throw ();
 
 				ibrcommon::Queue<ConvergenceLayer::Job> queue;
 
