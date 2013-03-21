@@ -77,13 +77,17 @@ namespace dtn
 
 		void DatagramConnection::run() throw ()
 		{
+			// create a deserializer for the stream
+			dtn::data::DefaultDeserializer deserializer(_stream, dtn::core::BundleCore::getInstance());
+
 			try {
 				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::run()", 10) << "entered" << IBRCOMMON_LOGGER_ENDL;
 
 				while(_stream.good())
 				{
-					dtn::data::DefaultDeserializer deserializer(_stream, dtn::core::BundleCore::getInstance());
 					dtn::data::Bundle bundle;
+
+					// read the bundle out of the stream
 					deserializer >> bundle;
 
 					// raise default bundle received event
