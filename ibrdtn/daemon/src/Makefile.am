@@ -26,8 +26,6 @@ dtnd_sources = \
 	EchoWorker.h \
 	Notifier.cpp \
 	Notifier.h \
-	StatisticLogger.h \
-	StatisticLogger.cpp \
 	CapsuleWorker.cpp \
 	CapsuleWorker.h \
 	DTNTPWorker.cpp \

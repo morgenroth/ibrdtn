@@ -192,46 +192,6 @@ namespace dtn
 				bool enableCrosslayer() const;
 			};
 
-			class Statistic : public Configuration::Extension
-			{
-				friend class Configuration;
-			protected:
-				Statistic();
-				virtual ~Statistic();
-				void load(const ibrcommon::ConfigFile &conf);
-
-			public:
-				/**
-				 * @return True, if the statistic logger is activated.
-				 */
-				bool enabled() const;
-
-				/**
-				 * @return The file for statistic log output.
-				 */
-				ibrcommon::File logfile() const throw (ParameterNotSetException);
-
-				/**
-				 * @return The type of the statistic logger.
-				 */
-				std::string type() const;
-
-				/**
-				 * @return The interval for statistic log refresh.
-				 */
-				unsigned int interval() const;
-
-				/**
-				 * @return The address for UDP statistics
-				 */
-				std::string address() const;
-
-				/**
-				 * @return The port for UDP statistics
-				 */
-				unsigned int port() const;
-			};
-
 			class Debug : public Configuration::Extension
 			{
 				friend class Configuration;
@@ -695,7 +655,6 @@ namespace dtn
 			};
 
 			const Configuration::Discovery& getDiscovery() const;
-			const Configuration::Statistic& getStatistic() const;
 			const Configuration::Debug& getDebug() const;
 			const Configuration::Logger& getLogger() const;
 			const Configuration::Network& getNetwork() const;
@@ -707,7 +666,6 @@ namespace dtn
 		private:
 			ibrcommon::ConfigFile _conf;
 			Configuration::Discovery _disco;
-			Configuration::Statistic _stats;
 			Configuration::Debug _debug;
 			Configuration::Logger _logger;
 			Configuration::Network _network;

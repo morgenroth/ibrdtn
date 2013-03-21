@@ -93,8 +93,6 @@ namespace dtn
 		Configuration::Discovery::Discovery()
 		 : _enabled(true), _timeout(5), _crosslayer(false) {};
 
-		Configuration::Statistic::Statistic() {};
-
 		Configuration::Debug::Debug()
 		 : _enabled(false), _quiet(false), _level(0) {};
 
@@ -124,7 +122,6 @@ namespace dtn
 		{};
 
 		Configuration::Discovery::~Discovery() {};
-		Configuration::Statistic::~Statistic() {};
 		Configuration::Debug::~Debug() {};
 		Configuration::Logger::~Logger() {};
 		Configuration::Network::~Network() {};
@@ -135,11 +132,6 @@ namespace dtn
 		const Configuration::Discovery& Configuration::getDiscovery() const
 		{
 			return _disco;
-		}
-
-		const Configuration::Statistic& Configuration::getStatistic() const
-		{
-			return _stats;
 		}
 
 		const Configuration::Debug& Configuration::getDebug() const
@@ -355,7 +347,6 @@ namespace dtn
 
 			// load all configuration extensions
 			_disco.load(_conf);
-			_stats.load(_conf);
 			_debug.load(_conf);
 			_logger.load(_conf);
 			_network.load(_conf);
@@ -368,10 +359,6 @@ namespace dtn
 		{
 			_timeout = conf.read<unsigned int>("discovery_timeout", 5);
 			_crosslayer = (conf.read<std::string>("discovery_crosslayer", "no") == "yes");
-		}
-
-		void Configuration::Statistic::load(const ibrcommon::ConfigFile&)
-		{
 		}
 
 		void Configuration::Logger::load(const ibrcommon::ConfigFile &conf)
@@ -907,40 +894,6 @@ namespace dtn
 		std::set<ibrcommon::vinterface> Configuration::Network::getInternetDevices() const
 		{
 			return _internet_devices;
-		}
-
-		bool Configuration::Statistic::enabled() const
-		{
-			return Configuration::getInstance()._conf.keyExists("statistic_type");
-		}
-
-		ibrcommon::File Configuration::Statistic::logfile() const throw (ParameterNotSetException)
-		{
-			try {
-				return ibrcommon::File(Configuration::getInstance()._conf.read<std::string>("statistic_file"));
-			} catch (const ConfigFile::key_not_found&) { }
-
-			throw ParameterNotSetException();
-		}
-
-		std::string Configuration::Statistic::type() const
-		{
-			return Configuration::getInstance()._conf.read<std::string>("statistic_type", "stdout");
-		}
-
-		unsigned int Configuration::Statistic::interval() const
-		{
-			return Configuration::getInstance()._conf.read<unsigned int>("statistic_interval", 300);
-		}
-
-		std::string Configuration::Statistic::address() const
-		{
-			return Configuration::getInstance()._conf.read<std::string>("statistic_address", "127.0.0.1");
-		}
-
-		unsigned int Configuration::Statistic::port() const
-		{
-			return Configuration::getInstance()._conf.read<unsigned int>("statistic_port", 1234);
 		}
 
 		size_t Configuration::getLimit(const std::string &suffix) const
