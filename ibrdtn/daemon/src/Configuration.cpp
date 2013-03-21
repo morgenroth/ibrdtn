@@ -833,15 +833,6 @@ namespace dtn
 			return _doapi;
 		}
 
-		std::string Configuration::getNotifyCommand()
-		{
-			try {
-				return _conf.read<string>("notify_cmd");
-			} catch (const ConfigFile::key_not_found&) { }
-
-			throw ParameterNotSetException();
-		}
-
 		Configuration::RoutingExtension Configuration::Network::getRoutingExtension() const
 		{
 			if ( _routing == "epidemic" ) return EPIDEMIC_ROUTING;

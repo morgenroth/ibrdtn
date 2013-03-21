@@ -135,14 +135,6 @@ namespace dtn
 			std::string version();
 
 			/**
-			 * The keyword "notify_cmd" can define an external application which
-			 * is called by some events. This could be used to notify the user
-			 * of some events of interest.
-			 * @return A path to the notify command.
-			 */
-			std::string getNotifyCommand();
-
-			/**
 			 * Get the type of bundle storage to use.
 			 * @return
 			 */

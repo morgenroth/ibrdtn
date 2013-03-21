@@ -70,7 +70,6 @@
 #include "EchoWorker.h"
 #include "CapsuleWorker.h"
 #include "DTNTPWorker.h"
-#include "Notifier.h"
 #include "DevNull.h"
 #include "Component.h"
 
@@ -502,12 +501,6 @@ int ibrdtn_daemon_initialize_global_variables() {
 int ibrdtn_daemon_initialize_components() {
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 	std::list< dtn::daemon::Component* > &components = __ibrdtn_daemon_components;
-
-	// create a notifier if configured
-	try {
-		__ibrdtn_daemon_components.push_back( new dtn::daemon::Notifier( conf.getNotifyCommand() ) );
-	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-	}
 
 	if (conf.getNetwork().doFragmentation())
 	{
