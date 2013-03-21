@@ -38,6 +38,8 @@ namespace dtn
 		class MemoryBundleStorage : public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, public BundleList::Listener
 		{
 		public:
+			static const std::string TAG;
+
 			MemoryBundleStorage(size_t maxsize = 0);
 			virtual ~MemoryBundleStorage();
 
@@ -122,6 +124,8 @@ namespace dtn
 			typedef std::set<dtn::data::Bundle> bundle_list;
 			bundle_list _bundles;
 			dtn::data::BundleList _list;
+
+			void __erase(const bundle_list::iterator &iter);
 
 			struct CMP_BUNDLE_PRIORITY
 			{
