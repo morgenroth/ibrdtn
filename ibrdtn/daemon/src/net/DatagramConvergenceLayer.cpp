@@ -128,20 +128,19 @@ namespace dtn
 		{
 			ibrcommon::MutexLock lc(_connection_cond);
 
-			std::list<DatagramConnection*>::iterator i;
-			for(i = _connections.begin(); i != _connections.end(); ++i)
+			const std::list<DatagramConnection*>::iterator i = std::find(_connections.begin(), _connections.end(), conn);
+
+			if (i != _connections.end())
 			{
-				if ((*i) == conn)
-				{
-					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Down: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Down: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 
-					_connections.erase(i);
-					_connection_cond.signal(true);
-					return;
-				}
+				_connections.erase(i);
+				_connection_cond.signal(true);
 			}
-
-			IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << "Error in " << conn->getIdentifier() << " not found!" << IBRCOMMON_LOGGER_ENDL;
+			else
+			{
+				IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << "Error in " << conn->getIdentifier() << " not found!" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void DatagramConvergenceLayer::componentUp() throw ()
@@ -163,12 +162,10 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 
 			// shutdown all connections
+			ibrcommon::MutexLock l(_connection_cond);
+			for(std::list<DatagramConnection*>::iterator i = _connections.begin(); i != _connections.end(); ++i)
 			{
-				ibrcommon::MutexLock l(_connection_cond);
-				for(std::list<DatagramConnection*>::iterator i = _connections.begin(); i != _connections.end(); ++i)
-				{
-					(*i)->shutdown();
-				}
+				(*i)->shutdown();
 			}
 		}
 
@@ -319,7 +316,7 @@ namespace dtn
 
 		const std::string DatagramConvergenceLayer::getName() const
 		{
-			return "DatagramConvergenceLayer";
+			return DatagramConvergenceLayer::TAG;
 		}
 	} /* namespace data */
 } /* namespace dtn */
