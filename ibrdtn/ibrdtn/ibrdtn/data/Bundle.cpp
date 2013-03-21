@@ -22,6 +22,8 @@
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Serializer.h"
 #include "ibrdtn/data/AgeBlock.h"
+#include "ibrdtn/data/MetaBundle.h"
+#include "ibrdtn/data/BundleID.h"
 
 namespace dtn
 {
@@ -146,6 +148,16 @@ namespace dtn
 			}
 
 			return ret;
+		}
+
+		bool Bundle::operator==(const BundleID& other) const
+		{
+			return other == (*this);
+		}
+
+		bool Bundle::operator==(const MetaBundle& other) const
+		{
+			return other == (*this);
 		}
 
 		bool Bundle::operator!=(const Bundle& other) const

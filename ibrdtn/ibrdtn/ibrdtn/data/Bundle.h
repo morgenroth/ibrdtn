@@ -42,6 +42,8 @@ namespace dtn
 	namespace data
 	{
 		class BundleBuilder;
+		class MetaBundle;
+		class BundleID;
 
 		class Bundle : public PrimaryBlock
 		{
@@ -94,6 +96,9 @@ namespace dtn
 
 			Bundle();
 			virtual ~Bundle();
+
+			bool operator==(const BundleID& other) const;
+			bool operator==(const MetaBundle& other) const;
 
 			bool operator==(const Bundle& other) const;
 			bool operator!=(const Bundle& other) const;
