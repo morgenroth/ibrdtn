@@ -35,6 +35,8 @@
 #include <ibrcommon/Logger.h>
 #include <string.h>
 
+#include <iomanip>
+
 #define AVG_RTT_WEIGHT 0.875
 
 namespace dtn
@@ -63,6 +65,8 @@ namespace dtn
 
 		void DatagramConnection::shutdown()
 		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "shutdown()" << IBRCOMMON_LOGGER_ENDL;
+
 			// close the stream
 			__cancellation();
 		}
@@ -77,12 +81,12 @@ namespace dtn
 
 		void DatagramConnection::run() throw ()
 		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "run()" << IBRCOMMON_LOGGER_ENDL;
+
 			// create a deserializer for the stream
 			dtn::data::DefaultDeserializer deserializer(_stream, dtn::core::BundleCore::getInstance());
 
 			try {
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::run()", 10) << "entered" << IBRCOMMON_LOGGER_ENDL;
-
 				while(_stream.good())
 				{
 					dtn::data::Bundle bundle;
@@ -94,21 +98,23 @@ namespace dtn
 					dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false);
 				}
 			} catch (const dtn::InvalidDataException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::run()", 10) << "Received an invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "Received an invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::run()", 10) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "Main-thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		void DatagramConnection::setup() throw ()
 		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "setup()" << IBRCOMMON_LOGGER_ENDL;
+
 			_callback.connectionUp(this);
 			_sender.start();
 		}
 
 		void DatagramConnection::finally() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 60) << "down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "finally()" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				ibrcommon::MutexLock l(_ack_cond);
@@ -143,7 +149,7 @@ namespace dtn
 		 */
 		void DatagramConnection::queue(const ConvergenceLayer::Job &job)
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 10) << "job queued" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 15) << "queue bundle " << job._bundle.toString() << " to " << job._destination.getString() << IBRCOMMON_LOGGER_ENDL;
 			_sender.queue.push(job);
 		}
 
@@ -154,9 +160,9 @@ namespace dtn
 		 */
 		void DatagramConnection::queue(const char &flags, const unsigned int &seqno, const char *buf, int len)
 		{
-			try {
-				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 10) << "Received frame sequence number: " << seqno << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "frame received, flags: " << flags << ", seqno: " << seqno << ", len: " << len << IBRCOMMON_LOGGER_ENDL;
 
+			try {
 				// sequence number checks
 				if (_params.seq_check)
 				{
@@ -214,7 +220,7 @@ namespace dtn
 				}
 				else
 				{
-					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 45) << "segment received" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 45) << ((flags & DatagramService::SEGMENT_LAST) ? "last" : "middle") << " segment received" << IBRCOMMON_LOGGER_ENDL;
 
 					// this is one segment after the HEAD flush the buffers
 					if (_recv_state == RECV_HEAD)
@@ -240,7 +246,7 @@ namespace dtn
 				// increment next sequence number
 				_next_seqno = (seqno + 1) % _params.max_seq_numbers;
 			} catch (const WrongSeqNoException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "out of order sequence number received " << seqno << " (expected " << ex.expected_seqno << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 15) << "sequence number received " << seqno << ", expected " << ex.expected_seqno << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (_params.flowcontrol == DatagramService::FLOW_STOPNWAIT)
@@ -267,6 +273,8 @@ namespace dtn
 			// set the seqno for this segment
 			size_t seqno = _last_ack;
 
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "frame to send, flags: " << flags << ", seqno: " << seqno << ", len: " << len << IBRCOMMON_LOGGER_ENDL;
+
 			if (_params.flowcontrol == DatagramService::FLOW_STOPNWAIT)
 			{
 				// start time measurement
@@ -275,6 +283,8 @@ namespace dtn
 				// max. 5 retries
 				for (int i = 0; i < 5; i++)
 				{
+					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 30) << "transmit frame seqno: " << seqno << IBRCOMMON_LOGGER_ENDL;
+
 					// send the datagram
 					_callback.callback_send(*this, flags, seqno, getIdentifier(), buf, len);
 
@@ -305,6 +315,8 @@ namespace dtn
 
 						return;
 					} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack timeout for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
+
 						// fail -> increment the future timeout
 						adjust_rtt(_avg_rtt * 2);
 
@@ -330,7 +342,7 @@ namespace dtn
 
 		void DatagramConnection::ack(const unsigned int &seqno)
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack received " << seqno << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack received for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
 
 			ibrcommon::MutexLock l(_ack_cond);
 			_last_ack = seqno;
@@ -352,6 +364,8 @@ namespace dtn
 
 			// assign the new value
 			_avg_rtt = new_rtt;
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "RTT adjusted, measured value: " << std::setprecision(4) << value << ", new avg. RTT: " << std::setprecision(4) << _avg_rtt << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		DatagramConnection::Stream::Stream(DatagramConnection &conn, const size_t maxmsglen)
@@ -428,12 +442,12 @@ namespace dtn
 
 		std::char_traits<char>::int_type DatagramConnection::Stream::overflow(std::char_traits<char>::int_type c)
 		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "Stream::overflow()" << IBRCOMMON_LOGGER_ENDL;
+
 			if (_abort) throw DatagramException("stream aborted");
 
 			char *ibegin = _out_buf;
 			char *iend = pptr();
-
-			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::Stream::overflow()", 10) << "entered" << IBRCOMMON_LOGGER_ENDL;
 
 			// mark the buffer for outgoing data as free
 			// the +1 sparse the first byte in the buffer and leave room
@@ -451,7 +465,7 @@ namespace dtn
 			// if there is nothing to send, just return
 			if (bytes == 0)
 			{
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::Stream::overflow()", 10) << "nothing to sent" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 35) << "Stream::overflow() nothing to sent" << IBRCOMMON_LOGGER_ENDL;
 				return std::char_traits<char>::not_eof(c);
 			}
 
@@ -459,7 +473,7 @@ namespace dtn
 				// Send segment to CL, use callback interface
 				_callback.stream_send(_out_buf, bytes, _last_segment);
 			} catch (const DatagramException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::Stream::overflow()", 25) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 35) << "Stream::overflow() exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw;
 			}
 
@@ -468,9 +482,9 @@ namespace dtn
 
 		std::char_traits<char>::int_type DatagramConnection::Stream::underflow()
 		{
-			ibrcommon::MutexLock l(_queue_buf_cond);
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "Stream::underflow()" << IBRCOMMON_LOGGER_ENDL;
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::Stream::underflow()", 10) << "entered" << IBRCOMMON_LOGGER_ENDL;
+			ibrcommon::MutexLock l(_queue_buf_cond);
 
 			while (_queue_buf_len == 0)
 			{
@@ -503,9 +517,9 @@ namespace dtn
 
 		void DatagramConnection::Sender::run() throw ()
 		{
-			try {
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::Sender::run()", 10) << "entered"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "Sender::run()"<< IBRCOMMON_LOGGER_ENDL;
 
+			try {
 				// get reference to the storage
 				dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
@@ -536,12 +550,12 @@ namespace dtn
 					}
 				}
 
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::Sender::run()", 10) << "stream destroyed"<< IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "Sender::run() stream destroyed"<< IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::Sender::run()", 50) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "Sender::run() exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				return;
 			} catch (std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConnection::Sender::run()", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "Sender::run() exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -582,6 +596,7 @@ namespace dtn
 			// abort all blocking operations on the stream
 			_stream.close();
 
+			// abort blocking calls on the queue
 			queue.abort();
 		}
 	} /* namespace data */

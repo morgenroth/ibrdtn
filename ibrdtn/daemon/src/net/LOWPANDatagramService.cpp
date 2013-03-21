@@ -33,6 +33,8 @@ namespace dtn
 {
 	namespace net
 	{
+		const std::string LOWPANDatagramService::TAG = "LOWPANDatagramService";
+
 		LOWPANDatagramService::LOWPANDatagramService(const ibrcommon::vinterface &iface, int panid)
 		 : _panid(panid), _iface(iface)
 		{
@@ -94,7 +96,7 @@ namespace dtn
 			try {
 				if (length > _params.max_msg_length)
 				{
-					IBRCOMMON_LOGGER(error) << "LOWPANConvergenceLayer::send buffer to big to be transferred (" << length << ")."<< IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(LOWPANDatagramService::TAG, error) << "send buffer to big to be transferred (" << length << ")."<< IBRCOMMON_LOGGER_ENDL;
 					throw DatagramException("send failed - buffer to big to be transferred");
 				}
 
@@ -149,7 +151,7 @@ namespace dtn
 			try {
 				if (length > _params.max_msg_length)
 				{
-					IBRCOMMON_LOGGER(error) << "LOWPANConvergenceLayer::send buffer to big to be transferred (" << length << ")."<< IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(LOWPANDatagramService::TAG, error) << "send buffer to big to be transferred (" << length << ")."<< IBRCOMMON_LOGGER_ENDL;
 					throw DatagramException("send failed - buffer to big to be transferred");
 				}
 
@@ -256,7 +258,7 @@ namespace dtn
 					// encode into the right format
 					address = LOWPANDatagramService::encode(fromaddr);
 
-					IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANDatagramService", 20) << "recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << address << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(LOWPANDatagramService::TAG, 20) << "recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << address << IBRCOMMON_LOGGER_ENDL;
 
 					return ret - 1;
 				}

@@ -36,6 +36,8 @@ namespace dtn
 {
 	namespace net
 	{
+		const std::string DatagramConvergenceLayer::TAG = "DatagramConvergenceLayer";
+
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
 		 : _service(ds), _running(false), _discovery_sn(0)
 		{
@@ -85,7 +87,7 @@ namespace dtn
 			const dtn::core::Node::URI &uri = uri_list.front();
 
 			// some debugging
-			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer", 10) << "job queued to " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "job queued to " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// lock the connection list while working with it
 			ibrcommon::MutexLock lc(_connection_cond);
@@ -112,14 +114,14 @@ namespace dtn
 			_connections.push_back(connection);
 			_connection_cond.signal(true);
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer", 10) << "Selected identifier: " << connection->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Selected identifier: " << connection->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
 			return *connection;
 		}
 
 		void DatagramConvergenceLayer::connectionUp(const DatagramConnection *conn)
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer", 10) << "Up: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Up: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void DatagramConvergenceLayer::connectionDown(const DatagramConnection *conn)
@@ -131,7 +133,7 @@ namespace dtn
 			{
 				if ((*i) == conn)
 				{
-					IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer", 10) << "Down: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Down: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 
 					_connections.erase(i);
 					_connection_cond.signal(true);
@@ -139,7 +141,7 @@ namespace dtn
 				}
 			}
 
-			IBRCOMMON_LOGGER_TAG("DatagramConvergenceLayer", error) << "Error in " << conn->getIdentifier() << " not found!" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << "Error in " << conn->getIdentifier() << " not found!" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void DatagramConvergenceLayer::componentUp() throw ()
@@ -149,7 +151,7 @@ namespace dtn
 			try {
 				_service->bind();
 			} catch (const std::exception &e) {
-				IBRCOMMON_LOGGER_TAG("DatagramConvergenceLayer", error) << "bind to " << _service->getInterface().toString() << " failed (" << e.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << "bind to " << _service->getInterface().toString() << " failed (" << e.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// set the running variable
@@ -208,7 +210,7 @@ namespace dtn
 			char data[maxlen];
 			size_t len = 0;
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer::componentRun()", 10) << "entered" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() entered" << IBRCOMMON_LOGGER_ENDL;
 
 			while (_running)
 			{
@@ -220,13 +222,13 @@ namespace dtn
 					break;
 				}
 
-				IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer::componentRun()", 10) << "Address: " << address << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() Address: " << address << IBRCOMMON_LOGGER_ENDL;
 
 				// Check for extended header and retrieve if available
 				if (type == HEADER_BROADCAST)
 				{
 					try {
-						IBRCOMMON_LOGGER_DEBUG_TAG("DatagramConvergenceLayer::componentRun()", 10) << "Announcement received" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() Announcement received" << IBRCOMMON_LOGGER_ENDL;
 						DiscoveryAnnouncement announce;
 						stringstream ss;
 						ss.write(data, len);
@@ -279,7 +281,7 @@ namespace dtn
 						// Decide in which queue to write based on the src address
 						connection.queue(flags, seqno, data, len);
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_TAG("DatagramConvergenceLayer", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						connection.shutdown();
 					};
 				}

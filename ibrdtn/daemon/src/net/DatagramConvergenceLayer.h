@@ -39,6 +39,8 @@ namespace dtn
 			public EventReceiver, public DatagramConnectionCallback
 		{
 		public:
+			static const std::string TAG;
+
 			enum HEADER_FLAGS
 			{
 				HEADER_UNKOWN = 0,
