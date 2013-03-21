@@ -160,7 +160,7 @@ namespace dtn
 		 */
 		void DatagramConnection::queue(const char &flags, const unsigned int &seqno, const char *buf, int len)
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "frame received, flags: " << flags << ", seqno: " << seqno << ", len: " << len << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "frame received, flags: " << (int)flags << ", seqno: " << seqno << ", len: " << len << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				// sequence number checks
@@ -273,7 +273,7 @@ namespace dtn
 			// set the seqno for this segment
 			size_t seqno = _last_ack;
 
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "frame to send, flags: " << flags << ", seqno: " << seqno << ", len: " << len << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "frame to send, flags: " << (int)flags << ", seqno: " << seqno << ", len: " << len << IBRCOMMON_LOGGER_ENDL;
 
 			if (_params.flowcontrol == DatagramService::FLOW_STOPNWAIT)
 			{
