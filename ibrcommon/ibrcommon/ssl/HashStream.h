@@ -25,6 +25,7 @@
 #include "ibrcommon/Exceptions.h"
 #include <streambuf>
 #include <iostream>
+#include <vector>
 
 namespace ibrcommon
 {
@@ -46,13 +47,13 @@ namespace ibrcommon
 
 	private:
 		// Output buffer
-		char *data_buf_;
+		std::vector<char> data_buf_;
 
 		// length of the data buffer
 		size_t data_size_;
 
 		// Input buffer (contains the hash after finalize)
-		char *hash_buf_;
+		std::vector<char> hash_buf_;
 
 		// length of the hash
 		unsigned int hash_size_;

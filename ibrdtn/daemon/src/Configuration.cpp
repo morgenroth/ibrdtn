@@ -444,22 +444,14 @@ namespace dtn
 			try {
 				return _conf.read<string>("local_uri");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
-				char *hostname_array = new char[64];
-				if ( gethostname(hostname_array, 64) != 0 )
+				std::vector<char> hostname_array(64);
+				if ( gethostname(&hostname_array[0], hostname_array.size()) != 0 )
 				{
 					// error
-					delete[] hostname_array;
 					return "local";
 				}
 
-				string hostname(hostname_array);
-				delete[] hostname_array;
-
-				stringstream ss;
-				ss << "dtn://" << hostname;
-				ss >> hostname;
-
-				return hostname;
+				return "dtn://" + std::string(&hostname_array[0]);
 			}
 			return "noname";
 		}

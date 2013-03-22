@@ -30,20 +30,18 @@ namespace dtn
 	namespace api
 	{
 		BundleStreamBuf::BundleStreamBuf(BundleStreamBufCallback &callback, size_t chunk_size, bool wait_seq_zero)
-		 : _callback(callback), _in_buf(new char[BUFF_SIZE]), _out_buf(new char[BUFF_SIZE]),
+		 : _callback(callback), _in_buf(BUFF_SIZE), _out_buf(BUFF_SIZE),
 		   _chunk_size(chunk_size), _chunk_payload(ibrcommon::BLOB::create()), _chunk_offset(0), _in_seq(0),
 		   _out_seq(0), _streaming(wait_seq_zero), _first_chunk(true), _last_chunk_received(false), _timeout_receive(0)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
-			setp(_in_buf, _in_buf + BUFF_SIZE - 1);
-		};
+			setp(&_in_buf[0], &_in_buf[BUFF_SIZE - 1]);
+		}
 
 		BundleStreamBuf::~BundleStreamBuf()
 		{
-			delete[] _in_buf;
-			delete[] _out_buf;
-		};
+		}
 
 		int BundleStreamBuf::sync()
 		{
@@ -59,11 +57,11 @@ namespace dtn
 
 		std::char_traits<char>::int_type BundleStreamBuf::overflow(std::char_traits<char>::int_type c)
 		{
-			char *ibegin = _in_buf;
+			char *ibegin = &_in_buf[0];
 			char *iend = pptr();
 
 			// mark the buffer as free
-			setp(_in_buf, _in_buf + BUFF_SIZE - 1);
+			setp(&_in_buf[0], &_in_buf[0] + BUFF_SIZE - 1);
 
 			if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 			{
@@ -77,7 +75,7 @@ namespace dtn
 			}
 
 			// copy data into the bundles payload
-			BundleStreamBuf::append(_chunk_payload, _in_buf, iend - ibegin);
+			BundleStreamBuf::append(_chunk_payload, &_in_buf[0], iend - ibegin);
 
 			// if size exceeds chunk limit, send it
 			if (_chunk_payload.iostream().size() > _chunk_size)
@@ -226,7 +224,7 @@ namespace dtn
 				(*stream).seekg(_chunk_offset, ios::beg);
 
 				// copy the data of the last received bundle into the buffer
-				(*stream).read(_out_buf, BUFF_SIZE);
+				(*stream).read(&_out_buf[0], BUFF_SIZE);
 
 				// get the read bytes
 				bytes = (*stream).gcount();
@@ -272,9 +270,9 @@ namespace dtn
 
 			// Since the input buffer content is now valid (or is new)
 			// the get pointer should be initialized (or reset).
-			setg(_out_buf, _out_buf, _out_buf + bytes);
+			setg(&_out_buf[0], &_out_buf[0], &_out_buf[0] + bytes);
 
-			return std::char_traits<char>::not_eof((unsigned char) _out_buf[0]);
+			return std::char_traits<char>::not_eof(_out_buf[0]);
 		}
 
 		BundleStreamBuf::Chunk::Chunk(const dtn::data::MetaBundle &m)

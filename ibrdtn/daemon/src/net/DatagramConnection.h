@@ -29,6 +29,7 @@
 #include <ibrcommon/thread/Conditional.h>
 #include <streambuf>
 #include <iostream>
+#include <vector>
 #include <stdint.h>
 
 namespace dtn
@@ -141,7 +142,7 @@ namespace dtn
 				// buffer for incoming data to queue
 				// the underflow method will block until
 				// this buffer contains any data
-				char *_queue_buf;
+				std::vector<char> _queue_buf;
 
 				// the number of bytes available in the queue buffer
 				int _queue_buf_len;
@@ -152,11 +153,11 @@ namespace dtn
 
 				// outgoing data from the upper layer is stored
 				// here first and processed by the overflow() method
-				char *_out_buf;
+				std::vector<char> _out_buf;
 
 				// incoming data to deliver data to the upper layer
 				// is stored in this buffer by the underflow() method
-				char *_in_buf;
+				std::vector<char> _in_buf;
 
 				// this variable is set to true to shutdown
 				// this stream
@@ -204,7 +205,7 @@ namespace dtn
 			// stores the head of each connection
 			// the head is hold back until at least a second
 			// or the last segment was received
-			char *_head_buf;
+			std::vector<char> _head_buf;
 			size_t _head_len;
 
 			const DatagramService::Parameter _params;

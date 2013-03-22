@@ -26,16 +26,13 @@
 namespace ibrcommon
 {
 	socketstream::socketstream(clientsocket *sock, size_t buffer_size)
-	 : std::iostream(this), errmsg(ERROR_NONE), _bufsize(buffer_size), in_buf_(NULL), out_buf_(NULL)
+	 : std::iostream(this), errmsg(ERROR_NONE), _bufsize(buffer_size), in_buf_(_bufsize), out_buf_(_bufsize)
 	{
 		// clear the local timer
 		timerclear(&_timeout);
 
-		in_buf_ = new char[_bufsize];
-		out_buf_ = new char[_bufsize];
-
 		// mark the buffer as free
-		setp(out_buf_, out_buf_ + _bufsize - 1);
+		setp(&out_buf_[0], &out_buf_[0] + _bufsize - 1);
 		setg(0, 0, 0);
 
 		_socket.add(sock);
@@ -45,9 +42,6 @@ namespace ibrcommon
 	socketstream::~socketstream()
 	{
 		_socket.destroy();
-
-		delete[] in_buf_;
-		delete[] out_buf_;
 	}
 
 	void socketstream::close()
@@ -72,11 +66,11 @@ namespace ibrcommon
 
 	std::char_traits<char>::int_type socketstream::overflow(std::char_traits<char>::int_type c)
 	{
-		char *ibegin = out_buf_;
+		char *ibegin = &out_buf_[0];
 		char *iend = pptr();
 
 		// mark the buffer as free
-		setp(out_buf_, out_buf_ + _bufsize - 1);
+		setp(&out_buf_[0], &out_buf_[0] + _bufsize - 1);
 
 		if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 		{
@@ -105,7 +99,7 @@ namespace ibrcommon
 			// send the data
 			clientsocket &sock = static_cast<clientsocket&>(**(writeset.begin()));
 
-			int ret = sock.send(out_buf_, (iend - ibegin), 0);
+			int ret = sock.send(&out_buf_[0], (iend - ibegin), 0);
 
 			// check how many bytes are sent
 			if ((size_t)ret < bytes)
@@ -124,7 +118,7 @@ namespace ibrcommon
 				char *buffer_begin = ibegin + bytes_left;
 
 				// mark the buffer as free
-				setp(buffer_begin, out_buf_ + _bufsize - 1);
+				setp(buffer_begin, &out_buf_[0] + _bufsize - 1);
 			}
 		} catch (const vsocket_interrupt &e) {
 			errmsg = ERROR_CLOSED;
@@ -181,7 +175,7 @@ namespace ibrcommon
 			clientsocket &sock = static_cast<clientsocket&>(**(readset.begin()));
 
 			// read some bytes
-			int bytes = sock.recv(in_buf_, _bufsize, 0);
+			int bytes = sock.recv(&in_buf_[0], _bufsize, 0);
 
 			// end of stream
 			if (bytes == 0)
@@ -194,9 +188,9 @@ namespace ibrcommon
 
 			// Since the input buffer content is now valid (or is new)
 			// the get pointer should be initialized (or reset).
-			setg(in_buf_, in_buf_, in_buf_ + bytes);
+			setg(&in_buf_[0], &in_buf_[0], &in_buf_[0] + bytes);
 
-			return std::char_traits<char>::not_eof((unsigned char) in_buf_[0]);
+			return std::char_traits<char>::not_eof(in_buf_[0]);
 		} catch (const vsocket_interrupt &e) {
 			errmsg = ERROR_CLOSED;
 			close();

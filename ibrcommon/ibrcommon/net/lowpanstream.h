@@ -26,6 +26,7 @@
 #include "ibrcommon/net/vaddress.h"
 #include <streambuf>
 #include <iostream>
+#include <vector>
 #include <stdint.h>
 
 namespace ibrcommon
@@ -73,13 +74,13 @@ namespace ibrcommon
 		char _out_stat;
 
 		// Input buffer
-		char *in_buf_;
+		std::vector<char> in_buf_;
 		int in_buf_len;
 		bool in_buf_free;
 
 		// Output buffer
-		char *out_buf_;
-		char *out2_buf_;
+		std::vector<char> out_buf_;
+		std::vector<char> out2_buf_;
 
 		// sequence number
 		uint8_t in_seq_num_;

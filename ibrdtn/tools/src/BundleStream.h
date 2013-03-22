@@ -27,6 +27,7 @@
 #include <ibrdtn/data/SDNV.h>
 #include <ibrdtn/data/StreamBlock.h>
 #include <ibrcommon/net/socketstream.h>
+#include <vector>
 
 class StreamBundle : public dtn::data::Bundle
 {
@@ -90,9 +91,9 @@ private:
 	};
 
 	// Input buffer
-	char *_in_buf;
+	std::vector<char> _in_buf;
 	// Output buffer
-	char *_out_buf;
+	std::vector<char> _out_buf;
 
 	dtn::api::Client &_client;
 	StreamBundle &_chunk;

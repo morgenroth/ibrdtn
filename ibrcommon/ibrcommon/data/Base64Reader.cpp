@@ -27,14 +27,13 @@
 namespace ibrcommon
 {
 	Base64Reader::Base64Reader(std::istream &stream, const size_t limit, const size_t buffer)
-	 : std::istream(this), _stream(stream), data_buf_(new char[buffer]), data_size_(buffer), _base64_state(0), _base64_padding(0), _byte_read(0), _byte_limit(limit)
+	 : std::istream(this), _stream(stream), data_buf_(buffer), data_size_(buffer), _base64_state(0), _base64_padding(0), _byte_read(0), _byte_limit(limit)
 	{
 		setg(0, 0, 0);
 	}
 
 	Base64Reader::~Base64Reader()
 	{
-		delete[] data_buf_;
 	}
 
 	void Base64Reader::set_b64(char val)
@@ -196,13 +195,13 @@ namespace ibrcommon
 
 		// Since the input buffer content is now valid (or is new)
 		// the get pointer should be initialized (or reset).
-		setg(data_buf_, data_buf_, data_buf_ + decoded_bytes);
+		setg(&data_buf_[0], &data_buf_[0], &data_buf_[0] + decoded_bytes);
 
 		if (_byte_limit > 0)
 		{
 			_byte_read += decoded_bytes;
 		}
 
-		return std::char_traits<char>::not_eof((unsigned char) data_buf_[0]);
+		return std::char_traits<char>::not_eof(data_buf_[0]);
 	}
 }

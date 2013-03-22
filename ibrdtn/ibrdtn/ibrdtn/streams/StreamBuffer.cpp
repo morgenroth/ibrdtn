@@ -28,20 +28,16 @@ namespace dtn
 	namespace streams
 	{
 		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream, const size_t buffer_size)
-			: _buffer_size(buffer_size), _statebits(STREAM_SOB), _conn(conn), in_buf_(new char[buffer_size]), out_buf_(new char[buffer_size]), _stream(stream),
+			: _buffer_size(buffer_size), _statebits(STREAM_SOB), _conn(conn), in_buf_(buffer_size), out_buf_(buffer_size), _stream(stream),
 			  _recv_size(0), _underflow_data_remain(0), _underflow_state(IDLE), _idle_timer(*this, 0)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
-			setp(out_buf_, out_buf_ + _buffer_size - 1);
+			setp(&out_buf_[0], &out_buf_[0] + _buffer_size - 1);
 		}
 
 		StreamConnection::StreamBuffer::~StreamBuffer()
 		{
-			// clear the own buffer
-			delete [] in_buf_;
-			delete [] out_buf_;
-
 			// stop the idle timer
 			_idle_timer.stop();
 		}
@@ -249,11 +245,11 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(90) << "StreamBuffer::overflow() called" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
-				char *ibegin = out_buf_;
+				char *ibegin = &out_buf_[0];
 				char *iend = pptr();
 
 				// mark the buffer as free
-				setp(out_buf_, out_buf_ + _buffer_size - 1);
+				setp(&out_buf_[0], &out_buf_[0] + _buffer_size - 1);
 
 				// append the last character
 				if(!traits_type::eq_int_type(c, traits_type::eof())) {
@@ -303,7 +299,7 @@ namespace dtn
 
 					// write the segment to the stream
 					_stream << seg;
-					_stream.write(out_buf_, seg._value);
+					_stream.write(&out_buf_[0], seg._value);
 				}
 
 				return traits_type::not_eof(c);
@@ -606,7 +602,7 @@ namespace dtn
 					if (!_stream.good()) throw StreamErrorException("stream went bad");
 
 					// here receive the data
-					_stream.read(in_buf_, readsize);
+					_stream.read(&in_buf_[0], readsize);
 
 					// reset idle timeout
 					_idle_timer.reset();
@@ -620,9 +616,9 @@ namespace dtn
 
 				// Since the input buffer content is now valid (or is new)
 				// the get pointer should be initialized (or reset).
-				setg(in_buf_, in_buf_, in_buf_ + readsize);
+				setg(&in_buf_[0], &in_buf_[0], &in_buf_[0] + readsize);
 
-				return traits_type::not_eof((unsigned char)in_buf_[0]);
+				return traits_type::not_eof(in_buf_[0]);
 
 			} catch (const StreamClosedException&) {
 				// set failed bit

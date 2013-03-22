@@ -47,10 +47,8 @@ namespace dtn
 
 		DatagramConnection::DatagramConnection(const std::string &identifier, const DatagramService::Parameter &params, DatagramConnectionCallback &callback)
 		 : _send_state(SEND_IDLE), _recv_state(RECV_IDLE), _callback(callback), _identifier(identifier), _stream(*this, params.max_msg_length), _sender(*this, _stream),
-		   _last_ack(0), _next_seqno(0), _head_buf(NULL), _head_len(0), _params(params), _avg_rtt(params.initial_timeout)
+		   _last_ack(0), _next_seqno(0), _head_buf(params.max_msg_length), _head_len(0), _params(params), _avg_rtt(params.initial_timeout)
 		{
-			// initialize the head buffer
-			_head_buf = new char[params.max_msg_length];
 		}
 
 		DatagramConnection::~DatagramConnection()
@@ -58,9 +56,6 @@ namespace dtn
 			// do not destroy this instance as long as
 			// the sender thread is running
 			_sender.join();
-
-			// delete head buffer
-			delete _head_buf;
 		}
 
 		void DatagramConnection::shutdown()
@@ -198,7 +193,7 @@ namespace dtn
 					{
 						// first segment received
 						// store the segment in a buffer
-						::memcpy(_head_buf, buf, len);
+						::memcpy(&_head_buf[0], buf, len);
 						_head_len = len;
 
 						// enter the HEAD state
@@ -209,7 +204,7 @@ namespace dtn
 						// last ACK seams to be lost or the peer has been restarted after
 						// sending the first segment
 						// overwrite the buffer with the new segment
-						::memcpy(_head_buf, buf, len);
+						::memcpy(&_head_buf[0], buf, len);
 						_head_len = len;
 					}
 					else
@@ -226,7 +221,7 @@ namespace dtn
 					if (_recv_state == RECV_HEAD)
 					{
 						// forward HEAD buffer to the stream
-						_stream.queue(_head_buf, _head_len);
+						_stream.queue(&_head_buf[0], _head_len);
 						_head_len = 0;
 
 						// switch to TRANSMISSION state
@@ -370,8 +365,8 @@ namespace dtn
 
 		DatagramConnection::Stream::Stream(DatagramConnection &conn, const size_t maxmsglen)
 		 : std::iostream(this), _buf_size(maxmsglen), _last_segment(false),
-		   _queue_buf(new char[_buf_size]), _queue_buf_len(0),
-		   _out_buf(new char[_buf_size]), _in_buf(new char[_buf_size]),
+		   _queue_buf(_buf_size), _queue_buf_len(0),
+		   _out_buf(_buf_size), _in_buf(_buf_size),
 		   _abort(false), _callback(conn)
 		{
 			// Initialize get pointer. This should be zero so that underflow
@@ -381,14 +376,11 @@ namespace dtn
 			// mark the buffer for outgoing data as free
 			// the +1 sparse the first byte in the buffer and leave room
 			// for the processing flags of the segment
-			setp(_out_buf, _out_buf + _buf_size - 1);
+			setp(&_out_buf[0], &_out_buf[0] + _buf_size - 1);
 		}
 
 		DatagramConnection::Stream::~Stream()
 		{
-			delete[] _queue_buf;
-			delete[] _out_buf;
-			delete[] _in_buf;
 		}
 
 		void DatagramConnection::Stream::queue(const char *buf, int len) throw (DatagramException)
@@ -403,7 +395,7 @@ namespace dtn
 			}
 
 			// copy the new data into the buffer, but leave out the first byte (header)
-			::memcpy(_queue_buf, buf, len);
+			::memcpy(&_queue_buf[0], buf, len);
 
 			// store the buffer length
 			_queue_buf_len = len;
@@ -446,13 +438,13 @@ namespace dtn
 
 			if (_abort) throw DatagramException("stream aborted");
 
-			char *ibegin = _out_buf;
+			char *ibegin = &_out_buf[0];
 			char *iend = pptr();
 
 			// mark the buffer for outgoing data as free
 			// the +1 sparse the first byte in the buffer and leave room
 			// for the processing flags of the segment
-			setp(_out_buf, _out_buf + _buf_size - 1);
+			setp(&_out_buf[0], &_out_buf[0] + _buf_size - 1);
 
 			if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 			{
@@ -471,7 +463,7 @@ namespace dtn
 
 			try {
 				// Send segment to CL, use callback interface
-				_callback.stream_send(_out_buf, bytes, _last_segment);
+				_callback.stream_send(&_out_buf[0], bytes, _last_segment);
 			} catch (const DatagramException &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 35) << "Stream::overflow() exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw;
@@ -493,17 +485,17 @@ namespace dtn
 			}
 
 			// copy the queue buffer to an internal buffer
-			::memcpy(_in_buf,_queue_buf, _queue_buf_len);
+			::memcpy(&_in_buf[0], &_queue_buf[0], _queue_buf_len);
 
 			// Since the input buffer content is now valid (or is new)
 			// the get pointer should be initialized (or reset).
-			setg(_in_buf, _in_buf, _in_buf + _queue_buf_len);
+			setg(&_in_buf[0], &_in_buf[0], &_in_buf[0] + _queue_buf_len);
 
 			// mark the queue buffer as free
 			_queue_buf_len = 0;
 			_queue_buf_cond.signal();
 
-			return std::char_traits<char>::not_eof((unsigned char) _in_buf[0]);
+			return std::char_traits<char>::not_eof(_in_buf[0]);
 		}
 
 		DatagramConnection::Sender::Sender(DatagramConnection &conn, Stream &stream)

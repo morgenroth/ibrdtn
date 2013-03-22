@@ -24,6 +24,7 @@
 
 #include "ibrcommon/data/Base64.h"
 #include <iostream>
+#include <vector>
 #include <string.h>
 #include <stdint.h>
 
@@ -44,7 +45,7 @@ namespace ibrcommon
 		std::istream &_stream;
 
 		// Output buffer
-		char *data_buf_;
+		std::vector<char> data_buf_;
 
 		// length of the data buffer
 		size_t data_size_;

@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <sys/time.h>
 #include <iomanip>
+#include <vector>
 #include <unistd.h>
 
 #ifdef HAVE_SYSLOG_H
@@ -311,14 +312,12 @@ namespace ibrcommon
 
 			if (_options & LOG_HOSTNAME)
 			{
-				char *hostname_array = new char[64];
-				if ( gethostname(hostname_array, 64) == 0 )
+				std::vector<char> hostname_array(64);
+				if ( gethostname(&hostname_array[0], 64) == 0 )
 				{
-					std::string hostname(hostname_array);
+					std::string hostname(&hostname_array[0]);
 					prefixes.push_back(hostname);
 				}
-
-				delete[] hostname_array;
 			}
 
 			if (_options & LOG_TAG)

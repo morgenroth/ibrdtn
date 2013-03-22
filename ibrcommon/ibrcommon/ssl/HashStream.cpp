@@ -25,17 +25,15 @@
 namespace ibrcommon
 {
 	HashStream::HashStream(const size_t hash, const size_t buffer)
-	 : iostream(this), data_buf_(new char[buffer]), data_size_(buffer), hash_buf_(new char[hash]), hash_size_(hash), final_(false)
+	 : iostream(this), data_buf_(buffer), data_size_(buffer), hash_buf_(hash), hash_size_(hash), final_(false)
 	{
 		// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 		setg(0, 0, 0);
-		setp(data_buf_, data_buf_ + data_size_ - 1);
+		setp(&data_buf_[0], &data_buf_[0] + data_size_ - 1);
 	}
 
 	HashStream::~HashStream()
 	{
-		delete[] data_buf_;
-		delete[] hash_buf_;
 	}
 
 	std::string HashStream::extract(std::istream &stream)
@@ -56,11 +54,11 @@ namespace ibrcommon
 
 	std::char_traits<char>::int_type HashStream::overflow(std::char_traits<char>::int_type c)
 	{
-		char *ibegin = data_buf_;
+		char *ibegin = &data_buf_[0];
 		char *iend = pptr();
 
 		// mark the buffer as free
-		setp(data_buf_, data_buf_ + data_size_ - 1);
+		setp(&data_buf_[0], &data_buf_[0] + data_size_ - 1);
 
 		if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 		{
@@ -74,7 +72,7 @@ namespace ibrcommon
 		}
 
 		// hashing
-		update(data_buf_, (iend - ibegin));
+		update(&data_buf_[0], (iend - ibegin));
 
 		return std::char_traits<char>::not_eof(c);
 	}
@@ -85,14 +83,14 @@ namespace ibrcommon
 
 		if (!final_)
 		{
-			finalize(hash_buf_, hash_size_);
+			finalize(&hash_buf_[0], hash_size_);
 			final_ = true;
 
 			// Since the input buffer content is now valid (or is new)
 			// the get pointer should be initialized (or reset).
-			setg(hash_buf_, hash_buf_, hash_buf_ + hash_size_);
+			setg(&hash_buf_[0], &hash_buf_[0], &hash_buf_[0] + hash_size_);
 
-			return std::char_traits<char>::not_eof((unsigned char) hash_buf_[0]);
+			return std::char_traits<char>::not_eof(hash_buf_[0]);
 		}
 
 		return std::char_traits<char>::eof();

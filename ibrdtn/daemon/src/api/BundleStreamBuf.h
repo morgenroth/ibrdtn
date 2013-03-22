@@ -81,9 +81,9 @@ namespace dtn
 			BundleStreamBufCallback &_callback;
 
 			// Input buffer
-			char *_in_buf;
+			std::vector<char> _in_buf;
 			// Output buffer
-			char *_out_buf;
+			std::vector<char> _out_buf;
 
 			size_t _chunk_size;
 

@@ -24,14 +24,13 @@
 namespace ibrcommon
 {
 	CipherStream::CipherStream(std::ostream &stream, const CipherMode mode, const size_t buffer)
-	 : std::ostream(this), _mode(mode), _stream(stream), data_buf_(new char[buffer]), data_size_(buffer)
+	 : std::ostream(this), _mode(mode), _stream(stream), data_buf_(buffer), data_size_(buffer)
 	{
-		setp(data_buf_, data_buf_ + data_size_ - 1);
+		setp(&data_buf_[0], &data_buf_[0] + data_size_ - 1);
 	}
 
 	CipherStream::~CipherStream()
 	{
-		delete[] data_buf_;
 	}
 
 	void CipherStream::encrypt(std::iostream& stream)
@@ -105,11 +104,11 @@ namespace ibrcommon
 
 	std::char_traits<char>::int_type CipherStream::overflow(std::char_traits<char>::int_type c)
 	{
-		char *ibegin = data_buf_;
+		char *ibegin = &data_buf_[0];
 		char *iend = pptr();
 
 		// mark the buffer as free
-		setp(data_buf_, data_buf_ + data_size_ - 1);
+		setp(&data_buf_[0], &data_buf_[0] + data_size_ - 1);
 
 		if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 		{
@@ -126,16 +125,16 @@ namespace ibrcommon
 		switch (_mode)
 		{
 		case CIPHER_ENCRYPT:
-			encrypt(data_buf_, (iend - ibegin));
+			encrypt(&data_buf_[0], (iend - ibegin));
 			break;
 
 		case CIPHER_DECRYPT:
-			decrypt(data_buf_, (iend - ibegin));
+			decrypt(&data_buf_[0], (iend - ibegin));
 			break;
 		}
 
 		// write result to stream
-		_stream.write(data_buf_, (iend - ibegin));
+		_stream.write(&data_buf_[0], (iend - ibegin));
 
 		return std::char_traits<char>::not_eof(c);
 	}
