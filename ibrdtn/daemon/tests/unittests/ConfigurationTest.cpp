@@ -106,13 +106,6 @@ void ConfigurationTest::testVersion()
 	CPPUNIT_ASSERT(conf.version() != "0.0.0");
 }
 
-void ConfigurationTest::testGetNotifyCommand()
-{
-	/* test signature () */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_THROW(conf.getNotifyCommand(), dtn::daemon::Configuration::ParameterNotSetException);
-}
-
 void ConfigurationTest::testGetStorage()
 {
 	/* test signature () const */
@@ -180,52 +173,6 @@ void ConfigurationTest::testDiscoveryTimeout()
 }
 
 /*=== END   tests for class 'Discovery' ===*/
-
-/*=== BEGIN tests for class 'Statistic' ===*/
-
-void ConfigurationTest::testStatisticEnabled()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(true, conf.getStatistic().enabled());
-}
-
-void ConfigurationTest::testStatisticLogfile()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT(ibrcommon::File("/tmp/ibrdtn.stats") == conf.getStatistic().logfile());
-}
-
-void ConfigurationTest::testStatisticType()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(std::string("stdout"), conf.getStatistic().type());
-}
-
-void ConfigurationTest::testStatisticInterval()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((unsigned int)2, conf.getStatistic().interval());
-}
-
-void ConfigurationTest::testStatisticAddress()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(std::string("127.0.0.1"), conf.getStatistic().address());
-}
-
-void ConfigurationTest::testStatisticPort()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((unsigned int)1234, conf.getStatistic().port());
-}
-
-/*=== END   tests for class 'Statistic' ===*/
 
 /*=== BEGIN tests for class 'Debug' ===*/
 
@@ -335,13 +282,6 @@ void ConfigurationTest::testGetDiscovery()
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 	CPPUNIT_ASSERT_EQUAL(true, conf.getDiscovery().enabled());
-}
-
-void ConfigurationTest::testGetStatistic()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(true, conf.getStatistic().enabled());
 }
 
 void ConfigurationTest::testGetDebug()

@@ -43,8 +43,6 @@ noinst_HEADERS = \
 #	DiscoveryServiceTest.hh \
 #	BundleReceivedEventTest.hh \
 #	DebuggerTest.hh \
-#	NotifierTest.hh \
-#	StatisticLoggerTest.hh \
 #	NeighborDatabaseTest.hh \
 #	TransferAbortedEventTest.hh \
 #	ConnectionManagerTest.hh \
