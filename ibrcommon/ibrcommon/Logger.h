@@ -22,8 +22,6 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-//#define __IBRCOMMON_MULTITHREADED__
-
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/data/File.h>
@@ -111,9 +109,9 @@ namespace ibrcommon
 			warning = 	1 << 4,	/* warning conditions */
 			notice = 	1 << 5,	/* normal but significant condition */
 			info = 		1 << 6,	/* informational */
-			debug =		1 << 7,	/* debug-level messages */
+			debug =		1 << 7	/* debug-level messages */
 		};
-	};
+	}
 
 	/**
 	 * @class Logger
