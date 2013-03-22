@@ -91,43 +91,43 @@ namespace dtn
 		{}
 
 		Configuration::Discovery::Discovery()
-		 : _enabled(true), _timeout(5), _crosslayer(false) {};
+		 : _enabled(true), _timeout(5), _crosslayer(false) {}
 
 		Configuration::Debug::Debug()
-		 : _enabled(false), _quiet(false), _level(0) {};
+		 : _enabled(false), _quiet(false), _level(0) {}
 
 		Configuration::Logger::Logger()
-		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {};
+		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {}
 
 		Configuration::Network::Network()
 		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false)
-		{};
+		{}
 
 		Configuration::Security::Security()
 		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false), _tlsOptionalOnBadClock(false), _level(SECURITY_LEVEL_NONE), _disableEncryption(false)
-		{};
+		{}
 
 		Configuration::Daemon::Daemon()
 		 : _daemonize(false), _kill(false), _threads(0)
-		{};
+		{}
 
 		Configuration::TimeSync::TimeSync()
 		 : _reference(true), _sync(false), _discovery(false), _sigma(1.001), _psi(0.8), _sync_level(0.10)
-		{};
+		{}
 
 		Configuration::DHT::DHT()
 		 : _enabled(true), _port(0), _dnsbootstrapping(true), _ipv4(true), _ipv6(true), _blacklist(true), _selfannounce(true),
 			_minRating(1), _allowNeighbourToAnnounceMe(true), _allowNeighbourAnnouncement(true),
 			_ignoreDHTNeighbourInformations(false)
-		{};
+		{}
 
-		Configuration::Discovery::~Discovery() {};
-		Configuration::Debug::~Debug() {};
-		Configuration::Logger::~Logger() {};
-		Configuration::Network::~Network() {};
-		Configuration::Daemon::~Daemon() {};
-		Configuration::TimeSync::~TimeSync() {};
-		Configuration::DHT::~DHT() {};
+		Configuration::Discovery::~Discovery() {}
+		Configuration::Debug::~Debug() {}
+		Configuration::Logger::~Logger() {}
+		Configuration::Network::~Network() {}
+		Configuration::Daemon::~Daemon() {}
+		Configuration::TimeSync::~TimeSync() {}
+		Configuration::DHT::~DHT() {}
 
 		const Configuration::Discovery& Configuration::getDiscovery() const
 		{
@@ -1023,9 +1023,9 @@ namespace dtn
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
 			}
 #endif
-		};
+		}
 
-		Configuration::Security::~Security() {};
+		Configuration::Security::~Security() {}
 
 		bool Configuration::Security::enabled() const
 		{

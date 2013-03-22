@@ -85,7 +85,7 @@ namespace dtn
 
 		protected:
 			virtual void componentUp() throw ();
-			virtual void componentRun() throw ();;
+			virtual void componentRun() throw ();
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();
 

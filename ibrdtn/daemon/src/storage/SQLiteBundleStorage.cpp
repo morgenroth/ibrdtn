@@ -193,7 +193,7 @@ namespace dtn
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-		};
+		}
 
 		void SQLiteBundleStorage::componentDown() throw ()
 		{
@@ -211,7 +211,7 @@ namespace dtn
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-		};
+		}
 
 		void SQLiteBundleStorage::__cancellation() throw ()
 		{

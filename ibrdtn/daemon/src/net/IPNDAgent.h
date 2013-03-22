@@ -67,7 +67,7 @@ namespace dtn
 
 		protected:
 			void sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider);
-			virtual void componentRun() throw ();;
+			virtual void componentRun() throw ();
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();

@@ -191,7 +191,7 @@ int __daemon_run()
 	ibrcommon::Logger::stop();
 
 	return 0;
-};
+}
 
 static char* __daemon_pidfile__ = NULL;
 

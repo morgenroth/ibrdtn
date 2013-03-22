@@ -44,6 +44,8 @@ namespace dtn
 			case INTERFACE_DOWN:
 				return "interface " + iface.toString() + " down";
 			}
+
+			return "unknown event";
 		}
 
 		const std::string P2PDialupEvent::className = "P2PDialupEvent";

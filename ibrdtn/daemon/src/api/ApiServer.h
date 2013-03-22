@@ -82,7 +82,7 @@ namespace dtn
 			virtual void connectionDown(ClientHandler *conn);
 
 			void componentUp() throw ();
-			void componentRun() throw ();;
+			void componentRun() throw ();
 			void componentDown() throw ();
 
 		private:

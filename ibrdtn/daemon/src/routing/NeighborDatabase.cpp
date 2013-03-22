@@ -31,7 +31,7 @@ namespace dtn
 	{
 		NeighborDatabase::NeighborEntry::NeighborEntry()
 		 : eid(), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED, FILTER_FINAL)
-		{};
+		{}
 
 		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &e)
 		 : eid(e), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED, FILTER_FINAL)

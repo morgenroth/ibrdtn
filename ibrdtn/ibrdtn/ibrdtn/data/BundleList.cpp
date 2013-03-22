@@ -26,7 +26,7 @@ namespace dtn
 {
 	namespace data
 	{
-		BundleList::Listener::~Listener() { };
+		BundleList::Listener::~Listener() { }
 
 		BundleList::BundleList(BundleList::Listener *listener)
 		 : _listener(listener)

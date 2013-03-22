@@ -137,7 +137,7 @@ namespace dtn
 			void iterateDatabase(const dtn::data::MetaBundle &bundle);
 
 		protected:
-			virtual void componentRun() throw ();;
+			virtual void componentRun() throw ();
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();

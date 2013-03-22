@@ -32,10 +32,11 @@ namespace dtn
 	namespace security
 	{
 		SecurityKey::SecurityKey()
-		{};
+		 : type(KEY_UNSPEC)
+		{}
 
 		SecurityKey::~SecurityKey()
-		{};
+		{}
 
 		void SecurityKey::free(RSA* key)
 		{

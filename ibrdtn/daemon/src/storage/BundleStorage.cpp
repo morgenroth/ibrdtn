@@ -44,12 +44,12 @@ namespace dtn
 		void BundleStorage::remove(const dtn::data::Bundle &b)
 		{
 			remove(dtn::data::BundleID(b));
-		};
+		}
 
 		dtn::data::MetaBundle BundleStorage::remove(const ibrcommon::BloomFilter&)
 		{
 			throw dtn::storage::NoBundleFoundException();
-		};
+		}
 
 		const dtn::data::EID BundleStorage::acceptCustody(const dtn::data::MetaBundle &meta)
 		{

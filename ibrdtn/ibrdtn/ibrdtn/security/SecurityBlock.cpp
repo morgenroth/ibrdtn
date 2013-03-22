@@ -192,7 +192,7 @@ namespace dtn
 		}
 
 		SecurityBlock::SecurityBlock(const dtn::security::SecurityBlock::BLOCK_TYPES type)
-		: Block(type), _ciphersuite_flags(0), _correlator(0)
+		: Block(type), _ciphersuite_id(0), _ciphersuite_flags(0), _correlator(0)
 		{
 
 		}

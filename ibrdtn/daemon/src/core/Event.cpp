@@ -25,8 +25,8 @@ namespace dtn
 {
 	namespace core
 	{
-		Event::Event(int p) : prio(p) { };
-		Event::~Event() {};
+		Event::Event(int p) : prio(p) { }
+		Event::~Event() {}
 
 		std::string Event::toString() const {
 			return this->getName() + ": " + this->getMessage();

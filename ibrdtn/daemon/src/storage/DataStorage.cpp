@@ -46,10 +46,10 @@ namespace dtn
 
 		DataStorage::Hash::Hash(const DataStorage::Container &container)
 		 : value(DataStorage::Hash::hash(container.getKey()))
-		{ };
+		{ }
 
-		DataStorage::Hash::Hash(const ibrcommon::File &file) : value(file.getBasename()) {};
-		DataStorage::Hash::~Hash() {};
+		DataStorage::Hash::Hash(const ibrcommon::File &file) : value(file.getBasename()) {}
+		DataStorage::Hash::~Hash() {}
 
 		bool DataStorage::Hash::operator==(const DataStorage::Hash &other) const
 		{
@@ -76,7 +76,7 @@ namespace dtn
 		{
 			_lock.enter();
 			_stream = new std::ifstream(getPath().c_str(), ios_base::in | ios_base::binary);
-		};
+		}
 
 		DataStorage::istream::~istream()
 		{
@@ -85,7 +85,7 @@ namespace dtn
 				delete _stream;
 				_lock.leave();
 			}
-		};
+		}
 
 		std::istream& DataStorage::istream::operator*()
 		{ return *_stream; }
@@ -265,8 +265,8 @@ namespace dtn
 			}
 		}
 
-		DataStorage::Container::~Container() {};
-		DataStorage::Task::~Task() {};
+		DataStorage::Container::~Container() {}
+		DataStorage::Task::~Task() {}
 
 		DataStorage::StoreDataTask::StoreDataTask(const Hash &h, Container *c)
 		 : hash(h), container(c)

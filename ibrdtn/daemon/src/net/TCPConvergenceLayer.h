@@ -113,7 +113,7 @@ namespace dtn
 			void __cancellation() throw ();
 
 			void componentUp() throw ();
-			void componentRun() throw ();;
+			void componentRun() throw ();
 			void componentDown() throw ();
 
 		private:

@@ -52,7 +52,7 @@ namespace dtn
 
 		protected:
 			void componentUp() throw ();
-			void componentRun() throw ();;
+			void componentRun() throw ();
 			void componentDown() throw ();
 
 			void __cancellation() throw ();
