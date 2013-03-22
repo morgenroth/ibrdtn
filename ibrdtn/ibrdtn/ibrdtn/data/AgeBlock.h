@@ -42,7 +42,7 @@ namespace dtn
 				virtual dtn::data::Block* create();
 			};
 
-			static const char BLOCK_TYPE = 10;
+			static const unsigned char BLOCK_TYPE = 10;
 
 			AgeBlock();
 			virtual ~AgeBlock();

@@ -185,12 +185,12 @@ namespace dtn
 			return _blocks.getAll();
 		}
 
-		dtn::data::Block& Bundle::getBlock(int index)
+		dtn::data::Block& Bundle::getBlock(size_t index)
 		{
 			return _blocks.get(index);
 		}
 		
-		const dtn::data::Block& Bundle::getBlock(int index) const
+		const dtn::data::Block& Bundle::getBlock(size_t index) const
 		{
 			return _blocks.get(index);
 		}
@@ -325,9 +325,9 @@ namespace dtn
 			return _blocks.size();
 		}
 
-		const Block& Bundle::BlockList::get(int index) const
+		const Block& Bundle::BlockList::get(size_t index) const
 		{
-			if(index < 0 || index >= _blocks.size()){
+			if (index >= _blocks.size()) {
 				throw NoSuchBlockFoundException();
 			}
 
@@ -336,9 +336,9 @@ namespace dtn
 			return *((*iter).getPointer());
 		}
 
-		Block& Bundle::BlockList::get(int index)
+		Block& Bundle::BlockList::get(size_t index)
 		{
-			if(index < 0 || index >= _blocks.size()){
+			if (index >= _blocks.size()) {
 				throw NoSuchBlockFoundException();
 			}
 

@@ -60,7 +60,7 @@ namespace dtn
 			virtual void clearEIDs();
 			virtual const eid_list& getEIDList() const;
 
-			const char& getType() const { return _blocktype; }
+			const unsigned char& getType() const { return _blocktype; }
 
 			void set(ProcFlags flag, const bool &value);
 			bool get(ProcFlags flag) const;
@@ -103,10 +103,10 @@ namespace dtn
 			 * The constructor of this class is protected to prevent instantiation of this abstract class.
 			 * @param blocktype The type of the block.
 			 */
-			Block(char blocktype);
+			Block(unsigned char blocktype);
 
 			// block type of this block
-			char _blocktype;
+			unsigned char _blocktype;
 
 			// the list of EID references embedded in this block
 			eid_list _eids;

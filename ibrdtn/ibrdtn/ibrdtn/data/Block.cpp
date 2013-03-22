@@ -29,7 +29,7 @@ namespace dtn
 {
 	namespace data
 	{
-		Block::Block(char blocktype)
+		Block::Block(unsigned char blocktype)
 		 : _blocktype(blocktype), _procflags(0)
 		{
 		}

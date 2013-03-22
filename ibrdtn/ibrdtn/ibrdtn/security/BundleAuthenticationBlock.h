@@ -57,7 +57,7 @@ namespace dtn
 				};
 
 				/** The block type of this class. */
-				static const char BLOCK_TYPE = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK;
+				static const unsigned char BLOCK_TYPE = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK;
 
 				/**
 				Deletes all keys, which were used for calculating the MACs

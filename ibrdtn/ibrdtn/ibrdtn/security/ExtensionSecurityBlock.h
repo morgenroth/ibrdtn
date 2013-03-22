@@ -59,7 +59,7 @@ namespace dtn
 				};
 
 				/** The block type of this class. */
-				static const char BLOCK_TYPE = SecurityBlock::EXTENSION_SECURITY_BLOCK;
+				static const unsigned char BLOCK_TYPE = SecurityBlock::EXTENSION_SECURITY_BLOCK;
 
 				/** does nothing */
 				virtual ~ExtensionSecurityBlock();
