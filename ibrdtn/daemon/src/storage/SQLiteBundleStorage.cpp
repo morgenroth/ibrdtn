@@ -237,11 +237,11 @@ namespace dtn
 
 		dtn::data::Bundle SQLiteBundleStorage::get(const dtn::data::BundleID &id)
 		{
+			SQLiteDatabase::blocklist blocks;
+			dtn::data::Bundle bundle;
+
 			try {
 				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
-
-				SQLiteDatabase::blocklist blocks;
-				dtn::data::Bundle bundle;
 
 				// query the data base for the bundle
 				_database.get(id, bundle, blocks);
@@ -299,12 +299,12 @@ namespace dtn
 						} catch (const std::bad_cast&) { };
 					}
 				}
-
-				return bundle;
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
 				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::storage::NoBundleFoundException();
 			}
+
+			return bundle;
 		}
 
 		void SQLiteBundleStorage::store(const dtn::data::Bundle &bundle)

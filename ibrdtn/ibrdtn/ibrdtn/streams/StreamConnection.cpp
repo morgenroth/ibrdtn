@@ -111,6 +111,9 @@ namespace dtn
 						break;
 					case CONNECTION_SHUTDOWN_PEER_SHUTDOWN:
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
+						_buf.abort();
+						_callback.eventShutdown(csc);
+						break;
 					case CONNECTION_SHUTDOWN_NOTSET:
 						_buf.abort();
 						_callback.eventShutdown(csc);

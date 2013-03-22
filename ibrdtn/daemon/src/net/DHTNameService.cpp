@@ -742,10 +742,14 @@ void dtn::dht::DHTNameService::bootstrappingIPs() {
 		struct sockaddr_in6 sin6;
 		memset(&sin, 0, sizeof(sin));
 		int port = 9999;
-		switch (ip.size()) {
-		case 2:
+
+		// read port
+		if (ip.size() > 1) {
 			port = atoi(ip[1].c_str());
-		case 1:
+		}
+
+		// read address
+		if (ip.size() > 0) {
 			rc = inet_pton(ipversion, ip[0].c_str(), &(sin.sin_addr));
 			if (rc <= 0) {
 				ipversion = AF_INET6;
@@ -768,10 +772,8 @@ void dtn::dht::DHTNameService::bootstrappingIPs() {
 				ibrcommon::MutexLock l(this->_libmutex);
 				dtn_dht_ping_node(wellknown_node, size);
 			}
-			break;
-		default:
-			break;
 		}
+
 		ip_iter++;
 	}
 }
