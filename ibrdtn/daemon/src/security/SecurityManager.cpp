@@ -82,14 +82,6 @@ namespace dtn
 			}
 		}
 
-		void SecurityManager::prefetchKey(const dtn::data::EID &eid)
-		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "prefetch key for: " << eid.getString() << IBRCOMMON_LOGGER_ENDL;
-
-			// prefetch the key for this EID
-			SecurityKeyManager::getInstance().prefetchKey(eid, SecurityKey::KEY_PUBLIC);
-		}
-
 		void SecurityManager::verify(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
 		{
 			verifyBAB(bundle);

@@ -643,7 +643,7 @@ namespace dtn
 			return traits_type::eof();
 		}
 
-		size_t StreamConnection::StreamBuffer::timeout(ibrcommon::Timer *timer)
+		size_t StreamConnection::StreamBuffer::timeout(ibrcommon::Timer*)
 		{
 			if (__good())
 			{

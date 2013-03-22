@@ -178,17 +178,17 @@ namespace dtn
 			return *this;
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::Bundle &obj)
+		size_t PlainSerializer::getLength(const dtn::data::Bundle&)
 		{
 			return 0;
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::PrimaryBlock &obj) const
+		size_t PlainSerializer::getLength(const dtn::data::PrimaryBlock&) const
 		{
 			return 0;
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::Block &obj) const
+		size_t PlainSerializer::getLength(const dtn::data::Block&) const
 		{
 			return 0;
 		}

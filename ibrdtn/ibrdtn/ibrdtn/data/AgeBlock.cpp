@@ -89,7 +89,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& AgeBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& AgeBlock::deserialize(std::istream &stream, const size_t)
 		{
 			stream >> _age;
 			_time.start();

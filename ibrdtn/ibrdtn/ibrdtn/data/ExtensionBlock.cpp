@@ -123,7 +123,7 @@ namespace dtn
 			return io.size();
 		}
 
-		std::ostream& ExtensionBlock::serialize(std::ostream &stream, size_t &length) const
+		std::ostream& ExtensionBlock::serialize(std::ostream &stream, size_t &) const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::BLOB::iostream io = blobref.iostream();

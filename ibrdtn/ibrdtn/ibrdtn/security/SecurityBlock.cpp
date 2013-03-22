@@ -350,7 +350,7 @@ namespace dtn
 			return length;
 		}
 
-		std::ostream& SecurityBlock::serialize(std::ostream &stream, size_t &length) const
+		std::ostream& SecurityBlock::serialize(std::ostream &stream, size_t &) const
 		{
 			stream << dtn::data::SDNV(_ciphersuite_id) << dtn::data::SDNV(_ciphersuite_flags);
 
@@ -372,7 +372,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::ostream& SecurityBlock::serialize_strict(std::ostream &stream, size_t &length) const
+		std::ostream& SecurityBlock::serialize_strict(std::ostream &stream, size_t &) const
 		{
 			stream << dtn::data::SDNV(_ciphersuite_id) << dtn::data::SDNV(_ciphersuite_flags);
 
@@ -394,7 +394,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& SecurityBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& SecurityBlock::deserialize(std::istream &stream, const size_t)
 		{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// recheck blocktype. if blocktype is set wrong, this will be a huge fail
