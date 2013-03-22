@@ -27,6 +27,7 @@
 #include <stdexcept>
 #include <string.h>
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -200,9 +201,9 @@ namespace data
 			throw dtn::InvalidDataException("Dictionary size is zero!");
 
 		obj._bytestream.str("");
-		char data[length.getValue()];
-		stream.read(data, length.getValue());
-		obj._bytestream.write(data, length.getValue());
+		std::vector<char> data(length.getValue());
+		stream.read(&data[0], data.size());
+		obj._bytestream.write(&data[0], data.size());
 
 		return stream;
 	}
