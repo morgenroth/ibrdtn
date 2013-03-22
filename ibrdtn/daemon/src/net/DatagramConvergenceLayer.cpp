@@ -31,6 +31,7 @@
 #include <ibrcommon/thread/MutexLock.h>
 
 #include <string.h>
+#include <vector>
 
 namespace dtn
 {
@@ -204,7 +205,7 @@ namespace dtn
 			unsigned int seqno = 0;
 			char flags = 0;
 			char type = 0;
-			char data[maxlen];
+			std::vector<char> data(maxlen);
 			size_t len = 0;
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() entered" << IBRCOMMON_LOGGER_ENDL;
@@ -213,7 +214,7 @@ namespace dtn
 			{
 				try {
 					// Receive full frame from socket
-					len = _service->recvfrom(data, maxlen, type, flags, seqno, address);
+					len = _service->recvfrom(&data[0], maxlen, type, flags, seqno, address);
 				} catch (const DatagramException&) {
 					_running = false;
 					break;
@@ -228,7 +229,7 @@ namespace dtn
 						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() Announcement received" << IBRCOMMON_LOGGER_ENDL;
 						DiscoveryAnnouncement announce;
 						stringstream ss;
-						ss.write(data, len);
+						ss.write(&data[0], len);
 						ss >> announce;
 
 						// ignore own beacons
@@ -276,7 +277,7 @@ namespace dtn
 
 					try {
 						// Decide in which queue to write based on the src address
-						connection.queue(flags, seqno, data, len);
+						connection.queue(flags, seqno, &data[0], len);
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						connection.shutdown();

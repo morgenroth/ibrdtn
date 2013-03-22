@@ -31,6 +31,7 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 #include <netinet/in.h>
+#include <vector>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -534,26 +535,26 @@ namespace dtn
 		{
 			// encrypt the ephemeral key and place it in _ciphersuite_params
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(key_size < RSA_size(rsa)-41);
+			assert(key_size < (size_t)RSA_size(rsa)-41);
 #endif
-			unsigned char encrypted_key[RSA_size(rsa)];
-			int encrypted_key_len = RSA_public_encrypt(key_size, key, encrypted_key, rsa, RSA_PKCS1_OAEP_PADDING);
+			std::vector<unsigned char> encrypted_key(RSA_size(rsa));
+			int encrypted_key_len = RSA_public_encrypt(key_size, key, &encrypted_key[0], rsa, RSA_PKCS1_OAEP_PADDING);
 			if (encrypted_key_len == -1)
 			{
 				IBRCOMMON_LOGGER_ex(critical) << "failed to encrypt the symmetric AES key" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
-			security_parameter.set(SecurityBlock::key_information, std::string(reinterpret_cast<char *>(encrypted_key), encrypted_key_len));
+			security_parameter.set(SecurityBlock::key_information, std::string(reinterpret_cast<char *>(&encrypted_key[0]), encrypted_key_len));
 		}
 
 		bool SecurityBlock::getKey(const TLVList& security_parameter, unsigned char * key, size_t key_size, RSA * rsa)
 		{
 			std::string key_string = security_parameter.get(SecurityBlock::key_information);
 			// get key, convert with reinterpret_cast
-			unsigned char const * encrypted_key = reinterpret_cast<const unsigned char*>(key_string.c_str());
-			unsigned char the_key[RSA_size(rsa)];
+			const unsigned char *encrypted_key = reinterpret_cast<const unsigned char*>(key_string.c_str());
+			std::vector<unsigned char> the_key(RSA_size(rsa));
 			RSA_blinding_on(rsa, NULL);
-			int plaintext_key_len = RSA_private_decrypt(key_string.size(), encrypted_key, the_key, rsa, RSA_PKCS1_OAEP_PADDING);
+			int plaintext_key_len = RSA_private_decrypt(key_string.size(), encrypted_key, &the_key[0], rsa, RSA_PKCS1_OAEP_PADDING);
 			RSA_blinding_off(rsa);
 			if (plaintext_key_len == -1)
 			{
@@ -562,9 +563,9 @@ namespace dtn
 				return false;
 			}
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(plaintext_key_len == key_size);
+			assert((size_t)plaintext_key_len == key_size);
 #endif
-			std::copy(the_key, the_key+key_size, key);
+			std::copy(&the_key[0], &the_key[key_size], key);
 			return true;
 		}
 

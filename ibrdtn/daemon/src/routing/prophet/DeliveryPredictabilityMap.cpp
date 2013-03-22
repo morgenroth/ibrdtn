@@ -9,6 +9,7 @@
 #include "core/BundleCore.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
+#include <vector>
 
 namespace dtn
 {
@@ -87,10 +88,16 @@ namespace dtn
 				/* read the EID */
 				data::SDNV eid_len;
 				stream >> eid_len;
-				char eid_cstr[eid_len.getValue()+1];
-				stream.read(eid_cstr, sizeof(eid_cstr)-1);
-				eid_cstr[sizeof(eid_cstr)-1] = 0;
-				data::EID eid(eid_cstr);
+
+				// create a buffer for the EID
+				std::vector<char> eid_cstr(eid_len.getValue());
+
+				// read the EID string
+				stream.read(&eid_cstr[0], eid_cstr.size());
+
+				// convert the string into an EID object
+				dtn::data::EID eid(std::string(eid_cstr.begin(), eid_cstr.end()));
+
 				if(eid == data::EID())
 					throw dtn::InvalidDataException("EID could not be casted, while parsing a dp_map.");
 
@@ -98,11 +105,17 @@ namespace dtn
 				float f;
 				data::SDNV float_len;
 				stream >> float_len;
-				char f_cstr[float_len.getValue()+1];
-				stream.read(f_cstr, sizeof(f_cstr)-1);
-				f_cstr[sizeof(f_cstr)-1] = 0;
 
-				std::stringstream ss(f_cstr);
+				// create a buffer for the data string
+				std::vector<char> f_cstr(float_len.getValue());
+
+				// read the data string
+				stream.read(&f_cstr[0], f_cstr.size());
+
+				// convert string data into a stringstream
+				std::stringstream ss(std::string(f_cstr.begin(), f_cstr.end()));
+
+				// convert string data into a float
 				ss >> f;
 				if(ss.fail())
 					throw dtn::InvalidDataException("Float could not be casted, while parsing a dp_map.");

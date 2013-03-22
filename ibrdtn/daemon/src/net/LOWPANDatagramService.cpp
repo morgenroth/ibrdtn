@@ -28,6 +28,7 @@
 #include <ibrcommon/Logger.h>
 
 #include <string.h>
+#include <vector>
 
 namespace dtn
 {
@@ -109,7 +110,7 @@ namespace dtn
 				LOWPANDatagramService::decode(identifier, destaddr);
 
 				// buffer for the datagram
-				char tmp[length + 1];
+				std::vector<char> tmp(length + 1);
 
 				// encode the header (1 byte)
 				tmp[0] = 0;
@@ -135,7 +136,7 @@ namespace dtn
 				}
 
 				// send converted line
-				sock.sendto(tmp, length + 1, 0, destaddr);
+				sock.sendto(&tmp[0], length + 1, 0, destaddr);
 			} catch (const ibrcommon::Exception&) {
 				throw DatagramException("send failed");
 			}
@@ -160,7 +161,7 @@ namespace dtn
 				ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**socks.begin());
 
 				// buffer for the datagram
-				char tmp[length + 1];
+				std::vector<char> tmp(length + 1);
 
 				// encode the header (1 byte)
 				tmp[0] = 0;
@@ -189,7 +190,7 @@ namespace dtn
 				sock.setAutoAck(false);
 
 				// send converted line
-				sock.sendto(tmp, length + 1, 0, _addr_broadcast);
+				sock.sendto(&tmp[0], length + 1, 0, _addr_broadcast);
 
 				// re-enable auto-ack feature
 				sock.setAutoAck(true);
@@ -215,13 +216,13 @@ namespace dtn
 				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
 					ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**iter);
 
-					char tmp[length + 1];
+					std::vector<char> tmp(length + 1);
 
 					// from address of the received frame
 					ibrcommon::vaddress fromaddr;
 
 					// Receive full frame from socket
-					size_t ret = sock.recvfrom(tmp, length + 1, 0, fromaddr);
+					size_t ret = sock.recvfrom(&tmp[0], length + 1, 0, fromaddr);
 
 					// decode the header (1 byte)
 					// IGNORE: compat: 00

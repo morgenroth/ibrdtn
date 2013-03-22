@@ -147,7 +147,7 @@ namespace dtn
 		void UDPDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const ibrcommon::vaddress &destination, const char *buf, size_t length) throw (DatagramException)
 		{
 			try {
-				char tmp[length + 2];
+				std::vector<char> tmp(length + 2);
 
 				// add a 2-byte header - type of frame first
 				tmp[0] = type;
@@ -166,7 +166,7 @@ namespace dtn
 					if ((*iter) == _msock) continue;
 					try {
 						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
-						sock.sendto(tmp, length + 2, 0, destination);
+						sock.sendto(&tmp[0], length + 2, 0, destination);
 						return;
 					} catch (const ibrcommon::Exception&) {
 					} catch (const std::bad_cast&) { }
@@ -197,9 +197,9 @@ namespace dtn
 					try {
 						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
-						char tmp[length + 2];
+						std::vector<char> tmp(length + 2);
 						ibrcommon::vaddress peeraddr;
-						size_t ret = sock.recvfrom(tmp, length + 2, 0, peeraddr);
+						size_t ret = sock.recvfrom(&tmp[0], length + 2, 0, peeraddr);
 
 						// first byte if the type
 						type = tmp[0];

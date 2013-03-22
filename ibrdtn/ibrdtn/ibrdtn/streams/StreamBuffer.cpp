@@ -22,6 +22,7 @@
 #include "ibrdtn/streams/StreamConnection.h"
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/TimeMeasurement.h>
+#include <vector>
 
 namespace dtn
 {
@@ -354,7 +355,7 @@ namespace dtn
 		void StreamConnection::StreamBuffer::skipData(size_t &size)
 		{
 			// a temporary buffer
-			char tmpbuf[_buffer_size];
+			std::vector<char> tmpbuf(_buffer_size);
 
 			try {
 				//  and read until the next segment
@@ -364,7 +365,7 @@ namespace dtn
 					if (size < _buffer_size) readsize = size;
 
 					// to reject a bundle read all remaining data of this segment
-					_stream.read(tmpbuf, readsize);
+					_stream.read(&tmpbuf[0], readsize);
 
 					// reset idle timeout
 					_idle_timer.reset();

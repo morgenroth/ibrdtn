@@ -25,6 +25,7 @@
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <iostream>
+#include <vector>
 #include <netinet/in.h>
 
 using namespace dtn::data;
@@ -358,11 +359,11 @@ namespace dtn
 				stream.read((char*)&inet_port, 2);
 				stream.read((char*)&eid_len, 2);
 
-				char eid[eid_len];
-				stream.read((char*)&eid, eid_len);
+				std::vector<char> eid(eid_len);
+				stream.read(&eid[0], eid.size());
 
 				announcement._version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
-				announcement._canonical_eid = EID(std::string(eid));
+				announcement._canonical_eid = EID(std::string(eid.begin(), eid.end()));
 
 				break;
 			}

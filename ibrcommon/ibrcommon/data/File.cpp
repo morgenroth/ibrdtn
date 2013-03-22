@@ -305,6 +305,6 @@ namespace ibrcommon
 		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
 		::close(fd);
 
-		return std::string(&name[0], name.size());
+		return std::string(name.begin(), name.end());
 	}
 }

@@ -31,6 +31,7 @@
 #include <ibrcommon/net/vsocket.h>
 #include <ibrcommon/net/lowpanstream.h>
 
+#include <vector>
 #include <list>
 
 using namespace dtn::data;
@@ -98,7 +99,7 @@ namespace dtn
 			ibrcommon::vaddress _addr_broadcast;
 			ibrcommon::vinterface _net;
 			int _panid;
-			char *_ipnd_buf;
+			std::vector<char> _ipnd_buf;
 			int _ipnd_buf_len;
 
 			ibrcommon::Mutex _connection_lock;

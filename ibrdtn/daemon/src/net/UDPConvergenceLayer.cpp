@@ -48,6 +48,7 @@
 
 #include <iostream>
 #include <list>
+#include <vector>
 
 
 using namespace dtn::data;
@@ -256,7 +257,7 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(m_readlock);
 
-			char data[m_maxmsgsize];
+			std::vector<char> data(m_maxmsgsize);
 
 			// data waiting
 			ibrcommon::socketset readfds;
@@ -268,7 +269,7 @@ namespace dtn
 				ibrcommon::datagramsocket *sock = static_cast<ibrcommon::datagramsocket*>(*readfds.begin());
 
 				ibrcommon::vaddress fromaddr;
-				size_t len = sock->recvfrom(data, m_maxmsgsize, 0, fromaddr);
+				size_t len = sock->recvfrom(&data[0], m_maxmsgsize, 0, fromaddr);
 
 				std::stringstream ss; ss << "udp://" << fromaddr.toString();
 				sender = dtn::data::EID(ss.str());
@@ -277,7 +278,7 @@ namespace dtn
 				{
 					// read all data into a stream
 					stringstream ss;
-					ss.write(data, len);
+					ss.write(&data[0], len);
 
 					// get the bundle
 					dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
