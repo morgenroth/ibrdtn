@@ -6,6 +6,7 @@
  */
 
 #include "ibrdtn/data/BundleSet.h"
+#include <vector>
 
 namespace dtn
 {
@@ -180,12 +181,12 @@ namespace dtn
 			dtn::data::SDNV count;
 			stream >> count;
 
-			char buffer[count.getValue()];
+			std::vector<char> buffer(count.getValue());
 
-			stream.read(buffer, count.getValue());
+			stream.read(&buffer[0], buffer.size());
 
 			obj.clear();
-			obj._bf.load((unsigned char*)buffer, count.getValue());
+			obj._bf.load((unsigned char*)&buffer[0], buffer.size());
 
 			// set the set to in-consistent mode
 			obj._consistent = false;
