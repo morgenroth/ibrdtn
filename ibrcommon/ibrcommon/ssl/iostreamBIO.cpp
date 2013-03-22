@@ -75,8 +75,7 @@ iostreamBIO::iostreamBIO(iostream *stream)
 	_bio->ptr = stream;
 }
 
-BIO *
-iostreamBIO::getBIO(){
+BIO * iostreamBIO::getBIO(){
 	return _bio;
 }
 
@@ -100,7 +99,7 @@ static int create(BIO *bio)
 
 
 
-static long ctrl(BIO *bio, int cmd, long  num, void *ptr)
+static long ctrl(BIO *bio, int cmd, long  num, void *)
 {
 	long ret;
 	iostream *stream = reinterpret_cast<iostream*>(bio->ptr);

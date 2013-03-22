@@ -132,12 +132,15 @@ namespace ibrcommon
 
 	void Thread::sleep(size_t timeout)
 	{
+	#if defined(HAVE_PTHREAD_DELAY)
 		timespec ts;
 		ts.tv_sec = timeout / 1000l;
 		ts.tv_nsec = (timeout % 1000l) * 1000000l;
-	#if defined(HAVE_PTHREAD_DELAY)
 		pthread_delay(&ts);
 	#elif defined(HAVE_PTHREAD_DELAY_NP)
+		timespec ts;
+		ts.tv_sec = timeout / 1000l;
+		ts.tv_nsec = (timeout % 1000l) * 1000000l;
 		pthread_delay_np(&ts);
 	#else
 		usleep(timeout * 1000);

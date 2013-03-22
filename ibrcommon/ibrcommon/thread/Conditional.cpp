@@ -48,10 +48,11 @@ namespace ibrcommon
 		try {
 			trylock();
 			leave();
-			return false;
 		} catch (const ibrcommon::MutexException&) {
 			return true;
 		}
+
+		return false;
 	}
 
 	void Conditional::signal (bool broadcast)
@@ -61,12 +62,10 @@ namespace ibrcommon
 		assert(isLocked());
 #endif
 
-		int ret = 0;
-
 		if (broadcast)
-			ret = pthread_cond_broadcast( &cond );
+			pthread_cond_broadcast( &cond );
 		else
-			ret = pthread_cond_signal( &cond );
+			pthread_cond_signal( &cond );
 	}
 
 	void Conditional::wait(size_t timeout) throw (ConditionalAbortException)

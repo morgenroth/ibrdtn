@@ -22,6 +22,7 @@
 #include "ibrcommon/data/Base64Reader.h"
 #include "ibrcommon/Logger.h"
 #include <stdio.h>
+#include <vector>
 
 namespace ibrcommon
 {
@@ -76,7 +77,7 @@ namespace ibrcommon
 		}
 
 		// read some data
-		char buffer[data_size_];
+		std::vector<char> buffer(data_size_);
 
 		if (_byte_limit > 0)
 		{
@@ -99,11 +100,11 @@ namespace ibrcommon
 			if (bytes_to_read > data_size_) bytes_to_read = data_size_;
 
 			// read from the stream
-			_stream.read((char*)&buffer, bytes_to_read);
+			_stream.read((char*)&buffer[0], bytes_to_read);
 		}
 		else
 		{
-			_stream.read((char*)&buffer, data_size_);
+			_stream.read((char*)&buffer[0], data_size_);
 		}
 
 		size_t len = _stream.gcount();

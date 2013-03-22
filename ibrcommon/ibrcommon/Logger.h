@@ -66,29 +66,30 @@
 
 #define IBRCOMMON_LOGGER(level) \
 	if (ibrcommon::LogLevel::level & ibrcommon::Logger::getLogMask()) { \
-		ibrcommon::Logger log = ibrcommon::Logger::level(""); \
-		log
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::level(""); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
 
 #define IBRCOMMON_LOGGER_TAG(tag, level) \
 	if (ibrcommon::LogLevel::level & ibrcommon::Logger::getLogMask()) { \
-		ibrcommon::Logger log = ibrcommon::Logger::level(tag); \
-		log
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::level(tag); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
 
 #define IBRCOMMON_LOGGER_DEBUG(verbosity) \
 	if (ibrcommon::Logger::getVerbosity() >= verbosity) \
 	{ \
-		ibrcommon::Logger log = ibrcommon::Logger::debug("", verbosity); \
-		log
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::debug("", verbosity); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
 
 #define IBRCOMMON_LOGGER_DEBUG_TAG(tag, verbosity) \
 	if (ibrcommon::Logger::getVerbosity() >= verbosity) \
 	{ \
-		ibrcommon::Logger log = ibrcommon::Logger::debug(tag, verbosity); \
-		log
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::debug(tag, verbosity); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
 
 #define IBRCOMMON_LOGGER_ENDL \
 		std::flush; \
-		log.print(); \
+		__macro_ibrcommon_logger.setMessage(__macro_ibrcommon_stream.str()); \
+		__macro_ibrcommon_logger.print(); \
 	}
 
 #define IBRCOMMON_LOGGER_ex(level) \
@@ -118,7 +119,7 @@ namespace ibrcommon
 	 *
 	 * The Logger class is the heart of the logging framework.
 	 */
-	class Logger : public std::stringstream
+	class Logger
 	{
 	public:
 		enum LogOptions
@@ -146,6 +147,16 @@ namespace ibrcommon
 
 		Logger(const Logger&);
 		virtual ~Logger();
+
+		/**
+		 * Set the logging message
+		 */
+		void setMessage(const std::string &data);
+
+		/**
+		 * Returns the logging message as string
+		 */
+		const std::string& str() const;
 
 		static Logger emergency(const std::string &tag);
 		static Logger alert(const std::string &tag);
@@ -367,6 +378,8 @@ namespace ibrcommon
 		const std::string _tag;
 		int _debug_verbosity;
 		struct timeval _logtime;
+
+		std::string _data;
 
 		static std::string _default_tag;
 		static LogWriter _logwriter;

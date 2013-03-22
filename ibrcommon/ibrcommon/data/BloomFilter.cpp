@@ -29,6 +29,9 @@
 
 namespace ibrcommon
 {
+	HashProvider::~HashProvider()
+	{ }
+
 	DefaultHashProvider::DefaultHashProvider(size_t salt_count)
 	 : salt_count_(salt_count)
 	{

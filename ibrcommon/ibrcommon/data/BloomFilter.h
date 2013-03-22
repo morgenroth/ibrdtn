@@ -41,6 +41,8 @@ namespace ibrcommon
 	class HashProvider
 	{
 	public:
+		virtual ~HashProvider() = 0;
+
 		/**
 		 * Get the number of the available hash algorithms.
 		 * @return

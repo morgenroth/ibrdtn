@@ -29,13 +29,13 @@ namespace ibrcommon
 		XMLStreamWriter *writer = static_cast<XMLStreamWriter*>(context);
 		writer->_stream.write(buffer, len);
 		return len;
-	};
+	}
 
-	int XMLStreamWriter::__close_callback(void * context)
+	int XMLStreamWriter::__close_callback(void*)
 	{
 		//XMLStreamWriter *writer = static_cast<XMLStreamWriter*>(context);
 		return 0;
-	};
+	}
 
 	XMLStreamWriter::XMLStreamWriter(std::ostream &stream)
 	 : _stream(stream)

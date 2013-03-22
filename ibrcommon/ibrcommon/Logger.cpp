@@ -45,12 +45,22 @@ namespace ibrcommon
 	}
 
 	Logger::Logger(const Logger &obj)
-	 : std::stringstream(obj.str()), _level(obj._level), _tag(obj._tag), _debug_verbosity(obj._debug_verbosity), _logtime(obj._logtime)
+	 : _level(obj._level), _tag(obj._tag), _debug_verbosity(obj._debug_verbosity), _logtime(obj._logtime), _data(obj._data)
 	{
 	}
 
 	Logger::~Logger()
 	{
+	}
+
+	void Logger::setMessage(const std::string &data)
+	{
+		_data = data;
+	}
+
+	const std::string& Logger::str() const
+	{
+		return _data;
 	}
 
 	Logger Logger::emergency(const std::string &tag)
@@ -537,7 +547,7 @@ namespace ibrcommon
 				while (!q.empty())
 				{
 					Logger &log = q.front();
-					try { log.flush(); } catch (const std::exception&) {};
+					try { flush(log); } catch (const std::exception&) {};
 
 					q.pop();
 				}

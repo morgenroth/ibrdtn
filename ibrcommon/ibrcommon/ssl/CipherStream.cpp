@@ -24,7 +24,7 @@
 namespace ibrcommon
 {
 	CipherStream::CipherStream(std::ostream &stream, const CipherMode mode, const size_t buffer)
-	 : std::ostream(this), _stream(stream), _mode(mode), data_buf_(new char[buffer]), data_size_(buffer)
+	 : std::ostream(this), _mode(mode), _stream(stream), data_buf_(new char[buffer]), data_size_(buffer)
 	{
 		setp(data_buf_, data_buf_ + data_size_ - 1);
 	}
