@@ -220,7 +220,7 @@ namespace dtn
 					if (bundle.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
 					try {
 						// check for a custody signal
-						dtn::data::PayloadBlock &payload = bundle.getBlock<dtn::data::PayloadBlock>();
+						dtn::data::PayloadBlock &payload = bundle.find<dtn::data::PayloadBlock>();
 
 						CustodySignalBlock custody;
 						custody.read(payload);
@@ -431,11 +431,10 @@ namespace dtn
 #endif
 
 			// check for invalid blocks
-			const dtn::data::Bundle::block_list &bl = b.getBlocks();
-			for (dtn::data::Bundle::block_list::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
+			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); iter++)
 			{
 				try {
-					const dtn::data::ExtensionBlock &e = dynamic_cast<const dtn::data::ExtensionBlock&>(**iter);
+					const dtn::data::ExtensionBlock &e = dynamic_cast<const dtn::data::ExtensionBlock&>(*iter);
 
 					if (e.get(dtn::data::Block::DELETE_BUNDLE_IF_NOT_PROCESSED))
 					{
@@ -460,11 +459,9 @@ namespace dtn
 		void BundleCore::processBlocks(dtn::data::Bundle &b)
 		{
 			// walk through the block and process them when needed
-			const dtn::data::Bundle::block_list blist = b.getBlocks();
-
-			for (dtn::data::Bundle::block_list::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
+			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); iter++)
 			{
-				const dtn::data::Block &block = (**iter);
+				const dtn::data::Block &block = (*iter);
 				switch (block.getType())
 				{
 #ifdef WITH_BUNDLE_SECURITY

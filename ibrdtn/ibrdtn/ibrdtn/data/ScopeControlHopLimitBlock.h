@@ -41,7 +41,7 @@ namespace dtn
 				virtual dtn::data::Block* create();
 			};
 
-			static const unsigned char BLOCK_TYPE = 199;
+			enum { BLOCK_TYPE = 199 };
 
 			ScopeControlHopLimitBlock();
 			virtual ~ScopeControlHopLimitBlock();

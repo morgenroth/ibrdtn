@@ -381,7 +381,7 @@ namespace dtn
 		void FileConvergenceLayer::replyHandshake(const dtn::data::Bundle &bundle, std::list<dtn::data::MetaBundle> &bl)
 		{
 			// read the ecm
-			const dtn::data::PayloadBlock &p = bundle.getBlock<dtn::data::PayloadBlock>();
+			const dtn::data::PayloadBlock &p = bundle.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference ref = p.getBLOB();
 			dtn::routing::NodeHandshake request;
 

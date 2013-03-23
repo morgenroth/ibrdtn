@@ -228,7 +228,7 @@ class TUN2BundleGateway : public dtn::api::Client
 		 */
 		void received(const dtn::data::Bundle &b)
 		{
-			ibrcommon::BLOB::Reference ref = b.getBlock<dtn::data::PayloadBlock>().getBLOB();
+			ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 			ibrcommon::BLOB::iostream stream = ref.iostream();
 			char data[65536];
 			stream->read(data, sizeof(data));

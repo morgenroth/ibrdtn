@@ -252,10 +252,9 @@ namespace dtn
 			dtn::data::DefaultSerializer serializer(std::cout);
 			size_t header = serializer.getLength((dtn::data::PrimaryBlock&)bundle);
 
-			const dtn::data::Bundle::block_list &blocks = bundle.getBlocks();
-			for (dtn::data::Bundle::block_list::const_iterator iter = blocks.begin(); iter != blocks.end(); iter++)
+			for (dtn::data::Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); iter++)
 			{
-				const dtn::data::Block &b = (**iter);
+				const dtn::data::Block &b = (*iter);
 				header += serializer.getLength(b);
 
 				try {
@@ -287,7 +286,7 @@ namespace dtn
 				throw FragmentationProhibitedException("Bundle fragmentation is restricted by do-not-fragment bit.");
 
 			try {
-				const dtn::data::PayloadBlock &payloadBlock = bundle.getBlock<dtn::data::PayloadBlock>();
+				const dtn::data::PayloadBlock &payloadBlock = bundle.find<dtn::data::PayloadBlock>();
 
 				// get bundle payload length
 				size_t payloadLength = payloadBlock.getLength();
@@ -308,7 +307,7 @@ namespace dtn
 					Bundle fragment = bundle;
 
 					// clear all the blocks
-					fragment.clearBlocks();
+					fragment.clear();
 
 					// set bundle is fragment flag
 					fragment.set(dtn::data::Bundle::FRAGMENT, true);
@@ -368,13 +367,13 @@ namespace dtn
 
 			char block_type = 0;
 
-			IBRCOMMON_LOGGER_DEBUG(5) << "Fragment original bundle block count: " << fragment.toString() << "  " << bundle.blockCount() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("FragmentManager", 5) << "Fragment original bundle block count: " << fragment.toString() << "  " << bundle.size() << IBRCOMMON_LOGGER_ENDL;
 
 			//check for each block if it has to be added to the fragment
-			for(size_t pos = 0; pos < bundle.blockCount(); ++pos)
+			for (dtn::data::Bundle::const_iterator it = bundle.begin(); it != bundle.end(); it++)
 			{
 				//get the current block
-				const Block &current_block = bundle.getBlock(pos);
+				const Block &current_block = dynamic_cast<const Block&>(*it);
 
 				block_type = current_block.getType();
 
@@ -399,22 +398,22 @@ namespace dtn
 							ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
 
 							//insert new Block before payload block
-							dtn::data::Block &fragment_block = fragment.insert(f, fragment_payloadBlock);
+							dtn::data::Block &fragment_block = fragment.insert(fragment.find(fragment_payloadBlock), f);
 
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << "Blocklist-Position:  " << pos << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 						catch(const ibrcommon::Exception &ex)
 						{
 							//insert new Block before payload block
-							dtn::data::Block &fragment_block = fragment.insert<dtn::data::ExtensionBlock>(fragment_payloadBlock);
+							dtn::data::Block &fragment_block = fragment.insert<dtn::data::ExtensionBlock>(fragment.find(fragment_payloadBlock));
 
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << "Blocklist-Position:  " << pos << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 
 					}
@@ -433,7 +432,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << "Blocklist-Position:  " << pos << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 						catch (const ibrcommon::Exception &ex)
 						{
@@ -443,7 +442,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << "Blocklist-Position:  " << pos << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				}

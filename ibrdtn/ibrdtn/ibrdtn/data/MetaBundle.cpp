@@ -54,7 +54,7 @@ namespace dtn
 			 * read the hop limit
 			 */
 			try {
-				const dtn::data::ScopeControlHopLimitBlock &schl = b.getBlock<const dtn::data::ScopeControlHopLimitBlock>();
+				const dtn::data::ScopeControlHopLimitBlock &schl = b.find<const dtn::data::ScopeControlHopLimitBlock>();
 				hopcount = schl.getHopsToLive();
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
@@ -62,7 +62,7 @@ namespace dtn
 			 * read the scheduling block
 			 */
 			try {
-				const dtn::data::SchedulingBlock &sblock = b.getBlock<const dtn::data::SchedulingBlock>();
+				const dtn::data::SchedulingBlock &sblock = b.find<const dtn::data::SchedulingBlock>();
 				net_priority = sblock.getPriority();
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
@@ -70,7 +70,7 @@ namespace dtn
 			 * read the payload length
 			 */
 			try {
-				const dtn::data::PayloadBlock &pblock = b.getBlock<const dtn::data::PayloadBlock>();
+				const dtn::data::PayloadBlock &pblock = b.find<const dtn::data::PayloadBlock>();
 				payloadlength = pblock.getLength();
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 		}

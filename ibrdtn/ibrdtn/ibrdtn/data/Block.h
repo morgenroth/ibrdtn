@@ -34,6 +34,8 @@ namespace dtn
 {
 	namespace data
 	{
+		typedef unsigned char block_t;
+
 		class BundleBuilder;
 
 		class Block
@@ -56,11 +58,16 @@ namespace dtn
 
 			virtual ~Block();
 
+			/**
+			 * allow comparison with the block type only
+			 */
+			bool operator==(block_t id) const;
+
 			virtual void addEID(const dtn::data::EID &eid);
 			virtual void clearEIDs();
 			virtual const eid_list& getEIDList() const;
 
-			const unsigned char& getType() const { return _blocktype; }
+			const block_t& getType() const { return _blocktype; }
 
 			void set(ProcFlags flag, const bool &value);
 			bool get(ProcFlags flag) const;
@@ -103,10 +110,10 @@ namespace dtn
 			 * The constructor of this class is protected to prevent instantiation of this abstract class.
 			 * @param blocktype The type of the block.
 			 */
-			Block(unsigned char blocktype);
+			Block(block_t blocktype);
 
 			// block type of this block
-			unsigned char _blocktype;
+			block_t _blocktype;
 
 			// the list of EID references embedded in this block
 			eid_list _eids;

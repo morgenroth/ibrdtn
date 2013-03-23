@@ -129,7 +129,7 @@ class EchoClient : public dtn::api::Client
 		
 		void checkReply(dtn::data::Bundle &bundle) {
 			size_t reply_seq = 0;
-			ibrcommon::BLOB::Reference blob = bundle.getBlock<dtn::data::PayloadBlock>().getBLOB();
+			ibrcommon::BLOB::Reference blob = bundle.find<dtn::data::PayloadBlock>().getBLOB();
 			blob.iostream()->read((char *)(&reply_seq),4 );
 
 			if (reply_seq != seq) {
@@ -387,7 +387,7 @@ int main(int argc, char *argv[])
 							if ((_max < tm.getMilliseconds()) || _max == 0) _max = tm.getMilliseconds();
 
 							{
-								ibrcommon::BLOB::Reference blob = response.getBlock<dtn::data::PayloadBlock>().getBLOB();
+								ibrcommon::BLOB::Reference blob = response.find<dtn::data::PayloadBlock>().getBLOB();
 								blob.iostream()->read((char *)(&reply_seq),4 );
 								payload_size = blob.iostream().size();
 							}

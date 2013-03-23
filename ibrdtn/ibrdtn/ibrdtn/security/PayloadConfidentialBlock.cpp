@@ -31,6 +31,7 @@
 
 #include <stdint.h>
 #include <typeinfo>
+#include <algorithm>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -66,10 +67,12 @@ namespace dtn
 			unsigned char tag[ibrcommon::AES128Stream::tag_len];
 
 			// get all PCBs
-			const std::list<const PayloadConfidentialBlock* > pcbs = bundle.getBlocks<PayloadConfidentialBlock>();
+			size_t pcbs_size = std::count(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
+			dtn::data::Bundle::iterator pcbs = std::remove(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
 
 			// get all PIBs
-			const std::list<const PayloadIntegrityBlock* > pibs = bundle.getBlocks<PayloadIntegrityBlock>();
+			size_t pibs_size = std::count(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
+			dtn::data::Bundle::iterator pibs = std::remove(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
 
 			// create a new payload confidential block
 			PayloadConfidentialBlock& pcb = bundle.push_front<PayloadConfidentialBlock>();
@@ -78,7 +81,7 @@ namespace dtn
 			createSaltAndKey(salt, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes);
 
 			// encrypt payload - BEGIN
-			dtn::data::PayloadBlock& plb = bundle.getBlock<dtn::data::PayloadBlock>();
+			dtn::data::PayloadBlock& plb = bundle.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference blobref = plb.getBLOB();
 
 			{
@@ -131,15 +134,15 @@ namespace dtn
 			// create correlator
 			uint64_t correlator = createCorrelatorValue(bundle);
 
-			if (pcbs.size() > 0 || pibs.size() > 0)
+			if (pcbs_size > 0 || pibs_size > 0)
 				pcb.setCorrelator(correlator);
 
 			// encrypt PCBs and PIBs
-			for (std::list<const PayloadConfidentialBlock*>::const_iterator it = pcbs.begin(); it != pcbs.end(); it++)
-				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, (dtn::data::Block&)**it, salt, ephemeral_key).setCorrelator(correlator);
+			for (dtn::data::Bundle::iterator it = pcbs; it != bundle.end(); it++)
+				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, *it, salt, ephemeral_key).setCorrelator(correlator);
 
-			for (std::list<const PayloadIntegrityBlock*>::const_iterator it = pibs.begin(); it != pibs.end(); it++)
-				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, (dtn::data::Block&)**it, salt, ephemeral_key).setCorrelator(correlator);
+			for (dtn::data::Bundle::iterator it = pibs; it != bundle.end(); it++)
+				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, *it, salt, ephemeral_key).setCorrelator(correlator);
 		}
 
 		void PayloadConfidentialBlock::decrypt(dtn::data::Bundle& bundle, const dtn::security::SecurityKey &long_key)
@@ -158,21 +161,18 @@ namespace dtn
 				uint64_t correlator = 0;
 				bool decrypt_related = false;
 
-				// get all blocks of this bundle
-				const dtn::data::Bundle::block_list &blocks = bundle.getBlocks();
-
 				// iterate through all blocks
-				for (dtn::data::Bundle::block_list::const_iterator it = blocks.begin(); it != blocks.end(); it++)
+				for (dtn::data::Bundle::iterator it = bundle.begin(); it != bundle.end(); it++)
 				{
 					try {
-						dynamic_cast<const PayloadIntegrityBlock&>(**it);
+						dynamic_cast<const PayloadIntegrityBlock&>(*it);
 
 						// add this block to the erasure list for later deletion
-						erasure_list.push_back((*it).getPointer());
+						erasure_list.push_back(&*it);
 					} catch (const std::bad_cast&) { };
 
 					try {
-						const PayloadConfidentialBlock &pcb = dynamic_cast<const PayloadConfidentialBlock&>(**it);
+						const PayloadConfidentialBlock &pcb = dynamic_cast<const PayloadConfidentialBlock&>(*it);
 
 						// get salt and key
 						uint32_t salt = getSalt(pcb._ciphersuite_params);
@@ -182,13 +182,13 @@ namespace dtn
 						{
 							// try to decrypt the block
 							try {
-								decryptBlock(bundle, (dtn::security::SecurityBlock&)**it, salt, key);
+								decryptBlock(bundle, (dtn::security::SecurityBlock&)*it, salt, key);
 
 								// success! add this block to the erasue list
-								erasure_list.push_back((*it).getPointer());
+								erasure_list.push_back(&*it);
 							} catch (const ibrcommon::Exception&) {
 								IBRCOMMON_LOGGER(critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
-								decryptBlock(bundle, (dtn::security::SecurityBlock&)**it, salt, key);
+								decryptBlock(bundle, (dtn::security::SecurityBlock&)*it, salt, key);
 
 								// abort the decryption and discard the bundle?
 								throw ibrcommon::Exception("decrypt of correlated block reversed, tag verfication failed");
@@ -215,7 +215,7 @@ namespace dtn
 							}
 
 							// success! add this block to the erasue list
-							erasure_list.push_back((*it).getPointer());
+							erasure_list.push_back(&*it);
 
 							// check if first PCB has a correlator
 							if (pcb._ciphersuite_flags & CONTAINS_CORRELATOR)
@@ -257,8 +257,8 @@ namespace dtn
 		bool PayloadConfidentialBlock::decryptPayload(dtn::data::Bundle& bundle, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes], const uint32_t salt)
 		{
 			// TODO handle fragmentation
-			PayloadConfidentialBlock& pcb = bundle.getBlock<PayloadConfidentialBlock>();
-			dtn::data::PayloadBlock& plb = bundle.getBlock<dtn::data::PayloadBlock>();
+			PayloadConfidentialBlock& pcb = bundle.find<PayloadConfidentialBlock>();
+			dtn::data::PayloadBlock& plb = bundle.find<dtn::data::PayloadBlock>();
 
 			// the array for the extracted iv
 			unsigned char iv[ibrcommon::AES128Stream::iv_len];

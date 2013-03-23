@@ -62,11 +62,9 @@ namespace dtn
 			_dictionary.add(obj._custodian);
 
 			// add EID of all secondary blocks
-			const Bundle::block_list &list = obj.getBlocks();
-
-			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
 			{
-				const Block &b = (**iter);
+				const Block &b = (*iter);
 				_dictionary.add( b.getEIDList() );
 			}
 
@@ -83,11 +81,9 @@ namespace dtn
 			(*this) << (PrimaryBlock&)obj;
 
 			// serialize all secondary blocks
-			const Bundle::block_list &list = obj.getBlocks();
-			
-			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
 			{
-				const Block &b = (**iter);
+				const Block &b = (*iter);
 				(*this) << b;
 			}
 
@@ -103,10 +99,12 @@ namespace dtn
 			prim.set(dtn::data::PrimaryBlock::FRAGMENT, true);
 
 			// set the application length according to the payload block size
-			try {
-				const dtn::data::PayloadBlock &payload = obj._bundle.getBlock<dtn::data::PayloadBlock>();
+			dtn::data::Bundle::const_iterator it = obj._bundle.find(dtn::data::PayloadBlock::BLOCK_TYPE);
+
+			if (it != obj._bundle.end()) {
+				const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(*it);
 				prim._appdatalength = payload.getLength();
-			} catch (dtn::data::Bundle::NoSuchBlockFoundException&) {
+			} else {
 				prim._appdatalength = 0;
 			}
 
@@ -117,12 +115,11 @@ namespace dtn
 			(*this) << prim;
 
 			// serialize all secondary blocks
-			const Bundle::block_list &list = obj._bundle.getBlocks();
 			bool post_payload = false;
 
-			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::const_iterator iter = obj._bundle.begin(); iter != obj._bundle.end(); iter++)
 			{
-				const Block &b = (**iter);
+				const Block &b = (*iter);
 
 				try {
 					// test if this is the payload block
@@ -158,11 +155,9 @@ namespace dtn
 			if (compressable)
 			{
 				// add EID of all secondary blocks
-				const Bundle::block_list &list = obj.getBlocks();
-
-				for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+				for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
 				{
-					const Block &b = (**iter);
+					const Block &b = (*iter);
 					const std::list<dtn::data::EID> eids = b.getEIDList();
 
 					for (std::list<dtn::data::EID>::const_iterator eit = eids.begin(); eit != eids.end(); eit++)
@@ -411,11 +406,9 @@ namespace dtn
 			len += getLength( (PrimaryBlock&)obj );
 			
 			// add size of all blocks
-			const Bundle::block_list &list = obj.getBlocks();
-
-			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
 			{
-				const Block &b = (**iter);
+				const Block &b = (*iter);
 				len += getLength( b );
 			}
 
@@ -582,7 +575,7 @@ namespace dtn
 		Deserializer& DefaultDeserializer::operator >>(dtn::data::Bundle& obj)
 		{
 			// clear all blocks
-			obj.clearBlocks();
+			obj.clear();
 
 			// read the primary block
 			(*this) >> (PrimaryBlock&)obj;

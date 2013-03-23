@@ -45,7 +45,7 @@ StreamBundle::StreamBundle()
 }
 
 StreamBundle::StreamBundle(const dtn::data::Bundle &b)
- : dtn::data::Bundle(b), _ref(getBlock<dtn::data::PayloadBlock>().getBLOB())
+ : dtn::data::Bundle(b), _ref(find<dtn::data::PayloadBlock>().getBLOB())
 {
 }
 
@@ -67,7 +67,7 @@ void StreamBundle::clear()
 
 	// increment the sequence number
 	try {
-		StreamBlock &block = getBlock<StreamBlock>();
+		StreamBlock &block = find<StreamBlock>();
 		block.setSequenceNumber(block.getSequenceNumber() + 1);
 	} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 }
@@ -81,7 +81,7 @@ size_t StreamBundle::size()
 size_t StreamBundle::getSequenceNumber(const StreamBundle &b)
 {
 	try {
-		const StreamBlock &block = b.getBlock<StreamBlock>();
+		const StreamBlock &block = b.find<StreamBlock>();
 		return block.getSequenceNumber();
 	} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { }
 
@@ -201,7 +201,7 @@ std::char_traits<char>::int_type BundleStreamBuf::__underflow()
 	const Chunk &c = (*_chunks.begin());
 
 	dtn::data::Bundle b = c._bundle;
-	ibrcommon::BLOB::Reference r = b.getBlock<dtn::data::PayloadBlock>().getBLOB();
+	ibrcommon::BLOB::Reference r = b.find<dtn::data::PayloadBlock>().getBLOB();
 
 	// get stream lock
 	ibrcommon::BLOB::iostream stream = r.iostream();

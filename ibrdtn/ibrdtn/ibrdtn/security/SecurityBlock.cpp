@@ -274,12 +274,11 @@ namespace dtn
 
 		bool SecurityBlock::isCorrelatorPresent(const dtn::data::Bundle& bundle, const uint64_t correlator)
 		{
-			const dtn::data::Bundle::block_list &blocks = bundle.getBlocks();
 			bool return_val = false;
-			for (dtn::data::Bundle::block_list::const_iterator it = blocks.begin(); it != blocks.end() && !return_val; it++)
+			for (dtn::data::Bundle::const_iterator it = bundle.begin(); it != bundle.end() && !return_val; it++)
 			{
-				const dtn::data::Block &b = (**it);
-				const char type = b.getType();
+				const dtn::data::Block &b = (*it);
+				const dtn::data::block_t type = b.getType();
 				if (type == BUNDLE_AUTHENTICATION_BLOCK
 					|| type == PAYLOAD_INTEGRITY_BLOCK
 					|| type == PAYLOAD_CONFIDENTIAL_BLOCK
@@ -636,18 +635,21 @@ namespace dtn
 			dtn::data::DefaultDeserializer ddser(plaintext);
 
 			// peek the block type
-			char block_type = plaintext.peek();
+			dtn::data::block_t block_type = plaintext.peek();
+
+			// get the position of "block"
+			dtn::data::Bundle::iterator b_it = bundle.find(block);
 
 			if (block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
 			{
-				dtn::data::PayloadBlock &plaintext_block = bundle.insert<dtn::data::PayloadBlock>(block);
+				dtn::data::PayloadBlock &plaintext_block = bundle.insert<dtn::data::PayloadBlock>(b_it);
 				ddser >> plaintext_block;
 			}
 			else
 			{
 				try {
 					dtn::data::ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
-					dtn::data::Block &plaintext_block = bundle.insert(f, block);
+					dtn::data::Block &plaintext_block = bundle.insert(b_it, f);
 					ddser >> plaintext_block;
 
 					plaintext_block.clearEIDs();
@@ -662,7 +664,7 @@ namespace dtn
 					copyEID(plaintext_block, plaintext_block, skip);
 
 				} catch (const ibrcommon::Exception &ex) {
-					dtn::data::ExtensionBlock &plaintext_block = bundle.insert<dtn::data::ExtensionBlock>(block);
+					dtn::data::ExtensionBlock &plaintext_block = bundle.insert<dtn::data::ExtensionBlock>(b_it);
 					ddser >> plaintext_block;
 
 					plaintext_block.clearEIDs();

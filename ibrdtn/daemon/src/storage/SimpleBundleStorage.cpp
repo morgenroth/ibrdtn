@@ -178,7 +178,7 @@ namespace dtn
 				}
 
 				try {
-					dtn::data::AgeBlock &agebl = bundle.getBlock<dtn::data::AgeBlock>();
+					dtn::data::AgeBlock &agebl = bundle.find<dtn::data::AgeBlock>();
 
 					// modify the AgeBlock with the age of the file
 					time_t age = stream.lastaccess() - stream.lastmodify();

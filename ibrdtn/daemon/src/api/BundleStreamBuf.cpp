@@ -209,7 +209,7 @@ namespace dtn
 				dtn::core::BundleCore::processBlocks(_current_bundle);
 			}
 
-			const dtn::data::PayloadBlock &payload = _current_bundle.getBlock<dtn::data::PayloadBlock>();
+			const dtn::data::PayloadBlock &payload = _current_bundle.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference r = payload.getBLOB();
 
 			bool end_of_stream = false;
@@ -282,7 +282,7 @@ namespace dtn
 			dtn::data::Bundle bundle = storage.get(_meta);
 
 			try {
-				const dtn::data::StreamBlock &block = bundle.getBlock<dtn::data::StreamBlock>();
+				const dtn::data::StreamBlock &block = bundle.find<dtn::data::StreamBlock>();
 				_seq = block.getSequenceNumber();
 				_first = block.get(dtn::data::StreamBlock::STREAM_BEGIN);
 				_last = block.get(dtn::data::StreamBlock::STREAM_END);

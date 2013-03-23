@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
 			dtn::data::Bundle b = client.getBundle(timeout);
 
 			// get the reference to the blob
-			ibrcommon::BLOB::Reference ref = b.getBlock<dtn::data::PayloadBlock>().getBLOB();
+			ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 
 			// write the data to output
 			if (_stdout)

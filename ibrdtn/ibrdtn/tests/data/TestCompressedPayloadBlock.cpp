@@ -53,7 +53,7 @@ void TestCompressedPayloadBlock::compressTest(void)
 
 	dtn::data::CompressedPayloadBlock::compress(b, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
 
-	dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+	dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
 
 	CPPUNIT_ASSERT(origin_psize > p.getLength());
 }
@@ -78,7 +78,7 @@ void TestCompressedPayloadBlock::extractTest(void)
 	dtn::data::CompressedPayloadBlock::compress(b, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
 	dtn::data::CompressedPayloadBlock::extract(b);
 
-	dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+	dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
 
 	CPPUNIT_ASSERT_EQUAL(origin_psize, p.getLength());
 

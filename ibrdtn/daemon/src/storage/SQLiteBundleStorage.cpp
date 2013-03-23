@@ -323,18 +323,15 @@ namespace dtn
 				// create a bundle id
 				const dtn::data::BundleID id(bundle);
 
-				// get all blocks of the bundle
-				const dtn::data::Bundle::block_list &blocklist = bundle.getBlocks();
-
 				// index number for order of the blocks
 				int index = 1;
 
 				// number of bytes stored
 				int storedBytes = 0;
 
-				for(dtn::data::Bundle::block_list::const_iterator it = blocklist.begin() ;it != blocklist.end(); it++)
+				for(dtn::data::Bundle::const_iterator it = bundle.begin() ;it != bundle.end(); it++)
 				{
-					const dtn::data::Block &block = (**it);
+					const dtn::data::Block &block = (*it);
 
 					// create a temporary file
 					ibrcommon::TemporaryFile tmpfile(_blockPath, "block");

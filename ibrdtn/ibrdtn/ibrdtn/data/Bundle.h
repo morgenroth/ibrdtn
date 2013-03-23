@@ -36,6 +36,7 @@
 #include <map>
 #include <typeinfo>
 #include <list>
+#include <iterator>
 
 namespace dtn
 {
@@ -58,41 +59,34 @@ namespace dtn
 					};
 			};
 
-			typedef std::list<refcnt_ptr<Block> > block_list;
+			typedef refcnt_ptr<Block> block_elem;
+			typedef std::list<block_elem> block_list;
 
-			class BlockList
+			class iterator : public block_list::iterator
 			{
-				friend class BundleBuilder;
-
-			public:
-				BlockList();
-				virtual ~BlockList();
-
-				BlockList& operator=(const BlockList &ref);
-
-				void push_front(Block *block);
-				void push_back(Block *block);
-				void insert(Block *block, const Block *before);
-				void remove(const Block *block);
-				void clear();
-
-				const std::set<dtn::data::EID> getEIDs() const;
-
-				Block& get(size_t index);
-				const Block& get(size_t index) const;
-				template<class T> T& get();
-				template<class T> const T& get() const;
-
-				template<class T>
-				const std::list<const T*> getAll() const;
-
-				const block_list& getAll() const;
-
-				size_t size() const;
-
-			private:
-				block_list _blocks;
+				public:
+					iterator(const block_list::iterator &it) : block_list::iterator(it) { };
+					const Block& operator*() const { return *(*((block_list::iterator*)this))->getPointer(); }
+					Block& operator*() { return *(*((block_list::iterator*)this))->getPointer(); }
 			};
+
+			class const_iterator : public block_list::const_iterator
+			{
+				public:
+					const_iterator(const block_list::const_iterator &it) : block_list::const_iterator(it) { };
+					const Block& operator*() const { return *(*((block_list::const_iterator*)this))->getPointer(); }
+			};
+
+			iterator begin();
+			iterator end();
+			const_iterator begin() const;
+			const_iterator end() const;
+
+			iterator find(block_t blocktype);
+			const_iterator find(block_t blocktype) const;
+
+			iterator find(const dtn::data::Block &block);
+			const_iterator find(const dtn::data::Block &block) const;
 
 			Bundle();
 			virtual ~Bundle();
@@ -105,19 +99,11 @@ namespace dtn
 			bool operator<(const Bundle& other) const;
 			bool operator>(const Bundle& other) const;
 
-			const block_list& getBlocks() const;
-
-			dtn::data::Block& getBlock(size_t index);
-			const dtn::data::Block& getBlock(size_t index) const;
+			template<class T>
+			T& find();
 
 			template<class T>
-			T& getBlock();
-
-			template<class T>
-			const T& getBlock() const;
-
-			template<class T>
-			const std::list<const T*> getBlocks() const;
+			const T& find() const;
 
 			template<class T>
 			T& push_front();
@@ -126,149 +112,105 @@ namespace dtn
 			T& push_back();
 
 			template<class T>
-			T& insert(const dtn::data::Block &before);
+			T& insert(iterator before);
 
 			dtn::data::PayloadBlock& push_front(ibrcommon::BLOB::Reference &ref);
 			dtn::data::PayloadBlock& push_back(ibrcommon::BLOB::Reference &ref);
-			dtn::data::PayloadBlock& insert(const dtn::data::Block &before, ibrcommon::BLOB::Reference &ref);
+			dtn::data::PayloadBlock& insert(iterator before, ibrcommon::BLOB::Reference &ref);
 
 			dtn::data::Block& push_front(dtn::data::ExtensionBlock::Factory &factory);
 			dtn::data::Block& push_back(dtn::data::ExtensionBlock::Factory &factory);
-			dtn::data::Block& insert(dtn::data::ExtensionBlock::Factory &factory, const dtn::data::Block &before);
+			dtn::data::Block& insert(iterator before, dtn::data::ExtensionBlock::Factory &factory);
+
+			void erase(iterator it);
+			void erase(iterator begin, iterator end);
 
 			void remove(const dtn::data::Block &block);
-			void clearBlocks();
 
-			string toString() const;
+			void clear();
 
-			size_t blockCount() const;
+			std::string toString() const;
+
+			size_t size() const;
 
 			bool allEIDsInCBHE() const;
 
 		private:
-			BlockList _blocks;
+			block_list _blocks;
 		};
 
 		template<class T>
-		const std::list<const T*> Bundle::getBlocks() const
+		T& Bundle::find()
 		{
-			return _blocks.getAll<T>();
+			iterator it = this->find(T::BLOCK_TYPE);
+			if (it == this->end()) throw NoSuchBlockFoundException();
+			return dynamic_cast<T&>(*it);
 		}
 
 		template<class T>
-		T& Bundle::getBlock()
+		const T& Bundle::find() const
 		{
-			return _blocks.get<T>();
-		}
-
-		template<class T>
-		const T& Bundle::getBlock() const
-		{
-			return _blocks.get<T>();
-		}
-
-		template<class T>
-		const T& Bundle::BlockList::get() const
-		{
-			try {
-				// copy all blocks to the list
-				for (Bundle::block_list::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
-				{
-					if ((*iter)->getType() == T::BLOCK_TYPE)
-					{
-						const Block *b = (*iter).getPointer();
-						return dynamic_cast<const T&>(*b);
-					}
-				}
-			} catch (const std::bad_cast&) {
-
-			}
-
-			throw NoSuchBlockFoundException();
-		}
-
-		template<class T>
-		T& Bundle::BlockList::get()
-		{
-			try {
-				// copy all blocks to the list
-				for (Bundle::block_list::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
-				{
-					if ((*iter)->getType() == T::BLOCK_TYPE)
-					{
-						Block *b = (*iter).getPointer();
-						return dynamic_cast<T&>(*b);
-					}
-				}
-			} catch (const std::bad_cast&) {
-
-			}
-
-			throw NoSuchBlockFoundException();
-		}
-
-		template<class T>
-		const std::list<const T*> Bundle::BlockList::getAll() const
-		{
-			// create a list of blocks
-			std::list<const T*> ret;
-
-			// copy all blocks to the list
-			for (Bundle::block_list::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
-			{
-				if ((*(*iter)).getType() == T::BLOCK_TYPE)
-				{
-					const T* obj = dynamic_cast<const T*>((*iter).getPointer());
-
-					if (obj != NULL)
-					{
-						ret.push_back( obj );
-					}
-				}
-			}
-
-			return ret;
+			const_iterator it = this->find(T::BLOCK_TYPE);
+			if (it == this->end()) throw NoSuchBlockFoundException();
+			return dynamic_cast<const T&>(*it);
 		}
 
 		template<class T>
 		T& Bundle::push_front()
 		{
 			T *tmpblock = new T();
-			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(block != NULL);
-#endif
-
+			block_elem block( static_cast<dtn::data::Block*>(tmpblock) );
 			_blocks.push_front(block);
+
+			// if this was the first element
+			if (size() == 1)
+			{
+				// set the last block bit
+				iterator last = end();
+				last--;
+				(*last).set(dtn::data::Block::LAST_BLOCK, true);
+			}
+
 			return (*tmpblock);
 		}
 
 		template<class T>
 		T& Bundle::push_back()
 		{
+			if (size() > 0) {
+				// remove the last block bit
+				iterator last = end();
+				last--;
+				(*last).set(dtn::data::Block::LAST_BLOCK, false);
+			}
+
 			T *tmpblock = new T();
-			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(block != NULL);
-#endif
-
+			block_elem block( static_cast<dtn::data::Block*>(tmpblock) );
 			_blocks.push_back(block);
+
+			// set the last block bit
+			block->set(dtn::data::Block::LAST_BLOCK, true);
+
 			return (*tmpblock);
 		}
 
 		template<class T>
-		T& Bundle::insert(const dtn::data::Block &before)
+		T& Bundle::insert(iterator before)
 		{
+			if (size() > 0) {
+				// remove the last block bit
+				iterator last = end();
+				last--;
+				(*last).set(dtn::data::Block::LAST_BLOCK, false);
+			}
+
 			T *tmpblock = new T();
-			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+			block_elem block( static_cast<dtn::data::Block*>(tmpblock) );
+			_blocks.insert(before, block);
 
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(block != NULL);
-#endif
+			// set the last block bit
+			block->set(dtn::data::Block::LAST_BLOCK, true);
 
-			_blocks.insert(block, &before);
 			return (*tmpblock);
 		}
 	}

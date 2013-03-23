@@ -128,7 +128,7 @@ namespace dtn
 			size_t exp_time = 0;
 
 			try {
-				const dtn::data::PayloadBlock &payload = capsule.getBlock<dtn::data::PayloadBlock>();
+				const dtn::data::PayloadBlock &payload = capsule.find<dtn::data::PayloadBlock>();
 
 				// get the stream object of the payload
 				ibrcommon::BLOB::Reference ref = payload.getBLOB();
@@ -200,7 +200,7 @@ namespace dtn
 		void Utils::decapsule(const dtn::data::Bundle &capsule, std::list<dtn::data::Bundle> &bundles)
 		{
 			try {
-				const dtn::data::PayloadBlock &payload = capsule.getBlock<dtn::data::PayloadBlock>();
+				const dtn::data::PayloadBlock &payload = capsule.find<dtn::data::PayloadBlock>();
 				ibrcommon::BLOB::iostream stream = payload.getBLOB().iostream();
 
 				// read the number of bundles

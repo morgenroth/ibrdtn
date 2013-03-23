@@ -59,7 +59,7 @@ void TestTrackingBlock::createTest(void)
 	// deserialize the bundle
 	dds >> dest;
 
-	const dtn::data::TrackingBlock &dest_tracking = b.getBlock<dtn::data::TrackingBlock>();
+	const dtn::data::TrackingBlock &dest_tracking = b.find<dtn::data::TrackingBlock>();
 
 	const dtn::data::TrackingBlock::tracking_list &list = dest_tracking.getTrack();
 

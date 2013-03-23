@@ -25,6 +25,7 @@
 #include "ibrdtn/data/Bundle.h"
 #include <openssl/err.h>
 #include <openssl/rsa.h>
+#include <algorithm>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -96,11 +97,11 @@ namespace dtn
 
 		void ExtensionSecurityBlock::decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, uint64_t correlator)
 		{
-			const std::list<const dtn::security::ExtensionSecurityBlock*> blocks = bundle.getBlocks<ExtensionSecurityBlock>();
-
-			for (std::list<const dtn::security::ExtensionSecurityBlock*>::const_iterator it = blocks.begin(); it != blocks.end(); it++)
+			// iterate through all extension security blocks
+			dtn::data::Bundle::iterator it = std::remove(bundle.begin(), bundle.end(), ExtensionSecurityBlock::BLOCK_TYPE);
+			for (; it != bundle.end(); it++)
 			{
-				const dtn::security::ExtensionSecurityBlock &esb = (**it);
+				const dtn::security::ExtensionSecurityBlock &esb = dynamic_cast<const dtn::security::ExtensionSecurityBlock&>(*it);
 
 				if ((correlator == 0) || (correlator == esb._correlator))
 				{

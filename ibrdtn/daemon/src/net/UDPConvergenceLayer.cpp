@@ -183,7 +183,7 @@ namespace dtn
 						throw ConnectionInterruptedException();
 					}
 
-					const size_t psize = bundle.getBlock<dtn::data::PayloadBlock>().getLength();
+					const size_t psize = bundle.find<dtn::data::PayloadBlock>().getLength();
 					const size_t fragment_size = m_maxmsgsize - header;
 					const size_t fragment_count = (psize / fragment_size) + (((psize % fragment_size) > 0) ? 1 : 0);
 

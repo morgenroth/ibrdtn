@@ -191,7 +191,7 @@ int main(int argc, char** argv)
 				if (signed_only && !b.get(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED)) continue;
 
 				// get the reference to the blob
-				ibrcommon::BLOB::Reference ref = b.getBlock<dtn::data::PayloadBlock>().getBLOB();
+				ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 
 				// get a temporary file name
 				ibrcommon::TemporaryFile file(blob_path, "bundle");

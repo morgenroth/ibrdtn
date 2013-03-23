@@ -52,7 +52,7 @@ void TestExtensionBlock::deserializeUnknownBlock(void)
 	dds >> dest;
 
 	// check unknown block
-	const dtn::data::ExtensionBlock &unknown = dynamic_cast<const dtn::data::ExtensionBlock&>(dest.getBlock(0));
+	const dtn::data::ExtensionBlock &unknown = dynamic_cast<const dtn::data::ExtensionBlock&>(*dest.begin());
 	CPPUNIT_ASSERT_EQUAL((unsigned char)140, unknown.getType());
 	ibrcommon::BLOB::Reference uref = unknown.getBLOB();
 
@@ -62,7 +62,7 @@ void TestExtensionBlock::deserializeUnknownBlock(void)
 	}
 
 	// check payload block
-	dtn::data::PayloadBlock &dest_payload = dest.getBlock<dtn::data::PayloadBlock>();
+	dtn::data::PayloadBlock &dest_payload = dest.find<dtn::data::PayloadBlock>();
 
 	CPPUNIT_ASSERT_EQUAL((size_t)11, dest_payload.getBLOB().iostream().size());
 }

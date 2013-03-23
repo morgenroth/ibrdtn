@@ -104,7 +104,7 @@ void PayloadConfidentialBlockTest::encryptTest(void)
 	}
 
 	// check the number of block, should be two
-	CPPUNIT_ASSERT_EQUAL((size_t)2, b.getBlocks().size());
+	CPPUNIT_ASSERT_EQUAL((size_t)2, b.size());
 }
 
 std::string PayloadConfidentialBlockTest::getHex(std::istream &stream)
@@ -170,7 +170,7 @@ void PayloadConfidentialBlockTest::decryptTest(void)
 
 		// verify the payload
 		{
-			dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+			dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
 
 			ibrcommon::BLOB::iostream stream = p.getBLOB().iostream();
 			std::stringstream ss; ss << (*stream).rdbuf();
@@ -188,5 +188,5 @@ void PayloadConfidentialBlockTest::decryptTest(void)
 	}
 
 	// check the number of block, should be one
-	CPPUNIT_ASSERT_EQUAL((size_t)1, b.getBlocks().size());
+	CPPUNIT_ASSERT_EQUAL((size_t)1, b.size());
 }

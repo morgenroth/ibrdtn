@@ -41,6 +41,8 @@
 #include "security/SecurityManager.h"
 #endif
 
+#include <algorithm>
+
 namespace dtn
 {
 	namespace api
@@ -529,7 +531,7 @@ namespace dtn
 									ss >> offset;
 									if (ss.fail()) throw ibrcommon::Exception("malformed command");
 
-									if (offset >= _bundle_reg.blockCount())
+									if (offset >= _bundle_reg.size())
 									{
 										inserter = dtn::data::BundleBuilder(_bundle_reg, dtn::data::BundleBuilder::END);
 									}
@@ -573,7 +575,9 @@ namespace dtn
 								ss >> offset;
 								if (ss.fail()) throw ibrcommon::Exception("malformed command");
 
-								_bundle_reg.remove(_bundle_reg.getBlock(offset));
+								dtn::data::Bundle::iterator it = _bundle_reg.begin();
+								std::advance(it, offset);
+								_bundle_reg.erase(it);
 
 								ibrcommon::MutexLock l(_write_lock);
 								_stream << ClientHandler::API_STATUS_OK << " BUNDLE BLOCK DEL SUCCESSFUL" << std::endl;
@@ -594,7 +598,7 @@ namespace dtn
 					{
 						size_t block_offset;
 						int cmd_index = 1;
-						dtn::data::Block& b = _bundle_reg.getBlock<dtn::data::PayloadBlock>();
+						dtn::data::Bundle::iterator block_it = _bundle_reg.begin();
 
 						if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
 
@@ -605,12 +609,18 @@ namespace dtn
 							cmd_index++;
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
-							if (block_offset >= _bundle_reg.getBlocks().size()) {
+							std::advance(block_it, block_offset);
+
+							if (block_it == _bundle_reg.end()) {
 								throw ibrcommon::Exception("invalid offset");
 							}
-
-							b = _bundle_reg.getBlock(block_offset);
 						}
+						else
+						{
+							block_it = _bundle_reg.find(dtn::data::PayloadBlock::BLOCK_TYPE);
+						}
+
+						dtn::data::Block& b = dynamic_cast<dtn::data::Block&>(*block_it);
 
 						int cmd_remaining = cmd.size() - (cmd_index + 1);
 						if (cmd[cmd_index] == "get")
@@ -837,7 +847,7 @@ namespace dtn
 			const dtn::data::Bundle b = dtn::core::BundleCore::getInstance().getStorage().get(bundle);
 
 			// get the payload block of the bundle
-			const dtn::data::PayloadBlock &payload = b.getBlock<dtn::data::PayloadBlock>();
+			const dtn::data::PayloadBlock &payload = b.find<dtn::data::PayloadBlock>();
 
 			try {
 				// try to decode as status report

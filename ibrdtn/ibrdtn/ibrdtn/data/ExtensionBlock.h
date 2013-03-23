@@ -38,14 +38,14 @@ namespace dtn
 			public:
 				virtual dtn::data::Block* create() = 0;
 
-				static Factory& get(char type) throw (ibrcommon::Exception);
+				static Factory& get(block_t type) throw (ibrcommon::Exception);
 
 			protected:
-				Factory(char type);
+				Factory(block_t type);
 				virtual ~Factory();
 
 			private:
-				char _type;
+				block_t _type;
 			};
 
 			ExtensionBlock();
@@ -54,7 +54,7 @@ namespace dtn
 
 			ibrcommon::BLOB::Reference getBLOB() const;
 
-			void setType(char type);
+			void setType(block_t type);
 
 			virtual size_t getLength() const;
 			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
@@ -67,14 +67,14 @@ namespace dtn
 				FactoryList();
 				virtual ~FactoryList();
 
-				Factory& get(char type) throw (ibrcommon::Exception);
-				void add(char type, Factory *f) throw (ibrcommon::Exception);
-				void remove(char type);
+				Factory& get(block_t type) throw (ibrcommon::Exception);
+				void add(block_t type, Factory *f) throw (ibrcommon::Exception);
+				void remove(block_t type);
 
 				static void initialize();
 
 			private:
-				std::map<char, Factory*> fmap;
+				std::map<block_t, Factory*> fmap;
 			};
 
 			static FactoryList *factories;

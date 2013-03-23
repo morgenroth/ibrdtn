@@ -42,7 +42,7 @@ namespace dtn
 				virtual dtn::data::Block* create();
 			};
 
-			static const unsigned char BLOCK_TYPE = 202;
+			enum { BLOCK_TYPE = 202 };
 
 			enum COMPRESS_ALGS
 			{

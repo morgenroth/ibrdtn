@@ -425,7 +425,7 @@ namespace dtn
 		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
 			// insert ESB, block can be removed after encryption, because bundle will destroy it
-			T& esb = bundle.insert<T>(block);
+			T& esb = bundle.insert<T>(bundle.find(block));
 
 			// take eid list
 			copyEID(block, esb);

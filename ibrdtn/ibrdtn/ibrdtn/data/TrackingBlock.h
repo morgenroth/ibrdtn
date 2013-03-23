@@ -28,7 +28,7 @@ namespace dtn
 				virtual dtn::data::Block* create();
 			};
 
-			static const unsigned char BLOCK_TYPE = 193;
+			enum { BLOCK_TYPE = 193 };
 
 			TrackingBlock();
 			virtual ~TrackingBlock();

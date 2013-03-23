@@ -60,7 +60,7 @@ namespace dtn
 				};
 
 				/** The block type of this class. */
-				static const unsigned char BLOCK_TYPE = SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK;
+				enum { BLOCK_TYPE = SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK };
 
 				/** does nothing */
 				virtual ~PayloadConfidentialBlock();

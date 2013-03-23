@@ -338,13 +338,13 @@ namespace dtn
 
 						// increment value in the scope control hop limit block
 						try {
-							dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+							dtn::data::ScopeControlHopLimitBlock &schl = bundle.find<dtn::data::ScopeControlHopLimitBlock>();
 							schl.increment();
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// modify TrackingBlock
 						try {
-							dtn::data::TrackingBlock &track = bundle.getBlock<dtn::data::TrackingBlock>();
+							dtn::data::TrackingBlock &track = bundle.find<dtn::data::TrackingBlock>();
 							track.append(dtn::core::BundleCore::local);
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 

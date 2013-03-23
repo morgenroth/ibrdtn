@@ -28,6 +28,8 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 
+#include <algorithm>
+
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
 #endif
@@ -68,7 +70,7 @@ namespace dtn
 			// check if this is a fragment
 			if (bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
 			{
-				dtn::data::PayloadBlock& plb = bundle.getBlock<dtn::data::PayloadBlock>();
+				dtn::data::PayloadBlock& plb = bundle.find<dtn::data::PayloadBlock>();
 				ibrcommon::BLOB::Reference blobref = plb.getBLOB();
 				ibrcommon::BLOB::iostream stream = blobref.iostream();
 				addFragmentRange(pib._ciphersuite_params, bundle._fragmentoffset, stream.size());
@@ -150,11 +152,14 @@ namespace dtn
 		void PayloadIntegrityBlock::verify(const dtn::data::Bundle &bundle, const SecurityKey &key)
 		{
 			// iterate over all PIBs to find the right one
-			std::list<const PayloadIntegrityBlock *> pibs = bundle.getBlocks<PayloadIntegrityBlock>();
+			dtn::data::Bundle::const_iterator it = bundle.find(PayloadIntegrityBlock::BLOCK_TYPE);
 
-			for (std::list<const PayloadIntegrityBlock *>::const_iterator it = pibs.begin(); it!=pibs.end(); it++)
+			while (it != bundle.end())
 			{
-				verify(bundle, key, **it);
+				verify(bundle, key, dynamic_cast<const PayloadIntegrityBlock&>(*it));
+
+				it++;
+				it = std::find(it, bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
 			}
 		}
 
@@ -181,13 +186,12 @@ namespace dtn
 
 		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle, const SecurityKey &key, const bool all)
 		{
-			std::list<const PayloadIntegrityBlock *> pibs = bundle.getBlocks<PayloadIntegrityBlock>();
-			const PayloadIntegrityBlock * valid = NULL;
+			dtn::data::Bundle::iterator it = bundle.find(PayloadIntegrityBlock::BLOCK_TYPE);
 
 			// search for valid PIB
-			for (std::list<const PayloadIntegrityBlock *>::const_iterator it = pibs.begin(); it != pibs.end() && !valid; it++)
+			while (it != bundle.end())
 			{
-				const PayloadIntegrityBlock &pib = (**it);
+				const PayloadIntegrityBlock &pib = dynamic_cast<const PayloadIntegrityBlock&>(*it);
 
 				// check if the PIB is valid
 				try {
@@ -197,30 +201,22 @@ namespace dtn
 					bundle.remove(pib);
 
 					// remove all previous pibs if all = true
-					if (all && (it != pibs.begin()))
+					if (all)
 					{
-						// move the iterator one backward
-						for (it--; it != pibs.begin(); it--)
-						{
-							bundle.remove(**it);
-						}
-
-						// remove the first PIB too
-						bundle.remove(**it);
+						bundle.erase(std::remove(bundle.begin(), it, PayloadIntegrityBlock::BLOCK_TYPE));
 					}
 
 					return;
 				} catch (const ibrcommon::Exception&) { };
+
+				it++;
+				it = std::find(it, bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
 			}
 		}
 
 		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle)
 		{
-			std::list<const PayloadIntegrityBlock *> pibs = bundle.getBlocks<PayloadIntegrityBlock>();
-			for (std::list<const PayloadIntegrityBlock *>::const_iterator it = pibs.begin(); it != pibs.end(); it++)
-			{
-				bundle.remove(*(*it));
-			}
+			bundle.erase(std::remove(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE));
 		}
 
 		std::istream& PayloadIntegrityBlock::deserialize(std::istream &stream, const size_t length)

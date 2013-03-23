@@ -87,7 +87,9 @@ namespace dtn
 
 		void CompressedPayloadBlock::compress(dtn::data::Bundle &b, CompressedPayloadBlock::COMPRESS_ALGS alg)
 		{
-			dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+			Bundle::iterator p_it = b.find(dtn::data::PayloadBlock::BLOCK_TYPE);
+			if (p_it == b.end()) throw ibrcommon::Exception("Payload block missing.");
+			dtn::data::PayloadBlock &p = dynamic_cast<dtn::data::PayloadBlock&>(*p_it);
 
 			// get a data container for the compressed payload
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -110,19 +112,21 @@ namespace dtn
 			cpb.setOriginSize(p.getLength());
 
 			// add the new payload block to the bundle
-			b.insert(p, ref);
+			b.insert(p_it, ref);
 
 			// delete the old payload block
-			b.remove(p);
+			b.erase(p_it);
 		}
 
 		void CompressedPayloadBlock::extract(dtn::data::Bundle &b)
 		{
 			// get the CPB first
-			dtn::data::CompressedPayloadBlock &cpb = b.getBlock<CompressedPayloadBlock>();
+			dtn::data::CompressedPayloadBlock &cpb = b.find<CompressedPayloadBlock>();
 
 			// get the payload block
-			dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+			Bundle::iterator p_it = b.find(dtn::data::PayloadBlock::BLOCK_TYPE);
+			if (p_it == b.end()) throw ibrcommon::Exception("Payload block missing.");
+			dtn::data::PayloadBlock &p = dynamic_cast<dtn::data::PayloadBlock&>(*p_it);
 
 			// get a data container for the uncompressed payload
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -138,10 +142,10 @@ namespace dtn
 			}
 
 			// add the new payload block to the bundle
-			b.insert(p, ref);
+			b.insert(p_it, ref);
 
 			// delete the old payload block
-			b.remove(p);
+			b.erase(p_it);
 
 			// delete the CPB
 			b.remove(cpb);
