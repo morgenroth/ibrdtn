@@ -68,11 +68,9 @@ namespace dtn
 
 			// get all PCBs
 			size_t pcbs_size = std::count(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
-			dtn::data::Bundle::iterator pcbs = std::remove(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
 
 			// get all PIBs
 			size_t pibs_size = std::count(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
-			dtn::data::Bundle::iterator pibs = std::remove(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
 
 			// create a new payload confidential block
 			PayloadConfidentialBlock& pcb = bundle.push_front<PayloadConfidentialBlock>();
@@ -138,11 +136,17 @@ namespace dtn
 				pcb.setCorrelator(correlator);
 
 			// encrypt PCBs and PIBs
-			for (dtn::data::Bundle::iterator it = pcbs; it != bundle.end(); it++)
+			for (dtn::data::Bundle::iterator it = bundle.find(PayloadConfidentialBlock::BLOCK_TYPE);
+					it != bundle.end(); it = std::find(it, bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE))
+			{
 				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, *it, salt, ephemeral_key).setCorrelator(correlator);
+			}
 
-			for (dtn::data::Bundle::iterator it = pibs; it != bundle.end(); it++)
+			for (dtn::data::Bundle::iterator it = bundle.find(PayloadIntegrityBlock::BLOCK_TYPE);
+					it != bundle.end(); it = std::find(it, bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE))
+			{
 				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, *it, salt, ephemeral_key).setCorrelator(correlator);
+			}
 		}
 
 		void PayloadConfidentialBlock::decrypt(dtn::data::Bundle& bundle, const dtn::security::SecurityKey &long_key)

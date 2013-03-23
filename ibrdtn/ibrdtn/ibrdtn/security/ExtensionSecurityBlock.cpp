@@ -98,8 +98,8 @@ namespace dtn
 		void ExtensionSecurityBlock::decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, uint64_t correlator)
 		{
 			// iterate through all extension security blocks
-			dtn::data::Bundle::iterator it = std::remove(bundle.begin(), bundle.end(), ExtensionSecurityBlock::BLOCK_TYPE);
-			for (; it != bundle.end(); it++)
+			for (dtn::data::Bundle::iterator it = bundle.find(ExtensionSecurityBlock::BLOCK_TYPE);
+					it != bundle.end(); it = std::find(it, bundle.end(), ExtensionSecurityBlock::BLOCK_TYPE))
 			{
 				const dtn::security::ExtensionSecurityBlock &esb = dynamic_cast<const dtn::security::ExtensionSecurityBlock&>(*it);
 
