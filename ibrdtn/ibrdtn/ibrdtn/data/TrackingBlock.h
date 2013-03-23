@@ -28,7 +28,7 @@ namespace dtn
 				virtual dtn::data::Block* create();
 			};
 
-			enum { BLOCK_TYPE = 193 };
+			enum { BLOCK_TYPE = (dtn::data::block_t)193 };
 
 			TrackingBlock();
 			virtual ~TrackingBlock();

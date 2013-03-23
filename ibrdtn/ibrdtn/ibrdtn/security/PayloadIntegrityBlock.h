@@ -53,7 +53,7 @@ namespace dtn
 				};
 
 				/** The block type of this class. */
-				enum { BLOCK_TYPE = SecurityBlock::PAYLOAD_INTEGRITY_BLOCK };
+				enum { BLOCK_TYPE = (dtn::data::block_t)SecurityBlock::PAYLOAD_INTEGRITY_BLOCK };
 				
 				/** frees the internal PKEY object, without deleting the rsa object 
 				given in the constructor */

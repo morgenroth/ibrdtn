@@ -41,7 +41,7 @@ namespace dtn
 				virtual dtn::data::Block* create();
 			};
 
-			enum { BLOCK_TYPE = 199 };
+			enum { BLOCK_TYPE = (dtn::data::block_t)199 };
 
 			ScopeControlHopLimitBlock();
 			virtual ~ScopeControlHopLimitBlock();

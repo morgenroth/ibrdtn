@@ -42,7 +42,7 @@ namespace dtn
 				virtual dtn::data::Block* create();
 			};
 
-			enum { BLOCK_TYPE = 202 };
+			enum { BLOCK_TYPE = (dtn::data::block_t)202 };
 
 			enum COMPRESS_ALGS
 			{
