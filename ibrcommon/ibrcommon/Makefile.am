@@ -20,7 +20,8 @@ h_sources = \
 	SyslogStream.h \
 	TimeMeasurement.h \
 	Logger.h \
-	TLSExceptions.h
+	TLSExceptions.h \
+	Iterator.h
 
 cc_sources = \
 	appstreambuf.cpp \
