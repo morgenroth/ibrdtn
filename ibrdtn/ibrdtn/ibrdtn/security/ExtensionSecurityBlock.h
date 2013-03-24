@@ -71,7 +71,7 @@ namespace dtn
 				@param bundle the bundle to which block belongs
 				@param block the to be encrypted block
 				*/
-				static void encrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::data::Block &block, const dtn::data::EID& source, const dtn::data::EID& destination);
+				static void encrypt(dtn::data::Bundle& bundle, const SecurityKey &key, dtn::data::Bundle::iterator it, const dtn::data::EID& source, const dtn::data::EID& destination);
 
 				/**
 				Decrypts the given block and replaces the ESB with the original block in
@@ -83,7 +83,7 @@ namespace dtn
 				replaced, false otherwise. when false the encrypted block will remain as
 				it was
 				*/
-				static void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::security::ExtensionSecurityBlock &block);
+				static void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, dtn::data::Bundle::iterator it);
 
 				/**
 				Decrypts all blocks in the bundle which have correlator as their

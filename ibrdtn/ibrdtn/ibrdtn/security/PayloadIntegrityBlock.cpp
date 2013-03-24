@@ -152,14 +152,11 @@ namespace dtn
 		void PayloadIntegrityBlock::verify(const dtn::data::Bundle &bundle, const SecurityKey &key)
 		{
 			// iterate over all PIBs to find the right one
-			dtn::data::Bundle::const_iterator it = bundle.find(PayloadIntegrityBlock::BLOCK_TYPE);
+			dtn::data::Bundle::const_find_iterator it(bundle.begin(), PayloadIntegrityBlock::BLOCK_TYPE);
 
-			while (it != bundle.end())
+			while (it.next(bundle.end()))
 			{
 				verify(bundle, key, dynamic_cast<const PayloadIntegrityBlock&>(*it));
-
-				it++;
-				it = std::find(it, bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
 			}
 		}
 
@@ -186,10 +183,10 @@ namespace dtn
 
 		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle, const SecurityKey &key, const bool all)
 		{
-			dtn::data::Bundle::iterator it = bundle.find(PayloadIntegrityBlock::BLOCK_TYPE);
+			dtn::data::Bundle::find_iterator it(bundle.begin(), PayloadIntegrityBlock::BLOCK_TYPE);
 
 			// search for valid PIB
-			while (it != bundle.end())
+			while (it.next(bundle.end()))
 			{
 				const PayloadIntegrityBlock &pib = dynamic_cast<const PayloadIntegrityBlock&>(*it);
 
@@ -208,9 +205,6 @@ namespace dtn
 
 					return;
 				} catch (const ibrcommon::Exception&) { };
-
-				it++;
-				it = std::find(it, bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
 			}
 		}
 

@@ -37,6 +37,7 @@
 #include <typeinfo>
 #include <list>
 #include <iterator>
+#include <algorithm>
 
 namespace dtn
 {
@@ -75,6 +76,68 @@ namespace dtn
 				public:
 					const_iterator(const block_list::const_iterator &it) : block_list::const_iterator(it) { };
 					const Block& operator*() const { return *(*((block_list::const_iterator*)this))->getPointer(); }
+			};
+
+			class find_iterator : public iterator
+			{
+				iterator _next;
+				dtn::data::block_t _match;
+
+			public:
+				find_iterator(iterator begin, dtn::data::block_t match)
+				 : iterator(begin), _next(begin), _match(match)
+				{
+				}
+
+				bool next(iterator end)
+				{
+					if (_next == end) return false;
+
+					((iterator&)*this) = std::find(_next, end, _match);
+
+					_next = ((iterator&)*this);
+
+					if (_next == end)
+					{
+						return false;
+					}
+					else
+					{
+						_next++;
+						return true;
+					}
+				}
+			};
+
+			class const_find_iterator : public const_iterator
+			{
+				const_iterator _next;
+				dtn::data::block_t _match;
+
+			public:
+				const_find_iterator(const_iterator begin, dtn::data::block_t match)
+				 : const_iterator(begin), _next(begin), _match(match)
+				{
+				}
+
+				bool next(const_iterator end)
+				{
+					if (_next == end) return false;
+
+					((const_iterator&)*this) = std::find(_next, end, _match);
+
+					_next = ((const_iterator&)*this);
+
+					if (_next == end)
+					{
+						return false;
+					}
+					else
+					{
+						_next++;
+						return true;
+					}
+				}
 			};
 
 			iterator begin();

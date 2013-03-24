@@ -93,9 +93,9 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(10) << "verify signed bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
-			// iterate ove all PIBs of this bundle
-			for (dtn::data::Bundle::iterator it = bundle.find(dtn::security::PayloadIntegrityBlock::BLOCK_TYPE);
-					it != bundle.end(); it = std::find(it, bundle.end(), dtn::security::PayloadIntegrityBlock::BLOCK_TYPE))
+			// iterate over all PIBs of this bundle
+			dtn::data::Bundle::find_iterator it(bundle.begin(), dtn::security::PayloadIntegrityBlock::BLOCK_TYPE);
+			while (it.next(bundle.end()))
 			{
 				const dtn::security::PayloadIntegrityBlock& pib = dynamic_cast<const dtn::security::PayloadIntegrityBlock&>(*it);
 
@@ -140,8 +140,8 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(10) << "verify authenticated bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// iterate over all BABs of this bundle
-			for (dtn::data::Bundle::iterator it = bundle.find(dtn::security::BundleAuthenticationBlock::BLOCK_TYPE);
-					it != bundle.end(); it = std::find(it, bundle.end(), dtn::security::BundleAuthenticationBlock::BLOCK_TYPE))
+			dtn::data::Bundle::find_iterator it(bundle.begin(), dtn::security::BundleAuthenticationBlock::BLOCK_TYPE);
+			while (it.next(bundle.end()))
 			{
 				const dtn::security::BundleAuthenticationBlock& bab = dynamic_cast<const dtn::security::BundleAuthenticationBlock&>(*it);
 

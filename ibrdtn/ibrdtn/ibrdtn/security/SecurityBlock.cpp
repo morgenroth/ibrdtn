@@ -597,8 +597,10 @@ namespace dtn
 			return ntohl(nsalt);
 		}
 
-		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
+		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
+			const dtn::security::SecurityBlock &block = dynamic_cast<const dtn::security::SecurityBlock&>(*it);
+
 			// the array for the extracted tag
 			unsigned char tag[ibrcommon::AES128Stream::tag_len];
 

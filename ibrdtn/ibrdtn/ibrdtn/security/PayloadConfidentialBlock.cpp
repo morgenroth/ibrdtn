@@ -66,22 +66,43 @@ namespace dtn
 			unsigned char iv[ibrcommon::AES128Stream::iv_len];
 			unsigned char tag[ibrcommon::AES128Stream::tag_len];
 
-			// get all PCBs
-			size_t pcbs_size = std::count(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
-
-			// get all PIBs
-			size_t pibs_size = std::count(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
-
-			// create a new payload confidential block
-			PayloadConfidentialBlock& pcb = bundle.push_front<PayloadConfidentialBlock>();
+			// create a new correlator value
+			uint64_t correlator = createCorrelatorValue(bundle);
 
 			// create a random salt and key
 			createSaltAndKey(salt, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes);
 
-			// encrypt payload - BEGIN
+			// count all PCBs
+			size_t pcbs_size = std::count(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
+
+			// count all PIBs
+			size_t pibs_size = std::count(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
+
+			// encrypt PCBs and PIBs
+			dtn::data::Bundle::find_iterator find_pcb(bundle.begin(), PayloadConfidentialBlock::BLOCK_TYPE);
+			while (find_pcb.next(bundle.end()))
+			{
+				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, find_pcb, salt, ephemeral_key).setCorrelator(correlator);
+			}
+
+			dtn::data::Bundle::find_iterator find_pib(bundle.begin(), PayloadIntegrityBlock::BLOCK_TYPE);
+			while (find_pib.next(bundle.end()))
+			{
+				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, find_pib, salt, ephemeral_key).setCorrelator(correlator);
+			}
+
+			// create a new payload confidential block
+			PayloadConfidentialBlock& pcb = bundle.push_front<PayloadConfidentialBlock>();
+
+			// set the correlator
+			if (pcbs_size > 0 || pibs_size > 0)
+				pcb.setCorrelator(correlator);
+
+			// get reference to the payload block
 			dtn::data::PayloadBlock& plb = bundle.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference blobref = plb.getBLOB();
 
+			// encrypt payload - BEGIN
 			{
 				ibrcommon::BLOB::iostream stream = blobref.iostream();
 				ibrcommon::AES128Stream aes_stream(ibrcommon::CipherStream::CIPHER_ENCRYPT, *stream, ephemeral_key, salt);
@@ -128,25 +149,6 @@ namespace dtn
 
 			pcb._security_result.set(SecurityBlock::PCB_integrity_check_value, tag, ibrcommon::AES128Stream::tag_len);
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
-
-			// create correlator
-			uint64_t correlator = createCorrelatorValue(bundle);
-
-			if (pcbs_size > 0 || pibs_size > 0)
-				pcb.setCorrelator(correlator);
-
-			// encrypt PCBs and PIBs
-			for (dtn::data::Bundle::iterator it = bundle.find(PayloadConfidentialBlock::BLOCK_TYPE);
-					it != bundle.end(); it = std::find(it, bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE))
-			{
-				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, *it, salt, ephemeral_key).setCorrelator(correlator);
-			}
-
-			for (dtn::data::Bundle::iterator it = bundle.find(PayloadIntegrityBlock::BLOCK_TYPE);
-					it != bundle.end(); it = std::find(it, bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE))
-			{
-				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, *it, salt, ephemeral_key).setCorrelator(correlator);
-			}
 		}
 
 		void PayloadConfidentialBlock::decrypt(dtn::data::Bundle& bundle, const dtn::security::SecurityKey &long_key)
@@ -186,13 +188,13 @@ namespace dtn
 						{
 							// try to decrypt the block
 							try {
-								decryptBlock(bundle, (dtn::security::SecurityBlock&)*it, salt, key);
+								decryptBlock(bundle, it, salt, key);
 
 								// success! add this block to the erasue list
 								erasure_list.push_back(&*it);
 							} catch (const ibrcommon::Exception&) {
 								IBRCOMMON_LOGGER(critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
-								decryptBlock(bundle, (dtn::security::SecurityBlock&)*it, salt, key);
+								decryptBlock(bundle, it, salt, key);
 
 								// abort the decryption and discard the bundle?
 								throw ibrcommon::Exception("decrypt of correlated block reversed, tag verfication failed");

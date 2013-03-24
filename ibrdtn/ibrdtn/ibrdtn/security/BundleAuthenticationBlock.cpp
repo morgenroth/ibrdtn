@@ -90,22 +90,16 @@ namespace dtn
 			verify(bundle, key, correlator);
 
 			// iterate over all BABs
-			dtn::data::Bundle::iterator it = bundle.find(BundleAuthenticationBlock::BLOCK_TYPE);
-			while (it != bundle.end())
+			dtn::data::Bundle::find_iterator it(bundle.begin(), BundleAuthenticationBlock::BLOCK_TYPE);
+			while (it.next(bundle.end()))
 			{
 				const BundleAuthenticationBlock &bab = dynamic_cast<const BundleAuthenticationBlock&>(*it);
 
 				// if the correlator is already authenticated, then remove the BAB
 				if ((bab._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && (bab._correlator == correlator))
 				{
-					bundle.erase(it++);
+					bundle.erase(it);
 				}
-				else
-				{
-					it++;
-				}
-
-				it = std::find(it, bundle.end(), BundleAuthenticationBlock::BLOCK_TYPE);
 			}
 		}
 
@@ -122,8 +116,8 @@ namespace dtn
 			// calculate the MAC of this bundle
 			std::string our_hash_string = calcMAC(bundle, key);
 
-			dtn::data::Bundle::const_iterator it = bundle.find(BundleAuthenticationBlock::BLOCK_TYPE);
-			while (it != bundle.end())
+			dtn::data::Bundle::const_find_iterator it(bundle.begin(), BundleAuthenticationBlock::BLOCK_TYPE);
+			while (it.next(bundle.end()))
 			{
 				const BundleAuthenticationBlock &bab = dynamic_cast<const BundleAuthenticationBlock&>(*it);
 
@@ -155,9 +149,6 @@ namespace dtn
 					// remember it for later check
 					correlators.insert(bab._correlator);
 				}
-
-				it++;
-				it = std::find(it, bundle.end(), BundleAuthenticationBlock::BLOCK_TYPE);
 			}
 
 			throw ibrcommon::Exception("verification failed");
