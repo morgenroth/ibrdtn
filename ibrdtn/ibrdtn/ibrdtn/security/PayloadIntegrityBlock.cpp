@@ -200,7 +200,7 @@ namespace dtn
 					// remove all previous pibs if all = true
 					if (all)
 					{
-						bundle.erase(std::remove(bundle.begin(), it, PayloadIntegrityBlock::BLOCK_TYPE));
+						bundle.erase(std::remove(bundle.begin(), (dtn::data::Bundle::iterator&)it, PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());
 					}
 
 					return;
@@ -210,7 +210,7 @@ namespace dtn
 
 		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle)
 		{
-			bundle.erase(std::remove(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE));
+			bundle.erase(std::remove(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());
 		}
 
 		std::istream& PayloadIntegrityBlock::deserialize(std::istream &stream, const size_t length)

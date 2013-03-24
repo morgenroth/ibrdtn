@@ -110,7 +110,7 @@ namespace dtn
 
 		void Bundle::erase(Bundle::iterator b, Bundle::iterator e)
 		{
-			for (iterator it = b; it != e; it++)
+			for (iterator it = b; it != e;)
 			{
 				_blocks.erase(it++);
 			}
