@@ -70,6 +70,8 @@ namespace dtn
 					iterator(const block_list::iterator &it) : block_list::iterator(it) { };
 					const Block& operator*() const { return *(*((block_list::iterator*)this))->getPointer(); }
 					Block& operator*() { return *(*((block_list::iterator*)this))->getPointer(); }
+					iterator& operator++() { ((block_list::iterator*)this)->operator ++(); return (*this); }
+					iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
 			};
 
 			class const_iterator : public block_list::const_iterator
@@ -77,6 +79,8 @@ namespace dtn
 				public:
 					const_iterator(const block_list::const_iterator &it) : block_list::const_iterator(it) { };
 					const Block& operator*() const { return *(*((block_list::const_iterator*)this))->getPointer(); }
+					const_iterator& operator++() { ((block_list::const_iterator*)this)->operator ++(); return (*this); }
+					const_iterator operator++(int) { const_iterator tmp(*this); operator++(); return tmp; }
 			};
 
 			typedef ibrcommon::find_iterator<iterator, dtn::data::block_t> find_iterator;
