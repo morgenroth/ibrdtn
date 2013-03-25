@@ -49,6 +49,7 @@ import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.p2p.P2PManager;
 import de.tubs.ibr.dtn.service.DaemonManager.DaemonStateListener;
@@ -218,7 +219,8 @@ public class DaemonService extends Service implements DaemonStateListener {
 		_session_manager = new SessionManager(this, _daemon);
 		
 		// create P2P Manager
-		_p2p_manager = new P2PManager(this, _p2p_listener, "my address");
+		SingletonEndpoint eid = DaemonProcess.getUniqueEndpointID(this);
+		_p2p_manager = new P2PManager(this, eid.toString());
 		
 		// create a new executor
 		_executor = Executors.newSingleThreadExecutor();
@@ -419,7 +421,7 @@ public class DaemonService extends Service implements DaemonStateListener {
 			updateNeighborNotification();
 			
 			// enable P2P manager
-			_p2p_manager.initialize();
+			_p2p_manager.initialize(this._daemon.getAPIConnection());
 			
 			break;
 		case SUSPENDED:
@@ -452,27 +454,4 @@ public class DaemonService extends Service implements DaemonStateListener {
 	public void onNeighborhoodChanged() {
 		updateNeighborNotification();
 	}
-	
-	private P2PManager.P2PNeighborListener _p2p_listener = new P2PManager.P2PNeighborListener() {
-		
-		public void onNeighborDisconnected(String name, String iface) {
-			Log.d(TAG, "P2P neighbor has been disconnected");
-			// TODO: put here the right code to control the dtnd
-		}
-		
-		public void onNeighborDisappear(String name) {
-			Log.d(TAG, "P2P neighbor has been disappeared");
-			// TODO: put here the right code to control the dtnd
-		}
-		
-		public void onNeighborDetected(String name) {
-			Log.d(TAG, "P2P neighbor has been detected");
-			// TODO: put here the right code to control the dtnd
-		}
-		
-		public void onNeighborConnected(String name, String iface) {
-			Log.d(TAG, "P2P neighbor has been connected");
-			// TODO: put here the right code to control the dtnd
-		}
-	};
 }
