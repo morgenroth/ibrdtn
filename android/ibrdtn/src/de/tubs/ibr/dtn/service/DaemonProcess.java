@@ -130,11 +130,11 @@ public class DaemonProcess extends Thread {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 		if (preferences.getBoolean("debug", false))
 		{
-			_builder.command(context.getFilesDir().getPath() + "/dtnd", "-c", context.getFilesDir().getPath() + "/config", "-d", "99");
+			_builder.command(context.getFilesDir().getPath() + "/dtnd", "-c", context.getFilesDir().getPath() + "/config", "-d", "99", "-v");
 		}
 		else
 		{
-			_builder.command(context.getFilesDir().getPath() + "/dtnd", "-c", context.getFilesDir().getPath() + "/config");
+			_builder.command(context.getFilesDir().getPath() + "/dtnd", "-c", context.getFilesDir().getPath() + "/config", "-v");
 		}
 		
 		// redirect error messages to the standard output
