@@ -25,6 +25,8 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t SchedulingBlock::BLOCK_TYPE = 198;
+
 		dtn::data::Block* SchedulingBlock::Factory::create()
 		{
 			return new SchedulingBlock();

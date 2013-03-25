@@ -41,6 +41,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const dtn::data::block_t PayloadConfidentialBlock::BLOCK_TYPE = SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK;
+
 		dtn::data::Block* PayloadConfidentialBlock::Factory::create()
 		{
 			return new PayloadConfidentialBlock();

@@ -12,6 +12,8 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t TrackingBlock::BLOCK_TYPE = 193;
+
 		dtn::data::Block* TrackingBlock::Factory::create()
 		{
 			return new TrackingBlock();

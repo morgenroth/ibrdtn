@@ -42,7 +42,7 @@ namespace dtn
 				virtual dtn::data::Block* create();
 			};
 
-			enum { BLOCK_TYPE = (dtn::data::block_t)198 };
+			static const dtn::data::block_t BLOCK_TYPE;
 
 			SchedulingBlock();
 			virtual ~SchedulingBlock();

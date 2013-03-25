@@ -25,6 +25,8 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t StreamBlock::BLOCK_TYPE = 242;
+
 		dtn::data::Block* StreamBlock::Factory::create()
 		{
 			return new StreamBlock();

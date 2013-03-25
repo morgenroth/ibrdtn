@@ -61,43 +61,35 @@ namespace dtn
 			return _alignment;
 		}
 
-		dtn::data::Block& BundleBuilder::insert(char block_type, size_t procflags)
+		dtn::data::Block& BundleBuilder::insert(dtn::data::block_t block_type, size_t procflags)
 		{
-			switch (block_type)
+			// exit if the block type is zero
+			if (block_type == 0) throw dtn::InvalidDataException("block type is zero");
+
+			if (block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
 			{
-				case 0:
-				{
-					throw dtn::InvalidDataException("block type is zero");
-					break;
-				}
+				// use standard payload routines to add a payload block
+				return insert<dtn::data::PayloadBlock>(procflags);
+			}
+			else
+			{
+				// get a extension block factory
+				try {
+					ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+					return insert(f, procflags);
+				} catch (const ibrcommon::Exception &ex) {
+					dtn::data::ExtensionBlock &block = insert<dtn::data::ExtensionBlock>(procflags);
 
-				case dtn::data::PayloadBlock::BLOCK_TYPE:
-				{
-					return insert<dtn::data::PayloadBlock>(procflags);
-					break;
-				}
+					// set block type of this unknown block
+					block.setType(block_type);
 
-				default:
-				{
-					// get a extension block factory
-					try {
-						ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
-						return insert(f, procflags);
-					} catch (const ibrcommon::Exception &ex) {
-						dtn::data::ExtensionBlock &block = insert<dtn::data::ExtensionBlock>(procflags);
-
-						// set block type of this unknown block
-						block.setType(block_type);
-
-						if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
-						{
-							// remove the block
-							_target->remove(block);
-						}
-
-						return block;
+					if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
+					{
+						// remove the block
+						_target->remove(block);
 					}
-					break;
+
+					return block;
 				}
 			}
 		}

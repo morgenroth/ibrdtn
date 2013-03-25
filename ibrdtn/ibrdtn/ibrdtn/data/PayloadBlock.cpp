@@ -28,6 +28,8 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t PayloadBlock::BLOCK_TYPE = 1;
+
 		PayloadBlock::PayloadBlock()
 		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ibrcommon::BLOB::create())
 		{

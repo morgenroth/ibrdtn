@@ -36,6 +36,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const dtn::data::block_t BundleAuthenticationBlock::BLOCK_TYPE = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK;
+
 		dtn::data::Block* BundleAuthenticationBlock::Factory::create()
 		{
 			return new BundleAuthenticationBlock();

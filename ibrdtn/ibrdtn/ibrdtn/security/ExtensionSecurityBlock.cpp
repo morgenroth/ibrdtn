@@ -35,6 +35,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const dtn::data::block_t ExtensionSecurityBlock::BLOCK_TYPE = SecurityBlock::EXTENSION_SECURITY_BLOCK;
+
 		dtn::data::Block* ExtensionSecurityBlock::Factory::create()
 		{
 			return new ExtensionSecurityBlock();

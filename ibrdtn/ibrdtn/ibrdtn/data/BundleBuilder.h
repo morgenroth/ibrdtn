@@ -44,7 +44,7 @@ namespace dtn
 			/**
 			 * Add a block to the bundle.
 			 */
-			dtn::data::Block& insert(char block_type, size_t procflags);
+			dtn::data::Block& insert(dtn::data::block_t block_type, size_t procflags);
 
 		private:
 			Bundle *_target;

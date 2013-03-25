@@ -38,6 +38,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const dtn::data::block_t PayloadIntegrityBlock::BLOCK_TYPE = SecurityBlock::PAYLOAD_INTEGRITY_BLOCK;
+
 		dtn::data::Block* PayloadIntegrityBlock::Factory::create()
 		{
 			return new PayloadIntegrityBlock();

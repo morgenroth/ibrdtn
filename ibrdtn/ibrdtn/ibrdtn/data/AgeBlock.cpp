@@ -25,6 +25,8 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t AgeBlock::BLOCK_TYPE = 10;
+
 		dtn::data::Block* AgeBlock::Factory::create()
 		{
 			return new AgeBlock();

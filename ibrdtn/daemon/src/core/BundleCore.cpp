@@ -462,36 +462,33 @@ namespace dtn
 			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); iter++)
 			{
 				const dtn::data::Block &block = (*iter);
-				switch (block.getType())
-				{
 #ifdef WITH_BUNDLE_SECURITY
-					case dtn::security::PayloadConfidentialBlock::BLOCK_TYPE:
-					{
-						// try to decrypt the bundle
-						try {
-							dtn::security::SecurityManager::getInstance().decrypt(b);
-						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-							// decrypt needed, but no key is available
-							IBRCOMMON_LOGGER(warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
-						} catch (const dtn::security::SecurityManager::DecryptException &ex) {
-							// decrypt failed
-							IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-						}
-						break;
+				if (block.getType() == dtn::security::PayloadConfidentialBlock::BLOCK_TYPE)
+				{
+					// try to decrypt the bundle
+					try {
+						dtn::security::SecurityManager::getInstance().decrypt(b);
+					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+						// decrypt needed, but no key is available
+						IBRCOMMON_LOGGER(warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
+					} catch (const dtn::security::SecurityManager::DecryptException &ex) {
+						// decrypt failed
+						IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
+					break;
+				}
 #endif
 
 #ifdef WITH_COMPRESSION
-					case dtn::data::CompressedPayloadBlock::BLOCK_TYPE:
-					{
-						// try to decompress the bundle
-						try {
-							dtn::data::CompressedPayloadBlock::extract(b);
-						} catch (const ibrcommon::Exception&) { };
-						break;
-					}
-#endif
+				if (block.getType() == dtn::data::CompressedPayloadBlock::BLOCK_TYPE)
+				{
+					// try to decompress the bundle
+					try {
+						dtn::data::CompressedPayloadBlock::extract(b);
+					} catch (const ibrcommon::Exception&) { };
+					break;
 				}
+#endif
 			}
 		}
 

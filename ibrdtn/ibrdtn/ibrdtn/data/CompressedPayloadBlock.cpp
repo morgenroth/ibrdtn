@@ -33,6 +33,8 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t CompressedPayloadBlock::BLOCK_TYPE = 202;
+
 		dtn::data::Block* CompressedPayloadBlock::Factory::create()
 		{
 			return new CompressedPayloadBlock();
