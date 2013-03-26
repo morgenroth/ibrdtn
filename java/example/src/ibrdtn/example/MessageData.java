@@ -11,6 +11,7 @@ public class MessageData implements Serializable {
 
     private String id;
     private String correlationId;
+    private String text;
 
     public String getId() {
         return id;
@@ -28,11 +29,20 @@ public class MessageData implements Serializable {
         this.correlationId = correlationId;
     }
 
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("\tID:").append(getId()).append("\n");
         sb.append("\tCorrelation:").append(getCorrelationId()).append("\n");
+        sb.append("\tText:").append(getText()).append("\n");
         return sb.toString();
     }
 }

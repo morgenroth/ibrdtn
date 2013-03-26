@@ -21,25 +21,25 @@ import java.util.logging.Logger;
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
-public class SelectiveCallbackHandler implements ibrdtn.api.sab.CallbackHandler {
+public class PassthroughTextHandler implements ibrdtn.api.sab.CallbackHandler {
 
-    private static final Logger logger = Logger.getLogger(SelectiveCallbackHandler.class.getName());
+    private static final Logger logger = Logger.getLogger(PassthroughTextHandler.class.getName());
     private BundleID bundleID = new BundleID();
     private Bundle bundle = null;
     private ExtendedClient client;
     private ExecutorService executor;
     private OutputStream stream;
     private Queue<BundleID> queue;
-    private boolean processing;
+    private boolean processing = false;
 
-    public SelectiveCallbackHandler(ExtendedClient client, ExecutorService executor) {
+    public PassthroughTextHandler(ExtendedClient client, ExecutorService executor) {
         this.client = client;
         this.executor = executor;
         this.queue = new LinkedList<>();
     }
 
     @Override
-    public void notify(BundleID id) {
+    public void notify(final BundleID id) {
         if (!processing) {
             loadBundle(id);
         } else {
@@ -66,35 +66,23 @@ public class SelectiveCallbackHandler implements ibrdtn.api.sab.CallbackHandler 
     @Override
     public void endBundle() {
         logger.log(Level.FINE, "Bundle received");
+        markDelivered();
 
-        final ExtendedClient finalClient = this.client;
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    /*
-                     * Decide if payload is interesting, based on Bundle meta data, e.g., payload length of the 
-                     * individual block. If applicable, partial payloads can be requested, as well.
-                     */
-                    logger.log(Level.SEVERE, "Requesting payload");
-                    finalClient.getPayload();
-
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Unable to mark bundle as delivered.", e);
-                }
-            }
-        });
+        processing = false;
+        if (!queue.isEmpty()) {
+            loadBundle(queue.poll());
+        }
     }
 
     @Override
     public void startBlock(Block block) {
-        logger.log(Level.SEVERE, "New block received: {0}", block.toString());
+        logger.log(Level.SEVERE, "Receiving new block: {0}", block.toString());
         bundle.appendBlock(block);
     }
 
     @Override
     public void endBlock() {
-        logger.log(Level.SEVERE, "Ending block");
+        logger.log(Level.SEVERE, "Block received");
     }
 
     @Override
@@ -113,20 +101,16 @@ public class SelectiveCallbackHandler implements ibrdtn.api.sab.CallbackHandler 
         if (stream != null) {
             try {
                 ByteArrayOutputStream baos = (ByteArrayOutputStream) stream;
+                PayloadBlock payload = null;
                 for (Block block : bundle.getBlocks()) {
                     if (block.getType() == PayloadBlock.type) {
-                        ((PayloadBlock) block).setData(baos.toByteArray());
+                        payload = (PayloadBlock) block;
                     }
                 }
+                payload.setData(baos.toByteArray());
 
-                logger.log(Level.SEVERE, "Payload received: {0}", baos.toString());
-
-                markDelivered();
-
-                processing = false;
-                if (!queue.isEmpty()) {
-                    loadBundle(queue.poll());
-                }
+                logger.log(Level.SEVERE, "Payload received: {0}\n{1}",
+                        new Object[]{payload.getData().size() + " bytes", baos.toString()});
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Unable to decode payload");
             }
@@ -138,7 +122,7 @@ public class SelectiveCallbackHandler implements ibrdtn.api.sab.CallbackHandler 
         logger.log(Level.SEVERE, "Payload: {0} of {1} bytes.", new Object[]{pos, total});
     }
 
-    private void loadBundle(BundleID id) {
+    private void loadBundle(final BundleID id) {
         processing = true;
 
         this.bundleID = id;
@@ -149,12 +133,10 @@ public class SelectiveCallbackHandler implements ibrdtn.api.sab.CallbackHandler 
             public void run() {
                 try {
                     /*
-                     * Load bundle into queue and manually inspect bundle info to decide whether or not 
-                     * to get the payload.
+                     * Load the next bundle
                      */
-                    exClient.loadBundle();
-                    exClient.getBundleInfo();
-                    logger.log(Level.SEVERE, "New bundle loaded, getting meta data");
+                    exClient.loadAndGetBundle();
+                    logger.log(Level.SEVERE, "New bundle loaded: {0}", id);
                 } catch (APIException e) {
                     logger.log(Level.WARNING, "Failed to load next bundle");
                 }
@@ -182,6 +164,7 @@ public class SelectiveCallbackHandler implements ibrdtn.api.sab.CallbackHandler 
                      */
                     logger.log(Level.SEVERE, "Delivered: {0}", finalBundleID);
                     finalClient.markDelivered(finalBundleID);
+
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Unable to mark bundle as delivered.", e);
                 }
