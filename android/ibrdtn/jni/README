@@ -13,28 +13,11 @@ How to compile IBR-DTN for Android?
       Build it with "make all"
       Add androgenizer executable to your PATH variable
 
-   3. Generate symlinks to C++ sources:
-      This links the c++ sources into the jni subdirectory
-      "cd jni"
-      "./generate_symlinks.sh"
+   3. Install git from your package manager: apt-get install git
 
-   4. Checkout other libraries used in IBR-DTN
-      Install git.
-      "cd jni"
-      "./checkout_libs.sh"
+   4. Run build.sh
 
-   5. Make Android makefiles:
-      We use Autotools in conjunction with androgenizer to generate specific Android Makefiles (Android.mk files).
-      You need to do the following in "ibrcommon", "ibrdtn", and "daemon":
-      "./autogen.sh"
-      "./configure --enable-android" (--enable-android disables all other parameters)
-      "make"
-
-   6. Build IBR-DTN with Android NDK
-      Start compiling by executing
-      "ndk-build"
-
-   7. OpenSSL (libssl, libcrypto) is compiled as a shared library, but it does not have to be packaged into the APK as it is already included in Android OS.
+   5. OpenSSL (libssl, libcrypto) is compiled as a shared library, but it does not have to be packaged into the APK as it is already included in Android OS.
       We can not include it with LDLIBS as it is not part of the stable API and thus not part of the official Android NDK.
 
 FAQ
