@@ -429,7 +429,7 @@ namespace dtn
 					if (_eids.size() < 2)
 						throw dtn::SerializationFailedException("ciphersuite flags indicate a security destination, but it is not present");
 
-					_security_destination = (*(_eids.begin())++);
+					_security_destination = *(++_eids.begin());
 				}
 				else
 				{
