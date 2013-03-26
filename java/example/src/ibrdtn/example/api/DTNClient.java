@@ -42,7 +42,7 @@ public class DTNClient {
 
         exClient = new ExtendedClient();
 
-        sabHandler = new PassthroughCallbackHandler(exClient, executor);
+        sabHandler = new SelectiveCallbackHandler(exClient, executor);
 
         exClient.setHandler(sabHandler);
         exClient.setHost(Constants.HOST);
