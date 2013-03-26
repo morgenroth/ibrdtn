@@ -42,7 +42,7 @@ public class DTNClient {
 
         exClient = new ExtendedClient();
 
-        sabHandler = new SelectiveCallbackHandler(exClient, executor);
+        sabHandler = new PassthroughCallbackHandler(exClient, executor);
 
         exClient.setHandler(sabHandler);
         exClient.setHost(Constants.HOST);
@@ -77,7 +77,7 @@ public class DTNClient {
             logger.log(Level.INFO, "Endpoint ''{0}'' registered.", endpoint);
 
         } catch (APIException e) {
-            logger.log(Level.WARNING, "API error: {0}", e.toString());
+            logger.log(Level.WARNING, "API error: {0}", e.getMessage());
         } catch (IOException e) {
             logger.log(Level.WARNING, "Could not connect to DTN daemon: {0}", e.getMessage());
         }
@@ -147,7 +147,7 @@ public class DTNClient {
             Thread.currentThread().interrupt();
         }
 
-        logger.log(Level.INFO, "DTNClient shutdown.");
+        logger.log(Level.INFO, "DTN connection closed.");
     }
 
     public void addStaticCallback(String msgType, ICallback callback) {

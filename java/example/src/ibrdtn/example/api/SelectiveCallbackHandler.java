@@ -89,8 +89,11 @@ public class SelectiveCallbackHandler implements ibrdtn.api.sab.CallbackHandler 
         if (stream != null) {
             try {
                 ByteArrayOutputStream baos = (ByteArrayOutputStream) stream;
-                PayloadBlock payloadBlock = (PayloadBlock) bundle.getBlocks().getLast();
-                payloadBlock.setData(baos.toByteArray());
+                for (Block block : bundle.getBlocks()) {
+                    if (block.getType() == PayloadBlock.type) {
+                        ((PayloadBlock) block).setData(baos.toByteArray());
+                    }
+                }
 
                 // Example: add message to database
                 // Message msg = new Message(received.source, received.destination, playfile);

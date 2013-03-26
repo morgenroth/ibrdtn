@@ -23,7 +23,7 @@ package ibrdtn.api.object;
 import ibrdtn.api.object.Bundle.Flags;
 import ibrdtn.api.object.Bundle.Priority;
 
-public class BundleID {
+public class BundleID implements Comparable<BundleID> {
 
     private String source = null;
     private Long timestamp = null;
@@ -111,5 +111,20 @@ public class BundleID {
             fragString += String.valueOf(this.fragOffset) + " ";
         }
         return String.valueOf(this.timestamp) + " " + String.valueOf(this.sequenceNumber) + fragString + this.source;
+    }
+
+    @Override
+    public int compareTo(BundleID o) {
+        final int BEFORE = -1;
+        final int EQUAL = 0;
+        final int AFTER = 1;
+
+        if (this.getPriority().ordinal() < o.getPriority().ordinal()) {
+            return BEFORE;
+        } else if (this.getPriority().ordinal() > o.getPriority().ordinal()) {
+            return AFTER;
+        } else {
+            return EQUAL;
+        }
     }
 }

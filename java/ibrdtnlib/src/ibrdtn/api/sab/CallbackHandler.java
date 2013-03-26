@@ -32,6 +32,12 @@ import java.io.OutputStream;
 
 public interface CallbackHandler {
 
+    public void notify(BundleID id);
+
+    public void notify(StatusReport r);
+
+    public void notify(Custody c);
+
     public void startBundle(Bundle bundle);
 
     public void endBundle();
@@ -45,10 +51,4 @@ public interface CallbackHandler {
     public void endPayload();
 
     public void progress(long pos, long total);
-
-    public void notify(BundleID id);
-
-    public void notify(StatusReport r);
-
-    public void notify(Custody c);
 }
