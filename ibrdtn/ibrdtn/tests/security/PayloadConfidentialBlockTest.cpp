@@ -142,51 +142,76 @@ void PayloadConfidentialBlockTest::decryptTest(void)
 	b._source = pubkey.reference + "/test";
 	b._destination = dtn::data::EID("dtn://destination/test");
 
-	/**
-	 * Add a payload with some payload data to the bundle and
-	 * encrypt it.
-	 */
-	{
-		// add payload block
-		dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
+	encrypt(pubkey, b);
 
-		// write some payload
-		(*p.getBLOB().iostream()) << _testdata << std::flush;
+	// check the number of block, should be two
+	CPPUNIT_ASSERT_EQUAL((size_t)2, b.size());
 
-		// encrypt the payload block
-		dtn::security::PayloadConfidentialBlock::encrypt(b, pubkey, b._source);
-	}
+	std::stringstream ss;
+	dtn::data::DefaultSerializer dser(ss);
+	dser << b;
+
+	// decrypt unserialized bundle
+	decrypt(pubkey, b);
+
+	// check the number of block, should be one
+	CPPUNIT_ASSERT_EQUAL((size_t)1, b.size());
 
 	/**
 	 * decrypt the bundle (payload only)
 	 */
-	{
-		dtn::security::SecurityKey pkey;
-		pkey.type = dtn::security::SecurityKey::KEY_PRIVATE;
-		pkey.file = ibrcommon::File("test-key.pem");
-		pkey.reference = pubkey.reference;
+	ss.clear();
+	dtn::data::DefaultDeserializer ddser(ss);
+	dtn::data::Bundle recv_b;
+	ddser >> recv_b;
 
-		dtn::security::PayloadConfidentialBlock::decrypt(b, pkey);
+	// check the number of block, should be two
+	CPPUNIT_ASSERT_EQUAL((size_t)2, recv_b.size());
 
-		// verify the payload
-		{
-			dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
-
-			ibrcommon::BLOB::iostream stream = p.getBLOB().iostream();
-			std::stringstream ss; ss << (*stream).rdbuf();
-
-			if (ss.str().length() != _testdata.length())
-			{
-				throw ibrcommon::Exception("wrong payload size, decryption failed!");
-			}
-
-			if (ss.str() != _testdata)
-			{
-				throw ibrcommon::Exception("decryption failed!");
-			}
-		}
-	}
+	decrypt(pubkey, recv_b);
 
 	// check the number of block, should be one
-	CPPUNIT_ASSERT_EQUAL((size_t)1, b.size());
+	CPPUNIT_ASSERT_EQUAL((size_t)1, recv_b.size());
+}
+
+void PayloadConfidentialBlockTest::encrypt(const dtn::security::SecurityKey &pubkey, dtn::data::Bundle &b)
+{
+	/**
+	 * Add a payload with some payload data to the bundle and
+	 * encrypt it.
+	 */
+	// add payload block
+	dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
+
+	// write some payload
+	(*p.getBLOB().iostream()) << _testdata << std::flush;
+
+	// encrypt the payload block
+	dtn::security::PayloadConfidentialBlock::encrypt(b, pubkey, b._source);
+}
+
+void PayloadConfidentialBlockTest::decrypt(const dtn::security::SecurityKey &pubkey, dtn::data::Bundle &b)
+{
+	dtn::security::SecurityKey pkey;
+	pkey.type = dtn::security::SecurityKey::KEY_PRIVATE;
+	pkey.file = ibrcommon::File("test-key.pem");
+	pkey.reference = pubkey.reference;
+
+	dtn::security::PayloadConfidentialBlock::decrypt(b, pkey);
+
+	// verify the payload
+	dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
+
+	ibrcommon::BLOB::iostream stream = p.getBLOB().iostream();
+	std::stringstream ss; ss << (*stream).rdbuf();
+
+	if (ss.str().length() != _testdata.length())
+	{
+		throw ibrcommon::Exception("wrong payload size, decryption failed!");
+	}
+
+	if (ss.str() != _testdata)
+	{
+		throw ibrcommon::Exception("decryption failed!");
+	}
 }
