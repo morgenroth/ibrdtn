@@ -29,7 +29,7 @@ namespace ibrcommon
 	 : ostream(this), out_buf_(BUFF_SIZE), _pkey(pkey), _verify(verify), _sign_valid(false), _return_code(0)
 	{
 		// Initialize get pointer.  This should be zero so that underflow is called upon first read.
-		setp(&out_buf_[0], &out_buf_[0] + BUFF_SIZE - 1);
+		setp(&out_buf_[0], &out_buf_[BUFF_SIZE - 1]);
 		EVP_MD_CTX_init(&_ctx);
 
 		if (!_verify)
@@ -88,13 +88,13 @@ namespace ibrcommon
 		if (!_sign_valid)
 		{
 			sync();
-			unsigned char * sign = new unsigned char[EVP_PKEY_size(_pkey)];
-			unsigned int size;
+			std::vector<unsigned char> sign(EVP_PKEY_size(_pkey));
+			unsigned int size = EVP_PKEY_size(_pkey);
 
-			_return_code = EVP_SignFinal(&_ctx, sign, &size, _pkey);
+			_return_code = EVP_SignFinal(&_ctx, &sign[0], &size, _pkey);
 
-			_sign = std::string(reinterpret_cast<const char * const>(sign), size);
-			delete [] sign;
+			_sign = std::string((const char*)&sign[0], size);
+
 			_sign_valid = true;
 		}
 		return std::pair<const int, const std::string>(_return_code, _sign);
@@ -128,7 +128,7 @@ namespace ibrcommon
 		char *iend = pptr();
 
 		// mark the buffer as free
-		setp(&out_buf_[0], &out_buf_[0] + BUFF_SIZE - 1);
+		setp(&out_buf_[0], &out_buf_[BUFF_SIZE - 1]);
 
 		if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 		{
@@ -145,7 +145,7 @@ namespace ibrcommon
 		if (!_verify)
 			// hashing
 		{
-			if (!EVP_SignUpdate(&_ctx, reinterpret_cast<unsigned char*>(&out_buf_[0]), iend - ibegin))
+			if (!EVP_SignUpdate(&_ctx, &out_buf_[0], iend - ibegin))
 			{
 				IBRCOMMON_LOGGER(critical) << "failed to feed data into the signature function" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
@@ -153,9 +153,9 @@ namespace ibrcommon
 		}
 		else
 		{
-			if (!EVP_VerifyUpdate(&_ctx, reinterpret_cast<unsigned char*>(&out_buf_[0]), iend - ibegin))
+			if (!EVP_VerifyUpdate(&_ctx, &out_buf_[0], iend - ibegin))
 			{
-				IBRCOMMON_LOGGER(critical) << "failed to feed data into the verfication function" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(critical) << "failed to feed data into the verification function" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
 		}
