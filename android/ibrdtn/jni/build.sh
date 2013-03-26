@@ -7,7 +7,7 @@ ln -s ../../../ibrdtn/daemon/ dtnd
 echo ""
 echo "Cloning external git sources used in IBR-DTN (libnl and openssl)..."
 echo "-------------------------------------------------------------------"
-git clone git://github.com/dschuermann/libnl-3-android.git nl-3
+git clone git://github.com/ibrdtn/libnl-3-android.git nl-3
 cd nl-3
 git fetch --tags
 git checkout origin
