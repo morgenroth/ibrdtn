@@ -38,7 +38,7 @@ AM_LDFLAGS = $(PTHREAD_LIBS) $(NL_LIBS) $(NL_ROUTE_LIBS) $(NL_GENL_LIBS)
 ibrcommon_libs = data/libdata.la link/liblink.la net/libnet.la thread/libthread.la
 
 if OPENSSL
-ibrcommon_libs += ssl/libssl.la ssl/gcm/libgcm.la
+ibrcommon_libs += ssl/libibrcommon_ssl.la ssl/gcm/libgcm.la
 endif
 
 if LIBXML
