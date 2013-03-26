@@ -6,8 +6,8 @@ h_sources = data/TestBundleList.h data/TestBundleSet.h data/TestDictionary.h dat
 cc_sources = data/TestBundleList.cpp data/TestBundleSet.cpp data/TestDictionary.cpp data/TestSerializer.cpp net/TestStreamConnection.cpp api/TestPlainSerializer.cpp utils/TestUtils.cpp data/TestExtensionBlock.cpp data/TestTrackingBlock.cpp Main.cpp
 
 if DTNSEC
-h_sources += security/TestSecurityBlock.h security/PayloadConfidentialBlockTest.h
-cc_sources += security/TestSecurityBlock.cpp security/PayloadConfidentialBlockTest.cpp
+h_sources += security/TestSecurityBlock.h security/PayloadConfidentialBlockTest.h security/PayloadIntegrityBlockTest.h
+cc_sources += security/TestSecurityBlock.cpp security/PayloadConfidentialBlockTest.cpp security/PayloadIntegrityBlockTest.cpp
 endif
 
 if COMPRESSION
