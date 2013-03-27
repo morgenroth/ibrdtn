@@ -6,7 +6,6 @@
 /* each class file includes its own register function */
 int registerJniHelp(JNIEnv* env);
 int register_de_tubs_ibr_dtn_service_NativeDaemonWrapper(JNIEnv *env);
-int register_de_tubs_ibr_dtn_service_ClientSession(JNIEnv *env);
 
 extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	LOGI("JNI_OnLoad");
@@ -22,7 +21,6 @@ extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	LOGI("JNI_OnLoad register methods:");
 	registerJniHelp(env);
 	register_de_tubs_ibr_dtn_service_NativeDaemonWrapper(env);
-	register_de_tubs_ibr_dtn_service_ClientSession(env);
 
 	LOGI("JNI_OnLoad done");
 

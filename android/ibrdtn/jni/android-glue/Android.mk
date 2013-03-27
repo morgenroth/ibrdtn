@@ -7,7 +7,7 @@ LOCAL_SRC_FILES = \
 	Helper.cpp \
 	JNI_OnLoad.cpp \
 	NativeDaemonWrapper.cpp \
-	ClientSession.cpp
+	SWIGWrapper.cpp
 
 LOCAL_C_INCLUDES :=\
 	$(LOCAL_PATH) \
