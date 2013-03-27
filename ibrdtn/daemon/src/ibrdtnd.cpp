@@ -879,6 +879,9 @@ int ibrdtn_daemon_main_loop()
 		delete (*iter);
 	}
 
+	// clear the list of all components
+	components.clear();
+
 	IBRCOMMON_LOGGER_TAG("shutdown", info) << "shutdown complete" << IBRCOMMON_LOGGER_ENDL;
 
 	return 0;
