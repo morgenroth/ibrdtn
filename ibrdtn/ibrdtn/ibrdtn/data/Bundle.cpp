@@ -151,7 +151,9 @@ namespace dtn
 			_blocks.insert(before, block);
 
 			// set the last block bit
-			block->set(dtn::data::Block::LAST_BLOCK, true);
+			iterator last = end();
+			last--;
+			(*last).set(dtn::data::Block::LAST_BLOCK, true);
 
 			return (*tmpblock);
 		}
@@ -241,7 +243,9 @@ namespace dtn
 			_blocks.insert(before, block);
 
 			// set the last block bit
-			block->set(dtn::data::Block::LAST_BLOCK, true);
+			iterator last = end();
+			last--;
+			(*last).set(dtn::data::Block::LAST_BLOCK, true);
 
 			return (*block);
 		}
