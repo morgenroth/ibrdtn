@@ -28,6 +28,12 @@ FAQ
      "ndk-build -B V=1 NDK_DEBUG=1 NDK_LOG=1" (force complete rebuild (-B), showing commands and enable debug and logs from android ndk)
 
 
+SWIG
+----
+
+   o NativeSession.cpp C++ class is wrapped into Java using SWIG. To regenerate Java classes based on NativeSession.cpp run "generate_swig_java_classes.sh".
+
+
 Implementation details
 ----------------------
 
