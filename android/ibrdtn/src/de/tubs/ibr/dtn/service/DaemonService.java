@@ -49,14 +49,6 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import de.tubs.ibr.dtn.DTNService;
-import de.tubs.ibr.dtn.DaemonState;
-import de.tubs.ibr.dtn.R;
-import de.tubs.ibr.dtn.api.DTNSession;
-import de.tubs.ibr.dtn.api.Registration;
-import de.tubs.ibr.dtn.daemon.Preferences;
-import de.tubs.ibr.dtn.p2p.P2PManager;
-import de.tubs.ibr.dtn.service.DaemonManager.DaemonStateListener;
 
 public class DaemonService extends Service {
 	public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
@@ -202,7 +194,7 @@ public class DaemonService extends Service {
 					updateNeighborNotification();
 
 					// enable P2P manager
-					_p2p_manager.initialize();
+//					_p2p_manager.initialize();
 					break;
 
 				case OFFLINE:
@@ -367,7 +359,7 @@ public class DaemonService extends Service {
 		_session_manager = new SessionManager(this);
 
 		// create P2P Manager
-		_p2p_manager = new P2PManager(this, _p2p_listener, "my address");
+//		_p2p_manager = new P2PManager(this, _p2p_listener, "my address");
 
 		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "DaemonService created");
 
@@ -455,32 +447,32 @@ public class DaemonService extends Service {
 		updateNeighborNotification();
 	}
 
-	private P2PManager.P2PNeighborListener _p2p_listener = new P2PManager.P2PNeighborListener() {
-
-		public void onNeighborDisconnected(String name, String iface)
-		{
-			Log.d(TAG, "P2P neighbor has been disconnected");
-			// TODO: put here the right code to control the dtnd
-		}
-
-		public void onNeighborDisappear(String name)
-		{
-			Log.d(TAG, "P2P neighbor has been disappeared");
-			// TODO: put here the right code to control the dtnd
-		}
-
-		public void onNeighborDetected(String name)
-		{
-			Log.d(TAG, "P2P neighbor has been detected");
-			// TODO: put here the right code to control the dtnd
-		}
-
-		public void onNeighborConnected(String name, String iface)
-		{
-			Log.d(TAG, "P2P neighbor has been connected");
-			// TODO: put here the right code to control the dtnd
-		}
-	};
+//	private P2PManager.P2PNeighborListener _p2p_listener = new P2PManager.P2PNeighborListener() {
+//
+//		public void onNeighborDisconnected(String name, String iface)
+//		{
+//			Log.d(TAG, "P2P neighbor has been disconnected");
+//			// TODO: put here the right code to control the dtnd
+//		}
+//
+//		public void onNeighborDisappear(String name)
+//		{
+//			Log.d(TAG, "P2P neighbor has been disappeared");
+//			// TODO: put here the right code to control the dtnd
+//		}
+//
+//		public void onNeighborDetected(String name)
+//		{
+//			Log.d(TAG, "P2P neighbor has been detected");
+//			// TODO: put here the right code to control the dtnd
+//		}
+//
+//		public void onNeighborConnected(String name, String iface)
+//		{
+//			Log.d(TAG, "P2P neighbor has been connected");
+//			// TODO: put here the right code to control the dtnd
+//		}
+//	};
 
 	private Notification buildNotification(int icon, String text)
 	{
