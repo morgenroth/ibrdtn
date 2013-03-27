@@ -39,44 +39,44 @@ public class NativeSession {
     this(swigJNI.new_NativeSession(NativeSessionCallback.getCPtr(cb), cb), true);
   }
 
-  public SWIGTYPE_p_dtn__data__EID getNodeEID() {
-    return new SWIGTYPE_p_dtn__data__EID(swigJNI.NativeSession_getNodeEID(swigCPtr, this), false);
+  public EID getNodeEID() {
+    return new EID(swigJNI.NativeSession_getNodeEID(swigCPtr, this), false);
   }
 
-  public void setEndpoint(SWIGTYPE_p_std__string suffix) {
-    swigJNI.NativeSession_setEndpoint(swigCPtr, this, SWIGTYPE_p_std__string.getCPtr(suffix));
+  public void setEndpoint(String suffix) {
+    swigJNI.NativeSession_setEndpoint(swigCPtr, this, suffix);
   }
 
   public void resetEndpoint() {
     swigJNI.NativeSession_resetEndpoint(swigCPtr, this);
   }
 
-  public void addEndpoint(SWIGTYPE_p_std__string suffix) {
-    swigJNI.NativeSession_addEndpoint(swigCPtr, this, SWIGTYPE_p_std__string.getCPtr(suffix));
+  public void addEndpoint(String suffix) {
+    swigJNI.NativeSession_addEndpoint(swigCPtr, this, suffix);
   }
 
-  public void removeEndpoint(SWIGTYPE_p_std__string suffix) {
-    swigJNI.NativeSession_removeEndpoint(swigCPtr, this, SWIGTYPE_p_std__string.getCPtr(suffix));
+  public void removeEndpoint(String suffix) {
+    swigJNI.NativeSession_removeEndpoint(swigCPtr, this, suffix);
   }
 
-  public void addRegistration(SWIGTYPE_p_dtn__data__EID eid) {
-    swigJNI.NativeSession_addRegistration(swigCPtr, this, SWIGTYPE_p_dtn__data__EID.getCPtr(eid));
+  public void addRegistration(EID eid) {
+    swigJNI.NativeSession_addRegistration(swigCPtr, this, EID.getCPtr(eid), eid);
   }
 
-  public void removeRegistration(SWIGTYPE_p_dtn__data__EID eid) {
-    swigJNI.NativeSession_removeRegistration(swigCPtr, this, SWIGTYPE_p_dtn__data__EID.getCPtr(eid));
+  public void removeRegistration(EID eid) {
+    swigJNI.NativeSession_removeRegistration(swigCPtr, this, EID.getCPtr(eid), eid);
   }
 
   public void next(NativeSession.RegisterIndex ri) {
     swigJNI.NativeSession_next(swigCPtr, this, ri.swigValue());
   }
 
-  public void load(NativeSession.RegisterIndex ri, SWIGTYPE_p_dtn__data__BundleID id) {
-    swigJNI.NativeSession_load(swigCPtr, this, ri.swigValue(), SWIGTYPE_p_dtn__data__BundleID.getCPtr(id));
+  public void load(NativeSession.RegisterIndex ri, BundleID id) {
+    swigJNI.NativeSession_load(swigCPtr, this, ri.swigValue(), BundleID.getCPtr(id), id);
   }
 
-  public SWIGTYPE_p_dtn__data__Bundle get(NativeSession.RegisterIndex ri) {
-    return new SWIGTYPE_p_dtn__data__Bundle(swigJNI.NativeSession_get(swigCPtr, this, ri.swigValue()), false);
+  public Bundle get(NativeSession.RegisterIndex ri) {
+    return new Bundle(swigJNI.NativeSession_get(swigCPtr, this, ri.swigValue()), false);
   }
 
   public void free(NativeSession.RegisterIndex ri) {
@@ -87,16 +87,16 @@ public class NativeSession {
     swigJNI.NativeSession_clear(swigCPtr, this, ri.swigValue());
   }
 
-  public void delivered(SWIGTYPE_p_dtn__data__BundleID id) {
-    swigJNI.NativeSession_delivered(swigCPtr, this, SWIGTYPE_p_dtn__data__BundleID.getCPtr(id));
+  public void delivered(BundleID id) {
+    swigJNI.NativeSession_delivered(swigCPtr, this, BundleID.getCPtr(id), id);
   }
 
   public void send(NativeSession.RegisterIndex ri) {
     swigJNI.NativeSession_send(swigCPtr, this, ri.swigValue());
   }
 
-  public void put(NativeSession.RegisterIndex ri, SWIGTYPE_p_dtn__data__Bundle b) {
-    swigJNI.NativeSession_put(swigCPtr, this, ri.swigValue(), SWIGTYPE_p_dtn__data__Bundle.getCPtr(b));
+  public void put(NativeSession.RegisterIndex ri, Bundle b) {
+    swigJNI.NativeSession_put(swigCPtr, this, ri.swigValue(), Bundle.getCPtr(b), b);
   }
 
   public void write(NativeSession.RegisterIndex ri, String buf, long len, long offset) {

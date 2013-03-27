@@ -35,16 +35,36 @@ public class NativeSessionCallback {
     }
   }
 
-  public void notifyBundle(SWIGTYPE_p_dtn__data__BundleID id) {
-    swigJNI.NativeSessionCallback_notifyBundle(swigCPtr, this, SWIGTYPE_p_dtn__data__BundleID.getCPtr(id));
+  protected void swigDirectorDisconnect() {
+    swigCMemOwn = false;
+    delete();
+  }
+
+  public void swigReleaseOwnership() {
+    swigCMemOwn = false;
+    swigJNI.NativeSessionCallback_change_ownership(this, swigCPtr, false);
+  }
+
+  public void swigTakeOwnership() {
+    swigCMemOwn = true;
+    swigJNI.NativeSessionCallback_change_ownership(this, swigCPtr, true);
+  }
+
+  public void notifyBundle(BundleID id) {
+    swigJNI.NativeSessionCallback_notifyBundle(swigCPtr, this, BundleID.getCPtr(id), id);
   }
 
   public void notifyStatusReport(SWIGTYPE_p_dtn__data__StatusReportBlock report) {
     swigJNI.NativeSessionCallback_notifyStatusReport(swigCPtr, this, SWIGTYPE_p_dtn__data__StatusReportBlock.getCPtr(report));
   }
 
-  public void notifyCustodySignal(SWIGTYPE_p_dtn__data__CustodySignalBlock custody) {
-    swigJNI.NativeSessionCallback_notifyCustodySignal(swigCPtr, this, SWIGTYPE_p_dtn__data__CustodySignalBlock.getCPtr(custody));
+  public void notifyCustodySignal(CustodySignalBlock custody) {
+    swigJNI.NativeSessionCallback_notifyCustodySignal(swigCPtr, this, CustodySignalBlock.getCPtr(custody), custody);
+  }
+
+  public NativeSessionCallback() {
+    this(swigJNI.new_NativeSessionCallback(), true);
+    swigJNI.NativeSessionCallback_director_connect(this, swigCPtr, swigCMemOwn, true);
   }
 
 }

@@ -35,8 +35,8 @@ public class BundleNotFoundException {
     }
   }
 
-  public BundleNotFoundException(SWIGTYPE_p_string what) {
-    this(swigJNI.new_BundleNotFoundException__SWIG_0(SWIGTYPE_p_string.getCPtr(what)), true);
+  public BundleNotFoundException(String what) {
+    this(swigJNI.new_BundleNotFoundException__SWIG_0(what), true);
   }
 
   public BundleNotFoundException() {

@@ -313,7 +313,7 @@ public class APISession {
 //			try {
 				synchronized(_api_mutex) {
 //					client.addRegistration(eid);
-					session.addRegistration(eid.toString());
+					session.addRegistration(eid);
 				}
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + eid);
 //			} catch (APIException e) {

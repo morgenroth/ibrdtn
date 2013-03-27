@@ -35,8 +35,8 @@ public class NativeSessionException {
     }
   }
 
-  public NativeSessionException(SWIGTYPE_p_string what) {
-    this(swigJNI.new_NativeSessionException__SWIG_0(SWIGTYPE_p_string.getCPtr(what)), true);
+  public NativeSessionException(String what) {
+    this(swigJNI.new_NativeSessionException__SWIG_0(what), true);
   }
 
   public NativeSessionException() {
