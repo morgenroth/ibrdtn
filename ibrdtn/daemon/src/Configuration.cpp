@@ -1044,7 +1044,6 @@ namespace dtn
 			return _tlsRequired;
 		}
 
-#ifdef WITH_BUNDLE_SECURITY
 		const ibrcommon::File& Configuration::Security::getPath() const
 		{
 			return _path;
@@ -1059,8 +1058,7 @@ namespace dtn
 		{
 			return _bab_default_key;
 		}
-#endif
-#if defined WITH_BUNDLE_SECURITY || defined WITH_TLS
+
 		const ibrcommon::File& Configuration::Security::getCertificate() const
 		{
 			return _cert;
@@ -1070,8 +1068,7 @@ namespace dtn
 		{
 			return _key;
 		}
-#endif
-#ifdef WITH_TLS
+
 		const ibrcommon::File& Configuration::Security::getTrustedCAPath() const
 		{
 			return _trustedCAPath;
@@ -1081,7 +1078,6 @@ namespace dtn
 		{
 			return _disableEncryption;
 		}
-#endif
 
 		bool Configuration::Logger::quiet() const
 		{

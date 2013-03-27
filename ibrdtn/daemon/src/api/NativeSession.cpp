@@ -227,10 +227,19 @@ namespace dtn
 			_bundle[ri] = b;
 		}
 
+		void NativeSession::put(RegisterIndex ri, const dtn::data::PrimaryBlock &p) throw ()
+		{
+			// clear all blocks in the register
+			_bundle[ri].clear();
+
+			// Copy the given primary block into the local register
+			((dtn::data::PrimaryBlock&)_bundle[ri]) = p;
+		}
+
 		void NativeSession::write(RegisterIndex ri, const char *buf, const size_t len, const size_t offset)
 		{
 			try {
-				dtn::data::PayloadBlock &payload = _bundle[ri].getBlock<dtn::data::PayloadBlock>();
+				dtn::data::PayloadBlock &payload = _bundle[ri].find<dtn::data::PayloadBlock>();
 
 				ibrcommon::BLOB::Reference ref = payload.getBLOB();
 				ibrcommon::BLOB::iostream stream = ref.iostream();
@@ -251,7 +260,7 @@ namespace dtn
 		void NativeSession::read(RegisterIndex ri, char *buf, size_t &len, const size_t offset)
 		{
 			try {
-				dtn::data::PayloadBlock &payload = _bundle[ri].getBlock<dtn::data::PayloadBlock>();
+				dtn::data::PayloadBlock &payload = _bundle[ri].find<dtn::data::PayloadBlock>();
 
 				ibrcommon::BLOB::Reference ref = payload.getBLOB();
 				ibrcommon::BLOB::iostream stream = ref.iostream();
@@ -325,7 +334,7 @@ namespace dtn
 			const dtn::data::Bundle b = dtn::core::BundleCore::getInstance().getStorage().get(bundle);
 
 			// get the payload block of the bundle
-			const dtn::data::PayloadBlock &payload = b.getBlock<dtn::data::PayloadBlock>();
+			const dtn::data::PayloadBlock &payload = b.find<dtn::data::PayloadBlock>();
 
 			try {
 				// try to decode as status report

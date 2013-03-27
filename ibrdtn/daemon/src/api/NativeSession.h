@@ -175,6 +175,11 @@ namespace dtn
 			void put(RegisterIndex ri, const dtn::data::Bundle &b) throw ();
 
 			/**
+			 * Copy the PrimaryBlock into the local register
+			 */
+			void put(RegisterIndex ri, const dtn::data::PrimaryBlock &b) throw ();
+
+			/**
 			 * Write byte into the payload block of the bundle in the
 			 * register. If there is no payload block, this method will
 			 * append a new one at the end of all blocks.
