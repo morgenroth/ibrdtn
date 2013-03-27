@@ -307,15 +307,15 @@ public class APISession {
 		
 		for (GroupEndpoint group : reg.getGroups())
 		{
-			ibrdtn.api.object.GroupEndpoint eid = new ibrdtn.api.object.GroupEndpoint( group.toString() );
+//			ibrdtn.api.object.GroupEndpoint eid = new ibrdtn.api.object.GroupEndpoint( group.toString() );
 			
 			// register to presence messages
 //			try {
 				synchronized(_api_mutex) {
 //					client.addRegistration(eid);
-					session.addRegistration(eid);
+					session.addRegistration(group);
 				}
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + eid);
+				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + group.toString());
 //			} catch (APIException e) {
 //				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration add failed: " + eid);
 //				raise_connection_failure(e);
@@ -337,20 +337,20 @@ public class APISession {
     public Boolean query(DTNSessionCallback cb, BundleID id) throws SessionDestroyedException
 	{
 		if (!isConnected()) throw new SessionDestroyedException("not connected.");
-		ibrdtn.api.object.BundleID api_id = new ibrdtn.api.object.BundleID();
-		id.setSource(id.getSource());
-		
-		ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp( id.getTimestamp() );
-		api_id.setTimestamp(ts.getValue());
-		
-		id.setSequencenumber(id.getSequencenumber());
+//		ibrdtn.api.object.BundleID api_id = new ibrdtn.api.object.BundleID();
+//		id.setSource(id.getSource());
+//		
+//		ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp( id.getTimestamp() );
+//		api_id.setTimestamp(ts.getValue());
+//		
+//		id.setSequencenumber(id.getSequencenumber());
 		
 //		try {
 			synchronized(_api_mutex) {
 				// load the next bundle
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load bundle: " + id.toString());
 //				client.loadBundle(api_id);
-				session.loadBundle(api_id.toString());
+				session.loadBundle(id);
 			
 				// set callback and mode
 		    	synchronized(_callback_mutex) {
@@ -413,19 +413,19 @@ public class APISession {
 		
 //		try {
 			ibrdtn.api.object.BundleID api_id = new ibrdtn.api.object.BundleID();
-			api_id.setSource(id.getSource());
-			
-			ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp( id.getTimestamp() );
-			api_id.setTimestamp(ts.getValue());
-			
-			api_id.setSequencenumber(id.getSequencenumber());
+//			api_id.setSource(id.getSource());
+//			
+//			ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp( id.getTimestamp() );
+//			api_id.setTimestamp(ts.getValue());
+//			
+//			api_id.setSequencenumber(id.getSequencenumber());
 			
 			synchronized(_api_mutex) {
 				// check for bundle to ack
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "ack bundle: " + id.toString());
 
 //				client.markDelivered(api_id);
-				session.markDelivered(api_id.toString());
+				session.markDelivered(id);
 			}
 //		} catch (APIException e) {
 //			raise_connection_failure(e);

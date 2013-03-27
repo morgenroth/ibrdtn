@@ -92,39 +92,57 @@ public class ClientSession {
 		nativeSession.setEndpoint(id);
 	}
 
-	public void addRegistration(ibrdtn.api.object.GroupEndpoint eid)
+	public void addRegistration(GroupEndpoint eid)
 	{
-		nativeSession.addRegistration(new de.tubs.ibr.dtn.swig.EID(eid.toString()));
+		de.tubs.ibr.dtn.swig.EID swigEid = new de.tubs.ibr.dtn.swig.EID(eid.toString());
+		nativeSession.addRegistration(swigEid);
 	}
 
-	public void loadBundle(String id)
+	public void loadBundle(BundleID id)
 	{
-		nativeSession.load(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, new de.tubs.ibr.dtn.swig.BundleID(new de.tubs.ibr.dtn.swig.EID(id)));
+		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
+		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource()));
+		swigId.setSequencenumber(id.getSequencenumber());
+
+		ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp(id.getTimestamp());
+		swigId.setTimestamp(ts.getValue());
+
+		nativeSession.load(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, swigId);
 	}
 
 	public void getBundle()
 	{
-		nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+		// nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+
+		// TODO: read?!
 	}
 
 	public void loadAndGetBundle()
 	{
-
+		// get next bundle in the queue
+		nativeSession.next(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
 	}
 
-	public void markDelivered(String bundleId)
+	public void markDelivered(BundleID id)
 	{
-//		nativeSession.
+		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
+		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource()));
+		swigId.setSequencenumber(id.getSequencenumber());
+
+		ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp(id.getTimestamp());
+		swigId.setTimestamp(ts.getValue());
+		 
+		nativeSession.delivered(swigId);
 	}
 
-	public void sendBundle(byte[] output)
-	{
-		de.tubs.ibr.dtn.swig.Bundle bundle = new de.tubs.ibr.dtn.swig.Bundle();
-//		bundle.
-
-		// put it in session
-		nativeSession.put(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, bundle);
-	}
+//	public void sendBundle(byte[] output)
+//	{
+//		de.tubs.ibr.dtn.swig.Bundle bundle = new de.tubs.ibr.dtn.swig.Bundle();
+//		// bundle.
+//
+//		// put it in session
+//		nativeSession.put(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, bundle);
+//	}
 
 	/**
 	 * Send a bundle directly to the daemon.
@@ -134,41 +152,41 @@ public class ClientSession {
 	 * @throws APIException
 	 *             If the transmission fails.
 	 */
-	public synchronized void send(Bundle bundle)
-	{
-		// TODO: implement native
-
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-		// // clear the previous bundle first
-		// if (query("bundle clear") != 200) throw new
-		// APIException("bundle clear failed");
-		//
-		// // announce a proceeding plain bundle
-		// if (query("bundle put plain") != 100) throw new
-		// APIException("bundle put failed");
-
-		PlainSerializer serializer = new PlainSerializer(out);
-
-		try
-		{
-			serializer.serialize(bundle);
-		} catch (IOException e)
-		{
-			// throw new APIException("serialization of bundle failed.");
-		}
-
-		sendBundle(out.toByteArray());
-
-		// if (_receiver.getResponse().getCode() != 200)
-		// {
-		// throw new APIException("bundle rejected or put failed");
-		// }
-
-		// send the bundle away
-		// if (query("bundle send") != 200) throw new
-		// APIException("bundle send failed");
-	}
+//	public synchronized void send(Bundle bundle)
+//	{
+//		// TODO: implement native
+//
+//		ByteArrayOutputStream out = new ByteArrayOutputStream();
+//
+//		// // clear the previous bundle first
+//		// if (query("bundle clear") != 200) throw new
+//		// APIException("bundle clear failed");
+//		//
+//		// // announce a proceeding plain bundle
+//		// if (query("bundle put plain") != 100) throw new
+//		// APIException("bundle put failed");
+//
+//		PlainSerializer serializer = new PlainSerializer(out);
+//
+//		try
+//		{
+//			serializer.serialize(bundle);
+//		} catch (IOException e)
+//		{
+//			// throw new APIException("serialization of bundle failed.");
+//		}
+//
+//		sendBundle(out.toByteArray());
+//
+//		// if (_receiver.getResponse().getCode() != 200)
+//		// {
+//		// throw new APIException("bundle rejected or put failed");
+//		// }
+//
+//		// send the bundle away
+//		// if (query("bundle send") != 200) throw new
+//		// APIException("bundle send failed");
+//	}
 
 	/**
 	 * Send a bundle directly to the daemon.
@@ -182,10 +200,10 @@ public class ClientSession {
 	 * @throws APIException
 	 *             If the transmission fails.
 	 */
-	public void send(EID destination, Integer lifetime, byte[] data)
-	{
-		send(destination, lifetime, data, Bundle.Priority.NORMAL);
-	}
+//	public void send(EID destination, Integer lifetime, byte[] data)
+//	{
+//		send(destination, lifetime, data, Bundle.Priority.NORMAL);
+//	}
 
 	/**
 	 * Send a bundle directly to the daemon.
@@ -204,10 +222,13 @@ public class ClientSession {
 	public void send(EID destination, Integer lifetime, byte[] data, Bundle.Priority priority)
 	{
 		// wrapper to the send(Bundle) function
-		Bundle bundle = new Bundle(destination, lifetime);
-		bundle.appendBlock(new PayloadBlock(data));
-		bundle.setPriority(priority);
-		send(bundle);
+//		Bundle bundle = new Bundle(destination, lifetime);
+//		bundle.appendBlock(new PayloadBlock(data));
+//		bundle.setPriority(priority);
+//		send(bundle);
+		
+		
+		
 	}
 
 	/**
@@ -225,10 +246,10 @@ public class ClientSession {
 	 * @throws APIException
 	 *             If the transmission fails.
 	 */
-	public void send(EID destination, Integer lifetime, InputStream stream, Long length)
-	{
-		send(destination, lifetime, stream, length, Bundle.Priority.NORMAL);
-	}
+//	public void send(EID destination, Integer lifetime, InputStream stream, Long length)
+//	{
+//		send(destination, lifetime, stream, length, Bundle.Priority.NORMAL);
+//	}
 
 	/**
 	 * Send a bundle directly to the daemon. The given stream is used as payload
@@ -247,13 +268,13 @@ public class ClientSession {
 	 * @throws APIException
 	 *             If the transmission fails.
 	 */
-	public void send(EID destination, Integer lifetime, InputStream stream, Long length, Bundle.Priority priority)
-	{
-		Bundle bundle = new Bundle(destination, lifetime);
-		bundle.appendBlock(new PayloadBlock(new InputStreamBlockData(stream, length)));
-		bundle.setPriority(priority);
-		send(bundle);
-	}
+//	public void send(EID destination, Integer lifetime, InputStream stream, Long length, Bundle.Priority priority)
+//	{
+//		Bundle bundle = new Bundle(destination, lifetime);
+//		bundle.appendBlock(new PayloadBlock(new InputStreamBlockData(stream, length)));
+//		bundle.setPriority(priority);
+//		send(bundle);
+//	}
 
 	public synchronized void initialize()
 	{
