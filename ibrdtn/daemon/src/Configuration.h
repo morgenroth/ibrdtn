@@ -407,7 +407,6 @@ namespace dtn
 				 */
 				bool TLSRequired() const;
 
-#ifdef WITH_BUNDLE_SECURITY
 				enum Level
 				{
 					SECURITY_LEVEL_NONE = 0,
@@ -415,28 +414,31 @@ namespace dtn
 					SECURITY_LEVEL_ENCRYPTED = 2
 				};
 
+				/**
+				 * Get the configured security level
+				 */
 				Level getLevel() const;
 
+				/**
+				 * Get the path to security related files
+				 */
 				const ibrcommon::File& getPath() const;
 
+				/**
+				 * Get the path to the default BAB key
+				 */
 				const ibrcommon::File& getBABDefaultKey() const;
 
-			private:
-				ibrcommon::File _path;
-				Level _level;
-				ibrcommon::File _bab_default_key;
-#endif
-#if defined WITH_BUNDLE_SECURITY || defined WITH_TLS
-			public:
+				/**
+				 * Get the path to the TLS certificate
+				 */
 				const ibrcommon::File& getCertificate() const;
 
+				/**
+				 * Get the path to the private TLS key
+				 */
 				const ibrcommon::File& getKey() const;
-			private:
-				ibrcommon::File _cert;
-				ibrcommon::File _key;
-#endif
-#ifdef WITH_TLS
-			public:
+
 				/*!
 				 * \brief Read the path for trusted Certificates from the Configuration.
 				 * \return A file object for the path
@@ -450,9 +452,26 @@ namespace dtn
 				bool TLSEncryptionDisabled() const;
 
 			private:
+				// security related files
+				ibrcommon::File _path;
+
+				// security level
+				Level _level;
+
+				// local BAB key
+				ibrcommon::File _bab_default_key;
+
+				// TLS certificate
+				ibrcommon::File _cert;
+
+				// TLS private key
+				ibrcommon::File _key;
+
+				// TLS trusted CA path
 				ibrcommon::File _trustedCAPath;
+
+				// TLS encryption disabled?
 				bool _disableEncryption;
-#endif
 			};
 
 			class Daemon : public Configuration::Extension
