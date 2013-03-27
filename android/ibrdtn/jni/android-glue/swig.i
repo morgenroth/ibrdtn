@@ -3,6 +3,7 @@
 
 %{
 #include "../ibrdtn/ibrdtn/data/EID.h"
+#include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
 #include "../ibrdtn/ibrdtn/data/BundleID.h"
 #include "../ibrdtn/ibrdtn/data/Bundle.h"
 #include "../ibrdtn/ibrdtn/data/CustodySignalBlock.h"
@@ -16,6 +17,9 @@
 
 /* Let's just grab the original header file here */
 %include "../ibrdtn/ibrdtn/data/EID.h"
+%include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
+
+%ignore getTimestamp;
 %include "../ibrdtn/ibrdtn/data/BundleID.h"
 %include "../ibrdtn/ibrdtn/data/Bundle.h"
 %include "../ibrdtn/ibrdtn/data/CustodySignalBlock.h"
