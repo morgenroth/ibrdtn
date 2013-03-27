@@ -45,6 +45,6 @@ APP_CPPFLAGS+=-I$(abspath $(LOCAL_PATH))/ibrcommon
 APP_CPPFLAGS+=-I$(abspath $(LOCAL_PATH))/ibrdtn
 
 # If APP_MODULES is not set, all modules are compiled!
-APP_MODULES:=ibrcommon ibrdtn dtnd native-library-wrapper
+APP_MODULES:=ibrcommon ibrdtn dtnd android-glue
 #APP_MODULES:=all
 

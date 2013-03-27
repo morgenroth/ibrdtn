@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := native-library-wrapper
+LOCAL_MODULE := android-glue
 LOCAL_SRC_FILES = \
 	JNIHelp.cpp \
 	Helper.cpp \
