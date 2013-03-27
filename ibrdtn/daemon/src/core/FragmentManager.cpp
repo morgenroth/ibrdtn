@@ -254,7 +254,7 @@ namespace dtn
 
 			for (dtn::data::Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); iter++)
 			{
-				const dtn::data::Block &b = (*iter);
+				const dtn::data::Block &b = (**iter);
 				header += serializer.getLength(b);
 
 				try {
@@ -373,7 +373,7 @@ namespace dtn
 			for (dtn::data::Bundle::const_iterator it = bundle.begin(); it != bundle.end(); it++)
 			{
 				//get the current block
-				const Block &current_block = dynamic_cast<const Block&>(*it);
+				const Block &current_block = dynamic_cast<const Block&>(**it);
 
 				block_type = current_block.getType();
 

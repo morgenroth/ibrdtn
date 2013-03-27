@@ -61,7 +61,7 @@ namespace dtn
 			/**
 			 * allow comparison with the block type only
 			 */
-			bool operator==(block_t id) const;
+			bool operator==(const block_t &id) const;
 
 			virtual void addEID(const dtn::data::EID &eid);
 			virtual void clearEIDs();

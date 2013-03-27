@@ -147,7 +147,7 @@ namespace dtn
 				for (dtn::data::Bundle::iterator block_it = obj.begin(); block_it != payload_it; block_it++)
 				{
 					// get the current block and type
-					Block &current_block = (*block_it);
+					Block &current_block = (**block_it);
 					block_t block_type = current_block.getType();
 
 					// search the position of the payload block
@@ -192,7 +192,7 @@ namespace dtn
 				for (payload_it++; payload_it != obj.end(); payload_it++)
 				{
 					//get the current block and type
-					Block &current_block = (*payload_it);
+					Block &current_block = (**payload_it);
 					block_t block_type = current_block.getType();
 
 					try

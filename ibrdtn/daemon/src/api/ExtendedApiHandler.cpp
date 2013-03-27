@@ -620,7 +620,7 @@ namespace dtn
 							block_it = _bundle_reg.find(dtn::data::PayloadBlock::BLOCK_TYPE);
 						}
 
-						dtn::data::Block& b = dynamic_cast<dtn::data::Block&>(*block_it);
+						dtn::data::Block& b = dynamic_cast<dtn::data::Block&>(**block_it);
 
 						int cmd_remaining = cmd.size() - (cmd_index + 1);
 						if (cmd[cmd_index] == "get")

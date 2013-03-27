@@ -158,7 +158,7 @@ namespace dtn
 
 			while (it.next(bundle.end()))
 			{
-				verify(bundle, key, dynamic_cast<const PayloadIntegrityBlock&>(*it));
+				verify(bundle, key, dynamic_cast<const PayloadIntegrityBlock&>(**it));
 			}
 		}
 
@@ -190,7 +190,7 @@ namespace dtn
 			// search for valid PIB
 			while (it.next(bundle.end()))
 			{
-				const PayloadIntegrityBlock &pib = dynamic_cast<const PayloadIntegrityBlock&>(*it);
+				const PayloadIntegrityBlock &pib = dynamic_cast<const PayloadIntegrityBlock&>(**it);
 
 				// check if the PIB is valid
 				try {

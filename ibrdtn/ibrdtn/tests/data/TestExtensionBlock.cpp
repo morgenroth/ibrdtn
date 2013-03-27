@@ -52,7 +52,7 @@ void TestExtensionBlock::deserializeUnknownBlock(void)
 	dds >> dest;
 
 	// check unknown block
-	const dtn::data::ExtensionBlock &unknown = dynamic_cast<const dtn::data::ExtensionBlock&>(*dest.begin());
+	const dtn::data::ExtensionBlock &unknown = dynamic_cast<const dtn::data::ExtensionBlock&>(**dest.begin());
 	CPPUNIT_ASSERT_EQUAL((unsigned char)140, unknown.getType());
 	ibrcommon::BLOB::Reference uref = unknown.getBLOB();
 

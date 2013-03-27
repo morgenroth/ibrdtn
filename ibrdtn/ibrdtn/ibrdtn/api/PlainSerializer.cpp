@@ -53,7 +53,7 @@ namespace dtn
 			// serialize all secondary blocks
 			for (dtn::data::Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
 			{
-				const dtn::data::Block &b = (*iter);
+				const dtn::data::Block &b = (**iter);
 				_stream << std::endl;
 				(*this) << b;
 			}

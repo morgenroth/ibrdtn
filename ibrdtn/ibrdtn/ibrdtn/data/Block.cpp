@@ -38,7 +38,7 @@ namespace dtn
 		{
 		}
 
-		bool Block::operator==(block_t id) const
+		bool Block::operator==(const block_t &id) const
 		{
 			return (id == _blocktype);
 		}

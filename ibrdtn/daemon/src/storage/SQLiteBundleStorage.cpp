@@ -331,7 +331,7 @@ namespace dtn
 
 				for(dtn::data::Bundle::const_iterator it = bundle.begin() ;it != bundle.end(); it++)
 				{
-					const dtn::data::Block &block = (*it);
+					const dtn::data::Block &block = (**it);
 
 					// create a temporary file
 					ibrcommon::TemporaryFile tmpfile(_blockPath, "block");

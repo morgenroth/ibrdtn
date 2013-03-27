@@ -97,7 +97,7 @@ namespace dtn
 			dtn::data::Bundle::find_iterator it(bundle.begin(), dtn::security::PayloadIntegrityBlock::BLOCK_TYPE);
 			while (it.next(bundle.end()))
 			{
-				const dtn::security::PayloadIntegrityBlock& pib = dynamic_cast<const dtn::security::PayloadIntegrityBlock&>(*it);
+				const dtn::security::PayloadIntegrityBlock& pib = dynamic_cast<const dtn::security::PayloadIntegrityBlock&>(**it);
 
 				try {
 					const SecurityKey key = SecurityKeyManager::getInstance().get(pib.getSecuritySource(bundle), SecurityKey::KEY_PUBLIC);
@@ -143,7 +143,7 @@ namespace dtn
 			dtn::data::Bundle::find_iterator it(bundle.begin(), dtn::security::BundleAuthenticationBlock::BLOCK_TYPE);
 			while (it.next(bundle.end()))
 			{
-				const dtn::security::BundleAuthenticationBlock& bab = dynamic_cast<const dtn::security::BundleAuthenticationBlock&>(*it);
+				const dtn::security::BundleAuthenticationBlock& bab = dynamic_cast<const dtn::security::BundleAuthenticationBlock&>(**it);
 
 				// look for the right BAB-factory
 				const dtn::data::EID node = bab.getSecuritySource(bundle);

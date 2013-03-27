@@ -79,7 +79,7 @@ namespace dtn
 
 		void ExtensionSecurityBlock::decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, dtn::data::Bundle::iterator it)
 		{
-			const dtn::security::ExtensionSecurityBlock& block = dynamic_cast<const dtn::security::ExtensionSecurityBlock&>(*it);
+			const dtn::security::ExtensionSecurityBlock& block = dynamic_cast<const dtn::security::ExtensionSecurityBlock&>(**it);
 
 			// load the rsa key
 			RSA *rsa_key = key.getRSA();
@@ -105,7 +105,7 @@ namespace dtn
 			dtn::data::Bundle::find_iterator find_it(bundle.begin(), ExtensionSecurityBlock::BLOCK_TYPE);
 			while (find_it.next(bundle.end()))
 			{
-				const dtn::security::ExtensionSecurityBlock &esb = dynamic_cast<const dtn::security::ExtensionSecurityBlock&>(*find_it);
+				const dtn::security::ExtensionSecurityBlock &esb = dynamic_cast<const dtn::security::ExtensionSecurityBlock&>(**find_it);
 
 				if ((correlator == 0) || (correlator == esb._correlator))
 				{

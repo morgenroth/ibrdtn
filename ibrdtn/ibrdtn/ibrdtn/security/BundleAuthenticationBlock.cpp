@@ -95,7 +95,7 @@ namespace dtn
 			dtn::data::Bundle::find_iterator it(bundle.begin(), BundleAuthenticationBlock::BLOCK_TYPE);
 			while (it.next(bundle.end()))
 			{
-				const BundleAuthenticationBlock &bab = dynamic_cast<const BundleAuthenticationBlock&>(*it);
+				const BundleAuthenticationBlock &bab = dynamic_cast<const BundleAuthenticationBlock&>(**it);
 
 				// if the correlator is already authenticated, then remove the BAB
 				if ((bab._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && (bab._correlator == correlator))
@@ -121,7 +121,7 @@ namespace dtn
 			dtn::data::Bundle::const_find_iterator it(bundle.begin(), BundleAuthenticationBlock::BLOCK_TYPE);
 			while (it.next(bundle.end()))
 			{
-				const BundleAuthenticationBlock &bab = dynamic_cast<const BundleAuthenticationBlock&>(*it);
+				const BundleAuthenticationBlock &bab = dynamic_cast<const BundleAuthenticationBlock&>(**it);
 
 				// the bab contains a security result
 				if (bab._ciphersuite_flags & CONTAINS_SECURITY_RESULT)

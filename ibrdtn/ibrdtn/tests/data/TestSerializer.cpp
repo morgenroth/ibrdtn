@@ -173,7 +173,7 @@ void TestSerializer::serializer_block_length(void)
 
 	for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); iter++)
 	{
-		const dtn::data::Block &block = (*iter);
+		const dtn::data::Block &block = (**iter);
 
 		std::stringstream ss;
 		dtn::data::DefaultSerializer ds(ss);

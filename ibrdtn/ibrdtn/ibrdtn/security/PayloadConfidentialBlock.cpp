@@ -173,14 +173,14 @@ namespace dtn
 				for (dtn::data::Bundle::iterator it = bundle.begin(); it != bundle.end(); it++)
 				{
 					try {
-						dynamic_cast<const PayloadIntegrityBlock&>(*it);
+						dynamic_cast<const PayloadIntegrityBlock&>(**it);
 
 						// add this block to the erasure list for later deletion
-						erasure_list.push_back(&*it);
+						erasure_list.push_back(&**it);
 					} catch (const std::bad_cast&) { };
 
 					try {
-						const PayloadConfidentialBlock &pcb = dynamic_cast<const PayloadConfidentialBlock&>(*it);
+						const PayloadConfidentialBlock &pcb = dynamic_cast<const PayloadConfidentialBlock&>(**it);
 
 						// get salt and key
 						uint32_t salt = getSalt(pcb._ciphersuite_params);
@@ -193,7 +193,7 @@ namespace dtn
 								decryptBlock(bundle, it, salt, key);
 
 								// success! add this block to the erasue list
-								erasure_list.push_back(&*it);
+								erasure_list.push_back(&**it);
 							} catch (const ibrcommon::Exception&) {
 								IBRCOMMON_LOGGER(critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
 								decryptBlock(bundle, it, salt, key);
@@ -223,7 +223,7 @@ namespace dtn
 							}
 
 							// success! add this block to the erasue list
-							erasure_list.push_back(&*it);
+							erasure_list.push_back(&**it);
 
 							// check if first PCB has a correlator
 							if (pcb._ciphersuite_flags & CONTAINS_CORRELATOR)

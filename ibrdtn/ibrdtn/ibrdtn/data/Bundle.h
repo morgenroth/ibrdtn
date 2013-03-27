@@ -61,27 +61,19 @@ namespace dtn
 					};
 			};
 
-			typedef refcnt_ptr<Block> block_elem;
+			class block_elem : public refcnt_ptr<Block>
+			{
+			public:
+				block_elem(dtn::data::Block *block) : refcnt_ptr<Block>(block) { }
+				bool operator==(const dtn::data::block_t &type) const {
+					return (**this) == type;
+				}
+			};
+
 			typedef std::list<block_elem> block_list;
 
-			class iterator : public block_list::iterator
-			{
-				public:
-					iterator(const block_list::iterator &it) : block_list::iterator(it) { };
-					const Block& operator*() const { return *(*((block_list::iterator*)this))->getPointer(); }
-					Block& operator*() { return *(*((block_list::iterator*)this))->getPointer(); }
-					iterator& operator++() { ((block_list::iterator*)this)->operator ++(); return (*this); }
-					iterator operator++(int) { iterator tmp(*this); operator++(); return tmp; }
-			};
-
-			class const_iterator : public block_list::const_iterator
-			{
-				public:
-					const_iterator(const block_list::const_iterator &it) : block_list::const_iterator(it) { };
-					const Block& operator*() const { return *(*((block_list::const_iterator*)this))->getPointer(); }
-					const_iterator& operator++() { ((block_list::const_iterator*)this)->operator ++(); return (*this); }
-					const_iterator operator++(int) { const_iterator tmp(*this); operator++(); return tmp; }
-			};
+			typedef block_list::iterator iterator;
+			typedef block_list::const_iterator const_iterator;
 
 			typedef ibrcommon::find_iterator<iterator, dtn::data::block_t> find_iterator;
 			typedef ibrcommon::find_iterator<const_iterator, dtn::data::block_t> const_find_iterator;
@@ -153,7 +145,7 @@ namespace dtn
 		{
 			iterator it = this->find(T::BLOCK_TYPE);
 			if (it == this->end()) throw NoSuchBlockFoundException();
-			return dynamic_cast<T&>(*it);
+			return dynamic_cast<T&>(**it);
 		}
 
 		template<class T>
@@ -161,7 +153,7 @@ namespace dtn
 		{
 			const_iterator it = this->find(T::BLOCK_TYPE);
 			if (it == this->end()) throw NoSuchBlockFoundException();
-			return dynamic_cast<const T&>(*it);
+			return dynamic_cast<const T&>(**it);
 		}
 
 		template<class T>
@@ -177,7 +169,7 @@ namespace dtn
 				// set the last block bit
 				iterator last = end();
 				last--;
-				(*last).set(dtn::data::Block::LAST_BLOCK, true);
+				(**last).set(dtn::data::Block::LAST_BLOCK, true);
 			}
 
 			return (*tmpblock);
@@ -190,7 +182,7 @@ namespace dtn
 				// remove the last block bit
 				iterator last = end();
 				last--;
-				(*last).set(dtn::data::Block::LAST_BLOCK, false);
+				(**last).set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
 			T *tmpblock = new T();
@@ -210,7 +202,7 @@ namespace dtn
 				// remove the last block bit
 				iterator last = end();
 				last--;
-				(*last).set(dtn::data::Block::LAST_BLOCK, false);
+				(**last).set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
 			T *tmpblock = new T();
@@ -220,7 +212,7 @@ namespace dtn
 			// set the last block bit
 			iterator last = end();
 			last--;
-			(*last).set(dtn::data::Block::LAST_BLOCK, true);
+			(**last).set(dtn::data::Block::LAST_BLOCK, true);
 
 			return (*tmpblock);
 		}

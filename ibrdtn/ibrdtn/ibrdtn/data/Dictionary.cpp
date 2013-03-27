@@ -53,7 +53,7 @@ namespace data
 		// add EID of all secondary blocks
 		for (Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); iter++)
 		{
-			const Block &b = (*iter);
+			const Block &b = (**iter);
 			add( b.getEIDList() );
 		}
 	}

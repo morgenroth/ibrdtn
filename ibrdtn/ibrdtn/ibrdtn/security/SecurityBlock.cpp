@@ -277,7 +277,7 @@ namespace dtn
 			bool return_val = false;
 			for (dtn::data::Bundle::const_iterator it = bundle.begin(); it != bundle.end() && !return_val; it++)
 			{
-				const dtn::data::Block &b = (*it);
+				const dtn::data::Block &b = (**it);
 				const dtn::data::block_t type = b.getType();
 				if (type == BUNDLE_AUTHENTICATION_BLOCK
 					|| type == PAYLOAD_INTEGRITY_BLOCK
@@ -599,7 +599,7 @@ namespace dtn
 
 		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
-			const dtn::security::SecurityBlock &block = dynamic_cast<const dtn::security::SecurityBlock&>(*it);
+			const dtn::security::SecurityBlock &block = dynamic_cast<const dtn::security::SecurityBlock&>(**it);
 
 			// the array for the extracted tag
 			unsigned char tag[ibrcommon::AES128Stream::tag_len];

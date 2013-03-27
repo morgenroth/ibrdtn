@@ -91,7 +91,7 @@ namespace dtn
 		{
 			Bundle::iterator p_it = b.find(dtn::data::PayloadBlock::BLOCK_TYPE);
 			if (p_it == b.end()) throw ibrcommon::Exception("Payload block missing.");
-			dtn::data::PayloadBlock &p = dynamic_cast<dtn::data::PayloadBlock&>(*p_it);
+			dtn::data::PayloadBlock &p = dynamic_cast<dtn::data::PayloadBlock&>(**p_it);
 
 			// get a data container for the compressed payload
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -128,7 +128,7 @@ namespace dtn
 			// get the payload block
 			Bundle::iterator p_it = b.find(dtn::data::PayloadBlock::BLOCK_TYPE);
 			if (p_it == b.end()) throw ibrcommon::Exception("Payload block missing.");
-			dtn::data::PayloadBlock &p = dynamic_cast<dtn::data::PayloadBlock&>(*p_it);
+			dtn::data::PayloadBlock &p = dynamic_cast<dtn::data::PayloadBlock&>(**p_it);
 
 			// get a data container for the uncompressed payload
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();

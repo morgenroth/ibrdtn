@@ -481,10 +481,10 @@ namespace dtn
 						dtn::data::Bundle::const_find_iterator age_it(b.begin(), dtn::data::AgeBlock::BLOCK_TYPE);
 
 						if (age_it.next(b.end())) throw ibrcommon::Exception("first ageblock missing");
-						const dtn::data::AgeBlock &peer_age = dynamic_cast<const dtn::data::AgeBlock&>(*age_it);
+						const dtn::data::AgeBlock &peer_age = dynamic_cast<const dtn::data::AgeBlock&>(**age_it);
 
 						if (age_it.next(b.end())) throw ibrcommon::Exception("second ageblock missing");
-						const dtn::data::AgeBlock &origin_age = dynamic_cast<const dtn::data::AgeBlock&>(*age_it);
+						const dtn::data::AgeBlock &origin_age = dynamic_cast<const dtn::data::AgeBlock&>(**age_it);
 
 						timeval tv_age; timerclear(&tv_age);
 						tv_age.tv_usec = origin_age.getMicroseconds();

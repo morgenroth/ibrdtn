@@ -52,10 +52,10 @@ namespace dtn
 			// skip all blocks before the correlator
 			for (; _with_correlator && iter != bundle.end(); iter++)
 			{
-				const dtn::data::Block &b = (*iter);
+				const dtn::data::Block &b = (**iter);
 				if (b.getType() == SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK || b.getType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK)
 				{
-					const dtn::security::SecurityBlock& sb = dynamic_cast<const dtn::security::SecurityBlock&>(*iter);
+					const dtn::security::SecurityBlock& sb = dynamic_cast<const dtn::security::SecurityBlock&>(**iter);
 					if ((sb._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && sb._correlator == _correlator)
 						break;
 				}
@@ -63,13 +63,13 @@ namespace dtn
 
 			// consume the first block. this block may have the same correlator set, 
 			// we are searching for in the loop
-			(*this) << (*iter);
+			(*this) << (**iter);
 			iter++;
 
 			// serialize the remaining block
 			for (; iter != bundle.end(); iter++)
 			{
-				const dtn::data::Block &b = (*iter);
+				const dtn::data::Block &b = (**iter);
 				(*this) << b;
 
 				try {

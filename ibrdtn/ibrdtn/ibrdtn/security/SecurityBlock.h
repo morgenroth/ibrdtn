@@ -424,7 +424,7 @@ namespace dtn
 		template <class T>
 		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
-			const dtn::data::Block &block = (*it);
+			const dtn::data::Block &block = (**it);
 
 			// insert ESB, block can be removed after encryption, because bundle will destroy it
 			T& esb = bundle.insert<T>(it);

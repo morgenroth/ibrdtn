@@ -99,7 +99,7 @@ namespace dtn
 		{
 			for (iterator it = begin(); it != end(); it++)
 			{
-				dtn::data::Block *b = &(*it);
+				dtn::data::Block *b = (*it).getPointer();
 				if (b == &block)
 				{
 					erase(it);
@@ -118,7 +118,7 @@ namespace dtn
 			// set the last block bit
 			iterator last = end();
 			last--;
-			(*last).set(dtn::data::Block::LAST_BLOCK, true);
+			(**last).set(dtn::data::Block::LAST_BLOCK, true);
 		}
 
 		void Bundle::erase(iterator it)
@@ -128,7 +128,7 @@ namespace dtn
 			// set the last block bit
 			iterator last = end();
 			last--;
-			(*last).set(dtn::data::Block::LAST_BLOCK, true);
+			(**last).set(dtn::data::Block::LAST_BLOCK, true);
 		}
 
 		void Bundle::clear()
@@ -142,7 +142,7 @@ namespace dtn
 				// remove the last block bit
 				iterator last = end();
 				last--;
-				(*last).set(dtn::data::Block::LAST_BLOCK, false);
+				(**last).set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
 			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
@@ -153,7 +153,7 @@ namespace dtn
 			// set the last block bit
 			iterator last = end();
 			last--;
-			(*last).set(dtn::data::Block::LAST_BLOCK, true);
+			(**last).set(dtn::data::Block::LAST_BLOCK, true);
 
 			return (*tmpblock);
 		}
@@ -170,7 +170,7 @@ namespace dtn
 				// set the last block bit
 				iterator last = end();
 				last--;
-				(*last).set(dtn::data::Block::LAST_BLOCK, true);
+				(**last).set(dtn::data::Block::LAST_BLOCK, true);
 			}
 
 			return (*tmpblock);
@@ -182,7 +182,7 @@ namespace dtn
 				// remove the last block bit
 				iterator last = end();
 				last--;
-				(*last).set(dtn::data::Block::LAST_BLOCK, false);
+				(**last).set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
 			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
@@ -206,7 +206,7 @@ namespace dtn
 				// set the last block bit
 				iterator last = end();
 				last--;
-				(*last).set(dtn::data::Block::LAST_BLOCK, true);
+				(**last).set(dtn::data::Block::LAST_BLOCK, true);
 			}
 
 			return (*block);
@@ -218,7 +218,7 @@ namespace dtn
 				// remove the last block bit
 				iterator last = end();
 				last--;
-				(*last).set(dtn::data::Block::LAST_BLOCK, false);
+				(**last).set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
 			block_elem block( factory.create() );
@@ -236,7 +236,7 @@ namespace dtn
 				// remove the last block bit
 				iterator last = end();
 				last--;
-				(*last).set(dtn::data::Block::LAST_BLOCK, false);
+				(**last).set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
 			block_elem block( factory.create() );
@@ -245,7 +245,7 @@ namespace dtn
 			// set the last block bit
 			iterator last = end();
 			last--;
-			(*last).set(dtn::data::Block::LAST_BLOCK, true);
+			(**last).set(dtn::data::Block::LAST_BLOCK, true);
 
 			return (*block);
 		}
@@ -269,9 +269,9 @@ namespace dtn
 			  )
 			{
 				for( const_iterator it = begin(); it != end(); it++ ) {
-					if( (*it).get( Block::BLOCK_CONTAINS_EIDS ) )
+					if( (**it).get( Block::BLOCK_CONTAINS_EIDS ) )
 					{
-						std::list< EID > blockEIDs = (*it).getEIDList();
+						std::list< EID > blockEIDs = (**it).getEIDList();
 						for( std::list< EID >::const_iterator itBlockEID = blockEIDs.begin(); itBlockEID != blockEIDs.end(); itBlockEID++ )
 						{
 							if( ! itBlockEID->isCompressable() )
@@ -303,7 +303,7 @@ namespace dtn
 		{
 			for (iterator it = begin(); it != end(); it++)
 			{
-				if ((&*it) == &block) return it;
+				if ((&**it) == &block) return it;
 			}
 
 			return end();
@@ -313,7 +313,7 @@ namespace dtn
 		{
 			for (const_iterator it = begin(); it != end(); it++)
 			{
-				if ((&*it) == &block) return it;
+				if ((&**it) == &block) return it;
 			}
 
 			return end();

@@ -154,7 +154,7 @@ void TestSecurityBlock::permutationBabPibTest(void)
 	CPPUNIT_ASSERT_EQUAL((size_t)2, b.size());
 
 	for (dtn::data::Bundle::const_iterator i = b.begin(); i != b.end(); i++) {
-		CPPUNIT_ASSERT_THROW(dynamic_cast<const dtn::security::BundleAuthenticationBlock&>(*i), std::bad_cast);
+		CPPUNIT_ASSERT_THROW(dynamic_cast<const dtn::security::BundleAuthenticationBlock&>(**i), std::bad_cast);
 	}
 
 	dtn::security::PayloadIntegrityBlock::verify(b, pubkey);

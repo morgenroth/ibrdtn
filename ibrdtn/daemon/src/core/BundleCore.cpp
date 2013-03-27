@@ -434,7 +434,7 @@ namespace dtn
 			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); iter++)
 			{
 				try {
-					const dtn::data::ExtensionBlock &e = dynamic_cast<const dtn::data::ExtensionBlock&>(*iter);
+					const dtn::data::ExtensionBlock &e = dynamic_cast<const dtn::data::ExtensionBlock&>(**iter);
 
 					if (e.get(dtn::data::Block::DELETE_BUNDLE_IF_NOT_PROCESSED))
 					{
@@ -461,7 +461,7 @@ namespace dtn
 			// walk through the block and process them when needed
 			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); iter++)
 			{
-				const dtn::data::Block &block = (*iter);
+				const dtn::data::Block &block = (**iter);
 #ifdef WITH_BUNDLE_SECURITY
 				if (block.getType() == dtn::security::PayloadConfidentialBlock::BLOCK_TYPE)
 				{

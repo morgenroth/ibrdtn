@@ -64,7 +64,7 @@ namespace dtn
 			// add EID of all secondary blocks
 			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
 			{
-				const Block &b = (*iter);
+				const Block &b = (**iter);
 				_dictionary.add( b.getEIDList() );
 			}
 
@@ -83,7 +83,7 @@ namespace dtn
 			// serialize all secondary blocks
 			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
 			{
-				const Block &b = (*iter);
+				const Block &b = (**iter);
 				(*this) << b;
 			}
 
@@ -102,7 +102,7 @@ namespace dtn
 			dtn::data::Bundle::const_iterator it = obj._bundle.find(dtn::data::PayloadBlock::BLOCK_TYPE);
 
 			if (it != obj._bundle.end()) {
-				const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(*it);
+				const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(**it);
 				prim._appdatalength = payload.getLength();
 			} else {
 				prim._appdatalength = 0;
@@ -119,7 +119,7 @@ namespace dtn
 
 			for (Bundle::const_iterator iter = obj._bundle.begin(); iter != obj._bundle.end(); iter++)
 			{
-				const Block &b = (*iter);
+				const Block &b = (**iter);
 
 				try {
 					// test if this is the payload block
@@ -157,7 +157,7 @@ namespace dtn
 				// add EID of all secondary blocks
 				for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
 				{
-					const Block &b = (*iter);
+					const Block &b = (**iter);
 					const std::list<dtn::data::EID> eids = b.getEIDList();
 
 					for (std::list<dtn::data::EID>::const_iterator eit = eids.begin(); eit != eids.end(); eit++)
@@ -408,7 +408,7 @@ namespace dtn
 			// add size of all blocks
 			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
 			{
-				const Block &b = (*iter);
+				const Block &b = (**iter);
 				len += getLength( b );
 			}
 
