@@ -36,7 +36,7 @@ public class NativeDaemonWrapper {
 	private final static String IBRCOMMON_NAME = "ibrcommon";
 	private final static String IBRDTN_NAME = "ibrdtn";
 	private final static String DTND_NAME = "dtnd";
-	private final static String NATIVE_LIBRARY_WRAPPER_NAME = "native-library-wrapper";
+	private final static String ANDROID_GLUE_NAME = "android-glue";
 
 	/**
 	 * Loads all shared libraries in the right order with System.loadLibrary()
@@ -54,7 +54,7 @@ public class NativeDaemonWrapper {
 			System.loadLibrary(IBRDTN_NAME);
 			System.loadLibrary(DTND_NAME);
 
-			System.loadLibrary(NATIVE_LIBRARY_WRAPPER_NAME);
+			System.loadLibrary(ANDROID_GLUE_NAME);
 		} catch (UnsatisfiedLinkError e)
 		{
 			Log.e(TAG, "UnsatisfiedLinkError! Are you running special hardware?", e);
