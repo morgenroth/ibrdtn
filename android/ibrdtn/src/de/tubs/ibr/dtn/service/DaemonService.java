@@ -257,7 +257,7 @@ public class DaemonService extends Service {
 			NativeDaemonWrapper.daemonShutdown();
 
 			// disable P2P manager
-			_p2p_manager.destroy();
+//			_p2p_manager.destroy();
 
 			// close all sessions
 			_session_manager.terminate();
