@@ -23,30 +23,28 @@ package de.tubs.ibr.dtn.service;
 
 import ibrdtn.api.APIConnection;
 import ibrdtn.api.ExtendedClient.APIException;
-import ibrdtn.api.object.Bundle;
-import ibrdtn.api.object.EID;
-import ibrdtn.api.object.InputStreamBlockData;
-import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.object.PlainSerializer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.UUID;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.util.Log;
+import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.DTNSessionCallback;
+import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.swig.NativeSession;
+import de.tubs.ibr.dtn.swig.PrimaryBlock;
 import de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex;
 import de.tubs.ibr.dtn.swig.NativeSessionCallback;
 
@@ -112,6 +110,7 @@ public class ClientSession {
 
 	public void getBundle()
 	{
+		// nativeSession.
 		// nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
 
 		// TODO: read?!
@@ -131,62 +130,67 @@ public class ClientSession {
 
 		ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp(id.getTimestamp());
 		swigId.setTimestamp(ts.getValue());
-		 
+
 		nativeSession.delivered(swigId);
 	}
 
-//	public void sendBundle(byte[] output)
-//	{
-//		de.tubs.ibr.dtn.swig.Bundle bundle = new de.tubs.ibr.dtn.swig.Bundle();
-//		// bundle.
-//
-//		// put it in session
-//		nativeSession.put(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, bundle);
-//	}
-
 	/**
-	 * Send a bundle directly to the daemon.
-	 * 
-	 * @param bundle
-	 *            The bundle to send.
-	 * @throws APIException
-	 *             If the transmission fails.
+	 * Put Bundle into NativeSession
 	 */
-//	public synchronized void send(Bundle bundle)
-//	{
-//		// TODO: implement native
-//
-//		ByteArrayOutputStream out = new ByteArrayOutputStream();
-//
-//		// // clear the previous bundle first
-//		// if (query("bundle clear") != 200) throw new
-//		// APIException("bundle clear failed");
-//		//
-//		// // announce a proceeding plain bundle
-//		// if (query("bundle put plain") != 100) throw new
-//		// APIException("bundle put failed");
-//
-//		PlainSerializer serializer = new PlainSerializer(out);
-//
-//		try
-//		{
-//			serializer.serialize(bundle);
-//		} catch (IOException e)
-//		{
-//			// throw new APIException("serialization of bundle failed.");
-//		}
-//
-//		sendBundle(out.toByteArray());
-//
-//		// if (_receiver.getResponse().getCode() != 200)
-//		// {
-//		// throw new APIException("bundle rejected or put failed");
-//		// }
-//
-//		// send the bundle away
-//		// if (query("bundle send") != 200) throw new
-//		// APIException("bundle send failed");
-//	}
+	public synchronized void put(Bundle bundle)
+	{
+		/*
+		 * Convert API Bundle to SWIG bundle
+		 */
+		de.tubs.ibr.dtn.swig.PrimaryBlock swigPrimaryBlock = new de.tubs.ibr.dtn.swig.PrimaryBlock();
+		swigPrimaryBlock.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.custodian));
+		swigPrimaryBlock.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.destination));
+		swigPrimaryBlock.set_fragmentoffset(bundle.fragment_offset);
+		swigPrimaryBlock.set_lifetime(bundle.lifetime);
+		swigPrimaryBlock.set_procflags(bundle.procflags);
+		swigPrimaryBlock.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.reportto));
+		swigPrimaryBlock.set_sequencenumber(bundle.sequencenumber);
+		swigPrimaryBlock.set_source(new de.tubs.ibr.dtn.swig.EID(bundle.source));
+
+		ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp(bundle.timestamp);
+		swigPrimaryBlock.set_timestamp(ts.getValue());
+
+		// TODO: priority
+		swigPrimaryBlock.setPriority(de.tubs.ibr.dtn.swig.PrimaryBlock.PRIORITY.PRIO_MEDIUM);
+
+		// put it into native session
+		nativeSession.put(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, swigPrimaryBlock);
+	}
+
+	public void writeAndSend(byte[] data)
+	{
+		nativeSession.write(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, data);
+
+		nativeSession.send(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+	}
+
+	public void writeAndSend(InputStream stream, Long length)
+	{
+		// read input as buffered stream and write into NativeSession Bundle
+		byte[] buf = new byte[8192];
+		int len;
+		int total = 0;
+		try
+		{
+			while ((len = stream.read(buf, 0, Math.min(buf.length, (int) Math.min(Integer.MAX_VALUE, length - total)))) > 0)
+			{
+				total += len;
+
+				nativeSession.write(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, buf, Long.valueOf(0));
+				// out.write(buf, 0, len);
+			}
+		} catch (IOException e)
+		{
+			Log.e(TAG, "Writing into NativeSession bundle failed!", e);
+		}
+
+		nativeSession.send(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+	}
 
 	/**
 	 * Send a bundle directly to the daemon.
@@ -200,10 +204,26 @@ public class ClientSession {
 	 * @throws APIException
 	 *             If the transmission fails.
 	 */
-//	public void send(EID destination, Integer lifetime, byte[] data)
-//	{
-//		send(destination, lifetime, data, Bundle.Priority.NORMAL);
-//	}
+	public void send(EID destination, int lifetime, byte[] data)
+	{
+		// send(destination, lifetime, data, Bundle.Priority.NORMAL);
+
+		Bundle bundle = new Bundle();
+		if (destination instanceof GroupEndpoint)
+		{
+			bundle.procflags = (long) 16;
+		} else
+		{
+			bundle.procflags = (long) 0;
+		}
+		bundle.destination = destination.toString();
+		bundle.lifetime = Long.valueOf(lifetime);
+
+		// put it into native session
+		put(bundle);
+
+		writeAndSend(data);
+	}
 
 	/**
 	 * Send a bundle directly to the daemon.
@@ -219,16 +239,50 @@ public class ClientSession {
 	 * @throws APIException
 	 *             If the transmission fails.
 	 */
-	public void send(EID destination, Integer lifetime, byte[] data, Bundle.Priority priority)
+	// public void send(EID destination, Integer lifetime, byte[] data,
+	// Bundle.Priority priority)
+	// {
+	// wrapper to the send(Bundle) function
+	// Bundle bundle = new Bundle(destination, lifetime);
+	// bundle.appendBlock(new PayloadBlock(data));
+	// bundle.setPriority(priority);
+	// send(bundle);
+	// }
+
+	/**
+	 * Send a bundle directly to the daemon. The given stream is used as payload
+	 * of the bundle.
+	 * 
+	 * @param destination
+	 *            The destination of the bundle.
+	 * @param lifetime
+	 *            The lifetime of the bundle.
+	 * @param stream
+	 *            The stream containing the payload data.
+	 * @param length
+	 *            The length of the payload.
+	 * @throws APIException
+	 *             If the transmission fails.
+	 */
+	public void send(EID destination, int lifetime, InputStream stream, Long length)
 	{
-		// wrapper to the send(Bundle) function
-//		Bundle bundle = new Bundle(destination, lifetime);
-//		bundle.appendBlock(new PayloadBlock(data));
-//		bundle.setPriority(priority);
-//		send(bundle);
-		
-		
-		
+		// send(destination, lifetime, stream, length, Bundle.Priority.NORMAL);
+
+		Bundle bundle = new Bundle();
+		if (destination instanceof GroupEndpoint)
+		{
+			bundle.procflags = (long) 16;
+		} else
+		{
+			bundle.procflags = (long) 0;
+		}
+		bundle.destination = destination.toString();
+		bundle.lifetime = Long.valueOf(lifetime);
+
+		// put it into native session
+		put(bundle);
+
+		writeAndSend(stream, length);
 	}
 
 	/**
@@ -243,38 +297,20 @@ public class ClientSession {
 	 *            The stream containing the payload data.
 	 * @param length
 	 *            The length of the payload.
-	 * @throws APIException
-	 *             If the transmission fails.
-	 */
-//	public void send(EID destination, Integer lifetime, InputStream stream, Long length)
-//	{
-//		send(destination, lifetime, stream, length, Bundle.Priority.NORMAL);
-//	}
-
-	/**
-	 * Send a bundle directly to the daemon. The given stream is used as payload
-	 * of the bundle.
-	 * 
-	 * @param destination
-	 *            The destination of the bundle.
-	 * @param lifetime
-	 *            The lifetime of the bundle.
-	 * @param stream
-	 *            The stream containing the payload data.
-	 * @param length
-	 *            The length of the payload.
 	 * @param priority
 	 *            The priority of the bundle
 	 * @throws APIException
 	 *             If the transmission fails.
 	 */
-//	public void send(EID destination, Integer lifetime, InputStream stream, Long length, Bundle.Priority priority)
-//	{
-//		Bundle bundle = new Bundle(destination, lifetime);
-//		bundle.appendBlock(new PayloadBlock(new InputStreamBlockData(stream, length)));
-//		bundle.setPriority(priority);
-//		send(bundle);
-//	}
+	// public void send(EID destination, Integer lifetime, InputStream stream,
+	// Long length, Bundle.Priority priority)
+	// {
+	// Bundle bundle = new Bundle(destination, lifetime);
+	// bundle.appendBlock(new PayloadBlock(new InputStreamBlockData(stream,
+	// length)));
+	// bundle.setPriority(priority);
+	// send(bundle);
+	// }
 
 	public synchronized void initialize()
 	{
@@ -376,6 +412,19 @@ public class ClientSession {
 			}
 		}
 
+		public boolean queryNext(DTNSessionCallback cb) throws RemoteException
+		{
+			try
+			{
+				APISession session = getSession();
+				return session.query(cb);
+			} catch (Exception e)
+			{
+				Log.e(TAG, "queryNext failed", e);
+				return false;
+			}
+		}
+
 		public boolean delivered(BundleID id) throws RemoteException
 		{
 			try
@@ -386,19 +435,6 @@ public class ClientSession {
 			} catch (Exception e)
 			{
 				Log.e(TAG, "delivered failed", e);
-				return false;
-			}
-		}
-
-		public boolean queryNext(DTNSessionCallback cb) throws RemoteException
-		{
-			try
-			{
-				APISession session = getSession();
-				return session.query(cb);
-			} catch (Exception e)
-			{
-				Log.e(TAG, "queryNext failed", e);
 				return false;
 			}
 		}

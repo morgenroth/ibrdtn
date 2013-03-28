@@ -412,7 +412,7 @@ public class APISession {
 		if (!isConnected()) throw new SessionDestroyedException("not connected.");
 		
 //		try {
-			ibrdtn.api.object.BundleID api_id = new ibrdtn.api.object.BundleID();
+//			ibrdtn.api.object.BundleID api_id = new ibrdtn.api.object.BundleID();
 //			api_id.setSource(id.getSource());
 //			
 //			ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp( id.getTimestamp() );
@@ -437,21 +437,21 @@ public class APISession {
 		if (!isConnected()) throw new SessionDestroyedException("not connected.");
 		
 //		try {
-			ibrdtn.api.object.EID api_destination = null;
-			
-			if (destination instanceof de.tubs.ibr.dtn.api.SingletonEndpoint)
-			{
-				api_destination = new ibrdtn.api.object.SingletonEndpoint( destination.toString() );
-			}
-			else
-			{
-				api_destination = new ibrdtn.api.object.GroupEndpoint( destination.toString() );
-			}
+//			ibrdtn.api.object.EID api_destination = null;
+//			
+//			if (destination instanceof de.tubs.ibr.dtn.api.SingletonEndpoint)
+//			{
+//				api_destination = new ibrdtn.api.object.SingletonEndpoint( destination.toString() );
+//			}
+//			else
+//			{
+//				api_destination = new ibrdtn.api.object.GroupEndpoint( destination.toString() );
+//			}
 			
 			synchronized(_api_mutex) {
 				// send the message to the daemon
 //				this.client.send(api_destination, lifetime, data);
-				session.send(api_destination, lifetime, data);
+				session.send(destination, lifetime, data);
 			}
 			
 			// debug
@@ -473,16 +473,16 @@ public class APISession {
 	{
 		if (!isConnected()) throw new SessionDestroyedException("not connected.");
 		
-		ibrdtn.api.object.EID api_destination = null;
-		
-		if (destination instanceof de.tubs.ibr.dtn.api.SingletonEndpoint)
-		{
-			api_destination = new ibrdtn.api.object.SingletonEndpoint( destination.toString() );
-		}
-		else
-		{
-			api_destination = new ibrdtn.api.object.GroupEndpoint( destination.toString() );
-		}
+//		ibrdtn.api.object.EID api_destination = null;
+//		
+//		if (destination instanceof de.tubs.ibr.dtn.api.SingletonEndpoint)
+//		{
+//			api_destination = new ibrdtn.api.object.SingletonEndpoint( destination.toString() );
+//		}
+//		else
+//		{
+//			api_destination = new ibrdtn.api.object.GroupEndpoint( destination.toString() );
+//		}
 		
 		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
 		
@@ -490,7 +490,7 @@ public class APISession {
 		try {
 			synchronized(_api_mutex) {
 //				this.client.send(api_destination, lifetime, stream, length);
-				session.send(api_destination, lifetime, stream, length);
+				session.send(destination, lifetime, stream, length);
 			}
 			return true;
 //		} catch (APIException e) {
