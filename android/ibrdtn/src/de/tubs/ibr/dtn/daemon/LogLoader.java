@@ -43,8 +43,6 @@ public class LogLoader extends Loader<LogMessage> {
 		@Override
 		protected Void doInBackground(Void... params)
 		{
-			Log.d(TAG, "LogcatTask doInBackground!");
-
 			Process process = null;
 			try
 			{
@@ -68,7 +66,6 @@ public class LogLoader extends Loader<LogMessage> {
 
 				}
 
-				Log.d(TAG, "Close reader and destroy process");
 				reader.close();
 				process.destroy();
 				process = null;
@@ -93,7 +90,6 @@ public class LogLoader extends Loader<LogMessage> {
 	protected void onReset()
 	{
 		super.onReset();
-		Log.d(TAG, "onReset");
 
 		onStopLoading();
 	}
@@ -101,8 +97,6 @@ public class LogLoader extends Loader<LogMessage> {
 	@Override
 	protected void onStartLoading()
 	{
-		Log.d(TAG, "onStartLoading");
-
 		// start thread that continuously gets logcat's output
 		mLogcatTask = new LogcatTask().execute();
 	}
@@ -110,8 +104,6 @@ public class LogLoader extends Loader<LogMessage> {
 	@Override
 	protected void onStopLoading()
 	{
-		Log.d(TAG, "onStopLoading");
-
 		mLogcatTask.cancel(false);
 	}
 

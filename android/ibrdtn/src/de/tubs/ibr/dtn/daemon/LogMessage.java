@@ -27,6 +27,7 @@ import java.util.HashMap;
 import android.util.Log;
 
 public class LogMessage {
+	private static final String TAG = "LogMessage";
 	public static HashMap<String, String> TAG_LABELS;
 
 	static
@@ -53,7 +54,7 @@ public class LogMessage {
 			msg = raw.substring(raw.indexOf(':', secondSpace) + 1, raw.length()).trim();
 		} catch (StringIndexOutOfBoundsException e)
 		{
-			Log.e("LogMessage", "Error while parsing the log messages", e);
+			Log.e(TAG, "Error while parsing the log messages", e);
 			if (date == null) date = "";
 			tag = "";
 			msg = raw;
