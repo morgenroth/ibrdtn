@@ -21,8 +21,6 @@
  */
 package de.tubs.ibr.dtn.service;
 
-import ibrdtn.api.Base64;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -39,6 +37,7 @@ import android.content.SharedPreferences.Editor;
 import android.util.Base64InputStream;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.util.Base64;
 
 public class SessionManager {
 	

@@ -21,10 +21,6 @@
  */
 package de.tubs.ibr.dtn.service;
 
-import ibrdtn.api.APIConnection;
-import ibrdtn.api.ExtendedClient.APIException;
-import ibrdtn.api.object.PlainSerializer;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -96,24 +92,23 @@ public class ClientSession {
 		nativeSession.addRegistration(swigEid);
 	}
 
+	public void getBundle()
+	{
+		nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+
+		// TODO: read?!
+	}
+
 	public void loadBundle(BundleID id)
 	{
 		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
 		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource()));
 		swigId.setSequencenumber(id.getSequencenumber());
 
-		ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp(id.getTimestamp());
+		Timestamp ts = new Timestamp(id.getTimestamp());
 		swigId.setTimestamp(ts.getValue());
 
 		nativeSession.load(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, swigId);
-	}
-
-	public void getBundle()
-	{
-		// nativeSession.
-		// nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
-
-		// TODO: read?!
 	}
 
 	public void loadAndGetBundle()
@@ -128,7 +123,7 @@ public class ClientSession {
 		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource()));
 		swigId.setSequencenumber(id.getSequencenumber());
 
-		ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp(id.getTimestamp());
+		Timestamp ts = new Timestamp(id.getTimestamp());
 		swigId.setTimestamp(ts.getValue());
 
 		nativeSession.delivered(swigId);
@@ -152,7 +147,7 @@ public class ClientSession {
 		swigPrimaryBlock.set_sequencenumber(bundle.sequencenumber);
 		swigPrimaryBlock.set_source(new de.tubs.ibr.dtn.swig.EID(bundle.source));
 
-		ibrdtn.api.Timestamp ts = new ibrdtn.api.Timestamp(bundle.timestamp);
+		Timestamp ts = new Timestamp(bundle.timestamp);
 		swigPrimaryBlock.set_timestamp(ts.getValue());
 
 		// TODO: priority
@@ -364,8 +359,8 @@ public class ClientSession {
 	{
 		if (!_daemon_online) throw new IOException("daemon is offline");
 
-		try
-		{
+//		try
+//		{
 			if (_session == null)
 			{
 				Log.d(TAG, "try to create an API session with the daemon");
@@ -390,11 +385,11 @@ public class ClientSession {
 				_session = null;
 				throw new IOException("not connected");
 			}
-		} catch (APIException e)
-		{
-			_session = null;
-			throw new IOException("api error");
-		}
+//		} catch (APIException e)
+//		{
+//			_session = null;
+//			throw new IOException("api error");
+//		}
 	}
 
 	private final DTNSession.Stub mBinder = new DTNSession.Stub() {
