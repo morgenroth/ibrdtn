@@ -54,9 +54,9 @@ namespace dtn
 			CustodySignalBlock();
 			virtual ~CustodySignalBlock();
 
-			void setMatch(const MetaBundle& other);
-			void setMatch(const Bundle& other);
-			bool match(const Bundle& other) const;
+			void setMatch(const dtn::data::MetaBundle& other);
+			void setMatch(const dtn::data::Bundle& other);
+			bool match(const dtn::data::Bundle& other) const;
 
 			virtual void read(const dtn::data::PayloadBlock &p) throw (WrongRecordException);
 			virtual void write(dtn::data::PayloadBlock &p) const;
