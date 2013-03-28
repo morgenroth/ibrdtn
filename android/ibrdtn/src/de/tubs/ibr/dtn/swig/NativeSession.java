@@ -75,8 +75,8 @@ public class NativeSession {
     swigJNI.NativeSession_load(swigCPtr, this, ri.swigValue(), BundleID.getCPtr(id), id);
   }
 
-  public Bundle get(NativeSession.RegisterIndex ri) {
-    return new Bundle(swigJNI.NativeSession_get(swigCPtr, this, ri.swigValue()), false);
+  public SWIGTYPE_p_dtn__data__Bundle get(NativeSession.RegisterIndex ri) {
+    return new SWIGTYPE_p_dtn__data__Bundle(swigJNI.NativeSession_get(swigCPtr, this, ri.swigValue()), false);
   }
 
   public void free(NativeSession.RegisterIndex ri) {
@@ -95,24 +95,28 @@ public class NativeSession {
     swigJNI.NativeSession_send(swigCPtr, this, ri.swigValue());
   }
 
-  public void put(NativeSession.RegisterIndex ri, Bundle b) {
-    swigJNI.NativeSession_put(swigCPtr, this, ri.swigValue(), Bundle.getCPtr(b), b);
+  public void put(NativeSession.RegisterIndex ri, SWIGTYPE_p_dtn__data__Bundle b) {
+    swigJNI.NativeSession_put__SWIG_0(swigCPtr, this, ri.swigValue(), SWIGTYPE_p_dtn__data__Bundle.getCPtr(b));
   }
 
-  public void write(NativeSession.RegisterIndex ri, String buf, long len, long offset) {
-    swigJNI.NativeSession_write__SWIG_0(swigCPtr, this, ri.swigValue(), buf, len, offset);
+  public void put(NativeSession.RegisterIndex ri, PrimaryBlock b) {
+    swigJNI.NativeSession_put__SWIG_1(swigCPtr, this, ri.swigValue(), PrimaryBlock.getCPtr(b), b);
   }
 
-  public void write(NativeSession.RegisterIndex ri, String buf, long len) {
-    swigJNI.NativeSession_write__SWIG_1(swigCPtr, this, ri.swigValue(), buf, len);
+  public void write(NativeSession.RegisterIndex ri, byte[] buf, long offset) {
+    swigJNI.NativeSession_write__SWIG_0(swigCPtr, this, ri.swigValue(), buf, offset);
   }
 
-  public void read(NativeSession.RegisterIndex ri, String buf, SWIGTYPE_p_size_t len, long offset) {
-    swigJNI.NativeSession_read__SWIG_0(swigCPtr, this, ri.swigValue(), buf, SWIGTYPE_p_size_t.getCPtr(len), offset);
+  public void write(NativeSession.RegisterIndex ri, byte[] buf) {
+    swigJNI.NativeSession_write__SWIG_1(swigCPtr, this, ri.swigValue(), buf);
   }
 
-  public void read(NativeSession.RegisterIndex ri, String buf, SWIGTYPE_p_size_t len) {
-    swigJNI.NativeSession_read__SWIG_1(swigCPtr, this, ri.swigValue(), buf, SWIGTYPE_p_size_t.getCPtr(len));
+  public void read(NativeSession.RegisterIndex ri, byte[] buf, int[] len, long offset) {
+    swigJNI.NativeSession_read__SWIG_0(swigCPtr, this, ri.swigValue(), buf, len, offset);
+  }
+
+  public void read(NativeSession.RegisterIndex ri, byte[] buf, int[] len) {
+    swigJNI.NativeSession_read__SWIG_1(swigCPtr, this, ri.swigValue(), buf, len);
   }
 
   public final static class RegisterIndex {

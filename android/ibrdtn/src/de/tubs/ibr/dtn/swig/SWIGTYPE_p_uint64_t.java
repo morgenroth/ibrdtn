@@ -8,18 +8,18 @@
 
 package de.tubs.ibr.dtn.swig;
 
-public class SWIGTYPE_p_SDNV {
+public class SWIGTYPE_p_uint64_t {
   private long swigCPtr;
 
-  protected SWIGTYPE_p_SDNV(long cPtr, boolean futureUse) {
+  protected SWIGTYPE_p_uint64_t(long cPtr, boolean futureUse) {
     swigCPtr = cPtr;
   }
 
-  protected SWIGTYPE_p_SDNV() {
+  protected SWIGTYPE_p_uint64_t() {
     swigCPtr = 0;
   }
 
-  protected static long getCPtr(SWIGTYPE_p_SDNV obj) {
+  protected static long getCPtr(SWIGTYPE_p_uint64_t obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 }

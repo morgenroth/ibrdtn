@@ -414,14 +414,24 @@ namespace Swig {
   }
 }
 
-#include "../ibrdtn/ibrdtn/data/EID.h"
-#include "../ibrdtn/ibrdtn/data/BundleID.h"
-#include "../ibrdtn/ibrdtn/data/Bundle.h"
-#include "../ibrdtn/ibrdtn/data/CustodySignalBlock.h"
-#include "../dtnd/src/api/NativeSession.h"
-
-
 #include <string>
+
+
+#include "../ibrdtn/ibrdtn/data/EID.h"
+#include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
+
+#include "../ibrdtn/ibrdtn/data/SDNV.h"
+
+#include "../ibrdtn/ibrdtn/data/DTNTime.h"
+
+
+#include "../ibrdtn/ibrdtn/data/BundleID.h"
+
+#include "../ibrdtn/ibrdtn/data/AdministrativeBlock.h"
+#include "../ibrdtn/ibrdtn/data/StatusReportBlock.h"
+#include "../ibrdtn/ibrdtn/data/CustodySignalBlock.h"
+
+#include "../dtnd/src/api/NativeSession.h"
 
 
 
@@ -512,7 +522,7 @@ void SwigDirector_NativeSessionCallback::swig_connect_director(JNIEnv *jenv, job
       "notifyBundle", "(Lde/tubs/ibr/dtn/swig/BundleID;)V", NULL 
     },
     {
-      "notifyStatusReport", "(Lde/tubs/ibr/dtn/swig/SWIGTYPE_p_dtn__data__StatusReportBlock;)V", NULL 
+      "notifyStatusReport", "(Lde/tubs/ibr/dtn/swig/StatusReportBlock;)V", NULL 
     },
     {
       "notifyCustodySignal", "(Lde/tubs/ibr/dtn/swig/CustodySignalBlock;)V", NULL 
@@ -898,6 +908,1087 @@ SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_EID_1getCompressed(JN
 }
 
 
+SWIGEXPORT jshort JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_BUNDLE_1VERSION_1get(JNIEnv *jenv, jclass jcls) {
+  jshort jresult = 0 ;
+  unsigned char result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (unsigned char)(unsigned char)dtn::data::BUNDLE_VERSION;
+  jresult = (jshort)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1PRIO_1LOW_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::PRIORITY result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::PRIORITY)dtn::data::PrimaryBlock::PRIO_LOW;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1PRIO_1MEDIUM_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::PRIORITY result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::PRIORITY)dtn::data::PrimaryBlock::PRIO_MEDIUM;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1PRIO_1HIGH_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::PRIORITY result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::PRIORITY)dtn::data::PrimaryBlock::PRIO_HIGH;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1FRAGMENT_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::FRAGMENT;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1APPDATA_1IS_1ADMRECORD_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1DONT_1FRAGMENT_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::DONT_FRAGMENT;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1CUSTODY_1REQUESTED_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::CUSTODY_REQUESTED;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1DESTINATION_1IS_1SINGLETON_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1ACKOFAPP_1REQUESTED_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::ACKOFAPP_REQUESTED;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1RESERVED_16_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::RESERVED_6;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1PRIORITY_1BIT1_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::PRIORITY_BIT1;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1PRIORITY_1BIT2_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::PRIORITY_BIT2;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1CLASSOFSERVICE_19_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::CLASSOFSERVICE_9;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1CLASSOFSERVICE_110_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::CLASSOFSERVICE_10;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1CLASSOFSERVICE_111_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::CLASSOFSERVICE_11;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1CLASSOFSERVICE_112_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::CLASSOFSERVICE_12;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1CLASSOFSERVICE_113_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::CLASSOFSERVICE_13;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1REQUEST_1REPORT_1OF_1BUNDLE_1RECEPTION_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_RECEPTION;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1REQUEST_1REPORT_1OF_1CUSTODY_1ACCEPTANCE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1REQUEST_1REPORT_1OF_1BUNDLE_1FORWARDING_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_FORWARDING;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1REQUEST_1REPORT_1OF_1BUNDLE_1DELIVERY_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELIVERY;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1REQUEST_1REPORT_1OF_1BUNDLE_1DELETION_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELETION;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1STATUS_1REPORT_1REQUEST_119_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::STATUS_REPORT_REQUEST_19;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1STATUS_1REPORT_1REQUEST_120_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::STATUS_REPORT_REQUEST_20;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1DTNSEC_1REQUEST_1SIGN_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1DTNSEC_1REQUEST_1ENCRYPT_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1DTNSEC_1STATUS_1VERIFIED_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1DTNSEC_1STATUS_1CONFIDENTIAL_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::DTNSEC_STATUS_CONFIDENTIAL;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1DTNSEC_1STATUS_1AUTHENTICATED_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::DTNSEC_STATUS_AUTHENTICATED;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1IBRDTN_1REQUEST_1COMPRESSION_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock::FLAGS result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock::FLAGS)dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1PrimaryBlock(JNIEnv *jenv, jclass jcls) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::PrimaryBlock *)new dtn::data::PrimaryBlock();
+  *(dtn::data::PrimaryBlock **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_delete_1PrimaryBlock(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1isExpired(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jboolean jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result = (bool)((dtn::data::PrimaryBlock const *)arg1)->isExpired();
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jstring JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1toString(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jstring jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  std::string result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result = ((dtn::data::PrimaryBlock const *)arg1)->toString();
+  jresult = jenv->NewStringUTF((&result)->c_str()); 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jboolean jarg3) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::PrimaryBlock::FLAGS arg2 ;
+  bool arg3 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = (dtn::data::PrimaryBlock::FLAGS)jarg2; 
+  arg3 = jarg3 ? true : false; 
+  (arg1)->set(arg2,arg3);
+}
+
+
+SWIGEXPORT jboolean JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+  jboolean jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::PrimaryBlock::FLAGS arg2 ;
+  bool result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = (dtn::data::PrimaryBlock::FLAGS)jarg2; 
+  result = (bool)((dtn::data::PrimaryBlock const *)arg1)->get(arg2);
+  jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1getPriority(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jint jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::PrimaryBlock::PRIORITY result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result = (dtn::data::PrimaryBlock::PRIORITY)((dtn::data::PrimaryBlock const *)arg1)->getPriority();
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1setPriority(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::PrimaryBlock::PRIORITY arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = (dtn::data::PrimaryBlock::PRIORITY)jarg2; 
+  (arg1)->setPriority(arg2);
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1relabel(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  (arg1)->relabel();
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1procflags_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = (size_t)jarg2; 
+  if (arg1) (arg1)->_procflags = arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1procflags_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result =  ((arg1)->_procflags);
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1timestamp_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = (size_t)jarg2; 
+  if (arg1) (arg1)->_timestamp = arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1timestamp_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result =  ((arg1)->_timestamp);
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1sequencenumber_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = (size_t)jarg2; 
+  if (arg1) (arg1)->_sequencenumber = arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1sequencenumber_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result =  ((arg1)->_sequencenumber);
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1lifetime_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = (size_t)jarg2; 
+  if (arg1) (arg1)->_lifetime = arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1lifetime_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result =  ((arg1)->_lifetime);
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1fragmentoffset_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = (size_t)jarg2; 
+  if (arg1) (arg1)->_fragmentoffset = arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1fragmentoffset_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result =  ((arg1)->_fragmentoffset);
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1appdatalength_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = (size_t)jarg2; 
+  if (arg1) (arg1)->_appdatalength = arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1appdatalength_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result =  ((arg1)->_appdatalength);
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1source_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::EID *arg2 = (dtn::data::EID *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = *(dtn::data::EID **)&jarg2; 
+  if (arg1) (arg1)->_source = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1source_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::EID *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result = (dtn::data::EID *)& ((arg1)->_source);
+  *(dtn::data::EID **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1destination_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::EID *arg2 = (dtn::data::EID *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = *(dtn::data::EID **)&jarg2; 
+  if (arg1) (arg1)->_destination = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1destination_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::EID *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result = (dtn::data::EID *)& ((arg1)->_destination);
+  *(dtn::data::EID **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1reportto_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::EID *arg2 = (dtn::data::EID *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = *(dtn::data::EID **)&jarg2; 
+  if (arg1) (arg1)->_reportto = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1reportto_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::EID *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result = (dtn::data::EID *)& ((arg1)->_reportto);
+  *(dtn::data::EID **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1custodian_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::EID *arg2 = (dtn::data::EID *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  arg2 = *(dtn::data::EID **)&jarg2; 
+  if (arg1) (arg1)->_custodian = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_PrimaryBlock_1_1custodian_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::PrimaryBlock *arg1 = (dtn::data::PrimaryBlock *) 0 ;
+  dtn::data::EID *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::PrimaryBlock **)&jarg1; 
+  result = (dtn::data::EID *)& ((arg1)->_custodian);
+  *(dtn::data::EID **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_SDNV_1MAX_1LENGTH_1get(JNIEnv *jenv, jclass jcls) {
+  jlong jresult = 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = dtn::data::SDNV::MAX_LENGTH;
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1SDNV_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  jlong jresult = 0 ;
+  uint64_t arg1 ;
+  uint64_t const *argp1 ;
+  dtn::data::SDNV *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  argp1 = *(uint64_t **)&jarg1; 
+  if (!argp1) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Attempt to dereference null uint64_t const");
+    return 0;
+  }
+  arg1 = *argp1; 
+  result = (dtn::data::SDNV *)new dtn::data::SDNV(arg1);
+  *(dtn::data::SDNV **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1SDNV_1_1SWIG_11(JNIEnv *jenv, jclass jcls) {
+  jlong jresult = 0 ;
+  dtn::data::SDNV *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::SDNV *)new dtn::data::SDNV();
+  *(dtn::data::SDNV **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_delete_1SDNV(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  dtn::data::SDNV *arg1 = (dtn::data::SDNV *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(dtn::data::SDNV **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_SDNV_1getLength_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::SDNV *arg1 = (dtn::data::SDNV *) 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::SDNV **)&jarg1; 
+  result = ((dtn::data::SDNV const *)arg1)->getLength();
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_SDNV_1getLength_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  jlong jresult = 0 ;
+  uint64_t *arg1 = 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(uint64_t **)&jarg1;
+  if (!arg1) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "uint64_t const & reference is null");
+    return 0;
+  } 
+  result = dtn::data::SDNV::getLength((uint64_t const &)*arg1);
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_SDNV_1getLength_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  jlong jresult = 0 ;
+  unsigned char *arg1 = (unsigned char *) 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(unsigned char **)&jarg1; 
+  result = dtn::data::SDNV::getLength((unsigned char const *)arg1);
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_SDNV_1getValue(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::SDNV *arg1 = (dtn::data::SDNV *) 0 ;
+  uint64_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::SDNV **)&jarg1; 
+  result = ((dtn::data::SDNV const *)arg1)->getValue();
+  *(uint64_t **)&jresult = new uint64_t((const uint64_t &)result); 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_SDNV_1decode(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jlong jarg3) {
+  jlong jresult = 0 ;
+  dtn::data::SDNV *arg1 = (dtn::data::SDNV *) 0 ;
+  char *arg2 = (char *) 0 ;
+  size_t arg3 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::SDNV **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  arg3 = (size_t)jarg3; 
+  result = (arg1)->decode((char const *)arg2,arg3);
+  jresult = (jlong)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_SDNV_1encode(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jstring jarg2, jlong jarg3) {
+  jlong jresult = 0 ;
+  dtn::data::SDNV *arg1 = (dtn::data::SDNV *) 0 ;
+  char *arg2 = (char *) 0 ;
+  size_t arg3 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::SDNV **)&jarg1; 
+  arg2 = 0;
+  if (jarg2) {
+    arg2 = (char *)jenv->GetStringUTFChars(jarg2, 0);
+    if (!arg2) return 0;
+  }
+  arg3 = (size_t)jarg3; 
+  result = ((dtn::data::SDNV const *)arg1)->encode(arg2,arg3);
+  jresult = (jlong)result; 
+  if (arg2) jenv->ReleaseStringUTFChars(jarg2, (const char *)arg2);
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1DTNTime_1_1SWIG_10(JNIEnv *jenv, jclass jcls) {
+  jlong jresult = 0 ;
+  dtn::data::DTNTime *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::DTNTime *)new dtn::data::DTNTime();
+  *(dtn::data::DTNTime **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1DTNTime_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jlong jarg2) {
+  jlong jresult = 0 ;
+  size_t arg1 ;
+  size_t arg2 ;
+  dtn::data::DTNTime *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = (size_t)jarg1; 
+  arg2 = (size_t)jarg2; 
+  result = (dtn::data::DTNTime *)new dtn::data::DTNTime(arg1,arg2);
+  *(dtn::data::DTNTime **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1DTNTime_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  jlong jresult = 0 ;
+  size_t arg1 ;
+  dtn::data::DTNTime *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = (size_t)jarg1; 
+  result = (dtn::data::DTNTime *)new dtn::data::DTNTime(arg1);
+  *(dtn::data::DTNTime **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1DTNTime_1_1SWIG_13(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  jlong jresult = 0 ;
+  dtn::data::SDNV arg1 ;
+  dtn::data::SDNV arg2 ;
+  dtn::data::SDNV *argp1 ;
+  dtn::data::SDNV *argp2 ;
+  dtn::data::DTNTime *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  argp1 = *(dtn::data::SDNV **)&jarg1; 
+  if (!argp1) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Attempt to dereference null dtn::data::SDNV");
+    return 0;
+  }
+  arg1 = *argp1; 
+  argp2 = *(dtn::data::SDNV **)&jarg2; 
+  if (!argp2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Attempt to dereference null dtn::data::SDNV");
+    return 0;
+  }
+  arg2 = *argp2; 
+  result = (dtn::data::DTNTime *)new dtn::data::DTNTime(arg1,arg2);
+  *(dtn::data::DTNTime **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_delete_1DTNTime(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  dtn::data::DTNTime *arg1 = (dtn::data::DTNTime *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(dtn::data::DTNTime **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_DTNTime_1getTimestamp(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::DTNTime *arg1 = (dtn::data::DTNTime *) 0 ;
+  dtn::data::SDNV *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::DTNTime **)&jarg1; 
+  result = (dtn::data::SDNV *) &((dtn::data::DTNTime const *)arg1)->getTimestamp();
+  *(dtn::data::SDNV **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_DTNTime_1getNanoseconds(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::DTNTime *arg1 = (dtn::data::DTNTime *) 0 ;
+  dtn::data::SDNV *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::DTNTime **)&jarg1; 
+  result = (dtn::data::SDNV *) &((dtn::data::DTNTime const *)arg1)->getNanoseconds();
+  *(dtn::data::SDNV **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_DTNTime_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  dtn::data::DTNTime *arg1 = (dtn::data::DTNTime *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::DTNTime **)&jarg1; 
+  (arg1)->set();
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_DTNTime_1getLength(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::DTNTime *arg1 = (dtn::data::DTNTime *) 0 ;
+  size_t result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::DTNTime **)&jarg1; 
+  result = ((dtn::data::DTNTime const *)arg1)->getLength();
+  jresult = (jlong)result; 
+  return jresult;
+}
+
+
 SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1BundleID_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jlong jarg3, jboolean jarg4, jlong jarg5) {
   jlong jresult = 0 ;
   dtn::data::EID arg1 ;
@@ -1035,14 +2126,13 @@ SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1BundleID_1_1SWIG
 }
 
 
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1BundleID_1_1SWIG_16(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1BundleID_1_1SWIG_16(JNIEnv *jenv, jclass jcls, jlong jarg1) {
   jlong jresult = 0 ;
   dtn::data::Bundle *arg1 = 0 ;
   dtn::data::BundleID *result = 0 ;
   
   (void)jenv;
   (void)jcls;
-  (void)jarg1_;
   arg1 = *(dtn::data::Bundle **)&jarg1;
   if (!arg1) {
     SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::Bundle const & reference is null");
@@ -1075,21 +2165,6 @@ SWIGEXPORT jstring JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_BundleID_1toString(
   arg1 = *(dtn::data::BundleID **)&jarg1; 
   result = ((dtn::data::BundleID const *)arg1)->toString();
   jresult = jenv->NewStringUTF((&result)->c_str()); 
-  return jresult;
-}
-
-
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_BundleID_1getTimestamp(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
-  jlong jresult = 0 ;
-  dtn::data::BundleID *arg1 = (dtn::data::BundleID *) 0 ;
-  size_t result;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::BundleID **)&jarg1; 
-  result = ((dtn::data::BundleID const *)arg1)->getTimestamp();
-  jresult = (jlong)result; 
   return jresult;
 }
 
@@ -1235,267 +2310,675 @@ SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_BundleID_1offset_1get
 }
 
 
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1Bundle(JNIEnv *jenv, jclass jcls) {
-  jlong jresult = 0 ;
-  dtn::data::Bundle *result = 0 ;
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_delete_1AdministrativeBlock(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  dtn::data::AdministrativeBlock *arg1 = (dtn::data::AdministrativeBlock *) 0 ;
   
   (void)jenv;
   (void)jcls;
-  result = (dtn::data::Bundle *)new dtn::data::Bundle();
-  *(dtn::data::Bundle **)&jresult = result; 
-  return jresult;
-}
-
-
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_delete_1Bundle(JNIEnv *jenv, jclass jcls, jlong jarg1) {
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
+  arg1 = *(dtn::data::AdministrativeBlock **)&jarg1; 
   delete arg1;
 }
 
 
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1getBlocks(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
-  jlong jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  dtn::data::Bundle::block_list *result = 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  result = (dtn::data::Bundle::block_list *) &((dtn::data::Bundle const *)arg1)->getBlocks();
-  *(dtn::data::Bundle::block_list **)&jresult = result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1getBlock_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2) {
-  jlong jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  int arg2 ;
-  dtn::data::Block *result = 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  arg2 = (int)jarg2; 
-  result = (dtn::data::Block *) &(arg1)->getBlock(arg2);
-  *(dtn::data::Block **)&jresult = result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1push_1front_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
-  jlong jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  ibrcommon::BLOB::Reference *arg2 = 0 ;
-  dtn::data::PayloadBlock *result = 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  arg2 = *(ibrcommon::BLOB::Reference **)&jarg2;
-  if (!arg2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "ibrcommon::BLOB::Reference & reference is null");
-    return 0;
-  } 
-  result = (dtn::data::PayloadBlock *) &(arg1)->push_front(*arg2);
-  *(dtn::data::PayloadBlock **)&jresult = result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1push_1back_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
-  jlong jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  ibrcommon::BLOB::Reference *arg2 = 0 ;
-  dtn::data::PayloadBlock *result = 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  arg2 = *(ibrcommon::BLOB::Reference **)&jarg2;
-  if (!arg2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "ibrcommon::BLOB::Reference & reference is null");
-    return 0;
-  } 
-  result = (dtn::data::PayloadBlock *) &(arg1)->push_back(*arg2);
-  *(dtn::data::PayloadBlock **)&jresult = result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1insert_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jlong jarg3) {
-  jlong jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  dtn::data::Block *arg2 = 0 ;
-  ibrcommon::BLOB::Reference *arg3 = 0 ;
-  dtn::data::PayloadBlock *result = 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  arg2 = *(dtn::data::Block **)&jarg2;
-  if (!arg2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::Block const & reference is null");
-    return 0;
-  } 
-  arg3 = *(ibrcommon::BLOB::Reference **)&jarg3;
-  if (!arg3) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "ibrcommon::BLOB::Reference & reference is null");
-    return 0;
-  } 
-  result = (dtn::data::PayloadBlock *) &(arg1)->insert((dtn::data::Block const &)*arg2,*arg3);
-  *(dtn::data::PayloadBlock **)&jresult = result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1push_1front_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
-  jlong jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  dtn::data::ExtensionBlock::Factory *arg2 = 0 ;
-  dtn::data::Block *result = 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  arg2 = *(dtn::data::ExtensionBlock::Factory **)&jarg2;
-  if (!arg2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::ExtensionBlock::Factory & reference is null");
-    return 0;
-  } 
-  result = (dtn::data::Block *) &(arg1)->push_front(*arg2);
-  *(dtn::data::Block **)&jresult = result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1push_1back_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
-  jlong jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  dtn::data::ExtensionBlock::Factory *arg2 = 0 ;
-  dtn::data::Block *result = 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  arg2 = *(dtn::data::ExtensionBlock::Factory **)&jarg2;
-  if (!arg2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::ExtensionBlock::Factory & reference is null");
-    return 0;
-  } 
-  result = (dtn::data::Block *) &(arg1)->push_back(*arg2);
-  *(dtn::data::Block **)&jresult = result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1insert_1_1SWIG_12(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jlong jarg3) {
-  jlong jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  dtn::data::ExtensionBlock::Factory *arg2 = 0 ;
-  dtn::data::Block *arg3 = 0 ;
-  dtn::data::Block *result = 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  arg2 = *(dtn::data::ExtensionBlock::Factory **)&jarg2;
-  if (!arg2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::ExtensionBlock::Factory & reference is null");
-    return 0;
-  } 
-  arg3 = *(dtn::data::Block **)&jarg3;
-  if (!arg3) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::Block const & reference is null");
-    return 0;
-  } 
-  result = (dtn::data::Block *) &(arg1)->insert(*arg2,(dtn::data::Block const &)*arg3);
-  *(dtn::data::Block **)&jresult = result; 
-  return jresult;
-}
-
-
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1remove(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  dtn::data::Block *arg2 = 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  arg2 = *(dtn::data::Block **)&jarg2;
-  if (!arg2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::Block const & reference is null");
-    return ;
-  } 
-  (arg1)->remove((dtn::data::Block const &)*arg2);
-}
-
-
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1clearBlocks(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  (arg1)->clearBlocks();
-}
-
-
-SWIGEXPORT jstring JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1toString(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
-  jstring jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  std::string result;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  result = ((dtn::data::Bundle const *)arg1)->toString();
-  jresult = jenv->NewStringUTF((&result)->c_str()); 
-  return jresult;
-}
-
-
-SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1blockCount(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
-  jlong jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
-  size_t result;
-  
-  (void)jenv;
-  (void)jcls;
-  (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  result = ((dtn::data::Bundle const *)arg1)->blockCount();
-  jresult = (jlong)result; 
-  return jresult;
-}
-
-
-SWIGEXPORT jboolean JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_Bundle_1allEIDsInCBHE(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+SWIGEXPORT jboolean JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_AdministrativeBlock_1refsFragment(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jboolean jresult = 0 ;
-  dtn::data::Bundle *arg1 = (dtn::data::Bundle *) 0 ;
+  dtn::data::AdministrativeBlock *arg1 = (dtn::data::AdministrativeBlock *) 0 ;
   bool result;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  arg1 = *(dtn::data::Bundle **)&jarg1; 
-  result = (bool)((dtn::data::Bundle const *)arg1)->allEIDsInCBHE();
+  arg1 = *(dtn::data::AdministrativeBlock **)&jarg1; 
+  result = (bool)((dtn::data::AdministrativeBlock const *)arg1)->refsFragment();
   jresult = (jboolean)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_AdministrativeBlock_1read(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  dtn::data::AdministrativeBlock *arg1 = (dtn::data::AdministrativeBlock *) 0 ;
+  dtn::data::PayloadBlock *arg2 = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::AdministrativeBlock **)&jarg1; 
+  arg2 = *(dtn::data::PayloadBlock **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::PayloadBlock const & reference is null");
+    return ;
+  } 
+  try {
+    (arg1)->read((dtn::data::PayloadBlock const &)*arg2);
+  }
+  catch(dtn::data::AdministrativeBlock::WrongRecordException &_e) {
+    (void)_e;
+    SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException, "C++ dtn::data::AdministrativeBlock::WrongRecordException exception thrown");
+    return ; 
+  }
+  
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_AdministrativeBlock_1write(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  dtn::data::AdministrativeBlock *arg1 = (dtn::data::AdministrativeBlock *) 0 ;
+  dtn::data::PayloadBlock *arg2 = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::AdministrativeBlock **)&jarg1; 
+  arg2 = *(dtn::data::PayloadBlock **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::PayloadBlock & reference is null");
+    return ;
+  } 
+  ((dtn::data::AdministrativeBlock const *)arg1)->write(*arg2);
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_AdministrativeBlock_1_1admfield_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jchar jarg2) {
+  dtn::data::AdministrativeBlock *arg1 = (dtn::data::AdministrativeBlock *) 0 ;
+  char arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::AdministrativeBlock **)&jarg1; 
+  arg2 = (char)jarg2; 
+  if (arg1) (arg1)->_admfield = arg2;
+}
+
+
+SWIGEXPORT jchar JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_AdministrativeBlock_1_1admfield_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jchar jresult = 0 ;
+  dtn::data::AdministrativeBlock *arg1 = (dtn::data::AdministrativeBlock *) 0 ;
+  char result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::AdministrativeBlock **)&jarg1; 
+  result = (char) ((arg1)->_admfield);
+  jresult = (jchar)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1RECEIPT_1OF_1BUNDLE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::TYPE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::TYPE)dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1CUSTODY_1ACCEPTANCE_1OF_1BUNDLE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::TYPE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::TYPE)dtn::data::StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1FORWARDING_1OF_1BUNDLE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::TYPE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::TYPE)dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1DELIVERY_1OF_1BUNDLE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::TYPE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::TYPE)dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1DELETION_1OF_1BUNDLE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::TYPE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::TYPE)dtn::data::StatusReportBlock::DELETION_OF_BUNDLE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1NO_1ADDITIONAL_1INFORMATION_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::REASON_CODE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::REASON_CODE)dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1LIFETIME_1EXPIRED_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::REASON_CODE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::REASON_CODE)dtn::data::StatusReportBlock::LIFETIME_EXPIRED;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1FORWARDED_1OVER_1UNIDIRECTIONAL_1LINK_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::REASON_CODE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::REASON_CODE)dtn::data::StatusReportBlock::FORWARDED_OVER_UNIDIRECTIONAL_LINK;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1TRANSMISSION_1CANCELED_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::REASON_CODE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::REASON_CODE)dtn::data::StatusReportBlock::TRANSMISSION_CANCELED;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1DEPLETED_1STORAGE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::REASON_CODE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::REASON_CODE)dtn::data::StatusReportBlock::DEPLETED_STORAGE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1DESTINATION_1ENDPOINT_1ID_1UNINTELLIGIBLE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::REASON_CODE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::REASON_CODE)dtn::data::StatusReportBlock::DESTINATION_ENDPOINT_ID_UNINTELLIGIBLE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1NO_1KNOWN_1ROUTE_1TO_1DESTINATION_1FROM_1HERE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::REASON_CODE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::REASON_CODE)dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1NO_1TIMELY_1CONTACT_1WITH_1NEXT_1NODE_1ON_1ROUTE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::REASON_CODE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::REASON_CODE)dtn::data::StatusReportBlock::NO_TIMELY_CONTACT_WITH_NEXT_NODE_ON_ROUTE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1BLOCK_1UNINTELLIGIBLE_1get(JNIEnv *jenv, jclass jcls) {
+  jint jresult = 0 ;
+  dtn::data::StatusReportBlock::REASON_CODE result;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock::REASON_CODE)dtn::data::StatusReportBlock::BLOCK_UNINTELLIGIBLE;
+  jresult = (jint)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_new_1StatusReportBlock(JNIEnv *jenv, jclass jcls) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  result = (dtn::data::StatusReportBlock *)new dtn::data::StatusReportBlock();
+  *(dtn::data::StatusReportBlock **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_delete_1StatusReportBlock(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  delete arg1;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1read(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::PayloadBlock *arg2 = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::PayloadBlock **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::PayloadBlock const & reference is null");
+    return ;
+  } 
+  try {
+    (arg1)->read((dtn::data::PayloadBlock const &)*arg2);
+  }
+  catch(dtn::data::AdministrativeBlock::WrongRecordException &_e) {
+    (void)_e;
+    SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException, "C++ dtn::data::AdministrativeBlock::WrongRecordException exception thrown");
+    return ; 
+  }
+  
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1write(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::PayloadBlock *arg2 = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::PayloadBlock **)&jarg2;
+  if (!arg2) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::PayloadBlock & reference is null");
+    return ;
+  } 
+  ((dtn::data::StatusReportBlock const *)arg1)->write(*arg2);
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1status_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jchar jarg2) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  char arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = (char)jarg2; 
+  if (arg1) (arg1)->_status = arg2;
+}
+
+
+SWIGEXPORT jchar JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1status_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jchar jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  char result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (char) ((arg1)->_status);
+  jresult = (jchar)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1reasoncode_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jchar jarg2) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  char arg2 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = (char)jarg2; 
+  if (arg1) (arg1)->_reasoncode = arg2;
+}
+
+
+SWIGEXPORT jchar JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1reasoncode_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jchar jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  char result;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (char) ((arg1)->_reasoncode);
+  jresult = (jchar)result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1fragment_1offset_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::SDNV *arg2 = (dtn::data::SDNV *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::SDNV **)&jarg2; 
+  if (arg1) (arg1)->_fragment_offset = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1fragment_1offset_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::SDNV *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (dtn::data::SDNV *)& ((arg1)->_fragment_offset);
+  *(dtn::data::SDNV **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1fragment_1length_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::SDNV *arg2 = (dtn::data::SDNV *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::SDNV **)&jarg2; 
+  if (arg1) (arg1)->_fragment_length = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1fragment_1length_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::SDNV *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (dtn::data::SDNV *)& ((arg1)->_fragment_length);
+  *(dtn::data::SDNV **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1timeof_1receipt_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::DTNTime *arg2 = (dtn::data::DTNTime *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::DTNTime **)&jarg2; 
+  if (arg1) (arg1)->_timeof_receipt = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1timeof_1receipt_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::DTNTime *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (dtn::data::DTNTime *)& ((arg1)->_timeof_receipt);
+  *(dtn::data::DTNTime **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1timeof_1custodyaccept_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::DTNTime *arg2 = (dtn::data::DTNTime *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::DTNTime **)&jarg2; 
+  if (arg1) (arg1)->_timeof_custodyaccept = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1timeof_1custodyaccept_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::DTNTime *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (dtn::data::DTNTime *)& ((arg1)->_timeof_custodyaccept);
+  *(dtn::data::DTNTime **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1timeof_1forwarding_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::DTNTime *arg2 = (dtn::data::DTNTime *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::DTNTime **)&jarg2; 
+  if (arg1) (arg1)->_timeof_forwarding = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1timeof_1forwarding_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::DTNTime *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (dtn::data::DTNTime *)& ((arg1)->_timeof_forwarding);
+  *(dtn::data::DTNTime **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1timeof_1delivery_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::DTNTime *arg2 = (dtn::data::DTNTime *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::DTNTime **)&jarg2; 
+  if (arg1) (arg1)->_timeof_delivery = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1timeof_1delivery_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::DTNTime *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (dtn::data::DTNTime *)& ((arg1)->_timeof_delivery);
+  *(dtn::data::DTNTime **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1timeof_1deletion_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::DTNTime *arg2 = (dtn::data::DTNTime *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::DTNTime **)&jarg2; 
+  if (arg1) (arg1)->_timeof_deletion = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1timeof_1deletion_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::DTNTime *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (dtn::data::DTNTime *)& ((arg1)->_timeof_deletion);
+  *(dtn::data::DTNTime **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1bundle_1timestamp_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::SDNV *arg2 = (dtn::data::SDNV *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::SDNV **)&jarg2; 
+  if (arg1) (arg1)->_bundle_timestamp = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1bundle_1timestamp_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::SDNV *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (dtn::data::SDNV *)& ((arg1)->_bundle_timestamp);
+  *(dtn::data::SDNV **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1bundle_1sequence_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::SDNV *arg2 = (dtn::data::SDNV *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::SDNV **)&jarg2; 
+  if (arg1) (arg1)->_bundle_sequence = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1bundle_1sequence_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::SDNV *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (dtn::data::SDNV *)& ((arg1)->_bundle_sequence);
+  *(dtn::data::SDNV **)&jresult = result; 
+  return jresult;
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1source_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::EID *arg2 = (dtn::data::EID *) 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg2_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  arg2 = *(dtn::data::EID **)&jarg2; 
+  if (arg1) (arg1)->_source = *arg2;
+}
+
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1_1source_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
+  jlong jresult = 0 ;
+  dtn::data::StatusReportBlock *arg1 = (dtn::data::StatusReportBlock *) 0 ;
+  dtn::data::EID *result = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  arg1 = *(dtn::data::StatusReportBlock **)&jarg1; 
+  result = (dtn::data::EID *)& ((arg1)->_source);
+  *(dtn::data::EID **)&jresult = result; 
   return jresult;
 }
 
@@ -1632,29 +3115,28 @@ SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_delete_1CustodySignalB
 
 SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1setMatch_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  MetaBundle *arg2 = 0 ;
+  dtn::data::MetaBundle *arg2 = 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  arg2 = *(MetaBundle **)&jarg2;
+  arg2 = *(dtn::data::MetaBundle **)&jarg2;
   if (!arg2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "MetaBundle const & reference is null");
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::MetaBundle const & reference is null");
     return ;
   } 
-  (arg1)->setMatch((MetaBundle const &)*arg2);
+  (arg1)->setMatch((dtn::data::MetaBundle const &)*arg2);
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1setMatch_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1setMatch_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
   dtn::data::Bundle *arg2 = 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
   arg2 = *(dtn::data::Bundle **)&jarg2;
   if (!arg2) {
@@ -1665,7 +3147,7 @@ SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1se
 }
 
 
-SWIGEXPORT jboolean JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1match(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
+SWIGEXPORT jboolean JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1match(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
   jboolean jresult = 0 ;
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
   dtn::data::Bundle *arg2 = 0 ;
@@ -1674,7 +3156,6 @@ SWIGEXPORT jboolean JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  (void)jarg2_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
   arg2 = *(dtn::data::Bundle **)&jarg2;
   if (!arg2) {
@@ -1703,9 +3184,9 @@ SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1re
   try {
     (arg1)->read((dtn::data::PayloadBlock const &)*arg2);
   }
-  catch(WrongRecordException &_e) {
+  catch(dtn::data::AdministrativeBlock::WrongRecordException &_e) {
     (void)_e;
-    SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException, "C++ WrongRecordException exception thrown");
+    SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException, "C++ dtn::data::AdministrativeBlock::WrongRecordException exception thrown");
     return ; 
   }
   
@@ -1785,172 +3266,147 @@ SWIGEXPORT jint JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1fragment_1offset_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1fragment_1offset_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  SDNV arg2 ;
-  SDNV *argp2 ;
+  dtn::data::SDNV *arg2 = (dtn::data::SDNV *) 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
+  (void)jarg2_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  argp2 = *(SDNV **)&jarg2; 
-  if (!argp2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Attempt to dereference null SDNV");
-    return ;
-  }
-  arg2 = *argp2; 
-  if (arg1) (arg1)->_fragment_offset = arg2;
+  arg2 = *(dtn::data::SDNV **)&jarg2; 
+  if (arg1) (arg1)->_fragment_offset = *arg2;
 }
 
 
 SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1fragment_1offset_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jlong jresult = 0 ;
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  SDNV result;
+  dtn::data::SDNV *result = 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  result =  ((arg1)->_fragment_offset);
-  *(SDNV **)&jresult = new SDNV((const SDNV &)result); 
+  result = (dtn::data::SDNV *)& ((arg1)->_fragment_offset);
+  *(dtn::data::SDNV **)&jresult = result; 
   return jresult;
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1fragment_1length_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1fragment_1length_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  SDNV arg2 ;
-  SDNV *argp2 ;
+  dtn::data::SDNV *arg2 = (dtn::data::SDNV *) 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
+  (void)jarg2_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  argp2 = *(SDNV **)&jarg2; 
-  if (!argp2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Attempt to dereference null SDNV");
-    return ;
-  }
-  arg2 = *argp2; 
-  if (arg1) (arg1)->_fragment_length = arg2;
+  arg2 = *(dtn::data::SDNV **)&jarg2; 
+  if (arg1) (arg1)->_fragment_length = *arg2;
 }
 
 
 SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1fragment_1length_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jlong jresult = 0 ;
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  SDNV result;
+  dtn::data::SDNV *result = 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  result =  ((arg1)->_fragment_length);
-  *(SDNV **)&jresult = new SDNV((const SDNV &)result); 
+  result = (dtn::data::SDNV *)& ((arg1)->_fragment_length);
+  *(dtn::data::SDNV **)&jresult = result; 
   return jresult;
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1timeofsignal_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1timeofsignal_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  DTNTime arg2 ;
-  DTNTime *argp2 ;
+  dtn::data::DTNTime *arg2 = (dtn::data::DTNTime *) 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
+  (void)jarg2_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  argp2 = *(DTNTime **)&jarg2; 
-  if (!argp2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Attempt to dereference null DTNTime");
-    return ;
-  }
-  arg2 = *argp2; 
-  if (arg1) (arg1)->_timeofsignal = arg2;
+  arg2 = *(dtn::data::DTNTime **)&jarg2; 
+  if (arg1) (arg1)->_timeofsignal = *arg2;
 }
 
 
 SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1timeofsignal_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jlong jresult = 0 ;
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  DTNTime result;
+  dtn::data::DTNTime *result = 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  result =  ((arg1)->_timeofsignal);
-  *(DTNTime **)&jresult = new DTNTime((const DTNTime &)result); 
+  result = (dtn::data::DTNTime *)& ((arg1)->_timeofsignal);
+  *(dtn::data::DTNTime **)&jresult = result; 
   return jresult;
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1bundle_1timestamp_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1bundle_1timestamp_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  SDNV arg2 ;
-  SDNV *argp2 ;
+  dtn::data::SDNV *arg2 = (dtn::data::SDNV *) 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
+  (void)jarg2_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  argp2 = *(SDNV **)&jarg2; 
-  if (!argp2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Attempt to dereference null SDNV");
-    return ;
-  }
-  arg2 = *argp2; 
-  if (arg1) (arg1)->_bundle_timestamp = arg2;
+  arg2 = *(dtn::data::SDNV **)&jarg2; 
+  if (arg1) (arg1)->_bundle_timestamp = *arg2;
 }
 
 
 SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1bundle_1timestamp_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jlong jresult = 0 ;
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  SDNV result;
+  dtn::data::SDNV *result = 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  result =  ((arg1)->_bundle_timestamp);
-  *(SDNV **)&jresult = new SDNV((const SDNV &)result); 
+  result = (dtn::data::SDNV *)& ((arg1)->_bundle_timestamp);
+  *(dtn::data::SDNV **)&jresult = result; 
   return jresult;
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1bundle_1sequence_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1bundle_1sequence_1set(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  SDNV arg2 ;
-  SDNV *argp2 ;
+  dtn::data::SDNV *arg2 = (dtn::data::SDNV *) 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
+  (void)jarg2_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  argp2 = *(SDNV **)&jarg2; 
-  if (!argp2) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "Attempt to dereference null SDNV");
-    return ;
-  }
-  arg2 = *argp2; 
-  if (arg1) (arg1)->_bundle_sequence = arg2;
+  arg2 = *(dtn::data::SDNV **)&jarg2; 
+  if (arg1) (arg1)->_bundle_sequence = *arg2;
 }
 
 
 SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1_1bundle_1sequence_1get(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_) {
   jlong jresult = 0 ;
   dtn::data::CustodySignalBlock *arg1 = (dtn::data::CustodySignalBlock *) 0 ;
-  SDNV result;
+  dtn::data::SDNV *result = 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   arg1 = *(dtn::data::CustodySignalBlock **)&jarg1; 
-  result =  ((arg1)->_bundle_sequence);
-  *(SDNV **)&jresult = new SDNV((const SDNV &)result); 
+  result = (dtn::data::SDNV *)& ((arg1)->_bundle_sequence);
+  *(dtn::data::SDNV **)&jresult = result; 
   return jresult;
 }
 
@@ -2098,13 +3554,14 @@ SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSessionCallback_
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSessionCallback_1notifyStatusReport(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSessionCallback_1notifyStatusReport(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jlong jarg2, jobject jarg2_) {
   dtn::api::NativeSessionCallback *arg1 = (dtn::api::NativeSessionCallback *) 0 ;
   dtn::data::StatusReportBlock *arg2 = 0 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
+  (void)jarg2_;
   arg1 = *(dtn::api::NativeSessionCallback **)&jarg1; 
   arg2 = *(dtn::data::StatusReportBlock **)&jarg2;
   if (!arg2) {
@@ -2518,7 +3975,7 @@ SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1send(JN
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1put(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jlong jarg3, jobject jarg3_) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1put_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jlong jarg3) {
   dtn::api::NativeSession *arg1 = (dtn::api::NativeSession *) 0 ;
   dtn::api::NativeSession::RegisterIndex arg2 ;
   dtn::data::Bundle *arg3 = 0 ;
@@ -2526,7 +3983,6 @@ SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1put(JNI
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
-  (void)jarg3_;
   arg1 = *(dtn::api::NativeSession **)&jarg1; 
   arg2 = (dtn::api::NativeSession::RegisterIndex)jarg2; 
   arg3 = *(dtn::data::Bundle **)&jarg3;
@@ -2538,7 +3994,27 @@ SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1put(JNI
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1write_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jstring jarg3, jlong jarg4, jlong jarg5) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1put_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jlong jarg3, jobject jarg3_) {
+  dtn::api::NativeSession *arg1 = (dtn::api::NativeSession *) 0 ;
+  dtn::api::NativeSession::RegisterIndex arg2 ;
+  dtn::data::PrimaryBlock *arg3 = 0 ;
+  
+  (void)jenv;
+  (void)jcls;
+  (void)jarg1_;
+  (void)jarg3_;
+  arg1 = *(dtn::api::NativeSession **)&jarg1; 
+  arg2 = (dtn::api::NativeSession::RegisterIndex)jarg2; 
+  arg3 = *(dtn::data::PrimaryBlock **)&jarg3;
+  if (!arg3) {
+    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "dtn::data::PrimaryBlock const & reference is null");
+    return ;
+  } 
+  (arg1)->put(arg2,(dtn::data::PrimaryBlock const &)*arg3);
+}
+
+
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1write_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jbyteArray jarg3, jlong jarg5) {
   dtn::api::NativeSession *arg1 = (dtn::api::NativeSession *) 0 ;
   dtn::api::NativeSession::RegisterIndex arg2 ;
   char *arg3 = (char *) 0 ;
@@ -2550,19 +4026,20 @@ SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1write_1
   (void)jarg1_;
   arg1 = *(dtn::api::NativeSession **)&jarg1; 
   arg2 = (dtn::api::NativeSession::RegisterIndex)jarg2; 
-  arg3 = 0;
-  if (jarg3) {
-    arg3 = (char *)jenv->GetStringUTFChars(jarg3, 0);
-    if (!arg3) return ;
+  {
+    arg3 = (char *) jenv->GetByteArrayElements(jarg3, 0);
+    arg4 = (size_t) jenv->GetArrayLength(jarg3);
   }
-  arg4 = (size_t)jarg4; 
   arg5 = (size_t)jarg5; 
   (arg1)->write(arg2,(char const *)arg3,arg4,arg5);
-  if (arg3) jenv->ReleaseStringUTFChars(jarg3, (const char *)arg3);
+  {
+    jenv->ReleaseByteArrayElements(jarg3, (jbyte *)arg3, 0);
+  }
+  
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1write_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jstring jarg3, jlong jarg4) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1write_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jbyteArray jarg3) {
   dtn::api::NativeSession *arg1 = (dtn::api::NativeSession *) 0 ;
   dtn::api::NativeSession::RegisterIndex arg2 ;
   char *arg3 = (char *) 0 ;
@@ -2573,70 +4050,115 @@ SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1write_1
   (void)jarg1_;
   arg1 = *(dtn::api::NativeSession **)&jarg1; 
   arg2 = (dtn::api::NativeSession::RegisterIndex)jarg2; 
-  arg3 = 0;
-  if (jarg3) {
-    arg3 = (char *)jenv->GetStringUTFChars(jarg3, 0);
-    if (!arg3) return ;
+  {
+    arg3 = (char *) jenv->GetByteArrayElements(jarg3, 0);
+    arg4 = (size_t) jenv->GetArrayLength(jarg3);
   }
-  arg4 = (size_t)jarg4; 
   (arg1)->write(arg2,(char const *)arg3,arg4);
-  if (arg3) jenv->ReleaseStringUTFChars(jarg3, (const char *)arg3);
+  {
+    jenv->ReleaseByteArrayElements(jarg3, (jbyte *)arg3, 0);
+  }
+  
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1read_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jstring jarg3, jlong jarg4, jlong jarg5) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1read_1_1SWIG_10(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jbyteArray jarg3, jintArray jarg4, jlong jarg5) {
   dtn::api::NativeSession *arg1 = (dtn::api::NativeSession *) 0 ;
   dtn::api::NativeSession::RegisterIndex arg2 ;
   char *arg3 = (char *) 0 ;
   size_t *arg4 = 0 ;
   size_t arg5 ;
+  size_t temp4 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   arg1 = *(dtn::api::NativeSession **)&jarg1; 
   arg2 = (dtn::api::NativeSession::RegisterIndex)jarg2; 
-  arg3 = 0;
-  if (jarg3) {
-    arg3 = (char *)jenv->GetStringUTFChars(jarg3, 0);
-    if (!arg3) return ;
+  {
+    arg3 = (char *) jenv->GetByteArrayElements(jarg3, 0); 
   }
-  arg4 = *(size_t **)&jarg4;
-  if (!arg4) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "size_t & reference is null");
-    return ;
-  } 
+  {
+    if (!jarg4) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
+      return ;
+    }
+    if (jenv->GetArrayLength(jarg4) == 0) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "Array must contain at least 1 element");
+      return ;
+    }
+    temp4 = (size_t)0;
+    arg4 = &temp4; 
+  }
   arg5 = (size_t)jarg5; 
   (arg1)->read(arg2,arg3,*arg4,arg5);
-  if (arg3) jenv->ReleaseStringUTFChars(jarg3, (const char *)arg3);
+  {
+    jenv->ReleaseByteArrayElements(jarg3, (jbyte *) arg3, 0); 
+  }
+  {
+    jint jvalue = (jint)temp4;
+    jenv->SetIntArrayRegion(jarg4, 0, 1, &jvalue);
+  }
+  
+  
 }
 
 
-SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1read_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jstring jarg3, jlong jarg4) {
+SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_NativeSession_1read_1_1SWIG_11(JNIEnv *jenv, jclass jcls, jlong jarg1, jobject jarg1_, jint jarg2, jbyteArray jarg3, jintArray jarg4) {
   dtn::api::NativeSession *arg1 = (dtn::api::NativeSession *) 0 ;
   dtn::api::NativeSession::RegisterIndex arg2 ;
   char *arg3 = (char *) 0 ;
   size_t *arg4 = 0 ;
+  size_t temp4 ;
   
   (void)jenv;
   (void)jcls;
   (void)jarg1_;
   arg1 = *(dtn::api::NativeSession **)&jarg1; 
   arg2 = (dtn::api::NativeSession::RegisterIndex)jarg2; 
-  arg3 = 0;
-  if (jarg3) {
-    arg3 = (char *)jenv->GetStringUTFChars(jarg3, 0);
-    if (!arg3) return ;
+  {
+    arg3 = (char *) jenv->GetByteArrayElements(jarg3, 0); 
   }
-  arg4 = *(size_t **)&jarg4;
-  if (!arg4) {
-    SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "size_t & reference is null");
-    return ;
-  } 
+  {
+    if (!jarg4) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
+      return ;
+    }
+    if (jenv->GetArrayLength(jarg4) == 0) {
+      SWIG_JavaThrowException(jenv, SWIG_JavaIndexOutOfBoundsException, "Array must contain at least 1 element");
+      return ;
+    }
+    temp4 = (size_t)0;
+    arg4 = &temp4; 
+  }
   (arg1)->read(arg2,arg3,*arg4);
-  if (arg3) jenv->ReleaseStringUTFChars(jarg3, (const char *)arg3);
+  {
+    jenv->ReleaseByteArrayElements(jarg3, (jbyte *) arg3, 0); 
+  }
+  {
+    jint jvalue = (jint)temp4;
+    jenv->SetIntArrayRegion(jarg4, 0, 1, &jvalue);
+  }
+  
+  
 }
 
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_StatusReportBlock_1SWIGUpcast(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+    jlong baseptr = 0;
+    (void)jenv;
+    (void)jcls;
+    *(dtn::data::AdministrativeBlock **)&baseptr = *(dtn::data::StatusReportBlock **)&jarg1;
+    return baseptr;
+}
+
+SWIGEXPORT jlong JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_CustodySignalBlock_1SWIGUpcast(JNIEnv *jenv, jclass jcls, jlong jarg1) {
+    jlong baseptr = 0;
+    (void)jenv;
+    (void)jcls;
+    *(dtn::data::AdministrativeBlock **)&baseptr = *(dtn::data::CustodySignalBlock **)&jarg1;
+    return baseptr;
+}
 
 SWIGEXPORT void JNICALL Java_de_tubs_ibr_dtn_swig_swigJNI_swig_1module_1init(JNIEnv *jenv, jclass jcls) {
   int i;

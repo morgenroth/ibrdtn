@@ -8,18 +8,18 @@
 
 package de.tubs.ibr.dtn.swig;
 
-public class SWIGTYPE_p_DTNTime {
+public class SWIGTYPE_p_dtn__data__Bundle {
   private long swigCPtr;
 
-  protected SWIGTYPE_p_DTNTime(long cPtr, boolean futureUse) {
+  protected SWIGTYPE_p_dtn__data__Bundle(long cPtr, boolean futureUse) {
     swigCPtr = cPtr;
   }
 
-  protected SWIGTYPE_p_DTNTime() {
+  protected SWIGTYPE_p_dtn__data__Bundle() {
     swigCPtr = 0;
   }
 
-  protected static long getCPtr(SWIGTYPE_p_DTNTime obj) {
+  protected static long getCPtr(SWIGTYPE_p_dtn__data__Bundle obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 }

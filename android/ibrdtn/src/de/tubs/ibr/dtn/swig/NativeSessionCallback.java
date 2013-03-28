@@ -54,8 +54,8 @@ public class NativeSessionCallback {
     swigJNI.NativeSessionCallback_notifyBundle(swigCPtr, this, BundleID.getCPtr(id), id);
   }
 
-  public void notifyStatusReport(SWIGTYPE_p_dtn__data__StatusReportBlock report) {
-    swigJNI.NativeSessionCallback_notifyStatusReport(swigCPtr, this, SWIGTYPE_p_dtn__data__StatusReportBlock.getCPtr(report));
+  public void notifyStatusReport(StatusReportBlock report) {
+    swigJNI.NativeSessionCallback_notifyStatusReport(swigCPtr, this, StatusReportBlock.getCPtr(report), report);
   }
 
   public void notifyCustodySignal(CustodySignalBlock custody) {

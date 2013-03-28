@@ -9,4 +9,8 @@
 package de.tubs.ibr.dtn.swig;
 
 public class swig {
+  public static short getBUNDLE_VERSION() {
+    return swigJNI.BUNDLE_VERSION_get();
+  }
+
 }

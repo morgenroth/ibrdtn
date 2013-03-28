@@ -8,18 +8,18 @@
 
 package de.tubs.ibr.dtn.swig;
 
-public class SWIGTYPE_p_dtn__data__ExtensionBlock__Factory {
+public class SWIGTYPE_p_RegisterIndex {
   private long swigCPtr;
 
-  protected SWIGTYPE_p_dtn__data__ExtensionBlock__Factory(long cPtr, boolean futureUse) {
+  protected SWIGTYPE_p_RegisterIndex(long cPtr, boolean futureUse) {
     swigCPtr = cPtr;
   }
 
-  protected SWIGTYPE_p_dtn__data__ExtensionBlock__Factory() {
+  protected SWIGTYPE_p_RegisterIndex() {
     swigCPtr = 0;
   }
 
-  protected static long getCPtr(SWIGTYPE_p_dtn__data__ExtensionBlock__Factory obj) {
+  protected static long getCPtr(SWIGTYPE_p_RegisterIndex obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 }

@@ -8,18 +8,18 @@
 
 package de.tubs.ibr.dtn.swig;
 
-public class SWIGTYPE_p_dtn__data__StatusReportBlock {
+public class SWIGTYPE_p_dtn__data__MetaBundle {
   private long swigCPtr;
 
-  protected SWIGTYPE_p_dtn__data__StatusReportBlock(long cPtr, boolean futureUse) {
+  protected SWIGTYPE_p_dtn__data__MetaBundle(long cPtr, boolean futureUse) {
     swigCPtr = cPtr;
   }
 
-  protected SWIGTYPE_p_dtn__data__StatusReportBlock() {
+  protected SWIGTYPE_p_dtn__data__MetaBundle() {
     swigCPtr = 0;
   }
 
-  protected static long getCPtr(SWIGTYPE_p_dtn__data__StatusReportBlock obj) {
+  protected static long getCPtr(SWIGTYPE_p_dtn__data__MetaBundle obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 }

@@ -8,18 +8,18 @@
 
 package de.tubs.ibr.dtn.swig;
 
-public class SWIGTYPE_p_ibrcommon__BLOB__Reference {
+public class SWIGTYPE_p_unsigned_char {
   private long swigCPtr;
 
-  protected SWIGTYPE_p_ibrcommon__BLOB__Reference(long cPtr, boolean futureUse) {
+  protected SWIGTYPE_p_unsigned_char(long cPtr, boolean futureUse) {
     swigCPtr = cPtr;
   }
 
-  protected SWIGTYPE_p_ibrcommon__BLOB__Reference() {
+  protected SWIGTYPE_p_unsigned_char() {
     swigCPtr = 0;
   }
 
-  protected static long getCPtr(SWIGTYPE_p_ibrcommon__BLOB__Reference obj) {
+  protected static long getCPtr(SWIGTYPE_p_unsigned_char obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 }

@@ -59,16 +59,12 @@ public class BundleID {
     this(swigJNI.new_BundleID__SWIG_5(), true);
   }
 
-  public BundleID(Bundle b) {
-    this(swigJNI.new_BundleID__SWIG_6(Bundle.getCPtr(b), b), true);
+  public BundleID(SWIGTYPE_p_dtn__data__Bundle b) {
+    this(swigJNI.new_BundleID__SWIG_6(SWIGTYPE_p_dtn__data__Bundle.getCPtr(b)), true);
   }
 
   public String toString() {
     return swigJNI.BundleID_toString(swigCPtr, this);
-  }
-
-  public long getTimestamp() {
-    return swigJNI.BundleID_getTimestamp(swigCPtr, this);
   }
 
   public void setSource(EID value) {
@@ -84,9 +80,9 @@ public class BundleID {
     swigJNI.BundleID_timestamp_set(swigCPtr, this, value);
   }
 
-//  public long getTimestamp() {
-//    return swigJNI.BundleID_timestamp_get(swigCPtr, this);
-//  }
+  public long getTimestamp() {
+    return swigJNI.BundleID_timestamp_get(swigCPtr, this);
+  }
 
   public void setSequencenumber(long value) {
     swigJNI.BundleID_sequencenumber_set(swigCPtr, this, value);

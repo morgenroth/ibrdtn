@@ -8,12 +8,11 @@
 
 package de.tubs.ibr.dtn.swig;
 
-public class CustodySignalBlock {
+public class CustodySignalBlock extends AdministrativeBlock {
   private long swigCPtr;
-  protected boolean swigCMemOwn;
 
   protected CustodySignalBlock(long cPtr, boolean cMemoryOwn) {
-    swigCMemOwn = cMemoryOwn;
+    super(swigJNI.CustodySignalBlock_SWIGUpcast(cPtr), cMemoryOwn);
     swigCPtr = cPtr;
   }
 
@@ -33,22 +32,23 @@ public class CustodySignalBlock {
       }
       swigCPtr = 0;
     }
+    super.delete();
   }
 
   public CustodySignalBlock() {
     this(swigJNI.new_CustodySignalBlock(), true);
   }
 
-  public void setMatch(SWIGTYPE_p_MetaBundle other) {
-    swigJNI.CustodySignalBlock_setMatch__SWIG_0(swigCPtr, this, SWIGTYPE_p_MetaBundle.getCPtr(other));
+  public void setMatch(SWIGTYPE_p_dtn__data__MetaBundle other) {
+    swigJNI.CustodySignalBlock_setMatch__SWIG_0(swigCPtr, this, SWIGTYPE_p_dtn__data__MetaBundle.getCPtr(other));
   }
 
-  public void setMatch(Bundle other) {
-    swigJNI.CustodySignalBlock_setMatch__SWIG_1(swigCPtr, this, Bundle.getCPtr(other), other);
+  public void setMatch(SWIGTYPE_p_dtn__data__Bundle other) {
+    swigJNI.CustodySignalBlock_setMatch__SWIG_1(swigCPtr, this, SWIGTYPE_p_dtn__data__Bundle.getCPtr(other));
   }
 
-  public boolean match(Bundle other) {
-    return swigJNI.CustodySignalBlock_match(swigCPtr, this, Bundle.getCPtr(other), other);
+  public boolean match(SWIGTYPE_p_dtn__data__Bundle other) {
+    return swigJNI.CustodySignalBlock_match(swigCPtr, this, SWIGTYPE_p_dtn__data__Bundle.getCPtr(other));
   }
 
   public void read(SWIGTYPE_p_dtn__data__PayloadBlock p) {
@@ -75,44 +75,49 @@ public class CustodySignalBlock {
     return CustodySignalBlock.REASON_CODE.swigToEnum(swigJNI.CustodySignalBlock__reason_get(swigCPtr, this));
   }
 
-  public void set_fragment_offset(SWIGTYPE_p_SDNV value) {
-    swigJNI.CustodySignalBlock__fragment_offset_set(swigCPtr, this, SWIGTYPE_p_SDNV.getCPtr(value));
+  public void set_fragment_offset(SDNV value) {
+    swigJNI.CustodySignalBlock__fragment_offset_set(swigCPtr, this, SDNV.getCPtr(value), value);
   }
 
-  public SWIGTYPE_p_SDNV get_fragment_offset() {
-    return new SWIGTYPE_p_SDNV(swigJNI.CustodySignalBlock__fragment_offset_get(swigCPtr, this), true);
+  public SDNV get_fragment_offset() {
+    long cPtr = swigJNI.CustodySignalBlock__fragment_offset_get(swigCPtr, this);
+    return (cPtr == 0) ? null : new SDNV(cPtr, false);
   }
 
-  public void set_fragment_length(SWIGTYPE_p_SDNV value) {
-    swigJNI.CustodySignalBlock__fragment_length_set(swigCPtr, this, SWIGTYPE_p_SDNV.getCPtr(value));
+  public void set_fragment_length(SDNV value) {
+    swigJNI.CustodySignalBlock__fragment_length_set(swigCPtr, this, SDNV.getCPtr(value), value);
   }
 
-  public SWIGTYPE_p_SDNV get_fragment_length() {
-    return new SWIGTYPE_p_SDNV(swigJNI.CustodySignalBlock__fragment_length_get(swigCPtr, this), true);
+  public SDNV get_fragment_length() {
+    long cPtr = swigJNI.CustodySignalBlock__fragment_length_get(swigCPtr, this);
+    return (cPtr == 0) ? null : new SDNV(cPtr, false);
   }
 
-  public void set_timeofsignal(SWIGTYPE_p_DTNTime value) {
-    swigJNI.CustodySignalBlock__timeofsignal_set(swigCPtr, this, SWIGTYPE_p_DTNTime.getCPtr(value));
+  public void set_timeofsignal(DTNTime value) {
+    swigJNI.CustodySignalBlock__timeofsignal_set(swigCPtr, this, DTNTime.getCPtr(value), value);
   }
 
-  public SWIGTYPE_p_DTNTime get_timeofsignal() {
-    return new SWIGTYPE_p_DTNTime(swigJNI.CustodySignalBlock__timeofsignal_get(swigCPtr, this), true);
+  public DTNTime get_timeofsignal() {
+    long cPtr = swigJNI.CustodySignalBlock__timeofsignal_get(swigCPtr, this);
+    return (cPtr == 0) ? null : new DTNTime(cPtr, false);
   }
 
-  public void set_bundle_timestamp(SWIGTYPE_p_SDNV value) {
-    swigJNI.CustodySignalBlock__bundle_timestamp_set(swigCPtr, this, SWIGTYPE_p_SDNV.getCPtr(value));
+  public void set_bundle_timestamp(SDNV value) {
+    swigJNI.CustodySignalBlock__bundle_timestamp_set(swigCPtr, this, SDNV.getCPtr(value), value);
   }
 
-  public SWIGTYPE_p_SDNV get_bundle_timestamp() {
-    return new SWIGTYPE_p_SDNV(swigJNI.CustodySignalBlock__bundle_timestamp_get(swigCPtr, this), true);
+  public SDNV get_bundle_timestamp() {
+    long cPtr = swigJNI.CustodySignalBlock__bundle_timestamp_get(swigCPtr, this);
+    return (cPtr == 0) ? null : new SDNV(cPtr, false);
   }
 
-  public void set_bundle_sequence(SWIGTYPE_p_SDNV value) {
-    swigJNI.CustodySignalBlock__bundle_sequence_set(swigCPtr, this, SWIGTYPE_p_SDNV.getCPtr(value));
+  public void set_bundle_sequence(SDNV value) {
+    swigJNI.CustodySignalBlock__bundle_sequence_set(swigCPtr, this, SDNV.getCPtr(value), value);
   }
 
-  public SWIGTYPE_p_SDNV get_bundle_sequence() {
-    return new SWIGTYPE_p_SDNV(swigJNI.CustodySignalBlock__bundle_sequence_get(swigCPtr, this), true);
+  public SDNV get_bundle_sequence() {
+    long cPtr = swigJNI.CustodySignalBlock__bundle_sequence_get(swigCPtr, this);
+    return (cPtr == 0) ? null : new SDNV(cPtr, false);
   }
 
   public void set_source(EID value) {
