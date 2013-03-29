@@ -861,16 +861,16 @@ namespace dtn
 				_stream << API_STATUS_NOTIFY_REPORT << " NOTIFY REPORT ";
 
 				// format the bundle ID and write it to the stream
-				_stream << report._bundle_timestamp.getValue() << "." << report._bundle_sequence.getValue();
+				_stream << report._bundleid.timestamp << "." << report._bundleid.sequencenumber;
 
 				if (report.refsFragment()) {
-					_stream << "." << report._fragment_offset.getValue() << ":" << report._fragment_length.getValue() << " ";
+					_stream << "." << report._bundleid.offset << ":" << report._fragment_length.getValue() << " ";
 				} else {
 					_stream << " ";
 				}
 
 				// origin source
-				_stream << report._source.getString() << " ";
+				_stream << report._bundleid.source.getString() << " ";
 
 				// reason code
 				_stream << (int)report._reasoncode << " ";
