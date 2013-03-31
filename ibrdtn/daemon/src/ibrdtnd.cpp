@@ -688,7 +688,10 @@ int ibrdtn_daemon_initialize_api() {
 	return 0;
 }
 
-int ibrdtn_daemon_initialize() {
+int ibrdtn_daemon_initialize(state_callback statecb) {
+	// signal state 0
+	if (statecb != NULL) statecb(0);
+
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 	std::list< dtn::daemon::Component* > &components = __ibrdtn_daemon_components;
 	dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
@@ -769,6 +772,9 @@ int ibrdtn_daemon_initialize() {
 	}
 #endif
 
+	// signal state 1
+	if (statecb != NULL) statecb(1);
+
 	// initialize core component
 	core.initialize();
 
@@ -784,10 +790,13 @@ int ibrdtn_daemon_initialize() {
 		(*iter)->initialize();
 	}
 
+	// signal state 2
+	if (statecb != NULL) statecb(2);
+
 	return 0;
 }
 
-int ibrdtn_daemon_main_loop()
+int ibrdtn_daemon_main_loop(state_callback statecb)
 {
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 	std::list< dtn::daemon::Component* > &components = __ibrdtn_daemon_components;
@@ -839,6 +848,9 @@ int ibrdtn_daemon_main_loop()
 
 	IBRCOMMON_LOGGER_TAG("Init", info) << "daemon ready" << IBRCOMMON_LOGGER_ENDL;
 
+	// signal state 3
+	if (statecb != NULL) statecb(3);
+
 	// create the event switch object
 	dtn::core::EventSwitch &esw = dtn::core::EventSwitch::getInstance();
 
@@ -851,6 +863,9 @@ int ibrdtn_daemon_main_loop()
 	{
 		esw.loop();
 	}
+
+	// signal state 4
+	if (statecb != NULL) statecb(4);
 
 	/**
 	 * terminate all components!
@@ -866,6 +881,9 @@ int ibrdtn_daemon_main_loop()
 
 	// terminate core component
 	core.terminate();
+
+	// signal state 5
+	if (statecb != NULL) statecb(5);
 
 	// delete bundle index
 	if (_bundle_index != NULL)
@@ -886,6 +904,9 @@ int ibrdtn_daemon_main_loop()
 	components.clear();
 
 	IBRCOMMON_LOGGER_TAG("shutdown", info) << "shutdown complete" << IBRCOMMON_LOGGER_ENDL;
+
+	// signal state 6
+	if (statecb != NULL) statecb(6);
 
 	return 0;
 }
