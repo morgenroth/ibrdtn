@@ -78,7 +78,7 @@ static void daemonInitialize(JNIEnv *env, jclass thisClass, jstring jConfigPath,
 
 	LOGI("Before ibrdtn_daemon_initialize");
 	try {
-		ibrdtn_daemon_initialize();
+		ibrdtn_daemon_initialize(NULL);
 	} catch (std::exception& e) {
 		LOGE("what %s", e.what());
 	}
@@ -88,7 +88,7 @@ static void daemonInitialize(JNIEnv *env, jclass thisClass, jstring jConfigPath,
 static void daemonMainLoop(JNIEnv *env, jclass thisClass)
 {
 	LOGI("Before ibrdtn_daemon_main_loop");
-	ibrdtn_daemon_main_loop();
+	ibrdtn_daemon_main_loop(NULL);
 	LOGI("After ibrdtn_daemon_main_loop");
 
 	// stop the asynchronous logger
