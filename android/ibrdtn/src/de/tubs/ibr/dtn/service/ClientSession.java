@@ -1,9 +1,10 @@
 /*
  * ClientSession.java
  * 
- * Copyright (C) 2011 IBR, TU Braunschweig
+ * Copyright (C) 2011-2013 IBR, TU Braunschweig
  *
  * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+ *             Dominik Schürmann <dominik@dominikschuermann.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@ package de.tubs.ibr.dtn.service;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 
 import android.content.Context;
 import android.content.Intent;
@@ -41,6 +43,7 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
+
 import de.tubs.ibr.dtn.swig.NativeSession;
 import de.tubs.ibr.dtn.swig.NativeSessionCallback;
 
@@ -56,7 +59,7 @@ public class ClientSession {
 	/*
 	 * TODO: is this used in the original code?
 	 */
-//	private Boolean _daemon_online = false;
+	// private Boolean _daemon_online = false;
 
 	// callback to the service-client
 	private Object _callback_mutex = new Object();
@@ -193,7 +196,35 @@ public class ClientSession {
 	 */
 	private class NativeSessionCallbackImpl extends NativeSessionCallback {
 
-		// TODO: override!
+		@Override
+		public void notifyBundle(de.tubs.ibr.dtn.swig.BundleID swigId)
+		{
+			// convert from swig BundleID to api BundleID
+			BundleID id = new BundleID();
+			id.setSequencenumber(swigId.getSequencenumber());
+			id.setSource(swigId.getSource().getString());
+
+			long swigTime = swigId.getTimestamp();
+			Timestamp ts = new Timestamp(swigTime);
+			id.setTimestamp(ts.getDate());
+
+			invoke_receive_intent(id);
+
+			// original invokation from SABHandler
+			// invoke_receive_intent(new BundleID());
+		}
+
+		@Override
+		public void notifyStatusReport(de.tubs.ibr.dtn.swig.StatusReportBlock swigReport)
+		{
+			// TODO
+		}
+
+		@Override
+		public void notifyCustodySignal(de.tubs.ibr.dtn.swig.CustodySignalBlock swigCustody)
+		{
+			// TODO
+		}
 
 	};
 
@@ -231,6 +262,7 @@ public class ClientSession {
 		nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
 
 		// TODO: read! (get, read, load)
+
 	}
 
 	public void loadBundle(BundleID id)
@@ -378,17 +410,16 @@ public class ClientSession {
 
 	public synchronized void initialize()
 	{
-//		_daemon_online = true;
+		// _daemon_online = true;
 
 		// Register application
 		register(_registration);
 	}
 
-//	public synchronized void terminate()
-//	{
-//		_daemon_online = false;
-//	}
-
+	// public synchronized void terminate()
+	// {
+	// _daemon_online = false;
+	// }
 
 	public void register(Registration reg)
 	{
@@ -402,7 +433,7 @@ public class ClientSession {
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + group.toString());
 
 		}
-		
+
 		invoke_registration_intent();
 	}
 
@@ -553,7 +584,6 @@ public class ClientSession {
 	{
 		return _package_name;
 	}
-
 
 	public void invoke_receive_intent(BundleID id)
 	{
