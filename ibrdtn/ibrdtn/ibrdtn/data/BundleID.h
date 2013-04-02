@@ -42,7 +42,6 @@ namespace dtn
 			bool operator>(const BundleID& other) const;
 
 			string toString() const;
-			uint64_t getTimestamp() const;
 
 			friend std::ostream &operator<<(std::ostream &stream, const BundleID &obj);
 			friend std::istream &operator>>(std::istream &stream, BundleID &obj);
