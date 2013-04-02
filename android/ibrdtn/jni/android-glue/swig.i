@@ -1,18 +1,9 @@
 /* File : swig.i */
 %module(directors="1") swig
 
-/* add declaration of std::exception */
-namespace std {
-class exception {
-public:
-    exception();
-    exception(const exception& rhs);
-    virtual ~exception();
-    virtual const char *what(void);
-};
-}
-
-// typmap for std::string
+// typemap for std::exception
+%include "std_except.i"
+// typemap for std::string
 %include "std_string.i"
 // typemap for BYTE
 %include "various.i"
