@@ -121,15 +121,6 @@ public class DaemonService extends Service {
 			if (cs == null) return null;
 			return cs.getBinder();
 		}
-
-		@Override
-		public List<String> getLog() throws RemoteException
-		{
-			// TODO: recompile ibr-dtn-api.jar. This method is removed in
-			// current
-			// DTNService aidl
-			return null;
-		}
 	};
 
 	@Override

@@ -174,7 +174,7 @@ int __daemon_run()
 		IBRCOMMON_LOGGER_TAG("Init", info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
 
-	ibrdtn_daemon_initialize();
+	ibrdtn_daemon_initialize(NULL);
 
 #ifdef HAVE_LIBDAEMON
 	if (conf.getDaemon().daemonize())
@@ -185,7 +185,7 @@ int __daemon_run()
 	}
 #endif
 
-	ibrdtn_daemon_main_loop();
+	ibrdtn_daemon_main_loop(NULL);
 
 	// stop the asynchronous logger
 	ibrcommon::Logger::stop();
