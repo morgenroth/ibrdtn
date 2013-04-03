@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 import android.content.Context;
 import android.content.Intent;
@@ -261,12 +262,21 @@ public class ClientSession {
 		nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG2);
 
 		// TODO: read! (get, read, load)
-		
-//		byte[] outputBuffer = new byte[];
-//		ByteArrayOutputStream boas =   new ByteArrayOutputStream();
-//		boas.w
-//		nativeSession.read(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG2, buf, len)
 
+		// TODO: NOT TESTED
+		ByteArrayOutputStream boas = new ByteArrayOutputStream();
+
+		// allocate byte array
+		byte[] temp = new byte[1024];
+		int[] len = { 1024 };
+		while (len[0] == 1024) {
+			nativeSession.read(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG2, temp, len);
+			try {
+				boas.write(temp);
+			} catch (IOException e) {
+				Log.e(TAG, "Writing to byte stream failed", e);
+			}
+		}
 	}
 
 	public void loadBundle(BundleID id)
