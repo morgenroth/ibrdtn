@@ -22,10 +22,10 @@
  */
 package de.tubs.ibr.dtn.service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
 
 import android.content.Context;
 import android.content.Intent;
@@ -235,7 +235,6 @@ public class ClientSession {
 	private NativeSession nativeSession = new NativeSession(new NativeSessionCallbackImpl());
 
 	public ClientSession(Context context, Registration reg, String packageName) {
-		// create a unique session key
 		this.context = context;
 		this._package_name = packageName;
 		this._registration = reg;
@@ -259,9 +258,14 @@ public class ClientSession {
 
 	public void getBundle()
 	{
-		nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+		nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG2);
 
 		// TODO: read! (get, read, load)
+		
+//		byte[] outputBuffer = new byte[];
+//		ByteArrayOutputStream boas =   new ByteArrayOutputStream();
+//		boas.w
+//		nativeSession.read(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG2, buf, len)
 
 	}
 
@@ -274,7 +278,7 @@ public class ClientSession {
 		Timestamp ts = new Timestamp(id.getTimestamp());
 		swigId.setTimestamp(ts.getValue());
 
-		// nativeSession.load(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1,
+		// nativeSession.load(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG2,
 		// swigId);
 	}
 
