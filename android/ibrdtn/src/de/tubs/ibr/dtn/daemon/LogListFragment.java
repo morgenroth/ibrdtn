@@ -54,6 +54,7 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 
 	private static final int MAX_LINES = 300;
 
+	@SuppressLint("NewApi")
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState)
 	{
@@ -64,6 +65,12 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 
 		getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
 		getListView().setStackFromBottom(true);
+		
+		// add scrollbar handle
+		getListView().setFastScrollEnabled(true);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			getListView().setFastScrollAlwaysVisible(true);
+		}
 
 		getListView().setOnScrollListener(new AbsListView.OnScrollListener() {
 
@@ -103,11 +110,9 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		{
 		case R.id.itemPlayPauseLog:
 		{
-			if (mPlayLog)
-			{
+			if (mPlayLog) {
 				pauseLog();
-			} else
-			{
+			} else {
 				playLog();
 			}
 		}
@@ -125,12 +130,10 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 	@Override
 	public void onPrepareOptionsMenu(Menu menu)
 	{
-		if (mPlayLog)
-		{
+		if (mPlayLog) {
 			mPlayItem.setTitle(R.string.log_pause);
 			mPlayItem.setIcon(android.R.drawable.ic_media_pause);
-		} else
-		{
+		} else {
 			mPlayItem.setTitle(R.string.log_play);
 			mPlayItem.setIcon(android.R.drawable.ic_media_play);
 		}
@@ -147,8 +150,7 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs_paused));
 
 		// change menu item to indicate pause
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-		{
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			getActivity().invalidateOptionsMenu();
 		}
 	}
@@ -163,8 +165,7 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs));
 
 		// change menu item to indicate play
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-		{
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 			getActivity().invalidateOptionsMenu();
 		}
 	}
@@ -186,11 +187,9 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 	{
 		super.onResume();
 
-		if (mPlayLog)
-		{
+		if (mPlayLog) {
 			playLog();
-		} else
-		{
+		} else {
 			pauseLog();
 		}
 	}
@@ -207,18 +206,15 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		scrollToBottom();
 
 		mAdapter.add(data);
-		if (mAdapter.getCount() > MAX_LINES)
-		{
+		if (mAdapter.getCount() > MAX_LINES) {
 			mAdapter.remove(0);
 		}
 		mAdapter.notifyDataSetChanged();
 
 		// The list should now be shown.
-		if (isResumed())
-		{
+		if (isResumed()) {
 			setListShown(true);
-		} else
-		{
+		} else {
 			setListShownNoAnimation(true);
 		}
 	}
@@ -276,8 +272,7 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 		{
 			ViewHolder holder;
 
-			if (convertView == null)
-			{
+			if (convertView == null) {
 				convertView = this.inflater.inflate(R.layout.log_item, null, true);
 				holder = new ViewHolder();
 				holder.imageMark = (ImageView) convertView.findViewById(R.id.imageMark);
@@ -285,31 +280,25 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 				holder.textTag = (TextView) convertView.findViewById(R.id.textTag);
 				holder.textLog = (TextView) convertView.findViewById(R.id.textLog);
 				convertView.setTag(holder);
-			} else
-			{
+			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
 
 			holder.msg = list.get(position);
 
-			if (holder.msg.tag.equals("E"))
-			{
+			if (holder.msg.tag.equals("E")) {
 				holder.imageMark.setImageLevel(1);
 				holder.textTag.setTextColor(context.getResources().getColor(R.color.light_red));
-			} else if (holder.msg.tag.equals("W"))
-			{
+			} else if (holder.msg.tag.equals("W")) {
 				holder.imageMark.setImageLevel(3);
 				holder.textTag.setTextColor(context.getResources().getColor(R.color.light_violett));
-			} else if (holder.msg.tag.equals("I"))
-			{
+			} else if (holder.msg.tag.equals("I")) {
 				holder.imageMark.setImageLevel(4);
 				holder.textTag.setTextColor(context.getResources().getColor(R.color.light_green));
-			} else if (holder.msg.tag.equals("D"))
-			{
+			} else if (holder.msg.tag.equals("D")) {
 				holder.imageMark.setImageLevel(5);
 				holder.textTag.setTextColor(context.getResources().getColor(R.color.light_yellow));
-			} else
-			{
+			} else {
 				holder.imageMark.setImageLevel(0);
 				holder.textTag.setTextColor(Color.WHITE);
 			}
@@ -317,11 +306,9 @@ public class LogListFragment extends ListFragment implements LoaderManager.Loade
 			holder.textDate.setText(holder.msg.date);
 			holder.textLog.setText(holder.msg.msg);
 
-			if (LogMessage.TAG_LABELS.containsKey(holder.msg.tag))
-			{
+			if (LogMessage.TAG_LABELS.containsKey(holder.msg.tag)) {
 				holder.textTag.setText(LogMessage.TAG_LABELS.get(holder.msg.tag));
-			} else
-			{
+			} else {
 				holder.textTag.setText(holder.msg.tag);
 			}
 
