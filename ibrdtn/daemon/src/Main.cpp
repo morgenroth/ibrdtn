@@ -37,7 +37,9 @@
 #include <pwd.h>
 #include <unistd.h>
 
-#include "ibrdtnd.h"
+#include "NativeDaemon.h"
+
+dtn::daemon::NativeDaemon _dtnd;
 
 /**
  * setup logging capabilities
@@ -72,7 +74,7 @@ void sighandler(int signal)
 	case SIGTERM:
 	case SIGINT:
 		_shutdown = true;
-		ibrdtn_daemon_shutdown();
+		_dtnd.shutdown();
 		break;
 	case SIGUSR1:
 		if (!_debug)
@@ -81,13 +83,13 @@ void sighandler(int signal)
 			_debug = true;
 		}
 
-		ibrdtn_daemon_runtime_debug(true);
+		_dtnd.setDebug(true);
 		break;
 	case SIGUSR2:
-		ibrdtn_daemon_runtime_debug(false);
+		_dtnd.setDebug(false);
 		break;
 	case SIGHUP:
-		ibrdtn_daemon_reload();
+		_dtnd.reload();
 		break;
 	default:
 		// dummy handler
@@ -174,7 +176,7 @@ int __daemon_run()
 		IBRCOMMON_LOGGER_TAG("Init", info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
 
-	ibrdtn_daemon_initialize(NULL);
+	_dtnd.initialize();
 
 #ifdef HAVE_LIBDAEMON
 	if (conf.getDaemon().daemonize())
@@ -185,7 +187,7 @@ int __daemon_run()
 	}
 #endif
 
-	ibrdtn_daemon_main_loop(NULL);
+	_dtnd.main_loop();
 
 	// stop the asynchronous logger
 	ibrcommon::Logger::stop();

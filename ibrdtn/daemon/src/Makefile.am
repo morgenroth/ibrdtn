@@ -30,8 +30,8 @@ dtnd_sources = \
 	DTNTPWorker.h \
 	StandByManager.h \
 	StandByManager.cpp \
-	ibrdtnd.h \
-	ibrdtnd.cpp
+	NativeDaemon.h \
+	NativeDaemon.cpp
 
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(SQLITE_CFLAGS) $(DAEMON_CFLAGS) $(DTNDHT_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(SQLITE_LIBS) $(DAEMON_LIBS) $(DTNDHT_LIBS)
