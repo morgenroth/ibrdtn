@@ -188,20 +188,20 @@ namespace dtn
 			ibrcommon::MutexLock l(_bundleslock);
 
 			// search for the bundle in the bundle list
-			const bundle_list::iterator iter = find(_bundles.begin(), _bundles.end(), id);
+			const bundle_list::const_iterator iter = find(_bundles.begin(), _bundles.end(), id);
 
 			// if no bundle was found throw an exception
 			if (iter == _bundles.end()) throw NoBundleFoundException();
 
 			// remove item in the bundlelist
-			dtn::data::MetaBundle bundle = (*iter);
+			const dtn::data::Bundle &bundle = (*iter);
 			_list.remove(bundle);
-
-			// erase the bundle
-			__erase(iter);
 
 			// raise bundle removed event
 			eventBundleRemoved(bundle);
+
+			// erase the bundle
+			__erase(iter);
 		}
 
 		dtn::data::MetaBundle MemoryBundleStorage::remove(const ibrcommon::BloomFilter &filter)
@@ -236,7 +236,7 @@ namespace dtn
 
 			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 			{
-				const dtn::data::Bundle bundle = (*iter);
+				const dtn::data::Bundle &bundle = (*iter);
 
 				// raise bundle removed event
 				eventBundleRemoved(bundle);
@@ -259,18 +259,18 @@ namespace dtn
 			// if the bundle was found ...
 			if (iter != _bundles.end())
 			{
-				// erase the bundle
-				__erase(iter);
-
 				// raise bundle removed event
 				eventBundleRemoved(b);
+
+				// raise bundle event
+				dtn::core::BundleEvent::raise( b, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
+
+				// raise an event
+				dtn::core::BundleExpiredEvent::raise( b );
+
+				// erase the bundle
+				__erase(iter);
 			}
-
-			// raise bundle event
-			dtn::core::BundleEvent::raise( b, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
-
-			// raise an event
-			dtn::core::BundleExpiredEvent::raise( b );
 		}
 
 		void MemoryBundleStorage::__erase(const bundle_list::iterator &iter)

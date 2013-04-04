@@ -30,6 +30,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import android.content.Context;
 import android.content.Intent;
@@ -42,11 +44,13 @@ import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.swig.NativeDaemon;
 import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
 
-public class DaemonMainThread extends Thread {
+public class DaemonMainThread {
 	private final static String TAG = "DaemonMainThread";
 
 	private NativeDaemon mDaemon = null;
-	private DaemonService mService;
+	private DaemonService mService = null;
+	private ExecutorService _executor = null;
+	private DaemonState _state = DaemonState.OFFLINE;
 	
 	private final static String GNUSTL_NAME = "gnustl_shared";
 	private final static String CRYPTO_NAME = "crypto";
@@ -91,39 +95,58 @@ public class DaemonMainThread extends Thread {
 	public DaemonMainThread(DaemonService context) {
 		this.mDaemon = new NativeDaemon(mDaemonCallback);
 		this.mService = context;
+		this._executor = Executors.newSingleThreadExecutor();
 	}
 	
 	public NativeDaemon getNative() {
 		return mDaemon;
 	}
-
-	public void run()
-	{
-		// lower priority of this thread
-		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-
-		String configPath = mService.getFilesDir().getPath() + "/" + "config";
-
-		// create configuration file
-		createConfig(mService, configPath);
-
-		// enable debug based on prefs
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mService);
-		int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
-		int debugVerbosity = Integer.valueOf(preferences.getString("pref_debug_verbosity", "0"));
-
-		// loads config and initializes daemon
-		this.mDaemon.enableLogging(configPath, "IBR-DTN Core", logLevel, debugVerbosity);
-		this.mDaemon.initialize();
-		
-		// blocking main loop
-		this.mDaemon.main_loop();
+	
+	public DaemonState getState() {
+	    return _state;
 	}
+	
+	public void start() {
+	    // submit the startup procedure to the executor
+	    _executor.submit(_main_loop);
+	}
+	
+	public void stop() {
+	    // stop the running daemon
+	    mDaemon.shutdown();
+	}
+
+	private Runnable _main_loop = new Runnable() {
+        @Override
+        public void run() {
+            // lower priority of this thread
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+
+            String configPath = mService.getFilesDir().getPath() + "/" + "config";
+
+            // create configuration file
+            createConfig(mService, configPath);
+
+            // enable debug based on prefs
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mService);
+            int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
+            int debugVerbosity = Integer.valueOf(preferences.getString("pref_debug_verbosity", "0"));
+
+            // loads config and initializes daemon
+            DaemonMainThread.this.mDaemon.enableLogging(configPath, "IBR-DTN_Core", logLevel, debugVerbosity);
+            DaemonMainThread.this.mDaemon.initialize();
+            
+            // blocking main loop
+            DaemonMainThread.this.mDaemon.main_loop();
+        }	    
+	};
 	
 	private NativeDaemonCallback mDaemonCallback = new NativeDaemonCallback() {
 		@Override
 		public void stateChanged(States state) {
 			if (States.STARTUP_COMPLETED.equals(state)) {
+			    _state = DaemonState.ONLINE;
+			    
 				// broadcast online state
 				Intent broadcastOnlineIntent = new Intent();
 				broadcastOnlineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
@@ -132,6 +155,8 @@ public class DaemonMainThread extends Thread {
 				mService.sendBroadcast(broadcastOnlineIntent);
 			}
 			else if (States.SHUTDOWN_INITIATED.equals(state)) {
+			    _state = DaemonState.OFFLINE;
+			    
 				// broadcast offline state
 				Intent broadcastOfflineIntent = new Intent();
 				broadcastOfflineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);

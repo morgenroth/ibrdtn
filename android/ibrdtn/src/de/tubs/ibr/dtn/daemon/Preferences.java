@@ -90,6 +90,13 @@ public class Preferences extends PreferenceActivity {
 			if (!prefs.contains("collect_stats")) {
 				showStatisticLoggerDialog(Preferences.this);
 			}
+			
+			// adjust daemon switch
+			try {
+                setDaemonSwitch(DaemonState.ONLINE.equals(Preferences.this.service.getState()));
+            } catch (RemoteException e) {
+                Log.e(TAG, "Can not query daemon state", e);
+            }
 		}
 
 		public void onServiceDisconnected(ComponentName name) {

@@ -80,28 +80,17 @@ public class DaemonService extends Service {
 
 	private DaemonMainThread mDaemonMainThread = null;
 
-	public DaemonState getState()
-	{
-		if (mDaemonMainThread != null && mDaemonMainThread.isAlive())
-		{
-			return DaemonState.ONLINE;
-		} else
-		{
-			return DaemonState.OFFLINE;
-		}
-	}
-
 	// This is the object that receives interactions from clients. See
 	// RemoteService for a more complete example.
 	private final DTNService.Stub mBinder = new DTNService.Stub() {
 		public DaemonState getState() throws RemoteException
 		{
-			return DaemonService.this.getState();
+			return DaemonService.this.mDaemonMainThread.getState();
 		}
 
 		public boolean isRunning() throws RemoteException
 		{
-			return DaemonService.this.getState().equals(DaemonState.ONLINE);
+			return DaemonService.this.mDaemonMainThread.getState().equals(DaemonState.ONLINE);
 		}
 
 		public List<String> getNeighbors() throws RemoteException
@@ -133,22 +122,6 @@ public class DaemonService extends Service {
 	@Override
 	public IBinder onBind(Intent intent)
 	{
-		//TODO: Do we really need to start the service when binding to it? This seems redundant.
-		// start the service if enabled and not running
-		// if (!getState().equals(DaemonState.ONLINE))
-		// {
-		// SharedPreferences prefs =
-		// PreferenceManager.getDefaultSharedPreferences(this);
-		// if (prefs.getBoolean("enabledSwitch", false))
-		// {
-		// Log.d(TAG, "Startup daemon on bind");
-		// // startup the daemon process
-		// final Intent startUpIntent = new Intent(this, DaemonService.class);
-		// startUpIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-		// startService(startUpIntent);
-		// }
-		// }
-
 		return mBinder;
 	}
 
@@ -242,17 +215,15 @@ public class DaemonService extends Service {
 			// turn this to a foreground service (kill-proof)
 			startForeground(1, n);
 
-			mDaemonMainThread = new DaemonMainThread(this);
 			mDaemonMainThread.start();
 			Log.d(TAG, "Started mDaemonMainThread");
-
 		} else if (ACTION_SHUTDOWN.equals(action))
 		{
 			NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 			nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.dialog_wait_stopping)));
 
 			// stop main loop
-			mDaemonMainThread.getNative().shutdown();
+            mDaemonMainThread.stop();
 
 			// disable P2P manager
 //			_p2p_manager.destroy();
@@ -280,8 +251,6 @@ public class DaemonService extends Service {
 			}
 		} else if (QUERY_NEIGHBORS.equals(action))
 		{
-			if (!getState().equals(DaemonState.ONLINE)) return;
-
 			synchronized (_notification_lock)
 			{
 				if (!_notification_dirty) return;
@@ -342,6 +311,9 @@ public class DaemonService extends Service {
 		IntentFilter ifilter = new IntentFilter(de.tubs.ibr.dtn.Intent.STATE);
 		ifilter.addCategory(Intent.CATEGORY_DEFAULT);
 		registerReceiver(mDaemonStateReceiver, ifilter);
+		
+		// create daemon main thread
+		mDaemonMainThread = new DaemonMainThread(this);
 
 		/*
 		 * incoming Intents will be processed by ServiceHandler and queued in
@@ -414,7 +386,7 @@ public class DaemonService extends Service {
 		if (ACTION_STARTUP.equals(action))
 		{
 			// handle startup intent directly without queuing
-			if (!getState().equals(DaemonState.ONLINE))
+			if (!mDaemonMainThread.getState().equals(DaemonState.ONLINE))
 			{
 				onHandleIntent(intent);
 			}
@@ -422,7 +394,7 @@ public class DaemonService extends Service {
 		{
 			// otherwise, queue intents to work them off ordered in own
 			// threads
-			if (getState().equals(DaemonState.ONLINE))
+			if (mDaemonMainThread.getState().equals(DaemonState.ONLINE))
 			{
 				Message msg = mServiceHandler.obtainMessage();
 				msg.arg1 = startId;

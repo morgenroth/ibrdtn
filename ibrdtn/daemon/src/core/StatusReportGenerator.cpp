@@ -91,16 +91,13 @@ namespace dtn
 			bundle._destination = b.reportto;
 
 			// set bundle parameter
+			report._bundleid = b;
+
 			if (b.get(Bundle::FRAGMENT))
 			{
-				report._fragment_offset = b.offset;
 				report._fragment_length = b.appdatalength;
 				report._admfield |= 1;
 			}
-
-			report._bundle_timestamp = b.timestamp;
-			report._bundle_sequence = b.sequencenumber;
-			report._source = b.source;
 
 			dtn::data::PayloadBlock &payload = bundle.push_back<dtn::data::PayloadBlock>();
 			report.write(payload);
