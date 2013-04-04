@@ -28,7 +28,8 @@ api_SOURCES = \
 	NativeSession.cpp \
 	NativeSerializer.h \
 	NativeSerializer.cpp \
-	NativeSerializerCallback.h
+	NativeSerializerCallback.h \
+	NativeSerializerCallback.cpp
 
 if ANDROID
 noinst_DATA = Android.mk

@@ -1,5 +1,5 @@
 /*
- * NativeSerializerCallback.h
+ * NativeSerializerCallback.cpp
  *
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
@@ -19,28 +19,14 @@
  *
  */
 
-#ifndef NATIVESERIALIZERCALLBACK_H_
-#define NATIVESERIALIZERCALLBACK_H_
-
-#include <ibrdtn/data/PrimaryBlock.h>
-#include <ibrdtn/data/Block.h>
+#include "api/NativeSerializerCallback.h"
 
 namespace dtn
 {
 	namespace api
 	{
-		class NativeSerializerCallback {
-		public:
-			virtual ~NativeSerializerCallback() = 0;
-
-			virtual void beginBundle(const dtn::data::PrimaryBlock &block) = 0;
-			virtual void endBundle() = 0;
-
-			virtual void beginBlock(const dtn::data::Block &block, const size_t payload_length) = 0;
-			virtual void endBlock() = 0;
-
-			virtual void payload(const char *data, const size_t len) = 0;
-		};
+		NativeSerializerCallback::~NativeSerializerCallback()
+		{
+		}
 	}
 }
-#endif /* NATIVESERIALIZERCALLBACK_H_ */
