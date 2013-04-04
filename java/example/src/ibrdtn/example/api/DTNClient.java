@@ -9,6 +9,9 @@ import ibrdtn.example.MessageData;
 import ibrdtn.example.callback.CallbackHandler;
 import ibrdtn.example.callback.ICallback;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -42,30 +45,13 @@ public class DTNClient {
 
         exClient = new ExtendedClient();
 
-        sabHandler = new PassthroughObjectHandler(exClient, executor);
+        sabHandler = new PassthroughHandler(exClient, executor);
 
         exClient.setHandler(sabHandler);
         exClient.setHost(Constants.HOST);
         exClient.setPort(Constants.PORT);
 
         connect();
-
-        MQWatchdog watchdog = new MQWatchdog(this);
-        executor.execute(watchdog);
-    }
-
-    public DTNClient(String endpoint, boolean eventNotifications) {
-        this(endpoint);
-
-        if (eventNotifications) {
-            EventNotifier notifier = new EventNotifier();
-            eventClient = new EventClient(notifier);
-            try {
-                eventClient.open();
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "Could not connect to DTN daemon: {0}", e.getMessage());
-            }
-        }
     }
 
     private void connect() {
@@ -101,12 +87,31 @@ public class DTNClient {
         });
     }
 
-    public void send(Bundle bundle, MessageData data, ICallback callback) {
-
-        bundle.appendBlock(new PayloadBlock(data));
+    public void send(Bundle bundle, ICallback callback) {
 
         if (callback != null) {
-            CallbackHandler.getInstance().add(data.getId(), callback);
+            final PayloadBlock payload = bundle.getPayloadBlock();
+            if (payload != null) {
+                try {
+                    PipedInputStream in = new PipedInputStream();
+                    final PipedOutputStream out = new PipedOutputStream(in);
+                    executor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                payload.getData().writeTo(out);
+                            } catch (IOException ex) {
+                                logger.log(Level.SEVERE, "Failed writing payload to stream", ex);
+                            }
+                        }
+                    });
+                    ObjectInputStream ois = new ObjectInputStream(in);
+                    MessageData data = (MessageData) ois.readObject();
+                    CallbackHandler.getInstance().add(data.getId(), callback);
+                } catch (IOException | ClassNotFoundException ex) {
+                    logger.log(Level.SEVERE, "Failed reading payload", ex);
+                }
+            }
         }
 
         send(bundle);
@@ -116,19 +121,10 @@ public class DTNClient {
 
         logger.log(Level.SEVERE, "Shutting down {0}", endpoint);
 
-        try {
-            exClient.close();
-            if (eventClient != null) {
-                eventClient.close();
-            }
-        } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not close connection to the DTN daemon: {0}", e.getMessage());
-        }
-
         executor.shutdown(); // Disable new tasks from being submitted
         try {
 
-            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+            if (!executor.awaitTermination(8, TimeUnit.SECONDS)) {
 
                 logger.log(Level.FINE, "Thread pool did not terminate on shutdown");
 
@@ -147,7 +143,36 @@ public class DTNClient {
             Thread.currentThread().interrupt();
         }
 
+        try {
+            exClient.close();
+            if (eventClient != null) {
+                eventClient.close();
+            }
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Could not close connection to the DTN daemon: {0}", e.getMessage());
+        }
+
         logger.log(Level.INFO, "DTN connection closed.");
+    }
+
+    public void setEvents(boolean eventNotifications) {
+        if (eventNotifications) {
+            EventNotifier notifier = new EventNotifier();
+            eventClient = new EventClient(notifier);
+            try {
+                eventClient.open();
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Could not connect to DTN daemon: {0}", e.getMessage());
+            }
+        } else {
+            if (eventClient != null) {
+                try {
+                    eventClient.close();
+                } catch (IOException e) {
+                    logger.log(Level.WARNING, "Closing EventClient connection failed: {0}", e.getMessage());
+                }
+            }
+        }
     }
 
     public void addStaticCallback(String msgType, ICallback callback) {

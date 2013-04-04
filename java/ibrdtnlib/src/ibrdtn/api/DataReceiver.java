@@ -188,11 +188,13 @@ public class DataReceiver extends Thread implements SABHandler {
         }
 
         if (outputStream != null) {
-            try {
-                outputStream.close();
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "Failed to close output stream", e);
-            }
+
+            // Stream should be closed by client, since he opened it.
+            // try {
+            //  outputStream.close();
+            // } catch (IOException e) {
+            //   logger.log(Level.WARNING, "Failed to close output stream", e);
+            //  }
 
             synchronized (handler_mutex) {
                 if (handler != null) {

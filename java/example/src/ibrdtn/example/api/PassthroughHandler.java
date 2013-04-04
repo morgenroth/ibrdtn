@@ -8,11 +8,14 @@ import ibrdtn.api.object.BundleID;
 import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.sab.Custody;
 import ibrdtn.api.sab.StatusReport;
+import ibrdtn.example.Envelope;
 import ibrdtn.example.MessageData;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import ibrdtn.example.callback.CallbackHandler;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
@@ -20,22 +23,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The application's custom handler for Simple API for Bundle Protocol (SAB) events, such as reception of a bundle.
+ * The application's custom handler for Simple API for Bundle Protocol (SAB) events, such as reception of a bundle. The
+ * PassthroughHandler directly loads a new bundle after being notified of it.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
-public class PassthroughObjectHandler implements ibrdtn.api.sab.CallbackHandler {
+public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
 
-    private static final Logger logger = Logger.getLogger(PassthroughObjectHandler.class.getName());
+    private static final Logger logger = Logger.getLogger(PassthroughHandler.class.getName());
     private BundleID bundleID = new BundleID();
     private Bundle bundle = null;
     private ExtendedClient client;
     private ExecutorService executor;
-    private OutputStream stream;
+    private PipedInputStream is;
+    private PipedOutputStream os;
     private Queue<BundleID> queue;
     private boolean processing = false;
 
-    public PassthroughObjectHandler(ExtendedClient client, ExecutorService executor) {
+    public PassthroughHandler(ExtendedClient client, ExecutorService executor) {
         this.client = client;
         this.executor = executor;
         this.queue = new LinkedList<>();
@@ -92,35 +97,83 @@ public class PassthroughObjectHandler implements ibrdtn.api.sab.CallbackHandler 
     public OutputStream startPayload() {
         logger.log(Level.SEVERE, "Receiving payload");
         /*
-         * For example, use a byte array stream to transfer the data. Alternatively, object streams or file streams 
-         * can be used, too.
+         * For a detailed description of how different streams affect efficiency, consult:
+         * 
+         * code.google.com/p/io-tools
          */
-        stream = new ByteArrayOutputStream();
-        return stream;
+        is = new PipedInputStream();
+        try {
+            os = new PipedOutputStream(is);//new ByteArrayOutputStream();
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Opening pipes failed", ex);
+        }
+        return os;
     }
 
     @Override
     public void endPayload() {
-        if (stream != null) {
-            try {
-                ByteArrayOutputStream baos = (ByteArrayOutputStream) stream;
-                PayloadBlock payload = null;
-                for (Block block : bundle.getBlocks()) {
-                    if (block.getType() == PayloadBlock.type) {
-                        payload = (PayloadBlock) block;
-                    }
+        if (os != null) {
+            PayloadBlock payload = bundle.getPayloadBlock();
+
+            try { // Read object from bundle
+
+                ObjectInputStream ois = new ObjectInputStream(is);
+                MessageData data = (MessageData) ois.readObject();
+
+                logger.log(Level.SEVERE, "Payload received: \n{0}", data);
+
+                if (payload != null) {
+                    payload.setData(data);
                 }
-                payload.setData(baos.toByteArray());
+                
+                forwardMessage(data);
 
-                ByteArrayInputStream in = new ByteArrayInputStream(baos.toByteArray());
-                ObjectInputStream is = new ObjectInputStream(in);
-                MessageData messageData = (MessageData) is.readObject();
+            } catch (IOException | ClassNotFoundException e) {
 
+                try { // Read byte array from bundle
+                    byte[] bytes = new byte[256];
+                    is.read(bytes);
 
-                logger.log(Level.SEVERE, "Payload received: {0}", messageData);
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Unable to decode payload");
+                    logger.log(Level.SEVERE, "Payload received: \n\t{0} ({1} bytes)",
+                            new Object[]{new String(bytes), bytes.length});
+
+                    if (payload != null) {
+                        payload.setData(bytes);
+                    }
+
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Unable to decode payload");
+                }
+            } finally {
+                try {
+                    is.close();
+                    os.close();
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Failed to close streams", ex);
+                }
             }
+//                ByteArrayOutputStream baos = (ByteArrayOutputStream) stream;
+//                PayloadBlock payload = null;
+//                for (Block block : bundle.getBlocks()) {
+//                    if (block.getType() == PayloadBlock.type) {
+//                        payload = (PayloadBlock) block;
+//                    }
+//                }
+//                payload.setData(baos.toByteArray());
+//
+//                try { // Try reading a MessageData object from the stream
+//                    ByteArrayInputStream in = new ByteArrayInputStream(baos.toByteArray());
+//                    ObjectInputStream is = new ObjectInputStream(in);
+//                    MessageData messageData = (MessageData) is.readObject();
+//                    logger.log(Level.SEVERE, "Payload ''MessageData'' received: {0}", messageData);
+//                } catch (IOException | ClassNotFoundException e) {
+//                    logger.log(Level.SEVERE, "Payload bytes received: {0}\n{1}",
+//                            new Object[]{payload.getData().size() + " bytes", baos.toString()});
+//                }
+
+//            } catch (Exception e) {
+//                logger.log(Level.WARNING, "Unable to decode payload");
+//            }
         }
     }
 
@@ -177,5 +230,13 @@ public class PassthroughObjectHandler implements ibrdtn.api.sab.CallbackHandler 
                 }
             }
         });
+    }
+
+    private void forwardMessage(MessageData data) {
+        Envelope envelope = new Envelope();
+        envelope.setBundleID(bundleID);
+        envelope.setData(data);
+        
+        CallbackHandler.getInstance().forwardMessage(envelope);
     }
 }

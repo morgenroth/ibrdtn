@@ -17,13 +17,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The application's custom handler for Simple API for Bundle Protocol (SAB) events, such as reception of a bundle.
+ * The application's custom handler for Simple API for Bundle Protocol (SAB) events, such as reception of a bundle. The
+ * SelectiveHandler only loads bundle meta data at first, thus allowing for selective bundle loading.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
-public class SelectiveTextHandler implements ibrdtn.api.sab.CallbackHandler {
+public class SelectiveHandler implements ibrdtn.api.sab.CallbackHandler {
 
-    private static final Logger logger = Logger.getLogger(SelectiveTextHandler.class.getName());
+    private static final Logger logger = Logger.getLogger(SelectiveHandler.class.getName());
     private BundleID bundleID = new BundleID();
     private Bundle bundle = null;
     private ExtendedClient client;
@@ -32,7 +33,7 @@ public class SelectiveTextHandler implements ibrdtn.api.sab.CallbackHandler {
     private Queue<BundleID> queue;
     private boolean processing;
 
-    public SelectiveTextHandler(ExtendedClient client, ExecutorService executor) {
+    public SelectiveHandler(ExtendedClient client, ExecutorService executor) {
         this.client = client;
         this.executor = executor;
         this.queue = new LinkedList<>();

@@ -2,7 +2,6 @@ package ibrdtn.example.callback;
 
 import ibrdtn.example.DTNExampleApp;
 import ibrdtn.example.Envelope;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -21,7 +20,6 @@ public class DisplayCallback implements ICallback {
 
     @Override
     public void messageReceived(Envelope message) {
-        logger.log(Level.FINE, "Callback received for {0}", message);
-        gui.print("Callback received for " + message);
+        gui.print("Bundle received: " + message);
     }
 }

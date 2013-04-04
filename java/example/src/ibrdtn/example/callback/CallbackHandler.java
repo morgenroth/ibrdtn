@@ -17,7 +17,6 @@ public class CallbackHandler {
     private static final Logger logger = Logger.getLogger(CallbackHandler.class.getName());
     private static CallbackHandler instance;
     private static Map<String, ICallback> callbacks;
-    private BlockingQueue<BundleSendTask> sendTasks = new LinkedBlockingQueue<>();
     private BlockingQueue<Envelope> incomingMessages = new LinkedBlockingQueue<>();
 
     public static CallbackHandler getInstance() {
@@ -62,15 +61,15 @@ public class CallbackHandler {
          * Process static, i.e., type-specific, rules.
          */
         callback = get(message.getClass().getCanonicalName());
-        if (callback != null && !processed) {
+        if (callback != null) {
             logger.log(Level.FINE, "Static callback. Message type ''{0}''", message.getClass().getName());
             callback.messageReceived(message);
             processed = true;
         }
 
         if (!processed) {
-            logger.log(Level.WARNING, "Message (ID ''{0}')' discarded---no according CallbackHandler found.",
-                    message.getData().getId());
+            logger.log(Level.WARNING, "Bundle ({0}) discarded---no according CallbackHandler found.",
+                    message.getBundleID());
         }
     }
 
@@ -82,16 +81,7 @@ public class CallbackHandler {
         return callbacks.get(id);
     }
 
-    public BundleSendTask getQueuedSendTask() throws InterruptedException {
-        BundleSendTask message = sendTasks.take();
-
-        return message;
-    }
-
-    public void enqueueSendTask(BundleSendTask task) throws InterruptedException {
-        sendTasks.put(task);
-    }
-
+    @Deprecated
     public Envelope takeIncomingMessage() throws InterruptedException {
         Envelope env = incomingMessages.take();
 

@@ -36,7 +36,7 @@ public class SimpleTest {
 
     @BeforeClass
     public static void setUpClass() {
-        dtnClient1 = new DTNClient(EID_1, false);
+        dtnClient1 = new DTNClient(EID_1);
 //        dtnClient2 = new DTNClient(EID_2, false);
 //        dtnClient2.addStaticCallback(Envelope.class.getCanonicalName(), new SimpleCallback());
 
@@ -74,6 +74,6 @@ public class SimpleTest {
          */
         ICallback callback = new SimpleCallback();
 
-        dtnClient1.send(bundle, data, callback);
+        dtnClient1.send(bundle, callback);
     }
 }

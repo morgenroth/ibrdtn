@@ -150,6 +150,24 @@ public class Bundle {
         return blocks;
     }
 
+    /**
+     * Returns the bundle's payload block, or null if no payload block exists.
+     *
+     * It it assumed that a maximum of one payload block exists.
+     *
+     * @return
+     */
+    public PayloadBlock getPayloadBlock() {
+        PayloadBlock payload = null;
+
+        for (Block block : getBlocks()) {
+            if (block.getType() == PayloadBlock.type) {
+                payload = (PayloadBlock) block;
+            }
+        }
+        return payload;
+    }
+
     public EID getDestination() {
         return destination;
     }

@@ -34,11 +34,8 @@ public class Envelope {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n\t").append(this.getClass().getSimpleName()).append("\n");
-        sb.append("\tSrc:").append(bundleID.getSource()).append("\n");
-        sb.append("\tDest:").append(bundleID.getDestination()).append("\n");
-        sb.append("\tPriority:").append(bundleID.getPriority()).append("\n");
-        sb.append("\tData:").append("\n").append(getData());
+        sb.append("\n\t").append(getBundleID());
+        sb.append("\n").append(getData());
         return sb.toString();
     }
 }

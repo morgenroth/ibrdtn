@@ -38,8 +38,8 @@ public class DTNClientTest {
 
     @BeforeClass
     public static void setUpClass() {
-        dtnClient1 = new DTNClient(EID_1, false);
-        dtnClient2 = new DTNClient(EID_2, false);
+        dtnClient1 = new DTNClient(EID_1);
+        dtnClient2 = new DTNClient(EID_2);
         dtnClient2.addStaticCallback(Envelope.class.getCanonicalName(), new SimpleCallback());
 
         source = new SingletonEndpoint(NODE + EID_1);

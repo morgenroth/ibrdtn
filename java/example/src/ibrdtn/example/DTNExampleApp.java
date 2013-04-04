@@ -8,9 +8,10 @@ import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.object.SingletonEndpoint;
 import ibrdtn.example.api.Constants;
 import ibrdtn.example.api.DTNClient;
+import ibrdtn.example.callback.AutoResponseCallback;
 import ibrdtn.example.callback.DisplayCallback;
 import ibrdtn.example.callback.ICallback;
-import ibrdtn.example.callback.ResponseCallback;
+import java.awt.event.ItemEvent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,8 +31,11 @@ public class DTNExampleApp extends javax.swing.JFrame {
     public DTNExampleApp() {
         initComponents();
 
-        dtnClient = new DTNClient(tfEndpoint.getText(), false);
+        String endpoint = tfEndpoint.getText();
+        dtnClient = new DTNClient(endpoint);
+
         dtnClient.addStaticCallback(Envelope.class.getCanonicalName(), new DisplayCallback(this));
+
         logger.log(Level.INFO, dtnClient.getConfiguration());
         print("INFO: " + dtnClient.getConfiguration());
 
@@ -81,6 +85,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         jPanel4 = new javax.swing.JPanel();
         cbOutput = new javax.swing.JComboBox();
         btnPrint = new javax.swing.JButton();
+        tbEvents = new javax.swing.JToggleButton();
         jPanel3 = new javax.swing.JPanel();
         tfPayload = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
@@ -306,6 +311,13 @@ public class DTNExampleApp extends javax.swing.JFrame {
             }
         });
 
+        tbEvents.setText("Events");
+        tbEvents.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                tbEventsItemStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -315,6 +327,8 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 .addComponent(cbOutput, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnPrint)
+                .addGap(18, 18, 18)
+                .addComponent(tbEvents)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
@@ -323,7 +337,8 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cbOutput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnPrint))
+                    .addComponent(btnPrint)
+                    .addComponent(tbEvents))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -408,8 +423,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel2)
-                            .addComponent(tfResponse, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(24, 24, 24)))
+                            .addComponent(tfResponse, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -510,7 +524,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         pack();
@@ -549,19 +563,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
         bundle.setFlag(Bundle.Flags.DELIVERY_REPORT, cbReports.isSelected());
         bundle.setFlag(Bundle.Flags.COMPRESSION_REQUEST, cbGZIP.isSelected());
 
-
-        /*
-         * Custom callback definitions.
-         */
-        ICallback callback = null;
-        if (!rbNone.isSelected()) {
-            if (rbResponse.isSelected()) {
-                callback = new ResponseCallback(this);
-            } else if (rbPrintOnly.isSelected()) {
-                callback = new DisplayCallback(this);
-            }
-        }
-
         /*
          * Custom data format.
          */
@@ -572,8 +573,21 @@ public class DTNExampleApp extends javax.swing.JFrame {
         bundle.appendBlock(new PayloadBlock(data));
 
         print("Sending " + bundle);
-//        dtnClient.send(bundle, data, callback);
-        dtnClient.send(bundle);
+
+        if (!rbNone.isSelected()) {
+            /*
+             * Custom callback definitions.
+             */
+            ICallback callback = null;
+            if (rbResponse.isSelected()) {
+                callback = new AutoResponseCallback(this);
+            } else if (rbPrintOnly.isSelected()) {
+                callback = new DisplayCallback(this);
+            }
+            dtnClient.send(bundle, callback);
+        } else {
+            dtnClient.send(bundle);
+        }
     }//GEN-LAST:event_btnSendActionPerformed
 
     private void btnAddGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddGIDActionPerformed
@@ -584,7 +598,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 dtnClient.getEC().addRegistration(gid);
                 print("INFO: GID '" + gid + "' added");
             } catch (APIException ex) {
-                logger.log(Level.SEVERE, null, ex);
+                print(ex.getMessage());
             }
         }
     }//GEN-LAST:event_btnAddGIDActionPerformed
@@ -596,7 +610,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 dtnClient.getEC().addEndpoint(eid);
                 print("INFO: Endpoint '" + eid + "' added");
             } catch (APIException ex) {
-                logger.log(Level.SEVERE, null, ex);
+                print(ex.getMessage());
             }
         }
     }//GEN-LAST:event_btnAddEIDActionPerformed
@@ -613,7 +627,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 dtnClient.getEC().removeEndpoint(eid);
                 print("INFO: Endpoint '" + eid + "' removed");
             } catch (APIException ex) {
-                logger.log(Level.SEVERE, null, ex);
+                print(ex.getMessage());
             }
         }
     }//GEN-LAST:event_btnRemoveEIDActionPerformed
@@ -626,7 +640,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 dtnClient.getEC().removeRegistration(eid);
                 print("INFO: GID '" + group + "' removed");
             } catch (APIException ex) {
-                logger.log(Level.SEVERE, null, ex);
+                print(ex.getMessage());
             }
         }
     }//GEN-LAST:event_btnRemoveGIDActionPerformed
@@ -650,9 +664,19 @@ public class DTNExampleApp extends javax.swing.JFrame {
                     logger.log(Level.WARNING, "Selected printing paramter unknown!");
             }
         } catch (APIException ex) {
-            logger.log(Level.SEVERE, "[Error] Retrieving DTN configuration parameters failed", ex);
+            print("[Error] Retrieving DTN configuration parameters failed");
         }
     }//GEN-LAST:event_btnPrintActionPerformed
+
+    private void tbEventsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_tbEventsItemStateChanged
+        if (evt.getStateChange() == ItemEvent.SELECTED) {
+            dtnClient.setEvents(true);
+            print("INFO: Event notifications enabled.");
+        } else {
+            dtnClient.setEvents(false);
+            print("INFO: Event notifications disabled.");
+        }
+    }//GEN-LAST:event_tbEventsItemStateChanged
 
     /**
      * Prints a string in the app's text area.
@@ -698,6 +722,10 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 new DTNExampleApp().setVisible(true);
             }
         });
+    }
+
+    public DTNClient getDtnClient() {
+        return dtnClient;
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem aboutMenuItem;
@@ -747,6 +775,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
     private javax.swing.JRadioButton rbUnicast;
     private javax.swing.JMenuItem saveAsMenuItem;
     private javax.swing.JMenuItem saveMenuItem;
+    private javax.swing.JToggleButton tbEvents;
     private javax.swing.JTextArea textArea;
     private javax.swing.JTextField tfDestination;
     private javax.swing.JTextField tfEid;
