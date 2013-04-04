@@ -128,16 +128,16 @@ namespace dtn
 			return dtn::core::BundleCore::local.getString();
 		}
 
-		std::set<std::string> getNeighbors() throw ()
+		std::vector<std::string> getNeighbors() throw ()
 		{
-			std::set<std::string> ret;
+			std::vector<std::string> ret;
 
 			// get neighbors
 			const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 			for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
 			{
 				const dtn::core::Node &n = (*iter);
-				ret.insert(n.getEID().getString());
+				ret.push_back(n.getEID().getString());
 			}
 
 			return ret;

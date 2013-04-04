@@ -159,9 +159,14 @@ namespace dtn
 			}
 		}
 
-		std::set<dtn::data::EID> NativeSession::getSubscriptions()
+		std::vector<std::string> NativeSession::getSubscriptions()
 		{
-			return _registration.getSubscriptions();
+			const std::set<dtn::data::EID> subs = _registration.getSubscriptions();
+			std::vector<std::string> ret;
+			for (std::set<dtn::data::EID>::const_iterator it = subs.begin(); it != subs.end(); ++it) {
+				ret.push_back((*it).getString());
+			}
+			return ret;
 		}
 
 		void NativeSession::next(RegisterIndex ri) throw (NativeSessionException)

@@ -97,7 +97,7 @@ namespace dtn
 
 			/** NATIVE DAEMON METHODS **/
 			std::string getLocalUri() throw ();
-			std::set<std::string> getNeighbors() throw ();
+			std::vector<std::string> getNeighbors() throw ();
 			void addConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ();
 			void removeConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ();
 

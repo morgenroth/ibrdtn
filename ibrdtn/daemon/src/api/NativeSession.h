@@ -137,7 +137,7 @@ namespace dtn
 			/**
 			 * Retrieve all registered endpoints
 			 */
-			std::set<dtn::data::EID> getSubscriptions();
+			std::vector<std::string> getSubscriptions();
 
 			/**
 			 * Loads the next bundle in the queue into the local
