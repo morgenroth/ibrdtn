@@ -167,7 +167,7 @@ namespace dtn
 						{
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
-							_endpoint = dtn::core::BundleCore::local + "/" + cmd[2];
+							_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + cmd[2];
 
 							// error checking
 							if (_endpoint == dtn::data::EID())
