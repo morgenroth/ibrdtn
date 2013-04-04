@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 import android.content.Context;
@@ -112,7 +114,7 @@ public class DaemonMainThread extends Thread {
 		int debugVerbosity = Integer.valueOf(preferences.getString("pref_debug_verbosity", "0"));
 
 		// loads config and initializes daemon
-		this.mDaemon.enableLogging(configPath, "Android IBR-DTN", logLevel, debugVerbosity);
+		this.mDaemon.enableLogging(configPath, "IBR-DTN_Core", logLevel, debugVerbosity);
 		this.mDaemon.initialize();
 		
 		// blocking main loop
@@ -300,6 +302,14 @@ public class DaemonMainThread extends Thread {
 			if (bundlePath != null) {
 				p.println("storage_path = " + bundlePath.getPath());
 			}
+						        
+			File logPath = DaemonStorageUtils.getStoragePath("logs");
+            if (logPath != null) {
+                Calendar cal = Calendar.getInstance();
+                String time = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH) + cal.get(Calendar.DAY_OF_MONTH) + cal.get(Calendar.DAY_OF_MONTH)
+                        + cal.get(Calendar.HOUR) + cal.get(Calendar.MINUTE) + cal.get(Calendar.SECOND);
+                p.println("logfile = " + logPath.getPath() + "ibrdtn_" + time +".log");
+            }
 
 			/*
 			 * if (preferences.getBoolean("connect_static", false)) { // add

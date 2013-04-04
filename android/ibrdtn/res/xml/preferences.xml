@@ -85,7 +85,7 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_logging" >
         <ListPreference
-            android:defaultValue="disabled"
+            android:defaultValue="0"
             android:entries="@array/log_options_names"
             android:entryValues="@array/log_options_values"
             android:key="log_options"
