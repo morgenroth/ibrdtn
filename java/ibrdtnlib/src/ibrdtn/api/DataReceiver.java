@@ -62,7 +62,7 @@ public class DataReceiver extends Thread implements SABHandler {
     CountingOutputStream counter = null;
     Long progress_last = 0L;
     private ProgressState progress_state = ProgressState.INITIAL;
-    private boolean startBlockSent;
+    private boolean isBlockInitialized;
 
     public DataReceiver(ExtendedClient client, Object handler_mutex, CallbackHandler handler) {
         this.client = client;
@@ -166,7 +166,7 @@ public class DataReceiver extends Thread implements SABHandler {
     public void endBlock() {
         logger.log(Level.SEVERE, "Ending block.");
 
-        if (!startBlockSent && current_block != null) {
+        if (!isBlockInitialized && current_block != null) {
             synchronized (handler_mutex) {
                 if (handler != null) {
                     handler.startBlock(current_block);
@@ -221,13 +221,13 @@ public class DataReceiver extends Thread implements SABHandler {
         updateProgress();
 
         current_block = null;
-        startBlockSent = false;
+        isBlockInitialized = false;
     }
 
     @Override
     public void attribute(String keyword, String value) {
 
-        logger.log(Level.SEVERE, "Attribute: {0}={1}", new Object[]{keyword, value});
+        logger.log(Level.FINE, "Attribute: {0}={1}", new Object[]{keyword, value});
 
         if (current_bundle != null) {
 
@@ -285,8 +285,9 @@ public class DataReceiver extends Thread implements SABHandler {
                     handler.startBlock(current_block);
                 }
             }
-            startBlockSent = true;
         }
+
+        isBlockInitialized = true;
 
         synchronized (handler_mutex) {
             if (handler != null) {
@@ -312,7 +313,7 @@ public class DataReceiver extends Thread implements SABHandler {
 
         logger.log(Level.WARNING, "Characters: {0}", data);
 
-        if (!startBlockSent) {
+        if (!isBlockInitialized) {
             initializeBlock();
         }
 

@@ -8,8 +8,14 @@ import ibrdtn.api.object.BundleID;
 import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.sab.Custody;
 import ibrdtn.api.sab.StatusReport;
-import java.io.ByteArrayOutputStream;
+import ibrdtn.example.Envelope;
+import ibrdtn.example.MessageData;
+import ibrdtn.example.callback.CallbackHandler;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
@@ -29,7 +35,8 @@ public class SelectiveHandler implements ibrdtn.api.sab.CallbackHandler {
     private Bundle bundle = null;
     private ExtendedClient client;
     private ExecutorService executor;
-    private OutputStream stream;
+    private PipedInputStream is;
+    private PipedOutputStream os;
     private Queue<BundleID> queue;
     private boolean processing;
 
@@ -68,18 +75,21 @@ public class SelectiveHandler implements ibrdtn.api.sab.CallbackHandler {
     public void endBundle() {
         logger.log(Level.FINE, "Bundle received");
 
+
+        /*
+         * Decide if payload is interesting, based on bundle meta data, e.g., payload length of the 
+         * individual block. If applicable, partial payloads can be requested, as well. 
+         * 
+         * If payload is not to be loaded, set processing = false;
+         */
+
         final ExtendedClient finalClient = this.client;
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    /*
-                     * Decide if payload is interesting, based on Bundle meta data, e.g., payload length of the 
-                     * individual block. If applicable, partial payloads can be requested, as well.
-                     */
                     logger.log(Level.SEVERE, "Requesting payload");
                     finalClient.getPayload();
-
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Unable to mark bundle as delivered.", e);
                 }
@@ -102,34 +112,61 @@ public class SelectiveHandler implements ibrdtn.api.sab.CallbackHandler {
     public OutputStream startPayload() {
         logger.log(Level.SEVERE, "Receiving payload");
         /*
-         * For example, use a byte array stream to transfer the data. Alternatively, object streams or file streams 
-         * can be used, too.
+         * For a detailed description of how different streams affect efficiency, consult:
+         * 
+         * code.google.com/p/io-tools
          */
-        stream = new ByteArrayOutputStream();
-        return stream;
+        is = new PipedInputStream();
+        try {
+            os = new PipedOutputStream(is);//new ByteArrayOutputStream();
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Opening pipes failed", ex);
+        }
+        return os;
     }
 
     @Override
     public void endPayload() {
-        if (stream != null) {
-            try {
-                ByteArrayOutputStream baos = (ByteArrayOutputStream) stream;
-                for (Block block : bundle.getBlocks()) {
-                    if (block.getType() == PayloadBlock.type) {
-                        ((PayloadBlock) block).setData(baos.toByteArray());
+        if (os != null) {
+            PayloadBlock payload = bundle.getPayloadBlock();
+
+            try { // Read object from bundle
+
+                ObjectInputStream ois = new ObjectInputStream(is);
+                MessageData data = (MessageData) ois.readObject();
+
+                logger.log(Level.SEVERE, "Payload received: \n{0}", data);
+
+                if (payload != null) {
+                    payload.setData(data);
+                }
+
+                forwardMessage(data);
+
+            } catch (IOException | ClassNotFoundException e) {
+                logger.log(Level.SEVERE, "AAAAH", e);
+                try { // Read byte array from bundle
+                    byte[] bytes = new byte[256];
+                    is.read(bytes);
+
+                    logger.log(Level.SEVERE, "Payload received: \n\t{0} ({1} bytes)",
+                            new Object[]{new String(bytes), bytes.length});
+
+                    if (payload != null) {
+                        payload.setData(bytes);
                     }
+
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Unable to decode payload");
                 }
-
-                logger.log(Level.SEVERE, "Payload received: {0}", baos.toString());
-
-                markDelivered();
-
-                processing = false;
-                if (!queue.isEmpty()) {
-                    loadBundle(queue.poll());
+            } finally {
+                try {
+                    is.close();
+                    os.close();
+                    processing = false;
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Failed to close streams", ex);
                 }
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Unable to decode payload");
             }
         }
     }
@@ -178,9 +215,7 @@ public class SelectiveHandler implements ibrdtn.api.sab.CallbackHandler {
                 // _database.put(Folder.INBOX, msg);
 
                 try {
-                    /*
-                     * Mark bundle as delivered...
-                     */
+                    // Mark bundle as delivered...                    
                     logger.log(Level.SEVERE, "Delivered: {0}", finalBundleID);
                     finalClient.markDelivered(finalBundleID);
                 } catch (Exception e) {
@@ -188,5 +223,13 @@ public class SelectiveHandler implements ibrdtn.api.sab.CallbackHandler {
                 }
             }
         });
+    }
+
+    private void forwardMessage(MessageData data) {
+        Envelope envelope = new Envelope();
+        envelope.setBundleID(bundleID);
+        envelope.setData(data);
+
+        CallbackHandler.getInstance().forwardMessage(envelope);
     }
 }
