@@ -41,6 +41,8 @@
 
 
 #include "../ibrdtn/ibrdtn/data/BundleID.h"
+#include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
+#include "../ibrdtn/ibrdtn/data/Bundle.h"
 
 #include "../ibrdtn/ibrdtn/data/AdministrativeBlock.h"
 #include "../ibrdtn/ibrdtn/data/StatusReportBlock.h"
@@ -61,6 +63,8 @@
 %include "../ibrdtn/ibrdtn/data/DTNTime.h"
 
 %include "../ibrdtn/ibrdtn/data/BundleID.h"
+%include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
+%include "../ibrdtn/ibrdtn/data/Bundle.h"
 
 %include "../ibrdtn/ibrdtn/data/AdministrativeBlock.h"
 %include "../ibrdtn/ibrdtn/data/StatusReportBlock.h"
@@ -74,3 +78,6 @@
 %apply int &INOUT { size_t &len }
 
 %include "../dtnd/src/api/NativeSession.h"
+
+// native daemon control
+%include "../dtnd/src/ibrdtnd.h"
