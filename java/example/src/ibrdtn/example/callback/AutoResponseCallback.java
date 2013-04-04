@@ -36,7 +36,7 @@ public class AutoResponseCallback implements ICallback {
         Bundle bundle = new Bundle(destination, 3600);
         bundle.appendBlock(new PayloadBlock(data));
 
-        gui.print("Sending response...\n");
+        gui.print("Sending " + bundle);
         gui.getDtnClient().send(bundle);
 
     }

@@ -125,7 +125,7 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
                 if (payload != null) {
                     payload.setData(data);
                 }
-                
+
                 forwardMessage(data);
 
             } catch (IOException | ClassNotFoundException e) {
@@ -152,28 +152,6 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
                     logger.log(Level.SEVERE, "Failed to close streams", ex);
                 }
             }
-//                ByteArrayOutputStream baos = (ByteArrayOutputStream) stream;
-//                PayloadBlock payload = null;
-//                for (Block block : bundle.getBlocks()) {
-//                    if (block.getType() == PayloadBlock.type) {
-//                        payload = (PayloadBlock) block;
-//                    }
-//                }
-//                payload.setData(baos.toByteArray());
-//
-//                try { // Try reading a MessageData object from the stream
-//                    ByteArrayInputStream in = new ByteArrayInputStream(baos.toByteArray());
-//                    ObjectInputStream is = new ObjectInputStream(in);
-//                    MessageData messageData = (MessageData) is.readObject();
-//                    logger.log(Level.SEVERE, "Payload ''MessageData'' received: {0}", messageData);
-//                } catch (IOException | ClassNotFoundException e) {
-//                    logger.log(Level.SEVERE, "Payload bytes received: {0}\n{1}",
-//                            new Object[]{payload.getData().size() + " bytes", baos.toString()});
-//                }
-
-//            } catch (Exception e) {
-//                logger.log(Level.WARNING, "Unable to decode payload");
-//            }
         }
     }
 
@@ -192,9 +170,7 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
             @Override
             public void run() {
                 try {
-                    /*
-                     * Load the next bundle
-                     */
+                    // Load the next bundle
                     exClient.loadAndGetBundle();
                     logger.log(Level.SEVERE, "New bundle loaded: {0}", id);
                 } catch (APIException e) {
@@ -219,9 +195,7 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
                 // _database.put(Folder.INBOX, msg);
 
                 try {
-                    /*
-                     * Mark bundle as delivered...
-                     */
+                    // Mark bundle as delivered...                     
                     logger.log(Level.SEVERE, "Delivered: {0}", finalBundleID);
                     finalClient.markDelivered(finalBundleID);
 
@@ -236,7 +210,7 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
         Envelope envelope = new Envelope();
         envelope.setBundleID(bundleID);
         envelope.setData(data);
-        
+
         CallbackHandler.getInstance().forwardMessage(envelope);
     }
 }
