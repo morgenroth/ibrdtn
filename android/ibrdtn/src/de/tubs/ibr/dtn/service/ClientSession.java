@@ -23,7 +23,9 @@
 package de.tubs.ibr.dtn.service;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import android.content.Context;
 import android.content.Intent;
@@ -65,7 +67,17 @@ public class ClientSession {
 		@Override
 		public void notifyBundle(de.tubs.ibr.dtn.swig.BundleID swigId)
 		{
-			invoke_receive_intent(toAndroid(swigId));
+	        // forward the notification as intent
+	        // create a new intent
+	        Intent notify = new Intent(de.tubs.ibr.dtn.Intent.RECEIVE);
+	        notify.addCategory(_package_name);
+	        notify.putExtra("type", "bundle");
+	        notify.putExtra("data", toAndroid(swigId));
+
+	        // send notification intent
+	        context.sendBroadcast(notify);
+
+	        Log.d(TAG, "RECEIVE intent sent to " + _package_name);
 		}
 
 		@Override
@@ -118,13 +130,24 @@ public class ClientSession {
 
 		}
 
-		invoke_registration_intent();
+        // send out registration intent to the application
+        Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
+        broadcastIntent.addCategory(_package_name);
+        broadcastIntent.putExtra("key", _package_name);
+
+        // send notification intent
+        context.sendBroadcast(broadcastIntent);
+
+        Log.d(TAG, "REGISTRATION intent sent to " + _package_name);
 	}
 	
 	private class SerializerCallback extends NativeSerializerCallback {
 		
 		private DTNSessionCallback _cb = null;
-		private TransferMode _mode = TransferMode.PASSTHROUGH;
+		private TransferMode _mode = TransferMode.NULL;
+		private OutputStream _output = null;
+		private long _current = 0L;
+		private long _length = 0L;
 		
 		public SerializerCallback(DTNSessionCallback cb) {
 			this._cb = cb;
@@ -135,8 +158,7 @@ public class ClientSession {
 			try {
 				_cb.startBundle(toAndroid(block));
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			    Log.e(TAG, "Remote call startBundle() failed", e);
 			}
 		}
 
@@ -145,19 +167,29 @@ public class ClientSession {
 			try {
 				_cb.endBundle();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			    Log.e(TAG, "Remote call endBundle() failed", e);
 			}
 		}
 
 		@Override
 		public void beginBlock(de.tubs.ibr.dtn.swig.Block block, long payload_length) {
 			try {
-				_mode = _cb.startBlock(toAndroid(block));
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			    _mode = _cb.startBlock(toAndroid(block));
+            } catch (RemoteException e) {
+                Log.e(TAG, "Remote call startBlock() failed", e);
+                return;
+            }
+			
+			if (TransferMode.FILEDESCRIPTOR.equals(_mode)) {
+			    try {
+	                // ask for a filedescriptor
+			        ParcelFileDescriptor target_fd = _cb.fd();
+			        _output = new FileOutputStream(target_fd.getFileDescriptor());
+			        _length = payload_length;
+	            } catch (RemoteException e) {
+	                Log.e(TAG, "Remote call fd() failed", e);
+	            }
+            }
 		}
 
 		@Override
@@ -165,35 +197,53 @@ public class ClientSession {
 			try {
 				_cb.endBlock();
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Log.e(TAG, "Remote call endBlock() failed", e);
 			}
+			
+			if (_output != null) {
+			    try {
+                    _output.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Error while closing output stream", e);
+                }
+			}
+			
+			_output = null;
+			_mode = TransferMode.NULL;
+			_length = 0L;
+			_current = 0L;
 		}
-
 		
 		@Override
 		public void payload(String data, long len) {
-			try {
-				switch (_mode) {
-				case FILEDESCRIPTOR:
-					break;
-				case NULL:
-					break;
-				case PASSTHROUGH:
-					// TODO: passthrough the data
-					byte bytes[] = new byte[4];
-					_cb.payload(bytes);
-					break;
-				case SIMPLE:
-					break;
-				default:
-					break;
-				
-				}
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		    // skip this if the transfer mode is set to null
+		    if (TransferMode.NULL.equals(_mode)) {
+		        return;
+		    }
+		    
+            if (_output != null) {
+                try {
+                    // put content into the output stream
+                    _output.write(data.getBytes());
+                    
+                    // increment current position
+                    _current += data.getBytes().length;
+                    
+                    // signal progress of copying
+                    _cb.progress(_current, _length);
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to put payload into the output stream", e);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Remote call progress() failed", e);
+                }
+            } else {
+                try {
+                    // passthrough the data
+                    _cb.payload(data.getBytes());
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Remote call payload() failed", e);
+                }
+            }
 		}
 	}
 
@@ -376,34 +426,6 @@ public class ClientSession {
 	public String getPackageName()
 	{
 		return _package_name;
-	}
-
-	public void invoke_receive_intent(BundleID id)
-	{
-		// forward the notification as intent
-		// create a new intent
-		Intent notify = new Intent(de.tubs.ibr.dtn.Intent.RECEIVE);
-		notify.addCategory(_package_name);
-		notify.putExtra("type", "bundle");
-		notify.putExtra("data", id);
-
-		// send notification intent
-		context.sendBroadcast(notify);
-
-		Log.d(TAG, "RECEIVE intent sent to " + _package_name);
-	}
-
-	private void invoke_registration_intent()
-	{
-		// send out registration intent to the application
-		Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
-		broadcastIntent.addCategory(_package_name);
-		broadcastIntent.putExtra("key", _package_name);
-
-		// send notification intent
-		context.sendBroadcast(broadcastIntent);
-
-		Log.d(TAG, "REGISTRATION intent sent to " + _package_name);
 	}
 	
 	private de.tubs.ibr.dtn.swig.BundleID toSwig(BundleID id)
