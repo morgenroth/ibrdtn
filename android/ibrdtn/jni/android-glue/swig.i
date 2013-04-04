@@ -9,6 +9,8 @@
 %include "various.i"
 // INPUT, OUTPUT, INOUT typemaps
 %include "typemaps.i"
+// vector support
+%include "std_vector.i"
 
 /* add renaming directive for standard operators */
 %rename(assign) operator=;
@@ -57,6 +59,10 @@
 %feature("director") NativeSessionCallback;
 %feature("director") NativeSerializerCallback;
 %feature("director") NativeDaemonCallback;
+
+namespace std {
+    %template(StringVec) std::vector<std::string>;
+}
 
 /* Let's just grab the original header file here */
 %include "../ibrdtn/ibrdtn/data/EID.h"
