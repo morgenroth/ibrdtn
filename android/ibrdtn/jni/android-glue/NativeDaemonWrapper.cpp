@@ -24,11 +24,12 @@
 
 #define THIS_LOG_TAG "IBR-DTN Native NativeDaemonWrapper"
 
-static void daemonInitialize(JNIEnv *env, jclass thisClass, jstring jConfigPath, jboolean jEnableDebug)
+static void daemonInitialize(JNIEnv *env, jclass thisClass, jstring jConfigPath, jint jLogLevel, jint jDebugVerbosity)
 {
 	//Get the native string from java string
 	std::string configPath = jstringToStdString(env, jConfigPath);
-	bool enableDebug = (bool) jEnableDebug;
+	int logLevel = (int) jLogLevel;
+	int debugVerbosity = (int) jDebugVerbosity;
 
 	/**
 	 * setup logging capabilities
@@ -39,16 +40,19 @@ static void daemonInitialize(JNIEnv *env, jclass thisClass, jstring jConfigPath,
 	unsigned char logsys;
 
 	// activate debugging
-	if (enableDebug)
+	if (logLevel == 1) {
+		// logcat filter, everything but DEBUG, INFO, and NOTICE
+		logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
+	} else if (logLevel == 2)
 	{
-		// init logger
-		ibrcommon::Logger::setVerbosity(99);
+		// set debug verbosity
+		ibrcommon::Logger::setVerbosity(debugVerbosity);
 
 		// logcat filter, everything
 		logsys = ibrcommon::Logger::LOGGER_ALL;
 	} else {
-		// logcat filter, everything but DEBUG and NOTICE
-		logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
+		// logcat filter, only LOGGER_EMERG
+		logsys = ibrcommon::Logger::LOGGER_EMERG;
 	}
 
 	// enable ring-buffer
@@ -65,7 +69,7 @@ static void daemonInitialize(JNIEnv *env, jclass thisClass, jstring jConfigPath,
 
 	try {
 		const ibrcommon::File &lf = conf.getLogger().getLogfile();
-		ibrcommon::Logger::setLogfile(lf, ibrcommon::Logger::LOGGER_ALL ^ ibrcommon::Logger::LOGGER_DEBUG, logopts);
+		ibrcommon::Logger::setLogfile(lf, logsys, logopts);
 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {};
 
 	// greeting
@@ -247,7 +251,7 @@ static void removeConnection(JNIEnv *env, jclass thisClass, jstring jEid, jstrin
 }
 
 static JNINativeMethod sMethods[] = {
-		{ "daemonInitialize", "(Ljava/lang/String;Z)V", (void *) daemonInitialize },
+		{ "daemonInitialize", "(Ljava/lang/String;II)V", (void *) daemonInitialize },
 		{ "daemonMainLoop", "()V", (void *) daemonMainLoop },
 		{ "daemonShutdown", "()V", (void *) daemonShutdown },
 		{ "daemonReload", "()V", (void *) daemonReload },
