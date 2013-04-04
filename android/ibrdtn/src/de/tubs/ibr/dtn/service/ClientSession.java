@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
 
 import android.content.Context;
 import android.content.Intent;
@@ -432,10 +433,10 @@ public class ClientSession {
 	{
 		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
 		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource()));
-		swigId.setSequencenumber(id.getSequencenumber());
+		swigId.setSequencenumber(BigInteger.valueOf(id.getSequencenumber()));
 
 		Timestamp ts = new Timestamp(id.getTimestamp());
-		swigId.setTimestamp(ts.getValue());
+		swigId.setTimestamp(BigInteger.valueOf(ts.getValue()));
 		
 		return swigId;
 	}
@@ -494,10 +495,10 @@ public class ClientSession {
 	private BundleID toAndroid(de.tubs.ibr.dtn.swig.BundleID swigId) {
 		// convert from swig BundleID to api BundleID
 		BundleID id = new BundleID();
-		id.setSequencenumber(swigId.getSequencenumber());
+		id.setSequencenumber(swigId.getSequencenumber().longValue());
 		id.setSource(swigId.getSource().getString());
 
-		long swigTime = swigId.getTimestamp();
+		long swigTime = swigId.getTimestamp().longValue();
 		Timestamp ts = new Timestamp(swigTime);
 		id.setTimestamp(ts.getDate());
 		

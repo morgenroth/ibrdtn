@@ -60,6 +60,8 @@
 %feature("director") NativeSerializerCallback;
 %feature("director") NativeDaemonCallback;
 
+%apply unsigned long long { uint64_t };
+
 namespace std {
     %template(StringVec) std::vector<std::string>;
 }
