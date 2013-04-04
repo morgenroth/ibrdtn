@@ -60,8 +60,6 @@
 
 %include "../ibrdtn/ibrdtn/data/DTNTime.h"
 
-// getTimestamp() is generated two times. Ignore one
-%ignore getTimestamp;
 %include "../ibrdtn/ibrdtn/data/BundleID.h"
 
 %include "../ibrdtn/ibrdtn/data/AdministrativeBlock.h"
