@@ -83,7 +83,9 @@
             android:summary="@string/pref_bab_key_desc"
             android:title="@string/pref_bab_key" />
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_logging" >
+    <PreferenceCategory
+        android:key="prefcat_logging"
+        android:title="@string/pref_logging" >
         <ListPreference
             android:defaultValue="1"
             android:entries="@array/log_options_names"

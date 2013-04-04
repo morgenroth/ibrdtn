@@ -64,7 +64,6 @@ public class LogLoader extends Loader<LogMessage> {
 					LogMessage msg = new LogMessage(line);
 
 					publishProgress(msg);
-
 				}
 
 				reader.close();

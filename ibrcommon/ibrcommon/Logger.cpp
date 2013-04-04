@@ -166,9 +166,11 @@ namespace ibrcommon
 
 	void Logger::LogWriter::enableSyslog(const char *name, int option, int facility, const unsigned char logmask)
 	{
+#if ( defined HAVE_SYSLOG_H || defined ANDROID )
 #ifdef HAVE_SYSLOG_H
 		// init syslog
 		::openlog(name, option, facility);
+#endif
 		_syslog = true;
 		_syslog_mask = logmask;
 		_global_logmask |= logmask;
@@ -195,7 +197,7 @@ namespace ibrcommon
 			}
 
 #if ( defined HAVE_SYSLOG_H || defined ANDROID )
-			// additionally log to the syslog
+			// additionally log to the syslog/android logcat
 			if (_syslog)
 			{
 				if (logger._level & _syslog_mask)
