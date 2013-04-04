@@ -123,12 +123,12 @@ namespace dtn
 		{
 		}
 
-		std::string getLocalUri() throw ()
+		std::string NativeDaemon::getLocalUri() throw ()
 		{
 			return dtn::core::BundleCore::local.getString();
 		}
 
-		std::vector<std::string> getNeighbors() throw ()
+		std::vector<std::string> NativeDaemon::getNeighbors() throw ()
 		{
 			std::vector<std::string> ret;
 
@@ -143,7 +143,7 @@ namespace dtn
 			return ret;
 		}
 
-		void addConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ()
+		void NativeDaemon::addConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ()
 		{
 			dtn::core::Node n(eid);
 			dtn::core::Node::Type t = dtn::core::Node::NODE_STATIC_GLOBAL;
@@ -169,7 +169,7 @@ namespace dtn
 			}
 		}
 
-		void removeConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ()
+		void NativeDaemon::removeConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ()
 		{
 			dtn::core::Node n(eid);
 			dtn::core::Node::Type t = dtn::core::Node::NODE_STATIC_GLOBAL;
