@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 package de.tubs.ibr.dtn.daemon;
 
 import java.util.LinkedList;
@@ -47,274 +48,254 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 
-public class LogListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<LogMessage> {
-	private LogListAdapter mAdapter = null;
-	private boolean mPlayLog = true;
-	private MenuItem mPlayItem;
+public class LogListFragment extends ListFragment implements
+        LoaderManager.LoaderCallbacks<LogMessage> {
+    private LogListAdapter mAdapter = null;
+    private boolean mPlayLog = true;
+    private MenuItem mPlayItem;
 
-	private static final int MAX_LINES = 300;
+    private static final int MAX_LINES = 600;
 
-	@SuppressLint("NewApi")
-	@Override
-	public void onActivityCreated(Bundle savedInstanceState)
-	{
-		super.onActivityCreated(savedInstanceState);
+    @SuppressLint("NewApi")
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
 
-		// We have a menu item to show in action bar.
-		setHasOptionsMenu(true);
+        // We have a menu item to show in action bar.
+        setHasOptionsMenu(true);
 
-		getListView().setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
-		getListView().setStackFromBottom(true);
-		
-		// add scrollbar handle
-		getListView().setFastScrollEnabled(true);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			getListView().setFastScrollAlwaysVisible(true);
-		}
+        getListView().setTranscriptMode(AbsListView.TRANSCRIPT_MODE_NORMAL);
+        getListView().setStackFromBottom(true);
 
-		getListView().setOnScrollListener(new AbsListView.OnScrollListener() {
+        // add scrollbar handle
+        getListView().setFastScrollEnabled(true);
 
-			@Override
-			public void onScrollStateChanged(AbsListView view, int scrollState)
-			{
-				pauseLog();
-			}
+        getListView().setOnScrollListener(new AbsListView.OnScrollListener() {
 
-			@Override
-			public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount)
-			{
-			}
-		});
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                pauseLog();
+            }
 
-		setEmptyText("no log");
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount,
+                    int totalItemCount) {
+            }
+        });
 
-		// create a new list adapter
-		mAdapter = new LogListAdapter(getActivity());
+        setEmptyText("no log");
 
-		// set listview adapter
-		setListAdapter(mAdapter);
-	}
+        // create a new list adapter
+        mAdapter = new LogListAdapter(getActivity());
 
-	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
-	{
-		super.onCreateOptionsMenu(menu, inflater);
-		inflater.inflate(R.menu.log_menu, menu);
-		mPlayItem = menu.findItem(R.id.itemPlayPauseLog);
-	}
+        // set listview adapter
+        setListAdapter(mAdapter);
+    }
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item)
-	{
-		switch (item.getItemId())
-		{
-		case R.id.itemPlayPauseLog:
-		{
-			if (mPlayLog) {
-				pauseLog();
-			} else {
-				playLog();
-			}
-		}
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.log_menu, menu);
+        mPlayItem = menu.findItem(R.id.itemPlayPauseLog);
+    }
 
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.itemPlayPauseLog: {
+                if (mPlayLog) {
+                    pauseLog();
+                } else {
+                    playLog();
+                }
+            }
 
-	/**
-	 * On Android < 3 this is called every time the menu is opened
-	 * 
-	 * On Android >= 3 invalidateOptionsMenu() has to be called to execute this
-	 */
-	@Override
-	public void onPrepareOptionsMenu(Menu menu)
-	{
-		if (mPlayLog) {
-			mPlayItem.setTitle(R.string.log_pause);
-			mPlayItem.setIcon(android.R.drawable.ic_media_pause);
-		} else {
-			mPlayItem.setTitle(R.string.log_play);
-			mPlayItem.setIcon(android.R.drawable.ic_media_play);
-		}
-		super.onPrepareOptionsMenu(menu);
-	}
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
-	@SuppressLint("NewApi")
-	private void pauseLog()
-	{
-		mPlayLog = false;
+    /**
+     * On Android < 3 this is called every time the menu is opened On Android >=
+     * 3 invalidateOptionsMenu() has to be called to execute this
+     */
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        if (mPlayLog) {
+            mPlayItem.setTitle(R.string.log_pause);
+            mPlayItem.setIcon(android.R.drawable.ic_media_pause);
+        } else {
+            mPlayItem.setTitle(R.string.log_play);
+            mPlayItem.setIcon(android.R.drawable.ic_media_play);
+        }
+        super.onPrepareOptionsMenu(menu);
+    }
 
-		getLoaderManager().destroyLoader(0);
+    @SuppressLint("NewApi")
+    private void pauseLog() {
+        mPlayLog = false;
 
-		getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs_paused));
+        getLoaderManager().destroyLoader(0);
 
-		// change menu item to indicate pause
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			getActivity().invalidateOptionsMenu();
-		}
-	}
+        getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs_paused));
 
-	@SuppressLint("NewApi")
-	private void playLog()
-	{
-		mPlayLog = true;
+        // change menu item to indicate pause
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            getActivity().invalidateOptionsMenu();
+        }
+    }
 
-		getLoaderManager().initLoader(0, null, this);
+    @SuppressLint("NewApi")
+    private void playLog() {
+        mPlayLog = true;
 
-		getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs));
+        getLoaderManager().initLoader(0, null, this);
 
-		// change menu item to indicate play
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			getActivity().invalidateOptionsMenu();
-		}
-	}
+        getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs));
 
-	private void scrollToBottom()
-	{
-		final ListView list = getListView();
-		list.post(new Runnable() {
-			@Override
-			public void run()
-			{
-				list.setSelection(mAdapter.getCount() - 1);
-			}
-		});
-	}
+        // change menu item to indicate play
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            getActivity().invalidateOptionsMenu();
+        }
+    }
 
-	@Override
-	public void onResume()
-	{
-		super.onResume();
+    private void scrollToBottom() {
+        final ListView list = getListView();
+        list.post(new Runnable() {
+            @Override
+            public void run()
+            {
+                list.setSelection(mAdapter.getCount() - 1);
+            }
+        });
+    }
 
-		if (mPlayLog) {
-			playLog();
-		} else {
-			pauseLog();
-		}
-	}
+    @Override
+    public void onResume() {
+        super.onResume();
 
-	@Override
-	public Loader<LogMessage> onCreateLoader(int id, Bundle args)
-	{
-		return new LogLoader(getActivity());
-	}
+        if (mPlayLog) {
+            playLog();
+        } else {
+            pauseLog();
+        }
+    }
 
-	@Override
-	public void onLoadFinished(Loader<LogMessage> loader, LogMessage data)
-	{
-		scrollToBottom();
+    @Override
+    public Loader<LogMessage> onCreateLoader(int id, Bundle args) {
+        return new LogLoader(getActivity());
+    }
 
-		mAdapter.add(data);
-		if (mAdapter.getCount() > MAX_LINES) {
-			mAdapter.remove(0);
-		}
-		mAdapter.notifyDataSetChanged();
+    @Override
+    public void onLoadFinished(Loader<LogMessage> loader, LogMessage data) {
+        scrollToBottom();
 
-		// The list should now be shown.
-		if (isResumed()) {
-			setListShown(true);
-		} else {
-			setListShownNoAnimation(true);
-		}
-	}
+        mAdapter.add(data);
+        if (mAdapter.getCount() > MAX_LINES) {
+            mAdapter.remove(0);
+        }
+        mAdapter.notifyDataSetChanged();
 
-	@Override
-	public void onLoaderReset(Loader<LogMessage> loader)
-	{
+        // The list should now be shown.
+        if (isResumed()) {
+            setListShown(true);
+        } else {
+            setListShownNoAnimation(true);
+        }
+    }
 
-	}
+    @Override
+    public void onLoaderReset(Loader<LogMessage> loader) {
 
-	private class LogListAdapter extends BaseAdapter {
-		private LayoutInflater inflater = null;
-		private List<LogMessage> list = new LinkedList<LogMessage>();
-		private Context context;
+    }
 
-		private class ViewHolder {
-			public ImageView imageMark;
-			public TextView textDate;
-			public TextView textTag;
-			public TextView textLog;
-			public LogMessage msg;
-		}
+    private class LogListAdapter extends BaseAdapter {
+        private LayoutInflater inflater = null;
+        private List<LogMessage> list = new LinkedList<LogMessage>();
+        private Context context;
 
-		public LogListAdapter(Context context) {
-			this.context = context;
-			this.inflater = LayoutInflater.from(context);
-		}
+        private class ViewHolder {
+            public ImageView imageMark;
+            public TextView textDate;
+            public TextView textTag;
+            public TextView textLog;
+            public LogMessage msg;
+        }
 
-		public int getCount()
-		{
-			return list.size();
-		}
+        public LogListAdapter(Context context) {
+            this.context = context;
+            this.inflater = LayoutInflater.from(context);
+        }
 
-		public void add(LogMessage msg)
-		{
-			list.add(msg);
-		}
+        public int getCount() {
+            return list.size();
+        }
 
-		public void remove(int position)
-		{
-			list.remove(position);
-		}
+        public void add(LogMessage msg) {
+            list.add(msg);
+        }
 
-		public Object getItem(int position)
-		{
-			return list.get(position);
-		}
+        public void remove(int position) {
+            list.remove(position);
+        }
 
-		public long getItemId(int position)
-		{
-			return position;
-		}
+        public Object getItem(int position) {
+            return list.get(position);
+        }
 
-		public View getView(int position, View convertView, ViewGroup parent)
-		{
-			ViewHolder holder;
+        public long getItemId(int position) {
+            return position;
+        }
 
-			if (convertView == null) {
-				convertView = this.inflater.inflate(R.layout.log_item, null, true);
-				holder = new ViewHolder();
-				holder.imageMark = (ImageView) convertView.findViewById(R.id.imageMark);
-				holder.textDate = (TextView) convertView.findViewById(R.id.textDate);
-				holder.textTag = (TextView) convertView.findViewById(R.id.textTag);
-				holder.textLog = (TextView) convertView.findViewById(R.id.textLog);
-				convertView.setTag(holder);
-			} else {
-				holder = (ViewHolder) convertView.getTag();
-			}
+        public View getView(int position, View convertView, ViewGroup parent) {
+            ViewHolder holder;
 
-			holder.msg = list.get(position);
+            if (convertView == null) {
+                convertView = this.inflater.inflate(R.layout.log_item, null, true);
+                holder = new ViewHolder();
+                holder.imageMark = (ImageView) convertView.findViewById(R.id.imageMark);
+                holder.textDate = (TextView) convertView.findViewById(R.id.textDate);
+                holder.textTag = (TextView) convertView.findViewById(R.id.textTag);
+                holder.textLog = (TextView) convertView.findViewById(R.id.textLog);
+                convertView.setTag(holder);
+            } else {
+                holder = (ViewHolder) convertView.getTag();
+            }
 
-			if (holder.msg.tag.equals("E")) {
-				holder.imageMark.setImageLevel(1);
-				holder.textTag.setTextColor(context.getResources().getColor(R.color.light_red));
-			} else if (holder.msg.tag.equals("W")) {
-				holder.imageMark.setImageLevel(3);
-				holder.textTag.setTextColor(context.getResources().getColor(R.color.light_violett));
-			} else if (holder.msg.tag.equals("I")) {
-				holder.imageMark.setImageLevel(4);
-				holder.textTag.setTextColor(context.getResources().getColor(R.color.light_green));
-			} else if (holder.msg.tag.equals("D")) {
-				holder.imageMark.setImageLevel(5);
-				holder.textTag.setTextColor(context.getResources().getColor(R.color.light_yellow));
-			} else {
-				holder.imageMark.setImageLevel(0);
-				holder.textTag.setTextColor(Color.WHITE);
-			}
+            holder.msg = list.get(position);
 
-			holder.textDate.setText(holder.msg.date);
-			holder.textLog.setText(holder.msg.msg);
+            if (holder.msg.level.equals("E")) {
+                holder.imageMark.setImageLevel(1);
+                holder.textTag.setTextColor(context.getResources().getColor(R.color.light_red));
+            } else if (holder.msg.level.equals("W")) {
+                holder.imageMark.setImageLevel(3);
+                holder.textTag.setTextColor(context.getResources().getColor(R.color.light_violett));
+            } else if (holder.msg.level.equals("I")) {
+                holder.imageMark.setImageLevel(4);
+                holder.textTag.setTextColor(context.getResources().getColor(R.color.light_green));
+            } else if (holder.msg.level.equals("D")) {
+                holder.imageMark.setImageLevel(5);
+                holder.textTag.setTextColor(context.getResources().getColor(R.color.light_yellow));
+            } else {
+                holder.imageMark.setImageLevel(0);
+                holder.textTag.setTextColor(Color.WHITE);
+            }
 
-			if (LogMessage.TAG_LABELS.containsKey(holder.msg.tag)) {
-				holder.textTag.setText(LogMessage.TAG_LABELS.get(holder.msg.tag));
-			} else {
-				holder.textTag.setText(holder.msg.tag);
-			}
+            holder.textDate.setText(holder.msg.date);
+            holder.textLog.setText(holder.msg.msg);
 
-			return convertView;
-		}
+            String tag;
+            if (LogMessage.LEVEL_LABELS.containsKey(holder.msg.level)) {
+                tag = LogMessage.LEVEL_LABELS.get(holder.msg.level);
+            } else {
+                tag = holder.msg.level;
+            }
 
-	};
+            holder.textTag.setText(tag + " (" + holder.msg.tag + ")");
+
+            return convertView;
+        }
+
+    };
 
 }

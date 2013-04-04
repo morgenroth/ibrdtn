@@ -382,6 +382,7 @@ namespace ibrcommon
 		std::string _data;
 
 		static std::string _default_tag;
+		static std::string _android_tag_prefix;
 		static LogWriter _logwriter;
 	};
 }

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 package de.tubs.ibr.dtn.daemon;
 
 import java.io.BufferedReader;
@@ -31,86 +32,78 @@ import android.support.v4.content.Loader;
 import android.util.Log;
 
 public class LogLoader extends Loader<LogMessage> {
-	private static final String TAG = "LogLoader";
-	private AsyncTask<Void, LogMessage, Void> mLogcatTask;
+    private static final String TAG = "LogLoader";
+    private AsyncTask<Void, LogMessage, Void> mLogcatTask;
 
-	public LogLoader(Context context) {
-		super(context);
-	}
+    public LogLoader(Context context) {
+        super(context);
+    }
 
-	private class LogcatTask extends AsyncTask<Void, LogMessage, Void> {
+    private class LogcatTask extends AsyncTask<Void, LogMessage, Void> {
 
-		@Override
-		protected Void doInBackground(Void... params)
-		{
-			Process process = null;
-			try
-			{
-			    // show only logs from IBR-DTN daemon
-				process = Runtime.getRuntime().exec("/system/bin/logcat -v time IBR-DTN_Core:V *:S");
-			} catch (IOException e)
-			{
-				Log.e(TAG, "Problem starting logcat in new Process!", e);
-			}
+        @Override
+        protected Void doInBackground(Void... params) {
+            Process process = null;
+            try {
+                // show only logs from IBR-DTN daemon
+                process = Runtime.getRuntime().exec("/system/bin/logcat -v time *:V");
+            } catch (IOException e) {
+                Log.e(TAG, "Problem starting logcat in new Process!", e);
+            }
 
-			BufferedReader reader = null;
+            BufferedReader reader = null;
 
-			try
-			{
-				reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-				String line = null;
-				while (!isCancelled() && (line = reader.readLine()) != null)
-				{
-					LogMessage msg = new LogMessage(line);
+            try {
+                reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line = null;
+                while (!isCancelled() && (line = reader.readLine()) != null) {
+                    try {
+                        LogMessage msg = new LogMessage(line);
+                        publishProgress(msg);
+                    } catch (IllegalStateException e) {
+                        // Does not match!
+                    }
+                }
 
-					publishProgress(msg);
-				}
+                reader.close();
+                process.destroy();
+                process = null;
+                reader = null;
+            } catch (IOException e) {
+                Log.e(TAG, "Reading from logcat failed!", e);
+            }
 
-				reader.close();
-				process.destroy();
-				process = null;
-				reader = null;
-			} catch (IOException e)
-			{
-				Log.e(TAG, "Reading from logcat failed!", e);
-			}
+            return null;
+        }
 
-			return null;
-		}
+        @Override
+        protected void onProgressUpdate(LogMessage... values) {
+            // deliver result to callback implementation of this loader
+            deliverResult(values[0]);
+        }
+    };
 
-		@Override
-		protected void onProgressUpdate(LogMessage... values)
-		{
-			// deliver result to callback implementation of this loader
-			deliverResult(values[0]);
-		}
-	};
+    @Override
+    protected void onReset() {
+        super.onReset();
 
-	@Override
-	protected void onReset()
-	{
-		super.onReset();
+        onStopLoading();
+    }
 
-		onStopLoading();
-	}
+    @Override
+    protected void onStartLoading() {
+        // start thread that continuously gets logcat's output
+        mLogcatTask = new LogcatTask().execute();
+    }
 
-	@Override
-	protected void onStartLoading()
-	{
-		// start thread that continuously gets logcat's output
-		mLogcatTask = new LogcatTask().execute();
-	}
+    @Override
+    protected void onStopLoading() {
+        mLogcatTask.cancel(false);
+    }
 
-	@Override
-	protected void onStopLoading()
-	{
-		mLogcatTask.cancel(false);
-	}
-
-	@Override
-	public void deliverResult(LogMessage data)
-	{
-		super.deliverResult(data);
-	}
+    @Override
+    public void deliverResult(LogMessage data) {
+        super.deliverResult(data);
+    }
 
 }

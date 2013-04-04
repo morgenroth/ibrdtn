@@ -41,6 +41,7 @@
 namespace ibrcommon
 {
 	std::string Logger::_default_tag = "Core";
+	std::string Logger::_android_tag_prefix = "IBR-DTN/";
 	Logger::LogWriter Logger::_logwriter;
 
 	Logger::Logger(LogLevel level, const std::string &tag, int debug_verbosity)
@@ -207,6 +208,9 @@ namespace ibrcommon
 					if (logger._tag.length() > 0) {
 						log_tag = logger._tag;
 					}
+
+					// add additional prefix for android tags to seperate them from other logcat messages
+					log_tag = Logger::_android_tag_prefix + log_tag;
 
 					switch (logger._level)
 					{

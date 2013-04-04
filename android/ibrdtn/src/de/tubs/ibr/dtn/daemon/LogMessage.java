@@ -20,45 +20,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 package de.tubs.ibr.dtn.daemon;
 
 import java.util.HashMap;
-
-import android.util.Log;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class LogMessage {
-	private static final String TAG = "LogMessage";
-	public static HashMap<String, String> TAG_LABELS;
+    public static HashMap<String, String> LEVEL_LABELS;
 
-	static
-	{
-		TAG_LABELS = new HashMap<String, String>();
-		TAG_LABELS.put("E", "Exception");
-		TAG_LABELS.put("W", "Warning");
-		TAG_LABELS.put("I", "Information");
-		TAG_LABELS.put("D", "Debug");
-		TAG_LABELS.put("V", "Verbose");
-	}
+    // try to match something like this:
+    // 04-04 22:36:25.865 I/IBR-DTN/RequeueBundleEvent( 1336): Bundle...
+    static final private String LOGCAT_LINE_REGEX = "^(\\S+\\s\\S+)\\s(\\w)/IBR-DTN/(.*)\\(\\s*\\d+\\)\\:\\s(.*)$";
+    private static Pattern mLinePattern;
+    private static Matcher mLineMatcher;
 
-	public String date;
-	public String tag;
-	public String msg;
+    static
+    {
+        mLinePattern = Pattern.compile(LOGCAT_LINE_REGEX, Pattern.CASE_INSENSITIVE);
 
-	public LogMessage(String raw) {
-		try
-		{
-			int secondSpace = raw.indexOf(' ', raw.indexOf(' ', 0) + 1);
+        LEVEL_LABELS = new HashMap<String, String>();
+        LEVEL_LABELS.put("E", "Exception");
+        LEVEL_LABELS.put("W", "Warning");
+        LEVEL_LABELS.put("I", "Information");
+        LEVEL_LABELS.put("D", "Debug");
+        LEVEL_LABELS.put("V", "Verbose");
+    }
 
-			date = raw.substring(0, secondSpace).trim();
-			tag = raw.substring(secondSpace, raw.indexOf('/', 0)).trim();
-			msg = raw.substring(raw.indexOf(':', secondSpace) + 1, raw.length()).trim();
-		} catch (StringIndexOutOfBoundsException e)
-		{
-			Log.e(TAG, "Error while parsing the log messages", e);
-			if (date == null) date = "";
-			tag = "";
-			msg = raw;
-		}
-	}
+    public String date;
+    public String level;
+    public String tag;
+    public String msg;
+
+    public LogMessage(String raw) throws IllegalStateException {
+        mLineMatcher = mLinePattern.matcher(raw);
+
+        if (mLineMatcher.matches()) {
+            date = mLineMatcher.group(1);
+            level = mLineMatcher.group(2);
+            tag = mLineMatcher.group(3);
+            msg = mLineMatcher.group(4);
+        } else {
+            throw new IllegalStateException("Does not match: " + raw);
+        }
+    }
 
 }

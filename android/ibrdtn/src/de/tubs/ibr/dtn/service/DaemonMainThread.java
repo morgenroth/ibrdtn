@@ -133,7 +133,7 @@ public class DaemonMainThread {
             int debugVerbosity = Integer.valueOf(preferences.getString("pref_debug_verbosity", "0"));
 
             // loads config and initializes daemon
-            DaemonMainThread.this.mDaemon.enableLogging(configPath, "IBR-DTN_Core", logLevel, debugVerbosity);
+            DaemonMainThread.this.mDaemon.enableLogging(configPath, "Core", logLevel, debugVerbosity);
             DaemonMainThread.this.mDaemon.initialize();
             
             // blocking main loop

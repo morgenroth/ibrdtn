@@ -19,6 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 package de.tubs.ibr.dtn.daemon;
 
 import de.tubs.ibr.dtn.R;
@@ -27,11 +28,10 @@ import android.support.v4.app.FragmentActivity;
 
 public class LogActivity extends FragmentActivity {
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState)
-	{
-		super.onCreate(savedInstanceState);
-		// only a wrapper to load LogListFragment
-		setContentView(R.layout.log_activity);
-	}
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // only a wrapper to load LogListFragment
+        setContentView(R.layout.log_activity);
+    }
 }
