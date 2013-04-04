@@ -22,6 +22,7 @@
 #ifndef NATIVESESSION_H_
 #define NATIVESESSION_H_
 
+#include "api/NativeSerializerCallback.h"
 #include "api/Registration.h"
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/StatusReportBlock.h>
@@ -148,6 +149,16 @@ namespace dtn
 			 * Returns the bundle in the register
 			 */
 			const dtn::data::Bundle& get(RegisterIndex ri) const throw ();
+
+			/**
+			 * Return the bundle in the register using the given callback
+			 */
+			void get(RegisterIndex ri, NativeSerializerCallback &cb) const throw ();
+
+			/**
+			 * Return the bundle skeleton in the register using the given callback
+			 */
+			void getInfo(RegisterIndex ri, NativeSerializerCallback &cb) const throw ();
 
 			/**
 			 * Delete the bundle in the local register from the storage

@@ -25,7 +25,10 @@ api_SOURCES = \
 	ApiP2PExtensionHandler.h \
 	ApiP2PExtensionHandler.cpp \
 	NativeSession.h \
-	NativeSession.cpp
+	NativeSession.cpp \
+	NativeSerializer.h \
+	NativeSerializer.cpp \
+	NativeSerializerCallback.h
 
 if ANDROID
 noinst_DATA = Android.mk

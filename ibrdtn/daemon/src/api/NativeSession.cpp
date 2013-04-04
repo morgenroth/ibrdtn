@@ -19,7 +19,8 @@
  *
  */
 
-#include "NativeSession.h"
+#include "api/NativeSession.h"
+#include "api/NativeSerializer.h"
 #include "core/BundleCore.h"
 
 #include <ibrdtn/data/PayloadBlock.h>
@@ -184,6 +185,18 @@ namespace dtn
 		const dtn::data::Bundle& NativeSession::get(RegisterIndex ri) const throw ()
 		{
 			return _bundle[ri];
+		}
+
+		void NativeSession::get(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
+		{
+			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_FULL);
+			serializer << _bundle[ri];
+		}
+
+		void NativeSession::getInfo(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
+		{
+			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_INFO);
+			serializer << _bundle[ri];
 		}
 
 		void NativeSession::free(RegisterIndex ri) throw (BundleNotFoundException)
