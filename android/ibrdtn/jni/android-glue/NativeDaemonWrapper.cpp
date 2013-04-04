@@ -60,7 +60,7 @@ static void daemonInitialize(JNIEnv *env, jclass thisClass, jstring jConfigPath,
 
 	// enable logging to Android's logcat
 	ibrcommon::Logger::enableAsync();// enable asynchronous logging feature (thread-safe)
-	ibrcommon::Logger::setDefaultTag("IBR-DTN Core");
+	ibrcommon::Logger::setDefaultTag("IBR-DTN_Core");
 	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", 0, 0, logsys);
 
 	// load the configuration file

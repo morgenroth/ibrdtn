@@ -46,7 +46,8 @@ public class LogLoader extends Loader<LogMessage> {
 			Process process = null;
 			try
 			{
-				process = Runtime.getRuntime().exec("/system/bin/logcat -v time *:V");
+			    // show only logs from IBR-DTN daemon
+				process = Runtime.getRuntime().exec("/system/bin/logcat -v time IBR-DTN_Core:V *:S");
 			} catch (IOException e)
 			{
 				Log.e(TAG, "Problem starting logcat in new Process!", e);
