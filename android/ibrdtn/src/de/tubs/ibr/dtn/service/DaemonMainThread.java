@@ -61,16 +61,14 @@ public class DaemonMainThread extends Thread {
 		// enable debug based on prefs
 		boolean debug = false;
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mService);
-		if (preferences.getBoolean("debug", false))
-		{
-			debug = true;
-		}
+		int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
+		int debugVerbosity = Integer.valueOf(preferences.getString("pref_debug_verbosity", "0"));
 
-		//TODO: test
+		// TODO: test
 		// NativeDaemonWrapper.daemonReload();
 
 		// loads config and initializes daemon
-		NativeDaemonWrapper.daemonInitialize(configPath, debug);
+		NativeDaemonWrapper.daemonInitialize(configPath, logLevel, debugVerbosity);
 
 		// broadcast online state
 		// TODO: better get callback when its really online?
@@ -115,13 +113,11 @@ public class DaemonMainThread extends Thread {
 	{
 		final String androidId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
 		MessageDigest md;
-		try
-		{
+		try {
 			md = MessageDigest.getInstance("MD5");
 			byte[] digest = md.digest(androidId.getBytes());
 			return new SingletonEndpoint("dtn://android-" + toHex(digest).substring(4, 12) + ".dtn");
-		} catch (NoSuchAlgorithmException e)
-		{
+		} catch (NoSuchAlgorithmException e) {
 			Log.e(TAG, "md5 not available");
 		}
 		return new SingletonEndpoint("dtn://android-" + androidId.substring(4, 12) + ".dtn");
@@ -139,13 +135,11 @@ public class DaemonMainThread extends Thread {
 		File config = new File(configPath);
 
 		// remove old config file
-		if (config.exists())
-		{
+		if (config.exists()) {
 			config.delete();
 		}
 
-		try
-		{
+		try {
 			FileOutputStream writer = context.openFileOutput("config", Context.MODE_PRIVATE);
 
 			// initialize default values if configured set already
@@ -156,13 +150,11 @@ public class DaemonMainThread extends Thread {
 			p.println("local_uri = " + preferences.getString("endpoint_id", getUniqueEndpointID(context).toString()));
 			p.println("routing = " + preferences.getString("routing", "default"));
 
-			if (preferences.getBoolean("constrains_lifetime", false))
-			{
+			if (preferences.getBoolean("constrains_lifetime", false)) {
 				p.println("limit_lifetime = 1209600");
 			}
 
-			if (preferences.getBoolean("constrains_timestamp", false))
-			{
+			if (preferences.getBoolean("constrains_timestamp", false)) {
 				p.println("limit_predated_timestamp = 1209600");
 			}
 
@@ -171,17 +163,14 @@ public class DaemonMainThread extends Thread {
 
 			String secmode = preferences.getString("security_mode", "disabled");
 
-			if (!secmode.equals("disabled"))
-			{
+			if (!secmode.equals("disabled")) {
 				File sec_folder = new File(context.getFilesDir().getPath() + "/bpsec");
-				if (!sec_folder.exists() || sec_folder.isDirectory())
-				{
+				if (!sec_folder.exists() || sec_folder.isDirectory()) {
 					p.println("security_path = " + sec_folder.getPath());
 				}
 			}
 
-			if (secmode.equals("bab"))
-			{
+			if (secmode.equals("bab")) {
 				// write default BAB key to file
 				String bab_key = preferences.getString("security_bab_key", "");
 				File bab_file = new File(context.getFilesDir().getPath() + "/default-bab-key.mac");
@@ -195,8 +184,7 @@ public class DaemonMainThread extends Thread {
 				bab_writer.flush();
 				bab_writer.close();
 
-				if (bab_key.length() > 0)
-				{
+				if (bab_key.length() > 0) {
 					// enable security extension: BAB
 					p.println("security_level = 1");
 
@@ -205,19 +193,16 @@ public class DaemonMainThread extends Thread {
 				}
 			}
 
-			if (preferences.getBoolean("checkIdleTimeout", false))
-			{
+			if (preferences.getBoolean("checkIdleTimeout", false)) {
 				p.println("tcp_idle_timeout = 30");
 			}
 
 			// set multicast address for discovery
 			p.println("discovery_address = ff02::142 224.0.0.142");
 
-			if (preferences.getBoolean("discovery_announce", true))
-			{
+			if (preferences.getBoolean("discovery_announce", true)) {
 				p.println("discovery_announce = 1");
-			} else
-			{
+			} else {
 				p.println("discovery_announce = 0");
 			}
 
@@ -225,15 +210,11 @@ public class DaemonMainThread extends Thread {
 			String ifaces = "";
 
 			Map<String, ?> prefs = preferences.getAll();
-			for (Map.Entry<String, ?> entry : prefs.entrySet())
-			{
+			for (Map.Entry<String, ?> entry : prefs.entrySet()) {
 				String key = entry.getKey();
-				if (key.startsWith("interface_"))
-				{
-					if (entry.getValue() instanceof Boolean)
-					{
-						if ((Boolean) entry.getValue())
-						{
+				if (key.startsWith("interface_")) {
+					if (entry.getValue() instanceof Boolean) {
+						if ((Boolean) entry.getValue()) {
 							String iface = key.substring(10, key.length());
 							ifaces = ifaces + " " + iface;
 
@@ -251,24 +232,20 @@ public class DaemonMainThread extends Thread {
 
 			// storage path
 			File blobPath = DaemonStorageUtils.getStoragePath("blob");
-			if (blobPath != null)
-			{
+			if (blobPath != null) {
 				p.println("blob_path = " + blobPath.getPath());
 
 				// flush storage path
 				File[] files = blobPath.listFiles();
-				if (files != null)
-				{
-					for (File f : files)
-					{
+				if (files != null) {
+					for (File f : files) {
 						f.delete();
 					}
 				}
 			}
 
 			File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
-			if (bundlePath != null)
-			{
+			if (bundlePath != null) {
 				p.println("storage_path = " + bundlePath.getPath());
 			}
 
@@ -292,8 +269,7 @@ public class DaemonMainThread extends Thread {
 
 			// close the filehandle
 			writer.close();
-		} catch (IOException e)
-		{
+		} catch (IOException e) {
 			Log.e(TAG, "Problem writing config", e);
 		}
 	}

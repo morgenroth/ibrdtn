@@ -74,7 +74,7 @@ public class NativeDaemonWrapper {
 	private NativeDaemonWrapper() {
 	}
 
-	public static native void daemonInitialize(String configPath, boolean enableDebug);
+	public static native void daemonInitialize(String configPath, int logLevel, int debugVerbosity);
 
 	public static native void daemonMainLoop();
 
