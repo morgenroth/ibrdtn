@@ -38,14 +38,62 @@ import android.provider.Settings.Secure;
 import android.util.Log;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.swig.NativeDaemon;
+import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
 
 public class DaemonMainThread extends Thread {
 	private final static String TAG = "DaemonMainThread";
 
+	private NativeDaemon mDaemon = null;
 	private DaemonService mService;
+	
+	private final static String GNUSTL_NAME = "gnustl_shared";
+	private final static String CRYPTO_NAME = "crypto";
+	private final static String SSL_NAME = "ssl";
+	private final static String IBRCOMMON_NAME = "ibrcommon";
+	private final static String IBRDTN_NAME = "ibrdtn";
+	private final static String DTND_NAME = "dtnd";
+	private final static String ANDROID_GLUE_NAME = "android-glue";
+
+	/**
+	 * Loads all shared libraries in the right order with System.loadLibrary()
+	 */
+	private static void loadLibraries()
+	{
+		try
+		{
+			System.loadLibrary(GNUSTL_NAME);
+
+			// System.loadLibrary(CRYPTO_NAME);
+			// System.loadLibrary(SSL_NAME);
+
+			System.loadLibrary(IBRCOMMON_NAME);
+			System.loadLibrary(IBRDTN_NAME);
+			System.loadLibrary(DTND_NAME);
+
+			System.loadLibrary(ANDROID_GLUE_NAME);
+		} catch (UnsatisfiedLinkError e)
+		{
+			Log.e(TAG, "UnsatisfiedLinkError! Are you running special hardware?", e);
+		} catch (Exception e)
+		{
+			Log.e(TAG, "Loading the libraries failed!", e);
+		}
+	}
+	
+	static
+	{
+		// load libraries on first use of this class
+		loadLibraries();
+	}
 
 	public DaemonMainThread(DaemonService context) {
+		this.mDaemon = new NativeDaemon(mDaemonCallback);
 		this.mService = context;
+	}
+	
+	public NativeDaemon getNative() {
+		return mDaemon;
 	}
 
 	public void run()
@@ -59,35 +107,39 @@ public class DaemonMainThread extends Thread {
 		createConfig(mService, configPath);
 
 		// enable debug based on prefs
-		boolean debug = false;
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mService);
 		int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
 		int debugVerbosity = Integer.valueOf(preferences.getString("pref_debug_verbosity", "0"));
 
-		// TODO: test
-		// NativeDaemonWrapper.daemonReload();
-
 		// loads config and initializes daemon
-		NativeDaemonWrapper.daemonInitialize(configPath, logLevel, debugVerbosity);
-
-		// broadcast online state
-		// TODO: better get callback when its really online?
-		Intent broadcastOnlineIntent = new Intent();
-		broadcastOnlineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
-		broadcastOnlineIntent.putExtra("state", DaemonState.ONLINE.name());
-		broadcastOnlineIntent.addCategory(Intent.CATEGORY_DEFAULT);
-		mService.sendBroadcast(broadcastOnlineIntent);
-
+		this.mDaemon.enableLogging(configPath, "Android IBR-DTN", logLevel, debugVerbosity);
+		this.mDaemon.initialize();
+		
 		// blocking main loop
-		NativeDaemonWrapper.daemonMainLoop();
-
-		// broadcast offline state
-		Intent broadcastOfflineIntent = new Intent();
-		broadcastOfflineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
-		broadcastOfflineIntent.putExtra("state", DaemonState.OFFLINE.name());
-		broadcastOfflineIntent.addCategory(Intent.CATEGORY_DEFAULT);
-		mService.sendBroadcast(broadcastOfflineIntent);
+		this.mDaemon.main_loop();
 	}
+	
+	private NativeDaemonCallback mDaemonCallback = new NativeDaemonCallback() {
+		@Override
+		public void stateChanged(States state) {
+			if (States.STARTUP_COMPLETED.equals(state)) {
+				// broadcast online state
+				Intent broadcastOnlineIntent = new Intent();
+				broadcastOnlineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
+				broadcastOnlineIntent.putExtra("state", DaemonState.ONLINE.name());
+				broadcastOnlineIntent.addCategory(Intent.CATEGORY_DEFAULT);
+				mService.sendBroadcast(broadcastOnlineIntent);
+			}
+			else if (States.SHUTDOWN_INITIATED.equals(state)) {
+				// broadcast offline state
+				Intent broadcastOfflineIntent = new Intent();
+				broadcastOfflineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
+				broadcastOfflineIntent.putExtra("state", DaemonState.OFFLINE.name());
+				broadcastOfflineIntent.addCategory(Intent.CATEGORY_DEFAULT);
+				mService.sendBroadcast(broadcastOfflineIntent);
+			}
+		}
+	};
 
 	/**
 	 * Create Hex String from byte array

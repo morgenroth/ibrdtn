@@ -50,11 +50,13 @@
 
 #include "../dtnd/src/api/NativeSession.h"
 #include "../dtnd/src/api/NativeSerializerCallback.h"
+#include "../dtnd/src/NativeDaemon.h"
 %}
 
 /* turn on director wrapping Callback */
 %feature("director") NativeSessionCallback;
 %feature("director") NativeSerializerCallback;
+%feature("director") NativeDaemonCallback;
 
 /* Let's just grab the original header file here */
 %include "../ibrdtn/ibrdtn/data/EID.h"
@@ -81,4 +83,5 @@
 
 %include "../dtnd/src/api/NativeSerializerCallback.h"
 %include "../dtnd/src/api/NativeSession.h"
+%include "../dtnd/src/NativeDaemon.h"
 

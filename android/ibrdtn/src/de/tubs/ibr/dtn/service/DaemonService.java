@@ -22,17 +22,9 @@
  */
 package de.tubs.ibr.dtn.service;
 
-import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
-import de.tubs.ibr.dtn.DTNService;
-import de.tubs.ibr.dtn.DaemonState;
-import de.tubs.ibr.dtn.R;
-import de.tubs.ibr.dtn.api.DTNSession;
-import de.tubs.ibr.dtn.api.Registration;
-import de.tubs.ibr.dtn.api.SingletonEndpoint;
-import de.tubs.ibr.dtn.daemon.Preferences;
-import de.tubs.ibr.dtn.p2p.P2PManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -49,6 +41,15 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import de.tubs.ibr.dtn.DTNService;
+import de.tubs.ibr.dtn.DaemonState;
+import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.api.DTNSession;
+import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.daemon.Preferences;
+import de.tubs.ibr.dtn.p2p.P2PManager;
+import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonService extends Service {
 	public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
@@ -69,7 +70,7 @@ public class DaemonService extends Service {
 
 	private Object _notification_lock = new Object();
 	private boolean _notification_dirty = false;
-	private Integer _notification_last_size = 0;
+	private Long _notification_last_size = 0L;
 
 	// session manager for all active sessions
 	private SessionManager _session_manager = null;
@@ -77,7 +78,7 @@ public class DaemonService extends Service {
 	// the P2P manager used for wifi direct control
 	private P2PManager _p2p_manager = null;
 
-	private DaemonMainThread mDaemonMainThread;
+	private DaemonMainThread mDaemonMainThread = null;
 
 	public DaemonState getState()
 	{
@@ -105,9 +106,15 @@ public class DaemonService extends Service {
 
 		public List<String> getNeighbors() throws RemoteException
 		{
-			String[] neighbors = NativeDaemonWrapper.getNeighbors();
+			if (mDaemonMainThread == null) return new LinkedList<String>();
+			
+			List<String> ret = new LinkedList<String>();
+			StringVec neighbors = mDaemonMainThread.getNative().getNeighbors();
+			for (int i = 0; i < neighbors.size(); i++) {
+				ret.add(neighbors.get(i));
+			}
 
-			return Arrays.asList(neighbors);
+			return ret;
 		}
 
 		public void clearStorage() throws RemoteException
@@ -245,7 +252,7 @@ public class DaemonService extends Service {
 			nm.notify(1, buildNotification(R.drawable.ic_notification, getResources().getString(R.string.dialog_wait_stopping)));
 
 			// stop main loop
-			NativeDaemonWrapper.daemonShutdown();
+			mDaemonMainThread.getNative().shutdown();
 
 			// disable P2P manager
 //			_p2p_manager.destroy();
@@ -265,10 +272,10 @@ public class DaemonService extends Service {
 			{
 				if (intent.getBooleanExtra("enabled", false))
 				{
-					NativeDaemonWrapper.addConnection(__CLOUD_EID__.toString(), __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+					mDaemonMainThread.getNative().addConnection(__CLOUD_EID__.toString(), __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
 				} else
 				{
-					NativeDaemonWrapper.removeConnection(__CLOUD_EID__.toString(), __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+					mDaemonMainThread.getNative().removeConnection(__CLOUD_EID__.toString(), __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
 				}
 			}
 		} else if (QUERY_NEIGHBORS.equals(action))
@@ -283,9 +290,8 @@ public class DaemonService extends Service {
 
 			// state is online
 			Log.i(TAG, "Query neighbors");
-			String[] neighborsArray = NativeDaemonWrapper.getNeighbors();
-			List<String> neighbors = Arrays.asList(neighborsArray);
-
+			StringVec neighbors = mDaemonMainThread.getNative().getNeighbors();
+			
 			synchronized (_notification_lock)
 			{
 				if (_notification_last_size.equals(neighbors.size())) return;

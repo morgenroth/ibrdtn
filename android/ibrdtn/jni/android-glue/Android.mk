@@ -3,10 +3,6 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := android-glue
 LOCAL_SRC_FILES = \
-	JNIHelp.cpp \
-	Helper.cpp \
-	JNI_OnLoad.cpp \
-	NativeDaemonWrapper.cpp \
 	SWIGWrapper.cpp
 
 LOCAL_C_INCLUDES :=\
