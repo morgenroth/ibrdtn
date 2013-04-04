@@ -49,7 +49,11 @@ namespace ibrcommon
 
 	void LinkManager::initialize()
 	{
-		getInstance().up();
+		static bool initialized = false;
+		if(!initialized){
+			getInstance().up();
+			initialized=true;
+		}
 	}
 
 	void LinkManager::addEventListener(const vinterface &iface, LinkManager::EventCallback *cb) throw ()

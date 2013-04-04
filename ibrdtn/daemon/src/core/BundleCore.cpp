@@ -158,7 +158,7 @@ namespace dtn
 			return _clock;
 		}
 
-		void BundleCore::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle)
+		void BundleCore::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle) throw (P2PDialupException)
 		{
 			try {
 				_connectionmanager.queue(destination, bundle);
@@ -168,6 +168,9 @@ namespace dtn
 			} catch (const dtn::net::ConnectionNotAvailableException &ex) {
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
+			} catch (const P2PDialupException&) {
+				// re-throw the P2PDialupException
+				throw;
 			} catch (const ibrcommon::Exception&) {
 				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
 			}
@@ -217,7 +220,7 @@ namespace dtn
 					if (bundle.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
 					try {
 						// check for a custody signal
-						dtn::data::PayloadBlock &payload = bundle.getBlock<dtn::data::PayloadBlock>();
+						dtn::data::PayloadBlock &payload = bundle.find<dtn::data::PayloadBlock>();
 
 						CustodySignalBlock custody;
 						custody.read(payload);
@@ -428,8 +431,7 @@ namespace dtn
 #endif
 
 			// check for invalid blocks
-			const dtn::data::Bundle::block_list &bl = b.getBlocks();
-			for (dtn::data::Bundle::block_list::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
+			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); iter++)
 			{
 				try {
 					const dtn::data::ExtensionBlock &e = dynamic_cast<const dtn::data::ExtensionBlock&>(**iter);
@@ -457,41 +459,36 @@ namespace dtn
 		void BundleCore::processBlocks(dtn::data::Bundle &b)
 		{
 			// walk through the block and process them when needed
-			const dtn::data::Bundle::block_list blist = b.getBlocks();
-
-			for (dtn::data::Bundle::block_list::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
+			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); iter++)
 			{
 				const dtn::data::Block &block = (**iter);
-				switch (block.getType())
-				{
 #ifdef WITH_BUNDLE_SECURITY
-					case dtn::security::PayloadConfidentialBlock::BLOCK_TYPE:
-					{
-						// try to decrypt the bundle
-						try {
-							dtn::security::SecurityManager::getInstance().decrypt(b);
-						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-							// decrypt needed, but no key is available
-							IBRCOMMON_LOGGER(warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
-						} catch (const dtn::security::SecurityManager::DecryptException &ex) {
-							// decrypt failed
-							IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-						}
-						break;
+				if (block.getType() == dtn::security::PayloadConfidentialBlock::BLOCK_TYPE)
+				{
+					// try to decrypt the bundle
+					try {
+						dtn::security::SecurityManager::getInstance().decrypt(b);
+					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+						// decrypt needed, but no key is available
+						IBRCOMMON_LOGGER(warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
+					} catch (const dtn::security::SecurityManager::DecryptException &ex) {
+						// decrypt failed
+						IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
+					break;
+				}
 #endif
 
 #ifdef WITH_COMPRESSION
-					case dtn::data::CompressedPayloadBlock::BLOCK_TYPE:
-					{
-						// try to decompress the bundle
-						try {
-							dtn::data::CompressedPayloadBlock::extract(b);
-						} catch (const ibrcommon::Exception&) { };
-						break;
-					}
-#endif
+				if (block.getType() == dtn::data::CompressedPayloadBlock::BLOCK_TYPE)
+				{
+					// try to decompress the bundle
+					try {
+						dtn::data::CompressedPayloadBlock::extract(b);
+					} catch (const ibrcommon::Exception&) { };
+					break;
 				}
+#endif
 			}
 		}
 

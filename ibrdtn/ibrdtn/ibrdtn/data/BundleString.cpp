@@ -22,6 +22,7 @@
 #include "ibrdtn/config.h"
 #include "ibrdtn/data/BundleString.h"
 #include "ibrdtn/data/SDNV.h"
+#include <vector>
 
 namespace dtn
 {
@@ -65,9 +66,9 @@ namespace dtn
 			
 			if (data_len > 0)
 			{
-				char data[data_len];
-				stream.read(data, data_len);
-				bstring.assign(data, data_len);
+				std::vector<char> data(data_len);
+				stream.read(&data[0], data.size());
+				bstring.assign(&data[0], data.size());
 			}
 
 			return stream;

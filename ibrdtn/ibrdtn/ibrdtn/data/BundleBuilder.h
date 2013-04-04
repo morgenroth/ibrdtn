@@ -10,6 +10,7 @@
 
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/Block.h>
+#include <iterator>
 #include <stdlib.h>
 
 namespace dtn
@@ -43,7 +44,7 @@ namespace dtn
 			/**
 			 * Add a block to the bundle.
 			 */
-			dtn::data::Block& insert(char block_type, size_t procflags);
+			dtn::data::Block& insert(dtn::data::block_t block_type, size_t procflags);
 
 		private:
 			Bundle *_target;
@@ -78,18 +79,13 @@ namespace dtn
 					return block;
 				}
 
-				try {
-					dtn::data::Block &prev_block = _target->getBlock(_pos-1);
+				dtn::data::Bundle::iterator it = _target->begin();
+				std::advance(it, _pos-1);
 
-					T &block = _target->insert<T>(prev_block);
-					block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
-					return block;
-				} catch (const std::exception &ex) {
-					T &block = _target->push_back<T>();
-					block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
-					return block;
-				}
-				break;
+				T &block = (it == _target->end()) ? _target->push_back<T>() : _target->insert<T>(it);
+
+				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				return block;
 			}
 		}
 	} /* namespace data */

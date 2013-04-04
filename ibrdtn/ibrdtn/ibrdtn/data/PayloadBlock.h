@@ -34,7 +34,7 @@ namespace dtn
 		class PayloadBlock : public Block
 		{
 		public:
-			static const char BLOCK_TYPE = 1;
+			static const dtn::data::block_t BLOCK_TYPE;
 
 			PayloadBlock();
 			PayloadBlock(ibrcommon::BLOB::Reference ref);

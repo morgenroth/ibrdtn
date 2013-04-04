@@ -25,6 +25,7 @@
 #include <streambuf>
 #include <iostream>
 #include <memory>
+#include <vector>
 #include <openssl/ssl.h>
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/data/File.h"
@@ -119,9 +120,9 @@ namespace ibrcommon
 		ibrcommon::Mutex _activation_lock;
 
 		// Input buffer
-		char *in_buf_;
+		std::vector<char> in_buf_;
 		// Output buffer
-		char *out_buf_;
+		std::vector<char> out_buf_;
 
 		std::iostream *_stream;
 		/* indicates if this node is the server in the underlying tcp connection */

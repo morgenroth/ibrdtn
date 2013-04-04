@@ -153,7 +153,7 @@ int main(int argc, char** argv)
             	dtn::data::Bundle b = client.getBundle();
 
             	// get the reference to the blob
-            	ibrcommon::BLOB::Reference ref = b.getBlock<dtn::data::PayloadBlock>().getBLOB();
+            	ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 
                 // create the extract command
                 stringstream cmdstream; cmdstream << "tar -x -C " << conf["inbox"];

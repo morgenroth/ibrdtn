@@ -33,6 +33,8 @@ namespace dtn
 		class LOWPANDatagramService : public dtn::net::DatagramService
 		{
 		public:
+			static const std::string TAG;
+
 			LOWPANDatagramService(const ibrcommon::vinterface &iface, int panid);
 			virtual ~LOWPANDatagramService();
 

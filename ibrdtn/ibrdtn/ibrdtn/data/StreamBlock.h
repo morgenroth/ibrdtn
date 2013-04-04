@@ -41,7 +41,7 @@ namespace dtn
 				virtual dtn::data::Block* create();
 			};
 
-			static const char BLOCK_TYPE = 242;
+			static const dtn::data::block_t BLOCK_TYPE;
 
 			enum STREAM_FLAGS
 			{

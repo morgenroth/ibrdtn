@@ -65,7 +65,7 @@ void TestSerializer::serializer_separate01(void)
 	dtn::data::SeparateDeserializer(ss1, b2).readBlock();
 	dtn::data::SeparateDeserializer(ss2, b2).readBlock();
 
-	CPPUNIT_ASSERT_EQUAL( b2.getBlocks().size(), b.getBlocks().size() );
+	CPPUNIT_ASSERT_EQUAL( b2.size(), b.size() );
 }
 
 void TestSerializer::serializer_cbhe01(void)
@@ -171,8 +171,7 @@ void TestSerializer::serializer_block_length(void)
 	b.push_back(ref);
 	b.push_front<dtn::data::AgeBlock>();
 
-	const dtn::data::Bundle::block_list blocks = b.getBlocks();
-	for (dtn::data::Bundle::block_list::const_iterator iter = blocks.begin(); iter != blocks.end(); iter++)
+	for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); iter++)
 	{
 		const dtn::data::Block &block = (**iter);
 
@@ -256,7 +255,7 @@ void TestSerializer::serializer_fragment_one(void)
 		dtn::data::Bundle fb;
 		dtn::data::DefaultDeserializer(ss) >> fb;
 		CPPUNIT_ASSERT(fb.get(dtn::data::PrimaryBlock::FRAGMENT));
-		CPPUNIT_ASSERT_EQUAL(fb.getBlock<dtn::data::PayloadBlock>().getLength(), (size_t)100);
+		CPPUNIT_ASSERT_EQUAL(fb.find<dtn::data::PayloadBlock>().getLength(), (size_t)100);
 	}
 }
 

@@ -22,6 +22,7 @@
 #include "Random.h"
 #include <time.h>
 #include <stdlib.h>
+#include <vector>
 
 namespace dtn
 {
@@ -40,14 +41,13 @@ namespace dtn
 		const std::string Random::gen_chars(size_t size) const
 		{
 			static const char text[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-			char dst[size];
+			std::vector<char> dst(size);
 			int i, len = size - 1;
-			for ( i = 0; i < len; ++i )
+			for ( i = 0; i <= len; ++i )
 			{
 				dst[i] = text[rand() % (sizeof text - 1)];
 			}
-			dst[i] = '\0';
-			return dst;
-		};
+			return std::string(dst.begin(), dst.end());
+		}
 	}
 }

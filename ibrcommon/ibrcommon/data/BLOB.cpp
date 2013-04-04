@@ -28,6 +28,7 @@
 #include <string.h>
 #include <cstring>
 #include <cerrno>
+#include <vector>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -51,7 +52,8 @@ namespace ibrcommon
 	std::ostream& BLOB::copy(std::ostream &output, std::istream &input, const size_t size, const size_t buffer_size)
 	{
 		// read payload
-		char buffer[buffer_size];
+		std::vector<char> buffer(buffer_size);
+
 		size_t remain = size;
 
 		while (remain > 0)
@@ -95,11 +97,11 @@ namespace ibrcommon
 				// read the full buffer size of less?
 				if (remain > buffer_size)
 				{
-					input.read(buffer, buffer_size);
+					input.read(&buffer[0], buffer_size);
 				}
 				else
 				{
-					input.read(buffer, remain);
+					input.read(&buffer[0], remain);
 				}
 
 				// retry if the read failed
@@ -107,7 +109,7 @@ namespace ibrcommon
 			}
 
 			// write the bytes to the BLOB
-			output.write(buffer, input.gcount());
+			output.write(&buffer[0], input.gcount());
 
 			// shrink the remaining bytes by the red bytes
 			remain -= input.gcount();
@@ -132,7 +134,7 @@ namespace ibrcommon
 	}
 
 	BLOB::Provider::~Provider()
-	{ };
+	{ }
 
 	BLOB::ProviderRef::ProviderRef(Provider *provider, bool auto_delete)
 	 : _provider(provider), _auto_delete(auto_delete)
@@ -319,7 +321,7 @@ namespace ibrcommon
 	}
 
 	FileBLOBProvider::TmpFileBLOB::TmpFileBLOB(const File &tmppath)
-	 : BLOB(), _filestream()
+	 : BLOB(), _filestream(), _fd(0)
 	{
 		// check if path is a directory
 		if (!tmppath.isDirectory())

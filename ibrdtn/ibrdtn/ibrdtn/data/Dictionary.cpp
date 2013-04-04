@@ -27,6 +27,7 @@
 #include <stdexcept>
 #include <string.h>
 #include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -50,11 +51,9 @@ namespace data
 		add(bundle._custodian);
 
 		// add EID of all secondary blocks
-		const Bundle::block_list &list = bundle.getBlocks();
-
-		for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+		for (Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); iter++)
 		{
-			const Block &b = (*(*iter));
+			const Block &b = (**iter);
 			add( b.getEIDList() );
 		}
 	}
@@ -200,9 +199,9 @@ namespace data
 			throw dtn::InvalidDataException("Dictionary size is zero!");
 
 		obj._bytestream.str("");
-		char data[length.getValue()];
-		stream.read(data, length.getValue());
-		obj._bytestream.write(data, length.getValue());
+		std::vector<char> data(length.getValue());
+		stream.read(&data[0], data.size());
+		obj._bytestream.write(&data[0], data.size());
 
 		return stream;
 	}

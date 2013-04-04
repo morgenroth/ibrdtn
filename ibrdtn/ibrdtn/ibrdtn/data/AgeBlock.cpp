@@ -25,6 +25,8 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t AgeBlock::BLOCK_TYPE = 10;
+
 		dtn::data::Block* AgeBlock::Factory::create()
 		{
 			return new AgeBlock();
@@ -89,7 +91,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& AgeBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& AgeBlock::deserialize(std::istream &stream, const size_t)
 		{
 			stream >> _age;
 			_time.start();

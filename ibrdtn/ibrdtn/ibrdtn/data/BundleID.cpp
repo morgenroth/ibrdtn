@@ -28,7 +28,7 @@ namespace dtn
 {
 	namespace data
 	{
-		BundleID::BundleID(const dtn::data::EID s, const size_t t, const size_t sq, const bool f, const size_t o)
+		BundleID::BundleID(const dtn::data::EID s, const uint64_t t, const uint64_t sq, const bool f, const uint64_t o)
 		: source(s), timestamp(t), sequencenumber(sq), fragment(f), offset(o)
 		{
 		}
@@ -86,11 +86,6 @@ namespace dtn
 			}
 
 			return true;
-		}
-
-		size_t BundleID::getTimestamp() const
-		{
-			return timestamp;
 		}
 
 		string BundleID::toString() const

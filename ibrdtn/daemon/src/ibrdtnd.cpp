@@ -70,9 +70,7 @@
 #include "EchoWorker.h"
 #include "CapsuleWorker.h"
 #include "DTNTPWorker.h"
-#include "Notifier.h"
 #include "DevNull.h"
-#include "StatisticLogger.h"
 #include "Component.h"
 
 #ifdef WITH_BUNDLE_SECURITY
@@ -341,7 +339,7 @@ int ibrdtn_daemon_initialize_convergencelayer()
 					}
 
 					try {
-						tcpcl->bind(net.iface, net.port);
+						tcpcl->add(net.iface, net.port);
 
 						if (it == _cl_map.end()) {
 							core.getConnectionManager().add(tcpcl);
@@ -503,12 +501,6 @@ int ibrdtn_daemon_initialize_global_variables() {
 int ibrdtn_daemon_initialize_components() {
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 	std::list< dtn::daemon::Component* > &components = __ibrdtn_daemon_components;
-
-	// create a notifier if configured
-	try {
-		__ibrdtn_daemon_components.push_back( new dtn::daemon::Notifier( conf.getNotifyCommand() ) );
-	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-	}
 
 	if (conf.getNetwork().doFragmentation())
 	{
@@ -693,47 +685,6 @@ int ibrdtn_daemon_initialize_api() {
 	return 0;
 }
 
-int ibrdtn_daemon_initialize_stat_logging() {
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	std::list< dtn::daemon::Component* > &components = __ibrdtn_daemon_components;
-
-	// create a statistic logger if configured
-	if (conf.getStatistic().enabled())
-	{
-		try {
-			if (conf.getStatistic().type() == "stdout")
-			{
-				components.push_back( new dtn::daemon::StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatistic().interval() ) );
-			}
-			else if (conf.getStatistic().type() == "syslog")
-			{
-				components.push_back( new dtn::daemon::StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_SYSLOG, conf.getStatistic().interval() ) );
-			}
-			else if (conf.getStatistic().type() == "plain")
-			{
-				components.push_back( new dtn::daemon::StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_PLAIN, conf.getStatistic().interval(), conf.getStatistic().logfile() ) );
-			}
-			else if (conf.getStatistic().type() == "csv")
-			{
-				components.push_back( new dtn::daemon::StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_CSV, conf.getStatistic().interval(), conf.getStatistic().logfile() ) );
-			}
-			else if (conf.getStatistic().type() == "stat")
-			{
-				components.push_back( new dtn::daemon::StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_STAT, conf.getStatistic().interval(), conf.getStatistic().logfile() ) );
-			}
-			else if (conf.getStatistic().type() == "udp")
-			{
-				components.push_back( new dtn::daemon::StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_UDP, conf.getStatistic().interval(), conf.getStatistic().address(), conf.getStatistic().port() ) );
-			}
-		} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-			IBRCOMMON_LOGGER_TAG("Init", error) << "StatisticLogger: Parameter statistic_file is not set! Fallback to stdout logging." << IBRCOMMON_LOGGER_ENDL;
-			components.push_back( new dtn::daemon::StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatistic().interval() ) );
-		}
-	}
-
-	return 0;
-}
-
 int ibrdtn_daemon_initialize() {
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 	std::list< dtn::daemon::Component* > &components = __ibrdtn_daemon_components;
@@ -799,12 +750,6 @@ int ibrdtn_daemon_initialize() {
 	}
 
 	if ((ret = ibrdtn_daemon_initialize_api()) != 0)
-	{
-		// error
-		return ret;
-	}
-
-	if ((ret = ibrdtn_daemon_initialize_stat_logging()) != 0)
 	{
 		// error
 		return ret;
@@ -933,6 +878,9 @@ int ibrdtn_daemon_main_loop()
 	{
 		delete (*iter);
 	}
+
+	// clear the list of all components
+	components.clear();
 
 	IBRCOMMON_LOGGER_TAG("shutdown", info) << "shutdown complete" << IBRCOMMON_LOGGER_ENDL;
 

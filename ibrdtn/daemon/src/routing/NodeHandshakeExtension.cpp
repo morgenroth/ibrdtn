@@ -241,7 +241,7 @@ namespace dtn
 		void NodeHandshakeExtension::processHandshake(const dtn::data::Bundle &bundle)
 		{
 			// read the ecm
-			const dtn::data::PayloadBlock &p = bundle.getBlock<dtn::data::PayloadBlock>();
+			const dtn::data::PayloadBlock &p = bundle.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference ref = p.getBLOB();
 			NodeHandshake handshake;
 

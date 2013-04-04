@@ -40,7 +40,7 @@ namespace dtn
 		void EchoWorker::callbackBundleReceived(const Bundle &b)
 		{
 			try {
-				const PayloadBlock &payload = b.getBlock<PayloadBlock>();
+				const PayloadBlock &payload = b.find<PayloadBlock>();
 
 				// generate a echo
 				Bundle echo;
@@ -60,7 +60,7 @@ namespace dtn
 				echo._lifetime = b._lifetime;
 
 				try {
-					const dtn::data::TrackingBlock &tracking = b.getBlock<dtn::data::TrackingBlock>();
+					const dtn::data::TrackingBlock &tracking = b.find<dtn::data::TrackingBlock>();
 					dtn::data::TrackingBlock &target = echo.push_back<dtn::data::TrackingBlock>();
 
 					// copy tracking block

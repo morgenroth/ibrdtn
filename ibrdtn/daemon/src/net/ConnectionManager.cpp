@@ -214,6 +214,18 @@ namespace dtn
 			_cl.erase( cl );
 		}
 
+		void ConnectionManager::add(P2PDialupExtension *ext)
+		{
+			ibrcommon::MutexLock l(_dialup_lock);
+			_dialups.insert(ext);
+		}
+
+		void ConnectionManager::remove(P2PDialupExtension *ext)
+		{
+			ibrcommon::MutexLock l(_dialup_lock);
+			_dialups.erase(ext);
+		}
+
 		void ConnectionManager::discovered(const dtn::core::Node &node)
 		{
 			// ignore messages of ourself
@@ -333,6 +345,32 @@ namespace dtn
 			throw ConnectionNotAvailableException();
 		}
 
+		void ConnectionManager::dialup(const dtn::core::Node &n)
+		{
+			// search for p2p_dialup connections
+			ibrcommon::MutexLock l(_cl_lock);
+
+			// get the list of all available URIs
+			std::list<Node::URI> uri_list = n.get(Node::NODE_P2P_DIALUP);
+
+			// trigger p2p_dialup connections
+			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); it++)
+			{
+				const dtn::core::Node::URI &uri = (*it);
+
+				ibrcommon::MutexLock l(_dialup_lock);
+				for (std::set<P2PDialupExtension*>::iterator iter = _dialups.begin(); iter != _dialups.end(); iter++)
+				{
+					P2PDialupExtension &p2pext = (**iter);
+
+					if (uri.protocol == p2pext.getProtocol()) {
+						// trigger connection set-up
+						p2pext.connect(uri);
+					}
+				}
+			}
+		}
+
 		void ConnectionManager::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
@@ -359,6 +397,9 @@ namespace dtn
 				}
 			}
 
+			// throw dial-up exception if there are P2P dial-up connections available
+			if (node.hasDialup()) throw P2PDialupException();
+
 			throw ConnectionNotAvailableException();
 		}
 
@@ -381,7 +422,16 @@ namespace dtn
 			// queue to a node
 			const Node &n = getNode(job._destination);
 			IBRCOMMON_LOGGER_DEBUG(2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
-			queue(n, job);
+
+			try {
+				queue(n, job);
+			} catch (const P2PDialupException&) {
+				// trigger the dial-up connection
+				dialup(n);
+
+				// re-throw P2PDialupException
+				throw;
+			}
 		}
 
 		void ConnectionManager::queue(const dtn::data::EID &eid, const dtn::data::BundleID &b)

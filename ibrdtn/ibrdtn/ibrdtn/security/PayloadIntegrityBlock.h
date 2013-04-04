@@ -53,7 +53,7 @@ namespace dtn
 				};
 
 				/** The block type of this class. */
-				static const char BLOCK_TYPE = SecurityBlock::PAYLOAD_INTEGRITY_BLOCK;
+				static const dtn::data::block_t BLOCK_TYPE;
 				
 				/** frees the internal PKEY object, without deleting the rsa object 
 				given in the constructor */

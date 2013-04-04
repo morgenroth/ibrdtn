@@ -167,11 +167,11 @@ namespace dtn
 			BundleStorage(size_t maxsize);
 
 			void allocSpace(size_t size) throw (StorageSizeExeededException);
-			void freeSpace(size_t size);
-			void clearSpace();
+			void freeSpace(size_t size) throw ();
+			void clearSpace() throw ();
 
-			void eventBundleAdded(const dtn::data::MetaBundle &b);
-			void eventBundleRemoved(const dtn::data::BundleID &id);
+			void eventBundleAdded(const dtn::data::MetaBundle &b) throw ();
+			void eventBundleRemoved(const dtn::data::BundleID &id) throw ();
 
 		private:
 			ibrcommon::Mutex _sizelock;

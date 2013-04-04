@@ -135,14 +135,6 @@ namespace dtn
 			std::string version();
 
 			/**
-			 * The keyword "notify_cmd" can define an external application which
-			 * is called by some events. This could be used to notify the user
-			 * of some events of interest.
-			 * @return A path to the notify command.
-			 */
-			std::string getNotifyCommand();
-
-			/**
 			 * Get the type of bundle storage to use.
 			 * @return
 			 */
@@ -190,46 +182,6 @@ namespace dtn
 				int port() const;
 				unsigned int timeout() const;
 				bool enableCrosslayer() const;
-			};
-
-			class Statistic : public Configuration::Extension
-			{
-				friend class Configuration;
-			protected:
-				Statistic();
-				virtual ~Statistic();
-				void load(const ibrcommon::ConfigFile &conf);
-
-			public:
-				/**
-				 * @return True, if the statistic logger is activated.
-				 */
-				bool enabled() const;
-
-				/**
-				 * @return The file for statistic log output.
-				 */
-				ibrcommon::File logfile() const throw (ParameterNotSetException);
-
-				/**
-				 * @return The type of the statistic logger.
-				 */
-				std::string type() const;
-
-				/**
-				 * @return The interval for statistic log refresh.
-				 */
-				unsigned int interval() const;
-
-				/**
-				 * @return The address for UDP statistics
-				 */
-				std::string address() const;
-
-				/**
-				 * @return The port for UDP statistics
-				 */
-				unsigned int port() const;
 			};
 
 			class Debug : public Configuration::Extension
@@ -455,7 +407,6 @@ namespace dtn
 				 */
 				bool TLSRequired() const;
 
-#ifdef WITH_BUNDLE_SECURITY
 				enum Level
 				{
 					SECURITY_LEVEL_NONE = 0,
@@ -463,28 +414,31 @@ namespace dtn
 					SECURITY_LEVEL_ENCRYPTED = 2
 				};
 
+				/**
+				 * Get the configured security level
+				 */
 				Level getLevel() const;
 
+				/**
+				 * Get the path to security related files
+				 */
 				const ibrcommon::File& getPath() const;
 
+				/**
+				 * Get the path to the default BAB key
+				 */
 				const ibrcommon::File& getBABDefaultKey() const;
 
-			private:
-				ibrcommon::File _path;
-				Level _level;
-				ibrcommon::File _bab_default_key;
-#endif
-#if defined WITH_BUNDLE_SECURITY || defined WITH_TLS
-			public:
+				/**
+				 * Get the path to the TLS certificate
+				 */
 				const ibrcommon::File& getCertificate() const;
 
+				/**
+				 * Get the path to the private TLS key
+				 */
 				const ibrcommon::File& getKey() const;
-			private:
-				ibrcommon::File _cert;
-				ibrcommon::File _key;
-#endif
-#ifdef WITH_TLS
-			public:
+
 				/*!
 				 * \brief Read the path for trusted Certificates from the Configuration.
 				 * \return A file object for the path
@@ -498,9 +452,26 @@ namespace dtn
 				bool TLSEncryptionDisabled() const;
 
 			private:
+				// security related files
+				ibrcommon::File _path;
+
+				// security level
+				Level _level;
+
+				// local BAB key
+				ibrcommon::File _bab_default_key;
+
+				// TLS certificate
+				ibrcommon::File _cert;
+
+				// TLS private key
+				ibrcommon::File _key;
+
+				// TLS trusted CA path
 				ibrcommon::File _trustedCAPath;
+
+				// TLS encryption disabled?
 				bool _disableEncryption;
-#endif
 			};
 
 			class Daemon : public Configuration::Extension
@@ -695,7 +666,6 @@ namespace dtn
 			};
 
 			const Configuration::Discovery& getDiscovery() const;
-			const Configuration::Statistic& getStatistic() const;
 			const Configuration::Debug& getDebug() const;
 			const Configuration::Logger& getLogger() const;
 			const Configuration::Network& getNetwork() const;
@@ -707,7 +677,6 @@ namespace dtn
 		private:
 			ibrcommon::ConfigFile _conf;
 			Configuration::Discovery _disco;
-			Configuration::Statistic _stats;
 			Configuration::Debug _debug;
 			Configuration::Logger _logger;
 			Configuration::Network _network;

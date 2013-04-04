@@ -64,6 +64,8 @@ namespace dtn
 				return "Node " + getNode().toString() + " available ";
 			case NODE_UNAVAILABLE:
 				return "Node " + getNode().toString() + " unavailable";
+			case NODE_UPDATED:
+				return "Node " + getNode().toString() + " updated";
 			default:
 				return "unknown";
 			}

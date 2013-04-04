@@ -132,7 +132,7 @@ namespace dtn
 
 		AbstractWorker::AbstractWorker() : _thread(*this)
 		{
-		};
+		}
 
 		void AbstractWorker::subscribe(const dtn::data::EID &endpoint)
 		{
@@ -166,7 +166,7 @@ namespace dtn
 		AbstractWorker::~AbstractWorker()
 		{
 			shutdown();
-		};
+		}
 
 		void AbstractWorker::shutdown()
 		{

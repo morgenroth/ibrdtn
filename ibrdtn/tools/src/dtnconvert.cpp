@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 			std::cout << "sequence number: " << b._sequencenumber << std::endl;
 			std::cout << "lifetime: " << b._lifetime << std::endl;
 
-			const dtn::data::PayloadBlock &pblock = b.getBlock<dtn::data::PayloadBlock>();
+			const dtn::data::PayloadBlock &pblock = b.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference ref = pblock.getBLOB();
 
 			// this part is protected agains other threads

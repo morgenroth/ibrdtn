@@ -47,15 +47,13 @@ namespace dtn
 			// serialize the primary block
 			(*this) << (dtn::data::PrimaryBlock&)obj;
 
-			// serialize all secondary blocks
-			const dtn::data::Bundle::block_list &list = obj.getBlocks();
-
 			// block count
-			_stream << "Blocks: " << list.size() << std::endl;
+			_stream << "Blocks: " << obj.size() << std::endl;
 
-			for (dtn::data::Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			// serialize all secondary blocks
+			for (dtn::data::Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
 			{
-				const dtn::data::Block &b = (*(*iter));
+				const dtn::data::Block &b = (**iter);
 				_stream << std::endl;
 				(*this) << b;
 			}
@@ -178,17 +176,17 @@ namespace dtn
 			return *this;
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::Bundle &obj)
+		size_t PlainSerializer::getLength(const dtn::data::Bundle&)
 		{
 			return 0;
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::PrimaryBlock &obj) const
+		size_t PlainSerializer::getLength(const dtn::data::PrimaryBlock&) const
 		{
 			return 0;
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::Block &obj) const
+		size_t PlainSerializer::getLength(const dtn::data::Block&) const
 		{
 			return 0;
 		}
@@ -207,7 +205,7 @@ namespace dtn
 			dtn::data::BundleBuilder builder(obj);
 
 			// clear all blocks
-			obj.clearBlocks();
+			obj.clear();
 
 			// read the primary block
 			(*this) >> (dtn::data::PrimaryBlock&)obj;

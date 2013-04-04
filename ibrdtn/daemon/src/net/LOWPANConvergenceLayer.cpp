@@ -50,7 +50,7 @@ namespace dtn
 	{
 		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, unsigned int mtu)
 			: DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-			_net(net), _panid(panid), _ipnd_buf(new char[BUFF_SIZE]), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
+			_net(net), _panid(panid), _ipnd_buf(BUFF_SIZE), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
 		{
 			// convert the panid into a string
 			std::stringstream ss;
@@ -63,7 +63,6 @@ namespace dtn
 		LOWPANConvergenceLayer::~LOWPANConvergenceLayer()
 		{
 			componentDown();
-			delete[] _ipnd_buf;
 		}
 
 		dtn::core::Node::Protocol LOWPANConvergenceLayer::getDiscoveryProtocol() const
@@ -230,9 +229,9 @@ namespace dtn
 				}
 			}
 			// Set extended header bit. Everything else 0
-			_ipnd_buf[0] =  0x08;
+			_ipnd_buf[0] = 0x08;
 			// Set discovery bit in extended header
-			_ipnd_buf[1] = 0x80;
+			_ipnd_buf[1] = (char)0x80;
 
 			// serialize announcement
 			stringstream ss;
@@ -243,10 +242,10 @@ namespace dtn
 				IBRCOMMON_LOGGER(error) << "Discovery announcement to big (" << len << ")" << IBRCOMMON_LOGGER_ENDL;
 
 			// copy data infront of the 2 byte header
-			memcpy(_ipnd_buf+2, ss.str().c_str(), len);
+			memcpy(&_ipnd_buf[2], ss.str().c_str(), len);
 
 			// send out broadcast frame
-			send_cb(_ipnd_buf, len + 2, _addr_broadcast);
+			send_cb(&_ipnd_buf[0], len + 2, _addr_broadcast);
 		}
 
 		void LOWPANConvergenceLayer::componentRun() throw ()
@@ -260,14 +259,14 @@ namespace dtn
 					for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
 						ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**iter);
 
-						char data[m_maxmsgsize];
+						std::vector<char> data(m_maxmsgsize);
 						char header;
 
 						// place to store the peer address
 						ibrcommon::vaddress peeraddr;
 
 						// Receive full frame from socket
-						int len = sock.recvfrom(data, m_maxmsgsize, 0, peeraddr);
+						int len = sock.recvfrom(&data[0], m_maxmsgsize, 0, peeraddr);
 
 						IBRCOMMON_LOGGER_DEBUG(40) << "Received IEEE 802.15.4 frame from " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -282,7 +281,7 @@ namespace dtn
 						if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {
 							DiscoveryAnnouncement announce;
 							stringstream ss;
-							ss.write(data+2, len-2);
+							ss.write(&data[2], len-2);
 							ss >> announce;
 							DiscoveryAgent::received(announce.getEID(), announce.getServices(), 30);
 							continue;
@@ -294,7 +293,7 @@ namespace dtn
 						LOWPANConnection* connection = getConnection(peeraddr);
 
 						// Decide in which queue to write based on the src address
-						connection->getStream().queue(data, len);
+						connection->getStream().queue(&data[0], len);
 					}
 				} catch (const ibrcommon::vsocket_interrupt&) {
 					return;

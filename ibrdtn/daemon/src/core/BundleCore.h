@@ -48,6 +48,14 @@ namespace dtn
 {
 	namespace core
 	{
+		class P2PDialupException : public ibrcommon::Exception
+		{
+			public:
+				P2PDialupException(string what = "No path known except of dial-up connections.") throw() : Exception(what)
+				{
+				};
+		};
+
 		/**
 		 * The BundleCore manage the Bundle Protocol basics
 		 */
@@ -66,7 +74,7 @@ namespace dtn
 			void setRouter(dtn::routing::BaseRouter *router);
 			dtn::routing::BaseRouter& getRouter() const;
 
-			void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle);
+			void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle) throw (P2PDialupException);
 
 			/**
 			 * Make the connection manager available to other modules.

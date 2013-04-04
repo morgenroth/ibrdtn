@@ -6,6 +6,7 @@
  */
 
 #include "ibrdtn/data/BundleBuilder.h"
+#include <iterator>
 
 namespace dtn
 {
@@ -45,18 +46,13 @@ namespace dtn
 					return block;
 				}
 
-				try {
-					dtn::data::Block &prev_block = _target->getBlock(_pos-1);
+				dtn::data::Bundle::iterator it = _target->begin();
+				std::advance(it, _pos-1);
 
-					dtn::data::Block &block = _target->insert(f, prev_block);
-					block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
-					return block;
-				} catch (const std::exception &ex) {
-					dtn::data::Block &block = _target->push_back(f);
-					block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
-					return block;
-				}
-				break;
+				dtn::data::Block &block = (it == _target->end()) ? _target->push_back(f) : _target->insert(it, f);
+
+				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				return block;
 			}
 		}
 
@@ -65,43 +61,35 @@ namespace dtn
 			return _alignment;
 		}
 
-		dtn::data::Block& BundleBuilder::insert(char block_type, size_t procflags)
+		dtn::data::Block& BundleBuilder::insert(dtn::data::block_t block_type, size_t procflags)
 		{
-			switch (block_type)
+			// exit if the block type is zero
+			if (block_type == 0) throw dtn::InvalidDataException("block type is zero");
+
+			if (block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
 			{
-				case 0:
-				{
-					throw dtn::InvalidDataException("block type is zero");
-					break;
-				}
+				// use standard payload routines to add a payload block
+				return insert<dtn::data::PayloadBlock>(procflags);
+			}
+			else
+			{
+				// get a extension block factory
+				try {
+					ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+					return insert(f, procflags);
+				} catch (const ibrcommon::Exception &ex) {
+					dtn::data::ExtensionBlock &block = insert<dtn::data::ExtensionBlock>(procflags);
 
-				case dtn::data::PayloadBlock::BLOCK_TYPE:
-				{
-					return insert<dtn::data::PayloadBlock>(procflags);
-					break;
-				}
+					// set block type of this unknown block
+					block.setType(block_type);
 
-				default:
-				{
-					// get a extension block factory
-					try {
-						ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
-						return insert(f, procflags);
-					} catch (const ibrcommon::Exception &ex) {
-						dtn::data::ExtensionBlock &block = insert<dtn::data::ExtensionBlock>(procflags);
-
-						// set block type of this unknown block
-						block.setType(block_type);
-
-						if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
-						{
-							// remove the block
-							_target->remove(block);
-						}
-
-						return block;
+					if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
+					{
+						// remove the block
+						_target->remove(block);
 					}
-					break;
+
+					return block;
 				}
 			}
 		}

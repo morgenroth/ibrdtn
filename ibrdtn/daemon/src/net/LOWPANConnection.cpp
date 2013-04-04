@@ -48,7 +48,7 @@ namespace dtn
 	namespace net
 	{
 		LOWPANConnection::LOWPANConnection(const ibrcommon::vaddress &address, LOWPANConvergenceLayer &cl)
-			: _address(address), _stream(cl, address), _sender(_stream), _cl(cl)
+			: _address(address), _sender(_stream), _stream(cl, address), _cl(cl)
 		{
 		}
 

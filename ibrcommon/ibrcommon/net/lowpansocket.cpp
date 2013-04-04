@@ -43,7 +43,7 @@ extern "C" {
 #include "ibrcommon/net/ieee802154.h"
 #include "ibrcommon/link/nl802154.h"
 extern struct nla_policy ieee802154_policy[IEEE802154_ATTR_MAX + 1];
-};
+}
 
 namespace ibrcommon
 {
@@ -171,7 +171,7 @@ namespace ibrcommon
 		unsigned char *buf = NULL;
 		struct sockaddr_nl nla;
 		struct nlattr *attrs[IEEE802154_ATTR_MAX+1];
-		struct genlmsghdr *ghdr;
+		//struct genlmsghdr *ghdr;
 		struct nlmsghdr *nlh;
 		struct nl_msg *msg;
 		int family;
@@ -193,7 +193,7 @@ namespace ibrcommon
 		nl_recv(nl, &nla, &buf, NULL);
 		nlh = (struct nlmsghdr*)buf;
 		genlmsg_parse(nlh, 0, attrs, IEEE802154_ATTR_MAX, ieee802154_policy);
-		ghdr = (genlmsghdr*)nlmsg_data(nlh);
+		//ghdr = (genlmsghdr*)nlmsg_data(nlh);
 		if (!attrs[IEEE802154_ATTR_SHORT_ADDR] || !attrs[IEEE802154_ATTR_SHORT_ADDR])
 			return;
 

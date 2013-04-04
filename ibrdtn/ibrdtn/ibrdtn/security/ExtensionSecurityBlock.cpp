@@ -25,6 +25,7 @@
 #include "ibrdtn/data/Bundle.h"
 #include <openssl/err.h>
 #include <openssl/rsa.h>
+#include <algorithm>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -34,6 +35,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const dtn::data::block_t ExtensionSecurityBlock::BLOCK_TYPE = SecurityBlock::EXTENSION_SECURITY_BLOCK;
+
 		dtn::data::Block* ExtensionSecurityBlock::Factory::create()
 		{
 			return new ExtensionSecurityBlock();
@@ -48,7 +51,7 @@ namespace dtn
 		{
 		}
 
-		void ExtensionSecurityBlock::encrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::data::Block &block, const dtn::data::EID& source, const dtn::data::EID& destination)
+		void ExtensionSecurityBlock::encrypt(dtn::data::Bundle& bundle, const SecurityKey &key, dtn::data::Bundle::iterator it, const dtn::data::EID& source, const dtn::data::EID& destination)
 		{
 			uint32_t salt = 0;
 
@@ -59,7 +62,7 @@ namespace dtn
 			unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes];
 			createSaltAndKey(salt, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes);
 
-			dtn::security::ExtensionSecurityBlock& esb = SecurityBlock::encryptBlock<ExtensionSecurityBlock>(bundle, block, salt, ephemeral_key);
+			dtn::security::ExtensionSecurityBlock& esb = SecurityBlock::encryptBlock<ExtensionSecurityBlock>(bundle, it, salt, ephemeral_key);
 
 			// set the source and destination address of the new block
 			if (source != bundle._source) esb.setSecuritySource( source );
@@ -74,8 +77,10 @@ namespace dtn
 			key.free(rsa_key);
 		}
 
-		void ExtensionSecurityBlock::decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::security::ExtensionSecurityBlock& block)
+		void ExtensionSecurityBlock::decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, dtn::data::Bundle::iterator it)
 		{
+			const dtn::security::ExtensionSecurityBlock& block = dynamic_cast<const dtn::security::ExtensionSecurityBlock&>(**it);
+
 			// load the rsa key
 			RSA *rsa_key = key.getRSA();
 
@@ -91,20 +96,20 @@ namespace dtn
 			// get salt, convert with stringstream
 			uint32_t salt = getSalt(block._ciphersuite_params);
 
-			SecurityBlock::decryptBlock(bundle, block, salt, keydata);
+			SecurityBlock::decryptBlock(bundle, it, salt, keydata);
 		}
 
 		void ExtensionSecurityBlock::decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, uint64_t correlator)
 		{
-			const std::list<const dtn::security::ExtensionSecurityBlock*> blocks = bundle.getBlocks<ExtensionSecurityBlock>();
-
-			for (std::list<const dtn::security::ExtensionSecurityBlock*>::const_iterator it = blocks.begin(); it != blocks.end(); it++)
+			// iterate through all extension security blocks
+			dtn::data::Bundle::find_iterator find_it(bundle.begin(), ExtensionSecurityBlock::BLOCK_TYPE);
+			while (find_it.next(bundle.end()))
 			{
-				const dtn::security::ExtensionSecurityBlock &esb = (**it);
+				const dtn::security::ExtensionSecurityBlock &esb = dynamic_cast<const dtn::security::ExtensionSecurityBlock&>(**find_it);
 
 				if ((correlator == 0) || (correlator == esb._correlator))
 				{
-					decrypt(bundle, key, esb);
+					decrypt(bundle, key, find_it);
 				}
 			}
 		}

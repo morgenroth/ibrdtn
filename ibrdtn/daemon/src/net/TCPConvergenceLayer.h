@@ -26,6 +26,7 @@
 #include "Component.h"
 
 #include "core/Node.h"
+#include "core/EventReceiver.h"
 #include "net/ConvergenceLayer.h"
 #include "net/TCPConnection.h"
 #include "net/DiscoveryService.h"
@@ -34,6 +35,7 @@
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrcommon/net/vsocket.h>
 #include <ibrcommon/net/vinterface.h>
+#include <ibrcommon/thread/Mutex.h>
 
 #include <set>
 #include <list>
@@ -47,9 +49,11 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for TCP/IP.
 		 * http://tools.ietf.org/html/draft-irtf-dtnrg-tcp-clayer-02
 		 */
-		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public ConvergenceLayer, public DiscoveryServiceProvider, public ibrcommon::LinkManager::EventCallback
+		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ConvergenceLayer, public DiscoveryServiceProvider, public ibrcommon::LinkManager::EventCallback
 		{
 			friend class TCPConnection;
+
+			const static std::string TAG;
 		public:
 			/**
 			 * Constructor
@@ -64,11 +68,11 @@ namespace dtn
 			virtual ~TCPConvergenceLayer();
 
 			/**
-			 * Bind on a interface
-			 * @param net
-			 * @param port
+			 * Add an interface to this convergence layer
+			 * @param net Interface to listen on
+			 * @param port Port to listen on
 			 */
-			void bind(const ibrcommon::vinterface &net, int port);
+			void add(const ibrcommon::vinterface &net, int port) throw ();
 
 			/**
 			 * Queue a new transmission job for this convergence layer.
@@ -102,14 +106,29 @@ namespace dtn
 
 			void eventNotify(const ibrcommon::LinkEvent &evt);
 
+			/**
+			 * @see EventReceiver::raiseEvent()
+			 */
+			void raiseEvent(const Event *evt) throw ();
+
 		protected:
 			void __cancellation() throw ();
 
 			void componentUp() throw ();
-			void componentRun() throw ();;
+			void componentRun() throw ();
 			void componentDown() throw ();
 
 		private:
+			/**
+			 * Listen to a specific interface
+			 */
+			void listen(const ibrcommon::vinterface &iface, int port) throw ();
+
+			/**
+			 * Remove a specific interface
+			 */
+			void unlisten(const ibrcommon::vinterface &iface) throw ();
+
 			/**
 			 * closes all active tcp connections
 			 */
@@ -131,10 +150,15 @@ namespace dtn
 			static const int DEFAULT_PORT;
 
 			ibrcommon::vsocket _vsocket;
+			bool _vsocket_state;
 
 			ibrcommon::Conditional _connections_cond;
 			std::list<TCPConnection*> _connections;
+
+			ibrcommon::Mutex _interface_lock;
 			std::set<ibrcommon::vinterface> _interfaces;
+
+			ibrcommon::Mutex _portmap_lock;
 			std::map<ibrcommon::vinterface, unsigned int> _portmap;
 			unsigned int _any_port;
 		};

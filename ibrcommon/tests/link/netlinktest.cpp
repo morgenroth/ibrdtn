@@ -37,3 +37,9 @@ void netlinktest :: baseTest (void)
 
 	//::sleep(560);
 }
+void netlinktest::upUpTest (void)
+{
+	ibrcommon::LinkManager::initialize();
+	ibrcommon::LinkManager::initialize();
+}
+

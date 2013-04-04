@@ -297,13 +297,14 @@ namespace ibrcommon
 	std::string TemporaryFile::tmpname(const File &path, const std::string prefix)
 	{
 		std::string pattern = path.getPath() + "/" + prefix + "XXXXXX";
-		char name[pattern.length()];
-		::strcpy(name, pattern.c_str());
 
-		int fd = mkstemp(name);
+		std::vector<char> name(pattern.length());
+		::strcpy(&name[0], pattern.c_str());
+
+		int fd = mkstemp(&name[0]);
 		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
 		::close(fd);
 
-		return std::string(name);
+		return std::string(name.begin(), name.end());
 	}
 }

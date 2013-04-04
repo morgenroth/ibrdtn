@@ -26,7 +26,7 @@ namespace dtn
 	namespace routing
 	{
 		NodeHandshake::NodeHandshake()
-		 : _type(HANDSHAKE_INVALID)
+		 : _type(HANDSHAKE_INVALID), _lifetime(0)
 		{
 		}
 

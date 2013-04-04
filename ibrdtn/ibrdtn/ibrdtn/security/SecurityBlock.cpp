@@ -31,6 +31,7 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 #include <netinet/in.h>
+#include <vector>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -192,7 +193,7 @@ namespace dtn
 		}
 
 		SecurityBlock::SecurityBlock(const dtn::security::SecurityBlock::BLOCK_TYPES type)
-		: Block(type), _ciphersuite_flags(0), _correlator(0)
+		: Block(type), _ciphersuite_id(0), _ciphersuite_flags(0), _correlator(0)
 		{
 
 		}
@@ -273,12 +274,11 @@ namespace dtn
 
 		bool SecurityBlock::isCorrelatorPresent(const dtn::data::Bundle& bundle, const uint64_t correlator)
 		{
-			const dtn::data::Bundle::block_list &blocks = bundle.getBlocks();
 			bool return_val = false;
-			for (dtn::data::Bundle::block_list::const_iterator it = blocks.begin(); it != blocks.end() && !return_val; it++)
+			for (dtn::data::Bundle::const_iterator it = bundle.begin(); it != bundle.end() && !return_val; it++)
 			{
 				const dtn::data::Block &b = (**it);
-				const char type = b.getType();
+				const dtn::data::block_t type = b.getType();
 				if (type == BUNDLE_AUTHENTICATION_BLOCK
 					|| type == PAYLOAD_INTEGRITY_BLOCK
 					|| type == PAYLOAD_CONFIDENTIAL_BLOCK
@@ -350,7 +350,7 @@ namespace dtn
 			return length;
 		}
 
-		std::ostream& SecurityBlock::serialize(std::ostream &stream, size_t &length) const
+		std::ostream& SecurityBlock::serialize(std::ostream &stream, size_t &) const
 		{
 			stream << dtn::data::SDNV(_ciphersuite_id) << dtn::data::SDNV(_ciphersuite_flags);
 
@@ -372,7 +372,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::ostream& SecurityBlock::serialize_strict(std::ostream &stream, size_t &length) const
+		std::ostream& SecurityBlock::serialize_strict(std::ostream &stream, size_t &) const
 		{
 			stream << dtn::data::SDNV(_ciphersuite_id) << dtn::data::SDNV(_ciphersuite_flags);
 
@@ -394,7 +394,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& SecurityBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& SecurityBlock::deserialize(std::istream &stream, const size_t)
 		{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// recheck blocktype. if blocktype is set wrong, this will be a huge fail
@@ -429,7 +429,7 @@ namespace dtn
 					if (_eids.size() < 2)
 						throw dtn::SerializationFailedException("ciphersuite flags indicate a security destination, but it is not present");
 
-					_security_destination = (*(_eids.begin())++);
+					_security_destination = *(++_eids.begin());
 				}
 				else
 				{
@@ -534,26 +534,26 @@ namespace dtn
 		{
 			// encrypt the ephemeral key and place it in _ciphersuite_params
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(key_size < RSA_size(rsa)-41);
+			assert(key_size < (size_t)RSA_size(rsa)-41);
 #endif
-			unsigned char encrypted_key[RSA_size(rsa)];
-			int encrypted_key_len = RSA_public_encrypt(key_size, key, encrypted_key, rsa, RSA_PKCS1_OAEP_PADDING);
+			std::vector<unsigned char> encrypted_key(RSA_size(rsa));
+			int encrypted_key_len = RSA_public_encrypt(key_size, key, &encrypted_key[0], rsa, RSA_PKCS1_OAEP_PADDING);
 			if (encrypted_key_len == -1)
 			{
 				IBRCOMMON_LOGGER_ex(critical) << "failed to encrypt the symmetric AES key" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
-			security_parameter.set(SecurityBlock::key_information, std::string(reinterpret_cast<char *>(encrypted_key), encrypted_key_len));
+			security_parameter.set(SecurityBlock::key_information, std::string(reinterpret_cast<char *>(&encrypted_key[0]), encrypted_key_len));
 		}
 
 		bool SecurityBlock::getKey(const TLVList& security_parameter, unsigned char * key, size_t key_size, RSA * rsa)
 		{
 			std::string key_string = security_parameter.get(SecurityBlock::key_information);
 			// get key, convert with reinterpret_cast
-			unsigned char const * encrypted_key = reinterpret_cast<const unsigned char*>(key_string.c_str());
-			unsigned char the_key[RSA_size(rsa)];
+			const unsigned char *encrypted_key = reinterpret_cast<const unsigned char*>(key_string.c_str());
+			std::vector<unsigned char> the_key(RSA_size(rsa));
 			RSA_blinding_on(rsa, NULL);
-			int plaintext_key_len = RSA_private_decrypt(key_string.size(), encrypted_key, the_key, rsa, RSA_PKCS1_OAEP_PADDING);
+			int plaintext_key_len = RSA_private_decrypt(key_string.size(), encrypted_key, &the_key[0], rsa, RSA_PKCS1_OAEP_PADDING);
 			RSA_blinding_off(rsa);
 			if (plaintext_key_len == -1)
 			{
@@ -562,9 +562,9 @@ namespace dtn
 				return false;
 			}
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(plaintext_key_len == key_size);
+			assert((size_t)plaintext_key_len == key_size);
 #endif
-			std::copy(the_key, the_key+key_size, key);
+			std::copy(&the_key[0], &the_key[key_size], key);
 			return true;
 		}
 
@@ -597,8 +597,10 @@ namespace dtn
 			return ntohl(nsalt);
 		}
 
-		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
+		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
+			const dtn::security::SecurityBlock &block = dynamic_cast<const dtn::security::SecurityBlock&>(**it);
+
 			// the array for the extracted tag
 			unsigned char tag[ibrcommon::AES128Stream::tag_len];
 
@@ -635,18 +637,21 @@ namespace dtn
 			dtn::data::DefaultDeserializer ddser(plaintext);
 
 			// peek the block type
-			char block_type = plaintext.peek();
+			dtn::data::block_t block_type = plaintext.peek();
+
+			// get the position of "block"
+			dtn::data::Bundle::iterator b_it = bundle.find(block);
 
 			if (block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
 			{
-				dtn::data::PayloadBlock &plaintext_block = bundle.insert<dtn::data::PayloadBlock>(block);
+				dtn::data::PayloadBlock &plaintext_block = bundle.insert<dtn::data::PayloadBlock>(b_it);
 				ddser >> plaintext_block;
 			}
 			else
 			{
 				try {
 					dtn::data::ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
-					dtn::data::Block &plaintext_block = bundle.insert(f, block);
+					dtn::data::Block &plaintext_block = bundle.insert(b_it, f);
 					ddser >> plaintext_block;
 
 					plaintext_block.clearEIDs();
@@ -661,7 +666,7 @@ namespace dtn
 					copyEID(plaintext_block, plaintext_block, skip);
 
 				} catch (const ibrcommon::Exception &ex) {
-					dtn::data::ExtensionBlock &plaintext_block = bundle.insert<dtn::data::ExtensionBlock>(block);
+					dtn::data::ExtensionBlock &plaintext_block = bundle.insert<dtn::data::ExtensionBlock>(b_it);
 					ddser >> plaintext_block;
 
 					plaintext_block.clearEIDs();

@@ -142,7 +142,6 @@ namespace dtn
 			X509_NAME_ENTRY *name_entry;
 			ASN1_STRING *eid_string;
 			int lastpos = -1;
-			int entry_count;
 			unsigned char *utf8_eid;
 			int utf8_eid_len;
 

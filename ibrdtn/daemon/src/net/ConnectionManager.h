@@ -24,6 +24,7 @@
 
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
+#include "net/P2PDialupExtension.h"
 #include "net/BundleReceiver.h"
 #include "core/EventReceiver.h"
 #include <ibrdtn/data/EID.h>
@@ -70,6 +71,16 @@ namespace dtn
 			 * Remove a convergence layer
 			 */
 			void remove(ConvergenceLayer *cl);
+
+			/**
+			 * Add a p2p dial-up extension
+			 */
+			void add(P2PDialupExtension *ext);
+
+			/**
+			 * Remove a p2p dial-up extension
+			 */
+			void remove(P2PDialupExtension *ext);
 
 			void queue(const dtn::data::EID &eid, const dtn::data::BundleID &b);
 
@@ -134,6 +145,11 @@ namespace dtn
 
 		private:
 			/**
+			 * establish a dial-up connection to the given node
+			 */
+			void dialup(const dtn::core::Node &n);
+
+			/**
 			 *  queue a bundle for delivery
 			 */
 			void queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job);
@@ -166,6 +182,10 @@ namespace dtn
 
 			// contains all configured convergence layers
 			std::set<ConvergenceLayer*> _cl;
+
+			// dial-up extensions
+			ibrcommon::Mutex _dialup_lock;
+			std::set<P2PDialupExtension*> _dialups;
 
 			// mutex for the lists of nodes
 			ibrcommon::Mutex _node_lock;

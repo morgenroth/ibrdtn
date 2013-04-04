@@ -35,7 +35,7 @@ namespace dtn
 	namespace api
 	{
 		BinaryStreamClient::BinaryStreamClient(ClientHandler &client, ibrcommon::socketstream &stream)
-		 : ProtocolHandler(client, stream), _sender(*this), _connection(*this, _stream)
+		 : ProtocolHandler(client, stream), _sender(*this), _connection(*this, _stream), _lastack(0)
 		{
 		}
 

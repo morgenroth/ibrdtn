@@ -4,7 +4,8 @@ noinst_HEADERS = \
 	BaseRouterTest.hh \
 	SimpleBundleStorageTest.hh \
 	DataStorageTest.h \
-	NodeTest.hh
+	NodeTest.hh \
+	DaemonTest.hh
 	
 #	UDPConvergenceLayerTest.hh \
 #	SQLiteBundleStorageTest.hh \
@@ -43,8 +44,6 @@ noinst_HEADERS = \
 #	DiscoveryServiceTest.hh \
 #	BundleReceivedEventTest.hh \
 #	DebuggerTest.hh \
-#	NotifierTest.hh \
-#	StatisticLoggerTest.hh \
 #	NeighborDatabaseTest.hh \
 #	TransferAbortedEventTest.hh \
 #	ConnectionManagerTest.hh \
@@ -59,7 +58,8 @@ unittest_SOURCES = \
 	ConfigurationTest.cpp \
 	SimpleBundleStorageTest.cpp \
 	DataStorageTest.cpp \
-	NodeTest.cpp
+	NodeTest.cpp \
+	DaemonTest.cpp
 	
 #	UDPConvergenceLayerTest.cpp \
 #	SQLiteBundleStorageTest.cpp \

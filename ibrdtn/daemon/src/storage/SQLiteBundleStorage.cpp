@@ -193,7 +193,7 @@ namespace dtn
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-		};
+		}
 
 		void SQLiteBundleStorage::componentDown() throw ()
 		{
@@ -211,7 +211,7 @@ namespace dtn
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-		};
+		}
 
 		void SQLiteBundleStorage::__cancellation() throw ()
 		{
@@ -237,11 +237,11 @@ namespace dtn
 
 		dtn::data::Bundle SQLiteBundleStorage::get(const dtn::data::BundleID &id)
 		{
+			SQLiteDatabase::blocklist blocks;
+			dtn::data::Bundle bundle;
+
 			try {
 				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
-
-				SQLiteDatabase::blocklist blocks;
-				dtn::data::Bundle bundle;
 
 				// query the data base for the bundle
 				_database.get(id, bundle, blocks);
@@ -299,12 +299,12 @@ namespace dtn
 						} catch (const std::bad_cast&) { };
 					}
 				}
-
-				return bundle;
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
 				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::storage::NoBundleFoundException();
 			}
+
+			return bundle;
 		}
 
 		void SQLiteBundleStorage::store(const dtn::data::Bundle &bundle)
@@ -323,16 +323,13 @@ namespace dtn
 				// create a bundle id
 				const dtn::data::BundleID id(bundle);
 
-				// get all blocks of the bundle
-				const dtn::data::Bundle::block_list &blocklist = bundle.getBlocks();
-
 				// index number for order of the blocks
 				int index = 1;
 
 				// number of bytes stored
 				int storedBytes = 0;
 
-				for(dtn::data::Bundle::block_list::const_iterator it = blocklist.begin() ;it != blocklist.end(); it++)
+				for(dtn::data::Bundle::const_iterator it = bundle.begin() ;it != bundle.end(); it++)
 				{
 					const dtn::data::Block &block = (**it);
 
@@ -554,7 +551,7 @@ namespace dtn
 			eventBundleAdded(bundle);
 		}
 
-		void SQLiteBundleStorage::eventBundleExpired(const dtn::data::BundleID &id)
+		void SQLiteBundleStorage::eventBundleExpired(const dtn::data::BundleID &id) throw ()
 		{
 			// raise bundle removed event
 			eventBundleRemoved(id);

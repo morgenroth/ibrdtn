@@ -44,12 +44,12 @@ namespace dtn
 		void BundleStorage::remove(const dtn::data::Bundle &b)
 		{
 			remove(dtn::data::BundleID(b));
-		};
+		}
 
 		dtn::data::MetaBundle BundleStorage::remove(const ibrcommon::BloomFilter&)
 		{
 			throw dtn::storage::NoBundleFoundException();
-		};
+		}
 
 		const dtn::data::EID BundleStorage::acceptCustody(const dtn::data::MetaBundle &meta)
 		{
@@ -147,7 +147,7 @@ namespace dtn
 			_currentsize += size;
 		}
 
-		void BundleStorage::freeSpace(size_t size)
+		void BundleStorage::freeSpace(size_t size) throw ()
 		{
 			ibrcommon::MutexLock l(_sizelock);
 			if (size > _currentsize)
@@ -161,13 +161,13 @@ namespace dtn
 			}
 		}
 
-		void BundleStorage::clearSpace()
+		void BundleStorage::clearSpace() throw ()
 		{
 			ibrcommon::MutexLock l(_sizelock);
 			_currentsize = 0;
 		}
 
-		void BundleStorage::eventBundleAdded(const dtn::data::MetaBundle &b)
+		void BundleStorage::eventBundleAdded(const dtn::data::MetaBundle &b) throw ()
 		{
 			IBRCOMMON_LOGGER_DEBUG(2) << "add bundle to index: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -177,7 +177,7 @@ namespace dtn
 			}
 		}
 
-		void BundleStorage::eventBundleRemoved(const dtn::data::BundleID &id)
+		void BundleStorage::eventBundleRemoved(const dtn::data::BundleID &id) throw ()
 		{
 			IBRCOMMON_LOGGER_DEBUG(2) << "remove bundle from index: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 

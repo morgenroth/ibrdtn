@@ -26,18 +26,15 @@
 namespace ibrcommon
 {
 	iobuffer::iobuffer(const size_t buffer)
-	 : _eof(false), _data_size(0), _buf_size(buffer), _input_buf(new char[buffer]), _interim_buf(new char[buffer]), _output_buf(new char[buffer])
+	 : _eof(false), _data_size(0), _buf_size(buffer), _input_buf(buffer), _interim_buf(buffer), _output_buf(buffer)
 	{
 		// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 		setg(0, 0, 0);
-		setp(_input_buf, _input_buf + _buf_size - 1);
+		setp(&_input_buf[0], &_input_buf[0] + _buf_size - 1);
 	}
 
 	iobuffer::~iobuffer()
 	{
-		delete[] _input_buf;
-		delete[] _output_buf;
-		delete[] _interim_buf;
 	}
 
 	void iobuffer::finalize()
@@ -58,11 +55,11 @@ namespace ibrcommon
 
 	std::char_traits<char>::int_type iobuffer::overflow(std::char_traits<char>::int_type c)
 	{
-		char *ibegin = _input_buf;
+		char *ibegin = &_input_buf[0];
 		char *iend = pptr();
 
 		// mark the buffer as free
-		setp(_input_buf, _input_buf + _buf_size - 1);
+		setp(&_input_buf[0], &_input_buf[0] + _buf_size - 1);
 
 		if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 		{
@@ -88,7 +85,7 @@ namespace ibrcommon
 		_data_size = (iend - ibegin);
 
 		// copy the data to the interim buffer
-		::memcpy(_interim_buf, _input_buf, _data_size);
+		::memcpy(&_interim_buf[0], &_input_buf[0], _data_size);
 
 		// signal the new data
 		_data_cond.signal(true);
@@ -110,16 +107,16 @@ namespace ibrcommon
 		}
 
 		// copy the data to the output buffer
-		::memcpy(_output_buf, _interim_buf, _data_size);
+		::memcpy(&_output_buf[0], &_interim_buf[0], _data_size);
 
 		// Since the input buffer content is now valid (or is new)
 		// the get pointer should be initialized (or reset).
-		setg(_output_buf, _output_buf, _output_buf + _data_size);
+		setg(&_output_buf[0], &_output_buf[0], &_output_buf[0] + _data_size);
 
 		// signal the empty buffer
 		_data_size = 0;
 		_data_cond.signal(true);
 
-		return std::char_traits<char>::not_eof((unsigned char) _output_buf[0]);
+		return std::char_traits<char>::not_eof(_output_buf[0]);
 	}
 }

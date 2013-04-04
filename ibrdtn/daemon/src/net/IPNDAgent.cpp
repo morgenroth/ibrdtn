@@ -22,7 +22,9 @@
 #include "Configuration.h"
 
 #include "net/IPNDAgent.h"
+#include "net/P2PDialupEvent.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 
 #include <ibrdtn/data/Exceptions.h>
 
@@ -45,7 +47,7 @@ namespace dtn
 
 		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-		   _version(DiscoveryAnnouncement::DISCO_VERSION_01)
+		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _send_socket_state(false)
 		{
 			// bind to receive socket
 			_recv_socket.add(new ibrcommon::multicastsocket(port));
@@ -75,20 +77,28 @@ namespace dtn
 
 		void IPNDAgent::add(const ibrcommon::vaddress &address) {
 			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "listen to " << address.toString() << IBRCOMMON_LOGGER_ENDL;
-			_destinations.push_back(address);
+			_destinations.insert(address);
 		}
 
 		void IPNDAgent::bind(const ibrcommon::vinterface &net)
 		{
 			IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "add interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
-			_interfaces.push_back(net);
+
+			// add the interface to the stored set
+			ibrcommon::MutexLock l(_interface_lock);
+
+			// only add the interface once
+			if (_interfaces.find(net) != _interfaces.end()) return;
+
+			// store the new interface in the list of interfaces
+			_interfaces.insert(net);
 		}
 
 		void IPNDAgent::leave_interface(const ibrcommon::vinterface &iface) throw ()
 		{
 			ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**_recv_socket.getAll().begin());
 
-			for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
+			for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
 			{
 				try {
 					msock.leave(*it_addr, iface);
@@ -108,7 +118,7 @@ namespace dtn
 		{
 			ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**_recv_socket.getAll().begin());
 
-			for (std::list<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
+			for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
 			{
 				try {
 					msock.join(*it_addr, iface);
@@ -156,7 +166,9 @@ namespace dtn
 			// set sequencenumber
 			announcement.setSequencenumber(sn);
 
-			for (std::list<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
+			ibrcommon::MutexLock l(_interface_lock);
+
+			for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
 			{
 				const ibrcommon::vinterface &iface = (*it_iface);
 
@@ -179,14 +191,125 @@ namespace dtn
 					}
 				}
 
-				for (std::list<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {
+				for (std::set<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {
 					send(announcement, iface, (*iter));
 				}
 			}
 		}
 
+		void IPNDAgent::listen(const ibrcommon::vinterface &iface) throw ()
+		{
+			// create sockets for all addresses on the interface
+			std::list<ibrcommon::vaddress> addrs = iface.getAddresses();
+
+			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+				ibrcommon::vaddress &addr = (*iter);
+
+				try {
+					// handle the addresses according to their family
+					switch (addr.family()) {
+					case AF_INET:
+					case AF_INET6:
+					{
+						ibrcommon::udpsocket *sock = new ibrcommon::udpsocket(addr);
+						if (_send_socket_state) sock->up();
+						_send_socket.add(sock, iface);
+						break;
+					}
+					default:
+						break;
+					}
+				} catch (const ibrcommon::vaddress::address_exception &ex) {
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				} catch (const ibrcommon::socket_exception &ex) {
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+		}
+
+		void IPNDAgent::unlisten(const ibrcommon::vinterface &iface) throw ()
+		{
+			ibrcommon::socketset socks = _send_socket.get(iface);
+			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+				ibrcommon::udpsocket *sock = dynamic_cast<ibrcommon::udpsocket*>(*iter);
+				_send_socket.remove(sock);
+				try {
+					sock->down();
+				} catch (const ibrcommon::socket_exception &ex) {
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				}
+				delete sock;
+			}
+		}
+
+		void IPNDAgent::raiseEvent(const Event *evt) throw ()
+		{
+			try {
+				const dtn::net::P2PDialupEvent &dialup = dynamic_cast<const dtn::net::P2PDialupEvent&>(*evt);
+
+				switch (dialup.type)
+				{
+					case dtn::net::P2PDialupEvent::INTERFACE_UP:
+					{
+						// add the interface to the stored set
+						{
+							ibrcommon::MutexLock l(_interface_lock);
+
+							// only add the interface once
+							if (_interfaces.find(dialup.iface) != _interfaces.end()) break;
+
+							// store the new interface in the list of interfaces
+							_interfaces.insert(dialup.iface);
+						}
+
+						// subscribe to NetLink events on our interfaces
+						ibrcommon::LinkManager::getInstance().addEventListener(dialup.iface, this);
+
+						// listen to the new interface
+						listen(dialup.iface);
+
+						// join to all multicast addresses on this interface
+						join_interface(dialup.iface);
+						break;
+					}
+
+					case dtn::net::P2PDialupEvent::INTERFACE_DOWN:
+					{
+						// check if the interface is bound by us
+						{
+							ibrcommon::MutexLock l(_interface_lock);
+
+							// only remove the interface if it exists
+							if (_interfaces.find(dialup.iface) == _interfaces.end()) break;
+
+							// remove the interface from the stored set
+							_interfaces.erase(dialup.iface);
+						}
+
+						// subscribe to NetLink events on our interfaces
+						ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
+
+						// leave the multicast groups on the interface
+						leave_interface(dialup.iface);
+
+						// remove all sockets on this interface
+						unlisten(dialup.iface);
+						break;
+					}
+				}
+			} catch (std::bad_cast&) {
+
+			}
+		}
+
 		void IPNDAgent::eventNotify(const ibrcommon::LinkEvent &evt)
 		{
+			// check first if we are really bound to the interface
+			{
+				ibrcommon::MutexLock l(_interface_lock);
+				if (_interfaces.find(evt.getInterface()) == _interfaces.end()) return;
+			}
+
 			switch (evt.getAction())
 			{
 				case ibrcommon::LinkEvent::ACTION_ADDRESS_ADDED:
@@ -225,15 +348,11 @@ namespace dtn
 
 				case ibrcommon::LinkEvent::ACTION_LINK_DOWN:
 				{
+					// leave the multicast groups on the interface
 					leave_interface(evt.getInterface());
 
-					ibrcommon::socketset socks = _send_socket.get(evt.getInterface());
-					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
-						ibrcommon::udpsocket *sock = dynamic_cast<ibrcommon::udpsocket*>(*iter);
-						_send_socket.remove(sock);
-						sock->down();
-						delete sock;
-					}
+					// remove all sockets on this interface
+					unlisten(evt.getInterface());
 					break;
 				}
 
@@ -255,33 +374,17 @@ namespace dtn
 
 			// join multicast groups
 			try {
-				for (std::list<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
+				ibrcommon::MutexLock l(_interface_lock);
+
+				for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
 				{
 					const ibrcommon::vinterface &iface = (*it_iface);
 
-					// create sockets for all addresses on the interface
-					std::list<ibrcommon::vaddress> addrs = iface.getAddresses();
-
-					for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
-						ibrcommon::vaddress &addr = (*iter);
-
-						try {
-							// handle the addresses according to their family
-							switch (addr.family()) {
-							case AF_INET:
-							case AF_INET6:
-								_send_socket.add(new ibrcommon::udpsocket(addr), iface);
-								break;
-							default:
-								break;
-							}
-						} catch (const ibrcommon::vaddress::address_exception &ex) {
-							IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
-						}
-					}
-
 					// subscribe to NetLink events on our interfaces
 					ibrcommon::LinkManager::getInstance().addEventListener(iface, this);
+
+					// listen on the interface
+					listen(iface);
 
 					// join to all multicast addresses on this interface
 					join_interface(iface);
@@ -293,18 +396,30 @@ namespace dtn
 			try {
 				// setup all send sockets
 				_send_socket.up();
+
+				// mark the send socket as up
+				_send_socket_state = true;
 			} catch (const ibrcommon::socket_exception &ex) {
 				IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+
+			// listen on P2P dial-up events
+			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::add(this);
 		}
 
 		void IPNDAgent::componentDown() throw ()
 		{
+			// un-listen on P2P dial-up events
+			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::remove(this);
+
 			// unsubscribe to NetLink events
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
 
 			// shutdown the send socket
 			_send_socket.destroy();
+
+			// mark the send socket as down
+			_send_socket_state = false;
 
 			// shutdown the receive socket
 			_recv_socket.down();

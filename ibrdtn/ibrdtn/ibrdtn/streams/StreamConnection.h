@@ -34,6 +34,7 @@
 #include <ibrcommon/thread/Queue.h>
 #include <iostream>
 #include <streambuf>
+#include <vector>
 
 namespace dtn
 {
@@ -317,10 +318,11 @@ namespace dtn
 				StreamConnection &_conn;
 
 				// Input buffer
-				char *in_buf_;
+				std::vector<char> in_buf_;
 
 				// Output buffer
-				char *out_buf_;
+				std::vector<char> out_buf_;
+
 				ibrcommon::Mutex _sendlock;
 
 				std::iostream &_stream;

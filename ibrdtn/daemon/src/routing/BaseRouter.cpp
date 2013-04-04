@@ -97,8 +97,16 @@ namespace dtn
 			// acquire the transfer of this bundle, could throw already in transit or no resource left exception
 			entry.acquireTransfer(id);
 
-			// transfer the bundle to the next hop
-			dtn::core::BundleCore::getInstance().transferTo(entry.eid, id);
+			try {
+				// transfer the bundle to the next hop
+				dtn::core::BundleCore::getInstance().transferTo(entry.eid, id);
+			} catch (const dtn::core::P2PDialupException&) {
+				// release the transfer
+				entry.releaseTransfer(id);
+
+				// and abort the query
+				throw NeighborDatabase::NeighborNotAvailableException();
+			}
 		}
 
 		bool BaseRouter::Extension::isRouting(const dtn::data::EID &eid)
@@ -330,13 +338,13 @@ namespace dtn
 
 						// increment value in the scope control hop limit block
 						try {
-							dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+							dtn::data::ScopeControlHopLimitBlock &schl = bundle.find<dtn::data::ScopeControlHopLimitBlock>();
 							schl.increment();
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// modify TrackingBlock
 						try {
-							dtn::data::TrackingBlock &track = bundle.getBlock<dtn::data::TrackingBlock>();
+							dtn::data::TrackingBlock &track = bundle.find<dtn::data::TrackingBlock>();
 							track.append(dtn::core::BundleCore::local);
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 

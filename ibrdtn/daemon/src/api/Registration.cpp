@@ -487,7 +487,7 @@ namespace dtn
 			{
 				// check for ageblock
 				try {
-					bundle.getBlock<dtn::data::AgeBlock>();
+					bundle.find<dtn::data::AgeBlock>();
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 					// add a new ageblock
 					bundle.push_front<dtn::data::AgeBlock>();
@@ -496,7 +496,7 @@ namespace dtn
 
 			// modify TrackingBlock
 			try {
-				dtn::data::TrackingBlock &track = bundle.getBlock<dtn::data::TrackingBlock>();
+				dtn::data::TrackingBlock &track = bundle.find<dtn::data::TrackingBlock>();
 				track.append(dtn::core::BundleCore::local);
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 

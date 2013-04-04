@@ -23,6 +23,7 @@
 #include <ibrcommon/thread/MutexLock.h>
 #include <stdio.h>
 #include <string.h>
+#include <vector>
 
 namespace ibrcommon
 {
@@ -42,7 +43,7 @@ namespace ibrcommon
 
 	int stopandwait::__send(const char *buffer, const size_t length)
 	{
-		char sendbuf[length + 2];
+		std::vector<char> sendbuf(length + 2);
 
 		// set message type
 		sendbuf[0] = 1; 	// 1 = DATA
@@ -51,11 +52,11 @@ namespace ibrcommon
 		sendbuf[1] = _out_seqno; _out_seqno++;
 
 		// copy the buffer
-		char *sendptr = ((char*)&sendbuf) + 2;
+		char *sendptr = ((char*)&sendbuf[0]) + 2;
 		::memcpy(sendptr, buffer, length);
 
 		// send the buffer
-		if (__send_impl((char*)&sendbuf, length + 2) != 0)
+		if (__send_impl((char*)&sendbuf[0], length + 2) != 0)
 		{
 			// ERROR!
 			return -1;
@@ -80,7 +81,7 @@ namespace ibrcommon
 					}
 
 					// resend the message
-					if (__send_impl((char*)&sendbuf, length + 2) != 0)
+					if (__send_impl((char*)&sendbuf[0], length + 2) != 0)
 					{
 						// ERROR!
 						return -1;
@@ -93,6 +94,8 @@ namespace ibrcommon
 				}
 			}
 		}
+
+		return 0;
 	}
 
 	int stopandwait::__recv(char *buffer, size_t &length)

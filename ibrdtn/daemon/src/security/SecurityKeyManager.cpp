@@ -66,11 +66,7 @@ namespace dtn
 			return ss.str();
 		}
 
-		void SecurityKeyManager::prefetchKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type)
-		{
-		}
-
-		bool SecurityKeyManager::hasKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type) const
+		bool SecurityKeyManager::hasKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType) const
 		{
 			const ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
 			return keyfile.exists();

@@ -22,6 +22,9 @@
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Serializer.h"
 #include "ibrdtn/data/AgeBlock.h"
+#include "ibrdtn/data/MetaBundle.h"
+#include "ibrdtn/data/BundleID.h"
+#include <algorithm>
 
 namespace dtn
 {
@@ -39,113 +42,37 @@ namespace dtn
 
 		Bundle::~Bundle()
 		{
-			clearBlocks();
+			clear();
 		}
 
-		Bundle::BlockList::BlockList()
+		Bundle::iterator Bundle::begin()
 		{
+			return _blocks.begin();
 		}
 
-		Bundle::BlockList::~BlockList()
+		Bundle::iterator Bundle::end()
 		{
+			return _blocks.end();
 		}
 
-		Bundle::BlockList& Bundle::BlockList::operator=(const Bundle::BlockList &ref)
+		Bundle::const_iterator Bundle::begin() const
 		{
-			_blocks.clear();
-			for (std::list<refcnt_ptr<Block> >::const_iterator iter = ref._blocks.begin(); iter != ref._blocks.end(); iter++)
-			{
-				const refcnt_ptr<Block> &obj = (*iter);
-				_blocks.push_back(obj);
-			}
-			return *this;
+			return _blocks.begin();
 		}
 
-		void Bundle::BlockList::push_front(Block *block)
+		Bundle::const_iterator Bundle::end() const
 		{
-			if (_blocks.empty())
-			{
-				// set the last block flag
-				block->set(dtn::data::Block::LAST_BLOCK, true);
-			}
-
-			_blocks.push_front(refcnt_ptr<Block>(block));
+			return _blocks.end();
 		}
 
-		void Bundle::BlockList::push_back(Block *block)
+		bool Bundle::operator==(const BundleID& other) const
 		{
-			// set the last block flag
-			block->set(dtn::data::Block::LAST_BLOCK, true);
-
-			if (!_blocks.empty())
-			{
-				// remove the last block flag of the previous block
-				dtn::data::Block *lastblock = (_blocks.back().getPointer());
-				lastblock->set(dtn::data::Block::LAST_BLOCK, false);
-			}
-
-			_blocks.push_back(refcnt_ptr<Block>(block));
+			return other == (*this);
 		}
 
-		void Bundle::BlockList::insert(Block *block, const Block *before)
+		bool Bundle::operator==(const MetaBundle& other) const
 		{
-			for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
-			{
-				const dtn::data::Block *lb = (*iter).getPointer();
-
-				if (lb == before)
-				{
-					_blocks.insert(iter, refcnt_ptr<Block>(block) );
-					return;
-				}
-			}
-		}
-
-		void Bundle::BlockList::remove(const Block *block)
-		{
-			// delete all blocks
-			for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
-			{
-				const dtn::data::Block &lb = (*(*iter));
-				if ( &lb == block )
-				{
-					_blocks.erase(iter++);
-
-					// set the last block bit
-					if (!_blocks.empty())
-						(*_blocks.back()).set(dtn::data::Block::LAST_BLOCK, true);
-
-					return;
-				}
-			}
-		}
-
-		void Bundle::BlockList::clear()
-		{
-			// clear the list of objects
-			_blocks.clear();
-		}
-
-		const Bundle::block_list& Bundle::BlockList::getAll() const
-		{
-			return _blocks;
-		}
-
-		const std::set<dtn::data::EID> Bundle::BlockList::getEIDs() const
-		{
-			std::set<dtn::data::EID> ret;
-
-			for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
-			{
-				std::list<EID> elist = (*iter)->getEIDList();
-
-				for (std::list<dtn::data::EID>::const_iterator iter = elist.begin(); iter != elist.end(); iter++)
-				{
-					ret.insert(*iter);
-				}
-			}
-
-			return ret;
+			return other == (*this);
 		}
 
 		bool Bundle::operator!=(const Bundle& other) const
@@ -168,103 +95,158 @@ namespace dtn
 			return PrimaryBlock(*this) > other;
 		}
 
-		const Bundle::block_list& Bundle::getBlocks() const
-		{
-			return _blocks.getAll();
-		}
-
-		dtn::data::Block& Bundle::getBlock(int index)
-		{
-			return _blocks.get(index);
-		}
-		
-		const dtn::data::Block& Bundle::getBlock(int index) const
-		{
-			return _blocks.get(index);
-		}
-
 		void Bundle::remove(const dtn::data::Block &block)
 		{
-			_blocks.remove(&block);
+			for (iterator it = begin(); it != end(); it++)
+			{
+				dtn::data::Block *b = (*it).getPointer();
+				if (b == &block)
+				{
+					erase(it);
+					return;
+				}
+			}
 		}
 
-		void Bundle::clearBlocks()
+		void Bundle::erase(Bundle::iterator b, Bundle::iterator e)
+		{
+			for (iterator it = b; it != e;)
+			{
+				_blocks.erase(it++);
+			}
+
+			// set the last block bit
+			iterator last = end();
+			last--;
+			(**last).set(dtn::data::Block::LAST_BLOCK, true);
+		}
+
+		void Bundle::erase(iterator it)
+		{
+			_blocks.erase(it);
+
+			// set the last block bit
+			iterator last = end();
+			last--;
+			(**last).set(dtn::data::Block::LAST_BLOCK, true);
+		}
+
+		void Bundle::clear()
 		{
 			_blocks.clear();
 		}
 
-		dtn::data::PayloadBlock& Bundle::insert(const dtn::data::Block &before, ibrcommon::BLOB::Reference &ref)
+		dtn::data::PayloadBlock& Bundle::insert(iterator before, ibrcommon::BLOB::Reference &ref)
 		{
+			if (size() > 0) {
+				// remove the last block bit
+				iterator last = end();
+				last--;
+				(**last).set(dtn::data::Block::LAST_BLOCK, false);
+			}
+
 			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
-			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+			block_elem block( static_cast<dtn::data::Block*>(tmpblock) );
 
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(block != NULL);
-#endif
+			_blocks.insert(before, block);
 
-			_blocks.insert(block, &before);
+			// set the last block bit
+			iterator last = end();
+			last--;
+			(**last).set(dtn::data::Block::LAST_BLOCK, true);
+
 			return (*tmpblock);
 		}
 
 		dtn::data::PayloadBlock& Bundle::push_front(ibrcommon::BLOB::Reference &ref)
 		{
 			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
-			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(block != NULL);
-#endif
-
+			block_elem block( static_cast<dtn::data::Block*>(tmpblock) );
 			_blocks.push_front(block);
+
+			// if this was the first element
+			if (size() == 1)
+			{
+				// set the last block bit
+				iterator last = end();
+				last--;
+				(**last).set(dtn::data::Block::LAST_BLOCK, true);
+			}
+
 			return (*tmpblock);
 		}
 
 		dtn::data::PayloadBlock& Bundle::push_back(ibrcommon::BLOB::Reference &ref)
 		{
+			if (size() > 0) {
+				// remove the last block bit
+				iterator last = end();
+				last--;
+				(**last).set(dtn::data::Block::LAST_BLOCK, false);
+			}
+
 			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
-			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(block != NULL);
-#endif
-
+			block_elem block( static_cast<dtn::data::Block*>(tmpblock) );
 			_blocks.push_back(block);
+
+			// set the last block bit
+			block->set(dtn::data::Block::LAST_BLOCK, true);
+
 			return (*tmpblock);
 		}
 
 		dtn::data::Block& Bundle::push_front(dtn::data::ExtensionBlock::Factory &factory)
 		{
-			dtn::data::Block *block = factory.create();
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(block != NULL);
-#endif
-
+			block_elem block( factory.create() );
 			_blocks.push_front(block);
+
+			// if this was the first element
+			if (size() == 1)
+			{
+				// set the last block bit
+				iterator last = end();
+				last--;
+				(**last).set(dtn::data::Block::LAST_BLOCK, true);
+			}
+
 			return (*block);
 		}
 
 		dtn::data::Block& Bundle::push_back(dtn::data::ExtensionBlock::Factory &factory)
 		{
-			dtn::data::Block *block = factory.create();
+			if (size() > 0) {
+				// remove the last block bit
+				iterator last = end();
+				last--;
+				(**last).set(dtn::data::Block::LAST_BLOCK, false);
+			}
 
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(block != NULL);
-#endif
-
+			block_elem block( factory.create() );
 			_blocks.push_back(block);
+
+			// set the last block bit
+			block->set(dtn::data::Block::LAST_BLOCK, true);
+
 			return (*block);
 		}
 		
-		Block& Bundle::insert(dtn::data::ExtensionBlock::Factory& factory, const dtn::data::Block& before)
+		Block& Bundle::insert(iterator before, dtn::data::ExtensionBlock::Factory& factory)
 		{
-			dtn::data::Block *block = factory.create();
-			
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(block != NULL);
-#endif
+			if (size() > 0) {
+				// remove the last block bit
+				iterator last = end();
+				last--;
+				(**last).set(dtn::data::Block::LAST_BLOCK, false);
+			}
 
-			_blocks.insert(block, &before);
+			block_elem block( factory.create() );
+			_blocks.insert(before, block);
+
+			// set the last block bit
+			iterator last = end();
+			last--;
+			(**last).set(dtn::data::Block::LAST_BLOCK, true);
+
 			return (*block);
 		}
 
@@ -273,7 +255,7 @@ namespace dtn
 			return PrimaryBlock::toString();
 		}
 
-		size_t Bundle::blockCount() const
+		size_t Bundle::size() const
 		{
 			return _blocks.size();
 		}
@@ -286,11 +268,10 @@ namespace dtn
 			    && _custodian.isCompressable()
 			  )
 			{
-				const block_list &blocks = _blocks.getAll();
-				for( block_list::const_iterator it = blocks.begin(); it != blocks.end(); it++ ) {
-					if( (*it)->get( Block::BLOCK_CONTAINS_EIDS ) )
+				for( const_iterator it = begin(); it != end(); it++ ) {
+					if( (**it).get( Block::BLOCK_CONTAINS_EIDS ) )
 					{
-						std::list< EID > blockEIDs = (*it)->getEIDList();
+						std::list< EID > blockEIDs = (**it).getEIDList();
 						for( std::list< EID >::const_iterator itBlockEID = blockEIDs.begin(); itBlockEID != blockEIDs.end(); itBlockEID++ )
 						{
 							if( ! itBlockEID->isCompressable() )
@@ -308,32 +289,35 @@ namespace dtn
 			}
 		}
 
-		size_t Bundle::BlockList::size() const
+		Bundle::const_iterator Bundle::find(block_t blocktype) const
 		{
-			return _blocks.size();
+			return std::find(begin(), end(), blocktype);
 		}
 
-		const Block& Bundle::BlockList::get(int index) const
+		Bundle::iterator Bundle::find(block_t blocktype)
 		{
-			if(index < 0 || index >= _blocks.size()){
-				throw NoSuchBlockFoundException();
+			return std::find(begin(), end(), blocktype);
+		}
+
+		Bundle::iterator Bundle::find(const dtn::data::Block &block)
+		{
+			for (iterator it = begin(); it != end(); it++)
+			{
+				if ((&**it) == &block) return it;
 			}
 
-			std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin();
-			std::advance(iter, index);
-			return *((*iter).getPointer());
+			return end();
 		}
 
-		Block& Bundle::BlockList::get(int index)
+		Bundle::const_iterator Bundle::find(const dtn::data::Block &block) const
 		{
-			if(index < 0 || index >= _blocks.size()){
-				throw NoSuchBlockFoundException();
+			for (const_iterator it = begin(); it != end(); it++)
+			{
+				if ((&**it) == &block) return it;
 			}
 
-			std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin();
-			std::advance(iter, index);
-			return *((*iter).getPointer());
+			return end();
 		}
+
 	}
 }
-

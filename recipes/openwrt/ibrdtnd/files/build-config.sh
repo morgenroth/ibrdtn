@@ -69,12 +69,6 @@ fi
 add_param $CONFFILE "ibrdtn.main.max_predated_timestamp" "limit_predated_timestamp"
 add_param $CONFFILE "ibrdtn.main.limit_lifetime" "limit_lifetime"
 
-add_param $CONFFILE "ibrdtn.statistic.type" "statistic_type"
-add_param $CONFFILE "ibrdtn.statistic.interval" "statistic_interval"
-add_param $CONFFILE "ibrdtn.statistic.file" "statistic_file"
-add_param $CONFFILE "ibrdtn.statistic.address" "statistic_address"
-add_param $CONFFILE "ibrdtn.statistic.port" "statistic_port"
-
 add_param $CONFFILE "ibrdtn.discovery.address" "discovery_address"
 add_param $CONFFILE "ibrdtn.discovery.timeout" "discovery_timeout"
 add_param $CONFFILE "ibrdtn.discovery.version" "discovery_version"

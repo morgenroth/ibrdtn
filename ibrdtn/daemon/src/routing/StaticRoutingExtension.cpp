@@ -356,6 +356,11 @@ namespace dtn
 				{
 					_taskqueue.push( new SearchNextBundleTask(n.getEID()) );
 				}
+				else if (nodeevent.getAction() == NODE_UPDATED)
+				{
+					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+				}
+
 				return;
 			} catch (const std::bad_cast&) { };
 

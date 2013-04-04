@@ -91,55 +91,47 @@ namespace dtn
 		{}
 
 		Configuration::Discovery::Discovery()
-		 : _enabled(true), _timeout(5), _crosslayer(false) {};
-
-		Configuration::Statistic::Statistic() {};
+		 : _enabled(true), _timeout(5), _crosslayer(false) {}
 
 		Configuration::Debug::Debug()
-		 : _enabled(false), _quiet(false), _level(0) {};
+		 : _enabled(false), _quiet(false), _level(0) {}
 
 		Configuration::Logger::Logger()
-		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {};
+		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {}
 
 		Configuration::Network::Network()
 		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false)
-		{};
+		{}
 
 		Configuration::Security::Security()
 		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false), _tlsOptionalOnBadClock(false), _level(SECURITY_LEVEL_NONE), _disableEncryption(false)
-		{};
+		{}
 
 		Configuration::Daemon::Daemon()
 		 : _daemonize(false), _kill(false), _threads(0)
-		{};
+		{}
 
 		Configuration::TimeSync::TimeSync()
 		 : _reference(true), _sync(false), _discovery(false), _sigma(1.001), _psi(0.8), _sync_level(0.10)
-		{};
+		{}
 
 		Configuration::DHT::DHT()
 		 : _enabled(true), _port(0), _dnsbootstrapping(true), _ipv4(true), _ipv6(true), _blacklist(true), _selfannounce(true),
 			_minRating(1), _allowNeighbourToAnnounceMe(true), _allowNeighbourAnnouncement(true),
 			_ignoreDHTNeighbourInformations(false)
-		{};
+		{}
 
-		Configuration::Discovery::~Discovery() {};
-		Configuration::Statistic::~Statistic() {};
-		Configuration::Debug::~Debug() {};
-		Configuration::Logger::~Logger() {};
-		Configuration::Network::~Network() {};
-		Configuration::Daemon::~Daemon() {};
-		Configuration::TimeSync::~TimeSync() {};
-		Configuration::DHT::~DHT() {};
+		Configuration::Discovery::~Discovery() {}
+		Configuration::Debug::~Debug() {}
+		Configuration::Logger::~Logger() {}
+		Configuration::Network::~Network() {}
+		Configuration::Daemon::~Daemon() {}
+		Configuration::TimeSync::~TimeSync() {}
+		Configuration::DHT::~DHT() {}
 
 		const Configuration::Discovery& Configuration::getDiscovery() const
 		{
 			return _disco;
-		}
-
-		const Configuration::Statistic& Configuration::getStatistic() const
-		{
-			return _stats;
 		}
 
 		const Configuration::Debug& Configuration::getDebug() const
@@ -355,7 +347,6 @@ namespace dtn
 
 			// load all configuration extensions
 			_disco.load(_conf);
-			_stats.load(_conf);
 			_debug.load(_conf);
 			_logger.load(_conf);
 			_network.load(_conf);
@@ -368,10 +359,6 @@ namespace dtn
 		{
 			_timeout = conf.read<unsigned int>("discovery_timeout", 5);
 			_crosslayer = (conf.read<std::string>("discovery_crosslayer", "no") == "yes");
-		}
-
-		void Configuration::Statistic::load(const ibrcommon::ConfigFile&)
-		{
 		}
 
 		void Configuration::Logger::load(const ibrcommon::ConfigFile &conf)
@@ -457,22 +444,14 @@ namespace dtn
 			try {
 				return _conf.read<string>("local_uri");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
-				char *hostname_array = new char[64];
-				if ( gethostname(hostname_array, 64) != 0 )
+				std::vector<char> hostname_array(64);
+				if ( gethostname(&hostname_array[0], hostname_array.size()) != 0 )
 				{
 					// error
-					delete[] hostname_array;
 					return "local";
 				}
 
-				string hostname(hostname_array);
-				delete[] hostname_array;
-
-				stringstream ss;
-				ss << "dtn://" << hostname;
-				ss >> hostname;
-
-				return hostname;
+				return "dtn://" + std::string(&hostname_array[0]);
 			}
 			return "noname";
 		}
@@ -846,15 +825,6 @@ namespace dtn
 			return _doapi;
 		}
 
-		std::string Configuration::getNotifyCommand()
-		{
-			try {
-				return _conf.read<string>("notify_cmd");
-			} catch (const ConfigFile::key_not_found&) { }
-
-			throw ParameterNotSetException();
-		}
-
 		Configuration::RoutingExtension Configuration::Network::getRoutingExtension() const
 		{
 			if ( _routing == "epidemic" ) return EPIDEMIC_ROUTING;
@@ -907,40 +877,6 @@ namespace dtn
 		std::set<ibrcommon::vinterface> Configuration::Network::getInternetDevices() const
 		{
 			return _internet_devices;
-		}
-
-		bool Configuration::Statistic::enabled() const
-		{
-			return Configuration::getInstance()._conf.keyExists("statistic_type");
-		}
-
-		ibrcommon::File Configuration::Statistic::logfile() const throw (ParameterNotSetException)
-		{
-			try {
-				return ibrcommon::File(Configuration::getInstance()._conf.read<std::string>("statistic_file"));
-			} catch (const ConfigFile::key_not_found&) { }
-
-			throw ParameterNotSetException();
-		}
-
-		std::string Configuration::Statistic::type() const
-		{
-			return Configuration::getInstance()._conf.read<std::string>("statistic_type", "stdout");
-		}
-
-		unsigned int Configuration::Statistic::interval() const
-		{
-			return Configuration::getInstance()._conf.read<unsigned int>("statistic_interval", 300);
-		}
-
-		std::string Configuration::Statistic::address() const
-		{
-			return Configuration::getInstance()._conf.read<std::string>("statistic_address", "127.0.0.1");
-		}
-
-		unsigned int Configuration::Statistic::port() const
-		{
-			return Configuration::getInstance()._conf.read<unsigned int>("statistic_port", 1234);
 		}
 
 		size_t Configuration::getLimit(const std::string &suffix) const
@@ -1087,9 +1023,9 @@ namespace dtn
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
 			}
 #endif
-		};
+		}
 
-		Configuration::Security::~Security() {};
+		Configuration::Security::~Security() {}
 
 		bool Configuration::Security::enabled() const
 		{
@@ -1108,7 +1044,6 @@ namespace dtn
 			return _tlsRequired;
 		}
 
-#ifdef WITH_BUNDLE_SECURITY
 		const ibrcommon::File& Configuration::Security::getPath() const
 		{
 			return _path;
@@ -1123,8 +1058,7 @@ namespace dtn
 		{
 			return _bab_default_key;
 		}
-#endif
-#if defined WITH_BUNDLE_SECURITY || defined WITH_TLS
+
 		const ibrcommon::File& Configuration::Security::getCertificate() const
 		{
 			return _cert;
@@ -1134,8 +1068,7 @@ namespace dtn
 		{
 			return _key;
 		}
-#endif
-#ifdef WITH_TLS
+
 		const ibrcommon::File& Configuration::Security::getTrustedCAPath() const
 		{
 			return _trustedCAPath;
@@ -1145,7 +1078,6 @@ namespace dtn
 		{
 			return _disableEncryption;
 		}
-#endif
 
 		bool Configuration::Logger::quiet() const
 		{

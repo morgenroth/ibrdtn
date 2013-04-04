@@ -29,13 +29,18 @@ namespace dtn
 {
 	namespace data
 	{
-		Block::Block(char blocktype)
+		Block::Block(block_t blocktype)
 		 : _blocktype(blocktype), _procflags(0)
 		{
 		}
 
 		Block::~Block()
 		{
+		}
+
+		bool Block::operator==(const block_t &id) const
+		{
+			return (id == _blocktype);
 		}
 
 		void Block::addEID(const EID &eid)

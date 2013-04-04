@@ -31,6 +31,7 @@
 
 #include <stdint.h>
 #include <typeinfo>
+#include <algorithm>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -40,6 +41,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const dtn::data::block_t PayloadConfidentialBlock::BLOCK_TYPE = SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK;
+
 		dtn::data::Block* PayloadConfidentialBlock::Factory::create()
 		{
 			return new PayloadConfidentialBlock();
@@ -65,22 +68,43 @@ namespace dtn
 			unsigned char iv[ibrcommon::AES128Stream::iv_len];
 			unsigned char tag[ibrcommon::AES128Stream::tag_len];
 
-			// get all PCBs
-			const std::list<const PayloadConfidentialBlock* > pcbs = bundle.getBlocks<PayloadConfidentialBlock>();
-
-			// get all PIBs
-			const std::list<const PayloadIntegrityBlock* > pibs = bundle.getBlocks<PayloadIntegrityBlock>();
-
-			// create a new payload confidential block
-			PayloadConfidentialBlock& pcb = bundle.push_front<PayloadConfidentialBlock>();
+			// create a new correlator value
+			uint64_t correlator = createCorrelatorValue(bundle);
 
 			// create a random salt and key
 			createSaltAndKey(salt, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes);
 
-			// encrypt payload - BEGIN
-			dtn::data::PayloadBlock& plb = bundle.getBlock<dtn::data::PayloadBlock>();
+			// count all PCBs
+			size_t pcbs_size = std::count(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
+
+			// count all PIBs
+			size_t pibs_size = std::count(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
+
+			// encrypt PCBs and PIBs
+			dtn::data::Bundle::find_iterator find_pcb(bundle.begin(), PayloadConfidentialBlock::BLOCK_TYPE);
+			while (find_pcb.next(bundle.end()))
+			{
+				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, find_pcb, salt, ephemeral_key).setCorrelator(correlator);
+			}
+
+			dtn::data::Bundle::find_iterator find_pib(bundle.begin(), PayloadIntegrityBlock::BLOCK_TYPE);
+			while (find_pib.next(bundle.end()))
+			{
+				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, find_pib, salt, ephemeral_key).setCorrelator(correlator);
+			}
+
+			// create a new payload confidential block
+			PayloadConfidentialBlock& pcb = bundle.push_front<PayloadConfidentialBlock>();
+
+			// set the correlator
+			if (pcbs_size > 0 || pibs_size > 0)
+				pcb.setCorrelator(correlator);
+
+			// get reference to the payload block
+			dtn::data::PayloadBlock& plb = bundle.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference blobref = plb.getBLOB();
 
+			// encrypt payload - BEGIN
 			{
 				ibrcommon::BLOB::iostream stream = blobref.iostream();
 				ibrcommon::AES128Stream aes_stream(ibrcommon::CipherStream::CIPHER_ENCRYPT, *stream, ephemeral_key, salt);
@@ -127,19 +151,6 @@ namespace dtn
 
 			pcb._security_result.set(SecurityBlock::PCB_integrity_check_value, tag, ibrcommon::AES128Stream::tag_len);
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
-
-			// create correlator
-			uint64_t correlator = createCorrelatorValue(bundle);
-
-			if (pcbs.size() > 0 || pibs.size() > 0)
-				pcb.setCorrelator(correlator);
-
-			// encrypt PCBs and PIBs
-			for (std::list<const PayloadConfidentialBlock*>::const_iterator it = pcbs.begin(); it != pcbs.end(); it++)
-				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, (dtn::data::Block&)**it, salt, ephemeral_key).setCorrelator(correlator);
-
-			for (std::list<const PayloadIntegrityBlock*>::const_iterator it = pibs.begin(); it != pibs.end(); it++)
-				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, (dtn::data::Block&)**it, salt, ephemeral_key).setCorrelator(correlator);
 		}
 
 		void PayloadConfidentialBlock::decrypt(dtn::data::Bundle& bundle, const dtn::security::SecurityKey &long_key)
@@ -158,17 +169,14 @@ namespace dtn
 				uint64_t correlator = 0;
 				bool decrypt_related = false;
 
-				// get all blocks of this bundle
-				const dtn::data::Bundle::block_list &blocks = bundle.getBlocks();
-
 				// iterate through all blocks
-				for (dtn::data::Bundle::block_list::const_iterator it = blocks.begin(); it != blocks.end(); it++)
+				for (dtn::data::Bundle::iterator it = bundle.begin(); it != bundle.end(); it++)
 				{
 					try {
 						dynamic_cast<const PayloadIntegrityBlock&>(**it);
 
 						// add this block to the erasure list for later deletion
-						erasure_list.push_back((*it).getPointer());
+						erasure_list.push_back(&**it);
 					} catch (const std::bad_cast&) { };
 
 					try {
@@ -182,13 +190,13 @@ namespace dtn
 						{
 							// try to decrypt the block
 							try {
-								decryptBlock(bundle, (dtn::security::SecurityBlock&)**it, salt, key);
+								decryptBlock(bundle, it, salt, key);
 
 								// success! add this block to the erasue list
-								erasure_list.push_back((*it).getPointer());
+								erasure_list.push_back(&**it);
 							} catch (const ibrcommon::Exception&) {
 								IBRCOMMON_LOGGER(critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
-								decryptBlock(bundle, (dtn::security::SecurityBlock&)**it, salt, key);
+								decryptBlock(bundle, it, salt, key);
 
 								// abort the decryption and discard the bundle?
 								throw ibrcommon::Exception("decrypt of correlated block reversed, tag verfication failed");
@@ -215,7 +223,7 @@ namespace dtn
 							}
 
 							// success! add this block to the erasue list
-							erasure_list.push_back((*it).getPointer());
+							erasure_list.push_back(&**it);
 
 							// check if first PCB has a correlator
 							if (pcb._ciphersuite_flags & CONTAINS_CORRELATOR)
@@ -257,8 +265,8 @@ namespace dtn
 		bool PayloadConfidentialBlock::decryptPayload(dtn::data::Bundle& bundle, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes], const uint32_t salt)
 		{
 			// TODO handle fragmentation
-			PayloadConfidentialBlock& pcb = bundle.getBlock<PayloadConfidentialBlock>();
-			dtn::data::PayloadBlock& plb = bundle.getBlock<dtn::data::PayloadBlock>();
+			PayloadConfidentialBlock& pcb = bundle.find<PayloadConfidentialBlock>();
+			dtn::data::PayloadBlock& plb = bundle.find<dtn::data::PayloadBlock>();
 
 			// the array for the extracted iv
 			unsigned char iv[ibrcommon::AES128Stream::iv_len];

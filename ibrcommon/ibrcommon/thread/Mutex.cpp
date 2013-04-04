@@ -27,7 +27,7 @@ namespace ibrcommon
 {
 	MutexInterface::~MutexInterface()
 	{
-	};
+	}
 
 	Mutex::Mutex(MUTEX_TYPE type)
 	{
@@ -108,5 +108,5 @@ namespace ibrcommon
 	MutexInterface& Mutex::dummy()
 	{
 		return _dummy;
-	};
+	}
 }

@@ -386,13 +386,13 @@ namespace dtn
 			If this is the first block, don't forget to add the key and salt to its
 			security parameters.
 			@param bundle the bundle which contains block
-			@param block the block which shall be encrypted and encapsulated
+			@param it The iterator pointing to the block which shall be encrypted and encapsulated
 			@param salt the salt to be used
 			@param ephemeral_key the key to be used
 			@return the Security Block which replaced block
 			*/
 			template <class T>
-			static T& encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
+			static T& encryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
 			/**
 			Decrypts the block which is held in the SecurityBlock replaces it.
@@ -405,7 +405,7 @@ namespace dtn
 			@param ephemeral_key the key
 			@return true if tag verification succeeded, false if not
 			*/
-			static void decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
+			static void decryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
 			/**
 			Calculates the Size of the stream and adds a fragment range item to ciphersuite_params
@@ -422,10 +422,12 @@ namespace dtn
 		};
 
 		template <class T>
-		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
+		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
+			const dtn::data::Block &block = (**it);
+
 			// insert ESB, block can be removed after encryption, because bundle will destroy it
-			T& esb = bundle.insert<T>(block);
+			T& esb = bundle.insert<T>(it);
 
 			// take eid list
 			copyEID(block, esb);
@@ -449,7 +451,7 @@ namespace dtn
 
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 
-			bundle.remove(block);
+			bundle.erase(it++);
 
 			return esb;
 		}

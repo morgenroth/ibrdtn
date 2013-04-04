@@ -23,7 +23,6 @@ package de.tubs.ibr.dtn.service;
 
 import ibrdtn.api.APIConnection;
 import ibrdtn.api.SocketAPIConnection;
-import ibrdtn.api.object.SingletonEndpoint;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,8 +36,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-import de.tubs.ibr.dtn.service.StreamLogger.StreamLoggerListener;
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -47,6 +44,8 @@ import android.content.res.AssetManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 import android.util.Log;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.service.StreamLogger.StreamLoggerListener;
 
 public class DaemonProcess extends Thread {
 
@@ -130,11 +129,11 @@ public class DaemonProcess extends Thread {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 		if (preferences.getBoolean("debug", false))
 		{
-			_builder.command(context.getFilesDir().getPath() + "/dtnd", "-c", context.getFilesDir().getPath() + "/config", "-d", "99");
+			_builder.command(context.getFilesDir().getPath() + "/dtnd", "-c", context.getFilesDir().getPath() + "/config", "-d", "99", "-v");
 		}
 		else
 		{
-			_builder.command(context.getFilesDir().getPath() + "/dtnd", "-c", context.getFilesDir().getPath() + "/config");
+			_builder.command(context.getFilesDir().getPath() + "/dtnd", "-c", context.getFilesDir().getPath() + "/config", "-v");
 		}
 		
 		// redirect error messages to the standard output

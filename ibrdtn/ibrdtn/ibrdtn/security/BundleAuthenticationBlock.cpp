@@ -26,6 +26,7 @@
 #include <ibrcommon/Logger.h>
 #include <cstring>
 #include <set>
+#include <algorithm>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -35,6 +36,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const dtn::data::block_t BundleAuthenticationBlock::BLOCK_TYPE = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK;
+
 		dtn::data::Block* BundleAuthenticationBlock::Factory::create()
 		{
 			return new BundleAuthenticationBlock();
@@ -88,45 +91,37 @@ namespace dtn
 			// verify the babs of the bundle
 			verify(bundle, key, correlator);
 
-			// get the list of BABs
-			const std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
-
-			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end(); it++)
+			// iterate over all BABs
+			dtn::data::Bundle::find_iterator it(bundle.begin(), BundleAuthenticationBlock::BLOCK_TYPE);
+			while (it.next(bundle.end()))
 			{
-				const BundleAuthenticationBlock &bab = (**it);
+				const BundleAuthenticationBlock &bab = dynamic_cast<const BundleAuthenticationBlock&>(**it);
 
 				// if the correlator is already authenticated, then remove the BAB
 				if ((bab._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && (bab._correlator == correlator))
 				{
-					bundle.remove(bab);
+					bundle.erase(it);
 				}
 			}
 		}
 
 		void BundleAuthenticationBlock::strip(dtn::data::Bundle& bundle)
 		{
-			// blocks of a certain type
-			const std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
-
-			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end(); it++)
-			{
-				bundle.remove(*(*it));
-			}
+			bundle.erase(std::remove(bundle.begin(), bundle.end(), BundleAuthenticationBlock::BLOCK_TYPE), bundle.end());
 		}
 
 		void BundleAuthenticationBlock::verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, uint64_t &correlator) throw (ibrcommon::Exception)
 		{
-			std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
-
 			// get the blocks, with which the key should match
 			std::set<uint64_t> correlators;
 
 			// calculate the MAC of this bundle
 			std::string our_hash_string = calcMAC(bundle, key);
 
-			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end(); it++)
+			dtn::data::Bundle::const_find_iterator it(bundle.begin(), BundleAuthenticationBlock::BLOCK_TYPE);
+			while (it.next(bundle.end()))
 			{
-				const BundleAuthenticationBlock &bab = (**it);
+				const BundleAuthenticationBlock &bab = dynamic_cast<const BundleAuthenticationBlock&>(**it);
 
 				// the bab contains a security result
 				if (bab._ciphersuite_flags & CONTAINS_SECURITY_RESULT)

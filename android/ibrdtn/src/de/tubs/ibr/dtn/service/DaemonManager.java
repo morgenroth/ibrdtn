@@ -386,7 +386,7 @@ public class DaemonManager implements ProcessListener {
 
 	public void onProcessLog(String log) {
 		// is daemon ready to serve API connections?
-		if (log.contains("INFO: API initialized")) {
+		if (log.contains("INFO") && log.contains("API initialized")) {
 			Thread cst = new Thread(_channel_setup_task);
 			cst.start();
 		}

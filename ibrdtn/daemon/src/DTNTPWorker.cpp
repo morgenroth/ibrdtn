@@ -411,7 +411,7 @@ namespace dtn
 
 			try {
 				// read payload block
-				const dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+				const dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
 
 				// read the type of the message
 				char type = 0; (*p.getBLOB().iostream()).get(type);
@@ -463,7 +463,7 @@ namespace dtn
 
 						// modify the old schl block or add a new one
 						try {
-							dtn::data::ScopeControlHopLimitBlock &schl = response.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+							dtn::data::ScopeControlHopLimitBlock &schl = response.find<dtn::data::ScopeControlHopLimitBlock>();
 							schl.setLimit(1);
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 							dtn::data::ScopeControlHopLimitBlock &schl = response.push_front<dtn::data::ScopeControlHopLimitBlock>();
@@ -478,9 +478,13 @@ namespace dtn
 					case TimeSyncMessage::TIMESYNC_RESPONSE:
 					{
 						// read the ageblock of the bundle
-						const std::list<const dtn::data::AgeBlock*> ageblocks = b.getBlocks<dtn::data::AgeBlock>();
-						const dtn::data::AgeBlock &peer_age = (*ageblocks.front());
-						const dtn::data::AgeBlock &origin_age = (*ageblocks.back());
+						dtn::data::Bundle::const_find_iterator age_it(b.begin(), dtn::data::AgeBlock::BLOCK_TYPE);
+
+						if (age_it.next(b.end())) throw ibrcommon::Exception("first ageblock missing");
+						const dtn::data::AgeBlock &peer_age = dynamic_cast<const dtn::data::AgeBlock&>(**age_it);
+
+						if (age_it.next(b.end())) throw ibrcommon::Exception("second ageblock missing");
+						const dtn::data::AgeBlock &origin_age = dynamic_cast<const dtn::data::AgeBlock&>(**age_it);
 
 						timeval tv_age; timerclear(&tv_age);
 						tv_age.tv_usec = origin_age.getMicroseconds();

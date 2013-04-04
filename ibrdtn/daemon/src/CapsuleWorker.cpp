@@ -43,7 +43,7 @@ namespace dtn
 		void CapsuleWorker::callbackBundleReceived(const dtn::data::Bundle &capsule)
 		{
 			try {
-				const PayloadBlock &payload = capsule.getBlock<PayloadBlock>();
+				const PayloadBlock &payload = capsule.find<PayloadBlock>();
 				ibrcommon::BLOB::iostream stream = payload.getBLOB().iostream();
 
 				// read the number of bundles

@@ -222,6 +222,9 @@ typedef nl_object nl_object_header;
 		// allocate a cache manager for ROUTE
 #ifdef HAVE_LIBNL3
 		ret = nl_cache_mngr_alloc((struct nl_sock*)_nl_handle, _protocol, NL_AUTO_PROVIDE, &_mngr);
+
+		if (ret != 0)
+			throw socket_exception("can not allocate netlink cache manager");
 #else
 		_mngr = nl_cache_mngr_alloc((struct nl_handle*)_nl_handle, _protocol, NL_AUTO_PROVIDE);
 #endif
@@ -235,6 +238,9 @@ typedef nl_object nl_object_header;
 #ifdef HAVE_LIBNL3
 			struct nl_cache *c;
 			ret = nl_cache_mngr_add(_mngr, cachename.c_str(), &nl_cache_callback, this, &c);
+
+			if (ret != 0)
+				throw socket_exception(std::string("can not allocate netlink cache ") + cachename);
 #else
 			struct nl_cache *c = nl_cache_mngr_add(_mngr, cachename.c_str(), &nl_cache_callback);
 #endif
@@ -278,8 +284,10 @@ typedef nl_object nl_object_header;
 	void NetLinkManager::netlinkcache::receive() throw (socket_exception)
 	{
 		if (_state == SOCKET_DOWN) throw socket_exception("socket not connected");
-		int ret = nl_cache_mngr_data_ready(_mngr);
+		nl_cache_mngr_data_ready(_mngr);
 #if 0
+		int ret = nl_cache_mngr_data_ready(_mngr);
+
 		/*
 		 * Some implementations always return an error code, because they reached
 		 * the last message. In that cases we should not throw an exception. Since

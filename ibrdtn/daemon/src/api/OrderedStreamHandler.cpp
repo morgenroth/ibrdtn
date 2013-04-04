@@ -88,10 +88,12 @@ namespace dtn
 			Registration &reg = _client.getRegistration();
 			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 20) << "get()" << IBRCOMMON_LOGGER_ENDL;
 
+			dtn::data::MetaBundle bundle;
+
 			while (true)
 			{
 				try {
-					dtn::data::MetaBundle bundle = reg.receiveMetaBundle();
+					bundle = reg.receiveMetaBundle();
 
 					// discard bundle if they are not from the specified peer
 					if ((!_group) && (bundle.source != _peer))
@@ -100,12 +102,14 @@ namespace dtn
 						continue;
 					}
 
-					return bundle;
+					break;
 				} catch (const dtn::storage::NoBundleFoundException&) {
 					IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 30) << "get(): no bundle found wait for notify" << IBRCOMMON_LOGGER_ENDL;
 					reg.wait_for_bundle(timeout);
 				}
 			}
+
+			return bundle;
 		}
 
 		void OrderedStreamHandler::__cancellation() throw ()
@@ -163,7 +167,7 @@ namespace dtn
 						{
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
-							_endpoint = dtn::core::BundleCore::local + "/" + cmd[2];
+							_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + cmd[2];
 
 							// error checking
 							if (_endpoint == dtn::data::EID())

@@ -25,6 +25,8 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t ScopeControlHopLimitBlock::BLOCK_TYPE = 199;
+
 		dtn::data::Block* ScopeControlHopLimitBlock::Factory::create()
 		{
 			return new ScopeControlHopLimitBlock();

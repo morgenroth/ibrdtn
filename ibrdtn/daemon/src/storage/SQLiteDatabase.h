@@ -111,7 +111,7 @@ namespace dtn
 			{
 			public:
 				virtual ~DatabaseListener() = 0;
-				virtual void eventBundleExpired(const dtn::data::BundleID&) = 0;
+				virtual void eventBundleExpired(const dtn::data::BundleID&) throw () = 0;
 				virtual void iterateDatabase(const dtn::data::MetaBundle&) = 0;
 			};
 

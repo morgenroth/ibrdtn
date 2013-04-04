@@ -68,13 +68,13 @@ public:
 
 	dtn::data::StatusReportBlock getStatusReport() const {
 		StatusReportBlock srb;
-		const dtn::data::PayloadBlock &payload = getBlock<dtn::data::PayloadBlock>();
+		const dtn::data::PayloadBlock &payload = find<dtn::data::PayloadBlock>();
 		srb.read(payload);
 		return srb;
 	}
 
 	const dtn::data::TrackingBlock& getTrackingBlock() const {
-		return getBlock<dtn::data::TrackingBlock>();
+		return find<dtn::data::TrackingBlock>();
 	}
 };
 

@@ -44,20 +44,18 @@ namespace ibrcommon
 	ibrcommon::Mutex TLSStream::_initialization_lock;
 
 	TLSStream::TLSStream(std::iostream *stream)
-	  : iostream(this), _activated(false), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]),
+	  : iostream(this), _activated(false), in_buf_(BUFF_SIZE), out_buf_(BUFF_SIZE),
 	    _stream(stream), _server(false), _ssl(NULL), _peer_cert(NULL), _iostreamBIO(NULL)
 	{
 		/* basic_streambuf related initialization */
 		// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 		setg(0, 0, 0);
-		setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
+		setp(&out_buf_[0], &out_buf_[0] + BUFF_SIZE - 1);
 	}
 
 	TLSStream::~TLSStream()
 	{
 		if(_ssl) SSL_free(_ssl);
-		delete[] in_buf_;
-		delete[] out_buf_;
 		if (_iostreamBIO != NULL) delete _iostreamBIO;
 	}
 
@@ -158,7 +156,7 @@ namespace ibrcommon
 		if(_activated)
 		{
 			/* decrypt */
-			num_bytes = SSL_read(_ssl, in_buf_, BUFF_SIZE);
+			num_bytes = SSL_read(_ssl, &in_buf_[0], BUFF_SIZE);
 			if(num_bytes == 0){
 				/* connection closed */
 				if(SSL_get_error(_ssl, num_bytes) == SSL_ERROR_ZERO_RETURN){
@@ -177,7 +175,7 @@ namespace ibrcommon
 		{
 			try{
 				/* make sure to read at least 1 byte and then read as much as we can */
-				num_bytes = _stream->read(in_buf_, 1).readsome(in_buf_+1, BUFF_SIZE-1) + 1;
+				num_bytes = _stream->read(&in_buf_[0], 1).readsome(&in_buf_[0]+1, BUFF_SIZE-1) + 1;
 			} catch(ios_base::failure &ex){
 				/* ignore, the specific bits are checked later */
 			}
@@ -195,19 +193,19 @@ namespace ibrcommon
 			}
 		}
 
-		setg(in_buf_, in_buf_, in_buf_ + num_bytes);
+		setg(&in_buf_[0], &in_buf_[0], &in_buf_[0] + num_bytes);
 
-		return traits::not_eof((unsigned char)in_buf_[0]);
+		return traits::not_eof(in_buf_[0]);
 	}
 
 	TLSStream::traits::int_type TLSStream::overflow(traits::int_type c)
 	{
 		streamsize num_bytes;
-		char *ibegin = out_buf_;
+		char *ibegin = &out_buf_[0];
 		char *iend = pptr();
 
 		// mark the buffer as free
-		setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
+		setp(&out_buf_[0], &out_buf_[0] + BUFF_SIZE - 1);
 
 		// append the last character
 		if(!traits::eq_int_type(c, traits::eof())) {
@@ -223,7 +221,7 @@ namespace ibrcommon
 		if(_activated)
 		{
 			/* use ssl to send */
-			num_bytes = SSL_write(_ssl, out_buf_, (iend - ibegin));
+			num_bytes = SSL_write(_ssl, &out_buf_[0], (iend - ibegin));
 			if(num_bytes == 0){
 				/* connection closed */
 				return traits::eof();
@@ -235,7 +233,7 @@ namespace ibrcommon
 		else
 		{
 			try{
-				_stream->write(out_buf_, (iend - ibegin));
+				_stream->write(&out_buf_[0], (iend - ibegin));
 			} catch(ios_base::failure &ex){
 				/* ignore, the badbit is checked instead */
 			}
