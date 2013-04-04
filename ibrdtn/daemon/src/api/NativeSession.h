@@ -135,6 +135,11 @@ namespace dtn
 			void removeRegistration(const dtn::data::EID &eid) throw (NativeSessionException);
 
 			/**
+			 * Retrieve all registered endpoints
+			 */
+			std::set<dtn::data::EID> getSubscriptions();
+
+			/**
 			 * Loads the next bundle in the queue into the local
 			 * register
 			 */

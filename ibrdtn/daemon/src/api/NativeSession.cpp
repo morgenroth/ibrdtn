@@ -159,6 +159,11 @@ namespace dtn
 			}
 		}
 
+		std::set<dtn::data::EID> NativeSession::getSubscriptions()
+		{
+			return _registration.getSubscriptions();
+		}
+
 		void NativeSession::next(RegisterIndex ri) throw (NativeSessionException)
 		{
 			try {
