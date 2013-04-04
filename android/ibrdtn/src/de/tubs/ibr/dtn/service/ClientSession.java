@@ -22,15 +22,11 @@
  */
 package de.tubs.ibr.dtn.service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Date;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.util.Log;
@@ -39,13 +35,13 @@ import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.DTNSessionCallback;
-import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.swig.NativeSerializerCallback;
 import de.tubs.ibr.dtn.swig.NativeSession;
+import de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex;
 import de.tubs.ibr.dtn.swig.NativeSessionCallback;
 import de.tubs.ibr.dtn.swig.PrimaryBlock;
 
@@ -58,138 +54,6 @@ public class ClientSession {
 	private Context context = null;
 	private Registration _registration = null;
 
-	/*
-	 * TODO: is this used in the original code?
-	 */
-	// private Boolean _daemon_online = false;
-
-	// callback to the service-client
-	private Object _callback_mutex = new Object();
-
-	private DTNSessionCallback _callback_real = null;
-	private DTNSessionCallback _callback_wrapper = new DTNSessionCallback() {
-
-		public IBinder asBinder()
-		{
-			return null;
-		}
-
-		public void startBundle(Bundle bundle) throws RemoteException
-		{
-			synchronized (_callback_mutex) {
-				if (_callback_real == null) return;
-				try {
-					_callback_real.startBundle(bundle);
-				} catch (Exception e) {
-					// remove the callback on error
-					_callback_real = null;
-					Log.e(TAG, "Error on callback [startBundle]", e);
-				}
-			}
-		}
-
-		public void endBundle() throws RemoteException
-		{
-			synchronized (_callback_mutex) {
-				if (_callback_real == null) return;
-				try {
-					_callback_real.endBundle();
-				} catch (Exception e) {
-					// remove the callback on error
-					_callback_real = null;
-					Log.e(TAG, "Error on callback [endBundle]", e);
-				}
-			}
-		}
-
-		public TransferMode startBlock(Block block) throws RemoteException
-		{
-			synchronized (_callback_mutex) {
-				if (_callback_real == null) return TransferMode.NULL;
-				try {
-					return _callback_real.startBlock(block);
-				} catch (Exception e) {
-					// remove the callback on error
-					_callback_real = null;
-					Log.e(TAG, "Error on callback [startBlock]", e);
-					return TransferMode.NULL;
-				}
-			}
-		}
-
-		public void endBlock() throws RemoteException
-		{
-			synchronized (_callback_mutex) {
-				if (_callback_real == null) return;
-				try {
-					_callback_real.endBlock();
-				} catch (Exception e) {
-					// remove the callback on error
-					_callback_real = null;
-					Log.e(TAG, "Error on callback [endBlock]", e);
-				}
-			}
-		}
-
-		public ParcelFileDescriptor fd() throws RemoteException
-		{
-			synchronized (_callback_mutex) {
-				if (_callback_real == null) return null;
-				try {
-					return _callback_real.fd();
-				} catch (Exception e) {
-					// remove the callback on error
-					_callback_real = null;
-					Log.e(TAG, "Error on callback [fd]", e);
-				}
-
-				return null;
-			}
-		}
-
-		public void progress(long current, long length) throws RemoteException
-		{
-			synchronized (_callback_mutex) {
-				if (_callback_real == null) return;
-				try {
-					_callback_real.progress(current, length);
-				} catch (Exception e) {
-					// remove the callback on error
-					_callback_real = null;
-					Log.e(TAG, "Error on callback [progress]", e);
-				}
-			}
-		}
-
-		public void payload(byte[] data) throws RemoteException
-		{
-			synchronized (_callback_mutex) {
-				if (_callback_real == null) return;
-				try {
-					_callback_real.payload(data);
-				} catch (Exception e) {
-					// remove the callback on error
-					_callback_real = null;
-					Log.e(TAG, "Error on callback [payload]", e);
-				}
-			}
-		}
-
-		public void characters(String data) throws RemoteException
-		{
-			synchronized (_callback_mutex) {
-				if (_callback_real == null) return;
-				try {
-					_callback_real.characters(data);
-				} catch (Exception e) {
-					// remove the callback on error
-					_callback_real = null;
-					Log.e(TAG, "Error on callback [characters]", e);
-				}
-			}
-		}
-	};
-
 	/**
 	 * Implemented C++ callback using SWIG directors
 	 * 
@@ -201,19 +65,7 @@ public class ClientSession {
 		@Override
 		public void notifyBundle(de.tubs.ibr.dtn.swig.BundleID swigId)
 		{
-			// convert from swig BundleID to api BundleID
-			BundleID id = new BundleID();
-			id.setSequencenumber(swigId.getSequencenumber());
-			id.setSource(swigId.getSource().getString());
-
-			long swigTime = swigId.getTimestamp();
-			Timestamp ts = new Timestamp(swigTime);
-			id.setTimestamp(ts.getDate());
-
-			invoke_receive_intent(id);
-
-			// original invokation from SABHandler
-			// invoke_receive_intent(new BundleID());
+			invoke_receive_intent(toAndroid(swigId));
 		}
 
 		@Override
@@ -242,168 +94,6 @@ public class ClientSession {
 		this._registration = reg;
 	}
 
-	/*
-	 * The following methods are Helper methods to interact with NativeSession
-	 * based on our API calls
-	 */
-
-	public void setEndpoint(String id)
-	{
-		nativeSession.setEndpoint(id);
-	}
-
-	public void addRegistration(GroupEndpoint eid)
-	{
-		de.tubs.ibr.dtn.swig.EID swigEid = new de.tubs.ibr.dtn.swig.EID(eid.toString());
-		nativeSession.addRegistration(swigEid);
-	}
-
-	public void getBundle()
-	{
-		nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG2);
-
-		// TODO: read! (get, read, load)
-
-		// TODO: NOT TESTED
-		ByteArrayOutputStream boas = new ByteArrayOutputStream();
-
-		// allocate byte array
-		byte[] temp = new byte[1024];
-		int[] len = { 1024 };
-		while (len[0] == 1024) {
-			nativeSession.read(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG2, temp, len);
-			try {
-				boas.write(temp);
-			} catch (IOException e) {
-				Log.e(TAG, "Writing to byte stream failed", e);
-			}
-		}
-	}
-
-	public void loadBundle(BundleID id)
-	{
-		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
-		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource()));
-		swigId.setSequencenumber(id.getSequencenumber());
-
-		Timestamp ts = new Timestamp(id.getTimestamp());
-		swigId.setTimestamp(ts.getValue());
-
-		// nativeSession.load(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG2,
-		// swigId);
-	}
-
-	public void loadAndGetBundle()
-	{
-		// get next bundle in the queue
-		// nativeSession.next(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
-	}
-
-	public void markDelivered(BundleID id)
-	{
-		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
-		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource()));
-		swigId.setSequencenumber(id.getSequencenumber());
-
-		Timestamp ts = new Timestamp(id.getTimestamp());
-		swigId.setTimestamp(ts.getValue());
-
-		nativeSession.delivered(swigId);
-	}
-
-	/**
-	 * Put Bundle into NativeSession
-	 */
-	public synchronized void put(Bundle bundle)
-	{
-		// put it into native session
-		nativeSession.put(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, toSwig(bundle));
-	}
-
-	public void writeAndSend(byte[] data)
-	{
-		nativeSession.write(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, data, data.length);
-
-		nativeSession.send(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
-	}
-
-	public void writeAndSend(InputStream stream, Long length)
-	{
-		// read input as buffered stream and write into NativeSession Bundle
-		byte[] buf = new byte[8192];
-		int len;
-		int total = 0;
-		try {
-			while ((len = stream.read(buf, 0, Math.min(buf.length, (int) Math.min(Integer.MAX_VALUE, length - total)))) > 0) {
-				total += len;
-
-				nativeSession.write(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, buf, Long.valueOf(0));
-				// out.write(buf, 0, len);
-			}
-		} catch (IOException e) {
-			Log.e(TAG, "Writing into NativeSession bundle failed!", e);
-		}
-
-		nativeSession.send(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
-	}
-
-	/**
-	 * Send a bundle using the daemon.
-	 * 
-	 * @param destination
-	 *            The destination of the bundle.
-	 * @param lifetime
-	 *            The lifetime of the bundle.
-	 * @param data
-	 *            The payload as byte-array.
-	 */
-	public void send(EID destination, int lifetime, byte[] data)
-	{
-		Bundle bundle = new Bundle();
-		if (destination instanceof GroupEndpoint) {
-			bundle.procflags = (long) 16;
-		} else {
-			bundle.procflags = (long) 0;
-		}
-		bundle.destination = destination.toString();
-		bundle.lifetime = Long.valueOf(lifetime);
-
-		// put it into native session
-		put(bundle);
-
-		writeAndSend(data);
-	}
-
-	/**
-	 * Send a bundle using the daemon. The given stream is used as payload of
-	 * the bundle.
-	 * 
-	 * @param destination
-	 *            The destination of the bundle.
-	 * @param lifetime
-	 *            The lifetime of the bundle.
-	 * @param stream
-	 *            The stream containing the payload data.
-	 * @param length
-	 *            The length of the payload.
-	 */
-	public void send(EID destination, int lifetime, InputStream stream, Long length)
-	{
-		Bundle bundle = new Bundle();
-		if (destination instanceof GroupEndpoint) {
-			bundle.procflags = (long) 16;
-		} else {
-			bundle.procflags = (long) 0;
-		}
-		bundle.destination = destination.toString();
-		bundle.lifetime = Long.valueOf(lifetime);
-
-		// put it into native session
-		put(bundle);
-
-		writeAndSend(stream, length);
-	}
-
 	public synchronized void initialize()
 	{
 		// _daemon_online = true;
@@ -412,20 +102,18 @@ public class ClientSession {
 		register(_registration);
 	}
 
-	// public synchronized void terminate()
-	// {
-	// _daemon_online = false;
-	// }
-
 	public void register(Registration reg)
 	{
-		setEndpoint(reg.getEndpoint());
+		// set local endpoint
+		nativeSession.setEndpoint(reg.getEndpoint());
 
 		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "endpoint registered: " + reg.getEndpoint());
 
 		for (GroupEndpoint group : reg.getGroups()) {
 
-			addRegistration(group);
+			de.tubs.ibr.dtn.swig.EID swigEid = new de.tubs.ibr.dtn.swig.EID(group.toString());
+			nativeSession.addRegistration(swigEid);
+			
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + group.toString());
 
 		}
@@ -546,8 +234,19 @@ public class ClientSession {
 		public boolean send(SingletonEndpoint destination, int lifetime, byte[] data) throws RemoteException
 		{
 			try {
-				// send the message to the daemon
-				ClientSession.this.send(destination, lifetime, data);
+				PrimaryBlock b = new PrimaryBlock();
+				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, true);
+				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
+				b.set_lifetime(lifetime);
+
+				// put the primary block into the register
+				nativeSession.put(RegisterIndex.REG2, b);
+				
+				// add data
+				nativeSession.write(RegisterIndex.REG2, data);
+				
+				// send the bundle
+				nativeSession.send(RegisterIndex.REG2);
 
 				// debug
 				Log.i(TAG, "Message sent: " + data);
@@ -562,8 +261,19 @@ public class ClientSession {
 		public boolean sendGroup(GroupEndpoint destination, int lifetime, byte[] data) throws RemoteException
 		{
 			try {
-				// send the message to the daemon
-				ClientSession.this.send(destination, lifetime, data);
+				PrimaryBlock b = new PrimaryBlock();
+				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, false);
+				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
+				b.set_lifetime(lifetime);
+
+				// put the primary block into the register
+				nativeSession.put(RegisterIndex.REG2, b);
+				
+				// add data
+				nativeSession.write(RegisterIndex.REG2, data);
+				
+				// send the bundle
+				nativeSession.send(RegisterIndex.REG2);
 
 				// debug
 				Log.i(TAG, "Message sent: " + data);
@@ -579,9 +289,29 @@ public class ClientSession {
 		{
 			try {
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
+				
+				PrimaryBlock b = new PrimaryBlock();
+				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, true);
+				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
+				b.set_lifetime(lifetime);
+
+				// put the primary block into the register
+				nativeSession.put(RegisterIndex.REG2, b);
+				
 				FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
 				try {
-					ClientSession.this.send(destination, lifetime, stream, length);
+					int offset = 0;
+					int count = 0;
+					byte[] buffer = new byte[8192];
+					while ((count = stream.read(buffer)) > 0) {
+						// add data
+						nativeSession.write(RegisterIndex.REG2, buffer, offset);
+						offset += count;
+					}
+					
+					// send the bundle
+					nativeSession.send(RegisterIndex.REG2);
+					
 					return true;
 				} finally {
 					try {
@@ -589,7 +319,7 @@ public class ClientSession {
 						fd.close();
 					} catch (IOException e) {
 					}
-				}
+				}				
 			} catch (Exception e) {
 				Log.e(TAG, "sendFileDescriptor failed", e);
 				return false;
@@ -600,9 +330,29 @@ public class ClientSession {
 		{
 			try {
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
+				
+				PrimaryBlock b = new PrimaryBlock();
+				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, false);
+				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
+				b.set_lifetime(lifetime);
+
+				// put the primary block into the register
+				nativeSession.put(RegisterIndex.REG2, b);
+				
 				FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
 				try {
-					ClientSession.this.send(destination, lifetime, stream, length);
+					int offset = 0;
+					int count = 0;
+					byte[] buffer = new byte[8192];
+					while ((count = stream.read(buffer)) > 0) {
+						// add data
+						nativeSession.write(RegisterIndex.REG2, buffer, offset);
+						offset += count;
+					}
+					
+					// send the bundle
+					nativeSession.send(RegisterIndex.REG2);
+					
 					return true;
 				} finally {
 					try {
@@ -717,5 +467,18 @@ public class ClientSession {
 		ret.length = block.getLength();
 		ret.procflags = block.getProcessingFlags();
 		return ret;
+	}
+	
+	private BundleID toAndroid(de.tubs.ibr.dtn.swig.BundleID swigId) {
+		// convert from swig BundleID to api BundleID
+		BundleID id = new BundleID();
+		id.setSequencenumber(swigId.getSequencenumber());
+		id.setSource(swigId.getSource().getString());
+
+		long swigTime = swigId.getTimestamp();
+		Timestamp ts = new Timestamp(swigTime);
+		id.setTimestamp(ts.getDate());
+		
+		return id;
 	}
 }
