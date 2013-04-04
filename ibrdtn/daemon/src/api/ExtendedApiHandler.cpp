@@ -113,7 +113,7 @@ namespace dtn
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							ibrcommon::MutexLock l(_write_lock);
-							dtn::data::EID new_endpoint = dtn::core::BundleCore::local + "/" + cmd[2];
+							dtn::data::EID new_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + cmd[2];
 
 							// error checking
 							if (new_endpoint == dtn::data::EID())
@@ -145,7 +145,7 @@ namespace dtn
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							ibrcommon::MutexLock l(_write_lock);
-							dtn::data::EID new_endpoint = dtn::core::BundleCore::local + "/" + cmd[2];
+							dtn::data::EID new_endpoint = dtn::core::BundleCore::local + BundleCore::local.getDelimiter() + cmd[2];
 
 							// error checking
 							if (new_endpoint == dtn::data::EID())
@@ -163,7 +163,7 @@ namespace dtn
 							dtn::data::EID del_endpoint = _endpoint;
 							if (cmd.size() >= 3)
 							{
-								del_endpoint = dtn::core::BundleCore::local + "/" + cmd[2];
+								del_endpoint = dtn::core::BundleCore::local + BundleCore::local.getDelimiter() + cmd[2];
 							}
 
 							ibrcommon::MutexLock l(_write_lock);
