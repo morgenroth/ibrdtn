@@ -32,9 +32,8 @@ namespace dtn
 	{
 		StatusReportBlock::StatusReportBlock()
 		 : AdministrativeBlock(16), _status(0), _reasoncode(0),
-		 _fragment_offset(0), _fragment_length(0), _timeof_receipt(),
-		 _timeof_custodyaccept(), _timeof_forwarding(), _timeof_delivery(),
-		 _timeof_deletion(), _bundle_timestamp(0), _bundle_sequence(0)
+		 _fragment_length(0), _timeof_receipt(), _timeof_custodyaccept(),
+		 _timeof_forwarding(), _timeof_delivery(), _timeof_deletion()
 		{
 		}
 
@@ -56,7 +55,7 @@ namespace dtn
 
 			if ( refsFragment() )
 			{
-				(*stream) << _fragment_offset;
+				(*stream) << dtn::data::SDNV(_bundleid.offset);
 				(*stream) << _fragment_length;
 			}
 
@@ -75,9 +74,9 @@ namespace dtn
 			if (_status & DELETION_OF_BUNDLE)
 				(*stream) << _timeof_deletion;
 
-			(*stream) << _bundle_timestamp;
-			(*stream) << _bundle_sequence;
-			(*stream) << BundleString(_source.getString());
+			(*stream) << dtn::data::SDNV(_bundleid.timestamp);
+			(*stream) << dtn::data::SDNV(_bundleid.sequencenumber);
+			(*stream) << BundleString(_bundleid.source.getString());
 		}
 
 		void StatusReportBlock::read(const dtn::data::PayloadBlock &p) throw (WrongRecordException)
@@ -95,7 +94,12 @@ namespace dtn
 
 			if ( refsFragment() )
 			{
-				(*stream) >> _fragment_offset;
+				_bundleid.fragment = true;
+
+				dtn::data::SDNV frag_offset;
+				(*stream) >> frag_offset;
+				_bundleid.offset = frag_offset.getValue();
+
 				(*stream) >> _fragment_length;
 			}
 
@@ -114,12 +118,17 @@ namespace dtn
 			if (_status & DELETION_OF_BUNDLE)
 				(*stream) >> _timeof_deletion;
 
-			(*stream) >> _bundle_timestamp;
-			(*stream) >> _bundle_sequence;
+			dtn::data::SDNV timestamp;
+			(*stream) >> timestamp;
+			_bundleid.timestamp = timestamp.getValue();
+
+			dtn::data::SDNV seqno;
+			(*stream) >> seqno;
+			_bundleid.sequencenumber = seqno.getValue();
 
 			BundleString source;
 			(*stream) >> source;
-			_source = EID(source);
+			_bundleid.source = EID(source);
 		}
 
 	}

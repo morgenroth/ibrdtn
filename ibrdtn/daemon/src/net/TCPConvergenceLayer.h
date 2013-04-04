@@ -52,6 +52,8 @@ namespace dtn
 		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ConvergenceLayer, public DiscoveryServiceProvider, public ibrcommon::LinkManager::EventCallback
 		{
 			friend class TCPConnection;
+
+			const static std::string TAG;
 		public:
 			/**
 			 * Constructor

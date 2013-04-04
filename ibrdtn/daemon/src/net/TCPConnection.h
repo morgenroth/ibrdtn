@@ -46,6 +46,7 @@ namespace dtn
 
 		class TCPConnection : public dtn::streams::StreamConnection::Callback, public ibrcommon::DetachedThread
 		{
+			const static std::string TAG;
 		public:
 			/**
 			 * Constructor for a new TCPConnection object.

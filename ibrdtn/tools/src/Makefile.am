@@ -23,4 +23,9 @@ dtntunnel_SOURCES = dtntunnel.cpp
 dtntracepath_SOURCES = dtntracepath.cpp
 dtntrigger_SOURCES = dtntrigger.cpp
 dtnconvert_SOURCES = dtnconvert.cpp
-dtnstream_SOURCES = dtnstream.cpp BundleStream.h
+
+dtnstream_SOURCES = \
+	dtnstream.cpp \
+	streaming/BundleStream.cpp \
+	streaming/BundleStreamBuf.cpp \
+	streaming/StreamBundle.cpp  

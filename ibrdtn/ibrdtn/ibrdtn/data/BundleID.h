@@ -32,7 +32,7 @@ namespace dtn
 		class BundleID
 		{
 		public:
-			BundleID(const dtn::data::EID source = dtn::data::EID(), const size_t timestamp = 0, const size_t sequencenumber = 0, const bool fragment = false, const size_t offset = 0);
+			BundleID(const dtn::data::EID source = dtn::data::EID(), const uint64_t timestamp = 0, const uint64_t sequencenumber = 0, const bool fragment = false, const uint64_t offset = 0);
 			BundleID(const dtn::data::Bundle &b);
 			virtual ~BundleID();
 
@@ -47,11 +47,11 @@ namespace dtn
 			friend std::istream &operator>>(std::istream &stream, BundleID &obj);
 
 			dtn::data::EID source;
-			size_t timestamp;
-			size_t sequencenumber;
+			uint64_t timestamp;
+			uint64_t sequencenumber;
 
 			bool fragment;
-			size_t offset;
+			uint64_t offset;
 		};
 	}
 }

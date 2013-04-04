@@ -49,6 +49,8 @@ namespace dtn
 		/*
 		 * class TCPConvergenceLayer
 		 */
+		const std::string TCPConvergenceLayer::TAG = "TCPConvergenceLayer";
+
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		TCPConvergenceLayer::TCPConvergenceLayer()
@@ -131,13 +133,13 @@ namespace dtn
 							break;
 						}
 					} catch (const ibrcommon::vaddress::address_exception &ex) {
-						IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 
-				IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 25) << "bound to " << net.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 25) << "bound to " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::vinterface::interface_not_set &ex) {
-				IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -150,7 +152,7 @@ namespace dtn
 				try {
 					sock->down();
 				} catch (const ibrcommon::socket_exception &ex) {
-					IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 				delete sock;
 			}
@@ -160,7 +162,7 @@ namespace dtn
 				_portmap.erase(iface);
 			}
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 25) << "unbound from " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 25) << "unbound from " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		dtn::core::Node::Protocol TCPConvergenceLayer::getDiscoveryProtocol() const
@@ -224,12 +226,12 @@ namespace dtn
 								// set the announce mark
 								announced = true;
 							} catch (const ibrcommon::vaddress::address_exception &ex) {
-								IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 25) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 25) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 						}
 					} catch (const ibrcommon::Exception &ex) {
 						// address collection process aborted
-						IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 65) << "Address collection aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 65) << "Address collection aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					};
 
 					// if we still not announced anything...
@@ -249,7 +251,7 @@ namespace dtn
 
 		const std::string TCPConvergenceLayer::getName() const
 		{
-			return "TCPConvergenceLayer";
+			return TCPConvergenceLayer::TAG;
 		}
 
 		void TCPConvergenceLayer::raiseEvent(const Event *evt) throw ()
@@ -403,7 +405,7 @@ namespace dtn
 				if (conn.match(n))
 				{
 					conn.queue(job._bundle);
-					IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 15) << "queued bundle to an existing tcp connection (" << conn.getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 15) << "queued bundle to an existing tcp connection (" << conn.getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 
 					return;
 				}
@@ -436,7 +438,7 @@ namespace dtn
 				// signal that there is a new connection
 				_connections_cond.signal(true);
 
-				IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 15) << "queued bundle to an new tcp connection (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 15) << "queued bundle to an new tcp connection (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) {
 				// raise transfer abort event for all bundles without an ACK
 				dtn::routing::RequeueBundleEvent::raise(n.getEID(), job._bundle);
@@ -460,7 +462,7 @@ namespace dtn
 			// signal that there is a new connection
 			_connections_cond.signal(true);
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 15) << "tcp connection added (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 15) << "tcp connection added (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void TCPConvergenceLayer::connectionDown(TCPConnection *conn)
@@ -471,7 +473,7 @@ namespace dtn
 				if (conn == (*iter))
 				{
 					_connections.erase(iter);
-					IBRCOMMON_LOGGER_DEBUG_TAG("TCPConvergenceLayer", 15) << "tcp connection removed (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 15) << "tcp connection removed (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 
 					// signal that there is a connection less
 					_connections_cond.signal(true);
@@ -568,7 +570,7 @@ namespace dtn
 				_vsocket.up();
 				_vsocket_state = true;
 			} catch (const ibrcommon::socket_exception &ex) {
-				IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", error) << "bind failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, error) << "bind failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -583,7 +585,7 @@ namespace dtn
 				_vsocket.down();
 				_vsocket_state = false;
 			} catch (const ibrcommon::socket_exception &ex) {
-				IBRCOMMON_LOGGER_TAG("TCPConvergenceLayer", error) << "shutdown failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, error) << "shutdown failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// close all active connections
