@@ -4,20 +4,24 @@ How to compile IBR-DTN for Android?
 -----------------------------------
 
    1. Install Android NDK:
-      Get NEWEST (at least 8d) official Android NDK from http://developer.android.com/tools/sdk/ndk/index.html
-      (For Windows, Cygwin 1.7 or higher is required)
-      Add the root directory of the unpacked Android NDK to your PATH variable (http://wiki.ubuntuusers.de/Umgebungsvariable)
+      Get official Android NDK Version 8d (only this version is tested properly!)
+      from http://developer.android.com/tools/sdk/ndk/index.html ,
+      For old versions see http://stackoverflow.com/questions/6849981/where-do-i-find-old-versions-of-ndk
+
+      (For Windows, Cygwin is required)
+
+   2. Add the root directory of the unpacked Android NDK to your PATH variable (http://wiki.ubuntuusers.de/Umgebungsvariable)
  
-   2. Install androgenizer:
+   3. Install androgenizer:
       Get androgenizer from http://cgit.collabora.com/git/android/androgenizer.git/
       Build it with "make all"
       Add androgenizer executable to your PATH variable
 
-   3. Install git from your package manager: apt-get install git
+   4. Install git and swig from your package manager: apt-get install git swig
 
-   4. Run build.sh
+   5. Run build.sh
 
-   5. OpenSSL (libssl, libcrypto) is compiled as a shared library, but it does not have to be packaged into the APK as it is already included in Android OS.
+   6. OpenSSL (libssl, libcrypto) is compiled as a shared library, but it does not have to be packaged into the APK as it is already included in Android OS.
       We can not include it with LDLIBS as it is not part of the stable API and thus not part of the official Android NDK.
 
 FAQ

@@ -73,6 +73,6 @@
 
 // apply typemap for java byte[] to read()
 %apply char *BYTE { char *buf }
-%apply int &OUTPUT { size_t &len }
+%apply int &INOUT { size_t &len }
 
 %include "../dtnd/src/api/NativeSession.h"
