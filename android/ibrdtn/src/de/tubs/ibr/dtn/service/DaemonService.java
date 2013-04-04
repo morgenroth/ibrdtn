@@ -122,22 +122,6 @@ public class DaemonService extends Service {
 	@Override
 	public IBinder onBind(Intent intent)
 	{
-		//TODO: Do we really need to start the service when binding to it? This seems redundant.
-		// start the service if enabled and not running
-		// if (!getState().equals(DaemonState.ONLINE))
-		// {
-		// SharedPreferences prefs =
-		// PreferenceManager.getDefaultSharedPreferences(this);
-		// if (prefs.getBoolean("enabledSwitch", false))
-		// {
-		// Log.d(TAG, "Startup daemon on bind");
-		// // startup the daemon process
-		// final Intent startUpIntent = new Intent(this, DaemonService.class);
-		// startUpIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-		// startService(startUpIntent);
-		// }
-		// }
-
 		return mBinder;
 	}
 
