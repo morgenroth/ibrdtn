@@ -42,17 +42,19 @@
 
 #include "../ibrdtn/ibrdtn/data/BundleID.h"
 #include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
-#include "../ibrdtn/ibrdtn/data/Bundle.h"
+#include "../ibrdtn/ibrdtn/data/Block.h"
 
 #include "../ibrdtn/ibrdtn/data/AdministrativeBlock.h"
 #include "../ibrdtn/ibrdtn/data/StatusReportBlock.h"
 #include "../ibrdtn/ibrdtn/data/CustodySignalBlock.h"
 
 #include "../dtnd/src/api/NativeSession.h"
+#include "../dtnd/src/api/NativeSerializerCallback.h"
 %}
 
 /* turn on director wrapping Callback */
 %feature("director") NativeSessionCallback;
+%feature("director") NativeSerializerCallback;
 
 /* Let's just grab the original header file here */
 %include "../ibrdtn/ibrdtn/data/EID.h"
@@ -64,7 +66,7 @@
 
 %include "../ibrdtn/ibrdtn/data/BundleID.h"
 %include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
-%include "../ibrdtn/ibrdtn/data/Bundle.h"
+%include "../ibrdtn/ibrdtn/data/Block.h"
 
 %include "../ibrdtn/ibrdtn/data/AdministrativeBlock.h"
 %include "../ibrdtn/ibrdtn/data/StatusReportBlock.h"
@@ -77,7 +79,6 @@
 %apply char *BYTE { char *buf }
 %apply int &INOUT { size_t &len }
 
+%include "../dtnd/src/api/NativeSerializerCallback.h"
 %include "../dtnd/src/api/NativeSession.h"
 
-// native daemon control
-%include "../dtnd/src/ibrdtnd.h"

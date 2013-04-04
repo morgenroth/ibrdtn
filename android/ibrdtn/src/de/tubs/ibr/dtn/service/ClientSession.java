@@ -26,7 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
+import java.util.Date;
 
 import android.content.Context;
 import android.content.Intent;
@@ -44,9 +44,10 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
-
+import de.tubs.ibr.dtn.swig.NativeSerializerCallback;
 import de.tubs.ibr.dtn.swig.NativeSession;
 import de.tubs.ibr.dtn.swig.NativeSessionCallback;
+import de.tubs.ibr.dtn.swig.PrimaryBlock;
 
 public class ClientSession {
 
@@ -315,32 +316,13 @@ public class ClientSession {
 	 */
 	public synchronized void put(Bundle bundle)
 	{
-		/*
-		 * Convert API Bundle to SWIG bundle
-		 */
-		de.tubs.ibr.dtn.swig.PrimaryBlock swigPrimaryBlock = new de.tubs.ibr.dtn.swig.PrimaryBlock();
-		swigPrimaryBlock.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.custodian));
-		swigPrimaryBlock.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.destination));
-		swigPrimaryBlock.set_fragmentoffset(bundle.fragment_offset);
-		swigPrimaryBlock.set_lifetime(bundle.lifetime);
-		swigPrimaryBlock.set_procflags(bundle.procflags);
-		swigPrimaryBlock.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.reportto));
-		swigPrimaryBlock.set_sequencenumber(bundle.sequencenumber);
-		swigPrimaryBlock.set_source(new de.tubs.ibr.dtn.swig.EID(bundle.source));
-
-		Timestamp ts = new Timestamp(bundle.timestamp);
-		swigPrimaryBlock.set_timestamp(ts.getValue());
-
-		// TODO: priority
-		swigPrimaryBlock.setPriority(de.tubs.ibr.dtn.swig.PrimaryBlock.PRIORITY.PRIO_MEDIUM);
-
 		// put it into native session
-		nativeSession.put(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, swigPrimaryBlock);
+		nativeSession.put(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, toSwig(bundle));
 	}
 
 	public void writeAndSend(byte[] data)
 	{
-		nativeSession.write(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, data);
+		nativeSession.write(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, data, data.length);
 
 		nativeSession.send(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
 	}
@@ -450,6 +432,82 @@ public class ClientSession {
 
 		invoke_registration_intent();
 	}
+	
+	private class SerializerCallback extends NativeSerializerCallback {
+		
+		private DTNSessionCallback _cb = null;
+		private TransferMode _mode = TransferMode.PASSTHROUGH;
+		
+		public SerializerCallback(DTNSessionCallback cb) {
+			this._cb = cb;
+		}
+
+		@Override
+		public void beginBundle(PrimaryBlock block) {
+			try {
+				_cb.startBundle(toAndroid(block));
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void endBundle() {
+			try {
+				_cb.endBundle();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void beginBlock(de.tubs.ibr.dtn.swig.Block block, long payload_length) {
+			try {
+				_mode = _cb.startBlock(toAndroid(block));
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void endBlock() {
+			try {
+				_cb.endBlock();
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+		
+		@Override
+		public void payload(String data, long len) {
+			try {
+				switch (_mode) {
+				case FILEDESCRIPTOR:
+					break;
+				case NULL:
+					break;
+				case PASSTHROUGH:
+					// TODO: passthrough the data
+					byte bytes[] = new byte[4];
+					_cb.payload(bytes);
+					break;
+				case SIMPLE:
+					break;
+				default:
+					break;
+				
+				}
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
 
 	/**
 	 * This is the actual implementation of the DTNSession API
@@ -458,26 +516,24 @@ public class ClientSession {
 		public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException
 		{
 			// load the bundle into the register
-			nativeSession.load(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, toSwig(id));
-			// TODO: catch exceptions?
-			
+			nativeSession.load(NativeSession.RegisterIndex.REG1, toSwig(id));
+
 			// get the bundle
-			de.tubs.ibr.dtn.swig.Bundle bundle = nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+			nativeSession.get(NativeSession.RegisterIndex.REG1, new SerializerCallback(cb));
 			
-			// TODO: implement serialization
-			return false;
+			// TODO: catch exceptions?
+			return true;
 		}
 
 		public boolean queryNext(DTNSessionCallback cb) throws RemoteException
 		{
 			// load the next bundle into the register
-			nativeSession.next(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
-			// TODO: catch exceptions?
+			nativeSession.next(NativeSession.RegisterIndex.REG1);
 			
 			// get the bundle
-			de.tubs.ibr.dtn.swig.Bundle bundle = nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+			nativeSession.get(NativeSession.RegisterIndex.REG1, new SerializerCallback(cb));
 			
-			// TODO: implement serialization
+			// TODO: catch exceptions?
 			return false;
 		}
 
@@ -610,5 +666,56 @@ public class ClientSession {
 		swigId.setTimestamp(ts.getValue());
 		
 		return swigId;
+	}
+	
+	private de.tubs.ibr.dtn.swig.PrimaryBlock toSwig(Bundle bundle) {
+		/*
+		 * Convert API Bundle to SWIG bundle
+		 */
+		de.tubs.ibr.dtn.swig.PrimaryBlock ret = new de.tubs.ibr.dtn.swig.PrimaryBlock();
+		ret.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.custodian));
+		ret.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.destination));
+		ret.set_fragmentoffset(bundle.fragment_offset);
+		ret.set_lifetime(bundle.lifetime);
+		ret.set_procflags(bundle.procflags);
+		ret.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.reportto));
+		ret.set_sequencenumber(bundle.sequencenumber);
+		ret.set_source(new de.tubs.ibr.dtn.swig.EID(bundle.source));
+
+		Timestamp ts = new Timestamp(bundle.timestamp);
+		ret.set_timestamp(ts.getValue());
+		
+		return ret;
+	}
+	
+	private Bundle toAndroid(PrimaryBlock block) {
+		Bundle ret = new Bundle();
+
+		ret.source = block.get_source().getString();
+		ret.destination = block.get_destination().getString();
+		ret.reportto = block.get_reportto().getString();
+		ret.custodian = block.get_custodian().getString();
+		
+		ret.lifetime = block.get_lifetime();
+		
+		Timestamp ts = new Timestamp(block.get_timestamp());
+		ret.timestamp = ts.getDate();
+		
+		ret.sequencenumber = block.get_sequencenumber();
+		ret.procflags = block.get_procflags();
+		if (block.get(PrimaryBlock.FLAGS.FRAGMENT)) {
+			ret.app_data_length = block.get_appdatalength();
+			ret.fragment_offset = block.get_fragmentoffset();
+		}
+		
+		return ret;
+	}
+	
+	private Block toAndroid(de.tubs.ibr.dtn.swig.Block block) {
+		Block ret = new Block();
+		ret.type = Integer.valueOf(block.getType());
+		ret.length = block.getLength();
+		ret.procflags = block.getProcessingFlags();
+		return ret;
 	}
 }
