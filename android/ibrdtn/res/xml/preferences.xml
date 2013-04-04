@@ -85,7 +85,7 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_logging" >
         <ListPreference
-            android:defaultValue="0"
+            android:defaultValue="1"
             android:entries="@array/log_options_names"
             android:entryValues="@array/log_options_values"
             android:key="log_options"
@@ -93,7 +93,7 @@
             android:title="@string/pref_log_options" />
 
         <EditTextPreference
-            android:defaultValue="0"
+            android:defaultValue="99"
             android:key="log_debug_verbosity"
             android:summary="@string/pref_log_debug_verbosity_desc"
             android:title="@string/pref_log_debug_verbosity" />

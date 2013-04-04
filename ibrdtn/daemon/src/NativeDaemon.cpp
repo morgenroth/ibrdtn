@@ -204,9 +204,6 @@ namespace dtn
 
 		void NativeDaemon::enableLogging(std::string configPath, std::string defaultTag, int logLevel, int debugVerbosity) throw ()
 		{
-			//Get the native string from java string
-//			std::string configPath = jstringToStdString(env, jConfigPath);
-
 			/**
 			 * setup logging capabilities
 			 */
