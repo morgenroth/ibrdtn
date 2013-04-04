@@ -88,11 +88,6 @@ namespace dtn
 			return true;
 		}
 
-		size_t BundleID::getTimestamp() const
-		{
-			return timestamp;
-		}
-
 		string BundleID::toString() const
 		{
 			stringstream ss;

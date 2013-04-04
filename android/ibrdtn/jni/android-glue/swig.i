@@ -1,18 +1,9 @@
 /* File : swig.i */
 %module(directors="1") swig
 
-/* add declaration of std::exception */
-namespace std {
-class exception {
-public:
-    exception();
-    exception(const exception& rhs);
-    virtual ~exception();
-    virtual const char *what(void);
-};
-}
-
-// typmap for std::string
+// typemap for std::exception
+%include "std_except.i"
+// typemap for std::string
 %include "std_string.i"
 // typemap for BYTE
 %include "various.i"
@@ -50,6 +41,8 @@ public:
 
 
 #include "../ibrdtn/ibrdtn/data/BundleID.h"
+#include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
+#include "../ibrdtn/ibrdtn/data/Bundle.h"
 
 #include "../ibrdtn/ibrdtn/data/AdministrativeBlock.h"
 #include "../ibrdtn/ibrdtn/data/StatusReportBlock.h"
@@ -69,9 +62,9 @@ public:
 
 %include "../ibrdtn/ibrdtn/data/DTNTime.h"
 
-// getTimestamp() is generated two times. Ignore one
-%ignore getTimestamp;
 %include "../ibrdtn/ibrdtn/data/BundleID.h"
+%include "../ibrdtn/ibrdtn/data/PrimaryBlock.h"
+%include "../ibrdtn/ibrdtn/data/Bundle.h"
 
 %include "../ibrdtn/ibrdtn/data/AdministrativeBlock.h"
 %include "../ibrdtn/ibrdtn/data/StatusReportBlock.h"
@@ -85,3 +78,6 @@ public:
 %apply int &INOUT { size_t &len }
 
 %include "../dtnd/src/api/NativeSession.h"
+
+// native daemon control
+%include "../dtnd/src/ibrdtnd.h"

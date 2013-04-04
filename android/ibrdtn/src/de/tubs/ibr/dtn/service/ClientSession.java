@@ -457,61 +457,34 @@ public class ClientSession {
 	private final DTNSession.Stub mBinder = new DTNSession.Stub() {
 		public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException
 		{
-			try {
-				// load the bundle
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load bundle: " + id.toString());
-				ClientSession.this.loadBundle(id);
-
-				// set callback and mode
-				synchronized (_callback_mutex) {
-					ClientSession.this._callback_real = cb;
-				}
-
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "get bundle: " + id.toString());
-				ClientSession.this.getBundle();
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load successful");
-
-				return true;
-			} catch (Exception e) {
-				Log.e(TAG, "query failed", e);
-				return false;
-			}
+			// load the bundle into the register
+			nativeSession.load(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1, toSwig(id));
+			// TODO: catch exceptions?
+			
+			// get the bundle
+			de.tubs.ibr.dtn.swig.Bundle bundle = nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+			
+			// TODO: implement serialization
+			return false;
 		}
 
 		public boolean queryNext(DTNSessionCallback cb) throws RemoteException
 		{
-			try {
-				// load the next bundle
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load and get bundle");
-
-				// set callback and mode
-				synchronized (_callback_mutex) {
-					ClientSession.this._callback_real = cb;
-				}
-
-				// get next bundle
-				ClientSession.this.loadAndGetBundle();
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "load successful");
-
-				return true;
-			} catch (Exception e) {
-				Log.e(TAG, "queryNext failed", e);
-				return false;
-			}
+			// load the next bundle into the register
+			nativeSession.next(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+			// TODO: catch exceptions?
+			
+			// get the bundle
+			de.tubs.ibr.dtn.swig.Bundle bundle = nativeSession.get(de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex.REG1);
+			
+			// TODO: implement serialization
+			return false;
 		}
 
 		public boolean delivered(BundleID id) throws RemoteException
 		{
-			try {
-				// check for bundle to ack
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "ack bundle: " + id.toString());
-
-				ClientSession.this.markDelivered(id);
-				return true;
-			} catch (Exception e) {
-				Log.e(TAG, "delivered failed", e);
-				return false;
-			}
+			nativeSession.delivered(toSwig(id));
+			return true;
 		}
 
 		public boolean send(SingletonEndpoint destination, int lifetime, byte[] data) throws RemoteException
@@ -625,5 +598,17 @@ public class ClientSession {
 		context.sendBroadcast(broadcastIntent);
 
 		Log.d(TAG, "REGISTRATION intent sent to " + _package_name);
+	}
+	
+	private de.tubs.ibr.dtn.swig.BundleID toSwig(BundleID id)
+	{
+		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
+		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource()));
+		swigId.setSequencenumber(id.getSequencenumber());
+
+		Timestamp ts = new Timestamp(id.getTimestamp());
+		swigId.setTimestamp(ts.getValue());
+		
+		return swigId;
 	}
 }
