@@ -19,7 +19,8 @@
  *
  */
 
-#include "NativeSession.h"
+#include "api/NativeSession.h"
+#include "api/NativeSerializer.h"
 #include "core/BundleCore.h"
 
 #include <ibrdtn/data/PayloadBlock.h>
@@ -81,7 +82,7 @@ namespace dtn
 
 		void NativeSession::setEndpoint(const std::string &suffix) throw (NativeSessionException)
 		{
-			const dtn::data::EID new_endpoint = dtn::core::BundleCore::local + BundleCore::local.getDelimiter() + suffix;
+			const dtn::data::EID new_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + suffix;
 
 			// error checking
 			if (new_endpoint == dtn::data::EID())
@@ -104,7 +105,7 @@ namespace dtn
 
 		void NativeSession::addEndpoint(const std::string &suffix) throw (NativeSessionException)
 		{
-			const dtn::data::EID new_endpoint = dtn::core::BundleCore::local + BundleCore::local.getDelimiter() + suffix;
+			const dtn::data::EID new_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + suffix;
 
 			// error checking
 			if (new_endpoint == dtn::data::EID())
@@ -119,7 +120,7 @@ namespace dtn
 
 		void NativeSession::removeEndpoint(const std::string &suffix) throw (NativeSessionException)
 		{
-			const dtn::data::EID old_endpoint = dtn::core::BundleCore::local + BundleCore::local.getDelimiter() + suffix;
+			const dtn::data::EID old_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + suffix;
 
 			// error checking
 			if (old_endpoint == dtn::data::EID())
@@ -184,6 +185,18 @@ namespace dtn
 		const dtn::data::Bundle& NativeSession::get(RegisterIndex ri) const throw ()
 		{
 			return _bundle[ri];
+		}
+
+		void NativeSession::get(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
+		{
+			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_FULL);
+			serializer << _bundle[ri];
+		}
+
+		void NativeSession::getInfo(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
+		{
+			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_INFO);
+			serializer << _bundle[ri];
 		}
 
 		void NativeSession::free(RegisterIndex ri) throw (BundleNotFoundException)
