@@ -252,14 +252,14 @@ public class DaemonService extends Service {
                     buildNotification(R.drawable.ic_notification,
                             getResources().getString(R.string.dialog_wait_stopping)));
 
-            // stop main loop
-            mDaemonMainThread.stop();
-
-            // disable P2P manager
-            // _p2p_manager.destroy();
-
             // close all sessions
             mSessionManager.terminate();
+            
+            // disable P2P manager
+            // _p2p_manager.destroy();
+            
+            // stop main loop
+            mDaemonMainThread.stop();
 
             // stop foreground service
             stopForeground(true);

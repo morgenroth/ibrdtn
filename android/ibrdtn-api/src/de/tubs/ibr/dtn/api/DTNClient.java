@@ -181,11 +181,6 @@ public final class DTNClient {
 			_handler.endBlock();
 		}
 
-		public void characters(String data) throws RemoteException {
-			if (_handler == null) return;
-			_handler.characters(data);
-		}
-
 		public ParcelFileDescriptor fd() throws RemoteException {
 			if (_handler == null) return null;
 			return _handler.fd();

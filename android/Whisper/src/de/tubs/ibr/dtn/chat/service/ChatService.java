@@ -21,6 +21,8 @@
  */
 package de.tubs.ibr.dtn.chat.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Date;
 import java.util.StringTokenizer;
 
@@ -96,6 +98,7 @@ public class ChatService extends IntentService {
 	
     private DataHandler _data_handler = new DataHandler()
     {
+        ByteArrayOutputStream stream = null;
     	Bundle current;
 
 		public void startBundle(Bundle bundle) {
@@ -116,27 +119,38 @@ public class ChatService extends IntentService {
 
 		public TransferMode startBlock(Block block) {
 			// ignore messages with a size larger than 8k
-			if (block.length > 8196) return TransferMode.NULL;
+			if ((block.length > 8196) || (block.type != 1)) return TransferMode.NULL;
+			
+			// create a new bytearray output stream
+			stream = new ByteArrayOutputStream();
+			
 			return TransferMode.SIMPLE;
 		}
 
 		public void endBlock() {
-		}
-
-		public void characters(String data) {
+		    if (stream != null) {
+                String msg = new String(stream.toByteArray());
+                stream = null;
+                
+                if (current.destination.equalsIgnoreCase(PRESENCE_GROUP_EID.toString()))
+                {
+                    eventNewPresence(current.source, current.timestamp, msg);
+                }
+                else
+                {
+                    eventNewMessage(current.source, current.timestamp, msg);
+                }
+		    }
 		}
 
 		public void payload(byte[] data) {
-			String msg = new String(data);
-			
-			if (current.destination.equalsIgnoreCase(PRESENCE_GROUP_EID.toString()))
-			{
-				eventNewPresence(current.source, current.timestamp, msg);
-			}
-			else
-			{
-				eventNewMessage(current.source, current.timestamp, msg);
-			}
+		    if (stream == null) return;
+		    // write data to the stream
+		    try {
+                stream.write(data);
+            } catch (IOException e) {
+                Log.e(TAG, "error on writing payload", e);
+            }
 		}
 
 		public ParcelFileDescriptor fd() {

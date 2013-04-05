@@ -35,7 +35,7 @@ namespace dtn
 		}
 
 		NativeSession::NativeSession(NativeSessionCallback *cb)
-		 : _receiver(*this), _cb(cb), _registration(dtn::core::BundleCore::getInstance().getSeeker())
+		 : _receiver(*this), _cb(cb), _registration(dtn::core::BundleCore::getInstance().getSeeker()), _destroyed(false)
 		{
 			// set the local endpoint to the default
 			_endpoint = _registration.getDefaultEID();
@@ -48,6 +48,16 @@ namespace dtn
 
 		NativeSession::~NativeSession()
 		{
+			destroy();
+		}
+
+		void NativeSession::destroy() throw ()
+		{
+			if (_destroyed) return;
+
+			// prevent future destroy calls
+			_destroyed = true;
+
 			// send stop signal to the receiver
 			_receiver.stop();
 
@@ -100,7 +110,9 @@ namespace dtn
 
 		void NativeSession::resetEndpoint() throw ()
 		{
+			_registration.unsubscribe(_endpoint);
 			_endpoint = _registration.getDefaultEID();
+			_registration.subscribe(_endpoint);
 		}
 
 		void NativeSession::addEndpoint(const std::string &suffix) throw (NativeSessionException)
@@ -156,6 +168,19 @@ namespace dtn
 			else
 			{
 				_registration.unsubscribe(eid);
+			}
+		}
+
+		void NativeSession::clearRegistration() throw ()
+		{
+			resetEndpoint();
+
+			const std::set<dtn::data::EID> subs = _registration.getSubscriptions();
+			for (std::set<dtn::data::EID>::const_iterator it = subs.begin(); it != subs.end(); ++it) {
+				const dtn::data::EID &e = (*it);
+				if (e != _endpoint) {
+					_registration.unsubscribe(e);
+				}
 			}
 		}
 

@@ -97,6 +97,12 @@ namespace dtn
 			virtual ~NativeSession();
 
 			/**
+			 * Destroy this session and block until
+			 * this process is done
+			 */
+			void destroy() throw ();
+
+			/**
 			 * Returns the node EID of this device
 			 */
 			const dtn::data::EID& getNodeEID() const throw ();
@@ -133,6 +139,11 @@ namespace dtn
 			 * Remove an endpoint identifier from the registration
 			 */
 			void removeRegistration(const dtn::data::EID &eid) throw (NativeSessionException);
+
+			/**
+			 * Removes all registrations and reset the default endpoint to the unique registration identifier
+			 */
+			void clearRegistration() throw ();
 
 			/**
 			 * Retrieve all registered endpoints
@@ -266,6 +277,9 @@ namespace dtn
 
 			// local bundle queue
 			ibrcommon::Queue<dtn::data::BundleID> _bundle_queue;
+
+			// mark the session as destroyed or not
+			bool _destroyed;
 		};
 	} /* namespace net */
 } /* namespace dtn */
