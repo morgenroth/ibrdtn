@@ -204,7 +204,7 @@ namespace dtn
 			 * @param len The number of bytes to copy.
 			 * @param offset Start here to write.
 			 */
-			void write(RegisterIndex ri, const char *buf, const size_t len, const size_t offset = std::string::npos);
+			void write(RegisterIndex ri, const char *buf, const size_t len, const size_t offset = std::string::npos) throw ();
 
 			/**
 			 * Read max. <len> bytes from the payload block in the bundle. If there
@@ -215,7 +215,7 @@ namespace dtn
 			 * @param len The size of the buf array. After the call it contains the number of bytes in the buffer.
 			 * @param offset Start here to read.
 			 */
-			void read(RegisterIndex ri, char *buf, size_t &len, const size_t offset = 0);
+			void read(RegisterIndex ri, char *buf, size_t &len, const size_t offset = 0) throw ();
 
 		private:
 			class BundleReceiver : public ibrcommon::JoinableThread
