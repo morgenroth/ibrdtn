@@ -138,6 +138,14 @@ namespace dtn
 		{
 		}
 
+		std::vector<std::string> NativeDaemon::getVersion() throw ()
+		{
+			std::vector<std::string> ret;
+			ret.push_back(VERSION);
+			ret.push_back(BUILD_NUMBER);
+			return ret;
+		}
+
 		void NativeDaemon::bindEvents()
 		{
 			if (_eventcb != NULL) {

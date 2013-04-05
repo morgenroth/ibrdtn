@@ -114,6 +114,11 @@ namespace dtn
 			 */
 			virtual void raiseEvent(const Event *evt) throw ();
 
+			/**
+			 * Returns version information about the native daemon
+			 */
+			std::vector<std::string> getVersion() throw ();
+
 		private:
 			void setState(NativeDaemonCallback::States state) throw ();
 
