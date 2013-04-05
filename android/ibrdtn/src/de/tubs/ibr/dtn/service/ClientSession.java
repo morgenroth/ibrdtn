@@ -42,10 +42,12 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
+import de.tubs.ibr.dtn.swig.BundleNotFoundException;
 import de.tubs.ibr.dtn.swig.NativeSerializerCallback;
 import de.tubs.ibr.dtn.swig.NativeSession;
 import de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex;
 import de.tubs.ibr.dtn.swig.NativeSessionCallback;
+import de.tubs.ibr.dtn.swig.NativeSessionException;
 import de.tubs.ibr.dtn.swig.PrimaryBlock;
 
 public class ClientSession {
@@ -117,29 +119,31 @@ public class ClientSession {
 
 	public void register(Registration reg)
 	{
-		// set local endpoint
-		nativeSession.setEndpoint(reg.getEndpoint());
+		try {
+		    // set local endpoint
+            nativeSession.setEndpoint(reg.getEndpoint());
+            
+            if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "endpoint registered: " + reg.getEndpoint());
 
-		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "endpoint registered: " + reg.getEndpoint());
+            for (GroupEndpoint group : reg.getGroups()) {
+                de.tubs.ibr.dtn.swig.EID swigEid = new de.tubs.ibr.dtn.swig.EID(group.toString());
+                nativeSession.addRegistration(swigEid);
+                
+                if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + group.toString());
+            }
 
-		for (GroupEndpoint group : reg.getGroups()) {
+            // send out registration intent to the application
+            Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
+            broadcastIntent.addCategory(_package_name);
+            broadcastIntent.putExtra("key", _package_name);
 
-			de.tubs.ibr.dtn.swig.EID swigEid = new de.tubs.ibr.dtn.swig.EID(group.toString());
-			nativeSession.addRegistration(swigEid);
-			
-			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + group.toString());
+            // send notification intent
+            context.sendBroadcast(broadcastIntent);
 
-		}
-
-        // send out registration intent to the application
-        Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
-        broadcastIntent.addCategory(_package_name);
-        broadcastIntent.putExtra("key", _package_name);
-
-        // send notification intent
-        context.sendBroadcast(broadcastIntent);
-
-        Log.d(TAG, "REGISTRATION intent sent to " + _package_name);
+            Log.d(TAG, "REGISTRATION intent sent to " + _package_name);
+        } catch (NativeSessionException e) {
+            Log.e(TAG, "registration failed", e);
+        }
 	}
 	
 	private class SerializerCallback extends NativeSerializerCallback {
@@ -252,34 +256,48 @@ public class ClientSession {
 	 * This is the actual implementation of the DTNSession API
 	 */
 	private final DTNSession.Stub mBinder = new DTNSession.Stub() {
-		public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException
-		{
-			// load the bundle into the register
-			nativeSession.load(NativeSession.RegisterIndex.REG1, toSwig(id));
+        public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException
+        {
+            try {
+                // load the bundle into the register
+                nativeSession.load(NativeSession.RegisterIndex.REG1, toSwig(id));
 
-			// get the bundle
-			nativeSession.get(NativeSession.RegisterIndex.REG1, new SerializerCallback(cb));
-			
-			// TODO: catch exceptions?
-			return true;
-		}
+                // get the bundle
+                nativeSession.get(NativeSession.RegisterIndex.REG1, new SerializerCallback(cb));
 
-		public boolean queryNext(DTNSessionCallback cb) throws RemoteException
-		{
-			// load the next bundle into the register
-			nativeSession.next(NativeSession.RegisterIndex.REG1);
-			
-			// get the bundle
-			nativeSession.get(NativeSession.RegisterIndex.REG1, new SerializerCallback(cb));
-			
-			// TODO: catch exceptions?
-			return false;
-		}
+                // bundle loaded - return true
+                return true;
+            } catch (BundleNotFoundException e) {
+                // bundle not found - return false
+                return false;
+            }
+        }
+
+        public boolean queryNext(DTNSessionCallback cb) throws RemoteException
+        {
+            try {
+                // load the next bundle into the register
+                nativeSession.next(NativeSession.RegisterIndex.REG1);
+
+                // get the bundle
+                nativeSession.get(NativeSession.RegisterIndex.REG1, new SerializerCallback(cb));
+
+                // bundle loaded - return true
+                return false;
+            } catch (BundleNotFoundException e) {
+                // bundle not found - return false
+                return false;
+            }
+        }
 
 		public boolean delivered(BundleID id) throws RemoteException
 		{
-			nativeSession.delivered(toSwig(id));
-			return true;
+			try {
+                nativeSession.delivered(toSwig(id));
+                return true;
+            } catch (BundleNotFoundException e) {
+                return false;
+            }
 		}
 
 		public boolean send(SingletonEndpoint destination, int lifetime, byte[] data) throws RemoteException

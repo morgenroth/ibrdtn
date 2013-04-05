@@ -31,6 +31,12 @@
 %ignore operator&;
 
 /* include ibrcommon exceptions */
+%typemap(javabase) ibrcommon::Exception "java.lang.Exception";
+%typemap(javacode) ibrcommon::Exception %{
+  public String getMessage() {
+    return what();
+  }
+%}
 %include "../ibrcommon/ibrcommon/Exceptions.h"
 
 %{
@@ -90,6 +96,27 @@ namespace std {
 // apply typemap for java byte[] to read()
 %apply char *BYTE { char *buf }
 %apply int &INOUT { size_t &len }
+
+%typemap(throws, throws="NativeDaemonException") dtn::daemon::NativeDaemonException {
+  jclass excep = jenv->FindClass("de/tubs/ibr/dtn/swig/NativeDaemonException");
+  if (excep)
+    jenv->ThrowNew(excep, $1.what());
+  return $null;
+}
+
+%typemap(throws, throws="NativeSessionException") dtn::api::NativeSessionException {
+  jclass excep = jenv->FindClass("de/tubs/ibr/dtn/swig/NativeSessionException");
+  if (excep)
+    jenv->ThrowNew(excep, $1.what());
+  return $null;
+}
+
+%typemap(throws, throws="BundleNotFoundException") dtn::api::BundleNotFoundException {
+  jclass excep = jenv->FindClass("de/tubs/ibr/dtn/swig/BundleNotFoundException");
+  if (excep)
+    jenv->ThrowNew(excep, $1.what());
+  return $null;
+}
 
 %include "../dtnd/src/core/EventReceiver.h"
 %include "../dtnd/src/api/NativeSerializerCallback.h"
