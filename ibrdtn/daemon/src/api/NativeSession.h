@@ -99,7 +99,7 @@ namespace dtn
 			/**
 			 * Returns the node EID of this device
 			 */
-			const dtn::data::EID& getNodeEID() const;
+			const dtn::data::EID& getNodeEID() const throw ();
 
 			/**
 			 * Set the default application endpoint suffix of this
@@ -137,7 +137,7 @@ namespace dtn
 			/**
 			 * Retrieve all registered endpoints
 			 */
-			std::vector<std::string> getSubscriptions();
+			std::vector<std::string> getSubscriptions() throw ();
 
 			/**
 			 * Loads the next bundle in the queue into the local

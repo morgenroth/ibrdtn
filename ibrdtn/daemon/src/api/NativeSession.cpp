@@ -57,7 +57,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG("NativeSession", 15) << "Session destroyed" << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		const dtn::data::EID& NativeSession::getNodeEID() const
+		const dtn::data::EID& NativeSession::getNodeEID() const throw ()
 		{
 			return dtn::core::BundleCore::local;
 		}
@@ -159,7 +159,7 @@ namespace dtn
 			}
 		}
 
-		std::vector<std::string> NativeSession::getSubscriptions()
+		std::vector<std::string> NativeSession::getSubscriptions() throw ()
 		{
 			const std::set<dtn::data::EID> subs = _registration.getSubscriptions();
 			std::vector<std::string> ret;
@@ -259,7 +259,7 @@ namespace dtn
 			((dtn::data::PrimaryBlock&)_bundle[ri]) = p;
 		}
 
-		void NativeSession::write(RegisterIndex ri, const char *buf, const size_t len, const size_t offset)
+		void NativeSession::write(RegisterIndex ri, const char *buf, const size_t len, const size_t offset) throw ()
 		{
 			try {
 				dtn::data::PayloadBlock &payload = _bundle[ri].find<dtn::data::PayloadBlock>();
@@ -280,7 +280,7 @@ namespace dtn
 			}
 		}
 
-		void NativeSession::read(RegisterIndex ri, char *buf, size_t &len, const size_t offset)
+		void NativeSession::read(RegisterIndex ri, char *buf, size_t &len, const size_t offset) throw ()
 		{
 			try {
 				dtn::data::PayloadBlock &payload = _bundle[ri].find<dtn::data::PayloadBlock>();
