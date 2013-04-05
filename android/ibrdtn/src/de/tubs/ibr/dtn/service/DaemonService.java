@@ -435,7 +435,10 @@ public class DaemonService extends Service {
         return START_STICKY;
     }
 
-    // TODO: Not used currently!
+    /**
+     * This method is called by the daemon main thread on every change in the
+     * node neighborhood.
+     */
     public void onNeighborhoodChanged() {
         updateNeighborNotification();
     }

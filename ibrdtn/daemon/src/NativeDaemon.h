@@ -23,6 +23,7 @@
 #include "StandByManager.h"
 #include "net/IPNDAgent.h"
 #include "storage/BundleSeeker.h"
+#include "core/EventReceiver.h"
 #include <ibrcommon/Exceptions.h>
 #include <list>
 #include <set>
@@ -51,6 +52,13 @@ namespace dtn
 			virtual void stateChanged(States state) throw () = 0;
 		};
 
+		class NativeEventCallback {
+		public:
+			virtual ~NativeEventCallback() = 0;
+
+			virtual void eventRaised(const std::string &event, const std::string &action, const std::vector<std::string> &data) throw () = 0;
+		};
+
 		class NativeDaemonException : public ibrcommon::Exception
 		{
 		public:
@@ -59,9 +67,9 @@ namespace dtn
 			};
 		};
 
-		class NativeDaemon {
+		class NativeDaemon : public dtn::core::EventReceiver {
 		public:
-			NativeDaemon(NativeDaemonCallback *statecb = NULL);
+			NativeDaemon(NativeDaemonCallback *statecb = NULL, NativeEventCallback *eventcb = NULL);
 			virtual ~NativeDaemon();
 
 			/**
@@ -101,8 +109,20 @@ namespace dtn
 			void addConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ();
 			void removeConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ();
 
+			/**
+			 * @see dtn::core::EventReceiver::raiseEvent()
+			 */
+			virtual void raiseEvent(const Event *evt) throw ();
+
 		private:
 			void setState(NativeDaemonCallback::States state) throw ();
+
+			void addEventData(const dtn::data::Bundle &b, std::vector<std::string> &data) const;
+			void addEventData(const dtn::data::MetaBundle &b, std::vector<std::string> &data) const;
+			void addEventData(const dtn::data::BundleID &b, std::vector<std::string> &data) const;
+
+			void bindEvents();
+			void unbindEvents();
 
 			void init_blob_storage() throw (NativeDaemonException);
 			void init_bundle_storage() throw (NativeDaemonException);
@@ -115,6 +135,7 @@ namespace dtn
 			void init_api() throw (NativeDaemonException);
 
 			NativeDaemonCallback *_statecb;
+			NativeEventCallback *_eventcb;
 
 			// list of components
 			std::list< dtn::daemon::Component* > _components;

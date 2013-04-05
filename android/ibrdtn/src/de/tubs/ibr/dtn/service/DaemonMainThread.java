@@ -43,6 +43,8 @@ import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.swig.NativeDaemon;
 import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
+import de.tubs.ibr.dtn.swig.NativeEventCallback;
+import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonMainThread {
 	private final static String TAG = "DaemonMainThread";
@@ -93,7 +95,7 @@ public class DaemonMainThread {
 	}
 
 	public DaemonMainThread(DaemonService context) {
-		this.mDaemon = new NativeDaemon(mDaemonCallback);
+		this.mDaemon = new NativeDaemon(mDaemonCallback, mEventCallback);
 		this.mService = context;
 		this._executor = Executors.newSingleThreadExecutor();
 	}
@@ -142,6 +144,66 @@ public class DaemonMainThread {
             // blocking main loop
             DaemonMainThread.this.mDaemon.main_loop();
         }	    
+	};
+	
+	private NativeEventCallback mEventCallback = new NativeEventCallback() {
+        @Override
+        public void eventRaised(String eventName, String action, StringVec data) {
+            Intent event = new Intent(de.tubs.ibr.dtn.Intent.EVENT);
+            Intent neighborIntent = null;
+
+            event.addCategory(Intent.CATEGORY_DEFAULT);
+            event.putExtra("name", eventName);
+
+            if (eventName.equals("NodeEvent")) {
+                neighborIntent = new Intent(de.tubs.ibr.dtn.Intent.NEIGHBOR);
+                neighborIntent.addCategory(Intent.CATEGORY_DEFAULT);
+            }
+
+            // place the action into the intent
+            if (action.length() > 0)
+            {
+                event.putExtra("action", action);
+
+                if (neighborIntent != null) {
+                    if (action.equals("available")) {
+                        neighborIntent.putExtra("action", "available");
+                    }
+                    else if (action.equals("unavailable")) {
+                        neighborIntent.putExtra("action", "unavailable");
+                    }
+                    else {
+                        neighborIntent = null;
+                    }
+                }
+            }
+
+            // put all attributes into the intent
+            for (int i = 0; i < data.size(); i++) {
+                String entry = data.get(i);
+                String entry_data[] = entry.split(": ", 2);
+                
+                // skip invalid entries
+                if (entry_data.length < 2) continue;
+
+                event.putExtra("attr:" + entry_data[0], entry_data[1]);
+                if (neighborIntent != null) {
+                    neighborIntent.putExtra("attr:" + entry_data[0], entry_data[1]);
+                }
+            }
+
+            // send event intent
+            mService.sendBroadcast(event);
+
+            if (neighborIntent != null) {
+                mService.sendBroadcast(neighborIntent);
+                mService.onNeighborhoodChanged();
+            }
+
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "EVENT intent broadcasted: " + eventName + "; Action: " + action);
+            }
+        }
 	};
 	
 	private NativeDaemonCallback mDaemonCallback = new NativeDaemonCallback() {

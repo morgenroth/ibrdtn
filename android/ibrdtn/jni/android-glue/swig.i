@@ -50,6 +50,7 @@
 #include "../ibrdtn/ibrdtn/data/StatusReportBlock.h"
 #include "../ibrdtn/ibrdtn/data/CustodySignalBlock.h"
 
+#include "../dtnd/src/core/EventReceiver.h"
 #include "../dtnd/src/api/NativeSession.h"
 #include "../dtnd/src/api/NativeSerializerCallback.h"
 #include "../dtnd/src/NativeDaemon.h"
@@ -59,6 +60,7 @@
 %feature("director") NativeSessionCallback;
 %feature("director") NativeSerializerCallback;
 %feature("director") NativeDaemonCallback;
+%feature("director") NativeEventCallback;
 
 %apply unsigned long long { uint64_t };
 
@@ -89,6 +91,7 @@ namespace std {
 %apply char *BYTE { char *buf }
 %apply int &INOUT { size_t &len }
 
+%include "../dtnd/src/core/EventReceiver.h"
 %include "../dtnd/src/api/NativeSerializerCallback.h"
 %include "../dtnd/src/api/NativeSession.h"
 %include "../dtnd/src/NativeDaemon.h"
