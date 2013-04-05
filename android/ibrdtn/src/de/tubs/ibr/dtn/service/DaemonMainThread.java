@@ -43,6 +43,8 @@ import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.swig.NativeDaemon;
 import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
+import de.tubs.ibr.dtn.swig.NativeEventCallback;
+import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonMainThread {
 	private final static String TAG = "DaemonMainThread";
@@ -93,7 +95,7 @@ public class DaemonMainThread {
 	}
 
 	public DaemonMainThread(DaemonService context) {
-		this.mDaemon = new NativeDaemon(mDaemonCallback);
+		this.mDaemon = new NativeDaemon(mDaemonCallback, mEventCallback);
 		this.mService = context;
 		this._executor = Executors.newSingleThreadExecutor();
 	}
@@ -139,6 +141,13 @@ public class DaemonMainThread {
             // blocking main loop
             DaemonMainThread.this.mDaemon.main_loop();
         }	    
+	};
+	
+	private NativeEventCallback mEventCallback = new NativeEventCallback() {
+        @Override
+        public void eventRaised(String event, String action, StringVec data) {
+            // TODO: convert event into intent
+        }
 	};
 	
 	private NativeDaemonCallback mDaemonCallback = new NativeDaemonCallback() {
