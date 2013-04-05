@@ -82,9 +82,6 @@ public class DaemonService extends Service {
 
     private DaemonMainThread mDaemonMainThread = null;
 
-    // private final CountDownLatch startingLatch = new CountDownLatch(1);
-    // private boolean starting = false;
-
     private final Object mStartingLock = new Object();
     private boolean mStarting = false;
 
