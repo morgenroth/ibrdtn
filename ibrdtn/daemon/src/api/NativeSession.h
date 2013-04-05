@@ -143,12 +143,12 @@ namespace dtn
 			 * Loads the next bundle in the queue into the local
 			 * register
 			 */
-			void next(RegisterIndex ri) throw (NativeSessionException);
+			void next(RegisterIndex ri) throw (BundleNotFoundException);
 
 			/**
 			 * Load a bundle into the local register
 			 */
-			void load(RegisterIndex ri, const dtn::data::BundleID &id) throw (NativeSessionException);
+			void load(RegisterIndex ri, const dtn::data::BundleID &id) throw (BundleNotFoundException);
 
 			/**
 			 * Returns the bundle in the register

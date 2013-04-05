@@ -43,6 +43,7 @@ import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.swig.NativeDaemon;
 import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
+import de.tubs.ibr.dtn.swig.NativeDaemonException;
 import de.tubs.ibr.dtn.swig.NativeEventCallback;
 import de.tubs.ibr.dtn.swig.StringVec;
 
@@ -137,12 +138,18 @@ public class DaemonMainThread {
             int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
             int debugVerbosity = Integer.valueOf(preferences.getString("pref_debug_verbosity", "0"));
 
-            // loads config and initializes daemon
+            // loads config
             DaemonMainThread.this.mDaemon.enableLogging(configPath, "Core", logLevel, debugVerbosity);
-            DaemonMainThread.this.mDaemon.initialize();
             
-            // blocking main loop
-            DaemonMainThread.this.mDaemon.main_loop();
+            try {
+                // initialize daemon
+                DaemonMainThread.this.mDaemon.initialize();
+                
+                // blocking main loop
+                DaemonMainThread.this.mDaemon.main_loop();
+            } catch (NativeDaemonException e) {
+                Log.e(TAG, "Daemon startup failed.", e);
+            }
         }	    
 	};
 	
