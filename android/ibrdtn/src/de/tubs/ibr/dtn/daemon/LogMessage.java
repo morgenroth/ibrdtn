@@ -32,20 +32,19 @@ public class LogMessage {
 
     // try to match something like this:
     // 04-04 22:36:25.865 I/IBR-DTN/RequeueBundleEvent( 1336): Bundle...
-    static final private String LOGCAT_LINE_REGEX = "^(\\S+\\s\\S+)\\s(\\w)/IBR-DTN/(.*)\\(\\s*\\d+\\)\\:\\s(.*)$";
+    private static final String LOGCAT_LINE_REGEX = "^(\\S+\\s\\S+)\\s(\\w)/IBR-DTN/(.*)\\(\\s*\\d+\\)\\:\\s(.*)$";
     private static Pattern mLinePattern;
     private static Matcher mLineMatcher;
 
-    static
-    {
-        mLinePattern = Pattern.compile(LOGCAT_LINE_REGEX, Pattern.CASE_INSENSITIVE);
-
+    static {
         LEVEL_LABELS = new HashMap<String, String>();
         LEVEL_LABELS.put("E", "Exception");
         LEVEL_LABELS.put("W", "Warning");
         LEVEL_LABELS.put("I", "Information");
         LEVEL_LABELS.put("D", "Debug");
         LEVEL_LABELS.put("V", "Verbose");
+
+        mLinePattern = Pattern.compile(LOGCAT_LINE_REGEX, Pattern.CASE_INSENSITIVE);
     }
 
     public String date;
