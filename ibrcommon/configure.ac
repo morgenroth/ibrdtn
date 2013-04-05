@@ -99,11 +99,10 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	use_netlink="yes"
 	
 	# OpenSSL
-	#AC_DEFINE(HAVE_OPENSSL, [1], [])
-	#OPENSSL_LIBS="-lssl -lcrypto"
-	#AC_SUBST(OPENSSL_LIBS)
-	#use_openssl="yes"
-	use_openssl="no"
+	AC_DEFINE(HAVE_OPENSSL, [1], [])
+	OPENSSL_LIBS="-lssl -lcrypto"
+	AC_SUBST(OPENSSL_LIBS)
+	use_openssl="yes"
 
 	# Lowpan
 	#AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], [])

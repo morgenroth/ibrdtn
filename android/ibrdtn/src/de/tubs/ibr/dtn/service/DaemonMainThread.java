@@ -72,8 +72,8 @@ public class DaemonMainThread {
 		{
 			System.loadLibrary(GNUSTL_NAME);
 
-			// System.loadLibrary(CRYPTO_NAME);
-			// System.loadLibrary(SSL_NAME);
+			System.loadLibrary(CRYPTO_NAME);
+			System.loadLibrary(SSL_NAME);
 
 			System.loadLibrary(IBRCOMMON_NAME);
 			System.loadLibrary(IBRDTN_NAME);

@@ -90,12 +90,11 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_SUBST(ibrcommon_LIBS)
 
 	# OpenSSL
-	#AC_DEFINE(WITH_BUNDLE_SECURITY, [1], [])
-	#AC_DEFINE(HAVE_OPENSSL, [1], [])
-	#OPENSSL_LIBS="-lssl -lcrypto"
-	#AC_SUBST(OPENSSL_LIBS)
-	#with_dtnsec="yes"
-	with_dtnsec="no"
+	AC_DEFINE(WITH_BUNDLE_SECURITY, [1], [])
+	AC_DEFINE(HAVE_OPENSSL, [1], [])
+	OPENSSL_LIBS="-lssl -lcrypto"
+	AC_SUBST(OPENSSL_LIBS)
+	with_dtnsec="yes"
 
 	# Compression
 	AC_DEFINE(WITH_COMPRESSION, [1], [])

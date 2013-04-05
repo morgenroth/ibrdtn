@@ -42,6 +42,6 @@ APP_CPPFLAGS+=-I$(abspath $(LOCAL_PATH))/ibrcommon
 APP_CPPFLAGS+=-I$(abspath $(LOCAL_PATH))/ibrdtn
 
 # If APP_MODULES is not set, all modules are compiled!
-APP_MODULES:=openssl ibrcommon ibrdtn dtnd android-glue
+APP_MODULES:=crypto ssl ibrcommon ibrdtn dtnd android-glue
 #APP_MODULES:=all
 

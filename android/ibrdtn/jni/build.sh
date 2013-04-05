@@ -36,6 +36,7 @@ do
 	cd $SOURCE
 	./autogen.sh
 	./configure --enable-android
+	make clean
 	make
 	cd ..
 done
