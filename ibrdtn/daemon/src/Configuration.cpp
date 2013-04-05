@@ -822,7 +822,11 @@ namespace dtn
 
 		bool Configuration::doAPI()
 		{
+#ifdef ANDROID
+			return false;
+#else
 			return _doapi;
+#endif
 		}
 
 		Configuration::RoutingExtension Configuration::Network::getRoutingExtension() const
