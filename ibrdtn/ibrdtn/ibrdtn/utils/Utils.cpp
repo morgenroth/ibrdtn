@@ -230,5 +230,12 @@ namespace dtn
 				catch (const dtn::InvalidDataException &ex) { };
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 		}
+
+		std::string Utils::toString(uint64_t value)
+		{
+			std::stringstream ss;
+			ss << value;
+			return ss.str();
+		}
 	}
 }
