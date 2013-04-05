@@ -110,7 +110,9 @@ namespace dtn
 
 		void NativeSession::resetEndpoint() throw ()
 		{
+			_registration.unsubscribe(_endpoint);
 			_endpoint = _registration.getDefaultEID();
+			_registration.subscribe(_endpoint);
 		}
 
 		void NativeSession::addEndpoint(const std::string &suffix) throw (NativeSessionException)
@@ -166,6 +168,19 @@ namespace dtn
 			else
 			{
 				_registration.unsubscribe(eid);
+			}
+		}
+
+		void NativeSession::clearRegistration() throw ()
+		{
+			resetEndpoint();
+
+			const std::set<dtn::data::EID> subs = _registration.getSubscriptions();
+			for (std::set<dtn::data::EID>::const_iterator it = subs.begin(); it != subs.end(); ++it) {
+				const dtn::data::EID &e = (*it);
+				if (e != _endpoint) {
+					_registration.unsubscribe(e);
+				}
 			}
 		}
 

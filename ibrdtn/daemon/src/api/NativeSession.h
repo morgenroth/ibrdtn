@@ -141,6 +141,11 @@ namespace dtn
 			void removeRegistration(const dtn::data::EID &eid) throw (NativeSessionException);
 
 			/**
+			 * Removes all registrations and reset the default endpoint to the unique registration identifier
+			 */
+			void clearRegistration() throw ();
+
+			/**
 			 * Retrieve all registered endpoints
 			 */
 			std::vector<std::string> getSubscriptions() throw ();
