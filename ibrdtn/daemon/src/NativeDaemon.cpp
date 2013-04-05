@@ -214,8 +214,8 @@ namespace dtn
 
 			// activate debugging
 			if (logLevel == 1) {
-				// logcat filter, everything but DEBUG, INFO, and NOTICE
-				logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
+				// logcat filter, everything but DEBUG and NOTICE
+				logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
 			} else if (logLevel == 2)
 			{
 				// set debug verbosity
