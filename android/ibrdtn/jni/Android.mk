@@ -5,9 +5,9 @@ JNI_PATH := $(LOCAL_PATH)
 include $(JNI_PATH)/nl-3/android_toolchain/jni/Android_static.mk
 
 # include openssl
-NDK_PROJECT_PATH := $(JNI_PATH)/openssl/
-include $(JNI_PATH)/openssl/Android.mk
-NDK_PROJECT_PATH := $(JNI_PATH)
+#NDK_PROJECT_PATH := $(JNI_PATH)/openssl/
+include $(JNI_PATH)/openssl/jni/Android.mk
+#NDK_PROJECT_PATH := $(JNI_PATH)
 
 # include ibr dtn modules
 include $(JNI_PATH)/ibrcommon/Android.mk
