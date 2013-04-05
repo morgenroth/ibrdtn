@@ -28,6 +28,7 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrdtn/utils/Clock.h>
+#include <ibrdtn/utils/Utils.h>
 #include <list>
 
 #include "StandByManager.h"
@@ -41,8 +42,7 @@
 #include "core/FragmentManager.h"
 #include "core/Node.h"
 #include "core/EventSwitch.h"
-#include "core/GlobalEvent.h"
-#include "core/NodeEvent.h"
+#include "core/EventDispatcher.h"
 
 #include "routing/BaseRouter.h"
 #include "routing/StaticRoutingExtension.h"
@@ -104,6 +104,16 @@
 #include "Debugger.h"
 #include "core/EventDebugger.h"
 
+/** events **/
+#include "core/NodeEvent.h"
+#include "core/GlobalEvent.h"
+#include "core/CustodyEvent.h"
+#include "routing/QueueBundleEvent.h"
+#include "net/BundleReceivedEvent.h"
+#include "net/TransferAbortedEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/ConnectionEvent.h"
+
 #define UNIT_MB * 1048576
 
 namespace dtn
@@ -114,13 +124,263 @@ namespace dtn
 		{
 		}
 
-		NativeDaemon::NativeDaemon(NativeDaemonCallback *statecb)
-		 : _statecb(statecb), _standby_manager(NULL), _ipnd(NULL), _bundle_index(NULL), _bundle_seeker(NULL)
+		NativeEventCallback::~NativeEventCallback()
 		{
+		}
+
+		NativeDaemon::NativeDaemon(NativeDaemonCallback *statecb, NativeEventCallback *eventcb)
+		 : _statecb(statecb), _eventcb(eventcb), _standby_manager(NULL), _ipnd(NULL), _bundle_index(NULL), _bundle_seeker(NULL)
+		{
+
 		}
 
 		NativeDaemon::~NativeDaemon()
 		{
+		}
+
+		void NativeDaemon::bindEvents()
+		{
+			if (_eventcb != NULL) {
+				// bind to several events
+				dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+				dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
+				dtn::core::EventDispatcher<dtn::core::CustodyEvent>::add(this);
+				dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::add(this);
+				dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
+				dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
+				dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
+				dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+			}
+		}
+
+		void NativeDaemon::unbindEvents()
+		{
+			if (_eventcb != NULL) {
+				// unbind to events
+				dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
+				dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
+				dtn::core::EventDispatcher<dtn::core::CustodyEvent>::remove(this);
+				dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::remove(this);
+				dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
+				dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
+				dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
+				dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
+			}
+		}
+
+		void NativeDaemon::addEventData(const dtn::data::Bundle &b, std::vector<std::string> &data) const
+		{
+			// add the bundle data
+			data.push_back("Source: " + b._source.getString());
+			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b._timestamp));
+			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b._sequencenumber));
+			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b._lifetime));
+			data.push_back("Procflags: " + dtn::utils::Utils::toString(b._procflags));
+
+			// add the destination eid
+			data.push_back("Destination: " + b._destination.getString());
+
+			if (b.get(dtn::data::PrimaryBlock::FRAGMENT))
+			{
+				// add fragmentation values
+				data.push_back("Appdatalength: " + dtn::utils::Utils::toString(b._appdatalength));
+				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b._fragmentoffset));
+			}
+		}
+
+		void NativeDaemon::addEventData(const dtn::data::MetaBundle &b, std::vector<std::string> &data) const
+		{
+			// add the bundle data
+			data.push_back("Source: " + b.source.getString());
+			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
+			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b.sequencenumber));
+			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b.lifetime));
+			data.push_back("Procflags: " + dtn::utils::Utils::toString(b.procflags));
+
+			// add the destination eid
+			data.push_back("Destination: " + b.destination.getString());
+
+			if (b.get(dtn::data::PrimaryBlock::FRAGMENT))
+			{
+				// add fragmentation values
+				data.push_back("Appdatalength: " + dtn::utils::Utils::toString(b.appdatalength));
+				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b.offset));
+			}
+		}
+
+		void NativeDaemon::addEventData(const dtn::data::BundleID &b, std::vector<std::string> &data) const
+		{
+			// add the bundle data
+			data.push_back("Source: " + b.source.getString());
+			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
+			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b.sequencenumber));
+
+			if (b.fragment)
+			{
+				// add fragmentation values
+				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b.offset));
+			}
+		}
+
+		void NativeDaemon::raiseEvent(const Event *evt) throw ()
+		{
+			std::string event = evt->getName();
+			std::string action;
+			std::vector<std::string> data;
+
+			try {
+				const dtn::core::NodeEvent &node = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+
+				// set action
+				switch (node.getAction())
+				{
+				case dtn::core::NODE_AVAILABLE:
+					action = "available";
+					break;
+				case dtn::core::NODE_UNAVAILABLE:
+					action = "unavailable";
+					break;
+				case dtn::core::NODE_UPDATED:
+					action = "updated";
+					break;
+				default:
+					break;
+				}
+
+				// add the node eid
+				data.push_back("EID: " + node.getNode().getEID().getString());
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
+
+				// set action
+				switch (global.getAction())
+				{
+				case dtn::core::GlobalEvent::GLOBAL_BUSY:
+					action = "busy";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_IDLE:
+					action = "idle";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_POWERSAVE:
+					action = "powersave";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_RELOAD:
+					action = "reload";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_SHUTDOWN:
+					action = "shutdown";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_SUSPEND:
+					action = "suspend";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
+					action = "internet available";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
+					action = "internet unavailable";
+					break;
+				default:
+					break;
+				}
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+
+				// set action
+				action = "received";
+
+				data.push_back("Peer: " + received.peer.getString());
+				data.push_back("Local: " + (received.fromlocal ? std::string("true") : std::string("false")));
+
+				// add bundle data
+				addEventData(received.bundle, data);
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::core::CustodyEvent &custody = dynamic_cast<const dtn::core::CustodyEvent&>(*evt);
+
+				// set action
+				switch (custody.getAction())
+				{
+				case dtn::core::CUSTODY_ACCEPT:
+					action = "accept";
+					break;
+				case dtn::core::CUSTODY_REJECT:
+					action = "reject";
+					break;
+				default:
+					break;
+				}
+
+				// add bundle data
+				addEventData(custody.getBundle(), data);
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+
+				// set action
+				action = "aborted";
+
+				data.push_back("Peer: " + aborted.getPeer().getString());
+
+				// add bundle data
+				addEventData(aborted.getBundleID(), data);
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+
+				// set action
+				action = "completed";
+
+				data.push_back("Peer: " + completed.getPeer().getString());
+
+				// add bundle data
+				addEventData(completed.getBundle(), data);
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::net::ConnectionEvent &connection = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
+
+				// set action
+				switch (connection.state)
+				{
+				case dtn::net::ConnectionEvent::CONNECTION_UP:
+					action = "up";
+					break;
+				case dtn::net::ConnectionEvent::CONNECTION_DOWN:
+					action = "down";
+					break;
+				case dtn::net::ConnectionEvent::CONNECTION_SETUP:
+					action = "setup";
+					break;
+				case dtn::net::ConnectionEvent::CONNECTION_TIMEOUT:
+					action = "timeout";
+					break;
+				default:
+					break;
+				}
+
+				// write the peer eid
+				data.push_back("Peer: " + connection.peer.getString());
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
+
+				// set action
+				action = "queued";
+
+				// add bundle data
+				addEventData(queued.bundle, data);
+			} catch (const std::bad_cast&) { };
+
+			// signal event to the callback interface
+			_eventcb->eventRaised(event, action, data);
 		}
 
 		std::string NativeDaemon::getLocalUri() throw ()
@@ -325,6 +585,9 @@ namespace dtn
 
 			// signal state COMPONENTS_INITIALIZED
 			setState(NativeDaemonCallback::COMPONENTS_INITIALIZED);
+
+			// listen to events
+			bindEvents();
 		}
 
 		/**
@@ -401,6 +664,9 @@ namespace dtn
 
 			// signal state SHUTDOWN_INITIATED
 			setState(NativeDaemonCallback::SHUTDOWN_INITIATED);
+
+			// unlisten to events
+			unbindEvents();
 
 			/**
 			 * terminate all components!
