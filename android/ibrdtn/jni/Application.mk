@@ -5,9 +5,6 @@ ibrcommon_TOP:=$(abspath $(LOCAL_PATH))/ibrcommon
 ibrdtn_TOP:=$(abspath $(LOCAL_PATH))/ibrdtn
 dtnd_TOP:=$(abspath $(LOCAL_PATH))/dtnd
 
-# force old gcc for openssl
-#NDK_TOOLCHAIN_VERSION=4.4.3
-
 # Optimizations
 #APP_OPTIM:=release
 APP_OPTIM:=debug
