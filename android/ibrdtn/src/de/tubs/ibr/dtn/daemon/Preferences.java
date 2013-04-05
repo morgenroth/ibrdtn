@@ -320,6 +320,24 @@ public class Preferences extends PreferenceActivity {
 			e.commit();
 		}
 	}
+
+    private void startDaemon() {
+        // startup the daemon process
+        final Intent intent = new Intent(Preferences.this, DaemonService.class);
+        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+        startService(intent);
+
+        // add cloud uplink immediately if enabled
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        setCloudUplink(prefs.getBoolean("enabledSwitch", false));
+    }
+
+    private void stopDaemon() {
+        // shutdown the daemon
+        final Intent intent = new Intent(Preferences.this, DaemonService.class);
+        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
+        startService(intent);
+    }
 	
 	@TargetApi(14)
 	@SuppressWarnings("deprecation")
@@ -339,17 +357,11 @@ public class Preferences extends PreferenceActivity {
 				if (((CheckBoxPreference) p).isChecked()) {
 					Preferences.this.setPrefsEnabled(false);
 					
-					// startup the daemon process
-					final Intent intent = new Intent(Preferences.this, DaemonService.class);
-					intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-					startService(intent);
+					startDaemon();
 				}
 				else
 				{
-					// shutdown the daemon
-					final Intent intent = new Intent(Preferences.this, DaemonService.class);
-					intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
-					startService(intent);
+				    stopDaemon();
 				}
 				
 				return true;
@@ -389,10 +401,7 @@ public class Preferences extends PreferenceActivity {
 						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", true).commit();
 						
-						// startup the daemon process
-						final Intent intent = new Intent(Preferences.this, DaemonService.class);
-						intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-						startService(intent);
+						startDaemon();
 					}
 					else
 					{
@@ -400,10 +409,7 @@ public class Preferences extends PreferenceActivity {
 						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", false).commit();
 						
-						// shutdown the daemon
-						final Intent intent = new Intent(Preferences.this, DaemonService.class);
-						intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
-						startService(intent);
+						stopDaemon();
 					}
 				}
 	        });
