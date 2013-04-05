@@ -97,6 +97,14 @@ public class Preferences extends PreferenceActivity {
             } catch (RemoteException e) {
                 Log.e(TAG, "Can not query daemon state", e);
             }
+			
+			// get the daemon version
+			try {
+			    String version[] = Preferences.this.service.getVersion();
+			    setVersion("dtnd: " + version[0] + ", build: " + version[1]);
+            } catch (RemoteException e) {
+                Log.e(TAG, "Can not query the daemon version", e);
+            }
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
@@ -457,12 +465,21 @@ public class Preferences extends PreferenceActivity {
 		    }
 		} catch (IOException e) { }
 		
-		// version information
-		Preference version = findPreference("system_version");
-		try {
-			PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
-			version.setSummary(info.versionName);
-		} catch (NameNotFoundException e) { };
+		// set initial version
+		setVersion(null);
+	}
+	
+	private void setVersion(String versionValue) {
+        // version information
+        Preference version = findPreference("system_version");
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
+            if (versionValue == null) {
+                version.setSummary("app: " + info.versionName);
+            } else {
+                version.setSummary("app: " + info.versionName + ", " + versionValue);
+            }
+        } catch (NameNotFoundException e) { };
 	}
 	
     @Override

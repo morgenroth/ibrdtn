@@ -117,6 +117,12 @@ public class DaemonService extends Service {
 			if (cs == null) return null;
 			return cs.getBinder();
 		}
+
+        @Override
+        public String[] getVersion() throws RemoteException {
+            StringVec version = mDaemonMainThread.getNative().getVersion();
+            return new String[] { version.get(0), version.get(1) };
+        }		
 	};
 
 	@Override

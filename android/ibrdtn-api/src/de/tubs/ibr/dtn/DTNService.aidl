@@ -50,4 +50,10 @@ interface DTNService {
 	 * @returns null if the session is not available.
 	 */
 	DTNSession getSession(String packageName);
+	
+	/**
+	 * Get the version of the daemon
+	 * @returns A array with the version at position 0 and the build number at position 1
+	 */
+	String[] getVersion();
 }
