@@ -145,8 +145,61 @@ public class DaemonMainThread {
 	
 	private NativeEventCallback mEventCallback = new NativeEventCallback() {
         @Override
-        public void eventRaised(String event, String action, StringVec data) {
-            // TODO: convert event into intent
+        public void eventRaised(String eventName, String action, StringVec data) {
+            Intent event = new Intent(de.tubs.ibr.dtn.Intent.EVENT);
+            Intent neighborIntent = null;
+
+            event.addCategory(Intent.CATEGORY_DEFAULT);
+            event.putExtra("name", eventName);
+
+            if (eventName.equals("NodeEvent")) {
+                neighborIntent = new Intent(de.tubs.ibr.dtn.Intent.NEIGHBOR);
+                neighborIntent.addCategory(Intent.CATEGORY_DEFAULT);
+            }
+
+            // place the action into the intent
+            if (action.length() > 0)
+            {
+                event.putExtra("action", action);
+
+                if (neighborIntent != null) {
+                    if (action.equals("available")) {
+                        neighborIntent.putExtra("action", "available");
+                    }
+                    else if (action.equals("unavailable")) {
+                        neighborIntent.putExtra("action", "unavailable");
+                    }
+                    else {
+                        neighborIntent = null;
+                    }
+                }
+            }
+
+            // put all attributes into the intent
+            for (int i = 0; i < data.size(); i++) {
+                String entry = data.get(i);
+                String entry_data[] = entry.split(": ", 2);
+                
+                // skip invalid entries
+                if (entry_data.length < 2) continue;
+
+                event.putExtra("attr:" + entry_data[0], entry_data[1]);
+                if (neighborIntent != null) {
+                    neighborIntent.putExtra("attr:" + entry_data[0], entry_data[1]);
+                }
+            }
+
+            // send event intent
+            mService.sendBroadcast(event);
+
+            if (neighborIntent != null) {
+                mService.sendBroadcast(neighborIntent);
+                mService.onNeighborhoodChanged();
+            }
+
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "EVENT intent broadcasted: " + eventName + "; Action: " + action);
+            }
         }
 	};
 	
