@@ -18,11 +18,11 @@ git fetch --tags
 git checkout origin
 git checkout 7e32da396adfe6b58b23641dacb1887f5855ff9c
 cd ..
-[ ! -e openssl ] && git clone git://github.com/guardianproject/openssl-android.git openssl
+[ ! -e openssl ] && git clone git://github.com/dpolishuk/openssl-android.git openssl
 cd openssl
 git fetch --tags
 git checkout origin
-git checkout 327836b3b18784d5da25ffe904dc37b6cf368c81
+git checkout 5fe1d66125abd4074674678f1c2aee2f5212da75
 cd ..
 
 echo ""
