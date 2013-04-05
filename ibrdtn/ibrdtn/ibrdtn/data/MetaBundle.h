@@ -43,15 +43,15 @@ namespace dtn
 			bool get(dtn::data::PrimaryBlock::FLAGS flag) const;
 
 			dtn::data::DTNTime received;
-			size_t lifetime;
+			uint64_t lifetime;
 			dtn::data::EID destination;
 			dtn::data::EID reportto;
 			dtn::data::EID custodian;
-			size_t appdatalength;
-			size_t procflags;
-			size_t expiretime;
-			size_t hopcount;
-			size_t payloadlength;
+			uint64_t appdatalength;
+			uint64_t procflags;
+			uint64_t expiretime;
+			uint64_t hopcount;
+			uint64_t payloadlength;
 			int8_t net_priority;
 		};
 	}
