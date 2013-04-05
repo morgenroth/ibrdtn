@@ -4,7 +4,7 @@ How to compile IBR-DTN for Android?
 -----------------------------------
 
    1. Install Android NDK:
-      Get official Android NDK Version 8d (only this version is tested properly!)
+      Get latest version of official Android NDK Version (Tested version: 8e)
       from http://developer.android.com/tools/sdk/ndk/index.html ,
       For old versions see http://stackoverflow.com/questions/6849981/where-do-i-find-old-versions-of-ndk
 

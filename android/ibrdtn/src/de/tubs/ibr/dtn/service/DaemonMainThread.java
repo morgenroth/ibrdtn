@@ -121,6 +121,9 @@ public class DaemonMainThread {
 	private Runnable _main_loop = new Runnable() {
         @Override
         public void run() {
+            // set state to UNKOWN to indicate that it is currently starting
+            changeDaemonState(DaemonState.UNKOWN);
+            
             // lower priority of this thread
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
 
@@ -207,27 +210,24 @@ public class DaemonMainThread {
 		@Override
 		public void stateChanged(States state) {
 			if (States.STARTUP_COMPLETED.equals(state)) {
-			    _state = DaemonState.ONLINE;
-			    
-				// broadcast online state
-				Intent broadcastOnlineIntent = new Intent();
-				broadcastOnlineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
-				broadcastOnlineIntent.putExtra("state", DaemonState.ONLINE.name());
-				broadcastOnlineIntent.addCategory(Intent.CATEGORY_DEFAULT);
-				mService.sendBroadcast(broadcastOnlineIntent);
+			    changeDaemonState(DaemonState.ONLINE);
 			}
 			else if (States.SHUTDOWN_INITIATED.equals(state)) {
-			    _state = DaemonState.OFFLINE;
-			    
-				// broadcast offline state
-				Intent broadcastOfflineIntent = new Intent();
-				broadcastOfflineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
-				broadcastOfflineIntent.putExtra("state", DaemonState.OFFLINE.name());
-				broadcastOfflineIntent.addCategory(Intent.CATEGORY_DEFAULT);
-				mService.sendBroadcast(broadcastOfflineIntent);
+			    changeDaemonState(DaemonState.OFFLINE);
 			}
 		}
 	};
+	
+	private void changeDaemonState(DaemonState newState) {
+	    _state = newState;
+	    
+	    // broadcast state change
+	    Intent broadcastOfflineIntent = new Intent();
+        broadcastOfflineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
+        broadcastOfflineIntent.putExtra("state", newState.name());
+        broadcastOfflineIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        mService.sendBroadcast(broadcastOfflineIntent);
+	}
 
 	/**
 	 * Create Hex String from byte array
