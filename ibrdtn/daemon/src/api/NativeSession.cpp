@@ -169,7 +169,7 @@ namespace dtn
 			return ret;
 		}
 
-		void NativeSession::next(RegisterIndex ri) throw (NativeSessionException)
+		void NativeSession::next(RegisterIndex ri) throw (BundleNotFoundException)
 		{
 			try {
 				const dtn::data::BundleID id = _bundle_queue.getnpop();
@@ -179,7 +179,7 @@ namespace dtn
 			}
 		}
 
-		void NativeSession::load(RegisterIndex ri, const dtn::data::BundleID &id) throw (NativeSessionException)
+		void NativeSession::load(RegisterIndex ri, const dtn::data::BundleID &id) throw (BundleNotFoundException)
 		{
 			// load the bundle
 			try {
