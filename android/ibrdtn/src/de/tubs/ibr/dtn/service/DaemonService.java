@@ -70,9 +70,9 @@ public class DaemonService extends Service {
     private volatile Looper mServiceLooper;
     private volatile ServiceHandler mServiceHandler;
 
-    private Object _notification_lock = new Object();
-    private boolean _notification_dirty = false;
-    private Long _notification_last_size = 0L;
+    private Object mNotificationLock = new Object();
+    private boolean mNotificationDirty = false;
+    private Long mNotificationLastSize = 0L;
 
     // session manager for all active sessions
     private SessionManager mSessionManager = null;
@@ -85,8 +85,8 @@ public class DaemonService extends Service {
     // private final CountDownLatch startingLatch = new CountDownLatch(1);
     // private boolean starting = false;
 
-    private final Object _starting_lock = new Object();
-    private boolean _starting = false;
+    private final Object mStartingLock = new Object();
+    private boolean mStarting = false;
 
     // This is the object that receives interactions from clients. See
     // RemoteService for a more complete example.
@@ -130,10 +130,10 @@ public class DaemonService extends Service {
     }
 
     private void updateNeighborNotification() {
-        synchronized (_notification_lock) {
-            if (_notification_dirty)
+        synchronized (mNotificationLock) {
+            if (mNotificationDirty)
                 return;
-            _notification_dirty = true;
+            mNotificationDirty = true;
 
             // queue query neighbors task
             final Intent neighborIntent = new Intent(this, DaemonService.class);
@@ -171,9 +171,9 @@ public class DaemonService extends Service {
                         // enable P2P manager
                         // _p2p_manager.initialize();
 
-                        synchronized (_starting_lock) {
-                            _starting = false;
-                            _starting_lock.notify();
+                        synchronized (mStartingLock) {
+                            mStarting = false;
+                            mStartingLock.notify();
                         }
 
                         break;
@@ -197,21 +197,27 @@ public class DaemonService extends Service {
 
         @Override
         public void handleMessage(Message msg) {
+            Intent intent = (Intent) msg.obj;
+
             // if main daemon thread is currently starting but not finished,
             // wait for it...
-            synchronized (_starting_lock) {
-                if (_starting) {
+            synchronized (mStartingLock) {
+                if (mStarting) {
+                    Log.d(TAG,
+                            "Intent ("
+                                    + intent.getAction()
+                                    + ") not queued! Daemon is currently starting! Wait for ONLINE state...");
                     try {
-                        _starting_lock.wait();
+                        mStartingLock.wait();
                     } catch (InterruptedException e) {
                         Log.e(TAG, "InterruptedException", e);
                     }
                 }
             }
 
-            Log.d(TAG, "ServiceHandler: Now handling Intent " + ((Intent) msg.obj).getAction());
+            Log.d(TAG, "ServiceHandler: Now handling Intent " + intent.getAction());
 
-            onHandleIntent((Intent) msg.obj);
+            onHandleIntent(intent);
         }
     }
 
@@ -220,13 +226,12 @@ public class DaemonService extends Service {
      * 
      * @param intent
      */
-    public void onHandleIntent(Intent intent)
-    {
+    public void onHandleIntent(Intent intent) {
         String action = intent.getAction();
 
         if (ACTION_STARTUP.equals(action)) {
-            synchronized (_starting_lock) {
-                _starting = true;
+            synchronized (mStartingLock) {
+                mStarting = true;
             }
 
             // create initial notification
@@ -260,33 +265,30 @@ public class DaemonService extends Service {
             nm.cancel(1);
 
         } else if (ACTION_CLOUD_UPLINK.equals(action)) {
-            if (intent.hasExtra("enabled"))
-            {
-                if (intent.getBooleanExtra("enabled", false))
-                {
+            if (intent.hasExtra("enabled")) {
+                if (intent.getBooleanExtra("enabled", false)) {
                     mDaemonMainThread.getNative().addConnection(__CLOUD_EID__.toString(),
                             __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-                } else
-                {
+                } else {
                     mDaemonMainThread.getNative().removeConnection(__CLOUD_EID__.toString(),
                             __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
                 }
             }
         } else if (QUERY_NEIGHBORS.equals(action)) {
-            synchronized (_notification_lock) {
-                if (!_notification_dirty)
+            synchronized (mNotificationLock) {
+                if (!mNotificationDirty)
                     return;
-                _notification_dirty = false;
+                mNotificationDirty = false;
             }
 
             // state is online
             Log.i(TAG, "Query neighbors");
             StringVec neighbors = mDaemonMainThread.getNative().getNeighbors();
 
-            synchronized (_notification_lock) {
-                if (_notification_last_size.equals(neighbors.size()))
+            synchronized (mNotificationLock) {
+                if (mNotificationLastSize.equals(neighbors.size()))
                     return;
-                _notification_last_size = neighbors.size();
+                mNotificationLastSize = neighbors.size();
             }
 
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -411,14 +413,8 @@ public class DaemonService extends Service {
         } else {
             // otherwise, queue intents to work them off ordered in own
             // threads
-            synchronized (_starting_lock) {
-                if (mDaemonMainThread.getState().equals(DaemonState.ONLINE) || _starting) {
-                    if (_starting) {
-                        Log.e(TAG,
-                                "Intent ("
-                                        + intent.getAction()
-                                        + ") not queued! Daemon is currently starting! Wait for ONLINE state...");
-                    }
+            synchronized (mStartingLock) {
+                if (mDaemonMainThread.getState().equals(DaemonState.ONLINE) || mStarting) {
                     Message msg = mServiceHandler.obtainMessage();
                     msg.arg1 = startId;
                     msg.obj = intent;
