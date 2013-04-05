@@ -35,7 +35,7 @@ namespace dtn
 		}
 
 		NativeSession::NativeSession(NativeSessionCallback *cb)
-		 : _receiver(*this), _cb(cb), _registration(dtn::core::BundleCore::getInstance().getSeeker())
+		 : _receiver(*this), _cb(cb), _registration(dtn::core::BundleCore::getInstance().getSeeker()), _destroyed(false)
 		{
 			// set the local endpoint to the default
 			_endpoint = _registration.getDefaultEID();
@@ -48,6 +48,16 @@ namespace dtn
 
 		NativeSession::~NativeSession()
 		{
+			destroy();
+		}
+
+		void NativeSession::destroy() throw ()
+		{
+			if (_destroyed) return;
+
+			// prevent future destroy calls
+			_destroyed = true;
+
 			// send stop signal to the receiver
 			_receiver.stop();
 

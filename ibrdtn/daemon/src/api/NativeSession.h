@@ -97,6 +97,12 @@ namespace dtn
 			virtual ~NativeSession();
 
 			/**
+			 * Destroy this session and block until
+			 * this process is done
+			 */
+			void destroy() throw ();
+
+			/**
 			 * Returns the node EID of this device
 			 */
 			const dtn::data::EID& getNodeEID() const throw ();
@@ -266,6 +272,9 @@ namespace dtn
 
 			// local bundle queue
 			ibrcommon::Queue<dtn::data::BundleID> _bundle_queue;
+
+			// mark the session as destroyed or not
+			bool _destroyed;
 		};
 	} /* namespace net */
 } /* namespace dtn */
