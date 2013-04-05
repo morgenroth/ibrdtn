@@ -22,7 +22,7 @@ cd ..
 cd openssl
 git fetch --tags
 git checkout origin
-git checkout bcf20de318b9954ce420c2f383d8f690edd7e5bb
+git checkout 8c6a9abf76767407afd652ed65fba32620c38e04
 cd ..
 
 echo ""
