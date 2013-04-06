@@ -12,16 +12,30 @@ echo "-----------------------------------------"
 echo ""
 echo "Cloning external git sources used in IBR-DTN (libnl and openssl)..."
 echo "-------------------------------------------------------------------"
+
+# check if the existing directory has the right revision
+if [ -e nl-3 ]; then
+  cd nl-3; REV=$(git rev-parse HEAD|tr -d '\n'); cd ..
+  if [ ${REV} != "7e32da396adfe6b58b23641dacb1887f5855ff9c" ]; then
+    rm -rf nl-3
+  fi
+fi
 [ ! -e nl-3 ] && git clone git://github.com/ibrdtn/libnl-3-android.git nl-3
 cd nl-3
 git fetch --tags
-git checkout origin
 git checkout 7e32da396adfe6b58b23641dacb1887f5855ff9c
 cd ..
+
+# check if the existing directory has the right revision
+if [ -e openssl ]; then
+  cd openssl; REV=$(git rev-parse HEAD|tr -d '\n'); cd ..
+  if [ "${REV}" != "8c6a9abf76767407afd652ed65fba32620c38e04" ]; then
+    rm -rf openssl
+  fi
+fi
 [ ! -e openssl ] && git clone git://github.com/dschuermann/openssl-android.git openssl
 cd openssl
 git fetch --tags
-git checkout origin
 git checkout 8c6a9abf76767407afd652ed65fba32620c38e04
 cd ..
 
