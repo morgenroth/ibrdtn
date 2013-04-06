@@ -478,30 +478,39 @@ namespace dtn
 
 			// logging options
 			unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL | ibrcommon::Logger::LOG_TAG;
-			unsigned char logsys;
+
+			// set default logging
+			unsigned char logsys = ibrcommon::Logger::LOGGER_EMERG | ibrcommon::Logger::LOGGER_ALERT | ibrcommon::Logger::LOGGER_CRIT | ibrcommon::Logger::LOGGER_ERR;
+
+			// activate info messages and warnings
+			if (logLevel > 0) {
+				logsys |= ibrcommon::Logger::LOGGER_WARNING;
+				logsys |= ibrcommon::Logger::LOGGER_INFO;
+			}
+
+			// activate frequent notice messages
+			if (logLevel > 1) {
+				logsys |= ibrcommon::Logger::LOGGER_NOTICE;
+			}
 
 			// activate debugging
-			if (logLevel == 1) {
-				// logcat filter, everything but DEBUG and NOTICE
-				logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
-			} else if (logLevel == 2)
-			{
+			if (logLevel > 2) {
+				logsys |= ibrcommon::Logger::LOGGER_DEBUG;
+
 				// set debug verbosity
 				ibrcommon::Logger::setVerbosity(debugVerbosity);
-
-				// logcat filter, everything
-				logsys = ibrcommon::Logger::LOGGER_ALL;
-			} else {
-				// logcat filter, only LOGGER_EMERG
-				logsys = ibrcommon::Logger::LOGGER_EMERG;
 			}
 
 			// enable ring-buffer
 			ibrcommon::Logger::enableBuffer(200);
 
-			// enable logging to Android's logcat
-			ibrcommon::Logger::enableAsync();// enable asynchronous logging feature (thread-safe)
+			// enable asynchronous logging feature (thread-safe)
+			ibrcommon::Logger::enableAsync();
+
+			// set default logging tag
 			ibrcommon::Logger::setDefaultTag(defaultTag);
+
+			// enable logging to Android's logcat
 			ibrcommon::Logger::enableSyslog("ibrdtn-daemon", 0, 0, logsys);
 
 			// load the configuration file
