@@ -136,7 +136,7 @@ public class DaemonMainThread {
             // enable debug based on prefs
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mService);
             int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
-            int debugVerbosity = Integer.valueOf(preferences.getString("pref_debug_verbosity", "0"));
+            int debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
 
             // loads config
             DaemonMainThread.this.mDaemon.enableLogging(configPath, "Core", logLevel, debugVerbosity);
