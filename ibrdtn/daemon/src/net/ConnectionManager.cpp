@@ -56,7 +56,7 @@ namespace dtn
 		};
 
 		ConnectionManager::ConnectionManager()
-		 : _shutdown(false), _next_autoconnect(0)
+		 : _next_autoconnect(0)
 		{
 		}
 
@@ -87,6 +87,14 @@ namespace dtn
 				// clear the list of convergence layers
 				_cl.clear();
 			}
+
+			{
+				ibrcommon::MutexLock l(_node_lock);
+				// clear the node list
+				_nodes.clear();
+			}
+
+			_next_autoconnect = 0;
 
 			dtn::core::EventDispatcher<NodeEvent>::remove(this);
 			dtn::core::EventDispatcher<TimeEvent>::remove(this);

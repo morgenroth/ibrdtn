@@ -174,9 +174,6 @@ namespace dtn
 			 */
 			dtn::core::Node& getNode(const dtn::data::EID &eid) throw (NeighborNotAvailableException);
 
-			// if set to true, this module will shutdown
-			bool _shutdown;
-
 			// mutex for the list of convergence layers
 			ibrcommon::Mutex _cl_lock;
 
