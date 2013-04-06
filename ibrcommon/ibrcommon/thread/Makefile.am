@@ -37,8 +37,8 @@ if ANDROID
 noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
-noinst_LTLIBRARIES = libthread.la
-libthread_la_SOURCES = $(h_sources) $(cc_sources)
+noinst_LTLIBRARIES = libibrcommon_thread.la
+libibrcommon_thread_la_SOURCES = $(h_sources) $(cc_sources)
 endif
 
 Android.mk: Makefile.am

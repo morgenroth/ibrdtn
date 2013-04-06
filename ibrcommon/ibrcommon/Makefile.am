@@ -35,14 +35,18 @@ library_include_HEADERS = $(h_sources)
 AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(NL_CFLAGS) $(NL_ROUTE_CFLAGS) $(NL_GENL_CFLAGS)
 AM_LDFLAGS = $(PTHREAD_LIBS) $(NL_LIBS) $(NL_ROUTE_LIBS) $(NL_GENL_LIBS)
 
-ibrcommon_libs = data/libdata.la link/liblink.la net/libnet.la thread/libthread.la
+ibrcommon_libs = \
+	data/libibrcommon_data.la \
+	link/libibrcommon_link.la \
+	net/libibrcommon_net.la \
+	thread/libibrcommon_thread.la
 
 if OPENSSL
-ibrcommon_libs += ssl/libssl.la ssl/gcm/libgcm.la
+ibrcommon_libs += ssl/libibrcommon_ssl.la ssl/gcm/libibrcommon_gcm.la
 endif
 
 if LIBXML
-ibrcommon_libs += xml/libxml.la
+ibrcommon_libs += xml/libibrcommon_xml.la
 endif
 
 if ANDROID
@@ -62,7 +66,7 @@ Android.mk: Makefile.am
 		-:SOURCES $(h_sources) $(cc_sources) \
 		-:CPPFLAGS $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
-			$(subst lib,libibrcommon_, $(ibrcommon_libs)) \
+			$(ibrcommon_libs) \
 			-llog \
 		-:LIBFILTER_WHOLE ibrcommon_data ibrcommon_link ibrcommon_net ibrcommon_thread ibrcommon_ssl ibrcommon_gcm ibrcommon_xml \
 			nl-3 nl-genl-3 nl-route-3 \
