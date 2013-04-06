@@ -30,7 +30,8 @@ FAQ
    o More Android NDK parameters:
      "ndk-build clean" (delete generated libs)
      "ndk-build -B V=1 NDK_DEBUG=1 NDK_LOG=1" (force complete rebuild (-B), showing commands and enable debug and logs from android ndk)
-
+   o Getting an error with "error: invalid conversion from 'void**' to 'JNIEnv** {aka _JNIEnv**}'"
+     Update your SWIG installation.
 
 SWIG
 ----
