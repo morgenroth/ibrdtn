@@ -12,12 +12,12 @@ void DaemonTest::testUpDownUp(){
 	dtn::daemon::NativeDaemon dtnd;
 
 	CPPUNIT_ASSERT_NO_THROW(dtnd.initialize());
-	CPPUNIT_ASSERT_NO_THROW(dtnd.main_loop());
 	dtnd.shutdown();
+	CPPUNIT_ASSERT_NO_THROW(dtnd.main_loop());
 
 	CPPUNIT_ASSERT_NO_THROW(dtnd.initialize());
-	CPPUNIT_ASSERT_NO_THROW(dtnd.main_loop());
 	dtnd.shutdown();
+	CPPUNIT_ASSERT_NO_THROW(dtnd.main_loop());
 }
 
 
