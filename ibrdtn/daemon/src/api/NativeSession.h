@@ -80,6 +80,8 @@ namespace dtn
 
 		class NativeSession {
 		public:
+			static const std::string TAG;
+
 			enum RegisterIndex {
 				REG1 = 0,
 				REG2 = 1

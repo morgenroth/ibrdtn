@@ -34,6 +34,8 @@ namespace dtn
 		{
 		}
 
+		const std::string NativeSession::TAG = "NativeSession";
+
 		NativeSession::NativeSession(NativeSessionCallback *cb)
 		 : _receiver(*this), _cb(cb), _registration(dtn::core::BundleCore::getInstance().getSeeker()), _destroyed(false)
 		{
@@ -43,7 +45,7 @@ namespace dtn
 			// start the receiver
 			_receiver.start();
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("NativeSession", 15) << "Session created" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session created" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		NativeSession::~NativeSession()
@@ -64,7 +66,7 @@ namespace dtn
 			// wait here until the receiver has been stopped
 			_receiver.join();
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("NativeSession", 15) << "Session destroyed" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session destroyed" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		const dtn::data::EID& NativeSession::getNodeEID() const throw ()
@@ -106,6 +108,8 @@ namespace dtn
 				_registration.subscribe(new_endpoint);
 				_endpoint = new_endpoint;
 			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Endpoint set to " << _endpoint.getString() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeSession::resetEndpoint() throw ()
@@ -113,6 +117,8 @@ namespace dtn
 			_registration.unsubscribe(_endpoint);
 			_endpoint = _registration.getDefaultEID();
 			_registration.subscribe(_endpoint);
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Endpoint set to " << _endpoint.getString() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeSession::addEndpoint(const std::string &suffix) throw (NativeSessionException)
@@ -128,6 +134,8 @@ namespace dtn
 			{
 				_registration.subscribe(new_endpoint);
 			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Endpoint " << suffix << " added" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeSession::removeEndpoint(const std::string &suffix) throw (NativeSessionException)
@@ -143,6 +151,8 @@ namespace dtn
 			{
 				_registration.unsubscribe(old_endpoint);
 			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Endpoint " << suffix << " removed" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeSession::addRegistration(const dtn::data::EID &eid) throw (NativeSessionException)
@@ -156,6 +166,8 @@ namespace dtn
 			{
 				_registration.subscribe(eid);
 			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Registration " << eid.getString() << " added" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeSession::removeRegistration(const dtn::data::EID &eid) throw (NativeSessionException)
@@ -169,6 +181,8 @@ namespace dtn
 			{
 				_registration.unsubscribe(eid);
 			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Registration " << eid.getString() << " removed" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeSession::clearRegistration() throw ()
@@ -182,6 +196,8 @@ namespace dtn
 					_registration.unsubscribe(e);
 				}
 			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Registrations cleared" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		std::vector<std::string> NativeSession::getSubscriptions() throw ()
@@ -199,6 +215,8 @@ namespace dtn
 			try {
 				const dtn::data::BundleID id = _bundle_queue.getnpop();
 				load(ri, id);
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Next bundle loaded" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::QueueUnblockedException&) {
 				throw BundleNotFoundException();
 			}
@@ -212,6 +230,8 @@ namespace dtn
 
 				// process the bundle block (security, compression, ...)
 				dtn::core::BundleCore::processBlocks(_bundle[ri]);
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Next bundle " << id.toString() << " loaded" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) {
 				throw BundleNotFoundException();
 			}
@@ -255,6 +275,8 @@ namespace dtn
 				// announce this bundle as delivered
 				dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(id);
 				_registration.delivered(meta);
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << id.toString() << " marked as delivered" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) {
 				throw BundleNotFoundException();
 			}
@@ -267,6 +289,8 @@ namespace dtn
 
 			// forward the bundle to the storage processing
 			dtn::api::Registration::processIncomingBundle(_endpoint, _bundle[ri]);
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << _bundle[ri].toString() << " sent" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeSession::put(RegisterIndex ri, const dtn::data::Bundle &b) throw ()
@@ -297,12 +321,16 @@ namespace dtn
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				dtn::data::PayloadBlock &payload = _bundle[ri].push_back<dtn::data::PayloadBlock>();
 
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 25) << "Payload block added on demand" << IBRCOMMON_LOGGER_ENDL;
+
 				ibrcommon::BLOB::Reference ref = payload.getBLOB();
 				ibrcommon::BLOB::iostream stream = ref.iostream();
 
 				(*stream).seekp(offset);
 				(*stream).write(buf, len);
 			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 25) << len << " bytes added to the payload" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeSession::read(RegisterIndex ri, char *buf, size_t &len, const size_t offset) throw ()
@@ -318,6 +346,7 @@ namespace dtn
 
 				len = (*stream).gcount();
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 25) << "no payload block available" << IBRCOMMON_LOGGER_ENDL;
 				len = 0;
 			}
 		}
@@ -360,6 +389,8 @@ namespace dtn
 							// announce the delivery of this bundle
 							reg.delivered(id);
 						} else {
+							IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "[BundleReceiver] fire notification for new bundle " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+
 							// notify the client about the new bundle
 							_session.fireNotificationBundle(id);
 						}
@@ -370,9 +401,9 @@ namespace dtn
 					yield();
 				}
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("NativeSession::BundleReceiver", 40) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 40) << "[BundleReceiver] " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("NativeSession::BundleReceiver", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 10) << "[BundleReceiver] " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -389,6 +420,8 @@ namespace dtn
 				dtn::data::StatusReportBlock report;
 				report.read(payload);
 
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "fire notification for status report" << IBRCOMMON_LOGGER_ENDL;
+
 				// fire the status report notification
 				_session.fireNotificationStatusReport(report);
 			} catch (const dtn::data::StatusReportBlock::WrongRecordException&) {
@@ -399,6 +432,8 @@ namespace dtn
 				// try to decode as custody signal
 				dtn::data::CustodySignalBlock custody;
 				custody.read(payload);
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "fire notification for custody signal" << IBRCOMMON_LOGGER_ENDL;
 
 				// fire the custody signal notification
 				_session.fireNotificationCustodySignal(custody);
