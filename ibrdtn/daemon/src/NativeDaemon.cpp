@@ -1316,6 +1316,7 @@ namespace dtn
 
 		void NativeDaemon::init_api() throw (NativeDaemonException)
 		{
+#ifndef ANDROID
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 			std::list< dtn::daemon::Component* > &components = _components;
 
@@ -1349,6 +1350,7 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER_TAG("Init", info) << "API disabled" << IBRCOMMON_LOGGER_ENDL;
 			}
+#endif
 		}
 	} /* namespace daemon */
 } /* namespace dtn */
