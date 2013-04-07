@@ -138,6 +138,9 @@ public class DaemonMainThread {
             int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
             int debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
             
+            // disable debugging if the log level is lower than 3
+            if (logLevel < 3) debugVerbosity = 0;
+            
             // set logging options
             DaemonMainThread.this.mDaemon.setLogging("Core", logLevel);
 
