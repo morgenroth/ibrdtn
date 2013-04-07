@@ -501,6 +501,10 @@ namespace ibrcommon
 			_logfile_stream.close();
 		}
 
+		// stop here if the logmask is zero
+		// this can be used to disable file logging
+		if (logmask == 0) return;
+
 		_logfile = logfile;
 		_logfile_logmask = logmask;
 		_logfile_options = options;
