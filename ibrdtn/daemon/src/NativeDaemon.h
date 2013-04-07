@@ -76,6 +76,7 @@ namespace dtn
 			 * Initialize the daemon modules and components
 			 */
 			void initialize() throw (NativeDaemonException);
+			void initialize(const std::string &configPath) throw (NativeDaemonException);
 
 			/**
 			 * Execute the daemon main loop. This starts all the
@@ -96,12 +97,17 @@ namespace dtn
 			/**
 			 * Enable / disable debugging at runtime
 			 */
-			void setDebug(bool enable) throw ();
+			void setDebug(int level) throw ();
 
 			/**
 			 * Set the config file and enable default logging capabilities
 			 */
-			void enableLogging(std::string configPath, std::string defaultTag, int logLevel, int debugVerbosity) throw ();
+			void setLogging(const std::string &defaultTag, int logLevel) throw ();
+
+			/**
+			 * Set the path to the log file
+			 */
+			void setLogFile(const std::string &path, int logLevel) throw ();
 
 			/** NATIVE DAEMON METHODS **/
 			std::string getLocalUri() throw ();

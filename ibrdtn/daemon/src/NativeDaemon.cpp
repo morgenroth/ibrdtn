@@ -470,14 +470,11 @@ namespace dtn
 			}
 		}
 
-		void NativeDaemon::enableLogging(std::string configPath, std::string defaultTag, int logLevel, int debugVerbosity) throw ()
+		void NativeDaemon::setLogging(const std::string &defaultTag, int logLevel) throw ()
 		{
 			/**
 			 * setup logging capabilities
 			 */
-
-			// logging options
-			unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL | ibrcommon::Logger::LOG_TAG;
 
 			// set default logging
 			unsigned char logsys = ibrcommon::Logger::LOGGER_EMERG | ibrcommon::Logger::LOGGER_ALERT | ibrcommon::Logger::LOGGER_CRIT | ibrcommon::Logger::LOGGER_ERR;
@@ -496,44 +493,68 @@ namespace dtn
 			// activate debugging
 			if (logLevel > 2) {
 				logsys |= ibrcommon::Logger::LOGGER_DEBUG;
-
-				// set debug verbosity
-				ibrcommon::Logger::setVerbosity(debugVerbosity);
 			}
-
-			// enable ring-buffer
-			ibrcommon::Logger::enableBuffer(200);
-
-			// enable asynchronous logging feature (thread-safe)
-			ibrcommon::Logger::enableAsync();
 
 			// set default logging tag
 			ibrcommon::Logger::setDefaultTag(defaultTag);
 
 			// enable logging to Android's logcat
 			ibrcommon::Logger::enableSyslog("ibrdtn-daemon", 0, 0, logsys);
+		}
 
-			// load the configuration file
-			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-			conf.load(configPath);
+		/**
+		 * Set the path to the log file
+		 */
+		void NativeDaemon::setLogFile(const std::string &path, int logLevel) throw ()
+		{
+			// logging options
+			unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL | ibrcommon::Logger::LOG_TAG;
 
-			try {
-				const ibrcommon::File &lf = conf.getLogger().getLogfile();
-				ibrcommon::Logger::setLogfile(lf, logsys, logopts);
-			} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {};
+			// set default logging
+			unsigned char logsys = ibrcommon::Logger::LOGGER_EMERG | ibrcommon::Logger::LOGGER_ALERT | ibrcommon::Logger::LOGGER_CRIT | ibrcommon::Logger::LOGGER_ERR;
 
-			// greeting
-			IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
+			// deactivate logging if logLevel is below zero
+			if (logLevel < 0) {
+				logsys = 0;
+			}
 
-			try {
-				const ibrcommon::File &lf = conf.getLogger().getLogfile();
-				IBRCOMMON_LOGGER(info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
-			} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {};
+			// activate info messages and warnings
+			if (logLevel > 0) {
+				logsys |= ibrcommon::Logger::LOGGER_WARNING;
+				logsys |= ibrcommon::Logger::LOGGER_INFO;
+			}
+
+			// activate frequent notice messages
+			if (logLevel > 1) {
+				logsys |= ibrcommon::Logger::LOGGER_NOTICE;
+			}
+
+			// activate debugging
+			if (logLevel > 2) {
+				logsys |= ibrcommon::Logger::LOGGER_DEBUG;
+			}
+
+			const ibrcommon::File lf(path);
+			ibrcommon::Logger::setLogfile(lf, logsys, logopts);
 		}
 
 		/**
 		 * Initialize the daemon modules and components
 		 */
+		void NativeDaemon::initialize(const std::string &configPath) throw (NativeDaemonException)
+		{
+			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+
+			// load the configuration file
+			conf.load(configPath);
+
+			// greeting
+			IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
+
+			// forward to the remaining initialize procedure
+			initialize();
+		}
+
 		void NativeDaemon::initialize() throw (NativeDaemonException)
 		{
 			// signal state UNINITIALIZED
@@ -751,17 +772,11 @@ namespace dtn
 		/**
 		 * Enable / disable debugging at runtime
 		 */
-		void NativeDaemon::setDebug(bool enable) throw ()
+		void NativeDaemon::setDebug(int level) throw ()
 		{
-			if (enable) {
-				// activate debugging
-				ibrcommon::Logger::setVerbosity(99);
-				IBRCOMMON_LOGGER_TAG("Init", info) << "debug level set to 99" << IBRCOMMON_LOGGER_ENDL;
-			} else {
-				// de-activate debugging
-				ibrcommon::Logger::setVerbosity(0);
-				IBRCOMMON_LOGGER_TAG("Init", info) << "debug level set to 0" << IBRCOMMON_LOGGER_ENDL;
-			}
+			// activate debugging
+			ibrcommon::Logger::setVerbosity(level);
+			IBRCOMMON_LOGGER_TAG("Init", info) << "debug level set to " << level << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeDaemon::init_blob_storage() throw (NativeDaemonException)
