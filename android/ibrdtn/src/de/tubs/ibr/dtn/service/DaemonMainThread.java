@@ -137,13 +137,39 @@ public class DaemonMainThread {
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mService);
             int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
             int debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
+            
+            // set logging options
+            DaemonMainThread.this.mDaemon.setLogging("Core", logLevel);
 
-            // loads config
-            DaemonMainThread.this.mDaemon.enableLogging(configPath, "Core", logLevel, debugVerbosity);
+            // set logfile options
+            String logFilePath = null;
+            
+			if (preferences.getBoolean("log_enable_file", false)) {
+    			File logPath = DaemonStorageUtils.getStoragePath("logs");
+                if (logPath != null) {
+                    logPath.mkdirs();
+                    Calendar cal = Calendar.getInstance();
+                    String time = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH) + cal.get(Calendar.DAY_OF_MONTH) + cal.get(Calendar.DAY_OF_MONTH)
+                            + cal.get(Calendar.HOUR) + cal.get(Calendar.MINUTE) + cal.get(Calendar.SECOND);
+                    
+                    logFilePath = logPath.getPath() + File.separatorChar + "ibrdtn_" + time + ".log";
+                }
+			}
+
+            if (logFilePath != null) {
+                // enable file logging
+                DaemonMainThread.this.mDaemon.setLogFile(logFilePath, logLevel);
+			} else {
+				// disable file logging
+				DaemonMainThread.this.mDaemon.setLogFile("", 0);
+			}
+
+            // set debug verbosity
+            DaemonMainThread.this.mDaemon.setDebug(debugVerbosity);
             
             try {
                 // initialize daemon
-                DaemonMainThread.this.mDaemon.initialize();
+                DaemonMainThread.this.mDaemon.initialize(configPath);
                 
                 // blocking main loop
                 DaemonMainThread.this.mDaemon.main_loop();
@@ -394,18 +420,6 @@ public class DaemonMainThread {
 			File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
 			if (bundlePath != null) {
 				p.println("storage_path = " + bundlePath.getPath());
-			}
-
-			boolean logToFile = preferences.getBoolean("log_enable_file", false);
-			if (logToFile) {
-    			File logPath = DaemonStorageUtils.getStoragePath("logs");
-                if (logPath != null) {
-                    logPath.mkdirs();
-                    Calendar cal = Calendar.getInstance();
-                    String time = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH) + cal.get(Calendar.DAY_OF_MONTH) + cal.get(Calendar.DAY_OF_MONTH)
-                            + cal.get(Calendar.HOUR) + cal.get(Calendar.MINUTE) + cal.get(Calendar.SECOND);
-                    p.println("logfile = " + logPath.getPath() + File.separatorChar + "ibrdtn_" + time + ".log");
-                }
 			}
 
 			/*
