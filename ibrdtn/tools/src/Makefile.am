@@ -27,5 +27,8 @@ dtnconvert_SOURCES = dtnconvert.cpp
 dtnstream_SOURCES = \
 	dtnstream.cpp \
 	streaming/BundleStream.cpp \
+	streaming/BundleStream.h \
 	streaming/BundleStreamBuf.cpp \
-	streaming/StreamBundle.cpp  
+	streaming/BundleStreamBuf.h \
+	streaming/StreamBundle.cpp \
+	streaming/StreamBundle.h
