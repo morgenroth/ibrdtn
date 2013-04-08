@@ -39,7 +39,7 @@ namespace dtn
 			virtual void beginBlock(const dtn::data::Block &block, const size_t payload_length) = 0;
 			virtual void endBlock() = 0;
 
-			virtual void payload(const char *data, const size_t len) = 0;
+			virtual void payload(const char *buf, const size_t len) = 0;
 		};
 	}
 }
