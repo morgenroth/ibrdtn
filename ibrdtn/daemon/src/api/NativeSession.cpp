@@ -217,7 +217,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Next bundle in queue is " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				load(ri, id);
-			} catch (const ibrcommon::QueueUnblockedException &ex) {
+			} catch (const dtn::storage::NoBundleFoundException &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw BundleNotFoundException();
 			}
