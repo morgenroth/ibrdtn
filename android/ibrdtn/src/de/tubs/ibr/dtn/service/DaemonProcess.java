@@ -47,8 +47,8 @@ import de.tubs.ibr.dtn.swig.NativeDaemonException;
 import de.tubs.ibr.dtn.swig.NativeEventCallback;
 import de.tubs.ibr.dtn.swig.StringVec;
 
-public class DaemonMainThread {
-	private final static String TAG = "DaemonMainThread";
+public class DaemonProcess {
+	private final static String TAG = "DaemonProcess";
 
 	private NativeDaemon mDaemon = null;
 	private DaemonService mService = null;
@@ -95,7 +95,7 @@ public class DaemonMainThread {
 		loadLibraries();
 	}
 
-	public DaemonMainThread(DaemonService context) {
+	public DaemonProcess(DaemonService context) {
 		this.mDaemon = new NativeDaemon(mDaemonCallback, mEventCallback);
 		this.mService = context;
 		this._executor = Executors.newSingleThreadExecutor();
@@ -142,7 +142,7 @@ public class DaemonMainThread {
             if (logLevel < 3) debugVerbosity = 0;
             
             // set logging options
-            DaemonMainThread.this.mDaemon.setLogging("Core", logLevel);
+            DaemonProcess.this.mDaemon.setLogging("Core", logLevel);
 
             // set logfile options
             String logFilePath = null;
@@ -161,21 +161,21 @@ public class DaemonMainThread {
 
             if (logFilePath != null) {
                 // enable file logging
-                DaemonMainThread.this.mDaemon.setLogFile(logFilePath, logLevel);
+                DaemonProcess.this.mDaemon.setLogFile(logFilePath, logLevel);
 			} else {
 				// disable file logging
-				DaemonMainThread.this.mDaemon.setLogFile("", 0);
+				DaemonProcess.this.mDaemon.setLogFile("", 0);
 			}
 
             // set debug verbosity
-            DaemonMainThread.this.mDaemon.setDebug(debugVerbosity);
+            DaemonProcess.this.mDaemon.setDebug(debugVerbosity);
             
             try {
                 // initialize daemon
-                DaemonMainThread.this.mDaemon.initialize(configPath);
+                DaemonProcess.this.mDaemon.initialize(configPath);
                 
                 // blocking main loop
-                DaemonMainThread.this.mDaemon.main_loop();
+                DaemonProcess.this.mDaemon.main_loop();
             } catch (NativeDaemonException e) {
                 Log.e(TAG, "Daemon startup failed.", e);
             }

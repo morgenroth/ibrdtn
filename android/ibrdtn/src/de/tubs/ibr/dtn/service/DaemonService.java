@@ -80,7 +80,7 @@ public class DaemonService extends Service {
     // the P2P manager used for wifi direct control
     private P2PManager _p2p_manager = null;
 
-    private DaemonMainThread mDaemonMainThread = null;
+    private DaemonProcess mDaemonProcess = null;
 
     private final Object mStartingLock = new Object();
     private boolean mStarting = false;
@@ -89,19 +89,19 @@ public class DaemonService extends Service {
     // RemoteService for a more complete example.
     private final DTNService.Stub mBinder = new DTNService.Stub() {
         public DaemonState getState() throws RemoteException {
-            return DaemonService.this.mDaemonMainThread.getState();
+            return DaemonService.this.mDaemonProcess.getState();
         }
 
         public boolean isRunning() throws RemoteException {
-            return DaemonService.this.mDaemonMainThread.getState().equals(DaemonState.ONLINE);
+            return DaemonService.this.mDaemonProcess.getState().equals(DaemonState.ONLINE);
         }
 
         public List<String> getNeighbors() throws RemoteException {
-            if (mDaemonMainThread == null)
+            if (mDaemonProcess == null)
                 return new LinkedList<String>();
 
             List<String> ret = new LinkedList<String>();
-            StringVec neighbors = mDaemonMainThread.getNative().getNeighbors();
+            StringVec neighbors = mDaemonProcess.getNative().getNeighbors();
             for (int i = 0; i < neighbors.size(); i++) {
                 ret.add(neighbors.get(i));
             }
@@ -122,7 +122,7 @@ public class DaemonService extends Service {
 
         @Override
         public String[] getVersion() throws RemoteException {
-            StringVec version = mDaemonMainThread.getNative().getVersion();
+            StringVec version = mDaemonProcess.getNative().getVersion();
             return new String[] { version.get(0), version.get(1) };
         }
     };
@@ -244,7 +244,7 @@ public class DaemonService extends Service {
             // turn this to a foreground service (kill-proof)
             startForeground(1, n);
 
-            mDaemonMainThread.start();
+            mDaemonProcess.start();
         } else if (ACTION_SHUTDOWN.equals(action)) {
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             nm.notify(
@@ -259,7 +259,7 @@ public class DaemonService extends Service {
             // _p2p_manager.destroy();
             
             // stop main loop
-            mDaemonMainThread.stop();
+            mDaemonProcess.stop();
 
             // stop foreground service
             stopForeground(true);
@@ -270,10 +270,10 @@ public class DaemonService extends Service {
         } else if (ACTION_CLOUD_UPLINK.equals(action)) {
             if (intent.hasExtra("enabled")) {
                 if (intent.getBooleanExtra("enabled", false)) {
-                    mDaemonMainThread.getNative().addConnection(__CLOUD_EID__.toString(),
+                    mDaemonProcess.getNative().addConnection(__CLOUD_EID__.toString(),
                             __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
                 } else {
-                    mDaemonMainThread.getNative().removeConnection(__CLOUD_EID__.toString(),
+                    mDaemonProcess.getNative().removeConnection(__CLOUD_EID__.toString(),
                             __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
                 }
             }
@@ -286,7 +286,7 @@ public class DaemonService extends Service {
 
             // state is online
             Log.i(TAG, "Query neighbors");
-            StringVec neighbors = mDaemonMainThread.getNative().getNeighbors();
+            StringVec neighbors = mDaemonProcess.getNative().getNeighbors();
 
             synchronized (mNotificationLock) {
                 if (mNotificationLastSize.equals(neighbors.size()))
@@ -339,7 +339,7 @@ public class DaemonService extends Service {
         registerReceiver(mDaemonStateReceiver, ifilter);
 
         // create daemon main thread
-        mDaemonMainThread = new DaemonMainThread(this);
+        mDaemonProcess = new DaemonProcess(this);
 
         /*
          * incoming Intents will be processed by ServiceHandler and queued in
@@ -409,7 +409,7 @@ public class DaemonService extends Service {
 
         if (ACTION_STARTUP.equals(action)) {
             // handle startup intent directly without queuing
-            if (mDaemonMainThread.getState().equals(DaemonState.OFFLINE))
+            if (mDaemonProcess.getState().equals(DaemonState.OFFLINE))
             {
                 onHandleIntent(intent);
             }
@@ -417,7 +417,7 @@ public class DaemonService extends Service {
             // otherwise, queue intents to work them off ordered in own
             // threads
             synchronized (mStartingLock) {
-                if (mDaemonMainThread.getState().equals(DaemonState.ONLINE) || mStarting) {
+                if (mDaemonProcess.getState().equals(DaemonState.ONLINE) || mStarting) {
                     Message msg = mServiceHandler.obtainMessage();
                     msg.arg1 = startId;
                     msg.obj = intent;
