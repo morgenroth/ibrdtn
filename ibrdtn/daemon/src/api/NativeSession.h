@@ -24,6 +24,7 @@
 
 #include "api/NativeSerializerCallback.h"
 #include "api/Registration.h"
+#include "core/EventReceiver.h"
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/StatusReportBlock.h>
 #include <ibrdtn/data/CustodySignalBlock.h>
@@ -231,11 +232,13 @@ namespace dtn
 			void read(RegisterIndex ri, char *buf, size_t &len, const size_t offset = 0) throw ();
 
 		private:
-			class BundleReceiver : public ibrcommon::JoinableThread
+			class BundleReceiver : public ibrcommon::JoinableThread, public dtn::core::EventReceiver
 			{
 			public:
 				BundleReceiver(NativeSession &session);
 				virtual ~BundleReceiver();
+
+				void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			protected:
 				void run() throw ();

@@ -22,6 +22,8 @@
 #include "api/NativeSession.h"
 #include "api/NativeSerializer.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
+#include "routing/QueueBundleEvent.h"
 
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrcommon/Logger.h>
@@ -214,10 +216,12 @@ namespace dtn
 		{
 			try {
 				const dtn::data::BundleID id = _bundle_queue.getnpop();
-				load(ri, id);
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Next bundle loaded" << IBRCOMMON_LOGGER_ENDL;
-			} catch (const ibrcommon::QueueUnblockedException&) {
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Next bundle in queue is " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+
+				load(ri, id);
+			} catch (const ibrcommon::QueueUnblockedException &ex) {
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw BundleNotFoundException();
 			}
 		}
@@ -231,8 +235,9 @@ namespace dtn
 				// process the bundle block (security, compression, ...)
 				dtn::core::BundleCore::processBlocks(_bundle[ri]);
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Next bundle " << id.toString() << " loaded" << IBRCOMMON_LOGGER_ENDL;
-			} catch (const ibrcommon::Exception&) {
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << id.toString() << " loaded" << IBRCOMMON_LOGGER_ENDL;
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw BundleNotFoundException();
 			}
 		}
@@ -361,6 +366,21 @@ namespace dtn
 			ibrcommon::JoinableThread::join();
 		}
 
+		void NativeSession::BundleReceiver::raiseEvent(const dtn::core::Event *evt) throw ()
+		{
+			try {
+				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
+
+				// ignore fragments - we can not deliver them directly to the client
+				if (queued.bundle.fragment) return;
+
+				if (_session._registration.hasSubscribed(queued.bundle.destination))
+				{
+					_session._registration.notify(Registration::NOTIFY_BUNDLE_AVAILABLE);
+				}
+			} catch (const std::bad_cast&) { };
+		}
+
 		void NativeSession::BundleReceiver::__cancellation() throw ()
 		{
 			// set the shutdown variable to true
@@ -376,9 +396,12 @@ namespace dtn
 
 		void NativeSession::BundleReceiver::run() throw ()
 		{
+			// listen to QueueBundleEvents
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+
 			Registration &reg = _session._registration;
 			try{
-				while (_shutdown) {
+				while (!_shutdown) {
 					try {
 						const dtn::data::MetaBundle id = reg.receiveMetaBundle();
 
@@ -390,6 +413,9 @@ namespace dtn
 							reg.delivered(id);
 						} else {
 							IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "[BundleReceiver] fire notification for new bundle " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+
+							// put the bundle into the API queue
+							_session._bundle_queue.push(id);
 
 							// notify the client about the new bundle
 							_session.fireNotificationBundle(id);
@@ -405,6 +431,9 @@ namespace dtn
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 10) << "[BundleReceiver] " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+
+			// un-listen from QueueBundleEvents
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 		}
 
 		void NativeSession::BundleReceiver::fireNotificationAdministrativeRecord(const dtn::data::MetaBundle &bundle)
