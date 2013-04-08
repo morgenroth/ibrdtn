@@ -85,12 +85,13 @@ namespace dtn
 					const dtn::data::Block &block = (**it);
 					_callback.beginBlock(block, block.getLength());
 
-					if (_mode != BUNDLE_FULL)
+					if (_mode == BUNDLE_FULL)
 					{
 						size_t len = 0;
 						NativeCallbackStream streambuf(_callback);
 						std::ostream stream(&streambuf);
 						block.serialize(stream, len);
+						stream << std::flush;
 					}
 
 					_callback.endBlock();
