@@ -137,7 +137,7 @@ namespace ibrcommon
 
 		while ((dirp = readdir(dp)) != NULL)
 		{
-			string name = string(dirp->d_name);
+			string name = string(dirp->d_name, dirp->d_reclen);
 			stringstream ss; ss << getPath() << "/" << name;
 			File file(ss.str(), dirp->d_type);
 			files.push_back(file);
@@ -150,7 +150,7 @@ namespace ibrcommon
 	bool File::isSystem() const
 	{
 		try {
-			if ((_path.substr(_path.length() - 2, 2) == "..") || (_path.substr(_path.length() - 1, 1) == ".")) return true;
+			if ((getBasename() == "..") || (getBasename() == ".")) return true;
 		} catch (const std::out_of_range&) {
 			return false;
 		}
