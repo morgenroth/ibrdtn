@@ -185,10 +185,6 @@ public class DTalkieService extends Service {
 			}
 		}
 
-		public void characters(String data) {
-			// nothing to do here, since we using FILEDESCRIPTOR mode
-		}
-
 		public void payload(byte[] data) {
 			// nothing to do here, since we using FILEDESCRIPTOR mode
 		}
