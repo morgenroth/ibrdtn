@@ -51,7 +51,8 @@ public class DaemonProcess {
 	private final static String TAG = "DaemonProcess";
 
 	private NativeDaemon mDaemon = null;
-	private DaemonService mService = null;
+	private DaemonProcessHandler mHandler = null;
+	private Context mContext = null;
 	private ExecutorService _executor = null;
 	private DaemonState _state = DaemonState.OFFLINE;
 	
@@ -95,9 +96,10 @@ public class DaemonProcess {
 		loadLibraries();
 	}
 
-	public DaemonProcess(DaemonService context) {
+	public DaemonProcess(Context context, DaemonProcessHandler handler) {
 		this.mDaemon = new NativeDaemon(mDaemonCallback, mEventCallback);
-		this.mService = context;
+		this.mContext = context;
+		this.mHandler = handler;
 		this._executor = Executors.newSingleThreadExecutor();
 	}
 	
@@ -108,6 +110,12 @@ public class DaemonProcess {
 	public DaemonState getState() {
 	    return _state;
 	}
+	
+    private void setState(DaemonState newState) {
+        if (_state.equals(newState)) return;
+        _state = newState;
+        mHandler.onStateChanged(_state);
+    }
 	
 	public void start() {
 	    // submit the startup procedure to the executor
@@ -121,20 +129,17 @@ public class DaemonProcess {
 
 	private Runnable _main_loop = new Runnable() {
         @Override
-        public void run() {
-            // set state to UNKOWN to indicate that it is currently starting
-            changeDaemonState(DaemonState.UNKOWN);
-            
+        public void run() {          
             // lower priority of this thread
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
 
-            String configPath = mService.getFilesDir().getPath() + "/" + "config";
+            String configPath = mContext.getFilesDir().getPath() + "/" + "config";
 
             // create configuration file
-            createConfig(mService, configPath);
+            createConfig(mContext, configPath);
 
             // enable debug based on prefs
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mService);
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
             int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
             int debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
             
@@ -229,11 +234,11 @@ public class DaemonProcess {
             }
 
             // send event intent
-            mService.sendBroadcast(event);
+            mHandler.onEvent(event);
 
             if (neighborIntent != null) {
-                mService.sendBroadcast(neighborIntent);
-                mService.onNeighborhoodChanged();
+                mHandler.onEvent(neighborIntent);
+                mHandler.onNeighborhoodChanged();
             }
 
             if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -246,25 +251,14 @@ public class DaemonProcess {
 		@Override
 		public void stateChanged(States state) {
 			if (States.STARTUP_COMPLETED.equals(state)) {
-			    changeDaemonState(DaemonState.ONLINE);
+			    setState(DaemonState.ONLINE);
 			}
 			else if (States.SHUTDOWN_INITIATED.equals(state)) {
-			    changeDaemonState(DaemonState.OFFLINE);
+			    setState(DaemonState.OFFLINE);
 			}
 		}
 	};
 	
-	private void changeDaemonState(DaemonState newState) {
-	    _state = newState;
-	    
-	    // broadcast state change
-	    Intent broadcastOfflineIntent = new Intent();
-        broadcastOfflineIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
-        broadcastOfflineIntent.putExtra("state", newState.name());
-        broadcastOfflineIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        mService.sendBroadcast(broadcastOfflineIntent);
-	}
-
 	/**
 	 * Create Hex String from byte array
 	 * 

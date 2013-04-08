@@ -59,8 +59,12 @@
     <string name="state_enabled">Aktiviert</string>
 	<string name="state_suspended">Ruhezustand</string>
     <string name="state_unkown">Unbekannt</string>
-    <string name="notify_neighbors">Sichtbare Nachbarn</string>
+    <string name="notify_neighbors">Nachbarn</string>
     <string name="notify_no_neighbors">Keine Nachbarn</string>
+    <string name="notify_pending">Initialisiere</string>
+    <string name="notify_error">Fehler</string>
+    <string name="notify_suspended">Ruhezustand</string>
+    <string name="notify_offline">Offline</string>
     <string name="system_version">Version</string>
     <string name="statichost">Statische Verbindung</string>
     <string name="host_name">EID des Knoten</string>
@@ -74,9 +78,6 @@
     <string name="alteratecloudstate">Verändere Cloudverbindung</string>
     <string name="alert_statistic_logger_title">Danke dass Sie IBR-DTN verwenden</string>
     <string name="alert_statistic_logger_dialog">Da es sich hierbei um Software aus der Forschung handelt bitten wir Sie um Unterstützung und hätten gerne die Erlaubnis statistische Daten über ausgetauschte Bündel zu sammeln. Diese Daten werden mittels DTN an die Forscher die diese Software entwickelt haben übertragen. Erlauben Sie die Sammlung und Übertragung von statistischen Daten?</string>
-	<string name="dialog_wait_starting">Aktiviere DTN Stack</string>
-    <string name="dialog_wait_stopping">Deaktiviere DTN Stack</string>
-    <string name="notify_error">Dienst fehlgeschlagen</string>
     <string name="senddatanow">Gesammelte Daten übertragen</string>
     <string name="list_apps">DTN Anwendungen</string>
     <string name="pref_cloudconnect_title">Cloud connect</string>

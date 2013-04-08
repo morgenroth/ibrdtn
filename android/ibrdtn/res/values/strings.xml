@@ -61,8 +61,12 @@
     <string name="state_enabled">Enabled</string>
     <string name="state_suspended">Suspended</string>
     <string name="state_unkown">Unknown</string>
-    <string name="notify_neighbors">Available neighbors</string>
+    <string name="notify_neighbors">Neighbors</string>
     <string name="notify_no_neighbors">No neighbors</string>
+    <string name="notify_pending">Initializing</string>
+    <string name="notify_error">Error</string>
+    <string name="notify_suspended">Suspended</string>
+    <string name="notify_offline">Offline</string>
     <string name="system_version">Version</string>
     <string name="statichost">Static Uplink</string>
     <string name="host_name">Node EID</string>
@@ -76,9 +80,6 @@
     <string name="alteratecloudstate">Alterate connection to the Cloud</string>
     <string name="alert_statistic_logger_title">Thank you for using IBR-DTN</string>
     <string name="alert_statistic_logger_dialog">Since this is research related software we ask for your support and the permission to collect statistical data about exchanged bundles of this device. These data is transmitted via DTN to the researchers who made this software. Do you allow the collection and transmission of statistical data?</string>
-    <string name="dialog_wait_starting">Activating DTN stack</string>
-    <string name="dialog_wait_stopping">Deactivating DTN stack</string>
-    <string name="notify_error">Service failed</string>
     <string name="senddatanow">Send collected data</string>
     <string name="list_apps">Show DTN apps</string>
     <string name="pref_cloudconnect_title">Cloud connect</string>

@@ -196,14 +196,6 @@ public class Preferences extends PreferenceActivity {
 		}
 	};
 	
-	private void setCloudUplink(boolean val) {
-		Intent intent = new Intent(Preferences.this, DaemonService.class);
-		intent.setAction(DaemonService.ACTION_CLOUD_UPLINK);
-		intent.addCategory(Intent.CATEGORY_DEFAULT);
-		intent.putExtra("enabled", val);
-		startService(intent);
-	}
-	
 	private class ClearStorageTask extends AsyncTask<String, Integer, Boolean> {
 		protected Boolean doInBackground(String... files)
 		{
@@ -334,10 +326,6 @@ public class Preferences extends PreferenceActivity {
         final Intent intent = new Intent(Preferences.this, DaemonService.class);
         intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
         startService(intent);
-
-        // add cloud uplink immediately if enabled
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        setCloudUplink(prefs.getBoolean("enabledSwitch", false));
     }
 
     private void stopDaemon() {
@@ -428,7 +416,14 @@ public class Preferences extends PreferenceActivity {
 		if (cbCloudConnect != null) {
 			cbCloudConnect.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			public boolean onPreferenceClick(Preference p) {
-				setCloudUplink(((CheckBoxPreference) p).isChecked());
+				Boolean val = ((CheckBoxPreference) p).isChecked();
+				
+		        Intent intent = new Intent(Preferences.this, DaemonService.class);
+		        intent.setAction(DaemonService.ACTION_CLOUD_UPLINK);
+		        intent.addCategory(Intent.CATEGORY_DEFAULT);
+		        intent.putExtra("enabled", val);
+		        startService(intent);
+		        
 				return true;
 			}
 			});
