@@ -6,12 +6,12 @@ ibrdtn_TOP:=$(abspath $(LOCAL_PATH))/ibrdtn
 dtnd_TOP:=$(abspath $(LOCAL_PATH))/dtnd
 
 # Optimizations
-#APP_OPTIM:=release
-APP_OPTIM:=debug
+APP_OPTIM:=release
+#APP_OPTIM:=debug
 
 # Build target
-APP_ABI:=armeabi
-#APP_ABI:=armeabi x86
+#APP_ABI:=armeabi
+APP_ABI:=armeabi armeabi-v7a x86
 # mips not working currently!
 #APP_ABI:=armeabi armeabi-v7a x86 mips
 #APP_ABI:=all
