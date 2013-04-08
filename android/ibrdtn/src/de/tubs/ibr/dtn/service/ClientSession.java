@@ -233,7 +233,7 @@ public class ClientSession {
 		}
 		
 		@Override
-		public void payload(String data, long len) {
+		public void payload(byte data[]) {
 		    // skip this if the transfer mode is set to null
 		    if (TransferMode.NULL.equals(_mode)) {
 		        return;
@@ -242,10 +242,10 @@ public class ClientSession {
             if (_output != null) {
                 try {
                     // put content into the output stream
-                    _output.write(data.getBytes());
+                    _output.write(data);
                     
                     // increment current position
-                    _current += data.getBytes().length;
+                    _current += data.length;
                     
                     // signal progress of copying
                     _cb.progress(_current, _length);
@@ -257,7 +257,7 @@ public class ClientSession {
             } else {
                 try {
                     // passthrough the data
-                    _cb.payload(data.getBytes());
+                    _cb.payload(data);
                 } catch (RemoteException e) {
                     Log.e(TAG, "Remote call payload() failed", e);
                 }
