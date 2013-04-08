@@ -11,7 +11,7 @@ APP_OPTIM:=release
 
 # Build target
 #APP_ABI:=armeabi
-APP_ABI:=armeabi armeabi-v7a x86
+APP_ABI:=armeabi armeabi-v7a
 # mips not working currently!
 #APP_ABI:=armeabi armeabi-v7a x86 mips
 #APP_ABI:=all
