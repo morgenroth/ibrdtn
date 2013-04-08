@@ -250,10 +250,6 @@ public class DTNExampleAppActivity extends Activity {
 			}
 		}
 
-		public void characters(String data) {
-			Log.i(TAG, "Received characters: " + new String(data));
-		}
-
 		public ParcelFileDescriptor fd() {
 			// create new filedescriptor
 			try {
