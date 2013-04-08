@@ -5,7 +5,8 @@ noinst_HEADERS = \
 	SimpleBundleStorageTest.hh \
 	DataStorageTest.h \
 	NodeTest.hh \
-	DaemonTest.hh
+	DaemonTest.hh \
+	NativeSerializerTest.h
 	
 #	UDPConvergenceLayerTest.hh \
 #	SQLiteBundleStorageTest.hh \
@@ -59,7 +60,8 @@ unittest_SOURCES = \
 	SimpleBundleStorageTest.cpp \
 	DataStorageTest.cpp \
 	NodeTest.cpp \
-	DaemonTest.cpp
+	DaemonTest.cpp \
+	NativeSerializerTest.cpp
 	
 #	UDPConvergenceLayerTest.cpp \
 #	SQLiteBundleStorageTest.cpp \
