@@ -44,8 +44,8 @@ namespace dtn
 			// set the local endpoint to the default
 			_endpoint = _registration.getDefaultEID();
 
-			// start the receiver
-			_receiver.start();
+			// initialize the receiver
+			_receiver.componentUp();
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session created" << IBRCOMMON_LOGGER_ENDL;
 		}
@@ -62,11 +62,8 @@ namespace dtn
 			// prevent future destroy calls
 			_destroyed = true;
 
-			// send stop signal to the receiver
-			_receiver.stop();
-
-			// wait here until the receiver has been stopped
-			_receiver.join();
+			// stop receiver
+			_receiver.componentDown();
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session destroyed" << IBRCOMMON_LOGGER_ENDL;
 		}
@@ -215,7 +212,7 @@ namespace dtn
 		void NativeSession::next(RegisterIndex ri) throw (BundleNotFoundException)
 		{
 			try {
-				const dtn::data::BundleID id = _bundle_queue.getnpop();
+				const dtn::data::MetaBundle id = _registration.receiveMetaBundle();
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Next bundle in queue is " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -370,13 +367,12 @@ namespace dtn
 		}
 
 		NativeSession::BundleReceiver::BundleReceiver(NativeSession &session)
-		 : _session(session), _shutdown(false)
+		 : _session(session)
 		{
 		}
 
 		NativeSession::BundleReceiver::~BundleReceiver()
 		{
-			ibrcommon::JoinableThread::join();
 		}
 
 		void NativeSession::BundleReceiver::raiseEvent(const dtn::core::Event *evt) throw ()
@@ -389,62 +385,32 @@ namespace dtn
 
 				if (_session._registration.hasSubscribed(queued.bundle.destination))
 				{
+					if (queued.bundle.procflags & dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD) {
+						// transform custody signals & status reports into notifies
+						fireNotificationAdministrativeRecord(queued.bundle);
+
+						// announce the delivery of this bundle
+						_session._registration.delivered(queued.bundle);
+					} else {
+						IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "[BundleReceiver] fire notification for new bundle " << queued.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+						// notify the client about the new bundle
+						_session.fireNotificationBundle(queued.bundle);
+					}
+
 					_session._registration.notify(Registration::NOTIFY_BUNDLE_AVAILABLE);
 				}
 			} catch (const std::bad_cast&) { };
 		}
 
-		void NativeSession::BundleReceiver::__cancellation() throw ()
-		{
-			// set the shutdown variable to true
-			_shutdown = true;
-
-			// abort all blocking calls on the registration object
-			_session._registration.abort();
-		}
-
-		void NativeSession::BundleReceiver::finally() throw ()
-		{
-		}
-
-		void NativeSession::BundleReceiver::run() throw ()
+		void NativeSession::BundleReceiver::componentUp() throw ()
 		{
 			// listen to QueueBundleEvents
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+		}
 
-			Registration &reg = _session._registration;
-			try{
-				while (!_shutdown) {
-					try {
-						const dtn::data::MetaBundle id = reg.receiveMetaBundle();
-
-						if (id.procflags & dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD) {
-							// transform custody signals & status reports into notifies
-							fireNotificationAdministrativeRecord(id);
-
-							// announce the delivery of this bundle
-							reg.delivered(id);
-						} else {
-							IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "[BundleReceiver] fire notification for new bundle " << id.toString() << IBRCOMMON_LOGGER_ENDL;
-
-							// put the bundle into the API queue
-							_session._bundle_queue.push(id);
-
-							// notify the client about the new bundle
-							_session.fireNotificationBundle(id);
-						}
-					} catch (const dtn::storage::NoBundleFoundException&) {
-						reg.wait_for_bundle();
-					}
-
-					yield();
-				}
-			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 40) << "[BundleReceiver] " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 10) << "[BundleReceiver] " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			}
-
+		void NativeSession::BundleReceiver::componentDown() throw ()
+		{
 			// un-listen from QueueBundleEvents
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 		}
