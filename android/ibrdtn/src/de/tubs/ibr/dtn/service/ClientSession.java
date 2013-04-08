@@ -330,9 +330,6 @@ public class ClientSession {
 				// send the bundle
 				nativeSession.send(RegisterIndex.REG2);
 
-				// debug
-				Log.i(TAG, "Message sent: " + data);
-
 				return true;
 			} catch (Exception e) {
 				Log.e(TAG, "send failed", e);
@@ -356,9 +353,6 @@ public class ClientSession {
 				
 				// send the bundle
 				nativeSession.send(RegisterIndex.REG2);
-
-				// debug
-				Log.i(TAG, "Message sent: " + data);
 
 				return true;
 			} catch (Exception e) {
