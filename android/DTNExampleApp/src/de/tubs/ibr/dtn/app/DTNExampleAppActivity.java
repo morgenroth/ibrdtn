@@ -266,7 +266,7 @@ public class DTNExampleAppActivity extends Activity {
 		}
 
 		public void payload(byte[] data) {
-			Log.i(TAG, "Received payload: " + new String(data));
+			Log.i(TAG, "Received " + data.length + " bytes payload");
 			final String msg = new String(data);
 			final SingletonEndpoint sender = new SingletonEndpoint(bundle.getSource());
 			
