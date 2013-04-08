@@ -310,7 +310,7 @@ public class DaemonService extends Service {
                    
                     // enable cloud uplink if enabled
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
-                    setCloudUplink(prefs.getBoolean("enabledSwitch", false));
+                    setCloudUplink(prefs.getBoolean("cloud_uplink", false));
                     break;
                     
                 case SUSPENDED:
