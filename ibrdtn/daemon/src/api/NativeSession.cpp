@@ -321,18 +321,31 @@ namespace dtn
 				ibrcommon::BLOB::Reference ref = payload.getBLOB();
 				ibrcommon::BLOB::iostream stream = ref.iostream();
 
-				(*stream).seekp(offset);
+				ssize_t stream_size = stream.size();
+
+				if ((offset > 0) || (stream_size < offset)) {
+					(*stream).seekp(0, std::ios_base::end);
+				} else {
+					(*stream).seekp(offset);
+				}
+
 				(*stream).write(buf, len);
+				(*stream) << std::flush;
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				dtn::data::PayloadBlock &payload = _bundle[ri].push_back<dtn::data::PayloadBlock>();
-
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 25) << "Payload block added on demand" << IBRCOMMON_LOGGER_ENDL;
 
 				ibrcommon::BLOB::Reference ref = payload.getBLOB();
 				ibrcommon::BLOB::iostream stream = ref.iostream();
 
-				(*stream).seekp(offset);
+				ssize_t stream_size = stream.size();
+
+				if ((offset > 0) || (stream_size < offset)) {
+					(*stream).seekp(0, std::ios_base::end);
+				} else {
+					(*stream).seekp(offset);
+				}
 				(*stream).write(buf, len);
+				(*stream) << std::flush;
 			}
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 25) << len << " bytes added to the payload" << IBRCOMMON_LOGGER_ENDL;
