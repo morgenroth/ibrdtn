@@ -122,6 +122,16 @@ namespace dtn
 			return __getExpireTime(getTime(), lifetime);
 		}
 
+		size_t Clock::getLifetime(const dtn::data::BundleID &id, size_t expiretime)
+		{
+			// if the timestamp of the bundle is larger than the expiretime
+			// the bundle is invalid
+			if (id.timestamp > expiretime) return 0;
+
+			// else the lifetime is the difference between the timestamp and the expiretime
+			return id.timestamp - expiretime;
+		}
+
 		size_t Clock::__getExpireTime(size_t timestamp, size_t lifetime)
 		{
 			// if the quality of time is zero, return standard expire time
