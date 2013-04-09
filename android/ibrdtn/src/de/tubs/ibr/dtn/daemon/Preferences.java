@@ -155,7 +155,7 @@ public class Preferences extends PreferenceActivity {
 	@SuppressWarnings("deprecation")
 	private void setPrefsEnabled(boolean val) {
 		// enable / disable depending elements
-		String[] prefcats = { "prefcat_general", "prefcat_interfaces", "prefcat_security", "prefcat_logging" };
+		String[] prefcats = { "prefcat_general", "prefcat_interfaces", "prefcat_security", "prefcat_timesync", "prefcat_logging" };
 		for (String pcat : prefcats) {
 			PreferenceCategory pc = (PreferenceCategory) findPreference(pcat);
 			pc.setEnabled(val);

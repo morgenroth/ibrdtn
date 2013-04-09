@@ -362,6 +362,23 @@ public class DaemonProcess {
 					p.println("security_bab_default_key = " + bab_file.getPath());
 				}
 			}
+			
+			String timesyncmode = preferences.getString("timesync_mode", "disabled");
+			
+			if (timesyncmode.equals("master")) {
+                p.println("time_reference = yes");
+                p.println("time_discovery_announcements = yes");
+                p.println("time_synchronize = no");
+                p.println("time_set_clock = no");
+			} else if (timesyncmode.equals("slave")) {
+			    p.println("time_reference = no");
+                p.println("time_discovery_announcements = yes");
+                p.println("time_synchronize = yes");
+			    p.println("time_set_clock = no");
+			    p.println("#time_sigma = 1.001");
+			    p.println("#time_psi = 0.9");
+			    p.println("#time_sync_level = 0.15");
+			}
 
 			if (preferences.getBoolean("checkIdleTimeout", false)) {
 				p.println("tcp_idle_timeout = 30");

@@ -83,6 +83,20 @@
             android:summary="@string/pref_bab_key_desc"
             android:title="@string/pref_bab_key" />
     </PreferenceCategory>
+    
+    <PreferenceCategory
+        android:key="prefcat_timesync"
+        android:title="@string/timesync" >
+        <ListPreference
+            android:defaultValue="disabled"
+            android:entries="@array/timesync_modes_names"
+            android:entryValues="@array/timesync_modes_values"
+            android:key="timesync_mode"
+            android:summary="@string/pref_timesync_mode_desc"
+            android:title="@string/pref_timesync_mode" />
+
+    </PreferenceCategory>
+    
     <PreferenceCategory
         android:key="prefcat_logging"
         android:title="@string/pref_logging" >

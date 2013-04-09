@@ -279,7 +279,10 @@ public class DaemonService extends Service {
         @Override
         public void onStateChanged(DaemonState state) {
             Log.d(TAG, "mDaemonStateReceiver: DaemonState: " + state);
-
+            
+            // request notification update
+            requestNotificationUpdate();
+            
             switch (state) {
                 case ERROR:
                     break;
@@ -296,14 +299,8 @@ public class DaemonService extends Service {
                     break;
                     
                 case ONLINE:
-                    // update notification text
-                    updateNotification();
-
                     // restore registrations
                     mSessionManager.initialize();
-
-                    // request notification update
-                    requestNotificationUpdate();
 
                     // TODO: enable P2P manager
                     // _p2p_manager.initialize();
