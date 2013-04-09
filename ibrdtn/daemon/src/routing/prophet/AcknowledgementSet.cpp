@@ -19,24 +19,29 @@ namespace dtn
 		}
 
 		AcknowledgementSet::AcknowledgementSet(const AcknowledgementSet &other)
-		 : ibrcommon::Mutex(), dtn::data::BundleList((const dtn::data::BundleList&)other)
+		 : ibrcommon::Mutex(), _bundles(other._bundles)
 		{
 		}
 
-		void AcknowledgementSet::merge(const AcknowledgementSet &other)
+		void AcknowledgementSet::add(const dtn::data::MetaBundle &bundle) throw ()
 		{
-			for(AcknowledgementSet::const_iterator it = other.begin(); it != other.end(); ++it)
-			{
-				const dtn::data::MetaBundle &ack = (*it);
-				if (!dtn::utils::Clock::isExpired(ack.expiretime)) {
-					add(ack);
-				}
+			if (!dtn::utils::Clock::isExpired(bundle.expiretime)) {
+				_bundles.add(bundle);
 			}
 		}
 
-		bool AcknowledgementSet::has(const dtn::data::BundleID &bundle) const
+		void AcknowledgementSet::expire(size_t timestamp) throw ()
 		{
-			return find(bundle) != end();
+			_bundles.expire(timestamp);
+		}
+
+		void AcknowledgementSet::merge(const AcknowledgementSet &other) throw ()
+		{
+			for(dtn::data::BundleList::const_iterator it = other._bundles.begin(); it != other._bundles.end(); ++it)
+			{
+				const dtn::data::MetaBundle &ack = (*it);
+				this->add(ack);
+			}
 		}
 
 		size_t AcknowledgementSet::getIdentifier() const
@@ -65,8 +70,8 @@ namespace dtn
 
 		std::ostream& operator<<(std::ostream& stream, const AcknowledgementSet& ack_set)
 		{
-			stream << dtn::data::SDNV(ack_set.size());
-			for (dtn::data::BundleList::const_iterator it = ack_set.begin(); it != ack_set.end(); ++it)
+			stream << dtn::data::SDNV(ack_set._bundles.size());
+			for (dtn::data::BundleList::const_iterator it = ack_set._bundles.begin(); it != ack_set._bundles.end(); ++it)
 			{
 				const dtn::data::MetaBundle &ack = (*it);
 				stream << (const dtn::data::BundleID&)ack;
@@ -79,7 +84,7 @@ namespace dtn
 		std::istream& operator>>(std::istream &stream, AcknowledgementSet &ack_set)
 		{
 			// clear the ack set first
-			ack_set.clear();
+			ack_set._bundles.clear();
 
 			dtn::data::SDNV size;
 			stream >> size;
