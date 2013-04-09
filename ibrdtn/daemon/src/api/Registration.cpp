@@ -180,7 +180,7 @@ namespace dtn
 			{
 				try {
 					// get the first bundle in the queue
-					dtn::data::MetaBundle b = _queue.getnpop(false);
+					dtn::data::MetaBundle b = _queue.pop();
 
 					// load the bundle
 					return storage.get(b);
@@ -203,7 +203,7 @@ namespace dtn
 			{
 				try {
 					// get the first bundle in the queue
-					dtn::data::MetaBundle b = _queue.getnpop(false);
+					dtn::data::MetaBundle b = _queue.pop();
 					return b;
 				}
 				catch(const ibrcommon::QueueUnblockedException & e){
@@ -222,7 +222,7 @@ namespace dtn
 		void Registration::underflow()
 		{
 			// expire outdated bundles in the list
-			_queue.getReceivedBundles().expire(dtn::utils::Clock::getTime());
+			_queue.expire(dtn::utils::Clock::getTime());
 
 			/**
 			 * search for bundles in the storage
@@ -337,15 +337,35 @@ namespace dtn
 		{
 			try {
 				_recv_bundles.add(bundle);
-				this->push(bundle);
+				_queue.push(bundle);
 
 				IBRCOMMON_LOGGER_DEBUG_TAG("RegistrationQueue", 10) << "add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) { }
 		}
 
-		dtn::data::BundleSet& Registration::RegistrationQueue::getReceivedBundles()
+		dtn::data::MetaBundle Registration::RegistrationQueue::pop() throw (const ibrcommon::QueueUnblockedException)
+		{
+			return _queue.getnpop(false);
+		}
+
+		const dtn::data::BundleSet& Registration::RegistrationQueue::getReceivedBundles() const throw ()
 		{
 			return _recv_bundles;
+		}
+
+		void Registration::RegistrationQueue::expire(const size_t timestamp) throw ()
+		{
+			_recv_bundles.expire(timestamp);
+		}
+
+		void Registration::RegistrationQueue::abort() throw ()
+		{
+			_queue.abort();
+		}
+
+		void Registration::RegistrationQueue::reset() throw ()
+		{
+			_queue.reset();
 		}
 
 		void Registration::subscribe(const dtn::data::EID &endpoint)
