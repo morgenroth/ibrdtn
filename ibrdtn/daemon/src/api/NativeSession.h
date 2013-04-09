@@ -232,7 +232,7 @@ namespace dtn
 			void read(RegisterIndex ri, char *buf, size_t &len, const size_t offset = 0) throw ();
 
 		private:
-			class BundleReceiver : public dtn::core::EventReceiver
+			class BundleReceiver : public ibrcommon::JoinableThread, public dtn::core::EventReceiver
 			{
 			public:
 				BundleReceiver(NativeSession &session);
@@ -240,13 +240,17 @@ namespace dtn
 
 				void raiseEvent(const dtn::core::Event *evt) throw ();
 
-				void componentUp() throw ();
-				void componentDown() throw ();
+			protected:
+				void run() throw ();
+				void finally() throw ();
+				void __cancellation() throw ();
 
 			private:
 				void fireNotificationAdministrativeRecord(const dtn::data::MetaBundle &bundle);
 
 				NativeSession &_session;
+
+				bool _shutdown;
 			} _receiver;
 
 			/**
@@ -275,6 +279,9 @@ namespace dtn
 
 			// local bundle register
 			dtn::data::Bundle _bundle[2];
+
+			// local bundle queue
+			ibrcommon::Queue<dtn::data::BundleID> _bundle_queue;
 
 			// mark the session as destroyed or not
 			bool _destroyed;

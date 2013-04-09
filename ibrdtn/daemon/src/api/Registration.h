@@ -233,17 +233,58 @@ namespace dtn
 			void underflow();
 
 		private:
-			class RegistrationQueue : public dtn::storage::BundleResult, public ibrcommon::Queue<dtn::data::MetaBundle> {
+			class RegistrationQueue : public dtn::storage::BundleResult {
 			public:
+				/**
+				 * Constructor
+				 */
 				RegistrationQueue();
+
+				/**
+				 * Destructor
+				 */
 				virtual ~RegistrationQueue();
 
+				/**
+				 * Put a bundle into the registration queue
+				 * This method is used by the storage.
+				 * @see dtn::storage::BundleResult::put()
+				 */
 				virtual void put(const dtn::data::MetaBundle &bundle) throw ();
 
-				dtn::data::BundleSet& getReceivedBundles();
+				/**
+				 * Get the next bundle of the queue.
+				 * An exception is thrown if the queue is empty or the queue has been aborted
+				 * before.
+				 */
+				dtn::data::MetaBundle pop() throw (const ibrcommon::QueueUnblockedException);
+
+				/**
+				 * Get a set with all received bundles
+				 */
+				const dtn::data::BundleSet& getReceivedBundles() const throw ();
+
+				/**
+				 * Expire bundles in the received bundle set
+				 */
+				void expire(const size_t timestamp) throw ();
+
+				/**
+				 * Abort all blocking call on the queue
+				 */
+				void abort() throw ();
+
+				/**
+				 * Reset the queue state. If called, blocking calls are allowed again.
+				 */
+				void reset() throw ();
 
 			private:
+				// all bundles have to remain in this set to avoid duplicate delivery
 				dtn::data::BundleSet _recv_bundles;
+
+				// queue where the currently queued bundles are stored
+				ibrcommon::Queue<dtn::data::MetaBundle> _queue;
 			};
 
 			const std::string _handle;

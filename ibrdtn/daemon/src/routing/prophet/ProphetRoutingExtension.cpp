@@ -140,6 +140,11 @@ namespace dtn
 			try {
 				const AcknowledgementSet& neighbor_ack_set = response.get<AcknowledgementSet>();
 
+				// merge ack'set into the known bundles
+				for (AcknowledgementSet::const_iterator it = _acknowledgementSet.begin(); it != _acknowledgementSet.end(); ++it) {
+					(**this).setKnown(*it);
+				}
+
 				// merge the received ack set with the local one
 				{
 					ibrcommon::MutexLock l(_acknowledgementSet);
@@ -152,8 +157,8 @@ namespace dtn
 				class BundleFilter : public dtn::storage::BundleSelector
 				{
 				public:
-					BundleFilter(const AcknowledgementSet& ack_set)
-					 : _ack_set(ack_set)
+					BundleFilter(BaseRouter& router)
+					 : _router(router)
 					{}
 
 					virtual ~BundleFilter() {}
@@ -166,15 +171,15 @@ namespace dtn
 						if (meta.destination.getNode() == dtn::core::BundleCore::local)
 							return false;
 
-						if(!_ack_set.has(meta))
+						if(!_router.isKnown(meta))
 							return false;
 
 						return true;
 					}
 
 				private:
-					const AcknowledgementSet& _ack_set;
-				} filter(neighbor_ack_set);
+					BaseRouter& _router;
+				} filter(**this);
 
 				dtn::storage::BundleResultList removeList;
 				storage.get(filter, removeList);
@@ -199,6 +204,12 @@ namespace dtn
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 
+				// expire bundles in the acknowledgement set
+				{
+					ibrcommon::MutexLock l(_acknowledgementSet);
+					_acknowledgementSet.expire(time.getUnixTimestamp());
+				}
+
 				ibrcommon::MutexLock l(_next_exchange_mutex);
 				if ((_next_exchange_timestamp > 0) && (_next_exchange_timestamp < time.getUnixTimestamp()))
 				{
@@ -206,9 +217,6 @@ namespace dtn
 
 					// define the next exchange timestamp
 					_next_exchange_timestamp = time.getUnixTimestamp() + _next_exchange_timeout;
-
-					ibrcommon::MutexLock l(_acknowledgementSet);
-					_acknowledgementSet.expire(time.getUnixTimestamp());
 				}
 				return;
 			} catch (const std::bad_cast&) { };
