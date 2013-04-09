@@ -26,6 +26,7 @@
 #include <sys/time.h>
 
 #include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/BundleID.h"
 
 namespace dtn
 {
@@ -76,6 +77,12 @@ namespace dtn
 			 * @return A DTN timestamp.
 			 */
 			static size_t getExpireTime(size_t lifetime);
+
+			/**
+			 * Returns the calculated lifetime in seconds based on the BundleID and the
+			 * expiretime
+			 */
+			static size_t getLifetime(const dtn::data::BundleID &id, size_t expiretime);
 
 			/**
 			 * Tells the internal clock the offset to the common network time.

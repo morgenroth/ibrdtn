@@ -6,6 +6,7 @@
  */
 
 #include "routing/prophet/AcknowledgementSet.h"
+#include "core/BundleCore.h"
 #include <ibrdtn/utils/Clock.h>
 
 namespace dtn
@@ -25,8 +26,14 @@ namespace dtn
 
 		void AcknowledgementSet::add(const dtn::data::MetaBundle &bundle) throw ()
 		{
-			if (!dtn::utils::Clock::isExpired(bundle.expiretime)) {
+			try {
+				// check if the bundle is valid
+				dtn::core::BundleCore::getInstance().validate(bundle);
+
+				// add the bundle to the set
 				_bundles.add(bundle);
+			} catch (dtn::data::Validator::RejectedException &ex) {
+				// bundle rejected
 			}
 		}
 
@@ -96,6 +103,7 @@ namespace dtn
 				stream >> (dtn::data::BundleID&)ack;
 				stream >> expire_time;
 				ack.expiretime = expire_time.getValue();
+				ack.lifetime = dtn::utils::Clock::getLifetime(ack, ack.expiretime);
 
 				ack_set.add(ack);
 			}
