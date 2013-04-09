@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="timesync_modes_names">
+        <item>Master</item>
+        <item>Slave</item>
+        <item>Deactivated</item>
+    </string-array>
+    <string-array name="timesync_modes_values">
+        <item>master</item>
+        <item>slave</item>
+        <item>disabled</item>
+    </string-array>    
+</resources>

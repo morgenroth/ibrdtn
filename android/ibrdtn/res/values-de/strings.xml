@@ -38,6 +38,7 @@
     <string name="wait">Bitte warten</string>
     <string name="clearingstorage">Speicher wird geleert.</string>
     <string name="security">Sicherheit</string>
+    <string name="timesync">Zeitsynchronisierung</string>
     <string name="constrains">Beschränkungen</string>
     <string name="pref_constrains_lifetime">Lebenszeit</string>
     <string name="pref_constrains_timestamp">Zeitstempel</string>
@@ -47,6 +48,8 @@
     <string name="pref_bab_key_desc">Legt den Schlüssel zur Authentisierung fest.</string>
     <string name="pref_security_mode">Sicherheitseinstellungen</string>
     <string name="pref_security_mode_desc">Legt die Sicherheitseinstellungen fest.</string>
+    <string name="pref_timesync_mode">Synchronisationsmodus</string>
+    <string name="pref_timesync_mode_desc">Definiert das Verhalten dieses Knotens hinsichtlich Zeitsynchronisation.</string>
     <string name="pref_collect_stats">Statistische Daten sammeln</string>
     <string name="pref_collect_stats_desc">Statistische Daten werden im Hintergrund gesammelt und an die DTN Forschungsgemeinschaft übermittelt</string>
     <string name="general">Allgemein</string>

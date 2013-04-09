@@ -40,6 +40,7 @@
     <string name="wait">Please wait</string>
     <string name="clearingstorage">Clearing storage.</string>
     <string name="security">Security</string>
+    <string name="timesync">Time-synchronization</string>
     <string name="constrains">Constrains</string>
     <string name="pref_constrains_lifetime">Lifetime</string>
     <string name="pref_constrains_timestamp">Timestamp</string>
@@ -49,6 +50,8 @@
     <string name="pref_bab_key_desc">Specify the authorization key.</string>
     <string name="pref_security_mode">Security Policy</string>
     <string name="pref_security_mode_desc">Specify the security policy for the network.</string>
+    <string name="pref_timesync_mode">Synchronization mode</string>
+    <string name="pref_timesync_mode_desc">Defines the behavior of this nodes regarding time-synchronization.</string>
     <string name="pref_collect_stats">Collect statistic data</string>
     <string name="pref_collect_stats_desc">Statistic data is collected in background and transmitted to the DTN research community</string>
     <string name="general">General</string>
