@@ -33,6 +33,7 @@ class FileTest : public CppUnit::TestFixture {
 		void testUpdate();
 		void testSize();
 		void testCreateDirectory();
+		void testGetBasename();
 		/*=== END   tests for class 'File' ===*/
 
 		void setUp();
@@ -52,6 +53,7 @@ class FileTest : public CppUnit::TestFixture {
 //			CPPUNIT_TEST(testUpdate);
 //			CPPUNIT_TEST(testSize);
 //			CPPUNIT_TEST(testCreateDirectory);
+			CPPUNIT_TEST(testGetBasename);
 		CPPUNIT_TEST_SUITE_END();
 };
 #endif /* FILETEST_HH */
