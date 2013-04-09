@@ -325,6 +325,40 @@ namespace dtn
 			} catch (const std::bad_cast&) { }
 		}
 
+		void BundleCore::validate(const dtn::data::MetaBundle &obj) const throw (dtn::data::Validator::RejectedException)
+		{
+			if (dtn::utils::Clock::isExpired(obj.expiretime)) {
+				// ... bundle is expired
+				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 15) << "bundle rejected: bundle has expired (" << obj.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("bundle is expired");
+			}
+
+			// check if the lifetime of the bundle is too long
+			if (BundleCore::max_lifetime > 0)
+			{
+				if (obj.lifetime > BundleCore::max_lifetime)
+				{
+					// ... we reject bundles with such a long lifetime
+					IBRCOMMON_LOGGER(warning) << "lifetime of bundle rejected: " << obj.toString() << IBRCOMMON_LOGGER_ENDL;
+					throw dtn::data::Validator::RejectedException("lifetime of the bundle is too long");
+				}
+			}
+
+			// check if the timestamp is in the future
+			if (BundleCore::max_timestamp_future > 0)
+			{
+				// first check if the local clock is reliable
+				if (dtn::utils::Clock::getRating() > 0)
+					// then check the timestamp
+					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < obj.timestamp)
+					{
+						// ... we reject bundles with a timestamp so far in the future
+						IBRCOMMON_LOGGER(warning) << "timestamp of bundle rejected: " << obj.toString() << IBRCOMMON_LOGGER_ENDL;
+						throw dtn::data::Validator::RejectedException("timestamp is too far in the future");
+					}
+			}
+		}
+
 		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)
 		{
 			/*
