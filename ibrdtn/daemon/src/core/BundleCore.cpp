@@ -343,7 +343,7 @@ namespace dtn
 		{
 			if (dtn::utils::Clock::isExpired(obj.expiretime)) {
 				// ... bundle is expired
-				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 15) << "bundle rejected: bundle has expired (" << obj.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 35) << "bundle rejected: bundle has expired (" << obj.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
@@ -353,7 +353,7 @@ namespace dtn
 				if (obj.lifetime > BundleCore::max_lifetime)
 				{
 					// ... we reject bundles with such a long lifetime
-					IBRCOMMON_LOGGER(warning) << "lifetime of bundle rejected: " << obj.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 35) << "lifetime of bundle rejected: " << obj.toString() << IBRCOMMON_LOGGER_ENDL;
 					throw dtn::data::Validator::RejectedException("lifetime of the bundle is too long");
 				}
 			}
