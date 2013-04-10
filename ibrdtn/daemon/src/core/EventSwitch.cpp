@@ -47,6 +47,18 @@ namespace dtn
 		void EventSwitch::componentUp() throw ()
 		{
 			// routine checked for throw() on 15.02.2013
+
+			// clear all queues
+			_queue.clear();
+			_prio_queue.clear();
+			_low_queue.clear();
+
+			// reset component state
+			_running = true;
+			_shutdown = false;
+
+			// reset aborted conditional
+			_queue_cond.reset();
 		}
 
 		void EventSwitch::componentDown() throw ()

@@ -20,22 +20,21 @@ void DaemonTest::testUpDownUp(){
 	initReturn_1 = ibrdtn_daemon_initialize();
 	CPPUNIT_ASSERT_EQUAL(initReturn_1,0);
 
-	loopReturn_1 = ibrdtn_daemon_main_loop();
-	CPPUNIT_ASSERT_EQUAL(loopReturn_1,0);
-
 	shutReturn_1 = ibrdtn_daemon_shutdown();
 	CPPUNIT_ASSERT_EQUAL(shutReturn_1,0);
+
+	loopReturn_1 = ibrdtn_daemon_main_loop();
+	CPPUNIT_ASSERT_EQUAL(loopReturn_1,0);
 
 
 	initReturn_2 = ibrdtn_daemon_initialize();
 	CPPUNIT_ASSERT_EQUAL(initReturn_2,0);
 
+	shutReturn_2 = ibrdtn_daemon_shutdown();
+        CPPUNIT_ASSERT_EQUAL(shutReturn_2,0);
+
 	loopReturn_2 = ibrdtn_daemon_main_loop();
 	CPPUNIT_ASSERT_EQUAL(loopReturn_2,0);
-
-	shutReturn_2 = ibrdtn_daemon_shutdown();
-	CPPUNIT_ASSERT_EQUAL(shutReturn_2,0);
-
 }
 
 

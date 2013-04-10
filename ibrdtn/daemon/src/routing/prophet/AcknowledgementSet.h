@@ -21,14 +21,26 @@ namespace dtn
 		/*!
 		 * \brief Set of Acknowledgements, that can be serialized in node handshakes.
 		 */
-		class AcknowledgementSet : public NodeHandshakeItem, public ibrcommon::Mutex, public dtn::data::BundleList
+		class AcknowledgementSet : public NodeHandshakeItem, public ibrcommon::Mutex
 		{
 		public:
 			AcknowledgementSet();
 			AcknowledgementSet(const AcknowledgementSet&);
 
-			void merge(const AcknowledgementSet&); ///< merge the set with a second AcknowledgementSet
-			bool has(const dtn::data::BundleID &bundle) const; ///< check if an acknowledgement exists for the bundle
+			/**
+			 * Add a bundle to the set
+			 */
+			void add(const dtn::data::MetaBundle &bundle) throw ();
+
+			/**
+			 * Expire outdated entries
+			 */
+			void expire(size_t timestamp) throw ();
+
+			/**
+			 * merge the set with a second AcknowledgementSet
+			 */
+			void merge(const AcknowledgementSet&) throw ();
 
 			/* virtual methods from NodeHandshakeItem */
 			virtual size_t getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
@@ -39,6 +51,13 @@ namespace dtn
 
 			friend std::ostream& operator<<(std::ostream&, const AcknowledgementSet&);
 			friend std::istream& operator>>(std::istream&, AcknowledgementSet&);
+
+			typedef dtn::data::BundleList::const_iterator const_iterator;
+			const_iterator begin() const { return _bundles.begin(); };
+			const_iterator end() const { return _bundles.end(); };
+
+		private:
+			dtn::data::BundleList _bundles;
 		};
 	} /* namespace routing */
 } /* namespace dtn */
