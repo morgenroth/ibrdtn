@@ -543,7 +543,8 @@ namespace dtn
 		 */
 		void NativeDaemon::initialize(const std::string &configPath) throw (NativeDaemonException)
 		{
-			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+			// reset and get configuration
+			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance(true);
 
 			// load the configuration file
 			conf.load(configPath);

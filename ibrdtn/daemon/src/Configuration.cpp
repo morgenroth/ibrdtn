@@ -169,9 +169,13 @@ namespace dtn
 			return _dht;
 		}
 
-		Configuration& Configuration::getInstance()
+		Configuration& Configuration::getInstance(bool reset)
 		{
 			static Configuration conf;
+
+			// reset configuration
+			if (reset) conf = Configuration();
+
 			return conf;
 		}
 

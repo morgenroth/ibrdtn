@@ -89,7 +89,7 @@ namespace dtn
 			{
 			};
 
-			static Configuration &getInstance();
+			static Configuration &getInstance(bool reset = false);
 
 			/**
 			 * load the configuration from a file
