@@ -46,7 +46,7 @@ public class StatusReport {
     }
 
     private void parse(String data) {
-        String start = "(603\\sNOTIFY\\sREPORT)";
+        String start = "(NOTIFY\\sREPORT)";
         String url = "(\\bdtn://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])";
         String fragments = "(\\.\\d+:\\d+)?";
         String notificationType = "(\\w+)\\[(\\d+)\\.(\\d+)\\]";

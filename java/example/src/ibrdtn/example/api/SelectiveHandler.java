@@ -75,26 +75,31 @@ public class SelectiveHandler implements ibrdtn.api.sab.CallbackHandler {
     public void endBundle() {
         logger.log(Level.FINE, "Bundle received");
 
-
         /*
          * Decide if payload is interesting, based on bundle meta data, e.g., payload length of the 
          * individual block. If applicable, partial payloads can be requested, as well. 
          * 
-         * If payload is not to be loaded, set processing = false;
+         * If payload is not to be loaded, set processing = false and markDelivered();
          */
 
-        final ExtendedClient finalClient = this.client;
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    logger.log(Level.SEVERE, "Requesting payload");
-                    finalClient.getPayload();
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Unable to mark bundle as delivered.", e);
+        boolean isPayloadInteresting = true;
+
+        if (isPayloadInteresting) {
+            final ExtendedClient finalClient = this.client;
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        logger.log(Level.SEVERE, "Requesting payload");
+                        finalClient.getPayload();
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Unable to mark bundle as delivered.", e);
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            endProcessingOfCurrentBundle();
+        }
     }
 
     @Override
@@ -144,7 +149,7 @@ public class SelectiveHandler implements ibrdtn.api.sab.CallbackHandler {
                 forwardMessage(data);
 
             } catch (IOException | ClassNotFoundException e) {
-                logger.log(Level.SEVERE, "AAAAH", e);
+
                 try { // Read byte array from bundle
                     byte[] bytes = new byte[256];
                     is.read(bytes);
@@ -163,7 +168,7 @@ public class SelectiveHandler implements ibrdtn.api.sab.CallbackHandler {
                 try {
                     is.close();
                     os.close();
-                    processing = false;
+                    endProcessingOfCurrentBundle();
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Failed to close streams", ex);
                 }
@@ -231,5 +236,13 @@ public class SelectiveHandler implements ibrdtn.api.sab.CallbackHandler {
         envelope.setData(data);
 
         CallbackHandler.getInstance().forwardMessage(envelope);
+    }
+
+    private void endProcessingOfCurrentBundle() {
+        processing = false;
+        markDelivered();
+        if (!queue.isEmpty()) {
+            loadBundle(queue.poll());
+        }
     }
 }
