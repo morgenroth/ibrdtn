@@ -49,8 +49,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		FloodRoutingExtension::FloodRoutingExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker)
+		FloodRoutingExtension::FloodRoutingExtension()
 		{
 			// write something to the syslog
 			IBRCOMMON_LOGGER(info) << "Initializing flooding routing module" << IBRCOMMON_LOGGER_ENDL;
@@ -251,7 +250,7 @@ namespace dtn
 
 							// query all bundles from the storage
 							list.clear();
-							_seeker.get(filter, list);
+							(**this).getSeeker().get(filter, list);
 
 							// send the bundles as long as we have resources
 							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)

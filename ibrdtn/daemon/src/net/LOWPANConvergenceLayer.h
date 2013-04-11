@@ -23,6 +23,7 @@
 #define LOWPANCONVERGENCELAYER_H_
 
 #include "Component.h"
+#include "core/EventReceiver.h"
 #include "net/ConvergenceLayer.h"
 #include "net/LOWPANConnection.h"
 #include "net/DiscoveryAgent.h"

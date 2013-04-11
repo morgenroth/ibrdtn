@@ -55,8 +55,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		EpidemicRoutingExtension::EpidemicRoutingExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker)
+		EpidemicRoutingExtension::EpidemicRoutingExtension()
 		{
 			// write something to the syslog
 			IBRCOMMON_LOGGER(info) << "Initializing epidemic routing module" << IBRCOMMON_LOGGER_ENDL;
@@ -286,7 +285,7 @@ namespace dtn
 
 								// query some unknown bundle from the storage
 								list.clear();
-								_seeker.get(filter, list);
+								(**this).getSeeker().get(filter, list);
 
 								// send the bundles as long as we have resources
 								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)

@@ -33,7 +33,7 @@ if [ -e openssl ]; then
     rm -rf openssl
   fi
 fi
-[ ! -e openssl ] && git clone git://github.com/dschuermann/openssl-android.git openssl
+[ ! -e openssl ] && git clone git://github.com/ibrdtn/openssl-android.git openssl
 cd openssl
 git fetch --tags
 git checkout 8c6a9abf76767407afd652ed65fba32620c38e04

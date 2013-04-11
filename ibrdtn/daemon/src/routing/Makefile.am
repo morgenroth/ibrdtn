@@ -2,6 +2,8 @@
 SUBDIRS = epidemic flooding prophet
 
 routing_SOURCES = \
+	RoutingExtension.h \
+	RoutingExtension.cpp \
 	BaseRouter.cpp \
 	BaseRouter.h \
 	NeighborDatabase.cpp \

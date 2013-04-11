@@ -47,10 +47,10 @@ namespace dtn
 {
 	namespace routing
 	{
-		ProphetRoutingExtension::ProphetRoutingExtension(dtn::storage::BundleSeeker &seeker, ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
+		ProphetRoutingExtension::ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
 								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ,
 								 ibrcommon::Timer::time_t next_exchange_timeout)
-			: Extension(seeker), _deliveryPredictabilityMap(time_unit, beta, gamma),
+			: _deliveryPredictabilityMap(time_unit, beta, gamma),
 			  _forwardingStrategy(strategy), _next_exchange_timeout(next_exchange_timeout), _next_exchange_timestamp(0),
 			  _p_encounter_max(p_encounter_max), _p_encounter_first(p_encounter_first),
 			  _p_first_threshold(p_first_threshold), _delta(delta), _i_typ(i_typ)
@@ -474,7 +474,7 @@ namespace dtn
 
 								// query some unknown bundle from the storage, the list contains max. 10 items.
 								list.clear();
-								_seeker.get(filter, list);
+								(**this).getSeeker().get(filter, list);
 
 								// send the bundles as long as we have resources
 								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)

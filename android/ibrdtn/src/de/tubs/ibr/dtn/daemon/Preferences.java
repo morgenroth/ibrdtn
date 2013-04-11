@@ -148,24 +148,6 @@ public class Preferences extends PreferenceActivity {
 		} else if (checkBoxPreference != null) {
 			checkBoxPreference.setChecked(val);
 		}
-		
-		setPrefsEnabled(!val);
-	}
-	
-	@SuppressWarnings("deprecation")
-	private void setPrefsEnabled(boolean val) {
-		// enable / disable depending elements
-		String[] prefcats = { "prefcat_general", "prefcat_interfaces", "prefcat_security", "prefcat_timesync", "prefcat_logging" };
-		for (String pcat : prefcats) {
-			PreferenceCategory pc = (PreferenceCategory) findPreference(pcat);
-			pc.setEnabled(val);
-		}
-		
-		String[] prefs = { "discovery_announce", "checkIdleTimeout" };
-		for (String p : prefs) {
-			Preference pobj = (Preference) findPreference(p);
-			pobj.setEnabled(val);
-		}
 	}
 	
 	private BroadcastReceiver _state_receiver = new BroadcastReceiver() {
@@ -351,12 +333,8 @@ public class Preferences extends PreferenceActivity {
 			checkBoxPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			public boolean onPreferenceClick(Preference p) {
 				if (((CheckBoxPreference) p).isChecked()) {
-					Preferences.this.setPrefsEnabled(false);
-					
 					startDaemon();
-				}
-				else
-				{
+				} else {
 				    stopDaemon();
 				}
 				
@@ -384,15 +362,11 @@ public class Preferences extends PreferenceActivity {
 	        
 	        // read initial state of the switch
 	        actionBarSwitch.setChecked( prefs.getBoolean("enabledSwitch", false) );
-	        setPrefsEnabled( !prefs.getBoolean("enabledSwitch", false) );
 	        
 	        actionBarSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 				public void onCheckedChanged(CompoundButton arg0, boolean val) {
-					Preferences.this.setPrefsEnabled(!val);
-					
+
 					if (val) {
-						Preferences.this.setPrefsEnabled(false);
-						
 						// set "enabledSwitch" preference to true
 						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", true).commit();
@@ -409,24 +383,6 @@ public class Preferences extends PreferenceActivity {
 					}
 				}
 	        });
-		}
-		
-		// add handle for cloud connect checkbox
-		CheckBoxPreference cbCloudConnect = (CheckBoxPreference) findPreference("cloud_uplink");
-		if (cbCloudConnect != null) {
-			cbCloudConnect.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-			public boolean onPreferenceClick(Preference p) {
-				Boolean val = ((CheckBoxPreference) p).isChecked();
-				
-		        Intent intent = new Intent(Preferences.this, DaemonService.class);
-		        intent.setAction(DaemonService.ACTION_CLOUD_UPLINK);
-		        intent.addCategory(Intent.CATEGORY_DEFAULT);
-		        intent.putExtra("enabled", val);
-		        startService(intent);
-		        
-				return true;
-			}
-			});
 		}
 		
 		// list all network interfaces

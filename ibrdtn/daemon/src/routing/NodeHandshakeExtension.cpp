@@ -32,14 +32,15 @@
 #include <ibrdtn/utils/Clock.h>
 
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/thread/RWLock.h>
 #include <ibrcommon/Logger.h>
 
 namespace dtn
 {
 	namespace routing
 	{
-		NodeHandshakeExtension::NodeHandshakeExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker), _endpoint(*this)
+		NodeHandshakeExtension::NodeHandshakeExtension()
+		 : _endpoint(*this)
 		{
 		}
 
@@ -145,11 +146,6 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		const std::list<BaseRouter::Extension*>& NodeHandshakeExtension::getExtensions()
-		{
-			return (**this).getExtensions();
-		}
-
 		NodeHandshakeExtension::HandshakeEndpoint::HandshakeEndpoint(NodeHandshakeExtension &callback)
 		 : _callback(callback)
 		{
@@ -188,13 +184,18 @@ namespace dtn
 			// create a new request for the summary vector of the neighbor
 			NodeHandshake request(NodeHandshake::HANDSHAKE_REQUEST);
 
-			// walk through all extensions to process the contents of the response
-			const std::list<BaseRouter::Extension*>& extensions = _callback.getExtensions();
-
-			for (std::list<BaseRouter::Extension*>::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+			// lock the extension list during the processing
 			{
-				BaseRouter::Extension &extension = (**iter);
-				extension.requestHandshake(origin, request);
+				ibrcommon::RWLock l((*_callback).getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+				// walk through all extensions to process the contents of the response
+				const BaseRouter::extension_list& extensions = (*_callback).getExtensions();
+
+				for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+				{
+					RoutingExtension &extension = (**iter);
+					extension.requestHandshake(origin, request);
+				}
 			}
 
 			// create a new bundle
@@ -257,13 +258,18 @@ namespace dtn
 				// create a new request for the summary vector of the neighbor
 				NodeHandshake response(NodeHandshake::HANDSHAKE_RESPONSE);
 
-				// walk through all extensions to process the contents of the response
-				const std::list<BaseRouter::Extension*>& extensions = (**this).getExtensions();
-
-				for (std::list<BaseRouter::Extension*>::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+				// lock the extension list during the processing
 				{
-					BaseRouter::Extension &extension = (**iter);
-					extension.responseHandshake(bundle._source, handshake, response);
+					ibrcommon::RWLock l((**this).getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+					// walk through all extensions to process the contents of the response
+					const BaseRouter::extension_list& extensions = (**this).getExtensions();
+
+					for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+					{
+						RoutingExtension &extension = (**iter);
+						extension.responseHandshake(bundle._source, handshake, response);
+					}
 				}
 
 				// create a new bundle
@@ -308,11 +314,11 @@ namespace dtn
 			else if (handshake.getType() == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
 				// walk through all extensions to process the contents of the response
-				const std::list<BaseRouter::Extension*>& extensions = (**this).getExtensions();
+				const BaseRouter::extension_list& extensions = (**this).getExtensions();
 
-				for (std::list<BaseRouter::Extension*>::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+				for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
 				{
-					BaseRouter::Extension &extension = (**iter);
+					RoutingExtension &extension = (**iter);
 					extension.processHandshake(bundle._source, handshake);
 				}
 

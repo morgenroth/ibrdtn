@@ -443,7 +443,7 @@ namespace dtn
 			return _level;
 		}
 
-		std::string Configuration::getNodename()
+		std::string Configuration::getNodename() const
 		{
 			try {
 				return _conf.read<string>("local_uri");
@@ -786,12 +786,12 @@ namespace dtn
 			return _nodes;
 		}
 
-		int Configuration::getTimezone()
+		int Configuration::getTimezone() const
 		{
 			return _conf.read<int>( "timezone", 0 );
 		}
 
-		ibrcommon::File Configuration::getPath(string name)
+		ibrcommon::File Configuration::getPath(string name) const
 		{
 			stringstream ss;
 			ss << name << "_path";
