@@ -41,6 +41,7 @@ import android.widget.ListAdapter;
 import android.widget.SimpleAdapter;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.api.Node;
 
 public class NeighborList extends ListActivity {
 	
@@ -98,19 +99,19 @@ public class NeighborList extends ListActivity {
 		bindService(new Intent(DTNService.class.getName()), mConnection, Context.BIND_AUTO_CREATE);
 	}
     
-	private class LoadNeighborList extends AsyncTask<String, Integer, List<String>> {
-		protected List<String> doInBackground(String... data)
+	private class LoadNeighborList extends AsyncTask<String, Integer, List<Node>> {
+		protected List<Node> doInBackground(String... data)
 		{
 			try {
 		        // query all neighbors
-				List<String> neighbors = service.getNeighbors();
+				List<Node> neighbors = service.getNeighbors();
 				return neighbors;
 			} catch (RemoteException e) {
 				return null;
 			}
 		}
 
-		protected void onPostExecute(List<String> neighbors)
+		protected void onPostExecute(List<Node> neighbors)
 		{
 			if (neighbors == null) return;
 			
@@ -128,10 +129,10 @@ public class NeighborList extends ListActivity {
 				// clear all data
 				_data.clear();
 				
-				for (String n : neighbors)
+				for (Node n : neighbors)
 				{
 					HashMap<String, String> m = new HashMap<String, String>();
-					m.put("eid", n);
+					m.put("eid", n.endpoint.toString());
 					_data.add( m );
 				}
 

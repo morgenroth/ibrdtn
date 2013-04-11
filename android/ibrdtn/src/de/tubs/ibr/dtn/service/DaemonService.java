@@ -43,9 +43,13 @@ import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.DTNSession;
+import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.p2p.P2PManager;
+import de.tubs.ibr.dtn.swig.NativeDaemonException;
+import de.tubs.ibr.dtn.swig.NativeNode;
 import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonService extends Service {
@@ -82,14 +86,24 @@ public class DaemonService extends Service {
             return DaemonService.this.mDaemonProcess.getState().equals(DaemonState.ONLINE);
         }
 
-        public List<String> getNeighbors() throws RemoteException {
+        public List<Node> getNeighbors() throws RemoteException {
             if (mDaemonProcess == null)
-                return new LinkedList<String>();
+                return new LinkedList<Node>();
 
-            List<String> ret = new LinkedList<String>();
+            List<Node> ret = new LinkedList<Node>();
             StringVec neighbors = mDaemonProcess.getNative().getNeighbors();
             for (int i = 0; i < neighbors.size(); i++) {
-                ret.add(neighbors.get(i));
+            	String eid = neighbors.get(i);
+            	
+            	try {
+                	// get extended info
+					NativeNode nn = mDaemonProcess.getNative().getInfo(eid);
+					
+	            	Node n = new Node();
+	            	n.endpoint = new SingletonEndpoint(eid);
+	            	n.type = nn.getType().toString();
+	                ret.add(n);
+				} catch (NativeDaemonException e) { }
             }
 
             return ret;
