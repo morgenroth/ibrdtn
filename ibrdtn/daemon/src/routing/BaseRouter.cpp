@@ -46,6 +46,7 @@
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/thread/RWLock.h>
 
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
@@ -77,12 +78,19 @@ namespace dtn
 		 */
 		void BaseRouter::add(RoutingExtension *extension)
 		{
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
 			_extensions.insert(extension);
 		}
 
 		void BaseRouter::remove(RoutingExtension *extension)
 		{
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
 			_extensions.erase(extension);
+		}
+
+		ibrcommon::RWMutex& BaseRouter::getExtensionMutex() throw ()
+		{
+			return _extensions_mutex;
 		}
 
 		const BaseRouter::extension_list& BaseRouter::getExtensions() const
@@ -92,6 +100,8 @@ namespace dtn
 
 		void BaseRouter::clearExtensions()
 		{
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+
 			// delete all extensions
 			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
@@ -103,6 +113,8 @@ namespace dtn
 
 		void BaseRouter::extensionsUp() throw ()
 		{
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+
 			_nh_extension.componentUp();
 			_retransmission_extension.componentUp();
 
@@ -117,6 +129,8 @@ namespace dtn
 
 		void BaseRouter::extensionsDown() throw ()
 		{
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+
 			_extension_state = false;
 
 			// stop all extensions
@@ -186,6 +200,7 @@ namespace dtn
 				}
 
 				// pass event to all extensions
+				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 				__forward_event(evt);
 				return;
 			} catch (const std::bad_cast&) { };
@@ -216,6 +231,7 @@ namespace dtn
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 				// pass event to all extensions
+				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 				__forward_event(evt);
 				return;
 			} catch (const std::bad_cast&) { };
@@ -240,6 +256,7 @@ namespace dtn
 				} catch (const dtn::storage::NoBundleFoundException&) { };
 
 				// pass event to all extensions
+				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 				__forward_event(evt);
 				return;
 			} catch (const std::bad_cast&) { };
@@ -370,11 +387,13 @@ namespace dtn
 				}
 
 				// pass event to all extensions
+				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 				__forward_event(evt);
 				return;
 			} catch (const std::bad_cast&) { };
 
 			// pass event to all extensions
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 			__forward_event(evt);
 		}
 

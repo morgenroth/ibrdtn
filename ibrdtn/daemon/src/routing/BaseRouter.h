@@ -39,6 +39,8 @@
 #include <ibrdtn/data/MetaBundle.h>
 
 #include <ibrcommon/thread/Thread.h>
+#include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/RWMutex.h>
 #include <ibrcommon/thread/Conditional.h>
 
 
@@ -100,6 +102,11 @@ namespace dtn
 			 * @return
 			 */
 			const extension_list& getExtensions() const;
+
+			/**
+			 * Give access to the mutex for the extension list
+			 */
+			ibrcommon::RWMutex& getExtensionMutex() throw ();
 
 			/**
 			 * Delete all extensions
@@ -200,6 +207,7 @@ namespace dtn
 			ibrcommon::Mutex _purged_bundles_lock;
 			dtn::data::BundleSet _purged_bundles;
 
+			ibrcommon::RWMutex _extensions_mutex;
 			extension_list _extensions;
 
 			// this is true if the extensions are up

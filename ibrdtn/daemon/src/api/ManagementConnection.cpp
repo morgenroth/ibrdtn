@@ -33,6 +33,7 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrcommon/link/LinkEvent.h>
+#include <ibrcommon/thread/RWLock.h>
 
 namespace dtn
 {
@@ -324,7 +325,12 @@ namespace dtn
 
 					if ( cmd[1] == "prophet" )
 					{
-						const dtn::routing::BaseRouter::extension_list& routingExtensions = dtn::core::BundleCore::getInstance().getRouter().getExtensions();
+						dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
+
+						// lock the extension list during the processing
+						ibrcommon::RWLock l(router.getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+						const dtn::routing::BaseRouter::extension_list& routingExtensions = router.getExtensions();
 						dtn::routing::BaseRouter::extension_list::const_iterator it;
 
 						/* find the prophet extension in the BaseRouter */

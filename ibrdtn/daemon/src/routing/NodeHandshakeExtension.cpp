@@ -32,6 +32,7 @@
 #include <ibrdtn/utils/Clock.h>
 
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/thread/RWLock.h>
 #include <ibrcommon/Logger.h>
 
 namespace dtn
@@ -183,13 +184,18 @@ namespace dtn
 			// create a new request for the summary vector of the neighbor
 			NodeHandshake request(NodeHandshake::HANDSHAKE_REQUEST);
 
-			// walk through all extensions to process the contents of the response
-			const BaseRouter::extension_list& extensions = (*_callback).getExtensions();
-
-			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+			// lock the extension list during the processing
 			{
-				RoutingExtension &extension = (**iter);
-				extension.requestHandshake(origin, request);
+				ibrcommon::RWLock l((*_callback).getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+				// walk through all extensions to process the contents of the response
+				const BaseRouter::extension_list& extensions = (*_callback).getExtensions();
+
+				for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+				{
+					RoutingExtension &extension = (**iter);
+					extension.requestHandshake(origin, request);
+				}
 			}
 
 			// create a new bundle
@@ -252,13 +258,18 @@ namespace dtn
 				// create a new request for the summary vector of the neighbor
 				NodeHandshake response(NodeHandshake::HANDSHAKE_RESPONSE);
 
-				// walk through all extensions to process the contents of the response
-				const BaseRouter::extension_list& extensions = (**this).getExtensions();
-
-				for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+				// lock the extension list during the processing
 				{
-					RoutingExtension &extension = (**iter);
-					extension.responseHandshake(bundle._source, handshake, response);
+					ibrcommon::RWLock l((**this).getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+					// walk through all extensions to process the contents of the response
+					const BaseRouter::extension_list& extensions = (**this).getExtensions();
+
+					for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+					{
+						RoutingExtension &extension = (**iter);
+						extension.responseHandshake(bundle._source, handshake, response);
+					}
 				}
 
 				// create a new bundle
