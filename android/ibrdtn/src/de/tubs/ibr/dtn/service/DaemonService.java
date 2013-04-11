@@ -78,7 +78,11 @@ public class DaemonService extends Service {
     // the P2P manager used for wifi direct control
     private P2PManager _p2p_manager = null;
 
+    // the daemon process
     private DaemonProcess mDaemonProcess = null;
+    
+    // indicates if a notification is visible
+    private Boolean _show_notification = false;
 
     // This is the object that receives interactions from clients. See
     // RemoteService for a more complete example.
@@ -148,20 +152,24 @@ public class DaemonService extends Service {
         String action = intent.getAction();
 
         if (ACTION_STARTUP.equals(action)) {
+            // mark the notification as visible
+            _show_notification = true;
+            
             // create initial notification
             Notification n = buildNotification(R.drawable.ic_notification, getResources()
                     .getString(R.string.notify_pending));
 
             // turn this to a foreground service (kill-proof)
             startForeground(1, n);
-
+            
+            // reload daemon configuration
+            mDaemonProcess.onConfigurationChanged();
+            
+            // start-up the daemon
             mDaemonProcess.start();
         } else if (ACTION_SHUTDOWN.equals(action)) {
             // stop main loop
             mDaemonProcess.stop();
-
-            // stop foreground service
-            stopForeground(true);
         } else if (ACTION_CLOUD_UPLINK.equals(action)) {
             if (DaemonState.ONLINE.equals(mDaemonProcess.getState())) {
                 setCloudUplink(intent.getBooleanExtra("enabled", false));
@@ -193,6 +201,12 @@ public class DaemonService extends Service {
 
         // create daemon main thread
         mDaemonProcess = new DaemonProcess(this, mProcessHandler);
+        
+        // initialize daemon configuration
+        mDaemonProcess.onConfigurationChanged();
+        
+        // initialize the basic daemon
+        mDaemonProcess.initialize();
 
         /*
          * incoming Intents will be processed by ServiceHandler and queued in
@@ -205,6 +219,9 @@ public class DaemonService extends Service {
 
         // create a session manager
         mSessionManager = new SessionManager(this);
+        
+        // restore registrations
+        mSessionManager.initialize();
 
         // create P2P Manager
         // _p2p_manager = new P2PManager(this, _p2p_listener, "my address");
@@ -225,7 +242,14 @@ public class DaemonService extends Service {
         mServiceLooper.quit();
 
         // close all sessions
+        mSessionManager.terminate();
+        
+        // save registrations
         mSessionManager.saveRegistrations();
+        
+        // shutdown daemon completely
+        mDaemonProcess.destroy();
+        mDaemonProcess = null;
 
         // remove notification
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -288,20 +312,20 @@ public class DaemonService extends Service {
                     break;
                     
                 case OFFLINE:
-                    // close all sessions
-                    mSessionManager.terminate();
-                    
                     // TODO: disable P2P manager
                     // _p2p_manager.destroy();
+                    
+                    // mark the notification as invisible
+                    _show_notification = false;
+                    
+                    // stop foreground service
+                    stopForeground(true);
                     
                     // stop service
                     stopSelf();
                     break;
                     
                 case ONLINE:
-                    // restore registrations
-                    mSessionManager.initialize();
-
                     // TODO: enable P2P manager
                     // _p2p_manager.initialize();
                    
@@ -390,7 +414,10 @@ public class DaemonService extends Service {
                 break;
         }
         
-        nm.notify(1, buildNotification(R.drawable.ic_notification, stateText));
+        // update the notification only if it is visible
+        if (_show_notification) {
+            nm.notify(1, buildNotification(R.drawable.ic_notification, stateText));
+        }
     }
 
     // private P2PManager.P2PNeighborListener _p2p_listener = new

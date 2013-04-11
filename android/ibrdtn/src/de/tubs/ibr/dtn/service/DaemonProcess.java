@@ -30,8 +30,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import android.content.Context;
 import android.content.Intent;
@@ -41,6 +39,7 @@ import android.provider.Settings.Secure;
 import android.util.Log;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.swig.DaemonRunLevel;
 import de.tubs.ibr.dtn.swig.NativeDaemon;
 import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
 import de.tubs.ibr.dtn.swig.NativeDaemonException;
@@ -53,7 +52,6 @@ public class DaemonProcess {
 	private NativeDaemon mDaemon = null;
 	private DaemonProcessHandler mHandler = null;
 	private Context mContext = null;
-	private ExecutorService _executor = null;
 	private DaemonState _state = DaemonState.OFFLINE;
 	
 	private final static String GNUSTL_NAME = "gnustl_shared";
@@ -100,7 +98,6 @@ public class DaemonProcess {
 		this.mDaemon = new NativeDaemon(mDaemonCallback, mEventCallback);
 		this.mContext = context;
 		this.mHandler = handler;
-		this._executor = Executors.newSingleThreadExecutor();
 	}
 	
 	public NativeDaemon getNative() {
@@ -116,76 +113,87 @@ public class DaemonProcess {
         _state = newState;
         mHandler.onStateChanged(_state);
     }
+    
+    public void initialize() {
+        try {
+            mDaemon.init(DaemonRunLevel.RUNLEVEL_API);
+        } catch (NativeDaemonException e) {
+            Log.e(TAG, "error while initializing the daemon process", e);
+        }
+    }
 	
 	public void start() {
-	    // submit the startup procedure to the executor
-	    _executor.submit(_main_loop);
+	    try {
+            mDaemon.init(DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS);
+        } catch (NativeDaemonException e) {
+            Log.e(TAG, "error while starting the daemon process", e);
+        }
 	}
 	
 	public void stop() {
 	    // stop the running daemon
-	    mDaemon.shutdown();
+	    try {
+            mDaemon.init(DaemonRunLevel.RUNLEVEL_API);
+        } catch (NativeDaemonException e) {
+            Log.e(TAG, "error while stopping the daemon process", e);
+        }
 	}
+	
+    public void destroy() {
+        // stop the running daemon
+        try {
+            mDaemon.init(DaemonRunLevel.RUNLEVEL_ZERO);
+        } catch (NativeDaemonException e) {
+            Log.e(TAG, "error while destroying the daemon process", e);
+        }
+    }
+	
+	public void onConfigurationChanged() {
+        String configPath = mContext.getFilesDir().getPath() + "/" + "config";
 
-	private Runnable _main_loop = new Runnable() {
-        @Override
-        public void run() {          
-            // lower priority of this thread
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+        // create configuration file
+        createConfig(mContext, configPath);
+        
+        // set configuration file
+        mDaemon.setConfigFile(configPath);
 
-            String configPath = mContext.getFilesDir().getPath() + "/" + "config";
+        // enable debug based on prefs
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
+        int debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
+        
+        // disable debugging if the log level is lower than 3
+        if (logLevel < 3) debugVerbosity = 0;
+        
+        // set logging options
+        mDaemon.setLogging("Core", logLevel);
 
-            // create configuration file
-            createConfig(mContext, configPath);
-
-            // enable debug based on prefs
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-            int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
-            int debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
-            
-            // disable debugging if the log level is lower than 3
-            if (logLevel < 3) debugVerbosity = 0;
-            
-            // set logging options
-            DaemonProcess.this.mDaemon.setLogging("Core", logLevel);
-
-            // set logfile options
-            String logFilePath = null;
-            
-			if (preferences.getBoolean("log_enable_file", false)) {
-    			File logPath = DaemonStorageUtils.getStoragePath("logs");
-                if (logPath != null) {
-                    logPath.mkdirs();
-                    Calendar cal = Calendar.getInstance();
-                    String time = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH) + cal.get(Calendar.DAY_OF_MONTH) + cal.get(Calendar.DAY_OF_MONTH)
-                            + cal.get(Calendar.HOUR) + cal.get(Calendar.MINUTE) + cal.get(Calendar.SECOND);
-                    
-                    logFilePath = logPath.getPath() + File.separatorChar + "ibrdtn_" + time + ".log";
-                }
-			}
-
-            if (logFilePath != null) {
-                // enable file logging
-                DaemonProcess.this.mDaemon.setLogFile(logFilePath, logLevel);
-			} else {
-				// disable file logging
-				DaemonProcess.this.mDaemon.setLogFile("", 0);
-			}
-
-            // set debug verbosity
-            DaemonProcess.this.mDaemon.setDebug(debugVerbosity);
-            
-            try {
-                // initialize daemon
-                DaemonProcess.this.mDaemon.initialize(configPath);
+        // set logfile options
+        String logFilePath = null;
+        
+        if (preferences.getBoolean("log_enable_file", false)) {
+            File logPath = DaemonStorageUtils.getStoragePath("logs");
+            if (logPath != null) {
+                logPath.mkdirs();
+                Calendar cal = Calendar.getInstance();
+                String time = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH) + cal.get(Calendar.DAY_OF_MONTH) + cal.get(Calendar.DAY_OF_MONTH)
+                        + cal.get(Calendar.HOUR) + cal.get(Calendar.MINUTE) + cal.get(Calendar.SECOND);
                 
-                // blocking main loop
-                DaemonProcess.this.mDaemon.main_loop();
-            } catch (NativeDaemonException e) {
-                Log.e(TAG, "Daemon startup failed.", e);
+                logFilePath = logPath.getPath() + File.separatorChar + "ibrdtn_" + time + ".log";
             }
-        }	    
-	};
+        }
+
+        if (logFilePath != null) {
+            // enable file logging
+            mDaemon.setLogFile(logFilePath, logLevel);
+        } else {
+            // disable file logging
+            mDaemon.setLogFile("", 0);
+        }
+
+        // set debug verbosity
+        mDaemon.setDebug(debugVerbosity);
+	}
 	
 	private NativeEventCallback mEventCallback = new NativeEventCallback() {
         @Override
@@ -249,11 +257,11 @@ public class DaemonProcess {
 	
 	private NativeDaemonCallback mDaemonCallback = new NativeDaemonCallback() {
 		@Override
-		public void stateChanged(States state) {
-			if (States.STARTUP_COMPLETED.equals(state)) {
+		public void levelChanged(DaemonRunLevel level) {
+			if (DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS.equals(level)) {
 			    setState(DaemonState.ONLINE);
 			}
-			else if (States.SHUTDOWN_INITIATED.equals(state)) {
+			else if (DaemonRunLevel.RUNLEVEL_API.equals(level)) {
 			    setState(DaemonState.OFFLINE);
 			}
 		}
