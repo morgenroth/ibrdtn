@@ -92,7 +92,6 @@
 
 #ifdef WITH_TLS
 #include "security/SecurityCertificateManager.h"
-#include "security/TLSStreamComponent.h"
 #endif
 
 #ifdef WITH_DHT_NAMESERVICE
@@ -1108,13 +1107,8 @@ namespace dtn
 #ifdef WITH_BUNDLE_SECURITY
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
-			const dtn::daemon::Configuration::Security &sec = conf.getSecurity();
-
-			if (sec.enabled())
-			{
-				// initialize the key manager for the security extensions
-				dtn::security::SecurityKeyManager::getInstance().initialize( sec.getPath(), sec.getCertificate(), sec.getKey() );
-			}
+			// initialize the key manager for the security extensions
+			dtn::security::SecurityKeyManager::getInstance().onConfigurationChanged( conf );
 #endif
 		}
 
