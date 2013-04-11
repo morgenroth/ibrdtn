@@ -30,18 +30,13 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
@@ -49,7 +44,6 @@ import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Registration;
-import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.p2p.P2PManager;
 import de.tubs.ibr.dtn.swig.StringVec;
@@ -57,15 +51,8 @@ import de.tubs.ibr.dtn.swig.StringVec;
 public class DaemonService extends Service {
     public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
     public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
-    public static final String ACTION_CLOUD_UPLINK = "de.tubs.ibr.dtn.action.CLOUD_UPLINK";
+    public static final String ACTION_RESTART = "de.tubs.ibr.dtn.action.RESTART";
     public static final String UPDATE_NOTIFICATION = "de.tubs.ibr.dtn.action.UPDATE_NOTIFICATION";
-
-    // CloudUplink Parameter
-    private static final SingletonEndpoint __CLOUD_EID__ = new SingletonEndpoint(
-            "dtn://cloud.dtnbone.dtn");
-    private static final String __CLOUD_PROTOCOL__ = "tcp";
-    private static final String __CLOUD_ADDRESS__ = "134.169.35.130"; // quorra.ibr.cs.tu-bs.de";
-    private static final String __CLOUD_PORT__ = "4559";
 
     private final String TAG = "DaemonService";
 
@@ -142,7 +129,7 @@ public class DaemonService extends Service {
             onHandleIntent(intent);
         }
     }
-
+    
     /**
      * Incoming Intents are handled here
      * 
@@ -170,10 +157,10 @@ public class DaemonService extends Service {
         } else if (ACTION_SHUTDOWN.equals(action)) {
             // stop main loop
             mDaemonProcess.stop();
-        } else if (ACTION_CLOUD_UPLINK.equals(action)) {
-            if (DaemonState.ONLINE.equals(mDaemonProcess.getState())) {
-                setCloudUplink(intent.getBooleanExtra("enabled", false));
-            }
+        } else if (ACTION_RESTART.equals(action)) {
+            final Integer level = intent.getIntExtra("runlevel", 0);
+            // restart the daemon into the given runlevel
+            mDaemonProcess.restart(level);
         } else if (UPDATE_NOTIFICATION.equals(action)) {
             // update state text in the notification 
             updateNotification();
@@ -198,7 +185,7 @@ public class DaemonService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
+        
         // create daemon main thread
         mDaemonProcess = new DaemonProcess(this, mProcessHandler);
         
@@ -328,10 +315,6 @@ public class DaemonService extends Service {
                 case ONLINE:
                     // TODO: enable P2P manager
                     // _p2p_manager.initialize();
-                   
-                    // enable cloud uplink if enabled
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
-                    setCloudUplink(prefs.getBoolean("cloud_uplink", false));
                     break;
                     
                 case SUSPENDED:
@@ -362,16 +345,6 @@ public class DaemonService extends Service {
         }
         
     };
-    
-    private void setCloudUplink(Boolean mode) {
-        if (mode) {
-            mDaemonProcess.getNative().addConnection(__CLOUD_EID__.toString(),
-                    __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-        } else {
-            mDaemonProcess.getNative().removeConnection(__CLOUD_EID__.toString(),
-                    __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-        }
-    }
     
     private void requestNotificationUpdate() {
         // request notification update
