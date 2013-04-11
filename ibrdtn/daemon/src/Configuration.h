@@ -49,6 +49,11 @@ namespace dtn
 			virtual ~Configuration();
 
 		public:
+			class OnChangeListener {
+			public:
+				virtual void onConfigurationChanged(const dtn::daemon::Configuration &conf) throw () = 0;
+			};
+
 			class NetConfig
 			{
 			public:
