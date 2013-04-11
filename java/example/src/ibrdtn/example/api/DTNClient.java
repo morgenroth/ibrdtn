@@ -71,6 +71,8 @@ public class DTNClient {
 
     public void send(Bundle bundle) {
 
+        logger.log(Level.INFO, "Sending {0}", bundle);
+
         final Bundle finalBundle = bundle;
         final ExtendedClient finalClient = this.exClient;
 
@@ -88,6 +90,7 @@ public class DTNClient {
     }
 
     public void send(Bundle bundle, ICallback callback) {
+        logger.log(Level.INFO, "Sending {0}", bundle);
 
         if (callback != null) {
             final PayloadBlock payload = bundle.getPayloadBlock();
@@ -119,7 +122,7 @@ public class DTNClient {
 
     public void shutdown() {
 
-        logger.log(Level.SEVERE, "Shutting down {0}", endpoint);
+        logger.log(Level.INFO, "Shutting down {0}", endpoint);
 
         executor.shutdown(); // Disable new tasks from being submitted
         try {
@@ -184,7 +187,7 @@ public class DTNClient {
     }
 
     public String getConfiguration() {
-        return "DTN Client: " + endpoint + " [" + Constants.HOST + ":" + Constants.PORT + "] \r\n";
+        return "DTN Client: " + endpoint + " [" + Constants.HOST + ":" + Constants.PORT + "]";
     }
 
     public ExtendedClient getEC() {

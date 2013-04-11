@@ -11,9 +11,12 @@ import ibrdtn.example.api.DTNClient;
 import ibrdtn.example.callback.AutoResponseCallback;
 import ibrdtn.example.callback.DisplayCallback;
 import ibrdtn.example.callback.ICallback;
+import ibrdtn.example.logging.WindowHandler;
 import java.awt.event.ItemEvent;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import javax.swing.text.DefaultCaret;
 
 /**
  * An application demonstrating the use of the IBR-DTN API.
@@ -22,8 +25,9 @@ import java.util.logging.Logger;
  */
 public class DTNExampleApp extends javax.swing.JFrame {
 
-    private static final Logger logger = Logger.getLogger(DTNExampleApp.class.getName());
+    private static final Logger logger = LogManager.getLogManager().getLogger("");
     private DTNClient dtnClient;
+    private WindowHandler handler = null;
 
     /**
      * Creates a new DTN demonstration app.
@@ -31,13 +35,20 @@ public class DTNExampleApp extends javax.swing.JFrame {
     public DTNExampleApp() {
         initComponents();
 
+        // Set logging text area to auto-scroll.
+        DefaultCaret caret = (DefaultCaret) textArea.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+
+        // Append a window logger to the global logger instance. Thus, all log messages can be print on the GUI.
+        handler = WindowHandler.getInstance(this);
+        logger.addHandler(handler);
+
         String endpoint = tfEndpoint.getText();
         dtnClient = new DTNClient(endpoint);
 
         dtnClient.addStaticCallback(Envelope.class.getCanonicalName(), new DisplayCallback(this));
 
         logger.log(Level.INFO, dtnClient.getConfiguration());
-        print("INFO: " + dtnClient.getConfiguration());
 
 //        Runtime.getRuntime().addShutdownHook(new Thread() {
 //            @Override
@@ -542,8 +553,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
         data.setText(tfPayload.getText());
         bundle.appendBlock(new PayloadBlock(data));
 
-        print("Sending " + bundle);
-
         if (cbAutoResponse.isSelected()) {
             ICallback callback = new AutoResponseCallback(this);
             dtnClient.send(bundle, callback);
@@ -558,7 +567,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
             GroupEndpoint gid = new GroupEndpoint(group);
             try {
                 dtnClient.getEC().addRegistration(gid);
-                print("INFO: GID '" + gid + "' added");
+                logger.log(Level.INFO, "GID ''{0}'' added", gid);
             } catch (APIException ex) {
                 print(ex.getMessage());
             }
@@ -570,7 +579,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         if (eid != null && eid.length() > 3) {
             try {
                 dtnClient.getEC().addEndpoint(eid);
-                print("INFO: Endpoint '" + eid + "' added");
+                logger.log(Level.INFO, "Endpoint ''{0}'' added", eid);
             } catch (APIException ex) {
                 print(ex.getMessage());
             }
@@ -587,7 +596,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         if (eid != null && eid.length() > 3) {
             try {
                 dtnClient.getEC().removeEndpoint(eid);
-                print("INFO: Endpoint '" + eid + "' removed");
+                logger.log(Level.INFO, "Endpoint ''{0}'' removed", eid);
             } catch (APIException ex) {
                 print(ex.getMessage());
             }
@@ -600,7 +609,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
             GroupEndpoint eid = new GroupEndpoint(group);
             try {
                 dtnClient.getEC().removeRegistration(eid);
-                print("INFO: GID '" + group + "' removed");
+                logger.log(Level.INFO, "GID ''{0}'' removed", group);
             } catch (APIException ex) {
                 print(ex.getMessage());
             }
@@ -611,32 +620,32 @@ public class DTNExampleApp extends javax.swing.JFrame {
         try {
             switch ((String) cbOutput.getSelectedItem()) {
                 case "Primary EID":
-                    print(dtnClient.getEC().getEndpoint().toString());
+                    logger.log(Level.INFO, dtnClient.getEC().getEndpoint().toString());
                     break;
                 case "Node Name":
-                    print(dtnClient.getEC().getNodeName().toString());
+                    logger.log(Level.INFO, dtnClient.getEC().getNodeName().toString());
                     break;
                 case "Registrations":
-                    print(dtnClient.getEC().getRegistrations().toString());
+                    logger.log(Level.INFO, dtnClient.getEC().getRegistrations().toString());
                     break;
                 case "Neighbors":
-                    print(dtnClient.getEC().getNeighbors().toString());
+                    logger.log(Level.INFO, dtnClient.getEC().getNeighbors().toString());
                     break;
                 default:
                     logger.log(Level.WARNING, "Selected printing paramter unknown!");
             }
         } catch (APIException ex) {
-            print("[Error] Retrieving DTN configuration parameters failed");
+            logger.log(Level.SEVERE, "Retrieving DTN configuration parameters failed");
         }
     }//GEN-LAST:event_btnPrintActionPerformed
 
     private void tbEventsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_tbEventsItemStateChanged
         if (evt.getStateChange() == ItemEvent.SELECTED) {
             dtnClient.setEvents(true);
-            print("INFO: Event notifications enabled.");
+            logger.log(Level.INFO, "Event notifications enabled.");
         } else {
             dtnClient.setEvents(false);
-            print("INFO: Event notifications disabled.");
+            logger.log(Level.INFO, "Event notifications disabled.");
         }
     }//GEN-LAST:event_tbEventsItemStateChanged
 
@@ -647,6 +656,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
      */
     public final void print(String string) {
         textArea.append(string + "\n");
+        textArea.validate();
     }
 
     /**

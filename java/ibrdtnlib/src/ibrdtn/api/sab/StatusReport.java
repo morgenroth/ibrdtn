@@ -51,7 +51,7 @@ public class StatusReport {
         String fragments = "(\\.\\d+:\\d+)?";
         String notificationType = "(\\w+)\\[(\\d+)\\.(\\d+)\\]";
 
-        // 603 NOTIFY REPORT <timestamp>.<seq_nr>[.<frag_offset>:<frag_len>] <src_eid> <reason_code> <type>\\[<timestamp>.<tmp_nanos>\\]
+        // NOTIFY REPORT <timestamp>.<seq_nr>[.<frag_offset>:<frag_len>] <src_eid> <reason_code> <type>\\[<timestamp>.<tmp_nanos>\\]
         final Pattern pattern = Pattern.compile(
                 start
                 + "\\s(\\d+)\\.(\\d+)"
@@ -115,6 +115,6 @@ public class StatusReport {
 
     @Override
     public String toString() {
-        return status + " : " + reasonCode + "(" + source + ")";
+        return "[Report] " + status + ": " + source + " (" + reasonCode + ")";
     }
 }

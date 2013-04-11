@@ -334,14 +334,14 @@ public class DataReceiver extends Thread implements SABHandler {
         logger.log(Level.SEVERE, "New notification: {0} {1}", new Object[]{String.valueOf(type), data});
 
         switch (type) {
-            case 600: //COMMON
+            case 600: // COMMON
                 logger.log(Level.SEVERE, "600 COMMON notification {0}", String.valueOf(type));
                 break;
             case 601: // NEIGHBOR 
                 logger.log(Level.SEVERE, "601 NEIGHBOR notification {0}", String.valueOf(type));
                 break;
             case 602: // BUNDLE
-                logger.log(Level.FINE, "New bundle notification {0}", String.valueOf(type));
+                logger.log(Level.FINE, "New bundle: {0}", String.valueOf(type));
                 BundleID bundleID = parseBundleNotification(data);
 
                 synchronized (handler_mutex) {
@@ -353,7 +353,7 @@ public class DataReceiver extends Thread implements SABHandler {
                 break;
             case 603: // REPORT
                 StatusReport report = new StatusReport(data);
-                logger.log(Level.SEVERE, "New report {0}", report);
+                logger.log(Level.FINE, "New report: {0}", report);
 
                 synchronized (handler_mutex) {
                     if (handler != null) {
