@@ -80,6 +80,11 @@ namespace dtn
 			virtual ~NativeDaemon();
 
 			/**
+			 * Get the current runlevel
+			 */
+			DaemonRunLevel getRunLevel() const throw ();
+
+			/**
 			 * Switch the runlevel of the daemon
 			 */
 			void init(DaemonRunLevel rl) throw (NativeDaemonException);

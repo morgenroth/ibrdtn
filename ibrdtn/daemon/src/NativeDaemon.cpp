@@ -499,7 +499,16 @@ namespace dtn
 			_config_file = ibrcommon::File(path);
 
 			// load the configuration file
-			dtn::daemon::Configuration::getInstance(true).load(_config_file.getPath());
+			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance(true);
+			conf.load(_config_file.getPath());
+
+			// reload bundle core configuration
+			dtn::core::BundleCore::getInstance().onConfigurationChanged(conf);
+
+#ifdef WITH_BUNDLE_SECURITY
+			// initialize the key manager for the security extensions
+			dtn::security::SecurityKeyManager::getInstance().onConfigurationChanged( conf );
+#endif
 		}
 
 		/**
@@ -536,6 +545,11 @@ namespace dtn
 
 			const ibrcommon::File lf(path);
 			ibrcommon::Logger::setLogfile(lf, logsys, logopts);
+		}
+
+		DaemonRunLevel NativeDaemon::getRunLevel() const throw ()
+		{
+			return _runlevel;
 		}
 
 		void NativeDaemon::init(DaemonRunLevel rl) throw (NativeDaemonException)
