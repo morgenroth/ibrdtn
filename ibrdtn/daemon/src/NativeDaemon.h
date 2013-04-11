@@ -20,7 +20,6 @@
  */
 
 #include "Component.h"
-#include "StandByManager.h"
 #include "net/IPNDAgent.h"
 #include "storage/BundleSeeker.h"
 #include "core/EventReceiver.h"
@@ -150,9 +149,6 @@ namespace dtn
 
 			// list of components
 			std::list< dtn::daemon::Component* > _components;
-
-			// stand-by manager
-			dtn::daemon::StandByManager *_standby_manager;
 
 			// IP neighbor discovery process
 			dtn::net::IPNDAgent *_ipnd;

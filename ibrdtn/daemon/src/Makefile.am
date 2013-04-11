@@ -28,8 +28,6 @@ dtnd_sources = \
 	CapsuleWorker.h \
 	DTNTPWorker.cpp \
 	DTNTPWorker.h \
-	StandByManager.h \
-	StandByManager.cpp \
 	NativeDaemon.h \
 	NativeDaemon.cpp
 

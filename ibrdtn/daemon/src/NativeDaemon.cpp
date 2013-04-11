@@ -31,8 +31,6 @@
 #include <ibrdtn/utils/Utils.h>
 #include <list>
 
-#include "StandByManager.h"
-
 #include "storage/BundleStorage.h"
 #include "storage/BundleSeeker.h"
 #include "storage/MemoryBundleStorage.h"
@@ -129,7 +127,7 @@ namespace dtn
 		}
 
 		NativeDaemon::NativeDaemon(NativeDaemonCallback *statecb, NativeEventCallback *eventcb)
-		 : _statecb(statecb), _eventcb(eventcb), _standby_manager(NULL), _ipnd(NULL), _bundle_index(NULL), _bundle_seeker(NULL)
+		 : _statecb(statecb), _eventcb(eventcb), _ipnd(NULL), _bundle_index(NULL), _bundle_seeker(NULL)
 		{
 
 		}
@@ -599,7 +597,6 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG("Init", 50) << "DHT: is enabled!" << IBRCOMMON_LOGGER_ENDL;
 				dtn::dht::DHTNameService* dhtns = new dtn::dht::DHTNameService();
 				components.push_back(dhtns);
-				if (_standby_manager != NULL) _standby_manager->adopt(dhtns);
 				if (_ipnd != NULL) _ipnd->addService(dhtns);
 			}
 		#endif
@@ -989,7 +986,6 @@ namespace dtn
 								UDPConvergenceLayer *udpcl = new dtn::net::UDPConvergenceLayer( net.iface, net.port, net.mtu );
 								core.getConnectionManager().add(udpcl);
 								components.push_back(udpcl);
-								if (_standby_manager != NULL) _standby_manager->adopt(udpcl);
 								if (_ipnd != NULL) 		_ipnd->addService(udpcl);
 
 								IBRCOMMON_LOGGER_TAG("Init", info) << "UDP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
@@ -1019,7 +1015,6 @@ namespace dtn
 								if (it == _cl_map.end()) {
 									core.getConnectionManager().add(tcpcl);
 									components.push_back(tcpcl);
-									if (_standby_manager != NULL) _standby_manager->adopt(tcpcl);
 									if (_ipnd != NULL) _ipnd->addService(tcpcl);
 									_cl_map[net.type] = tcpcl;
 								}
@@ -1042,7 +1037,6 @@ namespace dtn
 							try {
 								HTTPConvergenceLayer *httpcl = new HTTPConvergenceLayer( net.url );
 								core.getConnectionManager().add(httpcl);
-								if (_standby_manager != NULL) _standby_manager->adopt(httpcl);
 								components.push_back(httpcl);
 
 								IBRCOMMON_LOGGER_TAG("Init", info) << "HTTP ConvergenceLayer added, Server: " << net.url << IBRCOMMON_LOGGER_ENDL;
@@ -1060,7 +1054,6 @@ namespace dtn
 								LOWPANConvergenceLayer *lowpancl = new LOWPANConvergenceLayer( net.iface, net.port );
 								core.getConnectionManager().add(lowpancl);
 								components.push_back(lowpancl);
-								if (_standby_manager != NULL) _standby_manager->adopt(lowpancl);
 								if (_ipnd != NULL) _ipnd->addService(lowpancl);
 
 								IBRCOMMON_LOGGER_TAG("Init", info) << "LOWPAN ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
@@ -1077,7 +1070,6 @@ namespace dtn
 								LOWPANDatagramService *lowpan_service = new LOWPANDatagramService( net.iface, net.port );
 								DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(lowpan_service);
 								core.getConnectionManager().add(dgram_cl);
-								if (_standby_manager != NULL) _standby_manager->adopt(dgram_cl);
 								components.push_back(dgram_cl);
 
 								IBRCOMMON_LOGGER_TAG("Init", info) << "Datagram ConvergenceLayer (LowPAN) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
@@ -1094,7 +1086,6 @@ namespace dtn
 								UDPDatagramService *dgram_service = new UDPDatagramService( net.iface, net.port, net.mtu );
 								DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(dgram_service);
 								core.getConnectionManager().add(dgram_cl);
-								if (_standby_manager != NULL) _standby_manager->adopt(dgram_cl);
 								components.push_back(dgram_cl);
 
 								IBRCOMMON_LOGGER_TAG("Init", info) << "Datagram ConvergenceLayer (UDP) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
@@ -1179,10 +1170,6 @@ namespace dtn
 				// manager class for fragmentations
 				components.push_back( new dtn::core::FragmentManager() );
 			}
-
-			// create stand-by manager module
-			_standby_manager = new dtn::daemon::StandByManager();
-			components.push_back( _standby_manager);
 		}
 
 		void NativeDaemon::init_discovery() throw (NativeDaemonException)
@@ -1228,7 +1215,6 @@ namespace dtn
 				}
 
 				components.push_back(_ipnd);
-				if (_standby_manager != NULL) _standby_manager->adopt(_ipnd);
 			}
 			else
 			{
