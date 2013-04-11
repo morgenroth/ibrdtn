@@ -175,11 +175,11 @@ public class DTNExampleApp extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(cbCustody)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cbGZIP, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cbReports)
-                .addGap(60, 60, 60))
+                .addGap(72, 72, 72))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -267,19 +267,18 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(tfEid)
                     .addComponent(tfGid)
-                    .addComponent(tfEndpoint, javax.swing.GroupLayout.DEFAULT_SIZE, 132, Short.MAX_VALUE))
+                    .addComponent(tfEndpoint))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnSave)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(btnAddEID)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(btnAddEID)
+                            .addComponent(btnAddGID))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnRemoveEID))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(btnAddGID)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnRemoveGID))
-                    .addComponent(btnSave))
-                .addGap(55, 55, 55))
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(btnRemoveEID)
+                            .addComponent(btnRemoveGID)))))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -331,9 +330,9 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 .addComponent(cbOutput, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnPrint)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tbEvents)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -361,7 +360,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
             }
         });
 
-        cbAutoResponse.setText("Auto response");
+        cbAutoResponse.setText("Echo");
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -371,38 +370,35 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel1))
+                        .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(tfId, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(tfResponse, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cbAutoResponse))))
+                        .addComponent(tfId, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tfResponse, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(tfPayload))
                 .addGap(18, 18, 18)
-                .addComponent(btnSend, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cbAutoResponse)
+                    .addComponent(btnSend, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(47, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tfPayload, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnSend, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnSend))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(tfId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tfId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2)
                     .addComponent(tfResponse, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cbAutoResponse))
-                .addContainerGap(36, Short.MAX_VALUE))
+                .addGap(58, 58, 58))
         );
 
         fileMenu.setMnemonic('f');
@@ -477,15 +473,16 @@ public class DTNExampleApp extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -493,16 +490,16 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1))
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(14, Short.MAX_VALUE))
+                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 178, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         pack();
@@ -558,61 +555,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnSendActionPerformed
 
-    private void btnAddGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddGIDActionPerformed
-        String group = tfGid.getText();
-        if (group != null && group.length() > 3) {
-            GroupEndpoint gid = new GroupEndpoint(group);
-            try {
-                dtnClient.getEC().addRegistration(gid);
-                logger.log(Level.INFO, "GID ''{0}'' added", gid);
-            } catch (APIException ex) {
-                print(ex.getMessage());
-            }
-        }
-    }//GEN-LAST:event_btnAddGIDActionPerformed
-
-    private void btnAddEIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddEIDActionPerformed
-        String eid = tfEid.getText();
-        if (eid != null && eid.length() > 3) {
-            try {
-                dtnClient.getEC().addEndpoint(eid);
-                logger.log(Level.INFO, "Endpoint ''{0}'' added", eid);
-            } catch (APIException ex) {
-                print(ex.getMessage());
-            }
-        }
-    }//GEN-LAST:event_btnAddEIDActionPerformed
-
-    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
-        dtnClient.shutdown();
-        dtnClient = new DTNClient(tfEndpoint.getText());
-    }//GEN-LAST:event_btnSaveActionPerformed
-
-    private void btnRemoveEIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveEIDActionPerformed
-        String eid = tfEid.getText();
-        if (eid != null && eid.length() > 3) {
-            try {
-                dtnClient.getEC().removeEndpoint(eid);
-                logger.log(Level.INFO, "Endpoint ''{0}'' removed", eid);
-            } catch (APIException ex) {
-                print(ex.getMessage());
-            }
-        }
-    }//GEN-LAST:event_btnRemoveEIDActionPerformed
-
-    private void btnRemoveGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveGIDActionPerformed
-        String group = tfGid.getText();
-        if (group != null && group.length() > 3) {
-            GroupEndpoint eid = new GroupEndpoint(group);
-            try {
-                dtnClient.getEC().removeRegistration(eid);
-                logger.log(Level.INFO, "GID ''{0}'' removed", group);
-            } catch (APIException ex) {
-                print(ex.getMessage());
-            }
-        }
-    }//GEN-LAST:event_btnRemoveGIDActionPerformed
-
     private void btnPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPrintActionPerformed
         try {
             switch ((String) cbOutput.getSelectedItem()) {
@@ -645,6 +587,61 @@ public class DTNExampleApp extends javax.swing.JFrame {
             logger.log(Level.INFO, "Event notifications disabled.");
         }
     }//GEN-LAST:event_tbEventsItemStateChanged
+
+    private void btnRemoveGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveGIDActionPerformed
+        String group = tfGid.getText();
+        if (group != null && group.length() > 3) {
+            GroupEndpoint eid = new GroupEndpoint(group);
+            try {
+                dtnClient.getEC().removeRegistration(eid);
+                logger.log(Level.INFO, "GID ''{0}'' removed", group);
+            } catch (APIException ex) {
+                print(ex.getMessage());
+            }
+        }
+    }//GEN-LAST:event_btnRemoveGIDActionPerformed
+
+    private void btnRemoveEIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveEIDActionPerformed
+        String eid = tfEid.getText();
+        if (eid != null && eid.length() > 3) {
+            try {
+                dtnClient.getEC().removeEndpoint(eid);
+                logger.log(Level.INFO, "Endpoint ''{0}'' removed", eid);
+            } catch (APIException ex) {
+                print(ex.getMessage());
+            }
+        }
+    }//GEN-LAST:event_btnRemoveEIDActionPerformed
+
+    private void btnAddGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddGIDActionPerformed
+        String group = tfGid.getText();
+        if (group != null && group.length() > 3) {
+            GroupEndpoint gid = new GroupEndpoint(group);
+            try {
+                dtnClient.getEC().addRegistration(gid);
+                logger.log(Level.INFO, "GID ''{0}'' added", gid);
+            } catch (APIException ex) {
+                print(ex.getMessage());
+            }
+        }
+    }//GEN-LAST:event_btnAddGIDActionPerformed
+
+    private void btnAddEIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAddEIDActionPerformed
+        String eid = tfEid.getText();
+        if (eid != null && eid.length() > 3) {
+            try {
+                dtnClient.getEC().addEndpoint(eid);
+                logger.log(Level.INFO, "Endpoint ''{0}'' added", eid);
+            } catch (APIException ex) {
+                print(ex.getMessage());
+            }
+        }
+    }//GEN-LAST:event_btnAddEIDActionPerformed
+
+    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
+        dtnClient.shutdown();
+        dtnClient = new DTNClient(tfEndpoint.getText());
+    }//GEN-LAST:event_btnSaveActionPerformed
 
     /**
      * Prints a string in the app's text area.
