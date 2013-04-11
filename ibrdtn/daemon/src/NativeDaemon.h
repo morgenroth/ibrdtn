@@ -22,6 +22,7 @@
 #include "Component.h"
 #include "net/IPNDAgent.h"
 #include "storage/BundleSeeker.h"
+#include "storage/BundleIndex.h"
 #include "core/EventReceiver.h"
 #include <ibrcommon/Exceptions.h>
 #include <list>

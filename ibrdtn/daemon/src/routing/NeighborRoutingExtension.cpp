@@ -49,8 +49,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		NeighborRoutingExtension::NeighborRoutingExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker)
+		NeighborRoutingExtension::NeighborRoutingExtension()
 		{
 		}
 
@@ -169,7 +168,7 @@ namespace dtn
 
 						// query an unknown bundle from the storage, the list contains max. 10 items.
 						list.clear();
-						_seeker.get(filter, list);
+						(**this).getSeeker().get(filter, list);
 
 						IBRCOMMON_LOGGER_DEBUG(5) << "got " << list.size() << " items to transfer to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 

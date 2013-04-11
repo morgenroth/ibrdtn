@@ -1222,16 +1222,16 @@ namespace dtn
 			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
 
 			// create the base router
-			dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
+			dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter();
 
 			// make the router globally available
 			core.setRouter(router);
 
 			// add static routing extension
-			router->addExtension( new dtn::routing::StaticRoutingExtension(*_bundle_seeker) );
+			router->addExtension( new dtn::routing::StaticRoutingExtension() );
 
 			// add neighbor routing (direct-delivery) extension
-			router->addExtension( new dtn::routing::NeighborRoutingExtension(*_bundle_seeker) );
+			router->addExtension( new dtn::routing::NeighborRoutingExtension() );
 
 			// add other routing extensions depending on the configuration
 			switch (conf.getNetwork().getRoutingExtension())
@@ -1239,14 +1239,14 @@ namespace dtn
 			case dtn::daemon::Configuration::FLOOD_ROUTING:
 			{
 				IBRCOMMON_LOGGER_TAG("Init", info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
-				router->addExtension( new dtn::routing::FloodRoutingExtension(*_bundle_seeker) );
+				router->addExtension( new dtn::routing::FloodRoutingExtension() );
 				break;
 			}
 
 			case dtn::daemon::Configuration::EPIDEMIC_ROUTING:
 			{
 				IBRCOMMON_LOGGER_TAG("Init", info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
-				router->addExtension( new dtn::routing::EpidemicRoutingExtension(*_bundle_seeker) );
+				router->addExtension( new dtn::routing::EpidemicRoutingExtension() );
 				break;
 			}
 
@@ -1266,7 +1266,7 @@ namespace dtn
 					forwarding_strategy = new dtn::routing::ProphetRoutingExtension::GRTR_Strategy();
 				}
 				IBRCOMMON_LOGGER_TAG("Init", info) << "Using prophet routing extensions with " << strategy_name << " as forwarding strategy." << IBRCOMMON_LOGGER_ENDL;
-				router->addExtension( new dtn::routing::ProphetRoutingExtension(*_bundle_seeker, forwarding_strategy, prophet_config.p_encounter_max,
+				router->addExtension( new dtn::routing::ProphetRoutingExtension(forwarding_strategy, prophet_config.p_encounter_max,
 												prophet_config.p_encounter_first, prophet_config.p_first_threshold,
 												prophet_config.beta, prophet_config.gamma, prophet_config.delta,
 												prophet_config.time_unit, prophet_config.i_typ,

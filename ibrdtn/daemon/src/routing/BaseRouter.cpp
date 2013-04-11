@@ -40,9 +40,6 @@
 #include "routing/NodeHandshakeEvent.h"
 #include "routing/StaticRouteChangeEvent.h"
 
-#include "routing/NodeHandshakeExtension.h"
-#include "routing/RetransmissionExtension.h"
-
 #include <ibrdtn/data/TrackingBlock.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
@@ -58,111 +55,19 @@ namespace dtn
 {
 	namespace routing
 	{
-		BaseRouter *BaseRouter::Extension::_router = NULL;
-
-		/**
-		 * base implementation of the Extension class
-		 */
-		BaseRouter::Extension::Extension(dtn::storage::BundleSeeker &s)
-		 : _seeker(s)
-		{ }
-
-		BaseRouter::Extension::~Extension()
-		{ }
-
-		BaseRouter& BaseRouter::Extension::operator*()
-		{
-			return *_router;
-		}
-
-		/**
-		 * Transfer one bundle to another node.
-		 * @param destination The EID of the other node.
-		 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
-		 */
-		void BaseRouter::Extension::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id)
-		{
-			// lock the list of neighbors
-			ibrcommon::MutexLock l(_router->getNeighborDB());
-
-			// get the neighbor entry for the next hop
-			NeighborDatabase::NeighborEntry &entry = _router->getNeighborDB().get(destination);
-
-			// transfer bundle to the neighbor
-			transferTo(entry, id);
-		}
-
-		void BaseRouter::Extension::transferTo(NeighborDatabase::NeighborEntry &entry, const dtn::data::BundleID &id)
-		{
-			// acquire the transfer of this bundle, could throw already in transit or no resource left exception
-			entry.acquireTransfer(id);
-
-			try {
-				// transfer the bundle to the next hop
-				dtn::core::BundleCore::getInstance().transferTo(entry.eid, id);
-			} catch (const dtn::core::P2PDialupException&) {
-				// release the transfer
-				entry.releaseTransfer(id);
-
-				// and abort the query
-				throw NeighborDatabase::NeighborNotAvailableException();
-			}
-		}
-
-		bool BaseRouter::Extension::isRouting(const dtn::data::EID &eid)
-		{
-			if (eid.getApplication() == "routing")
-			{
-				return true;
-			}
-			else if ((eid.getScheme() == dtn::data::EID::CBHE_SCHEME) && (eid.getApplication() == "50"))
-			{
-				return true;
-			}
-
-			return false;
-		}
-
-		/**
-		 * base implementation of the Endpoint class
-		 */
-		BaseRouter::Endpoint::Endpoint()
-		{ }
-
-		BaseRouter::Endpoint::~Endpoint()
-		{ }
-
-		/**
-		 * implementation of the VirtualEndpoint class
-		 */
-		BaseRouter::VirtualEndpoint::VirtualEndpoint(dtn::data::EID name)
-		 : _client(NULL), _name(name)
-		{ }
-
-		BaseRouter::VirtualEndpoint::~VirtualEndpoint()
-		{ }
-
 		/**
 		 * implementation of the BaseRouter class
 		 */
-		BaseRouter::BaseRouter(dtn::storage::BundleStorage &storage)
-		 : _storage(storage), _nh_extension(NULL)
+		BaseRouter::BaseRouter()
 		{
 			// register myself for all extensions
-			Extension::_router = this;
-
-			// add node handshake module
-			_nh_extension = new dtn::routing::NodeHandshakeExtension(_storage);
-			addExtension( _nh_extension );
-
-			// add retransmission module
-			addExtension( new dtn::routing::RetransmissionExtension(_storage) );
+			RoutingExtension::_router = this;
 		}
 
 		BaseRouter::~BaseRouter()
 		{
 			// delete all extensions
-			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
 				delete (*iter);
 			}
@@ -172,14 +77,39 @@ namespace dtn
 		 * Add a routing extension to the routing core.
 		 * @param extension
 		 */
-		void BaseRouter::addExtension(BaseRouter::Extension *extension)
+		void BaseRouter::addExtension(RoutingExtension *extension)
 		{
 			_extensions.push_back(extension);
 		}
 
-		const std::list<BaseRouter::Extension*>& BaseRouter::getExtensions() const
+		const BaseRouter::extension_list& BaseRouter::getExtensions() const
 		{
 			return _extensions;
+		}
+
+		void BaseRouter::extensionsUp() throw ()
+		{
+			_nh_extension.componentUp();
+			_retransmission_extension.componentUp();
+
+			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			{
+				RoutingExtension &ex = (**iter);
+				ex.componentUp();
+			}
+		}
+
+		void BaseRouter::extensionsDown() throw ()
+		{
+			// stop all extensions
+			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			{
+				RoutingExtension &ex = (**iter);
+				ex.componentDown();
+			}
+
+			_retransmission_extension.componentDown();
+			_nh_extension.componentDown();
 		}
 
 		void BaseRouter::componentUp() throw ()
@@ -198,11 +128,8 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
 
-			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
-			{
-				BaseRouter::Extension &ex = (**iter);
-				ex.componentUp();
-			}
+			// bring extensions up
+			extensionsUp();
 		}
 
 		void BaseRouter::componentDown() throw ()
@@ -221,12 +148,8 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
 
-			// stop all extensions
-			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
-			{
-				BaseRouter::Extension &ex = (**iter);
-				ex.componentDown();
-			}
+			// bring extensions down
+			extensionsDown();
 		}
 
 		/**
@@ -297,7 +220,7 @@ namespace dtn
 
 					if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
 					{
-						const dtn::data::MetaBundle meta = _storage.get(event.getBundleID());
+						const dtn::data::MetaBundle meta = getStorage().get(event.getBundleID());
 
 						// add the transferred bundle to the bloomfilter of the receiver
 						entry.add(meta);
@@ -317,7 +240,7 @@ namespace dtn
 					if (received.fromlocal)
 					{
 						// store the bundle into a storage module
-						_storage.store(received.bundle);
+						getStorage().store(received.bundle);
 
 						// set the bundle as known
 						setKnown(received.bundle);
@@ -357,7 +280,7 @@ namespace dtn
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 						// store the bundle into a storage module
-						_storage.store(bundle);
+						getStorage().store(bundle);
 
 						// raise the queued event to notify all receivers about the new bundle
 						QueueBundleEvent::raise(received.bundle, received.peer);
@@ -399,7 +322,7 @@ namespace dtn
 				// Store incoming bundles into the storage
 				try {
 					// store the bundle into a storage module
-					_storage.store(generated.bundle);
+					getStorage().store(generated.bundle);
 
 					// raise the queued event to notify all receivers about the new bundle
  					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
@@ -446,30 +369,25 @@ namespace dtn
 		void BaseRouter::__forward_event(const dtn::core::Event *evt) const throw ()
 		{
 			// notify all underlying extensions
-			for (std::list<BaseRouter::Extension*>::const_iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
 				(*iter)->notify(evt);
 			}
 		}
 
-		/**
-		 * Get a bundle out of the storage.
-		 * @param id The ID of the bundle.
-		 * @return The requested bundle.
-		 */
-		dtn::data::Bundle BaseRouter::getBundle(const dtn::data::BundleID &id)
-		{
-			return _storage.get(id);
-		}
-
 		void BaseRouter::doHandshake(const dtn::data::EID &eid)
 		{
-			_nh_extension->doHandshake(eid);
+			_nh_extension.doHandshake(eid);
 		}
 
 		dtn::storage::BundleStorage& BaseRouter::getStorage()
 		{
-			return _storage;
+			return dtn::core::BundleCore::getInstance().getStorage();
+		}
+
+		dtn::storage::BundleSeeker& BaseRouter::getSeeker()
+		{
+			return dtn::core::BundleCore::getInstance().getSeeker();
 		}
 
 		void BaseRouter::setKnown(const dtn::data::MetaBundle &meta)

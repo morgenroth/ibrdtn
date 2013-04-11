@@ -38,8 +38,8 @@ namespace dtn
 {
 	namespace routing
 	{
-		NodeHandshakeExtension::NodeHandshakeExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker), _endpoint(*this)
+		NodeHandshakeExtension::NodeHandshakeExtension()
+		 : _endpoint(*this)
 		{
 		}
 
@@ -145,11 +145,6 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		const std::list<BaseRouter::Extension*>& NodeHandshakeExtension::getExtensions()
-		{
-			return (**this).getExtensions();
-		}
-
 		NodeHandshakeExtension::HandshakeEndpoint::HandshakeEndpoint(NodeHandshakeExtension &callback)
 		 : _callback(callback)
 		{
@@ -189,11 +184,11 @@ namespace dtn
 			NodeHandshake request(NodeHandshake::HANDSHAKE_REQUEST);
 
 			// walk through all extensions to process the contents of the response
-			const std::list<BaseRouter::Extension*>& extensions = _callback.getExtensions();
+			const BaseRouter::extension_list& extensions = (*_callback).getExtensions();
 
-			for (std::list<BaseRouter::Extension*>::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
 			{
-				BaseRouter::Extension &extension = (**iter);
+				RoutingExtension &extension = (**iter);
 				extension.requestHandshake(origin, request);
 			}
 
@@ -258,11 +253,11 @@ namespace dtn
 				NodeHandshake response(NodeHandshake::HANDSHAKE_RESPONSE);
 
 				// walk through all extensions to process the contents of the response
-				const std::list<BaseRouter::Extension*>& extensions = (**this).getExtensions();
+				const BaseRouter::extension_list& extensions = (**this).getExtensions();
 
-				for (std::list<BaseRouter::Extension*>::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+				for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
 				{
-					BaseRouter::Extension &extension = (**iter);
+					RoutingExtension &extension = (**iter);
 					extension.responseHandshake(bundle._source, handshake, response);
 				}
 
@@ -308,11 +303,11 @@ namespace dtn
 			else if (handshake.getType() == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
 				// walk through all extensions to process the contents of the response
-				const std::list<BaseRouter::Extension*>& extensions = (**this).getExtensions();
+				const BaseRouter::extension_list& extensions = (**this).getExtensions();
 
-				for (std::list<BaseRouter::Extension*>::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+				for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
 				{
-					BaseRouter::Extension &extension = (**iter);
+					RoutingExtension &extension = (**iter);
 					extension.processHandshake(bundle._source, handshake);
 				}
 

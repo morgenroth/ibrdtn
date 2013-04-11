@@ -48,8 +48,8 @@ namespace dtn
 {
 	namespace routing
 	{
-		StaticRoutingExtension::StaticRoutingExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker), next_expire(0)
+		StaticRoutingExtension::StaticRoutingExtension()
+		 : next_expire(0)
 		{
 		}
 
@@ -204,7 +204,7 @@ namespace dtn
 
 							// query all bundles from the storage
 							list.clear();
-							_seeker.get(filter, list);
+							(**this).getSeeker().get(filter, list);
 
 							// send the bundles as long as we have resources
 							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)

@@ -324,9 +324,8 @@ namespace dtn
 
 					if ( cmd[1] == "prophet" )
 					{
-						typedef dtn::routing::BaseRouter::Extension RoutingExtension;
-						const std::list<RoutingExtension*>& routingExtensions = dtn::core::BundleCore::getInstance().getRouter().getExtensions();
-						std::list<RoutingExtension*>::const_iterator it;
+						const dtn::routing::BaseRouter::extension_list& routingExtensions = dtn::core::BundleCore::getInstance().getRouter().getExtensions();
+						dtn::routing::BaseRouter::extension_list::const_iterator it;
 
 						/* find the prophet extension in the BaseRouter */
 

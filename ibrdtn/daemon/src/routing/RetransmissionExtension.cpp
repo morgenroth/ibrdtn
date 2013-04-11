@@ -36,8 +36,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		RetransmissionExtension::RetransmissionExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker)
+		RetransmissionExtension::RetransmissionExtension()
 		{
 		}
 

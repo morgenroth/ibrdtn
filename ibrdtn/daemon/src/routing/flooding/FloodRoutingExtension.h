@@ -24,7 +24,7 @@
 
 #include "core/Node.h"
 
-#include "routing/BaseRouter.h"
+#include "routing/RoutingExtension.h"
 #include "routing/NeighborDatabase.h"
 
 #include <ibrdtn/data/Block.h>
@@ -40,10 +40,10 @@ namespace dtn
 {
 	namespace routing
 	{
-		class FloodRoutingExtension : public BaseRouter::Extension, public ibrcommon::JoinableThread
+		class FloodRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
 		{
 		public:
-			FloodRoutingExtension(dtn::storage::BundleSeeker &seeker);
+			FloodRoutingExtension();
 			virtual ~FloodRoutingExtension();
 
 			void notify(const dtn::core::Event *evt) throw ();

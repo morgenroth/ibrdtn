@@ -22,7 +22,7 @@
 #ifndef RETRANSMISSIONEXTENSION_H_
 #define RETRANSMISSIONEXTENSION_H_
 
-#include "routing/BaseRouter.h"
+#include "routing/RoutingExtension.h"
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -33,10 +33,10 @@ namespace dtn
 {
 	namespace routing
 	{
-		class RetransmissionExtension : public BaseRouter::Extension
+		class RetransmissionExtension : public RoutingExtension
 		{
 		public:
-			RetransmissionExtension(dtn::storage::BundleSeeker &seeker);
+			RetransmissionExtension();
 			virtual ~RetransmissionExtension();
 
 			void notify(const dtn::core::Event *evt) throw ();
