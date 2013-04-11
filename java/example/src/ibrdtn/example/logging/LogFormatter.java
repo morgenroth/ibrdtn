@@ -21,8 +21,8 @@ public final class LogFormatter extends Formatter {
                 //.append(" ")
                 record.getLevel().getLocalizedName())
                 .append(": ")
-                .append(formatMessage(record))
-                .append(LINE_SEPARATOR);
+                .append(formatMessage(record));
+                //.append(LINE_SEPARATOR);
 
         if (record.getThrown() != null) {
             try {

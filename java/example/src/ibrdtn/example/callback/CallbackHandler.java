@@ -68,7 +68,7 @@ public class CallbackHandler {
         }
 
         if (!processed) {
-            logger.log(Level.WARNING, "Bundle ({0}) discarded---no according CallbackHandler found.",
+            logger.log(Level.FINE, "Message ({0}) discarded---no according CallbackHandler found.",
                     message.getBundleID());
         }
     }

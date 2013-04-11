@@ -9,7 +9,6 @@ import ibrdtn.api.object.SingletonEndpoint;
 import ibrdtn.example.api.Constants;
 import ibrdtn.example.api.DTNClient;
 import ibrdtn.example.callback.AutoResponseCallback;
-import ibrdtn.example.callback.DisplayCallback;
 import ibrdtn.example.callback.ICallback;
 import ibrdtn.example.logging.WindowHandler;
 import java.awt.event.ItemEvent;
@@ -45,8 +44,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         String endpoint = tfEndpoint.getText();
         dtnClient = new DTNClient(endpoint);
-
-        dtnClient.addStaticCallback(Envelope.class.getCanonicalName(), new DisplayCallback(this));
 
         logger.log(Level.INFO, dtnClient.getConfiguration());
 
@@ -620,16 +617,16 @@ public class DTNExampleApp extends javax.swing.JFrame {
         try {
             switch ((String) cbOutput.getSelectedItem()) {
                 case "Primary EID":
-                    logger.log(Level.INFO, dtnClient.getEC().getEndpoint().toString());
+                    logger.log(Level.INFO, "Primary EID {0}", dtnClient.getEC().getEndpoint().toString());
                     break;
                 case "Node Name":
-                    logger.log(Level.INFO, dtnClient.getEC().getNodeName().toString());
+                    logger.log(Level.INFO, "Node Name {0}", dtnClient.getEC().getNodeName().toString());
                     break;
                 case "Registrations":
-                    logger.log(Level.INFO, dtnClient.getEC().getRegistrations().toString());
+                    logger.log(Level.INFO, "Registrations {0}", dtnClient.getEC().getRegistrations().toString());
                     break;
                 case "Neighbors":
-                    logger.log(Level.INFO, dtnClient.getEC().getNeighbors().toString());
+                    logger.log(Level.INFO, "Neighbors {0}", dtnClient.getEC().getNeighbors().toString());
                     break;
                 default:
                     logger.log(Level.WARNING, "Selected printing paramter unknown!");

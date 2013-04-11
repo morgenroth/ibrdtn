@@ -67,7 +67,7 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
 
     @Override
     public void startBundle(Bundle bundle) {
-        logger.log(Level.SEVERE, "Receiving new bundle: {0}", bundle);
+        logger.log(Level.FINE, "Receiving: {0}", bundle);
         this.bundle = bundle;
     }
 
@@ -84,18 +84,18 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
 
     @Override
     public void startBlock(Block block) {
-        logger.log(Level.SEVERE, "Receiving new block: {0}", block.toString());
+        //logger.log(Level.FINE, "Receiving: {0}", block.toString());
         bundle.appendBlock(block);
     }
 
     @Override
     public void endBlock() {
-        logger.log(Level.SEVERE, "Block received");
+        //logger.log(Level.FINE, "Ending block");
     }
 
     @Override
     public OutputStream startPayload() {
-        logger.log(Level.SEVERE, "Receiving payload");
+        //logger.log(Level.INFO, "Receiving payload");
         /*
          * For a detailed description of how different streams affect efficiency, consult:
          * 
@@ -103,7 +103,7 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
          */
         is = new PipedInputStream();
         try {
-            os = new PipedOutputStream(is);//new ByteArrayOutputStream();
+            os = new PipedOutputStream(is);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Opening pipes failed", ex);
         }
@@ -120,7 +120,7 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
                 ObjectInputStream ois = new ObjectInputStream(is);
                 MessageData data = (MessageData) ois.readObject();
 
-                logger.log(Level.SEVERE, "Payload received: \n{0}", data);
+                //logger.log(Level.INFO, "Payload received: \n{0}", data);
 
                 if (payload != null) {
                     payload.setData(data);
@@ -157,7 +157,7 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
 
     @Override
     public void progress(long pos, long total) {
-        logger.log(Level.SEVERE, "Payload: {0} of {1} bytes.", new Object[]{pos, total});
+        logger.log(Level.INFO, "Payload: {0} of {1} bytes", new Object[]{pos, total});
     }
 
     private void loadBundle(final BundleID id) {
@@ -172,7 +172,7 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
                 try {
                     // Load the next bundle
                     exClient.loadAndGetBundle();
-                    logger.log(Level.SEVERE, "New bundle loaded: {0}", id);
+                    logger.log(Level.INFO, "New bundle loaded");
                 } catch (APIException e) {
                     logger.log(Level.WARNING, "Failed to load next bundle");
                 }
@@ -196,7 +196,7 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
 
                 try {
                     // Mark bundle as delivered...                     
-                    logger.log(Level.SEVERE, "Delivered: {0}", finalBundleID);
+                    logger.log(Level.FINE, "Delivered: {0}", finalBundleID);
                     finalClient.markDelivered(finalBundleID);
 
                 } catch (Exception e) {
@@ -210,6 +210,8 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
         Envelope envelope = new Envelope();
         envelope.setBundleID(bundleID);
         envelope.setData(data);
+
+        logger.log(Level.INFO, "Data received: {0}", envelope);
 
         CallbackHandler.getInstance().forwardMessage(envelope);
     }

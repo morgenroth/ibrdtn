@@ -6,6 +6,7 @@ import ibrdtn.api.object.SingletonEndpoint;
 import ibrdtn.example.DTNExampleApp;
 import ibrdtn.example.Envelope;
 import ibrdtn.example.MessageData;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -27,6 +28,8 @@ public class AutoResponseCallback implements ICallback {
 
         MessageData data = new MessageData();
 
+        logger.log(Level.INFO, "Building auto-response...");
+
         // Increment message ID for response
         data.setId(String.valueOf(Integer.parseInt(message.getData().getId()) + 1));
         data.setCorrelationId(message.getData().getId());
@@ -36,8 +39,6 @@ public class AutoResponseCallback implements ICallback {
         Bundle bundle = new Bundle(destination, 3600);
         bundle.appendBlock(new PayloadBlock(data));
 
-        gui.print("Sending " + bundle);
         gui.getDtnClient().send(bundle);
-
     }
 }

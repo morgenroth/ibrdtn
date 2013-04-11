@@ -128,13 +128,13 @@ public class DataReceiver extends Thread implements SABHandler {
 
     @Override
     public void startBundle() {
-        logger.log(Level.SEVERE, "Starting bundle.");
+        //logger.log(Level.FINE, "Starting bundle.");
         current_bundle = new Bundle();
     }
 
     @Override
     public void endBundle() {
-        logger.log(Level.SEVERE, "Ending bundle.");
+        //logger.log(Level.FINE, "Ending bundle.");
         synchronized (handler_mutex) {
             if (handler != null) {
                 handler.endBundle();
@@ -146,7 +146,7 @@ public class DataReceiver extends Thread implements SABHandler {
 
     @Override
     public void startBlock(Integer type) {
-        logger.log(Level.SEVERE, "Starting block (type: {0})", type);
+        //logger.log(Level.FINE, "Starting block (type: {0})", type);
 
         /*
          * Current bundle is null if only the payload was requested
@@ -164,7 +164,7 @@ public class DataReceiver extends Thread implements SABHandler {
 
     @Override
     public void endBlock() {
-        logger.log(Level.SEVERE, "Ending block.");
+        //logger.log(Level.FINE, "Ending block.");
 
         if (!isBlockInitialized && current_block != null) {
             synchronized (handler_mutex) {
@@ -227,7 +227,7 @@ public class DataReceiver extends Thread implements SABHandler {
     @Override
     public void attribute(String keyword, String value) {
 
-        logger.log(Level.FINE, "Attribute: {0}={1}", new Object[]{keyword, value});
+        //logger.log(Level.FINE, "Attribute: {0}={1}", new Object[]{keyword, value});
 
         if (current_bundle != null) {
 
@@ -311,7 +311,7 @@ public class DataReceiver extends Thread implements SABHandler {
     @Override
     public void characters(String data) throws SABException {
 
-        logger.log(Level.WARNING, "Characters: {0}", data);
+        //logger.log(Level.FINE, "Characters: {0}", data);
 
         if (!isBlockInitialized) {
             initializeBlock();
@@ -331,17 +331,17 @@ public class DataReceiver extends Thread implements SABHandler {
 
     @Override
     public void notify(Integer type, String data) {
-        logger.log(Level.SEVERE, "New notification: {0} {1}", new Object[]{String.valueOf(type), data});
+        logger.log(Level.INFO, "{0} {1}", new Object[]{String.valueOf(type), data});
 
         switch (type) {
             case 600: // COMMON
-                logger.log(Level.SEVERE, "600 COMMON notification {0}", String.valueOf(type));
+                logger.log(Level.INFO, "600 COMMON notification {0}", data);
                 break;
             case 601: // NEIGHBOR 
-                logger.log(Level.SEVERE, "601 NEIGHBOR notification {0}", String.valueOf(type));
+                logger.log(Level.INFO, "601 NEIGHBOR notification {0}", data);
                 break;
             case 602: // BUNDLE
-                logger.log(Level.FINE, "New bundle: {0}", String.valueOf(type));
+                //logger.log(Level.FINE, "New bundle: {0}", String.valueOf(type));
                 BundleID bundleID = parseBundleNotification(data);
 
                 synchronized (handler_mutex) {
@@ -353,7 +353,7 @@ public class DataReceiver extends Thread implements SABHandler {
                 break;
             case 603: // REPORT
                 StatusReport report = new StatusReport(data);
-                logger.log(Level.FINE, "New report: {0}", report);
+                //logger.log(Level.FINE, "New report: {0}", report);
 
                 synchronized (handler_mutex) {
                     if (handler != null) {
@@ -362,7 +362,7 @@ public class DataReceiver extends Thread implements SABHandler {
                 }
                 break;
             case 604: // CUSTODY                
-                logger.log(Level.SEVERE, "604 CUSTODY notification {0}", String.valueOf(type));
+                logger.log(Level.INFO, "604 CUSTODY notification {0}", data);
                 break;
         }
     }

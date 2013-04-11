@@ -16,6 +16,6 @@ public class EventNotifier implements EventListener {
 
     @Override
     public void eventRaised(Event evt) {
-        logger.log(Level.SEVERE, "{0}:{1}:{2}", new Object[]{evt.getName(), evt.getAction(), evt.getAttributes()});
+        logger.log(Level.INFO, "{0}:{1}:{2}", new Object[]{evt.getName(), evt.getAction(), evt.getAttributes()});
     }
 }

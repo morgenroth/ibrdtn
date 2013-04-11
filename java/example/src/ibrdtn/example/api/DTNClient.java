@@ -57,7 +57,7 @@ public class DTNClient {
     private void connect() {
         try {
             exClient.open();
-            logger.log(Level.FINE, "Successfully connected to DTN daemon.");
+            logger.log(Level.FINE, "Successfully connected to DTN daemon");
 
             exClient.setEndpoint(endpoint);
             logger.log(Level.INFO, "Endpoint ''{0}'' registered.", endpoint);
@@ -83,7 +83,7 @@ public class DTNClient {
                 try {
                     finalClient.send(finalBundle);
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Unable to send bundle.", e);
+                    logger.log(Level.SEVERE, "Unable to send bundle", e);
                 }
             }
         });
@@ -155,7 +155,7 @@ public class DTNClient {
             logger.log(Level.WARNING, "Could not close connection to the DTN daemon: {0}", e.getMessage());
         }
 
-        logger.log(Level.INFO, "DTN connection closed.");
+        logger.log(Level.INFO, "DTN connection closed");
     }
 
     public void setEvents(boolean eventNotifications) {

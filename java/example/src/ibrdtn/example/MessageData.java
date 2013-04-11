@@ -42,7 +42,7 @@ public class MessageData implements Serializable {
         StringBuilder sb = new StringBuilder();
         sb.append("\tID:").append(getId()).append("\n");
         sb.append("\tCorrelation:").append(getCorrelationId()).append("\n");
-        sb.append("\tText:").append(getText()).append("\n");
+        sb.append("\tText:").append(getText());
         return sb.toString();
     }
 }
