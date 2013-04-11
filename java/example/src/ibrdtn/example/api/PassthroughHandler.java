@@ -8,16 +8,12 @@ import ibrdtn.api.object.BundleID;
 import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.sab.Custody;
 import ibrdtn.api.sab.StatusReport;
-import ibrdtn.example.Envelope;
-import ibrdtn.example.MessageData;
-import ibrdtn.example.callback.CallbackHandler;
+import ibrdtn.example.PayloadType;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,22 +24,15 @@ import java.util.logging.Logger;
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
-public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
+public class PassthroughHandler extends APIHandler {
 
     private static final Logger logger = Logger.getLogger(PassthroughHandler.class.getName());
-    private BundleID bundleID = new BundleID();
-    private Bundle bundle = null;
-    private ExtendedClient client;
-    private ExecutorService executor;
-    private PipedInputStream is;
-    private PipedOutputStream os;
-    private Queue<BundleID> queue;
-    private boolean processing = false;
 
-    public PassthroughHandler(ExtendedClient client, ExecutorService executor) {
+    public PassthroughHandler(ExtendedClient client, ExecutorService executor, PayloadType messageType) {
         this.client = client;
         this.executor = executor;
         this.queue = new LinkedList<>();
+        this.messageType = messageType;
     }
 
     @Override
@@ -74,12 +63,8 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
     @Override
     public void endBundle() {
         logger.log(Level.FINE, "Bundle received");
-        markDelivered();
 
-        processing = false;
-        if (!queue.isEmpty()) {
-            loadBundle(queue.poll());
-        }
+        endProcessingOfCurrentBundle();
     }
 
     @Override
@@ -114,36 +99,17 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
     public void endPayload() {
         if (os != null) {
             PayloadBlock payload = bundle.getPayloadBlock();
-
-            try { // Read object from bundle
-
-                ObjectInputStream ois = new ObjectInputStream(is);
-                MessageData data = (MessageData) ois.readObject();
-
-                //logger.log(Level.INFO, "Payload received: \n{0}", data);
-
-                if (payload != null) {
-                    payload.setData(data);
+            try {
+                switch (messageType) {
+                    case BYTE:
+                        readByteArray(payload);
+                        break;
+                    case OBJECT:
+                        readObject(payload);
+                        break;
                 }
-
-                forwardMessage(data);
-
-            } catch (IOException | ClassNotFoundException e) {
-
-                try { // Read byte array from bundle
-                    byte[] bytes = new byte[256];
-                    is.read(bytes);
-
-                    logger.log(Level.SEVERE, "Payload received: \n\t{0} ({1} bytes)",
-                            new Object[]{new String(bytes), bytes.length});
-
-                    if (payload != null) {
-                        payload.setData(bytes);
-                    }
-
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Unable to decode payload");
-                }
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Unable to decode payload");
             } finally {
                 try {
                     is.close();
@@ -160,7 +126,8 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
         logger.log(Level.INFO, "Payload: {0} of {1} bytes", new Object[]{pos, total});
     }
 
-    private void loadBundle(final BundleID id) {
+    @Override
+    protected void loadBundle(final BundleID id) {
         processing = true;
 
         this.bundleID = id;
@@ -178,41 +145,5 @@ public class PassthroughHandler implements ibrdtn.api.sab.CallbackHandler {
                 }
             }
         });
-    }
-
-    private void markDelivered() {
-        final BundleID finalBundleID = this.bundleID;
-        final ExtendedClient finalClient = this.client;
-
-        // run the queue and delivered process asynchronously
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                // Example: add message to database
-                // Message msg = new Message(received.source, received.destination, playfile);
-                // msg.setCreated(received.timestamp);
-                // msg.setReceived(new Date());
-                // _database.put(Folder.INBOX, msg);
-
-                try {
-                    // Mark bundle as delivered...                     
-                    logger.log(Level.FINE, "Delivered: {0}", finalBundleID);
-                    finalClient.markDelivered(finalBundleID);
-
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Unable to mark bundle as delivered.", e);
-                }
-            }
-        });
-    }
-
-    private void forwardMessage(MessageData data) {
-        Envelope envelope = new Envelope();
-        envelope.setBundleID(bundleID);
-        envelope.setData(data);
-
-        logger.log(Level.INFO, "Data received: {0}", envelope);
-
-        CallbackHandler.getInstance().forwardMessage(envelope);
     }
 }

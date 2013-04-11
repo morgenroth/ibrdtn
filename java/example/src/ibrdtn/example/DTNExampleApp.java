@@ -11,7 +11,6 @@ import ibrdtn.example.api.DTNClient;
 import ibrdtn.example.callback.AutoResponseCallback;
 import ibrdtn.example.callback.ICallback;
 import ibrdtn.example.logging.WindowHandler;
-import java.awt.event.ItemEvent;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -42,8 +41,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         handler = WindowHandler.getInstance(this);
         logger.addHandler(handler);
 
-        String endpoint = tfEndpoint.getText();
-        dtnClient = new DTNClient(endpoint);
+        dtnClient = new DTNClient("1", PayloadType.OBJECT, APIHandlerType.SELECTIVE);
 
         logger.log(Level.INFO, dtnClient.getConfiguration());
 
@@ -78,9 +76,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
         cbReports = new javax.swing.JCheckBox();
         cbGZIP = new javax.swing.JCheckBox();
         jPanel2 = new javax.swing.JPanel();
-        tfEndpoint = new javax.swing.JTextField();
-        jLabel3 = new javax.swing.JLabel();
-        btnSave = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         tfEid = new javax.swing.JTextField();
@@ -92,7 +87,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
         jPanel4 = new javax.swing.JPanel();
         cbOutput = new javax.swing.JComboBox();
         btnPrint = new javax.swing.JButton();
-        tbEvents = new javax.swing.JToggleButton();
         jPanel3 = new javax.swing.JPanel();
         tfPayload = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
@@ -108,15 +102,14 @@ public class DTNExampleApp extends javax.swing.JFrame {
         saveAsMenuItem = new javax.swing.JMenuItem();
         exitMenuItem = new javax.swing.JMenuItem();
         editMenu = new javax.swing.JMenu();
-        cutMenuItem = new javax.swing.JMenuItem();
-        copyMenuItem = new javax.swing.JMenuItem();
-        pasteMenuItem = new javax.swing.JMenuItem();
-        deleteMenuItem = new javax.swing.JMenuItem();
+        settingsMenuItem = new javax.swing.JMenuItem();
         helpMenu = new javax.swing.JMenu();
         contentsMenuItem = new javax.swing.JMenuItem();
         aboutMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("IBR-DTN Java API Example Application");
+        setResizable(false);
 
         textArea.setEditable(false);
         textArea.setColumns(20);
@@ -127,7 +120,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         jLabel4.setText("Destination:");
 
-        tfDestination.setText("dtn://timpner-lx/client-2");
+        tfDestination.setText("dtn://timpner-lx/2");
 
         bgDestination.add(rbUnicast);
         rbUnicast.setSelected(true);
@@ -161,7 +154,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tfDestination, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(tfDestination, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
@@ -208,17 +201,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Config"));
 
-        tfEndpoint.setText("client-1");
-
-        jLabel3.setText("Primary EID:");
-
-        btnSave.setText("Set");
-        btnSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSaveActionPerformed(evt);
-            }
-        });
-
         jLabel7.setText("Endpoint:");
 
         jLabel8.setText("GroupEndoint:");
@@ -261,34 +243,24 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel8)
-                    .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING))
+                    .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(tfEid)
-                    .addComponent(tfGid)
-                    .addComponent(tfEndpoint))
+                    .addComponent(tfGid, javax.swing.GroupLayout.DEFAULT_SIZE, 129, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnSave)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btnAddEID)
-                            .addComponent(btnAddGID))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btnRemoveEID)
-                            .addComponent(btnRemoveGID)))))
+                    .addComponent(btnAddEID)
+                    .addComponent(btnAddGID))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnRemoveEID)
+                    .addComponent(btnRemoveGID)))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tfEndpoint, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnSave))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
                     .addComponent(tfEid, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -314,13 +286,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
             }
         });
 
-        tbEvents.setText("Events");
-        tbEvents.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                tbEventsItemStateChanged(evt);
-            }
-        });
-
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -328,26 +293,22 @@ public class DTNExampleApp extends javax.swing.JFrame {
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(cbOutput, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addComponent(btnPrint)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tbEvents)
-                .addContainerGap(16, Short.MAX_VALUE))
+                .addContainerGap(123, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cbOutput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnPrint)
-                    .addComponent(tbEvents))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnPrint))
+                .addGap(0, 4, Short.MAX_VALUE))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Payload"));
 
-        tfPayload.setText("IBR is great!");
+        tfPayload.setText("IBR says hi!");
 
         jLabel1.setText("ID:");
 
@@ -367,7 +328,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jLabel1)
@@ -379,10 +340,9 @@ public class DTNExampleApp extends javax.swing.JFrame {
                         .addComponent(tfResponse, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(tfPayload))
                 .addGap(18, 18, 18)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cbAutoResponse)
-                    .addComponent(btnSend, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(47, Short.MAX_VALUE))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cbAutoResponse, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnSend, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -400,6 +360,8 @@ public class DTNExampleApp extends javax.swing.JFrame {
                     .addComponent(cbAutoResponse))
                 .addGap(58, 58, 58))
         );
+
+        menuBar.setName(""); // NOI18N
 
         fileMenu.setMnemonic('f');
         fileMenu.setText("File");
@@ -431,23 +393,15 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         editMenu.setMnemonic('e');
         editMenu.setText("Edit");
-        editMenu.setEnabled(false);
 
-        cutMenuItem.setMnemonic('t');
-        cutMenuItem.setText("Cut");
-        editMenu.add(cutMenuItem);
-
-        copyMenuItem.setMnemonic('y');
-        copyMenuItem.setText("Copy");
-        editMenu.add(copyMenuItem);
-
-        pasteMenuItem.setMnemonic('p');
-        pasteMenuItem.setText("Paste");
-        editMenu.add(pasteMenuItem);
-
-        deleteMenuItem.setMnemonic('d');
-        deleteMenuItem.setText("Delete");
-        editMenu.add(deleteMenuItem);
+        settingsMenuItem.setMnemonic('d');
+        settingsMenuItem.setText("Settings");
+        settingsMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                settingsMenuItemActionPerformed(evt);
+            }
+        });
+        editMenu.add(settingsMenuItem);
 
         menuBar.add(editMenu);
 
@@ -472,34 +426,32 @@ public class DTNExampleApp extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(12, 12, 12)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 732, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(12, 12, 12)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 178, Short.MAX_VALUE)
-                .addContainerGap())
+                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(6, 6, 6)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(6, 6, 6)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 157, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
@@ -555,39 +507,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnSendActionPerformed
 
-    private void btnPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPrintActionPerformed
-        try {
-            switch ((String) cbOutput.getSelectedItem()) {
-                case "Primary EID":
-                    logger.log(Level.INFO, "Primary EID {0}", dtnClient.getEC().getEndpoint().toString());
-                    break;
-                case "Node Name":
-                    logger.log(Level.INFO, "Node Name {0}", dtnClient.getEC().getNodeName().toString());
-                    break;
-                case "Registrations":
-                    logger.log(Level.INFO, "Registrations {0}", dtnClient.getEC().getRegistrations().toString());
-                    break;
-                case "Neighbors":
-                    logger.log(Level.INFO, "Neighbors {0}", dtnClient.getEC().getNeighbors().toString());
-                    break;
-                default:
-                    logger.log(Level.WARNING, "Selected printing paramter unknown!");
-            }
-        } catch (APIException ex) {
-            logger.log(Level.SEVERE, "Retrieving DTN configuration parameters failed");
-        }
-    }//GEN-LAST:event_btnPrintActionPerformed
-
-    private void tbEventsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_tbEventsItemStateChanged
-        if (evt.getStateChange() == ItemEvent.SELECTED) {
-            dtnClient.setEvents(true);
-            logger.log(Level.INFO, "Event notifications enabled.");
-        } else {
-            dtnClient.setEvents(false);
-            logger.log(Level.INFO, "Event notifications disabled.");
-        }
-    }//GEN-LAST:event_tbEventsItemStateChanged
-
     private void btnRemoveGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveGIDActionPerformed
         String group = tfGid.getText();
         if (group != null && group.length() > 3) {
@@ -638,10 +557,32 @@ public class DTNExampleApp extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnAddEIDActionPerformed
 
-    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
-        dtnClient.shutdown();
-        dtnClient = new DTNClient(tfEndpoint.getText());
-    }//GEN-LAST:event_btnSaveActionPerformed
+    private void settingsMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_settingsMenuItemActionPerformed
+        new Settings(this).setVisible(true);
+    }//GEN-LAST:event_settingsMenuItemActionPerformed
+
+    private void btnPrintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnPrintActionPerformed
+        try {
+            switch ((String) cbOutput.getSelectedItem()) {
+                case "Primary EID":
+                logger.log(Level.INFO, "Primary EID {0}", dtnClient.getEC().getEndpoint().toString());
+                break;
+                case "Node Name":
+                logger.log(Level.INFO, "Node Name {0}", dtnClient.getEC().getNodeName().toString());
+                break;
+                case "Registrations":
+                logger.log(Level.INFO, "Registrations {0}", dtnClient.getEC().getRegistrations().toString());
+                break;
+                case "Neighbors":
+                logger.log(Level.INFO, "Neighbors {0}", dtnClient.getEC().getNeighbors().toString());
+                break;
+                default:
+                logger.log(Level.WARNING, "Selected printing paramter unknown!");
+            }
+        } catch (APIException ex) {
+            logger.log(Level.SEVERE, "Retrieving DTN configuration parameters failed");
+        }
+    }//GEN-LAST:event_btnPrintActionPerformed
 
     /**
      * Prints a string in the app's text area.
@@ -693,6 +634,10 @@ public class DTNExampleApp extends javax.swing.JFrame {
     public DTNClient getDtnClient() {
         return dtnClient;
     }
+
+    public void setDtnClient(DTNClient client) {
+        this.dtnClient = client;
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem aboutMenuItem;
     private javax.swing.ButtonGroup bgDestination;
@@ -701,7 +646,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
     private javax.swing.JButton btnPrint;
     private javax.swing.JButton btnRemoveEID;
     private javax.swing.JButton btnRemoveGID;
-    private javax.swing.JButton btnSave;
     private javax.swing.JButton btnSend;
     private javax.swing.JCheckBox cbAutoResponse;
     private javax.swing.JCheckBox cbCustody;
@@ -710,16 +654,12 @@ public class DTNExampleApp extends javax.swing.JFrame {
     private javax.swing.JComboBox cbPriority;
     private javax.swing.JCheckBox cbReports;
     private javax.swing.JMenuItem contentsMenuItem;
-    private javax.swing.JMenuItem copyMenuItem;
-    private javax.swing.JMenuItem cutMenuItem;
-    private javax.swing.JMenuItem deleteMenuItem;
     private javax.swing.JMenu editMenu;
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JMenu helpMenu;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -732,16 +672,14 @@ public class DTNExampleApp extends javax.swing.JFrame {
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenuItem openMenuItem;
-    private javax.swing.JMenuItem pasteMenuItem;
     private javax.swing.JRadioButton rbMulticast;
     private javax.swing.JRadioButton rbUnicast;
     private javax.swing.JMenuItem saveAsMenuItem;
     private javax.swing.JMenuItem saveMenuItem;
-    private javax.swing.JToggleButton tbEvents;
+    private javax.swing.JMenuItem settingsMenuItem;
     private javax.swing.JTextArea textArea;
     private javax.swing.JTextField tfDestination;
     private javax.swing.JTextField tfEid;
-    private javax.swing.JTextField tfEndpoint;
     private javax.swing.JTextField tfGid;
     private javax.swing.JTextField tfId;
     private javax.swing.JTextField tfPayload;

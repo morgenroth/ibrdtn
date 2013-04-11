@@ -5,7 +5,9 @@ import ibrdtn.api.EventClient;
 import ibrdtn.api.ExtendedClient;
 import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.PayloadBlock;
+import ibrdtn.example.APIHandlerType;
 import ibrdtn.example.MessageData;
+import ibrdtn.example.PayloadType;
 import ibrdtn.example.callback.CallbackHandler;
 import ibrdtn.example.callback.ICallback;
 import java.io.IOException;
@@ -34,18 +36,47 @@ public class DTNClient {
     private String endpoint = null;
 
     /**
+     * Default constructor, using byte[] as the expected payload format and passthrough as the API handling strategy.
      *
      * @param endpoint the application's primary EID
      */
     public DTNClient(String endpoint) {
 
+        this(endpoint, PayloadType.BYTE);
+    }
+
+    /**
+     * Constructor allowing to choose between different payload types.
+     *
+     * @param endpoint the application's primary EID
+     * @param type the expected payload format
+     */
+    public DTNClient(String endpoint, PayloadType type) {
+        this(endpoint, type, APIHandlerType.PASSTHROUGH);
+    }
+
+    /**
+     * Constructor allowing to choose between different payload types and API handling strategies.
+     *
+     * @param endpoint the application's primary EID
+     * @param type the expected payload format
+     * @param apiType the API handling strategy
+     */
+    public DTNClient(String endpoint, PayloadType payloadType, APIHandlerType apiType) {
         executor = Executors.newCachedThreadPool();
 
         this.endpoint = endpoint;
 
         exClient = new ExtendedClient();
 
-        sabHandler = new SelectiveHandler(exClient, executor);
+        switch (apiType) {
+            case PASSTHROUGH:
+                sabHandler = new PassthroughHandler(exClient, executor, payloadType);
+                break;
+            case SELECTIVE:
+                sabHandler = new SelectiveHandler(exClient, executor, payloadType);
+                break;
+        }
 
         exClient.setHandler(sabHandler);
         exClient.setHost(Constants.HOST);

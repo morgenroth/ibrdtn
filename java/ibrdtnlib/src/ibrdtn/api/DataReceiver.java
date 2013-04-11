@@ -311,7 +311,7 @@ public class DataReceiver extends Thread implements SABHandler {
     @Override
     public void characters(String data) throws SABException {
 
-        //logger.log(Level.FINE, "Characters: {0}", data);
+        //logger.log(Level.INFO, "Characters: {0}", data);
 
         if (!isBlockInitialized) {
             initializeBlock();
@@ -323,10 +323,11 @@ public class DataReceiver extends Thread implements SABHandler {
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Cannot write data to output stream.", e);
             }
+
+            // update progress stats
+            updateProgress();
         }
 
-        // update progress stats
-        updateProgress();
     }
 
     @Override
