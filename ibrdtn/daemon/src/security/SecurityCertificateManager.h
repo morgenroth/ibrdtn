@@ -22,6 +22,7 @@
 #ifndef SECURITYCERTIFICATEMANAGER_H_
 #define SECURITYCERTIFICATEMANAGER_H_
 
+#include "Configuration.h"
 #include "core/Event.h"
 #include "Component.h"
 
@@ -33,68 +34,72 @@
 #include <openssl/ssl.h>
 #include <string>
 
-namespace dtn {
+namespace dtn
+{
+	namespace security
+	{
+		/*!
+		 * \brief This class is a manager to handle certificates
+		 */
+		class SecurityCertificateManager : public dtn::daemon::Component, public dtn::daemon::Configuration::OnChangeListener {
+		public:
+			static const std::string TAG;
 
-namespace security {
+			SecurityCertificateManager();
+			virtual ~SecurityCertificateManager();
 
-/*!
- * \brief This class is a manager to handle certificates
- */
-class SecurityCertificateManager : public dtn::daemon::Component {
-public:
-	SecurityCertificateManager();
-	virtual ~SecurityCertificateManager();
+			/**
+			 * Listen for changes of the configuration
+			 */
+			virtual void onConfigurationChanged(const dtn::daemon::Configuration &conf) throw ();
 
-	//void addChainCertificate(ibrcommon::File &certificate);
-	/*!
-	 * \brief Validates if the CommonName in the given X509 certificate corresponds to the given EID
-	 * \param certificate The Certificate.
-	 * \param eid The EID of the sender.
-	 * \return returns true if the EID fits, false otherwise
-	 */
-	static bool validateSubject(X509 *certificate, const dtn::data::EID &eid);
+			/*!
+			 * \brief Validates if the CommonName in the given X509 certificate corresponds to the given EID
+			 * \param certificate The Certificate.
+			 * \param eid The EID of the sender.
+			 * \return returns true if the EID fits, false otherwise
+			 */
+			static bool validateSubject(X509 *certificate, const dtn::data::EID &eid);
 
-	/*!
-	 * \brief checks if this class has already been initialized with a certificate and private key
-	 * \return true if it is initialized, false otherwise
-	 */
-	bool isInitialized();
+			/*!
+			 * \brief checks if this class has already been initialized with a certificate and private key
+			 * \return true if it is initialized, false otherwise
+			 */
+			bool isInitialized();
 
-	/*!
-	 * \brief retrieve the saved certificate
-	 * \return The certificate.
-	 * \warning Check isInitialized() first, before calling this function
-	 */
-    X509 *getCert();
-	/*!
-	 * \brief retrieve the saved private key
-	 * \return The private key as an EVP_PKEY pointer (OpenSSL).
-	 * \warning Check isInitialized() first, before calling this function
-	 */
-    EVP_PKEY *getPrivateKey();
-	/*!
-	 * \brief retrieve the saved directory holding trusted certificates
-	 * \return The directory
-	 */
-    ibrcommon::File getTrustedCAPath() const;
+			/*!
+			 * \brief retrieve the saved certificate
+			 * \return The certificate.
+			 * \warning Check isInitialized() first, before calling this function
+			 */
+			const X509 *getCert() const;
+			/*!
+			 * \brief retrieve the saved private key
+			 * \return The private key as an EVP_PKEY pointer (OpenSSL).
+			 * \warning Check isInitialized() first, before calling this function
+			 */
+			const EVP_PKEY *getPrivateKey() const;
+			/*!
+			 * \brief retrieve the saved directory holding trusted certificates
+			 * \return The directory
+			 */
+			const ibrcommon::File& getTrustedCAPath() const;
 
-    /* functions from Component */
-    virtual void initialize();
-	virtual void startup();
-	virtual void terminate();
-	virtual const std::string getName() const;
+			/* functions from Component */
+			virtual void initialize() throw ();
+			virtual void startup() throw ();
+			virtual void terminate() throw ();
+			virtual const std::string getName() const;
 
-private:
-	ibrcommon::Mutex _initialization_lock;
-	bool _initialized;
+		private:
+			ibrcommon::Mutex _initialization_lock;
+			bool _initialized;
 
-	X509 *_cert;
-	EVP_PKEY *_privateKey;
-	ibrcommon::File _trustedCAPath;
-};
-
-}
-
+			X509 *_cert;
+			EVP_PKEY *_privateKey;
+			ibrcommon::File _trustedCAPath;
+		};
+	}
 }
 
 #endif /* SECURITYCERTIFICATEMANAGER_H_ */

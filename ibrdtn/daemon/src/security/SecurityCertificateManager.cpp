@@ -31,6 +31,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const std::string SecurityCertificateManager::TAG = "SecurityCertificateManager";
+
 		SecurityCertificateManager::SecurityCertificateManager()
 			: _initialized(false), _cert(NULL), _privateKey(NULL)
 		{
@@ -44,84 +46,94 @@ namespace dtn
 			return _initialized;
 		}
 
-		X509 *SecurityCertificateManager::getCert()
+		const X509 *SecurityCertificateManager::getCert() const
 		{
 			return _cert;
 		}
 
-		EVP_PKEY *SecurityCertificateManager::getPrivateKey()
+		const EVP_PKEY *SecurityCertificateManager::getPrivateKey() const
 		{
 			return _privateKey;
 		}
 
-		ibrcommon::File SecurityCertificateManager::getTrustedCAPath() const
+		const ibrcommon::File& SecurityCertificateManager::getTrustedCAPath() const
 		{
 			return _trustedCAPath;
 		}
 
-		void
-		SecurityCertificateManager::initialize()
+		void SecurityCertificateManager::onConfigurationChanged(const dtn::daemon::Configuration &conf) throw ()
 		{
-			ibrcommon::File certificate = dtn::daemon::Configuration::getInstance().getSecurity().getCertificate();
-			ibrcommon::File privateKey = dtn::daemon::Configuration::getInstance().getSecurity().getKey();
-			ibrcommon::File trustedCAPath = dtn::daemon::Configuration::getInstance().getSecurity().getTrustedCAPath();
+			ibrcommon::File certificate = conf.getSecurity().getCertificate();
+			ibrcommon::File privateKey = conf.getSecurity().getKey();
+			ibrcommon::File trustedCAPath = conf.getSecurity().getTrustedCAPath();
 
-			FILE *fp = NULL;
-			X509 *cert = NULL;
-			EVP_PKEY *key = NULL;
+			try {
+				FILE *fp = NULL;
+				X509 *cert = NULL;
+				EVP_PKEY *key = NULL;
 
+				/* read the certificate */
+				fp = fopen(certificate.getPath().c_str(), "r");
+				if(!fp || !PEM_read_X509(fp, &cert, NULL, NULL)){
+					IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, error) << "Could not read the certificate File: " << certificate.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
+					if(fp){
+						fclose(fp);
+					}
+					throw ibrcommon::IOException("Could not read the certificate.");
+				}
+				fclose(fp);
+
+				/* read the private key */
+				fp = fopen(privateKey.getPath().c_str(), "r");
+				if(!fp || !PEM_read_PrivateKey(fp, &key, NULL, NULL)){
+					IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, error) << "Could not read the PrivateKey File: " << privateKey.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
+					if(fp){
+						fclose(fp);
+					}
+					throw ibrcommon::IOException("Could not read the PrivateKey.");
+				}
+				fclose(fp);
+
+				/* check trustedCAPath */
+				if(!trustedCAPath.isDirectory()){
+					IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, error) << "the trustedCAPath is not valid: " << trustedCAPath.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
+					throw ibrcommon::IOException("Invalid trustedCAPath.");
+				}
+
+				_cert = cert;
+				_privateKey = key;
+				_trustedCAPath = trustedCAPath;
+				_initialized = true;
+			} catch (const ibrcommon::IOException &ex) {
+
+			}
+		}
+
+		void SecurityCertificateManager::initialize() throw ()
+		{
 			ibrcommon::MutexLock l(_initialization_lock);
-			if(_initialized){
-				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", info) << "already initialized." << IBRCOMMON_LOGGER_ENDL;
+
+			if (_initialized) {
+				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, info) << "already initialized." << IBRCOMMON_LOGGER_ENDL;
 				return;
 			}
 
-			/* read the certificate */
-			fp = fopen(certificate.getPath().c_str(), "r");
-			if(!fp || !PEM_read_X509(fp, &cert, NULL, NULL)){
-				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "Could not read the certificate File: " << certificate.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
-				if(fp){
-					fclose(fp);
-				}
-				throw ibrcommon::IOException("Could not read the certificate.");
-			}
-			fclose(fp);
+			// load configuration
+			onConfigurationChanged( dtn::daemon::Configuration::getInstance() );
 
-			/* read the private key */
-			fp = fopen(privateKey.getPath().c_str(), "r");
-			if(!fp || !PEM_read_PrivateKey(fp, &key, NULL, NULL)){
-				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "Could not read the PrivateKey File: " << privateKey.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
-				if(fp){
-					fclose(fp);
-				}
-				throw ibrcommon::IOException("Could not read the PrivateKey.");
-			}
-			fclose(fp);
-
-			/* check trustedCAPath */
-			if(!trustedCAPath.isDirectory()){
-				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "the trustedCAPath is not valid: " << trustedCAPath.getPath() << "." << IBRCOMMON_LOGGER_ENDL;
-				throw ibrcommon::IOException("Invalid trustedCAPath.");
-			}
-
-			_cert = cert;
-			_privateKey = key;
-			_trustedCAPath = trustedCAPath;
-			_initialized = true;
-
-			IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", info) << "Initialization succeeded." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, info) << "Initialization succeeded." << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void
-		SecurityCertificateManager::startup()
+		SecurityCertificateManager::startup() throw ()
 		{
-			if(_initialized){
+			if (_initialized) {
 				ibrcommon::TLSStream::init(_cert, _privateKey, _trustedCAPath, !dtn::daemon::Configuration::getInstance().getSecurity().TLSEncryptionDisabled());
 			}
 		}
 
 		void
-		SecurityCertificateManager::terminate()
+		SecurityCertificateManager::terminate() throw ()
 		{
 			/* nothing to do */
 		}
@@ -129,7 +141,7 @@ namespace dtn
 		const std::string
 		SecurityCertificateManager::getName() const
 		{
-			return "SecurityCertificateManager";
+			return SecurityCertificateManager::TAG;
 		}
 
 		bool
@@ -154,7 +166,7 @@ namespace dtn
 			/* convert the eid to an ASN1_STRING, it is needed later for comparison. */
 			eid_string = ASN1_STRING_type_new(V_ASN1_PRINTABLESTRING);
 			if(!eid_string){
-				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "Error while creating an ASN1_STRING." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, error) << "Error while creating an ASN1_STRING." << IBRCOMMON_LOGGER_ENDL;
 				return false;
 			}
 			/* TODO this function returns an int, but the return value is undocumented */
@@ -163,7 +175,7 @@ namespace dtn
 
 			utf8_eid_len = ASN1_STRING_to_UTF8(&utf8_eid, eid_string);
 			if(utf8_eid_len <= 0){
-				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "ASN1_STRING_to_UTF8() returned " << utf8_eid_len << "." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, error) << "ASN1_STRING_to_UTF8() returned " << utf8_eid_len << "." << IBRCOMMON_LOGGER_ENDL;
 				return false;
 			}
 
@@ -177,14 +189,14 @@ namespace dtn
 				/* get the NAME_ENTRY structure */
 				name_entry = X509_NAME_get_entry(cert_name, lastpos);
 				if(!name_entry){
-					IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "X509_NAME_get_entry returned NULL unexpectedly." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, error) << "X509_NAME_get_entry returned NULL unexpectedly." << IBRCOMMON_LOGGER_ENDL;
 					continue;
 				}
 
 				/* retrieve the string */
 				ASN1_STRING *asn1 = X509_NAME_ENTRY_get_data(name_entry);
 				if(!asn1){
-					IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "X509_NAME_ENTRY_get_data returned NULL unexpectedly." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, error) << "X509_NAME_ENTRY_get_data returned NULL unexpectedly." << IBRCOMMON_LOGGER_ENDL;
 					continue;
 				}
 
@@ -192,7 +204,7 @@ namespace dtn
 				int utf8_cert_len;
 				utf8_cert_len = ASN1_STRING_to_UTF8(&utf8_cert_name, asn1);
 				if(utf8_cert_len <= 0){
-					IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", error) << "ASN1_STRING_to_UTF8() returned " << utf8_cert_len << "." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, error) << "ASN1_STRING_to_UTF8() returned " << utf8_cert_len << "." << IBRCOMMON_LOGGER_ENDL;
 					continue;
 				}
 
@@ -212,7 +224,7 @@ namespace dtn
 
 			char *subject_line = X509_NAME_oneline(cert_name, NULL, 0);
 			if(subject_line){
-				IBRCOMMON_LOGGER_TAG("SecurityCertificateManager", warning) << "Certificate does not fit. EID: " << eid.getString() << ", Certificate Subject: " << subject_line << "." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, warning) << "Certificate does not fit. EID: " << eid.getString() << ", Certificate Subject: " << subject_line << "." << IBRCOMMON_LOGGER_ENDL;
 				delete subject_line;
 			}
 			return false;
