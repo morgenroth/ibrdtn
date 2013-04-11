@@ -125,8 +125,10 @@ namespace dtn
 		{
 		}
 
+		const std::string NativeDaemon::TAG = "NativeDaemon";
+
 		NativeDaemon::NativeDaemon(NativeDaemonCallback *statecb, NativeEventCallback *eventcb)
-		 : _statecb(statecb), _eventcb(eventcb), _ipnd(NULL), _bundle_index(NULL), _bundle_seeker(NULL)
+		 : _runlevel(RUNLEVEL_ZERO), _statecb(statecb), _eventcb(eventcb), _event_loop(NULL)
 		{
 
 		}
@@ -460,13 +462,6 @@ namespace dtn
 			}
 		}
 
-		void NativeDaemon::setState(NativeDaemonCallback::States state) throw ()
-		{
-			if (_statecb != NULL) {
-				_statecb->stateChanged(state);
-			}
-		}
-
 		void NativeDaemon::setLogging(const std::string &defaultTag, int logLevel) throw ()
 		{
 			/**
@@ -497,6 +492,14 @@ namespace dtn
 
 			// enable logging to Android's logcat
 			ibrcommon::Logger::enableSyslog("ibrdtn-daemon", 0, 0, logsys);
+		}
+
+		void NativeDaemon::setConfigFile(const std::string &path)
+		{
+			_config_file = ibrcommon::File(path);
+
+			// load the configuration file
+			dtn::daemon::Configuration::getInstance(true).load(_config_file.getPath());
 		}
 
 		/**
@@ -535,291 +538,243 @@ namespace dtn
 			ibrcommon::Logger::setLogfile(lf, logsys, logopts);
 		}
 
-		/**
-		 * Initialize the daemon modules and components
-		 */
-		void NativeDaemon::initialize(const std::string &configPath) throw (NativeDaemonException)
+		void NativeDaemon::init(DaemonRunLevel rl) throw (NativeDaemonException)
 		{
-			// reset and get configuration
-			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance(true);
-
-			// load the configuration file
-			conf.load(configPath);
-
-			// greeting
-			IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
-
-			// forward to the remaining initialize procedure
-			initialize();
+			ibrcommon::MutexLock l(_runlevel_cond);
+			if (_runlevel < rl) {
+				for (; _runlevel < rl; _runlevel = DaemonRunLevel(_runlevel + 1)) {
+					init_up(DaemonRunLevel(_runlevel + 1));
+					_runlevel_cond.signal(true);
+				}
+			} else if (_runlevel > rl) {
+				for (; _runlevel >= rl; _runlevel = DaemonRunLevel(_runlevel - 1)) {
+					init_down(_runlevel);
+					_runlevel_cond.signal(true);
+				}
+			}
 		}
 
-		void NativeDaemon::initialize() throw (NativeDaemonException)
+		void NativeDaemon::init_up(DaemonRunLevel rl) throw (NativeDaemonException)
 		{
-			// signal state UNINITIALIZED
-			setState(NativeDaemonCallback::UNINITIALIZED);
+			switch (rl) {
+			case RUNLEVEL_ZERO:
+				// nothing to do here
+				break;
 
-			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-			std::list< dtn::daemon::Component* > &components = _components;
-			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
+			case RUNLEVEL_CORE:
+				init_core();
+				break;
 
-			// set global vars
-			init_global_variables();
+			case RUNLEVEL_STORAGE:
+				init_storage();
+				break;
 
-			init_security();
-			init_components();
+			case RUNLEVEL_ROUTING:
+				init_routing();
+				break;
 
-			// create a storage for bundles
-			init_bundle_storage();
-			init_discovery();
-			init_routing();
+			case RUNLEVEL_API:
+				init_api();
+				break;
 
+			case RUNLEVEL_NETWORK:
+				init_network();
+				break;
+
+			case RUNLEVEL_ROUTING_EXTENSIONS:
+				init_routing_extensions();
+				break;
+			}
+
+			/**
+			 * initialize all components of this runlevel
+			 */
+			component_list &components = _components[rl];
+			for (component_list::iterator it = components.begin(); it != components.end(); ++it)
+			{
+				(*it)->initialize();
+			}
+
+			/**
+			 * start-up all components of this runlevel
+			 */
+			for (component_list::iterator it = components.begin(); it != components.end(); ++it)
+			{
+				(*it)->startup();
+			}
+
+			if (_statecb != NULL) {
+				_statecb->levelChanged(rl);
+			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeDaemon::TAG, 5) << "runlevel " << rl << " reached" << IBRCOMMON_LOGGER_ENDL;
+		}
+
+		void NativeDaemon::init_down(DaemonRunLevel rl) throw (NativeDaemonException)
+		{
+			/**
+			 * shutdown all components of this runlevel
+			 */
+			component_list &components = _components[rl];
+			for (component_list::iterator it = components.begin(); it != components.end(); ++it)
+			{
+				(*it)->terminate();
+			}
+
+			switch (rl) {
+			case RUNLEVEL_ZERO:
+				// nothing to do here
+				break;
+
+			case RUNLEVEL_CORE:
+				shutdown_core();
+				break;
+
+			case RUNLEVEL_STORAGE:
+				shutdown_storage();
+				break;
+
+			case RUNLEVEL_ROUTING:
+				shutdown_routing();
+				break;
+
+			case RUNLEVEL_API:
+				shutdown_api();
+				break;
+
+			case RUNLEVEL_NETWORK:
+				shutdown_network();
+				break;
+
+			case RUNLEVEL_ROUTING_EXTENSIONS:
+				shutdown_routing_extensions();
+				break;
+			}
+
+			/**
+			 * delete all components of this runlevel
+			 */
+			for (component_list::iterator it = components.begin(); it != components.end(); ++it)
+			{
+				delete (*it);
+			}
+			components.clear();
+
+			if (_statecb != NULL) {
+				_statecb->levelChanged(rl);
+			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeDaemon::TAG, 5) << "runlevel " << rl << " reached" << IBRCOMMON_LOGGER_ENDL;
+		}
+
+		void NativeDaemon::wait(DaemonRunLevel rl) throw ()
+		{
+			try {
+				ibrcommon::MutexLock l(_runlevel_cond);
+				while (_runlevel != rl) _runlevel_cond.wait();
+			} catch (const ibrcommon::Conditional::ConditionalAbortException&) {
+				// wait aborted
+			}
+		}
+
+		void NativeDaemon::init_core() throw (NativeDaemonException)
+		{
 			// enable link manager
 			ibrcommon::LinkManager::initialize();
 
-		#ifdef WITH_TLS
-			/* enable TLS support */
-			if ( conf.getSecurity().doTLS() )
+			// get the core
+			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
+
+			// reset and get configuration
+			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+
+			IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
+
+			// load configuration
+			if (_config_file.exists()) {
+				conf.load(_config_file.getPath());
+			} else {
+				conf.load();
+			}
+
+			// greeting
+			if (conf.getDebug().enabled())
 			{
-				components.push_back(new dtn::security::SecurityCertificateManager());
-				IBRCOMMON_LOGGER_TAG("Init", info) << "TLS security for TCP convergence layer enabled" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "debug level set to " << conf.getDebug().level() << IBRCOMMON_LOGGER_ENDL;
 			}
-		#endif
 
-			init_convergencelayers();
+			try {
+				const ibrcommon::File &lf = conf.getLogger().getLogfile();
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
+			} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
 
-			init_api();
-
-		#ifdef WITH_DHT_NAMESERVICE
-			// create dht naming service if configured
-			if (conf.getDHT().enabled()){
-				IBRCOMMON_LOGGER_DEBUG_TAG("Init", 50) << "DHT: is enabled!" << IBRCOMMON_LOGGER_ENDL;
-				dtn::dht::DHTNameService* dhtns = new dtn::dht::DHTNameService();
-				components.push_back(dhtns);
-				if (_ipnd != NULL) _ipnd->addService(dhtns);
+			if (conf.getDaemon().getThreads() > 1)
+			{
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Parallel event processing enabled using " << conf.getDaemon().getThreads() << " processes." << IBRCOMMON_LOGGER_ENDL;
 			}
-		#endif
-
-			// signal state COMPONENTS_CREATED
-			setState(NativeDaemonCallback::COMPONENTS_CREATED);
-
-			// initialize core component
-			core.initialize();
 
 			// initialize the event switch
 			dtn::core::EventSwitch::getInstance().initialize();
 
-			/**
-			 * initialize all components!
-			 */
-			for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
-			{
-				IBRCOMMON_LOGGER_DEBUG_TAG("Init", 20) << "Initialize component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
-				(*iter)->initialize();
-			}
-
-			// signal state COMPONENTS_INITIALIZED
-			setState(NativeDaemonCallback::COMPONENTS_INITIALIZED);
-
 			// listen to events
 			bindEvents();
+
+			// create a thread for the main loop
+			_event_loop = new NativeEventLoop(*this);
+
+			// start the event switch
+			_event_loop->start();
+
+#ifdef WITH_TLS
+			/* enable TLS support */
+			if ( conf.getSecurity().doTLS() )
+			{
+				_components[RUNLEVEL_CORE].push_back(new dtn::security::SecurityCertificateManager());
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "TLS security enabled" << IBRCOMMON_LOGGER_ENDL;
+			}
+#endif
+
+#ifdef WITH_BUNDLE_SECURITY
+			// initialize the key manager for the security extensions
+			dtn::security::SecurityKeyManager::getInstance().onConfigurationChanged( conf );
+#endif
+
+			// initialize core component
+			core.initialize();
 		}
 
-		/**
-		 * Execute the daemon main loop. This starts all the
-		 * components and blocks until the daemon is shut-down.
-		 */
-		void NativeDaemon::main_loop() throw (NativeDaemonException)
+		void NativeDaemon::shutdown_core() throw (NativeDaemonException)
 		{
-			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-			std::list< dtn::daemon::Component* > &components = _components;
-			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
+			// shutdown the event switch
+			_event_loop->stop();
+			_event_loop->join();
 
-			// run core component
-			core.startup();
-
-			/**
-			 * run all components!
-			 */
-			for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
-			{
-				IBRCOMMON_LOGGER_DEBUG_TAG("Init", 20) << "Startup component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
-				(*iter)->startup();
-			}
-
-			// create event debugger
-			dtn::core::EventDebugger event_debugger;
-
-			// Debugger
-			dtn::daemon::Debugger debugger;
-
-			// add echo module
-			dtn::daemon::EchoWorker echo;
-
-			// add bundle-in-bundle endpoint
-			dtn::daemon::CapsuleWorker capsule;
-
-			// add DT-NTP worker
-			dtn::daemon::DTNTPWorker dtntp;
-			if (_ipnd != NULL) _ipnd->addService(&dtntp);
-
-			// add DevNull module
-			dtn::daemon::DevNull devnull;
-
-			// announce static nodes, create a list of static nodes
-			std::list<Node> static_nodes = conf.getNetwork().getStaticNodes();
-
-			for (list<Node>::iterator iter = static_nodes.begin(); iter != static_nodes.end(); iter++)
-			{
-				core.getConnectionManager().add(*iter);
-			}
-
-			if (conf.getDaemon().getThreads() > 1)
-			{
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Parallel event processing enabled using " << conf.getDaemon().getThreads() << " processes." << IBRCOMMON_LOGGER_ENDL;
-			}
-
-			IBRCOMMON_LOGGER_TAG("Init", info) << "daemon ready" << IBRCOMMON_LOGGER_ENDL;
-
-			// signal state STARTUP_COMPLETED
-			setState(NativeDaemonCallback::STARTUP_COMPLETED);
-
-			// create the event switch object
-			dtn::core::EventSwitch &esw = dtn::core::EventSwitch::getInstance();
-
-			// run the event switch loop forever
-			if (conf.getDaemon().getThreads() > 1)
-			{
-				esw.loop( conf.getDaemon().getThreads() );
-			}
-			else
-			{
-				esw.loop();
-			}
-
-			// signal state SHUTDOWN_INITIATED
-			setState(NativeDaemonCallback::SHUTDOWN_INITIATED);
+			delete _event_loop;
+			_event_loop = NULL;
 
 			// unlisten to events
 			unbindEvents();
 
-			/**
-			 * terminate all components!
-			 */
-			for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
-			{
-				IBRCOMMON_LOGGER_DEBUG_TAG("shutdown", 20) << "Terminate component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
-				(*iter)->terminate();
-			}
+			// get the core
+			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
 
-			// terminate event switch component
-			esw.terminate();
-
-			// terminate core component
+			// shutdown the core component
 			core.terminate();
 
-			// signal state COMPONENTS_TERMINATED
-			setState(NativeDaemonCallback::COMPONENTS_TERMINATED);
+#ifdef WITH_BUNDLE_SECURITY
+			// reset configuration
+			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance(true);
 
-			// delete bundle index
-			if (_bundle_index != NULL)
-			{
-				core.getStorage().detach(_bundle_index);
-				delete _bundle_index;
-				_bundle_index = NULL;
-				_bundle_seeker = NULL;
-			}
-
-			// delete all components
-			for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
-			{
-				delete (*iter);
-			}
-
-			// clear the list of all components
-			components.clear();
-
-			IBRCOMMON_LOGGER_TAG("shutdown", info) << "shutdown complete" << IBRCOMMON_LOGGER_ENDL;
-
-			// signal state COMPONENTS_REMOVED
-			setState(NativeDaemonCallback::COMPONENTS_REMOVED);
+			// initialize the key manager for the security extensions
+			dtn::security::SecurityKeyManager::getInstance().onConfigurationChanged( conf );
+#endif
 		}
 
-		/**
-		 * Shut-down the daemon. The call returns immediately.
-		 */
-		void NativeDaemon::shutdown() throw ()
-		{
-			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
-			dtn::core::EventSwitch::getInstance().shutdown();
-		}
-
-		/**
-		 * Generate a reload signal
-		 */
-		void NativeDaemon::reload() throw ()
-		{
-			// reload logger
-			ibrcommon::Logger::reload();
-
-			// send reload signal to all modules
-			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
-		}
-
-		/**
-		 * Enable / disable debugging at runtime
-		 */
-		void NativeDaemon::setDebug(int level) throw ()
-		{
-			// activate debugging
-			ibrcommon::Logger::setVerbosity(level);
-			IBRCOMMON_LOGGER_TAG("Init", info) << "debug level set to " << level << IBRCOMMON_LOGGER_ENDL;
-		}
-
-		void NativeDaemon::init_blob_storage() throw (NativeDaemonException)
-		{
-			dtn::daemon::Configuration &config = dtn::daemon::Configuration::getInstance();
-
-			try {
-				// the configured BLOB path
-				ibrcommon::File blob_path = config.getPath("blob");
-
-				// check if the BLOB path exists
-				if (blob_path.exists())
-				{
-					if (blob_path.isDirectory())
-					{
-						IBRCOMMON_LOGGER_TAG("Init", info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
-						ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), false);
-					}
-					else
-					{
-						IBRCOMMON_LOGGER_TAG("Init", warning) << "BLOB path exists, but is not a directory! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
-					}
-				}
-				else
-				{
-					// try to create the BLOB path
-					ibrcommon::File::createDirectory(blob_path);
-
-					if (blob_path.exists())
-					{
-						IBRCOMMON_LOGGER_TAG("Init", info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
-						ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), false);
-					}
-					else
-					{
-						IBRCOMMON_LOGGER_TAG("Init", warning) << "Could not create BLOB path! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
-					}
-				}
-			} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-			}
-		}
-
-		void NativeDaemon::init_bundle_storage() throw (NativeDaemonException)
+		void NativeDaemon::init_storage() throw (NativeDaemonException)
 		{
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-			std::list< dtn::daemon::Component* > &components = _components;
 
+			// create a storage for bundles
 			dtn::storage::BundleStorage *storage = NULL;
 
 #ifdef HAVE_SQLITE
@@ -835,17 +790,17 @@ namespace dtn
 						ibrcommon::File::createDirectory(path);
 					}
 
-					IBRCOMMON_LOGGER_TAG("Init", info) << "using sqlite bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using sqlite bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 					dtn::storage::SQLiteBundleStorage *sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage") );
 
 					// use sqlite storage as BLOB provider, auto delete off
 					ibrcommon::BLOB::changeProvider(sbs, false);
 
-					components.push_back(sbs);
+					_components[RUNLEVEL_STORAGE].push_back(sbs);
 					storage = sbs;
 				} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-					IBRCOMMON_LOGGER_TAG("Init", error) << "storage for bundles" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "storage for bundles" << IBRCOMMON_LOGGER_ENDL;
 					throw NativeDaemonException("initialization of the bundle storage failed");
 				}
 			}
@@ -864,31 +819,21 @@ namespace dtn
 						ibrcommon::File::createDirectory(path);
 					}
 
-					IBRCOMMON_LOGGER_TAG("Init", info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
-
+					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
 					dtn::storage::SimpleBundleStorage *sbs = new dtn::storage::SimpleBundleStorage(path, conf.getLimit("storage"), conf.getLimit("storage_buffer"));
-
-					// initialize BLOB mechanism
-					init_blob_storage();
-
-					components.push_back(sbs);
+					_components[RUNLEVEL_STORAGE].push_back(sbs);
 					storage = sbs;
 				} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-					IBRCOMMON_LOGGER_TAG("Init", info) << "using bundle storage in memory-only mode" << IBRCOMMON_LOGGER_ENDL;
-
+					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using bundle storage in memory-only mode" << IBRCOMMON_LOGGER_ENDL;
 					dtn::storage::MemoryBundleStorage *sbs = new dtn::storage::MemoryBundleStorage(conf.getLimit("storage"));
-
-					// initialize BLOB mechanism
-					init_blob_storage();
-
-					components.push_back(sbs);
+					_components[RUNLEVEL_STORAGE].push_back(sbs);
 					storage = sbs;
 				}
 			}
 
 			if (storage == NULL)
 			{
-				IBRCOMMON_LOGGER_TAG("Init", error) << "bundle storage module \"" << conf.getStorage() << "\" do not exists!" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "bundle storage module \"" << conf.getStorage() << "\" do not exists!" << IBRCOMMON_LOGGER_ENDL;
 				throw NativeDaemonException("bundle storage not available");
 			}
 
@@ -899,28 +844,150 @@ namespace dtn
 			if (dtn::daemon::Configuration::getInstance().getNetwork().doScheduling())
 			{
 				// create a new bundle index
-				_bundle_index = new dtn::routing::SchedulingBundleIndex();
+				dtn::storage::BundleIndex *bundle_index = new dtn::routing::SchedulingBundleIndex();
 
 				// attach index to the storage
-				storage->attach(_bundle_index);
+				storage->attach(bundle_index);
 
 				// set this bundle index as default bundle seeker which is used to find bundles to transfer
-				_bundle_seeker = static_cast<dtn::storage::BundleSeeker*>(_bundle_index);
+				dtn::core::BundleCore::getInstance().setSeeker( bundle_index );
 
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Enable extended bundle index for scheduling" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Enable extended bundle index for scheduling" << IBRCOMMON_LOGGER_ENDL;
 			} else {
-				// use default bundle seeker which is used to find bundles to transfer
-				_bundle_seeker = storage;
+				// set the storage as default seeker
+				dtn::core::BundleCore::getInstance().setSeeker( storage );
 			}
 
-			// set the default seeker in the core
-			dtn::core::BundleCore::getInstance().setSeeker(_bundle_seeker);
+			/**
+			 * initialize blob storage mechanism
+			 */
+			try {
+				// the configured BLOB path
+				ibrcommon::File blob_path = conf.getPath("blob");
+
+				// check if the BLOB path exists
+				if (!blob_path.exists()) {
+					// try to create the BLOB path
+					ibrcommon::File::createDirectory(blob_path);
+				}
+
+				if (blob_path.exists() && blob_path.isDirectory())
+				{
+					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
+					ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), true);
+				}
+				else
+				{
+					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, warning) << "BLOB path exists, but is not a directory! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
+					ibrcommon::BLOB::changeProvider(new ibrcommon::MemoryBLOBProvider(), true);
+				}
+			} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { }
 		}
 
-		void NativeDaemon::init_convergencelayers() throw (NativeDaemonException)
+		void NativeDaemon::shutdown_storage() throw (NativeDaemonException)
+		{
+			// reset BLOB provider to memory based
+			ibrcommon::BLOB::changeProvider(new ibrcommon::MemoryBLOBProvider(), true);
+
+			// set the seeker in the core to NULL
+			dtn::core::BundleCore::getInstance().setSeeker(NULL);
+
+			// set the storage in the core to NULL
+			dtn::core::BundleCore::getInstance().setStorage(NULL);
+		}
+
+		void NativeDaemon::init_routing() throw (NativeDaemonException)
+		{
+			// create the base router
+			dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter();
+
+			// make the router globally available
+			dtn::core::BundleCore::getInstance().setRouter(router);
+
+			// add the router to the components list
+			_components[RUNLEVEL_ROUTING].push_back(router);
+		}
+
+		void NativeDaemon::shutdown_routing() throw (NativeDaemonException)
+		{
+			// set the global router to NULL
+			dtn::core::BundleCore::getInstance().setRouter(NULL);
+		}
+
+		void NativeDaemon::init_api() throw (NativeDaemonException)
 		{
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-			std::list< dtn::daemon::Component* > &components = _components;
+
+			// create event debugger
+			_components[RUNLEVEL_API].push_back( new dtn::core::EventDebugger() );
+
+			// Debugger
+			_apps.push_back( new dtn::daemon::Debugger() );
+
+			// add echo module
+			_apps.push_back( new dtn::daemon::EchoWorker() );
+
+			// add bundle-in-bundle endpoint
+			_apps.push_back( new dtn::daemon::CapsuleWorker() );
+
+			// add DT-NTP worker
+			_apps.push_back( new dtn::daemon::DTNTPWorker() );
+
+			// add DevNull module
+			_apps.push_back( new dtn::daemon::DevNull() );
+
+			if (conf.getNetwork().doFragmentation())
+			{
+				// manager class for fragmentations
+				_components[RUNLEVEL_API].push_back( new dtn::core::FragmentManager() );
+			}
+
+#ifndef ANDROID
+			if (conf.doAPI())
+			{
+		 		try {
+					ibrcommon::File socket = conf.getAPISocket();
+
+					try {
+						// use unix domain sockets for API
+						_components[RUNLEVEL_API].push_back(new dtn::api::ApiServer(socket));
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "API initialized using unix domain socket: " << socket.getPath() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::socket_exception&) {
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Unable to bind to unix domain socket " << socket.getPath() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+						exit(-1);
+					}
+				} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
+					dtn::daemon::Configuration::NetConfig apiconf = conf.getAPIInterface();
+
+					try {
+						// instance a API server, first create a socket
+						_components[RUNLEVEL_API].push_back(new dtn::api::ApiServer(apiconf.iface, apiconf.port));
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "API initialized using tcp socket: " << apiconf.iface.toString() << ":" << apiconf.port << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::socket_exception&) {
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Unable to bind to " << apiconf.iface.toString() << ":" << apiconf.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+						exit(-1);
+					}
+				};
+			}
+			else
+			{
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "API disabled" << IBRCOMMON_LOGGER_ENDL;
+			}
+#endif
+		}
+
+		void NativeDaemon::shutdown_api() throw (NativeDaemonException)
+		{
+			for (app_list::iterator it = _apps.begin(); it != _apps.end(); ++it)
+			{
+				delete (*it);
+			}
+			_apps.clear();
+		}
+
+		void NativeDaemon::init_network() throw (NativeDaemonException)
+		{
+			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
 
 			// get the configuration of the convergence layers
@@ -951,8 +1018,7 @@ namespace dtn
 								if (filecl == NULL)
 								{
 									filecl = new FileConvergenceLayer();
-									core.getConnectionManager().add(filecl);
-									components.push_back(filecl);
+									_components[RUNLEVEL_NETWORK].push_back(filecl);
 								}
 
 #ifdef HAVE_SYS_INOTIFY_H
@@ -965,7 +1031,7 @@ namespace dtn
 										if (fm == NULL)
 										{
 											fm = new FileMonitor();
-											components.push_back(fm);
+											_components[RUNLEVEL_NETWORK].push_back(fm);
 										}
 										ibrcommon::File path(net.url);
 										fm->watch(path);
@@ -973,7 +1039,7 @@ namespace dtn
 								}
 #endif
 							} catch (const ibrcommon::Exception &ex) {
-								IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add FileConvergenceLayer: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add FileConvergenceLayer: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 							break;
 						}
@@ -981,14 +1047,10 @@ namespace dtn
 						case dtn::daemon::Configuration::NetConfig::NETWORK_UDP:
 						{
 							try {
-								UDPConvergenceLayer *udpcl = new dtn::net::UDPConvergenceLayer( net.iface, net.port, net.mtu );
-								core.getConnectionManager().add(udpcl);
-								components.push_back(udpcl);
-								if (_ipnd != NULL) 		_ipnd->addService(udpcl);
-
-								IBRCOMMON_LOGGER_TAG("Init", info) << "UDP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+								_components[RUNLEVEL_NETWORK].push_back( new dtn::net::UDPConvergenceLayer( net.iface, net.port, net.mtu ) );
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "UDP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 							} catch (const ibrcommon::Exception &ex) {
-								IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add UDP ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add UDP ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 
 							break;
@@ -1011,19 +1073,17 @@ namespace dtn
 								tcpcl->add(net.iface, net.port);
 
 								if (it == _cl_map.end()) {
-									core.getConnectionManager().add(tcpcl);
-									components.push_back(tcpcl);
-									if (_ipnd != NULL) _ipnd->addService(tcpcl);
+									_components[RUNLEVEL_NETWORK].push_back(tcpcl);
 									_cl_map[net.type] = tcpcl;
 								}
 
-								IBRCOMMON_LOGGER_TAG("Init", info) << "TCP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "TCP ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 							} catch (const ibrcommon::Exception &ex) {
 								if (it == _cl_map.end()) {
 									delete tcpcl;
 								}
 
-								IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add TCP ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add TCP ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 
 							break;
@@ -1033,13 +1093,10 @@ namespace dtn
 						case dtn::daemon::Configuration::NetConfig::NETWORK_HTTP:
 						{
 							try {
-								HTTPConvergenceLayer *httpcl = new HTTPConvergenceLayer( net.url );
-								core.getConnectionManager().add(httpcl);
-								components.push_back(httpcl);
-
-								IBRCOMMON_LOGGER_TAG("Init", info) << "HTTP ConvergenceLayer added, Server: " << net.url << IBRCOMMON_LOGGER_ENDL;
+								_components[RUNLEVEL_NETWORK].push_back( new HTTPConvergenceLayer( net.url ) );
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "HTTP ConvergenceLayer added, Server: " << net.url << IBRCOMMON_LOGGER_ENDL;
 							} catch (const ibrcommon::Exception &ex) {
-								IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add HTTP ConvergenceLayer, Server: " << net.url << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add HTTP ConvergenceLayer, Server: " << net.url << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 							break;
 						}
@@ -1049,14 +1106,10 @@ namespace dtn
 						case dtn::daemon::Configuration::NetConfig::NETWORK_LOWPAN:
 						{
 							try {
-								LOWPANConvergenceLayer *lowpancl = new LOWPANConvergenceLayer( net.iface, net.port );
-								core.getConnectionManager().add(lowpancl);
-								components.push_back(lowpancl);
-								if (_ipnd != NULL) _ipnd->addService(lowpancl);
-
-								IBRCOMMON_LOGGER_TAG("Init", info) << "LOWPAN ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+								_components[RUNLEVEL_NETWORK].push_back( new LOWPANConvergenceLayer( net.iface, net.port ) );
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "LOWPAN ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 							} catch (const ibrcommon::Exception &ex) {
-								IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add LOWPAN ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add LOWPAN ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 
 							break;
@@ -1066,13 +1119,10 @@ namespace dtn
 						{
 							try {
 								LOWPANDatagramService *lowpan_service = new LOWPANDatagramService( net.iface, net.port );
-								DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(lowpan_service);
-								core.getConnectionManager().add(dgram_cl);
-								components.push_back(dgram_cl);
-
-								IBRCOMMON_LOGGER_TAG("Init", info) << "Datagram ConvergenceLayer (LowPAN) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+								_components[RUNLEVEL_NETWORK].push_back( new DatagramConvergenceLayer(lowpan_service) );
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Datagram ConvergenceLayer (LowPAN) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 							} catch (const ibrcommon::Exception &ex) {
-								IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add Datagram ConvergenceLayer (LowPAN) on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add Datagram ConvergenceLayer (LowPAN) on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 							break;
 						}
@@ -1082,13 +1132,10 @@ namespace dtn
 						{
 							try {
 								UDPDatagramService *dgram_service = new UDPDatagramService( net.iface, net.port, net.mtu );
-								DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(dgram_service);
-								core.getConnectionManager().add(dgram_cl);
-								components.push_back(dgram_cl);
-
-								IBRCOMMON_LOGGER_TAG("Init", info) << "Datagram ConvergenceLayer (UDP) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+								_components[RUNLEVEL_NETWORK].push_back( new DatagramConvergenceLayer(dgram_service) );
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Datagram ConvergenceLayer (UDP) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 							} catch (const ibrcommon::Exception &ex) {
-								IBRCOMMON_LOGGER_TAG("Init", error) << "Failed to add Datagram ConvergenceLayer (UDP) on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add Datagram ConvergenceLayer (UDP) on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 							break;
 						}
@@ -1097,79 +1144,25 @@ namespace dtn
 							break;
 					}
 				} catch (const std::exception &ex) {
-					IBRCOMMON_LOGGER_TAG("Init", error) << "Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
-		}
 
-		void NativeDaemon::init_security() throw (NativeDaemonException)
-		{
-#ifdef WITH_BUNDLE_SECURITY
-			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+			/****
+			 * Init DHT
+			 */
 
-			// initialize the key manager for the security extensions
-			dtn::security::SecurityKeyManager::getInstance().onConfigurationChanged( conf );
+#ifdef WITH_DHT_NAMESERVICE
+			// create dht naming service if configured
+			if (conf.getDHT().enabled()) {
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeDaemon::TAG, 50) << "DHT: is enabled!" << IBRCOMMON_LOGGER_ENDL;
+				_components[RUNLEVEL_NETWORK].push_back( new dtn::dht::DHTNameService() );
+			}
 #endif
-		}
 
-		void NativeDaemon::init_global_variables() throw (NativeDaemonException)
-		{
-			dtn::daemon::Configuration &config = dtn::daemon::Configuration::getInstance();
-
-			// set the timezone
-			dtn::utils::Clock::setTimezone(config.getTimezone());
-
-			// set local eid
-			dtn::core::BundleCore::local = config.getNodename();
-			IBRCOMMON_LOGGER_TAG("Init", info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
-
-			// set block size limit
-			dtn::core::BundleCore::blocksizelimit = config.getLimit("blocksize");
-			if (dtn::core::BundleCore::blocksizelimit > 0)
-			{
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Block size limited to " << dtn::core::BundleCore::blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
-			}
-
-			// set the lifetime limit
-			dtn::core::BundleCore::max_lifetime = config.getLimit("lifetime");
-			if (dtn::core::BundleCore::max_lifetime > 0)
-			{
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Lifetime limited to " << dtn::core::BundleCore::max_lifetime << " seconds" << IBRCOMMON_LOGGER_ENDL;
-			}
-
-			// set the timestamp limit
-			dtn::core::BundleCore::max_timestamp_future = config.getLimit("predated_timestamp");
-			if (dtn::core::BundleCore::max_timestamp_future > 0)
-			{
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Pre-dated timestamp limited to " << dtn::core::BundleCore::max_timestamp_future << " seconds in the future" << IBRCOMMON_LOGGER_ENDL;
-			}
-
-			// set the maximum count of bundles in transit (bundles to send to the CL queue)
-			size_t transit_limit = config.getLimit("bundles_in_transit");
-			if (transit_limit > 0)
-			{
-				dtn::core::BundleCore::max_bundles_in_transit = transit_limit;
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Limit the number of bundles in transit to " << dtn::core::BundleCore::max_bundles_in_transit << IBRCOMMON_LOGGER_ENDL;
-			}
-		}
-
-		void NativeDaemon::init_components() throw (NativeDaemonException)
-		{
-			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-			std::list< dtn::daemon::Component* > &components = _components;
-
-			if (conf.getNetwork().doFragmentation())
-			{
-				// manager class for fragmentations
-				components.push_back( new dtn::core::FragmentManager() );
-			}
-		}
-
-		void NativeDaemon::init_discovery() throw (NativeDaemonException)
-		{
-			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-			std::list< dtn::daemon::Component* > &components = _components;
-
+		 	/***
+		 	 * Init Discovery
+		 	 */
 			if (conf.getDiscovery().enabled())
 			{
 				// get the discovery port
@@ -1186,17 +1179,17 @@ namespace dtn
 						interfaces.insert(net.iface);
 				}
 
-				_ipnd = new dtn::net::IPNDAgent( disco_port );
+				dtn::net::IPNDAgent *ipnd = new dtn::net::IPNDAgent( disco_port );
 
 				try {
 					const std::set<ibrcommon::vaddress> addr = conf.getDiscovery().address();
 					for (std::set<ibrcommon::vaddress>::const_iterator iter = addr.begin(); iter != addr.end(); iter++) {
-						_ipnd->add(*iter);
+						ipnd->add(*iter);
 					}
 				} catch (const dtn::daemon::Configuration::ParameterNotFoundException&) {
 					// by default set multicast equivalent of broadcast
-					_ipnd->add(ibrcommon::vaddress("ff02::142", disco_port, AF_INET6));
-					_ipnd->add(ibrcommon::vaddress("224.0.0.142", disco_port, AF_INET));
+					ipnd->add(ibrcommon::vaddress("ff02::142", disco_port, AF_INET6));
+					ipnd->add(ibrcommon::vaddress("224.0.0.142", disco_port, AF_INET));
 				}
 
 				for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); iter++)
@@ -1204,49 +1197,119 @@ namespace dtn
 					const ibrcommon::vinterface &i = (*iter);
 
 					// add interfaces to discovery
-					_ipnd->bind(i);
+					ipnd->bind(i);
 				}
 
-				components.push_back(_ipnd);
+				/**
+				 * register apps at the IPND
+				 */
+				for (app_list::iterator it = _apps.begin(); it != _apps.end(); ++it)
+				{
+			 		try {
+			 			DiscoveryServiceProvider *dsp = dynamic_cast<DiscoveryServiceProvider*>(*it);
+			 			if (dsp != NULL) {
+			 				ipnd->addService(dsp);
+			 			}
+			 		} catch (const std::bad_cast&) { }
+				}
+
+				/**
+				 * register convergence layers at the IPND
+				 */
+			 	component_list &clist = _components[RUNLEVEL_NETWORK];
+			 	for (component_list::iterator it = clist.begin(); it != clist.end(); ++it)
+			 	{
+			 		try {
+			 			DiscoveryServiceProvider *dsp = dynamic_cast<DiscoveryServiceProvider*>(*it);
+			 			if (dsp != NULL) {
+			 				ipnd->addService(dsp);
+			 			}
+			 		} catch (const std::bad_cast&) { }
+			 	}
+
+				_components[RUNLEVEL_NETWORK].push_back(ipnd);
 			}
 			else
 			{
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Discovery disabled" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Discovery disabled" << IBRCOMMON_LOGGER_ENDL;
+			}
+
+		 	/**
+		 	 * register all convergence layers at the bundle core
+		 	 */
+			component_list &clist = _components[RUNLEVEL_NETWORK];
+			for (component_list::iterator it = clist.begin(); it != clist.end(); ++it)
+			{
+				try {
+					ConvergenceLayer *cl = dynamic_cast<ConvergenceLayer*>(*it);
+					if (cl != NULL) {
+						core.getConnectionManager().add(cl);
+					}
+				} catch (const std::bad_cast&) { }
+			}
+
+			// announce static nodes, create a list of static nodes
+			const std::list<Node> &static_nodes = conf.getNetwork().getStaticNodes();
+
+			for (list<Node>::const_iterator iter = static_nodes.begin(); iter != static_nodes.end(); ++iter)
+			{
+				core.getConnectionManager().add(*iter);
 			}
 		}
 
-		void NativeDaemon::init_routing() throw (NativeDaemonException)
+		void NativeDaemon::shutdown_network() throw (NativeDaemonException)
 		{
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-			std::list< dtn::daemon::Component* > &components = _components;
 			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
 
-			// create the base router
-			dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter();
+			// announce static nodes, create a list of static nodes
+			const std::list<Node> &static_nodes = conf.getNetwork().getStaticNodes();
 
-			// make the router globally available
-			core.setRouter(router);
+			for (list<Node>::const_iterator iter = static_nodes.begin(); iter != static_nodes.end(); ++iter)
+			{
+				core.getConnectionManager().remove(*iter);
+			}
+
+		 	/**
+		 	 * remove all convergence layers at the bundle core
+		 	 */
+			component_list &clist = _components[RUNLEVEL_NETWORK];
+			for (component_list::iterator it = clist.begin(); it != clist.end(); ++it)
+			{
+				try {
+					ConvergenceLayer *cl = dynamic_cast<ConvergenceLayer*>(*it);
+					if (cl != NULL) {
+						core.getConnectionManager().remove(cl);
+					}
+				} catch (const std::bad_cast&) { }
+			}
+		}
+
+		void NativeDaemon::init_routing_extensions() throw (NativeDaemonException)
+		{
+			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+			dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
 
 			// add static routing extension
-			router->addExtension( new dtn::routing::StaticRoutingExtension() );
+			router.add( new dtn::routing::StaticRoutingExtension() );
 
 			// add neighbor routing (direct-delivery) extension
-			router->addExtension( new dtn::routing::NeighborRoutingExtension() );
+			router.add( new dtn::routing::NeighborRoutingExtension() );
 
 			// add other routing extensions depending on the configuration
 			switch (conf.getNetwork().getRoutingExtension())
 			{
 			case dtn::daemon::Configuration::FLOOD_ROUTING:
 			{
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
-				router->addExtension( new dtn::routing::FloodRoutingExtension() );
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
+				router.add( new dtn::routing::FloodRoutingExtension() );
 				break;
 			}
 
 			case dtn::daemon::Configuration::EPIDEMIC_ROUTING:
 			{
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
-				router->addExtension( new dtn::routing::EpidemicRoutingExtension() );
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
+				router.add( new dtn::routing::EpidemicRoutingExtension() );
 				break;
 			}
 
@@ -1262,11 +1325,11 @@ namespace dtn
 					forwarding_strategy = new dtn::routing::ProphetRoutingExtension::GTMX_Strategy(prophet_config.gtmx_nf_max);
 				}
 				else{
-					IBRCOMMON_LOGGER_TAG("Init", error) << "Prophet forwarding strategy " << strategy_name << " not found. Using GRTR as fallback." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Prophet forwarding strategy " << strategy_name << " not found. Using GRTR as fallback." << IBRCOMMON_LOGGER_ENDL;
 					forwarding_strategy = new dtn::routing::ProphetRoutingExtension::GRTR_Strategy();
 				}
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Using prophet routing extensions with " << strategy_name << " as forwarding strategy." << IBRCOMMON_LOGGER_ENDL;
-				router->addExtension( new dtn::routing::ProphetRoutingExtension(forwarding_strategy, prophet_config.p_encounter_max,
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Using prophet routing extensions with " << strategy_name << " as forwarding strategy." << IBRCOMMON_LOGGER_ENDL;
+				router.add( new dtn::routing::ProphetRoutingExtension(forwarding_strategy, prophet_config.p_encounter_max,
 												prophet_config.p_encounter_first, prophet_config.p_first_threshold,
 												prophet_config.beta, prophet_config.gamma, prophet_config.delta,
 												prophet_config.time_unit, prophet_config.i_typ,
@@ -1275,62 +1338,81 @@ namespace dtn
 			}
 
 			default:
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Using default routing extensions" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Using default routing extensions" << IBRCOMMON_LOGGER_ENDL;
 				break;
 			}
 
-			components.push_back(router);
-
-			// enable or disable forwarding of bundles
-			if (conf.getNetwork().doForwarding())
-			{
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Forwarding of bundles enabled." << IBRCOMMON_LOGGER_ENDL;
-				BundleCore::forwarding = true;
-			}
-			else
-			{
-				IBRCOMMON_LOGGER_TAG("Init", info) << "Forwarding of bundles disabled." << IBRCOMMON_LOGGER_ENDL;
-				BundleCore::forwarding = false;
-			}
+			// initialize all routing extensions
+			router.extensionsUp();
 		}
 
-		void NativeDaemon::init_api() throw (NativeDaemonException)
+		void NativeDaemon::shutdown_routing_extensions() throw (NativeDaemonException)
 		{
-#ifndef ANDROID
+			dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
+
+			// disable all routing extensions
+			router.extensionsDown();
+
+			// delete all routing extensions
+			router.clearExtensions();
+		}
+
+		/**
+		 * Generate a reload signal
+		 */
+		void NativeDaemon::reload() throw ()
+		{
+			// reload logger
+			ibrcommon::Logger::reload();
+
+			// send reload signal to all modules
+			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
+		}
+
+		/**
+		 * Enable / disable debugging at runtime
+		 */
+		void NativeDaemon::setDebug(int level) throw ()
+		{
+			// activate debugging
+			ibrcommon::Logger::setVerbosity(level);
+			IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "debug level set to " << level << IBRCOMMON_LOGGER_ENDL;
+		}
+
+		NativeEventLoop::NativeEventLoop(NativeDaemon &daemon)
+		 : _daemon(daemon)
+		{
+		}
+
+		NativeEventLoop::~NativeEventLoop()
+		{
+		}
+
+		void NativeEventLoop::run(void) throw ()
+		{
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-			std::list< dtn::daemon::Component* > &components = _components;
 
-			if (conf.doAPI())
+			// create the event switch object
+			dtn::core::EventSwitch &esw = dtn::core::EventSwitch::getInstance();
+
+			// run the event switch loop forever
+			if (conf.getDaemon().getThreads() > 1)
 			{
-		 		try {
-					ibrcommon::File socket = conf.getAPISocket();
-
-					try {
-						// use unix domain sockets for API
-						components.push_back(new dtn::api::ApiServer(*_bundle_seeker, socket));
-						IBRCOMMON_LOGGER_TAG("Init", info) << "API initialized using unix domain socket: " << socket.getPath() << IBRCOMMON_LOGGER_ENDL;
-					} catch (const ibrcommon::socket_exception&) {
-						IBRCOMMON_LOGGER_TAG("Init", error) << "Unable to bind to unix domain socket " << socket.getPath() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
-						exit(-1);
-					}
-				} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
-					dtn::daemon::Configuration::NetConfig apiconf = conf.getAPIInterface();
-
-					try {
-						// instance a API server, first create a socket
-						components.push_back(new dtn::api::ApiServer(*_bundle_seeker, apiconf.iface, apiconf.port));
-						IBRCOMMON_LOGGER_TAG("Init", info) << "API initialized using tcp socket: " << apiconf.iface.toString() << ":" << apiconf.port << IBRCOMMON_LOGGER_ENDL;
-					} catch (const ibrcommon::socket_exception&) {
-						IBRCOMMON_LOGGER_TAG("Init", error) << "Unable to bind to " << apiconf.iface.toString() << ":" << apiconf.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
-						exit(-1);
-					}
-				};
+				esw.loop( conf.getDaemon().getThreads() );
 			}
 			else
 			{
-				IBRCOMMON_LOGGER_TAG("Init", info) << "API disabled" << IBRCOMMON_LOGGER_ENDL;
+				esw.loop();
 			}
-#endif
+
+			// terminate event switch component
+			esw.terminate();
+		}
+
+		void NativeEventLoop::__cancellation() throw ()
+		{
+			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+			dtn::core::EventSwitch::getInstance().shutdown();
 		}
 	} /* namespace daemon */
 } /* namespace dtn */

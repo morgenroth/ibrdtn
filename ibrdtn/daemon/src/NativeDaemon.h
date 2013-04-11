@@ -20,6 +20,7 @@
  */
 
 #include "Component.h"
+#include "core/AbstractWorker.h"
 #include "net/IPNDAgent.h"
 #include "storage/BundleSeeker.h"
 #include "storage/BundleIndex.h"
@@ -27,6 +28,7 @@
 #include <ibrcommon/Exceptions.h>
 #include <list>
 #include <set>
+#include <map>
 
 #ifndef NATIVEDAEMON_H_
 #define NATIVEDAEMON_H_
@@ -35,21 +37,22 @@ namespace dtn
 {
 	namespace daemon
 	{
+		enum DaemonRunLevel {
+			RUNLEVEL_ZERO = 0,
+			RUNLEVEL_CORE = 1,
+			RUNLEVEL_STORAGE = 2,
+			RUNLEVEL_ROUTING = 3,
+			RUNLEVEL_API = 4,
+			RUNLEVEL_NETWORK = 5,
+			RUNLEVEL_ROUTING_EXTENSIONS = 6
+		};
+
 		class NativeDaemonCallback {
 		public:
-			enum States {
-				UNINITIALIZED,
-				COMPONENTS_CREATED,
-				COMPONENTS_INITIALIZED,
-				STARTUP_COMPLETED,
-				SHUTDOWN_INITIATED,
-				COMPONENTS_TERMINATED,
-				COMPONENTS_REMOVED
-			};
 
 			virtual ~NativeDaemonCallback() = 0;
 
-			virtual void stateChanged(States state) throw () = 0;
+			virtual void levelChanged(DaemonRunLevel level) throw () = 0;
 		};
 
 		class NativeEventCallback {
@@ -67,27 +70,24 @@ namespace dtn
 			};
 		};
 
+		class NativeEventLoop;
+
 		class NativeDaemon : public dtn::core::EventReceiver {
 		public:
+			static const std::string TAG;
+
 			NativeDaemon(NativeDaemonCallback *statecb = NULL, NativeEventCallback *eventcb = NULL);
 			virtual ~NativeDaemon();
 
 			/**
-			 * Initialize the daemon modules and components
+			 * Switch the runlevel of the daemon
 			 */
-			void initialize() throw (NativeDaemonException);
-			void initialize(const std::string &configPath) throw (NativeDaemonException);
+			void init(DaemonRunLevel rl) throw (NativeDaemonException);
 
 			/**
-			 * Execute the daemon main loop. This starts all the
-			 * components and blocks until the daemon is shut-down.
+			 * Wait until the runlevel is reached
 			 */
-			void main_loop() throw (NativeDaemonException);
-
-			/**
-			 * Shut-down the daemon. The call returns immediately.
-			 */
-			void shutdown() throw ();
+			void wait(DaemonRunLevel rl) throw ();
 
 			/**
 			 * Generate a reload signal
@@ -109,6 +109,11 @@ namespace dtn
 			 */
 			void setLogFile(const std::string &path, int logLevel) throw ();
 
+			/**
+			 * Set the daemon configuration
+			 */
+			void setConfigFile(const std::string &config_file);
+
 			/** NATIVE DAEMON METHODS **/
 			std::string getLocalUri() throw ();
 			std::vector<std::string> getNeighbors() throw ();
@@ -126,7 +131,8 @@ namespace dtn
 			std::vector<std::string> getVersion() throw ();
 
 		private:
-			void setState(NativeDaemonCallback::States state) throw ();
+			void init_up(DaemonRunLevel rl) throw (NativeDaemonException);
+			void init_down(DaemonRunLevel rl) throw (NativeDaemonException);
 
 			void addEventData(const dtn::data::Bundle &b, std::vector<std::string> &data) const;
 			void addEventData(const dtn::data::MetaBundle &b, std::vector<std::string> &data) const;
@@ -135,28 +141,73 @@ namespace dtn
 			void bindEvents();
 			void unbindEvents();
 
-			void init_blob_storage() throw (NativeDaemonException);
-			void init_bundle_storage() throw (NativeDaemonException);
-			void init_convergencelayers() throw (NativeDaemonException);
-			void init_security() throw (NativeDaemonException);
-			void init_global_variables() throw (NativeDaemonException);
-			void init_components() throw (NativeDaemonException);
-			void init_discovery() throw (NativeDaemonException);
+			/**
+			 * routines to init/shutdown the daemon core
+			 */
+			void init_core() throw (NativeDaemonException);
+			void shutdown_core() throw (NativeDaemonException);
+
+			/**
+			 * routines to init/shutdown the storage subsystem
+			 */
+			void init_storage() throw (NativeDaemonException);
+			void shutdown_storage() throw (NativeDaemonException);
+
+			/**
+			 * routines to init/shutdown the base router
+			 */
 			void init_routing() throw (NativeDaemonException);
+			void shutdown_routing() throw (NativeDaemonException);
+
+			/**
+			 * routines to init/shutdown the API modules and embedded
+			 * Apps
+			 */
 			void init_api() throw (NativeDaemonException);
+			void shutdown_api() throw (NativeDaemonException);
+
+			/**
+			 * routines to init/shutdown the networking stack
+			 */
+			void init_network() throw (NativeDaemonException);
+			void shutdown_network() throw (NativeDaemonException);
+
+			/**
+			 * routines to init/shutdown the extended routing modules
+			 */
+			void init_routing_extensions() throw (NativeDaemonException);
+			void shutdown_routing_extensions() throw (NativeDaemonException);
+
+			// conditional
+			ibrcommon::Conditional _runlevel_cond;
+			DaemonRunLevel _runlevel;
 
 			NativeDaemonCallback *_statecb;
 			NativeEventCallback *_eventcb;
 
 			// list of components
-			std::list< dtn::daemon::Component* > _components;
+			typedef std::list< dtn::daemon::Component* > component_list;
+			typedef std::map<DaemonRunLevel, component_list > component_map;
+			component_map _components;
 
-			// IP neighbor discovery process
-			dtn::net::IPNDAgent *_ipnd;
+			// list of embedded apps
+			typedef std::list< dtn::core::AbstractWorker* > app_list;
+			app_list _apps;
 
-			// bundle index used to search for new bundles in the routing modules
-			dtn::storage::BundleIndex *_bundle_index;
-			dtn::storage::BundleSeeker *_bundle_seeker;
+			NativeEventLoop *_event_loop;
+
+			ibrcommon::File _config_file;
+		};
+
+		class NativeEventLoop : public ibrcommon::JoinableThread {
+		public:
+			NativeEventLoop(NativeDaemon &daemon);
+			~NativeEventLoop();
+			virtual void run(void) throw ();
+			virtual void __cancellation() throw ();
+
+		private:
+			NativeDaemon &_daemon;
 		};
 	} /* namespace daemon */
 } /* namespace dtn */

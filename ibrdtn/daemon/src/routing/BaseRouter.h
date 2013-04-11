@@ -79,7 +79,7 @@ namespace dtn
 					};
 			};
 
-			typedef std::list<RoutingExtension*> extension_list;
+			typedef std::set<RoutingExtension*> extension_list;
 
 			BaseRouter();
 			~BaseRouter();
@@ -88,13 +88,23 @@ namespace dtn
 			 * Add a routing extension to the routing core.
 			 * @param extension
 			 */
-			void addExtension(RoutingExtension *extension);
+			void add(RoutingExtension *extension);
+
+			/**
+			 * Remove a routing extension from the routing core
+			 */
+			void remove(RoutingExtension *extension);
 
 			/**
 			 * Returns a reference to all extensions.
 			 * @return
 			 */
 			const extension_list& getExtensions() const;
+
+			/**
+			 * Delete all extensions
+			 */
+			void clearExtensions();
 
 			/**
 			 * method to receive new events from the EventSwitch
@@ -167,14 +177,21 @@ namespace dtn
 			 */
 			NeighborDatabase& getNeighborDB();
 
+			/**
+			 * enable all extensions
+			 */
+			void extensionsUp() throw ();
+
+			/**
+			 * disable all extensions
+			 */
+			void extensionsDown() throw ();
+
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
 
 		private:
-			void extensionsUp() throw ();
-			void extensionsDown() throw ();
-
 			void __forward_event(const dtn::core::Event *evt) const throw ();
 
 			ibrcommon::Mutex _known_bundles_lock;
@@ -184,6 +201,9 @@ namespace dtn
 			dtn::data::BundleSet _purged_bundles;
 
 			extension_list _extensions;
+
+			// this is true if the extensions are up
+			bool _extension_state;
 
 			NeighborDatabase _neighbor_database;
 			NodeHandshakeExtension _nh_extension;

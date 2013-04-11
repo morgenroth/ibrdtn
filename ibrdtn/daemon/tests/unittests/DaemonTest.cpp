@@ -11,13 +11,11 @@ void DaemonTest::testUpDownUp(){
 
 	dtn::daemon::NativeDaemon dtnd;
 
-	CPPUNIT_ASSERT_NO_THROW(dtnd.initialize());
-	dtnd.shutdown();
-	CPPUNIT_ASSERT_NO_THROW(dtnd.main_loop());
+	CPPUNIT_ASSERT_NO_THROW(dtnd.init(dtn::daemon::RUNLEVEL_ROUTING_EXTENSIONS));
+	CPPUNIT_ASSERT_NO_THROW(dtnd.init(dtn::daemon::RUNLEVEL_ZERO));
 
-	CPPUNIT_ASSERT_NO_THROW(dtnd.initialize());
-	dtnd.shutdown();
-	CPPUNIT_ASSERT_NO_THROW(dtnd.main_loop());
+	CPPUNIT_ASSERT_NO_THROW(dtnd.init(dtn::daemon::RUNLEVEL_ROUTING_EXTENSIONS));
+	CPPUNIT_ASSERT_NO_THROW(dtnd.init(dtn::daemon::RUNLEVEL_ZERO));
 }
 
 

@@ -39,7 +39,7 @@ namespace dtn
 		const std::string NativeSession::TAG = "NativeSession";
 
 		NativeSession::NativeSession(NativeSessionCallback *cb)
-		 : _receiver(*this), _cb(cb), _registration(dtn::core::BundleCore::getInstance().getSeeker()), _destroyed(false)
+		 : _receiver(*this), _cb(cb), _destroyed(false)
 		{
 			// set the local endpoint to the default
 			_endpoint = _registration.getDefaultEID();

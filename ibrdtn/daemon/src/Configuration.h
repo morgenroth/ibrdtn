@@ -107,14 +107,14 @@ namespace dtn
 			/**
 			 * Returns the name of the node
 			 */
-			string getNodename();
+			std::string getNodename() const;
 
 			/**
 			 * Returns the manual timezone difference in hours.
 			 * @return A positive or negative number containing the
 			 * timezone offset in hours.
 			 */
-			int getTimezone();
+			int getTimezone() const;
 
 			/**
 			 * Generic command to get a specific path. If "name" is
@@ -122,7 +122,7 @@ namespace dtn
 			 * @param name The prefix of the path to get.
 			 * @return The path as file object.
 			 */
-			ibrcommon::File getPath(string name);
+			ibrcommon::File getPath(string name) const;
 
 			/**
 			 * Enable/Disable the API interface.

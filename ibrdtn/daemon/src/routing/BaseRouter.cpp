@@ -59,6 +59,7 @@ namespace dtn
 		 * implementation of the BaseRouter class
 		 */
 		BaseRouter::BaseRouter()
+		 : _extension_state(false)
 		{
 			// register myself for all extensions
 			RoutingExtension::_router = this;
@@ -67,24 +68,37 @@ namespace dtn
 		BaseRouter::~BaseRouter()
 		{
 			// delete all extensions
-			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
-			{
-				delete (*iter);
-			}
+			clearExtensions();
 		}
 
 		/**
 		 * Add a routing extension to the routing core.
 		 * @param extension
 		 */
-		void BaseRouter::addExtension(RoutingExtension *extension)
+		void BaseRouter::add(RoutingExtension *extension)
 		{
-			_extensions.push_back(extension);
+			_extensions.insert(extension);
+		}
+
+		void BaseRouter::remove(RoutingExtension *extension)
+		{
+			_extensions.erase(extension);
 		}
 
 		const BaseRouter::extension_list& BaseRouter::getExtensions() const
 		{
 			return _extensions;
+		}
+
+		void BaseRouter::clearExtensions()
+		{
+			// delete all extensions
+			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			{
+				delete (*iter);
+			}
+
+			_extensions.clear();
 		}
 
 		void BaseRouter::extensionsUp() throw ()
@@ -97,10 +111,14 @@ namespace dtn
 				RoutingExtension &ex = (**iter);
 				ex.componentUp();
 			}
+
+			_extension_state = true;
 		}
 
 		void BaseRouter::extensionsDown() throw ()
 		{
+			_extension_state = false;
+
 			// stop all extensions
 			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
@@ -127,9 +145,6 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
-
-			// bring extensions up
-			extensionsUp();
 		}
 
 		void BaseRouter::componentDown() throw ()
@@ -147,9 +162,6 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
-
-			// bring extensions down
-			extensionsDown();
 		}
 
 		/**
@@ -368,6 +380,9 @@ namespace dtn
 
 		void BaseRouter::__forward_event(const dtn::core::Event *evt) const throw ()
 		{
+			// do not forward the event if the extensions are down
+			if (!_extension_state) return;
+
 			// notify all underlying extensions
 			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{

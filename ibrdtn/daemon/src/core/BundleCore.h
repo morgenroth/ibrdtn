@@ -23,6 +23,7 @@
 #define BUNDLECORE_H_
 
 #include "Component.h"
+#include "Configuration.h"
 
 #include "core/EventReceiver.h"
 #include "core/StatusReportGenerator.h"
@@ -59,14 +60,18 @@ namespace dtn
 		/**
 		 * The BundleCore manage the Bundle Protocol basics
 		 */
-		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver, public dtn::data::Validator, public ibrcommon::LinkManager::EventCallback
+		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver, public dtn::data::Validator, public ibrcommon::LinkManager::EventCallback, public dtn::daemon::Configuration::OnChangeListener
 		{
 		public:
+			static const std::string TAG;
+
 			static dtn::data::EID local;
 
 			static BundleCore& getInstance();
 
 			WallClock& getClock();
+
+			virtual void onConfigurationChanged(const dtn::daemon::Configuration &conf) throw ();
 
 			void setStorage(dtn::storage::BundleStorage *storage);
 			dtn::storage::BundleStorage& getStorage();

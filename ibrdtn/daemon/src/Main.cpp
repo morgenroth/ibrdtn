@@ -61,6 +61,7 @@ const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger:
 bool _debug = false;
 
 // marker if the shutdown was called
+ibrcommon::Conditional _shutdown_cond;
 bool _shutdown = false;
 
 // on interruption do this!
@@ -73,9 +74,13 @@ void sighandler(int signal)
 	{
 	case SIGTERM:
 	case SIGINT:
+	{
+		ibrcommon::MutexLock l(_shutdown_cond);
 		_shutdown = true;
-		_dtnd.shutdown();
+		_shutdown_cond.signal(true);
 		break;
+	}
+
 	case SIGUSR1:
 		if (!_debug)
 		{
@@ -163,20 +168,8 @@ int __daemon_run()
 		ibrcommon::Logger::setLogfile(lf, ibrcommon::Logger::LOGGER_ALL ^ ibrcommon::Logger::LOGGER_DEBUG, logopts);
 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
 
-	// greeting
-	IBRCOMMON_LOGGER_TAG("Init", info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
-
-	if (conf.getDebug().enabled())
-	{
-		IBRCOMMON_LOGGER_TAG("Init", info) << "debug level set to " << conf.getDebug().level() << IBRCOMMON_LOGGER_ENDL;
-	}
-
-	try {
-		const ibrcommon::File &lf = conf.getLogger().getLogfile();
-		IBRCOMMON_LOGGER_TAG("Init", info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
-	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
-
-	_dtnd.initialize();
+	// initialize the daemon up to runlevel "Routing Extensions"
+	_dtnd.init(dtn::daemon::RUNLEVEL_ROUTING_EXTENSIONS);
 
 #ifdef HAVE_LIBDAEMON
 	if (conf.getDaemon().daemonize())
@@ -187,7 +180,10 @@ int __daemon_run()
 	}
 #endif
 
-	_dtnd.main_loop();
+	ibrcommon::MutexLock l(_shutdown_cond);
+	while (!_shutdown) _shutdown_cond.wait();
+
+	_dtnd.init(dtn::daemon::RUNLEVEL_ZERO);
 
 	// stop the asynchronous logger
 	ibrcommon::Logger::stop();
