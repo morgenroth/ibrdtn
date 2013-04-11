@@ -12,11 +12,8 @@ endif
 
 if TLS
 security_SOURCES += \
-	TLSStreamComponent.h \
-	TLSStreamComponent.cpp \
 	SecurityCertificateManager.h \
-	SecurityCertificateManager.cpp \
-	CertificateManagerInitEvent.cpp
+	SecurityCertificateManager.cpp
 endif
 
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS)

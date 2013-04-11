@@ -581,7 +581,6 @@ namespace dtn
 			/* enable TLS support */
 			if ( conf.getSecurity().doTLS() )
 			{
-				components.push_back(new dtn::security::TLSStreamComponent());
 				components.push_back(new dtn::security::SecurityCertificateManager());
 				IBRCOMMON_LOGGER_TAG("Init", info) << "TLS security for TCP convergence layer enabled" << IBRCOMMON_LOGGER_ENDL;
 			}

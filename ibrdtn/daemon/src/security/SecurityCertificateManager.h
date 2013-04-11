@@ -38,35 +38,6 @@ namespace dtn {
 namespace security {
 
 /*!
- * \brief This class represents an event that is thrown if the Initialization of the SecurityCertificateManager succeeded.
- */
-class CertificateManagerInitEvent : public dtn::core::Event{
-public:
-	virtual ~CertificateManagerInitEvent();
-
-	/* from Event */
-	virtual const std::string getName() const;
-	std::string getMessage() const;
-
-	static const std::string className;
-
-	/*!
-	 * \brief this function raises a new CertificateManagerInitEvent
-	 * \param certificate the X509 certificate, the manager was initialized with
-	 * \param privateKey the private key
-	 * \param trustedCAPath directory with trusted certificates
-	 */
-	static void raise(X509 * certificate, EVP_PKEY * privateKey, const ibrcommon::File &trustedCAPath);
-
-	X509 * const certificate;
-	EVP_PKEY * const privateKey;
-	const ibrcommon::File trustedCAPath;
-
-private:
-	CertificateManagerInitEvent(X509 * certificate, EVP_PKEY * privateKey, const ibrcommon::File &trustedCAPath);
-};
-
-/*!
  * \brief This class is a manager to handle certificates
  */
 class SecurityCertificateManager : public dtn::daemon::Component {

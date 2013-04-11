@@ -25,6 +25,7 @@
 #include <cstdlib>
 
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/ssl/TLSStream.h>
 
 namespace dtn
 {
@@ -115,7 +116,7 @@ namespace dtn
 		SecurityCertificateManager::startup()
 		{
 			if(_initialized){
-				CertificateManagerInitEvent::raise(_cert, _privateKey, _trustedCAPath);
+				ibrcommon::TLSStream::init(_cert, _privateKey, _trustedCAPath, !dtn::daemon::Configuration::getInstance().getSecurity().TLSEncryptionDisabled());
 			}
 		}
 
