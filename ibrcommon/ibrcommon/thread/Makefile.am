@@ -10,6 +10,7 @@ h_sources = \
 	AtomicCounter.h \
 	ThreadsafeState.h \
 	ThreadsafeReference.h \
+	SharedReference.h \
 	RWMutex.h \
 	RWLock.h
 
