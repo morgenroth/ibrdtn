@@ -21,8 +21,6 @@ How to compile IBR-DTN for Android?
 
    5. Run build.sh
 
-   6. OpenSSL (libssl, libcrypto) is compiled as a shared library, but it does not have to be packaged into the APK as it is already included in Android OS.
-      We can not include it with LDLIBS as it is not part of the stable API and thus not part of the official Android NDK.
 
 FAQ
 ---
@@ -30,8 +28,10 @@ FAQ
    o More Android NDK parameters:
      "ndk-build clean" (delete generated libs)
      "ndk-build -B V=1 NDK_DEBUG=1 NDK_LOG=1" (force complete rebuild (-B), showing commands and enable debug and logs from android ndk)
+
    o Getting an error with "error: invalid conversion from 'void**' to 'JNIEnv** {aka _JNIEnv**}'"
      Update your SWIG installation.
+
 
 SWIG
 ----
@@ -46,7 +46,9 @@ Implementation details
      nl-3: https://github.com/dschuermann/libnl
      openssl: https://github.com/guardianproject/openssl-android
 
-   o OpenSSL is compiled but not bundled into the application as we use already existing OpenSSL shared library included in Android OS
+   o  libssl, libcrypto (OpenSSL) are compiled as a shared libraries, but it could be possible to use Android's included OpenSSL.
+      Unfortunatly every Android version has a different version of OpenSSL bundled and those versions are possibly crippled or deprecated.
+      We can not include the headers of the included OpenSSL with LDLIBS as it is not part of the stable API and thus not part of the official Android NDK.
 
    o Androgenizer currently throws away -version-info but not -release, which result in an error, thus we omit libibrcommon_la_LDFLAGS for Android.mk
 
