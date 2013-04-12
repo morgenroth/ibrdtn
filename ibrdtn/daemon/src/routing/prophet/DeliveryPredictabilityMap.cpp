@@ -18,12 +18,12 @@ namespace dtn
 		const size_t DeliveryPredictabilityMap::identifier = NodeHandshakeItem::DELIVERY_PREDICTABILITY_MAP;
 
 		DeliveryPredictabilityMap::DeliveryPredictabilityMap()
-		: NeighborDataset(DeliveryPredictabilityMap::identifier), _beta(0.0), _gamma(0.0), _lastAgingTime(0), _time_unit(0)
+		: NeighborDataSetImpl(DeliveryPredictabilityMap::identifier), _beta(0.0), _gamma(0.0), _lastAgingTime(0), _time_unit(0)
 		{
 		}
 
 		DeliveryPredictabilityMap::DeliveryPredictabilityMap(const size_t &time_unit, const float &beta, const float &gamma)
-		: NeighborDataset(DeliveryPredictabilityMap::identifier), _beta(beta), _gamma(gamma), _lastAgingTime(0), _time_unit(time_unit)
+		: NeighborDataSetImpl(DeliveryPredictabilityMap::identifier), _beta(beta), _gamma(gamma), _lastAgingTime(0), _time_unit(time_unit)
 		{
 		}
 

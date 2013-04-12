@@ -1,7 +1,7 @@
 /*
- * ObjectLock.cpp
- *
- * Copyright (C) 2011 IBR, TU Braunschweig
+ * Node.aidl
+ * 
+ * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
@@ -18,34 +18,9 @@
  * limitations under the License.
  *
  */
+ 
+package de.tubs.ibr.dtn.api;
 
-#include "ibrcommon/thread/ObjectLock.h"
-#include "ibrcommon/thread/MutexLock.h"
-
-namespace ibrcommon
-{
-	ibrcommon::Conditional ObjectLock::__cond;
-	std::set<void*> ObjectLock::__locks;
-
-	ObjectLock::ObjectLock(void *obj)
-	 : _obj(obj)
-	{
-		ibrcommon::MutexLock l(__cond);
-
-		// check for lock
-		while (__locks.find(obj) != __locks.end())
-		{
-			// wait while there is a lock
-			__cond.wait();
-		}
-
-		// add lock
-		__locks.insert(obj);
-	}
-
-	ObjectLock::~ObjectLock()
-	{
-		ibrcommon::MutexLock l(__cond);
-		__locks.erase(_obj);
-	}
-}
+// Declare Node so AIDL can find it and knows that it implements
+// the parcelable protocol.
+parcelable Node;

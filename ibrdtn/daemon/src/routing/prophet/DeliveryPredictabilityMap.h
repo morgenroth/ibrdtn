@@ -24,7 +24,7 @@ namespace dtn
 		 * This class can be used as a map from EID to float.
 		 * Also, it can be serialized as a NodeHandshakeItem to be exchanged with neighbors.
 		 */
-		class DeliveryPredictabilityMap : public NeighborDataset, public NodeHandshakeItem, public ibrcommon::Mutex {
+		class DeliveryPredictabilityMap : public NeighborDataSetImpl, public NodeHandshakeItem, public ibrcommon::Mutex {
 		public:
 			static const size_t identifier;
 

@@ -18,6 +18,8 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- READ_LOGS is needed on Android < 4.1, On Android >= 4.1 an app can read it's own logs without permission -->
+    <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
 
     <uses-sdk
@@ -53,7 +55,7 @@
         </service>
 
         <activity
-            android:name=".daemon.NeighborList"
+            android:name="de.tubs.ibr.dtn.daemon.NeighborActivity"
             android:icon="@drawable/ic_neighbors"
             android:label="@string/list_neighbors" />
         <activity

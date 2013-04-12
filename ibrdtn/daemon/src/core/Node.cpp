@@ -271,6 +271,11 @@ namespace dtn
 			_attr_list.clear();
 		}
 
+		size_t Node::size() const
+		{
+			return _uri_list.size() + _attr_list.size();
+		}
+
 		// comparison of two URIs according to the priority
 		bool compare_uri_priority (const Node::URI &first, const Node::URI &second)
 		{

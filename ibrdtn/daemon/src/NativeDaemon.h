@@ -62,6 +62,25 @@ namespace dtn
 			virtual void eventRaised(const std::string &event, const std::string &action, const std::vector<std::string> &data) throw () = 0;
 		};
 
+		class NativeNode {
+		public:
+			enum Type {
+				NODE_P2P,
+				NODE_CONNECTED,
+				NODE_DISCOVERED,
+				NODE_INTERNET,
+				NODE_STATIC
+			};
+
+			NativeNode(const std::string &e)
+			: eid(e), type(NODE_STATIC) { };
+
+			~NativeNode() {};
+
+			std::string eid;
+			Type type;
+		};
+
 		class NativeDaemonException : public ibrcommon::Exception
 		{
 		public:
@@ -76,7 +95,14 @@ namespace dtn
 		public:
 			static const std::string TAG;
 
+			/**
+			 * Constructor
+			 */
 			NativeDaemon(NativeDaemonCallback *statecb = NULL, NativeEventCallback *eventcb = NULL);
+
+			/**
+			 * Destructor
+			 */
 			virtual ~NativeDaemon();
 
 			/**
@@ -120,10 +146,31 @@ namespace dtn
 			void setConfigFile(const std::string &config_file);
 
 			/** NATIVE DAEMON METHODS **/
+
+			/**
+			 * Get the local EID of this node
+			 */
 			std::string getLocalUri() throw ();
+
+			/**
+			 * Get the neighbors
+			 */
 			std::vector<std::string> getNeighbors() throw ();
-			void addConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ();
-			void removeConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ();
+
+			/**
+			 * Get neighbor info
+			 */
+			NativeNode getInfo(const std::string &neighbor_eid) throw (NativeDaemonException);
+
+			/**
+			 * Add a static connection to the neighbor with the given EID
+			 */
+			void addConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local = false) throw ();
+
+			/**
+			 * Remove a static connection of the neighbor with the given EID
+			 */
+			void removeConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local = false) throw ();
 
 			/**
 			 * @see dtn::core::EventReceiver::raiseEvent()

@@ -22,6 +22,7 @@
 package de.tubs.ibr.dtn;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.DTNSession;
+import de.tubs.ibr.dtn.api.Node;
 
 interface DTNService {
     /**
@@ -37,7 +38,7 @@ interface DTNService {
 	/**
 	 * Returns the available neighbors of the daemon.
 	 */
-	List<String> getNeighbors();
+	List<Node> getNeighbors();
 	
 	/**
 	 * Deletes all bundles in the storage of the daemon.

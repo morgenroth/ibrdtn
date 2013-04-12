@@ -395,6 +395,50 @@ namespace dtn
 			return dtn::core::BundleCore::local.getString();
 		}
 
+		NativeNode NativeDaemon::getInfo(const std::string &neighbor_eid) throw (NativeDaemonException)
+		{
+			NativeNode nn(neighbor_eid);
+
+			dtn::data::EID eid(neighbor_eid);
+			try {
+				dtn::core::Node n = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbor(eid);
+				dtn::core::Node::URI uri = n.getAll().front();
+				switch (uri.type) {
+				case dtn::core::Node::NODE_UNAVAILABLE:
+					throw NativeDaemonException("Node is not available");
+					break;
+
+				case dtn::core::Node::NODE_CONNECTED:
+					nn.type = NativeNode::NODE_CONNECTED;
+					break;
+
+				case dtn::core::Node::NODE_DISCOVERED:
+					nn.type = NativeNode::NODE_DISCOVERED;
+					break;
+
+				case dtn::core::Node::NODE_STATIC_GLOBAL:
+					nn.type = NativeNode::NODE_INTERNET;
+					break;
+
+				case dtn::core::Node::NODE_STATIC_LOCAL:
+					nn.type = NativeNode::NODE_STATIC;
+					break;
+
+				case dtn::core::Node::NODE_DHT_DISCOVERED:
+					nn.type = NativeNode::NODE_DISCOVERED;
+					break;
+
+				case dtn::core::Node::NODE_P2P_DIALUP:
+					nn.type = NativeNode::NODE_P2P;
+					break;
+				}
+			} catch (const NeighborNotAvailableException &ex) {
+				throw NativeDaemonException(ex.what());
+			}
+
+			return nn;
+		}
+
 		std::vector<std::string> NativeDaemon::getNeighbors() throw ()
 		{
 			std::vector<std::string> ret;
@@ -410,12 +454,12 @@ namespace dtn
 			return ret;
 		}
 
-		void NativeDaemon::addConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ()
+		void NativeDaemon::addConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local) throw ()
 		{
 			dtn::core::Node n(eid);
 			dtn::core::Node::Type t = dtn::core::Node::NODE_STATIC_GLOBAL;
 
-			t = dtn::core::Node::NODE_STATIC_LOCAL;
+			if (local) t = dtn::core::Node::NODE_STATIC_LOCAL;
 
 			if (protocol == "tcp")
 			{
@@ -436,12 +480,12 @@ namespace dtn
 			}
 		}
 
-		void NativeDaemon::removeConnection(std::string eid, std::string protocol, std::string address, std::string service) throw ()
+		void NativeDaemon::removeConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local) throw ()
 		{
 			dtn::core::Node n(eid);
 			dtn::core::Node::Type t = dtn::core::Node::NODE_STATIC_GLOBAL;
 
-			t = dtn::core::Node::NODE_STATIC_LOCAL;
+			if (local) t = dtn::core::Node::NODE_STATIC_LOCAL;
 
 			if (protocol == "tcp")
 			{

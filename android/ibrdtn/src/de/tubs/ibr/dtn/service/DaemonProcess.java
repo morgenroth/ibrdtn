@@ -229,7 +229,22 @@ public class DaemonProcess {
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             Log.d(TAG, "Preferences has changed " + key);
             
-            if (key.equals("cloud_uplink")) {
+            if (key.equals("enabledSwitch"))
+            {
+                if (prefs.getBoolean(key, false)) {
+                    // startup the daemon process
+                    final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                    intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+                    DaemonProcess.this.mContext.startService(intent);
+                } else {
+                    // shutdown the daemon
+                    final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                    intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
+                    DaemonProcess.this.mContext.startService(intent);
+                }
+            }
+            else if (key.equals("cloud_uplink"))
+            {
                 if (prefs.getBoolean(key, false)) {
                     getNative().addConnection(__CLOUD_EID__.toString(),
                             __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
@@ -385,6 +400,9 @@ public class DaemonProcess {
                     }
                     else if (action.equals("unavailable")) {
                         neighborIntent.putExtra("action", "unavailable");
+                    }
+                    else if (action.equals("updated")) {
+                        neighborIntent.putExtra("action", "updated");
                     }
                     else {
                         neighborIntent = null;
