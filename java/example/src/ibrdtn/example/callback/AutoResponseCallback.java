@@ -3,7 +3,7 @@ package ibrdtn.example.callback;
 import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.object.SingletonEndpoint;
-import ibrdtn.example.DTNExampleApp;
+import ibrdtn.example.ui.DTNExampleApp;
 import ibrdtn.example.Envelope;
 import ibrdtn.example.MessageData;
 import java.util.logging.Level;

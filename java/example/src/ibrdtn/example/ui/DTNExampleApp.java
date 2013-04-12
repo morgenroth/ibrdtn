@@ -1,11 +1,14 @@
-package ibrdtn.example;
+package ibrdtn.example.ui;
 
+import ibrdtn.example.api.APIHandlerType;
+import ibrdtn.example.api.PayloadType;
 import ibrdtn.api.APIException;
 import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.EID;
 import ibrdtn.api.object.GroupEndpoint;
 import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.object.SingletonEndpoint;
+import ibrdtn.example.MessageData;
 import ibrdtn.example.api.Constants;
 import ibrdtn.example.api.DTNClient;
 import ibrdtn.example.callback.AutoResponseCallback;
@@ -26,6 +29,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
     private static final Logger logger = LogManager.getLogManager().getLogger("");
     private DTNClient dtnClient;
     private WindowHandler handler = null;
+    protected PayloadType payloadType = PayloadType.OBJECT;
 
     /**
      * Creates a new DTN demonstration app.
@@ -493,11 +497,21 @@ public class DTNExampleApp extends javax.swing.JFrame {
         /*
          * Custom data format.
          */
-        MessageData data = new MessageData();
-        data.setId(tfId.getText());
-        data.setCorrelationId(tfResponse.getText());
-        data.setText(tfPayload.getText());
-        bundle.appendBlock(new PayloadBlock(data));
+        switch (payloadType) {
+            case OBJECT:
+                MessageData data = new MessageData();
+                data.setId(tfId.getText());
+                data.setCorrelationId(tfResponse.getText());
+                data.setText(tfPayload.getText());
+
+                bundle.appendBlock(new PayloadBlock(data));
+                break;
+            case BYTE:
+                String text = tfPayload.getText();
+
+                bundle.appendBlock(new PayloadBlock(text.getBytes()));
+                break;
+        }
 
         if (cbAutoResponse.isSelected()) {
             ICallback callback = new AutoResponseCallback(this);
@@ -565,19 +579,19 @@ public class DTNExampleApp extends javax.swing.JFrame {
         try {
             switch ((String) cbOutput.getSelectedItem()) {
                 case "Primary EID":
-                logger.log(Level.INFO, "Primary EID {0}", dtnClient.getEC().getEndpoint().toString());
-                break;
+                    logger.log(Level.INFO, "Primary EID {0}", dtnClient.getEC().getEndpoint().toString());
+                    break;
                 case "Node Name":
-                logger.log(Level.INFO, "Node Name {0}", dtnClient.getEC().getNodeName().toString());
-                break;
+                    logger.log(Level.INFO, "Node Name {0}", dtnClient.getEC().getNodeName().toString());
+                    break;
                 case "Registrations":
-                logger.log(Level.INFO, "Registrations {0}", dtnClient.getEC().getRegistrations().toString());
-                break;
+                    logger.log(Level.INFO, "Registrations {0}", dtnClient.getEC().getRegistrations().toString());
+                    break;
                 case "Neighbors":
-                logger.log(Level.INFO, "Neighbors {0}", dtnClient.getEC().getNeighbors().toString());
-                break;
+                    logger.log(Level.INFO, "Neighbors {0}", dtnClient.getEC().getNeighbors().toString());
+                    break;
                 default:
-                logger.log(Level.WARNING, "Selected printing paramter unknown!");
+                    logger.log(Level.WARNING, "Selected printing paramter unknown!");
             }
         } catch (APIException ex) {
             logger.log(Level.SEVERE, "Retrieving DTN configuration parameters failed");

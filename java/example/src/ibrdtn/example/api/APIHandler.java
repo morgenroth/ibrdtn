@@ -6,7 +6,6 @@ import ibrdtn.api.object.BundleID;
 import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.example.Envelope;
 import ibrdtn.example.MessageData;
-import ibrdtn.example.PayloadType;
 import ibrdtn.example.callback.CallbackHandler;
 import java.io.IOException;
 import java.io.ObjectInputStream;

@@ -1,5 +1,7 @@
-package ibrdtn.example;
+package ibrdtn.example.ui;
 
+import ibrdtn.example.api.APIHandlerType;
+import ibrdtn.example.api.PayloadType;
 import ibrdtn.example.api.DTNClient;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -170,6 +172,8 @@ public class Settings extends JDialog {
 
         PayloadType payloadType = (PayloadType) cbPayloadType.getSelectedItem();
         APIHandlerType apiHandlerType = (APIHandlerType) cbAPIType.getSelectedItem();
+        
+        dtnApp.payloadType = payloadType;
 
         DTNClient dtnClient = new DTNClient(tfEndpoint.getText(), payloadType, apiHandlerType);
         dtnApp.setDtnClient(dtnClient);

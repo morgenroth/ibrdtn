@@ -8,7 +8,6 @@ import ibrdtn.api.object.BundleID;
 import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.sab.Custody;
 import ibrdtn.api.sab.StatusReport;
-import ibrdtn.example.PayloadType;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
