@@ -31,12 +31,10 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -62,7 +60,6 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
 import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
-import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonProcess;
 import de.tubs.ibr.dtn.service.DaemonService;
@@ -90,13 +87,6 @@ public class Preferences extends PreferenceActivity {
 			if (!prefs.contains("collect_stats")) {
 				showStatisticLoggerDialog(Preferences.this);
 			}
-			
-			// adjust daemon switch
-			try {
-                setDaemonSwitch(DaemonState.ONLINE.equals(Preferences.this.service.getState()));
-            } catch (RemoteException e) {
-                Log.e(TAG, "Can not query daemon state", e);
-            }
 			
 			// get the daemon version
 			try {
@@ -140,43 +130,6 @@ public class Preferences extends PreferenceActivity {
 		builder.setNegativeButton(activity.getResources().getString(android.R.string.no), dialogClickListener);
 		builder.show();
 	}
-	
-	@TargetApi(14)
-	private void setDaemonSwitch(boolean val) {
-		if (actionBarSwitch != null) {
-			actionBarSwitch.setChecked(val);
-		} else if (checkBoxPreference != null) {
-			checkBoxPreference.setChecked(val);
-		}
-	}
-	
-	private BroadcastReceiver _state_receiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.STATE))
-			{
-				String state = intent.getStringExtra("state");
-				DaemonState ds = DaemonState.valueOf(state);
-				switch (ds)
-				{
-				case ONLINE:
-					Preferences.this.setDaemonSwitch(true);
-					break;
-					
-				case OFFLINE:
-					Preferences.this.setDaemonSwitch(false);
-					break;
-					
-				case ERROR:
-					Preferences.this.setDaemonSwitch(false);
-					break;
-					
-				default:
-					break;
-				}
-			}
-		}
-	};
 	
 	private class ClearStorageTask extends AsyncTask<String, Integer, Boolean> {
 		protected Boolean doInBackground(String... files)
@@ -303,20 +256,6 @@ public class Preferences extends PreferenceActivity {
 		}
 	}
 
-    private void startDaemon() {
-        // startup the daemon process
-        final Intent intent = new Intent(Preferences.this, DaemonService.class);
-        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-        startService(intent);
-    }
-
-    private void stopDaemon() {
-        // shutdown the daemon
-        final Intent intent = new Intent(Preferences.this, DaemonService.class);
-        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
-        startService(intent);
-    }
-	
 	@TargetApi(14)
 	@SuppressWarnings("deprecation")
 	@Override
@@ -329,19 +268,7 @@ public class Preferences extends PreferenceActivity {
 		
 		// connect daemon controls
         checkBoxPreference = (CheckBoxPreference) findPreference("enabledSwitch");
-		if (checkBoxPreference != null) {
-			checkBoxPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-			public boolean onPreferenceClick(Preference p) {
-				if (((CheckBoxPreference) p).isChecked()) {
-					startDaemon();
-				} else {
-				    stopDaemon();
-				}
-				
-				return true;
-			}
-			});
-		} else {
+        if (checkBoxPreference == null) {
 			// use custom actionbar switch
 	        actionBarSwitch = new Switch(this);
 
@@ -370,16 +297,12 @@ public class Preferences extends PreferenceActivity {
 						// set "enabledSwitch" preference to true
 						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", true).commit();
-						
-						startDaemon();
 					}
 					else
 					{
 						// set "enabledSwitch" preference to false
 						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", false).commit();
-						
-						stopDaemon();
 					}
 				}
 	        });
@@ -426,6 +349,7 @@ public class Preferences extends PreferenceActivity {
 		setVersion(null);
 	}
 	
+	@SuppressWarnings("deprecation")
 	private void setVersion(String versionValue) {
         // version information
         Preference version = findPreference("system_version");
@@ -441,8 +365,6 @@ public class Preferences extends PreferenceActivity {
 	
     @Override
 	protected void onPause() {
-		unregisterReceiver(_state_receiver);
-		
         // Detach our existing connection.
 		unbindService(mConnection);
 		
@@ -451,10 +373,6 @@ public class Preferences extends PreferenceActivity {
 
 	@Override
 	protected void onResume() {
-		IntentFilter ifilter = new IntentFilter(de.tubs.ibr.dtn.Intent.STATE);
-		ifilter.addCategory(Intent.CATEGORY_DEFAULT);
-  		registerReceiver(_state_receiver, ifilter );
-  		
 		// Establish a connection with the service.  We use an explicit
 		// class name because we want a specific service implementation that
 		// we know will be running in our own process (and thus won't be

@@ -31,12 +31,14 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
@@ -153,6 +155,9 @@ public class DaemonService extends Service {
         String action = intent.getAction();
 
         if (ACTION_STARTUP.equals(action)) {
+            // do nothing if the daemon is already up
+            if (mDaemonProcess.getState().equals(DaemonState.ONLINE)) return;
+            
             // mark the notification as visible
             _show_notification = true;
             
@@ -208,6 +213,15 @@ public class DaemonService extends Service {
         
         // initialize the basic daemon
         mDaemonProcess.initialize();
+        
+        // start daemon is enabled
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (prefs.getBoolean("enabledSwitch", false)) {
+            // startup the daemon process
+            final Intent intent = new Intent(this, DaemonService.class);
+            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+            startService(intent);
+        }
 
         /*
          * incoming Intents will be processed by ServiceHandler and queued in
