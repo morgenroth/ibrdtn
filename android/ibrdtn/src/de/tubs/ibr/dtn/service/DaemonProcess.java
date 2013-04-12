@@ -386,6 +386,9 @@ public class DaemonProcess {
                     else if (action.equals("unavailable")) {
                         neighborIntent.putExtra("action", "unavailable");
                     }
+                    else if (action.equals("updated")) {
+                        neighborIntent.putExtra("action", "updated");
+                    }
                     else {
                         neighborIntent = null;
                     }
