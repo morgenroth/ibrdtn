@@ -83,7 +83,7 @@ public class Preferences extends PreferenceActivity {
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Preferences.this.service = DTNService.Stub.asInterface(service);
-			Log.i(TAG, "service connected");
+			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
 			
 			// on first startup ask for permissions to collect statistical data
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
@@ -108,7 +108,7 @@ public class Preferences extends PreferenceActivity {
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
-			Log.i(TAG, "service disconnected");
+		    if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service disconnected");
 			service = null;
 		}
 	};
