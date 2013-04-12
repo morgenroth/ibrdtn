@@ -38,6 +38,7 @@
 #include "core/BundleEvent.h"
 
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/ThreadsafeReference.h>
 
 #include <ibrdtn/data/SDNV.h>
 #include <ibrdtn/data/Exceptions.h>
@@ -124,10 +125,10 @@ namespace dtn
 				// store a copy of the map in the neighbor database
 				{
 					NeighborDatabase &db = (**this).getNeighborDB();
-					DeliveryPredictabilityMap *dpm = new DeliveryPredictabilityMap(neighbor_dp_map);
+					NeighborDataset ds(new DeliveryPredictabilityMap(neighbor_dp_map));
 
 					ibrcommon::MutexLock l(db);
-					db.create(neighbor_node).putDataset(dpm);
+					db.create(neighbor_node).putDataset(ds);
 				}
 
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
@@ -464,7 +465,7 @@ namespace dtn
 
 							try {
 								// get the DeliveryPredictabilityMap of the potentially next hop
-								DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
+								const DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
 
 								// get the bundle filter of the neighbor
 								BundleFilter filter(entry, *_forwardingStrategy, dpm);

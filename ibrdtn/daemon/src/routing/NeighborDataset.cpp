@@ -11,8 +11,17 @@ namespace dtn
 {
 	namespace routing
 	{
-		NeighborDataset::NeighborDataset(size_t i)
-		 : id(i)
+		NeighborDataSetImpl::NeighborDataSetImpl(size_t id)
+		: _dataset_id(id)
+		{
+		}
+
+		NeighborDataSetImpl::~NeighborDataSetImpl()
+		{
+		}
+
+		NeighborDataset::NeighborDataset(NeighborDataSetImpl *impl)
+		 : _impl(impl)
 		{ }
 
 		NeighborDataset::~NeighborDataset()
@@ -20,12 +29,47 @@ namespace dtn
 
 		bool NeighborDataset::operator==(const NeighborDataset &obj) const
 		{
-			return (obj.id == id);
+			return (obj.getId() == getId());
 		}
 
 		bool NeighborDataset::operator<(const NeighborDataset &obj) const
 		{
-			return (id < obj.id);
+			return (getId() < obj.getId());
+		}
+
+		bool NeighborDataset::operator>(const NeighborDataset &obj) const
+		{
+			return (getId() > obj.getId());
+		}
+
+		bool NeighborDataset::operator==(const size_t &obj) const
+		{
+			return (obj == getId());
+		}
+
+		bool NeighborDataset::operator<(const size_t &obj) const
+		{
+			return (getId() < obj);
+		}
+
+		bool NeighborDataset::operator>(const size_t &obj) const
+		{
+			return (getId() > obj);
+		}
+
+		size_t NeighborDataset::getId() const
+		{
+			return _impl->_dataset_id;
+		}
+
+		NeighborDataSetImpl& NeighborDataset::operator*()
+		{
+			return _impl.operator*();
+		}
+
+		const NeighborDataSetImpl& NeighborDataset::operator*() const
+		{
+			return _impl.operator*();
 		}
 	} /* namespace routing */
 } /* namespace dtn */

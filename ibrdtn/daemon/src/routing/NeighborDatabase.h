@@ -29,6 +29,7 @@
 #include <ibrcommon/data/BloomFilter.h>
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/thread/ThreadsafeState.h>
+#include <algorithm>
 #include <map>
 
 namespace dtn
@@ -143,14 +144,14 @@ namespace dtn
 				 * Retrieve a specific data-set.
 				 */
 				template <class T>
-				T& getDataset() const throw (DatasetNotAvailableException)
+				const T& getDataset() const throw (DatasetNotAvailableException)
 				{
-					dataset_map::const_iterator iter = _datasets.find(T::identifier);
+					data_set::const_iterator iter = std::find(_datasets.begin(), _datasets.end(), T::identifier);
 
 					if (iter == _datasets.end()) throw DatasetNotAvailableException();
 
 					try {
-						return dynamic_cast<T&>(*(*iter).second);
+						return dynamic_cast<const T&>(**iter);
 					} catch (const std::bad_cast&) {
 						throw DatasetNotAvailableException();
 					}
@@ -160,7 +161,7 @@ namespace dtn
 				 * Put a data-set into the entry.
 				 * The old data-set gets replaced.
 				 */
-				void putDataset(NeighborDataset *dset);
+				void putDataset(NeighborDataset &dset);
 
 				/**
 				 * Remove a data-set.
@@ -168,11 +169,10 @@ namespace dtn
 				template <class T>
 				void removeDataset()
 				{
-					dataset_map::iterator it = _datasets.find(T::identifier);
+					data_set::iterator it = std::find(_datasets.begin(), _datasets.end(), T::identifier);
 
 					if (it == _datasets.end()) return;
 
-					delete it->second;
 					_datasets.erase(it);
 				}
 
@@ -187,9 +187,8 @@ namespace dtn
 				size_t _filter_expire;
 
 				// extended neighbor data
-				typedef std::map<size_t, NeighborDataset*> dataset_map;
-				typedef pair<size_t, NeighborDataset*> dataset_pair;
-				dataset_map _datasets;
+				typedef std::set<NeighborDataset> data_set;
+				data_set _datasets;
 
 				enum FILTER_REQUEST_STATE
 				{

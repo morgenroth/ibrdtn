@@ -39,11 +39,6 @@ namespace dtn
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
 		{
-			for (dataset_map::iterator it = _datasets.begin(); it != _datasets.end(); it++)
-			{
-				delete it->second;
-			}
-			_datasets.clear();
 		}
 
 		void NeighborDatabase::NeighborEntry::update(const ibrcommon::BloomFilter &bf, const size_t lifetime)
@@ -167,14 +162,13 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(20) << "release transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		void NeighborDatabase::NeighborEntry::putDataset(NeighborDataset *dset)
+		void NeighborDatabase::NeighborEntry::putDataset(NeighborDataset &dset)
 		{
-			pair<dataset_map::iterator, bool> ret = _datasets.insert( dataset_pair(dset->id, dset) );
+			pair<data_set::iterator, bool> ret = _datasets.insert( dset );
 
 			if (!ret.second) {
 				_datasets.erase(ret.first);
-				delete ret.first->second;
-				_datasets.insert( dataset_pair(dset->id, dset) );
+				_datasets.insert( dset );
 			}
 		}
 
