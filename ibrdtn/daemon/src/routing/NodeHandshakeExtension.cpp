@@ -115,7 +115,7 @@ namespace dtn
 					IBRCOMMON_LOGGER(notice) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// gen a report
-					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 
 					// add this bundle to the own purge vector
 					(**this).addPurgedBundle(meta);
