@@ -45,22 +45,25 @@ public class DTNExampleApp extends javax.swing.JFrame {
         handler = WindowHandler.getInstance(this);
         logger.addHandler(handler);
 
-        dtnClient = new DTNClient("1", PayloadType.OBJECT, APIHandlerType.SELECTIVE);
+        // Init connection to daemon
+        dtnClient = new DTNClient("1", PayloadType.OBJECT, APIHandlerType.PASSTHROUGH);
 
         logger.log(Level.INFO, dtnClient.getConfiguration());
+
+        // Set destination address
         try {
             tfDestination.setText(dtnClient.getEC().getNodeName() + "/echo");
-
-            //        Runtime.getRuntime().addShutdownHook(new Thread() {
-            //            @Override
-            //            public void run() {
-            //                dtnClient.shutdown();
-            //            }
-            //        });
         } catch (APIException ex) {
             logger.log(Level.SEVERE, "Retrieving DTN configuration parameters failed");
             tfDestination.setText("dtn://mynode/echo");
         }
+
+        //        Runtime.getRuntime().addShutdownHook(new Thread() {
+        //            @Override
+        //            public void run() {
+        //                dtnClient.shutdown();
+        //            }
+        //        });
     }
 
     /**
@@ -130,7 +133,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         jLabel4.setText("Destination:");
 
-        tfDestination.setText("dtn://timpner-lx/2");
+        tfDestination.setText("dtn://");
 
         bgDestination.add(rbUnicast);
         rbUnicast.setSelected(true);
@@ -485,6 +488,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         EID me = new SingletonEndpoint("api:me");
 
+        // Create bundle to send
         Bundle bundle = new Bundle(eid, Constants.LIFETIME);
         bundle.setPriority(Bundle.Priority.valueOf((String) cbPriority.getSelectedItem()));
 
@@ -501,7 +505,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         bundle.setFlag(Bundle.Flags.COMPRESSION_REQUEST, cbGZIP.isSelected());
 
         /*
-         * Custom data format.
+         * Switch between binary and custom data format.
          */
         switch (payloadType) {
             case OBJECT:
@@ -535,7 +539,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 dtnClient.getEC().removeRegistration(eid);
                 logger.log(Level.INFO, "GID ''{0}'' removed", group);
             } catch (APIException ex) {
-                print(ex.getMessage());
+                logger.log(Level.SEVERE, ex.getMessage());
             }
         }
     }//GEN-LAST:event_btnRemoveGIDActionPerformed
@@ -547,7 +551,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 dtnClient.getEC().removeEndpoint(eid);
                 logger.log(Level.INFO, "Endpoint ''{0}'' removed", eid);
             } catch (APIException ex) {
-                print(ex.getMessage());
+                logger.log(Level.SEVERE, ex.getMessage());
             }
         }
     }//GEN-LAST:event_btnRemoveEIDActionPerformed
@@ -560,7 +564,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 dtnClient.getEC().addRegistration(gid);
                 logger.log(Level.INFO, "GID ''{0}'' added", gid);
             } catch (APIException ex) {
-                print(ex.getMessage());
+                logger.log(Level.SEVERE, ex.getMessage());
             }
         }
     }//GEN-LAST:event_btnAddGIDActionPerformed
@@ -572,7 +576,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 dtnClient.getEC().addEndpoint(eid);
                 logger.log(Level.INFO, "Endpoint ''{0}'' added", eid);
             } catch (APIException ex) {
-                print(ex.getMessage());
+                logger.log(Level.SEVERE, ex.getMessage());
             }
         }
     }//GEN-LAST:event_btnAddEIDActionPerformed

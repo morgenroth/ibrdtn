@@ -188,6 +188,10 @@ public class Bundle {
         return custodian;
     }
 
+    /**
+     * Usually, the custodian is only set by the daemon.
+     * @param custodian 
+     */
     public void setCustodian(EID custodian) {
         this.custodian = custodian;
     }
