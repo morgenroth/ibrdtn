@@ -53,7 +53,7 @@
         </service>
 
         <activity
-            android:name=".daemon.NeighborList"
+            android:name="de.tubs.ibr.dtn.daemon.NeighborActivity"
             android:icon="@drawable/ic_neighbors"
             android:label="@string/list_neighbors" />
         <activity
