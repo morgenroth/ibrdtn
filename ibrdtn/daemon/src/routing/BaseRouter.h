@@ -194,6 +194,28 @@ namespace dtn
 			 */
 			void extensionsDown() throw ();
 
+			/**
+			 * Process a completed handshake
+			 * This method will iterate through all extensions and give each of them
+			 * a chance to process the completed handshake
+			 */
+			void processHandshake(const dtn::data::EID &source, NodeHandshake &answer);
+
+			/**
+			 * Respond to a received handshake request
+			 * This method will iterate through all extensions and give each of them
+			 * a chance to respond to a received handshake request
+			 */
+			void responseHandshake(const dtn::data::EID&, const NodeHandshake&, NodeHandshake&);
+
+			/**
+			 * Request to a received handshake request
+			 * This method will iterate through all extensions and ask each of them
+			 * if they are interested in some sort of routing data of the other peer
+			 */
+			void requestHandshake(const dtn::data::EID &destination, NodeHandshake &request);
+
+
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();

@@ -144,6 +144,66 @@ namespace dtn
 			_nh_extension.componentDown();
 		}
 
+		void BaseRouter::processHandshake(const dtn::data::EID &source, NodeHandshake &answer)
+		{
+			ibrcommon::RWLock l(getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+			// walk through all extensions to process the contents of the response
+			const BaseRouter::extension_list& extensions = getExtensions();
+
+			// process this handshake using the NodeHandshakeExtension
+			_nh_extension.processHandshake(source, answer);
+
+			// process this handshake using the retransmission extension
+			_retransmission_extension.processHandshake(source, answer);
+
+			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+			{
+				RoutingExtension &extension = (**iter);
+				extension.processHandshake(source, answer);
+			}
+		}
+
+		void BaseRouter::responseHandshake(const dtn::data::EID &source, const NodeHandshake &request, NodeHandshake &answer)
+		{
+			ibrcommon::RWLock l(getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+			// walk through all extensions to process the contents of the response
+			const BaseRouter::extension_list& extensions = getExtensions();
+
+			// process this handshake using the NodeHandshakeExtension
+			_nh_extension.responseHandshake(source, request, answer);
+
+			// process this handshake using the retransmission extension
+			_retransmission_extension.responseHandshake(source, request, answer);
+
+			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+			{
+				RoutingExtension &extension = (**iter);
+				extension.responseHandshake(source, request, answer);
+			}
+		}
+
+		void BaseRouter::requestHandshake(const dtn::data::EID &destination, NodeHandshake &request)
+		{
+			ibrcommon::RWLock l(getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+			// walk through all extensions to process the contents of the response
+			const BaseRouter::extension_list& extensions = getExtensions();
+
+			// process this handshake using the NodeHandshakeExtension
+			_nh_extension.requestHandshake(destination, request);
+
+			// process this handshake using the retransmission extension
+			_retransmission_extension.requestHandshake(destination, request);
+
+			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+			{
+				RoutingExtension &extension = (**iter);
+				extension.requestHandshake(destination, request);
+			}
+		}
+
 		void BaseRouter::componentUp() throw ()
 		{
 			// routine checked for throw() on 15.02.2013
