@@ -8,7 +8,6 @@ h_sources = \
 	Thread.h \
 	Timer.h \
 	AtomicCounter.h \
-	ObjectLock.h \
 	ThreadsafeState.h \
 	ThreadsafeReference.h \
 	RWMutex.h \
@@ -22,7 +21,6 @@ cc_sources = \
 	Thread.cpp \
 	Timer.cpp \
 	AtomicCounter.cpp \
-	ObjectLock.cpp \
 	RWMutex.cpp \
 	RWLock.cpp
 
