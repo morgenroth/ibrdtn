@@ -20,9 +20,9 @@ import java.util.logging.Logger;
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
-public abstract class APIHandler implements ibrdtn.api.sab.CallbackHandler {
+public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandler {
 
-    private static final Logger logger = Logger.getLogger(APIHandler.class.getName());
+    private static final Logger logger = Logger.getLogger(AbstractAPIHandler.class.getName());
     protected PipedInputStream is;
     protected PipedOutputStream os;
     protected ExtendedClient client;

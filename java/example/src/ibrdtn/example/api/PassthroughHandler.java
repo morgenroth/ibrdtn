@@ -23,7 +23,7 @@ import java.util.logging.Logger;
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
-public class PassthroughHandler extends APIHandler {
+public class PassthroughHandler extends AbstractAPIHandler {
 
     private static final Logger logger = Logger.getLogger(PassthroughHandler.class.getName());
 

@@ -23,7 +23,7 @@ import java.util.logging.Logger;
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
-public class SelectiveHandler extends APIHandler {
+public class SelectiveHandler extends AbstractAPIHandler {
 
     private static final Logger logger = Logger.getLogger(SelectiveHandler.class.getName());
 

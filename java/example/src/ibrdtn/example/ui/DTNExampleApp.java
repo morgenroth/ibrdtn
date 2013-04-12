@@ -48,13 +48,19 @@ public class DTNExampleApp extends javax.swing.JFrame {
         dtnClient = new DTNClient("1", PayloadType.OBJECT, APIHandlerType.SELECTIVE);
 
         logger.log(Level.INFO, dtnClient.getConfiguration());
+        try {
+            tfDestination.setText(dtnClient.getEC().getNodeName() + "/echo");
 
-//        Runtime.getRuntime().addShutdownHook(new Thread() {
-//            @Override
-//            public void run() {
-//                dtnClient.shutdown();
-//            }
-//        });
+            //        Runtime.getRuntime().addShutdownHook(new Thread() {
+            //            @Override
+            //            public void run() {
+            //                dtnClient.shutdown();
+            //            }
+            //        });
+        } catch (APIException ex) {
+            logger.log(Level.SEVERE, "Retrieving DTN configuration parameters failed");
+            tfDestination.setText("dtn://mynode/echo");
+        }
     }
 
     /**
