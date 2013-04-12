@@ -20,6 +20,11 @@ namespace dtn
 		{
 		}
 
+		NeighborDataset::NeighborDataset(size_t id)
+		 : _impl(new Empty(id))
+		{
+		}
+
 		NeighborDataset::NeighborDataset(NeighborDataSetImpl *impl)
 		 : _impl(impl)
 		{ }

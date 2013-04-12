@@ -26,7 +26,15 @@ namespace dtn
 
 		class NeighborDataset
 		{
+		private:
+			class Empty : public NeighborDataSetImpl {
+			public:
+				Empty(size_t id) : NeighborDataSetImpl(id) { };
+				virtual ~Empty() {};
+			};
+
 		public:
+			NeighborDataset(size_t id);
 			NeighborDataset(NeighborDataSetImpl *impl);
 			~NeighborDataset();
 

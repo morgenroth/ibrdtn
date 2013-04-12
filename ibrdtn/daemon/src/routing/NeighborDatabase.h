@@ -146,7 +146,8 @@ namespace dtn
 				template <class T>
 				const T& getDataset() const throw (DatasetNotAvailableException)
 				{
-					data_set::const_iterator iter = std::find(_datasets.begin(), _datasets.end(), T::identifier);
+					NeighborDataset item(T::identifier);
+					data_set::const_iterator iter = _datasets.find(item);
 
 					if (iter == _datasets.end()) throw DatasetNotAvailableException();
 
@@ -169,7 +170,8 @@ namespace dtn
 				template <class T>
 				void removeDataset()
 				{
-					data_set::iterator it = std::find(_datasets.begin(), _datasets.end(), T::identifier);
+					NeighborDataset item(T::identifier);
+					data_set::iterator it = _datasets.find(item);
 
 					if (it == _datasets.end()) return;
 
