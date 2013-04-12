@@ -184,6 +184,7 @@ namespace dtn
 
 		NeighborDatabase::~NeighborDatabase()
 		{
+			ibrcommon::MutexLock l(*this);
 			std::set<dtn::data::EID> ret;
 
 			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
