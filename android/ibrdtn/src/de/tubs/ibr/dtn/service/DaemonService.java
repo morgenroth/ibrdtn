@@ -330,14 +330,19 @@ public class DaemonService extends Service {
                     // TODO: disable P2P manager
                     // _p2p_manager.destroy();
                     
-                    // mark the notification as invisible
-                    _show_notification = false;
-                    
-                    // stop foreground service
-                    stopForeground(true);
-                    
-                    // stop service
-                    stopSelf();
+                    // disable foreground service only if the daemon has been switched off
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
+                    if (!prefs.getBoolean("enabledSwitch", false)) {
+                        // mark the notification as invisible
+                        _show_notification = false;
+                        
+                        // stop foreground service
+                        stopForeground(true);
+                        
+                        // stop service
+                        stopSelf();
+                    }
+
                     break;
                     
                 case ONLINE:
