@@ -466,7 +466,8 @@ public class ClientSession {
 		return swigId;
 	}
 	
-	private de.tubs.ibr.dtn.swig.PrimaryBlock toSwig(Bundle bundle) {
+	@SuppressWarnings("unused")
+    private de.tubs.ibr.dtn.swig.PrimaryBlock toSwig(Bundle bundle) {
 		/*
 		 * Convert API Bundle to SWIG bundle
 		 */

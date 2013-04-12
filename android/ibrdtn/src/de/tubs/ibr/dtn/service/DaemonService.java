@@ -212,21 +212,6 @@ public class DaemonService extends Service {
         // create daemon main thread
         mDaemonProcess = new DaemonProcess(this, mProcessHandler);
         
-        // initialize daemon configuration
-        mDaemonProcess.onConfigurationChanged();
-        
-        // initialize the basic daemon
-        mDaemonProcess.initialize();
-        
-        // start daemon is enabled
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        if (prefs.getBoolean("enabledSwitch", false)) {
-            // startup the daemon process
-            final Intent intent = new Intent(this, DaemonService.class);
-            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-            startService(intent);
-        }
-
         /*
          * incoming Intents will be processed by ServiceHandler and queued in
          * HandlerThread
@@ -239,17 +224,32 @@ public class DaemonService extends Service {
         // create a session manager
         mSessionManager = new SessionManager(this);
         
-        // restore registrations
-        mSessionManager.initialize();
-
         // create P2P Manager
         // _p2p_manager = new P2PManager(this, _p2p_listener, "my address");
+        
+        // initialize daemon configuration
+        mDaemonProcess.onConfigurationChanged();
+        
+        // initialize the basic daemon
+        mDaemonProcess.initialize();
+        
+        // restore registrations
+        mSessionManager.initialize();
 
         if (Log.isLoggable(TAG, Log.DEBUG))
             Log.d(TAG, "DaemonService created");
 
         // restore sessions
         mSessionManager.restoreRegistrations();
+        
+        // start daemon if enabled
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (prefs.getBoolean("enabledSwitch", false)) {
+            // startup the daemon process
+            final Intent intent = new Intent(this, DaemonService.class);
+            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+            startService(intent);
+        }
     }
 
     /**
@@ -261,21 +261,18 @@ public class DaemonService extends Service {
         mServiceLooper.quit();
 
         // close all sessions
-        mSessionManager.terminate();
-        
-        // save registrations
-        mSessionManager.saveRegistrations();
+        mSessionManager.destroy();
         
         // shutdown daemon completely
         mDaemonProcess.destroy();
         mDaemonProcess = null;
 
+        // dereference P2P Manager
+        _p2p_manager = null;
+        
         // remove notification
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         nm.cancel(1);
-
-        // dereference P2P Manager
-        _p2p_manager = null;
 
         // call super method
         super.onDestroy();
