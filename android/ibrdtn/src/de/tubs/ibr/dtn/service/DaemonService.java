@@ -23,6 +23,7 @@
 
 package de.tubs.ibr.dtn.service;
 
+import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -134,15 +135,18 @@ public class DaemonService extends Service {
         return mBinder;
     }
 
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
+    private static final class ServiceHandler extends Handler {
+        private final WeakReference<DaemonService> mService; 
+        
+        public ServiceHandler(Looper looper, DaemonService service) {
             super(looper);
+            mService = new WeakReference<DaemonService>(service);
         }
 
         @Override
         public void handleMessage(Message msg) {
             Intent intent = (Intent) msg.obj;
-            onHandleIntent(intent);
+            mService.get().onHandleIntent(intent);
         }
     }
     
@@ -230,7 +234,7 @@ public class DaemonService extends Service {
         HandlerThread thread = new HandlerThread("DaemonService_IntentThread");
         thread.start();
         mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper);
+        mServiceHandler = new ServiceHandler(mServiceLooper, this);
 
         // create a session manager
         mSessionManager = new SessionManager(this);
