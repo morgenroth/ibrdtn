@@ -439,16 +439,10 @@ namespace dtn
 
 				// create a background task for removing the bundle
 				_datastore.remove(hash);
-
-				// raise bundle removed event
-				eventBundleRemoved(meta);
 			}
 
 			_priority_index.clear();
 			_list.clear();
-
-			// set the storage size to zero
-			clearSpace();
 		}
 
 		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
