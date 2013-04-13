@@ -27,27 +27,6 @@ import java.io.File;
 import android.os.Environment;
 
 public class DaemonStorageUtils {
-	public static synchronized void clearStorage()
-	{
-		// check if the daemon is running
-		// if (isRunning())
-		// return;
-
-		// clear the storage directory
-		File bundles = getStoragePath("bundles");
-		if (bundles == null) return;
-
-		// flush storage path
-		File[] files = bundles.listFiles();
-		if (files != null)
-		{
-			for (File f : files)
-			{
-				f.delete();
-			}
-		}
-	}
-
 	public static File getStoragePath(String subdir)
 	{
 		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))

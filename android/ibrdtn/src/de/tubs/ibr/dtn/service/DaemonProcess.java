@@ -136,6 +136,10 @@ public class DaemonProcess {
         return ret;
 	}
 	
+	public synchronized void clearStorage() {
+		mDaemon.clearStorage();
+	}
+	
 	public DaemonState getState() {
 	    return _state;
 	}

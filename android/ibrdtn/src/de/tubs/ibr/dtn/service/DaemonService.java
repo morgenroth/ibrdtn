@@ -89,7 +89,7 @@ public class DaemonService extends Service {
         }
 
         public void clearStorage() throws RemoteException {
-            DaemonStorageUtils.clearStorage();
+        	DaemonService.this.mDaemonProcess.clearStorage();
         }
 
         public DTNSession getSession(String packageName) throws RemoteException {

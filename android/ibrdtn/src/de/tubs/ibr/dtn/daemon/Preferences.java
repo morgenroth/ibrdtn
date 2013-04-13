@@ -58,7 +58,6 @@ import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
-import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonProcess;
@@ -135,10 +134,6 @@ public class Preferences extends PreferenceActivity {
 		protected Boolean doInBackground(String... files)
 		{
 			try {
-		    	if (service.isRunning())
-		    	{
-		    		return false;
-		    	}
 		    	service.clearStorage();
 				return true;
 			} catch (RemoteException e) {
@@ -151,16 +146,7 @@ public class Preferences extends PreferenceActivity {
 
 		protected void onPostExecute(Boolean result)
 		{
-			if (result)
-			{
-				pd.dismiss();
-			}
-			else
-			{
-				pd.cancel();
-	    		Toast toast = Toast.makeText(Preferences.this, "Daemon is running! Please stop the daemon first.", Toast.LENGTH_LONG);
-	    		toast.show();
-			}
+			pd.dismiss();
 		}
 	}
 	
