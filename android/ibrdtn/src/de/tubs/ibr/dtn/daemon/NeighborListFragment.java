@@ -175,7 +175,8 @@ public class NeighborListFragment extends ListFragment {
             list.clear();
         }
 
-        public void remove(int position) {
+        @SuppressWarnings("unused")
+		public void remove(int position) {
             list.remove(position);
         }
 

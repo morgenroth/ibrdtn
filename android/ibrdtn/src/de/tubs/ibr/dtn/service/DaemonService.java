@@ -130,7 +130,8 @@ public class DaemonService extends Service {
      * 
      * @param intent
      */
-    public void onHandleIntent(Intent intent, int startId) {
+    @SuppressWarnings("deprecation")
+	public void onHandleIntent(Intent intent, int startId) {
         String action = intent.getAction();
 
         if (ACTION_STARTUP.equals(action)) {
