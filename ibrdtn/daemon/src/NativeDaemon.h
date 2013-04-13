@@ -182,6 +182,11 @@ namespace dtn
 			 */
 			std::vector<std::string> getVersion() throw ();
 
+			/**
+			 * Delete all bundles in the storage
+			 */
+			void clearStorage() throw ();
+
 		private:
 			void init_up(DaemonRunLevel rl) throw (NativeDaemonException);
 			void init_down(DaemonRunLevel rl) throw (NativeDaemonException);
