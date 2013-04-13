@@ -27,6 +27,8 @@
 
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/RWLock.h>
+#include <ibrcommon/thread/MutexLock.h>
 
 namespace dtn
 {
@@ -57,16 +59,26 @@ namespace dtn
 
 		void NativeSession::destroy() throw ()
 		{
-			if (_destroyed) return;
+			// prevent double calls
+			{
+				ibrcommon::MutexLock l(_destroyed_mutex);
+				if (_destroyed) return;
 
-			// prevent future destroy calls
-			_destroyed = true;
+				// prevent future destroy calls
+				_destroyed = true;
+			}
 
 			// send stop signal to the receiver
 			_receiver.stop();
 
 			// wait here until the receiver has been stopped
 			_receiver.join();
+
+			// invalidate the callback pointer
+			{
+				ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+				_cb = NULL;
+			}
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session destroyed" << IBRCOMMON_LOGGER_ENDL;
 		}
@@ -76,20 +88,23 @@ namespace dtn
 			return dtn::core::BundleCore::local;
 		}
 
-		void NativeSession::fireNotificationBundle(const dtn::data::BundleID &id) const throw ()
+		void NativeSession::fireNotificationBundle(const dtn::data::BundleID &id) throw ()
 		{
+			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 			if (_cb == NULL) return;
 			_cb->notifyBundle(id);
 		}
 
-		void NativeSession::fireNotificationStatusReport(const dtn::data::StatusReportBlock &report) const throw ()
+		void NativeSession::fireNotificationStatusReport(const dtn::data::StatusReportBlock &report) throw ()
 		{
+			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 			if (_cb == NULL) return;
 			_cb->notifyStatusReport(report);
 		}
 
-		void NativeSession::fireNotificationCustodySignal(const dtn::data::CustodySignalBlock &custody) const throw ()
+		void NativeSession::fireNotificationCustodySignal(const dtn::data::CustodySignalBlock &custody) throw ()
 		{
+			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 			if (_cb == NULL) return;
 			_cb->notifyCustodySignal(custody);
 		}
