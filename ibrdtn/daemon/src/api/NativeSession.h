@@ -30,6 +30,8 @@
 #include <ibrdtn/data/CustodySignalBlock.h>
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Queue.h>
+#include <ibrcommon/thread/RWMutex.h>
+#include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/Exceptions.h>
 
 namespace dtn
@@ -256,19 +258,20 @@ namespace dtn
 			/**
 			 * Push out an notification to the native session callback.
 			 */
-			void fireNotificationBundle(const dtn::data::BundleID &id) const throw ();
+			void fireNotificationBundle(const dtn::data::BundleID &id) throw ();
 
 			/**
 			 * Push out an notification to the native session callback.
 			 */
-			void fireNotificationStatusReport(const dtn::data::StatusReportBlock &report) const throw ();
+			void fireNotificationStatusReport(const dtn::data::StatusReportBlock &report) throw ();
 
 			/**
 			 * Push out an notification to the native session callback.
 			 */
-			void fireNotificationCustodySignal(const dtn::data::CustodySignalBlock &custody) const throw ();
+			void fireNotificationCustodySignal(const dtn::data::CustodySignalBlock &custody) throw ();
 
 			// callback
+			ibrcommon::RWMutex _cb_mutex;
 			NativeSessionCallback *_cb;
 
 			// local registration
@@ -284,6 +287,7 @@ namespace dtn
 			ibrcommon::Queue<dtn::data::BundleID> _bundle_queue;
 
 			// mark the session as destroyed or not
+			ibrcommon::Mutex _destroyed_mutex;
 			bool _destroyed;
 		};
 	} /* namespace net */

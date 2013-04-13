@@ -83,7 +83,7 @@ public class LogListFragment extends ListFragment implements
             }
         });
 
-        setEmptyText("no log");
+        setEmptyText(getActivity().getResources().getString(R.string.list_no_log));
 
         // create a new list adapter
         mAdapter = new LogListAdapter(getActivity());

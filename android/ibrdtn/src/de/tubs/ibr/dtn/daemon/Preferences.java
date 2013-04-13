@@ -58,7 +58,6 @@ import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
-import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonProcess;
@@ -81,13 +80,7 @@ public class Preferences extends PreferenceActivity {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Preferences.this.service = DTNService.Stub.asInterface(service);
 			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
-			
-			// on first startup ask for permissions to collect statistical data
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
-			if (!prefs.contains("collect_stats")) {
-				showStatisticLoggerDialog(Preferences.this);
-			}
-			
+				
 			// get the daemon version
 			try {
 			    String version[] = Preferences.this.service.getVersion();
@@ -107,19 +100,22 @@ public class Preferences extends PreferenceActivity {
 		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
 		    public void onClick(DialogInterface dialog, int which) {
 		    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+		        PreferenceActivity prefactivity = (PreferenceActivity)activity;
+		        
+		        @SuppressWarnings("deprecation")
+				CheckBoxPreference cb = (CheckBoxPreference)prefactivity.findPreference("collect_stats");
 		    	
 		        switch (which){
 		        case DialogInterface.BUTTON_POSITIVE:
 		        	prefs.edit().putBoolean("collect_stats", true).commit();
+		        	cb.setChecked(true);
 		            break;
 
 		        case DialogInterface.BUTTON_NEGATIVE:
 		        	prefs.edit().putBoolean("collect_stats", false).commit();
+		        	cb.setChecked(false);
 		            break;
 		        }
-		        
-		        activity.finish();
-		        activity.startActivity(new Intent(activity, Preferences.class));
 		    }
 		};
 
@@ -135,10 +131,6 @@ public class Preferences extends PreferenceActivity {
 		protected Boolean doInBackground(String... files)
 		{
 			try {
-		    	if (service.isRunning())
-		    	{
-		    		return false;
-		    	}
 		    	service.clearStorage();
 				return true;
 			} catch (RemoteException e) {
@@ -151,16 +143,7 @@ public class Preferences extends PreferenceActivity {
 
 		protected void onPostExecute(Boolean result)
 		{
-			if (result)
-			{
-				pd.dismiss();
-			}
-			else
-			{
-				pd.cancel();
-	    		Toast toast = Toast.makeText(Preferences.this, "Daemon is running! Please stop the daemon first.", Toast.LENGTH_LONG);
-	    		toast.show();
-			}
+			pd.dismiss();
 		}
 	}
 	
@@ -381,5 +364,11 @@ public class Preferences extends PreferenceActivity {
 				DaemonService.class), mConnection, Context.BIND_AUTO_CREATE);
   		
 		super.onResume();
+		
+		// on first startup ask for permissions to collect statistical data
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+		if (!prefs.contains("collect_stats")) {
+			showStatisticLoggerDialog(Preferences.this);
+		}
 	}
 }
