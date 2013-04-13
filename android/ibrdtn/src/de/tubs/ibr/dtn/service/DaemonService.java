@@ -121,7 +121,7 @@ public class DaemonService extends Service {
         @Override
         public void handleMessage(Message msg) {
             Intent intent = (Intent) msg.obj;
-            mService.get().onHandleIntent(intent);
+            mService.get().onHandleIntent(intent, msg.arg1);
         }
     }
     
@@ -130,7 +130,7 @@ public class DaemonService extends Service {
      * 
      * @param intent
      */
-    public void onHandleIntent(Intent intent) {
+    public void onHandleIntent(Intent intent, int startId) {
         String action = intent.getAction();
 
         if (ACTION_STARTUP.equals(action)) {
@@ -160,7 +160,9 @@ public class DaemonService extends Service {
 
             mSessionManager.unregister(pi.getTargetPackage());
         }
-
+        
+        // stop the daemon if it should be offline
+        if (mDaemonProcess.getState().equals(DaemonState.OFFLINE)) stopSelf(startId);
     }
 
     public DaemonService() {
