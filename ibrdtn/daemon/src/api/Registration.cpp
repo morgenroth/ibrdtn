@@ -55,6 +55,7 @@ namespace dtn
 {
 	namespace api
 	{
+		const std::string Registration::TAG = "Registration";
 		std::set<std::string> Registration::_handles;
 
 		const std::string Registration::alloc_handle()
@@ -171,43 +172,31 @@ namespace dtn
 
 		dtn::data::Bundle Registration::receive() throw (dtn::storage::NoBundleFoundException)
 		{
-			ibrcommon::MutexLock l(_receive_lock);
-
 			// get the global storage
 			dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
-			while (true)
-			{
-				try {
-					// get the first bundle in the queue
-					dtn::data::MetaBundle b = _queue.pop();
+			// get the next bundles as MetaBundle
+			dtn::data::MetaBundle b = receiveMetaBundle();
 
-					// load the bundle
-					return storage.get(b);
-				} catch (const ibrcommon::QueueUnblockedException &e) {
-					if (e.reason == ibrcommon::QueueUnblockedException::QUEUE_ABORT)
-					{
-						// query for new bundles
-						underflow();
-					}
-				} catch (const dtn::storage::NoBundleFoundException&) { }
-			}
-
-			throw dtn::storage::NoBundleFoundException();
+			// load the bundle
+			return storage.get(b);
 		}
 
 		dtn::data::MetaBundle Registration::receiveMetaBundle() throw (dtn::storage::NoBundleFoundException)
 		{
 			ibrcommon::MutexLock l(_receive_lock);
+
 			while(true)
 			{
 				try {
 					// get the first bundle in the queue
 					dtn::data::MetaBundle b = _queue.pop();
 					return b;
-				}
-				catch(const ibrcommon::QueueUnblockedException & e){
-					if(e.reason == ibrcommon::QueueUnblockedException::QUEUE_ABORT){
+				} catch (const ibrcommon::QueueUnblockedException &e) {
+					if (e.reason == ibrcommon::QueueUnblockedException::QUEUE_ABORT)
+					{
+						IBRCOMMON_LOGGER_DEBUG_TAG(Registration::TAG, 25) << "search for more bundles" << IBRCOMMON_LOGGER_ENDL;
+
 						// query for new bundles
 						underflow();
 					}
@@ -258,7 +247,7 @@ namespace dtn
 						}
 					}
 
-					IBRCOMMON_LOGGER_DEBUG_TAG("Registration", 10) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(Registration::TAG, 30) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					if (_bundles.has(meta))
 					{
@@ -339,7 +328,7 @@ namespace dtn
 				_recv_bundles.add(bundle);
 				_queue.push(bundle);
 
-				IBRCOMMON_LOGGER_DEBUG_TAG("RegistrationQueue", 10) << "add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(Registration::TAG, 10) << "[RegistrationQueue] add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) { }
 		}
 
@@ -527,7 +516,7 @@ namespace dtn
 				try {
 					dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
 				} catch (const ibrcommon::Exception &ex) {
-					IBRCOMMON_LOGGER(warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(Registration::TAG, warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				};
 			}
 #endif
@@ -542,9 +531,9 @@ namespace dtn
 					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
 				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 					// sign requested, but no key is available
-					IBRCOMMON_LOGGER(warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(Registration::TAG, warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
 				} catch (const dtn::security::SecurityManager::EncryptException&) {
-					IBRCOMMON_LOGGER(warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(Registration::TAG, warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
@@ -557,7 +546,7 @@ namespace dtn
 					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
 				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 					// sign requested, but no key is available
-					IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(Registration::TAG, warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 #endif

@@ -236,7 +236,7 @@ namespace dtn
 
 				load(ri, id);
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "No next bundle available" << IBRCOMMON_LOGGER_ENDL;
 				throw BundleNotFoundException();
 			}
 		}
@@ -252,7 +252,7 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << id.toString() << " loaded" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << id.toString() << ", Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw BundleNotFoundException();
 			}
 		}
@@ -449,6 +449,7 @@ namespace dtn
 							_session.fireNotificationBundle(id);
 						}
 					} catch (const dtn::storage::NoBundleFoundException&) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 25) << "[BundleReceiver] no more bundles found - wait until we are notified" << IBRCOMMON_LOGGER_ENDL;
 						reg.wait_for_bundle();
 					}
 
