@@ -201,7 +201,7 @@ namespace dtn
 					}
 					else
 					{
-						IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, warning) << "Peer requested to purge a bundle with a non-singleton destination: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, warning) << neighbor.getString() << " requested to purge a bundle with a non-singleton destination: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					/* generate a report */

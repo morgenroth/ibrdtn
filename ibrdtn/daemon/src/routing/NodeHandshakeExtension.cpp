@@ -130,7 +130,7 @@ namespace dtn
 					}
 					else
 					{
-						IBRCOMMON_LOGGER_TAG(NodeHandshakeExtension::TAG, warning) << "Peer requested to purge a bundle with a non-singleton destination: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(NodeHandshakeExtension::TAG, warning) << source.getString() << " requested to purge a bundle with a non-singleton destination: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 			} catch (std::exception&) { };
