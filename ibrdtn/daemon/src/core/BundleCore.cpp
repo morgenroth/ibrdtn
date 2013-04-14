@@ -321,8 +321,11 @@ namespace dtn
 						dtn::core::BundleEvent::raise(meta, BUNDLE_DELETED, StatusReportBlock::DESTINATION_ENDPOINT_ID_UNINTELLIGIBLE);
 					}
 
-					// delete the bundle
-					dtn::core::BundlePurgeEvent::raise(meta);
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						// delete the bundle
+						dtn::core::BundlePurgeEvent::raise(meta);
+					}
 				}
 
 				return;

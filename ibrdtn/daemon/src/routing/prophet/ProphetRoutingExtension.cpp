@@ -163,8 +163,8 @@ namespace dtn
 				class BundleFilter : public dtn::storage::BundleSelector
 				{
 				public:
-					BundleFilter(BaseRouter& router)
-					 : _router(router)
+					BundleFilter(const AcknowledgementSet& neighbor_ack_set)
+					 : _ackset(neighbor_ack_set)
 					{}
 
 					virtual ~BundleFilter() {}
@@ -177,15 +177,15 @@ namespace dtn
 						if (meta.destination.getNode() == dtn::core::BundleCore::local)
 							return false;
 
-						if(!_router.isKnown(meta))
+						if(!_ackset.has(meta))
 							return false;
 
 						return true;
 					}
 
 				private:
-					BaseRouter& _router;
-				} filter(**this);
+					const AcknowledgementSet& _ackset;
+				} filter(neighbor_ack_set);
 
 				dtn::storage::BundleResultList removeList;
 				storage.get(filter, removeList);
@@ -194,9 +194,15 @@ namespace dtn
 				{
 					const dtn::data::MetaBundle &meta = (*it);
 
-					dtn::core::BundlePurgeEvent::raise(meta);
-
-					IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						dtn::core::BundlePurgeEvent::raise(meta);
+						IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					}
+					else
+					{
+						IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, warning) << neighbor.getString() << " requested to purge a bundle with a non-singleton destination: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					}
 
 					/* generate a report */
 					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
