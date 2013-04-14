@@ -163,8 +163,8 @@ namespace dtn
 				class BundleFilter : public dtn::storage::BundleSelector
 				{
 				public:
-					BundleFilter(BaseRouter& router)
-					 : _router(router)
+					BundleFilter(const AcknowledgementSet& neighbor_ack_set)
+					 : _ackset(neighbor_ack_set)
 					{}
 
 					virtual ~BundleFilter() {}
@@ -177,15 +177,15 @@ namespace dtn
 						if (meta.destination.getNode() == dtn::core::BundleCore::local)
 							return false;
 
-						if(!_router.isKnown(meta))
+						if(!_ackset.has(meta))
 							return false;
 
 						return true;
 					}
 
 				private:
-					BaseRouter& _router;
-				} filter(**this);
+					const AcknowledgementSet& _ackset;
+				} filter(neighbor_ack_set);
 
 				dtn::storage::BundleResultList removeList;
 				storage.get(filter, removeList);
