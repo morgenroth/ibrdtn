@@ -75,7 +75,7 @@ namespace dtn
 				const dtn::data::BundleSet vec = (**this).getPurgedBundles();
 
 				// create an item
-				BloomFilterSummaryVector *item = new BloomFilterSummaryVector(vec);
+				BloomFilterPurgeVector *item = new BloomFilterPurgeVector(vec);
 
 				// add it to the handshake
 				answer.addItem(item);
