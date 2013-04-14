@@ -320,41 +320,40 @@ namespace dtn
 					// set fragment offset
 					fragment._fragmentoffset = offset;
 
-					// create new blob for fragment payload
-					ibrcommon::BLOB::Reference fragment_ref = ibrcommon::BLOB::create();
-
 					// copy partial payload to the payload of the fragment
-					{
+					try {
+						// create new blob for fragment payload
+						ibrcommon::BLOB::Reference fragment_ref = ibrcommon::BLOB::create();
+
+						// get the iostream object
 						ibrcommon::BLOB::iostream fragment_stream = fragment_ref.iostream();
 
-						try {
-							if ((offset + maxPayloadLength) > payloadLength) {
-								// copy payload to the fragment
-								ibrcommon::BLOB::copy(*fragment_stream, *stream, payloadLength - offset, 65535);
-							} else {
-								// copy payload to the fragment
-								ibrcommon::BLOB::copy(*fragment_stream, *stream, maxPayloadLength, 65535);
-							}
-						} catch (const ibrcommon::IOException &ex) {
-							IBRCOMMON_LOGGER_DEBUG(5) << "error while splitting bundle into fragments: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						if ((offset + maxPayloadLength) > payloadLength) {
+							// copy payload to the fragment
+							ibrcommon::BLOB::copy(*fragment_stream, *stream, payloadLength - offset, 65535);
+						} else {
+							// copy payload to the fragment
+							ibrcommon::BLOB::copy(*fragment_stream, *stream, maxPayloadLength, 65535);
 						}
 
 						// set new offset position
 						offset += fragment_stream.size();
+
+						// create fragment payload block
+						dtn::data::PayloadBlock &fragment_payloadBlock = fragment.push_back(fragment_ref);
+
+						// add all necessary blocks from the bundle to the fragment
+						addBlocksFromBundleToFragment(bundle, fragment, fragment_payloadBlock, isFirstFragment, payloadLength == offset);
+					} catch (const ibrcommon::IOException &ex) {
+						IBRCOMMON_LOGGER_TAG(FragmentManager::TAG, error) << "error while splitting bundle into fragments: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
-
-					// create fragment payload block
-					dtn::data::PayloadBlock &fragment_payloadBlock = fragment.push_back(fragment_ref);
-
-					// add all necessary blocks from the bundle to the fragment
-					addBlocksFromBundleToFragment(bundle, fragment, fragment_payloadBlock, isFirstFragment, payloadLength == offset);
 
 					// add current fragment to fragments list
 					fragments.push_back(fragment);
 
 					if (isFirstFragment) isFirstFragment = false;
 
-					IBRCOMMON_LOGGER_DEBUG(5) << "Fragment created: " << fragment.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Fragment created: " << fragment.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				// bundle has no payload
