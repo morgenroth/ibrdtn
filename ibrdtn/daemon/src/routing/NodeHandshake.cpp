@@ -98,6 +98,52 @@ namespace dtn
 			return _lifetime;
 		}
 
+		const std::string NodeHandshake::toString() const
+		{
+			std::stringstream ss;
+
+			switch (getType()) {
+				case HANDSHAKE_INVALID:
+					ss << "HANDSHAKE_INVALID";
+					break;
+
+				case HANDSHAKE_REQUEST:
+					ss << "HANDSHAKE_REQUEST";
+					break;
+
+				case HANDSHAKE_RESPONSE:
+					ss << "HANDSHAKE_RESPONSE";
+					break;
+
+				default:
+					ss << "HANDSHAKE";
+					break;
+			}
+
+			ss << "[ttl: " << getLifetime() << ",";
+
+			if (getType() == NodeHandshake::HANDSHAKE_REQUEST)
+			{
+				for (std::set<size_t>::const_iterator iter = _requests.begin(); iter != _requests.end(); iter++)
+				{
+					size_t item = (*iter);
+					ss << " " << item;
+				}
+			}
+			else if (getType() == NodeHandshake::HANDSHAKE_RESPONSE)
+			{
+				for (std::list<NodeHandshakeItem*>::const_iterator iter = _items.begin(); iter != _items.end(); iter++)
+				{
+					const NodeHandshakeItem &item (**iter);
+					ss << " " << item.getIdentifier();
+				}
+			}
+
+			ss << "]";
+
+			return ss.str();
+		}
+
 		std::ostream& operator<<(std::ostream &stream, const NodeHandshake &hs)
 		{
 			// first the type as SDNV

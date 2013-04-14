@@ -39,6 +39,8 @@ namespace dtn
 		class Registration
 		{
 		public:
+			static const std::string TAG;
+
 			enum NOTIFY_CALL
 			{
 				NOTIFY_BUNDLE_AVAILABLE = 0,

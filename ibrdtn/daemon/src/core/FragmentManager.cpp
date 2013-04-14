@@ -36,6 +36,8 @@ namespace dtn
 {
 	namespace core
 	{
+		const std::string FragmentManager::TAG = "FragmentManager";
+
 		ibrcommon::Mutex FragmentManager::_offsets_mutex;
 		std::set<FragmentManager::Transmission> FragmentManager::_offsets;
 
@@ -82,7 +84,7 @@ namespace dtn
 					list.clear();
 					search(meta, list);
 
-					IBRCOMMON_LOGGER_DEBUG(20) << "found " << list.size() << " fragments similar to bundle " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "found " << list.size() << " fragments similar to bundle " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// TODO: drop fragments if other fragments available containing the same payload
 
@@ -110,7 +112,7 @@ namespace dtn
 
 						if (meta.payloadlength > 0)
 						{
-							IBRCOMMON_LOGGER_DEBUG(20) << "fragment: " << (*iter).toString() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "fragment: " << (*iter).toString() << IBRCOMMON_LOGGER_ENDL;
 
 							try {
 								// load bundle from storage
@@ -119,7 +121,7 @@ namespace dtn
 								// merge the bundle
 								c << bundle;
 							} catch (const dtn::storage::NoBundleFoundException&) {
-								IBRCOMMON_LOGGER(error) << "could not load fragment to merge bundle" << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(FragmentManager::TAG, error) << "could not load fragment to merge bundle" << IBRCOMMON_LOGGER_ENDL;
 							};
 						}
 					}
@@ -224,7 +226,7 @@ namespace dtn
 				t.peer = peer;
 				t.expires = dtn::utils::Clock::getExpireTime( b );
 
-				IBRCOMMON_LOGGER_DEBUG(20) << "[FragmentManager] store offset of partial transmitted bundle " <<
+				IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "[FragmentManager] store offset of partial transmitted bundle " <<
 						id.toString() << "; offset: " << t.offset << " (" << abs_offset << ")" << IBRCOMMON_LOGGER_ENDL;
 
 				ibrcommon::MutexLock l(_offsets_mutex);
@@ -318,41 +320,40 @@ namespace dtn
 					// set fragment offset
 					fragment._fragmentoffset = offset;
 
-					// create new blob for fragment payload
-					ibrcommon::BLOB::Reference fragment_ref = ibrcommon::BLOB::create();
-
 					// copy partial payload to the payload of the fragment
-					{
+					try {
+						// create new blob for fragment payload
+						ibrcommon::BLOB::Reference fragment_ref = ibrcommon::BLOB::create();
+
+						// get the iostream object
 						ibrcommon::BLOB::iostream fragment_stream = fragment_ref.iostream();
 
-						try {
-							if ((offset + maxPayloadLength) > payloadLength) {
-								// copy payload to the fragment
-								ibrcommon::BLOB::copy(*fragment_stream, *stream, payloadLength - offset, 65535);
-							} else {
-								// copy payload to the fragment
-								ibrcommon::BLOB::copy(*fragment_stream, *stream, maxPayloadLength, 65535);
-							}
-						} catch (const ibrcommon::IOException &ex) {
-							IBRCOMMON_LOGGER_DEBUG(5) << "error while splitting bundle into fragments: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						if ((offset + maxPayloadLength) > payloadLength) {
+							// copy payload to the fragment
+							ibrcommon::BLOB::copy(*fragment_stream, *stream, payloadLength - offset, 65535);
+						} else {
+							// copy payload to the fragment
+							ibrcommon::BLOB::copy(*fragment_stream, *stream, maxPayloadLength, 65535);
 						}
 
 						// set new offset position
 						offset += fragment_stream.size();
+
+						// create fragment payload block
+						dtn::data::PayloadBlock &fragment_payloadBlock = fragment.push_back(fragment_ref);
+
+						// add all necessary blocks from the bundle to the fragment
+						addBlocksFromBundleToFragment(bundle, fragment, fragment_payloadBlock, isFirstFragment, payloadLength == offset);
+					} catch (const ibrcommon::IOException &ex) {
+						IBRCOMMON_LOGGER_TAG(FragmentManager::TAG, error) << "error while splitting bundle into fragments: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
-
-					// create fragment payload block
-					dtn::data::PayloadBlock &fragment_payloadBlock = fragment.push_back(fragment_ref);
-
-					// add all necessary blocks from the bundle to the fragment
-					addBlocksFromBundleToFragment(bundle, fragment, fragment_payloadBlock, isFirstFragment, payloadLength == offset);
 
 					// add current fragment to fragments list
 					fragments.push_back(fragment);
 
 					if (isFirstFragment) isFirstFragment = false;
 
-					IBRCOMMON_LOGGER_DEBUG(5) << "Fragment created: " << fragment.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Fragment created: " << fragment.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				// bundle has no payload
@@ -377,7 +378,7 @@ namespace dtn
 
 				block_type = current_block.getType();
 
-				IBRCOMMON_LOGGER_DEBUG(5) << "Fragment Block found: " << fragment.toString() << "  " << (unsigned int)block_type << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Fragment Block found: " << fragment.toString() << "  " << (unsigned int)block_type << IBRCOMMON_LOGGER_ENDL;
 
 
 				if (block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
@@ -403,7 +404,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 						catch(const ibrcommon::Exception &ex)
 						{
@@ -413,7 +414,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 
 					}
@@ -432,7 +433,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 						catch (const ibrcommon::Exception &ex)
 						{
@@ -442,7 +443,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				}

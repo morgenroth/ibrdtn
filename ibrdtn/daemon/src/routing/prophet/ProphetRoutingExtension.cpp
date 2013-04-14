@@ -48,6 +48,8 @@ namespace dtn
 {
 	namespace routing
 	{
+		const std::string ProphetRoutingExtension::TAG = "ProphetRoutingExtension";
+
 		ProphetRoutingExtension::ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
 								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ,
 								 ibrcommon::Timer::time_t next_exchange_timeout)
@@ -66,7 +68,7 @@ namespace dtn
 			_next_exchange_timestamp = dtn::utils::Clock::getUnixTimestamp() + _next_exchange_timeout;
 
 			// write something to the syslog
-			IBRCOMMON_LOGGER(info) << "Initializing PRoPHET routing module" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, info) << "Initializing PRoPHET routing module" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		ProphetRoutingExtension::~ProphetRoutingExtension()
@@ -106,21 +108,22 @@ namespace dtn
 			const dtn::data::EID neighbor_node = neighbor.getNode();
 
 			/* ignore neighbors, that have our EID */
-			if(neighbor_node == dtn::core::BundleCore::local)
-				return;
-
-			// update the encounter on every routing handshake
-			{
-				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
-
-				age();
-
-				/* update predictability for this neighbor */
-				updateNeighbor(neighbor_node);
-			}
+			if (neighbor_node == dtn::core::BundleCore::local) return;
 
 			try {
 				const DeliveryPredictabilityMap& neighbor_dp_map = response.get<DeliveryPredictabilityMap>();
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "DeliveryPredictabilityMap received" << IBRCOMMON_LOGGER_ENDL;
+
+				// update the encounter on every routing handshake
+				{
+					ibrcommon::MutexLock l(_deliveryPredictabilityMap);
+
+					age();
+
+					/* update predictability for this neighbor */
+					updateNeighbor(neighbor_node);
+				}
 
 				// store a copy of the map in the neighbor database
 				{
@@ -140,6 +143,8 @@ namespace dtn
 
 			try {
 				const AcknowledgementSet& neighbor_ack_set = response.get<AcknowledgementSet>();
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "AcknowledgementSet received" << IBRCOMMON_LOGGER_ENDL;
 
 				// merge ack'set into the known bundles
 				for (AcknowledgementSet::const_iterator it = _acknowledgementSet.begin(); it != _acknowledgementSet.end(); ++it) {
@@ -191,7 +196,7 @@ namespace dtn
 
 					dtn::core::BundlePurgeEvent::raise(meta);
 
-					IBRCOMMON_LOGGER(notice) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					/* generate a report */
 					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
@@ -327,7 +332,7 @@ namespace dtn
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("FloodRoutingExtension", error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -338,7 +343,7 @@ namespace dtn
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("FloodRoutingExtension", error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -444,7 +449,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG(50) << "processing prophet task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 50) << "processing prophet task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						/**
@@ -471,7 +476,7 @@ namespace dtn
 								BundleFilter filter(entry, *_forwardingStrategy, dpm);
 
 								// some debug output
-								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 								// query some unknown bundle from the storage, the list contains max. 10 items.
 								list.clear();
@@ -517,7 +522,7 @@ namespace dtn
 						} catch (const std::bad_cast&) { }
 
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in ProphetRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 20) << "Unexpected exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const std::exception&) {
 					return;
