@@ -117,14 +117,21 @@ namespace dtn
 					// delete bundles in the purge vector
 					const dtn::data::MetaBundle meta = storage.remove(purge);
 
-					// log the purged bundle
-					IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						// log the purged bundle
+						IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-					// gen a report
-					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, StatusReportBlock::NO_ADDITIONAL_INFORMATION);
+						// gen a report
+						dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 
-					// add this bundle to the own purge vector
-					(**this).addPurgedBundle(meta);
+						// add this bundle to the own purge vector
+						(**this).addPurgedBundle(meta);
+					}
+					else
+					{
+						IBRCOMMON_LOGGER_TAG(NodeHandshakeExtension::TAG, warning) << "Peer requested to purge a bundle with a non-singleton destination: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
 			} catch (std::exception&) { };
 		}

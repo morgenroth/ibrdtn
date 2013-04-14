@@ -194,9 +194,15 @@ namespace dtn
 				{
 					const dtn::data::MetaBundle &meta = (*it);
 
-					dtn::core::BundlePurgeEvent::raise(meta);
-
-					IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						dtn::core::BundlePurgeEvent::raise(meta);
+						IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					}
+					else
+					{
+						IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, warning) << "Peer requested to purge a bundle with a non-singleton destination: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					}
 
 					/* generate a report */
 					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);

@@ -136,7 +136,10 @@ namespace dtn
 						// delete all fragments of the merged bundle
 						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 						{
-							dtn::core::BundlePurgeEvent::raise(*iter);
+							if ((*iter).get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+							{
+								dtn::core::BundlePurgeEvent::raise(*iter);
+							}
 						}
 					}
 				}
