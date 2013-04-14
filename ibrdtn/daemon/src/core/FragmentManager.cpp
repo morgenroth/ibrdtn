@@ -36,6 +36,8 @@ namespace dtn
 {
 	namespace core
 	{
+		const std::string FragmentManager::TAG = "FragmentManager";
+
 		ibrcommon::Mutex FragmentManager::_offsets_mutex;
 		std::set<FragmentManager::Transmission> FragmentManager::_offsets;
 
@@ -82,7 +84,7 @@ namespace dtn
 					list.clear();
 					search(meta, list);
 
-					IBRCOMMON_LOGGER_DEBUG(20) << "found " << list.size() << " fragments similar to bundle " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "found " << list.size() << " fragments similar to bundle " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// TODO: drop fragments if other fragments available containing the same payload
 
@@ -110,7 +112,7 @@ namespace dtn
 
 						if (meta.payloadlength > 0)
 						{
-							IBRCOMMON_LOGGER_DEBUG(20) << "fragment: " << (*iter).toString() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "fragment: " << (*iter).toString() << IBRCOMMON_LOGGER_ENDL;
 
 							try {
 								// load bundle from storage
@@ -119,7 +121,7 @@ namespace dtn
 								// merge the bundle
 								c << bundle;
 							} catch (const dtn::storage::NoBundleFoundException&) {
-								IBRCOMMON_LOGGER(error) << "could not load fragment to merge bundle" << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(FragmentManager::TAG, error) << "could not load fragment to merge bundle" << IBRCOMMON_LOGGER_ENDL;
 							};
 						}
 					}
@@ -224,7 +226,7 @@ namespace dtn
 				t.peer = peer;
 				t.expires = dtn::utils::Clock::getExpireTime( b );
 
-				IBRCOMMON_LOGGER_DEBUG(20) << "[FragmentManager] store offset of partial transmitted bundle " <<
+				IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "[FragmentManager] store offset of partial transmitted bundle " <<
 						id.toString() << "; offset: " << t.offset << " (" << abs_offset << ")" << IBRCOMMON_LOGGER_ENDL;
 
 				ibrcommon::MutexLock l(_offsets_mutex);
@@ -377,7 +379,7 @@ namespace dtn
 
 				block_type = current_block.getType();
 
-				IBRCOMMON_LOGGER_DEBUG(5) << "Fragment Block found: " << fragment.toString() << "  " << (unsigned int)block_type << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Fragment Block found: " << fragment.toString() << "  " << (unsigned int)block_type << IBRCOMMON_LOGGER_ENDL;
 
 
 				if (block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
@@ -403,7 +405,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 						catch(const ibrcommon::Exception &ex)
 						{
@@ -413,7 +415,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block before Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 
 					}
@@ -432,7 +434,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 						catch (const ibrcommon::Exception &ex)
 						{
@@ -442,7 +444,7 @@ namespace dtn
 							//copy block
 							fragment_block = current_block;
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 5) << "Added Block after Payload: " << fragment.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				}

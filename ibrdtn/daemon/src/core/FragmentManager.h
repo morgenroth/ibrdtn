@@ -61,6 +61,8 @@ namespace dtn
 
 		class FragmentManager : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
 		{
+			static const std::string TAG;
+
 		public:
 			FragmentManager();
 			virtual ~FragmentManager();
