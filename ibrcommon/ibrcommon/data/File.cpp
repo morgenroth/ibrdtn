@@ -149,12 +149,7 @@ namespace ibrcommon
 
 	bool File::isSystem() const
 	{
-		try {
-			if ((getBasename() == "..") || (getBasename() == ".")) return true;
-		} catch (const std::out_of_range&) {
-			return false;
-		}
-		return false;
+		return ((getBasename() == "..") || (getBasename() == "."));
 	}
 
 	bool File::isDirectory() const
@@ -173,8 +168,8 @@ namespace ibrcommon
 #if !defined(ANDROID) && defined(HAVE_FEATURES_H)
 		return std::string(basename(_path.c_str()));
 #else
-		char path[_path.length()];
-		::memcpy(&path, _path.c_str(), _path.length());
+		char path[_path.length()+1];
+		::memcpy(&path, _path.c_str(), _path.length()+1);
 
 		return std::string(basename(path));
 #endif
