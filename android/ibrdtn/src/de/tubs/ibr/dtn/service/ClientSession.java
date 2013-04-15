@@ -80,7 +80,7 @@ public class ClientSession {
 	        // send notification intent
 	        context.sendBroadcast(notify);
 
-	        Log.d(TAG, "RECEIVE intent sent to " + _package_name);
+	        Log.d(TAG, "RECEIVE intent [" + swigId.toString() + "] sent to " + _package_name);
 		}
 
 		@Override
