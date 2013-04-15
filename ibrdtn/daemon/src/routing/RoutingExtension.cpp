@@ -22,12 +22,14 @@
 #include "routing/RoutingExtension.h"
 #include "routing/BaseRouter.h"
 #include "core/BundleCore.h"
+#include <ibrcommon/Logger.h>
 
 namespace dtn
 {
 	namespace routing
 	{
 		BaseRouter *RoutingExtension::_router = NULL;
+		const std::string RoutingExtension::TAG = "RoutingExtension";
 
 		/**
 		 * base implementation of the Extension class
@@ -68,6 +70,8 @@ namespace dtn
 			try {
 				// transfer the bundle to the next hop
 				dtn::core::BundleCore::getInstance().transferTo(entry.eid, id);
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle [" << id.toString() << "] queued for delivery to " << entry.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::core::P2PDialupException&) {
 				// release the transfer
 				entry.releaseTransfer(id);

@@ -36,6 +36,8 @@ namespace dtn
 
 		class RoutingExtension
 		{
+			static const std::string TAG;
+
 		public:
 			RoutingExtension();
 			virtual ~RoutingExtension() = 0;
