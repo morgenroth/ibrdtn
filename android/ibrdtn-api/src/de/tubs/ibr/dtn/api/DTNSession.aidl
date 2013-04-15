@@ -29,23 +29,31 @@ import android.os.ParcelFileDescriptor;
 interface DTNSession {
 	/**
 	 * Send a string as a bundle to the given destination.
+	 * It returns the BundleID of the transmitted bundle or null
+	 * if the send wasn't successful.
 	 */
-	boolean send(in SingletonEndpoint destination, int lifetime, in byte[] data);
+	BundleID send(in SingletonEndpoint destination, int lifetime, in byte[] data);
 	
 	/**
 	 * Send a string as a bundle to the given destination.
+	 * It returns the BundleID of the transmitted bundle or null
+	 * if the send wasn't successful.
 	 */
-	boolean sendGroup(in GroupEndpoint destination, int lifetime, in byte[] data);
+	BundleID sendGroup(in GroupEndpoint destination, int lifetime, in byte[] data);
 	
 	/**
 	 * Send the content of a file descriptor as bundle
+	 * It returns the BundleID of the transmitted bundle or null
+	 * if the send wasn't successful.
 	 */
-	boolean sendFileDescriptor(in SingletonEndpoint destination, int lifetime, in ParcelFileDescriptor fd, long length);
+	BundleID sendFileDescriptor(in SingletonEndpoint destination, int lifetime, in ParcelFileDescriptor fd, long length);
 	
 	/**
 	 * Send the content of a file descriptor as bundle
+	 * It returns the BundleID of the transmitted bundle or null
+	 * if the send wasn't successful.
 	 */
-	boolean sendGroupFileDescriptor(in GroupEndpoint destination, int lifetime, in ParcelFileDescriptor fd, long length);
+	BundleID sendGroupFileDescriptor(in GroupEndpoint destination, int lifetime, in ParcelFileDescriptor fd, long length);
 	
 	/**
 	 * query a given bundle id
