@@ -302,7 +302,7 @@ namespace dtn
 			}
 		}
 
-		void NativeSession::send(RegisterIndex ri) throw ()
+		dtn::data::BundleID NativeSession::send(RegisterIndex ri) throw ()
 		{
 			// create a new sequence number
 			_bundle[ri].relabel();
@@ -311,6 +311,8 @@ namespace dtn
 			dtn::api::Registration::processIncomingBundle(_endpoint, _bundle[ri]);
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << _bundle[ri].toString() << " sent" << IBRCOMMON_LOGGER_ENDL;
+
+			return _bundle[ri];
 		}
 
 		void NativeSession::put(RegisterIndex ri, const dtn::data::Bundle &b) throw ()

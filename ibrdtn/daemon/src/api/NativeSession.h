@@ -199,7 +199,7 @@ namespace dtn
 			/**
 			 * Send the bundle in the local register
 			 */
-			void send(RegisterIndex ri) throw ();
+			dtn::data::BundleID send(RegisterIndex ri) throw ();
 
 			/**
 			 * Copy the given bundle into the local register
