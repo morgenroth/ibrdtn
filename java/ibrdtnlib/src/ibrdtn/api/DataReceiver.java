@@ -27,6 +27,7 @@ import ibrdtn.api.object.EID;
 import ibrdtn.api.object.GroupEndpoint;
 import ibrdtn.api.object.SingletonEndpoint;
 import ibrdtn.api.sab.CallbackHandler;
+import ibrdtn.api.sab.Custody;
 import ibrdtn.api.sab.Response;
 import ibrdtn.api.sab.SABException;
 import ibrdtn.api.sab.SABHandler;
@@ -332,7 +333,7 @@ public class DataReceiver extends Thread implements SABHandler {
 
     @Override
     public void notify(Integer type, String data) {
-        logger.log(Level.INFO, "{0} {1}", new Object[]{String.valueOf(type), data});
+        // logger.log(Level.INFO, "{0} {1}", new Object[]{String.valueOf(type), data});
 
         switch (type) {
             case 600: // COMMON
@@ -362,8 +363,15 @@ public class DataReceiver extends Thread implements SABHandler {
                     }
                 }
                 break;
-            case 604: // CUSTODY                
-                logger.log(Level.INFO, "604 CUSTODY notification {0}", data);
+            case 604: // CUSTODY
+                Custody c = new Custody(data);
+
+                //logger.log(Level.FINE, "604 CUSTODY notification {0}", data);
+                synchronized (handler_mutex) {
+                    if (handler != null) {
+                        handler.notify(c);
+                    }
+                }
                 break;
         }
     }

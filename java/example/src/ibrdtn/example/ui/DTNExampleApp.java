@@ -496,7 +496,11 @@ public class DTNExampleApp extends javax.swing.JFrame {
             bundle.setReportto(me);
         }
 
-        bundle.setFlag(Bundle.Flags.CUSTODY_REQUEST, cbCustody.isSelected());
+        if (cbCustody.isSelected()) {
+            bundle.setCustodian(me);
+            bundle.setFlag(Bundle.Flags.CUSTODY_REQUEST, true);
+        }
+
         bundle.setFlag(Bundle.Flags.CUSTODY_REPORT, cbReports.isSelected());
         bundle.setFlag(Bundle.Flags.DELETION_REPORT, cbReports.isSelected());
         bundle.setFlag(Bundle.Flags.RECEPTION_REPORT, cbReports.isSelected());

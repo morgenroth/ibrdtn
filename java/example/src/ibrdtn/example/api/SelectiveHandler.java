@@ -45,12 +45,12 @@ public class SelectiveHandler extends AbstractAPIHandler {
 
     @Override
     public void notify(StatusReport r) {
-        logger.log(Level.SEVERE, r.toString());
+        logger.log(Level.INFO, r.toString());
     }
 
     @Override
     public void notify(Custody c) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        logger.log(Level.INFO, c.toString());
     }
 
     @Override
