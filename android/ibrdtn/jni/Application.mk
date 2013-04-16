@@ -9,9 +9,17 @@ dtnd_TOP:=$(abspath $(LOCAL_PATH))/dtnd
 #APP_OPTIM:=release
 APP_OPTIM:=debug
 
+# NDK Toolchain
+# works:
+NDK_TOOLCHAIN_VERSION=4.4.3
+#NDK_TOOLCHAIN_VERSION=clang
+#NDK_TOOLCHAIN_VERSION=clang3.2
+# does not work:
+#NDK_TOOLCHAIN_VERSION=4.6 # default
+#NDK_TOOLCHAIN_VERSION=4.7
+
 # Build target
-APP_ABI:=armeabi
-#APP_ABI:=armeabi x86
+APP_ABI:=armeabi x86
 # mips not working currently!
 #APP_ABI:=armeabi armeabi-v7a x86 mips
 #APP_ABI:=all
