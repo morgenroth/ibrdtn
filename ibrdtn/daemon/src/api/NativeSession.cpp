@@ -265,13 +265,21 @@ namespace dtn
 		void NativeSession::get(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
 		{
 			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_FULL);
-			serializer << _bundle[ri];
+			try {
+				serializer << _bundle[ri];
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(NativeSession::TAG, error) << "Get failed " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void NativeSession::getInfo(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
 		{
 			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_INFO);
-			serializer << _bundle[ri];
+			try {
+				serializer << _bundle[ri];
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(NativeSession::TAG, error) << "Get failed " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void NativeSession::free(RegisterIndex ri) throw (BundleNotFoundException)
