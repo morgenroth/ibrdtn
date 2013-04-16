@@ -33,13 +33,13 @@ namespace dtn
 		public:
 			virtual ~NativeSerializerCallback() = 0;
 
-			virtual void beginBundle(const dtn::data::PrimaryBlock &block) = 0;
-			virtual void endBundle() = 0;
+			virtual void beginBundle(const dtn::data::PrimaryBlock &block) throw () = 0;
+			virtual void endBundle() throw () = 0;
 
-			virtual void beginBlock(const dtn::data::Block &block, const size_t payload_length) = 0;
-			virtual void endBlock() = 0;
+			virtual void beginBlock(const dtn::data::Block &block, const size_t payload_length) throw () = 0;
+			virtual void endBlock() throw () = 0;
 
-			virtual void payload(const char *buf, const size_t len) = 0;
+			virtual void payload(const char *buf, const size_t len) throw () = 0;
 		};
 	}
 }
