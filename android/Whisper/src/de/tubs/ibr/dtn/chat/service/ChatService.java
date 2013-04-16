@@ -47,6 +47,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
+import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
@@ -333,9 +334,15 @@ public class ChatService extends IntentService {
 		SingletonEndpoint destination = new SingletonEndpoint(msg.getBuddy().getEndpoint());
 		
 		String lifetime = PreferenceManager.getDefaultSharedPreferences(this).getString("messageduration", "259200");
-		if (!s.send(destination, Integer.parseInt(lifetime), msg.getPayload().getBytes()))
+		BundleID ret = s.send(destination, Integer.parseInt(lifetime), msg.getPayload().getBytes());
+		
+		if (ret == null)
 		{
 			throw new Exception("could not send the message");
+		}
+		else
+		{
+		    Log.d(TAG, "Bundle sent, BundleID: " + ret.toString());
 		}
 	}
 	
@@ -347,9 +354,15 @@ public class ChatService extends IntentService {
 				"Nickname: " + nickname + "\n" +
 				"Status: " + status;
 		
-		if (!s.send(ChatService.PRESENCE_GROUP_EID, 3600, presence_message.getBytes()))
+		BundleID ret = s.send(ChatService.PRESENCE_GROUP_EID, 3600, presence_message.getBytes());
+		
+		if (ret == null)
 		{
 			throw new Exception("could not send the message");
+		}
+		else
+		{
+		    Log.d(TAG, "Presence sent, BundleID: " + ret.toString());
 		}
 	}
 	

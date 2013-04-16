@@ -298,8 +298,7 @@ namespace dtn
 						CustodySignalBlock custody;
 						custody.read(payload);
 
-						dtn::data::BundleID id(custody._source, custody._bundle_timestamp.getValue(), custody._bundle_sequence.getValue(), (custody._fragment_length.getValue() > 0), custody._fragment_offset.getValue());
-						getStorage().releaseCustody(bundle._source, id);
+						getStorage().releaseCustody(bundle._source, custody._bundleid);
 
 						IBRCOMMON_LOGGER_DEBUG(5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -321,8 +320,11 @@ namespace dtn
 						dtn::core::BundleEvent::raise(meta, BUNDLE_DELETED, StatusReportBlock::DESTINATION_ENDPOINT_ID_UNINTELLIGIBLE);
 					}
 
-					// delete the bundle
-					dtn::core::BundlePurgeEvent::raise(meta);
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						// delete the bundle
+						dtn::core::BundlePurgeEvent::raise(meta);
+					}
 				}
 
 				return;
@@ -344,7 +346,7 @@ namespace dtn
 					IBRCOMMON_LOGGER_TAG("BundleCore", notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// gen a report
-					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 				}
 
 				return;

@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.util.Date;
 
 import android.content.Context;
 import android.content.Intent;
@@ -49,6 +50,7 @@ import de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex;
 import de.tubs.ibr.dtn.swig.NativeSessionCallback;
 import de.tubs.ibr.dtn.swig.NativeSessionException;
 import de.tubs.ibr.dtn.swig.PrimaryBlock;
+import de.tubs.ibr.dtn.swig.StatusReportBlock;
 
 public class ClientSession {
 
@@ -74,25 +76,74 @@ public class ClientSession {
 	        // create a new intent
 	        Intent notify = new Intent(de.tubs.ibr.dtn.Intent.RECEIVE);
 	        notify.addCategory(_package_name);
-	        notify.putExtra("type", "bundle");
-	        notify.putExtra("data", toAndroid(swigId));
+	        notify.putExtra("bundleid", toAndroid(swigId));
 
 	        // send notification intent
 	        context.sendBroadcast(notify);
 
-	        Log.d(TAG, "RECEIVE intent sent to " + _package_name);
+	        Log.d(TAG, "RECEIVE intent (" + swigId.toString() + ") sent to " + _package_name);
 		}
 
 		@Override
 		public void notifyStatusReport(de.tubs.ibr.dtn.swig.StatusReportBlock swigReport)
 		{
-			// TODO
+		    de.tubs.ibr.dtn.swig.BundleID swigId = swigReport.get_bundleid();
+		    
+            // forward the notification as intent
+            // create a new intent
+            Intent notify = new Intent(de.tubs.ibr.dtn.Intent.STATUS_REPORT);
+            notify.addCategory(_package_name);
+            notify.putExtra("bundleid", toAndroid(swigId));
+            
+            notify.putExtra("status", swigReport.get_status());
+            notify.putExtra("reason", swigReport.get_reasoncode());
+            
+            char status = swigReport.get_status();
+            
+            if (0 < (status & StatusReportBlock.TYPE.RECEIPT_OF_BUNDLE.swigValue())) {
+                notify.putExtra("timeof_receipt", toAndroid(swigReport.get_timeof_receipt()));
+            }
+            
+            if (0 < (status & StatusReportBlock.TYPE.DELETION_OF_BUNDLE.swigValue())) {
+                notify.putExtra("timeof_deletion", toAndroid(swigReport.get_timeof_deletion()));
+            }
+            
+            if (0 < (status & StatusReportBlock.TYPE.DELIVERY_OF_BUNDLE.swigValue())) {
+                notify.putExtra("timeof_delivery", toAndroid(swigReport.get_timeof_delivery()));
+            }
+            
+            if (0 < (status & StatusReportBlock.TYPE.FORWARDING_OF_BUNDLE.swigValue())) {
+                notify.putExtra("timeof_forwarding", toAndroid(swigReport.get_timeof_forwarding()));
+            }
+            
+            if (0 < (status & StatusReportBlock.TYPE.CUSTODY_ACCEPTANCE_OF_BUNDLE.swigValue())) {
+                notify.putExtra("timeof_custodyaccept", toAndroid(swigReport.get_timeof_custodyaccept()));
+            }
+            
+            // send notification intent
+            context.sendBroadcast(notify);
+
+            Log.d(TAG, "STATUS_REPORT intent [" + swigId.toString() + "] sent to " + _package_name);
 		}
 
 		@Override
 		public void notifyCustodySignal(de.tubs.ibr.dtn.swig.CustodySignalBlock swigCustody)
 		{
-			// TODO
+		    de.tubs.ibr.dtn.swig.BundleID swigId = swigCustody.get_bundleid();
+		    
+            // forward the notification as intent
+            // create a new intent
+            Intent notify = new Intent(de.tubs.ibr.dtn.Intent.CUSTODY_SIGNAL);
+            notify.addCategory(_package_name);
+            notify.putExtra("bundleid", toAndroid(swigId));
+            
+            notify.putExtra("accepted", swigCustody.get_custody_accepted());
+            notify.putExtra("timeofsignal", toAndroid(swigCustody.get_timeofsignal()));
+
+            // send notification intent
+            context.sendBroadcast(notify);
+
+            Log.d(TAG, "CUSTODY_SIGNAL intent [" + swigId.toString() + "] sent to " + _package_name);
 		}
 
 	};
@@ -313,7 +364,7 @@ public class ClientSession {
             }
 		}
 
-		public boolean send(SingletonEndpoint destination, int lifetime, byte[] data) throws RemoteException
+		public BundleID send(SingletonEndpoint destination, int lifetime, byte[] data) throws RemoteException
 		{
 			try {
 				PrimaryBlock b = new PrimaryBlock();
@@ -328,16 +379,16 @@ public class ClientSession {
 				nativeSession.write(RegisterIndex.REG2, data);
 				
 				// send the bundle
-				nativeSession.send(RegisterIndex.REG2);
+				de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
 
-				return true;
+				return toAndroid(ret);
 			} catch (Exception e) {
 				Log.e(TAG, "send failed", e);
-				return false;
+				return null;
 			}
 		}
 
-		public boolean sendGroup(GroupEndpoint destination, int lifetime, byte[] data) throws RemoteException
+		public BundleID sendGroup(GroupEndpoint destination, int lifetime, byte[] data) throws RemoteException
 		{
 			try {
 				PrimaryBlock b = new PrimaryBlock();
@@ -352,16 +403,16 @@ public class ClientSession {
 				nativeSession.write(RegisterIndex.REG2, data);
 				
 				// send the bundle
-				nativeSession.send(RegisterIndex.REG2);
+				de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
 
-				return true;
+				return toAndroid(ret);
 			} catch (Exception e) {
 				Log.e(TAG, "sendGroup failed", e);
-				return false;
+				return null;
 			}
 		}
 
-		public boolean sendFileDescriptor(SingletonEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
+		public BundleID sendFileDescriptor(SingletonEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
 		{
 			try {
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
@@ -386,9 +437,9 @@ public class ClientSession {
 					}
 					
 					// send the bundle
-					nativeSession.send(RegisterIndex.REG2);
+					de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
 					
-					return true;
+					return toAndroid(ret);
 				} finally {
 					try {
 						stream.close();
@@ -398,11 +449,11 @@ public class ClientSession {
 				}				
 			} catch (Exception e) {
 				Log.e(TAG, "sendFileDescriptor failed", e);
-				return false;
+				return null;
 			}
 		}
 
-		public boolean sendGroupFileDescriptor(GroupEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
+		public BundleID sendGroupFileDescriptor(GroupEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
 		{
 			try {
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
@@ -427,9 +478,9 @@ public class ClientSession {
 					}
 					
 					// send the bundle
-					nativeSession.send(RegisterIndex.REG2);
+					de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
 					
-					return true;
+					return toAndroid(ret);
 				} finally {
 					try {
 						stream.close();
@@ -439,7 +490,7 @@ public class ClientSession {
 				}
 			} catch (Exception e) {
 				Log.e(TAG, "sendGroupFileDescriptor failed", e);
-				return false;
+				return null;
 			}
 		}
 	};
@@ -466,7 +517,8 @@ public class ClientSession {
 		return swigId;
 	}
 	
-	private de.tubs.ibr.dtn.swig.PrimaryBlock toSwig(Bundle bundle) {
+	@SuppressWarnings("unused")
+    private de.tubs.ibr.dtn.swig.PrimaryBlock toSwig(Bundle bundle) {
 		/*
 		 * Convert API Bundle to SWIG bundle
 		 */
@@ -529,4 +581,19 @@ public class ClientSession {
 		
 		return id;
 	}
+	
+    private Date toAndroid(de.tubs.ibr.dtn.swig.DTNTime time) {
+        long seconds = time.getTimestamp().getValue().longValue();
+        long nanoseconds = time.getNanoseconds().getValue().longValue();
+        long milliseconds = nanoseconds / 1000000;
+
+        // convert to UNIX time (starting at 1970)
+        Timestamp timestamp = new Timestamp( seconds );
+        
+        // add sub-seconds (millisecond resolution)
+        Date d = new Date();
+        d.setTime( timestamp.getValue() + milliseconds ); 
+        
+        return d;
+    }
 }

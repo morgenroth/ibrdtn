@@ -153,7 +153,7 @@ namespace dtn
 			if (size > _currentsize)
 			{
 				_currentsize = 0;
-				IBRCOMMON_LOGGER_TAG("MemoryBundleStorage", critical) << "More space to free than allocated." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BundleStorage", critical) << "More space to free than allocated." << IBRCOMMON_LOGGER_ENDL;
 			}
 			else
 			{

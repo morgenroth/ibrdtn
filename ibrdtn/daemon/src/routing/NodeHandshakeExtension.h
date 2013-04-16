@@ -35,6 +35,8 @@ namespace dtn
 	{
 		class NodeHandshakeExtension : public RoutingExtension
 		{
+			static const std::string TAG;
+
 		public:
 			NodeHandshakeExtension();
 			virtual ~NodeHandshakeExtension();

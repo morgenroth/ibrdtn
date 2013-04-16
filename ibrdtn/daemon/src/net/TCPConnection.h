@@ -35,6 +35,7 @@
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/net/socketstream.h>
 #include <ibrcommon/thread/Queue.h>
+#include <ibrcommon/thread/SharedReference.h>
 
 #include <memory>
 
@@ -178,6 +179,15 @@ namespace dtn
 
 			void __setup_socket(ibrcommon::clientsocket *sock, bool server);
 
+			// lock object for the procotol stream
+			typedef ibrcommon::SharedReference<dtn::streams::StreamConnection> safe_streamconnection;
+
+			/**
+			 * Return a thread-safe reference to the protocol stream
+			 * This method will throw an exception if the stream is NULL
+			 */
+			safe_streamconnection getProtocolStream() throw (ibrcommon::Exception);
+
 			dtn::streams::StreamContactHeader _peer;
 			dtn::core::Node _node;
 
@@ -187,6 +197,9 @@ namespace dtn
 
 			// optional security layer between socketstream and bundle protocol layer
 			std::iostream *_sec_stream;
+
+			// mutex for the protocol stream
+			ibrcommon::RWMutex _protocol_stream_mutex;
 
 			// this connection stream implements the bundle protocol
 			dtn::streams::StreamConnection *_protocol_stream;

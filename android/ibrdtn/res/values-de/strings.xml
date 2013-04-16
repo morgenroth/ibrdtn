@@ -8,6 +8,8 @@
     <string name="content_neighbor_icon">Nachbarssymbol</string>
     <string name="permlab_dtnCommunication">DTN Kommunikation</string>
     <string name="permdesc_dtnCommunication">Erlaubt eine Registrierung beim DTN Dienst und das senden/empfangen von Bündeln.</string>
+    <string name="permlab_dtnCommunicationServer">DTN Hintergrunddienst</string>
+    <string name="permdesc_dtnCommunicationServer">Erlaubt der App Benachrichtigungen an DTN Anwendungen zu senden.</string>
     <string name="service_name">DTN Dienst</string>
     <string name="app_name">IBR-DTN</string>
     <string name="applist">Anwendungen</string>
@@ -19,7 +21,8 @@
     <string name="eid_description">Die Endpoint ID von diesem Dienst.</string>
     <string name="routing_description">Der zu verwendende Wegewahl-Algorithmus.</string>
     <string name="configure">Konfiguration</string>
-    <string name="list_neighbors">Nachbarn anzeigen</string>
+    <string name="list_neighbors">Nachbarn</string>
+    <string name="showneighbors">Nachbarn anzeigen</string>
     <string name="list_logs">Logs</string>
     <string name="showlog">Log anzeigen</string>
     <string name="clearlog">Log löschen</string>
@@ -86,4 +89,6 @@
     <string name="pref_cloudconnect_title">Cloud connect</string>
     <string name="pref_cloudconnect_summary">Verwendet eine statische Verbindung zum DTN bone</string>
     <string name="pref_connection">Verbindung</string>
+    <string name="list_no_log">Keine Einträge gefunden.</string>
+    <string name="list_no_neighbors">Keine Nachbarn gefunden.</string>
 </resources>

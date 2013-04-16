@@ -23,7 +23,7 @@
 
 package de.tubs.ibr.dtn.service;
 
-import java.util.LinkedList;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import android.app.Notification;
@@ -31,12 +31,14 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
@@ -45,12 +47,8 @@ import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
-import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.p2p.P2PManager;
-import de.tubs.ibr.dtn.swig.NativeDaemonException;
-import de.tubs.ibr.dtn.swig.NativeNode;
-import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonService extends Service {
     public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
@@ -87,30 +85,11 @@ public class DaemonService extends Service {
         }
 
         public List<Node> getNeighbors() throws RemoteException {
-            if (mDaemonProcess == null)
-                return new LinkedList<Node>();
-
-            List<Node> ret = new LinkedList<Node>();
-            StringVec neighbors = mDaemonProcess.getNative().getNeighbors();
-            for (int i = 0; i < neighbors.size(); i++) {
-            	String eid = neighbors.get(i);
-            	
-            	try {
-                	// get extended info
-					NativeNode nn = mDaemonProcess.getNative().getInfo(eid);
-					
-	            	Node n = new Node();
-	            	n.endpoint = new SingletonEndpoint(eid);
-	            	n.type = nn.getType().toString();
-	                ret.add(n);
-				} catch (NativeDaemonException e) { }
-            }
-
-            return ret;
+        	return DaemonService.this.mDaemonProcess.getNeighbors();
         }
 
         public void clearStorage() throws RemoteException {
-            DaemonStorageUtils.clearStorage();
+        	DaemonService.this.mDaemonProcess.clearStorage();
         }
 
         public DTNSession getSession(String packageName) throws RemoteException {
@@ -122,8 +101,7 @@ public class DaemonService extends Service {
 
         @Override
         public String[] getVersion() throws RemoteException {
-            StringVec version = mDaemonProcess.getNative().getVersion();
-            return new String[] { version.get(0), version.get(1) };
+        	return DaemonService.this.mDaemonProcess.getVersion();
         }
     };
 
@@ -132,15 +110,18 @@ public class DaemonService extends Service {
         return mBinder;
     }
 
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
+    private static final class ServiceHandler extends Handler {
+        private final WeakReference<DaemonService> mService; 
+        
+        public ServiceHandler(Looper looper, DaemonService service) {
             super(looper);
+            mService = new WeakReference<DaemonService>(service);
         }
 
         @Override
         public void handleMessage(Message msg) {
             Intent intent = (Intent) msg.obj;
-            onHandleIntent(intent);
+            mService.get().onHandleIntent(intent, msg.arg1);
         }
     }
     
@@ -149,23 +130,14 @@ public class DaemonService extends Service {
      * 
      * @param intent
      */
-    public void onHandleIntent(Intent intent) {
+    @SuppressWarnings("deprecation")
+	public void onHandleIntent(Intent intent, int startId) {
         String action = intent.getAction();
 
         if (ACTION_STARTUP.equals(action)) {
-            // mark the notification as visible
-            _show_notification = true;
-            
-            // create initial notification
-            Notification n = buildNotification(R.drawable.ic_notification, getResources()
-                    .getString(R.string.notify_pending));
-
-            // turn this to a foreground service (kill-proof)
-            startForeground(1, n);
-            
-            // reload daemon configuration
-            mDaemonProcess.onConfigurationChanged();
-            
+            // do nothing if the daemon is already up
+            if (mDaemonProcess.getState().equals(DaemonState.ONLINE)) return;
+                     
             // start-up the daemon
             mDaemonProcess.start();
         } else if (ACTION_SHUTDOWN.equals(action)) {
@@ -189,7 +161,9 @@ public class DaemonService extends Service {
 
             mSessionManager.unregister(pi.getTargetPackage());
         }
-
+        
+        // stop the daemon if it should be offline
+        if (mDaemonProcess.getState().equals(DaemonState.OFFLINE)) stopSelf(startId);
     }
 
     public DaemonService() {
@@ -203,12 +177,6 @@ public class DaemonService extends Service {
         // create daemon main thread
         mDaemonProcess = new DaemonProcess(this, mProcessHandler);
         
-        // initialize daemon configuration
-        mDaemonProcess.onConfigurationChanged();
-        
-        // initialize the basic daemon
-        mDaemonProcess.initialize();
-
         /*
          * incoming Intents will be processed by ServiceHandler and queued in
          * HandlerThread
@@ -216,22 +184,34 @@ public class DaemonService extends Service {
         HandlerThread thread = new HandlerThread("DaemonService_IntentThread");
         thread.start();
         mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper);
+        mServiceHandler = new ServiceHandler(mServiceLooper, this);
 
         // create a session manager
         mSessionManager = new SessionManager(this);
         
-        // restore registrations
-        mSessionManager.initialize();
-
         // create P2P Manager
         // _p2p_manager = new P2PManager(this, _p2p_listener, "my address");
+        
+        // initialize the basic daemon
+        mDaemonProcess.initialize();
+        
+        // restore registrations
+        mSessionManager.initialize();
 
         if (Log.isLoggable(TAG, Log.DEBUG))
             Log.d(TAG, "DaemonService created");
 
         // restore sessions
         mSessionManager.restoreRegistrations();
+        
+        // start daemon if enabled
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (prefs.getBoolean("enabledSwitch", false)) {
+            // startup the daemon process
+            final Intent intent = new Intent(this, DaemonService.class);
+            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+            startService(intent);
+        }
     }
 
     /**
@@ -243,21 +223,18 @@ public class DaemonService extends Service {
         mServiceLooper.quit();
 
         // close all sessions
-        mSessionManager.terminate();
-        
-        // save registrations
-        mSessionManager.saveRegistrations();
+        mSessionManager.destroy();
         
         // shutdown daemon completely
         mDaemonProcess.destroy();
         mDaemonProcess = null;
 
+        // dereference P2P Manager
+        _p2p_manager = null;
+        
         // remove notification
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         nm.cancel(1);
-
-        // dereference P2P Manager
-        _p2p_manager = null;
 
         // call super method
         super.onDestroy();
@@ -283,18 +260,10 @@ public class DaemonService extends Service {
         if (Log.isLoggable(TAG, Log.DEBUG))
             Log.d(TAG, "Intent Action: " + action);
 
-        if (ACTION_STARTUP.equals(action)) {
-            // handle startup intent directly without queuing
-            if (mDaemonProcess.getState().equals(DaemonState.OFFLINE))
-            {
-                onHandleIntent(intent);
-            }
-        } else {
-            Message msg = mServiceHandler.obtainMessage();
-            msg.arg1 = startId;
-            msg.obj = intent;
-            mServiceHandler.sendMessage(msg);
-        }
+        Message msg = mServiceHandler.obtainMessage();
+        msg.arg1 = startId;
+        msg.obj = intent;
+        mServiceHandler.sendMessage(msg);
 
         return START_STICKY;
     }
@@ -316,17 +285,32 @@ public class DaemonService extends Service {
                     // TODO: disable P2P manager
                     // _p2p_manager.destroy();
                     
-                    // mark the notification as invisible
-                    _show_notification = false;
-                    
-                    // stop foreground service
-                    stopForeground(true);
-                    
-                    // stop service
-                    stopSelf();
+                    // disable foreground service only if the daemon has been switched off
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
+                    if (!prefs.getBoolean("enabledSwitch", false)) {
+                        // mark the notification as invisible
+                        _show_notification = false;
+                        
+                        // stop foreground service
+                        stopForeground(true);
+                        
+                        // stop service
+                        stopSelf();
+                    }
+
                     break;
                     
                 case ONLINE:
+                    // mark the notification as visible
+                    _show_notification = true;
+                    
+                    // create initial notification
+                    Notification n = buildNotification(R.drawable.ic_notification, getResources()
+                            .getString(R.string.notify_pending));
+
+                    // turn this to a foreground service (kill-proof)
+                    startForeground(1, n);
+                    
                     // TODO: enable P2P manager
                     // _p2p_manager.initialize();
                     break;
@@ -384,7 +368,7 @@ public class DaemonService extends Service {
                 break;
             case ONLINE:
                 // if the daemon is online, query for the number of neighbors and display it
-                StringVec neighbors = mDaemonProcess.getNative().getNeighbors();
+            	List<Node> neighbors = mDaemonProcess.getNeighbors();
         
                 if (neighbors.size() > 0) {
                     stateText = getResources().getString(R.string.notify_neighbors) + ": " + neighbors.size();

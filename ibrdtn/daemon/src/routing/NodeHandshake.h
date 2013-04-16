@@ -111,6 +111,8 @@ namespace dtn
 			size_t getType() const;
 			size_t getLifetime() const;
 
+			const std::string toString() const;
+
 			friend std::ostream& operator<<(std::ostream&, const NodeHandshake&);
 			friend std::istream& operator>>(std::istream&, NodeHandshake&);
 

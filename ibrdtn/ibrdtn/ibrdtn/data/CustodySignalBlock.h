@@ -63,12 +63,9 @@ namespace dtn
 
 			bool _custody_accepted;
 			REASON_CODE _reason;
-			SDNV _fragment_offset;
 			SDNV _fragment_length;
 			DTNTime _timeofsignal;
-			SDNV _bundle_timestamp;
-			SDNV _bundle_sequence;
-			EID _source;
+			dtn::data::BundleID _bundleid;
 		};
 	}
 }

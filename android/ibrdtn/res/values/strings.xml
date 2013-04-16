@@ -8,7 +8,9 @@
     <string name="content_app_icon">Application icon</string>
     <string name="content_neighbor_icon">Neighbor icon</string>
     <string name="permlab_dtnCommunication">DTN Communication</string>
-    <string name="permdesc_dtnCommunication">Allows to register to the DTN service and send/receive bundles.</string>
+    <string name="permdesc_dtnCommunication">Allows the app to register to DTN services and send/receive bundles.</string>
+    <string name="permlab_dtnCommunicationServer">DTN Daemon</string>
+    <string name="permdesc_dtnCommunicationServer">Allows the app to send notifications to DTN applications.</string>
     <string name="service_name">DTN Service</string>
     <string name="app_name">IBR-DTN</string>
     <string name="applist">Applications</string>
@@ -20,7 +22,8 @@
     <string name="eid_description">The endpoint identifier of this device.</string>
     <string name="routing_description">The routing scheme to use.</string>
     <string name="configure">Configuration</string>
-    <string name="list_neighbors">List neighbors</string>
+    <string name="list_neighbors">Neighbors</string>
+    <string name="showneighbors">Show neighbors</string>
     <string name="list_logs">Logs</string>
     <string name="list_logs_paused">Logs (PAUSED)</string>
     <string name="showlog">Show log</string>
@@ -98,5 +101,7 @@
     <string name="pref_log_debug_verbosity_desc">Requires logging level DEBUG</string>
     <string name="pref_log_enable_file">Log to File</string>
     <string name="pref_log_enable_file_desc">Also log into files in ibrdtn/logs/ on your external storage.</string>
+    <string name="list_no_log">No logs found.</string>
+    <string name="list_no_neighbors">No neighbors found.</string>
     
 </resources>

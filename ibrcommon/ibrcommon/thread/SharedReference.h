@@ -1,5 +1,5 @@
 /*
- * ObjectLock.cpp
+ * SharedReference.h
  *
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
@@ -19,33 +19,33 @@
  *
  */
 
-#include "ibrcommon/thread/ObjectLock.h"
-#include "ibrcommon/thread/MutexLock.h"
+#ifndef SHAREDREFERENCE_H_
+#define SHAREDREFERENCE_H_
 
-namespace ibrcommon
-{
-	ibrcommon::Conditional ObjectLock::__cond;
-	std::set<void*> ObjectLock::__locks;
+#include "ibrcommon/thread/RWLock.h"
+#include "ibrcommon/Exceptions.h"
 
-	ObjectLock::ObjectLock(void *obj)
-	 : _obj(obj)
+namespace ibrcommon {
+
+	template <class T>
+	class SharedReference
 	{
-		ibrcommon::MutexLock l(__cond);
+	public:
+		SharedReference(T* ref, RWMutex& mutex)
+			: _item(ref), _l(mutex, RWMutex::LOCK_READONLY)
+		{}
 
-		// check for lock
-		while (__locks.find(obj) != __locks.end())
+		T& operator*() const throw (ibrcommon::Exception)
 		{
-			// wait while there is a lock
-			__cond.wait();
+			if (_item == NULL) throw ibrcommon::Exception("object not initialized");
+			return *_item;
 		}
 
-		// add lock
-		__locks.insert(obj);
-	}
+	private:
+		T* _item;
+		RWLock _l;
+	};
 
-	ObjectLock::~ObjectLock()
-	{
-		ibrcommon::MutexLock l(__cond);
-		__locks.erase(_obj);
-	}
-}
+} // namespace ibrcommon
+
+#endif // SHAREDREFERENCE_H_

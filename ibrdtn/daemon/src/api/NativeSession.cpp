@@ -27,6 +27,8 @@
 
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/RWLock.h>
+#include <ibrcommon/thread/MutexLock.h>
 
 namespace dtn
 {
@@ -57,16 +59,26 @@ namespace dtn
 
 		void NativeSession::destroy() throw ()
 		{
-			if (_destroyed) return;
+			// prevent double calls
+			{
+				ibrcommon::MutexLock l(_destroyed_mutex);
+				if (_destroyed) return;
 
-			// prevent future destroy calls
-			_destroyed = true;
+				// prevent future destroy calls
+				_destroyed = true;
+			}
 
 			// send stop signal to the receiver
 			_receiver.stop();
 
 			// wait here until the receiver has been stopped
 			_receiver.join();
+
+			// invalidate the callback pointer
+			{
+				ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+				_cb = NULL;
+			}
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session destroyed" << IBRCOMMON_LOGGER_ENDL;
 		}
@@ -76,20 +88,23 @@ namespace dtn
 			return dtn::core::BundleCore::local;
 		}
 
-		void NativeSession::fireNotificationBundle(const dtn::data::BundleID &id) const throw ()
+		void NativeSession::fireNotificationBundle(const dtn::data::BundleID &id) throw ()
 		{
+			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 			if (_cb == NULL) return;
 			_cb->notifyBundle(id);
 		}
 
-		void NativeSession::fireNotificationStatusReport(const dtn::data::StatusReportBlock &report) const throw ()
+		void NativeSession::fireNotificationStatusReport(const dtn::data::StatusReportBlock &report) throw ()
 		{
+			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 			if (_cb == NULL) return;
 			_cb->notifyStatusReport(report);
 		}
 
-		void NativeSession::fireNotificationCustodySignal(const dtn::data::CustodySignalBlock &custody) const throw ()
+		void NativeSession::fireNotificationCustodySignal(const dtn::data::CustodySignalBlock &custody) throw ()
 		{
+			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 			if (_cb == NULL) return;
 			_cb->notifyCustodySignal(custody);
 		}
@@ -221,7 +236,7 @@ namespace dtn
 
 				load(ri, id);
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "No next bundle available" << IBRCOMMON_LOGGER_ENDL;
 				throw BundleNotFoundException();
 			}
 		}
@@ -237,7 +252,7 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << id.toString() << " loaded" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Failed to load bundle " << id.toString() << ", Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw BundleNotFoundException();
 			}
 		}
@@ -250,13 +265,21 @@ namespace dtn
 		void NativeSession::get(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
 		{
 			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_FULL);
-			serializer << _bundle[ri];
+			try {
+				serializer << _bundle[ri];
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(NativeSession::TAG, error) << "Get failed " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void NativeSession::getInfo(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
 		{
 			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_INFO);
-			serializer << _bundle[ri];
+			try {
+				serializer << _bundle[ri];
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(NativeSession::TAG, error) << "Get failed " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void NativeSession::free(RegisterIndex ri) throw (BundleNotFoundException)
@@ -287,7 +310,7 @@ namespace dtn
 			}
 		}
 
-		void NativeSession::send(RegisterIndex ri) throw ()
+		dtn::data::BundleID NativeSession::send(RegisterIndex ri) throw ()
 		{
 			// create a new sequence number
 			_bundle[ri].relabel();
@@ -296,6 +319,8 @@ namespace dtn
 			dtn::api::Registration::processIncomingBundle(_endpoint, _bundle[ri]);
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << _bundle[ri].toString() << " sent" << IBRCOMMON_LOGGER_ENDL;
+
+			return _bundle[ri];
 		}
 
 		void NativeSession::put(RegisterIndex ri, const dtn::data::Bundle &b) throw ()
@@ -434,6 +459,7 @@ namespace dtn
 							_session.fireNotificationBundle(id);
 						}
 					} catch (const dtn::storage::NoBundleFoundException&) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 25) << "[BundleReceiver] no more bundles found - wait until we are notified" << IBRCOMMON_LOGGER_ENDL;
 						reg.wait_for_bundle();
 					}
 

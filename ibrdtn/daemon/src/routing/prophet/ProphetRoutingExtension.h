@@ -51,6 +51,7 @@ namespace dtn
 		class ProphetRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
 		{
 			friend class ForwardingStrategy;
+			static const std::string TAG;
 
 		public:
 			ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first,

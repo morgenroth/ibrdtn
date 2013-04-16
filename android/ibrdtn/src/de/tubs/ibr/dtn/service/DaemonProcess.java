@@ -29,6 +29,8 @@ import java.io.PrintStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import android.content.Context;
@@ -38,12 +40,14 @@ import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 import android.util.Log;
 import de.tubs.ibr.dtn.DaemonState;
+import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.swig.DaemonRunLevel;
 import de.tubs.ibr.dtn.swig.NativeDaemon;
 import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
 import de.tubs.ibr.dtn.swig.NativeDaemonException;
 import de.tubs.ibr.dtn.swig.NativeEventCallback;
+import de.tubs.ibr.dtn.swig.NativeNode;
 import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonProcess {
@@ -106,9 +110,34 @@ public class DaemonProcess {
 		this.mContext = context;
 		this.mHandler = handler;
 	}
+
+	public String[] getVersion() {
+        StringVec version = mDaemon.getVersion();
+        return new String[] { version.get(0), version.get(1) };
+	}
 	
-	public NativeDaemon getNative() {
-		return mDaemon;
+	public synchronized List<Node> getNeighbors() {
+        List<Node> ret = new LinkedList<Node>();
+        StringVec neighbors = mDaemon.getNeighbors();
+        for (int i = 0; i < neighbors.size(); i++) {
+        	String eid = neighbors.get(i);
+        	
+        	try {
+            	// get extended info
+				NativeNode nn = mDaemon.getInfo(eid);
+				
+            	Node n = new Node();
+            	n.endpoint = new SingletonEndpoint(eid);
+            	n.type = nn.getType().toString();
+                ret.add(n);
+			} catch (NativeDaemonException e) { }
+        }
+
+        return ret;
+	}
+	
+	public synchronized void clearStorage() {
+		mDaemon.clearStorage();
 	}
 	
 	public DaemonState getState() {
@@ -121,7 +150,7 @@ public class DaemonProcess {
         mHandler.onStateChanged(_state);
     }
     
-    public void initialize() {
+    public synchronized void initialize() {
         // listen to preference changes
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         preferences.registerOnSharedPreferenceChangeListener(_pref_listener);
@@ -162,6 +191,9 @@ public class DaemonProcess {
         // set debug verbosity
         mDaemon.setDebug(debugVerbosity);
         
+        // initialize daemon configuration
+        onConfigurationChanged();
+        
         try {
             mDaemon.init(DaemonRunLevel.RUNLEVEL_API);
         } catch (NativeDaemonException e) {
@@ -169,7 +201,10 @@ public class DaemonProcess {
         }
     }
 	
-	public void start() {
+	public synchronized void start() {
+        // reload daemon configuration
+        onConfigurationChanged();
+        
 	    try {
             mDaemon.init(DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS);
         } catch (NativeDaemonException e) {
@@ -177,7 +212,7 @@ public class DaemonProcess {
         }
 	}
 	
-	public void stop() {
+	public synchronized void stop() {
 	    // stop the running daemon
 	    try {
             mDaemon.init(DaemonRunLevel.RUNLEVEL_API);
@@ -186,7 +221,7 @@ public class DaemonProcess {
         }
 	}
 	
-	public void restart(Integer runlevel) {
+	public synchronized void restart(Integer runlevel) {
 	    // restart the daemon
         DaemonRunLevel restore = mDaemon.getRunLevel();
         DaemonRunLevel rl = DaemonRunLevel.swigToEnum(runlevel);
@@ -211,7 +246,7 @@ public class DaemonProcess {
         }
 	}
 	
-    public void destroy() {
+    public synchronized void destroy() {
         // listen to preference changes
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.mContext);
         preferences.unregisterOnSharedPreferenceChangeListener(_pref_listener);
@@ -229,14 +264,31 @@ public class DaemonProcess {
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             Log.d(TAG, "Preferences has changed " + key);
             
-            if (key.equals("cloud_uplink")) {
+            if (key.equals("enabledSwitch"))
+            {
                 if (prefs.getBoolean(key, false)) {
-                    getNative().addConnection(__CLOUD_EID__.toString(),
-                            __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+                    // startup the daemon process
+                    final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                    intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+                    DaemonProcess.this.mContext.startService(intent);
                 } else {
-                    getNative().removeConnection(__CLOUD_EID__.toString(),
-                            __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+                    // shutdown the daemon
+                    final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                    intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
+                    DaemonProcess.this.mContext.startService(intent);
                 }
+            }
+            else if (key.equals("cloud_uplink"))
+            {
+            	synchronized(DaemonProcess.this) {
+	                if (prefs.getBoolean(key, false)) {
+	                    mDaemon.addConnection(__CLOUD_EID__.toString(),
+	                            __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+	                } else {
+	                    mDaemon.removeConnection(__CLOUD_EID__.toString(),
+	                            __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+	                }
+            	}
             }
             else if (key.equals("routing"))
             {
@@ -306,8 +358,10 @@ public class DaemonProcess {
             {
                 int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
                 
-                // set logging options
-                mDaemon.setLogging("Core", logLevel);
+                synchronized(DaemonProcess.this) {
+	                // set logging options
+	                mDaemon.setLogging("Core", logLevel);
+                }
             }
             else if (key.startsWith("log_debug_verbosity"))
             {
@@ -317,8 +371,10 @@ public class DaemonProcess {
                 // disable debugging if the log level is lower than 3
                 if (logLevel < 3) debugVerbosity = 0;
                 
-                // set debug verbosity
-                mDaemon.setDebug( debugVerbosity );
+                synchronized(DaemonProcess.this) {
+	                // set debug verbosity
+	                mDaemon.setDebug( debugVerbosity );
+                }
             }
             else if (key.startsWith("log_enable_file"))
             {
@@ -337,20 +393,22 @@ public class DaemonProcess {
                     }
                 }
 
-                if (logFilePath != null) {
-                    int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
-                    
-                    // enable file logging
-                    mDaemon.setLogFile(logFilePath, logLevel);
-                } else {
-                    // disable file logging
-                    mDaemon.setLogFile("", 0);
+                synchronized(DaemonProcess.this) {
+	                if (logFilePath != null) {
+	                    int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
+	                    
+	                    // enable file logging
+	                    mDaemon.setLogFile(logFilePath, logLevel);
+	                } else {
+	                    // disable file logging
+	                    mDaemon.setLogFile("", 0);
+	                }
                 }
             }
         }
     };
 	
-	public void onConfigurationChanged() {
+	private void onConfigurationChanged() {
         String configPath = mContext.getFilesDir().getPath() + "/" + "config";
 
         // create configuration file
@@ -385,6 +443,9 @@ public class DaemonProcess {
                     }
                     else if (action.equals("unavailable")) {
                         neighborIntent.putExtra("action", "unavailable");
+                    }
+                    else if (action.equals("updated")) {
+                        neighborIntent.putExtra("action", "updated");
                     }
                     else {
                         neighborIntent = null;
@@ -427,7 +488,7 @@ public class DaemonProcess {
 			    // enable cloud-uplink
 			    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonProcess.this.mContext);
                 if (prefs.getBoolean("cloud_uplink", false)) {
-                    getNative().addConnection(__CLOUD_EID__.toString(),
+                    mDaemon.addConnection(__CLOUD_EID__.toString(),
                             __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
                 }
 			    

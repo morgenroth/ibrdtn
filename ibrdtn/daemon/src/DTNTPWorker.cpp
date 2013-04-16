@@ -279,41 +279,45 @@ namespace dtn
 			// add an age block
 			b.push_back<dtn::data::AgeBlock>();
 
-			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+			try {
+				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
-			// create the payload of the message
-			{
-				ibrcommon::BLOB::iostream stream = ref.iostream();
+				// create the payload of the message
+				{
+					ibrcommon::BLOB::iostream stream = ref.iostream();
 
-				// create a new timesync request
-				TimeSyncMessage msg;
+					// create a new timesync request
+					TimeSyncMessage msg;
 
-				// write the message
-				(*stream) << msg;
+					// write the message
+					(*stream) << msg;
+				}
+
+				// add the payload to the message
+				b.push_back(ref);
+
+				// set the source and destination
+				b._source = dtn::core::BundleCore::local + "/dtntp";
+				b._destination = peer + "/dtntp";
+
+				// set high priority
+				b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
+				b.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
+
+				// set the the destination as singleton receiver
+				b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+
+				// set the lifetime of the bundle to 60 seconds
+				b._lifetime = 60;
+
+				// add a schl block
+				dtn::data::ScopeControlHopLimitBlock &schl = b.push_front<dtn::data::ScopeControlHopLimitBlock>();
+				schl.setLimit(1);
+
+				transmit(b);
+			} catch (const ibrcommon::IOException &ex) {
+				IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, error) << "error while synchronizing, Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-
-			// add the payload to the message
-			b.push_back(ref);
-
-			// set the source and destination
-			b._source = dtn::core::BundleCore::local + "/dtntp";
-			b._destination = peer + "/dtntp";
-
-			// set high priority
-			b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
-			b.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
-
-			// set the the destination as singleton receiver
-			b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-
-			// set the lifetime of the bundle to 60 seconds
-			b._lifetime = 60;
-
-			// add a schl block
-			dtn::data::ScopeControlHopLimitBlock &schl = b.push_front<dtn::data::ScopeControlHopLimitBlock>();
-			schl.setLimit(1);
-
-			transmit(b);
 		}
 
 

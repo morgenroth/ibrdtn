@@ -183,8 +183,15 @@ namespace dtn
 			dtn::core::Node &db = (*(ret.first)).second;
 
 			if (!ret.second) {
+				size_t old = db.size();
+
 				// add all attributes to the node in the database
 				db += n;
+
+				if (old != db.size()) {
+					// announce the new node
+					dtn::core::NodeEvent::raise(db, dtn::core::NODE_UPDATED);
+				}
 			} else {
 				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -203,8 +210,15 @@ namespace dtn
 			try {
 				dtn::core::Node &db = getNode(n.getEID());
 
+				size_t old = db.size();
+
 				// erase all attributes to the node in the database
 				db -= n;
+
+				if (old != db.size()) {
+					// announce the new node
+					dtn::core::NodeEvent::raise(db, dtn::core::NODE_UPDATED);
+				}
 
 				IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes removed: " << db << IBRCOMMON_LOGGER_ENDL;
 			} catch (const NeighborNotAvailableException&) { };

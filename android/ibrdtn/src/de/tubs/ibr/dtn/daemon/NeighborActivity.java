@@ -1,10 +1,9 @@
 /*
- * StorageUtils.java
+ * NeighborActivity.java
  * 
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
- * Written-by: Dominik Schürmann <dominik@dominikschuermann.de>
- * 	           Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+ * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,21 +19,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package de.tubs.ibr.dtn.service;
 
-import java.io.File;
+package de.tubs.ibr.dtn.daemon;
 
-import android.os.Environment;
+import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import de.tubs.ibr.dtn.R;
 
-public class DaemonStorageUtils {
-	public static File getStoragePath(String subdir)
-	{
-		if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
-		{
-			File externalStorage = Environment.getExternalStorageDirectory();
-			return new File(externalStorage.getPath() + File.separatorChar + "ibrdtn" + File.separatorChar + subdir);
-		}
+public class NeighborActivity extends FragmentActivity {
 
-		return null;
-	}
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // only a wrapper to load NeighborListFragment
+        setContentView(R.layout.neighbor_activity);
+    }
 }

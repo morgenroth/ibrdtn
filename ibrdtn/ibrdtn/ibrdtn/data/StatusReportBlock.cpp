@@ -49,9 +49,9 @@ namespace dtn
 			// clear the whole data first
 			stream.clear();
 
-			(*stream) << _admfield;
-			(*stream) << _status;
-			(*stream) << _reasoncode;
+			(*stream).put(_admfield);
+			(*stream).put(_status);
+			(*stream).put(_reasoncode);
 
 			if ( refsFragment() )
 			{
@@ -84,13 +84,13 @@ namespace dtn
 			ibrcommon::BLOB::Reference r = p.getBLOB();
 			ibrcommon::BLOB::iostream stream = r.iostream();
 
-			(*stream) >> _admfield;
+			(*stream).get(_admfield);
 
 			// check type field
 			if ((_admfield >> 4) != 1) throw WrongRecordException();
 
-			(*stream) >> _status;
-			(*stream) >> _reasoncode;
+			(*stream).get(_status);
+			(*stream).get(_reasoncode);
 
 			if ( refsFragment() )
 			{

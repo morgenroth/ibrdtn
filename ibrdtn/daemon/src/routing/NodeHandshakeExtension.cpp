@@ -39,6 +39,8 @@ namespace dtn
 {
 	namespace routing
 	{
+		const std::string NodeHandshakeExtension::TAG = "NodeHandshakeExtension";
+
 		NodeHandshakeExtension::NodeHandshakeExtension()
 		 : _endpoint(*this)
 		{
@@ -73,7 +75,7 @@ namespace dtn
 				const dtn::data::BundleSet vec = (**this).getPurgedBundles();
 
 				// create an item
-				BloomFilterSummaryVector *item = new BloomFilterSummaryVector(vec);
+				BloomFilterPurgeVector *item = new BloomFilterPurgeVector(vec);
 
 				// add it to the handshake
 				answer.addItem(item);
@@ -84,6 +86,8 @@ namespace dtn
 		{
 			try {
 				const BloomFilterSummaryVector bfsv = answer.get<BloomFilterSummaryVector>();
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "BloomFilterSummaryVector received" << IBRCOMMON_LOGGER_ENDL;
 
 				// get the summary vector (bloomfilter) of this ECM
 				const ibrcommon::BloomFilter &filter = bfsv.getVector().getBloomFilter();
@@ -101,6 +105,8 @@ namespace dtn
 			try {
 				const BloomFilterPurgeVector bfpv = answer.get<BloomFilterPurgeVector>();
 
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "BloomFilterPurgeVector received" << IBRCOMMON_LOGGER_ENDL;
+
 				// get the purge vector (bloomfilter) of this ECM
 				const ibrcommon::BloomFilter &purge = bfpv.getVector().getBloomFilter();
 
@@ -111,14 +117,21 @@ namespace dtn
 					// delete bundles in the purge vector
 					const dtn::data::MetaBundle meta = storage.remove(purge);
 
-					// log the purged bundle
-					IBRCOMMON_LOGGER(notice) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						// log the purged bundle
+						IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-					// gen a report
-					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, StatusReportBlock::DEPLETED_STORAGE);
+						// gen a report
+						dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 
-					// add this bundle to the own purge vector
-					(**this).addPurgedBundle(meta);
+						// add this bundle to the own purge vector
+						(**this).addPurgedBundle(meta);
+					}
+					else
+					{
+						IBRCOMMON_LOGGER_TAG(NodeHandshakeExtension::TAG, warning) << source.getString() << " requested to purge a bundle with a non-singleton destination: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
 			} catch (std::exception&) { };
 		}
@@ -184,19 +197,10 @@ namespace dtn
 			// create a new request for the summary vector of the neighbor
 			NodeHandshake request(NodeHandshake::HANDSHAKE_REQUEST);
 
-			// lock the extension list during the processing
-			{
-				ibrcommon::RWLock l((*_callback).getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+			// walk through all extensions to generate a request
+			(*_callback).requestHandshake(origin, request);
 
-				// walk through all extensions to process the contents of the response
-				const BaseRouter::extension_list& extensions = (*_callback).getExtensions();
-
-				for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
-				{
-					RoutingExtension &extension = (**iter);
-					extension.requestHandshake(origin, request);
-				}
-			}
+			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "Requesting handshake from " << origin.getString() << ": " << request.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// create a new bundle
 			dtn::data::Bundle req;
@@ -252,6 +256,8 @@ namespace dtn
 				(*s) >> handshake;
 			}
 
+			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "Handshake received from " << bundle._source.getString() << ": " << handshake.toString() << IBRCOMMON_LOGGER_ENDL;
+
 			// if this is a request answer with an summary vector
 			if (handshake.getType() == NodeHandshake::HANDSHAKE_REQUEST)
 			{
@@ -259,18 +265,9 @@ namespace dtn
 				NodeHandshake response(NodeHandshake::HANDSHAKE_RESPONSE);
 
 				// lock the extension list during the processing
-				{
-					ibrcommon::RWLock l((**this).getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+				(**this).responseHandshake(bundle._source, handshake, response);
 
-					// walk through all extensions to process the contents of the response
-					const BaseRouter::extension_list& extensions = (**this).getExtensions();
-
-					for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
-					{
-						RoutingExtension &extension = (**iter);
-						extension.responseHandshake(bundle._source, handshake, response);
-					}
-				}
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake reply to " << bundle._source.getString() << ": " << response.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				// create a new bundle
 				dtn::data::Bundle answer;
@@ -314,13 +311,7 @@ namespace dtn
 			else if (handshake.getType() == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
 				// walk through all extensions to process the contents of the response
-				const BaseRouter::extension_list& extensions = (**this).getExtensions();
-
-				for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
-				{
-					RoutingExtension &extension = (**iter);
-					extension.processHandshake(bundle._source, handshake);
-				}
+				(**this).processHandshake(bundle._source, handshake);
 
 				// call handshake completed event
 				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_COMPLETED, bundle._source );

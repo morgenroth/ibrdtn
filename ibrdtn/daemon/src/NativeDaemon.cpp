@@ -145,6 +145,11 @@ namespace dtn
 			return ret;
 		}
 
+		void NativeDaemon::clearStorage() throw ()
+		{
+			dtn::core::BundleCore::getInstance().getStorage().clear();
+		}
+
 		void NativeDaemon::bindEvents()
 		{
 			if (_eventcb != NULL) {
