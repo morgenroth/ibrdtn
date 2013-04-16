@@ -915,16 +915,16 @@ namespace dtn
 				_stream << API_STATUS_NOTIFY_CUSTODY << " NOTIFY CUSTODY ";
 
 				// format the bundle ID and write it to the stream
-				_stream << custody._bundle_timestamp.getValue() << "." << custody._bundle_sequence.getValue();
+				_stream << custody._bundleid.timestamp << "." << custody._bundleid.sequencenumber;
 
 				if (custody.refsFragment()) {
-					_stream << "." << custody._fragment_offset.getValue() << ":" << custody._fragment_length.getValue() << " ";
+					_stream << "." << custody._bundleid.offset << ":" << custody._fragment_length.getValue() << " ";
 				} else {
 					_stream << " ";
 				}
 
 				// origin source
-				_stream << custody._source.getString() << " ";
+				_stream << custody._bundleid.source.getString() << " ";
 
 				if (custody._custody_accepted) {
 					_stream << "ACCEPTED ";

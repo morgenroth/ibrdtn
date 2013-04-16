@@ -29,6 +29,9 @@ public class Intent {
 	public static final String UNREGISTER = "de.tubs.ibr.dtn.intent.UNREGISTER";
 	
 	public static final String RECEIVE = "de.tubs.ibr.dtn.intent.RECEIVE";
+	public static final String STATUS_REPORT = "de.tubs.ibr.dtn.intent.STATUS_REPORT";
+	public static final String CUSTODY_SIGNAL = "de.tubs.ibr.dtn.intent.CUSTODY_SIGNAL";
+	
 	public static final String STATE = "de.tubs.ibr.dtn.intent.STATE";
 	public static final String EVENT = "de.tubs.ibr.dtn.intent.EVENT";
 	

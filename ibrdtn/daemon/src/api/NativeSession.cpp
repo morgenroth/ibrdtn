@@ -265,13 +265,21 @@ namespace dtn
 		void NativeSession::get(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
 		{
 			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_FULL);
-			serializer << _bundle[ri];
+			try {
+				serializer << _bundle[ri];
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(NativeSession::TAG, error) << "Get failed " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void NativeSession::getInfo(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
 		{
 			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_INFO);
-			serializer << _bundle[ri];
+			try {
+				serializer << _bundle[ri];
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(NativeSession::TAG, error) << "Get failed " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void NativeSession::free(RegisterIndex ri) throw (BundleNotFoundException)
@@ -302,7 +310,7 @@ namespace dtn
 			}
 		}
 
-		void NativeSession::send(RegisterIndex ri) throw ()
+		dtn::data::BundleID NativeSession::send(RegisterIndex ri) throw ()
 		{
 			// create a new sequence number
 			_bundle[ri].relabel();
@@ -311,6 +319,8 @@ namespace dtn
 			dtn::api::Registration::processIncomingBundle(_endpoint, _bundle[ri]);
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << _bundle[ri].toString() << " sent" << IBRCOMMON_LOGGER_ENDL;
+
+			return _bundle[ri];
 		}
 
 		void NativeSession::put(RegisterIndex ri, const dtn::data::Bundle &b) throw ()
