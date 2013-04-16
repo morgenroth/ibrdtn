@@ -323,52 +323,76 @@ namespace dtn
 			// allocate space for the bundle
 			allocSpace(bundle_size);
 
-			// store the bundle
-			std::auto_ptr<BundleContainer> bc(new BundleContainer(bundle));
-			DataStorage::Hash hash(*bc);
+			// create meta data object
+			dtn::data::MetaBundle meta(bundle);
 
-			// check if this container is too big for us.
-			{
-				ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
+			// accept custody if requested
+			try {
+				dtn::data::EID custodian = BundleStorage::acceptCustody(meta);
 
-				// create meta data object
-				dtn::data::MetaBundle meta(bundle);
+				// container for the custody accepted bundle
+				dtn::data::Bundle ca_bundle = bundle;
 
-				// accept custody if requested
-				try {
-					dtn::data::EID custodian = BundleStorage::acceptCustody(meta);
+				// set the new custodian
+				ca_bundle._custodian = custodian;
 
-					// container for the custody accepted bundle
-					dtn::data::Bundle ca_bundle = bundle;
+				// update meta data object
+				meta = ca_bundle;
 
-					// set the new custodian
-					ca_bundle._custodian = custodian;
+				// create a new container and hash
+				std::auto_ptr<BundleContainer> bc(new BundleContainer(ca_bundle));
+				DataStorage::Hash hash(*bc);
 
-					// create meta data object
-					meta = ca_bundle;
+				// enter critical section - lock all data structures
+				{
+					// add the new bundles to the list of pending bundles
+					ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 
 					// add the bundle to the stored bundles
 					_pending_bundles[hash] = ca_bundle;
-				} catch (const ibrcommon::Exception&) {
+
+					// increment the storage size
+					_bundle_lengths[meta] = bundle_size;
+
+					// add it to the bundle list
+					_list.add(meta);
+					_priority_index.insert(meta);
+				}
+
+				// put the bundle into the data store
+				_datastore.store(hash, bc.get());
+				bc.release();
+			} catch (const ibrcommon::Exception&) {
+				// no custody has been requested - go on with standard store procedure
+
+				// create a new container and hash
+				std::auto_ptr<BundleContainer> bc(new BundleContainer(bundle));
+				DataStorage::Hash hash(*bc);
+
+				// enter critical section - lock all data structures
+				{
+					// add the new bundles to the list of pending bundles
+					ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
+
 					// no custody requested
 					// add the bundle to the stored bundles
 					_pending_bundles[hash] = bundle;
+
+					// increment the storage size
+					_bundle_lengths[meta] = bundle_size;
+
+					// add it to the bundle list
+					_list.add(meta);
+					_priority_index.insert(meta);
 				}
 
-				// increment the storage size
-				_bundle_lengths[meta] = bundle_size;
-
-				// add it to the bundle list
-				_list.add(meta);
-				_priority_index.insert(meta);
+				// put the bundle into the data store
+				_datastore.store(hash, bc.get());
+				bc.release();
 			}
 
 			// raise bundle added event
-			eventBundleAdded(bundle);
-
-			// put the bundle into the data store
-			_datastore.store(hash, bc.get());
-			bc.release();
+			eventBundleAdded(meta);
 		}
 
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
