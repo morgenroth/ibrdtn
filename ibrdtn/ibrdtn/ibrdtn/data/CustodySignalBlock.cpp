@@ -48,7 +48,8 @@ namespace dtn
 			// check type field
 			if ((_admfield >> 4) != 2) throw WrongRecordException();
 
-			char status; (*stream) >> status;
+			char status = 0;
+			(*stream).get(status);
 
 			// decode custody acceptance
 			_custody_accepted = (status & 0x01);
@@ -91,7 +92,7 @@ namespace dtn
 			stream.clear();
 
 			// write the content
-			(*stream) << _admfield;
+			(*stream).put(_admfield);
 
 			// encode reason flag
 			char status = (_reason << 1);
@@ -100,7 +101,7 @@ namespace dtn
 			if (_custody_accepted) status |= 0x01;
 
 			// write the status byte
-			(*stream) << status;
+			(*stream).put(status);
 
 			if ( refsFragment() )
 			{
