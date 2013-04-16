@@ -336,7 +336,7 @@ namespace dtn
 
 				// accept custody if requested
 				try {
-					dtn::data::EID custodian = BundleStorage::acceptCustody(bundle);
+					dtn::data::EID custodian = BundleStorage::acceptCustody(meta);
 
 					// container for the custody accepted bundle
 					dtn::data::Bundle ca_bundle = bundle;
