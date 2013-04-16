@@ -42,6 +42,11 @@ namespace dtn
 			 */
 			void merge(const AcknowledgementSet&) throw ();
 
+			/**
+			 * Returns true if the given bundleId is in the bundle list
+			 */
+			bool has(const dtn::data::BundleID &id) const throw ();
+
 			/* virtual methods from NodeHandshakeItem */
 			virtual size_t getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
 			virtual size_t getLength() const; ///< \see NodeHandshakeItem::getLength

@@ -84,7 +84,7 @@ namespace dtn
 			ibrcommon::BLOB::Reference r = p.getBLOB();
 			ibrcommon::BLOB::iostream stream = r.iostream();
 
-			(*stream) >> _admfield;
+			(*stream).get(_admfield);
 
 			// check type field
 			if ((_admfield >> 4) != 1) throw WrongRecordException();
