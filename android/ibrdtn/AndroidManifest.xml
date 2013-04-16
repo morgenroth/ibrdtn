@@ -11,6 +11,12 @@
         android:permissionGroup="android.permission-group.NETWORK"
         android:protectionLevel="normal" />
 
+	<permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"
+	        android:label="@string/permlab_dtnCommunicationServer"
+	        android:description="@string/permdesc_dtnCommunicationServer"
+	        android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
+	        android:protectionLevel="normal" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -21,6 +27,7 @@
     <!-- READ_LOGS is needed on Android < 4.1, On Android >= 4.1 an app can read it's own logs without permission -->
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
+    <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"/>
 
     <uses-sdk
         android:minSdkVersion="10"

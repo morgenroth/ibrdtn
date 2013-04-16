@@ -8,6 +8,8 @@
     <string name="content_neighbor_icon">Nachbarssymbol</string>
     <string name="permlab_dtnCommunication">DTN Kommunikation</string>
     <string name="permdesc_dtnCommunication">Erlaubt eine Registrierung beim DTN Dienst und das senden/empfangen von Bündeln.</string>
+    <string name="permlab_dtnCommunicationServer">DTN Hintergrunddienst</string>
+    <string name="permdesc_dtnCommunicationServer">Erlaubt der App Benachrichtigungen an DTN Anwendungen zu senden.</string>
     <string name="service_name">DTN Dienst</string>
     <string name="app_name">IBR-DTN</string>
     <string name="applist">Anwendungen</string>
