@@ -252,8 +252,11 @@ namespace dtn
 				case dtn::core::NODE_UNAVAILABLE:
 					action = "unavailable";
 					break;
-				case dtn::core::NODE_UPDATED:
-					action = "updated";
+				case dtn::core::NODE_DATA_ADDED:
+					action = "data_added";
+					break;
+				case dtn::core::NODE_DATA_REMOVED:
+					action = "data_removed";
 					break;
 				default:
 					break;
