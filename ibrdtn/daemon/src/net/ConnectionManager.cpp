@@ -190,7 +190,7 @@ namespace dtn
 
 				if (old != db.size()) {
 					// announce the new node
-					dtn::core::NodeEvent::raise(db, dtn::core::NODE_UPDATED);
+					dtn::core::NodeEvent::raise(db, dtn::core::NODE_DATA_ADDED);
 				}
 			} else {
 				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
@@ -217,7 +217,7 @@ namespace dtn
 
 				if (old != db.size()) {
 					// announce the new node
-					dtn::core::NodeEvent::raise(db, dtn::core::NODE_UPDATED);
+					dtn::core::NodeEvent::raise(db, dtn::core::NODE_DATA_REMOVED);
 				}
 
 				IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes removed: " << db << IBRCOMMON_LOGGER_ENDL;

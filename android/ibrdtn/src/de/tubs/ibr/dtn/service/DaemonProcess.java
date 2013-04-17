@@ -436,20 +436,9 @@ public class DaemonProcess {
             if (action.length() > 0)
             {
                 event.putExtra("action", action);
-
+                
                 if (neighborIntent != null) {
-                    if (action.equals("available")) {
-                        neighborIntent.putExtra("action", "available");
-                    }
-                    else if (action.equals("unavailable")) {
-                        neighborIntent.putExtra("action", "unavailable");
-                    }
-                    else if (action.equals("updated")) {
-                        neighborIntent.putExtra("action", "updated");
-                    }
-                    else {
-                        neighborIntent = null;
-                    }
+                	neighborIntent.putExtra("action", action);
                 }
             }
 

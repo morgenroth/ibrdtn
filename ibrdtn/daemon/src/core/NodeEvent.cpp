@@ -31,7 +31,18 @@ namespace dtn
 	{
 		NodeEvent::NodeEvent(const Node &n, const EventNodeAction action)
 		: m_node(n), m_action(action)
-		{}
+		{
+			switch (action) {
+			case NODE_DATA_ADDED:
+				setLoggable(false);
+				break;
+			case NODE_DATA_REMOVED:
+				setLoggable(false);
+				break;
+			default:
+				break;
+			}
+		}
 
 		void NodeEvent::raise(const Node &n, const EventNodeAction action)
 		{
@@ -64,8 +75,10 @@ namespace dtn
 				return "Node " + getNode().toString() + " available ";
 			case NODE_UNAVAILABLE:
 				return "Node " + getNode().toString() + " unavailable";
-			case NODE_UPDATED:
-				return "Node " + getNode().toString() + " updated";
+			case NODE_DATA_ADDED:
+				return "Node " + getNode().toString() + " updated, data added";
+			case NODE_DATA_REMOVED:
+				return "Node " + getNode().toString() + " updated, data remove";
 			default:
 				return "unknown";
 			}

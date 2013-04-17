@@ -99,7 +99,7 @@ namespace dtn
 				{
 					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 				}
-				else if (nodeevent.getAction() == NODE_UPDATED)
+				else if (nodeevent.getAction() == NODE_DATA_ADDED)
 				{
 					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 				}
