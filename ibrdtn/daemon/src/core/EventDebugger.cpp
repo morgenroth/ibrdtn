@@ -108,7 +108,10 @@ namespace dtn
 		void EventDebugger::raiseEvent(const Event *evt) throw ()
 		{
 			// print event
-			IBRCOMMON_LOGGER_TAG(evt->getName(), notice) << evt->getMessage() << IBRCOMMON_LOGGER_ENDL;
+			if (evt->isLoggable())
+			{
+				IBRCOMMON_LOGGER_TAG(evt->getName(), notice) << evt->getMessage() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		const std::string EventDebugger::getName() const
