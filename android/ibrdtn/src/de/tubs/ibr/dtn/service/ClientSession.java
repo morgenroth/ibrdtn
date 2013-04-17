@@ -27,6 +27,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Date;
 
 import android.content.Context;
@@ -424,29 +426,32 @@ public class ClientSession {
 
 				// put the primary block into the register
 				nativeSession.put(RegisterIndex.REG2, b);
+												
+                FileChannel inChannel = new FileInputStream(fd.getFileDescriptor()).getChannel();
+                try {
+                    int offset = 0;
+                    int count = 0;
+                    ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
+                    while (inChannel.read(buffer) > 0) {
+                        // add data
+                        buffer.limit(count);
+                        nativeSession.write(RegisterIndex.REG2, buffer.slice().array(), offset);
+                        offset += count;
+                        buffer.clear();
+                    }
+
+                    // send the bundle
+                    de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
+
+                    return toAndroid(ret);
+                } finally {
+                    try {
+                        inChannel.close();
+                        fd.close();
+                    } catch (IOException e) {
+                    }
+                }
 				
-				FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
-				try {
-					int offset = 0;
-					int count = 0;
-					byte[] buffer = new byte[8192];
-					while ((count = stream.read(buffer)) > 0) {
-						// add data
-						nativeSession.write(RegisterIndex.REG2, buffer, offset);
-						offset += count;
-					}
-					
-					// send the bundle
-					de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
-					
-					return toAndroid(ret);
-				} finally {
-					try {
-						stream.close();
-						fd.close();
-					} catch (IOException e) {
-					}
-				}				
 			} catch (Exception e) {
 				Log.e(TAG, "sendFileDescriptor failed", e);
 				return null;
