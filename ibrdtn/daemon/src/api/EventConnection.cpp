@@ -66,8 +66,11 @@ namespace dtn
 				case dtn::core::NODE_UNAVAILABLE:
 					_stream << "unavailable";
 					break;
-				case dtn::core::NODE_UPDATED:
-					_stream << "updated";
+				case dtn::core::NODE_DATA_ADDED:
+					_stream << "data_added";
+					break;
+				case dtn::core::NODE_DATA_REMOVED:
+					_stream << "data_removed";
 					break;
 				default:
 					break;

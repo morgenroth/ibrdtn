@@ -90,7 +90,7 @@ namespace dtn
 					// send all (multi-hop) bundles in the storage to the neighbor
 					_taskqueue.push( new SearchNextBundleTask(eid) );
 				}
-				else if (nodeevent.getAction() == NODE_UPDATED)
+				else if (nodeevent.getAction() == NODE_DATA_ADDED)
 				{
 					const dtn::data::EID &eid = n.getEID();
 
