@@ -426,13 +426,14 @@ public class ClientSession {
 
 				// put the primary block into the register
 				nativeSession.put(RegisterIndex.REG2, b);
-												
-                FileChannel inChannel = new FileInputStream(fd.getFileDescriptor()).getChannel();
+				
+				FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
+                FileChannel inChannel = stream.getChannel();
                 try {
                     int offset = 0;
                     int count = 0;
                     ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
-                    while (inChannel.read(buffer) > 0) {
+                    while ((count = inChannel.read(buffer)) > 0) {
                         // add data
                         buffer.limit(count);
                         nativeSession.write(RegisterIndex.REG2, buffer.slice().array(), offset);
@@ -447,6 +448,7 @@ public class ClientSession {
                 } finally {
                     try {
                         inChannel.close();
+                        stream.close();
                         fd.close();
                     } catch (IOException e) {
                     }
