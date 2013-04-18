@@ -26,6 +26,7 @@
 #include "routing/QueueBundleEvent.h"
 
 #include <ibrdtn/data/PayloadBlock.h>
+#include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/RWLock.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -40,47 +41,30 @@ namespace dtn
 
 		const std::string NativeSession::TAG = "NativeSession";
 
-		NativeSession::NativeSession(NativeSessionCallback *cb)
-		 : _receiver(*this), _cb(cb), _destroyed(false)
+		NativeSession::NativeSession(NativeSessionCallback *session_cb, NativeSerializerCallback *serializer_cb)
+		 : _receiver(*this), _session_cb(session_cb), _serializer_cb(serializer_cb)
 		{
 			// set the local endpoint to the default
 			_endpoint = _registration.getDefaultEID();
-
-			// start the receiver
-			_receiver.start();
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session created" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		NativeSession::~NativeSession()
 		{
-			destroy();
+			// invalidate the callback pointer
+			{
+				ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+				_session_cb = NULL;
+				_serializer_cb = NULL;
+			}
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session destroyed" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NativeSession::destroy() throw ()
 		{
-			// prevent double calls
-			{
-				ibrcommon::MutexLock l(_destroyed_mutex);
-				if (_destroyed) return;
-
-				// prevent future destroy calls
-				_destroyed = true;
-			}
-
-			// send stop signal to the receiver
-			_receiver.stop();
-
-			// wait here until the receiver has been stopped
-			_receiver.join();
-
-			// invalidate the callback pointer
-			{
-				ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
-				_cb = NULL;
-			}
-
-			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session destroyed" << IBRCOMMON_LOGGER_ENDL;
+			_registration.abort();
 		}
 
 		const dtn::data::EID& NativeSession::getNodeEID() const throw ()
@@ -91,22 +75,22 @@ namespace dtn
 		void NativeSession::fireNotificationBundle(const dtn::data::BundleID &id) throw ()
 		{
 			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
-			if (_cb == NULL) return;
-			_cb->notifyBundle(id);
+			if (_session_cb == NULL) return;
+			_session_cb->notifyBundle(id);
 		}
 
 		void NativeSession::fireNotificationStatusReport(const dtn::data::StatusReportBlock &report) throw ()
 		{
 			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
-			if (_cb == NULL) return;
-			_cb->notifyStatusReport(report);
+			if (_session_cb == NULL) return;
+			_session_cb->notifyStatusReport(report);
 		}
 
 		void NativeSession::fireNotificationCustodySignal(const dtn::data::CustodySignalBlock &custody) throw ()
 		{
 			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
-			if (_cb == NULL) return;
-			_cb->notifyCustodySignal(custody);
+			if (_session_cb == NULL) return;
+			_session_cb->notifyCustodySignal(custody);
 		}
 
 		void NativeSession::setEndpoint(const std::string &suffix) throw (NativeSessionException)
@@ -257,14 +241,12 @@ namespace dtn
 			}
 		}
 
-		const dtn::data::Bundle& NativeSession::get(RegisterIndex ri) const throw ()
+		void NativeSession::get(RegisterIndex ri) throw ()
 		{
-			return _bundle[ri];
-		}
+			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+			if (_serializer_cb == NULL) return;
 
-		void NativeSession::get(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
-		{
-			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_FULL);
+			NativeSerializer serializer(*_serializer_cb, NativeSerializer::BUNDLE_FULL);
 			try {
 				serializer << _bundle[ri];
 			} catch (const ibrcommon::Exception &ex) {
@@ -272,9 +254,12 @@ namespace dtn
 			}
 		}
 
-		void NativeSession::getInfo(RegisterIndex ri, NativeSerializerCallback &cb) const throw ()
+		void NativeSession::getInfo(RegisterIndex ri) throw ()
 		{
-			NativeSerializer serializer(cb, NativeSerializer::BUNDLE_INFO);
+			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+			if (_serializer_cb == NULL) return;
+
+			NativeSerializer serializer(*_serializer_cb, NativeSerializer::BUNDLE_INFO);
 			try {
 				serializer << _bundle[ri];
 			} catch (const ibrcommon::Exception &ex) {
@@ -395,13 +380,16 @@ namespace dtn
 		}
 
 		NativeSession::BundleReceiver::BundleReceiver(NativeSession &session)
-		 : _session(session), _shutdown(false)
+		 : _session(session)
 		{
+			// listen to QueueBundleEvents
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 		}
 
 		NativeSession::BundleReceiver::~BundleReceiver()
 		{
-			ibrcommon::JoinableThread::join();
+			// un-listen from QueueBundleEvents
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 		}
 
 		void NativeSession::BundleReceiver::raiseEvent(const dtn::core::Event *evt) throw ()
@@ -419,63 +407,40 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		void NativeSession::BundleReceiver::__cancellation() throw ()
+		void NativeSession::receive() throw (NativeSessionException)
 		{
-			// set the shutdown variable to true
-			_shutdown = true;
+			Registration &reg = _registration;
+			try {
+				try {
+					const dtn::data::MetaBundle id = reg.receiveMetaBundle();
 
-			// abort all blocking calls on the registration object
-			_session._registration.abort();
-		}
+					if (id.procflags & dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD) {
+						// transform custody signals & status reports into notifies
+						fireNotificationAdministrativeRecord(id);
 
-		void NativeSession::BundleReceiver::finally() throw ()
-		{
-		}
+						// announce the delivery of this bundle
+						reg.delivered(id);
+					} else {
+						IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "fire notification for new bundle " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 
-		void NativeSession::BundleReceiver::run() throw ()
-		{
-			// listen to QueueBundleEvents
-			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
+						// put the bundle into the API queue
+						_bundle_queue.push(id);
 
-			Registration &reg = _session._registration;
-			try{
-				while (!_shutdown) {
-					try {
-						const dtn::data::MetaBundle id = reg.receiveMetaBundle();
-
-						if (id.procflags & dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD) {
-							// transform custody signals & status reports into notifies
-							fireNotificationAdministrativeRecord(id);
-
-							// announce the delivery of this bundle
-							reg.delivered(id);
-						} else {
-							IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "[BundleReceiver] fire notification for new bundle " << id.toString() << IBRCOMMON_LOGGER_ENDL;
-
-							// put the bundle into the API queue
-							_session._bundle_queue.push(id);
-
-							// notify the client about the new bundle
-							_session.fireNotificationBundle(id);
-						}
-					} catch (const dtn::storage::NoBundleFoundException&) {
-						IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 25) << "[BundleReceiver] no more bundles found - wait until we are notified" << IBRCOMMON_LOGGER_ENDL;
-						reg.wait_for_bundle();
+						// notify the client about the new bundle
+						fireNotificationBundle(id);
 					}
-
-					yield();
+				} catch (const dtn::storage::NoBundleFoundException&) {
+					IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 25) << "no more bundles found - wait until we are notified" << IBRCOMMON_LOGGER_ENDL;
+					reg.wait_for_bundle();
 				}
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 40) << "[BundleReceiver] " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				throw NativeSessionException(std::string("loop aborted - ") + ex.what());
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 10) << "[BundleReceiver] " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				throw NativeSessionException(std::string("loop aborted - ") + ex.what());
 			}
-
-			// un-listen from QueueBundleEvents
-			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 		}
 
-		void NativeSession::BundleReceiver::fireNotificationAdministrativeRecord(const dtn::data::MetaBundle &bundle)
+		void NativeSession::fireNotificationAdministrativeRecord(const dtn::data::MetaBundle &bundle)
 		{
 			// load the whole bundle
 			const dtn::data::Bundle b = dtn::core::BundleCore::getInstance().getStorage().get(bundle);
@@ -491,7 +456,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "fire notification for status report" << IBRCOMMON_LOGGER_ENDL;
 
 				// fire the status report notification
-				_session.fireNotificationStatusReport(report);
+				fireNotificationStatusReport(report);
 			} catch (const dtn::data::StatusReportBlock::WrongRecordException&) {
 				// this is not a status report
 			}
@@ -504,7 +469,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "fire notification for custody signal" << IBRCOMMON_LOGGER_ENDL;
 
 				// fire the custody signal notification
-				_session.fireNotificationCustodySignal(custody);
+				fireNotificationCustodySignal(custody);
 			} catch (const dtn::data::CustodySignalBlock::WrongRecordException&) {
 				// this is not a custody report
 			}

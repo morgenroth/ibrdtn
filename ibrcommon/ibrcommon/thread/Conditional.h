@@ -53,7 +53,7 @@ namespace ibrcommon
 			Conditional();
 			virtual ~Conditional();
 
-			void signal(bool broadcast = false);
+			void signal(bool broadcast = false) throw ();
 
 			/*
 			 * Wait until signal() is called or the timeout exceeds.
@@ -66,12 +66,12 @@ namespace ibrcommon
 			/**
 			 * Abort all waits on this conditional.
 			 */
-			void abort();
+			void abort() throw ();
 
 			/**
 			 * Removes the abort call off this conditional.
 			 */
-			void reset();
+			void reset() throw ();
 
 			/**
 			 * Convert a millisecond timeout into use for high resolution
@@ -79,7 +79,7 @@ namespace ibrcommon
 			 * @param timeout to convert.
 			 * @param hires timespec representation to fill.
 			 */
-			static void gettimeout(size_t timeout, struct timespec *hires);
+			static void gettimeout(size_t timeout, struct timespec *hires) throw ();
 
 		private:
 			bool isLocked();

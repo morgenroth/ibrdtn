@@ -94,7 +94,7 @@ namespace dtn
 			 * Constructor of the native session
 			 * @param cb A callback object for notifications. May be NULL.
 			 */
-			NativeSession(NativeSessionCallback *cb);
+			NativeSession(NativeSessionCallback *session_cb, NativeSerializerCallback *serializer_cb);
 
 			/**
 			 * Destructor
@@ -167,19 +167,14 @@ namespace dtn
 			void load(RegisterIndex ri, const dtn::data::BundleID &id) throw (BundleNotFoundException);
 
 			/**
-			 * Returns the bundle in the register
-			 */
-			const dtn::data::Bundle& get(RegisterIndex ri) const throw ();
-
-			/**
 			 * Return the bundle in the register using the given callback
 			 */
-			void get(RegisterIndex ri, NativeSerializerCallback &cb) const throw ();
+			void get(RegisterIndex ri) throw ();
 
 			/**
 			 * Return the bundle skeleton in the register using the given callback
 			 */
-			void getInfo(RegisterIndex ri, NativeSerializerCallback &cb) const throw ();
+			void getInfo(RegisterIndex ri) throw ();
 
 			/**
 			 * Delete the bundle in the local register from the storage
@@ -233,8 +228,17 @@ namespace dtn
 			 */
 			void read(RegisterIndex ri, char *buf, size_t &len, const size_t offset = 0) throw ();
 
+			/**
+			 * Receives one bundle and returns. If there is no bundle this call will
+			 * block until a bundle is available or destroy() has been called.
+			 */
+			void receive() throw (NativeSessionException);
+
 		private:
-			class BundleReceiver : public ibrcommon::JoinableThread, public dtn::core::EventReceiver
+			// local registration
+			dtn::api::Registration _registration;
+
+			class BundleReceiver : public dtn::core::EventReceiver
 			{
 			public:
 				BundleReceiver(NativeSession &session);
@@ -242,23 +246,19 @@ namespace dtn
 
 				void raiseEvent(const dtn::core::Event *evt) throw ();
 
-			protected:
-				void run() throw ();
-				void finally() throw ();
-				void __cancellation() throw ();
-
 			private:
-				void fireNotificationAdministrativeRecord(const dtn::data::MetaBundle &bundle);
-
 				NativeSession &_session;
-
-				bool _shutdown;
 			} _receiver;
 
 			/**
 			 * Push out an notification to the native session callback.
 			 */
 			void fireNotificationBundle(const dtn::data::BundleID &id) throw ();
+
+			/**
+			 * Push out an notification to the native session callback.
+			 */
+			void fireNotificationAdministrativeRecord(const dtn::data::MetaBundle &bundle);
 
 			/**
 			 * Push out an notification to the native session callback.
@@ -272,10 +272,8 @@ namespace dtn
 
 			// callback
 			ibrcommon::RWMutex _cb_mutex;
-			NativeSessionCallback *_cb;
-
-			// local registration
-			dtn::api::Registration _registration;
+			NativeSessionCallback *_session_cb;
+			NativeSerializerCallback *_serializer_cb;
 
 			// default endpoint
 			dtn::data::EID _endpoint;
@@ -285,10 +283,6 @@ namespace dtn
 
 			// local bundle queue
 			ibrcommon::Queue<dtn::data::BundleID> _bundle_queue;
-
-			// mark the session as destroyed or not
-			ibrcommon::Mutex _destroyed_mutex;
-			bool _destroyed;
 		};
 	} /* namespace net */
 } /* namespace dtn */
