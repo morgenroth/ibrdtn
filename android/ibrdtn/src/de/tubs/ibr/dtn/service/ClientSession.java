@@ -485,8 +485,10 @@ public class ClientSession {
                     ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
                     while ((count = inChannel.read(buffer)) > 0) {
                         // add data
-                        buffer.limit(count);
-                        nativeSession.write(RegisterIndex.REG2, buffer.slice().array(), offset);
+                        byte data[] = new byte[count];
+                        buffer.flip();
+                        buffer.get(data);
+                        nativeSession.write(RegisterIndex.REG2, data, offset);
                         offset += count;
                         buffer.clear();
                     }
@@ -530,8 +532,10 @@ public class ClientSession {
                     ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
                     while ((count = inChannel.read(buffer)) > 0) {
                         // add data
-                        buffer.limit(count);
-                        nativeSession.write(RegisterIndex.REG2, buffer.slice().array(), offset);
+                        byte data[] = new byte[count];
+                        buffer.flip();
+                        buffer.get(data);
+                        nativeSession.write(RegisterIndex.REG2, data, offset);
                         offset += count;
                         buffer.clear();
                     }
