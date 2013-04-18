@@ -180,7 +180,7 @@ namespace ibrcommon
 			_cond.abort();
 		}
 
-		void reset()
+		void reset() throw ()
 		{
 			_cond.reset();
 		}
