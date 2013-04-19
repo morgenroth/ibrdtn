@@ -249,7 +249,7 @@ namespace testsuite{
 
 	void SQLiteBundleStorageTestSuite::insertTest(){
 		string ID;
-		int err,filename,TTLo, expire;
+		int err,TTLo, expire;
 		dtn::data::Bundle bundle,bundle2,bundle3;
 		{
 			dtn::core::SQLiteBundleStorage _storage(_path,"db",42);
@@ -269,7 +269,7 @@ namespace testsuite{
 		}
 
 		string bundleID, source, destination, reportto, custodian;
-		size_t progFlags, time, datalength, ttl, size, seq, life, offset;
+		size_t progFlags, time, datalength, ttl, seq, life, offset;
 		sqlite3 *database;
 		sqlite3_stmt *get;
 		err = sqlite3_open_v2(("/home/pennywise/workspace/EmmaSVN/Unittest/db"),&database,SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
@@ -314,7 +314,6 @@ namespace testsuite{
 		CPPUNIT_ASSERT(expire == TTLo);
 	}
 	void SQLiteBundleStorageTestSuite::getTest(){
-		int TTLo;
 		dtn::data::Bundle bundle,bundle2;
 		dtn::core::SQLiteBundleStorage _storage(_path,"db",42);
 		getBundle(bundle);
@@ -543,7 +542,7 @@ namespace testsuite{
     }
 
     void SQLiteBundleStorageTestSuite::storeBundleRoutingInfoTest(){
-    	int err,key;
+    	int err;
     	data::Bundle bundle1, bundle2, bundle3;
     	getBundle(bundle1);
     	data::BundleID BID1(bundle1);
@@ -889,7 +888,6 @@ namespace testsuite{
     	sqlite3_finalize(get);
     	sqlite3_close(database);
     	DIR *directory;
-    	bool condition1 = false, condition2 = false, condition3 = false;
     	struct dirent *dirpointer;
     	if((directory=opendir("/home/pennywise/workspace/EmmaSVN/Unittest/Bundles")) != NULL){
     		while((dirpointer=readdir(directory)) != NULL){

@@ -87,8 +87,7 @@ namespace ibrcommon
 		}
 
 		// write the data
-		int ret = 0;
-		if ((ret = fwrite(pbase(), sizeof(char), (iend - ibegin), _handle)) != (iend - ibegin))
+		if (fwrite(pbase(), sizeof(char), (iend - ibegin), _handle) != (iend - ibegin))
 		{
 			return std::char_traits<char>::eof();
 		}

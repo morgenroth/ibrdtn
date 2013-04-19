@@ -978,8 +978,6 @@ namespace ibrcommon
 			service = addr.service().c_str();
 		} catch (const vaddress::service_not_set&) { };
 
-		std::string errinfo = "with address: " + addr.toString();
-
 		if (0 != ::getaddrinfo(address, service, &hints, &res))
 			throw socket_exception("failed to getaddrinfo with address: " + addr.toString());
 

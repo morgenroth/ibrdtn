@@ -75,7 +75,6 @@ bool dtn::dht::DHTNameService::setNonBlockingInterruptPipe() {
 }
 
 void dtn::dht::DHTNameService::componentUp() throw () {
-	std::string eid = dtn::core::BundleCore::local.getNode().getString();
 	// creating interrupt pipe
 	if (pipe(_interrupt_pipe) < 0) {
 		IBRCOMMON_LOGGER(error) << "Error " << errno << " creating pipe"
@@ -573,7 +572,6 @@ void dtn::dht::DHTNameService::raiseEvent(const dtn::core::Event *evt) throw () 
 void dtn::dht::DHTNameService::pingNode(const dtn::core::Node &n) {
 	int rc;
 	std::list<dtn::core::Node::Attribute> services = n.get("dhtns");
-	std::string address = "0.0.0.0";
 	unsigned int port = 9999;
 	if (!services.empty()) {
 		for (std::list<dtn::core::Node::Attribute>::const_iterator service =

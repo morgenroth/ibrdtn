@@ -90,11 +90,10 @@ namespace ibrcommon
 	void File::update()
 	{
 		struct stat s;
-		int type;
 
 		if ( stat(_path.c_str(), &s) == 0 )
 		{
-			type = s.st_mode & S_IFMT;
+			int type = s.st_mode & S_IFMT;
 
 			switch (type)
 			{
@@ -185,8 +184,6 @@ namespace ibrcommon
 
 	int File::remove(bool recursive)
 	{
-		int ret;
-
 		if (isSystem()) return -1;
 		if (_type == DT_UNKNOWN) return -1;
 
@@ -194,6 +191,8 @@ namespace ibrcommon
 		{
 			if (recursive)
 			{
+				int ret = 0;
+
 				// container for all files
 				list<File> files;
 

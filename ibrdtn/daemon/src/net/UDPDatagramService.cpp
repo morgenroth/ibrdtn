@@ -244,8 +244,6 @@ namespace dtn
 		 */
 		const std::string UDPDatagramService::getServiceDescription() const
 		{
-			std::string address;
-
 			// get all addresses
 			std::list<ibrcommon::vaddress> addrs = _iface.getAddresses();
 
