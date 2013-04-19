@@ -110,7 +110,7 @@ typedef nl_object nl_object_header;
 		if (obj == NULL) return;
 
 		// get the header of the nl_object first
-		nl_object_header *header = (nl_object_header*)nl_object_priv(obj);
+		nl_object_header *header = static_cast<nl_object_header*>(nl_object_priv(obj));
 
 		switch (header->ce_msgtype) {
 			case RTM_NEWLINK: {
