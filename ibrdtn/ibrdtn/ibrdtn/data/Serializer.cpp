@@ -621,7 +621,7 @@ namespace dtn
 					}
 					else
 					{
-						throw ex;
+						throw;
 					}
 				}
 
