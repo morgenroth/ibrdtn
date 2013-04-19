@@ -41,7 +41,7 @@
             android:title="@string/discovery_announce" >
         </CheckBoxPreference>
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="checkIdleTimeout"
             android:summary="@string/autodisconnect_desc"
             android:title="@string/autodisconnect" />
