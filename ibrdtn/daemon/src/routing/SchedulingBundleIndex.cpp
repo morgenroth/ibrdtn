@@ -52,7 +52,7 @@ namespace dtn
 				if (!unlimited && (added >= cb.limit())) break;
 			}
 
-			if (added <= 0)
+			if (added == 0)
 				throw dtn::storage::NoBundleFoundException();
 		}
 
