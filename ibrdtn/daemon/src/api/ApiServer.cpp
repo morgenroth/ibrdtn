@@ -29,6 +29,8 @@
 
 #include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/net/vsocket.h>
+#include <ibrcommon/net/socketstream.h>
 
 #include <typeinfo>
 #include <algorithm>
