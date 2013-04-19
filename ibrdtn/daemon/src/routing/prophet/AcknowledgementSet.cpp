@@ -102,7 +102,7 @@ namespace dtn
 			dtn::data::SDNV size;
 			stream >> size;
 
-			for(size_t i = 0; i < size.getValue(); i++)
+			for(size_t i = 0; i < size.getValue(); ++i)
 			{
 				dtn::data::MetaBundle ack;
 				dtn::data::SDNV expire_time;

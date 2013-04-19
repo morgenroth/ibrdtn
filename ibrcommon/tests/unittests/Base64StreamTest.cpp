@@ -45,7 +45,7 @@ void Base64StreamTest::testDecode()
 	std::stringstream ss_decoded;
 
 	// test data
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 100; ++i)
 		ss_plain << "0123456789";
 
 	// encode the data
@@ -87,7 +87,7 @@ void Base64StreamTest::testFileReference()
 
 void Base64StreamTest::testReader()
 {
-	for (int j = 43000; j < 43010; j++)
+	for (int j = 43000; j < 43010; ++j)
 	{
 		std::cout << "+" << std::flush;
 //	int j = 42690;
@@ -103,7 +103,7 @@ void Base64StreamTest::testReader()
 		ibrcommon::Base64Stream is(ss_encoded, false, 75);
 
 		// test data
-		for (int i = 0; i < j; i++)
+		for (int i = 0; i < j; ++i)
 		{
 			char c = (i % 256);
 			ss_plain.put(c);

@@ -85,7 +85,7 @@ namespace dtn
 					// convert the port into a string
 					std::stringstream ss; ss << _bind_port;
 
-					for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+					for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); ++iter) {
 						ibrcommon::vaddress &addr = (*iter);
 
 						// handle the addresses according to their family
@@ -162,7 +162,7 @@ namespace dtn
 
 				// create vaddress
 				ibrcommon::socketset sockset = _vsocket.getAll();
-				for (ibrcommon::socketset::iterator iter = sockset.begin(); iter != sockset.end(); iter++) {
+				for (ibrcommon::socketset::iterator iter = sockset.begin(); iter != sockset.end(); ++iter) {
 					if ((*iter) == _msock) continue;
 					try {
 						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
@@ -193,7 +193,7 @@ namespace dtn
 				ibrcommon::socketset readfds;
 				_vsocket.select(&readfds, NULL, NULL, NULL);
 
-				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
+				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); ++iter) {
 					try {
 						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
@@ -249,7 +249,7 @@ namespace dtn
 			// get all addresses
 			std::list<ibrcommon::vaddress> addrs = _iface.getAddresses();
 
-			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); ++iter) {
 				ibrcommon::vaddress &addr = (*iter);
 
 				try {
@@ -329,7 +329,7 @@ namespace dtn
 					port = p[1];
 				}
 
-				param_iter++;
+				++param_iter;
 			}
 
 			address = ibrcommon::vaddress(addr, port);

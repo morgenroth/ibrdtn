@@ -232,7 +232,7 @@ typedef nl_object nl_object_header;
 		if (_mngr == NULL)
 			throw socket_exception("can not allocate netlink cache manager");
 
-		for (std::map<std::string, struct nl_cache*>::iterator iter = _caches.begin(); iter != _caches.end(); iter++)
+		for (std::map<std::string, struct nl_cache*>::iterator iter = _caches.begin(); iter != _caches.end(); ++iter)
 		{
 			const std::string &cachename = (*iter).first;
 #ifdef HAVE_LIBNL3
@@ -376,7 +376,7 @@ typedef nl_object nl_object_header;
 				socketset socks;
 				_sock.select(&socks, NULL, NULL, NULL);
 
-				for (socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+				for (socketset::iterator iter = socks.begin(); iter != socks.end(); ++iter) {
 					try {
 						netlinkcache &cache = dynamic_cast<netlinkcache&>(**iter);
 						cache.receive();

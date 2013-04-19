@@ -246,7 +246,7 @@ namespace dtn
 				// query the data base for the bundle
 				_database.get(id, bundle, blocks);
 
-				for (SQLiteDatabase::blocklist::const_iterator iter = blocks.begin(); iter != blocks.end(); iter++)
+				for (SQLiteDatabase::blocklist::const_iterator iter = blocks.begin(); iter != blocks.end(); ++iter)
 				{
 					const SQLiteDatabase::blocklist_entry &entry = (*iter);
 					const int blocktyp = entry.first;
@@ -329,7 +329,7 @@ namespace dtn
 				// number of bytes stored
 				int storedBytes = 0;
 
-				for(dtn::data::Bundle::const_iterator it = bundle.begin() ;it != bundle.end(); it++)
+				for(dtn::data::Bundle::const_iterator it = bundle.begin() ;it != bundle.end(); ++it)
 				{
 					const dtn::data::Block &block = (**it);
 

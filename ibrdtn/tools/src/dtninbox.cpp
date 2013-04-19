@@ -61,7 +61,7 @@ map<string,string> readconfiguration(int argc, char** argv)
     ret["name"] = argv[argc - 2];
     ret["inbox"] = argv[argc - 1];
 
-    for (int i = 0; i < (argc - 2); i++)
+    for (int i = 0; i < (argc - 2); ++i)
     {
         string arg = argv[i];
 

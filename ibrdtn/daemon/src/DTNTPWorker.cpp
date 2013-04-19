@@ -160,7 +160,7 @@ namespace dtn
 				// remove outdated blacklist entries
 				{
 					ibrcommon::MutexLock l(_blacklist_lock);
-					for (std::map<EID, size_t>::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); iter++)
+					for (std::map<EID, size_t>::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); ++iter)
 					{
 						size_t bl_age = (*iter).second;
 
@@ -213,7 +213,7 @@ namespace dtn
 				{
 					// search for other nodes with better credentials
 					const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
-					for (std::set<dtn::core::Node>::const_iterator iter = nodes.begin(); iter != nodes.end(); iter++) {
+					for (std::set<dtn::core::Node>::const_iterator iter = nodes.begin(); iter != nodes.end(); ++iter) {
 						if (shouldSyncWith(*iter)) {
 							syncWith(*iter);
 						}
@@ -358,7 +358,7 @@ namespace dtn
 					ss >> quality;
 				}
 
-				param_iter++;
+				++param_iter;
 			}
 		}
 

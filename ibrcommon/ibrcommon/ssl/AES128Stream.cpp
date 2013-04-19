@@ -41,7 +41,7 @@ namespace ibrcommon
 			IBRCOMMON_LOGGER(critical) << "failed to create initialization vector" << IBRCOMMON_LOGGER_ENDL;
 
 		// copy the IV to a local array
-		for (unsigned int i = 0; i < iv_len; i++)
+		for (unsigned int i = 0; i < iv_len; ++i)
 			_used_initialisation_vector[i] = _gcm_iv.initialisation_vector[i];
 
 		// init the GCM message
@@ -59,7 +59,7 @@ namespace ibrcommon
 		_gcm_iv.salt = htonl(salt);
 
 		// copy the IV to local variables
-		for (unsigned int i = 0; i < iv_len; i++)
+		for (unsigned int i = 0; i < iv_len; ++i)
 		{
 			_gcm_iv.initialisation_vector[i] = iv[i];
 			_used_initialisation_vector[i] = iv[i];
@@ -77,7 +77,7 @@ namespace ibrcommon
 
 	void AES128Stream::getIV(unsigned char (&to_iv)[iv_len]) const
 	{
-		for (unsigned int i = 0; i < iv_len; i++)
+		for (unsigned int i = 0; i < iv_len; ++i)
 			to_iv[i] = _used_initialisation_vector[i];
 	}
 

@@ -111,7 +111,7 @@ namespace ibrcommon
 		// position in array
 		size_t decoded_bytes = 0;
 
-		for (size_t i = 0; i < len; i++)
+		for (size_t i = 0; i < len; ++i)
 		{
 			const int c = Base64::getCharType( buffer[i] );
 

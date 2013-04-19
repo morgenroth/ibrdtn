@@ -54,7 +54,7 @@ namespace dtn
 		bool BundleMerger::Container::contains(size_t offset, size_t length) const
 		{
 			// check if the offered payload is already in the chunk list
-			for (std::set<Chunk>::const_iterator iter = _chunks.begin(); iter != _chunks.end(); iter++)
+			for (std::set<Chunk>::const_iterator iter = _chunks.begin(); iter != _chunks.end(); ++iter)
 			{
 				const Chunk &chunk = (*iter);
 
@@ -144,7 +144,7 @@ namespace dtn
 				if (payload_it == obj.end()) throw ibrcommon::Exception("Payload block missing.");
 
 				// iterate from begin to the payload block
-				for (dtn::data::Bundle::iterator block_it = obj.begin(); block_it != payload_it; block_it++)
+				for (dtn::data::Bundle::iterator block_it = obj.begin(); block_it != payload_it; ++block_it)
 				{
 					// get the current block and type
 					Block &current_block = (**block_it);
@@ -189,7 +189,7 @@ namespace dtn
 				if (payload_it == obj.end()) throw ibrcommon::Exception("Payload block missing.");
 
 				// start with the block after the payload block
-				for (payload_it++; payload_it != obj.end(); payload_it++)
+				for (payload_it++; payload_it != obj.end(); ++payload_it)
 				{
 					//get the current block and type
 					Block &current_block = (**payload_it);
@@ -252,7 +252,7 @@ namespace dtn
 			// check if the bundle payload is complete
 			size_t position = 0;
 
-			for (std::set<Chunk>::const_iterator iter = chunks.begin(); iter != chunks.end(); iter++)
+			for (std::set<Chunk>::const_iterator iter = chunks.begin(); iter != chunks.end(); ++iter)
 			{
 				const Chunk &chunk = (*iter);
 

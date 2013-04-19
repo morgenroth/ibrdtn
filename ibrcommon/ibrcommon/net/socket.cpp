@@ -827,7 +827,7 @@ namespace ibrcommon
 				}
 
 				// error checking for all returned sockets
-				for (socketset::iterator iter = probeset.begin(); iter != probeset.end(); iter++) {
+				for (socketset::iterator iter = probeset.begin(); iter != probeset.end(); ++iter) {
 					basesocket *current = (*iter);
 					int err = 0;
 					socklen_t len = sizeof(err);
@@ -1127,7 +1127,7 @@ namespace ibrcommon
 		::memset(&iface_addr, 0, sizeof(iface_addr));
 
 		const std::list<vaddress> iface_addrs = iface.getAddresses();
-		for (std::list<vaddress>::const_iterator iter = iface_addrs.begin(); iter != iface_addrs.end(); iter++) {
+		for (std::list<vaddress>::const_iterator iter = iface_addrs.begin(); iter != iface_addrs.end(); ++iter) {
 			const vaddress &addr = (*iter);
 
 			if ((ret = ::getaddrinfo(addr.address().c_str(), NULL, &hints, &res)) == 0) {

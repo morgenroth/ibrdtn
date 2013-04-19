@@ -103,7 +103,7 @@ namespace dtn
 			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
 
 			// delete all extensions
-			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
 			{
 				delete (*iter);
 			}
@@ -118,7 +118,7 @@ namespace dtn
 			_nh_extension.componentUp();
 			_retransmission_extension.componentUp();
 
-			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
 			{
 				RoutingExtension &ex = (**iter);
 				ex.componentUp();
@@ -134,7 +134,7 @@ namespace dtn
 			_extension_state = false;
 
 			// stop all extensions
-			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
 			{
 				RoutingExtension &ex = (**iter);
 				ex.componentDown();
@@ -157,7 +157,7 @@ namespace dtn
 			// process this handshake using the retransmission extension
 			_retransmission_extension.processHandshake(source, answer);
 
-			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); ++iter)
 			{
 				RoutingExtension &extension = (**iter);
 				extension.processHandshake(source, answer);
@@ -177,7 +177,7 @@ namespace dtn
 			// process this handshake using the retransmission extension
 			_retransmission_extension.responseHandshake(source, request, answer);
 
-			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); ++iter)
 			{
 				RoutingExtension &extension = (**iter);
 				extension.responseHandshake(source, request, answer);
@@ -197,7 +197,7 @@ namespace dtn
 			// process this handshake using the retransmission extension
 			_retransmission_extension.requestHandshake(destination, request);
 
-			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
+			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); ++iter)
 			{
 				RoutingExtension &extension = (**iter);
 				extension.requestHandshake(destination, request);
@@ -463,7 +463,7 @@ namespace dtn
 			if (!_extension_state) return;
 
 			// notify all underlying extensions
-			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
 			{
 				(*iter)->notify(evt);
 			}

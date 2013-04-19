@@ -60,7 +60,7 @@ namespace ibrcommon
 
 	void File::removeSlash()
 	{
-		std::string::iterator iter = _path.end(); iter--;
+		std::string::iterator iter = _path.end(); --iter;
 
 		if ((*iter) == '/')
 		{
@@ -201,7 +201,7 @@ namespace ibrcommon
 				if ((ret = getFiles(files)) < 0)
 					return ret;
 
-				for (list<File>::iterator iter = files.begin(); iter != files.end(); iter++)
+				for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
 				{
 					if (!(*iter).isSystem())
 					{

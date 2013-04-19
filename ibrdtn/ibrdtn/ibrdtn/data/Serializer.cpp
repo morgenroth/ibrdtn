@@ -62,7 +62,7 @@ namespace dtn
 			_dictionary.add(obj._custodian);
 
 			// add EID of all secondary blocks
-			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
+			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 			{
 				const Block &b = (**iter);
 				_dictionary.add( b.getEIDList() );
@@ -81,7 +81,7 @@ namespace dtn
 			(*this) << (PrimaryBlock&)obj;
 
 			// serialize all secondary blocks
-			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
+			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 			{
 				const Block &b = (**iter);
 				(*this) << b;
@@ -117,7 +117,7 @@ namespace dtn
 			// serialize all secondary blocks
 			bool post_payload = false;
 
-			for (Bundle::const_iterator iter = obj._bundle.begin(); iter != obj._bundle.end(); iter++)
+			for (Bundle::const_iterator iter = obj._bundle.begin(); iter != obj._bundle.end(); ++iter)
 			{
 				const Block &b = (**iter);
 
@@ -155,12 +155,12 @@ namespace dtn
 			if (compressable)
 			{
 				// add EID of all secondary blocks
-				for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
+				for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 				{
 					const Block &b = (**iter);
 					const std::list<dtn::data::EID> eids = b.getEIDList();
 
-					for (std::list<dtn::data::EID>::const_iterator eit = eids.begin(); eit != eids.end(); eit++)
+					for (std::list<dtn::data::EID>::const_iterator eit = eids.begin(); eit != eids.end(); ++eit)
 					{
 						const dtn::data::EID &eid = (*eit);
 						if (!eid.isCompressable())
@@ -241,7 +241,7 @@ namespace dtn
 				len += _dictionary.getSize();
 			}
 
-			for (int i = 0; i < 12; i++)
+			for (int i = 0; i < 12; ++i)
 			{
 				len += primaryheader[i].getLength();
 			}
@@ -262,7 +262,7 @@ namespace dtn
 			 * write the ref block of the dictionary
 			 * this includes scheme and ssp for destination, source, reportto and custodian.
 			 */
-			for (int i = 0; i < 11; i++)
+			for (int i = 0; i < 11; ++i)
 			{
 				_stream << primaryheader[i];
 			}
@@ -302,7 +302,7 @@ namespace dtn
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
 				_stream << SDNV(eids.size());
-				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					pair<size_t, size_t> offsets;
 
@@ -345,7 +345,7 @@ namespace dtn
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
 				_stream << SDNV(eids.size());
-				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					pair<size_t, size_t> offsets;
 
@@ -406,7 +406,7 @@ namespace dtn
 			len += getLength( (PrimaryBlock&)obj );
 			
 			// add size of all blocks
-			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
+			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 			{
 				const Block &b = (**iter);
 				len += getLength( b );
@@ -486,7 +486,7 @@ namespace dtn
 			// lifetime
 			primaryheader[10] = SDNV(obj._lifetime);
 
-			for (int i = 0; i < 11; i++)
+			for (int i = 0; i < 11; ++i)
 			{
 				len += primaryheader[i].getLength();
 			}
@@ -534,7 +534,7 @@ namespace dtn
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
 				len += dtn::data::SDNV(eids.size()).getLength();
-				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					pair<size_t, size_t> offsets = _dictionary.getRef(*it);
 					len += SDNV(offsets.first).getLength();
@@ -676,7 +676,7 @@ namespace dtn
 
 			// EID References
 			pair<SDNV, SDNV> ref[4];
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < 4; ++i)
 			{
 				_stream >> ref[i].first;
 				_stream >> ref[i].second;
@@ -737,7 +737,7 @@ namespace dtn
 				SDNV eidcount;
 				_stream >> eidcount;
 
-				for (unsigned int i = 0; i < eidcount.getValue(); i++)
+				for (unsigned int i = 0; i < eidcount.getValue(); ++i)
 				{
 					SDNV scheme, ssp;
 					_stream >> scheme;
@@ -813,7 +813,7 @@ namespace dtn
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
 				_stream << SDNV(eids.size());
-				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					dtn::data::BundleString str((*it).getString());
 					_stream << str;
@@ -847,7 +847,7 @@ namespace dtn
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
 				len += dtn::data::SDNV(eids.size()).getLength();
-				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					dtn::data::BundleString str((*it).getString());
 					len += str.getLength();
@@ -891,7 +891,7 @@ namespace dtn
 				SDNV eidcount;
 				_stream >> eidcount;
 
-				for (unsigned int i = 0; i < eidcount.getValue(); i++)
+				for (unsigned int i = 0; i < eidcount.getValue(); ++i)
 				{
 					dtn::data::BundleString str;
 					_stream >> str;

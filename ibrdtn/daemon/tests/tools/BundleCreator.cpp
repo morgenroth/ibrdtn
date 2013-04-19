@@ -44,7 +44,7 @@ void BundleCreator::addPayloadBlock(dtn::data::Bundle &bundle,int size = 1000, i
 	path = getFile();
 	payloadfile.open(filepath,ios::out|ios::binary);
 
-	for (int i = 1; i<=fragments; i++){
+	for (int i = 1; i<=fragments; ++i){
 		if(rest > 0){
 			rest--;
 			add = 1;
@@ -121,7 +121,7 @@ void BundleCreator::createFragment(dtn::data::Bundle *bundle, int fragments, int
 	bundle[0]._procflags += dtn::data::Bundle::CUSTODY_REQUESTED;
 	bundle[0]._reportto = dtn::data::EID(source);
 	addPayloadBlock(bundle[0],payloadsize,(-1),number);
-	for(int i = 1;  i < fragments+1; i++){
+	for(int i = 1;  i < fragments+1; ++i){
 		bundle[i]._source = dtn::data::EID(sourceID);
 		bundle[i]._destination = dtn::data::EID(destID);
 		bundle[i]._procflags += dtn::data::Bundle::FRAGMENT;

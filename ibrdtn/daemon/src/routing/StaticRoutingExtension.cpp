@@ -59,7 +59,7 @@ namespace dtn
 
 			// delete all static routes
 			for (std::list<StaticRoute*>::iterator iter = _routes.begin();
-					iter != _routes.end(); iter++)
+					iter != _routes.end(); ++iter)
 			{
 				StaticRoute *route = (*iter);
 				delete route;
@@ -128,7 +128,7 @@ namespace dtn
 
 					// search for one rule that match
 					for (std::list<const StaticRoute*>::const_iterator iter = _routes.begin();
-							iter != _routes.end(); iter++)
+							iter != _routes.end(); ++iter)
 					{
 						const StaticRoute &route = (**iter);
 
@@ -149,7 +149,7 @@ namespace dtn
 			// announce static routes here
 			const std::multimap<std::string, std::string> &routes = dtn::daemon::Configuration::getInstance().getNetwork().getStaticRoutes();
 
-			for (std::multimap<std::string, std::string>::const_iterator iter = routes.begin(); iter != routes.end(); iter++)
+			for (std::multimap<std::string, std::string>::const_iterator iter = routes.begin(); iter != routes.end(); ++iter)
 			{
 				const dtn::data::EID nexthop((*iter).second);
 				dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_ADD, nexthop, (*iter).first);
@@ -176,7 +176,7 @@ namespace dtn
 
 						// look for routes to this node
 						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
-								iter != _routes.end(); iter++)
+								iter != _routes.end(); ++iter)
 						{
 							const StaticRoute *route = (*iter);
 							if (route->getDestination() == task.eid)
@@ -207,7 +207,7 @@ namespace dtn
 							(**this).getSeeker().get(filter, list);
 
 							// send the bundles as long as we have resources
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								try {
 									// transfer the bundle to the neighbor
@@ -226,7 +226,7 @@ namespace dtn
 
 						// look for routes to this node
 						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
-								iter != _routes.end(); iter++)
+								iter != _routes.end(); ++iter)
 						{
 							const StaticRoute &route = (**iter);
 							IBRCOMMON_LOGGER_DEBUG(50) << "check static route: " << route.toString() << IBRCOMMON_LOGGER_ENDL;
@@ -261,7 +261,7 @@ namespace dtn
 							}
 							else
 							{
-								iter++;
+								++iter;
 							}
 						}
 
@@ -291,7 +291,7 @@ namespace dtn
 
 						// delete all static routes
 						for (std::list<StaticRoute*>::iterator iter = _routes.begin();
-								iter != _routes.end(); iter++)
+								iter != _routes.end(); ++iter)
 						{
 							StaticRoute *route = (*iter);
 							delete route;
@@ -326,7 +326,7 @@ namespace dtn
 									next_expire = route->getExpiration();
 								}
 
-								iter++;
+								++iter;
 							}
 						}
 					} catch (const bad_cast&) { };

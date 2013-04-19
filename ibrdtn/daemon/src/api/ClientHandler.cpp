@@ -299,7 +299,7 @@ namespace dtn
 						const std::set<dtn::data::EID> list = _registration->getSubscriptions();
 
 						(*_stream) << API_STATUS_OK << " REGISTRATION LIST" << std::endl;
-						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 						{
 							(*_stream) << (*iter).getString() << std::endl;
 						}

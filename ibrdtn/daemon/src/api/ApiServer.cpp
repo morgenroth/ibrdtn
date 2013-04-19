@@ -68,7 +68,7 @@ namespace dtn
 				// convert the port into a string
 				std::stringstream ss; ss << port;
 
-				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); ++iter) {
 					ibrcommon::vaddress &addr = (*iter);
 
 					try {
@@ -131,7 +131,7 @@ namespace dtn
 					_sockets.select(&fds, NULL, NULL, NULL);
 
 					// iterate through all readable sockets
-					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
+					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); ++iter)
 					{
 						// we assume all the sockets in _sockets are server sockets
 						// so cast this one to the right class
@@ -228,7 +228,7 @@ namespace dtn
 				ibrcommon::MutexLock l(_connection_lock);
 
 				// shutdown all clients
-				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 				{
 					(*iter)->stop();
 				}
@@ -241,7 +241,7 @@ namespace dtn
 		Registration& ApiServer::getRegistration(const std::string &handle)
 		{
 			ibrcommon::MutexLock l(_registration_lock);
-			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
 			{
 				if (*iter == handle)
 				{
@@ -274,12 +274,12 @@ namespace dtn
 						else
 						{
 							iter->detach();
-							iter++;
+							++iter;
 						}
 					}
 					catch(const Registration::AlreadyAttachedException &ex)
 					{
-						iter++;
+						++iter;
 					}
 				}
 			}
@@ -306,7 +306,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_connection_lock);
 
 			// remove this object out of the list
-			for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 			{
 				if (obj == (*iter))
 				{
@@ -327,7 +327,7 @@ namespace dtn
 			{
 				ibrcommon::MutexLock l(_registration_lock);
 				// remove the registration
-				for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+				for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
 				{
 					if (reg == (*iter))
 					{
@@ -348,7 +348,7 @@ namespace dtn
 				if (queued.bundle.fragment) return;
 
 				ibrcommon::MutexLock l(_connection_lock);
-				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 				{
 					ClientHandler &conn = **iter;
 					if (conn.getRegistration().hasSubscribed(queued.bundle.destination))
@@ -384,7 +384,7 @@ namespace dtn
 			size_t current_time = ibrcommon::Timer::get_current_time();
 
 			// find the registration that expires next
-			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
 			{
 				try
 				{

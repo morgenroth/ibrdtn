@@ -149,7 +149,7 @@ namespace dtn
 			}
 
 			// get maximum lifetime
-			for (std::list<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			for (std::list<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); ++iter)
 			{
 				const dtn::data::Bundle &b = (*iter);
 
@@ -191,7 +191,7 @@ namespace dtn
 			}
 
 			// serialize all bundles
-			for (std::list<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			for (std::list<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); ++iter)
 			{
 				serializer << (*iter);
 			}
@@ -207,7 +207,7 @@ namespace dtn
 				dtn::data::SDNV nob; (*stream) >> nob;
 
 				// read all offsets
-				for (size_t i = 0; i < (nob.getValue() - 1); i++)
+				for (size_t i = 0; i < (nob.getValue() - 1); ++i)
 				{
 					dtn::data::SDNV offset; (*stream) >> offset;
 				}
@@ -218,7 +218,7 @@ namespace dtn
 
 				try {
 					// read all bundles
-					for (size_t i = 0; i < nob.getValue(); i++)
+					for (size_t i = 0; i < nob.getValue(); ++i)
 					{
 						// deserialize the next bundle
 						deserializer >> b;

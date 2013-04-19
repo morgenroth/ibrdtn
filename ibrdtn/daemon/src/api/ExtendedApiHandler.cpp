@@ -249,7 +249,7 @@ namespace dtn
 							const std::set<dtn::data::EID> list = _client.getRegistration().getSubscriptions();
 
 							_stream << ClientHandler::API_STATUS_OK << " REGISTRATION LIST" << std::endl;
-							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								_stream << (*iter).getString() << std::endl;
 							}
@@ -331,7 +331,7 @@ namespace dtn
 							const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
 							_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
-							for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
+							for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); ++iter)
 							{
 								_stream << (*iter).getEID().getString() << std::endl;
 							}

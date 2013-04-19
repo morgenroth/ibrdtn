@@ -39,7 +39,7 @@ namespace dtn
 				{
 					ibrcommon::MutexLock l(_dispatcher._dispatch_lock);
 					for (std::list<EventReceiver*>::iterator iter = _dispatcher._receivers.begin();
-							iter != _dispatcher._receivers.end(); iter++)
+							iter != _dispatcher._receivers.end(); ++iter)
 					{
 						EventReceiver &receiver = (**iter);
 						receiver.raiseEvent(evt);
@@ -73,7 +73,7 @@ namespace dtn
 
 			void _remove(const EventReceiver *receiver) {
 				ibrcommon::MutexLock l(_dispatch_lock);
-				for (std::list<EventReceiver*>::iterator iter = _receivers.begin(); iter != _receivers.end(); iter++)
+				for (std::list<EventReceiver*>::iterator iter = _receivers.begin(); iter != _receivers.end(); ++iter)
 				{
 					if ((*iter) == receiver)
 					{

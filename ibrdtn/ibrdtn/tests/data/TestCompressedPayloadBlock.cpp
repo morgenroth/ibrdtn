@@ -42,7 +42,7 @@ void TestCompressedPayloadBlock::compressTest(void)
 	// generate some test data
 	{
 		ibrcommon::BLOB::iostream stream = ref.iostream();
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 10000; ++i)
 		{
 			(*stream) << "0123456789";
 		}
@@ -66,7 +66,7 @@ void TestCompressedPayloadBlock::extractTest(void)
 	// generate some test data
 	{
 		ibrcommon::BLOB::iostream stream = ref.iostream();
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 10000; ++i)
 		{
 			(*stream) << "0123456789";
 		}
@@ -85,7 +85,7 @@ void TestCompressedPayloadBlock::extractTest(void)
 	// detailed check of the payload
 	{
 		ibrcommon::BLOB::iostream stream = p.getBLOB().iostream();
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 10000; ++i)
 		{
 			char buf[10];
 			(*stream).read(buf, 10);

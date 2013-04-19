@@ -453,7 +453,7 @@ namespace dtn
 
 			// get neighbors
 			const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
-			for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
+			for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); ++iter)
 			{
 				const dtn::core::Node &n = (*iter);
 				ret.push_back(n.getEID().getString());
@@ -1071,7 +1071,7 @@ namespace dtn
 #endif
 
 			// create the convergence layers
-		 	for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+		 	for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
 			{
 				const dtn::daemon::Configuration::NetConfig &net = (*iter);
 
@@ -1238,7 +1238,7 @@ namespace dtn
 				std::set<ibrcommon::vinterface> interfaces;
 
 				const std::list<dtn::daemon::Configuration::NetConfig> &nets = conf.getNetwork().getInterfaces();
-				for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+				for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
 				{
 					const dtn::daemon::Configuration::NetConfig &net = (*iter);
 					if (!net.iface.empty())
@@ -1249,7 +1249,7 @@ namespace dtn
 
 				try {
 					const std::set<ibrcommon::vaddress> addr = conf.getDiscovery().address();
-					for (std::set<ibrcommon::vaddress>::const_iterator iter = addr.begin(); iter != addr.end(); iter++) {
+					for (std::set<ibrcommon::vaddress>::const_iterator iter = addr.begin(); iter != addr.end(); ++iter) {
 						ipnd->add(*iter);
 					}
 				} catch (const dtn::daemon::Configuration::ParameterNotFoundException&) {
@@ -1258,7 +1258,7 @@ namespace dtn
 					ipnd->add(ibrcommon::vaddress("224.0.0.142", disco_port, AF_INET));
 				}
 
-				for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); iter++)
+				for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); ++iter)
 				{
 					const ibrcommon::vinterface &i = (*iter);
 

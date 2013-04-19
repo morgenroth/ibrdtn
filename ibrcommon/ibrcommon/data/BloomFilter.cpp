@@ -66,7 +66,7 @@ namespace ibrcommon
 	{
 		std::list<bloom_type> hashes;
 
-		for (std::vector<bloom_type>::const_iterator iter = _salt.begin(); iter != _salt.end(); iter++)
+		for (std::vector<bloom_type>::const_iterator iter = _salt.begin(); iter != _salt.end(); ++iter)
 		{
 			hashes.push_back(hash_ap(begin, remaining_length, (*iter)));
 		}
@@ -188,7 +188,7 @@ namespace ibrcommon
 
 		std::list<bloom_type> hashes = _hashp.hash(key_begin, length);
 
-		for (std::list<bloom_type>::iterator iter = hashes.begin(); iter != hashes.end(); iter++)
+		for (std::list<bloom_type>::iterator iter = hashes.begin(); iter != hashes.end(); ++iter)
 		{
 			compute_indices( (*iter), bit_index, bit );
 			bit_table_[bit_index / bits_per_char] |= bit_mask[bit];
@@ -214,7 +214,7 @@ namespace ibrcommon
 
 		const std::list<bloom_type> hashes = _hashp.hash(key_begin, length);
 
-		for (std::list<bloom_type>::const_iterator iter = hashes.begin(); iter != hashes.end(); iter++)
+		for (std::list<bloom_type>::const_iterator iter = hashes.begin(); iter != hashes.end(); ++iter)
 		{
 			compute_indices( (*iter), bit_index, bit );
 			if ((bit_table_[bit_index / bits_per_char] & bit_mask[bit]) != bit_mask[bit])

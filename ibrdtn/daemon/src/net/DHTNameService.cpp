@@ -60,7 +60,7 @@ void dtn::dht::DHTNameService::__cancellation() throw () {
 }
 
 bool dtn::dht::DHTNameService::setNonBlockingInterruptPipe() {
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 2; ++i) {
 		int opts;
 		opts = fcntl(_interrupt_pipe[i], F_GETFL);
 		if (opts < 0) {
@@ -204,7 +204,7 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 
 	// for every available interface, build the correct struct
 	for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter =
-			nets.begin(); iter != nets.end(); iter++) {
+			nets.begin(); iter != nets.end(); ++iter) {
 		try {
 			cltype_ = getConvergenceLayerName((*iter));
 			std::stringstream ss;
@@ -261,13 +261,13 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 			dtn::storage::BundleStorage & storage = core.getStorage();
 			std::set<dtn::data::EID> eids_ = storage.getDistinctDestinations();
 			std::set<dtn::data::EID>::iterator iterator;
-			for (iterator = eids_.begin(); iterator != eids_.end(); iterator++) {
+			for (iterator = eids_.begin(); iterator != eids_.end(); ++iterator) {
 				lookup(*iterator);
 			}
 			std::set<dtn::core::Node> neighbours_ = core.getConnectionManager().getNeighbors();
 			std::set<dtn::core::Node>::iterator neighbouriterator;
 			for (neighbouriterator = neighbours_.begin(); neighbouriterator
-					!= neighbours_.end(); neighbouriterator++) {
+					!= neighbours_.end(); ++neighbouriterator) {
 				if (isNeighbourAnnouncable(*neighbouriterator))
 					announce(*neighbouriterator, NEIGHBOUR);
 			}
@@ -488,7 +488,7 @@ bool dtn::dht::DHTNameService::isNeighbourAnnouncable(
 	std::list<dtn::core::Node::Attribute> services = n.get("dhtns");
 	if (!services.empty()) {
 		for (std::list<dtn::core::Node::Attribute>::const_iterator service =
-				services.begin(); service != services.end(); service++) {
+				services.begin(); service != services.end(); ++service) {
 			bool proxy = true;
 			std::vector < string > parameters = dtn::utils::Utils::tokenize(
 					";", (*service).value);
@@ -502,7 +502,7 @@ bool dtn::dht::DHTNameService::isNeighbourAnnouncable(
 					proxy_stream << p[1];
 					proxy_stream >> proxy;
 				}
-				param_iter++;
+				++param_iter;
 			}
 			if (!proxy)
 				return false;
@@ -577,7 +577,7 @@ void dtn::dht::DHTNameService::pingNode(const dtn::core::Node &n) {
 	unsigned int port = 9999;
 	if (!services.empty()) {
 		for (std::list<dtn::core::Node::Attribute>::const_iterator service =
-				services.begin(); service != services.end(); service++) {
+				services.begin(); service != services.end(); ++service) {
 			std::vector < string > parameters = dtn::utils::Utils::tokenize(
 					";", (*service).value);
 			std::vector<string>::const_iterator param_iter = parameters.begin();
@@ -591,7 +591,7 @@ void dtn::dht::DHTNameService::pingNode(const dtn::core::Node &n) {
 					port_stream >> port;
 					portFound = true;
 				}
-				param_iter++;
+				++param_iter;
 			}
 			// Do not ping the node, if he doesn't tell us, which port he has
 			if(!portFound){
@@ -604,7 +604,7 @@ void dtn::dht::DHTNameService::pingNode(const dtn::core::Node &n) {
 						<< IBRCOMMON_LOGGER_ENDL;
 			std::string lastip = "";
 			for (std::list<std::string>::const_iterator iter = ips.begin(); iter
-					!= ips.end(); iter++) {
+					!= ips.end(); ++iter) {
 				const std::string ip = (*iter);
 				// Ignoring double existence of ip's
 				if (ip == lastip) {
@@ -642,7 +642,7 @@ std::list<std::string> dtn::dht::DHTNameService::getAllIPAddresses(
 	const std::list<dtn::core::Node::URI> uri_list = n.get(
 			dtn::core::Node::CONN_TCPIP);
 	for (std::list<dtn::core::Node::URI>::const_iterator iter =
-			uri_list.begin(); iter != uri_list.end(); iter++) {
+			uri_list.begin(); iter != uri_list.end(); ++iter) {
 		const dtn::core::Node::URI &uri = (*iter);
 		uri.decode(address, port);
 		ret.push_front(address);
@@ -650,7 +650,7 @@ std::list<std::string> dtn::dht::DHTNameService::getAllIPAddresses(
 	const std::list<dtn::core::Node::URI> udp_uri_list = n.get(
 			dtn::core::Node::CONN_UDPIP);
 	for (std::list<dtn::core::Node::URI>::const_iterator iter =
-			udp_uri_list.begin(); iter != udp_uri_list.end(); iter++) {
+			udp_uri_list.begin(); iter != udp_uri_list.end(); ++iter) {
 		const dtn::core::Node::URI &udp_uri = (*iter);
 		udp_uri.decode(address, port);
 		ret.push_front(address);
@@ -709,7 +709,7 @@ void dtn::dht::DHTNameService::bootstrappingDNS() {
 							<< "DHT Bootstrapping done for domain" << dn
 							<< IBRCOMMON_LOGGER_ENDL;
 			}
-			dns_iter++;
+			++dns_iter;
 		}
 	} else {
 		{
@@ -774,7 +774,7 @@ void dtn::dht::DHTNameService::bootstrappingIPs() {
 			}
 		}
 
-		ip_iter++;
+		++ip_iter;
 	}
 }
 
@@ -808,13 +808,12 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 	std::string clname__;
 	struct dtn_eid * eid = result->eid;
 	unsigned int i;
-	for (i = 0; i < eid->eidlen; i++) {
+	for (i = 0; i < eid->eidlen; ++i) {
 		eid__ += eid->eid[i];
 	}
 
 	// Extracting the convergence layer of the node
 	stringstream ss;
-	std::string cl__;
 	struct dtn_convergence_layer * cl = result->clayer;
 	if (cl == NULL)
 		return;
@@ -826,7 +825,7 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 		enum Node::Protocol proto__;
 		stringstream service;
 		clname__ = "";
-		for (i = 0; i < cl->clnamelen; i++) {
+		for (i = 0; i < cl->clnamelen; ++i) {
 			clname__ += cl->clname[i];
 		}
 		if (clname__ == "tcp") {
@@ -846,12 +845,12 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 				continue;
 			}
 			argstring__ = "";
-			for (i = 0; i < arg->keylen; i++) {
+			for (i = 0; i < arg->keylen; ++i) {
 				argstring__ += arg->key[i];
 			}
 			service << argstring__ << "=";
 			argstring__ = "";
-			for (i = 0; i < arg->valuelen && arg->value[i] != '\0'; i++) {
+			for (i = 0; i < arg->valuelen && arg->value[i] != '\0'; ++i) {
 				argstring__ += arg->value[i];
 			}
 			service << argstring__ << ";";
@@ -880,7 +879,7 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 		std::string neighbour__;
 		while (neighbour) {
 			neighbour__ = "";
-			for (i = 0; i < neighbour->eidlen; i++) {
+			for (i = 0; i < neighbour->eidlen; ++i) {
 				neighbour__ += neighbour->eid[i];
 			}
 			dtn::data::EID n(neighbour__);

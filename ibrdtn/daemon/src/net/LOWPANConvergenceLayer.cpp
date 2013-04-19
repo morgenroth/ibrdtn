@@ -217,7 +217,7 @@ namespace dtn
 			announcement.clearServices();
 
 			// add services
-			for (std::list<dtn::net::DiscoveryServiceProvider*>::iterator iter = providers.begin(); iter != providers.end(); iter++)
+			for (std::list<dtn::net::DiscoveryServiceProvider*>::iterator iter = providers.begin(); iter != providers.end(); ++iter)
 			{
 				dtn::net::DiscoveryServiceProvider &provider = (**iter);
 
@@ -256,7 +256,7 @@ namespace dtn
 					ibrcommon::socketset readfds;
 					_vsocket.select(&readfds, NULL, NULL, NULL);
 
-					for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
+					for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); ++iter) {
 						ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**iter);
 
 						std::vector<char> data(m_maxmsgsize);

@@ -113,7 +113,7 @@ namespace dtn
 				// convert the port into a string
 				std::stringstream ss; ss << port;
 
-				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); ++iter) {
 					ibrcommon::vaddress &addr = (*iter);
 
 					// handle the addresses according to their family
@@ -146,7 +146,7 @@ namespace dtn
 		void TCPConvergenceLayer::unlisten(const ibrcommon::vinterface &iface) throw ()
 		{
 			ibrcommon::socketset socks = _vsocket.get(iface);
-			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); ++iter) {
 				ibrcommon::tcpserversocket *sock = dynamic_cast<ibrcommon::tcpserversocket*>(*iter);
 				_vsocket.remove(sock);
 				try {
@@ -191,7 +191,7 @@ namespace dtn
 			bool announced = false;
 
 			// search for the matching interface
-			for (std::set<ibrcommon::vinterface>::const_iterator it = _interfaces.begin(); it != _interfaces.end(); it++)
+			for (std::set<ibrcommon::vinterface>::const_iterator it = _interfaces.begin(); it != _interfaces.end(); ++it)
 			{
 				const ibrcommon::vinterface &it_iface = *it;
 				if (it_iface == iface)
@@ -206,7 +206,7 @@ namespace dtn
 						// if no address is returned... (goto catch block)
 						if (list.empty()) throw ibrcommon::Exception("no address found");
 
-						for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
+						for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); ++addr_it)
 						{
 							const ibrcommon::vaddress &addr = (*addr_it);
 
@@ -326,7 +326,7 @@ namespace dtn
 				case ibrcommon::LinkEvent::ACTION_ADDRESS_REMOVED:
 				{
 					ibrcommon::socketset socks = _vsocket.getAll();
-					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); ++iter) {
 						ibrcommon::tcpserversocket *sock = dynamic_cast<ibrcommon::tcpserversocket*>(*iter);
 						if (sock->get_address().address() == evt.getAddress().address()) {
 							_vsocket.remove(sock);
@@ -355,7 +355,7 @@ namespace dtn
 			// search for an existing connection
 			ibrcommon::MutexLock l(_connections_cond);
 
-			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 			{
 				TCPConnection &conn = *(*iter);
 
@@ -398,7 +398,7 @@ namespace dtn
 			// search for an existing connection
 			ibrcommon::MutexLock l(_connections_cond);
 
-			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 			{
 				TCPConnection &conn = *(*iter);
 
@@ -448,7 +448,7 @@ namespace dtn
 		void TCPConvergenceLayer::connectionUp(TCPConnection *conn)
 		{
 			ibrcommon::MutexLock l(_connections_cond);
-			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 			{
 				if (conn == (*iter))
 				{
@@ -468,7 +468,7 @@ namespace dtn
 		void TCPConvergenceLayer::connectionDown(TCPConnection *conn)
 		{
 			ibrcommon::MutexLock l(_connections_cond);
-			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 			{
 				if (conn == (*iter))
 				{
@@ -492,7 +492,7 @@ namespace dtn
 					// wait for incoming connections
 					_vsocket.select(&readfds, NULL, NULL, NULL);
 
-					for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
+					for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); ++iter) {
 						try {
 							// assume that all sockets are serversockets
 							ibrcommon::serversocket &sock = dynamic_cast<ibrcommon::serversocket&>(**iter);
@@ -550,7 +550,7 @@ namespace dtn
 		{
 			// search for an existing connection
 			ibrcommon::MutexLock l(_connections_cond);
-			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 			{
 				TCPConnection &conn = *(*iter);
 
