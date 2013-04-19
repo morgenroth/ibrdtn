@@ -72,13 +72,13 @@ namespace dtn
 			 * Notifies the session callback if a new status report has
 			 * been received.
 			 */
-			virtual void notifyStatusReport(const dtn::data::StatusReportBlock &report) throw () = 0;
+			virtual void notifyStatusReport(const dtn::data::EID &source, const dtn::data::StatusReportBlock &report) throw () = 0;
 
 			/**
 			 * Notifies the session callback if a new custody signal has
 			 * been received.
 			 */
-			virtual void notifyCustodySignal(const dtn::data::CustodySignalBlock &custody) throw () = 0;
+			virtual void notifyCustodySignal(const dtn::data::EID &source, const dtn::data::CustodySignalBlock &custody) throw () = 0;
 		};
 
 		class NativeSession {
@@ -263,12 +263,12 @@ namespace dtn
 			/**
 			 * Push out an notification to the native session callback.
 			 */
-			void fireNotificationStatusReport(const dtn::data::StatusReportBlock &report) throw ();
+			void fireNotificationStatusReport(const dtn::data::EID &source, const dtn::data::StatusReportBlock &report) throw ();
 
 			/**
 			 * Push out an notification to the native session callback.
 			 */
-			void fireNotificationCustodySignal(const dtn::data::CustodySignalBlock &custody) throw ();
+			void fireNotificationCustodySignal(const dtn::data::EID &source, const dtn::data::CustodySignalBlock &custody) throw ();
 
 			// callback
 			ibrcommon::RWMutex _cb_mutex;

@@ -79,18 +79,18 @@ namespace dtn
 			_session_cb->notifyBundle(id);
 		}
 
-		void NativeSession::fireNotificationStatusReport(const dtn::data::StatusReportBlock &report) throw ()
+		void NativeSession::fireNotificationStatusReport(const dtn::data::EID &source, const dtn::data::StatusReportBlock &report) throw ()
 		{
 			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 			if (_session_cb == NULL) return;
-			_session_cb->notifyStatusReport(report);
+			_session_cb->notifyStatusReport(source, report);
 		}
 
-		void NativeSession::fireNotificationCustodySignal(const dtn::data::CustodySignalBlock &custody) throw ()
+		void NativeSession::fireNotificationCustodySignal(const dtn::data::EID &source, const dtn::data::CustodySignalBlock &custody) throw ()
 		{
 			ibrcommon::RWLock l(_cb_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 			if (_session_cb == NULL) return;
-			_session_cb->notifyCustodySignal(custody);
+			_session_cb->notifyCustodySignal(source, custody);
 		}
 
 		void NativeSession::setEndpoint(const std::string &suffix) throw (NativeSessionException)
@@ -456,7 +456,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "fire notification for status report" << IBRCOMMON_LOGGER_ENDL;
 
 				// fire the status report notification
-				fireNotificationStatusReport(report);
+				fireNotificationStatusReport(b._source, report);
 			} catch (const dtn::data::StatusReportBlock::WrongRecordException&) {
 				// this is not a status report
 			}
@@ -469,7 +469,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "fire notification for custody signal" << IBRCOMMON_LOGGER_ENDL;
 
 				// fire the custody signal notification
-				fireNotificationCustodySignal(custody);
+				fireNotificationCustodySignal(b._source, custody);
 			} catch (const dtn::data::CustodySignalBlock::WrongRecordException&) {
 				// this is not a custody report
 			}
