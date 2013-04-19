@@ -47,6 +47,9 @@ namespace dtn
 			// set the local endpoint to the default
 			_endpoint = _registration.getDefaultEID();
 
+			// listen to QueueBundleEvents
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(&_receiver);
+
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session created" << IBRCOMMON_LOGGER_ENDL;
 		}
 
@@ -64,6 +67,9 @@ namespace dtn
 
 		void NativeSession::destroy() throw ()
 		{
+			// un-listen from QueueBundleEvents
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(&_receiver);
+
 			_registration.abort();
 		}
 
@@ -382,14 +388,10 @@ namespace dtn
 		NativeSession::BundleReceiver::BundleReceiver(NativeSession &session)
 		 : _session(session)
 		{
-			// listen to QueueBundleEvents
-			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 		}
 
 		NativeSession::BundleReceiver::~BundleReceiver()
 		{
-			// un-listen from QueueBundleEvents
-			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 		}
 
 		void NativeSession::BundleReceiver::raiseEvent(const dtn::core::Event *evt) throw ()
