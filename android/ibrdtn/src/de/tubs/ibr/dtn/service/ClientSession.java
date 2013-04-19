@@ -305,6 +305,15 @@ public class ClientSession {
         } catch (InterruptedException e) {
             Log.e(TAG, "Join on receiver thread failed.", e);
         }
+	    
+	    this.nativeSession.delete();
+	    this.nativeSession = null;
+	    
+	    this._session_callback.delete();
+	    this._session_callback = null;
+	    
+	    this._serializer_callback.delete();
+	    this._serializer_callback = null;
 	}
 	
 	public void update(Registration reg) {
