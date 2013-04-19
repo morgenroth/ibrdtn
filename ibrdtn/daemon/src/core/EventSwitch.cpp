@@ -144,7 +144,7 @@ namespace dtn
 			// create worker threads
 			std::list<Worker*> wlist;
 
-			for (size_t i = 0; i < threads; i++)
+			for (size_t i = 0; i < threads; ++i)
 			{
 				Worker *w = new Worker(*this);
 				w->start();
@@ -158,7 +158,7 @@ namespace dtn
 				}
 			} catch (const ibrcommon::Conditional::ConditionalAbortException&) { };
 
-			for (std::list<Worker*>::iterator iter = wlist.begin(); iter != wlist.end(); iter++)
+			for (std::list<Worker*>::iterator iter = wlist.begin(); iter != wlist.end(); ++iter)
 			{
 				Worker *w = (*iter);
 				w->stop();

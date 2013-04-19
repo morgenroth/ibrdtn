@@ -110,7 +110,7 @@ namespace dtn
 
 		void NeighborDatabase::expire(const size_t timestamp)
 		{
-			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); ++iter)
 			{
 				(*iter).second->expire(timestamp);
 			}
@@ -181,7 +181,7 @@ namespace dtn
 			ibrcommon::MutexLock l(*this);
 			std::set<dtn::data::EID> ret;
 
-			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); ++iter)
 			{
 				delete (*iter).second;
 			}

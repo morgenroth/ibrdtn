@@ -28,7 +28,7 @@ namespace dtn
 	namespace routing
 	{
 		StaticRouteChangeEvent::StaticRouteChangeEvent(CHANGE_TYPE t)
-		 : type(t)
+		 : type(t), nexthop(), pattern(), timeout(0)
 		{
 		}
 

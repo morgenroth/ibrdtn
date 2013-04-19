@@ -226,13 +226,13 @@ namespace dtn
 
 			IBRCOMMON_LOGGER_TAG("SQLiteDatabase", info) << "Upgrade from version " << oldVersion << " to version " << newVersion << IBRCOMMON_LOGGER_ENDL;
 
-			for (int i = oldVersion; i < newVersion; i++)
+			for (int i = oldVersion; i < newVersion; ++i)
 			{
 				switch (i)
 				{
 				// if there is no version field, drop all tables
 				case 0:
-					for (size_t i = 0; i < SQL_TABLE_END; i++)
+					for (size_t i = 0; i < SQL_TABLE_END; ++i)
 					{
 						Statement st(_database, "DROP TABLE IF EXISTS " + _tables[i] + ";");
 						int err = st.step();
@@ -243,7 +243,7 @@ namespace dtn
 					}
 
 					// create all tables
-					for (size_t i = 0; i < 11; i++)
+					for (size_t i = 0; i < 11; ++i)
 					{
 						Statement st(_database, _db_structure[i]);
 						int err = st.step();

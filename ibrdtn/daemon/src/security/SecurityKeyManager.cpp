@@ -74,7 +74,7 @@ namespace dtn
 		{
 			std::string value = eid.getNode().getString();
 			std::stringstream ss;
-			for (std::string::const_iterator iter = value.begin(); iter != value.end(); iter++)
+			for (std::string::const_iterator iter = value.begin(); iter != value.end(); ++iter)
 			{
 				ss << std::hex << std::setw( 2 ) << std::setfill( '0' ) << (int)(*iter);
 			}

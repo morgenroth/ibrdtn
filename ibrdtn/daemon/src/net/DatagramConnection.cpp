@@ -276,7 +276,7 @@ namespace dtn
 				tm.start();
 
 				// max. 5 retries
-				for (int i = 0; i < 5; i++)
+				for (int i = 0; i < 5; ++i)
 				{
 					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 30) << "transmit frame seqno: " << seqno << IBRCOMMON_LOGGER_ENDL;
 

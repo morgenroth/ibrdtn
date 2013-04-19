@@ -285,7 +285,7 @@ namespace dtn
 				{
 					size_t o = offset;
 
-					for (std::set<dtn::data::EID>::const_iterator iter = _endpoints.begin(); iter != _endpoints.end(); iter++)
+					for (std::set<dtn::data::EID>::const_iterator iter = _endpoints.begin(); iter != _endpoints.end(); ++iter)
 					{
 						const std::string data = (*iter).getString();
 

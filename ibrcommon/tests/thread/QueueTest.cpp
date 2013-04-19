@@ -128,12 +128,12 @@ void QueueTest::tsq_test04()
 
 void QueueTest::tsq_test05()
 {
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 100; ++i)
 	{
 		TestThread t(200 / (i+1));
 		t.start();
 
-		for (int j = 0; j < i; j++)
+		for (int j = 0; j < i; ++j)
 		{
 			t._queue.push("hallo");
 			t._queue.push("welt");

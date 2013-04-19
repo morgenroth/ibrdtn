@@ -474,7 +474,7 @@ namespace ibrcommon
 		_sockets.erase(socket);
 
 		// search for the same socket in the map
-		for (std::map<vinterface, socketset>::iterator iter = _socket_map.begin(); iter != _socket_map.end(); iter++)
+		for (std::map<vinterface, socketset>::iterator iter = _socket_map.begin(); iter != _socket_map.end(); ++iter)
 		{
 			socketset &set = (*iter).second;
 			set.erase(socket);
@@ -497,7 +497,7 @@ namespace ibrcommon
 	{
 		down();
 
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++)
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter)
 		{
 			basesocket *sock = (*iter);
 			delete sock;
@@ -531,12 +531,12 @@ namespace ibrcommon
 			_state.setwait(SocketState::PENDING_UP, SocketState::IDLE);
 		}
 		
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter) {
 			try {
 				if (!(*iter)->ready()) (*iter)->up();
 			} catch (const socket_exception&) {
 				// rewind all previously up'ped sockets
-				for (socketset::iterator riter = _sockets.begin(); riter != iter; riter++) {
+				for (socketset::iterator riter = _sockets.begin(); riter != iter; ++riter) {
 					(*riter)->down();
 				}
 
@@ -570,7 +570,7 @@ namespace ibrcommon
 
 		// shut-down all the sockets
 		ibrcommon::MutexLock l(_socket_lock);
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter) {
 			try {
 				if ((*iter)->ready()) (*iter)->down();
 			} catch (const socket_exception&) { }
@@ -608,7 +608,7 @@ namespace ibrcommon
 			{
 				ibrcommon::MutexLock l(_socket_lock);
 				for (socketset::iterator iter = _sockets.begin();
-						iter != _sockets.end(); iter++)
+						iter != _sockets.end(); ++iter)
 				{
 					basesocket &sock = (**iter);
 					if (!sock.ready()) continue;
@@ -663,7 +663,7 @@ namespace ibrcommon
 
 			ibrcommon::MutexLock l(_socket_lock);
 			for (socketset::iterator iter = _sockets.begin();
-					iter != _sockets.end(); iter++)
+					iter != _sockets.end(); ++iter)
 			{
 				basesocket *sock = (*iter);
 

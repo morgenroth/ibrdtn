@@ -93,7 +93,7 @@ namespace dtn
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 
 			for (std::map<dtn::data::MetaBundle, DataStorage::Hash>::iterator iter = _stored_bundles.begin();
-					iter != _stored_bundles.end(); iter++)
+					iter != _stored_bundles.end(); ++iter)
 			{
 				const DataStorage::Hash &it_hash = iter->second;
 				const dtn::data::MetaBundle it_bundle = iter->first;
@@ -273,7 +273,7 @@ namespace dtn
 			// we have to iterate through all bundles
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READONLY);
 
-			for (std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); iter++)
+			for (std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); ++iter)
 			{
 				const dtn::data::MetaBundle &meta = (*iter);
 
@@ -292,7 +292,7 @@ namespace dtn
 			try {
 				ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READONLY);
 
-				for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+				for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 				{
 					const dtn::data::MetaBundle &meta = (*iter);
 					if (id == meta)
@@ -405,7 +405,7 @@ namespace dtn
 		{
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 			{
 				if ((*iter) == id)
 				{
@@ -432,7 +432,7 @@ namespace dtn
 		{
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 			{
 				// remove item in the bundlelist
 				const dtn::data::MetaBundle meta = (*iter);
@@ -460,7 +460,7 @@ namespace dtn
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 
 			// mark all bundles for deletion
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 			{
 				// remove item in the bundlelist
 				const dtn::data::MetaBundle &meta = (*iter);
@@ -477,7 +477,7 @@ namespace dtn
 
 		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
 		{
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 			{
 				if ((*iter) == b)
 				{

@@ -174,7 +174,7 @@ namespace dtn
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
 
 			// add all listener in the configuration
-			for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); iter++)
+			for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); ++iter)
 			{
 				ibrcommon::LinkManager::getInstance().addEventListener(*iter, this);
 			}
@@ -540,7 +540,7 @@ namespace dtn
 #endif
 
 			// check for invalid blocks
-			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); iter++)
+			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); ++iter)
 			{
 				try {
 					const dtn::data::ExtensionBlock &e = dynamic_cast<const dtn::data::ExtensionBlock&>(**iter);
@@ -568,7 +568,7 @@ namespace dtn
 		void BundleCore::processBlocks(dtn::data::Bundle &b)
 		{
 			// walk through the block and process them when needed
-			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); iter++)
+			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); ++iter)
 			{
 				const dtn::data::Block &block = (**iter);
 #ifdef WITH_BUNDLE_SECURITY
@@ -632,7 +632,7 @@ namespace dtn
 				setGloballyConnected(true);
 			} else {
 				bool found = false;
-				for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); iter++)
+				for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); ++iter)
 				{
 					const ibrcommon::vinterface &iface = (*iter);
 					if (!iface.getAddresses(ibrcommon::vaddress::SCOPE_GLOBAL).empty()) {

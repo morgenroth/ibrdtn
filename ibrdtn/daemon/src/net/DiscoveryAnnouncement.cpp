@@ -79,7 +79,7 @@ namespace dtn
 
 		const DiscoveryService& DiscoveryAnnouncement::getService(string name) const
 		{
-			for (std::list<DiscoveryService>::const_iterator iter = _services.begin(); iter != _services.end(); iter++)
+			for (std::list<DiscoveryService>::const_iterator iter = _services.begin(); iter != _services.end(); ++iter)
 			{
 				if ((*iter).getName() == name)
 				{
@@ -122,14 +122,14 @@ namespace dtn
 					beacon_len += eid.getLength();
 
 					// add service block length
-					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 					{
 						beacon_len += (*iter).getLength();
 					}
 
 					stream << (unsigned char)DiscoveryAnnouncement::DISCO_VERSION_00 << announcement._flags << beacon_len << eid;
 
-					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 					{
 						stream << (*iter);
 					}
@@ -169,7 +169,7 @@ namespace dtn
 					{
 						stream << dtn::data::SDNV(services.size());
 
-						for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+						for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 						{
 							stream << (*iter);
 						}
@@ -213,7 +213,7 @@ namespace dtn
 					stream.write((char*)&eid_len, 2);
 					stream << eid;
 
-					for (unsigned int i = 0; i < add_zeros; i++)
+					for (unsigned int i = 0; i < add_zeros; ++i)
 					{
 						stream.write((char*)&zero, 1);
 					}
@@ -322,7 +322,7 @@ namespace dtn
 					// clear the services
 					services.clear();
 
-					for (unsigned int i = 0; i < num_services.getValue(); i++)
+					for (unsigned int i = 0; i < num_services.getValue(); ++i)
 					{
 						// decode the service blocks
 						DiscoveryService service;

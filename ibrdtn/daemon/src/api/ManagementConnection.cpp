@@ -65,7 +65,7 @@ namespace dtn
 				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.size() == 0) continue;
+				if (cmd.empty()) continue;
 
 				if (cmd[0] == "exit")
 				{
@@ -120,7 +120,7 @@ namespace dtn
 						const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
 						_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
-						for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
+						for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); ++iter)
 						{
 							_stream << (*iter).getEID().getString() << std::endl;
 						}
@@ -308,7 +308,7 @@ namespace dtn
 						try {
 							bcore.getStorage().get(filter, blist);
 
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = blist.begin(); iter != blist.end(); ++iter)
 							{
 								const dtn::data::MetaBundle &b = *iter;
 								_stream << b.toString() << ";" << b.destination.getString() << ";" << std::endl;
@@ -350,7 +350,7 @@ namespace dtn
 									ibrcommon::ThreadsafeReference<const dtn::routing::AcknowledgementSet> ack_set = prophet_extension.getAcknowledgementSet();
 
 									_stream << ClientHandler::API_STATUS_OK << " ROUTING PROPHET ACKNOWLEDGEMENTS" << std::endl;
-									for (dtn::routing::AcknowledgementSet::const_iterator iter = (*ack_set).begin(); iter != (*ack_set).end(); iter++)
+									for (dtn::routing::AcknowledgementSet::const_iterator iter = (*ack_set).begin(); iter != (*ack_set).end(); ++iter)
 									{
 										const dtn::data::MetaBundle &ack = (*iter);
 										_stream << ack.toString() << " | " << ack.expiretime << std::endl;

@@ -262,7 +262,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_node_lock);
 
 			// search for outdated nodes
-			for (nodemap::iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+			for (nodemap::iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 			{
 				dtn::core::Node &n = (*iter).second;
 				if (n.isAnnounced()) continue;
@@ -286,7 +286,7 @@ namespace dtn
 			{
 				dtn::core::Node &n = (*iter).second;
 				if (!n.isAnnounced()) {
-					iter++;
+					++iter;
 					continue;
 				}
 
@@ -309,7 +309,7 @@ namespace dtn
 				}
 				else
 				{
-					iter++;
+					++iter;
 				}
 			}
 		}
@@ -325,7 +325,7 @@ namespace dtn
 			{
 				// search for non-connected but available nodes
 				ibrcommon::MutexLock l(_cl_lock);
-				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 				{
 					const Node &n = (*iter).second;
 					std::list<Node::URI> ul = n.get(Node::NODE_CONNECTED, Node::CONN_TCPIP);
@@ -352,7 +352,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_cl_lock);
 
 			// search for the right cl
-			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); iter++)
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
 			{
 				ConvergenceLayer *cl = (*iter);
 				if (node.has(cl->getDiscoveryProtocol()))
@@ -376,12 +376,12 @@ namespace dtn
 			std::list<Node::URI> uri_list = n.get(Node::NODE_P2P_DIALUP);
 
 			// trigger p2p_dialup connections
-			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); it++)
+			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); ++it)
 			{
 				const dtn::core::Node::URI &uri = (*it);
 
 				ibrcommon::MutexLock l(_dialup_lock);
-				for (std::set<P2PDialupExtension*>::iterator iter = _dialups.begin(); iter != _dialups.end(); iter++)
+				for (std::set<P2PDialupExtension*>::iterator iter = _dialups.begin(); iter != _dialups.end(); ++iter)
 				{
 					P2PDialupExtension &p2pext = (**iter);
 
@@ -401,12 +401,12 @@ namespace dtn
 			std::list<Node::URI> uri_list = node.getAll();
 
 			// search for a match between URI and available convergence layer
-			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); it++)
+			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); ++it)
 			{
 				const Node::URI &uri = (*it);
 
 				// search a matching convergence layer for this URI
-				for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); iter++)
+				for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
 				{
 					ConvergenceLayer *cl = (*iter);
 					if (cl->getDiscoveryProtocol() == uri.protocol)
@@ -432,7 +432,7 @@ namespace dtn
 			if (IBRCOMMON_LOGGER_LEVEL >= 50)
 			{
 				IBRCOMMON_LOGGER_DEBUG(50) << "## node list ##" << IBRCOMMON_LOGGER_ENDL;
-				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 				{
 					const dtn::core::Node &n = (*iter).second;
 					IBRCOMMON_LOGGER_DEBUG(2) << n << IBRCOMMON_LOGGER_ENDL;
@@ -467,7 +467,7 @@ namespace dtn
 
 			std::set<dtn::core::Node> ret;
 
-			for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+			for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 			{
 				const Node &n = (*iter).second;
 				if (n.isAvailable()) ret.insert( n );

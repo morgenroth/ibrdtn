@@ -201,7 +201,6 @@ namespace dtn
 							{
 								(void)deflateEnd(&strm);
 								throw ibrcommon::Exception("decompression failed. output stream went wrong.");
-								break;
 							}
 
 						} while (strm.avail_out == 0);

@@ -104,7 +104,7 @@ namespace dtn
 				// if no address is returned... (goto catch block)
 				if (list.empty()) throw ibrcommon::Exception("no address found");
 
-				for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); addr_it++)
+				for (std::list<ibrcommon::vaddress>::const_iterator addr_it = list.begin(); addr_it != list.end(); ++addr_it)
 				{
 					const ibrcommon::vaddress &addr = (*addr_it);
 
@@ -190,7 +190,7 @@ namespace dtn
 					IBRCOMMON_LOGGER_DEBUG(15) << "MTU of " << m_maxmsgsize << " is too small to carry " << psize << " bytes of payload." << IBRCOMMON_LOGGER_ENDL;
 					IBRCOMMON_LOGGER_DEBUG(15) << "create " << fragment_count << " fragments with " << fragment_size << " bytes each." << IBRCOMMON_LOGGER_ENDL;
 
-					for (size_t i = 0; i < fragment_count; i++)
+					for (size_t i = 0; i < fragment_count; ++i)
 					{
 						dtn::data::BundleFragment fragment(bundle, i * fragment_size, fragment_size);
 
@@ -239,7 +239,7 @@ namespace dtn
 
 			// get the first global scope socket
 			ibrcommon::socketset socks = _vsocket.getAll();
-			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); ++iter) {
 				ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
 				// send converted line back to client.
@@ -311,7 +311,7 @@ namespace dtn
 				case ibrcommon::LinkEvent::ACTION_ADDRESS_REMOVED:
 				{
 					ibrcommon::socketset socks = _vsocket.getAll();
-					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); ++iter) {
 						ibrcommon::udpsocket *sock = dynamic_cast<ibrcommon::udpsocket*>(*iter);
 						if (sock->get_address().address() == evt.getAddress().address()) {
 							_vsocket.remove(sock);
@@ -326,7 +326,7 @@ namespace dtn
 				case ibrcommon::LinkEvent::ACTION_LINK_DOWN:
 				{
 					ibrcommon::socketset socks = _vsocket.get(evt.getInterface());
-					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); ++iter) {
 						ibrcommon::udpsocket *sock = dynamic_cast<ibrcommon::udpsocket*>(*iter);
 						_vsocket.remove(sock);
 						sock->down();
@@ -350,7 +350,7 @@ namespace dtn
 				// convert the port into a string
 				std::stringstream ss; ss << _port;
 
-				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); ++iter) {
 					ibrcommon::vaddress &addr = (*iter);
 
 					try {

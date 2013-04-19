@@ -126,7 +126,7 @@ namespace dtn
 #endif
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
-				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 					(*this) << (*it);
 
 			try {
@@ -203,7 +203,7 @@ namespace dtn
 #endif
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
-				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 					len += it->getString().size();
 
 			// size-field of the size of the payload in the block

@@ -276,7 +276,7 @@ void SimpleBundleStorageTest::concurrentStoreGet(dtn::storage::BundleStorage &st
 	protected:
 		void run() throw ()
 		{
-			for (std::list<dtn::data::Bundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+			for (std::list<dtn::data::Bundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 			{
 				const dtn::data::Bundle &b = (*iter);
 				_storage.store(b);
@@ -304,7 +304,7 @@ void SimpleBundleStorageTest::concurrentStoreGet(dtn::storage::BundleStorage &st
 	// create some bundles
 	std::list<dtn::data::Bundle> list1, list2;
 
-	for (int i = 0; i < 2000; i++)
+	for (int i = 0; i < 2000; ++i)
 	{
 		dtn::data::Bundle b;
 		b._lifetime = 1;
@@ -326,7 +326,7 @@ void SimpleBundleStorageTest::concurrentStoreGet(dtn::storage::BundleStorage &st
 		sp.start();
 
 		// in parallel we try to retrieve bundles from list1
-		for (std::list<dtn::data::Bundle>::const_iterator iter = list1.begin(); iter != list1.end(); iter++)
+		for (std::list<dtn::data::Bundle>::const_iterator iter = list1.begin(); iter != list1.end(); ++iter)
 		{
 			const dtn::data::Bundle &b = (*iter);
 			dtn::data::Bundle bundle = storage.get(b);
@@ -360,7 +360,7 @@ void SimpleBundleStorageTest::testDiskRestore()
 		storage.startup();
 
 		// create some bundles
-		for (int i = 0; i < 2000; i++)
+		for (int i = 0; i < 2000; ++i)
 		{
 			dtn::data::Bundle b;
 			b._lifetime = 1;

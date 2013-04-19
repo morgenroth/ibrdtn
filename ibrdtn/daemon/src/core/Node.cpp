@@ -66,7 +66,7 @@ namespace dtn
 					port_stream >> port;
 				}
 
-				param_iter++;
+				++param_iter;
 			}
 		}
 
@@ -227,7 +227,7 @@ namespace dtn
 
 		bool Node::has(Node::Protocol proto) const
 		{
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				if ((*iter) == proto) return true;
 			}
@@ -236,7 +236,7 @@ namespace dtn
 
 		bool Node::has(const std::string &name) const
 		{
-			for (std::set<Attribute>::const_iterator iter = _attr_list.begin(); iter != _attr_list.end(); iter++)
+			for (std::set<Attribute>::const_iterator iter = _attr_list.begin(); iter != _attr_list.end(); ++iter)
 			{
 				if ((*iter) == name) return true;
 			}
@@ -291,7 +291,7 @@ namespace dtn
 		std::list<Node::URI> Node::get(Node::Protocol proto) const
 		{
 			std::list<URI> ret;
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				const URI &uri = (*iter);
 
@@ -308,7 +308,7 @@ namespace dtn
 		std::list<Node::URI> Node::get(Node::Type type) const
 		{
 			std::list<URI> ret;
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				const URI &uri = (*iter);
 
@@ -325,7 +325,7 @@ namespace dtn
 		std::list<Node::URI> Node::get(Node::Type type, Node::Protocol proto) const
 		{
 			std::list<URI> ret;
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				const URI &uri = (*iter);
 
@@ -338,7 +338,7 @@ namespace dtn
 		std::list<Node::URI> Node::getAll() const
 		{
 			std::list<Node::URI> ret;
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				const URI &uri = (*iter);
 
@@ -351,7 +351,7 @@ namespace dtn
 		std::set<Node::Type> Node::getTypes() const
 		{
 			std::set<Type> ret;
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				ret.insert((*iter).type);
 			}
@@ -361,7 +361,7 @@ namespace dtn
 		std::list<Node::Attribute> Node::get(const std::string &name) const
 		{
 			std::list<Attribute> ret;
-			for (std::set<Attribute>::const_iterator iter = _attr_list.begin(); iter != _attr_list.end(); iter++)
+			for (std::set<Attribute>::const_iterator iter = _attr_list.begin(); iter != _attr_list.end(); ++iter)
 			{
 				if ((*iter) == name) ret.push_back(*iter);
 			}
@@ -396,7 +396,7 @@ namespace dtn
 					}
 					else
 					{
-						iter++;
+						++iter;
 					}
 				}
 			}
@@ -414,7 +414,7 @@ namespace dtn
 					}
 					else
 					{
-						iter++;
+						++iter;
 					}
 				}
 			}
@@ -424,13 +424,13 @@ namespace dtn
 
 		const Node& Node::operator+=(const Node &other)
 		{
-			for (std::set<Attribute>::const_iterator iter = other._attr_list.begin(); iter != other._attr_list.end(); iter++)
+			for (std::set<Attribute>::const_iterator iter = other._attr_list.begin(); iter != other._attr_list.end(); ++iter)
 			{
 				const Attribute &attr = (*iter);
 				add(attr);
 			}
 
-			for (std::set<URI>::const_iterator iter = other._uri_list.begin(); iter != other._uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = other._uri_list.begin(); iter != other._uri_list.end(); ++iter)
 			{
 				const URI &u = (*iter);
 				add(u);
@@ -441,13 +441,13 @@ namespace dtn
 
 		const Node& Node::operator-=(const Node &other)
 		{
-			for (std::set<Attribute>::const_iterator iter = other._attr_list.begin(); iter != other._attr_list.end(); iter++)
+			for (std::set<Attribute>::const_iterator iter = other._attr_list.begin(); iter != other._attr_list.end(); ++iter)
 			{
 				const Attribute &attr = (*iter);
 				remove(attr);
 			}
 
-			for (std::set<URI>::const_iterator iter = other._uri_list.begin(); iter != other._uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = other._uri_list.begin(); iter != other._uri_list.end(); ++iter)
 			{
 				const URI &u = (*iter);
 				remove(u);
@@ -491,7 +491,7 @@ namespace dtn
 
 		bool Node::hasDialup() const
 		{
-			for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				const Node::URI &u = (*iter);
 				if (u.type == NODE_P2P_DIALUP) return true;
@@ -506,7 +506,7 @@ namespace dtn
 				return !_uri_list.empty();
 			} else {
 				// filter for global addresses when internet is not available
-				for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+				for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 				{
 					const Node::URI &u = (*iter);
 
@@ -557,13 +557,13 @@ namespace dtn
 		std::ostream& operator<<(std::ostream &stream, const Node &node)
 		{
 			stream << "Node: " << node._id.getString() << " [ ";
-			for (std::set<Node::Attribute>::const_iterator iter = node._attr_list.begin(); iter != node._attr_list.end(); iter++)
+			for (std::set<Node::Attribute>::const_iterator iter = node._attr_list.begin(); iter != node._attr_list.end(); ++iter)
 			{
 				const Node::Attribute &attr = (*iter);
 				stream << attr << "#expire=" << attr.expire << "; ";
 			}
 
-			for (std::set<Node::URI>::const_iterator iter = node._uri_list.begin(); iter != node._uri_list.end(); iter++)
+			for (std::set<Node::URI>::const_iterator iter = node._uri_list.begin(); iter != node._uri_list.end(); ++iter)
 			{
 				const Node::URI &u = (*iter);
 				stream << u << "#expire=" << u.expire << "; ";

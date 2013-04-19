@@ -137,7 +137,7 @@ namespace dtn
 		{
 		}
 
-		std::vector<std::string> NativeDaemon::getVersion() throw ()
+		std::vector<std::string> NativeDaemon::getVersion() const throw ()
 		{
 			std::vector<std::string> ret;
 			ret.push_back(VERSION);
@@ -145,7 +145,7 @@ namespace dtn
 			return ret;
 		}
 
-		void NativeDaemon::clearStorage() throw ()
+		void NativeDaemon::clearStorage() const throw ()
 		{
 			dtn::core::BundleCore::getInstance().getStorage().clear();
 		}
@@ -398,12 +398,12 @@ namespace dtn
 			_eventcb->eventRaised(event, action, data);
 		}
 
-		std::string NativeDaemon::getLocalUri() throw ()
+		std::string NativeDaemon::getLocalUri() const throw ()
 		{
 			return dtn::core::BundleCore::local.getString();
 		}
 
-		NativeNode NativeDaemon::getInfo(const std::string &neighbor_eid) throw (NativeDaemonException)
+		NativeNode NativeDaemon::getInfo(const std::string &neighbor_eid) const throw (NativeDaemonException)
 		{
 			NativeNode nn(neighbor_eid);
 
@@ -447,13 +447,13 @@ namespace dtn
 			return nn;
 		}
 
-		std::vector<std::string> NativeDaemon::getNeighbors() throw ()
+		std::vector<std::string> NativeDaemon::getNeighbors() const throw ()
 		{
 			std::vector<std::string> ret;
 
 			// get neighbors
 			const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
-			for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
+			for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); ++iter)
 			{
 				const dtn::core::Node &n = (*iter);
 				ret.push_back(n.getEID().getString());
@@ -462,7 +462,7 @@ namespace dtn
 			return ret;
 		}
 
-		void NativeDaemon::addConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local) throw ()
+		void NativeDaemon::addConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local) const throw ()
 		{
 			dtn::core::Node n(eid);
 			dtn::core::Node::Type t = dtn::core::Node::NODE_STATIC_GLOBAL;
@@ -488,7 +488,7 @@ namespace dtn
 			}
 		}
 
-		void NativeDaemon::removeConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local) throw ()
+		void NativeDaemon::removeConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local) const throw ()
 		{
 			dtn::core::Node n(eid);
 			dtn::core::Node::Type t = dtn::core::Node::NODE_STATIC_GLOBAL;
@@ -514,7 +514,7 @@ namespace dtn
 			}
 		}
 
-		void NativeDaemon::setLogging(const std::string &defaultTag, int logLevel) throw ()
+		void NativeDaemon::setLogging(const std::string &defaultTag, int logLevel) const throw ()
 		{
 			/**
 			 * setup logging capabilities
@@ -566,7 +566,7 @@ namespace dtn
 		/**
 		 * Set the path to the log file
 		 */
-		void NativeDaemon::setLogFile(const std::string &path, int logLevel) throw ()
+		void NativeDaemon::setLogFile(const std::string &path, int logLevel) const throw ()
 		{
 			// logging options
 			unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL | ibrcommon::Logger::LOG_TAG;
@@ -950,7 +950,7 @@ namespace dtn
 			} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { }
 		}
 
-		void NativeDaemon::shutdown_storage() throw (NativeDaemonException)
+		void NativeDaemon::shutdown_storage() const throw (NativeDaemonException)
 		{
 			// reset BLOB provider to memory based
 			ibrcommon::BLOB::changeProvider(new ibrcommon::MemoryBLOBProvider(), true);
@@ -974,7 +974,7 @@ namespace dtn
 			_components[RUNLEVEL_ROUTING].push_back(router);
 		}
 
-		void NativeDaemon::shutdown_routing() throw (NativeDaemonException)
+		void NativeDaemon::shutdown_routing() const throw (NativeDaemonException)
 		{
 			// set the global router to NULL
 			dtn::core::BundleCore::getInstance().setRouter(NULL);
@@ -1071,7 +1071,7 @@ namespace dtn
 #endif
 
 			// create the convergence layers
-		 	for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+		 	for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
 			{
 				const dtn::daemon::Configuration::NetConfig &net = (*iter);
 
@@ -1238,7 +1238,7 @@ namespace dtn
 				std::set<ibrcommon::vinterface> interfaces;
 
 				const std::list<dtn::daemon::Configuration::NetConfig> &nets = conf.getNetwork().getInterfaces();
-				for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+				for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
 				{
 					const dtn::daemon::Configuration::NetConfig &net = (*iter);
 					if (!net.iface.empty())
@@ -1249,7 +1249,7 @@ namespace dtn
 
 				try {
 					const std::set<ibrcommon::vaddress> addr = conf.getDiscovery().address();
-					for (std::set<ibrcommon::vaddress>::const_iterator iter = addr.begin(); iter != addr.end(); iter++) {
+					for (std::set<ibrcommon::vaddress>::const_iterator iter = addr.begin(); iter != addr.end(); ++iter) {
 						ipnd->add(*iter);
 					}
 				} catch (const dtn::daemon::Configuration::ParameterNotFoundException&) {
@@ -1258,7 +1258,7 @@ namespace dtn
 					ipnd->add(ibrcommon::vaddress("224.0.0.142", disco_port, AF_INET));
 				}
 
-				for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); iter++)
+				for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); ++iter)
 				{
 					const ibrcommon::vinterface &i = (*iter);
 
@@ -1412,7 +1412,7 @@ namespace dtn
 			router.extensionsUp();
 		}
 
-		void NativeDaemon::shutdown_routing_extensions() throw (NativeDaemonException)
+		void NativeDaemon::shutdown_routing_extensions() const throw (NativeDaemonException)
 		{
 			dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
 

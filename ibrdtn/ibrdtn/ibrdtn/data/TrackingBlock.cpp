@@ -36,7 +36,7 @@ namespace dtn
 			dtn::data::SDNV count(_entries.size());
 			ret += count.getLength();
 
-			for (tracking_list::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (tracking_list::const_iterator iter = _entries.begin(); iter != _entries.end(); ++iter)
 			{
 				const TrackingEntry &entry = (*iter);
 				ret += entry.getLength();
@@ -51,7 +51,7 @@ namespace dtn
 			dtn::data::SDNV count(_entries.size());
 			stream << count;
 
-			for (tracking_list::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (tracking_list::const_iterator iter = _entries.begin(); iter != _entries.end(); ++iter)
 			{
 				const TrackingEntry &entry = (*iter);
 				stream << entry;
@@ -67,7 +67,7 @@ namespace dtn
 
 			stream >> count;
 
-			for (size_t i = 0; i < count.getValue(); i++)
+			for (size_t i = 0; i < count.getValue(); ++i)
 			{
 				TrackingEntry entry;
 				stream >> entry;

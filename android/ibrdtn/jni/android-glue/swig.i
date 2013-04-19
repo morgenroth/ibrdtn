@@ -63,10 +63,10 @@
 %}
 
 /* turn on director wrapping Callback */
-%feature("director") NativeSessionCallback;
-%feature("director") NativeSerializerCallback;
-%feature("director") NativeDaemonCallback;
-%feature("director") NativeEventCallback;
+%feature("director", assumeoverride=1) NativeSessionCallback;
+%feature("director", assumeoverride=1) NativeSerializerCallback;
+%feature("director", assumeoverride=1) NativeDaemonCallback;
+%feature("director", assumeoverride=1) NativeEventCallback;
 
 %apply unsigned long long { uint64_t };
 

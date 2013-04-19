@@ -42,7 +42,7 @@ namespace dtn
 
 		void NodeHandshake::clear()
 		{
-			for (std::list<NodeHandshakeItem*>::const_iterator iter = _items.begin(); iter != _items.end(); iter++)
+			for (std::list<NodeHandshakeItem*>::const_iterator iter = _items.begin(); iter != _items.end(); ++iter)
 			{
 				delete (*iter);
 			}
@@ -68,7 +68,7 @@ namespace dtn
 
 		bool NodeHandshake::hasItem(const size_t identifier) const
 		{
-			for (std::list<NodeHandshakeItem*>::const_iterator iter = _items.begin(); iter != _items.end(); iter++)
+			for (std::list<NodeHandshakeItem*>::const_iterator iter = _items.begin(); iter != _items.end(); ++iter)
 			{
 				const NodeHandshakeItem &item = (**iter);
 				if (item.getIdentifier() == identifier) return true;
@@ -79,7 +79,7 @@ namespace dtn
 
 		NodeHandshakeItem* NodeHandshake::getItem(const size_t identifier) const
 		{
-			for (std::list<NodeHandshakeItem*>::const_iterator iter = _items.begin(); iter != _items.end(); iter++)
+			for (std::list<NodeHandshakeItem*>::const_iterator iter = _items.begin(); iter != _items.end(); ++iter)
 			{
 				NodeHandshakeItem *item = (*iter);
 				if (item->getIdentifier() == identifier) return item;
@@ -124,7 +124,7 @@ namespace dtn
 
 			if (getType() == NodeHandshake::HANDSHAKE_REQUEST)
 			{
-				for (std::set<size_t>::const_iterator iter = _requests.begin(); iter != _requests.end(); iter++)
+				for (std::set<size_t>::const_iterator iter = _requests.begin(); iter != _requests.end(); ++iter)
 				{
 					size_t item = (*iter);
 					ss << " " << item;
@@ -132,7 +132,7 @@ namespace dtn
 			}
 			else if (getType() == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
-				for (std::list<NodeHandshakeItem*>::const_iterator iter = _items.begin(); iter != _items.end(); iter++)
+				for (std::list<NodeHandshakeItem*>::const_iterator iter = _items.begin(); iter != _items.end(); ++iter)
 				{
 					const NodeHandshakeItem &item (**iter);
 					ss << " " << item.getIdentifier();
@@ -156,7 +156,7 @@ namespace dtn
 				dtn::data::SDNV number_of_items(hs._requests.size());
 				stream << number_of_items;
 
-				for (std::set<size_t>::const_iterator iter = hs._requests.begin(); iter != hs._requests.end(); iter++)
+				for (std::set<size_t>::const_iterator iter = hs._requests.begin(); iter != hs._requests.end(); ++iter)
 				{
 					dtn::data::SDNV req(*iter);
 					stream << req;
@@ -172,7 +172,7 @@ namespace dtn
 				dtn::data::SDNV number_of_items(hs._items.size());
 				stream << number_of_items;
 
-				for (std::list<NodeHandshakeItem*>::const_iterator iter = hs._items.begin(); iter != hs._items.end(); iter++)
+				for (std::list<NodeHandshakeItem*>::const_iterator iter = hs._items.begin(); iter != hs._items.end(); ++iter)
 				{
 					const NodeHandshakeItem &item (**iter);
 
@@ -207,7 +207,7 @@ namespace dtn
 				dtn::data::SDNV number_of_items;
 				stream >> number_of_items;
 
-				for (size_t i = 0; i < number_of_items.getValue(); i++)
+				for (size_t i = 0; i < number_of_items.getValue(); ++i)
 				{
 					dtn::data::SDNV req;
 					stream >> req;
@@ -225,7 +225,7 @@ namespace dtn
 				dtn::data::SDNV number_of_items;
 				stream >> number_of_items;
 
-				for (size_t i = 0; i < number_of_items.getValue(); i++)
+				for (size_t i = 0; i < number_of_items.getValue(); ++i)
 				{
 					// first the identifier of the item
 					dtn::data::SDNV id;
@@ -289,7 +289,7 @@ namespace dtn
 
 		void NodeHandshake::StreamMap::clear()
 		{
-			for (std::map<size_t, std::stringstream* >::iterator iter = _map.begin(); iter != _map.end(); iter++)
+			for (std::map<size_t, std::stringstream* >::iterator iter = _map.begin(); iter != _map.end(); ++iter)
 			{
 				delete (*iter).second;
 			}

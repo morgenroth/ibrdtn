@@ -182,7 +182,7 @@ namespace ibrcommon
 	{
 		if (_verbosity >= logger._debug_verbosity)
 		{
-			for (std::list<LoggerOutput>::iterator iter = _logger.begin(); iter != _logger.end(); iter++)
+			for (std::list<LoggerOutput>::iterator iter = _logger.begin(); iter != _logger.end(); ++iter)
 			{
 				LoggerOutput &output = (*iter);
 				output.log(logger);
@@ -386,7 +386,7 @@ namespace ibrcommon
 			}
 
 			// print prefixes
-			for (std::list<std::string>::const_iterator iter = prefixes.begin(); iter != prefixes.end(); iter++)
+			for (std::list<std::string>::const_iterator iter = prefixes.begin(); iter != prefixes.end(); ++iter)
 			{
 				if (iter == prefixes.begin())
 				{
@@ -558,7 +558,7 @@ namespace ibrcommon
 
 		LoggerOutput output(stream, logmask, options);
 
-		for (std::list<Logger>::const_iterator iter = _buffer->begin(); iter != _buffer->end(); iter++)
+		for (std::list<Logger>::const_iterator iter = _buffer->begin(); iter != _buffer->end(); ++iter)
 		{
 			const Logger &l = (*iter);
 			output.log(l);

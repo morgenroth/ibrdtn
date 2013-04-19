@@ -71,7 +71,7 @@ namespace dtn
 		{
 		}
 
-		std::string Configuration::version()
+		std::string Configuration::version() const
 		{
 			std::stringstream ss;
 			ss << PACKAGE_VERSION;
@@ -473,7 +473,7 @@ namespace dtn
 				std::string address_str = Configuration::getInstance()._conf.read<string>("discovery_address");
 				std::vector<std::string> addresses = dtn::utils::Utils::tokenize(" ", address_str);
 
-				for (std::vector<std::string>::iterator iter = addresses.begin(); iter != addresses.end(); iter++) {
+				for (std::vector<std::string>::iterator iter = addresses.begin(); iter != addresses.end(); ++iter) {
 					ret.insert( ibrcommon::vaddress(*iter, port(), AF_UNSPEC) );
 				}
 			} catch (const ConfigFile::key_not_found&) {
@@ -588,7 +588,7 @@ namespace dtn
 						dtn::core::Node::NODE_STATIC_GLOBAL : dtn::core::Node::NODE_STATIC_LOCAL;
 
 				// get node
-				for (std::list<Node>::iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+				for (std::list<Node>::iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 				{
 					dtn::core::Node &n = (*iter);
 
@@ -669,7 +669,7 @@ namespace dtn
 			else try
 			{
 				vector<string> nets = dtn::utils::Utils::tokenize(" ", conf.read<string>("net_interfaces") );
-				for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+				for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
 				{
 					std::string netname = (*iter);
 
@@ -763,7 +763,7 @@ namespace dtn
 			 */
 			try {
 				std::vector<string> inets = dtn::utils::Utils::tokenize(" ", conf.read<string>("net_internet") );
-				for (std::vector<string>::const_iterator iter = inets.begin(); iter != inets.end(); iter++)
+				for (std::vector<string>::const_iterator iter = inets.begin(); iter != inets.end(); ++iter)
 				{
 					ibrcommon::vinterface inet_dev(*iter);
 					_internet_devices.insert(inet_dev);
@@ -824,7 +824,7 @@ namespace dtn
 			return Configuration::getInstance()._conf.read<int>("discovery_version", 2);
 		}
 
-		bool Configuration::doAPI()
+		bool Configuration::doAPI() const
 		{
 			return _doapi;
 		}
@@ -1202,7 +1202,7 @@ namespace dtn
 
 		bool Configuration::DHT::isIPBootstrappingEnabled() const
 		{
-			return _bootstrappingips.size() > 0;
+			return !_bootstrappingips.empty();
 		}
 
 		std::vector<string> Configuration::DHT::getIPBootstrappingIPs() const

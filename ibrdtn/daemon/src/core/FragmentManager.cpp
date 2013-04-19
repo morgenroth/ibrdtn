@@ -90,7 +90,7 @@ namespace dtn
 
 					// check first if all fragment are available
 					std::set<BundleMerger::Chunk> chunks;
-					for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+					for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 					{
 						const dtn::data::MetaBundle &m = (*iter);
 						if (meta.payloadlength > 0)
@@ -106,7 +106,7 @@ namespace dtn
 					// create a new bundle merger container
 					dtn::data::BundleMerger::Container c = dtn::data::BundleMerger::getContainer();
 
-					for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+					for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 					{
 						const dtn::data::MetaBundle &meta = (*iter);
 
@@ -134,7 +134,7 @@ namespace dtn
 						dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true);
 
 						// delete all fragments of the merged bundle
-						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 						{
 							if ((*iter).get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 							{
@@ -241,7 +241,7 @@ namespace dtn
 		size_t FragmentManager::getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id)
 		{
 			ibrcommon::MutexLock l(_offsets_mutex);
-			for (std::set<Transmission>::const_iterator iter = _offsets.begin(); iter != _offsets.end(); iter++)
+			for (std::set<Transmission>::const_iterator iter = _offsets.begin(); iter != _offsets.end(); ++iter)
 			{
 				const Transmission &t = (*iter);
 				if (t.peer != peer) continue;
@@ -257,7 +257,7 @@ namespace dtn
 			dtn::data::DefaultSerializer serializer(std::cout);
 			size_t header = serializer.getLength((dtn::data::PrimaryBlock&)bundle);
 
-			for (dtn::data::Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); iter++)
+			for (dtn::data::Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)
 			{
 				const dtn::data::Block &b = (**iter);
 				header += serializer.getLength(b);
@@ -374,7 +374,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG("FragmentManager", 5) << "Fragment original bundle block count: " << fragment.toString() << "  " << bundle.size() << IBRCOMMON_LOGGER_ENDL;
 
 			//check for each block if it has to be added to the fragment
-			for (dtn::data::Bundle::const_iterator it = bundle.begin(); it != bundle.end(); it++)
+			for (dtn::data::Bundle::const_iterator it = bundle.begin(); it != bundle.end(); ++it)
 			{
 				//get the current block
 				const Block &current_block = dynamic_cast<const Block&>(**it);

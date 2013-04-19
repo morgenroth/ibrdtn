@@ -97,7 +97,7 @@ namespace dtn
 			{
 				// rebuild the bloom-filter
 				_bf.clear();
-				for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+				for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 				{
 					_bf.insert( (*iter).toString() );
 				}
@@ -117,7 +117,7 @@ namespace dtn
 //			if (filter == _bf) return ret;
 
 			// iterate through all items to find the differences
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
 				if (!filter.contains( (*iter).toString() ) )
 				{

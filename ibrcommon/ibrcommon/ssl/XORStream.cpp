@@ -37,7 +37,7 @@ namespace ibrcommon
 		const char *keydata = _key.c_str();
 		const size_t keylength = _key.length();
 
-		for (size_t i = 0; i < size; i++)
+		for (size_t i = 0; i < size; ++i)
 		{
 			buf[i] = buf[i] ^ keydata[_key_pos];
 			_key_pos++;
@@ -50,7 +50,7 @@ namespace ibrcommon
 		const char *keydata = _key.c_str();
 		const size_t keylength = _key.length();
 
-		for (size_t i = 0; i < size; i++)
+		for (size_t i = 0; i < size; ++i)
 		{
 			buf[i] = buf[i] ^ keydata[_key_pos];
 			_key_pos++;

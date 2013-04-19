@@ -103,7 +103,7 @@ namespace dtn
 					const dtn::data::AgeBlock &agebl = b.find<const dtn::data::AgeBlock>();
 					size_t seconds_left = 0;
 					if (b._lifetime > agebl.getSeconds()) {
-						ssize_t seconds_left = b._lifetime - agebl.getSeconds();
+						seconds_left = b._lifetime - agebl.getSeconds();
 					}
 					return getTime() + seconds_left;
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };

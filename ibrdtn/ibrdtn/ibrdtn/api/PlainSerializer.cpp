@@ -51,7 +51,7 @@ namespace dtn
 			_stream << "Blocks: " << obj.size() << std::endl;
 
 			// serialize all secondary blocks
-			for (dtn::data::Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
+			for (dtn::data::Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 			{
 				const dtn::data::Block &b = (**iter);
 				_stream << std::endl;
@@ -128,7 +128,7 @@ namespace dtn
 			{
 				std::list<dtn::data::EID> eid_list = obj.getEIDList();
 
-				for (std::list<dtn::data::EID>::const_iterator iter = eid_list.begin(); iter != eid_list.end(); iter++)
+				for (std::list<dtn::data::EID>::const_iterator iter = eid_list.begin(); iter != eid_list.end(); ++iter)
 				{
 					_stream << "EID: " << (*iter).getString() << std::endl;
 				}
@@ -336,7 +336,7 @@ namespace dtn
 				{
 					std::vector<std::string> flags = dtn::utils::Utils::tokenize(" ", values[1]);
 
-					for (std::vector<std::string>::const_iterator iter = flags.begin(); iter != flags.end(); iter++)
+					for (std::vector<std::string>::const_iterator iter = flags.begin(); iter != flags.end(); ++iter)
 					{
 						const std::string &value = (*iter);
 						if (value == "LAST_BLOCK")

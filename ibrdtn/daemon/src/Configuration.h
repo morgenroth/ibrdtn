@@ -128,7 +128,7 @@ namespace dtn
 			 * Enable/Disable the API interface.
 			 * @return True, if the API interface should be enabled.
 			 */
-			bool doAPI();
+			bool doAPI() const;
 
 			Configuration::NetConfig getAPIInterface() const;
 			ibrcommon::File getAPISocket() const;
@@ -137,7 +137,7 @@ namespace dtn
 			 * Get the version of this daemon.
 			 * @return The version string.
 			 */
-			std::string version();
+			std::string version() const;
 
 			/**
 			 * Get the type of bundle storage to use.
@@ -278,7 +278,15 @@ namespace dtn
 				friend class Configuration;
 			public:
 				/* prophet routing parameters */
-				struct ProphetConfig{
+				class ProphetConfig{
+				public:
+					ProphetConfig()
+					: p_encounter_max(0), p_encounter_first(0), p_first_threshold(0), beta(0), gamma(0), delta(0),
+					  time_unit(0), i_typ(0), next_exchange_timeout(0), forwarding_strategy(), gtmx_nf_max(0)
+					{ }
+
+					~ProphetConfig() { }
+
 					float p_encounter_max;
 					float p_encounter_first;
 					float p_first_threshold;

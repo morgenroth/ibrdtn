@@ -388,7 +388,7 @@ namespace dtn
 			try {
 				const std::list<dtn::core::Node::URI> uri_list = _node.get(dtn::core::Node::CONN_TCPIP);
 
-				for (std::list<dtn::core::Node::URI>::const_iterator iter = uri_list.begin(); iter != uri_list.end(); iter++)
+				for (std::list<dtn::core::Node::URI>::const_iterator iter = uri_list.begin(); iter != uri_list.end(); ++iter)
 				{
 					// break-out if the connection has been aborted
 					if (_aborted) throw ibrcommon::socket_exception("connection has been aborted");

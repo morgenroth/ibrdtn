@@ -245,7 +245,7 @@ namespace dtn
 						n.add(Node::URI(Node::NODE_DISCOVERED, _service->getProtocol(), address, to_value, 20));
 
 						const std::list<DiscoveryService> services = announce.getServices();
-						for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+						for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 						{
 							const DiscoveryService &s = (*iter);
 							n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));

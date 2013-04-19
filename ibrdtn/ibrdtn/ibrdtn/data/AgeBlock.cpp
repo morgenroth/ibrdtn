@@ -20,6 +20,7 @@
  */
 
 #include "ibrdtn/data/AgeBlock.h"
+#include <ibrcommon/TimeMeasurement.h>
 
 namespace dtn
 {

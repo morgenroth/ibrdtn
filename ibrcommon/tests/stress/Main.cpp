@@ -33,28 +33,28 @@ int main()
 	std::list<StressModule*> list;
 	list.push_back(new StressBLOB());
 
-	for (std::list<StressModule*>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+	for (std::list<StressModule*>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 	{
 		(*iter)->stage1();
 	}
 
-	for (std::list<StressModule*>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+	for (std::list<StressModule*>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 	{
 		(*iter)->stage2();
 	}
 
-	for (std::list<StressModule*>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+	for (std::list<StressModule*>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 	{
 		(*iter)->stage3();
 	}
 
 	bool err = false;
-	for (std::list<StressModule*>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+	for (std::list<StressModule*>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 	{
 		if (!(*iter)->check()) err = true;
 	}
 
-	for (std::list<StressModule*>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+	for (std::list<StressModule*>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 	{
 		delete (*iter);
 	}

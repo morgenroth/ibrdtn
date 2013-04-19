@@ -89,7 +89,7 @@ public class ClientSession {
 		}
 
 		@Override
-		public void notifyStatusReport(de.tubs.ibr.dtn.swig.StatusReportBlock swigReport)
+		public void notifyStatusReport(de.tubs.ibr.dtn.swig.EID source, de.tubs.ibr.dtn.swig.StatusReportBlock swigReport)
 		{
 		    de.tubs.ibr.dtn.swig.BundleID swigId = swigReport.get_bundleid();
 		    
@@ -98,7 +98,7 @@ public class ClientSession {
             Intent notify = new Intent(de.tubs.ibr.dtn.Intent.STATUS_REPORT);
             notify.addCategory(_package_name);
             notify.putExtra("bundleid", toAndroid(swigId));
-            
+            notify.putExtra("source", new SingletonEndpoint(source.getString()));
             notify.putExtra("status", swigReport.get_status());
             notify.putExtra("reason", swigReport.get_reasoncode());
             
@@ -131,7 +131,7 @@ public class ClientSession {
 		}
 
 		@Override
-		public void notifyCustodySignal(de.tubs.ibr.dtn.swig.CustodySignalBlock swigCustody)
+		public void notifyCustodySignal(de.tubs.ibr.dtn.swig.EID source, de.tubs.ibr.dtn.swig.CustodySignalBlock swigCustody)
 		{
 		    de.tubs.ibr.dtn.swig.BundleID swigId = swigCustody.get_bundleid();
 		    
@@ -140,7 +140,7 @@ public class ClientSession {
             Intent notify = new Intent(de.tubs.ibr.dtn.Intent.CUSTODY_SIGNAL);
             notify.addCategory(_package_name);
             notify.putExtra("bundleid", toAndroid(swigId));
-            
+            notify.putExtra("source", new SingletonEndpoint(source.getString()));
             notify.putExtra("accepted", swigCustody.get_custody_accepted());
             notify.putExtra("timeofsignal", toAndroid(swigCustody.get_timeofsignal()));
 
@@ -305,6 +305,15 @@ public class ClientSession {
         } catch (InterruptedException e) {
             Log.e(TAG, "Join on receiver thread failed.", e);
         }
+	    
+	    this.nativeSession.delete();
+	    this.nativeSession = null;
+	    
+	    this._session_callback.delete();
+	    this._session_callback = null;
+	    
+	    this._serializer_callback.delete();
+	    this._serializer_callback = null;
 	}
 	
 	public void update(Registration reg) {
