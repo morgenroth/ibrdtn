@@ -860,6 +860,9 @@ namespace dtn
 				// write notification header to API channel
 				_stream << API_STATUS_NOTIFY_REPORT << " NOTIFY REPORT ";
 
+				// write sender EID
+				_stream << b._source.getString() << " ";
+
 				// format the bundle ID and write it to the stream
 				_stream << report._bundleid.timestamp << "." << report._bundleid.sequencenumber;
 
@@ -913,6 +916,9 @@ namespace dtn
 
 				// write notification header to API channel
 				_stream << API_STATUS_NOTIFY_CUSTODY << " NOTIFY CUSTODY ";
+
+				// write sender EID
+				_stream << b._source.getString() << " ";
 
 				// format the bundle ID and write it to the stream
 				_stream << custody._bundleid.timestamp << "." << custody._bundleid.sequencenumber;
