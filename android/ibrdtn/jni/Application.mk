@@ -6,8 +6,8 @@ ibrdtn_TOP:=$(abspath $(LOCAL_PATH))/ibrdtn
 dtnd_TOP:=$(abspath $(LOCAL_PATH))/dtnd
 
 # Optimizations
-APP_OPTIM:=release
-#APP_OPTIM:=debug
+#APP_OPTIM:=release
+APP_OPTIM:=debug
 
 # NDK Toolchain
 # works:
