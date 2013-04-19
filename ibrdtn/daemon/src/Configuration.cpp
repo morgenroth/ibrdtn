@@ -1202,7 +1202,7 @@ namespace dtn
 
 		bool Configuration::DHT::isIPBootstrappingEnabled() const
 		{
-			return _bootstrappingips.size() > 0;
+			return !_bootstrappingips.empty();
 		}
 
 		std::vector<string> Configuration::DHT::getIPBootstrappingIPs() const

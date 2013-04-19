@@ -692,7 +692,7 @@ void dtn::dht::DHTNameService::bootstrappingFile() {
 void dtn::dht::DHTNameService::bootstrappingDNS() {
 	int rc;
 	std::vector < string > dns = _config.getDNSBootstrappingNames();
-	if (dns.size() > 0) {
+	if (!dns.empty()) {
 		std::vector<string>::const_iterator dns_iter = dns.begin();
 		while (dns_iter != dns.end()) {
 			const string &dn = (*dns_iter);
@@ -749,7 +749,7 @@ void dtn::dht::DHTNameService::bootstrappingIPs() {
 		}
 
 		// read address
-		if (ip.size() > 0) {
+		if (!ip.empty()) {
 			rc = inet_pton(ipversion, ip[0].c_str(), &(sin.sin_addr));
 			if (rc <= 0) {
 				ipversion = AF_INET6;

@@ -317,7 +317,7 @@ namespace dtn
 			std::list<dtn::core::Node::URI> uris = n.get(dtn::core::Node::CONN_FILE);
 
 			// abort the transfer, if no URI exists
-			if (uris.size() == 0) throw ibrcommon::Exception("path not defined");
+			if (uris.empty()) throw ibrcommon::Exception("path not defined");
 
 			// get the URI of the file path
 			const std::string &uri = uris.front().value;

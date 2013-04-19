@@ -186,7 +186,7 @@ namespace dtn
 							}
 						}
 
-						if (routes.size() > 0)
+						if (!routes.empty())
 						{
 							// this destination is not handles by any static route
 							ibrcommon::MutexLock l(db);
