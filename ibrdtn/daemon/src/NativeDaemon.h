@@ -133,12 +133,12 @@ namespace dtn
 			/**
 			 * Set the config file and enable default logging capabilities
 			 */
-			void setLogging(const std::string &defaultTag, int logLevel) throw ();
+			void setLogging(const std::string &defaultTag, int logLevel) const throw ();
 
 			/**
 			 * Set the path to the log file
 			 */
-			void setLogFile(const std::string &path, int logLevel) throw ();
+			void setLogFile(const std::string &path, int logLevel) const throw ();
 
 			/**
 			 * Set the daemon configuration
@@ -150,27 +150,27 @@ namespace dtn
 			/**
 			 * Get the local EID of this node
 			 */
-			std::string getLocalUri() throw ();
+			std::string getLocalUri() const throw ();
 
 			/**
 			 * Get the neighbors
 			 */
-			std::vector<std::string> getNeighbors() throw ();
+			std::vector<std::string> getNeighbors() const throw ();
 
 			/**
 			 * Get neighbor info
 			 */
-			NativeNode getInfo(const std::string &neighbor_eid) throw (NativeDaemonException);
+			NativeNode getInfo(const std::string &neighbor_eid) const throw (NativeDaemonException);
 
 			/**
 			 * Add a static connection to the neighbor with the given EID
 			 */
-			void addConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local = false) throw ();
+			void addConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local = false) const throw ();
 
 			/**
 			 * Remove a static connection of the neighbor with the given EID
 			 */
-			void removeConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local = false) throw ();
+			void removeConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local = false) const throw ();
 
 			/**
 			 * @see dtn::core::EventReceiver::raiseEvent()
@@ -180,12 +180,12 @@ namespace dtn
 			/**
 			 * Returns version information about the native daemon
 			 */
-			std::vector<std::string> getVersion() throw ();
+			std::vector<std::string> getVersion() const throw ();
 
 			/**
 			 * Delete all bundles in the storage
 			 */
-			void clearStorage() throw ();
+			void clearStorage() const throw ();
 
 		private:
 			void init_up(DaemonRunLevel rl) throw (NativeDaemonException);
@@ -208,13 +208,13 @@ namespace dtn
 			 * routines to init/shutdown the storage subsystem
 			 */
 			void init_storage() throw (NativeDaemonException);
-			void shutdown_storage() throw (NativeDaemonException);
+			void shutdown_storage() const throw (NativeDaemonException);
 
 			/**
 			 * routines to init/shutdown the base router
 			 */
 			void init_routing() throw (NativeDaemonException);
-			void shutdown_routing() throw (NativeDaemonException);
+			void shutdown_routing() const throw (NativeDaemonException);
 
 			/**
 			 * routines to init/shutdown the API modules and embedded
@@ -233,7 +233,7 @@ namespace dtn
 			 * routines to init/shutdown the extended routing modules
 			 */
 			void init_routing_extensions() throw (NativeDaemonException);
-			void shutdown_routing_extensions() throw (NativeDaemonException);
+			void shutdown_routing_extensions() const throw (NativeDaemonException);
 
 			// conditional
 			ibrcommon::Conditional _runlevel_cond;

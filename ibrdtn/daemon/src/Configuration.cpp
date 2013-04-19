@@ -71,7 +71,7 @@ namespace dtn
 		{
 		}
 
-		std::string Configuration::version()
+		std::string Configuration::version() const
 		{
 			std::stringstream ss;
 			ss << PACKAGE_VERSION;
@@ -824,7 +824,7 @@ namespace dtn
 			return Configuration::getInstance()._conf.read<int>("discovery_version", 2);
 		}
 
-		bool Configuration::doAPI()
+		bool Configuration::doAPI() const
 		{
 			return _doapi;
 		}

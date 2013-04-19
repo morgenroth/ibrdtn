@@ -128,7 +128,7 @@ namespace dtn
 			 * Enable/Disable the API interface.
 			 * @return True, if the API interface should be enabled.
 			 */
-			bool doAPI();
+			bool doAPI() const;
 
 			Configuration::NetConfig getAPIInterface() const;
 			ibrcommon::File getAPISocket() const;
@@ -137,7 +137,7 @@ namespace dtn
 			 * Get the version of this daemon.
 			 * @return The version string.
 			 */
-			std::string version();
+			std::string version() const;
 
 			/**
 			 * Get the type of bundle storage to use.
