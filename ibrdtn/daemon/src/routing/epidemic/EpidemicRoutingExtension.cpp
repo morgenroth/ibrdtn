@@ -55,8 +55,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		EpidemicRoutingExtension::EpidemicRoutingExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker)
+		EpidemicRoutingExtension::EpidemicRoutingExtension()
 		{
 			// write something to the syslog
 			IBRCOMMON_LOGGER(info) << "Initializing epidemic routing module" << IBRCOMMON_LOGGER_ENDL;
@@ -81,7 +80,7 @@ namespace dtn
 				// new bundles trigger a recheck for all neighbors
 				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
-				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); iter++)
+				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
 				{
 					const dtn::core::Node &n = (*iter);
 
@@ -100,7 +99,7 @@ namespace dtn
 				{
 					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 				}
-				else if (nodeevent.getAction() == NODE_UPDATED)
+				else if (nodeevent.getAction() == NODE_DATA_ADDED)
 				{
 					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 				}
@@ -286,10 +285,10 @@ namespace dtn
 
 								// query some unknown bundle from the storage
 								list.clear();
-								_seeker.get(filter, list);
+								(**this).getSeeker().get(filter, list);
 
 								// send the bundles as long as we have resources
-								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 								{
 									try {
 										// transfer the bundle to the neighbor

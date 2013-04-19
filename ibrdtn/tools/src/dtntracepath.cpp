@@ -171,7 +171,7 @@ class Tracer : public dtn::api::Client
 					const dtn::data::TrackingBlock &track_block = tb.getTrackingBlock();
 					const dtn::data::TrackingBlock::tracking_list &list = track_block.getTrack();
 
-					for (dtn::data::TrackingBlock::tracking_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+					for (dtn::data::TrackingBlock::tracking_list::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 					{
 						const dtn::data::TrackingBlock::TrackingEntry &entry = (*iter);
 						::printf("       # %s\n", entry.endpoint.getString().c_str());

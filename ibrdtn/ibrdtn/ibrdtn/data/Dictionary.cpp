@@ -51,7 +51,7 @@ namespace data
 		add(bundle._custodian);
 
 		// add EID of all secondary blocks
-		for (Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); iter++)
+		for (Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)
 		{
 			const Block &b = (**iter);
 			add( b.getEIDList() );
@@ -144,7 +144,7 @@ namespace data
 		while (iter != eids.end())
 		{
 			add(*iter);
-			iter++;
+			++iter;
 		}
 	}
 

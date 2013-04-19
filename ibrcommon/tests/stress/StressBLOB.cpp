@@ -24,7 +24,7 @@
 
 StressBLOB::StressBLOB()
 {
-	for (unsigned int i = 0; i < 100; i++)
+	for (unsigned int i = 0; i < 100; ++i)
 	{
 		_worker.push_back(new BLOBWorker(100, 10000));
 	}
@@ -32,7 +32,7 @@ StressBLOB::StressBLOB()
 
 StressBLOB::~StressBLOB()
 {
-	for (std::list<BLOBWorker*>::const_iterator iter = _worker.begin(); iter != _worker.end(); iter++)
+	for (std::list<BLOBWorker*>::const_iterator iter = _worker.begin(); iter != _worker.end(); ++iter)
 	{
 		delete (*iter);
 	}
@@ -40,7 +40,7 @@ StressBLOB::~StressBLOB()
 
 void StressBLOB::stage1()
 {
-	for (std::list<BLOBWorker*>::const_iterator iter = _worker.begin(); iter != _worker.end(); iter++)
+	for (std::list<BLOBWorker*>::const_iterator iter = _worker.begin(); iter != _worker.end(); ++iter)
 	{
 		std::cout << "+";
 		(*iter)->start();
@@ -53,7 +53,7 @@ void StressBLOB::stage2()
 
 void StressBLOB::stage3()
 {
-	for (std::list<BLOBWorker*>::const_iterator iter = _worker.begin(); iter != _worker.end(); iter++)
+	for (std::list<BLOBWorker*>::const_iterator iter = _worker.begin(); iter != _worker.end(); ++iter)
 	{
 		(*iter)->join();
 	}
@@ -64,7 +64,7 @@ void StressBLOB::stage3()
 bool StressBLOB::check()
 {
 	bool err = false;
-	for (std::list<BLOBWorker*>::const_iterator iter = _worker.begin(); iter != _worker.end(); iter++)
+	for (std::list<BLOBWorker*>::const_iterator iter = _worker.begin(); iter != _worker.end(); ++iter)
 	{
 		if (!(*iter)->check()) err = true;
 		std::cout << "$";
@@ -85,14 +85,14 @@ StressBLOB::BLOBWorker::~BLOBWorker()
 
 bool StressBLOB::BLOBWorker::check()
 {
-	for (std::list<ibrcommon::BLOB::Reference>::iterator iter = _refs.begin(); iter != _refs.end(); iter++)
+	for (std::list<ibrcommon::BLOB::Reference>::iterator iter = _refs.begin(); iter != _refs.end(); ++iter)
 	{
 		ibrcommon::BLOB::Reference &ref = (*iter);
 		ibrcommon::BLOB::iostream stream = ref.iostream();
 
-		for (unsigned int i = 0; i < _count; i++)
+		for (unsigned int i = 0; i < _count; ++i)
 		{
-			for (unsigned int k = 0; k < teststr.length(); k++)
+			for (unsigned int k = 0; k < teststr.length(); ++k)
 			{
 				char v = (*stream).get();
 				char e = teststr.c_str()[k];
@@ -110,7 +110,7 @@ bool StressBLOB::BLOBWorker::check()
 
 void StressBLOB::BLOBWorker::run() throw ()
 {
-	for (unsigned int i = 0; i < _count; i++)
+	for (unsigned int i = 0; i < _count; ++i)
 	{
 		ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 		_refs.push_back(ref);
@@ -119,7 +119,7 @@ void StressBLOB::BLOBWorker::run() throw ()
 		{
 			ibrcommon::BLOB::iostream stream = ref.iostream();
 
-			for (unsigned int j = 0; j < _size; j++)
+			for (unsigned int j = 0; j < _size; ++j)
 			{
 				(*stream) << teststr;
 			}

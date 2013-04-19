@@ -98,7 +98,7 @@ namespace dtn
 		{
 			ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**_recv_socket.getAll().begin());
 
-			for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
+			for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); ++it_addr)
 			{
 				try {
 					msock.leave(*it_addr, iface);
@@ -118,7 +118,7 @@ namespace dtn
 		{
 			ibrcommon::multicastsocket &msock = dynamic_cast<ibrcommon::multicastsocket&>(**_recv_socket.getAll().begin());
 
-			for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); it_addr++)
+			for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); ++it_addr)
 			{
 				try {
 					msock.join(*it_addr, iface);
@@ -142,7 +142,7 @@ namespace dtn
 
 			// send out discovery announcements on all bound sockets
 			// (hopefully only one per interface)
-			for (ibrcommon::socketset::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+			for (ibrcommon::socketset::const_iterator iter = fds.begin(); iter != fds.end(); ++iter)
 			{
 				ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
@@ -168,7 +168,7 @@ namespace dtn
 
 			ibrcommon::MutexLock l(_interface_lock);
 
-			for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
+			for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); ++it_iface)
 			{
 				const ibrcommon::vinterface &iface = (*it_iface);
 
@@ -178,7 +178,7 @@ namespace dtn
 				if (!_config.shortbeacon())
 				{
 					// add services
-					for (std::list<DiscoveryServiceProvider*>::iterator iter = providers.begin(); iter != providers.end(); iter++)
+					for (std::list<DiscoveryServiceProvider*>::iterator iter = providers.begin(); iter != providers.end(); ++iter)
 					{
 						DiscoveryServiceProvider &provider = (**iter);
 
@@ -191,7 +191,7 @@ namespace dtn
 					}
 				}
 
-				for (std::set<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); iter++) {
+				for (std::set<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); ++iter) {
 					send(announcement, iface, (*iter));
 				}
 			}
@@ -202,7 +202,7 @@ namespace dtn
 			// create sockets for all addresses on the interface
 			std::list<ibrcommon::vaddress> addrs = iface.getAddresses();
 
-			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); ++iter) {
 				ibrcommon::vaddress &addr = (*iter);
 
 				try {
@@ -230,7 +230,7 @@ namespace dtn
 		void IPNDAgent::unlisten(const ibrcommon::vinterface &iface) throw ()
 		{
 			ibrcommon::socketset socks = _send_socket.get(iface);
-			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+			for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); ++iter) {
 				ibrcommon::udpsocket *sock = dynamic_cast<ibrcommon::udpsocket*>(*iter);
 				_send_socket.remove(sock);
 				try {
@@ -329,7 +329,7 @@ namespace dtn
 				case ibrcommon::LinkEvent::ACTION_ADDRESS_REMOVED:
 				{
 					ibrcommon::socketset socks = _send_socket.get(evt.getInterface());
-					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); ++iter) {
 						ibrcommon::udpsocket *sock = dynamic_cast<ibrcommon::udpsocket*>(*iter);
 						if (sock->get_address().address() == evt.getAddress().address()) {
 							// leave interfaces if a interface is totally gone
@@ -376,7 +376,7 @@ namespace dtn
 			try {
 				ibrcommon::MutexLock l(_interface_lock);
 
-				for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
+				for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); ++it_iface)
 				{
 					const ibrcommon::vinterface &iface = (*it_iface);
 
@@ -448,7 +448,7 @@ namespace dtn
 					_recv_socket.select(&fds, NULL, NULL, &tv);
 
 					// receive from all sockets
-					for (ibrcommon::socketset::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+					for (ibrcommon::socketset::const_iterator iter = fds.begin(); iter != fds.end(); ++iter)
 					{
 						ibrcommon::multicastsocket &sock = dynamic_cast<ibrcommon::multicastsocket&>(**iter);
 
@@ -488,7 +488,7 @@ namespace dtn
 							}
 
 							// add all services to the return set
-							for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++) {
+							for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter) {
 								const DiscoveryService &service = (*iter);
 
 								// add source address if not set

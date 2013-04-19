@@ -62,7 +62,7 @@ map<string,string> readconfiguration(int argc, char** argv)
     ret["outbox"] = argv[argc - 2];
     ret["destination"] = argv[argc - 1];
 
-    for (int i = 0; i < (argc - 3); i++)
+    for (int i = 0; i < (argc - 3); ++i)
     {
         string arg = argv[i];
 
@@ -164,7 +164,7 @@ int main(int argc, char** argv)
 
             	stringstream file_list;
 
-            	for (list<File>::iterator iter = files.begin(); iter != files.end(); iter++)
+            	for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
             	{
 					File &f = (*iter);
 

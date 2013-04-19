@@ -211,9 +211,9 @@ namespace ibrcommon
 
 		/**
 		 * enable the asynchronous logging
-		 * This starts a seperate thread and a thread-safe queue to
+		 * This starts a separate thread and a thread-safe queue to
 		 * queue all logging messages first and call the log routine by
-		 * the thread. This option is nessacary, if the stream to log into
+		 * the thread. This option is necessary, if the stream to log into
 		 * are not thread-safe by itself.
 		 */
 		static void enableAsync();
@@ -232,7 +232,7 @@ namespace ibrcommon
 
 		/**
 		 * stops the asynchronous logging thread
-		 * you need to call this before your programm is going down, if you have
+		 * you need to call this before your program is going down, if you have
 		 * called enableAsync() before. 
 		 */
 		static void stop();
@@ -382,6 +382,7 @@ namespace ibrcommon
 		std::string _data;
 
 		static std::string _default_tag;
+		static std::string _android_tag_prefix;
 		static LogWriter _logwriter;
 	};
 }

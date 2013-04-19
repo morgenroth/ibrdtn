@@ -43,6 +43,8 @@ namespace dtn
 {
 	namespace storage
 	{
+		const std::string SimpleBundleStorage::TAG = "SimpleBundleStorage";
+
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize, size_t buffer_limit)
 		 : BundleStorage(maxsize), _list(this), _datastore(*this, workdir, buffer_limit)
 		{
@@ -54,6 +56,8 @@ namespace dtn
 
 		void SimpleBundleStorage::eventDataStorageStored(const dtn::storage::DataStorage::Hash &hash)
 		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(SimpleBundleStorage::TAG, 30) << "element successfully stored: " << hash.value << IBRCOMMON_LOGGER_ENDL;
+
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 			dtn::data::MetaBundle meta(_pending_bundles[hash]);
 			_pending_bundles.erase(hash);
@@ -62,7 +66,7 @@ namespace dtn
 
 		void SimpleBundleStorage::eventDataStorageStoreFailed(const dtn::storage::DataStorage::Hash &hash, const ibrcommon::Exception &ex)
 		{
-			IBRCOMMON_LOGGER(error) << "store failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(SimpleBundleStorage::TAG, error) << "store of element " << hash.value << " failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 
@@ -84,10 +88,12 @@ namespace dtn
 
 		void SimpleBundleStorage::eventDataStorageRemoved(const dtn::storage::DataStorage::Hash &hash)
 		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(SimpleBundleStorage::TAG, 30) << "element successfully removed: " << hash.value << IBRCOMMON_LOGGER_ENDL;
+
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 
 			for (std::map<dtn::data::MetaBundle, DataStorage::Hash>::iterator iter = _stored_bundles.begin();
-					iter != _stored_bundles.end(); iter++)
+					iter != _stored_bundles.end(); ++iter)
 			{
 				const DataStorage::Hash &it_hash = iter->second;
 				const dtn::data::MetaBundle it_bundle = iter->first;
@@ -109,9 +115,9 @@ namespace dtn
 			}
 		}
 
-		void SimpleBundleStorage::eventDataStorageRemoveFailed(const dtn::storage::DataStorage::Hash&, const ibrcommon::Exception &ex)
+		void SimpleBundleStorage::eventDataStorageRemoveFailed(const dtn::storage::DataStorage::Hash &hash, const ibrcommon::Exception &ex)
 		{
-			IBRCOMMON_LOGGER(error) << "remove failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(SimpleBundleStorage::TAG, error) << "remove of element " << hash.value << " failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void SimpleBundleStorage::iterateDataStorage(const dtn::storage::DataStorage::Hash &hash, dtn::storage::DataStorage::istream &stream)
@@ -147,7 +153,7 @@ namespace dtn
 				eventBundleAdded(bundle);
 			} catch (const std::exception&) {
 				// report this error to the console
-				IBRCOMMON_LOGGER(error) << "Error: Unable to restore bundle in file " << hash.value << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SimpleBundleStorage::TAG, error) << "Unable to restore bundle in file " << hash.value << IBRCOMMON_LOGGER_ENDL;
 
 				// error while reading file
 				_datastore.remove(hash);
@@ -200,7 +206,7 @@ namespace dtn
 			_datastore.iterateAll();
 
 			// some output
-			IBRCOMMON_LOGGER(info) << _list.size() << " Bundles restored." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(SimpleBundleStorage::TAG, info) << _list.size() << " Bundles restored." << IBRCOMMON_LOGGER_ENDL;
 
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 
@@ -267,7 +273,7 @@ namespace dtn
 			// we have to iterate through all bundles
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READONLY);
 
-			for (std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); iter++)
+			for (std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); ++iter)
 			{
 				const dtn::data::MetaBundle &meta = (*iter);
 
@@ -286,7 +292,7 @@ namespace dtn
 			try {
 				ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READONLY);
 
-				for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+				for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 				{
 					const dtn::data::MetaBundle &meta = (*iter);
 					if (id == meta)
@@ -296,7 +302,7 @@ namespace dtn
 				}
 			} catch (const dtn::SerializationFailedException &ex) {
 				// bundle loading failed
-				IBRCOMMON_LOGGER(error) << "Error while loading bundle data: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SimpleBundleStorage::TAG, error) << "failed to load bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 				// the bundle is broken, delete it
 				remove(id);
@@ -399,7 +405,7 @@ namespace dtn
 		{
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 			{
 				if ((*iter) == id)
 				{
@@ -426,7 +432,7 @@ namespace dtn
 		{
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 			{
 				// remove item in the bundlelist
 				const dtn::data::MetaBundle meta = (*iter);
@@ -454,7 +460,7 @@ namespace dtn
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
 
 			// mark all bundles for deletion
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 			{
 				// remove item in the bundlelist
 				const dtn::data::MetaBundle &meta = (*iter);
@@ -463,21 +469,15 @@ namespace dtn
 
 				// create a background task for removing the bundle
 				_datastore.remove(hash);
-
-				// raise bundle removed event
-				eventBundleRemoved(meta);
 			}
 
 			_priority_index.clear();
 			_list.clear();
-
-			// set the storage size to zero
-			clearSpace();
 		}
 
 		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
 		{
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
 			{
 				if ((*iter) == b)
 				{

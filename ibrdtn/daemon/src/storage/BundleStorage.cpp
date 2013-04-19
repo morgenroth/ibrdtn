@@ -153,7 +153,7 @@ namespace dtn
 			if (size > _currentsize)
 			{
 				_currentsize = 0;
-				IBRCOMMON_LOGGER_TAG("MemoryBundleStorage", critical) << "More space to free than allocated." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BundleStorage", critical) << "More space to free than allocated." << IBRCOMMON_LOGGER_ENDL;
 			}
 			else
 			{
@@ -171,7 +171,7 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(2) << "add bundle to index: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 
-			for (index_list::iterator it = _indexes.begin(); it != _indexes.end(); it++) {
+			for (index_list::iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
 				BundleIndex &index = (**it);
 				index.add(b);
 			}
@@ -181,7 +181,7 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(2) << "remove bundle from index: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 
-			for (index_list::iterator it = _indexes.begin(); it != _indexes.end(); it++) {
+			for (index_list::iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
 				BundleIndex &index = (**it);
 				index.remove(id);
 			}

@@ -30,7 +30,7 @@ void netlinktest :: baseTest (void)
 	std::list<ibrcommon::vaddress> ret = ibrcommon::LinkManager::getInstance().getAddressList(iface);
 
 	std::cout << "Addresses:" << std::endl;
-	for (std::list<ibrcommon::vaddress>::iterator iter = ret.begin(); iter != ret.end(); iter++)
+	for (std::list<ibrcommon::vaddress>::iterator iter = ret.begin(); iter != ret.end(); ++iter)
 	{
 		std::cout << " " << (*iter).toString() << std::endl;
 	}

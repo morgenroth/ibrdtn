@@ -8,9 +8,9 @@ h_sources = \
 	Thread.h \
 	Timer.h \
 	AtomicCounter.h \
-	ObjectLock.h \
 	ThreadsafeState.h \
 	ThreadsafeReference.h \
+	SharedReference.h \
 	RWMutex.h \
 	RWLock.h
 
@@ -22,7 +22,6 @@ cc_sources = \
 	Thread.cpp \
 	Timer.cpp \
 	AtomicCounter.cpp \
-	ObjectLock.cpp \
 	RWMutex.cpp \
 	RWLock.cpp
 
@@ -37,8 +36,8 @@ if ANDROID
 noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
-noinst_LTLIBRARIES = libthread.la
-libthread_la_SOURCES = $(h_sources) $(cc_sources)
+noinst_LTLIBRARIES = libibrcommon_thread.la
+libibrcommon_thread_la_SOURCES = $(h_sources) $(cc_sources)
 endif
 
 Android.mk: Makefile.am

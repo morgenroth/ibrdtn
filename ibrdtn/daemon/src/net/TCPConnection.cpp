@@ -68,7 +68,6 @@ namespace dtn
 		   _keepalive_sender(*this, _keepalive_timeout), _timeout(timeout), _lastack(0), _keepalive_timeout(0),
 		   _callback(tcpsrv), _flags(0), _aborted(false)
 		{
-			// if _socket is set to NULL, then we are the server
 		}
 
 		TCPConnection::~TCPConnection()
@@ -80,8 +79,10 @@ namespace dtn
 			_sender.join();
 
 			// clean-up
-			if (_protocol_stream != NULL) {
+			{
+				ibrcommon::RWLock l(_protocol_stream_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
 				delete _protocol_stream;
+				_protocol_stream = NULL;
 			}
 
 			if (_sec_stream != NULL) {
@@ -112,7 +113,7 @@ namespace dtn
 
 		void TCPConnection::rejectTransmission()
 		{
-			_protocol_stream->reject();
+			(*getProtocolStream()).reject();
 		}
 
 		void TCPConnection::eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) throw ()
@@ -203,12 +204,14 @@ namespace dtn
 				_socket_stream->setTimeout(timeout);
 			}
 
-			// enable idle timeout
-			size_t _idle_timeout = dtn::daemon::Configuration::getInstance().getNetwork().getTCPIdleTimeout();
-			if (_idle_timeout > 0)
-			{
-				_protocol_stream->enableIdleTimeout(_idle_timeout);
-			}
+			try {
+				// enable idle timeout
+				size_t _idle_timeout = dtn::daemon::Configuration::getInstance().getNetwork().getTCPIdleTimeout();
+				if (_idle_timeout > 0)
+				{
+					(*getProtocolStream()).enableIdleTimeout(_idle_timeout);
+				}
+			} catch (const ibrcommon::Exception&) {};
 
 			// raise up event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
@@ -288,8 +291,10 @@ namespace dtn
 
 		void TCPConnection::shutdown() throw ()
 		{
-			// shutdown
-			_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			try {
+				// shutdown
+				(*getProtocolStream()).shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			} catch (const ibrcommon::Exception&) {};
 
 			try {
 				// abort the connection thread
@@ -360,8 +365,10 @@ namespace dtn
 
 			// create a new stream connection
 			int chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
-			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
 
+			ibrcommon::RWLock l(_protocol_stream_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+			if (_protocol_stream != NULL) delete _protocol_stream;
+			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
 			_protocol_stream->exceptions(std::ios::badbit | std::ios::eofbit);
 		}
 
@@ -381,7 +388,7 @@ namespace dtn
 			try {
 				const std::list<dtn::core::Node::URI> uri_list = _node.get(dtn::core::Node::CONN_TCPIP);
 
-				for (std::list<dtn::core::Node::URI>::const_iterator iter = uri_list.begin(); iter != uri_list.end(); iter++)
+				for (std::list<dtn::core::Node::URI>::const_iterator iter = uri_list.begin(); iter != uri_list.end(); ++iter)
 				{
 					// break-out if the connection has been aborted
 					if (_aborted) throw ibrcommon::socket_exception("connection has been aborted");
@@ -429,9 +436,7 @@ namespace dtn
 			} catch (const ibrcommon::socket_exception&) {
 				// error on open, requeue all bundles in the queue
 				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << "connection to " << _node.toString() << " failed" << IBRCOMMON_LOGGER_ENDL;
-				if (_protocol_stream != NULL) {
-					_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-				}
+				(*getProtocolStream()).shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 				throw;
 			} catch (const bad_cast&) { };
 		}
@@ -448,7 +453,7 @@ namespace dtn
 				}
 
 				// do the handshake
-				_protocol_stream->handshake(dtn::core::BundleCore::local, _timeout, _flags);
+				(*getProtocolStream()).handshake(dtn::core::BundleCore::local, _timeout, _flags);
 
 				// start the sender
 				_sender.start();
@@ -456,7 +461,7 @@ namespace dtn
 				// start keepalive sender
 				_keepalive_sender.start();
 
-				while (!_protocol_stream->eof())
+				while (!(*getProtocolStream()).eof())
 				{
 					try {
 						// create a new empty bundle
@@ -495,17 +500,26 @@ namespace dtn
 				}
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				if (_protocol_stream != NULL) _protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				try {
+					(*getProtocolStream()).shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				} catch (const ibrcommon::Exception&) {};
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 10) << "run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
-				if (_protocol_stream != NULL) _protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				try {
+					(*getProtocolStream()).shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				} catch (const ibrcommon::Exception&) {};
 			}
 		}
 
+		TCPConnection::safe_streamconnection TCPConnection::getProtocolStream() throw (ibrcommon::Exception)
+		{
+			return safe_streamconnection(_protocol_stream, _protocol_stream_mutex);
+		}
 
 		TCPConnection& operator>>(TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
-			std::iostream &stream = (*conn._protocol_stream);
+			TCPConnection::safe_streamconnection sc = conn.getProtocolStream();
+			std::iostream &stream = (*sc);
 
 			// check if the stream is still good
 			if (!stream.good()) throw ibrcommon::IOException("stream went bad");
@@ -527,8 +541,6 @@ namespace dtn
 			// prepare a measurement
 			ibrcommon::TimeMeasurement m;
 
-			std::iostream &stream = (*conn._protocol_stream);
-
 			// get the offset, if this bundle has been reactively fragmented before
 			size_t offset = 0;
 			if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation()
@@ -536,6 +548,9 @@ namespace dtn
 			{
 				offset = dtn::core::FragmentManager::getOffset(conn.getNode().getEID(), bundle);
 			}
+
+			TCPConnection::safe_streamconnection sc = conn.getProtocolStream();
+			std::iostream &stream = (*sc);
 
 			// create a serializer
 			dtn::data::DefaultSerializer serializer(stream);
@@ -739,7 +754,7 @@ namespace dtn
 
 		void TCPConnection::keepalive()
 		{
-			_protocol_stream->keepalive();
+			(*getProtocolStream()).keepalive();
 		}
 
 		bool TCPConnection::good() const

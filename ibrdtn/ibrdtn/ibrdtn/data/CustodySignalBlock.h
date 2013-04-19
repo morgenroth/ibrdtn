@@ -54,21 +54,18 @@ namespace dtn
 			CustodySignalBlock();
 			virtual ~CustodySignalBlock();
 
-			void setMatch(const MetaBundle& other);
-			void setMatch(const Bundle& other);
-			bool match(const Bundle& other) const;
+			void setMatch(const dtn::data::MetaBundle& other);
+			void setMatch(const dtn::data::Bundle& other);
+			bool match(const dtn::data::Bundle& other) const;
 
 			virtual void read(const dtn::data::PayloadBlock &p) throw (WrongRecordException);
 			virtual void write(dtn::data::PayloadBlock &p) const;
 
 			bool _custody_accepted;
 			REASON_CODE _reason;
-			SDNV _fragment_offset;
 			SDNV _fragment_length;
 			DTNTime _timeofsignal;
-			SDNV _bundle_timestamp;
-			SDNV _bundle_sequence;
-			EID _source;
+			dtn::data::BundleID _bundleid;
 		};
 	}
 }

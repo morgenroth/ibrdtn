@@ -55,7 +55,7 @@ namespace dtn
 			// convert the announcement into NodeEvents
 			Node n(source);
 
-			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 			{
 				size_t to_value = (timeout == 0) ? _config.timeout() : timeout;
 

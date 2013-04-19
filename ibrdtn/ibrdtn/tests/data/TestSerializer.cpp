@@ -135,7 +135,7 @@ void TestSerializer::serializer_primaryblock_length(void)
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 	{
 		ibrcommon::BLOB::iostream stream = ref.iostream();
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 10; ++i)
 			(*stream) << "hello world" << std::flush;
 	}
 
@@ -164,14 +164,14 @@ void TestSerializer::serializer_block_length(void)
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 	{
 		ibrcommon::BLOB::iostream stream = ref.iostream();
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 10; ++i)
 			(*stream) << "hello world" << std::flush;
 	}
 
 	b.push_back(ref);
 	b.push_front<dtn::data::AgeBlock>();
 
-	for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); iter++)
+	for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); ++iter)
 	{
 		const dtn::data::Block &block = (**iter);
 
@@ -198,7 +198,7 @@ void TestSerializer::serializer_bundle_length(void)
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 	{
 		ibrcommon::BLOB::iostream stream = ref.iostream();
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 10; ++i)
 			(*stream) << "hello world" << std::flush;
 	}
 
@@ -232,7 +232,7 @@ void TestSerializer::serializer_fragment_one(void)
 	// generate some payload data
 	{
 		ibrcommon::BLOB::iostream ios = ref.iostream();
-		for (int i = 0; i < 100; i++)
+		for (int i = 0; i < 100; ++i)
 		{
 			(*ios) << "0123456789";
 		}
@@ -242,7 +242,7 @@ void TestSerializer::serializer_fragment_one(void)
 	b.push_back(ref);
 
 	// serialize the bundle in fragments with only 100 bytes of payload
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 10; ++i)
 	{
 		ds << dtn::data::BundleFragment(b, i * 100, 100);
 	}
@@ -250,7 +250,7 @@ void TestSerializer::serializer_fragment_one(void)
 	// jump to the first byte in the stringstream
 	ss.seekg(0);
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 10; ++i)
 	{
 		dtn::data::Bundle fb;
 		dtn::data::DefaultDeserializer(ss) >> fb;
@@ -268,7 +268,7 @@ void TestSerializer::serializer_ipn_compression_length(void)
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 	{
 		ibrcommon::BLOB::iostream stream = ref.iostream();
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 10; ++i)
 			(*stream) << "hello world" << std::flush;
 	}
 

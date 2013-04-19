@@ -63,6 +63,7 @@ namespace dtn
 {
 	namespace core
 	{
+		const std::string BundleCore::TAG = "BundleCore";
 		dtn::data::EID BundleCore::local;
 
 		size_t BundleCore::blocksizelimit = 0;
@@ -79,7 +80,7 @@ namespace dtn
 		}
 
 		BundleCore::BundleCore()
-		 : _clock(1), _storage(NULL), _router(NULL), _globally_connected(true)
+		 : _clock(1), _storage(NULL), _seeker(NULL), _router(NULL), _globally_connected(true)
 		{
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
@@ -100,14 +101,7 @@ namespace dtn
 		void BundleCore::componentUp() throw ()
 		{
 			// routine checked for throw() on 15.02.2013
-			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
-			for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); iter++)
-			{
-				ibrcommon::LinkManager::getInstance().addEventListener(*iter, this);
-			}
-
-			// check connection state
-			check_connection_state();
+			onConfigurationChanged(dtn::daemon::Configuration::getInstance());
 
 			_connectionmanager.initialize();
 			_clock.initialize();
@@ -124,9 +118,79 @@ namespace dtn
 			_clock.terminate();
 		}
 
+		void BundleCore::onConfigurationChanged(const dtn::daemon::Configuration &config) throw ()
+		{
+			// set the timezone
+			dtn::utils::Clock::setTimezone(config.getTimezone());
+
+			// set local eid
+			dtn::core::BundleCore::local = config.getNodename();
+			IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
+
+			// set block size limit
+			dtn::core::BundleCore::blocksizelimit = config.getLimit("blocksize");
+			if (dtn::core::BundleCore::blocksizelimit > 0)
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Block size limited to " << dtn::core::BundleCore::blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			// set the lifetime limit
+			dtn::core::BundleCore::max_lifetime = config.getLimit("lifetime");
+			if (dtn::core::BundleCore::max_lifetime > 0)
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Lifetime limited to " << dtn::core::BundleCore::max_lifetime << " seconds" << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			// set the timestamp limit
+			dtn::core::BundleCore::max_timestamp_future = config.getLimit("predated_timestamp");
+			if (dtn::core::BundleCore::max_timestamp_future > 0)
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Pre-dated timestamp limited to " << dtn::core::BundleCore::max_timestamp_future << " seconds in the future" << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			// set the maximum count of bundles in transit (bundles to send to the CL queue)
+			size_t transit_limit = config.getLimit("bundles_in_transit");
+			if (transit_limit > 0)
+			{
+				dtn::core::BundleCore::max_bundles_in_transit = transit_limit;
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Limit the number of bundles in transit to " << dtn::core::BundleCore::max_bundles_in_transit << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			// enable or disable forwarding of bundles
+			if (config.getNetwork().doForwarding())
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Forwarding of bundles enabled." << IBRCOMMON_LOGGER_ENDL;
+				BundleCore::forwarding = true;
+			}
+			else
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Forwarding of bundles disabled." << IBRCOMMON_LOGGER_ENDL;
+				BundleCore::forwarding = false;
+			}
+
+			const std::set<ibrcommon::vinterface> &global_nets = config.getNetwork().getInternetDevices();
+
+			// remove myself from all listeners
+			ibrcommon::LinkManager::getInstance().removeEventListener(this);
+
+			// add all listener in the configuration
+			for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); ++iter)
+			{
+				ibrcommon::LinkManager::getInstance().addEventListener(*iter, this);
+			}
+
+			// check connection state
+			check_connection_state();
+		}
+
 		void BundleCore::setStorage(dtn::storage::BundleStorage *storage)
 		{
 			_storage = storage;
+		}
+
+		void BundleCore::setSeeker(dtn::storage::BundleSeeker *seeker)
+		{
+			_seeker = seeker;
 		}
 
 		void BundleCore::setRouter(dtn::routing::BaseRouter *router)
@@ -151,6 +215,15 @@ namespace dtn
 				throw ibrcommon::Exception("No bundle storage is set! Use BundleCore::setStorage() to set a storage.");
 			}
 			return *_storage;
+		}
+
+		dtn::storage::BundleSeeker& BundleCore::getSeeker()
+		{
+			if (_seeker == NULL)
+			{
+				throw ibrcommon::Exception("No bundle seeker is set! Use BundleCore::setSeeker() to set a seeker.");
+			}
+			return *_seeker;
 		}
 
 		WallClock& BundleCore::getClock()
@@ -225,8 +298,7 @@ namespace dtn
 						CustodySignalBlock custody;
 						custody.read(payload);
 
-						dtn::data::BundleID id(custody._source, custody._bundle_timestamp.getValue(), custody._bundle_sequence.getValue(), (custody._fragment_length.getValue() > 0), custody._fragment_offset.getValue());
-						getStorage().releaseCustody(bundle._source, id);
+						getStorage().releaseCustody(bundle._source, custody._bundleid);
 
 						IBRCOMMON_LOGGER_DEBUG(5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -248,8 +320,11 @@ namespace dtn
 						dtn::core::BundleEvent::raise(meta, BUNDLE_DELETED, StatusReportBlock::DESTINATION_ENDPOINT_ID_UNINTELLIGIBLE);
 					}
 
-					// delete the bundle
-					dtn::core::BundlePurgeEvent::raise(meta);
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						// delete the bundle
+						dtn::core::BundlePurgeEvent::raise(meta);
+					}
 				}
 
 				return;
@@ -271,7 +346,7 @@ namespace dtn
 					IBRCOMMON_LOGGER_TAG("BundleCore", notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// gen a report
-					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 				}
 
 				return;
@@ -465,7 +540,7 @@ namespace dtn
 #endif
 
 			// check for invalid blocks
-			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); iter++)
+			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); ++iter)
 			{
 				try {
 					const dtn::data::ExtensionBlock &e = dynamic_cast<const dtn::data::ExtensionBlock&>(**iter);
@@ -493,7 +568,7 @@ namespace dtn
 		void BundleCore::processBlocks(dtn::data::Bundle &b)
 		{
 			// walk through the block and process them when needed
-			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); iter++)
+			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); ++iter)
 			{
 				const dtn::data::Block &block = (**iter);
 #ifdef WITH_BUNDLE_SECURITY
@@ -557,7 +632,7 @@ namespace dtn
 				setGloballyConnected(true);
 			} else {
 				bool found = false;
-				for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); iter++)
+				for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); ++iter)
 				{
 					const ibrcommon::vinterface &iface = (*iter);
 					if (!iface.getAddresses(ibrcommon::vaddress::SCOPE_GLOBAL).empty()) {

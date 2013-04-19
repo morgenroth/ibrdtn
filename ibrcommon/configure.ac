@@ -103,7 +103,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	OPENSSL_LIBS="-lssl -lcrypto"
 	AC_SUBST(OPENSSL_LIBS)
 	use_openssl="yes"
-	
+
 	# Lowpan
 	#AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], [])
 	use_lowpan="no"

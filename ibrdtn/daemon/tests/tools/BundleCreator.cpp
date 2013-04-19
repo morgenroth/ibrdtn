@@ -44,7 +44,7 @@ void BundleCreator::addPayloadBlock(dtn::data::Bundle &bundle,int size = 1000, i
 	path = getFile();
 	payloadfile.open(filepath,ios::out|ios::binary);
 
-	for (int i = 1; i<=fragments; i++){
+	for (int i = 1; i<=fragments; ++i){
 		if(rest > 0){
 			rest--;
 			add = 1;
@@ -70,7 +70,7 @@ void BundleCreator::addPayloadBlock(dtn::data::Bundle &bundle,int size = 1000, i
 
 void BundleCreator::addBlock(dtn::data::Bundle &bundle, int blocknumber, Position pos){
 	dtn::data::ExtensionBlock &block;
-	if(pos = BundleCreator::FRONT)
+	if(pos == BundleCreator::FRONT)
 		block = bundle.push_front<dtn::data::ExtensionBlock>();
 	else
 		block = bundle.push_back<dtn::data::ExtensionBlock>();
@@ -111,17 +111,17 @@ void BundleCreator::createBundle(dtn::data::Bundle &bundle, ibrcommon::File &fil
 }
 
 void BundleCreator::createFragment(dtn::data::Bundle *bundle, int fragments, int payloadsize, string souceID = "dtn:alice/app3", string destID = "dtn:bob/app2", int blocksBeforePayload = 0, int blocksAfterPayload = 0){
-	if(fragments = 0){
+	if(fragments == 0){
 		throw("Error in function createFragment: argument fragments mustn't be 0");
 	}
-	int add,rest = payloadsize % fragments;
+	int rest = payloadsize % fragments;
 	bundle[0]._source = dtn::data::EID(sourceID);
 	bundle[0]._destination = dtn::data::EID(destID);
 	bundle[0]._procflags += dtn::data::Bundle::PRIORITY_BIT1;
 	bundle[0]._procflags += dtn::data::Bundle::CUSTODY_REQUESTED;
 	bundle[0]._reportto = dtn::data::EID(source);
 	addPayloadBlock(bundle[0],payloadsize,(-1),number);
-	for(int i = 1;  i < fragments+1; i++){
+	for(int i = 1;  i < fragments+1; ++i){
 		bundle[i]._source = dtn::data::EID(sourceID);
 		bundle[i]._destination = dtn::data::EID(destID);
 		bundle[i]._procflags += dtn::data::Bundle::FRAGMENT;

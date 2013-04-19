@@ -28,5 +28,4 @@ Android.mk: Makefile.am
 		-:SOURCES $(routing_SOURCES) \
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
-		-:LIBFILTER_STATIC ibrdtn \
 		> $@

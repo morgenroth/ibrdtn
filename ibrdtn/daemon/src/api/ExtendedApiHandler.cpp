@@ -101,7 +101,7 @@ namespace dtn
 				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.size() == 0) continue;
+				if (cmd.empty()) continue;
 
 				try {
 					if (cmd[0] == "set")
@@ -249,7 +249,7 @@ namespace dtn
 							const std::set<dtn::data::EID> list = _client.getRegistration().getSubscriptions();
 
 							_stream << ClientHandler::API_STATUS_OK << " REGISTRATION LIST" << std::endl;
-							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								_stream << (*iter).getString() << std::endl;
 							}
@@ -331,7 +331,7 @@ namespace dtn
 							const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
 							_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
-							for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
+							for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); ++iter)
 							{
 								_stream << (*iter).getEID().getString() << std::endl;
 							}
@@ -860,6 +860,9 @@ namespace dtn
 				// write notification header to API channel
 				_stream << API_STATUS_NOTIFY_REPORT << " NOTIFY REPORT ";
 
+				// write sender EID
+				_stream << b._source.getString() << " ";
+
 				// format the bundle ID and write it to the stream
 				_stream << report._bundleid.timestamp << "." << report._bundleid.sequencenumber;
 
@@ -914,17 +917,20 @@ namespace dtn
 				// write notification header to API channel
 				_stream << API_STATUS_NOTIFY_CUSTODY << " NOTIFY CUSTODY ";
 
+				// write sender EID
+				_stream << b._source.getString() << " ";
+
 				// format the bundle ID and write it to the stream
-				_stream << custody._bundle_timestamp.getValue() << "." << custody._bundle_sequence.getValue();
+				_stream << custody._bundleid.timestamp << "." << custody._bundleid.sequencenumber;
 
 				if (custody.refsFragment()) {
-					_stream << "." << custody._fragment_offset.getValue() << ":" << custody._fragment_length.getValue() << " ";
+					_stream << "." << custody._bundleid.offset << ":" << custody._fragment_length.getValue() << " ";
 				} else {
 					_stream << " ";
 				}
 
 				// origin source
-				_stream << custody._source.getString() << " ";
+				_stream << custody._bundleid.source.getString() << " ";
 
 				if (custody._custody_accepted) {
 					_stream << "ACCEPTED ";

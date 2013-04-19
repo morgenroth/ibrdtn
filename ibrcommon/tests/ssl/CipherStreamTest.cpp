@@ -49,7 +49,7 @@ std::string CipherStreamTest::getHex(char (&data)[1024])
 {
 	std::stringstream buf;
 
-	for (int i = 0; i < 1024; i++)
+	for (int i = 0; i < 1024; ++i)
 	{
 		buf << std::hex << (int&)data[i] << ":";
 	}
@@ -77,7 +77,7 @@ std::string CipherStreamTest::getHex(std::istream &stream)
 
 bool CipherStreamTest::compare(char (&encrypted)[1024])
 {
-	for (int i = 0; i < 1024; i++)
+	for (int i = 0; i < 1024; ++i)
 	{
 		if (_plain_data[i] != encrypted[i])
 		{
@@ -265,7 +265,7 @@ void CipherStreamTest::aesstream_test01()
 	unsigned char etag[ibrcommon::AES128Stream::tag_len];
 	unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes];
 
-	for (unsigned int i = 0; i < ibrcommon::AES128Stream::key_size_in_bytes; i++)
+	for (unsigned int i = 0; i < ibrcommon::AES128Stream::key_size_in_bytes; ++i)
 	{
 		const std::string key_data = "1234557890123456";
 		key[i] = key_data.c_str()[i % 10];

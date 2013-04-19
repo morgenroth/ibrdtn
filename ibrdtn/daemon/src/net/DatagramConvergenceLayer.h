@@ -23,6 +23,7 @@
 #define DATAGRAMCONVERGENCELAYER_H_
 
 #include "Component.h"
+#include "core/EventReceiver.h"
 #include "net/DatagramService.h"
 #include "net/DatagramConnection.h"
 #include "net/ConvergenceLayer.h"

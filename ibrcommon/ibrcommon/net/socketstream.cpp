@@ -124,7 +124,7 @@ namespace ibrcommon
 			errmsg = ERROR_CLOSED;
 			close();
 			IBRCOMMON_LOGGER_DEBUG(40) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
-			throw e;
+			throw;
 		} catch (const socket_error &err) {
 			if (err.code() == ERROR_AGAIN) {
 				return overflow(c);

@@ -25,7 +25,7 @@
 #include "core/Node.h"
 #include "core/AbstractWorker.h"
 
-#include "routing/BaseRouter.h"
+#include "routing/RoutingExtension.h"
 #include "routing/NeighborDatabase.h"
 
 #include <ibrdtn/data/Block.h>
@@ -43,10 +43,10 @@ namespace dtn
 {
 	namespace routing
 	{
-		class EpidemicRoutingExtension : public BaseRouter::Extension, public ibrcommon::JoinableThread
+		class EpidemicRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
 		{
 		public:
-			EpidemicRoutingExtension(dtn::storage::BundleSeeker &seeker);
+			EpidemicRoutingExtension();
 			virtual ~EpidemicRoutingExtension();
 
 			void notify(const dtn::core::Event *evt) throw ();

@@ -49,8 +49,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		FloodRoutingExtension::FloodRoutingExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker)
+		FloodRoutingExtension::FloodRoutingExtension()
 		{
 			// write something to the syslog
 			IBRCOMMON_LOGGER(info) << "Initializing flooding routing module" << IBRCOMMON_LOGGER_ENDL;
@@ -69,7 +68,7 @@ namespace dtn
 				// new bundles are forwarded to all neighbors
 				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
-				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); iter++)
+				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
 				{
 					const dtn::core::Node &n = (*iter);
 
@@ -91,7 +90,7 @@ namespace dtn
 					// send all (multi-hop) bundles in the storage to the neighbor
 					_taskqueue.push( new SearchNextBundleTask(eid) );
 				}
-				else if (nodeevent.getAction() == NODE_UPDATED)
+				else if (nodeevent.getAction() == NODE_DATA_ADDED)
 				{
 					const dtn::data::EID &eid = n.getEID();
 
@@ -251,10 +250,10 @@ namespace dtn
 
 							// query all bundles from the storage
 							list.clear();
-							_seeker.get(filter, list);
+							(**this).getSeeker().get(filter, list);
 
 							// send the bundles as long as we have resources
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								try {
 									// transfer the bundle to the neighbor

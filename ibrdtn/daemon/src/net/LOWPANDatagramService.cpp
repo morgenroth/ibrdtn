@@ -213,7 +213,7 @@ namespace dtn
 				ibrcommon::socketset readfds;
 				_vsocket.select(&readfds, NULL, NULL, NULL);
 
-				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
+				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); ++iter) {
 					ibrcommon::lowpansocket &sock = dynamic_cast<ibrcommon::lowpansocket&>(**iter);
 
 					std::vector<char> tmp(length + 1);
@@ -348,7 +348,7 @@ namespace dtn
 					service = p[1];
 				}
 
-				param_iter++;
+				++param_iter;
 			}
 
 			addr = ibrcommon::vaddress(address, service, AF_IEEE802154);

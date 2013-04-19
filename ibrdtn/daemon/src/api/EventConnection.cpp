@@ -66,8 +66,11 @@ namespace dtn
 				case dtn::core::NODE_UNAVAILABLE:
 					_stream << "unavailable";
 					break;
-				case dtn::core::NODE_UPDATED:
-					_stream << "updated";
+				case dtn::core::NODE_DATA_ADDED:
+					_stream << "data_added";
+					break;
+				case dtn::core::NODE_DATA_REMOVED:
+					_stream << "data_removed";
 					break;
 				default:
 					break;
@@ -323,7 +326,7 @@ namespace dtn
 				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.size() == 0) continue;
+				if (cmd.empty()) continue;
 
 				// return to previous level
 				if (cmd[0] == "exit") break;

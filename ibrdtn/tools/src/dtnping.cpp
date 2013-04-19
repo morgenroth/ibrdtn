@@ -104,7 +104,7 @@ class EchoClient : public dtn::api::Client
 
 					// create testing pattern, chunkwise to ocnserve memory
 					char pattern[CREATE_CHUNK_SIZE];
-					for (size_t i = 0; i < sizeof(pattern); i++)
+					for (size_t i = 0; i < sizeof(pattern); ++i)
 					{
 						pattern[i] = '0';
 						pattern[i] += i % 10;
@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	for (int i = 1; i < argc; i++)
+	for (int i = 1; i < argc; ++i)
 	{
 		string arg = argv[i];
 
@@ -360,7 +360,7 @@ int main(int argc, char *argv[])
 		_runtime.start();
 
 		try {
-			for (unsigned int i = 0; (i < count) || nonstop; i++)
+			for (unsigned int i = 0; (i < count) || nonstop; ++i)
 			{
 				// set sending time
 				tm.start();

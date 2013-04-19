@@ -93,7 +93,7 @@ void ThreadTest::TestThread::run() throw ()
 	}
 	else
 	{
-		for (size_t i = 0; i < _time; i++)
+		for (size_t i = 0; i < _time; ++i)
 			::usleep(1000);
 	}
 }

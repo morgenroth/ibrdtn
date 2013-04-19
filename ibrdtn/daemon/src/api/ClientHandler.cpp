@@ -108,7 +108,7 @@ namespace dtn
 				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.size() == 0) continue;
+				if (cmd.empty()) continue;
 
 				try {
 					if (cmd[0] == "protocol")
@@ -299,7 +299,7 @@ namespace dtn
 						const std::set<dtn::data::EID> list = _registration->getSubscriptions();
 
 						(*_stream) << API_STATUS_OK << " REGISTRATION LIST" << std::endl;
-						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 						{
 							(*_stream) << (*iter).getString() << std::endl;
 						}

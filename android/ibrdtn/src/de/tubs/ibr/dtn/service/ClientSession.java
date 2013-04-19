@@ -1,9 +1,10 @@
 /*
  * ClientSession.java
  * 
- * Copyright (C) 2011 IBR, TU Braunschweig
+ * Copyright (C) 2011-2013 IBR, TU Braunschweig
  *
  * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+ *             Dominik Schürmann <dominik@dominikschuermann.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,239 +22,651 @@
  */
 package de.tubs.ibr.dtn.service;
 
-import ibrdtn.api.APIConnection;
-import ibrdtn.api.ExtendedClient.APIException;
-
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.Date;
 
 import android.content.Context;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.util.Log;
+import de.tubs.ibr.dtn.api.Block;
+import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.DTNSessionCallback;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
-import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.api.TransferMode;
+import de.tubs.ibr.dtn.swig.BundleNotFoundException;
+import de.tubs.ibr.dtn.swig.NativeSerializerCallback;
+import de.tubs.ibr.dtn.swig.NativeSession;
+import de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex;
+import de.tubs.ibr.dtn.swig.NativeSessionCallback;
+import de.tubs.ibr.dtn.swig.NativeSessionException;
+import de.tubs.ibr.dtn.swig.PrimaryBlock;
+import de.tubs.ibr.dtn.swig.StatusReportBlock;
 
 public class ClientSession {
-	
+
 	private final static String TAG = "ClientSession";
-	
+
 	private String _package_name = null;
 
 	private Context context = null;
-    private APISession _session = null;
-    private Registration _registration = null;
-    private DaemonManager _manager = null;
-    
-    private Boolean _daemon_online = false;
-    
-	public ClientSession(Context context, DaemonManager manager, Registration reg, String packageName)
-	{
-		// create a unique session key
+	private Registration _registration = null;
+	
+	private SerializerCallback _serializer_callback = new SerializerCallback();
+
+	/**
+	 * Implemented C++ callback using SWIG directors
+	 * 
+	 * see http://stackoverflow.com/questions/8168517/generating-java-interface-
+	 * with-swig/8246375#8246375
+	 */
+	private NativeSessionCallback _session_callback = new NativeSessionCallback() {
+
+		@Override
+		public void notifyBundle(de.tubs.ibr.dtn.swig.BundleID swigId)
+		{
+	        // forward the notification as intent
+	        // create a new intent
+	        Intent notify = new Intent(de.tubs.ibr.dtn.Intent.RECEIVE);
+	        notify.addCategory(_package_name);
+	        notify.putExtra("bundleid", toAndroid(swigId));
+
+	        // send notification intent
+	        context.sendBroadcast(notify);
+
+	        Log.d(TAG, "RECEIVE intent (" + swigId.toString() + ") sent to " + _package_name);
+		}
+
+		@Override
+		public void notifyStatusReport(de.tubs.ibr.dtn.swig.EID source, de.tubs.ibr.dtn.swig.StatusReportBlock swigReport)
+		{
+		    de.tubs.ibr.dtn.swig.BundleID swigId = swigReport.get_bundleid();
+		    
+            // forward the notification as intent
+            // create a new intent
+            Intent notify = new Intent(de.tubs.ibr.dtn.Intent.STATUS_REPORT);
+            notify.addCategory(_package_name);
+            notify.putExtra("bundleid", toAndroid(swigId));
+            notify.putExtra("source", new SingletonEndpoint(source.getString()));
+            notify.putExtra("status", swigReport.get_status());
+            notify.putExtra("reason", swigReport.get_reasoncode());
+            
+            char status = swigReport.get_status();
+            
+            if (0 < (status & StatusReportBlock.TYPE.RECEIPT_OF_BUNDLE.swigValue())) {
+                notify.putExtra("timeof_receipt", toAndroid(swigReport.get_timeof_receipt()));
+            }
+            
+            if (0 < (status & StatusReportBlock.TYPE.DELETION_OF_BUNDLE.swigValue())) {
+                notify.putExtra("timeof_deletion", toAndroid(swigReport.get_timeof_deletion()));
+            }
+            
+            if (0 < (status & StatusReportBlock.TYPE.DELIVERY_OF_BUNDLE.swigValue())) {
+                notify.putExtra("timeof_delivery", toAndroid(swigReport.get_timeof_delivery()));
+            }
+            
+            if (0 < (status & StatusReportBlock.TYPE.FORWARDING_OF_BUNDLE.swigValue())) {
+                notify.putExtra("timeof_forwarding", toAndroid(swigReport.get_timeof_forwarding()));
+            }
+            
+            if (0 < (status & StatusReportBlock.TYPE.CUSTODY_ACCEPTANCE_OF_BUNDLE.swigValue())) {
+                notify.putExtra("timeof_custodyaccept", toAndroid(swigReport.get_timeof_custodyaccept()));
+            }
+            
+            // send notification intent
+            context.sendBroadcast(notify);
+
+            Log.d(TAG, "STATUS_REPORT intent [" + swigId.toString() + "] sent to " + _package_name);
+		}
+
+		@Override
+		public void notifyCustodySignal(de.tubs.ibr.dtn.swig.EID source, de.tubs.ibr.dtn.swig.CustodySignalBlock swigCustody)
+		{
+		    de.tubs.ibr.dtn.swig.BundleID swigId = swigCustody.get_bundleid();
+		    
+            // forward the notification as intent
+            // create a new intent
+            Intent notify = new Intent(de.tubs.ibr.dtn.Intent.CUSTODY_SIGNAL);
+            notify.addCategory(_package_name);
+            notify.putExtra("bundleid", toAndroid(swigId));
+            notify.putExtra("source", new SingletonEndpoint(source.getString()));
+            notify.putExtra("accepted", swigCustody.get_custody_accepted());
+            notify.putExtra("timeofsignal", toAndroid(swigCustody.get_timeofsignal()));
+
+            // send notification intent
+            context.sendBroadcast(notify);
+
+            Log.d(TAG, "CUSTODY_SIGNAL intent [" + swigId.toString() + "] sent to " + _package_name);
+		}
+
+	};
+	
+    private static class SerializerCallback extends NativeSerializerCallback {
+        
+        private DTNSessionCallback _cb = null;
+        private TransferMode _mode = TransferMode.NULL;
+        private OutputStream _output = null;
+        private long _current = 0L;
+        private long _length = 0L;
+                
+        public SerializerCallback() {
+        }
+        
+        public void setCallback(DTNSessionCallback cb) {
+            this._cb = cb;
+        }
+
+        @Override
+        public void beginBundle(PrimaryBlock block) {
+            try {
+                _cb.startBundle(toAndroid(block));
+            } catch (RemoteException e) {
+                Log.e(TAG, "Remote call startBundle() failed", e);
+            }
+        }
+
+        @Override
+        public void endBundle() {
+            try {
+                _cb.endBundle();
+            } catch (RemoteException e) {
+                Log.e(TAG, "Remote call endBundle() failed", e);
+            }
+        }
+
+        @Override
+        public void beginBlock(de.tubs.ibr.dtn.swig.Block block, long payload_length) {
+            try {
+                _mode = _cb.startBlock(toAndroid(block));
+            } catch (RemoteException e) {
+                Log.e(TAG, "Remote call startBlock() failed", e);
+                return;
+            }
+            
+            if (TransferMode.FILEDESCRIPTOR.equals(_mode)) {
+                try {
+                    // ask for a filedescriptor
+                    ParcelFileDescriptor target_fd = _cb.fd();
+                    _output = new FileOutputStream(target_fd.getFileDescriptor());
+                    _length = payload_length;
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Remote call fd() failed", e);
+                }
+            }
+        }
+
+        @Override
+        public void endBlock() {
+            try {
+                _cb.endBlock();
+            } catch (RemoteException e) {
+                Log.e(TAG, "Remote call endBlock() failed", e);
+            }
+            
+            if (_output != null) {
+                try {
+                    _output.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Error while closing output stream", e);
+                }
+            }
+            
+            _output = null;
+            _mode = TransferMode.NULL;
+            _length = 0L;
+            _current = 0L;
+        }
+        
+        @Override
+        public void payload(byte data[]) {
+            // skip this if the transfer mode is set to null
+            if (TransferMode.NULL.equals(_mode)) {
+                return;
+            }
+            
+            if (_output != null) {
+                try {
+                    // put content into the output stream
+                    _output.write(data);
+                    
+                    // increment current position
+                    _current += data.length;
+                    
+                    // signal progress of copying
+                    _cb.progress(_current, _length);
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to put payload into the output stream", e);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Remote call progress() failed", e);
+                }
+            } else {
+                try {
+                    // passthrough the data
+                    _cb.payload(data);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Remote call payload() failed", e);
+                }
+            }
+        }
+    }
+
+	/*
+	 * This is the actual native implementation of this session. See
+	 * daemon/src/api/NativeSession.cpp. Java parts are generated by SWIG
+	 */
+	private NativeSession nativeSession = null;
+	
+	private Thread _receiver_thread = new Thread() {
+
+        @Override
+        public void run() {
+            try {
+                while (!this.isInterrupted()) {
+                    ClientSession.this.nativeSession.receive();
+                }
+            } catch (NativeSessionException e) {
+                Log.e(TAG, "Receiver thread terminated.", e);
+            }
+        }
+	    
+	};
+
+	public ClientSession(Context context, Registration reg, String packageName) {
+	    this.nativeSession = new NativeSession(_session_callback, _serializer_callback);
 		this.context = context;
 		this._package_name = packageName;
 		this._registration = reg;
-		this._manager = manager;
-	}
-	
-	public synchronized void initialize()
-	{
-		_daemon_online = true;
-		_initialize_process.start();
-	}
-	
-	private Thread _initialize_process = new Thread() {
-		@Override
-		public void run() {
-			try {
-				while (!isInterrupted())
-				{
-					try {
-						getSession();
-						break;
-					} catch (IOException e) {
-						synchronized(ClientSession.this) {
-							wait(5000);
-						}
-					}
-				}
-			} catch (InterruptedException e1) {	}
-		}
-	};
-	
-	public synchronized void terminate()
-	{
-		_daemon_online = false;
-		_initialize_process.interrupt();
 		
-		if (_session != null)
-		{
-			_session.disconnect();
-			_session = null;
-		}
+        // Register application
+        register(_registration);
+        
+        // start-up receiver thread
+        _receiver_thread.start();
 	}
 	
-	private synchronized APISession getSession() throws IOException
+	/**
+	 * destroy the session
+	 */
+	public void destroy() {
+	    this.nativeSession.destroy();
+	    try {
+	        this._receiver_thread.join();
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Join on receiver thread failed.", e);
+        }
+	    
+	    this.nativeSession.delete();
+	    this.nativeSession = null;
+	    
+	    this._session_callback.delete();
+	    this._session_callback = null;
+	    
+	    this._serializer_callback.delete();
+	    this._serializer_callback = null;
+	}
+	
+	public void update(Registration reg) {
+	    this._registration = reg;
+	    
+	    // remove all registrations
+	    nativeSession.clearRegistration();
+	    
+        // register again
+        register(_registration);
+	}
+
+	public void register(Registration reg)
 	{
-		if (!_daemon_online) throw new IOException("daemon is offline");
-		
 		try {
-			if (_session == null)
-			{
-				Log.d(TAG, "try to create an API session with the daemon");
-				_session = new APISession(this);
-				
-				APIConnection socket = this._manager.getAPIConnection();
-				if (socket == null) throw new IOException("daemon not running");
-				
-				_session.connect(socket);
-				_session.register(_registration);
-				
-				invoke_registration_intent();
-			}
-			
-			if (_session.isConnected())
-			{
-				return _session;
-			}
-			else
-			{
-				_session = null;
-				throw new IOException("not connected");
-			}
-		} catch (APIException e) {
-			_session = null;
-			throw new IOException("api error");
-		} catch (SessionDestroyedException e) {
-			_session = null;
-			throw new IOException("not connected");
-		}
+		    // set local endpoint
+            nativeSession.setEndpoint(reg.getEndpoint());
+            
+            if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "endpoint registered: " + reg.getEndpoint());
+
+            for (GroupEndpoint group : reg.getGroups()) {
+                de.tubs.ibr.dtn.swig.EID swigEid = new de.tubs.ibr.dtn.swig.EID(group.toString());
+                nativeSession.addRegistration(swigEid);
+                
+                if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + group.toString());
+            }
+
+            // send out registration intent to the application
+            Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
+            broadcastIntent.addCategory(_package_name);
+            broadcastIntent.putExtra("key", _package_name);
+
+            // send notification intent
+            context.sendBroadcast(broadcastIntent);
+
+            Log.d(TAG, "REGISTRATION intent sent to " + _package_name);
+        } catch (NativeSessionException e) {
+            Log.e(TAG, "registration failed", e);
+        }
 	}
+
+	/**
+	 * This is the actual implementation of the DTNSession API
+	 */
+	private final DTNSession.Stub mBinder = new DTNSession.Stub() {
+        public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException
+        {
+            synchronized(_serializer_callback) {
+                // set serializer for this query
+                _serializer_callback.setCallback(cb);
+                
+                try {
+                    // load the bundle into the register
+                    nativeSession.load(NativeSession.RegisterIndex.REG1, toSwig(id));
     
-    private final DTNSession.Stub mBinder = new DTNSession.Stub()
-    {
-		public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException {
+                    // get the bundle
+                    nativeSession.get(NativeSession.RegisterIndex.REG1);
+                    
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+    
+                    // bundle loaded - return true
+                    return true;
+                } catch (BundleNotFoundException e) {
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+                    
+                    // bundle not found - return false
+                    return false;
+                }
+            }
+        }
+
+        public boolean queryNext(DTNSessionCallback cb) throws RemoteException
+        {
+            synchronized(_serializer_callback) {
+                // set serializer for this query
+                _serializer_callback.setCallback(cb);
+                
+                try {
+                    // load the next bundle into the register
+                    nativeSession.next(NativeSession.RegisterIndex.REG1);
+    
+                    // get the bundle
+                    nativeSession.get(NativeSession.RegisterIndex.REG1);
+                    
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+    
+                    // bundle loaded - return true
+                    return false;
+                } catch (BundleNotFoundException e) {
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+                    
+                    // bundle not found - return false
+                    return false;
+                }
+            }
+        }
+
+		public boolean delivered(BundleID id) throws RemoteException
+		{
 			try {
-				APISession session = getSession();
-				session.query(cb, id);
-				return true;
-			} catch (Exception e) {
-				Log.e(TAG, "query failed", e);
-				return false;
-			}
+                nativeSession.delivered(toSwig(id));
+                return true;
+            } catch (BundleNotFoundException e) {
+                return false;
+            }
 		}
 
-		public boolean delivered(BundleID id) throws RemoteException {
+		public BundleID send(SingletonEndpoint destination, int lifetime, byte[] data) throws RemoteException
+		{
 			try {
-				APISession session = getSession();
-				session.setDelivered(id);
-				return true;
-			} catch (Exception e) {
-				Log.e(TAG, "delivered failed", e);
-				return false;
-			}
-		}
+				PrimaryBlock b = new PrimaryBlock();
+				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, true);
+				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
+				b.set_lifetime(lifetime);
 
-		public boolean queryNext(DTNSessionCallback cb) throws RemoteException {
-			try {
-				APISession session = getSession();
-				return session.query(cb);
-			} catch (Exception e) {
-				Log.e(TAG, "queryNext failed", e);
-				return false;
-			}
-		}
+				// put the primary block into the register
+				nativeSession.put(RegisterIndex.REG2, b);
+				
+				// add data
+				nativeSession.write(RegisterIndex.REG2, data);
+				
+				// send the bundle
+				de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
 
-		public boolean send(SingletonEndpoint destination,
-				int lifetime, byte[] data) throws RemoteException {
-			try {
-				APISession session = getSession();
-				return session.send(destination, lifetime, data);
+				return toAndroid(ret);
 			} catch (Exception e) {
 				Log.e(TAG, "send failed", e);
-				return false;
+				return null;
 			}
 		}
 
-		public boolean sendGroup(GroupEndpoint destination,
-				int lifetime, byte[] data) throws RemoteException {
+		public BundleID sendGroup(GroupEndpoint destination, int lifetime, byte[] data) throws RemoteException
+		{
 			try {
-				APISession session = getSession();
-				return session.send(destination, lifetime, data);
+				PrimaryBlock b = new PrimaryBlock();
+				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, false);
+				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
+				b.set_lifetime(lifetime);
+
+				// put the primary block into the register
+				nativeSession.put(RegisterIndex.REG2, b);
+				
+				// add data
+				nativeSession.write(RegisterIndex.REG2, data);
+				
+				// send the bundle
+				de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
+
+				return toAndroid(ret);
 			} catch (Exception e) {
 				Log.e(TAG, "sendGroup failed", e);
-				return false;
+				return null;
 			}
 		}
 
-		public boolean sendFileDescriptor(SingletonEndpoint destination, int lifetime,
-				ParcelFileDescriptor fd, long length) throws RemoteException {
+		public BundleID sendFileDescriptor(SingletonEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
+		{
 			try {
-				APISession session = getSession();
-				return session.send(destination, lifetime, fd, length);
+				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
+				
+				PrimaryBlock b = new PrimaryBlock();
+				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, true);
+				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
+				b.set_lifetime(lifetime);
+
+				// put the primary block into the register
+				nativeSession.put(RegisterIndex.REG2, b);
+				
+				FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
+                FileChannel inChannel = stream.getChannel();
+                try {
+                    int offset = 0;
+                    int count = 0;
+                    ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
+                    while ((count = inChannel.read(buffer)) > 0) {
+                        // add data
+                        byte data[] = new byte[count];
+                        buffer.flip();
+                        buffer.get(data);
+                        nativeSession.write(RegisterIndex.REG2, data, offset);
+                        offset += count;
+                        buffer.clear();
+                    }
+
+                    // send the bundle
+                    de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
+
+                    return toAndroid(ret);
+                } finally {
+                    try {
+                        inChannel.close();
+                        stream.close();
+                        fd.close();
+                    } catch (IOException e) {
+                    }
+                }
 			} catch (Exception e) {
 				Log.e(TAG, "sendFileDescriptor failed", e);
-				return false;
+				return null;
 			}
 		}
 
-		public boolean sendGroupFileDescriptor(GroupEndpoint destination, int lifetime,
-				ParcelFileDescriptor fd, long length) throws RemoteException {
+		public BundleID sendGroupFileDescriptor(GroupEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
+		{
 			try {
-				APISession session = getSession();
-				return session.send(destination, lifetime, fd, length);
+				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
+				
+				PrimaryBlock b = new PrimaryBlock();
+				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, false);
+				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
+				b.set_lifetime(lifetime);
+
+				// put the primary block into the register
+				nativeSession.put(RegisterIndex.REG2, b);
+				
+				FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
+                FileChannel inChannel = stream.getChannel();
+                try {
+                    int offset = 0;
+                    int count = 0;
+                    ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
+                    while ((count = inChannel.read(buffer)) > 0) {
+                        // add data
+                        byte data[] = new byte[count];
+                        buffer.flip();
+                        buffer.get(data);
+                        nativeSession.write(RegisterIndex.REG2, data, offset);
+                        offset += count;
+                        buffer.clear();
+                    }
+
+                    // send the bundle
+                    de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
+
+                    return toAndroid(ret);
+                } finally {
+                    try {
+                        inChannel.close();
+                        stream.close();
+                        fd.close();
+                    } catch (IOException e) {
+                    }
+                }
 			} catch (Exception e) {
 				Log.e(TAG, "sendGroupFileDescriptor failed", e);
-				return false;
+				return null;
 			}
 		}
-    };
-    
-    public DTNSession getBinder()
-    {
-    	return mBinder;
-    }
-    
+	};
+
+	public DTNSession getBinder()
+	{
+		return mBinder;
+	}
+
 	public String getPackageName()
 	{
 		return _package_name;
 	}
 	
-	public synchronized void invoke_reconnect()
+	private static de.tubs.ibr.dtn.swig.BundleID toSwig(BundleID id)
 	{
-		_session = null;
-	}
-	
-	public void invoke_receive_intent(BundleID id)
-	{
-		// forward the notification as intent
-		// create a new intent
-        Intent notify = new Intent(de.tubs.ibr.dtn.Intent.RECEIVE);
-        notify.addCategory(_package_name);
-        notify.putExtra("type", "bundle");
-        notify.putExtra("data", id);
+		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
+		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource()));
+		swigId.setSequencenumber(BigInteger.valueOf(id.getSequencenumber()));
 
-        // send notification intent
-        context.sendBroadcast(notify);
-        
-        Log.d(TAG, "RECEIVE intent sent to " + _package_name);
+		Timestamp ts = new Timestamp(id.getTimestamp());
+		swigId.setTimestamp(BigInteger.valueOf(ts.getValue()));
+		
+		return swigId;
 	}
 	
-    private void invoke_registration_intent()
-    {
-		// send out registration intent to the application
-		Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
-		broadcastIntent.addCategory(_package_name);
-		broadcastIntent.putExtra("key", _package_name);
+	@SuppressWarnings("unused")
+    private static de.tubs.ibr.dtn.swig.PrimaryBlock toSwig(Bundle bundle) {
+		/*
+		 * Convert API Bundle to SWIG bundle
+		 */
+		de.tubs.ibr.dtn.swig.PrimaryBlock ret = new de.tubs.ibr.dtn.swig.PrimaryBlock();
+		ret.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.custodian));
+		ret.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.destination));
+		ret.set_fragmentoffset(bundle.fragment_offset);
+		ret.set_lifetime(bundle.lifetime);
+		ret.set_procflags(bundle.procflags);
+		ret.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.reportto));
+		ret.set_sequencenumber(bundle.sequencenumber);
+		ret.set_source(new de.tubs.ibr.dtn.swig.EID(bundle.source));
+
+		Timestamp ts = new Timestamp(bundle.timestamp);
+		ret.set_timestamp(ts.getValue());
 		
-		// send notification intent
-		context.sendBroadcast(broadcastIntent);
+		return ret;
+	}
+	
+	private static Bundle toAndroid(PrimaryBlock block) {
+		Bundle ret = new Bundle();
+
+		ret.source = block.get_source().getString();
+		ret.destination = block.get_destination().getString();
+		ret.reportto = block.get_reportto().getString();
+		ret.custodian = block.get_custodian().getString();
 		
-		Log.d(TAG, "REGISTRATION intent sent to " + _package_name);
+		ret.lifetime = block.get_lifetime();
+		
+		Timestamp ts = new Timestamp(block.get_timestamp());
+		ret.timestamp = ts.getDate();
+		
+		ret.sequencenumber = block.get_sequencenumber();
+		ret.procflags = block.get_procflags();
+		if (block.get(PrimaryBlock.FLAGS.FRAGMENT)) {
+			ret.app_data_length = block.get_appdatalength();
+			ret.fragment_offset = block.get_fragmentoffset();
+		}
+		
+		return ret;
+	}
+	
+	private static Block toAndroid(de.tubs.ibr.dtn.swig.Block block) {
+		Block ret = new Block();
+		ret.type = Integer.valueOf(block.getType());
+		ret.length = block.getLength();
+		ret.procflags = block.getProcessingFlags();
+		return ret;
+	}
+	
+	private static BundleID toAndroid(de.tubs.ibr.dtn.swig.BundleID swigId) {
+		// convert from swig BundleID to api BundleID
+		BundleID id = new BundleID();
+		id.setSequencenumber(swigId.getSequencenumber().longValue());
+		id.setSource(swigId.getSource().getString());
+
+		long swigTime = swigId.getTimestamp().longValue();
+		Timestamp ts = new Timestamp(swigTime);
+		id.setTimestamp(ts.getDate());
+		
+		return id;
+	}
+	
+    private static Date toAndroid(de.tubs.ibr.dtn.swig.DTNTime time) {
+        long seconds = time.getTimestamp().getValue().longValue();
+        long nanoseconds = time.getNanoseconds().getValue().longValue();
+        long milliseconds = nanoseconds / 1000000;
+
+        // convert to UNIX time (starting at 1970)
+        Timestamp timestamp = new Timestamp( seconds );
+        
+        // add sub-seconds (millisecond resolution)
+        Date d = new Date();
+        d.setTime( timestamp.getValue() + milliseconds ); 
+        
+        return d;
     }
 }

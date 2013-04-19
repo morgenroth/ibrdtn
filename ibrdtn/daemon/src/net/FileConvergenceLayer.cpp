@@ -149,7 +149,7 @@ namespace dtn
 										}
 
 										// check if bundle is already in the path
-										for (std::list<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+										for (std::list<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); ++iter)
 										{
 											if ((*iter) == sbt.job._bundle)
 											{
@@ -252,7 +252,7 @@ namespace dtn
 			// get a reference to the router
 			dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
 
-			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); iter++)
+			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); ++iter)
 			{
 				const ibrcommon::File &f = (*iter);
 
@@ -317,7 +317,7 @@ namespace dtn
 			std::list<dtn::core::Node::URI> uris = n.get(dtn::core::Node::CONN_FILE);
 
 			// abort the transfer, if no URI exists
-			if (uris.size() == 0) throw ibrcommon::Exception("path not defined");
+			if (uris.empty()) throw ibrcommon::Exception("path not defined");
 
 			// get the URI of the file path
 			const std::string &uri = uris.front().value;
@@ -335,7 +335,7 @@ namespace dtn
 			// list all files in the folder
 			path.getFiles(files);
 
-			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); iter++)
+			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); ++iter)
 			{
 				const ibrcommon::File &f = (*iter);
 
@@ -403,7 +403,7 @@ namespace dtn
 					dtn::data::BundleSet vec;
 
 					// add bundles in the path
-					for (std::list<dtn::data::MetaBundle>::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
+					for (std::list<dtn::data::MetaBundle>::const_iterator iter = bl.begin(); iter != bl.end(); ++iter)
 					{
 						vec.add(*iter);
 					}
@@ -411,7 +411,7 @@ namespace dtn
 					// add bundles from the blacklist
 					{
 						ibrcommon::MutexLock l(_blacklist_mutex);
-						for (std::set<dtn::data::MetaBundle>::const_iterator iter = _blacklist.begin(); iter != _blacklist.end(); iter++)
+						for (std::set<dtn::data::MetaBundle>::const_iterator iter = _blacklist.begin(); iter != _blacklist.end(); ++iter)
 						{
 							vec.add(*iter);
 						}

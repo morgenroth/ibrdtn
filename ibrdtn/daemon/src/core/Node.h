@@ -164,6 +164,11 @@ namespace dtn
 			void clear();
 
 			/**
+			 * Get the number of entries (URI + Attributes)
+			 */
+			size_t size() const;
+
+			/**
 			 * Returns a list of URIs matching the given protocol
 			 * @param proto
 			 * @return

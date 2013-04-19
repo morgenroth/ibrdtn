@@ -23,7 +23,13 @@ api_SOURCES = \
 	BundleStreamBuf.h \
 	BundleStreamBuf.cpp \
 	ApiP2PExtensionHandler.h \
-	ApiP2PExtensionHandler.cpp
+	ApiP2PExtensionHandler.cpp \
+	NativeSession.h \
+	NativeSession.cpp \
+	NativeSerializer.h \
+	NativeSerializer.cpp \
+	NativeSerializerCallback.h \
+	NativeSerializerCallback.cpp
 
 if ANDROID
 noinst_DATA = Android.mk
@@ -40,5 +46,4 @@ Android.mk: Makefile.am
 		-:SOURCES $(api_SOURCES) \
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
-		-:LIBFILTER_STATIC ibrdtn \
 		> $@

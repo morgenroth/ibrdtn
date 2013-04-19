@@ -170,7 +170,7 @@ namespace dtn
 				bool decrypt_related = false;
 
 				// iterate through all blocks
-				for (dtn::data::Bundle::iterator it = bundle.begin(); it != bundle.end(); it++)
+				for (dtn::data::Bundle::iterator it = bundle.begin(); it != bundle.end(); ++it)
 				{
 					try {
 						dynamic_cast<const PayloadIntegrityBlock&>(**it);
@@ -250,7 +250,7 @@ namespace dtn
 				}
 
 				// delete all block in the erasure list
-				for (std::list<const dtn::data::Block* >::const_iterator it = erasure_list.begin(); it != erasure_list.end(); it++)
+				for (std::list<const dtn::data::Block* >::const_iterator it = erasure_list.begin(); it != erasure_list.end(); ++it)
 				{
 					bundle.remove(**it);
 				}

@@ -43,19 +43,19 @@ namespace dtn
 			 * Set up the component.
 			 * At this stage no other components should be used.
 			 */
-			virtual void initialize() = 0;
+			virtual void initialize() throw () = 0;
 
 			/**
 			 * Start up the component.
 			 * At this stage all other components are ready.
 			 */
-			virtual void startup() = 0;
+			virtual void startup() throw () = 0;
 
 			/**
 			 * Terminate the component and do some cleanup stuff.
 			 * All other components still exists, but may not serve signals.
 			 */
-			virtual void terminate() = 0;
+			virtual void terminate() throw () = 0;
 
 			/**
 			 * Return an identifier for this component
