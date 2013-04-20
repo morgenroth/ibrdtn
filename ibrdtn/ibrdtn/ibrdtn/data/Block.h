@@ -59,6 +59,11 @@ namespace dtn
 			virtual ~Block();
 
 			/**
+			 * assignment operator
+			 */
+			Block& operator=(const Block &block);
+
+			/**
 			 * allow comparison with the block type only
 			 */
 			bool operator==(const block_t &id) const;
