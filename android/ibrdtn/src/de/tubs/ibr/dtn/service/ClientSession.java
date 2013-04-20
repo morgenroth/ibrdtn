@@ -425,7 +425,7 @@ public class ClientSession {
             }
 		}
 
-		public BundleID send(SingletonEndpoint destination, int lifetime, byte[] data) throws RemoteException
+		public BundleID send(DTNSessionCallback cb, SingletonEndpoint destination, int lifetime, byte[] data) throws RemoteException
 		{
 			try {
 				PrimaryBlock b = new PrimaryBlock();
@@ -436,8 +436,16 @@ public class ClientSession {
 				// put the primary block into the register
 				nativeSession.put(RegisterIndex.REG2, b);
 				
+				if (cb != null) {
+					cb.progress(0, data.length);
+				}
+				
 				// add data
 				nativeSession.write(RegisterIndex.REG2, data);
+				
+				if (cb != null) {
+					cb.progress(data.length, data.length);
+				}
 				
 				// send the bundle
 				de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
@@ -449,7 +457,7 @@ public class ClientSession {
 			}
 		}
 
-		public BundleID sendGroup(GroupEndpoint destination, int lifetime, byte[] data) throws RemoteException
+		public BundleID sendGroup(DTNSessionCallback cb, GroupEndpoint destination, int lifetime, byte[] data) throws RemoteException
 		{
 			try {
 				PrimaryBlock b = new PrimaryBlock();
@@ -460,8 +468,16 @@ public class ClientSession {
 				// put the primary block into the register
 				nativeSession.put(RegisterIndex.REG2, b);
 				
+				if (cb != null) {
+					cb.progress(0, data.length);
+				}
+				
 				// add data
 				nativeSession.write(RegisterIndex.REG2, data);
+				
+				if (cb != null) {
+					cb.progress(data.length, data.length);
+				}
 				
 				// send the bundle
 				de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
@@ -473,7 +489,7 @@ public class ClientSession {
 			}
 		}
 
-		public BundleID sendFileDescriptor(SingletonEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
+		public BundleID sendFileDescriptor(DTNSessionCallback cb, SingletonEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
 		{
 			try {
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
@@ -485,6 +501,10 @@ public class ClientSession {
 
 				// put the primary block into the register
 				nativeSession.put(RegisterIndex.REG2, b);
+				
+				if (cb != null) {
+					cb.progress(0, length);
+				}
 				
 				FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
                 FileChannel inChannel = stream.getChannel();
@@ -500,6 +520,10 @@ public class ClientSession {
                         nativeSession.write(RegisterIndex.REG2, data, offset);
                         offset += count;
                         buffer.clear();
+                        
+        				if (cb != null) {
+        					cb.progress(offset, length);
+        				}
                     }
 
                     // send the bundle
@@ -520,7 +544,7 @@ public class ClientSession {
 			}
 		}
 
-		public BundleID sendGroupFileDescriptor(GroupEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
+		public BundleID sendGroupFileDescriptor(DTNSessionCallback cb, GroupEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
 		{
 			try {
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
@@ -529,9 +553,13 @@ public class ClientSession {
 				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, false);
 				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
 				b.set_lifetime(lifetime);
-
+				
 				// put the primary block into the register
 				nativeSession.put(RegisterIndex.REG2, b);
+				
+				if (cb != null) {
+					cb.progress(0, length);
+				}
 				
 				FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
                 FileChannel inChannel = stream.getChannel();
@@ -547,6 +575,10 @@ public class ClientSession {
                         nativeSession.write(RegisterIndex.REG2, data, offset);
                         offset += count;
                         buffer.clear();
+                        
+        				if (cb != null) {
+        					cb.progress(offset, length);
+        				}
                     }
 
                     // send the bundle
