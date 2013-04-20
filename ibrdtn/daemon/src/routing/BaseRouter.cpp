@@ -56,6 +56,8 @@ namespace dtn
 {
 	namespace routing
 	{
+		const std::string BaseRouter::TAG = "BaseRouter";
+
 		/**
 		 * implementation of the BaseRouter class
 		 */
@@ -274,7 +276,7 @@ namespace dtn
 					if ((event.getBundle().procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)
 							&& ( event.getPeer().getNode() == event.getBundle().destination.getNode() ))
 					{
-						IBRCOMMON_LOGGER_DEBUG(20) << "singleton bundle added to purge vector: " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(BaseRouter::TAG, 20) << "singleton bundle added to purge vector: " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// add it to the purge vector
 						ibrcommon::MutexLock l(_purged_bundles_lock);
@@ -376,27 +378,27 @@ namespace dtn
 					}
 					else
 					{
-						IBRCOMMON_LOGGER_DEBUG(5) << "Duplicate bundle " << received.bundle.toString() << " from " << received.peer.getString() << " ignored." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(BaseRouter::TAG, 5) << "Duplicate bundle " << received.bundle.toString() << " from " << received.peer.getString() << " ignored." << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					// finally create a bundle received event
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_RECEIVED);
 #ifdef WITH_BUNDLE_SECURITY
 				} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
-					IBRCOMMON_LOGGER(notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 #endif
 				} catch (const ibrcommon::IOException &ex) {
-					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
-					IBRCOMMON_LOGGER(notice) << "No space left for bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				} catch (const ibrcommon::Exception &ex) {
-					IBRCOMMON_LOGGER(error) << "Bundle " << received.bundle.toString() << " dropped: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, error) << "Bundle " << received.bundle.toString() << " dropped: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
@@ -421,9 +423,9 @@ namespace dtn
 					// raise the queued event to notify all receivers about the new bundle
  					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
 				} catch (const ibrcommon::IOException &ex) {
-					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
-					IBRCOMMON_LOGGER(notice) << "No space left for bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				// do not pass this event to any extension

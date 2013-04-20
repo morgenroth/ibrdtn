@@ -50,6 +50,8 @@ namespace dtn
 	{
 		class BaseRouter : public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
 		{
+			static const std::string TAG;
+
 		public:
 			class RoutingException : public ibrcommon::Exception
 			{
