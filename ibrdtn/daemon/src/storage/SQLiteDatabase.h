@@ -210,7 +210,7 @@ namespace dtn
 			/**
 			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException);
+			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException);
 
 			/**
 			 * Retrieve the meta data of a given bundle
@@ -276,7 +276,7 @@ namespace dtn
 			 * @param bind_offset
 			 * @param limit
 			 */
-			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const throw (SQLiteQueryException, NoBundleFoundException);
+			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const throw (SQLiteQueryException, NoBundleFoundException, BundleSelectorException);
 
 			/**
 			 * updates the nextExpiredTime. The calling function has to have the databaselock.

@@ -428,7 +428,7 @@ namespace dtn
 			st.reset();
 		}
 
-		void SQLiteDatabase::get(BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException)
+		void SQLiteDatabase::get(BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 
@@ -479,7 +479,7 @@ namespace dtn
 			if (items_added == 0) throw dtn::storage::NoBundleFoundException();
 		}
 
-		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException)
+		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
 		{
 			bool unlimited = (cb.limit() <= 0);
 			size_t query_limit = (cb.limit() > 0) ? cb.limit() : 10;
