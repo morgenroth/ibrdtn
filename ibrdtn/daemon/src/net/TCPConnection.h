@@ -112,9 +112,6 @@ namespace dtn
 			bool match(const dtn::data::EID &destination) const;
 			bool match(const dtn::core::NodeEvent &evt) const;
 
-			friend TCPConnection& operator>>(TCPConnection &conn, dtn::data::Bundle &bundle);
-			friend TCPConnection& operator<<(TCPConnection &conn, const dtn::data::Bundle &bundle);
-
 #ifdef WITH_TLS
 			/*!
 			 * \brief enables TLS for this connection

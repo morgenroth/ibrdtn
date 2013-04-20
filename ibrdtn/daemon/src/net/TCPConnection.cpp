@@ -452,8 +452,11 @@ namespace dtn
 					__setup_socket(_socket, true);
 				}
 
+				TCPConnection::safe_streamconnection sc = getProtocolStream();
+				std::iostream &stream = (*sc);
+
 				// do the handshake
-				(*getProtocolStream()).handshake(dtn::core::BundleCore::local, _timeout, _flags);
+				(*sc).handshake(dtn::core::BundleCore::local, _timeout, _flags);
 
 				// start the sender
 				_sender.start();
@@ -461,14 +464,23 @@ namespace dtn
 				// start keepalive sender
 				_keepalive_sender.start();
 
-				while (!(*getProtocolStream()).eof())
+				// create a deserializer for next bundle
+				dtn::data::DefaultDeserializer deserializer(stream, dtn::core::BundleCore::getInstance());
+
+				while (!(*sc).eof())
 				{
 					try {
 						// create a new empty bundle
 						dtn::data::Bundle bundle;
 
-						// deserialize the bundle
-						(*this) >> bundle;
+						// check if the stream is still good
+						if (!stream.good()) throw ibrcommon::IOException("stream went bad");
+
+						// enable/disable fragmentation support according to the contact header.
+						deserializer.setFragmentationSupport(_peer._flags & dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION);
+
+						// read the bundle (or the fragment if fragmentation is enabled)
+						deserializer >> bundle;
 
 						// check the bundle
 						if ( ( bundle._destination == EID() ) || ( bundle._source == EID() ) )
@@ -514,90 +526,6 @@ namespace dtn
 		TCPConnection::safe_streamconnection TCPConnection::getProtocolStream() throw (ibrcommon::Exception)
 		{
 			return safe_streamconnection(_protocol_stream, _protocol_stream_mutex);
-		}
-
-		TCPConnection& operator>>(TCPConnection &conn, dtn::data::Bundle &bundle)
-		{
-			TCPConnection::safe_streamconnection sc = conn.getProtocolStream();
-			std::iostream &stream = (*sc);
-
-			// check if the stream is still good
-			if (!stream.good()) throw ibrcommon::IOException("stream went bad");
-
-			// create a deserializer for next bundle
-			dtn::data::DefaultDeserializer deserializer(stream, dtn::core::BundleCore::getInstance());
-
-			// enable/disable fragmentation support according to the contact header.
-			deserializer.setFragmentationSupport(conn._peer._flags & dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION);
-
-			// read the bundle (or the fragment if fragmentation is enabled)
-			deserializer >> bundle;
-
-			return conn;
-		}
-
-		TCPConnection& operator<<(TCPConnection &conn, const dtn::data::Bundle &bundle)
-		{
-			// prepare a measurement
-			ibrcommon::TimeMeasurement m;
-
-			// get the offset, if this bundle has been reactively fragmented before
-			size_t offset = 0;
-			if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation()
-					&& !bundle.get(dtn::data::PrimaryBlock::DONT_FRAGMENT))
-			{
-				offset = dtn::core::FragmentManager::getOffset(conn.getNode().getEID(), bundle);
-			}
-
-			TCPConnection::safe_streamconnection sc = conn.getProtocolStream();
-			std::iostream &stream = (*sc);
-
-			// create a serializer
-			dtn::data::DefaultSerializer serializer(stream);
-
-			// put the bundle into the sentqueue
-			conn._sentqueue.push(bundle);
-
-			// start the measurement
-			m.start();
-
-			try {
-				// activate exceptions for this method
-				if (!stream.good()) throw ibrcommon::IOException("stream went bad");
-
-				if (offset > 0)
-				{
-					// transmit the fragment
-					serializer << dtn::data::BundleFragment(bundle, offset, -1);
-				}
-				else
-				{
-					// transmit the bundle
-					serializer << bundle;
-				}
-
-				// flush the stream
-				stream << std::flush;
-
-				// stop the time measurement
-				m.stop();
-
-				// get throughput
-				double kbytes_per_second = (serializer.getLength(bundle) / m.getSeconds()) / 1024;
-
-				// print out throughput
-				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 5) << "transfer finished after " << m << " with "
-						<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << IBRCOMMON_LOGGER_ENDL;
-
-			} catch (const ibrcommon::Exception &ex) {
-				// the connection not available
-				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 10) << "connection error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-
-				// forward exception
-				throw;
-			}
-
-			return conn;
 		}
 
 		TCPConnection::KeepaliveSender::KeepaliveSender(TCPConnection &connection, size_t &keepalive_timeout)
@@ -659,7 +587,13 @@ namespace dtn
 			try {
 				dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
-				while (_connection.good())
+				TCPConnection::safe_streamconnection sc = _connection.getProtocolStream();
+				std::iostream &stream = (*sc);
+
+				// create a serializer
+				dtn::data::DefaultSerializer serializer(stream);
+
+				while (stream.good())
 				{
 					dtn::data::BundleID transfer = ibrcommon::Queue<dtn::data::BundleID>::getnpop(true);
 
@@ -682,7 +616,58 @@ namespace dtn
 						}
 #endif
 						// send bundle
-						_connection << bundle;
+						// prepare a measurement
+						ibrcommon::TimeMeasurement m;
+
+						// get the offset, if this bundle has been reactively fragmented before
+						size_t offset = 0;
+						if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation()
+								&& !bundle.get(dtn::data::PrimaryBlock::DONT_FRAGMENT))
+						{
+							offset = dtn::core::FragmentManager::getOffset(_connection.getNode().getEID(), bundle);
+						}
+
+						// put the bundle into the sentqueue
+						_connection._sentqueue.push(bundle);
+
+						// start the measurement
+						m.start();
+
+						try {
+							// activate exceptions for this method
+							if (!stream.good()) throw ibrcommon::IOException("stream went bad");
+
+							if (offset > 0)
+							{
+								// transmit the fragment
+								serializer << dtn::data::BundleFragment(bundle, offset, -1);
+							}
+							else
+							{
+								// transmit the bundle
+								serializer << bundle;
+							}
+
+							// flush the stream
+							stream << std::flush;
+
+							// stop the time measurement
+							m.stop();
+
+							// get throughput
+							double kbytes_per_second = (serializer.getLength(bundle) / m.getSeconds()) / 1024;
+
+							// print out throughput
+							IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 5) << "transfer finished after " << m << " with "
+									<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << IBRCOMMON_LOGGER_ENDL;
+
+						} catch (const ibrcommon::Exception &ex) {
+							// the connection not available
+							IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 10) << "connection error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+							// forward exception
+							throw;
+						}
 					} catch (const dtn::storage::NoBundleFoundException&) {
 						// send transfer aborted event
 						TransferAbortedEvent::raise(_connection._node.getEID(), transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
