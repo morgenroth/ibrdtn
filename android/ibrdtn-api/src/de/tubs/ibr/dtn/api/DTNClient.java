@@ -244,11 +244,11 @@ public final class DTNClient {
 				if (destination instanceof GroupEndpoint)
 				{
 					// send the message to the daemon
-					return session.sendGroup((GroupEndpoint)destination, lifetime, data);
+					return session.sendGroup(null, (GroupEndpoint)destination, lifetime, data);
 				}
 
 				// send the message to the daemon
-				return session.send((SingletonEndpoint)destination, lifetime, data);
+				return session.send(null, (SingletonEndpoint)destination, lifetime, data);
 			} catch (RemoteException e) {
 				 throw new SessionDestroyedException("send failed");
 			}
@@ -265,12 +265,12 @@ public final class DTNClient {
 				if (destination instanceof GroupEndpoint)
 				{
 					// send the message to the daemon
-					return session.sendGroupFileDescriptor((GroupEndpoint)destination, lifetime, fd, length);
+					return session.sendGroupFileDescriptor(null, (GroupEndpoint)destination, lifetime, fd, length);
 				}
 				else
 				{
 					// send the message to the daemon
-					return session.sendFileDescriptor((SingletonEndpoint)destination, lifetime, fd, length);
+					return session.sendFileDescriptor(null, (SingletonEndpoint)destination, lifetime, fd, length);
 				}
 			} catch (RemoteException e) {
 				return null;

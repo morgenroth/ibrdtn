@@ -36,4 +36,6 @@ public class Intent {
 	public static final String EVENT = "de.tubs.ibr.dtn.intent.EVENT";
 	
 	public static final String NEIGHBOR = "de.tubs.ibr.dtn.intent.NEIGHBOR";
+	
+	public static final String SENDFILE = "de.tubs.ibr.dtn.intent.SENDFILE";
 }

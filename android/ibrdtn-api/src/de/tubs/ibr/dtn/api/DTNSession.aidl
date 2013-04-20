@@ -32,28 +32,28 @@ interface DTNSession {
 	 * It returns the BundleID of the transmitted bundle or null
 	 * if the send wasn't successful.
 	 */
-	BundleID send(in SingletonEndpoint destination, int lifetime, in byte[] data);
+	BundleID send(DTNSessionCallback cb, in SingletonEndpoint destination, int lifetime, in byte[] data);
 	
 	/**
 	 * Send a string as a bundle to the given destination.
 	 * It returns the BundleID of the transmitted bundle or null
 	 * if the send wasn't successful.
 	 */
-	BundleID sendGroup(in GroupEndpoint destination, int lifetime, in byte[] data);
+	BundleID sendGroup(DTNSessionCallback cb, in GroupEndpoint destination, int lifetime, in byte[] data);
 	
 	/**
 	 * Send the content of a file descriptor as bundle
 	 * It returns the BundleID of the transmitted bundle or null
 	 * if the send wasn't successful.
 	 */
-	BundleID sendFileDescriptor(in SingletonEndpoint destination, int lifetime, in ParcelFileDescriptor fd, long length);
+	BundleID sendFileDescriptor(DTNSessionCallback cb, in SingletonEndpoint destination, int lifetime, in ParcelFileDescriptor fd, long length);
 	
 	/**
 	 * Send the content of a file descriptor as bundle
 	 * It returns the BundleID of the transmitted bundle or null
 	 * if the send wasn't successful.
 	 */
-	BundleID sendGroupFileDescriptor(in GroupEndpoint destination, int lifetime, in ParcelFileDescriptor fd, long length);
+	BundleID sendGroupFileDescriptor(DTNSessionCallback cb, in GroupEndpoint destination, int lifetime, in ParcelFileDescriptor fd, long length);
 	
 	/**
 	 * query a given bundle id
