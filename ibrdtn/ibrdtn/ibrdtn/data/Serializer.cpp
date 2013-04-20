@@ -598,31 +598,55 @@ namespace dtn
 				// read processing flags
 				_stream >> procflags_sdnv;
 
-				// create a block object
-				dtn::data::Block &block = builder.insert(block_type, procflags_sdnv.getValue());
-
 				try {
-					(*this) >> block;
-				} catch (dtn::PayloadReceptionInterrupted &ex) {
-					// some debugging
-					IBRCOMMON_LOGGER_DEBUG(15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
+					// create a block object
+					dtn::data::Block &block = builder.insert(block_type, procflags_sdnv.getValue());
 
-					// interrupted transmission
-					if (!obj.get(dtn::data::PrimaryBlock::DONT_FRAGMENT) && (block.getLength() > 0) && _fragmentation)
-					{
-						IBRCOMMON_LOGGER_DEBUG(25) << "Create a fragment." << IBRCOMMON_LOGGER_ENDL;
+					try {
+						// read block content
+						(*this) >> block;
+					} catch (dtn::PayloadReceptionInterrupted &ex) {
+						// some debugging
+						IBRCOMMON_LOGGER_DEBUG(15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
 
-						if ( !obj.get(dtn::data::PrimaryBlock::FRAGMENT) )
+						// interrupted transmission
+						if (!obj.get(dtn::data::PrimaryBlock::DONT_FRAGMENT) && (block.getLength() > 0) && _fragmentation)
 						{
-							obj.set(dtn::data::PrimaryBlock::FRAGMENT, true);
-							obj._appdatalength = ex.length;
-							obj._fragmentoffset = 0;
+							IBRCOMMON_LOGGER_DEBUG(25) << "Create a fragment." << IBRCOMMON_LOGGER_ENDL;
+
+							if ( !obj.get(dtn::data::PrimaryBlock::FRAGMENT) )
+							{
+								obj.set(dtn::data::PrimaryBlock::FRAGMENT, true);
+								obj._appdatalength = ex.length;
+								obj._fragmentoffset = 0;
+							}
+						}
+						else
+						{
+							throw;
 						}
 					}
-					else
+				} catch (BundleBuilder::DiscardBlockException &ex) {
+					// skip EIDs
+					if ( procflags_sdnv.getValue() & dtn::data::Block::BLOCK_CONTAINS_EIDS )
 					{
-						throw;
+						SDNV eidcount;
+						_stream >> eidcount;
+
+						for (unsigned int i = 0; i < eidcount.getValue(); ++i)
+						{
+							SDNV scheme, ssp;
+							_stream >> scheme;
+							_stream >> ssp;
+						}
 					}
+
+					// read the size of the payload in the block
+					SDNV block_size;
+					_stream >> block_size;
+
+					// skip payload
+					_stream.ignore(block_size.getValue());
 				}
 
 				lastblock = (procflags_sdnv.getValue() & Block::LAST_BLOCK);
