@@ -696,73 +696,46 @@ namespace dtn
 
 		void SQLiteDatabase::transaction() throw (SQLiteDatabase::SQLiteQueryException)
 		{
+			char *zErrMsg = 0;
+
 			// start a transaction
-			int ret = sqlite3_exec(_database, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+			int ret = sqlite3_exec(_database, "BEGIN TRANSACTION;", NULL, NULL, &zErrMsg);
 
 			// check if the return value signals an error
-			switch (ret)
+			if ( ret != SQLITE_OK )
 			{
-			case SQLITE_CORRUPT:
-				throw SQLiteQueryException("Database is corrupt.");
-
-			case SQLITE_INTERRUPT:
-				throw SQLiteQueryException("Database interrupt.");
-
-			case SQLITE_SCHEMA:
-				throw SQLiteQueryException("Database schema error.");
-
-			case SQLITE_ERROR:
-				throw SQLiteQueryException("Database error.");
-			default:
-				break;
+				sqlite3_free( zErrMsg );
+				throw SQLiteQueryException( zErrMsg );
 			}
 		}
 
 		void SQLiteDatabase::rollback() throw (SQLiteDatabase::SQLiteQueryException)
 		{
+			char *zErrMsg = 0;
+
 			// rollback the whole transaction
-			int ret = sqlite3_exec(_database, "ROLLBACK TRANSACTION;", NULL, NULL, NULL);
+			int ret = sqlite3_exec(_database, "ROLLBACK TRANSACTION;", NULL, NULL, &zErrMsg);
 
 			// check if the return value signals an error
-			switch (ret)
+			if ( ret != SQLITE_OK )
 			{
-			case SQLITE_CORRUPT:
-				throw SQLiteQueryException("Database is corrupt.");
-
-			case SQLITE_INTERRUPT:
-				throw SQLiteQueryException("Database interrupt.");
-
-			case SQLITE_SCHEMA:
-				throw SQLiteQueryException("Database schema error.");
-
-			case SQLITE_ERROR:
-				throw SQLiteQueryException("Database error.");
-			default:
-				break;
+				sqlite3_free( zErrMsg );
+				throw SQLiteQueryException( zErrMsg );
 			}
 		}
 
 		void SQLiteDatabase::commit() throw (SQLiteDatabase::SQLiteQueryException)
 		{
+			char *zErrMsg = 0;
+
 			// commit the transaction
-			int ret = sqlite3_exec(_database, "END TRANSACTION;", NULL, NULL, NULL);
+			int ret = sqlite3_exec(_database, "END TRANSACTION;", NULL, NULL, &zErrMsg);
 
 			// check if the return value signals an error
-			switch (ret)
+			if ( ret != SQLITE_OK )
 			{
-			case SQLITE_CORRUPT:
-				throw SQLiteQueryException("Database is corrupt.");
-
-			case SQLITE_INTERRUPT:
-				throw SQLiteQueryException("Database interrupt.");
-
-			case SQLITE_SCHEMA:
-				throw SQLiteQueryException("Database schema error.");
-
-			case SQLITE_ERROR:
-				throw SQLiteQueryException("Database error.");
-			default:
-				break;
+				sqlite3_free( zErrMsg );
+				throw SQLiteQueryException( zErrMsg );
 			}
 		}
 
