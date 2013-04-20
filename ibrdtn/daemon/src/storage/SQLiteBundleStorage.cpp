@@ -28,6 +28,7 @@
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
 
+#include <ibrdtn/data/BundleBuilder.h>
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/Serializer.h>
@@ -282,21 +283,25 @@ namespace dtn
 					}
 					else
 					{
-						// read the block
-						dtn::data::Block &block = dtn::data::SeparateDeserializer(is, bundle).readBlock();
-
-						// close the file
-						is.close();
-
-						// modify the age block if present
 						try {
-							dtn::data::AgeBlock &agebl = dynamic_cast<dtn::data::AgeBlock&>(block);
+							// read the block
+							dtn::data::Block &block = dtn::data::SeparateDeserializer(is, bundle).readBlock();
 
-							// modify the AgeBlock with the age of the file
-							time_t age = file.lastaccess() - file.lastmodify();
+							// close the file
+							is.close();
 
-							agebl.addSeconds(age);
-						} catch (const std::bad_cast&) { };
+							// modify the age block if present
+							try {
+								dtn::data::AgeBlock &agebl = dynamic_cast<dtn::data::AgeBlock&>(block);
+
+								// modify the AgeBlock with the age of the file
+								time_t age = file.lastaccess() - file.lastmodify();
+
+								agebl.addSeconds(age);
+							} catch (const std::bad_cast&) { };
+						} catch (dtn::data::BundleBuilder::DiscardBlockException &ex) {
+							// skip extensions block
+						}
 					}
 				}
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {

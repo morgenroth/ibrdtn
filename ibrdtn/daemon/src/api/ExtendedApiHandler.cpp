@@ -561,6 +561,9 @@ namespace dtn
 									}
 									_stream << ClientHandler::API_STATUS_OK << " BUNDLE BLOCK ADD SUCCESSFUL" << std::endl;
 								}
+								catch (const BundleBuilder::DiscardBlockException &ex) {
+									_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " BUNDLE BLOCK DISCARDED" << std::endl;
+								}
 								catch (const PlainDeserializer::PlainDeserializerException &ex){
 									_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " BUNDLE BLOCK ADD FAILED" << std::endl;
 								}
