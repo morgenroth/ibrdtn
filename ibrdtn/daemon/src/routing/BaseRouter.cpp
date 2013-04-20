@@ -395,6 +395,11 @@ namespace dtn
 
 					// raise BundleEvent because we have to drop the bundle
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+				} catch (const ibrcommon::Exception &ex) {
+					IBRCOMMON_LOGGER(error) << "Bundle " << received.bundle.toString() << " dropped: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+					// raise BundleEvent because we have to drop the bundle
+					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				}
 
 				// no routing extension should be interested in this event
