@@ -192,7 +192,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
+				virtual size_t limit() const throw () { return _entry.getFreeTransferSlots(); };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{

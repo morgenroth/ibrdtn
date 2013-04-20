@@ -229,7 +229,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return dtn::core::BundleCore::max_bundles_in_transit; };
+				virtual size_t limit() const throw () { return dtn::core::BundleCore::max_bundles_in_transit; };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -258,7 +258,7 @@ namespace dtn
 				};
 
 #ifdef HAVE_SQLITE
-				const std::string getWhere() const
+				const std::string getWhere() const throw ()
 				{
 					if (_endpoints.size() > 1)
 					{
@@ -281,7 +281,7 @@ namespace dtn
 					}
 				};
 
-				size_t bind(sqlite3_stmt *st, size_t offset) const
+				size_t bind(sqlite3_stmt *st, size_t offset) const throw ()
 				{
 					size_t o = offset;
 

@@ -125,7 +125,7 @@ namespace dtn
 				 * returns the user-defined sql query
 				 * @return
 				 */
-				virtual const std::string getWhere() const = 0;
+				virtual const std::string getWhere() const throw () = 0;
 
 				/**
 				 * bind all custom values to the statement

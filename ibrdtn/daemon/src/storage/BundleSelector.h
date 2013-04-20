@@ -42,7 +42,7 @@ namespace dtn
 			 * Limit the number of selected items.
 			 * @return The limit as number of items.
 			 */
-			virtual size_t limit() const { return 1; };
+			virtual size_t limit() const throw () { return 1; };
 
 			/**
 			 * This method is called by the storage to determine if one bundle
