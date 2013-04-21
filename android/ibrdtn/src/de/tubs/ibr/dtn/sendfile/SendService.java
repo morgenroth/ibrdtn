@@ -163,13 +163,12 @@ public class SendService extends IntentService {
 				// open file as parcelable object
 				ParcelFileDescriptor fd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
 				
-				if (eid instanceof SingletonEndpoint) {
-					// send the file to singleton endpoint
-					session.sendFileDescriptor(_session_cb, (SingletonEndpoint)eid, 3600, fd, filelen);
-				} else if (eid instanceof GroupEndpoint) {
-					// send the file to group endpoint
-					session.sendGroupFileDescriptor(_session_cb, (GroupEndpoint)eid, 3600, fd, filelen);
-				}
+				Bundle b = new Bundle();
+				b.setLifetime(3600L);
+				b.setDestination(eid);
+				
+				// send the file to singleton endpoint
+				session.sendFileDescriptor(_session_cb, b, fd, filelen);
 			}
 		} catch (InterruptedException e) {
 			Log.e(TAG, "Error in onHandleIntent", e);

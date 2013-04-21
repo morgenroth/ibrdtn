@@ -425,13 +425,26 @@ public class ClientSession {
             }
 		}
 
-		public BundleID send(DTNSessionCallback cb, SingletonEndpoint destination, int lifetime, byte[] data) throws RemoteException
-		{
+		@Override
+		public BundleID send(DTNSessionCallback cb, Bundle bundle, byte[] data) throws RemoteException {
 			try {
 				PrimaryBlock b = new PrimaryBlock();
-				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, true);
-				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
-				b.set_lifetime(lifetime);
+
+				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, bundle.get(Bundle.ProcFlags.DESTINATION_IS_SINGLETON));
+				b.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
+				
+				// set lifetime
+				if (bundle.getLifetime() != null)
+					b.set_lifetime(bundle.getLifetime());
+				
+				if (bundle.getReportto() != null)
+					b.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
+				
+				if (bundle.getCustodian() != null)
+					b.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
+				
+				// add flags from procflags
+				b.set_procflags( b.get_procflags() | bundle.getProcflags() );
 
 				// put the primary block into the register
 				nativeSession.put(RegisterIndex.REG2, b);
@@ -457,47 +470,28 @@ public class ClientSession {
 			}
 		}
 
-		public BundleID sendGroup(DTNSessionCallback cb, GroupEndpoint destination, int lifetime, byte[] data) throws RemoteException
-		{
-			try {
-				PrimaryBlock b = new PrimaryBlock();
-				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, false);
-				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
-				b.set_lifetime(lifetime);
-
-				// put the primary block into the register
-				nativeSession.put(RegisterIndex.REG2, b);
-				
-				if (cb != null) {
-					cb.progress(0, data.length);
-				}
-				
-				// add data
-				nativeSession.write(RegisterIndex.REG2, data);
-				
-				if (cb != null) {
-					cb.progress(data.length, data.length);
-				}
-				
-				// send the bundle
-				de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
-
-				return toAndroid(ret);
-			} catch (Exception e) {
-				Log.e(TAG, "sendGroup failed", e);
-				return null;
-			}
-		}
-
-		public BundleID sendFileDescriptor(DTNSessionCallback cb, SingletonEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
-		{
+		@Override
+		public BundleID sendFileDescriptor(DTNSessionCallback cb, Bundle bundle, ParcelFileDescriptor fd, long length) throws RemoteException {
 			try {
 				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
 				
 				PrimaryBlock b = new PrimaryBlock();
-				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, true);
-				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
-				b.set_lifetime(lifetime);
+				
+				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, bundle.get(Bundle.ProcFlags.DESTINATION_IS_SINGLETON));
+				b.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
+				
+				// set lifetime
+				if (bundle.getLifetime() != null)
+					b.set_lifetime(bundle.getLifetime());
+				
+				if (bundle.getReportto() != null)
+					b.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
+				
+				if (bundle.getCustodian() != null)
+					b.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
+				
+				// add flags from procflags
+				b.set_procflags( b.get_procflags() | bundle.getProcflags() );
 
 				// put the primary block into the register
 				nativeSession.put(RegisterIndex.REG2, b);
@@ -543,61 +537,6 @@ public class ClientSession {
 				return null;
 			}
 		}
-
-		public BundleID sendGroupFileDescriptor(DTNSessionCallback cb, GroupEndpoint destination, int lifetime, ParcelFileDescriptor fd, long length) throws RemoteException
-		{
-			try {
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "Received file descriptor as bundle payload.");
-				
-				PrimaryBlock b = new PrimaryBlock();
-				b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON, false);
-				b.set_destination(new de.tubs.ibr.dtn.swig.EID(destination.toString()));
-				b.set_lifetime(lifetime);
-				
-				// put the primary block into the register
-				nativeSession.put(RegisterIndex.REG2, b);
-				
-				if (cb != null) {
-					cb.progress(0, length);
-				}
-				
-				FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
-                FileChannel inChannel = stream.getChannel();
-                try {
-                    int offset = 0;
-                    int count = 0;
-                    ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
-                    while ((count = inChannel.read(buffer)) > 0) {
-                        // add data
-                        byte data[] = new byte[count];
-                        buffer.flip();
-                        buffer.get(data);
-                        nativeSession.write(RegisterIndex.REG2, data, offset);
-                        offset += count;
-                        buffer.clear();
-                        
-        				if (cb != null) {
-        					cb.progress(offset, length);
-        				}
-                    }
-
-                    // send the bundle
-                    de.tubs.ibr.dtn.swig.BundleID ret = nativeSession.send(RegisterIndex.REG2);
-
-                    return toAndroid(ret);
-                } finally {
-                    try {
-                        inChannel.close();
-                        stream.close();
-                        fd.close();
-                    } catch (IOException e) {
-                    }
-                }
-			} catch (Exception e) {
-				Log.e(TAG, "sendGroupFileDescriptor failed", e);
-				return null;
-			}
-		}
 	};
 
 	public DTNSession getBinder()
@@ -613,7 +552,7 @@ public class ClientSession {
 	private static de.tubs.ibr.dtn.swig.BundleID toSwig(BundleID id)
 	{
 		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
-		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource()));
+		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource().toString()));
 		swigId.setSequencenumber(BigInteger.valueOf(id.getSequencenumber()));
 
 		Timestamp ts = new Timestamp(id.getTimestamp());
@@ -628,39 +567,44 @@ public class ClientSession {
 		 * Convert API Bundle to SWIG bundle
 		 */
 		de.tubs.ibr.dtn.swig.PrimaryBlock ret = new de.tubs.ibr.dtn.swig.PrimaryBlock();
-		ret.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.custodian));
-		ret.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.destination));
-		ret.set_fragmentoffset(bundle.fragment_offset);
-		ret.set_lifetime(bundle.lifetime);
-		ret.set_procflags(bundle.procflags);
-		ret.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.reportto));
-		ret.set_sequencenumber(bundle.sequencenumber);
-		ret.set_source(new de.tubs.ibr.dtn.swig.EID(bundle.source));
+		ret.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
+		ret.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
+		ret.set_fragmentoffset(bundle.getFragmentOffset());
+		ret.set_lifetime(bundle.getLifetime());
+		ret.set_procflags(bundle.getProcflags());
+		ret.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
+		ret.set_sequencenumber(bundle.getSequencenumber());
+		ret.set_source(new de.tubs.ibr.dtn.swig.EID(bundle.getSource().toString()));
 
-		Timestamp ts = new Timestamp(bundle.timestamp);
+		Timestamp ts = new Timestamp(bundle.getTimestamp());
 		ret.set_timestamp(ts.getValue());
 		
 		return ret;
 	}
 	
 	private static Bundle toAndroid(PrimaryBlock block) {
-		Bundle ret = new Bundle();
-
-		ret.source = block.get_source().getString();
-		ret.destination = block.get_destination().getString();
-		ret.reportto = block.get_reportto().getString();
-		ret.custodian = block.get_custodian().getString();
+		Bundle ret = new Bundle( block.get_procflags() );
 		
-		ret.lifetime = block.get_lifetime();
+		if (block.get(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON)) {
+			ret.setDestination( new SingletonEndpoint(block.get_destination().getString()) );
+		} else {
+			ret.setDestination( new GroupEndpoint(block.get_destination().getString()) );
+		}
+
+		ret.setSource( new SingletonEndpoint(block.get_source().getString()) );
+		ret.setReportto( new SingletonEndpoint(block.get_reportto().getString()) );
+		ret.setCustodian( new SingletonEndpoint(block.get_custodian().getString()) );
+		
+		ret.setLifetime( block.get_lifetime());
 		
 		Timestamp ts = new Timestamp(block.get_timestamp());
-		ret.timestamp = ts.getDate();
+		ret.setTimestamp( ts.getDate() );
 		
-		ret.sequencenumber = block.get_sequencenumber();
-		ret.procflags = block.get_procflags();
+		ret.setSequencenumber( block.get_sequencenumber() );
+
 		if (block.get(PrimaryBlock.FLAGS.FRAGMENT)) {
-			ret.app_data_length = block.get_appdatalength();
-			ret.fragment_offset = block.get_fragmentoffset();
+			ret.setAppDataLength( block.get_appdatalength() );
+			ret.setFragmentOffset( block.get_fragmentoffset() );
 		}
 		
 		return ret;
@@ -678,7 +622,7 @@ public class ClientSession {
 		// convert from swig BundleID to api BundleID
 		BundleID id = new BundleID();
 		id.setSequencenumber(swigId.getSequencenumber().longValue());
-		id.setSource(swigId.getSource().getString());
+		id.setSource(new SingletonEndpoint(swigId.getSource().getString()));
 
 		long swigTime = swigId.getTimestamp().longValue();
 		Timestamp ts = new Timestamp(swigTime);
