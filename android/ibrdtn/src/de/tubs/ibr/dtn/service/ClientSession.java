@@ -44,6 +44,7 @@ import de.tubs.ibr.dtn.api.DTNSessionCallback;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.api.Timestamp;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.swig.BundleNotFoundException;
 import de.tubs.ibr.dtn.swig.NativeSerializerCallback;
@@ -554,9 +555,7 @@ public class ClientSession {
 		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
 		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource().toString()));
 		swigId.setSequencenumber(BigInteger.valueOf(id.getSequencenumber()));
-
-		Timestamp ts = new Timestamp(id.getTimestamp());
-		swigId.setTimestamp(BigInteger.valueOf(ts.getValue()));
+		swigId.setTimestamp(BigInteger.valueOf(id.getTimestamp().getValue()));
 		
 		return swigId;
 	}
@@ -576,8 +575,7 @@ public class ClientSession {
 		ret.set_sequencenumber(bundle.getSequencenumber());
 		ret.set_source(new de.tubs.ibr.dtn.swig.EID(bundle.getSource().toString()));
 
-		Timestamp ts = new Timestamp(bundle.getTimestamp());
-		ret.set_timestamp(ts.getValue());
+		ret.set_timestamp(bundle.getTimestamp().getValue());
 		
 		return ret;
 	}
@@ -598,7 +596,7 @@ public class ClientSession {
 		ret.setLifetime( block.get_lifetime());
 		
 		Timestamp ts = new Timestamp(block.get_timestamp());
-		ret.setTimestamp( ts.getDate() );
+		ret.setTimestamp( ts );
 		
 		ret.setSequencenumber( block.get_sequencenumber() );
 
@@ -626,7 +624,7 @@ public class ClientSession {
 
 		long swigTime = swigId.getTimestamp().longValue();
 		Timestamp ts = new Timestamp(swigTime);
-		id.setTimestamp(ts.getDate());
+		id.setTimestamp(ts);
 		
 		return id;
 	}
