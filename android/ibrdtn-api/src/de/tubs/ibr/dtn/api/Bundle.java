@@ -21,8 +21,6 @@
 
 package de.tubs.ibr.dtn.api;
 
-import java.util.Date;
-
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -32,7 +30,7 @@ public class Bundle implements Parcelable {
 	private SingletonEndpoint custodian = null;
 	private SingletonEndpoint reportto = null;
 	private Long lifetime = null;
-	private Date timestamp = null;
+	private Timestamp timestamp = null;
 	private Long sequencenumber = null;
 	private Long procflags = 0L;
 	private Long app_data_length = null;
@@ -181,11 +179,11 @@ public class Bundle implements Parcelable {
 		this.lifetime = lifetime;
 	}
 
-	public Date getTimestamp() {
+	public Timestamp getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(Date timestamp) {
+	public void setTimestamp(Timestamp timestamp) {
 		this.timestamp = timestamp;
 	}
 
@@ -245,7 +243,7 @@ public class Bundle implements Parcelable {
 		if (nullMarker[2]) dest.writeString(custodian.toString());
 		if (nullMarker[3]) dest.writeString(reportto.toString());
 		if (nullMarker[4]) dest.writeLong( lifetime );
-		if (nullMarker[5]) dest.writeLong( timestamp.getTime() );
+		if (nullMarker[5]) dest.writeLong( timestamp.getValue() );
 		if (nullMarker[6]) dest.writeLong( sequencenumber );
 		if (nullMarker[7]) dest.writeLong( app_data_length );
 		if (nullMarker[8]) dest.writeLong( fragment_offset );
@@ -286,7 +284,7 @@ public class Bundle implements Parcelable {
         	if (nullMarker[4]) b.lifetime = source.readLong();
         	else b.lifetime = null;
         	
-        	if (nullMarker[5]) b.timestamp = new Date( source.readLong() );
+        	if (nullMarker[5]) b.timestamp = new Timestamp( source.readLong() );
         	else b.timestamp = null;
         	
         	if (nullMarker[6]) b.sequencenumber = source.readLong();

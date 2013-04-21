@@ -21,17 +21,14 @@
 
 package de.tubs.ibr.dtn.api;
 
-import java.util.Date;
-
-import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
-
 import android.os.Parcel;
 import android.os.Parcelable;
+import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 
 public class BundleID implements Parcelable {
 	
 	private SingletonEndpoint source = null;
-	private Date timestamp = null;
+	private Timestamp timestamp = null;
 	private Long sequencenumber = null;
 	
 	private Boolean fragment = false;
@@ -51,7 +48,7 @@ public class BundleID implements Parcelable {
 		this.fragment_offset = b.getFragmentOffset();
 	}
 	
-	public BundleID(SingletonEndpoint source, Date timestamp, Long sequencenumber)
+	public BundleID(SingletonEndpoint source, Timestamp timestamp, Long sequencenumber)
 	{
 		this.source = source;
 		this.timestamp = timestamp;
@@ -70,24 +67,24 @@ public class BundleID implements Parcelable {
 	public String toString() {
 		if (fragment)
 		{
-			return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getTime())) + 
+			return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getValue())) + 
 					" " + String.valueOf(this.sequencenumber) + 
 					" " + String.valueOf(this.fragment_offset) + 
 					" " + this.source;
 		}
 		else
 		{
-			return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getTime())) + 
+			return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getValue())) + 
 					" " + String.valueOf(this.sequencenumber) + 
 					" " + this.source;
 		}
 	}
 
-	public Date getTimestamp() {
+	public Timestamp getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(Date timestamp) {
+	public void setTimestamp(Timestamp timestamp) {
 		this.timestamp = timestamp;
 	}
 
@@ -107,7 +104,7 @@ public class BundleID implements Parcelable {
 		if (source == null) dest.writeString("");
 		else dest.writeString(source.toString());
 		
-		dest.writeLong( (timestamp == null) ? 0L : timestamp.getTime() );
+		dest.writeLong( (timestamp == null) ? 0L : timestamp.getValue() );
 		dest.writeLong( (sequencenumber == null) ? 0L : sequencenumber );
 		
 		dest.writeBooleanArray(new boolean[] {fragment});
@@ -123,7 +120,7 @@ public class BundleID implements Parcelable {
         	else id.source = new SingletonEndpoint(s_eid);
         	
         	Long ts = source.readLong();
-        	id.timestamp = (ts == 0) ? null : new Date( ts );
+        	id.timestamp = (ts == 0) ? null : new Timestamp( ts );
         	id.sequencenumber = source.readLong();
         	
         	boolean[] barray = { false };
