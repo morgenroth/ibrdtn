@@ -290,13 +290,13 @@ public class Bundle implements Parcelable {
         	else b.timestamp = null;
         	
         	if (nullMarker[6]) b.sequencenumber = source.readLong();
-        	b.sequencenumber = null;
+        	else b.sequencenumber = null;
         	
         	if (nullMarker[7]) b.app_data_length = source.readLong();
-        	b.app_data_length = null;
+        	else b.app_data_length = null;
         	
         	if (nullMarker[8]) b.fragment_offset = source.readLong();
-        	b.fragment_offset = null;
+        	else b.fragment_offset = null;
         	
         	return b;
         }
