@@ -333,13 +333,7 @@ public class MainActivity extends FragmentActivity
 			for (int i = 0; i < count; i++)
 			{
 				try {
-					BundleID id = MainActivity.this.service_helper.getService().sendMessage(msgs[i]);
-					
-					// set sent id of the message
-					msgs[i].setSentId(id.toString());
-					
-					// update message into the database
-					MainActivity.this.getRoster().reportSent(msgs[i]);
+					MainActivity.this.service_helper.getService().sendMessage(msgs[i]);
 					
 					// update total size
 					totalSize += msgs[i].getPayload().length();

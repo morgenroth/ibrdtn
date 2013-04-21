@@ -205,7 +205,7 @@ public class Roster extends LinkedList<Buddy> {
 		return msgs;
 	}
 	
-	public void store(Buddy buddy)
+	public synchronized void store(Buddy buddy)
 	{
 		ContentValues values = new ContentValues();
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -256,7 +256,7 @@ public class Roster extends LinkedList<Buddy> {
 		notifyBuddyChanged(buddy);
 	}
 
-	public void clearMessages(Buddy buddy)
+	public synchronized void clearMessages(Buddy buddy)
 	{
 		try {
 			database.delete("messages", "buddy = ?", new String[] { buddy.getId().toString() });
@@ -305,7 +305,7 @@ public class Roster extends LinkedList<Buddy> {
 		return msg;
 	}
 	
-	public void storeMessage(Message msg)
+	public synchronized void storeMessage(Message msg)
 	{
 		ContentValues values = new ContentValues();
 		
@@ -339,7 +339,7 @@ public class Roster extends LinkedList<Buddy> {
 		}
 	}
 	
-	public void reportSent(Message msg)
+	public synchronized void reportSent(Message msg)
 	{
 		ContentValues values = new ContentValues();
 		
@@ -366,7 +366,7 @@ public class Roster extends LinkedList<Buddy> {
 		}
 	}
 	
-	public void reportDelivery(SingletonEndpoint source, BundleID id)
+	public synchronized void reportDelivery(SingletonEndpoint source, BundleID id)
 	{
 		ContentValues values = new ContentValues();
 		

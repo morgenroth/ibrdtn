@@ -21,7 +21,7 @@
  */
 package de.tubs.ibr.dtn.chat;
 
-import java.text.DateFormat;
+import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -131,7 +131,7 @@ public class MessageView extends BaseAdapter {
 			if (holder.msg.getFlags() == 0) {
 				holder.pending.setVisibility(View.VISIBLE);
 				holder.delivered.setVisibility(View.GONE);
-			} else if (holder.msg.getFlags() == 3) {
+			} else if ((holder.msg.getFlags() & 2) > 0) {
 				holder.pending.setVisibility(View.GONE);
 				holder.delivered.setVisibility(View.VISIBLE);
 			} else {

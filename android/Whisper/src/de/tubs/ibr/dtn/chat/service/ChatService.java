@@ -137,11 +137,11 @@ public class ChatService extends IntentService {
                 
                 if (current.getDestination().equals(PRESENCE_GROUP_EID))
                 {
-                    eventNewPresence(current.getSource(), current.getTimestamp(), msg);
+                    eventNewPresence(current.getSource(), current.getTimestamp().getDate(), msg);
                 }
                 else
                 {
-                    eventNewMessage(current.getSource(), current.getTimestamp(), msg);
+                    eventNewMessage(current.getSource(), current.getTimestamp().getDate(), msg);
                 }
 		    }
 		}
@@ -329,7 +329,7 @@ public class ChatService extends IntentService {
 		return this.roster;
 	}
 	
-	public BundleID sendMessage(Message msg) throws Exception
+	public void sendMessage(Message msg) throws Exception
 	{
 		Session s = _client.getSession();
 		Bundle b = new Bundle();
@@ -343,19 +343,25 @@ public class ChatService extends IntentService {
 		b.set(ProcFlags.REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
 		b.setReportto(SingletonEndpoint.ME);
 		
-		// send out the message
-		BundleID ret = s.send(b, msg.getPayload().getBytes());
-		
-		if (ret == null)
-		{
-			throw new Exception("could not send the message");
+		synchronized(this.roster) {
+			// send out the message
+			BundleID ret = s.send(b, msg.getPayload().getBytes());
+			
+			if (ret == null)
+			{
+				throw new Exception("could not send the message");
+			}
+			else
+			{
+			    Log.d(TAG, "Bundle sent, BundleID: " + ret.toString());
+			}
+			
+			// set sent id of the message
+			msg.setSentId(ret.toString());
+			
+			// update message into the database
+			this.getRoster().reportSent(msg);
 		}
-		else
-		{
-		    Log.d(TAG, "Bundle sent, BundleID: " + ret.toString());
-		}
-		
-		return ret;
 	}
 	
 	public void sendPresence(String presence, String nickname, String status) throws Exception
