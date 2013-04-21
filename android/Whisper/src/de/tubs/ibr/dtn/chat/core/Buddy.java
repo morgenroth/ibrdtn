@@ -26,6 +26,7 @@ import java.util.Date;
 
 public class Buddy implements Comparable<Buddy> {
 
+	private Long id = null;
 	private String nickname = null;
 	private String endpoint = null;
 	private Date lastseen = null;
@@ -41,6 +42,14 @@ public class Buddy implements Comparable<Buddy> {
 		this.presence = presence;
 		this.status = status;
 		this.draftmsg = draftmsg;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public Date getLastSeen() {

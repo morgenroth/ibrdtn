@@ -7,13 +7,14 @@
     android:layout_margin="0dp">
     
     <ImageView
+        android:contentDescription="@string/image_contact_symbol"
         android:id="@+id/imageAvatar"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_weight="0"
         android:src="@drawable/ic_contact_foreign" />
     
-    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
@@ -44,6 +45,7 @@
     </RelativeLayout>
     
     <ImageView
+        android:contentDescription="@string/image_contact_symbol"
         android:id="@+id/imageAvatarRight"
         android:layout_width="48dp"
         android:layout_height="48dp"

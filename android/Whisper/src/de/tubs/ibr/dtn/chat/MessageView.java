@@ -99,6 +99,8 @@ public class MessageView extends BaseAdapter {
 		ImageView imageAvatarRight = (ImageView) convertView.findViewById(R.id.imageAvatarRight);
 		ImageView imageAvatarLeft = (ImageView) convertView.findViewById(R.id.imageAvatar);
 
+		String msgstate = null;
+		
 		if (holder.msg.isIncoming())
 		{
 			holder.label.setGravity(Gravity.LEFT);
@@ -112,9 +114,21 @@ public class MessageView extends BaseAdapter {
 			holder.text.setGravity(Gravity.RIGHT);
 			imageAvatarRight.setVisibility(View.VISIBLE);
 			imageAvatarLeft.setVisibility(View.GONE);
+			
+			if (holder.msg.getFlags() == 0) {
+				msgstate = "pending";
+			} else if (holder.msg.getFlags() == 1) {
+				msgstate = "sent";
+			} else if (holder.msg.getFlags() == 3) {
+				msgstate = "delivered";
+			}
 		}
 		
-		holder.label.setText(date);
+		if (msgstate == null) {
+			holder.label.setText(date);
+		} else {
+			holder.label.setText(date + " - " + msgstate);
+		}
 		
 		holder.text.setText(holder.msg.getPayload());
 		return convertView;
