@@ -127,7 +127,7 @@ public class DTalkieService extends Service {
 			        public void run() {
 			        	// add message to database
 			        	Message msg = new Message(received.getSource().toString(), received.getDestination().toString(), playfile);
-			        	msg.setCreated(received.getTimestamp());
+			        	msg.setCreated(received.getTimestamp().getDate());
 			        	msg.setReceived(new Date());
 			        	_database.put(Folder.INBOX, msg);
 			        	
