@@ -23,6 +23,7 @@ pom.xml.*
 #compiled libs
 libs/armeabi
 libs/x86
+libs/armeabi-v7a
 
 #
 # JNI
