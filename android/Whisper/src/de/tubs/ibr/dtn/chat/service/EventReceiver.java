@@ -30,8 +30,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import de.tubs.ibr.dtn.api.BundleID;
-import de.tubs.ibr.dtn.api.SingletonEndpoint;
 
 public class EventReceiver extends BroadcastReceiver {
 	
