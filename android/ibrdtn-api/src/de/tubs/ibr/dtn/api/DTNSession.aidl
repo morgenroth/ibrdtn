@@ -24,6 +24,7 @@ import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.DTNSessionCallback;
 import de.tubs.ibr.dtn.api.BundleID;
+import de.tubs.ibr.dtn.api.Bundle;
 import android.os.ParcelFileDescriptor;
 
 interface DTNSession {
@@ -32,28 +33,14 @@ interface DTNSession {
 	 * It returns the BundleID of the transmitted bundle or null
 	 * if the send wasn't successful.
 	 */
-	BundleID send(DTNSessionCallback cb, in SingletonEndpoint destination, int lifetime, in byte[] data);
-	
-	/**
-	 * Send a string as a bundle to the given destination.
-	 * It returns the BundleID of the transmitted bundle or null
-	 * if the send wasn't successful.
-	 */
-	BundleID sendGroup(DTNSessionCallback cb, in GroupEndpoint destination, int lifetime, in byte[] data);
+	BundleID send(DTNSessionCallback cb, in de.tubs.ibr.dtn.api.Bundle bundle, in byte[] data);
 	
 	/**
 	 * Send the content of a file descriptor as bundle
 	 * It returns the BundleID of the transmitted bundle or null
 	 * if the send wasn't successful.
 	 */
-	BundleID sendFileDescriptor(DTNSessionCallback cb, in SingletonEndpoint destination, int lifetime, in ParcelFileDescriptor fd, long length);
-	
-	/**
-	 * Send the content of a file descriptor as bundle
-	 * It returns the BundleID of the transmitted bundle or null
-	 * if the send wasn't successful.
-	 */
-	BundleID sendGroupFileDescriptor(DTNSessionCallback cb, in GroupEndpoint destination, int lifetime, in ParcelFileDescriptor fd, long length);
+	BundleID sendFileDescriptor(DTNSessionCallback cb, in de.tubs.ibr.dtn.api.Bundle bundle, in ParcelFileDescriptor fd, long length);
 	
 	/**
 	 * query a given bundle id

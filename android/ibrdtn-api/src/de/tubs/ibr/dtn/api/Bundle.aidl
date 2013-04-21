@@ -21,6 +21,9 @@
  
 package de.tubs.ibr.dtn.api;
 
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.api.GroupEndpoint;
+
 // Declare Bundle so AIDL can find it and knows that it implements
 // the parcelable protocol.
 parcelable Bundle;

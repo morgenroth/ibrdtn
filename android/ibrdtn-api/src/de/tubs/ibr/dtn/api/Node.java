@@ -12,14 +12,14 @@ public class Node implements Parcelable {
 	}
 
 	public void writeToParcel(Parcel dest, int flags) {
-		dest.writeParcelable(endpoint, 0);
+		dest.writeString(endpoint.toString());
 		dest.writeString(type);
 	}
 	
     public static final Creator<Node> CREATOR = new Creator<Node>() {
         public Node createFromParcel(final Parcel source) {
         	Node n = new Node();
-        	n.endpoint = source.readParcelable(null);
+        	n.endpoint = new SingletonEndpoint(source.readString());
         	n.type = source.readString();        	
         	return n;
         }

@@ -24,6 +24,8 @@ package de.tubs.ibr.dtn.api;
 import android.os.Parcel;
 
 public class SingletonEndpoint implements EID {
+	
+	public static final SingletonEndpoint ME = new SingletonEndpoint("api:me");
 	private String _eid = null;
 	
 	public SingletonEndpoint(String id)
