@@ -36,6 +36,7 @@ import java.util.Map;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 import android.util.Log;
@@ -58,6 +59,8 @@ public class DaemonProcess {
 	private Context mContext = null;
 	private DaemonState _state = DaemonState.OFFLINE;
 	
+    private WifiManager.MulticastLock _mcast_lock = null;
+
 	private final static String GNUSTL_NAME = "gnustl_shared";
 	private final static String CRYPTO_NAME = "crypto";
 	private final static String SSL_NAME = "ssl";
@@ -202,6 +205,12 @@ public class DaemonProcess {
     }
 	
 	public synchronized void start() {
+	    WifiManager wifi_manager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
+
+        // listen to multicast packets
+        _mcast_lock = wifi_manager.createMulticastLock(TAG);
+        _mcast_lock.acquire();
+
         // reload daemon configuration
         onConfigurationChanged();
         
@@ -218,6 +227,12 @@ public class DaemonProcess {
             mDaemon.init(DaemonRunLevel.RUNLEVEL_API);
         } catch (NativeDaemonException e) {
             Log.e(TAG, "error while stopping the daemon process", e);
+        }
+
+	    // release multicast lock
+        if (_mcast_lock != null) {
+            _mcast_lock.release();
+            _mcast_lock = null;
         }
 	}
 	
