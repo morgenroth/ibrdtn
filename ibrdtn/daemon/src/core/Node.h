@@ -122,6 +122,7 @@ namespace dtn
 
 			static std::string toString(Node::Type type);
 			static std::string toString(Node::Protocol proto);
+			static Node::Protocol fromProtocolString(const std::string &protocol);
 
 			/**
 			 * constructor

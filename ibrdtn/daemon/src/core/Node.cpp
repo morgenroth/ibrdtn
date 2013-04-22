@@ -225,6 +225,37 @@ namespace dtn
 			return "unknown";
 		}
 
+		Node::Protocol Node::fromProtocolString(const std::string &protocol)
+		{
+			if (protocol == "UDP") {
+				return Node::CONN_UDPIP;
+			} else if (protocol == "TCP") {
+				return Node::CONN_TCPIP;
+			} else if (protocol == "LoWPAN") {
+				return Node::CONN_LOWPAN;
+			} else if (protocol == "Bluetooth") {
+				return Node::CONN_BLUETOOTH;
+			} else if (protocol == "HTTP") {
+				return Node::CONN_HTTP;
+			} else if (protocol == "FILE") {
+				return Node::CONN_FILE;
+			} else if (protocol == "DGRAM:UDP") {
+				return Node::CONN_DGRAM_UDP;
+			} else if (protocol == "DGRAM:ETHERNET") {
+				return Node::CONN_DGRAM_ETHERNET;
+			} else if (protocol == "DGRAM:LOWPAN") {
+				return Node::CONN_DGRAM_LOWPAN;
+			} else if (protocol == "P2P:WIFI") {
+				return Node::CONN_P2P_WIFI;
+			} else if (protocol == "unsupported") {
+				return Node::CONN_P2P_BT;
+			} else if (protocol == "unsupported") {
+				return Node::CONN_UNSUPPORTED;
+			}
+
+			return Node::CONN_UNDEFINED;
+		}
+
 		bool Node::has(Node::Protocol proto) const
 		{
 			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
