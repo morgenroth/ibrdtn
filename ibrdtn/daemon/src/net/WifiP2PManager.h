@@ -33,9 +33,9 @@
 
 namespace dtn
 {
-	namespace daemon
+	namespace net
 	{
-		class WifiP2PManager : public IndependentComponent, public dtn::net::P2PDialupExtension, public wifip2p::WifiP2PInterface {
+		class WifiP2PManager : public dtn::daemon::IndependentComponent, public dtn::net::P2PDialupExtension, public wifip2p::WifiP2PInterface {
 		public:
 			static const std::string TAG;
 

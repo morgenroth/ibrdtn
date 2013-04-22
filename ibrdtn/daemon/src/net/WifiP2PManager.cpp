@@ -20,7 +20,7 @@
  *
  */
 
-#include "WifiP2PManager.h"
+#include "net/WifiP2PManager.h"
 #include <ibrcommon/Logger.h>
 #include "core/BundleCore.h"
 #include <unistd.h>
@@ -29,7 +29,7 @@
 
 namespace dtn
 {
-	namespace daemon
+	namespace net
 	{
 		const std::string WifiP2PManager::TAG = "WifiP2PManager";
 

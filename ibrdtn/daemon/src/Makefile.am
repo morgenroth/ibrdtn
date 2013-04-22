@@ -58,12 +58,6 @@ dtnd_SOURCES = Main.cpp
 dtnd_LDADD = libdtnd.la
 endif
 
-if WIFIP2P
-dtnd_sources += \
-	WifiP2PManager.h \
-	WifiP2PManager.cpp
-endif
-
 Android.mk: Makefile.am
 	$(ANDROGENIZER) -:PROJECT dtnd \
 		-:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \

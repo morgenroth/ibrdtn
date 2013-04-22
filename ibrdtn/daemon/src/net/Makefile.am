@@ -60,6 +60,10 @@ if DTNDHT
 net_SOURCES += DHTNameService.cpp DHTNameService.h
 endif
 
+if WIFIP2P
+net_SOURCES += WifiP2PManager.h WifiP2PManager.cpp
+endif
+
 AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(DTNDHT_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(DTNDHT_LIBS)
 

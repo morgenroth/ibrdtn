@@ -86,7 +86,7 @@
 #include "Component.h"
 
 #ifdef WITH_WIFIP2P
-#include "WifiP2PManager.h"
+#include "net/WifiP2PManager.h"
 #endif
 
 #ifdef WITH_BUNDLE_SECURITY
@@ -1236,7 +1236,7 @@ namespace dtn
 				const std::string wifip2p_ctrlpath = conf.getP2P().getCtrlPath();
 
 				// create a wifi-p2p manager
-				_components[RUNLEVEL_NETWORK].push_back( new dtn::daemon::WifiP2PManager(wifip2p_ctrlpath) );
+				_components[RUNLEVEL_NETWORK].push_back( new dtn::net::WifiP2PManager(wifip2p_ctrlpath) );
 			}
 #endif
 
