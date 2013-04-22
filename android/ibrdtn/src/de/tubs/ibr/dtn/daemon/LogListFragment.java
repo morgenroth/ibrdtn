@@ -291,7 +291,8 @@ public class LogListFragment extends ListFragment implements
                 tag = holder.msg.level;
             }
 
-            holder.textTag.setText(tag + " (" + holder.msg.tag + ")");
+            //holder.textTag.setText(tag + " (" + holder.msg.tag + ")");
+            holder.textTag.setText(holder.msg.tag);
 
             return convertView;
         }
