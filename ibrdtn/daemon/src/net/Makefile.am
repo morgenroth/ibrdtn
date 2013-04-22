@@ -45,7 +45,9 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 	P2PDialupExtension.h \
 	P2PDialupExtension.cpp \
 	P2PDialupEvent.h \
-	P2PDialupEvent.cpp
+	P2PDialupEvent.cpp \
+	NativeP2pManager.h \
+	NativeP2pManager.cpp
 
 if LOWPAN
 net_SOURCES += LOWPANConvergenceLayer.cpp LOWPANConvergenceLayer.h LOWPANConnection.cpp LOWPANConnection.h
