@@ -21,7 +21,6 @@
  */
 package de.tubs.ibr.dtn.chat;
 
-import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -156,9 +155,7 @@ public class MessageView extends BaseAdapter {
         now.setToNow();
 
         // Basic settings for formatDateTime() we want for all cases.
-        int format_flags = DateUtils.FORMAT_NO_NOON_MIDNIGHT |
-                           DateUtils.FORMAT_ABBREV_ALL |
-                           DateUtils.FORMAT_CAP_AMPM;
+        int format_flags = DateUtils.FORMAT_ABBREV_ALL;
 
         // If the message is from a different year, show the date and year.
         if (then.year != now.year) {
