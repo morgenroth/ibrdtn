@@ -343,7 +343,19 @@ namespace dtn
 				case ibrcommon::LinkEvent::ACTION_LINK_DOWN:
 				{
 					// remove all sockets on this interface
-					unlisten(evt.getInterface());
+					const ibrcommon::vinterface &iface = evt.getInterface();
+
+					ibrcommon::socketset socks = _vsocket.get(iface);
+					for (ibrcommon::socketset::iterator iter = socks.begin(); iter != socks.end(); ++iter) {
+						ibrcommon::tcpserversocket *sock = dynamic_cast<ibrcommon::tcpserversocket*>(*iter);
+						_vsocket.remove(sock);
+						try {
+							sock->down();
+						} catch (const ibrcommon::socket_exception &ex) {
+							IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						}
+						delete sock;
+					}
 					break;
 				}
 
