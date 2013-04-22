@@ -372,10 +372,17 @@ public class DaemonProcess {
             else if (key.startsWith("log_options"))
             {
                 int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
-                
+                int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
+
+                // disable debugging if the log level is lower than 3
+                if (logLevel < 3) debugVerbosity = 0;
+
                 synchronized(DaemonProcess.this) {
 	                // set logging options
 	                mDaemon.setLogging("Core", logLevel);
+
+	                // set debug verbosity
+	                mDaemon.setDebug( debugVerbosity );
                 }
             }
             else if (key.startsWith("log_debug_verbosity"))
