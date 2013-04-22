@@ -190,7 +190,7 @@ public class DaemonService extends Service {
         mSessionManager = new SessionManager(this);
         
         // create P2P Manager
-        // _p2p_manager = new P2PManager(this, _p2p_listener, "my address");
+        _p2p_manager = new P2PManager(this);
         
         // initialize the basic daemon
         mDaemonProcess.initialize();
@@ -282,8 +282,8 @@ public class DaemonService extends Service {
                     break;
                     
                 case OFFLINE:
-                    // TODO: disable P2P manager
-                    // _p2p_manager.destroy();
+                    // disable P2P manager
+                    _p2p_manager.destroy();
                     
                     // disable foreground service only if the daemon has been switched off
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
@@ -311,8 +311,8 @@ public class DaemonService extends Service {
                     // turn this to a foreground service (kill-proof)
                     startForeground(1, n);
                     
-                    // TODO: enable P2P manager
-                    // _p2p_manager.initialize();
+                    // enable P2P manager
+                    _p2p_manager.initialize();
                     break;
                     
                 case SUSPENDED:
@@ -390,34 +390,6 @@ public class DaemonService extends Service {
             nm.notify(1, buildNotification(R.drawable.ic_notification, stateText));
         }
     }
-
-    // private P2PManager.P2PNeighborListener _p2p_listener = new
-    // P2PManager.P2PNeighborListener() {
-    //
-    // public void onNeighborDisconnected(String name, String iface)
-    // {
-    // Log.d(TAG, "P2P neighbor has been disconnected");
-    // // TODO: put here the right code to control the dtnd
-    // }
-    //
-    // public void onNeighborDisappear(String name)
-    // {
-    // Log.d(TAG, "P2P neighbor has been disappeared");
-    // // TODO: put here the right code to control the dtnd
-    // }
-    //
-    // public void onNeighborDetected(String name)
-    // {
-    // Log.d(TAG, "P2P neighbor has been detected");
-    // // TODO: put here the right code to control the dtnd
-    // }
-    //
-    // public void onNeighborConnected(String name, String iface)
-    // {
-    // Log.d(TAG, "P2P neighbor has been connected");
-    // // TODO: put here the right code to control the dtnd
-    // }
-    // };
 
     private Notification buildNotification(int icon, String text) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);

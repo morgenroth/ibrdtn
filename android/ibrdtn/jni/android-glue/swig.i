@@ -59,6 +59,7 @@
 #include "../dtnd/src/core/EventReceiver.h"
 #include "../dtnd/src/api/NativeSession.h"
 #include "../dtnd/src/api/NativeSerializerCallback.h"
+#include "../dtnd/src/net/NativeP2pManager.h"
 #include "../dtnd/src/NativeDaemon.h"
 %}
 
@@ -67,6 +68,7 @@
 %feature("director", assumeoverride=1) NativeSerializerCallback;
 %feature("director", assumeoverride=1) NativeDaemonCallback;
 %feature("director", assumeoverride=1) NativeEventCallback;
+%feature("director") NativeP2pManager;
 
 %apply unsigned long long { uint64_t };
 
@@ -121,5 +123,6 @@ namespace std {
 %include "../dtnd/src/core/EventReceiver.h"
 %include "../dtnd/src/api/NativeSerializerCallback.h"
 %include "../dtnd/src/api/NativeSession.h"
+%include "../dtnd/src/net/NativeP2pManager.h"
 %include "../dtnd/src/NativeDaemon.h"
 
