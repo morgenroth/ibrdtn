@@ -121,6 +121,10 @@ namespace dtn
 			_ignoreDHTNeighbourInformations(false)
 		{}
 
+		Configuration::P2P::P2P()
+		 : _ctrl_path(""), _enabled(false)
+		{}
+
 		Configuration::Discovery::~Discovery() {}
 		Configuration::Debug::~Debug() {}
 		Configuration::Logger::~Logger() {}
@@ -128,6 +132,7 @@ namespace dtn
 		Configuration::Daemon::~Daemon() {}
 		Configuration::TimeSync::~TimeSync() {}
 		Configuration::DHT::~DHT() {}
+		Configuration::P2P::~P2P() {}
 
 		const Configuration::Discovery& Configuration::getDiscovery() const
 		{
@@ -167,6 +172,11 @@ namespace dtn
 		const Configuration::DHT& Configuration::getDHT() const
 		{
 			return _dht;
+		}
+
+		const Configuration::P2P& Configuration::getP2P() const
+		{
+			return _p2p;
 		}
 
 		Configuration& Configuration::getInstance(bool reset)
@@ -357,6 +367,7 @@ namespace dtn
 			_security.load(_conf);
 			_timesync.load(_conf);
 			_dht.load(_conf);
+			_p2p.load(_conf);
 		}
 
 		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
@@ -426,6 +437,17 @@ namespace dtn
 			_ignoreDHTNeighbourInformations = (conf.read<std::string> ("dht_ignore_neighbour_informations", "no") == "yes");
 
 			if (_minRating < 0)	_minRating = 0;
+		}
+
+		void Configuration::P2P::load(const ibrcommon::ConfigFile &conf)
+		{
+			try {
+				_ctrl_path = conf.read<std::string>("p2p_ctrlpath");
+				_enabled = true;
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+				// do nothing here...
+				_enabled = false;
+			}
 		}
 
 		bool Configuration::Debug::quiet() const
@@ -1262,6 +1284,16 @@ namespace dtn
 		bool Configuration::DHT::ignoreDHTNeighbourInformations() const
 		{
 			return _ignoreDHTNeighbourInformations;
+		}
+
+		bool Configuration::P2P::enabled() const
+		{
+			return _enabled;
+		}
+
+		const std::string Configuration::P2P::getCtrlPath() const
+		{
+			return _ctrl_path;
 		}
 	}
 }

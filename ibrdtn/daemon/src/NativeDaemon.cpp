@@ -85,6 +85,10 @@
 #include "DevNull.h"
 #include "Component.h"
 
+#ifdef WITH_WIFIP2P
+#include "WifiP2PManager.h"
+#endif
+
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
 #include "security/SecurityKeyManager.h"
@@ -1223,6 +1227,16 @@ namespace dtn
 			if (conf.getDHT().enabled()) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeDaemon::TAG, 50) << "DHT: is enabled!" << IBRCOMMON_LOGGER_ENDL;
 				_components[RUNLEVEL_NETWORK].push_back( new dtn::dht::DHTNameService() );
+			}
+#endif
+
+#ifdef WITH_WIFIP2P
+			if (conf.getP2P().enabled())
+			{
+				const std::string wifip2p_ctrlpath = conf.getP2P().getCtrlPath();
+
+				// create a wifi-p2p manager
+				_components[RUNLEVEL_NETWORK].push_back( new dtn::daemon::WifiP2PManager(wifip2p_ctrlpath) );
 			}
 #endif
 

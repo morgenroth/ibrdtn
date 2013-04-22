@@ -31,8 +31,8 @@ dtnd_sources = \
 	NativeDaemon.h \
 	NativeDaemon.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(SQLITE_CFLAGS) $(DAEMON_CFLAGS) $(DTNDHT_CFLAGS)
-AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(SQLITE_LIBS) $(DAEMON_LIBS) $(DTNDHT_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(SQLITE_CFLAGS) $(DAEMON_CFLAGS) $(DTNDHT_CFLAGS) $(WIFIP2P_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(SQLITE_LIBS) $(DAEMON_LIBS) $(DTNDHT_LIBS) $(WIFIP2P_LIBS)
 
 dtnd_libs = core/libcore.la storage/libstorage.la net/libnet.la routing/librouting.la api/libapi.la
 
@@ -56,6 +56,12 @@ libdtnd_la_SOURCES = $(dtnd_sources)
 libdtnd_la_LIBADD = $(dtnd_libs)
 dtnd_SOURCES = Main.cpp
 dtnd_LDADD = libdtnd.la
+endif
+
+if WIFIP2P
+dtnd_sources += \
+	WifiP2PManager.h \
+	WifiP2PManager.cpp
 endif
 
 Android.mk: Makefile.am

@@ -678,6 +678,22 @@ namespace dtn
 				bool ignoreDHTNeighbourInformations() const;
 			};
 
+			class P2P : public Configuration::Extension
+			{
+				friend class Configuration;
+			protected:
+				P2P();
+				virtual ~P2P();
+				void load(const ibrcommon::ConfigFile &conf);
+
+				std::string _ctrl_path;
+				bool _enabled;
+
+			public:
+				const std::string getCtrlPath() const;
+				bool enabled() const;
+			};
+
 			const Configuration::Discovery& getDiscovery() const;
 			const Configuration::Debug& getDebug() const;
 			const Configuration::Logger& getLogger() const;
@@ -686,6 +702,7 @@ namespace dtn
 			const Configuration::Daemon& getDaemon() const;
 			const Configuration::TimeSync& getTimeSync() const;
 			const Configuration::DHT& getDHT() const;
+			const Configuration::P2P& getP2P() const;
 
 		private:
 			ibrcommon::ConfigFile _conf;
@@ -697,6 +714,7 @@ namespace dtn
 			Configuration::Daemon _daemon;
 			Configuration::TimeSync _timesync;
 			Configuration::DHT _dht;
+			Configuration::P2P _p2p;
 
 			std::string _filename;
 			bool _doapi;
