@@ -259,7 +259,10 @@ int main(int argc, char *argv[])
 						if (bundle_signed) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 						// enable custody transfer if requested
-						if (bundle_custody) b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
+						if (bundle_custody) {
+							b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
+							b._custodian = dtn::data::EID("api:me");
+						}
 
 						// enable compression
 						if (bundle_compression) b.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, true);
@@ -306,7 +309,10 @@ int main(int argc, char *argv[])
 						if (bundle_signed) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 						// enable custody transfer if requested
-						if (bundle_custody) b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
+						if (bundle_custody) {
+							b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
+							b._custodian = dtn::data::EID("api:me");
+						}
 
 						// enable compression
 						if (bundle_compression) b.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, true);
