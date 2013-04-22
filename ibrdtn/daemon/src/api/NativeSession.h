@@ -189,7 +189,7 @@ namespace dtn
 			/**
 			 * Mark the bundle with the given ID as delivered.
 			 */
-			void delivered(const dtn::data::BundleID &id) throw (BundleNotFoundException);
+			void delivered(const dtn::data::BundleID &id) const throw (BundleNotFoundException);
 
 			/**
 			 * Send the bundle in the local register

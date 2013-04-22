@@ -288,7 +288,7 @@ namespace dtn
 			_bundle[ri] = dtn::data::Bundle();
 		}
 
-		void NativeSession::delivered(const dtn::data::BundleID &id) throw (BundleNotFoundException)
+		void NativeSession::delivered(const dtn::data::BundleID &id) const throw (BundleNotFoundException)
 		{
 			try {
 				// announce this bundle as delivered

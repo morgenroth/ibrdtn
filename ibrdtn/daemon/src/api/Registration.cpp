@@ -159,7 +159,7 @@ namespace dtn
 			return _endpoints;
 		}
 
-		void Registration::delivered(const dtn::data::MetaBundle &m)
+		void Registration::delivered(const dtn::data::MetaBundle &m) const
 		{
 			// raise bundle event
 			dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELIVERED);

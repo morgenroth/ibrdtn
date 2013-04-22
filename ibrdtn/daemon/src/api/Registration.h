@@ -158,7 +158,7 @@ namespace dtn
 			 * notify a bundle as delivered (and delete it if singleton destination)
 			 * @param id
 			 */
-			void delivered(const dtn::data::MetaBundle &m);
+			void delivered(const dtn::data::MetaBundle &m) const;
 
 			/**
 			 * returns a default EID based on the registration handle
