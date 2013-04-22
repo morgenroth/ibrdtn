@@ -73,12 +73,12 @@ namespace dtn
 			 */
 			dtn::data::Block& readBlock(dtn::data::BundleBuilder &builder);
 
-		private:
 			/**
 			 * deserialize a base64 encoded data stream into another stream
 			 */
-			dtn::data::Deserializer &operator>>(std::ostream &stream);
+			dtn::data::Deserializer& readBase64(std::ostream &stream);
 
+		private:
 			std::istream &_stream;
 			bool _lastblock;
 

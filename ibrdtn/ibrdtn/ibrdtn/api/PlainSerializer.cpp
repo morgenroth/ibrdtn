@@ -455,7 +455,7 @@ namespace dtn
 			return (*this);
 		}
 
-		dtn::data::Deserializer& PlainDeserializer::operator>>(std::ostream &stream)
+		dtn::data::Deserializer& PlainDeserializer::readBase64(std::ostream &stream)
 		{
 			ibrcommon::Base64Stream b64(stream, true);
 			std::string data;
