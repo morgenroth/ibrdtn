@@ -415,7 +415,7 @@ public class ClientSession {
                     _serializer_callback.setCallback(null);
 
                     // bundle loaded - return true
-                    return false;
+                    return true;
                 } catch (BundleNotFoundException e) {
                     // set serializer back to null
                     _serializer_callback.setCallback(null);
