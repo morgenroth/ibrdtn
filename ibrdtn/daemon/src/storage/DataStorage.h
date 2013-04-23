@@ -97,6 +97,7 @@ namespace dtn
 			DataStorage(Callback &callback, const ibrcommon::File &path, size_t write_buffer = 0, bool initialize = false);
 			virtual ~DataStorage();
 
+			const Hash store(Container *data);
 			void store(const Hash &hash, Container *data);
 
 			DataStorage::istream retrieve(const Hash &hash) throw (DataNotAvailableException);

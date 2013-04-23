@@ -159,6 +159,14 @@ namespace dtn
 			_tasks.push( new StoreDataTask(hash, data) );
 		}
 
+		const DataStorage::Hash DataStorage::store(DataStorage::Container *data)
+		{
+			// create a corresponding hash
+			DataStorage::Hash hash(*data);
+			store(hash, data);
+			return hash;
+		}
+
 		DataStorage::istream DataStorage::retrieve(const DataStorage::Hash &hash) throw (DataNotAvailableException)
 		{
 			ibrcommon::File file = _path.get(hash.value);
