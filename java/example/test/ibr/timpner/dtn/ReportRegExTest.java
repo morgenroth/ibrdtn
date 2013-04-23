@@ -29,27 +29,37 @@ public class ReportRegExTest {
         String notificationType = "(\\w+)\\[(\\d+)\\.(\\d+)\\]";
 
         // 603 NOTIFY REPORT <timestamp>.<seq_nr>[.<frag_offset>:<frag_len>] <src_eid> <reason_code> <type>\\[<timestamp>.<tmp_nanos>\\]
-        final Pattern pattern = Pattern.compile(start + "\\s(\\d+)\\.(\\d+)" + fragments + "\\s" + url + "\\s(\\d+)\\s" + notificationType
+        final Pattern pattern = Pattern.compile(
+                start 
+                + "\\s"
+                + url
+                + "\\s(\\d+)\\.(\\d+)" 
+                + fragments 
+                + "\\s" 
+                + url 
+                + "\\s(\\d+)\\s" 
+                + notificationType
                 + "(.*)");
         final Matcher matcher = pattern.
-                matcher("603 NOTIFY REPORT 414503259.0.666:777 dtn://timpner-lx/test-1 0 RECEIPT[1361188059.760648000] ");
+                matcher("603 NOTIFY REPORT dtn://timpner-lx 420030842.1 dtn://timpner-lx/1 0 RECEIPT[1366715642.374735000] ");
         matcher.find();
         System.out.println("Status: " + matcher.group(1));
-        System.out.println("Timestamp: " + matcher.group(2));
-        System.out.println("Seq: " + matcher.group(3));
-        System.out.println("[Frag]: " + matcher.group(4));
-        String frag = matcher.group(4);
+        System.out.println("Source: " + matcher.group(2));
+        System.out.println("Timestamp: " + matcher.group(3));
+        System.out.println("Seq: " + matcher.group(4));
+        System.out.println("[Frag]: " + matcher.group(5));
+        String frag = matcher.group(5);
         if (frag != null) {
             String[] split = frag.split("\\.|:");
-            System.out.println("Offset: " + split[1]);
-            System.out.println("Length: " + split[2]);
+            System.out.println("Offset: " + split[0]);
+            System.out.println("Length: " + split[1]);
         }
 
-        System.out.println("src: " + matcher.group(5));
-        int reasonCode = Integer.parseInt(matcher.group(6));
+        System.out.println("Dest: " + matcher.group(6));
+        int reasonCode = Integer.parseInt(matcher.group(7));
         System.out.println("Reason code: " + reasonCode + ":" + ReasonCode.values()[reasonCode]);
-        System.out.println("Type: " + matcher.group(7));
-        System.out.println("Timestamp: " + matcher.group(8));
-        System.out.println("Nanos: " + matcher.group(9));
+        System.out.println("Type: " + matcher.group(8));
+        System.out.println("Timestamp: " + matcher.group(9));
+        System.out.println("Nanos: " + matcher.group(10));
     }
 }

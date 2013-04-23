@@ -51,38 +51,42 @@ public class StatusReport {
         String fragments = "(\\.\\d+:\\d+)?";
         String notificationType = "(\\w+)\\[(\\d+)\\.(\\d+)\\]";
 
-        // NOTIFY REPORT <timestamp>.<seq_nr>[.<frag_offset>:<frag_len>] <src_eid> <reason_code> <type>\\[<timestamp>.<tmp_nanos>\\]
+        // NOTIFY REPORT <src_eid> <timestamp>.<seq_nr>[.<frag_offset>:<frag_len>] <dst_eid> <reason_code> <type>\\[<timestamp>.<tmp_nanos>\\]
         final Pattern pattern = Pattern.compile(
-                start
-                + "\\s(\\d+)\\.(\\d+)"
-                + fragments
+                start 
                 + "\\s"
                 + url
-                + "\\s(\\d+)\\s"
+                + "\\s(\\d+)\\.(\\d+)" 
+                + fragments 
+                + "\\s" 
+                + url 
+                + "\\s(\\d+)\\s" 
                 + notificationType
                 + "(.*)"); // This takes care of possible repititions of <type>\\[<timestamp>.<tmp_nanos>\\]. This is not expected behavior, though.
         final Matcher matcher = pattern.matcher(data);
         matcher.find();
 
-        timestamp = Long.parseLong(matcher.group(2));
-        sequenceNumber = Long.parseLong(matcher.group(3));
+        source = new SingletonEndpoint(matcher.group(2));
+        
+        timestamp = Long.parseLong(matcher.group(3));
+        sequenceNumber = Long.parseLong(matcher.group(4));
 
-        String frag = matcher.group(4);
+        String frag = matcher.group(5);
         if (frag != null) {
             String[] split = frag.split("\\.|:");
-            fragOffset = Long.parseLong(split[1]);
-            fragLength = Long.parseLong(split[2]);
+            fragOffset = Long.parseLong(split[0]);
+            fragLength = Long.parseLong(split[1]);
         }
 
-        source = new SingletonEndpoint(matcher.group(5));
+        //dest = new SingletonEndpoint(matcher.group(6));
 
-        int reason = Integer.parseInt(matcher.group(6));
+        int reason = Integer.parseInt(matcher.group(7));
         reasonCode = ReasonCode.values()[reason];
 
-        status = Status.valueOf(matcher.group(7));
+        status = Status.valueOf(matcher.group(8));
 
-        // System.out.println("Timestamp: " + matcher.group(8));
-        // System.out.println("Nanos: " + matcher.group(9));
+        // System.out.println("Timestamp: " + matcher.group(9));
+        // System.out.println("Nanos: " + matcher.group(10));
     }
 
     public Long getTimestamp() {
