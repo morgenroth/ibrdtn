@@ -173,10 +173,11 @@ public class Roster extends LinkedList<Buddy> {
 		
 		try {
 			// load the last 20 messages
-			Cursor cur = database.query("messages", new String[] { "_id", "direction", "created", "received", "payload", "sentid", "flags" }, "buddy = ?", new String[] { buddy.getId().toString() }, null, null, "_id", "0, 20");
+			Cursor cur = database.query("messages", new String[] { "_id", "direction", "created", "received", "payload", "sentid", "flags" }, "buddy = ?", new String[] { buddy.getId().toString() }, null, null, "_id DESC", "0, 20");
 			Log.i(TAG, "query for messages");
-	
-			while (cur.moveToNext())
+
+			cur.moveToLast();
+			while (!cur.isBeforeFirst())
 			{
 				try {
 					Long msgid = cur.getLong(0);
@@ -195,6 +196,7 @@ public class Roster extends LinkedList<Buddy> {
 				} catch (ParseException e) {
 					Log.e(TAG, "failed to convert date: " + cur.getString(1));
 				}
+				cur.moveToPrevious();
 			}
 			
 			cur.close();
