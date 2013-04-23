@@ -164,7 +164,6 @@ namespace dtn
 
 			// increment the storage size
 			allocSpace(size);
-			_bundle_lengths[bundle] = size;
 
 			// insert Container
 			pair<set<dtn::data::Bundle>::iterator,bool> ret = _bundles.insert( bundle );
@@ -174,11 +173,16 @@ namespace dtn
 				_list.add(dtn::data::MetaBundle(bundle));
 				_priority_index.insert( bundle );
 
+				_bundle_lengths[bundle] = size;
+
 				// raise bundle added event
 				eventBundleAdded(bundle);
 			}
 			else
 			{
+				// free the previously allocated space
+				freeSpace(size);
+
 				IBRCOMMON_LOGGER_DEBUG_TAG(MemoryBundleStorage::TAG, 5) << "got bundle duplicate " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
