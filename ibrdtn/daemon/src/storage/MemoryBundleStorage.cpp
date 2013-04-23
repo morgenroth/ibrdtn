@@ -217,11 +217,11 @@ namespace dtn
 					// remove item in the bundlelist
 					_list.remove(bundle);
 
-					// erase the bundle
-					__erase(iter);
-
 					// raise bundle removed event
 					eventBundleRemoved(bundle);
+
+					// erase the bundle
+					__erase(iter);
 
 					return bundle;
 				}
