@@ -459,9 +459,16 @@ namespace dtn
 				// remove item in the bundlelist
 				const dtn::data::MetaBundle &meta = (*iter);
 
-				// remove the item
-				__remove(meta);
+				// remove it from the bundle list
+				_priority_index.erase(meta);
+
+				DataStorage::Hash hash(meta.toString());
+
+				// create a background task for removing the bundle
+				_datastore.remove(hash);
 			}
+
+			_list.clear();
 		}
 
 		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
