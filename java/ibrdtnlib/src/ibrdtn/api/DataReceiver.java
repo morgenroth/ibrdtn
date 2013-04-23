@@ -333,7 +333,7 @@ public class DataReceiver extends Thread implements SABHandler {
 
     @Override
     public void notify(Integer type, String data) {
-         logger.log(Level.INFO, "{0} {1}", new Object[]{String.valueOf(type), data});
+        // logger.log(Level.INFO, "{0} {1}", new Object[]{String.valueOf(type), data});
 
         switch (type) {
             case 600: // COMMON
