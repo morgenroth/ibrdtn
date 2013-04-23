@@ -700,7 +700,7 @@ namespace dtn
 										b64 << std::flush;
 
 										// final line break (mark the end)
-										_stream << std::endl;
+										_stream << std::endl << std::endl;
 									} catch (const std::bad_cast&) {
 										_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PAYLOAD GET FAILED INVALID BLOCK TYPE" << std::endl;
 									}
@@ -716,7 +716,7 @@ namespace dtn
 									b64 << std::flush;
 
 									// final line break (mark the end)
-									_stream << std::endl;
+									_stream << std::endl << std::endl;
 								}
 							} catch (const std::exception &ex) {
 								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PAYLOAD GET FAILED " << ex.what() << std::endl;
