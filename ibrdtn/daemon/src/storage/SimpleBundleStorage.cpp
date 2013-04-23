@@ -322,7 +322,11 @@ namespace dtn
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READONLY);
 			std::set<dtn::data::EID> ret;
 
-			// TODO: implement this!
+			for (dtn::data::BundleList::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
+			{
+				const dtn::data::MetaBundle &bundle = (*iter);
+				ret.insert(bundle.destination);
+			}
 
 			return ret;
 		}
