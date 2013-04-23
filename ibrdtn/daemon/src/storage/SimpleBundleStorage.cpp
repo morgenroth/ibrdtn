@@ -79,6 +79,10 @@ namespace dtn
 			// cleanup bundle sizes
 			_bundle_lengths.erase(b);
 
+			// clean-up data structures
+			_list.remove(b);
+			_priority_index.erase(b);
+
 			// raise bundle removed event
 			eventBundleRemoved(b);
 
@@ -317,6 +321,9 @@ namespace dtn
 		{
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READONLY);
 			std::set<dtn::data::EID> ret;
+
+			// TODO: implement this!
+
 			return ret;
 		}
 
@@ -329,11 +336,11 @@ namespace dtn
 			// allocate space for the bundle
 			allocSpace(bundle_size);
 
-			// create meta data object
-			dtn::data::MetaBundle meta(bundle);
-
 			// accept custody if requested
 			try {
+				// create meta data object
+				dtn::data::MetaBundle meta(bundle);
+
 				dtn::data::EID custodian = BundleStorage::acceptCustody(meta);
 
 				// container for the custody accepted bundle
@@ -342,63 +349,12 @@ namespace dtn
 				// set the new custodian
 				ca_bundle._custodian = custodian;
 
-				// update meta data object
-				meta = ca_bundle;
-
-				// create a new container and hash
-				std::auto_ptr<BundleContainer> bc(new BundleContainer(ca_bundle));
-				DataStorage::Hash hash(*bc);
-
-				// enter critical section - lock all data structures
-				{
-					// add the new bundles to the list of pending bundles
-					ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
-
-					// add the bundle to the stored bundles
-					_pending_bundles[hash] = ca_bundle;
-
-					// increment the storage size
-					_bundle_lengths[meta] = bundle_size;
-
-					// add it to the bundle list
-					_list.add(meta);
-					_priority_index.insert(meta);
-				}
-
-				// put the bundle into the data store
-				_datastore.store(hash, bc.get());
-				bc.release();
+				// store the bundle with the custodian
+				__store(ca_bundle, bundle_size);
 			} catch (const ibrcommon::Exception&) {
 				// no custody has been requested - go on with standard store procedure
-
-				// create a new container and hash
-				std::auto_ptr<BundleContainer> bc(new BundleContainer(bundle));
-				DataStorage::Hash hash(*bc);
-
-				// enter critical section - lock all data structures
-				{
-					// add the new bundles to the list of pending bundles
-					ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
-
-					// no custody requested
-					// add the bundle to the stored bundles
-					_pending_bundles[hash] = bundle;
-
-					// increment the storage size
-					_bundle_lengths[meta] = bundle_size;
-
-					// add it to the bundle list
-					_list.add(meta);
-					_priority_index.insert(meta);
-				}
-
-				// put the bundle into the data store
-				_datastore.store(hash, bc.get());
-				bc.release();
+				__store(bundle, bundle_size);
 			}
-
-			// raise bundle added event
-			eventBundleAdded(meta);
 		}
 
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
@@ -412,20 +368,60 @@ namespace dtn
 					// remove item in the bundlelist
 					dtn::data::MetaBundle meta = (*iter);
 
-					// remove it from the bundle list
-					_list.remove(meta);
-					_priority_index.erase(meta);
-
-					DataStorage::Hash hash(meta.toString());
-
-					// create a background task for removing the bundle
-					_datastore.remove(hash);
+					// remove the item
+					__remove(meta);
 
 					return;
 				}
 			}
 
 			throw NoBundleFoundException();
+		}
+
+		void SimpleBundleStorage::__store(const dtn::data::Bundle &bundle, size_t bundle_size)
+		{
+			// create meta bundle object
+			const dtn::data::MetaBundle meta(bundle);
+
+			// create a new container and hash
+			std::auto_ptr<BundleContainer> bc(new BundleContainer(bundle));
+			DataStorage::Hash hash(*bc);
+
+			// enter critical section - lock all data structures
+			{
+				// add the new bundles to the list of pending bundles
+				ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
+
+				// no custody requested
+				// add the bundle to the stored bundles
+				_pending_bundles[hash] = bundle;
+
+				// increment the storage size
+				_bundle_lengths[meta] = bundle_size;
+
+				// add it to the bundle list
+				_list.add(meta);
+				_priority_index.insert(meta);
+			}
+
+			// put the bundle into the data store
+			_datastore.store(hash, bc.get());
+			bc.release();
+
+			// raise bundle added event
+			eventBundleAdded(meta);
+		}
+
+		void SimpleBundleStorage::__remove(const dtn::data::MetaBundle &meta)
+		{
+			// remove it from the bundle list
+			_list.remove(meta);
+			_priority_index.erase(meta);
+
+			DataStorage::Hash hash(meta.toString());
+
+			// create a background task for removing the bundle
+			_datastore.remove(hash);
 		}
 
 		dtn::data::MetaBundle SimpleBundleStorage::remove(const ibrcommon::BloomFilter &filter)
@@ -439,14 +435,8 @@ namespace dtn
 
 				if ( filter.contains(meta.toString()) )
 				{
-					// remove it from the bundle list
-					_list.remove(meta);
-					_priority_index.erase(meta);
-
-					DataStorage::Hash hash(meta.toString());
-
-					// create a background task for removing the bundle
-					_datastore.remove(hash);
+					// remove the item
+					__remove(meta);
 
 					return meta;
 				}
@@ -465,14 +455,9 @@ namespace dtn
 				// remove item in the bundlelist
 				const dtn::data::MetaBundle &meta = (*iter);
 
-				DataStorage::Hash hash(meta.toString());
-
-				// create a background task for removing the bundle
-				_datastore.remove(hash);
+				// remove the item
+				__remove(meta);
 			}
-
-			_priority_index.clear();
-			_list.clear();
 		}
 
 		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
@@ -484,13 +469,8 @@ namespace dtn
 					// remove the bundle
 					const dtn::data::MetaBundle &meta = (*iter);
 
-					DataStorage::Hash hash(meta.toString());
-
-					// create a background task for removing the bundle
-					_datastore.remove(hash);
-
-					// remove the bundle off the index
-					_priority_index.erase(meta);
+					// remove the item
+					__remove(meta);
 
 					break;
 				}
