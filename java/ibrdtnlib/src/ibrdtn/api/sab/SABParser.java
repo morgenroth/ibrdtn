@@ -42,8 +42,7 @@ public class SABParser {
         PARSER_BUNDLE,
         PARSER_BUNDLE_INFO,
         PARSER_BLOCK,
-        PARSER_BLOCK_INFO,
-        PARSER_BLOCK_PAYLOAD
+        PARSER_BLOCK_INFO
     }
     private State state = State.PARSER_RESPONSE;
     private Boolean lastblock = false;
@@ -83,7 +82,6 @@ public class SABParser {
                 handler.response(ret);
                 break;
 
-            case PARSER_BLOCK_PAYLOAD:
             case PARSER_BLOCK_INFO:
             case PARSER_BLOCK:
                 readBlock(reader, handler);
@@ -172,7 +170,7 @@ public class SABParser {
                 this.state = State.PARSER_BUNDLE_INFO;
                 handler.startBundle();
             } else if ((code == 200) && values[1].startsWith("PAYLOAD GET")) {
-                this.state = State.PARSER_BLOCK_PAYLOAD;
+                this.state = State.PARSER_DATA_INITIAL_PAYLOAD;
             }
         } catch (IOException e) {
             throw new SABException(e.toString());
@@ -234,9 +232,6 @@ public class SABParser {
             // read the payload, if an empty line was received
             if (data.length() == 0) {
                 switch (this.state) {
-                    case PARSER_BLOCK_PAYLOAD:
-                        this.state = State.PARSER_DATA_INITIAL_PAYLOAD;
-                        break;
                     case PARSER_BLOCK:
                         this.state = State.PARSER_DATA_INITIAL;
                         break;
@@ -297,7 +292,7 @@ public class SABParser {
             if ((data.length() == 0)
                     && (this.state != State.PARSER_DATA_INITIAL)
                     && (this.state != State.PARSER_DATA_INITIAL_PAYLOAD)) {
-                handler.endBlock();
+                handler.endBlock(); // macht das hier immer sinn?
                 switch (state) {
                     case PARSER_DATA_NEXT_PAYLOAD:
                         this.state = State.PARSER_RESPONSE;

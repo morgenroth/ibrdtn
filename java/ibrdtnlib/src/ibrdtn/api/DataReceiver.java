@@ -63,7 +63,7 @@ public class DataReceiver extends Thread implements SABHandler {
     CountingOutputStream counter = null;
     Long progress_last = 0L;
     private ProgressState progress_state = ProgressState.INITIAL;
-    private boolean isBlockInitialized;
+    private boolean isPayloadInitialized;
 
     public DataReceiver(ExtendedClient client, Object handler_mutex, CallbackHandler handler) {
         this.client = client;
@@ -81,7 +81,7 @@ public class DataReceiver extends Thread implements SABHandler {
         try {
             p.parse(client.istream, this);
         } catch (SABException e) {
-            logger.log(Level.SEVERE, "Parsing input stream failed", e);
+            logger.log(Level.SEVERE, "Parsing input stream failed", e.getMessage());
             client.mark_error();
         }
     }
@@ -167,7 +167,7 @@ public class DataReceiver extends Thread implements SABHandler {
     public void endBlock() {
         //logger.log(Level.FINE, "Ending block.");
 
-        if (!isBlockInitialized && current_block != null) {
+        if (!isPayloadInitialized && current_block != null) {
             synchronized (handler_mutex) {
                 if (handler != null) {
                     handler.startBlock(current_block);
@@ -206,9 +206,7 @@ public class DataReceiver extends Thread implements SABHandler {
             outputStream = null;
         }
 
-        /*
-         * Current block is null if only the payload was requested
-         */
+        // Current block is null if only the payload was requested        
         if (current_block != null) {
             synchronized (handler_mutex) {
                 if (handler != null) {
@@ -222,7 +220,7 @@ public class DataReceiver extends Thread implements SABHandler {
         updateProgress();
 
         current_block = null;
-        isBlockInitialized = false;
+        isPayloadInitialized = false;
     }
 
     @Override
@@ -232,6 +230,7 @@ public class DataReceiver extends Thread implements SABHandler {
 
         if (current_bundle != null) {
 
+            // Handle bundle attributes
             if (current_block == null) {
 
                 if (keyword.equalsIgnoreCase("source")) {
@@ -264,7 +263,7 @@ public class DataReceiver extends Thread implements SABHandler {
                 } else if (keyword.equalsIgnoreCase("Lifetime")) {
                     current_bundle.setLifetime(Long.parseLong(value));
                 }
-            } else {
+            } else { // handle block attributes
 
                 if (keyword.equalsIgnoreCase("Length")) {
                     current_block.setLength(Long.parseLong(value));
@@ -276,10 +275,9 @@ public class DataReceiver extends Thread implements SABHandler {
         }
     }
 
-    private void initializeBlock() {
-        /*
-         * Current block is null if only the payload was requested
-         */
+    private void initializePayload() {
+
+        // Current block is null if only the payload was requested         
         if (current_block != null) {
             synchronized (handler_mutex) {
                 if (handler != null) {
@@ -288,7 +286,7 @@ public class DataReceiver extends Thread implements SABHandler {
             }
         }
 
-        isBlockInitialized = true;
+        isPayloadInitialized = true;
 
         synchronized (handler_mutex) {
             if (handler != null) {
@@ -314,8 +312,8 @@ public class DataReceiver extends Thread implements SABHandler {
 
         //logger.log(Level.INFO, "Characters: {0}", data);
 
-        if (!isBlockInitialized) {
-            initializeBlock();
+        if (!isPayloadInitialized) {
+            initializePayload();
         }
 
         if (outputWriter != null) {
@@ -394,6 +392,7 @@ public class DataReceiver extends Thread implements SABHandler {
     }
 
     private void updateProgress() {
+
         if (current_block == null) {
             return;
         }
@@ -401,6 +400,9 @@ public class DataReceiver extends Thread implements SABHandler {
             return;
         }
         if (current_block.getType() != 1) {
+            return;
+        }
+        if (!isPayloadInitialized) { // if only bundle info was requested don't update payload progress
             return;
         }
 
