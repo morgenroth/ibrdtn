@@ -110,7 +110,7 @@ namespace dtn
 							// set the verify bit, after verification
 							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Bundle from " << bundle._source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(5) << "Bundle from " << bundle.source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
 							return;
 						} catch (const ibrcommon::Exception&) {
 							throw VerificationFailedException();
@@ -124,7 +124,7 @@ namespace dtn
 							// set the verify bit, after verification
 							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Bundle from " << bundle._source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(5) << "Bundle from " << bundle.source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
 						} catch (const ibrcommon::Exception&) {
 							throw VerificationFailedException();
 						}

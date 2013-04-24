@@ -263,7 +263,7 @@ namespace dtn
 		bool Bundle::allEIDsInCBHE() const
 		{
 			if(    _destination.isCompressable()
-			    && _source.isCompressable()
+			    && source.isCompressable()
 			    && _reportto.isCompressable()
 			    && _custodian.isCompressable()
 			  )

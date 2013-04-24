@@ -148,14 +148,14 @@ namespace dtn
 
 			_bundleid.timestamp = other.timestamp;
 			_bundleid.sequencenumber = other.sequencenumber;
-			_bundleid.source = other._source;
+			_bundleid.source = other.source;
 		}
 
 		bool CustodySignalBlock::match(const Bundle& other) const
 		{
 			if (_bundleid.timestamp != other.timestamp) return false;
 			if (_bundleid.sequencenumber != other.sequencenumber) return false;
-			if (_bundleid.source != other._source) return false;
+			if (_bundleid.source != other.source) return false;
 
 			// set bundle parameter
 			if (other.get(Bundle::FRAGMENT))

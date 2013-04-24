@@ -82,7 +82,7 @@ namespace dtn
 			custody_bundle.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 			custody_bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 			custody_bundle._destination = meta.custodian;
-			custody_bundle._source = dtn::core::BundleCore::local;
+			custody_bundle.source = dtn::core::BundleCore::local;
 
 			// send the custody accepted bundle
 			dtn::core::BundleGeneratedEvent::raise(custody_bundle);
@@ -119,7 +119,7 @@ namespace dtn
 
 			b.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 			b._destination = meta.custodian;
-			b._source = dtn::core::BundleCore::local;
+			b.source = dtn::core::BundleCore::local;
 
 			// send the custody rejected bundle
 			dtn::core::BundleGeneratedEvent::raise(b);

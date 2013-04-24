@@ -57,7 +57,7 @@ namespace dtn
 
 			// rebuild the dictionary
 			_dictionary.add(obj._destination);
-			_dictionary.add(obj._source);
+			_dictionary.add(obj.source);
 			_dictionary.add(obj._reportto);
 			_dictionary.add(obj._custodian);
 
@@ -147,7 +147,7 @@ namespace dtn
 		bool DefaultSerializer::isCompressable(const dtn::data::Bundle &obj) const
 		{
 			// check if all EID are compressable
-			bool compressable = ( obj._source.isCompressable() &&
+			bool compressable = ( obj.source.isCompressable() &&
 					obj._destination.isCompressable() &&
 					obj._reportto.isCompressable() &&
 					obj._custodian.isCompressable() );
@@ -197,7 +197,7 @@ namespace dtn
 				primaryheader[1] = SDNV(ref.second);
 
 				// source reference
-				ref = obj._source.getCompressed();
+				ref = obj.source.getCompressed();
 				primaryheader[2] = SDNV(ref.first);
 				primaryheader[3] = SDNV(ref.second);
 
@@ -222,7 +222,7 @@ namespace dtn
 				primaryheader[1] = SDNV(ref.second);
 
 				// source reference
-				ref = _dictionary.getRef(obj._source);
+				ref = _dictionary.getRef(obj.source);
 				primaryheader[2] = SDNV(ref.first);
 				primaryheader[3] = SDNV(ref.second);
 
@@ -434,7 +434,7 @@ namespace dtn
 				primaryheader[1] = SDNV(ref.second);
 
 				// source reference
-				ref = obj._source.getCompressed();
+				ref = obj.source.getCompressed();
 				primaryheader[2] = SDNV(ref.first);
 				primaryheader[3] = SDNV(ref.second);
 
@@ -459,7 +459,7 @@ namespace dtn
 				primaryheader[1] = SDNV(ref.second);
 
 				// source reference
-				ref = _dictionary.getRef(obj._source);
+				ref = _dictionary.getRef(obj.source);
 				primaryheader[2] = SDNV(ref.first);
 				primaryheader[3] = SDNV(ref.second);
 
@@ -675,7 +675,7 @@ namespace dtn
 			obj.received = 0;
 			obj.reportto = pb._reportto;
 			obj.sequencenumber = pb.sequencenumber;
-			obj.source = pb._source;
+			obj.source = pb.source;
 			obj.timestamp = pb.timestamp;
 
 			return (*this);
@@ -724,14 +724,14 @@ namespace dtn
 
 				// decode EIDs
 				obj._destination = _dictionary.get(ref[0].first.getValue(), ref[0].second.getValue());
-				obj._source = _dictionary.get(ref[1].first.getValue(), ref[1].second.getValue());
+				obj.source = _dictionary.get(ref[1].first.getValue(), ref[1].second.getValue());
 				obj._reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
 				obj._custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
 				_compressed = false;
 			} catch (const dtn::InvalidDataException&) {
 				// error while reading the dictionary. We assume that this is a compressed bundle header.
 				obj._destination = dtn::data::EID(ref[0].first.getValue(), ref[0].second.getValue());
-				obj._source = dtn::data::EID(ref[1].first.getValue(), ref[1].second.getValue());
+				obj.source = dtn::data::EID(ref[1].first.getValue(), ref[1].second.getValue());
 				obj._reportto = dtn::data::EID(ref[2].first.getValue(), ref[2].second.getValue());
 				obj._custodian = dtn::data::EID(ref[3].first.getValue(), ref[3].second.getValue());
 				_compressed = true;

@@ -59,7 +59,7 @@ void PayloadConfidentialBlockTest::encryptTest(void)
 	}
 
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://test");
+	b.source = dtn::data::EID("dtn://test");
 	b._destination = pubkey.reference;
 
 	// add payload block
@@ -85,7 +85,7 @@ void PayloadConfidentialBlockTest::encryptTest(void)
 	}
 
 	// encrypt the payload block
-	dtn::security::PayloadConfidentialBlock::encrypt(b, pubkey, b._source);
+	dtn::security::PayloadConfidentialBlock::encrypt(b, pubkey, b.source);
 
 	// verify the encryption
 	{
@@ -139,7 +139,7 @@ void PayloadConfidentialBlockTest::decryptTest(void)
 	}
 
 	dtn::data::Bundle b;
-	b._source = pubkey.reference + "/test";
+	b.source = pubkey.reference + "/test";
 	b._destination = dtn::data::EID("dtn://destination/test");
 
 	encrypt(pubkey, b);
@@ -187,7 +187,7 @@ void PayloadConfidentialBlockTest::encrypt(const dtn::security::SecurityKey &pub
 	(*p.getBLOB().iostream()) << _testdata << std::flush;
 
 	// encrypt the payload block
-	dtn::security::PayloadConfidentialBlock::encrypt(b, pubkey, b._source);
+	dtn::security::PayloadConfidentialBlock::encrypt(b, pubkey, b.source);
 }
 
 void PayloadConfidentialBlockTest::decrypt(const dtn::security::SecurityKey &pubkey, dtn::data::Bundle &b)

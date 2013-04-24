@@ -485,7 +485,7 @@ namespace dtn
 			static const dtn::data::EID clienteid("api:me");
 
 			// set the source address to the sending EID
-			bundle._source = source;
+			bundle.source = source;
 
 			if (bundle._destination == clienteid) bundle._destination = source;
 			if (bundle._reportto == clienteid) bundle._reportto = source;

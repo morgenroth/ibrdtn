@@ -712,7 +712,7 @@ namespace dtn
 		{
 			dtn::data::EID source = getSecuritySource();
 			if (source == dtn::data::EID())
-				source = bundle._source.getNode();
+				source = bundle.source.getNode();
 			return source;
 		}
 

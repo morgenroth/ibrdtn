@@ -87,7 +87,7 @@ namespace dtn
 			{
 				if (	(c._bundle.timestamp != obj.timestamp) ||
 						(c._bundle.sequencenumber != obj.sequencenumber) ||
-						(c._bundle._source != obj._source) )
+						(c._bundle.source != obj.source) )
 					throw ibrcommon::Exception("This fragment does not belongs to the others.");
 			}
 			else

@@ -187,7 +187,7 @@ namespace dtn
 		void NativeDaemon::addEventData(const dtn::data::Bundle &b, std::vector<std::string> &data) const
 		{
 			// add the bundle data
-			data.push_back("Source: " + b._source.getString());
+			data.push_back("Source: " + b.source.getString());
 			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
 			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b.sequencenumber));
 			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b.lifetime));

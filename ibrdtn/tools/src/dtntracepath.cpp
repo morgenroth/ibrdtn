@@ -125,7 +125,7 @@ class Tracer : public dtn::api::Client
 		{
 			TrackingBundle tb(b);
 
-			const std::string source = b._source.getString();
+			const std::string source = b.source.getString();
 
 			// format time data
 			std::stringstream time;

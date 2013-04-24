@@ -68,7 +68,7 @@ namespace dtn
 			_stream << "Processing flags: " << obj.procflags << std::endl;
 			_stream << "Timestamp: " << obj.timestamp << std::endl;
 			_stream << "Sequencenumber: " << obj.sequencenumber << std::endl;
-			_stream << "Source: " << obj._source.getString() << std::endl;
+			_stream << "Source: " << obj.source.getString() << std::endl;
 			_stream << "Destination: " << obj._destination.getString() << std::endl;
 			_stream << "Reportto: " << obj._reportto.getString() << std::endl;
 			_stream << "Custodian: " << obj._custodian.getString() << std::endl;
@@ -273,7 +273,7 @@ namespace dtn
 				}
 				else if (values[0] == "Source")
 				{
-					obj._source = values[1];
+					obj.source = values[1];
 				}
 				else if (values[0] == "Destination")
 				{

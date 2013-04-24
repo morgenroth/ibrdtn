@@ -79,7 +79,7 @@ namespace dtn
 			}
 
 			// set the source and destination address of the new block
-			if (key.reference != bundle._source.getNode()) pib.setSecuritySource( key.reference );
+			if (key.reference != bundle.source.getNode()) pib.setSecuritySource( key.reference );
 			if (destination != bundle._destination.getNode()) pib.setSecurityDestination( destination );
 
 			pib.setResultSize(key);

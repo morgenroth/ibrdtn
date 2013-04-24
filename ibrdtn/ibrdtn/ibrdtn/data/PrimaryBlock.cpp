@@ -108,7 +108,7 @@ namespace dtn
 		{
 			if (other.timestamp != timestamp) return false;
 			if (other.sequencenumber != sequencenumber) return false;
-			if (other._source != _source) return false;
+			if (other.source != source) return false;
 			if (other.get(PrimaryBlock::FRAGMENT) != get(PrimaryBlock::FRAGMENT)) return false;
 
 			if (get(PrimaryBlock::FRAGMENT))
@@ -122,8 +122,8 @@ namespace dtn
 
 		bool PrimaryBlock::operator<(const PrimaryBlock& other) const
 		{
-			if (_source < other._source) return true;
-			if (_source != other._source) return false;
+			if (source < other.source) return true;
+			if (source != other.source) return false;
 
 			if (timestamp < other.timestamp) return true;
 			if (timestamp != other.timestamp) return false;

@@ -458,7 +458,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "fire notification for status report" << IBRCOMMON_LOGGER_ENDL;
 
 				// fire the status report notification
-				fireNotificationStatusReport(b._source, report);
+				fireNotificationStatusReport(b.source, report);
 			} catch (const dtn::data::StatusReportBlock::WrongRecordException&) {
 				// this is not a status report
 			}
@@ -471,7 +471,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "fire notification for custody signal" << IBRCOMMON_LOGGER_ENDL;
 
 				// fire the custody signal notification
-				fireNotificationCustodySignal(b._source, custody);
+				fireNotificationCustodySignal(b.source, custody);
 			} catch (const dtn::data::CustodySignalBlock::WrongRecordException&) {
 				// this is not a custody report
 			}

@@ -136,7 +136,7 @@ namespace dtn
 				_stream << "Local: " << (received.fromlocal ? "true" : "false") << std::endl;
 
 				// write the bundle data
-				_stream << "Source: " << received.bundle._source.getString() << std::endl;
+				_stream << "Source: " << received.bundle.source.getString() << std::endl;
 				_stream << "Timestamp: " << received.bundle.timestamp << std::endl;
 				_stream << "Sequencenumber: " << received.bundle.sequencenumber << std::endl;
 				_stream << "Lifetime: " << received.bundle.lifetime << std::endl;

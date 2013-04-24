@@ -64,7 +64,7 @@ namespace dtn
 			b._destination = _peer;
 
 			// set source
-			b._source = _endpoint;
+			b.source = _endpoint;
 
 			// set lifetime
 			b.lifetime = _lifetime;

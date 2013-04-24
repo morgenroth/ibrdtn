@@ -128,7 +128,7 @@ namespace dtn
 			// encrypt payload - END
 
 			// set the source and destination address of the new block
-			if (source != bundle._source.getNode()) pcb.setSecuritySource( source );
+			if (source != bundle.source.getNode()) pcb.setSecuritySource( source );
 			if (long_key.reference != bundle._destination.getNode()) pcb.setSecurityDestination( long_key.reference );
 
 			// set replicate in every fragment to true

@@ -428,11 +428,11 @@ namespace dtn
 				dtn::data::Bundle answer;
 
 				// set the source of the bundle
-				answer._source = bundle._destination;
+				answer.source = bundle._destination;
 
 				// set the destination of the bundle
 				answer.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-				answer._destination = bundle._source;
+				answer._destination = bundle.source;
 
 				// limit the lifetime to 60 seconds
 				answer.lifetime = 60;

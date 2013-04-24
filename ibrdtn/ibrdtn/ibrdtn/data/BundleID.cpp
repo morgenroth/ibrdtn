@@ -34,7 +34,7 @@ namespace dtn
 		}
 
 		BundleID::BundleID(const dtn::data::PrimaryBlock &b)
-		: source(b._source), timestamp(b.timestamp), sequencenumber(b.sequencenumber),
+		: source(b.source), timestamp(b.timestamp), sequencenumber(b.sequencenumber),
 		fragment(b.get(dtn::data::Bundle::FRAGMENT)), offset(b.fragmentoffset)
 		{
 		}

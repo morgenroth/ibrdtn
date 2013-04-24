@@ -124,7 +124,7 @@ namespace dtn
 			size_t fragmentoffset;
 			size_t appdatalength;
 
-			EID _source;
+			EID source;
 			EID _destination;
 			EID _reportto;
 			EID _custodian;

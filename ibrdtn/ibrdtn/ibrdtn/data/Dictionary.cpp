@@ -46,7 +46,7 @@ namespace data
 	{
 		// rebuild the dictionary
 		add(bundle._destination);
-		add(bundle._source);
+		add(bundle.source);
 		add(bundle._reportto);
 		add(bundle._custodian);
 

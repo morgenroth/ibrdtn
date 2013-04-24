@@ -81,7 +81,7 @@ namespace dtn
 
 			// dest, source, report to id
 			(*this) << obj._destination;
-			(*this) << obj._source;
+			(*this) << obj.source;
 			(*this) << obj._reportto;
 
 			// timestamp
@@ -172,7 +172,7 @@ namespace dtn
 			// source id length
 			length += 4;
 			// source id
-			length += obj._source.getString().size();
+			length += obj.source.getString().size();
 			// report to id length
 			length += 4;
 			// report to id

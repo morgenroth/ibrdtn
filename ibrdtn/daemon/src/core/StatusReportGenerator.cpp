@@ -86,7 +86,7 @@ namespace dtn
 			}
 
 			// set source and destination
-			bundle._source = dtn::core::BundleCore::local;
+			bundle.source = dtn::core::BundleCore::local;
 			bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 			bundle._destination = b.reportto;
 
