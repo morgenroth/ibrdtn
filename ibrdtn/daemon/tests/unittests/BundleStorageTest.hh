@@ -25,7 +25,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 	private:
 		ibrtest::EventSwitchLoop *esl;
 
-		void testGetList(dtn::storage::BundleStorage &storage);
+		void testStore(dtn::storage::BundleStorage &storage);
 		void testRemove(dtn::storage::BundleStorage &storage);
 		void testAgeBlock(dtn::storage::BundleStorage &storage);
 		void testClear(dtn::storage::BundleStorage &storage);
@@ -36,6 +36,13 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testRaiseEvent(dtn::storage::BundleStorage &storage);
 		void testConcurrentStoreGet(dtn::storage::BundleStorage &storage);
 		void testRestore(dtn::storage::BundleStorage &storage);
+		void testExpiration(dtn::storage::BundleStorage &storage);
+		void testDistinctDestinations(dtn::storage::BundleStorage &storage);
+		void testSelector(dtn::storage::BundleStorage &storage);
+		void testRemoveBloomfilter(dtn::storage::BundleStorage &storage);
+		void testDoubleStore(dtn::storage::BundleStorage &storage);
+		void testFaultyGet(dtn::storage::BundleStorage &storage);
+		void testFaultyStore(dtn::storage::BundleStorage &storage);
 
 	public:
 #define CPPUNIT_TEST_ALL_STORAGES(testMethod) \
@@ -48,7 +55,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		        context.makeFixture() ) ) ); \
 		}
 
-		void testGetList();
+		void testStore();
 		void testRemove();
 		void testAgeBlock();
 		void testClear();
@@ -59,6 +66,13 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testRaiseEvent();
 		void testConcurrentStoreGet();
 		void testRestore();
+		void testExpiration();
+		void testDistinctDestinations();
+		void testSelector();
+		void testRemoveBloomfilter();
+		void testDoubleStore();
+		void testFaultyGet();
+		void testFaultyStore();
 
 		void setUp();
 		void tearDown();
@@ -68,7 +82,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		_storage_names.push_back("MemoryBundleStorage");
 		_storage_names.push_back("SimpleBundleStorage");
 
-		CPPUNIT_TEST_ALL_STORAGES(testGetList);
+		CPPUNIT_TEST_ALL_STORAGES(testStore);
 		CPPUNIT_TEST_ALL_STORAGES(testRemove);
 		CPPUNIT_TEST_ALL_STORAGES(testAgeBlock);
 		CPPUNIT_TEST_ALL_STORAGES(testClear);
@@ -79,6 +93,13 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		CPPUNIT_TEST_ALL_STORAGES(testRaiseEvent);
 		CPPUNIT_TEST_ALL_STORAGES(testConcurrentStoreGet);
 		CPPUNIT_TEST_ALL_STORAGES(testRestore);
+		CPPUNIT_TEST_ALL_STORAGES(testExpiration);
+		CPPUNIT_TEST_ALL_STORAGES(testDistinctDestinations);
+		CPPUNIT_TEST_ALL_STORAGES(testSelector);
+		CPPUNIT_TEST_ALL_STORAGES(testRemoveBloomfilter);
+		CPPUNIT_TEST_ALL_STORAGES(testDoubleStore);
+		CPPUNIT_TEST_ALL_STORAGES(testFaultyGet);
+		CPPUNIT_TEST_ALL_STORAGES(testFaultyStore);
 		CPPUNIT_TEST_SUITE_END();
 
 		static size_t testCounter;

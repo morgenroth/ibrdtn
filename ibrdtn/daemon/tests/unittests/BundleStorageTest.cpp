@@ -31,7 +31,7 @@
  */
 
 #include "BundleStorageTest.hh"
-
+#include <cppunit/extensions/HelperMacros.h>
 
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
@@ -48,7 +48,7 @@
 #include "storage/SimpleBundleStorage.h"
 #include "storage/MemoryBundleStorage.h"
 
-
+#include <unistd.h>
 
 CPPUNIT_TEST_SUITE_REGISTRATION(BundleStorageTest);
 
@@ -120,21 +120,21 @@ void BundleStorageTest::tearDown()
 
 /*========================== tests below ==========================*/
 
-void BundleStorageTest::testGetList()
+void BundleStorageTest::testStore()
 {
-	STORAGE_TEST(testGetList);
+	STORAGE_TEST(testStore);
 }
 
-void BundleStorageTest::testGetList(dtn::storage::BundleStorage &storage)
+void BundleStorageTest::testStore(dtn::storage::BundleStorage &storage)
 {
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node-one/test");
 
-	CPPUNIT_ASSERT_EQUAL((unsigned int)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 
 	storage.store(b);
 
-	CPPUNIT_ASSERT_EQUAL((unsigned int)1, storage.count());
+	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
 }
 
 void BundleStorageTest::testRemove()
@@ -147,15 +147,15 @@ void BundleStorageTest::testRemove(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node-one/test");
 
-	CPPUNIT_ASSERT_EQUAL((unsigned int)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 
 	storage.store(b);
 
-	CPPUNIT_ASSERT_EQUAL((unsigned int)1, storage.count());
+	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
 
 	storage.remove(b);
 
-	CPPUNIT_ASSERT_EQUAL((unsigned int)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 }
 
 void BundleStorageTest::testAgeBlock()
@@ -181,10 +181,14 @@ void BundleStorageTest::testAgeBlock(dtn::storage::BundleStorage &storage)
 	{
 		dtn::data::AgeBlock &agebl = b.push_back<dtn::data::AgeBlock>();
 		agebl.setSeconds(42);
-
-		// store the bundle
-		storage.store(b);
 	}
+
+	// store the bundle
+	storage.store(b);
+
+	// special case for caching storages (SimpleBundleStorage)
+	// wait until the bundle is written
+	storage.wait();
 
 	dtn::data::BundleID id(b);
 
@@ -215,15 +219,15 @@ void BundleStorageTest::testClear(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node-one/test");
 
-	CPPUNIT_ASSERT_EQUAL((unsigned int)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 
 	storage.store(b);
 
-	CPPUNIT_ASSERT_EQUAL((unsigned int)1, storage.count());
+	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
 
 	storage.clear();
 
-	CPPUNIT_ASSERT_EQUAL((unsigned int)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 }
 
 void BundleStorageTest::testEmpty()
@@ -259,11 +263,11 @@ void BundleStorageTest::testCount(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node-one/test");
 
-	CPPUNIT_ASSERT_EQUAL((unsigned int)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 
 	storage.store(b);
 
-	CPPUNIT_ASSERT_EQUAL((unsigned int)1, storage.count());
+	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
 }
 
 void BundleStorageTest::testSize()
@@ -437,8 +441,281 @@ void BundleStorageTest::testRestore(dtn::storage::BundleStorage &storage)
 		c.startup();
 
 		// the storage should contain 2000 bundles
-		CPPUNIT_ASSERT_EQUAL((unsigned int)2000, storage.count());
+		CPPUNIT_ASSERT_EQUAL((size_t)2000, storage.count());
 	} catch (const std::bad_cast&) {
 
 	};
+}
+
+void BundleStorageTest::testExpiration()
+{
+	STORAGE_TEST(testExpiration);
+}
+
+void BundleStorageTest::testExpiration(dtn::storage::BundleStorage &storage)
+{
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://node-one/test");
+	b._lifetime = 20;
+
+	// store the bundle
+	storage.store(b);
+
+	// check if the storage count is right
+	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
+
+	// raise time event to trigger expiration
+	dtn::core::TimeEvent::raise(b._timestamp + 21, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
+
+	// now wait until the event switch queue is empty
+	dtn::core::EventSwitch &es = dtn::core::EventSwitch::getInstance();
+	while (!es.empty()) ::sleep(1);
+
+	// special case for storages deferred mechanisms (SimpleBundleStorage)
+	// wait until all tasks of the storage are processed
+	storage.wait();
+
+	// check if the storage count is right
+	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
+}
+
+void BundleStorageTest::testDistinctDestinations()
+{
+	STORAGE_TEST(testDistinctDestinations);
+}
+
+void BundleStorageTest::testDistinctDestinations(dtn::storage::BundleStorage &storage)
+{
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://node-one/test");
+
+	for (int i = 0; i < 10; i++) {
+		b.relabel();
+
+		std::stringstream ss;
+		ss << "dtn://node-two/" << i;
+		b._destination = dtn::data::EID(ss.str());
+
+		// store the bundle
+		storage.store(b);
+	}
+
+	for (int i = 5; i < 10; i++) {
+		b.relabel();
+
+		std::stringstream ss;
+		ss << "dtn://node-two/" << i;
+		b._destination = dtn::data::EID(ss.str());
+
+		// store the bundle
+		storage.store(b);
+	}
+
+	// check the number of distinct addresses
+	CPPUNIT_ASSERT_EQUAL((size_t)10, storage.getDistinctDestinations().size());
+}
+
+void BundleStorageTest::testSelector()
+{
+	STORAGE_TEST(testSelector);
+}
+
+void BundleStorageTest::testSelector(dtn::storage::BundleStorage &storage)
+{
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://node-one/test");
+
+	for (int i = 0; i < 10; i++) {
+		b.relabel();
+
+		std::stringstream ss;
+		ss << "dtn://node-two/" << i;
+		b._destination = dtn::data::EID(ss.str());
+
+		// store the bundle
+		storage.store(b);
+	}
+
+	for (int i = 5; i < 10; i++) {
+		b.relabel();
+
+		std::stringstream ss;
+		ss << "dtn://node-two/" << i;
+		b._destination = dtn::data::EID(ss.str());
+
+		// store the bundle
+		storage.store(b);
+	}
+
+	class BundleFilter : public dtn::storage::BundleSelector
+	{
+	public:
+		BundleFilter()
+		{};
+
+		virtual ~BundleFilter() {};
+
+		virtual size_t limit() const throw () { return 5; };
+
+		virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+		{
+			// select every second bundle
+			return (meta.destination == dtn::data::EID("dtn://node-two/6"));
+		};
+	};
+
+	dtn::storage::BundleResultList list;
+
+	// create a new bundle filter
+	BundleFilter filter;
+
+	// query an unknown bundle from the storage, the list contains max. 10 items.
+	list.clear();
+	storage.get(filter, list);
+
+	// check the number of selected bundles
+	CPPUNIT_ASSERT_EQUAL((size_t)2, list.size());
+}
+
+void BundleStorageTest::testRemoveBloomfilter()
+{
+	STORAGE_TEST(testRemoveBloomfilter);
+}
+
+void BundleStorageTest::testRemoveBloomfilter(dtn::storage::BundleStorage &storage)
+{
+	std::vector<dtn::data::Bundle> bundles;
+
+	for (int i = 0; i < 20; i++) {
+		dtn::data::Bundle b;
+		b._source = dtn::data::EID("dtn://node-one/test");
+
+		std::stringstream ss;
+		ss << "dtn://node-two/" << i;
+		b._destination = dtn::data::EID(ss.str());
+
+		// copy bundle into the list of bundles
+		bundles.push_back(b);
+
+		// store the bundle
+		storage.store(b);
+	}
+
+	ibrcommon::BloomFilter bf;
+	bf.insert(bundles[1].toString());
+	bf.insert(bundles[4].toString());
+	bf.insert(bundles[11].toString());
+
+	// remove the bundles marked in the bloom-filter
+	CPPUNIT_ASSERT_THROW( while (true) storage.remove(bf), dtn::storage::NoBundleFoundException );
+
+	// check the number of bundles in the storage
+	CPPUNIT_ASSERT_EQUAL((size_t)17, storage.count());
+}
+
+void BundleStorageTest::testDoubleStore()
+{
+	STORAGE_TEST(testDoubleStore);
+}
+
+void BundleStorageTest::testDoubleStore(dtn::storage::BundleStorage &storage)
+{
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://node-one/test");
+
+	for (int i = 0; i < 2; i++) {
+		std::stringstream ss;
+		ss << "dtn://node-two/" << i;
+		b._destination = dtn::data::EID(ss.str());
+
+		// store the bundle
+		storage.store(b);
+	}
+
+	// check the number of selected bundles
+	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
+}
+
+void BundleStorageTest::testFaultyGet()
+{
+	STORAGE_TEST(testFaultyGet);
+}
+
+void BundleStorageTest::testFaultyGet(dtn::storage::BundleStorage &storage)
+{
+	dtn::data::Bundle b;
+
+	// set standard variables
+	b._source = dtn::data::EID("dtn://node-one/test");
+	b._lifetime = 1;
+	b._destination = dtn::data::EID("dtn://node-two/test");
+
+	// add some payload
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	b.push_back(ref);
+
+	(*ref.iostream()) << "Hallo Welt" << std::endl;
+
+	// store the bundle
+	storage.store(b);
+
+	// special case for caching storages (SimpleBundleStorage)
+	// wait until the bundle is written
+	storage.wait();
+
+	dtn::data::BundleID id(b);
+
+	// clear the bundle
+	b = dtn::data::Bundle();
+
+	// set the storage to faulty
+	storage.setFaulty(true);
+
+	// retrieve the bundle
+	CPPUNIT_ASSERT_THROW( b = storage.get(id), dtn::storage::NoBundleFoundException );
+
+	// set the storage to non-faulty
+	storage.setFaulty(false);
+}
+
+void BundleStorageTest::testFaultyStore()
+{
+	STORAGE_TEST(testFaultyStore);
+}
+
+void BundleStorageTest::testFaultyStore(dtn::storage::BundleStorage &storage)
+{
+	dtn::data::Bundle b;
+
+	// set standard variables
+	b._source = dtn::data::EID("dtn://node-one/test");
+	b._lifetime = 1;
+	b._destination = dtn::data::EID("dtn://node-two/test");
+
+	// add some payload
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	b.push_back(ref);
+
+	(*ref.iostream()) << "Hallo Welt" << std::endl;
+
+	// set the storage to faulty
+	storage.setFaulty(true);
+
+	// store the bundle
+	storage.store(b);
+
+	// special case for caching storages (SimpleBundleStorage)
+	// wait until the bundle is written
+	storage.wait();
+
+	// set the storage to non-faulty
+	storage.setFaulty(false);
+
+	dtn::data::BundleID id(b);
+
+	// clear the bundle
+	b = dtn::data::Bundle();
+
+	// retrieve the bundle
+	CPPUNIT_ASSERT_THROW( b = storage.get(id), dtn::storage::NoBundleFoundException );
 }
