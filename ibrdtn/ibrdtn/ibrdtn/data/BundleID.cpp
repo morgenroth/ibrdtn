@@ -33,7 +33,7 @@ namespace dtn
 		{
 		}
 
-		BundleID::BundleID(const dtn::data::Bundle &b)
+		BundleID::BundleID(const dtn::data::PrimaryBlock &b)
 		: source(b._source), timestamp(b._timestamp), sequencenumber(b._sequencenumber),
 		fragment(b.get(dtn::data::Bundle::FRAGMENT)), offset(b._fragmentoffset)
 		{
@@ -88,7 +88,7 @@ namespace dtn
 			return true;
 		}
 
-		string BundleID::toString() const
+		std::string BundleID::toString() const
 		{
 			stringstream ss;
 			ss << "[" << timestamp << "." << sequencenumber;

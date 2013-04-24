@@ -152,17 +152,7 @@ namespace dtn
 
 		std::string PrimaryBlock::toString() const
 		{
-			stringstream ss;
-			ss << "[" << _timestamp << "." << _sequencenumber;
-
-			if (get(FRAGMENT))
-			{
-				ss << "." << _fragmentoffset;
-			}
-
-			ss << "] " << _source.getString() << " -> " << _destination.getString();
-
-			return ss.str();
+			return dtn::data::BundleID(*this).toString();
 		}
 
 		void PrimaryBlock::relabel()
