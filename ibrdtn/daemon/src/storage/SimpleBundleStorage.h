@@ -146,13 +146,13 @@ namespace dtn
 			/**
 			 * Wait until all the data has been stored to the disk
 			 */
-			void wait();
+			virtual void wait();
 
 			/**
 			 * Set the storage to faulty. If set to true, each try to store
 			 * or retrieve a bundle will fail.
 			 */
-			void setFaulty(bool mode);
+			virtual void setFaulty(bool mode);
 
 			/*** END: methods for unit-testing ***/
 
