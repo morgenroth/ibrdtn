@@ -128,7 +128,7 @@ void BundleStorageTest::testStore()
 void BundleStorageTest::testStore(dtn::storage::BundleStorage &storage)
 {
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://node-one/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
 
 	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 
@@ -145,7 +145,7 @@ void BundleStorageTest::testRemove()
 void BundleStorageTest::testRemove(dtn::storage::BundleStorage &storage)
 {
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://node-one/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
 
 	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 
@@ -167,10 +167,9 @@ void BundleStorageTest::testAgeBlock(dtn::storage::BundleStorage &storage)
 {
 	dtn::data::Bundle b;
 
-	// set standard variables
-	b._source = dtn::data::EID("dtn://node-one/test");
-	b._lifetime = 1;
-	b._destination = dtn::data::EID("dtn://node-two/test");
+	// set standard variable.sourceurce = dtn::data::EID("dtn://node-one/test");
+	b.lifetime = 1;
+	b.destination = dtn::data::EID("dtn://node-two/test");
 
 	// add some payload
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -217,7 +216,7 @@ void BundleStorageTest::testClear(dtn::storage::BundleStorage &storage)
 {
 	/* test signature () */
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://node-one/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
 
 	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 
@@ -239,7 +238,7 @@ void BundleStorageTest::testEmpty(dtn::storage::BundleStorage &storage)
 {
 	/* test signature () */
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://node-one/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
 
 	CPPUNIT_ASSERT_EQUAL(true, storage.empty());
 
@@ -261,7 +260,7 @@ void BundleStorageTest::testCount(dtn::storage::BundleStorage &storage)
 {
 	/* test signature () */
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://node-one/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
 
 	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 
@@ -279,7 +278,7 @@ void BundleStorageTest::testSize(dtn::storage::BundleStorage &storage)
 {
 	/* test signature () const */
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://node-one/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
 
 	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.size());
 
@@ -314,8 +313,8 @@ void BundleStorageTest::testRaiseEvent(dtn::storage::BundleStorage &storage)
 		/* test signature (const Event *evt) */
 	dtn::data::EID eid("dtn://node-one/test");
 	dtn::data::Bundle b;
-	b._lifetime = 60;
-	b._source = dtn::data::EID("dtn://node-two/foo");
+	b.lifetime = 60;
+	b.source = dtn::data::EID("dtn://node-two/foo");
 
 	storage.store(b);
 	dtn::core::TimeEvent::raise(dtn::utils::Clock::getTime() + 3600, dtn::utils::Clock::getTime() + 3600 - dtn::utils::Clock::TIMEVAL_CONVERSION, dtn::core::TIME_SECOND_TICK);
@@ -365,8 +364,8 @@ void BundleStorageTest::testConcurrentStoreGet(dtn::storage::BundleStorage &stor
 	for (int i = 0; i < 2000; ++i)
 	{
 		dtn::data::Bundle b;
-		b._lifetime = 1;
-		b._source = dtn::data::EID("dtn://node-two/foo");
+		b.lifetime = 1;
+		b.source = dtn::data::EID("dtn://node-two/foo");
 		ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 		b.push_back(ref);
 
@@ -420,8 +419,8 @@ void BundleStorageTest::testRestore(dtn::storage::BundleStorage &storage)
 		for (int i = 0; i < 2000; ++i)
 		{
 			dtn::data::Bundle b;
-			b._lifetime = 1;
-			b._source = dtn::data::EID("dtn://node-two/foo");
+			b.lifetime = 1;
+			b.source = dtn::data::EID("dtn://node-two/foo");
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 			b.push_back(ref);
 
@@ -455,8 +454,8 @@ void BundleStorageTest::testExpiration()
 void BundleStorageTest::testExpiration(dtn::storage::BundleStorage &storage)
 {
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://node-one/test");
-	b._lifetime = 20;
+	b.source = dtn::data::EID("dtn://node-one/test");
+	b.lifetime = 20;
 
 	// store the bundle
 	storage.store(b);
@@ -487,14 +486,14 @@ void BundleStorageTest::testDistinctDestinations()
 void BundleStorageTest::testDistinctDestinations(dtn::storage::BundleStorage &storage)
 {
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://node-one/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
 
 	for (int i = 0; i < 10; i++) {
 		b.relabel();
 
 		std::stringstream ss;
 		ss << "dtn://node-two/" << i;
-		b._destination = dtn::data::EID(ss.str());
+		b.destination = dtn::data::EID(ss.str());
 
 		// store the bundle
 		storage.store(b);
@@ -505,7 +504,7 @@ void BundleStorageTest::testDistinctDestinations(dtn::storage::BundleStorage &st
 
 		std::stringstream ss;
 		ss << "dtn://node-two/" << i;
-		b._destination = dtn::data::EID(ss.str());
+		b.destination = dtn::data::EID(ss.str());
 
 		// store the bundle
 		storage.store(b);
@@ -523,14 +522,14 @@ void BundleStorageTest::testSelector()
 void BundleStorageTest::testSelector(dtn::storage::BundleStorage &storage)
 {
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://node-one/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
 
 	for (int i = 0; i < 10; i++) {
 		b.relabel();
 
 		std::stringstream ss;
 		ss << "dtn://node-two/" << i;
-		b._destination = dtn::data::EID(ss.str());
+		b.destination = dtn::data::EID(ss.str());
 
 		// store the bundle
 		storage.store(b);
@@ -541,7 +540,7 @@ void BundleStorageTest::testSelector(dtn::storage::BundleStorage &storage)
 
 		std::stringstream ss;
 		ss << "dtn://node-two/" << i;
-		b._destination = dtn::data::EID(ss.str());
+		b.destination = dtn::data::EID(ss.str());
 
 		// store the bundle
 		storage.store(b);
@@ -588,11 +587,11 @@ void BundleStorageTest::testRemoveBloomfilter(dtn::storage::BundleStorage &stora
 
 	for (int i = 0; i < 20; i++) {
 		dtn::data::Bundle b;
-		b._source = dtn::data::EID("dtn://node-one/test");
+		b.source = dtn::data::EID("dtn://node-one/test");
 
 		std::stringstream ss;
 		ss << "dtn://node-two/" << i;
-		b._destination = dtn::data::EID(ss.str());
+		b.destination = dtn::data::EID(ss.str());
 
 		// copy bundle into the list of bundles
 		bundles.push_back(b);
@@ -621,12 +620,12 @@ void BundleStorageTest::testDoubleStore()
 void BundleStorageTest::testDoubleStore(dtn::storage::BundleStorage &storage)
 {
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://node-one/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
 
 	for (int i = 0; i < 2; i++) {
 		std::stringstream ss;
 		ss << "dtn://node-two/" << i;
-		b._destination = dtn::data::EID(ss.str());
+		b.destination = dtn::data::EID(ss.str());
 
 		// store the bundle
 		storage.store(b);
@@ -646,9 +645,9 @@ void BundleStorageTest::testFaultyGet(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 
 	// set standard variables
-	b._source = dtn::data::EID("dtn://node-one/test");
-	b._lifetime = 1;
-	b._destination = dtn::data::EID("dtn://node-two/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
+	b.lifetime = 1;
+	b.destination = dtn::data::EID("dtn://node-two/test");
 
 	// add some payload
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -688,9 +687,9 @@ void BundleStorageTest::testFaultyStore(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 
 	// set standard variables
-	b._source = dtn::data::EID("dtn://node-one/test");
-	b._lifetime = 1;
-	b._destination = dtn::data::EID("dtn://node-two/test");
+	b.source = dtn::data::EID("dtn://node-one/test");
+	b.lifetime = 1;
+	b.destination = dtn::data::EID("dtn://node-two/test");
 
 	// add some payload
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();

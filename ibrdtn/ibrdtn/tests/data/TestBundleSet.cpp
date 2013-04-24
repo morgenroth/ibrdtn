@@ -67,7 +67,7 @@ void TestBundleSet::genbundles(dtn::data::BundleSet &l, int number, int offset, 
 
 		stringstream ss; ss << rand();
 
-		b._source = dtn::data::EID("dtn://node" + ss.str() + "/application");
+		b.source = dtn::data::EID("dtn://node" + ss.str() + "/application");
 
 		l.add(b);
 	}
@@ -79,12 +79,12 @@ void TestBundleSet::containTest(void)
 	dtn::data::BundleSet l(&ebc);
 
 	dtn::data::Bundle b1;
-	b1._source = dtn::data::EID("dtn:test");
+	b1.source = dtn::data::EID("dtn:test");
 	b1.timestamp = 1;
 	b1.sequencenumber = 1;
 
 	dtn::data::Bundle b2;
-	b2._source = dtn::data::EID("dtn:test");
+	b2.source = dtn::data::EID("dtn:test");
 	b2.timestamp = 2;
 	b2.sequencenumber = 3;
 

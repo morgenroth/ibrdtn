@@ -66,7 +66,7 @@ void TestBundleList::genbundles(dtn::data::BundleList &l, int number, int offset
 
 		stringstream ss; ss << rand();
 
-		b._source = dtn::data::EID("dtn://node" + ss.str() + "/application");
+		b.source = dtn::data::EID("dtn://node" + ss.str() + "/application");
 
 		l.add(b);
 	}
