@@ -48,7 +48,7 @@ namespace data
 		add(bundle.destination);
 		add(bundle.source);
 		add(bundle.reportto);
-		add(bundle._custodian);
+		add(bundle.custodian);
 
 		// add EID of all secondary blocks
 		for (Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)

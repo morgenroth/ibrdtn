@@ -95,7 +95,7 @@ void TestSerializer::serializer_cbhe01(void)
 	CPPUNIT_ASSERT( b._source == b2._source );
 	CPPUNIT_ASSERT( b.destination == b2.destination );
 	CPPUNIT_ASSERT( b.reportto == b2.reportto );
-	CPPUNIT_ASSERT( b._custodian == b2._custodian );
+	CPPUNIT_ASSERT( b.custodian == b2.custodian );
 }
 
 void TestSerializer::serializer_cbhe02(void)

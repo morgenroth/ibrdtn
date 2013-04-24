@@ -127,7 +127,7 @@ namespace dtn
 			EID source;
 			EID destination;
 			EID reportto;
-			EID _custodian;
+			EID custodian;
 
 		private:
 			static ibrcommon::Mutex __sequence_lock;

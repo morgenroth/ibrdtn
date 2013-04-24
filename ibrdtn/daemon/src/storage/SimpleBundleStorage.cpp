@@ -376,7 +376,7 @@ namespace dtn
 				dtn::data::Bundle ca_bundle = bundle;
 
 				// set the new custodian
-				ca_bundle._custodian = custodian;
+				ca_bundle.custodian = custodian;
 
 				// store the bundle with the custodian
 				__store(ca_bundle, bundle_size);

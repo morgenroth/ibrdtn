@@ -265,7 +265,7 @@ namespace dtn
 			if( destination.isCompressable()
 			    && source.isCompressable()
 			    && reportto.isCompressable()
-			    && _custodian.isCompressable()
+			    && custodian.isCompressable()
 			  )
 			{
 				for( const_iterator it = begin(); it != end(); ++it ) {

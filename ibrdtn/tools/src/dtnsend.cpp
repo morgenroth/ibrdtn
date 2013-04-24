@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
 						// enable custody transfer if requested
 						if (bundle_custody) {
 							b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
-							b._custodian = dtn::data::EID("api:me");
+							b.custodian = dtn::data::EID("api:me");
 						}
 
 						// enable compression
@@ -311,7 +311,7 @@ int main(int argc, char *argv[])
 						// enable custody transfer if requested
 						if (bundle_custody) {
 							b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
-							b._custodian = dtn::data::EID("api:me");
+							b.custodian = dtn::data::EID("api:me");
 						}
 
 						// enable compression

@@ -59,7 +59,7 @@ namespace dtn
 			_dictionary.add(obj.destination);
 			_dictionary.add(obj.source);
 			_dictionary.add(obj.reportto);
-			_dictionary.add(obj._custodian);
+			_dictionary.add(obj.custodian);
 
 			// add EID of all secondary blocks
 			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
@@ -150,7 +150,7 @@ namespace dtn
 			bool compressable = ( obj.source.isCompressable() &&
 					obj.destination.isCompressable() &&
 					obj.reportto.isCompressable() &&
-					obj._custodian.isCompressable() );
+					obj.custodian.isCompressable() );
 
 			if (compressable)
 			{
@@ -207,7 +207,7 @@ namespace dtn
 				primaryheader[5] = SDNV(ref.second);
 
 				// custodian reference
-				ref = obj._custodian.getCompressed();
+				ref = obj.custodian.getCompressed();
 				primaryheader[6] = SDNV(ref.first);
 				primaryheader[7] = SDNV(ref.second);
 
@@ -232,7 +232,7 @@ namespace dtn
 				primaryheader[5] = SDNV(ref.second);
 
 				// custodian reference
-				ref = _dictionary.getRef(obj._custodian);
+				ref = _dictionary.getRef(obj.custodian);
 				primaryheader[6] = SDNV(ref.first);
 				primaryheader[7] = SDNV(ref.second);
 
@@ -444,7 +444,7 @@ namespace dtn
 				primaryheader[5] = SDNV(ref.second);
 
 				// custodian reference
-				ref = obj._custodian.getCompressed();
+				ref = obj.custodian.getCompressed();
 				primaryheader[6] = SDNV(ref.first);
 				primaryheader[7] = SDNV(ref.second);
 
@@ -469,7 +469,7 @@ namespace dtn
 				primaryheader[5] = SDNV(ref.second);
 
 				// custodian reference
-				ref = _dictionary.getRef(obj._custodian);
+				ref = _dictionary.getRef(obj.custodian);
 				primaryheader[6] = SDNV(ref.first);
 				primaryheader[7] = SDNV(ref.second);
 
@@ -664,7 +664,7 @@ namespace dtn
 			(*this) >> pb;
 
 			obj.appdatalength = pb.appdatalength;
-			obj.custodian = pb._custodian;
+			obj.custodian = pb.custodian;
 			obj.destination = pb.destination;
 			obj.expiretime = dtn::utils::Clock::getExpireTime(pb.timestamp, pb.lifetime);
 			obj.fragment = pb.get(dtn::data::PrimaryBlock::FRAGMENT);
@@ -726,14 +726,14 @@ namespace dtn
 				obj.destination = _dictionary.get(ref[0].first.getValue(), ref[0].second.getValue());
 				obj.source = _dictionary.get(ref[1].first.getValue(), ref[1].second.getValue());
 				obj.reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
-				obj._custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
+				obj.custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
 				_compressed = false;
 			} catch (const dtn::InvalidDataException&) {
 				// error while reading the dictionary. We assume that this is a compressed bundle header.
 				obj.destination = dtn::data::EID(ref[0].first.getValue(), ref[0].second.getValue());
 				obj.source = dtn::data::EID(ref[1].first.getValue(), ref[1].second.getValue());
 				obj.reportto = dtn::data::EID(ref[2].first.getValue(), ref[2].second.getValue());
-				obj._custodian = dtn::data::EID(ref[3].first.getValue(), ref[3].second.getValue());
+				obj.custodian = dtn::data::EID(ref[3].first.getValue(), ref[3].second.getValue());
 				_compressed = true;
 			}
 
