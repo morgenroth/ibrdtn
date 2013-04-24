@@ -398,7 +398,7 @@ namespace dtn
 			bundle._reportto = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 2) );
 			bundle._custodian = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 3) );
 			bundle._procflags = sqlite3_column_int(*st, offset + 4);
-			bundle._timestamp = sqlite3_column_int64(*st, offset + 5);
+			bundle.timestamp = sqlite3_column_int64(*st, offset + 5);
 			bundle._sequencenumber = sqlite3_column_int64(*st, offset + 6);
 			bundle._lifetime = sqlite3_column_int64(*st, offset + 7);
 
@@ -595,7 +595,7 @@ namespace dtn
 			int err;
 
 			const dtn::data::EID _sourceid = bundle._source;
-			size_t TTL = bundle._timestamp + bundle._lifetime;
+			size_t TTL = bundle.timestamp + bundle._lifetime;
 
 			Statement st(_database, _sql_queries[BUNDLE_STORE]);
 

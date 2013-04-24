@@ -188,7 +188,7 @@ namespace dtn
 		{
 			// add the bundle data
 			data.push_back("Source: " + b._source.getString());
-			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b._timestamp));
+			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
 			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b._sequencenumber));
 			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b._lifetime));
 			data.push_back("Procflags: " + dtn::utils::Utils::toString(b._procflags));

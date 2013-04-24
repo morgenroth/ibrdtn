@@ -475,7 +475,7 @@ namespace dtn
 				// first check if the local clock is reliable
 				if (dtn::utils::Clock::getRating() > 0)
 					// then check the timestamp
-					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < p._timestamp)
+					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < p.timestamp)
 					{
 						// ... we reject bundles with a timestamp so far in the future
 						IBRCOMMON_LOGGER(warning) << "timestamp of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;

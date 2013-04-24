@@ -492,7 +492,7 @@ namespace dtn
 			if (bundle._custodian == clienteid) bundle._custodian = source;
 
 			// if the timestamp is not set, add a ageblock
-			if (bundle._timestamp == 0)
+			if (bundle.timestamp == 0)
 			{
 				// check for ageblock
 				try {

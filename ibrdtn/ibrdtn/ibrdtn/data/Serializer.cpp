@@ -183,7 +183,7 @@ namespace dtn
 			size_t len = 0;
 			dtn::data::SDNV primaryheader[14];
 
-			primaryheader[8] = SDNV(obj._timestamp);		// timestamp
+			primaryheader[8] = SDNV(obj.timestamp);		// timestamp
 			primaryheader[9] = SDNV(obj._sequencenumber);	// sequence number
 			primaryheader[10] = SDNV(obj._lifetime);		// lifetime
 
@@ -478,7 +478,7 @@ namespace dtn
 			}
 
 			// timestamp
-			primaryheader[8] = SDNV(obj._timestamp);
+			primaryheader[8] = SDNV(obj.timestamp);
 
 			// sequence number
 			primaryheader[9] = SDNV(obj._sequencenumber);
@@ -666,7 +666,7 @@ namespace dtn
 			obj.appdatalength = pb._appdatalength;
 			obj.custodian = pb._custodian;
 			obj.destination = pb._destination;
-			obj.expiretime = dtn::utils::Clock::getExpireTime(pb._timestamp, pb._lifetime);
+			obj.expiretime = dtn::utils::Clock::getExpireTime(pb.timestamp, pb._lifetime);
 			obj.fragment = pb.get(dtn::data::PrimaryBlock::FRAGMENT);
 			obj.hopcount = 0;
 			obj.lifetime = pb._lifetime;
@@ -676,7 +676,7 @@ namespace dtn
 			obj.reportto = pb._reportto;
 			obj.sequencenumber = pb._sequencenumber;
 			obj.source = pb._source;
-			obj.timestamp = pb._timestamp;
+			obj.timestamp = pb.timestamp;
 
 			return (*this);
 		}
@@ -708,7 +708,7 @@ namespace dtn
 
 			// timestamp
 			_stream >> tmpsdnv;
-			obj._timestamp = tmpsdnv.getValue();
+			obj.timestamp = tmpsdnv.getValue();
 
 			// sequence number
 			_stream >> tmpsdnv;

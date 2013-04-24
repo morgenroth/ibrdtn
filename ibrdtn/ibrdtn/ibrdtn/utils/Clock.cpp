@@ -96,7 +96,7 @@ namespace dtn
 
 		size_t Clock::getExpireTime(const dtn::data::Bundle &b)
 		{
-			if ((b._timestamp == 0) || dtn::utils::Clock::isBad())
+			if ((b.timestamp == 0) || dtn::utils::Clock::isBad())
 			{
 				// use the AgeBlock to verify the age
 				try {
@@ -109,7 +109,7 @@ namespace dtn
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 			}
 
-			return __getExpireTime(b._timestamp, b._lifetime);
+			return __getExpireTime(b.timestamp, b._lifetime);
 		}
 
 		size_t Clock::getExpireTime(size_t timestamp, size_t lifetime)
@@ -152,7 +152,7 @@ namespace dtn
 				return (b._lifetime < agebl.getSeconds());
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
-			return __isExpired(b._timestamp, b._lifetime);
+			return __isExpired(b.timestamp, b._lifetime);
 		}
 
 		bool Clock::isExpired(size_t timestamp, size_t lifetime)

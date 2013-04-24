@@ -33,7 +33,7 @@ namespace dtn
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
 		PrimaryBlock::PrimaryBlock()
-		 : _procflags(0), _timestamp(0), _sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
+		 : _procflags(0), timestamp(0), _sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
 		{
 			relabel();
 
@@ -106,7 +106,7 @@ namespace dtn
 
 		bool PrimaryBlock::operator==(const PrimaryBlock& other) const
 		{
-			if (other._timestamp != _timestamp) return false;
+			if (other.timestamp != timestamp) return false;
 			if (other._sequencenumber != _sequencenumber) return false;
 			if (other._source != _source) return false;
 			if (other.get(PrimaryBlock::FRAGMENT) != get(PrimaryBlock::FRAGMENT)) return false;
@@ -125,8 +125,8 @@ namespace dtn
 			if (_source < other._source) return true;
 			if (_source != other._source) return false;
 
-			if (_timestamp < other._timestamp) return true;
-			if (_timestamp != other._timestamp) return false;
+			if (timestamp < other.timestamp) return true;
+			if (timestamp != other.timestamp) return false;
 
 			if (_sequencenumber < other._sequencenumber) return true;
 			if (_sequencenumber != other._sequencenumber) return false;
@@ -147,7 +147,7 @@ namespace dtn
 
 		bool PrimaryBlock::isExpired() const
 		{
-			return dtn::utils::Clock::isExpired(_lifetime + _timestamp, _lifetime);
+			return dtn::utils::Clock::isExpired(_lifetime + timestamp, _lifetime);
 		}
 
 		std::string PrimaryBlock::toString() const
@@ -159,16 +159,16 @@ namespace dtn
 		{
 			if (dtn::utils::Clock::isBad())
 			{
-				_timestamp = 0;
+				timestamp = 0;
 			}
 			else
 			{
-				_timestamp = dtn::utils::Clock::getTime();
+				timestamp = dtn::utils::Clock::getTime();
 			}
 
 			ibrcommon::MutexLock l(__sequence_lock);
-			if (_timestamp > __last_timestamp) {
-				__last_timestamp = _timestamp;
+			if (timestamp > __last_timestamp) {
+				__last_timestamp = timestamp;
 				__sequencenumber = 0;
 			}
 

@@ -33,7 +33,7 @@ namespace dtn
 		Bundle::Bundle()
 		{
 			// if the timestamp is not set, add a ageblock
-			if (_timestamp == 0)
+			if (timestamp == 0)
 			{
 				// add a new ageblock
 				push_front<dtn::data::AgeBlock>();

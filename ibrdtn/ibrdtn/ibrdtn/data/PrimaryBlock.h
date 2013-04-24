@@ -118,7 +118,7 @@ namespace dtn
 			bool operator>(const PrimaryBlock& other) const;
 
 			size_t _procflags;
-			size_t _timestamp;
+			size_t timestamp;
 			size_t _sequencenumber;
 			size_t _lifetime;
 			size_t _fragmentoffset;

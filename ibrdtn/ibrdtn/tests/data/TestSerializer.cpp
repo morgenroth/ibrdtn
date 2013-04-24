@@ -129,7 +129,7 @@ void TestSerializer::serializer_primaryblock_length(void)
 	b._source = dtn::data::EID("dtn://node1/app1");
 	b._destination = dtn::data::EID("dtn://node2/app2");
 	b._lifetime = 3600;
-	b._timestamp = 12345678;
+	b.timestamp = 12345678;
 	b._sequencenumber = 1234;
 
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -158,7 +158,7 @@ void TestSerializer::serializer_block_length(void)
 	b._source = dtn::data::EID("dtn://node1/app1");
 	b._destination = dtn::data::EID("dtn://node2/app2");
 	b._lifetime = 3600;
-	b._timestamp = 12345678;
+	b.timestamp = 12345678;
 	b._sequencenumber = 1234;
 
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -192,7 +192,7 @@ void TestSerializer::serializer_bundle_length(void)
 	b._source = dtn::data::EID("dtn://node1/app1");
 	b._destination = dtn::data::EID("dtn://node2/app2");
 	b._lifetime = 3600;
-	b._timestamp = 12345678;
+	b.timestamp = 12345678;
 	b._sequencenumber = 1234;
 
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -221,7 +221,7 @@ void TestSerializer::serializer_fragment_one(void)
 	b._source = dtn::data::EID("dtn://node1/app1");
 	b._destination = dtn::data::EID("dtn://node2/app2");
 	b._lifetime = 3600;
-	b._timestamp = 12345678;
+	b.timestamp = 12345678;
 	b._sequencenumber = 1234;
 
 	std::stringstream ss;

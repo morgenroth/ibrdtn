@@ -146,14 +146,14 @@ namespace dtn
 				_bundleid.fragment = true;
 			}
 
-			_bundleid.timestamp = other._timestamp;
+			_bundleid.timestamp = other.timestamp;
 			_bundleid.sequencenumber = other._sequencenumber;
 			_bundleid.source = other._source;
 		}
 
 		bool CustodySignalBlock::match(const Bundle& other) const
 		{
-			if (_bundleid.timestamp != other._timestamp) return false;
+			if (_bundleid.timestamp != other.timestamp) return false;
 			if (_bundleid.sequencenumber != other._sequencenumber) return false;
 			if (_bundleid.source != other._source) return false;
 

@@ -109,7 +109,7 @@ int main(int argc, char** argv)
 			std::cout << "flags: " << std::hex << std::setw( 2 ) << std::setfill( '0' ) << b._procflags << std::dec << std::endl;
 			std::cout << "source: " << b._source.getString() << std::endl;
 			std::cout << "destination: " << b._destination.getString() << std::endl;
-			std::cout << "timestamp: " << b._timestamp << std::endl;
+			std::cout << "timestamp: " << b.timestamp << std::endl;
 			std::cout << "sequence number: " << b._sequencenumber << std::endl;
 			std::cout << "lifetime: " << b._lifetime << std::endl;
 

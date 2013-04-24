@@ -465,7 +465,7 @@ void BundleStorageTest::testExpiration(dtn::storage::BundleStorage &storage)
 	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
 
 	// raise time event to trigger expiration
-	dtn::core::TimeEvent::raise(b._timestamp + 21, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
+	dtn::core::TimeEvent::raise(b.timestamp + 21, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
 
 	// now wait until the event switch queue is empty
 	dtn::core::EventSwitch &es = dtn::core::EventSwitch::getInstance();

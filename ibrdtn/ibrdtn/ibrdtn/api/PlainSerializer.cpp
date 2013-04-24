@@ -66,7 +66,7 @@ namespace dtn
 		dtn::data::Serializer& PlainSerializer::operator<<(const dtn::data::PrimaryBlock &obj)
 		{
 			_stream << "Processing flags: " << obj._procflags << std::endl;
-			_stream << "Timestamp: " << obj._timestamp << std::endl;
+			_stream << "Timestamp: " << obj.timestamp << std::endl;
 			_stream << "Sequencenumber: " << obj._sequencenumber << std::endl;
 			_stream << "Source: " << obj._source.getString() << std::endl;
 			_stream << "Destination: " << obj._destination.getString() << std::endl;
@@ -264,7 +264,7 @@ namespace dtn
 				else if (values[0] == "Timestamp")
 				{
 					ss.clear(); ss.str(values[1]);
-					ss >> obj._timestamp;
+					ss >> obj.timestamp;
 				}
 				else if (values[0] == "Sequencenumber")
 				{
