@@ -321,7 +321,7 @@ namespace dtn
 					fragment._appdatalength = payloadLength;
 
 					// set fragment offset
-					fragment._fragmentoffset = offset;
+					fragment.fragmentoffset = offset;
 
 					// copy partial payload to the payload of the fragment
 					try {

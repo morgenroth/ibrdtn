@@ -114,13 +114,13 @@ namespace dtn
 			}
 
 			ibrcommon::BLOB::iostream stream = c._blob.iostream();
-			(*stream).seekp(obj._fragmentoffset);
+			(*stream).seekp(obj.fragmentoffset);
 
 			dtn::data::PayloadBlock &p = obj.find<dtn::data::PayloadBlock>();
 			const size_t plength = p.getLength();
 
 			// skip write operation if chunk is already in the merged bundle
-			if (c.contains(obj._fragmentoffset, plength)) return c;
+			if (c.contains(obj.fragmentoffset, plength)) return c;
 
 			// copy payload of the fragment into the new blob
 			{
@@ -130,11 +130,11 @@ namespace dtn
 			}
 
 			// add the chunk to the list of chunks
-			c.add(obj._fragmentoffset, plength);
+			c.add(obj.fragmentoffset, plength);
 
 			// check if fragment is the first one
 			// add blocks only once
-			if (!c._hasFirstFragBlocksAdded && obj._fragmentoffset == 0)
+			if (!c._hasFirstFragBlocksAdded && obj.fragmentoffset == 0)
 			{
 				c._hasFirstFragBlocksAdded = true;
 
@@ -178,7 +178,7 @@ namespace dtn
 
 			//check if fragment is the last one
 			//add blocks only once
-			if(!c._hasLastFragBlocksAdded && obj._fragmentoffset + plength == obj._appdatalength)
+			if(!c._hasLastFragBlocksAdded && obj.fragmentoffset + plength == obj._appdatalength)
 			{
 				c._hasLastFragBlocksAdded = true;
 

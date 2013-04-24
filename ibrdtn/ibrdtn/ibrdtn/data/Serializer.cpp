@@ -109,7 +109,7 @@ namespace dtn
 			}
 
 			// set the fragmentation offset
-			prim._fragmentoffset += obj._offset;
+			prim.fragmentoffset += obj._offset;
 
 			// serialize the primary block
 			(*this) << prim;
@@ -248,7 +248,7 @@ namespace dtn
 
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
-				primaryheader[12] = SDNV(obj._fragmentoffset);
+				primaryheader[12] = SDNV(obj.fragmentoffset);
 				primaryheader[13] = SDNV(obj._appdatalength);
 
 				len += primaryheader[12].getLength();
@@ -505,7 +505,7 @@ namespace dtn
 
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
-				primaryheader[12] = SDNV(obj._fragmentoffset);
+				primaryheader[12] = SDNV(obj.fragmentoffset);
 				primaryheader[13] = SDNV(obj._appdatalength);
 
 				len += primaryheader[12].getLength();
@@ -618,7 +618,7 @@ namespace dtn
 							{
 								obj.set(dtn::data::PrimaryBlock::FRAGMENT, true);
 								obj._appdatalength = ex.length;
-								obj._fragmentoffset = 0;
+								obj.fragmentoffset = 0;
 							}
 						}
 						else
@@ -670,7 +670,7 @@ namespace dtn
 			obj.fragment = pb.get(dtn::data::PrimaryBlock::FRAGMENT);
 			obj.hopcount = 0;
 			obj.lifetime = pb.lifetime;
-			obj.offset = pb._fragmentoffset;
+			obj.offset = pb.fragmentoffset;
 			obj.procflags = pb.procflags;
 			obj.received = 0;
 			obj.reportto = pb._reportto;
@@ -741,7 +741,7 @@ namespace dtn
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
 				_stream >> tmpsdnv;
-				obj._fragmentoffset = tmpsdnv.getValue();
+				obj.fragmentoffset = tmpsdnv.getValue();
 
 				_stream >> tmpsdnv;
 				obj._appdatalength = tmpsdnv.getValue();

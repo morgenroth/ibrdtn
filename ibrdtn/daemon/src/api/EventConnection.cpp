@@ -149,7 +149,7 @@ namespace dtn
 				{
 					// write fragmentation values
 					_stream << "Appdatalength: " << received.bundle._appdatalength << std::endl;
-					_stream << "Fragmentoffset: " << received.bundle._fragmentoffset << std::endl;
+					_stream << "Fragmentoffset: " << received.bundle.fragmentoffset << std::endl;
 				}
 
 				// close the event

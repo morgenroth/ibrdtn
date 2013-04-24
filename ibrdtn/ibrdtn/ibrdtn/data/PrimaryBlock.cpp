@@ -33,7 +33,7 @@ namespace dtn
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
 		PrimaryBlock::PrimaryBlock()
-		 : procflags(0), timestamp(0), sequencenumber(0), lifetime(3600), _fragmentoffset(0), _appdatalength(0)
+		 : procflags(0), timestamp(0), sequencenumber(0), lifetime(3600), fragmentoffset(0), _appdatalength(0)
 		{
 			relabel();
 
@@ -113,7 +113,7 @@ namespace dtn
 
 			if (get(PrimaryBlock::FRAGMENT))
 			{
-				if (other._fragmentoffset != _fragmentoffset) return false;
+				if (other.fragmentoffset != fragmentoffset) return false;
 				if (other._appdatalength != _appdatalength) return false;
 			}
 
@@ -134,7 +134,7 @@ namespace dtn
 			if (other.get(PrimaryBlock::FRAGMENT))
 			{
 				if (!get(PrimaryBlock::FRAGMENT)) return true;
-				return (_fragmentoffset < other._fragmentoffset);
+				return (fragmentoffset < other.fragmentoffset);
 			}
 
 			return false;

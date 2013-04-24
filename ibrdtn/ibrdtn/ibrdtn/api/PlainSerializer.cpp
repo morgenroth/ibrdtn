@@ -76,7 +76,7 @@ namespace dtn
 
 			if (obj.procflags & dtn::data::PrimaryBlock::FRAGMENT)
 			{
-				_stream << "Fragment offset: " << obj._fragmentoffset << std::endl;
+				_stream << "Fragment offset: " << obj.fragmentoffset << std::endl;
 				_stream << "Application data length: " << obj._appdatalength << std::endl;
 			}
 
@@ -295,7 +295,7 @@ namespace dtn
 				else if (values[0] == "Fragment offset")
 				{
 					ss.clear(); ss.str(values[1]);
-					ss >> obj._fragmentoffset;
+					ss >> obj.fragmentoffset;
 				}
 				else if (values[0] == "Application data length")
 				{

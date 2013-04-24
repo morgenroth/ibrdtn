@@ -200,7 +200,7 @@ namespace dtn
 			{
 				// add fragmentation values
 				data.push_back("Appdatalength: " + dtn::utils::Utils::toString(b._appdatalength));
-				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b._fragmentoffset));
+				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b.fragmentoffset));
 			}
 		}
 

@@ -116,7 +116,7 @@ namespace dtn
 				if (bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
 				{
 					// ... and set the corresponding cipher suit params
-					addFragmentRange(pcb._ciphersuite_params, bundle._fragmentoffset, stream.size());
+					addFragmentRange(pcb._ciphersuite_params, bundle.fragmentoffset, stream.size());
 				}
 
 				// get the IV

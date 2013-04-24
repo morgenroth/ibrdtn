@@ -404,7 +404,7 @@ namespace dtn
 
 			if (bundle.procflags & data::Bundle::FRAGMENT)
 			{
-				bundle._fragmentoffset = sqlite3_column_int64(*st, offset + 8);
+				bundle.fragmentoffset = sqlite3_column_int64(*st, offset + 8);
 				bundle._appdatalength = sqlite3_column_int64(*st, offset + 9);
 			}
 		}
