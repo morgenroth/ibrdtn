@@ -121,7 +121,7 @@ namespace dtn
 			/**
 			 * @return the count of bundles in the storage
 			 */
-			virtual unsigned int count() { return 0; };
+			virtual size_t count() { return 0; };
 
 			/**
 			 * Get the current size

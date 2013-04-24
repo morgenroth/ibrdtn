@@ -86,7 +86,7 @@ namespace dtn
 			// it is safe to delete this bundle now. (depending on the routing algorithm.)
 		}
 
-		unsigned int MemoryBundleStorage::count()
+		size_t MemoryBundleStorage::count()
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 			return _bundles.size();

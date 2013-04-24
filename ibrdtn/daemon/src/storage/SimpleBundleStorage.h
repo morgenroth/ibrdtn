@@ -117,7 +117,7 @@ namespace dtn
 			/**
 			 * @sa BundleStorage::count()
 			 */
-			unsigned int count();
+			size_t count();
 
 			/**
 			 * @sa BundleStorage::releaseCustody();

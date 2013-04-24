@@ -274,7 +274,7 @@ namespace dtn
 			// it is safe to delete this bundle now. (depending on the routing algorithm.)
 		}
 
-		unsigned int SimpleBundleStorage::count()
+		size_t SimpleBundleStorage::count()
 		{
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READONLY);
 			return _list.size();
