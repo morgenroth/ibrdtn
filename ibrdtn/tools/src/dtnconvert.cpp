@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 			std::cout << "source: " << b._source.getString() << std::endl;
 			std::cout << "destination: " << b._destination.getString() << std::endl;
 			std::cout << "timestamp: " << b.timestamp << std::endl;
-			std::cout << "sequence number: " << b._sequencenumber << std::endl;
+			std::cout << "sequence number: " << b.sequencenumber << std::endl;
 			std::cout << "lifetime: " << b._lifetime << std::endl;
 
 			const dtn::data::PayloadBlock &pblock = b.find<dtn::data::PayloadBlock>();

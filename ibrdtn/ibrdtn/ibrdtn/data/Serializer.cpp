@@ -184,7 +184,7 @@ namespace dtn
 			dtn::data::SDNV primaryheader[14];
 
 			primaryheader[8] = SDNV(obj.timestamp);		// timestamp
-			primaryheader[9] = SDNV(obj._sequencenumber);	// sequence number
+			primaryheader[9] = SDNV(obj.sequencenumber);	// sequence number
 			primaryheader[10] = SDNV(obj._lifetime);		// lifetime
 
 			pair<size_t, size_t> ref;
@@ -481,7 +481,7 @@ namespace dtn
 			primaryheader[8] = SDNV(obj.timestamp);
 
 			// sequence number
-			primaryheader[9] = SDNV(obj._sequencenumber);
+			primaryheader[9] = SDNV(obj.sequencenumber);
 
 			// lifetime
 			primaryheader[10] = SDNV(obj._lifetime);
@@ -674,7 +674,7 @@ namespace dtn
 			obj.procflags = pb.procflags;
 			obj.received = 0;
 			obj.reportto = pb._reportto;
-			obj.sequencenumber = pb._sequencenumber;
+			obj.sequencenumber = pb.sequencenumber;
 			obj.source = pb._source;
 			obj.timestamp = pb.timestamp;
 
@@ -712,7 +712,7 @@ namespace dtn
 
 			// sequence number
 			_stream >> tmpsdnv;
-			obj._sequencenumber = tmpsdnv.getValue();
+			obj.sequencenumber = tmpsdnv.getValue();
 
 			// lifetime
 			_stream >> tmpsdnv;

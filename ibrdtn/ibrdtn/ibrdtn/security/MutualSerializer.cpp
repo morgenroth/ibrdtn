@@ -86,7 +86,7 @@ namespace dtn
 
 			// timestamp
 			(*this) << dtn::data::SDNV(obj.timestamp);
-			(*this) << dtn::data::SDNV(obj._sequencenumber);
+			(*this) << dtn::data::SDNV(obj.sequencenumber);
 
 			// lifetime
 			(*this) << dtn::data::SDNV(obj._lifetime);

@@ -63,7 +63,7 @@ void TestBundleSet::genbundles(dtn::data::BundleSet &l, int number, int offset, 
 
 		b._lifetime = random_integer;
 		b.timestamp = 0;
-		b._sequencenumber = random_integer;
+		b.sequencenumber = random_integer;
 
 		stringstream ss; ss << rand();
 
@@ -81,12 +81,12 @@ void TestBundleSet::containTest(void)
 	dtn::data::Bundle b1;
 	b1._source = dtn::data::EID("dtn:test");
 	b1.timestamp = 1;
-	b1._sequencenumber = 1;
+	b1.sequencenumber = 1;
 
 	dtn::data::Bundle b2;
 	b2._source = dtn::data::EID("dtn:test");
 	b2.timestamp = 2;
-	b2._sequencenumber = 3;
+	b2.sequencenumber = 3;
 
 	CPPUNIT_ASSERT(l.has(b1) == false);
 	CPPUNIT_ASSERT(l.has(b2) == false);

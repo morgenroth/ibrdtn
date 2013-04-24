@@ -399,7 +399,7 @@ namespace dtn
 			bundle._custodian = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 3) );
 			bundle.procflags = sqlite3_column_int(*st, offset + 4);
 			bundle.timestamp = sqlite3_column_int64(*st, offset + 5);
-			bundle._sequencenumber = sqlite3_column_int64(*st, offset + 6);
+			bundle.sequencenumber = sqlite3_column_int64(*st, offset + 6);
 			bundle._lifetime = sqlite3_column_int64(*st, offset + 7);
 
 			if (bundle.procflags & data::Bundle::FRAGMENT)
