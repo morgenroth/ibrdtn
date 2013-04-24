@@ -143,6 +143,35 @@ namespace ibrcommon
 			__pop();
 		}
 
+		T get(bool blocking = false, size_t timeout = 0) throw (QueueUnblockedException)
+		{
+			try {
+				ibrcommon::MutexLock l(_cond);
+				if (_queue.empty())
+				{
+					if (blocking)
+					{
+						if (timeout == 0)
+						{
+							__wait(QUEUE_NOT_EMPTY);
+						}
+						else
+						{
+							__wait(QUEUE_NOT_EMPTY, timeout);
+						}
+					}
+					else
+					{
+						throw QueueUnblockedException(QueueUnblockedException::QUEUE_ABORT, "getnpop(): queue is empty!");
+					}
+				}
+
+				return _queue.front();
+			} catch (const ibrcommon::Conditional::ConditionalAbortException &ex) {
+				throw QueueUnblockedException(ex, "getnpop()");
+			}
+		}
+
 		T getnpop(bool blocking = false, size_t timeout = 0) throw (QueueUnblockedException)
 		{
 			try {
