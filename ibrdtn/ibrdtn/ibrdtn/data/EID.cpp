@@ -257,10 +257,10 @@ namespace dtn
 			}
 		}
 
-		std::pair<size_t, size_t> EID::getCompressed() const
+		std::pair<uint64_t, uint64_t> EID::getCompressed() const
 		{
-			size_t node = 0;
-			size_t app = 0;
+			uint64_t node = 0;
+			uint64_t app = 0;
 
 			if (isCompressable())
 			{

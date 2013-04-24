@@ -24,6 +24,7 @@
 
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Bundle.h"
+#include <stdint.h>
 
 namespace dtn
 {

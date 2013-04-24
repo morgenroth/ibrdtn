@@ -28,6 +28,7 @@
 #include <ibrcommon/thread/Mutex.h>
 #include <string>
 #include <iostream>
+#include <stdint.h>
 
 #ifdef SWIG
 #    define DEPRECATED
@@ -117,12 +118,12 @@ namespace dtn
 			bool operator<(const PrimaryBlock& other) const;
 			bool operator>(const PrimaryBlock& other) const;
 
-			size_t procflags;
-			size_t timestamp;
-			size_t sequencenumber;
-			size_t lifetime;
-			size_t fragmentoffset;
-			size_t appdatalength;
+			uint64_t procflags;
+			uint64_t timestamp;
+			uint64_t sequencenumber;
+			uint64_t lifetime;
+			uint64_t fragmentoffset;
+			uint64_t appdatalength;
 
 			EID source;
 			EID destination;
@@ -131,8 +132,8 @@ namespace dtn
 
 		private:
 			static ibrcommon::Mutex __sequence_lock;
-			static size_t __sequencenumber;
-			static size_t __last_timestamp;
+			static uint64_t __sequencenumber;
+			static uint64_t __last_timestamp;
 		};
 	}
 }
