@@ -191,7 +191,7 @@ namespace dtn
 			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
 			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b._sequencenumber));
 			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b._lifetime));
-			data.push_back("Procflags: " + dtn::utils::Utils::toString(b._procflags));
+			data.push_back("Procflags: " + dtn::utils::Utils::toString(b.procflags));
 
 			// add the destination eid
 			data.push_back("Destination: " + b._destination.getString());

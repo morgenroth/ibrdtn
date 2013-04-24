@@ -74,7 +74,7 @@ namespace dtn
 			_stream << dtn::data::BUNDLE_VERSION;
 
 			// processing flags
-			(*this) << dtn::data::SDNV(obj._procflags & 0x0000000007C1BE);
+			(*this) << dtn::data::SDNV(obj.procflags & 0x0000000007C1BE);
 
 			// length of header
 			(*this) << (uint32_t)getLength(obj);

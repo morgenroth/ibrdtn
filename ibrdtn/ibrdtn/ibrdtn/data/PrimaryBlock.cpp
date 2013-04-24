@@ -33,7 +33,7 @@ namespace dtn
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
 		PrimaryBlock::PrimaryBlock()
-		 : _procflags(0), timestamp(0), _sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
+		 : procflags(0), timestamp(0), _sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
 		{
 			relabel();
 
@@ -49,17 +49,17 @@ namespace dtn
 		{
 			if (value)
 			{
-				_procflags |= flag;
+				procflags |= flag;
 			}
 			else
 			{
-				_procflags &= ~(flag);
+				procflags &= ~(flag);
 			}
 		}
 
 		bool PrimaryBlock::get(FLAGS flag) const
 		{
-			return (_procflags & flag);
+			return (procflags & flag);
 		}
 
 		PrimaryBlock::PRIORITY PrimaryBlock::getPriority() const

@@ -65,7 +65,7 @@ namespace dtn
 
 		dtn::data::Serializer& PlainSerializer::operator<<(const dtn::data::PrimaryBlock &obj)
 		{
-			_stream << "Processing flags: " << obj._procflags << std::endl;
+			_stream << "Processing flags: " << obj.procflags << std::endl;
 			_stream << "Timestamp: " << obj.timestamp << std::endl;
 			_stream << "Sequencenumber: " << obj._sequencenumber << std::endl;
 			_stream << "Source: " << obj._source.getString() << std::endl;
@@ -74,7 +74,7 @@ namespace dtn
 			_stream << "Custodian: " << obj._custodian.getString() << std::endl;
 			_stream << "Lifetime: " << obj._lifetime << std::endl;
 
-			if (obj._procflags & dtn::data::PrimaryBlock::FRAGMENT)
+			if (obj.procflags & dtn::data::PrimaryBlock::FRAGMENT)
 			{
 				_stream << "Fragment offset: " << obj._fragmentoffset << std::endl;
 				_stream << "Application data length: " << obj._appdatalength << std::endl;
@@ -259,7 +259,7 @@ namespace dtn
 				if (values[0] == "Processing flags")
 				{
 					ss.clear(); ss.str(values[1]);
-					ss >> obj._procflags;
+					ss >> obj.procflags;
 				}
 				else if (values[0] == "Timestamp")
 				{

@@ -65,7 +65,7 @@ void TestSecurityBlock::localBABTest(void)
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://source/app");
 	b._destination = dtn::data::EID("dtn://destination/app");
-	b._procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
+	b.procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
 	b._lifetime = 3600;
 
 	const dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
@@ -95,7 +95,7 @@ void TestSecurityBlock::serializeBABTest(void)
 		dtn::data::Bundle b;
 		b._source = dtn::data::EID("dtn://source/app");
 		b._destination = dtn::data::EID("dtn://destination/app");
-		b._procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
+		b.procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
 		b._lifetime = 3600;
 
 		const dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();

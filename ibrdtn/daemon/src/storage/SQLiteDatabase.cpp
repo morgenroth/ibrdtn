@@ -397,12 +397,12 @@ namespace dtn
 			bundle._destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
 			bundle._reportto = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 2) );
 			bundle._custodian = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 3) );
-			bundle._procflags = sqlite3_column_int(*st, offset + 4);
+			bundle.procflags = sqlite3_column_int(*st, offset + 4);
 			bundle.timestamp = sqlite3_column_int64(*st, offset + 5);
 			bundle._sequencenumber = sqlite3_column_int64(*st, offset + 6);
 			bundle._lifetime = sqlite3_column_int64(*st, offset + 7);
 
-			if (bundle._procflags & data::Bundle::FRAGMENT)
+			if (bundle.procflags & data::Bundle::FRAGMENT)
 			{
 				bundle._fragmentoffset = sqlite3_column_int64(*st, offset + 8);
 				bundle._appdatalength = sqlite3_column_int64(*st, offset + 9);
@@ -605,7 +605,7 @@ namespace dtn
 			sqlite3_bind_text(*st, 6, bundle._destination.getString().c_str(), bundle._destination.getString().length(), SQLITE_TRANSIENT);
 			sqlite3_bind_text(*st, 7, bundle._reportto.getString().c_str(), bundle._reportto.getString().length(), SQLITE_TRANSIENT);
 			sqlite3_bind_text(*st, 8, bundle._custodian.getString().c_str(), bundle._custodian.getString().length(), SQLITE_TRANSIENT);
-			sqlite3_bind_int(*st, 9, bundle._procflags);
+			sqlite3_bind_int(*st, 9, bundle.procflags);
 			sqlite3_bind_int64(*st, 10, bundle._lifetime);
 
 			if (bundle.get(dtn::data::Bundle::FRAGMENT))

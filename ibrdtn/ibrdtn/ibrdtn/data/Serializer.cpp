@@ -177,7 +177,7 @@ namespace dtn
 		Serializer& DefaultSerializer::operator <<(const dtn::data::PrimaryBlock& obj)
 		{
 			_stream << dtn::data::BUNDLE_VERSION;		// bundle version
-			_stream << dtn::data::SDNV(obj._procflags);	// processing flags
+			_stream << dtn::data::SDNV(obj.procflags);	// processing flags
 
 			// predict the block length
 			size_t len = 0;
@@ -420,7 +420,7 @@ namespace dtn
 			size_t len = 0;
 
 			len += sizeof(dtn::data::BUNDLE_VERSION);		// bundle version
-			len += dtn::data::SDNV(obj._procflags).getLength();	// processing flags
+			len += dtn::data::SDNV(obj.procflags).getLength();	// processing flags
 
 			// primary header
 			dtn::data::SDNV primaryheader[14];
@@ -671,7 +671,7 @@ namespace dtn
 			obj.hopcount = 0;
 			obj.lifetime = pb._lifetime;
 			obj.offset = pb._fragmentoffset;
-			obj.procflags = pb._procflags;
+			obj.procflags = pb.procflags;
 			obj.received = 0;
 			obj.reportto = pb._reportto;
 			obj.sequencenumber = pb._sequencenumber;
@@ -693,7 +693,7 @@ namespace dtn
 
 			// PROCFLAGS
 			_stream >> tmpsdnv;	// processing flags
-			obj._procflags = tmpsdnv.getValue();
+			obj.procflags = tmpsdnv.getValue();
 
 			// BLOCK LENGTH
 			_stream >> blocklength;

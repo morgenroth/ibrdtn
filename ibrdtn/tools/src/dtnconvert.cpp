@@ -106,7 +106,7 @@ int main(int argc, char** argv)
 			dtn::data::Bundle b;
 			dd >> b;
 
-			std::cout << "flags: " << std::hex << std::setw( 2 ) << std::setfill( '0' ) << b._procflags << std::dec << std::endl;
+			std::cout << "flags: " << std::hex << std::setw( 2 ) << std::setfill( '0' ) << b.procflags << std::dec << std::endl;
 			std::cout << "source: " << b._source.getString() << std::endl;
 			std::cout << "destination: " << b._destination.getString() << std::endl;
 			std::cout << "timestamp: " << b.timestamp << std::endl;

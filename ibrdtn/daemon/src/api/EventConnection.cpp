@@ -140,7 +140,7 @@ namespace dtn
 				_stream << "Timestamp: " << received.bundle.timestamp << std::endl;
 				_stream << "Sequencenumber: " << received.bundle._sequencenumber << std::endl;
 				_stream << "Lifetime: " << received.bundle._lifetime << std::endl;
-				_stream << "Procflags: " << received.bundle._procflags << std::endl;
+				_stream << "Procflags: " << received.bundle.procflags << std::endl;
 
 				// write the destination eid
 				_stream << "Destination: " << received.bundle._destination.getString() << std::endl;

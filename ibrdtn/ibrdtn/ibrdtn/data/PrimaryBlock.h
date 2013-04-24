@@ -117,7 +117,7 @@ namespace dtn
 			bool operator<(const PrimaryBlock& other) const;
 			bool operator>(const PrimaryBlock& other) const;
 
-			size_t _procflags;
+			size_t procflags;
 			size_t timestamp;
 			size_t _sequencenumber;
 			size_t _lifetime;
