@@ -148,6 +148,20 @@ namespace ibrcommon
 		pthread_attr_destroy(&attr);
 	}
 
+	void Thread::reset() throw (ThreadException)
+	{
+		if ( _state != THREAD_FINALIZED )
+			throw ThreadException(0, "invalid state for reset");
+
+		pthread_attr_destroy(&attr);
+
+		_state.reset(THREAD_CREATED);
+		tid = 0;
+		_detached = false;
+
+		pthread_attr_init(&attr);
+	}
+
 	int Thread::kill(int sig)
 	{
 		if (tid == 0) return -1;

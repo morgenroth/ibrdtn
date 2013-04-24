@@ -101,6 +101,11 @@ namespace ibrcommon
 		virtual ~Thread() = 0;
 
 		/**
+		 * Reset this thread to initial state
+		 */
+		void reset() throw (ThreadException);
+
+		/**
 		 * Yield execution context of the current thread. This is a static
 		 * and may be used anywhere.
 		 */
