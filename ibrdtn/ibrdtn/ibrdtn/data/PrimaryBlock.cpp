@@ -28,8 +28,8 @@ namespace dtn
 {
 	namespace data
 	{
-		size_t PrimaryBlock::__sequencenumber = 0;
-		size_t PrimaryBlock::__last_timestamp = 0;
+		uint64_t PrimaryBlock::__sequencenumber = 0;
+		uint64_t PrimaryBlock::__last_timestamp = 0;
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
 		PrimaryBlock::PrimaryBlock()
