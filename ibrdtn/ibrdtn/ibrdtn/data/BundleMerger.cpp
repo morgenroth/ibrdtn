@@ -96,7 +96,7 @@ namespace dtn
 				c._bundle = obj;
 
 				// store the app data length
-				c._appdatalength = obj._appdatalength;
+				c._appdatalength = obj.appdatalength;
 
 				// remove all block of the copy
 				c._bundle.clear();
@@ -178,7 +178,7 @@ namespace dtn
 
 			//check if fragment is the last one
 			//add blocks only once
-			if(!c._hasLastFragBlocksAdded && obj.fragmentoffset + plength == obj._appdatalength)
+			if(!c._hasLastFragBlocksAdded && obj.fragmentoffset + plength == obj.appdatalength)
 			{
 				c._hasLastFragBlocksAdded = true;
 

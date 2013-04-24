@@ -103,9 +103,9 @@ namespace dtn
 
 			if (it != obj._bundle.end()) {
 				const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(**it);
-				prim._appdatalength = payload.getLength();
+				prim.appdatalength = payload.getLength();
 			} else {
-				prim._appdatalength = 0;
+				prim.appdatalength = 0;
 			}
 
 			// set the fragmentation offset
@@ -249,7 +249,7 @@ namespace dtn
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
 				primaryheader[12] = SDNV(obj.fragmentoffset);
-				primaryheader[13] = SDNV(obj._appdatalength);
+				primaryheader[13] = SDNV(obj.appdatalength);
 
 				len += primaryheader[12].getLength();
 				len += primaryheader[13].getLength();
@@ -506,7 +506,7 @@ namespace dtn
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
 				primaryheader[12] = SDNV(obj.fragmentoffset);
-				primaryheader[13] = SDNV(obj._appdatalength);
+				primaryheader[13] = SDNV(obj.appdatalength);
 
 				len += primaryheader[12].getLength();
 				len += primaryheader[13].getLength();
@@ -617,7 +617,7 @@ namespace dtn
 							if ( !obj.get(dtn::data::PrimaryBlock::FRAGMENT) )
 							{
 								obj.set(dtn::data::PrimaryBlock::FRAGMENT, true);
-								obj._appdatalength = ex.length;
+								obj.appdatalength = ex.length;
 								obj.fragmentoffset = 0;
 							}
 						}
@@ -663,7 +663,7 @@ namespace dtn
 			dtn::data::PrimaryBlock pb;
 			(*this) >> pb;
 
-			obj.appdatalength = pb._appdatalength;
+			obj.appdatalength = pb.appdatalength;
 			obj.custodian = pb._custodian;
 			obj.destination = pb._destination;
 			obj.expiretime = dtn::utils::Clock::getExpireTime(pb.timestamp, pb.lifetime);
@@ -744,7 +744,7 @@ namespace dtn
 				obj.fragmentoffset = tmpsdnv.getValue();
 
 				_stream >> tmpsdnv;
-				obj._appdatalength = tmpsdnv.getValue();
+				obj.appdatalength = tmpsdnv.getValue();
 			}
 			
 			// validate this primary block

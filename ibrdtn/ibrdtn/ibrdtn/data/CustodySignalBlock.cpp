@@ -140,7 +140,7 @@ namespace dtn
 			if (other.get(Bundle::FRAGMENT))
 			{
 				_bundleid.offset = other.fragmentoffset;
-				_fragment_length = other._appdatalength;
+				_fragment_length = other.appdatalength;
 
 				setFragment(true);
 				_bundleid.fragment = true;
@@ -162,7 +162,7 @@ namespace dtn
 			{
 				if (!_bundleid.fragment) return false;
 				if (_bundleid.offset != other.fragmentoffset) return false;
-				if (_fragment_length != other._appdatalength) return false;
+				if (_fragment_length != other.appdatalength) return false;
 			}
 
 			return true;

@@ -199,7 +199,7 @@ namespace dtn
 			if (b.get(dtn::data::PrimaryBlock::FRAGMENT))
 			{
 				// add fragmentation values
-				data.push_back("Appdatalength: " + dtn::utils::Utils::toString(b._appdatalength));
+				data.push_back("Appdatalength: " + dtn::utils::Utils::toString(b.appdatalength));
 				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b.fragmentoffset));
 			}
 		}

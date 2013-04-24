@@ -148,7 +148,7 @@ namespace dtn
 				if (received.bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
 				{
 					// write fragmentation values
-					_stream << "Appdatalength: " << received.bundle._appdatalength << std::endl;
+					_stream << "Appdatalength: " << received.bundle.appdatalength << std::endl;
 					_stream << "Fragmentoffset: " << received.bundle.fragmentoffset << std::endl;
 				}
 

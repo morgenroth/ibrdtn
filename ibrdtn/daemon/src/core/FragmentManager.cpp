@@ -318,7 +318,7 @@ namespace dtn
 					fragment.set(dtn::data::Bundle::FRAGMENT, true);
 
 					// set application data length
-					fragment._appdatalength = payloadLength;
+					fragment.appdatalength = payloadLength;
 
 					// set fragment offset
 					fragment.fragmentoffset = offset;

@@ -122,7 +122,7 @@ namespace dtn
 			size_t sequencenumber;
 			size_t lifetime;
 			size_t fragmentoffset;
-			size_t _appdatalength;
+			size_t appdatalength;
 
 			EID _source;
 			EID _destination;
