@@ -218,7 +218,7 @@ namespace dtn
 									throw ibrcommon::IOException(ss.str());
 								}
 
-								store.container->serialize(stream);
+								store._container->serialize(stream);
 								stream.close();
 							}
 
@@ -269,12 +269,11 @@ namespace dtn
 		DataStorage::Task::~Task() {}
 
 		DataStorage::StoreDataTask::StoreDataTask(const Hash &h, Container *c)
-		 : hash(h), container(c)
+		 : hash(h), _container(c)
 		{}
 
 		DataStorage::StoreDataTask::~StoreDataTask()
 		{
-			delete container;
 		}
 
 		DataStorage::RemoveDataTask::RemoveDataTask(const Hash &h) : hash(h)

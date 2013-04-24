@@ -28,6 +28,7 @@
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Semaphore.h>
+#include <memory>
 
 #ifndef DATASTORAGE_H_
 #define DATASTORAGE_H_
@@ -131,7 +132,7 @@ namespace dtn
 				virtual ~StoreDataTask();
 
 				const Hash hash;
-				Container *container;
+				std::auto_ptr<Container> _container;
 			};
 
 			class RemoveDataTask : public Task
