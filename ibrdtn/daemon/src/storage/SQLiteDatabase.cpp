@@ -35,6 +35,8 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(50) << "sqlite trace: " << pQuery << IBRCOMMON_LOGGER_ENDL;
 		}
 
+		const std::string SQLiteDatabase::TAG = "SQLiteDatabase";
+
 		const std::string SQLiteDatabase::_select_names[2] = {
 				"source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, payloadlength, netpriority",
 				"source, timestamp, sequencenumber, fragmentoffset, procflags"
@@ -123,7 +125,7 @@ namespace dtn
 			return _st;
 		}
 
-		void SQLiteDatabase::Statement::reset()
+		void SQLiteDatabase::Statement::reset() throw ()
 		{
 			if (_st != NULL) {
 				sqlite3_reset(_st);
@@ -157,7 +159,7 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::Statement::prepare()
+		void SQLiteDatabase::Statement::prepare() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			if (_st != NULL)
 				throw SQLiteQueryException("already prepared");
@@ -179,7 +181,7 @@ namespace dtn
 		{
 		}
 
-		int SQLiteDatabase::getVersion()
+		int SQLiteDatabase::getVersion() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			// Check version of SQLiteDB
 			int version = 0;
@@ -201,7 +203,7 @@ namespace dtn
 			return version;
 		}
 
-		void SQLiteDatabase::setVersion(int version)
+		void SQLiteDatabase::setVersion(int version) throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			std::stringstream ss; ss << version;
 			Statement st(_database, SET_SCHEMAVERSION);
@@ -212,44 +214,44 @@ namespace dtn
 			int err = st.step();
 			if(err != SQLITE_DONE)
 			{
-				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "failed to set version " << err << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << "failed to set version " << err << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void SQLiteDatabase::doUpgrade(int oldVersion, int newVersion)
+		void SQLiteDatabase::doUpgrade(int oldVersion, int newVersion) throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			if (oldVersion > newVersion)
 			{
-				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "Downgrade from version " << oldVersion << " to version " << newVersion << " is not possible." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << "Downgrade from version " << oldVersion << " to version " << newVersion << " is not possible." << IBRCOMMON_LOGGER_ENDL;
 				throw ibrcommon::Exception("Downgrade not possible.");
 			}
 
-			IBRCOMMON_LOGGER_TAG("SQLiteDatabase", info) << "Upgrade from version " << oldVersion << " to version " << newVersion << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, info) << "Upgrade from version " << oldVersion << " to version " << newVersion << IBRCOMMON_LOGGER_ENDL;
 
-			for (int i = oldVersion; i < newVersion; i++)
+			for (int i = oldVersion; i < newVersion; ++i)
 			{
 				switch (i)
 				{
 				// if there is no version field, drop all tables
 				case 0:
-					for (size_t i = 0; i < SQL_TABLE_END; i++)
+					for (size_t i = 0; i < SQL_TABLE_END; ++i)
 					{
 						Statement st(_database, "DROP TABLE IF EXISTS " + _tables[i] + ";");
 						int err = st.step();
 						if(err != SQLITE_DONE)
 						{
-							IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "drop table " << _tables[i] << " failed " << err << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << "drop table " << _tables[i] << " failed " << err << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 
 					// create all tables
-					for (size_t i = 0; i < 11; i++)
+					for (size_t i = 0; i < 11; ++i)
 					{
 						Statement st(_database, _db_structure[i]);
 						int err = st.step();
 						if(err != SQLITE_DONE)
 						{
-							IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "failed to create table " << _tables[i] << "; err: " << err << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << "failed to create table " << _tables[i] << "; err: " << err << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 
@@ -263,7 +265,7 @@ namespace dtn
 					int err = st.step();
 					if(err != SQLITE_DONE)
 					{
-						IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "failed to alter table " << _tables[SQL_TABLE_BUNDLE] << "; err: " << err << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << "failed to alter table " << _tables[SQL_TABLE_BUNDLE] << "; err: " << err << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					// set new database version
@@ -273,7 +275,7 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::open()
+		void SQLiteDatabase::open() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			//Configure SQLite Library
 			SQLiteConfigure::configure();
@@ -288,7 +290,7 @@ namespace dtn
 			//open the database
 			if (sqlite3_open_v2(_file.getPath().c_str(), &_database,  SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL))
 			{
-				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "Can't open database: " << sqlite3_errmsg(_database) << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << "Can't open database: " << sqlite3_errmsg(_database) << IBRCOMMON_LOGGER_ENDL;
 				sqlite3_close(_database);
 				throw ibrcommon::Exception("Unable to open sqlite database");
 			}
@@ -297,14 +299,14 @@ namespace dtn
 				// check database version and upgrade if necessary
 				int version = getVersion();
 
-				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", info) << "Database version " << version << " found." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, info) << "Database version " << version << " found." << IBRCOMMON_LOGGER_ENDL;
 
 				if (version != DBSCHEMA_VERSION)
 				{
 					doUpgrade(version, DBSCHEMA_VERSION);
 				}
 			} catch (const SQLiteQueryException &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", warning) << "upgrade failed, start-over with a fresh database" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, warning) << "upgrade failed, start-over with a fresh database" << IBRCOMMON_LOGGER_ENDL;
 				doUpgrade(0, DBSCHEMA_VERSION);
 			}
 
@@ -333,7 +335,7 @@ namespace dtn
 			SQLiteConfigure::shutdown();
 		}
 
-		void SQLiteDatabase::get(const dtn::data::BundleID &id, dtn::data::MetaBundle &meta) const
+		void SQLiteDatabase::get(const dtn::data::BundleID &id, dtn::data::MetaBundle &meta) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException)
 		{
 			// check if the bundle is already on the deletion list
 			if (contains_deletion(id)) throw dtn::storage::NoBundleFoundException();
@@ -352,7 +354,7 @@ namespace dtn
 			{
 				stringstream error;
 				error << "No Bundle found with BundleID: " << id.toString();
-				IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 15) << error.str() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteDatabase::TAG, 15) << error.str() << IBRCOMMON_LOGGER_ENDL;
 				throw SQLiteQueryException(error.str());
 			}
 
@@ -360,7 +362,7 @@ namespace dtn
 			get(st, meta);
 		}
 
-		void SQLiteDatabase::get(Statement &st, dtn::data::MetaBundle &bundle, size_t offset) const
+		void SQLiteDatabase::get(Statement &st, dtn::data::MetaBundle &bundle, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
 			bundle.destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
@@ -389,7 +391,7 @@ namespace dtn
 			bundle.net_priority = sqlite3_column_int64(*st, 12);
 		}
 
-		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, size_t offset) const
+		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			bundle._source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
 			bundle._destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
@@ -407,7 +409,7 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::iterateAll()
+		void SQLiteDatabase::iterateAll() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			Statement st(_database, _sql_queries[BUNDLE_GET_ITERATOR]);
 
@@ -426,7 +428,7 @@ namespace dtn
 			st.reset();
 		}
 
-		void SQLiteDatabase::get(BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException)
+		void SQLiteDatabase::get(BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 
@@ -471,13 +473,13 @@ namespace dtn
 					}
 				}
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::storage::NoBundleFoundException&) { }
 
 			if (items_added == 0) throw dtn::storage::NoBundleFoundException();
 		}
 
-		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const
+		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
 		{
 			bool unlimited = (cb.limit() <= 0);
 			size_t query_limit = (cb.limit() > 0) ? cb.limit() : 10;
@@ -518,7 +520,7 @@ namespace dtn
 			st.reset();
 		}
 
-		void SQLiteDatabase::get(const dtn::data::BundleID &id, dtn::data::Bundle &bundle, blocklist &blocks) const
+		void SQLiteDatabase::get(const dtn::data::BundleID &id, dtn::data::Bundle &bundle, blocklist &blocks) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException)
 		{
 			int err = 0;
 
@@ -539,7 +541,7 @@ namespace dtn
 			// execute the query and check for error
 			if ((err = st.step()) != SQLITE_ROW)
 			{
-				IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 15) << "sql error: " << err << "; No bundle found with id: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteDatabase::TAG, 15) << "sql error: " << err << "; No bundle found with id: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::storage::NoBundleFoundException();
 			}
 
@@ -588,7 +590,7 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::store(const dtn::data::Bundle &bundle)
+		void SQLiteDatabase::store(const dtn::data::Bundle &bundle) throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			int err;
 
@@ -644,7 +646,7 @@ namespace dtn
 
 			if (err == SQLITE_CONSTRAINT)
 			{
-				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", warning) << "Bundle is already in the storage" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, warning) << "Bundle is already in the storage" << IBRCOMMON_LOGGER_ENDL;
 
 				stringstream error;
 				error << "store() failure: " << err << " " <<  sqlite3_errmsg(_database);
@@ -654,7 +656,7 @@ namespace dtn
 			{
 				stringstream error;
 				error << "store() failure: " << err << " " <<  sqlite3_errmsg(_database);
-				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << error.str() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << error.str() << IBRCOMMON_LOGGER_ENDL;
 
 				throw SQLiteQueryException(error.str());
 			}
@@ -663,7 +665,7 @@ namespace dtn
 			new_expire_time(TTL);
 		}
 
-		void SQLiteDatabase::store(const dtn::data::BundleID &id, int index, const dtn::data::Block &block, const ibrcommon::File &file)
+		void SQLiteDatabase::store(const dtn::data::BundleID &id, int index, const dtn::data::Block &block, const ibrcommon::File &file) throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			int blocktyp = (int)block.getType();
 
@@ -692,25 +694,52 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::transaction()
+		void SQLiteDatabase::transaction() throw (SQLiteDatabase::SQLiteQueryException)
 		{
+			char *zErrMsg = 0;
+
 			// start a transaction
-			sqlite3_exec(_database, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+			int ret = sqlite3_exec(_database, "BEGIN TRANSACTION;", NULL, NULL, &zErrMsg);
+
+			// check if the return value signals an error
+			if ( ret != SQLITE_OK )
+			{
+				sqlite3_free( zErrMsg );
+				throw SQLiteQueryException( zErrMsg );
+			}
 		}
 
-		void SQLiteDatabase::rollback()
+		void SQLiteDatabase::rollback() throw (SQLiteDatabase::SQLiteQueryException)
 		{
+			char *zErrMsg = 0;
+
 			// rollback the whole transaction
-			sqlite3_exec(_database, "ROLLBACK TRANSACTION;", NULL, NULL, NULL);
+			int ret = sqlite3_exec(_database, "ROLLBACK TRANSACTION;", NULL, NULL, &zErrMsg);
+
+			// check if the return value signals an error
+			if ( ret != SQLITE_OK )
+			{
+				sqlite3_free( zErrMsg );
+				throw SQLiteQueryException( zErrMsg );
+			}
 		}
 
-		void SQLiteDatabase::commit()
+		void SQLiteDatabase::commit() throw (SQLiteDatabase::SQLiteQueryException)
 		{
+			char *zErrMsg = 0;
+
 			// commit the transaction
-			sqlite3_exec(_database, "END TRANSACTION;", NULL, NULL, NULL);
+			int ret = sqlite3_exec(_database, "END TRANSACTION;", NULL, NULL, &zErrMsg);
+
+			// check if the return value signals an error
+			if ( ret != SQLITE_OK )
+			{
+				sqlite3_free( zErrMsg );
+				throw SQLiteQueryException( zErrMsg );
+			}
 		}
 
-		void SQLiteDatabase::remove(const dtn::data::BundleID &id)
+		void SQLiteDatabase::remove(const dtn::data::BundleID &id) throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			{
 				// select the right statement to use
@@ -751,7 +780,7 @@ namespace dtn
 			remove_deletion(id);
 		}
 
-		void SQLiteDatabase::clear()
+		void SQLiteDatabase::clear() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			Statement vacuum(_database, _sql_queries[VACUUM]);
 			Statement bundle_clear(_database, _sql_queries[BUNDLE_CLEAR]);
@@ -768,7 +797,7 @@ namespace dtn
 			reset_expire_time();
 		}
 
-		bool SQLiteDatabase::empty() const
+		bool SQLiteDatabase::empty() const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			Statement st(_database, _sql_queries[EMPTY_CHECK]);
 
@@ -782,9 +811,9 @@ namespace dtn
 			}
 		}
 
-		unsigned int SQLiteDatabase::count() const
+		size_t SQLiteDatabase::count() const throw (SQLiteDatabase::SQLiteQueryException)
 		{
-			int rows = 0;
+			size_t rows = 0;
 			int err = 0;
 
 			Statement st(_database, _sql_queries[COUNT_ENTRIES]);
@@ -797,21 +826,20 @@ namespace dtn
 			{
 				stringstream error;
 				error << "count: failure " << err << " " << sqlite3_errmsg(_database);
-				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << error.str() << IBRCOMMON_LOGGER_ENDL;
 				throw SQLiteQueryException(error.str());
 			}
 
 			return rows;
 		}
 
-		const std::set<dtn::data::EID> SQLiteDatabase::getDistinctDestinations()
+		const std::set<dtn::data::EID> SQLiteDatabase::getDistinctDestinations() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			std::set<dtn::data::EID> ret;
 			// TODO: implement this method!
 			return ret;
 		}
 
-		void SQLiteDatabase::update_expire_time()
+		void SQLiteDatabase::update_expire_time() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			Statement st(_database, _sql_queries[EXPIRE_NEXT_TIMESTAMP]);
 
@@ -827,7 +855,7 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::expire(size_t timestamp)
+		void SQLiteDatabase::expire(size_t timestamp) throw ()
 		{
 			/*
 			 * Only if the actual time is bigger or equal than the time when the next bundle expires, deleteexpired is called.
@@ -841,7 +869,7 @@ namespace dtn
 			 * Nach dem Löschen wird die DB durchsucht und der nächste Ablaufzeitpunkt wird in die Variable gesetzt.
 			 */
 
-			{
+			try {
 				Statement st(_database, _sql_queries[EXPIRE_BUNDLE_FILENAMES]);
 
 				// query for blocks of expired bundles
@@ -851,9 +879,11 @@ namespace dtn
 					ibrcommon::File block((const char*)sqlite3_column_text(*st,0));
 					block.remove();
 				}
+			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
-			{
+			try {
 				Statement st(_database, _sql_queries[EXPIRE_BUNDLES]);
 
 				// query expired bundles
@@ -867,27 +897,31 @@ namespace dtn
 					// raise bundle removed event
 					_listener.eventBundleExpired(id);
 				}
+			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
-			{
+			try {
 				Statement st(_database, _sql_queries[EXPIRE_BUNDLE_DELETE]);
 
 				// delete all expired db entries (bundles and blocks)
 				sqlite3_bind_int64(*st, 1, timestamp);
 				st.step();
+			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			//update deprecated timer
 			update_expire_time();
 		}
 
-		void SQLiteDatabase::vacuum()
+		void SQLiteDatabase::vacuum() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			Statement st(_database, _sql_queries[VACUUM]);
 			st.step();
 		}
 
-		void SQLiteDatabase::update(UPDATE_VALUES mode, const dtn::data::BundleID &id, const dtn::data::EID &eid)
+		void SQLiteDatabase::update(UPDATE_VALUES mode, const dtn::data::BundleID &id, const dtn::data::EID &eid) throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			if (mode == UPDATE_CUSTODIAN)
 			{
@@ -907,12 +941,12 @@ namespace dtn
 				{
 					stringstream error;
 					error << "update_custodian() failure: " << err << " " <<  sqlite3_errmsg(_database);
-					IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << error.str() << IBRCOMMON_LOGGER_ENDL;
+					throw SQLiteDatabase::SQLiteQueryException(error.str());
 				}
 			}
 		}
 
-		void SQLiteDatabase::new_expire_time(size_t ttl)
+		void SQLiteDatabase::new_expire_time(size_t ttl) throw ()
 		{
 			if (_next_expiration == 0 || ttl < _next_expiration)
 			{
@@ -920,32 +954,32 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::reset_expire_time()
+		void SQLiteDatabase::reset_expire_time() throw ()
 		{
 			_next_expiration = 0;
 		}
 
-		size_t SQLiteDatabase::get_expire_time()
+		size_t SQLiteDatabase::get_expire_time() const throw ()
 		{
 			return _next_expiration;
 		}
 
-		void SQLiteDatabase::add_deletion(const dtn::data::BundleID &id)
+		void SQLiteDatabase::add_deletion(const dtn::data::BundleID &id) throw ()
 		{
 			_deletion_list.insert(id);
 		}
 
-		void SQLiteDatabase::remove_deletion(const dtn::data::BundleID &id)
+		void SQLiteDatabase::remove_deletion(const dtn::data::BundleID &id) throw ()
 		{
 			_deletion_list.erase(id);
 		}
 
-		bool SQLiteDatabase::contains_deletion(const dtn::data::BundleID &id) const
+		bool SQLiteDatabase::contains_deletion(const dtn::data::BundleID &id) const throw ()
 		{
 			return (_deletion_list.find(id) != _deletion_list.end());
 		}
 
-		void SQLiteDatabase::set_bundleid(Statement &st, const dtn::data::BundleID &id, size_t offset) const
+		void SQLiteDatabase::set_bundleid(Statement &st, const dtn::data::BundleID &id, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			const std::string source_id = id.source.getString();
 			sqlite3_bind_text(*st, offset + 1, source_id.c_str(), source_id.length(), SQLITE_TRANSIENT);
@@ -958,7 +992,7 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::get_bundleid(Statement &st, dtn::data::BundleID &id, size_t offset) const
+		void SQLiteDatabase::get_bundleid(Statement &st, dtn::data::BundleID &id, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			id.source = dtn::data::EID((const char*)sqlite3_column_text(*st, offset + 0));
 			id.timestamp = sqlite3_column_int64(*st, offset + 1);

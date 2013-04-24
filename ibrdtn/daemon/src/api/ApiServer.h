@@ -44,8 +44,8 @@ namespace dtn
 		public:
 			static const std::string TAG;
 
-			ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::File &socket);
-			ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::vinterface &net, int port = 4550);
+			ApiServer(const ibrcommon::File &socket);
+			ApiServer(const ibrcommon::vinterface &net, int port = 4550);
 			virtual ~ApiServer();
 
 			/**
@@ -105,8 +105,6 @@ namespace dtn
 			ibrcommon::Mutex _connection_lock;
 			ibrcommon::Mutex _registration_lock;
 			ibrcommon::Timer _garbage_collector;
-
-			dtn::storage::BundleSeeker &_seeker;
 		};
 	}
 }

@@ -22,8 +22,8 @@ if ANDROID
 noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
-noinst_LTLIBRARIES = libgcm.la
-libgcm_la_SOURCES = $(h_sources) $(cc_sources)
+noinst_LTLIBRARIES = libibrcommon_gcm.la
+libibrcommon_gcm_la_SOURCES = $(h_sources) $(cc_sources)
 endif
 
 Android.mk: Makefile.am

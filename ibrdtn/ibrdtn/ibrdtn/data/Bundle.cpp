@@ -97,7 +97,7 @@ namespace dtn
 
 		void Bundle::remove(const dtn::data::Block &block)
 		{
-			for (iterator it = begin(); it != end(); it++)
+			for (iterator it = begin(); it != end(); ++it)
 			{
 				dtn::data::Block *b = (*it).getPointer();
 				if (b == &block)
@@ -117,7 +117,7 @@ namespace dtn
 
 			// set the last block bit
 			iterator last = end();
-			last--;
+			--last;
 			(**last).set(dtn::data::Block::LAST_BLOCK, true);
 		}
 
@@ -127,7 +127,7 @@ namespace dtn
 
 			// set the last block bit
 			iterator last = end();
-			last--;
+			--last;
 			(**last).set(dtn::data::Block::LAST_BLOCK, true);
 		}
 
@@ -141,7 +141,7 @@ namespace dtn
 			if (size() > 0) {
 				// remove the last block bit
 				iterator last = end();
-				last--;
+				--last;
 				(**last).set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
@@ -152,7 +152,7 @@ namespace dtn
 
 			// set the last block bit
 			iterator last = end();
-			last--;
+			--last;
 			(**last).set(dtn::data::Block::LAST_BLOCK, true);
 
 			return (*tmpblock);
@@ -169,7 +169,7 @@ namespace dtn
 			{
 				// set the last block bit
 				iterator last = end();
-				last--;
+				--last;
 				(**last).set(dtn::data::Block::LAST_BLOCK, true);
 			}
 
@@ -181,7 +181,7 @@ namespace dtn
 			if (size() > 0) {
 				// remove the last block bit
 				iterator last = end();
-				last--;
+				--last;
 				(**last).set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
@@ -205,7 +205,7 @@ namespace dtn
 			{
 				// set the last block bit
 				iterator last = end();
-				last--;
+				--last;
 				(**last).set(dtn::data::Block::LAST_BLOCK, true);
 			}
 
@@ -217,7 +217,7 @@ namespace dtn
 			if (size() > 0) {
 				// remove the last block bit
 				iterator last = end();
-				last--;
+				--last;
 				(**last).set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
@@ -235,7 +235,7 @@ namespace dtn
 			if (size() > 0) {
 				// remove the last block bit
 				iterator last = end();
-				last--;
+				--last;
 				(**last).set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
@@ -244,7 +244,7 @@ namespace dtn
 
 			// set the last block bit
 			iterator last = end();
-			last--;
+			--last;
 			(**last).set(dtn::data::Block::LAST_BLOCK, true);
 
 			return (*block);
@@ -268,11 +268,11 @@ namespace dtn
 			    && _custodian.isCompressable()
 			  )
 			{
-				for( const_iterator it = begin(); it != end(); it++ ) {
+				for( const_iterator it = begin(); it != end(); ++it ) {
 					if( (**it).get( Block::BLOCK_CONTAINS_EIDS ) )
 					{
 						std::list< EID > blockEIDs = (**it).getEIDList();
-						for( std::list< EID >::const_iterator itBlockEID = blockEIDs.begin(); itBlockEID != blockEIDs.end(); itBlockEID++ )
+						for( std::list< EID >::const_iterator itBlockEID = blockEIDs.begin(); itBlockEID != blockEIDs.end(); ++itBlockEID )
 						{
 							if( ! itBlockEID->isCompressable() )
 							{
@@ -301,7 +301,7 @@ namespace dtn
 
 		Bundle::iterator Bundle::find(const dtn::data::Block &block)
 		{
-			for (iterator it = begin(); it != end(); it++)
+			for (iterator it = begin(); it != end(); ++it)
 			{
 				if ((&**it) == &block) return it;
 			}
@@ -311,7 +311,7 @@ namespace dtn
 
 		Bundle::const_iterator Bundle::find(const dtn::data::Block &block) const
 		{
-			for (const_iterator it = begin(); it != end(); it++)
+			for (const_iterator it = begin(); it != end(); ++it)
 			{
 				if ((&**it) == &block) return it;
 			}

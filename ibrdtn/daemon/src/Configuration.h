@@ -49,6 +49,11 @@ namespace dtn
 			virtual ~Configuration();
 
 		public:
+			class OnChangeListener {
+			public:
+				virtual void onConfigurationChanged(const dtn::daemon::Configuration &conf) throw () = 0;
+			};
+
 			class NetConfig
 			{
 			public:
@@ -89,7 +94,7 @@ namespace dtn
 			{
 			};
 
-			static Configuration &getInstance();
+			static Configuration &getInstance(bool reset = false);
 
 			/**
 			 * load the configuration from a file
@@ -102,14 +107,14 @@ namespace dtn
 			/**
 			 * Returns the name of the node
 			 */
-			string getNodename();
+			std::string getNodename() const;
 
 			/**
 			 * Returns the manual timezone difference in hours.
 			 * @return A positive or negative number containing the
 			 * timezone offset in hours.
 			 */
-			int getTimezone();
+			int getTimezone() const;
 
 			/**
 			 * Generic command to get a specific path. If "name" is
@@ -117,13 +122,13 @@ namespace dtn
 			 * @param name The prefix of the path to get.
 			 * @return The path as file object.
 			 */
-			ibrcommon::File getPath(string name);
+			ibrcommon::File getPath(string name) const;
 
 			/**
 			 * Enable/Disable the API interface.
 			 * @return True, if the API interface should be enabled.
 			 */
-			bool doAPI();
+			bool doAPI() const;
 
 			Configuration::NetConfig getAPIInterface() const;
 			ibrcommon::File getAPISocket() const;
@@ -132,7 +137,7 @@ namespace dtn
 			 * Get the version of this daemon.
 			 * @return The version string.
 			 */
-			std::string version();
+			std::string version() const;
 
 			/**
 			 * Get the type of bundle storage to use.
@@ -273,7 +278,15 @@ namespace dtn
 				friend class Configuration;
 			public:
 				/* prophet routing parameters */
-				struct ProphetConfig{
+				class ProphetConfig{
+				public:
+					ProphetConfig()
+					: p_encounter_max(0), p_encounter_first(0), p_first_threshold(0), beta(0), gamma(0), delta(0),
+					  time_unit(0), i_typ(0), next_exchange_timeout(0), forwarding_strategy(), gtmx_nf_max(0)
+					{ }
+
+					~ProphetConfig() { }
+
 					float p_encounter_max;
 					float p_encounter_first;
 					float p_first_threshold;
@@ -665,6 +678,22 @@ namespace dtn
 				bool ignoreDHTNeighbourInformations() const;
 			};
 
+			class P2P : public Configuration::Extension
+			{
+				friend class Configuration;
+			protected:
+				P2P();
+				virtual ~P2P();
+				void load(const ibrcommon::ConfigFile &conf);
+
+				std::string _ctrl_path;
+				bool _enabled;
+
+			public:
+				const std::string getCtrlPath() const;
+				bool enabled() const;
+			};
+
 			const Configuration::Discovery& getDiscovery() const;
 			const Configuration::Debug& getDebug() const;
 			const Configuration::Logger& getLogger() const;
@@ -673,6 +702,7 @@ namespace dtn
 			const Configuration::Daemon& getDaemon() const;
 			const Configuration::TimeSync& getTimeSync() const;
 			const Configuration::DHT& getDHT() const;
+			const Configuration::P2P& getP2P() const;
 
 		private:
 			ibrcommon::ConfigFile _conf;
@@ -684,6 +714,7 @@ namespace dtn
 			Configuration::Daemon _daemon;
 			Configuration::TimeSync _timesync;
 			Configuration::DHT _dht;
+			Configuration::P2P _p2p;
 
 			std::string _filename;
 			bool _doapi;

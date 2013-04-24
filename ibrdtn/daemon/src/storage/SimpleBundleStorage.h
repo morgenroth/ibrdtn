@@ -53,6 +53,8 @@ namespace dtn
 		 */
 		class SimpleBundleStorage : public DataStorage::Callback, public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, public BundleList::Listener
 		{
+			static const std::string TAG;
+
 		public:
 			/**
 			 * Constructor
@@ -159,6 +161,9 @@ namespace dtn
 			};
 
 			dtn::data::Bundle __get(const dtn::data::MetaBundle&);
+
+			void __remove(const dtn::data::MetaBundle &meta);
+			void __store(const dtn::data::Bundle &bundle, size_t bundle_size);
 
 			// bundle list
 			dtn::data::BundleList _list;

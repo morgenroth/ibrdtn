@@ -28,13 +28,11 @@ dtnd_sources = \
 	CapsuleWorker.h \
 	DTNTPWorker.cpp \
 	DTNTPWorker.h \
-	StandByManager.h \
-	StandByManager.cpp \
-	ibrdtnd.h \
-	ibrdtnd.cpp
+	NativeDaemon.h \
+	NativeDaemon.cpp
 
-AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(SQLITE_CFLAGS) $(DAEMON_CFLAGS) $(DTNDHT_CFLAGS)
-AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(SQLITE_LIBS) $(DAEMON_LIBS) $(DTNDHT_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(SQLITE_CFLAGS) $(DAEMON_CFLAGS) $(DTNDHT_CFLAGS) $(WIFIP2P_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(SQLITE_LIBS) $(DAEMON_LIBS) $(DTNDHT_LIBS) $(WIFIP2P_LIBS)
 
 dtnd_libs = core/libcore.la storage/libstorage.la net/libnet.la routing/librouting.la api/libapi.la
 
@@ -60,20 +58,18 @@ dtnd_SOURCES = Main.cpp
 dtnd_LDADD = libdtnd.la
 endif
 
-# include openssl used by ibrcommon and zlib
 Android.mk: Makefile.am
 	$(ANDROGENIZER) -:PROJECT dtnd \
 		-:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
-		-:EXECUTABLE dtnd \
+		-:SHARED dtnd \
 		-:SOURCES $(dtnd_sources) \
-			Main.cpp \
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
 			$(subst lib,libdtnd_, $(dtnd_libs)) \
-			-lssl -lcrypto \
 			-lz \
+			-lgnustl_shared \
+			-librcommon \
 		-:LIBFILTER_WHOLE dtnd_core dtnd_storage dtnd_net dtnd_routing dtnd_api \
-			ibrdtn \
 		-:SUBDIR $(patsubst %,src/%, $(SUBDIRS)) \
 		> $@
 

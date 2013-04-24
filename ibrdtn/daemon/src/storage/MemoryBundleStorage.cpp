@@ -99,7 +99,7 @@ namespace dtn
 			// we have to iterate through all bundles
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (prio_bundle_set::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); iter++)
+			for (prio_bundle_set::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); ++iter)
 			{
 				const dtn::data::MetaBundle &bundle = (*iter);
 
@@ -118,7 +118,7 @@ namespace dtn
 			try {
 				ibrcommon::MutexLock l(_bundleslock);
 
-				for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+				for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 				{
 					const dtn::data::Bundle &bundle = (*iter);
 					if (id == bundle)
@@ -145,7 +145,7 @@ namespace dtn
 
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
 				const dtn::data::Bundle &bundle = (*iter);
 				ret.insert(bundle._destination);
@@ -164,7 +164,6 @@ namespace dtn
 
 			// increment the storage size
 			allocSpace(size);
-			_bundle_lengths[bundle] = size;
 
 			// insert Container
 			pair<set<dtn::data::Bundle>::iterator,bool> ret = _bundles.insert( bundle );
@@ -174,11 +173,16 @@ namespace dtn
 				_list.add(dtn::data::MetaBundle(bundle));
 				_priority_index.insert( bundle );
 
+				_bundle_lengths[bundle] = size;
+
 				// raise bundle added event
 				eventBundleAdded(bundle);
 			}
 			else
 			{
+				// free the previously allocated space
+				freeSpace(size);
+
 				IBRCOMMON_LOGGER_DEBUG_TAG(MemoryBundleStorage::TAG, 5) << "got bundle duplicate " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
@@ -208,7 +212,7 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
 				if ( filter.contains((*iter).toString()) )
 				{
@@ -217,11 +221,11 @@ namespace dtn
 					// remove item in the bundlelist
 					_list.remove(bundle);
 
-					// erase the bundle
-					__erase(iter);
-
 					// raise bundle removed event
 					eventBundleRemoved(bundle);
+
+					// erase the bundle
+					__erase(iter);
 
 					return bundle;
 				}
@@ -234,7 +238,7 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
 				const dtn::data::Bundle &bundle = (*iter);
 

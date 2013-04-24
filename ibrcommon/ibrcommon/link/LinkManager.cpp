@@ -87,7 +87,7 @@ namespace ibrcommon
 		try {
 			ibrcommon::MutexLock l(_listener_mutex);
 
-			for (std::map<vinterface, std::set<LinkManager::EventCallback* > >::iterator iter = _listener.begin(); iter != _listener.end(); iter++)
+			for (std::map<vinterface, std::set<LinkManager::EventCallback* > >::iterator iter = _listener.begin(); iter != _listener.end(); ++iter)
 			{
 				std::set<LinkManager::EventCallback* > &ss = iter->second;
 				ss.erase(cb);
@@ -109,7 +109,7 @@ namespace ibrcommon
 		ibrcommon::MutexLock l(_listener_mutex);
 		std::set<LinkManager::EventCallback* > &ss = _listener[iface];
 
-		for (std::set<LinkManager::EventCallback* >::iterator iter = ss.begin(); iter != ss.end(); iter++)
+		for (std::set<LinkManager::EventCallback* >::iterator iter = ss.begin(); iter != ss.end(); ++iter)
 		{
 			try {
 				(*iter)->eventNotify((LinkEvent&)lme);

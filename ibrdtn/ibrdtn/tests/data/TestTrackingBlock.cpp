@@ -30,7 +30,7 @@ void TestTrackingBlock::createTest(void)
 	// generate some test data
 	{
 		ibrcommon::BLOB::iostream stream = ref.iostream();
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 10000; ++i)
 		{
 			(*stream) << "0123456789";
 		}
@@ -66,7 +66,7 @@ void TestTrackingBlock::createTest(void)
 	CPPUNIT_ASSERT_EQUAL(list.size(), (size_t)3);
 
 	int i = 0;
-	for (dtn::data::TrackingBlock::tracking_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+	for (dtn::data::TrackingBlock::tracking_list::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 	{
 		const dtn::data::TrackingBlock::TrackingEntry &entry = (*iter);
 		CPPUNIT_ASSERT_EQUAL(entry.endpoint.getString(), hops[i].getString());

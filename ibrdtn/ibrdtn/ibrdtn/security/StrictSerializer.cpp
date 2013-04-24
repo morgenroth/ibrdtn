@@ -50,7 +50,7 @@ namespace dtn
 			dtn::data::Bundle::const_iterator iter = bundle.begin();
 
 			// skip all blocks before the correlator
-			for (; _with_correlator && iter != bundle.end(); iter++)
+			for (; _with_correlator && iter != bundle.end(); ++iter)
 			{
 				const dtn::data::Block &b = (**iter);
 				if (b.getType() == SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK || b.getType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK)
@@ -64,10 +64,10 @@ namespace dtn
 			// consume the first block. this block may have the same correlator set, 
 			// we are searching for in the loop
 			(*this) << (**iter);
-			iter++;
+			++iter;
 
 			// serialize the remaining block
-			for (; iter != bundle.end(); iter++)
+			for (; iter != bundle.end(); ++iter)
 			{
 				const dtn::data::Block &b = (**iter);
 				(*this) << b;
@@ -101,7 +101,7 @@ namespace dtn
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
 				_stream << dtn::data::SDNV(eids.size());
-				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					pair<size_t, size_t> offsets;
 

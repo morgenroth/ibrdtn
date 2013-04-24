@@ -34,9 +34,14 @@
 #include <syslog.h>
 #endif
 
+#ifdef ANDROID
+#include <android/log.h>
+#endif
+
 namespace ibrcommon
 {
 	std::string Logger::_default_tag = "Core";
+	std::string Logger::_android_tag_prefix = "IBR-DTN/";
 	Logger::LogWriter Logger::_logwriter;
 
 	Logger::Logger(LogLevel level, const std::string &tag, int debug_verbosity)
@@ -162,9 +167,11 @@ namespace ibrcommon
 
 	void Logger::LogWriter::enableSyslog(const char *name, int option, int facility, const unsigned char logmask)
 	{
+#if ( defined HAVE_SYSLOG_H || defined ANDROID )
 #ifdef HAVE_SYSLOG_H
 		// init syslog
 		::openlog(name, option, facility);
+#endif
 		_syslog = true;
 		_syslog_mask = logmask;
 		_global_logmask |= logmask;
@@ -175,7 +182,7 @@ namespace ibrcommon
 	{
 		if (_verbosity >= logger._debug_verbosity)
 		{
-			for (std::list<LoggerOutput>::iterator iter = _logger.begin(); iter != _logger.end(); iter++)
+			for (std::list<LoggerOutput>::iterator iter = _logger.begin(); iter != _logger.end(); ++iter)
 			{
 				LoggerOutput &output = (*iter);
 				output.log(logger);
@@ -190,12 +197,60 @@ namespace ibrcommon
 				}
 			}
 
-#ifdef HAVE_SYSLOG_H
-			// additionally log to the syslog
+#if ( defined HAVE_SYSLOG_H || defined ANDROID )
+			// additionally log to the syslog/android logcat
 			if (_syslog)
 			{
 				if (logger._level & _syslog_mask)
 				{
+#ifdef ANDROID
+					std::string log_tag = Logger::_default_tag;
+					if (logger._tag.length() > 0) {
+						log_tag = logger._tag;
+					}
+
+					// add additional prefix for android tags to seperate them from other logcat messages
+					log_tag = Logger::_android_tag_prefix + log_tag;
+
+					switch (logger._level)
+					{
+					case LOGGER_EMERG:
+						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_ALERT:
+						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_CRIT:
+						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_ERR:
+						__android_log_print(ANDROID_LOG_ERROR, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_WARNING:
+						__android_log_print(ANDROID_LOG_WARN, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_NOTICE:
+						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_INFO:
+						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_DEBUG:
+						__android_log_print(ANDROID_LOG_DEBUG, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					default:
+						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+					}
+#else
 					switch (logger._level)
 					{
 					case LOGGER_EMERG:
@@ -234,6 +289,7 @@ namespace ibrcommon
 						::syslog( LOG_NOTICE, "%s", logger.str().c_str() );
 						break;
 					}
+#endif
 				}
 			}
 #endif
@@ -325,12 +381,12 @@ namespace ibrcommon
 				if (log._tag.length() > 0) {
 					prefixes.push_back(log._tag);
 				} else {
-					prefixes.push_back(_default_tag);
+					prefixes.push_back(Logger::_default_tag);
 				}
 			}
 
 			// print prefixes
-			for (std::list<std::string>::const_iterator iter = prefixes.begin(); iter != prefixes.end(); iter++)
+			for (std::list<std::string>::const_iterator iter = prefixes.begin(); iter != prefixes.end(); ++iter)
 			{
 				if (iter == prefixes.begin())
 				{
@@ -502,7 +558,7 @@ namespace ibrcommon
 
 		LoggerOutput output(stream, logmask, options);
 
-		for (std::list<Logger>::const_iterator iter = _buffer->begin(); iter != _buffer->end(); iter++)
+		for (std::list<Logger>::const_iterator iter = _buffer->begin(); iter != _buffer->end(); ++iter)
 		{
 			const Logger &l = (*iter);
 			output.log(l);

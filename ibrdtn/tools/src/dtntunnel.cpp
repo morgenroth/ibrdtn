@@ -123,7 +123,7 @@ void timer_display_throughput(int) {
 	float throughput_sum_up = 0;
 	float throughput_sum_down = 0;
 
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 5; ++i) {
 		throughput_sum_up += throughput_data_up[i];
 		throughput_sum_down += throughput_data_down[i];
 	}
@@ -342,7 +342,7 @@ int main(int argc, char *argv[])
 	}
 
 	int optindex = 0;
-	for (index = optind; index < argc; index++)
+	for (index = optind; index < argc; ++index)
 	{
 		switch (optindex)
 		{

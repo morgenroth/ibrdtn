@@ -36,8 +36,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		RetransmissionExtension::RetransmissionExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker)
+		RetransmissionExtension::RetransmissionExtension()
 		{
 		}
 
@@ -136,7 +135,7 @@ namespace dtn
 				ibrcommon::MutexLock l(_mutex);
 
 				size_t elements = _queue.size();
-				for (size_t i = 0; i < elements; i++)
+				for (size_t i = 0; i < elements; ++i)
 				{
 					const RetransmissionData &data = _queue.front();
 

@@ -101,7 +101,7 @@ int init(int argc, char** argv)
 	}
 
 	int optindex = 0;
-	for (index = optind; index < argc; index++)
+	for (index = optind; index < argc; ++index)
 	{
 		switch (optindex)
 		{

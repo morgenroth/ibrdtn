@@ -139,7 +139,7 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 
 		try {
 			// load buddy from roster
-			Buddy buddy = this.getRoster().get( this.buddyId );
+			Buddy buddy = this.getRoster().getBuddy( this.buddyId );
 			String msg = buddy.getDraftMessage();
 			
 			if (msg != null) text.append(msg);
@@ -278,7 +278,7 @@ public class ChatFragment extends Fragment implements ChatServiceListener, Roste
 			
 			if (buddyId != null) {
 				// load buddy from roster
-				buddy = roster.get( buddyId );
+				buddy = roster.getBuddy( buddyId );
 				
 				if (buddy == null) {
 					Log.e(TAG, "Error buddy not found: " + getActivity().getIntent().getStringExtra("buddy"));

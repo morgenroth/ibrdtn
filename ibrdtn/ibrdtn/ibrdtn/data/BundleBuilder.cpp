@@ -61,7 +61,7 @@ namespace dtn
 			return _alignment;
 		}
 
-		dtn::data::Block& BundleBuilder::insert(dtn::data::block_t block_type, size_t procflags)
+		dtn::data::Block& BundleBuilder::insert(dtn::data::block_t block_type, size_t procflags) throw (DiscardBlockException)
 		{
 			// exit if the block type is zero
 			if (block_type == 0) throw dtn::InvalidDataException("block type is zero");
@@ -87,6 +87,8 @@ namespace dtn
 					{
 						// remove the block
 						_target->remove(block);
+
+						throw DiscardBlockException();
 					}
 
 					return block;

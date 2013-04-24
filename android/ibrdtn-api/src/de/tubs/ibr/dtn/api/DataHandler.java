@@ -28,7 +28,6 @@ public interface DataHandler {
 	public void endBundle();
 	public TransferMode startBlock(Block block);
 	public void endBlock(); 
-	public void characters(String data);
 	public void payload(byte[] data);
 	public ParcelFileDescriptor fd();
 	public void progress(long current, long length);

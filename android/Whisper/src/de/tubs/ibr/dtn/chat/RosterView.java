@@ -199,7 +199,9 @@ public class RosterView extends BaseAdapter {
 	public void onContentChanged(String buddyId) {
 		if (this.buddies == null) return;
 		Log.d(TAG, "refresh requested...");
-		Collections.sort(this.buddies);
+		if (!this.buddies.isEmpty()) {
+		    Collections.sort(this.buddies);
+		}
 		filterBuddies();
 		this.notifyDataSetChanged();
 	}

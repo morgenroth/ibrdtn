@@ -57,7 +57,7 @@ void TestBundleSet::genbundles(dtn::data::BundleSet &l, int number, int offset, 
 	int range = max - offset;
 	dtn::data::Bundle b;
 
-	for (int i = 0; i < number; i++)
+	for (int i = 0; i < number; ++i)
 	{
 		int random_integer = offset + (rand() % range);
 
@@ -127,14 +127,14 @@ void TestBundleSet::orderTest(void)
 	genbundles(l, 1000, 0, 500);
 	genbundles(l, 1000, 600, 1000);
 
-	for (int i = 0; i < 550; i++)
+	for (int i = 0; i < 550; ++i)
 	{
 		l.expire(i);
 	}
 
 	CPPUNIT_ASSERT(ebc.counter == 1000);
 
-	for (int i = 0; i < 1050; i++)
+	for (int i = 0; i < 1050; ++i)
 	{
 		l.expire(i);
 	}

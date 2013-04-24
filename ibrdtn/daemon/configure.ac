@@ -293,6 +293,22 @@ AS_IF([test "x$enable_android" = "xyes"], [
 				AC_MSG_WARN([dtndht library not found. dht support is disabled.])
 			])
 
+
+	dnl -----------------------------------------------
+	dnl optional parameter: Wifi-P2P support
+	dnl -----------------------------------------------
+
+	PKG_CHECK_MODULES([WIFIP2P], wifip2p >= 0.1 , [
+				with_wifi_p2p="yes"
+				AC_SUBST(WIFIP2P_CFLAGS)
+				AC_SUBST(WIFIP2P_LIBS)
+				AC_DEFINE(WITH_WIFIP2P, [1], ["wifi-p2p support enabled"])
+			], [
+				with_wifi_p2p="no"
+				AC_MSG_WARN([wifi-p2p library not found. wifi-p2p support is disabled.])
+			])
+
+
 	dnl -----------------------------------------------
 	dnl check for regex capabilities
 	dnl -----------------------------------------------
@@ -316,6 +332,7 @@ AM_CONDITIONAL(TLS, test x$with_tls = xyes)
 AM_CONDITIONAL(DTNDHT, test x$with_dht = xyes)
 AM_CONDITIONAL(REGEX, test x$have_regex = xyes)
 AM_CONDITIONAL(ANDROID, test x$enable_android = xyes)
+AM_CONDITIONAL(WIFIP2P, test x$with_wifi_p2p = xyes)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts

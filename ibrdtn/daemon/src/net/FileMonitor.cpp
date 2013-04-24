@@ -61,7 +61,7 @@ namespace dtn
 				throw ibrcommon::socket_exception("socket is not up");
 
 #ifdef HAVE_SYS_INOTIFY_H
-			for (watch_map::iterator iter = _watch_map.begin(); iter != _watch_map.end(); iter++)
+			for (watch_map::iterator iter = _watch_map.begin(); iter != _watch_map.end(); ++iter)
 			{
 				const int wd = (*iter).first;
 				inotify_rm_watch(this->fd(), wd);
@@ -145,7 +145,7 @@ namespace dtn
 					_socket.select(&fds, NULL, NULL, NULL);
 
 					// receive from all sockets
-					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
+					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); ++iter)
 					{
 						inotifysocket &sock = dynamic_cast<inotifysocket&>(**iter);
 						sock.read((char*)&buf, 1024);
@@ -175,14 +175,14 @@ namespace dtn
 
 			std::set<ibrcommon::File> watch_set;
 
-			for (watch_set::iterator iter = _watchset.begin(); iter != _watchset.end(); iter++)
+			for (watch_set::iterator iter = _watchset.begin(); iter != _watchset.end(); ++iter)
 			{
 				const ibrcommon::File &path = (*iter);
 				std::list<ibrcommon::File> files;
 
 				if (path.getFiles(files) == 0)
 				{
-					for (std::list<ibrcommon::File>::iterator iter = files.begin(); iter != files.end(); iter++)
+					for (std::list<ibrcommon::File>::iterator iter = files.begin(); iter != files.end(); ++iter)
 					{
 						watch_set.insert(*iter);
 					}
@@ -194,7 +194,7 @@ namespace dtn
 			}
 
 			// check for new directories
-			for (std::set<ibrcommon::File>::iterator iter = watch_set.begin(); iter != watch_set.end(); iter++)
+			for (std::set<ibrcommon::File>::iterator iter = watch_set.begin(); iter != watch_set.end(); ++iter)
 			{
 				const ibrcommon::File &path = (*iter);
 				if (path.isDirectory() && !path.isSystem())
@@ -219,7 +219,7 @@ namespace dtn
 				}
 				else
 				{
-					iter++;
+					++iter;
 				}
 			}
 		}

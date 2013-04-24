@@ -26,7 +26,7 @@ namespace dtn
 
 		void SchedulingBundleIndex::remove(const dtn::data::BundleID &id)
 		{
-			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); iter++)
+			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
 			{
 				const dtn::data::MetaBundle &b = (*iter);
 				if (id == (const dtn::data::BundleID&)b) {
@@ -41,7 +41,7 @@ namespace dtn
 			bool unlimited = (cb.limit() <= 0);
 			size_t added = 0;
 
-			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); iter++)
+			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
 			{
 				const dtn::data::MetaBundle &b = (*iter);
 				if (cb.shouldAdd(b)) {
@@ -52,7 +52,7 @@ namespace dtn
 				if (!unlimited && (added >= cb.limit())) break;
 			}
 
-			if (added <= 0)
+			if (added == 0)
 				throw dtn::storage::NoBundleFoundException();
 		}
 

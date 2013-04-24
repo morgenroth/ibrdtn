@@ -37,4 +37,5 @@
     <string name="tts_when_on_headset">Read out the message</string>
     <string name="tts_when_on_headset_desc">Play messages via TTS when a headset is connected.</string>
     <string name="debug_notification">Debug Notification</string>
+    <string name="image_contact_symbol">Contact symbol</string>
 </resources>

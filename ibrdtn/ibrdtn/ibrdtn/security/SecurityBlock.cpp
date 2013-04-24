@@ -45,7 +45,7 @@ namespace dtn
 		{
 			std::stringstream ss;
 
-			for (std::set<TLV>::const_iterator iter = begin(); iter != end(); iter++)
+			for (std::set<TLV>::const_iterator iter = begin(); iter != end(); ++iter)
 			{
 				ss << (*iter);
 			}
@@ -63,7 +63,7 @@ namespace dtn
 		{
 			size_t len = 0;
 
-			for (std::set<SecurityBlock::TLV>::const_iterator iter = begin(); iter != end(); iter++)
+			for (std::set<SecurityBlock::TLV>::const_iterator iter = begin(); iter != end(); ++iter)
 			{
 				len += (*iter).getLength();
 			}
@@ -73,7 +73,7 @@ namespace dtn
 
 		const std::string SecurityBlock::TLVList::get(SecurityBlock::TLV_TYPES type) const
 		{
-			for (std::set<SecurityBlock::TLV>::const_iterator iter = begin(); iter != end(); iter++)
+			for (std::set<SecurityBlock::TLV>::const_iterator iter = begin(); iter != end(); ++iter)
 			{
 				if ((*iter).getType() == type)
 				{
@@ -137,7 +137,7 @@ namespace dtn
 			dtn::data::SDNV length(tlvlist.getPayloadLength());
 			stream << length;
 
-			for (std::set<SecurityBlock::TLV>::const_iterator iter = tlvlist.begin(); iter != tlvlist.end(); iter++)
+			for (std::set<SecurityBlock::TLV>::const_iterator iter = tlvlist.begin(); iter != tlvlist.end(); ++iter)
 			{
 				stream << (*iter);
 			}
@@ -275,7 +275,7 @@ namespace dtn
 		bool SecurityBlock::isCorrelatorPresent(const dtn::data::Bundle& bundle, const uint64_t correlator)
 		{
 			bool return_val = false;
-			for (dtn::data::Bundle::const_iterator it = bundle.begin(); it != bundle.end() && !return_val; it++)
+			for (dtn::data::Bundle::const_iterator it = bundle.begin(); it != bundle.end() && !return_val; ++it)
 			{
 				const dtn::data::Block &b = (**it);
 				const dtn::data::block_t type = b.getType();
@@ -577,10 +577,10 @@ namespace dtn
 			while (it != their_eids.end() && skip > 0)
 			{
 				skip--;
-				it++;
+				++it;
 			}
 
-			for (; it != their_eids.end(); it++)
+			for (; it != their_eids.end(); ++it)
 				to.addEID(*it);
 		}
 

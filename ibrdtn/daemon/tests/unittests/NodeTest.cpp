@@ -52,10 +52,10 @@ void NodeTest::testGetProtocol()
 	std::list<dtn::core::Node::URI>::iterator iter = items.begin();
 
 	CPPUNIT_ASSERT_EQUAL((*iter).type, dtn::core::Node::NODE_DISCOVERED);
-	iter++;
+	++iter;
 
 	CPPUNIT_ASSERT_EQUAL((*iter).type, dtn::core::Node::NODE_STATIC_LOCAL);
-	iter++;
+	++iter;
 
 	CPPUNIT_ASSERT_EQUAL((*iter).type, dtn::core::Node::NODE_CONNECTED);
 }

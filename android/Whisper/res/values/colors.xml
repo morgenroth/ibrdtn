@@ -55,4 +55,6 @@
     <color name="border_chat">#a1a1a1</color>
     
     <color name="border_menu_seperator">#a1a1a1</color>
+    
+    <color name="text_hairline">#ffcccccc</color>
 </resources>

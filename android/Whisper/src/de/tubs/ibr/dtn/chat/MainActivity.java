@@ -35,6 +35,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.core.Message;
 import de.tubs.ibr.dtn.chat.core.Roster;
@@ -281,7 +282,7 @@ public class MainActivity extends FragmentActivity
 	public void onClearMessages(String buddyId) {
 		try {
 			// load buddy from roster
-			Buddy buddy = this.getRoster().get( buddyId );
+			Buddy buddy = this.getRoster().getBuddy( buddyId );
 			this.getRoster().clearMessages(buddy);
 		} catch (ServiceNotConnectedException e) {
 			Log.e(TAG, "clear messages failed", e);
@@ -291,17 +292,17 @@ public class MainActivity extends FragmentActivity
 	public void onMessage(String buddyId, String text) {
 		try {
 			// load buddy from roster
-			Buddy buddy = this.getRoster().get( buddyId );
-			Message msg = new Message(false, new Date(), new Date(), text);
+			Buddy buddy = this.getRoster().getBuddy( buddyId );
+			Message msg = new Message(null, false, new Date(), new Date(), text);
 			msg.setBuddy(buddy);
 			
 			Log.i(TAG, "send text to " + buddy.getNickname() + ": " + msg.getPayload());
 			
-			// send the message
-			new SendChatMessageTask().execute(msg);
-			
 			// store the message in the database
 			this.getRoster().storeMessage(msg);
+			
+			// send the message
+			new SendChatMessageTask().execute(msg);
 		} catch (ServiceNotConnectedException e) {
 			Log.e(TAG, "failed to send message", e);
 		}
@@ -312,7 +313,7 @@ public class MainActivity extends FragmentActivity
 
 		try {
 			// load buddy from roster
-			Buddy buddy = this.getRoster().get( buddyId );
+			Buddy buddy = this.getRoster().getBuddy( buddyId );
 			
 			if (msg.length() > 0)
 				buddy.setDraftMessage( msg );

@@ -51,7 +51,7 @@ namespace dtn
 			_stream << "Blocks: " << obj.size() << std::endl;
 
 			// serialize all secondary blocks
-			for (dtn::data::Bundle::const_iterator iter = obj.begin(); iter != obj.end(); iter++)
+			for (dtn::data::Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 			{
 				const dtn::data::Block &b = (**iter);
 				_stream << std::endl;
@@ -128,7 +128,7 @@ namespace dtn
 			{
 				std::list<dtn::data::EID> eid_list = obj.getEIDList();
 
-				for (std::list<dtn::data::EID>::const_iterator iter = eid_list.begin(); iter != eid_list.end(); iter++)
+				for (std::list<dtn::data::EID>::const_iterator iter = eid_list.begin(); iter != eid_list.end(); ++iter)
 				{
 					_stream << "EID: " << (*iter).getString() << std::endl;
 				}
@@ -218,6 +218,8 @@ namespace dtn
 			{
 				try {
 					readBlock(builder);
+				} catch (const dtn::data::BundleBuilder::DiscardBlockException &ex) {
+					IBRCOMMON_LOGGER_DEBUG(5) << "unknown block has been discarded " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				} catch (const UnknownBlockException &ex) {
 					IBRCOMMON_LOGGER_DEBUG(5) << "unknown administrative block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				} catch (const BlockNotProcessableException &ex) {
@@ -336,7 +338,7 @@ namespace dtn
 				{
 					std::vector<std::string> flags = dtn::utils::Utils::tokenize(" ", values[1]);
 
-					for (std::vector<std::string>::const_iterator iter = flags.begin(); iter != flags.end(); iter++)
+					for (std::vector<std::string>::const_iterator iter = flags.begin(); iter != flags.end(); ++iter)
 					{
 						const std::string &value = (*iter);
 						if (value == "LAST_BLOCK")
@@ -453,7 +455,7 @@ namespace dtn
 			return (*this);
 		}
 
-		dtn::data::Deserializer& PlainDeserializer::operator>>(std::ostream &stream)
+		dtn::data::Deserializer& PlainDeserializer::readBase64(std::ostream &stream)
 		{
 			ibrcommon::Base64Stream b64(stream, true);
 			std::string data;
@@ -507,10 +509,14 @@ namespace dtn
 				throw dtn::InvalidDataException("need block type as first header");
 			}
 
-			dtn::data::Block &block = builder.insert(block_type, 0);
-			(*this) >> block;
-
-			return block;
+			try {
+				dtn::data::Block &block = builder.insert(block_type, 0);
+				(*this) >> block;
+				return block;
+			} catch (dtn::data::BundleBuilder::DiscardBlockException &ex) {
+				// TODO: skip block
+				throw;
+			}
 		}
 	}
 }

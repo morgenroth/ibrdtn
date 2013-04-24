@@ -105,8 +105,11 @@ namespace dtn
 						// raise bundle event
 						dtn::core::BundleEvent::raise(b, BUNDLE_DELIVERED);
 
-						// remove the bundle from the storage
-						dtn::core::BundlePurgeEvent::raise(id);
+						if (b.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+						{
+							// remove the bundle from the storage
+							dtn::core::BundlePurgeEvent::raise(id);
+						}
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG("AbstractWorker", 15) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					};

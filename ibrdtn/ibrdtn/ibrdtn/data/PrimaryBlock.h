@@ -29,6 +29,12 @@
 #include <string>
 #include <iostream>
 
+#ifdef SWIG
+#    define DEPRECATED
+#else
+#    define DEPRECATED  __attribute__ ((deprecated))
+#endif
+
 namespace dtn
 {
 	namespace data
@@ -91,7 +97,7 @@ namespace dtn
 			 * This method is deprecated because it does not recognize the AgeBlock
 			 * as alternative age verification.
 			 */
-			bool isExpired() const __attribute__ ((deprecated));
+			bool isExpired() const DEPRECATED;
 
 			std::string toString() const;
 

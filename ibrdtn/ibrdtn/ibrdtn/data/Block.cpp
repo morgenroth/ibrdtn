@@ -38,6 +38,13 @@ namespace dtn
 		{
 		}
 
+		Block& Block::operator=(const Block &block)
+		{
+			_procflags = ~(LAST_BLOCK) & block._procflags;
+			_eids = block._eids;
+			return (*this);
+		}
+
 		bool Block::operator==(const block_t &id) const
 		{
 			return (id == _blocktype);

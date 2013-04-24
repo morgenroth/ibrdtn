@@ -54,7 +54,7 @@ namespace testsuite{
 			throw "unable to open the database";
 		}
 		ins = prepareStatement("INSERT INTO Bundles (BundleID, Source, Destination, Reportto, Custodian, ProcFlags, Timestamp, Sequencenumber, Lifetime, Fragmentoffset, Appdatalength, TTL, Size) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);", database);
-		for(int i = 0; i < 100; i++){
+		for(int i = 0; i < 100; ++i){
 			stringstream text,filename;
 			text << i;
 			sqlite3_bind_text(ins,1,text.str().c_str(),text.str().length(),SQLITE_TRANSIENT);
@@ -89,7 +89,7 @@ namespace testsuite{
 	void SQLiteBundleStorageTestSuite::getBundle(dtn::data::Bundle &bundle, string source, string dest, int size){
 		fstream lala;
 		lala.open("/home/pennywise/workspace/EmmaSVN/Unittest/hallo",ios::out|ios::binary);
-		for (int i = 1; i<=size; i++){
+		for (int i = 1; i<=size; ++i){
 			if(i<=(size/2))
 				lala<< "1";
 			else
@@ -133,7 +133,7 @@ namespace testsuite{
 		lala.open("/home/pennywise/workspace/EmmaSVN/Unittest/hallo",ios::out|ios::binary);
 		lala2.open("/home/pennywise/workspace/EmmaSVN/Unittest/hallo2",ios::out|ios::binary);
 		lala3.open("/home/pennywise/workspace/EmmaSVN/Unittest/hallo3",ios::out|ios::binary);
-		for (int i = 1; i<=total; i++){
+		for (int i = 1; i<=total; ++i){
 			if(i<second)
 				lala<< "1";
 			if(i>=second && i < third+4)
@@ -249,7 +249,7 @@ namespace testsuite{
 
 	void SQLiteBundleStorageTestSuite::insertTest(){
 		string ID;
-		int err,filename,TTLo, expire;
+		int err,TTLo, expire;
 		dtn::data::Bundle bundle,bundle2,bundle3;
 		{
 			dtn::core::SQLiteBundleStorage _storage(_path,"db",42);
@@ -269,7 +269,7 @@ namespace testsuite{
 		}
 
 		string bundleID, source, destination, reportto, custodian;
-		size_t progFlags, time, datalength, ttl, size, seq, life, offset;
+		size_t progFlags, time, datalength, ttl, seq, life, offset;
 		sqlite3 *database;
 		sqlite3_stmt *get;
 		err = sqlite3_open_v2(("/home/pennywise/workspace/EmmaSVN/Unittest/db"),&database,SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
@@ -314,7 +314,6 @@ namespace testsuite{
 		CPPUNIT_ASSERT(expire == TTLo);
 	}
 	void SQLiteBundleStorageTestSuite::getTest(){
-		int TTLo;
 		dtn::data::Bundle bundle,bundle2;
 		dtn::core::SQLiteBundleStorage _storage(_path,"db",42);
 		getBundle(bundle);
@@ -341,7 +340,7 @@ namespace testsuite{
 //			fstream lala, blockfile;
 //			lala.open("/home/pennywise/workspace/EmmaSVN/Unittest/blocktest",ios::out|ios::binary);
 //			blockfile.open("/home/pennywise/workspace/EmmaSVN/Unittest/block",ios::out|ios::binary);
-//			for (int i = 1; i<=2000; i++){
+//			for (int i = 1; i<=2000; ++i){
 //				if(i<=1000)
 //					lala << "1";
 //				else
@@ -543,7 +542,7 @@ namespace testsuite{
     }
 
     void SQLiteBundleStorageTestSuite::storeBundleRoutingInfoTest(){
-    	int err,key;
+    	int err;
     	data::Bundle bundle1, bundle2, bundle3;
     	getBundle(bundle1);
     	data::BundleID BID1(bundle1);
@@ -685,7 +684,7 @@ namespace testsuite{
     		CPPUNIT_ASSERT(_storage.deleteList.size() == 2);
     		CPPUNIT_ASSERT(_storage.nextExpiredTime == 10);
     		list<string>::iterator it;
-    		for(it = _storage.deleteList.begin(); it != _storage.deleteList.end();it++){
+    		for(it = _storage.deleteList.begin(); it != _storage.deleteList.end(); ++it){
     			cout << "Dateiname: " << (*it) << endl;
     		}
     	}
@@ -726,7 +725,7 @@ namespace testsuite{
     	data::BundleID ID(frags.front()._source,frags.front()._timestamp, frags.front()._sequencenumber);
     	{
 			dtn::core::SQLiteBundleStorage _storage(_path,"db",42);
-			for(it = frags.begin(); it!= frags.end();it++){
+			for(it = frags.begin(); it!= frags.end(); ++it){
 				_storage.storeFragment(*it);
 			}
 		}
@@ -889,7 +888,6 @@ namespace testsuite{
     	sqlite3_finalize(get);
     	sqlite3_close(database);
     	DIR *directory;
-    	bool condition1 = false, condition2 = false, condition3 = false;
     	struct dirent *dirpointer;
     	if((directory=opendir("/home/pennywise/workspace/EmmaSVN/Unittest/Bundles")) != NULL){
     		while((dirpointer=readdir(directory)) != NULL){
@@ -911,7 +909,7 @@ namespace testsuite{
     	list<data::Block*>::iterator it;
     	data::Block* pblock;
     	blocklist2 = bundle.getBlocks();
-    	for (it = blocklist2.begin(); it!=blocklist2.end();it++){
+    	for (it = blocklist2.begin(); it!=blocklist2.end(); ++it){
     		pblock = (*it);
     	}
 
@@ -1024,7 +1022,7 @@ namespace testsuite{
 //		fstream filestream;
 //		data::BundleID ID(bundle);
 //
-//		for(it = blocklist.begin() ;it != blocklist.end(); it++){
+//		for(it = blocklist.begin() ;it != blocklist.end(); ++it){
 //			filedescriptor = -1;
 //			blocktyp = (int)(*it)->getType();
 //			char *blockfilename;
@@ -1054,7 +1052,7 @@ namespace testsuite{
     void SQLiteBundleStorageTestSuite::storeBundleTimeTest(){
     	fstream lala;
 		lala.open("/home/pennywise/workspace/EmmaSVN/Unittest/payload",ios::out|ios::binary);
-		for (int i = 1; i<=100; i++){
+		for (int i = 1; i<=100; ++i){
 			if(i<=(100/2))
 				lala<< "1";
 			else
@@ -1078,7 +1076,7 @@ namespace testsuite{
 			getBundle(bd, "dtn:alice/app3", "dtn:bob/app2", file);
 			bundleList.push_back(bd);
 		}
-		for(it = bundleList.begin(); it!=bundleList.end();it++){
+		for(it = bundleList.begin(); it!=bundleList.end(); ++it){
     		ibrcommon::TimeMeasurement time, time2;
     		time.start();
     		storeBlocks(*it);
@@ -1106,7 +1104,7 @@ namespace testsuite{
     	fstream lala;
     	vector<double> _result;
 		lala.open(payloadfile.c_str(),ios::out|ios::binary);
-		for (int i = 1; i<=size; i++){
+		for (int i = 1; i<=size; ++i){
 			if(i<=(size/2))
 				lala<< "1";
 			else
@@ -1121,7 +1119,7 @@ namespace testsuite{
     	list<data::BundleID> resultID;
 
     	dtn::core::SQLiteBundleStorage _storage(_path,"db",42);
-    	for (int i=0; i < number; i++){
+    	for (int i=0; i < number; ++i){
     		if(i%500 == 0)
     			cout << i <<" Bundles written"<<endl;
     		data::Bundle bd;
@@ -1148,7 +1146,7 @@ namespace testsuite{
     	time2.start();
     	dtn::core::SQLiteBundleStorage _storage(_path,"db",42);
 
-    	for(it = idList.begin(); it!=idList.end(); it++){
+    	for(it = idList.begin(); it!=idList.end(); ++it){
     		time.start();
     		_storage.remove(*it);
     		time.stop();
@@ -1161,7 +1159,7 @@ namespace testsuite{
 
     void SQLiteBundleStorageTestSuite::insertTimeTest(){
     	vector<vector<double> > result_insert, resul_delete;
-    	for (int i = 0 ; i < 4; i++){
+    	for (int i = 0 ; i < 4; ++i){
     		cout << "insertTest start"<<endl;
     		clearFolder(_path);
     		list<data::BundleID> idList;
@@ -1180,7 +1178,7 @@ namespace testsuite{
     	fstream strom, strom2;
     	strom.open("/home/pennywise/workspace/EmmaSVN/TimeMeasurements/insertTime_Erweitert.csv",ios::out);
     	strom2.open("/home/pennywise/workspace/EmmaSVN/TimeMeasurements/deleteTimeErweitert.csv",ios::out);
-    	for(int i = 0; i<result_insert[0].size(); i++){
+    	for(int i = 0; i<result_insert[0].size(); ++i){
     		time_insert = ((result_insert[0])[i] + (result_insert[1])[i] + (result_insert[2])[i] + (result_insert[3])[i])/4;
     		strom << time_insert <<endl;
 
@@ -1195,7 +1193,7 @@ namespace testsuite{
     	list<data::BundleID> idList;
     	list<data::BundleID>::iterator it;
     	ibrcommon::TimeMeasurement time, time2;
-    	for(int i = 1; i < 100; i++){
+    	for(int i = 1; i < 100; ++i){
 			time.start();
 			idList = insertTime(10,1000000,tmp,"/home/pennywise/workspace/EmmaSVN/Unittest/Payload_insertErweitert");
 			fstream timestream;
@@ -1207,7 +1205,7 @@ namespace testsuite{
 
 			cout.flush();
 			cout << "Speicherzeit: " << time <<endl;
-			for(it = idList.begin();it != idList.end();it++){
+			for(it = idList.begin();it != idList.end(); ++it){
 				ibrcommon::TimeMeasurement time;
 				time.start();
 				_storage.get(*it);

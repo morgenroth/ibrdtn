@@ -23,18 +23,24 @@
 #define EVENTDEBUGGER_H_
 
 #include "core/EventReceiver.h"
+#include "Component.h"
 
 namespace dtn
 {
 	namespace core
 	{
-		class EventDebugger : public EventReceiver
+		class EventDebugger : public EventReceiver, public dtn::daemon::IntegratedComponent
 		{
 		public:
 			EventDebugger();
 			virtual ~EventDebugger();
 
+			virtual void componentUp() throw ();
+			virtual void componentDown() throw ();
+
 			void raiseEvent(const Event *evt) throw ();
+
+			virtual const std::string getName() const;
 		};
 	}
 }

@@ -119,7 +119,7 @@ namespace ibrcommon
 		}
 
 		// for each byte...
-		for (size_t i = 0; i < len; i++)
+		for (size_t i = 0; i < len; ++i)
 		{
 			// do cipher stuff
 			if (_decode)

@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 
 	std::list<std::string> arglist;
 
-	for (int i = 0; i < argc; i++)
+	for (int i = 0; i < argc; ++i)
 	{
 		if (argv[i][0] == '-')
 		{
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 		return -1;
 	} else if (arglist.size() == 2)
 	{
-		std::list<std::string>::iterator iter = arglist.begin(); iter++;
+		std::list<std::string>::iterator iter = arglist.begin(); ++iter;
 
 		// the first parameter is the destination
 		file_destination = (*iter);
@@ -189,10 +189,10 @@ int main(int argc, char *argv[])
 	}
 	else if (arglist.size() > 2)
 	{
-		std::list<std::string>::iterator iter = arglist.begin(); iter++;
+		std::list<std::string>::iterator iter = arglist.begin(); ++iter;
 
 		// the first parameter is the destination
-		file_destination = (*iter); iter++;
+		file_destination = (*iter); ++iter;
 
 		// the second parameter is the filename
 		filename = (*iter);
@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
 					// copy cin to a BLOB
 					(*ref.iostream()) << cin.rdbuf();
 
-					for(int u=0; u<copies; u++){
+					for(int u=0; u<copies; ++u){
 						dtn::data::Bundle b;
 
 						// set the destination
@@ -259,7 +259,10 @@ int main(int argc, char *argv[])
 						if (bundle_signed) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 						// enable custody transfer if requested
-						if (bundle_custody) b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
+						if (bundle_custody) {
+							b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
+							b._custodian = dtn::data::EID("api:me");
+						}
 
 						// enable compression
 						if (bundle_compression) b.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, true);
@@ -286,7 +289,7 @@ int main(int argc, char *argv[])
 					// open file as read-only BLOB
 					ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::open(filename);
 
-					for(int u=0; u<copies; u++){
+					for(int u=0; u<copies; ++u){
 						// create a bundle from the file
 						dtn::data::Bundle b;
 
@@ -306,7 +309,10 @@ int main(int argc, char *argv[])
 						if (bundle_signed) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 						// enable custody transfer if requested
-						if (bundle_custody) b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
+						if (bundle_custody) {
+							b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
+							b._custodian = dtn::data::EID("api:me");
+						}
 
 						// enable compression
 						if (bundle_compression) b.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, true);

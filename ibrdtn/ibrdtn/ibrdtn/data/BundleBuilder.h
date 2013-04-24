@@ -19,6 +19,14 @@ namespace dtn
 	{
 		class BundleBuilder {
 		public:
+			class DiscardBlockException : public dtn::SerializationFailedException
+			{
+			public:
+				DiscardBlockException(string what = "Block has been discarded.") throw() : dtn::SerializationFailedException(what)
+				{
+				};
+			};
+
 			enum POSITION
 			{
 				FRONT,
@@ -44,7 +52,7 @@ namespace dtn
 			/**
 			 * Add a block to the bundle.
 			 */
-			dtn::data::Block& insert(dtn::data::block_t block_type, size_t procflags);
+			dtn::data::Block& insert(dtn::data::block_t block_type, size_t procflags) throw (DiscardBlockException);
 
 		private:
 			Bundle *_target;

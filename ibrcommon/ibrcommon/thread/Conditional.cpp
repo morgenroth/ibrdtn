@@ -55,7 +55,7 @@ namespace ibrcommon
 		return false;
 	}
 
-	void Conditional::signal (bool broadcast)
+	void Conditional::signal (bool broadcast) throw ()
 	{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 		// assert a locked Conditional
@@ -129,7 +129,7 @@ namespace ibrcommon
 #endif
 	}
 
-	void Conditional::gettimeout(size_t msec, struct timespec *ts)
+	void Conditional::gettimeout(size_t msec, struct timespec *ts) throw ()
 	{
 #if _POSIX_TIMERS > 0 && defined(HAVE_PTHREAD_CONDATTR_SETCLOCK)
 	#if defined(_POSIX_MONOTONIC_CLOCK)
@@ -151,7 +151,7 @@ namespace ibrcommon
 		}
 	}
 
-	void Conditional::abort()
+	void Conditional::abort() throw ()
 	{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 		// assert a locked Conditional
@@ -162,7 +162,7 @@ namespace ibrcommon
 		_abort = true;
 	}
 
-	void Conditional::reset()
+	void Conditional::reset() throw ()
 	{
 		_abort = false;
 	}

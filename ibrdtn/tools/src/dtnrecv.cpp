@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	int count   = 1;
 	ibrcommon::File unixdomain;
 
-	for (int i = 0; i < argc; i++)
+	for (int i = 0; i < argc; ++i)
 	{
 		string arg = argv[i];
 
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 			file.exceptions(std::ios::badbit | std::ios::eofbit);
 		}
 
-		for(h = 0; h < count; h++)
+		for(h = 0; h < count; ++h)
 		{
 			// receive the bundle
 			dtn::data::Bundle b = client.getBundle(timeout);

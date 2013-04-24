@@ -26,7 +26,7 @@
 #include "routing/prophet/ForwardingStrategy.h"
 #include "routing/prophet/AcknowledgementSet.h"
 
-#include "routing/BaseRouter.h"
+#include "routing/RoutingExtension.h"
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/ThreadsafeReference.h>
@@ -48,12 +48,13 @@ namespace dtn
 		 * predictabilityMaps with neighbors.
 		 * For a detailed description of the protocol, see draft-irtf-dtnrg-prophet-09
 		 */
-		class ProphetRoutingExtension : public BaseRouter::Extension, public ibrcommon::JoinableThread
+		class ProphetRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
 		{
 			friend class ForwardingStrategy;
+			static const std::string TAG;
 
 		public:
-			ProphetRoutingExtension(dtn::storage::BundleSeeker &seeker, ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first,
+			ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first,
 						float p_first_threshold, float beta, float gamma, float delta,
 						size_t time_unit, size_t i_typ,
 						size_t next_exchange_timeout);

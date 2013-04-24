@@ -25,14 +25,18 @@ import java.util.Date;
 
 public class Message {
 
-	private Boolean incoming = null;;
+	private Long msgid = null;
+	private Boolean incoming = null;
 	private Buddy buddy = null;
-	private Date created = null;;
-	private Date received = null;;
-	private String payload = null;;
+	private Date created = null;
+	private Date received = null;
+	private String payload = null;
+	private String sentid = null;
+	private Long flags = 0L;
 	
-	public Message(Boolean incoming, Date created, Date received, String payload)
+	public Message(Long id, Boolean incoming, Date created, Date received, String payload)
 	{
+		this.msgid = id;
 		this.incoming = incoming;
 		this.created = created;
 		this.received = received;
@@ -71,5 +75,26 @@ public class Message {
 	public void setPayload(String payload) {
 		this.payload = payload;
 	}
-	
+	public void setSentId(String id) {
+		this.sentid = id;
+	}
+	public String getSentId() {
+		return this.sentid;
+	}
+
+	public Long getMsgId() {
+		return msgid;
+	}
+
+	public void setMsgId(Long msgid) {
+		this.msgid = msgid;
+	}
+
+	public Long getFlags() {
+		return flags;
+	}
+
+	public void setFlags(Long flags) {
+		this.flags = flags;
+	}
 }

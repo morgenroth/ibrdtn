@@ -40,7 +40,7 @@ void tcpstreamtest :: baseTest (void)
 	// start the streamchecker
 	_checker.start();
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 10; ++i)
 	{
 		runTest();
 	}
@@ -73,11 +73,11 @@ void tcpstreamtest::runTest()
 		ibrcommon::socketstream client(new ibrcommon::tcpsocket(addr));
 
 		// send some data
-		for (size_t j = 0; j < 20; j++)
+		for (size_t j = 0; j < 20; ++j)
 		{
-			for (size_t i = 0; i < 100000; i++)
+			for (size_t i = 0; i < 100000; ++i)
 			{
-				for (int k = 0; k < 10; k++)
+				for (int k = 0; k < 10; ++k)
 				{
 					client.put(values[k]);
 				}
@@ -114,7 +114,7 @@ void tcpstreamtest::StreamChecker::run() throw ()
 				ibrcommon::socketset fds;
 				_sock.select(&fds, NULL, NULL, NULL);
 
-				for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
+				for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); ++iter)
 				{
 					ibrcommon::serversocket &srv = dynamic_cast<ibrcommon::serversocket&>(**iter);
 					ibrcommon::vaddress source;

@@ -32,12 +32,12 @@ namespace ibrcommon
 {
 	Timer::time_t Timer::get_current_time()
 	{
-		::time_t rawtime = time(NULL);
+		::time_t rawtime = ::time(NULL);
 		tm * ptm;
 
-		ptm = gmtime ( &rawtime );
+		ptm = ::gmtime ( &rawtime );
 
-		return mktime(ptm);
+		return ::mktime(ptm);
 	}
 
 	Timer::Timer(TimerCallback &callback, size_t timeout)

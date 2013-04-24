@@ -48,8 +48,8 @@ namespace dtn
 {
 	namespace routing
 	{
-		StaticRoutingExtension::StaticRoutingExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker), next_expire(0)
+		StaticRoutingExtension::StaticRoutingExtension()
+		 : next_expire(0)
 		{
 		}
 
@@ -59,7 +59,7 @@ namespace dtn
 
 			// delete all static routes
 			for (std::list<StaticRoute*>::iterator iter = _routes.begin();
-					iter != _routes.end(); iter++)
+					iter != _routes.end(); ++iter)
 			{
 				StaticRoute *route = (*iter);
 				delete route;
@@ -82,7 +82,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
+				virtual size_t limit() const throw () { return _entry.getFreeTransferSlots(); };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -128,7 +128,7 @@ namespace dtn
 
 					// search for one rule that match
 					for (std::list<const StaticRoute*>::const_iterator iter = _routes.begin();
-							iter != _routes.end(); iter++)
+							iter != _routes.end(); ++iter)
 					{
 						const StaticRoute &route = (**iter);
 
@@ -149,7 +149,7 @@ namespace dtn
 			// announce static routes here
 			const std::multimap<std::string, std::string> &routes = dtn::daemon::Configuration::getInstance().getNetwork().getStaticRoutes();
 
-			for (std::multimap<std::string, std::string>::const_iterator iter = routes.begin(); iter != routes.end(); iter++)
+			for (std::multimap<std::string, std::string>::const_iterator iter = routes.begin(); iter != routes.end(); ++iter)
 			{
 				const dtn::data::EID nexthop((*iter).second);
 				dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_ADD, nexthop, (*iter).first);
@@ -176,7 +176,7 @@ namespace dtn
 
 						// look for routes to this node
 						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
-								iter != _routes.end(); iter++)
+								iter != _routes.end(); ++iter)
 						{
 							const StaticRoute *route = (*iter);
 							if (route->getDestination() == task.eid)
@@ -186,7 +186,7 @@ namespace dtn
 							}
 						}
 
-						if (routes.size() > 0)
+						if (!routes.empty())
 						{
 							// this destination is not handles by any static route
 							ibrcommon::MutexLock l(db);
@@ -204,10 +204,10 @@ namespace dtn
 
 							// query all bundles from the storage
 							list.clear();
-							_seeker.get(filter, list);
+							(**this).getSeeker().get(filter, list);
 
 							// send the bundles as long as we have resources
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								try {
 									// transfer the bundle to the neighbor
@@ -226,7 +226,7 @@ namespace dtn
 
 						// look for routes to this node
 						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
-								iter != _routes.end(); iter++)
+								iter != _routes.end(); ++iter)
 						{
 							const StaticRoute &route = (**iter);
 							IBRCOMMON_LOGGER_DEBUG(50) << "check static route: " << route.toString() << IBRCOMMON_LOGGER_ENDL;
@@ -261,7 +261,7 @@ namespace dtn
 							}
 							else
 							{
-								iter++;
+								++iter;
 							}
 						}
 
@@ -291,7 +291,7 @@ namespace dtn
 
 						// delete all static routes
 						for (std::list<StaticRoute*>::iterator iter = _routes.begin();
-								iter != _routes.end(); iter++)
+								iter != _routes.end(); ++iter)
 						{
 							StaticRoute *route = (*iter);
 							delete route;
@@ -326,7 +326,7 @@ namespace dtn
 									next_expire = route->getExpiration();
 								}
 
-								iter++;
+								++iter;
 							}
 						}
 					} catch (const bad_cast&) { };
@@ -356,7 +356,7 @@ namespace dtn
 				{
 					_taskqueue.push( new SearchNextBundleTask(n.getEID()) );
 				}
-				else if (nodeevent.getAction() == NODE_UPDATED)
+				else if (nodeevent.getAction() == NODE_DATA_ADDED)
 				{
 					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 				}

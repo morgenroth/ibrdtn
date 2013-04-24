@@ -21,6 +21,8 @@
  */
 package de.tubs.ibr.dtn.chat.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Date;
 import java.util.StringTokenizer;
 
@@ -45,6 +47,8 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
+import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
+import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
@@ -69,7 +73,8 @@ public class ChatService extends IntentService {
 	private static final String TAG = "ChatService";
 	
 	// mark a specific bundle as delivered
-	private static final String  MARK_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.MARK_DELIVERED";
+	public static final String  MARK_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.MARK_DELIVERED";
+	public static final String  REPORT_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.REPORT_DELIVERED";
 	
 	private static final int MESSAGE_NOTIFICATION = 1;
 	public static final String ACTION_OPENCHAT = "de.tubs.ibr.dtn.chat.OPENCHAT";
@@ -96,6 +101,7 @@ public class ChatService extends IntentService {
 	
     private DataHandler _data_handler = new DataHandler()
     {
+        ByteArrayOutputStream stream = null;
     	Bundle current;
 
 		public void startBundle(Bundle bundle) {
@@ -116,27 +122,38 @@ public class ChatService extends IntentService {
 
 		public TransferMode startBlock(Block block) {
 			// ignore messages with a size larger than 8k
-			if (block.length > 8196) return TransferMode.NULL;
+			if ((block.length > 8196) || (block.type != 1)) return TransferMode.NULL;
+			
+			// create a new bytearray output stream
+			stream = new ByteArrayOutputStream();
+			
 			return TransferMode.SIMPLE;
 		}
 
 		public void endBlock() {
-		}
-
-		public void characters(String data) {
+		    if (stream != null) {
+                String msg = new String(stream.toByteArray());
+                stream = null;
+                
+                if (current.getDestination().equals(PRESENCE_GROUP_EID))
+                {
+                    eventNewPresence(current.getSource(), current.getTimestamp().getDate(), msg);
+                }
+                else
+                {
+                    eventNewMessage(current.getSource(), current.getTimestamp().getDate(), msg);
+                }
+		    }
 		}
 
 		public void payload(byte[] data) {
-			String msg = new String(data);
-			
-			if (current.destination.equalsIgnoreCase(PRESENCE_GROUP_EID.toString()))
-			{
-				eventNewPresence(current.source, current.timestamp, msg);
-			}
-			else
-			{
-				eventNewMessage(current.source, current.timestamp, msg);
-			}
+		    if (stream == null) return;
+		    // write data to the stream
+		    try {
+                stream.write(data);
+            } catch (IOException e) {
+                Log.e(TAG, "error on writing payload", e);
+            }
 		}
 
 		public ParcelFileDescriptor fd() {
@@ -149,7 +166,7 @@ public class ChatService extends IntentService {
 		public void finished(int startId) {
 		}
     
-		private void eventNewPresence(String source, Date created, String payload)
+		private void eventNewPresence(SingletonEndpoint source, Date created, String payload)
 		{
 			Log.i(TAG, "Presence received from " + source);
 			
@@ -189,19 +206,19 @@ public class ChatService extends IntentService {
 			
 			if (nickname != null)
 			{
-				eventBuddyInfo(created, source, presence, nickname, status);
+				eventBuddyInfo(created, source.toString(), presence, nickname, status);
 			}
 		}
 		
-		private void eventNewMessage(String source, Date created, String payload)
+		private void eventNewMessage(SingletonEndpoint source, Date created, String payload)
 		{
 			if (source == null)
 			{
 				Log.e(TAG, "message source is null!");
 			}
 			
-			Buddy b = getRoster().get(source);
-			Message msg = new Message(true, created, new Date(), payload);
+			Buddy b = getRoster().getBuddy(source.toString());
+			Message msg = new Message(null, true, created, new Date(), payload);
 			msg.setBuddy(b);
 			
 			getRoster().storeMessage(msg);
@@ -315,13 +332,35 @@ public class ChatService extends IntentService {
 	public void sendMessage(Message msg) throws Exception
 	{
 		Session s = _client.getSession();
+		Bundle b = new Bundle();
 		
-		SingletonEndpoint destination = new SingletonEndpoint(msg.getBuddy().getEndpoint());
+		b.setDestination(new SingletonEndpoint(msg.getBuddy().getEndpoint()));
 		
 		String lifetime = PreferenceManager.getDefaultSharedPreferences(this).getString("messageduration", "259200");
-		if (!s.send(destination, Integer.parseInt(lifetime), msg.getPayload().getBytes()))
-		{
-			throw new Exception("could not send the message");
+		b.setLifetime(Long.parseLong(lifetime));
+		
+		// set status report requests
+		b.set(ProcFlags.REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
+		b.setReportto(SingletonEndpoint.ME);
+		
+		synchronized(this.roster) {
+			// send out the message
+			BundleID ret = s.send(b, msg.getPayload().getBytes());
+			
+			if (ret == null)
+			{
+				throw new Exception("could not send the message");
+			}
+			else
+			{
+			    Log.d(TAG, "Bundle sent, BundleID: " + ret.toString());
+			}
+			
+			// set sent id of the message
+			msg.setSentId(ret.toString());
+			
+			// update message into the database
+			this.getRoster().reportSent(msg);
 		}
 	}
 	
@@ -333,16 +372,22 @@ public class ChatService extends IntentService {
 				"Nickname: " + nickname + "\n" +
 				"Status: " + status;
 		
-		if (!s.send(ChatService.PRESENCE_GROUP_EID, 3600, presence_message.getBytes()))
+		BundleID ret = s.send(ChatService.PRESENCE_GROUP_EID, 3600, presence_message.getBytes());
+		
+		if (ret == null)
 		{
 			throw new Exception("could not send the message");
+		}
+		else
+		{
+		    Log.d(TAG, "Presence sent, BundleID: " + ret.toString());
 		}
 	}
 	
 	public void eventBuddyInfo(Date timestamp, String source, String presence, String nickname, String status)
 	{
 		// get the buddy object
-		Buddy b = getRoster().get(source);
+		Buddy b = getRoster().getBuddy(source);
 		
 		// discard the buddy info, if it is too old
 		if (b.getLastSeen() != null)
@@ -497,7 +542,7 @@ public class ChatService extends IntentService {
         }
         else if (MARK_DELIVERED_INTENT.equals(action))
         {
-        	de.tubs.ibr.dtn.api.BundleID bundleid = intent.getParcelableExtra("bundleid");
+        	BundleID bundleid = intent.getParcelableExtra("bundleid");
         	if (bundleid == null) {
         		Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
         		return;
@@ -509,12 +554,27 @@ public class ChatService extends IntentService {
     			Log.e(TAG, "Can not mark bundle as delivered.", e);
     		}	
         }
+        else if (REPORT_DELIVERED_INTENT.equals(action))
+        {
+			SingletonEndpoint source = intent.getParcelableExtra("source");
+			BundleID bundleid = intent.getParcelableExtra("bundleid");
+			
+        	if (bundleid == null) {
+        		Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
+        		return;
+        	}
+        	
+        	// report delivery to the roster
+        	getRoster().reportDelivery(source, bundleid);
+        }
 	}
 	
 	public void startDebug(Debug d) {
 		switch (d) {
 		case NOTIFICATION:
-			createNotification(this.getRoster().getFirst(), new Message(true, new Date(), new Date(), "Debug message"));
+			if (this.getRoster().size() > 0) {
+				createNotification(this.getRoster().getFirst(), new Message(null, true, new Date(), new Date(), "Debug message"));
+			}
 			break;
 		}
 	}

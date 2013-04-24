@@ -50,7 +50,7 @@ namespace dtn
 				SDNV nob; (*stream) >> nob;
 
 				// read all offsets
-				for (size_t i = 0; i < (nob.getValue() - 1); i++)
+				for (size_t i = 0; i < (nob.getValue() - 1); ++i)
 				{
 					SDNV offset; (*stream) >> offset;
 				}
@@ -61,7 +61,7 @@ namespace dtn
 
 				try {
 					// read all bundles
-					for (size_t i = 0; i < nob.getValue(); i++)
+					for (size_t i = 0; i < nob.getValue(); ++i)
 					{
 						// deserialize the next bundle
 						deserializer >> b;

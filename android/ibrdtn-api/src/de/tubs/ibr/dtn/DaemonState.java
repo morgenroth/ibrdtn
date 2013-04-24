@@ -26,6 +26,7 @@ import android.os.Parcelable;
 
 public enum DaemonState implements Parcelable {
 	UNKOWN,
+	PENDING,
 	ONLINE,
 	OFFLINE,
 	SUSPENDED,

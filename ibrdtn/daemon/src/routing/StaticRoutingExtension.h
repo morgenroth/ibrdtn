@@ -23,7 +23,7 @@
 #define STATICROUTINGEXTENSION_H_
 
 #include "routing/StaticRoute.h"
-#include "routing/BaseRouter.h"
+#include "routing/RoutingExtension.h"
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -32,10 +32,10 @@ namespace dtn
 {
 	namespace routing
 	{
-		class StaticRoutingExtension : public BaseRouter::Extension, public ibrcommon::JoinableThread
+		class StaticRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
 		{
 		public:
-			StaticRoutingExtension(dtn::storage::BundleSeeker &seeker);
+			StaticRoutingExtension();
 			virtual ~StaticRoutingExtension();
 
 			void notify(const dtn::core::Event *evt) throw ();

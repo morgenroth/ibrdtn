@@ -122,6 +122,7 @@ namespace dtn
 
 			static std::string toString(Node::Type type);
 			static std::string toString(Node::Protocol proto);
+			static Node::Protocol fromProtocolString(const std::string &protocol);
 
 			/**
 			 * constructor
@@ -162,6 +163,11 @@ namespace dtn
 			 * Clear all URIs & Attributes contained in this node.
 			 */
 			void clear();
+
+			/**
+			 * Get the number of entries (URI + Attributes)
+			 */
+			size_t size() const;
 
 			/**
 			 * Returns a list of URIs matching the given protocol
