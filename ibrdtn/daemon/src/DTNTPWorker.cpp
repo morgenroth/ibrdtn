@@ -308,7 +308,7 @@ namespace dtn
 				b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 
 				// set the lifetime of the bundle to 60 seconds
-				b._lifetime = 60;
+				b.lifetime = 60;
 
 				// add a schl block
 				dtn::data::ScopeControlHopLimitBlock &schl = b.push_front<dtn::data::ScopeControlHopLimitBlock>();
@@ -428,7 +428,7 @@ namespace dtn
 						response.relabel();
 
 						// set the lifetime of the bundle to 60 seconds
-						response._lifetime = 60;
+						response.lifetime = 60;
 
 						// switch the source and destination
 						response._source = b._destination;

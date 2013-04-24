@@ -461,7 +461,7 @@ namespace dtn
 			// check if the lifetime of the bundle is too long
 			if (BundleCore::max_lifetime > 0)
 			{
-				if (p._lifetime > BundleCore::max_lifetime)
+				if (p.lifetime > BundleCore::max_lifetime)
 				{
 					// ... we reject bundles with such a long lifetime
 					IBRCOMMON_LOGGER(warning) << "lifetime of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;

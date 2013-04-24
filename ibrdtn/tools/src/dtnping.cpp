@@ -83,7 +83,7 @@ class EchoClient : public dtn::api::Client
 			if (sign) b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 
 			// set lifetime
-			b._lifetime = lifetime;
+			b.lifetime = lifetime;
 			
 			// create a new blob
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -392,7 +392,7 @@ int main(int argc, char *argv[])
 								payload_size = blob.iostream().size();
 							}
 
-							std::cout << payload_size << " bytes from " << response._source.getString() << ": seq=" << reply_seq << " ttl=" << response._lifetime << " time=" << tm << std::endl;
+							std::cout << payload_size << " bytes from " << response._source.getString() << ": seq=" << reply_seq << " ttl=" << response.lifetime << " time=" << tm << std::endl;
 							_received++;
 						} catch (const dtn::api::ConnectionTimeoutException &e) {
 							if (stop_after_first_fail)

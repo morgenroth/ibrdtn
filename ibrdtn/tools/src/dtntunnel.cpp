@@ -201,7 +201,7 @@ class TUN2BundleGateway : public dtn::api::Client
 
 			b._destination = endpoint;
 			b.push_back(blob);
-			b._lifetime = lifetime;
+			b.lifetime = lifetime;
 
 			// transmit the packet
 			(*this) << b;

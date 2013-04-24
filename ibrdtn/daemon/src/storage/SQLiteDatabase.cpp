@@ -400,7 +400,7 @@ namespace dtn
 			bundle.procflags = sqlite3_column_int(*st, offset + 4);
 			bundle.timestamp = sqlite3_column_int64(*st, offset + 5);
 			bundle.sequencenumber = sqlite3_column_int64(*st, offset + 6);
-			bundle._lifetime = sqlite3_column_int64(*st, offset + 7);
+			bundle.lifetime = sqlite3_column_int64(*st, offset + 7);
 
 			if (bundle.procflags & data::Bundle::FRAGMENT)
 			{
@@ -595,7 +595,7 @@ namespace dtn
 			int err;
 
 			const dtn::data::EID _sourceid = bundle._source;
-			size_t TTL = bundle.timestamp + bundle._lifetime;
+			size_t TTL = bundle.timestamp + bundle.lifetime;
 
 			Statement st(_database, _sql_queries[BUNDLE_STORE]);
 
@@ -606,7 +606,7 @@ namespace dtn
 			sqlite3_bind_text(*st, 7, bundle._reportto.getString().c_str(), bundle._reportto.getString().length(), SQLITE_TRANSIENT);
 			sqlite3_bind_text(*st, 8, bundle._custodian.getString().c_str(), bundle._custodian.getString().length(), SQLITE_TRANSIENT);
 			sqlite3_bind_int(*st, 9, bundle.procflags);
-			sqlite3_bind_int64(*st, 10, bundle._lifetime);
+			sqlite3_bind_int64(*st, 10, bundle.lifetime);
 
 			if (bundle.get(dtn::data::Bundle::FRAGMENT))
 			{

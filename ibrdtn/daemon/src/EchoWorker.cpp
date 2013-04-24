@@ -57,7 +57,7 @@ namespace dtn
 				echo._source = getWorkerURI();
 
 				// set the lifetime to the same value as the received bundle
-				echo._lifetime = b._lifetime;
+				echo.lifetime = b.lifetime;
 
 				try {
 					const dtn::data::TrackingBlock &tracking = b.find<dtn::data::TrackingBlock>();

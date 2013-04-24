@@ -72,7 +72,7 @@ namespace dtn
 			_stream << "Destination: " << obj._destination.getString() << std::endl;
 			_stream << "Reportto: " << obj._reportto.getString() << std::endl;
 			_stream << "Custodian: " << obj._custodian.getString() << std::endl;
-			_stream << "Lifetime: " << obj._lifetime << std::endl;
+			_stream << "Lifetime: " << obj.lifetime << std::endl;
 
 			if (obj.procflags & dtn::data::PrimaryBlock::FRAGMENT)
 			{
@@ -290,7 +290,7 @@ namespace dtn
 				else if (values[0] == "Lifetime")
 				{
 					ss.clear(); ss.str(values[1]);
-					ss >> obj._lifetime;
+					ss >> obj.lifetime;
 				}
 				else if (values[0] == "Fragment offset")
 				{

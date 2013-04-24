@@ -189,7 +189,7 @@ class Tracer : public dtn::api::Client
 			ProbeBundle b(destination, tracking);
 
 			// set lifetime
-			b._lifetime = timeout;
+			b.lifetime = timeout;
 
 			// set some stupid payload
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();

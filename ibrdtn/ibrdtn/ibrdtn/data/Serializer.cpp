@@ -185,7 +185,7 @@ namespace dtn
 
 			primaryheader[8] = SDNV(obj.timestamp);		// timestamp
 			primaryheader[9] = SDNV(obj.sequencenumber);	// sequence number
-			primaryheader[10] = SDNV(obj._lifetime);		// lifetime
+			primaryheader[10] = SDNV(obj.lifetime);		// lifetime
 
 			pair<size_t, size_t> ref;
 
@@ -484,7 +484,7 @@ namespace dtn
 			primaryheader[9] = SDNV(obj.sequencenumber);
 
 			// lifetime
-			primaryheader[10] = SDNV(obj._lifetime);
+			primaryheader[10] = SDNV(obj.lifetime);
 
 			for (int i = 0; i < 11; ++i)
 			{
@@ -666,10 +666,10 @@ namespace dtn
 			obj.appdatalength = pb._appdatalength;
 			obj.custodian = pb._custodian;
 			obj.destination = pb._destination;
-			obj.expiretime = dtn::utils::Clock::getExpireTime(pb.timestamp, pb._lifetime);
+			obj.expiretime = dtn::utils::Clock::getExpireTime(pb.timestamp, pb.lifetime);
 			obj.fragment = pb.get(dtn::data::PrimaryBlock::FRAGMENT);
 			obj.hopcount = 0;
-			obj.lifetime = pb._lifetime;
+			obj.lifetime = pb.lifetime;
 			obj.offset = pb._fragmentoffset;
 			obj.procflags = pb.procflags;
 			obj.received = 0;
@@ -716,7 +716,7 @@ namespace dtn
 
 			// lifetime
 			_stream >> tmpsdnv;
-			obj._lifetime = tmpsdnv.getValue();
+			obj.lifetime = tmpsdnv.getValue();
 
 			try {
 				// dictionary

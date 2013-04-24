@@ -128,7 +128,7 @@ void TestSerializer::serializer_primaryblock_length(void)
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node1/app1");
 	b._destination = dtn::data::EID("dtn://node2/app2");
-	b._lifetime = 3600;
+	b.lifetime = 3600;
 	b.timestamp = 12345678;
 	b.sequencenumber = 1234;
 
@@ -157,7 +157,7 @@ void TestSerializer::serializer_block_length(void)
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node1/app1");
 	b._destination = dtn::data::EID("dtn://node2/app2");
-	b._lifetime = 3600;
+	b.lifetime = 3600;
 	b.timestamp = 12345678;
 	b.sequencenumber = 1234;
 
@@ -191,7 +191,7 @@ void TestSerializer::serializer_bundle_length(void)
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node1/app1");
 	b._destination = dtn::data::EID("dtn://node2/app2");
-	b._lifetime = 3600;
+	b.lifetime = 3600;
 	b.timestamp = 12345678;
 	b.sequencenumber = 1234;
 
@@ -220,7 +220,7 @@ void TestSerializer::serializer_fragment_one(void)
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node1/app1");
 	b._destination = dtn::data::EID("dtn://node2/app2");
-	b._lifetime = 3600;
+	b.lifetime = 3600;
 	b.timestamp = 12345678;
 	b.sequencenumber = 1234;
 
@@ -274,7 +274,7 @@ void TestSerializer::serializer_ipn_compression_length(void)
 
 	ipnbundle.push_back(ref);
 
-	ipnbundle._lifetime = 3600;
+	ipnbundle.lifetime = 3600;
 
 	ipnbundle.push_front<dtn::data::AgeBlock>();
 

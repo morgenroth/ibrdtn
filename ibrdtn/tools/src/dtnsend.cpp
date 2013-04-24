@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
 						if (bundle_compression) b.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, true);
 
 						// set the lifetime
-						b._lifetime = lifetime;
+						b.lifetime = lifetime;
 
 						// set the bundles priority
 						b.setPriority(dtn::data::PrimaryBlock::PRIORITY(priority));
@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
 						if (bundle_compression) b.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, true);
 
 						// set the lifetime
-						b._lifetime = lifetime;
+						b.lifetime = lifetime;
 
 						// set the bundles priority
 						b.setPriority(dtn::data::PrimaryBlock::PRIORITY(priority));

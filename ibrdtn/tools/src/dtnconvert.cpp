@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 			std::cout << "destination: " << b._destination.getString() << std::endl;
 			std::cout << "timestamp: " << b.timestamp << std::endl;
 			std::cout << "sequence number: " << b.sequencenumber << std::endl;
-			std::cout << "lifetime: " << b._lifetime << std::endl;
+			std::cout << "lifetime: " << b.lifetime << std::endl;
 
 			const dtn::data::PayloadBlock &pblock = b.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference ref = pblock.getBLOB();
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 
 			b._source = _source;
 			b._destination = _destination;
-			b._lifetime = _lifetime;
+			b.lifetime = _lifetime;
 
 			const dtn::data::PayloadBlock &pblock = b.push_back<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference ref = pblock.getBLOB();

@@ -33,7 +33,7 @@ namespace dtn
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
 		PrimaryBlock::PrimaryBlock()
-		 : procflags(0), timestamp(0), sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
+		 : procflags(0), timestamp(0), sequencenumber(0), lifetime(3600), _fragmentoffset(0), _appdatalength(0)
 		{
 			relabel();
 
@@ -147,7 +147,7 @@ namespace dtn
 
 		bool PrimaryBlock::isExpired() const
 		{
-			return dtn::utils::Clock::isExpired(_lifetime + timestamp, _lifetime);
+			return dtn::utils::Clock::isExpired(lifetime + timestamp, lifetime);
 		}
 
 		std::string PrimaryBlock::toString() const

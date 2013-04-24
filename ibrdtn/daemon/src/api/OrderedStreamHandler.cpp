@@ -67,7 +67,7 @@ namespace dtn
 			b._source = _endpoint;
 
 			// set lifetime
-			b._lifetime = _lifetime;
+			b.lifetime = _lifetime;
 
 			// set flag if the bundles are addresses to a group
 			if (_group)

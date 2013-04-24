@@ -435,7 +435,7 @@ namespace dtn
 				answer._destination = bundle._source;
 
 				// limit the lifetime to 60 seconds
-				answer._lifetime = 60;
+				answer.lifetime = 60;
 
 				// set high priority
 				answer.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);

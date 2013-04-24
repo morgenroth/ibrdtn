@@ -89,7 +89,7 @@ namespace dtn
 			(*this) << dtn::data::SDNV(obj.sequencenumber);
 
 			// lifetime
-			(*this) << dtn::data::SDNV(obj._lifetime);
+			(*this) << dtn::data::SDNV(obj.lifetime);
 
 			return *this;
 		}

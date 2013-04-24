@@ -167,7 +167,7 @@ namespace dtn
 			capsule.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, custody);
 
 			// set the new lifetime
-			capsule._lifetime = exp_time - capsule.timestamp;
+			capsule.lifetime = exp_time - capsule.timestamp;
 		}
 
 		void Utils::encapsule(ibrcommon::BLOB::Reference &ref, const std::list<dtn::data::Bundle> &bundles)

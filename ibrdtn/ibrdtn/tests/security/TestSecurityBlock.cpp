@@ -66,7 +66,7 @@ void TestSecurityBlock::localBABTest(void)
 	b._source = dtn::data::EID("dtn://source/app");
 	b._destination = dtn::data::EID("dtn://destination/app");
 	b.procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
-	b._lifetime = 3600;
+	b.lifetime = 3600;
 
 	const dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
 	ibrcommon::BLOB::Reference ref = p.getBLOB();
@@ -96,7 +96,7 @@ void TestSecurityBlock::serializeBABTest(void)
 		b._source = dtn::data::EID("dtn://source/app");
 		b._destination = dtn::data::EID("dtn://destination/app");
 		b.procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
-		b._lifetime = 3600;
+		b.lifetime = 3600;
 
 		const dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
 		ibrcommon::BLOB::Reference ref = p.getBLOB();

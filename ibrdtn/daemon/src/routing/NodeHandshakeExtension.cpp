@@ -217,7 +217,7 @@ namespace dtn
 				req._destination = origin + origin.getDelimiter() + "routing";
 
 			// limit the lifetime to 60 seconds
-			req._lifetime = 60;
+			req.lifetime = 60;
 
 			// set high priority
 			req.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -280,7 +280,7 @@ namespace dtn
 				answer._destination = bundle._source;
 
 				// limit the lifetime to 60 seconds
-				answer._lifetime = 60;
+				answer.lifetime = 60;
 
 				// set high priority
 				answer.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);

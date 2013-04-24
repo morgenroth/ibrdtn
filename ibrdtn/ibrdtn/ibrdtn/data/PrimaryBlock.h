@@ -120,7 +120,7 @@ namespace dtn
 			size_t procflags;
 			size_t timestamp;
 			size_t sequencenumber;
-			size_t _lifetime;
+			size_t lifetime;
 			size_t _fragmentoffset;
 			size_t _appdatalength;
 
