@@ -33,7 +33,7 @@ namespace dtn
 	namespace storage
 	{
 		BundleStorage::BundleStorage(size_t maxsize)
-		 : _maxsize(maxsize), _currentsize(0)
+		 : _faulty(false), _maxsize(maxsize), _currentsize(0)
 		{
 		}
 

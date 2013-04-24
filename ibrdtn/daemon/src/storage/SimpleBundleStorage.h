@@ -141,6 +141,21 @@ namespace dtn
 			virtual void eventDataStorageRemoveFailed(const dtn::storage::DataStorage::Hash &hash, const ibrcommon::Exception&);
 			virtual void iterateDataStorage(const dtn::storage::DataStorage::Hash &hash, dtn::storage::DataStorage::istream &stream);
 
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Wait until all the data has been stored to the disk
+			 */
+			void wait();
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * or retrieve a bundle will fail.
+			 */
+			void setFaulty(bool mode);
+
+			/*** END: methods for unit-testing ***/
+
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();

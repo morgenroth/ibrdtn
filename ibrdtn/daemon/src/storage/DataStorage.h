@@ -119,6 +119,16 @@ namespace dtn
 			 */
 			void reset();
 
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * a bundle will fail.
+			 */
+			void setFaulty(bool mode);
+
+			/*** END: methods for unit-testing ***/
+
 		protected:
 			void run() throw ();
 			void __cancellation() throw ();
@@ -154,6 +164,7 @@ namespace dtn
 			ibrcommon::Queue< Task* > _tasks;
 			ibrcommon::Semaphore _store_sem;
 			bool _store_limited;
+			bool _faulty;
 
 			ibrcommon::Mutex _global_mutex;
 		};

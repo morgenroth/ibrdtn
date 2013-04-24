@@ -160,6 +160,21 @@ namespace dtn
 			 */
 			void detach(dtn::storage::BundleIndex *index);
 
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Wait until all the data has been stored and is not cached anymore
+			 */
+			virtual void wait() { };
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * or retrieve a bundle will fail.
+			 */
+			virtual void setFaulty(bool mode) { _faulty = mode; };
+
+			/*** END: methods for unit-testing ***/
+
 		protected:
 			/**
 			 * constructor
@@ -172,6 +187,8 @@ namespace dtn
 
 			void eventBundleAdded(const dtn::data::MetaBundle &b) throw ();
 			void eventBundleRemoved(const dtn::data::BundleID &id) throw ();
+
+			bool _faulty;
 
 		private:
 			ibrcommon::Mutex _sizelock;

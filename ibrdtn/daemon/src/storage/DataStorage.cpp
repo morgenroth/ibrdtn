@@ -91,7 +91,7 @@ namespace dtn
 		{ return *_stream; }
 
 		DataStorage::DataStorage(Callback &callback, const ibrcommon::File &path, size_t write_buffer, bool initialize)
-		 : _callback(callback), _path(path), _tasks(), _store_sem(write_buffer), _store_limited(write_buffer > 0)
+		 : _callback(callback), _path(path), _tasks(), _store_sem(write_buffer), _store_limited(write_buffer > 0), _faulty(false)
 		// limit the number of bundles in the write buffer
 		{
 			// initialize the storage
@@ -136,6 +136,11 @@ namespace dtn
 		void DataStorage::reset()
 		{
 			JoinableThread::reset();
+		}
+
+		void DataStorage::setFaulty(bool mode)
+		{
+			_faulty = mode;
 		}
 
 		void DataStorage::iterateAll()
@@ -217,7 +222,7 @@ namespace dtn
 								std::ofstream stream(destination.getPath().c_str(), ios::out | ios::binary | ios::trunc);
 
 								// check the streams health
-								if (!stream.good())
+								if (!stream.good() || _faulty)
 								{
 									std::stringstream ss; ss << "unable to open filestream [" << std::strerror(errno) << "]";
 									throw ibrcommon::IOException(ss.str());

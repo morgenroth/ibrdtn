@@ -123,6 +123,10 @@ namespace dtn
 					const dtn::data::Bundle &bundle = (*iter);
 					if (id == bundle)
 					{
+						if (_faulty) {
+							throw dtn::SerializationFailedException("bundle get failed due to faulty setting");
+						}
+
 						return bundle;
 					}
 				}
@@ -157,6 +161,8 @@ namespace dtn
 		void MemoryBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
 			ibrcommon::MutexLock l(_bundleslock);
+
+			if (_faulty) return;
 
 			// get size of the bundle
 			dtn::data::DefaultSerializer s(std::cout);

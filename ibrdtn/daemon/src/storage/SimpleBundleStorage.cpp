@@ -166,6 +166,10 @@ namespace dtn
 
 		dtn::data::Bundle SimpleBundleStorage::__get(const dtn::data::MetaBundle &meta)
 		{
+			if (_faulty) {
+				throw dtn::SerializationFailedException("bundle get failed due to faulty setting");
+			}
+
 			DataStorage::Hash hash(meta.toString());
 			std::map<DataStorage::Hash, dtn::data::Bundle>::iterator it = _pending_bundles.find(hash);
 
@@ -278,6 +282,17 @@ namespace dtn
 		{
 			ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READONLY);
 			return _list.size();
+		}
+
+		void SimpleBundleStorage::wait()
+		{
+			_datastore.wait();
+		}
+
+		void SimpleBundleStorage::setFaulty(bool mode)
+		{
+			_faulty = mode;
+			_datastore.setFaulty(mode);
 		}
 
 		void SimpleBundleStorage::get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
