@@ -498,19 +498,13 @@ namespace dtn
 
 		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
 		{
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
-			{
-				if ((*iter) == b)
-				{
-					// remove the bundle
-					const dtn::data::MetaBundle &meta = (*iter);
+			// remove it from the bundle list
+			_priority_index.erase(b);
 
-					// remove the item
-					__remove(meta);
+			DataStorage::Hash hash(b.toString());
 
-					break;
-				}
-			}
+			// create a background task for removing the bundle
+			_datastore.remove(hash);
 
 			// raise bundle event
 			dtn::core::BundleEvent::raise( b, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
