@@ -114,6 +114,11 @@ namespace dtn
 			 */
 			void iterateAll();
 
+			/**
+			 * reset the data storage
+			 */
+			void reset();
+
 		protected:
 			void run() throw ();
 			void __cancellation() throw ();

@@ -133,6 +133,11 @@ namespace dtn
 			}
 		}
 
+		void DataStorage::reset()
+		{
+			JoinableThread::reset();
+		}
+
 		void DataStorage::iterateAll()
 		{
 			std::list<ibrcommon::File> files;

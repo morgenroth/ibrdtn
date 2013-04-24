@@ -230,6 +230,16 @@ namespace dtn
 				_datastore.wait();
 				_datastore.stop();
 				_datastore.join();
+
+				// reset datastore
+				_datastore.reset();
+
+				// clear all data structures
+				ibrcommon::RWLock l(_bundleslock, ibrcommon::RWMutex::LOCK_READWRITE);
+				_pending_bundles.clear();
+				_stored_bundles.clear();
+				_bundle_lengths.clear();
+				_list.clear();
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG("SimpleBundleStorage", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
