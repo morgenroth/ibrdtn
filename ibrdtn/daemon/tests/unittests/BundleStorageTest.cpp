@@ -100,7 +100,7 @@ void BundleStorageTest::setUp()
 
 void BundleStorageTest::tearDown()
 {
-	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+	esl->stop();
 
 	try {
 		dtn::daemon::Component &c = dynamic_cast<dtn::daemon::Component&>(*_storage);
@@ -317,6 +317,7 @@ void BundleStorageTest::testRaiseEvent(dtn::storage::BundleStorage &storage)
 	b.source = dtn::data::EID("dtn://node-two/foo");
 
 	storage.store(b);
+	storage.wait();
 	dtn::core::TimeEvent::raise(dtn::utils::Clock::getTime() + 3600, dtn::utils::Clock::getTime() + 3600 - dtn::utils::Clock::TIMEVAL_CONVERSION, dtn::core::TIME_SECOND_TICK);
 }
 
