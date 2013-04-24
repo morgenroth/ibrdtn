@@ -63,7 +63,7 @@ void BundleStreamBuf::__flush()
 	// request delivery acks
 	if (_request_ack) {
 		_chunk.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
-		_chunk._reportto = dtn::data::EID("api:me");
+		_chunk.reportto = dtn::data::EID("api:me");
 	}
 
 	// send the current chunk and clear it

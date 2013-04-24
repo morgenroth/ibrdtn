@@ -58,7 +58,7 @@ namespace dtn
 			// rebuild the dictionary
 			_dictionary.add(obj.destination);
 			_dictionary.add(obj.source);
-			_dictionary.add(obj._reportto);
+			_dictionary.add(obj.reportto);
 			_dictionary.add(obj._custodian);
 
 			// add EID of all secondary blocks
@@ -149,7 +149,7 @@ namespace dtn
 			// check if all EID are compressable
 			bool compressable = ( obj.source.isCompressable() &&
 					obj.destination.isCompressable() &&
-					obj._reportto.isCompressable() &&
+					obj.reportto.isCompressable() &&
 					obj._custodian.isCompressable() );
 
 			if (compressable)
@@ -202,7 +202,7 @@ namespace dtn
 				primaryheader[3] = SDNV(ref.second);
 
 				// reportto reference
-				ref = obj._reportto.getCompressed();
+				ref = obj.reportto.getCompressed();
 				primaryheader[4] = SDNV(ref.first);
 				primaryheader[5] = SDNV(ref.second);
 
@@ -227,7 +227,7 @@ namespace dtn
 				primaryheader[3] = SDNV(ref.second);
 
 				// reportto reference
-				ref = _dictionary.getRef(obj._reportto);
+				ref = _dictionary.getRef(obj.reportto);
 				primaryheader[4] = SDNV(ref.first);
 				primaryheader[5] = SDNV(ref.second);
 
@@ -439,7 +439,7 @@ namespace dtn
 				primaryheader[3] = SDNV(ref.second);
 
 				// reportto reference
-				ref = obj._reportto.getCompressed();
+				ref = obj.reportto.getCompressed();
 				primaryheader[4] = SDNV(ref.first);
 				primaryheader[5] = SDNV(ref.second);
 
@@ -464,7 +464,7 @@ namespace dtn
 				primaryheader[3] = SDNV(ref.second);
 
 				// reportto reference
-				ref = _dictionary.getRef(obj._reportto);
+				ref = _dictionary.getRef(obj.reportto);
 				primaryheader[4] = SDNV(ref.first);
 				primaryheader[5] = SDNV(ref.second);
 
@@ -673,7 +673,7 @@ namespace dtn
 			obj.offset = pb.fragmentoffset;
 			obj.procflags = pb.procflags;
 			obj.received = 0;
-			obj.reportto = pb._reportto;
+			obj.reportto = pb.reportto;
 			obj.sequencenumber = pb.sequencenumber;
 			obj.source = pb.source;
 			obj.timestamp = pb.timestamp;
@@ -725,14 +725,14 @@ namespace dtn
 				// decode EIDs
 				obj.destination = _dictionary.get(ref[0].first.getValue(), ref[0].second.getValue());
 				obj.source = _dictionary.get(ref[1].first.getValue(), ref[1].second.getValue());
-				obj._reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
+				obj.reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
 				obj._custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
 				_compressed = false;
 			} catch (const dtn::InvalidDataException&) {
 				// error while reading the dictionary. We assume that this is a compressed bundle header.
 				obj.destination = dtn::data::EID(ref[0].first.getValue(), ref[0].second.getValue());
 				obj.source = dtn::data::EID(ref[1].first.getValue(), ref[1].second.getValue());
-				obj._reportto = dtn::data::EID(ref[2].first.getValue(), ref[2].second.getValue());
+				obj.reportto = dtn::data::EID(ref[2].first.getValue(), ref[2].second.getValue());
 				obj._custodian = dtn::data::EID(ref[3].first.getValue(), ref[3].second.getValue());
 				_compressed = true;
 			}

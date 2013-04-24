@@ -47,7 +47,7 @@ namespace data
 		// rebuild the dictionary
 		add(bundle.destination);
 		add(bundle.source);
-		add(bundle._reportto);
+		add(bundle.reportto);
 		add(bundle._custodian);
 
 		// add EID of all secondary blocks

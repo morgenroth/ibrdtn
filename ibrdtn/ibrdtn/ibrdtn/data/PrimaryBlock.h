@@ -126,7 +126,7 @@ namespace dtn
 
 			EID source;
 			EID destination;
-			EID _reportto;
+			EID reportto;
 			EID _custodian;
 
 		private:

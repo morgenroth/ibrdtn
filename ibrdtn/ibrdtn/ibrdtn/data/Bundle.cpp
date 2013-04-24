@@ -264,7 +264,7 @@ namespace dtn
 		{
 			if( destination.isCompressable()
 			    && source.isCompressable()
-			    && _reportto.isCompressable()
+			    && reportto.isCompressable()
 			    && _custodian.isCompressable()
 			  )
 			{

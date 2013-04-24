@@ -70,7 +70,7 @@ namespace dtn
 			_stream << "Sequencenumber: " << obj.sequencenumber << std::endl;
 			_stream << "Source: " << obj.source.getString() << std::endl;
 			_stream << "Destination: " << obj.destination.getString() << std::endl;
-			_stream << "Reportto: " << obj._reportto.getString() << std::endl;
+			_stream << "Reportto: " << obj.reportto.getString() << std::endl;
 			_stream << "Custodian: " << obj._custodian.getString() << std::endl;
 			_stream << "Lifetime: " << obj.lifetime << std::endl;
 
@@ -281,7 +281,7 @@ namespace dtn
 				}
 				else if (values[0] == "Reportto")
 				{
-					obj._reportto = values[1];
+					obj.reportto = values[1];
 				}
 				else if (values[0] == "Custodian")
 				{

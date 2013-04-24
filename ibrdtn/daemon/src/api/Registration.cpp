@@ -488,7 +488,7 @@ namespace dtn
 			bundle.source = source;
 
 			if (bundle.destination == clienteid) bundle.destination = source;
-			if (bundle._reportto == clienteid) bundle._reportto = source;
+			if (bundle.reportto == clienteid) bundle.reportto = source;
 			if (bundle._custodian == clienteid) bundle._custodian = source;
 
 			// if the timestamp is not set, add a ageblock

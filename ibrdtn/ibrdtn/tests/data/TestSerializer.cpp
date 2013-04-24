@@ -80,7 +80,7 @@ void TestSerializer::serializer_cbhe01(void)
 
 	b._source = src;
 	b.destination = dst;
-	b._reportto = report;
+	b.reportto = report;
 
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 	b.push_back(ref);
@@ -94,7 +94,7 @@ void TestSerializer::serializer_cbhe01(void)
 
 	CPPUNIT_ASSERT( b._source == b2._source );
 	CPPUNIT_ASSERT( b.destination == b2.destination );
-	CPPUNIT_ASSERT( b._reportto == b2._reportto );
+	CPPUNIT_ASSERT( b.reportto == b2.reportto );
 	CPPUNIT_ASSERT( b._custodian == b2._custodian );
 }
 

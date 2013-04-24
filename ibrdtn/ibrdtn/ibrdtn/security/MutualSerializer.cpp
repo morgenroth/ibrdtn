@@ -82,7 +82,7 @@ namespace dtn
 			// dest, source, report to id
 			(*this) << obj.destination;
 			(*this) << obj.source;
-			(*this) << obj._reportto;
+			(*this) << obj.reportto;
 
 			// timestamp
 			(*this) << dtn::data::SDNV(obj.timestamp);
@@ -176,7 +176,7 @@ namespace dtn
 			// report to id length
 			length += 4;
 			// report to id
-			length += obj._reportto.getString().size();
+			length += obj.reportto.getString().size();
 			// creation time: 2*SDNV
 			length += 2*sdnv_size;
 			// lifetime: SDNV

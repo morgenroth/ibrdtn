@@ -202,7 +202,7 @@ class Tracer : public dtn::api::Client
 			if (options & 0x04) b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_RECEPTION, true);
 			if (options & 0x08) b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELETION, true);
 
-			b._reportto = dtn::data::EID("api:me");
+			b.reportto = dtn::data::EID("api:me");
 
 			ibrcommon::TimeMeasurement tm;
 
