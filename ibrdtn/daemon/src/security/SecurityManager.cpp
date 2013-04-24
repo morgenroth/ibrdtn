@@ -77,7 +77,7 @@ namespace dtn
 				const SecurityKey key = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_PRIVATE);
 
 				// sign the bundle with PIB
-				dtn::security::PayloadIntegrityBlock::sign(bundle, key, bundle._destination.getNode());
+				dtn::security::PayloadIntegrityBlock::sign(bundle, key, bundle.destination.getNode());
 			} catch (const SecurityKeyManager::KeyNotFoundException &ex) {
 				throw KeyMissingException(ex.what());
 			}
@@ -225,7 +225,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(10) << "encrypt bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				// get the encryption key
-				dtn::security::SecurityKey key = SecurityKeyManager::getInstance().get(bundle._destination, dtn::security::SecurityKey::KEY_PUBLIC);
+				dtn::security::SecurityKey key = SecurityKeyManager::getInstance().get(bundle.destination, dtn::security::SecurityKey::KEY_PUBLIC);
 
 				// encrypt the payload of the bundle
 				dtn::security::PayloadConfidentialBlock::encrypt(bundle, key, dtn::core::BundleCore::local);

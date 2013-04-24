@@ -60,7 +60,7 @@ void PayloadConfidentialBlockTest::encryptTest(void)
 
 	dtn::data::Bundle b;
 	b.source = dtn::data::EID("dtn://test");
-	b._destination = pubkey.reference;
+	b.destination = pubkey.reference;
 
 	// add payload block
 	dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
@@ -140,7 +140,7 @@ void PayloadConfidentialBlockTest::decryptTest(void)
 
 	dtn::data::Bundle b;
 	b.source = pubkey.reference + "/test";
-	b._destination = dtn::data::EID("dtn://destination/test");
+	b.destination = dtn::data::EID("dtn://destination/test");
 
 	encrypt(pubkey, b);
 

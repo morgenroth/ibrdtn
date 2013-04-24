@@ -88,7 +88,7 @@ void BundleCreator::addBlocks(dtn::data::Bundle &bundle, int quantity, Position 
 }
 
 void BundleCreator::createBundle(dtn::data::Bundle &bundle,string souceID = "dtn:alice/app3", string destID = "dtn:bob/app2", int payloadsize, int blocksBeforePayload = 0, int blocksAfterPayload = 0){
-	bundle._source = dtn::data::EID(sourceID);
+	bundle.source = dtn::data::EID(sourceID);
 	bundle._destination = dtn::data::EID(destID);
 	bundle._procflags += dtn::data::Bundle::PRIORITY_BIT1;
 	bundle._procflags += dtn::data::Bundle::CUSTODY_REQUESTED;
@@ -99,7 +99,7 @@ void BundleCreator::createBundle(dtn::data::Bundle &bundle,string souceID = "dtn
 }
 
 void BundleCreator::createBundle(dtn::data::Bundle &bundle, ibrcommon::File &file, string souceID = "dtn:alice/app3", string destID = "dtn:bob/app2", int blocksBeforePayload = 0, int blocksAfterPayload = 0){
-	bundle._source = dtn::data::EID(sourceID);
+	bundle.source = dtn::data::EID(sourceID);
 	bundle._destination = dtn::data::EID(destID);
 	bundle._procflags += dtn::data::Bundle::PRIORITY_BIT1;
 	bundle._procflags += dtn::data::Bundle::CUSTODY_REQUESTED;

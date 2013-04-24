@@ -80,7 +80,7 @@ namespace dtn
 			(*this) << (uint32_t)getLength(obj);
 
 			// dest, source, report to id
-			(*this) << obj._destination;
+			(*this) << obj.destination;
 			(*this) << obj.source;
 			(*this) << obj._reportto;
 
@@ -168,7 +168,7 @@ namespace dtn
 			// dest id length
 			uint32_t length = 4;
 			// dest id
-			length += obj._destination.getString().size();
+			length += obj.destination.getString().size();
 			// source id length
 			length += 4;
 			// source id

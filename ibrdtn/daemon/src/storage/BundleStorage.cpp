@@ -81,7 +81,7 @@ namespace dtn
 
 			custody_bundle.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 			custody_bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-			custody_bundle._destination = meta.custodian;
+			custody_bundle.destination = meta.custodian;
 			custody_bundle.source = dtn::core::BundleCore::local;
 
 			// send the custody accepted bundle
@@ -118,7 +118,7 @@ namespace dtn
 			signal.write(payload);
 
 			b.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
-			b._destination = meta.custodian;
+			b.destination = meta.custodian;
 			b.source = dtn::core::BundleCore::local;
 
 			// send the custody rejected bundle

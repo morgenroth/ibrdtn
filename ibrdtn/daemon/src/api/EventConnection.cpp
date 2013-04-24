@@ -143,7 +143,7 @@ namespace dtn
 				_stream << "Procflags: " << received.bundle.procflags << std::endl;
 
 				// write the destination eid
-				_stream << "Destination: " << received.bundle._destination.getString() << std::endl;
+				_stream << "Destination: " << received.bundle.destination.getString() << std::endl;
 
 				if (received.bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
 				{

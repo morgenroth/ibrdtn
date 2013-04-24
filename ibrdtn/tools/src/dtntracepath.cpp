@@ -37,9 +37,9 @@
 class ProbeBundle : public dtn::data::Bundle
 {
 public:
-	ProbeBundle(const dtn::data::EID &destination, bool tracking)
+	ProbeBundle(const dtn::data::EID &d, bool tracking)
 	{
-		_destination = destination;
+		destination = d;
 
 		if (tracking) {
 			push_back<dtn::data::TrackingBlock>();

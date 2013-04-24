@@ -57,7 +57,7 @@ void PayloadIntegrityBlockTest::signTest(void)
 {
 	dtn::data::Bundle b;
 	b.source = dtn::data::EID("dtn://test");
-	b._destination = pkey.reference;
+	b.destination = pkey.reference;
 
 	// add payload block
 	dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
@@ -76,7 +76,7 @@ void PayloadIntegrityBlockTest::verifyTest(void)
 {
 	dtn::data::Bundle b;
 	b.source = dtn::data::EID("dtn://test");
-	b._destination = pubkey.reference;
+	b.destination = pubkey.reference;
 
 	// add payload block
 	dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();

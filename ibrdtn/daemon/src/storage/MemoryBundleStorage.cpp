@@ -152,7 +152,7 @@ namespace dtn
 			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
 				const dtn::data::Bundle &bundle = (*iter);
-				ret.insert(bundle._destination);
+				ret.insert(bundle.destination);
 			}
 
 			return ret;

@@ -244,7 +244,7 @@ int main(int argc, char *argv[])
 						dtn::data::Bundle b;
 
 						// set the destination
-						b._destination = file_destination;
+						b.destination = file_destination;
 
 						// add payload block with the reference
 						b.push_back(ref);
@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
 						dtn::data::Bundle b;
 
 						// set the destination
-						b._destination = file_destination;
+						b.destination = file_destination;
 
 						// add payload block with the reference
 						b.push_back(ref);

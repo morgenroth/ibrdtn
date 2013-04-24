@@ -61,7 +61,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 20) << "put()" << IBRCOMMON_LOGGER_ENDL;
 
 			// set destination EID
-			b._destination = _peer;
+			b.destination = _peer;
 
 			// set source
 			b.source = _endpoint;

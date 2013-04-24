@@ -50,7 +50,7 @@ namespace dtn
 				echo.push_back(ref);
 
 				// set destination and mark the bundle as singleton destination
-				echo._destination = b.source;
+				echo.destination = b.source;
 				echo.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 
 				// set the source of the bundle

@@ -487,7 +487,7 @@ namespace dtn
 			// set the source address to the sending EID
 			bundle.source = source;
 
-			if (bundle._destination == clienteid) bundle._destination = source;
+			if (bundle.destination == clienteid) bundle.destination = source;
 			if (bundle._reportto == clienteid) bundle._reportto = source;
 			if (bundle._custodian == clienteid) bundle._custodian = source;
 

@@ -79,7 +79,7 @@ void TestSerializer::serializer_cbhe01(void)
 	std::pair<size_t, size_t> cbhe_eid = src.getCompressed();
 
 	b._source = src;
-	b._destination = dst;
+	b.destination = dst;
 	b._reportto = report;
 
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -93,7 +93,7 @@ void TestSerializer::serializer_cbhe01(void)
 	dtn::data::DefaultDeserializer(ss) >> b2;
 
 	CPPUNIT_ASSERT( b._source == b2._source );
-	CPPUNIT_ASSERT( b._destination == b2._destination );
+	CPPUNIT_ASSERT( b.destination == b2.destination );
 	CPPUNIT_ASSERT( b._reportto == b2._reportto );
 	CPPUNIT_ASSERT( b._custodian == b2._custodian );
 }
@@ -106,7 +106,7 @@ void TestSerializer::serializer_cbhe02(void)
 	dtn::data::EID dst("ipn:2.3");
 
 	b._source = src;
-	b._destination = dst;
+	b.destination = dst;
 
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
@@ -127,7 +127,7 @@ void TestSerializer::serializer_primaryblock_length(void)
 {
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node1/app1");
-	b._destination = dtn::data::EID("dtn://node2/app2");
+	b.destination = dtn::data::EID("dtn://node2/app2");
 	b.lifetime = 3600;
 	b.timestamp = 12345678;
 	b.sequencenumber = 1234;
@@ -156,7 +156,7 @@ void TestSerializer::serializer_block_length(void)
 {
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node1/app1");
-	b._destination = dtn::data::EID("dtn://node2/app2");
+	b.destination = dtn::data::EID("dtn://node2/app2");
 	b.lifetime = 3600;
 	b.timestamp = 12345678;
 	b.sequencenumber = 1234;
@@ -190,7 +190,7 @@ void TestSerializer::serializer_bundle_length(void)
 {
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node1/app1");
-	b._destination = dtn::data::EID("dtn://node2/app2");
+	b.destination = dtn::data::EID("dtn://node2/app2");
 	b.lifetime = 3600;
 	b.timestamp = 12345678;
 	b.sequencenumber = 1234;
@@ -219,7 +219,7 @@ void TestSerializer::serializer_fragment_one(void)
 {
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node1/app1");
-	b._destination = dtn::data::EID("dtn://node2/app2");
+	b.destination = dtn::data::EID("dtn://node2/app2");
 	b.lifetime = 3600;
 	b.timestamp = 12345678;
 	b.sequencenumber = 1234;
@@ -263,7 +263,7 @@ void TestSerializer::serializer_ipn_compression_length(void)
 {
 	dtn::data::Bundle ipnbundle;
 	ipnbundle._source = dtn::data::EID("ipn:5.2");
-	ipnbundle._destination = dtn::data::EID("ipn:1.2");
+	ipnbundle.destination = dtn::data::EID("ipn:1.2");
 
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 	{

@@ -45,7 +45,7 @@ namespace data
 	Dictionary::Dictionary(const dtn::data::Bundle &bundle)
 	{
 		// rebuild the dictionary
-		add(bundle._destination);
+		add(bundle.destination);
 		add(bundle.source);
 		add(bundle._reportto);
 		add(bundle._custodian);

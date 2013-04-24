@@ -129,7 +129,7 @@ void BaseRouterTest::testRaiseEvent()
 	/* test signature (const dtn::core::Event *evt) */
 	dtn::data::EID eid("dtn://no-neighbor");
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://testcase-one/foo");
+	b.source = dtn::data::EID("dtn://testcase-one/foo");
 
 	ibrtest::EventSwitchLoop esl; esl.start();
 	dtn::routing::BaseRouter router;
@@ -165,7 +165,7 @@ void BaseRouterTest::testIsKnown()
 	dtn::routing::BaseRouter router;
 
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://testcase-one/foo");
+	b.source = dtn::data::EID("dtn://testcase-one/foo");
 
 	CPPUNIT_ASSERT_EQUAL(false, router.isKnown(b));
 
@@ -180,7 +180,7 @@ void BaseRouterTest::testSetKnown()
 	dtn::routing::BaseRouter router;
 
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://testcase-one/foo");
+	b.source = dtn::data::EID("dtn://testcase-one/foo");
 
 	router.setKnown(b);
 	CPPUNIT_ASSERT_EQUAL(true, router.isKnown(b));
@@ -192,7 +192,7 @@ void BaseRouterTest::testGetSummaryVector()
 	dtn::routing::BaseRouter router;
 
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://testcase-one/foo");
+	b.source = dtn::data::EID("dtn://testcase-one/foo");
 
 	CPPUNIT_ASSERT_EQUAL(false, router.isKnown(b));
 

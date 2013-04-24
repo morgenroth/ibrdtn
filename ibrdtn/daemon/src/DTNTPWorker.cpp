@@ -298,7 +298,7 @@ namespace dtn
 
 				// set the source and destination
 				b.source = dtn::core::BundleCore::local + "/dtntp";
-				b._destination = peer + "/dtntp";
+				b.destination = peer + "/dtntp";
 
 				// set high priority
 				b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -431,8 +431,8 @@ namespace dtn
 						response.lifetime = 60;
 
 						// switch the source and destination
-						response.source = b._destination;
-						response._destination = b.source;
+						response.source = b.destination;
+						response.destination = b.source;
 						
 						// set high priority
 						response.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);

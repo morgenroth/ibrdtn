@@ -450,7 +450,7 @@ namespace dtn
 			// if we do not forward bundles
 			if (!BundleCore::forwarding)
 			{
-				if (!p._destination.sameHost(BundleCore::local))
+				if (!p.destination.sameHost(BundleCore::local))
 				{
 					// ... we reject all non-local bundles.
 					IBRCOMMON_LOGGER(warning) << "non-local bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
@@ -516,7 +516,7 @@ namespace dtn
 			 */
 
 			// reject bundles without destination
-			if (b._destination.isNone())
+			if (b.destination.isNone())
 			{
 				IBRCOMMON_LOGGER(warning) << "bundle rejected: the destination is null" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle destination is none");

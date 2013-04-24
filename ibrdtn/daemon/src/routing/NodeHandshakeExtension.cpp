@@ -212,9 +212,9 @@ namespace dtn
 			req.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 
 			if (origin.isCompressable())
-				req._destination = origin + origin.getDelimiter() + "50";
+				req.destination = origin + origin.getDelimiter() + "50";
 			else
-				req._destination = origin + origin.getDelimiter() + "routing";
+				req.destination = origin + origin.getDelimiter() + "routing";
 
 			// limit the lifetime to 60 seconds
 			req.lifetime = 60;
@@ -277,7 +277,7 @@ namespace dtn
 
 				// set the destination of the bundle
 				answer.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-				answer._destination = bundle.source;
+				answer.destination = bundle.source;
 
 				// limit the lifetime to 60 seconds
 				answer.lifetime = 60;

@@ -720,7 +720,7 @@ namespace dtn
 		{
 			dtn::data::EID destination = getSecurityDestination();
 			if (destination == dtn::data::EID())
-				destination = bundle._destination.getNode();
+				destination = bundle.destination.getNode();
 			return destination;
 		}
 	}

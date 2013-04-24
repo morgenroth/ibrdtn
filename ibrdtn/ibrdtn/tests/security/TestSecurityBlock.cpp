@@ -64,7 +64,7 @@ void TestSecurityBlock::localBABTest(void)
 {
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://source/app");
-	b._destination = dtn::data::EID("dtn://destination/app");
+	b.destination = dtn::data::EID("dtn://destination/app");
 	b.procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
 	b.lifetime = 3600;
 
@@ -94,7 +94,7 @@ void TestSecurityBlock::serializeBABTest(void)
 	{
 		dtn::data::Bundle b;
 		b._source = dtn::data::EID("dtn://source/app");
-		b._destination = dtn::data::EID("dtn://destination/app");
+		b.destination = dtn::data::EID("dtn://destination/app");
 		b.procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
 		b.lifetime = 3600;
 
@@ -129,7 +129,7 @@ void TestSecurityBlock::permutationBabPibTest(void)
 {
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://test");
-	b._destination = pkey.reference;
+	b.destination = pkey.reference;
 
 	// add payload block
 	dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();

@@ -125,7 +125,7 @@ namespace dtn
 			size_t appdatalength;
 
 			EID source;
-			EID _destination;
+			EID destination;
 			EID _reportto;
 			EID _custodian;
 

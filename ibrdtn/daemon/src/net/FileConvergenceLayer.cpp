@@ -124,7 +124,7 @@ namespace dtn
 											// read the bundle out of the storage
 											const dtn::data::Bundle bundle = storage.get(sbt.job._bundle);
 
-											if (bundle._destination == (sbt.node.getEID() + "/routing"))
+											if (bundle.destination == (sbt.node.getEID() + "/routing"))
 											{
 												// add this bundle to the blacklist
 												{
@@ -428,11 +428,11 @@ namespace dtn
 				dtn::data::Bundle answer;
 
 				// set the source of the bundle
-				answer.source = bundle._destination;
+				answer.source = bundle.destination;
 
 				// set the destination of the bundle
 				answer.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-				answer._destination = bundle.source;
+				answer.destination = bundle.source;
 
 				// limit the lifetime to 60 seconds
 				answer.lifetime = 60;
@@ -455,7 +455,7 @@ namespace dtn
 				schl.setLimit(1);
 
 				// raise default bundle received event
-				dtn::net::BundleReceivedEvent::raise(bundle._destination.getNode(), answer, false);
+				dtn::net::BundleReceivedEvent::raise(bundle.destination.getNode(), answer, false);
 			}
 		}
 	} /* namespace net */

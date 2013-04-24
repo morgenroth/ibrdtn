@@ -394,7 +394,7 @@ namespace dtn
 		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
-			bundle._destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
+			bundle.destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
 			bundle._reportto = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 2) );
 			bundle._custodian = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 3) );
 			bundle.procflags = sqlite3_column_int(*st, offset + 4);
@@ -602,7 +602,7 @@ namespace dtn
 			set_bundleid(st, bundle);
 
 			sqlite3_bind_text(*st, 5, bundle.source.getString().c_str(), bundle.source.getString().length(), SQLITE_TRANSIENT);
-			sqlite3_bind_text(*st, 6, bundle._destination.getString().c_str(), bundle._destination.getString().length(), SQLITE_TRANSIENT);
+			sqlite3_bind_text(*st, 6, bundle.destination.getString().c_str(), bundle.destination.getString().length(), SQLITE_TRANSIENT);
 			sqlite3_bind_text(*st, 7, bundle._reportto.getString().c_str(), bundle._reportto.getString().length(), SQLITE_TRANSIENT);
 			sqlite3_bind_text(*st, 8, bundle._custodian.getString().c_str(), bundle._custodian.getString().length(), SQLITE_TRANSIENT);
 			sqlite3_bind_int(*st, 9, bundle.procflags);

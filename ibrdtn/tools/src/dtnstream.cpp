@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
 		// transmitter mode
 		if (_destination != dtn::data::EID())
 		{
-			bs.base()._destination = _destination;
+			bs.base().destination = _destination;
 			bs.base().setPriority(dtn::data::PrimaryBlock::PRIORITY(_priority));
 			bs.base().lifetime = _lifetime;
 			if (_bundle_encryption) bs.base().set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, true);

@@ -194,7 +194,7 @@ namespace dtn
 			data.push_back("Procflags: " + dtn::utils::Utils::toString(b.procflags));
 
 			// add the destination eid
-			data.push_back("Destination: " + b._destination.getString());
+			data.push_back("Destination: " + b.destination.getString());
 
 			if (b.get(dtn::data::PrimaryBlock::FRAGMENT))
 			{
