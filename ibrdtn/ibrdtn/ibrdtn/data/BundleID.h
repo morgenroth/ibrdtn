@@ -24,6 +24,7 @@
 
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Bundle.h"
+#include <stdint.h>
 
 namespace dtn
 {
@@ -33,7 +34,7 @@ namespace dtn
 		{
 		public:
 			BundleID(const dtn::data::EID source = dtn::data::EID(), const uint64_t timestamp = 0, const uint64_t sequencenumber = 0, const bool fragment = false, const uint64_t offset = 0);
-			BundleID(const dtn::data::Bundle &b);
+			BundleID(const dtn::data::PrimaryBlock &b);
 			virtual ~BundleID();
 
 			bool operator!=(const BundleID& other) const;
@@ -41,7 +42,7 @@ namespace dtn
 			bool operator<(const BundleID& other) const;
 			bool operator>(const BundleID& other) const;
 
-			string toString() const;
+			std::string toString() const;
 
 			friend std::ostream &operator<<(std::ostream &stream, const BundleID &obj);
 			friend std::istream &operator>>(std::istream &stream, BundleID &obj);

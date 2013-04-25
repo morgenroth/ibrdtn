@@ -96,20 +96,20 @@ namespace dtn
 
 		size_t Clock::getExpireTime(const dtn::data::Bundle &b)
 		{
-			if ((b._timestamp == 0) || dtn::utils::Clock::isBad())
+			if ((b.timestamp == 0) || dtn::utils::Clock::isBad())
 			{
 				// use the AgeBlock to verify the age
 				try {
 					const dtn::data::AgeBlock &agebl = b.find<const dtn::data::AgeBlock>();
 					size_t seconds_left = 0;
-					if (b._lifetime > agebl.getSeconds()) {
-						seconds_left = b._lifetime - agebl.getSeconds();
+					if (b.lifetime > agebl.getSeconds()) {
+						seconds_left = b.lifetime - agebl.getSeconds();
 					}
 					return getTime() + seconds_left;
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 			}
 
-			return __getExpireTime(b._timestamp, b._lifetime);
+			return __getExpireTime(b.timestamp, b.lifetime);
 		}
 
 		size_t Clock::getExpireTime(size_t timestamp, size_t lifetime)
@@ -149,10 +149,10 @@ namespace dtn
 			// use the AgeBlock to verify the age
 			try {
 				const dtn::data::AgeBlock &agebl = b.find<const dtn::data::AgeBlock>();
-				return (b._lifetime < agebl.getSeconds());
+				return (b.lifetime < agebl.getSeconds());
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
-			return __isExpired(b._timestamp, b._lifetime);
+			return __isExpired(b.timestamp, b.lifetime);
 		}
 
 		bool Clock::isExpired(size_t timestamp, size_t lifetime)

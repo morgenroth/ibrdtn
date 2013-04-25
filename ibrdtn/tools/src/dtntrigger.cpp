@@ -204,7 +204,7 @@ int main(int argc, char** argv)
 					out.close();
 
 					// call the script
-					std::string cmd = _shell + " " + _script + " " + b._source.getString() + " " + file.getPath();
+					std::string cmd = _shell + " " + _script + " " + b.source.getString() + " " + file.getPath();
 					::system(cmd.c_str());
 
 					// remove temporary file

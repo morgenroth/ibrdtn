@@ -45,8 +45,8 @@ namespace dtn
 		}
 
 		MetaBundle::MetaBundle(const dtn::data::Bundle &b)
-		 : BundleID(b), lifetime(b._lifetime), destination(b._destination), reportto(b._reportto),
-		   custodian(b._custodian), appdatalength(b._appdatalength), procflags(b._procflags), expiretime(0), hopcount(std::numeric_limits<std::size_t>::max()), payloadlength(0), net_priority(0)
+		 : BundleID(b), lifetime(b.lifetime), destination(b.destination), reportto(b.reportto),
+		   custodian(b.custodian), appdatalength(b.appdatalength), procflags(b.procflags), expiretime(0), hopcount(std::numeric_limits<std::size_t>::max()), payloadlength(0), net_priority(0)
 		{
 			expiretime = dtn::utils::Clock::getExpireTime(b);
 

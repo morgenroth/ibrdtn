@@ -23,6 +23,7 @@
 #define DTNTIME_H_
 
 #include "ibrdtn/data/SDNV.h"
+#include <stdint.h>
 
 namespace dtn
 {
@@ -32,7 +33,7 @@ namespace dtn
 		{
 		public:
 			DTNTime();
-			DTNTime(size_t seconds, size_t nanoseconds = 0);
+			DTNTime(uint64_t seconds, uint64_t nanoseconds = 0);
 			DTNTime(SDNV seconds, SDNV nanoseconds);
 			virtual ~DTNTime();
 

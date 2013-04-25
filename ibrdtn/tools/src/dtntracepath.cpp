@@ -37,9 +37,9 @@
 class ProbeBundle : public dtn::data::Bundle
 {
 public:
-	ProbeBundle(const dtn::data::EID &destination, bool tracking)
+	ProbeBundle(const dtn::data::EID &d, bool tracking)
 	{
-		_destination = destination;
+		destination = d;
 
 		if (tracking) {
 			push_back<dtn::data::TrackingBlock>();
@@ -125,7 +125,7 @@ class Tracer : public dtn::api::Client
 		{
 			TrackingBundle tb(b);
 
-			const std::string source = b._source.getString();
+			const std::string source = b.source.getString();
 
 			// format time data
 			std::stringstream time;
@@ -189,7 +189,7 @@ class Tracer : public dtn::api::Client
 			ProbeBundle b(destination, tracking);
 
 			// set lifetime
-			b._lifetime = timeout;
+			b.lifetime = timeout;
 
 			// set some stupid payload
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -202,7 +202,7 @@ class Tracer : public dtn::api::Client
 			if (options & 0x04) b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_RECEPTION, true);
 			if (options & 0x08) b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELETION, true);
 
-			b._reportto = dtn::data::EID("api:me");
+			b.reportto = dtn::data::EID("api:me");
 
 			ibrcommon::TimeMeasurement tm;
 

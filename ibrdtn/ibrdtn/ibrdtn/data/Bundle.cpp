@@ -33,7 +33,7 @@ namespace dtn
 		Bundle::Bundle()
 		{
 			// if the timestamp is not set, add a ageblock
-			if (_timestamp == 0)
+			if (timestamp == 0)
 			{
 				// add a new ageblock
 				push_front<dtn::data::AgeBlock>();
@@ -262,10 +262,10 @@ namespace dtn
 
 		bool Bundle::allEIDsInCBHE() const
 		{
-			if(    _destination.isCompressable()
-			    && _source.isCompressable()
-			    && _reportto.isCompressable()
-			    && _custodian.isCompressable()
+			if( destination.isCompressable()
+			    && source.isCompressable()
+			    && reportto.isCompressable()
+			    && custodian.isCompressable()
 			  )
 			{
 				for( const_iterator it = begin(); it != end(); ++it ) {

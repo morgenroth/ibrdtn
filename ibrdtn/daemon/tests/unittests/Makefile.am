@@ -2,7 +2,7 @@
 noinst_HEADERS = \
 	ConfigurationTest.hh \
 	BaseRouterTest.hh \
-	SimpleBundleStorageTest.hh \
+	BundleStorageTest.hh \
 	DataStorageTest.h \
 	NodeTest.hh \
 	DaemonTest.hh \
@@ -57,7 +57,7 @@ unittest_SOURCES = \
 	Main.cpp \
 	BaseRouterTest.cpp \
 	ConfigurationTest.cpp \
-	SimpleBundleStorageTest.cpp \
+	BundleStorageTest.cpp \
 	DataStorageTest.cpp \
 	NodeTest.cpp \
 	DaemonTest.cpp \

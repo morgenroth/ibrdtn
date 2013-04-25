@@ -33,7 +33,7 @@ namespace dtn
 	namespace storage
 	{
 		BundleStorage::BundleStorage(size_t maxsize)
-		 : _maxsize(maxsize), _currentsize(0)
+		 : _faulty(false), _maxsize(maxsize), _currentsize(0)
 		{
 		}
 
@@ -81,8 +81,8 @@ namespace dtn
 
 			custody_bundle.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 			custody_bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-			custody_bundle._destination = meta.custodian;
-			custody_bundle._source = dtn::core::BundleCore::local;
+			custody_bundle.destination = meta.custodian;
+			custody_bundle.source = dtn::core::BundleCore::local;
 
 			// send the custody accepted bundle
 			dtn::core::BundleGeneratedEvent::raise(custody_bundle);
@@ -118,8 +118,8 @@ namespace dtn
 			signal.write(payload);
 
 			b.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
-			b._destination = meta.custodian;
-			b._source = dtn::core::BundleCore::local;
+			b.destination = meta.custodian;
+			b.source = dtn::core::BundleCore::local;
 
 			// send the custody rejected bundle
 			dtn::core::BundleGeneratedEvent::raise(b);

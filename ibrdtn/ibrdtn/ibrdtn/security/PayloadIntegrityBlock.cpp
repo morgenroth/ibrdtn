@@ -75,12 +75,12 @@ namespace dtn
 				dtn::data::PayloadBlock& plb = bundle.find<dtn::data::PayloadBlock>();
 				ibrcommon::BLOB::Reference blobref = plb.getBLOB();
 				ibrcommon::BLOB::iostream stream = blobref.iostream();
-				addFragmentRange(pib._ciphersuite_params, bundle._fragmentoffset, stream.size());
+				addFragmentRange(pib._ciphersuite_params, bundle.fragmentoffset, stream.size());
 			}
 
 			// set the source and destination address of the new block
-			if (key.reference != bundle._source.getNode()) pib.setSecuritySource( key.reference );
-			if (destination != bundle._destination.getNode()) pib.setSecurityDestination( destination );
+			if (key.reference != bundle.source.getNode()) pib.setSecuritySource( key.reference );
+			if (destination != bundle.destination.getNode()) pib.setSecurityDestination( destination );
 
 			pib.setResultSize(key);
 			pib.setCiphersuiteId(SecurityBlock::PIB_RSA_SHA256);

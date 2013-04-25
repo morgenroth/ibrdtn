@@ -281,8 +281,8 @@ void DataStorageTest::testStressTest()
 		std::ostream& serialize(std::ostream &stream)
 		{
 			dtn::data::Bundle fake;
-			fake._source = dtn::data::EID("dtn://test1/fake");
-			fake._destination = dtn::data::EID("dtn://test/fake");
+			fake.source = dtn::data::EID("dtn://test1/fake");
+			fake.destination = dtn::data::EID("dtn://test/fake");
 
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 

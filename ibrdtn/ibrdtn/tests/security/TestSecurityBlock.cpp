@@ -63,10 +63,10 @@ void TestSecurityBlock::tearDown(void)
 void TestSecurityBlock::localBABTest(void)
 {
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://source/app");
-	b._destination = dtn::data::EID("dtn://destination/app");
-	b._procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
-	b._lifetime = 3600;
+	b.source = dtn::data::EID("dtn://source/app");
+	b.destination = dtn::data::EID("dtn://destination/app");
+	b.procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
+	b.lifetime = 3600;
 
 	const dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
 	ibrcommon::BLOB::Reference ref = p.getBLOB();
@@ -93,10 +93,10 @@ void TestSecurityBlock::serializeBABTest(void)
 	// we create an serialize a new bundle with SecurityBlock appended
 	{
 		dtn::data::Bundle b;
-		b._source = dtn::data::EID("dtn://source/app");
-		b._destination = dtn::data::EID("dtn://destination/app");
-		b._procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
-		b._lifetime = 3600;
+		b.source = dtn::data::EID("dtn://source/app");
+		b.destination = dtn::data::EID("dtn://destination/app");
+		b.procflags |= dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON;
+		b.lifetime = 3600;
 
 		const dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
 		ibrcommon::BLOB::Reference ref = p.getBLOB();
@@ -128,8 +128,8 @@ void TestSecurityBlock::serializeBABTest(void)
 void TestSecurityBlock::permutationBabPibTest(void)
 {
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://test");
-	b._destination = pkey.reference;
+	b.source = dtn::data::EID("dtn://test");
+	b.destination = pkey.reference;
 
 	// add payload block
 	dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();

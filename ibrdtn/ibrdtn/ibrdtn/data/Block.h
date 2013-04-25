@@ -29,6 +29,7 @@
 #include "ibrdtn/data/Serializer.h"
 #include <ibrcommon/Exceptions.h>
 #include <list>
+#include <stdint.h>
 
 namespace dtn
 {
@@ -125,7 +126,7 @@ namespace dtn
 
 		private:
 			// block processing flags
-			size_t _procflags;
+			uint64_t _procflags;
 		};
 	}
 }

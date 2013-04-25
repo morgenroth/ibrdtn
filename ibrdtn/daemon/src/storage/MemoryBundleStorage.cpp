@@ -26,6 +26,8 @@
 #include "core/BundleExpiredEvent.h"
 #include "core/BundleEvent.h"
 
+#include <ibrdtn/utils/Clock.h>
+
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
 
@@ -86,7 +88,7 @@ namespace dtn
 			// it is safe to delete this bundle now. (depending on the routing algorithm.)
 		}
 
-		unsigned int MemoryBundleStorage::count()
+		size_t MemoryBundleStorage::count()
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 			return _bundles.size();
@@ -102,6 +104,9 @@ namespace dtn
 			for (prio_bundle_set::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); ++iter)
 			{
 				const dtn::data::MetaBundle &bundle = (*iter);
+
+				// skip expired bundles
+				if ( dtn::utils::Clock::isExpired( bundle.timestamp, bundle.lifetime ) ) continue;
 
 				if ( cb.shouldAdd(bundle) )
 				{
@@ -123,6 +128,10 @@ namespace dtn
 					const dtn::data::Bundle &bundle = (*iter);
 					if (id == bundle)
 					{
+						if (_faulty) {
+							throw dtn::SerializationFailedException("bundle get failed due to faulty setting");
+						}
+
 						return bundle;
 					}
 				}
@@ -148,7 +157,7 @@ namespace dtn
 			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
 				const dtn::data::Bundle &bundle = (*iter);
-				ret.insert(bundle._destination);
+				ret.insert(bundle.destination);
 			}
 
 			return ret;
@@ -157,6 +166,8 @@ namespace dtn
 		void MemoryBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
 			ibrcommon::MutexLock l(_bundleslock);
+
+			if (_faulty) return;
 
 			// get size of the bundle
 			dtn::data::DefaultSerializer s(std::cout);

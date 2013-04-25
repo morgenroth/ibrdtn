@@ -318,10 +318,10 @@ namespace dtn
 					fragment.set(dtn::data::Bundle::FRAGMENT, true);
 
 					// set application data length
-					fragment._appdatalength = payloadLength;
+					fragment.appdatalength = payloadLength;
 
 					// set fragment offset
-					fragment._fragmentoffset = offset;
+					fragment.fragmentoffset = offset;
 
 					// copy partial payload to the payload of the fragment
 					try {

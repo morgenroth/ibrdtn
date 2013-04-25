@@ -297,8 +297,8 @@ namespace dtn
 				b.push_back(ref);
 
 				// set the source and destination
-				b._source = dtn::core::BundleCore::local + "/dtntp";
-				b._destination = peer + "/dtntp";
+				b.source = dtn::core::BundleCore::local + "/dtntp";
+				b.destination = peer + "/dtntp";
 
 				// set high priority
 				b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -308,7 +308,7 @@ namespace dtn
 				b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 
 				// set the lifetime of the bundle to 60 seconds
-				b._lifetime = 60;
+				b.lifetime = 60;
 
 				// add a schl block
 				dtn::data::ScopeControlHopLimitBlock &schl = b.push_front<dtn::data::ScopeControlHopLimitBlock>();
@@ -411,7 +411,7 @@ namespace dtn
 		void DTNTPWorker::callbackBundleReceived(const Bundle &b)
 		{
 			// do not sync with ourselves
-			if (b._source.getNode() == dtn::core::BundleCore::local) return;
+			if (b.source.getNode() == dtn::core::BundleCore::local) return;
 
 			try {
 				// read payload block
@@ -428,11 +428,11 @@ namespace dtn
 						response.relabel();
 
 						// set the lifetime of the bundle to 60 seconds
-						response._lifetime = 60;
+						response.lifetime = 60;
 
 						// switch the source and destination
-						response._source = b._destination;
-						response._destination = b._source;
+						response.source = b.destination;
+						response.destination = b.source;
 						
 						// set high priority
 						response.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -523,14 +523,14 @@ namespace dtn
 						timersub(&tv_local, &peer_timestamp, &offset);
 
 						// print out offset to the local clock
-						IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, info) << "DT-NTP bundle received; rtt = " << dtn::utils::Clock::toDouble(rtt) << "s; prop. delay = " << dtn::utils::Clock::toDouble(prop_delay) << "s; clock of " << b._source.getNode().getString() << " has a offset of " << dtn::utils::Clock::toDouble(offset) << "s" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, info) << "DT-NTP bundle received; rtt = " << dtn::utils::Clock::toDouble(rtt) << "s; prop. delay = " << dtn::utils::Clock::toDouble(prop_delay) << "s; clock of " << b.source.getNode().getString() << " has a offset of " << dtn::utils::Clock::toDouble(offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 
 						// sync to this time message
 						sync(msg, offset, tv_local, peer_timestamp);
 
 						// remove the blacklist entry
 						ibrcommon::MutexLock l(_blacklist_lock);
-						_sync_blacklist.erase(b._source.getNode());
+						_sync_blacklist.erase(b.source.getNode());
 
 						break;
 					}

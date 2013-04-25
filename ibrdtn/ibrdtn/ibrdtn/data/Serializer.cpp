@@ -56,10 +56,10 @@ namespace dtn
 			_dictionary.clear();
 
 			// rebuild the dictionary
-			_dictionary.add(obj._destination);
-			_dictionary.add(obj._source);
-			_dictionary.add(obj._reportto);
-			_dictionary.add(obj._custodian);
+			_dictionary.add(obj.destination);
+			_dictionary.add(obj.source);
+			_dictionary.add(obj.reportto);
+			_dictionary.add(obj.custodian);
 
 			// add EID of all secondary blocks
 			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
@@ -103,13 +103,13 @@ namespace dtn
 
 			if (it != obj._bundle.end()) {
 				const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(**it);
-				prim._appdatalength = payload.getLength();
+				prim.appdatalength = payload.getLength();
 			} else {
-				prim._appdatalength = 0;
+				prim.appdatalength = 0;
 			}
 
 			// set the fragmentation offset
-			prim._fragmentoffset += obj._offset;
+			prim.fragmentoffset += obj._offset;
 
 			// serialize the primary block
 			(*this) << prim;
@@ -147,10 +147,10 @@ namespace dtn
 		bool DefaultSerializer::isCompressable(const dtn::data::Bundle &obj) const
 		{
 			// check if all EID are compressable
-			bool compressable = ( obj._source.isCompressable() &&
-					obj._destination.isCompressable() &&
-					obj._reportto.isCompressable() &&
-					obj._custodian.isCompressable() );
+			bool compressable = ( obj.source.isCompressable() &&
+					obj.destination.isCompressable() &&
+					obj.reportto.isCompressable() &&
+					obj.custodian.isCompressable() );
 
 			if (compressable)
 			{
@@ -177,37 +177,37 @@ namespace dtn
 		Serializer& DefaultSerializer::operator <<(const dtn::data::PrimaryBlock& obj)
 		{
 			_stream << dtn::data::BUNDLE_VERSION;		// bundle version
-			_stream << dtn::data::SDNV(obj._procflags);	// processing flags
+			_stream << dtn::data::SDNV(obj.procflags);	// processing flags
 
 			// predict the block length
 			size_t len = 0;
 			dtn::data::SDNV primaryheader[14];
 
-			primaryheader[8] = SDNV(obj._timestamp);		// timestamp
-			primaryheader[9] = SDNV(obj._sequencenumber);	// sequence number
-			primaryheader[10] = SDNV(obj._lifetime);		// lifetime
+			primaryheader[8] = SDNV(obj.timestamp);		// timestamp
+			primaryheader[9] = SDNV(obj.sequencenumber);	// sequence number
+			primaryheader[10] = SDNV(obj.lifetime);		// lifetime
 
 			pair<size_t, size_t> ref;
 
 			if (_compressable)
 			{
 				// destination reference
-				ref = obj._destination.getCompressed();
+				ref = obj.destination.getCompressed();
 				primaryheader[0] = SDNV(ref.first);
 				primaryheader[1] = SDNV(ref.second);
 
 				// source reference
-				ref = obj._source.getCompressed();
+				ref = obj.source.getCompressed();
 				primaryheader[2] = SDNV(ref.first);
 				primaryheader[3] = SDNV(ref.second);
 
 				// reportto reference
-				ref = obj._reportto.getCompressed();
+				ref = obj.reportto.getCompressed();
 				primaryheader[4] = SDNV(ref.first);
 				primaryheader[5] = SDNV(ref.second);
 
 				// custodian reference
-				ref = obj._custodian.getCompressed();
+				ref = obj.custodian.getCompressed();
 				primaryheader[6] = SDNV(ref.first);
 				primaryheader[7] = SDNV(ref.second);
 
@@ -217,22 +217,22 @@ namespace dtn
 			else
 			{
 				// destination reference
-				ref = _dictionary.getRef(obj._destination);
+				ref = _dictionary.getRef(obj.destination);
 				primaryheader[0] = SDNV(ref.first);
 				primaryheader[1] = SDNV(ref.second);
 
 				// source reference
-				ref = _dictionary.getRef(obj._source);
+				ref = _dictionary.getRef(obj.source);
 				primaryheader[2] = SDNV(ref.first);
 				primaryheader[3] = SDNV(ref.second);
 
 				// reportto reference
-				ref = _dictionary.getRef(obj._reportto);
+				ref = _dictionary.getRef(obj.reportto);
 				primaryheader[4] = SDNV(ref.first);
 				primaryheader[5] = SDNV(ref.second);
 
 				// custodian reference
-				ref = _dictionary.getRef(obj._custodian);
+				ref = _dictionary.getRef(obj.custodian);
 				primaryheader[6] = SDNV(ref.first);
 				primaryheader[7] = SDNV(ref.second);
 
@@ -248,8 +248,8 @@ namespace dtn
 
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
-				primaryheader[12] = SDNV(obj._fragmentoffset);
-				primaryheader[13] = SDNV(obj._appdatalength);
+				primaryheader[12] = SDNV(obj.fragmentoffset);
+				primaryheader[13] = SDNV(obj.appdatalength);
 
 				len += primaryheader[12].getLength();
 				len += primaryheader[13].getLength();
@@ -420,7 +420,7 @@ namespace dtn
 			size_t len = 0;
 
 			len += sizeof(dtn::data::BUNDLE_VERSION);		// bundle version
-			len += dtn::data::SDNV(obj._procflags).getLength();	// processing flags
+			len += dtn::data::SDNV(obj.procflags).getLength();	// processing flags
 
 			// primary header
 			dtn::data::SDNV primaryheader[14];
@@ -429,22 +429,22 @@ namespace dtn
 			if (_compressable)
 			{
 				// destination reference
-				ref = obj._destination.getCompressed();
+				ref = obj.destination.getCompressed();
 				primaryheader[0] = SDNV(ref.first);
 				primaryheader[1] = SDNV(ref.second);
 
 				// source reference
-				ref = obj._source.getCompressed();
+				ref = obj.source.getCompressed();
 				primaryheader[2] = SDNV(ref.first);
 				primaryheader[3] = SDNV(ref.second);
 
 				// reportto reference
-				ref = obj._reportto.getCompressed();
+				ref = obj.reportto.getCompressed();
 				primaryheader[4] = SDNV(ref.first);
 				primaryheader[5] = SDNV(ref.second);
 
 				// custodian reference
-				ref = obj._custodian.getCompressed();
+				ref = obj.custodian.getCompressed();
 				primaryheader[6] = SDNV(ref.first);
 				primaryheader[7] = SDNV(ref.second);
 
@@ -454,22 +454,22 @@ namespace dtn
 			else
 			{
 				// destination reference
-				ref = _dictionary.getRef(obj._destination);
+				ref = _dictionary.getRef(obj.destination);
 				primaryheader[0] = SDNV(ref.first);
 				primaryheader[1] = SDNV(ref.second);
 
 				// source reference
-				ref = _dictionary.getRef(obj._source);
+				ref = _dictionary.getRef(obj.source);
 				primaryheader[2] = SDNV(ref.first);
 				primaryheader[3] = SDNV(ref.second);
 
 				// reportto reference
-				ref = _dictionary.getRef(obj._reportto);
+				ref = _dictionary.getRef(obj.reportto);
 				primaryheader[4] = SDNV(ref.first);
 				primaryheader[5] = SDNV(ref.second);
 
 				// custodian reference
-				ref = _dictionary.getRef(obj._custodian);
+				ref = _dictionary.getRef(obj.custodian);
 				primaryheader[6] = SDNV(ref.first);
 				primaryheader[7] = SDNV(ref.second);
 
@@ -478,13 +478,13 @@ namespace dtn
 			}
 
 			// timestamp
-			primaryheader[8] = SDNV(obj._timestamp);
+			primaryheader[8] = SDNV(obj.timestamp);
 
 			// sequence number
-			primaryheader[9] = SDNV(obj._sequencenumber);
+			primaryheader[9] = SDNV(obj.sequencenumber);
 
 			// lifetime
-			primaryheader[10] = SDNV(obj._lifetime);
+			primaryheader[10] = SDNV(obj.lifetime);
 
 			for (int i = 0; i < 11; ++i)
 			{
@@ -505,8 +505,8 @@ namespace dtn
 
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
-				primaryheader[12] = SDNV(obj._fragmentoffset);
-				primaryheader[13] = SDNV(obj._appdatalength);
+				primaryheader[12] = SDNV(obj.fragmentoffset);
+				primaryheader[13] = SDNV(obj.appdatalength);
 
 				len += primaryheader[12].getLength();
 				len += primaryheader[13].getLength();
@@ -617,8 +617,8 @@ namespace dtn
 							if ( !obj.get(dtn::data::PrimaryBlock::FRAGMENT) )
 							{
 								obj.set(dtn::data::PrimaryBlock::FRAGMENT, true);
-								obj._appdatalength = ex.length;
-								obj._fragmentoffset = 0;
+								obj.appdatalength = ex.length;
+								obj.fragmentoffset = 0;
 							}
 						}
 						else
@@ -663,20 +663,20 @@ namespace dtn
 			dtn::data::PrimaryBlock pb;
 			(*this) >> pb;
 
-			obj.appdatalength = pb._appdatalength;
-			obj.custodian = pb._custodian;
-			obj.destination = pb._destination;
-			obj.expiretime = dtn::utils::Clock::getExpireTime(pb._timestamp, pb._lifetime);
+			obj.appdatalength = pb.appdatalength;
+			obj.custodian = pb.custodian;
+			obj.destination = pb.destination;
+			obj.expiretime = dtn::utils::Clock::getExpireTime(pb.timestamp, pb.lifetime);
 			obj.fragment = pb.get(dtn::data::PrimaryBlock::FRAGMENT);
 			obj.hopcount = 0;
-			obj.lifetime = pb._lifetime;
-			obj.offset = pb._fragmentoffset;
-			obj.procflags = pb._procflags;
+			obj.lifetime = pb.lifetime;
+			obj.offset = pb.fragmentoffset;
+			obj.procflags = pb.procflags;
 			obj.received = 0;
-			obj.reportto = pb._reportto;
-			obj.sequencenumber = pb._sequencenumber;
-			obj.source = pb._source;
-			obj.timestamp = pb._timestamp;
+			obj.reportto = pb.reportto;
+			obj.sequencenumber = pb.sequencenumber;
+			obj.source = pb.source;
+			obj.timestamp = pb.timestamp;
 
 			return (*this);
 		}
@@ -693,7 +693,7 @@ namespace dtn
 
 			// PROCFLAGS
 			_stream >> tmpsdnv;	// processing flags
-			obj._procflags = tmpsdnv.getValue();
+			obj.procflags = tmpsdnv.getValue();
 
 			// BLOCK LENGTH
 			_stream >> blocklength;
@@ -708,32 +708,32 @@ namespace dtn
 
 			// timestamp
 			_stream >> tmpsdnv;
-			obj._timestamp = tmpsdnv.getValue();
+			obj.timestamp = tmpsdnv.getValue();
 
 			// sequence number
 			_stream >> tmpsdnv;
-			obj._sequencenumber = tmpsdnv.getValue();
+			obj.sequencenumber = tmpsdnv.getValue();
 
 			// lifetime
 			_stream >> tmpsdnv;
-			obj._lifetime = tmpsdnv.getValue();
+			obj.lifetime = tmpsdnv.getValue();
 
 			try {
 				// dictionary
 				_stream >> _dictionary;
 
 				// decode EIDs
-				obj._destination = _dictionary.get(ref[0].first.getValue(), ref[0].second.getValue());
-				obj._source = _dictionary.get(ref[1].first.getValue(), ref[1].second.getValue());
-				obj._reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
-				obj._custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
+				obj.destination = _dictionary.get(ref[0].first.getValue(), ref[0].second.getValue());
+				obj.source = _dictionary.get(ref[1].first.getValue(), ref[1].second.getValue());
+				obj.reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
+				obj.custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
 				_compressed = false;
 			} catch (const dtn::InvalidDataException&) {
 				// error while reading the dictionary. We assume that this is a compressed bundle header.
-				obj._destination = dtn::data::EID(ref[0].first.getValue(), ref[0].second.getValue());
-				obj._source = dtn::data::EID(ref[1].first.getValue(), ref[1].second.getValue());
-				obj._reportto = dtn::data::EID(ref[2].first.getValue(), ref[2].second.getValue());
-				obj._custodian = dtn::data::EID(ref[3].first.getValue(), ref[3].second.getValue());
+				obj.destination = dtn::data::EID(ref[0].first.getValue(), ref[0].second.getValue());
+				obj.source = dtn::data::EID(ref[1].first.getValue(), ref[1].second.getValue());
+				obj.reportto = dtn::data::EID(ref[2].first.getValue(), ref[2].second.getValue());
+				obj.custodian = dtn::data::EID(ref[3].first.getValue(), ref[3].second.getValue());
 				_compressed = true;
 			}
 
@@ -741,10 +741,10 @@ namespace dtn
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
 				_stream >> tmpsdnv;
-				obj._fragmentoffset = tmpsdnv.getValue();
+				obj.fragmentoffset = tmpsdnv.getValue();
 
 				_stream >> tmpsdnv;
-				obj._appdatalength = tmpsdnv.getValue();
+				obj.appdatalength = tmpsdnv.getValue();
 			}
 			
 			// validate this primary block

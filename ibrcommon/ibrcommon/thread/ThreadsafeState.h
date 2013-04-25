@@ -32,7 +32,7 @@ namespace ibrcommon
 	{
 	protected:
 		T _state;
-		T _final_state;
+		const T _final_state;
 
 	public:
 		ThreadsafeState(T init, T final)
@@ -46,6 +46,11 @@ namespace ibrcommon
 			_state = _final_state;
 			this->signal(true);
 		};
+
+		void reset(T init)
+		{
+			_state = init;
+		}
 
 		T get() const
 		{

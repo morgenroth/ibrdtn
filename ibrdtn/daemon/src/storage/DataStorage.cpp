@@ -91,7 +91,7 @@ namespace dtn
 		{ return *_stream; }
 
 		DataStorage::DataStorage(Callback &callback, const ibrcommon::File &path, size_t write_buffer, bool initialize)
-		 : _callback(callback), _path(path), _tasks(), _store_sem(write_buffer), _store_limited(write_buffer > 0)
+		 : _callback(callback), _path(path), _tasks(), _store_sem(write_buffer), _store_limited(write_buffer > 0), _faulty(false)
 		// limit the number of bundles in the write buffer
 		{
 			// initialize the storage
@@ -131,6 +131,16 @@ namespace dtn
 			} catch (const ibrcommon::QueueUnblockedException&) {
 				// exit
 			}
+		}
+
+		void DataStorage::reset()
+		{
+			JoinableThread::reset();
+		}
+
+		void DataStorage::setFaulty(bool mode)
+		{
+			_faulty = mode;
 		}
 
 		void DataStorage::iterateAll()
@@ -173,7 +183,7 @@ namespace dtn
 
 			if (!file.exists())
 			{
-				throw DataNotAvailableException();
+				throw DataNotAvailableException("file " + file.getPath() + " not found");
 			}
 
 			return DataStorage::istream(_global_mutex, file);
@@ -199,7 +209,7 @@ namespace dtn
 			try {
 				while (true)
 				{
-					Task *t = _tasks.getnpop(true);
+					Task *t = _tasks.get(true);
 
 					try {
 						StoreDataTask &store = dynamic_cast<StoreDataTask&>(*t);
@@ -212,13 +222,13 @@ namespace dtn
 								std::ofstream stream(destination.getPath().c_str(), ios::out | ios::binary | ios::trunc);
 
 								// check the streams health
-								if (!stream.good())
+								if (!stream.good() || _faulty)
 								{
 									std::stringstream ss; ss << "unable to open filestream [" << std::strerror(errno) << "]";
 									throw ibrcommon::IOException(ss.str());
 								}
 
-								store.container->serialize(stream);
+								store._container->serialize(stream);
 								stream.close();
 							}
 
@@ -259,6 +269,7 @@ namespace dtn
 					}
 
 					delete t;
+					_tasks.pop();
 				}
 			} catch (const ibrcommon::QueueUnblockedException&) {
 				// exit
@@ -269,12 +280,11 @@ namespace dtn
 		DataStorage::Task::~Task() {}
 
 		DataStorage::StoreDataTask::StoreDataTask(const Hash &h, Container *c)
-		 : hash(h), container(c)
+		 : hash(h), _container(c)
 		{}
 
 		DataStorage::StoreDataTask::~StoreDataTask()
 		{
-			delete container;
 		}
 
 		DataStorage::RemoveDataTask::RemoveDataTask(const Hash &h) : hash(h)

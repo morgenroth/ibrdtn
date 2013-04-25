@@ -74,22 +74,22 @@ namespace dtn
 			_stream << dtn::data::BUNDLE_VERSION;
 
 			// processing flags
-			(*this) << dtn::data::SDNV(obj._procflags & 0x0000000007C1BE);
+			(*this) << dtn::data::SDNV(obj.procflags & 0x0000000007C1BE);
 
 			// length of header
 			(*this) << (uint32_t)getLength(obj);
 
 			// dest, source, report to id
-			(*this) << obj._destination;
-			(*this) << obj._source;
-			(*this) << obj._reportto;
+			(*this) << obj.destination;
+			(*this) << obj.source;
+			(*this) << obj.reportto;
 
 			// timestamp
-			(*this) << dtn::data::SDNV(obj._timestamp);
-			(*this) << dtn::data::SDNV(obj._sequencenumber);
+			(*this) << dtn::data::SDNV(obj.timestamp);
+			(*this) << dtn::data::SDNV(obj.sequencenumber);
 
 			// lifetime
-			(*this) << dtn::data::SDNV(obj._lifetime);
+			(*this) << dtn::data::SDNV(obj.lifetime);
 
 			return *this;
 		}
@@ -168,15 +168,15 @@ namespace dtn
 			// dest id length
 			uint32_t length = 4;
 			// dest id
-			length += obj._destination.getString().size();
+			length += obj.destination.getString().size();
 			// source id length
 			length += 4;
 			// source id
-			length += obj._source.getString().size();
+			length += obj.source.getString().size();
 			// report to id length
 			length += 4;
 			// report to id
-			length += obj._reportto.getString().size();
+			length += obj.reportto.getString().size();
 			// creation time: 2*SDNV
 			length += 2*sdnv_size;
 			// lifetime: SDNV

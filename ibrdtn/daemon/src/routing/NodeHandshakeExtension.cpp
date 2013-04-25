@@ -206,18 +206,18 @@ namespace dtn
 			dtn::data::Bundle req;
 
 			// set the source of the bundle
-			req._source = getWorkerURI();
+			req.source = getWorkerURI();
 
 			// set the destination of the bundle
 			req.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 
 			if (origin.isCompressable())
-				req._destination = origin + origin.getDelimiter() + "50";
+				req.destination = origin + origin.getDelimiter() + "50";
 			else
-				req._destination = origin + origin.getDelimiter() + "routing";
+				req.destination = origin + origin.getDelimiter() + "routing";
 
 			// limit the lifetime to 60 seconds
-			req._lifetime = 60;
+			req.lifetime = 60;
 
 			// set high priority
 			req.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -256,7 +256,7 @@ namespace dtn
 				(*s) >> handshake;
 			}
 
-			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "Handshake received from " << bundle._source.getString() << ": " << handshake.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "Handshake received from " << bundle.source.getString() << ": " << handshake.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// if this is a request answer with an summary vector
 			if (handshake.getType() == NodeHandshake::HANDSHAKE_REQUEST)
@@ -265,22 +265,22 @@ namespace dtn
 				NodeHandshake response(NodeHandshake::HANDSHAKE_RESPONSE);
 
 				// lock the extension list during the processing
-				(**this).responseHandshake(bundle._source, handshake, response);
+				(**this).responseHandshake(bundle.source, handshake, response);
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake reply to " << bundle._source.getString() << ": " << response.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake reply to " << bundle.source.getString() << ": " << response.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				// create a new bundle
 				dtn::data::Bundle answer;
 
 				// set the source of the bundle
-				answer._source = _endpoint.getWorkerURI();
+				answer.source = _endpoint.getWorkerURI();
 
 				// set the destination of the bundle
 				answer.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-				answer._destination = bundle._source;
+				answer.destination = bundle.source;
 
 				// limit the lifetime to 60 seconds
-				answer._lifetime = 60;
+				answer.lifetime = 60;
 
 				// set high priority
 				answer.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -306,15 +306,15 @@ namespace dtn
 				_endpoint.send(answer);
 
 				// call handshake completed event
-				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_REPLIED, bundle._source );
+				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_REPLIED, bundle.source );
 			}
 			else if (handshake.getType() == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
 				// walk through all extensions to process the contents of the response
-				(**this).processHandshake(bundle._source, handshake);
+				(**this).processHandshake(bundle.source, handshake);
 
 				// call handshake completed event
-				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_COMPLETED, bundle._source );
+				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_COMPLETED, bundle.source );
 			}
 		}
 	} /* namespace routing */

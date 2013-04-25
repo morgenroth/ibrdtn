@@ -60,13 +60,13 @@ void TestBundleList::genbundles(dtn::data::BundleList &l, int number, int offset
 	{
 		int random_integer = offset + (rand() % range);
 
-		b._lifetime = random_integer;
-		b._timestamp = 0;
-		b._sequencenumber = random_integer;
+		b.lifetime = random_integer;
+		b.timestamp = 0;
+		b.sequencenumber = random_integer;
 
 		stringstream ss; ss << rand();
 
-		b._source = dtn::data::EID("dtn://node" + ss.str() + "/application");
+		b.source = dtn::data::EID("dtn://node" + ss.str() + "/application");
 
 		l.add(b);
 	}

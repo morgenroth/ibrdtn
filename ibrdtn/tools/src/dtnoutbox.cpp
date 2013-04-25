@@ -198,7 +198,7 @@ int main(int argc, char** argv)
     			dtn::data::Bundle b;
 
     			// set destination
-    			b._destination = destination;
+    			b.destination = destination;
 
     			// add payload block using the blob
     			b.push_back(blob);

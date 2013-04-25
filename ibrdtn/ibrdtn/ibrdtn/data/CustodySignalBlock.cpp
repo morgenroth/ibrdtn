@@ -139,30 +139,30 @@ namespace dtn
 			// set bundle parameter
 			if (other.get(Bundle::FRAGMENT))
 			{
-				_bundleid.offset = other._fragmentoffset;
-				_fragment_length = other._appdatalength;
+				_bundleid.offset = other.fragmentoffset;
+				_fragment_length = other.appdatalength;
 
 				setFragment(true);
 				_bundleid.fragment = true;
 			}
 
-			_bundleid.timestamp = other._timestamp;
-			_bundleid.sequencenumber = other._sequencenumber;
-			_bundleid.source = other._source;
+			_bundleid.timestamp = other.timestamp;
+			_bundleid.sequencenumber = other.sequencenumber;
+			_bundleid.source = other.source;
 		}
 
 		bool CustodySignalBlock::match(const Bundle& other) const
 		{
-			if (_bundleid.timestamp != other._timestamp) return false;
-			if (_bundleid.sequencenumber != other._sequencenumber) return false;
-			if (_bundleid.source != other._source) return false;
+			if (_bundleid.timestamp != other.timestamp) return false;
+			if (_bundleid.sequencenumber != other.sequencenumber) return false;
+			if (_bundleid.source != other.source) return false;
 
 			// set bundle parameter
 			if (other.get(Bundle::FRAGMENT))
 			{
 				if (!_bundleid.fragment) return false;
-				if (_bundleid.offset != other._fragmentoffset) return false;
-				if (_fragment_length != other._appdatalength) return false;
+				if (_bundleid.offset != other.fragmentoffset) return false;
+				if (_fragment_length != other.appdatalength) return false;
 			}
 
 			return true;

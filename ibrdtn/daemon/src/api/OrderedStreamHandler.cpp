@@ -61,13 +61,13 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 20) << "put()" << IBRCOMMON_LOGGER_ENDL;
 
 			// set destination EID
-			b._destination = _peer;
+			b.destination = _peer;
 
 			// set source
-			b._source = _endpoint;
+			b.source = _endpoint;
 
 			// set lifetime
-			b._lifetime = _lifetime;
+			b.lifetime = _lifetime;
 
 			// set flag if the bundles are addresses to a group
 			if (_group)

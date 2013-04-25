@@ -61,13 +61,13 @@ void TestBundleSet::genbundles(dtn::data::BundleSet &l, int number, int offset, 
 	{
 		int random_integer = offset + (rand() % range);
 
-		b._lifetime = random_integer;
-		b._timestamp = 0;
-		b._sequencenumber = random_integer;
+		b.lifetime = random_integer;
+		b.timestamp = 0;
+		b.sequencenumber = random_integer;
 
 		stringstream ss; ss << rand();
 
-		b._source = dtn::data::EID("dtn://node" + ss.str() + "/application");
+		b.source = dtn::data::EID("dtn://node" + ss.str() + "/application");
 
 		l.add(b);
 	}
@@ -79,14 +79,14 @@ void TestBundleSet::containTest(void)
 	dtn::data::BundleSet l(&ebc);
 
 	dtn::data::Bundle b1;
-	b1._source = dtn::data::EID("dtn:test");
-	b1._timestamp = 1;
-	b1._sequencenumber = 1;
+	b1.source = dtn::data::EID("dtn:test");
+	b1.timestamp = 1;
+	b1.sequencenumber = 1;
 
 	dtn::data::Bundle b2;
-	b2._source = dtn::data::EID("dtn:test");
-	b2._timestamp = 2;
-	b2._sequencenumber = 3;
+	b2.source = dtn::data::EID("dtn:test");
+	b2.timestamp = 2;
+	b2.sequencenumber = 3;
 
 	CPPUNIT_ASSERT(l.has(b1) == false);
 	CPPUNIT_ASSERT(l.has(b2) == false);

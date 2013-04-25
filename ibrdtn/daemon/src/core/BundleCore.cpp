@@ -298,7 +298,7 @@ namespace dtn
 						CustodySignalBlock custody;
 						custody.read(payload);
 
-						getStorage().releaseCustody(bundle._source, custody._bundleid);
+						getStorage().releaseCustody(bundle.source, custody._bundleid);
 
 						IBRCOMMON_LOGGER_DEBUG(5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -450,7 +450,7 @@ namespace dtn
 			// if we do not forward bundles
 			if (!BundleCore::forwarding)
 			{
-				if (!p._destination.sameHost(BundleCore::local))
+				if (!p.destination.sameHost(BundleCore::local))
 				{
 					// ... we reject all non-local bundles.
 					IBRCOMMON_LOGGER(warning) << "non-local bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
@@ -461,7 +461,7 @@ namespace dtn
 			// check if the lifetime of the bundle is too long
 			if (BundleCore::max_lifetime > 0)
 			{
-				if (p._lifetime > BundleCore::max_lifetime)
+				if (p.lifetime > BundleCore::max_lifetime)
 				{
 					// ... we reject bundles with such a long lifetime
 					IBRCOMMON_LOGGER(warning) << "lifetime of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
@@ -475,7 +475,7 @@ namespace dtn
 				// first check if the local clock is reliable
 				if (dtn::utils::Clock::getRating() > 0)
 					// then check the timestamp
-					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < p._timestamp)
+					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < p.timestamp)
 					{
 						// ... we reject bundles with a timestamp so far in the future
 						IBRCOMMON_LOGGER(warning) << "timestamp of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
@@ -516,7 +516,7 @@ namespace dtn
 			 */
 
 			// reject bundles without destination
-			if (b._destination.isNone())
+			if (b.destination.isNone())
 			{
 				IBRCOMMON_LOGGER(warning) << "bundle rejected: the destination is null" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle destination is none");

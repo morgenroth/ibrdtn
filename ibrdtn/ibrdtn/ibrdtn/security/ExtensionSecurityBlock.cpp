@@ -65,8 +65,8 @@ namespace dtn
 			dtn::security::ExtensionSecurityBlock& esb = SecurityBlock::encryptBlock<ExtensionSecurityBlock>(bundle, it, salt, ephemeral_key);
 
 			// set the source and destination address of the new block
-			if (source != bundle._source) esb.setSecuritySource( source );
-			if (destination != bundle._destination) esb.setSecurityDestination( destination );
+			if (source != bundle.source) esb.setSecuritySource( source );
+			if (destination != bundle.destination) esb.setSecurityDestination( destination );
 
 			// encrypt the ephemeral key and place it in _ciphersuite_params
 			addSalt(esb._ciphersuite_params, salt);

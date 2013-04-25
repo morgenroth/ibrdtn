@@ -76,11 +76,6 @@ namespace dtn
 				bool _running;
 			};
 
-			/**
-			 * checks if all the queues are empty
-			 */
-			bool empty();
-
 			ibrcommon::Conditional _queue_cond;
 			std::list<Task*> _queue;
 			std::list<Task*> _prio_queue;
@@ -95,6 +90,11 @@ namespace dtn
 		public:
 			static EventSwitch& getInstance();
 			void loop(size_t threads = 0);
+
+			/**
+			 * checks if all the queues are empty
+			 */
+			bool empty() const;
 
 			/**
 			 * Bring down the EventSwitch.

@@ -85,9 +85,9 @@ namespace dtn
 
 			if (c._initialized)
 			{
-				if (	(c._bundle._timestamp != obj._timestamp) ||
-						(c._bundle._sequencenumber != obj._sequencenumber) ||
-						(c._bundle._source != obj._source) )
+				if (	(c._bundle.timestamp != obj.timestamp) ||
+						(c._bundle.sequencenumber != obj.sequencenumber) ||
+						(c._bundle.source != obj.source) )
 					throw ibrcommon::Exception("This fragment does not belongs to the others.");
 			}
 			else
@@ -96,7 +96,7 @@ namespace dtn
 				c._bundle = obj;
 
 				// store the app data length
-				c._appdatalength = obj._appdatalength;
+				c._appdatalength = obj.appdatalength;
 
 				// remove all block of the copy
 				c._bundle.clear();
@@ -114,13 +114,13 @@ namespace dtn
 			}
 
 			ibrcommon::BLOB::iostream stream = c._blob.iostream();
-			(*stream).seekp(obj._fragmentoffset);
+			(*stream).seekp(obj.fragmentoffset);
 
 			dtn::data::PayloadBlock &p = obj.find<dtn::data::PayloadBlock>();
 			const size_t plength = p.getLength();
 
 			// skip write operation if chunk is already in the merged bundle
-			if (c.contains(obj._fragmentoffset, plength)) return c;
+			if (c.contains(obj.fragmentoffset, plength)) return c;
 
 			// copy payload of the fragment into the new blob
 			{
@@ -130,11 +130,11 @@ namespace dtn
 			}
 
 			// add the chunk to the list of chunks
-			c.add(obj._fragmentoffset, plength);
+			c.add(obj.fragmentoffset, plength);
 
 			// check if fragment is the first one
 			// add blocks only once
-			if (!c._hasFirstFragBlocksAdded && obj._fragmentoffset == 0)
+			if (!c._hasFirstFragBlocksAdded && obj.fragmentoffset == 0)
 			{
 				c._hasFirstFragBlocksAdded = true;
 
@@ -178,7 +178,7 @@ namespace dtn
 
 			//check if fragment is the last one
 			//add blocks only once
-			if(!c._hasLastFragBlocksAdded && obj._fragmentoffset + plength == obj._appdatalength)
+			if(!c._hasLastFragBlocksAdded && obj.fragmentoffset + plength == obj.appdatalength)
 			{
 				c._hasLastFragBlocksAdded = true;
 

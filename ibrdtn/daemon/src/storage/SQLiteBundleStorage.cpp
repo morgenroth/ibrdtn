@@ -449,7 +449,7 @@ namespace dtn
 			return true;
 		}
 
-		unsigned int SQLiteBundleStorage::count()
+		size_t SQLiteBundleStorage::count()
 		{
 			try {
 				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);

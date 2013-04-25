@@ -29,7 +29,7 @@ namespace dtn
 {
 	namespace data
 	{
-		class BundleList : public std::set<dtn::data::MetaBundle>
+		class BundleList
 		{
 		public:
 			class Listener {
@@ -47,6 +47,25 @@ namespace dtn
 
 			virtual void expire(const size_t timestamp) throw ();
 
+			typedef std::set<dtn::data::MetaBundle> meta_set;
+			typedef meta_set::iterator iterator;
+			typedef meta_set::const_iterator const_iterator;
+
+			iterator begin() { return _meta_bundles.begin(); }
+			iterator end() { return _meta_bundles.end(); }
+
+			const_iterator begin() const { return _meta_bundles.begin(); }
+			const_iterator end() const { return _meta_bundles.end(); }
+
+			template<class T>
+			iterator find(const T &b) { return _meta_bundles.find(b); }
+
+			template<class T>
+			const_iterator find(const T &b) const { return _meta_bundles.find(b); }
+
+			bool empty() const { return _meta_bundles.empty(); }
+			size_t size() const { return _meta_bundles.size(); }
+
 		private:
 			class ExpiringBundle
 			{
@@ -63,6 +82,7 @@ namespace dtn
 			};
 
 			std::set<ExpiringBundle> _bundles;
+			std::set<dtn::data::MetaBundle> _meta_bundles;
 
 			BundleList::Listener *_listener;
 		};

@@ -33,7 +33,7 @@ namespace dtn
 			set();
 		}
 
-		DTNTime::DTNTime(size_t seconds, size_t nanoseconds)
+		DTNTime::DTNTime(uint64_t seconds, uint64_t nanoseconds)
 		 : _seconds(seconds), _nanoseconds(nanoseconds)
 		{
 		}

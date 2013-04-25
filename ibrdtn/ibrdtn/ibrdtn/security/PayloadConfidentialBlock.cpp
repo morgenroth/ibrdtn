@@ -116,7 +116,7 @@ namespace dtn
 				if (bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
 				{
 					// ... and set the corresponding cipher suit params
-					addFragmentRange(pcb._ciphersuite_params, bundle._fragmentoffset, stream.size());
+					addFragmentRange(pcb._ciphersuite_params, bundle.fragmentoffset, stream.size());
 				}
 
 				// get the IV
@@ -128,8 +128,8 @@ namespace dtn
 			// encrypt payload - END
 
 			// set the source and destination address of the new block
-			if (source != bundle._source.getNode()) pcb.setSecuritySource( source );
-			if (long_key.reference != bundle._destination.getNode()) pcb.setSecurityDestination( long_key.reference );
+			if (source != bundle.source.getNode()) pcb.setSecuritySource( source );
+			if (long_key.reference != bundle.destination.getNode()) pcb.setSecurityDestination( long_key.reference );
 
 			// set replicate in every fragment to true
 			pcb.set(REPLICATE_IN_EVERY_FRAGMENT, true);

@@ -28,8 +28,7 @@
 #include <list>
 #include <sstream>
 #include <list>
-
-using namespace std;
+#include <stdint.h>
 
 namespace dtn
 {
@@ -73,12 +72,12 @@ namespace dtn
 			/**
 			 * add a list of eids to the dictionary
 			 */
-			void add(const list<EID> &eids);
+			void add(const std::list<EID> &eids);
 
 			/**
 			 * return the eid for the reference [scheme,ssp]
 			 */
-			EID get(size_t scheme, size_t ssp);
+			EID get(uint64_t scheme, uint64_t ssp);
 
 			/**
 			 * clear the dictionary
@@ -88,12 +87,12 @@ namespace dtn
 			/**
 			 * returns the size of the bytearray
 			 */
-			size_t getSize() const;
+			uint64_t getSize() const;
 
 			/**
 			 * returns the references of the given eid
 			 */
-			pair<size_t, size_t> getRef(const EID &eid) const;
+			pair<uint64_t, uint64_t> getRef(const EID &eid) const;
 
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj);
 			friend std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj);
@@ -101,9 +100,9 @@ namespace dtn
 		private:
 			bool exists(const std::string) const;
 			void add(const std::string);
-			size_t get(const std::string) const;
+			uint64_t get(const std::string) const;
 
-			stringstream _bytestream;
+			std::stringstream _bytestream;
 		};
 	}
 }

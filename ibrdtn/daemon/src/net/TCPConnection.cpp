@@ -483,7 +483,7 @@ namespace dtn
 						deserializer >> bundle;
 
 						// check the bundle
-						if ( ( bundle._destination == EID() ) || ( bundle._source == EID() ) )
+						if ( ( bundle.destination == EID() ) || ( bundle.source == EID() ) )
 						{
 							// invalid bundle!
 							throw dtn::data::Validator::RejectedException("destination or source EID is null");

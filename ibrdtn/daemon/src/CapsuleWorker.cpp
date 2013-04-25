@@ -67,7 +67,7 @@ namespace dtn
 						deserializer >> b;
 
 						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(capsule._source, b, false);
+						dtn::net::BundleReceivedEvent::raise(capsule.source, b, false);
 					}
 				}
 				catch (const dtn::InvalidDataException &ex) {

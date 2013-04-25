@@ -187,20 +187,20 @@ namespace dtn
 		void NativeDaemon::addEventData(const dtn::data::Bundle &b, std::vector<std::string> &data) const
 		{
 			// add the bundle data
-			data.push_back("Source: " + b._source.getString());
-			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b._timestamp));
-			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b._sequencenumber));
-			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b._lifetime));
-			data.push_back("Procflags: " + dtn::utils::Utils::toString(b._procflags));
+			data.push_back("Source: " + b.source.getString());
+			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
+			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b.sequencenumber));
+			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b.lifetime));
+			data.push_back("Procflags: " + dtn::utils::Utils::toString(b.procflags));
 
 			// add the destination eid
-			data.push_back("Destination: " + b._destination.getString());
+			data.push_back("Destination: " + b.destination.getString());
 
 			if (b.get(dtn::data::PrimaryBlock::FRAGMENT))
 			{
 				// add fragmentation values
-				data.push_back("Appdatalength: " + dtn::utils::Utils::toString(b._appdatalength));
-				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b._fragmentoffset));
+				data.push_back("Appdatalength: " + dtn::utils::Utils::toString(b.appdatalength));
+				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b.fragmentoffset));
 			}
 		}
 

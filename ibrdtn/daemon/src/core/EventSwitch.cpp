@@ -79,7 +79,7 @@ namespace dtn
 			} catch (const ibrcommon::Conditional::ConditionalAbortException&) {};
 		}
 
-		bool EventSwitch::empty()
+		bool EventSwitch::empty() const
 		{
 			return (_low_queue.empty() && _queue.empty() && _prio_queue.empty());
 		}

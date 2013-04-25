@@ -50,14 +50,14 @@ namespace dtn
 				echo.push_back(ref);
 
 				// set destination and mark the bundle as singleton destination
-				echo._destination = b._source;
+				echo.destination = b.source;
 				echo.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 
 				// set the source of the bundle
-				echo._source = getWorkerURI();
+				echo.source = getWorkerURI();
 
 				// set the lifetime to the same value as the received bundle
-				echo._lifetime = b._lifetime;
+				echo.lifetime = b.lifetime;
 
 				try {
 					const dtn::data::TrackingBlock &tracking = b.find<dtn::data::TrackingBlock>();

@@ -65,19 +65,19 @@ namespace dtn
 
 		dtn::data::Serializer& PlainSerializer::operator<<(const dtn::data::PrimaryBlock &obj)
 		{
-			_stream << "Processing flags: " << obj._procflags << std::endl;
-			_stream << "Timestamp: " << obj._timestamp << std::endl;
-			_stream << "Sequencenumber: " << obj._sequencenumber << std::endl;
-			_stream << "Source: " << obj._source.getString() << std::endl;
-			_stream << "Destination: " << obj._destination.getString() << std::endl;
-			_stream << "Reportto: " << obj._reportto.getString() << std::endl;
-			_stream << "Custodian: " << obj._custodian.getString() << std::endl;
-			_stream << "Lifetime: " << obj._lifetime << std::endl;
+			_stream << "Processing flags: " << obj.procflags << std::endl;
+			_stream << "Timestamp: " << obj.timestamp << std::endl;
+			_stream << "Sequencenumber: " << obj.sequencenumber << std::endl;
+			_stream << "Source: " << obj.source.getString() << std::endl;
+			_stream << "Destination: " << obj.destination.getString() << std::endl;
+			_stream << "Reportto: " << obj.reportto.getString() << std::endl;
+			_stream << "Custodian: " << obj.custodian.getString() << std::endl;
+			_stream << "Lifetime: " << obj.lifetime << std::endl;
 
-			if (obj._procflags & dtn::data::PrimaryBlock::FRAGMENT)
+			if (obj.procflags & dtn::data::PrimaryBlock::FRAGMENT)
 			{
-				_stream << "Fragment offset: " << obj._fragmentoffset << std::endl;
-				_stream << "Application data length: " << obj._appdatalength << std::endl;
+				_stream << "Fragment offset: " << obj.fragmentoffset << std::endl;
+				_stream << "Application data length: " << obj.appdatalength << std::endl;
 			}
 
 			return (*this);
@@ -259,48 +259,48 @@ namespace dtn
 				if (values[0] == "Processing flags")
 				{
 					ss.clear(); ss.str(values[1]);
-					ss >> obj._procflags;
+					ss >> obj.procflags;
 				}
 				else if (values[0] == "Timestamp")
 				{
 					ss.clear(); ss.str(values[1]);
-					ss >> obj._timestamp;
+					ss >> obj.timestamp;
 				}
 				else if (values[0] == "Sequencenumber")
 				{
 					ss.clear(); ss.str(values[1]);
-					ss >> obj._sequencenumber;
+					ss >> obj.sequencenumber;
 				}
 				else if (values[0] == "Source")
 				{
-					obj._source = values[1];
+					obj.source = values[1];
 				}
 				else if (values[0] == "Destination")
 				{
-					obj._destination = values[1];
+					obj.destination = values[1];
 				}
 				else if (values[0] == "Reportto")
 				{
-					obj._reportto = values[1];
+					obj.reportto = values[1];
 				}
 				else if (values[0] == "Custodian")
 				{
-					obj._custodian = values[1];
+					obj.custodian = values[1];
 				}
 				else if (values[0] == "Lifetime")
 				{
 					ss.clear(); ss.str(values[1]);
-					ss >> obj._lifetime;
+					ss >> obj.lifetime;
 				}
 				else if (values[0] == "Fragment offset")
 				{
 					ss.clear(); ss.str(values[1]);
-					ss >> obj._fragmentoffset;
+					ss >> obj.fragmentoffset;
 				}
 				else if (values[0] == "Application data length")
 				{
 					ss.clear(); ss.str(values[1]);
-					ss >> obj._appdatalength;
+					ss >> obj.appdatalength;
 				}
 			}
 
