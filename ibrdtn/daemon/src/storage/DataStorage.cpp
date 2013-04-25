@@ -183,7 +183,7 @@ namespace dtn
 
 			if (!file.exists())
 			{
-				throw DataNotAvailableException();
+				throw DataNotAvailableException("file " + file.getPath() + " not found");
 			}
 
 			return DataStorage::istream(_global_mutex, file);
