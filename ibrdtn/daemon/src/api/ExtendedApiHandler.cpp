@@ -135,13 +135,12 @@ namespace dtn
 						{
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
-							if (cmd[2] == "raw") {
-								_encoding = dtn::api::PlainSerializer::RAW;
+							// parse encoding
+							dtn::api::PlainSerializer::Encoding enc = dtn::api::PlainSerializer::parseEncoding(cmd[2]);
 
-								ibrcommon::MutexLock l(_write_lock);
-								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
-							} else if (cmd[2] == "base64") {
-								_encoding = dtn::api::PlainSerializer::BASE64;
+							if (enc != dtn::api::PlainSerializer::INVALID) {
+								// set the new encoding as default
+								_encoding = enc;
 
 								ibrcommon::MutexLock l(_write_lock);
 								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
@@ -410,7 +409,7 @@ namespace dtn
 								_stream << ClientHandler::API_STATUS_CONTINUE << " PUT BUNDLE PLAIN" << std::endl;
 
 								try {
-									PlainDeserializer(_stream, _encoding) >> _bundle_reg;
+									PlainDeserializer(_stream) >> _bundle_reg;
 									_stream << ClientHandler::API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
 								} catch (const std::exception &ex) {
 									IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 20) << "put failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -741,7 +740,7 @@ namespace dtn
 										ibrcommon::Base64Stream b64(_stream, false, 80);
 										block.serialize(b64, slength);
 										b64 << std::flush;
-									} else {
+									} else if (_encoding == PlainSerializer::RAW) {
 										block.serialize(_stream, slength);
 									}
 
@@ -784,7 +783,7 @@ namespace dtn
 								}
 
 								/* write the new data into the blob */
-								PlainDeserializer(_stream).readData(*stream, _encoding);
+								PlainDeserializer(_stream).readData(*stream);
 
 								_stream << ClientHandler::API_STATUS_OK << " PAYLOAD PUT SUCCESSFUL" << std::endl;
 							} catch (std::bad_cast&) {
@@ -812,7 +811,7 @@ namespace dtn
 								(*stream).seekp(0, ios_base::end);
 
 								/* write the new data into the blob */
-								PlainDeserializer(_stream).readData(*stream, _encoding);
+								PlainDeserializer(_stream).readData(*stream);
 
 								_stream << ClientHandler::API_STATUS_OK << " PAYLOAD APPEND SUCCESSFUL" << std::endl;
 							} catch (std::bad_cast&) {
