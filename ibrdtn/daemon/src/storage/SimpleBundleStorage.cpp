@@ -91,9 +91,6 @@ namespace dtn
 
 			// remove it
 			_metastore.remove(meta);
-
-			// raise bundle removed event
-			eventBundleRemoved(meta);
 		}
 
 		void SimpleBundleStorage::eventDataStorageRemoved(const dtn::storage::DataStorage::Hash &hash)
@@ -111,9 +108,6 @@ namespace dtn
 				{
 					// decrement the storage size
 					freeSpace( _metastore.getSize(meta) );
-
-					// raise bundle removed event
-					eventBundleRemoved(meta);
 
 					// remove it
 					_metastore.remove(meta);
@@ -395,6 +389,9 @@ namespace dtn
 
 			// create a background task for removing the bundle
 			_datastore.remove(hash);
+
+			// raise bundle removed event
+			eventBundleRemoved(meta);
 		}
 
 		void SimpleBundleStorage::__store(const dtn::data::Bundle &bundle, size_t bundle_size)
@@ -444,6 +441,9 @@ namespace dtn
 			// create a background task for removing the bundle
 			_datastore.remove(hash);
 
+			// raise bundle removed event
+			eventBundleRemoved(meta);
+
 			return meta;
 		}
 
@@ -478,6 +478,9 @@ namespace dtn
 
 			// raise an event
 			dtn::core::BundleExpiredEvent::raise( b );
+
+			// raise bundle removed event
+			eventBundleRemoved(b);
 		}
 
 		SimpleBundleStorage::BundleContainer::BundleContainer(const dtn::data::Bundle &b)
