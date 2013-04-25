@@ -374,7 +374,7 @@ namespace dtn
 							if (cmd.size() == 2)
 							{
 								_stream << ClientHandler::API_STATUS_OK << " BUNDLE GET "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
-								PlainSerializer(_stream) << _bundle_reg;
+								PlainSerializer(_stream, _encoding) << _bundle_reg;
 							}
 							else if (cmd[2] == "binary")
 							{
