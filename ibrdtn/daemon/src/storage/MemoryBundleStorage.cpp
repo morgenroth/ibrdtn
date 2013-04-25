@@ -26,6 +26,8 @@
 #include "core/BundleExpiredEvent.h"
 #include "core/BundleEvent.h"
 
+#include <ibrdtn/utils/Clock.h>
+
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
 
@@ -102,6 +104,9 @@ namespace dtn
 			for (prio_bundle_set::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); ++iter)
 			{
 				const dtn::data::MetaBundle &bundle = (*iter);
+
+				// skip expired bundles
+				if ( dtn::utils::Clock::isExpired( bundle.timestamp, bundle.lifetime ) ) continue;
 
 				if ( cb.shouldAdd(bundle) )
 				{

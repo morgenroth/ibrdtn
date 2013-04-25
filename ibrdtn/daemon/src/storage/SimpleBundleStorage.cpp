@@ -28,6 +28,7 @@
 
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/utils/Utils.h>
+#include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/thread/RWLock.h>
 #include <ibrcommon/Logger.h>
 
@@ -305,6 +306,9 @@ namespace dtn
 			for (std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); ++iter)
 			{
 				const dtn::data::MetaBundle &meta = (*iter);
+
+				// skip expired bundles
+				if ( dtn::utils::Clock::isExpired( meta.timestamp, meta.lifetime ) ) continue;
 
 				if ( cb.shouldAdd(meta) )
 				{

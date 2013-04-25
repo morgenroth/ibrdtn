@@ -501,7 +501,7 @@ namespace dtn
 				get(st, m, 0);
 
 				// check if the bundle is already on the deletion list
-				if (!contains_deletion(m))
+				if ( !contains_deletion(m) && !dtn::utils::Clock::isExpired( m.timestamp, m.lifetime ) )
 				{
 					// ask the filter if this bundle should be added to the return list
 					if (cb.shouldAdd(m))
