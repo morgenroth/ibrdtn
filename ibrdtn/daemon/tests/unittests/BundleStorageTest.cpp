@@ -153,7 +153,7 @@ void BundleStorageTest::testRemove(dtn::storage::BundleStorage &storage)
 
 	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
 
-	storage.remove(b);
+	CPPUNIT_ASSERT_NO_THROW_MESSAGE( "storage.remove(b)", storage.remove(b) );
 
 	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
 }
@@ -196,7 +196,7 @@ void BundleStorageTest::testAgeBlock(dtn::storage::BundleStorage &storage)
 
 	try {
 		// retrieve the bundle
-		CPPUNIT_ASSERT_NO_THROW( b = storage.get(id) );
+		CPPUNIT_ASSERT_NO_THROW_MESSAGE( "storage.get(id)", b = storage.get(id) );
 
 		// get the ageblock
 		dtn::data::AgeBlock &agebl = b.find<dtn::data::AgeBlock>();
