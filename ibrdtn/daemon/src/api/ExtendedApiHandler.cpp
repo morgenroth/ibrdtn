@@ -50,7 +50,7 @@ namespace dtn
 	{
 		ExtendedApiHandler::ExtendedApiHandler(ClientHandler &client, ibrcommon::socketstream &stream)
 		 : ProtocolHandler(client, stream), _sender(new Sender(*this)),
-		   _endpoint(_client.getRegistration().getDefaultEID())
+		   _endpoint(_client.getRegistration().getDefaultEID()), _encoding(dtn::api::PlainSerializer::BASE64)
 		{
 			_client.getRegistration().subscribe(_endpoint);
 		}
@@ -129,6 +129,25 @@ namespace dtn
 								reg.subscribe(new_endpoint);
 								_endpoint = new_endpoint;
 								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
+							}
+						}
+						else if (cmd[1] == "encoding")
+						{
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
+
+							if (cmd[2] == "raw") {
+								_encoding = dtn::api::PlainSerializer::RAW;
+
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
+							} else if (cmd[2] == "base64") {
+								_encoding = dtn::api::PlainSerializer::BASE64;
+
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
+							} else {
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " INVALID ENCODING" << std::endl;
 							}
 						}
 						else
@@ -366,7 +385,7 @@ namespace dtn
 							else if (cmd[2] == "plain")
 							{
 								_stream << ClientHandler::API_STATUS_OK << " BUNDLE GET PLAIN "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
-								PlainSerializer(_stream) << _bundle_reg;
+								PlainSerializer(_stream, _encoding) << _bundle_reg;
 							}
 							else if (cmd[2] == "xml")
 							{
@@ -391,7 +410,7 @@ namespace dtn
 								_stream << ClientHandler::API_STATUS_CONTINUE << " PUT BUNDLE PLAIN" << std::endl;
 
 								try {
-									PlainDeserializer(_stream) >> _bundle_reg;
+									PlainDeserializer(_stream, _encoding) >> _bundle_reg;
 									_stream << ClientHandler::API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
 								} catch (const std::exception &ex) {
 									IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 20) << "put failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -513,7 +532,7 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 
 							_stream << ClientHandler::API_STATUS_OK << " BUNDLE INFO "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
-							PlainSerializer(_stream, true) << _bundle_reg;
+							PlainSerializer(_stream, PlainSerializer::SKIP_PAYLOAD) << _bundle_reg;
 						}
 						else if (cmd[1] == "block")
 						{
@@ -672,8 +691,15 @@ namespace dtn
 											remaining = length;
 										}
 
+										std::ostream *target = &_stream;
+
 										// put data here
 										ibrcommon::Base64Stream b64(_stream, false, 80);
+
+										if (_encoding == dtn::api::PlainSerializer::BASE64)
+										{
+											target = &b64;
+										}
 
 										// ignore all bytes leading the offset
 										(*stream).ignore(payload_offset);
@@ -693,11 +719,11 @@ namespace dtn
 
 											buffered = (*stream).gcount();
 											remaining -= buffered;
-											b64.write(&data[0], buffered);
+											(*target).write(&data[0], buffered);
 										}
 
 										// flush the base64 buffer
-										b64 << std::flush;
+										(*target) << std::flush;
 
 										// final line break (mark the end)
 										_stream << std::endl << std::endl;
@@ -709,11 +735,15 @@ namespace dtn
 								{
 									_stream << ClientHandler::API_STATUS_OK << " PAYLOAD GET" << std::endl;
 
-									// put data here
-									ibrcommon::Base64Stream b64(_stream, false, 80);
 									size_t slength = 0;
-									block.serialize(b64, slength);
-									b64 << std::flush;
+									if (_encoding == dtn::api::PlainSerializer::BASE64) {
+										// put data here
+										ibrcommon::Base64Stream b64(_stream, false, 80);
+										block.serialize(b64, slength);
+										b64 << std::flush;
+									} else {
+										block.serialize(_stream, slength);
+									}
 
 									// final line break (mark the end)
 									_stream << std::endl << std::endl;
@@ -754,7 +784,7 @@ namespace dtn
 								}
 
 								/* write the new data into the blob */
-								PlainDeserializer(_stream).readBase64(*stream);
+								PlainDeserializer(_stream).readData(*stream, _encoding);
 
 								_stream << ClientHandler::API_STATUS_OK << " PAYLOAD PUT SUCCESSFUL" << std::endl;
 							} catch (std::bad_cast&) {
@@ -782,7 +812,7 @@ namespace dtn
 								(*stream).seekp(0, ios_base::end);
 
 								/* write the new data into the blob */
-								PlainDeserializer(_stream).readBase64(*stream);
+								PlainDeserializer(_stream).readData(*stream, _encoding);
 
 								_stream << ClientHandler::API_STATUS_OK << " PAYLOAD APPEND SUCCESSFUL" << std::endl;
 							} catch (std::bad_cast&) {

@@ -34,14 +34,19 @@ namespace dtn
 		class PlainSerializer : public dtn::data::Serializer
 		{
 		public:
-			PlainSerializer(std::ostream &stream, bool skip_payload = false);
+			enum Encoding {
+				SKIP_PAYLOAD,
+				BASE64,
+				RAW
+			};
+			PlainSerializer(std::ostream &stream, Encoding enc = BASE64);
 			virtual ~PlainSerializer();
 
 			dtn::data::Serializer &operator<<(const dtn::data::Bundle &obj);
 			dtn::data::Serializer &operator<<(const dtn::data::PrimaryBlock &obj);
 			dtn::data::Serializer &operator<<(const dtn::data::Block &obj);
 
-			dtn::data::Serializer &serialize(ibrcommon::BLOB::iostream &obj, size_t limit = 0);
+			dtn::data::Serializer &serialize(ibrcommon::BLOB::iostream &obj, Encoding enc, size_t limit = 0);
 
 			size_t getLength(const dtn::data::Bundle &obj);
 			size_t getLength(const dtn::data::PrimaryBlock &obj) const;
@@ -49,7 +54,7 @@ namespace dtn
 
 		private:
 			std::ostream &_stream;
-			bool _skip_payload;
+			Encoding _encoding;
 		};
 
 		class PlainDeserializer : public dtn::data::Deserializer
@@ -58,7 +63,7 @@ namespace dtn
 			class UnknownBlockException;
 			class BlockNotProcessableException;
 
-			PlainDeserializer(std::istream &stream);
+			PlainDeserializer(std::istream &stream, PlainSerializer::Encoding enc = PlainSerializer::BASE64);
 			virtual ~PlainDeserializer();
 
 			dtn::data::Deserializer &operator>>(dtn::data::Bundle &obj);
@@ -76,11 +81,12 @@ namespace dtn
 			/**
 			 * deserialize a base64 encoded data stream into another stream
 			 */
-			dtn::data::Deserializer& readBase64(std::ostream &stream);
+			dtn::data::Deserializer& readData(std::ostream &stream, PlainSerializer::Encoding enc);
 
 		private:
 			std::istream &_stream;
 			bool _lastblock;
+			PlainSerializer::Encoding _encoding;
 
 		public:
 			class PlainDeserializerException : public ibrcommon::Exception

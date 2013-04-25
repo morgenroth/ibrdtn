@@ -33,8 +33,8 @@ namespace dtn
 {
 	namespace api
 	{
-		PlainSerializer::PlainSerializer(std::ostream &stream, bool skip_payload)
-		 : _stream(stream), _skip_payload(skip_payload)
+		PlainSerializer::PlainSerializer(std::ostream &stream, Encoding enc)
+		 : _stream(stream), _encoding(enc)
 		{
 		}
 
@@ -137,16 +137,32 @@ namespace dtn
 			_stream << "Length: " << obj.getLength() << std::endl;
 
 
-			if(!_skip_payload){
+			if(_encoding != SKIP_PAYLOAD){
 				try {
 
 					_stream << std::endl;
 
 					// put data here
-					ibrcommon::Base64Stream b64(_stream, false, 80);
 					size_t slength = 0;
-					obj.serialize(b64, slength);
-					b64 << std::flush;
+					switch(_encoding)
+					{
+						case BASE64:
+						{
+							ibrcommon::Base64Stream b64(_stream, false, 80);
+							obj.serialize(b64, slength);
+							b64 << std::flush;
+							break;
+						}
+
+						case RAW:
+							obj.serialize(_stream, slength);
+							_stream << std::flush;
+							break;
+
+						default:
+							break;
+					}
+
 				} catch (const std::exception &ex) {
 					std::cerr << ex.what() << std::endl;
 				}
@@ -157,7 +173,7 @@ namespace dtn
 			return (*this);
 		}
 
-		dtn::data::Serializer &PlainSerializer::serialize(ibrcommon::BLOB::iostream &obj, size_t limit){
+		dtn::data::Serializer &PlainSerializer::serialize(ibrcommon::BLOB::iostream &obj, Encoding enc, size_t limit){
 			size_t len = obj.size();
 			if(limit < len && limit > 0)
 			{
@@ -167,10 +183,25 @@ namespace dtn
 			_stream << "Length: " << len << std::endl;
 			_stream << std::endl;
 
-			ibrcommon::Base64Stream b64(_stream, false, 80);
-			ibrcommon::BLOB::copy(b64, *obj, len);
-			b64 << std::flush;
+			switch(enc)
+			{
+				case BASE64:
+				{
+					ibrcommon::Base64Stream b64(_stream, false, 80);
+					ibrcommon::BLOB::copy(b64, *obj, len);
+					b64 << std::flush;
+					break;
+				}
 
+				case RAW:
+					ibrcommon::BLOB::copy(_stream, *obj, len);
+					_stream << std::flush;
+					break;
+
+				default:
+					break;
+			}
+			_stream << std::flush;
 			_stream << std::endl;
 
 			return *this;
@@ -191,8 +222,8 @@ namespace dtn
 			return 0;
 		}
 
-		PlainDeserializer::PlainDeserializer(std::istream &stream)
-		 : _stream(stream), _lastblock(false)
+		PlainDeserializer::PlainDeserializer(std::istream &stream, PlainSerializer::Encoding enc)
+		 : _stream(stream), _lastblock(false), _encoding(enc)
 		{
 		}
 
@@ -382,8 +413,22 @@ namespace dtn
 
 			// then read the payload
 			IBRCOMMON_LOGGER_DEBUG(20) << "API expecting payload size of " << blocksize << IBRCOMMON_LOGGER_ENDL;
-			ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
-			obj.deserialize(base64_decoder, blocksize);
+
+			switch(_encoding)
+			{
+				case PlainSerializer::BASE64:
+					{
+						ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
+						obj.deserialize(base64_decoder, blocksize);
+						break;
+					}
+				case PlainSerializer::RAW:
+					obj.deserialize(_stream, blocksize);
+					break;
+
+				default:
+					break;
+			}
 
 			std::string buffer;
 
@@ -434,8 +479,21 @@ namespace dtn
 			}
 
 			// then read the payload
-			ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
-			ibrcommon::BLOB::copy(*obj, base64_decoder, blocksize);
+			switch(_encoding)
+			{
+				case PlainSerializer::BASE64:
+					{
+						ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
+						ibrcommon::BLOB::copy(*obj, base64_decoder, blocksize);
+						break;
+					}
+				case PlainSerializer::RAW:
+					ibrcommon::BLOB::copy(*obj, _stream, blocksize);
+					break;
+
+				default:
+					break;
+			}
 			//*obj.iostream() << base64_decoder.rdbuf() << std::flush;
 
 			std::string buffer;
@@ -455,7 +513,7 @@ namespace dtn
 			return (*this);
 		}
 
-		dtn::data::Deserializer& PlainDeserializer::readBase64(std::ostream &stream)
+		dtn::data::Deserializer& PlainDeserializer::readData(std::ostream &stream, PlainSerializer::Encoding enc)
 		{
 			ibrcommon::Base64Stream b64(stream, true);
 			std::string data;
