@@ -14,7 +14,9 @@ storage_SOURCES = \
 	BundleIndex.h \
 	BundleIndex.cpp \
 	BundleSeeker.h \
-	BundleSelector.h
+	BundleSelector.h \
+	MetaStorage.h \
+	MetaStorage.cpp
 	
 
 if SQLITE
