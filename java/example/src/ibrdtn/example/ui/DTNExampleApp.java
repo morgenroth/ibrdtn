@@ -14,8 +14,6 @@ import ibrdtn.example.api.DTNClient;
 import ibrdtn.example.callback.AutoResponseCallback;
 import ibrdtn.example.callback.ICallback;
 import ibrdtn.example.logging.WindowHandler;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -649,14 +647,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                     logger.log(Level.INFO, "Neighbors {0}", dtnClient.getEC().getNeighbors().toString());
                     break;
                 case "Neighbor Connections":
-                    List<Node> connections = new LinkedList<>();
-                    for (String s : dtnClient.getEC().getNeighborConnections()) {
-                        Node node = new Node(s);
-                        connections.add(node);
-                    }
                     logger.log(Level.INFO, "Neighbor connections {0}", dtnClient.getEC().getNeighborConnections().toString());
-                    logger.log(Level.INFO, "Neighbor connections {0}", connections);
-
                     break;
                 default:
                     logger.log(Level.WARNING, "Selected printing paramter unknown!");

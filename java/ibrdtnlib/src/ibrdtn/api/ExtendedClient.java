@@ -27,6 +27,7 @@ import ibrdtn.api.object.BundleID;
 import ibrdtn.api.object.EID;
 import ibrdtn.api.object.GroupEndpoint;
 import ibrdtn.api.object.InputStreamBlockData;
+import ibrdtn.api.object.Node;
 import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.object.PlainSerializer;
 import ibrdtn.api.object.SelfEncodingObject;
@@ -42,6 +43,7 @@ import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.UnknownHostException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -760,12 +762,12 @@ public class ExtendedClient extends Client {
     /**
      * Gets all neighbor connections of the daemon.
      *
-     * NOTE: Only works with Rotti's adapted daemon.
+     * NOTE: Only works with Rotti's <rottmann@ibr.cs.tu-bs.de> adapted daemon.
      *
-     * @return A list of connections.
+     * @return A list of nodes with connection information.
      * @throws APIException if the request fails
      */
-    public synchronized List<String> getNeighborConnections() throws APIException {
+    public synchronized List<Node> getNeighborConnections() throws APIException {
         // throw exception if not connected
         if (state != State.CONNECTED) {
             throw new APIException("not connected");
@@ -776,7 +778,13 @@ public class ExtendedClient extends Client {
             throw new APIException("neighbor list connections failed");
         }
 
-        return _receiver.getList();
+        List<Node> nodes = new LinkedList<>();
+        for (String s : _receiver.getList()) {
+            Node node = new Node(s);
+            nodes.add(node);
+        }
+
+        return nodes;
     }
 
     /**
