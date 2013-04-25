@@ -56,12 +56,12 @@ void TestPlainSerializer::plain_serializer_inversion(void)
 	dtn::data::PayloadBlock &p1 = b1.push_back(ref);
 
 	/* set all possible flags */
-	p1.set( (dtn::data::Block::ProcFlags) (dtn::data::Block::REPLICATE_IN_EVERY_FRAGMENT
-			| dtn::data::Block::TRANSMIT_STATUSREPORT_IF_NOT_PROCESSED
-			| dtn::data::Block::DELETE_BUNDLE_IF_NOT_PROCESSED
-			| dtn::data::Block::DISCARD_IF_NOT_PROCESSED
-//			| dtn::data::Block::FORWARDED_WITHOUT_PROCESSED
-			| dtn::data::Block::BLOCK_CONTAINS_EIDS), true);
+	p1.set( dtn::data::Block::REPLICATE_IN_EVERY_FRAGMENT, true );
+	p1.set( dtn::data::Block::TRANSMIT_STATUSREPORT_IF_NOT_PROCESSED, true );
+	p1.set( dtn::data::Block::DELETE_BUNDLE_IF_NOT_PROCESSED, true );
+	p1.set( dtn::data::Block::DISCARD_IF_NOT_PROCESSED, true );
+//	p1.set( dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, true );
+	p1.set( dtn::data::Block::BLOCK_CONTAINS_EIDS, true );
 
 	dtn::data::ScopeControlHopLimitBlock::Factory f;
 	b1.push_back(f);
