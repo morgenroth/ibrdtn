@@ -503,6 +503,25 @@ namespace dtn
 			}
 		}
 
+		void BundleCore::validate(const dtn::data::PrimaryBlock &bundle, const dtn::data::Block&, const size_t size) const throw (RejectedException)
+		{
+			/*
+			 *
+			 * reject a block if
+			 * ... it exceeds the payload limit
+			 *
+			 * throw dtn::data::DefaultDeserializer::RejectedException();
+			 *
+			 */
+
+			// check for the size of the block
+			if ((BundleCore::blocksizelimit > 0) && (size > BundleCore::blocksizelimit))
+			{
+				IBRCOMMON_LOGGER(warning) << "bundle " << bundle.toString() << " rejected: block size of " << size << " is too big" << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("block size is too big");
+			}
+		}
+
 		void BundleCore::validate(const dtn::data::Bundle &b) const throw (dtn::data::Validator::RejectedException)
 		{
 			/*

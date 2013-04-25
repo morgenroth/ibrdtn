@@ -604,7 +604,7 @@ namespace dtn
 
 					try {
 						// read block content
-						(*this) >> block;
+						(*this).read(obj, block);
 					} catch (dtn::PayloadReceptionInterrupted &ex) {
 						// some debugging
 						IBRCOMMON_LOGGER_DEBUG(15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
@@ -791,6 +791,44 @@ namespace dtn
 			return (*this);
 		}
 
+		Deserializer& DefaultDeserializer::read(const dtn::data::PrimaryBlock &bundle, dtn::data::Block &obj)
+		{
+			// read EIDs
+			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
+			{
+				SDNV eidcount;
+				_stream >> eidcount;
+
+				for (unsigned int i = 0; i < eidcount.getValue(); ++i)
+				{
+					SDNV scheme, ssp;
+					_stream >> scheme;
+					_stream >> ssp;
+
+					if (_compressed)
+					{
+						obj.addEID( dtn::data::EID(scheme.getValue(), ssp.getValue()) );
+					}
+					else
+					{
+						obj.addEID( _dictionary.get(scheme.getValue(), ssp.getValue()) );
+					}
+				}
+			}
+
+			// read the size of the payload in the block
+			SDNV block_size;
+			_stream >> block_size;
+
+			// validate this block
+			_validator.validate(bundle, obj, block_size.getValue());
+
+			// read the payload of the block
+			obj.deserialize(_stream, block_size.getValue());
+
+			return (*this);
+		}
+
 		AcceptValidator::AcceptValidator()
 		{
 		}
@@ -804,6 +842,11 @@ namespace dtn
 		}
 
 		void AcceptValidator::validate(const dtn::data::Block&, const size_t) const throw (RejectedException)
+		{
+
+		}
+
+		void AcceptValidator::validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const size_t) const throw (RejectedException)
 		{
 
 		}

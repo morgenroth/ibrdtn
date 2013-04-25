@@ -82,6 +82,7 @@ namespace dtn
 
 			virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException) = 0;
 			virtual void validate(const dtn::data::Block&, const size_t) const throw (RejectedException) = 0;
+			virtual void validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const size_t) const throw (RejectedException) = 0;
 			virtual void validate(const dtn::data::Bundle&) const throw (RejectedException) = 0;
 		};
 
@@ -93,6 +94,7 @@ namespace dtn
 
 			virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException);
 			virtual void validate(const dtn::data::Block&, const size_t) const throw (RejectedException);
+			virtual void validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const size_t) const throw (RejectedException);
 			virtual void validate(const dtn::data::Bundle&) const throw (RejectedException);
 		};
 
@@ -173,6 +175,7 @@ namespace dtn
 			virtual Deserializer &operator>>(dtn::data::Bundle &obj);
 			virtual Deserializer &operator>>(dtn::data::PrimaryBlock &obj);
 			virtual Deserializer &operator>>(dtn::data::Block &obj);
+			virtual Deserializer &read(const dtn::data::PrimaryBlock &bundle, dtn::data::Block &obj);
 			virtual Deserializer &operator>>(dtn::data::MetaBundle &obj);
 
 			/**
