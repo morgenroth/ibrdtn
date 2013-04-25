@@ -35,7 +35,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
 
     protected void readByteArray(PayloadBlock payload) throws IOException {
 
-        byte[] bytes = new byte[16];
+        byte[] bytes = new byte[32];
         int readBytes = is.read(bytes);
 
         StringBuilder sb = new StringBuilder();

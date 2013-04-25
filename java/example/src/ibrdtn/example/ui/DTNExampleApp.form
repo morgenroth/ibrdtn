@@ -111,10 +111,13 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="12" pref="12" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jScrollPane1" min="-2" pref="732" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Group type="102" attributes="0">
+                      <Component id="jScrollPane1" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                  </Group>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="1" max="-2" attributes="0">
                           <Component id="jPanel3" max="32767" attributes="0"/>
@@ -122,9 +125,14 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
-                          <Component id="jPanel4" min="-2" max="-2" attributes="0"/>
+                          <Component id="jPanel4" alignment="0" max="32767" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                          <Component id="jPanel5" max="32767" attributes="0"/>
                       </Group>
+                      <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -142,10 +150,14 @@
                       <Component id="jPanel4" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace min="6" pref="6" max="-2" attributes="0"/>
-              <Component id="jPanel3" min="-2" pref="117" max="-2" attributes="0"/>
-              <EmptySpace min="6" pref="6" max="-2" attributes="0"/>
-              <Component id="jScrollPane1" min="-2" pref="157" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="jPanel3" min="-2" pref="117" max="-2" attributes="0"/>
+                  <Component id="jPanel5" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="jScrollPane1" pref="194" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -439,7 +451,7 @@
                   <Component id="cbOutput" min="-2" pref="180" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="btnPrint" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="123" max="32767" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -450,7 +462,7 @@
                       <Component id="cbOutput" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="btnPrint" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace min="0" pref="4" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -459,11 +471,12 @@
         <Component class="javax.swing.JComboBox" name="cbOutput">
           <Properties>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-              <StringArray count="4">
+              <StringArray count="5">
                 <StringItem index="0" value="Primary EID"/>
                 <StringItem index="1" value="Node Name"/>
                 <StringItem index="2" value="Registrations"/>
                 <StringItem index="3" value="Neighbors"/>
+                <StringItem index="4" value="Neighbor Connections"/>
               </StringArray>
             </Property>
           </Properties>
@@ -564,6 +577,52 @@
         <Component class="javax.swing.JCheckBox" name="cbAutoResponse">
           <Properties>
             <Property name="text" type="java.lang.String" value="Echo"/>
+          </Properties>
+        </Component>
+      </SubComponents>
+    </Container>
+    <Container class="javax.swing.JPanel" name="jPanel5">
+      <Properties>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+            <TitledBorder title="Security"/>
+          </Border>
+        </Property>
+      </Properties>
+
+      <Layout>
+        <DimensionLayout dim="0">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <Group type="102" alignment="0" attributes="0">
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="cbEncrypt" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="cbSign" max="32767" attributes="0"/>
+                  <EmptySpace min="-2" pref="220" max="-2" attributes="0"/>
+              </Group>
+          </Group>
+        </DimensionLayout>
+        <DimensionLayout dim="1">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <Group type="102" alignment="0" attributes="0">
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="cbEncrypt" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="cbSign" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace min="0" pref="12" max="32767" attributes="0"/>
+              </Group>
+          </Group>
+        </DimensionLayout>
+      </Layout>
+      <SubComponents>
+        <Component class="javax.swing.JCheckBox" name="cbEncrypt">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Encrypt"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JCheckBox" name="cbSign">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Sign"/>
           </Properties>
         </Component>
       </SubComponents>

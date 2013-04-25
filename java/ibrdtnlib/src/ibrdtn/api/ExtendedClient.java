@@ -758,6 +758,28 @@ public class ExtendedClient extends Client {
     }
 
     /**
+     * Gets all neighbor connections of the daemon.
+     *
+     * NOTE: Only works with Rotti's adapted daemon.
+     *
+     * @return A list of connections.
+     * @throws APIException if the request fails
+     */
+    public synchronized List<String> getNeighborConnections() throws APIException {
+        // throw exception if not connected
+        if (state != State.CONNECTED) {
+            throw new APIException("not connected");
+        }
+
+        // query for registration list connections
+        if (query("neighbor list connections") != 200) {
+            throw new APIException("neighbor list connections failed");
+        }
+
+        return _receiver.getList();
+    }
+
+    /**
      * Gets the EID of the DTN daemon in the form 'dtn://$name'.
      *
      * @return the daemons EID

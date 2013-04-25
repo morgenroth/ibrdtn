@@ -14,6 +14,8 @@ import ibrdtn.example.api.DTNClient;
 import ibrdtn.example.callback.AutoResponseCallback;
 import ibrdtn.example.callback.ICallback;
 import ibrdtn.example.logging.WindowHandler;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -108,6 +110,9 @@ public class DTNExampleApp extends javax.swing.JFrame {
         tfId = new javax.swing.JTextField();
         btnSend = new javax.swing.JButton();
         cbAutoResponse = new javax.swing.JCheckBox();
+        jPanel5 = new javax.swing.JPanel();
+        cbEncrypt = new javax.swing.JCheckBox();
+        cbSign = new javax.swing.JCheckBox();
         menuBar = new javax.swing.JMenuBar();
         fileMenu = new javax.swing.JMenu();
         openMenuItem = new javax.swing.JMenuItem();
@@ -290,7 +295,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Output"));
 
-        cbOutput.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Primary EID", "Node Name", "Registrations", "Neighbors" }));
+        cbOutput.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Primary EID", "Node Name", "Registrations", "Neighbors", "Neighbor Connections" }));
 
         btnPrint.setText("Print");
         btnPrint.addActionListener(new java.awt.event.ActionListener() {
@@ -308,7 +313,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 .addComponent(cbOutput, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(btnPrint)
-                .addContainerGap(123, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -316,7 +321,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cbOutput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnPrint))
-                .addGap(0, 4, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Payload"));
@@ -372,6 +377,32 @@ public class DTNExampleApp extends javax.swing.JFrame {
                     .addComponent(tfResponse, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cbAutoResponse))
                 .addGap(58, 58, 58))
+        );
+
+        jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder("Security"));
+
+        cbEncrypt.setText("Encrypt");
+
+        cbSign.setText("Sign");
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(cbEncrypt)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cbSign, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(220, 220, 220))
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cbEncrypt)
+                    .addComponent(cbSign))
+                .addGap(0, 12, Short.MAX_VALUE))
         );
 
         menuBar.setName(""); // NOI18N
@@ -440,16 +471,22 @@ public class DTNExampleApp extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(12, 12, 12)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 732, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1)
+                        .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(12, 12, 12))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -461,10 +498,13 @@ public class DTNExampleApp extends javax.swing.JFrame {
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(6, 6, 6)
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(6, 6, 6)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 157, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         pack();
@@ -507,6 +547,10 @@ public class DTNExampleApp extends javax.swing.JFrame {
         bundle.setFlag(Bundle.Flags.FORWARD_REPORT, cbReports.isSelected());
         bundle.setFlag(Bundle.Flags.DELIVERY_REPORT, cbReports.isSelected());
         bundle.setFlag(Bundle.Flags.COMPRESSION_REQUEST, cbGZIP.isSelected());
+
+        // DTNSEC
+        bundle.setFlag(Bundle.Flags.DTNSEC_REQUEST_ENCRYPT, cbEncrypt.isSelected());
+        bundle.setFlag(Bundle.Flags.DTNSEC_REQUEST_SIGN, cbSign.isSelected());
 
         /*
          * Switch between binary and custom data format.
@@ -604,6 +648,16 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 case "Neighbors":
                     logger.log(Level.INFO, "Neighbors {0}", dtnClient.getEC().getNeighbors().toString());
                     break;
+                case "Neighbor Connections":
+                    List<Node> connections = new LinkedList<>();
+                    for (String s : dtnClient.getEC().getNeighborConnections()) {
+                        Node node = new Node(s);
+                        connections.add(node);
+                    }
+                    logger.log(Level.INFO, "Neighbor connections {0}", dtnClient.getEC().getNeighborConnections().toString());
+                    logger.log(Level.INFO, "Neighbor connections {0}", connections);
+
+                    break;
                 default:
                     logger.log(Level.WARNING, "Selected printing paramter unknown!");
             }
@@ -677,10 +731,12 @@ public class DTNExampleApp extends javax.swing.JFrame {
     private javax.swing.JButton btnSend;
     private javax.swing.JCheckBox cbAutoResponse;
     private javax.swing.JCheckBox cbCustody;
+    private javax.swing.JCheckBox cbEncrypt;
     private javax.swing.JCheckBox cbGZIP;
     private javax.swing.JComboBox cbOutput;
     private javax.swing.JComboBox cbPriority;
     private javax.swing.JCheckBox cbReports;
+    private javax.swing.JCheckBox cbSign;
     private javax.swing.JMenuItem contentsMenuItem;
     private javax.swing.JMenu editMenu;
     private javax.swing.JMenuItem exitMenuItem;
@@ -696,6 +752,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JMenuBar menuBar;
