@@ -444,20 +444,20 @@ public class ClientSession {
 
                 b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON,
                         bundle.get(Bundle.ProcFlags.DESTINATION_IS_SINGLETON));
-                b.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
+                b.setDestination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
 
                 // set lifetime
                 if (bundle.getLifetime() != null)
-                    b.set_lifetime(bundle.getLifetime());
+                    b.setLifetime(BigInteger.valueOf(bundle.getLifetime()));
 
                 if (bundle.getReportto() != null)
-                    b.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
+                    b.setReportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
 
                 if (bundle.getCustodian() != null)
-                    b.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
+                    b.setCustodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
 
                 // add flags from procflags
-                b.set_procflags(b.get_procflags() | bundle.getProcflags());
+                b.setProcflags( BigInteger.valueOf( b.getProcflags().longValue() | bundle.getProcflags() ) );
 
                 // bundle id return value
                 de.tubs.ibr.dtn.swig.BundleID ret = null;
@@ -499,20 +499,20 @@ public class ClientSession {
 
                 b.set(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON,
                         bundle.get(Bundle.ProcFlags.DESTINATION_IS_SINGLETON));
-                b.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
+                b.setDestination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
 
                 // set lifetime
                 if (bundle.getLifetime() != null)
-                    b.set_lifetime(bundle.getLifetime());
+                    b.setLifetime( BigInteger.valueOf( bundle.getLifetime() ) );
 
                 if (bundle.getReportto() != null)
-                    b.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
+                    b.setReportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
 
                 if (bundle.getCustodian() != null)
-                    b.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
+                    b.setCustodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
 
                 // add flags from procflags
-                b.set_procflags(b.get_procflags() | bundle.getProcflags());
+                b.setProcflags( BigInteger.valueOf( b.getProcflags().longValue() | bundle.getProcflags() ) );
 
                 // open the file descriptor
                 FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
@@ -606,43 +606,43 @@ public class ClientSession {
 		 * Convert API Bundle to SWIG bundle
 		 */
 		de.tubs.ibr.dtn.swig.PrimaryBlock ret = new de.tubs.ibr.dtn.swig.PrimaryBlock();
-		ret.set_custodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
-		ret.set_destination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
-		ret.set_fragmentoffset(bundle.getFragmentOffset());
-		ret.set_lifetime(bundle.getLifetime());
-		ret.set_procflags(bundle.getProcflags());
-		ret.set_reportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
-		ret.set_sequencenumber(bundle.getSequencenumber());
-		ret.set_source(new de.tubs.ibr.dtn.swig.EID(bundle.getSource().toString()));
+		ret.setCustodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
+		ret.setDestination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
+		ret.setFragmentoffset( BigInteger.valueOf( bundle.getFragmentOffset() ) );
+		ret.setLifetime( BigInteger.valueOf( bundle.getLifetime().longValue() ) );
+		ret.setProcflags( BigInteger.valueOf( bundle.getProcflags() ) );
+		ret.setReportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
+		ret.setSequencenumber( BigInteger.valueOf( bundle.getSequencenumber() ) );
+		ret.setSource(new de.tubs.ibr.dtn.swig.EID(bundle.getSource().toString()));
 
-		ret.set_timestamp(bundle.getTimestamp().getValue());
+		ret.setTimestamp( BigInteger.valueOf( bundle.getTimestamp().getValue() ) );
 		
 		return ret;
 	}
 	
 	private static Bundle toAndroid(PrimaryBlock block) {
-		Bundle ret = new Bundle( block.get_procflags() );
+		Bundle ret = new Bundle( block.getProcflags().longValue() );
 		
 		if (block.get(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON)) {
-			ret.setDestination( new SingletonEndpoint(block.get_destination().getString()) );
+			ret.setDestination( new SingletonEndpoint(block.getDestination().getString()) );
 		} else {
-			ret.setDestination( new GroupEndpoint(block.get_destination().getString()) );
+			ret.setDestination( new GroupEndpoint(block.getDestination().getString()) );
 		}
 
-		ret.setSource( new SingletonEndpoint(block.get_source().getString()) );
-		ret.setReportto( new SingletonEndpoint(block.get_reportto().getString()) );
-		ret.setCustodian( new SingletonEndpoint(block.get_custodian().getString()) );
+		ret.setSource( new SingletonEndpoint(block.getSource().getString()) );
+		ret.setReportto( new SingletonEndpoint(block.getReportto().getString()) );
+		ret.setCustodian( new SingletonEndpoint(block.getCustodian().getString()) );
 		
-		ret.setLifetime( block.get_lifetime());
+		ret.setLifetime( block.getLifetime().longValue() );
 		
-		Timestamp ts = new Timestamp(block.get_timestamp());
+		Timestamp ts = new Timestamp(block.getTimestamp().longValue());
 		ret.setTimestamp( ts );
 		
-		ret.setSequencenumber( block.get_sequencenumber() );
+		ret.setSequencenumber( block.getSequencenumber().longValue() );
 
 		if (block.get(PrimaryBlock.FLAGS.FRAGMENT)) {
-			ret.setAppDataLength( block.get_appdatalength() );
-			ret.setFragmentOffset( block.get_fragmentoffset() );
+			ret.setAppDataLength( block.getAppdatalength().longValue() );
+			ret.setFragmentOffset( block.getFragmentoffset().longValue() );
 		}
 		
 		return ret;
