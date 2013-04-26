@@ -289,7 +289,7 @@ namespace dtn
 
 		Serializer& DefaultSerializer::operator <<(const dtn::data::Block& obj)
 		{
-			_stream << obj.getType();
+			_stream.put((char&)obj.getType());
 			_stream << dtn::data::SDNV(obj.getProcessingFlags());
 
 			const Block::eid_list &eids = obj.getEIDList();
@@ -332,7 +332,7 @@ namespace dtn
 
 		Serializer& DefaultSerializer::serialize(const dtn::data::PayloadBlock& obj, size_t clip_offset, size_t clip_length)
 		{
-			_stream << obj.getType();
+			_stream.put((char&)obj.getType());
 			_stream << dtn::data::SDNV(obj.getProcessingFlags());
 
 			const Block::eid_list &eids = obj.getEIDList();
@@ -583,7 +583,7 @@ namespace dtn
 			// read until the last block
 			bool lastblock = false;
 
-			char block_type;
+			block_t block_type;
 			dtn::data::SDNV procflags_sdnv;
 
 			// create a bundle builder
@@ -593,7 +593,7 @@ namespace dtn
 			while (!_stream.eof() && !lastblock)
 			{
 				// BLOCK_TYPE
-				_stream.get(block_type);
+				_stream.get((char&)block_type);
 
 				// read processing flags
 				_stream >> procflags_sdnv;
@@ -867,7 +867,7 @@ namespace dtn
 
 		Serializer& SeparateSerializer::operator <<(const dtn::data::Block& obj)
 		{
-			_stream << obj.getType();
+			_stream.put((char&)obj.getType());
 			_stream << dtn::data::SDNV(obj.getProcessingFlags());
 
 			const Block::eid_list &eids = obj.getEIDList();
@@ -940,11 +940,11 @@ namespace dtn
 		{
 			BundleBuilder builder(_bundle);
 
-			char block_type;
+			block_t block_type;
 			dtn::data::SDNV procflags_sdnv;
 
 			// BLOCK_TYPE
-			_stream.get(block_type);
+			_stream.get((char&)block_type);
 
 			// read processing flags
 			_stream >> procflags_sdnv;
