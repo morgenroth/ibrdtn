@@ -28,21 +28,27 @@ namespace dtn
 			case FRONT:
 			{
 				dtn::data::Block &block = _target->push_front(f);
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 
 			case END:
 			{
 				dtn::data::Block &block = _target->push_back(f);
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 
 			default:
 				if(_pos <= 0) {
 					dtn::data::Block &block = _target->push_front(f);
-					block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+					bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+					block._procflags = procflags;
+					block.set(dtn::data::Block::LAST_BLOCK, last_block);
 					return block;
 				}
 
@@ -51,7 +57,9 @@ namespace dtn
 
 				dtn::data::Block &block = (it == _target->end()) ? _target->push_back(f) : _target->insert(it, f);
 
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 		}
