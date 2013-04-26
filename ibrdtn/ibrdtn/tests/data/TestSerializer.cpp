@@ -28,10 +28,16 @@
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/BundleFragment.h>
 #include <ibrdtn/data/AgeBlock.h>
+#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
+#include <ibrdtn/data/BundleBuilder.h>
 #include <iostream>
 #include <sstream>
 
 CPPUNIT_TEST_SUITE_REGISTRATION (TestSerializer);
+
+void TestSerializer::hexdump(char c) {
+  std::cout << std::hex << (int)c << " ";
+}
 
 void TestSerializer::setUp(void)
 {
@@ -286,4 +292,106 @@ void TestSerializer::serializer_ipn_compression_length(void)
 	size_t calc_len = ds.getLength(ipnbundle);
 
 	CPPUNIT_ASSERT_EQUAL(written_len, calc_len);
+}
+
+void TestSerializer::serializer_outin_binary(void)
+{
+	std::stringstream ss, ss1, ss2, payloadss;
+	dtn::data::DefaultSerializer serializer(ss);
+	dtn::data::DefaultDeserializer deserializer(ss);
+	dtn::data::Bundle b1, b2;
+
+	/* create Bundle */
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	payloadss << "test payload" << std::endl;
+	(*ref.iostream()) << payloadss.rdbuf();
+	dtn::data::PayloadBlock &p1 = b1.push_back(ref);
+
+	/* set all possible flags */
+	p1.set( dtn::data::Block::REPLICATE_IN_EVERY_FRAGMENT, true );
+	p1.set( dtn::data::Block::TRANSMIT_STATUSREPORT_IF_NOT_PROCESSED, true );
+	p1.set( dtn::data::Block::DELETE_BUNDLE_IF_NOT_PROCESSED, true );
+	p1.set( dtn::data::Block::DISCARD_IF_NOT_PROCESSED, true );
+	p1.set( dtn::data::Block::BLOCK_CONTAINS_EIDS, true );
+
+	p1.addEID(dtn::data::EID("dtn://test1234/app1234"));
+
+	b1.push_front<dtn::data::ScopeControlHopLimitBlock>();
+
+	/* add unknown extension block */
+	dtn::data::BundleBuilder builder(b1);
+	dtn::data::Block &ext_block = builder.insert(42, 0);
+	ext_block.set( dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, true );
+
+	dtn::data::ExtensionBlock &ext_block_cast = dynamic_cast<dtn::data::ExtensionBlock&>(ext_block);
+	ibrcommon::BLOB::Reference ext_ref = ext_block_cast.getBLOB();
+	{
+		ibrcommon::BLOB::iostream ext_stream = ext_ref.iostream();
+		(*ext_stream) << "Hello World" << std::flush;
+	}
+
+	/* serialize b1 and deserialize it into b2 */
+	serializer << b1;
+	deserializer >> b2;
+
+	/* serialize b1 and b2 into stringstreams */
+	dtn::data::DefaultSerializer(ss1) << b1;
+	dtn::data::DefaultSerializer(ss2) << b2;
+
+	/* compare strings */
+	CPPUNIT_ASSERT_EQUAL( 0, ss1.str().compare(ss2.str()) );
+}
+
+void TestSerializer::serializer_outin_structure(void)
+{
+	std::stringstream ss, ss1, ss2, payloadss;
+	dtn::data::DefaultSerializer serializer(ss);
+	dtn::data::DefaultDeserializer deserializer(ss);
+	dtn::data::Bundle b1, b2;
+
+	/* create Bundle */
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	payloadss << "test payload" << std::endl;
+	(*ref.iostream()) << payloadss.rdbuf();
+	dtn::data::PayloadBlock &p1 = b1.push_back(ref);
+
+	/* set all possible flags */
+	p1.set( dtn::data::Block::REPLICATE_IN_EVERY_FRAGMENT, true );
+	p1.set( dtn::data::Block::TRANSMIT_STATUSREPORT_IF_NOT_PROCESSED, true );
+	p1.set( dtn::data::Block::DELETE_BUNDLE_IF_NOT_PROCESSED, true );
+	p1.set( dtn::data::Block::DISCARD_IF_NOT_PROCESSED, true );
+	p1.set( dtn::data::Block::BLOCK_CONTAINS_EIDS, true );
+
+	p1.addEID(dtn::data::EID("dtn://test1234/app1234"));
+
+	b1.push_front<dtn::data::AgeBlock>();
+	b1.push_front<dtn::data::ScopeControlHopLimitBlock>();
+
+	/* add unknown extension block */
+	dtn::data::BundleBuilder builder(b1);
+	dtn::data::Block &ext_block = builder.insert(42, 0);
+	ext_block.set( dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, true );
+
+	dtn::data::ExtensionBlock &ext_block_cast = dynamic_cast<dtn::data::ExtensionBlock&>(ext_block);
+	ibrcommon::BLOB::Reference ext_ref = ext_block_cast.getBLOB();
+	{
+		ibrcommon::BLOB::iostream ext_stream = ext_ref.iostream();
+		(*ext_stream) << "Hello World" << std::flush;
+	}
+
+	/* serialize b1 and deserialize it into b2 */
+	serializer << b1;
+	deserializer >> b2;
+
+	/* serialize b1 and b2 into stringstreams */
+	dtn::data::DefaultSerializer(ss1) << b1;
+	dtn::data::DefaultSerializer(ss2) << b2;
+
+	/* check structure */
+	const dtn::data::PayloadBlock &p2 = b2.find<dtn::data::PayloadBlock>();
+	CPPUNIT_ASSERT_EQUAL((size_t)1, p2.getEIDList().size());
+	CPPUNIT_ASSERT(dtn::data::EID("dtn://test1234/app1234") == p2.getEIDList().front());
+
+	CPPUNIT_ASSERT_NO_THROW( b2.find<dtn::data::AgeBlock>() );
+	CPPUNIT_ASSERT_NO_THROW( b2.find<dtn::data::ScopeControlHopLimitBlock>() );
 }

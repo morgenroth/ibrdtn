@@ -31,6 +31,8 @@ class TestPlainSerializer : public CPPUNIT_NS :: TestFixture
 	CPPUNIT_TEST (plain_serializer_inversion);
 	CPPUNIT_TEST_SUITE_END ();
 
+	static void hexdump(char c);
+
 public:
 	void setUp (void);
 	void tearDown (void);

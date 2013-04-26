@@ -36,7 +36,11 @@ class TestSerializer : public CPPUNIT_NS :: TestFixture
 	CPPUNIT_TEST (serializer_bundle_length);
 	CPPUNIT_TEST (serializer_fragment_one);
 	CPPUNIT_TEST (serializer_ipn_compression_length);
+	CPPUNIT_TEST (serializer_outin_binary);
+	CPPUNIT_TEST (serializer_outin_structure);
 	CPPUNIT_TEST_SUITE_END ();
+
+	static void hexdump(char c);
 
 public:
 	void setUp (void);
@@ -54,6 +58,9 @@ protected:
 	void serializer_fragment_one(void);
 
 	void serializer_ipn_compression_length(void);
+
+	void serializer_outin_binary(void);
+	void serializer_outin_structure(void);
 };
 
 #endif /* TESTSERIALIZER_H_ */
