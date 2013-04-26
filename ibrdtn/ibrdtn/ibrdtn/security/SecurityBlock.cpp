@@ -298,12 +298,12 @@ namespace dtn
 
 		size_t SecurityBlock::getLength() const
 		{
-			size_t length = dtn::data::SDNV::getLength(_ciphersuite_id)
-				+ dtn::data::SDNV::getLength(_ciphersuite_flags);
+			size_t length = dtn::data::SDNV(_ciphersuite_id).getLength()
+				+ dtn::data::SDNV(_ciphersuite_flags).getLength();
 
 			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
 			{
-				length += dtn::data::SDNV::getLength(_correlator);
+				length += dtn::data::SDNV(_correlator).getLength();
 			}
 
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)

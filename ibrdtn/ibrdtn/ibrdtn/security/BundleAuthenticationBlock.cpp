@@ -172,7 +172,7 @@ namespace dtn
 			// TLV type
 			size_t size = 1;
 			// length of value length
-			size += dtn::data::SDNV::getLength(EVP_MD_size(EVP_sha1()));
+			size += dtn::data::SDNV(EVP_MD_size(EVP_sha1())).getLength();
 			// length of value
 			size += EVP_MD_size(EVP_sha1());
 			return size;

@@ -22,8 +22,10 @@
 #include "ibrdtn/security/StrictSerializer.h"
 #include "ibrdtn/security/BundleAuthenticationBlock.h"
 #include "ibrdtn/security/PayloadIntegrityBlock.h"
+#include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/Dictionary.h"
 
 namespace dtn
 {
@@ -103,7 +105,7 @@ namespace dtn
 				_stream << dtn::data::SDNV(eids.size());
 				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<size_t, size_t> offsets;
+					pair<dtn::data::SDNV, dtn::data::SDNV> offsets;
 
 					if (_compressable)
 					{
@@ -114,8 +116,8 @@ namespace dtn
 						offsets = _dictionary.getRef(*it);
 					}
 
-					_stream << dtn::data::SDNV(offsets.first);
-					_stream << dtn::data::SDNV(offsets.second);
+					_stream << offsets.first;
+					_stream << offsets.second;
 				}
 			}
 

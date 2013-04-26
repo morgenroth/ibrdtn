@@ -73,14 +73,14 @@ namespace dtn
 		{
 		}
 
-		uint64_t Dictionary::get(const std::string value) const
+		SDNV Dictionary::get(const std::string value) const throw (ibrcommon::Exception)
 		{
 			std::string bytes = _bytestream.str();
 			const char *bytebegin = bytes.c_str();
 			const char *bytepos = bytebegin;
 			const char *byteend = bytebegin + bytes.length() + 1;
 
-			if (bytes.length() <= 0) return std::string::npos;
+			if (bytes.length() <= 0) throw ibrcommon::Exception("entry not found");
 
 			while (bytepos < byteend)
 			{
@@ -94,7 +94,7 @@ namespace dtn
 				bytepos += dictstr.length() + 1;
 			}
 
-			return std::string::npos;
+			 throw ibrcommon::Exception("entry not found");
 		}
 
 		bool Dictionary::exists(const std::string value) const
@@ -145,15 +145,15 @@ namespace dtn
 			}
 		}
 
-		EID Dictionary::get(uint64_t scheme, uint64_t ssp)
+		EID Dictionary::get(SDNV scheme, SDNV ssp)
 		{
 			char buffer[1024];
 
-			_bytestream.seekg(scheme);
+			_bytestream.seekg(scheme.getValue());
 			_bytestream.get(buffer, 1024, '\0');
 			std::string scheme_str(buffer);
 
-			_bytestream.seekg(ssp);
+			_bytestream.seekg(ssp.getValue());
 			_bytestream.get(buffer, 1024, '\0');
 			std::string ssp_str(buffer);
 
@@ -165,12 +165,12 @@ namespace dtn
 			_bytestream.str("");
 		}
 
-		uint64_t Dictionary::getSize() const
+		size_t Dictionary::getSize() const
 		{
 			return _bytestream.str().length();
 		}
 
-		pair<uint64_t, uint64_t> Dictionary::getRef(const EID &eid) const
+		pair<SDNV, SDNV> Dictionary::getRef(const EID &eid) const
 		{
 			const std::string scheme = eid.getScheme();
 			const std::string ssp = eid.getSSP();

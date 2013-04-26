@@ -187,54 +187,54 @@ namespace dtn
 			primaryheader[9] = SDNV(obj.sequencenumber);	// sequence number
 			primaryheader[10] = SDNV(obj.lifetime);		// lifetime
 
-			pair<size_t, size_t> ref;
+			pair<SDNV, SDNV> ref;
 
 			if (_compressable)
 			{
 				// destination reference
 				ref = obj.destination.getCompressed();
-				primaryheader[0] = SDNV(ref.first);
-				primaryheader[1] = SDNV(ref.second);
+				primaryheader[0] = ref.first;
+				primaryheader[1] = ref.second;
 
 				// source reference
 				ref = obj.source.getCompressed();
-				primaryheader[2] = SDNV(ref.first);
-				primaryheader[3] = SDNV(ref.second);
+				primaryheader[2] = ref.first;
+				primaryheader[3] = ref.second;
 
 				// reportto reference
 				ref = obj.reportto.getCompressed();
-				primaryheader[4] = SDNV(ref.first);
-				primaryheader[5] = SDNV(ref.second);
+				primaryheader[4] = ref.first;
+				primaryheader[5] = ref.second;
 
 				// custodian reference
 				ref = obj.custodian.getCompressed();
-				primaryheader[6] = SDNV(ref.first);
-				primaryheader[7] = SDNV(ref.second);
+				primaryheader[6] = ref.first;
+				primaryheader[7] = ref.second;
 
 				// dictionary size is zero in a compressed bundle header
-				primaryheader[11] = SDNV(0);
+				primaryheader[11] = 0;
 			}
 			else
 			{
 				// destination reference
 				ref = _dictionary.getRef(obj.destination);
-				primaryheader[0] = SDNV(ref.first);
-				primaryheader[1] = SDNV(ref.second);
+				primaryheader[0] = ref.first;
+				primaryheader[1] = ref.second;
 
 				// source reference
 				ref = _dictionary.getRef(obj.source);
-				primaryheader[2] = SDNV(ref.first);
-				primaryheader[3] = SDNV(ref.second);
+				primaryheader[2] = ref.first;
+				primaryheader[3] = ref.second;
 
 				// reportto reference
 				ref = _dictionary.getRef(obj.reportto);
-				primaryheader[4] = SDNV(ref.first);
-				primaryheader[5] = SDNV(ref.second);
+				primaryheader[4] = ref.first;
+				primaryheader[5] = ref.second;
 
 				// custodian reference
 				ref = _dictionary.getRef(obj.custodian);
-				primaryheader[6] = SDNV(ref.first);
-				primaryheader[7] = SDNV(ref.second);
+				primaryheader[6] = ref.first;
+				primaryheader[7] = ref.second;
 
 				// dictionary size
 				primaryheader[11] = SDNV(_dictionary.getSize());
@@ -304,7 +304,7 @@ namespace dtn
 				_stream << SDNV(eids.size());
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<size_t, size_t> offsets;
+					pair<SDNV, SDNV> offsets;
 
 					if (_compressable)
 					{
@@ -315,8 +315,8 @@ namespace dtn
 						offsets = _dictionary.getRef(*it);
 					}
 
-					_stream << SDNV(offsets.first);
-					_stream << SDNV(offsets.second);
+					_stream << offsets.first;
+					_stream << offsets.second;
 				}
 			}
 
@@ -347,7 +347,7 @@ namespace dtn
 				_stream << SDNV(eids.size());
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<size_t, size_t> offsets;
+					pair<SDNV, SDNV> offsets;
 
 					if (_compressable)
 					{
@@ -358,8 +358,8 @@ namespace dtn
 						offsets = _dictionary.getRef(*it);
 					}
 
-					_stream << SDNV(offsets.first);
-					_stream << SDNV(offsets.second);
+					_stream << offsets.first;
+					_stream << offsets.second;
 				}
 			}
 
@@ -424,29 +424,29 @@ namespace dtn
 
 			// primary header
 			dtn::data::SDNV primaryheader[14];
-			pair<size_t, size_t> ref;
+			pair<SDNV, SDNV> ref;
 
 			if (_compressable)
 			{
 				// destination reference
 				ref = obj.destination.getCompressed();
-				primaryheader[0] = SDNV(ref.first);
-				primaryheader[1] = SDNV(ref.second);
+				primaryheader[0] = ref.first;
+				primaryheader[1] = ref.second;
 
 				// source reference
 				ref = obj.source.getCompressed();
-				primaryheader[2] = SDNV(ref.first);
-				primaryheader[3] = SDNV(ref.second);
+				primaryheader[2] = ref.first;
+				primaryheader[3] = ref.second;;
 
 				// reportto reference
 				ref = obj.reportto.getCompressed();
-				primaryheader[4] = SDNV(ref.first);
-				primaryheader[5] = SDNV(ref.second);
+				primaryheader[4] = ref.first;
+				primaryheader[5] = ref.second;;
 
 				// custodian reference
 				ref = obj.custodian.getCompressed();
-				primaryheader[6] = SDNV(ref.first);
-				primaryheader[7] = SDNV(ref.second);
+				primaryheader[6] = ref.first;
+				primaryheader[7] = ref.second;;
 
 				// dictionary size
 				primaryheader[11] = SDNV(0);
@@ -455,23 +455,23 @@ namespace dtn
 			{
 				// destination reference
 				ref = _dictionary.getRef(obj.destination);
-				primaryheader[0] = SDNV(ref.first);
-				primaryheader[1] = SDNV(ref.second);
+				primaryheader[0] = ref.first;
+				primaryheader[1] = ref.second;;
 
 				// source reference
 				ref = _dictionary.getRef(obj.source);
-				primaryheader[2] = SDNV(ref.first);
-				primaryheader[3] = SDNV(ref.second);
+				primaryheader[2] = ref.first;
+				primaryheader[3] = ref.second;;
 
 				// reportto reference
 				ref = _dictionary.getRef(obj.reportto);
-				primaryheader[4] = SDNV(ref.first);
-				primaryheader[5] = SDNV(ref.second);
+				primaryheader[4] = ref.first;
+				primaryheader[5] = ref.second;;
 
 				// custodian reference
 				ref = _dictionary.getRef(obj.custodian);
-				primaryheader[6] = SDNV(ref.first);
-				primaryheader[7] = SDNV(ref.second);
+				primaryheader[6] = ref.first;
+				primaryheader[7] = ref.second;;
 
 				// dictionary size
 				primaryheader[11] = SDNV(_dictionary.getSize());
@@ -536,9 +536,9 @@ namespace dtn
 				len += dtn::data::SDNV(eids.size()).getLength();
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<size_t, size_t> offsets = _dictionary.getRef(*it);
-					len += SDNV(offsets.first).getLength();
-					len += SDNV(offsets.second).getLength();
+					pair<SDNV, SDNV> offsets = _dictionary.getRef(*it);
+					len += offsets.first.getLength();
+					len += offsets.second.getLength();
 				}
 			}
 

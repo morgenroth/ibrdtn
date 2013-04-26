@@ -25,6 +25,7 @@
 #define DICTIONARY_H_
 
 #include "ibrdtn/data/EID.h"
+#include "ibrdtn/data/SDNV.h"
 #include <list>
 #include <sstream>
 #include <list>
@@ -77,7 +78,7 @@ namespace dtn
 			/**
 			 * return the eid for the reference [scheme,ssp]
 			 */
-			EID get(uint64_t scheme, uint64_t ssp);
+			EID get(SDNV scheme, SDNV ssp);
 
 			/**
 			 * clear the dictionary
@@ -87,12 +88,12 @@ namespace dtn
 			/**
 			 * returns the size of the bytearray
 			 */
-			uint64_t getSize() const;
+			size_t getSize() const;
 
 			/**
 			 * returns the references of the given eid
 			 */
-			pair<uint64_t, uint64_t> getRef(const EID &eid) const;
+			pair<SDNV, SDNV> getRef(const EID &eid) const;
 
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj);
 			friend std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj);
@@ -100,7 +101,7 @@ namespace dtn
 		private:
 			bool exists(const std::string) const;
 			void add(const std::string);
-			uint64_t get(const std::string) const;
+			SDNV get(const std::string) const throw (ibrcommon::Exception);
 
 			std::stringstream _bytestream;
 		};
