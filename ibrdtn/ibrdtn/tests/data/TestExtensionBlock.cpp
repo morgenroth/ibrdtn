@@ -29,14 +29,22 @@ void TestExtensionBlock::deserializeUnknownBlock(void)
 
 	dtn::data::PayloadBlock &payload = b.push_back(ref);
 
+	dtn::data::Dictionary dict;
+
+	// rebuild the dictionary
+	dict.add(b.destination);
+	dict.add(b.source);
+	dict.add(b.reportto);
+	dict.add(b.custodian);
+
 	std::stringstream ss;
-	dtn::data::DefaultSerializer ds(ss);
+	dtn::data::DefaultSerializer ds(ss, dict);
 
 	// serialize the primary block
-	ds << (const dtn::data::PrimaryBlock&)b;
+	CPPUNIT_ASSERT_NO_THROW( ds << (const dtn::data::PrimaryBlock&)b );
 
 	// fake unknown block
-	unsigned char type = 140;
+	dtn::data::block_t type = 140;
 	ss.put(type);					// block type
 	ss << dtn::data::SDNV(0);	// block flags
 	ss << dtn::data::SDNV(5);	// block size
@@ -53,7 +61,7 @@ void TestExtensionBlock::deserializeUnknownBlock(void)
 
 	// check unknown block
 	const dtn::data::ExtensionBlock &unknown = dynamic_cast<const dtn::data::ExtensionBlock&>(**dest.begin());
-	CPPUNIT_ASSERT_EQUAL((unsigned char)140, unknown.getType());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::block_t)140, unknown.getType());
 	ibrcommon::BLOB::Reference uref = unknown.getBLOB();
 
 	{

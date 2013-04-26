@@ -148,8 +148,16 @@ void TestSerializer::serializer_primaryblock_length(void)
 	b.push_back(ref);
 	b.push_front<dtn::data::AgeBlock>();
 
+	dtn::data::Dictionary dict;
+
+	// rebuild the dictionary
+	dict.add(b.destination);
+	dict.add(b.source);
+	dict.add(b.reportto);
+	dict.add(b.custodian);
+
 	std::stringstream ss;
-	dtn::data::DefaultSerializer ds(ss);
+	dtn::data::DefaultSerializer ds(ss, dict);
 	ds << (dtn::data::PrimaryBlock&)b;
 
 	size_t written_len = ss.tellp();
