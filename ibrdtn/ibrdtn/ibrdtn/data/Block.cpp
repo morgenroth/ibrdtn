@@ -85,7 +85,7 @@ namespace dtn
 			return (_procflags & flag);
 		}
 
-		const size_t& Block::getProcessingFlags() const
+		const uint64_t& Block::getProcessingFlags() const
 		{
 			return _procflags;
 		}
