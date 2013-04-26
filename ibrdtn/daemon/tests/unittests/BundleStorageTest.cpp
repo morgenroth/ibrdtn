@@ -39,6 +39,7 @@
 #include "core/TimeEvent.h"
 #include <ibrdtn/utils/Clock.h>
 #include "core/BundleCore.h"
+#include <ibrcommon/data/File.h>
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrdtn/data/PayloadBlock.h>
@@ -62,6 +63,18 @@ void BundleStorageTest::setUp()
 {
 	// create a new event switch
 	esl = new ibrtest::EventSwitchLoop();
+
+	// enable blob path
+	ibrcommon::File blob_path("/tmp/blobs");
+
+	// check if the BLOB path exists
+	if (!blob_path.exists()) {
+		// try to create the BLOB path
+		ibrcommon::File::createDirectory(blob_path);
+	}
+
+	// enable the blob provider
+	ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), true);
 
 	switch (testCounter++)
 	{
