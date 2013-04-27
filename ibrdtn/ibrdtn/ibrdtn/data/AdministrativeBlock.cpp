@@ -25,7 +25,7 @@ namespace dtn
 			if (val) {
 				_admfield |= 0x01;
 			} else {
-				_admfield &= ~(0x01);
+				_admfield &= ~((char)0x01);
 			}
 		}
 	} /* namespace data */
