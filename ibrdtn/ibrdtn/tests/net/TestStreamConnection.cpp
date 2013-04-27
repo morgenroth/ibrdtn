@@ -74,7 +74,7 @@ void TestStreamConnection::connectionUpDown()
 		void eventError() throw () {};
 		void eventBundleRefused() throw () {};
 		void eventBundleForwarded() throw () {};
-		void eventBundleAck(size_t ack) throw ()
+		void eventBundleAck(uint64_t ack) throw ()
 		{
 			std::cout << "server: ack received, value: " << ack << std::endl;
 		};
@@ -149,7 +149,7 @@ void TestStreamConnection::connectionUpDown()
 		void eventError() throw () {};
 		void eventBundleRefused() throw () {};
 		void eventBundleForwarded() throw () {};
-		void eventBundleAck(size_t) throw ()
+		void eventBundleAck(uint64_t) throw ()
 		{
 			// std::cout << "client: ack received, value: " << ack << std::endl;
 		};

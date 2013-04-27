@@ -92,5 +92,5 @@ void TestSDNV::testMax(void)
 	ss.clear();
 	CPPUNIT_ASSERT_NO_THROW( ss >> dst );
 
-	CPPUNIT_ASSERT_EQUAL(st, (size_t)dst.getValue());
+	CPPUNIT_ASSERT_EQUAL(st, dst.getValue());
 }
