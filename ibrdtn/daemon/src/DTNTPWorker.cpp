@@ -44,7 +44,7 @@ namespace dtn
 		const std::string DTNTPWorker::TAG = "DTNTPWorker";
 
 		DTNTPWorker::DTNTPWorker()
-		 : _sync_threshold(0.15), _announce_rating(false), _base_rating(0.0), _psi(0.99), _sigma(1.0), _sync(false)
+		 : _sync_threshold(0.15f), _announce_rating(false), _base_rating(0.0), _psi(0.99), _sigma(1.0), _sync(false)
 		{
 			AbstractWorker::initialize("/dtntp", 60, true);
 
@@ -86,7 +86,7 @@ namespace dtn
 		}
 
 		DTNTPWorker::TimeSyncMessage::TimeSyncMessage()
-		 : type(TIMESYNC_REQUEST), origin_rating(dtn::utils::Clock::getRating()), peer_rating(0.0)
+		 : type(TIMESYNC_REQUEST), origin_rating(dtn::utils::Clock::getRating()), peer_rating(0.0f)
 		{
 			timerclear(&origin_timestamp);
 			timerclear(&peer_timestamp);
