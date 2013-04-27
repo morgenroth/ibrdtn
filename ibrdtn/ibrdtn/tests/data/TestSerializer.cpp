@@ -145,9 +145,6 @@ void TestSerializer::serializer_primaryblock_length(void)
 			(*stream) << "hello world" << std::flush;
 	}
 
-	b.push_back(ref);
-	b.push_front<dtn::data::AgeBlock>();
-
 	dtn::data::Dictionary dict;
 
 	// rebuild the dictionary
@@ -183,7 +180,7 @@ void TestSerializer::serializer_block_length(void)
 	}
 
 	b.push_back(ref);
-	b.push_front<dtn::data::AgeBlock>();
+	b.push_front<dtn::data::ScopeControlHopLimitBlock>();
 
 	for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); ++iter)
 	{
@@ -217,7 +214,7 @@ void TestSerializer::serializer_bundle_length(void)
 	}
 
 	b.push_back(ref);
-	b.push_front<dtn::data::AgeBlock>();
+	b.push_front<dtn::data::ScopeControlHopLimitBlock>();
 
 	std::stringstream ss;
 	dtn::data::DefaultSerializer ds(ss);
@@ -290,7 +287,7 @@ void TestSerializer::serializer_ipn_compression_length(void)
 
 	ipnbundle.lifetime = 3600;
 
-	ipnbundle.push_front<dtn::data::AgeBlock>();
+	ipnbundle.push_front<dtn::data::ScopeControlHopLimitBlock>();
 
 	std::stringstream ss;
 	dtn::data::DefaultSerializer ds(ss);
