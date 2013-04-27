@@ -121,7 +121,7 @@ int main(int argc, char** argv)
     }
 
     // backoff for reconnect
-    size_t backoff = 2;
+    unsigned int backoff = 2;
 
     // check outbox for files
 	File outbox(conf["outbox"]);

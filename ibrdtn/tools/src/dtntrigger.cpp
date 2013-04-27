@@ -158,7 +158,7 @@ int main(int argc, char** argv)
 	}
 
 	// backoff for reconnect
-	size_t backoff = 2;
+	unsigned int backoff = 2;
 
 	// loop, if no stop if requested
 	while (_running)
