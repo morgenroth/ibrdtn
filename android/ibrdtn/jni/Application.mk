@@ -33,7 +33,7 @@ APP_PLATFORM:=android-9
 APP_STL:=gnustl_shared
 
 # enable exceptions and rtti (information about data types at runtime)
-APP_CPPFLAGS:=-fexceptions -frtti
+APP_CPPFLAGS:=-fexceptions -frtti -Wall -Wextra -Wconversion
 APP_CFLAGS:=
 
 # ibrcommon
