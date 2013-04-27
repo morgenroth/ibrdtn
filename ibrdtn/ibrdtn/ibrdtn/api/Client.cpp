@@ -178,7 +178,7 @@ namespace dtn
 			}
 		}
 
-		void Client::eventBundleAck(size_t ack) throw ()
+		void Client::eventBundleAck(uint64_t ack) throw ()
 		{
 			lastack = ack;
 		}

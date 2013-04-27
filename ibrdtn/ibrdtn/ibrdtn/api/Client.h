@@ -190,7 +190,7 @@ namespace dtn
 			 * the last ACK'd bundle size in the lastack variable.
 			 * @param ack ACK'd bundle size
 			 */
-			virtual void eventBundleAck(size_t ack) throw ();
+			virtual void eventBundleAck(uint64_t ack) throw ();
 
 			/**
 			 * The shutdown event callback method can overloaded to handle shutdown
