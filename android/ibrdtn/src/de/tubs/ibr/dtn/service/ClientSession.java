@@ -652,7 +652,7 @@ public class ClientSession {
 		Block ret = new Block();
 		ret.type = Integer.valueOf(block.getType());
 		ret.length = block.getLength();
-		ret.procflags = block.getProcessingFlags();
+		ret.procflags = block.getProcessingFlags().longValue();
 		return ret;
 	}
 	
