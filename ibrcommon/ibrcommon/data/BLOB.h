@@ -182,7 +182,7 @@ namespace ibrcommon
 
 		BLOB();
 
-		virtual size_t __get_size() = 0;
+		virtual std::streamoff __get_size() = 0;
 		virtual std::iostream &__get_stream() = 0;
 
 	private:
@@ -210,7 +210,7 @@ namespace ibrcommon
 			return _filestream;
 		}
 
-		size_t __get_size();
+		std::streamoff __get_size();
 
 	private:
 		std::fstream _filestream;
@@ -246,7 +246,7 @@ namespace ibrcommon
 				return _stringstream;
 			}
 
-			size_t __get_size();
+			std::streamoff __get_size();
 
 		private:
 			StringBLOB();
@@ -286,7 +286,7 @@ namespace ibrcommon
 				return _filestream;
 			}
 
-			size_t __get_size();
+			std::streamoff __get_size();
 
 		private:
 			std::fstream _filestream;
