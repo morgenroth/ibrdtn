@@ -170,7 +170,7 @@ namespace dtn
 			return _bytestream.str().length();
 		}
 
-		pair<SDNV, SDNV> Dictionary::getRef(const EID &eid) const
+		dtn::data::Dictionary::Reference Dictionary::getRef(const EID &eid) const
 		{
 			const std::string scheme = eid.getScheme();
 			const std::string ssp = eid.getSSP();

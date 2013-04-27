@@ -105,7 +105,7 @@ namespace dtn
 				_stream << dtn::data::SDNV(eids.size());
 				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<dtn::data::SDNV, dtn::data::SDNV> offsets;
+					dtn::data::Dictionary::Reference offsets;
 
 					if (_compressable)
 					{

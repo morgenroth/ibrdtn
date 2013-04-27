@@ -187,7 +187,7 @@ namespace dtn
 			primaryheader[9] = SDNV(obj.sequencenumber);	// sequence number
 			primaryheader[10] = SDNV(obj.lifetime);		// lifetime
 
-			pair<SDNV, SDNV> ref;
+			dtn::data::Dictionary::Reference ref;
 
 			if (_compressable)
 			{
@@ -304,7 +304,7 @@ namespace dtn
 				_stream << SDNV(eids.size());
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<SDNV, SDNV> offsets;
+					dtn::data::Dictionary::Reference offsets;
 
 					if (_compressable)
 					{
@@ -347,7 +347,7 @@ namespace dtn
 				_stream << SDNV(eids.size());
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<SDNV, SDNV> offsets;
+					dtn::data::Dictionary::Reference offsets;
 
 					if (_compressable)
 					{
@@ -424,7 +424,7 @@ namespace dtn
 
 			// primary header
 			dtn::data::SDNV primaryheader[14];
-			pair<SDNV, SDNV> ref;
+			dtn::data::Dictionary::Reference ref;
 
 			if (_compressable)
 			{
@@ -536,7 +536,7 @@ namespace dtn
 				len += dtn::data::SDNV(eids.size()).getLength();
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<SDNV, SDNV> offsets = _dictionary.getRef(*it);
+					dtn::data::Dictionary::Reference offsets = _dictionary.getRef(*it);
 					len += offsets.first.getLength();
 					len += offsets.second.getLength();
 				}

@@ -82,7 +82,7 @@ void TestSerializer::serializer_cbhe01(void)
 	dtn::data::EID dst("ipn:2.3");
 	dtn::data::EID report("ipn:6.1");
 
-	std::pair<size_t, size_t> cbhe_eid = src.getCompressed();
+	dtn::data::EID::Compressed cbhe_eid = src.getCompressed();
 
 	b.source = src;
 	b.destination = dst;

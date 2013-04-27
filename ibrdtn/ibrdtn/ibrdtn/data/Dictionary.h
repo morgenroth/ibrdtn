@@ -93,7 +93,8 @@ namespace dtn
 			/**
 			 * returns the references of the given eid
 			 */
-			pair<SDNV, SDNV> getRef(const EID &eid) const;
+			typedef std::pair<SDNV, SDNV> Reference;
+			Reference getRef(const EID &eid) const;
 
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj);
 			friend std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj);

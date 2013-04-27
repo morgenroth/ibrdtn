@@ -257,7 +257,7 @@ namespace dtn
 			}
 		}
 
-		std::pair<uint64_t, uint64_t> EID::getCompressed() const
+		EID::Compressed EID::getCompressed() const
 		{
 			uint64_t node = 0;
 			uint64_t app = 0;

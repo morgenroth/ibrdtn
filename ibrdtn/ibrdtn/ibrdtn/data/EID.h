@@ -24,7 +24,7 @@
 
 #include <string>
 #include "ibrcommon/Exceptions.h"
-#include <stdint.h>
+#include <ibrdtn/data/SDNV.h>
 
 using namespace std;
 
@@ -96,7 +96,8 @@ namespace dtn
 			 * are set to zero if the EID is not compressable.
 			 * @return A pair of two numeric values.
 			 */
-			std::pair<uint64_t, uint64_t> getCompressed() const;
+			typedef std::pair<SDNV, SDNV> Compressed;
+			Compressed getCompressed() const;
 
 		private:
 			std::string _scheme;
