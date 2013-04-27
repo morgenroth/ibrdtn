@@ -186,9 +186,9 @@ namespace dtn
 					// uint32_t inet_addr;
 					uint16_t inet_port = htons(4556);
 					std::string eid = announcement._canonical_eid.getString();
-					uint16_t eid_len = htons(eid.length());
+					uint16_t eid_len = htons((uint16_t)eid.length());
 					unsigned int add_zeros = (4 - (eid.length() % 4)) % 4;
-					uint16_t length = htons(12 + eid.length() + add_zeros);
+					uint16_t length = htons((uint16_t)12 + eid.length() + add_zeros);
 
 
 					stream << (unsigned char)cl_type;
@@ -238,7 +238,7 @@ namespace dtn
 			else
 			{
 				// read IPND version of the frame
-				version = stream.get();
+				version = (unsigned char)stream.get();
 			}
 
 			switch (version)
