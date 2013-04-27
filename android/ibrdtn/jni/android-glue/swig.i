@@ -11,6 +11,7 @@
 %include "typemaps.i"
 // vector support
 %include "std_vector.i"
+%include "stdint.i"
 
 /* add renaming directive for standard operators */
 %rename(assign) operator=;
