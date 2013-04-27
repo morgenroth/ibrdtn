@@ -76,12 +76,12 @@ void TestExtensionBlock::deserializeUnknownBlock(void)
 
 	{
 		ibrcommon::BLOB::iostream stream = uref.iostream();
-		CPPUNIT_ASSERT_EQUAL( (size_t)5, stream.size() );
+		CPPUNIT_ASSERT_EQUAL( (std::streamsize)5, stream.size() );
 	}
 
 	// check payload block
 	dtn::data::PayloadBlock &dest_payload = dest.find<dtn::data::PayloadBlock>();
 
-	CPPUNIT_ASSERT_EQUAL((size_t)11, dest_payload.getBLOB().iostream().size());
+	CPPUNIT_ASSERT_EQUAL((std::streamsize)11, dest_payload.getBLOB().iostream().size());
 }
 

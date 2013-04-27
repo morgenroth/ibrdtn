@@ -108,7 +108,7 @@ namespace dtn
 			ibrcommon::BLOB::_filelimit.post();
 		}
 
-		std::streamoff SQLiteBundleStorage::SQLiteBLOB::__get_size()
+		std::streamsize SQLiteBundleStorage::SQLiteBLOB::__get_size()
 		{
 			return _file.size();
 		}

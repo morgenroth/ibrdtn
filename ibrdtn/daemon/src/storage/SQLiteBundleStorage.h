@@ -254,7 +254,7 @@ namespace dtn
 					return _filestream;
 				}
 
-				std::streamoff __get_size();
+				std::streamsize __get_size();
 
 			private:
 				SQLiteBLOB(const ibrcommon::File &path);

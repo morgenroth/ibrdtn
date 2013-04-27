@@ -249,13 +249,13 @@ namespace ibrcommon
 	{
 	}
 
-	std::streamoff MemoryBLOBProvider::StringBLOB::__get_size()
+	std::streamsize MemoryBLOBProvider::StringBLOB::__get_size()
 	{
 		// store current position
-		std::streamoff pos = _stringstream.tellg();
+		std::streamsize pos = _stringstream.tellg();
 
 		_stringstream.seekg(0, std::ios_base::end);
-		std::streamoff size = _stringstream.tellg();
+		std::streamsize size = _stringstream.tellg();
 		_stringstream.seekg(pos);
 
 		return size;
@@ -300,7 +300,7 @@ namespace ibrcommon
 		BLOB::_filelimit.post();
 	}
 
-	std::streamoff FileBLOB::__get_size()
+	std::streamsize FileBLOB::__get_size()
 	{
 		return _file.size();
 	}
@@ -364,7 +364,7 @@ namespace ibrcommon
 		BLOB::_filelimit.post();
 	}
 
-	std::streamoff FileBLOBProvider::TmpFileBLOB::__get_size()
+	std::streamsize FileBLOBProvider::TmpFileBLOB::__get_size()
 	{
 		return _tmpfile.size();
 	}
