@@ -148,7 +148,7 @@ void ConfigurationTest::testDiscoveryVersion()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((char)2, conf.getDiscovery().version());
+	CPPUNIT_ASSERT_EQUAL(2, conf.getDiscovery().version());
 }
 
 void ConfigurationTest::testDiscoveryAddress()

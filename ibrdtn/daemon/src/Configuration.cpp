@@ -645,24 +645,24 @@ namespace dtn
 
 			if(_routing == "prophet"){
 				/* read prophet parameters */
-				_prophet_config.p_encounter_max = conf.read<float>("prophet_p_encounter_max", 0.7);
+				_prophet_config.p_encounter_max = conf.read<float>("prophet_p_encounter_max", 0.7f);
 				if(_prophet_config.p_encounter_max > 1 || _prophet_config.p_encounter_max <= 0)
-					_prophet_config.p_encounter_max = 0.7;
-				_prophet_config.p_encounter_first = conf.read<float>("prophet_p_encounter_first", 0.5);
+					_prophet_config.p_encounter_max = 0.7f;
+				_prophet_config.p_encounter_first = conf.read<float>("prophet_p_encounter_first", 0.5f);
 				if(_prophet_config.p_encounter_first > 1 || _prophet_config.p_encounter_first <= 0)
-					_prophet_config.p_encounter_first = 0.5;
-				_prophet_config.p_first_threshold = conf.read<float>("prophet_p_first_threshold", 0.1);
+					_prophet_config.p_encounter_first = 0.5f;
+				_prophet_config.p_first_threshold = conf.read<float>("prophet_p_first_threshold", 0.1f);
 				if(_prophet_config.p_first_threshold < 0 || _prophet_config.p_first_threshold >= _prophet_config.p_encounter_first)
 					_prophet_config.p_first_threshold = 0; //disable first threshold on misconfiguration
-				_prophet_config.beta = conf.read<float>("prophet_beta", 0.9);
+				_prophet_config.beta = conf.read<float>("prophet_beta", 0.9f);
 				if(_prophet_config.beta < 0 || _prophet_config.beta > 1)
-					_prophet_config.beta = 0.9;
-				_prophet_config.gamma = conf.read<float>("prophet_gamma", 0.999);
+					_prophet_config.beta = 0.9f;
+				_prophet_config.gamma = conf.read<float>("prophet_gamma", 0.999f);
 				if(_prophet_config.gamma <= 0 || _prophet_config.gamma > 1)
-					_prophet_config.gamma = 0.999;
-				_prophet_config.delta = conf.read<float>("prophet_delta", 0.01);
+					_prophet_config.gamma = 0.999f;
+				_prophet_config.delta = conf.read<float>("prophet_delta", 0.01f);
 				if(_prophet_config.delta < 0 || _prophet_config.delta > 1)
-					_prophet_config.delta = 0.01;
+					_prophet_config.delta = 0.01f;
 				_prophet_config.time_unit = conf.read<ibrcommon::Timer::time_t>("prophet_time_unit", 1);
 				if(_prophet_config.time_unit < 1)
 					_prophet_config.time_unit = 1;
@@ -841,7 +841,7 @@ namespace dtn
 			return (Configuration::getInstance()._conf.read<int>("discovery_short", 0) == 1);
 		}
 
-		char Configuration::Discovery::version() const
+		int Configuration::Discovery::version() const
 		{
 			return Configuration::getInstance()._conf.read<int>("discovery_version", 2);
 		}

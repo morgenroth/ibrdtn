@@ -182,7 +182,7 @@ namespace dtn
 				bool enabled() const;
 				bool announce() const;
 				bool shortbeacon() const;
-				char version() const;
+				int version() const;
 				const std::set<ibrcommon::vaddress> address() const throw (ParameterNotFoundException);
 				int port() const;
 				unsigned int timeout() const;
