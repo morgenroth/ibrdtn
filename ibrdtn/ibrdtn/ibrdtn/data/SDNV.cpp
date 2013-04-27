@@ -151,6 +151,8 @@ namespace dtn
 
 		std::istream &operator>>(std::istream &stream, dtn::data::SDNV &obj)
 		{
+			// TODO: check if the value fits into sizeof(size_t)
+
 			size_t val_len = 0;
 			unsigned char bp = 0;
 			unsigned char start = 0;

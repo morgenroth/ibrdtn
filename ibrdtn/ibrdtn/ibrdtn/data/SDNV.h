@@ -24,6 +24,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdint.h>
+#include <limits>
+#include <ibrcommon/Exceptions.h>
 
 #ifndef _SDNV_H_
 #define _SDNV_H_
@@ -50,6 +52,14 @@ namespace dtn
 {
 	namespace data
 	{
+		class ValueOutOfRangeException : public ibrcommon::Exception
+		{
+		public:
+			ValueOutOfRangeException(const std::string &what = "The value is out of range.") throw() : ibrcommon::Exception(what)
+			{
+			};
+		};
+
 		class SDNV
 		{
 		public:
@@ -63,7 +73,20 @@ namespace dtn
 			 * Constructor for a SDNV object
 			 * @param value The new value of the SDNV
 			 */
-			SDNV(const uint64_t value = 0);
+			template<typename T>
+			SDNV(const T value = 0) : _value(0) {
+				if (sizeof(T) == sizeof(_value))
+				{
+					_value = value;
+				}
+				else
+				{
+					if (value > std::numeric_limits<_value>::max())
+						throw ValueOutOfRangeException();
+
+					_value = std::numeric_limits<_value>::max() & value;
+				}
+			}
 
 			/**
 			 * Destructor
@@ -81,9 +104,35 @@ namespace dtn
 			 * Returns the decoded value.
 			 * @return The decoded value.
 			 */
-			uint64_t getValue() const;
+			template<typename T>
+			T get() const {
+				if (sizeof(T) == sizeof(_value))
+				{
+					return _value;
+				}
+				else
+				{
+					if (_value > std::numeric_limits<T>::max())
+						throw ValueOutOfRangeException();
 
-			const SDNV& operator=(const uint64_t &value);
+					return std::numeric_limits<T>::max() & _value;
+				}
+			}
+
+			template<typename T>
+			const SDNV& operator=(const T &value) {
+				if (sizeof(T) == sizeof(_value))
+				{
+					_value = value;
+				}
+				else
+				{
+					if (value > std::numeric_limits<_value>::max())
+						throw ValueOutOfRangeException();
+
+					_value = std::numeric_limits<_value>::max() & value;
+				}
+			}
 
 			bool operator==(const SDNV &value) const;
 			bool operator!=(const SDNV &value) const;
@@ -94,7 +143,11 @@ namespace dtn
 			SDNV operator-(const SDNV &value);
 			SDNV& operator-=(const SDNV &value);
 
-			bool operator&(const uint64_t &value) const;
+			bool operator&(const SDNV &value) const;
+			bool operator|(const SDNV &value) const;
+
+			SDNV& operator&=(const SDNV &value) const;
+			SDNV& operator|=(const SDNV &value) const;
 
 			bool operator<(const SDNV &value) const;
 			bool operator<=(const SDNV &value) const;
@@ -105,7 +158,7 @@ namespace dtn
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV &obj);
 			friend std::istream &operator>>(std::istream &stream, dtn::data::SDNV &obj);
 
-			uint64_t _value;
+			size_t _value;
 		};
 	}
 }
