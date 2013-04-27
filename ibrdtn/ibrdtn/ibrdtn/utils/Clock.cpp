@@ -94,14 +94,14 @@ namespace dtn
 			_modify_clock = val;
 		}
 
-		size_t Clock::getExpireTime(const dtn::data::Bundle &b)
+		uint64_t Clock::getExpireTime(const dtn::data::Bundle &b)
 		{
 			if ((b.timestamp == 0) || dtn::utils::Clock::isBad())
 			{
 				// use the AgeBlock to verify the age
 				try {
 					const dtn::data::AgeBlock &agebl = b.find<const dtn::data::AgeBlock>();
-					size_t seconds_left = 0;
+					uint64_t seconds_left = 0;
 					if (b.lifetime > agebl.getSeconds()) {
 						seconds_left = b.lifetime - agebl.getSeconds();
 					}
@@ -112,17 +112,17 @@ namespace dtn
 			return __getExpireTime(b.timestamp, b.lifetime);
 		}
 
-		size_t Clock::getExpireTime(size_t timestamp, size_t lifetime)
+		uint64_t Clock::getExpireTime(uint64_t timestamp, uint64_t lifetime)
 		{
 			return __getExpireTime(timestamp, lifetime);
 		}
 
-		size_t Clock::getExpireTime(size_t lifetime)
+		uint64_t Clock::getExpireTime(uint64_t lifetime)
 		{
 			return __getExpireTime(getTime(), lifetime);
 		}
 
-		size_t Clock::getLifetime(const dtn::data::BundleID &id, size_t expiretime)
+		uint64_t Clock::getLifetime(const dtn::data::BundleID &id, uint64_t expiretime)
 		{
 			// if the timestamp of the bundle is larger than the expiretime
 			// the bundle is invalid
@@ -132,13 +132,13 @@ namespace dtn
 			return id.timestamp - expiretime;
 		}
 
-		size_t Clock::__getExpireTime(size_t timestamp, size_t lifetime)
+		uint64_t Clock::__getExpireTime(uint64_t timestamp, uint64_t lifetime)
 		{
 			// if the quality of time is zero, return standard expire time
 			if (Clock::getRating() == 0) return timestamp + lifetime;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			size_t sigma = lifetime * (1 - Clock::getRating());
+			double sigma = lifetime * (1 - Clock::getRating());
 
 			// expiration adjusted by quality of time
 			return timestamp + lifetime + sigma;
@@ -155,18 +155,18 @@ namespace dtn
 			return __isExpired(b.timestamp, b.lifetime);
 		}
 
-		bool Clock::isExpired(size_t timestamp, size_t lifetime)
+		bool Clock::isExpired(uint64_t timestamp, uint64_t lifetime)
 		{
 			return __isExpired(timestamp, lifetime);
 		}
 
-		bool Clock::__isExpired(size_t timestamp, size_t lifetime)
+		bool Clock::__isExpired(uint64_t timestamp, uint64_t lifetime)
 		{
 			// if the quality of time is zero or the clock is bad, then never expire a bundle
 			if ((Clock::getRating() == 0) || dtn::utils::Clock::isBad()) return false;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			size_t sigma = lifetime * (1 - Clock::getRating());
+			double sigma = lifetime * (1 - Clock::getRating());
 
 			// expiration adjusted by quality of time
 			if ( Clock::getTime() > (timestamp + lifetime + sigma)) return true;
@@ -174,7 +174,7 @@ namespace dtn
 			return false;
 		}
 
-		size_t Clock::getTime()
+		uint64_t Clock::getTime()
 		{
 			struct timeval now;
 			Clock::gettimeofday(&now);
@@ -191,7 +191,7 @@ namespace dtn
 			return (now.tv_sec - TIMEVAL_CONVERSION) + offset;
 		}
 
-		size_t Clock::getUnixTimestamp()
+		uint64_t Clock::getUnixTimestamp()
 		{
 			struct timeval now;
 			Clock::gettimeofday(&now);

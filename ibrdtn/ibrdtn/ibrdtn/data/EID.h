@@ -39,39 +39,39 @@ namespace dtn
 			static const std::string CBHE_SCHEME;
 
 			EID();
-			EID(std::string scheme, std::string ssp);
-			EID(std::string value);
+			EID(const std::string &scheme, const std::string &ssp);
+			EID(const std::string &value);
 
 			/**
 			 * Constructor for CBHE EIDs.
 			 * @param node Node number.
 			 * @param application Application number.
 			 */
-			EID(size_t node, size_t application);
+			EID(const dtn::data::SDNV &node, const dtn::data::SDNV &application);
 
 			virtual ~EID();
 
 			EID& operator=(const EID &other);
 
-			bool operator==(EID const& other) const;
+			bool operator==(const EID &other) const;
 
-			bool operator==(string const& other) const;
+			bool operator==(const std::string &other) const;
 
-			bool operator!=(EID const& other) const;
+			bool operator!=(const EID &other) const;
 
-			EID operator+(string suffix) const;
+			EID operator+(const std::string &suffix) const;
 
-			bool sameHost(string const& other) const;
-			bool sameHost(EID const& other) const;
+			bool sameHost(const std::string &other) const;
+			bool sameHost(const EID &other) const;
 
-			bool operator<(EID const& other) const;
-			bool operator>(const EID& other) const;
+			bool operator<(const EID &other) const;
+			bool operator>(const EID &other) const;
 
 			std::string getString() const;
 			std::string getApplication() const throw (ibrcommon::Exception);
 			std::string getHost() const throw (ibrcommon::Exception);
-			std::string getScheme() const;
-			std::string getSSP() const;
+			const std::string& getScheme() const;
+			const std::string& getSSP() const;
 
 			std::string getDelimiter() const;
 

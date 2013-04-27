@@ -47,12 +47,12 @@ namespace dtn
 
 			POSITION getAlignment() const;
 
-			dtn::data::Block &insert(dtn::data::ExtensionBlock::Factory &f, size_t procflags);
+			dtn::data::Block &insert(dtn::data::ExtensionBlock::Factory &f, uint64_t procflags);
 
 			/**
 			 * Add a block to the bundle.
 			 */
-			dtn::data::Block& insert(dtn::data::block_t block_type, size_t procflags) throw (DiscardBlockException);
+			dtn::data::Block& insert(dtn::data::block_t block_type, uint64_t procflags) throw (DiscardBlockException);
 
 		private:
 			Bundle *_target;

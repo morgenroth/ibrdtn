@@ -13,7 +13,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		const size_t AcknowledgementSet::identifier = NodeHandshakeItem::PROPHET_ACKNOWLEDGEMENT_SET;
+		const dtn::data::SDNV AcknowledgementSet::identifier = NodeHandshakeItem::PROPHET_ACKNOWLEDGEMENT_SET;
 
 		AcknowledgementSet::AcknowledgementSet()
 		{
@@ -57,7 +57,7 @@ namespace dtn
 			return !(iter == _bundles.end());
 		}
 
-		size_t AcknowledgementSet::getIdentifier() const
+		const dtn::data::SDNV& AcknowledgementSet::getIdentifier() const
 		{
 			return identifier;
 		}

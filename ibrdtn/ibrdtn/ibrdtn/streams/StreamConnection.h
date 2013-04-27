@@ -124,7 +124,7 @@ namespace dtn
 				/**
 				 * This method is called if a ACK is received.
 				 */
-				virtual void eventBundleAck(size_t ack) throw () = 0;
+				virtual void eventBundleAck(uint64_t ack) throw () = 0;
 
 				/**
 				 * This method is called if a handshake was successful.
@@ -304,7 +304,7 @@ namespace dtn
 					STREAM_TIMER_SUPPORT = 1 << 11
 				};
 
-				void skipData(size_t &size);
+				void skipData(uint64_t &size);
 
 				bool get(const StateBits bit) const;
 				void set(const StateBits bit);
@@ -327,14 +327,14 @@ namespace dtn
 
 				std::iostream &_stream;
 
-				size_t _recv_size;
+				dtn::data::SDNV _recv_size;
 
 				// this queue contains all sent data segments
 				// they are removed if an ack or nack is received
 				ibrcommon::Queue<StreamDataSegment> _segments;
 				std::queue<StreamDataSegment> _rejected_segments;
 
-				size_t _underflow_data_remain;
+				uint64_t _underflow_data_remain;
 				State _underflow_state;
 
 				ibrcommon::Timer _idle_timer;
@@ -344,7 +344,7 @@ namespace dtn
 
 			void eventShutdown(StreamConnection::ConnectionShutdownCases csc);
 
-			void eventBundleAck(size_t ack);
+			void eventBundleAck(uint64_t ack);
 			void eventBundleRefused();
 			void eventBundleForwarded();
 

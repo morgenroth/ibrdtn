@@ -342,7 +342,7 @@ namespace dtn
 			return _recv_bundles;
 		}
 
-		void Registration::RegistrationQueue::expire(const size_t timestamp) throw ()
+		void Registration::RegistrationQueue::expire(const uint64_t timestamp) throw ()
 		{
 			_recv_bundles.expire(timestamp);
 		}

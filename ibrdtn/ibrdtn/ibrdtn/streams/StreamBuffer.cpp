@@ -66,7 +66,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(80) << "---------------------------------------" << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Buffer size: " << _buffer_size << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "State bits: " << _statebits << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "Recv size: " << _recv_size << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(80) << "Recv size: " << _recv_size.getValue() << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Segments: " << _segments.size() << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Reject segments: " << _rejected_segments.size() << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Underflow remaining: " << _underflow_data_remain << IBRCOMMON_LOGGER_ENDL;
@@ -300,7 +300,7 @@ namespace dtn
 
 					// write the segment to the stream
 					_stream << seg;
-					_stream.write(&out_buf_[0], seg._value);
+					_stream.write(&out_buf_[0], (size_t)seg._value.getValue());
 				}
 
 				return traits_type::not_eof(c);
@@ -352,7 +352,7 @@ namespace dtn
 			return ret;
 		}
 
-		void StreamConnection::StreamBuffer::skipData(size_t &size)
+		void StreamConnection::StreamBuffer::skipData(uint64_t &size)
 		{
 			// a temporary buffer
 			std::vector<char> tmpbuf(_buffer_size);
@@ -361,11 +361,11 @@ namespace dtn
 				//  and read until the next segment
 				while (size > 0 && _stream.good())
 				{
-					size_t readsize = _buffer_size;
+					uint64_t readsize = _buffer_size;
 					if (size < _buffer_size) readsize = size;
 
 					// to reject a bundle read all remaining data of this segment
-					_stream.read(&tmpbuf[0], readsize);
+					_stream.read(&tmpbuf[0], (std::streamsize)readsize);
 
 					// reset idle timeout
 					_idle_timer.reset();
@@ -447,7 +447,7 @@ namespace dtn
 					{
 						case StreamDataSegment::MSG_DATA_SEGMENT:
 						{
-							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_DATA_SEGMENT received, size: " << seg._value << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_DATA_SEGMENT received, size: " << seg._value.getValue() << IBRCOMMON_LOGGER_ENDL;
 
 							if (seg._flags & StreamDataSegment::MSG_MARK_BEGINN)
 							{
@@ -460,7 +460,7 @@ namespace dtn
 							}
 
 							// set the new data length
-							_underflow_data_remain = seg._value;
+							_underflow_data_remain = seg._value.getValue();
 
 							if (get(STREAM_REJECT))
 							{
@@ -509,7 +509,7 @@ namespace dtn
 
 									IBRCOMMON_LOGGER_DEBUG(60) << q.size() << " elements to ACK" << IBRCOMMON_LOGGER_ENDL;
 
-									_conn.eventBundleAck(seg._value);
+									_conn.eventBundleAck(seg._value.getValue());
 
 									q.pop();
 								}
@@ -596,14 +596,14 @@ namespace dtn
 				}
 
 				// currently transferring data
-				size_t readsize = _buffer_size;
+				uint64_t readsize = _buffer_size;
 				if (_underflow_data_remain < _buffer_size) readsize = _underflow_data_remain;
 
 				try {
 					if (!_stream.good()) throw StreamErrorException("stream went bad");
 
 					// here receive the data
-					_stream.read(&in_buf_[0], readsize);
+					_stream.read(&in_buf_[0], (std::streamsize)readsize);
 
 					// reset idle timeout
 					_idle_timer.reset();

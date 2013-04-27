@@ -39,13 +39,13 @@ namespace dtn
 			 * Return the current unix timestamp adjusted by
 			 * the configured timezone offset
 			 */
-			static size_t getUnixTimestamp();
+			static uint64_t getUnixTimestamp();
 
 			/**
 			 * Return the current DTN timestamp adjusted by
 			 * the configured timezone offset
 			 */
-			static size_t getTime();
+			static uint64_t getTime();
 
 			/**
 			 * Check if a bundle is expired
@@ -57,18 +57,18 @@ namespace dtn
 			 * This method is deprecated because it does not recognize the AgeBlock
 			 * as alternative age verification.
 			 */
-			static bool isExpired(size_t timestamp, size_t lifetime = 0) __attribute__ ((deprecated));
+			static bool isExpired(uint64_t timestamp, uint64_t lifetime = 0) __attribute__ ((deprecated));
 
 			/**
 			 * Return the time of expiration of the given bundle
 			 */
-			static size_t getExpireTime(const dtn::data::Bundle &b);
+			static uint64_t getExpireTime(const dtn::data::Bundle &b);
 
 			/**
 			 * This method is deprecated because it does not recognize the AgeBlock
 			 * as alternative age verification.
 			 */
-			static size_t getExpireTime(size_t timestamp, size_t lifetime) __attribute__ ((deprecated));
+			static uint64_t getExpireTime(uint64_t timestamp, uint64_t lifetime) __attribute__ ((deprecated));
 
 			/**
 			 * Returns the timestamp when this lifetime is going to be expired
@@ -76,13 +76,13 @@ namespace dtn
 			 * @param lifetime The lifetime in seconds.
 			 * @return A DTN timestamp.
 			 */
-			static size_t getExpireTime(size_t lifetime);
+			static uint64_t getExpireTime(uint64_t lifetime);
 
 			/**
 			 * Returns the calculated lifetime in seconds based on the BundleID and the
 			 * expiretime
 			 */
-			static size_t getLifetime(const dtn::data::BundleID &id, size_t expiretime);
+			static uint64_t getLifetime(const dtn::data::BundleID &id, uint64_t expiretime);
 
 			/**
 			 * Tells the internal clock the offset to the common network time.
@@ -182,8 +182,8 @@ namespace dtn
 			Clock();
 			virtual ~Clock();
 
-			static bool __isExpired(size_t timestamp, size_t lifetime = 0);
-			static size_t __getExpireTime(size_t timestamp, size_t lifetime);
+			static bool __isExpired(uint64_t timestamp, uint64_t lifetime = 0);
+			static uint64_t __getExpireTime(uint64_t timestamp, uint64_t lifetime);
 
 			static struct timeval _offset;
 			static bool _offset_init;

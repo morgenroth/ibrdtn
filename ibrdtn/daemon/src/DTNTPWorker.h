@@ -165,7 +165,8 @@ namespace dtn
 
 			// manage a list of recently sync'd nodes
 			ibrcommon::Mutex _blacklist_lock;
-			std::map<EID, size_t> _sync_blacklist;
+			typedef std::map<EID, uint64_t> blacklist_map;
+			blacklist_map _sync_blacklist;
 		};
 	}
 }

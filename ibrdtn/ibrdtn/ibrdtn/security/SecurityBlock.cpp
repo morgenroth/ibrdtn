@@ -637,7 +637,7 @@ namespace dtn
 			dtn::data::DefaultDeserializer ddser(plaintext);
 
 			// peek the block type
-			dtn::data::block_t block_type = plaintext.peek();
+			dtn::data::block_t block_type = (dtn::data::block_t)plaintext.peek();
 
 			// get the position of "block"
 			dtn::data::Bundle::iterator b_it = bundle.find(block);
@@ -685,13 +685,10 @@ namespace dtn
 			bundle.remove(block);
 		}
 
-		void SecurityBlock::addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, size_t payload_length)
+		void SecurityBlock::addFragmentRange(TLVList& ciphersuite_params, const dtn::data::SDNV &offset, const dtn::data::SDNV &range)
 		{
-			dtn::data::SDNV offset(fragmentoffset);
-			dtn::data::SDNV range_sdnv(payload_length);
-
 			std::stringstream ss;
-			ss << offset << range_sdnv;
+			ss << offset << range;
 
 			ciphersuite_params.set(SecurityBlock::fragment_range, ss.str());
 		}

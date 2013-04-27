@@ -83,7 +83,7 @@ namespace dtn
 			 */
 			uint64_t getValue() const;
 
-			size_t operator=(const uint64_t &value);
+			const SDNV& operator=(const uint64_t &value);
 
 			bool operator==(const SDNV &value) const;
 			bool operator!=(const SDNV &value) const;

@@ -15,7 +15,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		const size_t DeliveryPredictabilityMap::identifier = NodeHandshakeItem::DELIVERY_PREDICTABILITY_MAP;
+		const dtn::data::SDNV DeliveryPredictabilityMap::identifier = NodeHandshakeItem::DELIVERY_PREDICTABILITY_MAP;
 
 		DeliveryPredictabilityMap::DeliveryPredictabilityMap()
 		: NeighborDataSetImpl(DeliveryPredictabilityMap::identifier), _beta(0.0), _gamma(0.0), _lastAgingTime(0), _time_unit(0)
@@ -30,7 +30,7 @@ namespace dtn
 		DeliveryPredictabilityMap::~DeliveryPredictabilityMap() {
 		}
 
-		size_t DeliveryPredictabilityMap::getIdentifier() const
+		const dtn::data::SDNV& DeliveryPredictabilityMap::getIdentifier() const
 		{
 			return identifier;
 		}
@@ -189,12 +189,12 @@ namespace dtn
 
 		void DeliveryPredictabilityMap::age(const float &p_first_threshold)
 		{
-			size_t current_time = dtn::utils::Clock::getUnixTimestamp();
+			uint64_t current_time = dtn::utils::Clock::getUnixTimestamp();
 
 			// prevent double aging
 			if (current_time <= _lastAgingTime) return;
 
-			unsigned int k = (current_time - _lastAgingTime) / _time_unit;
+			uint64_t k = (current_time - _lastAgingTime) / _time_unit;
 
 			predictmap::iterator it;
 			for(it = _predictmap.begin(); it != _predictmap.end();)

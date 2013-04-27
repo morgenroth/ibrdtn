@@ -51,7 +51,7 @@ namespace dtn
 			return _bundle;
 		}
 
-		bool BundleMerger::Container::contains(size_t offset, size_t length) const
+		bool BundleMerger::Container::contains(uint64_t offset, uint64_t length) const
 		{
 			// check if the offered payload is already in the chunk list
 			for (std::set<Chunk>::const_iterator iter = _chunks.begin(); iter != _chunks.end(); ++iter)
@@ -69,7 +69,7 @@ namespace dtn
 			return false;
 		}
 
-		void BundleMerger::Container::add(size_t offset, size_t length)
+		void BundleMerger::Container::add(uint64_t offset, uint64_t length)
 		{
 			BundleMerger::Chunk chunk(offset, length);
 			_chunks.insert(chunk);
@@ -230,7 +230,7 @@ namespace dtn
 			return Container(ref);
 		}
 
-		BundleMerger::Chunk::Chunk(size_t o, size_t l)
+		BundleMerger::Chunk::Chunk(uint64_t o, uint64_t l)
 		 : offset(o), length(l)
 		{
 		}
@@ -247,10 +247,10 @@ namespace dtn
 			return (length < other.length);
 		}
 
-		bool BundleMerger::Chunk::isComplete(size_t length, const std::set<Chunk> &chunks)
+		bool BundleMerger::Chunk::isComplete(uint64_t length, const std::set<Chunk> &chunks)
 		{
 			// check if the bundle payload is complete
-			size_t position = 0;
+			uint64_t position = 0;
 
 			for (std::set<Chunk>::const_iterator iter = chunks.begin(); iter != chunks.end(); ++iter)
 			{

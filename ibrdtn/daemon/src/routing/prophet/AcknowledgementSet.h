@@ -48,11 +48,11 @@ namespace dtn
 			bool has(const dtn::data::BundleID &id) const throw ();
 
 			/* virtual methods from NodeHandshakeItem */
-			virtual size_t getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
+			virtual const dtn::data::SDNV& getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
 			virtual size_t getLength() const; ///< \see NodeHandshakeItem::getLength
 			virtual std::ostream& serialize(std::ostream& stream) const; ///< \see NodeHandshakeItem::serialize
 			virtual std::istream& deserialize(std::istream& stream); ///< \see NodeHandshakeItem::deserialize
-			static const size_t identifier;
+			static const dtn::data::SDNV identifier;
 
 			friend std::ostream& operator<<(std::ostream&, const AcknowledgementSet&);
 			friend std::istream& operator>>(std::istream&, AcknowledgementSet&);

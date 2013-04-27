@@ -56,7 +56,7 @@ namespace dtn
 			std::list<Neighbor> _neighbors;
 			uint16_t _sn;
 			std::list<dtn::net::DiscoveryServiceProvider*> _provider;
-			size_t _last_announce_sent;
+			uint64_t _last_announce_sent;
 		};
 	}
 }

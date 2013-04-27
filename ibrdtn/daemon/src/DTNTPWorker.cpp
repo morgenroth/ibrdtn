@@ -160,9 +160,9 @@ namespace dtn
 				// remove outdated blacklist entries
 				{
 					ibrcommon::MutexLock l(_blacklist_lock);
-					for (std::map<EID, size_t>::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); ++iter)
+					for (blacklist_map::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); ++iter)
 					{
-						size_t bl_age = (*iter).second;
+						uint64_t bl_age = (*iter).second;
 
 						// do not query again if the blacklist entry is valid
 						if (bl_age < t.getUnixTimestamp())

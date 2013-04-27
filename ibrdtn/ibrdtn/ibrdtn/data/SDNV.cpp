@@ -57,9 +57,10 @@ namespace dtn
 			return _value;
 		}
 
-		size_t SDNV::operator=(const uint64_t &value)
+		const SDNV& SDNV::operator=(const uint64_t &value)
 		{
-			return (_value = value);
+			_value = value;
+			return (*this);
 		}
 
 		bool SDNV::operator==(const SDNV &value) const

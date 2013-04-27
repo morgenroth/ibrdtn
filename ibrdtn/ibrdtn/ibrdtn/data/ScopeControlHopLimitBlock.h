@@ -46,9 +46,9 @@ namespace dtn
 			ScopeControlHopLimitBlock();
 			virtual ~ScopeControlHopLimitBlock();
 
-			size_t getHopsToLive() const;
-			void increment(size_t hops = 1);
-			void setLimit(size_t hops);
+			uint64_t getHopsToLive() const;
+			void increment(const dtn::data::SDNV &hops = 1);
+			void setLimit(const dtn::data::SDNV &hops);
 
 			virtual size_t getLength() const;
 			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;

@@ -31,6 +31,7 @@
 #include <ibrcommon/refcnt_ptr.h>
 #include <ibrcommon/Logger.h>
 #include <list>
+#include <limits>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -645,8 +646,11 @@ namespace dtn
 					SDNV block_size;
 					_stream >> block_size;
 
+					if (block_size.getValue() > std::numeric_limits<std::size_t>::max())
+						throw InvalidDataException("block is too large");
+
 					// skip payload
-					_stream.ignore(block_size.getValue());
+					_stream.ignore((std::streamsize) block_size.getValue());
 				}
 
 				lastblock = (procflags_sdnv.getValue() & Block::LAST_BLOCK);
@@ -699,7 +703,7 @@ namespace dtn
 			_stream >> blocklength;
 
 			// EID References
-			pair<SDNV, SDNV> ref[4];
+			dtn::data::Dictionary::Reference ref[4];
 			for (int i = 0; i < 4; ++i)
 			{
 				_stream >> ref[i].first;
@@ -723,17 +727,17 @@ namespace dtn
 				_stream >> _dictionary;
 
 				// decode EIDs
-				obj.destination = _dictionary.get(ref[0].first.getValue(), ref[0].second.getValue());
-				obj.source = _dictionary.get(ref[1].first.getValue(), ref[1].second.getValue());
-				obj.reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
-				obj.custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
+				obj.destination = _dictionary.get(ref[0].first, ref[0].second);
+				obj.source = _dictionary.get(ref[1].first, ref[1].second);
+				obj.reportto = _dictionary.get(ref[2].first, ref[2].second);
+				obj.custodian = _dictionary.get(ref[3].first, ref[3].second);
 				_compressed = false;
 			} catch (const dtn::InvalidDataException&) {
 				// error while reading the dictionary. We assume that this is a compressed bundle header.
-				obj.destination = dtn::data::EID(ref[0].first.getValue(), ref[0].second.getValue());
-				obj.source = dtn::data::EID(ref[1].first.getValue(), ref[1].second.getValue());
-				obj.reportto = dtn::data::EID(ref[2].first.getValue(), ref[2].second.getValue());
-				obj.custodian = dtn::data::EID(ref[3].first.getValue(), ref[3].second.getValue());
+				obj.destination = dtn::data::EID(ref[0].first, ref[0].second);
+				obj.source = dtn::data::EID(ref[1].first, ref[1].second);
+				obj.reportto = dtn::data::EID(ref[2].first, ref[2].second);
+				obj.custodian = dtn::data::EID(ref[3].first, ref[3].second);
 				_compressed = true;
 			}
 
@@ -769,11 +773,11 @@ namespace dtn
 
 					if (_compressed)
 					{
-						obj.addEID( dtn::data::EID(scheme.getValue(), ssp.getValue()) );
+						obj.addEID( dtn::data::EID(scheme, ssp) );
 					}
 					else
 					{
-						obj.addEID( _dictionary.get(scheme.getValue(), ssp.getValue()) );
+						obj.addEID( _dictionary.get(scheme, ssp) );
 					}
 				}
 			}
@@ -782,11 +786,14 @@ namespace dtn
 			SDNV block_size;
 			_stream >> block_size;
 
+			if (block_size.getValue() > std::numeric_limits<std::size_t>::max())
+				throw InvalidDataException("block is too large");
+
 			// validate this block
 			_validator.validate(obj, block_size.getValue());
 
 			// read the payload of the block
-			obj.deserialize(_stream, block_size.getValue());
+			obj.deserialize(_stream, (size_t)block_size.getValue());
 
 			return (*this);
 		}
@@ -807,7 +814,7 @@ namespace dtn
 
 					if (_compressed)
 					{
-						obj.addEID( dtn::data::EID(scheme.getValue(), ssp.getValue()) );
+						obj.addEID( dtn::data::EID(scheme, ssp) );
 					}
 					else
 					{
@@ -820,11 +827,14 @@ namespace dtn
 			SDNV block_size;
 			_stream >> block_size;
 
+			if (block_size.getValue() > std::numeric_limits<std::size_t>::max())
+				throw InvalidDataException("block is too large");
+
 			// validate this block
 			_validator.validate(bundle, obj, block_size.getValue());
 
 			// read the payload of the block
-			obj.deserialize(_stream, block_size.getValue());
+			obj.deserialize(_stream, (size_t)block_size.getValue());
 
 			return (*this);
 		}
@@ -841,12 +851,12 @@ namespace dtn
 		{
 		}
 
-		void AcceptValidator::validate(const dtn::data::Block&, const size_t) const throw (RejectedException)
+		void AcceptValidator::validate(const dtn::data::Block&, const uint64_t) const throw (RejectedException)
 		{
 
 		}
 
-		void AcceptValidator::validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const size_t) const throw (RejectedException)
+		void AcceptValidator::validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const uint64_t) const throw (RejectedException)
 		{
 
 		}
@@ -969,13 +979,15 @@ namespace dtn
 			// read the size of the payload in the block
 			SDNV block_size;
 			_stream >> block_size;
-//			obj._blocksize = block_size.getValue();
+
+			if (block_size.getValue() > std::numeric_limits<std::size_t>::max())
+				throw InvalidDataException("block is too large");
 
 			// validate this block
 			_validator.validate(obj, block_size.getValue());
 
 			// read the payload of the block
-			obj.deserialize(_stream, block_size.getValue());
+			obj.deserialize(_stream, (size_t)block_size.getValue());
 
 			return obj;
 		}

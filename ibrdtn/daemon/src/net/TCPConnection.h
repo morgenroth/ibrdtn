@@ -98,7 +98,7 @@ namespace dtn
 
 			virtual void eventBundleRefused() throw ();
 			virtual void eventBundleForwarded() throw ();
-			virtual void eventBundleAck(size_t ack) throw ();
+			virtual void eventBundleAck(uint64_t ack) throw ();
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
@@ -212,7 +212,7 @@ namespace dtn
 			size_t _timeout;
 
 			ibrcommon::Queue<dtn::data::MetaBundle> _sentqueue;
-			size_t _lastack;
+			uint64_t _lastack;
 			size_t _keepalive_timeout;
 
 			TCPConvergenceLayer &_callback;

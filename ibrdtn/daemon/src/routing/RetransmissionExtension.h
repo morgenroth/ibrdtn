@@ -63,7 +63,7 @@ namespace dtn
 				bool operator==(const RetransmissionData &obj);
 
 			private:
-				size_t _timestamp;
+				uint64_t _timestamp;
 				size_t _count;
 				const size_t retry;
 			};

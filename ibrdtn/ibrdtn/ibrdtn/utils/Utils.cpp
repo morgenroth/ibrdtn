@@ -154,7 +154,7 @@ namespace dtn
 				const dtn::data::Bundle &b = (*iter);
 
 				// get the expiration time of this bundle
-				size_t expt = dtn::utils::Clock::getExpireTime(b);
+				uint64_t expt = dtn::utils::Clock::getExpireTime(b);
 
 				// if this bundle expire later then use this lifetime
 				if (expt > exp_time) exp_time = expt;

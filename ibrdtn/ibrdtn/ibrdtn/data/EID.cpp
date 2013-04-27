@@ -36,7 +36,7 @@ namespace dtn
 		{
 		}
 
-		EID::EID(std::string scheme, std::string ssp)
+		EID::EID(const std::string &scheme, const std::string &ssp)
 		 : _scheme(scheme), _ssp(ssp)
 		{
 			dtn::utils::Utils::trim(_scheme);
@@ -45,9 +45,10 @@ namespace dtn
 			// TODO: checks for illegal characters
 		}
 
-		EID::EID(std::string value)
+		EID::EID(const std::string &orig_value)
 		: _scheme(DEFAULT_SCHEME), _ssp("none")
 		{
+			std::string value = orig_value;
 			dtn::utils::Utils::trim(value);
 
 			try {
@@ -72,13 +73,13 @@ namespace dtn
 			}
 		}
 
-		EID::EID(size_t node, size_t application)
+		EID::EID(const dtn::data::SDNV &node, const dtn::data::SDNV &application)
 		 : _scheme(EID::DEFAULT_SCHEME), _ssp("none")
 		{
 			if (node == 0)	return;
 
 			std::stringstream ss_ssp;
-			ss_ssp << node << "." << application;
+			ss_ssp << node.getValue() << "." << application.getValue();
 			_ssp = ss_ssp.str();
 			_scheme = CBHE_SCHEME;
 		}
@@ -94,42 +95,42 @@ namespace dtn
 			return *this;
 		}
 
-		bool EID::operator==(EID const& other) const
+		bool EID::operator==(const EID &other) const
 		{
 			return (_ssp == other._ssp) && (_scheme == other._scheme);
 		}
 
-		bool EID::operator==(string const& other) const
+		bool EID::operator==(const std::string &other) const
 		{
 			return ((*this) == EID(other));
 		}
 
-		bool EID::operator!=(EID const& other) const
+		bool EID::operator!=(const EID &other) const
 		{
 			return !((*this) == other);
 		}
 
-		EID EID::operator+(string suffix) const
+		EID EID::operator+(const std::string& suffix) const
 		{
 			return EID(getString() + suffix);
 		}
 
-		bool EID::sameHost(string const& other) const
+		bool EID::sameHost(const std::string& other) const
 		{
 			return ( EID(other) == getNode() );
 		}
 
-		bool EID::sameHost(EID const& other) const
+		bool EID::sameHost(const EID &other) const
 		{
 			return ( other.getNode() == getNode() );
 		}
 
-		bool EID::operator<(EID const& other) const
+		bool EID::operator<(const EID &other) const
 		{
 			return getString() < other.getString();
 		}
 
-		bool EID::operator>(EID const& other) const
+		bool EID::operator>(const EID &other) const
 		{
 			return other < (*this);
 		}
@@ -197,12 +198,12 @@ namespace dtn
 			return _ssp.substr(0, application_start);
 		}
 
-		std::string EID::getScheme() const
+		const std::string& EID::getScheme() const
 		{
 			return _scheme;
 		}
 
-		std::string EID::getSSP() const
+		const std::string& EID::getSSP() const
 		{
 			return _ssp;
 		}

@@ -64,7 +64,7 @@ namespace dtn
 			return _bundles.size();
 		}
 
-		void BundleSet::expire(const size_t timestamp) throw ()
+		void BundleSet::expire(const uint64_t timestamp) throw ()
 		{
 			bool commit = false;
 

@@ -41,14 +41,14 @@ namespace dtn
 		{
 		}
 
-		void NeighborDatabase::NeighborEntry::update(const ibrcommon::BloomFilter &bf, const size_t lifetime)
+		void NeighborDatabase::NeighborEntry::update(const ibrcommon::BloomFilter &bf, const uint64_t lifetime)
 		{
 			ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
 			_filter = bf;
 
 			if (lifetime == 0)
 			{
-				_filter_expire = std::numeric_limits<std::size_t>::max();
+				_filter_expire = std::numeric_limits<uint64_t>::max();
 			}
 			else
 			{

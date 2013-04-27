@@ -43,18 +43,18 @@ namespace dtn
 		{
 		}
 
-		size_t ScopeControlHopLimitBlock::getHopsToLive() const
+		uint64_t ScopeControlHopLimitBlock::getHopsToLive() const
 		{
 			if (_limit.getValue() < _count.getValue()) return 0;
 			return _limit.getValue() - _count.getValue();
 		}
 
-		void ScopeControlHopLimitBlock::increment(size_t hops)
+		void ScopeControlHopLimitBlock::increment(const dtn::data::SDNV &hops)
 		{
 			_count += dtn::data::SDNV(hops);
 		}
 
-		void ScopeControlHopLimitBlock::setLimit(size_t hops)
+		void ScopeControlHopLimitBlock::setLimit(const dtn::data::SDNV &hops)
 		{
 			_count = 0;
 			_limit = hops;

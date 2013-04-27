@@ -45,7 +45,7 @@ namespace dtn
 			virtual void remove(const dtn::data::MetaBundle &bundle) throw ();
 			virtual void clear() throw ();
 
-			virtual void expire(const size_t timestamp) throw ();
+			virtual void expire(const uint64_t timestamp) throw ();
 
 			typedef std::set<dtn::data::MetaBundle> meta_set;
 			typedef meta_set::iterator iterator;

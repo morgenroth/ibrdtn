@@ -35,7 +35,7 @@ namespace dtn
 			virtual void clear() throw ();
 			virtual bool has(const dtn::data::BundleID &bundle) const throw ();
 
-			virtual void expire(const size_t timestamp) throw ();
+			virtual void expire(const uint64_t timestamp) throw ();
 
 			/**
 			 * Returns the number of elements in this set

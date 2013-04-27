@@ -412,7 +412,7 @@ namespace dtn
 		bool Node::expire()
 		{
 			// get the current timestamp
-			size_t ct = dtn::utils::Clock::getTime();
+			uint64_t ct = dtn::utils::Clock::getTime();
 
 			// walk though all Attribute elements and remove the expired ones
 			{

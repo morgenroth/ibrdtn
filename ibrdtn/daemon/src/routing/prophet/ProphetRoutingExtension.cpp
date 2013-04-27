@@ -552,8 +552,8 @@ namespace dtn
 				return _p_encounter_max;
 			}
 
-			size_t currentTime = dtn::utils::Clock::getUnixTimestamp();
-			size_t time_diff = currentTime - it->second;
+			uint64_t currentTime = dtn::utils::Clock::getUnixTimestamp();
+			uint64_t time_diff = currentTime - it->second;
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(currentTime >= it->second && "the ageMap timestamp should be smaller than the current timestamp");
 #endif

@@ -107,8 +107,8 @@ namespace dtn
 			AcknowledgementSet _acknowledgementSet;
 
 			ibrcommon::Mutex _next_exchange_mutex; ///< Mutex for the _next_exchange_timestamp.
-			size_t _next_exchange_timeout; ///< Interval in seconds how often Handshakes should be executed on longer connections.
-			size_t _next_exchange_timestamp; ///< Unix timestamp, when the next handshake is due.
+			uint64_t _next_exchange_timeout; ///< Interval in seconds how often Handshakes should be executed on longer connections.
+			uint64_t _next_exchange_timestamp; ///< Unix timestamp, when the next handshake is due.
 
 			/*!
 			 * Calculates the p_encounter that rises linearly with the time since the encounter, up to p_encounter_max.

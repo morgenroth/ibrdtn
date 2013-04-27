@@ -61,8 +61,8 @@ namespace dtn
 			void setAlgorithm(COMPRESS_ALGS alg);
 			COMPRESS_ALGS getAlgorithm() const;
 
-			void setOriginSize(size_t s);
-			size_t getOriginSize() const;
+			void setOriginSize(uint64_t s);
+			uint64_t getOriginSize() const;
 
 			static void compress(dtn::data::Bundle &b, COMPRESS_ALGS alg);
 			static void extract(dtn::data::Bundle &b);

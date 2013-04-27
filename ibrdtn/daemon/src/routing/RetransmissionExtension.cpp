@@ -191,7 +191,7 @@ namespace dtn
 		{
 			_count++;
 			_timestamp = dtn::utils::Clock::getTime();
-			size_t backoff = pow((float)retry, (int)_count -1);
+			float backoff = pow((float)retry, (int)_count -1);
 			_timestamp += backoff;
 
 			return (*this);
@@ -201,7 +201,7 @@ namespace dtn
 		{
 			_count++;
 			_timestamp = dtn::utils::Clock::getTime();
-			size_t backoff = pow((float)retry, (int)_count -1);
+			float backoff = pow((float)retry, (int)_count -1);
 			_timestamp += backoff;
 
 			return (*this);

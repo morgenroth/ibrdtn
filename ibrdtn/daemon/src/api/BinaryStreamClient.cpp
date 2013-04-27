@@ -124,7 +124,7 @@ namespace dtn
 			}
 		}
 
-		void BinaryStreamClient::eventBundleAck(size_t ack) throw ()
+		void BinaryStreamClient::eventBundleAck(uint64_t ack) throw ()
 		{
 			_lastack = ack;
 		}

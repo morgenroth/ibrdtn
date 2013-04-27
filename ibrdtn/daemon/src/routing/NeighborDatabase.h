@@ -95,7 +95,7 @@ namespace dtn
 				 * @param bf The bloomfilter object
 				 * @param lifetime The desired lifetime of this bloomfilter
 				 */
-				void update(const ibrcommon::BloomFilter &bf, const size_t lifetime = 0);
+				void update(const ibrcommon::BloomFilter &bf, const uint64_t lifetime = 0);
 
 				void reset();
 
@@ -186,7 +186,7 @@ namespace dtn
 				// bloomfilter used as summary vector
 				ibrcommon::BloomFilter _filter;
 				dtn::data::BundleSet _summary;
-				size_t _filter_expire;
+				uint64_t _filter_expire;
 
 				// extended neighbor data
 				typedef std::set<NeighborDataset> data_set;

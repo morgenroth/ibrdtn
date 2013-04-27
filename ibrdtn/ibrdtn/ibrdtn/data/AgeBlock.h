@@ -54,28 +54,28 @@ namespace dtn
 			virtual std::ostream &serialize_strict(std::ostream &stream, size_t &length) const;
 			virtual size_t getLength_strict() const;
 
-			size_t getMicroseconds() const;
-			size_t getSeconds() const;
+			uint64_t getMicroseconds() const;
+			uint64_t getSeconds() const;
 
 			/**
 			 * set the age
 			 */
-			void setSeconds(size_t value);
+			void setSeconds(uint64_t value);
 
 			/**
 			 * add a value to the age
 			 */
-			void addSeconds(size_t value);
+			void addSeconds(uint64_t value);
 
 			/**
 			 * set the age
 			 */
-			void setMicroseconds(size_t value);
+			void setMicroseconds(uint64_t value);
 
 			/**
 			 * add microseconds to the ageblock
 			 */
-			void addMicroseconds(size_t value);
+			void addMicroseconds(uint64_t value);
 
 		private:
 			dtn::data::SDNV _age;

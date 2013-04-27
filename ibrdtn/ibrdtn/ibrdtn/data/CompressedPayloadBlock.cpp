@@ -77,12 +77,12 @@ namespace dtn
 			return COMPRESS_ALGS( _algorithm.getValue() );
 		}
 
-		void CompressedPayloadBlock::setOriginSize(size_t s)
+		void CompressedPayloadBlock::setOriginSize(uint64_t s)
 		{
 			_origin_size = s;
 		}
 
-		size_t CompressedPayloadBlock::getOriginSize() const
+		uint64_t CompressedPayloadBlock::getOriginSize() const
 		{
 			return _origin_size.getValue();
 		}

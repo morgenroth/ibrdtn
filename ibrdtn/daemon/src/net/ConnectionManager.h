@@ -192,7 +192,7 @@ namespace dtn
 			nodemap _nodes;
 
 			// next timestamp for autoconnect check
-			size_t _next_autoconnect;
+			uint64_t _next_autoconnect;
 		};
 	}
 }
