@@ -22,7 +22,7 @@
 #include "data/TestSDNV.h"
 #include <cppunit/extensions/HelperMacros.h>
 
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 #include <sstream>
 #include <stdint.h>
 
@@ -42,10 +42,10 @@ void TestSDNV::tearDown(void)
 
 void TestSDNV::testLength(void)
 {
-	CPPUNIT_ASSERT_EQUAL((size_t)1, dtn::data::SDNV(127).getLength());
-	CPPUNIT_ASSERT_EQUAL((size_t)2, dtn::data::SDNV(700).getLength());
-	CPPUNIT_ASSERT_EQUAL((size_t)3, dtn::data::SDNV(32896).getLength());
-	CPPUNIT_ASSERT_EQUAL((size_t)4, dtn::data::SDNV(8388608).getLength());
+	CPPUNIT_ASSERT_EQUAL((size_t)1, dtn::data::Number(127).getLength());
+	CPPUNIT_ASSERT_EQUAL((size_t)2, dtn::data::Number(700).getLength());
+	CPPUNIT_ASSERT_EQUAL((size_t)3, dtn::data::Number(32896).getLength());
+	CPPUNIT_ASSERT_EQUAL((size_t)4, dtn::data::Number(8388608).getLength());
 }
 
 void TestSDNV::testSerialize(void)
@@ -53,15 +53,15 @@ void TestSDNV::testSerialize(void)
 	for (uint64_t i = 0; i <= (2^32); i += (2^7))
 	{
 		std::stringstream ss;
-		dtn::data::SDNV src(i);
-		dtn::data::SDNV dst;
+		dtn::data::Number src(i);
+		dtn::data::Number dst;
 
 		ss << src;
 		ss.clear();
 		ss >> dst;
 
 		CPPUNIT_ASSERT_EQUAL((size_t)ss.gcount(), src.getLength());
-		CPPUNIT_ASSERT_EQUAL(src.getValue(), dst.getValue());
+		CPPUNIT_ASSERT_EQUAL(src.get<size_t>(), dst.get<size_t>());
 	}
 }
 
@@ -70,27 +70,38 @@ void TestSDNV::testSizeT(void)
 	size_t st = 4096;
 
 	std::stringstream ss;
-	dtn::data::SDNV src(st);
-	dtn::data::SDNV dst;
+	dtn::data::Number src(st);
+	dtn::data::Number dst;
 
 	ss << src;
 	ss.clear();
 	ss >> dst;
 
-	CPPUNIT_ASSERT_EQUAL(st, (size_t)dst.getValue());
+	CPPUNIT_ASSERT_EQUAL(st, dst.get<size_t>());
 }
 
 void TestSDNV::testMax(void)
 {
-	uint64_t st = static_cast<uint64_t>(-1);
-
 	std::stringstream ss;
-	dtn::data::SDNV src(st);
-	dtn::data::SDNV dst;
+	dtn::data::Number src = dtn::data::Number::max();
+	dtn::data::Number dst;
 
 	CPPUNIT_ASSERT_NO_THROW( ss << src );
 	ss.clear();
 	CPPUNIT_ASSERT_NO_THROW( ss >> dst );
 
-	CPPUNIT_ASSERT_EQUAL(st, dst.getValue());
+	CPPUNIT_ASSERT_EQUAL(src, dst);
+}
+
+void TestSDNV::testOutOfRange(void)
+{
+	uint64_t st = static_cast<uint64_t>(-1);
+
+	std::stringstream ss;
+	dtn::data::SDNV<uint64_t> src(st);
+	dtn::data::SDNV<uint32_t> dst;
+
+	CPPUNIT_ASSERT_NO_THROW( ss << src );
+	ss.clear();
+	CPPUNIT_ASSERT_THROW( ss >> dst, dtn::data::ValueOutOfRangeException );
 }

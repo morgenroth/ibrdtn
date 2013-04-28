@@ -96,7 +96,7 @@ namespace dtn
 				c._bundle = obj;
 
 				// store the app data length
-				c._appdatalength = obj.appdatalength;
+				c._appdatalength = obj.appdatalength.get<dtn::data::Length>();
 
 				// remove all block of the copy
 				c._bundle.clear();
@@ -114,13 +114,13 @@ namespace dtn
 			}
 
 			ibrcommon::BLOB::iostream stream = c._blob.iostream();
-			(*stream).seekp(obj.fragmentoffset);
+			(*stream).seekp(obj.fragmentoffset.get<std::streampos>());
 
 			dtn::data::PayloadBlock &p = obj.find<dtn::data::PayloadBlock>();
 			const Length plength = p.getLength();
 
 			// skip write operation if chunk is already in the merged bundle
-			if (c.contains(obj.fragmentoffset, plength)) return c;
+			if (c.contains(obj.fragmentoffset.get<dtn::data::Length>(), plength)) return c;
 
 			// copy payload of the fragment into the new blob
 			{
@@ -130,7 +130,7 @@ namespace dtn
 			}
 
 			// add the chunk to the list of chunks
-			c.add(obj.fragmentoffset, plength);
+			c.add(obj.fragmentoffset.get<dtn::data::Length>(), plength);
 
 			// check if fragment is the first one
 			// add blocks only once

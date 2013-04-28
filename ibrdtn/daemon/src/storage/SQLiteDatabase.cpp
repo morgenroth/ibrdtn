@@ -611,7 +611,7 @@ namespace dtn
 
 			if (bundle.get(dtn::data::Bundle::FRAGMENT))
 			{
-				sqlite3_bind_int64(*st, 11, bundle.appdatalength);
+				sqlite3_bind_int64(*st, 11, bundle.appdatalength.get<uint64_t>());
 			}
 			else
 			{

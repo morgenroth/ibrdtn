@@ -51,8 +51,8 @@ void TestExtensionBlock::deserializeUnknownBlock(void)
 	// fake unknown block
 	dtn::data::block_t type = 140;
 	ss.put(type);					// block type
-	ss << dtn::data::SDNV(0);	// block flags
-	ss << dtn::data::SDNV(5);	// block size
+	ss << dtn::data::Number(0);	// block flags
+	ss << dtn::data::Number(5);	// block size
 	ss << "12345";
 
 	// serialize payload block

@@ -31,6 +31,7 @@ class TestSDNV : public CPPUNIT_NS :: TestFixture {
 	CPPUNIT_TEST (testSerialize);
 	CPPUNIT_TEST (testSizeT);
 	CPPUNIT_TEST (testMax);
+	CPPUNIT_TEST (testOutOfRange);
 	CPPUNIT_TEST_SUITE_END ();
 
 	static void hexdump(char c);
@@ -42,6 +43,7 @@ public:
 	void testSerialize(void);
 	void testLength(void);
 	void testSizeT(void);
+	void testOutOfRange(void);
 	void testMax(void);
 };
 

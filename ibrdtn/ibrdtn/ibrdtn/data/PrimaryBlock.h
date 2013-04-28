@@ -123,8 +123,8 @@ namespace dtn
 			Timestamp timestamp;
 			Number sequencenumber;
 			Number lifetime;
-			Length fragmentoffset;
-			Length appdatalength;
+			Number fragmentoffset;
+			Number appdatalength;
 
 			EID source;
 			EID destination;
