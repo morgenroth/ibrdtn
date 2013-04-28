@@ -63,10 +63,10 @@ void BundleStream::received(const dtn::data::Bundle &b)
 			report.read(payload);
 
 			// check if the received report matches a newer bundle
-			if ((_last_delivery_ack.source == dtn::data::EID()) || (report._bundleid > _last_delivery_ack))
+			if ((_last_delivery_ack.source == dtn::data::EID()) || (report.bundleid > _last_delivery_ack))
 			{
 				// store the received ack
-				_last_delivery_ack = report._bundleid;
+				_last_delivery_ack = report.bundleid;
 
 				// flush the buffer
 				_buf.flush();

@@ -298,7 +298,7 @@ namespace dtn
 						CustodySignalBlock custody;
 						custody.read(payload);
 
-						getStorage().releaseCustody(bundle.source, custody._bundleid);
+						getStorage().releaseCustody(bundle.source, custody.bundleid);
 
 						IBRCOMMON_LOGGER_DEBUG(5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 

@@ -967,39 +967,39 @@ namespace dtn
 				_stream << b.source.getString() << " ";
 
 				// format the bundle ID and write it to the stream
-				_stream << report._bundleid.timestamp << "." << report._bundleid.sequencenumber;
+				_stream << report.bundleid.timestamp << "." << report.bundleid.sequencenumber;
 
 				if (report.refsFragment()) {
-					_stream << "." << report._bundleid.offset << ":" << report._fragment_length.getValue() << " ";
+					_stream << "." << report.bundleid.offset << ":" << report.fragment_length.getValue() << " ";
 				} else {
 					_stream << " ";
 				}
 
 				// origin source
-				_stream << report._bundleid.source.getString() << " ";
+				_stream << report.bundleid.source.getString() << " ";
 
 				// reason code
-				_stream << (int)report._reasoncode << " ";
+				_stream << (int)report.reasoncode << " ";
 
-				if (report._status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE)
-					_stream << "RECEIPT[" << report._timeof_receipt.getTimestamp().getValue() << "."
-						<< report._timeof_receipt.getNanoseconds().getValue() << "] ";
+				if (report.status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE)
+					_stream << "RECEIPT[" << report.timeof_receipt.getTimestamp().getValue() << "."
+						<< report.timeof_receipt.getNanoseconds().getValue() << "] ";
 
-				if (report._status & dtn::data::StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE)
-					_stream << "CUSTODY-ACCEPTANCE[" << report._timeof_custodyaccept.getTimestamp().getValue() << "."
-						<< report._timeof_custodyaccept.getNanoseconds().getValue() << "] ";
+				if (report.status & dtn::data::StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE)
+					_stream << "CUSTODY-ACCEPTANCE[" << report.timeof_custodyaccept.getTimestamp().getValue() << "."
+						<< report.timeof_custodyaccept.getNanoseconds().getValue() << "] ";
 
-				if (report._status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE)
-					_stream << "FORWARDING[" << report._timeof_forwarding.getTimestamp().getValue() << "."
-						<< report._timeof_forwarding.getNanoseconds().getValue() << "] ";
+				if (report.status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE)
+					_stream << "FORWARDING[" << report.timeof_forwarding.getTimestamp().getValue() << "."
+						<< report.timeof_forwarding.getNanoseconds().getValue() << "] ";
 
-				if (report._status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE)
-					_stream << "DELIVERY[" << report._timeof_delivery.getTimestamp().getValue() << "."
-						<< report._timeof_delivery.getNanoseconds().getValue() << "] ";
+				if (report.status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE)
+					_stream << "DELIVERY[" << report.timeof_delivery.getTimestamp().getValue() << "."
+						<< report.timeof_delivery.getNanoseconds().getValue() << "] ";
 
-				if (report._status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE)
-					_stream << "DELETION[" << report._timeof_deletion.getTimestamp().getValue() << "."
-						<< report._timeof_deletion.getNanoseconds().getValue() << "] ";
+				if (report.status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE)
+					_stream << "DELETION[" << report.timeof_deletion.getTimestamp().getValue() << "."
+						<< report.timeof_deletion.getNanoseconds().getValue() << "] ";
 
 				// finalize statement with a line-break
 				_stream << std::endl;
@@ -1024,25 +1024,25 @@ namespace dtn
 				_stream << b.source.getString() << " ";
 
 				// format the bundle ID and write it to the stream
-				_stream << custody._bundleid.timestamp << "." << custody._bundleid.sequencenumber;
+				_stream << custody.bundleid.timestamp << "." << custody.bundleid.sequencenumber;
 
 				if (custody.refsFragment()) {
-					_stream << "." << custody._bundleid.offset << ":" << custody._fragment_length.getValue() << " ";
+					_stream << "." << custody.bundleid.offset << ":" << custody.fragment_length.getValue() << " ";
 				} else {
 					_stream << " ";
 				}
 
 				// origin source
-				_stream << custody._bundleid.source.getString() << " ";
+				_stream << custody.bundleid.source.getString() << " ";
 
-				if (custody._custody_accepted) {
+				if (custody.custody_accepted) {
 					_stream << "ACCEPTED ";
 				} else {
-					_stream << "REJECTED(" << (int)custody._reason << ") ";
+					_stream << "REJECTED(" << (int)custody.reason << ") ";
 				}
 
 				// add time of signal to the message
-				_stream << custody._timeofsignal.getTimestamp().getValue() << "." << custody._timeofsignal.getNanoseconds().getValue();
+				_stream << custody.timeofsignal.getTimestamp().getValue() << "." << custody.timeofsignal.getNanoseconds().getValue();
 
 				// finalize statement with a line-break
 				_stream << std::endl;

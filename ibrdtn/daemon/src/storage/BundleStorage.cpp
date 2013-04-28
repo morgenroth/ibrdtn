@@ -73,7 +73,7 @@ namespace dtn
 			signal.setMatch(meta);
 
 			// set accepted
-			signal._custody_accepted = true;
+			signal.custody_accepted = true;
 
 			// write the custody data to a payload block
 			dtn::data::PayloadBlock &payload = custody_bundle.push_back<dtn::data::PayloadBlock>();
@@ -111,7 +111,7 @@ namespace dtn
 			signal.setMatch(meta);
 
 			// set reason code
-			signal._reason = reason;
+			signal.reason = reason;
 
 			// write the custody data to a payload block
 			dtn::data::PayloadBlock &payload = b.push_back<dtn::data::PayloadBlock>();

@@ -134,32 +134,32 @@ class Tracer : public dtn::api::Client
 			if (tb.isAdmRecord()) {
 				dtn::data::StatusReportBlock sr = tb.getStatusReport();
 
-				if (sr._status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE) {
+				if (sr.status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE) {
 					std::stringstream type;
 					type << "forwarded";
 					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-					printReason(sr._reasoncode);
+					printReason(sr.reasoncode);
 				}
 
-				if (sr._status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE) {
+				if (sr.status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE) {
 					std::stringstream type;
 					type << "reception";
 					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-					printReason(sr._reasoncode);
+					printReason(sr.reasoncode);
 				}
 
-				if (sr._status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE) {
+				if (sr.status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE) {
 					std::stringstream type;
 					type << "delivery";
 					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-					printReason(sr._reasoncode);
+					printReason(sr.reasoncode);
 				}
 
-				if (sr._status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE) {
+				if (sr.status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE) {
 					std::stringstream type;
 					type << "deletion";
 					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-					printReason(sr._reasoncode);
+					printReason(sr.reasoncode);
 				}
 			} else {
 				std::stringstream type;
