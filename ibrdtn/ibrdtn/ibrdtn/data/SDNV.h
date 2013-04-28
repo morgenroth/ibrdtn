@@ -74,9 +74,10 @@ namespace dtn
 			static const size_t MAX_LENGTH = 10;
 
 			SDNV(const double value) : _value(0) {
-				E max_val = std::numeric_limits<E>::max();
-				if (value > static_cast<double>(max_val))
-					throw ValueOutOfRangeException();
+				// TODO: check if assignment is legal
+//				E max_val = std::numeric_limits<E>::max();
+//				if (value > static_cast<double>(max_val))
+//					throw ValueOutOfRangeException();
 
 				_value = static_cast<double>(value);
 			}
@@ -93,9 +94,10 @@ namespace dtn
 				}
 				else
 				{
-					E max_val = std::numeric_limits<E>::max();
-					if (value > static_cast<T>(max_val))
-						throw ValueOutOfRangeException();
+					// TODO: check if assignment is legal
+//					E max_val = std::numeric_limits<E>::max();
+//					if (value > static_cast<T>(max_val))
+//						throw ValueOutOfRangeException();
 
 					_value = static_cast<E>(value);
 				}
@@ -136,9 +138,10 @@ namespace dtn
 				}
 				else
 				{
-					T max_val = std::numeric_limits<T>::max();
-					if (_value > static_cast<E>(max_val))
-						throw ValueOutOfRangeException();
+					// TODO: check if assignment is legal
+//					T max_val = std::numeric_limits<T>::max();
+//					if (_value > static_cast<E>(max_val))
+//						throw ValueOutOfRangeException();
 
 					return static_cast<T>(_value);
 				}
@@ -152,9 +155,10 @@ namespace dtn
 				}
 				else
 				{
-					E max_val = std::numeric_limits<E>::max();
-					if (value > static_cast<T>(max_val))
-						throw ValueOutOfRangeException();
+					// TODO: check if assignment is legal
+//					E max_val = std::numeric_limits<E>::max();
+//					if (value > static_cast<T>(max_val))
+//						throw ValueOutOfRangeException();
 
 					_value = static_cast<E>(value);
 				}
