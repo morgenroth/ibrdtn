@@ -41,7 +41,7 @@ namespace dtn
 		/**
 		 * The number of seconds between 1/1/1970 and 1/1/2000.
 		 */
-		const uint32_t Clock::TIMEVAL_CONVERSION = 946684800;
+		const dtn::data::Timestamp Clock::TIMEVAL_CONVERSION = 946684800;
 
 		Clock::Clock()
 		{
@@ -94,14 +94,14 @@ namespace dtn
 			_modify_clock = val;
 		}
 
-		uint64_t Clock::getExpireTime(const dtn::data::Bundle &b)
+		dtn::data::Timestamp Clock::getExpireTime(const dtn::data::Bundle &b)
 		{
 			if ((b.timestamp == 0) || dtn::utils::Clock::isBad())
 			{
 				// use the AgeBlock to verify the age
 				try {
 					const dtn::data::AgeBlock &agebl = b.find<const dtn::data::AgeBlock>();
-					uint64_t seconds_left = 0;
+					dtn::data::Number seconds_left = 0;
 					if (b.lifetime > agebl.getSeconds()) {
 						seconds_left = b.lifetime - agebl.getSeconds();
 					}
@@ -112,17 +112,17 @@ namespace dtn
 			return __getExpireTime(b.timestamp, b.lifetime);
 		}
 
-		uint64_t Clock::getExpireTime(uint64_t timestamp, uint64_t lifetime)
+		dtn::data::Timestamp Clock::getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
 			return __getExpireTime(timestamp, lifetime);
 		}
 
-		uint64_t Clock::getExpireTime(uint64_t lifetime)
+		dtn::data::Timestamp Clock::getExpireTime(const dtn::data::Number &lifetime)
 		{
 			return __getExpireTime(getTime(), lifetime);
 		}
 
-		uint64_t Clock::getLifetime(const dtn::data::BundleID &id, uint64_t expiretime)
+		dtn::data::Number Clock::getLifetime(const dtn::data::BundleID &id, const dtn::data::Timestamp &expiretime)
 		{
 			// if the timestamp of the bundle is larger than the expiretime
 			// the bundle is invalid
@@ -132,16 +132,16 @@ namespace dtn
 			return id.timestamp - expiretime;
 		}
 
-		uint64_t Clock::__getExpireTime(uint64_t timestamp, uint64_t lifetime)
+		dtn::data::Number Clock::__getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
 			// if the quality of time is zero, return standard expire time
 			if (Clock::getRating() == 0) return timestamp + lifetime;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			double sigma = lifetime * (1 - Clock::getRating());
+			double sigma_error = static_cast<double>(lifetime) * (1 - Clock::getRating());
 
 			// expiration adjusted by quality of time
-			return timestamp + lifetime + sigma;
+			return timestamp + lifetime + dtn::data::Number(sigma_error);
 		}
 
 		bool Clock::isExpired(const dtn::data::Bundle &b)
@@ -155,51 +155,54 @@ namespace dtn
 			return __isExpired(b.timestamp, b.lifetime);
 		}
 
-		bool Clock::isExpired(uint64_t timestamp, uint64_t lifetime)
+		bool Clock::isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
 			return __isExpired(timestamp, lifetime);
 		}
 
-		bool Clock::__isExpired(uint64_t timestamp, uint64_t lifetime)
+		bool Clock::__isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
 			// if the quality of time is zero or the clock is bad, then never expire a bundle
 			if ((Clock::getRating() == 0) || dtn::utils::Clock::isBad()) return false;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			double sigma = lifetime * (1 - Clock::getRating());
+			const double sigma_error = static_cast<double>(lifetime) * (1 - Clock::getRating());
+
+			// calculate adjusted expire time
+			const dtn::data::Timestamp expiretime = timestamp + lifetime + dtn::data::Number(sigma_error);
 
 			// expiration adjusted by quality of time
-			if ( Clock::getTime() > (timestamp + lifetime + sigma)) return true;
+			if ( Clock::getTime() > expiretime) return true;
 
 			return false;
 		}
 
-		uint64_t Clock::getTime()
+		dtn::data::Timestamp Clock::getTime()
 		{
 			struct timeval now;
 			Clock::gettimeofday(&now);
 
 			// timezone
-			int offset = Clock::getTimezone() * 3600;
+			dtn::data::Timestamp offset = Clock::getTimezone() * 3600;
 
 			// do we believe we are before the year 2000?
-			if ((u_int)now.tv_sec < TIMEVAL_CONVERSION)
+			if (dtn::data::Timestamp(now.tv_sec) < TIMEVAL_CONVERSION)
 			{
 				return 0;
 			}
 
-			return (now.tv_sec - TIMEVAL_CONVERSION) + offset;
+			return (dtn::data::Timestamp(now.tv_sec) - TIMEVAL_CONVERSION) + offset;
 		}
 
-		uint64_t Clock::getUnixTimestamp()
+		dtn::data::Timestamp Clock::getUnixTimestamp()
 		{
 			struct timeval now;
 			Clock::gettimeofday(&now);
 
 			// timezone
-			int offset = Clock::getTimezone() * 3600;
+			dtn::data::SDNV offset = Clock::getTimezone() * 3600;
 
-			return now.tv_sec + offset;
+			return dtn::data::Timestamp(now.tv_sec) + offset;
 		}
 
 		void Clock::setOffset(const struct timeval &tv)
@@ -270,7 +273,7 @@ namespace dtn
 		}
 
 		double Clock::toDouble(const timeval &val) {
-			return val.tv_sec + (val.tv_usec / 1000000.0);
+			return static_cast<double>(val.tv_sec) + (static_cast<double>(val.tv_usec) / 1000000.0);
 		}
 	}
 }

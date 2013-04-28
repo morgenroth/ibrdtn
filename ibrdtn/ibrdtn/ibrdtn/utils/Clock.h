@@ -22,9 +22,9 @@
 #ifndef CLOCK_H_
 #define CLOCK_H_
 
-#include <sys/types.h>
 #include <sys/time.h>
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/BundleID.h"
 
@@ -39,13 +39,13 @@ namespace dtn
 			 * Return the current unix timestamp adjusted by
 			 * the configured timezone offset
 			 */
-			static uint64_t getUnixTimestamp();
+			static dtn::data::Timestamp getUnixTimestamp();
 
 			/**
 			 * Return the current DTN timestamp adjusted by
 			 * the configured timezone offset
 			 */
-			static uint64_t getTime();
+			static dtn::data::Timestamp getTime();
 
 			/**
 			 * Check if a bundle is expired
@@ -57,18 +57,18 @@ namespace dtn
 			 * This method is deprecated because it does not recognize the AgeBlock
 			 * as alternative age verification.
 			 */
-			static bool isExpired(uint64_t timestamp, uint64_t lifetime = 0) __attribute__ ((deprecated));
+			static bool isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime = 0) __attribute__ ((deprecated));
 
 			/**
 			 * Return the time of expiration of the given bundle
 			 */
-			static uint64_t getExpireTime(const dtn::data::Bundle &b);
+			static dtn::data::Timestamp getExpireTime(const dtn::data::Bundle &b);
 
 			/**
 			 * This method is deprecated because it does not recognize the AgeBlock
 			 * as alternative age verification.
 			 */
-			static uint64_t getExpireTime(uint64_t timestamp, uint64_t lifetime) __attribute__ ((deprecated));
+			static dtn::data::Timestamp getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime) __attribute__ ((deprecated));
 
 			/**
 			 * Returns the timestamp when this lifetime is going to be expired
@@ -76,13 +76,13 @@ namespace dtn
 			 * @param lifetime The lifetime in seconds.
 			 * @return A DTN timestamp.
 			 */
-			static uint64_t getExpireTime(uint64_t lifetime);
+			static dtn::data::Timestamp getExpireTime(const dtn::data::Number &lifetime);
 
 			/**
 			 * Returns the calculated lifetime in seconds based on the BundleID and the
 			 * expiretime
 			 */
-			static uint64_t getLifetime(const dtn::data::BundleID &id, uint64_t expiretime);
+			static dtn::data::Number getLifetime(const dtn::data::BundleID &id, const dtn::data::Timestamp &expiretime);
 
 			/**
 			 * Tells the internal clock the offset to the common network time.
@@ -102,7 +102,7 @@ namespace dtn
 			 */
 			static void setOffset(const struct timeval &tv);
 
-			static const uint32_t TIMEVAL_CONVERSION;
+			static const dtn::data::Timestamp TIMEVAL_CONVERSION;
 
 			/**
 			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
@@ -182,8 +182,8 @@ namespace dtn
 			Clock();
 			virtual ~Clock();
 
-			static bool __isExpired(uint64_t timestamp, uint64_t lifetime = 0);
-			static uint64_t __getExpireTime(uint64_t timestamp, uint64_t lifetime);
+			static bool __isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime = 0);
+			static dtn::data::Timestamp __getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime);
 
 			static struct timeval _offset;
 			static bool _offset_init;
