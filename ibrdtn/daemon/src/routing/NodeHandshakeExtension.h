@@ -81,7 +81,7 @@ namespace dtn
 
 			private:
 				NodeHandshakeExtension &_callback;
-				std::map<dtn::data::EID, size_t> _blacklist;
+				std::map<dtn::data::EID, dtn::data::Timestamp> _blacklist;
 				ibrcommon::Mutex _blacklist_lock;
 			};
 

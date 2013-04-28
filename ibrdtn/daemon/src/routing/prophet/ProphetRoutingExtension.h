@@ -57,7 +57,7 @@ namespace dtn
 			ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first,
 						float p_first_threshold, float beta, float gamma, float delta,
 						size_t time_unit, size_t i_typ,
-						size_t next_exchange_timeout);
+						dtn::data::Timestamp next_exchange_timeout);
 			virtual ~ProphetRoutingExtension();
 
 			/* virtual methods from BaseRouter::Extension */
@@ -107,8 +107,8 @@ namespace dtn
 			AcknowledgementSet _acknowledgementSet;
 
 			ibrcommon::Mutex _next_exchange_mutex; ///< Mutex for the _next_exchange_timestamp.
-			uint64_t _next_exchange_timeout; ///< Interval in seconds how often Handshakes should be executed on longer connections.
-			uint64_t _next_exchange_timestamp; ///< Unix timestamp, when the next handshake is due.
+			dtn::data::Timestamp _next_exchange_timeout; ///< Interval in seconds how often Handshakes should be executed on longer connections.
+			dtn::data::Timestamp _next_exchange_timestamp; ///< Unix timestamp, when the next handshake is due.
 
 			/*!
 			 * Calculates the p_encounter that rises linearly with the time since the encounter, up to p_encounter_max.
@@ -121,7 +121,7 @@ namespace dtn
 			float _delta; ///< Maximum predictability is (1-delta).
 			size_t _i_typ; ///< time interval that is characteristic for the network
 
-			typedef std::map<dtn::data::EID, size_t> age_map;
+			typedef std::map<dtn::data::EID, dtn::data::Timestamp> age_map;
 			age_map _ageMap; ///< map with time for each neighbor, when the last encounter happened
 
 			class Task

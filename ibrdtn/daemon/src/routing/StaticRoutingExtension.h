@@ -50,7 +50,7 @@ namespace dtn
 			class EIDRoute : public StaticRoute
 			{
 			public:
-				EIDRoute(const dtn::data::EID &match, const dtn::data::EID &nexthop, size_t expiretime = 0);
+				EIDRoute(const dtn::data::EID &match, const dtn::data::EID &nexthop, const dtn::data::Timestamp &expiretime = 0);
 				virtual ~EIDRoute();
 
 				bool match(const dtn::data::EID &eid) const;
@@ -62,12 +62,12 @@ namespace dtn
 				 */
 				const std::string toString() const;
 
-				size_t getExpiration() const;
+				const dtn::data::Timestamp& getExpiration() const;
 
 			private:
 				const dtn::data::EID _nexthop;
 				const dtn::data::EID _match;
-				const size_t expiretime;
+				const dtn::data::Timestamp expiretime;
 			};
 
 			class Task
@@ -129,12 +129,12 @@ namespace dtn
 			class ExpireTask : public Task
 			{
 			public:
-				ExpireTask(size_t timestamp);
+				ExpireTask(dtn::data::Timestamp timestamp);
 				virtual ~ExpireTask();
 
 				virtual std::string toString();
 
-				size_t timestamp;
+				dtn::data::Timestamp timestamp;
 			};
 
 			/**
@@ -147,7 +147,7 @@ namespace dtn
 			 */
 			std::list<StaticRoute*> _routes;
 			ibrcommon::Mutex _expire_lock;
-			size_t next_expire;
+			dtn::data::Timestamp next_expire;
 		};
 	}
 }

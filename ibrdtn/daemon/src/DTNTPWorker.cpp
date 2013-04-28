@@ -107,14 +107,14 @@ namespace dtn
 			ss.clear(); ss.str(""); ss << obj.origin_rating;
 			stream << dtn::data::BundleString(ss.str());
 
-			stream << dtn::data::SDNV(obj.origin_timestamp.tv_sec);
-			stream << dtn::data::SDNV(obj.origin_timestamp.tv_usec);
+			stream << dtn::data::Number(obj.origin_timestamp.tv_sec);
+			stream << dtn::data::Number(obj.origin_timestamp.tv_usec);
 
 			ss.clear(); ss.str(""); ss << obj.peer_rating;
 			stream << dtn::data::BundleString(ss.str());
 
-			stream << dtn::data::SDNV(obj.peer_timestamp.tv_sec);
-			stream << dtn::data::SDNV(obj.peer_timestamp.tv_usec);
+			stream << dtn::data::Number(obj.peer_timestamp.tv_sec);
+			stream << dtn::data::Number(obj.peer_timestamp.tv_usec);
 
 			return stream;
 		}
@@ -124,7 +124,7 @@ namespace dtn
 			char type = 0;
 			std::stringstream ss;
 			dtn::data::BundleString bs;
-			dtn::data::SDNV sdnv;
+			dtn::data::Number sdnv;
 
 			stream >> type;
 			obj.type = DTNTPWorker::TimeSyncMessage::MSG_TYPE(type);
@@ -134,16 +134,16 @@ namespace dtn
 			ss.str((const std::string&)bs);
 			ss >> obj.origin_rating;
 
-			stream >> sdnv; obj.origin_timestamp.tv_sec = sdnv.getValue();
-			stream >> sdnv; obj.origin_timestamp.tv_usec = sdnv.getValue();
+			stream >> sdnv; obj.origin_timestamp.tv_sec = sdnv.get<__time_t>();
+			stream >> sdnv; obj.origin_timestamp.tv_usec = sdnv.get<__suseconds_t>();
 
 			stream >> bs;
 			ss.clear();
 			ss.str((const std::string&)bs);
 			ss >> obj.peer_rating;
 
-			stream >> sdnv; obj.peer_timestamp.tv_sec = sdnv.getValue();
-			stream >> sdnv; obj.peer_timestamp.tv_usec = sdnv.getValue();
+			stream >> sdnv; obj.peer_timestamp.tv_sec = sdnv.get<__time_t>();
+			stream >> sdnv; obj.peer_timestamp.tv_usec = sdnv.get<__suseconds_t>();
 
 			return stream;
 		}
@@ -162,7 +162,7 @@ namespace dtn
 					ibrcommon::MutexLock l(_blacklist_lock);
 					for (blacklist_map::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); ++iter)
 					{
-						uint64_t bl_age = (*iter).second;
+						const dtn::data::Timestamp &bl_age = (*iter).second;
 
 						// do not query again if the blacklist entry is valid
 						if (bl_age < t.getUnixTimestamp())
@@ -234,7 +234,7 @@ namespace dtn
 
 			// decode attribute parameter
 			unsigned int version = 0;
-			size_t timestamp = 0;
+			dtn::data::Timestamp timestamp = 0;
 			float quality = 0.0;
 			decode(attrs.front(), version, timestamp, quality);
 
@@ -260,7 +260,7 @@ namespace dtn
 				ibrcommon::MutexLock l(_blacklist_lock);
 				if (_sync_blacklist.find(peer) != _sync_blacklist.end())
 				{
-					size_t bl_age = _sync_blacklist[peer];
+					const dtn::data::Timestamp &bl_age = _sync_blacklist[peer];
 
 					// do not query again if the blacklist entry is valid
 					if (bl_age > dtn::utils::Clock::getUnixTimestamp())
@@ -297,8 +297,8 @@ namespace dtn
 				b.push_back(ref);
 
 				// set the source and destination
-				b.source = dtn::core::BundleCore::local + "/dtntp";
-				b.destination = peer + "/dtntp";
+				b.source = dtn::core::BundleCore::local.add("/dtntp");
+				b.destination = peer.add("/dtntp");
 
 				// set high priority
 				b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -330,7 +330,7 @@ namespace dtn
 			announcement.addService( DiscoveryService("dtntp", ss.str()));
 		}
 
-		void DTNTPWorker::decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality) const
+		void DTNTPWorker::decode(const dtn::core::Node::Attribute &attr, unsigned int &version, dtn::data::Timestamp &timestamp, float &quality) const
 		{
 			// parse parameters
 			std::vector<std::string> parameters = dtn::utils::Utils::tokenize(";", attr.value);
@@ -491,7 +491,7 @@ namespace dtn
 						const dtn::data::AgeBlock &origin_age = dynamic_cast<const dtn::data::AgeBlock&>(**age_it);
 
 						timeval tv_age; timerclear(&tv_age);
-						tv_age.tv_usec = origin_age.getMicroseconds();
+						tv_age.tv_usec = origin_age.getMicroseconds().get<__suseconds_t>();
 
 						ibrcommon::BLOB::Reference ref = p.getBLOB();
 						ibrcommon::BLOB::iostream stream = ref.iostream();
@@ -514,7 +514,7 @@ namespace dtn
 
 						timeval sync_delay;
 						timerclear(&sync_delay);
-						sync_delay.tv_usec = peer_age.getMicroseconds() + prop_delay.tv_usec;
+						sync_delay.tv_usec = peer_age.getMicroseconds().get<__suseconds_t>() + prop_delay.tv_usec;
 
 						timeval peer_timestamp;
 						timeradd(&msg.peer_timestamp, &sync_delay, &peer_timestamp);

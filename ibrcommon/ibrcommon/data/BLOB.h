@@ -52,7 +52,7 @@ namespace ibrcommon
 		/**
 		 * copy a stream to another stream
 		 */
-		static std::ostream& copy(std::ostream &output, std::istream &input, const size_t size, const size_t buffer_size = 0x1000);
+		static std::ostream& copy(std::ostream &output, std::istream &input, const std::streamsize size, const size_t buffer_size = 0x1000);
 
 		virtual ~BLOB();
 

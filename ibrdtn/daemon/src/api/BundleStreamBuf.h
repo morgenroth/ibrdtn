@@ -69,7 +69,7 @@ namespace dtn
 				void load();
 
 				dtn::data::MetaBundle _meta;
-				size_t _seq;
+				dtn::data::Number _seq;
 				bool _first;
 				bool _last;
 			};
@@ -85,17 +85,17 @@ namespace dtn
 			// Output buffer
 			std::vector<char> _out_buf;
 
-			size_t _chunk_size;
+			std::streamsize _chunk_size;
 
 			ibrcommon::BLOB::Reference _chunk_payload;
 
 			std::set<Chunk> _chunks;
-			size_t _chunk_offset;
+			std::streamsize _chunk_offset;
 
 			dtn::data::Bundle _current_bundle;
 
-			size_t _in_seq;
-			size_t _out_seq;
+			dtn::data::Number _in_seq;
+			dtn::data::Number _out_seq;
 
 			bool _streaming;
 

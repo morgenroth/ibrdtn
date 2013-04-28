@@ -20,7 +20,7 @@ namespace dtn
 		{
 		}
 
-		NeighborDataset::NeighborDataset(const dtn::data::SDNV &id)
+		NeighborDataset::NeighborDataset(const dtn::data::Number &id)
 		 : _impl(new Empty(id))
 		{
 		}

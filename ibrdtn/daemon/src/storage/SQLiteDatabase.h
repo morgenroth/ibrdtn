@@ -135,7 +135,7 @@ namespace dtn
 				 * @param offset
 				 * @return
 				 */
-				virtual int bind(sqlite3_stmt*, size_t offset) const throw ()
+				virtual int bind(sqlite3_stmt*, int offset) const throw ()
 				{
 					return offset;
 				}

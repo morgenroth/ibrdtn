@@ -182,7 +182,7 @@ namespace dtn
 			return _count;
 		}
 
-		size_t RetransmissionExtension::RetransmissionData::getTimestamp() const
+		const dtn::data::Timestamp& RetransmissionExtension::RetransmissionData::getTimestamp() const
 		{
 			return _timestamp;
 		}

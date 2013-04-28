@@ -308,7 +308,7 @@ namespace dtn
 			try {
 				const TimeEvent &time=dynamic_cast<const TimeEvent&>(*evt);
 				if (time.getAction() == TIME_SECOND_TICK)
-					if (time.getTimestamp()%5 == 0)
+					if (time.getTimestamp().get<size_t>() % 5 == 0)
 						timeout();
 			} catch (const std::bad_cast&)
 			{}

@@ -269,7 +269,7 @@ namespace dtn
 				/**
 				 * Expire bundles in the received bundle set
 				 */
-				void expire(const uint64_t timestamp) throw ();
+				void expire(const dtn::data::Timestamp &timestamp) throw ();
 
 				/**
 				 * Abort all blocking call on the queue

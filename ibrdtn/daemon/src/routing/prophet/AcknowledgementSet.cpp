@@ -13,7 +13,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		const dtn::data::SDNV AcknowledgementSet::identifier = NodeHandshakeItem::PROPHET_ACKNOWLEDGEMENT_SET;
+		const dtn::data::Number AcknowledgementSet::identifier = NodeHandshakeItem::PROPHET_ACKNOWLEDGEMENT_SET;
 
 		AcknowledgementSet::AcknowledgementSet()
 		{
@@ -37,7 +37,7 @@ namespace dtn
 			}
 		}
 
-		void AcknowledgementSet::expire(size_t timestamp) throw ()
+		void AcknowledgementSet::expire(const dtn::data::Timestamp &timestamp) throw ()
 		{
 			_bundles.expire(timestamp);
 		}
@@ -57,7 +57,7 @@ namespace dtn
 			return !(iter == _bundles.end());
 		}
 
-		const dtn::data::SDNV& AcknowledgementSet::getIdentifier() const
+		const dtn::data::Number& AcknowledgementSet::getIdentifier() const
 		{
 			return identifier;
 		}
@@ -83,12 +83,12 @@ namespace dtn
 
 		std::ostream& operator<<(std::ostream& stream, const AcknowledgementSet& ack_set)
 		{
-			stream << dtn::data::SDNV(ack_set._bundles.size());
+			stream << dtn::data::Number(ack_set._bundles.size());
 			for (dtn::data::BundleList::const_iterator it = ack_set._bundles.begin(); it != ack_set._bundles.end(); ++it)
 			{
 				const dtn::data::MetaBundle &ack = (*it);
 				stream << (const dtn::data::BundleID&)ack;
-				stream << dtn::data::SDNV(ack.expiretime);
+				stream << ack.expiretime;
 			}
 
 			return stream;
@@ -99,16 +99,14 @@ namespace dtn
 			// clear the ack set first
 			ack_set._bundles.clear();
 
-			dtn::data::SDNV size;
+			dtn::data::Number size;
 			stream >> size;
 
-			for(size_t i = 0; i < size.getValue(); ++i)
+			for(size_t i = 0; size > i; ++i)
 			{
 				dtn::data::MetaBundle ack;
-				dtn::data::SDNV expire_time;
 				stream >> (dtn::data::BundleID&)ack;
-				stream >> expire_time;
-				ack.expiretime = expire_time.getValue();
+				stream >> ack.expiretime;
 				ack.lifetime = dtn::utils::Clock::getLifetime(ack, ack.expiretime);
 
 				ack_set.add(ack);

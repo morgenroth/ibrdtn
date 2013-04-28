@@ -101,7 +101,7 @@ namespace dtn
 
 		void NativeSession::setEndpoint(const std::string &suffix) throw (NativeSessionException)
 		{
-			const dtn::data::EID new_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + suffix;
+			const dtn::data::EID new_endpoint = dtn::core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + suffix );
 
 			// error checking
 			if (new_endpoint == dtn::data::EID())
@@ -130,7 +130,7 @@ namespace dtn
 
 		void NativeSession::addEndpoint(const std::string &suffix) throw (NativeSessionException)
 		{
-			const dtn::data::EID new_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + suffix;
+			const dtn::data::EID new_endpoint = dtn::core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + suffix );
 
 			// error checking
 			if (new_endpoint == dtn::data::EID())
@@ -147,7 +147,7 @@ namespace dtn
 
 		void NativeSession::removeEndpoint(const std::string &suffix) throw (NativeSessionException)
 		{
-			const dtn::data::EID old_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + suffix;
+			const dtn::data::EID old_endpoint = dtn::core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + suffix );
 
 			// error checking
 			if (old_endpoint == dtn::data::EID())

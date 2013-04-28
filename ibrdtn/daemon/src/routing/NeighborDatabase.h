@@ -26,6 +26,7 @@
 #include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/BundleID.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrcommon/data/BloomFilter.h>
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/thread/ThreadsafeState.h>
@@ -95,7 +96,7 @@ namespace dtn
 				 * @param bf The bloomfilter object
 				 * @param lifetime The desired lifetime of this bloomfilter
 				 */
-				void update(const ibrcommon::BloomFilter &bf, const uint64_t lifetime = 0);
+				void update(const ibrcommon::BloomFilter &bf, const dtn::data::Number &lifetime = 0);
 
 				void reset();
 
@@ -138,7 +139,7 @@ namespace dtn
 				 * trigger expire mechanisms for bloomfilter and bundle summary
 				 * @param timestamp
 				 */
-				void expire(const size_t timestamp);
+				void expire(const dtn::data::Timestamp &timestamp);
 
 				/**
 				 * Retrieve a specific data-set.
@@ -186,7 +187,7 @@ namespace dtn
 				// bloomfilter used as summary vector
 				ibrcommon::BloomFilter _filter;
 				dtn::data::BundleSet _summary;
-				uint64_t _filter_expire;
+				dtn::data::Timestamp _filter_expire;
 
 				// extended neighbor data
 				typedef std::set<NeighborDataset> data_set;
@@ -232,7 +233,7 @@ namespace dtn
 			 * trigger expire mechanisms for bloomfilter and bundle summary
 			 * @param timestamp
 			 */
-			void expire(const size_t timestamp);
+			void expire(const dtn::data::Timestamp &timestamp);
 
 		private:
 			typedef std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* > neighbor_map;

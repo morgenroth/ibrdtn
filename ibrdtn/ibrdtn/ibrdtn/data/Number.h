@@ -35,6 +35,7 @@ namespace dtn
 
 		typedef unsigned char block_t;
 		typedef dtn::data::SDNV<Size> Number;
+		typedef dtn::data::SDNV<float> Float;
 		typedef dtn::data::SDNV<int> Integer;
 		typedef dtn::data::SDNV<Size> Timestamp;
 

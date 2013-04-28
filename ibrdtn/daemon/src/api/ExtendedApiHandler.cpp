@@ -114,7 +114,7 @@ namespace dtn
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							ibrcommon::MutexLock l(_write_lock);
-							dtn::data::EID new_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + cmd[2];
+							dtn::data::EID new_endpoint = dtn::core::BundleCore::local.add(dtn::core::BundleCore::local.getDelimiter() + cmd[2]);
 
 							// error checking
 							if (new_endpoint == dtn::data::EID())
@@ -164,7 +164,7 @@ namespace dtn
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							ibrcommon::MutexLock l(_write_lock);
-							dtn::data::EID new_endpoint = dtn::core::BundleCore::local + BundleCore::local.getDelimiter() + cmd[2];
+							dtn::data::EID new_endpoint = dtn::core::BundleCore::local.add(BundleCore::local.getDelimiter() + cmd[2]);
 
 							// error checking
 							if (new_endpoint == dtn::data::EID())
@@ -182,7 +182,7 @@ namespace dtn
 							dtn::data::EID del_endpoint = _endpoint;
 							if (cmd.size() >= 3)
 							{
-								del_endpoint = dtn::core::BundleCore::local + BundleCore::local.getDelimiter() + cmd[2];
+								del_endpoint = dtn::core::BundleCore::local.add( BundleCore::local.getDelimiter() + cmd[2] );
 							}
 
 							ibrcommon::MutexLock l(_write_lock);
@@ -970,7 +970,7 @@ namespace dtn
 				_stream << report.bundleid.timestamp << "." << report.bundleid.sequencenumber;
 
 				if (report.refsFragment()) {
-					_stream << "." << report.bundleid.offset << ":" << report.fragment_length.getValue() << " ";
+					_stream << "." << report.bundleid.offset.toString() << ":" << report.fragment_length.toString() << " ";
 				} else {
 					_stream << " ";
 				}
@@ -982,24 +982,24 @@ namespace dtn
 				_stream << (int)report.reasoncode << " ";
 
 				if (report.status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE)
-					_stream << "RECEIPT[" << report.timeof_receipt.getTimestamp().getValue() << "."
-						<< report.timeof_receipt.getNanoseconds().getValue() << "] ";
+					_stream << "RECEIPT[" << report.timeof_receipt.getTimestamp().toString() << "."
+						<< report.timeof_receipt.getNanoseconds().toString() << "] ";
 
 				if (report.status & dtn::data::StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE)
-					_stream << "CUSTODY-ACCEPTANCE[" << report.timeof_custodyaccept.getTimestamp().getValue() << "."
-						<< report.timeof_custodyaccept.getNanoseconds().getValue() << "] ";
+					_stream << "CUSTODY-ACCEPTANCE[" << report.timeof_custodyaccept.getTimestamp().toString() << "."
+						<< report.timeof_custodyaccept.getNanoseconds().toString() << "] ";
 
 				if (report.status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE)
-					_stream << "FORWARDING[" << report.timeof_forwarding.getTimestamp().getValue() << "."
-						<< report.timeof_forwarding.getNanoseconds().getValue() << "] ";
+					_stream << "FORWARDING[" << report.timeof_forwarding.getTimestamp().toString() << "."
+						<< report.timeof_forwarding.getNanoseconds().toString() << "] ";
 
 				if (report.status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE)
-					_stream << "DELIVERY[" << report.timeof_delivery.getTimestamp().getValue() << "."
-						<< report.timeof_delivery.getNanoseconds().getValue() << "] ";
+					_stream << "DELIVERY[" << report.timeof_delivery.getTimestamp().toString() << "."
+						<< report.timeof_delivery.getNanoseconds().toString() << "] ";
 
 				if (report.status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE)
-					_stream << "DELETION[" << report.timeof_deletion.getTimestamp().getValue() << "."
-						<< report.timeof_deletion.getNanoseconds().getValue() << "] ";
+					_stream << "DELETION[" << report.timeof_deletion.getTimestamp().toString() << "."
+						<< report.timeof_deletion.getNanoseconds().toString() << "] ";
 
 				// finalize statement with a line-break
 				_stream << std::endl;
@@ -1027,7 +1027,7 @@ namespace dtn
 				_stream << custody.bundleid.timestamp << "." << custody.bundleid.sequencenumber;
 
 				if (custody.refsFragment()) {
-					_stream << "." << custody.bundleid.offset << ":" << custody.fragment_length.getValue() << " ";
+					_stream << "." << custody.bundleid.offset << ":" << custody.fragment_length.toString() << " ";
 				} else {
 					_stream << " ";
 				}
@@ -1042,7 +1042,7 @@ namespace dtn
 				}
 
 				// add time of signal to the message
-				_stream << custody.timeofsignal.getTimestamp().getValue() << "." << custody.timeofsignal.getNanoseconds().getValue();
+				_stream << custody.timeofsignal.getTimestamp().toString() << "." << custody.timeofsignal.getNanoseconds().toString();
 
 				// finalize statement with a line-break
 				_stream << std::endl;

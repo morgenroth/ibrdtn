@@ -188,10 +188,10 @@ namespace dtn
 		{
 			// add the bundle data
 			data.push_back("Source: " + b.source.getString());
-			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
-			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b.sequencenumber));
-			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b.lifetime));
-			data.push_back("Procflags: " + dtn::utils::Utils::toString(b.procflags));
+			data.push_back("Timestamp: " + b.timestamp.toString());
+			data.push_back("Sequencenumber: " + b.sequencenumber.toString());
+			data.push_back("Lifetime: " + b.lifetime.toString());
+			data.push_back("Procflags: " + b.procflags.toString());
 
 			// add the destination eid
 			data.push_back("Destination: " + b.destination.getString());
@@ -208,10 +208,10 @@ namespace dtn
 		{
 			// add the bundle data
 			data.push_back("Source: " + b.source.getString());
-			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
-			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b.sequencenumber));
-			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b.lifetime));
-			data.push_back("Procflags: " + dtn::utils::Utils::toString(b.procflags));
+			data.push_back("Timestamp: " + b.timestamp.toString());
+			data.push_back("Sequencenumber: " + b.sequencenumber.toString());
+			data.push_back("Lifetime: " + b.lifetime.toString());
+			data.push_back("Procflags: " + b.procflags.toString());
 
 			// add the destination eid
 			data.push_back("Destination: " + b.destination.getString());
@@ -219,8 +219,8 @@ namespace dtn
 			if (b.get(dtn::data::PrimaryBlock::FRAGMENT))
 			{
 				// add fragmentation values
-				data.push_back("Appdatalength: " + dtn::utils::Utils::toString(b.appdatalength));
-				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b.offset));
+				data.push_back("Appdatalength: " + b.appdatalength.toString());
+				data.push_back("Fragmentoffset: " + b.offset.toString());
 			}
 		}
 
@@ -228,13 +228,13 @@ namespace dtn
 		{
 			// add the bundle data
 			data.push_back("Source: " + b.source.getString());
-			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
-			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b.sequencenumber));
+			data.push_back("Timestamp: " + b.timestamp.toString());
+			data.push_back("Sequencenumber: " + b.sequencenumber.toString());
 
 			if (b.fragment)
 			{
 				// add fragmentation values
-				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b.offset));
+				data.push_back("Fragmentoffset: " + b.offset.toString());
 			}
 		}
 

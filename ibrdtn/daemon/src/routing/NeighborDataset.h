@@ -8,7 +8,7 @@
 #ifndef NEIGHBORDATASET_H_
 #define NEIGHBORDATASET_H_
 
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrcommon/refcnt_ptr.h>
 #include <stdlib.h>
 #include <iostream>

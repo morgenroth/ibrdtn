@@ -231,7 +231,7 @@ namespace dtn
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 		}
 
-		std::string Utils::toString(uint64_t value)
+		std::string Utils::toString(const dtn::data::Length &value)
 		{
 			std::stringstream ss;
 			ss << value;

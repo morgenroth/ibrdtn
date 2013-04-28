@@ -9,6 +9,7 @@
 #define SCHEDULINGBUNDLEINDEX_H_
 
 #include "storage/BundleIndex.h"
+#include <ibrdtn/data/Number.h>
 
 namespace dtn
 {
@@ -60,7 +61,7 @@ namespace dtn
 
 					// use payloadlength for not fragmented bundles and
 					// appdatalength for fragments
-					uint64_t complete_payloadlength_lhs, complete_payloadlength_rhs;
+					dtn::data::Number complete_payloadlength_lhs, complete_payloadlength_rhs;
 
 					if (lhs.fragment)
 						complete_payloadlength_lhs = lhs.appdatalength;

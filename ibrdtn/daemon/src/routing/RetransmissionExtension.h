@@ -53,7 +53,7 @@ namespace dtn
 
 				const dtn::data::EID destination;
 
-				size_t getTimestamp() const;
+				const dtn::data::Timestamp& getTimestamp() const;
 				size_t getCount() const;
 
 				RetransmissionData& operator++();
@@ -63,7 +63,7 @@ namespace dtn
 				bool operator==(const RetransmissionData &obj);
 
 			private:
-				uint64_t _timestamp;
+				dtn::data::Timestamp _timestamp;
 				size_t _count;
 				const size_t retry;
 			};

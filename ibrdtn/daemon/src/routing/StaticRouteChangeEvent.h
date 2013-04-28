@@ -54,7 +54,7 @@ namespace dtn
 			const dtn::data::EID nexthop;
 			const dtn::data::EID destination;
 			const std::string pattern;
-			size_t timeout;
+			dtn::data::Number timeout;
 
 			static const std::string className;
 

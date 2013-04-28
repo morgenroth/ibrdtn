@@ -78,7 +78,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const throw () { return _entry.getFreeTransferSlots(); };
+				virtual dtn::data::Size limit() const throw () { return _entry.getFreeTransferSlots(); };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -123,7 +123,7 @@ namespace dtn
 					return "destination LIKE ?";
 				};
 
-				size_t bind(sqlite3_stmt *st, size_t offset) const throw ()
+				int bind(sqlite3_stmt *st, int offset) const throw ()
 				{
 					const std::string d = _entry.eid.getNode().getString() + "%";
 					sqlite3_bind_text(st, offset, d.c_str(), d.size(), SQLITE_TRANSIENT);

@@ -59,7 +59,7 @@ namespace dtn
 			BloomFilterSummaryVector(const dtn::data::BundleSet &vector);
 			virtual ~BloomFilterSummaryVector();
 			const dtn::data::Number& getIdentifier() const;
-			size_t getLength() const;
+			dtn::data::Length getLength() const;
 			std::ostream& serialize(std::ostream&) const;
 			std::istream& deserialize(std::istream&);
 			static const dtn::data::Number identifier;
@@ -77,7 +77,7 @@ namespace dtn
 			BloomFilterPurgeVector(const dtn::data::BundleSet &vector);
 			virtual ~BloomFilterPurgeVector();
 			const dtn::data::Number& getIdentifier() const;
-			size_t getLength() const;
+			dtn::data::Length getLength() const;
 			std::ostream& serialize(std::ostream&) const;
 			std::istream& deserialize(std::istream&);
 			static const dtn::data::Number identifier;

@@ -130,7 +130,7 @@ namespace dtn
 			 * @param timestamp
 			 * @param quality
 			 */
-			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality) const;
+			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, dtn::data::Timestamp &timestamp, float &quality) const;
 
 			/**
 			 * Synchronize this clock with another one
@@ -165,7 +165,7 @@ namespace dtn
 
 			// manage a list of recently sync'd nodes
 			ibrcommon::Mutex _blacklist_lock;
-			typedef std::map<EID, uint64_t> blacklist_map;
+			typedef std::map<EID, dtn::data::Timestamp> blacklist_map;
 			blacklist_map _sync_blacklist;
 		};
 	}

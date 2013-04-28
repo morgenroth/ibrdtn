@@ -164,7 +164,7 @@ namespace dtn
 			tm.start();
 
 			// while not the right sequence number received -> wait
-			while ((_in_seq != (*_chunks.begin())._seq))
+			while (_in_seq != (*_chunks.begin())._seq)
 			{
 				try {
 					// request the next bundle

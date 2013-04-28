@@ -52,7 +52,7 @@ namespace dtn
 
 		ProphetRoutingExtension::ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
 								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ,
-								 ibrcommon::Timer::time_t next_exchange_timeout)
+								 dtn::data::Timestamp next_exchange_timeout)
 			: _deliveryPredictabilityMap(time_unit, beta, gamma),
 			  _forwardingStrategy(strategy), _next_exchange_timeout(next_exchange_timeout), _next_exchange_timestamp(0),
 			  _p_encounter_max(p_encounter_max), _p_encounter_first(p_encounter_first),
@@ -169,7 +169,7 @@ namespace dtn
 
 					virtual ~BundleFilter() {}
 
-					virtual size_t limit() const throw () { return 0; }
+					virtual dtn::data::Size limit() const throw () { return 0; }
 
 					virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 					{
@@ -383,7 +383,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const throw () { return _entry.getFreeTransferSlots(); };
+				virtual dtn::data::Size limit() const throw () { return _entry.getFreeTransferSlots(); };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -552,8 +552,8 @@ namespace dtn
 				return _p_encounter_max;
 			}
 
-			uint64_t currentTime = dtn::utils::Clock::getUnixTimestamp();
-			uint64_t time_diff = currentTime - it->second;
+			const dtn::data::Timestamp currentTime = dtn::utils::Clock::getUnixTimestamp();
+			const dtn::data::Timestamp time_diff = currentTime - it->second;
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(currentTime >= it->second && "the ageMap timestamp should be smaller than the current timestamp");
 #endif
@@ -563,7 +563,7 @@ namespace dtn
 			}
 			else
 			{
-				return _p_encounter_max * ((float) time_diff / _i_typ);
+				return _p_encounter_max * static_cast<float>(time_diff.get<size_t>() / _i_typ);
 			}
 		}
 

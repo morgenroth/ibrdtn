@@ -49,7 +49,7 @@ namespace ibrcommon
 	{
 	}
 
-	std::ostream& BLOB::copy(std::ostream &output, std::istream &input, const size_t size, const size_t buffer_size)
+	std::ostream& BLOB::copy(std::ostream &output, std::istream &input, const std::streamsize size, const size_t buffer_size)
 	{
 		// read payload
 		std::vector<char> buffer(buffer_size);

@@ -43,7 +43,7 @@ namespace dtn
 			static void encapsule(dtn::data::Bundle &capsule, const std::list<dtn::data::Bundle> &bundles);
 			static void decapsule(const dtn::data::Bundle &capsule, std::list<dtn::data::Bundle> &bundles);
 
-			static std::string toString(uint64_t value);
+			static std::string toString(const dtn::data::Length &value);
 
 		private:
 			static void encapsule(ibrcommon::BLOB::Reference &ref, const std::list<dtn::data::Bundle> &bundles);

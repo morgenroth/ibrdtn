@@ -47,12 +47,13 @@ namespace dtn
 				ibrcommon::BLOB::iostream stream = payload.getBLOB().iostream();
 
 				// read the number of bundles
-				SDNV nob; (*stream) >> nob;
+				dtn::data::Number nob; (*stream) >> nob;
 
 				// read all offsets
-				for (size_t i = 0; i < (nob.getValue() - 1); ++i)
+				for (size_t i = 0; (nob - 1) > i; ++i)
 				{
-					SDNV offset; (*stream) >> offset;
+					dtn::data::Number offset;
+					(*stream) >> offset;
 				}
 
 				// create a deserializer for all bundles
@@ -61,7 +62,7 @@ namespace dtn
 
 				try {
 					// read all bundles
-					for (size_t i = 0; i < nob.getValue(); ++i)
+					for (size_t i = 0; nob > i; ++i)
 					{
 						// deserialize the next bundle
 						deserializer >> b;

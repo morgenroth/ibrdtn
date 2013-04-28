@@ -101,7 +101,7 @@ namespace dtn
 
 		Registration::Registration()
 		 : _handle(alloc_handle()),
-		   _default_eid(core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + _handle),
+		   _default_eid(core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + _handle) ),
 		   _persistent(false), _detached(false), _expiry(0)
 		{
 		}
@@ -342,7 +342,7 @@ namespace dtn
 			return _recv_bundles;
 		}
 
-		void Registration::RegistrationQueue::expire(const uint64_t timestamp) throw ()
+		void Registration::RegistrationQueue::expire(const dtn::data::Timestamp &timestamp) throw ()
 		{
 			_recv_bundles.expire(timestamp);
 		}

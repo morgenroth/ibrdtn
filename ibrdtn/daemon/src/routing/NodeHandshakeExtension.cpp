@@ -99,7 +99,7 @@ namespace dtn
 				 */
 				NeighborDatabase &db = (**this).getNeighborDB();
 				ibrcommon::MutexLock l(db);
-				db.create(source.getNode()).update(filter, answer.getLifetime().getValue());
+				db.create(source.getNode()).update(filter, answer.getLifetime());
 			} catch (std::exception&) { };
 
 			try {
@@ -212,9 +212,9 @@ namespace dtn
 			req.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 
 			if (origin.isCompressable())
-				req.destination = origin + origin.getDelimiter() + "50";
+				req.destination = origin.add(origin.getDelimiter() + "50");
 			else
-				req.destination = origin + origin.getDelimiter() + "routing";
+				req.destination = origin.add(origin.getDelimiter() + "routing");
 
 			// limit the lifetime to 60 seconds
 			req.lifetime = 60;

@@ -41,7 +41,7 @@ namespace dtn
 		{
 		}
 
-		void NeighborDatabase::NeighborEntry::update(const ibrcommon::BloomFilter &bf, const uint64_t lifetime)
+		void NeighborDatabase::NeighborEntry::update(const ibrcommon::BloomFilter &bf, const dtn::data::Number &lifetime)
 		{
 			ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
 			_filter = bf;
@@ -88,7 +88,7 @@ namespace dtn
 			return _summary.has(id);
 		}
 
-		void NeighborDatabase::NeighborEntry::expire(const size_t timestamp)
+		void NeighborDatabase::NeighborEntry::expire(const dtn::data::Timestamp &timestamp)
 		{
 			{
 				ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
@@ -108,7 +108,7 @@ namespace dtn
 			_summary.expire(timestamp);
 		}
 
-		void NeighborDatabase::expire(const size_t timestamp)
+		void NeighborDatabase::expire(const dtn::data::Timestamp &timestamp)
 		{
 			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); ++iter)
 			{

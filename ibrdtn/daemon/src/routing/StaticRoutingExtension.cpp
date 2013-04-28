@@ -424,7 +424,7 @@ namespace dtn
 				}
 				else
 				{
-					size_t et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
+					dtn::data::Timestamp et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
 					r = new EIDRoute(route.destination, route.nexthop, et);
 				}
 
@@ -469,7 +469,7 @@ namespace dtn
 			}
 		}
 
-		StaticRoutingExtension::EIDRoute::EIDRoute(const dtn::data::EID &match, const dtn::data::EID &nexthop, size_t et)
+		StaticRoutingExtension::EIDRoute::EIDRoute(const dtn::data::EID &match, const dtn::data::EID &nexthop, const dtn::data::Timestamp &et)
 		 : _nexthop(nexthop), _match(match), expiretime(et)
 		{
 		}
@@ -499,7 +499,7 @@ namespace dtn
 			return ss.str();
 		}
 
-		size_t StaticRoutingExtension::EIDRoute::getExpiration() const
+		const dtn::data::Timestamp& StaticRoutingExtension::EIDRoute::getExpiration() const
 		{
 			return expiretime;
 		}
@@ -567,7 +567,7 @@ namespace dtn
 
 		/****************************************/
 
-		StaticRoutingExtension::ExpireTask::ExpireTask(size_t t)
+		StaticRoutingExtension::ExpireTask::ExpireTask(dtn::data::Timestamp t)
 		 : timestamp(t)
 		{
 

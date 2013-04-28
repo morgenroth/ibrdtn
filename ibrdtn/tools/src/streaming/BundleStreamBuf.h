@@ -76,7 +76,7 @@ private:
 		bool operator<(const Chunk& other) const;
 
 		dtn::data::Bundle _bundle;
-		size_t _seq;
+		dtn::data::Number _seq;
 	};
 
 	// Input buffer
@@ -97,7 +97,7 @@ private:
 	std::set<Chunk> _chunks;
 	size_t _chunk_offset;
 
-	size_t _in_seq;
+	dtn::data::Number _in_seq;
 	bool _streaming;
 	bool _request_ack;
 	bool _flush_request;
