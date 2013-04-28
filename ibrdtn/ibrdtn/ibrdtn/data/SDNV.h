@@ -399,6 +399,15 @@ namespace dtn
 				return ss.str();
 			}
 
+			void fromString(const std::string &data) {
+				std::stringstream ss; ss.str(data);
+				ss >> _value;
+			}
+
+			void read(std::istream &stream) {
+				stream >> _value;
+			}
+
 		private:
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV<E> &obj)
 			{

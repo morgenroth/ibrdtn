@@ -84,19 +84,19 @@ namespace dtn
 
 		dtn::data::Serializer& PlainSerializer::operator<<(const dtn::data::PrimaryBlock &obj)
 		{
-			_stream << "Processing flags: " << obj.procflags << std::endl;
-			_stream << "Timestamp: " << obj.timestamp << std::endl;
-			_stream << "Sequencenumber: " << obj.sequencenumber << std::endl;
+			_stream << "Processing flags: " << obj.procflags.toString() << std::endl;
+			_stream << "Timestamp: " << obj.timestamp.toString() << std::endl;
+			_stream << "Sequencenumber: " << obj.sequencenumber.toString() << std::endl;
 			_stream << "Source: " << obj.source.getString() << std::endl;
 			_stream << "Destination: " << obj.destination.getString() << std::endl;
 			_stream << "Reportto: " << obj.reportto.getString() << std::endl;
 			_stream << "Custodian: " << obj.custodian.getString() << std::endl;
-			_stream << "Lifetime: " << obj.lifetime << std::endl;
+			_stream << "Lifetime: " << obj.lifetime.toString() << std::endl;
 
 			if (obj.procflags & dtn::data::PrimaryBlock::FRAGMENT)
 			{
-				_stream << "Fragment offset: " << obj.fragmentoffset << std::endl;
-				_stream << "Application data length: " << obj.appdatalength << std::endl;
+				_stream << "Fragment offset: " << obj.fragmentoffset.toString() << std::endl;
+				_stream << "Application data length: " << obj.appdatalength.toString() << std::endl;
 			}
 
 			return (*this);
@@ -253,7 +253,6 @@ namespace dtn
 			// read until the first empty line appears
 			while (_stream.good())
 			{
-				std::stringstream ss;
 				getline(_stream, data);
 
 				std::string::reverse_iterator iter = data.rbegin();
@@ -274,18 +273,15 @@ namespace dtn
 				// assign header value
 				if (values[0] == "Processing flags")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj.procflags;
+					obj.procflags.fromString(values[1]);
 				}
 				else if (values[0] == "Timestamp")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj.timestamp;
+					obj.timestamp.fromString(values[1]);
 				}
 				else if (values[0] == "Sequencenumber")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj.sequencenumber;
+					obj.sequencenumber.fromString(values[1]);
 				}
 				else if (values[0] == "Source")
 				{
@@ -305,18 +301,15 @@ namespace dtn
 				}
 				else if (values[0] == "Lifetime")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj.lifetime;
+					obj.lifetime.fromString(values[1]);
 				}
 				else if (values[0] == "Fragment offset")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj.fragmentoffset;
+					obj.fragmentoffset.fromString(values[1]);
 				}
 				else if (values[0] == "Application data length")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj.appdatalength;
+					obj.appdatalength.fromString(values[1]);
 				}
 			}
 
