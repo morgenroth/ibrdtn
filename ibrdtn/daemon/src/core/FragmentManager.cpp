@@ -95,13 +95,13 @@ namespace dtn
 						const dtn::data::MetaBundle &m = (*iter);
 						if (meta.payloadlength > 0)
 						{
-							BundleMerger::Chunk chunk(m.offset, m.payloadlength);
+							BundleMerger::Chunk chunk(m.offset.get<dtn::data::Length>(), m.payloadlength.get<dtn::data::Length>());
 							chunks.insert(chunk);
 						}
 					}
 
 					// wait for the next bundle if the fragment is not complete
-					if (!BundleMerger::Chunk::isComplete(meta.appdatalength, chunks)) continue;
+					if (!BundleMerger::Chunk::isComplete(meta.appdatalength.get<dtn::data::Length>(), chunks)) continue;
 
 					// create a new bundle merger container
 					dtn::data::BundleMerger::Container c = dtn::data::BundleMerger::getContainer();

@@ -19,10 +19,10 @@ namespace dtn
 	{
 		class NeighborDataSetImpl {
 		public:
-			NeighborDataSetImpl(const dtn::data::SDNV &id);
+			NeighborDataSetImpl(const dtn::data::Number &id);
 			virtual ~NeighborDataSetImpl() = 0;
 
-			const dtn::data::SDNV _dataset_id;
+			const dtn::data::Number _dataset_id;
 		};
 
 		class NeighborDataset
@@ -30,12 +30,12 @@ namespace dtn
 		private:
 			class Empty : public NeighborDataSetImpl {
 			public:
-				Empty(const dtn::data::SDNV &id) : NeighborDataSetImpl(id) { };
+				Empty(const dtn::data::Number &id) : NeighborDataSetImpl(id) { };
 				virtual ~Empty() {};
 			};
 
 		public:
-			NeighborDataset(const dtn::data::SDNV &id);
+			NeighborDataset(const dtn::data::Number &id);
 			NeighborDataset(NeighborDataSetImpl *impl);
 			~NeighborDataset();
 
@@ -43,11 +43,11 @@ namespace dtn
 			bool operator<(const NeighborDataset&) const;
 			bool operator>(const NeighborDataset&) const;
 
-			bool operator==(const dtn::data::SDNV&) const;
-			bool operator<(const dtn::data::SDNV&) const;
-			bool operator>(const dtn::data::SDNV&) const;
+			bool operator==(const dtn::data::Number&) const;
+			bool operator<(const dtn::data::Number&) const;
+			bool operator>(const dtn::data::Number&) const;
 
-			const dtn::data::SDNV &getId() const;
+			const dtn::data::Number &getId() const;
 
 			NeighborDataSetImpl& operator*();
 			const NeighborDataSetImpl& operator*() const;

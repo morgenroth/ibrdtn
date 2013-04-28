@@ -192,7 +192,7 @@ namespace dtn
 			nodemap _nodes;
 
 			// next timestamp for autoconnect check
-			uint64_t _next_autoconnect;
+			dtn::data::Timestamp _next_autoconnect;
 		};
 	}
 }

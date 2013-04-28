@@ -40,13 +40,16 @@ namespace dtn
 
 		class Bitset : public dtn::data::SDNV<Size> {
 		public:
+			Bitset() {
+			}
+
 			template<typename T>
 			Bitset(T value) : SDNV(value) {
 			}
 
 			~Bitset() { }
 
-			void set(uint8_t flag, const bool &value)
+			void setBit(uint8_t flag, const bool &value)
 			{
 				if (value)
 				{
@@ -58,7 +61,7 @@ namespace dtn
 				}
 			}
 
-			bool get(uint8_t flag) const
+			bool getBit(uint8_t flag) const
 			{
 				return ((const dtn::data::SDNV<Size>&)(*this) & flag);
 			}

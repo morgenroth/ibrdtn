@@ -100,7 +100,7 @@ namespace dtn
 			size_t size() throw ();
 
 			bool has(const dtn::data::MetaBundle &m) const throw ();
-			void expire(size_t timestamp) throw ();
+			void expire(const dtn::data::Timestamp &timestamp) throw ();
 
 			template<class T>
 			const dtn::data::MetaBundle& find(const T &id) const throw (NoBundleFoundException)

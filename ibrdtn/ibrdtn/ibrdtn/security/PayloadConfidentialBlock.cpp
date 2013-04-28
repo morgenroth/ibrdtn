@@ -69,7 +69,7 @@ namespace dtn
 			unsigned char tag[ibrcommon::AES128Stream::tag_len];
 
 			// create a new correlator value
-			uint64_t correlator = createCorrelatorValue(bundle);
+			dtn::data::Number correlator = createCorrelatorValue(bundle);
 
 			// create a random salt and key
 			createSaltAndKey(salt, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes);
@@ -166,7 +166,7 @@ namespace dtn
 				unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes];
 
 				// correlator of the first PCB
-				uint64_t correlator = 0;
+				dtn::data::Number correlator = 0;
 				bool decrypt_related = false;
 
 				// iterate through all blocks

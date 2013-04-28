@@ -20,15 +20,13 @@
  */
 
 #include "ibrdtn/streams/StreamDataSegment.h"
-#include "ibrdtn/data/SDNV.h"
-
-using namespace std;
+#include "ibrdtn/data/Number.h"
 
 namespace dtn
 {
 	namespace streams
 	{
-		StreamDataSegment::StreamDataSegment(SegmentType type, const dtn::data::SDNV &size)
+		StreamDataSegment::StreamDataSegment(SegmentType type, const dtn::data::Number &size)
 		 : _value(size), _type(type), _reason(MSG_SHUTDOWN_IDLE_TIMEOUT), _flags(0)
 		{
 		}
@@ -38,7 +36,7 @@ namespace dtn
 		{
 		}
 
-		StreamDataSegment::StreamDataSegment(ShutdownReason reason, const dtn::data::SDNV &reconnect)
+		StreamDataSegment::StreamDataSegment(ShutdownReason reason, const dtn::data::Number &reconnect)
 		: _value(reconnect), _type(MSG_SHUTDOWN), _reason(reason), _flags(3)
 		{
 		}
@@ -85,8 +83,6 @@ namespace dtn
 
 		std::istream &operator>>(std::istream &stream, StreamDataSegment &seg)
 		{
-			dtn::data::SDNV value;
-
 			char header = 0;
 			stream.get(header);
 
@@ -97,14 +93,12 @@ namespace dtn
 			{
 			case StreamDataSegment::MSG_DATA_SEGMENT:
 				// read the length
-				stream >> value;
-				seg._value = value;
+				stream >> seg._value;
 				break;
 
 			case StreamDataSegment::MSG_ACK_SEGMENT:
 				// read the acknowledged length
-				stream >> value;
-				seg._value = value;
+				stream >> seg._value;
 				break;
 
 			case StreamDataSegment::MSG_REFUSE_BUNDLE:
@@ -119,8 +113,7 @@ namespace dtn
 				stream.get(reason);
 				seg._reason = StreamDataSegment::ShutdownReason(reason);
 
-				stream >> value;
-				seg._value = value.getValue();
+				stream >> seg._value;
 				break;
 			}
 

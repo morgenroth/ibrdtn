@@ -21,7 +21,7 @@
 
 #include "net/DiscoveryAnnouncement.h"
 #include <ibrdtn/data/Exceptions.h>
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <iostream>
@@ -116,7 +116,7 @@ namespace dtn
 					}
 
 					dtn::data::BundleString eid(announcement._canonical_eid.getString());
-					dtn::data::SDNV beacon_len;
+					dtn::data::Number beacon_len;
 
 					// determine the beacon length
 					beacon_len += eid.getLength();
@@ -167,7 +167,7 @@ namespace dtn
 
 					if ( flags && DiscoveryAnnouncement::BEACON_SERVICE_BLOCK )
 					{
-						stream << dtn::data::SDNV(services.size());
+						stream << dtn::data::Number(services.size());
 
 						for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 						{
@@ -247,8 +247,8 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER_DEBUG(60) << "beacon version 1 received" << IBRCOMMON_LOGGER_ENDL;
 
-				dtn::data::SDNV beacon_len;
-				dtn::data::SDNV eid_len;
+				dtn::data::Number beacon_len;
+				dtn::data::Number eid_len;
 
 				stream.get((char&)announcement._flags);
 
@@ -259,10 +259,13 @@ namespace dtn
 					return stream;
 				}
 
-				stream >> beacon_len; int remain = beacon_len.getValue();
+				stream >> beacon_len;
+				int remain = beacon_len.get<int>();
 
 				dtn::data::BundleString eid;
-				stream >> eid; remain -= eid.getLength();
+				stream >> eid;
+				remain -= static_cast<int>(eid.getLength());
+
 				announcement._canonical_eid = dtn::data::EID((std::string)eid);
 
 				// get the services
@@ -277,7 +280,7 @@ namespace dtn
 					DiscoveryService service;
 					stream >> service;
 					services.push_back(service);
-					remain -= service.getLength();
+					remain -= static_cast<int>(service.getLength());
 				}
 				break;
 			}
@@ -314,15 +317,15 @@ namespace dtn
 					list<DiscoveryService> &services = announcement._services;
 
 					// read the number of services
-					dtn::data::SDNV num_services;
+					dtn::data::Number num_services;
 					stream >> num_services;
 
-					IBRCOMMON_LOGGER_DEBUG(65) << "beacon services (" << num_services.getValue() << "): " << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(65) << "beacon services (" << num_services.toString() << "): " << IBRCOMMON_LOGGER_ENDL;
 
 					// clear the services
 					services.clear();
 
-					for (unsigned int i = 0; i < num_services.getValue(); ++i)
+					for (unsigned int i = 0; num_services > i; ++i)
 					{
 						// decode the service blocks
 						DiscoveryService service;

@@ -139,12 +139,12 @@ namespace dtn
 					dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 					// read the bundle out of the storage
-					const dtn::data::Bundle bundle = storage.get(job._bundle);
+					const dtn::data::Bundle bundle = storage.get(job.bundle);
 
 					// Put bundle into stringstream
 					serializer << bundle; _stream.flush();
 					// raise bundle event
-					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+					dtn::net::TransferCompletedEvent::raise(job.destination, bundle);
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				}
 				// FIXME: Exit strategy when sending on socket failed. Like destroying the connection object

@@ -99,7 +99,7 @@ namespace dtn
 			SecurityBlock::decryptBlock(bundle, it, salt, keydata);
 		}
 
-		void ExtensionSecurityBlock::decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, uint64_t correlator)
+		void ExtensionSecurityBlock::decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::data::Number &correlator)
 		{
 			// iterate through all extension security blocks
 			dtn::data::Bundle::find_iterator find_it(bundle.begin(), ExtensionSecurityBlock::BLOCK_TYPE);

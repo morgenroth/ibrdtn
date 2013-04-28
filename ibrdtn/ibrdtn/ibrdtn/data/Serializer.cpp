@@ -331,7 +331,7 @@ namespace dtn
 			return (*this);
 		}
 
-		Serializer& DefaultSerializer::serialize(const dtn::data::PayloadBlock& obj, Length clip_offset, Length clip_length)
+		Serializer& DefaultSerializer::serialize(const dtn::data::PayloadBlock& obj, const Length &clip_offset, const Length &clip_length)
 		{
 			_stream.put((char&)obj.getType());
 			_stream << obj.getProcessingFlags();
@@ -544,11 +544,11 @@ namespace dtn
 			}
 
 			// size of the payload in the block
-			Number payload_size = obj.getLength();
+			Length payload_size = obj.getLength();
 			len += payload_size;
 
 			// size of the payload size
-			len += payload_size.getLength();
+			len += Number(payload_size).getLength();
 
 			return len;
 		}
@@ -629,12 +629,12 @@ namespace dtn
 					}
 				} catch (BundleBuilder::DiscardBlockException &ex) {
 					// skip EIDs
-					if ( procflags.get(dtn::data::Block::BLOCK_CONTAINS_EIDS) )
+					if ( procflags.getBit(dtn::data::Block::BLOCK_CONTAINS_EIDS) )
 					{
 						Number eidcount;
 						_stream >> eidcount;
 
-						for (unsigned int i = 0; i < eidcount; ++i)
+						for (unsigned int i = 0; eidcount > i; ++i)
 						{
 							Number scheme, ssp;
 							_stream >> scheme;
@@ -650,7 +650,7 @@ namespace dtn
 					_stream.ignore(block_size.get<std::streamsize>());
 				}
 
-				lastblock = procflags.get(Block::LAST_BLOCK);
+				lastblock = procflags.getBit(Block::LAST_BLOCK);
 			}
 
 			// validate this bundle
@@ -673,7 +673,7 @@ namespace dtn
 			obj.lifetime = pb.lifetime;
 			obj.offset = pb.fragmentoffset;
 			obj.procflags = pb.procflags;
-			obj.received = 0;
+			obj.received = dtn::data::DTNTime();
 			obj.reportto = pb.reportto;
 			obj.sequencenumber = pb.sequencenumber;
 			obj.source = pb.source;
@@ -754,7 +754,7 @@ namespace dtn
 				Number eidcount;
 				_stream >> eidcount;
 
-				for (unsigned int i = 0; i < eidcount; ++i)
+				for (unsigned int i = 0; eidcount > i; ++i)
 				{
 					Number scheme, ssp;
 					_stream >> scheme;
@@ -792,7 +792,7 @@ namespace dtn
 				Number eidcount;
 				_stream >> eidcount;
 
-				for (unsigned int i = 0; i < eidcount; ++i)
+				for (unsigned int i = 0; eidcount > i; ++i)
 				{
 					Number scheme, ssp;
 					_stream >> scheme;
@@ -951,7 +951,7 @@ namespace dtn
 				Number eidcount;
 				_stream >> eidcount;
 
-				for (unsigned int i = 0; i < eidcount; ++i)
+				for (unsigned int i = 0; eidcount > i; ++i)
 				{
 					dtn::data::BundleString str;
 					_stream >> str;

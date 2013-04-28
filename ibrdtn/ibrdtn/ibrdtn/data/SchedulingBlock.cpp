@@ -45,7 +45,7 @@ namespace dtn
 
 		void SchedulingBlock::setPriority(Integer p)
 		{
-			_flags.set(HAS_PRIORITY, true);
+			_flags.setBit(HAS_PRIORITY, true);
 			_priority = p;
 		}
 
@@ -58,7 +58,7 @@ namespace dtn
 		{
 			Length len = _flags.getLength();
 
-			if (_flags.get(HAS_PRIORITY)) _priority.getLength();
+			if (_flags.getBit(HAS_PRIORITY)) _priority.getLength();
 
 			return len;
 		}
@@ -67,7 +67,7 @@ namespace dtn
 		{
 			stream << _flags;
 
-			if (_flags.get(HAS_PRIORITY)) {
+			if (_flags.getBit(HAS_PRIORITY)) {
 				stream << _priority;
 			}
 
@@ -79,7 +79,7 @@ namespace dtn
 		{
 			stream >> _flags;
 
-			if (_flags.get(HAS_PRIORITY)) {
+			if (_flags.getBit(HAS_PRIORITY)) {
 				stream >> _priority;
 			}
 

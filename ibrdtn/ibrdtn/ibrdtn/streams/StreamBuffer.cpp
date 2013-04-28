@@ -66,7 +66,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(80) << "---------------------------------------" << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Buffer size: " << _buffer_size << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "State bits: " << _statebits << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "Recv size: " << _recv_size.getValue() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(80) << "Recv size: " << _recv_size.toString() << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Segments: " << _segments.size() << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Reject segments: " << _rejected_segments.size() << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Underflow remaining: " << _underflow_data_remain << IBRCOMMON_LOGGER_ENDL;
@@ -106,7 +106,7 @@ namespace dtn
 
 		bool StreamConnection::StreamBuffer::__good() const
 		{
-			int badbits = STREAM_FAILED + STREAM_BAD + STREAM_EOF + STREAM_SHUTDOWN + STREAM_CLOSED;
+			int badbits = STREAM_FAILED | STREAM_BAD | STREAM_EOF | STREAM_SHUTDOWN | STREAM_CLOSED;
 			return !(badbits & _statebits);
 		}
 
@@ -300,7 +300,7 @@ namespace dtn
 
 					// write the segment to the stream
 					_stream << seg;
-					_stream.write(&out_buf_[0], (size_t)seg._value.getValue());
+					_stream.write(&out_buf_[0], seg._value.get<size_t>());
 				}
 
 				return traits_type::not_eof(c);
@@ -447,7 +447,7 @@ namespace dtn
 					{
 						case StreamDataSegment::MSG_DATA_SEGMENT:
 						{
-							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_DATA_SEGMENT received, size: " << seg._value.getValue() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_DATA_SEGMENT received, size: " << seg._value.toString() << IBRCOMMON_LOGGER_ENDL;
 
 							if (seg._flags & StreamDataSegment::MSG_MARK_BEGINN)
 							{
@@ -460,7 +460,7 @@ namespace dtn
 							}
 
 							// set the new data length
-							_underflow_data_remain = seg._value.getValue();
+							_underflow_data_remain = seg._value.get<Length>();
 
 							if (get(STREAM_REJECT))
 							{
@@ -509,7 +509,7 @@ namespace dtn
 
 									IBRCOMMON_LOGGER_DEBUG(60) << q.size() << " elements to ACK" << IBRCOMMON_LOGGER_ENDL;
 
-									_conn.eventBundleAck(seg._value.getValue());
+									_conn.eventBundleAck(seg._value.get<Length>());
 
 									q.pop();
 								}

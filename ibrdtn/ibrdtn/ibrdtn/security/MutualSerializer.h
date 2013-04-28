@@ -24,7 +24,7 @@
 
 #include "ibrdtn/data/Serializer.h"
 #include "ibrdtn/security/SecurityBlock.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include <sys/types.h>
 
 namespace dtn
@@ -47,7 +47,7 @@ namespace dtn
 				/**
 				The size in bytes of a SDNV in mutable form in the stream
 				*/
-				static const size_t sdnv_size = 8;
+				static const dtn::data::Length sdnv_size = 8;
 				
 				/**
 				Creates a MutualSerializer which will stream into stream
@@ -118,7 +118,7 @@ namespace dtn
 				@param value the SDNV which shall be written
 				@return the stream in which shall be written
 				*/
-				virtual Serializer &operator<<(const dtn::data::SDNV& value);
+				virtual Serializer &operator<<(const dtn::data::Number& value);
 
 				/**
 				 * Serialize a list of type-length-value entries.

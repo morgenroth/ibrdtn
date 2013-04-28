@@ -25,6 +25,7 @@
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/thread/Timer.h>
+#include <ibrdtn/data/Number.h>
 #include "Component.h"
 
 namespace dtn

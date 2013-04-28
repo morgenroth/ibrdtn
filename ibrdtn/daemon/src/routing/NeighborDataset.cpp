@@ -11,7 +11,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		NeighborDataSetImpl::NeighborDataSetImpl(const dtn::data::SDNV &id)
+		NeighborDataSetImpl::NeighborDataSetImpl(const dtn::data::Number &id)
 		: _dataset_id(id)
 		{
 		}
@@ -47,22 +47,22 @@ namespace dtn
 			return (getId() > obj.getId());
 		}
 
-		bool NeighborDataset::operator==(const dtn::data::SDNV &obj) const
+		bool NeighborDataset::operator==(const dtn::data::Number &obj) const
 		{
 			return (obj == getId());
 		}
 
-		bool NeighborDataset::operator<(const dtn::data::SDNV &obj) const
+		bool NeighborDataset::operator<(const dtn::data::Number &obj) const
 		{
 			return (getId() < obj);
 		}
 
-		bool NeighborDataset::operator>(const dtn::data::SDNV &obj) const
+		bool NeighborDataset::operator>(const dtn::data::Number &obj) const
 		{
 			return (getId() > obj);
 		}
 
-		const dtn::data::SDNV& NeighborDataset::getId() const
+		const dtn::data::Number& NeighborDataset::getId() const
 		{
 			return _impl->_dataset_id;
 		}

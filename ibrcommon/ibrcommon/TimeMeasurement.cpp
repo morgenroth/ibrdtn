@@ -65,7 +65,7 @@ namespace ibrcommon
 #endif
 	}
 
-	float TimeMeasurement::getMilliseconds() const
+	size_t TimeMeasurement::getMilliseconds() const
 	{
 		// calc difference
 		uint64_t timeElapsed = getNanoseconds();
@@ -73,10 +73,10 @@ namespace ibrcommon
 		// make it readable
 		float delay_ms = (float)timeElapsed / 1000000;
 
-		return delay_ms;
+		return static_cast<size_t>(delay_ms);
 	}
 
-	uint64_t TimeMeasurement::getNanoseconds() const
+	size_t TimeMeasurement::getNanoseconds() const
 	{
 		// calc difference
 #ifdef HAVE_MACH_MACH_TIME_H
@@ -86,10 +86,10 @@ namespace ibrcommon
 #endif
 
 		if (val < 0) return 0;
-		return val;
+		return static_cast<size_t>(val);
 	}
 
-	float TimeMeasurement::getMicroseconds() const
+	size_t TimeMeasurement::getMicroseconds() const
 	{
 		// calc difference
 		uint64_t timeElapsed = getNanoseconds();
@@ -97,10 +97,10 @@ namespace ibrcommon
 		// make it readable
 		float delay_m = (float)timeElapsed / 1000;
 
-		return delay_m;
+		return static_cast<size_t>(delay_m);
 	}
 
-	float TimeMeasurement::getSeconds() const
+	size_t TimeMeasurement::getSeconds() const
 	{
 		return getMilliseconds() / 1000;
 	}
@@ -152,9 +152,9 @@ namespace ibrcommon
 		return stream;
 	}
 
-	int64_t TimeMeasurement::timespecDiff(const uint64_t &timeA, const uint64_t &timeB)
+	ssize_t TimeMeasurement::timespecDiff(const size_t &timeA, const size_t &timeB)
 	{
-		int64_t duration = timeA - timeB;
+		double duration = static_cast<double>(timeA) - static_cast<double>(timeB);
 
 #ifdef HAVE_MACH_MACH_TIME_H
 		mach_timebase_info_data_t info;
@@ -164,12 +164,14 @@ namespace ibrcommon
 		duration *= info.numer;
 		duration /= info.denom;
 #endif
-		return duration;
+		return static_cast<ssize_t>(duration);
 	}
 
-	int64_t TimeMeasurement::timespecDiff(const struct timespec *timeA_p, const struct timespec *timeB_p)
+	ssize_t TimeMeasurement::timespecDiff(const struct timespec *timeA_p, const struct timespec *timeB_p)
 	{
-		//Casting to 64Bit, otherwise it caps out at ~ 5 secs for 32bit machines
-		return ( ( (int64_t)(timeA_p->tv_sec) * 1e9 + (int64_t)(timeA_p->tv_nsec)) -  ( (int64_t)(timeB_p->tv_sec) * 1e9 + (int64_t)(timeB_p->tv_nsec)) );
+		double timeA = static_cast<double>(timeA_p->tv_sec) * 1e9 + static_cast<double>(timeA_p->tv_nsec);
+		double timeB = static_cast<double>(timeB_p->tv_sec) * 1e9 + static_cast<double>(timeB_p->tv_nsec);
+
+		return static_cast<size_t>( timeA - timeB );
 	}
 }

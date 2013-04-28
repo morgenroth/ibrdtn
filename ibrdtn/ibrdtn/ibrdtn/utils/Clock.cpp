@@ -138,7 +138,7 @@ namespace dtn
 			if (Clock::getRating() == 0) return timestamp + lifetime;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			double sigma_error = static_cast<double>(lifetime) * (1 - Clock::getRating());
+			double sigma_error = lifetime.get<double>() * (1 - Clock::getRating());
 
 			// expiration adjusted by quality of time
 			return timestamp + lifetime + dtn::data::Number(sigma_error);
@@ -166,7 +166,7 @@ namespace dtn
 			if ((Clock::getRating() == 0) || dtn::utils::Clock::isBad()) return false;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			const double sigma_error = static_cast<double>(lifetime) * (1 - Clock::getRating());
+			const double sigma_error = lifetime.get<double>() * (1 - Clock::getRating());
 
 			// calculate adjusted expire time
 			const dtn::data::Timestamp expiretime = timestamp + lifetime + dtn::data::Number(sigma_error);
@@ -200,9 +200,9 @@ namespace dtn
 			Clock::gettimeofday(&now);
 
 			// timezone
-			dtn::data::SDNV offset = Clock::getTimezone() * 3600;
+			dtn::data::Timestamp offset = Clock::getTimezone() * 3600;
 
-			return dtn::data::Timestamp(now.tv_sec) + offset;
+			return offset + now.tv_sec;
 		}
 
 		void Clock::setOffset(const struct timeval &tv)

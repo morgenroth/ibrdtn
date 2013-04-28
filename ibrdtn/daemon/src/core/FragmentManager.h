@@ -115,8 +115,8 @@ namespace dtn
 
 				dtn::data::EID peer;
 				dtn::data::BundleID id;
-				uint64_t offset;
-				uint64_t expires;
+				dtn::data::Length offset;
+				dtn::data::Timestamp expires;
 			};
 
 			static void expire_offsets(uint64_t timestamp);

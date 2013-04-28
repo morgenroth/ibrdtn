@@ -80,12 +80,12 @@ namespace dtn
 		int MetaBundle::getPriority() const
 		{
 			// read priority
-			if (procflags.get(dtn::data::PrimaryBlock::PRIORITY_BIT1))
+			if (procflags.getBit(dtn::data::PrimaryBlock::PRIORITY_BIT1))
 			{
 				return 0;
 			}
 
-			if (procflags.get(dtn::data::PrimaryBlock::PRIORITY_BIT2))
+			if (procflags.getBit(dtn::data::PrimaryBlock::PRIORITY_BIT2))
 			{
 				return 1;
 			}
@@ -95,7 +95,7 @@ namespace dtn
 
 		bool MetaBundle::get(dtn::data::PrimaryBlock::FLAGS flag) const
 		{
-			return procflags.get(flag);
+			return procflags.getBit(flag);
 		}
 	}
 }

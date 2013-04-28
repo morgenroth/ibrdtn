@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <limits>
+#include <cstdlib>
 
 #ifndef _SDNV_H_
 #define _SDNV_H_
@@ -72,6 +73,14 @@ namespace dtn
 			 */
 			static const size_t MAX_LENGTH = 10;
 
+			SDNV(const double value) : _value(0) {
+				E max_val = std::numeric_limits<E>::max();
+				if (value > static_cast<double>(max_val))
+					throw ValueOutOfRangeException();
+
+				_value = static_cast<double>(value);
+			}
+
 			/**
 			 * Constructor for a SDNV object
 			 * @param value The new value of the SDNV
@@ -80,15 +89,19 @@ namespace dtn
 			SDNV(const T value = 0) : _value(0) {
 				if (sizeof(T) == sizeof(_value))
 				{
-					_value = value;
+					_value = static_cast<T>(value);
 				}
 				else
 				{
-					if (value > std::numeric_limits<E>::max())
+					E max_val = std::numeric_limits<E>::max();
+					if (value > static_cast<T>(max_val))
 						throw ValueOutOfRangeException();
 
-					_value = std::numeric_limits<E>::max() & value;
+					_value = static_cast<E>(value);
 				}
+			}
+
+			SDNV() : _value(0) {
 			}
 
 			/**
@@ -115,22 +128,19 @@ namespace dtn
 				return val_len;
 			}
 
-			/**
-			 * Returns the decoded value.
-			 * @return The decoded value.
-			 */
 			template<typename T>
 			T get() const {
-				if (sizeof(T) == sizeof(_value))
+				if (sizeof(T) == sizeof(E))
 				{
-					return _value;
+					return static_cast<T>(_value);
 				}
 				else
 				{
-					if (_value > std::numeric_limits<T>::max())
+					T max_val = std::numeric_limits<T>::max();
+					if (_value > static_cast<E>(max_val))
 						throw ValueOutOfRangeException();
 
-					return std::numeric_limits<T>::max() & _value;
+					return static_cast<T>(_value);
 				}
 			}
 
@@ -142,11 +152,14 @@ namespace dtn
 				}
 				else
 				{
-					if (value > std::numeric_limits<E>::max())
+					E max_val = std::numeric_limits<E>::max();
+					if (value > static_cast<T>(max_val))
 						throw ValueOutOfRangeException();
 
-					_value = std::numeric_limits<E>::max() & value;
+					_value = static_cast<E>(value);
 				}
+
+				return (*this);
 			}
 
 			bool operator==(const SDNV<E> &value) const
@@ -159,10 +172,32 @@ namespace dtn
 				return (value._value != _value);
 			}
 
+			template<typename T>
+			SDNV<E> operator+(const T &value)
+			{
+				E result = _value + static_cast<E>(value);
+				return SDNV<E>(result);
+			}
+
 			SDNV<E> operator+(const SDNV<E> &value)
 			{
 				E result = _value + value._value;
 				return SDNV<E>(result);
+			}
+
+			template<typename T>
+			friend SDNV<E> operator+(const SDNV<E> &left, const T &right)
+			{
+				SDNV<E> ret(left);
+				ret += right;
+				return ret;
+			}
+
+			template<typename T>
+			SDNV<E>& operator+=(const T &value)
+			{
+				_value += static_cast<E>(value);
+				return (*this);
 			}
 
 			SDNV<E>& operator+=(const SDNV<E> &value)
@@ -171,15 +206,131 @@ namespace dtn
 				return (*this);
 			}
 
+			SDNV<E>& operator++() // prefix
+			{
+				++_value;
+				return (*this);
+			}
+
+			SDNV<E> operator++(int) // postfix
+			{
+				SDNV<E> prev(*this);
+				++_value;
+				return prev;
+			}
+
+			template<typename T>
+			SDNV<E> operator-(const T &value)
+			{
+				E result = _value - static_cast<E>(value);
+				return SDNV<E>(result);
+			}
+
 			SDNV<E> operator-(const SDNV<E> &value)
 			{
 				E result = _value - value._value;
 				return SDNV<E>(result);
 			}
 
+			template<typename T>
+			friend SDNV<E> operator-(const SDNV<E> &left, const T &right)
+			{
+				SDNV<E> ret(left);
+				ret -= right;
+				return ret;
+			}
+
+			template<typename T>
+			SDNV<E>& operator-=(const T &value)
+			{
+				_value -= static_cast<E>(value);
+				return (*this);
+			}
+
 			SDNV<E>& operator-=(const SDNV<E> &value)
 			{
 				_value -= value._value;
+				return (*this);
+			}
+
+			SDNV<E>& operator--() // prefix
+			{
+				--_value;
+				return (*this);
+			}
+
+			SDNV<E> operator--(int) // postfix
+			{
+				SDNV<E> prev(*this);
+				--_value;
+				return prev;
+			}
+
+			template<typename T>
+			SDNV<E> operator/(const T &value)
+			{
+				E result = _value / static_cast<E>(value);
+				return SDNV<E>(result);
+			}
+
+			SDNV<E> operator/(const SDNV<E> &value)
+			{
+				E result = _value / value._value;
+				return SDNV<E>(result);
+			}
+
+			template<typename T>
+			friend SDNV<E> operator/(const SDNV<E> &left, const T &right)
+			{
+				SDNV<E> ret(left);
+				ret /= right;
+				return ret;
+			}
+
+			template<typename T>
+			SDNV<E>& operator/=(const T &value)
+			{
+				_value /= static_cast<E>(value);
+				return (*this);
+			}
+
+			SDNV<E>& operator/=(const SDNV<E> &value)
+			{
+				_value /= value._value;
+				return (*this);
+			}
+
+			template<typename T>
+			SDNV<E> operator*(const T &value)
+			{
+				E result = _value * static_cast<E>(value);
+				return SDNV<E>(result);
+			}
+
+			SDNV<E> operator*(const SDNV<E> &value)
+			{
+				E result = _value * value._value;
+				return SDNV<E>(result);
+			}
+
+			template<typename T>
+			friend SDNV<E> operator*(const SDNV<E> &left, const T &right)
+			{
+				SDNV<E> ret(left);
+				ret *= right;
+				return ret;
+			}
+
+			template<typename T>
+			SDNV<E>& operator*=(const T &value)
+			{
+				_value *= static_cast<E>(value);
+				return (*this);
+			}
+
+			SDNV<E>& operator*=(const SDNV<E> &value)
+			{
+				_value *= value._value;
 				return (*this);
 			}
 
@@ -228,6 +379,14 @@ namespace dtn
 			static SDNV<E> max()
 			{
 				return std::numeric_limits<E>::max();
+			}
+
+			SDNV<E>& random()
+			{
+				// for compatibility use 32-bit here
+				uint32_t val = static_cast<uint32_t>(::random());
+				(*this) = static_cast<E>(val);
+				return (*this);
 			}
 
 			std::string toString() const {

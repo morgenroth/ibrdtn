@@ -39,7 +39,7 @@ namespace dtn
 		}
 
 		ConvergenceLayer::Job::Job(const dtn::data::EID &eid, const dtn::data::BundleID &b)
-		 : _bundle(b), _destination(eid)
+		 : bundle(b), destination(eid)
 		{
 		}
 
@@ -49,8 +49,8 @@ namespace dtn
 
 		void ConvergenceLayer::Job::clear()
 		{
-			_bundle = dtn::data::BundleID();
-			_destination = dtn::data::EID();
+			bundle = dtn::data::BundleID();
+			destination = dtn::data::EID();
 		}
 	}
 }

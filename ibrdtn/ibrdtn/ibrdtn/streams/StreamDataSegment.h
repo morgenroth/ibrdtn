@@ -23,7 +23,7 @@
 #ifndef STREAMDATASEGMENT_H_
 #define STREAMDATASEGMENT_H_
 
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 #include <stdlib.h>
 #include <iostream>
 #include <stdint.h>
@@ -58,13 +58,13 @@ namespace dtn
 				MSG_SHUTDOWN_BUSY = 0x02
 			};
 
-			StreamDataSegment(SegmentType type, const dtn::data::SDNV &size); // creates a ACK or DATA segment
+			StreamDataSegment(SegmentType type, const dtn::data::Number &size); // creates a ACK or DATA segment
 			StreamDataSegment(SegmentType type = MSG_KEEPALIVE); // Creates a Keep-Alive Message
-			StreamDataSegment(ShutdownReason reason, const dtn::data::SDNV &reconnect = 0);  // Creates a Shutdown Message
+			StreamDataSegment(ShutdownReason reason, const dtn::data::Number &reconnect = 0);  // Creates a Shutdown Message
 
 			virtual ~StreamDataSegment();
 
-			dtn::data::SDNV _value;
+			dtn::data::Number _value;
 			SegmentType _type;
 			ShutdownReason _reason;
 			uint8_t _flags;

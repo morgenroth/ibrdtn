@@ -40,9 +40,9 @@ namespace dtn
 
 		Block& Block::operator=(const Block &block)
 		{
-			bool last_block = _procflags.get(LAST_BLOCK);
+			bool last_block = _procflags.getBit(LAST_BLOCK);
 			_procflags = block._procflags;
-			_procflags.set(LAST_BLOCK, last_block);
+			_procflags.setBit(LAST_BLOCK, last_block);
 
 			_eids = block._eids;
 			return (*this);
@@ -58,7 +58,7 @@ namespace dtn
 			_eids.push_back(eid);
 
 			// add proc. flag
-			_procflags.set(Block::BLOCK_CONTAINS_EIDS, true);
+			_procflags.setBit(Block::BLOCK_CONTAINS_EIDS, true);
 		}
 
 		void Block::clearEIDs()
@@ -66,7 +66,7 @@ namespace dtn
 			_eids.clear();
 
 			// clear proc. flag
-			_procflags.set(Block::BLOCK_CONTAINS_EIDS, false);
+			_procflags.setBit(Block::BLOCK_CONTAINS_EIDS, false);
 		}
 
 		const Block::eid_list& Block::getEIDList() const
@@ -76,12 +76,12 @@ namespace dtn
 
 		void Block::set(ProcFlags flag, const bool &value)
 		{
-			_procflags.set(flag, value);
+			_procflags.setBit(flag, value);
 		}
 
 		bool Block::get(ProcFlags flag) const
 		{
-			return _procflags.get(flag);
+			return _procflags.getBit(flag);
 		}
 
 		const Bitset& Block::getProcessingFlags() const

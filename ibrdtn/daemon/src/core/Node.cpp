@@ -35,7 +35,7 @@ namespace dtn
 {
 	namespace core
 	{
-		Node::URI::URI(const Node::Type t, const Node::Protocol p, const std::string &uri, const size_t to, const int prio)
+		Node::URI::URI(const Node::Type t, const Node::Protocol p, const std::string &uri, const dtn::data::Number &to, const int prio)
 		 : type(t), protocol(p), value(uri), expire((to == 0) ? 0 : dtn::utils::Clock::getTime() + to), priority(prio)
 		{
 		}
@@ -102,7 +102,7 @@ namespace dtn
 			return stream;
 		}
 
-		Node::Attribute::Attribute(const Type t, const std::string &n, const std::string &v, const size_t to, const int p)
+		Node::Attribute::Attribute(const Type t, const std::string &n, const std::string &v, const dtn::data::Number &to, const int p)
 		 : type(t), name(n), value(v), expire((to == 0) ? 0 : dtn::utils::Clock::getTime() + to), priority(p)
 		{
 		}
@@ -412,7 +412,7 @@ namespace dtn
 		bool Node::expire()
 		{
 			// get the current timestamp
-			uint64_t ct = dtn::utils::Clock::getTime();
+			dtn::data::Timestamp ct = dtn::utils::Clock::getTime();
 
 			// walk though all Attribute elements and remove the expired ones
 			{

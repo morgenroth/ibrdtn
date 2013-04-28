@@ -25,6 +25,7 @@
 #include <ibrdtn/data/SchedulingBlock.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
+#include <stdint.h>
 
 namespace dtn
 {
@@ -164,7 +165,7 @@ namespace dtn
 			if (_st != NULL)
 				throw SQLiteQueryException("already prepared");
 
-			int err = sqlite3_prepare_v2(_database, _query.c_str(), _query.length(), &_st, 0);
+			int err = sqlite3_prepare_v2(_database, _query.c_str(), static_cast<int>(_query.length()), &_st, 0);
 
 			if ( err != SQLITE_OK )
 				throw SQLiteQueryException("failed to prepare statement: " + _query);
@@ -209,7 +210,7 @@ namespace dtn
 			Statement st(_database, SET_SCHEMAVERSION);
 
 			// bind version text to the statement
-			sqlite3_bind_text(*st, 1, ss.str().c_str(), ss.str().length(), SQLITE_TRANSIENT);
+			sqlite3_bind_text(*st, 1, ss.str().c_str(), static_cast<int>(ss.str().length()), SQLITE_TRANSIENT);
 
 			int err = st.step();
 			if(err != SQLITE_DONE)
@@ -362,7 +363,7 @@ namespace dtn
 			get(st, meta);
 		}
 
-		void SQLiteDatabase::get(Statement &st, dtn::data::MetaBundle &bundle, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::get(Statement &st, dtn::data::MetaBundle &bundle, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
 			bundle.destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
@@ -388,10 +389,10 @@ namespace dtn
 			bundle.payloadlength = sqlite3_column_int64(*st, 11);
 
 			// restore net priority
-			bundle.net_priority = sqlite3_column_int64(*st, 12);
+			bundle.net_priority = sqlite3_column_int(*st, 12);
 		}
 
-		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
 			bundle.destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
@@ -452,7 +453,7 @@ namespace dtn
 					while (unlimited || (items_added < query_limit))
 					{
 						// bind the statement parameter
-						size_t bind_offset = query.bind(*st, 1);
+						int bind_offset = query.bind(*st, 1);
 
 						// query the database
 						__get(cb, st, ret, items_added, bind_offset, offset);
@@ -479,7 +480,7 @@ namespace dtn
 			if (items_added == 0) throw dtn::storage::NoBundleFoundException();
 		}
 
-		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
+		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, int bind_offset, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
 		{
 			bool unlimited = (cb.limit() <= 0);
 			size_t query_limit = (cb.limit() > 0) ? cb.limit() : 10;
@@ -595,18 +596,18 @@ namespace dtn
 			int err;
 
 			const dtn::data::EID _sourceid = bundle.source;
-			size_t TTL = bundle.timestamp + bundle.lifetime;
+			dtn::data::Number TTL = bundle.timestamp + bundle.lifetime;
 
 			Statement st(_database, _sql_queries[BUNDLE_STORE]);
 
 			set_bundleid(st, bundle);
 
-			sqlite3_bind_text(*st, 5, bundle.source.getString().c_str(), bundle.source.getString().length(), SQLITE_TRANSIENT);
-			sqlite3_bind_text(*st, 6, bundle.destination.getString().c_str(), bundle.destination.getString().length(), SQLITE_TRANSIENT);
-			sqlite3_bind_text(*st, 7, bundle.reportto.getString().c_str(), bundle.reportto.getString().length(), SQLITE_TRANSIENT);
-			sqlite3_bind_text(*st, 8, bundle.custodian.getString().c_str(), bundle.custodian.getString().length(), SQLITE_TRANSIENT);
-			sqlite3_bind_int(*st, 9, bundle.procflags);
-			sqlite3_bind_int64(*st, 10, bundle.lifetime);
+			sqlite3_bind_text(*st, 5, bundle.source.getString().c_str(), static_cast<int>(bundle.source.getString().length()), SQLITE_TRANSIENT);
+			sqlite3_bind_text(*st, 6, bundle.destination.getString().c_str(), static_cast<int>(bundle.destination.getString().length()), SQLITE_TRANSIENT);
+			sqlite3_bind_text(*st, 7, bundle.reportto.getString().c_str(), static_cast<int>(bundle.reportto.getString().length()), SQLITE_TRANSIENT);
+			sqlite3_bind_text(*st, 8, bundle.custodian.getString().c_str(), static_cast<int>(bundle.custodian.getString().length()), SQLITE_TRANSIENT);
+			sqlite3_bind_int(*st, 9, bundle.procflags.get<uint32_t>());
+			sqlite3_bind_int64(*st, 10, bundle.lifetime.get<uint64_t>());
 
 			if (bundle.get(dtn::data::Bundle::FRAGMENT))
 			{
@@ -618,12 +619,12 @@ namespace dtn
 				sqlite3_bind_null(*st, 11);
 			}
 
-			sqlite3_bind_int64(*st, 12, TTL);
+			sqlite3_bind_int64(*st, 12, TTL.get<uint64_t>());
 			sqlite3_bind_int64(*st, 13, dtn::data::MetaBundle(bundle).getPriority());
 
 			try {
 				const dtn::data::ScopeControlHopLimitBlock &schl = bundle.find<const dtn::data::ScopeControlHopLimitBlock>();
-				sqlite3_bind_int64(*st, 14, schl.getHopsToLive() );
+				sqlite3_bind_int64(*st, 14, schl.getHopsToLive().get<uint64_t>() );
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				sqlite3_bind_null(*st, 14 );
 			}
@@ -637,7 +638,7 @@ namespace dtn
 
 			try {
 				const dtn::data::SchedulingBlock &sched = bundle.find<const dtn::data::SchedulingBlock>();
-				sqlite3_bind_int64(*st, 16, sched.getPriority() );
+				sqlite3_bind_int(*st, 16, sched.getPriority().get<int>() );
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				sqlite3_bind_int64(*st, 16, 0 );
 			}
@@ -682,7 +683,7 @@ namespace dtn
 			sqlite3_bind_int(*st, 5, blocktyp);
 
 			// the filename of the block data
-			sqlite3_bind_text(*st, 6, file.getPath().c_str(), file.getPath().size(), SQLITE_TRANSIENT);
+			sqlite3_bind_text(*st, 6, file.getPath().c_str(), static_cast<int>(file.getPath().size()), SQLITE_TRANSIENT);
 
 			// the ordering number
 			sqlite3_bind_int(*st, 7, index);
@@ -855,12 +856,12 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::expire(size_t timestamp) throw ()
+		void SQLiteDatabase::expire(const dtn::data::Timestamp &timestamp) throw ()
 		{
 			/*
 			 * Only if the actual time is bigger or equal than the time when the next bundle expires, deleteexpired is called.
 			 */
-			size_t exp_time = get_expire_time();
+			dtn::data::Timestamp exp_time = get_expire_time();
 			if ((timestamp < exp_time) || (exp_time == 0)) return;
 
 			/*
@@ -873,7 +874,7 @@ namespace dtn
 				Statement st(_database, _sql_queries[EXPIRE_BUNDLE_FILENAMES]);
 
 				// query for blocks of expired bundles
-				sqlite3_bind_int64(*st, 1, timestamp);
+				sqlite3_bind_int64(*st, 1, timestamp.get<uint64_t>());
 				while (st.step() == SQLITE_ROW)
 				{
 					ibrcommon::File block((const char*)sqlite3_column_text(*st,0));
@@ -887,7 +888,7 @@ namespace dtn
 				Statement st(_database, _sql_queries[EXPIRE_BUNDLES]);
 
 				// query expired bundles
-				sqlite3_bind_int64(*st, 1, timestamp);
+				sqlite3_bind_int64(*st, 1, timestamp.get<uint64_t>());
 				while (st.step() == SQLITE_ROW)
 				{
 					dtn::data::BundleID id;
@@ -905,7 +906,7 @@ namespace dtn
 				Statement st(_database, _sql_queries[EXPIRE_BUNDLE_DELETE]);
 
 				// delete all expired db entries (bundles and blocks)
-				sqlite3_bind_int64(*st, 1, timestamp);
+				sqlite3_bind_int64(*st, 1, timestamp.get<uint64_t>());
 				st.step();
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -931,7 +932,7 @@ namespace dtn
 
 				Statement st(_database, _sql_queries[query]);
 
-				sqlite3_bind_text(*st, 1, eid.getString().c_str(), eid.getString().length(), SQLITE_TRANSIENT);
+				sqlite3_bind_text(*st, 1, eid.getString().c_str(), static_cast<int>(eid.getString().length()), SQLITE_TRANSIENT);
 				set_bundleid(st, id, 1);
 
 				// update the custodian in the database
@@ -946,7 +947,7 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::new_expire_time(size_t ttl) throw ()
+		void SQLiteDatabase::new_expire_time(const dtn::data::Timestamp &ttl) throw ()
 		{
 			if (_next_expiration == 0 || ttl < _next_expiration)
 			{
@@ -959,7 +960,7 @@ namespace dtn
 			_next_expiration = 0;
 		}
 
-		size_t SQLiteDatabase::get_expire_time() const throw ()
+		const dtn::data::Timestamp& SQLiteDatabase::get_expire_time() const throw ()
 		{
 			return _next_expiration;
 		}
@@ -979,20 +980,20 @@ namespace dtn
 			return (_deletion_list.find(id) != _deletion_list.end());
 		}
 
-		void SQLiteDatabase::set_bundleid(Statement &st, const dtn::data::BundleID &id, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			const std::string source_id = id.source.getString();
-			sqlite3_bind_text(*st, offset + 1, source_id.c_str(), source_id.length(), SQLITE_TRANSIENT);
-			sqlite3_bind_int64(*st, offset + 2, id.timestamp);
-			sqlite3_bind_int64(*st, offset + 3, id.sequencenumber);
+			sqlite3_bind_text(*st, offset + 1, source_id.c_str(), static_cast<int>(source_id.length()), SQLITE_TRANSIENT);
+			sqlite3_bind_int64(*st, offset + 2, id.timestamp.get<uint64_t>());
+			sqlite3_bind_int64(*st, offset + 3, id.sequencenumber.get<uint64_t>());
 
 			if (id.fragment)
 			{
-				sqlite3_bind_int64(*st, offset + 4, id.offset);
+				sqlite3_bind_int64(*st, offset + 4, id.offset.get<uint64_t>());
 			}
 		}
 
-		void SQLiteDatabase::get_bundleid(Statement &st, dtn::data::BundleID &id, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::get_bundleid(Statement &st, dtn::data::BundleID &id, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			id.source = dtn::data::EID((const char*)sqlite3_column_text(*st, offset + 0));
 			id.timestamp = sqlite3_column_int64(*st, offset + 1);

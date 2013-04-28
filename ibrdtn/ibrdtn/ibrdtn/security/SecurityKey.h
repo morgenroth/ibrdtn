@@ -23,7 +23,7 @@
 #define SECURITYKEY_H_
 
 #include "ibrdtn/data/EID.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/DTNTime.h"
 #include "ibrdtn/data/BundleString.h"
 #include <ibrcommon/data/File.h>
@@ -74,7 +74,7 @@ namespace dtn
 			friend std::ostream &operator<<(std::ostream &stream, const SecurityKey &key)
 			{
 				// key type
-				stream << dtn::data::SDNV(key.type);
+				stream << dtn::data::Number(key.type);
 
 				// EID reference
 				stream << dtn::data::BundleString(key.reference.getString());
@@ -89,8 +89,8 @@ namespace dtn
 			friend std::istream &operator>>(std::istream &stream, SecurityKey &key)
 			{
 				// key type
-				dtn::data::SDNV sdnv_type; stream >> sdnv_type;
-				key.type = KeyType(sdnv_type.getValue());
+				dtn::data::Number sdnv_type; stream >> sdnv_type;
+				key.type = KeyType(sdnv_type.get<KeyType>());
 
 				// EID reference
 				dtn::data::BundleString eid_reference; stream >> eid_reference;

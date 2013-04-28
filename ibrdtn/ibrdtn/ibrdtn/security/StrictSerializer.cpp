@@ -31,7 +31,7 @@ namespace dtn
 {
 	namespace security
 	{
-		StrictSerializer::StrictSerializer(std::ostream& stream, const dtn::security::SecurityBlock::BLOCK_TYPES type, const bool with_correlator, const uint64_t correlator)
+		StrictSerializer::StrictSerializer(std::ostream& stream, const dtn::security::SecurityBlock::BLOCK_TYPES type, const bool with_correlator, const dtn::data::Number &correlator)
 		 : DefaultSerializer(stream), _block_type(type), _with_correlator(with_correlator), _correlator(correlator)
 		{
 		}
@@ -91,7 +91,7 @@ namespace dtn
 		dtn::data::Serializer& StrictSerializer::operator<<(const dtn::data::Block &obj)
 		{
 			_stream << obj.getType();
-			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+			_stream << obj.getProcessingFlags();
 
 			const dtn::data::Block::eid_list &eids = obj.getEIDList();
 
@@ -102,7 +102,7 @@ namespace dtn
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << dtn::data::SDNV(eids.size());
+				_stream << dtn::data::Number(eids.size());
 				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					dtn::data::Dictionary::Reference offsets;
@@ -122,7 +122,7 @@ namespace dtn
 			}
 
 			// write size of the payload in the block
-			_stream << dtn::data::SDNV(obj.getLength_strict());
+			_stream << dtn::data::Number(obj.getLength_strict());
 
 			size_t slength = 0;
 			obj.serialize_strict(_stream, slength);

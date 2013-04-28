@@ -170,7 +170,7 @@ namespace dtn
 			if ((result_size = EVP_PKEY_size(pkey)) > 0)
 			{
 				// sdnv length
-				result_size += dtn::data::SDNV(result_size).getLength();
+				result_size += dtn::data::Number(result_size).getLength();
 
 				// type
 				result_size++;

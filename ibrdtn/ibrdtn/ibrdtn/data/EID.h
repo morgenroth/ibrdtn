@@ -61,6 +61,11 @@ namespace dtn
 
 			EID operator+(const std::string &suffix) const;
 
+			friend EID operator+(const EID &left, const std::string &right)
+			{
+				return EID(left.getString() + right);
+			}
+
 			bool sameHost(const std::string &other) const;
 			bool sameHost(const EID &other) const;
 

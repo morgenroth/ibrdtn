@@ -439,10 +439,10 @@ namespace dtn
 				}
 			}
 
-			IBRCOMMON_LOGGER_DEBUG(50) << "search for node " << job._destination.getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(50) << "search for node " << job.destination.getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// queue to a node
-			const Node &n = getNode(job._destination);
+			const Node &n = getNode(job.destination);
 			IBRCOMMON_LOGGER_DEBUG(2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
 
 			try {

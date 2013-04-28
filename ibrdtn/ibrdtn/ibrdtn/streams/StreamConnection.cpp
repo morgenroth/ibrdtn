@@ -132,7 +132,7 @@ namespace dtn
 			_callback.eventShutdown(csc);
 		}
 
-		void StreamConnection::eventBundleAck(uint64_t ack)
+		void StreamConnection::eventBundleAck(Length ack)
 		{
 			_callback.eventBundleAck(ack);
 		}

@@ -144,7 +144,7 @@ namespace dtn
 		 */
 		void DatagramConnection::queue(const ConvergenceLayer::Job &job)
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 15) << "queue bundle " << job._bundle.toString() << " to " << job._destination.getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 15) << "queue bundle " << job.bundle.toString() << " to " << job.destination.getString() << IBRCOMMON_LOGGER_ENDL;
 			_sender.queue.push(job);
 		}
 
@@ -525,7 +525,7 @@ namespace dtn
 					_current_job = queue.getnpop(true);
 
 					// read the bundle out of the storage
-					const dtn::data::Bundle bundle = storage.get(_current_job._bundle);
+					const dtn::data::Bundle bundle = storage.get(_current_job.bundle);
 
 					// write the bundle into the stream
 					serializer << bundle; _stream.flush();
@@ -534,7 +534,7 @@ namespace dtn
 					if (_stream.good())
 					{
 						// bundle send completely - raise bundle event
-						dtn::net::TransferCompletedEvent::raise(_current_job._destination, bundle);
+						dtn::net::TransferCompletedEvent::raise(_current_job.destination, bundle);
 						dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 
 						// clear the "current_job" register
@@ -563,7 +563,7 @@ namespace dtn
 					const ConvergenceLayer::Job job = queue.getnpop();
 
 					// raise transfer abort event for all bundles without an ACK
-					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+					dtn::routing::RequeueBundleEvent::raise(job.destination, job.bundle);
 				}
 			} catch (const ibrcommon::QueueUnblockedException&) {
 				// queue empty
@@ -576,7 +576,7 @@ namespace dtn
 		void DatagramConnection::Sender::finally() throw ()
 		{
 			// notify the aborted transfer of the last bundle
-			if (_current_job._bundle != dtn::data::BundleID())
+			if (_current_job.bundle != dtn::data::BundleID())
 			{
 				// put-back job on the queue
 				queue.push(_current_job);

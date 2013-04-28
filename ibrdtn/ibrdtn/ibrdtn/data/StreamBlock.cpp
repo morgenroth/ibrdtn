@@ -63,12 +63,12 @@ namespace dtn
 
 		void StreamBlock::set(STREAM_FLAGS flag, const bool &value)
 		{
-			_streamflags.set(flag, value);
+			_streamflags.setBit(flag, value);
 		}
 
 		bool StreamBlock::get(STREAM_FLAGS flag) const
 		{
-			return _streamflags.get(flag);
+			return _streamflags.getBit(flag);
 		}
 
 		void StreamBlock::setSequenceNumber(Number seq)

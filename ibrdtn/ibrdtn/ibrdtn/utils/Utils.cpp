@@ -125,7 +125,7 @@ namespace dtn
 		void Utils::encapsule(dtn::data::Bundle &capsule, const std::list<dtn::data::Bundle> &bundles)
 		{
 			bool custody = false;
-			size_t exp_time = 0;
+			dtn::data::Number exp_time = 0;
 
 			try {
 				const dtn::data::PayloadBlock &payload = capsule.find<dtn::data::PayloadBlock>();
@@ -154,7 +154,7 @@ namespace dtn
 				const dtn::data::Bundle &b = (*iter);
 
 				// get the expiration time of this bundle
-				uint64_t expt = dtn::utils::Clock::getExpireTime(b);
+				dtn::data::Timestamp expt = dtn::utils::Clock::getExpireTime(b);
 
 				// if this bundle expire later then use this lifetime
 				if (expt > exp_time) exp_time = expt;
@@ -175,7 +175,7 @@ namespace dtn
 			ibrcommon::BLOB::iostream stream = ref.iostream();
 
 			// the number of encapsulated bundles
-			dtn::data::SDNV elements(bundles.size());
+			dtn::data::Number elements(bundles.size());
 			(*stream) << elements;
 
 			// create a serializer
@@ -187,7 +187,7 @@ namespace dtn
 			for (size_t i = 0; i < (bundles.size() - 1); i++, iter++)
 			{
 				const dtn::data::Bundle &b = (*iter);
-				(*stream) << dtn::data::SDNV(serializer.getLength(b));
+				(*stream) << dtn::data::Number(serializer.getLength(b));
 			}
 
 			// serialize all bundles
@@ -204,12 +204,12 @@ namespace dtn
 				ibrcommon::BLOB::iostream stream = payload.getBLOB().iostream();
 
 				// read the number of bundles
-				dtn::data::SDNV nob; (*stream) >> nob;
+				dtn::data::Number nob; (*stream) >> nob;
 
 				// read all offsets
-				for (size_t i = 0; i < (nob.getValue() - 1); ++i)
+				for (size_t i = 0; (nob - 1) > i; ++i)
 				{
-					dtn::data::SDNV offset; (*stream) >> offset;
+					dtn::data::Number offset; (*stream) >> offset;
 				}
 
 				// create a deserializer for all bundles
@@ -218,7 +218,7 @@ namespace dtn
 
 				try {
 					// read all bundles
-					for (size_t i = 0; i < nob.getValue(); ++i)
+					for (size_t i = 0; nob > i; ++i)
 					{
 						// deserialize the next bundle
 						deserializer >> b;

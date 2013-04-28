@@ -56,8 +56,8 @@ namespace dtn
 
 				void clear();
 
-				dtn::data::BundleID _bundle;
-				dtn::data::EID _destination;
+				dtn::data::BundleID bundle;
+				dtn::data::EID destination;
 			};
 
 			ConvergenceLayer();

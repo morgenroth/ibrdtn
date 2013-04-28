@@ -119,10 +119,10 @@ namespace dtn
 
 									try {
 										// check if bundle is a routing bundle
-										if (sbt.job._bundle.source == (dtn::core::BundleCore::local + "/routing"))
+										if (sbt.job.bundle.source == (dtn::core::BundleCore::local + "/routing"))
 										{
 											// read the bundle out of the storage
-											const dtn::data::Bundle bundle = storage.get(sbt.job._bundle);
+											const dtn::data::Bundle bundle = storage.get(sbt.job.bundle);
 
 											if (bundle.destination == (sbt.node.getEID() + "/routing"))
 											{
@@ -132,7 +132,7 @@ namespace dtn
 													if (_blacklist.find(bundle) != _blacklist.end())
 													{
 														// send transfer aborted event
-														dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
+														dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job.bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
 														continue;
 													}
 													_blacklist.add(bundle);
@@ -151,10 +151,10 @@ namespace dtn
 										// check if bundle is already in the path
 										for (std::list<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); ++iter)
 										{
-											if ((*iter) == sbt.job._bundle)
+											if ((*iter) == sbt.job.bundle)
 											{
 												// send transfer aborted event
-												dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
+												dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job.bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
 												continue;
 											}
 										}
@@ -163,11 +163,11 @@ namespace dtn
 
 										try {
 											// read the bundle out of the storage
-											const dtn::data::Bundle bundle = storage.get(sbt.job._bundle);
+											const dtn::data::Bundle bundle = storage.get(sbt.job.bundle);
 
 											std::fstream fs(filename.getPath().c_str(), std::fstream::out);
 
-											IBRCOMMON_LOGGER(info) << "write bundle " << sbt.job._bundle.toString() << " to file " << filename.getPath() << IBRCOMMON_LOGGER_ENDL;
+											IBRCOMMON_LOGGER(info) << "write bundle " << sbt.job.bundle.toString() << " to file " << filename.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 											dtn::data::DefaultSerializer s(fs);
 
@@ -183,10 +183,10 @@ namespace dtn
 										}
 									} catch (const dtn::storage::NoBundleFoundException&) {
 										// send transfer aborted event
-										dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+										dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job.bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 									} catch (const ibrcommon::Exception&) {
 										// something went wrong - requeue transfer for later
-										dtn::routing::RequeueBundleEvent::raise(sbt.node.getEID(), sbt.job._bundle);
+										dtn::routing::RequeueBundleEvent::raise(sbt.node.getEID(), sbt.job.bundle);
 									}
 
 								} catch (const std::bad_cast&) { }

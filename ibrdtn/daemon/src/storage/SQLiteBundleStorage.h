@@ -223,14 +223,14 @@ namespace dtn
 			class TaskExpire : public Task
 			{
 			public:
-				TaskExpire(size_t timestamp)
+				TaskExpire(const dtn::data::Timestamp &timestamp)
 				: _timestamp(timestamp) { };
 
 				virtual ~TaskExpire() {};
 				virtual void run(SQLiteBundleStorage &storage);
 
 			private:
-				size_t _timestamp;
+				const dtn::data::Timestamp _timestamp;
 			};
 
 			/**

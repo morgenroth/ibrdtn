@@ -418,7 +418,7 @@ namespace dtn
 
 				if (conn.match(n))
 				{
-					conn.queue(job._bundle);
+					conn.queue(job.bundle);
 					IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 15) << "queued bundle to an existing tcp connection (" << conn.getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 
 					return;
@@ -447,7 +447,7 @@ namespace dtn
 				conn->initialize();
 
 				// queue the bundle
-				conn->queue(job._bundle);
+				conn->queue(job.bundle);
 
 				// signal that there is a new connection
 				_connections_cond.signal(true);
@@ -455,7 +455,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 15) << "queued bundle to an new tcp connection (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) {
 				// raise transfer abort event for all bundles without an ACK
-				dtn::routing::RequeueBundleEvent::raise(n.getEID(), job._bundle);
+				dtn::routing::RequeueBundleEvent::raise(n.getEID(), job.bundle);
 			}
 		}
 

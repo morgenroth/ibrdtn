@@ -50,7 +50,7 @@ namespace dtn
 			return (it != _list.end());
 		}
 
-		void MetaStorage::expire(size_t timestamp) throw ()
+		void MetaStorage::expire(const dtn::data::Timestamp &timestamp) throw ()
 		{
 			_list.expire(timestamp);
 		}

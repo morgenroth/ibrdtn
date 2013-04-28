@@ -50,8 +50,7 @@ namespace dtn
 		{
 			ibrcommon::TimeMeasurement time = this->_time;
 			time.stop();
-
-			return _age.getValue() + time.getMicroseconds();
+			return _age + time.getMicroseconds();
 		}
 
 		dtn::data::Number AgeBlock::getSeconds() const

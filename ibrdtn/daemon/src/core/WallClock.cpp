@@ -71,7 +71,7 @@ namespace dtn
 
 		size_t WallClock::timeout(ibrcommon::Timer*)
 		{
-			size_t dtntime = dtn::utils::Clock::getTime();
+			dtn::data::Timestamp dtntime = dtn::utils::Clock::getTime();
 
 			if (dtntime == 0)
 			{
@@ -80,10 +80,10 @@ namespace dtn
 				ibrcommon::MutexLock l(*this);
 				signal(true);
 			}
-			else if (_next <= dtntime)
+			else if (dtntime >= _next)
 			{
 				TimeEvent::raise(dtntime, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
-				_next = dtntime + _frequency;
+				_next = dtntime.get<size_t>() + _frequency;
 
 				ibrcommon::MutexLock l(*this);
 				signal(true);

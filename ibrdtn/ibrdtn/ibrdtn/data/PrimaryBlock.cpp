@@ -47,12 +47,12 @@ namespace dtn
 
 		void PrimaryBlock::set(FLAGS flag, bool value)
 		{
-			procflags.set(flag, value);
+			procflags.setBit(flag, value);
 		}
 
 		bool PrimaryBlock::get(FLAGS flag) const
 		{
-			return procflags.get(flag);
+			return procflags.getBit(flag);
 		}
 
 		PrimaryBlock::PRIORITY PrimaryBlock::getPriority() const

@@ -192,7 +192,7 @@ namespace dtn
 
 			try {
 				// read the bundle out of the storage
-				const dtn::data::Bundle bundle = storage.get(job._bundle);
+				const dtn::data::Bundle bundle = storage.get(job.bundle);
 
 				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 				{
@@ -259,7 +259,7 @@ namespace dtn
 
 						if(http_code == HTTP_OK)
 						{
-							dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+							dtn::net::TransferCompletedEvent::raise(job.destination, bundle);
 							dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 						}
 					}
@@ -268,7 +268,7 @@ namespace dtn
 				}
 			} catch (const dtn::storage::NoBundleFoundException&) {
 				// send transfer aborted event
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			}
 
 		}

@@ -121,17 +121,17 @@ namespace dtn
 
 		bool TrackingBlock::TrackingEntry::getFlag(TrackingBlock::TrackingEntry::Flags f) const
 		{
-			return flags.get(f);
+			return flags.getBit(f);
 		}
 
 		void TrackingBlock::TrackingEntry::setFlag(TrackingBlock::TrackingEntry::Flags f, bool value)
 		{
-			flags.set(f, value);
+			flags.setBit(f, value);
 		}
 
 		Length TrackingBlock::TrackingEntry::getLength() const
 		{
-			Length ret = dtn::data::Number(flags).getLength();
+			Length ret = flags.getLength();
 
 			if (getFlag(TrackingEntry::TIMESTAMP_PRESENT)) {
 				ret += timestamp.getLength();
@@ -144,7 +144,7 @@ namespace dtn
 
 		std::ostream& operator<<(std::ostream &stream, const TrackingBlock::TrackingEntry &entry)
 		{
-			stream << dtn::data::Number(entry.flags);
+			stream << entry.flags;
 
 			if (entry.getFlag(TrackingBlock::TrackingEntry::TIMESTAMP_PRESENT)) {
 				stream << entry.timestamp;

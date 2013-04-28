@@ -75,7 +75,7 @@ namespace dtn
 
 		CompressedPayloadBlock::COMPRESS_ALGS CompressedPayloadBlock::getAlgorithm() const
 		{
-			return _algorithm.get<CompressedPayloadBlock::COMPRESS_ALGS>();
+			return CompressedPayloadBlock::COMPRESS_ALGS(_algorithm.get<size_t>());
 		}
 
 		void CompressedPayloadBlock::setOriginSize(const Number &s)

@@ -145,7 +145,7 @@ namespace dtn
 			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_UDPIP);
 			if (uri_list.empty())
 			{
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_UNDEFINED);
+				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_UNDEFINED);
 				return;
 			}
 
@@ -164,7 +164,7 @@ namespace dtn
 
 			try {
 				// read the bundle out of the storage
-				const dtn::data::Bundle bundle = storage.get(job._bundle);
+				const dtn::data::Bundle bundle = storage.get(job.bundle);
 
 				// create a dummy serializer
 				dtn::data::DefaultSerializer dummy(std::cout);
@@ -217,17 +217,17 @@ namespace dtn
 				}
 
 				// success - raise bundle event
-				dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+				dtn::net::TransferCompletedEvent::raise(job.destination, bundle);
 				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 			} catch (const dtn::storage::NoBundleFoundException&) {
 				// send transfer aborted event
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			} catch (const ibrcommon::socket_exception&) {
 				// CL is busy, requeue bundle
-				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+				dtn::routing::RequeueBundleEvent::raise(job.destination, job.bundle);
 			} catch (const NoAddressFoundException &ex) {
 				// no connection available
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}
 
 		}
