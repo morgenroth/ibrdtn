@@ -20,7 +20,7 @@
  */
 
 #include <ibrdtn/data/Block.h>
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/ExtensionBlock.h>
 #include <ibrdtn/data/MetaBundle.h>
 
@@ -47,20 +47,20 @@ namespace dtn
 			SchedulingBlock();
 			virtual ~SchedulingBlock();
 
-			void setPriority(int8_t p);
-			int8_t getPriority() const;
+			void setPriority(Integer p);
+			Integer getPriority() const;
 
-			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual Length getLength() const;
+			virtual std::ostream &serialize(std::ostream &stream, Length &length) const;
+			virtual std::istream &deserialize(std::istream &stream, const Length &length);
 
 		private:
 			enum procflags {
 				HAS_PRIORITY = 1
 			};
 
-			int8_t _flags;
-			int8_t _priority;
+			Bitset _flags;
+			Integer _priority;
 		};
 
 		/**

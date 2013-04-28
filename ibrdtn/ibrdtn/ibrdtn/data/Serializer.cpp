@@ -178,15 +178,15 @@ namespace dtn
 		Serializer& DefaultSerializer::operator <<(const dtn::data::PrimaryBlock& obj)
 		{
 			_stream << dtn::data::BUNDLE_VERSION;		// bundle version
-			_stream << dtn::data::SDNV(obj.procflags);	// processing flags
+			_stream << obj.procflags;	// processing flags
 
 			// predict the block length
-			size_t len = 0;
-			dtn::data::SDNV primaryheader[14];
+			Number len = 0;
+			dtn::data::Number primaryheader[14];
 
-			primaryheader[8] = SDNV(obj.timestamp);		// timestamp
-			primaryheader[9] = SDNV(obj.sequencenumber);	// sequence number
-			primaryheader[10] = SDNV(obj.lifetime);		// lifetime
+			primaryheader[8] = obj.timestamp;		// timestamp
+			primaryheader[9] = obj.sequencenumber;	// sequence number
+			primaryheader[10] = obj.lifetime;		// lifetime
 
 			dtn::data::Dictionary::Reference ref;
 
@@ -238,7 +238,7 @@ namespace dtn
 				primaryheader[7] = ref.second;
 
 				// dictionary size
-				primaryheader[11] = SDNV(_dictionary.getSize());
+				primaryheader[11] = Number(_dictionary.getSize());
 				len += _dictionary.getSize();
 			}
 
@@ -249,15 +249,15 @@ namespace dtn
 
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
-				primaryheader[12] = SDNV(obj.fragmentoffset);
-				primaryheader[13] = SDNV(obj.appdatalength);
+				primaryheader[12] = obj.fragmentoffset;
+				primaryheader[13] = obj.appdatalength;
 
 				len += primaryheader[12].getLength();
 				len += primaryheader[13].getLength();
 			}
 
 			// write the block length
-			_stream << SDNV(len);
+			_stream << len;
 
 			/*
 			 * write the ref block of the dictionary
@@ -291,7 +291,7 @@ namespace dtn
 		Serializer& DefaultSerializer::operator <<(const dtn::data::Block& obj)
 		{
 			_stream.put((char&)obj.getType());
-			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+			_stream << obj.getProcessingFlags();
 
 			const Block::eid_list &eids = obj.getEIDList();
 
@@ -302,7 +302,7 @@ namespace dtn
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << SDNV(eids.size());
+				_stream << Number(eids.size());
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					dtn::data::Dictionary::Reference offsets;
@@ -322,19 +322,19 @@ namespace dtn
 			}
 
 			// write size of the payload in the block
-			_stream << SDNV(obj.getLength());
+			_stream << Number(obj.getLength());
 
 			// write the payload of the block
-			size_t slength = 0;
+			Length slength = 0;
 			obj.serialize(_stream, slength);
 
 			return (*this);
 		}
 
-		Serializer& DefaultSerializer::serialize(const dtn::data::PayloadBlock& obj, size_t clip_offset, size_t clip_length)
+		Serializer& DefaultSerializer::serialize(const dtn::data::PayloadBlock& obj, Length clip_offset, Length clip_length)
 		{
 			_stream.put((char&)obj.getType());
-			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+			_stream << obj.getProcessingFlags();
 
 			const Block::eid_list &eids = obj.getEIDList();
 
@@ -345,7 +345,7 @@ namespace dtn
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << SDNV(eids.size());
+				_stream << Number(eids.size());
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					dtn::data::Dictionary::Reference offsets;
@@ -365,22 +365,22 @@ namespace dtn
 			}
 
 			// get the remaining payload size
-			size_t payload_size = obj.getLength();
-			size_t remain = payload_size - clip_offset;
+			Length payload_size = obj.getLength();
+			Length remain = payload_size - clip_offset;
 
 			// check if the remaining data length is >= clip_length
 			if (payload_size < clip_offset)
 			{
 				// set the real predicted payload length
 				// write size of the payload in the block
-				_stream << SDNV(0);
+				_stream << Number(0);
 			}
 			else
 			if (remain > clip_length)
 			{
 				// set the real predicted payload length
 				// write size of the payload in the block
-				_stream << SDNV(clip_length);
+				_stream << Number(clip_length);
 
 				// now skip the <offset>-bytes and all bytes after <offset + length>
 				obj.serialize( _stream, clip_offset, clip_length );
@@ -389,7 +389,7 @@ namespace dtn
 			{
 				// set the real predicted payload length
 				// write size of the payload in the block
-				_stream << SDNV(remain);
+				_stream << Number(remain);
 
 				// now skip the <offset>-bytes and all bytes after <offset + length>
 				obj.serialize( _stream, clip_offset, remain );
@@ -398,12 +398,12 @@ namespace dtn
 			return (*this);
 		}
 
-		size_t DefaultSerializer::getLength(const dtn::data::Bundle &obj)
+		Length DefaultSerializer::getLength(const dtn::data::Bundle &obj)
 		{
 			// rebuild the dictionary
 			rebuildDictionary(obj);
 
-			size_t len = 0;
+			Length len = 0;
 			len += getLength( (PrimaryBlock&)obj );
 			
 			// add size of all blocks
@@ -416,15 +416,15 @@ namespace dtn
 			return len;
 		}
 
-		size_t DefaultSerializer::getLength(const dtn::data::PrimaryBlock& obj) const
+		Length DefaultSerializer::getLength(const dtn::data::PrimaryBlock& obj) const
 		{
-			size_t len = 0;
+			Length len = 0;
 
 			len += sizeof(dtn::data::BUNDLE_VERSION);		// bundle version
-			len += dtn::data::SDNV(obj.procflags).getLength();	// processing flags
+			len += obj.procflags.getLength();	// processing flags
 
 			// primary header
-			dtn::data::SDNV primaryheader[14];
+			dtn::data::Number primaryheader[14];
 			dtn::data::Dictionary::Reference ref;
 
 			if (_compressable)
@@ -450,7 +450,7 @@ namespace dtn
 				primaryheader[7] = ref.second;;
 
 				// dictionary size
-				primaryheader[11] = SDNV(0);
+				primaryheader[11] = Number(0);
 			}
 			else
 			{
@@ -475,17 +475,17 @@ namespace dtn
 				primaryheader[7] = ref.second;;
 
 				// dictionary size
-				primaryheader[11] = SDNV(_dictionary.getSize());
+				primaryheader[11] = Number(_dictionary.getSize());
 			}
 
 			// timestamp
-			primaryheader[8] = SDNV(obj.timestamp);
+			primaryheader[8] = obj.timestamp;
 
 			// sequence number
-			primaryheader[9] = SDNV(obj.sequencenumber);
+			primaryheader[9] = obj.sequencenumber;
 
 			// lifetime
-			primaryheader[10] = SDNV(obj.lifetime);
+			primaryheader[10] = obj.lifetime;
 
 			for (int i = 0; i < 11; ++i)
 			{
@@ -506,24 +506,24 @@ namespace dtn
 
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
-				primaryheader[12] = SDNV(obj.fragmentoffset);
-				primaryheader[13] = SDNV(obj.appdatalength);
+				primaryheader[12] = obj.fragmentoffset;
+				primaryheader[13] = obj.appdatalength;
 
 				len += primaryheader[12].getLength();
 				len += primaryheader[13].getLength();
 			}
 
-			len += SDNV(len).getLength();
+			len += Number(len).getLength();
 
 			return len;
 		}
 
-		size_t DefaultSerializer::getLength(const dtn::data::Block &obj) const
+		Length DefaultSerializer::getLength(const dtn::data::Block &obj) const
 		{
-			size_t len = 0;
+			Length len = 0;
 
 			len += sizeof(obj.getType());
-			len += dtn::data::SDNV(obj.getProcessingFlags()).getLength();
+			len += obj.getProcessingFlags().getLength();
 
 			const Block::eid_list &eids = obj.getEIDList();
 
@@ -534,7 +534,7 @@ namespace dtn
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				len += dtn::data::SDNV(eids.size()).getLength();
+				len += dtn::data::Number(eids.size()).getLength();
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					dtn::data::Dictionary::Reference offsets = _dictionary.getRef(*it);
@@ -544,11 +544,11 @@ namespace dtn
 			}
 
 			// size of the payload in the block
-			size_t payload_size = obj.getLength();
+			Number payload_size = obj.getLength();
 			len += payload_size;
 
 			// size of the payload size
-			len += SDNV(payload_size).getLength();
+			len += payload_size.getLength();
 
 			return len;
 		}
@@ -585,7 +585,7 @@ namespace dtn
 			bool lastblock = false;
 
 			block_t block_type;
-			dtn::data::SDNV procflags_sdnv;
+			dtn::data::Bitset procflags;
 
 			// create a bundle builder
 			dtn::data::BundleBuilder builder(obj);
@@ -597,11 +597,11 @@ namespace dtn
 				_stream.get((char&)block_type);
 
 				// read processing flags
-				_stream >> procflags_sdnv;
+				_stream >> procflags;
 
 				try {
 					// create a block object
-					dtn::data::Block &block = builder.insert(block_type, procflags_sdnv.getValue());
+					dtn::data::Block &block = builder.insert(block_type, procflags);
 
 					try {
 						// read block content
@@ -629,31 +629,28 @@ namespace dtn
 					}
 				} catch (BundleBuilder::DiscardBlockException &ex) {
 					// skip EIDs
-					if ( procflags_sdnv.getValue() & dtn::data::Block::BLOCK_CONTAINS_EIDS )
+					if ( procflags.get(dtn::data::Block::BLOCK_CONTAINS_EIDS) )
 					{
-						SDNV eidcount;
+						Number eidcount;
 						_stream >> eidcount;
 
-						for (unsigned int i = 0; i < eidcount.getValue(); ++i)
+						for (unsigned int i = 0; i < eidcount; ++i)
 						{
-							SDNV scheme, ssp;
+							Number scheme, ssp;
 							_stream >> scheme;
 							_stream >> ssp;
 						}
 					}
 
 					// read the size of the payload in the block
-					SDNV block_size;
+					Number block_size;
 					_stream >> block_size;
 
-					if (block_size.getValue() > std::numeric_limits<std::size_t>::max())
-						throw InvalidDataException("block is too large");
-
 					// skip payload
-					_stream.ignore((std::streamsize) block_size.getValue());
+					_stream.ignore(block_size.get<std::streamsize>());
 				}
 
-				lastblock = (procflags_sdnv.getValue() & Block::LAST_BLOCK);
+				lastblock = procflags.get(Block::LAST_BLOCK);
 			}
 
 			// validate this bundle
@@ -688,16 +685,14 @@ namespace dtn
 		Deserializer& DefaultDeserializer::operator >>(dtn::data::PrimaryBlock& obj)
 		{
 			char version = 0;
-			SDNV tmpsdnv;
-			SDNV blocklength;
+			Number blocklength;
 
 			// check for the right version
 			_stream.get(version);
 			if (version != dtn::data::BUNDLE_VERSION) throw dtn::InvalidProtocolException("Bundle version differ from ours.");
 
 			// PROCFLAGS
-			_stream >> tmpsdnv;	// processing flags
-			obj.procflags = tmpsdnv.getValue();
+			_stream >> obj.procflags;	// processing flags
 
 			// BLOCK LENGTH
 			_stream >> blocklength;
@@ -711,16 +706,13 @@ namespace dtn
 			}
 
 			// timestamp
-			_stream >> tmpsdnv;
-			obj.timestamp = tmpsdnv.getValue();
+			_stream >> obj.timestamp;
 
 			// sequence number
-			_stream >> tmpsdnv;
-			obj.sequencenumber = tmpsdnv.getValue();
+			_stream >> obj.sequencenumber;
 
 			// lifetime
-			_stream >> tmpsdnv;
-			obj.lifetime = tmpsdnv.getValue();
+			_stream >> obj.lifetime;
 
 			try {
 				// dictionary
@@ -744,11 +736,8 @@ namespace dtn
 			// fragmentation?
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
-				_stream >> tmpsdnv;
-				obj.fragmentoffset = tmpsdnv.getValue();
-
-				_stream >> tmpsdnv;
-				obj.appdatalength = tmpsdnv.getValue();
+				_stream >> obj.fragmentoffset;
+				_stream >> obj.appdatalength;
 			}
 			
 			// validate this primary block
@@ -762,12 +751,12 @@ namespace dtn
 			// read EIDs
 			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
-				SDNV eidcount;
+				Number eidcount;
 				_stream >> eidcount;
 
-				for (unsigned int i = 0; i < eidcount.getValue(); ++i)
+				for (unsigned int i = 0; i < eidcount; ++i)
 				{
-					SDNV scheme, ssp;
+					Number scheme, ssp;
 					_stream >> scheme;
 					_stream >> ssp;
 
@@ -783,17 +772,14 @@ namespace dtn
 			}
 
 			// read the size of the payload in the block
-			SDNV block_size;
+			Number block_size;
 			_stream >> block_size;
 
-			if (block_size.getValue() > std::numeric_limits<std::size_t>::max())
-				throw InvalidDataException("block is too large");
-
 			// validate this block
-			_validator.validate(obj, block_size.getValue());
+			_validator.validate(obj, block_size.get<Length>());
 
 			// read the payload of the block
-			obj.deserialize(_stream, (size_t)block_size.getValue());
+			obj.deserialize(_stream, block_size.get<Length>());
 
 			return (*this);
 		}
@@ -803,12 +789,12 @@ namespace dtn
 			// read EIDs
 			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
-				SDNV eidcount;
+				Number eidcount;
 				_stream >> eidcount;
 
-				for (unsigned int i = 0; i < eidcount.getValue(); ++i)
+				for (unsigned int i = 0; i < eidcount; ++i)
 				{
-					SDNV scheme, ssp;
+					Number scheme, ssp;
 					_stream >> scheme;
 					_stream >> ssp;
 
@@ -818,23 +804,20 @@ namespace dtn
 					}
 					else
 					{
-						obj.addEID( _dictionary.get(scheme.getValue(), ssp.getValue()) );
+						obj.addEID( _dictionary.get(scheme, ssp) );
 					}
 				}
 			}
 
 			// read the size of the payload in the block
-			SDNV block_size;
+			Number block_size;
 			_stream >> block_size;
 
-			if (block_size.getValue() > std::numeric_limits<std::size_t>::max())
-				throw InvalidDataException("block is too large");
-
 			// validate this block
-			_validator.validate(bundle, obj, block_size.getValue());
+			_validator.validate(bundle, obj, block_size.get<Length>());
 
 			// read the payload of the block
-			obj.deserialize(_stream, (size_t)block_size.getValue());
+			obj.deserialize(_stream, block_size.get<Length>());
 
 			return (*this);
 		}
@@ -878,7 +861,7 @@ namespace dtn
 		Serializer& SeparateSerializer::operator <<(const dtn::data::Block& obj)
 		{
 			_stream.put((char&)obj.getType());
-			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+			_stream << obj.getProcessingFlags();
 
 			const Block::eid_list &eids = obj.getEIDList();
 
@@ -889,7 +872,7 @@ namespace dtn
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << SDNV(eids.size());
+				_stream << Number(eids.size());
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					dtn::data::BundleString str((*it).getString());
@@ -898,21 +881,21 @@ namespace dtn
 			}
 
 			// write size of the payload in the block
-			_stream << SDNV(obj.getLength());
+			_stream << Number(obj.getLength());
 
 			// write the payload of the block
-			size_t slength = 0;
+			Length slength = 0;
 			obj.serialize(_stream, slength);
 
 			return (*this);
 		}
 
-		size_t SeparateSerializer::getLength(const dtn::data::Block &obj) const
+		Length SeparateSerializer::getLength(const dtn::data::Block &obj) const
 		{
-			size_t len = 0;
+			Length len = 0;
 
 			len += sizeof(obj.getType());
-			len += dtn::data::SDNV(obj.getProcessingFlags()).getLength();
+			len += obj.getProcessingFlags().getLength();
 
 			const Block::eid_list &eids = obj.getEIDList();
 
@@ -923,7 +906,7 @@ namespace dtn
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				len += dtn::data::SDNV(eids.size()).getLength();
+				len += dtn::data::Number(eids.size()).getLength();
 				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					dtn::data::BundleString str((*it).getString());
@@ -951,24 +934,24 @@ namespace dtn
 			BundleBuilder builder(_bundle);
 
 			block_t block_type;
-			dtn::data::SDNV procflags_sdnv;
+			Bitset procflags;
 
 			// BLOCK_TYPE
 			_stream.get((char&)block_type);
 
 			// read processing flags
-			_stream >> procflags_sdnv;
+			_stream >> procflags;
 
 			// create a block object
-			dtn::data::Block &obj = builder.insert(block_type, procflags_sdnv.getValue());
+			dtn::data::Block &obj = builder.insert(block_type, procflags);
 
 			// read EIDs
 			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
-				SDNV eidcount;
+				Number eidcount;
 				_stream >> eidcount;
 
-				for (unsigned int i = 0; i < eidcount.getValue(); ++i)
+				for (unsigned int i = 0; i < eidcount; ++i)
 				{
 					dtn::data::BundleString str;
 					_stream >> str;
@@ -977,17 +960,14 @@ namespace dtn
 			}
 
 			// read the size of the payload in the block
-			SDNV block_size;
+			Number block_size;
 			_stream >> block_size;
 
-			if (block_size.getValue() > std::numeric_limits<std::size_t>::max())
-				throw InvalidDataException("block is too large");
-
 			// validate this block
-			_validator.validate(obj, block_size.getValue());
+			_validator.validate(obj, block_size.get<Length>());
 
 			// read the payload of the block
-			obj.deserialize(_stream, (size_t)block_size.getValue());
+			obj.deserialize(_stream, block_size.get<Length>());
 
 			return obj;
 		}

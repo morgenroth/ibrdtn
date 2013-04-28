@@ -52,9 +52,9 @@ namespace dtn
 				return (*this);
 			};
 
-			virtual size_t getLength(const dtn::data::Bundle &obj) = 0;
-			virtual size_t getLength(const dtn::data::PrimaryBlock &obj) const = 0;
-			virtual size_t getLength(const dtn::data::Block &obj) const = 0;
+			virtual Length getLength(const dtn::data::Bundle &obj) = 0;
+			virtual Length getLength(const dtn::data::PrimaryBlock &obj) const = 0;
+			virtual Length getLength(const dtn::data::Block &obj) const = 0;
 		};
 
 		class Deserializer
@@ -81,8 +81,8 @@ namespace dtn
 			virtual ~Validator() {};
 
 			virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException) = 0;
-			virtual void validate(const dtn::data::Block&, const uint64_t) const throw (RejectedException) = 0;
-			virtual void validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const uint64_t) const throw (RejectedException) = 0;
+			virtual void validate(const dtn::data::Block&, const Length) const throw (RejectedException) = 0;
+			virtual void validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const Length) const throw (RejectedException) = 0;
 			virtual void validate(const dtn::data::Bundle&) const throw (RejectedException) = 0;
 		};
 
@@ -93,8 +93,8 @@ namespace dtn
 			virtual ~AcceptValidator();
 
 			virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException);
-			virtual void validate(const dtn::data::Block&, const uint64_t) const throw (RejectedException);
-			virtual void validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const uint64_t) const throw (RejectedException);
+			virtual void validate(const dtn::data::Block&, const Length) const throw (RejectedException);
+			virtual void validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const Length) const throw (RejectedException);
 			virtual void validate(const dtn::data::Bundle&) const throw (RejectedException);
 		};
 
@@ -125,12 +125,12 @@ namespace dtn
 			virtual Serializer &operator<<(const dtn::data::Block &obj);
 			virtual Serializer &operator<<(const dtn::data::BundleFragment &obj);
 
-			virtual size_t getLength(const dtn::data::Bundle &obj);
-			virtual size_t getLength(const dtn::data::PrimaryBlock &obj) const;
-			virtual size_t getLength(const dtn::data::Block &obj) const;
+			virtual Length getLength(const dtn::data::Bundle &obj);
+			virtual Length getLength(const dtn::data::PrimaryBlock &obj) const;
+			virtual Length getLength(const dtn::data::Block &obj) const;
 
 		protected:
-			Serializer &serialize(const dtn::data::PayloadBlock& obj, size_t clip_offset, size_t clip_length);
+			Serializer &serialize(const dtn::data::PayloadBlock& obj, const Length &clip_offset, const Length &clip_length);
 			void rebuildDictionary(const dtn::data::Bundle &obj);
 			bool isCompressable(const dtn::data::Bundle &obj) const;
 			std::ostream &_stream;
@@ -203,7 +203,7 @@ namespace dtn
 			virtual ~SeparateSerializer();
 
 			virtual Serializer &operator<<(const dtn::data::Block &obj);
-			virtual size_t getLength(const dtn::data::Block &obj) const;
+			virtual Length getLength(const dtn::data::Block &obj) const;
 		};
 
 		class SeparateDeserializer : public DefaultDeserializer

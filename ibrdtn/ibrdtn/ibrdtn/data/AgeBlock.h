@@ -20,7 +20,7 @@
  */
 
 #include <ibrdtn/data/Block.h>
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/ExtensionBlock.h>
 #include <ibrcommon/TimeMeasurement.h>
 
@@ -47,38 +47,38 @@ namespace dtn
 			AgeBlock();
 			virtual ~AgeBlock();
 
-			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual dtn::data::Length getLength() const;
+			virtual std::ostream &serialize(std::ostream &stream, dtn::data::Length &length) const;
+			virtual std::istream &deserialize(std::istream &stream, const dtn::data::Length &length);
 
-			virtual std::ostream &serialize_strict(std::ostream &stream, size_t &length) const;
-			virtual size_t getLength_strict() const;
+			virtual std::ostream &serialize_strict(std::ostream &stream, dtn::data::Length &length) const;
+			virtual dtn::data::Length getLength_strict() const;
 
-			uint64_t getMicroseconds() const;
-			uint64_t getSeconds() const;
+			dtn::data::Number getMicroseconds() const;
+			dtn::data::Number getSeconds() const;
 
 			/**
 			 * set the age
 			 */
-			void setSeconds(uint64_t value);
+			void setSeconds(const dtn::data::Number &value);
 
 			/**
 			 * add a value to the age
 			 */
-			void addSeconds(uint64_t value);
+			void addSeconds(const dtn::data::Number &value);
 
 			/**
 			 * set the age
 			 */
-			void setMicroseconds(uint64_t value);
+			void setMicroseconds(const dtn::data::Number &value);
 
 			/**
 			 * add microseconds to the ageblock
 			 */
-			void addMicroseconds(uint64_t value);
+			void addMicroseconds(const dtn::data::Number &value);
 
 		private:
-			dtn::data::SDNV _age;
+			dtn::data::Timestamp _age;
 			ibrcommon::TimeMeasurement _time;
 		};
 

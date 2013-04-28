@@ -8,6 +8,7 @@
 #ifndef BUNDLEBUILDER_H_
 #define BUNDLEBUILDER_H_
 
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/Block.h>
 #include <iterator>
@@ -43,16 +44,16 @@ namespace dtn
 			void clear();
 
 			template <class T>
-			T& insert(size_t procflags);
+			T& insert(const Bitset &procflags);
 
 			POSITION getAlignment() const;
 
-			dtn::data::Block &insert(dtn::data::ExtensionBlock::Factory &f, uint64_t procflags);
+			dtn::data::Block &insert(dtn::data::ExtensionBlock::Factory &f, const Bitset &procflags);
 
 			/**
 			 * Add a block to the bundle.
 			 */
-			dtn::data::Block& insert(dtn::data::block_t block_type, uint64_t procflags) throw (DiscardBlockException);
+			dtn::data::Block& insert(dtn::data::block_t block_type, const Bitset &procflags) throw (DiscardBlockException);
 
 		private:
 			Bundle *_target;
@@ -62,7 +63,7 @@ namespace dtn
 		};
 
 		template <class T>
-		T& BundleBuilder::insert(size_t procflags)
+		T& BundleBuilder::insert(const Bitset &procflags)
 		{
 			switch (_alignment)
 			{

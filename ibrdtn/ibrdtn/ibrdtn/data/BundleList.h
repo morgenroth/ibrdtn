@@ -22,6 +22,7 @@
 #ifndef BUNDLELIST_H_
 #define BUNDLELIST_H_
 
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/MetaBundle.h>
 #include <set>
 
@@ -45,7 +46,7 @@ namespace dtn
 			virtual void remove(const dtn::data::MetaBundle &bundle) throw ();
 			virtual void clear() throw ();
 
-			virtual void expire(const uint64_t timestamp) throw ();
+			virtual void expire(const Timestamp &timestamp) throw ();
 
 			typedef std::set<dtn::data::MetaBundle> meta_set;
 			typedef meta_set::iterator iterator;
@@ -64,7 +65,7 @@ namespace dtn
 			const_iterator find(const T &b) const { return _meta_bundles.find(b); }
 
 			bool empty() const { return _meta_bundles.empty(); }
-			size_t size() const { return _meta_bundles.size(); }
+			Size size() const { return _meta_bundles.size(); }
 
 		private:
 			class ExpiringBundle

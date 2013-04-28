@@ -49,18 +49,19 @@ namespace dtn
 		{
 		}
 
-		size_t CompressedPayloadBlock::getLength() const
+		Length CompressedPayloadBlock::getLength() const
 		{
 			return _algorithm.getLength() + _origin_size.getLength();
 		}
 
-		std::ostream& CompressedPayloadBlock::serialize(std::ostream &stream, size_t &) const
+		std::ostream& CompressedPayloadBlock::serialize(std::ostream &stream, Length &len) const
 		{
 			stream << _algorithm << _origin_size;
+			len -= _algorithm.getLength() + _origin_size.getLength();
 			return stream;
 		}
 
-		std::istream& CompressedPayloadBlock::deserialize(std::istream &stream, const size_t)
+		std::istream& CompressedPayloadBlock::deserialize(std::istream &stream, const Length&)
 		{
 			stream >> _algorithm;
 			stream >> _origin_size;
@@ -74,17 +75,17 @@ namespace dtn
 
 		CompressedPayloadBlock::COMPRESS_ALGS CompressedPayloadBlock::getAlgorithm() const
 		{
-			return COMPRESS_ALGS( _algorithm.getValue() );
+			return _algorithm.get<CompressedPayloadBlock::COMPRESS_ALGS>();
 		}
 
-		void CompressedPayloadBlock::setOriginSize(uint64_t s)
+		void CompressedPayloadBlock::setOriginSize(const Number &s)
 		{
 			_origin_size = s;
 		}
 
-		uint64_t CompressedPayloadBlock::getOriginSize() const
+		const Number& CompressedPayloadBlock::getOriginSize() const
 		{
-			return _origin_size.getValue();
+			return _origin_size;
 		}
 
 		void CompressedPayloadBlock::compress(dtn::data::Bundle &b, CompressedPayloadBlock::COMPRESS_ALGS alg)
@@ -160,7 +161,7 @@ namespace dtn
 				case COMPRESSION_ZLIB:
 				{
 #ifdef HAVE_ZLIB
-					const size_t CHUNK_SIZE = 16384;
+					const Length CHUNK_SIZE = 16384;
 
 					int ret, flush;
 					unsigned have;
@@ -227,7 +228,7 @@ namespace dtn
 				case COMPRESSION_ZLIB:
 				{
 #ifdef HAVE_ZLIB
-					const size_t CHUNK_SIZE = 16384;
+					const Length CHUNK_SIZE = 16384;
 
 					int ret;
 					unsigned have;

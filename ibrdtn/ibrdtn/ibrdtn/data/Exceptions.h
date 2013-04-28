@@ -23,6 +23,7 @@
 #define EXCEPTIONS_H_
 
 #include "ibrcommon/Exceptions.h"
+#include <ibrdtn/data/Number.h>
 
 #include <stdexcept>
 #include <string>
@@ -62,8 +63,8 @@ namespace dtn
 		class PayloadReceptionInterrupted : public dtn::SerializationFailedException
 		{
 		public:
-			const size_t length;
-			PayloadReceptionInterrupted(const size_t l, string what = "The payload reception has been interrupted.") throw() : dtn::SerializationFailedException(what), length(l)
+			const dtn::data::Length length;
+			PayloadReceptionInterrupted(const dtn::data::Length l, string what = "The payload reception has been interrupted.") throw() : dtn::SerializationFailedException(what), length(l)
 			{
 			};
 		};

@@ -43,29 +43,29 @@ namespace dtn
 		{
 		}
 
-		uint64_t ScopeControlHopLimitBlock::getHopsToLive() const
+		Number ScopeControlHopLimitBlock::getHopsToLive() const
 		{
-			if (_limit.getValue() < _count.getValue()) return 0;
-			return _limit.getValue() - _count.getValue();
+			if (_limit < _count) return 0;
+			return _limit - _count;
 		}
 
-		void ScopeControlHopLimitBlock::increment(const dtn::data::SDNV &hops)
+		void ScopeControlHopLimitBlock::increment(const Number &hops)
 		{
-			_count += dtn::data::SDNV(hops);
+			_count += hops;
 		}
 
-		void ScopeControlHopLimitBlock::setLimit(const dtn::data::SDNV &hops)
+		void ScopeControlHopLimitBlock::setLimit(const Number &hops)
 		{
 			_count = 0;
 			_limit = hops;
 		}
 
-		size_t ScopeControlHopLimitBlock::getLength() const
+		Length ScopeControlHopLimitBlock::getLength() const
 		{
 			return _count.getLength() + _limit.getLength();
 		}
 
-		std::ostream& ScopeControlHopLimitBlock::serialize(std::ostream &stream, size_t &length) const
+		std::ostream& ScopeControlHopLimitBlock::serialize(std::ostream &stream, Length &length) const
 		{
 			stream << _count;
 			stream << _limit;
@@ -73,7 +73,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& ScopeControlHopLimitBlock::deserialize(std::istream &stream, const size_t)
+		std::istream& ScopeControlHopLimitBlock::deserialize(std::istream &stream, const Length&)
 		{
 			stream >> _count;
 			stream >> _limit;

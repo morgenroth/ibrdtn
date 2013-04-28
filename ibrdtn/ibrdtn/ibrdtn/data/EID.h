@@ -24,7 +24,7 @@
 
 #include <string>
 #include "ibrcommon/Exceptions.h"
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 
 using namespace std;
 
@@ -47,7 +47,7 @@ namespace dtn
 			 * @param node Node number.
 			 * @param application Application number.
 			 */
-			EID(const dtn::data::SDNV &node, const dtn::data::SDNV &application);
+			EID(const dtn::data::Number &node, const dtn::data::Number &application);
 
 			virtual ~EID();
 
@@ -96,7 +96,7 @@ namespace dtn
 			 * are set to zero if the EID is not compressable.
 			 * @return A pair of two numeric values.
 			 */
-			typedef std::pair<SDNV, SDNV> Compressed;
+			typedef std::pair<Number, Number> Compressed;
 			Compressed getCompressed() const;
 
 		private:

@@ -8,6 +8,7 @@
 #ifndef BUNDLESET_H_
 #define BUNDLESET_H_
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/MetaBundle.h"
 #include <ibrcommon/data/BloomFilter.h>
 #include <set>
@@ -28,24 +29,24 @@ namespace dtn
 			/**
 			 * @param bf_size Initial size fo the bloom-filter.
 			 */
-			BundleSet(Listener *listener = NULL, size_t bf_size = 1024);
+			BundleSet(Listener *listener = NULL, Length bf_size = 1024);
 			virtual ~BundleSet();
 
 			virtual void add(const dtn::data::MetaBundle &bundle) throw ();
 			virtual void clear() throw ();
 			virtual bool has(const dtn::data::BundleID &bundle) const throw ();
 
-			virtual void expire(const uint64_t timestamp) throw ();
+			virtual void expire(const Timestamp timestamp) throw ();
 
 			/**
 			 * Returns the number of elements in this set
 			 */
-			virtual size_t size() const throw ();
+			virtual Size size() const throw ();
 
 			/**
 			 * Returns the data length of the serialized BundleSet
 			 */
-			size_t getLength() const throw ();
+			Length getLength() const throw ();
 
 			const ibrcommon::BloomFilter& getBloomFilter() const throw ();
 

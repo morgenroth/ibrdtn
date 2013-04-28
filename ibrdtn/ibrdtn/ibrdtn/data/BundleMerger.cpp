@@ -51,7 +51,7 @@ namespace dtn
 			return _bundle;
 		}
 
-		bool BundleMerger::Container::contains(uint64_t offset, uint64_t length) const
+		bool BundleMerger::Container::contains(Length offset, Length length) const
 		{
 			// check if the offered payload is already in the chunk list
 			for (std::set<Chunk>::const_iterator iter = _chunks.begin(); iter != _chunks.end(); ++iter)
@@ -69,7 +69,7 @@ namespace dtn
 			return false;
 		}
 
-		void BundleMerger::Container::add(uint64_t offset, uint64_t length)
+		void BundleMerger::Container::add(Length offset, Length length)
 		{
 			BundleMerger::Chunk chunk(offset, length);
 			_chunks.insert(chunk);
@@ -117,7 +117,7 @@ namespace dtn
 			(*stream).seekp(obj.fragmentoffset);
 
 			dtn::data::PayloadBlock &p = obj.find<dtn::data::PayloadBlock>();
-			const size_t plength = p.getLength();
+			const Length plength = p.getLength();
 
 			// skip write operation if chunk is already in the merged bundle
 			if (c.contains(obj.fragmentoffset, plength)) return c;
@@ -230,7 +230,7 @@ namespace dtn
 			return Container(ref);
 		}
 
-		BundleMerger::Chunk::Chunk(uint64_t o, uint64_t l)
+		BundleMerger::Chunk::Chunk(Length o, Length l)
 		 : offset(o), length(l)
 		{
 		}
@@ -247,10 +247,10 @@ namespace dtn
 			return (length < other.length);
 		}
 
-		bool BundleMerger::Chunk::isComplete(uint64_t length, const std::set<Chunk> &chunks)
+		bool BundleMerger::Chunk::isComplete(Length length, const std::set<Chunk> &chunks)
 		{
 			// check if the bundle payload is complete
-			uint64_t position = 0;
+			Length position = 0;
 
 			for (std::set<Chunk>::const_iterator iter = chunks.begin(); iter != chunks.end(); ++iter)
 			{

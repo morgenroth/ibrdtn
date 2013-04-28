@@ -22,9 +22,9 @@
 #ifndef BUNDLEID_H_
 #define BUNDLEID_H_
 
+#include <ibrdtn/data/Number.h>
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Bundle.h"
-#include <stdint.h>
 
 namespace dtn
 {
@@ -33,7 +33,7 @@ namespace dtn
 		class BundleID
 		{
 		public:
-			BundleID(const dtn::data::EID source = dtn::data::EID(), const uint64_t timestamp = 0, const uint64_t sequencenumber = 0, const bool fragment = false, const uint64_t offset = 0);
+			BundleID(const dtn::data::EID source = dtn::data::EID(), const dtn::data::Timestamp &timestamp = 0, const dtn::data::Number &sequencenumber = 0, const bool fragment = false, const dtn::data::Number &offset = 0);
 			BundleID(const dtn::data::PrimaryBlock &b);
 			virtual ~BundleID();
 
@@ -48,11 +48,11 @@ namespace dtn
 			friend std::istream &operator>>(std::istream &stream, BundleID &obj);
 
 			dtn::data::EID source;
-			uint64_t timestamp;
-			uint64_t sequencenumber;
+			dtn::data::Timestamp timestamp;
+			dtn::data::Number sequencenumber;
 
 			bool fragment;
-			uint64_t offset;
+			dtn::data::Number offset;
 		};
 	}
 }

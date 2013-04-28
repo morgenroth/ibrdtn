@@ -24,6 +24,7 @@
 
 #include "ibrdtn/data/Block.h"
 #include <ibrcommon/data/BLOB.h>
+#include <ibrdtn/data/Number.h>
 #include <map>
 
 namespace dtn
@@ -56,9 +57,9 @@ namespace dtn
 
 			void setType(block_t type);
 
-			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual Length getLength() const;
+			virtual std::ostream &serialize(std::ostream &stream, Length &length) const;
+			virtual std::istream &deserialize(std::istream &stream, const Length &length);
 
 		protected:
 			class FactoryList

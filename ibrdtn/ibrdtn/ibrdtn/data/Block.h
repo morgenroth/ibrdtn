@@ -24,19 +24,16 @@
 
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Exceptions.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/Serializer.h"
 #include <ibrcommon/Exceptions.h>
 #include <list>
-#include <stdint.h>
 
 namespace dtn
 {
 	namespace data
 	{
-		typedef unsigned char block_t;
-
 		class BundleBuilder;
 
 		class Block
@@ -77,39 +74,39 @@ namespace dtn
 
 			void set(ProcFlags flag, const bool &value);
 			bool get(ProcFlags flag) const;
-			const uint64_t& getProcessingFlags() const;
+			const Bitset& getProcessingFlags() const;
 
 			/**
 			 * Serialize the derived block payload.
 			 * @param stream A output stream to serialize into.
 			 * @return The same reference as given with the stream parameter.
 			 */
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const = 0;
+			virtual std::ostream &serialize(std::ostream &stream, Length &length) const = 0;
 
 			/**
 			 * Deserialize the derived block payload.
 			 * @param stream A input stream to deserialize from.
 			 * @return The same reference as given with the stream parameter.
 			 */
-			virtual std::istream &deserialize(std::istream &stream, const size_t length) = 0;
+			virtual std::istream &deserialize(std::istream &stream, const Length &length) = 0;
 
 			/**
 			 * Return the length of the payload, if this were an abstract block. It is
 			 * the length put in the third field, after block type and processing flags.
 			 */
-			virtual size_t getLength() const = 0;
+			virtual Length getLength() const = 0;
 
 			/**
 			 * Return the length of the payload in strict format
 			 */
-			virtual size_t getLength_strict() const;
+			virtual Length getLength_strict() const;
 
 			/**
 			Serialize the block in a strict way. Dynamic fields are set to the last deserialized value.
 			@param stream the stream to be written into
 			@return the same stream as the parameter for chaining
 			*/
-			virtual std::ostream &serialize_strict(std::ostream &stream, size_t &length) const;
+			virtual std::ostream &serialize_strict(std::ostream &stream, Length &length) const;
 
 		protected:
 			/**
@@ -126,7 +123,7 @@ namespace dtn
 
 		private:
 			// block processing flags
-			uint64_t _procflags;
+			Bitset _procflags;
 		};
 	}
 }

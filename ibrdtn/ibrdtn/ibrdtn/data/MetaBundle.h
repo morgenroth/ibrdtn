@@ -22,6 +22,7 @@
 #ifndef METABUNDLE_H_
 #define METABUNDLE_H_
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/BundleID.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/DTNTime.h"
@@ -43,16 +44,16 @@ namespace dtn
 			bool get(dtn::data::PrimaryBlock::FLAGS flag) const;
 
 			dtn::data::DTNTime received;
-			uint64_t lifetime;
+			Number lifetime;
 			dtn::data::EID destination;
 			dtn::data::EID reportto;
 			dtn::data::EID custodian;
-			uint64_t appdatalength;
-			uint64_t procflags;
-			uint64_t expiretime;
-			uint64_t hopcount;
-			uint64_t payloadlength;
-			int8_t net_priority;
+			Number appdatalength;
+			Bitset procflags;
+			Number expiretime;
+			Number hopcount;
+			Number payloadlength;
+			Integer net_priority;
 		};
 	}
 }

@@ -15,7 +15,7 @@ namespace dtn
 		BundleSet::Listener::~Listener()
 		{ }
 
-		BundleSet::BundleSet(BundleSet::Listener *listener, size_t bf_size)
+		BundleSet::BundleSet(BundleSet::Listener *listener, Length bf_size)
 		 : _bf(bf_size * 8), _listener(listener), _consistent(true)
 		{
 		}
@@ -59,12 +59,12 @@ namespace dtn
 			return false;
 		}
 
-		size_t BundleSet::size() const throw ()
+		Size BundleSet::size() const throw ()
 		{
 			return _bundles.size();
 		}
 
-		void BundleSet::expire(const uint64_t timestamp) throw ()
+		void BundleSet::expire(const Timestamp timestamp) throw ()
 		{
 			bool commit = false;
 
@@ -160,14 +160,14 @@ namespace dtn
 			return !(((*this) < other) || ((*this) == other));
 		}
 
-		size_t BundleSet::getLength() const throw ()
+		Length BundleSet::getLength() const throw ()
 		{
-			return dtn::data::SDNV(_bf.size()).getLength() + _bf.size();
+			return dtn::data::Number(_bf.size()).getLength() + _bf.size();
 		}
 
 		std::ostream &operator<<(std::ostream &stream, const BundleSet &obj)
 		{
-			dtn::data::SDNV size(obj._bf.size());
+			dtn::data::Number size(obj._bf.size());
 			stream << size;
 
 			const char *data = reinterpret_cast<const char*>(obj._bf.table());
@@ -178,10 +178,10 @@ namespace dtn
 
 		std::istream &operator>>(std::istream &stream, BundleSet &obj)
 		{
-			dtn::data::SDNV count;
+			dtn::data::Number count;
 			stream >> count;
 
-			std::vector<char> buffer(count.getValue());
+			std::vector<char> buffer(count.get<size_t>());
 
 			stream.read(&buffer[0], buffer.size());
 

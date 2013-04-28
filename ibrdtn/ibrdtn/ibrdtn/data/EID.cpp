@@ -73,13 +73,13 @@ namespace dtn
 			}
 		}
 
-		EID::EID(const dtn::data::SDNV &node, const dtn::data::SDNV &application)
+		EID::EID(const dtn::data::Number &node, const dtn::data::Number &application)
 		 : _scheme(EID::DEFAULT_SCHEME), _ssp("none")
 		{
 			if (node == 0)	return;
 
 			std::stringstream ss_ssp;
-			ss_ssp << node.getValue() << "." << application.getValue();
+			ss_ssp << node.toString() << "." << application.toString();
 			_ssp = ss_ssp.str();
 			_scheme = CBHE_SCHEME;
 		}

@@ -26,7 +26,6 @@
 #include "ibrdtn/utils/Clock.h"
 #include "ibrdtn/data/ScopeControlHopLimitBlock.h"
 #include "ibrdtn/data/SchedulingBlock.h"
-#include <limits>
 
 namespace dtn
 {
@@ -34,19 +33,19 @@ namespace dtn
 	{
 		MetaBundle::MetaBundle()
 		 : BundleID(), received(), lifetime(0), destination(), reportto(),
-		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(std::numeric_limits<std::size_t>::max()), payloadlength(0), net_priority(0)
+		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
 		{
 		}
 
 		MetaBundle::MetaBundle(const dtn::data::BundleID &id)
 		 : BundleID(id), received(), lifetime(0), destination(), reportto(),
-		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(std::numeric_limits<std::size_t>::max()), payloadlength(0), net_priority(0)
+		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
 		{
 		}
 
 		MetaBundle::MetaBundle(const dtn::data::Bundle &b)
 		 : BundleID(b), lifetime(b.lifetime), destination(b.destination), reportto(b.reportto),
-		   custodian(b.custodian), appdatalength(b.appdatalength), procflags(b.procflags), expiretime(0), hopcount(std::numeric_limits<std::size_t>::max()), payloadlength(0), net_priority(0)
+		   custodian(b.custodian), appdatalength(b.appdatalength), procflags(b.procflags), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
 		{
 			expiretime = dtn::utils::Clock::getExpireTime(b);
 
@@ -81,12 +80,12 @@ namespace dtn
 		int MetaBundle::getPriority() const
 		{
 			// read priority
-			if (procflags & dtn::data::PrimaryBlock::PRIORITY_BIT1)
+			if (procflags.get(dtn::data::PrimaryBlock::PRIORITY_BIT1))
 			{
 				return 0;
 			}
 
-			if (procflags & dtn::data::PrimaryBlock::PRIORITY_BIT2)
+			if (procflags.get(dtn::data::PrimaryBlock::PRIORITY_BIT2))
 			{
 				return 1;
 			}
@@ -96,7 +95,7 @@ namespace dtn
 
 		bool MetaBundle::get(dtn::data::PrimaryBlock::FLAGS flag) const
 		{
-			return (procflags & flag);
+			return procflags.get(flag);
 		}
 	}
 }

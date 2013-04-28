@@ -255,7 +255,7 @@ namespace dtn
 			return PrimaryBlock::toString();
 		}
 
-		size_t Bundle::size() const
+		Size Bundle::size() const
 		{
 			return _blocks.size();
 		}

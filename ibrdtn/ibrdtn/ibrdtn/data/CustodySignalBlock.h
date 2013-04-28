@@ -26,7 +26,7 @@
 
 #include "ibrdtn/data/AdministrativeBlock.h"
 #include "ibrdtn/data/EID.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/MetaBundle.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/DTNTime.h"
@@ -61,11 +61,11 @@ namespace dtn
 			virtual void read(const dtn::data::PayloadBlock &p) throw (WrongRecordException);
 			virtual void write(dtn::data::PayloadBlock &p) const;
 
-			bool _custody_accepted;
-			REASON_CODE _reason;
-			SDNV _fragment_length;
-			DTNTime _timeofsignal;
-			dtn::data::BundleID _bundleid;
+			bool custody_accepted;
+			REASON_CODE reason;
+			Number fragment_length;
+			DTNTime timeofsignal;
+			dtn::data::BundleID bundleid;
 		};
 	}
 }

@@ -22,6 +22,7 @@
 #ifndef PRIMARYBLOCK_H_
 #define PRIMARYBLOCK_H_
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/Serializer.h"
@@ -118,12 +119,12 @@ namespace dtn
 			bool operator<(const PrimaryBlock& other) const;
 			bool operator>(const PrimaryBlock& other) const;
 
-			uint64_t procflags;
-			uint64_t timestamp;
-			uint64_t sequencenumber;
-			uint64_t lifetime;
-			uint64_t fragmentoffset;
-			uint64_t appdatalength;
+			Bitset procflags;
+			Timestamp timestamp;
+			Number sequencenumber;
+			Number lifetime;
+			Length fragmentoffset;
+			Length appdatalength;
 
 			EID source;
 			EID destination;
@@ -132,8 +133,8 @@ namespace dtn
 
 		private:
 			static ibrcommon::Mutex __sequence_lock;
-			static uint64_t __sequencenumber;
-			static uint64_t __last_timestamp;
+			static Number __sequencenumber;
+			static Timestamp __last_timestamp;
 		};
 	}
 }

@@ -20,7 +20,7 @@
  */
 
 #include <ibrdtn/data/Block.h>
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/ExtensionBlock.h>
 
 #ifndef SCOPECONTROLHOPLIMITBLOCK_H_
@@ -46,17 +46,17 @@ namespace dtn
 			ScopeControlHopLimitBlock();
 			virtual ~ScopeControlHopLimitBlock();
 
-			uint64_t getHopsToLive() const;
-			void increment(const dtn::data::SDNV &hops = 1);
-			void setLimit(const dtn::data::SDNV &hops);
+			Number getHopsToLive() const;
+			void increment(const Number &hops = 1);
+			void setLimit(const Number &hops);
 
-			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual Length getLength() const;
+			virtual std::ostream &serialize(std::ostream &stream, Length &length) const;
+			virtual std::istream &deserialize(std::istream &stream, const Length &length);
 
 		private:
-			dtn::data::SDNV _count;
-			dtn::data::SDNV _limit;
+			dtn::data::Number _count;
+			dtn::data::Number _limit;
 		};
 
 		/**

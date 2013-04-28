@@ -61,7 +61,7 @@ namespace dtn
 			_meta_bundles.clear();
 		}
 
-		void BundleList::expire(const uint64_t timestamp) throw ()
+		void BundleList::expire(const Timestamp &timestamp) throw ()
 		{
 			// we can not expire bundles if we have no idea of time
 			if (timestamp == 0) return;

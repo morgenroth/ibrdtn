@@ -20,12 +20,14 @@
  *    THIS FILE BASES ON DTN_2.4.0/SERVLIB/BUNDLING/SDNV.H
  */
 
+#include <ibrcommon/Exceptions.h>
+
+#include <sstream>
 #include <sys/types.h>
 #include <iostream>
 #include <stdio.h>
 #include <stdint.h>
 #include <limits>
-#include <ibrcommon/Exceptions.h>
 
 #ifndef _SDNV_H_
 #define _SDNV_H_
@@ -60,6 +62,7 @@ namespace dtn
 			};
 		};
 
+		template<class E>
 		class SDNV
 		{
 		public:
@@ -81,10 +84,10 @@ namespace dtn
 				}
 				else
 				{
-					if (value > std::numeric_limits<_value>::max())
+					if (value > std::numeric_limits<E>::max())
 						throw ValueOutOfRangeException();
 
-					_value = std::numeric_limits<_value>::max() & value;
+					_value = std::numeric_limits<E>::max() & value;
 				}
 			}
 
@@ -92,13 +95,25 @@ namespace dtn
 			 * Destructor
 			 * @return
 			 */
-			~SDNV();
+			~SDNV() {
+			}
 
 			/**
 			 * Determine the encoded length of the value.
 			 * @return The length of the encoded value.
 			 */
-			size_t getLength() const;
+			size_t getLength() const
+			{
+				size_t val_len = 0;
+				E tmp = _value;
+
+				do {
+					tmp = tmp >> 7;
+					val_len++;
+				} while (tmp != 0);
+
+				return val_len;
+			}
 
 			/**
 			 * Returns the decoded value.
@@ -127,38 +142,158 @@ namespace dtn
 				}
 				else
 				{
-					if (value > std::numeric_limits<_value>::max())
+					if (value > std::numeric_limits<E>::max())
 						throw ValueOutOfRangeException();
 
-					_value = std::numeric_limits<_value>::max() & value;
+					_value = std::numeric_limits<E>::max() & value;
 				}
 			}
 
-			bool operator==(const SDNV &value) const;
-			bool operator!=(const SDNV &value) const;
+			bool operator==(const SDNV<E> &value) const
+			{
+				return (value._value == _value);
+			}
 
-			SDNV operator+(const SDNV &value);
-			SDNV& operator+=(const SDNV &value);
+			bool operator!=(const SDNV<E> &value) const
+			{
+				return (value._value != _value);
+			}
 
-			SDNV operator-(const SDNV &value);
-			SDNV& operator-=(const SDNV &value);
+			SDNV<E> operator+(const SDNV<E> &value)
+			{
+				E result = _value + value._value;
+				return SDNV<E>(result);
+			}
 
-			bool operator&(const SDNV &value) const;
-			bool operator|(const SDNV &value) const;
+			SDNV<E>& operator+=(const SDNV<E> &value)
+			{
+				_value += value._value;
+				return (*this);
+			}
 
-			SDNV& operator&=(const SDNV &value) const;
-			SDNV& operator|=(const SDNV &value) const;
+			SDNV<E> operator-(const SDNV<E> &value)
+			{
+				E result = _value - value._value;
+				return SDNV<E>(result);
+			}
 
-			bool operator<(const SDNV &value) const;
-			bool operator<=(const SDNV &value) const;
-			bool operator>(const SDNV &value) const;
-			bool operator>=(const SDNV &value) const;
+			SDNV<E>& operator-=(const SDNV<E> &value)
+			{
+				_value -= value._value;
+				return (*this);
+			}
+
+			bool operator&(const SDNV<E> &value) const
+			{
+				return (value._value & _value);
+			}
+
+			bool operator|(const SDNV<E> &value) const
+			{
+				return (value._value | _value);
+			}
+
+			SDNV<E>& operator&=(const SDNV<E> &value)
+			{
+				_value &= value._value;
+				return (*this);
+			}
+
+			SDNV<E>& operator|=(const SDNV<E> &value)
+			{
+				_value |= value._value;
+				return (*this);
+			}
+
+			bool operator<(const SDNV<E> &value) const
+			{
+				return (_value < value._value);
+			}
+
+			bool operator<=(const SDNV<E> &value) const
+			{
+				return (_value <= value._value);
+			}
+
+			bool operator>(const SDNV<E> &value) const
+			{
+				return (_value > value._value);
+			}
+
+			bool operator>=(const SDNV<E> &value) const
+			{
+				return (_value >= value._value);
+			}
+
+			static SDNV<E> max()
+			{
+				return std::numeric_limits<E>::max();
+			}
+
+			std::string toString() const {
+				std::stringstream ss;
+				ss << _value;
+				return ss.str();
+			}
 
 		private:
-			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV &obj);
-			friend std::istream &operator>>(std::istream &stream, dtn::data::SDNV &obj);
+			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV<E> &obj)
+			{
+				unsigned char buffer[10];
+				unsigned char *bp = &buffer[0];
+				uint64_t val = obj._value;
 
-			size_t _value;
+				const size_t val_len = obj.getLength();
+
+				if (!(val_len > 0)) throw ValueOutOfRangeException("ERROR(SDNV): !(val_len > 0)");
+				if (!(val_len <= SDNV::MAX_LENGTH)) throw ValueOutOfRangeException("ERROR(SDNV): !(val_len <= MAX_LENGTH)");
+
+				// Now advance bp to the last byte and fill it in backwards with the value bytes.
+				bp += val_len;
+				unsigned char high_bit = 0; // for the last octet
+				do {
+					--bp;
+					*bp = (unsigned char)(high_bit | (val & 0x7f));
+					high_bit = (1 << 7); // for all but the last octet
+					val = val >> 7;
+				} while (val != 0);
+
+				if (!(bp == &buffer[0])) throw ValueOutOfRangeException("ERROR(SDNV): !(bp == buffer)");
+
+				// write encoded value to the stream
+				stream.write((const char*)&buffer[0], val_len);
+
+				return stream;
+			}
+
+			friend std::istream &operator>>(std::istream &stream, dtn::data::SDNV<E> &obj)
+			{
+				// TODO: check if the value fits into sizeof(size_t)
+
+				size_t val_len = 0;
+				unsigned char bp = 0;
+				unsigned char start = 0;
+
+				obj._value = 0;
+				do {
+					stream.get((char&)bp);
+
+					obj._value = (obj._value << 7) | (bp & 0x7f);
+					++val_len;
+
+					if ((bp & (1 << 7)) == 0)
+						break; // all done;
+
+					if (start == 0) start = bp;
+				} while (1);
+
+				if ((val_len > SDNV::MAX_LENGTH) || ((val_len == SDNV::MAX_LENGTH) && (start != 0x81)))
+					throw ValueOutOfRangeException("ERROR(SDNV): overflow value in sdnv");
+
+				return stream;
+			}
+
+			E _value;
 		};
 	}
 }
