@@ -95,19 +95,19 @@ void TestPlainSerializer::plain_serializer_inversion(void)
 	dtn::data::DefaultSerializer(ss1) << b1;
 	dtn::data::DefaultSerializer(ss2) << b2;
 
-	std::string ss1_data = ss1.str();
-	std::string ss2_data = ss2.str();
-
-	// Debugging
-	std::cout << "\n---\n" << ss.str() << "\n---" << std::endl;
-
-	std::cout << "\n---\n" << std::endl;
-	std::for_each(ss1_data.begin(), ss1_data.end(), hexdump);
-	std::cout << "\n---\n" << std::endl;
-
-	std::cout << "\n---\n" << std::endl;
-	std::for_each(ss2_data.begin(), ss2_data.end(), hexdump);
-	std::cout << "\n---\n" << std::endl;
+//	std::string ss1_data = ss1.str();
+//	std::string ss2_data = ss2.str();
+//
+//	// Debugging
+//	std::cout << "\n---\n" << ss.str() << "\n---" << std::endl;
+//
+//	std::cout << "\n---\n" << std::endl;
+//	std::for_each(ss1_data.begin(), ss1_data.end(), hexdump);
+//	std::cout << "\n---\n" << std::endl;
+//
+//	std::cout << "\n---\n" << std::endl;
+//	std::for_each(ss2_data.begin(), ss2_data.end(), hexdump);
+//	std::cout << "\n---\n" << std::endl;
 
 	/* compare strings */
 	CPPUNIT_ASSERT_EQUAL( 0, ss1.str().compare(ss2.str()) );
