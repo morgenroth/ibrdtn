@@ -35,7 +35,7 @@ namespace ibrcommon
 	class lowpansocket : public datagramsocket
 	{
 	public:
-		lowpansocket(int panid, const vinterface &iface);
+		lowpansocket(const uint16_t &panid, const vinterface &iface);
 		~lowpansocket();
 		void up() throw (socket_exception);
 		void down() throw (socket_exception);
@@ -52,7 +52,7 @@ namespace ibrcommon
 		static void getAddress(struct ieee802154_addr *ret, const vinterface &iface);
 
 	private:
-		const int _panid;
+		const uint16_t _panid;
 		const vinterface _iface;
 	};
 }

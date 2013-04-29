@@ -39,7 +39,7 @@ namespace ibrcommon
 		 * Callback interface implementation from LoWPAN CL
 		 * @see LOWPANConvergenceLayer
 		 */
-		virtual void send_cb(char *buf, int len, const ibrcommon::vaddress &address) = 0;
+		virtual void send_cb(const char *buf, size_t len, const ibrcommon::vaddress &address) = 0;
 	};
 
 	class lowpanstream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream

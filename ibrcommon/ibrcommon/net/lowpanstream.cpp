@@ -116,7 +116,7 @@ namespace ibrcommon
 		} else
 		{
 			// increment the sequence number
-			in_seq_num_ = (in_seq_num_ + 1) % 8;
+			in_seq_num_ = static_cast<uint8_t>((in_seq_num_ + 1) % 8);
 		}
 
 		// check if this is the right segment
@@ -183,7 +183,7 @@ namespace ibrcommon
 		out_buf_[0] |= _out_stat;
 
 		out_seq_num_global++;
-		out_seq_num_ = (out_seq_num_ + 1) % 8;
+		out_seq_num_ = static_cast<uint8_t>((out_seq_num_ + 1) % 8);
 
 		IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream send segment " << (int)out_seq_num_ << " / " << out_seq_num_global << IBRCOMMON_LOGGER_ENDL;
 

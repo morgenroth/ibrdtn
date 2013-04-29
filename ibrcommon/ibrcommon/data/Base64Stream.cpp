@@ -165,7 +165,7 @@ namespace ibrcommon
 					default:
 					{
 						// put char into the decode buffer
-						set_b64(c);
+						set_b64(static_cast<char>(c));
 						break;
 					}
 				}

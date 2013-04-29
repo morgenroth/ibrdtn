@@ -130,7 +130,7 @@ namespace ibrcommon
 
 	void vsocket::pipesocket::read(char *buf, size_t len) throw (socket_exception)
 	{
-		int ret = ::read(this->fd(), buf, len);
+		ssize_t ret = ::read(this->fd(), buf, len);
 		if (ret == -1)
 			throw socket_exception("read error");
 		if (ret == 0)
@@ -139,7 +139,7 @@ namespace ibrcommon
 
 	void vsocket::pipesocket::write(const char *buf, size_t len) throw (socket_exception)
 	{
-		int ret = ::write(_output_fd, buf, len);
+		ssize_t ret = ::write(_output_fd, buf, len);
 		if (ret == -1)
 			throw socket_exception("write error");
 	}

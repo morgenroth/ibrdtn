@@ -23,7 +23,7 @@
 
 namespace ibrcommon
 {
-	HMacStream::HMacStream(const unsigned char * const key, const size_t key_size)
+	HMacStream::HMacStream(const unsigned char * const key, const int key_size)
 	 : HashStream(BUFF_SIZE, EVP_MAX_MD_SIZE), key_(key), key_size_(key_size)
 	{
 		HMAC_CTX_init(&ctx_);

@@ -107,7 +107,7 @@ namespace ibrcommon
 		if (!_sign_valid)
 		{
 			sync();
-			_return_code = EVP_VerifyFinal(&_ctx, reinterpret_cast<const unsigned char *>(their_sign.c_str()), their_sign.size(), _pkey);
+			_return_code = EVP_VerifyFinal(&_ctx, reinterpret_cast<const unsigned char *>(their_sign.c_str()), static_cast<unsigned int>(their_sign.size()), _pkey);
 			_sign_valid = true;
 		}
 		return _return_code;

@@ -50,7 +50,7 @@ namespace ibrcommon
 
 		void addData(const std::string &data);
 
-		void addData(const char *data, const size_t len);
+		void addData(const char *data, const int len);
 
 	private:
 		std::ostream &_stream;

@@ -134,7 +134,7 @@ namespace ibrcommon
 			throw address_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 		}
 
-		sa_family_t fam = res->ai_family;
+		sa_family_t fam = static_cast<sa_family_t>(res->ai_family);
 		freeaddrinfo(res);
 
 		return fam;

@@ -24,7 +24,7 @@
 
 namespace ibrcommon
 {
-	HashStream::HashStream(const size_t hash, const size_t buffer)
+	HashStream::HashStream(const unsigned int hash, const size_t buffer)
 	 : iostream(this), data_buf_(buffer), data_size_(buffer), hash_buf_(hash), hash_size_(hash), final_(false)
 	{
 		// Initialize get pointer.  This should be zero so that underflow is called upon first read.

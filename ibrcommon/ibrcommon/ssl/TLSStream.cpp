@@ -66,7 +66,7 @@ namespace ibrcommon
 
 	X509 *TLSStream::activate()
 	{
-		int error;
+		long error;
 
 		ibrcommon::MutexLock l(_activation_lock);
 		if(_activated){
@@ -117,7 +117,7 @@ namespace ibrcommon
 		/* perform TLS Handshake */
 		error = SSL_do_handshake(_ssl);
 		if(error <= 0){ /* on 0 the handshake failed but was shut down controlled */
-			int errcode = SSL_get_error(_ssl, error);
+			int errcode = SSL_get_error(_ssl, static_cast<int>(error));
 			log_error("TLS handshake failed", errcode);
 
 			/* cleanup */
@@ -150,7 +150,7 @@ namespace ibrcommon
 
 	TLSStream::traits::int_type TLSStream::underflow()
 	{
-		streamsize num_bytes;
+		int num_bytes = 0;
 		/* get data from tcpstream */
 
 		if(_activated)
@@ -175,7 +175,7 @@ namespace ibrcommon
 		{
 			try{
 				/* make sure to read at least 1 byte and then read as much as we can */
-				num_bytes = _stream->read(&in_buf_[0], 1).readsome(&in_buf_[0]+1, BUFF_SIZE-1) + 1;
+				num_bytes = static_cast<int>( _stream->read(&in_buf_[0], 1).readsome(&in_buf_[0]+1, BUFF_SIZE-1) + 1 );
 			} catch(ios_base::failure &ex){
 				/* ignore, the specific bits are checked later */
 			}
@@ -200,7 +200,7 @@ namespace ibrcommon
 
 	TLSStream::traits::int_type TLSStream::overflow(traits::int_type c)
 	{
-		streamsize num_bytes;
+		int num_bytes;
 		char *ibegin = &out_buf_[0];
 		char *iend = pptr();
 
@@ -221,7 +221,7 @@ namespace ibrcommon
 		if(_activated)
 		{
 			/* use ssl to send */
-			num_bytes = SSL_write(_ssl, &out_buf_[0], (iend - ibegin));
+			num_bytes = SSL_write(_ssl, &out_buf_[0], static_cast<int>(iend - ibegin));
 			if(num_bytes == 0){
 				/* connection closed */
 				return traits::eof();

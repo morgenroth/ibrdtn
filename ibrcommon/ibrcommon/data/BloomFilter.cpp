@@ -314,11 +314,11 @@ namespace ibrcommon
 		bit = bit_index % bits_per_char;
 	}
 
-	float BloomFilter::getAllocation() const
+	double BloomFilter::getAllocation() const
 	{
-		float m = table_size_;
-		float n = _itemcount;
-		float k = salt_count_;
+		double m = static_cast<double>(table_size_);
+		double n = static_cast<double>(_itemcount);
+		double k = static_cast<double>(salt_count_);
 
 		return pow(1 - pow(1 - (1 / m), k * n), k);
 	}

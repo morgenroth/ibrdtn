@@ -94,15 +94,15 @@ namespace ibrcommon
 			}
 
 			// bytes to send
-			size_t bytes = (iend - ibegin);
+			ssize_t bytes = (iend - ibegin);
 
 			// send the data
 			clientsocket &sock = static_cast<clientsocket&>(**(writeset.begin()));
 
-			int ret = sock.send(&out_buf_[0], (iend - ibegin), 0);
+			ssize_t ret = sock.send(&out_buf_[0], (iend - ibegin), 0);
 
 			// check how many bytes are sent
-			if ((size_t)ret < bytes)
+			if (ret < bytes)
 			{
 				// we did not sent all bytes
 				char *resched_begin = ibegin + ret;
@@ -175,7 +175,7 @@ namespace ibrcommon
 			clientsocket &sock = static_cast<clientsocket&>(**(readset.begin()));
 
 			// read some bytes
-			int bytes = sock.recv(&in_buf_[0], _bufsize, 0);
+			ssize_t bytes = sock.recv(&in_buf_[0], _bufsize, 0);
 
 			// end of stream
 			if (bytes == 0)

@@ -131,7 +131,7 @@ typedef nl_object nl_object_header;
 					nl_addr2str( naddr, addr_buf, sizeof( addr_buf ));
 					std::string addrname(addr_buf);
 
-					addr = vaddress(addrname, "", nl_addr_guess_family(naddr));
+					addr = vaddress(addrname, "", static_cast<sa_family_t>(nl_addr_guess_family(naddr)));
 				}
 
 				unsigned int flags = rtnl_link_get_flags(link);

@@ -115,7 +115,7 @@ namespace ibrcommon
 		 * Sleep current thread for a specified time period.
 		 * @param timeout to sleep for in milliseconds.
 		 */
-		static void sleep(size_t timeout);
+		static void sleep(time_t timeout);
 
 		/**
 		 * This method is called before the run.
