@@ -159,7 +159,7 @@ namespace dtn
 		std::string BundleAuthenticationBlock::calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator, const dtn::data::Number &correlator)
 		{
 			std::string hmac_key = key.getData();
-			ibrcommon::HMacStream hms((const unsigned char*)hmac_key.c_str(), hmac_key.length());
+			ibrcommon::HMacStream hms((const unsigned char*)hmac_key.c_str(), static_cast<int>(hmac_key.length()));
 			dtn::security::StrictSerializer ss(hms, BUNDLE_AUTHENTICATION_BLOCK, with_correlator, correlator);
 			(dtn::data::DefaultSerializer&)ss << bundle;
 			hms << std::flush;

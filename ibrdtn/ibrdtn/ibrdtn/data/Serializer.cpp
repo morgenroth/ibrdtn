@@ -585,7 +585,7 @@ namespace dtn
 			bool lastblock = false;
 
 			block_t block_type;
-			dtn::data::Bitset procflags;
+			dtn::data::Bitset<Block::ProcFlags> procflags;
 
 			// create a bundle builder
 			dtn::data::BundleBuilder builder(obj);
@@ -934,7 +934,7 @@ namespace dtn
 			BundleBuilder builder(_bundle);
 
 			block_t block_type;
-			Bitset procflags;
+			Bitset<Block::ProcFlags> procflags;
 
 			// BLOCK_TYPE
 			_stream.get((char&)block_type);

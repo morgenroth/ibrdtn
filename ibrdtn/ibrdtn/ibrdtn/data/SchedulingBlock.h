@@ -59,7 +59,7 @@ namespace dtn
 				HAS_PRIORITY = 1
 			};
 
-			Bitset _flags;
+			Bitset<procflags> _flags;
 			Integer _priority;
 		};
 

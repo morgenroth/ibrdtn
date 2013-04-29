@@ -95,7 +95,9 @@ namespace dtn
 			}
 
 			// flags
-			stream.get(h._flags);
+			char tmp;
+			stream.get(tmp);
+			h._flags = tmp;
 
 			uint16_t ka = 0;
 			stream.read((char*)&ka, 2);

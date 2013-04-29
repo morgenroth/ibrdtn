@@ -594,7 +594,7 @@ namespace dtn
 		dtn::data::Block& PlainDeserializer::readBlock(dtn::data::BundleBuilder &builder)
 		{
 			std::string buffer;
-			int block_type;
+			dtn::data::block_t block_type;
 
 			// read the block type (first line)
 			getline(_stream, buffer);
@@ -611,7 +611,9 @@ namespace dtn
 			if (values[0] == "Block")
 			{
 				std::stringstream ss; ss.str(values[1]);
-				ss >> block_type;
+				int type;
+				ss >> type;
+				block_type = static_cast<dtn::data::block_t>(type);
 			}
 			else
 			{

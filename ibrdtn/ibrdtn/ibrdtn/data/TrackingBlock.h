@@ -56,7 +56,7 @@ namespace dtn
 				bool getFlag(Flags f) const;
 				void setFlag(Flags f, bool value);
 
-				Bitset flags;
+				Bitset<Flags> flags;
 				dtn::data::EID endpoint;
 				dtn::data::DTNTime timestamp;
 

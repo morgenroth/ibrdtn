@@ -40,6 +40,7 @@ namespace dtn
 		typedef dtn::data::SDNV<int> Integer;
 		typedef dtn::data::SDNV<Size> Timestamp;
 
+		template<typename E>
 		class Bitset : public dtn::data::SDNV<Size> {
 		public:
 			Bitset() {
@@ -51,7 +52,7 @@ namespace dtn
 
 			~Bitset() { }
 
-			void setBit(uint8_t flag, const bool &value)
+			void setBit(E flag, const bool &value)
 			{
 				if (value)
 				{
@@ -63,7 +64,7 @@ namespace dtn
 				}
 			}
 
-			bool getBit(uint8_t flag) const
+			bool getBit(E flag) const
 			{
 				return ((const dtn::data::SDNV<Size>&)(*this) & flag);
 			}

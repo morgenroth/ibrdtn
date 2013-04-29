@@ -117,13 +117,13 @@ namespace dtn
 			if (_app.length() > 0) localeid = EID("api:" + _app);
 
 			// connection flags
-			char flags = 0;
+			dtn::data::Bitset<dtn::streams::StreamContactHeader::HEADER_BITS> flags;
 
 			// request acknowledgements
-			flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+			flags.setBit(dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS, true);
 
 			// set comm. mode
-			if (_mode == MODE_SENDONLY) flags |= HANDSHAKE_SENDONLY;
+			if (_mode == MODE_SENDONLY) flags.setBit(dtn::streams::StreamContactHeader::HANDSHAKE_SENDONLY, true);
 
 			// receive API banner
 			std::string buffer;

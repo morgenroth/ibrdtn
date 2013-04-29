@@ -161,10 +161,10 @@ namespace dtn
 				case COMPRESSION_ZLIB:
 				{
 #ifdef HAVE_ZLIB
-					const Length CHUNK_SIZE = 16384;
+					const uInt CHUNK_SIZE = 16384;
 
 					int ret, flush;
-					unsigned have;
+					uInt have;
 					unsigned char in[CHUNK_SIZE];
 					unsigned char out[CHUNK_SIZE];
 					z_stream strm;
@@ -180,7 +180,7 @@ namespace dtn
 
 					do {
 						is.read((char*)&in, CHUNK_SIZE);
-						strm.avail_in = is.gcount();
+						strm.avail_in = static_cast<uInt>(is.gcount());
 
 						flush = is.eof() ? Z_FINISH : Z_NO_FLUSH;
 						strm.next_in = in;
@@ -231,7 +231,7 @@ namespace dtn
 					const Length CHUNK_SIZE = 16384;
 
 					int ret;
-					unsigned have;
+					uInt have;
 					unsigned char in[CHUNK_SIZE];
 					unsigned char out[CHUNK_SIZE];
 					z_stream strm;
@@ -248,7 +248,7 @@ namespace dtn
 
 					do {
 						is.read((char*)&in, CHUNK_SIZE);
-						strm.avail_in = is.gcount();
+						strm.avail_in = static_cast<uInt>(is.gcount());
 
 						// we're done if there is no more input
 						if ((strm.avail_in == 0) && (ret != Z_STREAM_END))

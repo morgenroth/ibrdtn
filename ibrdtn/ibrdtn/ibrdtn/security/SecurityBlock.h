@@ -244,7 +244,7 @@ namespace dtn
 			/** the ciphersuite flags tell if security result or parameters are
 			used, if the security destination or source is set and if a correlator
 			is used */
-			dtn::data::Bitset _ciphersuite_flags;
+			dtn::data::Bitset<CIPHERSUITE_FLAGS> _ciphersuite_flags;
 			/** a correlator binds several security blocks in a bundle together */
 			dtn::data::Number _correlator;
 

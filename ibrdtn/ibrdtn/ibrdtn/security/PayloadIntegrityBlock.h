@@ -114,7 +114,7 @@ namespace dtn
 				/** If the PIB does not know the size of the sign in advance, this
 				member can be set, so the size of the security result can be calculated
 				correctly */
-				int result_size;
+				dtn::data::Length result_size;
 
 				/**
 				Calculates a signature using the PIB-RSA-SHA256 algorithm.

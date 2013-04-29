@@ -119,7 +119,7 @@ namespace dtn
 			bool operator<(const PrimaryBlock& other) const;
 			bool operator>(const PrimaryBlock& other) const;
 
-			Bitset procflags;
+			Bitset<FLAGS> procflags;
 			Timestamp timestamp;
 			Number sequencenumber;
 			Number lifetime;

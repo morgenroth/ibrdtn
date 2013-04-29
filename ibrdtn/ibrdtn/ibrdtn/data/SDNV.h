@@ -79,7 +79,7 @@ namespace dtn
 //				if (value > static_cast<double>(max_val))
 //					throw ValueOutOfRangeException();
 
-				_value = static_cast<double>(value);
+				_value = static_cast<E>(value);
 			}
 
 			/**
@@ -90,7 +90,7 @@ namespace dtn
 			SDNV(const T value = 0) : _value(0) {
 				if (sizeof(T) == sizeof(_value))
 				{
-					_value = static_cast<T>(value);
+					_value = static_cast<E>(value);
 				}
 				else
 				{

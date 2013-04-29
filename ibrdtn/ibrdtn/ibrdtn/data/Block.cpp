@@ -84,7 +84,7 @@ namespace dtn
 			return _procflags.getBit(flag);
 		}
 
-		const Bitset& Block::getProcessingFlags() const
+		const Bitset<Block::ProcFlags>& Block::getProcessingFlags() const
 		{
 			return _procflags;
 		}

@@ -44,16 +44,16 @@ namespace dtn
 			void clear();
 
 			template <class T>
-			T& insert(const Bitset &procflags);
+			T& insert(const Bitset<Block::ProcFlags> &procflags);
 
 			POSITION getAlignment() const;
 
-			dtn::data::Block &insert(dtn::data::ExtensionBlock::Factory &f, const Bitset &procflags);
+			dtn::data::Block &insert(dtn::data::ExtensionBlock::Factory &f, const Bitset<Block::ProcFlags> &procflags);
 
 			/**
 			 * Add a block to the bundle.
 			 */
-			dtn::data::Block& insert(dtn::data::block_t block_type, const Bitset &procflags) throw (DiscardBlockException);
+			dtn::data::Block& insert(dtn::data::block_t block_type, const Bitset<Block::ProcFlags> &procflags) throw (DiscardBlockException);
 
 		private:
 			Bundle *_target;
@@ -63,7 +63,7 @@ namespace dtn
 		};
 
 		template <class T>
-		T& BundleBuilder::insert(const Bitset &procflags)
+		T& BundleBuilder::insert(const Bitset<Block::ProcFlags> &procflags)
 		{
 			switch (_alignment)
 			{

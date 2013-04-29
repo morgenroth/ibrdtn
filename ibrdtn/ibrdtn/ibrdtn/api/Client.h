@@ -124,16 +124,6 @@ namespace dtn
 				bool _running;
 			};
 
-			/**
-			 * This are the handshake flags.
-			 */
-			enum HANDSHAKE_FLAGS
-			{
-				HANDSHAKE_NONE = 0x0,    //!< No handshake option is set.
-				HANDSHAKE_SENDONLY = 0x80//!< The client only send bundle and do not want to received any bundle.
-			};
-
-
 		public:
 			/**
 			 * This are the communication flags.

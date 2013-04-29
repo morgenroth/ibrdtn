@@ -49,7 +49,7 @@ namespace dtn
 			dtn::data::EID reportto;
 			dtn::data::EID custodian;
 			Number appdatalength;
-			Bitset procflags;
+			Bitset<dtn::data::PrimaryBlock::FLAGS> procflags;
 			Number expiretime;
 			Number hopcount;
 			Number payloadlength;

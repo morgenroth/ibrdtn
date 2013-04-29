@@ -42,13 +42,13 @@ namespace dtn
 		{
 		}
 
-		void StreamConnection::handshake(const dtn::data::EID &eid, const dtn::data::Timeout &timeout, const char flags)
+		void StreamConnection::handshake(const dtn::data::EID &eid, const dtn::data::Timeout &timeout, const dtn::data::Bitset<StreamContactHeader::HEADER_BITS> &flags)
 		{
 			// create a new header
 			dtn::streams::StreamContactHeader header(eid);
 
 			// set timeout
-			header._keepalive = timeout;
+			header._keepalive = static_cast<uint16_t>(timeout);
 
 			// set flags
 			header._flags = flags;

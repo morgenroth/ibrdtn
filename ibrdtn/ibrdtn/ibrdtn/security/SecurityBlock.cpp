@@ -520,7 +520,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_ex(critical) << "failed to generate salt. maybe /dev/urandom is missing for seeding the PRNG" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
-			if (!RAND_bytes(key, key_size))
+			if (!RAND_bytes(key, static_cast<int>(key_size)))
 			{
 				IBRCOMMON_LOGGER_ex(critical) << "failed to generate key. maybe /dev/urandom is missing for seeding the PRNG" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
@@ -534,7 +534,7 @@ namespace dtn
 			assert(key_size < (dtn::data::Length)RSA_size(rsa)-41);
 #endif
 			std::vector<unsigned char> encrypted_key(RSA_size(rsa));
-			int encrypted_key_len = RSA_public_encrypt(key_size, key, &encrypted_key[0], rsa, RSA_PKCS1_OAEP_PADDING);
+			int encrypted_key_len = RSA_public_encrypt(static_cast<int>(key_size), key, &encrypted_key[0], rsa, RSA_PKCS1_OAEP_PADDING);
 			if (encrypted_key_len == -1)
 			{
 				IBRCOMMON_LOGGER_ex(critical) << "failed to encrypt the symmetric AES key" << IBRCOMMON_LOGGER_ENDL;
@@ -550,7 +550,7 @@ namespace dtn
 			const unsigned char *encrypted_key = reinterpret_cast<const unsigned char*>(key_string.c_str());
 			std::vector<unsigned char> the_key(RSA_size(rsa));
 			RSA_blinding_on(rsa, NULL);
-			int plaintext_key_len = RSA_private_decrypt(key_string.size(), encrypted_key, &the_key[0], rsa, RSA_PKCS1_OAEP_PADDING);
+			int plaintext_key_len = RSA_private_decrypt(static_cast<int>(key_string.size()), encrypted_key, &the_key[0], rsa, RSA_PKCS1_OAEP_PADDING);
 			RSA_blinding_off(rsa);
 			if (plaintext_key_len == -1)
 			{

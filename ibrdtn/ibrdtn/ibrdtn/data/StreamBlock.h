@@ -64,7 +64,7 @@ namespace dtn
 
 		private:
 			Number _seq;
-			Bitset _streamflags;
+			Bitset<STREAM_FLAGS> _streamflags;
 		};
 
 		/**

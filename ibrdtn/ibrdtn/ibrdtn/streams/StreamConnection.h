@@ -156,7 +156,7 @@ namespace dtn
 			 * @param eid The local address of this node.
 			 * @param timeout The desired timeout for this connection.
 			 */
-			void handshake(const dtn::data::EID &eid, const dtn::data::Timeout &timeout = 10, const char flags = 0);
+			void handshake(const dtn::data::EID &eid, const dtn::data::Timeout &timeout = 10, const dtn::data::Bitset<StreamContactHeader::HEADER_BITS> &flags = 0);
 
 			/**
 			 * This method shutdown the whole connection handling process. To differ between the

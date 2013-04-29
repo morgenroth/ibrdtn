@@ -74,7 +74,7 @@ namespace dtn
 
 			void set(ProcFlags flag, const bool &value);
 			bool get(ProcFlags flag) const;
-			const Bitset& getProcessingFlags() const;
+			const Bitset<ProcFlags>& getProcessingFlags() const;
 
 			/**
 			 * Serialize the derived block payload.
@@ -123,7 +123,7 @@ namespace dtn
 
 		private:
 			// block processing flags
-			Bitset _procflags;
+			Bitset<ProcFlags> _procflags;
 		};
 	}
 }
