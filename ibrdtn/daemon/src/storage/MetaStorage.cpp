@@ -90,7 +90,7 @@ namespace dtn
 			return ret;
 		}
 
-		void MetaStorage::store(const dtn::data::MetaBundle &meta, size_t space) throw ()
+		void MetaStorage::store(const dtn::data::MetaBundle &meta, const dtn::data::Length &space) throw ()
 		{
 			// increment the storage size
 			_bundle_lengths[meta] = space;
@@ -129,7 +129,7 @@ namespace dtn
 			return size() == 0;
 		}
 
-		size_t MetaStorage::size() throw ()
+		dtn::data::Size MetaStorage::size() throw ()
 		{
 			return _priority_index.size() - _removal_set.size();
 		}
@@ -142,7 +142,7 @@ namespace dtn
 			_removal_set.clear();
 		}
 
-		size_t MetaStorage::getSize(const dtn::data::MetaBundle &meta) throw (NoBundleFoundException)
+		dtn::data::Length MetaStorage::getSize(const dtn::data::MetaBundle &meta) throw (NoBundleFoundException)
 		{
 			size_map::const_iterator it = _bundle_lengths.find(meta);
 			if (it == _bundle_lengths.end())

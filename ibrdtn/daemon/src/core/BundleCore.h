@@ -96,7 +96,7 @@ namespace dtn
 			 * @param nexthop
 			 * @param timeout
 			 */
-			void addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, size_t timeout = 0);
+			void addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, const dtn::data::Timeout &timeout = 0);
 
 			/**
 			 * Remove a static route from the static routing module.
@@ -122,17 +122,17 @@ namespace dtn
 			/**
 			 * Define a global block size limit. This is used in the validator to reject bundles while receiving.
 			 */
-			static size_t blocksizelimit;
+			static dtn::data::Length blocksizelimit;
 
 			/**
 			 * Define the maximum lifetime for accepted bundles
 			 */
-			static size_t max_lifetime;
+			static dtn::data::Length max_lifetime;
 
 			/**
 			 * Define the maximum offset for the timestamp of pre-dated bundles
 			 */
-			static size_t max_timestamp_future;
+			static dtn::data::Length max_timestamp_future;
 
 			/**
 			 * Define if forwarding is allowed. If set to false, this daemon only accepts bundles for local applications.
@@ -143,7 +143,7 @@ namespace dtn
 			/**
 			 * Defines how many bundles should be in transit at once
 			 */
-			static size_t max_bundles_in_transit;
+			static dtn::data::Size max_bundles_in_transit;
 
 			/**
 			 * @see Component::getName()
@@ -179,7 +179,8 @@ namespace dtn
 			/**
 			 * Forbidden copy constructor
 			 */
-			BundleCore operator=(const BundleCore &k) { return k; };
+			BundleCore operator=(const BundleCore &k)
+			{ return k; };
 
 			/**
 			 * This is a clock object. It can be used to synchronize methods to the local clock.

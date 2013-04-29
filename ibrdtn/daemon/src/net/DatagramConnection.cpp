@@ -47,7 +47,7 @@ namespace dtn
 
 		DatagramConnection::DatagramConnection(const std::string &identifier, const DatagramService::Parameter &params, DatagramConnectionCallback &callback)
 		 : _send_state(SEND_IDLE), _recv_state(RECV_IDLE), _callback(callback), _identifier(identifier), _stream(*this, params.max_msg_length), _sender(*this, _stream),
-		   _last_ack(0), _next_seqno(0), _head_buf(params.max_msg_length), _head_len(0), _params(params), _avg_rtt(params.initial_timeout)
+		   _last_ack(0), _next_seqno(0), _head_buf(params.max_msg_length), _head_len(0), _params(params), _avg_rtt(static_cast<double>(params.initial_timeout))
 		{
 		}
 
@@ -153,7 +153,7 @@ namespace dtn
 		 * @param buf
 		 * @param len
 		 */
-		void DatagramConnection::queue(const char &flags, const unsigned int &seqno, const char *buf, int len)
+		void DatagramConnection::queue(const char &flags, const unsigned int &seqno, const char *buf, const dtn::data::Length &len)
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "frame received, flags: " << (int)flags << ", seqno: " << seqno << ", len: " << len << IBRCOMMON_LOGGER_ENDL;
 
@@ -251,7 +251,7 @@ namespace dtn
 			}
 		}
 
-		void DatagramConnection::stream_send(const char *buf, int len, bool last) throw (DatagramException)
+		void DatagramConnection::stream_send(const char *buf, const dtn::data::Length &len, bool last) throw (DatagramException)
 		{
 			// measure the time until the ack is received
 			ibrcommon::TimeMeasurement tm;
@@ -266,7 +266,7 @@ namespace dtn
 			if (last) flags |= DatagramService::SEGMENT_LAST;
 
 			// set the seqno for this segment
-			size_t seqno = _last_ack;
+			unsigned int seqno = _last_ack;
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 25) << "frame to send, flags: " << (int)flags << ", seqno: " << seqno << ", len: " << len << IBRCOMMON_LOGGER_ENDL;
 
@@ -288,7 +288,7 @@ namespace dtn
 
 					// set timeout to twice the average round-trip-time
 					struct timespec ts;
-					ibrcommon::Conditional::gettimeout((_avg_rtt * 2) + 1, &ts);
+					ibrcommon::Conditional::gettimeout(static_cast<size_t>(_avg_rtt * 2) + 1, &ts);
 
 					try {
 						ibrcommon::MutexLock l(_ack_cond);
@@ -306,14 +306,14 @@ namespace dtn
 						tm.stop();
 
 						// adjust the average rtt
-						adjust_rtt(tm.getMilliseconds());
+						adjust_rtt(static_cast<double>(tm.getMilliseconds()));
 
 						return;
 					} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
 						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack timeout for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
 
 						// fail -> increment the future timeout
-						adjust_rtt(_avg_rtt * 2);
+						adjust_rtt(static_cast<double>(_avg_rtt) * 2);
 
 						// retransmit the frame
 						continue;
@@ -349,10 +349,10 @@ namespace dtn
 			_peer_eid = peer;
 		}
 
-		void DatagramConnection::adjust_rtt(float value)
+		void DatagramConnection::adjust_rtt(double value)
 		{
 			// convert current avg to float
-			float new_rtt = _avg_rtt;
+			double new_rtt = _avg_rtt;
 
 			// calculate average
 			new_rtt = (new_rtt * (1 - AVG_RTT_WEIGHT)) + (AVG_RTT_WEIGHT * value);
@@ -363,7 +363,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "RTT adjusted, measured value: " << std::setprecision(4) << value << ", new avg. RTT: " << std::setprecision(4) << _avg_rtt << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		DatagramConnection::Stream::Stream(DatagramConnection &conn, const size_t maxmsglen)
+		DatagramConnection::Stream::Stream(DatagramConnection &conn, const dtn::data::Length &maxmsglen)
 		 : std::iostream(this), _buf_size(maxmsglen), _last_segment(false),
 		   _queue_buf(_buf_size), _queue_buf_len(0),
 		   _out_buf(_buf_size), _in_buf(_buf_size),
@@ -383,7 +383,7 @@ namespace dtn
 		{
 		}
 
-		void DatagramConnection::Stream::queue(const char *buf, int len) throw (DatagramException)
+		void DatagramConnection::Stream::queue(const char *buf, const dtn::data::Length &len) throw (DatagramException)
 		{
 			ibrcommon::MutexLock l(_queue_buf_cond);
 			if (_abort) throw DatagramException("stream aborted");
@@ -452,7 +452,7 @@ namespace dtn
 			}
 
 			// bytes to send
-			size_t bytes = (iend - ibegin);
+			const dtn::data::Length bytes = (iend - ibegin);
 
 			// if there is nothing to send, just return
 			if (bytes == 0)

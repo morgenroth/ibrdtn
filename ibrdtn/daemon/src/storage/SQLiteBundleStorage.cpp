@@ -118,7 +118,7 @@ namespace dtn
 			return ibrcommon::BLOB::Reference(new SQLiteBLOB(_blobPath));
 		}
 
-		SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const size_t &maxsize)
+		SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const dtn::data::Length &maxsize)
 		 : BundleStorage(maxsize), _database(path.get("sqlite.db"), *this)
 		{
 			// set the block path
@@ -449,7 +449,7 @@ namespace dtn
 			return true;
 		}
 
-		size_t SQLiteBundleStorage::count()
+		dtn::data::Size SQLiteBundleStorage::count()
 		{
 			try {
 				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);

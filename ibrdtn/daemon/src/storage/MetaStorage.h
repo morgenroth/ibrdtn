@@ -77,7 +77,7 @@ namespace dtn
 			// bundle list
 			dtn::data::BundleList _list;
 
-			typedef std::map<dtn::data::BundleID, size_t> size_map;
+			typedef std::map<dtn::data::BundleID, dtn::data::Length> size_map;
 			size_map _bundle_lengths;
 
 			typedef std::set<dtn::data::BundleID> id_set;
@@ -116,7 +116,7 @@ namespace dtn
 
 			std::set<dtn::data::EID> getDistinctDestinations() const throw ();
 
-			void store(const dtn::data::MetaBundle &meta, size_t space) throw ();
+			void store(const dtn::data::MetaBundle &meta, const dtn::data::Length &space) throw ();
 
 			void remove(const dtn::data::MetaBundle &meta) throw ();
 
@@ -134,7 +134,7 @@ namespace dtn
 			/**
 			 * Get the size of the bundle
 			 */
-			size_t getSize(const dtn::data::MetaBundle &meta) throw (NoBundleFoundException);
+			dtn::data::Length getSize(const dtn::data::MetaBundle &meta) throw (NoBundleFoundException);
 
 		protected:
 			virtual void eventBundleExpired(const dtn::data::MetaBundle &b) throw ();

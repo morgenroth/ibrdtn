@@ -167,7 +167,7 @@ namespace dtn
 			/**
 			 * Get the number of entries (URI + Attributes)
 			 */
-			size_t size() const;
+			dtn::data::Size size() const;
 
 			/**
 			 * Returns a list of URIs matching the given protocol

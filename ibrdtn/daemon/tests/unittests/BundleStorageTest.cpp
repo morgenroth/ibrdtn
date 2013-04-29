@@ -143,11 +143,11 @@ void BundleStorageTest::testStore(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 	b.source = dtn::data::EID("dtn://node-one/test");
 
-	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.count());
 
 	storage.store(b);
 
-	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1, storage.count());
 }
 
 void BundleStorageTest::testRemove()
@@ -160,15 +160,15 @@ void BundleStorageTest::testRemove(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 	b.source = dtn::data::EID("dtn://node-one/test");
 
-	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.count());
 
 	storage.store(b);
 
-	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1, storage.count());
 
 	CPPUNIT_ASSERT_NO_THROW_MESSAGE( "storage.remove(b)", storage.remove(b) );
 
-	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.count());
 }
 
 void BundleStorageTest::testAgeBlock()
@@ -231,15 +231,15 @@ void BundleStorageTest::testClear(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 	b.source = dtn::data::EID("dtn://node-one/test");
 
-	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.count());
 
 	storage.store(b);
 
-	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1, storage.count());
 
 	storage.clear();
 
-	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.count());
 }
 
 void BundleStorageTest::testEmpty()
@@ -275,11 +275,11 @@ void BundleStorageTest::testCount(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 	b.source = dtn::data::EID("dtn://node-one/test");
 
-	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.count());
 
 	storage.store(b);
 
-	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1, storage.count());
 }
 
 void BundleStorageTest::testSize()
@@ -293,14 +293,14 @@ void BundleStorageTest::testSize(dtn::storage::BundleStorage &storage)
 	dtn::data::Bundle b;
 	b.source = dtn::data::EID("dtn://node-one/test");
 
-	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.size());
 
 	storage.store(b);
 
 	std::stringstream ss;
 	dtn::data::DefaultSerializer(ss) << b;
 
-	CPPUNIT_ASSERT_EQUAL((size_t)ss.str().length(), storage.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Length)ss.str().length(), storage.size());
 }
 
 void BundleStorageTest::testReleaseCustody()
@@ -454,7 +454,7 @@ void BundleStorageTest::testRestore(dtn::storage::BundleStorage &storage)
 		c.startup();
 
 		// the storage should contain 2000 bundles
-		CPPUNIT_ASSERT_EQUAL((size_t)2000, storage.count());
+		CPPUNIT_ASSERT_EQUAL((dtn::data::Size)2000, storage.count());
 	} catch (const std::bad_cast&) {
 
 	};
@@ -475,7 +475,7 @@ void BundleStorageTest::testExpiration(dtn::storage::BundleStorage &storage)
 	storage.store(b);
 
 	// check if the storage count is right
-	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1, storage.count());
 
 	// raise time event to trigger expiration
 	dtn::core::TimeEvent::raise(b.timestamp + 21, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
@@ -489,7 +489,7 @@ void BundleStorageTest::testExpiration(dtn::storage::BundleStorage &storage)
 	storage.wait();
 
 	// check if the storage count is right
-	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.count());
 }
 
 void BundleStorageTest::testDistinctDestinations()
@@ -525,7 +525,7 @@ void BundleStorageTest::testDistinctDestinations(dtn::storage::BundleStorage &st
 	}
 
 	// check the number of distinct addresses
-	CPPUNIT_ASSERT_EQUAL((size_t)10, storage.getDistinctDestinations().size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)10, storage.getDistinctDestinations().size());
 }
 
 void BundleStorageTest::testSelector()
@@ -568,7 +568,7 @@ void BundleStorageTest::testSelector(dtn::storage::BundleStorage &storage)
 
 		virtual ~BundleFilter() {};
 
-		virtual size_t limit() const throw () { return 5; };
+		virtual dtn::data::Size limit() const throw () { return 5; };
 
 		virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 		{
@@ -623,7 +623,7 @@ void BundleStorageTest::testRemoveBloomfilter(dtn::storage::BundleStorage &stora
 	CPPUNIT_ASSERT_THROW( while (true) storage.remove(bf), dtn::storage::NoBundleFoundException );
 
 	// check the number of bundles in the storage
-	CPPUNIT_ASSERT_EQUAL((size_t)17, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)17, storage.count());
 }
 
 void BundleStorageTest::testDoubleStore()
@@ -646,7 +646,7 @@ void BundleStorageTest::testDoubleStore(dtn::storage::BundleStorage &storage)
 	}
 
 	// check the number of selected bundles
-	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1, storage.count());
 }
 
 void BundleStorageTest::testFaultyGet()

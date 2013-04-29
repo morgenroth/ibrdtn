@@ -39,7 +39,7 @@ namespace dtn
 			 * Constructor for the global Clock
 			 * @param frequency Specify the frequency for the clock tick in seconds.
 			 */
-			WallClock(size_t frequency);
+			WallClock(const dtn::data::Timeout &frequency);
 			virtual ~WallClock();
 
 			/**
@@ -63,7 +63,7 @@ namespace dtn
 			virtual void componentDown() throw ();
 
 		private:
-			size_t _frequency;
+			dtn::data::Timeout _frequency;
 			size_t _next;
 			ibrcommon::Timer _timer;
 

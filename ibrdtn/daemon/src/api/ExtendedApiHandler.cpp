@@ -278,7 +278,7 @@ namespace dtn
 						{
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
-							size_t lifetime = 0;
+							ibrcommon::Timer::time_t lifetime = 0;
 							std::stringstream ss(cmd[2]);
 
 							ss >> lifetime;
@@ -544,7 +544,7 @@ namespace dtn
 								/* parse an optional offset, where to insert the block */
 								if (cmd.size() > 3)
 								{
-									size_t offset;
+									dtn::data::Size offset;
 									istringstream ss(cmd[3]);
 
 									ss >> offset;
@@ -1069,10 +1069,10 @@ namespace dtn
 		{
 			// load bundle id
 			std::stringstream ss;
-			size_t timestamp = 0;
-			size_t sequencenumber = 0;
+			dtn::data::Timestamp timestamp = 0;
+			dtn::data::Number sequencenumber = 0;
 			bool fragment = false;
-			size_t offset = 0;
+			dtn::data::Number offset = 0;
 
 			if ((data.size() - start) < 3)
 			{
@@ -1080,14 +1080,18 @@ namespace dtn
 			}
 
 			// read timestamp
-			ss.clear(); ss.str(data[start]); ss >> timestamp;
+			ss.clear(); ss.str(data[start]);
+			timestamp.read(ss);
+
 			if(ss.fail())
 			{
 			throw ibrcommon::Exception("malformed parameters");
 			}
 
 			// read sequence number
-			ss.clear(); ss.str(data[start+1]); ss >> sequencenumber;
+			ss.clear(); ss.str(data[start+1]);
+			sequencenumber.read(ss);
+
 			if(ss.fail())
 			{
 			throw ibrcommon::Exception("malformed parameters");
@@ -1099,7 +1103,9 @@ namespace dtn
 				fragment = true;
 
 				// read sequence number
-				ss.clear(); ss.str(data[start+2]); ss >> offset;
+				ss.clear(); ss.str(data[start+2]);
+				offset.read(ss);
+
 				if(ss.fail())
 				{
 					throw ibrcommon::Exception("malformed parameters");

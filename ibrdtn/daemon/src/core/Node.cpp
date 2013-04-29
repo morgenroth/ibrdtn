@@ -302,7 +302,7 @@ namespace dtn
 			_attr_list.clear();
 		}
 
-		size_t Node::size() const
+		dtn::data::Size Node::size() const
 		{
 			return _uri_list.size() + _attr_list.size();
 		}

@@ -337,7 +337,7 @@ namespace dtn
 				ibrcommon::BLOB::Reference ref = payload.getBLOB();
 				ibrcommon::BLOB::iostream stream = ref.iostream();
 
-				size_t stream_size = stream.size();
+				std::streamsize stream_size = stream.size();
 
 				if ((offset > 0) || (stream_size < offset)) {
 					(*stream).seekp(0, std::ios_base::end);
@@ -353,7 +353,7 @@ namespace dtn
 				ibrcommon::BLOB::Reference ref = payload.getBLOB();
 				ibrcommon::BLOB::iostream stream = ref.iostream();
 
-				ssize_t stream_size = stream.size();
+				std::streamsize stream_size = stream.size();
 
 				if ((offset > 0) || (stream_size < offset)) {
 					(*stream).seekp(0, std::ios_base::end);

@@ -87,7 +87,7 @@ namespace dtn
 
 					if (_mode == BUNDLE_FULL)
 					{
-						size_t len = 0;
+						dtn::data::Length len = 0;
 						NativeCallbackStream streambuf(_callback);
 						std::ostream stream(&streambuf);
 						block.serialize(stream, len);

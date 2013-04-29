@@ -47,7 +47,7 @@ namespace dtn
 
 			virtual ~NodeHandshakeItem() { };
 			virtual const dtn::data::Number& getIdentifier() const = 0;
-			virtual size_t getLength() const = 0;
+			virtual dtn::data::Length getLength() const = 0;
 			virtual std::ostream& serialize(std::ostream&) const = 0;
 			virtual std::istream& deserialize(std::istream&) = 0;
 		};

@@ -66,10 +66,10 @@ namespace dtn
 		const std::string BundleCore::TAG = "BundleCore";
 		dtn::data::EID BundleCore::local;
 
-		size_t BundleCore::blocksizelimit = 0;
-		size_t BundleCore::max_lifetime = 0;
-		size_t BundleCore::max_timestamp_future = 0;
-		size_t BundleCore::max_bundles_in_transit = 5;
+		dtn::data::Length BundleCore::blocksizelimit = 0;
+		dtn::data::Length BundleCore::max_lifetime = 0;
+		dtn::data::Length BundleCore::max_timestamp_future = 0;
+		dtn::data::Size BundleCore::max_bundles_in_transit = 5;
 
 		bool BundleCore::forwarding = true;
 
@@ -149,7 +149,7 @@ namespace dtn
 			}
 
 			// set the maximum count of bundles in transit (bundles to send to the CL queue)
-			size_t transit_limit = config.getLimit("bundles_in_transit");
+			dtn::data::Size transit_limit = config.getLimit("bundles_in_transit");
 			if (transit_limit > 0)
 			{
 				dtn::core::BundleCore::max_bundles_in_transit = transit_limit;
@@ -254,7 +254,7 @@ namespace dtn
 			return _connectionmanager;
 		}
 
-		void BundleCore::addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, size_t timeout)
+		void BundleCore::addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, const dtn::data::Timeout &timeout)
 		{
 			dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_ADD, nexthop, destination, timeout);
 		}

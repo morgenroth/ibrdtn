@@ -215,7 +215,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const throw () { return 0; };
+				virtual dtn::data::Size limit() const throw () { return 0; };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle&) const throw (dtn::storage::BundleSelectorException)
 				{

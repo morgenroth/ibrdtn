@@ -33,7 +33,7 @@ namespace dtn
 			virtual ~DeliveryPredictabilityMap();
 
 			virtual const dtn::data::Number& getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
-			virtual size_t getLength() const; ///< \see NodeHandshakeItem::getLength
+			virtual dtn::data::Length getLength() const; ///< \see NodeHandshakeItem::getLength
 			virtual std::ostream& serialize(std::ostream& stream) const; ///< \see NodeHandshakeItem::serialize
 			virtual std::istream& deserialize(std::istream& stream); ///< \see NodeHandshakeItem::deserialize
 

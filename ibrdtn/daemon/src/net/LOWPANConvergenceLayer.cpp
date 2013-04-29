@@ -94,7 +94,7 @@ namespace dtn
 			}
 		}
 
-		void LOWPANConvergenceLayer::send_cb(char *buf, int len, const ibrcommon::vaddress &addr)
+		void LOWPANConvergenceLayer::send_cb(const char *buf, const size_t len, const ibrcommon::vaddress &addr)
 		{
 			ibrcommon::socketset socks = _vsocket.getAll();
 			if (socks.size() == 0) return;

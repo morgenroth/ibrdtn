@@ -32,7 +32,7 @@ namespace dtn
 {
 	namespace storage
 	{
-		BundleStorage::BundleStorage(size_t maxsize)
+		BundleStorage::BundleStorage(const dtn::data::Length &maxsize)
 		 : _faulty(false), _maxsize(maxsize), _currentsize(0)
 		{
 		}
@@ -128,12 +128,12 @@ namespace dtn
 			dtn::core::CustodyEvent::raise(b, dtn::core::CUSTODY_REJECT);
 		}
 
-		size_t BundleStorage::size() const
+		dtn::data::Length BundleStorage::size() const
 		{
 			return _currentsize;
 		}
 
-		void BundleStorage::allocSpace(size_t size) throw (StorageSizeExeededException)
+		void BundleStorage::allocSpace(const dtn::data::Length &size) throw (StorageSizeExeededException)
 		{
 			ibrcommon::MutexLock l(_sizelock);
 
@@ -147,7 +147,7 @@ namespace dtn
 			_currentsize += size;
 		}
 
-		void BundleStorage::freeSpace(size_t size) throw ()
+		void BundleStorage::freeSpace(const dtn::data::Length &size) throw ()
 		{
 			ibrcommon::MutexLock l(_sizelock);
 			if (size > _currentsize)

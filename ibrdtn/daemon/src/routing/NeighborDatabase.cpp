@@ -143,7 +143,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(20) << "acquire transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		size_t NeighborDatabase::NeighborEntry::getFreeTransferSlots() const
+		dtn::data::Size NeighborDatabase::NeighborEntry::getFreeTransferSlots() const
 		{
 			if (dtn::core::BundleCore::max_bundles_in_transit <= _transit_bundles.size()) return 0;
 			return dtn::core::BundleCore::max_bundles_in_transit - _transit_bundles.size();

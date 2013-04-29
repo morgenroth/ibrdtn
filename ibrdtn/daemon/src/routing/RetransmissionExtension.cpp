@@ -134,8 +134,8 @@ namespace dtn
 				// delete all matching elements in the queue
 				ibrcommon::MutexLock l(_mutex);
 
-				size_t elements = _queue.size();
-				for (size_t i = 0; i < elements; ++i)
+				dtn::data::Size elements = _queue.size();
+				for (dtn::data::Size i = 0; i < elements; ++i)
 				{
 					const RetransmissionData &data = _queue.front();
 
@@ -177,7 +177,7 @@ namespace dtn
 			return true;
 		}
 
-		size_t RetransmissionExtension::RetransmissionData::getCount() const
+		dtn::data::Size RetransmissionExtension::RetransmissionData::getCount() const
 		{
 			return _count;
 		}
@@ -207,7 +207,7 @@ namespace dtn
 			return (*this);
 		}
 
-		RetransmissionExtension::RetransmissionData::RetransmissionData(const dtn::data::BundleID &id, dtn::data::EID d, size_t r)
+		RetransmissionExtension::RetransmissionData::RetransmissionData(const dtn::data::BundleID &id, const dtn::data::EID &d, const dtn::data::Size &r)
 		 : dtn::data::BundleID(id), destination(d), _timestamp(0), _count(0), retry(r)
 		{
 			(*this)++;

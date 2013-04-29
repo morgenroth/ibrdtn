@@ -46,7 +46,7 @@ namespace dtn
 	{
 		const std::string SimpleBundleStorage::TAG = "SimpleBundleStorage";
 
-		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize, size_t buffer_limit)
+		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, const dtn::data::Length &maxsize, const dtn::data::Length &buffer_limit)
 		 : BundleStorage(maxsize), _datastore(*this, workdir, buffer_limit), _metastore(*this)
 		{
 		}
@@ -135,8 +135,8 @@ namespace dtn
 				ds >> bundle;
 				
 				// allocate space for the bundle
-				size_t bundle_size = (*stream).tellg();
-				allocSpace(bundle_size);
+				std::streamsize bundle_size = (*stream).tellg();
+				allocSpace(static_cast<dtn::data::Length>(bundle_size));
 
 				// extract meta data
 				dtn::data::MetaBundle meta(bundle);
@@ -232,7 +232,7 @@ namespace dtn
 			// it is safe to delete this bundle now. (depending on the routing algorithm.)
 		}
 
-		size_t SimpleBundleStorage::count()
+		dtn::data::Size SimpleBundleStorage::count()
 		{
 			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
 			return _metastore.size();
@@ -350,7 +350,7 @@ namespace dtn
 		{
 			// get the bundle size
 			dtn::data::DefaultSerializer s(std::cout);
-			size_t bundle_size = s.getLength(bundle);
+			dtn::data::Length bundle_size = s.getLength(bundle);
 			
 			// allocate space for the bundle
 			allocSpace(bundle_size);
@@ -394,7 +394,7 @@ namespace dtn
 			eventBundleRemoved(meta);
 		}
 
-		void SimpleBundleStorage::__store(const dtn::data::Bundle &bundle, size_t bundle_size)
+		void SimpleBundleStorage::__store(const dtn::data::Bundle &bundle, const dtn::data::Length &bundle_size)
 		{
 			// create meta bundle object
 			const dtn::data::MetaBundle meta(bundle);

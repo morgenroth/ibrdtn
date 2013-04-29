@@ -238,7 +238,7 @@ namespace dtn
 
 			bool empty() const throw (SQLiteQueryException);
 
-			size_t count() const throw (SQLiteQueryException);
+			dtn::data::Size count() const throw (SQLiteQueryException);
 
 			void clear() throw (SQLiteQueryException);
 

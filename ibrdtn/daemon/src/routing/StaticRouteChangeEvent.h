@@ -24,6 +24,7 @@
 
 #include "core/Event.h"
 #include <ibrdtn/data/EID.h>
+#include <ibrdtn/data/Number.h>
 
 namespace dtn
 {
@@ -47,8 +48,8 @@ namespace dtn
 			std::string getMessage() const;
 
 			static void raiseEvent(CHANGE_TYPE type);
-			static void raiseEvent(CHANGE_TYPE type, const dtn::data::EID &nexthop, const std::string pattern, size_t timeout = 0);
-			static void raiseEvent(CHANGE_TYPE type, const dtn::data::EID &nexthop, const dtn::data::EID &destination, size_t timeout = 0);
+			static void raiseEvent(CHANGE_TYPE type, const dtn::data::EID &nexthop, const std::string &pattern, const dtn::data::Number &timeout = 0);
+			static void raiseEvent(CHANGE_TYPE type, const dtn::data::EID &nexthop, const dtn::data::EID &destination, const dtn::data::Number &timeout = 0);
 
 			CHANGE_TYPE type;
 			const dtn::data::EID nexthop;
@@ -60,8 +61,8 @@ namespace dtn
 
 		private:
 			StaticRouteChangeEvent(CHANGE_TYPE type);
-			StaticRouteChangeEvent(CHANGE_TYPE type, const dtn::data::EID &nexthop, const std::string pattern, size_t timeout = 0);
-			StaticRouteChangeEvent(CHANGE_TYPE type, const dtn::data::EID &nexthop, const dtn::data::EID &destination, size_t timeout = 0);
+			StaticRouteChangeEvent(CHANGE_TYPE type, const dtn::data::EID &nexthop, const std::string &pattern, const dtn::data::Number &timeout = 0);
+			StaticRouteChangeEvent(CHANGE_TYPE type, const dtn::data::EID &nexthop, const dtn::data::EID &destination, const dtn::data::Number &timeout = 0);
 		};
 	} /* namespace routing */
 } /* namespace dtn */

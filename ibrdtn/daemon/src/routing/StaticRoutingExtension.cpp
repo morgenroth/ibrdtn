@@ -82,7 +82,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const throw () { return _entry.getFreeTransferSlots(); };
+				virtual dtn::data::Size limit() const throw () { return _entry.getFreeTransferSlots(); };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -418,7 +418,7 @@ namespace dtn
 #ifdef HAVE_REGEX_H
 					r = new StaticRegexRoute(route.pattern, route.nexthop);
 #else
-					size_t et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
+					dtn::data::Timestamp et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
 					r = new EIDRoute(route.pattern, route.nexthop, et);
 #endif
 				}

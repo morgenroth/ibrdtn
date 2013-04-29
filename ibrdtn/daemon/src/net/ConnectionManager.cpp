@@ -183,7 +183,7 @@ namespace dtn
 			dtn::core::Node &db = (*(ret.first)).second;
 
 			if (!ret.second) {
-				size_t old = db.size();
+				dtn::data::Size old = db.size();
 
 				// add all attributes to the node in the database
 				db += n;
@@ -210,7 +210,7 @@ namespace dtn
 			try {
 				dtn::core::Node &db = getNode(n.getEID());
 
-				size_t old = db.size();
+				dtn::data::Size old = db.size();
 
 				// erase all attributes to the node in the database
 				db -= n;
@@ -318,7 +318,7 @@ namespace dtn
 		{
 			std::queue<dtn::core::Node> _connect_nodes;
 
-			size_t interval = dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
+			dtn::data::Timeout interval = dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
 			if (interval == 0) return;
 
 			if (_next_autoconnect < dtn::utils::Clock::getTime())

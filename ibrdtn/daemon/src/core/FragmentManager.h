@@ -93,7 +93,7 @@ namespace dtn
 			 * @param id
 			 * @return
 			 */
-			static size_t getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id);
+			static dtn::data::Length getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id);
 
 			/**
 			 * Split-up a bundle into several pieces
@@ -101,7 +101,7 @@ namespace dtn
 			 * @param maxPayloadLength payload length maximum per fragment
 			 * @param fragments list of all fragments
 			 */
-			static void split(const dtn::data::Bundle &bundle, const size_t maxPayloadLength, std::list<dtn::data::Bundle> &fragments) throw (FragmentationAbortedException);
+			static void split(const dtn::data::Bundle &bundle, const dtn::data::Length &maxPayloadLength, std::list<dtn::data::Bundle> &fragments) throw (FragmentationAbortedException);
 
 		private:
 			class Transmission

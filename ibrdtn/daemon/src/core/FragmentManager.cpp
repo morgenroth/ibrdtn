@@ -188,7 +188,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const throw () { return 0; };
+				virtual dtn::data::Size limit() const throw () { return 0; };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -238,7 +238,7 @@ namespace dtn
 			} catch (const dtn::storage::NoBundleFoundException&) { };
 		}
 
-		size_t FragmentManager::getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id)
+		dtn::data::Length FragmentManager::getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id)
 		{
 			ibrcommon::MutexLock l(_offsets_mutex);
 			for (std::set<Transmission>::const_iterator iter = _offsets.begin(); iter != _offsets.end(); ++iter)
@@ -284,7 +284,7 @@ namespace dtn
 			}
 		}
 
-		void FragmentManager::split(const dtn::data::Bundle &bundle, size_t maxPayloadLength, std::list<dtn::data::Bundle> &fragments) throw (FragmentationAbortedException)
+		void FragmentManager::split(const dtn::data::Bundle &bundle, const dtn::data::Length &maxPayloadLength, std::list<dtn::data::Bundle> &fragments) throw (FragmentationAbortedException)
 		{
 			// get bundle DONT_FRAGMENT Flag
 			if (bundle.get(dtn::data::PrimaryBlock::DONT_FRAGMENT))
@@ -294,7 +294,7 @@ namespace dtn
 				const dtn::data::PayloadBlock &payloadBlock = bundle.find<dtn::data::PayloadBlock>();
 
 				// get bundle payload length
-				size_t payloadLength = payloadBlock.getLength();
+				dtn::data::Length payloadLength = payloadBlock.getLength();
 
 				// check if fragmentation needed
 				if (payloadLength <= maxPayloadLength)
@@ -304,7 +304,7 @@ namespace dtn
 				ibrcommon::BLOB::iostream stream = ref.iostream();
 
 				bool isFirstFragment = true;
-				size_t offset = 0;
+				dtn::data::Length offset = 0;
 
 				while (!(*stream).eof() && (payloadLength > offset))
 				{

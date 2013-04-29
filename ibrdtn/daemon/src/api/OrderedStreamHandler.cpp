@@ -83,7 +83,7 @@ namespace dtn
 			dtn::net::BundleReceivedEvent::raise(_client.getRegistration().getDefaultEID(), b, true);
 		}
 
-		dtn::data::MetaBundle OrderedStreamHandler::get(size_t timeout)
+		dtn::data::MetaBundle OrderedStreamHandler::get(const dtn::data::Timeout &timeout)
 		{
 			Registration &reg = _client.getRegistration();
 			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 20) << "get()" << IBRCOMMON_LOGGER_ENDL;
@@ -196,7 +196,7 @@ namespace dtn
 						else if (cmd[1] == "lifetime")
 						{
 							std::stringstream ss(cmd[2]);
-							ss >> _lifetime;
+							_lifetime.read(ss);
 							_stream << ClientHandler::API_STATUS_OK << " LIFETIME CHANGED" << std::endl;
 						}
 						else if (cmd[1] == "chunksize")

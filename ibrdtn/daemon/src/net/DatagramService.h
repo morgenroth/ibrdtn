@@ -28,13 +28,13 @@ namespace dtn
 		class WrongSeqNoException : public DatagramException
 		{
 		public:
-			WrongSeqNoException(int exp_seqno)
+			WrongSeqNoException(size_t exp_seqno)
 			: DatagramException("Wrong sequence number received"), expected_seqno(exp_seqno)
 			{};
 
 			virtual ~WrongSeqNoException() throw() {};
 
-			const int expected_seqno;
+			const size_t expected_seqno;
 		};
 
 		class DatagramService

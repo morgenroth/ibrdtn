@@ -117,8 +117,8 @@ void ConfigurationTest::testGetLimit()
 {
 	/* test signature (std::string) */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((size_t)0, conf.getLimit("test"));
-	CPPUNIT_ASSERT_EQUAL((size_t)20000000, conf.getLimit("storage"));
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Length)0, conf.getLimit("test"));
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Length)20000000, conf.getLimit("storage"));
 }
 
 /*=== BEGIN tests for class 'Discovery' ===*/
@@ -272,7 +272,7 @@ void ConfigurationTest::testGetTCPChunkSize()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((size_t)1024, conf.getNetwork().getTCPChunkSize());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Length)1024, conf.getNetwork().getTCPChunkSize());
 }
 
 /*=== END   tests for class 'Network' ===*/

@@ -29,7 +29,7 @@ namespace dtn
 {
 	namespace api
 	{
-		BundleStreamBuf::BundleStreamBuf(BundleStreamBufCallback &callback, size_t chunk_size, bool wait_seq_zero)
+		BundleStreamBuf::BundleStreamBuf(BundleStreamBufCallback &callback, const dtn::data::Length &chunk_size, bool wait_seq_zero)
 		 : _callback(callback), _in_buf(BUFF_SIZE), _out_buf(BUFF_SIZE),
 		   _chunk_size(chunk_size), _chunk_payload(ibrcommon::BLOB::create()), _chunk_offset(0), _in_seq(0),
 		   _out_seq(0), _streaming(wait_seq_zero), _first_chunk(true), _last_chunk_received(false), _timeout_receive(0)
@@ -117,17 +117,17 @@ namespace dtn
 			_out_seq++;
 		}
 
-		void BundleStreamBuf::setChunkSize(size_t size)
+		void BundleStreamBuf::setChunkSize(const dtn::data::Length &size)
 		{
 			_chunk_size = size;
 		}
 
-		void BundleStreamBuf::setTimeout(size_t timeout)
+		void BundleStreamBuf::setTimeout(const dtn::data::Timeout &timeout)
 		{
 			_timeout_receive = timeout;
 		}
 
-		void BundleStreamBuf::append(ibrcommon::BLOB::Reference &ref, const char* data, size_t length)
+		void BundleStreamBuf::append(ibrcommon::BLOB::Reference &ref, const char* data, const dtn::data::Length &length)
 		{
 			ibrcommon::BLOB::iostream stream = ref.iostream();
 			(*stream).seekp(0, ios::end);
@@ -213,7 +213,7 @@ namespace dtn
 			ibrcommon::BLOB::Reference r = payload.getBLOB();
 
 			bool end_of_stream = false;
-			size_t bytes = 0;
+			std::streamsize bytes = 0;
 
 			// lock the stream while reading from it
 			{

@@ -29,7 +29,7 @@ namespace dtn
 {
 	namespace core
 	{
-		WallClock::WallClock(size_t frequency) : _frequency(frequency), _next(0), _timer(*this, frequency)
+		WallClock::WallClock(const dtn::data::Timeout &frequency) : _frequency(frequency), _next(0), _timer(*this, frequency)
 		{
 		}
 

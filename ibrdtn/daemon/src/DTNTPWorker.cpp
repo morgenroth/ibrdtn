@@ -86,7 +86,7 @@ namespace dtn
 		}
 
 		DTNTPWorker::TimeSyncMessage::TimeSyncMessage()
-		 : type(TIMESYNC_REQUEST), origin_rating(dtn::utils::Clock::getRating()), peer_rating(0.0f)
+		 : type(TIMESYNC_REQUEST), origin_rating(dtn::utils::Clock::getRating()), peer_rating(0.0)
 		{
 			timerclear(&origin_timestamp);
 			timerclear(&peer_timestamp);
@@ -387,7 +387,7 @@ namespace dtn
 				// adjust sigma
 				double t_stable = local_time - lastsync_time;
 				double sigma_base = (1 / ::pow(_psi, 1/t_stable));
-				double sigma_adjustment = ::abs(remote_time - local_time) / (local_time - lastsync_time) * msg.peer_rating;
+				double sigma_adjustment = ::fabs(remote_time - local_time) / (local_time - lastsync_time) * msg.peer_rating;
 				_sigma = sigma_base + sigma_adjustment;
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(DTNTPWorker::TAG, 25) << "new sigma: " << _sigma << IBRCOMMON_LOGGER_ENDL;

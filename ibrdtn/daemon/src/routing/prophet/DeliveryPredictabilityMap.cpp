@@ -35,14 +35,14 @@ namespace dtn
 			return identifier;
 		}
 
-		size_t DeliveryPredictabilityMap::getLength() const
+		dtn::data::Length DeliveryPredictabilityMap::getLength() const
 		{
-			size_t len = 0;
+			dtn::data::Length len = 0;
 			for(predictmap::const_iterator it = _predictmap.begin(); it != _predictmap.end(); ++it)
 			{
 				/* calculate length of the EID */
 				const std::string eid = it->first.getString();
-				size_t eid_len = eid.length();
+				dtn::data::Length eid_len = eid.length();
 				len += data::Number(eid_len).getLength() + eid_len;
 
 				/* calculate length of the float in fixed notation */
@@ -50,7 +50,7 @@ namespace dtn
 				std::stringstream ss;
 				ss << f << std::flush;
 
-				size_t float_len = ss.str().length();
+				dtn::data::Length float_len = ss.str().length();
 				len += data::Number(float_len).getLength() + float_len;
 			}
 			return data::Number(_predictmap.size()).getLength() + len;

@@ -62,7 +62,7 @@ namespace dtn
 			return identifier;
 		}
 
-		size_t AcknowledgementSet::getLength() const
+		dtn::data::Length AcknowledgementSet::getLength() const
 		{
 			std::stringstream ss;
 			serialize(ss);

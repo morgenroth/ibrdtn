@@ -42,7 +42,7 @@ namespace dtn
 		{
 		public:
 			virtual ~DatagramConnectionCallback() {};
-			virtual void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, int len) throw (DatagramException) = 0;
+			virtual void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, const dtn::data::Length &len) throw (DatagramException) = 0;
 			virtual void callback_ack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException) = 0;
 
 			virtual void connectionUp(const DatagramConnection *conn) = 0;
@@ -78,7 +78,7 @@ namespace dtn
 			 * @param buf
 			 * @param len
 			 */
-			void queue(const char &flags, const unsigned int &seqno, const char *buf, int len);
+			void queue(const char &flags, const unsigned int &seqno, const char *buf, const dtn::data::Length &len);
 
 			/**
 			 * This method is called by the DatagramCL, if an ACK is received.
@@ -110,7 +110,7 @@ namespace dtn
 			class Stream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
 			{
 			public:
-				Stream(DatagramConnection &conn, const size_t maxmsglen);
+				Stream(DatagramConnection &conn, const dtn::data::Length &maxmsglen);
 				virtual ~Stream();
 
 				/**
@@ -118,7 +118,7 @@ namespace dtn
 				 * @param buf Buffer with received data
 				 * @param len Length of the buffer
 				 */
-				void queue(const char *buf, int len) throw (DatagramException);
+				void queue(const char *buf, const dtn::data::Length &len) throw (DatagramException);
 
 				/**
 				 * Close the stream to terminate all blocking
@@ -133,7 +133,7 @@ namespace dtn
 
 			private:
 				// buffer size and maximum message size
-				const size_t _buf_size;
+				const dtn::data::Length _buf_size;
 
 				// will be set to true if the next segment is the last
 				// of the bundle
@@ -145,7 +145,7 @@ namespace dtn
 				std::vector<char> _queue_buf;
 
 				// the number of bytes available in the queue buffer
-				int _queue_buf_len;
+				dtn::data::Length _queue_buf_len;
 
 				// conditional to lock the queue buffer and the
 				// corresponding length variable
@@ -189,9 +189,9 @@ namespace dtn
 				DatagramConnection &_connection;
 			};
 
-			void stream_send(const char *buf, int len, bool last) throw (DatagramException);
+			void stream_send(const char *buf, const dtn::data::Length &len, bool last) throw (DatagramException);
 
-			void adjust_rtt(float value);
+			void adjust_rtt(double value);
 
 			DatagramConnectionCallback &_callback;
 			const std::string _identifier;
@@ -199,18 +199,18 @@ namespace dtn
 			DatagramConnection::Sender _sender;
 
 			ibrcommon::Conditional _ack_cond;
-			size_t _last_ack;
-			size_t _next_seqno;
+			unsigned int _last_ack;
+			unsigned int _next_seqno;
 
 			// stores the head of each connection
 			// the head is hold back until at least a second
 			// or the last segment was received
 			std::vector<char> _head_buf;
-			size_t _head_len;
+			dtn::data::Length _head_len;
 
 			const DatagramService::Parameter _params;
 
-			size_t _avg_rtt;
+			double _avg_rtt;
 
 			dtn::data::EID _peer_eid;
 		};

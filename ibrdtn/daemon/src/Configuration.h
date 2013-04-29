@@ -158,7 +158,7 @@ namespace dtn
 			 * If the string is "block", then the value of "limit_block" is returned.
 			 * @return A limit in bytes.
 			 */
-			size_t getLimit(const std::string&) const;
+			dtn::data::Size getLimit(const std::string&) const;
 
 			class Extension
 			{
@@ -310,11 +310,11 @@ namespace dtn
 				std::string _routing;
 				bool _forwarding;
 				bool _tcp_nodelay;
-				size_t _tcp_chunksize;
-				size_t _tcp_idle_timeout;
+				dtn::data::Length _tcp_chunksize;
+				dtn::data::Timeout _tcp_idle_timeout;
 				ibrcommon::vinterface _default_net;
 				bool _use_default_net;
-				size_t _auto_connect;
+				dtn::data::Timeout _auto_connect;
 				bool _fragmentation;
 				bool _scheduling;
 				ProphetConfig _prophet_config;
@@ -355,17 +355,17 @@ namespace dtn
 				/**
 				 * @return The size of TCP chunks for bundles.
 				 */
-				size_t getTCPChunkSize() const;
+				dtn::data::Length getTCPChunkSize() const;
 
 				/**
 				 * @return The idle timeout for TCP connections in seconds.
 				 */
-				size_t getTCPIdleTimeout() const;
+				dtn::data::Timeout getTCPIdleTimeout() const;
 
 				/**
 				 * @return Each x seconds try to connect to all available nodes.
 				 */
-				size_t getAutoConnect() const;
+				dtn::data::Timeout getAutoConnect() const;
 
 				/**
 				 * @return True, if fragmentation support is enabled.
@@ -494,7 +494,7 @@ namespace dtn
 				bool _daemonize;
 				ibrcommon::File _pidfile;
 				bool _kill;
-				size_t _threads;
+				dtn::data::Size _threads;
 
 			protected:
 				Daemon();
@@ -505,7 +505,7 @@ namespace dtn
 				bool daemonize() const;
 				const ibrcommon::File& getPidFile() const;
 				bool kill_daemon() const;
-				size_t getThreads() const;
+				dtn::data::Size getThreads() const;
 			};
 
 			class TimeSync : public Configuration::Extension

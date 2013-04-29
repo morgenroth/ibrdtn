@@ -119,7 +119,7 @@ namespace dtn
 				/**
 				 * @return the number of free transfer slots
 				 */
-				size_t getFreeTransferSlots() const;
+				dtn::data::Size getFreeTransferSlots() const;
 				
 				/**
 				 * @return True, if the threshold of free transfer slots is reached.

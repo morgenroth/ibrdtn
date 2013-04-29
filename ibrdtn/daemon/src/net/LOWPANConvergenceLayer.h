@@ -80,7 +80,7 @@ namespace dtn
 			 * @param len Length of the buffer
 			 * @param address IEEE 802.15.4 short address of the destination
 			 */
-			virtual void send_cb(char *buf, int len, const ibrcommon::vaddress &addr);
+			virtual void send_cb(const char *buf, const size_t len, const ibrcommon::vaddress &addr);
 
 			static const size_t BUFF_SIZE = 115;
 

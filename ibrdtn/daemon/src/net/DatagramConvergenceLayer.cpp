@@ -61,7 +61,7 @@ namespace dtn
 			return _service->getProtocol();
 		}
 
-		void DatagramConvergenceLayer::callback_send(DatagramConnection&, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, int len) throw (DatagramException)
+		void DatagramConvergenceLayer::callback_send(DatagramConnection&, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, const dtn::data::Length &len) throw (DatagramException)
 		{
 			// only on sender at once
 			ibrcommon::MutexLock l(_send_lock);
@@ -185,14 +185,14 @@ namespace dtn
 			stringstream ss;
 			ss << announcement;
 
-			int len = ss.str().size();
+			std::streamsize len = ss.str().size();
 
 			try {
 				// only on sender at once
 				ibrcommon::MutexLock l(_send_lock);
 
 				// forward the send request to DatagramService
-				_service->send(HEADER_BROADCAST, 0, 0, ss.str().c_str(), len);
+				_service->send(HEADER_BROADCAST, 0, 0, ss.str().c_str(), static_cast<dtn::data::Length>(len));
 			} catch (const DatagramException&) {
 				// ignore any send failure
 			};

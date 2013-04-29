@@ -40,7 +40,7 @@ namespace dtn
 		public:
 			static const std::string TAG;
 
-			MemoryBundleStorage(size_t maxsize = 0);
+			MemoryBundleStorage(const dtn::data::Length &maxsize = 0);
 			virtual ~MemoryBundleStorage();
 
 			/**
@@ -94,7 +94,7 @@ namespace dtn
 			/**
 			 * @sa BundleStorage::count()
 			 */
-			size_t count();
+			dtn::data::Size count();
 
 			/**
 			 * @sa BundleStorage::releaseCustody();
@@ -162,7 +162,7 @@ namespace dtn
 			typedef std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY> prio_bundle_set;
 			prio_bundle_set _priority_index;
 
-			typedef std::map<dtn::data::BundleID, size_t> size_map;
+			typedef std::map<dtn::data::BundleID, dtn::data::Length> size_map;
 			size_map _bundle_lengths;
 		};
 	}

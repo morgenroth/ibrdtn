@@ -92,10 +92,10 @@ namespace dtn
 				MSG_TYPE type;
 
 				timeval origin_timestamp;
-				float origin_rating;
+				double origin_rating;
 
 				timeval peer_timestamp;
-				float peer_rating;
+				double peer_rating;
 
 				friend std::ostream &operator<<(std::ostream &stream, const DTNTPWorker::TimeSyncMessage &obj);
 				friend std::istream &operator>>(std::istream &stream, DTNTPWorker::TimeSyncMessage &obj);
