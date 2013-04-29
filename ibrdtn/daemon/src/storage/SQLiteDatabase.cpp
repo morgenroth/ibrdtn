@@ -365,10 +365,16 @@ namespace dtn
 
 		void SQLiteDatabase::get(Statement &st, dtn::data::MetaBundle &bundle, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
-			bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
-			bundle.destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
-			bundle.reportto = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 2) );
-			bundle.custodian = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 3) );
+			try {
+				bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
+				bundle.destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
+				bundle.reportto = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 2) );
+				bundle.custodian = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 3) );
+			} catch (const dtn::InvalidDataException&) {
+				IBRCOMMON_LOGGER_TAG(TAG, warning) << "unable to read EIDs from database" << IBRCOMMON_LOGGER_ENDL;
+				throw SQLiteDatabase::SQLiteQueryException("unable to read EIDs from database");
+			}
+
 			bundle.procflags = sqlite3_column_int(*st, offset + 4);
 			bundle.timestamp = sqlite3_column_int64(*st, offset + 5);
 			bundle.sequencenumber = sqlite3_column_int64(*st, offset + 6);
@@ -394,10 +400,16 @@ namespace dtn
 
 		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
-			bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
-			bundle.destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
-			bundle.reportto = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 2) );
-			bundle.custodian = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 3) );
+			try {
+				bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
+				bundle.destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
+				bundle.reportto = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 2) );
+				bundle.custodian = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 3) );
+			} catch (const dtn::InvalidDataException&) {
+				IBRCOMMON_LOGGER_TAG(TAG, warning) << "unable to read EIDs from database" << IBRCOMMON_LOGGER_ENDL;
+				throw SQLiteDatabase::SQLiteQueryException("unable to read EIDs from database");
+			}
+
 			bundle.procflags = sqlite3_column_int(*st, offset + 4);
 			bundle.timestamp = sqlite3_column_int64(*st, offset + 5);
 			bundle.sequencenumber = sqlite3_column_int64(*st, offset + 6);
