@@ -192,7 +192,7 @@ namespace dtn
 			_count++;
 			_timestamp = dtn::utils::Clock::getTime();
 			float backoff = pow((float)retry, (int)_count -1);
-			_timestamp += backoff;
+			_timestamp += static_cast<dtn::data::Size>(backoff);
 
 			return (*this);
 		}
@@ -202,7 +202,7 @@ namespace dtn
 			_count++;
 			_timestamp = dtn::utils::Clock::getTime();
 			float backoff = pow((float)retry, (int)_count -1);
-			_timestamp += backoff;
+			_timestamp += static_cast<dtn::data::Size>(backoff);
 
 			return (*this);
 		}

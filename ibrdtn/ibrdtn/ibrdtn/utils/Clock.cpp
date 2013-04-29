@@ -141,7 +141,7 @@ namespace dtn
 			double sigma_error = lifetime.get<double>() * (1 - Clock::getRating());
 
 			// expiration adjusted by quality of time
-			return timestamp + lifetime + dtn::data::Number(sigma_error);
+			return timestamp + lifetime + dtn::data::Number(static_cast<dtn::data::Size>(sigma_error));
 		}
 
 		bool Clock::isExpired(const dtn::data::Bundle &b)
@@ -169,7 +169,7 @@ namespace dtn
 			const double sigma_error = lifetime.get<double>() * (1 - Clock::getRating());
 
 			// calculate adjusted expire time
-			const dtn::data::Timestamp expiretime = timestamp + lifetime + dtn::data::Number(sigma_error);
+			const dtn::data::Timestamp expiretime = timestamp + lifetime + dtn::data::Number(static_cast<dtn::data::Size>(sigma_error));
 
 			// expiration adjusted by quality of time
 			if ( Clock::getTime() > expiretime) return true;

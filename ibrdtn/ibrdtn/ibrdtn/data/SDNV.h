@@ -73,34 +73,11 @@ namespace dtn
 			 */
 			static const size_t MAX_LENGTH = 10;
 
-			SDNV(const double value) : _value(0) {
-				// TODO: check if assignment is legal
-//				E max_val = std::numeric_limits<E>::max();
-//				if (value > static_cast<double>(max_val))
-//					throw ValueOutOfRangeException();
-
-				_value = static_cast<E>(value);
-			}
-
 			/**
 			 * Constructor for a SDNV object
 			 * @param value The new value of the SDNV
 			 */
-			template<typename T>
-			SDNV(const T value = 0) : _value(0) {
-				if (sizeof(T) == sizeof(_value))
-				{
-					_value = static_cast<E>(value);
-				}
-				else
-				{
-					// TODO: check if assignment is legal
-//					E max_val = std::numeric_limits<E>::max();
-//					if (value > static_cast<T>(max_val))
-//						throw ValueOutOfRangeException();
-
-					_value = static_cast<E>(value);
-				}
+			SDNV(const E value) : _value(value) {
 			}
 
 			SDNV() : _value(0) {
@@ -132,37 +109,11 @@ namespace dtn
 
 			template<typename T>
 			T get() const {
-				if (sizeof(T) == sizeof(E))
-				{
-					return static_cast<T>(_value);
-				}
-				else
-				{
-					// TODO: check if assignment is legal
-//					T max_val = std::numeric_limits<T>::max();
-//					if (_value > static_cast<E>(max_val))
-//						throw ValueOutOfRangeException();
-
-					return static_cast<T>(_value);
-				}
+				return static_cast<T>(_value);
 			}
 
-			template<typename T>
-			const SDNV& operator=(const T &value) {
-				if (sizeof(T) == sizeof(_value))
-				{
-					_value = value;
-				}
-				else
-				{
-					// TODO: check if assignment is legal
-//					E max_val = std::numeric_limits<E>::max();
-//					if (value > static_cast<T>(max_val))
-//						throw ValueOutOfRangeException();
-
-					_value = static_cast<E>(value);
-				}
-
+			const SDNV& operator=(const E &value) {
+				_value = value;
 				return (*this);
 			}
 
@@ -176,10 +127,9 @@ namespace dtn
 				return (value._value != _value);
 			}
 
-			template<typename T>
-			SDNV<E> operator+(const T &value)
+			SDNV<E> operator+(const E &value)
 			{
-				E result = _value + static_cast<E>(value);
+				E result = _value + value;
 				return SDNV<E>(result);
 			}
 
@@ -189,18 +139,25 @@ namespace dtn
 				return SDNV<E>(result);
 			}
 
-			template<typename T>
-			friend SDNV<E> operator+(const SDNV<E> &left, const T &right)
+			friend
+			SDNV<E> operator+(const SDNV<E> &left, const SDNV<E> &right)
 			{
 				SDNV<E> ret(left);
 				ret += right;
 				return ret;
 			}
 
-			template<typename T>
-			SDNV<E>& operator+=(const T &value)
+			friend
+			SDNV<E> operator+(const SDNV<E> &left, const E &right)
 			{
-				_value += static_cast<E>(value);
+				SDNV<E> ret(left);
+				ret += right;
+				return ret;
+			}
+
+			SDNV<E>& operator+=(const E &value)
+			{
+				_value += value;
 				return (*this);
 			}
 
@@ -223,10 +180,9 @@ namespace dtn
 				return prev;
 			}
 
-			template<typename T>
-			SDNV<E> operator-(const T &value)
+			SDNV<E> operator-(const E &value)
 			{
-				E result = _value - static_cast<E>(value);
+				E result = _value - value;
 				return SDNV<E>(result);
 			}
 
@@ -236,18 +192,25 @@ namespace dtn
 				return SDNV<E>(result);
 			}
 
-			template<typename T>
-			friend SDNV<E> operator-(const SDNV<E> &left, const T &right)
+			friend
+			SDNV<E> operator-(const SDNV<E> &left, const SDNV<E> &right)
 			{
 				SDNV<E> ret(left);
 				ret -= right;
 				return ret;
 			}
 
-			template<typename T>
-			SDNV<E>& operator-=(const T &value)
+			friend
+			SDNV<E> operator-(const SDNV<E> &left, const E &right)
 			{
-				_value -= static_cast<E>(value);
+				SDNV<E> ret(left);
+				ret -= right;
+				return ret;
+			}
+
+			SDNV<E>& operator-=(const E &value)
+			{
+				_value -= value;
 				return (*this);
 			}
 
@@ -270,10 +233,9 @@ namespace dtn
 				return prev;
 			}
 
-			template<typename T>
-			SDNV<E> operator/(const T &value)
+			SDNV<E> operator/(const E &value)
 			{
-				E result = _value / static_cast<E>(value);
+				E result = _value / value;
 				return SDNV<E>(result);
 			}
 
@@ -283,18 +245,25 @@ namespace dtn
 				return SDNV<E>(result);
 			}
 
-			template<typename T>
-			friend SDNV<E> operator/(const SDNV<E> &left, const T &right)
+			friend
+			SDNV<E> operator/(const SDNV<E> &left, const SDNV<E> &right)
 			{
 				SDNV<E> ret(left);
 				ret /= right;
 				return ret;
 			}
 
-			template<typename T>
-			SDNV<E>& operator/=(const T &value)
+			friend
+			SDNV<E> operator/(const SDNV<E> &left, const E &right)
 			{
-				_value /= static_cast<E>(value);
+				SDNV<E> ret(left);
+				ret /= right;
+				return ret;
+			}
+
+			SDNV<E>& operator/=(const E &value)
+			{
+				_value /= value;
 				return (*this);
 			}
 
@@ -304,10 +273,9 @@ namespace dtn
 				return (*this);
 			}
 
-			template<typename T>
-			SDNV<E> operator*(const T &value)
+			SDNV<E> operator*(const E &value)
 			{
-				E result = _value * static_cast<E>(value);
+				E result = _value * value;
 				return SDNV<E>(result);
 			}
 
@@ -317,18 +285,25 @@ namespace dtn
 				return SDNV<E>(result);
 			}
 
-			template<typename T>
-			friend SDNV<E> operator*(const SDNV<E> &left, const T &right)
+			friend
+			SDNV<E> operator*(const SDNV<E> &left, const SDNV<E> &right)
 			{
 				SDNV<E> ret(left);
 				ret *= right;
 				return ret;
 			}
 
-			template<typename T>
-			SDNV<E>& operator*=(const T &value)
+			friend
+			SDNV<E> operator*(const SDNV<E> &left, const E &right)
 			{
-				_value *= static_cast<E>(value);
+				SDNV<E> ret(left);
+				ret *= right;
+				return ret;
+			}
+
+			SDNV<E>& operator*=(const E &value)
+			{
+				_value *= value;
 				return (*this);
 			}
 
@@ -409,7 +384,8 @@ namespace dtn
 			}
 
 		private:
-			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV<E> &obj)
+			friend
+			std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV<E> &obj)
 			{
 				unsigned char buffer[10];
 				unsigned char *bp = &buffer[0];
@@ -438,7 +414,8 @@ namespace dtn
 				return stream;
 			}
 
-			friend std::istream &operator>>(std::istream &stream, dtn::data::SDNV<E> &obj)
+			friend
+			std::istream &operator>>(std::istream &stream, dtn::data::SDNV<E> &obj)
 			{
 				size_t val_len = 0;
 				unsigned char bp = 0;
