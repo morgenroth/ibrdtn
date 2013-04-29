@@ -496,7 +496,7 @@ namespace dtn
 						const dtn::data::AgeBlock &origin_age = dynamic_cast<const dtn::data::AgeBlock&>(**age_it);
 
 						timeval tv_age; timerclear(&tv_age);
-						tv_age.tv_usec = origin_age.getMicroseconds().get<__suseconds_t>();
+						tv_age.tv_usec = origin_age.getMicroseconds().get<suseconds_t>();
 
 						ibrcommon::BLOB::Reference ref = p.getBLOB();
 						ibrcommon::BLOB::iostream stream = ref.iostream();
@@ -519,7 +519,7 @@ namespace dtn
 
 						timeval sync_delay;
 						timerclear(&sync_delay);
-						sync_delay.tv_usec = peer_age.getMicroseconds().get<__suseconds_t>() + prop_delay.tv_usec;
+						sync_delay.tv_usec = peer_age.getMicroseconds().get<suseconds_t>() + prop_delay.tv_usec;
 
 						timeval peer_timestamp;
 						timeradd(&msg.peer_timestamp, &sync_delay, &peer_timestamp);
