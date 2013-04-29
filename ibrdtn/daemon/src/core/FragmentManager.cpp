@@ -216,7 +216,7 @@ namespace dtn
 			} catch (const dtn::storage::NoBundleFoundException&) { }
 		}
 
-		void FragmentManager::setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, uint64_t abs_offset)
+		void FragmentManager::setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, const dtn::data::Length &abs_offset)
 		{
 			try {
 				Transmission t;
@@ -252,10 +252,10 @@ namespace dtn
 			return 0;
 		}
 
-		uint64_t FragmentManager::get_payload_offset(const dtn::data::Bundle &bundle, uint64_t abs_offset)
+		dtn::data::Length FragmentManager::get_payload_offset(const dtn::data::Bundle &bundle, const dtn::data::Length &abs_offset)
 		{
 			dtn::data::DefaultSerializer serializer(std::cout);
-			uint64_t header = serializer.getLength((dtn::data::PrimaryBlock&)bundle);
+			dtn::data::Length header = serializer.getLength((dtn::data::PrimaryBlock&)bundle);
 
 			for (dtn::data::Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)
 			{
@@ -273,7 +273,7 @@ namespace dtn
 			return 0;
 		}
 
-		void FragmentManager::expire_offsets(uint64_t timestamp)
+		void FragmentManager::expire_offsets(const dtn::data::Timestamp &timestamp)
 		{
 			ibrcommon::MutexLock l(_offsets_mutex);
 			for (std::set<Transmission>::iterator iter = _offsets.begin(); iter != _offsets.end();)

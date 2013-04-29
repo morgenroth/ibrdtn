@@ -252,13 +252,13 @@ namespace ibrcommon
 	std::streamsize MemoryBLOBProvider::StringBLOB::__get_size()
 	{
 		// store current position
-		std::streamsize pos = _stringstream.tellg();
+		std::streamoff pos = _stringstream.tellg();
 
 		_stringstream.seekg(0, std::ios_base::end);
-		std::streamsize size = _stringstream.tellg();
+		std::streamoff size = _stringstream.tellg();
 		_stringstream.seekg(pos);
 
-		return size;
+		return static_cast<std::streamsize>(size);
 	}
 
 	void FileBLOB::clear()

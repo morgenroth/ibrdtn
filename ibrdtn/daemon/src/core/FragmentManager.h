@@ -85,7 +85,7 @@ namespace dtn
 			 * @param id
 			 * @param offset
 			 */
-			static void setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, uint64_t abs_offset);
+			static void setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, const dtn::data::Length &abs_offset);
 
 			/**
 			 * Get the offset of a transmission
@@ -119,8 +119,8 @@ namespace dtn
 				dtn::data::Timestamp expires;
 			};
 
-			static void expire_offsets(uint64_t timestamp);
-			static uint64_t get_payload_offset(const dtn::data::Bundle &bundle, uint64_t abs_offset);
+			static void expire_offsets(const dtn::data::Timestamp &timestamp);
+			static dtn::data::Length get_payload_offset(const dtn::data::Bundle &bundle, const dtn::data::Length &abs_offset);
 
 			/**
 			 * adds all necessary blocks from the bundle to the fragment

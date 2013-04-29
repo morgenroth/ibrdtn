@@ -106,12 +106,11 @@ namespace dtn
 		}
 
 		TrackingBlock::TrackingEntry::TrackingEntry()
-		 : flags(0)
 		{
 		}
 
 		TrackingBlock::TrackingEntry::TrackingEntry(const dtn::data::EID &eid)
-		 : flags(0), endpoint(eid)
+		 : endpoint(eid)
 		{
 		}
 

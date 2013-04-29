@@ -245,7 +245,7 @@ namespace ibrcommon
 	{
 		struct stat filestatus;
 		stat( getPath().c_str(), &filestatus );
-		return filestatus.st_size;
+		return static_cast<size_t>(filestatus.st_size);
 	}
 
 	time_t File::lastaccess() const

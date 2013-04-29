@@ -212,7 +212,7 @@ namespace dtn
 			size_t _timeout;
 
 			ibrcommon::Queue<dtn::data::MetaBundle> _sentqueue;
-			uint64_t _lastack;
+			dtn::data::Length _lastack;
 			size_t _keepalive_timeout;
 
 			TCPConvergenceLayer &_callback;

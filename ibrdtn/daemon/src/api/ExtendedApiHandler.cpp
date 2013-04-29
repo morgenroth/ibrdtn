@@ -550,7 +550,7 @@ namespace dtn
 									ss >> offset;
 									if (ss.fail()) throw ibrcommon::Exception("malformed command");
 
-									if (offset >= _bundle_reg.size())
+									if (static_cast<dtn::data::Size>(offset) >= _bundle_reg.size())
 									{
 										inserter = dtn::data::BundleBuilder(_bundle_reg, dtn::data::BundleBuilder::END);
 									}
@@ -681,7 +681,7 @@ namespace dtn
 										ibrcommon::BLOB::Reference ref = pb.getBLOB();
 										ibrcommon::BLOB::iostream stream = ref.iostream();
 
-										if (payload_offset >= stream.size())
+										if (static_cast<std::streamsize>(payload_offset) >= stream.size())
 											throw ibrcommon::Exception("offset out of range");
 
 										size_t remaining = stream.size() - payload_offset;
@@ -774,7 +774,7 @@ namespace dtn
 								ibrcommon::BLOB::iostream stream = ref.iostream();
 
 								// if the offset is valid
-								if (payload_offset < stream.size()) {
+								if (static_cast<std::streamsize>(payload_offset) < stream.size()) {
 									// move the streams put pointer to the given offset
 									(*stream).seekp(payload_offset, ios_base::beg);
 								} else if (payload_offset > 0) {

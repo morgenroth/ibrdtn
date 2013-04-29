@@ -621,7 +621,8 @@ namespace dtn
 			}
 
 			try {
-				dtn::data::Block &block = builder.insert(block_type, 0);
+				const dtn::data::Bitset<dtn::data::Block::ProcFlags> procflags;
+				dtn::data::Block &block = builder.insert(block_type, procflags);
 				(*this) >> block;
 				return block;
 			} catch (dtn::data::BundleBuilder::DiscardBlockException &ex) {

@@ -60,7 +60,7 @@ namespace ibrcommon
 		int ret = ::select(nfds, readfds, writefds, exceptfds, &to_copy);
 		tm.stop();
 
-		uint64_t us = tm.getMicroseconds();
+		size_t us = tm.getMicroseconds();
 
 		while ((us > 1000000) && (timeout->tv_sec > 0))
 		{
@@ -68,7 +68,7 @@ namespace ibrcommon
 			timeout->tv_sec--;
 		}
 
-		if (us >= (uint64_t)timeout->tv_usec)
+		if (us >= static_cast<size_t>(timeout->tv_usec))
 		{
 			timeout->tv_usec = 0;
 		}

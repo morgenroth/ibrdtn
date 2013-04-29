@@ -135,8 +135,8 @@ namespace dtn
 				ds >> bundle;
 				
 				// allocate space for the bundle
-				std::streamsize bundle_size = (*stream).tellg();
-				allocSpace(static_cast<dtn::data::Length>(bundle_size));
+				dtn::data::Length bundle_size = static_cast<dtn::data::Length>( (*stream).tellg() );
+				allocSpace(bundle_size);
 
 				// extract meta data
 				dtn::data::MetaBundle meta(bundle);

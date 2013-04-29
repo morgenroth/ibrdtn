@@ -43,11 +43,10 @@ namespace dtn
 		template<typename E>
 		class Bitset : public dtn::data::SDNV<Size> {
 		public:
-			Bitset() {
+			Bitset(Size initial) : dtn::data::SDNV<Size>(initial) {
 			}
 
-			template<typename T>
-			Bitset(T value) : SDNV(value) {
+			Bitset() {
 			}
 
 			~Bitset() { }

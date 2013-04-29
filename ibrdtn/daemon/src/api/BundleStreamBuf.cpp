@@ -78,7 +78,7 @@ namespace dtn
 			BundleStreamBuf::append(_chunk_payload, &_in_buf[0], iend - ibegin);
 
 			// if size exceeds chunk limit, send it
-			if (_chunk_payload.iostream().size() > _chunk_size)
+			if (_chunk_payload.iostream().size() > static_cast<std::streamsize>(_chunk_size))
 			{
 				flushPayload();
 			}

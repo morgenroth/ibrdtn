@@ -33,7 +33,7 @@ namespace dtn
 		}
 
 		StreamBlock::StreamBlock()
-		: dtn::data::Block(StreamBlock::BLOCK_TYPE), _seq(0), _streamflags(0)
+		: dtn::data::Block(StreamBlock::BLOCK_TYPE), _seq(0)
 		{
 		}
 

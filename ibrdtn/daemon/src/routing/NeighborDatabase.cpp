@@ -48,7 +48,7 @@ namespace dtn
 
 			if (lifetime == 0)
 			{
-				_filter_expire = std::numeric_limits<uint64_t>::max();
+				_filter_expire = std::numeric_limits<dtn::data::Size>::max();
 			}
 			else
 			{

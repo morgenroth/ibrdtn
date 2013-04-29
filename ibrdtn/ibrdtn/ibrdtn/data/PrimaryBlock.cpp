@@ -33,7 +33,7 @@ namespace dtn
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
 		PrimaryBlock::PrimaryBlock()
-		 : procflags(0), timestamp(0), sequencenumber(0), lifetime(3600), fragmentoffset(0), appdatalength(0)
+		 : timestamp(0), sequencenumber(0), lifetime(3600), fragmentoffset(0), appdatalength(0)
 		{
 			relabel();
 

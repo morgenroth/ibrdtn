@@ -33,7 +33,7 @@ namespace dtn
 		}
 
 		SchedulingBlock::SchedulingBlock()
-		 : dtn::data::Block(SchedulingBlock::BLOCK_TYPE), _flags(0), _priority(0)
+		 : dtn::data::Block(SchedulingBlock::BLOCK_TYPE), _priority(0)
 		{
 			// set the replicate in every fragment bit
 			set(REPLICATE_IN_EVERY_FRAGMENT, true);

@@ -339,7 +339,7 @@ namespace dtn
 
 				std::streamsize stream_size = stream.size();
 
-				if ((offset > 0) || (stream_size < offset)) {
+				if ((offset > 0) || (stream_size < static_cast<std::streamsize>(offset))) {
 					(*stream).seekp(0, std::ios_base::end);
 				} else {
 					(*stream).seekp(offset);
@@ -355,7 +355,7 @@ namespace dtn
 
 				std::streamsize stream_size = stream.size();
 
-				if ((offset > 0) || (stream_size < offset)) {
+				if ((offset > 0) || (stream_size < static_cast<std::streamsize>(offset))) {
 					(*stream).seekp(0, std::ios_base::end);
 				} else {
 					(*stream).seekp(offset);

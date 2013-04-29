@@ -30,7 +30,7 @@ namespace dtn
 	namespace data
 	{
 		Block::Block(block_t blocktype)
-		 : _blocktype(blocktype), _procflags(0)
+		 : _blocktype(blocktype)
 		{
 		}
 
