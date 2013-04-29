@@ -440,11 +440,11 @@ namespace dtn
 
 			friend std::istream &operator>>(std::istream &stream, dtn::data::SDNV<E> &obj)
 			{
-				// TODO: check if the value fits into sizeof(size_t)
-
 				size_t val_len = 0;
 				unsigned char bp = 0;
 				unsigned char start = 0;
+
+				int carry = 0;
 
 				obj._value = 0;
 				do {
@@ -455,6 +455,12 @@ namespace dtn
 
 					if ((bp & (1 << 7)) == 0)
 						break; // all done;
+
+					// check if the value fits into sizeof(E)
+					if ((val_len % 8) == 0) ++carry;
+
+					if ((sizeof(E) + carry) < val_len)
+						throw ValueOutOfRangeException("ERROR(SDNV): overflow value in sdnv");
 
 					if (start == 0) start = bp;
 				} while (1);
