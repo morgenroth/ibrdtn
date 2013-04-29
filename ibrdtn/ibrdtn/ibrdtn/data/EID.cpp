@@ -48,6 +48,10 @@ namespace dtn
 		EID::EID(const std::string &orig_value)
 		: _scheme(DEFAULT_SCHEME), _ssp("none")
 		{
+			if (orig_value.length() == 0) {
+				throw dtn::InvalidDataException("given EID is empty!");
+			}
+
 			std::string value = orig_value;
 			dtn::utils::Utils::trim(value);
 
@@ -57,7 +61,7 @@ namespace dtn
 
 				// jump to default eid if the format is wrong
 				if (delimiter == std::string::npos)
-					throw dtn::InvalidDataException("wrong eid format: " + value);
+					throw dtn::InvalidDataException("wrong EID format: " + value);
 
 				// the scheme is everything before the delimiter
 				_scheme = value.substr(0, delimiter);
@@ -66,7 +70,14 @@ namespace dtn
 				size_t startofssp = delimiter + 1;
 				_ssp = value.substr(startofssp, value.length() - startofssp);
 
-				// TODO: do syntax check
+				// do syntax check
+				if (_scheme.length() == 0) {
+					throw dtn::InvalidDataException("scheme is empty!");
+				}
+
+				if (_ssp.length() == 0) {
+					throw dtn::InvalidDataException("SSP is empty!");
+				}
 			} catch (const std::exception&) {
 				_scheme = DEFAULT_SCHEME;
 				_ssp = "none";
@@ -140,7 +151,7 @@ namespace dtn
 			return _scheme + ":" + _ssp;
 		}
 
-		std::string EID::getApplication() const throw (dtn::InvalidDataException)
+		std::string EID::getApplication() const throw ()
 		{
 			size_t first_char = 0;
 			char delimiter = '.';
@@ -154,8 +165,10 @@ namespace dtn
 				first_char = _ssp.find_first_not_of(delimiter);
 
 				// only "/" ? thats bad!
-				if (first_char == std::string::npos)
-					throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
+				if (first_char == std::string::npos) {
+					return "";
+					//throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
+				}
 			}
 
 			// start of application part
@@ -169,7 +182,7 @@ namespace dtn
 			return _ssp.substr(application_start + 1, _ssp.length() - application_start - 1);
 		}
 
-		std::string EID::getHost() const throw (dtn::InvalidDataException)
+		std::string EID::getHost() const throw ()
 		{
 			size_t first_char = 0;
 			char delimiter = '.';
@@ -183,8 +196,10 @@ namespace dtn
 				first_char = _ssp.find_first_not_of(delimiter);
 
 				// only "/" ? thats bad!
-				if (first_char == std::string::npos)
-					throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
+				if (first_char == std::string::npos) {
+					return "none";
+					// throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
+				}
 			}
 
 			// start of application part
@@ -208,7 +223,7 @@ namespace dtn
 			return _ssp;
 		}
 
-		EID EID::getNode() const throw (dtn::InvalidDataException)
+		EID EID::getNode() const throw ()
 		{
 			return _scheme + ":" + getHost();
 		}

@@ -77,14 +77,14 @@ namespace dtn
 			bool operator>(const EID &other) const;
 
 			std::string getString() const;
-			std::string getApplication() const throw (dtn::InvalidDataException);
-			std::string getHost() const throw (dtn::InvalidDataException);
+			std::string getApplication() const throw ();
+			std::string getHost() const throw ();
 			const std::string& getScheme() const;
 			const std::string& getSSP() const;
 
 			std::string getDelimiter() const;
 
-			EID getNode() const throw (dtn::InvalidDataException);
+			EID getNode() const throw ();
 
 			bool hasApplication() const;
 
