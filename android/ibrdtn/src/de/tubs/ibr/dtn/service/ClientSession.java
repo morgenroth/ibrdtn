@@ -26,7 +26,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Date;
@@ -47,12 +46,14 @@ import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.Timestamp;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.swig.BundleNotFoundException;
+import de.tubs.ibr.dtn.swig.DtnNumber;
 import de.tubs.ibr.dtn.swig.NativeSerializerCallback;
 import de.tubs.ibr.dtn.swig.NativeSession;
 import de.tubs.ibr.dtn.swig.NativeSession.RegisterIndex;
 import de.tubs.ibr.dtn.swig.NativeSessionCallback;
 import de.tubs.ibr.dtn.swig.NativeSessionException;
 import de.tubs.ibr.dtn.swig.PrimaryBlock;
+import de.tubs.ibr.dtn.swig.PrimaryBlockFlags;
 import de.tubs.ibr.dtn.swig.StatusReportBlock;
 
 public class ClientSession {
@@ -95,7 +96,7 @@ public class ClientSession {
 		@Override
 		public void notifyStatusReport(de.tubs.ibr.dtn.swig.EID source, de.tubs.ibr.dtn.swig.StatusReportBlock swigReport)
 		{
-		    de.tubs.ibr.dtn.swig.BundleID swigId = swigReport.get_bundleid();
+		    de.tubs.ibr.dtn.swig.BundleID swigId = swigReport.getBundleid();
 		    
             // forward the notification as intent
             // create a new intent
@@ -103,29 +104,29 @@ public class ClientSession {
             notify.addCategory(_package_name);
             notify.putExtra("bundleid", toAndroid(swigId));
             notify.putExtra("source", new SingletonEndpoint(source.getString()));
-            notify.putExtra("status", swigReport.get_status());
-            notify.putExtra("reason", swigReport.get_reasoncode());
+            notify.putExtra("status", swigReport.getStatus());
+            notify.putExtra("reason", swigReport.getReasoncode());
             
-            char status = swigReport.get_status();
+            char status = swigReport.getStatus();
             
             if (0 < (status & StatusReportBlock.TYPE.RECEIPT_OF_BUNDLE.swigValue())) {
-                notify.putExtra("timeof_receipt", toAndroid(swigReport.get_timeof_receipt()));
+                notify.putExtra("timeof_receipt", toAndroid(swigReport.getTimeof_receipt()));
             }
             
             if (0 < (status & StatusReportBlock.TYPE.DELETION_OF_BUNDLE.swigValue())) {
-                notify.putExtra("timeof_deletion", toAndroid(swigReport.get_timeof_deletion()));
+                notify.putExtra("timeof_deletion", toAndroid(swigReport.getTimeof_deletion()));
             }
             
             if (0 < (status & StatusReportBlock.TYPE.DELIVERY_OF_BUNDLE.swigValue())) {
-                notify.putExtra("timeof_delivery", toAndroid(swigReport.get_timeof_delivery()));
+                notify.putExtra("timeof_delivery", toAndroid(swigReport.getTimeof_delivery()));
             }
             
             if (0 < (status & StatusReportBlock.TYPE.FORWARDING_OF_BUNDLE.swigValue())) {
-                notify.putExtra("timeof_forwarding", toAndroid(swigReport.get_timeof_forwarding()));
+                notify.putExtra("timeof_forwarding", toAndroid(swigReport.getTimeof_forwarding()));
             }
             
             if (0 < (status & StatusReportBlock.TYPE.CUSTODY_ACCEPTANCE_OF_BUNDLE.swigValue())) {
-                notify.putExtra("timeof_custodyaccept", toAndroid(swigReport.get_timeof_custodyaccept()));
+                notify.putExtra("timeof_custodyaccept", toAndroid(swigReport.getTimeof_custodyaccept()));
             }
             
             // send notification intent
@@ -137,7 +138,7 @@ public class ClientSession {
 		@Override
 		public void notifyCustodySignal(de.tubs.ibr.dtn.swig.EID source, de.tubs.ibr.dtn.swig.CustodySignalBlock swigCustody)
 		{
-		    de.tubs.ibr.dtn.swig.BundleID swigId = swigCustody.get_bundleid();
+		    de.tubs.ibr.dtn.swig.BundleID swigId = swigCustody.getBundleid();
 		    
             // forward the notification as intent
             // create a new intent
@@ -145,8 +146,8 @@ public class ClientSession {
             notify.addCategory(_package_name);
             notify.putExtra("bundleid", toAndroid(swigId));
             notify.putExtra("source", new SingletonEndpoint(source.getString()));
-            notify.putExtra("accepted", swigCustody.get_custody_accepted());
-            notify.putExtra("timeofsignal", toAndroid(swigCustody.get_timeofsignal()));
+            notify.putExtra("accepted", swigCustody.getCustody_accepted());
+            notify.putExtra("timeofsignal", toAndroid(swigCustody.getTimeofsignal()));
 
             // send notification intent
             context.sendBroadcast(notify);
@@ -448,7 +449,7 @@ public class ClientSession {
 
                 // set lifetime
                 if (bundle.getLifetime() != null)
-                    b.setLifetime(BigInteger.valueOf(bundle.getLifetime()));
+                    b.setLifetime(new DtnNumber(bundle.getLifetime()));
 
                 if (bundle.getReportto() != null)
                     b.setReportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
@@ -457,7 +458,7 @@ public class ClientSession {
                     b.setCustodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
 
                 // add flags from procflags
-                b.setProcflags( BigInteger.valueOf( b.getProcflags().longValue() | bundle.getProcflags() ) );
+                b.setProcflags( new PrimaryBlockFlags( b.getProcflags().get() | bundle.getProcflags() ) );
 
                 // bundle id return value
                 de.tubs.ibr.dtn.swig.BundleID ret = null;
@@ -503,7 +504,7 @@ public class ClientSession {
 
                 // set lifetime
                 if (bundle.getLifetime() != null)
-                    b.setLifetime( BigInteger.valueOf( bundle.getLifetime() ) );
+                    b.setLifetime( new DtnNumber( bundle.getLifetime() ) );
 
                 if (bundle.getReportto() != null)
                     b.setReportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
@@ -512,7 +513,7 @@ public class ClientSession {
                     b.setCustodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
 
                 // add flags from procflags
-                b.setProcflags( BigInteger.valueOf( b.getProcflags().longValue() | bundle.getProcflags() ) );
+                b.setProcflags( new PrimaryBlockFlags( b.getProcflags().get() | bundle.getProcflags() ) );
 
                 // open the file descriptor
                 FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
@@ -594,8 +595,8 @@ public class ClientSession {
 	{
 		de.tubs.ibr.dtn.swig.BundleID swigId = new de.tubs.ibr.dtn.swig.BundleID();
 		swigId.setSource(new de.tubs.ibr.dtn.swig.EID(id.getSource().toString()));
-		swigId.setSequencenumber(BigInteger.valueOf(id.getSequencenumber()));
-		swigId.setTimestamp(BigInteger.valueOf(id.getTimestamp().getValue()));
+		swigId.setSequencenumber(new DtnNumber(id.getSequencenumber()));
+		swigId.setTimestamp(new DtnNumber(id.getTimestamp().getValue()));
 		
 		return swigId;
 	}
@@ -608,20 +609,20 @@ public class ClientSession {
 		de.tubs.ibr.dtn.swig.PrimaryBlock ret = new de.tubs.ibr.dtn.swig.PrimaryBlock();
 		ret.setCustodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
 		ret.setDestination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
-		ret.setFragmentoffset( BigInteger.valueOf( bundle.getFragmentOffset() ) );
-		ret.setLifetime( BigInteger.valueOf( bundle.getLifetime().longValue() ) );
-		ret.setProcflags( BigInteger.valueOf( bundle.getProcflags() ) );
+		ret.setFragmentoffset( new DtnNumber( bundle.getFragmentOffset() ) );
+		ret.setLifetime( new DtnNumber( bundle.getLifetime().longValue() ) );
+		ret.setProcflags( new PrimaryBlockFlags( bundle.getProcflags().longValue() ) );
 		ret.setReportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
-		ret.setSequencenumber( BigInteger.valueOf( bundle.getSequencenumber() ) );
+		ret.setSequencenumber( new DtnNumber( bundle.getSequencenumber() ) );
 		ret.setSource(new de.tubs.ibr.dtn.swig.EID(bundle.getSource().toString()));
 
-		ret.setTimestamp( BigInteger.valueOf( bundle.getTimestamp().getValue() ) );
+		ret.setTimestamp( new DtnNumber( bundle.getTimestamp().getValue() ) );
 		
 		return ret;
 	}
 	
 	private static Bundle toAndroid(PrimaryBlock block) {
-		Bundle ret = new Bundle( block.getProcflags().longValue() );
+		Bundle ret = new Bundle( block.getProcflags().get() );
 		
 		if (block.get(PrimaryBlock.FLAGS.DESTINATION_IS_SINGLETON)) {
 			ret.setDestination( new SingletonEndpoint(block.getDestination().getString()) );
@@ -633,16 +634,16 @@ public class ClientSession {
 		ret.setReportto( new SingletonEndpoint(block.getReportto().getString()) );
 		ret.setCustodian( new SingletonEndpoint(block.getCustodian().getString()) );
 		
-		ret.setLifetime( block.getLifetime().longValue() );
+		ret.setLifetime( block.getLifetime().get() );
 		
-		Timestamp ts = new Timestamp(block.getTimestamp().longValue());
+		Timestamp ts = new Timestamp(block.getTimestamp().get());
 		ret.setTimestamp( ts );
 		
-		ret.setSequencenumber( block.getSequencenumber().longValue() );
+		ret.setSequencenumber( block.getSequencenumber().get() );
 
 		if (block.get(PrimaryBlock.FLAGS.FRAGMENT)) {
-			ret.setAppDataLength( block.getAppdatalength().longValue() );
-			ret.setFragmentOffset( block.getFragmentoffset().longValue() );
+			ret.setAppDataLength( block.getAppdatalength().get() );
+			ret.setFragmentOffset( block.getFragmentoffset().get() );
 		}
 		
 		return ret;
@@ -652,17 +653,17 @@ public class ClientSession {
 		Block ret = new Block();
 		ret.type = Integer.valueOf(block.getType());
 		ret.length = block.getLength();
-		ret.procflags = block.getProcessingFlags().longValue();
+		ret.procflags = block.getProcessingFlags().get();
 		return ret;
 	}
 	
 	private static BundleID toAndroid(de.tubs.ibr.dtn.swig.BundleID swigId) {
 		// convert from swig BundleID to api BundleID
 		BundleID id = new BundleID();
-		id.setSequencenumber(swigId.getSequencenumber().longValue());
+		id.setSequencenumber(swigId.getSequencenumber().get());
 		id.setSource(new SingletonEndpoint(swigId.getSource().getString()));
 
-		long swigTime = swigId.getTimestamp().longValue();
+		long swigTime = swigId.getTimestamp().get();
 		Timestamp ts = new Timestamp(swigTime);
 		id.setTimestamp(ts);
 		
@@ -670,8 +671,8 @@ public class ClientSession {
 	}
 	
     private static Date toAndroid(de.tubs.ibr.dtn.swig.DTNTime time) {
-        long seconds = time.getTimestamp().getValue().longValue();
-        long nanoseconds = time.getNanoseconds().getValue().longValue();
+        long seconds = time.getTimestamp().get();
+        long nanoseconds = time.getNanoseconds().get();
         long milliseconds = nanoseconds / 1000000;
 
         // convert to UNIX time (starting at 1970)
