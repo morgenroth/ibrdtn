@@ -113,6 +113,10 @@ namespace dtn
 				return static_cast<T>(_value);
 			}
 
+			const E& get() const {
+				return _value;
+			}
+
 			const SDNV& operator=(const E &value) {
 				_value = value;
 				return (*this);
