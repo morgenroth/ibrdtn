@@ -86,7 +86,7 @@ namespace dtn
 			(*stream).put(_admfield);
 
 			// encode reason flag
-			char status = (reason << 1);
+			char status = static_cast<char>(reason << 1);
 
 			// encode custody acceptance
 			if (custody_accepted) status |= 0x01;

@@ -228,7 +228,7 @@ namespace dtn
 				case COMPRESSION_ZLIB:
 				{
 #ifdef HAVE_ZLIB
-					const Length CHUNK_SIZE = 16384;
+					const uInt CHUNK_SIZE = 16384;
 
 					int ret;
 					uInt have;

@@ -48,7 +48,7 @@ namespace dtn
 		std::ostream &operator<<(std::ostream &stream, const StreamDataSegment &seg)
 		{
 			char header = seg._flags;
-			header += ((seg._type & 0x0F) << 4);
+			header |= static_cast<char>((seg._type & 0x0F) << 4);
 
 			// write the header (1-byte)
 			stream.put(header);
