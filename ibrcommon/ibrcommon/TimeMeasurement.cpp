@@ -91,18 +91,20 @@ namespace ibrcommon
 
 	size_t TimeMeasurement::getMicroseconds() const
 	{
-		// calc difference
 		size_t timeElapsed = getNanoseconds();
 
-		// make it readable
-		float delay_m = (float)timeElapsed / 1000;
+		double delay_m = static_cast<double>(timeElapsed) / 1000.0;
 
 		return static_cast<size_t>(delay_m);
 	}
 
 	size_t TimeMeasurement::getSeconds() const
 	{
-		return getMilliseconds() / 1000;
+		size_t timeElapsed = getNanoseconds();
+
+		double delay_m = static_cast<double>(timeElapsed) / 1000000.0;
+
+		return static_cast<size_t>(delay_m);
 	}
 
 	std::ostream& TimeMeasurement::format(std::ostream &stream, const double value)
