@@ -48,7 +48,7 @@ namespace dtn
 		class LOWPANConvergenceLayer : public DiscoveryAgent, public ConvergenceLayer, public dtn::daemon::IndependentComponent, public ibrcommon::lowpanstream_callback, public EventReceiver, public DiscoveryServiceProvider
 		{
 		public:
-			LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, unsigned int mtu = 115); //MTU is actually 127...
+			LOWPANConvergenceLayer(const ibrcommon::vinterface &net, uint16_t panid, unsigned int mtu = 115); //MTU is actually 127...
 
 			virtual ~LOWPANConvergenceLayer();
 
@@ -99,7 +99,7 @@ namespace dtn
 
 			ibrcommon::vaddress _addr_broadcast;
 			ibrcommon::vinterface _net;
-			int _panid;
+			uint16_t _panid;
 			std::vector<char> _ipnd_buf;
 			int _ipnd_buf_len;
 

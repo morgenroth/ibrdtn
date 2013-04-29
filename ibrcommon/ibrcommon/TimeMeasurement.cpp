@@ -105,7 +105,7 @@ namespace ibrcommon
 		return getMilliseconds() / 1000;
 	}
 
-	std::ostream& TimeMeasurement::format(std::ostream &stream, const float value)
+	std::ostream& TimeMeasurement::format(std::ostream &stream, const double value)
 	{
 #ifdef __UCLIBC__
 		char buf[32];

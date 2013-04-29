@@ -332,7 +332,7 @@ namespace dtn
 				int index = 1;
 
 				// number of bytes stored
-				int storedBytes = 0;
+				dtn::data::Length storedBytes = 0;
 
 				for(dtn::data::Bundle::const_iterator it = bundle.begin() ;it != bundle.end(); ++it)
 				{

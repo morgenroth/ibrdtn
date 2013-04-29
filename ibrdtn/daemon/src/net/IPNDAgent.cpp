@@ -459,7 +459,7 @@ namespace dtn
 						std::list<DiscoveryService> ret_services;
 						dtn::data::EID ret_source;
 
-						int len = sock.recvfrom(data, 1500, 0, sender);
+						ssize_t len = sock.recvfrom(data, 1500, 0, sender);
 
 						if (len < 0) return;
 

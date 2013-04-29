@@ -58,7 +58,7 @@ namespace dtn
 			/**
 			 * Constructor
 			 */
-			SimpleBundleStorage(const ibrcommon::File &workdir, const dtn::data::Length &maxsize = 0, const dtn::data::Length &buffer_limit = 0);
+			SimpleBundleStorage(const ibrcommon::File &workdir, const dtn::data::Length &maxsize = 0, const unsigned int &buffer_limit = 0);
 
 			/**
 			 * Destructor

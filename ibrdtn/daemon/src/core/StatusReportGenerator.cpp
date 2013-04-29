@@ -53,10 +53,10 @@ namespace dtn
 			bundle.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 
 			// get the flags and set the status flag
-			report.status |= type;
+			report.status |= static_cast<char>(type);
 
 			// set the reason code
-			report.reasoncode |= reason;
+			report.reasoncode |= static_cast<char>(reason);
 
 			switch (type)
 			{

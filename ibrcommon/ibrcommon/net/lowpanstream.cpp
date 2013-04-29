@@ -89,7 +89,7 @@ namespace ibrcommon
 		in_buf_cond.signal();
 	}
 
-	void lowpanstream::queue(char *buf, int len)
+	void lowpanstream::queue(char *buf, size_t len)
 	{
 		ibrcommon::MutexLock l(in_buf_cond);
 

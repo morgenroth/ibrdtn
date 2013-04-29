@@ -126,7 +126,7 @@ namespace dtn
 				int bind(sqlite3_stmt *st, int offset) const throw ()
 				{
 					const std::string d = _entry.eid.getNode().getString() + "%";
-					sqlite3_bind_text(st, offset, d.c_str(), d.size(), SQLITE_TRANSIENT);
+					sqlite3_bind_text(st, offset, d.c_str(), static_cast<int>(d.size()), SQLITE_TRANSIENT);
 					return offset + 1;
 				}
 #endif

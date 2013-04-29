@@ -36,7 +36,7 @@ namespace dtn
 	{
 		const std::string LOWPANDatagramService::TAG = "LOWPANDatagramService";
 
-		LOWPANDatagramService::LOWPANDatagramService(const ibrcommon::vinterface &iface, int panid)
+		LOWPANDatagramService::LOWPANDatagramService(const ibrcommon::vinterface &iface, uint16_t panid)
 		 : _panid(panid), _iface(iface)
 		{
 			// set connection parameters
@@ -124,7 +124,7 @@ namespace dtn
 				else if (type == DatagramConvergenceLayer::HEADER_NACK) tmp[0] |= 0x00 << 4;
 
 				// seq.no: xx (2 bit)
-				tmp[0] |= (0x03 & seqno) << 2;
+				tmp[0] |= static_cast<char>((0x03 & seqno) << 2);
 
 				// flags: 10 = first, 00 = middle, 01 = last, 11 = both
 				if (flags & DatagramService::SEGMENT_FIRST) tmp[0] |= 0x2;
@@ -175,7 +175,7 @@ namespace dtn
 				else if (type == DatagramConvergenceLayer::HEADER_NACK) tmp[0] |= 0x00 << 4;
 
 				// seq.no: xx (2 bit)
-				tmp[0] |= (0x03 & seqno) << 2;
+				tmp[0] |= static_cast<char>((0x03 & seqno) << 2);
 
 				// flags: 10 = first, 00 = middle, 01 = last, 11 = both
 				if (flags & DatagramService::SEGMENT_FIRST) tmp[0] |= 0x2;

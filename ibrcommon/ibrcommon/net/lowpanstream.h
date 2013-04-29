@@ -58,7 +58,7 @@ namespace ibrcommon
 		 * @param buf Buffer with received data
 		 * @param len Length of the buffer
 		 */
-		void queue(char *buf, int len);
+		void queue(char *buf, size_t len);
 
 		void abort();
 
@@ -75,7 +75,7 @@ namespace ibrcommon
 
 		// Input buffer
 		std::vector<char> in_buf_;
-		int in_buf_len;
+		size_t in_buf_len;
 		bool in_buf_free;
 
 		// Output buffer

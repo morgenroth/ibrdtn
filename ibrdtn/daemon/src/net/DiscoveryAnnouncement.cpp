@@ -188,7 +188,7 @@ namespace dtn
 					std::string eid = announcement._canonical_eid.getString();
 					uint16_t eid_len = htons((uint16_t)eid.length());
 					unsigned int add_zeros = (4 - (eid.length() % 4)) % 4;
-					uint16_t length = htons((uint16_t)12 + eid.length() + add_zeros);
+					uint16_t length = htons(static_cast<uint16_t>(12 + eid.length() + add_zeros));
 
 
 					stream << (unsigned char)cl_type;

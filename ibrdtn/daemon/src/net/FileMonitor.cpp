@@ -82,7 +82,7 @@ namespace dtn
 #endif
 		}
 
-		int inotifysocket::read(char *data, size_t len) throw (ibrcommon::socket_exception)
+		ssize_t inotifysocket::read(char *data, size_t len) throw (ibrcommon::socket_exception)
 		{
 #ifdef HAVE_SYS_INOTIFY_H
 			return ::read(this->fd(), data, len);

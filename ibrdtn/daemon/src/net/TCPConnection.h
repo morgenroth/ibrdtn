@@ -218,7 +218,7 @@ namespace dtn
 			TCPConvergenceLayer &_callback;
 
 			/* flags to be used in this nodes StreamContactHeader */
-			char _flags;
+			dtn::data::Bitset<dtn::streams::StreamContactHeader::HEADER_BITS> _flags;
 
 			/* with this boolean the connection is marked as aborted */
 			bool _aborted;

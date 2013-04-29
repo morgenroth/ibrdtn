@@ -44,7 +44,7 @@ namespace dtn
 
 			void watch(const ibrcommon::File &path, int opts) throw (ibrcommon::socket_exception);
 
-			int read(char *data, size_t len) throw (ibrcommon::socket_exception);
+			ssize_t read(char *data, size_t len) throw (ibrcommon::socket_exception);
 
 		private:
 

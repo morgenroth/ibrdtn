@@ -281,15 +281,15 @@ namespace dtn
 					}
 				};
 
-				size_t bind(sqlite3_stmt *st, size_t offset) const throw ()
+				int bind(sqlite3_stmt *st, int offset) const throw ()
 				{
-					size_t o = offset;
+					int o = offset;
 
 					for (std::set<dtn::data::EID>::const_iterator iter = _endpoints.begin(); iter != _endpoints.end(); ++iter)
 					{
 						const std::string data = (*iter).getString();
 
-						sqlite3_bind_text(st, o, data.c_str(), data.size(), SQLITE_TRANSIENT);
+						sqlite3_bind_text(st, o, data.c_str(), static_cast<int>(data.size()), SQLITE_TRANSIENT);
 						o++;
 					}
 

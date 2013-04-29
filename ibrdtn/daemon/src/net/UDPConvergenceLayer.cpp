@@ -59,7 +59,7 @@ namespace dtn
 	{
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
-		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, unsigned int mtu)
+		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, dtn::data::Length mtu)
 		 : _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
 		{
 		}
@@ -172,7 +172,7 @@ namespace dtn
 				size_t header = dummy.getLength((const PrimaryBlock&)bundle);
 				header += 20; // two times SDNV through fragmentation
 
-				unsigned int size = dummy.getLength(bundle);
+				dtn::data::Length size = dummy.getLength(bundle);
 
 				if (size > m_maxmsgsize)
 				{

@@ -141,8 +141,8 @@ namespace dtn
 		{
 #ifdef WITH_TLS
 			/* if both nodes support TLS, activate it */
-			if ((_peer._flags & dtn::streams::StreamContactHeader::REQUEST_TLS)
-					&& (_flags & dtn::streams::StreamContactHeader::REQUEST_TLS))
+			if (_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_TLS)
+					&& _flags.getBit(dtn::streams::StreamContactHeader::REQUEST_TLS))
 			{
 				try{
 					ibrcommon::TLSStream &tls = dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream);
@@ -364,7 +364,7 @@ namespace dtn
 #endif
 
 			// create a new stream connection
-			int chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
+			dtn::data::Length chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
 
 			ibrcommon::RWLock l(_protocol_stream_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
 			if (_protocol_stream != NULL) delete _protocol_stream;
@@ -477,7 +477,7 @@ namespace dtn
 						if (!stream.good()) throw ibrcommon::IOException("stream went bad");
 
 						// enable/disable fragmentation support according to the contact header.
-						deserializer.setFragmentationSupport(_peer._flags & dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION);
+						deserializer.setFragmentationSupport(_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION));
 
 						// read the bundle (or the fragment if fragmentation is enabled)
 						deserializer >> bundle;
@@ -655,7 +655,7 @@ namespace dtn
 							m.stop();
 
 							// get throughput
-							double kbytes_per_second = (serializer.getLength(bundle) / m.getSeconds()) / 1024;
+							double kbytes_per_second = (static_cast<double>(serializer.getLength(bundle)) / static_cast<double>(m.getSeconds())) / 1024.0;
 
 							// print out throughput
 							IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 5) << "transfer finished after " << m << " with "
@@ -707,7 +707,7 @@ namespace dtn
 				{
 					const dtn::data::BundleID id = _sentqueue.getnpop();
 
-					if ((_lastack > 0) && (_peer._flags & dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION))
+					if ((_lastack > 0) && (_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION)))
 					{
 						// some data are already acknowledged
 						// store this information in the fragment manager
@@ -733,7 +733,7 @@ namespace dtn
 #ifdef WITH_TLS
 		void dtn::net::TCPConnection::enableTLS()
 		{
-			_flags |= dtn::streams::StreamContactHeader::REQUEST_TLS;
+			_flags.setBit(dtn::streams::StreamContactHeader::REQUEST_TLS, true);
 		}
 #endif
 

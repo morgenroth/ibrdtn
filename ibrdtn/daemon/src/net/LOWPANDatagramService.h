@@ -35,7 +35,7 @@ namespace dtn
 		public:
 			static const std::string TAG;
 
-			LOWPANDatagramService(const ibrcommon::vinterface &iface, int panid);
+			LOWPANDatagramService(const ibrcommon::vinterface &iface, uint16_t panid);
 			virtual ~LOWPANDatagramService();
 
 			/**
@@ -111,7 +111,7 @@ namespace dtn
 
 			ibrcommon::vaddress _addr_broadcast;
 
-			int _panid;
+			uint16_t _panid;
 			const ibrcommon::vinterface _iface;
 			DatagramService::Parameter _params;
 

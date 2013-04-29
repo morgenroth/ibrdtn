@@ -48,7 +48,7 @@ namespace dtn
 {
 	namespace net
 	{
-		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, unsigned int mtu)
+		LOWPANConvergenceLayer::LOWPANConvergenceLayer(const ibrcommon::vinterface &net, uint16_t panid, unsigned int mtu)
 			: DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
 			_net(net), _panid(panid), _ipnd_buf(BUFF_SIZE), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
 		{
@@ -237,7 +237,7 @@ namespace dtn
 			stringstream ss;
 			ss << announcement;
 
-			int len = ss.str().size();
+			dtn::data::Length len = ss.str().size();
 			if (len > 113)
 				IBRCOMMON_LOGGER(error) << "Discovery announcement to big (" << len << ")" << IBRCOMMON_LOGGER_ENDL;
 
@@ -266,7 +266,7 @@ namespace dtn
 						ibrcommon::vaddress peeraddr;
 
 						// Receive full frame from socket
-						int len = sock.recvfrom(&data[0], m_maxmsgsize, 0, peeraddr);
+						ssize_t len = sock.recvfrom(&data[0], static_cast<size_t>(m_maxmsgsize), 0, peeraddr);
 
 						IBRCOMMON_LOGGER_DEBUG(40) << "Received IEEE 802.15.4 frame from " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
 

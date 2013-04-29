@@ -135,8 +135,8 @@ namespace dtn
 				_stream >> peer;
 
 				// enable/disable ACK/NACK support
-				if (peer._flags & StreamContactHeader::REQUEST_ACKNOWLEDGMENTS) set(STREAM_ACK_SUPPORT);
-				if (peer._flags & StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS) set(STREAM_NACK_SUPPORT);
+				if (peer._flags.getBit(StreamContactHeader::REQUEST_ACKNOWLEDGMENTS)) set(STREAM_ACK_SUPPORT);
+				if (peer._flags.getBit(StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS)) set(STREAM_NACK_SUPPORT);
 
 				// set the incoming timer if set (> 0)
 				if (peer._keepalive > 0)

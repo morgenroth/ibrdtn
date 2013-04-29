@@ -544,7 +544,7 @@ namespace dtn
 								/* parse an optional offset, where to insert the block */
 								if (cmd.size() > 3)
 								{
-									dtn::data::Size offset;
+									int offset;
 									istringstream ss(cmd[3]);
 
 									ss >> offset;
@@ -653,7 +653,7 @@ namespace dtn
 						// get the selected block
 						dtn::data::Block &block = dynamic_cast<dtn::data::Block&>(**block_it);
 
-						int cmd_remaining = cmd.size() - (cmd_index + 1);
+						size_t cmd_remaining = cmd.size() - (cmd_index + 1);
 						if (cmd[cmd_index] == "get")
 						{
 							// lock the API stream

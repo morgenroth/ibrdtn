@@ -45,7 +45,7 @@ namespace ibrcommon
 
 		friend std::ostream &operator<<(std::ostream &stream, const TimeMeasurement &measurement);
 
-		static std::ostream& format(std::ostream &stream, const float value);
+		static std::ostream& format(std::ostream &stream, const double value);
 
 	private:
 		static ssize_t timespecDiff(const struct timespec *timeA_p, const struct timespec *timeB_p);

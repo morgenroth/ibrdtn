@@ -890,7 +890,7 @@ namespace dtn
 					}
 
 					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
-					dtn::storage::SimpleBundleStorage *sbs = new dtn::storage::SimpleBundleStorage(path, conf.getLimit("storage"), conf.getLimit("storage_buffer"));
+					dtn::storage::SimpleBundleStorage *sbs = new dtn::storage::SimpleBundleStorage(path, conf.getLimit("storage"), static_cast<unsigned int>(conf.getLimit("storage_buffer")));
 					_components[RUNLEVEL_STORAGE].push_back(sbs);
 					storage = sbs;
 				} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
@@ -1176,7 +1176,7 @@ namespace dtn
 						case dtn::daemon::Configuration::NetConfig::NETWORK_LOWPAN:
 						{
 							try {
-								_components[RUNLEVEL_NETWORK].push_back( new LOWPANConvergenceLayer( net.iface, net.port ) );
+								_components[RUNLEVEL_NETWORK].push_back( new LOWPANConvergenceLayer( net.iface, static_cast<uint16_t>(net.port) ) );
 								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "LOWPAN ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 							} catch (const ibrcommon::Exception &ex) {
 								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add LOWPAN ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -1188,7 +1188,7 @@ namespace dtn
 						case dtn::daemon::Configuration::NetConfig::NETWORK_DGRAM_LOWPAN:
 						{
 							try {
-								LOWPANDatagramService *lowpan_service = new LOWPANDatagramService( net.iface, net.port );
+								LOWPANDatagramService *lowpan_service = new LOWPANDatagramService( net.iface, static_cast<uint16_t>(net.port) );
 								_components[RUNLEVEL_NETWORK].push_back( new DatagramConvergenceLayer(lowpan_service) );
 								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Datagram ConvergenceLayer (LowPAN) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 							} catch (const ibrcommon::Exception &ex) {
