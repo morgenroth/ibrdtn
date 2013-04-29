@@ -162,7 +162,7 @@ namespace dtn
 					_stream << std::endl;
 
 					// put data here
-					size_t slength = 0;
+					dtn::data::Length slength = 0;
 					switch(_encoding)
 					{
 						case BASE64:
@@ -192,17 +192,17 @@ namespace dtn
 			return (*this);
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::Bundle&)
+		dtn::data::Length PlainSerializer::getLength(const dtn::data::Bundle&)
 		{
 			return 0;
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::PrimaryBlock&) const
+		dtn::data::Length PlainSerializer::getLength(const dtn::data::PrimaryBlock&) const
 		{
 			return 0;
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::Block&) const
+		dtn::data::Length PlainSerializer::getLength(const dtn::data::Block&) const
 		{
 			return 0;
 		}
@@ -319,7 +319,7 @@ namespace dtn
 		dtn::data::Deserializer& PlainDeserializer::operator>>(dtn::data::Block &obj)
 		{
 			std::string data;
-			size_t blocksize = 0;
+			dtn::data::Length blocksize = 0;
 			PlainSerializer::Encoding enc = PlainSerializer::BASE64;
 
 			// read until the first empty line appears
@@ -434,7 +434,7 @@ namespace dtn
 		dtn::data::Deserializer& PlainDeserializer::operator>>(ibrcommon::BLOB::iostream &obj)
 		{
 			std::string data;
-			size_t blocksize = 0;
+			dtn::data::Length blocksize = 0;
 			PlainSerializer::Encoding enc = PlainSerializer::BASE64;
 
 			// read until the first empty line appears
@@ -502,7 +502,7 @@ namespace dtn
 			return (*this);
 		}
 
-		void PlainSerializer::writeData(std::istream &stream, size_t len, PlainSerializer::Encoding enc)
+		void PlainSerializer::writeData(std::istream &stream, const dtn::data::Length &len, PlainSerializer::Encoding enc)
 		{
 			_stream << "Length: " << len << std::endl;
 			_stream << "Encoding: " << PlainSerializer::printEncoding(enc) << std::endl;
@@ -533,7 +533,7 @@ namespace dtn
 		void PlainDeserializer::readData(std::ostream &stream)
 		{
 			std::string data;
-			size_t len = 0;
+			dtn::data::Length len = 0;
 			PlainSerializer::Encoding enc = PlainSerializer::BASE64;
 
 			// read headers until an empty line

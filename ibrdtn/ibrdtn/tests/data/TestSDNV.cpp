@@ -60,7 +60,7 @@ void TestSDNV::testSerialize(void)
 		ss.clear();
 		ss >> dst;
 
-		CPPUNIT_ASSERT_EQUAL((size_t)ss.gcount(), src.getLength());
+		CPPUNIT_ASSERT_EQUAL(ss.gcount(), (std::streamsize)src.getLength());
 		CPPUNIT_ASSERT_EQUAL(src.get<size_t>(), dst.get<size_t>());
 	}
 }

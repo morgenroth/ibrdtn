@@ -178,7 +178,7 @@ namespace dtn
 			}
 		}
 
-		void Client::eventBundleAck(uint64_t ack) throw ()
+		void Client::eventBundleAck(const dtn::data::Length &ack) throw ()
 		{
 			lastack = ack;
 		}
@@ -206,7 +206,7 @@ namespace dtn
 			flush();
 		}
 
-		dtn::data::Bundle Client::getBundle(size_t timeout) throw (ConnectionException)
+		dtn::data::Bundle Client::getBundle(const dtn::data::Timeout &timeout) throw (ConnectionException)
 		{
 			try {
 				return _inqueue.getnpop(true, timeout * 1000);

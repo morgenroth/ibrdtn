@@ -484,7 +484,7 @@ namespace dtn
 			}
 		}
 
-		void BundleCore::validate(const dtn::data::Block&, const uint64_t size) const throw (dtn::data::Validator::RejectedException)
+		void BundleCore::validate(const dtn::data::Block&, const dtn::data::Number& size) const throw (dtn::data::Validator::RejectedException)
 		{
 			/*
 			 *
@@ -503,7 +503,7 @@ namespace dtn
 			}
 		}
 
-		void BundleCore::validate(const dtn::data::PrimaryBlock &bundle, const dtn::data::Block&, const uint64_t size) const throw (RejectedException)
+		void BundleCore::validate(const dtn::data::PrimaryBlock &bundle, const dtn::data::Block&, const dtn::data::Number& size) const throw (RejectedException)
 		{
 			/*
 			 *

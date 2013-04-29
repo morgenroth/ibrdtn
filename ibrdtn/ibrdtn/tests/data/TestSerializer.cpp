@@ -157,8 +157,8 @@ void TestSerializer::serializer_primaryblock_length(void)
 	dtn::data::DefaultSerializer ds(ss, dict);
 	ds << (dtn::data::PrimaryBlock&)b;
 
-	size_t written_len = ss.tellp();
-	size_t calc_len = ds.getLength((dtn::data::PrimaryBlock&)b);
+	std::stringstream::pos_type written_len = ss.tellp();
+	std::stringstream::pos_type calc_len = ds.getLength((dtn::data::PrimaryBlock&)b);
 
 	CPPUNIT_ASSERT_EQUAL(written_len, calc_len);
 }

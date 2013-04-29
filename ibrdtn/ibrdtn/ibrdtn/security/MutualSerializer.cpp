@@ -144,14 +144,14 @@ namespace dtn
 				(*this) << dtn::data::Number(obj.getLength());
 
 				// write the payload of the block
-				size_t slength = 0;
+				dtn::data::Length slength = 0;
 				obj.serialize(_stream, slength);
 			};
 
 			return (*this);
 		}
 
-		size_t MutualSerializer::getLength(const dtn::data::Bundle&)
+		dtn::data::Length MutualSerializer::getLength(const dtn::data::Bundle&)
 		{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(false);
@@ -159,7 +159,7 @@ namespace dtn
 			return 0;
 		}
 
-		size_t MutualSerializer::getLength(const dtn::data::PrimaryBlock &obj) const
+		dtn::data::Length MutualSerializer::getLength(const dtn::data::PrimaryBlock &obj) const
 		{
 			// predict the block length
 			// length in bytes
@@ -187,9 +187,9 @@ namespace dtn
 			return length;
 		}
 
-		size_t MutualSerializer::getLength(const dtn::data::Block &obj) const
+		dtn::data::Length MutualSerializer::getLength(const dtn::data::Block &obj) const
 		{
-			size_t len = 0;
+			dtn::data::Length len = 0;
 
 			len += sizeof(obj.getType());
 			// proc flags

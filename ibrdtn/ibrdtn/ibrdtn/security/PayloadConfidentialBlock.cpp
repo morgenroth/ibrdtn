@@ -75,10 +75,10 @@ namespace dtn
 			createSaltAndKey(salt, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes);
 
 			// count all PCBs
-			size_t pcbs_size = std::count(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
+			dtn::data::Size pcbs_size = std::count(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
 
 			// count all PIBs
-			size_t pibs_size = std::count(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
+			dtn::data::Size pibs_size = std::count(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
 
 			// encrypt PCBs and PIBs
 			dtn::data::Bundle::find_iterator find_pcb(bundle.begin(), PayloadConfidentialBlock::BLOCK_TYPE);

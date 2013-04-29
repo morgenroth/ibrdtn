@@ -28,7 +28,7 @@ namespace dtn
 {
 	namespace streams
 	{
-		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream, const size_t buffer_size)
+		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream, const dtn::data::Length &buffer_size)
 			: _buffer_size(buffer_size), _statebits(STREAM_SOB), _conn(conn), in_buf_(buffer_size), out_buf_(buffer_size), _stream(stream),
 			  _recv_size(0), _underflow_data_remain(0), _underflow_state(IDLE), _idle_timer(*this, 0)
 		{
@@ -227,7 +227,7 @@ namespace dtn
 		void StreamConnection::StreamBuffer::wait()
 		{
 			// TODO: get max time to wait out of the timeout values
-			size_t timeout = 0;
+			dtn::data::Timeout timeout = 0;
 
 			try {
 				IBRCOMMON_LOGGER_DEBUG(15) << "waitCompleted(): wait for completion of transmission, " << _segments.size() << " ACKs left" << IBRCOMMON_LOGGER_ENDL;
@@ -352,7 +352,7 @@ namespace dtn
 			return ret;
 		}
 
-		void StreamConnection::StreamBuffer::skipData(uint64_t &size)
+		void StreamConnection::StreamBuffer::skipData(dtn::data::Length &size)
 		{
 			// a temporary buffer
 			std::vector<char> tmpbuf(_buffer_size);
@@ -361,7 +361,7 @@ namespace dtn
 				//  and read until the next segment
 				while (size > 0 && _stream.good())
 				{
-					uint64_t readsize = _buffer_size;
+					dtn::data::Length readsize = _buffer_size;
 					if (size < _buffer_size) readsize = size;
 
 					// to reject a bundle read all remaining data of this segment
@@ -596,7 +596,7 @@ namespace dtn
 				}
 
 				// currently transferring data
-				uint64_t readsize = _buffer_size;
+				dtn::data::Length readsize = _buffer_size;
 				if (_underflow_data_remain < _buffer_size) readsize = _underflow_data_remain;
 
 				try {
@@ -653,7 +653,7 @@ namespace dtn
 			throw ibrcommon::Timer::StopTimerException();
 		}
 
-		void StreamConnection::StreamBuffer::enableIdleTimeout(size_t seconds)
+		void StreamConnection::StreamBuffer::enableIdleTimeout(const dtn::data::Timeout &seconds)
 		{
 			_idle_timer.set(seconds);
 			_idle_timer.start();

@@ -22,6 +22,7 @@
 #ifndef CLIENT_H_
 #define CLIENT_H_
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/streams/StreamConnection.h"
 #include <ibrcommon/net/socketstream.h>
@@ -190,7 +191,7 @@ namespace dtn
 			 * the last ACK'd bundle size in the lastack variable.
 			 * @param ack ACK'd bundle size
 			 */
-			virtual void eventBundleAck(uint64_t ack) throw ();
+			virtual void eventBundleAck(const dtn::data::Length &ack) throw ();
 
 			/**
 			 * The shutdown event callback method can overloaded to handle shutdown
@@ -241,10 +242,10 @@ namespace dtn
 			 * @param timeout
 			 * @return
 			 */
-			dtn::data::Bundle getBundle(size_t timeout = 0) throw (ConnectionException);
+			dtn::data::Bundle getBundle(const dtn::data::Timeout &timeout = 0) throw (ConnectionException);
 
 			// public variable
-			size_t lastack;
+			dtn::data::Length lastack;
 
 		protected:
 			/**

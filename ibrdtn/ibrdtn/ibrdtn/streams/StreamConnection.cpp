@@ -33,7 +33,7 @@ namespace dtn
 {
 	namespace streams
 	{
-		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream, const size_t buffer_size)
+		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream, const dtn::data::Length &buffer_size)
 		 : std::iostream(&_buf), _callback(cb), _buf(*this, stream, buffer_size), _shutdown_reason(CONNECTION_SHUTDOWN_NOTSET)
 		{
 		}
@@ -42,7 +42,7 @@ namespace dtn
 		{
 		}
 
-		void StreamConnection::handshake(const dtn::data::EID &eid, const size_t timeout, const char flags)
+		void StreamConnection::handshake(const dtn::data::EID &eid, const dtn::data::Timeout &timeout, const char flags)
 		{
 			// create a new header
 			dtn::streams::StreamContactHeader header(eid);
@@ -132,7 +132,7 @@ namespace dtn
 			_callback.eventShutdown(csc);
 		}
 
-		void StreamConnection::eventBundleAck(Length ack)
+		void StreamConnection::eventBundleAck(const dtn::data::Length &ack)
 		{
 			_callback.eventBundleAck(ack);
 		}
@@ -155,7 +155,7 @@ namespace dtn
 			_callback.eventTimeout();
 		}
 
-		void StreamConnection::enableIdleTimeout(size_t seconds)
+		void StreamConnection::enableIdleTimeout(const dtn::data::Timeout &seconds)
 		{
 			_buf.enableIdleTimeout(seconds);
 		}

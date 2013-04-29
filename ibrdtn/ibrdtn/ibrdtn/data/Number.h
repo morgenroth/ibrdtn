@@ -32,6 +32,7 @@ namespace dtn
 	{
 		typedef size_t Length;
 		typedef size_t Size;
+		typedef size_t Timeout;
 
 		typedef unsigned char block_t;
 		typedef dtn::data::SDNV<Size> Number;

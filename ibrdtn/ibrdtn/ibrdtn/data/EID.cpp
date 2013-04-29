@@ -260,18 +260,18 @@ namespace dtn
 
 		EID::Compressed EID::getCompressed() const
 		{
-			uint64_t node = 0;
-			uint64_t app = 0;
+			dtn::data::Number node = 0;
+			dtn::data::Number app = 0;
 
 			if (isCompressable())
 			{
 				std::stringstream ss_node(getHost());
-				ss_node >> node;
+				node.read(ss_node);
 
 				if (hasApplication())
 				{
 					std::stringstream ss_app(getApplication());
-					ss_app >> app;
+					app.read(ss_app);
 				}
 			}
 

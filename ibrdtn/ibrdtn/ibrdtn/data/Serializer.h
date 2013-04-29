@@ -81,8 +81,8 @@ namespace dtn
 			virtual ~Validator() {};
 
 			virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException) = 0;
-			virtual void validate(const dtn::data::Block&, const Length) const throw (RejectedException) = 0;
-			virtual void validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const Length) const throw (RejectedException) = 0;
+			virtual void validate(const dtn::data::Block&, const dtn::data::Number&) const throw (RejectedException) = 0;
+			virtual void validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const dtn::data::Number&) const throw (RejectedException) = 0;
 			virtual void validate(const dtn::data::Bundle&) const throw (RejectedException) = 0;
 		};
 
@@ -93,8 +93,8 @@ namespace dtn
 			virtual ~AcceptValidator();
 
 			virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException);
-			virtual void validate(const dtn::data::Block&, const Length) const throw (RejectedException);
-			virtual void validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const Length) const throw (RejectedException);
+			virtual void validate(const dtn::data::Block&, const dtn::data::Number&) const throw (RejectedException);
+			virtual void validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const dtn::data::Number&) const throw (RejectedException);
 			virtual void validate(const dtn::data::Bundle&) const throw (RejectedException);
 		};
 

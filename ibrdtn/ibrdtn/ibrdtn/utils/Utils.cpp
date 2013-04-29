@@ -34,7 +34,7 @@ namespace dtn
 		void Utils::rtrim(std::string &str)
 		{
 			// trim trailing spaces
-			size_t endpos = str.find_last_not_of(" \t");
+			std::string::size_type endpos = str.find_last_not_of(" \t");
 			if( string::npos != endpos )
 			{
 				str = str.substr( 0, endpos+1 );
@@ -44,7 +44,7 @@ namespace dtn
 		void Utils::ltrim(std::string &str)
 		{
 			// trim leading spaces
-			size_t startpos = str.find_first_not_of(" \t");
+			std::string::size_type startpos = str.find_first_not_of(" \t");
 			if( string::npos != startpos )
 			{
 				str = str.substr( startpos );
@@ -57,13 +57,13 @@ namespace dtn
 			rtrim(str);
 		}
 
-		vector<string> Utils::tokenize(string token, string data, size_t max)
+		std::vector<std::string> Utils::tokenize(const std::string &token, const std::string &data, const dtn::data::Size &max)
 		{
-			vector<string> l;
-			string value;
+			std::vector<std::string> l;
+			std::string value;
 
 			// Skip delimiters at beginning.
-			string::size_type pos = data.find_first_not_of(token, 0);
+			std::string::size_type pos = data.find_first_not_of(token, 0);
 
 			while (pos != string::npos)
 			{

@@ -38,7 +38,7 @@ namespace dtn
 		{
 		}
 
-		const std::string Random::gen_chars(size_t size) const
+		const std::string Random::gen_chars(const dtn::data::Length &size) const
 		{
 			static const char text[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 			std::vector<char> dst(size);

@@ -44,7 +44,7 @@ namespace dtn
 
 				virtual void eventBundleRefused() throw ();
 				virtual void eventBundleForwarded() throw ();
-				virtual void eventBundleAck(uint64_t ack) throw ();
+				virtual void eventBundleAck(const dtn::data::Length &ack) throw ();
 
 				const dtn::data::EID& getPeer() const;
 

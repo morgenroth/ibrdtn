@@ -274,7 +274,7 @@ namespace dtn
 			}
 		}
 
-		void TCPConnection::eventBundleAck(uint64_t ack) throw ()
+		void TCPConnection::eventBundleAck(const dtn::data::Length &ack) throw ()
 		{
 			_lastack = ack;
 		}

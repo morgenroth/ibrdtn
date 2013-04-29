@@ -80,21 +80,21 @@ namespace dtn
 				/**
 				Not implemented. This is only required by the interface.
 				*/
-				virtual size_t getLength(const dtn::data::Bundle &obj);
+				virtual dtn::data::Length getLength(const dtn::data::Bundle &obj);
 				
 				/**
 				Returns the length of the primary block in mutable canonical form.
 				@param obj the primary block, of which the length shall be calculated
 				@return the length of the primary block
 				*/
-				virtual size_t getLength(const dtn::data::PrimaryBlock &obj) const;
+				virtual dtn::data::Length getLength(const dtn::data::PrimaryBlock &obj) const;
 				
 				/**
 				Returns the length of the block in mutable canonical form.
 				@param obj the block, of which the length shall be calculated
 				@return the length of the block
 				*/
-				virtual size_t getLength(const dtn::data::Block &obj) const;
+				virtual dtn::data::Length getLength(const dtn::data::Block &obj) const;
 
 				/**
 				Writes a uint32_t into stream in network byte order.

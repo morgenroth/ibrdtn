@@ -776,10 +776,10 @@ namespace dtn
 			_stream >> block_size;
 
 			// validate this block
-			_validator.validate(obj, block_size.get<Length>());
+			_validator.validate(obj, block_size);
 
 			// read the payload of the block
-			obj.deserialize(_stream, block_size.get<Length>());
+			obj.deserialize(_stream, block_size.get<dtn::data::Length>());
 
 			return (*this);
 		}
@@ -814,7 +814,7 @@ namespace dtn
 			_stream >> block_size;
 
 			// validate this block
-			_validator.validate(bundle, obj, block_size.get<Length>());
+			_validator.validate(bundle, obj, block_size);
 
 			// read the payload of the block
 			obj.deserialize(_stream, block_size.get<Length>());
@@ -834,12 +834,12 @@ namespace dtn
 		{
 		}
 
-		void AcceptValidator::validate(const dtn::data::Block&, const uint64_t) const throw (RejectedException)
+		void AcceptValidator::validate(const dtn::data::Block&, const dtn::data::Number&) const throw (RejectedException)
 		{
 
 		}
 
-		void AcceptValidator::validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const uint64_t) const throw (RejectedException)
+		void AcceptValidator::validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const dtn::data::Number&) const throw (RejectedException)
 		{
 
 		}
@@ -964,7 +964,7 @@ namespace dtn
 			_stream >> block_size;
 
 			// validate this block
-			_validator.validate(obj, block_size.get<Length>());
+			_validator.validate(obj, block_size);
 
 			// read the payload of the block
 			obj.deserialize(_stream, block_size.get<Length>());
