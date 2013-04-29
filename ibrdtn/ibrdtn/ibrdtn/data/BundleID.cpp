@@ -91,11 +91,11 @@ namespace dtn
 		std::string BundleID::toString() const
 		{
 			stringstream ss;
-			ss << "[" << timestamp << "." << sequencenumber;
+			ss << "[" << timestamp.toString() << "." << sequencenumber.toString();
 
 			if (fragment)
 			{
-				ss << "." << offset;
+				ss << "." << offset.toString();
 			}
 
 			ss << "] " << source.getString();

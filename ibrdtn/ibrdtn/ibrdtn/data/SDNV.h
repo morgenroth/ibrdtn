@@ -21,6 +21,7 @@
  */
 
 #include <ibrcommon/Exceptions.h>
+#include <ibrdtn/data/Exceptions.h>
 
 #include <sstream>
 #include <sys/types.h>
@@ -55,10 +56,10 @@ namespace dtn
 {
 	namespace data
 	{
-		class ValueOutOfRangeException : public ibrcommon::Exception
+		class ValueOutOfRangeException : public dtn::InvalidDataException
 		{
 		public:
-			ValueOutOfRangeException(const std::string &what = "The value is out of range.") throw() : ibrcommon::Exception(what)
+			ValueOutOfRangeException(const std::string &what = "The value is out of range.") throw() : dtn::InvalidDataException(what)
 			{
 			};
 		};

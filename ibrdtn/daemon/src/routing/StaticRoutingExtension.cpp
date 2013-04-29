@@ -581,7 +581,7 @@ namespace dtn
 		std::string StaticRoutingExtension::ExpireTask::toString()
 		{
 			std::stringstream ss;
-			ss << "ExpireTask: " << timestamp;
+			ss << "ExpireTask: " << timestamp.toString();
 			return ss.str();
 		}
 	}

@@ -514,7 +514,7 @@ namespace dtn
 			}
 
 			// get the write position
-			if (size > stream.tellp())
+			if (static_cast<std::streamoff>(size) > stream.tellp())
 			{
 				std::stringstream ss; ss << "Not all data were written [" << stream.tellp() << " of " << size << " bytes]";
 				throw dtn::SerializationFailedException(ss.str());

@@ -120,14 +120,14 @@ namespace dtn
 					break;
 			}
 
-			ss << "[ttl: " << getLifetime() << ",";
+			ss << "[ttl: " << getLifetime().toString() << ",";
 
 			if (getType() == NodeHandshake::HANDSHAKE_REQUEST)
 			{
 				for (request_set::const_iterator iter = _requests.begin(); iter != _requests.end(); ++iter)
 				{
 					const dtn::data::Number &item = (*iter);
-					ss << " " << item;
+					ss << " " << item.toString();
 				}
 			}
 			else if (getType() == NodeHandshake::HANDSHAKE_RESPONSE)
@@ -135,7 +135,7 @@ namespace dtn
 				for (std::list<NodeHandshakeItem*>::const_iterator iter = _items.begin(); iter != _items.end(); ++iter)
 				{
 					const NodeHandshakeItem &item (**iter);
-					ss << " " << item.getIdentifier();
+					ss << " " << item.getIdentifier().toString();
 				}
 			}
 

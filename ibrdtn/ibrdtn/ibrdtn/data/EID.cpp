@@ -57,7 +57,7 @@ namespace dtn
 
 				// jump to default eid if the format is wrong
 				if (delimiter == std::string::npos)
-					throw ibrcommon::Exception("wrong eid format");
+					throw dtn::InvalidDataException("wrong eid format: " + value);
 
 				// the scheme is everything before the delimiter
 				_scheme = value.substr(0, delimiter);
@@ -140,7 +140,7 @@ namespace dtn
 			return _scheme + ":" + _ssp;
 		}
 
-		std::string EID::getApplication() const throw (ibrcommon::Exception)
+		std::string EID::getApplication() const throw (dtn::InvalidDataException)
 		{
 			size_t first_char = 0;
 			char delimiter = '.';
@@ -155,7 +155,7 @@ namespace dtn
 
 				// only "/" ? thats bad!
 				if (first_char == std::string::npos)
-					throw ibrcommon::Exception("wrong eid format");
+					throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
 			}
 
 			// start of application part
@@ -169,7 +169,7 @@ namespace dtn
 			return _ssp.substr(application_start + 1, _ssp.length() - application_start - 1);
 		}
 
-		std::string EID::getHost() const throw (ibrcommon::Exception)
+		std::string EID::getHost() const throw (dtn::InvalidDataException)
 		{
 			size_t first_char = 0;
 			char delimiter = '.';
@@ -184,7 +184,7 @@ namespace dtn
 
 				// only "/" ? thats bad!
 				if (first_char == std::string::npos)
-					throw ibrcommon::Exception("wrong eid format");
+					throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
 			}
 
 			// start of application part
@@ -208,7 +208,7 @@ namespace dtn
 			return _ssp;
 		}
 
-		EID EID::getNode() const throw (ibrcommon::Exception)
+		EID EID::getNode() const throw (dtn::InvalidDataException)
 		{
 			return _scheme + ":" + getHost();
 		}
@@ -226,7 +226,7 @@ namespace dtn
 
 			// only "/" ? thats bad!
 			if (first_char == std::string::npos)
-				throw ibrcommon::Exception("wrong eid format");
+				throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
 
 			// start of application part
 			size_t application_start = _ssp.find_first_of("/", first_char);
