@@ -967,7 +967,7 @@ namespace dtn
 				_stream << b.source.getString() << " ";
 
 				// format the bundle ID and write it to the stream
-				_stream << report.bundleid.timestamp << "." << report.bundleid.sequencenumber;
+				_stream << report.bundleid.timestamp.toString() << "." << report.bundleid.sequencenumber.toString();
 
 				if (report.refsFragment()) {
 					_stream << "." << report.bundleid.offset.toString() << ":" << report.fragment_length.toString() << " ";
@@ -1024,10 +1024,10 @@ namespace dtn
 				_stream << b.source.getString() << " ";
 
 				// format the bundle ID and write it to the stream
-				_stream << custody.bundleid.timestamp << "." << custody.bundleid.sequencenumber;
+				_stream << custody.bundleid.timestamp.toString() << "." << custody.bundleid.sequencenumber.toString();
 
 				if (custody.refsFragment()) {
-					_stream << "." << custody.bundleid.offset << ":" << custody.fragment_length.toString() << " ";
+					_stream << "." << custody.bundleid.offset.toString() << ":" << custody.fragment_length.toString() << " ";
 				} else {
 					_stream << " ";
 				}
@@ -1055,11 +1055,11 @@ namespace dtn
 
 		void ExtendedApiHandler::sayBundleID(ostream &stream, const dtn::data::BundleID &id)
 		{
-			stream << id.timestamp << " " << id.sequencenumber << " ";
+			stream << id.timestamp.toString() << " " << id.sequencenumber.toString() << " ";
 
 			if (id.fragment)
 			{
-				stream << id.offset << " ";
+				stream << id.offset.toString() << " ";
 			}
 
 			stream << id.source.getString();

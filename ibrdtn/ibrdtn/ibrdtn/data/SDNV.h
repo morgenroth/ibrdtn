@@ -384,15 +384,13 @@ namespace dtn
 				stream >> _value;
 			}
 
-		private:
-			friend
-			std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV<E> &obj)
+			void encode(std::ostream &stream) const
 			{
 				unsigned char buffer[10];
 				unsigned char *bp = &buffer[0];
-				uint64_t val = obj._value;
+				uint64_t val = _value;
 
-				const size_t val_len = obj.getLength();
+				const size_t val_len = getLength();
 
 				if (!(val_len > 0)) throw ValueOutOfRangeException("ERROR(SDNV): !(val_len > 0)");
 				if (!(val_len <= SDNV::MAX_LENGTH)) throw ValueOutOfRangeException("ERROR(SDNV): !(val_len <= MAX_LENGTH)");
@@ -411,12 +409,9 @@ namespace dtn
 
 				// write encoded value to the stream
 				stream.write((const char*)&buffer[0], val_len);
-
-				return stream;
 			}
 
-			friend
-			std::istream &operator>>(std::istream &stream, dtn::data::SDNV<E> &obj)
+			void decode(std::istream &stream)
 			{
 				size_t val_len = 0;
 				unsigned char bp = 0;
@@ -424,11 +419,11 @@ namespace dtn
 
 				int carry = 0;
 
-				obj._value = 0;
+				_value = 0;
 				do {
 					stream.get((char&)bp);
 
-					obj._value = (obj._value << 7) | (bp & 0x7f);
+					_value = (_value << 7) | (bp & 0x7f);
 					++val_len;
 
 					if ((bp & (1 << 7)) == 0)
@@ -445,7 +440,20 @@ namespace dtn
 
 				if ((val_len > SDNV::MAX_LENGTH) || ((val_len == SDNV::MAX_LENGTH) && (start != 0x81)))
 					throw ValueOutOfRangeException("ERROR(SDNV): overflow value in sdnv");
+			}
 
+		private:
+			friend
+			std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV<E> &obj)
+			{
+				obj.encode(stream);
+				return stream;
+			}
+
+			friend
+			std::istream &operator>>(std::istream &stream, dtn::data::SDNV<E> &obj)
+			{
+				obj.decode(stream);
 				return stream;
 			}
 

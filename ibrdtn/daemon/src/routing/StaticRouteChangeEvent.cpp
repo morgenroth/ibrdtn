@@ -70,7 +70,7 @@ namespace dtn
 				}
 
 				ss << " => " << nexthop.getString();
-				if (timeout > 0) ss << "; timeout = " << timeout;
+				if (timeout > 0) ss << "; timeout = " << timeout.toString();
 				break;
 			case ROUTE_DEL:
 				ss << "del route ";

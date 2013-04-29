@@ -47,7 +47,8 @@ namespace dtn
 				ibrcommon::BLOB::iostream stream = payload.getBLOB().iostream();
 
 				// read the number of bundles
-				dtn::data::Number nob; (*stream) >> nob;
+				dtn::data::Number nob;
+				(*stream) >> nob;
 
 				// read all offsets
 				for (size_t i = 0; (nob - 1) > i; ++i)

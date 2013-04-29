@@ -591,13 +591,13 @@ namespace dtn
 			for (std::set<Node::Attribute>::const_iterator iter = node._attr_list.begin(); iter != node._attr_list.end(); ++iter)
 			{
 				const Node::Attribute &attr = (*iter);
-				stream << attr << "#expire=" << attr.expire << "; ";
+				stream << attr << "#expire=" << attr.expire.toString() << "; ";
 			}
 
 			for (std::set<Node::URI>::const_iterator iter = node._uri_list.begin(); iter != node._uri_list.end(); ++iter)
 			{
 				const Node::URI &u = (*iter);
-				stream << u << "#expire=" << u.expire << "; ";
+				stream << u << "#expire=" << u.expire.toString() << "; ";
 			}
 			stream << " ]";
 

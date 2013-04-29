@@ -67,8 +67,7 @@ namespace dtn
 		std::string TimeEvent::getMessage() const
 		{
 			if (getAction() == TIME_SECOND_TICK) {
-				std::stringstream ss; ss << getTimestamp();
-				return "new timestamp is " + ss.str();
+				return "new timestamp is " + getTimestamp().toString();
 			}
 			return "unknown";
 		}

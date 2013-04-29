@@ -134,16 +134,22 @@ namespace dtn
 			ss.str((const std::string&)bs);
 			ss >> obj.origin_rating;
 
-			stream >> sdnv; obj.origin_timestamp.tv_sec = sdnv.get<__time_t>();
-			stream >> sdnv; obj.origin_timestamp.tv_usec = sdnv.get<__suseconds_t>();
+			stream >> sdnv;
+			obj.origin_timestamp.tv_sec = sdnv.get<time_t>();
+
+			stream >> sdnv;
+			obj.origin_timestamp.tv_usec = sdnv.get<suseconds_t>();
 
 			stream >> bs;
 			ss.clear();
 			ss.str((const std::string&)bs);
 			ss >> obj.peer_rating;
 
-			stream >> sdnv; obj.peer_timestamp.tv_sec = sdnv.get<__time_t>();
-			stream >> sdnv; obj.peer_timestamp.tv_usec = sdnv.get<__suseconds_t>();
+			stream >> sdnv;
+			obj.peer_timestamp.tv_sec = sdnv.get<time_t>();
+
+			stream >> sdnv;
+			obj.peer_timestamp.tv_usec = sdnv.get<suseconds_t>();
 
 			return stream;
 		}
@@ -326,7 +332,7 @@ namespace dtn
 			if (!_announce_rating) throw NoServiceHereException("Discovery of time sync mechanisms disabled.");
 
 			std::stringstream ss;
-			ss << "version=" << PROTO_VERSION << ";quality=" << dtn::utils::Clock::getRating() << ";timestamp=" << dtn::utils::Clock::getTime() << ";";
+			ss << "version=" << PROTO_VERSION << ";quality=" << dtn::utils::Clock::getRating() << ";timestamp=" << dtn::utils::Clock::getTime().toString() << ";";
 			announcement.addService( DiscoveryService("dtntp", ss.str()));
 		}
 
@@ -348,8 +354,7 @@ namespace dtn
 
 				if (p[0].compare("timestamp") == 0)
 				{
-					std::stringstream ss(p[1]);
-					ss >> timestamp;
+					timestamp.fromString(p[1]);
 				}
 
 				if (p[0].compare("quality") == 0)

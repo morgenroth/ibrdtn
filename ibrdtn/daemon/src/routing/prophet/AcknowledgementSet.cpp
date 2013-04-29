@@ -83,12 +83,13 @@ namespace dtn
 
 		std::ostream& operator<<(std::ostream& stream, const AcknowledgementSet& ack_set)
 		{
-			stream << dtn::data::Number(ack_set._bundles.size());
+			dtn::data::Number ackset_size(ack_set._bundles.size());
+			ackset_size.encode(stream);
 			for (dtn::data::BundleList::const_iterator it = ack_set._bundles.begin(); it != ack_set._bundles.end(); ++it)
 			{
 				const dtn::data::MetaBundle &ack = (*it);
 				stream << (const dtn::data::BundleID&)ack;
-				stream << ack.expiretime;
+				ack.expiretime.encode(stream);
 			}
 
 			return stream;
@@ -100,13 +101,13 @@ namespace dtn
 			ack_set._bundles.clear();
 
 			dtn::data::Number size;
-			stream >> size;
+			size.decode(stream);
 
 			for(size_t i = 0; size > i; ++i)
 			{
 				dtn::data::MetaBundle ack;
 				stream >> (dtn::data::BundleID&)ack;
-				stream >> ack.expiretime;
+				ack.expiretime.decode(stream);
 				ack.lifetime = dtn::utils::Clock::getLifetime(ack, ack.expiretime);
 
 				ack_set.add(ack);

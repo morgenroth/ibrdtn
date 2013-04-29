@@ -165,8 +165,7 @@ namespace dtn
 			else if (hs._type == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
 				// then the lifetime of this data
-				dtn::data::Number lifetime(hs._lifetime);
-				stream << lifetime;
+				stream << hs._lifetime;
 
 				// then the number of request items
 				dtn::data::Number number_of_items(hs._items.size());

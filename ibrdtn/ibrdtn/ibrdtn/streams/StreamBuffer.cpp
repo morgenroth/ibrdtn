@@ -488,7 +488,7 @@ namespace dtn
 
 						case StreamDataSegment::MSG_ACK_SEGMENT:
 						{
-							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_ACK_SEGMENT received, size: " << seg._value << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_ACK_SEGMENT received, size: " << seg._value.toString() << IBRCOMMON_LOGGER_ENDL;
 
 							// remove the segment in the queue
 							if (get(STREAM_ACK_SUPPORT))
@@ -496,7 +496,7 @@ namespace dtn
 								ibrcommon::Queue<StreamDataSegment>::Locked q = _segments.exclusive();
 								if (q.empty())
 								{
-									IBRCOMMON_LOGGER(error) << "got an unexpected ACK with size of " << seg._value << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER(error) << "got an unexpected ACK with size of " << seg._value.toString() << IBRCOMMON_LOGGER_ENDL;
 								}
 								else
 								{
@@ -518,12 +518,12 @@ namespace dtn
 						}
 
 						case StreamDataSegment::MSG_KEEPALIVE:
-							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_KEEPALIVE received, size: " << seg._value << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_KEEPALIVE received, size: " << seg._value.toString() << IBRCOMMON_LOGGER_ENDL;
 							break;
 
 						case StreamDataSegment::MSG_REFUSE_BUNDLE:
 						{
-							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_REFUSE_BUNDLE received, flags: " << seg._flags << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_REFUSE_BUNDLE received, flags: " << (int)seg._flags << IBRCOMMON_LOGGER_ENDL;
 
 							// TODO: Test bundle rejection!
 

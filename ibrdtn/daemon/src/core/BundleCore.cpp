@@ -498,7 +498,7 @@ namespace dtn
 			// check for the size of the block
 			if ((BundleCore::blocksizelimit > 0) && (size > BundleCore::blocksizelimit))
 			{
-				IBRCOMMON_LOGGER(warning) << "bundle rejected: block size of " << size << " is too big" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(warning) << "bundle rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("block size is too big");
 			}
 		}
@@ -517,7 +517,7 @@ namespace dtn
 			// check for the size of the block
 			if ((BundleCore::blocksizelimit > 0) && (size > BundleCore::blocksizelimit))
 			{
-				IBRCOMMON_LOGGER(warning) << "bundle " << bundle.toString() << " rejected: block size of " << size << " is too big" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(warning) << "bundle " << bundle.toString() << " rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("block size is too big");
 			}
 		}

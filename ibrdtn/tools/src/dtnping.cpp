@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
 								payload_size = blob.iostream().size();
 							}
 
-							std::cout << payload_size << " bytes from " << response.source.getString() << ": seq=" << reply_seq << " ttl=" << response.lifetime << " time=" << tm << std::endl;
+							std::cout << payload_size << " bytes from " << response.source.getString() << ": seq=" << reply_seq << " ttl=" << response.lifetime.toString() << " time=" << tm << std::endl;
 							_received++;
 						} catch (const dtn::api::ConnectionTimeoutException &e) {
 							if (stop_after_first_fail)
