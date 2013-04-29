@@ -655,7 +655,10 @@ namespace dtn
 							m.stop();
 
 							// get throughput
-							double kbytes_per_second = (static_cast<double>(serializer.getLength(bundle)) / static_cast<double>(m.getSeconds())) / 1024.0;
+							double duration = static_cast<double>(m.getNanoseconds());
+							double data_len = static_cast<double>(serializer.getLength(bundle));
+
+							double kbytes_per_second = (data_len / 1024.0) / (duration / 1000000.0);
 
 							// print out throughput
 							IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 5) << "transfer finished after " << m << " with "
