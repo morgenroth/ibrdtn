@@ -37,6 +37,7 @@ namespace dtn
 		{
 			if (data == "raw") return PlainSerializer::RAW;
 			if (data == "base64") return PlainSerializer::BASE64;
+			if (data == "skip") return PlainSerializer::SKIP_PAYLOAD;
 			return PlainSerializer::INVALID;
 		}
 
@@ -47,6 +48,8 @@ namespace dtn
 				return "raw";
 			case PlainSerializer::BASE64:
 				return "base64";
+			case PlainSerializer::SKIP_PAYLOAD:
+				return "skip";
 			default:
 				return "invalid";
 			}
