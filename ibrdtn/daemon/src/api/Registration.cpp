@@ -102,7 +102,7 @@ namespace dtn
 		Registration::Registration()
 		 : _handle(alloc_handle()),
 		   _default_eid(core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + _handle) ),
-		   _persistent(false), _detached(false), _expiry(0)
+		   _persistent(false), _detached(false), _expiry(0), _filter_fragments(true)
 		{
 		}
 
@@ -210,6 +210,8 @@ namespace dtn
 
 		void Registration::underflow()
 		{
+			bool fragment_conf = dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation();
+
 			// expire outdated bundles in the list
 			_queue.expire(dtn::utils::Clock::getTime());
 
@@ -223,8 +225,8 @@ namespace dtn
 #endif
 			{
 			public:
-				BundleFilter(const std::set<dtn::data::EID> endpoints, const dtn::data::BundleSet &bundles, bool loopback)
-				 : _endpoints(endpoints), _bundles(bundles), _loopback(loopback)
+				BundleFilter(const std::set<dtn::data::EID> endpoints, const dtn::data::BundleSet &bundles, bool loopback, bool fragment_filter)
+				 : _endpoints(endpoints), _bundles(bundles), _loopback(loopback), _fragment_filter(fragment_filter)
 				{};
 
 				virtual ~BundleFilter() {};
@@ -233,6 +235,12 @@ namespace dtn
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
+					// filter fragments if requested
+					if (meta.fragment && _fragment_filter)
+					{
+						return false;
+					}
+
 					if (_endpoints.find(meta.destination) == _endpoints.end())
 					{
 						return false;
@@ -301,7 +309,8 @@ namespace dtn
 				const std::set<dtn::data::EID> _endpoints;
 				const dtn::data::BundleSet &_bundles;
 				const bool _loopback;
-			} filter(_endpoints, _queue.getReceivedBundles(), false);
+				const bool _fragment_filter;
+			} filter(_endpoints, _queue.getReceivedBundles(), false, fragment_conf && _filter_fragments);
 
 			// query the database for more bundles
 			ibrcommon::MutexLock l(_endpoints_lock);
@@ -448,6 +457,11 @@ namespace dtn
 			}
 
 			return _persistent;
+		}
+
+		void Registration::setFilterFragments(bool val)
+		{
+			_filter_fragments = val;
 		}
 
 		ibrcommon::Timer::time_t Registration::getExpireTime() const

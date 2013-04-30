@@ -130,6 +130,8 @@ namespace dtn
 					{
 						dtn::data::Bundle &merged = c.getBundle();
 
+						IBRCOMMON_LOGGER_TAG(FragmentManager::TAG, notice) << "Bundle " << merged.toString() << " merged" << IBRCOMMON_LOGGER_ENDL;
+
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true);
 

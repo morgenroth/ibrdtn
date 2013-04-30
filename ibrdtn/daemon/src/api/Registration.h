@@ -208,6 +208,11 @@ namespace dtn
 			bool isPersistent() const;
 
 			/**
+			 * Allows to disable the re-assemble of fragments
+			 */
+			void setFilterFragments(bool val);
+
+			/**
 			 * gets the expire time of this registration if it is persistent
 			 * @see ibrcommon::Timer::get_current_time()
 			 * @exception NotPersistentException the registration is not persistent
@@ -311,6 +316,8 @@ namespace dtn
 			bool _detached;
 			ibrcommon::Mutex _attach_lock;
 			ibrcommon::Timer::time_t _expiry;
+
+			bool _filter_fragments;
 		};
 	}
 }
