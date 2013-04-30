@@ -93,6 +93,19 @@ void TestSDNV::testMax(void)
 	CPPUNIT_ASSERT_EQUAL(src, dst);
 }
 
+void TestSDNV::testMax32(void)
+{
+	std::stringstream ss;
+	dtn::data::SDNV<uint32_t> src = dtn::data::SDNV<uint32_t>::max();
+	dtn::data::SDNV<uint32_t> dst;
+
+	CPPUNIT_ASSERT_NO_THROW( ss << src );
+	ss.clear();
+	CPPUNIT_ASSERT_NO_THROW( ss >> dst );
+
+	CPPUNIT_ASSERT_EQUAL(src, dst);
+}
+
 void TestSDNV::testOutOfRange(void)
 {
 	uint64_t st = static_cast<uint64_t>(-1);
