@@ -407,12 +407,6 @@ namespace dtn
 		void DatagramConnection::Stream::close()
 		{
 			ibrcommon::MutexLock l(_queue_buf_cond);
-
-			while (_queue_buf_len > 0)
-			{
-				_queue_buf_cond.wait();
-			}
-
 			_abort = true;
 			_queue_buf_cond.abort();
 		}
