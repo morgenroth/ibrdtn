@@ -127,6 +127,11 @@ namespace dtn
 			void markRemoved(const dtn::data::MetaBundle &meta) throw ();
 
 			/**
+			 * Return true, if the bundle is already marked as removed
+			 */
+			bool isRemoved(const dtn::data::MetaBundle &meta) const throw ();
+
+			/**
 			 * Delete all bundles
 			 */
 			void clear() throw ();

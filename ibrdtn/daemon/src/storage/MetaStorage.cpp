@@ -119,6 +119,11 @@ namespace dtn
 			}
 		}
 
+		bool MetaStorage::isRemoved(const dtn::data::MetaBundle &meta) const throw ()
+		{
+			return (_removal_set.find(meta) != _removal_set.end());
+		}
+
 		bool MetaStorage::empty() throw ()
 		{
 			if ( _priority_index.empty() )

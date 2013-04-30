@@ -381,17 +381,21 @@ namespace dtn
 			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
 			const dtn::data::MetaBundle &meta = _metastore.find(id);
 
-			// remove if from the meta storage
-			_metastore.markRemoved(meta);
+			// first check if the bundles is already marked as removed
+			if (!_metastore.isRemoved(meta))
+			{
+				// remove if from the meta storage
+				_metastore.markRemoved(meta);
 
-			// create the hash for data storage removal
-			DataStorage::Hash hash(meta.toString());
+				// create the hash for data storage removal
+				DataStorage::Hash hash(meta.toString());
 
-			// create a background task for removing the bundle
-			_datastore.remove(hash);
+				// create a background task for removing the bundle
+				_datastore.remove(hash);
 
-			// raise bundle removed event
-			eventBundleRemoved(meta);
+				// raise bundle removed event
+				eventBundleRemoved(meta);
+			}
 		}
 
 		void SimpleBundleStorage::__store(const dtn::data::Bundle &bundle, const dtn::data::Length &bundle_size)
@@ -432,17 +436,21 @@ namespace dtn
 			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
 			const dtn::data::MetaBundle meta = _metastore.find(filter);
 
-			// remove if from the meta storage
-			_metastore.markRemoved(meta);
+			// first check if the bundles is already marked as removed
+			if (!_metastore.isRemoved(meta))
+			{
+				// remove if from the meta storage
+				_metastore.markRemoved(meta);
 
-			// create the hash for data storage removal
-			DataStorage::Hash hash(meta.toString());
+				// create the hash for data storage removal
+				DataStorage::Hash hash(meta.toString());
 
-			// create a background task for removing the bundle
-			_datastore.remove(hash);
+				// create a background task for removing the bundle
+				_datastore.remove(hash);
 
-			// raise bundle removed event
-			eventBundleRemoved(meta);
+				// raise bundle removed event
+				eventBundleRemoved(meta);
+			}
 
 			return meta;
 		}
