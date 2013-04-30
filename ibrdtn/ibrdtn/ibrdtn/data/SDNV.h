@@ -117,9 +117,14 @@ namespace dtn
 				return _value;
 			}
 
-			const SDNV& operator=(const E &value) {
+			const SDNV& operator=(const E value) {
 				_value = value;
 				return (*this);
+			}
+
+			bool operator==(const E value) const
+			{
+				return (value == _value);
 			}
 
 			bool operator==(const SDNV<E> &value) const
@@ -127,12 +132,17 @@ namespace dtn
 				return (value._value == _value);
 			}
 
+			bool operator!=(const E value) const
+			{
+				return (value != _value);
+			}
+
 			bool operator!=(const SDNV<E> &value) const
 			{
 				return (value._value != _value);
 			}
 
-			SDNV<E> operator+(const E &value)
+			SDNV<E> operator+(const E value)
 			{
 				E result = _value + value;
 				return SDNV<E>(result);
@@ -153,14 +163,14 @@ namespace dtn
 			}
 
 			friend
-			SDNV<E> operator+(const SDNV<E> &left, const E &right)
+			SDNV<E> operator+(const SDNV<E> &left, const E right)
 			{
 				SDNV<E> ret(left);
 				ret += right;
 				return ret;
 			}
 
-			SDNV<E>& operator+=(const E &value)
+			SDNV<E>& operator+=(const E value)
 			{
 				_value += value;
 				return (*this);
@@ -185,7 +195,7 @@ namespace dtn
 				return prev;
 			}
 
-			SDNV<E> operator-(const E &value)
+			SDNV<E> operator-(const E value)
 			{
 				E result = _value - value;
 				return SDNV<E>(result);
@@ -206,14 +216,14 @@ namespace dtn
 			}
 
 			friend
-			SDNV<E> operator-(const SDNV<E> &left, const E &right)
+			SDNV<E> operator-(const SDNV<E> &left, const E right)
 			{
 				SDNV<E> ret(left);
 				ret -= right;
 				return ret;
 			}
 
-			SDNV<E>& operator-=(const E &value)
+			SDNV<E>& operator-=(const E value)
 			{
 				_value -= value;
 				return (*this);
@@ -238,7 +248,7 @@ namespace dtn
 				return prev;
 			}
 
-			SDNV<E> operator/(const E &value)
+			SDNV<E> operator/(const E value)
 			{
 				E result = _value / value;
 				return SDNV<E>(result);
@@ -259,14 +269,14 @@ namespace dtn
 			}
 
 			friend
-			SDNV<E> operator/(const SDNV<E> &left, const E &right)
+			SDNV<E> operator/(const SDNV<E> &left, const E right)
 			{
 				SDNV<E> ret(left);
 				ret /= right;
 				return ret;
 			}
 
-			SDNV<E>& operator/=(const E &value)
+			SDNV<E>& operator/=(const E value)
 			{
 				_value /= value;
 				return (*this);
@@ -278,7 +288,7 @@ namespace dtn
 				return (*this);
 			}
 
-			SDNV<E> operator*(const E &value)
+			SDNV<E> operator*(const E value)
 			{
 				E result = _value * value;
 				return SDNV<E>(result);
@@ -299,14 +309,14 @@ namespace dtn
 			}
 
 			friend
-			SDNV<E> operator*(const SDNV<E> &left, const E &right)
+			SDNV<E> operator*(const SDNV<E> &left, const E right)
 			{
 				SDNV<E> ret(left);
 				ret *= right;
 				return ret;
 			}
 
-			SDNV<E>& operator*=(const E &value)
+			SDNV<E>& operator*=(const E value)
 			{
 				_value *= value;
 				return (*this);
@@ -338,6 +348,26 @@ namespace dtn
 			{
 				_value |= value._value;
 				return (*this);
+			}
+
+			bool operator<(const E value) const
+			{
+				return (_value < value);
+			}
+
+			bool operator<=(const E value) const
+			{
+				return (_value <= value);
+			}
+
+			bool operator>(const E value) const
+			{
+				return (_value > value);
+			}
+
+			bool operator>=(const E value) const
+			{
+				return (_value >= value);
 			}
 
 			bool operator<(const SDNV<E> &value) const
