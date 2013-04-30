@@ -57,7 +57,7 @@ namespace dtn
 			rtrim(str);
 		}
 
-		std::vector<std::string> Utils::tokenize(const std::string &token, const std::string &data, const std::string::size_type &max)
+		std::vector<std::string> Utils::tokenize(const std::string &token, const std::string &data, std::string::size_type max)
 		{
 			std::vector<std::string> l;
 			std::string value;
@@ -65,34 +65,35 @@ namespace dtn
 			// Skip delimiters at beginning.
 			std::string::size_type pos = data.find_first_not_of(token, 0);
 
+			std::string::size_type tokenPos = 0;
+
 			while (pos != string::npos)
 			{
-				// Find first "non-delimiter".
-				string::size_type tokenPos = data.find_first_of(token, pos);
+				if (l.size() >= max)
+				{
+					// if maximum reached
+					tokenPos = std::string::npos;
+				}
+				else
+				{
+					// Find first "non-delimiter".
+					tokenPos = data.find_first_of(token, pos);
+				}
 
-				// Found a token, add it to the vector.
-				if(tokenPos == string::npos){
+				if (tokenPos == std::string::npos) {
+					// No more tokens found, add last part to the vector.
 					value = data.substr(pos);
 					l.push_back(value);
+
+					// exit the loop
 					break;
 				} else {
+					// Found a token, add it to the vector.
 					value = data.substr(pos, tokenPos - pos);
 					l.push_back(value);
 				}
 				// Skip delimiters.  Note the "not_of"
 				pos = data.find_first_not_of(token, tokenPos);
-				// Find next "non-delimiter"
-				tokenPos = data.find_first_of(token, pos);
-
-				// if maximum reached
-				if (l.size() >= max && pos != string::npos)
-				{
-					// add the remaining part to the vector as last element
-					l.push_back(data.substr(pos, data.length() - pos));
-
-					// and break the search loop
-					break;
-				}
 			}
 
 			return l;

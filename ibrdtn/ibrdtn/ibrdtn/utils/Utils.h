@@ -37,7 +37,7 @@ namespace dtn
 			static void ltrim(std::string &str);
 			static void trim(std::string &str);
 
-			static std::vector<std::string> tokenize(const std::string &token, const std::string &data, const std::string::size_type &max = std::string::npos);
+			static std::vector<std::string> tokenize(const std::string &token, const std::string &data, std::string::size_type max = std::string::npos);
 			static double distance(double lat1, double lon1, double lat2, double lon2);
 
 			static void encapsule(dtn::data::Bundle &capsule, const std::list<dtn::data::Bundle> &bundles);
