@@ -143,7 +143,7 @@ namespace dtn
 			 * @param cb Callback object for events of this stream
 			 * @param stream The underlying stream object
 			 */
-			StreamConnection(StreamConnection::Callback &cb, iostream &stream, const dtn::data::Length &buffer_size = 4096);
+			StreamConnection(StreamConnection::Callback &cb, iostream &stream, const dtn::data::Length buffer_size = 4096);
 
 			/**
 			 * Destructor of the StreamConnection class
@@ -216,7 +216,7 @@ namespace dtn
 				/**
 				 * constructor
 				 */
-				StreamBuffer(StreamConnection &conn, iostream &stream, const dtn::data::Length &buffer_size = 1024);
+				StreamBuffer(StreamConnection &conn, iostream &stream, const dtn::data::Length buffer_size = 1024);
 				virtual ~StreamBuffer();
 
 				/**

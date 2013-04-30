@@ -207,7 +207,7 @@ namespace dtn
 			return (*this);
 		}
 
-		RetransmissionExtension::RetransmissionData::RetransmissionData(const dtn::data::BundleID &id, const dtn::data::EID &d, const dtn::data::Size &r)
+		RetransmissionExtension::RetransmissionData::RetransmissionData(const dtn::data::BundleID &id, const dtn::data::EID &d, const dtn::data::Size r)
 		 : dtn::data::BundleID(id), destination(d), _timestamp(0), _count(0), retry(r)
 		{
 			(*this)++;

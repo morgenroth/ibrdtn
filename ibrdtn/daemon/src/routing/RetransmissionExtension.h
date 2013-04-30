@@ -47,7 +47,7 @@ namespace dtn
 			class RetransmissionData : public dtn::data::BundleID
 			{
 			public:
-				RetransmissionData(const dtn::data::BundleID &id, const dtn::data::EID &destination, const dtn::data::Size &retry = 2);
+				RetransmissionData(const dtn::data::BundleID &id, const dtn::data::EID &destination, const dtn::data::Size retry = 2);
 				virtual ~RetransmissionData();
 
 

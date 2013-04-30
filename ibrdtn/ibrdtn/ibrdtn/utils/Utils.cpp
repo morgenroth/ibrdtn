@@ -57,7 +57,7 @@ namespace dtn
 			rtrim(str);
 		}
 
-		std::vector<std::string> Utils::tokenize(const std::string &token, const std::string &data, std::string::size_type max)
+		std::vector<std::string> Utils::tokenize(const std::string &token, const std::string &data, const std::string::size_type max)
 		{
 			std::vector<std::string> l;
 			std::string value;

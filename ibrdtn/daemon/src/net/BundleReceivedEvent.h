@@ -42,14 +42,14 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local = false);
+			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool local = false);
 
 			const dtn::data::EID peer;
 			const dtn::data::Bundle bundle;
 			const bool fromlocal;
 
 		private:
-			BundleReceivedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local);
+			BundleReceivedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool local);
 
 			static ibrcommon::Semaphore _sem;
 		};

@@ -40,7 +40,7 @@ namespace dtn
 		public:
 			static const std::string TAG;
 
-			MemoryBundleStorage(const dtn::data::Length &maxsize = 0);
+			MemoryBundleStorage(const dtn::data::Length maxsize = 0);
 			virtual ~MemoryBundleStorage();
 
 			/**

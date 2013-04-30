@@ -232,7 +232,7 @@ namespace dtn
 			 * @param timeout
 			 * @return
 			 */
-			dtn::data::Bundle getBundle(const dtn::data::Timeout &timeout = 0) throw (ConnectionException);
+			dtn::data::Bundle getBundle(const dtn::data::Timeout timeout = 0) throw (ConnectionException);
 
 			// public variable
 			dtn::data::Length lastack;

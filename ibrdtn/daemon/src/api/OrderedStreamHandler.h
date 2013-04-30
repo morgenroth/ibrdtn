@@ -43,7 +43,7 @@ namespace dtn
 			virtual void __cancellation() throw ();
 
 			virtual void put(dtn::data::Bundle &b);
-			virtual dtn::data::MetaBundle get(const dtn::data::Timeout &timeout = 0);
+			virtual dtn::data::MetaBundle get(const dtn::data::Timeout timeout = 0);
 			virtual void delivered(const dtn::data::MetaBundle &m);
 
 		private:

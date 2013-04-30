@@ -35,7 +35,7 @@ namespace dtn
 		public:
 			virtual ~BundleStreamBufCallback() { };
 			virtual void put(dtn::data::Bundle &b) = 0;
-			virtual dtn::data::MetaBundle get(const dtn::data::Timeout &timeout = 0) = 0;
+			virtual dtn::data::MetaBundle get(const dtn::data::Timeout timeout = 0) = 0;
 			virtual void delivered(const dtn::data::MetaBundle &b) = 0;
 		};
 
@@ -45,7 +45,7 @@ namespace dtn
 			// The size of the input and output buffers.
 			static const dtn::data::Length BUFF_SIZE = 5120;
 
-			BundleStreamBuf(BundleStreamBufCallback &callback, const dtn::data::Length &chunk_size = 4096, bool wait_seq_zero = false);
+			BundleStreamBuf(BundleStreamBufCallback &callback, const dtn::data::Length chunk_size = 4096, bool wait_seq_zero = false);
 			virtual ~BundleStreamBuf();
 
 			void setChunkSize(const dtn::data::Length &size);

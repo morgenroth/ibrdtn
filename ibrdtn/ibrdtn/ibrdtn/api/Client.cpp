@@ -206,7 +206,7 @@ namespace dtn
 			flush();
 		}
 
-		dtn::data::Bundle Client::getBundle(const dtn::data::Timeout &timeout) throw (ConnectionException)
+		dtn::data::Bundle Client::getBundle(const dtn::data::Timeout timeout) throw (ConnectionException)
 		{
 			try {
 				return _inqueue.getnpop(true, timeout * 1000);

@@ -29,7 +29,7 @@ namespace dtn
 {
 	namespace api
 	{
-		BundleStreamBuf::BundleStreamBuf(BundleStreamBufCallback &callback, const dtn::data::Length &chunk_size, bool wait_seq_zero)
+		BundleStreamBuf::BundleStreamBuf(BundleStreamBufCallback &callback, const dtn::data::Length chunk_size, bool wait_seq_zero)
 		 : _callback(callback), _in_buf(BUFF_SIZE), _out_buf(BUFF_SIZE),
 		   _chunk_size(chunk_size), _chunk_payload(ibrcommon::BLOB::create()), _chunk_offset(0), _in_seq(0),
 		   _out_seq(0), _streaming(wait_seq_zero), _first_chunk(true), _last_chunk_received(false), _timeout_receive(0)

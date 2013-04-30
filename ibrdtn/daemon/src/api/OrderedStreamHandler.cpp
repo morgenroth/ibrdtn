@@ -83,7 +83,7 @@ namespace dtn
 			dtn::net::BundleReceivedEvent::raise(_client.getRegistration().getDefaultEID(), b, true);
 		}
 
-		dtn::data::MetaBundle OrderedStreamHandler::get(const dtn::data::Timeout &timeout)
+		dtn::data::MetaBundle OrderedStreamHandler::get(const dtn::data::Timeout timeout)
 		{
 			Registration &reg = _client.getRegistration();
 			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 20) << "get()" << IBRCOMMON_LOGGER_ENDL;

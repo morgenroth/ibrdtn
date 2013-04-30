@@ -254,7 +254,7 @@ namespace dtn
 			return _connectionmanager;
 		}
 
-		void BundleCore::addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, const dtn::data::Timeout &timeout)
+		void BundleCore::addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, const dtn::data::Timeout timeout)
 		{
 			dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_ADD, nexthop, destination, timeout);
 		}

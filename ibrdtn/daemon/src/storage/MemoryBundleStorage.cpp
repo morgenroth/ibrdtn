@@ -37,7 +37,7 @@ namespace dtn
 	{
 		const std::string MemoryBundleStorage::TAG = "MemoryBundleStorage";
 
-		MemoryBundleStorage::MemoryBundleStorage(const dtn::data::Length &maxsize)
+		MemoryBundleStorage::MemoryBundleStorage(const dtn::data::Length maxsize)
 		 : BundleStorage(maxsize), _list(this)
 		{
 		}

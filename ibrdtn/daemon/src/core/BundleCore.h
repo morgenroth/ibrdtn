@@ -96,7 +96,7 @@ namespace dtn
 			 * @param nexthop
 			 * @param timeout
 			 */
-			void addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, const dtn::data::Timeout &timeout = 0);
+			void addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, const dtn::data::Timeout timeout = 0);
 
 			/**
 			 * Remove a static route from the static routing module.

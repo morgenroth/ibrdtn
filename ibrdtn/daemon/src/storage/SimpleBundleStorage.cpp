@@ -46,7 +46,7 @@ namespace dtn
 	{
 		const std::string SimpleBundleStorage::TAG = "SimpleBundleStorage";
 
-		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, const dtn::data::Length &maxsize, const unsigned int &buffer_limit)
+		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, const dtn::data::Length maxsize, const unsigned int buffer_limit)
 		 : BundleStorage(maxsize), _datastore(*this, workdir, buffer_limit), _metastore(*this)
 		{
 		}
