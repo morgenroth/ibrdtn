@@ -91,4 +91,6 @@
     <string name="pref_connection">Verbindung</string>
     <string name="list_no_log">Keine Einträge gefunden.</string>
     <string name="list_no_neighbors">Keine Nachbarn gefunden.</string>
+    <string name="pref_fragmentation_desc">Erlaubt reaktive Fragmentierung und Reassemblierung</string>
+    <string name="pref_fragmentation">Unterstützung für Fragmentierung</string>
 </resources>

@@ -346,6 +346,13 @@ public class DaemonProcess {
                 intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
             }
+            else if (key.startsWith("checkFragmentation"))
+            {
+                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
+                DaemonProcess.this.mContext.startService(intent);
+            }
             else if (key.startsWith("constrains_lifetime"))
             {
                 onConfigurationChanged();
@@ -634,6 +641,10 @@ public class DaemonProcess {
 
 			if (preferences.getBoolean("checkIdleTimeout", false)) {
 				p.println("tcp_idle_timeout = 30");
+			}
+			
+			if (preferences.getBoolean("checkFragmentation", true)) {
+			    p.println("fragmentation = yes");
 			}
 
 			// set multicast address for discovery
