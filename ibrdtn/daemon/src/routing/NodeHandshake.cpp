@@ -147,10 +147,9 @@ namespace dtn
 		std::ostream& operator<<(std::ostream &stream, const NodeHandshake &hs)
 		{
 			// first the type as SDNV
-			dtn::data::Number type(hs._type);
-			stream << type;
+			stream << hs._type;
 
-			if (hs._type == NodeHandshake::HANDSHAKE_REQUEST)
+			if (hs._type.get<size_t>() == NodeHandshake::HANDSHAKE_REQUEST)
 			{
 				// then the number of request items
 				dtn::data::Number number_of_items(hs._requests.size());
@@ -162,7 +161,7 @@ namespace dtn
 					stream << req;
 				}
 			}
-			else if (hs._type == NodeHandshake::HANDSHAKE_RESPONSE)
+			else if (hs._type.get<size_t>() == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
 				// then the lifetime of this data
 				stream << hs._lifetime;
@@ -211,7 +210,7 @@ namespace dtn
 					hs._requests.insert(req);
 				}
 			}
-			else if (hs._type == NodeHandshake::HANDSHAKE_RESPONSE)
+			else if (hs._type.get<size_t>() == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
 				// then the lifetime of this data
 				stream >> hs._lifetime;
