@@ -81,6 +81,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 
 		_storage_names.push_back("MemoryBundleStorage");
 		_storage_names.push_back("SimpleBundleStorage");
+		_storage_names.push_back("SQLiteBundleStorage");
 
 		CPPUNIT_TEST_ALL_STORAGES(testStore);
 		CPPUNIT_TEST_ALL_STORAGES(testRemove);

@@ -30,6 +30,7 @@
  *
  */
 
+#include "config.h"
 #include "BundleStorageTest.hh"
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -48,6 +49,10 @@
 
 #include "storage/SimpleBundleStorage.h"
 #include "storage/MemoryBundleStorage.h"
+
+#ifdef HAVE_SQLITE
+#include "storage/SQLiteBundleStorage.h"
+#endif
 
 #include <unistd.h>
 
@@ -96,6 +101,20 @@ void BundleStorageTest::setUp()
 			_storage = new dtn::storage::SimpleBundleStorage(path);
 			break;
 		}
+
+#ifdef HAVE_SQLITE
+	case 2:
+		{
+			// prepare path for the sqlite based storage
+			ibrcommon::File path("/tmp/bundle-sqlite-test");
+			if (path.exists()) path.remove(true);
+			ibrcommon::File::createDirectory(path);
+
+			// prepare a sqlite database
+			_storage = new dtn::storage::SQLiteBundleStorage(path, 0);
+			break;
+		}
+#endif
 	}
 
 	if (testCounter >= _storage_names.size()) testCounter = 0;
