@@ -56,8 +56,6 @@ namespace dtn
 				BUNDLE_GET_ITERATOR,
 				BUNDLE_GET_FILTER,
 				BUNDLE_GET_ID,
-				FRAGMENT_GET_ID,
-				BUNDLE_GET_FRAGMENT,
 				GET_DISTINCT_DESTINATIONS,
 
 				EXPIRE_BUNDLES,
@@ -69,18 +67,14 @@ namespace dtn
 				COUNT_ENTRIES,
 
 				BUNDLE_DELETE,
-				FRAGMENT_DELETE,
 				BUNDLE_CLEAR,
 				BUNDLE_STORE,
 				BUNDLE_UPDATE_CUSTODIAN,
-				FRAGMENT_UPDATE_CUSTODIAN,
 
 				PROCFLAGS_SET,
 
 				BLOCK_GET_ID,
-				BLOCK_GET_ID_FRAGMENT,
 				BLOCK_GET,
-				BLOCK_GET_FRAGMENT,
 				BLOCK_CLEAR,
 				BLOCK_STORE,
 
@@ -88,6 +82,7 @@ namespace dtn
 				SQL_QUERIES_END
 			};
 
+			static const int DBSCHEMA_FRESH_VERSION;
 			static const int DBSCHEMA_VERSION;
 			static const std::string QUERY_SCHEMAVERSION;
 			static const std::string SET_SCHEMAVERSION;
@@ -253,6 +248,16 @@ namespace dtn
 			 */
 			void iterateAll() throw (SQLiteQueryException);
 
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * a bundle will fail.
+			 */
+			void setFaulty(bool mode);
+
+			/*** END: methods for unit-testing ***/
+
 		private:
 			/**
 			 * Retrieve meta data from the database and put them into a meta bundle structure.
@@ -311,7 +316,7 @@ namespace dtn
 			 * @param oldVersion Current version of the database.
 			 * @param newVersion Required version.
 			 */
-			void doUpgrade(int oldVersion, int newVersion) throw (SQLiteQueryException);
+			void doUpgrade(int oldVersion, int newVersion) throw (ibrcommon::Exception);
 
 			ibrcommon::File _file;
 
@@ -330,6 +335,8 @@ namespace dtn
 
 			// listener for events on the database
 			DatabaseListener &_listener;
+
+			bool _faulty;
 		};
 	} /* namespace storage */
 } /* namespace dtn */

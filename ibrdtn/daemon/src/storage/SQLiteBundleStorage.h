@@ -136,6 +136,21 @@ namespace dtn
 			void eventBundleExpired(const dtn::data::BundleID &id) throw ();
 			void iterateDatabase(const dtn::data::MetaBundle &bundle);
 
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Wait until all the data has been stored to the disk
+			 */
+			virtual void wait();
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * or retrieve a bundle will fail.
+			 */
+			virtual void setFaulty(bool mode);
+
+			/*** END: methods for unit-testing ***/
+
 		protected:
 			virtual void componentRun() throw ();
 			virtual void componentUp() throw ();

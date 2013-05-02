@@ -131,8 +131,6 @@ namespace dtn
 
 		SQLiteBundleStorage::~SQLiteBundleStorage()
 		{
-			stop();
-			join();
 		}
 
 		void SQLiteBundleStorage::componentRun() throw ()
@@ -215,6 +213,9 @@ namespace dtn
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+
+			stop();
+			join();
 		}
 
 		void SQLiteBundleStorage::__cancellation() throw ()
@@ -558,6 +559,17 @@ namespace dtn
 		{
 			// raise bundle removed event
 			eventBundleRemoved(id);
+		}
+
+		void SQLiteBundleStorage::wait()
+		{
+			_tasks.wait(ibrcommon::Queue<Task*>::QUEUE_EMPTY);
+		}
+
+		void SQLiteBundleStorage::setFaulty(bool mode)
+		{
+			_faulty = mode;
+			_database.setFaulty(mode);
 		}
 	}
 }
