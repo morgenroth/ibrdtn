@@ -46,9 +46,40 @@ namespace dtn
 			remove(dtn::data::BundleID(b));
 		}
 
-		dtn::data::MetaBundle BundleStorage::remove(const ibrcommon::BloomFilter&)
+		dtn::data::MetaBundle BundleStorage::remove(const ibrcommon::BloomFilter &filter)
 		{
-			throw dtn::storage::NoBundleFoundException();
+			class BundleFilter : public dtn::storage::BundleSelector
+			{
+			public:
+				BundleFilter(const ibrcommon::BloomFilter &filter)
+				 : _filter(filter)
+				{};
+
+				virtual ~BundleFilter() {};
+
+				virtual dtn::data::Size limit() const throw () { return 1; };
+
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+				{
+					// select the bundle if it is in the filter
+					return _filter.contains(meta.toString());
+				};
+
+				const ibrcommon::BloomFilter &_filter;
+			} bundle_filter(filter);
+
+			dtn::storage::BundleResultList list;
+
+			// query an unknown bundle from the storage, the list contains 1 item.
+			get(bundle_filter, list);
+
+			if (list.empty())
+				throw NoBundleFoundException();
+
+			dtn::data::MetaBundle ret = list.front();
+			this->remove(ret);
+
+			return ret;
 		}
 
 		const dtn::data::EID BundleStorage::acceptCustody(const dtn::data::MetaBundle &meta)
