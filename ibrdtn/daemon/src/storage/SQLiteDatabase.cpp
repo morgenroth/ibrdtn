@@ -924,8 +924,12 @@ namespace dtn
 				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
-			//update deprecated timer
-			update_expire_time();
+			try {
+				//update deprecated timer
+				update_expire_time();
+			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void SQLiteDatabase::vacuum() throw (SQLiteDatabase::SQLiteQueryException)
