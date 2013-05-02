@@ -121,6 +121,9 @@ namespace dtn
 		SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const dtn::data::Length &maxsize)
 		 : BundleStorage(maxsize), _database(path.get("sqlite.db"), *this)
 		{
+			// use sqlite storage as BLOB provider, auto delete off
+			ibrcommon::BLOB::changeProvider(this, false);
+
 			// set the block path
 			_blockPath = path.get("blocks");
 			_blobPath = path.get("blob");

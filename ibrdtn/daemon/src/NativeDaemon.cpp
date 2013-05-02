@@ -864,9 +864,6 @@ namespace dtn
 
 					dtn::storage::SQLiteBundleStorage *sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage") );
 
-					// use sqlite storage as BLOB provider, auto delete off
-					ibrcommon::BLOB::changeProvider(sbs, false);
-
 					_components[RUNLEVEL_STORAGE].push_back(sbs);
 					storage = sbs;
 				} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
