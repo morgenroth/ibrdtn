@@ -195,19 +195,6 @@ namespace dtn
 				bool _abort;
 			};
 
-			class TaskRemove : public Task
-			{
-			public:
-				TaskRemove(const dtn::data::BundleID &id)
-				 : _id(id) { };
-
-				virtual ~TaskRemove() {};
-				virtual void run(SQLiteBundleStorage &storage);
-
-			private:
-				const dtn::data::BundleID _id;
-			};
-
 			class TaskIdle : public Task
 			{
 			public:

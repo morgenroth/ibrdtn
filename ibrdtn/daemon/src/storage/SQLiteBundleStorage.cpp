@@ -404,21 +404,16 @@ namespace dtn
 
 		void SQLiteBundleStorage::remove(const dtn::data::BundleID &id)
 		{
-			_tasks.push(new TaskRemove(id));
-		}
-
-		void SQLiteBundleStorage::TaskRemove::run(SQLiteBundleStorage &storage)
-		{
 			// remove the bundle in locked state
 			try {
-				ibrcommon::RWLock l(storage._global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
-				storage._database.remove(_id);
+				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				_database.remove(id);
+
+				// raise bundle removed event
+				eventBundleRemoved(id);
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-
-			// raise bundle removed event
-			storage.eventBundleRemoved(_id);
 		}
 
 		void SQLiteBundleStorage::clearAll()
