@@ -55,7 +55,7 @@ namespace ibrcommon
 		 * and non-existing file.
 		 * @param path Filename or path to reference to.
 		 */
-		File(const string path);
+		File(const std::string &path);
 
 		/**
 		 * Destructor of the file.
@@ -163,10 +163,10 @@ namespace ibrcommon
 		bool operator<(const ibrcommon::File &other) const;
 
 	private:
-		File(const string path, const unsigned char t);
+		File(const std::string &path, const unsigned char t);
 		void resolveAbsolutePath();
 		void removeSlash();
-		string _path;
+		std::string _path;
 		unsigned char _type;
 	};
 

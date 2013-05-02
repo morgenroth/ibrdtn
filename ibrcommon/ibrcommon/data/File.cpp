@@ -43,14 +43,14 @@ namespace ibrcommon
 	{
 	}
 
-	File::File(const string path, const unsigned char t)
+	File::File(const std::string &path, const unsigned char t)
 	 : _path(path), _type(t)
 	{
 		resolveAbsolutePath();
 		removeSlash();
 	}
 
-	File::File(const string path)
+	File::File(const std::string &path)
 	 : _path(path), _type(DT_UNKNOWN)
 	{
 		resolveAbsolutePath();
@@ -124,20 +124,26 @@ namespace ibrcommon
 		return _type;
 	}
 
-	int File::getFiles(list<File> &files) const
+	int File::getFiles(std::list<File> &files) const
 	{
 		if (!isDirectory()) return -1;
 
 		DIR *dp;
+		struct dirent dirp_data;
 		struct dirent *dirp;
 		if((dp = opendir(_path.c_str())) == NULL) {
 			return errno;
 		}
 
-		while ((dirp = readdir(dp)) != NULL)
+		while (::readdir_r(dp, &dirp_data, &dirp) == 0)
 		{
-			string name = string(dirp->d_name, dirp->d_reclen);
-			stringstream ss; ss << getPath() << "/" << name;
+			if (dirp == NULL) break;
+
+			// TODO: check if the name is always limited by a zero
+			// std::string name = std::string(dirp->d_name, dirp->d_reclen);
+
+			std::string name = std::string(dirp->d_name);
+			std::stringstream ss; ss << getPath() << "/" << name;
 			File file(ss.str(), dirp->d_type);
 			files.push_back(file);
 		}
@@ -202,9 +208,10 @@ namespace ibrcommon
 
 				for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
 				{
-					if (!(*iter).isSystem())
+					ibrcommon::File &file = (*iter);
+					if (!file.isSystem())
 					{
-						if ((ret = (*iter).remove(recursive)) < 0)
+						if ((ret = file.remove(recursive)) < 0)
 							return ret;
 					}
 				}
