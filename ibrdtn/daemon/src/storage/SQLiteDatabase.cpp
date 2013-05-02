@@ -57,6 +57,7 @@ namespace dtn
 			"SELECT " + _select_names[0] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL LIMIT 1;",
 			"SELECT " + _select_names[0] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
 			"SELECT * FROM " + _tables[SQL_TABLE_BUNDLE] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset != NULL ORDER BY fragmentoffset ASC;",
+			"SELECT DISTINCT destination FROM " + _tables[SQL_TABLE_BUNDLE],
 
 			"SELECT " + _select_names[1] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE expiretime <= ?;",
 			"SELECT filename FROM "+ _tables[SQL_TABLE_BUNDLE] +" as a, "+ _tables[SQL_TABLE_BLOCK] +" as b WHERE a.source_id = b.source_id AND a.timestamp = b.timestamp AND a.sequencenumber = b.sequencenumber AND ((a.fragmentoffset = b.fragmentoffset) OR ((a.fragmentoffset IS NULL) AND (b.fragmentoffset IS NULL))) AND a.expiretime <= ?;",
@@ -848,7 +849,17 @@ namespace dtn
 		const std::set<dtn::data::EID> SQLiteDatabase::getDistinctDestinations() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			std::set<dtn::data::EID> ret;
-			// TODO: implement this method!
+
+			Statement st(_database, _sql_queries[GET_DISTINCT_DESTINATIONS]);
+
+			// step through all blocks
+			while (st.step() == SQLITE_ROW)
+			{
+				// delete each referenced block file
+				const std::string destination( (const char*)sqlite3_column_text(*st, 0) );
+				ret.insert(destination);
+			}
+
 			return ret;
 		}
 
