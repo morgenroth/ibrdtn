@@ -108,7 +108,7 @@ namespace dtn
 			void addItem(NodeHandshakeItem *item);
 			bool hasItem(const dtn::data::Number &identifier) const;
 
-			const dtn::data::Number& getType() const;
+			MESSAGE_TYPE getType() const;
 			const dtn::data::Number& getLifetime() const;
 
 			const std::string toString() const;
@@ -143,7 +143,10 @@ namespace dtn
 
 			typedef std::set<dtn::data::Number> request_set;
 			request_set _requests;
-			std::list<NodeHandshakeItem*> _items;
+
+			typedef std::list<NodeHandshakeItem*> item_set;
+			item_set _items;
+
 			StreamMap _raw_items;
 
 			// deny copying
