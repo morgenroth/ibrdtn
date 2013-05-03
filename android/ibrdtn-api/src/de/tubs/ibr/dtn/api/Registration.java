@@ -69,7 +69,7 @@ public class Registration implements Parcelable, Serializable {
 
 	public boolean equals(Registration other) {
 		if (!this.endpoint.equals(other.endpoint)) return false;
-		if (this.groups.equals(other.groups)) return false;
+		if (!this.groups.equals(other.groups)) return false;
 		return true;
 	}
 	
