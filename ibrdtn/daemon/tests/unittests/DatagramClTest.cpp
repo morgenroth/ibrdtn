@@ -6,7 +6,9 @@
  */
 
 #include "DatagramClTest.h"
+#include "../tools/TestEventListener.h"
 #include "storage/MemoryBundleStorage.h"
+#include "core/NodeEvent.h"
 
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
@@ -102,19 +104,18 @@ void DatagramClTest::tearDown() {
 }
 
 void DatagramClTest::discoveryTest() {
-	{
-		const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
-		CPPUNIT_ASSERT_EQUAL((size_t)0, nodes.size());
-	}
+	TestEventListener<dtn::core::NodeEvent> evtl;
+
+	const std::set<dtn::core::Node> pre_disco_nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+	CPPUNIT_ASSERT_EQUAL((size_t)0, pre_disco_nodes.size());
 
 	// send fake discovery beacon
 	_fake_service->fakeDiscovery();
 
 	// wait until the beacon has been processes
-	::usleep(500000);
+	ibrcommon::MutexLock l(evtl.event_cond);
+	while (evtl.event_counter == 0) evtl.event_cond.wait();
 
-	{
-		const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
-		CPPUNIT_ASSERT_EQUAL((size_t)1, nodes.size());
-	}
+	const std::set<dtn::core::Node> post_disco_nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+	CPPUNIT_ASSERT_EQUAL((size_t)1, post_disco_nodes.size());
 }
