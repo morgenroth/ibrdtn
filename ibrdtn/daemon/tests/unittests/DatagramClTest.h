@@ -24,6 +24,7 @@ class DatagramClTest : public CppUnit::TestFixture {
 	dtn::net::DatagramConvergenceLayer *_fake_cl;
 
 	void discoveryTest();
+	void queueTest();
 
 public:
 	void setUp();
@@ -31,6 +32,7 @@ public:
 
 	CPPUNIT_TEST_SUITE(DatagramClTest);
 	CPPUNIT_TEST(discoveryTest);
+	CPPUNIT_TEST(queueTest);
 	CPPUNIT_TEST_SUITE_END();
 };
 

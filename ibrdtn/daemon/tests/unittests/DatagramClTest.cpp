@@ -9,6 +9,7 @@
 #include "../tools/TestEventListener.h"
 #include "storage/MemoryBundleStorage.h"
 #include "core/NodeEvent.h"
+#include "net/TransferCompletedEvent.h"
 
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
@@ -47,6 +48,10 @@ void DatagramClTest::setUp() {
 
 	// add standard memory base storage
 	_storage = new dtn::storage::MemoryBundleStorage();
+
+	// make storage globally available
+	dtn::core::BundleCore::getInstance().setStorage(_storage);
+	dtn::core::BundleCore::getInstance().setSeeker(_storage);
 
 	// create fake datagram service
 	_fake_service = new FakeDatagramService();
@@ -118,4 +123,67 @@ void DatagramClTest::discoveryTest() {
 
 	const std::set<dtn::core::Node> post_disco_nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 	CPPUNIT_ASSERT_EQUAL((size_t)1, post_disco_nodes.size());
+}
+
+void DatagramClTest::queueTest() {
+	// create a new bundle
+	dtn::data::Bundle b;
+
+	// set standard variable.sourceurce = dtn::data::EID("dtn://node-one/test");
+	b.lifetime = 1;
+	b.destination = dtn::data::EID("dtn://node-two/test");
+
+	// add some payload
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	b.push_back(ref);
+
+	for (int i = 0; i < 1000; ++i)
+		(*ref.iostream()) << "Hallo Welt" << std::endl;
+
+	{
+		dtn::data::AgeBlock &agebl = b.push_back<dtn::data::AgeBlock>();
+		agebl.setSeconds(42);
+	}
+
+	// store the bundle
+	_storage->store(b);
+
+	// special case for caching storages (SimpleBundleStorage)
+	// wait until the bundle is written
+	_storage->wait();
+
+	dtn::data::BundleID id(b);
+
+	TestEventListener<dtn::core::NodeEvent> node_evtl;
+	TestEventListener<dtn::net::TransferCompletedEvent> completed_evtl;
+
+	// send fake discovery beacon
+	_fake_service->fakeDiscovery();
+
+	// wait until the beacon has been processes
+	try {
+		ibrcommon::MutexLock l(node_evtl.event_cond);
+		while (node_evtl.event_counter == 0) node_evtl.event_cond.wait(20000);
+	} catch (const ibrcommon::Conditional::ConditionalAbortException&) {
+		CPPUNIT_FAIL("discovery - timeout reached");
+	}
+
+	const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+	const dtn::core::Node &n = (*nodes.begin());
+
+	// create a job
+	const ConvergenceLayer::Job job(n.getEID(), id);
+
+	// send fake discovery beacon
+	_fake_cl->queue(n, job);
+
+	// wait until the bundle has been transmitted
+	try {
+		ibrcommon::MutexLock l(completed_evtl.event_cond);
+		while (completed_evtl.event_counter == 0) completed_evtl.event_cond.wait(20000);
+	} catch (const ibrcommon::Conditional::ConditionalAbortException&) {
+		CPPUNIT_FAIL("completed - timeout reached");
+	}
+
+	CPPUNIT_ASSERT_EQUAL((unsigned int)1, completed_evtl.event_counter);
 }

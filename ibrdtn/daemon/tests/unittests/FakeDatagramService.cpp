@@ -54,6 +54,7 @@ void FakeDatagramService::fakeDiscovery() {
 	msg.type = DatagramConvergenceLayer::HEADER_BROADCAST;
 	msg.flags = 0;
 	msg.seqno = 0;
+	msg.address = "fakeaddr";
 
 	istream_iterator<char> eos;
 	istream_iterator<char> iit(ss);
@@ -80,10 +81,12 @@ void FakeDatagramService::shutdown() {
 }
 
 void FakeDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const std::string &address, const char *buf, size_t length) throw (DatagramException) {
-	// wait 50ms and queue an ack
-	::usleep(50000);
+	if (type == dtn::net::DatagramConvergenceLayer::HEADER_SEGMENT) {
+		// wait 50ms and queue an ack
+		::usleep(50000);
 
-	genAck(seqno, address);
+		genAck((seqno + 1) % 4, address);
+	}
 }
 
 void FakeDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const char *buf, size_t length) throw (DatagramException) {
