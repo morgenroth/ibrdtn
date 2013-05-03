@@ -4,7 +4,9 @@ noinst_HEADERS = \
 	BundleStorageTest.hh \
 	ConfigurationTest.hh \
 	DaemonTest.hh \
+	DatagramClTest.h \
 	DataStorageTest.h \
+	FakeDatagramService.h \
 	NativeSerializerTest.h \
 	NodeTest.hh
 
@@ -14,7 +16,9 @@ unittest_SOURCES = \
 	BundleStorageTest.cpp \
 	ConfigurationTest.cpp \
 	DaemonTest.cpp \
+	DatagramClTest.cpp \
 	DataStorageTest.cpp \
+	FakeDatagramService.cpp \
 	NativeSerializerTest.cpp \
 	NodeTest.cpp
 	
