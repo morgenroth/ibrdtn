@@ -73,14 +73,14 @@ namespace dtn
 		{
 		}
 
-		Number Dictionary::get(const std::string &value) const throw (ibrcommon::Exception)
+		Number Dictionary::get(const std::string &value) const throw (EntryNotFoundException)
 		{
 			std::string bytes = _bytestream.str();
 			const char *bytebegin = bytes.c_str();
 			const char *bytepos = bytebegin;
 			const char *byteend = bytebegin + bytes.length() + 1;
 
-			if (bytes.length() <= 0) throw ibrcommon::Exception("entry not found");
+			if (bytes.length() <= 0) throw EntryNotFoundException();
 
 			while (bytepos < byteend)
 			{
@@ -94,7 +94,7 @@ namespace dtn
 				bytepos += dictstr.length() + 1;
 			}
 
-			 throw ibrcommon::Exception("entry not found");
+			 throw EntryNotFoundException();
 		}
 
 		bool Dictionary::exists(const std::string &value) const

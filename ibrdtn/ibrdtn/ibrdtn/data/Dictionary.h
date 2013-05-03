@@ -40,6 +40,14 @@ namespace dtn
 		class Dictionary
 		{
 		public:
+			class EntryNotFoundException : public dtn::InvalidDataException
+			{
+			public:
+				EntryNotFoundException(string what = "The requested dictionary entry is not available.") throw() : dtn::InvalidDataException(what)
+				{
+				};
+			};
+
 			/**
 			 * create a empty dictionary
 			 */
@@ -102,7 +110,7 @@ namespace dtn
 		private:
 			bool exists(const std::string&) const;
 			void add(const std::string&);
-			Number get(const std::string&) const throw (ibrcommon::Exception);
+			Number get(const std::string&) const throw (EntryNotFoundException);
 
 			std::stringstream _bytestream;
 		};
