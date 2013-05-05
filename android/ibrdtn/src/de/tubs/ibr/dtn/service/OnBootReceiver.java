@@ -25,7 +25,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class OnBootReceiver extends BroadcastReceiver {
@@ -35,7 +34,7 @@ public class OnBootReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		// load preferences
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		SharedPreferences preferences = DaemonService.getSharedPreferences(context);
 		Log.i(TAG, "IntentReceiver called by " + intent.getAction());
 		
 		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))

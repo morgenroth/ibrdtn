@@ -26,19 +26,21 @@ package de.tubs.ibr.dtn.service;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
@@ -55,6 +57,9 @@ public class DaemonService extends Service {
     public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
     public static final String ACTION_RESTART = "de.tubs.ibr.dtn.action.RESTART";
     public static final String UPDATE_NOTIFICATION = "de.tubs.ibr.dtn.action.UPDATE_NOTIFICATION";
+    public static final String PREFERENCE_CHANGED = "de.tubs.ibr.dtn.action.PREFERENCE_CHANGED";
+    
+    public static final String PREFERENCE_NAME = "de.tubs.ibr.dtn.service_prefs";
 
     private final String TAG = "DaemonService";
 
@@ -160,6 +165,10 @@ public class DaemonService extends Service {
             final PendingIntent pi = (PendingIntent) intent.getParcelableExtra("app");
 
             mSessionManager.unregister(pi.getTargetPackage());
+        } else if (PREFERENCE_CHANGED.equals(action)) {
+        	if (intent.hasExtra("key")) {
+        		mDaemonProcess.onPreferenceChanged(intent.getStringExtra("key"));
+        	}
         }
         
         // stop the daemon if it should be offline
@@ -205,7 +214,7 @@ public class DaemonService extends Service {
         mSessionManager.restoreRegistrations();
         
         // start daemon if enabled
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences prefs = DaemonService.getSharedPreferences(this);
         if (prefs.getBoolean("enabledSwitch", false)) {
             // startup the daemon process
             final Intent intent = new Intent(this, DaemonService.class);
@@ -286,7 +295,7 @@ public class DaemonService extends Service {
                     _p2p_manager.destroy();
                     
                     // disable foreground service only if the daemon has been switched off
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
+                    SharedPreferences prefs = DaemonService.getSharedPreferences(DaemonService.this);
                     if (!prefs.getBoolean("enabledSwitch", false)) {
                         // mark the notification as invisible
                         _show_notification = false;
@@ -411,4 +420,12 @@ public class DaemonService extends Service {
         return builder.getNotification();
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	public static SharedPreferences getSharedPreferences(Context context) {
+    	if (android.os.Build.VERSION.SDK_INT >= 11) {
+    		return context.getSharedPreferences(DaemonService.PREFERENCE_NAME, Context.MODE_MULTI_PROCESS);
+    	} else {
+    		return context.getSharedPreferences(DaemonService.PREFERENCE_NAME, Context.MODE_PRIVATE);
+    	}
+    }
 }

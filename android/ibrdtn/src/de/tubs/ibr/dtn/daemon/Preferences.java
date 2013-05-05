@@ -99,7 +99,7 @@ public class Preferences extends PreferenceActivity {
 	public static void showStatisticLoggerDialog(final Activity activity) {
 		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
 		    public void onClick(DialogInterface dialog, int which) {
-		    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+		    	SharedPreferences prefs = DaemonService.getSharedPreferences(activity);
 		        PreferenceActivity prefactivity = (PreferenceActivity)activity;
 		        
 		        @SuppressWarnings("deprecation")
@@ -181,7 +181,7 @@ public class Preferences extends PreferenceActivity {
 	    
 	    case R.id.itemSendDataNow:
 	    {
-	    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+	    	SharedPreferences prefs = DaemonService.getSharedPreferences(this);
 			Calendar now = Calendar.getInstance();
 			prefs.edit().putLong("stats_timestamp", now.getTimeInMillis()).commit(); 
 
@@ -213,7 +213,7 @@ public class Preferences extends PreferenceActivity {
 	}
 	
 	public static void initializeDefaultPreferences(Context context) {
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+		SharedPreferences prefs = DaemonService.getSharedPreferences(context);
 		
 		if (!prefs.contains("endpoint_id")) {
 			Editor e = prefs.edit();
@@ -243,10 +243,17 @@ public class Preferences extends PreferenceActivity {
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+		PreferenceManager prefman = getPreferenceManager();
+		prefman.setSharedPreferencesName(DaemonService.PREFERENCE_NAME);
+		if (android.os.Build.VERSION.SDK_INT >= 11) {
+			prefman.setSharedPreferencesMode(Context.MODE_MULTI_PROCESS);
+		}
+		
 		// initialize default values if configured set already
 		initializeDefaultPreferences(this);
-		
-	    super.onCreate(savedInstanceState);
+
 		addPreferencesFromResource(R.xml.preferences);
 		
 		// connect daemon controls
@@ -268,7 +275,10 @@ public class Preferences extends PreferenceActivity {
 	                    Gravity.CENTER_VERTICAL | Gravity.RIGHT));
 	        //}
 	        
-	        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+	        SharedPreferences prefs = DaemonService.getSharedPreferences(Preferences.this);
+
+	        // listen to preference changes
+	        prefs.registerOnSharedPreferenceChangeListener(_pref_listener);
 	        
 	        // read initial state of the switch
 	        actionBarSwitch.setChecked( prefs.getBoolean("enabledSwitch", false) );
@@ -278,13 +288,13 @@ public class Preferences extends PreferenceActivity {
 
 					if (val) {
 						// set "enabledSwitch" preference to true
-						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+						SharedPreferences prefs = DaemonService.getSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", true).commit();
 					}
 					else
 					{
 						// set "enabledSwitch" preference to false
-						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+						SharedPreferences prefs = DaemonService.getSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", false).commit();
 					}
 				}
@@ -366,9 +376,22 @@ public class Preferences extends PreferenceActivity {
 		super.onResume();
 		
 		// on first startup ask for permissions to collect statistical data
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+		SharedPreferences prefs = DaemonService.getSharedPreferences(Preferences.this);
 		if (!prefs.contains("collect_stats")) {
 			showStatisticLoggerDialog(Preferences.this);
 		}
 	}
+	
+    private SharedPreferences.OnSharedPreferenceChangeListener _pref_listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+            Log.d(TAG, "Preferences has changed " + key);
+            
+            // startup the daemon process
+            final Intent intent = new Intent(Preferences.this, DaemonService.class);
+            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.PREFERENCE_CHANGED);
+            intent.putExtra("key", key);
+            Preferences.this.startService(intent);
+        }
+    };
 }

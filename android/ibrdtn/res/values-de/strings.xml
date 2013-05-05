@@ -12,6 +12,7 @@
     <string name="permdesc_dtnCommunicationServer">Erlaubt der App Benachrichtigungen an DTN Anwendungen zu senden.</string>
     <string name="service_name">DTN Dienst</string>
     <string name="app_name">IBR-DTN</string>
+    <string name="app_name_daemon">IBR-DTN Hintergrunddienst</string>
     <string name="applist">Anwendungen</string>
     <string name="launch_daemon">Dienst aktivieren</string>
     <string name="endpoint_id">Endpoint ID</string>
