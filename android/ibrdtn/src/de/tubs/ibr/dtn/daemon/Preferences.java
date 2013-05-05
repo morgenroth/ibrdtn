@@ -301,6 +301,9 @@ public class Preferences extends PreferenceActivity {
 	            // skip loopback device
 	            if (i.isLoopback()) continue;
 	            
+	            // skip rmnet
+	            if (i.getDisplayName().startsWith("rmnet")) continue;
+	            
 	            String iface = i.getDisplayName();
 	            CheckBoxPreference cb_i = new CheckBoxPreference(this);
 	            
