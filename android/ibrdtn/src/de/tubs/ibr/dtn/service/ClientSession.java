@@ -270,6 +270,9 @@ public class ClientSession {
 
         @Override
         public void run() {
+        	// lower the thread priority
+        	android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+        	
             try {
                 while (!this.isInterrupted()) {
                     ClientSession.this.nativeSession.receive();

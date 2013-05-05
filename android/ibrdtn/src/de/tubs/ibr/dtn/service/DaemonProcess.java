@@ -153,6 +153,10 @@ public class DaemonProcess {
     }
     
     public synchronized void initialize() {
+    	// lower the thread priority
+    	android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+    	
+    	// get daemon preferences
         SharedPreferences preferences = DaemonService.getSharedPreferences(this.mContext);
 
         // enable debug based on prefs

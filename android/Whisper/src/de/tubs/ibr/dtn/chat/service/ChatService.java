@@ -250,7 +250,10 @@ public class ChatService extends IntentService {
 	@Override
 	public void onCreate()
 	{
-		Log.i(TAG, "service created.");
+		// lower the thread priority
+		android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+
+		// call onCreate of the super-class
 		super.onCreate();
 		
 		IntentFilter screen_filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
@@ -280,6 +283,8 @@ public class ChatService extends IntentService {
 		} catch (SecurityException ex) {
 			_service_error = ServiceError.PERMISSION_NOT_GRANTED;
 		}
+		
+		Log.i(TAG, "service created.");
 	}
 	
 	private BroadcastReceiver _screen_receiver = new BroadcastReceiver() {
