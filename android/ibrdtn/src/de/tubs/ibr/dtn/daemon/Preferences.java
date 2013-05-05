@@ -107,12 +107,12 @@ public class Preferences extends PreferenceActivity {
 		    	
 		        switch (which){
 		        case DialogInterface.BUTTON_POSITIVE:
-		        	prefs.edit().putBoolean("collect_stats", true).commit();
+		        	prefs.edit().putBoolean("collect_stats", true).putBoolean("collect_stats_initialized", true).commit();
 		        	cb.setChecked(true);
 		            break;
 
 		        case DialogInterface.BUTTON_NEGATIVE:
-		        	prefs.edit().putBoolean("collect_stats", false).commit();
+		        	prefs.edit().putBoolean("collect_stats", false).putBoolean("collect_stats_initialized", true).commit();
 		        	cb.setChecked(false);
 		            break;
 		        }
@@ -125,26 +125,6 @@ public class Preferences extends PreferenceActivity {
 		builder.setPositiveButton(activity.getResources().getString(android.R.string.yes), dialogClickListener);
 		builder.setNegativeButton(activity.getResources().getString(android.R.string.no), dialogClickListener);
 		builder.show();
-	}
-	
-	private class ClearStorageTask extends AsyncTask<String, Integer, Boolean> {
-		protected Boolean doInBackground(String... files)
-		{
-			try {
-		    	service.clearStorage();
-				return true;
-			} catch (RemoteException e) {
-				return false;
-			}
-		}
-
-		protected void onProgressUpdate(Integer... progress) {
-		}
-
-		protected void onPostExecute(Boolean result)
-		{
-			pd.dismiss();
-		}
 	}
 	
 	@Override
@@ -174,8 +154,9 @@ public class Preferences extends PreferenceActivity {
 	    
 	    case R.id.itemClearStorage:
 	    {
-			pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.clearingstorage), true, false);
-			(new ClearStorageTask()).execute();
+			Intent i = new Intent(Preferences.this, DaemonService.class);
+			i.setAction(DaemonService.ACTION_CLEAR_STORAGE);
+			startService(i);
 	    	return true;
 	    }
 	    
@@ -215,28 +196,31 @@ public class Preferences extends PreferenceActivity {
 	public static void initializeDefaultPreferences(Context context) {
 		SharedPreferences prefs = DaemonService.getSharedPreferences(context);
 		
-		if (!prefs.contains("endpoint_id")) {
-			Editor e = prefs.edit();
-			e.putString("endpoint_id", DaemonProcess.getUniqueEndpointID(context).toString());
-			
-			try {
-				// scan for known network devices
-				for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
-			    {
-		            NetworkInterface i = list.nextElement();
-		            String iface = i.getDisplayName();
-		            
-		            if (	iface.contains("wlan") ||
-		            		iface.contains("wifi") ||
-		            		iface.contains("eth")
-		            	) {
-		            	e.putBoolean("interface_" + iface, true);
-		            }
-			    }
-			} catch (IOException ex) { }
-			
-			e.commit();
-		}
+		if (prefs.getBoolean("initialized", false)) return;
+
+		Editor e = prefs.edit();
+		e.putString("endpoint_id", DaemonProcess.getUniqueEndpointID(context).toString());
+		
+		try {
+			// scan for known network devices
+			for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
+		    {
+	            NetworkInterface i = list.nextElement();
+	            String iface = i.getDisplayName();
+	            
+	            if (	iface.contains("wlan") ||
+	            		iface.contains("wifi") ||
+	            		iface.contains("eth")
+	            	) {
+	            	e.putBoolean("interface_" + iface, true);
+	            }
+		    }
+		} catch (IOException ex) { }
+		
+		// set preferences to initialized
+		e.putBoolean("initialized", true);
+		
+		e.commit();
 	}
 
 	@TargetApi(14)
@@ -250,6 +234,9 @@ public class Preferences extends PreferenceActivity {
 		if (android.os.Build.VERSION.SDK_INT >= 11) {
 			prefman.setSharedPreferencesMode(Context.MODE_MULTI_PROCESS);
 		}
+		
+		// set default preference values
+		DaemonService.setDefaultValues(this, R.xml.preferences, false);
 		
 		// initialize default values if configured set already
 		initializeDefaultPreferences(this);
@@ -377,7 +364,7 @@ public class Preferences extends PreferenceActivity {
 		
 		// on first startup ask for permissions to collect statistical data
 		SharedPreferences prefs = DaemonService.getSharedPreferences(Preferences.this);
-		if (!prefs.contains("collect_stats")) {
+		if (!prefs.getBoolean("collect_stats_initialized", false)) {
 			showStatisticLoggerDialog(Preferences.this);
 		}
 	}

@@ -41,6 +41,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
@@ -56,9 +57,12 @@ public class DaemonService extends Service {
     public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
     public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
     public static final String ACTION_RESTART = "de.tubs.ibr.dtn.action.RESTART";
+    
     public static final String UPDATE_NOTIFICATION = "de.tubs.ibr.dtn.action.UPDATE_NOTIFICATION";
     public static final String PREFERENCE_CHANGED = "de.tubs.ibr.dtn.action.PREFERENCE_CHANGED";
+    
     public static final String ACTION_INITIATE_CONNECTION = "de.tubs.ibr.dtn.action.ACTION_INITIATE_CONNECTION";
+    public static final String ACTION_CLEAR_STORAGE = "de.tubs.ibr.dtn.action.ACTION_CLEAR_STORAGE";
     
     public static final String PREFERENCE_NAME = "de.tubs.ibr.dtn.service_prefs";
 
@@ -174,6 +178,8 @@ public class DaemonService extends Service {
         	if (intent.hasExtra("endpoint")) {
         		mDaemonProcess.initiateConnection(intent.getStringExtra("endpoint"));
         	}
+        } else if (ACTION_CLEAR_STORAGE.equals(action)) {
+        	mDaemonProcess.clearStorage();
         }
         
         // stop the daemon if it should be offline
@@ -431,6 +437,15 @@ public class DaemonService extends Service {
     		return context.getSharedPreferences(DaemonService.PREFERENCE_NAME, Context.MODE_MULTI_PROCESS);
     	} else {
     		return context.getSharedPreferences(DaemonService.PREFERENCE_NAME, Context.MODE_PRIVATE);
+    	}
+    }
+    
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static void setDefaultValues(Context context, int resId, boolean readAgain) {
+    	if (android.os.Build.VERSION.SDK_INT >= 11) {
+    		PreferenceManager.setDefaultValues(context, DaemonService.PREFERENCE_NAME, Context.MODE_MULTI_PROCESS, resId, readAgain);
+    	} else {
+    		PreferenceManager.setDefaultValues(context, DaemonService.PREFERENCE_NAME, Context.MODE_PRIVATE, resId, readAgain);
     	}
     }
 }
