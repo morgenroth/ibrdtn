@@ -30,7 +30,6 @@ import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -41,7 +40,6 @@ import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -69,9 +67,6 @@ public class Preferences extends PreferenceActivity {
 	private final String TAG = "Preferences";
 	
 	private DTNService service = null;
-	
-	// progress dialog for the send process
-	private ProgressDialog pd = null;
 	
 	private Switch actionBarSwitch = null;
 	private CheckBoxPreference checkBoxPreference = null;
