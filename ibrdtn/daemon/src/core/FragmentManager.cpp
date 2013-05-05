@@ -221,7 +221,7 @@ namespace dtn
 			} catch (const dtn::storage::NoBundleFoundException&) { }
 		}
 
-		void FragmentManager::setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, const dtn::data::Length &abs_offset)
+		void FragmentManager::setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, const dtn::data::Length &abs_offset) throw ()
 		{
 			try {
 				Transmission t;
@@ -243,7 +243,7 @@ namespace dtn
 			} catch (const dtn::storage::NoBundleFoundException&) { };
 		}
 
-		dtn::data::Length FragmentManager::getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id)
+		dtn::data::Length FragmentManager::getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id) throw ()
 		{
 			ibrcommon::MutexLock l(_offsets_mutex);
 			for (std::set<Transmission>::const_iterator iter = _offsets.begin(); iter != _offsets.end(); ++iter)
@@ -257,22 +257,26 @@ namespace dtn
 			return 0;
 		}
 
-		dtn::data::Length FragmentManager::get_payload_offset(const dtn::data::Bundle &bundle, const dtn::data::Length &abs_offset)
+		dtn::data::Length FragmentManager::get_payload_offset(const dtn::data::Bundle &bundle, const dtn::data::Length &abs_offset) throw ()
 		{
-			dtn::data::DefaultSerializer serializer(std::cout);
-			dtn::data::Length header = serializer.getLength((dtn::data::PrimaryBlock&)bundle);
+			try {
+				dtn::data::DefaultSerializer serializer(std::cout);
+				dtn::data::Length header = serializer.getLength((dtn::data::PrimaryBlock&)bundle);
 
-			for (dtn::data::Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)
-			{
-				const dtn::data::Block &b = (**iter);
-				header += serializer.getLength(b);
+				for (dtn::data::Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)
+				{
+					const dtn::data::Block &b = (**iter);
+					header += serializer.getLength(b);
 
-				try {
-					const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(b);
-					header -= payload.getLength();
-					if (abs_offset < header) return 0;
-					return abs_offset - header;
-				} catch (std::bad_cast&) { };
+					try {
+						const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(b);
+						header -= payload.getLength();
+						if (abs_offset < header) return 0;
+						return abs_offset - header;
+					} catch (std::bad_cast&) { };
+				}
+			} catch (const dtn::SerializationFailedException&) {
+				// failure while calculating the bundle length
 			}
 
 			return 0;
