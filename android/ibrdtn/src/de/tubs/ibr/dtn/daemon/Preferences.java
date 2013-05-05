@@ -61,6 +61,7 @@ import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonProcess;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.stats.CollectorService;
+import de.tubs.ibr.dtn.swig.DaemonRunLevel;
 
 public class Preferences extends PreferenceActivity {
 	
@@ -369,11 +370,115 @@ public class Preferences extends PreferenceActivity {
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             Log.d(TAG, "Preferences has changed " + key);
             
-            // startup the daemon process
-            final Intent intent = new Intent(Preferences.this, DaemonService.class);
-            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.PREFERENCE_CHANGED);
-            intent.putExtra("key", key);
-            Preferences.this.startService(intent);
+            if (key.equals("enabledSwitch"))
+            {
+                if (prefs.getBoolean(key, false)) {
+                    // startup the daemon process
+                    final Intent intent = new Intent(Preferences.this, DaemonService.class);
+                    intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+                    startService(intent);
+                } else {
+                    // shutdown the daemon
+                    final Intent intent = new Intent(Preferences.this, DaemonService.class);
+                    intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
+                    startService(intent);
+                }
+            }
+            else if (key.equals("routing"))
+            {
+                // routing scheme changed
+                // check runlevel and restart some runlevels if necessary
+                final Intent intent = new Intent(Preferences.this, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS.swigValue() - 1);
+                startService(intent);
+            }
+            else if (key.startsWith("interface_"))
+            {
+                // a interface has been removed or added
+                // check runlevel and restart some runlevels if necessary
+                final Intent intent = new Intent(Preferences.this, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
+                startService(intent);
+            }
+            else if (key.startsWith("endpoint_id"))
+            {
+                // the endpoint id has been changed
+                // check runlevel and restart some runlevels if necessary
+                final Intent intent = new Intent(Preferences.this, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_API.swigValue() - 1);
+                startService(intent);
+            }
+            else if (key.startsWith("discovery_announce"))
+            {
+                final Intent intent = new Intent(Preferences.this, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
+                startService(intent);
+            }
+            else if (key.startsWith("checkIdleTimeout"))
+            {
+                final Intent intent = new Intent(Preferences.this, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
+                startService(intent);
+            }
+            else if (key.startsWith("checkFragmentation"))
+            {
+                final Intent intent = new Intent(Preferences.this, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
+                startService(intent);
+            }
+            else if (key.startsWith("constrains_lifetime"))
+            {
+				// startup the daemon process
+				final Intent intent = new Intent(Preferences.this, DaemonService.class);
+				intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONFIGURATION_CHANGED);
+				intent.putExtra("key", key);
+				startService(intent);
+            }
+            else if (key.startsWith("constrains_timestamp"))
+            {
+				// startup the daemon process
+				final Intent intent = new Intent(Preferences.this, DaemonService.class);
+				intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONFIGURATION_CHANGED);
+				intent.putExtra("key", key);
+				startService(intent);
+            }
+            else if (key.startsWith("security_mode"))
+            {
+				// startup the daemon process
+				final Intent intent = new Intent(Preferences.this, DaemonService.class);
+				intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONFIGURATION_CHANGED);
+				intent.putExtra("key", key);
+				startService(intent);
+            }
+            else if (key.startsWith("security_bab_key"))
+            {
+				// startup the daemon process
+				final Intent intent = new Intent(Preferences.this, DaemonService.class);
+				intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONFIGURATION_CHANGED);
+				intent.putExtra("key", key);
+				startService(intent);
+            }
+            else if (key.startsWith("timesync_mode"))
+            {
+                final Intent intent = new Intent(Preferences.this, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_API.swigValue() - 1);
+                startService(intent);
+            }
+            else
+            {
+				// send configuration change as intent to the service
+				final Intent intent = new Intent(Preferences.this, DaemonService.class);
+				intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONFIGURATION_CHANGED);
+				intent.putExtra("key", key);
+				startService(intent);
+            }
         }
     };
 }

@@ -277,24 +277,10 @@ public class DaemonProcess {
         }
     }
     
-    public void onPreferenceChanged(String key) {
+    public void onConfigurationChanged(String key) {
     	SharedPreferences prefs = DaemonService.getSharedPreferences(this.mContext);
-        
-        if (key.equals("enabledSwitch"))
-        {
-            if (prefs.getBoolean(key, false)) {
-                // startup the daemon process
-                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
-                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-                DaemonProcess.this.mContext.startService(intent);
-            } else {
-                // shutdown the daemon
-                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
-                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
-                DaemonProcess.this.mContext.startService(intent);
-            }
-        }
-        else if (key.equals("cloud_uplink"))
+
+        if (key.equals("cloud_uplink"))
         {
         	synchronized(DaemonProcess.this) {
                 if (prefs.getBoolean(key, false)) {
@@ -305,77 +291,6 @@ public class DaemonProcess {
                             __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
                 }
         	}
-        }
-        else if (key.equals("routing"))
-        {
-            // routing scheme changed
-            // check runlevel and restart some runlevels if necessary
-            final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
-            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-            intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS.swigValue() - 1);
-            DaemonProcess.this.mContext.startService(intent);
-        }
-        else if (key.startsWith("interface_"))
-        {
-            // a interface has been removed or added
-            // check runlevel and restart some runlevels if necessary
-            final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
-            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-            intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
-            DaemonProcess.this.mContext.startService(intent);
-        }
-        else if (key.startsWith("endpoint_id"))
-        {
-            // the endpoint id has been changed
-            // check runlevel and restart some runlevels if necessary
-            final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
-            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-            intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_API.swigValue() - 1);
-            DaemonProcess.this.mContext.startService(intent);
-        }
-        else if (key.startsWith("discovery_announce"))
-        {
-            final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
-            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-            intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
-            DaemonProcess.this.mContext.startService(intent);
-        }
-        else if (key.startsWith("checkIdleTimeout"))
-        {
-            final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
-            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-            intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
-            DaemonProcess.this.mContext.startService(intent);
-        }
-        else if (key.startsWith("checkFragmentation"))
-        {
-            final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
-            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-            intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
-            DaemonProcess.this.mContext.startService(intent);
-        }
-        else if (key.startsWith("constrains_lifetime"))
-        {
-            onConfigurationChanged();
-        }
-        else if (key.startsWith("constrains_timestamp"))
-        {
-            onConfigurationChanged();
-        }
-        else if (key.startsWith("security_mode"))
-        {
-            onConfigurationChanged();
-        }
-        else if (key.startsWith("security_bab_key"))
-        {
-            onConfigurationChanged();
-        }
-        else if (key.startsWith("timesync_mode"))
-        {
-            final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
-            intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-            intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_API.swigValue() - 1);
-            DaemonProcess.this.mContext.startService(intent);
         }
         else if (key.startsWith("log_options"))
         {
@@ -434,6 +349,8 @@ public class DaemonProcess {
                     mDaemon.setLogFile("", 0);
                 }
             }
+        } else {
+        	this.onConfigurationChanged();
         }
     }
 	
