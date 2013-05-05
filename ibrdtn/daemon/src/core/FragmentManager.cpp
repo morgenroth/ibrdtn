@@ -151,6 +151,9 @@ namespace dtn
 		void FragmentManager::componentDown() throw ()
 		{
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
+
+			stop();
+			join();
 		}
 
 		void FragmentManager::raiseEvent(const Event *evt) throw ()
