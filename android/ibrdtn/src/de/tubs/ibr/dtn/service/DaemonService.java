@@ -58,6 +58,7 @@ public class DaemonService extends Service {
     public static final String ACTION_RESTART = "de.tubs.ibr.dtn.action.RESTART";
     public static final String UPDATE_NOTIFICATION = "de.tubs.ibr.dtn.action.UPDATE_NOTIFICATION";
     public static final String PREFERENCE_CHANGED = "de.tubs.ibr.dtn.action.PREFERENCE_CHANGED";
+    public static final String ACTION_INITIATE_CONNECTION = "de.tubs.ibr.dtn.action.ACTION_INITIATE_CONNECTION";
     
     public static final String PREFERENCE_NAME = "de.tubs.ibr.dtn.service_prefs";
 
@@ -168,6 +169,10 @@ public class DaemonService extends Service {
         } else if (PREFERENCE_CHANGED.equals(action)) {
         	if (intent.hasExtra("key")) {
         		mDaemonProcess.onPreferenceChanged(intent.getStringExtra("key"));
+        	}
+        } else if (ACTION_INITIATE_CONNECTION.equals(action)) {
+        	if (intent.hasExtra("endpoint")) {
+        		mDaemonProcess.initiateConnection(intent.getStringExtra("endpoint"));
         	}
         }
         

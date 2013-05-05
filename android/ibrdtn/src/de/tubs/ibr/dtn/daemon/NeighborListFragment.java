@@ -42,10 +42,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.Node;
+import de.tubs.ibr.dtn.service.DaemonService;
 
 public class NeighborListFragment extends ListFragment {
 
@@ -70,7 +72,22 @@ public class NeighborListFragment extends ListFragment {
         }
     };
 
-    private BroadcastReceiver _receiver = new BroadcastReceiver() {
+    @Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		NeighborListAdapter nla = (NeighborListAdapter)this.getListAdapter();
+		Node n = (Node)nla.getItem(position);
+		
+        // initiate connection via intent
+        final Intent intent = new Intent(getActivity(), DaemonService.class);
+        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_INITIATE_CONNECTION);
+        intent.putExtra("endpoint", n.endpoint.toString());
+        getActivity().startService(intent);
+    	
+    	// call super-method
+    	super.onListItemClick(l, v, position, id);
+	}
+
+	private BroadcastReceiver _receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.NEIGHBOR)) {

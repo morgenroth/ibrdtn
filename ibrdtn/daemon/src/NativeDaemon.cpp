@@ -518,6 +518,17 @@ namespace dtn
 			}
 		}
 
+		void NativeDaemon::initiateConnection(std::string eid)
+		{
+			dtn::data::EID neighbor(eid);
+			dtn::net::ConnectionManager &cm = dtn::core::BundleCore::getInstance().getConnectionManager();
+
+			try {
+				const dtn::core::Node n = cm.getNeighbor(neighbor);
+				cm.open(n);
+			} catch (const dtn::net::NeighborNotAvailableException&) { }
+		}
+
 		void NativeDaemon::setLogging(const std::string &defaultTag, int logLevel) const throw ()
 		{
 			/**

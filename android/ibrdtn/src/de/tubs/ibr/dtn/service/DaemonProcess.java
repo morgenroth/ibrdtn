@@ -152,6 +152,12 @@ public class DaemonProcess {
         mHandler.onStateChanged(_state);
     }
     
+    public synchronized void initiateConnection(String endpoint) {
+    	if (getState().equals(DaemonState.ONLINE)) {
+    		mDaemon.initiateConnection(endpoint);
+    	}
+    }
+    
     public synchronized void initialize() {
     	// lower the thread priority
     	android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
