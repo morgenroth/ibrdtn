@@ -267,22 +267,32 @@ namespace dtn
 						// create a new BLOB object
 						SQLiteBLOB *blob = new SQLiteBLOB(_blobPath);
 
+						// create a reference of the BLOB
+						ibrcommon::BLOB::Reference ref(blob);
+
 						// remove the corresponding file
 						blob->_file.remove();
 
-						// generate a hardlink, pointing to the BLOB file
-						if ( ::link(file.getPath().c_str(), blob->_file.getPath().c_str()) == 0)
-						{
-							// create a reference of the BLOB
-							ibrcommon::BLOB::Reference ref(blob);
+						try {
+							// generate a hard-link, pointing to the BLOB file
+							if ( ::link(file.getPath().c_str(), blob->_file.getPath().c_str()) != 0 )
+							{
+								// copy the BLOB into a new file if hard-links are not supported
+								blob->_file = ibrcommon::TemporaryFile(_blobPath, "blob");
+								std::ofstream fout(blob->_file.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
+
+								// open the filestream
+								ibrcommon::BLOB::iostream stream = ref.iostream();
+
+								const std::streamsize length = stream.size();
+								ibrcommon::BLOB::copy(fout, (*stream), length);
+							}
 
 							// add payload block to the bundle
 							bundle.push_back(ref);
-						}
-						else
-						{
-							delete blob;
-							IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", error) << "unable to load bundle: failed to create a hard-link" << IBRCOMMON_LOGGER_ENDL;
+						} catch (const ibrcommon::Exception &ex) {
+							IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", error) << "unable to load bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+							throw dtn::SerializationFailedException(ex.what());
 						}
 					}
 					else
@@ -343,37 +353,52 @@ namespace dtn
 					const dtn::data::Block &block = (**it);
 
 					// create a temporary file
-					ibrcommon::TemporaryFile tmpfile(_blockPath, "block");
+					ibrcommon::TemporaryFile tmpfile(_blockPath, (block.getType() == dtn::data::PayloadBlock::BLOCK_TYPE) ? "payload" : "block");
 
-					try {
+					if (block.getType() == dtn::data::PayloadBlock::BLOCK_TYPE)
+					{
 						try {
 							const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(block);
 							ibrcommon::BLOB::Reference ref = payload.getBLOB();
 							ibrcommon::BLOB::iostream stream = ref.iostream();
 
-							const SQLiteBLOB &blob = dynamic_cast<const SQLiteBLOB&>(*ref);
+							try {
+								const SQLiteBLOB &blob = dynamic_cast<const SQLiteBLOB&>(*ref);
 
-							// first remove the tmp file
-							tmpfile.remove();
+								// first remove the tmp file
+								tmpfile.remove();
 
-							// make a hardlink to the origin blob file
-							if ( ::link(blob._file.getPath().c_str(), tmpfile.getPath().c_str()) != 0 )
-							{
-								tmpfile = ibrcommon::TemporaryFile(_blockPath, "block");
-								throw ibrcommon::Exception("hard-link failed");
+								// make a hard-link to the origin blob file
+								if ( ::link(blob._file.getPath().c_str(), tmpfile.getPath().c_str()) != 0 )
+								{
+									// copy the BLOB into a new file if hard-links are not supported
+									tmpfile = ibrcommon::TemporaryFile(_blockPath, "payload");
+									std::ofstream fout(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
+
+									const std::streamsize length = stream.size();
+									ibrcommon::BLOB::copy(fout, (*stream), length);
+								}
+							} catch (const std::bad_cast&) {
+								// copy the BLOB into a new file this isn't a sqlite block object
+								tmpfile = ibrcommon::TemporaryFile(_blockPath, "payload");
+								std::ofstream fout(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
+
+								const std::streamsize length = stream.size();
+								ibrcommon::BLOB::copy(fout, (*stream), length);
 							}
 						} catch (const std::bad_cast&) {
-							throw ibrcommon::Exception("not a Payload or SQLiteBLOB");
+							throw ibrcommon::Exception("not a payload block");
 						}
-
-						storedBytes += _blockPath.size();
-					} catch (const ibrcommon::Exception&) {
-						std::ofstream filestream(tmpfile.getPath().c_str(), std::ios_base::out | std::ios::binary);
+					}
+					else
+					{
+						std::ofstream filestream(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
 						dtn::data::SeparateSerializer serializer(filestream);
 						serializer << block;
-						storedBytes += serializer.getLength(block);
 						filestream.close();
 					}
+
+					storedBytes += tmpfile.size();
 
 					_database.store(id, index, block, tmpfile);
 
