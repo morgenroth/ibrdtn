@@ -275,7 +275,7 @@ namespace dtn
 						return abs_offset - header;
 					} catch (std::bad_cast&) { };
 				}
-			} catch (const dtn::SerializationFailedException&) {
+			} catch (const dtn::InvalidDataException&) {
 				// failure while calculating the bundle length
 			}
 
