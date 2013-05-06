@@ -47,7 +47,9 @@ namespace dtn
 				SQL_TABLE_BUNDLE_ROUTING_INFO = 3,
 				SQL_TABLE_NODE_ROUTING_INFO = 4,
 				SQL_TABLE_PROPERTIES = 5,
-				SQL_TABLE_END = 6
+				SQL_TABLE_SEEN_BUNDLES = 6,
+				SQL_TABLE_END = 7
+
 			};
 
 			// enum of all possible statements
@@ -78,6 +80,15 @@ namespace dtn
 				BLOCK_CLEAR,
 				BLOCK_STORE,
 
+                SEEN_BUNDLE_ADD,
+                SEEN_BUNDLE_CLEAR,
+                SEEN_BUNDLE_GET,
+                SEEN_BUNDLE_EXPIRE,
+                SEEN_BUNDLE_REMOVE,
+                SEEN_BUNDLE_GETALL,
+                SEEN_BUNDLE_COUNT,
+                SEEN_BUNDLE_EXPIRE_NEXT_TIMESTAMP,
+
 				VACUUM,
 				SQL_QUERIES_END
 			};
@@ -95,7 +106,8 @@ namespace dtn
 			static const std::string _sql_queries[SQL_QUERIES_END];
 
 			// array of the db structure as sql
-			static const std::string _db_structure[11];
+			static const int DB_STRUCTURE_END = 13;
+			static const std::string _db_structure[DB_STRUCTURE_END];
 
 			static const std::string TAG;
 
@@ -247,6 +259,37 @@ namespace dtn
 			 * iterate through all the bundles and call the iterateDatabase() on each bundle
 			 */
 			void iterateAll() throw (SQLiteQueryException);
+
+  /**
+             * add a seen bundle to the database
+             * @param bundle
+             */
+            void add_seen_bundle(const dtn::data::MetaBundle &bundle) throw (SQLiteQueryException);
+
+            /**
+             * returns true, if database contains the bundle, false if not
+             */
+            bool contains_seen_bundle(const dtn::data::BundleID &id) const throw (SQLiteQueryException);
+
+            /*
+             * removes all seen bundles from database
+             */
+            void clear_seen_bundles() throw (SQLiteQueryException);
+
+            /*
+             * removes specific bundle from database
+             */
+            void erase_seen_bundle(const dtn::data::BundleID &id) throw (SQLiteQueryException);
+
+            /*
+             * returns a set of all bundles contained in the database
+             */
+            std::set<dtn::data::MetaBundle> get_all_seen_bundles() throw (SQLiteQueryException);
+            /*
+             * returns number of seen bundles
+             */
+            unsigned int count_seen_bundles() const throw (SQLiteQueryException);
+
 
 			/*** BEGIN: methods for unit-testing ***/
 

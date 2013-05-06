@@ -8,7 +8,8 @@ noinst_HEADERS = \
 	DataStorageTest.h \
 	FakeDatagramService.h \
 	NativeSerializerTest.h \
-	NodeTest.hh
+	NodeTest.hh \
+	SQLiteBundleSetTest.hh
 
 unittest_SOURCES = \
 	Main.cpp \
@@ -20,8 +21,9 @@ unittest_SOURCES = \
 	DataStorageTest.cpp \
 	FakeDatagramService.cpp \
 	NativeSerializerTest.cpp \
-	NodeTest.cpp
-	
+	NodeTest.cpp \
+	SQLiteBundleSetTest.cpp
+
 # what flags you want to pass to the C compiler & linker
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/tests/unittests $(ibrdtn_CFLAGS) $(CPPUNIT_CFLAGS) -Wall $(CURL_CFLAGS) $(SQLITE_CFLAGS)
 AM_LDFLAGS = $(ibrdtn_LIBS) $(CPPUNIT_LIBS) $(CURL_LIBS) $(SQLITE_LIBS)

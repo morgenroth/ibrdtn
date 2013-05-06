@@ -44,7 +44,7 @@ namespace dtn
 		};
 
 		const std::string SQLiteDatabase::_tables[SQL_TABLE_END] =
-				{ "bundles", "blocks", "routing", "routing_bundles", "routing_nodes", "properties" };
+				{ "bundles", "blocks", "routing", "routing_bundles", "routing_nodes", "properties", "seen_bundles" };
 
 		// this is the version of a fresh created db scheme
 		const int SQLiteDatabase::DBSCHEMA_FRESH_VERSION = 3;
@@ -81,10 +81,19 @@ namespace dtn
 			"DELETE FROM "+ _tables[SQL_TABLE_BLOCK] +";",
 			"INSERT INTO "+ _tables[SQL_TABLE_BLOCK] +" (source_id, timestamp, sequencenumber, fragmentoffset, blocktype, filename, ordernumber) VALUES (?,?,?,?,?,?,?);",
 
+			"INSERT INTO " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime) VALUES (?,?,?,?,?);",
+			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + ";",
+			"SELECT * FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
+			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE expiretime <= ?;",
+			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
+			"SELECT * FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + ";",
+			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + ";",
+			"SELECT expiretime FROM "+ _tables[SQL_TABLE_SEEN_BUNDLES] +" ORDER BY expiretime ASC LIMIT 1;",
+
 			"VACUUM;",
 		};
 
-		const std::string SQLiteDatabase::_db_structure[11] =
+		const std::string SQLiteDatabase::_db_structure[SQLiteDatabase::DB_STRUCTURE_END] =
 		{
 			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BLOCK] + "` ( `key` INTEGER PRIMARY KEY ASC, `source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL DEFAULT 0, `blocktype` INTEGER NOT NULL, `filename` TEXT NOT NULL, `ordernumber` INTEGER NOT NULL);",
 			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BUNDLE] + "` ( `key` INTEGER PRIMARY KEY ASC, `source_id` TEXT NOT NULL, `source` TEXT NOT NULL, `destination` TEXT NOT NULL, `reportto` TEXT NOT NULL, `custodian` TEXT NOT NULL, `procflags` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `lifetime` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL DEFAULT 0, `appdatalength` INTEGER NOT NULL DEFAULT 0, `expiretime` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `hopcount` INTEGER DEFAULT NULL, `netpriority` INTEGER NOT NULL DEFAULT 0);",
@@ -98,6 +107,7 @@ namespace dtn
 			"CREATE UNIQUE INDEX IF NOT EXISTS bundles_id ON " + _tables[SQL_TABLE_BUNDLE] + " (source_id, timestamp, sequencenumber, fragmentoffset);"
 			"CREATE INDEX IF NOT EXISTS bundles_expire ON " + _tables[SQL_TABLE_BUNDLE] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime);",
 			"CREATE TABLE IF NOT EXISTS '" + _tables[SQL_TABLE_PROPERTIES] + "' ( `key` TEXT PRIMARY KEY ASC ON CONFLICT REPLACE, `value` TEXT NOT NULL);"
+			"CREATE TABLE IF NOT EXISTS " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (`source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER DEFAULT NULL, `expiretime` INTEGER, PRIMARY KEY(`source_id`, `timestamp`, `sequencenumber`, `fragmentoffset`));"
 		};
 
 		SQLiteDatabase::SQLBundleQuery::SQLBundleQuery()
@@ -133,7 +143,7 @@ namespace dtn
 			}
 		}
 
-		int SQLiteDatabase::Statement::step() throw (SQLiteQueryException)
+		int SQLiteDatabase::Statement::step() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			if (_st == NULL)
 				throw SQLiteQueryException("statement not prepared");
@@ -250,7 +260,7 @@ namespace dtn
 					}
 
 					// create all tables
-					for (size_t i = 0; i < 11; ++i)
+					for (size_t i = 0; i < DB_STRUCTURE_END; ++i)
 					{
 						Statement st(_database, _db_structure[i]);
 						int err = st.step();
@@ -338,6 +348,9 @@ namespace dtn
 
 		void SQLiteDatabase::get(const dtn::data::BundleID &id, dtn::data::MetaBundle &meta) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException)
 		{
+			// check if the bundle is already on the deletion list
+			if (contains_deletion(id)) throw dtn::storage::NoBundleFoundException();
+
 			// lock the prepared statement
 			Statement st(_database, _sql_queries[BUNDLE_GET_ID]);
 
@@ -441,6 +454,101 @@ namespace dtn
 
 			st.reset();
 		}
+		void SQLiteDatabase::add_seen_bundle(const dtn::data::MetaBundle &bundle) throw (SQLiteDatabase::SQLiteQueryException)
+				{
+					//inform database about (potentially) new expiretime
+					dtn::data::Timestamp TTL = bundle.timestamp + bundle.lifetime;
+					new_expire_time(TTL);
+
+					Statement st(_database, _sql_queries[SEEN_BUNDLE_ADD]);
+
+					const std::string source_id = bundle.source.getString();
+
+
+
+					sqlite3_bind_text(*st,1,source_id.c_str(),source_id.length(),SQLITE_TRANSIENT);
+					sqlite3_bind_int64(*st,2,bundle.timestamp.get<uint64_t>());
+					sqlite3_bind_int64(*st,3,bundle.sequencenumber.get<uint64_t>());
+					sqlite3_bind_int64(*st,4,bundle.offset.get<uint64_t>());
+					sqlite3_bind_int64(*st,5,bundle.expiretime.get<uint64_t>());
+
+					st.step();
+
+				}
+
+				bool SQLiteDatabase::contains_seen_bundle(const dtn::data::BundleID &id) const throw (SQLiteDatabase::SQLiteQueryException)
+				{
+					Statement st( const_cast<sqlite3*>(_database), _sql_queries[SEEN_BUNDLE_GET]);
+
+					const std::string source_id = id.source.getString();
+					sqlite3_bind_text(*st,1,source_id.c_str(),source_id.length(),SQLITE_TRANSIENT);
+					sqlite3_bind_int64(*st,2,id.timestamp.get<uint64_t>());
+					sqlite3_bind_int64(*st,3,id.sequencenumber.get<uint64_t>());
+					sqlite3_bind_int64(*st,4,id.offset.get<uint64_t>());
+
+					if (st.step() == SQLITE_ROW)
+						return true;
+					return false;
+
+				}
+
+				void SQLiteDatabase::clear_seen_bundles() throw (SQLiteDatabase::SQLiteQueryException)
+				{
+					Statement st(_database, _sql_queries[SEEN_BUNDLE_CLEAR]);
+					st.step();
+				}
+
+				//TODO kann weg?
+				void SQLiteDatabase::erase_seen_bundle(const dtn::data::BundleID &id) throw (SQLiteDatabase::SQLiteQueryException)
+				{
+					Statement st(_database, _sql_queries[SEEN_BUNDLE_REMOVE]);
+
+					const std::string source_id = id.source.getString();
+					sqlite3_bind_text(*st,1,source_id.c_str(),source_id.length(),SQLITE_TRANSIENT);
+					sqlite3_bind_int64(*st,2,id.timestamp.get<uint64_t>());
+					sqlite3_bind_int64(*st,3,id.sequencenumber.get<uint64_t>());
+					sqlite3_bind_int64(*st,4,id.offset.get<uint64_t>());
+
+					st.step();
+				}
+				std::set<dtn::data::MetaBundle> SQLiteDatabase::get_all_seen_bundles() throw (SQLiteDatabase::SQLiteQueryException)
+				{
+					Statement st(_database,_sql_queries[SEEN_BUNDLE_GETALL]);
+
+					std::set<dtn::data::MetaBundle> ret;
+
+					while(st.step() == SQLITE_ROW){
+
+						const char* source_id_ptr = reinterpret_cast<const char*> (sqlite3_column_text(*st,0));
+						std::string source_id(source_id_ptr);
+						int timestamp = sqlite3_column_int64(*st,1);
+						int sequencenumber = sqlite3_column_int64(*st,2);
+						int fragmenetoffset = sqlite3_column_int64(*st,3);
+
+						dtn::data::BundleID id(dtn::data::EID(source_id),timestamp,sequencenumber,fragmenetoffset);
+						dtn::data::MetaBundle bundle(id);
+
+						ret.insert(bundle);
+					}
+
+					return ret;
+
+				}
+
+				unsigned int SQLiteDatabase::count_seen_bundles() const throw (SQLiteDatabase::SQLiteQueryException)
+				{
+					int rows = 0;
+
+					Statement st(_database, _sql_queries[SEEN_BUNDLE_COUNT]);
+
+
+					if (( st.step()) == SQLITE_ROW)
+					{
+						rows = sqlite3_column_int(*st, 0);
+					}
+
+					return rows;
+				}
 
 		void SQLiteDatabase::get(const BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException)
 		{
@@ -538,6 +646,9 @@ namespace dtn
 			int err = 0;
 
 			IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 25) << "get bundle from sqlite storage " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+
+			// if bundle is deleted?
+			if (contains_deletion(id)) throw dtn::storage::NoBundleFoundException();
 
 			// do this while db is locked
 			Statement st(_database, _sql_queries[BUNDLE_GET_ID]);
@@ -768,6 +879,9 @@ namespace dtn
 
 			//update deprecated timer
 			update_expire_time();
+
+			// remove it from the deletion list
+			remove_deletion(id);
 		}
 
 		void SQLiteDatabase::clear() throw (SQLiteDatabase::SQLiteQueryException)
@@ -963,6 +1077,21 @@ namespace dtn
 		const dtn::data::Timestamp& SQLiteDatabase::get_expire_time() const throw ()
 		{
 			return _next_expiration;
+		}
+
+		void SQLiteDatabase::add_deletion(const dtn::data::BundleID &id) throw ()
+		{
+			_deletion_list.insert(id);
+		}
+
+		void SQLiteDatabase::remove_deletion(const dtn::data::BundleID &id) throw ()
+		{
+			_deletion_list.erase(id);
+		}
+
+		bool SQLiteDatabase::contains_deletion(const dtn::data::BundleID &id) const throw ()
+		{
+			return (_deletion_list.find(id) != _deletion_list.end());
 		}
 
 		void SQLiteDatabase::set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
