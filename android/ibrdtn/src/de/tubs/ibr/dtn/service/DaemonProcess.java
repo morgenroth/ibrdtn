@@ -37,6 +37,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
+import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 import android.util.Log;
 import de.tubs.ibr.dtn.DaemonState;
@@ -163,7 +164,10 @@ public class DaemonProcess {
     	android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
     	
     	// get daemon preferences
-        SharedPreferences preferences = DaemonService.getSharedPreferences(this.mContext);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        
+        // listen to preference changes
+        preferences.registerOnSharedPreferenceChangeListener(_pref_listener);
 
         // enable debug based on prefs
         int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
@@ -269,6 +273,12 @@ public class DaemonProcess {
 	}
 	
     public synchronized void destroy() {
+        // get daemon preferences
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        
+        // unlisten to preference changes
+        preferences.unregisterOnSharedPreferenceChangeListener(_pref_listener);
+        
         // stop the running daemon
         try {
             mDaemon.init(DaemonRunLevel.RUNLEVEL_ZERO);
@@ -277,82 +287,162 @@ public class DaemonProcess {
         }
     }
     
-    public void onConfigurationChanged(String key) {
-    	SharedPreferences prefs = DaemonService.getSharedPreferences(this.mContext);
-
-        if (key.equals("cloud_uplink"))
-        {
-        	synchronized(DaemonProcess.this) {
+    private SharedPreferences.OnSharedPreferenceChangeListener _pref_listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+            Log.d(TAG, "Preferences has changed " + key);
+            
+            if (key.equals("enabledSwitch"))
+            {
                 if (prefs.getBoolean(key, false)) {
-                    mDaemon.addConnection(__CLOUD_EID__.toString(),
-                            __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+                    // startup the daemon process
+                    final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                    intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
+                    DaemonProcess.this.mContext.startService(intent);
                 } else {
-                    mDaemon.removeConnection(__CLOUD_EID__.toString(),
-                            __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-                }
-        	}
-        }
-        else if (key.startsWith("log_options"))
-        {
-            int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
-            int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
-
-            // disable debugging if the log level is lower than 3
-            if (logLevel < 3) debugVerbosity = 0;
-
-            synchronized(DaemonProcess.this) {
-                // set logging options
-                mDaemon.setLogging("Core", logLevel);
-
-                // set debug verbosity
-                mDaemon.setDebug( debugVerbosity );
-            }
-        }
-        else if (key.startsWith("log_debug_verbosity"))
-        {
-            int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
-            int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
-            
-            // disable debugging if the log level is lower than 3
-            if (logLevel < 3) debugVerbosity = 0;
-            
-            synchronized(DaemonProcess.this) {
-                // set debug verbosity
-                mDaemon.setDebug( debugVerbosity );
-            }
-        }
-        else if (key.startsWith("log_enable_file"))
-        {
-            // set logfile options
-            String logFilePath = null;
-            
-            if (prefs.getBoolean("log_enable_file", false)) {
-                File logPath = DaemonStorageUtils.getStoragePath("logs");
-                if (logPath != null) {
-                    logPath.mkdirs();
-                    Calendar cal = Calendar.getInstance();
-                    String time = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH) + cal.get(Calendar.DAY_OF_MONTH) + cal.get(Calendar.DAY_OF_MONTH)
-                            + cal.get(Calendar.HOUR) + cal.get(Calendar.MINUTE) + cal.get(Calendar.SECOND);
-                    
-                    logFilePath = logPath.getPath() + File.separatorChar + "ibrdtn_" + time + ".log";
+                    // shutdown the daemon
+                    final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                    intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
+                    DaemonProcess.this.mContext.startService(intent);
                 }
             }
-
-            synchronized(DaemonProcess.this) {
-                if (logFilePath != null) {
-                    int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
-                    
-                    // enable file logging
-                    mDaemon.setLogFile(logFilePath, logLevel);
-                } else {
-                    // disable file logging
-                    mDaemon.setLogFile("", 0);
+            else if (key.equals("routing"))
+            {
+                // routing scheme changed
+                // check runlevel and restart some runlevels if necessary
+                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS.swigValue() - 1);
+                DaemonProcess.this.mContext.startService(intent);
+            }
+            else if (key.startsWith("interface_"))
+            {
+                // a interface has been removed or added
+                // check runlevel and restart some runlevels if necessary
+                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
+                DaemonProcess.this.mContext.startService(intent);
+            }
+            else if (key.startsWith("endpoint_id"))
+            {
+                // the endpoint id has been changed
+                // check runlevel and restart some runlevels if necessary
+                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_API.swigValue() - 1);
+                DaemonProcess.this.mContext.startService(intent);
+            }
+            else if (key.startsWith("discovery_announce"))
+            {
+                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
+                DaemonProcess.this.mContext.startService(intent);
+            }
+            else if (key.startsWith("checkIdleTimeout"))
+            {
+                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
+                DaemonProcess.this.mContext.startService(intent);
+            }
+            else if (key.startsWith("checkFragmentation"))
+            {
+                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
+                DaemonProcess.this.mContext.startService(intent);
+            }
+            else if (key.startsWith("timesync_mode"))
+            {
+                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_API.swigValue() - 1);
+                DaemonProcess.this.mContext.startService(intent);
+            }
+            else if (key.equals("cloud_uplink"))
+            {
+                Log.d(TAG, key + " == " + String.valueOf( prefs.getBoolean(key, false) ));
+                synchronized(DaemonProcess.this) {
+                    if (prefs.getBoolean(key, false)) {
+                        mDaemon.addConnection(__CLOUD_EID__.toString(),
+                                __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+                    } else {
+                        mDaemon.removeConnection(__CLOUD_EID__.toString(),
+                                __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+                    }
                 }
             }
-        } else {
-        	this.onConfigurationChanged();
+            else if (key.startsWith("log_options"))
+            {
+                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                
+                int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
+                int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
+
+                // disable debugging if the log level is lower than 3
+                if (logLevel < 3) debugVerbosity = 0;
+
+                synchronized(DaemonProcess.this) {
+                    // set logging options
+                    mDaemon.setLogging("Core", logLevel);
+
+                    // set debug verbosity
+                    mDaemon.setDebug( debugVerbosity );
+                }
+            }
+            else if (key.startsWith("log_debug_verbosity"))
+            {
+                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                
+                int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
+                int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
+                
+                // disable debugging if the log level is lower than 3
+                if (logLevel < 3) debugVerbosity = 0;
+                
+                synchronized(DaemonProcess.this) {
+                    // set debug verbosity
+                    mDaemon.setDebug( debugVerbosity );
+                }
+            }
+            else if (key.startsWith("log_enable_file"))
+            {
+                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                
+                // set logfile options
+                String logFilePath = null;
+                
+                if (prefs.getBoolean("log_enable_file", false)) {
+                    File logPath = DaemonStorageUtils.getStoragePath("logs");
+                    if (logPath != null) {
+                        logPath.mkdirs();
+                        Calendar cal = Calendar.getInstance();
+                        String time = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH) + cal.get(Calendar.DAY_OF_MONTH) + cal.get(Calendar.DAY_OF_MONTH)
+                                + cal.get(Calendar.HOUR) + cal.get(Calendar.MINUTE) + cal.get(Calendar.SECOND);
+                        
+                        logFilePath = logPath.getPath() + File.separatorChar + "ibrdtn_" + time + ".log";
+                    }
+                }
+
+                synchronized(DaemonProcess.this) {
+                    if (logFilePath != null) {
+                        int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
+                        
+                        // enable file logging
+                        mDaemon.setLogFile(logFilePath, logLevel);
+                    } else {
+                        // disable file logging
+                        mDaemon.setLogFile("", 0);
+                    }
+                }
+            } else {
+                // default action
+                onConfigurationChanged();
+            }
         }
-    }
+    };
 	
 	private void onConfigurationChanged() {
         String configPath = mContext.getFilesDir().getPath() + "/" + "config";
@@ -421,7 +511,7 @@ public class DaemonProcess {
 		public void levelChanged(DaemonRunLevel level) {
 			if (DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS.equals(level)) {
 			    // enable cloud-uplink
-			    SharedPreferences prefs = DaemonService.getSharedPreferences(DaemonProcess.this.mContext);
+			    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonProcess.this.mContext);
                 if (prefs.getBoolean("cloud_uplink", false)) {
                     mDaemon.addConnection(__CLOUD_EID__.toString(),
                             __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
@@ -477,7 +567,7 @@ public class DaemonProcess {
 	private void createConfig(Context context, String configPath)
 	{
 		// load preferences
-		SharedPreferences preferences = DaemonService.getSharedPreferences(context);
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 		File config = new File(configPath);
 
 		// remove old config file

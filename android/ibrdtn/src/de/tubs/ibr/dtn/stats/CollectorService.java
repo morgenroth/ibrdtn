@@ -27,7 +27,6 @@ import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
-import de.tubs.ibr.dtn.service.DaemonService;
 
 public class CollectorService extends IntentService {
 	
@@ -113,7 +112,7 @@ public class CollectorService extends IntentService {
 				output.close();
 				
 				// check if the last statistic bundle was send at least two hours ago
-				SharedPreferences prefs = DaemonService.getSharedPreferences(CollectorService.this);
+				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(CollectorService.this);
 				Calendar calendar = Calendar.getInstance();
 				calendar.roll(Calendar.HOUR, false);
 				

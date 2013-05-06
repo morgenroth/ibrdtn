@@ -61,7 +61,6 @@ import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonProcess;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.stats.CollectorService;
-import de.tubs.ibr.dtn.swig.DaemonRunLevel;
 
 public class Preferences extends PreferenceActivity {
 	
@@ -95,7 +94,7 @@ public class Preferences extends PreferenceActivity {
 	public static void showStatisticLoggerDialog(final Activity activity) {
 		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
 		    public void onClick(DialogInterface dialog, int which) {
-		    	SharedPreferences prefs = DaemonService.getSharedPreferences(activity);
+		    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
 		        PreferenceActivity prefactivity = (PreferenceActivity)activity;
 		        
 		        @SuppressWarnings("deprecation")
@@ -158,7 +157,7 @@ public class Preferences extends PreferenceActivity {
 	    
 	    case R.id.itemSendDataNow:
 	    {
-	    	SharedPreferences prefs = DaemonService.getSharedPreferences(this);
+	    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 			Calendar now = Calendar.getInstance();
 			prefs.edit().putLong("stats_timestamp", now.getTimeInMillis()).commit(); 
 
@@ -190,7 +189,7 @@ public class Preferences extends PreferenceActivity {
 	}
 	
 	public static void initializeDefaultPreferences(Context context) {
-		SharedPreferences prefs = DaemonService.getSharedPreferences(context);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		
 		if (prefs.getBoolean("initialized", false)) return;
 
@@ -225,14 +224,8 @@ public class Preferences extends PreferenceActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		PreferenceManager prefman = getPreferenceManager();
-		prefman.setSharedPreferencesName(DaemonService.PREFERENCE_NAME);
-		if (android.os.Build.VERSION.SDK_INT >= 11) {
-			prefman.setSharedPreferencesMode(Context.MODE_MULTI_PROCESS);
-		}
-		
 		// set default preference values
-		DaemonService.setDefaultValues(this, R.xml.preferences, false);
+		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 		
 		// initialize default values if configured set already
 		initializeDefaultPreferences(this);
@@ -258,11 +251,8 @@ public class Preferences extends PreferenceActivity {
 	                    Gravity.CENTER_VERTICAL | Gravity.RIGHT));
 	        //}
 	        
-	        SharedPreferences prefs = DaemonService.getSharedPreferences(Preferences.this);
+	        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 
-	        // listen to preference changes
-	        prefs.registerOnSharedPreferenceChangeListener(_pref_listener);
-	        
 	        // read initial state of the switch
 	        actionBarSwitch.setChecked( prefs.getBoolean("enabledSwitch", false) );
 	        
@@ -271,13 +261,13 @@ public class Preferences extends PreferenceActivity {
 
 					if (val) {
 						// set "enabledSwitch" preference to true
-						SharedPreferences prefs = DaemonService.getSharedPreferences(Preferences.this);
+						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", true).commit();
 					}
 					else
 					{
 						// set "enabledSwitch" preference to false
-						SharedPreferences prefs = DaemonService.getSharedPreferences(Preferences.this);
+						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", false).commit();
 					}
 				}
@@ -362,126 +352,9 @@ public class Preferences extends PreferenceActivity {
 		super.onResume();
 		
 		// on first startup ask for permissions to collect statistical data
-		SharedPreferences prefs = DaemonService.getSharedPreferences(Preferences.this);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 		if (!prefs.getBoolean("collect_stats_initialized", false)) {
 			showStatisticLoggerDialog(Preferences.this);
 		}
 	}
-	
-    private SharedPreferences.OnSharedPreferenceChangeListener _pref_listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-        @Override
-        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-            Log.d(TAG, "Preferences has changed " + key);
-            
-            if (key.equals("enabledSwitch"))
-            {
-                if (prefs.getBoolean(key, false)) {
-                    // startup the daemon process
-                    final Intent intent = new Intent(Preferences.this, DaemonService.class);
-                    intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-                    startService(intent);
-                } else {
-                    // shutdown the daemon
-                    final Intent intent = new Intent(Preferences.this, DaemonService.class);
-                    intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
-                    startService(intent);
-                }
-            }
-            else if (key.equals("routing"))
-            {
-                // routing scheme changed
-                // check runlevel and restart some runlevels if necessary
-                final Intent intent = new Intent(Preferences.this, DaemonService.class);
-                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS.swigValue() - 1);
-                startService(intent);
-            }
-            else if (key.startsWith("interface_"))
-            {
-                // a interface has been removed or added
-                // check runlevel and restart some runlevels if necessary
-                final Intent intent = new Intent(Preferences.this, DaemonService.class);
-                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
-                startService(intent);
-            }
-            else if (key.startsWith("endpoint_id"))
-            {
-                // the endpoint id has been changed
-                // check runlevel and restart some runlevels if necessary
-                final Intent intent = new Intent(Preferences.this, DaemonService.class);
-                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_API.swigValue() - 1);
-                startService(intent);
-            }
-            else if (key.startsWith("discovery_announce"))
-            {
-                final Intent intent = new Intent(Preferences.this, DaemonService.class);
-                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
-                startService(intent);
-            }
-            else if (key.startsWith("checkIdleTimeout"))
-            {
-                final Intent intent = new Intent(Preferences.this, DaemonService.class);
-                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
-                startService(intent);
-            }
-            else if (key.startsWith("checkFragmentation"))
-            {
-                final Intent intent = new Intent(Preferences.this, DaemonService.class);
-                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
-                startService(intent);
-            }
-            else if (key.startsWith("constrains_lifetime"))
-            {
-				// startup the daemon process
-				final Intent intent = new Intent(Preferences.this, DaemonService.class);
-				intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONFIGURATION_CHANGED);
-				intent.putExtra("key", key);
-				startService(intent);
-            }
-            else if (key.startsWith("constrains_timestamp"))
-            {
-				// startup the daemon process
-				final Intent intent = new Intent(Preferences.this, DaemonService.class);
-				intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONFIGURATION_CHANGED);
-				intent.putExtra("key", key);
-				startService(intent);
-            }
-            else if (key.startsWith("security_mode"))
-            {
-				// startup the daemon process
-				final Intent intent = new Intent(Preferences.this, DaemonService.class);
-				intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONFIGURATION_CHANGED);
-				intent.putExtra("key", key);
-				startService(intent);
-            }
-            else if (key.startsWith("security_bab_key"))
-            {
-				// startup the daemon process
-				final Intent intent = new Intent(Preferences.this, DaemonService.class);
-				intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONFIGURATION_CHANGED);
-				intent.putExtra("key", key);
-				startService(intent);
-            }
-            else if (key.startsWith("timesync_mode"))
-            {
-                final Intent intent = new Intent(Preferences.this, DaemonService.class);
-                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_API.swigValue() - 1);
-                startService(intent);
-            }
-            else
-            {
-				// send configuration change as intent to the service
-				final Intent intent = new Intent(Preferences.this, DaemonService.class);
-				intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_CONFIGURATION_CHANGED);
-				intent.putExtra("key", key);
-				startService(intent);
-            }
-        }
-    };
 }

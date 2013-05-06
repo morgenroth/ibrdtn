@@ -8,7 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import de.tubs.ibr.dtn.service.DaemonService;
+import android.preference.PreferenceManager;
 
 public class DataReceiver extends BroadcastReceiver {
 	
@@ -17,7 +17,7 @@ public class DataReceiver extends BroadcastReceiver {
 		if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.EVENT)) {
 			
 			// check if enabled
-			SharedPreferences prefs = DaemonService.getSharedPreferences(context);
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 			if (!prefs.getBoolean("collect_stats", false)) return;
 			
 			String eventName = intent.getStringExtra("name");
