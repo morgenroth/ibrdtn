@@ -545,6 +545,7 @@ namespace dtn
 					case NODE_CONNECTED: return true;
 					case NODE_DISCOVERED: return true;
 					case NODE_STATIC_LOCAL: return true;
+					case NODE_P2P_DIALUP: return true;
 					default: break;
 					}
 				}
@@ -567,6 +568,9 @@ namespace dtn
 					return true;
 
 				case NODE_STATIC_LOCAL:
+					return true;
+
+				case NODE_P2P_DIALUP:
 					return true;
 
 				default:
