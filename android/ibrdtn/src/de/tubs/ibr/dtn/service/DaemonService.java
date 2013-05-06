@@ -171,6 +171,28 @@ public class DaemonService extends Service {
         	}
         } else if (ACTION_CLEAR_STORAGE.equals(action)) {
         	mDaemonProcess.clearStorage();
+        } else if ("de.hendrikfreytag.wifip2p4ibrdtn.action.CONNECTION_CHANGED".equals(action)) {
+            final int state = intent.getIntExtra("de.hendrikfreytag.wifip2p4ibrdtn.extra.STATE", -1);
+            final String iface = intent.getStringExtra("de.hendrikfreytag.wifip2p4ibrdtn.extra.INTERFACE");
+
+            switch (state) {
+            case 0:
+                Log.d(TAG, "Interface down: " + iface);
+                _p2p_manager.fireInterfaceDown(iface);
+                break;
+            case 1:
+                Log.d(TAG, "Interface up: " + iface);
+                _p2p_manager.fireInterfaceUp(iface);
+                break;
+            default:
+                Log.d(TAG, "Unknown state: " + iface);
+                break;
+        
+            }
+        } else if ("de.hendrikfreytag.wifip2p4ibrdtn.action.PEER_FOUND".equals(action)) {
+            final String eid = intent.getStringExtra("de.hendrikfreytag.wifip2p4ibrdtn.extra.EID");
+            final String mac = intent.getStringExtra("de.hendrikfreytag.wifip2p4ibrdtn.extra.MAC");
+            _p2p_manager.fireDiscovered(eid, mac);
         }
         
         // stop the daemon if it should be offline

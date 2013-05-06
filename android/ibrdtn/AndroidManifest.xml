@@ -28,6 +28,7 @@
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"/>
+	<uses-permission android:name="de.hendrikfreytag.wifip2p4ibrdtn.permission.REQUEST_PEER_CONNECTION"/>
 
     <uses-sdk
         android:minSdkVersion="9"
@@ -57,6 +58,8 @@
                 <action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
                 <action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
                 <action android:name="de.tubs.ibr.dtn.DTNService" />
+				<action android:name="de.hendrikfreytag.wifip2p4ibrdtn.action.CONNECTION_CHANGED"/>
+				<action android:name="de.hendrikfreytag.wifip2p4ibrdtn.action.PEER_FOUND"/>
             </intent-filter>
         </service>
         
