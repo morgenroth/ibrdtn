@@ -279,6 +279,8 @@ namespace dtn
 							// generate a hard-link, pointing to the BLOB file
 							if ( ::link(file.getPath().c_str(), blob->_file.getPath().c_str()) != 0 )
 							{
+								IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 25) << "hard-link failed (" << errno << ") " << blob->_file.getPath() << " -> " << file.getPath() << IBRCOMMON_LOGGER_ENDL;
+
 								// copy the BLOB into a new file if hard-links are not supported
 								blob->_file = ibrcommon::TemporaryFile(_blobPath, "blob");
 								std::ofstream fout(blob->_file.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
@@ -373,6 +375,8 @@ namespace dtn
 								// make a hard-link to the origin blob file
 								if ( ::link(blob._file.getPath().c_str(), tmpfile.getPath().c_str()) != 0 )
 								{
+									IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 25) << "hard-link failed (" << errno << ") " << tmpfile.getPath() << " -> " << blob._file.getPath() << IBRCOMMON_LOGGER_ENDL;
+
 									// copy the BLOB into a new file if hard-links are not supported
 									tmpfile = ibrcommon::TemporaryFile(_blockPath, "payload");
 									std::ofstream fout(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
