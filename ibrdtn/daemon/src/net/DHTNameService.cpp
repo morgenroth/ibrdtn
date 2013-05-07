@@ -357,7 +357,7 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 		}
 		if (this->_foundNodes != numberOfHosts) {
 			if (_config.isBlacklistEnabled()) {
-				IBRCOMMON_LOGGER(info) << "DHT Nodes available: "
+				IBRCOMMON_LOGGER_DEBUG(42) << "DHT Nodes available: "
 							<< numberOfHosts << "(Good:" << numberOfGoodHosts
 							<< "+" << numberOfGood6Hosts << ") Blocked: "
 							<< numberOfBlocksHosts << "("
@@ -366,7 +366,7 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 							<< IBRCOMMON_LOGGER_ENDL;
 
 			} else {
-				IBRCOMMON_LOGGER(info) << "DHT Nodes available: "
+				IBRCOMMON_LOGGER_DEBUG(42) << "DHT Nodes available: "
 							<< numberOfHosts << "(Good:" << numberOfGoodHosts
 							<< "+" << numberOfGood6Hosts << ")"
 							<< IBRCOMMON_LOGGER_ENDL;
