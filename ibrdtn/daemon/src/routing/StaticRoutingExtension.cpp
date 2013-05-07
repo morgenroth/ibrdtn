@@ -168,7 +168,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 5) << "processing routing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 5) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);

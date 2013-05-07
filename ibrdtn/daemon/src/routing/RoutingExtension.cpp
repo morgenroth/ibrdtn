@@ -71,7 +71,7 @@ namespace dtn
 				// transfer the bundle to the next hop
 				dtn::core::BundleCore::getInstance().transferTo(entry.eid, id);
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle [" << id.toString() << "] queued for delivery to " << entry.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle " << id.toString() << " queued for " << entry.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::core::P2PDialupException&) {
 				// release the transfer
 				entry.releaseTransfer(id);

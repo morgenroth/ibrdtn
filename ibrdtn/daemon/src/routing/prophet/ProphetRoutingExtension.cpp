@@ -113,7 +113,7 @@ namespace dtn
 			try {
 				const DeliveryPredictabilityMap& neighbor_dp_map = response.get<DeliveryPredictabilityMap>();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "delivery predictability map received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "delivery predictability map received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// update the encounter on every routing handshake
 				{
@@ -144,7 +144,7 @@ namespace dtn
 			try {
 				const AcknowledgementSet& neighbor_ack_set = response.get<AcknowledgementSet>();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "AcknowledgementSet received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "ack'set received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// merge ack'set into the known bundles
 				for (AcknowledgementSet::const_iterator it = _acknowledgementSet.begin(); it != _acknowledgementSet.end(); ++it) {

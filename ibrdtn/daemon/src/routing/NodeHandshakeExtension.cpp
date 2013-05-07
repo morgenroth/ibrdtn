@@ -87,7 +87,7 @@ namespace dtn
 			try {
 				const BloomFilterSummaryVector bfsv = answer.get<BloomFilterSummaryVector>();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "summary vector received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "summary vector received from " << source.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// get the summary vector (bloomfilter) of this ECM
 				const ibrcommon::BloomFilter &filter = bfsv.getVector().getBloomFilter();
@@ -105,7 +105,7 @@ namespace dtn
 			try {
 				const BloomFilterPurgeVector bfpv = answer.get<BloomFilterPurgeVector>();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "purge vector received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "purge vector received from " << source.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// get the purge vector (bloomfilter) of this ECM
 				const ibrcommon::BloomFilter &purge = bfpv.getVector().getBloomFilter();

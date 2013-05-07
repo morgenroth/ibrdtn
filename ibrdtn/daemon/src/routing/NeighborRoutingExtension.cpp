@@ -147,7 +147,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 5) << "processing routing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 5) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					/**
 					 * SearchNextBundleTask triggers a search for a bundle to transfer
