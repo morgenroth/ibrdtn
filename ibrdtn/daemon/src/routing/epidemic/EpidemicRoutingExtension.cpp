@@ -55,10 +55,12 @@ namespace dtn
 {
 	namespace routing
 	{
+		const std::string EpidemicRoutingExtension::TAG = "EpidemicRoutingExtension";
+
 		EpidemicRoutingExtension::EpidemicRoutingExtension()
 		{
 			// write something to the syslog
-			IBRCOMMON_LOGGER(info) << "Initializing epidemic routing module" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(EpidemicRoutingExtension::TAG, info) << "Initializing epidemic routing module" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		EpidemicRoutingExtension::~EpidemicRoutingExtension()
@@ -161,7 +163,7 @@ namespace dtn
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("EpidemicRoutingExtension", error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(EpidemicRoutingExtension::TAG, error) << "componentUp failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -172,7 +174,7 @@ namespace dtn
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("EpidemicRoutingExtension", error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(EpidemicRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -257,7 +259,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG(50) << "processing epidemic task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 50) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						/**
@@ -281,7 +283,7 @@ namespace dtn
 								BundleFilter filter(entry);
 
 								// some debug output
-								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 								// query some unknown bundle from the storage
 								list.clear();
@@ -304,9 +306,10 @@ namespace dtn
 						} catch (const dtn::storage::NoBundleFoundException&) {
 						} catch (const std::bad_cast&) { };
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in EpidemicRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 20) << "task failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
-				} catch (const std::exception&) {
+				} catch (const std::exception &ex) {
+					IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 15) << "terminated due to " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 

@@ -49,6 +49,8 @@ namespace dtn
 {
 	namespace routing
 	{
+		const std::string NeighborRoutingExtension::TAG = "NeighborRoutingExtension";
+
 		NeighborRoutingExtension::NeighborRoutingExtension()
 		{
 		}
@@ -145,7 +147,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG(5) << "processing neighbor routing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 5) << "processing routing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					/**
 					 * SearchNextBundleTask triggers a search for a bundle to transfer
@@ -170,7 +172,7 @@ namespace dtn
 						list.clear();
 						(**this).getSeeker().get(filter, list);
 
-						IBRCOMMON_LOGGER_DEBUG(5) << "got " << list.size() << " items to transfer to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 5) << "got " << list.size() << " items to transfer to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 						// send the bundles as long as we have resources
 						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
@@ -204,7 +206,7 @@ namespace dtn
 					} catch (const std::bad_cast&) { };
 
 				} catch (const std::exception &ex) {
-					IBRCOMMON_LOGGER_DEBUG(20) << "neighbor routing failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 15) << "terminated due to " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 
@@ -270,7 +272,7 @@ namespace dtn
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("NeighborRoutingExtension", error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(NeighborRoutingExtension::TAG, error) << "componentUp failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -282,7 +284,7 @@ namespace dtn
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("NeighborRoutingExtension", error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(NeighborRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

@@ -48,6 +48,8 @@ namespace dtn
 {
 	namespace routing
 	{
+		const std::string StaticRoutingExtension::TAG = "StaticRoutingExtension";
+
 		StaticRoutingExtension::StaticRoutingExtension()
 		 : next_expire(0)
 		{
@@ -166,7 +168,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG(5) << "processing static routing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 5) << "processing routing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
@@ -200,7 +202,7 @@ namespace dtn
 							BundleFilter filter(entry, routes);
 
 							// some debug
-							IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 							// query all bundles from the storage
 							list.clear();
@@ -222,14 +224,14 @@ namespace dtn
 
 					try {
 						const ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
-						IBRCOMMON_LOGGER_DEBUG(50) << "search static route for " << task.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 50) << "search static route for " << task.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// look for routes to this node
 						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
 								iter != _routes.end(); ++iter)
 						{
 							const StaticRoute &route = (**iter);
-							IBRCOMMON_LOGGER_DEBUG(50) << "check static route: " << route.toString() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 50) << "check static route: " << route.toString() << IBRCOMMON_LOGGER_ENDL;
 							try {
 								if (route.match(task.bundle.destination))
 								{
@@ -332,7 +334,7 @@ namespace dtn
 					} catch (const bad_cast&) { };
 
 				} catch (const std::exception &ex) {
-					IBRCOMMON_LOGGER_DEBUG(20) << "static routing failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 15) << "terminated due to " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 
@@ -453,7 +455,7 @@ namespace dtn
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("StaticRoutingExtension", error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(StaticRoutingExtension::TAG, error) << "componentUp failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -465,7 +467,7 @@ namespace dtn
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("StaticRoutingExtension", error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(StaticRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

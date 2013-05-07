@@ -49,10 +49,12 @@ namespace dtn
 {
 	namespace routing
 	{
+		const std::string FloodRoutingExtension::TAG = "FloodRoutingExtension";
+
 		FloodRoutingExtension::FloodRoutingExtension()
 		{
 			// write something to the syslog
-			IBRCOMMON_LOGGER(info) << "Initializing flooding routing module" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(FloodRoutingExtension::TAG, info) << "Initializing flooding routing module" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		FloodRoutingExtension::~FloodRoutingExtension()
@@ -138,7 +140,7 @@ namespace dtn
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("FloodRoutingExtension", error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(FloodRoutingExtension::TAG, error) << "componentUp failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -149,7 +151,7 @@ namespace dtn
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("FloodRoutingExtension", error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(FloodRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -228,7 +230,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG(50) << "processing flooding task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(FloodRoutingExtension::TAG, 50) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						try {
@@ -246,7 +248,7 @@ namespace dtn
 							BundleFilter filter(entry);
 
 							// some debug
-							IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(FloodRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 							// query all bundles from the storage
 							list.clear();
@@ -265,9 +267,10 @@ namespace dtn
 						} catch (const dtn::storage::NoBundleFoundException&) {
 						} catch (const std::bad_cast&) { };
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in FloodRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(FloodRoutingExtension::TAG, 20) << "task failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
-				} catch (const std::exception&) {
+				} catch (const std::exception &ex) {
+					IBRCOMMON_LOGGER_DEBUG_TAG(FloodRoutingExtension::TAG, 15) << "terminated due to " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 
