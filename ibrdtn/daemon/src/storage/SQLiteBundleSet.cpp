@@ -15,15 +15,11 @@ namespace dtn
 		// spezielle nummern, und generiert
 		// wenn neu generiert -> alte eintr. mit neuer nummer löschen
 
-		SQLiteBundleSet::SQLiteBundleSet(dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase* database)
+		SQLiteBundleSet::SQLiteBundleSet(dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database)
 		 : _bf(bf_size * 8), _listener(listener), _consistent(true),_database(database)
 		{
 		}
 
-		SQLiteBundleSet::SQLiteBundleSet(dtn::storage::SQLiteDatabase* database)
-		 : _bf(1024 * 8), _listener(NULL), _consistent(true), _database(database)
-		{
-		}
 		SQLiteBundleSet::~SQLiteBundleSet()
 		{
 		}
@@ -31,7 +27,7 @@ namespace dtn
 		void SQLiteBundleSet::add(const dtn::data::MetaBundle &bundle) throw()
 		{
 			// insert bundle id into database
-			_database->add_seen_bundle(bundle);
+			_database.add_seen_bundle(bundle);
 
 			// add bundle to the bloomfilter
 			_bf.insert(bundle.toString());
@@ -40,7 +36,7 @@ namespace dtn
 		void SQLiteBundleSet::clear() throw()
 		{
 			_consistent = true;
-			_database->clear_seen_bundles();
+			_database.clear_seen_bundles();
 			_bf.clear();
 		}
 
@@ -52,7 +48,7 @@ namespace dtn
 				// the bundles set. This happen if the MemoryBundleSet gets deserialized.
 				if (!_consistent) return true;
 
-				return _database->contains_seen_bundle(bundle);
+				return _database.contains_seen_bundle(bundle);
 			}
 
 			return false;
@@ -66,7 +62,7 @@ namespace dtn
 			if (timestamp == 0) return;
 
 			// expire in database
-			_database->expire(timestamp);
+			_database.expire(timestamp);
 
 			// raise expired event
 			if (_listener != NULL)
@@ -80,7 +76,7 @@ namespace dtn
 				//kleinste expiretime merken, aufpassen bei add!
 				// rebuild the bloom-filter
 				_bf.clear();
-				std::set<dtn::data::MetaBundle> bundles = _database->get_all_seen_bundles();
+				std::set<dtn::data::MetaBundle> bundles = _database.get_all_seen_bundles();
 				for (std::set<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
 				{
 					_bf.insert( (*iter).toString() );
@@ -90,7 +86,7 @@ namespace dtn
 
 		dtn::data::Size SQLiteBundleSet::size() const throw()
 		{
-			return _database->count_seen_bundles();
+			return _database.count_seen_bundles();
 		}
 
 		dtn::data::Size SQLiteBundleSet::getLength() const throw()
@@ -109,7 +105,7 @@ namespace dtn
 			std::set<dtn::data::MetaBundle> ret;
 
 			//get bundles from db
-			std::set<dtn::data::MetaBundle> bundles = _database->get_all_seen_bundles();
+			std::set<dtn::data::MetaBundle> bundles = _database.get_all_seen_bundles();
 
 			// iterate through all items to find the differences
 			for (std::set<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)

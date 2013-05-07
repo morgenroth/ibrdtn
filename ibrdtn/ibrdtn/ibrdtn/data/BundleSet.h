@@ -53,6 +53,8 @@ namespace dtn
 
 			std::set<dtn::data::MetaBundle> getNotIn(ibrcommon::BloomFilter &filter) const throw ();
 
+			BundleSet  createBundleSet();
+
 			std::ostream& serialize(std::ostream &stream) const;
 			std::istream& deserialize(std::istream &stream);
 

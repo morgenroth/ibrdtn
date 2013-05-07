@@ -10,7 +10,7 @@
  */
 
 #include "ibrdtn/data/BundleSet.h"
-#include "ibrdtn/data/MemoryBundleSet.h"
+#include "ibrdtn/data/BundleSetFactory.h"
 
 namespace dtn
 {
@@ -21,12 +21,8 @@ namespace dtn
 		{
 		}
 
-		BundleSet::BundleSet(BundleSet::Listener *listener, Length bf_size) :
-				_set_impl(new MemoryBundleSet(listener, bf_size))
+		BundleSet::BundleSet(BundleSet::Listener *listener, Length bf_size) : _set_impl(BundleSetFactory::create(listener,bf_size))
 		{
-			//TODO -> factory
-			//default MemoryBundleSet
-
 		}
 		BundleSet::BundleSet(BundleSetImpl* ptr) : _set_impl(ptr)
 		{
@@ -71,8 +67,6 @@ namespace dtn
 		{
 			return _set_impl->getNotIn(filter);
 		}
-
-
 
 		Length BundleSet::getLength() const throw ()
 		{

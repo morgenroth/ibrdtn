@@ -30,7 +30,8 @@ h_sources = \
 	SchedulingBlock.h \
 	Number.h \
 	MemoryBundleSet.h \
-	BundleSetImpl.h
+	BundleSetImpl.h \
+	BundleSetFactory.h
 
 cc_sources = \
 	Serializer.cpp \
@@ -60,7 +61,8 @@ cc_sources = \
 	TrackingBlock.cpp \
 	SchedulingBlock.cpp \
 	MemoryBundleSet.cpp \
-	BundleSetImpl.cpp
+	BundleSetImpl.cpp \
+	BundleSetFactory.cpp
 
 if COMPRESSION
 h_sources += CompressedPayloadBlock.h
