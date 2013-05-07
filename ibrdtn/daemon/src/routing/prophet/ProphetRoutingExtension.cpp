@@ -333,6 +333,9 @@ namespace dtn
 
 		void ProphetRoutingExtension::componentUp() throw ()
 		{
+			// reset task queue
+			_taskqueue.reset();
+
 			// routine checked for throw() on 15.02.2013
 			try {
 				// run the thread

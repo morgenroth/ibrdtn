@@ -450,6 +450,9 @@ namespace dtn
 
 		void StaticRoutingExtension::componentUp() throw ()
 		{
+			// reset the task queue
+			_taskqueue.reset();
+
 			// routine checked for throw() on 15.02.2013
 			try {
 				// run the thread
