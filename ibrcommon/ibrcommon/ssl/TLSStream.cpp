@@ -37,6 +37,7 @@
 namespace ibrcommon
 {
 	static const int ERR_BUF_SIZE = 256;
+	const std::string TLSStream::TAG = "TLSStream";
 
 	SSL_CTX *TLSStream::_ssl_ctx = NULL;
 	bool TLSStream::_initialized = false;
@@ -69,14 +70,14 @@ namespace ibrcommon
 		long error;
 
 		ibrcommon::MutexLock l(_activation_lock);
-		if(_activated){
-			IBRCOMMON_LOGGER(info) << "TLS has already been activated." << IBRCOMMON_LOGGER_ENDL;
+		if (_activated) {
+			IBRCOMMON_LOGGER_TAG(TLSStream::TAG, warning) << "TLS has already been activated." << IBRCOMMON_LOGGER_ENDL;
 			return _peer_cert;
 		}
 
 		/* check if TLSStream has already been initialized */
-		if(!_initialized){
-			IBRCOMMON_LOGGER_TAG("TLSStream", critical) << "TLSStream has not been initialized. Aborting activation." << IBRCOMMON_LOGGER_ENDL;
+		if (!_initialized) {
+			IBRCOMMON_LOGGER_TAG(TLSStream::TAG, critical) << "TLSStream has not been initialized. Aborting activation." << IBRCOMMON_LOGGER_ENDL;
 			throw TLSNotInitializedException("TLSStream is not initialized.");
 		}
 
@@ -86,7 +87,7 @@ namespace ibrcommon
 			char err_buf[ERR_BUF_SIZE];
 			ERR_error_string_n(ERR_get_error(), err_buf, ERR_BUF_SIZE);
 			err_buf[ERR_BUF_SIZE - 1] = '\0';
-			IBRCOMMON_LOGGER_TAG("TLSStream", critical) << "SSL Object creation failed: " << err_buf << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(TLSStream::TAG, critical) << "SSL Object creation failed: " << err_buf << IBRCOMMON_LOGGER_ENDL;
 			throw SSLCreationException(err_buf);
 		}
 
@@ -118,7 +119,8 @@ namespace ibrcommon
 		error = SSL_do_handshake(_ssl);
 		if(error <= 0){ /* on 0 the handshake failed but was shut down controlled */
 			int errcode = SSL_get_error(_ssl, static_cast<int>(error));
-			log_error("TLS handshake failed", errcode);
+
+			IBRCOMMON_LOGGER_TAG(TLSStream::TAG, error) << "TLS handshake failed: " << log_error_msg(errcode) << IBRCOMMON_LOGGER_ENDL;
 
 			/* cleanup */
 			if (_iostreamBIO != NULL) delete _iostreamBIO;
@@ -130,7 +132,7 @@ namespace ibrcommon
 
 		_peer_cert = SSL_get_peer_certificate(_ssl);
 		if((error = SSL_get_verify_result(_ssl)) != X509_V_OK || _peer_cert == NULL){
-			IBRCOMMON_LOGGER_TAG("TLSStream", error) << "Peer certificate could not be verified. Error: " << error << ". Error codes are documented in \"man 1 verify\"." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(TLSStream::TAG, error) << "Peer certificate could not be verified. Error: " << error << ". Error codes are documented in \"man 1 verify\"." << IBRCOMMON_LOGGER_ENDL;
 			if(_peer_cert){
 				X509_free(_peer_cert);
 				_peer_cert = NULL;
@@ -163,11 +165,11 @@ namespace ibrcommon
 					/* clean shutdown */
 					close();
 				} else {
-					log_debug("underflow()", SSL_get_error(_ssl, num_bytes));
+					IBRCOMMON_LOGGER_DEBUG_TAG(TLSStream::TAG, 60) << "underflow() " << log_error_msg(SSL_get_error(_ssl, num_bytes)) << IBRCOMMON_LOGGER_ENDL;
 				}
 				return traits::eof();
-			} else if(num_bytes < 0){
-				log_debug("underflow()", SSL_get_error(_ssl, num_bytes));
+			} else if(num_bytes < 0) {
+				IBRCOMMON_LOGGER_DEBUG_TAG(TLSStream::TAG, 60) << "underflow() " << log_error_msg(SSL_get_error(_ssl, num_bytes)) << IBRCOMMON_LOGGER_ENDL;
 				return traits::eof();
 			}
 		}
@@ -184,11 +186,11 @@ namespace ibrcommon
 				return traits::eof();
 			}
 			if(_stream->fail()){
-				IBRCOMMON_LOGGER_DEBUG_TAG("TLSStream", 15) << "underlying stream failed while reading." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(TLSStream::TAG, 60) << "underlying stream failed while reading." << IBRCOMMON_LOGGER_ENDL;
 				return traits::eof();
 			}
 			if(_stream->bad()){
-				IBRCOMMON_LOGGER_DEBUG_TAG("TLSStream", 15) << "underlying stream went bad while reading." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(TLSStream::TAG, 60) << "underlying stream went bad while reading." << IBRCOMMON_LOGGER_ENDL;
 				return traits::eof();
 			}
 		}
@@ -226,7 +228,7 @@ namespace ibrcommon
 				/* connection closed */
 				return traits::eof();
 			} else if(num_bytes < 0){
-				log_debug("overflow()", SSL_get_error(_ssl, num_bytes));
+				IBRCOMMON_LOGGER_DEBUG_TAG(TLSStream::TAG, 60) << "overflow() " << log_error_msg(SSL_get_error(_ssl, num_bytes)) << IBRCOMMON_LOGGER_ENDL;
 				return traits::eof();
 			}
 		}
@@ -237,8 +239,8 @@ namespace ibrcommon
 			} catch(ios_base::failure &ex){
 				/* ignore, the badbit is checked instead */
 			}
-			if(_stream->bad()){
-				IBRCOMMON_LOGGER_DEBUG_TAG("TLSStream", 15) << "underlying stream went bad while writing." << IBRCOMMON_LOGGER_ENDL;
+			if (_stream->bad()) {
+				IBRCOMMON_LOGGER_DEBUG_TAG(TLSStream::TAG, 60) << "underlying stream went bad while writing." << IBRCOMMON_LOGGER_ENDL;
 				return traits::eof();
 			}
 		}
@@ -250,7 +252,7 @@ namespace ibrcommon
 	{
 		ibrcommon::MutexLock l(_initialization_lock);
 		if(_initialized){
-			IBRCOMMON_LOGGER_TAG("TLSStream", info) << "TLS has already been initialized." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(TLSStream::TAG, info) << "TLS has already been initialized." << IBRCOMMON_LOGGER_ENDL;
 			return;
 		}
 
@@ -271,7 +273,7 @@ namespace ibrcommon
 			char err_buf[ERR_BUF_SIZE];
 			ERR_error_string_n(ERR_get_error(), err_buf, ERR_BUF_SIZE);
 			err_buf[ERR_BUF_SIZE - 1] = '\0';
-			IBRCOMMON_LOGGER_TAG("TLSStream", critical) << "TLS/SSL Context Object creation failed: " << err_buf << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(TLSStream::TAG, critical) << "TLS/SSL Context Object creation failed: " << err_buf << IBRCOMMON_LOGGER_ENDL;
 			throw ContextCreationException(err_buf);
 		}
 
@@ -282,22 +284,22 @@ namespace ibrcommon
 		/* load the trusted certificates from CAPath */
 		if(trustedCAPath.isDirectory()){
 			if(SSL_CTX_load_verify_locations(_ssl_ctx, NULL, trustedCAPath.getPath().c_str()) != 1){
-			   IBRCOMMON_LOGGER_TAG("TLSStream", error) << "SSL_CTX_load_verify_locations failed." << IBRCOMMON_LOGGER_ENDL;
+			   IBRCOMMON_LOGGER_TAG(TLSStream::TAG, error) << "SSL_CTX_load_verify_locations failed." << IBRCOMMON_LOGGER_ENDL;
 			}
 		} else {
-			IBRCOMMON_LOGGER_TAG("TLSStream", info) << "TLS initialization without trusted certificates." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(TLSStream::TAG, info) << "TLS initialization without trusted certificates." << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		/* load the certificate and private key
 		 * the certificate chain will be completed by openssl with certificates from CAPath */
 		if(!certificate || SSL_CTX_use_certificate(_ssl_ctx, certificate) != 1){
-			IBRCOMMON_LOGGER_TAG("TLSStream", critical) << "Could not load the certificate." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(TLSStream::TAG, critical) << "Could not load the certificate." << IBRCOMMON_LOGGER_ENDL;
 			SSL_CTX_free(_ssl_ctx);
 			_ssl_ctx = NULL;
 			throw TLSCertificateFileException("Could not load the certificate.");
 		}
 		if(!privateKey || SSL_CTX_use_PrivateKey(_ssl_ctx, privateKey) != 1){
-			IBRCOMMON_LOGGER_TAG("TLSStream", critical) << "Could not load the private key." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(TLSStream::TAG, critical) << "Could not load the private key." << IBRCOMMON_LOGGER_ENDL;
 			SSL_CTX_free(_ssl_ctx);
 			_ssl_ctx = NULL;
 			throw TLSKeyFileException("Could not load the private key.");
@@ -316,25 +318,25 @@ namespace ibrcommon
 					FILE *fp = fopen(it->getPath().c_str(), "r");
 					if(fp && PEM_read_X509(fp, &cert, NULL, NULL)){
 						if(SSL_CTX_add_client_CA(_ssl_ctx, cert) != 1){
-							IBRCOMMON_LOGGER_TAG("TLSStream", error) << "could not add client CA from file: " << it->getPath() << "." << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_TAG(TLSStream::TAG, error) << "could not add client CA from file: " << it->getPath() << "." << IBRCOMMON_LOGGER_ENDL;
 						}
 					} else {
-						IBRCOMMON_LOGGER_TAG("TLSStream", error) << "could not read certificate from " << it->getPath() << "." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(TLSStream::TAG, error) << "could not read certificate from " << it->getPath() << "." << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 			} else {
-				IBRCOMMON_LOGGER_TAG("TLSStream", error) << "Could not get files from CADirectory." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TLSStream::TAG, error) << "Could not get files from CADirectory." << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		if(!enableEncryption){
 			if(!SSL_CTX_set_cipher_list(_ssl_ctx, "eNULL")){
-				IBRCOMMON_LOGGER_TAG("TLSStream", critical) << "Could not set the cipherlist." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TLSStream::TAG, critical) << "Could not set the cipherlist." << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		_initialized = true;
-		IBRCOMMON_LOGGER_TAG("TLSStream", info) << "Initialization succeeded." << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG(TLSStream::TAG, info) << "Initialization succeeded." << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	void TLSStream::flushInitialization()
@@ -359,17 +361,17 @@ namespace ibrcommon
 	void TLSStream::close(){
 		if(_ssl && _stream->good()){
 			int ret;
-			if((ret = SSL_shutdown(_ssl)) == -1){
-				log_debug("SSL_shutdown error", SSL_get_error(_ssl, ret));
+			if((ret = SSL_shutdown(_ssl)) == -1) {
+				IBRCOMMON_LOGGER_DEBUG_TAG(TLSStream::TAG, 60) << "SSL_shutdown error " << log_error_msg(SSL_get_error(_ssl, ret)) << IBRCOMMON_LOGGER_ENDL;
 			} else if(ret == 0){
 				/* try again */
 				if((ret = SSL_shutdown(_ssl)) == -1){
 					/* this can happen for example if the peer does not send a shutdown message */
-					log_debug("SSL_shutdown error (2)", SSL_get_error(_ssl, ret));
+					IBRCOMMON_LOGGER_DEBUG_TAG(TLSStream::TAG, 60) << "SSL_shutdown error " << log_error_msg(SSL_get_error(_ssl, ret)) << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}
-		IBRCOMMON_LOGGER_DEBUG(25) << "TLS Connection closed." << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG(TLSStream::TAG, 60) << "Connection closed." << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	int TLSStream::sync()
@@ -382,16 +384,6 @@ namespace ibrcommon
 		_stream->flush();
 
 		return ret;
-	}
-
-	void TLSStream::log_error(std::string tag, int errnumber)
-	{
-		IBRCOMMON_LOGGER(error) << "[TLSStream] " << tag << " " << log_error_msg(errnumber) << IBRCOMMON_LOGGER_ENDL;
-	}
-
-	void TLSStream::log_debug(std::string tag, int errnumber)
-	{
-		IBRCOMMON_LOGGER_DEBUG(25) << "[TLSStream] " << tag << " " << log_error_msg(errnumber) << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	std::string TLSStream::log_error_msg(int errnumber)

@@ -36,7 +36,7 @@ namespace ibrcommon
 		{
 			if (!EVP_SignInit_ex(&_ctx, EVP_sha256(), NULL))
 			{
-				IBRCOMMON_LOGGER(critical) << "failed to initialize the signature function" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("RSASHA256Stream", critical) << "failed to initialize the signature function" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
 		}
@@ -44,7 +44,7 @@ namespace ibrcommon
 		{
 			if (!EVP_VerifyInit_ex(&_ctx, EVP_sha256(), NULL))
 			{
-				IBRCOMMON_LOGGER(critical) << "failed to initialize the verification function" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("RSASHA256Stream", critical) << "failed to initialize the verification function" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
 		}
@@ -65,7 +65,7 @@ namespace ibrcommon
 		{
 			if (!EVP_SignInit_ex(&_ctx, EVP_sha256(), NULL))
 			{
-				IBRCOMMON_LOGGER(critical) << "failed to initialize the signature function" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("RSASHA256Stream", critical) << "failed to initialize the signature function" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
 		}
@@ -73,7 +73,7 @@ namespace ibrcommon
 		{
 			if (!EVP_VerifyInit_ex(&_ctx, EVP_sha256(), NULL))
 			{
-				IBRCOMMON_LOGGER(critical) << "failed to initialize the verfication function" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("RSASHA256Stream", critical) << "failed to initialize the verfication function" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
 		}
@@ -147,7 +147,7 @@ namespace ibrcommon
 		{
 			if (!EVP_SignUpdate(&_ctx, &out_buf_[0], iend - ibegin))
 			{
-				IBRCOMMON_LOGGER(critical) << "failed to feed data into the signature function" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("RSASHA256Stream", critical) << "failed to feed data into the signature function" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
 		}
@@ -155,7 +155,7 @@ namespace ibrcommon
 		{
 			if (!EVP_VerifyUpdate(&_ctx, &out_buf_[0], iend - ibegin))
 			{
-				IBRCOMMON_LOGGER(critical) << "failed to feed data into the verification function" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("RSASHA256Stream", critical) << "failed to feed data into the verification function" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
 		}

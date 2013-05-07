@@ -1233,7 +1233,7 @@ namespace ibrcommon
 #endif
 
 		// successful!
-		IBRCOMMON_LOGGER_DEBUG(5) << "multicast operation (" << optname << ") successful with " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("multicastsocket", 70) << "multicast operation (" << optname << ") successful with " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	void basesocket::check_socket_error(const int err) const throw (socket_exception)

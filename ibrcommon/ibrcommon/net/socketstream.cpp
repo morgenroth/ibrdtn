@@ -80,7 +80,7 @@ namespace ibrcommon
 		// if there is nothing to send, just return
 		if ((iend - ibegin) == 0)
 		{
-			IBRCOMMON_LOGGER_DEBUG(90) << "tcpstream::overflow() nothing to sent" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 80) << "overflow() nothing to sent" << IBRCOMMON_LOGGER_ENDL;
 			return std::char_traits<char>::not_eof(c);
 		}
 
@@ -123,7 +123,7 @@ namespace ibrcommon
 		} catch (const vsocket_interrupt &e) {
 			errmsg = ERROR_CLOSED;
 			close();
-			IBRCOMMON_LOGGER_DEBUG(40) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 85) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
 			throw;
 		} catch (const socket_error &err) {
 			if (err.code() == ERROR_AGAIN) {
@@ -137,7 +137,7 @@ namespace ibrcommon
 			close();
 
 			// create a detailed exception message
-			std::stringstream ss; ss << "<tcpstream> send() in tcpstream failed: " << err.code();
+			std::stringstream ss; ss << "send() failed: " << err.code();
 			throw stream_exception(ss.str());
 		} catch (const socket_exception &ex) {
 			// set the last error code
@@ -182,7 +182,7 @@ namespace ibrcommon
 			{
 				errmsg = ERROR_CLOSED;
 				close();
-				IBRCOMMON_LOGGER_DEBUG(40) << "<tcpstream> recv() returned zero: " << errno << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 85) << "recv() returned zero: " << errno << IBRCOMMON_LOGGER_ENDL;
 				return std::char_traits<char>::eof();
 			}
 
@@ -194,7 +194,7 @@ namespace ibrcommon
 		} catch (const vsocket_interrupt &e) {
 			errmsg = ERROR_CLOSED;
 			close();
-			IBRCOMMON_LOGGER_DEBUG(40) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 85) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
 			return std::char_traits<char>::eof();
 		} catch (const socket_error &err) {
 			// set the last error code
@@ -203,9 +203,9 @@ namespace ibrcommon
 			// close the stream/socket due to failures
 			close();
 
-			IBRCOMMON_LOGGER_DEBUG(40) << "<tcpstream> recv() failed: " << err.code() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 75) << "recv() failed: " << err.code() << IBRCOMMON_LOGGER_ENDL;
 		} catch (const socket_exception &ex) {
-			IBRCOMMON_LOGGER_DEBUG(40) << "<tcpstream> recv() failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 75) << "recv() failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		return std::char_traits<char>::eof();
