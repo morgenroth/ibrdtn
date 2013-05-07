@@ -352,11 +352,11 @@ namespace dtn
 				{
 					const dtn::data::Block &block = (**it);
 
-					// create a temporary file
-					ibrcommon::TemporaryFile tmpfile(_blockPath, (block.getType() == dtn::data::PayloadBlock::BLOCK_TYPE) ? "payload" : "block");
-
 					if (block.getType() == dtn::data::PayloadBlock::BLOCK_TYPE)
 					{
+						// create a temporary file
+						ibrcommon::TemporaryFile tmpfile(_blockPath, "payload");
+
 						try {
 							const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(block);
 							ibrcommon::BLOB::Reference ref = payload.getBLOB();
@@ -389,18 +389,28 @@ namespace dtn
 						} catch (const std::bad_cast&) {
 							throw ibrcommon::Exception("not a payload block");
 						}
+
+						// add determine the amount of stored bytes
+						storedBytes += tmpfile.size();
+
+						// store the block into the database
+						_database.store(id, index, block, tmpfile);
 					}
 					else
 					{
+						ibrcommon::TemporaryFile tmpfile(_blockPath, "block");
+
 						std::ofstream filestream(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
 						dtn::data::SeparateSerializer serializer(filestream);
 						serializer << block;
 						filestream.close();
+
+						// add determine the amount of stored bytes
+						storedBytes += tmpfile.size();
+
+						// store the block into the database
+						_database.store(id, index, block, tmpfile);
 					}
-
-					storedBytes += tmpfile.size();
-
-					_database.store(id, index, block, tmpfile);
 
 					// increment index
 					index++;
