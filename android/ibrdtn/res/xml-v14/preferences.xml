@@ -46,6 +46,23 @@
             android:title="@string/pref_fragmentation" />
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="prefcat_p2p"
+        android:title="@string/prefcat_p2p_connection" >
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="p2p_enabled"
+            android:summary="@string/pref_p2p_summary"
+            android:title="@string/pref_p2p" />
+
+        <ListPreference
+            android:defaultValue="on"
+            android:entries="@array/p2p_strategy_names"
+            android:entryValues="@array/p2p_strategy_values"
+            android:key="p2p_strategy"
+            android:summary="@string/pref_p2p_strategy_summary"
+            android:title="@string/pref_p2p_strategy" android:dependency="p2p_enabled"/>
+    </PreferenceCategory>
+    <PreferenceCategory
         android:key="prefcat_interfaces"
         android:title="@string/interfaces" >
     </PreferenceCategory>
@@ -82,7 +99,6 @@
             android:summary="@string/pref_bab_key_desc"
             android:title="@string/pref_bab_key" />
     </PreferenceCategory>
-    
     <PreferenceCategory
         android:key="prefcat_timesync"
         android:title="@string/timesync" >
@@ -93,9 +109,7 @@
             android:key="timesync_mode"
             android:summary="@string/pref_timesync_mode_desc"
             android:title="@string/pref_timesync_mode" />
-
     </PreferenceCategory>
-    
     <PreferenceCategory
         android:key="prefcat_logging"
         android:title="@string/pref_logging" >

@@ -94,4 +94,9 @@
     <string name="list_no_neighbors">Keine Nachbarn gefunden.</string>
     <string name="pref_fragmentation_desc">Erlaubt reaktive Fragmentierung und Reassemblierung</string>
     <string name="pref_fragmentation">Unterstützung für Fragmentierung</string>
+    <string name="prefcat_p2p_connection">Peer-to-Peer</string>
+    <string name="pref_p2p">P2P-Verbindung</string>
+    <string name="pref_p2p_summary">P2P-Verbindungen per Wi-Fi Direct verwenden</string>
+    <string name="pref_p2p_strategy">Strategie</string>
+    <string name="pref_p2p_strategy_summary">Die zu verwendende Suchstrategie</string>
 </resources>
