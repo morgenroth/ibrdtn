@@ -48,6 +48,8 @@ namespace dtn
 	{
 		class SQLiteBundleStorage: public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::BLOB::Provider, public SQLiteDatabase::DatabaseListener
 		{
+			static const std::string TAG;
+
 		public:
 			/**
 			 * create a new BLOB object within this storage
