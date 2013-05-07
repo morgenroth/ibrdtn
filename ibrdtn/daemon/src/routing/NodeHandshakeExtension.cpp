@@ -306,7 +306,7 @@ namespace dtn
 				_endpoint.send(answer);
 
 				// call handshake completed event
-				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_REPLIED, bundle.source );
+				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_REPLIED, bundle.source.getNode() );
 			}
 			else if (handshake.getType() == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
@@ -314,7 +314,7 @@ namespace dtn
 				(**this).processHandshake(bundle.source, handshake);
 
 				// call handshake completed event
-				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_COMPLETED, bundle.source );
+				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_COMPLETED, bundle.source.getNode() );
 			}
 		}
 	} /* namespace routing */
