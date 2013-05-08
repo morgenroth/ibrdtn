@@ -51,7 +51,8 @@ namespace dtn
 			dtn::data::Serializer &operator<<(const dtn::data::PrimaryBlock &obj);
 			dtn::data::Serializer &operator<<(const dtn::data::Block &obj);
 
-			void writeData(std::istream &stream, const dtn::data::Length &len, PlainSerializer::Encoding enc = PlainSerializer::BASE64);
+			void writeData(const dtn::data::Block &block);
+			void writeData(std::istream &stream, const dtn::data::Length &len);
 
 			dtn::data::Length getLength(const dtn::data::Bundle &obj);
 			dtn::data::Length getLength(const dtn::data::PrimaryBlock &obj) const;
