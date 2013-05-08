@@ -49,7 +49,7 @@ namespace ibrtest
 		virtual void run() throw ()
 		{
 			dtn::core::EventSwitch &es = dtn::core::EventSwitch::getInstance();
-			es.loop();
+			es.loop(0);
 		}
 
 		virtual void __cancellation() throw ()
