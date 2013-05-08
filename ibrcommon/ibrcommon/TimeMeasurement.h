@@ -37,25 +37,22 @@ namespace ibrcommon
 
 		void start();
 		void stop();
+		
+		double getMicroseconds() const;
+		double getMilliseconds() const;
 
-		size_t getNanoseconds() const;
-		size_t getMicroseconds() const;
-		size_t getMilliseconds() const;
-		size_t getSeconds() const;
+		void getTime(struct timespec &diff) const;
+		time_t getSeconds() const;
 
 		friend std::ostream &operator<<(std::ostream &stream, const TimeMeasurement &measurement);
 
 		static std::ostream& format(std::ostream &stream, const double value);
 
 	private:
-		static ssize_t timespecDiff(const struct timespec *timeA_p, const struct timespec *timeB_p);
-		static ssize_t timespecDiff(const size_t &stop, const size_t &start);
+		void gettime(struct timespec *ts);
 
 		struct timespec _start;
 		struct timespec _end;
-
-		size_t _uint64_start;
-		size_t _uint64_end;
 	};
 }
 
