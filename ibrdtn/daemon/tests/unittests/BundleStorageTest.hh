@@ -14,6 +14,8 @@
  
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
+
+#include "config.h"
 #include "storage/BundleStorage.h"
 #include "Component.h"
 #include "../tools/EventSwitchLoop.h"
@@ -81,7 +83,10 @@ class BundleStorageTest : public CppUnit::TestFixture {
 
 		_storage_names.push_back("MemoryBundleStorage");
 		_storage_names.push_back("SimpleBundleStorage");
+
+#ifdef HAVE_SQLITE
 		_storage_names.push_back("SQLiteBundleStorage");
+#endif
 
 		CPPUNIT_TEST_ALL_STORAGES(testStore);
 		CPPUNIT_TEST_ALL_STORAGES(testRemove);

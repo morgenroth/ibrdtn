@@ -322,6 +322,7 @@ void BundleStorageTest::testSize(dtn::storage::BundleStorage &storage)
 
 	storage.store(b);
 
+#ifdef HAVE_SQLITE
 	try {
 		dynamic_cast<dtn::storage::SQLiteBundleStorage&>(storage);
 		const dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
@@ -329,11 +330,14 @@ void BundleStorageTest::testSize(dtn::storage::BundleStorage &storage)
 		// TODO: fix .size() implementation in SQLiteBundleStorage
 		//CPPUNIT_ASSERT((dtn::data::Length)p.getLength() <= storage.size());
 	} catch (const std::bad_cast&) {
+#endif
 		std::stringstream ss;
 		dtn::data::DefaultSerializer(ss) << b;
 
 		CPPUNIT_ASSERT_EQUAL((dtn::data::Length)ss.str().length(), storage.size());
+#ifdef HAVE_SQLITE
 	}
+#endif
 }
 
 void BundleStorageTest::testReleaseCustody()
