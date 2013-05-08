@@ -150,7 +150,8 @@ namespace dtn
 				DEFAULT_ROUTING = 0,
 				EPIDEMIC_ROUTING = 1,
 				FLOOD_ROUTING = 2,
-				PROPHET_ROUTING = 3
+				PROPHET_ROUTING = 3,
+				NO_ROUTING = 4
 			};
 
 			/**

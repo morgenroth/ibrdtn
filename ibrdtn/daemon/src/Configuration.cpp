@@ -853,6 +853,7 @@ namespace dtn
 
 		Configuration::RoutingExtension Configuration::Network::getRoutingExtension() const
 		{
+			if ( _routing == "none" ) return NO_ROUTING;
 			if ( _routing == "epidemic" ) return EPIDEMIC_ROUTING;
 			if ( _routing == "flooding" ) return FLOOD_ROUTING;
 			if ( _routing == "prophet" ) return PROPHET_ROUTING;
