@@ -21,9 +21,12 @@
 
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/vsocket.h"
-#include "ibrcommon/TimeMeasurement.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Logger.h"
+
+#ifndef HAVE_FEATURES_H
+#include "ibrcommon/TimeMeasurement.h"
+#endif
 
 #include <algorithm>
 #include <netdb.h>
