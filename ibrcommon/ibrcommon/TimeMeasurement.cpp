@@ -132,16 +132,15 @@ namespace ibrcommon
 
 	void TimeMeasurement::getTime(struct timespec &diff) const
 	{
-		diff.tv_sec = _end.tv_sec - _start.tv_sec;
-
-		if (_start.tv_nsec < _end.tv_nsec)
+		if ((_end.tv_nsec - _start.tv_nsec) < 0)
 		{
-			diff.tv_nsec = _end.tv_nsec - _start.tv_nsec;
+			diff.tv_sec = _end.tv_sec - _start.tv_sec - 1;
+			diff.tv_nsec = (1000000000 + _end.tv_nsec) - _start.tv_nsec;
 		}
 		else
 		{
-			diff.tv_sec--;
-			diff.tv_nsec = (1000000 + _end.tv_nsec) - _start.tv_nsec;
+			diff.tv_sec = _end.tv_sec - _start.tv_sec;
+			diff.tv_nsec = _end.tv_nsec - _start.tv_nsec;
 		}
 	}
 
