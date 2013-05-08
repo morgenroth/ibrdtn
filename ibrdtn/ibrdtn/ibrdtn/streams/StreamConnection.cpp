@@ -139,13 +139,13 @@ namespace dtn
 
 		void StreamConnection::eventBundleRefused()
 		{
-			IBRCOMMON_LOGGER_DEBUG(20) << "bundle has been refused" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamConnection", 20) << "bundle has been refused" << IBRCOMMON_LOGGER_ENDL;
 			_callback.eventBundleRefused();
 		}
 
 		void StreamConnection::eventBundleForwarded()
 		{
-			IBRCOMMON_LOGGER_DEBUG(20) << "bundle has been forwarded" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamConnection", 20) << "bundle has been forwarded" << IBRCOMMON_LOGGER_ENDL;
 			_callback.eventBundleForwarded();
 		}
 

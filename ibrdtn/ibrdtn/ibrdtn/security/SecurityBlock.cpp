@@ -692,13 +692,13 @@ namespace dtn
 
 		bool SecurityBlock::isSecuritySource(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const
 		{
-			IBRCOMMON_LOGGER_DEBUG(30) << "check security source: " << getSecuritySource(bundle).getString() << " == " << eid.getNode().getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityBlock", 30) << "check security source: " << getSecuritySource(bundle).getString() << " == " << eid.getNode().getString() << IBRCOMMON_LOGGER_ENDL;
 			return getSecuritySource(bundle) == eid.getNode();
 		}
 
 		bool SecurityBlock::isSecurityDestination(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const
 		{
-			IBRCOMMON_LOGGER_DEBUG(30) << "check security destination: " << getSecurityDestination(bundle).getString() << " == " << eid.getNode().getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityBlock", 30) << "check security destination: " << getSecurityDestination(bundle).getString() << " == " << eid.getNode().getString() << IBRCOMMON_LOGGER_ENDL;
 			return getSecurityDestination(bundle) == eid.getNode();
 		}
 		

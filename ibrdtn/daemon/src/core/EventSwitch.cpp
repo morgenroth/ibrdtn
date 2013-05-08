@@ -100,7 +100,6 @@ namespace dtn
 
 				if (!_prio_queue.empty())
 				{
-//					IBRCOMMON_LOGGER_DEBUG(1) << "process element of priority queue" << IBRCOMMON_LOGGER_ENDL;
 					t = _prio_queue.front();
 					_prio_queue.pop_front();
 				}

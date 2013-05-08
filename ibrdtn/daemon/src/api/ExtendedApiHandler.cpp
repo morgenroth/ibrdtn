@@ -74,7 +74,7 @@ namespace dtn
 
 		void ExtendedApiHandler::finally()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "ExtendedApiConnection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 60) << "ExtendedApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 
 			_client.getRegistration().abort();
 

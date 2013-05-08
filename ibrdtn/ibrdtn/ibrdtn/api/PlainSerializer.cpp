@@ -238,11 +238,11 @@ namespace dtn
 				try {
 					readBlock(builder);
 				} catch (const dtn::data::BundleBuilder::DiscardBlockException &ex) {
-					IBRCOMMON_LOGGER_DEBUG(5) << "unknown block has been discarded " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 5) << "unknown block has been discarded " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				} catch (const UnknownBlockException &ex) {
-					IBRCOMMON_LOGGER_DEBUG(5) << "unknown administrative block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 5) << "unknown administrative block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				} catch (const BlockNotProcessableException &ex) {
-					IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
@@ -399,7 +399,7 @@ namespace dtn
 			}
 
 			// then read the payload
-			IBRCOMMON_LOGGER_DEBUG(20) << "API expecting payload size of " << blocksize << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 20) << "API expecting payload size of " << blocksize << IBRCOMMON_LOGGER_ENDL;
 
 			switch(enc)
 			{

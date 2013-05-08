@@ -55,7 +55,7 @@ namespace dtn
 
 		void SecurityManager::auth(dtn::data::Bundle &bundle) const throw (KeyMissingException)
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "auth bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "auth bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				// try to load the local key
@@ -70,7 +70,7 @@ namespace dtn
 
 		void SecurityManager::sign(dtn::data::Bundle &bundle) const throw (KeyMissingException)
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "sign bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "sign bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				// try to load the local key
@@ -91,7 +91,7 @@ namespace dtn
 
 		void SecurityManager::verifyPIB(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "verify signed bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "verify signed bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// iterate over all PIBs of this bundle
 			dtn::data::Bundle::find_iterator it(bundle.begin(), dtn::security::PayloadIntegrityBlock::BLOCK_TYPE);
@@ -110,7 +110,7 @@ namespace dtn
 							// set the verify bit, after verification
 							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Bundle from " << bundle.source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 5) << "Bundle from " << bundle.source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
 							return;
 						} catch (const ibrcommon::Exception&) {
 							throw VerificationFailedException();
@@ -124,7 +124,7 @@ namespace dtn
 							// set the verify bit, after verification
 							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
 
-							IBRCOMMON_LOGGER_DEBUG(5) << "Bundle from " << bundle.source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 5) << "Bundle from " << bundle.source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
 						} catch (const ibrcommon::Exception&) {
 							throw VerificationFailedException();
 						}
@@ -137,7 +137,7 @@ namespace dtn
 
 		void SecurityManager::verifyBAB(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "verify authenticated bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "verify authenticated bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// iterate over all BABs of this bundle
 			dtn::data::Bundle::find_iterator it(bundle.begin(), dtn::security::BundleAuthenticationBlock::BLOCK_TYPE);
@@ -181,7 +181,7 @@ namespace dtn
 			{
 				// check if the bundle is encrypted and throw an exception if not
 				//throw VerificationFailedException("Bundle is not encrypted");
-				IBRCOMMON_LOGGER_DEBUG(10) << "encryption required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "encryption required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				if (std::count(bundle.begin(), bundle.end(), dtn::security::PayloadConfidentialBlock::BLOCK_TYPE) == 0)
 					throw VerificationFailedException("No PCB available!");
@@ -191,7 +191,7 @@ namespace dtn
 			{
 				// check if the bundle is signed and throw an exception if not
 				//throw VerificationFailedException("Bundle is not signed");
-				IBRCOMMON_LOGGER_DEBUG(10) << "authentication required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "authentication required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				if (std::count(bundle.begin(), bundle.end(), dtn::security::BundleAuthenticationBlock::BLOCK_TYPE) == 0)
 					throw VerificationFailedException("No BAB available!");
@@ -205,7 +205,7 @@ namespace dtn
 
 			// decrypt
 			try {
-				IBRCOMMON_LOGGER_DEBUG(10) << "decrypt bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "decrypt bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				// get the encryption key
 				dtn::security::SecurityKey key = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, dtn::security::SecurityKey::KEY_PRIVATE);
@@ -222,7 +222,7 @@ namespace dtn
 		void SecurityManager::encrypt(dtn::data::Bundle &bundle) const throw (EncryptException, KeyMissingException)
 		{
 			try {
-				IBRCOMMON_LOGGER_DEBUG(10) << "encrypt bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "encrypt bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				// get the encryption key
 				dtn::security::SecurityKey key = SecurityKeyManager::getInstance().get(bundle.destination, dtn::security::SecurityKey::KEY_PUBLIC);

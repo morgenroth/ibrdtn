@@ -608,12 +608,12 @@ namespace dtn
 						(*this).read(obj, block);
 					} catch (dtn::PayloadReceptionInterrupted &ex) {
 						// some debugging
-						IBRCOMMON_LOGGER_DEBUG(15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("DefaultDeserializer", 15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
 
 						// interrupted transmission
 						if (!obj.get(dtn::data::PrimaryBlock::DONT_FRAGMENT) && (block.getLength() > 0) && _fragmentation)
 						{
-							IBRCOMMON_LOGGER_DEBUG(25) << "Create a fragment." << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("DefaultDeserializer", 25) << "Create a fragment." << IBRCOMMON_LOGGER_ENDL;
 
 							if ( !obj.get(dtn::data::PrimaryBlock::FRAGMENT) )
 							{

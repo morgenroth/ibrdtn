@@ -300,7 +300,7 @@ namespace dtn
 
 						getStorage().releaseCustody(bundle.source, custody.bundleid);
 
-						IBRCOMMON_LOGGER_DEBUG(5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						delivered = true;
 					} catch (const AdministrativeBlock::WrongRecordException&) {
@@ -396,7 +396,7 @@ namespace dtn
 				// set the local clock to the new timestamp
 				dtn::utils::Clock::setOffset(timeadj.offset);
 
-				IBRCOMMON_LOGGER(info) << "time adjusted by " << dtn::utils::Clock::toDouble(timeadj.offset) << "s; new rating: " << timeadj.rating << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BundleCore", info) << "time adjusted by " << dtn::utils::Clock::toDouble(timeadj.offset) << "s; new rating: " << timeadj.rating << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::bad_cast&) { }
 		}
 
@@ -428,7 +428,7 @@ namespace dtn
 					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < obj.timestamp)
 					{
 						// ... we reject bundles with a timestamp so far in the future
-						IBRCOMMON_LOGGER(warning) << "timestamp of bundle rejected: " << obj.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "timestamp of bundle rejected: " << obj.toString() << IBRCOMMON_LOGGER_ENDL;
 						throw dtn::data::Validator::RejectedException("timestamp is too far in the future");
 					}
 			}
@@ -453,7 +453,7 @@ namespace dtn
 				if (!p.destination.sameHost(BundleCore::local))
 				{
 					// ... we reject all non-local bundles.
-					IBRCOMMON_LOGGER(warning) << "non-local bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "non-local bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
 					throw dtn::data::Validator::RejectedException("bundle is not local");
 				}
 			}
@@ -464,7 +464,7 @@ namespace dtn
 				if (p.lifetime > BundleCore::max_lifetime)
 				{
 					// ... we reject bundles with such a long lifetime
-					IBRCOMMON_LOGGER(warning) << "lifetime of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "lifetime of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
 					throw dtn::data::Validator::RejectedException("lifetime of the bundle is too long");
 				}
 			}
@@ -478,7 +478,7 @@ namespace dtn
 					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < p.timestamp)
 					{
 						// ... we reject bundles with a timestamp so far in the future
-						IBRCOMMON_LOGGER(warning) << "timestamp of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "timestamp of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
 						throw dtn::data::Validator::RejectedException("timestamp is too far in the future");
 					}
 			}
@@ -498,7 +498,7 @@ namespace dtn
 			// check for the size of the block
 			if ((BundleCore::blocksizelimit > 0) && (size > BundleCore::blocksizelimit))
 			{
-				IBRCOMMON_LOGGER(warning) << "bundle rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("block size is too big");
 			}
 		}
@@ -517,7 +517,7 @@ namespace dtn
 			// check for the size of the block
 			if ((BundleCore::blocksizelimit > 0) && (size > BundleCore::blocksizelimit))
 			{
-				IBRCOMMON_LOGGER(warning) << "bundle " << bundle.toString() << " rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle " << bundle.toString() << " rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("block size is too big");
 			}
 		}
@@ -537,14 +537,14 @@ namespace dtn
 			// reject bundles without destination
 			if (b.destination.isNone())
 			{
-				IBRCOMMON_LOGGER(warning) << "bundle rejected: the destination is null" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: the destination is null" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle destination is none");
 			}
 
 			// check if the bundle is expired
 			if (dtn::utils::Clock::isExpired(b))
 			{
-				IBRCOMMON_LOGGER(warning) << "bundle rejected: bundle has expired (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: bundle has expired (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
@@ -553,7 +553,7 @@ namespace dtn
 			try {
 				dtn::security::SecurityManager::getInstance().fastverify(b);
 			} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(5) << "[bundle rejected] security checks failed, reason: " << ex.what() << ", bundle: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 5) << "[bundle rejected] security checks failed, reason: " << ex.what() << ", bundle: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("security checks failed");
 			}
 #endif
@@ -598,10 +598,10 @@ namespace dtn
 						dtn::security::SecurityManager::getInstance().decrypt(b);
 					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 						// decrypt needed, but no key is available
-						IBRCOMMON_LOGGER(warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
 					} catch (const dtn::security::SecurityManager::DecryptException &ex) {
 						// decrypt failed
-						IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					break;
 				}

@@ -33,7 +33,7 @@ namespace dtn
 	{
 		void sql_tracer(void*, const char * pQuery)
 		{
-			IBRCOMMON_LOGGER_DEBUG(50) << "sqlite trace: " << pQuery << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 50) << "sqlite trace: " << pQuery << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		const std::string SQLiteDatabase::TAG = "SQLiteDatabase";
@@ -284,7 +284,7 @@ namespace dtn
 			// check if SQLite is thread-safe
 			if (sqlite3_threadsafe() == 0)
 			{
-				IBRCOMMON_LOGGER(critical) << "sqlite library has not compiled with threading support." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", critical) << "sqlite library has not compiled with threading support." << IBRCOMMON_LOGGER_ENDL;
 				throw ibrcommon::Exception("need threading support in sqlite!");
 			}
 
@@ -329,7 +329,7 @@ namespace dtn
 			//close Databaseconnection
 			if (sqlite3_close(_database) != SQLITE_OK)
 			{
-				IBRCOMMON_LOGGER(error) << "unable to close database" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "unable to close database" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// shutdown sqlite library
@@ -521,7 +521,7 @@ namespace dtn
 					// ask the filter if this bundle should be added to the return list
 					if (cb.shouldAdd(m))
 					{
-						IBRCOMMON_LOGGER_DEBUG(40) << "add bundle to query selection list: " << m.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 40) << "add bundle to query selection list: " << m.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// add the bundle to the list
 						ret.put(m);
@@ -539,7 +539,7 @@ namespace dtn
 		{
 			int err = 0;
 
-			IBRCOMMON_LOGGER_DEBUG(25) << "get bundle from sqlite storage " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 25) << "get bundle from sqlite storage " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// if bundle is deleted?
 			if (contains_deletion(id)) throw dtn::storage::NoBundleFoundException();
@@ -583,18 +583,18 @@ namespace dtn
 				{
 					if (blocks.size() == 0)
 					{
-						IBRCOMMON_LOGGER(error) << "get_blocks: no blocks found for: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "get_blocks: no blocks found for: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 						throw SQLiteQueryException("no blocks found");
 					}
 				}
 				else
 				{
-					IBRCOMMON_LOGGER(error) << "get_blocks() failure: "<< err << " " << sqlite3_errmsg(_database) << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "get_blocks() failure: "<< err << " " << sqlite3_errmsg(_database) << IBRCOMMON_LOGGER_ENDL;
 					throw SQLiteQueryException("can not query for blocks");
 				}
 
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER(error) << "could not get bundle blocks: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("SQLiteDatabase", error) << "could not get bundle blocks: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::storage::NoBundleFoundException();
 			}
 		}
@@ -768,7 +768,7 @@ namespace dtn
 				set_bundleid(st, id);
 				st.step();
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "bundle " << id.toString() << " deleted" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 10) << "bundle " << id.toString() << " deleted" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			//update deprecated timer

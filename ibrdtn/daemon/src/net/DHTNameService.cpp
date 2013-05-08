@@ -77,13 +77,13 @@ bool dtn::dht::DHTNameService::setNonBlockingInterruptPipe() {
 void dtn::dht::DHTNameService::componentUp() throw () {
 	// creating interrupt pipe
 	if (pipe(_interrupt_pipe) < 0) {
-		IBRCOMMON_LOGGER(error) << "Error " << errno << " creating pipe"
+		IBRCOMMON_LOGGER_TAG("DHTNameService", error) << "Error " << errno << " creating pipe"
 					<< IBRCOMMON_LOGGER_ENDL;
 		return;
 	}
 	// set the pipe to non-blocking
 	if (!this->setNonBlockingInterruptPipe()) {
-		IBRCOMMON_LOGGER(error) << "Error " << errno
+		IBRCOMMON_LOGGER_TAG("DHTNameService", error) << "Error " << errno
 					<< " setting pipe to non-blocking mode"
 					<< IBRCOMMON_LOGGER_ENDL;
 		return;
@@ -91,7 +91,7 @@ void dtn::dht::DHTNameService::componentUp() throw () {
 	// init DHT
 	int rc = dtn_dht_initstruct(&_context);
 	if (rc < 0) {
-		IBRCOMMON_LOGGER(error) << "DHT Context creation failed: " << rc
+		IBRCOMMON_LOGGER_TAG("DHTNameService", error) << "DHT Context creation failed: " << rc
 					<< IBRCOMMON_LOGGER_ENDL;
 		return;
 	}
@@ -125,10 +125,10 @@ void dtn::dht::DHTNameService::componentUp() throw () {
 	if (rc != 0) {
 		if(_context.type == BINDBOTH) {
 			if(rc == -2){
-				IBRCOMMON_LOGGER(warning) << "DHT IPv6 socket couldn't be initialized"
+				IBRCOMMON_LOGGER_TAG("DHTNameService", warning) << "DHT IPv6 socket couldn't be initialized"
 								<<IBRCOMMON_LOGGER_ENDL;
 			} else {
-				IBRCOMMON_LOGGER(warning) << "DHT socket(s) couldn't be initialized"
+				IBRCOMMON_LOGGER_TAG("DHTNameService", warning) << "DHT socket(s) couldn't be initialized"
 												<<IBRCOMMON_LOGGER_ENDL;
 			}
 			dtn_dht_close_sockets(&_context);
@@ -136,36 +136,36 @@ void dtn::dht::DHTNameService::componentUp() throw () {
 			_context.type = IPV4ONLY;
 			rc = dtn_dht_init_sockets(&_context);
 			if(rc != 0){
-				IBRCOMMON_LOGGER(warning) << "DHT IPv4 socket couldn't be initialized"
+				IBRCOMMON_LOGGER_TAG("DHTNameService", warning) << "DHT IPv4 socket couldn't be initialized"
 							<<IBRCOMMON_LOGGER_ENDL;
 				dtn_dht_close_sockets(&_context);
 				// Try only IPv6
 				_context.type = IPV6ONLY;
 				rc = dtn_dht_init_sockets(&_context);
 				if(rc!=0){
-					IBRCOMMON_LOGGER(warning) << "DHT IPv6 socket couldn't be initialized"
+					IBRCOMMON_LOGGER_TAG("DHTNameService", warning) << "DHT IPv6 socket couldn't be initialized"
 								<<IBRCOMMON_LOGGER_ENDL;
-					IBRCOMMON_LOGGER(error) << "DHT Sockets couldn't be initialized"
+					IBRCOMMON_LOGGER_TAG("DHTNameService", error) << "DHT Sockets couldn't be initialized"
 										<<IBRCOMMON_LOGGER_ENDL;
 					dtn_dht_close_sockets(&_context);
 					return;
 				}
 			}
 		} else {
-			IBRCOMMON_LOGGER(error) << "DHT Sockets couldn't be initialized"
+			IBRCOMMON_LOGGER_TAG("DHTNameService", error) << "DHT Sockets couldn't be initialized"
 					<<IBRCOMMON_LOGGER_ENDL;
 			dtn_dht_close_sockets(&_context);
 			return;
 		}
 	}
-	IBRCOMMON_LOGGER_DEBUG(50) << "Sockets for DHT initialized"
+	IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 50) << "Sockets for DHT initialized"
 				<<IBRCOMMON_LOGGER_ENDL;
 	if (!_config.isBlacklistEnabled()) {
-		IBRCOMMON_LOGGER_DEBUG(50) << "DHT Blacklist disabled"
+		IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 50) << "DHT Blacklist disabled"
 					<<IBRCOMMON_LOGGER_ENDL;
 		dtn_dht_blacklist(0);
 	} else {
-		IBRCOMMON_LOGGER_DEBUG(50) << "DHT Blacklist enabled"
+		IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 50) << "DHT Blacklist enabled"
 					<<IBRCOMMON_LOGGER_ENDL;
 	}
 	{
@@ -173,17 +173,17 @@ void dtn::dht::DHTNameService::componentUp() throw () {
 		rc = dtn_dht_init(&_context);
 	}
 	if (rc < 0) {
-		IBRCOMMON_LOGGER(error) << "DHT initialization failed"
+		IBRCOMMON_LOGGER_TAG("DHTNameService", error) << "DHT initialization failed"
 					<< IBRCOMMON_LOGGER_ENDL;
 		return;
 	}
-	IBRCOMMON_LOGGER(info) << "DHT initialized on Port: " << _context.port
+	IBRCOMMON_LOGGER_TAG("DHTNameService", info) << "DHT initialized on Port: " << _context.port
 				<< " with ID: " << myid << IBRCOMMON_LOGGER_ENDL;
 	this->_initialized = true;
 	// Warning about possibly wrong configuration
 	if(_config.isNeighbourAnnouncementEnabled() &&
 			!daemon::Configuration::getInstance().getNetwork().doForwarding()) {
-		IBRCOMMON_LOGGER(warning) << "DHT will not announce neighbor nodes: "
+		IBRCOMMON_LOGGER_TAG("DHTNameService", warning) << "DHT will not announce neighbor nodes: "
 				<<  "announcement enabled but routing forwarding is disabled"
 				<< IBRCOMMON_LOGGER_ENDL;
 	}
@@ -191,7 +191,7 @@ void dtn::dht::DHTNameService::componentUp() throw () {
 
 void dtn::dht::DHTNameService::componentRun() throw () {
 	if (!this->_initialized) {
-		IBRCOMMON_LOGGER(error) << "DHT is not initialized"
+		IBRCOMMON_LOGGER_TAG("DHTNameService", error) << "DHT is not initialized"
 					<<IBRCOMMON_LOGGER_ENDL;
 		return;
 	}
@@ -299,14 +299,14 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 		rc = select(high_fd + 1, &readfds, NULL, NULL, &tv);
 		if (rc < 0) {
 			if (errno != EINTR) {
-				IBRCOMMON_LOGGER(error)
+				IBRCOMMON_LOGGER_TAG("DHTNameService", error)
 							<< "select of DHT Sockets failed with error: "
 							<< errno << IBRCOMMON_LOGGER_ENDL;
 				sleep(1);
 			}
 		}
 		if (FD_ISSET(_interrupt_pipe[0], &readfds)) {
-			IBRCOMMON_LOGGER_DEBUG(25) << "unblocked by self-pipe-trick"
+			IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25) << "unblocked by self-pipe-trick"
 						<< IBRCOMMON_LOGGER_ENDL;
 			// this was an interrupt with the self-pipe-trick
 			char buf[2];
@@ -357,7 +357,7 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 		}
 		if (this->_foundNodes != numberOfHosts) {
 			if (_config.isBlacklistEnabled()) {
-				IBRCOMMON_LOGGER_DEBUG(42) << "DHT Nodes available: "
+				IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 42) << "DHT Nodes available: "
 							<< numberOfHosts << "(Good:" << numberOfGoodHosts
 							<< "+" << numberOfGood6Hosts << ") Blocked: "
 							<< numberOfBlocksHosts << "("
@@ -366,7 +366,7 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 							<< IBRCOMMON_LOGGER_ENDL;
 
 			} else {
-				IBRCOMMON_LOGGER_DEBUG(42) << "DHT Nodes available: "
+				IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 42) << "DHT Nodes available: "
 							<< numberOfHosts << "(Good:" << numberOfGoodHosts
 							<< "+" << numberOfGood6Hosts << ")"
 							<< IBRCOMMON_LOGGER_ENDL;
@@ -378,10 +378,10 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 			if (errno == EINTR) {
 				continue;
 			} else {
-				IBRCOMMON_LOGGER(error) << "dtn_dht_periodic failed"
+				IBRCOMMON_LOGGER_TAG("DHTNameService", error) << "dtn_dht_periodic failed"
 							<< IBRCOMMON_LOGGER_ENDL;
 				if (rc == EINVAL || rc == EFAULT) {
-					IBRCOMMON_LOGGER(error) << "DHT failed -> stopping DHT"
+					IBRCOMMON_LOGGER_TAG("DHTNameService", error) << "DHT failed -> stopping DHT"
 								<< IBRCOMMON_LOGGER_ENDL;
 					break;
 				}
@@ -396,23 +396,23 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 		ibrcommon::MutexLock l(this->_libmutex);
 		int save = dtn_dht_save_conf(_config.getPathToNodeFiles().c_str());
 		if (save != 0) {
-			IBRCOMMON_LOGGER(warning) << "DHT could not save nodes"
+			IBRCOMMON_LOGGER_TAG("DHTNameService", warning) << "DHT could not save nodes"
 						<< IBRCOMMON_LOGGER_ENDL;
 		} else {
-			IBRCOMMON_LOGGER_DEBUG(25) << "DHT saved nodes"
+			IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25) << "DHT saved nodes"
 						<< IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 	if (this->_announced && _config.isSelfAnnouncingEnabled())
 		deannounce(dtn::core::BundleCore::local);
 	dtn_dht_uninit();
-	IBRCOMMON_LOGGER(info) << "DHT shut down" << IBRCOMMON_LOGGER_ENDL;
+	IBRCOMMON_LOGGER_TAG("DHTNameService", info) << "DHT shut down" << IBRCOMMON_LOGGER_ENDL;
 	// Closes all sockets of the DHT
 	dtn_dht_close_sockets(&_context);
 
 	dtn_dht_free_convergence_layer_struct(_context.clayer);
 
-	IBRCOMMON_LOGGER_DEBUG(25) << "DHT sockets are closed"
+	IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25) << "DHT sockets are closed"
 				<< IBRCOMMON_LOGGER_ENDL;
 	::close(_interrupt_pipe[0]);
 	::close(_interrupt_pipe[1]);
@@ -420,11 +420,11 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 
 void dtn::dht::DHTNameService::componentDown() throw () {
 	this->_exiting = true;
-	IBRCOMMON_LOGGER_DEBUG(25) << "DHT will be shut down"
+	IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25) << "DHT will be shut down"
 				<< IBRCOMMON_LOGGER_ENDL;
 	ssize_t written = ::write(_interrupt_pipe[1], "i", 1);
 	if (written < 1) {
-		IBRCOMMON_LOGGER_DEBUG(25) << "DHT pipeline trick failed"
+		IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25) << "DHT pipeline trick failed"
 					<< IBRCOMMON_LOGGER_ENDL;
 	}
 }
@@ -433,7 +433,7 @@ void dtn::dht::DHTNameService::lookup(const dtn::data::EID &eid) {
 	if (dtn::core::BundleCore::local != eid.getNode()) {
 		if (this->_announced) {
 			std::string eid_ = eid.getNode().getString();
-			IBRCOMMON_LOGGER_DEBUG(30) << "DHT Lookup: " << eid_
+			IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 30) << "DHT Lookup: " << eid_
 						<< IBRCOMMON_LOGGER_ENDL;
 			ibrcommon::MutexLock l(this->_libmutex);
 			dtn_dht_lookup(&_context, eid_.c_str(), eid_.size());
@@ -453,7 +453,7 @@ void dtn::dht::DHTNameService::announce(const dtn::core::Node &n,
 		ibrcommon::MutexLock l(this->_libmutex);
 		int rc = dtn_dht_announce(&_context, eid_.c_str(), eid_.size(), type);
 		if (rc > 0) {
-			IBRCOMMON_LOGGER(info) << "DHT Announcing: " << eid_
+			IBRCOMMON_LOGGER_TAG("DHTNameService", info) << "DHT Announcing: " << eid_
 						<< IBRCOMMON_LOGGER_ENDL;
 		}
 	}
@@ -514,7 +514,7 @@ void dtn::dht::DHTNameService::deannounce(const dtn::core::Node &n) {
 	std::string eid_ = n.getEID().getNode().getString();
 	ibrcommon::MutexLock l(this->_libmutex);
 	dtn_dht_deannounce(eid_.c_str(), eid_.size());
-	IBRCOMMON_LOGGER_DEBUG(25) << "DHT Deannounced: " << eid_
+	IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25) << "DHT Deannounced: " << eid_
 				<< IBRCOMMON_LOGGER_ENDL;
 }
 
@@ -595,10 +595,10 @@ void dtn::dht::DHTNameService::pingNode(const dtn::core::Node &n) {
 			if(!portFound){
 				continue;
 			}
-			IBRCOMMON_LOGGER_DEBUG(25) << "trying to ping node "
+			IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25) << "trying to ping node "
 						<< n.toString() << IBRCOMMON_LOGGER_ENDL;
 			const std::list<std::string> ips = getAllIPAddresses(n);
-			IBRCOMMON_LOGGER_DEBUG(25) << ips.size() << " IP Addresses found!"
+			IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25) << ips.size() << " IP Addresses found!"
 						<< IBRCOMMON_LOGGER_ENDL;
 			std::string lastip = "";
 			for (std::list<std::string>::const_iterator iter = ips.begin(); iter
@@ -613,17 +613,17 @@ void dtn::dht::DHTNameService::pingNode(const dtn::core::Node &n) {
 				memset(&sin, 0, sizeof(sin));
 				sin.sin_family = AF_INET;
 				sin.sin_port = htons(port);
-				IBRCOMMON_LOGGER_DEBUG(26) << " --- Using IP address: " << ip
+				IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 26) << " --- Using IP address: " << ip
 							<<IBRCOMMON_LOGGER_ENDL;
 				rc = inet_pton(AF_INET, ip.c_str(), &(sin.sin_addr));
 				if (rc == 1) {
-					IBRCOMMON_LOGGER_DEBUG(26) << "Pinging node "
+					IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 26) << "Pinging node "
 								<< n.toString() << " on " << ip << ":" << port
 								<< IBRCOMMON_LOGGER_ENDL;
 					ibrcommon::MutexLock l(this->_libmutex);
 					dtn_dht_ping_node((struct sockaddr*) &sin, sizeof(sin));
 				} else {
-					IBRCOMMON_LOGGER(error) << " --- ERROR pton: " << rc
+					IBRCOMMON_LOGGER_TAG("DHTNameService", error) << " --- ERROR pton: " << rc
 								<<IBRCOMMON_LOGGER_ENDL;
 				}
 				lastip = ip;
@@ -679,10 +679,10 @@ void dtn::dht::DHTNameService::bootstrappingFile() {
 		rc = dtn_dht_load_prev_conf(_config.getPathToNodeFiles().c_str());
 	}
 	if (rc != 0) {
-		IBRCOMMON_LOGGER(warning) << "DHT loading of saved nodes failed"
+		IBRCOMMON_LOGGER_TAG("DHTNameService", warning) << "DHT loading of saved nodes failed"
 					<< IBRCOMMON_LOGGER_ENDL;
 	} else {
-		IBRCOMMON_LOGGER_DEBUG(25) << "DHT loading of saved nodes done"
+		IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25) << "DHT loading of saved nodes done"
 					<< IBRCOMMON_LOGGER_ENDL;
 	}
 }
@@ -699,11 +699,11 @@ void dtn::dht::DHTNameService::bootstrappingDNS() {
 				rc = dtn_dht_dns_bootstrap(&_context, dn.c_str(), NULL);
 			}
 			if (rc != 0) {
-				IBRCOMMON_LOGGER(warning) << "bootstrapping from domain " << dn
+				IBRCOMMON_LOGGER_TAG("DHTNameService", warning) << "bootstrapping from domain " << dn
 							<< " failed with error: " << rc
 							<< IBRCOMMON_LOGGER_ENDL;
 			} else {
-				IBRCOMMON_LOGGER_DEBUG(25)
+				IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25)
 							<< "DHT Bootstrapping done for domain" << dn
 							<< IBRCOMMON_LOGGER_ENDL;
 			}
@@ -715,11 +715,11 @@ void dtn::dht::DHTNameService::bootstrappingDNS() {
 			rc = dtn_dht_dns_bootstrap(&_context, NULL, NULL);
 		}
 		if (rc != 0) {
-			IBRCOMMON_LOGGER(warning)
+			IBRCOMMON_LOGGER_TAG("DHTNameService", warning)
 						<< "bootstrapping from default domain failed with error: "
 						<< rc << IBRCOMMON_LOGGER_ENDL;
 		} else {
-			IBRCOMMON_LOGGER_DEBUG(25)
+			IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25)
 						<< "DHT Bootstrapping done for default domain"
 						<< IBRCOMMON_LOGGER_ENDL;
 		}
@@ -867,7 +867,7 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 	// Adding the new node to the BundleCore to make it available to the daemon
 	dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
 	if (hasCL) {
-		IBRCOMMON_LOGGER(info) << ss.str() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("DHTNameService", info) << ss.str() << IBRCOMMON_LOGGER_ENDL;
 		core.getConnectionManager().add(node);
 	}
 

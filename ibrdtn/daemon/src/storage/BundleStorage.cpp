@@ -200,7 +200,7 @@ namespace dtn
 
 		void BundleStorage::eventBundleAdded(const dtn::data::MetaBundle &b) throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(2) << "add bundle to index: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BundleStorage", 2) << "add bundle to index: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			for (index_list::iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
 				BundleIndex &index = (**it);
@@ -210,7 +210,7 @@ namespace dtn
 
 		void BundleStorage::eventBundleRemoved(const dtn::data::BundleID &id) throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(2) << "remove bundle from index: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BundleStorage", 2) << "remove bundle from index: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			for (index_list::iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
 				BundleIndex &index = (**it);

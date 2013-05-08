@@ -167,7 +167,7 @@ namespace dtn
 
 											std::fstream fs(filename.getPath().c_str(), std::fstream::out);
 
-											IBRCOMMON_LOGGER(info) << "write bundle " << sbt.job.bundle.toString() << " to file " << filename.getPath() << IBRCOMMON_LOGGER_ENDL;
+											IBRCOMMON_LOGGER_TAG("FileConvergenceLayer", info) << "write bundle " << sbt.job.bundle.toString() << " to file " << filename.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 											dtn::data::DefaultSerializer s(fs);
 
@@ -194,7 +194,7 @@ namespace dtn
 							}
 						}
 					} catch (const std::exception &ex) {
-						IBRCOMMON_LOGGER(error) << "error while processing file convergencelayer task: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("FileConvergenceLayer", error) << "error while processing file convergencelayer task: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					delete t;
 				}
@@ -303,11 +303,11 @@ namespace dtn
 				catch (const dtn::data::Validator::RejectedException &ex)
 				{
 					// display the rejection
-					IBRCOMMON_LOGGER(warning) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("FileConvergenceLayer", warning) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 				catch (const dtn::InvalidDataException &ex) {
 					// display the rejection
-					IBRCOMMON_LOGGER(warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("FileConvergenceLayer", warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}
@@ -363,7 +363,7 @@ namespace dtn
 					// put the meta bundle in the list
 					ret.push_back(meta);
 				} catch (const std::exception&) {
-					IBRCOMMON_LOGGER_DEBUG(34) << "bundle in file " << f.getPath() << " invalid or expired" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("FileConvergenceLayer", 34) << "bundle in file " << f.getPath() << " invalid or expired" << IBRCOMMON_LOGGER_ENDL;
 
 					// delete the file
 					ibrcommon::File(f).remove();

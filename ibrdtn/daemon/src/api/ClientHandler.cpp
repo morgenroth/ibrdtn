@@ -193,7 +193,7 @@ namespace dtn
 
 		void ClientHandler::finally() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "ApiConnection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ClientHandler", 60) << "ApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 
 			// remove the client from the list in ApiServer
 			_srv.connectionDown(this);

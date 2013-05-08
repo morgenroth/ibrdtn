@@ -95,7 +95,7 @@ namespace dtn
 
 				if ((_filter_expire > 0) && (_filter_expire < timestamp))
 				{
-					IBRCOMMON_LOGGER_DEBUG(15) << "summary vector of " << eid.getString() << " is expired" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 15) << "summary vector of " << eid.getString() << " is expired" << IBRCOMMON_LOGGER_ENDL;
 
 					// set the filter state to expired once
 					l = FILTER_EXPIRED;
@@ -140,7 +140,7 @@ namespace dtn
 			// insert the bundle into the transit list
 			_transit_bundles.insert(id);
 
-			IBRCOMMON_LOGGER_DEBUG(20) << "acquire transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "acquire transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		dtn::data::Size NeighborDatabase::NeighborEntry::getFreeTransferSlots() const
@@ -159,7 +159,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_transit_lock);
 			_transit_bundles.erase(id);
 
-			IBRCOMMON_LOGGER_DEBUG(20) << "release transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "release transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NeighborDatabase::NeighborEntry::putDataset(NeighborDataset &dset)

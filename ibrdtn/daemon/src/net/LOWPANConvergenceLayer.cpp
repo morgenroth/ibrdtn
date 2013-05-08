@@ -134,7 +134,7 @@ namespace dtn
 
 			ibrcommon::vaddress addr( address, ss_pan.str(), AF_IEEE802154 );
 
-			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::queue"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 55) << "LOWPANConvergenceLayer::queue"<< IBRCOMMON_LOGGER_ENDL;
 
 			ibrcommon::MutexLock lc(_connection_lock);
 			LOWPANConnection *connection = getConnection(addr);
@@ -148,7 +148,7 @@ namespace dtn
 			{
 				LOWPANConnection &conn = dynamic_cast<LOWPANConnection&>(**i);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "Connection address: " << conn._address.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 55) << "Connection address: " << conn._address.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				if (conn._address == addr)
 					return (*i);
@@ -158,7 +158,7 @@ namespace dtn
 			LOWPANConnection *connection = new LOWPANConnection(addr, (*this));
 
 			ConnectionList.push_back(connection);
-			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::getConnection "<< connection->_address.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 55) << "LOWPANConvergenceLayer::getConnection "<< connection->_address.toString() << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
 			return connection;
 		}
@@ -206,7 +206,7 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPAN IPND beacon send started" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 60) << "LOWPAN IPND beacon send started" << IBRCOMMON_LOGGER_ENDL;
 
 			DiscoveryAnnouncement announcement(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local);
 
@@ -239,7 +239,7 @@ namespace dtn
 
 			dtn::data::Length len = ss.str().size();
 			if (len > 113)
-				IBRCOMMON_LOGGER(error) << "Discovery announcement to big (" << len << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("LOWPANConvergenceLayer", error) << "Discovery announcement to big (" << len << ")" << IBRCOMMON_LOGGER_ENDL;
 
 			// copy data infront of the 2 byte header
 			memcpy(&_ipnd_buf[2], ss.str().c_str(), len);
@@ -268,7 +268,7 @@ namespace dtn
 						// Receive full frame from socket
 						ssize_t len = sock.recvfrom(&data[0], static_cast<size_t>(m_maxmsgsize), 0, peeraddr);
 
-						IBRCOMMON_LOGGER_DEBUG(40) << "Received IEEE 802.15.4 frame from " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 40) << "Received IEEE 802.15.4 frame from " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// We got nothing from the socket, keep reading
 						if (len <= 0)

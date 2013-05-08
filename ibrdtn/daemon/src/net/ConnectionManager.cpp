@@ -193,7 +193,7 @@ namespace dtn
 					dtn::core::NodeEvent::raise(db, dtn::core::NODE_DATA_ADDED);
 				}
 			} else {
-				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (db.isAvailable() && !db.isAnnounced()) {
@@ -220,7 +220,7 @@ namespace dtn
 					dtn::core::NodeEvent::raise(db, dtn::core::NODE_DATA_REMOVED);
 				}
 
-				IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes removed: " << db << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 56) << "Node attributes removed: " << db << IBRCOMMON_LOGGER_ENDL;
 			} catch (const NeighborNotAvailableException&) { };
 		}
 
@@ -431,19 +431,19 @@ namespace dtn
 
 			if (IBRCOMMON_LOGGER_LEVEL >= 50)
 			{
-				IBRCOMMON_LOGGER_DEBUG(50) << "## node list ##" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "## node list ##" << IBRCOMMON_LOGGER_ENDL;
 				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 				{
 					const dtn::core::Node &n = (*iter).second;
-					IBRCOMMON_LOGGER_DEBUG(2) << n << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << n << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
-			IBRCOMMON_LOGGER_DEBUG(50) << "search for node " << job.destination.getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "search for node " << job.destination.getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// queue to a node
 			const Node &n = getNode(job.destination);
-			IBRCOMMON_LOGGER_DEBUG(2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				queue(n, job);
