@@ -60,7 +60,7 @@ class EchoClient : public dtn::api::Client
 				} catch (const std::string &errmsg) {
 					std::cerr << errmsg << std::endl;
 				}
-				wait = wait - static_cast<double>(tm.getMilliseconds());
+				wait = wait - tm.getMilliseconds();
 			}
 			throw ibrcommon::Exception("timeout is set to zero");
 		}
@@ -384,7 +384,7 @@ int main(int argc, char *argv[])
 							size_t payload_size = 0;
 
 							// check for min/max/avg
-							_avg += static_cast<double>(tm.getMilliseconds());
+							_avg += tm.getMilliseconds();
 							if ((_min > tm.getMilliseconds()) || _min == 0) _min = static_cast<double>(tm.getMilliseconds());
 							if ((_max < tm.getMilliseconds()) || _max == 0) _max = static_cast<double>(tm.getMilliseconds());
 

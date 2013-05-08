@@ -520,7 +520,7 @@ namespace dtn
 				} catch (const ibrcommon::vsocket_timeout&) { };
 
 				// trigger timeout, if one second is elapsed
-				tm.stop(); if (tm.getMilliseconds() > 1000)
+				tm.stop(); if (tm.getMilliseconds() > 1000.0)
 				{
 					tm.start();
 					timeout();

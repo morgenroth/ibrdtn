@@ -53,7 +53,7 @@ void BundleStreamBuf::flush()
 	__flush();
 }
 
-void BundleStreamBuf::setReceiveTimeout(unsigned int timeout)
+void BundleStreamBuf::setReceiveTimeout(dtn::data::Timeout timeout)
 {
 	_receive_timeout = timeout;
 }

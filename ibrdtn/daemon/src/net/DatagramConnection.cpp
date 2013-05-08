@@ -306,7 +306,7 @@ namespace dtn
 						tm.stop();
 
 						// adjust the average rtt
-						adjust_rtt(static_cast<double>(tm.getMilliseconds()));
+						adjust_rtt(tm.getMilliseconds());
 
 						return;
 					} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {

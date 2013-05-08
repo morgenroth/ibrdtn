@@ -655,7 +655,7 @@ namespace dtn
 							m.stop();
 
 							// get throughput
-							double duration = static_cast<double>(m.getNanoseconds());
+							double duration = m.getMicroseconds();
 							double data_len = static_cast<double>(serializer.getLength(bundle));
 
 							double kbytes_per_second = (data_len / 1024.0) / (duration / 1000000.0);
