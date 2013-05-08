@@ -517,6 +517,8 @@ void BundleStorageTest::testExpiration(dtn::storage::BundleStorage &storage)
 
 	// wait until the time event has been processed
 	{
+		::sleep(2);
+
 		ibrcommon::MutexLock l(evtl.event_cond);
 		while (evtl.event_counter == 0) evtl.event_cond.wait(20000);
 	}
