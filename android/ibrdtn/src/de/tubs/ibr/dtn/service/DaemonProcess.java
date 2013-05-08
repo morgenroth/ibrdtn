@@ -409,7 +409,7 @@ public class DaemonProcess {
             }
             else if (key.startsWith("log_enable_file"))
             {
-                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                Log.d(TAG, key + " == " + prefs.getBoolean(key, false));
                 
                 // set logfile options
                 String logFilePath = null;
