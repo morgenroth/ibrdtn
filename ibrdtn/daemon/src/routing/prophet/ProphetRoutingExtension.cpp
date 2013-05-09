@@ -508,9 +508,12 @@ namespace dtn
 								// query a new summary vector from this neighbor
 								(**this).doHandshake(task.eid);
 							}
-						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-						} catch (const dtn::storage::NoBundleFoundException&) {
+						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const NeighborDatabase::NeighborNotAvailableException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const dtn::storage::NoBundleFoundException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const std::bad_cast&) { }
 
 						/**

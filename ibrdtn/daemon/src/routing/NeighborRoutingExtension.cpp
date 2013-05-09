@@ -182,9 +182,12 @@ namespace dtn
 								transferTo(entry, *iter);
 							} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 						}
-					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-					} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-					} catch (const dtn::storage::NoBundleFoundException&) {
+					} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const NeighborDatabase::NeighborNotAvailableException &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const dtn::storage::NoBundleFoundException &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					} catch (const std::bad_cast&) { };
 
 					/**
