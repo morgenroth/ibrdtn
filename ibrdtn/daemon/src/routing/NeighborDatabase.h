@@ -136,6 +136,21 @@ namespace dtn
 				void expire(const dtn::data::Timestamp &timestamp);
 
 				/**
+				 * Determine if the neighbor entry is expired
+				 */
+				bool isExpired(const dtn::data::Timestamp &timestamp) const;
+
+				/**
+				 * Returns the last update of this entry
+				 */
+				const dtn::data::Timestamp& getLastUpdate() const;
+
+				/**
+				 * updates the last update timestamp
+				 */
+				void touch();
+
+				/**
 				 * Retrieve a specific data-set.
 				 */
 				template <class T>
@@ -196,6 +211,8 @@ namespace dtn
 				};
 
 				ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE> _filter_state;
+
+				dtn::data::Timestamp _last_update;
 			};
 
 			NeighborDatabase();

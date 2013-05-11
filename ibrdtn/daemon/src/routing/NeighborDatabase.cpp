@@ -88,6 +88,22 @@ namespace dtn
 			return _summary.has(id);
 		}
 
+		bool NeighborDatabase::NeighborEntry::isExpired(const dtn::data::Timestamp &timestamp) const
+		{
+			// expired after 15 minutes
+			return (_last_update + 900) < timestamp;
+		}
+
+		const dtn::data::Timestamp& NeighborDatabase::NeighborEntry::getLastUpdate() const
+		{
+			return _last_update;
+		}
+
+		void NeighborDatabase::NeighborEntry::touch()
+		{
+			_last_update = dtn::utils::Clock::getTime();
+		}
+
 		void NeighborDatabase::NeighborEntry::expire(const dtn::data::Timestamp &timestamp)
 		{
 			{
@@ -110,9 +126,16 @@ namespace dtn
 
 		void NeighborDatabase::expire(const dtn::data::Timestamp &timestamp)
 		{
-			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); ++iter)
+			for (neighbor_map::iterator iter = _entries.begin(); iter != _entries.end(); )
 			{
-				(*iter).second->expire(timestamp);
+				NeighborEntry &entry = (*iter->second);
+
+				if (entry.isExpired(timestamp)) {
+					_entries.erase(iter++);
+				} else {
+					entry.expire(timestamp);
+					++iter;
+				}
 			}
 		}
 
@@ -186,6 +209,9 @@ namespace dtn
 				iter = itm.first;
 			}
 
+			// set last update timestamp
+			(*(*iter).second).touch();
+
 			return *(*iter).second;
 		}
 
@@ -199,6 +225,9 @@ namespace dtn
 			{
 				throw NeighborNotAvailableException();
 			}
+
+			// set last update timestamp
+			(*(*iter).second).touch();
 
 			return *(*iter).second;
 		}
