@@ -141,14 +141,13 @@ namespace dtn
 
 		void NeighborDatabase::NeighborEntry::acquireTransfer(const dtn::data::BundleID &id) throw (NoMoreTransfersAvailable, AlreadyInTransitException)
 		{
+			// check if enough resources available to transfer the bundle
+			if (dtn::net::BundleTransfer::count(eid) >= dtn::core::BundleCore::max_bundles_in_transit) throw NoMoreTransfersAvailable();
+
 			ibrcommon::MutexLock l(_transit_lock);
 
 			// check if the bundle is already in transit
 			if (_transit_bundles.find(id) != _transit_bundles.end()) throw AlreadyInTransitException();
-
-			// check if enough resources available to transfer the bundle
-			// TODO: switch to new method for checking the amount of ongoing transfers
-			if (_transit_bundles.size() >= dtn::core::BundleCore::max_bundles_in_transit) throw NoMoreTransfersAvailable();
 
 			// insert the bundle into the transit list
 			_transit_bundles.insert(id);
@@ -158,13 +157,15 @@ namespace dtn
 
 		dtn::data::Size NeighborDatabase::NeighborEntry::getFreeTransferSlots() const
 		{
-			if (dtn::core::BundleCore::max_bundles_in_transit <= _transit_bundles.size()) return 0;
-			return dtn::core::BundleCore::max_bundles_in_transit - _transit_bundles.size();
+			dtn::data::Size transit_bundles = dtn::net::BundleTransfer::count(eid);
+
+			if (dtn::core::BundleCore::max_bundles_in_transit <= transit_bundles) return 0;
+			return dtn::core::BundleCore::max_bundles_in_transit - transit_bundles;
 		}
 
 		bool NeighborDatabase::NeighborEntry::isTransferThresholdReached() const
 		{
-			return _transit_bundles.size() <= (dtn::core::BundleCore::max_bundles_in_transit / 2);
+			return dtn::net::BundleTransfer::count(eid) <= (dtn::core::BundleCore::max_bundles_in_transit / 2);
 		}
 
 		void NeighborDatabase::NeighborEntry::releaseTransfer(const dtn::data::BundleID &id)

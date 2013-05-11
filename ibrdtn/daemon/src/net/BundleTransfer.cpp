@@ -78,12 +78,12 @@ namespace dtn
 			}
 		}
 
-		int BundleTransfer::count(const dtn::data::EID &neighbor)
+		dtn::data::Size BundleTransfer::count(const dtn::data::EID &neighbor)
 		{
 			return Slot::count(neighbor);
 		}
 
-		int BundleTransfer::Slot::count(const dtn::data::EID &neighbor)
+		dtn::data::Size BundleTransfer::Slot::count(const dtn::data::EID &neighbor)
 		{
 			ibrcommon::MutexLock l(_slot_lock);
 			return _slot_map[neighbor];

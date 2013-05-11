@@ -20,7 +20,7 @@
  */
 
 #include "net/TransferAbortedEvent.h"
-
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/MetaBundle.h>
 
@@ -55,7 +55,7 @@ namespace dtn
 			/**
 			 * Get the number of current transfers
 			 */
-			static int count(const dtn::data::EID &neighbor);
+			static dtn::data::Size count(const dtn::data::EID &neighbor);
 
 		private:
 			class Slot {
@@ -76,11 +76,11 @@ namespace dtn
 				 */
 				void complete();
 
-				static int count(const dtn::data::EID &neighbor);
+				static dtn::data::Size count(const dtn::data::EID &neighbor);
 
 			private:
 				static ibrcommon::Mutex _slot_lock;
-				typedef std::map<dtn::data::EID, int> slot_map;
+				typedef std::map<dtn::data::EID, dtn::data::Size> slot_map;
 				static slot_map _slot_map;
 
 				bool _completed;
