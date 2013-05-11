@@ -116,17 +116,6 @@ namespace dtn
 			}
 		}
 
-		void NeighborDatabase::NeighborEntry::acquireFilterRequest() throw (NoMoreTransfersAvailable)
-		{
-			ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
-
-			if (l != FILTER_EXPIRED)
-				throw NoMoreTransfersAvailable();
-
-			// set the state to zero
-			l = FILTER_AWAITING;
-		}
-
 		void NeighborDatabase::NeighborEntry::acquireTransfer(const dtn::data::BundleID &id) throw (NoMoreTransfersAvailable, AlreadyInTransitException)
 		{
 			ibrcommon::MutexLock l(_transit_lock);

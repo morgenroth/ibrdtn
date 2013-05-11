@@ -105,12 +105,6 @@ namespace dtn
 				bool has(const dtn::data::BundleID&, const bool require_bloomfilter = false) const;
 
 				/**
-				 * acquire resource to send a filter request.
-				 * The resources are reset once if the filter expires.
-				 */
-				void acquireFilterRequest() throw (NoMoreTransfersAvailable);
-
-				/**
 				 * Acquire transfer resources. If no resources is left,
 				 * an exception is thrown.
 				 */
@@ -120,7 +114,7 @@ namespace dtn
 				 * @return the number of free transfer slots
 				 */
 				dtn::data::Size getFreeTransferSlots() const;
-				
+
 				/**
 				 * @return True, if the threshold of free transfer slots is reached.
 				 */
