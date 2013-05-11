@@ -137,13 +137,6 @@ namespace dtn
 
 		void SQLiteBundleStorage::componentRun() throw ()
 		{
-			try {
-				// iterate through all bundles to generate indexes
-				_database.iterateAll();
-			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
-				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			}
-
 			// loop until aborted
 			try {
 				while (true)
@@ -195,6 +188,13 @@ namespace dtn
 				// open the database and create all folders and files if needed
 				_database.open();
 			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			try {
+				// iterate through all bundles to generate indexes
+				_database.iterateAll();
+			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
