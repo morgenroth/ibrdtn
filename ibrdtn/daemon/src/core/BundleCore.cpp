@@ -231,21 +231,18 @@ namespace dtn
 			return _clock;
 		}
 
-		void BundleCore::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle) throw (P2PDialupException)
+		void BundleCore::transferTo(dtn::net::BundleTransfer &transfer) throw (P2PDialupException)
 		{
 			try {
-				_connectionmanager.queue(destination, bundle);
+				_connectionmanager.queue(transfer);
 			} catch (const dtn::net::NeighborNotAvailableException &ex) {
 				// signal interruption of the transfer
-				dtn::net::TransferAbortedEvent::raise(destination, bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+				transfer.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			} catch (const dtn::net::ConnectionNotAvailableException &ex) {
-				// signal interruption of the transfer
-				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
 			} catch (const P2PDialupException&) {
 				// re-throw the P2PDialupException
 				throw;
 			} catch (const ibrcommon::Exception&) {
-				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
 			}
 		}
 

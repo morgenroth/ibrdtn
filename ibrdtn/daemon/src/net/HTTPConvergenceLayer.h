@@ -75,7 +75,7 @@ namespace dtn
 			/**
 			 * @see ConvergenceLayer::queue()
 			 */
-			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job);
 
 			/**
 			 * @see Component::getName()

@@ -120,7 +120,7 @@ namespace dtn
 		{
 		}
 
-		void LOWPANConnectionSender::queue(const ConvergenceLayer::Job &job)
+		void LOWPANConnectionSender::queue(const dtn::net::BundleTransfer &job)
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnectionSender", 85) << "queue"<< IBRCOMMON_LOGGER_ENDL;
 			_queue.push(job);
@@ -131,7 +131,7 @@ namespace dtn
 			try {
 				while(_stream.good())
 				{
-					ConvergenceLayer::Job job = _queue.getnpop(true);
+					dtn::net::BundleTransfer job = _queue.getnpop(true);
 					dtn::data::DefaultSerializer serializer(_stream);
 
 					IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnectionSender", 85) << "run"<< IBRCOMMON_LOGGER_ENDL;
@@ -139,13 +139,12 @@ namespace dtn
 					dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 					// read the bundle out of the storage
-					const dtn::data::Bundle bundle = storage.get(job.bundle);
+					const dtn::data::Bundle bundle = storage.get(job.getBundle());
 
 					// Put bundle into stringstream
 					serializer << bundle; _stream.flush();
 					// raise bundle event
-					dtn::net::TransferCompletedEvent::raise(job.destination, bundle);
-					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+					job.complete();
 				}
 				// FIXME: Exit strategy when sending on socket failed. Like destroying the connection object
 				// Also check what needs to be done when the node is not reachable (transfer requeue...)

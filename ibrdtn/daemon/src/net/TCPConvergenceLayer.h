@@ -78,7 +78,7 @@ namespace dtn
 			 * Queue a new transmission job for this convergence layer.
 			 * @param job
 			 */
-			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job);
 
 			/**
 			 * Open a connection to the given node.

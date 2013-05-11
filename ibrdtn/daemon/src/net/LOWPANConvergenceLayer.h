@@ -65,7 +65,7 @@ namespace dtn
 			 * @param n Node reference
 			 * @param job Job reference
 			 */
-			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job);
 
 			/**
 			 * @see Component::getName()

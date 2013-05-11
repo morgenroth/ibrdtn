@@ -407,7 +407,7 @@ namespace dtn
 			return;
 		}
 
-		void TCPConvergenceLayer::queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job)
+		void TCPConvergenceLayer::queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job)
 		{
 			// search for an existing connection
 			ibrcommon::MutexLock l(_connections_cond);
@@ -418,7 +418,7 @@ namespace dtn
 
 				if (conn.match(n))
 				{
-					conn.queue(job.bundle);
+					conn.queue(job);
 					IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 15) << "queued bundle to an existing tcp connection (" << conn.getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 
 					return;
@@ -447,15 +447,14 @@ namespace dtn
 				conn->initialize();
 
 				// queue the bundle
-				conn->queue(job.bundle);
+				conn->queue(job);
 
 				// signal that there is a new connection
 				_connections_cond.signal(true);
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 15) << "queued bundle to an new tcp connection (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) {
-				// raise transfer abort event for all bundles without an ACK
-				dtn::routing::RequeueBundleEvent::raise(n.getEID(), job.bundle);
+
 			}
 		}
 

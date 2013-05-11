@@ -182,7 +182,7 @@ namespace dtn
 		 * @param node node informations
 		 * @param job parameter to get next bundle to send from storage
 		 */
-		void HTTPConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void HTTPConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 			std::string url_send;
@@ -192,7 +192,7 @@ namespace dtn
 
 			try {
 				// read the bundle out of the storage
-				const dtn::data::Bundle bundle = storage.get(job.bundle);
+				const dtn::data::Bundle bundle = storage.get(job.getBundle());
 
 				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 				{
@@ -259,8 +259,8 @@ namespace dtn
 
 						if(http_code == HTTP_OK)
 						{
-							dtn::net::TransferCompletedEvent::raise(job.destination, bundle);
-							dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+							dtn::net::BundleTransfer local_job = job;
+							local_job.complete();
 						}
 					}
 
@@ -268,7 +268,8 @@ namespace dtn
 				}
 			} catch (const dtn::storage::NoBundleFoundException&) {
 				// send transfer aborted event
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+				dtn::net::BundleTransfer local_job = job;
+				local_job.abort(dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			}
 
 		}

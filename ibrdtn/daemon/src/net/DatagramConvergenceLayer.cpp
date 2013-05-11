@@ -79,7 +79,7 @@ namespace dtn
 			_service->send(HEADER_ACK, 0, seqno, destination, NULL, 0);
 		}
 
-		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			const std::list<dtn::core::Node::URI> uri_list = node.get(_service->getProtocol());
 			if (uri_list.empty()) return;

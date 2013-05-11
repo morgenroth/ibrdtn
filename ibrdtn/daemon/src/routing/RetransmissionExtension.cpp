@@ -57,10 +57,17 @@ namespace dtn
 					if ( data.getTimestamp() <= time.getTimestamp() )
 					{
 						try {
+							const dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(data);
+
 							// retransmit the bundle
-							dtn::core::BundleCore::getInstance().transferTo(data.destination, data);
+							dtn::net::BundleTransfer transfer(data.destination, meta);
+							dtn::core::BundleCore::getInstance().transferTo(transfer);
 						} catch (const dtn::core::P2PDialupException&) {
 							// do nothing here
+							dtn::routing::RequeueBundleEvent::raise(data.destination, data);
+						} catch (const ibrcommon::Exception&) {
+							// do nothing here
+							dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 						}
 
 						// remove the item off the queue

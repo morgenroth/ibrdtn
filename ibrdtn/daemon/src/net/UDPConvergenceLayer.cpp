@@ -140,12 +140,13 @@ namespace dtn
 			}
 		}
 
-		void UDPConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void UDPConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_UDPIP);
 			if (uri_list.empty())
 			{
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_UNDEFINED);
+				dtn::net::BundleTransfer local_job = job;
+				local_job.abort(dtn::net::TransferAbortedEvent::REASON_UNDEFINED);
 				return;
 			}
 
@@ -164,7 +165,7 @@ namespace dtn
 
 			try {
 				// read the bundle out of the storage
-				const dtn::data::Bundle bundle = storage.get(job.bundle);
+				const dtn::data::Bundle bundle = storage.get(job.getBundle());
 
 				// create a dummy serializer
 				dtn::data::DefaultSerializer dummy(std::cout);
@@ -217,19 +218,19 @@ namespace dtn
 				}
 
 				// success - raise bundle event
-				dtn::net::TransferCompletedEvent::raise(job.destination, bundle);
-				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+				dtn::net::BundleTransfer local_job = job;
+				local_job.complete();
 			} catch (const dtn::storage::NoBundleFoundException&) {
 				// send transfer aborted event
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+				dtn::net::BundleTransfer local_job = job;
+				local_job.abort(dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			} catch (const ibrcommon::socket_exception&) {
 				// CL is busy, requeue bundle
-				dtn::routing::RequeueBundleEvent::raise(job.destination, job.bundle);
 			} catch (const NoAddressFoundException &ex) {
 				// no connection available
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+				dtn::net::BundleTransfer local_job = job;
+				local_job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}
-
 		}
 
 		void UDPConvergenceLayer::send(const ibrcommon::vaddress &addr, const std::string &data) throw (ibrcommon::socket_exception, NoAddressFoundException)

@@ -147,6 +147,7 @@ namespace dtn
 			if (_transit_bundles.find(id) != _transit_bundles.end()) throw AlreadyInTransitException();
 
 			// check if enough resources available to transfer the bundle
+			// TODO: switch to new method for checking the amount of ongoing transfers
 			if (_transit_bundles.size() >= dtn::core::BundleCore::max_bundles_in_transit) throw NoMoreTransfersAvailable();
 
 			// insert the bundle into the transit list

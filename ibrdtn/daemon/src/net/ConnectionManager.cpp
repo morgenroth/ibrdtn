@@ -393,7 +393,7 @@ namespace dtn
 			}
 		}
 
-		void ConnectionManager::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void ConnectionManager::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
 
@@ -425,7 +425,7 @@ namespace dtn
 			throw ConnectionNotAvailableException();
 		}
 
-		void ConnectionManager::queue(const ConvergenceLayer::Job &job)
+		void ConnectionManager::queue(const dtn::net::BundleTransfer &job)
 		{
 			ibrcommon::MutexLock l(_node_lock);
 
@@ -439,10 +439,10 @@ namespace dtn
 				}
 			}
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "search for node " << job.destination.getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "search for node " << job.getNeighbor().getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// queue to a node
-			const Node &n = getNode(job.destination);
+			const Node &n = getNode(job.getNeighbor());
 			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
 
 			try {
@@ -454,11 +454,6 @@ namespace dtn
 				// re-throw P2PDialupException
 				throw;
 			}
-		}
-
-		void ConnectionManager::queue(const dtn::data::EID &eid, const dtn::data::BundleID &b)
-		{
-			queue( ConvergenceLayer::Job(eid, b) );
 		}
 
 		const std::set<dtn::core::Node> ConnectionManager::getNeighbors()
