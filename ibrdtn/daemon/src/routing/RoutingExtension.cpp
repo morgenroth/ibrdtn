@@ -68,8 +68,7 @@ namespace dtn
 			entry.acquireTransfer(meta);
 
 			try {
-				// TODO: switch to new method for checking the amount of ongoing transfers
-
+				// create a new bundle transfer object
 				dtn::net::BundleTransfer transfer(entry.eid, meta);
 
 				// transfer the bundle to the next hop
