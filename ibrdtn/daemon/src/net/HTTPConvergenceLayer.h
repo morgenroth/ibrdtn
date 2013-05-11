@@ -39,8 +39,6 @@
 #include <ibrdtn/data/Serializer.h>
 
 #include "net/ConvergenceLayer.h"
-#include "net/TransferCompletedEvent.h"
-#include "net/TransferAbortedEvent.h"
 #include "net/BundleReceivedEvent.h"
 
 #include <ibrcommon/data/BLOB.h>

@@ -23,9 +23,7 @@
 #include "net/DatagramConnection.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
-#include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
-#include "routing/RequeueBundleEvent.h"
 #include "core/BundleCore.h"
 
 #include <ibrdtn/utils/Utils.h>

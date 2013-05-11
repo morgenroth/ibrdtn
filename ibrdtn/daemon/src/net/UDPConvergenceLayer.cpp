@@ -21,11 +21,9 @@
 
 #include "net/UDPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
-#include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundleCore.h"
-#include "routing/RequeueBundleEvent.h"
 #include "Configuration.h"
 
 #include <ibrdtn/utils/Utils.h>

@@ -21,7 +21,6 @@
 
 #include "Configuration.h"
 #include "net/FileConvergenceLayer.h"
-#include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/EventDispatcher.h"
@@ -31,7 +30,6 @@
 #include "core/TimeEvent.h"
 #include "routing/BaseRouter.h"
 #include "routing/NodeHandshake.h"
-#include "routing/RequeueBundleEvent.h"
 #include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>

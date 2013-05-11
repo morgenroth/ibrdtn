@@ -31,7 +31,6 @@
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
-#include "routing/RequeueBundleEvent.h"
 
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>

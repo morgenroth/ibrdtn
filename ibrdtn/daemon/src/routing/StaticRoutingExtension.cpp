@@ -27,7 +27,6 @@
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/ConnectionEvent.h"
-#include "routing/RequeueBundleEvent.h"
 #include "core/NodeEvent.h"
 #include "storage/SimpleBundleStorage.h"
 #include "core/TimeEvent.h"

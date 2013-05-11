@@ -29,9 +29,7 @@
 #include "net/TCPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
 #include "net/ConnectionEvent.h"
-#include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
-#include "routing/RequeueBundleEvent.h"
 
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/TimeMeasurement.h>
