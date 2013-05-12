@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     android:id="@+id/message_fragment"
      android:orientation="vertical"
      android:layout_width="match_parent"
-     android:layout_height="match_parent"
-     >
+     android:layout_height="match_parent">
      
-	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	<de.tubs.ibr.dtn.chat.BuddyDisplay
 	    android:layout_width="fill_parent"
 	    android:layout_height="wrap_content"
 	    android:background="@color/buddy_background"
 	    android:orientation="horizontal"
 	    android:padding="4dp"
-	    android:id="@+id/chat_buddy_display">
+	    android:id="@+id/buddy_display">
 	
 	    <ImageView
 	        android:contentDescription="@string/desc_buddy_icon"
@@ -22,7 +22,7 @@
 	        android:layout_margin="8dp"
 	        android:src="@drawable/online" />
 	    
-	    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    <RelativeLayout
 	        android:layout_width="wrap_content"
 	        android:layout_height="wrap_content"
 	        android:layout_weight="1"
@@ -36,7 +36,7 @@
 		        android:layout_toRightOf="@+id/buddy_icon"
 		        android:gravity="center_vertical"
 		        android:textColor="@color/buddy_text"
-		        android:text="@string/nickname"
+		        android:text="@string/empty"
 		        android:textSize="18dp" />
 		
 		    <TextView
@@ -48,21 +48,21 @@
 		        android:ellipsize="marquee"
 		        android:singleLine="true"
 		        android:textColor="@color/buddy_text"
-		        android:text="@string/example_text"
+		        android:text="@string/empty"
 		        android:textSize="12dp" />
 		    
 	    </RelativeLayout>
 	
-	</LinearLayout>
+	</de.tubs.ibr.dtn.chat.BuddyDisplay>
 
-    <ListView
+    <de.tubs.ibr.dtn.chat.MessageList
         android:id="@+id/list_messages"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:transcriptMode="alwaysScroll"
         android:stackFromBottom="true">
-    </ListView>
+    </de.tubs.ibr.dtn.chat.MessageList>
 	
 	<View
 	    android:id="@+id/inputbox_separator"
@@ -70,13 +70,12 @@
 	    android:layout_height="1dp"
 	    android:background="@color/border_menu_seperator" />
 	
-	<LinearLayout
-	    xmlns:android="http://schemas.android.com/apk/res/android"
+	<de.tubs.ibr.dtn.chat.MessageComposer
 	    android:name="de.tubs.ibr.dtn.chat.InputFragment"
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    android:background="@color/inputbox_background"
-	    android:id="@+id/input_view">
+	    android:id="@+id/message_composer">
 	    
 	      <EditText
 	          android:id="@+id/textMessage"
@@ -86,7 +85,7 @@
 	          android:layout_margin="8dp"
 	          android:ems="10"
 	          android:inputType="textShortMessage|textMultiLine|textAutoCorrect|textCapSentences"
-	          android:text="@string/example_text"
+	          android:text="@string/empty"
 	          android:imeOptions="actionSend">
 	      </EditText>
 	
@@ -101,6 +100,6 @@
 		    android:onClick="sendMessage"
 		    android:src="@drawable/ic_send" />
 	
-	</LinearLayout>
+	</de.tubs.ibr.dtn.chat.MessageComposer>
     
  </LinearLayout>
