@@ -25,17 +25,15 @@ package de.tubs.ibr.dtn.daemon;
 import java.util.LinkedList;
 import java.util.List;
 
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.support.v4.app.ListFragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,27 +47,35 @@ import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.service.DaemonService;
 
-public class NeighborListFragment extends ListFragment {
+public class NeighborListFragment extends ListFragment implements
+	LoaderManager.LoaderCallbacks<List<Node>> {
+	
+	// The loader's unique id. Loader ids are specific to the Activity or
+	// Fragment in which they reside.
+	private static final int LOADER_ID = 1;
 
     private static final String TAG = "NeighborListFragment";
     
-    private Object serviceLock = new Object();
-    private DTNService service = null;
+    private Object mServiceLock = new Object();
+    private DTNService mService = null;
     private NeighborListAdapter mAdapter = null;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName name, IBinder s) {
-        	synchronized(serviceLock) {
-        		service = DTNService.Stub.asInterface(s);
+        	synchronized(mServiceLock) {
+        		mService = DTNService.Stub.asInterface(s);
         	}
         	if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
 
-            refreshView();
+        	// initialize the loader
+            NeighborListFragment.this.getLoaderManager().initLoader(LOADER_ID,  null, NeighborListFragment.this);
         }
 
         public void onServiceDisconnected(ComponentName name) {
-            synchronized(serviceLock) {
-            	service = null;
+        	NeighborListFragment.this.getLoaderManager().destroyLoader(LOADER_ID);
+        	
+            synchronized(mServiceLock) {
+            	mService = null;
             }
             if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service disconnected");
         }
@@ -90,25 +96,8 @@ public class NeighborListFragment extends ListFragment {
     	super.onListItemClick(l, v, position, id);
 	}
 
-	private BroadcastReceiver _receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (de.tubs.ibr.dtn.Intent.NEIGHBOR.equals(intent.getAction())) {
-                refreshView();
-            }
-        }
-    };
-
-    private void refreshView() {
-        if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "refreshing");
-        (new LoadNeighborList()).execute();
-    }
-
     @Override
     public void onPause() {
-        // unregister from intent receiver
-        getActivity().unregisterReceiver(_receiver);
-        
         // Detach our existing connection.
         getActivity().unbindService(mConnection);
         super.onPause();
@@ -117,10 +106,6 @@ public class NeighborListFragment extends ListFragment {
     @Override
     public void onResume() {
         super.onResume();
-        
-        IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.NEIGHBOR);
-        filter.addCategory(Intent.CATEGORY_DEFAULT);
-        getActivity().registerReceiver(_receiver, filter);
 
         // Establish a connection with the service. We use an explicit
         // class name because we want a specific service implementation that
@@ -128,37 +113,6 @@ public class NeighborListFragment extends ListFragment {
         // supporting component replacement by other applications).
         getActivity().bindService(new Intent(DTNService.class.getName()), mConnection,
                 Context.BIND_AUTO_CREATE);
-    }
-
-    private class LoadNeighborList extends AsyncTask<String, Integer, List<Node>> {
-        protected List<Node> doInBackground(String... data)
-        {
-        	synchronized(serviceLock) {
-	            try {
-	                // query all neighbors
-	            	return service.getNeighbors();
-	            } catch (RemoteException e) {
-	                return null;
-	            }
-        	}
-        }
-
-        protected void onPostExecute(List<Node> neighbors)
-        {
-            if (neighbors == null)
-                return;
-
-            synchronized (mAdapter) {
-                // clear all data
-                mAdapter.clear();
-
-                for (Node n : neighbors) {
-                    mAdapter.add(n);
-                }
-                
-                mAdapter.notifyDataSetChanged();
-            }
-        }
     }
 
     @Override
@@ -249,5 +203,29 @@ public class NeighborListFragment extends ListFragment {
 
             return convertView;
         }  
-    };
+    }
+
+	@Override
+	public Loader<List<Node>> onCreateLoader(int id, Bundle args) {
+		return new NeighborListLoader(getActivity(), mService);
+	}
+
+	@Override
+	public void onLoadFinished(Loader<List<Node>> loader, List<Node> neighbors) {
+        synchronized (mAdapter) {
+            // clear all data
+            mAdapter.clear();
+
+            for (Node n : neighbors) {
+                mAdapter.add(n);
+            }
+            
+            mAdapter.notifyDataSetChanged();
+        }
+	}
+
+	@Override
+	public void onLoaderReset(Loader<List<Node>> loader) {
+		mAdapter.clear();
+	};
 }
