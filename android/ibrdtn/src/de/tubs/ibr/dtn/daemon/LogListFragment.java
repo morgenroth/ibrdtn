@@ -50,6 +50,11 @@ import android.support.v4.content.Loader;
 
 public class LogListFragment extends ListFragment implements
         LoaderManager.LoaderCallbacks<LogMessage> {
+	
+	// The loader's unique id. Loader ids are specific to the Activity or
+	// Fragment in which they reside.
+	private static final int LOADER_ID = 1;
+	
     private LogListAdapter mAdapter = null;
     private boolean mPlayLog = true;
     private MenuItem mPlayItem;
@@ -135,7 +140,7 @@ public class LogListFragment extends ListFragment implements
     private void pauseLog() {
         mPlayLog = false;
 
-        getLoaderManager().destroyLoader(0);
+        getLoaderManager().destroyLoader(LOADER_ID);
 
         getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs_paused));
 
@@ -149,7 +154,7 @@ public class LogListFragment extends ListFragment implements
     private void playLog() {
         mPlayLog = true;
 
-        getLoaderManager().initLoader(0, null, this);
+        getLoaderManager().initLoader(LOADER_ID, null, this);
 
         getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs));
 
@@ -206,7 +211,7 @@ public class LogListFragment extends ListFragment implements
 
     @Override
     public void onLoaderReset(Loader<LogMessage> loader) {
-
+    	mAdapter.clear();
     }
 
     private class LogListAdapter extends BaseAdapter {
@@ -237,6 +242,10 @@ public class LogListFragment extends ListFragment implements
 
         public void remove(int position) {
             list.remove(position);
+        }
+        
+        public void clear() {
+        	list.clear();
         }
 
         public Object getItem(int position) {
