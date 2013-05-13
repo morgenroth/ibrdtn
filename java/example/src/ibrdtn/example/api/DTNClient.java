@@ -32,6 +32,8 @@ public class DTNClient {
     private EventClient eventClient = null;
     private ibrdtn.api.sab.CallbackHandler sabHandler = null;
     private String endpoint = null;
+    private final APIHandlerType apiType;
+    private final PayloadType payloadType;
 
     /**
      * Default constructor, using byte[] as the expected payload format and passthrough as the API handling strategy.
@@ -64,6 +66,8 @@ public class DTNClient {
         executor = Executors.newCachedThreadPool();
 
         this.endpoint = endpoint;
+        this.payloadType = payloadType;
+        this.apiType = apiType;
 
         exClient = new ExtendedClient();
 
@@ -217,6 +221,14 @@ public class DTNClient {
 
     public String getConfiguration() {
         return "DTN Client: " + endpoint + " [" + Constants.HOST + ":" + Constants.PORT + "]";
+    }
+
+    public APIHandlerType getApiType() {
+        return apiType;
+    }
+
+    public PayloadType getPayloadType() {
+        return payloadType;
     }
 
     public ExtendedClient getEC() {

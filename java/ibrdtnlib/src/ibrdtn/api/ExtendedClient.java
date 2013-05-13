@@ -61,6 +61,12 @@ public class ExtendedClient extends Client {
     private EID remoteEID = null;
     protected CallbackHandler handler = null;
 
+    public enum Encoding {
+
+        BASE64,
+        RAW
+    }
+
     private enum State {
 
         UNINITIALIZED,
@@ -257,6 +263,13 @@ public class ExtendedClient extends Client {
                 super.close();
             }
         } catch (IOException e) {
+        }
+    }
+
+    public void setEncoding(Encoding encoding) throws APIException {
+        if (query("set encoding " + encoding.toString().toLowerCase()) != 200) {
+            // error
+            throw new APIException("encoding switch failed");
         }
     }
 

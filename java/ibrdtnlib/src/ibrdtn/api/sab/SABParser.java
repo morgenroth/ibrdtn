@@ -39,6 +39,7 @@ public class SABParser {
         PARSER_DATA_NEXT,
         PARSER_DATA_INITIAL_PAYLOAD,
         PARSER_DATA_NEXT_PAYLOAD,
+        PARSER_DATA_PAYLOAD_HEADER,
         PARSER_BUNDLE,
         PARSER_BUNDLE_INFO,
         PARSER_BLOCK,
@@ -82,6 +83,7 @@ public class SABParser {
                 handler.response(ret);
                 break;
 
+            case PARSER_DATA_PAYLOAD_HEADER:
             case PARSER_BLOCK_INFO:
             case PARSER_BLOCK:
                 readBlock(reader, handler);
@@ -123,7 +125,7 @@ public class SABParser {
     private void readResponse(BufferedReader reader, SABHandler handler) throws SABException {
         try {
             String data = reader.readLine();
-//			System.out.println("Debug received: " + data);
+            // System.out.println("Debug received: " + data);
 
             // if the data is null throw exception
             if (data == null) {
@@ -170,7 +172,7 @@ public class SABParser {
                 this.state = State.PARSER_BUNDLE_INFO;
                 handler.startBundle();
             } else if ((code == 200) && values[1].startsWith("PAYLOAD GET")) {
-                this.state = State.PARSER_DATA_INITIAL_PAYLOAD;
+                this.state = State.PARSER_DATA_PAYLOAD_HEADER;
             }
         } catch (IOException e) {
             throw new SABException(e.toString());
@@ -245,6 +247,9 @@ public class SABParser {
                             this.state = State.PARSER_BLOCK_INFO;
                         }
                         break;
+                    case PARSER_DATA_PAYLOAD_HEADER:
+                        this.state = State.PARSER_DATA_INITIAL_PAYLOAD;
+                        break;
                 }
                 return;
             }
@@ -292,7 +297,9 @@ public class SABParser {
             if ((data.length() == 0)
                     && (this.state != State.PARSER_DATA_INITIAL)
                     && (this.state != State.PARSER_DATA_INITIAL_PAYLOAD)) {
-                handler.endBlock(); // macht das hier immer sinn?
+
+                handler.endBlock();
+
                 switch (state) {
                     case PARSER_DATA_NEXT_PAYLOAD:
                         this.state = State.PARSER_RESPONSE;

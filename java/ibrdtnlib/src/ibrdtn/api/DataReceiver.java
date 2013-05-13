@@ -64,11 +64,17 @@ public class DataReceiver extends Thread implements SABHandler {
     Long progress_last = 0L;
     private ProgressState progress_state = ProgressState.INITIAL;
     private boolean isPayloadInitialized;
+    private Encoding encoding = Encoding.BASE64;
 
     public DataReceiver(ExtendedClient client, Object handler_mutex, CallbackHandler handler) {
         this.client = client;
         this.handler_mutex = handler_mutex;
         this.handler = handler;
+    }
+
+    private enum Encoding {
+
+        RAW, BASE64, SKIP
     }
 
     private enum ProgressState {
@@ -149,9 +155,7 @@ public class DataReceiver extends Thread implements SABHandler {
     public void startBlock(Integer type) {
         //logger.log(Level.FINE, "Starting block (type: {0})", type);
 
-        /*
-         * Current bundle is null if only the payload was requested
-         */
+        // current bundle is null if only the payload was requested        
         if (current_bundle != null) {
             current_block = Block.createBlock(type);
 
@@ -175,27 +179,15 @@ public class DataReceiver extends Thread implements SABHandler {
             }
         }
 
-        // close outputWriter of the current block
-        if (outputWriter != null) {
+        if (outputStream != null) {
+
             try {
                 outputWriter.flush();
                 outputWriter.close();
+                // stream itself should be closed by client, since he opened it.
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Failed to flush output writer", e);
             }
-
-            outputWriter = null;
-            counter = null;
-        }
-
-        if (outputStream != null) {
-
-            // Stream should be closed by client, since he opened it.
-            // try {
-            //  outputStream.close();
-            // } catch (IOException e) {
-            //   logger.log(Level.WARNING, "Failed to close output stream", e);
-            //  }
 
             synchronized (handler_mutex) {
                 if (handler != null) {
@@ -203,10 +195,12 @@ public class DataReceiver extends Thread implements SABHandler {
                 }
             }
 
+            outputWriter = null;
+            counter = null;
             outputStream = null;
         }
 
-        // Current block is null if only the payload was requested        
+        // current block is null if only the payload was requested        
         if (current_block != null) {
             synchronized (handler_mutex) {
                 if (handler != null) {
@@ -227,6 +221,17 @@ public class DataReceiver extends Thread implements SABHandler {
     public void attribute(String keyword, String value) {
 
         //logger.log(Level.FINE, "Attribute: {0}={1}", new Object[]{keyword, value});
+
+        // Handle 'payload get' attributes
+        if (keyword.equalsIgnoreCase("encoding")) {
+            if (value.equals("raw")) {
+                this.encoding = Encoding.RAW;
+            } else if (value.equals("skip")) {
+                this.encoding = Encoding.SKIP;
+            } else {
+                this.encoding = Encoding.BASE64;
+            }
+        }
 
         if (current_bundle != null) {
 
@@ -265,14 +270,14 @@ public class DataReceiver extends Thread implements SABHandler {
                 }
             } else { // handle block attributes
 
-                if (keyword.equalsIgnoreCase("Length")) {
+                if (keyword.equalsIgnoreCase("length")) {
                     current_block.setLength(Long.parseLong(value));
-                } else if (keyword.equalsIgnoreCase("Flags")) {
+                } else if (keyword.equalsIgnoreCase("flags")) {
                     current_block.setFlags(value);
                 }
             }
-
         }
+
     }
 
     private void initializePayload() {
@@ -296,14 +301,25 @@ public class DataReceiver extends Thread implements SABHandler {
 
         /*
          * If outputStream is null it is assumed that the payload data is to be ignored.
+         * 
          */
         if (outputStream != null) {
             counter = new CountingOutputStream(outputStream);
+
+            OutputStream wrappedStream = null;
+            switch (this.encoding) {
+                case RAW:
+                    wrappedStream = counter;
+                    break;
+                case BASE64:
+                    wrappedStream = new Base64.OutputStream(
+                            counter,
+                            Base64.DECODE);
+                    break;
+            }
             outputWriter = new BufferedWriter(
                     new OutputStreamWriter(
-                    new Base64.OutputStream(
-                    counter,
-                    Base64.DECODE)));
+                    wrappedStream));
         }
     }
 

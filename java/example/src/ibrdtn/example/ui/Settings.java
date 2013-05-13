@@ -1,5 +1,6 @@
 package ibrdtn.example.ui;
 
+import ibrdtn.api.APIException;
 import ibrdtn.example.api.APIHandlerType;
 import ibrdtn.example.api.PayloadType;
 import ibrdtn.example.api.DTNClient;
@@ -34,6 +35,19 @@ public class Settings extends JDialog {
         int y = Math.max(0, parentBounds.y + (parentBounds.height - size.height) / 2);
         setLocation(new Point(x, y));
         dtnApp = (DTNExampleApp) parent;
+
+
+        cbAPIType.setSelectedItem(dtnApp.getDtnClient().getApiType());
+        cbPayloadType.setSelectedItem(dtnApp.getDtnClient().getPayloadType());
+        try {
+            dtnApp.getDtnClient().getEC().getNodeName();
+            String node = dtnApp.getDtnClient().getEC().getNodeName().toString();
+            String eid = dtnApp.getDtnClient().getEC().getEndpoint().toString();
+            eid = eid.replaceAll(node + "/", "");
+            tfEndpoint.setText(eid);
+        } catch (APIException ex) {
+            logger.log(Level.WARNING, "Failed to get eid");
+        }
     }
 
     /**
@@ -141,9 +155,11 @@ public class Settings extends JDialog {
         mainPanel.add(jLabel5, gridBagConstraints);
 
         tfEndpoint.setText("client-1");
+        tfEndpoint.setMinimumSize(new java.awt.Dimension(60, 27));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 3;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         mainPanel.add(tfEndpoint, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
@@ -172,7 +188,7 @@ public class Settings extends JDialog {
 
         PayloadType payloadType = (PayloadType) cbPayloadType.getSelectedItem();
         APIHandlerType apiHandlerType = (APIHandlerType) cbAPIType.getSelectedItem();
-        
+
         dtnApp.payloadType = payloadType;
 
         DTNClient dtnClient = new DTNClient(tfEndpoint.getText(), payloadType, apiHandlerType);
