@@ -49,14 +49,14 @@ namespace dtn
 			return _blobref;
 		}
 
-		size_t PayloadBlock::getLength() const
+		Length PayloadBlock::getLength() const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::BLOB::iostream io = blobref.iostream();
 			return io.size();
 		}
 
-		std::ostream& PayloadBlock::serialize(std::ostream &stream, size_t &length) const
+		std::ostream& PayloadBlock::serialize(std::ostream &stream, Length &length) const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::BLOB::iostream io = blobref.iostream();
@@ -71,7 +71,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::ostream& PayloadBlock::serialize(std::ostream &stream, size_t clip_offset, size_t clip_length) const
+		std::ostream& PayloadBlock::serialize(std::ostream &stream, const Length &clip_offset, const Length &clip_length) const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::BLOB::iostream io = blobref.iostream();
@@ -86,7 +86,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& PayloadBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& PayloadBlock::deserialize(std::istream &stream, const Length &length)
 		{
 			// lock the BLOB
 			ibrcommon::BLOB::iostream io = _blobref.iostream();

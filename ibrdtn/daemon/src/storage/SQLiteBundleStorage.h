@@ -48,6 +48,8 @@ namespace dtn
 	{
 		class SQLiteBundleStorage: public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::BLOB::Provider, public SQLiteDatabase::DatabaseListener
 		{
+			static const std::string TAG;
+
 		public:
 			/**
 			 * create a new BLOB object within this storage
@@ -61,7 +63,7 @@ namespace dtn
 			 * @param Dateiname der Datenbank
 			 * @param maximale Größe der Datenbank
 			 */
-			SQLiteBundleStorage(const ibrcommon::File &path, const size_t &maxsize);
+			SQLiteBundleStorage(const ibrcommon::File &path, const dtn::data::Length &maxsize);
 
 			/**
 			 * destructor
@@ -117,7 +119,7 @@ namespace dtn
 			/**
 			 * @return the count of bundles in the storage
 			 */
-			size_t count();
+			dtn::data::Size count();
 
 			/**
 			 * @sa BundleStorage::releaseCustody();
@@ -135,6 +137,21 @@ namespace dtn
 			 */
 			void eventBundleExpired(const dtn::data::BundleID &id) throw ();
 			void iterateDatabase(const dtn::data::MetaBundle &bundle);
+
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Wait until all the data has been stored to the disk
+			 */
+			virtual void wait();
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * or retrieve a bundle will fail.
+			 */
+			virtual void setFaulty(bool mode);
+
+			/*** END: methods for unit-testing ***/
 
 		protected:
 			virtual void componentRun() throw ();
@@ -195,19 +212,6 @@ namespace dtn
 				bool _abort;
 			};
 
-			class TaskRemove : public Task
-			{
-			public:
-				TaskRemove(const dtn::data::BundleID &id)
-				 : _id(id) { };
-
-				virtual ~TaskRemove() {};
-				virtual void run(SQLiteBundleStorage &storage);
-
-			private:
-				const dtn::data::BundleID _id;
-			};
-
 			class TaskIdle : public Task
 			{
 			public:
@@ -223,14 +227,14 @@ namespace dtn
 			class TaskExpire : public Task
 			{
 			public:
-				TaskExpire(size_t timestamp)
+				TaskExpire(const dtn::data::Timestamp &timestamp)
 				: _timestamp(timestamp) { };
 
 				virtual ~TaskExpire() {};
 				virtual void run(SQLiteBundleStorage &storage);
 
 			private:
-				size_t _timestamp;
+				const dtn::data::Timestamp _timestamp;
 			};
 
 			/**
@@ -254,7 +258,7 @@ namespace dtn
 					return _filestream;
 				}
 
-				size_t __get_size();
+				std::streamsize __get_size();
 
 			private:
 				SQLiteBLOB(const ibrcommon::File &path);

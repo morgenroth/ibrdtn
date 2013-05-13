@@ -22,6 +22,7 @@
 #ifndef RANDOM_H_
 #define RANDOM_H_
 
+#include "ibrdtn/data/Number.h"
 #include <string>
 
 namespace dtn
@@ -34,7 +35,7 @@ namespace dtn
 			Random();
 			virtual ~Random();
 
-			const std::string gen_chars(size_t length) const;
+			const std::string gen_chars(const dtn::data::Length &length) const;
 		};
 	}
 }

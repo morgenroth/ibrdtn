@@ -188,10 +188,10 @@ namespace dtn
 		{
 			// add the bundle data
 			data.push_back("Source: " + b.source.getString());
-			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
-			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b.sequencenumber));
-			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b.lifetime));
-			data.push_back("Procflags: " + dtn::utils::Utils::toString(b.procflags));
+			data.push_back("Timestamp: " + b.timestamp.toString());
+			data.push_back("Sequencenumber: " + b.sequencenumber.toString());
+			data.push_back("Lifetime: " + b.lifetime.toString());
+			data.push_back("Procflags: " + b.procflags.toString());
 
 			// add the destination eid
 			data.push_back("Destination: " + b.destination.getString());
@@ -199,8 +199,8 @@ namespace dtn
 			if (b.get(dtn::data::PrimaryBlock::FRAGMENT))
 			{
 				// add fragmentation values
-				data.push_back("Appdatalength: " + dtn::utils::Utils::toString(b.appdatalength));
-				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b.fragmentoffset));
+				data.push_back("Appdatalength: " + b.appdatalength.toString());
+				data.push_back("Fragmentoffset: " + b.fragmentoffset.toString());
 			}
 		}
 
@@ -208,10 +208,10 @@ namespace dtn
 		{
 			// add the bundle data
 			data.push_back("Source: " + b.source.getString());
-			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
-			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b.sequencenumber));
-			data.push_back("Lifetime: " + dtn::utils::Utils::toString(b.lifetime));
-			data.push_back("Procflags: " + dtn::utils::Utils::toString(b.procflags));
+			data.push_back("Timestamp: " + b.timestamp.toString());
+			data.push_back("Sequencenumber: " + b.sequencenumber.toString());
+			data.push_back("Lifetime: " + b.lifetime.toString());
+			data.push_back("Procflags: " + b.procflags.toString());
 
 			// add the destination eid
 			data.push_back("Destination: " + b.destination.getString());
@@ -219,8 +219,8 @@ namespace dtn
 			if (b.get(dtn::data::PrimaryBlock::FRAGMENT))
 			{
 				// add fragmentation values
-				data.push_back("Appdatalength: " + dtn::utils::Utils::toString(b.appdatalength));
-				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b.offset));
+				data.push_back("Appdatalength: " + b.appdatalength.toString());
+				data.push_back("Fragmentoffset: " + b.offset.toString());
 			}
 		}
 
@@ -228,13 +228,13 @@ namespace dtn
 		{
 			// add the bundle data
 			data.push_back("Source: " + b.source.getString());
-			data.push_back("Timestamp: " + dtn::utils::Utils::toString(b.timestamp));
-			data.push_back("Sequencenumber: " + dtn::utils::Utils::toString(b.sequencenumber));
+			data.push_back("Timestamp: " + b.timestamp.toString());
+			data.push_back("Sequencenumber: " + b.sequencenumber.toString());
 
 			if (b.fragment)
 			{
 				// add fragmentation values
-				data.push_back("Fragmentoffset: " + dtn::utils::Utils::toString(b.offset));
+				data.push_back("Fragmentoffset: " + b.offset.toString());
 			}
 		}
 
@@ -516,6 +516,17 @@ namespace dtn
 				n.add(dtn::core::Node::URI(dtn::core::Node::NODE_STATIC_LOCAL, dtn::core::Node::CONN_FILE, address, 0, 10));
 				dtn::core::BundleCore::getInstance().getConnectionManager().remove(n);
 			}
+		}
+
+		void NativeDaemon::initiateConnection(std::string eid)
+		{
+			dtn::data::EID neighbor(eid);
+			dtn::net::ConnectionManager &cm = dtn::core::BundleCore::getInstance().getConnectionManager();
+
+			try {
+				const dtn::core::Node n = cm.getNeighbor(neighbor);
+				cm.open(n);
+			} catch (const dtn::net::NeighborNotAvailableException&) { }
 		}
 
 		void NativeDaemon::setLogging(const std::string &defaultTag, int logLevel) const throw ()
@@ -864,9 +875,6 @@ namespace dtn
 
 					dtn::storage::SQLiteBundleStorage *sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage") );
 
-					// use sqlite storage as BLOB provider, auto delete off
-					ibrcommon::BLOB::changeProvider(sbs, false);
-
 					_components[RUNLEVEL_STORAGE].push_back(sbs);
 					storage = sbs;
 				} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
@@ -890,7 +898,7 @@ namespace dtn
 					}
 
 					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
-					dtn::storage::SimpleBundleStorage *sbs = new dtn::storage::SimpleBundleStorage(path, conf.getLimit("storage"), conf.getLimit("storage_buffer"));
+					dtn::storage::SimpleBundleStorage *sbs = new dtn::storage::SimpleBundleStorage(path, conf.getLimit("storage"), static_cast<unsigned int>(conf.getLimit("storage_buffer")));
 					_components[RUNLEVEL_STORAGE].push_back(sbs);
 					storage = sbs;
 				} catch (const dtn::daemon::Configuration::ParameterNotSetException&) {
@@ -1176,7 +1184,7 @@ namespace dtn
 						case dtn::daemon::Configuration::NetConfig::NETWORK_LOWPAN:
 						{
 							try {
-								_components[RUNLEVEL_NETWORK].push_back( new LOWPANConvergenceLayer( net.iface, net.port ) );
+								_components[RUNLEVEL_NETWORK].push_back( new LOWPANConvergenceLayer( net.iface, static_cast<uint16_t>(net.port) ) );
 								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "LOWPAN ConvergenceLayer added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 							} catch (const ibrcommon::Exception &ex) {
 								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add LOWPAN ConvergenceLayer on " << net.iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -1188,7 +1196,7 @@ namespace dtn
 						case dtn::daemon::Configuration::NetConfig::NETWORK_DGRAM_LOWPAN:
 						{
 							try {
-								LOWPANDatagramService *lowpan_service = new LOWPANDatagramService( net.iface, net.port );
+								LOWPANDatagramService *lowpan_service = new LOWPANDatagramService( net.iface, static_cast<uint16_t>(net.port) );
 								_components[RUNLEVEL_NETWORK].push_back( new DatagramConvergenceLayer(lowpan_service) );
 								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Datagram ConvergenceLayer (LowPAN) added on " << net.iface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 							} catch (const ibrcommon::Exception &ex) {
@@ -1373,9 +1381,6 @@ namespace dtn
 			// add static routing extension
 			router.add( new dtn::routing::StaticRoutingExtension() );
 
-			// add neighbor routing (direct-delivery) extension
-			router.add( new dtn::routing::NeighborRoutingExtension() );
-
 			// add other routing extensions depending on the configuration
 			switch (conf.getNetwork().getRoutingExtension())
 			{
@@ -1383,6 +1388,9 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
 				router.add( new dtn::routing::FloodRoutingExtension() );
+
+				// add neighbor routing (direct-delivery) extension
+				router.add( new dtn::routing::NeighborRoutingExtension() );
 				break;
 			}
 
@@ -1390,6 +1398,9 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
 				router.add( new dtn::routing::EpidemicRoutingExtension() );
+
+				// add neighbor routing (direct-delivery) extension
+				router.add( new dtn::routing::NeighborRoutingExtension() );
 				break;
 			}
 
@@ -1414,11 +1425,21 @@ namespace dtn
 												prophet_config.beta, prophet_config.gamma, prophet_config.delta,
 												prophet_config.time_unit, prophet_config.i_typ,
 												prophet_config.next_exchange_timeout));
+
+				// add neighbor routing (direct-delivery) extension
+				router.add( new dtn::routing::NeighborRoutingExtension() );
 				break;
 			}
 
+			case dtn::daemon::Configuration::NO_ROUTING:
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Dynamic routing extensions disabled" << IBRCOMMON_LOGGER_ENDL;
+				break;
+
 			default:
 				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Using default routing extensions" << IBRCOMMON_LOGGER_ENDL;
+
+				// add neighbor routing (direct-delivery) extension
+				router.add( new dtn::routing::NeighborRoutingExtension() );
 				break;
 			}
 

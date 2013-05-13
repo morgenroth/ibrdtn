@@ -215,8 +215,8 @@ namespace ibrcommon {
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
-		int send(const char *data, size_t len, int flags = 0) throw (socket_error);
-		int recv(char *data, size_t len, int flags = 0) throw (socket_error);
+		ssize_t send(const char *data, size_t len, int flags = 0) throw (socket_error);
+		ssize_t recv(char *data, size_t len, int flags = 0) throw (socket_error);
 
 		void set(CLIENT_OPTION opt, bool val) throw (socket_error);
 
@@ -253,7 +253,7 @@ namespace ibrcommon {
 		virtual void up() throw (socket_exception) = 0;
 		virtual void down() throw (socket_exception) = 0;
 
-		virtual size_t recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
+		virtual ssize_t recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
 		virtual void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
 
 	protected:

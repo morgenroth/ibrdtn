@@ -82,7 +82,10 @@ namespace dtn
 			 */
 			void remove(P2PDialupExtension *ext);
 
-			void queue(const dtn::data::EID &eid, const dtn::data::BundleID &b);
+			/**
+			 * queue a bundle for transmission
+			 */
+			void queue(const dtn::net::BundleTransfer &job);
 
 			/**
 			 * method to receive new events from the EventSwitch
@@ -98,8 +101,6 @@ namespace dtn
 			};
 
 			void open(const dtn::core::Node &node);
-
-			void queue(const ConvergenceLayer::Job &job);
 
 			/**
 			 * get a set with all neighbors
@@ -152,7 +153,7 @@ namespace dtn
 			/**
 			 *  queue a bundle for delivery
 			 */
-			void queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job);
 
 			/**
 			 * checks for timed out nodes
@@ -192,7 +193,7 @@ namespace dtn
 			nodemap _nodes;
 
 			// next timestamp for autoconnect check
-			size_t _next_autoconnect;
+			dtn::data::Timestamp _next_autoconnect;
 		};
 	}
 }

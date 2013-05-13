@@ -98,7 +98,7 @@ namespace dtn
 
 			virtual void eventBundleRefused() throw ();
 			virtual void eventBundleForwarded() throw ();
-			virtual void eventBundleAck(size_t ack) throw ();
+			virtual void eventBundleAck(const dtn::data::Length &ack) throw ();
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
@@ -106,7 +106,7 @@ namespace dtn
 			 * queue a bundle for this connection
 			 * @param bundle
 			 */
-			void queue(const dtn::data::BundleID &bundle);
+			void queue(const dtn::net::BundleTransfer &job);
 
 			bool match(const dtn::core::Node &n) const;
 			bool match(const dtn::data::EID &destination) const;
@@ -158,7 +158,7 @@ namespace dtn
 				size_t &_keepalive_timeout;
 			};
 
-			class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::data::BundleID>
+			class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::net::BundleTransfer>
 			{
 			public:
 				Sender(TCPConnection &connection);
@@ -171,7 +171,6 @@ namespace dtn
 
 			private:
 				TCPConnection &_connection;
-				//dtn::data::BundleID _current_transfer;
 			};
 
 			void __setup_socket(ibrcommon::clientsocket *sock, bool server);
@@ -211,14 +210,14 @@ namespace dtn
 			// handshake variables
 			size_t _timeout;
 
-			ibrcommon::Queue<dtn::data::MetaBundle> _sentqueue;
-			size_t _lastack;
+			ibrcommon::Queue<dtn::net::BundleTransfer> _sentqueue;
+			dtn::data::Length _lastack;
 			size_t _keepalive_timeout;
 
 			TCPConvergenceLayer &_callback;
 
 			/* flags to be used in this nodes StreamContactHeader */
-			char _flags;
+			dtn::data::Bitset<dtn::streams::StreamContactHeader::HEADER_BITS> _flags;
 
 			/* with this boolean the connection is marked as aborted */
 			bool _aborted;

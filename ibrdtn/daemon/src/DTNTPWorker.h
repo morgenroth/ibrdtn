@@ -92,10 +92,10 @@ namespace dtn
 				MSG_TYPE type;
 
 				timeval origin_timestamp;
-				float origin_rating;
+				double origin_rating;
 
 				timeval peer_timestamp;
-				float peer_rating;
+				double peer_rating;
 
 				friend std::ostream &operator<<(std::ostream &stream, const DTNTPWorker::TimeSyncMessage &obj);
 				friend std::istream &operator>>(std::istream &stream, DTNTPWorker::TimeSyncMessage &obj);
@@ -130,7 +130,7 @@ namespace dtn
 			 * @param timestamp
 			 * @param quality
 			 */
-			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality) const;
+			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, dtn::data::Timestamp &timestamp, float &quality) const;
 
 			/**
 			 * Synchronize this clock with another one
@@ -165,7 +165,8 @@ namespace dtn
 
 			// manage a list of recently sync'd nodes
 			ibrcommon::Mutex _blacklist_lock;
-			std::map<EID, size_t> _sync_blacklist;
+			typedef std::map<EID, dtn::data::Timestamp> blacklist_map;
+			blacklist_map _sync_blacklist;
 		};
 	}
 }

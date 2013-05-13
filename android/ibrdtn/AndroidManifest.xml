@@ -50,7 +50,9 @@
 
         <service
             android:name=".service.DaemonService"
-            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" >
+            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
+            android:exported="true"
+            android:label="@string/app_name_daemon">
             <intent-filter>
                 <action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
                 <action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
@@ -111,7 +113,9 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".stats.CollectorService" >
+        <service
+            android:name=".stats.CollectorService"
+            android:exported="false" >
         </service>
 
         <receiver

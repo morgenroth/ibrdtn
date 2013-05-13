@@ -97,7 +97,7 @@ namespace dtn
 				block will remain encrypted inside the bundle. the other blocks will 
 				decrypted, so recovering the failed block may be impossible.
 				*/
-				static void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, uint64_t correlator = 0);
+				static void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::data::Number &correlator = 0);
 
 			protected:
 				/**

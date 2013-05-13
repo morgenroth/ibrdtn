@@ -20,15 +20,13 @@
  */
 
 #include "ibrdtn/streams/StreamDataSegment.h"
-#include "ibrdtn/data/SDNV.h"
-
-using namespace std;
+#include "ibrdtn/data/Number.h"
 
 namespace dtn
 {
 	namespace streams
 	{
-		StreamDataSegment::StreamDataSegment(SegmentType type, size_t size)
+		StreamDataSegment::StreamDataSegment(SegmentType type, const dtn::data::Number &size)
 		 : _value(size), _type(type), _reason(MSG_SHUTDOWN_IDLE_TIMEOUT), _flags(0)
 		{
 		}
@@ -38,7 +36,7 @@ namespace dtn
 		{
 		}
 
-		StreamDataSegment::StreamDataSegment(ShutdownReason reason, size_t reconnect)
+		StreamDataSegment::StreamDataSegment(ShutdownReason reason, const dtn::data::Number &reconnect)
 		: _value(reconnect), _type(MSG_SHUTDOWN), _reason(reason), _flags(3)
 		{
 		}
@@ -50,7 +48,7 @@ namespace dtn
 		std::ostream &operator<<(std::ostream &stream, const StreamDataSegment &seg)
 		{
 			char header = seg._flags;
-			header += ((seg._type & 0x0F) << 4);
+			header |= static_cast<char>((seg._type & 0x0F) << 4);
 
 			// write the header (1-byte)
 			stream.put(header);
@@ -59,12 +57,12 @@ namespace dtn
 			{
 			case StreamDataSegment::MSG_DATA_SEGMENT:
 				// write the length + data
-				stream << dtn::data::SDNV(seg._value);
+				stream << seg._value;
 				break;
 
 			case StreamDataSegment::MSG_ACK_SEGMENT:
 				// write the acknowledged length
-				stream << dtn::data::SDNV(seg._value);
+				stream << seg._value;
 				break;
 
 			case StreamDataSegment::MSG_REFUSE_BUNDLE:
@@ -76,7 +74,7 @@ namespace dtn
 			case StreamDataSegment::MSG_SHUTDOWN:
 				// write the reason (char) + reconnect time (SDNV)
 				stream.put((char)seg._reason);
-				stream << dtn::data::SDNV(seg._value);
+				stream << seg._value;
 				break;
 			}
 
@@ -85,8 +83,6 @@ namespace dtn
 
 		std::istream &operator>>(std::istream &stream, StreamDataSegment &seg)
 		{
-			dtn::data::SDNV value;
-
 			char header = 0;
 			stream.get(header);
 
@@ -97,14 +93,12 @@ namespace dtn
 			{
 			case StreamDataSegment::MSG_DATA_SEGMENT:
 				// read the length
-				stream >> value;
-				seg._value = value.getValue();
+				stream >> seg._value;
 				break;
 
 			case StreamDataSegment::MSG_ACK_SEGMENT:
 				// read the acknowledged length
-				stream >> value;
-				seg._value = value.getValue();
+				stream >> seg._value;
 				break;
 
 			case StreamDataSegment::MSG_REFUSE_BUNDLE:
@@ -119,8 +113,7 @@ namespace dtn
 				stream.get(reason);
 				seg._reason = StreamDataSegment::ShutdownReason(reason);
 
-				stream >> value;
-				seg._value = value.getValue();
+				stream >> seg._value;
 				break;
 			}
 

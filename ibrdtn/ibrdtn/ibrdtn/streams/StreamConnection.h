@@ -56,7 +56,7 @@ namespace dtn
 			class TransmissionInterruptedException : public ibrcommon::IOException
 			{
 				public:
-					TransmissionInterruptedException(const dtn::data::Bundle &bundle, const size_t position) throw()
+					TransmissionInterruptedException(const dtn::data::Bundle &bundle, const dtn::data::Length &position) throw()
 					 : ibrcommon::IOException("Transmission was interrupted."), _bundle(bundle), _position(position)
 					{
 					};
@@ -66,7 +66,7 @@ namespace dtn
 					};
 
 					const dtn::data::Bundle _bundle;
-					const size_t _position;
+					const dtn::data::Length _position;
 			};
 
 			class StreamClosedException : public ibrcommon::IOException
@@ -124,7 +124,7 @@ namespace dtn
 				/**
 				 * This method is called if a ACK is received.
 				 */
-				virtual void eventBundleAck(size_t ack) throw () = 0;
+				virtual void eventBundleAck(const dtn::data::Length &ack) throw () = 0;
 
 				/**
 				 * This method is called if a handshake was successful.
@@ -143,7 +143,7 @@ namespace dtn
 			 * @param cb Callback object for events of this stream
 			 * @param stream The underlying stream object
 			 */
-			StreamConnection(StreamConnection::Callback &cb, iostream &stream, const size_t buffer_size = 4096);
+			StreamConnection(StreamConnection::Callback &cb, iostream &stream, const dtn::data::Length buffer_size = 4096);
 
 			/**
 			 * Destructor of the StreamConnection class
@@ -156,7 +156,7 @@ namespace dtn
 			 * @param eid The local address of this node.
 			 * @param timeout The desired timeout for this connection.
 			 */
-			void handshake(const dtn::data::EID &eid, const size_t timeout = 10, const char flags = 0);
+			void handshake(const dtn::data::EID &eid, const dtn::data::Timeout &timeout, const dtn::data::Bitset<StreamContactHeader::HEADER_BITS> &flags);
 
 			/**
 			 * This method shutdown the whole connection handling process. To differ between the
@@ -195,7 +195,7 @@ namespace dtn
 			 * enables the idle timeout thread
 			 * @param seconds
 			 */
-			void enableIdleTimeout(size_t seconds);
+			void enableIdleTimeout(const dtn::data::Timeout &seconds);
 
 		private:
 			/**
@@ -216,7 +216,7 @@ namespace dtn
 				/**
 				 * constructor
 				 */
-				StreamBuffer(StreamConnection &conn, iostream &stream, const size_t buffer_size = 1024);
+				StreamBuffer(StreamConnection &conn, iostream &stream, const dtn::data::Length buffer_size = 1024);
 				virtual ~StreamBuffer();
 
 				/**
@@ -264,7 +264,7 @@ namespace dtn
 				 * enables the idle timeout thread
 				 * @param seconds
 				 */
-				void enableIdleTimeout(size_t seconds);
+				void enableIdleTimeout(const dtn::data::Timeout &seconds);
 
 			protected:
 				virtual int sync();
@@ -304,13 +304,13 @@ namespace dtn
 					STREAM_TIMER_SUPPORT = 1 << 11
 				};
 
-				void skipData(size_t &size);
+				void skipData(dtn::data::Length &size);
 
 				bool get(const StateBits bit) const;
 				void set(const StateBits bit);
 				void unset(const StateBits bit);
 
-				const size_t _buffer_size;
+				const dtn::data::Length _buffer_size;
 
 				ibrcommon::Mutex _statelock;
 				int _statebits;
@@ -327,14 +327,14 @@ namespace dtn
 
 				std::iostream &_stream;
 
-				size_t _recv_size;
+				dtn::data::Number _recv_size;
 
 				// this queue contains all sent data segments
 				// they are removed if an ack or nack is received
 				ibrcommon::Queue<StreamDataSegment> _segments;
 				std::queue<StreamDataSegment> _rejected_segments;
 
-				size_t _underflow_data_remain;
+				Length _underflow_data_remain;
 				State _underflow_state;
 
 				ibrcommon::Timer _idle_timer;
@@ -344,7 +344,7 @@ namespace dtn
 
 			void eventShutdown(StreamConnection::ConnectionShutdownCases csc);
 
-			void eventBundleAck(size_t ack);
+			void eventBundleAck(const dtn::data::Length &ack);
 			void eventBundleRefused();
 			void eventBundleForwarded();
 

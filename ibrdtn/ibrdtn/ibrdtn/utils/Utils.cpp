@@ -34,7 +34,7 @@ namespace dtn
 		void Utils::rtrim(std::string &str)
 		{
 			// trim trailing spaces
-			size_t endpos = str.find_last_not_of(" \t");
+			std::string::size_type endpos = str.find_last_not_of(" \t");
 			if( string::npos != endpos )
 			{
 				str = str.substr( 0, endpos+1 );
@@ -44,7 +44,7 @@ namespace dtn
 		void Utils::ltrim(std::string &str)
 		{
 			// trim leading spaces
-			size_t startpos = str.find_first_not_of(" \t");
+			std::string::size_type startpos = str.find_first_not_of(" \t");
 			if( string::npos != startpos )
 			{
 				str = str.substr( startpos );
@@ -57,42 +57,43 @@ namespace dtn
 			rtrim(str);
 		}
 
-		vector<string> Utils::tokenize(string token, string data, size_t max)
+		std::vector<std::string> Utils::tokenize(const std::string &token, const std::string &data, const std::string::size_type max)
 		{
-			vector<string> l;
-			string value;
+			std::vector<std::string> l;
+			std::string value;
 
 			// Skip delimiters at beginning.
-			string::size_type pos = data.find_first_not_of(token, 0);
+			std::string::size_type pos = data.find_first_not_of(token, 0);
+
+			std::string::size_type tokenPos = 0;
 
 			while (pos != string::npos)
 			{
-				// Find first "non-delimiter".
-				string::size_type tokenPos = data.find_first_of(token, pos);
+				if (l.size() >= max)
+				{
+					// if maximum reached
+					tokenPos = std::string::npos;
+				}
+				else
+				{
+					// Find first "non-delimiter".
+					tokenPos = data.find_first_of(token, pos);
+				}
 
-				// Found a token, add it to the vector.
-				if(tokenPos == string::npos){
+				if (tokenPos == std::string::npos) {
+					// No more tokens found, add last part to the vector.
 					value = data.substr(pos);
 					l.push_back(value);
+
+					// exit the loop
 					break;
 				} else {
+					// Found a token, add it to the vector.
 					value = data.substr(pos, tokenPos - pos);
 					l.push_back(value);
 				}
 				// Skip delimiters.  Note the "not_of"
 				pos = data.find_first_not_of(token, tokenPos);
-				// Find next "non-delimiter"
-				tokenPos = data.find_first_of(token, pos);
-
-				// if maximum reached
-				if (l.size() >= max && pos != string::npos)
-				{
-					// add the remaining part to the vector as last element
-					l.push_back(data.substr(pos, data.length() - pos));
-
-					// and break the search loop
-					break;
-				}
 			}
 
 			return l;
@@ -125,7 +126,7 @@ namespace dtn
 		void Utils::encapsule(dtn::data::Bundle &capsule, const std::list<dtn::data::Bundle> &bundles)
 		{
 			bool custody = false;
-			size_t exp_time = 0;
+			dtn::data::Number exp_time = 0;
 
 			try {
 				const dtn::data::PayloadBlock &payload = capsule.find<dtn::data::PayloadBlock>();
@@ -154,7 +155,7 @@ namespace dtn
 				const dtn::data::Bundle &b = (*iter);
 
 				// get the expiration time of this bundle
-				size_t expt = dtn::utils::Clock::getExpireTime(b);
+				dtn::data::Timestamp expt = dtn::utils::Clock::getExpireTime(b);
 
 				// if this bundle expire later then use this lifetime
 				if (expt > exp_time) exp_time = expt;
@@ -175,7 +176,7 @@ namespace dtn
 			ibrcommon::BLOB::iostream stream = ref.iostream();
 
 			// the number of encapsulated bundles
-			dtn::data::SDNV elements(bundles.size());
+			dtn::data::Number elements(bundles.size());
 			(*stream) << elements;
 
 			// create a serializer
@@ -187,7 +188,7 @@ namespace dtn
 			for (size_t i = 0; i < (bundles.size() - 1); i++, iter++)
 			{
 				const dtn::data::Bundle &b = (*iter);
-				(*stream) << dtn::data::SDNV(serializer.getLength(b));
+				(*stream) << dtn::data::Number(serializer.getLength(b));
 			}
 
 			// serialize all bundles
@@ -204,12 +205,12 @@ namespace dtn
 				ibrcommon::BLOB::iostream stream = payload.getBLOB().iostream();
 
 				// read the number of bundles
-				dtn::data::SDNV nob; (*stream) >> nob;
+				dtn::data::Number nob; (*stream) >> nob;
 
 				// read all offsets
-				for (size_t i = 0; i < (nob.getValue() - 1); ++i)
+				for (size_t i = 0; (nob - 1) > i; ++i)
 				{
-					dtn::data::SDNV offset; (*stream) >> offset;
+					dtn::data::Number offset; (*stream) >> offset;
 				}
 
 				// create a deserializer for all bundles
@@ -218,7 +219,7 @@ namespace dtn
 
 				try {
 					// read all bundles
-					for (size_t i = 0; i < nob.getValue(); ++i)
+					for (size_t i = 0; nob > i; ++i)
 					{
 						// deserialize the next bundle
 						deserializer >> b;
@@ -231,7 +232,7 @@ namespace dtn
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 		}
 
-		std::string Utils::toString(uint64_t value)
+		std::string Utils::toString(const dtn::data::Length &value)
 		{
 			std::stringstream ss;
 			ss << value;

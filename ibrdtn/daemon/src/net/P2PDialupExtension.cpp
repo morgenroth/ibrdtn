@@ -16,9 +16,13 @@ namespace dtn
 	{
 
 		P2PDialupExtension::P2PDialupExtension() {
+			// register at the bundle core
+			dtn::core::BundleCore::getInstance().getConnectionManager().add(this);
 		}
 
 		P2PDialupExtension::~P2PDialupExtension() {
+			// unregister at the bundle core
+			dtn::core::BundleCore::getInstance().getConnectionManager().remove(this);
 		}
 
 		void P2PDialupExtension::fireDiscovered(const dtn::data::EID &eid, const dtn::core::Node::URI &uri) const

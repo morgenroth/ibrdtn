@@ -13,11 +13,11 @@ namespace dtn
 	namespace routing
 	{
 		StaticRegexRoute::StaticRegexRoute(const std::string &regex, const dtn::data::EID &dest)
-			: _dest(dest), _regex_str(regex), _invalid(false)
+			: _dest(dest), _regex_str(regex), _invalid(false), _expire(0)
 		{
 			if ( regcomp(&_regex, regex.c_str(), 0) )
 			{
-				IBRCOMMON_LOGGER(error) << "Could not compile regex: " << regex << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("StaticRegexRoute", error) << "Could not compile regex: " << regex << IBRCOMMON_LOGGER_ENDL;
 				_invalid = true;
 			}
 		}
@@ -53,7 +53,7 @@ namespace dtn
 			{
 				if ( regcomp(&_regex, obj._regex_str.c_str(), 0) )
 				{
-					IBRCOMMON_LOGGER(error) << "Could not compile regex: " << _regex_str << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("StaticRegexRoute", error) << "Could not compile regex: " << _regex_str << IBRCOMMON_LOGGER_ENDL;
 					_invalid = true;
 				}
 			}
@@ -84,7 +84,7 @@ namespace dtn
 			{
 				char msgbuf[100];
 				regerror(reti, &_regex, msgbuf, sizeof(msgbuf));
-				IBRCOMMON_LOGGER(error) << "Regex match failed: " << std::string(msgbuf) << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("StaticRegexRoute", error) << "Regex match failed: " << std::string(msgbuf) << IBRCOMMON_LOGGER_ENDL;
 				return false;
 			}
 		}
@@ -99,6 +99,11 @@ namespace dtn
 			std::stringstream ss;
 			ss << _regex_str << " => " << _dest.getString();
 			return ss.str();
+		}
+
+		const dtn::data::Timestamp& StaticRegexRoute::getExpiration() const
+		{
+			return _expire;
 		}
 	}
 }

@@ -27,7 +27,7 @@ namespace dtn
 {
 	namespace core
 	{
-		TimeEvent::TimeEvent(const size_t timestamp, const size_t unixtimestamp, const TimeEventAction action)
+		TimeEvent::TimeEvent(const dtn::data::Timestamp &timestamp, const dtn::data::Timestamp &unixtimestamp, const TimeEventAction action)
 		: m_timestamp(timestamp), m_unixtimestamp(unixtimestamp), m_action(action)
 		{
 
@@ -43,12 +43,12 @@ namespace dtn
 			return m_action;
 		}
 
-		size_t TimeEvent::getTimestamp() const
+		const dtn::data::Timestamp& TimeEvent::getTimestamp() const
 		{
 			return m_timestamp;
 		}
 
-		size_t TimeEvent::getUnixTimestamp() const
+		const dtn::data::Timestamp& TimeEvent::getUnixTimestamp() const
 		{
 			return m_unixtimestamp;
 		}
@@ -58,7 +58,7 @@ namespace dtn
 			return TimeEvent::className;
 		}
 
-		void TimeEvent::raise(const size_t timestamp, const size_t unixtimestamp, const TimeEventAction action)
+		void TimeEvent::raise(const dtn::data::Timestamp &timestamp, const dtn::data::Timestamp &unixtimestamp, const TimeEventAction action)
 		{
 			// raise the new event
 			dtn::core::EventDispatcher<TimeEvent>::raise( new TimeEvent(timestamp, unixtimestamp, action) );
@@ -67,8 +67,7 @@ namespace dtn
 		std::string TimeEvent::getMessage() const
 		{
 			if (getAction() == TIME_SECOND_TICK) {
-				std::stringstream ss; ss << getTimestamp();
-				return "new timestamp is " + ss.str();
+				return "new timestamp is " + getTimestamp().toString();
 			}
 			return "unknown";
 		}

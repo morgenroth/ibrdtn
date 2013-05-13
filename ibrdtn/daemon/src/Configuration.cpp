@@ -112,7 +112,7 @@ namespace dtn
 		{}
 
 		Configuration::TimeSync::TimeSync()
-		 : _reference(true), _sync(false), _discovery(false), _sigma(1.001), _psi(0.8), _sync_level(0.10)
+		 : _reference(true), _sync(false), _discovery(false), _sigma(1.001f), _psi(0.8f), _sync_level(0.10f)
 		{}
 
 		Configuration::DHT::DHT()
@@ -199,7 +199,7 @@ namespace dtn
 			int showversion = 0;
 
 			// set number of threads to the number of available cpus
-			_daemon._threads = ibrcommon::Thread::getNumberOfProcessors();
+			_daemon._threads = static_cast<dtn::data::Size>(ibrcommon::Thread::getNumberOfProcessors());
 
 			while (1)
 			{
@@ -406,9 +406,9 @@ namespace dtn
 				_discovery = (conf.read<std::string>("time_discovery_announcements") == "yes");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 
-			_sigma = conf.read<float>("time_sigma", 1.001);
-			_psi = conf.read<float>("time_psi", 0.9);
-			_sync_level = conf.read<float>("time_sync_level", 0.15);
+			_sigma = conf.read<float>("time_sigma", 1.001f);
+			_psi = conf.read<float>("time_psi", 0.9f);
+			_sync_level = conf.read<float>("time_sync_level", 0.15f);
 
 			// enable the clock modify feature
 			dtn::utils::Clock::setModifyClock(conf.read<std::string>("time_set_clock", "no") == "yes");
@@ -522,7 +522,7 @@ namespace dtn
 
 		Configuration::NetConfig Configuration::getAPIInterface() const
 		{
-			size_t port = _conf.read<size_t>("api_port", 4550);
+			int port = _conf.read<int>("api_port", 4550);
 
 			try {
 				std::string interface_name = _conf.read<std::string>("api_interface");
@@ -645,24 +645,24 @@ namespace dtn
 
 			if(_routing == "prophet"){
 				/* read prophet parameters */
-				_prophet_config.p_encounter_max = conf.read<float>("prophet_p_encounter_max", 0.7);
+				_prophet_config.p_encounter_max = conf.read<float>("prophet_p_encounter_max", 0.7f);
 				if(_prophet_config.p_encounter_max > 1 || _prophet_config.p_encounter_max <= 0)
-					_prophet_config.p_encounter_max = 0.7;
-				_prophet_config.p_encounter_first = conf.read<float>("prophet_p_encounter_first", 0.5);
+					_prophet_config.p_encounter_max = 0.7f;
+				_prophet_config.p_encounter_first = conf.read<float>("prophet_p_encounter_first", 0.5f);
 				if(_prophet_config.p_encounter_first > 1 || _prophet_config.p_encounter_first <= 0)
-					_prophet_config.p_encounter_first = 0.5;
-				_prophet_config.p_first_threshold = conf.read<float>("prophet_p_first_threshold", 0.1);
+					_prophet_config.p_encounter_first = 0.5f;
+				_prophet_config.p_first_threshold = conf.read<float>("prophet_p_first_threshold", 0.1f);
 				if(_prophet_config.p_first_threshold < 0 || _prophet_config.p_first_threshold >= _prophet_config.p_encounter_first)
 					_prophet_config.p_first_threshold = 0; //disable first threshold on misconfiguration
-				_prophet_config.beta = conf.read<float>("prophet_beta", 0.9);
+				_prophet_config.beta = conf.read<float>("prophet_beta", 0.9f);
 				if(_prophet_config.beta < 0 || _prophet_config.beta > 1)
-					_prophet_config.beta = 0.9;
-				_prophet_config.gamma = conf.read<float>("prophet_gamma", 0.999);
+					_prophet_config.beta = 0.9f;
+				_prophet_config.gamma = conf.read<float>("prophet_gamma", 0.999f);
 				if(_prophet_config.gamma <= 0 || _prophet_config.gamma > 1)
-					_prophet_config.gamma = 0.999;
-				_prophet_config.delta = conf.read<float>("prophet_delta", 0.01);
+					_prophet_config.gamma = 0.999f;
+				_prophet_config.delta = conf.read<float>("prophet_delta", 0.01f);
 				if(_prophet_config.delta < 0 || _prophet_config.delta > 1)
-					_prophet_config.delta = 0.01;
+					_prophet_config.delta = 0.01f;
 				_prophet_config.time_unit = conf.read<ibrcommon::Timer::time_t>("prophet_time_unit", 1);
 				if(_prophet_config.time_unit < 1)
 					_prophet_config.time_unit = 1;
@@ -773,7 +773,7 @@ namespace dtn
 			/**
 			 * auto connect interval
 			 */
-			_auto_connect = conf.read<size_t>("net_autoconnect", 0);
+			_auto_connect = conf.read<dtn::data::Timeout>("net_autoconnect", 0);
 
 			/**
 			 * fragmentation support
@@ -841,7 +841,7 @@ namespace dtn
 			return (Configuration::getInstance()._conf.read<int>("discovery_short", 0) == 1);
 		}
 
-		char Configuration::Discovery::version() const
+		int Configuration::Discovery::version() const
 		{
 			return Configuration::getInstance()._conf.read<int>("discovery_version", 2);
 		}
@@ -853,6 +853,7 @@ namespace dtn
 
 		Configuration::RoutingExtension Configuration::Network::getRoutingExtension() const
 		{
+			if ( _routing == "none" ) return NO_ROUTING;
 			if ( _routing == "epidemic" ) return EPIDEMIC_ROUTING;
 			if ( _routing == "flooding" ) return FLOOD_ROUTING;
 			if ( _routing == "prophet" ) return PROPHET_ROUTING;
@@ -880,17 +881,17 @@ namespace dtn
 			return _tcp_nodelay;
 		}
 
-		size_t Configuration::Network::getTCPChunkSize() const
+		dtn::data::Length Configuration::Network::getTCPChunkSize() const
 		{
 			return _tcp_chunksize;
 		}
 
-		size_t Configuration::Network::getTCPIdleTimeout() const
+		dtn::data::Timeout Configuration::Network::getTCPIdleTimeout() const
 		{
 			return _tcp_idle_timeout;
 		}
 
-		size_t Configuration::Network::getAutoConnect() const
+		dtn::data::Timeout Configuration::Network::getAutoConnect() const
 		{
 			return _auto_connect;
 		}
@@ -905,7 +906,7 @@ namespace dtn
 			return _internet_devices;
 		}
 
-		size_t Configuration::getLimit(const std::string &suffix) const
+		dtn::data::Size Configuration::getLimit(const std::string &suffix) const
 		{
 			std::string unparsed = _conf.read<std::string>("limit_" + suffix, "0");
 
@@ -917,19 +918,19 @@ namespace dtn
 			switch (multiplier)
 			{
 			default:
-				return (size_t)value;
+				return static_cast<dtn::data::Size>(value);
 				break;
 
 			case 'G':
-				return (size_t)(value * 1000000000);
+				return static_cast<dtn::data::Size>(value * 1000000000);
 				break;
 
 			case 'M':
-				return (size_t)(value * 1000000);
+				return static_cast<dtn::data::Size>(value * 1000000);
 				break;
 
 			case 'K':
-				return (size_t)(value * 1000);
+				return static_cast<dtn::data::Size>(value * 1000);
 				break;
 			}
 
@@ -1146,7 +1147,7 @@ namespace dtn
 			return _kill;
 		}
 
-		size_t Configuration::Daemon::getThreads() const
+		dtn::data::Size Configuration::Daemon::getThreads() const
 		{
 			return _threads;
 		}

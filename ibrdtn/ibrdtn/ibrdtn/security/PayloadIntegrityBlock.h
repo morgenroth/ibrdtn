@@ -94,7 +94,7 @@ namespace dtn
 				Parses the PayloadIntegrityBlock from a Stream
 				@param stream the stream to read from
 				*/
-				virtual std::istream &deserialize(std::istream &stream, const size_t length);
+				virtual std::istream &deserialize(std::istream &stream, const dtn::data::Length &length);
 
 			protected:
 				/**
@@ -108,13 +108,13 @@ namespace dtn
 				canonicalisation, where the block itself is included to the canonical
 				form, but the security result is excluded or unknown.
 				*/
-				virtual size_t getSecurityResultSize() const;
+				virtual dtn::data::Length getSecurityResultSize() const;
 
 			private:
 				/** If the PIB does not know the size of the sign in advance, this
 				member can be set, so the size of the security result can be calculated
 				correctly */
-				int result_size;
+				dtn::data::Length result_size;
 
 				/**
 				Calculates a signature using the PIB-RSA-SHA256 algorithm.

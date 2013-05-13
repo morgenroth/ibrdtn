@@ -108,7 +108,7 @@ namespace dtn
 						if (default_key.exists())
 						{
 							keydata.file = default_key;
-							keydata.lastupdate = default_key.lastmodify();
+							keydata.lastupdate = DTNTime(default_key.lastmodify(), 0);
 							break;
 						}
 
@@ -117,7 +117,7 @@ namespace dtn
 					}
 
 					keydata.file = keyfile;
-					keydata.lastupdate = keyfile.lastmodify();
+					keydata.lastupdate = DTNTime(keyfile.lastmodify(), 0);
 					break;
 				}
 
@@ -135,7 +135,7 @@ namespace dtn
 
 
 					keydata.file = keyfile;
-					keydata.lastupdate = keyfile.lastmodify();
+					keydata.lastupdate = DTNTime(keyfile.lastmodify(), 0);
 					break;
 				}
 			}

@@ -22,6 +22,7 @@
 #ifndef BUNDLEFRAGMENT_H_
 #define BUNDLEFRAGMENT_H_
 
+#include <ibrdtn/data/Number.h>
 #include <stdlib.h>
 
 namespace dtn
@@ -32,13 +33,13 @@ namespace dtn
 		class BundleFragment
 		{
 			public:
-				BundleFragment(const dtn::data::Bundle &bundle, size_t payload_length);
-				BundleFragment(const dtn::data::Bundle &bundle, size_t offset, size_t payload_length);
+				BundleFragment(const dtn::data::Bundle &bundle, const dtn::data::Length &payload_length);
+				BundleFragment(const dtn::data::Bundle &bundle, const dtn::data::Length &offset, const dtn::data::Length &payload_length);
 				virtual ~BundleFragment();
 
 				const dtn::data::Bundle &_bundle;
-				const size_t _offset;
-				const size_t _length;
+				const dtn::data::Length _offset;
+				const dtn::data::Length _length;
 		};
 	}
 }

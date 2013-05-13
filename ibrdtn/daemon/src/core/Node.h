@@ -80,13 +80,13 @@ namespace dtn
 			class URI
 			{
 			public:
-				URI(const Type t, const Protocol proto, const std::string &uri, const size_t timeout = 0, const int priority = 0);
+				URI(const Type t, const Protocol proto, const std::string &uri, const dtn::data::Number &timeout = 0, const int priority = 0);
 				~URI();
 
 				const Type type;
 				const Protocol protocol;
 				const std::string value;
-				const size_t expire;
+				const dtn::data::Timestamp expire;
 				const int priority;
 
 				void decode(std::string &address, unsigned int &port) const;
@@ -103,13 +103,13 @@ namespace dtn
 			class Attribute
 			{
 			public:
-				Attribute(const Type t, const std::string &name, const std::string &value, const size_t timeout = 0, const int priority = 0);
+				Attribute(const Type t, const std::string &name, const std::string &value, const dtn::data::Number &timeout = 0, const int priority = 0);
 				~Attribute();
 
 				const Type type;
 				const std::string name;
 				const std::string value;
-				const size_t expire;
+				const dtn::data::Timestamp expire;
 				const int priority;
 
 				bool operator<(const Attribute &other) const;
@@ -167,7 +167,7 @@ namespace dtn
 			/**
 			 * Get the number of entries (URI + Attributes)
 			 */
-			size_t size() const;
+			dtn::data::Size size() const;
 
 			/**
 			 * Returns a list of URIs matching the given protocol

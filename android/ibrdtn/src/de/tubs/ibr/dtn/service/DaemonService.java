@@ -54,7 +54,12 @@ public class DaemonService extends Service {
     public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
     public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
     public static final String ACTION_RESTART = "de.tubs.ibr.dtn.action.RESTART";
-    public static final String UPDATE_NOTIFICATION = "de.tubs.ibr.dtn.action.UPDATE_NOTIFICATION";
+   
+    public static final String ACTION_UPDATE_NOTIFICATION = "de.tubs.ibr.dtn.action.UPDATE_NOTIFICATION";
+    public static final String ACTION_INITIATE_CONNECTION = "de.tubs.ibr.dtn.action.INITIATE_CONNECTION";
+    public static final String ACTION_CLEAR_STORAGE = "de.tubs.ibr.dtn.action.CLEAR_STORAGE";
+    
+    public static final String PREFERENCE_NAME = "de.tubs.ibr.dtn.service_prefs";
 
     private final String TAG = "DaemonService";
 
@@ -147,7 +152,7 @@ public class DaemonService extends Service {
             final Integer level = intent.getIntExtra("runlevel", 0);
             // restart the daemon into the given runlevel
             mDaemonProcess.restart(level);
-        } else if (UPDATE_NOTIFICATION.equals(action)) {
+        } else if (ACTION_UPDATE_NOTIFICATION.equals(action)) {
             // update state text in the notification 
             updateNotification();
         } else if (de.tubs.ibr.dtn.Intent.REGISTER.equals(action)) {
@@ -160,6 +165,12 @@ public class DaemonService extends Service {
             final PendingIntent pi = (PendingIntent) intent.getParcelableExtra("app");
 
             mSessionManager.unregister(pi.getTargetPackage());
+        } else if (ACTION_INITIATE_CONNECTION.equals(action)) {
+        	if (intent.hasExtra("endpoint")) {
+        		mDaemonProcess.initiateConnection(intent.getStringExtra("endpoint"));
+        	}
+        } else if (ACTION_CLEAR_STORAGE.equals(action)) {
+        	mDaemonProcess.clearStorage();
         }
         
         // stop the daemon if it should be offline
@@ -347,7 +358,7 @@ public class DaemonService extends Service {
     private void requestNotificationUpdate() {
         // request notification update
         final Intent neighborIntent = new Intent(DaemonService.this, DaemonService.class);
-        neighborIntent.setAction(UPDATE_NOTIFICATION);
+        neighborIntent.setAction(ACTION_UPDATE_NOTIFICATION);
         startService(neighborIntent);
     }
     
@@ -410,5 +421,4 @@ public class DaemonService extends Service {
 
         return builder.getNotification();
     }
-
 }

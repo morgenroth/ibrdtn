@@ -20,7 +20,7 @@
  */
 
 #include "ibrdtn/data/StatusReportBlock.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/BundleString.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include <stdlib.h>
@@ -31,9 +31,9 @@ namespace dtn
 	namespace data
 	{
 		StatusReportBlock::StatusReportBlock()
-		 : AdministrativeBlock(16), _status(0), _reasoncode(0),
-		 _fragment_length(0), _timeof_receipt(), _timeof_custodyaccept(),
-		 _timeof_forwarding(), _timeof_delivery(), _timeof_deletion()
+		 : AdministrativeBlock(16), status(0), reasoncode(0),
+		 fragment_length(0), timeof_receipt(), timeof_custodyaccept(),
+		 timeof_forwarding(), timeof_delivery(), timeof_deletion()
 		{
 		}
 
@@ -50,33 +50,33 @@ namespace dtn
 			stream.clear();
 
 			(*stream).put(_admfield);
-			(*stream).put(_status);
-			(*stream).put(_reasoncode);
+			(*stream).put(status);
+			(*stream).put(reasoncode);
 
 			if ( refsFragment() )
 			{
-				(*stream) << dtn::data::SDNV(_bundleid.offset);
-				(*stream) << _fragment_length;
+				(*stream) << bundleid.offset;
+				(*stream) << fragment_length;
 			}
 
-			if (_status & RECEIPT_OF_BUNDLE)
-				(*stream) << _timeof_receipt;
+			if (status & RECEIPT_OF_BUNDLE)
+				(*stream) << timeof_receipt;
 
-			if (_status & CUSTODY_ACCEPTANCE_OF_BUNDLE)
-				(*stream) << _timeof_custodyaccept;
+			if (status & CUSTODY_ACCEPTANCE_OF_BUNDLE)
+				(*stream) << timeof_custodyaccept;
 
-			if (_status & FORWARDING_OF_BUNDLE)
-				(*stream) << _timeof_forwarding;
+			if (status & FORWARDING_OF_BUNDLE)
+				(*stream) << timeof_forwarding;
 
-			if (_status & DELIVERY_OF_BUNDLE)
-				(*stream) << _timeof_delivery;
+			if (status & DELIVERY_OF_BUNDLE)
+				(*stream) << timeof_delivery;
 
-			if (_status & DELETION_OF_BUNDLE)
-				(*stream) << _timeof_deletion;
+			if (status & DELETION_OF_BUNDLE)
+				(*stream) << timeof_deletion;
 
-			(*stream) << dtn::data::SDNV(_bundleid.timestamp);
-			(*stream) << dtn::data::SDNV(_bundleid.sequencenumber);
-			(*stream) << BundleString(_bundleid.source.getString());
+			(*stream) << bundleid.timestamp;
+			(*stream) << bundleid.sequencenumber;
+			(*stream) << BundleString(bundleid.source.getString());
 		}
 
 		void StatusReportBlock::read(const dtn::data::PayloadBlock &p) throw (WrongRecordException)
@@ -89,46 +89,38 @@ namespace dtn
 			// check type field
 			if ((_admfield >> 4) != 1) throw WrongRecordException();
 
-			(*stream).get(_status);
-			(*stream).get(_reasoncode);
+			(*stream).get(status);
+			(*stream).get(reasoncode);
 
 			if ( refsFragment() )
 			{
-				_bundleid.fragment = true;
+				bundleid.fragment = true;
 
-				dtn::data::SDNV frag_offset;
-				(*stream) >> frag_offset;
-				_bundleid.offset = frag_offset.getValue();
-
-				(*stream) >> _fragment_length;
+				(*stream) >> bundleid.offset;
+				(*stream) >> fragment_length;
 			}
 
-			if (_status & RECEIPT_OF_BUNDLE)
-				(*stream) >> _timeof_receipt;
+			if (status & RECEIPT_OF_BUNDLE)
+				(*stream) >> timeof_receipt;
 
-			if (_status & CUSTODY_ACCEPTANCE_OF_BUNDLE)
-				(*stream) >> _timeof_custodyaccept;
+			if (status & CUSTODY_ACCEPTANCE_OF_BUNDLE)
+				(*stream) >> timeof_custodyaccept;
 
-			if (_status & FORWARDING_OF_BUNDLE)
-				(*stream) >> _timeof_forwarding;
+			if (status & FORWARDING_OF_BUNDLE)
+				(*stream) >> timeof_forwarding;
 
-			if (_status & DELIVERY_OF_BUNDLE)
-				(*stream) >> _timeof_delivery;
+			if (status & DELIVERY_OF_BUNDLE)
+				(*stream) >> timeof_delivery;
 
-			if (_status & DELETION_OF_BUNDLE)
-				(*stream) >> _timeof_deletion;
+			if (status & DELETION_OF_BUNDLE)
+				(*stream) >> timeof_deletion;
 
-			dtn::data::SDNV timestamp;
-			(*stream) >> timestamp;
-			_bundleid.timestamp = timestamp.getValue();
-
-			dtn::data::SDNV seqno;
-			(*stream) >> seqno;
-			_bundleid.sequencenumber = seqno.getValue();
+			(*stream) >> bundleid.timestamp;
+			(*stream) >> bundleid.sequencenumber;
 
 			BundleString source;
 			(*stream) >> source;
-			_bundleid.source = EID(source);
+			bundleid.source = EID(source);
 		}
 
 	}

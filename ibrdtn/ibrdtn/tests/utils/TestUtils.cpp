@@ -33,16 +33,38 @@ void TestUtils::tearDown()
 {
 }
 
-void TestUtils::tokenizeTest()
+void TestUtils::tokenizeEmptyTest()
 {
 	using namespace dtn::utils;
+
+	// empty test1
 	CPPUNIT_ASSERT(Utils::tokenize(":", "").empty());
+
+	// empty test2
 	CPPUNIT_ASSERT(Utils::tokenize(":", "::").empty());
-	CPPUNIT_ASSERT_EQUAL((int)Utils::tokenize(":", ":a:test::", 2).size(), 2);
-	CPPUNIT_ASSERT_EQUAL((int)Utils::tokenize(":", ":a:test::b::", 2).size(), 3);
+}
+
+void TestUtils::tokenizeSizeTest()
+{
+	using namespace dtn::utils;
+
+	CPPUNIT_ASSERT_EQUAL((size_t)2, Utils::tokenize(":", ":a:test::", 2).size());
+	CPPUNIT_ASSERT_EQUAL((size_t)3, Utils::tokenize(":", ":a:test::b::", 2).size());
+}
+
+void TestUtils::tokenizeSizeSpacesTest()
+{
+	using namespace dtn::utils;
+
+	CPPUNIT_ASSERT_EQUAL((size_t)1, Utils::tokenize(":", ": :", 1).size());
+	CPPUNIT_ASSERT_EQUAL((size_t)3, Utils::tokenize(":", ":    :t e s t: ").size());
+}
+
+void TestUtils::tokenizeLastItemTest()
+{
+	using namespace dtn::utils;
+
 	//TODO how should the added string in the last item look like? "b::" or ":b::" or "::b::"
-	CPPUNIT_ASSERT(Utils::tokenize(":", ":a:test::b::", 2)[2] == "b::");
-	CPPUNIT_ASSERT_EQUAL((int)Utils::tokenize(":", ": :", 1).size(), 1);
-	CPPUNIT_ASSERT_EQUAL((int)Utils::tokenize(":", ":    :t e s t: ").size(), 3);
+	CPPUNIT_ASSERT_EQUAL(std::string("b::"), Utils::tokenize(":", ":a:test::b::", 2)[2]);
 }
 

@@ -31,19 +31,19 @@ namespace dtn
 		Random::Random()
 		{
 			// initialize a random seed
-			srand(time(0));
+			srand(static_cast<unsigned int>(time(0)));
 		}
 
 		Random::~Random()
 		{
 		}
 
-		const std::string Random::gen_chars(size_t size) const
+		const std::string Random::gen_chars(const dtn::data::Length &size) const
 		{
 			static const char text[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 			std::vector<char> dst(size);
-			int i, len = size - 1;
-			for ( i = 0; i <= len; ++i )
+			const dtn::data::Length len = size - 1;
+			for ( dtn::data::Length i = 0; i <= len; ++i )
 			{
 				dst[i] = text[rand() % (sizeof text - 1)];
 			}

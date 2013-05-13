@@ -28,7 +28,7 @@ namespace dtn
 	{
 		void DevNull::callbackBundleReceived(const dtn::data::Bundle &b)
 		{
-			IBRCOMMON_LOGGER(info) << "Bundle " << b.toString() << " went to /null" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("DevNull", info) << "Bundle " << b.toString() << " went to /null" << IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 }

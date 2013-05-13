@@ -61,7 +61,7 @@ namespace dtn
 			return _service->getProtocol();
 		}
 
-		void DatagramConvergenceLayer::callback_send(DatagramConnection&, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, int len) throw (DatagramException)
+		void DatagramConvergenceLayer::callback_send(DatagramConnection&, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, const dtn::data::Length &len) throw (DatagramException)
 		{
 			// only on sender at once
 			ibrcommon::MutexLock l(_send_lock);
@@ -79,7 +79,7 @@ namespace dtn
 			_service->send(HEADER_ACK, 0, seqno, destination, NULL, 0);
 		}
 
-		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			const std::list<dtn::core::Node::URI> uri_list = node.get(_service->getProtocol());
 			if (uri_list.empty()) return;
@@ -88,7 +88,7 @@ namespace dtn
 			const dtn::core::Node::URI &uri = uri_list.front();
 
 			// some debugging
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "job queued to " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "job queued for " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// lock the connection list while working with it
 			ibrcommon::MutexLock lc(_connection_cond);
@@ -185,14 +185,14 @@ namespace dtn
 			stringstream ss;
 			ss << announcement;
 
-			int len = ss.str().size();
+			std::streamsize len = ss.str().size();
 
 			try {
 				// only on sender at once
 				ibrcommon::MutexLock l(_send_lock);
 
 				// forward the send request to DatagramService
-				_service->send(HEADER_BROADCAST, 0, 0, ss.str().c_str(), len);
+				_service->send(HEADER_BROADCAST, 0, 0, ss.str().c_str(), static_cast<dtn::data::Length>(len));
 			} catch (const DatagramException&) {
 				// ignore any send failure
 			};
@@ -303,7 +303,7 @@ namespace dtn
 			try {
 				const TimeEvent &time=dynamic_cast<const TimeEvent&>(*evt);
 				if (time.getAction() == TIME_SECOND_TICK)
-					if (time.getTimestamp() % 5 == 0)
+					if (time.getTimestamp().get<size_t>() % 5 == 0)
 						sendAnnoucement();
 			} catch (const std::bad_cast&)
 			{}

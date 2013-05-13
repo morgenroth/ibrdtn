@@ -116,14 +116,14 @@ namespace dtn
 			_blocktype = type;
 		}
 
-		size_t ExtensionBlock::getLength() const
+		Length ExtensionBlock::getLength() const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::BLOB::iostream io = blobref.iostream();
 			return io.size();
 		}
 
-		std::ostream& ExtensionBlock::serialize(std::ostream &stream, size_t &) const
+		std::ostream& ExtensionBlock::serialize(std::ostream &stream, Length &) const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::BLOB::iostream io = blobref.iostream();
@@ -137,7 +137,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& ExtensionBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& ExtensionBlock::deserialize(std::istream &stream, const Length &length)
 		{
 			// lock the BLOB
 			ibrcommon::BLOB::iostream io = _blobref.iostream();

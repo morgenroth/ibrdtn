@@ -32,7 +32,7 @@ namespace dtn
 {
 	namespace storage
 	{
-		BundleStorage::BundleStorage(size_t maxsize)
+		BundleStorage::BundleStorage(const dtn::data::Length &maxsize)
 		 : _faulty(false), _maxsize(maxsize), _currentsize(0)
 		{
 		}
@@ -46,9 +46,40 @@ namespace dtn
 			remove(dtn::data::BundleID(b));
 		}
 
-		dtn::data::MetaBundle BundleStorage::remove(const ibrcommon::BloomFilter&)
+		dtn::data::MetaBundle BundleStorage::remove(const ibrcommon::BloomFilter &filter)
 		{
-			throw dtn::storage::NoBundleFoundException();
+			class BundleFilter : public dtn::storage::BundleSelector
+			{
+			public:
+				BundleFilter(const ibrcommon::BloomFilter &filter)
+				 : _filter(filter)
+				{};
+
+				virtual ~BundleFilter() {};
+
+				virtual dtn::data::Size limit() const throw () { return 1; };
+
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+				{
+					// select the bundle if it is in the filter
+					return _filter.contains(meta.toString());
+				};
+
+				const ibrcommon::BloomFilter &_filter;
+			} bundle_filter(filter);
+
+			dtn::storage::BundleResultList list;
+
+			// query an unknown bundle from the storage, the list contains 1 item.
+			get(bundle_filter, list);
+
+			if (list.empty())
+				throw NoBundleFoundException();
+
+			dtn::data::MetaBundle ret = list.front();
+			this->remove(ret);
+
+			return ret;
 		}
 
 		const dtn::data::EID BundleStorage::acceptCustody(const dtn::data::MetaBundle &meta)
@@ -73,7 +104,7 @@ namespace dtn
 			signal.setMatch(meta);
 
 			// set accepted
-			signal._custody_accepted = true;
+			signal.custody_accepted = true;
 
 			// write the custody data to a payload block
 			dtn::data::PayloadBlock &payload = custody_bundle.push_back<dtn::data::PayloadBlock>();
@@ -111,7 +142,7 @@ namespace dtn
 			signal.setMatch(meta);
 
 			// set reason code
-			signal._reason = reason;
+			signal.reason = reason;
 
 			// write the custody data to a payload block
 			dtn::data::PayloadBlock &payload = b.push_back<dtn::data::PayloadBlock>();
@@ -128,12 +159,12 @@ namespace dtn
 			dtn::core::CustodyEvent::raise(b, dtn::core::CUSTODY_REJECT);
 		}
 
-		size_t BundleStorage::size() const
+		dtn::data::Length BundleStorage::size() const
 		{
 			return _currentsize;
 		}
 
-		void BundleStorage::allocSpace(size_t size) throw (StorageSizeExeededException)
+		void BundleStorage::allocSpace(const dtn::data::Length &size) throw (StorageSizeExeededException)
 		{
 			ibrcommon::MutexLock l(_sizelock);
 
@@ -147,7 +178,7 @@ namespace dtn
 			_currentsize += size;
 		}
 
-		void BundleStorage::freeSpace(size_t size) throw ()
+		void BundleStorage::freeSpace(const dtn::data::Length &size) throw ()
 		{
 			ibrcommon::MutexLock l(_sizelock);
 			if (size > _currentsize)
@@ -169,7 +200,7 @@ namespace dtn
 
 		void BundleStorage::eventBundleAdded(const dtn::data::MetaBundle &b) throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(2) << "add bundle to index: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BundleStorage", 2) << "add bundle to index: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			for (index_list::iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
 				BundleIndex &index = (**it);
@@ -179,7 +210,7 @@ namespace dtn
 
 		void BundleStorage::eventBundleRemoved(const dtn::data::BundleID &id) throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(2) << "remove bundle from index: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BundleStorage", 2) << "remove bundle from index: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			for (index_list::iterator it = _indexes.begin(); it != _indexes.end(); ++it) {
 				BundleIndex &index = (**it);

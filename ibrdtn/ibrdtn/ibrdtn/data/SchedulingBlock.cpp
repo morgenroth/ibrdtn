@@ -33,7 +33,7 @@ namespace dtn
 		}
 
 		SchedulingBlock::SchedulingBlock()
-		 : dtn::data::Block(SchedulingBlock::BLOCK_TYPE), _flags(0), _priority(0)
+		 : dtn::data::Block(SchedulingBlock::BLOCK_TYPE), _priority(0)
 		{
 			// set the replicate in every fragment bit
 			set(REPLICATE_IN_EVERY_FRAGMENT, true);
@@ -43,48 +43,44 @@ namespace dtn
 		{
 		}
 
-		void SchedulingBlock::setPriority(int8_t p)
+		void SchedulingBlock::setPriority(Integer p)
 		{
-			_flags |= HAS_PRIORITY;
+			_flags.setBit(HAS_PRIORITY, true);
 			_priority = p;
 		}
 
-		int8_t SchedulingBlock::getPriority() const
+		Integer SchedulingBlock::getPriority() const
 		{
 			return _priority;
 		}
 
-		size_t SchedulingBlock::getLength() const
+		Length SchedulingBlock::getLength() const
 		{
-			size_t len = dtn::data::SDNV(_flags).getLength();
+			Length len = _flags.getLength();
 
-			if (_flags & HAS_PRIORITY) dtn::data::SDNV(_priority).getLength();
+			if (_flags.getBit(HAS_PRIORITY)) _priority.getLength();
 
 			return len;
 		}
 
-		std::ostream& SchedulingBlock::serialize(std::ostream &stream, size_t &length) const
+		std::ostream& SchedulingBlock::serialize(std::ostream &stream, Length &length) const
 		{
-			stream << dtn::data::SDNV(_flags);
+			stream << _flags;
 
-			if (_flags & HAS_PRIORITY) {
-				stream << dtn::data::SDNV(_priority);
+			if (_flags.getBit(HAS_PRIORITY)) {
+				stream << _priority;
 			}
 
 			length += getLength();
 			return stream;
 		}
 
-		std::istream& SchedulingBlock::deserialize(std::istream &stream, const size_t)
+		std::istream& SchedulingBlock::deserialize(std::istream &stream, const Length&)
 		{
-			dtn::data::SDNV flags;
-			stream >> flags;
-			_flags = flags.getValue();
+			stream >> _flags;
 
-			if (_flags & HAS_PRIORITY) {
-				dtn::data::SDNV priority;
-				stream >> priority;
-				_priority = priority.getValue();
+			if (_flags.getBit(HAS_PRIORITY)) {
+				stream >> _priority;
 			}
 
 			return stream;

@@ -28,7 +28,10 @@
 class TestUtils : public CPPUNIT_NS :: TestFixture
 {
 	CPPUNIT_TEST_SUITE (TestUtils);
-	CPPUNIT_TEST (tokenizeTest);
+	CPPUNIT_TEST (tokenizeEmptyTest);
+	CPPUNIT_TEST (tokenizeSizeTest);
+	CPPUNIT_TEST (tokenizeSizeSpacesTest);
+	CPPUNIT_TEST (tokenizeLastItemTest);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -36,7 +39,10 @@ public:
 	void tearDown (void);
 
 protected:
-	void tokenizeTest(void);
+	void tokenizeEmptyTest(void);
+	void tokenizeSizeTest(void);
+	void tokenizeSizeSpacesTest(void);
+	void tokenizeLastItemTest(void);
 };
 
 

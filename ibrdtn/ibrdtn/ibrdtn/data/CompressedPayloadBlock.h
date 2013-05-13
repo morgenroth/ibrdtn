@@ -20,7 +20,7 @@
  */
 
 #include <ibrdtn/data/Block.h>
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/ExtensionBlock.h>
 #include "ibrdtn/data/Bundle.h"
 
@@ -54,15 +54,15 @@ namespace dtn
 			CompressedPayloadBlock();
 			virtual ~CompressedPayloadBlock();
 
-			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual Length getLength() const;
+			virtual std::ostream &serialize(std::ostream &stream, Length &length) const;
+			virtual std::istream &deserialize(std::istream &stream, const Length &length);
 
 			void setAlgorithm(COMPRESS_ALGS alg);
 			COMPRESS_ALGS getAlgorithm() const;
 
-			void setOriginSize(size_t s);
-			size_t getOriginSize() const;
+			void setOriginSize(const Number &s);
+			const Number& getOriginSize() const;
 
 			static void compress(dtn::data::Bundle &b, COMPRESS_ALGS alg);
 			static void extract(dtn::data::Bundle &b);
@@ -71,8 +71,8 @@ namespace dtn
 			static void compress(CompressedPayloadBlock::COMPRESS_ALGS alg, std::istream &is, std::ostream &os);
 			static void extract(CompressedPayloadBlock::COMPRESS_ALGS alg, std::istream &is, std::ostream &os);
 
-			dtn::data::SDNV _algorithm;
-			dtn::data::SDNV _origin_size;
+			dtn::data::Number _algorithm;
+			dtn::data::Number _origin_size;
 		};
 
 		/**

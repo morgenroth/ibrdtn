@@ -69,16 +69,16 @@ namespace dtn
 			unsigned char tag[ibrcommon::AES128Stream::tag_len];
 
 			// create a new correlator value
-			uint64_t correlator = createCorrelatorValue(bundle);
+			dtn::data::Number correlator = createCorrelatorValue(bundle);
 
 			// create a random salt and key
 			createSaltAndKey(salt, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes);
 
 			// count all PCBs
-			size_t pcbs_size = std::count(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
+			dtn::data::Size pcbs_size = std::count(bundle.begin(), bundle.end(), PayloadConfidentialBlock::BLOCK_TYPE);
 
 			// count all PIBs
-			size_t pibs_size = std::count(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
+			dtn::data::Size pibs_size = std::count(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE);
 
 			// encrypt PCBs and PIBs
 			dtn::data::Bundle::find_iterator find_pcb(bundle.begin(), PayloadConfidentialBlock::BLOCK_TYPE);
@@ -166,7 +166,7 @@ namespace dtn
 				unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes];
 
 				// correlator of the first PCB
-				uint64_t correlator = 0;
+				dtn::data::Number correlator = 0;
 				bool decrypt_related = false;
 
 				// iterate through all blocks
@@ -195,7 +195,7 @@ namespace dtn
 								// success! add this block to the erasue list
 								erasure_list.push_back(&**it);
 							} catch (const ibrcommon::Exception&) {
-								IBRCOMMON_LOGGER(critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG("PayloadConfidentialBlock", critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
 								decryptBlock(bundle, it, salt, key);
 
 								// abort the decryption and discard the bundle?
@@ -209,7 +209,7 @@ namespace dtn
 							// try to decrypt the symmetric AES key
 							if (!getKey(pcb._ciphersuite_params, key, ibrcommon::AES128Stream::key_size_in_bytes, rsa_key))
 							{
-								IBRCOMMON_LOGGER(critical) << "could not get symmetric key decrypted" << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG("PayloadConfidentialBlock", critical) << "could not get symmetric key decrypted" << IBRCOMMON_LOGGER_ENDL;
 								throw ibrcommon::Exception("decrypt failed - could not get symmetric key decrypted");
 							}
 
@@ -217,7 +217,7 @@ namespace dtn
 							if (!decryptPayload(bundle, key, salt))
 							{
 								// reverse decryption
-								IBRCOMMON_LOGGER(critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG("PayloadConfidentialBlock", critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
 								decryptPayload(bundle, key, salt);
 								throw ibrcommon::Exception("decrypt reversed - tag verfication failed");
 							}
@@ -288,7 +288,7 @@ namespace dtn
 				// get the decrypt tag
 				if (!decrypt.verify(tag))
 				{
-					IBRCOMMON_LOGGER(error) << "integrity signature of the decrypted payload is invalid" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("PayloadConfidentialBlock", error) << "integrity signature of the decrypted payload is invalid" << IBRCOMMON_LOGGER_ENDL;
 					return false;
 				}
 			}

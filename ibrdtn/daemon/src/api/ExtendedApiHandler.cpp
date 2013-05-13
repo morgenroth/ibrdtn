@@ -50,7 +50,7 @@ namespace dtn
 	{
 		ExtendedApiHandler::ExtendedApiHandler(ClientHandler &client, ibrcommon::socketstream &stream)
 		 : ProtocolHandler(client, stream), _sender(new Sender(*this)),
-		   _endpoint(_client.getRegistration().getDefaultEID())
+		   _endpoint(_client.getRegistration().getDefaultEID()), _encoding(dtn::api::PlainSerializer::BASE64)
 		{
 			_client.getRegistration().subscribe(_endpoint);
 		}
@@ -74,7 +74,7 @@ namespace dtn
 
 		void ExtendedApiHandler::finally()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "ExtendedApiConnection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 60) << "ExtendedApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 
 			_client.getRegistration().abort();
 
@@ -114,7 +114,7 @@ namespace dtn
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							ibrcommon::MutexLock l(_write_lock);
-							dtn::data::EID new_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + cmd[2];
+							dtn::data::EID new_endpoint = dtn::core::BundleCore::local.add(dtn::core::BundleCore::local.getDelimiter() + cmd[2]);
 
 							// error checking
 							if (new_endpoint == dtn::data::EID())
@@ -129,6 +129,24 @@ namespace dtn
 								reg.subscribe(new_endpoint);
 								_endpoint = new_endpoint;
 								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
+							}
+						}
+						else if (cmd[1] == "encoding")
+						{
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
+
+							// parse encoding
+							dtn::api::PlainSerializer::Encoding enc = dtn::api::PlainSerializer::parseEncoding(cmd[2]);
+
+							if (enc != dtn::api::PlainSerializer::INVALID) {
+								// set the new encoding as default
+								_encoding = enc;
+
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
+							} else {
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " INVALID ENCODING" << std::endl;
 							}
 						}
 						else
@@ -146,7 +164,7 @@ namespace dtn
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							ibrcommon::MutexLock l(_write_lock);
-							dtn::data::EID new_endpoint = dtn::core::BundleCore::local + BundleCore::local.getDelimiter() + cmd[2];
+							dtn::data::EID new_endpoint = dtn::core::BundleCore::local.add(BundleCore::local.getDelimiter() + cmd[2]);
 
 							// error checking
 							if (new_endpoint == dtn::data::EID())
@@ -164,7 +182,7 @@ namespace dtn
 							dtn::data::EID del_endpoint = _endpoint;
 							if (cmd.size() >= 3)
 							{
-								del_endpoint = dtn::core::BundleCore::local + BundleCore::local.getDelimiter() + cmd[2];
+								del_endpoint = dtn::core::BundleCore::local.add( BundleCore::local.getDelimiter() + cmd[2] );
 							}
 
 							ibrcommon::MutexLock l(_write_lock);
@@ -260,7 +278,7 @@ namespace dtn
 						{
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
-							size_t lifetime = 0;
+							ibrcommon::Timer::time_t lifetime = 0;
 							std::stringstream ss(cmd[2]);
 
 							ss >> lifetime;
@@ -356,7 +374,7 @@ namespace dtn
 							if (cmd.size() == 2)
 							{
 								_stream << ClientHandler::API_STATUS_OK << " BUNDLE GET "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
-								PlainSerializer(_stream) << _bundle_reg;
+								PlainSerializer(_stream, _encoding) << _bundle_reg;
 							}
 							else if (cmd[2] == "binary")
 							{
@@ -366,7 +384,7 @@ namespace dtn
 							else if (cmd[2] == "plain")
 							{
 								_stream << ClientHandler::API_STATUS_OK << " BUNDLE GET PLAIN "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
-								PlainSerializer(_stream) << _bundle_reg;
+								PlainSerializer(_stream, _encoding) << _bundle_reg;
 							}
 							else if (cmd[2] == "xml")
 							{
@@ -513,7 +531,7 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 
 							_stream << ClientHandler::API_STATUS_OK << " BUNDLE INFO "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
-							PlainSerializer(_stream, true) << _bundle_reg;
+							PlainSerializer(_stream, PlainSerializer::SKIP_PAYLOAD) << _bundle_reg;
 						}
 						else if (cmd[1] == "block")
 						{
@@ -526,13 +544,13 @@ namespace dtn
 								/* parse an optional offset, where to insert the block */
 								if (cmd.size() > 3)
 								{
-									size_t offset;
+									int offset;
 									istringstream ss(cmd[3]);
 
 									ss >> offset;
 									if (ss.fail()) throw ibrcommon::Exception("malformed command");
 
-									if (offset >= _bundle_reg.size())
+									if (static_cast<dtn::data::Size>(offset) >= _bundle_reg.size())
 									{
 										inserter = dtn::data::BundleBuilder(_bundle_reg, dtn::data::BundleBuilder::END);
 									}
@@ -635,13 +653,15 @@ namespace dtn
 						// get the selected block
 						dtn::data::Block &block = dynamic_cast<dtn::data::Block&>(**block_it);
 
-						int cmd_remaining = cmd.size() - (cmd_index + 1);
+						size_t cmd_remaining = cmd.size() - (cmd_index + 1);
 						if (cmd[cmd_index] == "get")
 						{
 							// lock the API stream
 							ibrcommon::MutexLock l(_write_lock);
 
 							try {
+								dtn::api::PlainSerializer ps(_stream, _encoding);
+
 								if (cmd_remaining > 0)
 								{
 									size_t payload_offset = 0;
@@ -655,7 +675,7 @@ namespace dtn
 										ss.clear(); ss.str(cmd[cmd_index+2]); ss >> length;
 									}
 
-									// abort there if the stream is no payload block
+									// abort here if the stream is no payload block
 									try {
 										dtn::data::PayloadBlock &pb = dynamic_cast<dtn::data::PayloadBlock&>(block);
 
@@ -663,7 +683,7 @@ namespace dtn
 										ibrcommon::BLOB::Reference ref = pb.getBLOB();
 										ibrcommon::BLOB::iostream stream = ref.iostream();
 
-										if (payload_offset >= stream.size())
+										if (static_cast<std::streamsize>(payload_offset) >= stream.size())
 											throw ibrcommon::Exception("offset out of range");
 
 										size_t remaining = stream.size() - payload_offset;
@@ -672,35 +692,16 @@ namespace dtn
 											remaining = length;
 										}
 
-										// put data here
-										ibrcommon::Base64Stream b64(_stream, false, 80);
-
 										// ignore all bytes leading the offset
 										(*stream).ignore(payload_offset);
 
 										_stream << ClientHandler::API_STATUS_OK << " PAYLOAD GET" << std::endl;
 
-										std::vector<char> data(4096);
-										size_t buffered = 0;
-
-										while ((*stream).good() && (remaining > 0))
-										{
-											if (remaining > data.size()) {
-												(*stream).read(&data[0], data.size());
-											} else {
-												(*stream).read(&data[0], remaining);
-											}
-
-											buffered = (*stream).gcount();
-											remaining -= buffered;
-											b64.write(&data[0], buffered);
-										}
-
-										// flush the base64 buffer
-										b64 << std::flush;
+										// write the payload
+										ps.writeData((*stream), remaining);
 
 										// final line break (mark the end)
-										_stream << std::endl << std::endl;
+										_stream << std::endl;
 									} catch (const std::bad_cast&) {
 										_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PAYLOAD GET FAILED INVALID BLOCK TYPE" << std::endl;
 									}
@@ -709,14 +710,11 @@ namespace dtn
 								{
 									_stream << ClientHandler::API_STATUS_OK << " PAYLOAD GET" << std::endl;
 
-									// put data here
-									ibrcommon::Base64Stream b64(_stream, false, 80);
-									size_t slength = 0;
-									block.serialize(b64, slength);
-									b64 << std::flush;
+									// write the payload
+									ps.writeData(block);
 
 									// final line break (mark the end)
-									_stream << std::endl << std::endl;
+									_stream << std::endl;
 								}
 							} catch (const std::exception &ex) {
 								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PAYLOAD GET FAILED " << ex.what() << std::endl;
@@ -745,7 +743,7 @@ namespace dtn
 								ibrcommon::BLOB::iostream stream = ref.iostream();
 
 								// if the offset is valid
-								if (payload_offset < stream.size()) {
+								if (static_cast<std::streamsize>(payload_offset) < stream.size()) {
 									// move the streams put pointer to the given offset
 									(*stream).seekp(payload_offset, ios_base::beg);
 								} else if (payload_offset > 0) {
@@ -754,7 +752,7 @@ namespace dtn
 								}
 
 								/* write the new data into the blob */
-								PlainDeserializer(_stream).readBase64(*stream);
+								PlainDeserializer(_stream).readData(*stream);
 
 								_stream << ClientHandler::API_STATUS_OK << " PAYLOAD PUT SUCCESSFUL" << std::endl;
 							} catch (std::bad_cast&) {
@@ -782,7 +780,7 @@ namespace dtn
 								(*stream).seekp(0, ios_base::end);
 
 								/* write the new data into the blob */
-								PlainDeserializer(_stream).readBase64(*stream);
+								PlainDeserializer(_stream).readData(*stream);
 
 								_stream << ClientHandler::API_STATUS_OK << " PAYLOAD APPEND SUCCESSFUL" << std::endl;
 							} catch (std::bad_cast&) {
@@ -938,39 +936,39 @@ namespace dtn
 				_stream << b.source.getString() << " ";
 
 				// format the bundle ID and write it to the stream
-				_stream << report._bundleid.timestamp << "." << report._bundleid.sequencenumber;
+				_stream << report.bundleid.timestamp.toString() << "." << report.bundleid.sequencenumber.toString();
 
 				if (report.refsFragment()) {
-					_stream << "." << report._bundleid.offset << ":" << report._fragment_length.getValue() << " ";
+					_stream << "." << report.bundleid.offset.toString() << ":" << report.fragment_length.toString() << " ";
 				} else {
 					_stream << " ";
 				}
 
 				// origin source
-				_stream << report._bundleid.source.getString() << " ";
+				_stream << report.bundleid.source.getString() << " ";
 
 				// reason code
-				_stream << (int)report._reasoncode << " ";
+				_stream << (int)report.reasoncode << " ";
 
-				if (report._status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE)
-					_stream << "RECEIPT[" << report._timeof_receipt.getTimestamp().getValue() << "."
-						<< report._timeof_receipt.getNanoseconds().getValue() << "] ";
+				if (report.status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE)
+					_stream << "RECEIPT[" << report.timeof_receipt.getTimestamp().toString() << "."
+						<< report.timeof_receipt.getNanoseconds().toString() << "] ";
 
-				if (report._status & dtn::data::StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE)
-					_stream << "CUSTODY-ACCEPTANCE[" << report._timeof_custodyaccept.getTimestamp().getValue() << "."
-						<< report._timeof_custodyaccept.getNanoseconds().getValue() << "] ";
+				if (report.status & dtn::data::StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE)
+					_stream << "CUSTODY-ACCEPTANCE[" << report.timeof_custodyaccept.getTimestamp().toString() << "."
+						<< report.timeof_custodyaccept.getNanoseconds().toString() << "] ";
 
-				if (report._status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE)
-					_stream << "FORWARDING[" << report._timeof_forwarding.getTimestamp().getValue() << "."
-						<< report._timeof_forwarding.getNanoseconds().getValue() << "] ";
+				if (report.status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE)
+					_stream << "FORWARDING[" << report.timeof_forwarding.getTimestamp().toString() << "."
+						<< report.timeof_forwarding.getNanoseconds().toString() << "] ";
 
-				if (report._status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE)
-					_stream << "DELIVERY[" << report._timeof_delivery.getTimestamp().getValue() << "."
-						<< report._timeof_delivery.getNanoseconds().getValue() << "] ";
+				if (report.status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE)
+					_stream << "DELIVERY[" << report.timeof_delivery.getTimestamp().toString() << "."
+						<< report.timeof_delivery.getNanoseconds().toString() << "] ";
 
-				if (report._status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE)
-					_stream << "DELETION[" << report._timeof_deletion.getTimestamp().getValue() << "."
-						<< report._timeof_deletion.getNanoseconds().getValue() << "] ";
+				if (report.status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE)
+					_stream << "DELETION[" << report.timeof_deletion.getTimestamp().toString() << "."
+						<< report.timeof_deletion.getNanoseconds().toString() << "] ";
 
 				// finalize statement with a line-break
 				_stream << std::endl;
@@ -995,25 +993,25 @@ namespace dtn
 				_stream << b.source.getString() << " ";
 
 				// format the bundle ID and write it to the stream
-				_stream << custody._bundleid.timestamp << "." << custody._bundleid.sequencenumber;
+				_stream << custody.bundleid.timestamp.toString() << "." << custody.bundleid.sequencenumber.toString();
 
 				if (custody.refsFragment()) {
-					_stream << "." << custody._bundleid.offset << ":" << custody._fragment_length.getValue() << " ";
+					_stream << "." << custody.bundleid.offset.toString() << ":" << custody.fragment_length.toString() << " ";
 				} else {
 					_stream << " ";
 				}
 
 				// origin source
-				_stream << custody._bundleid.source.getString() << " ";
+				_stream << custody.bundleid.source.getString() << " ";
 
-				if (custody._custody_accepted) {
+				if (custody.custody_accepted) {
 					_stream << "ACCEPTED ";
 				} else {
-					_stream << "REJECTED(" << (int)custody._reason << ") ";
+					_stream << "REJECTED(" << (int)custody.reason << ") ";
 				}
 
 				// add time of signal to the message
-				_stream << custody._timeofsignal.getTimestamp().getValue() << "." << custody._timeofsignal.getNanoseconds().getValue();
+				_stream << custody.timeofsignal.getTimestamp().toString() << "." << custody.timeofsignal.getNanoseconds().toString();
 
 				// finalize statement with a line-break
 				_stream << std::endl;
@@ -1026,11 +1024,11 @@ namespace dtn
 
 		void ExtendedApiHandler::sayBundleID(ostream &stream, const dtn::data::BundleID &id)
 		{
-			stream << id.timestamp << " " << id.sequencenumber << " ";
+			stream << id.timestamp.toString() << " " << id.sequencenumber.toString() << " ";
 
 			if (id.fragment)
 			{
-				stream << id.offset << " ";
+				stream << id.offset.toString() << " ";
 			}
 
 			stream << id.source.getString();
@@ -1040,10 +1038,10 @@ namespace dtn
 		{
 			// load bundle id
 			std::stringstream ss;
-			size_t timestamp = 0;
-			size_t sequencenumber = 0;
+			dtn::data::Timestamp timestamp = 0;
+			dtn::data::Number sequencenumber = 0;
 			bool fragment = false;
-			size_t offset = 0;
+			dtn::data::Number offset = 0;
 
 			if ((data.size() - start) < 3)
 			{
@@ -1051,14 +1049,18 @@ namespace dtn
 			}
 
 			// read timestamp
-			ss.clear(); ss.str(data[start]); ss >> timestamp;
+			ss.clear(); ss.str(data[start]);
+			timestamp.read(ss);
+
 			if(ss.fail())
 			{
 			throw ibrcommon::Exception("malformed parameters");
 			}
 
 			// read sequence number
-			ss.clear(); ss.str(data[start+1]); ss >> sequencenumber;
+			ss.clear(); ss.str(data[start+1]);
+			sequencenumber.read(ss);
+
 			if(ss.fail())
 			{
 			throw ibrcommon::Exception("malformed parameters");
@@ -1070,7 +1072,9 @@ namespace dtn
 				fragment = true;
 
 				// read sequence number
-				ss.clear(); ss.str(data[start+2]); ss >> offset;
+				ss.clear(); ss.str(data[start+2]);
+				offset.read(ss);
+
 				if(ss.fail())
 				{
 					throw ibrcommon::Exception("malformed parameters");

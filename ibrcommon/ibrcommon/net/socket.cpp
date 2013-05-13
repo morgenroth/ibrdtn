@@ -22,7 +22,6 @@
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/socket.h"
 #include "ibrcommon/net/vsocket.h"
-#include "ibrcommon/TimeMeasurement.h"
 #include "ibrcommon/Logger.h"
 
 #include <arpa/inet.h>
@@ -204,11 +203,11 @@ namespace ibrcommon
 		} catch (const vaddress::address_exception&) {
 			// if not address is set use DEFAULT_SOCKET_FAMILY
 			if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY, type, protocol)) > -1) {
-				_family = DEFAULT_SOCKET_FAMILY;
+				_family = static_cast<sa_family_t>(DEFAULT_SOCKET_FAMILY);
 			}
 			// if that fails switch to the alternative SOCKET_FAMILY
 			else if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY_ALTERNATIVE, type, protocol)) > -1) {
-				_family = DEFAULT_SOCKET_FAMILY_ALTERNATIVE;
+				_family = static_cast<sa_family_t>(DEFAULT_SOCKET_FAMILY_ALTERNATIVE);
 
 				// set the alternative socket family as default
 				DEFAULT_SOCKET_FAMILY = DEFAULT_SOCKET_FAMILY_ALTERNATIVE;
@@ -222,7 +221,7 @@ namespace ibrcommon
 
 	void basesocket::init_socket(int domain, int type, int protocol) throw (socket_exception)
 	{
-		_family = domain;
+		_family = static_cast<sa_family_t>(domain);
 		if ((_fd = ::socket(domain, type, protocol)) < 0) {
 			throw socket_raw_error(errno, "cannot create socket");
 		}
@@ -279,9 +278,9 @@ namespace ibrcommon
 		this->close();
 	}
 
-	int clientsocket::send(const char *data, size_t len, int flags) throw (socket_error)
+	ssize_t clientsocket::send(const char *data, size_t len, int flags) throw (socket_error)
 	{
-		int ret = ::send(this->fd(), data, len, flags);
+		ssize_t ret = ::send(this->fd(), data, len, flags);
 		if (ret == -1) {
 			switch (errno)
 			{
@@ -304,9 +303,9 @@ namespace ibrcommon
 		return ret;
 	}
 
-	int clientsocket::recv(char *data, size_t len, int flags) throw (socket_error)
+	ssize_t clientsocket::recv(char *data, size_t len, int flags) throw (socket_error)
 	{
-		int ret = ::recv(this->fd(), data, len, flags);
+		ssize_t ret = ::recv(this->fd(), data, len, flags);
 		if (ret == -1) {
 			switch (errno)
 			{
@@ -400,7 +399,7 @@ namespace ibrcommon
 	{
 	}
 
-	size_t datagramsocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
+	ssize_t datagramsocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		struct sockaddr_storage clientAddress;
 		socklen_t clientAddressLength = sizeof(clientAddress);
@@ -424,7 +423,7 @@ namespace ibrcommon
 
 	void datagramsocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception)
 	{
-		ssize_t ret = 0;
+		int ret = 0;
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
 
@@ -450,12 +449,13 @@ namespace ibrcommon
 			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 		}
 
-		ret = ::sendto(this->fd(), buf, buflen, flags, res->ai_addr, res->ai_addrlen);
+		ssize_t len = 0;
+		len = ::sendto(this->fd(), buf, buflen, flags, res->ai_addr, res->ai_addrlen);
 
 		// free the addrinfo struct
 		freeaddrinfo(res);
 
-		if (ret == -1) {
+		if (len == -1) {
 			throw socket_raw_error(errno);
 		}
 	}
@@ -482,7 +482,7 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		int len = 0;
+		size_t len = 0;
 		struct sockaddr_un saun;
 
 		/*
@@ -510,7 +510,7 @@ namespace ibrcommon
 		 */
 		len = sizeof(saun.sun_family) + strlen(saun.sun_path);
 
-		if (::connect(_fd, (struct sockaddr *)&saun, len) < 0) {
+		if (::connect(_fd, (struct sockaddr *)&saun, static_cast<socklen_t>(len)) < 0) {
 			this->close();
 			throw socket_exception("Could not connect to the named socket.");
 		}
@@ -589,7 +589,7 @@ namespace ibrcommon
 		address_length = sizeof(address.sun_family) + strlen(address.sun_path);
 
 		// bind to the socket
-		basesocket::bind(_fd, (struct sockaddr *) &address, address_length);
+		basesocket::bind(_fd, (struct sockaddr *) &address, static_cast<socklen_t>(address_length));
 	}
 
 	tcpserversocket::tcpserversocket(const int port, int listen)
@@ -1147,7 +1147,7 @@ namespace ibrcommon
 		::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
 		int level = 0;
-		ssize_t ret = 0;
+		int ret = 0;
 
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
@@ -1232,7 +1232,7 @@ namespace ibrcommon
 #endif
 
 		// successful!
-		IBRCOMMON_LOGGER_DEBUG(5) << "multicast operation (" << optname << ") successful with " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("multicastsocket", 70) << "multicast operation (" << optname << ") successful with " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	void basesocket::check_socket_error(const int err) const throw (socket_exception)

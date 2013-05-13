@@ -12,6 +12,7 @@
     <string name="permdesc_dtnCommunicationServer">Erlaubt der App Benachrichtigungen an DTN Anwendungen zu senden.</string>
     <string name="service_name">DTN Dienst</string>
     <string name="app_name">IBR-DTN</string>
+    <string name="app_name_daemon">IBR-DTN Hintergrunddienst</string>
     <string name="applist">Anwendungen</string>
     <string name="launch_daemon">Dienst aktivieren</string>
     <string name="endpoint_id">Endpoint ID</string>
@@ -91,4 +92,6 @@
     <string name="pref_connection">Verbindung</string>
     <string name="list_no_log">Keine Einträge gefunden.</string>
     <string name="list_no_neighbors">Keine Nachbarn gefunden.</string>
+    <string name="pref_fragmentation_desc">Erlaubt reaktive Fragmentierung und Reassemblierung</string>
+    <string name="pref_fragmentation">Unterstützung für Fragmentierung</string>
 </resources>

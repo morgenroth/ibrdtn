@@ -49,7 +49,7 @@ void TestCompressedPayloadBlock::compressTest(void)
 	}
 
 	// add a payload block
-	size_t origin_psize = b.push_back(ref).getLength();
+	const dtn::data::Length origin_psize = b.push_back(ref).getLength();
 
 	dtn::data::CompressedPayloadBlock::compress(b, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
 
@@ -73,7 +73,7 @@ void TestCompressedPayloadBlock::extractTest(void)
 	}
 
 	// add a payload block
-	size_t origin_psize = b.push_back(ref).getLength();
+	const dtn::data::Length origin_psize = b.push_back(ref).getLength();
 
 	dtn::data::CompressedPayloadBlock::compress(b, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
 	dtn::data::CompressedPayloadBlock::extract(b);
@@ -89,7 +89,7 @@ void TestCompressedPayloadBlock::extractTest(void)
 		{
 			char buf[10];
 			(*stream).read(buf, 10);
-			CPPUNIT_ASSERT_EQUAL((size_t)(*stream).gcount(), (size_t)10);
+			CPPUNIT_ASSERT_EQUAL((*stream).gcount(), (std::streamsize)10);
 			CPPUNIT_ASSERT_EQUAL(std::string(buf, 10), std::string("0123456789"));
 		}
 	}

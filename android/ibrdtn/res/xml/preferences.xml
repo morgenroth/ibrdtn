@@ -45,6 +45,11 @@
             android:key="checkIdleTimeout"
             android:summary="@string/autodisconnect_desc"
             android:title="@string/autodisconnect" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="checkFragmentation"
+            android:summary="@string/pref_fragmentation_desc"
+            android:title="@string/pref_fragmentation" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="prefcat_interfaces"

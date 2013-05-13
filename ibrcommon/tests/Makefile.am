@@ -32,8 +32,8 @@ endif
 
 EXTRA_DIST = base64-dec.dat base64-enc.dat test-key.pem
 
-AM_CPPFLAGS = $(DEBUG_CFLAGS)
-AM_LDFLAGS = -L@top_srcdir@/ibrcommon/.libs -librcommon
+AM_CPPFLAGS = $(DEBUG_CFLAGS) $(OPENSSL_CFLAGS)
+AM_LDFLAGS = -L@top_srcdir@/ibrcommon/.libs -librcommon $(OPENSSL_LIBS)
 
 AM_CPPFLAGS += -I@top_srcdir@ -I@top_srcdir@/tests
 

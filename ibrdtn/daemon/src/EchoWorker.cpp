@@ -67,7 +67,7 @@ namespace dtn
 					target = tracking;
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
-				IBRCOMMON_LOGGER_DEBUG(5) << "echo request received, replying!" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("EchoWorker", 5) << "echo request received, replying!" << IBRCOMMON_LOGGER_ENDL;
 
 				// send it
 				transmit( echo );

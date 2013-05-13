@@ -27,6 +27,7 @@
 #include "core/Node.h"
 #include "api/ClientHandler.h"
 
+#include <ibrdtn/api/PlainSerializer.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Queue.h>
@@ -93,6 +94,8 @@ namespace dtn
 
 			dtn::data::EID _endpoint;
 			ibrcommon::Queue<dtn::data::BundleID> _bundle_queue;
+
+			dtn::api::PlainSerializer::Encoding _encoding;
 		};
 	}
 }

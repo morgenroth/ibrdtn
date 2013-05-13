@@ -115,7 +115,7 @@ namespace ibrcommon
 		 * Sleep current thread for a specified time period.
 		 * @param timeout to sleep for in milliseconds.
 		 */
-		static void sleep(size_t timeout);
+		static void sleep(time_t timeout);
 
 		/**
 		 * This method is called before the run.
@@ -137,6 +137,11 @@ namespace ibrcommon
 		 * wrapper for pthread_setconcurrency.
 		 */
 		static void concurrency(int level);
+
+		/**
+		 * Returns true if this thread was started and finalized before.
+		 */
+		bool isFinalized() throw ();
 
 		/**
 		 * Determine if two thread identifiers refer to the same thread.

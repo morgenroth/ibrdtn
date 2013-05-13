@@ -164,7 +164,7 @@ namespace ibrcommon
 
 		const cell_type* table() const;
 
-		float getAllocation() const;
+		double getAllocation() const;
 
 	protected:
 		virtual void compute_indices(const bloom_type& hash, std::size_t& bit_index, std::size_t& bit) const;

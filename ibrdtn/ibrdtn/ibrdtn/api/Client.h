@@ -22,6 +22,7 @@
 #ifndef CLIENT_H_
 #define CLIENT_H_
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/streams/StreamConnection.h"
 #include <ibrcommon/net/socketstream.h>
@@ -123,16 +124,6 @@ namespace dtn
 				bool _running;
 			};
 
-			/**
-			 * This are the handshake flags.
-			 */
-			enum HANDSHAKE_FLAGS
-			{
-				HANDSHAKE_NONE = 0x0,    //!< No handshake option is set.
-				HANDSHAKE_SENDONLY = 0x80//!< The client only send bundle and do not want to received any bundle.
-			};
-
-
 		public:
 			/**
 			 * This are the communication flags.
@@ -190,7 +181,7 @@ namespace dtn
 			 * the last ACK'd bundle size in the lastack variable.
 			 * @param ack ACK'd bundle size
 			 */
-			virtual void eventBundleAck(size_t ack) throw ();
+			virtual void eventBundleAck(const dtn::data::Length &ack) throw ();
 
 			/**
 			 * The shutdown event callback method can overloaded to handle shutdown
@@ -241,10 +232,10 @@ namespace dtn
 			 * @param timeout
 			 * @return
 			 */
-			dtn::data::Bundle getBundle(size_t timeout = 0) throw (ConnectionException);
+			dtn::data::Bundle getBundle(const dtn::data::Timeout timeout = 0) throw (ConnectionException);
 
 			// public variable
-			size_t lastack;
+			dtn::data::Length lastack;
 
 		protected:
 			/**

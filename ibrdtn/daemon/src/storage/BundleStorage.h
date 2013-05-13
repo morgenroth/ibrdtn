@@ -121,12 +121,12 @@ namespace dtn
 			/**
 			 * @return the count of bundles in the storage
 			 */
-			virtual size_t count() { return 0; };
+			virtual dtn::data::Size count() { return 0; };
 
 			/**
 			 * Get the current size
 			 */
-			size_t size() const;
+			dtn::data::Length size() const;
 
 			/**
 			 * This method is called if another node accepts custody for a
@@ -179,10 +179,10 @@ namespace dtn
 			/**
 			 * constructor
 			 */
-			BundleStorage(size_t maxsize);
+			BundleStorage(const dtn::data::Length &maxsize);
 
-			void allocSpace(size_t size) throw (StorageSizeExeededException);
-			void freeSpace(size_t size) throw ();
+			void allocSpace(const dtn::data::Length &size) throw (StorageSizeExeededException);
+			void freeSpace(const dtn::data::Length &size) throw ();
 			void clearSpace() throw ();
 
 			void eventBundleAdded(const dtn::data::MetaBundle &b) throw ();
@@ -192,8 +192,8 @@ namespace dtn
 
 		private:
 			ibrcommon::Mutex _sizelock;
-			size_t _maxsize;
-			size_t _currentsize;
+			const dtn::data::Length _maxsize;
+			dtn::data::Length _currentsize;
 
 			ibrcommon::Mutex _index_lock;
 			typedef std::set<dtn::storage::BundleIndex*> index_list;

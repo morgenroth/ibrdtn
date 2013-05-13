@@ -60,7 +60,7 @@ class EchoClient : public dtn::api::Client
 				} catch (const std::string &errmsg) {
 					std::cerr << errmsg << std::endl;
 				}
-				wait=wait-tm.getMilliseconds();
+				wait = wait - tm.getMilliseconds();
 			}
 			throw ibrcommon::Exception("timeout is set to zero");
 		}
@@ -106,8 +106,7 @@ class EchoClient : public dtn::api::Client
 					char pattern[CREATE_CHUNK_SIZE];
 					for (size_t i = 0; i < sizeof(pattern); ++i)
 					{
-						pattern[i] = '0';
-						pattern[i] += i % 10;
+						pattern[i] = static_cast<char>(static_cast<int>('0') + (i % 10));
 					}
 
 					while (size > CREATE_CHUNK_SIZE) {
@@ -182,8 +181,11 @@ void print_summary()
 {
 	_runtime.stop();
 
-	double loss = 0; if (_transmitted > 0) loss = (((double)_transmitted - (double)_received) / (double)_transmitted) * 100.0;
-	double avg_value = 0; if (_received > 0) avg_value = (_avg/_received);
+	double loss = 0;
+	if (_transmitted > 0) loss = ((static_cast<double>(_transmitted) - static_cast<double>(_received)) / static_cast<double>(_transmitted)) * 100.0;
+
+	double avg_value = 0;
+	if (_received > 0) avg_value = ( _avg / static_cast<double>(_received) );
 
 	std::cout << std::endl << "--- " << _addr.getString() << " echo statistics --- " << std::endl;
 	std::cout << _transmitted << " bundles transmitted, " << _received << " received, " << loss << "% bundle loss, time " << _runtime << std::endl;
@@ -383,8 +385,8 @@ int main(int argc, char *argv[])
 
 							// check for min/max/avg
 							_avg += tm.getMilliseconds();
-							if ((_min > tm.getMilliseconds()) || _min == 0) _min = tm.getMilliseconds();
-							if ((_max < tm.getMilliseconds()) || _max == 0) _max = tm.getMilliseconds();
+							if ((_min > tm.getMilliseconds()) || _min == 0) _min = static_cast<double>(tm.getMilliseconds());
+							if ((_max < tm.getMilliseconds()) || _max == 0) _max = static_cast<double>(tm.getMilliseconds());
 
 							{
 								ibrcommon::BLOB::Reference blob = response.find<dtn::data::PayloadBlock>().getBLOB();
@@ -392,7 +394,7 @@ int main(int argc, char *argv[])
 								payload_size = blob.iostream().size();
 							}
 
-							std::cout << payload_size << " bytes from " << response.source.getString() << ": seq=" << reply_seq << " ttl=" << response.lifetime << " time=" << tm << std::endl;
+							std::cout << payload_size << " bytes from " << response.source.getString() << ": seq=" << reply_seq << " ttl=" << response.lifetime.toString() << " time=" << tm << std::endl;
 							_received++;
 						} catch (const dtn::api::ConnectionTimeoutException &e) {
 							if (stop_after_first_fail)

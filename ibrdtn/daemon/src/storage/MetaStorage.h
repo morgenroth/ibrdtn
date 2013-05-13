@@ -45,25 +45,7 @@ namespace dtn
 					if (lhs.getPriority() != rhs.getPriority())
 						return false;
 
-					if (lhs.timestamp < rhs.timestamp)
-						return true;
-
-					if (lhs.timestamp != rhs.timestamp)
-						return false;
-
-					if (lhs.sequencenumber < rhs.sequencenumber)
-						return true;
-
-					if (lhs.sequencenumber != rhs.sequencenumber)
-						return false;
-
-					if (rhs.fragment)
-					{
-						if (!lhs.fragment) return true;
-						return (lhs.offset < rhs.offset);
-					}
-
-					return false;
+					return lhs < rhs;
 				}
 			};
 
@@ -77,7 +59,7 @@ namespace dtn
 			// bundle list
 			dtn::data::BundleList _list;
 
-			typedef std::map<dtn::data::BundleID, size_t> size_map;
+			typedef std::map<dtn::data::BundleID, dtn::data::Length> size_map;
 			size_map _bundle_lengths;
 
 			typedef std::set<dtn::data::BundleID> id_set;
@@ -100,7 +82,7 @@ namespace dtn
 			size_t size() throw ();
 
 			bool has(const dtn::data::MetaBundle &m) const throw ();
-			void expire(size_t timestamp) throw ();
+			void expire(const dtn::data::Timestamp &timestamp) throw ();
 
 			template<class T>
 			const dtn::data::MetaBundle& find(const T &id) const throw (NoBundleFoundException)
@@ -116,7 +98,7 @@ namespace dtn
 
 			std::set<dtn::data::EID> getDistinctDestinations() const throw ();
 
-			void store(const dtn::data::MetaBundle &meta, size_t space) throw ();
+			void store(const dtn::data::MetaBundle &meta, const dtn::data::Length &space) throw ();
 
 			void remove(const dtn::data::MetaBundle &meta) throw ();
 
@@ -127,6 +109,11 @@ namespace dtn
 			void markRemoved(const dtn::data::MetaBundle &meta) throw ();
 
 			/**
+			 * Return true, if the bundle is already marked as removed
+			 */
+			bool isRemoved(const dtn::data::MetaBundle &meta) const throw ();
+
+			/**
 			 * Delete all bundles
 			 */
 			void clear() throw ();
@@ -134,7 +121,7 @@ namespace dtn
 			/**
 			 * Get the size of the bundle
 			 */
-			size_t getSize(const dtn::data::MetaBundle &meta) throw (NoBundleFoundException);
+			dtn::data::Length getSize(const dtn::data::MetaBundle &meta) throw (NoBundleFoundException);
 
 		protected:
 			virtual void eventBundleExpired(const dtn::data::MetaBundle &b) throw ();

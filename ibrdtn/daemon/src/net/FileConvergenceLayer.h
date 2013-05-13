@@ -46,7 +46,7 @@ namespace dtn
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
 			void open(const dtn::core::Node&);
-			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job);
 
 			const std::string getName() const;
 
@@ -77,10 +77,10 @@ namespace dtn
 			class StoreBundleTask : public Task
 			{
 			public:
-				StoreBundleTask(const dtn::core::Node &n, const ConvergenceLayer::Job &j);
+				StoreBundleTask(const dtn::core::Node &n, const dtn::net::BundleTransfer &j);
 				virtual ~StoreBundleTask();
 
-				const ConvergenceLayer::Job job;
+				dtn::net::BundleTransfer job;
 			};
 
 			void replyHandshake(const dtn::data::Bundle &bundle, std::list<dtn::data::MetaBundle>&);

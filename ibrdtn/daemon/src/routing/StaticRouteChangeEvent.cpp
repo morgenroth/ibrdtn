@@ -32,12 +32,12 @@ namespace dtn
 		{
 		}
 
-		StaticRouteChangeEvent::StaticRouteChangeEvent(CHANGE_TYPE t, const dtn::data::EID &n, const std::string p, size_t to)
+		StaticRouteChangeEvent::StaticRouteChangeEvent(CHANGE_TYPE t, const dtn::data::EID &n, const std::string &p, const dtn::data::Number &to)
 		 : type(t), nexthop(n), pattern(p), timeout(to)
 		{
 		}
 
-		StaticRouteChangeEvent::StaticRouteChangeEvent(CHANGE_TYPE t, const dtn::data::EID &n, const dtn::data::EID &d, size_t to)
+		StaticRouteChangeEvent::StaticRouteChangeEvent(CHANGE_TYPE t, const dtn::data::EID &n, const dtn::data::EID &d, const dtn::data::Number &to)
 		 : type(t), nexthop(n), destination(d), timeout(to)
 		{
 		}
@@ -70,7 +70,7 @@ namespace dtn
 				}
 
 				ss << " => " << nexthop.getString();
-				if (timeout > 0) ss << "; timeout = " << timeout;
+				if (timeout > 0) ss << "; timeout = " << timeout.toString();
 				break;
 			case ROUTE_DEL:
 				ss << "del route ";
@@ -105,12 +105,12 @@ namespace dtn
 			dtn::core::EventDispatcher<StaticRouteChangeEvent>::raise( new StaticRouteChangeEvent(t) );
 		}
 
-		void StaticRouteChangeEvent::raiseEvent(CHANGE_TYPE t, const dtn::data::EID &n, const std::string p, size_t to)
+		void StaticRouteChangeEvent::raiseEvent(CHANGE_TYPE t, const dtn::data::EID &n, const std::string &p, const dtn::data::Number &to)
 		{
 			dtn::core::EventDispatcher<StaticRouteChangeEvent>::raise( new StaticRouteChangeEvent(t, n, p, to) );
 		}
 
-		void StaticRouteChangeEvent::raiseEvent(CHANGE_TYPE t, const dtn::data::EID &n, const dtn::data::EID &d, size_t to)
+		void StaticRouteChangeEvent::raiseEvent(CHANGE_TYPE t, const dtn::data::EID &n, const dtn::data::EID &d, const dtn::data::Number &to)
 		{
 			dtn::core::EventDispatcher<StaticRouteChangeEvent>::raise( new StaticRouteChangeEvent(t, n, d, to) );
 		}

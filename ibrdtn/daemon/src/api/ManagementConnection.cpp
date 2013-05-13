@@ -102,7 +102,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const throw () { return 0; };
+				virtual dtn::data::Size limit() const throw () { return 0; };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle&) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -353,7 +353,7 @@ namespace dtn
 									for (dtn::routing::AcknowledgementSet::const_iterator iter = (*ack_set).begin(); iter != (*ack_set).end(); ++iter)
 									{
 										const dtn::data::MetaBundle &ack = (*iter);
-										_stream << ack.toString() << " | " << ack.expiretime << std::endl;
+										_stream << ack.toString() << " | " << ack.expiretime.toString() << std::endl;
 									}
 									_stream << std::endl;
 								} else {

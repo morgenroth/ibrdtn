@@ -47,14 +47,14 @@ namespace dtn
 			class RetransmissionData : public dtn::data::BundleID
 			{
 			public:
-				RetransmissionData(const dtn::data::BundleID &id, dtn::data::EID destination, size_t retry = 2);
+				RetransmissionData(const dtn::data::BundleID &id, const dtn::data::EID &destination, const dtn::data::Size retry = 2);
 				virtual ~RetransmissionData();
 
 
 				const dtn::data::EID destination;
 
-				size_t getTimestamp() const;
-				size_t getCount() const;
+				const dtn::data::Timestamp& getTimestamp() const;
+				dtn::data::Size getCount() const;
 
 				RetransmissionData& operator++();
 				RetransmissionData& operator++(int);
@@ -63,9 +63,9 @@ namespace dtn
 				bool operator==(const RetransmissionData &obj);
 
 			private:
-				size_t _timestamp;
-				size_t _count;
-				const size_t retry;
+				dtn::data::Timestamp _timestamp;
+				dtn::data::Size _count;
+				const dtn::data::Size retry;
 			};
 
 			ibrcommon::Mutex _mutex;

@@ -100,7 +100,7 @@ namespace dtn
 				// stop the receiver
 				_receiver.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(20) << "ThreadException in Client destructor: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("Client", 20) << "ThreadException in Client destructor: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 			
 			// Close the stream. This releases all reading or writing threads.
@@ -117,13 +117,13 @@ namespace dtn
 			if (_app.length() > 0) localeid = EID("api:" + _app);
 
 			// connection flags
-			char flags = 0;
+			dtn::data::Bitset<dtn::streams::StreamContactHeader::HEADER_BITS> flags;
 
 			// request acknowledgements
-			flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+			flags.setBit(dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS, true);
 
 			// set comm. mode
-			if (_mode == MODE_SENDONLY) flags |= HANDSHAKE_SENDONLY;
+			if (_mode == MODE_SENDONLY) flags.setBit(dtn::streams::StreamContactHeader::HANDSHAKE_SENDONLY, true);
 
 			// receive API banner
 			std::string buffer;
@@ -149,7 +149,7 @@ namespace dtn
 				// run the receiver
 				_receiver.start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start Client::Receiver\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client", error) << "failed to start Client::Receiver\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -178,7 +178,7 @@ namespace dtn
 			}
 		}
 
-		void Client::eventBundleAck(size_t ack) throw ()
+		void Client::eventBundleAck(const dtn::data::Length &ack) throw ()
 		{
 			lastack = ack;
 		}
@@ -206,7 +206,7 @@ namespace dtn
 			flush();
 		}
 
-		dtn::data::Bundle Client::getBundle(size_t timeout) throw (ConnectionException)
+		dtn::data::Bundle Client::getBundle(const dtn::data::Timeout timeout) throw (ConnectionException)
 		{
 			try {
 				return _inqueue.getnpop(true, timeout * 1000);

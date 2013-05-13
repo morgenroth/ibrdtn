@@ -28,7 +28,7 @@ namespace dtn
 {
 	namespace streams
 	{
-		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream, const size_t buffer_size)
+		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream, const dtn::data::Length buffer_size)
 			: _buffer_size(buffer_size), _statebits(STREAM_SOB), _conn(conn), in_buf_(buffer_size), out_buf_(buffer_size), _stream(stream),
 			  _recv_size(0), _underflow_data_remain(0), _underflow_state(IDLE), _idle_timer(*this, 0)
 		{
@@ -62,51 +62,51 @@ namespace dtn
 
 		void StreamConnection::StreamBuffer::__error() const
 		{
-			IBRCOMMON_LOGGER_DEBUG(80) << "StreamBuffer Debugging" << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "---------------------------------------" << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "Buffer size: " << _buffer_size << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "State bits: " << _statebits << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "Recv size: " << _recv_size << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "Segments: " << _segments.size() << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "Reject segments: " << _rejected_segments.size() << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "Underflow remaining: " << _underflow_data_remain << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "Underflow state: " << _underflow_state << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "---------------------------------------" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "StreamBuffer Debugging" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "---------------------------------------" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "Buffer size: " << _buffer_size << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "State bits: " << _statebits << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "Recv size: " << _recv_size.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "Segments: " << _segments.size() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "Reject segments: " << _rejected_segments.size() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "Underflow remaining: " << _underflow_data_remain << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "Underflow state: " << _underflow_state << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "---------------------------------------" << IBRCOMMON_LOGGER_ENDL;
 
 			if (_statebits & STREAM_FAILED)
 			{
-				IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: STREAM_FAILED is set" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "stream went bad: STREAM_FAILED is set" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (_statebits & STREAM_BAD)
 			{
-				IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: STREAM_BAD is set" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "stream went bad: STREAM_BAD is set" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (_statebits & STREAM_EOF)
 			{
-				IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: STREAM_EOF is set" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "stream went bad: STREAM_EOF is set" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (_statebits & STREAM_SHUTDOWN)
 			{
-				IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: STREAM_SHUTDOWN is set" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "stream went bad: STREAM_SHUTDOWN is set" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (_statebits & STREAM_CLOSED)
 			{
-				IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: STREAM_CLOSED is set" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "stream went bad: STREAM_CLOSED is set" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (!_stream.good())
 			{
-				IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: good() returned false" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 80) << "stream went bad: good() returned false" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		bool StreamConnection::StreamBuffer::__good() const
 		{
-			int badbits = STREAM_FAILED + STREAM_BAD + STREAM_EOF + STREAM_SHUTDOWN + STREAM_CLOSED;
+			int badbits = STREAM_FAILED | STREAM_BAD | STREAM_EOF | STREAM_SHUTDOWN | STREAM_CLOSED;
 			return !(badbits & _statebits);
 		}
 
@@ -135,8 +135,8 @@ namespace dtn
 				_stream >> peer;
 
 				// enable/disable ACK/NACK support
-				if (peer._flags & StreamContactHeader::REQUEST_ACKNOWLEDGMENTS) set(STREAM_ACK_SUPPORT);
-				if (peer._flags & StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS) set(STREAM_NACK_SUPPORT);
+				if (peer._flags.getBit(StreamContactHeader::REQUEST_ACKNOWLEDGMENTS)) set(STREAM_ACK_SUPPORT);
+				if (peer._flags.getBit(StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS)) set(STREAM_NACK_SUPPORT);
 
 				// set the incoming timer if set (> 0)
 				if (peer._keepalive > 0)
@@ -191,7 +191,7 @@ namespace dtn
 				try {
 					ibrcommon::MutexTryLock l(_sendlock);
 					_stream << StreamDataSegment() << std::flush;
-					IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE sent" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 15) << "KEEPALIVE sent" << IBRCOMMON_LOGGER_ENDL;
 				} catch (const ibrcommon::MutexException&) {
 					// could not grab the lock - another process is sending something
 					// then we do nothing since a data frame do the same as a keepalive frame.
@@ -227,14 +227,14 @@ namespace dtn
 		void StreamConnection::StreamBuffer::wait()
 		{
 			// TODO: get max time to wait out of the timeout values
-			size_t timeout = 0;
+			dtn::data::Timeout timeout = 0;
 
 			try {
-				IBRCOMMON_LOGGER_DEBUG(15) << "waitCompleted(): wait for completion of transmission, " << _segments.size() << " ACKs left" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 15) << "waitCompleted(): wait for completion of transmission, " << _segments.size() << " ACKs left" << IBRCOMMON_LOGGER_ENDL;
 				_segments.wait(ibrcommon::Queue<StreamDataSegment>::QUEUE_EMPTY, timeout);
-				IBRCOMMON_LOGGER_DEBUG(15) << "waitCompleted(): transfer completed" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 15) << "waitCompleted(): transfer completed" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::QueueUnblockedException&) {
-				IBRCOMMON_LOGGER_DEBUG(15) << "waitCompleted(): transfer aborted (timeout)" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 15) << "waitCompleted(): transfer aborted (timeout)" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -243,7 +243,7 @@ namespace dtn
 		// be written to (in this case, the streambuf object that this is controlling).
 		std::char_traits<char>::int_type StreamConnection::StreamBuffer::overflow(std::char_traits<char>::int_type c)
 		{
-			IBRCOMMON_LOGGER_DEBUG(90) << "StreamBuffer::overflow() called" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 90) << "overflow() called" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				char *ibegin = &out_buf_[0];
@@ -300,7 +300,7 @@ namespace dtn
 
 					// write the segment to the stream
 					_stream << seg;
-					_stream.write(&out_buf_[0], seg._value);
+					_stream.write(&out_buf_[0], seg._value.get<size_t>());
 				}
 
 				return traits_type::not_eof(c);
@@ -308,21 +308,21 @@ namespace dtn
 				// set failed bit
 				set(STREAM_FAILED);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "StreamClosedException in overflow()" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 10) << "StreamClosedException in overflow()" << IBRCOMMON_LOGGER_ENDL;
 
 				throw;
 			} catch (const StreamErrorException&) {
 				// set failed bit
 				set(STREAM_FAILED);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in overflow()" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 10) << "StreamErrorException in overflow()" << IBRCOMMON_LOGGER_ENDL;
 
 				throw;
 			} catch (const ios_base::failure&) {
 				// set failed bit
 				set(STREAM_FAILED);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "ios_base::failure in overflow()" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 10) << "ios_base::failure in overflow()" << IBRCOMMON_LOGGER_ENDL;
 
 				throw;
 			}
@@ -352,7 +352,7 @@ namespace dtn
 			return ret;
 		}
 
-		void StreamConnection::StreamBuffer::skipData(size_t &size)
+		void StreamConnection::StreamBuffer::skipData(dtn::data::Length &size)
 		{
 			// a temporary buffer
 			std::vector<char> tmpbuf(_buffer_size);
@@ -361,11 +361,11 @@ namespace dtn
 				//  and read until the next segment
 				while (size > 0 && _stream.good())
 				{
-					size_t readsize = _buffer_size;
+					dtn::data::Length readsize = _buffer_size;
 					if (size < _buffer_size) readsize = size;
 
 					// to reject a bundle read all remaining data of this segment
-					_stream.read(&tmpbuf[0], readsize);
+					_stream.read(&tmpbuf[0], (std::streamsize)readsize);
 
 					// reset idle timeout
 					_idle_timer.reset();
@@ -382,7 +382,7 @@ namespace dtn
 		// Fill the input buffer.  This reads out of the streambuf.
 		std::char_traits<char>::int_type StreamConnection::StreamBuffer::underflow()
 		{
-			IBRCOMMON_LOGGER_DEBUG(90) << "StreamBuffer::underflow() called" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 90) << "StreamBuffer::underflow() called" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				if (_underflow_state == DATA_TRANSFER)
@@ -447,7 +447,7 @@ namespace dtn
 					{
 						case StreamDataSegment::MSG_DATA_SEGMENT:
 						{
-							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_DATA_SEGMENT received, size: " << seg._value << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 70) << "MSG_DATA_SEGMENT received, size: " << seg._value.toString() << IBRCOMMON_LOGGER_ENDL;
 
 							if (seg._flags & StreamDataSegment::MSG_MARK_BEGINN)
 							{
@@ -460,7 +460,7 @@ namespace dtn
 							}
 
 							// set the new data length
-							_underflow_data_remain = seg._value;
+							_underflow_data_remain = seg._value.get<Length>();
 
 							if (get(STREAM_REJECT))
 							{
@@ -488,7 +488,7 @@ namespace dtn
 
 						case StreamDataSegment::MSG_ACK_SEGMENT:
 						{
-							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_ACK_SEGMENT received, size: " << seg._value << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 70) << "MSG_ACK_SEGMENT received, size: " << seg._value.toString() << IBRCOMMON_LOGGER_ENDL;
 
 							// remove the segment in the queue
 							if (get(STREAM_ACK_SUPPORT))
@@ -496,7 +496,7 @@ namespace dtn
 								ibrcommon::Queue<StreamDataSegment>::Locked q = _segments.exclusive();
 								if (q.empty())
 								{
-									IBRCOMMON_LOGGER(error) << "got an unexpected ACK with size of " << seg._value << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER_TAG("StreamBuffer", error) << "got an unexpected ACK with size of " << seg._value.toString() << IBRCOMMON_LOGGER_ENDL;
 								}
 								else
 								{
@@ -507,9 +507,9 @@ namespace dtn
 										_conn.eventBundleForwarded();
 									}
 
-									IBRCOMMON_LOGGER_DEBUG(60) << q.size() << " elements to ACK" << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 60) << q.size() << " elements to ACK" << IBRCOMMON_LOGGER_ENDL;
 
-									_conn.eventBundleAck(seg._value);
+									_conn.eventBundleAck(seg._value.get<Length>());
 
 									q.pop();
 								}
@@ -518,12 +518,12 @@ namespace dtn
 						}
 
 						case StreamDataSegment::MSG_KEEPALIVE:
-							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_KEEPALIVE received, size: " << seg._value << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 70) << "MSG_KEEPALIVE received, size: " << seg._value.toString() << IBRCOMMON_LOGGER_ENDL;
 							break;
 
 						case StreamDataSegment::MSG_REFUSE_BUNDLE:
 						{
-							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_REFUSE_BUNDLE received, flags: " << seg._flags << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 70) << "MSG_REFUSE_BUNDLE received, flags: " << (int)seg._flags << IBRCOMMON_LOGGER_ENDL;
 
 							// TODO: Test bundle rejection!
 
@@ -536,14 +536,14 @@ namespace dtn
 									_rejected_segments.pop();
 
 									// we received a NACK
-									IBRCOMMON_LOGGER_DEBUG(30) << "NACK received, still " << _rejected_segments.size() << " segments to NACK" << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 30) << "NACK received, still " << _rejected_segments.size() << " segments to NACK" << IBRCOMMON_LOGGER_ENDL;
 								}
 								else try
 								{
 									StreamDataSegment qs = _segments.getnpop();
 
 									// we received a NACK
-									IBRCOMMON_LOGGER_DEBUG(20) << "NACK received!" << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 20) << "NACK received!" << IBRCOMMON_LOGGER_ENDL;
 
 									// get all segment ACKs in the queue for this transmission
 									while (!_segments.empty())
@@ -563,7 +563,7 @@ namespace dtn
 									_conn.eventBundleRefused();
 
 									// we received a NACK
-									IBRCOMMON_LOGGER_DEBUG(30) << _rejected_segments.size() << " segments to NACK" << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 30) << _rejected_segments.size() << " segments to NACK" << IBRCOMMON_LOGGER_ENDL;
 
 									// the queue is empty, then skip the current transfer
 									if (_segments.empty())
@@ -571,17 +571,17 @@ namespace dtn
 										set(STREAM_SKIP);
 
 										// we received a NACK
-										IBRCOMMON_LOGGER_DEBUG(25) << "skip the current transfer" << IBRCOMMON_LOGGER_ENDL;
+										IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 25) << "skip the current transfer" << IBRCOMMON_LOGGER_ENDL;
 									}
 
 								} catch (const ibrcommon::QueueUnblockedException&) {
-									IBRCOMMON_LOGGER(error) << "got an unexpected NACK" << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER_TAG("StreamBuffer", error) << "got an unexpected NACK" << IBRCOMMON_LOGGER_ENDL;
 								}
 
 							}
 							else
 							{
-								IBRCOMMON_LOGGER(error) << "got an unexpected NACK" << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG("StreamBuffer", error) << "got an unexpected NACK" << IBRCOMMON_LOGGER_ENDL;
 							}
 
 							break;
@@ -589,21 +589,21 @@ namespace dtn
 
 						case StreamDataSegment::MSG_SHUTDOWN:
 						{
-							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_SHUTDOWN received" << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 70) << "MSG_SHUTDOWN received" << IBRCOMMON_LOGGER_ENDL;
 							throw StreamShutdownException();
 						}
 					}
 				}
 
 				// currently transferring data
-				size_t readsize = _buffer_size;
+				dtn::data::Length readsize = _buffer_size;
 				if (_underflow_data_remain < _buffer_size) readsize = _underflow_data_remain;
 
 				try {
 					if (!_stream.good()) throw StreamErrorException("stream went bad");
 
 					// here receive the data
-					_stream.read(&in_buf_[0], readsize);
+					_stream.read(&in_buf_[0], (std::streamsize)readsize);
 
 					// reset idle timeout
 					_idle_timer.reset();
@@ -625,20 +625,20 @@ namespace dtn
 				// set failed bit
 				set(STREAM_FAILED);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "StreamClosedException in underflow()" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 10) << "StreamClosedException in underflow()" << IBRCOMMON_LOGGER_ENDL;
 
 			} catch (const StreamErrorException &ex) {
 				// set failed bit
 				set(STREAM_FAILED);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in underflow(): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 10) << "StreamErrorException in underflow(): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 				throw;
 			} catch (const StreamShutdownException&) {
 				// set failed bit
 				set(STREAM_FAILED);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "StreamShutdownException in underflow()" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("StreamBuffer", 10) << "StreamShutdownException in underflow()" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			return traits_type::eof();
@@ -653,7 +653,7 @@ namespace dtn
 			throw ibrcommon::Timer::StopTimerException();
 		}
 
-		void StreamConnection::StreamBuffer::enableIdleTimeout(size_t seconds)
+		void StreamConnection::StreamBuffer::enableIdleTimeout(const dtn::data::Timeout &seconds)
 		{
 			_idle_timer.set(seconds);
 			_idle_timer.start();

@@ -33,7 +33,7 @@ namespace dtn
 	namespace streams
 	{
 		StreamContactHeader::StreamContactHeader()
-		 : _flags(1), _keepalive(0)
+		 : _flags(REQUEST_ACKNOWLEDGMENTS), _keepalive(0)
 		{
 		}
 
@@ -62,7 +62,7 @@ namespace dtn
 		std::ostream &operator<<(std::ostream &stream, const StreamContactHeader &h)
 		{
 			//BundleStreamWriter writer(stream);
-			stream << "dtn!" << TCPCL_VERSION << h._flags;
+			stream << "dtn!" << TCPCL_VERSION << h._flags.get<char>();
 
 			// convert to network byte order
 			uint16_t ka = htons(h._keepalive);
@@ -95,7 +95,9 @@ namespace dtn
 			}
 
 			// flags
-			stream.get(h._flags);
+			char tmp;
+			stream.get(tmp);
+			h._flags = tmp;
 
 			uint16_t ka = 0;
 			stream.read((char*)&ka, 2);

@@ -34,7 +34,7 @@ CONF_PARAMS="${CONF_PARAMS} --with-tls"
 CONF_PARAMS="${CONF_PARAMS} --with-dht"
 
 # configures the project to be verbose and pedantic to coding errors and mistakes.
-DEVFLAGS="-Wall -Wextra -pedantic -D__DEVELOPMENT_ASSERTIONS__"
+DEVFLAGS="-Wall -Wextra -pedantic -Wconversion -D__DEVELOPMENT_ASSERTIONS__"
 
 if [ -e .coverage ]; then
 	# enable debugging symbols and code coverage testing

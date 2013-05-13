@@ -29,9 +29,7 @@
 #include "net/TCPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
 #include "net/ConnectionEvent.h"
-#include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
-#include "routing/RequeueBundleEvent.h"
 
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/TimeMeasurement.h>
@@ -96,9 +94,9 @@ namespace dtn
 			}
 		}
 
-		void TCPConnection::queue(const dtn::data::BundleID &bundle)
+		void TCPConnection::queue(const dtn::net::BundleTransfer &job)
 		{
-			_sender.push(bundle);
+			_sender.push(job);
 		}
 
 		const dtn::streams::StreamContactHeader& TCPConnection::getHeader() const
@@ -141,8 +139,8 @@ namespace dtn
 		{
 #ifdef WITH_TLS
 			/* if both nodes support TLS, activate it */
-			if ((_peer._flags & dtn::streams::StreamContactHeader::REQUEST_TLS)
-					&& (_flags & dtn::streams::StreamContactHeader::REQUEST_TLS))
+			if (_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_TLS)
+					&& _flags.getBit(dtn::streams::StreamContactHeader::REQUEST_TLS))
 			{
 				try{
 					ibrcommon::TLSStream &tls = dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream);
@@ -241,10 +239,10 @@ namespace dtn
 		void TCPConnection::eventBundleRefused() throw ()
 		{
 			try {
-				const dtn::data::BundleID bundle = _sentqueue.getnpop();
+				dtn::net::BundleTransfer job = _sentqueue.getnpop();
 
-				// requeue the bundle
-				TransferAbortedEvent::raise(EID(_node.getEID()), bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
+				// abort the transmission
+				job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED);
 
 				// set ACK to zero
 				_lastack = 0;
@@ -258,13 +256,10 @@ namespace dtn
 		void TCPConnection::eventBundleForwarded() throw ()
 		{
 			try {
-				const dtn::data::MetaBundle bundle = _sentqueue.getnpop();
+				dtn::net::BundleTransfer job = _sentqueue.getnpop();
 
-				// signal completion of the transfer
-				TransferCompletedEvent::raise(_node.getEID(), bundle);
-
-				// raise bundle event
-				dtn::core::BundleEvent::raise(bundle, BUNDLE_FORWARDED);
+				// mark job as complete
+				job.complete();
 
 				// set ACK to zero
 				_lastack = 0;
@@ -274,7 +269,7 @@ namespace dtn
 			}
 		}
 
-		void TCPConnection::eventBundleAck(size_t ack) throw ()
+		void TCPConnection::eventBundleAck(const dtn::data::Length &ack) throw ()
 		{
 			_lastack = ack;
 		}
@@ -364,7 +359,7 @@ namespace dtn
 #endif
 
 			// create a new stream connection
-			int chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
+			dtn::data::Length chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
 
 			ibrcommon::RWLock l(_protocol_stream_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
 			if (_protocol_stream != NULL) delete _protocol_stream;
@@ -477,7 +472,7 @@ namespace dtn
 						if (!stream.good()) throw ibrcommon::IOException("stream went bad");
 
 						// enable/disable fragmentation support according to the contact header.
-						deserializer.setFragmentationSupport(_peer._flags & dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION);
+						deserializer.setFragmentationSupport(_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION));
 
 						// read the bundle (or the fragment if fragmentation is enabled)
 						deserializer >> bundle;
@@ -579,7 +574,7 @@ namespace dtn
 		void TCPConnection::Sender::__cancellation() throw ()
 		{
 			// cancel the main thread in here
-			ibrcommon::Queue<dtn::data::BundleID>::abort();
+			ibrcommon::Queue<dtn::net::BundleTransfer>::abort();
 		}
 
 		void TCPConnection::Sender::run() throw ()
@@ -595,11 +590,11 @@ namespace dtn
 
 				while (stream.good())
 				{
-					dtn::data::BundleID transfer = ibrcommon::Queue<dtn::data::BundleID>::getnpop(true);
+					dtn::net::BundleTransfer transfer = ibrcommon::Queue<dtn::net::BundleTransfer>::getnpop(true);
 
 					try {
 						// read the bundle out of the storage
-						dtn::data::Bundle bundle = storage.get(transfer);
+						dtn::data::Bundle bundle = storage.get(transfer.getBundle());
 
 #ifdef WITH_BUNDLE_SECURITY
 						const dtn::daemon::Configuration::Security::Level seclevel =
@@ -628,7 +623,7 @@ namespace dtn
 						}
 
 						// put the bundle into the sentqueue
-						_connection._sentqueue.push(bundle);
+						_connection._sentqueue.push(transfer);
 
 						// start the measurement
 						m.start();
@@ -655,7 +650,10 @@ namespace dtn
 							m.stop();
 
 							// get throughput
-							double kbytes_per_second = (serializer.getLength(bundle) / m.getSeconds()) / 1024;
+							double duration = m.getMicroseconds();
+							double data_len = static_cast<double>(serializer.getLength(bundle));
+
+							double kbytes_per_second = (data_len / 1024.0) / (duration / 1000000.0);
 
 							// print out throughput
 							IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 5) << "transfer finished after " << m << " with "
@@ -670,7 +668,7 @@ namespace dtn
 						}
 					} catch (const dtn::storage::NoBundleFoundException&) {
 						// send transfer aborted event
-						TransferAbortedEvent::raise(_connection._node.getEID(), transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+						transfer.abort(dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 					}
 
 					// idle a little bit
@@ -688,38 +686,17 @@ namespace dtn
 
 		void TCPConnection::clearQueue()
 		{
-			// requeue all bundles still queued
-			try {
-				while (true)
-				{
-					const dtn::data::BundleID id = _sender.getnpop();
-
-					// raise transfer abort event for all bundles without an ACK
-					dtn::routing::RequeueBundleEvent::raise(_node.getEID(), id);
-				}
-			} catch (const ibrcommon::QueueUnblockedException&) {
-				// queue emtpy
-			}
-
 			// requeue all bundles still in transit
 			try {
 				while (true)
 				{
-					const dtn::data::BundleID id = _sentqueue.getnpop();
+					const dtn::net::BundleTransfer job = _sentqueue.getnpop();
 
-					if ((_lastack > 0) && (_peer._flags & dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION))
+					if ((_lastack > 0) && (_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION)))
 					{
 						// some data are already acknowledged
 						// store this information in the fragment manager
-						dtn::core::FragmentManager::setOffset(_peer.getEID(), id, _lastack);
-
-						// raise transfer abort event for all bundles without an ACK
-						dtn::routing::RequeueBundleEvent::raise(_node.getEID(), id);
-					}
-					else
-					{
-						// raise transfer abort event for all bundles without an ACK
-						dtn::routing::RequeueBundleEvent::raise(_node.getEID(), id);
+						dtn::core::FragmentManager::setOffset(_peer.getEID(), job.getBundle(), _lastack);
 					}
 
 					// set last ack to zero
@@ -733,7 +710,7 @@ namespace dtn
 #ifdef WITH_TLS
 		void dtn::net::TCPConnection::enableTLS()
 		{
-			_flags |= dtn::streams::StreamContactHeader::REQUEST_TLS;
+			_flags.setBit(dtn::streams::StreamContactHeader::REQUEST_TLS, true);
 		}
 #endif
 

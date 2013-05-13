@@ -115,24 +115,24 @@ namespace ibrcommon
 
 	void Base64::Group::b64_0(int val)
 	{
-		_data[0] = ((val & _0011_1111) << 2) | (_0000_0011 & _data[0]);
+		_data[0] = static_cast<uint8_t>( ((val & _0011_1111) << 2) | (_0000_0011 & _data[0]) );
 	}
 
 	void Base64::Group::b64_1(int val)
 	{
-		_data[0] = ((val & _0011_0000) >> 4) | (_1111_1100 & _data[0]);
-		_data[1] = ((val & _0000_1111) << 4) | (_0000_1111 & _data[1]);
+		_data[0] = static_cast<uint8_t>( ((val & _0011_0000) >> 4) | (_1111_1100 & _data[0]) );
+		_data[1] = static_cast<uint8_t>( ((val & _0000_1111) << 4) | (_0000_1111 & _data[1]) );
 	}
 
 	void Base64::Group::b64_2(int val)
 	{
-		_data[1] = ((val & _0011_1100) >> 2) | (_1111_0000 & _data[1]);
-		_data[2] = ((val & _0000_0011) << 6) | (_0011_1111 & _data[2]);
+		_data[1] = static_cast<uint8_t>( ((val & _0011_1100) >> 2) | (_1111_0000 & _data[1]) );
+		_data[2] = static_cast<uint8_t>( ((val & _0000_0011) << 6) | (_0011_1111 & _data[2]) );
 	}
 
 	void Base64::Group::b64_3(int val)
 	{
-		_data[2] = (val & _0011_1111) | (_1100_0000 & _data[2]);
+		_data[2] = static_cast<uint8_t>( (val & _0011_1111) | (_1100_0000 & _data[2]) );
 	}
 
 	int Base64::getCharType(int _C)

@@ -434,7 +434,7 @@ namespace dtn
 
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-				size_t expire_time = time.getTimestamp();
+				dtn::data::Timestamp expire_time = time.getTimestamp();
 				if (expire_time <= 60) expire_time = 0;
 				else expire_time -= 60;
 

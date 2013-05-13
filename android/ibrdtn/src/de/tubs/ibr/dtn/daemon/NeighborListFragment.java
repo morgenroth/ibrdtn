@@ -42,54 +42,74 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.Node;
+import de.tubs.ibr.dtn.service.DaemonService;
 
 public class NeighborListFragment extends ListFragment {
 
     private static final String TAG = "NeighborListFragment";
+    
+    private Object serviceLock = new Object();
     private DTNService service = null;
     private NeighborListAdapter mAdapter = null;
 
     private ServiceConnection mConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            NeighborListFragment.this.service = DTNService.Stub.asInterface(service);
-            if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
+        public void onServiceConnected(ComponentName name, IBinder s) {
+        	synchronized(serviceLock) {
+        		service = DTNService.Stub.asInterface(s);
+        	}
+        	if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
 
-            IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.NEIGHBOR);
-            filter.addCategory(Intent.CATEGORY_DEFAULT);
-            getActivity().registerReceiver(_receiver, filter);
             refreshView();
         }
 
         public void onServiceDisconnected(ComponentName name) {
+            synchronized(serviceLock) {
+            	service = null;
+            }
             if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service disconnected");
-            service = null;
         }
     };
 
-    private BroadcastReceiver _receiver = new BroadcastReceiver() {
+    @Override
+	public void onListItemClick(ListView l, View v, int position, long id) {
+		NeighborListAdapter nla = (NeighborListAdapter)this.getListAdapter();
+		Node n = (Node)nla.getItem(position);
+		
+        // initiate connection via intent
+        final Intent intent = new Intent(getActivity(), DaemonService.class);
+        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_INITIATE_CONNECTION);
+        intent.putExtra("endpoint", n.endpoint.toString());
+        getActivity().startService(intent);
+    	
+    	// call super-method
+    	super.onListItemClick(l, v, position, id);
+	}
+
+	private BroadcastReceiver _receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.NEIGHBOR)) {
+            if (de.tubs.ibr.dtn.Intent.NEIGHBOR.equals(intent.getAction())) {
                 refreshView();
             }
         }
     };
 
     private void refreshView() {
-        if (NeighborListFragment.this.service != null) {
-            if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "refreshing");
-            (new LoadNeighborList()).execute();
-        }
+        if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "refreshing");
+        (new LoadNeighborList()).execute();
     }
 
     @Override
     public void onPause() {
-        // Detach our existing connection.
+        // unregister from intent receiver
         getActivity().unregisterReceiver(_receiver);
+        
+        // Detach our existing connection.
         getActivity().unbindService(mConnection);
         super.onPause();
     }
@@ -97,6 +117,10 @@ public class NeighborListFragment extends ListFragment {
     @Override
     public void onResume() {
         super.onResume();
+        
+        IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.NEIGHBOR);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        getActivity().registerReceiver(_receiver, filter);
 
         // Establish a connection with the service. We use an explicit
         // class name because we want a specific service implementation that
@@ -109,13 +133,14 @@ public class NeighborListFragment extends ListFragment {
     private class LoadNeighborList extends AsyncTask<String, Integer, List<Node>> {
         protected List<Node> doInBackground(String... data)
         {
-            try {
-                // query all neighbors
-                List<Node> neighbors = service.getNeighbors();
-                return neighbors;
-            } catch (RemoteException e) {
-                return null;
-            }
+        	synchronized(serviceLock) {
+	            try {
+	                // query all neighbors
+	            	return service.getNeighbors();
+	            } catch (RemoteException e) {
+	                return null;
+	            }
+        	}
         }
 
         protected void onPostExecute(List<Node> neighbors)

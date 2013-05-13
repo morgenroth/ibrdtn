@@ -49,7 +49,7 @@ stop() {
 	TIMEOUT=0;
 	
 	# check if the daemon is running
-	while [ -n "`ps ax | grep dtnd | grep -v grep`" ]; do
+	while [ -n "`ps | grep dtnd | grep -v grep`" ]; do
 		# check if the daemon is still running
 		if [ $TIMEOUT -ge 10 ]; then
 			/bin/echo " killing"

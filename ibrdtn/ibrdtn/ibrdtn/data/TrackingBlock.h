@@ -9,7 +9,7 @@
 #define TRACKINGBLOCK_H_
 
 #include <ibrdtn/data/Block.h>
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/DTNTime.h>
 #include <ibrdtn/data/ExtensionBlock.h>
 
@@ -33,12 +33,12 @@ namespace dtn
 			TrackingBlock();
 			virtual ~TrackingBlock();
 
-			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual Length getLength() const;
+			virtual std::ostream &serialize(std::ostream &stream, Length &length) const;
+			virtual std::istream &deserialize(std::istream &stream, const Length &length);
 
-			virtual std::ostream &serialize_strict(std::ostream &stream, size_t &length) const;
-			virtual size_t getLength_strict() const;
+			virtual std::ostream &serialize_strict(std::ostream &stream, Length &length) const;
+			virtual Length getLength_strict() const;
 
 			class TrackingEntry
 			{
@@ -56,14 +56,14 @@ namespace dtn
 				bool getFlag(Flags f) const;
 				void setFlag(Flags f, bool value);
 
-				uint64_t flags;
+				Bitset<Flags> flags;
 				dtn::data::EID endpoint;
 				dtn::data::DTNTime timestamp;
 
 				friend std::ostream& operator<<(std::ostream &stream, const TrackingEntry &entry);
 				friend std::istream& operator>>(std::istream &stream, TrackingEntry &entry);
 
-				size_t getLength() const;
+				Length getLength() const;
 			};
 
 			typedef std::list<TrackingEntry> tracking_list;

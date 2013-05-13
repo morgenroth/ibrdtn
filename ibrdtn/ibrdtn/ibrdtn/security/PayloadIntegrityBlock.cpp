@@ -54,7 +54,7 @@ namespace dtn
 		{
 		}
 
-		size_t PayloadIntegrityBlock::getSecurityResultSize() const
+		dtn::data::Length PayloadIntegrityBlock::getSecurityResultSize() const
 		{
 			if (result_size > 0)
 			{
@@ -170,7 +170,7 @@ namespace dtn
 			if ((result_size = EVP_PKEY_size(pkey)) > 0)
 			{
 				// sdnv length
-				result_size += dtn::data::SDNV(result_size).getLength();
+				result_size += dtn::data::Number(result_size).getLength();
 
 				// type
 				result_size++;
@@ -215,7 +215,7 @@ namespace dtn
 			bundle.erase(std::remove(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());
 		}
 
-		std::istream& PayloadIntegrityBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& PayloadIntegrityBlock::deserialize(std::istream &stream, const dtn::data::Length &length)
 		{
 			// deserialize the SecurityBlock
 			SecurityBlock::deserialize(stream, length);

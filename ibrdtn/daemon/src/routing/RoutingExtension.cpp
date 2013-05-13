@@ -50,7 +50,7 @@ namespace dtn
 		 * @param destination The EID of the other node.
 		 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
 		 */
-		void RoutingExtension::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id)
+		void RoutingExtension::transferTo(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta)
 		{
 			// lock the list of neighbors
 			ibrcommon::MutexLock l(_router->getNeighborDB());
@@ -59,22 +59,25 @@ namespace dtn
 			NeighborDatabase::NeighborEntry &entry = _router->getNeighborDB().get(destination);
 
 			// transfer bundle to the neighbor
-			transferTo(entry, id);
+			transferTo(entry, meta);
 		}
 
-		void RoutingExtension::transferTo(NeighborDatabase::NeighborEntry &entry, const dtn::data::BundleID &id)
+		void RoutingExtension::transferTo(NeighborDatabase::NeighborEntry &entry, const dtn::data::MetaBundle &meta)
 		{
 			// acquire the transfer of this bundle, could throw already in transit or no resource left exception
-			entry.acquireTransfer(id);
+			entry.acquireTransfer(meta);
 
 			try {
-				// transfer the bundle to the next hop
-				dtn::core::BundleCore::getInstance().transferTo(entry.eid, id);
+				// create a new bundle transfer object
+				dtn::net::BundleTransfer transfer(entry.eid, meta);
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle [" << id.toString() << "] queued for delivery to " << entry.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+				// transfer the bundle to the next hop
+				dtn::core::BundleCore::getInstance().transferTo(transfer);
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle " << meta.toString() << " queued for " << entry.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::core::P2PDialupException&) {
 				// release the transfer
-				entry.releaseTransfer(id);
+				entry.releaseTransfer(meta);
 
 				// and abort the query
 				throw NeighborDatabase::NeighborNotAvailableException();

@@ -33,7 +33,7 @@ namespace ibrcommon
 		// The size of the input and output buffers.
 		static const size_t BUFF_SIZE = 2048;
 
-		HMacStream(const unsigned char * const key, const size_t key_size);
+		HMacStream(const unsigned char * const key, const int key_size);
 		virtual ~HMacStream();
 
 	protected:
@@ -42,7 +42,7 @@ namespace ibrcommon
 
 	private:
 		const unsigned char * const key_;
-		const size_t key_size_;
+		const int key_size_;
 
 		HMAC_CTX ctx_;
 	};

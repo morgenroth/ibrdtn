@@ -53,31 +53,31 @@ namespace dtn
 			bundle.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 
 			// get the flags and set the status flag
-			report._status |= type;
+			report.status |= static_cast<char>(type);
 
 			// set the reason code
-			report._reasoncode |= reason;
+			report.reasoncode |= static_cast<char>(reason);
 
 			switch (type)
 			{
 				case StatusReportBlock::RECEIPT_OF_BUNDLE:
-					report._timeof_receipt.set();
+					report.timeof_receipt.set();
 				break;
 
 				case StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE:
-					report._timeof_custodyaccept.set();
+					report.timeof_custodyaccept.set();
 				break;
 
 				case StatusReportBlock::FORWARDING_OF_BUNDLE:
-					report._timeof_forwarding.set();
+					report.timeof_forwarding.set();
 				break;
 
 				case StatusReportBlock::DELIVERY_OF_BUNDLE:
-					report._timeof_delivery.set();
+					report.timeof_delivery.set();
 				break;
 
 				case StatusReportBlock::DELETION_OF_BUNDLE:
-					report._timeof_deletion.set();
+					report.timeof_deletion.set();
 				break;
 
 				default:
@@ -91,11 +91,11 @@ namespace dtn
 			bundle.destination = b.reportto;
 
 			// set bundle parameter
-			report._bundleid = b;
+			report.bundleid = b;
 
 			if (b.get(Bundle::FRAGMENT))
 			{
-				report._fragment_length = b.appdatalength;
+				report.fragment_length = b.appdatalength;
 				report._admfield |= 1;
 			}
 

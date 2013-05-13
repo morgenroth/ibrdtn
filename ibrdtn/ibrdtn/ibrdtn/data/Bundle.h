@@ -22,6 +22,7 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/PrimaryBlock.h"
@@ -75,8 +76,8 @@ namespace dtn
 			typedef block_list::iterator iterator;
 			typedef block_list::const_iterator const_iterator;
 
-			typedef ibrcommon::find_iterator<iterator, dtn::data::block_t> find_iterator;
-			typedef ibrcommon::find_iterator<const_iterator, dtn::data::block_t> const_find_iterator;
+			typedef ibrcommon::find_iterator<iterator, block_t> find_iterator;
+			typedef ibrcommon::find_iterator<const_iterator, block_t> const_find_iterator;
 
 			iterator begin();
 			iterator end();
@@ -86,8 +87,8 @@ namespace dtn
 			iterator find(block_t blocktype);
 			const_iterator find(block_t blocktype) const;
 
-			iterator find(const dtn::data::Block &block);
-			const_iterator find(const dtn::data::Block &block) const;
+			iterator find(const Block &block);
+			const_iterator find(const Block &block) const;
 
 			Bundle();
 			virtual ~Bundle();
@@ -119,20 +120,20 @@ namespace dtn
 			dtn::data::PayloadBlock& push_back(ibrcommon::BLOB::Reference &ref);
 			dtn::data::PayloadBlock& insert(iterator before, ibrcommon::BLOB::Reference &ref);
 
-			dtn::data::Block& push_front(dtn::data::ExtensionBlock::Factory &factory);
-			dtn::data::Block& push_back(dtn::data::ExtensionBlock::Factory &factory);
-			dtn::data::Block& insert(iterator before, dtn::data::ExtensionBlock::Factory &factory);
+			dtn::data::Block& push_front(ExtensionBlock::Factory &factory);
+			dtn::data::Block& push_back(ExtensionBlock::Factory &factory);
+			dtn::data::Block& insert(iterator before, ExtensionBlock::Factory &factory);
 
 			void erase(iterator it);
 			void erase(iterator begin, iterator end);
 
-			void remove(const dtn::data::Block &block);
+			void remove(const Block &block);
 
 			void clear();
 
 			std::string toString() const;
 
-			size_t size() const;
+			Size size() const;
 
 			bool allEIDsInCBHE() const;
 

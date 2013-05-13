@@ -153,11 +153,22 @@ public class DaemonProcess {
         mHandler.onStateChanged(_state);
     }
     
+    public synchronized void initiateConnection(String endpoint) {
+    	if (getState().equals(DaemonState.ONLINE)) {
+    		mDaemon.initiateConnection(endpoint);
+    	}
+    }
+    
     public synchronized void initialize() {
-        // listen to preference changes
+    	// lower the thread priority
+    	android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+    	
+    	// get daemon preferences
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.mContext);
-        preferences.registerOnSharedPreferenceChangeListener(_pref_listener);
         
+        // listen to preference changes
+        preferences.registerOnSharedPreferenceChangeListener(_pref_listener);
+
         // enable debug based on prefs
         int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
         int debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
@@ -262,8 +273,10 @@ public class DaemonProcess {
 	}
 	
     public synchronized void destroy() {
-        // listen to preference changes
+        // get daemon preferences
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.mContext);
+        
+        // unlisten to preference changes
         preferences.unregisterOnSharedPreferenceChangeListener(_pref_listener);
         
         // stop the running daemon
@@ -292,18 +305,6 @@ public class DaemonProcess {
                     intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
                     DaemonProcess.this.mContext.startService(intent);
                 }
-            }
-            else if (key.equals("cloud_uplink"))
-            {
-            	synchronized(DaemonProcess.this) {
-	                if (prefs.getBoolean(key, false)) {
-	                    mDaemon.addConnection(__CLOUD_EID__.toString(),
-	                            __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-	                } else {
-	                    mDaemon.removeConnection(__CLOUD_EID__.toString(),
-	                            __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
-	                }
-            	}
             }
             else if (key.equals("routing"))
             {
@@ -346,21 +347,12 @@ public class DaemonProcess {
                 intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
             }
-            else if (key.startsWith("constrains_lifetime"))
+            else if (key.startsWith("checkFragmentation"))
             {
-                onConfigurationChanged();
-            }
-            else if (key.startsWith("constrains_timestamp"))
-            {
-                onConfigurationChanged();
-            }
-            else if (key.startsWith("security_mode"))
-            {
-                onConfigurationChanged();
-            }
-            else if (key.startsWith("security_bab_key"))
-            {
-                onConfigurationChanged();
+                final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
+                intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
+                intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_NETWORK.swigValue() - 1);
+                DaemonProcess.this.mContext.startService(intent);
             }
             else if (key.startsWith("timesync_mode"))
             {
@@ -369,8 +361,23 @@ public class DaemonProcess {
                 intent.putExtra("runlevel", DaemonRunLevel.RUNLEVEL_API.swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
             }
+            else if (key.equals("cloud_uplink"))
+            {
+                Log.d(TAG, key + " == " + String.valueOf( prefs.getBoolean(key, false) ));
+                synchronized(DaemonProcess.this) {
+                    if (prefs.getBoolean(key, false)) {
+                        mDaemon.addConnection(__CLOUD_EID__.toString(),
+                                __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+                    } else {
+                        mDaemon.removeConnection(__CLOUD_EID__.toString(),
+                                __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
+                    }
+                }
+            }
             else if (key.startsWith("log_options"))
             {
+                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                
                 int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
                 int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
 
@@ -378,15 +385,17 @@ public class DaemonProcess {
                 if (logLevel < 3) debugVerbosity = 0;
 
                 synchronized(DaemonProcess.this) {
-	                // set logging options
-	                mDaemon.setLogging("Core", logLevel);
+                    // set logging options
+                    mDaemon.setLogging("Core", logLevel);
 
-	                // set debug verbosity
-	                mDaemon.setDebug( debugVerbosity );
+                    // set debug verbosity
+                    mDaemon.setDebug( debugVerbosity );
                 }
             }
             else if (key.startsWith("log_debug_verbosity"))
             {
+                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                
                 int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
                 int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
                 
@@ -394,12 +403,14 @@ public class DaemonProcess {
                 if (logLevel < 3) debugVerbosity = 0;
                 
                 synchronized(DaemonProcess.this) {
-	                // set debug verbosity
-	                mDaemon.setDebug( debugVerbosity );
+                    // set debug verbosity
+                    mDaemon.setDebug( debugVerbosity );
                 }
             }
             else if (key.startsWith("log_enable_file"))
             {
+                Log.d(TAG, key + " == " + prefs.getBoolean(key, false));
+                
                 // set logfile options
                 String logFilePath = null;
                 
@@ -416,16 +427,19 @@ public class DaemonProcess {
                 }
 
                 synchronized(DaemonProcess.this) {
-	                if (logFilePath != null) {
-	                    int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
-	                    
-	                    // enable file logging
-	                    mDaemon.setLogFile(logFilePath, logLevel);
-	                } else {
-	                    // disable file logging
-	                    mDaemon.setLogFile("", 0);
-	                }
+                    if (logFilePath != null) {
+                        int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
+                        
+                        // enable file logging
+                        mDaemon.setLogFile(logFilePath, logLevel);
+                    } else {
+                        // disable file logging
+                        mDaemon.setLogFile("", 0);
+                    }
                 }
+            } else {
+                // default action
+                onConfigurationChanged();
             }
         }
     };
@@ -634,6 +648,10 @@ public class DaemonProcess {
 
 			if (preferences.getBoolean("checkIdleTimeout", false)) {
 				p.println("tcp_idle_timeout = 30");
+			}
+			
+			if (preferences.getBoolean("checkFragmentation", true)) {
+			    p.println("fragmentation = yes");
 			}
 
 			// set multicast address for discovery

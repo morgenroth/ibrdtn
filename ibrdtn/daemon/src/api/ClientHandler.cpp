@@ -193,7 +193,7 @@ namespace dtn
 
 		void ClientHandler::finally() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "ApiConnection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ClientHandler", 60) << "ApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 
 			// remove the client from the list in ApiServer
 			_srv.connectionDown(this);
@@ -215,7 +215,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const throw () { return 0; };
+				virtual dtn::data::Size limit() const throw () { return 0; };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle&) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -233,7 +233,7 @@ namespace dtn
 						if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 						ibrcommon::MutexLock l(_write_lock);
-						_endpoint = dtn::core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + cmd[2];
+						_endpoint = dtn::core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + cmd[2] );
 
 						// error checking
 						if (_endpoint == dtn::data::EID())

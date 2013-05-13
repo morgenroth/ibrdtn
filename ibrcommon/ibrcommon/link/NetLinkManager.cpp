@@ -131,7 +131,7 @@ typedef nl_object nl_object_header;
 					nl_addr2str( naddr, addr_buf, sizeof( addr_buf ));
 					std::string addrname(addr_buf);
 
-					addr = vaddress(addrname, "", nl_addr_guess_family(naddr));
+					addr = vaddress(addrname, "", static_cast<sa_family_t>(nl_addr_guess_family(naddr)));
 				}
 
 				unsigned int flags = rtnl_link_get_flags(link);
@@ -170,7 +170,7 @@ typedef nl_object nl_object_header;
 			}
 
 			default:
-				if (IBRCOMMON_LOGGER_LEVEL > 50) {
+				if (IBRCOMMON_LOGGER_LEVEL > 90) {
 				struct nl_dump_params dp;
 				memset(&dp, 0, sizeof(struct nl_dump_params));
 #ifdef HAVE_LIBNL3
@@ -385,7 +385,7 @@ typedef nl_object nl_object_header;
 			}
 		} catch (const socket_exception&) {
 			// stopped / interrupted
-			IBRCOMMON_LOGGER(error) << "NetLink connection stopped" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("NetLinkManager", error) << "NetLink connection stopped" << IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 

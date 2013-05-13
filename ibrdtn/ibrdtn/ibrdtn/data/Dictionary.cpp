@@ -20,7 +20,7 @@
  */
 
 #include "ibrdtn/data/Dictionary.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/Bundle.h"
 #include <map>
@@ -73,14 +73,14 @@ namespace dtn
 		{
 		}
 
-		uint64_t Dictionary::get(const std::string value) const
+		Number Dictionary::get(const std::string &value) const throw (EntryNotFoundException)
 		{
 			std::string bytes = _bytestream.str();
 			const char *bytebegin = bytes.c_str();
 			const char *bytepos = bytebegin;
 			const char *byteend = bytebegin + bytes.length() + 1;
 
-			if (bytes.length() <= 0) return std::string::npos;
+			if (bytes.length() <= 0) throw EntryNotFoundException();
 
 			while (bytepos < byteend)
 			{
@@ -94,10 +94,10 @@ namespace dtn
 				bytepos += dictstr.length() + 1;
 			}
 
-			return std::string::npos;
+			 throw EntryNotFoundException();
 		}
 
-		bool Dictionary::exists(const std::string value) const
+		bool Dictionary::exists(const std::string &value) const
 		{
 			std::string bytes = _bytestream.str();
 			const char *bytepos = bytes.c_str();
@@ -120,7 +120,7 @@ namespace dtn
 			return false;
 		}
 
-		void Dictionary::add(const std::string value)
+		void Dictionary::add(const std::string &value)
 		{
 			if (!exists(value))
 			{
@@ -145,15 +145,15 @@ namespace dtn
 			}
 		}
 
-		EID Dictionary::get(uint64_t scheme, uint64_t ssp)
+		EID Dictionary::get(const Number &scheme, const Number &ssp)
 		{
 			char buffer[1024];
 
-			_bytestream.seekg(scheme);
+			_bytestream.seekg(scheme.get<std::streampos>());
 			_bytestream.get(buffer, 1024, '\0');
 			std::string scheme_str(buffer);
 
-			_bytestream.seekg(ssp);
+			_bytestream.seekg(ssp.get<std::streampos>());
 			_bytestream.get(buffer, 1024, '\0');
 			std::string ssp_str(buffer);
 
@@ -165,12 +165,12 @@ namespace dtn
 			_bytestream.str("");
 		}
 
-		uint64_t Dictionary::getSize() const
+		Size Dictionary::getSize() const
 		{
 			return _bytestream.str().length();
 		}
 
-		pair<uint64_t, uint64_t> Dictionary::getRef(const EID &eid) const
+		dtn::data::Dictionary::Reference Dictionary::getRef(const EID &eid) const
 		{
 			const std::string scheme = eid.getScheme();
 			const std::string ssp = eid.getSSP();
@@ -179,7 +179,7 @@ namespace dtn
 
 		std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj)
 		{
-			dtn::data::SDNV length(obj.getSize());
+			dtn::data::Number length(obj.getSize());
 			stream << length;
 			stream << obj._bytestream.str();
 
@@ -188,15 +188,15 @@ namespace dtn
 
 		std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj)
 		{
-			dtn::data::SDNV length;
+			dtn::data::Number length;
 			stream >> length;
 
 			// if the dictionary size if zero throw a exception
-			if (length.getValue() <= 0)
+			if (length == 0)
 				throw dtn::InvalidDataException("Dictionary size is zero!");
 
 			obj._bytestream.str("");
-			std::vector<char> data(length.getValue());
+			std::vector<char> data(length.get<size_t>());
 			stream.read(&data[0], data.size());
 			obj._bytestream.write(&data[0], data.size());
 

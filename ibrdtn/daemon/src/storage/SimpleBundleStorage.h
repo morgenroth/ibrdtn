@@ -58,7 +58,7 @@ namespace dtn
 			/**
 			 * Constructor
 			 */
-			SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize = 0, size_t buffer_limit = 0);
+			SimpleBundleStorage(const ibrcommon::File &workdir, const dtn::data::Length maxsize = 0, const unsigned int buffer_limit = 0);
 
 			/**
 			 * Destructor
@@ -116,7 +116,7 @@ namespace dtn
 			/**
 			 * @sa BundleStorage::count()
 			 */
-			size_t count();
+			dtn::data::Size count();
 
 			/**
 			 * @sa BundleStorage::releaseCustody();
@@ -175,7 +175,7 @@ namespace dtn
 			};
 
 			void __remove(const dtn::data::MetaBundle &meta);
-			void __store(const dtn::data::Bundle &bundle, size_t bundle_size);
+			void __store(const dtn::data::Bundle &bundle, const dtn::data::Length &bundle_size);
 
 			typedef std::map<DataStorage::Hash, dtn::data::Bundle> pending_map;
 			ibrcommon::RWMutex _pending_lock;

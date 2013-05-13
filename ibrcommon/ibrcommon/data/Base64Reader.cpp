@@ -90,7 +90,7 @@ namespace ibrcommon
 			bytes_to_read -= _base64_state;
 
 			// debug
-			IBRCOMMON_LOGGER_DEBUG(30) <<
+			IBRCOMMON_LOGGER_DEBUG_TAG("Base64Reader", 60) <<
 					"[Base64Reader] base64 bytes to read: " << bytes_to_read <<
 					"; payload bytes: " << (_byte_limit - _byte_read) <<
 					"; byte in buffer: " << (int)_base64_state << IBRCOMMON_LOGGER_ENDL;
@@ -154,7 +154,7 @@ namespace ibrcommon
 				default:
 				{
 					// put char into the decode buffer
-					set_b64(c);
+					set_b64(static_cast<char>(c));
 					break;
 				}
 			}

@@ -48,7 +48,7 @@ namespace dtn
 {
 	namespace net
 	{
-		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, unsigned int mtu)
+		LOWPANConvergenceLayer::LOWPANConvergenceLayer(const ibrcommon::vinterface &net, uint16_t panid, unsigned int mtu)
 			: DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
 			_net(net), _panid(panid), _ipnd_buf(BUFF_SIZE), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
 		{
@@ -94,7 +94,7 @@ namespace dtn
 			}
 		}
 
-		void LOWPANConvergenceLayer::send_cb(char *buf, int len, const ibrcommon::vaddress &addr)
+		void LOWPANConvergenceLayer::send_cb(const char *buf, const size_t len, const ibrcommon::vaddress &addr)
 		{
 			ibrcommon::socketset socks = _vsocket.getAll();
 			if (socks.size() == 0) return;
@@ -118,7 +118,7 @@ namespace dtn
 			}
 		}
 
-		void LOWPANConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void LOWPANConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_LOWPAN);
 			if (uri_list.empty()) return;
@@ -134,7 +134,7 @@ namespace dtn
 
 			ibrcommon::vaddress addr( address, ss_pan.str(), AF_IEEE802154 );
 
-			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::queue"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 55) << "LOWPANConvergenceLayer::queue"<< IBRCOMMON_LOGGER_ENDL;
 
 			ibrcommon::MutexLock lc(_connection_lock);
 			LOWPANConnection *connection = getConnection(addr);
@@ -148,7 +148,7 @@ namespace dtn
 			{
 				LOWPANConnection &conn = dynamic_cast<LOWPANConnection&>(**i);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "Connection address: " << conn._address.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 55) << "Connection address: " << conn._address.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				if (conn._address == addr)
 					return (*i);
@@ -158,7 +158,7 @@ namespace dtn
 			LOWPANConnection *connection = new LOWPANConnection(addr, (*this));
 
 			ConnectionList.push_back(connection);
-			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::getConnection "<< connection->_address.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 55) << "LOWPANConvergenceLayer::getConnection "<< connection->_address.toString() << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
 			return connection;
 		}
@@ -206,7 +206,7 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPAN IPND beacon send started" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 60) << "LOWPAN IPND beacon send started" << IBRCOMMON_LOGGER_ENDL;
 
 			DiscoveryAnnouncement announcement(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local);
 
@@ -237,9 +237,9 @@ namespace dtn
 			stringstream ss;
 			ss << announcement;
 
-			int len = ss.str().size();
+			dtn::data::Length len = ss.str().size();
 			if (len > 113)
-				IBRCOMMON_LOGGER(error) << "Discovery announcement to big (" << len << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("LOWPANConvergenceLayer", error) << "Discovery announcement to big (" << len << ")" << IBRCOMMON_LOGGER_ENDL;
 
 			// copy data infront of the 2 byte header
 			memcpy(&_ipnd_buf[2], ss.str().c_str(), len);
@@ -266,9 +266,9 @@ namespace dtn
 						ibrcommon::vaddress peeraddr;
 
 						// Receive full frame from socket
-						int len = sock.recvfrom(&data[0], m_maxmsgsize, 0, peeraddr);
+						ssize_t len = sock.recvfrom(&data[0], static_cast<size_t>(m_maxmsgsize), 0, peeraddr);
 
-						IBRCOMMON_LOGGER_DEBUG(40) << "Received IEEE 802.15.4 frame from " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 40) << "Received IEEE 802.15.4 frame from " << peeraddr.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// We got nothing from the socket, keep reading
 						if (len <= 0)
@@ -308,7 +308,7 @@ namespace dtn
 			try {
 				const TimeEvent &time=dynamic_cast<const TimeEvent&>(*evt);
 				if (time.getAction() == TIME_SECOND_TICK)
-					if (time.getTimestamp()%5 == 0)
+					if (time.getTimestamp().get<size_t>() % 5 == 0)
 						timeout();
 			} catch (const std::bad_cast&)
 			{}

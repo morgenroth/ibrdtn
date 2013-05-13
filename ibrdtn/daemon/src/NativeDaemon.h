@@ -173,6 +173,11 @@ namespace dtn
 			void removeConnection(std::string eid, std::string protocol, std::string address, std::string service, bool local = false) const throw ();
 
 			/**
+			 * initiate a connection to a given neighbor
+			 */
+			void initiateConnection(std::string eid);
+
+			/**
 			 * @see dtn::core::EventReceiver::raiseEvent()
 			 */
 			virtual void raiseEvent(const Event *evt) throw ();

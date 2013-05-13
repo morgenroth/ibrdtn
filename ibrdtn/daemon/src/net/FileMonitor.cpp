@@ -82,7 +82,7 @@ namespace dtn
 #endif
 		}
 
-		int inotifysocket::read(char *data, size_t len) throw (ibrcommon::socket_exception)
+		ssize_t inotifysocket::read(char *data, size_t len) throw (ibrcommon::socket_exception)
 		{
 #ifdef HAVE_SYS_INOTIFY_H
 			return ::read(this->fd(), data, len);
@@ -103,7 +103,7 @@ namespace dtn
 
 		void FileMonitor::watch(const ibrcommon::File &watch)
 		{
-			IBRCOMMON_LOGGER_DEBUG(5) << "watch on: " << watch.getPath() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("FileMonitor", 5) << "watch on: " << watch.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 			if (!watch.isDirectory())
 				throw ibrcommon::Exception("can not watch files, please specify a directory");
@@ -171,7 +171,7 @@ namespace dtn
 
 		void FileMonitor::scan()
 		{
-			IBRCOMMON_LOGGER_DEBUG(5) << "scan for file changes" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("FileMonitor", 5) << "scan for file changes" << IBRCOMMON_LOGGER_ENDL;
 
 			std::set<ibrcommon::File> watch_set;
 
@@ -189,7 +189,7 @@ namespace dtn
 				}
 				else
 				{
-					IBRCOMMON_LOGGER(error) << "scan of " << path.getPath() << " failed" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("FileMonitor", error) << "scan of " << path.getPath() << " failed" << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
@@ -214,7 +214,7 @@ namespace dtn
 				if (watch_set.find(path) == watch_set.end())
 				{
 					dtn::core::BundleCore::getInstance().getConnectionManager().remove(node);
-					IBRCOMMON_LOGGER_DEBUG(5) << "Node on drive gone: " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("FileMonitor", 5) << "Node on drive gone: " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 					_active_paths.erase(iter++);
 				}
 				else
@@ -243,7 +243,7 @@ namespace dtn
 
 					_active_paths[path] = n;
 
-					IBRCOMMON_LOGGER_DEBUG(5) << "Node on drive found: " << n.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("FileMonitor", 5) << "Node on drive found: " << n.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 
 				} catch (const ibrcommon::ConfigFile::key_not_found&) {};
 			}

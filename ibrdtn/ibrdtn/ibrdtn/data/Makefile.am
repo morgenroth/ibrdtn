@@ -27,7 +27,8 @@ h_sources = \
 	BundleBuilder.h \
 	AdministrativeBlock.h \
 	TrackingBlock.h \
-	SchedulingBlock.h
+	SchedulingBlock.h \
+	Number.h
 
 cc_sources = \
 	Serializer.cpp \

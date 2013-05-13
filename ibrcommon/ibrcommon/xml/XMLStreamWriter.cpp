@@ -101,7 +101,7 @@ namespace ibrcommon
 		}
 	}
 
-	void XMLStreamWriter::addData(const char *data, const size_t len)
+	void XMLStreamWriter::addData(const char *data, const int len)
 	{
 		if (xmlTextWriterWriteRawLen(_writer, BAD_CAST data, len) < 0)
 		{

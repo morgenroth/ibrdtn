@@ -153,7 +153,7 @@ namespace dtn
 				tmp[0] = type;
 
 				// flags (4-bit) + seqno (4-bit)
-				tmp[1] = (0xf0 & (flags << 4)) | (0x0f & seqno);
+				tmp[1] = static_cast<char>((0xf0 & (flags << 4)) | (0x0f & seqno));
 
 				// copy payload to the new buffer
 				::memcpy(&tmp[2], buf, length);

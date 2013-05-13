@@ -48,7 +48,7 @@ namespace dtn
 		class LOWPANConvergenceLayer : public DiscoveryAgent, public ConvergenceLayer, public dtn::daemon::IndependentComponent, public ibrcommon::lowpanstream_callback, public EventReceiver, public DiscoveryServiceProvider
 		{
 		public:
-			LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, unsigned int mtu = 115); //MTU is actually 127...
+			LOWPANConvergenceLayer(const ibrcommon::vinterface &net, uint16_t panid, unsigned int mtu = 115); //MTU is actually 127...
 
 			virtual ~LOWPANConvergenceLayer();
 
@@ -65,7 +65,7 @@ namespace dtn
 			 * @param n Node reference
 			 * @param job Job reference
 			 */
-			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job);
 
 			/**
 			 * @see Component::getName()
@@ -80,7 +80,7 @@ namespace dtn
 			 * @param len Length of the buffer
 			 * @param address IEEE 802.15.4 short address of the destination
 			 */
-			virtual void send_cb(char *buf, int len, const ibrcommon::vaddress &addr);
+			virtual void send_cb(const char *buf, const size_t len, const ibrcommon::vaddress &addr);
 
 			static const size_t BUFF_SIZE = 115;
 
@@ -99,7 +99,7 @@ namespace dtn
 
 			ibrcommon::vaddress _addr_broadcast;
 			ibrcommon::vinterface _net;
-			int _panid;
+			uint16_t _panid;
 			std::vector<char> _ipnd_buf;
 			int _ipnd_buf_len;
 

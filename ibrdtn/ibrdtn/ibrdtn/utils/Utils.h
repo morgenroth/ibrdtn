@@ -37,13 +37,13 @@ namespace dtn
 			static void ltrim(std::string &str);
 			static void trim(std::string &str);
 
-			static vector<string> tokenize(std::string token, std::string data, size_t max = std::string::npos);
+			static std::vector<std::string> tokenize(const std::string &token, const std::string &data, const std::string::size_type max = std::string::npos);
 			static double distance(double lat1, double lon1, double lat2, double lon2);
 
 			static void encapsule(dtn::data::Bundle &capsule, const std::list<dtn::data::Bundle> &bundles);
 			static void decapsule(const dtn::data::Bundle &capsule, std::list<dtn::data::Bundle> &bundles);
 
-			static std::string toString(uint64_t value);
+			static std::string toString(const dtn::data::Length &value);
 
 		private:
 			static void encapsule(ibrcommon::BLOB::Reference &ref, const std::list<dtn::data::Bundle> &bundles);

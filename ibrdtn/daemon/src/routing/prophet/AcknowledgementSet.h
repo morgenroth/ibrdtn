@@ -35,7 +35,7 @@ namespace dtn
 			/**
 			 * Expire outdated entries
 			 */
-			void expire(size_t timestamp) throw ();
+			void expire(const dtn::data::Timestamp &timestamp) throw ();
 
 			/**
 			 * merge the set with a second AcknowledgementSet
@@ -48,11 +48,11 @@ namespace dtn
 			bool has(const dtn::data::BundleID &id) const throw ();
 
 			/* virtual methods from NodeHandshakeItem */
-			virtual size_t getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
-			virtual size_t getLength() const; ///< \see NodeHandshakeItem::getLength
+			virtual const dtn::data::Number& getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
+			virtual dtn::data::Length getLength() const; ///< \see NodeHandshakeItem::getLength
 			virtual std::ostream& serialize(std::ostream& stream) const; ///< \see NodeHandshakeItem::serialize
 			virtual std::istream& deserialize(std::istream& stream); ///< \see NodeHandshakeItem::deserialize
-			static const size_t identifier;
+			static const dtn::data::Number identifier;
 
 			friend std::ostream& operator<<(std::ostream&, const AcknowledgementSet&);
 			friend std::istream& operator>>(std::istream&, AcknowledgementSet&);

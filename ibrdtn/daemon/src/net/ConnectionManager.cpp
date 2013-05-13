@@ -31,7 +31,6 @@
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
-#include "routing/RequeueBundleEvent.h"
 
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
@@ -183,7 +182,7 @@ namespace dtn
 			dtn::core::Node &db = (*(ret.first)).second;
 
 			if (!ret.second) {
-				size_t old = db.size();
+				dtn::data::Size old = db.size();
 
 				// add all attributes to the node in the database
 				db += n;
@@ -193,7 +192,7 @@ namespace dtn
 					dtn::core::NodeEvent::raise(db, dtn::core::NODE_DATA_ADDED);
 				}
 			} else {
-				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (db.isAvailable() && !db.isAnnounced()) {
@@ -210,7 +209,7 @@ namespace dtn
 			try {
 				dtn::core::Node &db = getNode(n.getEID());
 
-				size_t old = db.size();
+				dtn::data::Size old = db.size();
 
 				// erase all attributes to the node in the database
 				db -= n;
@@ -220,7 +219,7 @@ namespace dtn
 					dtn::core::NodeEvent::raise(db, dtn::core::NODE_DATA_REMOVED);
 				}
 
-				IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes removed: " << db << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 56) << "Node attributes removed: " << db << IBRCOMMON_LOGGER_ENDL;
 			} catch (const NeighborNotAvailableException&) { };
 		}
 
@@ -318,7 +317,7 @@ namespace dtn
 		{
 			std::queue<dtn::core::Node> _connect_nodes;
 
-			size_t interval = dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
+			dtn::data::Timeout interval = dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
 			if (interval == 0) return;
 
 			if (_next_autoconnect < dtn::utils::Clock::getTime())
@@ -393,7 +392,7 @@ namespace dtn
 			}
 		}
 
-		void ConnectionManager::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void ConnectionManager::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
 
@@ -425,25 +424,25 @@ namespace dtn
 			throw ConnectionNotAvailableException();
 		}
 
-		void ConnectionManager::queue(const ConvergenceLayer::Job &job)
+		void ConnectionManager::queue(const dtn::net::BundleTransfer &job)
 		{
 			ibrcommon::MutexLock l(_node_lock);
 
 			if (IBRCOMMON_LOGGER_LEVEL >= 50)
 			{
-				IBRCOMMON_LOGGER_DEBUG(50) << "## node list ##" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "## node list ##" << IBRCOMMON_LOGGER_ENDL;
 				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 				{
 					const dtn::core::Node &n = (*iter).second;
-					IBRCOMMON_LOGGER_DEBUG(2) << n << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << n << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
-			IBRCOMMON_LOGGER_DEBUG(50) << "search for node " << job._destination.getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "search for node " << job.getNeighbor().getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// queue to a node
-			const Node &n = getNode(job._destination);
-			IBRCOMMON_LOGGER_DEBUG(2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
+			const Node &n = getNode(job.getNeighbor());
+			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				queue(n, job);
@@ -454,11 +453,6 @@ namespace dtn
 				// re-throw P2PDialupException
 				throw;
 			}
-		}
-
-		void ConnectionManager::queue(const dtn::data::EID &eid, const dtn::data::BundleID &b)
-		{
-			queue( ConvergenceLayer::Job(eid, b) );
 		}
 
 		const std::set<dtn::core::Node> ConnectionManager::getNeighbors()

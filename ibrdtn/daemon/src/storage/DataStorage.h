@@ -95,7 +95,7 @@ namespace dtn
 				virtual void iterateDataStorage(const Hash &hash, DataStorage::istream &stream) = 0;
 			};
 
-			DataStorage(Callback &callback, const ibrcommon::File &path, size_t write_buffer = 0, bool initialize = false);
+			DataStorage(Callback &callback, const ibrcommon::File &path, unsigned int write_buffer = 0, bool initialize = false);
 			virtual ~DataStorage();
 
 			const Hash store(Container *data);

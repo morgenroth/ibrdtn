@@ -51,7 +51,7 @@ namespace dtn
 			return _bundle;
 		}
 
-		bool BundleMerger::Container::contains(size_t offset, size_t length) const
+		bool BundleMerger::Container::contains(Length offset, Length length) const
 		{
 			// check if the offered payload is already in the chunk list
 			for (std::set<Chunk>::const_iterator iter = _chunks.begin(); iter != _chunks.end(); ++iter)
@@ -69,7 +69,7 @@ namespace dtn
 			return false;
 		}
 
-		void BundleMerger::Container::add(size_t offset, size_t length)
+		void BundleMerger::Container::add(Length offset, Length length)
 		{
 			BundleMerger::Chunk chunk(offset, length);
 			_chunks.insert(chunk);
@@ -96,7 +96,7 @@ namespace dtn
 				c._bundle = obj;
 
 				// store the app data length
-				c._appdatalength = obj.appdatalength;
+				c._appdatalength = obj.appdatalength.get<dtn::data::Length>();
 
 				// remove all block of the copy
 				c._bundle.clear();
@@ -114,13 +114,13 @@ namespace dtn
 			}
 
 			ibrcommon::BLOB::iostream stream = c._blob.iostream();
-			(*stream).seekp(obj.fragmentoffset);
+			(*stream).seekp(obj.fragmentoffset.get<std::streampos>());
 
 			dtn::data::PayloadBlock &p = obj.find<dtn::data::PayloadBlock>();
-			const size_t plength = p.getLength();
+			const Length plength = p.getLength();
 
 			// skip write operation if chunk is already in the merged bundle
-			if (c.contains(obj.fragmentoffset, plength)) return c;
+			if (c.contains(obj.fragmentoffset.get<dtn::data::Length>(), plength)) return c;
 
 			// copy payload of the fragment into the new blob
 			{
@@ -130,7 +130,7 @@ namespace dtn
 			}
 
 			// add the chunk to the list of chunks
-			c.add(obj.fragmentoffset, plength);
+			c.add(obj.fragmentoffset.get<dtn::data::Length>(), plength);
 
 			// check if fragment is the first one
 			// add blocks only once
@@ -230,7 +230,7 @@ namespace dtn
 			return Container(ref);
 		}
 
-		BundleMerger::Chunk::Chunk(size_t o, size_t l)
+		BundleMerger::Chunk::Chunk(Length o, Length l)
 		 : offset(o), length(l)
 		{
 		}
@@ -247,10 +247,10 @@ namespace dtn
 			return (length < other.length);
 		}
 
-		bool BundleMerger::Chunk::isComplete(size_t length, const std::set<Chunk> &chunks)
+		bool BundleMerger::Chunk::isComplete(Length length, const std::set<Chunk> &chunks)
 		{
 			// check if the bundle payload is complete
-			size_t position = 0;
+			Length position = 0;
 
 			for (std::set<Chunk>::const_iterator iter = chunks.begin(); iter != chunks.end(); ++iter)
 			{

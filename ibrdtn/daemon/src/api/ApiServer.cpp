@@ -170,7 +170,7 @@ namespace dtn
 						}
 
 						// generate some output
-						IBRCOMMON_LOGGER_DEBUG(5) << "new connected client at the extended API server" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "new connected client at the extended API server" << IBRCOMMON_LOGGER_ENDL;
 
 						// send welcome banner
 						(*conn) << "IBR-DTN " << dtn::daemon::Configuration::getInstance().version() << " API 1.0" << std::endl;
@@ -185,7 +185,7 @@ namespace dtn
 							// create a new registration
 							Registration reg;
 							_registrations.push_back(reg);
-							IBRCOMMON_LOGGER_DEBUG(5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
 
 							// create a new clienthandler for the new registration
 							obj  = new ClientHandler(*this, _registrations.back(), conn);
@@ -268,7 +268,7 @@ namespace dtn
 					{
 						iter->attach();
 						if(!iter->isPersistent()){
-							IBRCOMMON_LOGGER_DEBUG(5) << "release registration " << iter->getHandle() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "release registration " << iter->getHandle() << IBRCOMMON_LOGGER_ENDL;
 							iter = _registrations.erase(iter);
 						}
 						else
@@ -295,13 +295,13 @@ namespace dtn
 		void ApiServer::connectionUp(ClientHandler*)
 		{
 			// generate some output
-			IBRCOMMON_LOGGER_DEBUG(5) << "api connection up" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "api connection up" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void ApiServer::connectionDown(ClientHandler *obj)
 		{
 			// generate some output
-			IBRCOMMON_LOGGER_DEBUG(5) << "api connection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "api connection down" << IBRCOMMON_LOGGER_ENDL;
 
 			ibrcommon::MutexLock l(_connection_lock);
 
@@ -331,7 +331,7 @@ namespace dtn
 				{
 					if (reg == (*iter))
 					{
-						IBRCOMMON_LOGGER_DEBUG(5) << "release registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "release registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
 						_registrations.erase(iter);
 						break;
 					}

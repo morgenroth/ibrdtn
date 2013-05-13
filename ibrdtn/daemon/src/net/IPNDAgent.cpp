@@ -459,7 +459,7 @@ namespace dtn
 						std::list<DiscoveryService> ret_services;
 						dtn::data::EID ret_source;
 
-						int len = sock.recvfrom(data, 1500, 0, sender);
+						ssize_t len = sock.recvfrom(data, 1500, 0, sender);
 
 						if (len < 0) return;
 
@@ -520,7 +520,7 @@ namespace dtn
 				} catch (const ibrcommon::vsocket_timeout&) { };
 
 				// trigger timeout, if one second is elapsed
-				tm.stop(); if (tm.getMilliseconds() > 1000)
+				tm.stop(); if (tm.getMilliseconds() > 1000.0)
 				{
 					tm.start();
 					timeout();

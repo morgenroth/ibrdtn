@@ -21,28 +21,34 @@ namespace dtn
 		{
 		}
 
-		dtn::data::Block &BundleBuilder::insert(dtn::data::ExtensionBlock::Factory &f, size_t procflags)
+		dtn::data::Block &BundleBuilder::insert(dtn::data::ExtensionBlock::Factory &f, const Bitset<Block::ProcFlags> &procflags)
 		{
 			switch (_alignment)
 			{
 			case FRONT:
 			{
 				dtn::data::Block &block = _target->push_front(f);
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 
 			case END:
 			{
 				dtn::data::Block &block = _target->push_back(f);
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 
 			default:
 				if(_pos <= 0) {
 					dtn::data::Block &block = _target->push_front(f);
-					block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+					bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+					block._procflags = procflags;
+					block.set(dtn::data::Block::LAST_BLOCK, last_block);
 					return block;
 				}
 
@@ -51,7 +57,9 @@ namespace dtn
 
 				dtn::data::Block &block = (it == _target->end()) ? _target->push_back(f) : _target->insert(it, f);
 
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 		}
@@ -61,7 +69,7 @@ namespace dtn
 			return _alignment;
 		}
 
-		dtn::data::Block& BundleBuilder::insert(dtn::data::block_t block_type, size_t procflags) throw (DiscardBlockException)
+		dtn::data::Block& BundleBuilder::insert(dtn::data::block_t block_type, const Bitset<dtn::data::Block::ProcFlags> &procflags) throw (DiscardBlockException)
 		{
 			// exit if the block type is zero
 			if (block_type == 0) throw dtn::InvalidDataException("block type is zero");

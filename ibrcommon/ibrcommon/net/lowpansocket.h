@@ -35,7 +35,7 @@ namespace ibrcommon
 	class lowpansocket : public datagramsocket
 	{
 	public:
-		lowpansocket(int panid, const vinterface &iface);
+		lowpansocket(const uint16_t &panid, const vinterface &iface);
 		~lowpansocket();
 		void up() throw (socket_exception);
 		void down() throw (socket_exception);
@@ -45,14 +45,14 @@ namespace ibrcommon
 		 */
 		void setAutoAck(bool enable) throw (socket_exception);
 
-		virtual size_t recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
+		virtual ssize_t recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
 		virtual void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
 
 		static void getAddress(const vinterface &iface, const std::string &panid, ibrcommon::vaddress &addr);
 		static void getAddress(struct ieee802154_addr *ret, const vinterface &iface);
 
 	private:
-		const int _panid;
+		const uint16_t _panid;
 		const vinterface _iface;
 	};
 }

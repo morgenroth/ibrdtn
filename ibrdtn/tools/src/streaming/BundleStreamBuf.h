@@ -21,6 +21,7 @@
 
 #include "streaming/StreamBundle.h"
 #include <ibrdtn/api/Client.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/Bundle.h>
 #include <iostream>
 #include <set>
@@ -53,7 +54,7 @@ public:
 	/**
 	 * Set the timeout for receiving bundles
 	 */
-	void setReceiveTimeout(unsigned int timeout);
+	void setReceiveTimeout(dtn::data::Timeout timeout);
 
 protected:
 	virtual int sync();
@@ -76,7 +77,7 @@ private:
 		bool operator<(const Chunk& other) const;
 
 		dtn::data::Bundle _bundle;
-		size_t _seq;
+		dtn::data::Number _seq;
 	};
 
 	// Input buffer
@@ -97,12 +98,12 @@ private:
 	std::set<Chunk> _chunks;
 	size_t _chunk_offset;
 
-	size_t _in_seq;
+	dtn::data::Number _in_seq;
 	bool _streaming;
 	bool _request_ack;
 	bool _flush_request;
 
-	unsigned int _receive_timeout;
+	dtn::data::Timeout _receive_timeout;
 };
 
 #endif /* BUNDLESTREAMBUF_H_ */

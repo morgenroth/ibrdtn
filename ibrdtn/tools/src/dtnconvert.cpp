@@ -106,12 +106,12 @@ int main(int argc, char** argv)
 			dtn::data::Bundle b;
 			dd >> b;
 
-			std::cout << "flags: " << std::hex << std::setw( 2 ) << std::setfill( '0' ) << b.procflags << std::dec << std::endl;
+			std::cout << "flags: " << std::hex << std::setw( 2 ) << std::setfill( '0' ) << b.procflags.toString() << std::dec << std::endl;
 			std::cout << "source: " << b.source.getString() << std::endl;
 			std::cout << "destination: " << b.destination.getString() << std::endl;
-			std::cout << "timestamp: " << b.timestamp << std::endl;
-			std::cout << "sequence number: " << b.sequencenumber << std::endl;
-			std::cout << "lifetime: " << b.lifetime << std::endl;
+			std::cout << "timestamp: " << b.timestamp.toString() << std::endl;
+			std::cout << "sequence number: " << b.sequencenumber.toString() << std::endl;
+			std::cout << "lifetime: " << b.lifetime.toString() << std::endl;
 
 			const dtn::data::PayloadBlock &pblock = b.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference ref = pblock.getBLOB();

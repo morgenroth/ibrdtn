@@ -41,6 +41,8 @@ namespace ibrcommon
 	 */
 	class TLSStream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
 	{
+		static const std::string TAG;
+
 	public:
 		typedef std::char_traits<char> traits;
 
@@ -108,8 +110,6 @@ namespace ibrcommon
 
 	private:
 		std::string log_error_msg(int errnumber);
-		void log_error(std::string tag, int errnumber);
-		void log_debug(std::string tag, int errnumber);
 
 		static bool _initialized;
 		/* this second initialized variable is needed, because init() can fail and SSL_library_init() is not reentrant. */

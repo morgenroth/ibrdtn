@@ -32,7 +32,7 @@ namespace ibrcommon
 	class HashStream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
 	{
 	public:
-		HashStream(const size_t hash, const size_t buffer = 2048);
+		HashStream(const unsigned int hash, const size_t buffer = 2048);
 		virtual ~HashStream();
 
 		static std::string extract(std::istream &stream);

@@ -8,6 +8,7 @@
 #ifndef BUNDLEBUILDER_H_
 #define BUNDLEBUILDER_H_
 
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/Block.h>
 #include <iterator>
@@ -43,16 +44,16 @@ namespace dtn
 			void clear();
 
 			template <class T>
-			T& insert(size_t procflags);
+			T& insert(const Bitset<Block::ProcFlags> &procflags);
 
 			POSITION getAlignment() const;
 
-			dtn::data::Block &insert(dtn::data::ExtensionBlock::Factory &f, size_t procflags);
+			dtn::data::Block &insert(dtn::data::ExtensionBlock::Factory &f, const Bitset<Block::ProcFlags> &procflags);
 
 			/**
 			 * Add a block to the bundle.
 			 */
-			dtn::data::Block& insert(dtn::data::block_t block_type, size_t procflags) throw (DiscardBlockException);
+			dtn::data::Block& insert(dtn::data::block_t block_type, const Bitset<Block::ProcFlags> &procflags) throw (DiscardBlockException);
 
 		private:
 			Bundle *_target;
@@ -62,28 +63,34 @@ namespace dtn
 		};
 
 		template <class T>
-		T& BundleBuilder::insert(size_t procflags)
+		T& BundleBuilder::insert(const Bitset<Block::ProcFlags> &procflags)
 		{
 			switch (_alignment)
 			{
 			case FRONT:
 			{
 				T &block = _target->push_front<T>();
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 
 			case END:
 			{
 				T &block = _target->push_back<T>();
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 
 			default:
 				if(_pos <= 0) {
 					T &block = _target->push_front<T>();
-					block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+					bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+					block._procflags = procflags;
+					block.set(dtn::data::Block::LAST_BLOCK, last_block);
 					return block;
 				}
 
@@ -92,7 +99,9 @@ namespace dtn
 
 				T &block = (it == _target->end()) ? _target->push_back<T>() : _target->insert<T>(it);
 
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 		}

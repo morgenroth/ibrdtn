@@ -56,8 +56,7 @@ namespace dtn
 				BUNDLE_GET_ITERATOR,
 				BUNDLE_GET_FILTER,
 				BUNDLE_GET_ID,
-				FRAGMENT_GET_ID,
-				BUNDLE_GET_FRAGMENT,
+				GET_DISTINCT_DESTINATIONS,
 
 				EXPIRE_BUNDLES,
 				EXPIRE_BUNDLE_FILENAMES,
@@ -68,18 +67,14 @@ namespace dtn
 				COUNT_ENTRIES,
 
 				BUNDLE_DELETE,
-				FRAGMENT_DELETE,
 				BUNDLE_CLEAR,
 				BUNDLE_STORE,
 				BUNDLE_UPDATE_CUSTODIAN,
-				FRAGMENT_UPDATE_CUSTODIAN,
 
 				PROCFLAGS_SET,
 
 				BLOCK_GET_ID,
-				BLOCK_GET_ID_FRAGMENT,
 				BLOCK_GET,
-				BLOCK_GET_FRAGMENT,
 				BLOCK_CLEAR,
 				BLOCK_STORE,
 
@@ -87,6 +82,7 @@ namespace dtn
 				SQL_QUERIES_END
 			};
 
+			static const int DBSCHEMA_FRESH_VERSION;
 			static const int DBSCHEMA_VERSION;
 			static const std::string QUERY_SCHEMAVERSION;
 			static const std::string SET_SCHEMAVERSION;
@@ -135,7 +131,7 @@ namespace dtn
 				 * @param offset
 				 * @return
 				 */
-				virtual size_t bind(sqlite3_stmt*, size_t offset) const throw ()
+				virtual int bind(sqlite3_stmt*, int offset) const throw ()
 				{
 					return offset;
 				}
@@ -187,7 +183,7 @@ namespace dtn
 			 * Expire all bundles with a lifetime lower than the given timestamp.
 			 * @param timestamp
 			 */
-			void expire(size_t timestamp) throw ();
+			void expire(const dtn::data::Timestamp &timestamp) throw ();
 
 			/**
 			 * Shrink down the database.
@@ -238,7 +234,7 @@ namespace dtn
 
 			bool empty() const throw (SQLiteQueryException);
 
-			size_t count() const throw (SQLiteQueryException);
+			dtn::data::Size count() const throw (SQLiteQueryException);
 
 			void clear() throw (SQLiteQueryException);
 
@@ -252,6 +248,16 @@ namespace dtn
 			 */
 			void iterateAll() throw (SQLiteQueryException);
 
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * a bundle will fail.
+			 */
+			void setFaulty(bool mode);
+
+			/*** END: methods for unit-testing ***/
+
 		private:
 			/**
 			 * Retrieve meta data from the database and put them into a meta bundle structure.
@@ -259,7 +265,7 @@ namespace dtn
 			 * @param bundle
 			 * @param offset
 			 */
-			void get(Statement &st, dtn::data::MetaBundle &bundle, size_t offset = 0) const throw (SQLiteQueryException);
+			void get(Statement &st, dtn::data::MetaBundle &bundle, int offset = 0) const throw (SQLiteQueryException);
 
 			/**
 			 * Retrieve meta data from the database and put them into a bundle structure.
@@ -267,7 +273,7 @@ namespace dtn
 			 * @param bundle
 			 * @param offset
 			 */
-			void get(Statement &st, dtn::data::Bundle &bundle, size_t offset = 0) const throw (SQLiteQueryException);
+			void get(Statement &st, dtn::data::Bundle &bundle, int offset = 0) const throw (SQLiteQueryException);
 
 			/**
 			 *
@@ -276,7 +282,7 @@ namespace dtn
 			 * @param bind_offset
 			 * @param limit
 			 */
-			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const throw (SQLiteQueryException, NoBundleFoundException, BundleSelectorException);
+			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, int bind_offset, size_t offset) const throw (SQLiteQueryException, NoBundleFoundException, BundleSelectorException);
 
 			/**
 			 * updates the nextExpiredTime. The calling function has to have the databaselock.
@@ -287,12 +293,12 @@ namespace dtn
 			 * lower the next expire time if the ttl is lower than the current expire time
 			 * @param ttl
 			 */
-			void new_expire_time(size_t ttl) throw ();
+			void new_expire_time(const dtn::data::Timestamp &ttl) throw ();
 			void reset_expire_time() throw ();
-			size_t get_expire_time() const throw ();
+			const dtn::data::Timestamp& get_expire_time() const throw ();
 
-			void set_bundleid(Statement &st, const dtn::data::BundleID &id, size_t offset = 0) const throw (SQLiteQueryException);
-			void get_bundleid(Statement &st, dtn::data::BundleID &id, size_t offset = 0) const throw (SQLiteQueryException);
+			void set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
+			void get_bundleid(Statement &st, dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
 
 			/**
 			 * get database version
@@ -310,7 +316,7 @@ namespace dtn
 			 * @param oldVersion Current version of the database.
 			 * @param newVersion Required version.
 			 */
-			void doUpgrade(int oldVersion, int newVersion) throw (SQLiteQueryException);
+			void doUpgrade(int oldVersion, int newVersion) throw (ibrcommon::Exception);
 
 			ibrcommon::File _file;
 
@@ -318,7 +324,7 @@ namespace dtn
 			sqlite3 *_database;
 
 			// next expiration
-			size_t _next_expiration;
+			dtn::data::Timestamp _next_expiration;
 
 			void add_deletion(const dtn::data::BundleID &id) throw ();
 			void remove_deletion(const dtn::data::BundleID &id) throw ();
@@ -329,6 +335,8 @@ namespace dtn
 
 			// listener for events on the database
 			DatabaseListener &_listener;
+
+			bool _faulty;
 		};
 	} /* namespace storage */
 } /* namespace dtn */

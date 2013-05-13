@@ -28,12 +28,12 @@ namespace dtn
 {
 	namespace data
 	{
-		uint64_t PrimaryBlock::__sequencenumber = 0;
-		uint64_t PrimaryBlock::__last_timestamp = 0;
+		Number PrimaryBlock::__sequencenumber = 0;
+		Timestamp PrimaryBlock::__last_timestamp = 0;
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
 		PrimaryBlock::PrimaryBlock()
-		 : procflags(0), timestamp(0), sequencenumber(0), lifetime(3600), fragmentoffset(0), appdatalength(0)
+		 : timestamp(0), sequencenumber(0), lifetime(3600), fragmentoffset(0), appdatalength(0)
 		{
 			relabel();
 
@@ -47,19 +47,12 @@ namespace dtn
 
 		void PrimaryBlock::set(FLAGS flag, bool value)
 		{
-			if (value)
-			{
-				procflags |= flag;
-			}
-			else
-			{
-				procflags &= ~(flag);
-			}
+			procflags.setBit(flag, value);
 		}
 
 		bool PrimaryBlock::get(FLAGS flag) const
 		{
-			return (procflags & flag);
+			return procflags.getBit(flag);
 		}
 
 		PrimaryBlock::PRIORITY PrimaryBlock::getPriority() const

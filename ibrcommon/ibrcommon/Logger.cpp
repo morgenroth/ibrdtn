@@ -440,7 +440,7 @@ namespace ibrcommon
 			_use_queue = true;
 			start();
 		} catch (const ibrcommon::ThreadException &ex) {
-			IBRCOMMON_LOGGER(error) << "failed to start LogWriter\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("LogWriter", error) << "enableAsync failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 	

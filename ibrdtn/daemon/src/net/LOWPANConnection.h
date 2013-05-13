@@ -43,13 +43,13 @@ namespace dtn
 				 * Queueing a job, originally coming from the DTN core, to work its way down to the CL through the lowpanstream
 				 * @param job Reference to the job conatining EID and bundle
 				 */
-				void queue(const ConvergenceLayer::Job &job);
+				void queue(const dtn::net::BundleTransfer &job);
 				void run() throw ();
 				void __cancellation() throw ();
 
 			private:
 				ibrcommon::lowpanstream &_stream;
-				ibrcommon::Queue<ConvergenceLayer::Job> _queue;
+				ibrcommon::Queue<dtn::net::BundleTransfer> _queue;
 		};
 
 		class LOWPANConvergenceLayer;

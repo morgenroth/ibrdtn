@@ -8,6 +8,7 @@
 #ifndef NEIGHBORDATASET_H_
 #define NEIGHBORDATASET_H_
 
+#include <ibrdtn/data/Number.h>
 #include <ibrcommon/refcnt_ptr.h>
 #include <stdlib.h>
 #include <iostream>
@@ -18,10 +19,10 @@ namespace dtn
 	{
 		class NeighborDataSetImpl {
 		public:
-			NeighborDataSetImpl(size_t id);
+			NeighborDataSetImpl(const dtn::data::Number &id);
 			virtual ~NeighborDataSetImpl() = 0;
 
-			const size_t _dataset_id;
+			const dtn::data::Number _dataset_id;
 		};
 
 		class NeighborDataset
@@ -29,12 +30,12 @@ namespace dtn
 		private:
 			class Empty : public NeighborDataSetImpl {
 			public:
-				Empty(size_t id) : NeighborDataSetImpl(id) { };
+				Empty(const dtn::data::Number &id) : NeighborDataSetImpl(id) { };
 				virtual ~Empty() {};
 			};
 
 		public:
-			NeighborDataset(size_t id);
+			NeighborDataset(const dtn::data::Number &id);
 			NeighborDataset(NeighborDataSetImpl *impl);
 			~NeighborDataset();
 
@@ -42,11 +43,11 @@ namespace dtn
 			bool operator<(const NeighborDataset&) const;
 			bool operator>(const NeighborDataset&) const;
 
-			bool operator==(const size_t&) const;
-			bool operator<(const size_t&) const;
-			bool operator>(const size_t&) const;
+			bool operator==(const dtn::data::Number&) const;
+			bool operator<(const dtn::data::Number&) const;
+			bool operator>(const dtn::data::Number&) const;
 
-			size_t getId() const;
+			const dtn::data::Number &getId() const;
 
 			NeighborDataSetImpl& operator*();
 			const NeighborDataSetImpl& operator*() const;

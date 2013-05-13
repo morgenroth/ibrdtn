@@ -44,7 +44,7 @@ namespace dtn
 
 				virtual void eventBundleRefused() throw ();
 				virtual void eventBundleForwarded() throw ();
-				virtual void eventBundleAck(size_t ack) throw ();
+				virtual void eventBundleAck(const dtn::data::Length &ack) throw ();
 
 				const dtn::data::EID& getPeer() const;
 
@@ -82,7 +82,7 @@ namespace dtn
 				dtn::streams::StreamContactHeader _contact;
 
 				ibrcommon::Queue<dtn::data::Bundle> _sentqueue;
-				size_t _lastack;
+				uint64_t _lastack;
 
 				dtn::data::EID _eid;
 		};

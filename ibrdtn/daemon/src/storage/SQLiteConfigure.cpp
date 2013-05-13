@@ -43,7 +43,7 @@ namespace dtn
 
 				if (err != SQLITE_OK)
 				{
-					IBRCOMMON_LOGGER(error) << "SQLite configure failed: " << err << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("SQLiteConfigure", error) << "SQLite configure failed: " << err << IBRCOMMON_LOGGER_ENDL;
 					throw ibrcommon::Exception("unable to set serialized sqlite configuration");
 				}
 

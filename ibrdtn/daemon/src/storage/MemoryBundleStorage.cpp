@@ -37,7 +37,7 @@ namespace dtn
 	{
 		const std::string MemoryBundleStorage::TAG = "MemoryBundleStorage";
 
-		MemoryBundleStorage::MemoryBundleStorage(size_t maxsize)
+		MemoryBundleStorage::MemoryBundleStorage(const dtn::data::Length maxsize)
 		 : BundleStorage(maxsize), _list(this)
 		{
 		}
@@ -88,7 +88,7 @@ namespace dtn
 			// it is safe to delete this bundle now. (depending on the routing algorithm.)
 		}
 
-		size_t MemoryBundleStorage::count()
+		dtn::data::Size MemoryBundleStorage::count()
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 			return _bundles.size();
@@ -171,7 +171,7 @@ namespace dtn
 
 			// get size of the bundle
 			dtn::data::DefaultSerializer s(std::cout);
-			size_t size = s.getLength(bundle);
+			dtn::data::Length size = s.getLength(bundle);
 
 			// increment the storage size
 			allocSpace(size);
@@ -296,7 +296,7 @@ namespace dtn
 			_priority_index.erase(bundle);
 
 			// get the storage size of this bundle
-			size_t len = _bundle_lengths[bundle];
+			dtn::data::Length len = _bundle_lengths[bundle];
 			_bundle_lengths.erase(bundle);
 
 			// decrement the storage size

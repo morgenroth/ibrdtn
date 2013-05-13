@@ -147,22 +147,21 @@ namespace dtn
 			_groups.erase(endpoint);
 		}
 
-		void AbstractWorker::initialize(const string uri, const size_t cbhe, bool async)
+		void AbstractWorker::initialize(const std::string &uri, const dtn::data::Number &cbhe, bool async)
 		{
 			if (BundleCore::local.getScheme() == dtn::data::EID::CBHE_SCHEME)
 			{
-				std::stringstream cbhe_id; cbhe_id << cbhe;
-				_eid = BundleCore::local + BundleCore::local.getDelimiter() + cbhe_id.str();
+				_eid = BundleCore::local.add(BundleCore::local.getDelimiter() + cbhe.toString());
 			}
 			else
 			{
-				_eid = BundleCore::local + uri;
+				_eid = BundleCore::local.add(uri);
 			}
 
 			try {
 				if (async) _thread.start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start thread in AbstractWorker\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("AbstractWorker", error) << "initialize failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

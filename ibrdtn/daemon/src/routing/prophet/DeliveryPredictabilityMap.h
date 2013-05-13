@@ -26,14 +26,14 @@ namespace dtn
 		 */
 		class DeliveryPredictabilityMap : public NeighborDataSetImpl, public NodeHandshakeItem, public ibrcommon::Mutex {
 		public:
-			static const size_t identifier;
+			static const dtn::data::Number identifier;
 
 			DeliveryPredictabilityMap();
 			DeliveryPredictabilityMap(const size_t &time_unit, const float &beta, const float &gamma);
 			virtual ~DeliveryPredictabilityMap();
 
-			virtual size_t getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
-			virtual size_t getLength() const; ///< \see NodeHandshakeItem::getLength
+			virtual const dtn::data::Number& getIdentifier() const; ///< \see NodeHandshakeItem::getIdentifier
+			virtual dtn::data::Length getLength() const; ///< \see NodeHandshakeItem::getLength
 			virtual std::ostream& serialize(std::ostream& stream) const; ///< \see NodeHandshakeItem::serialize
 			virtual std::istream& deserialize(std::istream& stream); ///< \see NodeHandshakeItem::deserialize
 
@@ -77,7 +77,7 @@ namespace dtn
 			float _beta; ///< Weight of the transitive property of prophet.
 			float _gamma; ///< Determines how quickly predictabilities age.
 
-			size_t _lastAgingTime; ///< Timestamp when the map has been aged the last time.
+			dtn::data::Timestamp _lastAgingTime; ///< Timestamp when the map has been aged the last time.
 			size_t _time_unit; ///< time unit to be used in the network
 
 		};

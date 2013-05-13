@@ -25,6 +25,7 @@
 #define DICTIONARY_H_
 
 #include "ibrdtn/data/EID.h"
+#include "ibrdtn/data/Number.h"
 #include <list>
 #include <sstream>
 #include <list>
@@ -39,6 +40,14 @@ namespace dtn
 		class Dictionary
 		{
 		public:
+			class EntryNotFoundException : public dtn::InvalidDataException
+			{
+			public:
+				EntryNotFoundException(string what = "The requested dictionary entry is not available.") throw() : dtn::InvalidDataException(what)
+				{
+				};
+			};
+
 			/**
 			 * create a empty dictionary
 			 */
@@ -77,7 +86,7 @@ namespace dtn
 			/**
 			 * return the eid for the reference [scheme,ssp]
 			 */
-			EID get(uint64_t scheme, uint64_t ssp);
+			EID get(const Number &scheme, const Number &ssp);
 
 			/**
 			 * clear the dictionary
@@ -87,20 +96,21 @@ namespace dtn
 			/**
 			 * returns the size of the bytearray
 			 */
-			uint64_t getSize() const;
+			Size getSize() const;
 
 			/**
 			 * returns the references of the given eid
 			 */
-			pair<uint64_t, uint64_t> getRef(const EID &eid) const;
+			typedef std::pair<Number, Number> Reference;
+			Reference getRef(const EID &eid) const;
 
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj);
 			friend std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj);
 
 		private:
-			bool exists(const std::string) const;
-			void add(const std::string);
-			uint64_t get(const std::string) const;
+			bool exists(const std::string&) const;
+			void add(const std::string&);
+			Number get(const std::string&) const throw (EntryNotFoundException);
 
 			std::stringstream _bytestream;
 		};

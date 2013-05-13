@@ -282,7 +282,7 @@ public class DTalkieService extends Service {
 	@Override
 	public void onCreate()
 	{
-		Log.i(TAG, "Service created.");
+		// call onCreate of the super-class
 		super.onCreate();
 		
 		// create executor
@@ -319,6 +319,8 @@ public class DTalkieService extends Service {
 		} catch (SecurityException ex) {
 			_service_error = ServiceError.PERMISSION_NOT_GRANTED;
 		}
+		
+		Log.i(TAG, "Service created.");
 	}
 	
 	public ServiceError getServiceError() {

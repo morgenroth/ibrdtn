@@ -47,7 +47,7 @@ extern struct nla_policy ieee802154_policy[IEEE802154_ATTR_MAX + 1];
 
 namespace ibrcommon
 {
-	lowpansocket::lowpansocket(int panid, const vinterface &iface)
+	lowpansocket::lowpansocket(const uint16_t &panid, const vinterface &iface)
 	 : _panid(panid), _iface(iface)
 	{
 	}
@@ -99,7 +99,7 @@ namespace ibrcommon
 		}
 	}
 
-	size_t lowpansocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
+	ssize_t lowpansocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		struct sockaddr_storage clientAddress;
 		socklen_t clientAddressLength = sizeof(clientAddress);

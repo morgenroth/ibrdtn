@@ -36,6 +36,9 @@ namespace ibrcommon
 	class TimerCallback
 	{
 	public:
+		virtual ~TimerCallback() {
+		}
+
 		/**
 		 * This method will be called if the timer timed out.
 		 * @param timer The reference to the timer which timed out.

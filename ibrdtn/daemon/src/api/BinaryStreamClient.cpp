@@ -74,7 +74,7 @@ namespace dtn
 			else
 			{
 				// contact received event
-				_eid = BundleCore::local + BundleCore::local.getDelimiter() + header._localeid.getSSP();
+				_eid = BundleCore::local.add( BundleCore::local.getDelimiter() + header._localeid.getSSP() );
 			}
 
 			IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 20) << "new client connected, handle: " << reg.getHandle() << "; eid: "<< _eid.getString() << IBRCOMMON_LOGGER_ENDL;
@@ -84,7 +84,7 @@ namespace dtn
 
 		void BinaryStreamClient::eventConnectionDown() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(40) << "BinaryStreamClient::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 40) << "BinaryStreamClient::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
 			_client.getRegistration().unsubscribe(_eid);
 
@@ -124,7 +124,7 @@ namespace dtn
 			}
 		}
 
-		void BinaryStreamClient::eventBundleAck(size_t ack) throw ()
+		void BinaryStreamClient::eventBundleAck(const dtn::data::Length &ack) throw ()
 		{
 			_lastack = ack;
 		}
@@ -140,7 +140,7 @@ namespace dtn
 
 		void BinaryStreamClient::finally()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "BinaryStreamClient down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 60) << "BinaryStreamClient down" << IBRCOMMON_LOGGER_ENDL;
 
 			// abort blocking registrations
 			_client.getRegistration().abort();

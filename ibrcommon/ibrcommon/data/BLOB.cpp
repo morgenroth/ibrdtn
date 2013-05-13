@@ -49,7 +49,7 @@ namespace ibrcommon
 	{
 	}
 
-	std::ostream& BLOB::copy(std::ostream &output, std::istream &input, const size_t size, const size_t buffer_size)
+	std::ostream& BLOB::copy(std::ostream &output, std::istream &input, const std::streamsize size, const size_t buffer_size)
 	{
 		// read payload
 		std::vector<char> buffer(buffer_size);
@@ -82,14 +82,14 @@ namespace ibrcommon
 			// retry if the read failed
 			if (input.fail())
 			{
-				IBRCOMMON_LOGGER(warning) << "input stream failed [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BLOB::copy", warning) << "input stream failed [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied" << IBRCOMMON_LOGGER_ENDL;
 				input.clear();
 			}
 
 			// if the last write failed, then retry
 			if (output.fail())
 			{
-				IBRCOMMON_LOGGER(warning) << "output stream failed [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BLOB::copy", warning) << "output stream failed [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied" << IBRCOMMON_LOGGER_ENDL;
 				output.clear();
 			}
 			else
@@ -249,16 +249,16 @@ namespace ibrcommon
 	{
 	}
 
-	size_t MemoryBLOBProvider::StringBLOB::__get_size()
+	std::streamsize MemoryBLOBProvider::StringBLOB::__get_size()
 	{
 		// store current position
-		size_t pos = _stringstream.tellg();
+		std::streamoff pos = _stringstream.tellg();
 
 		_stringstream.seekg(0, std::ios_base::end);
-		size_t size = _stringstream.tellg();
+		std::streamoff size = _stringstream.tellg();
 		_stringstream.seekg(pos);
 
-		return size;
+		return static_cast<std::streamsize>(size);
 	}
 
 	void FileBLOB::clear()
@@ -300,7 +300,7 @@ namespace ibrcommon
 		BLOB::_filelimit.post();
 	}
 
-	size_t FileBLOB::__get_size()
+	std::streamsize FileBLOB::__get_size()
 	{
 		return _file.size();
 	}
@@ -315,7 +315,7 @@ namespace ibrcommon
 
 		if (!_filestream.is_open())
 		{
-			IBRCOMMON_LOGGER(error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("TmpFileBLOB::clear", error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
 			throw ibrcommon::CanNotOpenFileException(_tmpfile);
 		}
 	}
@@ -348,7 +348,7 @@ namespace ibrcommon
 
 		if (!_filestream.is_open())
 		{
-			IBRCOMMON_LOGGER(error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("TmpFileBLOB::open", error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
 			throw ibrcommon::CanNotOpenFileException(_tmpfile);
 		}
 	}
@@ -364,7 +364,7 @@ namespace ibrcommon
 		BLOB::_filelimit.post();
 	}
 
-	size_t FileBLOBProvider::TmpFileBLOB::__get_size()
+	std::streamsize FileBLOBProvider::TmpFileBLOB::__get_size()
 	{
 		return _tmpfile.size();
 	}

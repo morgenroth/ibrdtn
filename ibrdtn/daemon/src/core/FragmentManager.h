@@ -85,7 +85,7 @@ namespace dtn
 			 * @param id
 			 * @param offset
 			 */
-			static void setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, size_t abs_offset);
+			static void setOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id, const dtn::data::Length &abs_offset) throw ();
 
 			/**
 			 * Get the offset of a transmission
@@ -93,7 +93,7 @@ namespace dtn
 			 * @param id
 			 * @return
 			 */
-			static size_t getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id);
+			static dtn::data::Length getOffset(const dtn::data::EID &peer, const dtn::data::BundleID &id) throw ();
 
 			/**
 			 * Split-up a bundle into several pieces
@@ -101,7 +101,7 @@ namespace dtn
 			 * @param maxPayloadLength payload length maximum per fragment
 			 * @param fragments list of all fragments
 			 */
-			static void split(const dtn::data::Bundle &bundle, const size_t maxPayloadLength, std::list<dtn::data::Bundle> &fragments) throw (FragmentationAbortedException);
+			static void split(const dtn::data::Bundle &bundle, const dtn::data::Length &maxPayloadLength, std::list<dtn::data::Bundle> &fragments) throw (FragmentationAbortedException);
 
 		private:
 			class Transmission
@@ -115,12 +115,12 @@ namespace dtn
 
 				dtn::data::EID peer;
 				dtn::data::BundleID id;
-				size_t offset;
-				size_t expires;
+				dtn::data::Length offset;
+				dtn::data::Timestamp expires;
 			};
 
-			static void expire_offsets(size_t timestamp);
-			static size_t get_payload_offset(const dtn::data::Bundle &bundle, size_t abs_offset);
+			static void expire_offsets(const dtn::data::Timestamp &timestamp);
+			static dtn::data::Length get_payload_offset(const dtn::data::Bundle &bundle, const dtn::data::Length &abs_offset) throw ();
 
 			/**
 			 * adds all necessary blocks from the bundle to the fragment

@@ -148,11 +148,11 @@ static long ctrl(BIO *bio, int cmd, long  num, void *)
 static int bread(BIO *bio, char *buf, int len)
 {
 	iostream *stream = reinterpret_cast<iostream*>(bio->ptr);
-	streamsize num_bytes = bio->num;
+	int num_bytes = bio->num;
 
 	try{
 		/* make sure to read at least 1 byte and then read as much as we can */
-		num_bytes = stream->read(buf, 1).readsome(buf+1, len-1) + 1;
+		num_bytes = static_cast<int>( stream->read(buf, 1).readsome(buf+1, len-1) + 1 );
 	} catch(ios_base::failure &ex){
 		/* ignore, bio->num will be returned and indicate the error */
 	}

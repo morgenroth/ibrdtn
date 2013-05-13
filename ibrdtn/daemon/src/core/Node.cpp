@@ -35,7 +35,7 @@ namespace dtn
 {
 	namespace core
 	{
-		Node::URI::URI(const Node::Type t, const Node::Protocol p, const std::string &uri, const size_t to, const int prio)
+		Node::URI::URI(const Node::Type t, const Node::Protocol p, const std::string &uri, const dtn::data::Number &to, const int prio)
 		 : type(t), protocol(p), value(uri), expire((to == 0) ? 0 : dtn::utils::Clock::getTime() + to), priority(prio)
 		{
 		}
@@ -102,7 +102,7 @@ namespace dtn
 			return stream;
 		}
 
-		Node::Attribute::Attribute(const Type t, const std::string &n, const std::string &v, const size_t to, const int p)
+		Node::Attribute::Attribute(const Type t, const std::string &n, const std::string &v, const dtn::data::Number &to, const int p)
 		 : type(t), name(n), value(v), expire((to == 0) ? 0 : dtn::utils::Clock::getTime() + to), priority(p)
 		{
 		}
@@ -302,7 +302,7 @@ namespace dtn
 			_attr_list.clear();
 		}
 
-		size_t Node::size() const
+		dtn::data::Size Node::size() const
 		{
 			return _uri_list.size() + _attr_list.size();
 		}
@@ -412,7 +412,7 @@ namespace dtn
 		bool Node::expire()
 		{
 			// get the current timestamp
-			size_t ct = dtn::utils::Clock::getTime();
+			dtn::data::Timestamp ct = dtn::utils::Clock::getTime();
 
 			// walk though all Attribute elements and remove the expired ones
 			{
@@ -545,6 +545,7 @@ namespace dtn
 					case NODE_CONNECTED: return true;
 					case NODE_DISCOVERED: return true;
 					case NODE_STATIC_LOCAL: return true;
+					case NODE_P2P_DIALUP: return true;
 					default: break;
 					}
 				}
@@ -569,6 +570,9 @@ namespace dtn
 				case NODE_STATIC_LOCAL:
 					return true;
 
+				case NODE_P2P_DIALUP:
+					return true;
+
 				default:
 					return false;
 				}
@@ -591,13 +595,13 @@ namespace dtn
 			for (std::set<Node::Attribute>::const_iterator iter = node._attr_list.begin(); iter != node._attr_list.end(); ++iter)
 			{
 				const Node::Attribute &attr = (*iter);
-				stream << attr << "#expire=" << attr.expire << "; ";
+				stream << attr << "#expire=" << attr.expire.toString() << "; ";
 			}
 
 			for (std::set<Node::URI>::const_iterator iter = node._uri_list.begin(); iter != node._uri_list.end(); ++iter)
 			{
 				const Node::URI &u = (*iter);
-				stream << u << "#expire=" << u.expire << "; ";
+				stream << u << "#expire=" << u.expire.toString() << "; ";
 			}
 			stream << " ]";
 
