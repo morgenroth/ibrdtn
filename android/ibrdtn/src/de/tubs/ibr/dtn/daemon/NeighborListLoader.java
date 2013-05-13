@@ -21,6 +21,7 @@ public class NeighborListLoader extends AsyncTaskLoader<List<Node>> {
 	public NeighborListLoader(Context context, DTNService service) {
 		super(context);
 		mService = service;
+		setUpdateThrottle(250);
 	}
 	
 	@Override
@@ -83,7 +84,7 @@ public class NeighborListLoader extends AsyncTaskLoader<List<Node>> {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (de.tubs.ibr.dtn.Intent.NEIGHBOR.equals(intent.getAction())) {
-                NeighborListLoader.this.forceLoad();
+            	onContentChanged();
             }
         }
     };

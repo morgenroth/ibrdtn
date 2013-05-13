@@ -85,9 +85,13 @@ public class LogLoader extends Loader<LogMessage> {
 
     @Override
     protected void onReset() {
-        super.onReset();
-
+    	super.onReset();
         onStopLoading();
+        
+    	if (mLogcatTask != null) {
+    		mLogcatTask.cancel(false);
+    		mLogcatTask = null;
+    	}
     }
 
     @Override
@@ -95,15 +99,4 @@ public class LogLoader extends Loader<LogMessage> {
         // start thread that continuously gets logcat's output
         mLogcatTask = new LogcatTask().execute();
     }
-
-    @Override
-    protected void onStopLoading() {
-        mLogcatTask.cancel(false);
-    }
-
-    @Override
-    public void deliverResult(LogMessage data) {
-        super.deliverResult(data);
-    }
-
 }

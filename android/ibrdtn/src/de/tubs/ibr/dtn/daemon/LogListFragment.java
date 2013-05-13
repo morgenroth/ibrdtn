@@ -23,30 +23,18 @@
 
 package de.tubs.ibr.dtn.daemon;
 
-import java.util.LinkedList;
-import java.util.List;
-
-import de.tubs.ibr.dtn.R;
 import android.annotation.SuppressLint;
-import android.content.Context;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
-
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.AbsListView;
+import android.widget.ListView;
+import de.tubs.ibr.dtn.R;
 
 public class LogListFragment extends ListFragment implements
         LoaderManager.LoaderCallbacks<LogMessage> {
@@ -58,8 +46,6 @@ public class LogListFragment extends ListFragment implements
     private LogListAdapter mAdapter = null;
     private boolean mPlayLog = true;
     private MenuItem mPlayItem;
-
-    private static final int MAX_LINES = 600;
 
     @SuppressLint("NewApi")
     @Override
@@ -95,6 +81,9 @@ public class LogListFragment extends ListFragment implements
 
         // set listview adapter
         setListAdapter(mAdapter);
+        
+        // Start out with a progress indicator.
+        setListShown(false);
     }
 
     @Override
@@ -140,6 +129,7 @@ public class LogListFragment extends ListFragment implements
     private void pauseLog() {
         mPlayLog = false;
 
+        // pause the loader
         getLoaderManager().destroyLoader(LOADER_ID);
 
         getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs_paused));
@@ -154,6 +144,7 @@ public class LogListFragment extends ListFragment implements
     private void playLog() {
         mPlayLog = true;
 
+        // initialize the loader
         getLoaderManager().initLoader(LOADER_ID, null, this);
 
         getActivity().getWindow().setTitle(getResources().getString(R.string.list_logs));
@@ -193,13 +184,11 @@ public class LogListFragment extends ListFragment implements
 
     @Override
     public void onLoadFinished(Loader<LogMessage> loader, LogMessage data) {
-        scrollToBottom();
-
-        mAdapter.add(data);
-        if (mAdapter.getCount() > MAX_LINES) {
-            mAdapter.remove(0);
-        }
-        mAdapter.notifyDataSetChanged();
+    	synchronized (mAdapter) {
+    		mAdapter.add(data);
+    	}
+    	
+    	scrollToBottom();
 
         // The list should now be shown.
         if (isResumed()) {
@@ -211,101 +200,5 @@ public class LogListFragment extends ListFragment implements
 
     @Override
     public void onLoaderReset(Loader<LogMessage> loader) {
-    	mAdapter.clear();
     }
-
-    private class LogListAdapter extends BaseAdapter {
-        private LayoutInflater inflater = null;
-        private List<LogMessage> list = new LinkedList<LogMessage>();
-        private Context context;
-
-        private class ViewHolder {
-            public ImageView imageMark;
-            public TextView textDate;
-            public TextView textTag;
-            public TextView textLog;
-            public LogMessage msg;
-        }
-
-        public LogListAdapter(Context context) {
-            this.context = context;
-            this.inflater = LayoutInflater.from(context);
-        }
-
-        public int getCount() {
-            return list.size();
-        }
-
-        public void add(LogMessage msg) {
-            list.add(msg);
-        }
-
-        public void remove(int position) {
-            list.remove(position);
-        }
-        
-        public void clear() {
-        	list.clear();
-        }
-
-        public Object getItem(int position) {
-            return list.get(position);
-        }
-
-        public long getItemId(int position) {
-            return position;
-        }
-
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ViewHolder holder;
-
-            if (convertView == null) {
-                convertView = this.inflater.inflate(R.layout.log_item, null, true);
-                holder = new ViewHolder();
-                holder.imageMark = (ImageView) convertView.findViewById(R.id.imageMark);
-                holder.textDate = (TextView) convertView.findViewById(R.id.textDate);
-                holder.textTag = (TextView) convertView.findViewById(R.id.textTag);
-                holder.textLog = (TextView) convertView.findViewById(R.id.textLog);
-                convertView.setTag(holder);
-            } else {
-                holder = (ViewHolder) convertView.getTag();
-            }
-
-            holder.msg = list.get(position);
-
-            if (holder.msg.level.equals("E")) {
-                holder.imageMark.setImageLevel(1);
-                holder.textTag.setTextColor(context.getResources().getColor(R.color.light_red));
-            } else if (holder.msg.level.equals("W")) {
-                holder.imageMark.setImageLevel(3);
-                holder.textTag.setTextColor(context.getResources().getColor(R.color.light_violett));
-            } else if (holder.msg.level.equals("I")) {
-                holder.imageMark.setImageLevel(4);
-                holder.textTag.setTextColor(context.getResources().getColor(R.color.light_green));
-            } else if (holder.msg.level.equals("D")) {
-                holder.imageMark.setImageLevel(5);
-                holder.textTag.setTextColor(context.getResources().getColor(R.color.light_yellow));
-            } else {
-                holder.imageMark.setImageLevel(0);
-                holder.textTag.setTextColor(Color.WHITE);
-            }
-
-            holder.textDate.setText(holder.msg.date);
-            holder.textLog.setText(holder.msg.msg);
-
-            String tag;
-            if (LogMessage.LEVEL_LABELS.containsKey(holder.msg.level)) {
-                tag = LogMessage.LEVEL_LABELS.get(holder.msg.level);
-            } else {
-                tag = holder.msg.level;
-            }
-
-            //holder.textTag.setText(tag + " (" + holder.msg.tag + ")");
-            holder.textTag.setText(holder.msg.tag);
-
-            return convertView;
-        }
-
-    };
-
 }

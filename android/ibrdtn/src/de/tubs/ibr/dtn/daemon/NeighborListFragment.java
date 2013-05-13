@@ -22,7 +22,6 @@
 
 package de.tubs.ibr.dtn.daemon;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import android.content.ComponentName;
@@ -35,13 +34,8 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.Node;
@@ -68,11 +62,11 @@ public class NeighborListFragment extends ListFragment implements
         	if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
 
         	// initialize the loader
-            NeighborListFragment.this.getLoaderManager().initLoader(LOADER_ID,  null, NeighborListFragment.this);
+            getLoaderManager().initLoader(LOADER_ID,  null, NeighborListFragment.this);
         }
 
         public void onServiceDisconnected(ComponentName name) {
-        	NeighborListFragment.this.getLoaderManager().destroyLoader(LOADER_ID);
+        	getLoaderManager().destroyLoader(LOADER_ID);
         	
             synchronized(mServiceLock) {
             	mService = null;
@@ -126,83 +120,9 @@ public class NeighborListFragment extends ListFragment implements
 
         // set listview adapter
         setListAdapter(mAdapter);
-    }
-
-    private class NeighborListAdapter extends BaseAdapter {
-        private LayoutInflater inflater = null;
-        private List<Node> list = new LinkedList<Node>();
-
-        private class ViewHolder {
-            public ImageView imageIcon;
-            public TextView textName;
-            public Node node;
-        }
-
-        public NeighborListAdapter(Context context) {
-            this.inflater = LayoutInflater.from(context);
-        }
-
-        public int getCount() {
-            return list.size();
-        }
-
-        public void add(Node n) {
-            list.add(n);
-        }
-
-        public void clear() {
-            list.clear();
-        }
-
-        @SuppressWarnings("unused")
-		public void remove(int position) {
-            list.remove(position);
-        }
-
-        public Object getItem(int position) {
-            return list.get(position);
-        }
-
-        public long getItemId(int position) {
-            return position;
-        }
-
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ViewHolder holder;
-
-            if (convertView == null) {
-                convertView = this.inflater.inflate(R.layout.neighborlist_item, null, true);
-                holder = new ViewHolder();
-                holder.imageIcon = (ImageView) convertView.findViewById(R.id.imageIcon);
-                holder.textName = (TextView) convertView.findViewById(R.id.textName);
-                convertView.setTag(holder);
-            } else {
-                holder = (ViewHolder) convertView.getTag();
-            }
-
-            holder.node = list.get(position);
-
-            if (holder.node.type.equals("NODE_P2P")) {
-                holder.imageIcon.setBackgroundColor(getResources().getColor(R.color.blue));
-                holder.imageIcon.setImageResource(R.drawable.ic_p2p);
-            } else if (holder.node.type.equals("NODE_DISCOVERED")) {
-                holder.imageIcon.setBackgroundColor(getResources().getColor(R.color.blue));
-                holder.imageIcon.setImageResource(R.drawable.ic_wifi);
-            } else if (holder.node.type.equals("NODE_CONNECTED")) {
-                holder.imageIcon.setBackgroundColor(getResources().getColor(R.color.green));
-                holder.imageIcon.setImageResource(R.drawable.ic_node);
-            } else if (holder.node.type.equals("NODE_INTERNET")) {
-                holder.imageIcon.setBackgroundColor(getResources().getColor(R.color.dark_gray));
-                holder.imageIcon.setImageResource(R.drawable.ic_world);
-            } else {
-                holder.imageIcon.setBackgroundColor(getResources().getColor(R.color.yellow));
-                holder.imageIcon.setImageResource(R.drawable.ic_node);
-            }
-
-            holder.textName.setText(holder.node.endpoint.toString());
-
-            return convertView;
-        }  
+        
+        // Start out with a progress indicator.
+        setListShown(false);
     }
 
 	@Override
@@ -213,19 +133,18 @@ public class NeighborListFragment extends ListFragment implements
 	@Override
 	public void onLoadFinished(Loader<List<Node>> loader, List<Node> neighbors) {
         synchronized (mAdapter) {
-            // clear all data
-            mAdapter.clear();
-
-            for (Node n : neighbors) {
-                mAdapter.add(n);
-            }
-            
-            mAdapter.notifyDataSetChanged();
+        	mAdapter.swapList(neighbors);
+        }
+        
+        // The list should now be shown.
+        if (isResumed()) {
+            setListShown(true);
+        } else {
+            setListShownNoAnimation(true);
         }
 	}
 
 	@Override
 	public void onLoaderReset(Loader<List<Node>> loader) {
-		mAdapter.clear();
-	};
+	}
 }
