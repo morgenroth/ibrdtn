@@ -29,6 +29,9 @@ namespace dtn
 			// insert bundle id into database
 			_database.add_seen_bundle(bundle);
 
+			//update expiretime, if necessary
+			new_expire_time(bundle.expiretime);
+
 			// add bundle to the bloomfilter
 			_bf.insert(bundle.toString());
 		}
@@ -56,7 +59,8 @@ namespace dtn
 
 		void SQLiteBundleSet::expire(const dtn::data::Timestamp timestamp) throw ()
 		{
-			bool commit = false;
+			//only write changes in bloomfilter, if it's time to do it
+			bool commit = _next_expiration <= timestamp;
 
 			// we can not expire bundles if we have no idea of time
 			if (timestamp == 0) return;
@@ -68,12 +72,10 @@ namespace dtn
 			if (_listener != NULL)
 				_listener->eventBundleExpired(dtn::data::MetaBundle()); //TODO was sinnvolles übergeben
 
-			//wenn kl. expiretime überschritten > commit
 			if (commit)
 			{
 				//TODO Idee: strings mit SQL aufbauen -> performanter
 
-				//kleinste expiretime merken, aufpassen bei add!
 				// rebuild the bloom-filter
 				_bf.clear();
 				std::set<dtn::data::MetaBundle> bundles = _database.get_all_seen_bundles();
@@ -148,6 +150,13 @@ namespace dtn
 			_consistent = false;
 
 			return stream;
+		}
+		void SQLiteBundleSet::new_expire_time(const dtn::data::Timestamp &ttl) throw ()
+		{
+			if (_next_expiration == 0 || ttl < _next_expiration)
+			{
+				_next_expiration = ttl;
+			}
 		}
 	} /* namespace data */
 } /* namespace dtn */

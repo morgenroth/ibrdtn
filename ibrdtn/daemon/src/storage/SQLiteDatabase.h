@@ -301,6 +301,7 @@ namespace dtn
 
 			/*** END: methods for unit-testing ***/
 
+
 		private:
 			/**
 			 * Retrieve meta data from the database and put them into a meta bundle structure.
@@ -332,13 +333,6 @@ namespace dtn
 			 */
 			void update_expire_time() throw (SQLiteQueryException);
 
-			/**
-			 * lower the next expire time if the ttl is lower than the current expire time
-			 * @param ttl
-			 */
-			void new_expire_time(const dtn::data::Timestamp &ttl) throw ();
-			void reset_expire_time() throw ();
-			const dtn::data::Timestamp& get_expire_time() const throw ();
 
 			void set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
 			void get_bundleid(Statement &st, dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
@@ -368,6 +362,13 @@ namespace dtn
 
 			// next expiration
 			dtn::data::Timestamp _next_expiration;
+			/**
+			 * lower the next expire time if the ttl is lower than the current expire time
+			 * @param ttl
+			 */
+			void new_expire_time(const dtn::data::Timestamp &ttl) throw ();
+			void reset_expire_time() throw ();
+			const dtn::data::Timestamp& get_expire_time() const throw ();
 
 			// listener for events on the database
 			DatabaseListener &_listener;

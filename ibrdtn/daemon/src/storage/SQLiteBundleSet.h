@@ -59,6 +59,9 @@ namespace dtn
 			bool _consistent;
 
 			dtn::storage::SQLiteDatabase& _database;
+
+			dtn::data::Timestamp _next_expiration;
+			void new_expire_time(const dtn::data::Timestamp &ttl) throw();
 		};
 	} /* namespace data */
 } /* namespace dtn */
