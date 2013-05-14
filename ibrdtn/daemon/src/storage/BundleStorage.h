@@ -26,6 +26,7 @@
 #include <storage/BundleResult.h>
 #include <storage/BundleIndex.h>
 #include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrdtn/data/CustodySignalBlock.h>
@@ -160,6 +161,7 @@ namespace dtn
 			 */
 			void detach(dtn::storage::BundleIndex *index);
 
+			dtn::data::BundleSet createSet();
 
 			/*** BEGIN: methods for unit-testing ***/
 

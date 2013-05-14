@@ -140,6 +140,8 @@ namespace dtn
 			void eventBundleExpired(const dtn::data::BundleID &id) throw ();
 			void iterateDatabase(const dtn::data::MetaBundle &bundle);
 
+			dtn::data::BundleSet createSet();
+
 			/*** BEGIN: methods for unit-testing ***/
 
 			/**
@@ -154,6 +156,7 @@ namespace dtn
 			virtual void setFaulty(bool mode);
 
 			/*** END: methods for unit-testing ***/
+
 
 		protected:
 			virtual void componentRun() throw ();
@@ -300,9 +303,11 @@ namespace dtn
 
 			ibrcommon::RWMutex _global_lock;
 
+			SQLiteBundleSetFactory _setFactory;
+
 //			ibrcommon::AccessLockContext _al_context;
 
-			SQLiteBundleSetFactory _setFactory;
+
 		};
 	}
 }

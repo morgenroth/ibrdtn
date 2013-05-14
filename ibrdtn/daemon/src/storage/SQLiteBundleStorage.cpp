@@ -609,6 +609,11 @@ namespace dtn
 			eventBundleRemoved(id);
 		}
 
+		dtn::data::BundleSet SQLiteBundleStorage::createSet(){
+				//TODO keine default werte verwenden
+				return _setFactory.create(NULL,1024);
+		}
+
 		void SQLiteBundleStorage::wait()
 		{
 			_tasks.wait(ibrcommon::Queue<Task*>::QUEUE_EMPTY);

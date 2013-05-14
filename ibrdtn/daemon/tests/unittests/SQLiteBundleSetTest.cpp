@@ -22,9 +22,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(SQLiteBundleSetTest);
 void SQLiteBundleSetTest::containTest(void){
 	ExpiredBundleCounter ebc;
 
-	/*
-	dtn::data::BundleSet l =_sqliteStorage->createBundleSet(&ebc,1024);
-	//TODO -> factory
+	dtn::data::BundleSet l = _sqliteStorage->createSet();
 
 	dtn::data::Bundle b1;
 	b1.source = dtn::data::EID("dtn:test");
@@ -63,11 +61,9 @@ void SQLiteBundleSetTest::containTest(void){
 
 	CPPUNIT_ASSERT(l.has(b1) == true);
 	CPPUNIT_ASSERT(l.has(b2) == true);
-	*/
 }
 void SQLiteBundleSetTest::orderTest(void){
-	/*
-	dtn::data::BundleSet l =_sqliteStorage->createBundleSet();
+	dtn::data::BundleSet l = _sqliteStorage->createSet();
 
 	CPPUNIT_ASSERT(l.size() == 0);
 
@@ -89,7 +85,7 @@ void SQLiteBundleSetTest::orderTest(void){
 		l.expire(i);
 	}
 
-	CPPUNIT_ASSERT(l.size() == 0);*/
+	CPPUNIT_ASSERT(l.size() == 0);
 }
 
 
