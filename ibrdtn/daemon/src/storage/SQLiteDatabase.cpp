@@ -526,7 +526,7 @@ namespace dtn
 						int fragmenetoffset = sqlite3_column_int64(*st,3);
 
 						dtn::data::BundleID id(dtn::data::EID(source_id),timestamp,sequencenumber,fragmenetoffset);
-						dtn::data::MetaBundle bundle(id);
+						dtn::data::MetaBundle bundle = dtn::data::MetaBundle::mockUp(id);
 
 						ret.insert(bundle);
 					}

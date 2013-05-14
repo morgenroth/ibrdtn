@@ -51,7 +51,7 @@ namespace dtn
 				// the bundles set. This happen if the MemoryBundleSet gets deserialized.
 				if (!_consistent) return true;
 
-				std::set<dtn::data::MetaBundle>::iterator iter = _bundles.find(bundle);
+				std::set<dtn::data::MetaBundle>::iterator iter = _bundles.find(dtn::data::MetaBundle::mockUp(bundle));
 				return (iter != _bundles.end());
 			}
 
