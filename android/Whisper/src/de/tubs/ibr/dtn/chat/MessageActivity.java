@@ -1,6 +1,7 @@
 package de.tubs.ibr.dtn.chat;
 
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 
@@ -8,9 +9,16 @@ public class MessageActivity extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        int screenSize = (getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK);
+        int orientation = getResources().getConfiguration().orientation;
 
-        if (getResources().getConfiguration().orientation
-                == Configuration.ORIENTATION_LANDSCAPE) {
+        if (
+        		(orientation == Configuration.ORIENTATION_LANDSCAPE) &&
+        		(screenSize == Configuration.SCREENLAYOUT_SIZE_LARGE) &&
+        		(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+        	)
+        {
             // If the screen is now in landscape mode, we can show the
             // dialog in-line with the list so we don't need this activity.
             finish();

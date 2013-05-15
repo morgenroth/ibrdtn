@@ -209,11 +209,6 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 	@Override
 	public void onResume() {
 		super.onResume();
-	}
-	
-	@Override
-	public void onStart() {
-		super.onStart();
 		
 		// Establish a connection with the service.  We use an explicit
 		// class name because we want a specific service implementation that
@@ -221,16 +216,26 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 		// supporting component replacement by other applications).
 		getActivity().bindService(new Intent(getActivity(), ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
 	}
-
+	
 	@Override
-	public void onStop() {
-		super.onStop();
-		
+	public void onPause() {
 		// unbind from service
 		if (mBound) {
 			getActivity().unbindService(mConnection);
 			getLoaderManager().destroyLoader(LOADER_ID);
 		}
+		
+		super.onPause();
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
 	}
 
 	@Override

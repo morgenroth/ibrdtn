@@ -157,14 +157,6 @@ public class MessageFragment extends Fragment {
 	@Override
 	public void onStart() {
 		super.onStart();
-		
-		if (getShownBuddy() != null) {
-			// Establish a connection with the service.  We use an explicit
-			// class name because we want a specific service implementation that
-			// we know will be running in our own process (and thus won't be
-			// supporting component replacement by other applications).
-			getActivity().bindService(new Intent(getActivity(), ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
-		}
 	}
 
 	@Override
@@ -180,13 +172,6 @@ public class MessageFragment extends Fragment {
 	@Override
 	public void onStop() {
 		super.onStop();
-		
-		// unbind from service
-		if (mBound) {
-			getActivity().unbindService(mConnection);
-			getLoaderManager().destroyLoader(MESSAGE_LOADER_ID);
-			getLoaderManager().destroyLoader(BUDDY_LOADER_ID);
-		}
 	}
 
 	@Override
@@ -205,6 +190,13 @@ public class MessageFragment extends Fragment {
 			}
 		}
 		
+		// unbind from service
+		if (mBound) {
+			getActivity().unbindService(mConnection);
+			getLoaderManager().destroyLoader(MESSAGE_LOADER_ID);
+			getLoaderManager().destroyLoader(BUDDY_LOADER_ID);
+		}
+		
 		super.onPause();
 	}
 
@@ -216,5 +208,13 @@ public class MessageFragment extends Fragment {
 
 		// set the current visible buddy
 		ChatService.setVisible(buddyId);
+		
+		if (buddyId != null) {
+			// Establish a connection with the service.  We use an explicit
+			// class name because we want a specific service implementation that
+			// we know will be running in our own process (and thus won't be
+			// supporting component replacement by other applications).
+			getActivity().bindService(new Intent(getActivity(), ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+		}
 	}
 }
