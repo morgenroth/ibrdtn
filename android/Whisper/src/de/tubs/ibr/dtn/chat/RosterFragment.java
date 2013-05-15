@@ -200,10 +200,10 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
-		// get buddy id of position
-		RosterItem ritem = (RosterItem)getListView().getChildAt(position);
-
-		showMessages(ritem.getBuddyId());
+		// get buddy of position
+		RosterItem ritem = (RosterItem)v;
+		if (ritem != null)
+			showMessages(ritem.getBuddyId());
 	}
     
 	@Override
