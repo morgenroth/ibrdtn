@@ -82,10 +82,6 @@ public class MessageComposer extends LinearLayout {
 		mTextMessage.setEnabled(enabled);
 		mButton.setEnabled(enabled);
 		super.setEnabled(enabled);
-		
-		if (enabled) {
-			mTextMessage.requestFocus();
-		}
 	}
 	
 	private void flushTextBox()
@@ -101,7 +97,6 @@ public class MessageComposer extends LinearLayout {
 					
 			// clear the text field
 			mTextMessage.setText("");
-			mTextMessage.requestFocus();
 		}
 	}
 }

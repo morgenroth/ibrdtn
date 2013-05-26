@@ -32,7 +32,9 @@
         
         <activity
             android:name=".MessageActivity"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".MainActivity"
+			android:configChanges="orientation|screenSize|keyboardHidden"
+			android:windowSoftInputMode="stateHidden|adjustResize">
             <meta-data
 		        android:name="android.support.PARENT_ACTIVITY"
 		        android:value=".MainActivity"/>
