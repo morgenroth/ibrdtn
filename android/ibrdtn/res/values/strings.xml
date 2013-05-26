@@ -41,6 +41,8 @@
     <string name="service_running">Service running</string>
     <string name="development">Development</string>
     <string name="runasbackgroundservice">Activate daemon</string>
+    <string name="runasforegroundservice">Foreground Service</string>
+    <string name="runasforegroundservice_description">Keep the service active in background</string>
     <string name="wait">Please wait</string>
     <string name="clearingstorage">Clearing storage.</string>
     <string name="security">Security</string>

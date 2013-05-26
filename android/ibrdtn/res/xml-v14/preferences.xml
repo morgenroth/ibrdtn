@@ -18,6 +18,12 @@
             android:summary="@string/routing_description"
             android:title="@string/routing" >
         </ListPreference>
+        
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="RunAsForegroundService"
+            android:title="@string/runasforegroundservice"
+            android:summary="@string/runasforegroundservice_description" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="prefcat_connection"
