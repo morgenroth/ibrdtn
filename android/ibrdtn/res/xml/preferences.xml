@@ -3,7 +3,6 @@
 
     <PreferenceCategory android:title="@string/service" >
         <CheckBoxPreference
-            android:disableDependentsState="true"
             android:key="enabledSwitch"
             android:title="@string/runasbackgroundservice" />
     </PreferenceCategory>
