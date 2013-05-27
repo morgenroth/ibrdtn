@@ -25,6 +25,7 @@
 #include <streambuf>
 #include <iostream>
 #include <memory>
+#include <vector>
 #include <openssl/ssl.h>
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/data/File.h"
@@ -40,6 +41,8 @@ namespace ibrcommon
 	 */
 	class TLSStream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
 	{
+		static const std::string TAG;
+
 	public:
 		typedef std::char_traits<char> traits;
 
@@ -107,8 +110,6 @@ namespace ibrcommon
 
 	private:
 		std::string log_error_msg(int errnumber);
-		void log_error(std::string tag, int errnumber);
-		void log_debug(std::string tag, int errnumber);
 
 		static bool _initialized;
 		/* this second initialized variable is needed, because init() can fail and SSL_library_init() is not reentrant. */
@@ -119,9 +120,9 @@ namespace ibrcommon
 		ibrcommon::Mutex _activation_lock;
 
 		// Input buffer
-		char *in_buf_;
+		std::vector<char> in_buf_;
 		// Output buffer
-		char *out_buf_;
+		std::vector<char> out_buf_;
 
 		std::iostream *_stream;
 		/* indicates if this node is the server in the underlying tcp connection */

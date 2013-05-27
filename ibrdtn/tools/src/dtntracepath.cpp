@@ -23,7 +23,6 @@
 #include <ibrdtn/data/StatusReportBlock.h>
 #include <ibrdtn/data/TrackingBlock.h>
 #include "ibrdtn/api/Client.h"
-#include "ibrdtn/api/StringBundle.h"
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/net/socketstream.h>
 #include "ibrcommon/thread/Mutex.h"
@@ -35,14 +34,15 @@
 #include <sstream>
 #include <unistd.h>
 
-class ProbeBundle : public dtn::api::StringBundle
+class ProbeBundle : public dtn::data::Bundle
 {
 public:
-	ProbeBundle(const dtn::data::EID &destination, bool tracking)
-	 : dtn::api::StringBundle(destination)
+	ProbeBundle(const dtn::data::EID &d, bool tracking)
 	{
+		destination = d;
+
 		if (tracking) {
-			_b.push_back<dtn::data::TrackingBlock>();
+			push_back<dtn::data::TrackingBlock>();
 		}
 	}
 
@@ -51,11 +51,11 @@ public:
 	}
 };
 
-class TrackingBundle : public dtn::api::Bundle
+class TrackingBundle : public dtn::data::Bundle
 {
 public:
-	TrackingBundle(const dtn::api::Bundle &apib)
-	 : Bundle(apib)
+	TrackingBundle(const dtn::data::Bundle &apib)
+	 : dtn::data::Bundle(apib)
 	{
 	}
 
@@ -63,18 +63,18 @@ public:
 	}
 
 	bool isAdmRecord() {
-		return (_b.get(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD));
+		return (get(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD));
 	}
 
 	dtn::data::StatusReportBlock getStatusReport() const {
 		StatusReportBlock srb;
-		const dtn::data::PayloadBlock &payload = _b.getBlock<dtn::data::PayloadBlock>();
+		const dtn::data::PayloadBlock &payload = find<dtn::data::PayloadBlock>();
 		srb.read(payload);
 		return srb;
 	}
 
 	const dtn::data::TrackingBlock& getTrackingBlock() const {
-		return _b.getBlock<dtn::data::TrackingBlock>();
+		return find<dtn::data::TrackingBlock>();
 	}
 };
 
@@ -121,11 +121,11 @@ class Tracer : public dtn::api::Client
 			}
 		}
 
-		void formattedLog(size_t i, const dtn::api::Bundle &b, const ibrcommon::TimeMeasurement &tm)
+		void formattedLog(size_t i, const dtn::data::Bundle &b, const ibrcommon::TimeMeasurement &tm)
 		{
 			TrackingBundle tb(b);
 
-			const std::string source = b.getSource().getString();
+			const std::string source = b.source.getString();
 
 			// format time data
 			std::stringstream time;
@@ -134,32 +134,32 @@ class Tracer : public dtn::api::Client
 			if (tb.isAdmRecord()) {
 				dtn::data::StatusReportBlock sr = tb.getStatusReport();
 
-				if (sr._status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE) {
+				if (sr.status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE) {
 					std::stringstream type;
 					type << "forwarded";
 					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-					printReason(sr._reasoncode);
+					printReason(sr.reasoncode);
 				}
 
-				if (sr._status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE) {
+				if (sr.status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE) {
 					std::stringstream type;
 					type << "reception";
 					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-					printReason(sr._reasoncode);
+					printReason(sr.reasoncode);
 				}
 
-				if (sr._status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE) {
+				if (sr.status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE) {
 					std::stringstream type;
 					type << "delivery";
 					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-					printReason(sr._reasoncode);
+					printReason(sr.reasoncode);
 				}
 
-				if (sr._status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE) {
+				if (sr.status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE) {
 					std::stringstream type;
 					type << "deletion";
 					::printf(" %3d: %-48s %-12s %6s\n", (unsigned int)i, source.c_str(), type.str().c_str(), time.str().c_str());
-					printReason(sr._reasoncode);
+					printReason(sr.reasoncode);
 				}
 			} else {
 				std::stringstream type;
@@ -171,7 +171,7 @@ class Tracer : public dtn::api::Client
 					const dtn::data::TrackingBlock &track_block = tb.getTrackingBlock();
 					const dtn::data::TrackingBlock::tracking_list &list = track_block.getTrack();
 
-					for (dtn::data::TrackingBlock::tracking_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+					for (dtn::data::TrackingBlock::tracking_list::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 					{
 						const dtn::data::TrackingBlock::TrackingEntry &entry = (*iter);
 						::printf("       # %s\n", entry.endpoint.getString().c_str());
@@ -189,22 +189,24 @@ class Tracer : public dtn::api::Client
 			ProbeBundle b(destination, tracking);
 
 			// set lifetime
-			b.setLifetime(timeout);
+			b.lifetime = timeout;
 
 			// set some stupid payload
-			b.append("follow the white rabbit");
+			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+			b.push_back(ref);
+			(*ref.iostream()) << "follow the white rabbit";
 
 			// request forward and delivery reports
-			if (options & 0x01) b.requestForwardedReport();
-			if (options & 0x02) b.requestDeliveredReport();
-			if (options & 0x04) b.requestReceptionReport();
-			if (options & 0x08) b.requestDeletedReport();
+			if (options & 0x01) b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_FORWARDING, true);
+			if (options & 0x02) b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
+			if (options & 0x04) b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_RECEPTION, true);
+			if (options & 0x08) b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELETION, true);
 
-			b.setReportTo( EID("api:me") );
+			b.reportto = dtn::data::EID("api:me");
 
 			ibrcommon::TimeMeasurement tm;
 
-			std::list<dtn::api::Bundle> bundles;
+			std::list<dtn::data::Bundle> bundles;
 
 			try {
 				size_t i = 0;
@@ -221,7 +223,7 @@ class Tracer : public dtn::api::Client
 					// now receive all incoming bundles
 					while (true)
 					{
-						dtn::api::Bundle recv = getBundle(timeout);
+						dtn::data::Bundle recv = getBundle(timeout);
 						bundles.push_back(recv);
 						tm.stop();
 
@@ -234,38 +236,6 @@ class Tracer : public dtn::api::Client
 				}
 
 				std::cout << std::endl;
-
-//				// sort the list
-//				bundles.sort();
-//
-//				// print out each hop
-//				for (std::list<dtn::api::Bundle>::iterator iter = bundles.begin(); iter != bundles.end(); iter++)
-//				{
-//					const dtn::api::Bundle &b = (*iter);
-//
-//					ReportBundle report(b);
-//					const dtn::data::StatusReportBlock &sr = report.extract();
-//
-//
-//					std::cout << "Hop: " << (*iter).getSource().getString() << std::endl;
-//
-//					if (sr._status & dtn::data::StatusReportBlock::FORWARDING_OF_BUNDLE) {
-//						std::cout << "   bundle forwarded: " << sr._timeof_forwarding.getTimestamp().getValue() << std::endl;
-//					}
-//
-//					if (sr._status & dtn::data::StatusReportBlock::RECEIPT_OF_BUNDLE) {
-//						std::cout << "   bundle reception: " << sr._timeof_receipt.getTimestamp().getValue() << std::endl;
-//					}
-//
-//					if (sr._status & dtn::data::StatusReportBlock::DELIVERY_OF_BUNDLE) {
-//						std::cout << "   bundle delivery: " << sr._timeof_delivery.getTimestamp().getValue() << std::endl;
-//					}
-//
-//					if (sr._status & dtn::data::StatusReportBlock::DELETION_OF_BUNDLE) {
-//						std::cout << "   bundle deletion: " << sr._timeof_deletion.getTimestamp().getValue() << std::endl;
-//					}
-//				}
-
 			} catch (const dtn::api::ConnectionException&) {
 				cout << "Disconnected." << endl;
 			} catch (const ibrcommon::IOException&) {

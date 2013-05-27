@@ -25,7 +25,7 @@
 #include "ibrcommon/Exceptions.h"
 #include <streambuf>
 #include <iostream>
-#include <iostream>
+#include <vector>
 
 namespace ibrcommon
 {
@@ -55,7 +55,7 @@ namespace ibrcommon
 		CipherMode _mode;
 
 		// Output buffer
-		char *data_buf_;
+		std::vector<char> data_buf_;
 
 		// length of the data buffer
 		size_t data_size_;

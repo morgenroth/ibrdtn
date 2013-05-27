@@ -46,8 +46,8 @@ namespace dtn
 			};
 
 			virtual ~NodeHandshakeItem() { };
-			virtual size_t getIdentifier() const = 0;
-			virtual size_t getLength() const = 0;
+			virtual const dtn::data::Number& getIdentifier() const = 0;
+			virtual dtn::data::Length getLength() const = 0;
 			virtual std::ostream& serialize(std::ostream&) const = 0;
 			virtual std::istream& deserialize(std::istream&) = 0;
 		};
@@ -58,11 +58,11 @@ namespace dtn
 			BloomFilterSummaryVector();
 			BloomFilterSummaryVector(const dtn::data::BundleSet &vector);
 			virtual ~BloomFilterSummaryVector();
-			size_t getIdentifier() const;
-			size_t getLength() const;
+			const dtn::data::Number& getIdentifier() const;
+			dtn::data::Length getLength() const;
 			std::ostream& serialize(std::ostream&) const;
 			std::istream& deserialize(std::istream&);
-			static size_t identifier;
+			static const dtn::data::Number identifier;
 
 			const dtn::data::BundleSet& getVector() const;
 
@@ -76,11 +76,11 @@ namespace dtn
 			BloomFilterPurgeVector();
 			BloomFilterPurgeVector(const dtn::data::BundleSet &vector);
 			virtual ~BloomFilterPurgeVector();
-			size_t getIdentifier() const;
-			size_t getLength() const;
+			const dtn::data::Number& getIdentifier() const;
+			dtn::data::Length getLength() const;
 			std::ostream& serialize(std::ostream&) const;
 			std::istream& deserialize(std::istream&);
-			static size_t identifier;
+			static const dtn::data::Number identifier;
 
 			const dtn::data::BundleSet& getVector() const;
 
@@ -99,17 +99,19 @@ namespace dtn
 			};
 
 			NodeHandshake();
-			NodeHandshake(MESSAGE_TYPE type, size_t lifetime = 60);
+			NodeHandshake(MESSAGE_TYPE type, const dtn::data::Number &lifetime = 60);
 
 			virtual ~NodeHandshake();
 
-			void addRequest(const size_t identifier);
-			bool hasRequest(const size_t identifier) const;
+			void addRequest(const dtn::data::Number &identifier);
+			bool hasRequest(const dtn::data::Number &identifier) const;
 			void addItem(NodeHandshakeItem *item);
-			bool hasItem(const size_t identifier) const;
+			bool hasItem(const dtn::data::Number &identifier) const;
 
-			size_t getType() const;
-			size_t getLifetime() const;
+			MESSAGE_TYPE getType() const;
+			const dtn::data::Number& getLifetime() const;
+
+			const std::string toString() const;
 
 			friend std::ostream& operator<<(std::ostream&, const NodeHandshake&);
 			friend std::istream& operator>>(std::istream&, NodeHandshake&);
@@ -124,22 +126,27 @@ namespace dtn
 				StreamMap();
 				~StreamMap();
 				void clear();
-				std::stringstream& get(size_t identifier);
-				void remove(size_t identifier);
-				bool has(size_t identifier);
+				std::stringstream& get(const dtn::data::Number &identifier);
+				void remove(const dtn::data::Number &identifier);
+				bool has(const dtn::data::Number &identifier);
 
 			private:
-				std::map<size_t, std::stringstream* > _map;
+				typedef std::map<dtn::data::Number, std::stringstream* > stream_map;
+				stream_map _map;
 			};
 
-			NodeHandshakeItem* getItem(const size_t identifier) const;
+			NodeHandshakeItem* getItem(const dtn::data::Number &identifier) const;
 			void clear();
 
-			size_t _type;
-			size_t _lifetime;
+			dtn::data::Number _type;
+			dtn::data::Number _lifetime;
 
-			std::set<size_t> _requests;
-			std::list<NodeHandshakeItem*> _items;
+			typedef std::set<dtn::data::Number> request_set;
+			request_set _requests;
+
+			typedef std::list<NodeHandshakeItem*> item_set;
+			item_set _items;
+
 			StreamMap _raw_items;
 
 			// deny copying

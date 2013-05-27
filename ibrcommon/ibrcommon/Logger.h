@@ -22,8 +22,6 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-//#define __IBRCOMMON_MULTITHREADED__
-
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/data/File.h>
@@ -67,19 +65,31 @@
 	ibrcommon::Logger::getVerbosity()
 
 #define IBRCOMMON_LOGGER(level) \
-	{ \
-		ibrcommon::Logger log = ibrcommon::Logger::level(); \
-		log
+	if (ibrcommon::LogLevel::level & ibrcommon::Logger::getLogMask()) { \
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::level(""); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
+
+#define IBRCOMMON_LOGGER_TAG(tag, level) \
+	if (ibrcommon::LogLevel::level & ibrcommon::Logger::getLogMask()) { \
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::level(tag); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
 
 #define IBRCOMMON_LOGGER_DEBUG(verbosity) \
 	if (ibrcommon::Logger::getVerbosity() >= verbosity) \
 	{ \
-		ibrcommon::Logger log = ibrcommon::Logger::debug(verbosity); \
-		log
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::debug("", verbosity); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
+
+#define IBRCOMMON_LOGGER_DEBUG_TAG(tag, verbosity) \
+	if (ibrcommon::Logger::getVerbosity() >= verbosity) \
+	{ \
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::debug(tag, verbosity); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
 
 #define IBRCOMMON_LOGGER_ENDL \
 		std::flush; \
-		log.print(); \
+		__macro_ibrcommon_logger.setMessage(__macro_ibrcommon_stream.str()); \
+		__macro_ibrcommon_logger.print(); \
 	}
 
 #define IBRCOMMON_LOGGER_ex(level) \
@@ -90,12 +100,26 @@
 
 namespace ibrcommon
 {
+	namespace LogLevel {
+		enum LogLevel
+		{
+			emergency =	1 << 0,	/* system is unusable */
+			alert =		1 << 1,	/* action must be taken immediately */
+			critical =	1 << 2,	/* critical conditions */
+			error =		1 << 3,	/* error conditions */
+			warning = 	1 << 4,	/* warning conditions */
+			notice = 	1 << 5,	/* normal but significant condition */
+			info = 		1 << 6,	/* informational */
+			debug =		1 << 7	/* debug-level messages */
+		};
+	}
+
 	/**
 	 * @class Logger
 	 *
 	 * The Logger class is the heart of the logging framework.
 	 */
-	class Logger : public std::stringstream
+	class Logger
 	{
 	public:
 		enum LogOptions
@@ -104,7 +128,8 @@ namespace ibrcommon
 			LOG_DATETIME =	1 << 0,	/* print date/time on log messages */
 			LOG_HOSTNAME = 	1 << 1, /* print hostname on log messages */
 			LOG_LEVEL =		1 << 2,	/* print the log level on log messages */
-			LOG_TIMESTAMP =	1 << 3	/* print timestamp on log messages */
+			LOG_TIMESTAMP =	1 << 3,	/* print timestamp on log messages */
+			LOG_TAG = 		1 << 4  /* print tag on log messages */
 		};
 
 		enum LogLevel
@@ -123,20 +148,35 @@ namespace ibrcommon
 		Logger(const Logger&);
 		virtual ~Logger();
 
-		static Logger emergency();
-		static Logger alert();
-		static Logger critical();
-		static Logger error();
-		static Logger warning();
-		static Logger notice();
-		static Logger info();
-		static Logger debug(int verbosity);
+		/**
+		 * Set the logging message
+		 */
+		void setMessage(const std::string &data);
+
+		/**
+		 * Returns the logging message as string
+		 */
+		const std::string& str() const;
+
+		static Logger emergency(const std::string &tag);
+		static Logger alert(const std::string &tag);
+		static Logger critical(const std::string &tag);
+		static Logger error(const std::string &tag);
+		static Logger warning(const std::string &tag);
+		static Logger notice(const std::string &tag);
+		static Logger info(const std::string &tag);
+		static Logger debug(const std::string &tag, int verbosity);
 
 		/**
 		 * Set the global verbosity of the logger.
 		 * @param verbosity A verbosity level as number. Higher value leads to more output.
 		 */
 		static void setVerbosity(const int verbosity);
+
+		/**
+		 * Returns the global logging mask
+		 */
+		static unsigned char getLogMask();
 
 		/**
 		 * Get the global verbosity of the logger.
@@ -171,9 +211,9 @@ namespace ibrcommon
 
 		/**
 		 * enable the asynchronous logging
-		 * This starts a seperate thread and a thread-safe queue to
+		 * This starts a separate thread and a thread-safe queue to
 		 * queue all logging messages first and call the log routine by
-		 * the thread. This option is nessacary, if the stream to log into
+		 * the thread. This option is necessary, if the stream to log into
 		 * are not thread-safe by itself.
 		 */
 		static void enableAsync();
@@ -192,10 +232,15 @@ namespace ibrcommon
 
 		/**
 		 * stops the asynchronous logging thread
-		 * you need to call this before your programm is going down, if you have
+		 * you need to call this before your program is going down, if you have
 		 * called enableAsync() before. 
 		 */
 		static void stop();
+
+		/**
+		 * Set the default tag for untagged logging
+		 */
+		static void setDefaultTag(const std::string &tag);
 
 		/**
 		 * Print the log message to the log output (or queue it in the writer)
@@ -208,7 +253,7 @@ namespace ibrcommon
 		static void reload();
 
 	private:
-		Logger(LogLevel level, int debug_verbosity = 0);
+		Logger(LogLevel level, const std::string &tag, int debug_verbosity = 0);
 
 		class LoggerOutput
 		{
@@ -241,7 +286,10 @@ namespace ibrcommon
 			 * Get the global verbosity of the logger.
 			 * @return The verbosity level as number. Higher value leads to more output.
 			 */
-			int getVerbosity();
+			int getVerbosity() const;
+
+
+			unsigned char getLogMask() const;
 
 			/**
 			 * Add a standard output stream to the logging framework.
@@ -305,6 +353,7 @@ namespace ibrcommon
 			 */
 			void flush(const Logger &logger);
 
+			unsigned char _global_logmask;
 			int _verbosity;
 			bool _syslog;
 			unsigned char _syslog_mask;
@@ -326,9 +375,14 @@ namespace ibrcommon
 		};
 
 		LogLevel _level;
+		const std::string _tag;
 		int _debug_verbosity;
 		struct timeval _logtime;
 
+		std::string _data;
+
+		static std::string _default_tag;
+		static std::string _android_tag_prefix;
 		static LogWriter _logwriter;
 	};
 }

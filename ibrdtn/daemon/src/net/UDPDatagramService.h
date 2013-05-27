@@ -105,12 +105,18 @@ namespace dtn
 			virtual const DatagramService::Parameter& getParameter() const;
 
 		private:
+			void send(const char &type, const char &flags, const unsigned int &seqno, const ibrcommon::vaddress &destination, const char *buf, size_t length) throw (DatagramException);
+
 			static const std::string encode(const ibrcommon::vaddress &address, const int port = 0);
 			static void decode(const std::string &identifier, ibrcommon::vaddress &address);
 
 			ibrcommon::vsocket _vsocket;
 
 			const static int BROADCAST_PORT = 5551;
+			const static ibrcommon::vaddress BROADCAST_ADDR;
+
+			ibrcommon::multicastsocket *_msock;
+
 			const ibrcommon::vinterface _iface;
 			const int _bind_port;
 

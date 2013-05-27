@@ -50,14 +50,14 @@ namespace dtn
 			_provider.push_back(provider);
 		}
 
-		void DiscoveryAgent::received(const dtn::data::EID &source, const std::list<DiscoveryService> &services, size_t timeout)
+		void DiscoveryAgent::received(const dtn::data::EID &source, const std::list<DiscoveryService> &services, const dtn::data::Number &timeout)
 		{
 			// convert the announcement into NodeEvents
 			Node n(source);
 
-			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 			{
-				size_t to_value = (timeout == 0) ? _config.timeout() : timeout;
+				const dtn::data::Number to_value = (timeout == 0) ? _config.timeout() : timeout;
 
 				const DiscoveryService &s = (*iter);
 
@@ -88,7 +88,7 @@ namespace dtn
 				// first check if another announcement was sent during the same seconds
 				if (_last_announce_sent != dtn::utils::Clock::getTime())
 				{
-					IBRCOMMON_LOGGER_DEBUG(55) << "reply with discovery announcement" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "reply with discovery announcement" << IBRCOMMON_LOGGER_ENDL;
 
 					sendAnnoucement(_sn, _provider);
 
@@ -106,7 +106,7 @@ namespace dtn
 			// check if announcements are enabled
 			if (_config.announce())
 			{
-				IBRCOMMON_LOGGER_DEBUG(55) << "send discovery announcement" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "send discovery announcement" << IBRCOMMON_LOGGER_ENDL;
 
 				sendAnnoucement(_sn, _provider);
 

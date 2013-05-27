@@ -6,6 +6,7 @@
  */
 
 #include "ibrdtn/data/BundleBuilder.h"
+#include <iterator>
 
 namespace dtn
 {
@@ -20,43 +21,46 @@ namespace dtn
 		{
 		}
 
-		dtn::data::Block &BundleBuilder::insert(dtn::data::ExtensionBlock::Factory &f, size_t procflags)
+		dtn::data::Block &BundleBuilder::insert(dtn::data::ExtensionBlock::Factory &f, const Bitset<Block::ProcFlags> &procflags)
 		{
 			switch (_alignment)
 			{
 			case FRONT:
 			{
 				dtn::data::Block &block = _target->push_front(f);
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 
 			case END:
 			{
 				dtn::data::Block &block = _target->push_back(f);
-				block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
 				return block;
 			}
 
 			default:
 				if(_pos <= 0) {
 					dtn::data::Block &block = _target->push_front(f);
-					block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
+					bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+					block._procflags = procflags;
+					block.set(dtn::data::Block::LAST_BLOCK, last_block);
 					return block;
 				}
 
-				try {
-					dtn::data::Block &prev_block = _target->getBlock(_pos-1);
+				dtn::data::Bundle::iterator it = _target->begin();
+				std::advance(it, _pos-1);
 
-					dtn::data::Block &block = _target->insert(f, prev_block);
-					block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
-					return block;
-				} catch (const std::exception &ex) {
-					dtn::data::Block &block = _target->push_back(f);
-					block._procflags = procflags & (~(dtn::data::Block::LAST_BLOCK) | block._procflags);
-					return block;
-				}
-				break;
+				dtn::data::Block &block = (it == _target->end()) ? _target->push_back(f) : _target->insert(it, f);
+
+				bool last_block = block.get(dtn::data::Block::LAST_BLOCK);
+				block._procflags = procflags;
+				block.set(dtn::data::Block::LAST_BLOCK, last_block);
+				return block;
 			}
 		}
 
@@ -65,43 +69,37 @@ namespace dtn
 			return _alignment;
 		}
 
-		dtn::data::Block& BundleBuilder::insert(char block_type, size_t procflags)
+		dtn::data::Block& BundleBuilder::insert(dtn::data::block_t block_type, const Bitset<dtn::data::Block::ProcFlags> &procflags) throw (dtn::InvalidDataException)
 		{
-			switch (block_type)
+			// exit if the block type is zero
+			if (block_type == 0) throw dtn::InvalidDataException("block type is zero");
+
+			if (block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
 			{
-				case 0:
-				{
-					throw dtn::InvalidDataException("block type is zero");
-					break;
-				}
+				// use standard payload routines to add a payload block
+				return insert<dtn::data::PayloadBlock>(procflags);
+			}
+			else
+			{
+				// get a extension block factory
+				try {
+					ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+					return insert(f, procflags);
+				} catch (const ibrcommon::Exception &ex) {
+					dtn::data::ExtensionBlock &block = insert<dtn::data::ExtensionBlock>(procflags);
 
-				case dtn::data::PayloadBlock::BLOCK_TYPE:
-				{
-					return insert<dtn::data::PayloadBlock>(procflags);
-					break;
-				}
+					// set block type of this unknown block
+					block.setType(block_type);
 
-				default:
-				{
-					// get a extension block factory
-					try {
-						ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
-						return insert(f, procflags);
-					} catch (const ibrcommon::Exception &ex) {
-						dtn::data::ExtensionBlock &block = insert<dtn::data::ExtensionBlock>(procflags);
+					if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
+					{
+						// remove the block
+						_target->remove(block);
 
-						// set block type of this unknown block
-						block.setType(block_type);
-
-						if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
-						{
-							// remove the block
-							_target->remove(block);
-						}
-
-						return block;
+						throw DiscardBlockException();
 					}
-					break;
+
+					return block;
 				}
 			}
 		}

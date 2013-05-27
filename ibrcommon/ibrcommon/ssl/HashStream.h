@@ -25,13 +25,14 @@
 #include "ibrcommon/Exceptions.h"
 #include <streambuf>
 #include <iostream>
+#include <vector>
 
 namespace ibrcommon
 {
 	class HashStream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
 	{
 	public:
-		HashStream(const size_t hash, const size_t buffer = 2048);
+		HashStream(const unsigned int hash, const size_t buffer = 2048);
 		virtual ~HashStream();
 
 		static std::string extract(std::istream &stream);
@@ -46,13 +47,13 @@ namespace ibrcommon
 
 	private:
 		// Output buffer
-		char *data_buf_;
+		std::vector<char> data_buf_;
 
 		// length of the data buffer
 		size_t data_size_;
 
 		// Input buffer (contains the hash after finalize)
-		char *hash_buf_;
+		std::vector<char> hash_buf_;
 
 		// length of the hash
 		unsigned int hash_size_;

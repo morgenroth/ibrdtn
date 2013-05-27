@@ -43,7 +43,7 @@ namespace dtn
 		{
 		}
 
-		size_t DiscoveryService::getLength() const
+		dtn::data::Length DiscoveryService::getLength() const
 		{
 			BundleString name(_service_name);
 			BundleString parameters(_service_parameters);
@@ -51,12 +51,12 @@ namespace dtn
 			return name.getLength() + parameters.getLength();
 		}
 
-		std::string DiscoveryService::getName() const
+		const std::string& DiscoveryService::getName() const
 		{
 			return _service_name;
 		}
 
-		std::string DiscoveryService::getParameters() const
+		const std::string& DiscoveryService::getParameters() const
 		{
 			return _service_parameters;
 		}

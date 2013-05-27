@@ -35,6 +35,7 @@
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/net/socketstream.h>
 #include <ibrcommon/thread/Queue.h>
+#include <ibrcommon/thread/SharedReference.h>
 
 #include <memory>
 
@@ -46,6 +47,7 @@ namespace dtn
 
 		class TCPConnection : public dtn::streams::StreamConnection::Callback, public ibrcommon::DetachedThread
 		{
+			const static std::string TAG;
 		public:
 			/**
 			 * Constructor for a new TCPConnection object.
@@ -66,12 +68,12 @@ namespace dtn
 			/**
 			 * This method is called after accept()
 			 */
-			virtual void initialize();
+			virtual void initialize() throw ();
 
 			/**
 			 * shutdown the whole tcp connection
 			 */
-			void shutdown();
+			void shutdown() throw ();
 
 			/**
 			 * Get the header of this connection
@@ -88,15 +90,15 @@ namespace dtn
 			/**
 			 * callback methods for tcpstream
 			 */
-			virtual void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc);
-			virtual void eventTimeout();
-			virtual void eventError();
-			virtual void eventConnectionUp(const dtn::streams::StreamContactHeader &header);
-			virtual void eventConnectionDown();
+			virtual void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc) throw ();
+			virtual void eventTimeout() throw ();
+			virtual void eventError() throw ();
+			virtual void eventConnectionUp(const dtn::streams::StreamContactHeader &header) throw ();
+			virtual void eventConnectionDown() throw ();
 
-			virtual void eventBundleRefused();
-			virtual void eventBundleForwarded();
-			virtual void eventBundleAck(size_t ack);
+			virtual void eventBundleRefused() throw ();
+			virtual void eventBundleForwarded() throw ();
+			virtual void eventBundleAck(const dtn::data::Length &ack) throw ();
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
@@ -104,14 +106,11 @@ namespace dtn
 			 * queue a bundle for this connection
 			 * @param bundle
 			 */
-			void queue(const dtn::data::BundleID &bundle);
+			void queue(const dtn::net::BundleTransfer &job);
 
 			bool match(const dtn::core::Node &n) const;
 			bool match(const dtn::data::EID &destination) const;
 			bool match(const dtn::core::NodeEvent &evt) const;
-
-			friend TCPConnection& operator>>(TCPConnection &conn, dtn::data::Bundle &bundle);
-			friend TCPConnection& operator<<(TCPConnection &conn, const dtn::data::Bundle &bundle);
 
 #ifdef WITH_TLS
 			/*!
@@ -133,6 +132,8 @@ namespace dtn
 
 			void keepalive();
 			bool good() const;
+
+			void initiateExtendedHandshake() throw (ibrcommon::Exception);
 
 		private:
 			class KeepaliveSender : public ibrcommon::JoinableThread
@@ -157,7 +158,7 @@ namespace dtn
 				size_t &_keepalive_timeout;
 			};
 
-			class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::data::BundleID>
+			class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::net::BundleTransfer>
 			{
 			public:
 				Sender(TCPConnection &connection);
@@ -170,10 +171,18 @@ namespace dtn
 
 			private:
 				TCPConnection &_connection;
-				//dtn::data::BundleID _current_transfer;
 			};
 
 			void __setup_socket(ibrcommon::clientsocket *sock, bool server);
+
+			// lock object for the procotol stream
+			typedef ibrcommon::SharedReference<dtn::streams::StreamConnection> safe_streamconnection;
+
+			/**
+			 * Return a thread-safe reference to the protocol stream
+			 * This method will throw an exception if the stream is NULL
+			 */
+			safe_streamconnection getProtocolStream() throw (ibrcommon::Exception);
 
 			dtn::streams::StreamContactHeader _peer;
 			dtn::core::Node _node;
@@ -184,6 +193,9 @@ namespace dtn
 
 			// optional security layer between socketstream and bundle protocol layer
 			std::iostream *_sec_stream;
+
+			// mutex for the protocol stream
+			ibrcommon::RWMutex _protocol_stream_mutex;
 
 			// this connection stream implements the bundle protocol
 			dtn::streams::StreamConnection *_protocol_stream;
@@ -198,14 +210,14 @@ namespace dtn
 			// handshake variables
 			size_t _timeout;
 
-			ibrcommon::Queue<dtn::data::MetaBundle> _sentqueue;
-			size_t _lastack;
+			ibrcommon::Queue<dtn::net::BundleTransfer> _sentqueue;
+			dtn::data::Length _lastack;
 			size_t _keepalive_timeout;
 
 			TCPConvergenceLayer &_callback;
 
 			/* flags to be used in this nodes StreamContactHeader */
-			char _flags;
+			dtn::data::Bitset<dtn::streams::StreamContactHeader::HEADER_BITS> _flags;
 
 			/* with this boolean the connection is marked as aborted */
 			bool _aborted;

@@ -22,6 +22,7 @@
 #ifndef METABUNDLE_H_
 #define METABUNDLE_H_
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/BundleID.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/DTNTime.h"
@@ -35,7 +36,6 @@ namespace dtn
 		{
 		public:
 			MetaBundle();
-			MetaBundle(const dtn::data::BundleID &id);
 			MetaBundle(const dtn::data::Bundle &b);
 			virtual ~MetaBundle();
 
@@ -43,16 +43,26 @@ namespace dtn
 			bool get(dtn::data::PrimaryBlock::FLAGS flag) const;
 
 			dtn::data::DTNTime received;
-			size_t lifetime;
+			Number lifetime;
 			dtn::data::EID destination;
 			dtn::data::EID reportto;
 			dtn::data::EID custodian;
-			size_t appdatalength;
-			size_t procflags;
-			size_t expiretime;
-			size_t hopcount;
-			size_t payloadlength;
-			int8_t net_priority;
+			Number appdatalength;
+			Bitset<dtn::data::PrimaryBlock::FLAGS> procflags;
+			Number expiretime;
+			Number hopcount;
+			Number payloadlength;
+			Integer net_priority;
+
+			/**
+			 * Creates a mock-up MetaBundle using a BundleID.
+			 * Such object are incomplete and should only used in a limited
+			 * fashion.
+			 */
+			static MetaBundle mockUp(const dtn::data::BundleID &id);
+
+		private:
+			MetaBundle(const dtn::data::BundleID &id);
 		};
 	}
 }

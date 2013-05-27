@@ -31,12 +31,14 @@
 #include "routing/NodeHandshakeEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
+#include "net/ConnectionEvent.h"
 #include "core/TimeEvent.h"
 #include "core/NodeEvent.h"
 #include "core/BundlePurgeEvent.h"
 #include "core/BundleEvent.h"
 
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/ThreadsafeReference.h>
 
 #include <ibrdtn/data/SDNV.h>
 #include <ibrdtn/data/Exceptions.h>
@@ -46,10 +48,12 @@ namespace dtn
 {
 	namespace routing
 	{
-		ProphetRoutingExtension::ProphetRoutingExtension(dtn::storage::BundleSeeker &seeker, ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
+		const std::string ProphetRoutingExtension::TAG = "ProphetRoutingExtension";
+
+		ProphetRoutingExtension::ProphetRoutingExtension(ForwardingStrategy *strategy, float p_encounter_max, float p_encounter_first, float p_first_threshold,
 								 float beta, float gamma, float delta, ibrcommon::Timer::time_t time_unit, ibrcommon::Timer::time_t i_typ,
-								 ibrcommon::Timer::time_t next_exchange_timeout)
-			: Extension(seeker), _deliveryPredictabilityMap(time_unit, beta, gamma),
+								 dtn::data::Timestamp next_exchange_timeout)
+			: _deliveryPredictabilityMap(time_unit, beta, gamma),
 			  _forwardingStrategy(strategy), _next_exchange_timeout(next_exchange_timeout), _next_exchange_timestamp(0),
 			  _p_encounter_max(p_encounter_max), _p_encounter_first(p_encounter_first),
 			  _p_first_threshold(p_first_threshold), _delta(delta), _i_typ(i_typ)
@@ -64,7 +68,7 @@ namespace dtn
 			_next_exchange_timestamp = dtn::utils::Clock::getUnixTimestamp() + _next_exchange_timeout;
 
 			// write something to the syslog
-			IBRCOMMON_LOGGER(info) << "Initializing PRoPHET routing module" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, info) << "Initializing PRoPHET routing module" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		ProphetRoutingExtension::~ProphetRoutingExtension()
@@ -104,29 +108,30 @@ namespace dtn
 			const dtn::data::EID neighbor_node = neighbor.getNode();
 
 			/* ignore neighbors, that have our EID */
-			if(neighbor_node == dtn::core::BundleCore::local)
-				return;
-
-			// update the encounter on every routing handshake
-			{
-				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
-
-				age();
-
-				/* update predictability for this neighbor */
-				updateNeighbor(neighbor_node);
-			}
+			if (neighbor_node == dtn::core::BundleCore::local) return;
 
 			try {
 				const DeliveryPredictabilityMap& neighbor_dp_map = response.get<DeliveryPredictabilityMap>();
 
+				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "delivery predictability map received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
+
+				// update the encounter on every routing handshake
+				{
+					ibrcommon::MutexLock l(_deliveryPredictabilityMap);
+
+					age();
+
+					/* update predictability for this neighbor */
+					updateNeighbor(neighbor_node);
+				}
+
 				// store a copy of the map in the neighbor database
 				{
 					NeighborDatabase &db = (**this).getNeighborDB();
-					DeliveryPredictabilityMap *dpm = new DeliveryPredictabilityMap(neighbor_dp_map);
+					NeighborDataset ds(new DeliveryPredictabilityMap(neighbor_dp_map));
 
 					ibrcommon::MutexLock l(db);
-					db.create(neighbor_node).putDataset(dpm);
+					db.create(neighbor_node).putDataset(ds);
 				}
 
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
@@ -138,6 +143,13 @@ namespace dtn
 
 			try {
 				const AcknowledgementSet& neighbor_ack_set = response.get<AcknowledgementSet>();
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "ack'set received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
+
+				// merge ack'set into the known bundles
+				for (AcknowledgementSet::const_iterator it = _acknowledgementSet.begin(); it != _acknowledgementSet.end(); ++it) {
+					(**this).setKnown(*it);
+				}
 
 				// merge the received ack set with the local one
 				{
@@ -151,13 +163,13 @@ namespace dtn
 				class BundleFilter : public dtn::storage::BundleSelector
 				{
 				public:
-					BundleFilter(const AcknowledgementSet& ack_set)
-					 : _ack_set(ack_set)
+					BundleFilter(const AcknowledgementSet& neighbor_ack_set)
+					 : _ackset(neighbor_ack_set)
 					{}
 
 					virtual ~BundleFilter() {}
 
-					virtual size_t limit() const { return 0; }
+					virtual dtn::data::Size limit() const throw () { return 0; }
 
 					virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 					{
@@ -165,14 +177,14 @@ namespace dtn
 						if (meta.destination.getNode() == dtn::core::BundleCore::local)
 							return false;
 
-						if(!_ack_set.has(meta))
+						if(!_ackset.has(meta))
 							return false;
 
 						return true;
 					}
 
 				private:
-					const AcknowledgementSet& _ack_set;
+					const AcknowledgementSet& _ackset;
 				} filter(neighbor_ack_set);
 
 				dtn::storage::BundleResultList removeList;
@@ -182,12 +194,18 @@ namespace dtn
 				{
 					const dtn::data::MetaBundle &meta = (*it);
 
-					dtn::core::BundlePurgeEvent::raise(meta);
-
-					IBRCOMMON_LOGGER(notice) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						dtn::core::BundlePurgeEvent::raise(meta);
+						IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					}
+					else
+					{
+						IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, warning) << neighbor.getString() << " requested to purge a bundle with a non-singleton destination: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					}
 
 					/* generate a report */
-					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 				}
 			} catch (const dtn::storage::NoBundleFoundException&) {
 			} catch (std::exception&) { }
@@ -198,6 +216,12 @@ namespace dtn
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 
+				// expire bundles in the acknowledgement set
+				{
+					ibrcommon::MutexLock l(_acknowledgementSet);
+					_acknowledgementSet.expire(time.getUnixTimestamp());
+				}
+
 				ibrcommon::MutexLock l(_next_exchange_mutex);
 				if ((_next_exchange_timestamp > 0) && (_next_exchange_timestamp < time.getUnixTimestamp()))
 				{
@@ -205,9 +229,6 @@ namespace dtn
 
 					// define the next exchange timestamp
 					_next_exchange_timestamp = time.getUnixTimestamp() + _next_exchange_timeout;
-
-					ibrcommon::MutexLock l(_acknowledgementSet);
-					_acknowledgementSet.expire(time.getUnixTimestamp());
 				}
 				return;
 			} catch (const std::bad_cast&) { };
@@ -219,7 +240,7 @@ namespace dtn
 				// new bundles trigger a recheck for all neighbors
 				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
-				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); iter++)
+				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
 				{
 					const dtn::core::Node &n = (*iter);
 
@@ -238,7 +259,22 @@ namespace dtn
 				{
 					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 				}
+				else if (nodeevent.getAction() == NODE_DATA_ADDED)
+				{
+					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+				}
 
+				return;
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
+
+				if (ce.state == dtn::net::ConnectionEvent::CONNECTION_UP)
+				{
+					// send all (multi-hop) bundles in the storage to the neighbor
+					_taskqueue.push( new SearchNextBundleTask(ce.peer) );
+				}
 				return;
 			} catch (const std::bad_cast&) { };
 
@@ -297,22 +333,26 @@ namespace dtn
 
 		void ProphetRoutingExtension::componentUp() throw ()
 		{
+			// reset task queue
+			_taskqueue.reset();
+
+			// routine checked for throw() on 15.02.2013
 			try {
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, error) << "componentUp failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		void ProphetRoutingExtension::componentDown() throw ()
 		{
 			try {
-				// run the thread
+				// stop the thread
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -346,7 +386,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
+				virtual dtn::data::Size limit() const throw () { return _entry.getFreeTransferSlots(); };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -418,7 +458,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG(50) << "processing prophet task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 50) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						/**
@@ -439,20 +479,20 @@ namespace dtn
 
 							try {
 								// get the DeliveryPredictabilityMap of the potentially next hop
-								DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
+								const DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
 
 								// get the bundle filter of the neighbor
 								BundleFilter filter(entry, *_forwardingStrategy, dpm);
 
 								// some debug output
-								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 								// query some unknown bundle from the storage, the list contains max. 10 items.
 								list.clear();
-								_seeker.get(filter, list);
+								(**this).getSeeker().get(filter, list);
 
 								// send the bundles as long as we have resources
-								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 								{
 									const dtn::data::MetaBundle &meta = (*iter);
 
@@ -468,9 +508,12 @@ namespace dtn
 								// query a new summary vector from this neighbor
 								(**this).doHandshake(task.eid);
 							}
-						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-						} catch (const dtn::storage::NoBundleFoundException&) {
+						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const NeighborDatabase::NeighborNotAvailableException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const dtn::storage::NoBundleFoundException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const std::bad_cast&) { }
 
 						/**
@@ -491,9 +534,10 @@ namespace dtn
 						} catch (const std::bad_cast&) { }
 
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in ProphetRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 20) << "task failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
-				} catch (const std::exception&) {
+				} catch (const std::exception &ex) {
+					IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 15) << "terminated due to " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 
@@ -515,8 +559,8 @@ namespace dtn
 				return _p_encounter_max;
 			}
 
-			size_t currentTime = dtn::utils::Clock::getUnixTimestamp();
-			size_t time_diff = currentTime - it->second;
+			const dtn::data::Timestamp currentTime = dtn::utils::Clock::getUnixTimestamp();
+			const dtn::data::Timestamp time_diff = currentTime - it->second;
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(currentTime >= it->second && "the ageMap timestamp should be smaller than the current timestamp");
 #endif
@@ -526,7 +570,7 @@ namespace dtn
 			}
 			else
 			{
-				return _p_encounter_max * ((float) time_diff / _i_typ);
+				return _p_encounter_max * static_cast<float>(time_diff.get<size_t>() / _i_typ);
 			}
 		}
 

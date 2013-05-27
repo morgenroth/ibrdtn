@@ -30,20 +30,16 @@ import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -60,9 +56,7 @@ import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Switch;
-import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
-import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonProcess;
 import de.tubs.ibr.dtn.service.DaemonService;
@@ -74,26 +68,25 @@ public class Preferences extends PreferenceActivity {
 	
 	private DTNService service = null;
 	
-	// progress dialog for the send process
-	private ProgressDialog pd = null;
-	
 	private Switch actionBarSwitch = null;
 	private CheckBoxPreference checkBoxPreference = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			Preferences.this.service = DTNService.Stub.asInterface(service);
-			Log.i(TAG, "service connected");
-			
-			// on first startup ask for permissions to collect statistical data
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
-			if (!prefs.contains("collect_stats")) {
-				showStatisticLoggerDialog(Preferences.this);
-			}
+			if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service connected");
+				
+			// get the daemon version
+			try {
+			    String version[] = Preferences.this.service.getVersion();
+			    setVersion("dtnd: " + version[0] + ", build: " + version[1]);
+            } catch (RemoteException e) {
+                Log.e(TAG, "Can not query the daemon version", e);
+            }
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
-			Log.i(TAG, "service disconnected");
+		    if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "service disconnected");
 			service = null;
 		}
 	};
@@ -102,19 +95,22 @@ public class Preferences extends PreferenceActivity {
 		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
 		    public void onClick(DialogInterface dialog, int which) {
 		    	SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+		        PreferenceActivity prefactivity = (PreferenceActivity)activity;
+		        
+		        @SuppressWarnings("deprecation")
+				CheckBoxPreference cb = (CheckBoxPreference)prefactivity.findPreference("collect_stats");
 		    	
 		        switch (which){
 		        case DialogInterface.BUTTON_POSITIVE:
-		        	prefs.edit().putBoolean("collect_stats", true).commit();
+		        	prefs.edit().putBoolean("collect_stats", true).putBoolean("collect_stats_initialized", true).commit();
+		        	cb.setChecked(true);
 		            break;
 
 		        case DialogInterface.BUTTON_NEGATIVE:
-		        	prefs.edit().putBoolean("collect_stats", false).commit();
+		        	prefs.edit().putBoolean("collect_stats", false).putBoolean("collect_stats_initialized", true).commit();
+		        	cb.setChecked(false);
 		            break;
 		        }
-		        
-		        activity.finish();
-		        activity.startActivity(new Intent(activity, Preferences.class));
 		    }
 		};
 
@@ -124,102 +120,6 @@ public class Preferences extends PreferenceActivity {
 		builder.setPositiveButton(activity.getResources().getString(android.R.string.yes), dialogClickListener);
 		builder.setNegativeButton(activity.getResources().getString(android.R.string.no), dialogClickListener);
 		builder.show();
-	}
-	
-	@TargetApi(14)
-	private void setDaemonSwitch(boolean val) {
-		if (actionBarSwitch != null) {
-			actionBarSwitch.setChecked(val);
-		} else if (checkBoxPreference != null) {
-			checkBoxPreference.setChecked(val);
-		}
-		
-		setPrefsEnabled(!val);
-	}
-	
-	@SuppressWarnings("deprecation")
-	private void setPrefsEnabled(boolean val) {
-		// enable / disable depending elements
-		String[] prefcats = { "prefcat_general", "prefcat_interfaces", "prefcat_security" };
-		for (String pcat : prefcats) {
-			PreferenceCategory pc = (PreferenceCategory) findPreference(pcat);
-			pc.setEnabled(val);
-		}
-		
-		String[] prefs = { "discovery_announce", "checkIdleTimeout" };
-		for (String p : prefs) {
-			Preference pobj = (Preference) findPreference(p);
-			pobj.setEnabled(val);
-		}
-	}
-	
-	private BroadcastReceiver _state_receiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.STATE))
-			{
-				String state = intent.getStringExtra("state");
-				DaemonState ds = DaemonState.valueOf(state);
-				switch (ds)
-				{
-				case ONLINE:
-					Preferences.this.setDaemonSwitch(true);
-					break;
-					
-				case OFFLINE:
-					Preferences.this.setDaemonSwitch(false);
-					break;
-					
-				case ERROR:
-					Preferences.this.setDaemonSwitch(false);
-					break;
-					
-				default:
-					break;
-				}
-			}
-		}
-	};
-	
-	private void setCloudUplink(boolean val) {
-		Intent i = new Intent();
-		i.setAction(DaemonService.ACTION_CLOUD_UPLINK);
-		i.addCategory(Intent.CATEGORY_DEFAULT);
-		i.putExtra("enabled", val);
-    	this.sendBroadcast(i);
-	}
-	
-	private class ClearStorageTask extends AsyncTask<String, Integer, Boolean> {
-		protected Boolean doInBackground(String... files)
-		{
-			try {
-		    	if (service.isRunning())
-		    	{
-		    		return false;
-		    	}
-		    	service.clearStorage();
-				return true;
-			} catch (RemoteException e) {
-				return false;
-			}
-		}
-
-		protected void onProgressUpdate(Integer... progress) {
-		}
-
-		protected void onPostExecute(Boolean result)
-		{
-			if (result)
-			{
-				pd.dismiss();
-			}
-			else
-			{
-				pd.cancel();
-	    		Toast toast = Toast.makeText(Preferences.this, "Daemon is running! Please stop the daemon first.", Toast.LENGTH_LONG);
-	    		toast.show();
-			}
-		}
 	}
 	
 	@Override
@@ -249,8 +149,9 @@ public class Preferences extends PreferenceActivity {
 	    
 	    case R.id.itemClearStorage:
 	    {
-			pd = ProgressDialog.show(Preferences.this, getResources().getString(R.string.wait), getResources().getString(R.string.clearingstorage), true, false);
-			(new ClearStorageTask()).execute();
+			Intent i = new Intent(Preferences.this, DaemonService.class);
+			i.setAction(DaemonService.ACTION_CLEAR_STORAGE);
+			startService(i);
 	    	return true;
 	    }
 	    
@@ -277,7 +178,7 @@ public class Preferences extends PreferenceActivity {
 	    case R.id.itemNeighbors:
 	    {
 	    	// open neighbor list activity
-	    	Intent i = new Intent(Preferences.this, NeighborList.class);
+	    	Intent i = new Intent(Preferences.this, NeighborActivity.class);
 	    	startActivity(i);
 	    	return true;
 	    }
@@ -290,65 +191,50 @@ public class Preferences extends PreferenceActivity {
 	public static void initializeDefaultPreferences(Context context) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		
-		if (!prefs.contains("endpoint_id")) {
-			Editor e = prefs.edit();
-			e.putString("endpoint_id", DaemonProcess.getUniqueEndpointID(context).toString());
-			
-			try {
-				// scan for known network devices
-				for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
-			    {
-		            NetworkInterface i = list.nextElement();
-		            String iface = i.getDisplayName();
-		            
-		            if (	iface.contains("wlan") ||
-		            		iface.contains("wifi") ||
-		            		iface.contains("eth")
-		            	) {
-		            	e.putBoolean("interface_" + iface, true);
-		            }
-			    }
-			} catch (IOException ex) { }
-			
-			e.commit();
-		}
+		if (prefs.getBoolean("initialized", false)) return;
+
+		Editor e = prefs.edit();
+		e.putString("endpoint_id", DaemonProcess.getUniqueEndpointID(context).toString());
+		
+		try {
+			// scan for known network devices
+			for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
+		    {
+	            NetworkInterface i = list.nextElement();
+	            String iface = i.getDisplayName();
+	            
+	            if (	iface.contains("wlan") ||
+	            		iface.contains("wifi") ||
+	            		iface.contains("eth")
+	            	) {
+	            	e.putBoolean("interface_" + iface, true);
+	            }
+		    }
+		} catch (IOException ex) { }
+		
+		// set preferences to initialized
+		e.putBoolean("initialized", true);
+		
+		e.commit();
 	}
-	
+
 	@TargetApi(14)
 	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+		// set default preference values
+		PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+		
 		// initialize default values if configured set already
 		initializeDefaultPreferences(this);
-		
-	    super.onCreate(savedInstanceState);
+
 		addPreferencesFromResource(R.xml.preferences);
 		
 		// connect daemon controls
         checkBoxPreference = (CheckBoxPreference) findPreference("enabledSwitch");
-		if (checkBoxPreference != null) {
-			checkBoxPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-			public boolean onPreferenceClick(Preference p) {
-				if (((CheckBoxPreference) p).isChecked()) {
-					Preferences.this.setPrefsEnabled(false);
-					
-					// startup the daemon process
-					final Intent intent = new Intent(Preferences.this, DaemonService.class);
-					intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-					startService(intent);
-				}
-				else
-				{
-					// shutdown the daemon
-					final Intent intent = new Intent(Preferences.this, DaemonService.class);
-					intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
-					startService(intent);
-				}
-				
-				return true;
-			}
-			});
-		} else {
+        if (checkBoxPreference == null) {
 			// use custom actionbar switch
 	        actionBarSwitch = new Switch(this);
 
@@ -366,51 +252,26 @@ public class Preferences extends PreferenceActivity {
 	        //}
 	        
 	        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
-	        
+
 	        // read initial state of the switch
 	        actionBarSwitch.setChecked( prefs.getBoolean("enabledSwitch", false) );
-	        setPrefsEnabled( !prefs.getBoolean("enabledSwitch", false) );
 	        
 	        actionBarSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 				public void onCheckedChanged(CompoundButton arg0, boolean val) {
-					Preferences.this.setPrefsEnabled(!val);
-					
+
 					if (val) {
-						Preferences.this.setPrefsEnabled(false);
-						
 						// set "enabledSwitch" preference to true
 						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", true).commit();
-						
-						// startup the daemon process
-						final Intent intent = new Intent(Preferences.this, DaemonService.class);
-						intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
-						startService(intent);
 					}
 					else
 					{
 						// set "enabledSwitch" preference to false
 						SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
 						prefs.edit().putBoolean("enabledSwitch", false).commit();
-						
-						// shutdown the daemon
-						final Intent intent = new Intent(Preferences.this, DaemonService.class);
-						intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_SHUTDOWN);
-						startService(intent);
 					}
 				}
 	        });
-		}
-		
-		// add handle for cloud connect checkbox
-		CheckBoxPreference cbCloudConnect = (CheckBoxPreference) findPreference("cloud_uplink");
-		if (cbCloudConnect != null) {
-			cbCloudConnect.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-			public boolean onPreferenceClick(Preference p) {
-				setCloudUplink(((CheckBoxPreference) p).isChecked());
-				return true;
-			}
-			});
 		}
 		
 		// list all network interfaces
@@ -429,6 +290,9 @@ public class Preferences extends PreferenceActivity {
 	            
 	            // skip loopback device
 	            if (i.isLoopback()) continue;
+	            
+	            // skip rmnet
+	            if (i.getDisplayName().startsWith("rmnet")) continue;
 	            
 	            String iface = i.getDisplayName();
 	            CheckBoxPreference cb_i = new CheckBoxPreference(this);
@@ -450,18 +314,26 @@ public class Preferences extends PreferenceActivity {
 		    }
 		} catch (IOException e) { }
 		
-		// version information
-		Preference version = findPreference("system_version");
-		try {
-			PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
-			version.setSummary(info.versionName);
-		} catch (NameNotFoundException e) { };
+		// set initial version
+		setVersion(null);
+	}
+	
+	@SuppressWarnings("deprecation")
+	private void setVersion(String versionValue) {
+        // version information
+        Preference version = findPreference("system_version");
+        try {
+            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
+            if (versionValue == null) {
+                version.setSummary("app: " + info.versionName);
+            } else {
+                version.setSummary("app: " + info.versionName + ", " + versionValue);
+            }
+        } catch (NameNotFoundException e) { };
 	}
 	
     @Override
 	protected void onPause() {
-		unregisterReceiver(_state_receiver);
-		
         // Detach our existing connection.
 		unbindService(mConnection);
 		
@@ -470,10 +342,6 @@ public class Preferences extends PreferenceActivity {
 
 	@Override
 	protected void onResume() {
-		IntentFilter ifilter = new IntentFilter(de.tubs.ibr.dtn.Intent.STATE);
-		ifilter.addCategory(Intent.CATEGORY_DEFAULT);
-  		registerReceiver(_state_receiver, ifilter );
-  		
 		// Establish a connection with the service.  We use an explicit
 		// class name because we want a specific service implementation that
 		// we know will be running in our own process (and thus won't be
@@ -482,5 +350,11 @@ public class Preferences extends PreferenceActivity {
 				DaemonService.class), mConnection, Context.BIND_AUTO_CREATE);
   		
 		super.onResume();
+		
+		// on first startup ask for permissions to collect statistical data
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(Preferences.this);
+		if (!prefs.getBoolean("collect_stats_initialized", false)) {
+			showStatisticLoggerDialog(Preferences.this);
+		}
 	}
 }

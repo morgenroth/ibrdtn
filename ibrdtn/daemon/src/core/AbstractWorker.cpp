@@ -105,10 +105,13 @@ namespace dtn
 						// raise bundle event
 						dtn::core::BundleEvent::raise(b, BUNDLE_DELIVERED);
 
-						// remove the bundle from the storage
-						dtn::core::BundlePurgeEvent::raise(id);
+						if (b.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+						{
+							// remove the bundle from the storage
+							dtn::core::BundlePurgeEvent::raise(id);
+						}
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_DEBUG(15) << "Error while processing a bundle in a worker: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("AbstractWorker", 15) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					};
 
 					yield();
@@ -132,7 +135,7 @@ namespace dtn
 
 		AbstractWorker::AbstractWorker() : _thread(*this)
 		{
-		};
+		}
 
 		void AbstractWorker::subscribe(const dtn::data::EID &endpoint)
 		{
@@ -144,29 +147,28 @@ namespace dtn
 			_groups.erase(endpoint);
 		}
 
-		void AbstractWorker::initialize(const string uri, const size_t cbhe, bool async)
+		void AbstractWorker::initialize(const std::string &uri, const dtn::data::Number &cbhe, bool async)
 		{
 			if (BundleCore::local.getScheme() == dtn::data::EID::CBHE_SCHEME)
 			{
-				std::stringstream cbhe_id; cbhe_id << cbhe;
-				_eid = BundleCore::local + BundleCore::local.getDelimiter() + cbhe_id.str();
+				_eid = BundleCore::local.add(BundleCore::local.getDelimiter() + cbhe.toString());
 			}
 			else
 			{
-				_eid = BundleCore::local + uri;
+				_eid = BundleCore::local.add(uri);
 			}
 
 			try {
 				if (async) _thread.start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start thread in AbstractWorker\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("AbstractWorker", error) << "initialize failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		AbstractWorker::~AbstractWorker()
 		{
 			shutdown();
-		};
+		}
 
 		void AbstractWorker::shutdown()
 		{

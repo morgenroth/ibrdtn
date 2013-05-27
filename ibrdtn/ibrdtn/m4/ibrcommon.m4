@@ -16,7 +16,7 @@ AC_DEFUN([LOCAL_CHECK_IBRCOMMON],
 		m4_pattern_allow([^PKG_CONFIG_PATH$])
 		
 		# export the path of ibrcommon
-		export PKG_CONFIG_PATH="${ibrcommon_path}"
+		export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:${ibrcommon_path}"
 		
 		# check for the svn version of ibrcommon
 		if pkg-config --atleast-version=$LOCAL_IBRCOMMON_VERSION ibrcommon; then

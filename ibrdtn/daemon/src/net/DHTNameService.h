@@ -29,6 +29,7 @@
 #include "Component.h"
 #include "Configuration.h"
 #include "core/Event.h"
+#include "core/EventReceiver.h"
 #include "net/DiscoveryServiceProvider.h"
 
 #include <ibrdtn/data/EID.h>

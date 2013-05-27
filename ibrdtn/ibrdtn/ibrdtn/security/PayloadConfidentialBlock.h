@@ -60,7 +60,7 @@ namespace dtn
 				};
 
 				/** The block type of this class. */
-				static const char BLOCK_TYPE = SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK;
+				static const dtn::data::block_t BLOCK_TYPE;
 
 				/** does nothing */
 				virtual ~PayloadConfidentialBlock();

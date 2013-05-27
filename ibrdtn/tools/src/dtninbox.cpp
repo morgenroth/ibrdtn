@@ -21,7 +21,6 @@
 
 #include "config.h"
 #include "ibrdtn/api/Client.h"
-#include "ibrdtn/api/FileBundle.h"
 #include "ibrcommon/net/socket.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
@@ -62,7 +61,7 @@ map<string,string> readconfiguration(int argc, char** argv)
     ret["name"] = argv[argc - 2];
     ret["inbox"] = argv[argc - 1];
 
-    for (int i = 0; i < (argc - 2); i++)
+    for (int i = 0; i < (argc - 2); ++i)
     {
         string arg = argv[i];
 
@@ -121,7 +120,7 @@ int main(int argc, char** argv)
     }
 
     // backoff for reconnect
-    size_t backoff = 2;
+    unsigned int backoff = 2;
 
     // check outbox for files
 	File outbox(conf["outbox"]);
@@ -151,10 +150,10 @@ int main(int argc, char** argv)
             while (_running)
             {
             	// receive the bundle
-            	dtn::api::Bundle b = client.getBundle();
+            	dtn::data::Bundle b = client.getBundle();
 
             	// get the reference to the blob
-            	ibrcommon::BLOB::Reference ref = b.getData();
+            	ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 
                 // create the extract command
                 stringstream cmdstream; cmdstream << "tar -x -C " << conf["inbox"];

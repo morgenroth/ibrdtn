@@ -46,9 +46,9 @@ namespace dtn
 			return BundlePurgeEvent::className;
 		}
 
-		std::string BundlePurgeEvent::toString() const
+		std::string BundlePurgeEvent::getMessage() const
 		{
-			return className + ": purging bundle " + bundle.toString();
+			return "purging bundle " + bundle.toString();
 		}
 
 		const std::string BundlePurgeEvent::className = "BundlePurgeEvent";

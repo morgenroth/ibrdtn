@@ -126,8 +126,8 @@ public class DTalkieService extends Service {
 				executor.execute(new Runnable() {
 			        public void run() {
 			        	// add message to database
-			        	Message msg = new Message(received.source, received.destination, playfile);
-			        	msg.setCreated(received.timestamp);
+			        	Message msg = new Message(received.getSource().toString(), received.getDestination().toString(), playfile);
+			        	msg.setCreated(received.getTimestamp().getDate());
 			        	msg.setReceived(new Date());
 			        	_database.put(Folder.INBOX, msg);
 			        	
@@ -183,10 +183,6 @@ public class DTalkieService extends Service {
 				// unset the payload file
 				Log.i(TAG, "File received: " + file.getAbsolutePath());
 			}
-		}
-
-		public void characters(String data) {
-			// nothing to do here, since we using FILEDESCRIPTOR mode
 		}
 
 		public void payload(byte[] data) {
@@ -286,7 +282,7 @@ public class DTalkieService extends Service {
 	@Override
 	public void onCreate()
 	{
-		Log.i(TAG, "Service created.");
+		// call onCreate of the super-class
 		super.onCreate();
 		
 		// create executor
@@ -323,6 +319,8 @@ public class DTalkieService extends Service {
 		} catch (SecurityException ex) {
 			_service_error = ServiceError.PERMISSION_NOT_GRANTED;
 		}
+		
+		Log.i(TAG, "Service created.");
 	}
 	
 	public ServiceError getServiceError() {
@@ -484,9 +482,18 @@ public class DTalkieService extends Service {
 		public void run() {
 			try {
 				ParcelFileDescriptor fd = ParcelFileDescriptor.open(this.msg, ParcelFileDescriptor.MODE_READ_ONLY);
-				_client.getSession().send(DTALKIE_GROUP_EID, 1800, fd, this.msg.length());
+				BundleID ret = _client.getSession().send(DTALKIE_GROUP_EID, 1800, fd, this.msg.length());
+				
+				if (ret == null)
+				{
+				    Log.e(TAG, "Recording sent failed");
+		        }
+				else
+				{
+				    Log.i(TAG, "Recording sent, BundleID: " + ret.toString());
+		        }
+				
 				this.msg.delete();
-				Log.i(TAG, "Recording sent");
 			} catch (FileNotFoundException ex) {
 				Log.e(TAG, "Can not open message file for transmission", ex);
 			} catch (SessionDestroyedException ex) {

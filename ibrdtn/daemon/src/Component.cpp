@@ -40,21 +40,24 @@ namespace dtn
 			join();
 		}
 
-		void IndependentComponent::initialize()
+		void IndependentComponent::initialize() throw ()
 		{
+			// reset thread is necessary
+			if (JoinableThread::isFinalized()) JoinableThread::reset();
+
 			componentUp();
 		}
 
-		void IndependentComponent::startup()
+		void IndependentComponent::startup() throw ()
 		{
 			try {
-				this->start();
+				JoinableThread::start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start IndependentComponent\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("IndependentComponent", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void IndependentComponent::terminate()
+		void IndependentComponent::terminate() throw ()
 		{
 			componentDown();
 			JoinableThread::stop();
@@ -73,17 +76,17 @@ namespace dtn
 		{
 		}
 
-		void IntegratedComponent::initialize()
+		void IntegratedComponent::initialize() throw ()
 		{
 			componentUp();
 		}
 
-		void IntegratedComponent::startup()
+		void IntegratedComponent::startup() throw ()
 		{
 			// nothing to do
 		}
 
-		void IntegratedComponent::terminate()
+		void IntegratedComponent::terminate() throw ()
 		{
 			componentDown();
 		}

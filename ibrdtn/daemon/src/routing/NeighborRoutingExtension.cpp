@@ -49,8 +49,9 @@ namespace dtn
 {
 	namespace routing
 	{
-		NeighborRoutingExtension::NeighborRoutingExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker)
+		const std::string NeighborRoutingExtension::TAG = "NeighborRoutingExtension";
+
+		NeighborRoutingExtension::NeighborRoutingExtension()
 		{
 		}
 
@@ -79,7 +80,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
+				virtual dtn::data::Size limit() const throw () { return _entry.getFreeTransferSlots(); };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -119,15 +120,15 @@ namespace dtn
 				};
 
 #ifdef HAVE_SQLITE
-				const std::string getWhere() const
+				const std::string getWhere() const throw ()
 				{
 					return "destination LIKE ?";
 				};
 
-				size_t bind(sqlite3_stmt *st, size_t offset) const
+				int bind(sqlite3_stmt *st, int offset) const throw ()
 				{
 					const std::string d = _entry.eid.getNode().getString() + "%";
-					sqlite3_bind_text(st, offset, d.c_str(), d.size(), SQLITE_TRANSIENT);
+					sqlite3_bind_text(st, offset, d.c_str(), static_cast<int>(d.size()), SQLITE_TRANSIENT);
 					return offset + 1;
 				}
 #endif
@@ -146,7 +147,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG(5) << "processing neighbor routing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 5) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					/**
 					 * SearchNextBundleTask triggers a search for a bundle to transfer
@@ -169,21 +170,24 @@ namespace dtn
 
 						// query an unknown bundle from the storage, the list contains max. 10 items.
 						list.clear();
-						_seeker.get(filter, list);
+						(**this).getSeeker().get(filter, list);
 
-						IBRCOMMON_LOGGER_DEBUG(5) << "got " << list.size() << " items to transfer to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 5) << "got " << list.size() << " items to transfer to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 						// send the bundles as long as we have resources
-						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 						{
 							try {
 								// transfer the bundle to the neighbor
 								transferTo(entry, *iter);
 							} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 						}
-					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-					} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-					} catch (const dtn::storage::NoBundleFoundException&) {
+					} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const NeighborDatabase::NeighborNotAvailableException &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const dtn::storage::NoBundleFoundException &ex) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					} catch (const std::bad_cast&) { };
 
 					/**
@@ -195,7 +199,7 @@ namespace dtn
 						// new bundles trigger a recheck for all neighbors
 						const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
-						for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); iter++)
+						for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
 						{
 							const dtn::core::Node &n = (*iter);
 
@@ -205,7 +209,7 @@ namespace dtn
 					} catch (const std::bad_cast&) { };
 
 				} catch (const std::exception &ex) {
-					IBRCOMMON_LOGGER_DEBUG(20) << "neighbor routing failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 15) << "terminated due to " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 
@@ -244,6 +248,10 @@ namespace dtn
 				{
 					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 				}
+				else if (nodeevent.getAction() == NODE_DATA_ADDED)
+				{
+					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+				}
 
 				return;
 			} catch (const std::bad_cast&) { };
@@ -262,22 +270,27 @@ namespace dtn
 
 		void NeighborRoutingExtension::componentUp() throw ()
 		{
+			// reset the task queue
+			_taskqueue.reset();
+
+			// routine checked for throw() on 15.02.2013
 			try {
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(NeighborRoutingExtension::TAG, error) << "componentUp failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		void NeighborRoutingExtension::componentDown() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			try {
-				// run the thread
+				// stop the thread
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(NeighborRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

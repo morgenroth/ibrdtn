@@ -22,10 +22,11 @@
 #ifndef CLOCK_H_
 #define CLOCK_H_
 
-#include <sys/types.h>
 #include <sys/time.h>
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/BundleID.h"
 
 namespace dtn
 {
@@ -34,24 +35,40 @@ namespace dtn
 		class Clock
 		{
 		public:
-			static size_t getUnixTimestamp();
-			static size_t getTime();
+			/**
+			 * Return the current unix timestamp adjusted by
+			 * the configured timezone offset
+			 */
+			static dtn::data::Timestamp getUnixTimestamp();
 
+			/**
+			 * Return the current DTN timestamp adjusted by
+			 * the configured timezone offset
+			 */
+			static dtn::data::Timestamp getTime();
+
+			/**
+			 * Check if a bundle is expired
+			 * @return True if the bundle is expired
+			 */
 			static bool isExpired(const dtn::data::Bundle &b);
 
 			/**
 			 * This method is deprecated because it does not recognize the AgeBlock
 			 * as alternative age verification.
 			 */
-			static bool isExpired(size_t timestamp, size_t lifetime = 0) __attribute__ ((deprecated));
+			static bool isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime = 0) __attribute__ ((deprecated));
 
-			static size_t getExpireTime(const dtn::data::Bundle &b);
+			/**
+			 * Return the time of expiration of the given bundle
+			 */
+			static dtn::data::Timestamp getExpireTime(const dtn::data::Bundle &b);
 
 			/**
 			 * This method is deprecated because it does not recognize the AgeBlock
 			 * as alternative age verification.
 			 */
-			static size_t getExpireTime(size_t timestamp, size_t lifetime) __attribute__ ((deprecated));
+			static dtn::data::Timestamp getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime) __attribute__ ((deprecated));
 
 			/**
 			 * Returns the timestamp when this lifetime is going to be expired
@@ -59,7 +76,13 @@ namespace dtn
 			 * @param lifetime The lifetime in seconds.
 			 * @return A DTN timestamp.
 			 */
-			static size_t getExpireTime(size_t lifetime);
+			static dtn::data::Timestamp getExpireTime(const dtn::data::Number &lifetime);
+
+			/**
+			 * Returns the calculated lifetime in seconds based on the BundleID and the
+			 * expiretime
+			 */
+			static dtn::data::Number getLifetime(const dtn::data::BundleID &id, const dtn::data::Timestamp &expiretime);
 
 			/**
 			 * Tells the internal clock the offset to the common network time.
@@ -79,35 +102,88 @@ namespace dtn
 			 */
 			static void setOffset(const struct timeval &tv);
 
-			static int timezone;
+			static const dtn::data::Timestamp TIMEVAL_CONVERSION;
 
-			static uint32_t TIMEVAL_CONVERSION;
+			/**
+			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
+			 * to detect expiration.
+			 * @return True, if the local clock is marked as bad
+			 */
+			static bool isBad();
+
+			/**
+			 * Set the bad state of the clock returned by Clock::isBad()
+			 */
+			static void setBad(bool val);
+
+			/**
+			 * Specify a timezone offset in hours
+			 */
+			static int getTimezone();
+
+			/**
+			 * Set a timezone offset in hours
+			 */
+			static void setTimezone(int val);
 
 			/**
 			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
 			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives
 			 * an abstract knowledge about the rating of the local clock.
 			 */
-			static float rating;
+			static double getRating();
 
 			/**
-			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
-			 * to detect expiration.
+			 * Set the rating returned by Clock::getRating()
 			 */
-			static bool badclock;
+			static void setRating(double val);
 
 			/**
 			 * if set to true, the function settimeofday() and setOffset() will modify the clock of the host
 			 * instead of storing the local offset.
 			 */
-			static bool modify_clock;
+			static bool shouldModifyClock();
+
+			/**
+			 * Set the clock modification parameter returned by Clock::shouldModifyClock()
+			 */
+			static void setModifyClock(bool val);
+
+			/**
+			 * Converts a timeval to a double value
+			 */
+			static double toDouble(const timeval &val);
 
 		private:
+			/**
+			 * Timezone offset in hours
+			 */
+			static int _timezone;
+
+			/**
+			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
+			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives
+			 * an abstract knowledge about the rating of the local clock.
+			 */
+			static double _rating;
+
+			/**
+			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
+			 * to detect expiration.
+			 */
+			static bool _badclock;
+
+			/**
+			 * if set to true, the function settimeofday() and setOffset() will modify the clock of the host
+			 * instead of storing the local offset.
+			 */
+			static bool _modify_clock;
+
 			Clock();
 			virtual ~Clock();
 
-			static bool __isExpired(size_t timestamp, size_t lifetime = 0);
-			static size_t __getExpireTime(size_t timestamp, size_t lifetime);
+			static bool __isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime = 0);
+			static dtn::data::Timestamp __getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime);
 
 			static struct timeval _offset;
 			static bool _offset_init;

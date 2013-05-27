@@ -29,6 +29,9 @@
 
 namespace ibrcommon
 {
+	HashProvider::~HashProvider()
+	{ }
+
 	DefaultHashProvider::DefaultHashProvider(size_t salt_count)
 	 : salt_count_(salt_count)
 	{
@@ -63,7 +66,7 @@ namespace ibrcommon
 	{
 		std::list<bloom_type> hashes;
 
-		for (std::vector<bloom_type>::const_iterator iter = _salt.begin(); iter != _salt.end(); iter++)
+		for (std::vector<bloom_type>::const_iterator iter = _salt.begin(); iter != _salt.end(); ++iter)
 		{
 			hashes.push_back(hash_ap(begin, remaining_length, (*iter)));
 		}
@@ -185,7 +188,7 @@ namespace ibrcommon
 
 		std::list<bloom_type> hashes = _hashp.hash(key_begin, length);
 
-		for (std::list<bloom_type>::iterator iter = hashes.begin(); iter != hashes.end(); iter++)
+		for (std::list<bloom_type>::iterator iter = hashes.begin(); iter != hashes.end(); ++iter)
 		{
 			compute_indices( (*iter), bit_index, bit );
 			bit_table_[bit_index / bits_per_char] |= bit_mask[bit];
@@ -211,7 +214,7 @@ namespace ibrcommon
 
 		const std::list<bloom_type> hashes = _hashp.hash(key_begin, length);
 
-		for (std::list<bloom_type>::const_iterator iter = hashes.begin(); iter != hashes.end(); iter++)
+		for (std::list<bloom_type>::const_iterator iter = hashes.begin(); iter != hashes.end(); ++iter)
 		{
 			compute_indices( (*iter), bit_index, bit );
 			if ((bit_table_[bit_index / bits_per_char] & bit_mask[bit]) != bit_mask[bit])
@@ -311,11 +314,11 @@ namespace ibrcommon
 		bit = bit_index % bits_per_char;
 	}
 
-	float BloomFilter::getAllocation() const
+	double BloomFilter::getAllocation() const
 	{
-		float m = table_size_;
-		float n = _itemcount;
-		float k = salt_count_;
+		double m = static_cast<double>(table_size_);
+		double n = static_cast<double>(_itemcount);
+		double k = static_cast<double>(salt_count_);
 
 		return pow(1 - pow(1 - (1 / m), k * n), k);
 	}

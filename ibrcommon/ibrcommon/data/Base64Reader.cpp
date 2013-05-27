@@ -22,18 +22,18 @@
 #include "ibrcommon/data/Base64Reader.h"
 #include "ibrcommon/Logger.h"
 #include <stdio.h>
+#include <vector>
 
 namespace ibrcommon
 {
 	Base64Reader::Base64Reader(std::istream &stream, const size_t limit, const size_t buffer)
-	 : std::istream(this), _stream(stream), data_buf_(new char[buffer]), data_size_(buffer), _base64_state(0), _base64_padding(0), _byte_read(0), _byte_limit(limit)
+	 : std::istream(this), _stream(stream), data_buf_(buffer), data_size_(buffer), _base64_state(0), _base64_padding(0), _byte_read(0), _byte_limit(limit)
 	{
 		setg(0, 0, 0);
 	}
 
 	Base64Reader::~Base64Reader()
 	{
-		delete[] data_buf_;
 	}
 
 	void Base64Reader::set_b64(char val)
@@ -76,7 +76,7 @@ namespace ibrcommon
 		}
 
 		// read some data
-		char buffer[data_size_];
+		std::vector<char> buffer(data_size_);
 
 		if (_byte_limit > 0)
 		{
@@ -90,7 +90,7 @@ namespace ibrcommon
 			bytes_to_read -= _base64_state;
 
 			// debug
-			IBRCOMMON_LOGGER_DEBUG(30) <<
+			IBRCOMMON_LOGGER_DEBUG_TAG("Base64Reader", 60) <<
 					"[Base64Reader] base64 bytes to read: " << bytes_to_read <<
 					"; payload bytes: " << (_byte_limit - _byte_read) <<
 					"; byte in buffer: " << (int)_base64_state << IBRCOMMON_LOGGER_ENDL;
@@ -99,11 +99,11 @@ namespace ibrcommon
 			if (bytes_to_read > data_size_) bytes_to_read = data_size_;
 
 			// read from the stream
-			_stream.read((char*)&buffer, bytes_to_read);
+			_stream.read((char*)&buffer[0], bytes_to_read);
 		}
 		else
 		{
-			_stream.read((char*)&buffer, data_size_);
+			_stream.read((char*)&buffer[0], data_size_);
 		}
 
 		size_t len = _stream.gcount();
@@ -111,7 +111,7 @@ namespace ibrcommon
 		// position in array
 		size_t decoded_bytes = 0;
 
-		for (size_t i = 0; i < len; i++)
+		for (size_t i = 0; i < len; ++i)
 		{
 			const int c = Base64::getCharType( buffer[i] );
 
@@ -154,7 +154,7 @@ namespace ibrcommon
 				default:
 				{
 					// put char into the decode buffer
-					set_b64(c);
+					set_b64(static_cast<char>(c));
 					break;
 				}
 			}
@@ -195,13 +195,13 @@ namespace ibrcommon
 
 		// Since the input buffer content is now valid (or is new)
 		// the get pointer should be initialized (or reset).
-		setg(data_buf_, data_buf_, data_buf_ + decoded_bytes);
+		setg(&data_buf_[0], &data_buf_[0], &data_buf_[0] + decoded_bytes);
 
 		if (_byte_limit > 0)
 		{
 			_byte_read += decoded_bytes;
 		}
 
-		return std::char_traits<char>::not_eof((unsigned char) data_buf_[0]);
+		return std::char_traits<char>::not_eof(data_buf_[0]);
 	}
 }

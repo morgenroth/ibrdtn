@@ -23,6 +23,7 @@
 #define TIMEEVENT_H_
 
 #include "core/Event.h"
+#include <ibrdtn/data/Number.h>
 
 namespace dtn
 {
@@ -39,21 +40,21 @@ namespace dtn
 			virtual ~TimeEvent();
 
 			TimeEventAction getAction() const;
-			size_t getTimestamp() const;
-			size_t getUnixTimestamp() const;
+			const dtn::data::Timestamp& getTimestamp() const;
+			const dtn::data::Timestamp& getUnixTimestamp() const;
 			const std::string getName() const;
 
-			static void raise(const size_t timestamp, const size_t unixtimestamp, const TimeEventAction action);
+			static void raise(const dtn::data::Timestamp &timestamp, const dtn::data::Timestamp &unixtimestamp, const TimeEventAction action);
 
-			std::string toString() const;
+			std::string getMessage() const;
 
 			static const std::string className;
 
 		private:
-			TimeEvent(const size_t timestamp, const size_t unixtimestamp, const TimeEventAction action);
+			TimeEvent(const dtn::data::Timestamp &timestamp, const dtn::data::Timestamp &unixtimestamp, const TimeEventAction action);
 
-			const size_t m_timestamp;
-			const size_t m_unixtimestamp;
+			const dtn::data::Timestamp m_timestamp;
+			const dtn::data::Timestamp m_unixtimestamp;
 			const TimeEventAction m_action;
 		};
 	}

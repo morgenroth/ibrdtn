@@ -21,15 +21,38 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include <ibrdtn/security/SecurityKey.h>
+#include <string>
 
 #ifndef TESTSECURITYBLOCK_H_
 #define TESTSECURITYBLOCK_H_
+
+class SecurityStringKey : public dtn::security::SecurityKey
+{
+public:
+	SecurityStringKey() : _data() {};
+	virtual ~SecurityStringKey() {};
+
+	void setData(const std::string &data)
+	{
+		_data = data;
+	}
+
+	virtual const std::string getData() const
+	{
+		return _data;
+	}
+
+private:
+	std::string _data;
+};
 
 class TestSecurityBlock : public CPPUNIT_NS :: TestFixture
 {
 	CPPUNIT_TEST_SUITE (TestSecurityBlock);
 	CPPUNIT_TEST (localBABTest);
 	CPPUNIT_TEST (serializeBABTest);
+	CPPUNIT_TEST (permutationBabPibTest);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -39,6 +62,14 @@ public:
 protected:
 	void localBABTest(void);
 	void serializeBABTest(void);
+	void permutationBabPibTest(void);
+
+private:
+	dtn::security::SecurityKey pubkey;
+	dtn::security::SecurityKey pkey;
+	SecurityStringKey _babkey;
+
+	std::string _testdata;
 };
 
 #endif /* TESTSECURITYBLOCK_H_ */

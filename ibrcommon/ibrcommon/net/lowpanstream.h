@@ -26,6 +26,7 @@
 #include "ibrcommon/net/vaddress.h"
 #include <streambuf>
 #include <iostream>
+#include <vector>
 #include <stdint.h>
 
 namespace ibrcommon
@@ -38,7 +39,7 @@ namespace ibrcommon
 		 * Callback interface implementation from LoWPAN CL
 		 * @see LOWPANConvergenceLayer
 		 */
-		virtual void send_cb(char *buf, int len, const ibrcommon::vaddress &address) = 0;
+		virtual void send_cb(const char *buf, size_t len, const ibrcommon::vaddress &address) = 0;
 	};
 
 	class lowpanstream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
@@ -57,7 +58,7 @@ namespace ibrcommon
 		 * @param buf Buffer with received data
 		 * @param len Length of the buffer
 		 */
-		void queue(char *buf, int len);
+		void queue(char *buf, size_t len);
 
 		void abort();
 
@@ -73,13 +74,13 @@ namespace ibrcommon
 		char _out_stat;
 
 		// Input buffer
-		char *in_buf_;
-		int in_buf_len;
+		std::vector<char> in_buf_;
+		size_t in_buf_len;
 		bool in_buf_free;
 
 		// Output buffer
-		char *out_buf_;
-		char *out2_buf_;
+		std::vector<char> out_buf_;
+		std::vector<char> out2_buf_;
 
 		// sequence number
 		uint8_t in_seq_num_;

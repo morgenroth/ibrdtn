@@ -74,9 +74,18 @@ public class EventReceiver extends BroadcastReceiver {
 		}
 		else if (action.equals(de.tubs.ibr.dtn.Intent.RECEIVE))
 		{
-			// open activity
+			// start receiving service
 			Intent i = new Intent(context, ChatService.class);
 			i.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
+			context.startService(i);
+		}
+		else if (action.equals(de.tubs.ibr.dtn.Intent.STATUS_REPORT))
+		{
+			// forward intent to the chat service
+			Intent i = new Intent(context, ChatService.class);
+			i.setAction(ChatService.REPORT_DELIVERED_INTENT);
+			i.putExtra("source", intent.getParcelableExtra("source"));
+			i.putExtra("bundleid", intent.getParcelableExtra("bundleid"));
 			context.startService(i);
 		}
 	}

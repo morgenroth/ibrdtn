@@ -22,8 +22,11 @@
 #ifndef CONVERGENCELAYER_H_
 #define CONVERGENCELAYER_H_
 
-#include "ibrdtn/data/BundleID.h"
+#include "net/BundleTransfer.h"
 #include "core/Node.h"
+
+#include <ibrdtn/data/BundleID.h>
+#include <ibrcommon/Exceptions.h>
 
 using namespace dtn::data;
 
@@ -33,33 +36,28 @@ namespace dtn
 	{
 		class BundleReceiver;
 
+		class NoAddressFoundException : public ibrcommon::Exception
+		{
+		public:
+			NoAddressFoundException(std::string what = "There is no address available for this peer.") throw() : ibrcommon::Exception(what)
+			{
+			};
+		};
+
 		/**
 		 * Ist für die Zustellung von Bundles verantwortlich.
 		 */
 		class ConvergenceLayer
 		{
 		public:
-			class Job
-			{
-			public:
-				Job();
-				Job(const dtn::data::EID &eid, const dtn::data::BundleID &b);
-				~Job();
-
-				void clear();
-
-				dtn::data::BundleID _bundle;
-				dtn::data::EID _destination;
-			};
-
 			/**
 			 * destructor
 			 */
-			virtual ~ConvergenceLayer() {};
+			virtual ~ConvergenceLayer() = 0;
 
 			virtual dtn::core::Node::Protocol getDiscoveryProtocol() const = 0;
 
-			virtual void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job) = 0;
+			virtual void queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job) = 0;
 
 			/**
 			 * This method opens a connection proactive.

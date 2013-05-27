@@ -23,12 +23,13 @@
 #include "core/TimeEvent.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/Logger.h>
 
 namespace dtn
 {
 	namespace core
 	{
-		WallClock::WallClock(size_t frequency) : _frequency(frequency), _next(0), _timer(*this, frequency)
+		WallClock::WallClock(const dtn::data::Timeout &frequency) : _frequency(frequency), _next(0), _timer(*this, frequency)
 		{
 		}
 
@@ -48,13 +49,18 @@ namespace dtn
 
 		void WallClock::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			if(_timer.isRunning())
 			{
 				_timer.reset();
 			}
 			else
 			{
-				_timer.start();
+				try {
+					_timer.start();
+				} catch (const ibrcommon::ThreadException &ex) {
+					IBRCOMMON_LOGGER_TAG("WallClock", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				}
 			}
 		}
 
@@ -65,7 +71,7 @@ namespace dtn
 
 		size_t WallClock::timeout(ibrcommon::Timer*)
 		{
-			size_t dtntime = dtn::utils::Clock::getTime();
+			dtn::data::Timestamp dtntime = dtn::utils::Clock::getTime();
 
 			if (dtntime == 0)
 			{
@@ -74,10 +80,10 @@ namespace dtn
 				ibrcommon::MutexLock l(*this);
 				signal(true);
 			}
-			else if (_next <= dtntime)
+			else if (dtntime >= _next)
 			{
 				TimeEvent::raise(dtntime, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
-				_next = dtntime + _frequency;
+				_next = dtntime.get<size_t>() + _frequency;
 
 				ibrcommon::MutexLock l(*this);
 				signal(true);

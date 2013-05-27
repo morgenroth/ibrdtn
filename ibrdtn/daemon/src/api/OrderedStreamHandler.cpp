@@ -58,16 +58,16 @@ namespace dtn
 
 		void OrderedStreamHandler::put(dtn::data::Bundle &b)
 		{
-			IBRCOMMON_LOGGER_DEBUG(20) << "OrderedStreamHandler: put()" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 20) << "put()" << IBRCOMMON_LOGGER_ENDL;
 
 			// set destination EID
-			b._destination = _peer;
+			b.destination = _peer;
 
 			// set source
-			b._source = _endpoint;
+			b.source = _endpoint;
 
 			// set lifetime
-			b._lifetime = _lifetime;
+			b.lifetime = _lifetime;
 
 			// set flag if the bundles are addresses to a group
 			if (_group)
@@ -83,29 +83,33 @@ namespace dtn
 			dtn::net::BundleReceivedEvent::raise(_client.getRegistration().getDefaultEID(), b, true);
 		}
 
-		dtn::data::MetaBundle OrderedStreamHandler::get(size_t timeout)
+		dtn::data::MetaBundle OrderedStreamHandler::get(const dtn::data::Timeout timeout)
 		{
 			Registration &reg = _client.getRegistration();
-			IBRCOMMON_LOGGER_DEBUG(20) << "OrderedStreamHandler: get()" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 20) << "get()" << IBRCOMMON_LOGGER_ENDL;
+
+			dtn::data::MetaBundle bundle;
 
 			while (true)
 			{
 				try {
-					dtn::data::MetaBundle bundle = reg.receiveMetaBundle();
+					bundle = reg.receiveMetaBundle();
 
 					// discard bundle if they are not from the specified peer
 					if ((!_group) && (bundle.source != _peer))
 					{
-						IBRCOMMON_LOGGER_DEBUG(30) << "OrderedStreamHandler: get(): bundle source " << bundle.source.getString() << " not expected - discard" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 30) << "get(): bundle source " << bundle.source.getString() << " not expected - discard" << IBRCOMMON_LOGGER_ENDL;
 						continue;
 					}
 
-					return bundle;
+					break;
 				} catch (const dtn::storage::NoBundleFoundException&) {
-					IBRCOMMON_LOGGER_DEBUG(30) << "OrderedStreamHandler: get(): no bundle found wait for notify" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 30) << "get(): no bundle found wait for notify" << IBRCOMMON_LOGGER_ENDL;
 					reg.wait_for_bundle(timeout);
 				}
 			}
+
+			return bundle;
 		}
 
 		void OrderedStreamHandler::__cancellation() throw ()
@@ -116,7 +120,7 @@ namespace dtn
 
 		void OrderedStreamHandler::finally()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "OrderedStreamHandler down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 60) << "OrderedStreamHandler down" << IBRCOMMON_LOGGER_ENDL;
 
 			_client.getRegistration().abort();
 
@@ -142,7 +146,7 @@ namespace dtn
 				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.size() == 0) continue;
+				if (cmd.empty()) continue;
 
 				try {
 					if (cmd[0] == "connect")
@@ -163,7 +167,7 @@ namespace dtn
 						{
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
-							_endpoint = dtn::core::BundleCore::local + "/" + cmd[2];
+							_endpoint = dtn::core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + cmd[2] );
 
 							// error checking
 							if (_endpoint == dtn::data::EID())
@@ -192,7 +196,7 @@ namespace dtn
 						else if (cmd[1] == "lifetime")
 						{
 							std::stringstream ss(cmd[2]);
-							ss >> _lifetime;
+							_lifetime.read(ss);
 							_stream << ClientHandler::API_STATUS_OK << " LIFETIME CHANGED" << std::endl;
 						}
 						else if (cmd[1] == "chunksize")
@@ -252,7 +256,7 @@ namespace dtn
 			try {
 				_handler._stream << _handler._bundlestream.rdbuf() << std::flush;
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 	} /* namespace api */

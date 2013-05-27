@@ -33,6 +33,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const std::string SecurityKeyManager::TAG = "SecurityKeyManager";
+
 		SecurityKeyManager& SecurityKeyManager::getInstance()
 		{
 			static SecurityKeyManager instance;
@@ -47,30 +49,39 @@ namespace dtn
 		{
 		}
 
-		void SecurityKeyManager::initialize(const ibrcommon::File &path, const ibrcommon::File &ca, const ibrcommon::File &key)
+		void SecurityKeyManager::onConfigurationChanged(const dtn::daemon::Configuration &conf) throw ()
 		{
-			IBRCOMMON_LOGGER(info) << "security key manager initialized; path: " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
+			const dtn::daemon::Configuration::Security &sec = conf.getSecurity();
 
-			// store all paths locally
-			_path = path; _key = key; _ca = ca;
+			if (sec.enabled())
+			{
+				IBRCOMMON_LOGGER_TAG(SecurityKeyManager::TAG, info) << "initialized; path: " << sec.getPath().getPath() << IBRCOMMON_LOGGER_ENDL;
+
+				// store all paths locally
+				_path = sec.getPath();
+				_key = sec.getKey();
+				_ca = sec.getCertificate();
+			}
+			else
+			{
+				_path = ibrcommon::File();
+				_key = ibrcommon::File();
+				_ca = ibrcommon::File();
+			}
 		}
 
 		const std::string SecurityKeyManager::hash(const dtn::data::EID &eid)
 		{
 			std::string value = eid.getNode().getString();
 			std::stringstream ss;
-			for (std::string::const_iterator iter = value.begin(); iter != value.end(); iter++)
+			for (std::string::const_iterator iter = value.begin(); iter != value.end(); ++iter)
 			{
 				ss << std::hex << std::setw( 2 ) << std::setfill( '0' ) << (int)(*iter);
 			}
 			return ss.str();
 		}
 
-		void SecurityKeyManager::prefetchKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type)
-		{
-		}
-
-		bool SecurityKeyManager::hasKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type) const
+		bool SecurityKeyManager::hasKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType) const
 		{
 			const ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
 			return keyfile.exists();
@@ -97,16 +108,16 @@ namespace dtn
 						if (default_key.exists())
 						{
 							keydata.file = default_key;
-							keydata.lastupdate = default_key.lastmodify();
+							keydata.lastupdate = DTNTime(default_key.lastmodify(), 0);
 							break;
 						}
 
-						IBRCOMMON_LOGGER(warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(SecurityKeyManager::TAG, warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
 						throw SecurityKeyManager::KeyNotFoundException();
 					}
 
 					keydata.file = keyfile;
-					keydata.lastupdate = keyfile.lastmodify();
+					keydata.lastupdate = DTNTime(keyfile.lastmodify(), 0);
 					break;
 				}
 
@@ -118,13 +129,13 @@ namespace dtn
 
 					if (!keyfile.exists())
 					{
-						IBRCOMMON_LOGGER(warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(SecurityKeyManager::TAG, warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
 						throw SecurityKeyManager::KeyNotFoundException();
 					}
 
 
 					keydata.file = keyfile;
-					keydata.lastupdate = keyfile.lastmodify();
+					keydata.lastupdate = DTNTime(keyfile.lastmodify(), 0);
 					break;
 				}
 			}

@@ -49,6 +49,11 @@ namespace dtn
 			virtual ~Configuration();
 
 		public:
+			class OnChangeListener {
+			public:
+				virtual void onConfigurationChanged(const dtn::daemon::Configuration &conf) throw () = 0;
+			};
+
 			class NetConfig
 			{
 			public:
@@ -89,7 +94,7 @@ namespace dtn
 			{
 			};
 
-			static Configuration &getInstance();
+			static Configuration &getInstance(bool reset = false);
 
 			/**
 			 * load the configuration from a file
@@ -102,14 +107,14 @@ namespace dtn
 			/**
 			 * Returns the name of the node
 			 */
-			string getNodename();
+			std::string getNodename() const;
 
 			/**
 			 * Returns the manual timezone difference in hours.
 			 * @return A positive or negative number containing the
 			 * timezone offset in hours.
 			 */
-			int getTimezone();
+			int getTimezone() const;
 
 			/**
 			 * Generic command to get a specific path. If "name" is
@@ -117,13 +122,13 @@ namespace dtn
 			 * @param name The prefix of the path to get.
 			 * @return The path as file object.
 			 */
-			ibrcommon::File getPath(string name);
+			ibrcommon::File getPath(string name) const;
 
 			/**
 			 * Enable/Disable the API interface.
 			 * @return True, if the API interface should be enabled.
 			 */
-			bool doAPI();
+			bool doAPI() const;
 
 			Configuration::NetConfig getAPIInterface() const;
 			ibrcommon::File getAPISocket() const;
@@ -132,15 +137,7 @@ namespace dtn
 			 * Get the version of this daemon.
 			 * @return The version string.
 			 */
-			std::string version();
-
-			/**
-			 * The keyword "notify_cmd" can define an external application which
-			 * is called by some events. This could be used to notify the user
-			 * of some events of interest.
-			 * @return A path to the notify command.
-			 */
-			std::string getNotifyCommand();
+			std::string version() const;
 
 			/**
 			 * Get the type of bundle storage to use.
@@ -153,7 +150,8 @@ namespace dtn
 				DEFAULT_ROUTING = 0,
 				EPIDEMIC_ROUTING = 1,
 				FLOOD_ROUTING = 2,
-				PROPHET_ROUTING = 3
+				PROPHET_ROUTING = 3,
+				NO_ROUTING = 4
 			};
 
 			/**
@@ -161,7 +159,7 @@ namespace dtn
 			 * If the string is "block", then the value of "limit_block" is returned.
 			 * @return A limit in bytes.
 			 */
-			size_t getLimit(const std::string&) const;
+			dtn::data::Size getLimit(const std::string&) const;
 
 			class Extension
 			{
@@ -185,51 +183,11 @@ namespace dtn
 				bool enabled() const;
 				bool announce() const;
 				bool shortbeacon() const;
-				char version() const;
+				int version() const;
 				const std::set<ibrcommon::vaddress> address() const throw (ParameterNotFoundException);
 				int port() const;
 				unsigned int timeout() const;
 				bool enableCrosslayer() const;
-			};
-
-			class Statistic : public Configuration::Extension
-			{
-				friend class Configuration;
-			protected:
-				Statistic();
-				virtual ~Statistic();
-				void load(const ibrcommon::ConfigFile &conf);
-
-			public:
-				/**
-				 * @return True, if the statistic logger is activated.
-				 */
-				bool enabled() const;
-
-				/**
-				 * @return The file for statistic log output.
-				 */
-				ibrcommon::File logfile() const throw (ParameterNotSetException);
-
-				/**
-				 * @return The type of the statistic logger.
-				 */
-				std::string type() const;
-
-				/**
-				 * @return The interval for statistic log refresh.
-				 */
-				unsigned int interval() const;
-
-				/**
-				 * @return The address for UDP statistics
-				 */
-				std::string address() const;
-
-				/**
-				 * @return The port for UDP statistics
-				 */
-				unsigned int port() const;
 			};
 
 			class Debug : public Configuration::Extension
@@ -274,6 +232,7 @@ namespace dtn
 				unsigned int _options;
 				bool _timestamps;
 				ibrcommon::File _logfile;
+				bool _verbose;
 
 			public:
 				/**
@@ -308,6 +267,11 @@ namespace dtn
 				 * Returns true if the logger display timestamp instead of datetime values.
 				 */
 				bool display_timestamps() const;
+
+				/**
+				 * Returns true if verbose logging is activated
+				 */
+				bool verbose() const;
 			};
 
 			class Network :  public Configuration::Extension
@@ -315,7 +279,15 @@ namespace dtn
 				friend class Configuration;
 			public:
 				/* prophet routing parameters */
-				struct ProphetConfig{
+				class ProphetConfig{
+				public:
+					ProphetConfig()
+					: p_encounter_max(0), p_encounter_first(0), p_first_threshold(0), beta(0), gamma(0), delta(0),
+					  time_unit(0), i_typ(0), next_exchange_timeout(0), forwarding_strategy(), gtmx_nf_max(0)
+					{ }
+
+					~ProphetConfig() { }
+
 					float p_encounter_max;
 					float p_encounter_first;
 					float p_first_threshold;
@@ -339,11 +311,11 @@ namespace dtn
 				std::string _routing;
 				bool _forwarding;
 				bool _tcp_nodelay;
-				size_t _tcp_chunksize;
-				size_t _tcp_idle_timeout;
+				dtn::data::Length _tcp_chunksize;
+				dtn::data::Timeout _tcp_idle_timeout;
 				ibrcommon::vinterface _default_net;
 				bool _use_default_net;
-				size_t _auto_connect;
+				dtn::data::Timeout _auto_connect;
 				bool _fragmentation;
 				bool _scheduling;
 				ProphetConfig _prophet_config;
@@ -384,17 +356,17 @@ namespace dtn
 				/**
 				 * @return The size of TCP chunks for bundles.
 				 */
-				size_t getTCPChunkSize() const;
+				dtn::data::Length getTCPChunkSize() const;
 
 				/**
 				 * @return The idle timeout for TCP connections in seconds.
 				 */
-				size_t getTCPIdleTimeout() const;
+				dtn::data::Timeout getTCPIdleTimeout() const;
 
 				/**
 				 * @return Each x seconds try to connect to all available nodes.
 				 */
-				size_t getAutoConnect() const;
+				dtn::data::Timeout getAutoConnect() const;
 
 				/**
 				 * @return True, if fragmentation support is enabled.
@@ -449,7 +421,6 @@ namespace dtn
 				 */
 				bool TLSRequired() const;
 
-#ifdef WITH_BUNDLE_SECURITY
 				enum Level
 				{
 					SECURITY_LEVEL_NONE = 0,
@@ -457,28 +428,31 @@ namespace dtn
 					SECURITY_LEVEL_ENCRYPTED = 2
 				};
 
+				/**
+				 * Get the configured security level
+				 */
 				Level getLevel() const;
 
+				/**
+				 * Get the path to security related files
+				 */
 				const ibrcommon::File& getPath() const;
 
+				/**
+				 * Get the path to the default BAB key
+				 */
 				const ibrcommon::File& getBABDefaultKey() const;
 
-			private:
-				ibrcommon::File _path;
-				Level _level;
-				ibrcommon::File _bab_default_key;
-#endif
-#if defined WITH_BUNDLE_SECURITY || defined WITH_TLS
-			public:
+				/**
+				 * Get the path to the TLS certificate
+				 */
 				const ibrcommon::File& getCertificate() const;
 
+				/**
+				 * Get the path to the private TLS key
+				 */
 				const ibrcommon::File& getKey() const;
-			private:
-				ibrcommon::File _cert;
-				ibrcommon::File _key;
-#endif
-#ifdef WITH_TLS
-			public:
+
 				/*!
 				 * \brief Read the path for trusted Certificates from the Configuration.
 				 * \return A file object for the path
@@ -492,9 +466,26 @@ namespace dtn
 				bool TLSEncryptionDisabled() const;
 
 			private:
+				// security related files
+				ibrcommon::File _path;
+
+				// security level
+				Level _level;
+
+				// local BAB key
+				ibrcommon::File _bab_default_key;
+
+				// TLS certificate
+				ibrcommon::File _cert;
+
+				// TLS private key
+				ibrcommon::File _key;
+
+				// TLS trusted CA path
 				ibrcommon::File _trustedCAPath;
+
+				// TLS encryption disabled?
 				bool _disableEncryption;
-#endif
 			};
 
 			class Daemon : public Configuration::Extension
@@ -504,7 +495,7 @@ namespace dtn
 				bool _daemonize;
 				ibrcommon::File _pidfile;
 				bool _kill;
-				size_t _threads;
+				dtn::data::Size _threads;
 
 			protected:
 				Daemon();
@@ -515,7 +506,7 @@ namespace dtn
 				bool daemonize() const;
 				const ibrcommon::File& getPidFile() const;
 				bool kill_daemon() const;
-				size_t getThreads() const;
+				dtn::data::Size getThreads() const;
 			};
 
 			class TimeSync : public Configuration::Extension
@@ -688,8 +679,23 @@ namespace dtn
 				bool ignoreDHTNeighbourInformations() const;
 			};
 
+			class P2P : public Configuration::Extension
+			{
+				friend class Configuration;
+			protected:
+				P2P();
+				virtual ~P2P();
+				void load(const ibrcommon::ConfigFile &conf);
+
+				std::string _ctrl_path;
+				bool _enabled;
+
+			public:
+				const std::string getCtrlPath() const;
+				bool enabled() const;
+			};
+
 			const Configuration::Discovery& getDiscovery() const;
-			const Configuration::Statistic& getStatistic() const;
 			const Configuration::Debug& getDebug() const;
 			const Configuration::Logger& getLogger() const;
 			const Configuration::Network& getNetwork() const;
@@ -697,11 +703,11 @@ namespace dtn
 			const Configuration::Daemon& getDaemon() const;
 			const Configuration::TimeSync& getTimeSync() const;
 			const Configuration::DHT& getDHT() const;
+			const Configuration::P2P& getP2P() const;
 
 		private:
 			ibrcommon::ConfigFile _conf;
 			Configuration::Discovery _disco;
-			Configuration::Statistic _stats;
 			Configuration::Debug _debug;
 			Configuration::Logger _logger;
 			Configuration::Network _network;
@@ -709,6 +715,7 @@ namespace dtn
 			Configuration::Daemon _daemon;
 			Configuration::TimeSync _timesync;
 			Configuration::DHT _dht;
+			Configuration::P2P _p2p;
 
 			std::string _filename;
 			bool _doapi;

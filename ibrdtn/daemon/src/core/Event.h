@@ -44,14 +44,27 @@ namespace dtn
 			virtual std::string toString() const;
 
 			/**
+			 * Get a describing message for this event
+			 */
+			virtual std::string getMessage() const = 0;
+
+			/**
+			 * If this event should be logged, this method
+			 * returns true
+			 */
+			bool isLoggable() const;
+
+			/**
 			 * Contains the priority of this event.
 			 */
 			const int prio;
 
 		protected:
 			Event(int prio = 0);
+			void setLoggable(bool val);
 
 		private:
+			bool _loggable;
 		};
 
 		class EventProcessor {

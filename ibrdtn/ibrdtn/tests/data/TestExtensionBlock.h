@@ -17,6 +17,7 @@ class TestExtensionBlock : public CPPUNIT_NS :: TestFixture
 	CPPUNIT_TEST (deserializeUnknownBlock);
 	CPPUNIT_TEST_SUITE_END ();
 
+	static void hexdump(const unsigned char &c);
 public:
 	void setUp (void);
 	void tearDown (void);

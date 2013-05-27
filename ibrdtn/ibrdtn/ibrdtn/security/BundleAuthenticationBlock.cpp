@@ -26,6 +26,7 @@
 #include <ibrcommon/Logger.h>
 #include <cstring>
 #include <set>
+#include <algorithm>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -35,6 +36,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const dtn::data::block_t BundleAuthenticationBlock::BLOCK_TYPE = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK;
+
 		dtn::data::Block* BundleAuthenticationBlock::Factory::create()
 		{
 			return new BundleAuthenticationBlock();
@@ -55,9 +58,9 @@ namespace dtn
 			bab_begin.set(dtn::data::Block::DISCARD_IF_NOT_PROCESSED, true);
 
 			// set security source
-			if (key.reference != bundle._source.getNode()) bab_begin.setSecuritySource( key.reference );
+			if (key.reference != bundle.source.getNode()) bab_begin.setSecuritySource( key.reference );
 
-			uint64_t correlator = createCorrelatorValue(bundle);
+			dtn::data::Number correlator = createCorrelatorValue(bundle);
 			bab_begin.setCorrelator(correlator);
 			bab_begin.setCiphersuiteId(BAB_HMAC);
 
@@ -74,7 +77,7 @@ namespace dtn
 		void BundleAuthenticationBlock::verify(const dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key) throw (ibrcommon::Exception)
 		{
 			// store the correlator of the verified BABs
-			uint64_t correlator;
+			dtn::data::Number correlator;
 
 			// verify the babs of the bundle
 			verify(bundle, key, correlator);
@@ -83,50 +86,42 @@ namespace dtn
 		void BundleAuthenticationBlock::strip(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key)
 		{
 			// store the correlator of the verified BABs
-			uint64_t correlator;
+			dtn::data::Number correlator;
 
 			// verify the babs of the bundle
 			verify(bundle, key, correlator);
 
-			// get the list of BABs
-			const std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
-
-			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end(); it++)
+			// iterate over all BABs
+			dtn::data::Bundle::find_iterator it(bundle.begin(), BundleAuthenticationBlock::BLOCK_TYPE);
+			while (it.next(bundle.end()))
 			{
-				const BundleAuthenticationBlock &bab = (**it);
+				const BundleAuthenticationBlock &bab = dynamic_cast<const BundleAuthenticationBlock&>(**it);
 
 				// if the correlator is already authenticated, then remove the BAB
 				if ((bab._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && (bab._correlator == correlator))
 				{
-					bundle.remove(bab);
+					bundle.erase(it);
 				}
 			}
 		}
 
 		void BundleAuthenticationBlock::strip(dtn::data::Bundle& bundle)
 		{
-			// blocks of a certain type
-			const std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
-
-			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end(); it++)
-			{
-				bundle.remove(*(*it));
-			}
+			bundle.erase(std::remove(bundle.begin(), bundle.end(), BundleAuthenticationBlock::BLOCK_TYPE), bundle.end());
 		}
 
-		void BundleAuthenticationBlock::verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, uint64_t &correlator) throw (ibrcommon::Exception)
+		void BundleAuthenticationBlock::verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, dtn::data::Number &correlator) throw (ibrcommon::Exception)
 		{
-			std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
-
 			// get the blocks, with which the key should match
-			std::set<uint64_t> correlators;
+			std::set<dtn::data::Number> correlators;
 
 			// calculate the MAC of this bundle
 			std::string our_hash_string = calcMAC(bundle, key);
 
-			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end(); it++)
+			dtn::data::Bundle::const_find_iterator it(bundle.begin(), BundleAuthenticationBlock::BLOCK_TYPE);
+			while (it.next(bundle.end()))
 			{
-				const BundleAuthenticationBlock &bab = (**it);
+				const BundleAuthenticationBlock &bab = dynamic_cast<const BundleAuthenticationBlock&>(**it);
 
 				// the bab contains a security result
 				if (bab._ciphersuite_flags & CONTAINS_SECURITY_RESULT)
@@ -142,7 +137,7 @@ namespace dtn
 						return;
 					}
 
-					IBRCOMMON_LOGGER_DEBUG(15) << "security mac does not match" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("BundleAuthenticationBlock", 15) << "security mac does not match" << IBRCOMMON_LOGGER_ENDL;
 				}
 				// bab contains no security result but a correlator
 				else if (bab._ciphersuite_flags &  CONTAINS_CORRELATOR)
@@ -161,10 +156,10 @@ namespace dtn
 			throw ibrcommon::Exception("verification failed");
 		}
 
-		std::string BundleAuthenticationBlock::calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator, const uint64_t correlator)
+		std::string BundleAuthenticationBlock::calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator, const dtn::data::Number &correlator)
 		{
 			std::string hmac_key = key.getData();
-			ibrcommon::HMacStream hms((const unsigned char*)hmac_key.c_str(), hmac_key.length());
+			ibrcommon::HMacStream hms((const unsigned char*)hmac_key.c_str(), static_cast<int>(hmac_key.length()));
 			dtn::security::StrictSerializer ss(hms, BUNDLE_AUTHENTICATION_BLOCK, with_correlator, correlator);
 			(dtn::data::DefaultSerializer&)ss << bundle;
 			hms << std::flush;
@@ -172,12 +167,12 @@ namespace dtn
 			return ibrcommon::HashStream::extract(hms);
 		}
 
-		size_t BundleAuthenticationBlock::getSecurityResultSize() const
+		dtn::data::Length BundleAuthenticationBlock::getSecurityResultSize() const
 		{
 			// TLV type
-			size_t size = 1;
+			dtn::data::Length size = 1;
 			// length of value length
-			size += dtn::data::SDNV::getLength(EVP_MD_size(EVP_sha1()));
+			size += dtn::data::Number(EVP_MD_size(EVP_sha1())).getLength();
 			// length of value
 			size += EVP_MD_size(EVP_sha1());
 			return size;

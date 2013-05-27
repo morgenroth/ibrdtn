@@ -24,6 +24,7 @@
 #ifndef PAYLOADBLOCK_H_
 #define PAYLOADBLOCK_H_
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrcommon/data/BLOB.h"
 
@@ -34,7 +35,7 @@ namespace dtn
 		class PayloadBlock : public Block
 		{
 		public:
-			static const char BLOCK_TYPE = 1;
+			static const dtn::data::block_t BLOCK_TYPE;
 
 			PayloadBlock();
 			PayloadBlock(ibrcommon::BLOB::Reference ref);
@@ -42,9 +43,9 @@ namespace dtn
 
 			ibrcommon::BLOB::Reference getBLOB() const;
 
-			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual Length getLength() const;
+			virtual std::ostream &serialize(std::ostream &stream, Length &length) const;
+			virtual std::istream &deserialize(std::istream &stream, const Length &length);
 
 			/**
 			 * serialize only a part of the payload
@@ -53,7 +54,7 @@ namespace dtn
 			 * @param clip_length The length of the data.
 			 * @return The previously given stream.
 			 */
-			std::ostream &serialize(std::ostream &stream, size_t clip_offset, size_t clip_length) const;
+			std::ostream &serialize(std::ostream &stream, const Length &clip_offset, const Length &clip_length) const;
 
 		private:
 			ibrcommon::BLOB::Reference _blobref;

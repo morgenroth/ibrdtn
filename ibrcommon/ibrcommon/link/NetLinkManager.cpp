@@ -61,16 +61,6 @@ typedef nl_object nl_object_header;
 	};
 #endif
 
-	vaddress nl_addr_get_vaddress(struct nl_addr *naddr) {
-		if (!naddr) return vaddress();
-
-		char addr_buf[256];
-		nl_addr2str( naddr, addr_buf, sizeof( addr_buf ));
-		std::string addrname(addr_buf);
-
-		return vaddress(addrname);
-	}
-
 	vaddress rtnl_addr_get_local_vaddress(struct rtnl_addr *obj) {
 		struct nl_addr *naddr = rtnl_addr_get_local(obj);
 		if (!naddr) return vaddress();
@@ -108,11 +98,11 @@ typedef nl_object nl_object_header;
 			addrname += "%" + iface.toString();
 		}
 
-		return vaddress(addrname, "", scopename);
+		return vaddress(addrname, "", scopename, sa_addr.ss_family);
 	}
 
 #ifdef HAVE_LIBNL3
-	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action, void *data)
+	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action, void*)
 #else
 	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action)
 #endif
@@ -120,7 +110,7 @@ typedef nl_object nl_object_header;
 		if (obj == NULL) return;
 
 		// get the header of the nl_object first
-		nl_object_header *header = (nl_object_header*)nl_object_priv(obj);
+		nl_object_header *header = static_cast<nl_object_header*>(nl_object_priv(obj));
 
 		switch (header->ce_msgtype) {
 			case RTM_NEWLINK: {
@@ -132,7 +122,17 @@ typedef nl_object nl_object_header;
 				vinterface iface = LinkManager::getInstance().getInterface(ifindex);
 
 				struct nl_addr *naddr = rtnl_link_get_addr(link);
-				vaddress addr = nl_addr_get_vaddress(naddr);
+
+				// default empty address
+				vaddress addr;
+
+				if (naddr) {
+					char addr_buf[256];
+					nl_addr2str( naddr, addr_buf, sizeof( addr_buf ));
+					std::string addrname(addr_buf);
+
+					addr = vaddress(addrname, "", static_cast<sa_family_t>(nl_addr_guess_family(naddr)));
+				}
 
 				unsigned int flags = rtnl_link_get_flags(link);
 
@@ -170,7 +170,7 @@ typedef nl_object nl_object_header;
 			}
 
 			default:
-				if (IBRCOMMON_LOGGER_LEVEL > 50) {
+				if (IBRCOMMON_LOGGER_LEVEL > 90) {
 				struct nl_dump_params dp;
 				memset(&dp, 0, sizeof(struct nl_dump_params));
 #ifdef HAVE_LIBNL3
@@ -222,6 +222,9 @@ typedef nl_object nl_object_header;
 		// allocate a cache manager for ROUTE
 #ifdef HAVE_LIBNL3
 		ret = nl_cache_mngr_alloc((struct nl_sock*)_nl_handle, _protocol, NL_AUTO_PROVIDE, &_mngr);
+
+		if (ret != 0)
+			throw socket_exception("can not allocate netlink cache manager");
 #else
 		_mngr = nl_cache_mngr_alloc((struct nl_handle*)_nl_handle, _protocol, NL_AUTO_PROVIDE);
 #endif
@@ -229,12 +232,15 @@ typedef nl_object nl_object_header;
 		if (_mngr == NULL)
 			throw socket_exception("can not allocate netlink cache manager");
 
-		for (std::map<std::string, struct nl_cache*>::iterator iter = _caches.begin(); iter != _caches.end(); iter++)
+		for (std::map<std::string, struct nl_cache*>::iterator iter = _caches.begin(); iter != _caches.end(); ++iter)
 		{
 			const std::string &cachename = (*iter).first;
 #ifdef HAVE_LIBNL3
 			struct nl_cache *c;
 			ret = nl_cache_mngr_add(_mngr, cachename.c_str(), &nl_cache_callback, this, &c);
+
+			if (ret != 0)
+				throw socket_exception(std::string("can not allocate netlink cache ") + cachename);
 #else
 			struct nl_cache *c = nl_cache_mngr_add(_mngr, cachename.c_str(), &nl_cache_callback);
 #endif
@@ -278,8 +284,10 @@ typedef nl_object nl_object_header;
 	void NetLinkManager::netlinkcache::receive() throw (socket_exception)
 	{
 		if (_state == SOCKET_DOWN) throw socket_exception("socket not connected");
-		int ret = nl_cache_mngr_data_ready(_mngr);
+		nl_cache_mngr_data_ready(_mngr);
 #if 0
+		int ret = nl_cache_mngr_data_ready(_mngr);
+
 		/*
 		 * Some implementations always return an error code, because they reached
 		 * the last message. In that cases we should not throw an exception. Since
@@ -368,7 +376,7 @@ typedef nl_object nl_object_header;
 				socketset socks;
 				_sock.select(&socks, NULL, NULL, NULL);
 
-				for (socketset::iterator iter = socks.begin(); iter != socks.end(); iter++) {
+				for (socketset::iterator iter = socks.begin(); iter != socks.end(); ++iter) {
 					try {
 						netlinkcache &cache = dynamic_cast<netlinkcache&>(**iter);
 						cache.receive();
@@ -377,7 +385,7 @@ typedef nl_object nl_object_header;
 			}
 		} catch (const socket_exception&) {
 			// stopped / interrupted
-			IBRCOMMON_LOGGER(error) << "NetLink connection stopped" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("NetLinkManager", error) << "NetLink connection stopped" << IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 

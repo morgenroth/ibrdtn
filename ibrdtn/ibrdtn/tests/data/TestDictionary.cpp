@@ -44,8 +44,8 @@ void TestDictionary::mainTest(void)
 
 	dict.add( dtn::data::EID("dtn://node2") );
 
-	std::pair<size_t, size_t> ref1 = dict.getRef( dtn::data::EID("dtn://node1") );
-	std::pair<size_t, size_t> ref2 = dict.getRef( dtn::data::EID("dtn://node1/applikation") );
+	dtn::data::Dictionary::Reference ref1 = dict.getRef( dtn::data::EID("dtn://node1") );
+	dtn::data::Dictionary::Reference ref2 = dict.getRef( dtn::data::EID("dtn://node1/applikation") );
 
 	CPPUNIT_ASSERT(ref1.first == ref2.first);
 

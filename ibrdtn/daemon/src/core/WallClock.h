@@ -25,6 +25,7 @@
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/thread/Timer.h>
+#include <ibrdtn/data/Number.h>
 #include "Component.h"
 
 namespace dtn
@@ -38,7 +39,7 @@ namespace dtn
 			 * Constructor for the global Clock
 			 * @param frequency Specify the frequency for the clock tick in seconds.
 			 */
-			WallClock(size_t frequency);
+			WallClock(const dtn::data::Timeout &frequency);
 			virtual ~WallClock();
 
 			/**
@@ -62,7 +63,7 @@ namespace dtn
 			virtual void componentDown() throw ();
 
 		private:
-			size_t _frequency;
+			dtn::data::Timeout _frequency;
 			size_t _next;
 			ibrcommon::Timer _timer;
 

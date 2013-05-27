@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/api/Client.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/data/File.h>
@@ -100,7 +101,7 @@ int init(int argc, char** argv)
 	}
 
 	int optindex = 0;
-	for (index = optind; index < argc; index++)
+	for (index = optind; index < argc; ++index)
 	{
 		switch (optindex)
 		{
@@ -157,7 +158,7 @@ int main(int argc, char** argv)
 	}
 
 	// backoff for reconnect
-	size_t backoff = 2;
+	unsigned int backoff = 2;
 
 	// loop, if no stop if requested
 	while (_running)
@@ -184,13 +185,13 @@ int main(int argc, char** argv)
 			while (_running)
 			{
 				// receive the bundle
-				dtn::api::Bundle b = client.getBundle();
+				dtn::data::Bundle b = client.getBundle();
 
 				// skip non-signed bundles if we should accept signed bundles only
-				if (signed_only && !b.statusVerified()) continue;
+				if (signed_only && !b.get(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED)) continue;
 
 				// get the reference to the blob
-				ibrcommon::BLOB::Reference ref = b.getData();
+				ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 
 				// get a temporary file name
 				ibrcommon::TemporaryFile file(blob_path, "bundle");
@@ -203,7 +204,7 @@ int main(int argc, char** argv)
 					out.close();
 
 					// call the script
-					std::string cmd = _shell + " " + _script + " " + b.getSource().getString() + " " + file.getPath();
+					std::string cmd = _shell + " " + _script + " " + b.source.getString() + " " + file.getPath();
 					::system(cmd.c_str());
 
 					// remove temporary file

@@ -26,12 +26,12 @@ namespace dtn
 {
 	namespace data
 	{
-		BundleFragment::BundleFragment(const dtn::data::Bundle &bundle, size_t payload_length)
+		BundleFragment::BundleFragment(const dtn::data::Bundle &bundle, const dtn::data::Length &payload_length)
 		 : _bundle(bundle), _offset(0), _length(payload_length)
 		{
 		}
 
-		BundleFragment::BundleFragment(const dtn::data::Bundle &bundle, size_t offset, size_t payload_length)
+		BundleFragment::BundleFragment(const dtn::data::Bundle &bundle, const dtn::data::Length &offset, const dtn::data::Length &payload_length)
 		 : _bundle(bundle), _offset(offset), _length(payload_length)
 		{
 		}

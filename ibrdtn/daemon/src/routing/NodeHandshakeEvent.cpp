@@ -40,21 +40,21 @@ namespace dtn
 			return NodeHandshakeEvent::className;
 		}
 
-		std::string NodeHandshakeEvent::toString() const
+		std::string NodeHandshakeEvent::getMessage() const
 		{
 			switch (state)
 			{
 			case HANDSHAKE_REPLIED:
-				return getName() + ": replied to " + peer.getString();
+				return "replied to " + peer.getString();
 				break;
 			case HANDSHAKE_COMPLETED:
-				return getName() + ": completed with " + peer.getString();
+				return "completed with " + peer.getString();
 				break;
 			case HANDSHAKE_UPDATED:
-				return getName() + ": updated of " + peer.getString();
+				return "updated of " + peer.getString();
 				break;
 			default:
-				return getName() + ": " + peer.getString();
+				return peer.getString();
 			}
 		}
 

@@ -12,6 +12,8 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t TrackingBlock::BLOCK_TYPE = 193;
+
 		dtn::data::Block* TrackingBlock::Factory::create()
 		{
 			return new TrackingBlock();
@@ -26,15 +28,15 @@ namespace dtn
 		{
 		}
 
-		size_t TrackingBlock::getLength() const
+		Length TrackingBlock::getLength() const
 		{
-			size_t ret = 0;
+			Length ret = 0;
 
 			// number of elements
-			dtn::data::SDNV count(_entries.size());
+			dtn::data::Number count(_entries.size());
 			ret += count.getLength();
 
-			for (tracking_list::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (tracking_list::const_iterator iter = _entries.begin(); iter != _entries.end(); ++iter)
 			{
 				const TrackingEntry &entry = (*iter);
 				ret += entry.getLength();
@@ -43,13 +45,13 @@ namespace dtn
 			return ret;
 		}
 
-		std::ostream& TrackingBlock::serialize(std::ostream &stream, size_t&) const
+		std::ostream& TrackingBlock::serialize(std::ostream &stream, Length&) const
 		{
 			// number of elements
-			dtn::data::SDNV count(_entries.size());
+			dtn::data::Number count(_entries.size());
 			stream << count;
 
-			for (tracking_list::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (tracking_list::const_iterator iter = _entries.begin(); iter != _entries.end(); ++iter)
 			{
 				const TrackingEntry &entry = (*iter);
 				stream << entry;
@@ -58,14 +60,14 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& TrackingBlock::deserialize(std::istream &stream, const size_t)
+		std::istream& TrackingBlock::deserialize(std::istream &stream, const Length&)
 		{
 			// number of elements
-			dtn::data::SDNV count;
+			dtn::data::Number count;
 
 			stream >> count;
 
-			for (size_t i = 0; i < count.getValue(); i++)
+			for (Number i = 0; i < count; ++i)
 			{
 				TrackingEntry entry;
 				stream >> entry;
@@ -75,12 +77,12 @@ namespace dtn
 			return stream;
 		}
 
-		size_t TrackingBlock::getLength_strict() const
+		Length TrackingBlock::getLength_strict() const
 		{
 			return getLength();
 		}
 
-		std::ostream& TrackingBlock::serialize_strict(std::ostream &stream, size_t &length) const
+		std::ostream& TrackingBlock::serialize_strict(std::ostream &stream, Length &length) const
 		{
 			return serialize(stream, length);
 		}
@@ -104,12 +106,11 @@ namespace dtn
 		}
 
 		TrackingBlock::TrackingEntry::TrackingEntry()
-		 : flags(0)
 		{
 		}
 
 		TrackingBlock::TrackingEntry::TrackingEntry(const dtn::data::EID &eid)
-		 : flags(0), endpoint(eid)
+		 : endpoint(eid)
 		{
 		}
 
@@ -119,24 +120,17 @@ namespace dtn
 
 		bool TrackingBlock::TrackingEntry::getFlag(TrackingBlock::TrackingEntry::Flags f) const
 		{
-			return (flags & f);
+			return flags.getBit(f);
 		}
 
 		void TrackingBlock::TrackingEntry::setFlag(TrackingBlock::TrackingEntry::Flags f, bool value)
 		{
-			if (value)
-			{
-				flags |= f;
-			}
-			else
-			{
-				flags &= ~(f);
-			}
+			flags.setBit(f, value);
 		}
 
-		size_t TrackingBlock::TrackingEntry::getLength() const
+		Length TrackingBlock::TrackingEntry::getLength() const
 		{
-			size_t ret = dtn::data::SDNV(flags).getLength();
+			Length ret = flags.getLength();
 
 			if (getFlag(TrackingEntry::TIMESTAMP_PRESENT)) {
 				ret += timestamp.getLength();
@@ -149,7 +143,7 @@ namespace dtn
 
 		std::ostream& operator<<(std::ostream &stream, const TrackingBlock::TrackingEntry &entry)
 		{
-			stream << dtn::data::SDNV(entry.flags);
+			stream << entry.flags;
 
 			if (entry.getFlag(TrackingBlock::TrackingEntry::TIMESTAMP_PRESENT)) {
 				stream << entry.timestamp;
@@ -162,9 +156,7 @@ namespace dtn
 
 		std::istream& operator>>(std::istream &stream, TrackingBlock::TrackingEntry &entry)
 		{
-			dtn::data::SDNV flags;
-			stream >> flags;
-			entry.flags = flags.getValue();
+			stream >> entry.flags;
 
 			if (entry.getFlag(TrackingBlock::TrackingEntry::TIMESTAMP_PRESENT)) {
 				stream >> entry.timestamp;

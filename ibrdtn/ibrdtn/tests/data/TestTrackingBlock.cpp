@@ -30,7 +30,7 @@ void TestTrackingBlock::createTest(void)
 	// generate some test data
 	{
 		ibrcommon::BLOB::iostream stream = ref.iostream();
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 10000; ++i)
 		{
 			(*stream) << "0123456789";
 		}
@@ -59,14 +59,14 @@ void TestTrackingBlock::createTest(void)
 	// deserialize the bundle
 	dds >> dest;
 
-	const dtn::data::TrackingBlock &dest_tracking = b.getBlock<dtn::data::TrackingBlock>();
+	const dtn::data::TrackingBlock &dest_tracking = b.find<dtn::data::TrackingBlock>();
 
 	const dtn::data::TrackingBlock::tracking_list &list = dest_tracking.getTrack();
 
 	CPPUNIT_ASSERT_EQUAL(list.size(), (size_t)3);
 
 	int i = 0;
-	for (dtn::data::TrackingBlock::tracking_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+	for (dtn::data::TrackingBlock::tracking_list::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 	{
 		const dtn::data::TrackingBlock::TrackingEntry &entry = (*iter);
 		CPPUNIT_ASSERT_EQUAL(entry.endpoint.getString(), hops[i].getString());

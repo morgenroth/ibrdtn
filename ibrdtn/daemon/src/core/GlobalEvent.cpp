@@ -46,6 +46,34 @@ namespace dtn
 			return GlobalEvent::className;
 		}
 
+		std::string GlobalEvent::getMessage() const
+		{
+			switch (getAction()) {
+			case GlobalEvent::GLOBAL_SHUTDOWN:
+				return "Shutdown initiated.";
+			case GlobalEvent::GLOBAL_RELOAD:
+				return "Reload signal received.";
+			case GlobalEvent::GLOBAL_IDLE:
+				return "Switched to IDLE mode.";
+			case GlobalEvent::GLOBAL_BUSY:
+				return "Switched to BUSY mode.";
+			case GlobalEvent::GLOBAL_SUSPEND:
+				return "Go into suspend mode.";
+			case GlobalEvent::GLOBAL_POWERSAVE:
+				return "Go into powersave mode.";
+			case GlobalEvent::GLOBAL_WAKEUP:
+				return "Wake-up components.";
+			case GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
+				return "Internet connection is available.";
+			case GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
+				return "Internet connection is gone.";
+			default:
+				return "unknown";
+			}
+
+			return "unknown";
+		}
+
 		void GlobalEvent::raise(const Action a)
 		{
 			// raise the new event

@@ -35,7 +35,7 @@ namespace dtn
 	namespace api
 	{
 		BinaryStreamClient::BinaryStreamClient(ClientHandler &client, ibrcommon::socketstream &stream)
-		 : ProtocolHandler(client, stream), _sender(*this), _connection(*this, _stream)
+		 : ProtocolHandler(client, stream), _sender(*this), _connection(*this, _stream), _lastack(0)
 		{
 		}
 
@@ -50,19 +50,19 @@ namespace dtn
 			return _eid;
 		}
 
-		void BinaryStreamClient::eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases)
+		void BinaryStreamClient::eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) throw ()
 		{
 		}
 
-		void BinaryStreamClient::eventTimeout()
+		void BinaryStreamClient::eventTimeout() throw ()
 		{
 		}
 
-		void BinaryStreamClient::eventError()
+		void BinaryStreamClient::eventError() throw ()
 		{
 		}
 
-		void BinaryStreamClient::eventConnectionUp(const dtn::streams::StreamContactHeader &header)
+		void BinaryStreamClient::eventConnectionUp(const dtn::streams::StreamContactHeader &header) throw ()
 		{
 			Registration &reg = _client.getRegistration();
 
@@ -74,17 +74,17 @@ namespace dtn
 			else
 			{
 				// contact received event
-				_eid = BundleCore::local + BundleCore::local.getDelimiter() + header._localeid.getSSP();
+				_eid = BundleCore::local.add( BundleCore::local.getDelimiter() + header._localeid.getSSP() );
 			}
 
-			IBRCOMMON_LOGGER_DEBUG(20) << "new client connected, handle: " << reg.getHandle() << "; eid: "<< _eid.getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 20) << "new client connected, handle: " << reg.getHandle() << "; eid: "<< _eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 			reg.subscribe(_eid);
 		}
 
-		void BinaryStreamClient::eventConnectionDown()
+		void BinaryStreamClient::eventConnectionDown() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(40) << "BinaryStreamClient::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 40) << "BinaryStreamClient::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
 			_client.getRegistration().unsubscribe(_eid);
 
@@ -92,11 +92,11 @@ namespace dtn
 				// stop the sender
 				_sender.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "BinaryStreamClient::eventConnectionDown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BinaryStreamClient", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void BinaryStreamClient::eventBundleRefused()
+		void BinaryStreamClient::eventBundleRefused() throw ()
 		{
 			try {
 				const dtn::data::Bundle bundle = _sentqueue.getnpop();
@@ -109,7 +109,7 @@ namespace dtn
 			}
 		}
 
-		void BinaryStreamClient::eventBundleForwarded()
+		void BinaryStreamClient::eventBundleForwarded() throw ()
 		{
 			try {
 				const dtn::data::Bundle bundle = _sentqueue.getnpop();
@@ -124,7 +124,7 @@ namespace dtn
 			}
 		}
 
-		void BinaryStreamClient::eventBundleAck(size_t ack)
+		void BinaryStreamClient::eventBundleAck(const dtn::data::Length &ack) throw ()
 		{
 			_lastack = ack;
 		}
@@ -140,7 +140,7 @@ namespace dtn
 
 		void BinaryStreamClient::finally()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "BinaryStreamClient down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 60) << "BinaryStreamClient down" << IBRCOMMON_LOGGER_ENDL;
 
 			// abort blocking registrations
 			_client.getRegistration().abort();
@@ -177,22 +177,22 @@ namespace dtn
 					bundle.relabel();
 
 					// process the new bundle
-					_client.getAPIServer().processIncomingBundle(_eid, bundle);
+					dtn::api::Registration::processIncomingBundle(_eid, bundle);
 				}
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start thread in BinaryStreamClient\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BinaryStreamClient", error) << "failed to start thread: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (const dtn::SerializationFailedException &ex) {
-				IBRCOMMON_LOGGER(error) << "BinaryStreamClient::run(): SerializationFailedException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BinaryStreamClient", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (const ibrcommon::IOException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "BinaryStreamClient::run(): IOException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (const dtn::InvalidDataException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "BinaryStreamClient::run(): InvalidDataException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "BinaryStreamClient::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			}
 		}
@@ -250,14 +250,14 @@ namespace dtn
 					yield();
 				}
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(40) << "BinaryStreamClient::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 40) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				return;
 			} catch (const ibrcommon::IOException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException says " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::InvalidDataException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException says " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 10) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

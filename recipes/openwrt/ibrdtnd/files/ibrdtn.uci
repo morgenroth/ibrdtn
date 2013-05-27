@@ -46,19 +46,6 @@ config 'daemon' 'storage'
 
 
 #####################################
-# statistic logging                 #
-#####################################
-
-config 'daemon' 'statistic'
-	# types: stdout | syslog | plain | csv | stat | udp
-	option type			stat
-	option interval		2
-	option file			/tmp/ibrdtn.stats
-#	option address		127.0.0.1
-#	option port			1234
-
-
-#####################################
 # routing configuration             #
 #####################################
 
@@ -112,6 +99,7 @@ config 'daemon' 'main'
 config 'daemon' 'discovery'
 #	option address		224.0.0.1
 #	option timeout		5
+#	option crosslayer	yes
 
 config 'daemon' 'tcptuning'
 #	option 'idle_timeout'	120

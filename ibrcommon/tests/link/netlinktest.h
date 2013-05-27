@@ -17,6 +17,7 @@ class netlinktest : public CPPUNIT_NS :: TestFixture
 {
 	CPPUNIT_TEST_SUITE (netlinktest);
 	CPPUNIT_TEST (baseTest);
+	CPPUNIT_TEST (upUpTest);
 	CPPUNIT_TEST_SUITE_END ();
 
 	public:
@@ -25,6 +26,7 @@ class netlinktest : public CPPUNIT_NS :: TestFixture
 
 	protected:
 		void baseTest (void);
+		void upUpTest (void);
 };
 
 #endif /* NETLINKTEST_H_ */

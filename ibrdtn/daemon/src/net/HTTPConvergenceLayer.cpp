@@ -33,139 +33,20 @@ namespace dtn
 {
 	namespace net
 	{
+		/** Set timeout for waiting until next http request */
+		const int TIMEOUT = 1000;
+		/** Set timeout for waiting until connection retry */
+		const int CONN_TIMEOUT = 5000;
 
-	/** Set timeout for waiting until next http request */
-	const int TIMEOUT = 1000;
-	/** Set timeout for waiting until connection retry */
-	const int CONN_TIMEOUT = 5000;
+		/** HTTP CODE OK */
+		const int HTTP_OK = 200;
+		/** HTTP CODE NO DATA ON SERVER */
+		const int HTTP_NO_DATA = 410;
 
-	/** HTTP CODE OK */
-	const int HTTP_OK = 200;
-	/** HTTP CODE NO DATA ON SERVER */
-	const int HTTP_NO_DATA = 410;
-
-	/** CURL CODE CONN OK*/
-	const int CURL_CONN_OK = 0;
-	/** CURL CODE PARTIAL FILE*/
-	const int CURL_PARTIAL_FILE = 18;
-
-	/* CURL DEBUG SECTION START */
-
-	/**
-	 * struct data, for curl debug methods.
-	 */
-	struct data {
-		char trace_ascii;
-	};
-
-	/**
-	 *  Curl debug method, is used when the VERBOSE option is set.
-	 *  It prints raw received data to console. This method is for
-	 *  checking reveived data, not processed by IBR-DTN.
-	 *
-	 *  @param text
-	 *  @param stream
-	 *  @param ptr
-	 *  @param size
-	 *  @param nohex
-	 */
-	static void dump(const char *text,
-						FILE *stream, unsigned char *ptr, size_t size,
-						char nohex)
-	{
-		  size_t i;
-		  size_t c;
-
-		  unsigned int width=0x10;
-
-		  if(nohex)
-
-			// without the hex output, we can fit more on screen
-
-			width = 0x40;
-
-		  fprintf(stream, "%s, %10.10ld bytes (0x%8.8lx)\n",
-				  text, (long)size, (long)size);
-
-		  for(i=0; i<size; i+= width) {
-
-			fprintf(stream, "%4.4lx: ", (long)i);
-
-			if(!nohex) {
-
-			  // hex not disabled, show it
-
-              for(c = 0; c < width; c++)
-				if(i+c < size)
-				  fprintf(stream, "%02x ", ptr[i+c]);
-				else
-				  fputs("   ", stream);
-			}
-
-			for(c = 0; (c < width) && (i+c < size); c++) {
-
-			  // check for 0D0A; if found, skip past and start a new line of output
-
- 		   if (nohex && (i+c+1 < size) && ptr[i+c]==0x0D && ptr[i+c+1]==0x0A) {
-				i+=(c+2-width);
-				break;
-			  }
-			  fprintf(stream, "%c",
-					  (ptr[i+c]>=0x20) && (ptr[i+c]<0x80)?ptr[i+c]:'.');
-
-			  // check again for 0D0A, to avoid an extra \n if it's at width
-
-			  if (nohex && (i+c+2 < size) && ptr[i+c+1]==0x0D && ptr[i+c+2]==0x0A) {
-				i+=(c+3-width);
-				break;
-			  }
-			}
-
-
-			fputc('\n', stream);
-		  }
-		  fflush(stream);
-	}
-
-
-	/**
-	 * Curl debug trace method, uses the dump() method to
-	 * print all relevant information about the respective
-	 * connection.
-	 *
-	 * @param handle
-	 * @param type
-	 * @param data
-	 * @param size
-	 * @param userp
-	 */
-	static int my_trace(CURL *handle, curl_infotype type,
-	             char *data, size_t size, void *userp)
-	{
-		  struct data *config = (struct data *)userp;
-		  const char *text;
-		  (void)handle; // prevent compiler warning
-
-		  switch (type) {
-			  case CURLINFO_TEXT:
-				fprintf(stderr, "== Info: %s", data);
-			  default: // in case a new one is introduced to shock us
-				return 0;
-
-			  case CURLINFO_HEADER_IN:
-				text = "<= Recv header";
-				break;
-			  case CURLINFO_DATA_IN:
-				text = "<= Recv data";
-				break;
-		  }
-
-		  dump(text, stderr, (unsigned char *)data, size, config->trace_ascii);
-		  return 0;
-	 }
-
-	/* CURL DEBUG SECTION END */
-
+		/** CURL CODE CONN OK*/
+		const int CURL_CONN_OK = 0;
+		/** CURL CODE PARTIAL FILE*/
+		const int CURL_PARTIAL_FILE = 18;
 
 		/**
 		 * Stream read function
@@ -274,7 +155,7 @@ namespace dtn
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle, false);
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_DEBUG(10) << "http error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("HTTPConvergenceLayer", 10) << "http error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					yield();
@@ -301,7 +182,7 @@ namespace dtn
 		 * @param node node informations
 		 * @param job parameter to get next bundle to send from storage
 		 */
-		void HTTPConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void HTTPConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 			std::string url_send;
@@ -311,7 +192,7 @@ namespace dtn
 
 			try {
 				// read the bundle out of the storage
-				const dtn::data::Bundle bundle = storage.get(job._bundle);
+				const dtn::data::Bundle bundle = storage.get(job.getBundle());
 
 				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 				{
@@ -378,8 +259,8 @@ namespace dtn
 
 						if(http_code == HTTP_OK)
 						{
-							dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-							dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+							dtn::net::BundleTransfer local_job = job;
+							local_job.complete();
 						}
 					}
 
@@ -387,7 +268,8 @@ namespace dtn
 				}
 			} catch (const dtn::storage::NoBundleFoundException&) {
 				// send transfer aborted event
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+				dtn::net::BundleTransfer local_job = job;
+				local_job.abort(dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			}
 
 		}
@@ -406,6 +288,7 @@ namespace dtn
 		 */
 		void HTTPConvergenceLayer::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 		}
 
 		/**
@@ -425,16 +308,6 @@ namespace dtn
 			std::string url = _server + "?eid=" + dtn::core::BundleCore::local.getString();
 
 			CURL *curl_down;
-			CURLcode res;
-
-			/* CURL DEBUG */
-            //struct data config;
-			//config.trace_ascii = 1; /* enable ascii tracing */
-
-
-			//long http_code = 0;
-			//double download_size = 0;
-			//long connects = 0;
 
 			while (_running)
 			{
@@ -475,7 +348,7 @@ namespace dtn
 
 					/* do curl */
 					receiver.start();
-					res = curl_easy_perform(curl_down);
+					curl_easy_perform(curl_down);
 
 					{
 						ibrcommon::MutexLock l(_push_iob_mutex);
@@ -490,17 +363,9 @@ namespace dtn
 					//curl_easy_getinfo (curl, CURLINFO_SIZE_DOWNLOAD, &download_size);
 					//curl_easy_getinfo (curl, CURLINFO_NUM_CONNECTS, &connects);
 
-					/* DEBUG OUTPUT INFORMATION */
-					//std::cout << "CURL CODE    : " << res << std::endl;
-					//std::cerr << "HTTP CODE    : " << http_code << std::endl;
-					//std::cout << "DOWNLOAD_SIZE: " << download_size << " Bytes" << std::endl;
-					//std::cout << "NUM_CONNECTS : " << connects << " Connects" << std::endl;
-					/* DEBUG OUTPUT INFORMATION */
-
 					/* Wait some time an retry to connect */
 					sleep(CONN_TIMEOUT);  // Wenn Verbindung nicht hergestellt werden konnte warte 5 sec.
-					IBRCOMMON_LOGGER_DEBUG(10) << "http error: " << "Couldn't connect to server ... wait " << CONN_TIMEOUT/1000 << "s until retry" << IBRCOMMON_LOGGER_ENDL;
-
+					IBRCOMMON_LOGGER_DEBUG_TAG("HTTPConvergenceLayer", 10) << "http error: " << "Couldn't connect to server ... wait " << CONN_TIMEOUT/1000 << "s until retry" << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				/* always cleanup */

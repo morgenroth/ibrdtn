@@ -28,6 +28,8 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 
+#include <algorithm>
+
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
 #endif
@@ -36,6 +38,8 @@ namespace dtn
 {
 	namespace security
 	{
+		const dtn::data::block_t PayloadIntegrityBlock::BLOCK_TYPE = SecurityBlock::PAYLOAD_INTEGRITY_BLOCK;
+
 		dtn::data::Block* PayloadIntegrityBlock::Factory::create()
 		{
 			return new PayloadIntegrityBlock();
@@ -50,7 +54,7 @@ namespace dtn
 		{
 		}
 
-		size_t PayloadIntegrityBlock::getSecurityResultSize() const
+		dtn::data::Length PayloadIntegrityBlock::getSecurityResultSize() const
 		{
 			if (result_size > 0)
 			{
@@ -68,15 +72,15 @@ namespace dtn
 			// check if this is a fragment
 			if (bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
 			{
-				dtn::data::PayloadBlock& plb = bundle.getBlock<dtn::data::PayloadBlock>();
+				dtn::data::PayloadBlock& plb = bundle.find<dtn::data::PayloadBlock>();
 				ibrcommon::BLOB::Reference blobref = plb.getBLOB();
 				ibrcommon::BLOB::iostream stream = blobref.iostream();
-				addFragmentRange(pib._ciphersuite_params, bundle._fragmentoffset, stream.size());
+				addFragmentRange(pib._ciphersuite_params, bundle.fragmentoffset, stream.size());
 			}
 
 			// set the source and destination address of the new block
-			if (key.reference != bundle._source.getNode()) pib.setSecuritySource( key.reference );
-			if (destination != bundle._destination.getNode()) pib.setSecurityDestination( destination );
+			if (key.reference != bundle.source.getNode()) pib.setSecuritySource( key.reference );
+			if (destination != bundle.destination.getNode()) pib.setSecurityDestination( destination );
 
 			pib.setResultSize(key);
 			pib.setCiphersuiteId(SecurityBlock::PIB_RSA_SHA256);
@@ -150,11 +154,11 @@ namespace dtn
 		void PayloadIntegrityBlock::verify(const dtn::data::Bundle &bundle, const SecurityKey &key)
 		{
 			// iterate over all PIBs to find the right one
-			std::list<const PayloadIntegrityBlock *> pibs = bundle.getBlocks<PayloadIntegrityBlock>();
+			dtn::data::Bundle::const_find_iterator it(bundle.begin(), PayloadIntegrityBlock::BLOCK_TYPE);
 
-			for (std::list<const PayloadIntegrityBlock *>::const_iterator it = pibs.begin(); it!=pibs.end(); it++)
+			while (it.next(bundle.end()))
 			{
-				verify(bundle, key, **it);
+				verify(bundle, key, dynamic_cast<const PayloadIntegrityBlock&>(**it));
 			}
 		}
 
@@ -166,7 +170,7 @@ namespace dtn
 			if ((result_size = EVP_PKEY_size(pkey)) > 0)
 			{
 				// sdnv length
-				result_size += dtn::data::SDNV(result_size).getLength();
+				result_size += dtn::data::Number(result_size).getLength();
 
 				// type
 				result_size++;
@@ -181,13 +185,12 @@ namespace dtn
 
 		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle, const SecurityKey &key, const bool all)
 		{
-			std::list<const PayloadIntegrityBlock *> pibs = bundle.getBlocks<PayloadIntegrityBlock>();
-			const PayloadIntegrityBlock * valid = NULL;
+			dtn::data::Bundle::find_iterator it(bundle.begin(), PayloadIntegrityBlock::BLOCK_TYPE);
 
 			// search for valid PIB
-			for (std::list<const PayloadIntegrityBlock *>::const_iterator it = pibs.begin(); it != pibs.end() && !valid; it++)
+			while (it.next(bundle.end()))
 			{
-				const PayloadIntegrityBlock &pib = (**it);
+				const PayloadIntegrityBlock &pib = dynamic_cast<const PayloadIntegrityBlock&>(**it);
 
 				// check if the PIB is valid
 				try {
@@ -197,16 +200,9 @@ namespace dtn
 					bundle.remove(pib);
 
 					// remove all previous pibs if all = true
-					if (all && (it != pibs.begin()))
+					if (all)
 					{
-						// move the iterator one backward
-						for (it--; it != pibs.begin(); it--)
-						{
-							bundle.remove(**it);
-						}
-
-						// remove the first PIB too
-						bundle.remove(**it);
+						bundle.erase(std::remove(bundle.begin(), (dtn::data::Bundle::iterator&)it, PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());
 					}
 
 					return;
@@ -216,14 +212,10 @@ namespace dtn
 
 		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle)
 		{
-			std::list<const PayloadIntegrityBlock *> pibs = bundle.getBlocks<PayloadIntegrityBlock>();
-			for (std::list<const PayloadIntegrityBlock *>::const_iterator it = pibs.begin(); it != pibs.end(); it++)
-			{
-				bundle.remove(*(*it));
-			}
+			bundle.erase(std::remove(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());
 		}
 
-		std::istream& PayloadIntegrityBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& PayloadIntegrityBlock::deserialize(std::istream &stream, const dtn::data::Length &length)
 		{
 			// deserialize the SecurityBlock
 			SecurityBlock::deserialize(stream, length);

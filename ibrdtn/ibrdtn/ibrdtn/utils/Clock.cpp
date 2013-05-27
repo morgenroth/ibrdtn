@@ -23,24 +23,25 @@
 #include "ibrdtn/data/AgeBlock.h"
 
 #include <ibrcommon/Logger.h>
+#include <iomanip>
 
 namespace dtn
 {
 	namespace utils
 	{
-		int Clock::timezone = 0;
-		float Clock::rating = 0;
-		bool Clock::badclock = false;
+		int Clock::_timezone = 0;
+		double Clock::_rating = 0;
+		bool Clock::_badclock = false;
 
 		struct timeval Clock::_offset;
 		bool Clock::_offset_init = false;
 
-		bool Clock::modify_clock = false;
+		bool Clock::_modify_clock = false;
 
 		/**
 		 * The number of seconds between 1/1/1970 and 1/1/2000.
 		 */
-		uint32_t Clock::TIMEVAL_CONVERSION = 946684800;
+		const dtn::data::Timestamp Clock::TIMEVAL_CONVERSION = 946684800;
 
 		Clock::Clock()
 		{
@@ -50,104 +51,163 @@ namespace dtn
 		{
 		}
 
-		size_t Clock::getExpireTime(const dtn::data::Bundle &b)
+		bool Clock::isBad()
 		{
-			if ((b._timestamp == 0) || dtn::utils::Clock::badclock)
+			return _badclock;
+		}
+
+		void Clock::setBad(bool val)
+		{
+			_badclock = val;
+		}
+
+		int Clock::getTimezone()
+		{
+			return _timezone;
+		}
+
+		void Clock::setTimezone(int val)
+		{
+			_timezone = val;
+		}
+
+		double Clock::getRating()
+		{
+			return _rating;
+		}
+
+		void Clock::setRating(double val)
+		{
+			_rating = val;
+
+			// debug quality of time
+			IBRCOMMON_LOGGER_DEBUG_TAG("Clock", 25) << "new clock rating is " << std::setprecision(16) << val << IBRCOMMON_LOGGER_ENDL;
+		}
+
+		bool Clock::shouldModifyClock()
+		{
+			return _modify_clock;
+		}
+
+		void Clock::setModifyClock(bool val)
+		{
+			_modify_clock = val;
+		}
+
+		dtn::data::Timestamp Clock::getExpireTime(const dtn::data::Bundle &b)
+		{
+			if ((b.timestamp == 0) || dtn::utils::Clock::isBad())
 			{
 				// use the AgeBlock to verify the age
 				try {
-					const dtn::data::AgeBlock &agebl = b.getBlock<const dtn::data::AgeBlock>();
-					size_t seconds_left = b._lifetime - agebl.getSeconds();
+					const dtn::data::AgeBlock &agebl = b.find<const dtn::data::AgeBlock>();
+					dtn::data::Number seconds_left = 0;
+					if (b.lifetime > agebl.getSeconds()) {
+						seconds_left = b.lifetime - agebl.getSeconds();
+					}
 					return getTime() + seconds_left;
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 			}
 
-			return __getExpireTime(b._timestamp, b._lifetime);
+			return __getExpireTime(b.timestamp, b.lifetime);
 		}
 
-		size_t Clock::getExpireTime(size_t timestamp, size_t lifetime)
+		dtn::data::Timestamp Clock::getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
 			return __getExpireTime(timestamp, lifetime);
 		}
 
-		size_t Clock::getExpireTime(size_t lifetime)
+		dtn::data::Timestamp Clock::getExpireTime(const dtn::data::Number &lifetime)
 		{
 			return __getExpireTime(getTime(), lifetime);
 		}
 
-		size_t Clock::__getExpireTime(size_t timestamp, size_t lifetime)
+		dtn::data::Number Clock::getLifetime(const dtn::data::BundleID &id, const dtn::data::Timestamp &expiretime)
+		{
+			// if the timestamp of the bundle is larger than the expiretime
+			// the bundle is invalid
+			if (id.timestamp > expiretime) return 0;
+
+			// else the lifetime is the difference between the timestamp and the expiretime
+			return id.timestamp - expiretime;
+		}
+
+		dtn::data::Number Clock::__getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
 			// if the quality of time is zero, return standard expire time
-			if (Clock::rating == 0) return timestamp + lifetime;
+			if (Clock::getRating() == 0) return timestamp + lifetime;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			size_t sigma = lifetime * (1 - Clock::rating);
+			double sigma_error = lifetime.get<double>() * (1 - Clock::getRating());
 
 			// expiration adjusted by quality of time
-			return timestamp + lifetime + sigma;
+			return timestamp + lifetime + dtn::data::Number(static_cast<dtn::data::Size>(sigma_error));
 		}
 
 		bool Clock::isExpired(const dtn::data::Bundle &b)
 		{
 			// use the AgeBlock to verify the age
 			try {
-				const dtn::data::AgeBlock &agebl = b.getBlock<const dtn::data::AgeBlock>();
-				return (b._lifetime < agebl.getSeconds());
+				const dtn::data::AgeBlock &agebl = b.find<const dtn::data::AgeBlock>();
+				return (b.lifetime < agebl.getSeconds());
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
-			return __isExpired(b._timestamp, b._lifetime);
+			return __isExpired(b.timestamp, b.lifetime);
 		}
 
-		bool Clock::isExpired(size_t timestamp, size_t lifetime)
+		bool Clock::isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
 			return __isExpired(timestamp, lifetime);
 		}
 
-		bool Clock::__isExpired(size_t timestamp, size_t lifetime)
+		bool Clock::__isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
 			// if the quality of time is zero or the clock is bad, then never expire a bundle
-			if ((Clock::rating == 0) || dtn::utils::Clock::badclock) return false;
+			if ((Clock::getRating() == 0) || dtn::utils::Clock::isBad()) return false;
 
 			// calculate sigma based on the quality of time and the original lifetime
-			size_t sigma = lifetime * (1 - Clock::rating);
+			const double sigma_error = lifetime.get<double>() * (1 - Clock::getRating());
+
+			// calculate adjusted expire time
+			const dtn::data::Timestamp expiretime = timestamp + lifetime + dtn::data::Number(static_cast<dtn::data::Size>(sigma_error));
 
 			// expiration adjusted by quality of time
-			if ( Clock::getTime() > (timestamp + lifetime + sigma)) return true;
+			if ( Clock::getTime() > expiretime) return true;
 
 			return false;
 		}
 
-		size_t Clock::getTime()
+		dtn::data::Timestamp Clock::getTime()
 		{
 			struct timeval now;
 			Clock::gettimeofday(&now);
 
 			// timezone
-			int offset = Clock::timezone * 3600;
+			dtn::data::Timestamp offset = Clock::getTimezone() * 3600;
 
 			// do we believe we are before the year 2000?
-			if ((u_int)now.tv_sec < TIMEVAL_CONVERSION)
+			if (dtn::data::Timestamp(now.tv_sec) < TIMEVAL_CONVERSION)
 			{
 				return 0;
 			}
 
-			return (now.tv_sec - TIMEVAL_CONVERSION) + offset;
+			return (dtn::data::Timestamp(now.tv_sec) - TIMEVAL_CONVERSION) + offset;
 		}
 
-		size_t Clock::getUnixTimestamp()
+		dtn::data::Timestamp Clock::getUnixTimestamp()
 		{
 			struct timeval now;
 			Clock::gettimeofday(&now);
 
 			// timezone
-			int offset = Clock::timezone * 3600;
+			dtn::data::Timestamp offset = Clock::getTimezone() * 3600;
 
-			return now.tv_sec + offset;
+			return offset + now.tv_sec;
 		}
 
 		void Clock::setOffset(const struct timeval &tv)
 		{
-			if (!modify_clock)
+			if (!Clock::shouldModifyClock())
 			{
 				if (!Clock::_offset_init)
 				{
@@ -155,7 +215,7 @@ namespace dtn
 					Clock::_offset_init = true;
 				}
 				timeradd(&Clock::_offset, &tv, &Clock::_offset);
-				IBRCOMMON_LOGGER(info) << "[Clock] new local offset: " << _offset.tv_sec << " seconds and " << _offset.tv_usec << " microseconds" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Clock", info) << "new local offset: " << Clock::toDouble(_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 			}
 			else
 			{
@@ -177,7 +237,7 @@ namespace dtn
 			struct timeval now;
 			::gettimeofday(&now, &tz);
 
-			if (!modify_clock)
+			if (!Clock::shouldModifyClock())
 			{
 				if (!Clock::_offset_init)
 				{
@@ -185,7 +245,7 @@ namespace dtn
 					Clock::_offset_init = true;
 				}
 				timersub(&now, tv, &Clock::_offset);
-				IBRCOMMON_LOGGER(info) << "[Clock] new local offset: " << _offset.tv_sec << " seconds and " << _offset.tv_usec << " microseconds" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Clock", info) << "new local offset: " << Clock::toDouble(_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 			}
 			else
 			{
@@ -200,7 +260,7 @@ namespace dtn
 			::gettimeofday(tv, &tz);
 
 			// correct by the local offset
-			if (!modify_clock)
+			if (!Clock::shouldModifyClock())
 			{
 				if (!Clock::_offset_init)
 				{
@@ -210,6 +270,10 @@ namespace dtn
 				// add offset
 				timersub(tv, &Clock::_offset, tv);
 			}
+		}
+
+		double Clock::toDouble(const timeval &val) {
+			return static_cast<double>(val.tv_sec) + (static_cast<double>(val.tv_usec) / 1000000.0);
 		}
 	}
 }

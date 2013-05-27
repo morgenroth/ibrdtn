@@ -26,14 +26,13 @@
 namespace ibrcommon
 {
 	Base64Stream::Base64Stream(std::ostream &stream, bool decode, const size_t linebreak, const size_t buffer)
-	 : std::ostream(this), _decode(decode), _stream(stream), data_buf_(new char[buffer]), data_size_(buffer), _base64_state(0), _char_counter(0), _base64_padding(0), _linebreak(linebreak)
+	 : std::ostream(this), _decode(decode), _stream(stream), data_buf_(buffer), data_size_(buffer), _base64_state(0), _char_counter(0), _base64_padding(0), _linebreak(linebreak)
 	{
-		setp(data_buf_, data_buf_ + data_size_ - 1);
+		setp(&data_buf_[0], &data_buf_[0] + data_size_ - 1);
 	}
 
 	Base64Stream::~Base64Stream()
 	{
-		delete[] data_buf_;
 	}
 
 	void Base64Stream::set_byte(char val)
@@ -99,7 +98,7 @@ namespace ibrcommon
 
 	std::char_traits<char>::int_type Base64Stream::overflow(std::char_traits<char>::int_type c)
 	{
-		char *ibegin = data_buf_;
+		char *ibegin = &data_buf_[0];
 		char *iend = pptr();
 
 		if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
@@ -108,7 +107,7 @@ namespace ibrcommon
 		}
 
 		// mark the buffer as free
-		setp(data_buf_, data_buf_ + data_size_ - 1);
+		setp(&data_buf_[0], &data_buf_[0] + data_size_ - 1);
 
 		// available data
 		size_t len = (iend - ibegin);
@@ -120,7 +119,7 @@ namespace ibrcommon
 		}
 
 		// for each byte...
-		for (size_t i = 0; i < len; i++)
+		for (size_t i = 0; i < len; ++i)
 		{
 			// do cipher stuff
 			if (_decode)
@@ -166,7 +165,7 @@ namespace ibrcommon
 					default:
 					{
 						// put char into the decode buffer
-						set_b64(c);
+						set_b64(static_cast<char>(c));
 						break;
 					}
 				}

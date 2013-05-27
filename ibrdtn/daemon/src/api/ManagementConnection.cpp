@@ -33,6 +33,7 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrcommon/link/LinkEvent.h>
+#include <ibrcommon/thread/RWLock.h>
 
 namespace dtn
 {
@@ -64,7 +65,7 @@ namespace dtn
 				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.size() == 0) continue;
+				if (cmd.empty()) continue;
 
 				if (cmd[0] == "exit")
 				{
@@ -101,9 +102,9 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return 0; };
+				virtual dtn::data::Size limit() const throw () { return 0; };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle&) const throw (dtn::storage::BundleSelectorException)
 				{
 					return true;
 				}
@@ -119,7 +120,7 @@ namespace dtn
 						const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
 						_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
-						for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
+						for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); ++iter)
 						{
 							_stream << (*iter).getEID().getString() << std::endl;
 						}
@@ -144,7 +145,7 @@ namespace dtn
 							// address family.
 
 							// the new address is defined as 5th parameter
-							ibrcommon::vaddress addr(cmd[5]);
+							ibrcommon::vaddress addr(cmd[5], "");
 
 							if (cmd[2] == "add")
 							{
@@ -307,7 +308,7 @@ namespace dtn
 						try {
 							bcore.getStorage().get(filter, blist);
 
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = blist.begin(); iter != blist.end(); ++iter)
 							{
 								const dtn::data::MetaBundle &b = *iter;
 								_stream << b.toString() << ";" << b.destination.getString() << ";" << std::endl;
@@ -324,9 +325,13 @@ namespace dtn
 
 					if ( cmd[1] == "prophet" )
 					{
-						typedef dtn::routing::BaseRouter::Extension RoutingExtension;
-						const std::list<RoutingExtension*>& routingExtensions = dtn::core::BundleCore::getInstance().getRouter().getExtensions();
-						std::list<RoutingExtension*>::const_iterator it;
+						dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
+
+						// lock the extension list during the processing
+						ibrcommon::RWLock l(router.getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+						const dtn::routing::BaseRouter::extension_list& routingExtensions = router.getExtensions();
+						dtn::routing::BaseRouter::extension_list::const_iterator it;
 
 						/* find the prophet extension in the BaseRouter */
 
@@ -345,10 +350,10 @@ namespace dtn
 									ibrcommon::ThreadsafeReference<const dtn::routing::AcknowledgementSet> ack_set = prophet_extension.getAcknowledgementSet();
 
 									_stream << ClientHandler::API_STATUS_OK << " ROUTING PROPHET ACKNOWLEDGEMENTS" << std::endl;
-									for (dtn::routing::AcknowledgementSet::const_iterator iter = (*ack_set).begin(); iter != (*ack_set).end(); iter++)
+									for (dtn::routing::AcknowledgementSet::const_iterator iter = (*ack_set).begin(); iter != (*ack_set).end(); ++iter)
 									{
 										const dtn::data::MetaBundle &ack = (*iter);
-										_stream << ack.toString() << " | " << ack.expiretime << std::endl;
+										_stream << ack.toString() << " | " << ack.expiretime.toString() << std::endl;
 									}
 									_stream << std::endl;
 								} else {

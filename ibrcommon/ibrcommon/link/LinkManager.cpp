@@ -49,10 +49,14 @@ namespace ibrcommon
 
 	void LinkManager::initialize()
 	{
-		getInstance().up();
+		static bool initialized = false;
+		if(!initialized){
+			getInstance().up();
+			initialized=true;
+		}
 	}
 
-	void LinkManager::addEventListener(const vinterface &iface, LinkManager::EventCallback *cb)
+	void LinkManager::addEventListener(const vinterface &iface, LinkManager::EventCallback *cb) throw ()
 	{
 		if (cb == NULL) return;
 		ibrcommon::MutexLock l(_listener_mutex);
@@ -61,7 +65,7 @@ namespace ibrcommon
 		ss.insert(cb);
 	}
 
-	void LinkManager::removeEventListener(const vinterface &iface, LinkManager::EventCallback *cb)
+	void LinkManager::removeEventListener(const vinterface &iface, LinkManager::EventCallback *cb) throw ()
 	{
 		if (cb == NULL) return;
 		ibrcommon::MutexLock l(_listener_mutex);
@@ -76,14 +80,14 @@ namespace ibrcommon
 		}
 	}
 
-	void LinkManager::removeEventListener(LinkManager::EventCallback *cb)
+	void LinkManager::removeEventListener(LinkManager::EventCallback *cb) throw ()
 	{
 		if (cb == NULL) return;
 
 		try {
 			ibrcommon::MutexLock l(_listener_mutex);
 
-			for (std::map<vinterface, std::set<LinkManager::EventCallback* > >::iterator iter = _listener.begin(); iter != _listener.end(); iter++)
+			for (std::map<vinterface, std::set<LinkManager::EventCallback* > >::iterator iter = _listener.begin(); iter != _listener.end(); ++iter)
 			{
 				std::set<LinkManager::EventCallback* > &ss = iter->second;
 				ss.erase(cb);
@@ -96,7 +100,7 @@ namespace ibrcommon
 
 	void LinkManager::raiseEvent(const LinkEvent &lme)
 	{
-		IBRCOMMON_LOGGER_DEBUG(57) << "LinkManager: event raised " << lme.toString() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("LinkManager", 65) << "event raised " << lme.toString() << IBRCOMMON_LOGGER_ENDL;
 
 		// get the corresponding interface
 		const vinterface &iface = lme.getInterface();
@@ -105,7 +109,7 @@ namespace ibrcommon
 		ibrcommon::MutexLock l(_listener_mutex);
 		std::set<LinkManager::EventCallback* > &ss = _listener[iface];
 
-		for (std::set<LinkManager::EventCallback* >::iterator iter = ss.begin(); iter != ss.end(); iter++)
+		for (std::set<LinkManager::EventCallback* >::iterator iter = ss.begin(); iter != ss.end(); ++iter)
 		{
 			try {
 				(*iter)->eventNotify((LinkEvent&)lme);

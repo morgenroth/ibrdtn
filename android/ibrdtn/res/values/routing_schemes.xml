@@ -2,11 +2,13 @@
 <resources>
     <string-array name="routing_scheme_names">
         <item>Disabled</item>
+        <item>Direct-Delivery</item>
         <item>Flooding</item>
         <item>Epidemic Routing</item>
         <item>PRoPHET Routing</item>
     </string-array>
     <string-array name="routing_scheme_values">
+        <item>none</item>
         <item>default</item>
         <item>flooding</item>
         <item>epidemic</item>

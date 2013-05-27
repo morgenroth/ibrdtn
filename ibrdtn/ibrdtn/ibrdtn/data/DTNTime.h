@@ -22,7 +22,8 @@
 #ifndef DTNTIME_H_
 #define DTNTIME_H_
 
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
+#include <stdint.h>
 
 namespace dtn
 {
@@ -32,28 +33,27 @@ namespace dtn
 		{
 		public:
 			DTNTime();
-			DTNTime(size_t seconds, size_t nanoseconds = 0);
-			DTNTime(SDNV seconds, SDNV nanoseconds);
+			DTNTime(const Timestamp &seconds, const Number &nanoseconds = 0);
 			virtual ~DTNTime();
 
-			const SDNV& getTimestamp() const;
-			const SDNV& getNanoseconds() const;
+			const Timestamp& getTimestamp() const;
+			const Number& getNanoseconds() const;
 
 			/**
 			 * set the DTNTime to the current time
 			 */
 			void set();
 
-			void operator+=(const size_t value);
+			void operator+=(const Timestamp &value);
 
-			size_t getLength() const;
+			Length getLength() const;
 
 		private:
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::DTNTime &obj);
 			friend std::istream &operator>>(std::istream &stream, dtn::data::DTNTime &obj);
 
-			SDNV _seconds;
-			SDNV _nanoseconds;
+			Timestamp _seconds;
+			Number _nanoseconds;
 		};
 	}
 }

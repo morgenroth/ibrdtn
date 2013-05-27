@@ -281,8 +281,8 @@ void DataStorageTest::testStressTest()
 		std::ostream& serialize(std::ostream &stream)
 		{
 			dtn::data::Bundle fake;
-			fake._source = dtn::data::EID("dtn://test1/fake");
-			fake._destination = dtn::data::EID("dtn://test/fake");
+			fake.source = dtn::data::EID("dtn://test1/fake");
+			fake.destination = dtn::data::EID("dtn://test/fake");
 
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
@@ -290,7 +290,7 @@ void DataStorageTest::testStressTest()
 				ibrcommon::BLOB::iostream io = ref.iostream();
 
 				// write some test data into the blob
-				for (unsigned int j = 0; j < _bytes; j++)
+				for (unsigned int j = 0; j < _bytes; ++j)
 				{
 						(*io) << _data;
 				}
@@ -342,9 +342,9 @@ void DataStorageTest::testStressTest()
 	size_t id = 0;
 	std::string testdata = "0123456789";
 
-	for (int i = 0; i < num_of_sizes; i++)
+	for (int i = 0; i < num_of_sizes; ++i)
 	{
-		for (int j = 0; j < 100; j++)
+		for (int j = 0; j < 100; ++j)
 		{
 			dtn::storage::DataStorage::Hash h = storage.store(new DataContainer(id, sizes[i], testdata));
 			_datavolume[h] = sizes[i];
@@ -358,16 +358,16 @@ void DataStorageTest::testStressTest()
 	CPPUNIT_ASSERT_EQUAL(0, callback.failed);
 
 //	for (std::list<dtn::storage::DataStorage::Hash>::const_iterator iter = _data.begin();
-//			iter != _data.end(); iter++)
+//			iter != _data.end(); ++iter)
 //	{
 //		const dtn::storage::DataStorage::Hash &h = (*iter);
 //		size_t size = _datavolume[h];
 //
 //		dtn::storage::DataStorage::istream stream = storage.retrieve(h);
 //
-//		for (unsigned int i = 0; i < size; i++)
+//		for (unsigned int i = 0; i < size; ++i)
 //		{
-//			for (unsigned int k = 0; k < testdata.length(); k++)
+//			for (unsigned int k = 0; k < testdata.length(); ++k)
 //			{
 //				char v = (*stream).get();
 //				char e = testdata.c_str()[k];

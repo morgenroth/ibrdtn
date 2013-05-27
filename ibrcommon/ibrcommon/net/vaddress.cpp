@@ -39,28 +39,33 @@ namespace ibrcommon
 	const std::string vaddress::VADDR_ANY = "any";
 
 	vaddress::vaddress()
-	 : _address(VADDR_ANY), _service(), _scope()
+	 : _address(VADDR_ANY), _service(), _scope(), _family(AF_UNSPEC)
 	{
 	}
 
-	vaddress::vaddress(const int port)
-	 : _address(VADDR_ANY), _service(), _scope()
-	{
-		std::stringstream ss;
-		ss << port;
-		_service = ss.str();
-	}
-
-	vaddress::vaddress(const std::string &address, const int port)
-	 : _address(address), _service(), _scope()
+	vaddress::vaddress(const int port, sa_family_t family)
+	 : _address(VADDR_ANY), _service(), _scope(), _family(family)
 	{
 		std::stringstream ss;
 		ss << port;
 		_service = ss.str();
 	}
 
-	vaddress::vaddress(const std::string &address, const std::string &service, const std::string &scope)
-	 : _address(address), _service(service), _scope(scope)
+	vaddress::vaddress(const std::string &address, const int port, sa_family_t family)
+	 : _address(address), _service(), _scope(), _family(family)
+	{
+		std::stringstream ss;
+		ss << port;
+		_service = ss.str();
+	}
+
+	vaddress::vaddress(const std::string &address, const std::string &service, sa_family_t family)
+	 : _address(address), _service(service), _scope(), _family(family)
+	{
+	}
+
+	vaddress::vaddress(const std::string &address, const std::string &service, const std::string &scope, sa_family_t family)
+	 : _address(address), _service(service), _scope(scope), _family(family)
 	{
 	}
 
@@ -102,6 +107,9 @@ namespace ibrcommon
 
 	sa_family_t vaddress::family() const throw (address_exception)
 	{
+		if (_family != AF_UNSPEC)
+			return _family;
+
 		struct addrinfo hints;
 		memset(&hints, 0, sizeof(struct addrinfo));
 		hints.ai_family = PF_UNSPEC;
@@ -126,7 +134,7 @@ namespace ibrcommon
 			throw address_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 		}
 
-		sa_family_t fam = res->ai_family;
+		sa_family_t fam = static_cast<sa_family_t>(res->ai_family);
 		freeaddrinfo(res);
 
 		return fam;

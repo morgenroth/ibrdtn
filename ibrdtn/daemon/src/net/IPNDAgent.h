@@ -28,9 +28,11 @@
 #include "Component.h"
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryAnnouncement.h"
+#include "core/EventReceiver.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vsocket.h>
 #include <ibrcommon/link/LinkManager.h>
+#include <ibrcommon/thread/Mutex.h>
 #include <list>
 #include <map>
 
@@ -40,9 +42,11 @@ namespace dtn
 {
 	namespace net
 	{
-		class IPNDAgent : public DiscoveryAgent, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback
+		class IPNDAgent : public DiscoveryAgent, public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback
 		{
 		public:
+			static const std::string TAG;
+
 			IPNDAgent(int port);
 			virtual ~IPNDAgent();
 
@@ -56,23 +60,35 @@ namespace dtn
 
 			void eventNotify(const ibrcommon::LinkEvent &evt);
 
+			/**
+			 * @see EventReceiver::raiseEvent()
+			 */
+			void raiseEvent(const Event *evt) throw ();
+
 		protected:
 			void sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider);
-			virtual void componentRun() throw ();;
+			virtual void componentRun() throw ();
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();
 
 		private:
-			void leave_interface(const ibrcommon::vinterface &iface);
-			void join_interface(const ibrcommon::vinterface &iface);
+			void leave_interface(const ibrcommon::vinterface &iface) throw ();
+			void join_interface(const ibrcommon::vinterface &iface) throw ();
 			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
+
+			void listen(const ibrcommon::vinterface &iface) throw ();
+			void unlisten(const ibrcommon::vinterface &iface) throw ();
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;
 			ibrcommon::vsocket _recv_socket;
 			ibrcommon::vsocket _send_socket;
-			std::list<ibrcommon::vaddress> _destinations;
-			std::list<ibrcommon::vinterface> _interfaces;
+			bool _send_socket_state;
+
+			std::set<ibrcommon::vaddress> _destinations;
+
+			ibrcommon::Mutex _interface_lock;
+			std::set<ibrcommon::vinterface> _interfaces;
 		};
 	}
 }

@@ -31,6 +31,7 @@
 #include <ibrcommon/refcnt_ptr.h>
 #include <ibrcommon/Logger.h>
 #include <list>
+#include <limits>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -56,15 +57,13 @@ namespace dtn
 			_dictionary.clear();
 
 			// rebuild the dictionary
-			_dictionary.add(obj._destination);
-			_dictionary.add(obj._source);
-			_dictionary.add(obj._reportto);
-			_dictionary.add(obj._custodian);
+			_dictionary.add(obj.destination);
+			_dictionary.add(obj.source);
+			_dictionary.add(obj.reportto);
+			_dictionary.add(obj.custodian);
 
 			// add EID of all secondary blocks
-			const Bundle::block_list &list = obj.getBlocks();
-
-			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 			{
 				const Block &b = (**iter);
 				_dictionary.add( b.getEIDList() );
@@ -83,9 +82,7 @@ namespace dtn
 			(*this) << (PrimaryBlock&)obj;
 
 			// serialize all secondary blocks
-			const Bundle::block_list &list = obj.getBlocks();
-			
-			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 			{
 				const Block &b = (**iter);
 				(*this) << b;
@@ -103,24 +100,25 @@ namespace dtn
 			prim.set(dtn::data::PrimaryBlock::FRAGMENT, true);
 
 			// set the application length according to the payload block size
-			try {
-				const dtn::data::PayloadBlock &payload = obj._bundle.getBlock<dtn::data::PayloadBlock>();
-				prim._appdatalength = payload.getLength();
-			} catch (dtn::data::Bundle::NoSuchBlockFoundException&) {
-				prim._appdatalength = 0;
+			dtn::data::Bundle::const_iterator it = obj._bundle.find(dtn::data::PayloadBlock::BLOCK_TYPE);
+
+			if (it != obj._bundle.end()) {
+				const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(**it);
+				prim.appdatalength = payload.getLength();
+			} else {
+				prim.appdatalength = 0;
 			}
 
 			// set the fragmentation offset
-			prim._fragmentoffset += obj._offset;
+			prim.fragmentoffset += obj._offset;
 
 			// serialize the primary block
 			(*this) << prim;
 
 			// serialize all secondary blocks
-			const Bundle::block_list &list = obj._bundle.getBlocks();
 			bool post_payload = false;
 
-			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::const_iterator iter = obj._bundle.begin(); iter != obj._bundle.end(); ++iter)
 			{
 				const Block &b = (**iter);
 
@@ -150,22 +148,20 @@ namespace dtn
 		bool DefaultSerializer::isCompressable(const dtn::data::Bundle &obj) const
 		{
 			// check if all EID are compressable
-			bool compressable = ( obj._source.isCompressable() &&
-					obj._destination.isCompressable() &&
-					obj._reportto.isCompressable() &&
-					obj._custodian.isCompressable() );
+			bool compressable = ( obj.source.isCompressable() &&
+					obj.destination.isCompressable() &&
+					obj.reportto.isCompressable() &&
+					obj.custodian.isCompressable() );
 
 			if (compressable)
 			{
 				// add EID of all secondary blocks
-				const Bundle::block_list &list = obj.getBlocks();
-
-				for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+				for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 				{
 					const Block &b = (**iter);
 					const std::list<dtn::data::EID> eids = b.getEIDList();
 
-					for (std::list<dtn::data::EID>::const_iterator eit = eids.begin(); eit != eids.end(); eit++)
+					for (std::list<dtn::data::EID>::const_iterator eit = eids.begin(); eit != eids.end(); ++eit)
 					{
 						const dtn::data::EID &eid = (*eit);
 						if (!eid.isCompressable())
@@ -182,92 +178,92 @@ namespace dtn
 		Serializer& DefaultSerializer::operator <<(const dtn::data::PrimaryBlock& obj)
 		{
 			_stream << dtn::data::BUNDLE_VERSION;		// bundle version
-			_stream << dtn::data::SDNV(obj._procflags);	// processing flags
+			_stream << obj.procflags;	// processing flags
 
 			// predict the block length
-			size_t len = 0;
-			dtn::data::SDNV primaryheader[14];
+			Number len = 0;
+			dtn::data::Number primaryheader[14];
 
-			primaryheader[8] = SDNV(obj._timestamp);		// timestamp
-			primaryheader[9] = SDNV(obj._sequencenumber);	// sequence number
-			primaryheader[10] = SDNV(obj._lifetime);		// lifetime
+			primaryheader[8] = obj.timestamp;		// timestamp
+			primaryheader[9] = obj.sequencenumber;	// sequence number
+			primaryheader[10] = obj.lifetime;		// lifetime
 
-			pair<size_t, size_t> ref;
+			dtn::data::Dictionary::Reference ref;
 
 			if (_compressable)
 			{
 				// destination reference
-				ref = obj._destination.getCompressed();
-				primaryheader[0] = SDNV(ref.first);
-				primaryheader[1] = SDNV(ref.second);
+				ref = obj.destination.getCompressed();
+				primaryheader[0] = ref.first;
+				primaryheader[1] = ref.second;
 
 				// source reference
-				ref = obj._source.getCompressed();
-				primaryheader[2] = SDNV(ref.first);
-				primaryheader[3] = SDNV(ref.second);
+				ref = obj.source.getCompressed();
+				primaryheader[2] = ref.first;
+				primaryheader[3] = ref.second;
 
 				// reportto reference
-				ref = obj._reportto.getCompressed();
-				primaryheader[4] = SDNV(ref.first);
-				primaryheader[5] = SDNV(ref.second);
+				ref = obj.reportto.getCompressed();
+				primaryheader[4] = ref.first;
+				primaryheader[5] = ref.second;
 
 				// custodian reference
-				ref = obj._custodian.getCompressed();
-				primaryheader[6] = SDNV(ref.first);
-				primaryheader[7] = SDNV(ref.second);
+				ref = obj.custodian.getCompressed();
+				primaryheader[6] = ref.first;
+				primaryheader[7] = ref.second;
 
 				// dictionary size is zero in a compressed bundle header
-				primaryheader[11] = SDNV(0);
+				primaryheader[11] = 0;
 			}
 			else
 			{
 				// destination reference
-				ref = _dictionary.getRef(obj._destination);
-				primaryheader[0] = SDNV(ref.first);
-				primaryheader[1] = SDNV(ref.second);
+				ref = _dictionary.getRef(obj.destination);
+				primaryheader[0] = ref.first;
+				primaryheader[1] = ref.second;
 
 				// source reference
-				ref = _dictionary.getRef(obj._source);
-				primaryheader[2] = SDNV(ref.first);
-				primaryheader[3] = SDNV(ref.second);
+				ref = _dictionary.getRef(obj.source);
+				primaryheader[2] = ref.first;
+				primaryheader[3] = ref.second;
 
 				// reportto reference
-				ref = _dictionary.getRef(obj._reportto);
-				primaryheader[4] = SDNV(ref.first);
-				primaryheader[5] = SDNV(ref.second);
+				ref = _dictionary.getRef(obj.reportto);
+				primaryheader[4] = ref.first;
+				primaryheader[5] = ref.second;
 
 				// custodian reference
-				ref = _dictionary.getRef(obj._custodian);
-				primaryheader[6] = SDNV(ref.first);
-				primaryheader[7] = SDNV(ref.second);
+				ref = _dictionary.getRef(obj.custodian);
+				primaryheader[6] = ref.first;
+				primaryheader[7] = ref.second;
 
 				// dictionary size
-				primaryheader[11] = SDNV(_dictionary.getSize());
+				primaryheader[11] = Number(_dictionary.getSize());
 				len += _dictionary.getSize();
 			}
 
-			for (int i = 0; i < 12; i++)
+			for (int i = 0; i < 12; ++i)
 			{
 				len += primaryheader[i].getLength();
 			}
 
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
-				primaryheader[12] = SDNV(obj._fragmentoffset);
-				primaryheader[13] = SDNV(obj._appdatalength);
+				primaryheader[12] = obj.fragmentoffset;
+				primaryheader[13] = obj.appdatalength;
 
 				len += primaryheader[12].getLength();
 				len += primaryheader[13].getLength();
 			}
 
 			// write the block length
-			_stream << SDNV(len);
+			_stream << len;
 
 			/*
 			 * write the ref block of the dictionary
 			 * this includes scheme and ssp for destination, source, reportto and custodian.
 			 */
-			for (int i = 0; i < 11; i++)
+			for (int i = 0; i < 11; ++i)
 			{
 				_stream << primaryheader[i];
 			}
@@ -294,8 +290,8 @@ namespace dtn
 
 		Serializer& DefaultSerializer::operator <<(const dtn::data::Block& obj)
 		{
-			_stream << obj.getType();
-			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+			_stream.put((char&)obj.getType());
+			_stream << obj.getProcessingFlags();
 
 			const Block::eid_list &eids = obj.getEIDList();
 
@@ -306,10 +302,10 @@ namespace dtn
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << SDNV(eids.size());
-				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				_stream << Number(eids.size());
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<size_t, size_t> offsets;
+					dtn::data::Dictionary::Reference offsets;
 
 					if (_compressable)
 					{
@@ -320,25 +316,25 @@ namespace dtn
 						offsets = _dictionary.getRef(*it);
 					}
 
-					_stream << SDNV(offsets.first);
-					_stream << SDNV(offsets.second);
+					_stream << offsets.first;
+					_stream << offsets.second;
 				}
 			}
 
 			// write size of the payload in the block
-			_stream << SDNV(obj.getLength());
+			_stream << Number(obj.getLength());
 
 			// write the payload of the block
-			size_t slength = 0;
+			Length slength = 0;
 			obj.serialize(_stream, slength);
 
 			return (*this);
 		}
 
-		Serializer& DefaultSerializer::serialize(const dtn::data::PayloadBlock& obj, size_t clip_offset, size_t clip_length)
+		Serializer& DefaultSerializer::serialize(const dtn::data::PayloadBlock& obj, const Length &clip_offset, const Length &clip_length)
 		{
-			_stream << obj.getType();
-			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+			_stream.put((char&)obj.getType());
+			_stream << obj.getProcessingFlags();
 
 			const Block::eid_list &eids = obj.getEIDList();
 
@@ -349,10 +345,10 @@ namespace dtn
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << SDNV(eids.size());
-				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				_stream << Number(eids.size());
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<size_t, size_t> offsets;
+					dtn::data::Dictionary::Reference offsets;
 
 					if (_compressable)
 					{
@@ -363,28 +359,28 @@ namespace dtn
 						offsets = _dictionary.getRef(*it);
 					}
 
-					_stream << SDNV(offsets.first);
-					_stream << SDNV(offsets.second);
+					_stream << offsets.first;
+					_stream << offsets.second;
 				}
 			}
 
 			// get the remaining payload size
-			size_t payload_size = obj.getLength();
-			size_t remain = payload_size - clip_offset;
+			Length payload_size = obj.getLength();
+			Length remain = payload_size - clip_offset;
 
 			// check if the remaining data length is >= clip_length
 			if (payload_size < clip_offset)
 			{
 				// set the real predicted payload length
 				// write size of the payload in the block
-				_stream << SDNV(0);
+				_stream << Number(0);
 			}
 			else
 			if (remain > clip_length)
 			{
 				// set the real predicted payload length
 				// write size of the payload in the block
-				_stream << SDNV(clip_length);
+				_stream << Number(clip_length);
 
 				// now skip the <offset>-bytes and all bytes after <offset + length>
 				obj.serialize( _stream, clip_offset, clip_length );
@@ -393,7 +389,7 @@ namespace dtn
 			{
 				// set the real predicted payload length
 				// write size of the payload in the block
-				_stream << SDNV(remain);
+				_stream << Number(remain);
 
 				// now skip the <offset>-bytes and all bytes after <offset + length>
 				obj.serialize( _stream, clip_offset, remain );
@@ -402,18 +398,16 @@ namespace dtn
 			return (*this);
 		}
 
-		size_t DefaultSerializer::getLength(const dtn::data::Bundle &obj)
+		Length DefaultSerializer::getLength(const dtn::data::Bundle &obj)
 		{
 			// rebuild the dictionary
 			rebuildDictionary(obj);
 
-			size_t len = 0;
+			Length len = 0;
 			len += getLength( (PrimaryBlock&)obj );
 			
 			// add size of all blocks
-			const Bundle::block_list &list = obj.getBlocks();
-
-			for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 			{
 				const Block &b = (**iter);
 				len += getLength( b );
@@ -422,78 +416,78 @@ namespace dtn
 			return len;
 		}
 
-		size_t DefaultSerializer::getLength(const dtn::data::PrimaryBlock& obj) const
+		Length DefaultSerializer::getLength(const dtn::data::PrimaryBlock& obj) const
 		{
-			size_t len = 0;
+			Length len = 0;
 
 			len += sizeof(dtn::data::BUNDLE_VERSION);		// bundle version
-			len += dtn::data::SDNV(obj._procflags).getLength();	// processing flags
+			len += obj.procflags.getLength();	// processing flags
 
 			// primary header
-			dtn::data::SDNV primaryheader[14];
-			pair<size_t, size_t> ref;
+			dtn::data::Number primaryheader[14];
+			dtn::data::Dictionary::Reference ref;
 
 			if (_compressable)
 			{
 				// destination reference
-				ref = obj._destination.getCompressed();
-				primaryheader[0] = SDNV(ref.first);
-				primaryheader[1] = SDNV(ref.second);
+				ref = obj.destination.getCompressed();
+				primaryheader[0] = ref.first;
+				primaryheader[1] = ref.second;
 
 				// source reference
-				ref = obj._source.getCompressed();
-				primaryheader[2] = SDNV(ref.first);
-				primaryheader[3] = SDNV(ref.second);
+				ref = obj.source.getCompressed();
+				primaryheader[2] = ref.first;
+				primaryheader[3] = ref.second;;
 
 				// reportto reference
-				ref = obj._reportto.getCompressed();
-				primaryheader[4] = SDNV(ref.first);
-				primaryheader[5] = SDNV(ref.second);
+				ref = obj.reportto.getCompressed();
+				primaryheader[4] = ref.first;
+				primaryheader[5] = ref.second;;
 
 				// custodian reference
-				ref = obj._custodian.getCompressed();
-				primaryheader[6] = SDNV(ref.first);
-				primaryheader[7] = SDNV(ref.second);
+				ref = obj.custodian.getCompressed();
+				primaryheader[6] = ref.first;
+				primaryheader[7] = ref.second;;
 
 				// dictionary size
-				primaryheader[11] = SDNV(0);
+				primaryheader[11] = Number(0);
 			}
 			else
 			{
 				// destination reference
-				ref = _dictionary.getRef(obj._destination);
-				primaryheader[0] = SDNV(ref.first);
-				primaryheader[1] = SDNV(ref.second);
+				ref = _dictionary.getRef(obj.destination);
+				primaryheader[0] = ref.first;
+				primaryheader[1] = ref.second;;
 
 				// source reference
-				ref = _dictionary.getRef(obj._source);
-				primaryheader[2] = SDNV(ref.first);
-				primaryheader[3] = SDNV(ref.second);
+				ref = _dictionary.getRef(obj.source);
+				primaryheader[2] = ref.first;
+				primaryheader[3] = ref.second;;
 
 				// reportto reference
-				ref = _dictionary.getRef(obj._reportto);
-				primaryheader[4] = SDNV(ref.first);
-				primaryheader[5] = SDNV(ref.second);
+				ref = _dictionary.getRef(obj.reportto);
+				primaryheader[4] = ref.first;
+				primaryheader[5] = ref.second;;
 
 				// custodian reference
-				ref = _dictionary.getRef(obj._custodian);
-				primaryheader[6] = SDNV(ref.first);
-				primaryheader[7] = SDNV(ref.second);
+				ref = _dictionary.getRef(obj.custodian);
+				primaryheader[6] = ref.first;
+				primaryheader[7] = ref.second;;
 
 				// dictionary size
-				primaryheader[11] = SDNV(_dictionary.getSize());
+				primaryheader[11] = Number(_dictionary.getSize());
 			}
 
 			// timestamp
-			primaryheader[8] = SDNV(obj._timestamp);
+			primaryheader[8] = obj.timestamp;
 
 			// sequence number
-			primaryheader[9] = SDNV(obj._sequencenumber);
+			primaryheader[9] = obj.sequencenumber;
 
 			// lifetime
-			primaryheader[10] = SDNV(obj._lifetime);
+			primaryheader[10] = obj.lifetime;
 
-			for (int i = 0; i < 11; i++)
+			for (int i = 0; i < 11; ++i)
 			{
 				len += primaryheader[i].getLength();
 			}
@@ -512,24 +506,24 @@ namespace dtn
 
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
-				primaryheader[12] = SDNV(obj._fragmentoffset);
-				primaryheader[13] = SDNV(obj._appdatalength);
+				primaryheader[12] = obj.fragmentoffset;
+				primaryheader[13] = obj.appdatalength;
 
 				len += primaryheader[12].getLength();
 				len += primaryheader[13].getLength();
 			}
 
-			len += SDNV(len).getLength();
+			len += Number(len).getLength();
 
 			return len;
 		}
 
-		size_t DefaultSerializer::getLength(const dtn::data::Block &obj) const
+		Length DefaultSerializer::getLength(const dtn::data::Block &obj) const
 		{
-			size_t len = 0;
+			Length len = 0;
 
 			len += sizeof(obj.getType());
-			len += dtn::data::SDNV(obj.getProcessingFlags()).getLength();
+			len += obj.getProcessingFlags().getLength();
 
 			const Block::eid_list &eids = obj.getEIDList();
 
@@ -540,21 +534,21 @@ namespace dtn
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				len += dtn::data::SDNV(eids.size()).getLength();
-				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				len += dtn::data::Number(eids.size()).getLength();
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<size_t, size_t> offsets = _dictionary.getRef(*it);
-					len += SDNV(offsets.first).getLength();
-					len += SDNV(offsets.second).getLength();
+					dtn::data::Dictionary::Reference offsets = _dictionary.getRef(*it);
+					len += offsets.first.getLength();
+					len += offsets.second.getLength();
 				}
 			}
 
 			// size of the payload in the block
-			size_t payload_size = obj.getLength();
+			Length payload_size = obj.getLength();
 			len += payload_size;
 
 			// size of the payload size
-			len += SDNV(payload_size).getLength();
+			len += Number(payload_size).getLength();
 
 			return len;
 		}
@@ -582,7 +576,7 @@ namespace dtn
 		Deserializer& DefaultDeserializer::operator >>(dtn::data::Bundle& obj)
 		{
 			// clear all blocks
-			obj.clearBlocks();
+			obj.clear();
 
 			// read the primary block
 			(*this) >> (PrimaryBlock&)obj;
@@ -590,8 +584,8 @@ namespace dtn
 			// read until the last block
 			bool lastblock = false;
 
-			char block_type;
-			dtn::data::SDNV procflags_sdnv;
+			block_t block_type;
+			dtn::data::Bitset<Block::ProcFlags> procflags;
 
 			// create a bundle builder
 			dtn::data::BundleBuilder builder(obj);
@@ -600,39 +594,63 @@ namespace dtn
 			while (!_stream.eof() && !lastblock)
 			{
 				// BLOCK_TYPE
-				_stream.get(block_type);
+				_stream.get((char&)block_type);
 
 				// read processing flags
-				_stream >> procflags_sdnv;
-
-				// create a block object
-				dtn::data::Block &block = builder.insert(block_type, procflags_sdnv.getValue());
+				_stream >> procflags;
 
 				try {
-					(*this) >> block;
-				} catch (dtn::PayloadReceptionInterrupted &ex) {
-					// some debugging
-					IBRCOMMON_LOGGER_DEBUG(15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
+					// create a block object
+					dtn::data::Block &block = builder.insert(block_type, procflags);
 
-					// interrupted transmission
-					if (!obj.get(dtn::data::PrimaryBlock::DONT_FRAGMENT) && (block.getLength() > 0) && _fragmentation)
-					{
-						IBRCOMMON_LOGGER_DEBUG(25) << "Create a fragment." << IBRCOMMON_LOGGER_ENDL;
+					try {
+						// read block content
+						(*this).read(obj, block);
+					} catch (dtn::PayloadReceptionInterrupted &ex) {
+						// some debugging
+						IBRCOMMON_LOGGER_DEBUG_TAG("DefaultDeserializer", 15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
 
-						if ( !obj.get(dtn::data::PrimaryBlock::FRAGMENT) )
+						// interrupted transmission
+						if (!obj.get(dtn::data::PrimaryBlock::DONT_FRAGMENT) && (block.getLength() > 0) && _fragmentation)
 						{
-							obj.set(dtn::data::PrimaryBlock::FRAGMENT, true);
-							obj._appdatalength = ex.length;
-							obj._fragmentoffset = 0;
+							IBRCOMMON_LOGGER_DEBUG_TAG("DefaultDeserializer", 25) << "Create a fragment." << IBRCOMMON_LOGGER_ENDL;
+
+							if ( !obj.get(dtn::data::PrimaryBlock::FRAGMENT) )
+							{
+								obj.set(dtn::data::PrimaryBlock::FRAGMENT, true);
+								obj.appdatalength = ex.length;
+								obj.fragmentoffset = 0;
+							}
+						}
+						else
+						{
+							throw;
 						}
 					}
-					else
+				} catch (BundleBuilder::DiscardBlockException &ex) {
+					// skip EIDs
+					if ( procflags.getBit(dtn::data::Block::BLOCK_CONTAINS_EIDS) )
 					{
-						throw ex;
+						Number eidcount;
+						_stream >> eidcount;
+
+						for (unsigned int i = 0; eidcount > i; ++i)
+						{
+							Number scheme, ssp;
+							_stream >> scheme;
+							_stream >> ssp;
+						}
 					}
+
+					// read the size of the payload in the block
+					Number block_size;
+					_stream >> block_size;
+
+					// skip payload
+					_stream.ignore(block_size.get<std::streamsize>());
 				}
 
-				lastblock = (procflags_sdnv.getValue() & Block::LAST_BLOCK);
+				lastblock = procflags.getBit(Block::LAST_BLOCK);
 			}
 
 			// validate this bundle
@@ -646,20 +664,20 @@ namespace dtn
 			dtn::data::PrimaryBlock pb;
 			(*this) >> pb;
 
-			obj.appdatalength = pb._appdatalength;
-			obj.custodian = pb._custodian;
-			obj.destination = pb._destination;
-			obj.expiretime = dtn::utils::Clock::getExpireTime(pb._timestamp, pb._lifetime);
+			obj.appdatalength = pb.appdatalength;
+			obj.custodian = pb.custodian;
+			obj.destination = pb.destination;
+			obj.expiretime = dtn::utils::Clock::getExpireTime(pb.timestamp, pb.lifetime);
 			obj.fragment = pb.get(dtn::data::PrimaryBlock::FRAGMENT);
 			obj.hopcount = 0;
-			obj.lifetime = pb._lifetime;
-			obj.offset = pb._fragmentoffset;
-			obj.procflags = pb._procflags;
-			obj.received = 0;
-			obj.reportto = pb._reportto;
-			obj.sequencenumber = pb._sequencenumber;
-			obj.source = pb._source;
-			obj.timestamp = pb._timestamp;
+			obj.lifetime = pb.lifetime;
+			obj.offset = pb.fragmentoffset;
+			obj.procflags = pb.procflags;
+			obj.received = dtn::data::DTNTime();
+			obj.reportto = pb.reportto;
+			obj.sequencenumber = pb.sequencenumber;
+			obj.source = pb.source;
+			obj.timestamp = pb.timestamp;
 
 			return (*this);
 		}
@@ -667,67 +685,59 @@ namespace dtn
 		Deserializer& DefaultDeserializer::operator >>(dtn::data::PrimaryBlock& obj)
 		{
 			char version = 0;
-			SDNV tmpsdnv;
-			SDNV blocklength;
+			Number blocklength;
 
 			// check for the right version
 			_stream.get(version);
 			if (version != dtn::data::BUNDLE_VERSION) throw dtn::InvalidProtocolException("Bundle version differ from ours.");
 
 			// PROCFLAGS
-			_stream >> tmpsdnv;	// processing flags
-			obj._procflags = tmpsdnv.getValue();
+			_stream >> obj.procflags;	// processing flags
 
 			// BLOCK LENGTH
 			_stream >> blocklength;
 
 			// EID References
-			pair<SDNV, SDNV> ref[4];
-			for (int i = 0; i < 4; i++)
+			dtn::data::Dictionary::Reference ref[4];
+			for (int i = 0; i < 4; ++i)
 			{
 				_stream >> ref[i].first;
 				_stream >> ref[i].second;
 			}
 
 			// timestamp
-			_stream >> tmpsdnv;
-			obj._timestamp = tmpsdnv.getValue();
+			_stream >> obj.timestamp;
 
 			// sequence number
-			_stream >> tmpsdnv;
-			obj._sequencenumber = tmpsdnv.getValue();
+			_stream >> obj.sequencenumber;
 
 			// lifetime
-			_stream >> tmpsdnv;
-			obj._lifetime = tmpsdnv.getValue();
+			_stream >> obj.lifetime;
 
 			try {
 				// dictionary
 				_stream >> _dictionary;
 
 				// decode EIDs
-				obj._destination = _dictionary.get(ref[0].first.getValue(), ref[0].second.getValue());
-				obj._source = _dictionary.get(ref[1].first.getValue(), ref[1].second.getValue());
-				obj._reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
-				obj._custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
+				obj.destination = _dictionary.get(ref[0].first, ref[0].second);
+				obj.source = _dictionary.get(ref[1].first, ref[1].second);
+				obj.reportto = _dictionary.get(ref[2].first, ref[2].second);
+				obj.custodian = _dictionary.get(ref[3].first, ref[3].second);
 				_compressed = false;
 			} catch (const dtn::InvalidDataException&) {
 				// error while reading the dictionary. We assume that this is a compressed bundle header.
-				obj._destination = dtn::data::EID(ref[0].first.getValue(), ref[0].second.getValue());
-				obj._source = dtn::data::EID(ref[1].first.getValue(), ref[1].second.getValue());
-				obj._reportto = dtn::data::EID(ref[2].first.getValue(), ref[2].second.getValue());
-				obj._custodian = dtn::data::EID(ref[3].first.getValue(), ref[3].second.getValue());
+				obj.destination = dtn::data::EID(ref[0].first, ref[0].second);
+				obj.source = dtn::data::EID(ref[1].first, ref[1].second);
+				obj.reportto = dtn::data::EID(ref[2].first, ref[2].second);
+				obj.custodian = dtn::data::EID(ref[3].first, ref[3].second);
 				_compressed = true;
 			}
 
 			// fragmentation?
 			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
-				_stream >> tmpsdnv;
-				obj._fragmentoffset = tmpsdnv.getValue();
-
-				_stream >> tmpsdnv;
-				obj._appdatalength = tmpsdnv.getValue();
+				_stream >> obj.fragmentoffset;
+				_stream >> obj.appdatalength;
 			}
 			
 			// validate this primary block
@@ -741,35 +751,73 @@ namespace dtn
 			// read EIDs
 			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
-				SDNV eidcount;
+				Number eidcount;
 				_stream >> eidcount;
 
-				for (unsigned int i = 0; i < eidcount.getValue(); i++)
+				for (unsigned int i = 0; eidcount > i; ++i)
 				{
-					SDNV scheme, ssp;
+					Number scheme, ssp;
 					_stream >> scheme;
 					_stream >> ssp;
 
 					if (_compressed)
 					{
-						obj.addEID( dtn::data::EID(scheme.getValue(), ssp.getValue()) );
+						obj.addEID( dtn::data::EID(scheme, ssp) );
 					}
 					else
 					{
-						obj.addEID( _dictionary.get(scheme.getValue(), ssp.getValue()) );
+						obj.addEID( _dictionary.get(scheme, ssp) );
 					}
 				}
 			}
 
 			// read the size of the payload in the block
-			SDNV block_size;
+			Number block_size;
 			_stream >> block_size;
 
 			// validate this block
-			_validator.validate(obj, block_size.getValue());
+			_validator.validate(obj, block_size);
 
 			// read the payload of the block
-			obj.deserialize(_stream, block_size.getValue());
+			obj.deserialize(_stream, block_size.get<dtn::data::Length>());
+
+			return (*this);
+		}
+
+		Deserializer& DefaultDeserializer::read(const dtn::data::PrimaryBlock &bundle, dtn::data::Block &obj)
+		{
+			// read EIDs
+			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
+			{
+				Number eidcount;
+				_stream >> eidcount;
+
+				for (unsigned int i = 0; eidcount > i; ++i)
+				{
+					Number scheme, ssp;
+					_stream >> scheme;
+					_stream >> ssp;
+
+					if (_compressed)
+					{
+						obj.addEID( dtn::data::EID(scheme, ssp) );
+					}
+					else
+					{
+						obj.addEID( _dictionary.get(scheme, ssp) );
+					}
+				}
+			}
+
+			// read the size of the payload in the block
+			Number block_size;
+			_stream >> block_size;
+
+			// validate this block
+			_validator.validate(bundle, obj, block_size);
+
+			// read the payload of the block
+			obj.deserialize(_stream, block_size.get<Length>());
 
 			return (*this);
 		}
@@ -786,7 +834,12 @@ namespace dtn
 		{
 		}
 
-		void AcceptValidator::validate(const dtn::data::Block&, const size_t) const throw (RejectedException)
+		void AcceptValidator::validate(const dtn::data::Block&, const dtn::data::Number&) const throw (RejectedException)
+		{
+
+		}
+
+		void AcceptValidator::validate(const dtn::data::PrimaryBlock&, const dtn::data::Block&, const dtn::data::Number&) const throw (RejectedException)
 		{
 
 		}
@@ -807,8 +860,8 @@ namespace dtn
 
 		Serializer& SeparateSerializer::operator <<(const dtn::data::Block& obj)
 		{
-			_stream << obj.getType();
-			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+			_stream.put((char&)obj.getType());
+			_stream << obj.getProcessingFlags();
 
 			const Block::eid_list &eids = obj.getEIDList();
 
@@ -819,8 +872,8 @@ namespace dtn
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << SDNV(eids.size());
-				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				_stream << Number(eids.size());
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					dtn::data::BundleString str((*it).getString());
 					_stream << str;
@@ -828,21 +881,21 @@ namespace dtn
 			}
 
 			// write size of the payload in the block
-			_stream << SDNV(obj.getLength());
+			_stream << Number(obj.getLength());
 
 			// write the payload of the block
-			size_t slength = 0;
+			Length slength = 0;
 			obj.serialize(_stream, slength);
 
 			return (*this);
 		}
 
-		size_t SeparateSerializer::getLength(const dtn::data::Block &obj) const
+		Length SeparateSerializer::getLength(const dtn::data::Block &obj) const
 		{
-			size_t len = 0;
+			Length len = 0;
 
 			len += sizeof(obj.getType());
-			len += dtn::data::SDNV(obj.getProcessingFlags()).getLength();
+			len += obj.getProcessingFlags().getLength();
 
 			const Block::eid_list &eids = obj.getEIDList();
 
@@ -853,8 +906,8 @@ namespace dtn
 
 			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
-				len += dtn::data::SDNV(eids.size()).getLength();
-				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				len += dtn::data::Number(eids.size()).getLength();
+				for (Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
 					dtn::data::BundleString str((*it).getString());
 					len += str.getLength();
@@ -880,25 +933,25 @@ namespace dtn
 		{
 			BundleBuilder builder(_bundle);
 
-			char block_type;
-			dtn::data::SDNV procflags_sdnv;
+			block_t block_type;
+			Bitset<Block::ProcFlags> procflags;
 
 			// BLOCK_TYPE
-			_stream.get(block_type);
+			_stream.get((char&)block_type);
 
 			// read processing flags
-			_stream >> procflags_sdnv;
+			_stream >> procflags;
 
 			// create a block object
-			dtn::data::Block &obj = builder.insert(block_type, procflags_sdnv.getValue());
+			dtn::data::Block &obj = builder.insert(block_type, procflags);
 
 			// read EIDs
 			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
-				SDNV eidcount;
+				Number eidcount;
 				_stream >> eidcount;
 
-				for (unsigned int i = 0; i < eidcount.getValue(); i++)
+				for (unsigned int i = 0; eidcount > i; ++i)
 				{
 					dtn::data::BundleString str;
 					_stream >> str;
@@ -907,15 +960,14 @@ namespace dtn
 			}
 
 			// read the size of the payload in the block
-			SDNV block_size;
+			Number block_size;
 			_stream >> block_size;
-//			obj._blocksize = block_size.getValue();
 
 			// validate this block
-			_validator.validate(obj, block_size.getValue());
+			_validator.validate(obj, block_size);
 
 			// read the payload of the block
-			obj.deserialize(_stream, block_size.getValue());
+			obj.deserialize(_stream, block_size.get<Length>());
 
 			return obj;
 		}

@@ -24,40 +24,34 @@
 #include "api/ApiServer.h"
 #include "core/EventDispatcher.h"
 #include "core/BundleCore.h"
-#include "routing/QueueBundleEvent.h"
-#include "net/BundleReceivedEvent.h"
 #include "core/NodeEvent.h"
-#include "core/FragmentManager.h"
-#include <ibrdtn/data/TrackingBlock.h>
-#include <ibrdtn/data/AgeBlock.h>
+#include "routing/QueueBundleEvent.h"
+
 #include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/net/vsocket.h>
+#include <ibrcommon/net/socketstream.h>
+
 #include <typeinfo>
 #include <algorithm>
 #include <sstream>
 #include <unistd.h>
 #include <list>
 
-#ifdef WITH_COMPRESSION
-#include <ibrdtn/data/CompressedPayloadBlock.h>
-#endif
-
-#ifdef WITH_BUNDLE_SECURITY
-#include "security/SecurityManager.h"
-#endif
-
 namespace dtn
 {
 	namespace api
 	{
-		ApiServer::ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::File &socketfile)
-		 : _shutdown(false), _garbage_collector(*this), _seeker(seeker)
+		const std::string ApiServer::TAG = "ApiServer";
+
+		ApiServer::ApiServer(const ibrcommon::File &socketfile)
+		 : _shutdown(false), _garbage_collector(*this)
 		{
 			_sockets.add(new ibrcommon::fileserversocket(socketfile));
 		}
 
-		ApiServer::ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::vinterface &net, int port)
-		 : _shutdown(false), _garbage_collector(*this), _seeker(seeker)
+		ApiServer::ApiServer(const ibrcommon::vinterface &net, int port)
+		 : _shutdown(false), _garbage_collector(*this)
 		{
 			if (net.isLoopback()) {
 				ibrcommon::vaddress addr(ibrcommon::vaddress::VADDR_LOCALHOST, port);
@@ -71,11 +65,27 @@ namespace dtn
 				// add a socket for each address on the interface
 				std::list<ibrcommon::vaddress> addrs = net.getAddresses();
 
-				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+				// convert the port into a string
+				std::stringstream ss; ss << port;
+
+				for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); ++iter) {
 					ibrcommon::vaddress &addr = (*iter);
-					std::stringstream ss; ss << port;
-					addr.setService(ss.str());
-					_sockets.add(new ibrcommon::tcpserversocket(addr, 5), net);
+
+					try {
+						// handle the addresses according to their family
+						switch (addr.family()) {
+						case AF_INET:
+						case AF_INET6:
+							addr.setService(ss.str());
+							_sockets.add(new ibrcommon::tcpserversocket(addr, 5), net);
+							break;
+
+						default:
+							break;
+						}
+					} catch (const ibrcommon::vaddress::address_exception &ex) {
+						IBRCOMMON_LOGGER_TAG(ApiServer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
 			}
 		}
@@ -97,8 +107,13 @@ namespace dtn
 
 		void ApiServer::componentUp() throw ()
 		{
-			// bring up all server sockets
-			_sockets.up();
+			// routine checked for throw() on 15.02.2013
+			try {
+				// bring up all server sockets
+				_sockets.up();
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG(ApiServer::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 			
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			startGarbageCollector();
@@ -116,7 +131,7 @@ namespace dtn
 					_sockets.select(&fds, NULL, NULL, NULL);
 
 					// iterate through all readable sockets
-					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
+					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); ++iter)
 					{
 						// we assume all the sockets in _sockets are server sockets
 						// so cast this one to the right class
@@ -155,7 +170,7 @@ namespace dtn
 						}
 
 						// generate some output
-						IBRCOMMON_LOGGER_DEBUG(5) << "new connected client at the extended API server" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "new connected client at the extended API server" << IBRCOMMON_LOGGER_ENDL;
 
 						// send welcome banner
 						(*conn) << "IBR-DTN " << dtn::daemon::Configuration::getInstance().version() << " API 1.0" << std::endl;
@@ -168,9 +183,9 @@ namespace dtn
 							ibrcommon::MutexLock l1(_registration_lock);
 							
 							// create a new registration
-							Registration reg(_seeker);
+							Registration reg;
 							_registrations.push_back(reg);
-							IBRCOMMON_LOGGER_DEBUG(5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
 
 							// create a new clienthandler for the new registration
 							obj  = new ClientHandler(*this, _registrations.back(), conn);
@@ -213,7 +228,7 @@ namespace dtn
 				ibrcommon::MutexLock l(_connection_lock);
 
 				// shutdown all clients
-				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 				{
 					(*iter)->stop();
 				}
@@ -223,114 +238,10 @@ namespace dtn
 			while (_connections.size() > 0) ::sleep(1);
 		}
 
-		void ApiServer::processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle)
-		{
-			// check address fields for "api:me", this has to be replaced
-			static const dtn::data::EID clienteid("api:me");
-
-			// set the source address to the sending EID
-			bundle._source = source;
-
-			if (bundle._destination == clienteid) bundle._destination = source;
-			if (bundle._reportto == clienteid) bundle._reportto = source;
-			if (bundle._custodian == clienteid) bundle._custodian = source;
-
-			// if the timestamp is not set, add a ageblock
-			if (bundle._timestamp == 0)
-			{
-				// check for ageblock
-				try {
-					bundle.getBlock<dtn::data::AgeBlock>();
-				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
-					// add a new ageblock
-					bundle.push_front<dtn::data::AgeBlock>();
-				}
-			}
-
-			// modify TrackingBlock
-			try {
-				dtn::data::TrackingBlock &track = bundle.getBlock<dtn::data::TrackingBlock>();
-				track.append(dtn::core::BundleCore::local);
-			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
-
-#ifdef WITH_COMPRESSION
-			// if the compression bit is set, then compress the bundle
-			if (bundle.get(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION))
-			{
-				try {
-					dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
-				} catch (const ibrcommon::Exception &ex) {
-					IBRCOMMON_LOGGER(warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				};
-			}
-#endif
-
-#ifdef WITH_BUNDLE_SECURITY
-			// if the encrypt bit is set, then try to encrypt the bundle
-			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
-			{
-				try {
-					dtn::security::SecurityManager::getInstance().encrypt(bundle);
-
-					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
-				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-					// sign requested, but no key is available
-					IBRCOMMON_LOGGER(warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
-				} catch (const dtn::security::SecurityManager::EncryptException&) {
-					IBRCOMMON_LOGGER(warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-
-			// if the sign bit is set, then try to sign the bundle
-			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN))
-			{
-				try {
-					dtn::security::SecurityManager::getInstance().sign(bundle);
-
-					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
-				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-					// sign requested, but no key is available
-					IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-#endif
-
-			// get the payload size maximum
-			size_t maxPayloadLength = dtn::daemon::Configuration::getInstance().getLimit("payload");
-
-			// check if fragmentation is enabled
-			// do not try pro-active fragmentation if the payload length is not limited
-			if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation() && (maxPayloadLength > 0))
-			{
-				try {
-					std::list<dtn::data::Bundle> fragments;
-
-					dtn::core::FragmentManager::split(bundle, maxPayloadLength, fragments);
-
-					//for each fragment raise bundle received event
-					for(std::list<dtn::data::Bundle>::iterator it = fragments.begin(); it != fragments.end(); ++it)
-					{
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(source, *it, true);
-					}
-
-					return;
-				} catch (const FragmentationProhibitedException&) {
-				} catch (const FragmentationNotNecessaryException&) {
-				} catch (const FragmentationAbortedException&) {
-					// drop the bundle
-					return;
-				}
-			}
-
-			// raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(source, bundle, true);
-		}
-
 		Registration& ApiServer::getRegistration(const std::string &handle)
 		{
 			ibrcommon::MutexLock l(_registration_lock);
-			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
 			{
 				if (*iter == handle)
 				{
@@ -357,18 +268,18 @@ namespace dtn
 					{
 						iter->attach();
 						if(!iter->isPersistent()){
-							IBRCOMMON_LOGGER_DEBUG(5) << "release registration " << iter->getHandle() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "release registration " << iter->getHandle() << IBRCOMMON_LOGGER_ENDL;
 							iter = _registrations.erase(iter);
 						}
 						else
 						{
 							iter->detach();
-							iter++;
+							++iter;
 						}
 					}
 					catch(const Registration::AlreadyAttachedException &ex)
 					{
-						iter++;
+						++iter;
 					}
 				}
 			}
@@ -384,18 +295,18 @@ namespace dtn
 		void ApiServer::connectionUp(ClientHandler*)
 		{
 			// generate some output
-			IBRCOMMON_LOGGER_DEBUG(5) << "api connection up" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "api connection up" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void ApiServer::connectionDown(ClientHandler *obj)
 		{
 			// generate some output
-			IBRCOMMON_LOGGER_DEBUG(5) << "api connection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "api connection down" << IBRCOMMON_LOGGER_ENDL;
 
 			ibrcommon::MutexLock l(_connection_lock);
 
 			// remove this object out of the list
-			for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 			{
 				if (obj == (*iter))
 				{
@@ -416,11 +327,11 @@ namespace dtn
 			{
 				ibrcommon::MutexLock l(_registration_lock);
 				// remove the registration
-				for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+				for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
 				{
 					if (reg == (*iter))
 					{
-						IBRCOMMON_LOGGER_DEBUG(5) << "release registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "release registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
 						_registrations.erase(iter);
 						break;
 					}
@@ -437,7 +348,7 @@ namespace dtn
 				if (queued.bundle.fragment) return;
 
 				ibrcommon::MutexLock l(_connection_lock);
-				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 				{
 					ClientHandler &conn = **iter;
 					if (conn.getRegistration().hasSubscribed(queued.bundle.destination))
@@ -473,7 +384,7 @@ namespace dtn
 			size_t current_time = ibrcommon::Timer::get_current_time();
 
 			// find the registration that expires next
-			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
 			{
 				try
 				{

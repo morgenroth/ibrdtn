@@ -67,7 +67,7 @@ iostreamBIO::iostreamBIO(iostream *stream)
 		char err_buf[ERR_BUF_SIZE];
         ERR_error_string_n(ERR_get_error(), err_buf, ERR_BUF_SIZE);
         err_buf[ERR_BUF_SIZE - 1] = '\0';
-        IBRCOMMON_LOGGER(critical) << "iostreamBIO: BIO creation failed: " << err_buf << IBRCOMMON_LOGGER_ENDL;
+        IBRCOMMON_LOGGER_TAG("iostreamBIO", critical) << "BIO creation failed: " << err_buf << IBRCOMMON_LOGGER_ENDL;
 		throw BIOException(err_buf);
 	}
 
@@ -75,8 +75,7 @@ iostreamBIO::iostreamBIO(iostream *stream)
 	_bio->ptr = stream;
 }
 
-BIO *
-iostreamBIO::getBIO(){
+BIO * iostreamBIO::getBIO(){
 	return _bio;
 }
 
@@ -100,12 +99,12 @@ static int create(BIO *bio)
 
 
 
-static long ctrl(BIO *bio, int cmd, long  num, void *ptr)
+static long ctrl(BIO *bio, int cmd, long  num, void *)
 {
 	long ret;
 	iostream *stream = reinterpret_cast<iostream*>(bio->ptr);
 
-	IBRCOMMON_LOGGER_DEBUG(90) << "iostreamBIO: ctrl called, cmd: " << cmd << ", num: " << num << "." << IBRCOMMON_LOGGER_ENDL;
+	IBRCOMMON_LOGGER_DEBUG_TAG("iostreamBIO", 90) << "ctrl called, cmd: " << cmd << ", num: " << num << "." << IBRCOMMON_LOGGER_ENDL;
 
 	switch(cmd){
 	case BIO_CTRL_PUSH:
@@ -131,12 +130,12 @@ static long ctrl(BIO *bio, int cmd, long  num, void *ptr)
 //			throw;
 //		}
 		if(stream->bad()){
-			IBRCOMMON_LOGGER_DEBUG(20) << "iostreamBIO: underlying Stream went bad while flushing." << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("iostreamBIO", 20) << "underlying Stream went bad while flushing." << IBRCOMMON_LOGGER_ENDL;
 			ret = 0;
 		}
 		break;
 	default:
-		IBRCOMMON_LOGGER(warning) << "iostreamBIO: ctrl called with unhandled cmd: " << cmd << "." << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_TAG("iostreamBIO", warning) << "ctrl called with unhandled cmd: " << cmd << "." << IBRCOMMON_LOGGER_ENDL;
 		ret = 0;
 		break;
 	}
@@ -149,11 +148,11 @@ static long ctrl(BIO *bio, int cmd, long  num, void *ptr)
 static int bread(BIO *bio, char *buf, int len)
 {
 	iostream *stream = reinterpret_cast<iostream*>(bio->ptr);
-	streamsize num_bytes = bio->num;
+	int num_bytes = bio->num;
 
 	try{
 		/* make sure to read at least 1 byte and then read as much as we can */
-		num_bytes = stream->read(buf, 1).readsome(buf+1, len-1) + 1;
+		num_bytes = static_cast<int>( stream->read(buf, 1).readsome(buf+1, len-1) + 1 );
 	} catch(ios_base::failure &ex){
 		/* ignore, bio->num will be returned and indicate the error */
 	}
@@ -183,7 +182,7 @@ static int bwrite(BIO *bio, const char *buf, int len)
 //		throw;
 //	}
 	if(stream->bad()){
-		IBRCOMMON_LOGGER_DEBUG(20) << "iostreamBIO: underlying Stream went bad while writing." << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("iostreamBIO", 20) << "underlying Stream went bad while writing." << IBRCOMMON_LOGGER_ENDL;
 		return 0;
 	}
 
@@ -197,7 +196,7 @@ static int bwrite(BIO *bio, const char *buf, int len)
 //		throw;
 //	}
 	if(stream->bad()){
-		IBRCOMMON_LOGGER_DEBUG(20) << "iostreamBIO: underlying Stream went bad while flushing (bwrite)." << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("iostreamBIO", 20) << "underlying Stream went bad while flushing (bwrite)." << IBRCOMMON_LOGGER_ENDL;
 		return 0;
 	}
 

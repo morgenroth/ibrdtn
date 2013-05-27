@@ -28,6 +28,7 @@
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 #include "core/Node.h"
+#include "net/ConnectionEvent.h"
 #include "net/ConnectionManager.h"
 #include "Configuration.h"
 #include "core/BundleCore.h"
@@ -54,11 +55,12 @@ namespace dtn
 {
 	namespace routing
 	{
-		EpidemicRoutingExtension::EpidemicRoutingExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker)
+		const std::string EpidemicRoutingExtension::TAG = "EpidemicRoutingExtension";
+
+		EpidemicRoutingExtension::EpidemicRoutingExtension()
 		{
 			// write something to the syslog
-			IBRCOMMON_LOGGER(info) << "Initializing epidemic routing module" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG(EpidemicRoutingExtension::TAG, info) << "Initializing epidemic routing module" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		EpidemicRoutingExtension::~EpidemicRoutingExtension()
@@ -80,7 +82,7 @@ namespace dtn
 				// new bundles trigger a recheck for all neighbors
 				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
-				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); iter++)
+				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
 				{
 					const dtn::core::Node &n = (*iter);
 
@@ -99,7 +101,22 @@ namespace dtn
 				{
 					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 				}
+				else if (nodeevent.getAction() == NODE_DATA_ADDED)
+				{
+					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+				}
 
+				return;
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
+
+				if (ce.state == dtn::net::ConnectionEvent::CONNECTION_UP)
+				{
+					// send all (multi-hop) bundles in the storage to the neighbor
+					_taskqueue.push( new SearchNextBundleTask(ce.peer) );
+				}
 				return;
 			} catch (const std::bad_cast&) { };
 
@@ -141,22 +158,26 @@ namespace dtn
 
 		void EpidemicRoutingExtension::componentUp() throw ()
 		{
+			// reset the task queue
+			_taskqueue.reset();
+
+			// routine checked for throw() on 15.02.2013
 			try {
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(EpidemicRoutingExtension::TAG, error) << "componentUp failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		void EpidemicRoutingExtension::componentDown() throw ()
 		{
 			try {
-				// run the thread
+				// stop the thread
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(EpidemicRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -176,7 +197,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
+				virtual dtn::data::Size limit() const throw () { return _entry.getFreeTransferSlots(); };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -241,7 +262,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG(50) << "processing epidemic task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 50) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						/**
@@ -265,14 +286,14 @@ namespace dtn
 								BundleFilter filter(entry);
 
 								// some debug output
-								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 								// query some unknown bundle from the storage
 								list.clear();
-								_seeker.get(filter, list);
+								(**this).getSeeker().get(filter, list);
 
 								// send the bundles as long as we have resources
-								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 								{
 									try {
 										// transfer the bundle to the neighbor
@@ -288,9 +309,10 @@ namespace dtn
 						} catch (const dtn::storage::NoBundleFoundException&) {
 						} catch (const std::bad_cast&) { };
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in EpidemicRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 20) << "task failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
-				} catch (const std::exception&) {
+				} catch (const std::exception &ex) {
+					IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 15) << "terminated due to " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 

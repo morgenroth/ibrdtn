@@ -21,6 +21,8 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/security/SecurityKey.h>
 #include <iostream>
 #include <string>
 
@@ -43,6 +45,8 @@ protected:
 	void decryptTest(void);
 
 private:
+	void encrypt(const dtn::security::SecurityKey &pubkey, dtn::data::Bundle &b);
+	void decrypt(const dtn::security::SecurityKey &pubkey, dtn::data::Bundle &b);
 	std::string getHex(std::istream &stream);
 	std::string _testdata;
 };

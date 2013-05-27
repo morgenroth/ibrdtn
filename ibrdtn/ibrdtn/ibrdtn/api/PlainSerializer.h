@@ -34,22 +34,33 @@ namespace dtn
 		class PlainSerializer : public dtn::data::Serializer
 		{
 		public:
-			PlainSerializer(std::ostream &stream, bool skip_payload = false);
+			enum Encoding {
+				INVALID,
+				SKIP_PAYLOAD,
+				BASE64,
+				RAW
+			};
+
+			static Encoding parseEncoding(const std::string &data);
+			static std::string printEncoding(const Encoding &enc);
+
+			PlainSerializer(std::ostream &stream, Encoding enc = BASE64);
 			virtual ~PlainSerializer();
 
 			dtn::data::Serializer &operator<<(const dtn::data::Bundle &obj);
 			dtn::data::Serializer &operator<<(const dtn::data::PrimaryBlock &obj);
 			dtn::data::Serializer &operator<<(const dtn::data::Block &obj);
 
-			dtn::data::Serializer &serialize(ibrcommon::BLOB::iostream &obj, size_t limit = 0);
+			void writeData(const dtn::data::Block &block);
+			void writeData(std::istream &stream, const dtn::data::Length &len);
 
-			size_t getLength(const dtn::data::Bundle &obj);
-			size_t getLength(const dtn::data::PrimaryBlock &obj) const;
-			size_t getLength(const dtn::data::Block &obj) const;
+			dtn::data::Length getLength(const dtn::data::Bundle &obj);
+			dtn::data::Length getLength(const dtn::data::PrimaryBlock &obj) const;
+			dtn::data::Length getLength(const dtn::data::Block &obj) const;
 
 		private:
 			std::ostream &_stream;
-			bool _skip_payload;
+			Encoding _encoding;
 		};
 
 		class PlainDeserializer : public dtn::data::Deserializer
@@ -73,12 +84,12 @@ namespace dtn
 			 */
 			dtn::data::Block& readBlock(dtn::data::BundleBuilder &builder);
 
-		private:
 			/**
 			 * deserialize a base64 encoded data stream into another stream
 			 */
-			dtn::data::Deserializer &operator>>(std::ostream &stream);
+			void readData(std::ostream &stream);
 
+		private:
 			std::istream &_stream;
 			bool _lastblock;
 

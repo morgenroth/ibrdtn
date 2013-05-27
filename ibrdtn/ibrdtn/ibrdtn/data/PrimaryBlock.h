@@ -22,12 +22,20 @@
 #ifndef PRIMARYBLOCK_H_
 #define PRIMARYBLOCK_H_
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/Serializer.h"
 #include <ibrcommon/thread/Mutex.h>
 #include <string>
 #include <iostream>
+#include <stdint.h>
+
+#ifdef SWIG
+#    define DEPRECATED
+#else
+#    define DEPRECATED  __attribute__ ((deprecated))
+#endif
 
 namespace dtn
 {
@@ -38,6 +46,19 @@ namespace dtn
 		class PrimaryBlock
 		{
 		public:
+			/**
+			 * Define the Bundle Priorities
+			 * PRIO_LOW low priority for this bundle
+			 * PRIO_MEDIUM medium priority for this bundle
+			 * PRIO_HIGH high priority for this bundle
+			 */
+			enum PRIORITY
+			{
+				PRIO_LOW = 0,
+				PRIO_MEDIUM = 1,
+				PRIO_HIGH = 2
+			};
+
 			enum FLAGS
 			{
 				FRAGMENT = 1 << 0x00,
@@ -78,12 +99,15 @@ namespace dtn
 			 * This method is deprecated because it does not recognize the AgeBlock
 			 * as alternative age verification.
 			 */
-			bool isExpired() const __attribute__ ((deprecated));
+			bool isExpired() const DEPRECATED;
 
 			std::string toString() const;
 
 			void set(FLAGS flag, bool value);
 			bool get(FLAGS flag) const;
+
+			PRIORITY getPriority() const;
+			void setPriority(PRIORITY p);
 
 			/**
 			 * relabel the primary block with a new sequence number and a timestamp
@@ -95,22 +119,22 @@ namespace dtn
 			bool operator<(const PrimaryBlock& other) const;
 			bool operator>(const PrimaryBlock& other) const;
 
-			size_t _procflags;
-			size_t _timestamp;
-			size_t _sequencenumber;
-			size_t _lifetime;
-			size_t _fragmentoffset;
-			size_t _appdatalength;
+			Bitset<FLAGS> procflags;
+			Timestamp timestamp;
+			Number sequencenumber;
+			Number lifetime;
+			Number fragmentoffset;
+			Number appdatalength;
 
-			EID _source;
-			EID _destination;
-			EID _reportto;
-			EID _custodian;
+			EID source;
+			EID destination;
+			EID reportto;
+			EID custodian;
 
 		private:
 			static ibrcommon::Mutex __sequence_lock;
-			static size_t __sequencenumber;
-			static size_t __last_timestamp;
+			static Number __sequencenumber;
+			static Timestamp __last_timestamp;
 		};
 	}
 }

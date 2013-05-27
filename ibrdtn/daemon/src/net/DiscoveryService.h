@@ -22,6 +22,7 @@
 #ifndef DISCOVERYSERVICE_H_
 #define DISCOVERYSERVICE_H_
 
+#include <ibrdtn/data/Number.h>
 #include <stdlib.h>
 #include <iostream>
 
@@ -36,10 +37,10 @@ namespace dtn
 			DiscoveryService(std::string name, std::string parameters);
 			virtual ~DiscoveryService();
 
-			size_t getLength() const;
+			dtn::data::Length getLength() const;
 
-			std::string getName() const;
-			std::string getParameters() const;
+			const std::string& getName() const;
+			const std::string& getParameters() const;
 
 		protected:
 			std::string _service_name;

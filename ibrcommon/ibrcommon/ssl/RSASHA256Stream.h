@@ -26,6 +26,7 @@
 #include <openssl/evp.h>
 #include <streambuf>
 #include <iostream>
+#include <vector>
 
 namespace ibrcommon
 {
@@ -95,7 +96,7 @@ namespace ibrcommon
 
 	private:
 		/** the buffer in which data will be streamed into */
-		char *out_buf_;
+		std::vector<char> out_buf_;
 
 		/** the PKEY object containing the rsa key used for the signature */
 		EVP_PKEY * const _pkey;

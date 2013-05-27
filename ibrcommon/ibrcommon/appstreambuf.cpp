@@ -79,6 +79,8 @@ namespace ibrcommon
 		// if there is nothing to send, just return
 		if ( iend <= ibegin ) return std::char_traits<char>::not_eof(m);
 
+		size_t avail_data = (iend - ibegin);
+
 		// mark the buffer as free
 		setp( &m_buf[0], &m_buf[0] + (m_buf.size() - 1) );
 
@@ -87,8 +89,7 @@ namespace ibrcommon
 		}
 
 		// write the data
-		int ret = 0;
-		if ((ret = fwrite(pbase(), sizeof(char), (iend - ibegin), _handle)) != (iend - ibegin))
+		if (fwrite(pbase(), sizeof(char), avail_data, _handle) != avail_data)
 		{
 			return std::char_traits<char>::eof();
 		}

@@ -24,6 +24,7 @@
 
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
+#include "net/P2PDialupExtension.h"
 #include "net/BundleReceiver.h"
 #include "core/EventReceiver.h"
 #include <ibrdtn/data/EID.h>
@@ -61,9 +62,30 @@ namespace dtn
 			void add(const dtn::core::Node &n);
 			void remove(const dtn::core::Node &n);
 
-			void addConvergenceLayer(ConvergenceLayer *cl);
+			/**
+			 * Add a convergence layer
+			 */
+			void add(ConvergenceLayer *cl);
 
-			void queue(const dtn::data::EID &eid, const dtn::data::BundleID &b);
+			/**
+			 * Remove a convergence layer
+			 */
+			void remove(ConvergenceLayer *cl);
+
+			/**
+			 * Add a p2p dial-up extension
+			 */
+			void add(P2PDialupExtension *ext);
+
+			/**
+			 * Remove a p2p dial-up extension
+			 */
+			void remove(P2PDialupExtension *ext);
+
+			/**
+			 * queue a bundle for transmission
+			 */
+			void queue(const dtn::net::BundleTransfer &job);
 
 			/**
 			 * method to receive new events from the EventSwitch
@@ -79,8 +101,6 @@ namespace dtn
 			};
 
 			void open(const dtn::core::Node &node);
-
-			void queue(const ConvergenceLayer::Job &job);
 
 			/**
 			 * get a set with all neighbors
@@ -126,9 +146,14 @@ namespace dtn
 
 		private:
 			/**
+			 * establish a dial-up connection to the given node
+			 */
+			void dialup(const dtn::core::Node &n);
+
+			/**
 			 *  queue a bundle for delivery
 			 */
-			void queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job);
 
 			/**
 			 * checks for timed out nodes
@@ -150,14 +175,15 @@ namespace dtn
 			 */
 			dtn::core::Node& getNode(const dtn::data::EID &eid) throw (NeighborNotAvailableException);
 
-			// if set to true, this module will shutdown
-			bool _shutdown;
-
 			// mutex for the list of convergence layers
 			ibrcommon::Mutex _cl_lock;
 
 			// contains all configured convergence layers
 			std::set<ConvergenceLayer*> _cl;
+
+			// dial-up extensions
+			ibrcommon::Mutex _dialup_lock;
+			std::set<P2PDialupExtension*> _dialups;
 
 			// mutex for the lists of nodes
 			ibrcommon::Mutex _node_lock;
@@ -167,7 +193,7 @@ namespace dtn
 			nodemap _nodes;
 
 			// next timestamp for autoconnect check
-			size_t _next_autoconnect;
+			dtn::data::Timestamp _next_autoconnect;
 		};
 	}
 }

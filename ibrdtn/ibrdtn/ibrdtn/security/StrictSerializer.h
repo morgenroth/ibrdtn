@@ -43,7 +43,7 @@ namespace dtn
 				/**
 				Constructs a StrictSerializer, which will stream into stream
 				*/
-				StrictSerializer(std::ostream& stream, const SecurityBlock::BLOCK_TYPES type = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK, const bool with_correlator = false, const uint64_t correlator = 0);
+				StrictSerializer(std::ostream& stream, const SecurityBlock::BLOCK_TYPES type = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK, const bool with_correlator = false, const dtn::data::Number &correlator = 0);
 
 				/** does nothing */
 				virtual ~StrictSerializer();
@@ -65,7 +65,7 @@ namespace dtn
 			private:
 				const dtn::security::SecurityBlock::BLOCK_TYPES _block_type;
 				const bool _with_correlator;
-				const uint64_t _correlator;
+				const dtn::data::Number _correlator;
 		};
 	}
 }

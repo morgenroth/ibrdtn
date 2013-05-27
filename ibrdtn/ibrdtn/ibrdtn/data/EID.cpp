@@ -36,7 +36,7 @@ namespace dtn
 		{
 		}
 
-		EID::EID(std::string scheme, std::string ssp)
+		EID::EID(const std::string &scheme, const std::string &ssp)
 		 : _scheme(scheme), _ssp(ssp)
 		{
 			dtn::utils::Utils::trim(_scheme);
@@ -45,9 +45,14 @@ namespace dtn
 			// TODO: checks for illegal characters
 		}
 
-		EID::EID(std::string value)
+		EID::EID(const std::string &orig_value)
 		: _scheme(DEFAULT_SCHEME), _ssp("none")
 		{
+			if (orig_value.length() == 0) {
+				throw dtn::InvalidDataException("given EID is empty!");
+			}
+
+			std::string value = orig_value;
 			dtn::utils::Utils::trim(value);
 
 			try {
@@ -56,7 +61,7 @@ namespace dtn
 
 				// jump to default eid if the format is wrong
 				if (delimiter == std::string::npos)
-					throw ibrcommon::Exception("wrong eid format");
+					throw dtn::InvalidDataException("wrong EID format: " + value);
 
 				// the scheme is everything before the delimiter
 				_scheme = value.substr(0, delimiter);
@@ -65,20 +70,27 @@ namespace dtn
 				size_t startofssp = delimiter + 1;
 				_ssp = value.substr(startofssp, value.length() - startofssp);
 
-				// TODO: do syntax check
+				// do syntax check
+				if (_scheme.length() == 0) {
+					throw dtn::InvalidDataException("scheme is empty!");
+				}
+
+				if (_ssp.length() == 0) {
+					throw dtn::InvalidDataException("SSP is empty!");
+				}
 			} catch (const std::exception&) {
 				_scheme = DEFAULT_SCHEME;
 				_ssp = "none";
 			}
 		}
 
-		EID::EID(size_t node, size_t application)
+		EID::EID(const dtn::data::Number &node, const dtn::data::Number &application)
 		 : _scheme(EID::DEFAULT_SCHEME), _ssp("none")
 		{
 			if (node == 0)	return;
 
 			std::stringstream ss_ssp;
-			ss_ssp << node << "." << application;
+			ss_ssp << node.toString() << "." << application.toString();
 			_ssp = ss_ssp.str();
 			_scheme = CBHE_SCHEME;
 		}
@@ -94,42 +106,42 @@ namespace dtn
 			return *this;
 		}
 
-		bool EID::operator==(EID const& other) const
+		bool EID::operator==(const EID &other) const
 		{
 			return (_ssp == other._ssp) && (_scheme == other._scheme);
 		}
 
-		bool EID::operator==(string const& other) const
+		bool EID::operator==(const std::string &other) const
 		{
 			return ((*this) == EID(other));
 		}
 
-		bool EID::operator!=(EID const& other) const
+		bool EID::operator!=(const EID &other) const
 		{
 			return !((*this) == other);
 		}
 
-		EID EID::operator+(string suffix) const
+		EID EID::operator+(const std::string& suffix) const
 		{
 			return EID(getString() + suffix);
 		}
 
-		bool EID::sameHost(string const& other) const
+		bool EID::sameHost(const std::string& other) const
 		{
 			return ( EID(other) == getNode() );
 		}
 
-		bool EID::sameHost(EID const& other) const
+		bool EID::sameHost(const EID &other) const
 		{
 			return ( other.getNode() == getNode() );
 		}
 
-		bool EID::operator<(EID const& other) const
+		bool EID::operator<(const EID &other) const
 		{
 			return getString() < other.getString();
 		}
 
-		bool EID::operator>(EID const& other) const
+		bool EID::operator>(const EID &other) const
 		{
 			return other < (*this);
 		}
@@ -139,7 +151,7 @@ namespace dtn
 			return _scheme + ":" + _ssp;
 		}
 
-		std::string EID::getApplication() const throw (ibrcommon::Exception)
+		std::string EID::getApplication() const throw ()
 		{
 			size_t first_char = 0;
 			char delimiter = '.';
@@ -153,8 +165,10 @@ namespace dtn
 				first_char = _ssp.find_first_not_of(delimiter);
 
 				// only "/" ? thats bad!
-				if (first_char == std::string::npos)
-					throw ibrcommon::Exception("wrong eid format");
+				if (first_char == std::string::npos) {
+					return "";
+					//throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
+				}
 			}
 
 			// start of application part
@@ -168,7 +182,7 @@ namespace dtn
 			return _ssp.substr(application_start + 1, _ssp.length() - application_start - 1);
 		}
 
-		std::string EID::getHost() const throw (ibrcommon::Exception)
+		std::string EID::getHost() const throw ()
 		{
 			size_t first_char = 0;
 			char delimiter = '.';
@@ -182,8 +196,10 @@ namespace dtn
 				first_char = _ssp.find_first_not_of(delimiter);
 
 				// only "/" ? thats bad!
-				if (first_char == std::string::npos)
-					throw ibrcommon::Exception("wrong eid format");
+				if (first_char == std::string::npos) {
+					return "none";
+					// throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
+				}
 			}
 
 			// start of application part
@@ -197,17 +213,17 @@ namespace dtn
 			return _ssp.substr(0, application_start);
 		}
 
-		std::string EID::getScheme() const
+		const std::string& EID::getScheme() const
 		{
 			return _scheme;
 		}
 
-		std::string EID::getSSP() const
+		const std::string& EID::getSSP() const
 		{
 			return _ssp;
 		}
 
-		EID EID::getNode() const throw (ibrcommon::Exception)
+		EID EID::getNode() const throw ()
 		{
 			return _scheme + ":" + getHost();
 		}
@@ -225,7 +241,7 @@ namespace dtn
 
 			// only "/" ? thats bad!
 			if (first_char == std::string::npos)
-				throw ibrcommon::Exception("wrong eid format");
+				throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
 
 			// start of application part
 			size_t application_start = _ssp.find_first_of("/", first_char);
@@ -257,20 +273,20 @@ namespace dtn
 			}
 		}
 
-		std::pair<size_t, size_t> EID::getCompressed() const
+		EID::Compressed EID::getCompressed() const
 		{
-			size_t node = 0;
-			size_t app = 0;
+			dtn::data::Number node = 0;
+			dtn::data::Number app = 0;
 
 			if (isCompressable())
 			{
 				std::stringstream ss_node(getHost());
-				ss_node >> node;
+				node.read(ss_node);
 
 				if (hasApplication())
 				{
 					std::stringstream ss_app(getApplication());
-					ss_app >> app;
+					app.read(ss_app);
 				}
 			}
 

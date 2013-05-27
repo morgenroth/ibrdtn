@@ -3,6 +3,8 @@
 net_SOURCES = 	BundleReceivedEvent.cpp \
 	BundleReceivedEvent.h \
 	BundleReceiver.h \
+	BundleTransfer.h \
+	BundleTransfer.cpp \
 	ConnectionEvent.cpp \
 	ConnectionEvent.h \
 	ConnectionManager.cpp \
@@ -41,7 +43,13 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 	UDPDatagramService.h \
 	UDPDatagramService.cpp \
 	FileMonitor.h \
-	FileMonitor.cpp
+	FileMonitor.cpp \
+	P2PDialupExtension.h \
+	P2PDialupExtension.cpp \
+	P2PDialupEvent.h \
+	P2PDialupEvent.cpp \
+	NativeP2pManager.h \
+	NativeP2pManager.cpp
 
 if LOWPAN
 net_SOURCES += LOWPANConvergenceLayer.cpp LOWPANConvergenceLayer.h LOWPANConnection.cpp LOWPANConnection.h
@@ -56,8 +64,12 @@ if DTNDHT
 net_SOURCES += DHTNameService.cpp DHTNameService.h
 endif
 
-AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(DTNDHT_CFLAGS)
-AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(DTNDHT_LIBS)
+if WIFIP2P
+net_SOURCES += WifiP2PManager.h WifiP2PManager.cpp
+endif
+
+AM_CPPFLAGS = -I$(top_srcdir)/src $(ibrdtn_CFLAGS) $(CURL_CFLAGS) $(DTNDHT_CFLAGS) $(WIFIP2P_CFLAGS)
+AM_LDFLAGS = $(ibrdtn_LIBS) $(CURL_LIBS) $(DTNDHT_LIBS) $(WIFIP2P_LIBS)
 
 if ANDROID
 noinst_DATA = Android.mk
@@ -74,5 +86,4 @@ Android.mk: Makefile.am
 		-:SOURCES $(net_SOURCES) \
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
-		-:LIBFILTER_STATIC ibrdtn \
 		> $@

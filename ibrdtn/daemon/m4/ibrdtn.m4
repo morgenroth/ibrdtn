@@ -32,7 +32,7 @@ AC_DEFUN([LOCAL_CHECK_IBRDTN],
 		m4_pattern_allow([^PKG_CONFIG_PATH$])
 		
 		# export the relative path of ibrdtn
-		export PKG_CONFIG_PATH="${ibrdtn_path}:${ibrcommon_path}"
+		export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:${ibrdtn_path}:${ibrcommon_path}"
 		
 		# check for the svn version of ibrdtn
 		if pkg-config --atleast-version=$LOCAL_IBRDTN_VERSION ibrdtn; then

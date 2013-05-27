@@ -33,12 +33,7 @@ namespace dtn
 			set();
 		}
 
-		DTNTime::DTNTime(size_t seconds, size_t nanoseconds)
-		 : _seconds(seconds), _nanoseconds(nanoseconds)
-		{
-		}
-
-		DTNTime::DTNTime(SDNV seconds, SDNV nanoseconds)
+		DTNTime::DTNTime(const Timestamp &seconds, const Number &nanoseconds)
 		 : _seconds(seconds), _nanoseconds(nanoseconds)
 		{
 		}
@@ -52,25 +47,25 @@ namespace dtn
 			timeval tv;
 			dtn::utils::Clock::gettimeofday(&tv);
 			_seconds = tv.tv_sec;
-			_nanoseconds = SDNV(tv.tv_usec * 1000);
+			_nanoseconds = Number(tv.tv_usec) * 1000;
 		}
 
-		size_t DTNTime::getLength() const
+		Length DTNTime::getLength() const
 		{
 			return _seconds.getLength() + _nanoseconds.getLength();
 		}
 
-		const SDNV& DTNTime::getTimestamp() const
+		const Number& DTNTime::getTimestamp() const
 		{
 			return _seconds;
 		}
 
-		const SDNV& DTNTime::getNanoseconds() const
+		const Number& DTNTime::getNanoseconds() const
 		{
 			return _nanoseconds;
 		}
 
-		void DTNTime::operator+=(const size_t value)
+		void DTNTime::operator+=(const Timestamp &value)
 		{
 			_seconds += value;
 		}

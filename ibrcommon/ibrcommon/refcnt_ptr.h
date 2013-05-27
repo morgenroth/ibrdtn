@@ -88,21 +88,6 @@ template <class T> class refcnt_ptr
 			return *this;
 		}
 
-		refcnt_ptr<T>& operator= (refcnt_ptr<T>& right)
-		{
-			// ignore assignment to myself
-			if (h_ == right.h_) return *this;
-
-			ibrcommon::MutexLock l(right.h_->lock);
-			++right.h_->count_;
-
-			down();
-
-			h_ = right.h_;
-
-			return *this;
-		}
-
 		// access to the managed object
 		T* operator-> () { return h_->ptr_; }
 		T& operator* () { return *h_->ptr_; }

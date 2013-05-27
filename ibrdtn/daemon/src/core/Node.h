@@ -55,7 +55,9 @@ namespace dtn
 				CONN_FILE = 6,
 				CONN_DGRAM_UDP = 7,
 				CONN_DGRAM_LOWPAN = 8,
-				CONN_DGRAM_ETHERNET = 9
+				CONN_DGRAM_ETHERNET = 9,
+				CONN_P2P_WIFI = 10,
+				CONN_P2P_BT = 11
 			};
 
 			/**
@@ -71,19 +73,20 @@ namespace dtn
 				NODE_DISCOVERED = 2,
 				NODE_STATIC_GLOBAL = 3,
 				NODE_STATIC_LOCAL = 4,
-				NODE_DHT_DISCOVERED = 5
+				NODE_DHT_DISCOVERED = 5,
+				NODE_P2P_DIALUP = 6
 			};
 
 			class URI
 			{
 			public:
-				URI(const Type t, const Protocol proto, const std::string &uri, const size_t timeout = 0, const int priority = 0);
+				URI(const Type t, const Protocol proto, const std::string &uri, const dtn::data::Number &timeout = 0, const int priority = 0);
 				~URI();
 
 				const Type type;
 				const Protocol protocol;
 				const std::string value;
-				const size_t expire;
+				const dtn::data::Timestamp expire;
 				const int priority;
 
 				void decode(std::string &address, unsigned int &port) const;
@@ -100,13 +103,13 @@ namespace dtn
 			class Attribute
 			{
 			public:
-				Attribute(const Type t, const std::string &name, const std::string &value, const size_t timeout = 0, const int priority = 0);
+				Attribute(const Type t, const std::string &name, const std::string &value, const dtn::data::Number &timeout = 0, const int priority = 0);
 				~Attribute();
 
 				const Type type;
 				const std::string name;
 				const std::string value;
-				const size_t expire;
+				const dtn::data::Timestamp expire;
 				const int priority;
 
 				bool operator<(const Attribute &other) const;
@@ -119,6 +122,7 @@ namespace dtn
 
 			static std::string toString(Node::Type type);
 			static std::string toString(Node::Protocol proto);
+			static Node::Protocol fromProtocolString(const std::string &protocol);
 
 			/**
 			 * constructor
@@ -161,11 +165,17 @@ namespace dtn
 			void clear();
 
 			/**
+			 * Get the number of entries (URI + Attributes)
+			 */
+			dtn::data::Size size() const;
+
+			/**
 			 * Returns a list of URIs matching the given protocol
 			 * @param proto
 			 * @return
 			 */
 			std::list<URI> get(Node::Protocol proto) const;
+			std::list<URI> get(Node::Type type) const;
 			std::list<URI> get(Node::Type type, Node::Protocol proto) const;
 
 			/**
@@ -214,6 +224,11 @@ namespace dtn
 
 			bool doConnectImmediately() const;
 			void setConnectImmediately(bool val);
+
+			/**
+			 * @return true, if there is at least one dial-up connection
+			 */
+			bool hasDialup() const;
 
 			/**
 			 * @return true, if at least one connection is available

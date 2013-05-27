@@ -26,6 +26,7 @@
 #include "ibrcommon/net/vsocket.h"
 #include <streambuf>
 #include <iostream>
+#include <vector>
 
 namespace ibrcommon
 {
@@ -57,9 +58,9 @@ namespace ibrcommon
 		const size_t _bufsize;
 
 		// Input buffer
-		char *in_buf_;
+		std::vector<char> in_buf_;
 		// Output buffer
-		char *out_buf_;
+		std::vector<char> out_buf_;
 
 		timeval _timeout;
 	};

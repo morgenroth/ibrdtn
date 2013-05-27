@@ -31,7 +31,6 @@
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
-#include "routing/RequeueBundleEvent.h"
 
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
@@ -56,7 +55,7 @@ namespace dtn
 		};
 
 		ConnectionManager::ConnectionManager()
-		 : _shutdown(false), _next_autoconnect(0)
+		 : _next_autoconnect(0)
 		{
 		}
 
@@ -66,6 +65,7 @@ namespace dtn
 
 		void ConnectionManager::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<TimeEvent>::add(this);
 			dtn::core::EventDispatcher<NodeEvent>::add(this);
 			dtn::core::EventDispatcher<ConnectionEvent>::add(this);
@@ -86,6 +86,14 @@ namespace dtn
 				// clear the list of convergence layers
 				_cl.clear();
 			}
+
+			{
+				ibrcommon::MutexLock l(_node_lock);
+				// clear the node list
+				_nodes.clear();
+			}
+
+			_next_autoconnect = 0;
 
 			dtn::core::EventDispatcher<NodeEvent>::remove(this);
 			dtn::core::EventDispatcher<TimeEvent>::remove(this);
@@ -174,10 +182,17 @@ namespace dtn
 			dtn::core::Node &db = (*(ret.first)).second;
 
 			if (!ret.second) {
+				dtn::data::Size old = db.size();
+
 				// add all attributes to the node in the database
 				db += n;
+
+				if (old != db.size()) {
+					// announce the new node
+					dtn::core::NodeEvent::raise(db, dtn::core::NODE_DATA_ADDED);
+				}
 			} else {
-				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 56) << "New node available: " << db << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (db.isAvailable() && !db.isAnnounced()) {
@@ -194,17 +209,42 @@ namespace dtn
 			try {
 				dtn::core::Node &db = getNode(n.getEID());
 
+				dtn::data::Size old = db.size();
+
 				// erase all attributes to the node in the database
 				db -= n;
 
-				IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes removed: " << db << IBRCOMMON_LOGGER_ENDL;
+				if (old != db.size()) {
+					// announce the new node
+					dtn::core::NodeEvent::raise(db, dtn::core::NODE_DATA_REMOVED);
+				}
+
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 56) << "Node attributes removed: " << db << IBRCOMMON_LOGGER_ENDL;
 			} catch (const NeighborNotAvailableException&) { };
 		}
 
-		void ConnectionManager::addConvergenceLayer(ConvergenceLayer *cl)
+		void ConnectionManager::add(ConvergenceLayer *cl)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
 			_cl.insert( cl );
+		}
+
+		void ConnectionManager::remove(ConvergenceLayer *cl)
+		{
+			ibrcommon::MutexLock l(_cl_lock);
+			_cl.erase( cl );
+		}
+
+		void ConnectionManager::add(P2PDialupExtension *ext)
+		{
+			ibrcommon::MutexLock l(_dialup_lock);
+			_dialups.insert(ext);
+		}
+
+		void ConnectionManager::remove(P2PDialupExtension *ext)
+		{
+			ibrcommon::MutexLock l(_dialup_lock);
+			_dialups.erase(ext);
 		}
 
 		void ConnectionManager::discovered(const dtn::core::Node &node)
@@ -221,7 +261,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_node_lock);
 
 			// search for outdated nodes
-			for (nodemap::iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+			for (nodemap::iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 			{
 				dtn::core::Node &n = (*iter).second;
 				if (n.isAnnounced()) continue;
@@ -245,7 +285,7 @@ namespace dtn
 			{
 				dtn::core::Node &n = (*iter).second;
 				if (!n.isAnnounced()) {
-					iter++;
+					++iter;
 					continue;
 				}
 
@@ -268,7 +308,7 @@ namespace dtn
 				}
 				else
 				{
-					iter++;
+					++iter;
 				}
 			}
 		}
@@ -277,14 +317,14 @@ namespace dtn
 		{
 			std::queue<dtn::core::Node> _connect_nodes;
 
-			size_t interval = dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
+			dtn::data::Timeout interval = dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
 			if (interval == 0) return;
 
 			if (_next_autoconnect < dtn::utils::Clock::getTime())
 			{
 				// search for non-connected but available nodes
 				ibrcommon::MutexLock l(_cl_lock);
-				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 				{
 					const Node &n = (*iter).second;
 					std::list<Node::URI> ul = n.get(Node::NODE_CONNECTED, Node::CONN_TCPIP);
@@ -311,7 +351,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_cl_lock);
 
 			// search for the right cl
-			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); iter++)
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
 			{
 				ConvergenceLayer *cl = (*iter);
 				if (node.has(cl->getDiscoveryProtocol()))
@@ -326,7 +366,33 @@ namespace dtn
 			throw ConnectionNotAvailableException();
 		}
 
-		void ConnectionManager::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void ConnectionManager::dialup(const dtn::core::Node &n)
+		{
+			// search for p2p_dialup connections
+			ibrcommon::MutexLock l(_cl_lock);
+
+			// get the list of all available URIs
+			std::list<Node::URI> uri_list = n.get(Node::NODE_P2P_DIALUP);
+
+			// trigger p2p_dialup connections
+			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); ++it)
+			{
+				const dtn::core::Node::URI &uri = (*it);
+
+				ibrcommon::MutexLock l(_dialup_lock);
+				for (std::set<P2PDialupExtension*>::iterator iter = _dialups.begin(); iter != _dialups.end(); ++iter)
+				{
+					P2PDialupExtension &p2pext = (**iter);
+
+					if (uri.protocol == p2pext.getProtocol()) {
+						// trigger connection set-up
+						p2pext.connect(uri);
+					}
+				}
+			}
+		}
+
+		void ConnectionManager::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
 
@@ -334,12 +400,12 @@ namespace dtn
 			std::list<Node::URI> uri_list = node.getAll();
 
 			// search for a match between URI and available convergence layer
-			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); it++)
+			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); ++it)
 			{
 				const Node::URI &uri = (*it);
 
 				// search a matching convergence layer for this URI
-				for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); iter++)
+				for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
 				{
 					ConvergenceLayer *cl = (*iter);
 					if (cl->getDiscoveryProtocol() == uri.protocol)
@@ -352,34 +418,41 @@ namespace dtn
 				}
 			}
 
+			// throw dial-up exception if there are P2P dial-up connections available
+			if (node.hasDialup()) throw P2PDialupException();
+
 			throw ConnectionNotAvailableException();
 		}
 
-		void ConnectionManager::queue(const ConvergenceLayer::Job &job)
+		void ConnectionManager::queue(const dtn::net::BundleTransfer &job)
 		{
 			ibrcommon::MutexLock l(_node_lock);
 
 			if (IBRCOMMON_LOGGER_LEVEL >= 50)
 			{
-				IBRCOMMON_LOGGER_DEBUG(50) << "## node list ##" << IBRCOMMON_LOGGER_ENDL;
-				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "## node list ##" << IBRCOMMON_LOGGER_ENDL;
+				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 				{
 					const dtn::core::Node &n = (*iter).second;
-					IBRCOMMON_LOGGER_DEBUG(2) << n << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << n << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
-			IBRCOMMON_LOGGER_DEBUG(50) << "search for node " << job._destination.getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "search for node " << job.getNeighbor().getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// queue to a node
-			const Node &n = getNode(job._destination);
-			IBRCOMMON_LOGGER_DEBUG(2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
-			queue(n, job);
-		}
+			const Node &n = getNode(job.getNeighbor());
+			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
 
-		void ConnectionManager::queue(const dtn::data::EID &eid, const dtn::data::BundleID &b)
-		{
-			queue( ConvergenceLayer::Job(eid, b) );
+			try {
+				queue(n, job);
+			} catch (const P2PDialupException&) {
+				// trigger the dial-up connection
+				dialup(n);
+
+				// re-throw P2PDialupException
+				throw;
+			}
 		}
 
 		const std::set<dtn::core::Node> ConnectionManager::getNeighbors()
@@ -388,7 +461,7 @@ namespace dtn
 
 			std::set<dtn::core::Node> ret;
 
-			for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+			for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 			{
 				const Node &n = (*iter).second;
 				if (n.isAvailable()) ret.insert( n );

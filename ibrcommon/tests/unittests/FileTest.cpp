@@ -120,6 +120,13 @@ void FileTest::testCreateDirectory()
 	CPPUNIT_FAIL("not implemented");
 }
 
+void FileTest::testGetBasename()
+{
+	CPPUNIT_ASSERT_EQUAL(std::string(".."), ibrcommon::File("test/..").getBasename());
+	CPPUNIT_ASSERT_EQUAL(std::string("."), ibrcommon::File("test/.").getBasename());
+	CPPUNIT_ASSERT_EQUAL(std::string("test"), ibrcommon::File("./../blah/../test").getBasename());
+}
+
 /*=== END   tests for class 'File' ===*/
 
 void FileTest::setUp()

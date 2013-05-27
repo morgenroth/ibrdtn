@@ -23,6 +23,7 @@
 #define DATAGRAMCONVERGENCELAYER_H_
 
 #include "Component.h"
+#include "core/EventReceiver.h"
 #include "net/DatagramService.h"
 #include "net/DatagramConnection.h"
 #include "net/ConvergenceLayer.h"
@@ -39,6 +40,8 @@ namespace dtn
 			public EventReceiver, public DatagramConnectionCallback
 		{
 		public:
+			static const std::string TAG;
+
 			enum HEADER_FLAGS
 			{
 				HEADER_UNKOWN = 0,
@@ -63,7 +66,7 @@ namespace dtn
 			 * @param n Node reference
 			 * @param job Job reference
 			 */
-			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job);
 
 			/**
 			 * @see Component::getName()
@@ -78,7 +81,7 @@ namespace dtn
 
 		protected:
 			virtual void componentUp() throw ();
-			virtual void componentRun() throw ();;
+			virtual void componentRun() throw ();
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();
 
@@ -91,7 +94,7 @@ namespace dtn
 			 * @param buf
 			 * @param len
 			 */
-			void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, int len) throw (DatagramException);
+			void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, const dtn::data::Length &len) throw (DatagramException);
 
 			void callback_ack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException);
 

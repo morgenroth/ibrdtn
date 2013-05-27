@@ -27,6 +27,7 @@
 #include "api/EventConnection.h"
 #include "api/ExtendedApiHandler.h"
 #include "api/OrderedStreamHandler.h"
+#include "api/ApiP2PExtensionHandler.h"
 #include "core/BundleCore.h"
 #include <ibrcommon/Logger.h>
 #include <ibrdtn/utils/Utils.h>
@@ -107,7 +108,7 @@ namespace dtn
 				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.size() == 0) continue;
+				if (cmd.empty()) continue;
 
 				try {
 					if (cmd[0] == "protocol")
@@ -142,6 +143,26 @@ namespace dtn
 							_handler = new OrderedStreamHandler(*this, *_stream);
 							continue;
 						}
+						else if (cmd[1] == "p2p_extension")
+						{
+							if (cmd.size() < 3) {
+								error(API_STATUS_NOT_ACCEPTABLE, "P2P TYPE REQUIRED");
+								continue;
+							}
+
+							if (cmd[2] == "wifi") {
+								// switch to the streaming api
+								_handler = new ApiP2PExtensionHandler(*this, *_stream, dtn::core::Node::CONN_P2P_WIFI);
+								continue;
+							} else if (cmd[2] == "bt") {
+								// switch to the streaming api
+								_handler = new ApiP2PExtensionHandler(*this, *_stream, dtn::core::Node::CONN_P2P_BT);
+								continue;
+							} else {
+								error(API_STATUS_NOT_ACCEPTABLE, "P2P TYPE UNKNOWN");
+								continue;
+							}
+						}
 						else
 						{
 							error(API_STATUS_NOT_ACCEPTABLE, "UNKNOWN PROTOCOL");
@@ -172,7 +193,7 @@ namespace dtn
 
 		void ClientHandler::finally() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "ApiConnection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ClientHandler", 60) << "ApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 
 			// remove the client from the list in ApiServer
 			_srv.connectionDown(this);
@@ -194,9 +215,9 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return 0; };
+				virtual dtn::data::Size limit() const throw () { return 0; };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle&) const throw (dtn::storage::BundleSelectorException)
 				{
 					return true;
 				}
@@ -212,7 +233,7 @@ namespace dtn
 						if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 						ibrcommon::MutexLock l(_write_lock);
-						_endpoint = dtn::core::BundleCore::local + "/" + cmd[2];
+						_endpoint = dtn::core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + cmd[2] );
 
 						// error checking
 						if (_endpoint == dtn::data::EID())
@@ -278,7 +299,7 @@ namespace dtn
 						const std::set<dtn::data::EID> list = _registration->getSubscriptions();
 
 						(*_stream) << API_STATUS_OK << " REGISTRATION LIST" << std::endl;
-						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 						{
 							(*_stream) << (*iter).getString() << std::endl;
 						}

@@ -181,11 +181,6 @@ public final class DTNClient {
 			_handler.endBlock();
 		}
 
-		public void characters(String data) throws RemoteException {
-			if (_handler == null) return;
-			_handler.characters(data);
-		}
-
 		public ParcelFileDescriptor fd() throws RemoteException {
 			if (_handler == null) return null;
 			return _handler.fd();
@@ -241,45 +236,55 @@ public final class DTNClient {
 		/**
 		 * Send a string as a bundle to the given destination.
 		 */
-		public boolean send(EID destination, int lifetime, byte[] data) throws SessionDestroyedException
+		public BundleID send(Bundle bundle, byte[] data) throws SessionDestroyedException
 		{
 			if (this.session == null) new SessionDestroyedException("session is null");
 			
 			try {
-				if (destination instanceof GroupEndpoint)
-				{
-					// send the message to the daemon
-					return session.sendGroup((GroupEndpoint)destination, lifetime, data);
-				}
-
 				// send the message to the daemon
-				return session.send((SingletonEndpoint)destination, lifetime, data);
+				return session.send(null, bundle, data);
 			} catch (RemoteException e) {
 				 throw new SessionDestroyedException("send failed");
 			}
 		}
 		
 		/**
+		 * Send a string as a bundle to the given destination.
+		 */
+		public BundleID send(EID destination, long lifetime, byte[] data) throws SessionDestroyedException
+		{
+			Bundle bundle = new Bundle();
+			bundle.setDestination(destination);
+			bundle.setLifetime(lifetime);
+			
+			return send(bundle, data);
+		}
+		
+		/**
 		 * Send the content of a file descriptor as bundle
 		 */
-		public boolean send(EID destination, int lifetime, ParcelFileDescriptor fd, Long length) throws SessionDestroyedException
+		public BundleID send(Bundle bundle, ParcelFileDescriptor fd, Long length) throws SessionDestroyedException
 		{
 			if (this.session == null)  new SessionDestroyedException("session is null");
 			
 			try {
-				if (destination instanceof GroupEndpoint)
-				{
-					// send the message to the daemon
-					return session.sendGroupFileDescriptor((GroupEndpoint)destination, lifetime, fd, length);
-				}
-				else
-				{
-					// send the message to the daemon
-					return session.sendFileDescriptor((SingletonEndpoint)destination, lifetime, fd, length);
-				}
+				// send the message to the daemon
+				return session.sendFileDescriptor(null, bundle, fd, length);
 			} catch (RemoteException e) {
-				return false;
+				return null;
 			}
+		}
+		
+		/**
+		 * Send the content of a file descriptor as bundle
+		 */
+		public BundleID send(EID destination, long lifetime, ParcelFileDescriptor fd, Long length) throws SessionDestroyedException
+		{
+			Bundle bundle = new Bundle();
+			bundle.setDestination(destination);
+			bundle.setLifetime(lifetime);
+			
+			return send(bundle, fd, length);
 		}
 		
 		public Boolean queryNext() throws SessionDestroyedException

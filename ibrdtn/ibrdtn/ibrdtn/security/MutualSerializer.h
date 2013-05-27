@@ -24,7 +24,7 @@
 
 #include "ibrdtn/data/Serializer.h"
 #include "ibrdtn/security/SecurityBlock.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include <sys/types.h>
 
 namespace dtn
@@ -47,7 +47,7 @@ namespace dtn
 				/**
 				The size in bytes of a SDNV in mutable form in the stream
 				*/
-				static const size_t sdnv_size = 8;
+				static const dtn::data::Length sdnv_size = 8;
 				
 				/**
 				Creates a MutualSerializer which will stream into stream
@@ -80,21 +80,21 @@ namespace dtn
 				/**
 				Not implemented. This is only required by the interface.
 				*/
-				virtual size_t getLength(const dtn::data::Bundle &obj);
+				virtual dtn::data::Length getLength(const dtn::data::Bundle &obj);
 				
 				/**
 				Returns the length of the primary block in mutable canonical form.
 				@param obj the primary block, of which the length shall be calculated
 				@return the length of the primary block
 				*/
-				virtual size_t getLength(const dtn::data::PrimaryBlock &obj) const;
+				virtual dtn::data::Length getLength(const dtn::data::PrimaryBlock &obj) const;
 				
 				/**
 				Returns the length of the block in mutable canonical form.
 				@param obj the block, of which the length shall be calculated
 				@return the length of the block
 				*/
-				virtual size_t getLength(const dtn::data::Block &obj) const;
+				virtual dtn::data::Length getLength(const dtn::data::Block &obj) const;
 
 				/**
 				Writes a uint32_t into stream in network byte order.
@@ -118,7 +118,7 @@ namespace dtn
 				@param value the SDNV which shall be written
 				@return the stream in which shall be written
 				*/
-				virtual Serializer &operator<<(const dtn::data::SDNV& value);
+				virtual Serializer &operator<<(const dtn::data::Number& value);
 
 				/**
 				 * Serialize a list of type-length-value entries.

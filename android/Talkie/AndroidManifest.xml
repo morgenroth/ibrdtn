@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="de.tubs.ibr.dtn.dtalkie"
-    android:versionCode="12"
-    android:versionName="1.0-1" >
+    android:versionCode="13"
+    android:versionName="1.1" >
 
-	<uses-sdk android:minSdkVersion="10" android:targetSdkVersion="15" />
+	<uses-sdk android:minSdkVersion="9" android:targetSdkVersion="17" />
     
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -12,6 +12,7 @@
     <uses-permission android:name="android.dtn.permission.RECEIVE"/>
 
     <application
+        android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name" >
         <activity
@@ -30,7 +31,7 @@
 		<service android:name=".service.DTalkieService" />
 		
 	    <!-- <receiver android:enabled="true" android:name=".service.EventReceiver" android:permission="android.dtn.permission.SEND">  -->
-	    <receiver android:enabled="true" android:name=".service.EventReceiver">
+	    <receiver android:enabled="true" android:name=".service.EventReceiver" android:exported="true" android:permission="de.tubs.ibr.dtn.permission.DTN_SERVER">
 	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.intent.STATE" />
 	            <category android:name="android.intent.category.DEFAULT" />

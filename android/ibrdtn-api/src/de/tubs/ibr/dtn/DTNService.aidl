@@ -22,6 +22,7 @@
 package de.tubs.ibr.dtn;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.api.DTNSession;
+import de.tubs.ibr.dtn.api.Node;
 
 interface DTNService {
     /**
@@ -35,14 +36,9 @@ interface DTNService {
 	boolean isRunning();
 	
 	/**
-	 * Returns the log in the ring-buffer of the service.
-	 */
-	List<String> getLog();
-	
-	/**
 	 * Returns the available neighbors of the daemon.
 	 */
-	List<String> getNeighbors();
+	List<Node> getNeighbors();
 	
 	/**
 	 * Deletes all bundles in the storage of the daemon.
@@ -55,4 +51,10 @@ interface DTNService {
 	 * @returns null if the session is not available.
 	 */
 	DTNSession getSession(String packageName);
+	
+	/**
+	 * Get the version of the daemon
+	 * @returns A array with the version at position 0 and the build number at position 1
+	 */
+	String[] getVersion();
 }

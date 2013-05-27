@@ -26,11 +26,15 @@
 #include <stdexcept>
 #include <pthread.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <signal.h>
 
-#ifdef ANDROID
-#define PAGE_SIZE sysconf(_SC_PAGESIZE)
+#ifdef _WIN32
+#include <windows.h>
+#elif MACOS
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#else
+#include <unistd.h>
 #endif
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
@@ -39,6 +43,31 @@
 
 namespace ibrcommon
 {
+	size_t Thread::getNumberOfProcessors()
+	{
+#ifdef WIN32
+		SYSTEM_INFO sysinfo;
+		GetSystemInfo(&sysinfo);
+		return sysinfo.dwNumberOfProcessors;
+#elif MACOS
+		int nm[2];
+		size_t len = 4;
+		uint32_t count;
+
+		nm[0] = CTL_HW; nm[1] = HW_AVAILCPU;
+		sysctl(nm, 2, &count, &len, NULL, 0);
+
+		if(count < 1) {
+			nm[1] = HW_NCPU;
+			sysctl(nm, 2, &count, &len, NULL, 0);
+			if(count < 1) { count = 1; }
+		}
+		return count;
+#else
+		return sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+	}
+
 	void* Thread::__execute__(void *obj) throw ()
 	{
 #ifdef __DEVELOPMENT_ASSERTIONS__
@@ -97,23 +126,40 @@ namespace ibrcommon
 	#endif
 	}
 
-	void Thread::sleep(size_t timeout)
+	void Thread::sleep(time_t timeout)
 	{
+	#if defined(HAVE_PTHREAD_DELAY)
 		timespec ts;
 		ts.tv_sec = timeout / 1000l;
 		ts.tv_nsec = (timeout % 1000l) * 1000000l;
-	#if defined(HAVE_PTHREAD_DELAY)
 		pthread_delay(&ts);
 	#elif defined(HAVE_PTHREAD_DELAY_NP)
+		timespec ts;
+		ts.tv_sec = timeout / 1000l;
+		ts.tv_nsec = (timeout % 1000l) * 1000000l;
 		pthread_delay_np(&ts);
 	#else
-		usleep(timeout * 1000);
+		usleep(static_cast<useconds_t>(timeout) * 1000);
 	#endif
 	}
 
 	Thread::~Thread()
 	{
 		pthread_attr_destroy(&attr);
+	}
+
+	void Thread::reset() throw (ThreadException)
+	{
+		if ( _state != THREAD_FINALIZED )
+			throw ThreadException(0, "invalid state for reset");
+
+		pthread_attr_destroy(&attr);
+
+		_state.reset(THREAD_CREATED);
+		tid = 0;
+		_detached = false;
+
+		pthread_attr_init(&attr);
 	}
 
 	int Thread::kill(int sig)
@@ -154,6 +200,11 @@ namespace ibrcommon
 	bool Thread::equal(pthread_t t1, pthread_t t2)
 	{
 		return (pthread_equal(t1, t2) != 0);
+	}
+
+	bool Thread::isFinalized() throw ()
+	{
+		return _state == THREAD_FINALIZED;
 	}
 
 	JoinableThread::JoinableThread(size_t size)

@@ -43,14 +43,14 @@ namespace ibrcommon
 	{
 	}
 
-	File::File(const string path, const unsigned char t)
+	File::File(const std::string &path, const unsigned char t)
 	 : _path(path), _type(t)
 	{
 		resolveAbsolutePath();
 		removeSlash();
 	}
 
-	File::File(const string path)
+	File::File(const std::string &path)
 	 : _path(path), _type(DT_UNKNOWN)
 	{
 		resolveAbsolutePath();
@@ -60,7 +60,7 @@ namespace ibrcommon
 
 	void File::removeSlash()
 	{
-		std::string::iterator iter = _path.end(); iter--;
+		std::string::iterator iter = _path.end(); --iter;
 
 		if ((*iter) == '/')
 		{
@@ -90,11 +90,10 @@ namespace ibrcommon
 	void File::update()
 	{
 		struct stat s;
-		int type;
 
 		if ( stat(_path.c_str(), &s) == 0 )
 		{
-			type = s.st_mode & S_IFMT;
+			int type = s.st_mode & S_IFMT;
 
 			switch (type)
 			{
@@ -125,20 +124,26 @@ namespace ibrcommon
 		return _type;
 	}
 
-	int File::getFiles(list<File> &files) const
+	int File::getFiles(std::list<File> &files) const
 	{
 		if (!isDirectory()) return -1;
 
 		DIR *dp;
+		struct dirent dirp_data;
 		struct dirent *dirp;
 		if((dp = opendir(_path.c_str())) == NULL) {
 			return errno;
 		}
 
-		while ((dirp = readdir(dp)) != NULL)
+		while (::readdir_r(dp, &dirp_data, &dirp) == 0)
 		{
-			string name = string(dirp->d_name);
-			stringstream ss; ss << getPath() << "/" << name;
+			if (dirp == NULL) break;
+
+			// TODO: check if the name is always limited by a zero
+			// std::string name = std::string(dirp->d_name, dirp->d_reclen);
+
+			std::string name = std::string(dirp->d_name);
+			std::stringstream ss; ss << getPath() << "/" << name;
 			File file(ss.str(), dirp->d_type);
 			files.push_back(file);
 		}
@@ -149,12 +154,7 @@ namespace ibrcommon
 
 	bool File::isSystem() const
 	{
-		try {
-			if ((_path.substr(_path.length() - 2, 2) == "..") || (_path.substr(_path.length() - 1, 1) == ".")) return true;
-		} catch (const std::out_of_range&) {
-			return false;
-		}
-		return false;
+		return ((getBasename() == "..") || (getBasename() == "."));
 	}
 
 	bool File::isDirectory() const
@@ -173,8 +173,8 @@ namespace ibrcommon
 #if !defined(ANDROID) && defined(HAVE_FEATURES_H)
 		return std::string(basename(_path.c_str()));
 #else
-		char path[_path.length()];
-		::memcpy(&path, _path.c_str(), _path.length());
+		char path[_path.length()+1];
+		::memcpy(&path, _path.c_str(), _path.length()+1);
 
 		return std::string(basename(path));
 #endif
@@ -190,8 +190,6 @@ namespace ibrcommon
 
 	int File::remove(bool recursive)
 	{
-		int ret;
-
 		if (isSystem()) return -1;
 		if (_type == DT_UNKNOWN) return -1;
 
@@ -199,6 +197,8 @@ namespace ibrcommon
 		{
 			if (recursive)
 			{
+				int ret = 0;
+
 				// container for all files
 				list<File> files;
 
@@ -206,11 +206,12 @@ namespace ibrcommon
 				if ((ret = getFiles(files)) < 0)
 					return ret;
 
-				for (list<File>::iterator iter = files.begin(); iter != files.end(); iter++)
+				for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
 				{
-					if (!(*iter).isSystem())
+					ibrcommon::File &file = (*iter);
+					if (!file.isSystem())
 					{
-						if ((ret = (*iter).remove(recursive)) < 0)
+						if ((ret = file.remove(recursive)) < 0)
 							return ret;
 					}
 				}
@@ -251,7 +252,7 @@ namespace ibrcommon
 	{
 		struct stat filestatus;
 		stat( getPath().c_str(), &filestatus );
-		return filestatus.st_size;
+		return static_cast<size_t>(filestatus.st_size);
 	}
 
 	time_t File::lastaccess() const
@@ -297,13 +298,14 @@ namespace ibrcommon
 	std::string TemporaryFile::tmpname(const File &path, const std::string prefix)
 	{
 		std::string pattern = path.getPath() + "/" + prefix + "XXXXXX";
-		char name[pattern.length()];
-		::strcpy(name, pattern.c_str());
 
-		int fd = mkstemp(name);
+		std::vector<char> name(pattern.length() + 1);
+		::strcpy(&name[0], pattern.c_str());
+
+		int fd = mkstemp(&name[0]);
 		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
 		::close(fd);
 
-		return std::string(name);
+		return std::string(name.begin(), name.end());
 	}
 }

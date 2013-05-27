@@ -35,7 +35,7 @@ namespace dtn
 {
 	namespace core
 	{
-		Node::URI::URI(const Node::Type t, const Node::Protocol p, const std::string &uri, const size_t to, const int prio)
+		Node::URI::URI(const Node::Type t, const Node::Protocol p, const std::string &uri, const dtn::data::Number &to, const int prio)
 		 : type(t), protocol(p), value(uri), expire((to == 0) ? 0 : dtn::utils::Clock::getTime() + to), priority(prio)
 		{
 		}
@@ -66,7 +66,7 @@ namespace dtn
 					port_stream >> port;
 				}
 
-				param_iter++;
+				++param_iter;
 			}
 		}
 
@@ -102,7 +102,7 @@ namespace dtn
 			return stream;
 		}
 
-		Node::Attribute::Attribute(const Type t, const std::string &n, const std::string &v, const size_t to, const int p)
+		Node::Attribute::Attribute(const Type t, const std::string &n, const std::string &v, const dtn::data::Number &to, const int p)
 		 : type(t), name(n), value(v), expire((to == 0) ? 0 : dtn::utils::Clock::getTime() + to), priority(p)
 		{
 		}
@@ -170,6 +170,9 @@ namespace dtn
 
 			case Node::NODE_DHT_DISCOVERED:
 				return "dht discovered";
+
+			case Node::NODE_P2P_DIALUP:
+				return "p2p dialup";
 			}
 
 			return "unknown";
@@ -211,14 +214,51 @@ namespace dtn
 
 			case Node::CONN_DGRAM_LOWPAN:
 				return "DGRAM:LOWPAN";
+
+			case Node::CONN_P2P_WIFI:
+				return "P2P:WIFI";
+
+			case Node::CONN_P2P_BT:
+				return "P2P:BT";
 			}
 
 			return "unknown";
 		}
 
+		Node::Protocol Node::fromProtocolString(const std::string &protocol)
+		{
+			if (protocol == "UDP") {
+				return Node::CONN_UDPIP;
+			} else if (protocol == "TCP") {
+				return Node::CONN_TCPIP;
+			} else if (protocol == "LoWPAN") {
+				return Node::CONN_LOWPAN;
+			} else if (protocol == "Bluetooth") {
+				return Node::CONN_BLUETOOTH;
+			} else if (protocol == "HTTP") {
+				return Node::CONN_HTTP;
+			} else if (protocol == "FILE") {
+				return Node::CONN_FILE;
+			} else if (protocol == "DGRAM:UDP") {
+				return Node::CONN_DGRAM_UDP;
+			} else if (protocol == "DGRAM:ETHERNET") {
+				return Node::CONN_DGRAM_ETHERNET;
+			} else if (protocol == "DGRAM:LOWPAN") {
+				return Node::CONN_DGRAM_LOWPAN;
+			} else if (protocol == "P2P:WIFI") {
+				return Node::CONN_P2P_WIFI;
+			} else if (protocol == "unsupported") {
+				return Node::CONN_P2P_BT;
+			} else if (protocol == "unsupported") {
+				return Node::CONN_UNSUPPORTED;
+			}
+
+			return Node::CONN_UNDEFINED;
+		}
+
 		bool Node::has(Node::Protocol proto) const
 		{
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				if ((*iter) == proto) return true;
 			}
@@ -227,7 +267,7 @@ namespace dtn
 
 		bool Node::has(const std::string &name) const
 		{
-			for (std::set<Attribute>::const_iterator iter = _attr_list.begin(); iter != _attr_list.end(); iter++)
+			for (std::set<Attribute>::const_iterator iter = _attr_list.begin(); iter != _attr_list.end(); ++iter)
 			{
 				if ((*iter) == name) return true;
 			}
@@ -262,6 +302,11 @@ namespace dtn
 			_attr_list.clear();
 		}
 
+		dtn::data::Size Node::size() const
+		{
+			return _uri_list.size() + _attr_list.size();
+		}
+
 		// comparison of two URIs according to the priority
 		bool compare_uri_priority (const Node::URI &first, const Node::URI &second)
 		{
@@ -277,7 +322,7 @@ namespace dtn
 		std::list<Node::URI> Node::get(Node::Protocol proto) const
 		{
 			std::list<URI> ret;
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				const URI &uri = (*iter);
 
@@ -291,10 +336,27 @@ namespace dtn
 			return ret;
 		}
 
+		std::list<Node::URI> Node::get(Node::Type type) const
+		{
+			std::list<URI> ret;
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
+			{
+				const URI &uri = (*iter);
+
+				if (uri == type)
+				{
+					ret.push_back(uri);
+				}
+			}
+
+			ret.sort(compare_uri_priority);
+			return ret;
+		}
+
 		std::list<Node::URI> Node::get(Node::Type type, Node::Protocol proto) const
 		{
 			std::list<URI> ret;
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				const URI &uri = (*iter);
 
@@ -307,7 +369,7 @@ namespace dtn
 		std::list<Node::URI> Node::getAll() const
 		{
 			std::list<Node::URI> ret;
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				const URI &uri = (*iter);
 
@@ -320,7 +382,7 @@ namespace dtn
 		std::set<Node::Type> Node::getTypes() const
 		{
 			std::set<Type> ret;
-			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 			{
 				ret.insert((*iter).type);
 			}
@@ -330,7 +392,7 @@ namespace dtn
 		std::list<Node::Attribute> Node::get(const std::string &name) const
 		{
 			std::list<Attribute> ret;
-			for (std::set<Attribute>::const_iterator iter = _attr_list.begin(); iter != _attr_list.end(); iter++)
+			for (std::set<Attribute>::const_iterator iter = _attr_list.begin(); iter != _attr_list.end(); ++iter)
 			{
 				if ((*iter) == name) ret.push_back(*iter);
 			}
@@ -350,7 +412,7 @@ namespace dtn
 		bool Node::expire()
 		{
 			// get the current timestamp
-			size_t ct = dtn::utils::Clock::getTime();
+			dtn::data::Timestamp ct = dtn::utils::Clock::getTime();
 
 			// walk though all Attribute elements and remove the expired ones
 			{
@@ -365,7 +427,7 @@ namespace dtn
 					}
 					else
 					{
-						iter++;
+						++iter;
 					}
 				}
 			}
@@ -383,7 +445,7 @@ namespace dtn
 					}
 					else
 					{
-						iter++;
+						++iter;
 					}
 				}
 			}
@@ -393,13 +455,13 @@ namespace dtn
 
 		const Node& Node::operator+=(const Node &other)
 		{
-			for (std::set<Attribute>::const_iterator iter = other._attr_list.begin(); iter != other._attr_list.end(); iter++)
+			for (std::set<Attribute>::const_iterator iter = other._attr_list.begin(); iter != other._attr_list.end(); ++iter)
 			{
 				const Attribute &attr = (*iter);
 				add(attr);
 			}
 
-			for (std::set<URI>::const_iterator iter = other._uri_list.begin(); iter != other._uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = other._uri_list.begin(); iter != other._uri_list.end(); ++iter)
 			{
 				const URI &u = (*iter);
 				add(u);
@@ -410,13 +472,13 @@ namespace dtn
 
 		const Node& Node::operator-=(const Node &other)
 		{
-			for (std::set<Attribute>::const_iterator iter = other._attr_list.begin(); iter != other._attr_list.end(); iter++)
+			for (std::set<Attribute>::const_iterator iter = other._attr_list.begin(); iter != other._attr_list.end(); ++iter)
 			{
 				const Attribute &attr = (*iter);
 				remove(attr);
 			}
 
-			for (std::set<URI>::const_iterator iter = other._uri_list.begin(); iter != other._uri_list.end(); iter++)
+			for (std::set<URI>::const_iterator iter = other._uri_list.begin(); iter != other._uri_list.end(); ++iter)
 			{
 				const URI &u = (*iter);
 				remove(u);
@@ -458,13 +520,24 @@ namespace dtn
 			_connect_immediately = val;
 		}
 
+		bool Node::hasDialup() const
+		{
+			for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
+			{
+				const Node::URI &u = (*iter);
+				if (u.type == NODE_P2P_DIALUP) return true;
+			}
+
+			return false;
+		}
+
 		bool Node::isAvailable() const
 		{
 			if (dtn::core::BundleCore::getInstance().isGloballyConnected()) {
 				return !_uri_list.empty();
 			} else {
 				// filter for global addresses when internet is not available
-				for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+				for (std::set<Node::URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); ++iter)
 				{
 					const Node::URI &u = (*iter);
 
@@ -472,6 +545,7 @@ namespace dtn
 					case NODE_CONNECTED: return true;
 					case NODE_DISCOVERED: return true;
 					case NODE_STATIC_LOCAL: return true;
+					case NODE_P2P_DIALUP: return true;
 					default: break;
 					}
 				}
@@ -496,6 +570,9 @@ namespace dtn
 				case NODE_STATIC_LOCAL:
 					return true;
 
+				case NODE_P2P_DIALUP:
+					return true;
+
 				default:
 					return false;
 				}
@@ -515,16 +592,16 @@ namespace dtn
 		std::ostream& operator<<(std::ostream &stream, const Node &node)
 		{
 			stream << "Node: " << node._id.getString() << " [ ";
-			for (std::set<Node::Attribute>::const_iterator iter = node._attr_list.begin(); iter != node._attr_list.end(); iter++)
+			for (std::set<Node::Attribute>::const_iterator iter = node._attr_list.begin(); iter != node._attr_list.end(); ++iter)
 			{
 				const Node::Attribute &attr = (*iter);
-				stream << attr << "#expire=" << attr.expire << "; ";
+				stream << attr << "#expire=" << attr.expire.toString() << "; ";
 			}
 
-			for (std::set<Node::URI>::const_iterator iter = node._uri_list.begin(); iter != node._uri_list.end(); iter++)
+			for (std::set<Node::URI>::const_iterator iter = node._uri_list.begin(); iter != node._uri_list.end(); ++iter)
 			{
 				const Node::URI &u = (*iter);
-				stream << u << "#expire=" << u.expire << "; ";
+				stream << u << "#expire=" << u.expire.toString() << "; ";
 			}
 			stream << " ]";
 

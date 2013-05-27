@@ -14,7 +14,9 @@ storage_SOURCES = \
 	BundleIndex.h \
 	BundleIndex.cpp \
 	BundleSeeker.h \
-	BundleSelector.h
+	BundleSelector.h \
+	MetaStorage.h \
+	MetaStorage.cpp
 	
 
 if SQLITE
@@ -39,5 +41,4 @@ Android.mk: Makefile.am
 		-:SOURCES $(storage_SOURCES) \
 		-:CPPFLAGS $(CPPFLAGS) $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
-		-:LIBFILTER_STATIC ibrdtn \
 		> $@

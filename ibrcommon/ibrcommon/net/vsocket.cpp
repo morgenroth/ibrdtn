@@ -21,9 +21,12 @@
 
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/vsocket.h"
-#include "ibrcommon/TimeMeasurement.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Logger.h"
+
+#ifndef HAVE_FEATURES_H
+#include "ibrcommon/TimeMeasurement.h"
+#endif
 
 #include <algorithm>
 #include <netdb.h>
@@ -60,7 +63,7 @@ namespace ibrcommon
 		int ret = ::select(nfds, readfds, writefds, exceptfds, &to_copy);
 		tm.stop();
 
-		uint64_t us = tm.getMicroseconds();
+		size_t us = tm.getMicroseconds();
 
 		while ((us > 1000000) && (timeout->tv_sec > 0))
 		{
@@ -68,7 +71,7 @@ namespace ibrcommon
 			timeout->tv_sec--;
 		}
 
-		if (us >= (uint64_t)timeout->tv_usec)
+		if (us >= static_cast<size_t>(timeout->tv_usec))
 		{
 			timeout->tv_usec = 0;
 		}
@@ -105,7 +108,7 @@ namespace ibrcommon
 		// create a pipe for interruption
 		if (::pipe(pipe_fds) < 0)
 		{
-			IBRCOMMON_LOGGER(error) << "Error " << errno << " creating pipe" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("pipesocket", error) << "Error " << errno << " creating pipe" << IBRCOMMON_LOGGER_ENDL;
 			throw socket_exception("failed to create pipe");
 		}
 
@@ -130,7 +133,7 @@ namespace ibrcommon
 
 	void vsocket::pipesocket::read(char *buf, size_t len) throw (socket_exception)
 	{
-		int ret = ::read(this->fd(), buf, len);
+		ssize_t ret = ::read(this->fd(), buf, len);
 		if (ret == -1)
 			throw socket_exception("read error");
 		if (ret == 0)
@@ -139,7 +142,7 @@ namespace ibrcommon
 
 	void vsocket::pipesocket::write(const char *buf, size_t len) throw (socket_exception)
 	{
-		int ret = ::write(_output_fd, buf, len);
+		ssize_t ret = ::write(_output_fd, buf, len);
 		if (ret == -1)
 			throw socket_exception("write error");
 	}
@@ -335,7 +338,7 @@ namespace ibrcommon
 
 	void vsocket::SocketState::__change(STATE s)
 	{
-		IBRCOMMON_LOGGER_DEBUG(66) << "SocketState transition: " << __getname(_state) << " -> " << __getname(s) << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("SocketState", 90) << "SocketState transition: " << __getname(_state) << " -> " << __getname(s) << IBRCOMMON_LOGGER_ENDL;
 		_state = s;
 		ibrcommon::Conditional::signal(true);
 	}
@@ -416,7 +419,7 @@ namespace ibrcommon
 			ibrcommon::MutexLock l(_state);
 			_state.setwait(SocketState::SELECT, SocketState::DOWN);
 			_counter++;
-			IBRCOMMON_LOGGER_DEBUG(66) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SelectGuard", 90) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
 		} catch (const SocketState::state_exception&) {
 			throw vsocket_interrupt("select interrupted while waiting for IDLE socket");
 		}
@@ -428,7 +431,7 @@ namespace ibrcommon
 		try {
 			ibrcommon::MutexLock l(_state);
 			_counter--;
-			IBRCOMMON_LOGGER_DEBUG(66) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SelectGuard", 90) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
 
 			if (_counter == 0) {
 				if (_state.get() == SocketState::SAFE_REQUEST) {
@@ -474,7 +477,7 @@ namespace ibrcommon
 		_sockets.erase(socket);
 
 		// search for the same socket in the map
-		for (std::map<vinterface, socketset>::iterator iter = _socket_map.begin(); iter != _socket_map.end(); iter++)
+		for (std::map<vinterface, socketset>::iterator iter = _socket_map.begin(); iter != _socket_map.end(); ++iter)
 		{
 			socketset &set = (*iter).second;
 			set.erase(socket);
@@ -497,7 +500,7 @@ namespace ibrcommon
 	{
 		down();
 
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++)
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter)
 		{
 			basesocket *sock = (*iter);
 			delete sock;
@@ -531,12 +534,12 @@ namespace ibrcommon
 			_state.setwait(SocketState::PENDING_UP, SocketState::IDLE);
 		}
 		
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter) {
 			try {
 				if (!(*iter)->ready()) (*iter)->up();
 			} catch (const socket_exception&) {
 				// rewind all previously up'ped sockets
-				for (socketset::iterator riter = _sockets.begin(); riter != iter; riter++) {
+				for (socketset::iterator riter = _sockets.begin(); riter != iter; ++riter) {
 					(*riter)->down();
 				}
 
@@ -570,7 +573,7 @@ namespace ibrcommon
 
 		// shut-down all the sockets
 		ibrcommon::MutexLock l(_socket_lock);
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter) {
 			try {
 				if ((*iter)->ready()) (*iter)->down();
 			} catch (const socket_exception&) { }
@@ -608,7 +611,7 @@ namespace ibrcommon
 			{
 				ibrcommon::MutexLock l(_socket_lock);
 				for (socketset::iterator iter = _sockets.begin();
-						iter != _sockets.end(); iter++)
+						iter != _sockets.end(); ++iter)
 				{
 					basesocket &sock = (**iter);
 					if (!sock.ready()) continue;
@@ -650,7 +653,7 @@ namespace ibrcommon
 
 			if (FD_ISSET(_pipe.fd(), &fds_read))
 			{
-				IBRCOMMON_LOGGER_DEBUG(25) << "unblocked by self-pipe-trick" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("vsocket::select", 90) << "unblocked by self-pipe-trick" << IBRCOMMON_LOGGER_ENDL;
 
 				// this was an interrupt with the self-pipe-trick
 				ibrcommon::MutexLock l(_socket_lock);
@@ -663,7 +666,7 @@ namespace ibrcommon
 
 			ibrcommon::MutexLock l(_socket_lock);
 			for (socketset::iterator iter = _sockets.begin();
-					iter != _sockets.end(); iter++)
+					iter != _sockets.end(); ++iter)
 			{
 				basesocket *sock = (*iter);
 

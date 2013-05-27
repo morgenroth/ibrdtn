@@ -101,9 +101,9 @@ void BloomFilterTest::testHash()
 
 		CPPUNIT_ASSERT((*iter1)==(*iter2));
 		CPPUNIT_ASSERT((*iter1)!=(*iter3));
-		iter1++;
-		iter2++;
-		iter3++;
+		++iter1;
+		++iter2;
+		++iter3;
 	}
 
 }
@@ -196,9 +196,9 @@ void BloomFilterTest::testContains()
 
 	ibrcommon::BloomFilter Filter1(8196,2);
 	char word[8];
-	for(int j=0; j <=127 ; j++)
+	for(int j=0; j <=127 ; ++j)
 	{
-		for(int i=0; i <= 7; i++)
+		for(int i=0; i <= 7; ++i)
 		{
 			word[i] = 33 + rand() % (126 - 23);
 		}
@@ -215,10 +215,10 @@ void BloomFilterTest::testContainsAll()
 	ibrcommon::BloomFilter Filter2(8196,2);
 	vector<char*> v(127);
 	std::vector<char*>::iterator it;
-	for(int j=0; j<128 ; j++)
+	for(int j=0; j<128 ; ++j)
 	{
 		char word[8];
-		for(int i=0; i <= 7; i++)
+		for(int i=0; i <= 7; ++i)
 		{
 			word[i] = 33 + rand() % (126 - 23);
 		}
@@ -235,10 +235,10 @@ void BloomFilterTest::testContainsNone()
 	ibrcommon::BloomFilter Filter2(8196,2);
 	vector<char*> v(127);
 	std::vector<char*>::iterator it;
-	for(int j=0; j<128 ; j++)
+	for(int j=0; j<128 ; ++j)
 	{
 		char word[8];
-		for(int i=0; i <= 7; i++)
+		for(int i=0; i <= 7; ++i)
 		{
 			word[i] = 33 + rand() % (126 - 23);
 		}
@@ -346,10 +346,10 @@ void BloomFilterTest::testGetAllocation()
 	ibrcommon::BloomFilter FilterA(1000,1);
 	vector<char*> v1(100);
 	float expResult = 0.0952; //m/n=10  k=1
-	for(int j=0; j<100 ; j++)
+	for(int j=0; j<100 ; ++j)
 	{
 		char word[8];
-		for(int i=0; i <= 7; i++)
+		for(int i=0; i <= 7; ++i)
 		{
 			word[i] = 33 + rand() % (126 - 23);
 		}
@@ -366,10 +366,10 @@ void BloomFilterTest::testGetAllocation()
 	ibrcommon::BloomFilter FilterB(10000,1);
 	vector<char*> v2(1000);
 	expResult = 0.0952; //m/n=10  k=1
-	for(int j=0; j<1000 ; j++)
+	for(int j=0; j<1000 ; ++j)
 	{
 		char word[8];
-		for(int i=0; i <= 7; i++)
+		for(int i=0; i <= 7; ++i)
 		{
 			word[i] = 33 + rand() % (126 - 23);
 		}
@@ -387,10 +387,10 @@ void BloomFilterTest::testGetAllocation()
 	ibrcommon::BloomFilter FilterC(8192,2);
 	vector<char*> v3(1024);
 	expResult = 0.0489; //m/n=8  k=2
-	for(int j=0; j<1024 ; j++)
+	for(int j=0; j<1024 ; ++j)
 	{
 		char word[8];
-		for(int i=0; i <= 7; i++)
+		for(int i=0; i <= 7; ++i)
 		{
 			word[i] = 33 + rand() % (126 - 23);
 		}
@@ -408,10 +408,10 @@ void BloomFilterTest::testGetAllocation()
 	ibrcommon::BloomFilter FilterD(2250,4);
 	vector<char*> v4(150);
 	expResult = 0.003; //m/n=15  k=4
-	for(int j=0; j<150 ; j++)
+	for(int j=0; j<150 ; ++j)
 	{
 		char word[8];
-		for(int i=0; i <= 7; i++)
+		for(int i=0; i <= 7; ++i)
 		{
 			word[i] = 33 + rand() % (126 - 23);
 		}
@@ -429,10 +429,10 @@ void BloomFilterTest::testGetAllocation()
 	ibrcommon::BloomFilter FilterF(100,2);
 	vector<char*> v5(50);
 	expResult = 0.383; //m/n=20  k=2
-	for(int j=0; j<51; j++)
+	for(int j=0; j<51; ++j)
 	{
 		char word[8];
-		for(int i=0; i <= 7; i++)
+		for(int i=0; i <= 7; ++i)
 		{
 			word[i] = 33 + rand() % (126 - 23);
 		}
@@ -450,10 +450,10 @@ void BloomFilterTest::testGetAllocation()
 	ibrcommon::BloomFilter FilterG(70,5);
 	vector<char*> v6(10);
 	expResult = 0.0347; //m/n=7 k=5
-	for(int j=0; j<11; j++)
+	for(int j=0; j<11; ++j)
 	{
 		char word[8];
-		for(int i=0; i <= 7; i++)
+		for(int i=0; i <= 7; ++i)
 		{
 			word[i] = 33 + rand() % (126 - 23);
 		}
@@ -466,15 +466,15 @@ void BloomFilterTest::testGetAllocation()
 //	cout<<"expected result:"<<expResult<<endl;
 	CPPUNIT_ASSERT_DOUBLES_EQUAL(expResult, Result, 0.01);
 	/*
-	for(int l=10; l<21; l++)
+	for(int l=10; l<21; ++l)
 	{
 		ibrcommon::BloomFilter Filter(100*l,1);
 		vector<char*> v(100);
 		std::vector<char*>::iterator it;
-		for(int j=0; j<99 ; j++)
+		for(int j=0; j<99 ; ++j)
 		{
 			char word[8];
-			for(int i=0; i <= 7; i++)
+			for(int i=0; i <= 7; ++i)
 			{
 				word[i] = 33 + rand() % (126 - 23);
 			}
@@ -485,9 +485,9 @@ void BloomFilterTest::testGetAllocation()
 
 		long r=0;
 		double tests = 100000;
-		for(int k=0; k<tests; k++){
+		for(int k=0; k<tests; ++k){
 			char word[8];
-			for(int i=0; i <= 7; i++)
+			for(int i=0; i <= 7; ++i)
 			{
 				word[i] = 33 + rand() % (126 - 23);
 			}

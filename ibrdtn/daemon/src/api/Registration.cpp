@@ -20,15 +20,29 @@
  */
 
 #include "config.h"
+#include "Configuration.h"
 #include "api/Registration.h"
 #include "storage/BundleStorage.h"
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
 #include "core/BundlePurgeEvent.h"
+#include "core/FragmentManager.h"
+#include "net/BundleReceivedEvent.h"
 
 #ifdef HAVE_SQLITE
 #include "storage/SQLiteBundleStorage.h"
 #endif
+
+#ifdef WITH_COMPRESSION
+#include <ibrdtn/data/CompressedPayloadBlock.h>
+#endif
+
+#ifdef WITH_BUNDLE_SECURITY
+#include "security/SecurityManager.h"
+#endif
+
+#include <ibrdtn/data/TrackingBlock.h>
+#include <ibrdtn/data/AgeBlock.h>
 
 #include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Random.h>
@@ -41,6 +55,7 @@ namespace dtn
 {
 	namespace api
 	{
+		const std::string Registration::TAG = "Registration";
 		std::set<std::string> Registration::_handles;
 
 		const std::string Registration::alloc_handle()
@@ -84,10 +99,10 @@ namespace dtn
 			Registration::_handles.erase(handle);
 		}
 
-		Registration::Registration(dtn::storage::BundleSeeker &seeker)
+		Registration::Registration()
 		 : _handle(alloc_handle()),
-		   _default_eid(core::BundleCore::local + dtn::core::BundleCore::local.getDelimiter() + _handle),
-		   _persistent(false), _detached(false), _expiry(0), _seeker(seeker)
+		   _default_eid(core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + _handle) ),
+		   _persistent(false), _detached(false), _expiry(0), _filter_fragments(true)
 		{
 		}
 
@@ -144,7 +159,7 @@ namespace dtn
 			return _endpoints;
 		}
 
-		void Registration::delivered(const dtn::data::MetaBundle &m)
+		void Registration::delivered(const dtn::data::MetaBundle &m) const
 		{
 			// raise bundle event
 			dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELIVERED);
@@ -157,43 +172,31 @@ namespace dtn
 
 		dtn::data::Bundle Registration::receive() throw (dtn::storage::NoBundleFoundException)
 		{
-			ibrcommon::MutexLock l(_receive_lock);
-
 			// get the global storage
 			dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
-			while (true)
-			{
-				try {
-					// get the first bundle in the queue
-					dtn::data::MetaBundle b = _queue.getnpop(false);
+			// get the next bundles as MetaBundle
+			dtn::data::MetaBundle b = receiveMetaBundle();
 
-					// load the bundle
-					return storage.get(b);
-				} catch (const ibrcommon::QueueUnblockedException &e) {
-					if (e.reason == ibrcommon::QueueUnblockedException::QUEUE_ABORT)
-					{
-						// query for new bundles
-						underflow();
-					}
-				} catch (const dtn::storage::NoBundleFoundException&) { }
-			}
-
-			throw dtn::storage::NoBundleFoundException();
+			// load the bundle
+			return storage.get(b);
 		}
 
 		dtn::data::MetaBundle Registration::receiveMetaBundle() throw (dtn::storage::NoBundleFoundException)
 		{
 			ibrcommon::MutexLock l(_receive_lock);
+
 			while(true)
 			{
 				try {
 					// get the first bundle in the queue
-					dtn::data::MetaBundle b = _queue.getnpop(false);
+					dtn::data::MetaBundle b = _queue.pop();
 					return b;
-				}
-				catch(const ibrcommon::QueueUnblockedException & e){
-					if(e.reason == ibrcommon::QueueUnblockedException::QUEUE_ABORT){
+				} catch (const ibrcommon::QueueUnblockedException &e) {
+					if (e.reason == ibrcommon::QueueUnblockedException::QUEUE_ABORT)
+					{
+						IBRCOMMON_LOGGER_DEBUG_TAG(Registration::TAG, 25) << "search for more bundles" << IBRCOMMON_LOGGER_ENDL;
+
 						// query for new bundles
 						underflow();
 					}
@@ -207,8 +210,10 @@ namespace dtn
 
 		void Registration::underflow()
 		{
+			bool fragment_conf = dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation();
+
 			// expire outdated bundles in the list
-			_queue.getReceivedBundles().expire(dtn::utils::Clock::getTime());
+			_queue.expire(dtn::utils::Clock::getTime());
 
 			/**
 			 * search for bundles in the storage
@@ -220,16 +225,22 @@ namespace dtn
 #endif
 			{
 			public:
-				BundleFilter(const std::set<dtn::data::EID> endpoints, const dtn::data::BundleSet &bundles, bool loopback)
-				 : _endpoints(endpoints), _bundles(bundles), _loopback(loopback)
+				BundleFilter(const std::set<dtn::data::EID> endpoints, const dtn::data::BundleSet &bundles, bool loopback, bool fragment_filter)
+				 : _endpoints(endpoints), _bundles(bundles), _loopback(loopback), _fragment_filter(fragment_filter)
 				{};
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return dtn::core::BundleCore::max_bundles_in_transit; };
+				virtual dtn::data::Size limit() const throw () { return dtn::core::BundleCore::max_bundles_in_transit; };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
+					// filter fragments if requested
+					if (meta.fragment && _fragment_filter)
+					{
+						return false;
+					}
+
 					if (_endpoints.find(meta.destination) == _endpoints.end())
 					{
 						return false;
@@ -244,7 +255,7 @@ namespace dtn
 						}
 					}
 
-					IBRCOMMON_LOGGER_DEBUG(10) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(Registration::TAG, 30) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					if (_bundles.has(meta))
 					{
@@ -255,7 +266,7 @@ namespace dtn
 				};
 
 #ifdef HAVE_SQLITE
-				const std::string getWhere() const
+				const std::string getWhere() const throw ()
 				{
 					if (_endpoints.size() > 1)
 					{
@@ -278,15 +289,15 @@ namespace dtn
 					}
 				};
 
-				size_t bind(sqlite3_stmt *st, size_t offset) const
+				int bind(sqlite3_stmt *st, int offset) const throw ()
 				{
-					size_t o = offset;
+					int o = offset;
 
-					for (std::set<dtn::data::EID>::const_iterator iter = _endpoints.begin(); iter != _endpoints.end(); iter++)
+					for (std::set<dtn::data::EID>::const_iterator iter = _endpoints.begin(); iter != _endpoints.end(); ++iter)
 					{
 						const std::string data = (*iter).getString();
 
-						sqlite3_bind_text(st, o, data.c_str(), data.size(), SQLITE_TRANSIENT);
+						sqlite3_bind_text(st, o, data.c_str(), static_cast<int>(data.size()), SQLITE_TRANSIENT);
 						o++;
 					}
 
@@ -298,13 +309,14 @@ namespace dtn
 				const std::set<dtn::data::EID> _endpoints;
 				const dtn::data::BundleSet &_bundles;
 				const bool _loopback;
-			} filter(_endpoints, _queue.getReceivedBundles(), false);
+				const bool _fragment_filter;
+			} filter(_endpoints, _queue.getReceivedBundles(), false, fragment_conf && _filter_fragments);
 
 			// query the database for more bundles
 			ibrcommon::MutexLock l(_endpoints_lock);
 
 			try {
-				_seeker.get( filter, _queue );
+				dtn::core::BundleCore::getInstance().getSeeker().get( filter, _queue );
 			} catch (const dtn::storage::NoBundleFoundException&) {
 				_no_more_bundles = true;
 				throw;
@@ -323,15 +335,35 @@ namespace dtn
 		{
 			try {
 				_recv_bundles.add(bundle);
-				this->push(bundle);
+				_queue.push(bundle);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(Registration::TAG, 10) << "[RegistrationQueue] add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) { }
 		}
 
-		dtn::data::BundleSet& Registration::RegistrationQueue::getReceivedBundles()
+		dtn::data::MetaBundle Registration::RegistrationQueue::pop() throw (const ibrcommon::QueueUnblockedException)
+		{
+			return _queue.getnpop(false);
+		}
+
+		const dtn::data::BundleSet& Registration::RegistrationQueue::getReceivedBundles() const throw ()
 		{
 			return _recv_bundles;
+		}
+
+		void Registration::RegistrationQueue::expire(const dtn::data::Timestamp &timestamp) throw ()
+		{
+			_recv_bundles.expire(timestamp);
+		}
+
+		void Registration::RegistrationQueue::abort() throw ()
+		{
+			_queue.abort();
+		}
+
+		void Registration::RegistrationQueue::reset() throw ()
+		{
+			_queue.reset();
 		}
 
 		void Registration::subscribe(const dtn::data::EID &endpoint)
@@ -427,6 +459,11 @@ namespace dtn
 			return _persistent;
 		}
 
+		void Registration::setFilterFragments(bool val)
+		{
+			_filter_fragments = val;
+		}
+
 		ibrcommon::Timer::time_t Registration::getExpireTime() const
 		{
 			if(!isPersistent()) throw NotPersistentException("Registration is not persistent.");
@@ -454,6 +491,110 @@ namespace dtn
 			_notify_queue.reset();
 
 			_wait_for_cond.reset();
+		}
+
+		void Registration::processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle)
+		{
+			// check address fields for "api:me", this has to be replaced
+			static const dtn::data::EID clienteid("api:me");
+
+			// set the source address to the sending EID
+			bundle.source = source;
+
+			if (bundle.destination == clienteid) bundle.destination = source;
+			if (bundle.reportto == clienteid) bundle.reportto = source;
+			if (bundle.custodian == clienteid) bundle.custodian = source;
+
+			// if the timestamp is not set, add a ageblock
+			if (bundle.timestamp == 0)
+			{
+				// check for ageblock
+				try {
+					bundle.find<dtn::data::AgeBlock>();
+				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+					// add a new ageblock
+					bundle.push_front<dtn::data::AgeBlock>();
+				}
+			}
+
+			// modify TrackingBlock
+			try {
+				dtn::data::TrackingBlock &track = bundle.find<dtn::data::TrackingBlock>();
+				track.append(dtn::core::BundleCore::local);
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+
+#ifdef WITH_COMPRESSION
+			// if the compression bit is set, then compress the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION))
+			{
+				try {
+					dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
+				} catch (const ibrcommon::Exception &ex) {
+					IBRCOMMON_LOGGER_TAG(Registration::TAG, warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				};
+			}
+#endif
+
+#ifdef WITH_BUNDLE_SECURITY
+			// if the encrypt bit is set, then try to encrypt the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
+			{
+				try {
+					dtn::security::SecurityManager::getInstance().encrypt(bundle);
+
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
+				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+					// sign requested, but no key is available
+					IBRCOMMON_LOGGER_TAG(Registration::TAG, warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
+				} catch (const dtn::security::SecurityManager::EncryptException&) {
+					IBRCOMMON_LOGGER_TAG(Registration::TAG, warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+
+			// if the sign bit is set, then try to sign the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN))
+			{
+				try {
+					dtn::security::SecurityManager::getInstance().sign(bundle);
+
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
+				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+					// sign requested, but no key is available
+					IBRCOMMON_LOGGER_TAG(Registration::TAG, warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+#endif
+
+			// get the payload size maximum
+			size_t maxPayloadLength = dtn::daemon::Configuration::getInstance().getLimit("payload");
+
+			// check if fragmentation is enabled
+			// do not try pro-active fragmentation if the payload length is not limited
+			if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation() && (maxPayloadLength > 0))
+			{
+				try {
+					std::list<dtn::data::Bundle> fragments;
+
+					dtn::core::FragmentManager::split(bundle, maxPayloadLength, fragments);
+
+					//for each fragment raise bundle received event
+					for(std::list<dtn::data::Bundle>::iterator it = fragments.begin(); it != fragments.end(); ++it)
+					{
+						// raise default bundle received event
+						dtn::net::BundleReceivedEvent::raise(source, *it, true);
+					}
+
+					return;
+				} catch (const FragmentationProhibitedException&) {
+				} catch (const FragmentationNotNecessaryException&) {
+				} catch (const FragmentationAbortedException&) {
+					// drop the bundle
+					return;
+				}
+			}
+
+			// raise default bundle received event
+			dtn::net::BundleReceivedEvent::raise(source, bundle, true);
 		}
 	}
 }

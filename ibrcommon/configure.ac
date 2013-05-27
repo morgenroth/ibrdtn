@@ -103,7 +103,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	OPENSSL_LIBS="-lssl -lcrypto"
 	AC_SUBST(OPENSSL_LIBS)
 	use_openssl="yes"
-	
+
 	# Lowpan
 	#AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], [])
 	use_lowpan="no"
@@ -180,7 +180,11 @@ AS_IF([test "x$enable_android" = "xyes"], [
 					AC_DEFINE(HAVE_LIBNL3_ROUTE, [1], ["netlink route library 3.0 is available"])
 					REQUIRES_LIBS="$REQUIRES_LIBS libnl-route-3.0"
 				], [
-					echo "netlink route module not found"
+					AC_CHECK_LIB(nl-route-3, rtnl_route_alloc, [], [
+						AC_CHECK_LIB(nl-route, rtnl_route_alloc, [], [
+							AC_MSG_ERROR([netlink route module not found])
+						])
+					])
 				])
 
 				# check for additional netlink modules
@@ -188,7 +192,11 @@ AS_IF([test "x$enable_android" = "xyes"], [
 					AC_DEFINE(HAVE_LIBNL3_GENL, [1], ["netlink genl library 3.0 is available"])
 					REQUIRES_LIBS="$REQUIRES_LIBS libnl-genl-3.0"
 				], [
-					echo "netlink genl module not found"
+					AC_CHECK_LIB(nl-genl-3, genl_connect, [], [
+						AC_CHECK_LIB(nl-genl, genl_connect, [], [
+							AC_MSG_ERROR([netlink genl module not found])
+						])
+					])
 				])
 			], [
 				PKG_CHECK_MODULES([NL], [libnl-1], [

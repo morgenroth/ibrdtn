@@ -40,15 +40,13 @@
 #include "routing/NodeHandshakeEvent.h"
 #include "routing/StaticRouteChangeEvent.h"
 
-#include "routing/NodeHandshakeExtension.h"
-#include "routing/RetransmissionExtension.h"
-
 #include <ibrdtn/data/TrackingBlock.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/thread/RWLock.h>
 
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
@@ -58,124 +56,159 @@ namespace dtn
 {
 	namespace routing
 	{
-		BaseRouter *BaseRouter::Extension::_router = NULL;
-
-		/**
-		 * base implementation of the Extension class
-		 */
-		BaseRouter::Extension::Extension(dtn::storage::BundleSeeker &s)
-		 : _seeker(s)
-		{ }
-
-		BaseRouter::Extension::~Extension()
-		{ }
-
-		BaseRouter& BaseRouter::Extension::operator*()
-		{
-			return *_router;
-		}
-
-		/**
-		 * Transfer one bundle to another node.
-		 * @param destination The EID of the other node.
-		 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
-		 */
-		void BaseRouter::Extension::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id)
-		{
-			// lock the list of neighbors
-			ibrcommon::MutexLock l(_router->getNeighborDB());
-
-			// get the neighbor entry for the next hop
-			NeighborDatabase::NeighborEntry &entry = _router->getNeighborDB().get(destination);
-
-			// transfer bundle to the neighbor
-			transferTo(entry, id);
-		}
-
-		void BaseRouter::Extension::transferTo(NeighborDatabase::NeighborEntry &entry, const dtn::data::BundleID &id)
-		{
-			// acquire the transfer of this bundle, could throw already in transit or no resource left exception
-			entry.acquireTransfer(id);
-
-			// transfer the bundle to the next hop
-			dtn::core::BundleCore::getInstance().transferTo(entry.eid, id);
-		}
-
-		bool BaseRouter::Extension::isRouting(const dtn::data::EID &eid)
-		{
-			if (eid.getApplication() == "routing")
-			{
-				return true;
-			}
-			else if ((eid.getScheme() == dtn::data::EID::CBHE_SCHEME) && (eid.getApplication() == "50"))
-			{
-				return true;
-			}
-
-			return false;
-		}
-
-		/**
-		 * base implementation of the Endpoint class
-		 */
-		BaseRouter::Endpoint::Endpoint()
-		{ }
-
-		BaseRouter::Endpoint::~Endpoint()
-		{ }
-
-		/**
-		 * implementation of the VirtualEndpoint class
-		 */
-		BaseRouter::VirtualEndpoint::VirtualEndpoint(dtn::data::EID name)
-		 : _client(NULL), _name(name)
-		{ }
-
-		BaseRouter::VirtualEndpoint::~VirtualEndpoint()
-		{ }
+		const std::string BaseRouter::TAG = "BaseRouter";
 
 		/**
 		 * implementation of the BaseRouter class
 		 */
-		BaseRouter::BaseRouter(dtn::storage::BundleStorage &storage)
-		 : _storage(storage), _nh_extension(NULL)
+		BaseRouter::BaseRouter()
+		 : _extension_state(false)
 		{
 			// register myself for all extensions
-			Extension::_router = this;
-
-			// add node handshake module
-			_nh_extension = new dtn::routing::NodeHandshakeExtension(_storage);
-			addExtension( _nh_extension );
-
-			// add retransmission module
-			addExtension( new dtn::routing::RetransmissionExtension(_storage) );
+			RoutingExtension::_router = this;
 		}
 
 		BaseRouter::~BaseRouter()
 		{
 			// delete all extensions
-			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
-			{
-				delete (*iter);
-			}
+			clearExtensions();
 		}
 
 		/**
 		 * Add a routing extension to the routing core.
 		 * @param extension
 		 */
-		void BaseRouter::addExtension(BaseRouter::Extension *extension)
+		void BaseRouter::add(RoutingExtension *extension)
 		{
-			_extensions.push_back(extension);
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+			_extensions.insert(extension);
 		}
 
-		const std::list<BaseRouter::Extension*>& BaseRouter::getExtensions() const
+		void BaseRouter::remove(RoutingExtension *extension)
+		{
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+			_extensions.erase(extension);
+		}
+
+		ibrcommon::RWMutex& BaseRouter::getExtensionMutex() throw ()
+		{
+			return _extensions_mutex;
+		}
+
+		const BaseRouter::extension_list& BaseRouter::getExtensions() const
 		{
 			return _extensions;
 		}
 
+		void BaseRouter::clearExtensions()
+		{
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+
+			// delete all extensions
+			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
+			{
+				delete (*iter);
+			}
+
+			_extensions.clear();
+		}
+
+		void BaseRouter::extensionsUp() throw ()
+		{
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+
+			_nh_extension.componentUp();
+			_retransmission_extension.componentUp();
+
+			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
+			{
+				RoutingExtension &ex = (**iter);
+				ex.componentUp();
+			}
+
+			_extension_state = true;
+		}
+
+		void BaseRouter::extensionsDown() throw ()
+		{
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+
+			_extension_state = false;
+
+			// stop all extensions
+			for (extension_list::iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
+			{
+				RoutingExtension &ex = (**iter);
+				ex.componentDown();
+			}
+
+			_retransmission_extension.componentDown();
+			_nh_extension.componentDown();
+		}
+
+		void BaseRouter::processHandshake(const dtn::data::EID &source, NodeHandshake &answer)
+		{
+			ibrcommon::RWLock l(getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+			// walk through all extensions to process the contents of the response
+			const BaseRouter::extension_list& extensions = getExtensions();
+
+			// process this handshake using the NodeHandshakeExtension
+			_nh_extension.processHandshake(source, answer);
+
+			// process this handshake using the retransmission extension
+			_retransmission_extension.processHandshake(source, answer);
+
+			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); ++iter)
+			{
+				RoutingExtension &extension = (**iter);
+				extension.processHandshake(source, answer);
+			}
+		}
+
+		void BaseRouter::responseHandshake(const dtn::data::EID &source, const NodeHandshake &request, NodeHandshake &answer)
+		{
+			ibrcommon::RWLock l(getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+			// walk through all extensions to process the contents of the response
+			const BaseRouter::extension_list& extensions = getExtensions();
+
+			// process this handshake using the NodeHandshakeExtension
+			_nh_extension.responseHandshake(source, request, answer);
+
+			// process this handshake using the retransmission extension
+			_retransmission_extension.responseHandshake(source, request, answer);
+
+			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); ++iter)
+			{
+				RoutingExtension &extension = (**iter);
+				extension.responseHandshake(source, request, answer);
+			}
+		}
+
+		void BaseRouter::requestHandshake(const dtn::data::EID &destination, NodeHandshake &request)
+		{
+			ibrcommon::RWLock l(getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+			// walk through all extensions to process the contents of the response
+			const BaseRouter::extension_list& extensions = getExtensions();
+
+			// process this handshake using the NodeHandshakeExtension
+			_nh_extension.requestHandshake(destination, request);
+
+			// process this handshake using the retransmission extension
+			_retransmission_extension.requestHandshake(destination, request);
+
+			for (BaseRouter::extension_list::const_iterator iter = extensions.begin(); iter != extensions.end(); ++iter)
+			{
+				RoutingExtension &extension = (**iter);
+				extension.requestHandshake(destination, request);
+			}
+		}
+
 		void BaseRouter::componentUp() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::add(this);
@@ -188,16 +221,11 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
-
-			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
-			{
-				BaseRouter::Extension &ex = (**iter);
-				ex.componentUp();
-			}
 		}
 
 		void BaseRouter::componentDown() throw ()
 		{
+			// routine checked for throw() on 15.02.2013
 			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::remove(this);
@@ -210,13 +238,6 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
-
-			// stop all extensions
-			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
-			{
-				BaseRouter::Extension &ex = (**iter);
-				ex.componentDown();
-			}
 		}
 
 		/**
@@ -241,6 +262,7 @@ namespace dtn
 				}
 
 				// pass event to all extensions
+				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 				__forward_event(evt);
 				return;
 			} catch (const std::bad_cast&) { };
@@ -254,7 +276,7 @@ namespace dtn
 					if ((event.getBundle().procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)
 							&& ( event.getPeer().getNode() == event.getBundle().destination.getNode() ))
 					{
-						IBRCOMMON_LOGGER_DEBUG(20) << "singleton bundle added to purge vector: " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(BaseRouter::TAG, 20) << "singleton bundle added to purge vector: " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// add it to the purge vector
 						ibrcommon::MutexLock l(_purged_bundles_lock);
@@ -271,6 +293,7 @@ namespace dtn
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 				// pass event to all extensions
+				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 				__forward_event(evt);
 				return;
 			} catch (const std::bad_cast&) { };
@@ -287,7 +310,7 @@ namespace dtn
 
 					if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
 					{
-						const dtn::data::MetaBundle meta = _storage.get(event.getBundleID());
+						const dtn::data::MetaBundle meta = getStorage().get(event.getBundleID());
 
 						// add the transferred bundle to the bloomfilter of the receiver
 						entry.add(meta);
@@ -295,6 +318,7 @@ namespace dtn
 				} catch (const dtn::storage::NoBundleFoundException&) { };
 
 				// pass event to all extensions
+				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 				__forward_event(evt);
 				return;
 			} catch (const std::bad_cast&) { };
@@ -307,7 +331,7 @@ namespace dtn
 					if (received.fromlocal)
 					{
 						// store the bundle into a storage module
-						_storage.store(received.bundle);
+						getStorage().store(received.bundle);
 
 						// set the bundle as known
 						setKnown(received.bundle);
@@ -328,13 +352,13 @@ namespace dtn
 
 						// increment value in the scope control hop limit block
 						try {
-							dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+							dtn::data::ScopeControlHopLimitBlock &schl = bundle.find<dtn::data::ScopeControlHopLimitBlock>();
 							schl.increment();
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// modify TrackingBlock
 						try {
-							dtn::data::TrackingBlock &track = bundle.getBlock<dtn::data::TrackingBlock>();
+							dtn::data::TrackingBlock &track = bundle.find<dtn::data::TrackingBlock>();
 							track.append(dtn::core::BundleCore::local);
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
@@ -347,29 +371,34 @@ namespace dtn
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 						// store the bundle into a storage module
-						_storage.store(bundle);
+						getStorage().store(bundle);
 
 						// raise the queued event to notify all receivers about the new bundle
 						QueueBundleEvent::raise(received.bundle, received.peer);
 					}
 					else
 					{
-						IBRCOMMON_LOGGER_DEBUG(5) << "Duplicate bundle " << received.bundle.toString() << " from " << received.peer.getString() << " ignored." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(BaseRouter::TAG, 5) << "Duplicate bundle " << received.bundle.toString() << " from " << received.peer.getString() << " ignored." << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					// finally create a bundle received event
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_RECEIVED);
 #ifdef WITH_BUNDLE_SECURITY
 				} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
-					IBRCOMMON_LOGGER(notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 #endif
 				} catch (const ibrcommon::IOException &ex) {
-					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
-					IBRCOMMON_LOGGER(notice) << "No space left for bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+					// raise BundleEvent because we have to drop the bundle
+					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+				} catch (const ibrcommon::Exception &ex) {
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, error) << "Bundle " << received.bundle.toString() << " dropped: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
@@ -389,14 +418,14 @@ namespace dtn
 				// Store incoming bundles into the storage
 				try {
 					// store the bundle into a storage module
-					_storage.store(generated.bundle);
+					getStorage().store(generated.bundle);
 
 					// raise the queued event to notify all receivers about the new bundle
  					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
 				} catch (const ibrcommon::IOException &ex) {
-					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
-					IBRCOMMON_LOGGER(notice) << "No space left for bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				// do not pass this event to any extension
@@ -405,7 +434,7 @@ namespace dtn
 
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-				size_t expire_time = time.getTimestamp();
+				dtn::data::Timestamp expire_time = time.getTimestamp();
 				if (expire_time <= 60) expire_time = 0;
 				else expire_time -= 60;
 
@@ -425,41 +454,44 @@ namespace dtn
 				}
 
 				// pass event to all extensions
+				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 				__forward_event(evt);
 				return;
 			} catch (const std::bad_cast&) { };
 
 			// pass event to all extensions
+			ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
 			__forward_event(evt);
 		}
 
-		void BaseRouter::__forward_event(const dtn::core::Event *evt) const throw ()
+		void BaseRouter::__forward_event(const dtn::core::Event *evt) throw ()
 		{
+			// do not forward the event if the extensions are down
+			if (!_extension_state) return;
+
+			_nh_extension.notify(evt);
+			_retransmission_extension.notify(evt);
+
 			// notify all underlying extensions
-			for (std::list<BaseRouter::Extension*>::const_iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)
 			{
 				(*iter)->notify(evt);
 			}
 		}
 
-		/**
-		 * Get a bundle out of the storage.
-		 * @param id The ID of the bundle.
-		 * @return The requested bundle.
-		 */
-		dtn::data::Bundle BaseRouter::getBundle(const dtn::data::BundleID &id)
-		{
-			return _storage.get(id);
-		}
-
 		void BaseRouter::doHandshake(const dtn::data::EID &eid)
 		{
-			_nh_extension->doHandshake(eid);
+			_nh_extension.doHandshake(eid);
 		}
 
 		dtn::storage::BundleStorage& BaseRouter::getStorage()
 		{
-			return _storage;
+			return dtn::core::BundleCore::getInstance().getStorage();
+		}
+
+		dtn::storage::BundleSeeker& BaseRouter::getSeeker()
+		{
+			return dtn::core::BundleCore::getInstance().getSeeker();
 		}
 
 		void BaseRouter::setKnown(const dtn::data::MetaBundle &meta)

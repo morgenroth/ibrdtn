@@ -41,11 +41,15 @@ namespace dtn
 	namespace daemon
 	{
 		const unsigned int DTNTPWorker::PROTO_VERSION = 1;
+		const std::string DTNTPWorker::TAG = "DTNTPWorker";
 
 		DTNTPWorker::DTNTPWorker()
-		 : _sync_threshold(0.15), _announce_rating(false), _base_rating(0.0), _psi(0.99), _sigma(1.0), _sync(false)
+		 : _sync_threshold(0.15f), _announce_rating(false), _base_rating(0.0), _psi(0.99), _sigma(1.0), _sync(false)
 		{
 			AbstractWorker::initialize("/dtntp", 60, true);
+
+			// initialize the last sync time to zero
+			timerclear(&_last_sync_time);
 
 			// get global configuration for time synchronization
 			const dtn::daemon::Configuration::TimeSync &conf = dtn::daemon::Configuration::getInstance().getTimeSync();
@@ -55,9 +59,9 @@ namespace dtn
 				// evaluate the current local time
 				if (dtn::utils::Clock::getTime() > 0) {
 					_base_rating = 1.0;
-					dtn::utils::Clock::rating = 1.0;
+					dtn::utils::Clock::setRating(1.0);
 				} else {
-					IBRCOMMON_LOGGER(warning) << "The local clock seems to be wrong. Expiration disabled." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be wrong. Expiration disabled." << IBRCOMMON_LOGGER_ENDL;
 				}
 			} else {
 				_sigma = conf.getSigma();
@@ -74,9 +78,6 @@ namespace dtn
 			_sync  = conf.doSync();
 
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
-
-			// debug quality of time
-			IBRCOMMON_LOGGER_DEBUG(10) << "quality of time is " << dtn::utils::Clock::rating << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		DTNTPWorker::~DTNTPWorker()
@@ -85,7 +86,7 @@ namespace dtn
 		}
 
 		DTNTPWorker::TimeSyncMessage::TimeSyncMessage()
-		 : type(TIMESYNC_REQUEST), origin_rating(dtn::utils::Clock::rating), peer_rating(0.0)
+		 : type(TIMESYNC_REQUEST), origin_rating(dtn::utils::Clock::getRating()), peer_rating(0.0)
 		{
 			timerclear(&origin_timestamp);
 			timerclear(&peer_timestamp);
@@ -106,14 +107,14 @@ namespace dtn
 			ss.clear(); ss.str(""); ss << obj.origin_rating;
 			stream << dtn::data::BundleString(ss.str());
 
-			stream << dtn::data::SDNV(obj.origin_timestamp.tv_sec);
-			stream << dtn::data::SDNV(obj.origin_timestamp.tv_usec);
+			stream << dtn::data::Number(obj.origin_timestamp.tv_sec);
+			stream << dtn::data::Number(obj.origin_timestamp.tv_usec);
 
 			ss.clear(); ss.str(""); ss << obj.peer_rating;
 			stream << dtn::data::BundleString(ss.str());
 
-			stream << dtn::data::SDNV(obj.peer_timestamp.tv_sec);
-			stream << dtn::data::SDNV(obj.peer_timestamp.tv_usec);
+			stream << dtn::data::Number(obj.peer_timestamp.tv_sec);
+			stream << dtn::data::Number(obj.peer_timestamp.tv_usec);
 
 			return stream;
 		}
@@ -123,7 +124,7 @@ namespace dtn
 			char type = 0;
 			std::stringstream ss;
 			dtn::data::BundleString bs;
-			dtn::data::SDNV sdnv;
+			dtn::data::Number sdnv;
 
 			stream >> type;
 			obj.type = DTNTPWorker::TimeSyncMessage::MSG_TYPE(type);
@@ -133,16 +134,22 @@ namespace dtn
 			ss.str((const std::string&)bs);
 			ss >> obj.origin_rating;
 
-			stream >> sdnv; obj.origin_timestamp.tv_sec = sdnv.getValue();
-			stream >> sdnv; obj.origin_timestamp.tv_usec = sdnv.getValue();
+			stream >> sdnv;
+			obj.origin_timestamp.tv_sec = sdnv.get<time_t>();
+
+			stream >> sdnv;
+			obj.origin_timestamp.tv_usec = sdnv.get<suseconds_t>();
 
 			stream >> bs;
 			ss.clear();
 			ss.str((const std::string&)bs);
 			ss >> obj.peer_rating;
 
-			stream >> sdnv; obj.peer_timestamp.tv_sec = sdnv.getValue();
-			stream >> sdnv; obj.peer_timestamp.tv_usec = sdnv.getValue();
+			stream >> sdnv;
+			obj.peer_timestamp.tv_sec = sdnv.get<time_t>();
+
+			stream >> sdnv;
+			obj.peer_timestamp.tv_usec = sdnv.get<suseconds_t>();
 
 			return stream;
 		}
@@ -159,9 +166,9 @@ namespace dtn
 				// remove outdated blacklist entries
 				{
 					ibrcommon::MutexLock l(_blacklist_lock);
-					for (std::map<EID, size_t>::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); iter++)
+					for (blacklist_map::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); ++iter)
 					{
-						size_t bl_age = (*iter).second;
+						const dtn::data::Timestamp &bl_age = (*iter).second;
 
 						// do not query again if the blacklist entry is valid
 						if (bl_age < t.getUnixTimestamp())
@@ -178,27 +185,32 @@ namespace dtn
 					/**
 					 * evaluate the current local time
 					 */
-					if (dtn::utils::Clock::rating == 0)
+					if (dtn::utils::Clock::getRating() == 0)
 					{
 						if (t.getTimestamp() > 0)
 						{
-							dtn::utils::Clock::rating = 1;
-							IBRCOMMON_LOGGER(warning) << "The local clock seems to be okay again. Expiration enabled." << IBRCOMMON_LOGGER_ENDL;
+							dtn::utils::Clock::setRating(1.0);
+							IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be okay again. Expiration enabled." << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				}
 				// if we are not a reference then update the local rating if we're not a reference node
 				else
 				{
-					ssize_t now = dtn::utils::Clock::getTime();
-
 					// before we can age our rating we should have been synchronized at least one time
-					if ((_last_sync_time.tv_sec > 0) && (_last_sync_time.tv_sec < now)) {
-						// calculate the new clock rating
-						dtn::utils::Clock::rating = _base_rating * (1.0 / (::pow(_sigma, now - _last_sync_time.tv_sec)));
+					if (timerisset(&_last_sync_time))
+					{
+						timeval now;
+						dtn::utils::Clock::gettimeofday(&now);
 
-						// debug quality of time
-						IBRCOMMON_LOGGER_DEBUG(25) << "clock rating is " << dtn::utils::Clock::rating << IBRCOMMON_LOGGER_ENDL;
+						// at least one second should passed
+						if (_last_sync_time.tv_sec < now.tv_sec)
+						{
+							// calculate the new clock rating
+							timeval timediff;
+							timersub(&now, &_last_sync_time, &timediff);
+							dtn::utils::Clock::setRating(_base_rating * (1.0 / (::pow(_sigma, dtn::utils::Clock::toDouble(timediff)))));
+						}
 					}
 				}
 
@@ -207,7 +219,7 @@ namespace dtn
 				{
 					// search for other nodes with better credentials
 					const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
-					for (std::set<dtn::core::Node>::const_iterator iter = nodes.begin(); iter != nodes.end(); iter++) {
+					for (std::set<dtn::core::Node>::const_iterator iter = nodes.begin(); iter != nodes.end(); ++iter) {
 						if (shouldSyncWith(*iter)) {
 							syncWith(*iter);
 						}
@@ -228,7 +240,7 @@ namespace dtn
 
 			// decode attribute parameter
 			unsigned int version = 0;
-			size_t timestamp = 0;
+			dtn::data::Timestamp timestamp = 0;
 			float quality = 0.0;
 			decode(attrs.front(), version, timestamp, quality);
 
@@ -239,7 +251,7 @@ namespace dtn
 			if (timestamp == dtn::utils::Clock::getTime()) return false;
 
 			// do not sync if the quality is worse than ours
-			if ((quality * (1 - _sync_threshold)) <= dtn::utils::Clock::rating) return false;
+			if ((quality * (1 - _sync_threshold)) <= dtn::utils::Clock::getRating()) return false;
 
 			return true;
 		}
@@ -254,7 +266,7 @@ namespace dtn
 				ibrcommon::MutexLock l(_blacklist_lock);
 				if (_sync_blacklist.find(peer) != _sync_blacklist.end())
 				{
-					size_t bl_age = _sync_blacklist[peer];
+					const dtn::data::Timestamp &bl_age = _sync_blacklist[peer];
 
 					// do not query again if the blacklist entry is valid
 					if (bl_age > dtn::utils::Clock::getUnixTimestamp())
@@ -273,41 +285,45 @@ namespace dtn
 			// add an age block
 			b.push_back<dtn::data::AgeBlock>();
 
-			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+			try {
+				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
-			// create the payload of the message
-			{
-				ibrcommon::BLOB::iostream stream = ref.iostream();
+				// create the payload of the message
+				{
+					ibrcommon::BLOB::iostream stream = ref.iostream();
 
-				// create a new timesync request
-				TimeSyncMessage msg;
+					// create a new timesync request
+					TimeSyncMessage msg;
 
-				// write the message
-				(*stream) << msg;
+					// write the message
+					(*stream) << msg;
+				}
+
+				// add the payload to the message
+				b.push_back(ref);
+
+				// set the source and destination
+				b.source = dtn::core::BundleCore::local.add("/dtntp");
+				b.destination = peer.add("/dtntp");
+
+				// set high priority
+				b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
+				b.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
+
+				// set the the destination as singleton receiver
+				b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+
+				// set the lifetime of the bundle to 60 seconds
+				b.lifetime = 60;
+
+				// add a schl block
+				dtn::data::ScopeControlHopLimitBlock &schl = b.push_front<dtn::data::ScopeControlHopLimitBlock>();
+				schl.setLimit(1);
+
+				transmit(b);
+			} catch (const ibrcommon::IOException &ex) {
+				IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, error) << "error while synchronizing, Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-
-			// add the payload to the message
-			b.push_back(ref);
-
-			// set the source and destination
-			b._source = dtn::core::BundleCore::local + "/dtntp";
-			b._destination = peer + "/dtntp";
-
-			// set high priority
-			b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
-			b.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
-
-			// set the the destination as singleton receiver
-			b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-
-			// set the lifetime of the bundle to 60 seconds
-			b._lifetime = 60;
-
-			// add a schl block
-			dtn::data::ScopeControlHopLimitBlock &schl = b.push_front<dtn::data::ScopeControlHopLimitBlock>();
-			schl.setLimit(1);
-
-			transmit(b);
 		}
 
 
@@ -316,11 +332,11 @@ namespace dtn
 			if (!_announce_rating) throw NoServiceHereException("Discovery of time sync mechanisms disabled.");
 
 			std::stringstream ss;
-			ss << "version=" << PROTO_VERSION << ";quality=" << dtn::utils::Clock::rating << ";timestamp=" << dtn::utils::Clock::getTime() << ";";
+			ss << "version=" << PROTO_VERSION << ";quality=" << dtn::utils::Clock::getRating() << ";timestamp=" << dtn::utils::Clock::getTime().toString() << ";";
 			announcement.addService( DiscoveryService("dtntp", ss.str()));
 		}
 
-		void DTNTPWorker::decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality) const
+		void DTNTPWorker::decode(const dtn::core::Node::Attribute &attr, unsigned int &version, dtn::data::Timestamp &timestamp, float &quality) const
 		{
 			// parse parameters
 			std::vector<std::string> parameters = dtn::utils::Utils::tokenize(";", attr.value);
@@ -338,8 +354,7 @@ namespace dtn
 
 				if (p[0].compare("timestamp") == 0)
 				{
-					std::stringstream ss(p[1]);
-					ss >> timestamp;
+					timestamp.fromString(p[1]);
 				}
 
 				if (p[0].compare("quality") == 0)
@@ -348,16 +363,12 @@ namespace dtn
 					ss >> quality;
 				}
 
-				param_iter++;
+				++param_iter;
 			}
 		}
 
 		bool DTNTPWorker::hasReference() const {
 			return (_sigma == 1.0);
-		}
-
-		double DTNTPWorker::toDouble(const timeval &val) const {
-			return val.tv_sec + (val.tv_usec / 1000000.0);
 		}
 
 		void DTNTPWorker::sync(const TimeSyncMessage &msg, const struct timeval &offset, const struct timeval &local, const struct timeval &remote)
@@ -368,19 +379,23 @@ namespace dtn
 			ibrcommon::MutexLock l(_sync_lock);
 
 			// if the received quality of time is worse than ours, ignore it
-			if (dtn::utils::Clock::rating >= msg.peer_rating) return;
+			if (dtn::utils::Clock::getRating() >= msg.peer_rating) return;
 
-			double local_time = toDouble(local);
-			double remote_time = toDouble(remote);
-			double lastsync_time = toDouble(_last_sync_time);
+			double local_time = dtn::utils::Clock::toDouble(local);
+			double remote_time = dtn::utils::Clock::toDouble(remote);
 
-			// adjust sigma
+			// adjust sigma if we sync'd at least twice
+			if (timerisset(&_last_sync_time))
 			{
+				double lastsync_time = dtn::utils::Clock::toDouble(_last_sync_time);
+
+				// adjust sigma
 				double t_stable = local_time - lastsync_time;
 				double sigma_base = (1 / ::pow(_psi, 1/t_stable));
+				double sigma_adjustment = ::fabs(remote_time - local_time) / (local_time - lastsync_time) * msg.peer_rating;
+				_sigma = sigma_base + sigma_adjustment;
 
-				_sigma = ::abs(remote_time - local_time) / (local_time - lastsync_time) * msg.peer_rating;
-				_sigma += sigma_base;
+				IBRCOMMON_LOGGER_DEBUG_TAG(DTNTPWorker::TAG, 25) << "new sigma: " << _sigma << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (local_time > remote_time) {
@@ -401,11 +416,11 @@ namespace dtn
 		void DTNTPWorker::callbackBundleReceived(const Bundle &b)
 		{
 			// do not sync with ourselves
-			if (b._source.getNode() == dtn::core::BundleCore::local) return;
+			if (b.source.getNode() == dtn::core::BundleCore::local) return;
 
 			try {
 				// read payload block
-				const dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+				const dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
 
 				// read the type of the message
 				char type = 0; (*p.getBLOB().iostream()).get(type);
@@ -418,11 +433,11 @@ namespace dtn
 						response.relabel();
 
 						// set the lifetime of the bundle to 60 seconds
-						response._lifetime = 60;
+						response.lifetime = 60;
 
 						// switch the source and destination
-						response._source = b._destination;
-						response._destination = b._source;
+						response.source = b.destination;
+						response.destination = b.source;
 						
 						// set high priority
 						response.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -445,7 +460,7 @@ namespace dtn
 
 							// fill in the own values
 							msg.type = TimeSyncMessage::TIMESYNC_RESPONSE;
-							msg.peer_rating = dtn::utils::Clock::rating;
+							msg.peer_rating = dtn::utils::Clock::getRating();
 							dtn::utils::Clock::gettimeofday(&msg.peer_timestamp);
 
 							// write the response
@@ -457,7 +472,7 @@ namespace dtn
 
 						// modify the old schl block or add a new one
 						try {
-							dtn::data::ScopeControlHopLimitBlock &schl = response.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+							dtn::data::ScopeControlHopLimitBlock &schl = response.find<dtn::data::ScopeControlHopLimitBlock>();
 							schl.setLimit(1);
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 							dtn::data::ScopeControlHopLimitBlock &schl = response.push_front<dtn::data::ScopeControlHopLimitBlock>();
@@ -472,12 +487,16 @@ namespace dtn
 					case TimeSyncMessage::TIMESYNC_RESPONSE:
 					{
 						// read the ageblock of the bundle
-						const std::list<const dtn::data::AgeBlock*> ageblocks = b.getBlocks<dtn::data::AgeBlock>();
-						const dtn::data::AgeBlock &peer_age = (*ageblocks.front());
-						const dtn::data::AgeBlock &origin_age = (*ageblocks.back());
+						dtn::data::Bundle::const_find_iterator age_it(b.begin(), dtn::data::AgeBlock::BLOCK_TYPE);
+
+						if (age_it.next(b.end())) throw ibrcommon::Exception("first ageblock missing");
+						const dtn::data::AgeBlock &peer_age = dynamic_cast<const dtn::data::AgeBlock&>(**age_it);
+
+						if (age_it.next(b.end())) throw ibrcommon::Exception("second ageblock missing");
+						const dtn::data::AgeBlock &origin_age = dynamic_cast<const dtn::data::AgeBlock&>(**age_it);
 
 						timeval tv_age; timerclear(&tv_age);
-						tv_age.tv_usec = origin_age.getMicroseconds();
+						tv_age.tv_usec = origin_age.getMicroseconds().get<suseconds_t>();
 
 						ibrcommon::BLOB::Reference ref = p.getBLOB();
 						ibrcommon::BLOB::iostream stream = ref.iostream();
@@ -500,7 +519,7 @@ namespace dtn
 
 						timeval sync_delay;
 						timerclear(&sync_delay);
-						sync_delay.tv_usec = peer_age.getMicroseconds() + prop_delay.tv_usec;
+						sync_delay.tv_usec = peer_age.getMicroseconds().get<suseconds_t>() + prop_delay.tv_usec;
 
 						timeval peer_timestamp;
 						timeradd(&msg.peer_timestamp, &sync_delay, &peer_timestamp);
@@ -509,14 +528,14 @@ namespace dtn
 						timersub(&tv_local, &peer_timestamp, &offset);
 
 						// print out offset to the local clock
-						IBRCOMMON_LOGGER(info) << "DT-NTP bundle received; rtt = " << rtt.tv_sec << "s " << rtt.tv_usec << "us; prop. delay = " << prop_delay.tv_sec << "s " << prop_delay.tv_usec << "us; clock of " << b._source.getNode().getString() << " has a offset of " << offset.tv_sec << "s " << offset.tv_usec << "us" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, info) << "DT-NTP bundle received; rtt = " << dtn::utils::Clock::toDouble(rtt) << "s; prop. delay = " << dtn::utils::Clock::toDouble(prop_delay) << "s; clock of " << b.source.getNode().getString() << " has a offset of " << dtn::utils::Clock::toDouble(offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 
 						// sync to this time message
 						sync(msg, offset, tv_local, peer_timestamp);
 
 						// remove the blacklist entry
 						ibrcommon::MutexLock l(_blacklist_lock);
-						_sync_blacklist.erase(b._source.getNode());
+						_sync_blacklist.erase(b.source.getNode());
 
 						break;
 					}

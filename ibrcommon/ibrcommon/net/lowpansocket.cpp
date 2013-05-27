@@ -43,11 +43,11 @@ extern "C" {
 #include "ibrcommon/net/ieee802154.h"
 #include "ibrcommon/link/nl802154.h"
 extern struct nla_policy ieee802154_policy[IEEE802154_ATTR_MAX + 1];
-};
+}
 
 namespace ibrcommon
 {
-	lowpansocket::lowpansocket(int panid, const vinterface &iface)
+	lowpansocket::lowpansocket(const uint16_t &panid, const vinterface &iface)
 	 : _panid(panid), _iface(iface)
 	{
 	}
@@ -91,7 +91,15 @@ namespace ibrcommon
 		this->close();
 	}
 
-	size_t lowpansocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
+	void lowpansocket::setAutoAck(bool enable) throw (socket_exception)
+	{
+		int optval = (enable ? 1 : 0);
+		if (::setsockopt(_fd, SOL_IEEE802154, WPAN_WANTACK, &optval, sizeof(optval)) < 0) {
+			throw ibrcommon::socket_exception("can not set auto-ack feature");
+		}
+	}
+
+	ssize_t lowpansocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		struct sockaddr_storage clientAddress;
 		socklen_t clientAddressLength = sizeof(clientAddress);
@@ -109,7 +117,7 @@ namespace ibrcommon
 		std::stringstream ss_pan; ss_pan << addr154->addr.pan_id;
 		std::stringstream ss_short; ss_short << addr154->addr.short_addr;
 
-		addr = ibrcommon::vaddress(ss_short.str(), ss_pan.str());
+		addr = ibrcommon::vaddress(ss_short.str(), ss_pan.str(), clientAddress.ss_family);
 
 		return ret;
 	}
@@ -149,7 +157,7 @@ namespace ibrcommon
 		std::stringstream ss_pan; ss_pan << address.addr.pan_id;
 		std::stringstream ss_addr; ss_addr << address.addr.short_addr;
 
-		addr = ibrcommon::vaddress(ss_addr.str(), panid);
+		addr = ibrcommon::vaddress(ss_addr.str(), panid, address.family);
 	}
 
 	void lowpansocket::getAddress(struct ieee802154_addr *ret, const vinterface &iface)
@@ -163,7 +171,7 @@ namespace ibrcommon
 		unsigned char *buf = NULL;
 		struct sockaddr_nl nla;
 		struct nlattr *attrs[IEEE802154_ATTR_MAX+1];
-		struct genlmsghdr *ghdr;
+		//struct genlmsghdr *ghdr;
 		struct nlmsghdr *nlh;
 		struct nl_msg *msg;
 		int family;
@@ -185,7 +193,7 @@ namespace ibrcommon
 		nl_recv(nl, &nla, &buf, NULL);
 		nlh = (struct nlmsghdr*)buf;
 		genlmsg_parse(nlh, 0, attrs, IEEE802154_ATTR_MAX, ieee802154_policy);
-		ghdr = (genlmsghdr*)nlmsg_data(nlh);
+		//ghdr = (genlmsghdr*)nlmsg_data(nlh);
 		if (!attrs[IEEE802154_ATTR_SHORT_ADDR] || !attrs[IEEE802154_ATTR_SHORT_ADDR])
 			return;
 

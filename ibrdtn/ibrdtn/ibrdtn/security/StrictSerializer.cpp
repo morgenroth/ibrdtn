@@ -22,14 +22,16 @@
 #include "ibrdtn/security/StrictSerializer.h"
 #include "ibrdtn/security/BundleAuthenticationBlock.h"
 #include "ibrdtn/security/PayloadIntegrityBlock.h"
+#include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/Dictionary.h"
 
 namespace dtn
 {
 	namespace security
 	{
-		StrictSerializer::StrictSerializer(std::ostream& stream, const dtn::security::SecurityBlock::BLOCK_TYPES type, const bool with_correlator, const uint64_t correlator)
+		StrictSerializer::StrictSerializer(std::ostream& stream, const dtn::security::SecurityBlock::BLOCK_TYPES type, const bool with_correlator, const dtn::data::Number &correlator)
 		 : DefaultSerializer(stream), _block_type(type), _with_correlator(with_correlator), _correlator(correlator)
 		{
 		}
@@ -47,16 +49,15 @@ namespace dtn
 			(dtn::data::DefaultSerializer&)(*this) << static_cast<const dtn::data::PrimaryBlock&>(bundle);
 
 			// serialize all secondary blocks
-			const dtn::data::Bundle::block_list &list = bundle.getBlocks();
-			dtn::data::Bundle::block_list::const_iterator iter = list.begin();
+			dtn::data::Bundle::const_iterator iter = bundle.begin();
 
 			// skip all blocks before the correlator
-			for (; _with_correlator && iter != list.end(); iter++)
+			for (; _with_correlator && iter != bundle.end(); ++iter)
 			{
-				const dtn::data::Block &b = (*(*iter));
+				const dtn::data::Block &b = (**iter);
 				if (b.getType() == SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK || b.getType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK)
 				{
-					const dtn::security::SecurityBlock& sb = dynamic_cast<const dtn::security::SecurityBlock&>(*(*iter));
+					const dtn::security::SecurityBlock& sb = dynamic_cast<const dtn::security::SecurityBlock&>(**iter);
 					if ((sb._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && sb._correlator == _correlator)
 						break;
 				}
@@ -64,13 +65,13 @@ namespace dtn
 
 			// consume the first block. this block may have the same correlator set, 
 			// we are searching for in the loop
-			(*this) << (*(*iter));
-			iter++;
+			(*this) << (**iter);
+			++iter;
 
 			// serialize the remaining block
-			for (; iter != list.end(); iter++)
+			for (; iter != bundle.end(); ++iter)
 			{
-				const dtn::data::Block &b = (*(*iter));
+				const dtn::data::Block &b = (**iter);
 				(*this) << b;
 
 				try {
@@ -90,7 +91,7 @@ namespace dtn
 		dtn::data::Serializer& StrictSerializer::operator<<(const dtn::data::Block &obj)
 		{
 			_stream << obj.getType();
-			_stream << dtn::data::SDNV(obj.getProcessingFlags());
+			_stream << obj.getProcessingFlags();
 
 			const dtn::data::Block::eid_list &eids = obj.getEIDList();
 
@@ -101,10 +102,10 @@ namespace dtn
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
-				_stream << dtn::data::SDNV(eids.size());
-				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				_stream << dtn::data::Number(eids.size());
+				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 				{
-					pair<size_t, size_t> offsets;
+					dtn::data::Dictionary::Reference offsets;
 
 					if (_compressable)
 					{
@@ -115,15 +116,15 @@ namespace dtn
 						offsets = _dictionary.getRef(*it);
 					}
 
-					_stream << dtn::data::SDNV(offsets.first);
-					_stream << dtn::data::SDNV(offsets.second);
+					_stream << offsets.first;
+					_stream << offsets.second;
 				}
 			}
 
 			// write size of the payload in the block
-			_stream << dtn::data::SDNV(obj.getLength_strict());
+			_stream << dtn::data::Number(obj.getLength_strict());
 
-			size_t slength = 0;
+			dtn::data::Length slength = 0;
 			obj.serialize_strict(_stream, slength);
 
 			return (*this);

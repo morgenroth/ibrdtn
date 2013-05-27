@@ -23,6 +23,7 @@
 #define BUNDLECORE_H_
 
 #include "Component.h"
+#include "Configuration.h"
 
 #include "core/EventReceiver.h"
 #include "core/StatusReportGenerator.h"
@@ -48,25 +49,40 @@ namespace dtn
 {
 	namespace core
 	{
+		class P2PDialupException : public ibrcommon::Exception
+		{
+			public:
+				P2PDialupException(string what = "No path known except of dial-up connections.") throw() : Exception(what)
+				{
+				};
+		};
+
 		/**
 		 * The BundleCore manage the Bundle Protocol basics
 		 */
-		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver, public dtn::data::Validator, public ibrcommon::LinkManager::EventCallback
+		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver, public dtn::data::Validator, public ibrcommon::LinkManager::EventCallback, public dtn::daemon::Configuration::OnChangeListener
 		{
 		public:
+			static const std::string TAG;
+
 			static dtn::data::EID local;
 
 			static BundleCore& getInstance();
 
 			WallClock& getClock();
 
+			virtual void onConfigurationChanged(const dtn::daemon::Configuration &conf) throw ();
+
 			void setStorage(dtn::storage::BundleStorage *storage);
 			dtn::storage::BundleStorage& getStorage();
+
+			void setSeeker(dtn::storage::BundleSeeker *seeker);
+			dtn::storage::BundleSeeker& getSeeker();
 
 			void setRouter(dtn::routing::BaseRouter *router);
 			dtn::routing::BaseRouter& getRouter() const;
 
-			void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle);
+			void transferTo(dtn::net::BundleTransfer &transfer) throw (P2PDialupException);
 
 			/**
 			 * Make the connection manager available to other modules.
@@ -80,7 +96,7 @@ namespace dtn
 			 * @param nexthop
 			 * @param timeout
 			 */
-			void addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, size_t timeout = 0);
+			void addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, const dtn::data::Timeout timeout = 0);
 
 			/**
 			 * Remove a static route from the static routing module.
@@ -98,23 +114,25 @@ namespace dtn
 			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			virtual void validate(const dtn::data::PrimaryBlock &obj) const throw (RejectedException);
-			virtual void validate(const dtn::data::Block &obj, const size_t length) const throw (RejectedException);
+			virtual void validate(const dtn::data::Block &obj, const dtn::data::Number&) const throw (RejectedException);
+			virtual void validate(const dtn::data::PrimaryBlock &bundle, const dtn::data::Block &obj, const dtn::data::Number&) const throw (RejectedException);
 			virtual void validate(const dtn::data::Bundle &obj) const throw (RejectedException);
+			virtual void validate(const dtn::data::MetaBundle &obj) const throw (RejectedException);
 
 			/**
 			 * Define a global block size limit. This is used in the validator to reject bundles while receiving.
 			 */
-			static size_t blocksizelimit;
+			static dtn::data::Length blocksizelimit;
 
 			/**
 			 * Define the maximum lifetime for accepted bundles
 			 */
-			static size_t max_lifetime;
+			static dtn::data::Length max_lifetime;
 
 			/**
 			 * Define the maximum offset for the timestamp of pre-dated bundles
 			 */
-			static size_t max_timestamp_future;
+			static dtn::data::Length max_timestamp_future;
 
 			/**
 			 * Define if forwarding is allowed. If set to false, this daemon only accepts bundles for local applications.
@@ -125,7 +143,7 @@ namespace dtn
 			/**
 			 * Defines how many bundles should be in transit at once
 			 */
-			static size_t max_bundles_in_transit;
+			static dtn::data::Size max_bundles_in_transit;
 
 			/**
 			 * @see Component::getName()
@@ -156,12 +174,13 @@ namespace dtn
 			/**
 			 * Check if we are connected to the internet.
 			 */
-			void check_connection_state();
+			void check_connection_state() throw ();
 
 			/**
 			 * Forbidden copy constructor
 			 */
-			BundleCore operator=(const BundleCore &k) { return k; };
+			BundleCore operator=(const BundleCore &k)
+			{ return k; };
 
 			/**
 			 * This is a clock object. It can be used to synchronize methods to the local clock.
@@ -169,6 +188,7 @@ namespace dtn
 			WallClock _clock;
 
 			dtn::storage::BundleStorage *_storage;
+			dtn::storage::BundleSeeker *_seeker;
 			dtn::routing::BaseRouter *_router;
 
 			// generator for statusreports

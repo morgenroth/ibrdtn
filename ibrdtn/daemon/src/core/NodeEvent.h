@@ -34,7 +34,9 @@ namespace dtn
 		enum EventNodeAction
 		{
 			NODE_UNAVAILABLE = 0,
-			NODE_AVAILABLE = 1
+			NODE_AVAILABLE = 1,
+			NODE_DATA_ADDED = 2,
+			NODE_DATA_REMOVED = 3
 		};
 
 		class NodeEvent : public Event
@@ -46,7 +48,7 @@ namespace dtn
 			const Node& getNode() const;
 			const std::string getName() const;
 
-			std::string toString() const;
+			std::string getMessage() const;
 
 			static void raise(const Node &n, const EventNodeAction action);
 

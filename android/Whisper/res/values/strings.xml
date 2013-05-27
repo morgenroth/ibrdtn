@@ -4,7 +4,7 @@
     <string name="desc_buddy_icon">Buddy icon</string>
     <string name="desc_send_button">Send button</string>
     <string name="list_messages">Messages</string>
-    <string name="example_text">This is an example text. It should be a little bit longer than normal texts to test out the wrap functionalities.</string>
+    <string name="empty"></string>
     <string name="close">Close</string>
     <string name="clearmsg">Clear messages</string>
     <string name="conversation_with">Conversation with</string>
@@ -37,4 +37,6 @@
     <string name="tts_when_on_headset">Read out the message</string>
     <string name="tts_when_on_headset_desc">Play messages via TTS when a headset is connected.</string>
     <string name="debug_notification">Debug Notification</string>
+    <string name="debug_buddy_add">Add buddy</string>
+    <string name="image_contact_symbol">Contact symbol</string>
 </resources>

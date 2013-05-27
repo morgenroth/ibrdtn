@@ -21,12 +21,10 @@
 
 #include "config.h"
 #include "ibrdtn/api/Client.h"
-#include "ibrdtn/api/FileBundle.h"
 #include "ibrcommon/net/socket.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrdtn/data/PayloadBlock.h"
-#include "ibrdtn/api/BLOBBundle.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
@@ -64,7 +62,7 @@ map<string,string> readconfiguration(int argc, char** argv)
     ret["outbox"] = argv[argc - 2];
     ret["destination"] = argv[argc - 1];
 
-    for (int i = 0; i < (argc - 3); i++)
+    for (int i = 0; i < (argc - 3); ++i)
     {
         string arg = argv[i];
 
@@ -123,7 +121,7 @@ int main(int argc, char** argv)
     }
 
     // backoff for reconnect
-    size_t backoff = 2;
+    unsigned int backoff = 2;
 
     // check outbox for files
 	File outbox(conf["outbox"]);
@@ -166,20 +164,15 @@ int main(int argc, char** argv)
 
             	stringstream file_list;
 
-            	int prefix_length = outbox.getPath().length() + 1;
-
-            	for (list<File>::iterator iter = files.begin(); iter != files.end(); iter++)
+            	for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
             	{
-            		File &f = (*iter);
+					File &f = (*iter);
 
-            		// skip system files ("." and "..")
-            		if (f.isSystem()) continue;
+					// skip system files ("." and "..")
+					if (f.isSystem()) continue;
 
-					// remove the prefix of the outbox path
-            		string rpath = f.getPath();
-            		rpath = rpath.substr(prefix_length, rpath.length() - prefix_length);
-
-            		file_list << rpath << " ";
+					// add the file to the filelist
+					file_list << f.getBasename() << " ";
             	}
 
             	// output of all files to send
@@ -200,7 +193,15 @@ int main(int argc, char** argv)
 
             	// create a new bundle
     			dtn::data::EID destination = EID(conf["destination"]);
-    			dtn::api::BLOBBundle b(destination, blob);
+
+    			// create a new bundle
+    			dtn::data::Bundle b;
+
+    			// set destination
+    			b.destination = destination;
+
+    			// add payload block using the blob
+    			b.push_back(blob);
 
                 // send the bundle
     			client << b; client.flush();

@@ -33,7 +33,7 @@ namespace dtn
 	{
 		void Debugger::callbackBundleReceived(const Bundle &b)
 		{
-			IBRCOMMON_LOGGER_DEBUG(5) << "Bundle received " << b.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("Debugger", 5) << "Bundle received " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 }

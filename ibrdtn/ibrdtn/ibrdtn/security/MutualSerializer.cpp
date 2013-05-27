@@ -74,22 +74,22 @@ namespace dtn
 			_stream << dtn::data::BUNDLE_VERSION;
 
 			// processing flags
-			(*this) << dtn::data::SDNV(obj._procflags & 0x0000000007C1BE);
+			(*this) << (obj.procflags & 0x0000000007C1BE);
 
 			// length of header
 			(*this) << (uint32_t)getLength(obj);
 
 			// dest, source, report to id
-			(*this) << obj._destination;
-			(*this) << obj._source;
-			(*this) << obj._reportto;
+			(*this) << obj.destination;
+			(*this) << obj.source;
+			(*this) << obj.reportto;
 
 			// timestamp
-			(*this) << dtn::data::SDNV(obj._timestamp);
-			(*this) << dtn::data::SDNV(obj._sequencenumber);
+			(*this) << obj.timestamp;
+			(*this) << obj.sequencenumber;
 
 			// lifetime
-			(*this) << dtn::data::SDNV(obj._lifetime);
+			(*this) << obj.lifetime;
 
 			return *this;
 		}
@@ -116,7 +116,7 @@ namespace dtn
 			}
 
 			_stream << obj.getType();
-			(*this) << dtn::data::SDNV(obj.getProcessingFlags() & 0x0000000000000077);
+			(*this) << (obj.getProcessingFlags() & 0x0000000000000077);
 
 			const dtn::data::Block::eid_list &eids = obj.getEIDList();
 
@@ -126,7 +126,7 @@ namespace dtn
 #endif
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
-				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 					(*this) << (*it);
 
 			try {
@@ -135,23 +135,23 @@ namespace dtn
 				if ( (sb.getType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK) || (sb.getType() == SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK) )
 				{
 					// write size of the payload in the block
-					(*this) << dtn::data::SDNV(sb.getLength_mutable());
+					(*this) << dtn::data::Number(sb.getLength_mutable());
 
 					sb.serialize_mutable_without_security_result(*this);
 				}
 			} catch (const std::bad_cast&) {
 				// write size of the payload in the block
-				(*this) << dtn::data::SDNV(obj.getLength());
+				(*this) << dtn::data::Number(obj.getLength());
 
 				// write the payload of the block
-				size_t slength = 0;
+				dtn::data::Length slength = 0;
 				obj.serialize(_stream, slength);
 			};
 
 			return (*this);
 		}
 
-		size_t MutualSerializer::getLength(const dtn::data::Bundle&)
+		dtn::data::Length MutualSerializer::getLength(const dtn::data::Bundle&)
 		{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(false);
@@ -159,7 +159,7 @@ namespace dtn
 			return 0;
 		}
 
-		size_t MutualSerializer::getLength(const dtn::data::PrimaryBlock &obj) const
+		dtn::data::Length MutualSerializer::getLength(const dtn::data::PrimaryBlock &obj) const
 		{
 			// predict the block length
 			// length in bytes
@@ -168,28 +168,28 @@ namespace dtn
 			// dest id length
 			uint32_t length = 4;
 			// dest id
-			length += obj._destination.getString().size();
+			length += static_cast<uint32_t>(obj.destination.getString().size());
 			// source id length
 			length += 4;
 			// source id
-			length += obj._source.getString().size();
+			length += static_cast<uint32_t>(obj.source.getString().size());
 			// report to id length
 			length += 4;
 			// report to id
-			length += obj._reportto.getString().size();
+			length += static_cast<uint32_t>(obj.reportto.getString().size());
 			// creation time: 2*SDNV
-			length += 2*sdnv_size;
+			length += static_cast<uint32_t>(2 * sdnv_size);
 			// lifetime: SDNV
-			length += sdnv_size;
+			length += static_cast<uint32_t>(sdnv_size);
 
 			IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "length: " << length << IBRCOMMON_LOGGER_ENDL;
 
 			return length;
 		}
 
-		size_t MutualSerializer::getLength(const dtn::data::Block &obj) const
+		dtn::data::Length MutualSerializer::getLength(const dtn::data::Block &obj) const
 		{
-			size_t len = 0;
+			dtn::data::Length len = 0;
 
 			len += sizeof(obj.getType());
 			// proc flags
@@ -203,7 +203,7 @@ namespace dtn
 #endif
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
-				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); it++)
+				for (dtn::data::Block::eid_list::const_iterator it = eids.begin(); it != eids.end(); ++it)
 					len += it->getString().size();
 
 			// size-field of the size of the payload in the block
@@ -232,25 +232,25 @@ namespace dtn
 
 		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::EID& value)
 		{
-			uint32_t length = value.getString().length();
+			uint32_t length = static_cast<uint32_t>(value.getString().length());
 			(*this) << length;
 			_stream << value.getString();
 
 			return *this;
 		}
 
-		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::SDNV& value)
+		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::Number& value)
 		{
 			// endianess muahahaha ...
 			// and now we are gcc centric, even older versions work
-			uint64_t be = GUINT64_TO_BE(value.getValue());
+			uint64_t be = GUINT64_TO_BE(value.get<uint64_t>());
 			_stream.write(reinterpret_cast<char*>(&be), sizeof(uint64_t));
 			return *this;
 		}
 
 		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::security::SecurityBlock::TLVList& list)
 		{
-			(*this) << dtn::data::SDNV(list.getLength());
+			(*this) << dtn::data::Number(list.getLength());
 			_stream << list.toString();
 			return *this;
 		}
