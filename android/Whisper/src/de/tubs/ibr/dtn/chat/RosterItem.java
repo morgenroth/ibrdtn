@@ -16,7 +16,6 @@ public class RosterItem extends LinearLayout {
 	private static final String TAG = "RosterItem";
 	
 	private Buddy mBuddy = null;
-	private int mPosition = 0;
 	
 	ImageView mImage = null;
 	TextView mLabel = null;
@@ -46,7 +45,6 @@ public class RosterItem extends LinearLayout {
     }
 	
 	public void bind(Buddy b, int position) {
-		mPosition = position;
 		mBuddy = b;
 		onDataChanged();
 	}

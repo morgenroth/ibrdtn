@@ -14,7 +14,6 @@ public class MessageItem extends RelativeLayout {
 	private static final String TAG = "MessageItem";
 	
 	private Message mMessage = null;
-	private int mPosition = 0;
 	
 	TextView mLabel = null;
 	TextView mText = null;
@@ -42,7 +41,6 @@ public class MessageItem extends RelativeLayout {
     }
     
 	public void bind(Message m, int position) {
-		mPosition = position;
 		mMessage = m;
 		onDataChanged();
 	}

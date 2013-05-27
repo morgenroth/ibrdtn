@@ -44,7 +44,6 @@ public class Roster {
 	
 	public final static String NOTIFY_ROSTER_CHANGED = "de.tubs.ibr.dtn.chat.NOTIFY_ROSTER_CHANGED";
 	
-	@SuppressWarnings("unused")
 	private final String TAG = "Roster";
 	
 	private DBOpenHelper _helper = null;
