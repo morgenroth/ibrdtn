@@ -706,18 +706,6 @@ public class DaemonProcess {
 				p.println("storage_path = " + bundlePath.getPath());
 			}
 
-			/*
-			 * if (preferences.getBoolean("connect_static", false)) { // add
-			 * static connection p.println("static1_uri = " +
-			 * preferences.getString("host_name", "dtn:none"));
-			 * p.println("static1_address = " +
-			 * preferences.getString("host_address", "0.0.0.0"));
-			 * p.println("static1_proto = tcp"); p.println("static1_port = " +
-			 * preferences.getString("host_port", "4556"));
-			 * 
-			 * // p.println("net_autoconnect = 120"); }
-			 */
-
 			// enable interface rebind
 			p.println("net_rebind = yes");
 
