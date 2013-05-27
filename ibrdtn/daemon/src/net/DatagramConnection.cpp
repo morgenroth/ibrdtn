@@ -380,23 +380,27 @@ namespace dtn
 
 		void DatagramConnection::Stream::queue(const char *buf, const dtn::data::Length &len) throw (DatagramException)
 		{
-			ibrcommon::MutexLock l(_queue_buf_cond);
-			if (_abort) throw DatagramException("stream aborted");
+			try {
+				ibrcommon::MutexLock l(_queue_buf_cond);
+				if (_abort) throw DatagramException("stream aborted");
 
-			// wait until the buffer is free
-			while (_queue_buf_len > 0)
-			{
-				_queue_buf_cond.wait();
+				// wait until the buffer is free
+				while (_queue_buf_len > 0)
+				{
+					_queue_buf_cond.wait();
+				}
+
+				// copy the new data into the buffer, but leave out the first byte (header)
+				::memcpy(&_queue_buf[0], buf, len);
+
+				// store the buffer length
+				_queue_buf_len = len;
+
+				// notify waiting threads
+				_queue_buf_cond.signal();
+			} catch (ibrcommon::Conditional::ConditionalAbortException &ex) {
+				throw DatagramException("stream aborted");
 			}
-
-			// copy the new data into the buffer, but leave out the first byte (header)
-			::memcpy(&_queue_buf[0], buf, len);
-
-			// store the buffer length
-			_queue_buf_len = len;
-
-			// notify waiting threads
-			_queue_buf_cond.signal();
 		}
 
 		void DatagramConnection::Stream::close()
@@ -455,6 +459,11 @@ namespace dtn
 				_callback.stream_send(&_out_buf[0], bytes, _last_segment);
 			} catch (const DatagramException &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 35) << "Stream::overflow() exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+				// close this stream
+				close();
+
+				// re-throw the DatagramException
 				throw;
 			}
 
@@ -465,26 +474,30 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "Stream::underflow()" << IBRCOMMON_LOGGER_ENDL;
 
-			ibrcommon::MutexLock l(_queue_buf_cond);
+			try {
+				ibrcommon::MutexLock l(_queue_buf_cond);
 
-			while (_queue_buf_len == 0)
-			{
-				if (_abort) throw ibrcommon::Exception("stream aborted");
-				_queue_buf_cond.wait();
+				while (_queue_buf_len == 0)
+				{
+					if (_abort) throw ibrcommon::Exception("stream aborted");
+					_queue_buf_cond.wait();
+				}
+
+				// copy the queue buffer to an internal buffer
+				::memcpy(&_in_buf[0], &_queue_buf[0], _queue_buf_len);
+
+				// Since the input buffer content is now valid (or is new)
+				// the get pointer should be initialized (or reset).
+				setg(&_in_buf[0], &_in_buf[0], &_in_buf[0] + _queue_buf_len);
+
+				// mark the queue buffer as free
+				_queue_buf_len = 0;
+				_queue_buf_cond.signal();
+
+				return std::char_traits<char>::not_eof(_in_buf[0]);
+			} catch (ibrcommon::Conditional::ConditionalAbortException &ex) {
+				throw DatagramException("stream aborted");
 			}
-
-			// copy the queue buffer to an internal buffer
-			::memcpy(&_in_buf[0], &_queue_buf[0], _queue_buf_len);
-
-			// Since the input buffer content is now valid (or is new)
-			// the get pointer should be initialized (or reset).
-			setg(&_in_buf[0], &_in_buf[0], &_in_buf[0] + _queue_buf_len);
-
-			// mark the queue buffer as free
-			_queue_buf_len = 0;
-			_queue_buf_cond.signal();
-
-			return std::char_traits<char>::not_eof(_in_buf[0]);
 		}
 
 		DatagramConnection::Sender::Sender(DatagramConnection &conn, Stream &stream)
