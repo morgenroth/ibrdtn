@@ -66,6 +66,7 @@ public class Preferences extends PreferenceActivity {
 	
 	private final String TAG = "Preferences";
 	
+	private Boolean mBound = false;
 	private DTNService service = null;
 	
 	private Switch actionBarSwitch = null;
@@ -318,6 +319,16 @@ public class Preferences extends PreferenceActivity {
 		setVersion(null);
 	}
 	
+	@Override
+	public void onDestroy() {
+	    if (mBound) {
+	        // Detach our existing connection.
+	        unbindService(mConnection);
+	    }
+
+	    super.onDestroy();
+	}
+	
 	@SuppressWarnings("deprecation")
 	private void setVersion(String versionValue) {
         // version information
@@ -334,20 +345,19 @@ public class Preferences extends PreferenceActivity {
 	
     @Override
 	protected void onPause() {
-        // Detach our existing connection.
-		unbindService(mConnection);
-		
 		super.onPause();
 	}
 
 	@Override
 	protected void onResume() {
-		// Establish a connection with the service.  We use an explicit
-		// class name because we want a specific service implementation that
-		// we know will be running in our own process (and thus won't be
-		// supporting component replacement by other applications).
-		bindService(new Intent(Preferences.this, 
-				DaemonService.class), mConnection, Context.BIND_AUTO_CREATE);
+	    if (!mBound) {
+    		// Establish a connection with the service.  We use an explicit
+    		// class name because we want a specific service implementation that
+    		// we know will be running in our own process (and thus won't be
+    		// supporting component replacement by other applications).
+    		bindService(new Intent(Preferences.this, 
+    				DaemonService.class), mConnection, Context.BIND_AUTO_CREATE);
+	    }
   		
 		super.onResume();
 		
