@@ -324,6 +324,7 @@ public class Preferences extends PreferenceActivity {
 	    if (mBound) {
 	        // Detach our existing connection.
 	        unbindService(mConnection);
+	        mBound = false;
 	    }
 
 	    super.onDestroy();
@@ -357,6 +358,7 @@ public class Preferences extends PreferenceActivity {
     		// supporting component replacement by other applications).
     		bindService(new Intent(Preferences.this, 
     				DaemonService.class), mConnection, Context.BIND_AUTO_CREATE);
+    		mBound = true;
 	    }
   		
 		super.onResume();
