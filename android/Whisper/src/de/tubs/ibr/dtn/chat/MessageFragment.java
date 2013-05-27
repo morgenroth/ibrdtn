@@ -36,8 +36,7 @@ public class MessageFragment extends Fragment {
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			mService = ((ChatService.LocalBinder)service).getService();
-			mBound = true;
-			
+
 			mMessageList.setChatService(mService);
 			if (mBuddyDisplay != null) mBuddyDisplay.setChatService(mService);
 			
@@ -53,7 +52,6 @@ public class MessageFragment extends Fragment {
 			getLoaderManager().destroyLoader(MESSAGE_LOADER_ID);
 			getLoaderManager().destroyLoader(BUDDY_LOADER_ID);
 			mService = null;
-			mBound = false;
 		}
 	};
 	
@@ -171,6 +169,7 @@ public class MessageFragment extends Fragment {
 			getActivity().unbindService(mConnection);
 			getLoaderManager().destroyLoader(MESSAGE_LOADER_ID);
 			getLoaderManager().destroyLoader(BUDDY_LOADER_ID);
+			mBound = false;
 		}
 		
 	    super.onDestroy();
@@ -215,6 +214,7 @@ public class MessageFragment extends Fragment {
 			// we know will be running in our own process (and thus won't be
 			// supporting component replacement by other applications).
 			getActivity().bindService(new Intent(getActivity(), ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+			mBound = true;
 		}
 	}
 }

@@ -41,7 +41,6 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
 			mService = ((ChatService.LocalBinder)service).getService();
-			mBound = true;
 			
 			switch (mService.getServiceError()) {
 			case NO_ERROR:
@@ -63,7 +62,6 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 		public void onServiceDisconnected(ComponentName name) {
 			getLoaderManager().destroyLoader(LOADER_ID);
 			mService = null;
-			mBound = false;
 		}
 	};
 	
@@ -216,6 +214,7 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 		// supporting component replacement by other applications).
 		if (!mBound) {
 			getActivity().bindService(new Intent(getActivity(), ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
+			mBound = true;
 		}
 	}
 	
@@ -240,6 +239,7 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 		if (mBound) {
 			getActivity().unbindService(mConnection);
 			getLoaderManager().destroyLoader(LOADER_ID);
+			mBound = false;
 		}
 		
 		super.onDestroy();
