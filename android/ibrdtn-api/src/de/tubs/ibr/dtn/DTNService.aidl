@@ -36,6 +36,11 @@ interface DTNService {
 	boolean isRunning();
 	
 	/**
+	 * Get the local endpoint
+	 */
+	String getEndpoint();
+	
+	/**
 	 * Returns the available neighbors of the daemon.
 	 */
 	List<Node> getNeighbors();
