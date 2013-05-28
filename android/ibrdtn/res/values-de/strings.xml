@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="example_item_title">Beispiel Titel</string>
     <string name="example_item_text">Beispiel Text</string>
     <string name="content_colormark">Farbmarkierung eines Log-Eintrags</string>
@@ -64,7 +65,7 @@
     <string name="toast_startup_completed">DTN Prozess gestartet!</string>
     <string name="state_disabled">Deaktiviert</string>
     <string name="state_enabled">Aktiviert</string>
-	<string name="state_suspended">Ruhezustand</string>
+    <string name="state_suspended">Ruhezustand</string>
     <string name="state_unkown">Unbekannt</string>
     <string name="notify_neighbors">Nachbarn</string>
     <string name="notify_no_neighbors">Keine Nachbarn</string>
@@ -94,9 +95,5 @@
     <string name="list_no_neighbors">Keine Nachbarn gefunden.</string>
     <string name="pref_fragmentation_desc">Erlaubt reaktive Fragmentierung und Reassemblierung</string>
     <string name="pref_fragmentation">Unterstützung für Fragmentierung</string>
-    <string name="prefcat_p2p_connection">Peer-to-Peer</string>
-    <string name="pref_p2p">P2P-Verbindung</string>
-    <string name="pref_p2p_summary">P2P-Verbindungen per Wi-Fi Direct verwenden</string>
-    <string name="pref_p2p_strategy">Strategie</string>
-    <string name="pref_p2p_strategy_summary">Die zu verwendende Suchstrategie</string>
+
 </resources>

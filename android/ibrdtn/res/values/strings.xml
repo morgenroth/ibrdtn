@@ -106,9 +106,5 @@
     <string name="list_no_neighbors">No neighbors found.</string>
     <string name="pref_fragmentation_desc">Allow reactive fragmentation and reassembling</string>
     <string name="pref_fragmentation">Fragmentation support</string>
-    <string name="prefcat_p2p_connection">Peer-to-peer</string>
-    <string name="pref_p2p">P2P Connection</string>
-    <string name="pref_p2p_summary">Use P2P connection via Wi-Fi Direct</string>
-    <string name="pref_p2p_strategy">Strategy</string>
-    <string name="pref_p2p_strategy_summary">The search strategy to use</string>
+
 </resources>
