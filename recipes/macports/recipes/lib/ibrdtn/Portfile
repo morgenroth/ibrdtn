@@ -17,7 +17,7 @@ depends_lib     \
                 port:pkgconfig \
                 port:ibrcommon \
                 port:zlib \
-                port:glib1 
+                port:glib2-devel 
 configure.args   \
                 --with-compression \
                 --with-dtnsec \
