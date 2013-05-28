@@ -110,6 +110,12 @@ public class DaemonService extends Service {
         public String[] getVersion() throws RemoteException {
         	return DaemonService.this.mDaemonProcess.getVersion();
         }
+
+        @Override
+        public String getEndpoint() throws RemoteException {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
+            return prefs.getString("endpoint_id", "dtn:none");
+        }
     };
 
     @Override
