@@ -8,7 +8,6 @@
     
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
-	<uses-permission android:name="de.tubs.ibr.dtn.permission.RECEIVE"/>
 
     <application
         android:allowBackup="true"

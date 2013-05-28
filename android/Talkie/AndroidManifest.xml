@@ -9,7 +9,6 @@
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.dtn.permission.RECEIVE"/>
 
     <application
         android:allowBackup="true"
