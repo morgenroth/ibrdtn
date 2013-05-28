@@ -16,6 +16,7 @@ ant -f ibrdtn-api/build.xml clean ${BUILD_MODE}
 cp ibrdtn-api/bin/classes.jar ibrdtn/libs/android-ibrdtn-api.jar
 cp ibrdtn-api/bin/classes.jar Whisper/libs/android-ibrdtn-api.jar
 cp ibrdtn-api/bin/classes.jar Talkie/libs/android-ibrdtn-api.jar
+cp ibrdtn-api/bin/classes.jar DTNExampleApp/libs/android-ibrdtn-api.jar
 
 ### BUILD IBR-DTN DAEMON ###
 
