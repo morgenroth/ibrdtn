@@ -238,35 +238,48 @@ namespace dtn
 
 		void TCPConnection::eventBundleRefused() throw ()
 		{
-			try {
-				dtn::net::BundleTransfer job = _sentqueue.getnpop();
+			ibrcommon::Queue<dtn::net::BundleTransfer>::Locked l = _sentqueue.exclusive();
 
-				// abort the transmission
-				job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED);
-
-				// set ACK to zero
-				_lastack = 0;
-
-			} catch (const ibrcommon::QueueUnblockedException&) {
-				// pop on empty queue!
+			// stop here if the queue is already empty
+			if (l.empty()) {
 				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, error) << "transfer refused without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
+				return;
 			}
+
+			// get the job on top of the sent queue
+			dtn::net::BundleTransfer &job = l.front();
+
+			// abort the transmission
+			job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED);
+
+			// set ACK to zero
+			_lastack = 0;
+
+			// release the job
+			l.pop();
 		}
 
 		void TCPConnection::eventBundleForwarded() throw ()
 		{
-			try {
-				dtn::net::BundleTransfer job = _sentqueue.getnpop();
+			ibrcommon::Queue<dtn::net::BundleTransfer>::Locked l = _sentqueue.exclusive();
 
-				// mark job as complete
-				job.complete();
-
-				// set ACK to zero
-				_lastack = 0;
-			} catch (const ibrcommon::QueueUnblockedException&) {
-				// pop on empty queue!
+			// stop here if the queue is already empty
+			if (l.empty()) {
 				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, error) << "transfer completed without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
+				return;
 			}
+
+			// get the job on top of the sent queue
+			dtn::net::BundleTransfer &job = l.front();
+
+			// mark job as complete
+			job.complete();
+
+			// set ACK to zero
+			_lastack = 0;
+
+			// release the job
+			l.pop();
 		}
 
 		void TCPConnection::eventBundleAck(const dtn::data::Length &ack) throw ()
@@ -687,23 +700,25 @@ namespace dtn
 		void TCPConnection::clearQueue()
 		{
 			// requeue all bundles still in transit
-			try {
-				while (true)
+			ibrcommon::Queue<dtn::net::BundleTransfer>::Locked l = _sentqueue.exclusive();
+
+			while (!l.empty())
+			{
+				// get the job on top of the sent queue
+				const dtn::net::BundleTransfer &job = l.front();
+
+				if ((_lastack > 0) && (_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION)))
 				{
-					const dtn::net::BundleTransfer job = _sentqueue.getnpop();
-
-					if ((_lastack > 0) && (_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION)))
-					{
-						// some data are already acknowledged
-						// store this information in the fragment manager
-						dtn::core::FragmentManager::setOffset(_peer.getEID(), job.getBundle(), _lastack);
-					}
-
-					// set last ack to zero
-					_lastack = 0;
+					// some data are already acknowledged
+					// store this information in the fragment manager
+					dtn::core::FragmentManager::setOffset(_peer.getEID(), job.getBundle(), _lastack);
 				}
-			} catch (const ibrcommon::QueueUnblockedException&) {
-				// queue emtpy
+
+				// set last ack to zero
+				_lastack = 0;
+
+				// release the job
+				l.pop();
 			}
 		}
 
