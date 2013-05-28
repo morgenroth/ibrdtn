@@ -20,8 +20,7 @@ depends_lib     \
                 port:sqlite3 \
                 port:ibrdtn \
                 port:ibrcommon \
-                port:dtndht \
-                port:glib1 
+                port:dtndht 
 configure.args   \
                 --with-curl \
                 --with-sqlite \
