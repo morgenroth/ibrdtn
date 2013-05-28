@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, DTNExampleAppActivity!</string>
-    <string name="app_name">DTNExampleApp</string>
-    <string name="alert_missing_daemon">The DTN daemon is not installed. Would you like to install it now?</string>
-    <string name="alert_yes">Yes</string>
-    <string name="alert_no">No</string>
+    <string name="app_name">DTN Ping</string>
+    <string name="hintDestination">dtn://destination/echo</string>
+    <string name="buttonPing">Ping</string>
+    <string name="resultText_default">No result</string>
+    <string name="resultText">Result: %1$,.2f ms</string>
 </resources>
