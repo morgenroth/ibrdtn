@@ -15,7 +15,6 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import de.tubs.ibr.dtn.api.SingletonEndpoint;
 
 public class PingActivity extends Activity {
 	
@@ -95,10 +94,10 @@ public class PingActivity extends Activity {
     };
     
     private void ping() {
-        if (mService != null) {
-            SingletonEndpoint destination = new SingletonEndpoint(mTextEid.getText().toString());
-            mService.doPing(destination);
-        }
+        Intent i = new Intent(this, PingService.class);
+        i.setAction(PingService.PING_INTENT);
+        i.putExtra("destination", mTextEid.getText().toString());
+        startService(i);
     }
     
     private void updateResult() {

@@ -31,6 +31,9 @@ public class PingService extends IntentService {
     
     // process a status report
     public static final String REPORT_DELIVERED_INTENT = "de.tubs.ibr.dtn.example.REPORT_DELIVERED";
+    
+    // this intent send out a PING message
+    public static final String PING_INTENT = "de.tubs.ibr.dtn.example.PING";
 
     // indicates updated data to other components
     public static final String DATA_UPDATED = "de.tubs.ibr.dtn.example.DATA_UPDATED";
@@ -87,7 +90,7 @@ public class PingService extends IntentService {
         return null;
     }
     
-    public void doPing(SingletonEndpoint destination) {
+    private void doPing(SingletonEndpoint destination) {
         // create a new bundle
         Bundle b = new Bundle();
         
@@ -169,6 +172,14 @@ public class PingService extends IntentService {
             BundleID bundleid = intent.getParcelableExtra("bundleid");
             
             Log.d(TAG, "Status report received for " + bundleid.toString() + " from " + source.toString());
+        }
+        else if (PING_INTENT.equals(action))
+        {
+            // retrieve the ping destination
+            SingletonEndpoint destination = new SingletonEndpoint(intent.getStringExtra("destination"));
+            
+            // send out the ping
+            doPing(destination);
         }
     }
     
