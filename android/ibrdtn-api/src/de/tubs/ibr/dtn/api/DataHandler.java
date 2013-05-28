@@ -31,5 +31,4 @@ public interface DataHandler {
 	public void payload(byte[] data);
 	public ParcelFileDescriptor fd();
 	public void progress(long current, long length);
-	public void finished(int startId);
 }
