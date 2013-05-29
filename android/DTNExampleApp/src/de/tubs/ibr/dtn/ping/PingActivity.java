@@ -84,8 +84,6 @@ public class PingActivity extends Activity {
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName name, IBinder service) {
             mService = ((PingService.LocalBinder)service).getService();
-            String endpoint = mService.getLocalEndpoint();
-            if (endpoint != null) mTextEid.setText( endpoint + "/echo" );
         }
 
         public void onServiceDisconnected(ComponentName name) {
@@ -116,8 +114,12 @@ public class PingActivity extends Activity {
     private BroadcastReceiver mDataReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            // update the displayed result
-            updateResult();
+            if (intent.hasExtra("localeid")) {
+                mTextEid.setText( intent.getStringExtra("localeid") + "/echo" );
+            } else {
+                // update the displayed result
+                updateResult();
+            }
         }
     };
 }
