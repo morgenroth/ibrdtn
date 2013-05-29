@@ -223,7 +223,7 @@ namespace dtn
 			virtual void componentDown() throw ();
 
 		private:
-			void __forward_event(const dtn::core::Event *evt) const throw ();
+			void __forward_event(const dtn::core::Event *evt) throw ();
 
 			ibrcommon::Mutex _known_bundles_lock;
 			dtn::data::BundleSet _known_bundles;

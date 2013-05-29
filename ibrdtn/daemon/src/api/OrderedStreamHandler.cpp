@@ -120,7 +120,7 @@ namespace dtn
 
 		void OrderedStreamHandler::finally()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "OrderedStreamHandler down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 60) << "OrderedStreamHandler down" << IBRCOMMON_LOGGER_ENDL;
 
 			_client.getRegistration().abort();
 
@@ -256,7 +256,7 @@ namespace dtn
 			try {
 				_handler._stream << _handler._bundlestream.rdbuf() << std::flush;
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("OrderedStreamHandler", 10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 	} /* namespace api */

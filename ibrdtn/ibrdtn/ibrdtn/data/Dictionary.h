@@ -74,14 +74,19 @@ namespace dtn
 			virtual ~Dictionary();
 
 			/**
-			 * add a eid to the dictionary
+			 * add an EID to the dictionary
 			 */
 			void add(const EID &eid);
 
 			/**
-			 * add a list of eids to the dictionary
+			 * add a list of EIDs to the dictionary
 			 */
 			void add(const std::list<EID> &eids);
+
+			/**
+			 * add all EIDs of a bundle into the dictionary
+			 */
+			void add(const Bundle &bundle);
 
 			/**
 			 * return the eid for the reference [scheme,ssp]

@@ -82,14 +82,14 @@ namespace ibrcommon
 			// retry if the read failed
 			if (input.fail())
 			{
-				IBRCOMMON_LOGGER(warning) << "input stream failed [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BLOB::copy", warning) << "input stream failed [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied" << IBRCOMMON_LOGGER_ENDL;
 				input.clear();
 			}
 
 			// if the last write failed, then retry
 			if (output.fail())
 			{
-				IBRCOMMON_LOGGER(warning) << "output stream failed [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BLOB::copy", warning) << "output stream failed [" << std::strerror(errno) << "]; " << (size-remain) << " of " << size << " bytes copied" << IBRCOMMON_LOGGER_ENDL;
 				output.clear();
 			}
 			else
@@ -315,7 +315,7 @@ namespace ibrcommon
 
 		if (!_filestream.is_open())
 		{
-			IBRCOMMON_LOGGER(error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("TmpFileBLOB::clear", error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
 			throw ibrcommon::CanNotOpenFileException(_tmpfile);
 		}
 	}
@@ -348,7 +348,7 @@ namespace ibrcommon
 
 		if (!_filestream.is_open())
 		{
-			IBRCOMMON_LOGGER(error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("TmpFileBLOB::open", error) << "can not open temporary file " << _tmpfile.getPath() << IBRCOMMON_LOGGER_ENDL;
 			throw ibrcommon::CanNotOpenFileException(_tmpfile);
 		}
 	}

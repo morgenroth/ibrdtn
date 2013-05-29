@@ -100,7 +100,7 @@ namespace ibrcommon
 
 	void LinkManager::raiseEvent(const LinkEvent &lme)
 	{
-		IBRCOMMON_LOGGER_DEBUG_TAG("LinkManager", 57) << "event raised " << lme.toString() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("LinkManager", 65) << "event raised " << lme.toString() << IBRCOMMON_LOGGER_ENDL;
 
 		// get the corresponding interface
 		const vinterface &iface = lme.getInterface();

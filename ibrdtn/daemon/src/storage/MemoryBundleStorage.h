@@ -137,25 +137,7 @@ namespace dtn
 					if (lhs.getPriority() != rhs.getPriority())
 						return false;
 
-					if (lhs.timestamp < rhs.timestamp)
-						return true;
-
-					if (lhs.timestamp != rhs.timestamp)
-						return false;
-
-					if (lhs.sequencenumber < rhs.sequencenumber)
-						return true;
-
-					if (lhs.sequencenumber != rhs.sequencenumber)
-						return false;
-
-					if (rhs.fragment)
-					{
-						if (!lhs.fragment) return true;
-						return (lhs.offset < rhs.offset);
-					}
-
-					return false;
+					return lhs < rhs;
 				}
 			};
 

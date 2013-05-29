@@ -74,7 +74,7 @@ namespace dtn
 
 		void ExtendedApiHandler::finally()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "ExtendedApiConnection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ExtendedApiHandler", 60) << "ExtendedApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 
 			_client.getRegistration().abort();
 
@@ -660,6 +660,8 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 
 							try {
+								dtn::api::PlainSerializer ps(_stream, _encoding);
+
 								if (cmd_remaining > 0)
 								{
 									size_t payload_offset = 0;
@@ -673,7 +675,7 @@ namespace dtn
 										ss.clear(); ss.str(cmd[cmd_index+2]); ss >> length;
 									}
 
-									// abort there if the stream is no payload block
+									// abort here if the stream is no payload block
 									try {
 										dtn::data::PayloadBlock &pb = dynamic_cast<dtn::data::PayloadBlock&>(block);
 
@@ -690,42 +692,16 @@ namespace dtn
 											remaining = length;
 										}
 
-										std::ostream *target = &_stream;
-
-										// put data here
-										ibrcommon::Base64Stream b64(_stream, false, 80);
-
-										if (_encoding == dtn::api::PlainSerializer::BASE64)
-										{
-											target = &b64;
-										}
-
 										// ignore all bytes leading the offset
 										(*stream).ignore(payload_offset);
 
 										_stream << ClientHandler::API_STATUS_OK << " PAYLOAD GET" << std::endl;
 
-										std::vector<char> data(4096);
-										size_t buffered = 0;
-
-										while ((*stream).good() && (remaining > 0))
-										{
-											if (remaining > data.size()) {
-												(*stream).read(&data[0], data.size());
-											} else {
-												(*stream).read(&data[0], remaining);
-											}
-
-											buffered = (*stream).gcount();
-											remaining -= buffered;
-											(*target).write(&data[0], buffered);
-										}
-
-										// flush the base64 buffer
-										(*target) << std::flush;
+										// write the payload
+										ps.writeData((*stream), remaining);
 
 										// final line break (mark the end)
-										_stream << std::endl << std::endl;
+										_stream << std::endl;
 									} catch (const std::bad_cast&) {
 										_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PAYLOAD GET FAILED INVALID BLOCK TYPE" << std::endl;
 									}
@@ -734,18 +710,11 @@ namespace dtn
 								{
 									_stream << ClientHandler::API_STATUS_OK << " PAYLOAD GET" << std::endl;
 
-									size_t slength = 0;
-									if (_encoding == dtn::api::PlainSerializer::BASE64) {
-										// put data here
-										ibrcommon::Base64Stream b64(_stream, false, 80);
-										block.serialize(b64, slength);
-										b64 << std::flush;
-									} else if (_encoding == PlainSerializer::RAW) {
-										block.serialize(_stream, slength);
-									}
+									// write the payload
+									ps.writeData(block);
 
 									// final line break (mark the end)
-									_stream << std::endl << std::endl;
+									_stream << std::endl;
 								}
 							} catch (const std::exception &ex) {
 								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PAYLOAD GET FAILED " << ex.what() << std::endl;

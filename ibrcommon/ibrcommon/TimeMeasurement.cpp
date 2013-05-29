@@ -31,6 +31,8 @@
 
 #ifdef HAVE_MACH_MACH_TIME_H
 #include <mach/mach_time.h>
+#include <mach/clock.h>
+#include <mach/mach.h>
 #endif
 
 namespace ibrcommon
@@ -46,65 +48,41 @@ namespace ibrcommon
 
 	void TimeMeasurement::start()
 	{
-#ifdef HAVE_MACH_MACH_TIME_H
-		_uint64_start = mach_absolute_time();
-#else
-		// set sending time
-		clock_gettime(CLOCK_MONOTONIC, &_start);
-
-#endif
+		// set start time
+		gettime(&_start);
 	}
 
 	void TimeMeasurement::stop()
 	{
-#ifdef HAVE_MACH_MACH_TIME_H
-		_uint64_end = mach_absolute_time();
-#else
-		// set receiving time
-		clock_gettime(CLOCK_MONOTONIC, &_end);
-#endif
+		// set stop time
+		gettime(&_end);
 	}
 
-	size_t TimeMeasurement::getMilliseconds() const
+	double TimeMeasurement::getMilliseconds() const
 	{
-		// calc difference
-		size_t timeElapsed = getNanoseconds();
+		struct timespec diff;
+		getTime(diff);
 
-		// make it readable
-		float delay_ms = (float)timeElapsed / 1000000;
+		// merge seconds and nanoseconds
+		double delay_us = ((double)diff.tv_sec * 1000.0) + ((double)diff.tv_nsec / 1000000.0);
 
-		return static_cast<size_t>(delay_ms);
+		return delay_us;
 	}
 
-	size_t TimeMeasurement::getNanoseconds() const
+	double TimeMeasurement::getMicroseconds() const
 	{
-		// calc difference
-#ifdef HAVE_MACH_MACH_TIME_H
-		ssize_t val = TimeMeasurement::timespecDiff(_uint64_end, _uint64_start);
-#else
-		ssize_t val = TimeMeasurement::timespecDiff(&_end, &_start);
-#endif
+		struct timespec diff;
+		getTime(diff);
 
-		if (val < 0) return 0;
-		return static_cast<size_t>(val);
+		// merge seconds and nanoseconds
+		double delay_us = ((double)diff.tv_sec * 1000000.0) + ((double)diff.tv_nsec / 1000.0);
+
+		return delay_us;
 	}
 
-	size_t TimeMeasurement::getMicroseconds() const
+	time_t TimeMeasurement::getSeconds() const
 	{
-		size_t timeElapsed = getNanoseconds();
-
-		double delay_m = static_cast<double>(timeElapsed) / 1000.0;
-
-		return static_cast<size_t>(delay_m);
-	}
-
-	size_t TimeMeasurement::getSeconds() const
-	{
-		size_t timeElapsed = getNanoseconds();
-
-		double delay_m = static_cast<double>(timeElapsed) / 1000000.0;
-
-		return static_cast<size_t>(delay_m);
+		return _end.tv_sec - _start.tv_sec;
 	}
 
 	std::ostream& TimeMeasurement::format(std::ostream &stream, const double value)
@@ -121,59 +99,63 @@ namespace ibrcommon
 
 	std::ostream &operator<<(std::ostream &stream, const TimeMeasurement &measurement)
 	{
-		// calc difference
-#ifdef HAVE_MACH_MACH_TIME_H
-		ssize_t timeElapsed = TimeMeasurement::timespecDiff(measurement._uint64_end, measurement._uint64_start);
-#else
-		ssize_t timeElapsed = TimeMeasurement::timespecDiff(&(measurement._end), &(measurement._start));
-#endif
+		struct timespec diff;
+		measurement.getTime(diff);
 
-		// make it readable
-		float delay_ms = (float)timeElapsed / 1000000;
-		float delay_sec = delay_ms / 1000;
-		float delay_min = delay_sec / 60;
-		float delay_h = delay_min / 60;
+		// convert nanoseconds to milliseconds
+		double delay_ms = (double)diff.tv_nsec / 1000000.0;
 
-		if (delay_h > 1)
+		if (diff.tv_sec < 1)
 		{
-			TimeMeasurement::format(stream, delay_h); stream << " h";
+			TimeMeasurement::format(stream, delay_ms); stream << " ms";
+			return stream;
 		}
-		else if (delay_min > 1)
+
+		// convert time interval to seconds
+		double seconds = (double)diff.tv_sec + (delay_ms / 1000.0);
+
+		if (diff.tv_sec >= 3600)
 		{
-			TimeMeasurement::format(stream, delay_min); stream << " m";
+			TimeMeasurement::format(stream, seconds / 3600.0); stream << " h";
 		}
-		else if (delay_sec > 1)
+		else if (diff.tv_sec >= 60)
 		{
-			TimeMeasurement::format(stream, delay_sec); stream << " s";
+			TimeMeasurement::format(stream, seconds / 60.0); stream << " m";
 		}
 		else
 		{
-			TimeMeasurement::format(stream, delay_ms); stream << " ms";
+			TimeMeasurement::format(stream, seconds); stream << " s";
 		}
 
 		return stream;
 	}
 
-	ssize_t TimeMeasurement::timespecDiff(const size_t &timeA, const size_t &timeB)
+	void TimeMeasurement::getTime(struct timespec &diff) const
 	{
-		double duration = static_cast<double>(timeA) - static_cast<double>(timeB);
-
-#ifdef HAVE_MACH_MACH_TIME_H
-		mach_timebase_info_data_t info;
-		mach_timebase_info(&info);
-
-		/* Convert to nanoseconds */
-		duration *= info.numer;
-		duration /= info.denom;
-#endif
-		return static_cast<ssize_t>(duration);
+		if ((_end.tv_nsec - _start.tv_nsec) < 0)
+		{
+			diff.tv_sec = _end.tv_sec - _start.tv_sec - 1;
+			diff.tv_nsec = (1000000000 + _end.tv_nsec) - _start.tv_nsec;
+		}
+		else
+		{
+			diff.tv_sec = _end.tv_sec - _start.tv_sec;
+			diff.tv_nsec = _end.tv_nsec - _start.tv_nsec;
+		}
 	}
 
-	ssize_t TimeMeasurement::timespecDiff(const struct timespec *timeA_p, const struct timespec *timeB_p)
+	void TimeMeasurement::gettime(struct timespec *ts)
 	{
-		double timeA = static_cast<double>(timeA_p->tv_sec) * 1e9 + static_cast<double>(timeA_p->tv_nsec);
-		double timeB = static_cast<double>(timeB_p->tv_sec) * 1e9 + static_cast<double>(timeB_p->tv_nsec);
-
-		return static_cast<size_t>( timeA - timeB );
+#ifdef HAVE_MACH_MACH_TIME_H // OS X does not have clock_gettime, use clock_get_time
+		clock_serv_t cclock;
+		mach_timespec_t mts;
+		host_get_clock_service(mach_host_self(), REALTIME_CLOCK, &cclock);
+		clock_get_time(cclock, &mts);
+		mach_port_deallocate(mach_task_self(), cclock);
+		ts->tv_sec = mts.tv_sec;
+		ts->tv_nsec = mts.tv_nsec;
+#else
+		::clock_gettime(CLOCK_MONOTONIC, ts);
+#endif
 	}
 }

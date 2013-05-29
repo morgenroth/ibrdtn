@@ -3,6 +3,8 @@
 net_SOURCES = 	BundleReceivedEvent.cpp \
 	BundleReceivedEvent.h \
 	BundleReceiver.h \
+	BundleTransfer.h \
+	BundleTransfer.cpp \
 	ConnectionEvent.cpp \
 	ConnectionEvent.h \
 	ConnectionManager.cpp \

@@ -22,9 +22,6 @@
 #include "net/LOWPANConnection.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
-#include "net/TransferCompletedEvent.h"
-#include "net/TransferAbortedEvent.h"
-#include "routing/RequeueBundleEvent.h"
 #include "core/BundleCore.h"
 
 #include <ibrcommon/Logger.h>
@@ -85,7 +82,7 @@ namespace dtn
 						dtn::data::Bundle bundle;
 						deserializer >> bundle;
 
-						IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConnection::run"<< IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnection", 10) << "LOWPANConnection::run"<< IBRCOMMON_LOGGER_ENDL;
 
 						// determine sender
 						std::stringstream ss; ss << "lowpan:" << _address.address() << "." << _address.service();
@@ -95,13 +92,13 @@ namespace dtn
 						dtn::net::BundleReceivedEvent::raise(sender, bundle, false);
 
 					} catch (const dtn::InvalidDataException &ex) {
-						IBRCOMMON_LOGGER_DEBUG(10) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnection", 10) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::IOException &ex) {
-						IBRCOMMON_LOGGER_DEBUG(10) << "IOException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnection", 10) << "IOException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 			} catch (std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnection", 10) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -120,9 +117,9 @@ namespace dtn
 		{
 		}
 
-		void LOWPANConnectionSender::queue(const ConvergenceLayer::Job &job)
+		void LOWPANConnectionSender::queue(const dtn::net::BundleTransfer &job)
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << ":LOWPANConnectionSender::queue"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnectionSender", 85) << "queue"<< IBRCOMMON_LOGGER_ENDL;
 			_queue.push(job);
 		}
 
@@ -131,28 +128,27 @@ namespace dtn
 			try {
 				while(_stream.good())
 				{
-					ConvergenceLayer::Job job = _queue.getnpop(true);
+					dtn::net::BundleTransfer job = _queue.getnpop(true);
 					dtn::data::DefaultSerializer serializer(_stream);
 
-					IBRCOMMON_LOGGER_DEBUG(10) << ":LOWPANConnectionSender::run"<< IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnectionSender", 85) << "run"<< IBRCOMMON_LOGGER_ENDL;
 
 					dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 					// read the bundle out of the storage
-					const dtn::data::Bundle bundle = storage.get(job.bundle);
+					const dtn::data::Bundle bundle = storage.get(job.getBundle());
 
 					// Put bundle into stringstream
 					serializer << bundle; _stream.flush();
 					// raise bundle event
-					dtn::net::TransferCompletedEvent::raise(job.destination, bundle);
-					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+					job.complete();
 				}
 				// FIXME: Exit strategy when sending on socket failed. Like destroying the connection object
 				// Also check what needs to be done when the node is not reachable (transfer requeue...)
 
-				IBRCOMMON_LOGGER_DEBUG(10) << ":LOWPANConnectionSender::run stream destroyed"<< IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnectionSender", 45) << "stream destroyed"<< IBRCOMMON_LOGGER_ENDL;
 			} catch (std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConnectionSender", 40) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

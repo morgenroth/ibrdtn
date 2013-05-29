@@ -21,9 +21,12 @@
 
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/vsocket.h"
-#include "ibrcommon/TimeMeasurement.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Logger.h"
+
+#ifndef HAVE_FEATURES_H
+#include "ibrcommon/TimeMeasurement.h"
+#endif
 
 #include <algorithm>
 #include <netdb.h>
@@ -105,7 +108,7 @@ namespace ibrcommon
 		// create a pipe for interruption
 		if (::pipe(pipe_fds) < 0)
 		{
-			IBRCOMMON_LOGGER(error) << "Error " << errno << " creating pipe" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("pipesocket", error) << "Error " << errno << " creating pipe" << IBRCOMMON_LOGGER_ENDL;
 			throw socket_exception("failed to create pipe");
 		}
 
@@ -335,7 +338,7 @@ namespace ibrcommon
 
 	void vsocket::SocketState::__change(STATE s)
 	{
-		IBRCOMMON_LOGGER_DEBUG(66) << "SocketState transition: " << __getname(_state) << " -> " << __getname(s) << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("SocketState", 90) << "SocketState transition: " << __getname(_state) << " -> " << __getname(s) << IBRCOMMON_LOGGER_ENDL;
 		_state = s;
 		ibrcommon::Conditional::signal(true);
 	}
@@ -416,7 +419,7 @@ namespace ibrcommon
 			ibrcommon::MutexLock l(_state);
 			_state.setwait(SocketState::SELECT, SocketState::DOWN);
 			_counter++;
-			IBRCOMMON_LOGGER_DEBUG(66) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SelectGuard", 90) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
 		} catch (const SocketState::state_exception&) {
 			throw vsocket_interrupt("select interrupted while waiting for IDLE socket");
 		}
@@ -428,7 +431,7 @@ namespace ibrcommon
 		try {
 			ibrcommon::MutexLock l(_state);
 			_counter--;
-			IBRCOMMON_LOGGER_DEBUG(66) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SelectGuard", 90) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
 
 			if (_counter == 0) {
 				if (_state.get() == SocketState::SAFE_REQUEST) {
@@ -650,7 +653,7 @@ namespace ibrcommon
 
 			if (FD_ISSET(_pipe.fd(), &fds_read))
 			{
-				IBRCOMMON_LOGGER_DEBUG(25) << "unblocked by self-pipe-trick" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("vsocket::select", 90) << "unblocked by self-pipe-trick" << IBRCOMMON_LOGGER_ENDL;
 
 				// this was an interrupt with the self-pipe-trick
 				ibrcommon::MutexLock l(_socket_lock);

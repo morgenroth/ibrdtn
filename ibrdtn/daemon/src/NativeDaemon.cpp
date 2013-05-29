@@ -1381,9 +1381,6 @@ namespace dtn
 			// add static routing extension
 			router.add( new dtn::routing::StaticRoutingExtension() );
 
-			// add neighbor routing (direct-delivery) extension
-			router.add( new dtn::routing::NeighborRoutingExtension() );
-
 			// add other routing extensions depending on the configuration
 			switch (conf.getNetwork().getRoutingExtension())
 			{
@@ -1391,6 +1388,9 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
 				router.add( new dtn::routing::FloodRoutingExtension() );
+
+				// add neighbor routing (direct-delivery) extension
+				router.add( new dtn::routing::NeighborRoutingExtension() );
 				break;
 			}
 
@@ -1398,6 +1398,9 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
 				router.add( new dtn::routing::EpidemicRoutingExtension() );
+
+				// add neighbor routing (direct-delivery) extension
+				router.add( new dtn::routing::NeighborRoutingExtension() );
 				break;
 			}
 
@@ -1422,11 +1425,21 @@ namespace dtn
 												prophet_config.beta, prophet_config.gamma, prophet_config.delta,
 												prophet_config.time_unit, prophet_config.i_typ,
 												prophet_config.next_exchange_timeout));
+
+				// add neighbor routing (direct-delivery) extension
+				router.add( new dtn::routing::NeighborRoutingExtension() );
 				break;
 			}
 
+			case dtn::daemon::Configuration::NO_ROUTING:
+				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Dynamic routing extensions disabled" << IBRCOMMON_LOGGER_ENDL;
+				break;
+
 			default:
 				IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "Using default routing extensions" << IBRCOMMON_LOGGER_ENDL;
+
+				// add neighbor routing (direct-delivery) extension
+				router.add( new dtn::routing::NeighborRoutingExtension() );
 				break;
 			}
 

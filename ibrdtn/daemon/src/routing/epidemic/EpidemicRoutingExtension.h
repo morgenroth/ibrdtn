@@ -45,6 +45,8 @@ namespace dtn
 	{
 		class EpidemicRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
 		{
+			static const std::string TAG;
+
 		public:
 			EpidemicRoutingExtension();
 			virtual ~EpidemicRoutingExtension();

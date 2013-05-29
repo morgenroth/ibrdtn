@@ -31,14 +31,14 @@ namespace ibrcommon
 	{
 		// init gcm and load the key into the context
 		if (gcm_init_and_key(key, key_size_in_bytes, &_ctx))
-			IBRCOMMON_LOGGER(critical) << "failed to initialize aes gcm context" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("AES128Stream", critical) << "failed to initialize aes gcm context" << IBRCOMMON_LOGGER_ENDL;
 
 		// convert the salt to network byte order
 		_gcm_iv.salt = htonl(salt);
 
 		// generate a random IV
 		if (!RAND_bytes(_gcm_iv.initialisation_vector, iv_len))
-			IBRCOMMON_LOGGER(critical) << "failed to create initialization vector" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("AES128Stream", critical) << "failed to create initialization vector" << IBRCOMMON_LOGGER_ENDL;
 
 		// copy the IV to a local array
 		for (unsigned int i = 0; i < iv_len; ++i)
@@ -53,7 +53,7 @@ namespace ibrcommon
 	{
 		// init gcm and load the key into the context
 		if (gcm_init_and_key(key, key_size_in_bytes, &_ctx))
-			IBRCOMMON_LOGGER(critical) << "failed to initialize aes gcm context" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("AES128Stream", critical) << "failed to initialize aes gcm context" << IBRCOMMON_LOGGER_ENDL;
 
 		// convert the salt to network byte order
 		_gcm_iv.salt = htonl(salt);

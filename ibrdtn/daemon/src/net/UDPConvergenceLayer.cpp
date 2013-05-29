@@ -21,11 +21,9 @@
 
 #include "net/UDPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
-#include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundleCore.h"
-#include "routing/RequeueBundleEvent.h"
 #include "Configuration.h"
 
 #include <ibrdtn/utils/Utils.h>
@@ -140,12 +138,13 @@ namespace dtn
 			}
 		}
 
-		void UDPConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void UDPConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_UDPIP);
 			if (uri_list.empty())
 			{
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_UNDEFINED);
+				dtn::net::BundleTransfer local_job = job;
+				local_job.abort(dtn::net::TransferAbortedEvent::REASON_UNDEFINED);
 				return;
 			}
 
@@ -164,11 +163,15 @@ namespace dtn
 
 			try {
 				// read the bundle out of the storage
-				const dtn::data::Bundle bundle = storage.get(job.bundle);
+				const dtn::data::Bundle bundle = storage.get(job.getBundle());
 
-				// create a dummy serializer
-				dtn::data::DefaultSerializer dummy(std::cout);
+				// build the dictionary for EID lookup
+				const dtn::data::Dictionary dict(bundle);
 
+				// create a default serializer
+				dtn::data::DefaultSerializer dummy(std::cout, dict);
+
+				// get the encoded length of the primary block
 				size_t header = dummy.getLength((const PrimaryBlock&)bundle);
 				header += 20; // two times SDNV through fragmentation
 
@@ -187,8 +190,8 @@ namespace dtn
 					const size_t fragment_size = m_maxmsgsize - header;
 					const size_t fragment_count = (psize / fragment_size) + (((psize % fragment_size) > 0) ? 1 : 0);
 
-					IBRCOMMON_LOGGER_DEBUG(15) << "MTU of " << m_maxmsgsize << " is too small to carry " << psize << " bytes of payload." << IBRCOMMON_LOGGER_ENDL;
-					IBRCOMMON_LOGGER_DEBUG(15) << "create " << fragment_count << " fragments with " << fragment_size << " bytes each." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("UDPConvergenceLayer", 30) << "MTU of " << m_maxmsgsize << " is too small to carry " << psize << " bytes of payload." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("UDPConvergenceLayer", 30) << "create " << fragment_count << " fragments with " << fragment_size << " bytes each." << IBRCOMMON_LOGGER_ENDL;
 
 					for (size_t i = 0; i < fragment_count; ++i)
 					{
@@ -217,19 +220,19 @@ namespace dtn
 				}
 
 				// success - raise bundle event
-				dtn::net::TransferCompletedEvent::raise(job.destination, bundle);
-				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+				dtn::net::BundleTransfer local_job = job;
+				local_job.complete();
 			} catch (const dtn::storage::NoBundleFoundException&) {
 				// send transfer aborted event
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+				dtn::net::BundleTransfer local_job = job;
+				local_job.abort(dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			} catch (const ibrcommon::socket_exception&) {
 				// CL is busy, requeue bundle
-				dtn::routing::RequeueBundleEvent::raise(job.destination, job.bundle);
 			} catch (const NoAddressFoundException &ex) {
 				// no connection available
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+				dtn::net::BundleTransfer local_job = job;
+				local_job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}
-
 		}
 
 		void UDPConvergenceLayer::send(const ibrcommon::vaddress &addr, const std::string &data) throw (ibrcommon::socket_exception, NoAddressFoundException)
@@ -404,7 +407,7 @@ namespace dtn
 					dtn::net::BundleReceivedEvent::raise(sender, bundle, false);
 
 				} catch (const dtn::InvalidDataException &ex) {
-					IBRCOMMON_LOGGER(warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("UDPConvergenceLayer", warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const std::exception &ex) {
 
 				}

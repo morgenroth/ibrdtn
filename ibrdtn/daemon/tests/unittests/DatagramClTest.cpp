@@ -152,7 +152,7 @@ void DatagramClTest::queueTest() {
 	// wait until the bundle is written
 	_storage->wait();
 
-	dtn::data::BundleID id(b);
+	dtn::data::MetaBundle id(b);
 
 	TestEventListener<dtn::core::NodeEvent> node_evtl;
 	TestEventListener<dtn::net::TransferCompletedEvent> completed_evtl;
@@ -171,11 +171,16 @@ void DatagramClTest::queueTest() {
 	const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 	const dtn::core::Node &n = (*nodes.begin());
 
-	// create a job
-	const ConvergenceLayer::Job job(n.getEID(), id);
+	// create BundleTransfer in a separate scope because the
+	// TransferCompletedEvent is only raised after all objects
+	// are destroyed
+	{
+		// create a job
+		const dtn::net::BundleTransfer job(n.getEID(), id);
 
-	// send fake discovery beacon
-	_fake_cl->queue(n, job);
+		// send fake discovery beacon
+		_fake_cl->queue(n, job);
+	}
 
 	// wait until the bundle has been transmitted
 	try {

@@ -71,7 +71,7 @@ namespace dtn
 			 * Queue job for delivery to another node
 			 * @param job
 			 */
-			void queue(const ConvergenceLayer::Job &job);
+			void queue(const dtn::net::BundleTransfer &job);
 
 			/**
 			 * queue data for delivery to the stream
@@ -177,12 +177,9 @@ namespace dtn
 				void finally() throw ();
 				void __cancellation() throw ();
 
-				void clearQueue() throw ();
-
-				ibrcommon::Queue<ConvergenceLayer::Job> queue;
+				ibrcommon::Queue<dtn::net::BundleTransfer> queue;
 
 			private:
-				ConvergenceLayer::Job _current_job;
 				DatagramConnection::Stream &_stream;
 
 				// callback to the corresponding connection object

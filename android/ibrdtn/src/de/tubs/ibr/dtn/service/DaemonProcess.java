@@ -409,7 +409,7 @@ public class DaemonProcess {
             }
             else if (key.startsWith("log_enable_file"))
             {
-                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                Log.d(TAG, key + " == " + prefs.getBoolean(key, false));
                 
                 // set logfile options
                 String logFilePath = null;
@@ -705,18 +705,6 @@ public class DaemonProcess {
 			if (bundlePath != null) {
 				p.println("storage_path = " + bundlePath.getPath());
 			}
-
-			/*
-			 * if (preferences.getBoolean("connect_static", false)) { // add
-			 * static connection p.println("static1_uri = " +
-			 * preferences.getString("host_name", "dtn:none"));
-			 * p.println("static1_address = " +
-			 * preferences.getString("host_address", "0.0.0.0"));
-			 * p.println("static1_proto = tcp"); p.println("static1_port = " +
-			 * preferences.getString("host_port", "4556"));
-			 * 
-			 * // p.println("net_autoconnect = 120"); }
-			 */
 
 			// enable interface rebind
 			p.println("net_rebind = yes");

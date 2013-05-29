@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "BundleStorageTest.hh"
+#include "../tools/TestEventListener.h"
 #include <cppunit/extensions/HelperMacros.h>
 
 #include <ibrdtn/data/Bundle.h>
@@ -321,6 +322,7 @@ void BundleStorageTest::testSize(dtn::storage::BundleStorage &storage)
 
 	storage.store(b);
 
+#ifdef HAVE_SQLITE
 	try {
 		dynamic_cast<dtn::storage::SQLiteBundleStorage&>(storage);
 		const dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
@@ -328,11 +330,14 @@ void BundleStorageTest::testSize(dtn::storage::BundleStorage &storage)
 		// TODO: fix .size() implementation in SQLiteBundleStorage
 		//CPPUNIT_ASSERT((dtn::data::Length)p.getLength() <= storage.size());
 	} catch (const std::bad_cast&) {
+#endif
 		std::stringstream ss;
 		dtn::data::DefaultSerializer(ss) << b;
 
 		CPPUNIT_ASSERT_EQUAL((dtn::data::Length)ss.str().length(), storage.size());
+#ifdef HAVE_SQLITE
 	}
+#endif
 }
 
 void BundleStorageTest::testReleaseCustody()
@@ -509,12 +514,18 @@ void BundleStorageTest::testExpiration(dtn::storage::BundleStorage &storage)
 	// check if the storage count is right
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1, storage.count());
 
+	TestEventListener<dtn::core::TimeEvent> evtl;
+
 	// raise time event to trigger expiration
 	dtn::core::TimeEvent::raise(b.timestamp + 21, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
 
-	// now wait until the event switch queue is empty
-	dtn::core::EventSwitch &es = dtn::core::EventSwitch::getInstance();
-	while (!es.empty()) ::sleep(1);
+	// wait until the time event has been processed
+	{
+		::sleep(2);
+
+		ibrcommon::MutexLock l(evtl.event_cond);
+		while (evtl.event_counter == 0) evtl.event_cond.wait(20000);
+	}
 
 	// special case for storages deferred mechanisms (SimpleBundleStorage)
 	// wait until all tasks of the storage are processed

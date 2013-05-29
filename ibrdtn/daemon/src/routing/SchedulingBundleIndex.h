@@ -79,13 +79,7 @@ namespace dtn
 					if (complete_payloadlength_lhs != complete_payloadlength_rhs)
 						return false;
 
-					if (lhs.sequencenumber < rhs.sequencenumber)
-						return true;
-					if (lhs.sequencenumber != rhs.sequencenumber)
-						return false;
-
-					// sequencenumber is equal, bundles have to be fragments
-					return (lhs.offset < rhs.offset);
+					return lhs < rhs;
 				}
 			};
 

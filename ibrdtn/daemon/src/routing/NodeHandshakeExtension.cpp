@@ -87,7 +87,7 @@ namespace dtn
 			try {
 				const BloomFilterSummaryVector bfsv = answer.get<BloomFilterSummaryVector>();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "BloomFilterSummaryVector received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "summary vector received from " << source.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// get the summary vector (bloomfilter) of this ECM
 				const ibrcommon::BloomFilter &filter = bfsv.getVector().getBloomFilter();
@@ -105,7 +105,7 @@ namespace dtn
 			try {
 				const BloomFilterPurgeVector bfpv = answer.get<BloomFilterPurgeVector>();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "BloomFilterPurgeVector received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "purge vector received from " << source.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// get the purge vector (bloomfilter) of this ECM
 				const ibrcommon::BloomFilter &purge = bfpv.getVector().getBloomFilter();
@@ -200,7 +200,7 @@ namespace dtn
 			// walk through all extensions to generate a request
 			(*_callback).requestHandshake(origin, request);
 
-			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "Requesting handshake from " << origin.getString() << ": " << request.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake query from " << origin.getString() << ": " << request.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// create a new bundle
 			dtn::data::Bundle req;
@@ -256,7 +256,7 @@ namespace dtn
 				(*s) >> handshake;
 			}
 
-			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "Handshake received from " << bundle.source.getString() << ": " << handshake.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake received from " << bundle.source.getString() << ": " << handshake.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// if this is a request answer with an summary vector
 			if (handshake.getType() == NodeHandshake::HANDSHAKE_REQUEST)
@@ -306,7 +306,7 @@ namespace dtn
 				_endpoint.send(answer);
 
 				// call handshake completed event
-				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_REPLIED, bundle.source );
+				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_REPLIED, bundle.source.getNode() );
 			}
 			else if (handshake.getType() == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
@@ -314,7 +314,7 @@ namespace dtn
 				(**this).processHandshake(bundle.source, handshake);
 
 				// call handshake completed event
-				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_COMPLETED, bundle.source );
+				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_COMPLETED, bundle.source.getNode() );
 			}
 		}
 	} /* namespace routing */

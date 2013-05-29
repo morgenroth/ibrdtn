@@ -119,7 +119,6 @@ while [ 1 == 1 ]; do
 		add_param $CONFFILE "ibrdtn.@network[$iter].type" "net_lan${iter}_type"
 		add_param $CONFFILE "ibrdtn.@network[$iter].interface" "net_lan${iter}_interface"
 		add_param $CONFFILE "ibrdtn.@network[$iter].port" "net_lan${iter}_port"
-		add_param $CONFFILE "ibrdtn.@network[$iter].discovery" "net_lan${iter}_discovery"
 	else
 		break
 	fi

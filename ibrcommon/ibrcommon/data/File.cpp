@@ -299,7 +299,7 @@ namespace ibrcommon
 	{
 		std::string pattern = path.getPath() + "/" + prefix + "XXXXXX";
 
-		std::vector<char> name(pattern.length());
+		std::vector<char> name(pattern.length() + 1);
 		::strcpy(&name[0], pattern.c_str());
 
 		int fd = mkstemp(&name[0]);

@@ -84,7 +84,7 @@ namespace dtn
 
 		void BinaryStreamClient::eventConnectionDown() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(40) << "BinaryStreamClient::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 40) << "BinaryStreamClient::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
 			_client.getRegistration().unsubscribe(_eid);
 
@@ -140,7 +140,7 @@ namespace dtn
 
 		void BinaryStreamClient::finally()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "BinaryStreamClient down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 60) << "BinaryStreamClient down" << IBRCOMMON_LOGGER_ENDL;
 
 			// abort blocking registrations
 			_client.getRegistration().abort();

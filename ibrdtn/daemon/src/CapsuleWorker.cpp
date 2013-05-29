@@ -74,7 +74,7 @@ namespace dtn
 				}
 				catch (const dtn::InvalidDataException &ex) {
 					// display the rejection
-					IBRCOMMON_LOGGER(warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("CapsuleWorker", warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 		}

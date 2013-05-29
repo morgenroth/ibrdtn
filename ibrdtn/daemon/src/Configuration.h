@@ -70,20 +70,17 @@ namespace dtn
 					NETWORK_DGRAM_ETHERNET = 8
 				};
 
-				NetConfig(std::string name, NetType type, const std::string &url, bool discovery = true);
-				NetConfig(std::string name, NetType type, const ibrcommon::vaddress &address, int port, bool discovery = true);
-				NetConfig(std::string name, NetType type, const ibrcommon::vinterface &iface, int port, bool discovery = true);
-				NetConfig(std::string name, NetType type, int port, bool discovery = true);
+				NetConfig(std::string name, NetType type, const std::string &url);
+				NetConfig(std::string name, NetType type, const ibrcommon::vinterface &iface, int port);
+				NetConfig(std::string name, NetType type, int port);
 				virtual ~NetConfig();
 
 				std::string name;
 				NetType type;
 				std::string url;
 				ibrcommon::vinterface iface;
-				ibrcommon::vaddress address;
 				int mtu;
 				int port;
-				bool discovery;
 			};
 
 			class ParameterNotSetException : ibrcommon::Exception
@@ -150,7 +147,8 @@ namespace dtn
 				DEFAULT_ROUTING = 0,
 				EPIDEMIC_ROUTING = 1,
 				FLOOD_ROUTING = 2,
-				PROPHET_ROUTING = 3
+				PROPHET_ROUTING = 3,
+				NO_ROUTING = 4
 			};
 
 			/**

@@ -105,12 +105,6 @@ namespace dtn
 				bool has(const dtn::data::BundleID&, const bool require_bloomfilter = false) const;
 
 				/**
-				 * acquire resource to send a filter request.
-				 * The resources are reset once if the filter expires.
-				 */
-				void acquireFilterRequest() throw (NoMoreTransfersAvailable);
-
-				/**
 				 * Acquire transfer resources. If no resources is left,
 				 * an exception is thrown.
 				 */
@@ -120,7 +114,7 @@ namespace dtn
 				 * @return the number of free transfer slots
 				 */
 				dtn::data::Size getFreeTransferSlots() const;
-				
+
 				/**
 				 * @return True, if the threshold of free transfer slots is reached.
 				 */
@@ -140,6 +134,21 @@ namespace dtn
 				 * @param timestamp
 				 */
 				void expire(const dtn::data::Timestamp &timestamp);
+
+				/**
+				 * Determine if the neighbor entry is expired
+				 */
+				bool isExpired(const dtn::data::Timestamp &timestamp) const;
+
+				/**
+				 * Returns the last update of this entry
+				 */
+				const dtn::data::Timestamp& getLastUpdate() const;
+
+				/**
+				 * updates the last update timestamp
+				 */
+				void touch();
 
 				/**
 				 * Retrieve a specific data-set.
@@ -202,6 +211,8 @@ namespace dtn
 				};
 
 				ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE> _filter_state;
+
+				dtn::data::Timestamp _last_update;
 			};
 
 			NeighborDatabase();

@@ -4,7 +4,6 @@
     <string name="desc_buddy_icon">Freundstatus</string>
     <string name="desc_send_button">Senden Knopf</string>
     <string name="send">Abschicken</string>
-    <string name="example_text">Dies ist ein Beispieltext. Er sollte etwas länger sein als normale Texte um einen Zeilenumbruch zu provozieren.</string>
     <string name="list_messages">Nachrichten</string>
     <string name="close">Schließen</string>
     <string name="clearmsg">Nachrichten löschen</string>
@@ -38,4 +37,5 @@
     <string name="question_delete_messages">Möchten Sie wirklich alle von diesem Kontakt empfangenen und an diesen gesendete Nachrichten löschen?</string>
     <string name="tts_when_on_headset">Nachricht vorlesen</string>
     <string name="tts_when_on_headset_desc">Spielt die Nachricht mittels TTS ab wenn ein Kopfhöhrer verbunden ist.</string>
+	<string name="type_to_compose_text_enter_to_send">Nachricht schreiben</string>
 </resources>

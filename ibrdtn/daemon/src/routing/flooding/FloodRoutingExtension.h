@@ -42,6 +42,8 @@ namespace dtn
 	{
 		class FloodRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
 		{
+			static const std::string TAG;
+
 		public:
 			FloodRoutingExtension();
 			virtual ~FloodRoutingExtension();

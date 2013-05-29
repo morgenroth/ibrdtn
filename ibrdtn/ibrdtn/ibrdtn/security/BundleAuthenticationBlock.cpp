@@ -137,7 +137,7 @@ namespace dtn
 						return;
 					}
 
-					IBRCOMMON_LOGGER_DEBUG(15) << "security mac does not match" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("BundleAuthenticationBlock", 15) << "security mac does not match" << IBRCOMMON_LOGGER_ENDL;
 				}
 				// bab contains no security result but a correlator
 				else if (bab._ciphersuite_flags &  CONTAINS_CORRELATOR)

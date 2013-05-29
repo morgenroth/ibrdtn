@@ -464,10 +464,13 @@ namespace dtn
 			__forward_event(evt);
 		}
 
-		void BaseRouter::__forward_event(const dtn::core::Event *evt) const throw ()
+		void BaseRouter::__forward_event(const dtn::core::Event *evt) throw ()
 		{
 			// do not forward the event if the extensions are down
 			if (!_extension_state) return;
+
+			_nh_extension.notify(evt);
+			_retransmission_extension.notify(evt);
 
 			// notify all underlying extensions
 			for (extension_list::const_iterator iter = _extensions.begin(); iter != _extensions.end(); ++iter)

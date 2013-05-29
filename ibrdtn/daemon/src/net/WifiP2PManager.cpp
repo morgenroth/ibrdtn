@@ -25,8 +25,6 @@
 #include "core/BundleCore.h"
 #include <unistd.h>
 
-#include <wifip2p/WifiP2PInterface.h>
-
 namespace dtn
 {
 	namespace net
@@ -36,7 +34,7 @@ namespace dtn
 		//TODO How to do exception handling (try-catch) in initialization list
 		WifiP2PManager::WifiP2PManager(const std::string &ctrlpath)
 		 : _running(false), _timeout(120), _priority(10),
-		   ce(ctrlpath, dtn::core::BundleCore::local.getString(), *this)
+		   ce(ctrlpath, dtn::core::BundleCore::local.getString(), *this, *this)
 		{
 			ce.setTime_ST_SCAN(20);
 		}
@@ -298,5 +296,19 @@ namespace dtn
 
 		}
 
+		void WifiP2PManager::log(std::string tag, std::string msg)
+		{
+			IBRCOMMON_LOGGER_TAG(WifiP2PManager::TAG + "[" + tag + "]", notice) << msg << IBRCOMMON_LOGGER_ENDL;
+		}
+
+		void WifiP2PManager::log_err(std::string tag, std::string msg)
+		{
+			IBRCOMMON_LOGGER_TAG(WifiP2PManager::TAG + "[" + tag + "]", error) << msg << IBRCOMMON_LOGGER_ENDL;
+		}
+
+		void WifiP2PManager::log_debug(int debug, std::string tag, std::string msg)
+		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(WifiP2PManager::TAG + "[" + tag + "]", debug) << msg << IBRCOMMON_LOGGER_ENDL;
+		}
 	} /* namespace net */
 } /* namespace dtn */

@@ -42,13 +42,16 @@ namespace dtn
 
 		void IndependentComponent::initialize() throw ()
 		{
+			// reset thread is necessary
+			if (JoinableThread::isFinalized()) JoinableThread::reset();
+
 			componentUp();
 		}
 
 		void IndependentComponent::startup() throw ()
 		{
 			try {
-				this->start();
+				JoinableThread::start();
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_TAG("IndependentComponent", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}

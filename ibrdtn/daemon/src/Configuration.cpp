@@ -47,23 +47,18 @@ namespace dtn
 {
 	namespace daemon
 	{
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, const std::string &u, bool d)
-		 : name(n), type(t), url(u), mtu(0), port(0), discovery(d)
+		Configuration::NetConfig::NetConfig(std::string n, NetType t, const std::string &u)
+		 : name(n), type(t), url(u), mtu(0), port(0)
 		{
 		}
 
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vinterface &i, int p, bool d)
-		 : name(n), type(t), iface(i), mtu(1500), port(p), discovery(d)
+		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vinterface &i, int p)
+		 : name(n), type(t), iface(i), mtu(1500), port(p)
 		{
 		}
 
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vaddress &a, int p, bool d)
-		 : name(n), type(t), iface(), address(a), mtu(1500), port(p), discovery(d)
-		{
-		}
-
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, int p, bool d)
-		 : name(n), type(t), iface(), mtu(1500), port(p), discovery(d)
+		Configuration::NetConfig::NetConfig(std::string n, NetType t, int p)
+		 : name(n), type(t), iface(), mtu(1500), port(p)
 		{
 		}
 
@@ -699,7 +694,6 @@ namespace dtn
 					std::string key_port = "net_" + netname + "_port";
 					std::string key_interface = "net_" + netname + "_interface";
 					std::string key_address = "net_" + netname + "_address";
-					std::string key_discovery = "net_" + netname + "_discovery";
 					std::string key_path = "net_" + netname + "_path";
 					std::string key_mtu = "net_" + netname + "_mtu";
 
@@ -720,8 +714,7 @@ namespace dtn
 						case Configuration::NetConfig::NETWORK_HTTP:
 						{
 							Configuration::NetConfig nc(netname, type,
-									conf.read<std::string>(key_address, "http://localhost/"),
-									conf.read<std::string>(key_discovery, "yes") == "no");
+									conf.read<std::string>(key_address, "http://localhost/"));
 
 							_interfaces.push_back(nc);
 							break;
@@ -730,8 +723,7 @@ namespace dtn
 						case Configuration::NetConfig::NETWORK_FILE:
 						{
 							Configuration::NetConfig nc(netname, type,
-									conf.read<std::string>(key_path, ""),
-									conf.read<std::string>(key_discovery, "yes") == "no");
+									conf.read<std::string>(key_path, ""));
 
 							_interfaces.push_back(nc);
 							break;
@@ -740,17 +732,15 @@ namespace dtn
 						default:
 						{
 							int port = conf.read<int>(key_port, 4556);
-							bool discovery = (conf.read<std::string>(key_discovery, "yes") == "yes");
 							int mtu = conf.read<int>(key_mtu, 1280);
 
 							try {
 								ibrcommon::vinterface iface(conf.read<std::string>(key_interface));
-								Configuration::NetConfig nc(netname, type, iface, port, discovery);
+								Configuration::NetConfig nc(netname, type, iface, port);
 								nc.mtu = mtu;
 								_interfaces.push_back(nc);
 							} catch (const ConfigFile::key_not_found&) {
-								ibrcommon::vaddress addr;
-								Configuration::NetConfig nc(netname, type, addr, port, discovery);
+								Configuration::NetConfig nc(netname, type, port);
 								nc.mtu = mtu;
 								_interfaces.push_back(nc);
 							}
@@ -853,6 +843,7 @@ namespace dtn
 
 		Configuration::RoutingExtension Configuration::Network::getRoutingExtension() const
 		{
+			if ( _routing == "none" ) return NO_ROUTING;
 			if ( _routing == "epidemic" ) return EPIDEMIC_ROUTING;
 			if ( _routing == "flooding" ) return FLOOD_ROUTING;
 			if ( _routing == "prophet" ) return PROPHET_ROUTING;

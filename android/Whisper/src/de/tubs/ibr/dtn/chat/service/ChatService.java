@@ -44,6 +44,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
@@ -67,14 +68,18 @@ import de.tubs.ibr.dtn.chat.core.Roster;
 public class ChatService extends IntentService {
 	
 	public enum Debug {
-		NOTIFICATION
+		NOTIFICATION,
+		BUDDY_ADD
 	}
 	
 	private static final String TAG = "ChatService";
 	
 	// mark a specific bundle as delivered
-	public static final String  MARK_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.MARK_DELIVERED";
-	public static final String  REPORT_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.REPORT_DELIVERED";
+	public static final String MARK_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.MARK_DELIVERED";
+	public static final String REPORT_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.REPORT_DELIVERED";
+	
+	public static final String ACTION_SEND_MESSAGE = "de.tubs.ibr.dtn.chat.SEND_MESSAGE";
+	public static final String ACTION_REFRESH_PRESENCE = "de.tubs.ibr.dtn.chat.REFRESH_PRESENCE";
 	
 	private static final int MESSAGE_NOTIFICATION = 1;
 	public static final String ACTION_OPENCHAT = "de.tubs.ibr.dtn.chat.OPENCHAT";
@@ -83,7 +88,7 @@ public class ChatService extends IntentService {
 	private ServiceError _service_error = ServiceError.NO_ERROR;
 	private Boolean _screen_off = false;
 	
-	private static String visibleBuddy = null;
+	private static Long visibleBuddy = null;
 	
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
@@ -206,7 +211,7 @@ public class ChatService extends IntentService {
 			
 			if (nickname != null)
 			{
-				eventBuddyInfo(created, source.toString(), presence, nickname, status);
+				getRoster().updatePresence(source.toString(), created, presence, nickname, status);
 			}
 		}
 		
@@ -217,11 +222,14 @@ public class ChatService extends IntentService {
 				Log.e(TAG, "message source is null!");
 			}
 			
-			Buddy b = getRoster().getBuddy(source.toString());
-			Message msg = new Message(null, true, created, new Date(), payload);
-			msg.setBuddy(b);
+			// create a new message
+			Long msgId = getRoster().createMessage(source.toString(), created, new Date(), true, payload, 0L);
 			
-			getRoster().storeMessage(msg);
+			// retrieve message object
+			Message msg = getRoster().getMessage(msgId);
+			
+			// get buddy object
+			Buddy b = getRoster().getBuddy(msg.getBuddyId());
 			
 			// create a notification
 			createNotification(b, msg);
@@ -296,10 +304,10 @@ public class ChatService extends IntentService {
 				_screen_off = false;
 				
 				// clear notification
-				String visible = ChatService.getVisible();
+				Long visible = ChatService.getVisible();
 				if (visible != null) {
 					NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-					mNotificationManager.cancel(visible, MESSAGE_NOTIFICATION);
+					mNotificationManager.cancel(visible.toString(), MESSAGE_NOTIFICATION);
 				}
 			}
 		}
@@ -334,98 +342,15 @@ public class ChatService extends IntentService {
 		return this.roster;
 	}
 	
-	public void sendMessage(Message msg) throws Exception
-	{
-		Session s = _client.getSession();
-		Bundle b = new Bundle();
-		
-		b.setDestination(new SingletonEndpoint(msg.getBuddy().getEndpoint()));
-		
-		String lifetime = PreferenceManager.getDefaultSharedPreferences(this).getString("messageduration", "259200");
-		b.setLifetime(Long.parseLong(lifetime));
-		
-		// set status report requests
-		b.set(ProcFlags.REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
-		b.setReportto(SingletonEndpoint.ME);
-		
-		synchronized(this.roster) {
-			// send out the message
-			BundleID ret = s.send(b, msg.getPayload().getBytes());
-			
-			if (ret == null)
-			{
-				throw new Exception("could not send the message");
-			}
-			else
-			{
-			    Log.d(TAG, "Bundle sent, BundleID: " + ret.toString());
-			}
-			
-			// set sent id of the message
-			msg.setSentId(ret.toString());
-			
-			// update message into the database
-			this.getRoster().reportSent(msg);
-		}
+	public synchronized static void setVisible(Long buddyId) {
+		visibleBuddy = buddyId;
 	}
 	
-	public void sendPresence(String presence, String nickname, String status) throws Exception
-	{
-		Session s = _client.getSession();
-		
-		String presence_message = "Presence: " + presence + "\n" +
-				"Nickname: " + nickname + "\n" +
-				"Status: " + status;
-		
-		BundleID ret = s.send(ChatService.PRESENCE_GROUP_EID, 3600, presence_message.getBytes());
-		
-		if (ret == null)
-		{
-			throw new Exception("could not send the message");
-		}
-		else
-		{
-		    Log.d(TAG, "Presence sent, BundleID: " + ret.toString());
-		}
-	}
-	
-	public void eventBuddyInfo(Date timestamp, String source, String presence, String nickname, String status)
-	{
-		// get the buddy object
-		Buddy b = getRoster().getBuddy(source);
-		
-		// discard the buddy info, if it is too old
-		if (b.getLastSeen() != null)
-		{
-			if (timestamp.before( b.getLastSeen() ))
-			{
-				Log.d(TAG, "eventBuddyInfo discarded: " + source + "; " + presence + "; " + nickname + "; " + status);
-				return;
-			}
-		}
-		
-		Log.d(TAG, "eventBuddyInfo: " + source + "; " + presence + "; " + nickname + "; " + status);
-		
-		b.setNickname(nickname);
-		b.setLastSeen(timestamp);
-		b.setStatus(status);
-		b.setPresence(presence);
-		getRoster().store(b);
-	}
-	
-	public synchronized static void setVisible(String buddyId) {
-		if (visibleBuddy != buddyId) visibleBuddy = buddyId;
-	}
-	
-	public synchronized static void setInvisible(String buddyId) {
-		if (visibleBuddy == buddyId) visibleBuddy = null;
-	}
-	
-	private synchronized static String getVisible() {
+	private synchronized static Long getVisible() {
 		return visibleBuddy;
 	}
 	
-	public static Boolean isVisible(String buddyId)
+	public static Boolean isVisible(Long buddyId)
 	{
 		if (visibleBuddy == null) return false;
 		return (visibleBuddy.equals(buddyId));
@@ -436,7 +361,7 @@ public class ChatService extends IntentService {
 	{
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		
-		if (ChatService.isVisible(b.getEndpoint()))
+		if (ChatService.isVisible(b.getId()))
 		{
 			if (!_screen_off) return;
 		}
@@ -458,15 +383,17 @@ public class ChatService extends IntentService {
 			defaults |= Notification.DEFAULT_VIBRATE;
 		}
 		
-		Intent notificationIntent = new Intent(this, MainActivity.class);
-		//notificationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
-		//notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-		notificationIntent.setAction(ACTION_OPENCHAT);
-		notificationIntent.addCategory("android.intent.category.DEFAULT");
-		notificationIntent.putExtra("buddy", b.getEndpoint());
+		/** CREATE AN INTENT TO OPEN THE MESSAGES ACTIVITY **/
+		Intent messagesIntent = new Intent(this, MainActivity.class);
 		
-		int requestID = (int) System.currentTimeMillis();
-		PendingIntent contentIntent = PendingIntent.getActivity(this, requestID, notificationIntent, PendingIntent.FLAG_ONE_SHOT);
+		// add buddy data
+		messagesIntent.putExtra("buddyId", b.getId());
+		
+		TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+		// Adds the Inten to the main view
+		stackBuilder.addNextIntent(messagesIntent);
+		// Gets a PendingIntent containing the entire back stack
+		PendingIntent contentIntent = stackBuilder.getPendingIntent(b.getId().intValue(), PendingIntent.FLAG_UPDATE_CURRENT);
 		
 		builder.setContentTitle(contentTitle);
 		builder.setContentText(contentText);
@@ -481,7 +408,7 @@ public class ChatService extends IntentService {
 		Notification notification = builder.getNotification();
 		
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mNotificationManager.notify(b.getEndpoint(), MESSAGE_NOTIFICATION, notification);
+		mNotificationManager.notify(b.getId().toString(), MESSAGE_NOTIFICATION, notification);
 		
 		if (prefs.getBoolean("ttsWhenOnHeadset", false)) {
 			AudioManager am = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
@@ -526,9 +453,7 @@ public class ChatService extends IntentService {
 		    }
 			
 			Log.i(TAG, "push out presence; " + presence_tag);
-			try {
-				sendPresence(presence_tag, presence_nick, presence_text);
-			} catch (Exception e) { }
+			actionRefreshPresence(presence_tag, presence_nick, presence_text);
 			
 			Editor edit = preferences.edit();
 			edit.putLong("lastpresenceupdate", (new Date().getTime()));
@@ -547,39 +472,149 @@ public class ChatService extends IntentService {
         }
         else if (MARK_DELIVERED_INTENT.equals(action))
         {
-        	BundleID bundleid = intent.getParcelableExtra("bundleid");
-        	if (bundleid == null) {
-        		Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
-        		return;
-        	}
-        	
-    		try {
-    			_client.getSession().delivered(bundleid);
-    		} catch (Exception e) {
-    			Log.e(TAG, "Can not mark bundle as delivered.", e);
-    		}	
+        	actionMarkDelivered(intent);
         }
         else if (REPORT_DELIVERED_INTENT.equals(action))
         {
-			SingletonEndpoint source = intent.getParcelableExtra("source");
-			BundleID bundleid = intent.getParcelableExtra("bundleid");
-			
-        	if (bundleid == null) {
-        		Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
-        		return;
-        	}
+        	actionReportDelivered(intent);
+        }
+        else if (ACTION_SEND_MESSAGE.equals(action))
+        {
+        	Long buddyId = intent.getLongExtra("buddyId", -1);
+        	String text = intent.getStringExtra("text");
         	
-        	// report delivery to the roster
-        	getRoster().reportDelivery(source, bundleid);
+        	// abort if there is no buddyId
+        	if (buddyId < 0) return;
+        	
+        	actionSendMessage(buddyId, text);
+        }
+        else if (ACTION_REFRESH_PRESENCE.equals(action))
+        {
+    		String presence = intent.getStringExtra("presence");
+    		String nickname = intent.getStringExtra("nickname");
+    		String status = intent.getStringExtra("status");
+    		
+        	actionRefreshPresence(presence, nickname, status);
         }
 	}
 	
+	private void actionMarkDelivered(Intent intent) {
+    	BundleID bundleid = intent.getParcelableExtra("bundleid");
+    	if (bundleid == null) {
+    		Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
+    		return;
+    	}
+    	
+		try {
+			_client.getSession().delivered(bundleid);
+		} catch (Exception e) {
+			Log.e(TAG, "Can not mark bundle as delivered.", e);
+		}	
+	}
+	
+	private void actionReportDelivered(Intent intent) {
+		SingletonEndpoint source = intent.getParcelableExtra("source");
+		BundleID bundleid = intent.getParcelableExtra("bundleid");
+		
+    	if (bundleid == null) {
+    		Log.e(TAG, "Intent to mark a bundle as delivered, but no bundle ID given");
+    		return;
+    	}
+    	
+    	synchronized(this.roster) {
+	    	// report delivery to the roster
+	    	getRoster().reportDelivery(source, bundleid);
+    	}
+	}
+	
+	private void actionSendMessage(Long buddyId, String text) {
+		try {
+			Session s = _client.getSession();
+			
+			Long msgId = getRoster().createMessage(buddyId, new Date(), new Date(), false, text, 0L);
+			
+			// load buddy from roster
+			Buddy buddy = getRoster().getBuddy( buddyId );
+			
+			// create a new bundle
+			Bundle b = new Bundle();
+			
+			b.setDestination(new SingletonEndpoint(buddy.getEndpoint()));
+			
+			String lifetime = PreferenceManager.getDefaultSharedPreferences(this).getString("messageduration", "259200");
+			b.setLifetime(Long.parseLong(lifetime));
+			
+			// set status report requests
+			b.set(ProcFlags.REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
+			b.setReportto(SingletonEndpoint.ME);
+			
+			synchronized(this.roster) {
+				// send out the message
+				BundleID ret = s.send(b, text.getBytes());
+				
+				if (ret == null)
+				{
+					Log.e(TAG, "could not send the message");
+				}
+				else
+				{
+				    Log.d(TAG, "Bundle sent, BundleID: " + ret.toString());
+				}
+				
+				// update message into the database
+				getRoster().reportSent(msgId, ret.toString());
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (SessionDestroyedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void actionRefreshPresence(String presence, String nickname, String status) {	
+		try {
+			Session s = _client.getSession();
+			
+			String presence_message = "Presence: " + presence + "\n" +
+					"Nickname: " + nickname + "\n" +
+					"Status: " + status;
+			
+			BundleID ret = s.send(ChatService.PRESENCE_GROUP_EID, 3600, presence_message.getBytes());
+			
+			if (ret == null)
+			{
+				Log.e(TAG, "could not send the message");
+			}
+			else
+			{
+			    Log.d(TAG, "Presence sent, BundleID: " + ret.toString());
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (SessionDestroyedException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void startDebug(Debug d) {
+		String debug_source = "dtn://debug/chat";
+		
 		switch (d) {
 		case NOTIFICATION:
-			if (this.getRoster().size() > 0) {
-				createNotification(this.getRoster().getFirst(), new Message(null, true, new Date(), new Date(), "Debug message"));
-			}
+			// create a new message
+			Long msgId = getRoster().createMessage(debug_source, new Date(), new Date(), true, "Hello World", 0L);
+			
+			// retrieve message object
+			Message msg = getRoster().getMessage(msgId);
+			
+			// get buddy object
+			Buddy b = getRoster().getBuddy(msg.getBuddyId());
+			
+			// create a notification
+			createNotification(b, msg);
+			break;
+		case BUDDY_ADD:
+			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World");
 			break;
 		}
 	}

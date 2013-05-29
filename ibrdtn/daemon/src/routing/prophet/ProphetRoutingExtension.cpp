@@ -113,7 +113,7 @@ namespace dtn
 			try {
 				const DeliveryPredictabilityMap& neighbor_dp_map = response.get<DeliveryPredictabilityMap>();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "DeliveryPredictabilityMap received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "delivery predictability map received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// update the encounter on every routing handshake
 				{
@@ -144,7 +144,7 @@ namespace dtn
 			try {
 				const AcknowledgementSet& neighbor_ack_set = response.get<AcknowledgementSet>();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "AcknowledgementSet received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "ack'set received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// merge ack'set into the known bundles
 				for (AcknowledgementSet::const_iterator it = _acknowledgementSet.begin(); it != _acknowledgementSet.end(); ++it) {
@@ -333,12 +333,15 @@ namespace dtn
 
 		void ProphetRoutingExtension::componentUp() throw ()
 		{
+			// reset task queue
+			_taskqueue.reset();
+
 			// routine checked for throw() on 15.02.2013
 			try {
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, error) << "componentUp failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -349,7 +352,7 @@ namespace dtn
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -455,7 +458,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 50) << "processing prophet task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 50) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						/**
@@ -505,9 +508,12 @@ namespace dtn
 								// query a new summary vector from this neighbor
 								(**this).doHandshake(task.eid);
 							}
-						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-						} catch (const dtn::storage::NoBundleFoundException&) {
+						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const NeighborDatabase::NeighborNotAvailableException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const dtn::storage::NoBundleFoundException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const std::bad_cast&) { }
 
 						/**
@@ -528,9 +534,10 @@ namespace dtn
 						} catch (const std::bad_cast&) { }
 
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 20) << "Unexpected exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 20) << "task failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
-				} catch (const std::exception&) {
+				} catch (const std::exception &ex) {
+					IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 15) << "terminated due to " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 

@@ -36,7 +36,6 @@ namespace dtn
 		{
 		public:
 			MetaBundle();
-			MetaBundle(const dtn::data::BundleID &id);
 			MetaBundle(const dtn::data::Bundle &b);
 			virtual ~MetaBundle();
 
@@ -54,6 +53,16 @@ namespace dtn
 			Number hopcount;
 			Number payloadlength;
 			Integer net_priority;
+
+			/**
+			 * Creates a mock-up MetaBundle using a BundleID.
+			 * Such object are incomplete and should only used in a limited
+			 * fashion.
+			 */
+			static MetaBundle mockUp(const dtn::data::BundleID &id);
+
+		private:
+			MetaBundle(const dtn::data::BundleID &id);
 		};
 	}
 }

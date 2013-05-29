@@ -34,6 +34,8 @@ namespace dtn
 	{
 		class StaticRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
 		{
+			static const std::string TAG;
+
 		public:
 			StaticRoutingExtension();
 			virtual ~StaticRoutingExtension();

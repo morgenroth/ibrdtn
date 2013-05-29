@@ -482,7 +482,7 @@ namespace dtn
 							// get the list of services
 							const std::list<DiscoveryService> &services = announce.getServices();
 
-							if (services.empty())
+							if (services.empty() && announce.isShort())
 							{
 								ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
 							}
@@ -520,7 +520,7 @@ namespace dtn
 				} catch (const ibrcommon::vsocket_timeout&) { };
 
 				// trigger timeout, if one second is elapsed
-				tm.stop(); if (tm.getMilliseconds() > 1000)
+				tm.stop(); if (tm.getMilliseconds() > 1000.0)
 				{
 					tm.start();
 					timeout();

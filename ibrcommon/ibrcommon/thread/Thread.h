@@ -139,6 +139,11 @@ namespace ibrcommon
 		static void concurrency(int level);
 
 		/**
+		 * Returns true if this thread was started and finalized before.
+		 */
+		bool isFinalized() throw ();
+
+		/**
 		 * Determine if two thread identifiers refer to the same thread.
 		 * @param other The thread to compare.
 		 * @return True, if both threads are the same.

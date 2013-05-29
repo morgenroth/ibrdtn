@@ -93,17 +93,17 @@ namespace ibrcommon
 	{
 		ibrcommon::MutexLock l(in_buf_cond);
 
-		IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream::queue"<< IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 75) << "queue" << IBRCOMMON_LOGGER_ENDL;
 
 		// Retrieve sequence number of frame
 		unsigned int seq_num = buf[0] & SEQ_NUM_MASK;
 
-		IBRCOMMON_LOGGER_DEBUG(45) << "Received frame sequence number: " << seq_num << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 70) << "Received frame sequence number: " << seq_num << IBRCOMMON_LOGGER_ENDL;
 
 		// Check if the sequence number is what we expect
 		if (in_seq_num_ != seq_num)
 		{
-			IBRCOMMON_LOGGER(error) << "Received frame with out of bound sequence number (" << seq_num << " expected " << (int)in_seq_num_ << ")"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("lowpanstream", error) << "Received frame with out of bound sequence number (" << seq_num << " expected " << (int)in_seq_num_ << ")"<< IBRCOMMON_LOGGER_ENDL;
 			_abort = true;
 			in_buf_cond.signal();
 			return;
@@ -148,7 +148,7 @@ namespace ibrcommon
 				std::char_traits<char>::eof()), std::char_traits<char>::eof()) ? -1
 				: 0;
 
-		IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream::sync"<< IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 80) << "sync" << IBRCOMMON_LOGGER_ENDL;
 
 		return ret;
 	}
@@ -158,7 +158,7 @@ namespace ibrcommon
 		char *ibegin = &out_buf_[0];
 		char *iend = pptr();
 
-		IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream::overflow"<< IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 80) << "overflow" << IBRCOMMON_LOGGER_ENDL;
 
 		// mark the buffer as free
 		setp(&out_buf_[1], &out_buf_[BUFF_SIZE - 1]);
@@ -174,7 +174,7 @@ namespace ibrcommon
 		// if there is nothing to send, just return
 		if (bytes == 0)
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream::overflow() nothing to sent" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 80) << "overflow() nothing to sent" << IBRCOMMON_LOGGER_ENDL;
 			return std::char_traits<char>::not_eof(c);
 		}
 
@@ -185,7 +185,7 @@ namespace ibrcommon
 		out_seq_num_global++;
 		out_seq_num_ = static_cast<uint8_t>((out_seq_num_ + 1) % 8);
 
-		IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream send segment " << (int)out_seq_num_ << " / " << out_seq_num_global << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 80) << "lowpanstream send segment " << (int)out_seq_num_ << " / " << out_seq_num_global << IBRCOMMON_LOGGER_ENDL;
 
 		// Send segment to CL, use callback interface
 		callback.send_cb(&out_buf_[0], bytes, _address);
@@ -208,7 +208,7 @@ namespace ibrcommon
 	{
 		ibrcommon::MutexLock l(in_buf_cond);
 
-		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 10) << "underflow"<< IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 80) << "underflow"<< IBRCOMMON_LOGGER_ENDL;
 
 		while (in_buf_free)
 		{
@@ -217,7 +217,7 @@ namespace ibrcommon
 		}
 		memcpy(&out2_buf_[0] , &in_buf_[0], in_buf_len);
 		in_buf_free = true;
-		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 10) << "underflow in_buf_free: " << in_buf_free << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("lowpanstream", 80) << "underflow in_buf_free: " << in_buf_free << IBRCOMMON_LOGGER_ENDL;
 		in_buf_cond.signal();
 
 		// Since the input buffer content is now valid (or is new)

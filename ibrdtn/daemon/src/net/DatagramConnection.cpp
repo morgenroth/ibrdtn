@@ -23,9 +23,7 @@
 #include "net/DatagramConnection.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
-#include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
-#include "routing/RequeueBundleEvent.h"
 #include "core/BundleCore.h"
 
 #include <ibrdtn/utils/Utils.h>
@@ -128,9 +126,6 @@ namespace dtn
 				// remove this connection from the connection list
 				_callback.connectionDown(this);
 			} catch (const ibrcommon::MutexException&) { };
-
-			// clear the queue
-			_sender.clearQueue();
 		}
 
 		const std::string& DatagramConnection::getIdentifier() const
@@ -142,9 +137,9 @@ namespace dtn
 		 * Queue job for delivery to another node
 		 * @param job
 		 */
-		void DatagramConnection::queue(const ConvergenceLayer::Job &job)
+		void DatagramConnection::queue(const dtn::net::BundleTransfer &job)
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 15) << "queue bundle " << job.bundle.toString() << " to " << job.destination.getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 15) << "queue bundle " << job.getBundle().toString() << " to " << job.getNeighbor().getString() << IBRCOMMON_LOGGER_ENDL;
 			_sender.queue.push(job);
 		}
 
@@ -306,7 +301,7 @@ namespace dtn
 						tm.stop();
 
 						// adjust the average rtt
-						adjust_rtt(static_cast<double>(tm.getMilliseconds()));
+						adjust_rtt(tm.getMilliseconds());
 
 						return;
 					} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
@@ -385,23 +380,27 @@ namespace dtn
 
 		void DatagramConnection::Stream::queue(const char *buf, const dtn::data::Length &len) throw (DatagramException)
 		{
-			ibrcommon::MutexLock l(_queue_buf_cond);
-			if (_abort) throw DatagramException("stream aborted");
+			try {
+				ibrcommon::MutexLock l(_queue_buf_cond);
+				if (_abort) throw DatagramException("stream aborted");
 
-			// wait until the buffer is free
-			while (_queue_buf_len > 0)
-			{
-				_queue_buf_cond.wait();
+				// wait until the buffer is free
+				while (_queue_buf_len > 0)
+				{
+					_queue_buf_cond.wait();
+				}
+
+				// copy the new data into the buffer, but leave out the first byte (header)
+				::memcpy(&_queue_buf[0], buf, len);
+
+				// store the buffer length
+				_queue_buf_len = len;
+
+				// notify waiting threads
+				_queue_buf_cond.signal();
+			} catch (ibrcommon::Conditional::ConditionalAbortException &ex) {
+				throw DatagramException("stream aborted");
 			}
-
-			// copy the new data into the buffer, but leave out the first byte (header)
-			::memcpy(&_queue_buf[0], buf, len);
-
-			// store the buffer length
-			_queue_buf_len = len;
-
-			// notify waiting threads
-			_queue_buf_cond.signal();
 		}
 
 		void DatagramConnection::Stream::close()
@@ -460,6 +459,11 @@ namespace dtn
 				_callback.stream_send(&_out_buf[0], bytes, _last_segment);
 			} catch (const DatagramException &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 35) << "Stream::overflow() exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+				// close this stream
+				close();
+
+				// re-throw the DatagramException
 				throw;
 			}
 
@@ -470,26 +474,30 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 40) << "Stream::underflow()" << IBRCOMMON_LOGGER_ENDL;
 
-			ibrcommon::MutexLock l(_queue_buf_cond);
+			try {
+				ibrcommon::MutexLock l(_queue_buf_cond);
 
-			while (_queue_buf_len == 0)
-			{
-				if (_abort) throw ibrcommon::Exception("stream aborted");
-				_queue_buf_cond.wait();
+				while (_queue_buf_len == 0)
+				{
+					if (_abort) throw ibrcommon::Exception("stream aborted");
+					_queue_buf_cond.wait();
+				}
+
+				// copy the queue buffer to an internal buffer
+				::memcpy(&_in_buf[0], &_queue_buf[0], _queue_buf_len);
+
+				// Since the input buffer content is now valid (or is new)
+				// the get pointer should be initialized (or reset).
+				setg(&_in_buf[0], &_in_buf[0], &_in_buf[0] + _queue_buf_len);
+
+				// mark the queue buffer as free
+				_queue_buf_len = 0;
+				_queue_buf_cond.signal();
+
+				return std::char_traits<char>::not_eof(_in_buf[0]);
+			} catch (ibrcommon::Conditional::ConditionalAbortException &ex) {
+				throw DatagramException("stream aborted");
 			}
-
-			// copy the queue buffer to an internal buffer
-			::memcpy(&_in_buf[0], &_queue_buf[0], _queue_buf_len);
-
-			// Since the input buffer content is now valid (or is new)
-			// the get pointer should be initialized (or reset).
-			setg(&_in_buf[0], &_in_buf[0], &_in_buf[0] + _queue_buf_len);
-
-			// mark the queue buffer as free
-			_queue_buf_len = 0;
-			_queue_buf_cond.signal();
-
-			return std::char_traits<char>::not_eof(_in_buf[0]);
 		}
 
 		DatagramConnection::Sender::Sender(DatagramConnection &conn, Stream &stream)
@@ -516,10 +524,10 @@ namespace dtn
 				while(_stream.good())
 				{
 					// get the next job
-					_current_job = queue.getnpop(true);
+					dtn::net::BundleTransfer job = queue.getnpop(true);
 
 					// read the bundle out of the storage
-					const dtn::data::Bundle bundle = storage.get(_current_job.bundle);
+					const dtn::data::Bundle bundle = storage.get(job.getBundle());
 
 					// write the bundle into the stream
 					serializer << bundle; _stream.flush();
@@ -528,11 +536,7 @@ namespace dtn
 					if (_stream.good())
 					{
 						// bundle send completely - raise bundle event
-						dtn::net::TransferCompletedEvent::raise(_current_job.destination, bundle);
-						dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
-
-						// clear the "current_job" register
-						_current_job.clear();
+						job.complete();
 					}
 				}
 
@@ -545,36 +549,8 @@ namespace dtn
 			}
 		}
 
-		void DatagramConnection::Sender::clearQueue() throw ()
-		{
-			// reset the previously aborted queue
-			queue.reset();
-
-			// requeue all bundles still queued
-			try {
-				while (true)
-				{
-					const ConvergenceLayer::Job job = queue.getnpop();
-
-					// raise transfer abort event for all bundles without an ACK
-					dtn::routing::RequeueBundleEvent::raise(job.destination, job.bundle);
-				}
-			} catch (const ibrcommon::QueueUnblockedException&) {
-				// queue empty
-			}
-
-			// abort all operations on the queue again
-			queue.abort();
-		}
-
 		void DatagramConnection::Sender::finally() throw ()
 		{
-			// notify the aborted transfer of the last bundle
-			if (_current_job.bundle != dtn::data::BundleID())
-			{
-				// put-back job on the queue
-				queue.push(_current_job);
-			}
 		}
 
 		void DatagramConnection::Sender::__cancellation() throw ()

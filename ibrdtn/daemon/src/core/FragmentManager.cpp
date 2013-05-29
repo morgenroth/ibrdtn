@@ -260,7 +260,13 @@ namespace dtn
 		dtn::data::Length FragmentManager::get_payload_offset(const dtn::data::Bundle &bundle, const dtn::data::Length &abs_offset) throw ()
 		{
 			try {
-				dtn::data::DefaultSerializer serializer(std::cout);
+				// build the dictionary for EID lookup
+				const dtn::data::Dictionary dict(bundle);
+
+				// create a default serializer
+				dtn::data::DefaultSerializer serializer(std::cout, dict);
+
+				// get the encoded length of the primary block
 				dtn::data::Length header = serializer.getLength((dtn::data::PrimaryBlock&)bundle);
 
 				for (dtn::data::Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)
@@ -275,7 +281,7 @@ namespace dtn
 						return abs_offset - header;
 					} catch (std::bad_cast&) { };
 				}
-			} catch (const dtn::SerializationFailedException&) {
+			} catch (const dtn::InvalidDataException&) {
 				// failure while calculating the bundle length
 			}
 

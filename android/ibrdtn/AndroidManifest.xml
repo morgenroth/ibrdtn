@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="de.tubs.ibr.dtn"
     android:versionCode="32"
-    android:versionName="0.9.0-32" >
+    android:versionName="0.9.0" >
 
     <permission
         android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
@@ -10,12 +10,12 @@
         android:label="@string/permlab_dtnCommunication"
         android:permissionGroup="android.permission-group.NETWORK"
         android:protectionLevel="normal" />
-    <permission
-        android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"
-        android:description="@string/permdesc_dtnCommunicationServer"
-        android:label="@string/permlab_dtnCommunicationServer"
-        android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
-        android:protectionLevel="normal" />
+
+	<permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"
+	        android:label="@string/permlab_dtnCommunicationServer"
+	        android:description="@string/permdesc_dtnCommunicationServer"
+	        android:permissionGroup="android.permission-group.SYSTEM_TOOLS"
+	        android:protectionLevel="normal" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
@@ -27,7 +27,7 @@
     <!-- READ_LOGS is needed on Android < 4.1, On Android >= 4.1 an app can read it's own logs without permission -->
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
-    <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER" />
+    <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"/>
     <uses-permission android:name="de.hendrikfreytag.wifip2p4ibrdtn.permission.REQUEST_PEER_CONNECTION" />
 
     <uses-sdk
@@ -39,60 +39,55 @@
         android:icon="@drawable/icon"
         android:label="@string/app_name" >
         <activity
-            android:name="de.tubs.ibr.dtn.daemon.Preferences"
+            android:name=".daemon.Preferences"
             android:icon="@drawable/icon"
             android:label="@string/app_name"
             android:uiOptions="splitActionBarWhenNarrow" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <service
-            android:name="de.tubs.ibr.dtn.service.DaemonService"
+            android:name=".service.DaemonService"
+            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
             android:exported="true"
-            android:label="@string/app_name_daemon"
-            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" >
+            android:label="@string/app_name_daemon">
             <intent-filter>
                 <action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
                 <action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
                 <action android:name="de.tubs.ibr.dtn.DTNService" />
-                <action android:name="de.hendrikfreytag.wifip2p4ibrdtn.action.CONNECTION_CHANGED" />
-                <action android:name="de.hendrikfreytag.wifip2p4ibrdtn.action.PEER_FOUND" />
             </intent-filter>
         </service>
+        
         <service
-            android:name="de.tubs.ibr.dtn.sendfile.SendService"
+            android:name=".sendfile.SendService"
             android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" >
             <intent-filter>
                 <action android:name="de.tubs.ibr.dtn.intent.SENDFILE" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="de.tubs.ibr.dtn.intent.REGISTRATION" />
-
-                <category android:name="de.tubs.ibr.dtn.sendfile.SendService" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
-
-                <category android:name="de.tubs.ibr.dtn.sendfile.SendService" />
-            </intent-filter>
+	        <intent-filter>
+				<action android:name="de.tubs.ibr.dtn.intent.REGISTRATION" />
+	            <category android:name="de.tubs.ibr.dtn.sendfile.SendService" />
+	        </intent-filter>
+	        <intent-filter>
+	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
+	            <category android:name="de.tubs.ibr.dtn.sendfile.SendService" />
+	        </intent-filter>
         </service>
+        
         <service
-            android:name="de.tubs.ibr.dtn.sendfile.ReceiveService"
+            android:name=".sendfile.ReceiveService"
             android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" >
-            <intent-filter>
-                <action android:name="de.tubs.ibr.dtn.intent.REGISTRATION" />
-
-                <category android:name="de.tubs.ibr.dtn.sendfile.ReceiveService" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
-
-                <category android:name="de.tubs.ibr.dtn.sendfile.ReceiveService" />
-            </intent-filter>
+	        <intent-filter>
+				<action android:name="de.tubs.ibr.dtn.intent.REGISTRATION" />
+	            <category android:name="de.tubs.ibr.dtn.sendfile.ReceiveService" />
+	        </intent-filter>
+	        <intent-filter>
+	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
+	            <category android:name="de.tubs.ibr.dtn.sendfile.ReceiveService" />
+	        </intent-filter>
         </service>
 
         <activity
@@ -100,7 +95,7 @@
             android:icon="@drawable/ic_neighbors"
             android:label="@string/list_neighbors" />
         <activity
-            android:name="de.tubs.ibr.dtn.daemon.LogActivity"
+            android:name=".daemon.LogActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:icon="@drawable/ic_log"
             android:label="@string/list_logs" />
@@ -110,7 +105,7 @@
             android:theme="@android:style/Theme.NoTitleBar" />
 
         <receiver
-            android:name="de.tubs.ibr.dtn.service.OnBootReceiver"
+            android:name=".service.OnBootReceiver"
             android:enabled="true"
             android:exported="false"
             android:label="IntentReceiver" >
@@ -120,23 +115,31 @@
         </receiver>
 
         <service
-            android:name="de.tubs.ibr.dtn.stats.CollectorService"
+            android:name=".stats.CollectorService"
             android:exported="false" >
         </service>
 
         <receiver
-            android:name="de.tubs.ibr.dtn.stats.DataReceiver"
+            android:name=".stats.DataReceiver"
             android:exported="false"
             android:label="DataReceiver" >
             <intent-filter>
                 <action android:name="de.tubs.ibr.dtn.intent.EVENT" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
+        
+		<receiver
+			android:name=".service.NetworkStateReceiver"
+			android:label="NetworkStateReceiver">
+			<intent-filter>
+				<action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+				<action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
+			</intent-filter>
+		</receiver>
 
         <activity
-            android:name="de.tubs.ibr.dtn.p2p.P2pSettingsActivity"
+            android:name=".p2p.P2pSettingsActivity"
             android:label="@string/title_activity_p2p_settings" >
             <intent-filter>
                 <action android:name=".activities.P2pSettingsActivity" />

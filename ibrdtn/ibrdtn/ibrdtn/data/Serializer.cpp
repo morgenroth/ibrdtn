@@ -57,17 +57,7 @@ namespace dtn
 			_dictionary.clear();
 
 			// rebuild the dictionary
-			_dictionary.add(obj.destination);
-			_dictionary.add(obj.source);
-			_dictionary.add(obj.reportto);
-			_dictionary.add(obj.custodian);
-
-			// add EID of all secondary blocks
-			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
-			{
-				const Block &b = (**iter);
-				_dictionary.add( b.getEIDList() );
-			}
+			_dictionary.add(obj);
 
 			// check if the bundle header could be compressed
 			_compressable = isCompressable(obj);
@@ -608,12 +598,12 @@ namespace dtn
 						(*this).read(obj, block);
 					} catch (dtn::PayloadReceptionInterrupted &ex) {
 						// some debugging
-						IBRCOMMON_LOGGER_DEBUG(15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("DefaultDeserializer", 15) << "Reception of bundle payload failed." << IBRCOMMON_LOGGER_ENDL;
 
 						// interrupted transmission
 						if (!obj.get(dtn::data::PrimaryBlock::DONT_FRAGMENT) && (block.getLength() > 0) && _fragmentation)
 						{
-							IBRCOMMON_LOGGER_DEBUG(25) << "Create a fragment." << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("DefaultDeserializer", 25) << "Create a fragment." << IBRCOMMON_LOGGER_ENDL;
 
 							if ( !obj.get(dtn::data::PrimaryBlock::FRAGMENT) )
 							{

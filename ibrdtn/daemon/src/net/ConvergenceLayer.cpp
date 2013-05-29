@@ -26,31 +26,8 @@ namespace dtn
 {
 	namespace net
 	{
-		ConvergenceLayer::ConvergenceLayer()
-		{
-		}
-
 		ConvergenceLayer::~ConvergenceLayer()
 		{
-		}
-
-		ConvergenceLayer::Job::Job()
-		{
-		}
-
-		ConvergenceLayer::Job::Job(const dtn::data::EID &eid, const dtn::data::BundleID &b)
-		 : bundle(b), destination(eid)
-		{
-		}
-
-		ConvergenceLayer::Job::~Job()
-		{
-		}
-
-		void ConvergenceLayer::Job::clear()
-		{
-			bundle = dtn::data::BundleID();
-			destination = dtn::data::EID();
 		}
 	}
 }

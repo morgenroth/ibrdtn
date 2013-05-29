@@ -79,7 +79,7 @@ namespace dtn
 			_service->send(HEADER_ACK, 0, seqno, destination, NULL, 0);
 		}
 
-		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
+		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			const std::list<dtn::core::Node::URI> uri_list = node.get(_service->getProtocol());
 			if (uri_list.empty()) return;
@@ -88,7 +88,7 @@ namespace dtn
 			const dtn::core::Node::URI &uri = uri_list.front();
 
 			// some debugging
-			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "job queued to " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "job queued for " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// lock the connection list while working with it
 			ibrcommon::MutexLock lc(_connection_cond);

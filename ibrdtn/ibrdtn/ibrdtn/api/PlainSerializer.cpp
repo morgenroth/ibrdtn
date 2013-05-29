@@ -238,11 +238,11 @@ namespace dtn
 				try {
 					readBlock(builder);
 				} catch (const dtn::data::BundleBuilder::DiscardBlockException &ex) {
-					IBRCOMMON_LOGGER_DEBUG(5) << "unknown block has been discarded " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 5) << "unknown block has been discarded " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				} catch (const UnknownBlockException &ex) {
-					IBRCOMMON_LOGGER_DEBUG(5) << "unknown administrative block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 5) << "unknown administrative block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				} catch (const BlockNotProcessableException &ex) {
-					IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
@@ -399,7 +399,7 @@ namespace dtn
 			}
 
 			// then read the payload
-			IBRCOMMON_LOGGER_DEBUG(20) << "API expecting payload size of " << blocksize << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 20) << "API expecting payload size of " << blocksize << IBRCOMMON_LOGGER_ENDL;
 
 			switch(enc)
 			{
@@ -505,13 +505,42 @@ namespace dtn
 			return (*this);
 		}
 
-		void PlainSerializer::writeData(std::istream &stream, const dtn::data::Length &len, PlainSerializer::Encoding enc)
+		void PlainSerializer::writeData(const dtn::data::Block &block)
 		{
-			_stream << "Length: " << len << std::endl;
-			_stream << "Encoding: " << PlainSerializer::printEncoding(enc) << std::endl;
+			_stream << "Length: " << block.getLength() << std::endl;
+			_stream << "Encoding: " << PlainSerializer::printEncoding(_encoding) << std::endl;
 			_stream << std::endl;
 
-			switch(enc)
+			size_t slength = 0;
+
+			switch(_encoding)
+			{
+				case BASE64:
+				{
+					// put data here
+					ibrcommon::Base64Stream b64(_stream, false, 80);
+					block.serialize(b64, slength);
+					b64 << std::flush;
+					break;
+				}
+
+				case RAW:
+					block.serialize(_stream, slength);
+					break;
+
+				default:
+					break;
+			}
+			_stream << std::endl;
+		}
+
+		void PlainSerializer::writeData(std::istream &stream, const dtn::data::Length &len)
+		{
+			_stream << "Length: " << len << std::endl;
+			_stream << "Encoding: " << PlainSerializer::printEncoding(_encoding) << std::endl;
+			_stream << std::endl;
+
+			switch(_encoding)
 			{
 				case BASE64:
 				{
@@ -529,7 +558,6 @@ namespace dtn
 				default:
 					break;
 			}
-			_stream << std::flush;
 			_stream << std::endl;
 		}
 
