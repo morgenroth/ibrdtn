@@ -84,7 +84,8 @@ public class ClientSession {
 	        // forward the notification as intent
 	        // create a new intent
 	        Intent notify = new Intent(de.tubs.ibr.dtn.Intent.RECEIVE);
-	        notify.addCategory(_package_name);
+	        notify.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
+	        notify.setPackage(_package_name);
 	        notify.putExtra("bundleid", toAndroid(swigId));
 
 	        // send notification intent
@@ -101,7 +102,8 @@ public class ClientSession {
             // forward the notification as intent
             // create a new intent
             Intent notify = new Intent(de.tubs.ibr.dtn.Intent.STATUS_REPORT);
-            notify.addCategory(_package_name);
+            notify.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
+            notify.setPackage(_package_name);
             notify.putExtra("bundleid", toAndroid(swigId));
             notify.putExtra("source", new SingletonEndpoint(source.getString()));
             notify.putExtra("status", swigReport.getStatus());
@@ -143,7 +145,8 @@ public class ClientSession {
             // forward the notification as intent
             // create a new intent
             Intent notify = new Intent(de.tubs.ibr.dtn.Intent.CUSTODY_SIGNAL);
-            notify.addCategory(_package_name);
+            notify.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
+            notify.setPackage(_package_name);
             notify.putExtra("bundleid", toAndroid(swigId));
             notify.putExtra("source", new SingletonEndpoint(source.getString()));
             notify.putExtra("accepted", swigCustody.getCustody_accepted());
@@ -354,7 +357,8 @@ public class ClientSession {
 
             // send out registration intent to the application
             Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
-            broadcastIntent.addCategory(_package_name);
+            broadcastIntent.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
+            broadcastIntent.setPackage(_package_name);
             broadcastIntent.putExtra("key", _package_name);
 
             // send notification intent

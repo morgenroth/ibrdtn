@@ -22,6 +22,8 @@
 package de.tubs.ibr.dtn;
 
 public class Intent {
+    public static final String CATEGORY_SESSION = "de.tubs.ibr.dtn.intent.category.SESSION";
+    
 	public static final String DTNAPP = "de.tubs.ibr.dtn.intent.DTNAPP";
 	
 	public static final String REGISTRATION = "de.tubs.ibr.dtn.intent.REGISTRATION";
