@@ -17,6 +17,7 @@ import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
+import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
@@ -78,9 +79,10 @@ public class PingService extends IntentService {
         return mLastMeasurement;
     }
     
-    public String getLocalEndpoint() {
+    private String getLocalEndpoint() {
         try {
             if (mClient != null) {
+                if (mClient.getDTNService() == null) return null;
                 return mClient.getDTNService().getEndpoint();
             }
         } catch (RemoteException e) {
@@ -183,12 +185,34 @@ public class PingService extends IntentService {
         }
     }
     
+    SessionConnection mSession = new SessionConnection() {
+
+        @Override
+        public void onSessionConnected(Session session) {
+            Log.d(TAG, "Session connected");
+            
+            String localeid = getLocalEndpoint();
+            if (localeid != null) {
+                // notify other components of the updated EID
+                Intent i = new Intent(DATA_UPDATED);
+                i.putExtra("localeid", localeid);
+                sendBroadcast(i);
+            }
+        }
+
+        @Override
+        public void onSessionDisconnected() {
+            Log.d(TAG, "Session disconnected");
+        }
+        
+    };
+    
     @Override
     public void onCreate() {
         super.onCreate();
         
         // create a new DTN client
-        mClient = new DTNClient();
+        mClient = new DTNClient(mSession);
         
         // create registration with "example-app" as endpoint
         // if the EID of this device is "dtn://device" then the
