@@ -41,18 +41,7 @@ namespace dtn
 		 */
 		Dictionary::Dictionary(const dtn::data::Bundle &bundle)
 		{
-			// rebuild the dictionary
-			add(bundle.destination);
-			add(bundle.source);
-			add(bundle.reportto);
-			add(bundle.custodian);
-
-			// add EID of all secondary blocks
-			for (Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)
-			{
-				const Block &b = (**iter);
-				add( b.getEIDList() );
-			}
+			add(bundle);
 		}
 
 		Dictionary::Dictionary(const Dictionary &d)
@@ -142,6 +131,22 @@ namespace dtn
 			{
 				add(*iter);
 				++iter;
+			}
+		}
+
+		void Dictionary::add(const Bundle &bundle)
+		{
+			// rebuild the dictionary
+			add(bundle.destination);
+			add(bundle.source);
+			add(bundle.reportto);
+			add(bundle.custodian);
+
+			// add EID of all secondary blocks
+			for (Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)
+			{
+				const Block &b = (**iter);
+				add( b.getEIDList() );
 			}
 		}
 
