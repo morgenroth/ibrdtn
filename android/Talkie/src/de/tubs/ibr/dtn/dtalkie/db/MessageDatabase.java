@@ -22,74 +22,79 @@
 package de.tubs.ibr.dtn.dtalkie.db;
 
 import java.io.File;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import de.tubs.ibr.dtn.dtalkie.R;
+import android.provider.BaseColumns;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.ListAdapter;
-import android.widget.TextView;
+import de.tubs.ibr.dtn.dtalkie.MessageAdapter;
 
+@SuppressLint("SimpleDateFormat")
 public class MessageDatabase {
 	
-	private final static String TAG = "MessageDatabase"; 
+	private final static String TAG = "MessageDatabase";
 	
-	private DBOpenHelper _helper = null;
-	private SQLiteDatabase _database = null;
-	private OnUpdateListener _listener = null;
+	public final static String NOTIFY_DATABASE_UPDATED = "de.tubs.ibr.dtn.dtalkie.DATABASE_UPDATED"; 
 	
-	private HashMap<Folder, SmartListAdapter> _views = new HashMap<Folder, SmartListAdapter>();
-	private HashMap<Folder, LinkedList<Message>> _messages = new HashMap<Folder, LinkedList<Message>>();
+	private DBOpenHelper mHelper = null;
+	private SQLiteDatabase mDatabase = null;
+    private Context mContext = null;
 	
-	public enum Folder {
-		INBOX("inbox"),
-		OUTBOX("outbox");
-		
-		private Folder(String name) {
-			this.name = name;
-		}
-		
-		private final String name;
-		
-		public String toString() {
-			return name;
-		}
-	}
+    private static final String DATABASE_NAME = "messages";
+    private static final int DATABASE_VERSION = 1;
+    
+    public enum Folder {
+        INBOX("inbox"),
+        OUTBOX("outbox");
+        
+        private Folder(String table) {
+            this.mTable = table;
+        }
+        
+        private final String mTable;
+        
+        public String getTableName() {
+            return mTable;
+        }
+    }
+    
+    // Database creation sql statement
+    private static final String DATABASE_CREATE_OUTBOX = 
+            "CREATE TABLE " + Folder.OUTBOX.getTableName() + " (" +
+                BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                Message.SOURCE + " TEXT NOT NULL, " +
+                Message.DESTINATION + " TEXT NOT NULL, " +
+                Message.CREATED + " TEXT, " +
+                Message.RECEIVED + "  TEXT, " +
+                Message.FILENAME + " TEXT NOT NULL, " +
+                Message.MARKED + " TEXT, " +
+                Message.PRIORITY + " INTEGER " +
+            ");";
+
+    private static final String DATABASE_CREATE_INBOX = 
+            "CREATE TABLE " + Folder.INBOX.getTableName() + " (" +
+                BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                Message.SOURCE + " TEXT NOT NULL, " +
+                Message.DESTINATION + " TEXT NOT NULL, " +
+                Message.CREATED + " TEXT, " +
+                Message.RECEIVED + "  TEXT, " +
+                Message.FILENAME + " TEXT NOT NULL, " +
+                Message.MARKED + " TEXT, " +
+                Message.PRIORITY + " INTEGER " +
+            ");";
 	
-	public interface OnUpdateListener
-	{
-		public void update(Folder folder);
+	public SQLiteDatabase getDB() {
+	    return mDatabase;
 	}
 	
 	private class DBOpenHelper extends SQLiteOpenHelper {
-		
-		private static final String DATABASE_NAME = "messages";
-		private static final int DATABASE_VERSION = 1;
-		
-		// Database creation sql statement
-		private static final String DATABASE_CREATE_OUTBOX = "create table outbox (_id integer primary key autoincrement, "
-				+ "source text not null, destination text not null, created text, received text,  filename text not null, marked text, priority integer);";
-
-		private static final String DATABASE_CREATE_INBOX = "create table inbox (_id integer primary key autoincrement, "
-				+ "source text not null, destination text not null, created text, received text, filename text not null, marked text, priority integer);";
 		
 		public DBOpenHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -114,103 +119,105 @@ public class MessageDatabase {
 
 	public MessageDatabase(Context context) throws SQLException
 	{
-		final DateFormat formatter = new SimpleDateFormat("yyyy-M-d HH:mm:ss");
-		
-		_helper = new DBOpenHelper(context);
-		_database = _helper.getWritableDatabase();
-		
-		for (Folder f : Folder.values())
-		{
-			// create list
-			LinkedList<Message> l = new LinkedList<Message>();
-			_messages.put(f, l);
-			
-			// load all messages
-			Cursor cur = _database.query(f.toString(), new String[] { "_id", "source", "destination", "created", "received", "filename", "marked", "priority" }, null, null, null, null, null, null);
-			Log.i(TAG, "query for messages");
-			
-			cur.moveToFirst();
-			while (!cur.isAfterLast())
-			{
-				Message msg = new Message(cur.getLong(0));
-				
-				msg.setSource(cur.getString(1));
-				msg.setDestination(cur.getString(2));
-				
-				try {
-					if (!cur.isNull(3)) msg.setCreated( formatter.parse( cur.getString(3) ));
-				} catch (ParseException e) {
-					Log.e(TAG, "failed to convert date: " + cur.getString(3));
-				}
-				
-				try {
-					if (!cur.isNull(4)) msg.setReceived( formatter.parse( cur.getString(4) ));
-				} catch (ParseException e) {
-					Log.e(TAG, "failed to convert date: " + cur.getString(4));
-				}
-
-				if (!cur.isNull(5)) msg.setFile( new File(cur.getString(5)) );
-				if (!cur.isNull(6)) msg.setMarked(cur.getString(6).equals("yes"));
-				if (!cur.isNull(7)) msg.setPriority(cur.getInt(7));
-				
-				l.add( msg );
-				
-				cur.moveToNext();
-			}
-			
-			cur.close();
-			
-			// create view
-			_views.put(f, new SmartListAdapter(context, f, l));
-		}
+		mHelper = new DBOpenHelper(context);
+		mDatabase = mHelper.getWritableDatabase();
+		mContext = context;
 	}
+	
+    public void notifyDataChanged(Folder f) {
+        Intent i = new Intent(NOTIFY_DATABASE_UPDATED);
+        if (f != null) i.putExtra("folder", f.toString());
+        mContext.sendBroadcast(i);
+    }
 	
 	public void close()
 	{
-		_database.close();
-		_helper.close();
-		
-		// destroy views
-		_views.clear();
+		mDatabase.close();
+		mHelper.close();
 	}
 	
-	public void clear(Folder folder) {
-		LinkedList<Message> msgs = _messages.get(folder);
-		
-		while (!msgs.isEmpty()) {
-			remove(folder, msgs.element());
+	public Message get(Folder f, Long msgid) {
+        Message msg = null;
+        
+        try {
+            Cursor cur = mDatabase.query(f.getTableName(), MessageAdapter.PROJECTION, Message.ID + " = ?", new String[] { msgid.toString() }, null, null, null, "0, 1");
+            
+            if (cur.moveToNext())
+            {
+                msg = new Message(mContext, cur, new MessageAdapter.ColumnsMap());
+            }
+            
+            cur.close();
+        } catch (Exception e) {
+            // message not found
+            Log.e(TAG, "getMessage() failed", e);
+        }
+        
+        return msg;
+	}
+	
+    public Message nextMarked(Folder f, Boolean val) {
+        Message msg = null;
+        
+        try {
+            Cursor cur = mDatabase.query(f.getTableName(), MessageAdapter.PROJECTION, Message.MARKED + " = ?", new String[] { val ? "yes" : "no" }, null, null, null, "0, 1");
+            
+            if (cur.moveToNext())
+            {
+                msg = new Message(mContext, cur, new MessageAdapter.ColumnsMap());
+            }
+            
+            cur.close();
+        } catch (Exception e) {
+            // message not found
+            Log.e(TAG, "getMessage() failed", e);
+        }
+        
+        return msg;
+    }
+	
+	public void clear(Folder f) {
+	    // delete all files
+        try {
+            Cursor cur = mDatabase.query(f.toString(), MessageAdapter.PROJECTION, null, null, null, null, null);
+            
+            if (cur.moveToNext())
+            {
+                File file = new File(cur.getString(new MessageAdapter.ColumnsMap().mColumnFilename));
+                file.delete();
+            }
+            
+            cur.close();
+        } catch (Exception e) {
+            Log.e(TAG, "clear() failed", e);
+        }
+	    
+	    mDatabase.delete(f.toString(), null, null);
+	    notifyDataChanged(f);
+	}
+	
+	public void remove(Folder folder, Long msgid) {
+	    Message msg = get(folder, msgid);
+	    
+		// delete the message file
+		if (msg.getFile() != null) {
+			msg.getFile().delete();
 		}
-	}
-	
-	public void remove(Folder folder, Message msg) {
-		if (msg.getId() != null) {
-			_database.delete(folder.toString(), "_id = ?", new String[] { msg.getId().toString() });
-			
-			// remove from cached list
-			_messages.get(folder).remove(msg);
-			
-			// refresh smart view
-			_views.get(folder).refresh();
-			
-			// delete the message file
-			if (msg.getFile() != null) {
-				msg.getFile().delete();
-			}
-		}
-	}
-	
-	public void mark(Folder folder, Message msg, boolean val) {
-		msg.setMarked(val);
 		
+        mDatabase.delete(folder.getTableName(), "_id = ?", new String[] { msgid.toString() });
+
+		notifyDataChanged(folder);
+	}
+	
+	public void mark(Folder folder, Long msgid, boolean val) {
 		ContentValues values = new ContentValues();
 
 		values.put("marked", val ? "yes" : "no");
 		
 		// update message data
-		_database.update(folder.toString(), values, "_id = ?", new String[] { msg.getId().toString() });
+		mDatabase.update(folder.getTableName(), values, "_id = ?", new String[] { String.valueOf(msgid) });
 		
-		// refresh smart view
-		_views.get(folder).refresh();
+		notifyDataChanged(folder);
 	}
 	
 	public void put(Folder folder, Message msg) {
@@ -235,161 +242,8 @@ public class MessageDatabase {
 		if (msg.getPriority() != null) values.put("priority", msg.getPriority());
 		
 		// store the message in the database
-		Long rowId = _database.insert(folder.toString(), null, values);
+		mDatabase.insert(folder.getTableName(), null, values);
 		
-		// set id of the message
-		msg.setId(rowId);
-		
-		// add to cached list
-		_messages.get(folder).add(msg);
-		
-		// refresh smart view
-		_views.get(folder).refresh();
-	}
-	
-	public Message get(Folder folder, Integer pos) {
-		return _messages.get(folder).get(pos);
-	}
-	
-	public Message getMessage(Folder folder, Long id) {
-		List<Message> msgs = _messages.get(folder);
-		for (Message m : msgs) {
-			if (m.getId().equals(id)) return m;
-		}
-		return null;
-	}
-	
-	public Message getMarkedMessage(Folder folder, Boolean val) {
-		LinkedList<Message> msgs = _messages.get(folder);
-		Iterator<Message> i = msgs.descendingIterator();
-		while (i.hasNext()) {
-			Message m = i.next();
-			if (m.isMarked() == val) return m;
-		}
-		return null;
-	}
-	
-	public ListAdapter getListAdapter(Folder folder)
-	{
-		return _views.get(folder);
-	}
-	
-	public class ViewHolder
-	{
-		public TextView text;
-		public TextView bottomText;
-		public TextView sideText;
-		public Message msg;
-		public ImageView icon;
-	}
-	
-	private static final Comparator<Message> _list_sorter = new Comparator<Message>() {
-		public int compare(Message arg0, Message arg1) {
-			return arg1.compareTo(arg0);
-		}	
-	};
-	
-	private class SmartListAdapter extends BaseAdapter {
-		
-		private LayoutInflater inflater = null;
-		private List<Message> list = null;
-		private Folder folder = null;
-
-		public SmartListAdapter(Context context, Folder folder, List<Message> list)
-		{
-			this.inflater = LayoutInflater.from(context);
-			this.folder = folder;
-			this.list = list;
-			Collections.sort(this.list, _list_sorter);
-		}
-		
-		public int getCount() {
-			return list.size();
-		}
-
-		public Object getItem(int position) {
-			return list.get(position);
-		}
-
-		public long getItemId(int position) {
-			return position;
-		}
-		
-		public View getView(int position, View convertView, ViewGroup parent) {
-			ViewHolder holder;
-			
-			if (convertView == null)
-			{
-				convertView = this.inflater.inflate(R.layout.message_item, null, true);
-				holder = new ViewHolder();
-				holder.text = (TextView) convertView.findViewById(R.id.label);
-				holder.bottomText = (TextView) convertView.findViewById(R.id.bottomtext);
-				holder.sideText = (TextView) convertView.findViewById(R.id.sidetext);
-				holder.icon = (ImageView) convertView.findViewById(R.id.icon);
-				convertView.setTag(holder);
-			} else {
-				holder = (ViewHolder) convertView.getTag();
-			}
-			
-			holder.msg = list.get(position);
-			
-			if (holder.msg.isMarked()) {
-				holder.icon.setImageLevel(0);
-			} else {
-				holder.icon.setImageLevel(1);
-			}
-			
-			holder.text.setText(holder.msg.getSource());
-			holder.bottomText.setText( DateFormat.getDateTimeInstance().format( holder.msg.getCreated()) );
-			
-			// get delay
-			if (holder.msg.getReceived() != null)
-			{
-				Long delay = holder.msg.getReceived().getTime() - holder.msg.getCreated().getTime();
-				
-				if (holder.msg.getReceived().before(holder.msg.getCreated()))
-				{
-					holder.sideText.setText("");
-				}
-				else if (delay <= 1000)
-				{
-					holder.sideText.setText("1 second");
-				}
-				else if (delay < 60000)
-				{
-					holder.sideText.setText((delay / 1000) + " seconds");
-				}
-				else if (delay < 120000)
-				{
-					holder.sideText.setText("~1 minute");
-				}
-				else
-				{
-					holder.sideText.setText("~" + delay / 60000 + " minutes");
-				}
-			}
-			else
-			{
-				holder.sideText.setText("");
-			}
-			
-			return convertView;
-		}
-		
-		public void refresh()
-		{
-			Collections.sort(this.list, _list_sorter);
-			notifyOnUpdateListener(this.folder);
-		}
-	};
-	
-	public void setOnUpdateListener(OnUpdateListener listener) {
-		_listener = listener;
-	}
-	
-	private void notifyOnUpdateListener(Folder folder) {
-		if (_listener != null) {
-			_listener.update(folder);
-		}
+		notifyDataChanged(folder);
 	}
 }

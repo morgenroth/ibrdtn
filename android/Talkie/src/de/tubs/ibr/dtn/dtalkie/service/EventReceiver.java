@@ -41,7 +41,7 @@ public class EventReceiver extends BroadcastReceiver {
 			if (state.equals("ONLINE"))
 			{
 				// open activity
-				Intent i = new Intent(context, DTalkieService.class);
+				Intent i = new Intent(context, TalkieService.class);
 				i.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
 				context.startService(i);
 			}
@@ -52,7 +52,7 @@ public class EventReceiver extends BroadcastReceiver {
 		else if (action.equals(de.tubs.ibr.dtn.Intent.RECEIVE))
 		{
 			// open activity
-			Intent i = new Intent(context, DTalkieService.class);
+			Intent i = new Intent(context, TalkieService.class);
 			i.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
 			context.startService(i);
 		}

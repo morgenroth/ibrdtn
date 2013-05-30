@@ -1,10 +1,13 @@
 package de.tubs.ibr.dtn.dtalkie.service;
 
+import java.io.File;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Environment;
 import de.tubs.ibr.dtn.dtalkie.R;
 
 public class Utils {
@@ -61,4 +64,23 @@ public class Utils {
 		builder.setNegativeButton(activity.getResources().getString(R.string.alert_no), dialogClickListener);
 		builder.show();
 	}
+	
+    public static File getStoragePath()
+    {
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
+        {
+            File externalStorage = Environment.getExternalStorageDirectory();
+            
+            // create working directory
+            File sharefolder = new File(externalStorage.getPath() + File.separatorChar + "dtalkie");
+            if (!sharefolder.exists())
+            {
+                    sharefolder.mkdir();
+            }
+            
+            return sharefolder;
+        }
+        
+        return null;
+    }
 }
