@@ -167,9 +167,6 @@ public class ChatService extends IntentService {
 
 		public void progress(long current, long length) {
 		}
-
-		public void finished(int startId) {
-		}
     
 		private void eventNewPresence(SingletonEndpoint source, Date created, String payload)
 		{
