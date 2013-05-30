@@ -41,6 +41,7 @@ public class RecorderService extends Service {
 //    private FileObserver mObserver = null;
     private File mCurrentFile = null;
     
+    private Object mRecLock = new Object();
     private Boolean mRecording = false;
     private Boolean mOnEar = false;
 
@@ -165,7 +166,18 @@ public class RecorderService extends Service {
     }
     
     public Boolean isRecording() {
-        return mRecording;
+    	synchronized(mRecLock) {
+    		return mRecording;
+    	}
+    }
+    
+    public int getMaxAmplitude() {
+    	synchronized(mRecLock) {
+    		if (mRecording)
+    			return mRecorder.getMaxAmplitude();
+    		else
+    			return 0;
+    	}
     }
 
     private void startRecording()
@@ -186,15 +198,17 @@ public class RecorderService extends Service {
             // create temporary file
             mCurrentFile = File.createTempFile("record", ".3gp", path);
             
-            mRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
-            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-            mRecorder.setOutputFile(mCurrentFile.getAbsolutePath());
-            mRecorder.prepare();
-            mRecorder.start();
-            
-            // set state to recording
-            mRecording = true;
+            synchronized(mRecLock) {
+	            mRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+	            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+	            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
+	            mRecorder.setOutputFile(mCurrentFile.getAbsolutePath());
+	            mRecorder.prepare();
+	            mRecorder.start();
+	            
+	            // set state to recording
+	            mRecording = true;
+            }
             
             // make a noise
             playSound(Sound.BEEP);
@@ -222,25 +236,29 @@ public class RecorderService extends Service {
     
     private void stopRecording()
     {
-        // only stop recording in state RECORDING
-        if (!isRecording()) return;
-
-        Log.i(TAG, "stop recording audio");
-        
-        // stop the recorder
-        mRecorder.stop();
-        
-        // set recording to false
-        mRecording = false;
+    	synchronized(mRecLock) {
+	        // only stop recording in state RECORDING
+	        if (!mRecording) return;
+	
+	        Log.i(TAG, "stop recording audio");
+	        
+	        // stop the recorder
+	        mRecorder.stop();
+	        
+	        // set recording to false
+	        mRecording = false;
+    	}
     }
 
     private void finalizeRecording(File f)
     {
-        // reset recorder
-        mRecorder.reset();
-
-        // set recording to false
-        mRecording = false;
+    	synchronized(mRecLock) {
+	        // reset recorder
+	        mRecorder.reset();
+	
+	        // set recording to false
+	        mRecording = false;
+    	}
         
         playSound(Sound.QUIT);
         
