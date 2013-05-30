@@ -264,7 +264,6 @@ namespace dtn
 				SQLiteBLOB(const ibrcommon::File &path);
 				std::fstream _filestream;
 				ibrcommon::TemporaryFile _file;
-				ibrcommon::File _blobPath;
 			};
 
 

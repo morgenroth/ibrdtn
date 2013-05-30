@@ -52,7 +52,7 @@ namespace dtn
 		bool SQLiteBundleStorage::TaskIdle::_idle = false;
 
 		SQLiteBundleStorage::SQLiteBLOB::SQLiteBLOB(const ibrcommon::File &path)
-		 : _blobPath(path), _file(_blobPath, "blob")
+		 : _file(path, "blob")
 		{
 		}
 
