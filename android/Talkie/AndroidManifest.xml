@@ -16,7 +16,8 @@
         android:label="@string/app_name" >
         <activity
             android:label="@string/app_name"
-            android:name=".TalkieActivity" >
+            android:name=".TalkieActivity"
+            android:configChanges="orientation|screenSize">
             <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
