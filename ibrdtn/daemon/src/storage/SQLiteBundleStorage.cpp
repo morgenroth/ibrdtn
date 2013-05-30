@@ -52,10 +52,8 @@ namespace dtn
 		bool SQLiteBundleStorage::TaskIdle::_idle = false;
 
 		SQLiteBundleStorage::SQLiteBLOB::SQLiteBLOB(const ibrcommon::File &path)
-		 : _blobPath(path)
+		 : _blobPath(path), _file(_blobPath, "blob")
 		{
-			// generate a new temporary file
-			_file = ibrcommon::TemporaryFile(_blobPath, "blob");
 		}
 
 		SQLiteBundleStorage::SQLiteBLOB::~SQLiteBLOB()
@@ -68,12 +66,6 @@ namespace dtn
 		{
 			// close the file
 			_filestream.close();
-
-			// remove the old file
-			_file.remove();
-
-			// generate a new temporary file
-			_file = ibrcommon::TemporaryFile(_blobPath, "blob");
 
 			// open temporary file
 			_filestream.open(_file.getPath().c_str(), ios::in | ios::out | ios::trunc | ios::binary );
