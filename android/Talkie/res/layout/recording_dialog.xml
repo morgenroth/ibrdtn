@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <FrameLayout
+        android:id="@+id/recAnimation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        android:background="@drawable/rec_background_8">
+
+        <ImageButton
+            android:id="@+id/button_record"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_margin="32dp"
+            android:background="@drawable/rec_button"
+            android:src="@drawable/ic_mic" />
+    </FrameLayout>
+
+</LinearLayout>
