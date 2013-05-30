@@ -291,7 +291,7 @@ namespace ibrcommon
 		private:
 			std::fstream _filestream;
 			int _fd;
-			File _tmpfile;
+			TemporaryFile _tmpfile;
 		};
 	};
 }
