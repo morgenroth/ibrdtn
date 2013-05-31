@@ -24,17 +24,8 @@ void BundleSetTest::setUp()
 {
 	// create a new event switch
 	esl = new ibrtest::EventSwitchLoop();
-	/*// enable blob path
-		ibrcommon::File blob_path("/tmp/blobs");
 
-		// check if the BLOB path exists
-		if (!blob_path.exists()) {
-			// try to create the BLOB path
-			ibrcommon::File::createDirectory(blob_path);
-		}
 
-		// enable the blob provider
-		ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), true);*/
 	switch(testCounter++){
 	//MemoryBundleSet
 	case 0: {
@@ -59,9 +50,8 @@ void BundleSetTest::setUp()
 
 
 	if (testCounter >= _storage_names.size()) testCounter = 0;
-	// start-up event switch
-	esl->start();
 
+	esl->start();
 	try {
 		dtn::daemon::Component &c = dynamic_cast<dtn::daemon::Component&>(*_storage);
 		c.initialize();

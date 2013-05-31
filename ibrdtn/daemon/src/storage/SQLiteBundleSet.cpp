@@ -74,8 +74,6 @@ namespace dtn
 
 			if (commit)
 			{
-				//TODO Idee: strings mit SQL aufbauen -> performanter
-
 				// rebuild the bloom-filter
 				_bf.clear();
 				std::set<dtn::data::MetaBundle> bundles = _database.get_all_seen_bundles();
