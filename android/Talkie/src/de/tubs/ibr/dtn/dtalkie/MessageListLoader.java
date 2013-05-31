@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
+import de.tubs.ibr.dtn.dtalkie.db.Message;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
 import de.tubs.ibr.dtn.dtalkie.service.TalkieService;
@@ -36,12 +37,12 @@ public class MessageListLoader extends AsyncTaskLoader<Cursor> {
             if (Folder.INBOX.equals(mFolder)) {
                 // load all messages
                 return db.query(Folder.INBOX.getTableName(), MessageAdapter.PROJECTION,
-                        null, null, null, null, null, null);
+                        null, null, null, null, Message.RECEIVED + " DESC");
             }
             else {
                 // load all messages
                 return db.query(Folder.OUTBOX.getTableName(), MessageAdapter.PROJECTION,
-                        null, null, null, null, null, null);
+                        null, null, null, null, Message.RECEIVED + " DESC");
             }
         } catch (Exception e) {
             // message not found
