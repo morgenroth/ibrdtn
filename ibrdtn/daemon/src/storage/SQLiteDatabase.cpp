@@ -439,10 +439,11 @@ namespace dtn
 		void SQLiteDatabase::iterateAll() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			Statement st(_database, _sql_queries[BUNDLE_GET_ITERATOR]);
-
 			// abort if enough bundles are found
+			int i = 0;
 			while (st.step() == SQLITE_ROW)
 			{
+				i++;
 				dtn::data::MetaBundle m;
 
 				// extract the primary values and set them in the bundle object
@@ -955,17 +956,22 @@ namespace dtn
 
 		void SQLiteDatabase::update_expire_time() throw (SQLiteDatabase::SQLiteQueryException)
 		{
-			Statement st(_database, _sql_queries[EXPIRE_NEXT_TIMESTAMP]);
+			Statement st1(_database, _sql_queries[EXPIRE_NEXT_TIMESTAMP]);
+			Statement st2(_database, _sql_queries[SEEN_BUNDLE_EXPIRE_NEXT_TIMESTAMP]);
 
-			int err = st.step();
+			int err1 = st1.step();
+			int err2 = st2.step();
 
-			if (err == SQLITE_ROW)
+
+			if (err1 == SQLITE_ROW)
 			{
-				_next_expiration = sqlite3_column_int64(*st, 0);
+				_next_expiration = sqlite3_column_int64(*st1, 0);
 			}
-			else
+			if (err2 == SQLITE_ROW)
 			{
-				_next_expiration = 0;
+				dtn::data::Timestamp ts = sqlite3_column_int64(*st2, 0);
+				if(ts < _next_expiration)
+					_next_expiration = ts;
 			}
 		}
 
@@ -975,7 +981,7 @@ namespace dtn
 			 * Only if the actual time is bigger or equal than the time when the next bundle expires, deleteexpired is called.
 			 */
 			dtn::data::Timestamp exp_time = get_expire_time();
-			if (timestamp < exp_time) return;
+			if ((timestamp < exp_time) || (exp_time == 0)) return;
 
 			/*
 			 * Performanceverbesserung: Damit die Abfragen nicht jede Sekunde ausgeführt werden müssen, speichert man den Zeitpunkt an dem
@@ -984,7 +990,7 @@ namespace dtn
 			 */
 
 			try {
-				Statement st(_database, _sql_queries[SEEN_BUNDLE_EXPIRE]);
+				Statement st(_database, _sql_queries[EXPIRE_BUNDLE_FILENAMES]);
 
 				// query for blocks of expired bundles
 				sqlite3_bind_int64(*st, 1, timestamp.get<uint64_t>());
@@ -1019,6 +1025,17 @@ namespace dtn
 				Statement st(_database, _sql_queries[EXPIRE_BUNDLE_DELETE]);
 
 				// delete all expired db entries (bundles and blocks)
+				sqlite3_bind_int64(*st, 1, timestamp.get<uint64_t>());
+				st.step();
+			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
+				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+
+
+			try {
+				Statement st(_database, _sql_queries[SEEN_BUNDLE_EXPIRE]);
+
+				// expire seen bundles
 				sqlite3_bind_int64(*st, 1, timestamp.get<uint64_t>());
 				st.step();
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
