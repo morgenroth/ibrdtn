@@ -291,9 +291,6 @@ namespace dtn
 
 		void SQLiteDatabase::open() throw (SQLiteDatabase::SQLiteQueryException)
 		{
-			static int i = 0;
-			i++;
-
 			//Configure SQLite Library
 			SQLiteConfigure::configure();
 
