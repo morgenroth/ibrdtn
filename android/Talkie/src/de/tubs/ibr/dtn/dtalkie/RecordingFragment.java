@@ -1,10 +1,11 @@
 package de.tubs.ibr.dtn.dtalkie;
 
-import java.io.Serializable;
 import java.util.List;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -12,6 +13,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -27,6 +29,9 @@ public class RecordingFragment extends Fragment {
 
     @SuppressWarnings("unused")
     private static final String TAG = "RecordingFragment";
+    
+    private RecorderService mService = null;
+    private Boolean mBound = false;
     
     private ImageButton mRecordButton = null;
     
@@ -70,6 +75,16 @@ public class RecordingFragment extends Fragment {
         }
     };
     
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mService = ((RecorderService.LocalBinder)service).getService();
+        }
+
+        public void onServiceDisconnected(ComponentName name) {
+            mService = null;
+        }
+    };
+    
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
@@ -92,10 +107,16 @@ public class RecordingFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mBound = false;
     }
 
     @Override
     public void onDestroy() {
+        if (mBound) {
+            getActivity().unbindService(mConnection);
+            mBound = false;
+        }
+        
         super.onDestroy();
     }
 
@@ -114,6 +135,11 @@ public class RecordingFragment extends Fragment {
     public void onResume() {
         super.onResume();
         
+        if (!mBound) {
+            getActivity().bindService(new Intent(getActivity(), RecorderService.class), mConnection, Context.BIND_AUTO_CREATE);
+            mBound = true;
+        }
+        
         SensorManager sm = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         List<Sensor> sensors = sm.getSensorList(Sensor.TYPE_PROXIMITY);
         if (sensors.size() > 0) {
@@ -128,10 +154,9 @@ public class RecordingFragment extends Fragment {
         
         mRecordButton.setPressed(true);
         
-        Intent rec_i = new Intent(getActivity(), RecorderService.class);
-        rec_i.setAction(RecorderService.ACTION_RECORD);
-        rec_i.putExtra("destination", (Serializable)RecorderService.TALKIE_GROUP_EID);
-        getActivity().startService(rec_i);
+        if (mService != null) {
+            mService.startRecording(RecorderService.TALKIE_GROUP_EID);
+        }
     }
     
     private void stopRecording() {
@@ -140,8 +165,8 @@ public class RecordingFragment extends Fragment {
         
         mRecordButton.setPressed(false);
         
-        Intent rec_i = new Intent(getActivity(), RecorderService.class);
-        rec_i.setAction(RecorderService.ACTION_STOP);
-        getActivity().startService(rec_i);
+        if (mService != null) {
+            mService.stopRecording();
+        }
     }
 }

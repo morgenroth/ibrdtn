@@ -3,7 +3,6 @@ package de.tubs.ibr.dtn.dtalkie.service;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.ref.WeakReference;
 import java.util.List;
 
 import android.app.Service;
@@ -15,11 +14,7 @@ import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.Binder;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
@@ -27,14 +22,8 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 public class RecorderService extends Service {
 
     private static final String TAG = "RecorderService";
-    
-    public static final String ACTION_RECORD = "de.tubs.ibr.dtn.dtalkie.RECORD";
-    public static final String ACTION_STOP = "de.tubs.ibr.dtn.dtalkie.STOP";
-    
-    public static final GroupEndpoint TALKIE_GROUP_EID = new GroupEndpoint("dtn://dtalkie.dtn/broadcast");
 
-    private volatile Looper mServiceLooper;
-    private volatile ServiceHandler mServiceHandler;
+    public static final GroupEndpoint TALKIE_GROUP_EID = new GroupEndpoint("dtn://dtalkie.dtn/broadcast");
 
     private MediaRecorder mRecorder = null;
     private SoundFXManager mSoundManager = null;
@@ -67,63 +56,9 @@ public class RecorderService extends Service {
         return mBinder;
     }
     
-    private static final class ServiceHandler extends Handler {
-        private final WeakReference<RecorderService> mService; 
-        
-        public ServiceHandler(Looper looper, RecorderService service) {
-            super(looper);
-            mService = new WeakReference<RecorderService>(service);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            Intent intent = (Intent) msg.obj;
-            if (intent != null) {
-                mService.get().onHandleIntent(intent, msg.arg1);
-            }
-        }
-    }
-    
-    public void onHandleIntent(Intent intent, int startId) {
-        String action = intent.getAction();
-
-        if (ACTION_RECORD.equals(action)) {
-            mDestination = (EID)intent.getSerializableExtra("destination");
-            if (mDestination != null) {
-                startRecording();
-            }
-        } else if (ACTION_STOP.equals(action)) {
-            stopRecording();
-            stopSelf(startId);
-        }
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) {
-            stopSelf(startId);
-        }
-        
-        Message msg = mServiceHandler.obtainMessage();
-        msg.arg1 = startId;
-        msg.obj = intent;
-        mServiceHandler.sendMessage(msg);
-
-        return START_STICKY;
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
-        
-        /*
-         * incoming Intents will be processed by ServiceHandler and queued in
-         * HandlerThread
-         */
-        HandlerThread thread = new HandlerThread("RecorderService_IntentThread");
-        thread.start();
-        mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper, this);
         
         SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
         List<Sensor> sensors = sm.getSensorList(Sensor.TYPE_PROXIMITY);
@@ -134,8 +69,13 @@ public class RecorderService extends Service {
         
         // create a media recorder
         mRecorder = new MediaRecorder();
+        
+        // set recorder listener
         mRecorder.setOnErrorListener(mErrorListener);
         mRecorder.setOnInfoListener(mInfoListener);
+        
+        // set recorder default source
+        mRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         
         // init sound pool
         mSoundManager = new SoundFXManager();
@@ -154,9 +94,6 @@ public class RecorderService extends Service {
         
         SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
         sm.unregisterListener(mSensorListener);
-        
-        // stop looper that handles incoming intents
-        mServiceLooper.quit();
         
         // release all recoder resources
         mRecorder.release();
@@ -180,11 +117,14 @@ public class RecorderService extends Service {
     	}
     }
 
-    private void startRecording()
+    public void startRecording(EID destination)
     {
         if (isRecording()) return;
         
-        Log.i(TAG, "start recording audio");
+        // store the destination
+        mDestination = destination;
+        
+        Log.i(TAG, "start recording audio for " + mDestination.toString());
         
         File path = Utils.getStoragePath();
         
@@ -199,9 +139,8 @@ public class RecorderService extends Service {
             mCurrentFile = File.createTempFile("record", ".3gp", path);
             
             synchronized(mRecLock) {
-	            mRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
-	            mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-	            mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
+                mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+                mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
 	            mRecorder.setOutputFile(mCurrentFile.getAbsolutePath());
 	            mRecorder.prepare();
 	            mRecorder.start();
@@ -234,7 +173,7 @@ public class RecorderService extends Service {
         }
     }
     
-    private void stopRecording()
+    public void stopRecording()
     {
     	synchronized(mRecLock) {
 	        // only stop recording in state RECORDING
@@ -255,6 +194,7 @@ public class RecorderService extends Service {
     	synchronized(mRecLock) {
 	        // reset recorder
 	        mRecorder.reset();
+	        mRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
 	
 	        // set recording to false
 	        mRecording = false;
