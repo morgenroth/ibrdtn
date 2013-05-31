@@ -47,9 +47,9 @@ namespace dtn
 				{ "bundles", "blocks", "routing", "routing_bundles", "routing_nodes", "properties", "seen_bundles" };
 
 		// this is the version of a fresh created db scheme
-		const int SQLiteDatabase::DBSCHEMA_FRESH_VERSION = 3;
+		const int SQLiteDatabase::DBSCHEMA_FRESH_VERSION = 4;
 
-		const int SQLiteDatabase::DBSCHEMA_VERSION = 3;
+		const int SQLiteDatabase::DBSCHEMA_VERSION = 4;
 
 		const std::string SQLiteDatabase::QUERY_SCHEMAVERSION = "SELECT `value` FROM " + SQLiteDatabase::_tables[SQLiteDatabase::SQL_TABLE_PROPERTIES] + " WHERE `key` = 'version' LIMIT 0,1;";
 		const std::string SQLiteDatabase::SET_SCHEMAVERSION = "INSERT INTO " + SQLiteDatabase::_tables[SQLiteDatabase::SQL_TABLE_PROPERTIES] + " (`key`, `value`) VALUES ('version', ?);";
@@ -282,12 +282,18 @@ namespace dtn
 				case 2:
 					// NO UPGRADE PATH HERE
 					throw ibrcommon::Exception("Re-creation required.");
+				case 3:
+					// NO UPGRADE PATH HERE
+					throw ibrcommon::Exception("Re-creation required.");
 				}
 			}
 		}
 
 		void SQLiteDatabase::open() throw (SQLiteDatabase::SQLiteQueryException)
 		{
+			static int i = 0;
+			i++;
+
 			//Configure SQLite Library
 			SQLiteConfigure::configure();
 
@@ -305,7 +311,6 @@ namespace dtn
 				sqlite3_close(_database);
 				throw ibrcommon::Exception("Unable to open sqlite database");
 			}
-
 			try {
 				// check database version and upgrade if necessary
 				int version = getVersion();
@@ -336,6 +341,7 @@ namespace dtn
 
 		void SQLiteDatabase::close()
 		{
+			setVersion(DBSCHEMA_FRESH_VERSION);
 			//close Databaseconnection
 			if (sqlite3_close(_database) != SQLITE_OK)
 			{
@@ -440,10 +446,8 @@ namespace dtn
 		{
 			Statement st(_database, _sql_queries[BUNDLE_GET_ITERATOR]);
 			// abort if enough bundles are found
-			int i = 0;
 			while (st.step() == SQLITE_ROW)
 			{
-				i++;
 				dtn::data::MetaBundle m;
 
 				// extract the primary values and set them in the bundle object
