@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.drawable.LayerDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -17,7 +18,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -38,6 +38,9 @@ public class RecordingFragment extends Fragment {
     private ImageButton mRecordButton = null;
     
     private Boolean mUpdateAmplitudeSwitch = false;
+    private int mMaxAmplitude = 0;
+    private int mIdleCounter = 0;
+    
     private Handler mHandler = null;
     
     private Boolean mRecording = false;
@@ -167,11 +170,15 @@ public class RecordingFragment extends Fragment {
         // lock screen orientation
         Utils.lockScreenOrientation(getActivity());
         
-        mRecordButton.setPressed(true);
-        
-        // start amplitude update
-        mUpdateAmplitudeSwitch = true;
-        mHandler.postDelayed(mUpdateAmplitude, 200);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        if (!prefs.getBoolean("ptt", false)) {
+            // start amplitude update
+            mUpdateAmplitudeSwitch = true;
+            mHandler.postDelayed(mUpdateAmplitude, 100);
+        } else {
+            // set indicator level to zero
+            setIndicator(1.0f);
+        }
         
         if (mService != null) {
             mService.startRecording(RecorderService.TALKIE_GROUP_EID);
@@ -186,7 +193,8 @@ public class RecordingFragment extends Fragment {
         mUpdateAmplitudeSwitch = false;
         mHandler.removeCallbacks(mUpdateAmplitude);
         
-        mRecordButton.setPressed(false);
+        // set indicator level to zero
+        setIndicator(0.0f);
         
         // unlock screen orientation
         Utils.unlockScreenOrientation(getActivity());
@@ -194,6 +202,9 @@ public class RecordingFragment extends Fragment {
         if (mService != null) {
             mService.stopRecording();
         }
+        
+        mMaxAmplitude = 0;
+        mIdleCounter = 0;
     }
     
     private void toggleRecording() {
@@ -204,14 +215,44 @@ public class RecordingFragment extends Fragment {
         }
     }
     
+    @SuppressWarnings("deprecation")
+    private void setIndicator(Float level) {
+        LayerDrawable d = (LayerDrawable)getResources().getDrawable(R.drawable.ptt_background);
+        
+        int height = this.getView().getMeasuredHeight();
+        
+        d.setLayerInset(1, 0, 0, 0, Float.valueOf(height * (level * 1.2f)).intValue());
+        mRecordButton.setBackgroundDrawable(d);
+    }
+    
     private Runnable mUpdateAmplitude = new Runnable() {
         @Override
         public void run() {
             if (mUpdateAmplitudeSwitch) {
-                mHandler.postDelayed(mUpdateAmplitude, 200);
                 if (mService != null) {
-                    Log.d(TAG, "update amplitude: " + mService.getMaxAmplitude());
+                    int curamp = mService.getMaxAmplitude();
+                    if (mMaxAmplitude < curamp) mMaxAmplitude = curamp;
+                    
+                    float level = 0.0f;
+                            
+                    if (mMaxAmplitude > 0) {
+                        level = Float.valueOf(curamp) / mMaxAmplitude;
+                    }
+                    
+                    if (level < 0.4f) {
+                        mIdleCounter++;
+                    } else {
+                        mIdleCounter = 0;
+                    }
+                    
+                    setIndicator(level);
+                    
+                    // if there is no sound for 2 seconds
+                    if (mIdleCounter >= 20) {
+                        stopRecording();
+                    }
                 }
+                mHandler.postDelayed(mUpdateAmplitude, 100);
             }
         }
     };

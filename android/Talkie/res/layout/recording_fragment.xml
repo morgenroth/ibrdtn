@@ -8,7 +8,7 @@
         android:id="@+id/button_record"
         android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:background="@drawable/button_record"
+        android:background="@drawable/ptt_background"
         android:src="@drawable/ic_mic" />
 
 </LinearLayout>
