@@ -133,6 +133,15 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
                     mService.getDatabase().remove(Folder.INBOX, m.getId());
                 }
                 return true;
+                
+            case R.id.itemReply:
+                Intent i = new Intent("de.tubs.ibr.dtn.dtalkie.RECORD_MESSAGE");
+                i.addCategory(Intent.CATEGORY_DEFAULT);
+                i.putExtra("destination", m.getSource());
+                i.putExtra("singleton", true);
+                startActivity(i);
+                return true;
+                
             default:
                 return super.onContextItemSelected(item);
             }

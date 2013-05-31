@@ -6,6 +6,7 @@
     <string name="sending">Sending</string>
     <string name="new_message_received">New message received</string>
     <string name="from">From</string>
+    <string name="reply">Reply</string>
     <string name="button_talk">Talk</string>
     <string name="autorec">Auto-Record</string>
     <string name="autoplay">Auto-Play</string>

@@ -17,8 +17,9 @@
     
 	<Button 
         android:id="@+id/cancel"
+        style="?android:attr/buttonBarButtonStyle"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="0dip"
         android:layout_weight="1"
         android:text="@android:string/cancel"/>
 

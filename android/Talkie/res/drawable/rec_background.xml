@@ -7,4 +7,9 @@
 		<solid android:color="@color/dark_blue" />
 		</shape>
 	</item>
+	<item android:top="32dp" android:right="32dp" android:bottom="32dp" android:left="32dp">
+		<shape android:shape="oval">
+		<solid android:color="@color/blue" />
+		</shape>
+	</item>
 </layer-list>
