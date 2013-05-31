@@ -110,10 +110,7 @@ public class RecorderService extends Service {
     
     public int getMaxAmplitude() {
     	synchronized(mRecLock) {
-    		if (mRecording)
-    			return mRecorder.getMaxAmplitude();
-    		else
-    			return 0;
+    		return mRecorder.getMaxAmplitude();
     	}
     }
 

@@ -13,9 +13,11 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -34,6 +36,9 @@ public class RecordingFragment extends Fragment {
     private Boolean mBound = false;
     
     private ImageButton mRecordButton = null;
+    
+    private Boolean mUpdateAmplitudeSwitch = false;
+    private Handler mHandler = null;
     
     private SensorEventListener mSensorListener = new SensorEventListener() {
         public void onSensorChanged(SensorEvent event) {
@@ -108,6 +113,7 @@ public class RecordingFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBound = false;
+        mHandler = new Handler();
     }
 
     @Override
@@ -117,6 +123,7 @@ public class RecordingFragment extends Fragment {
             mBound = false;
         }
         
+        mHandler = null;
         super.onDestroy();
     }
 
@@ -154,19 +161,39 @@ public class RecordingFragment extends Fragment {
         
         mRecordButton.setPressed(true);
         
+        // start amplitude update
+        mUpdateAmplitudeSwitch = true;
+        mHandler.postDelayed(mUpdateAmplitude, 200);
+        
         if (mService != null) {
             mService.startRecording(RecorderService.TALKIE_GROUP_EID);
         }
     }
     
     private void stopRecording() {
-        // unlock screen orientation
-        Utils.unlockScreenOrientation(getActivity());
+        // stop amplitude update
+        mUpdateAmplitudeSwitch = false;
+        mHandler.removeCallbacks(mUpdateAmplitude);
         
         mRecordButton.setPressed(false);
+        
+        // unlock screen orientation
+        Utils.unlockScreenOrientation(getActivity());
         
         if (mService != null) {
             mService.stopRecording();
         }
     }
+    
+    private Runnable mUpdateAmplitude = new Runnable() {
+        @Override
+        public void run() {
+            if (mUpdateAmplitudeSwitch) {
+                mHandler.postDelayed(mUpdateAmplitude, 200);
+                if (mService != null) {
+                    Log.d(TAG, "update amplitude: " + mService.getMaxAmplitude());
+                }
+            }
+        }
+    };
 }
