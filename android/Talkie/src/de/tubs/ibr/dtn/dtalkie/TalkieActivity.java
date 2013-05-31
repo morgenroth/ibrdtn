@@ -35,38 +35,4 @@ public class TalkieActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
     }
-    
-	@Override
-	protected void onPause() {
-//		unlockScreenOrientation();
-
-		super.onPause();
-	}
-
-	@Override
-	protected void onResume() {
-//        lockCurrentScreenOrientation();
-        
-		super.onResume();
-	}
-    
-//    private void lockCurrentScreenOrientation() {
-//    	switch (this.getResources().getConfiguration().orientation) {
-//    	case Configuration.ORIENTATION_LANDSCAPE:
-//    		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-//    		break;
-//    		
-//    	case Configuration.ORIENTATION_PORTRAIT:
-//    		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-//    		break;
-//    		
-//    	default:
-//    		setRequestedOrientation(getRequestedOrientation());
-//    		break;
-//    	}
-//    }
-//    
-//    private void unlockScreenOrientation() {
-//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
-//    }
 }

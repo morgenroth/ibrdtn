@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Environment;
 import de.tubs.ibr.dtn.dtalkie.R;
@@ -82,5 +83,14 @@ public class Utils {
         }
         
         return null;
+    }
+    
+    public static void lockScreenOrientation(Activity activity) {
+        int orientation = activity.getResources().getConfiguration().orientation;
+        activity.setRequestedOrientation(orientation);
+    }
+
+    public static void unlockScreenOrientation(Activity activity) {
+        activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
     }
 }

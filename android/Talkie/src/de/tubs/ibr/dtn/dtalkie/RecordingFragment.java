@@ -26,6 +26,7 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import de.tubs.ibr.dtn.dtalkie.service.RecorderService;
+import de.tubs.ibr.dtn.dtalkie.service.Utils;
 
 public class RecordingFragment extends Fragment {
 
@@ -168,6 +169,9 @@ public class RecordingFragment extends Fragment {
     }
     
     private void startRecording() {
+        // lock screen orientation
+        Utils.lockScreenOrientation(getActivity());
+        
         mRecordButton.setPressed(true);
         
         Intent rec_i = new Intent(getActivity(), RecorderService.class);
@@ -177,6 +181,9 @@ public class RecordingFragment extends Fragment {
     }
     
     private void stopRecording() {
+        // unlock screen orientation
+        Utils.unlockScreenOrientation(getActivity());
+        
         mRecordButton.setPressed(false);
         
         Intent rec_i = new Intent(getActivity(), RecorderService.class);
