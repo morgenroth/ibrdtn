@@ -482,6 +482,7 @@ void BundleStorageTest::testRestore(dtn::storage::BundleStorage &storage)
 
 			storage.store(b);
 		}
+		CPPUNIT_ASSERT_EQUAL((dtn::data::Size)2000, storage.count());
 
 		// shutdown the storage
 		c.terminate();
@@ -495,6 +496,7 @@ void BundleStorageTest::testRestore(dtn::storage::BundleStorage &storage)
 
 		// the storage should contain 2000 bundles
 		CPPUNIT_ASSERT_EQUAL((dtn::data::Size)2000, storage.count());
+
 	} catch (const std::bad_cast&) {
 
 	};
