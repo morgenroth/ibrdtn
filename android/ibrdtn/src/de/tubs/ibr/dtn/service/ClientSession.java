@@ -33,6 +33,7 @@ import java.util.Date;
 import android.content.Context;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
+import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
@@ -105,7 +106,7 @@ public class ClientSession {
             notify.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
             notify.setPackage(_package_name);
             notify.putExtra("bundleid", toAndroid(swigId));
-            notify.putExtra("source", new SingletonEndpoint(source.getString()));
+            notify.putExtra("source", (Parcelable)new SingletonEndpoint(source.getString()));
             notify.putExtra("status", swigReport.getStatus());
             notify.putExtra("reason", swigReport.getReasoncode());
             
@@ -148,7 +149,7 @@ public class ClientSession {
             notify.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
             notify.setPackage(_package_name);
             notify.putExtra("bundleid", toAndroid(swigId));
-            notify.putExtra("source", new SingletonEndpoint(source.getString()));
+            notify.putExtra("source", (Parcelable)new SingletonEndpoint(source.getString()));
             notify.putExtra("accepted", swigCustody.getCustody_accepted());
             notify.putExtra("timeofsignal", toAndroid(swigCustody.getTimeofsignal()));
 
