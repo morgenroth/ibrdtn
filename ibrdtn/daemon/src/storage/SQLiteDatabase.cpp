@@ -260,7 +260,7 @@ namespace dtn
 					}
 
 					// create all tables
-					for (size_t i = 0; i < DB_STRUCTURE_END; ++i)
+					for (size_t i = 0; i < (DB_STRUCTURE_END - 1); ++i)
 					{
 						Statement st(_database, _db_structure[i]);
 						int err = st.step();
@@ -338,7 +338,6 @@ namespace dtn
 
 		void SQLiteDatabase::close()
 		{
-			setVersion(DBSCHEMA_FRESH_VERSION);
 			//close Databaseconnection
 			if (sqlite3_close(_database) != SQLITE_OK)
 			{
