@@ -137,10 +137,10 @@ void BundleSetTest::orderTest(){
 
 	CPPUNIT_ASSERT(l.size() == 0);
 
-	genbundles(l, 50, 0, 500);
-	genbundles(l, 50, 600, 1000);
+	genbundles(l, 500, 0, 500);
+	genbundles(l, 500, 600, 1000);
 
-	CPPUNIT_ASSERT(l.size() == 100);
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000,l.size());
 
 
 	for (int i = 0; i < 550; ++i)
@@ -149,14 +149,14 @@ void BundleSetTest::orderTest(){
 	}
 
 
-	CPPUNIT_ASSERT(l.size() == 50);
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500,l.size());
 
 	for (int i = 0; i < 1050; ++i)
 	{
 		l.expire(i);
 	}
 
-	CPPUNIT_ASSERT(l.size() == 0);
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0,l.size());
 
 }
 void BundleSetTest::genbundles(dtn::data::BundleSet &l, int number, int offset, int max)

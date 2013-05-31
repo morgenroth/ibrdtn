@@ -13,7 +13,7 @@
 
 #include "config.h"
 #include "storage/BundleStorage.h"
-#include "data/BundleSet.h"
+#include "../tools/EventSwitchLoop.h"
 #include <vector>
 
 class BundleSetTest : public CppUnit::TestFixture {
@@ -21,8 +21,7 @@ class BundleSetTest : public CppUnit::TestFixture {
 
 		ibrtest::EventSwitchLoop *esl;
 
-		void containTest();
-		void orderTest();
+
 		class ExpiredBundleCounter : public dtn::data::BundleSet::Listener
 		{
 		public:
@@ -37,10 +36,10 @@ class BundleSetTest : public CppUnit::TestFixture {
 	public:
 #define CPPUNIT_TEST_ALL_STORAGES(testMethod) \
 		testCounter = 0; \
-		for (size_t i = 0; i < _set_names.size(); i++) { \
+		for (size_t i = 0; i < _storage_names.size(); i++) { \
 		  CPPUNIT_TEST_SUITE_ADD_TEST( \
 		    ( new CPPUNIT_NS::TestCaller<TestFixtureType>( \
-		    	context.getTestNameFor( std::string(#testMethod) + " (" + _set_names[i] + ")" ), \
+		    	context.getTestNameFor( std::string(#testMethod) + " (" + _storage_names[i] + ")" ), \
 		    	&TestFixtureType::testMethod, \
 		        context.makeFixture() ) ) ); \
 		}
@@ -53,10 +52,10 @@ class BundleSetTest : public CppUnit::TestFixture {
 
 		CPPUNIT_TEST_SUITE(BundleSetTest);
 
-		_set_names.push_back("MemoryBundleSet");
+		_storage_names.push_back("MemoryBundleStorage");
 
 #ifdef HAVE_SQLITE
-		_set_names.push_back("SQLiteBundleSet");
+		_storage_names.push_back("SQLiteBundleStorage");
 #endif
 
 		CPPUNIT_TEST_ALL_STORAGES(containTest);
@@ -65,6 +64,6 @@ class BundleSetTest : public CppUnit::TestFixture {
 
 		static size_t testCounter;
 		static dtn::storage::BundleStorage *_storage;
-		static std::vector<std::string> _set_names;
+		static std::vector<std::string> _storage_names;
 };
 #endif /* BUNDLESETTEST_H_ */
