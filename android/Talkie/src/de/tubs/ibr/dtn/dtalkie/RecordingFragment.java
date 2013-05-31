@@ -40,6 +40,8 @@ public class RecordingFragment extends Fragment {
     private Boolean mUpdateAmplitudeSwitch = false;
     private Handler mHandler = null;
     
+    private Boolean mRecording = false;
+    
     private SensorEventListener mSensorListener = new SensorEventListener() {
         public void onSensorChanged(SensorEvent event) {
             if (event.values.length > 0) {
@@ -68,11 +70,14 @@ public class RecordingFragment extends Fragment {
         public boolean onTouch(View v, MotionEvent event) {
             switch ( event.getAction() ) {
                 case MotionEvent.ACTION_DOWN:
-                    startRecording();
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    if (prefs.getBoolean("ptt", false)) {
+                        startRecording();
+                    }
                     break;
                     
                 case MotionEvent.ACTION_UP:
-                    stopRecording();
+                    toggleRecording();
                     break;
             }
             
@@ -156,6 +161,9 @@ public class RecordingFragment extends Fragment {
     }
     
     private void startRecording() {
+        if (mRecording) return;
+        mRecording = true;
+        
         // lock screen orientation
         Utils.lockScreenOrientation(getActivity());
         
@@ -171,6 +179,9 @@ public class RecordingFragment extends Fragment {
     }
     
     private void stopRecording() {
+        if (!mRecording) return;
+        mRecording = false;
+        
         // stop amplitude update
         mUpdateAmplitudeSwitch = false;
         mHandler.removeCallbacks(mUpdateAmplitude);
@@ -182,6 +193,14 @@ public class RecordingFragment extends Fragment {
         
         if (mService != null) {
             mService.stopRecording();
+        }
+    }
+    
+    private void toggleRecording() {
+        if (mRecording) {
+            stopRecording();
+        } else {
+            startRecording();
         }
     }
     
