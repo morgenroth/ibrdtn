@@ -16,17 +16,15 @@ namespace dtn
 {
 	namespace data
 	{
-
 		BundleSet::Listener::~Listener()
-		{
-		}
+		{ }
 
 		BundleSet::BundleSet(BundleSet::Listener *listener, Length bf_size) : _set_impl(BundleSetFactory::create(listener,bf_size))
 		{
 		}
+
 		BundleSet::BundleSet(BundleSetImpl* ptr) : _set_impl(ptr)
 		{
-
 		}
 
 		BundleSet::~BundleSet()

@@ -611,7 +611,6 @@ namespace dtn
 			eventBundleRemoved(id);
 		}
 
-
 		void SQLiteBundleStorage::wait()
 		{
 			_tasks.wait(ibrcommon::Queue<Task*>::QUEUE_EMPTY);

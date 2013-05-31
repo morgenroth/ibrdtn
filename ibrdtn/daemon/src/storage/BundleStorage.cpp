@@ -229,6 +229,5 @@ namespace dtn
 			ibrcommon::MutexLock l(_index_lock);
 			_indexes.erase(index);
 		}
-
 	}
 }

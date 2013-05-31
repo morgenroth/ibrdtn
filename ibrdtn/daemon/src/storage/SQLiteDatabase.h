@@ -49,7 +49,6 @@ namespace dtn
 				SQL_TABLE_PROPERTIES = 5,
 				SQL_TABLE_SEEN_BUNDLES = 6,
 				SQL_TABLE_END = 7
-
 			};
 
 			// enum of all possible statements
@@ -80,14 +79,14 @@ namespace dtn
 				BLOCK_CLEAR,
 				BLOCK_STORE,
 
-                SEEN_BUNDLE_ADD,
-                SEEN_BUNDLE_CLEAR,
-                SEEN_BUNDLE_GET,
-                SEEN_BUNDLE_EXPIRE,
-                SEEN_BUNDLE_REMOVE,
-                SEEN_BUNDLE_GETALL,
-                SEEN_BUNDLE_COUNT,
-                SEEN_BUNDLE_EXPIRE_NEXT_TIMESTAMP,
+				SEEN_BUNDLE_ADD,
+				SEEN_BUNDLE_CLEAR,
+				SEEN_BUNDLE_GET,
+				SEEN_BUNDLE_EXPIRE,
+				SEEN_BUNDLE_REMOVE,
+				SEEN_BUNDLE_GETALL,
+				SEEN_BUNDLE_COUNT,
+				SEEN_BUNDLE_EXPIRE_NEXT_TIMESTAMP,
 
 				VACUUM,
 				SQL_QUERIES_END
@@ -260,35 +259,35 @@ namespace dtn
 			 */
 			void iterateAll() throw (SQLiteQueryException);
 
-  /**
-             * add a seen bundle to the database
-             * @param bundle
-             */
-            void add_seen_bundle(const dtn::data::MetaBundle &bundle) throw (SQLiteQueryException);
+			/**
+			 * add a seen bundle to the database
+			 * @param bundle
+			 */
+			void add_seen_bundle(const dtn::data::MetaBundle &bundle) throw (SQLiteQueryException);
 
-            /**
-             * returns true, if database contains the bundle, false if not
-             */
-            bool contains_seen_bundle(const dtn::data::BundleID &id) const throw (SQLiteQueryException);
+			/**
+			 * returns true, if database contains the bundle, false if not
+			 */
+			bool contains_seen_bundle(const dtn::data::BundleID &id) const throw (SQLiteQueryException);
 
-            /*
-             * removes all seen bundles from database
-             */
-            void clear_seen_bundles() throw (SQLiteQueryException);
+			/*
+			 * removes all seen bundles from database
+			 */
+			void clear_seen_bundles() throw (SQLiteQueryException);
 
-            /*
-             * removes specific bundle from database
-             */
-            void erase_seen_bundle(const dtn::data::BundleID &id) throw (SQLiteQueryException);
+			/*
+			 * removes specific bundle from database
+			 */
+			void erase_seen_bundle(const dtn::data::BundleID &id) throw (SQLiteQueryException);
 
-            /*
-             * returns a set of all bundles contained in the database
-             */
-            std::set<dtn::data::MetaBundle> get_all_seen_bundles() throw (SQLiteQueryException);
-            /*
-             * returns number of seen bundles
-             */
-            unsigned int count_seen_bundles() const throw (SQLiteQueryException);
+			/*
+			 * returns a set of all bundles contained in the database
+			 */
+			std::set<dtn::data::MetaBundle> get_all_seen_bundles() throw (SQLiteQueryException);
+			/*
+			 * returns number of seen bundles
+			 */
+			unsigned int count_seen_bundles() const throw (SQLiteQueryException);
 
 
 			/*** BEGIN: methods for unit-testing ***/
@@ -300,7 +299,6 @@ namespace dtn
 			void setFaulty(bool mode);
 
 			/*** END: methods for unit-testing ***/
-
 
 		private:
 			/**
@@ -333,6 +331,13 @@ namespace dtn
 			 */
 			void update_expire_time() throw (SQLiteQueryException);
 
+			/**
+			 * lower the next expire time if the ttl is lower than the current expire time
+			 * @param ttl
+			 */
+			void new_expire_time(const dtn::data::Timestamp &ttl) throw ();
+			void reset_expire_time() throw ();
+			const dtn::data::Timestamp& get_expire_time() const throw ();
 
 			void set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
 			void get_bundleid(Statement &st, dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
@@ -362,13 +367,6 @@ namespace dtn
 
 			// next expiration
 			dtn::data::Timestamp _next_expiration;
-			/**
-			 * lower the next expire time if the ttl is lower than the current expire time
-			 * @param ttl
-			 */
-			void new_expire_time(const dtn::data::Timestamp &ttl) throw ();
-			void reset_expire_time() throw ();
-			const dtn::data::Timestamp& get_expire_time() const throw ();
 
 			// listener for events on the database
 			DatabaseListener &_listener;

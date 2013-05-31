@@ -305,8 +305,6 @@ namespace dtn
 			SQLiteBundleSetFactory _setFactory;
 
 //			ibrcommon::AccessLockContext _al_context;
-
-
 		};
 	}
 }

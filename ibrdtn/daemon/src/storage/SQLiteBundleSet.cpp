@@ -89,7 +89,7 @@ namespace dtn
 			return _database.count_seen_bundles();
 		}
 
-		dtn::data::Size SQLiteBundleSet::getLength() const throw()
+		dtn::data::Length SQLiteBundleSet::getLength() const throw()
 		{
 			return dtn::data::Number(_bf.size()).getLength() + _bf.size();
 		}

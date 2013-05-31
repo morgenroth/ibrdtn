@@ -47,7 +47,7 @@ namespace dtn
 			/**
 			 * Returns the data length of the serialized BundleSet
 			 */
-			Size getLength() const throw ();
+			Length getLength() const throw ();
 
 			const ibrcommon::BloomFilter& getBloomFilter() const throw ();
 

@@ -38,7 +38,7 @@ namespace dtn
 			/**
 			 * Returns the data length of the serialized BundleSet
 			 */
-			virtual Size getLength() const throw () = 0;
+			virtual Length getLength() const throw () = 0;
 
 			virtual const ibrcommon::BloomFilter& getBloomFilter() const throw() = 0;
 

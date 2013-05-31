@@ -112,7 +112,6 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
-
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
