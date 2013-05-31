@@ -33,6 +33,7 @@ public class RecorderService extends Service {
     private Object mRecLock = new Object();
     private Boolean mRecording = false;
     private Boolean mOnEar = false;
+    private Boolean mAbort = false;
 
     private EID mDestination = null;
     
@@ -86,6 +87,11 @@ public class RecorderService extends Service {
         mSoundManager.load(this, Sound.BEEP);
         mSoundManager.load(this, Sound.QUIT);
         mSoundManager.load(this, Sound.SQUELSH_LONG);
+        mSoundManager.load(this, Sound.SQUELSH_SHORT);
+        
+        mRecording = false;
+        mOnEar = false;
+        mAbort = false;
     }
 
     @Override
@@ -180,10 +186,23 @@ public class RecorderService extends Service {
 	        
 	        // stop the recorder
 	        mRecorder.stop();
-	        
-	        // set recording to false
-	        mRecording = false;
     	}
+    }
+    
+    public void abortRecording()
+    {
+        synchronized(mRecLock) {
+            // only stop recording in state RECORDING
+            if (!mRecording) return;
+    
+            Log.i(TAG, "stop recording audio");
+            
+            // stop the recorder
+            mRecorder.stop();
+            
+            // set recording to false
+            mAbort = true;
+        }
     }
 
     private void finalizeRecording(File f)
@@ -193,18 +212,27 @@ public class RecorderService extends Service {
 	        mRecorder.reset();
 	        mRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
 	
-	        // set recording to false
-	        mRecording = false;
+	        if (mAbort) {
+	            // TODO: add a good abort sound
+	            playSound(Sound.SQUELSH_SHORT);
+	            
+	            // delete the file
+	            f.delete();
+	        } else {
+	            playSound(Sound.QUIT);
+	            
+	            // send recorded intent
+	            Intent recorded_i = new Intent(this, TalkieService.class);
+	            recorded_i.setAction(TalkieService.ACTION_RECORDED);
+	            recorded_i.putExtra("recfile", f);
+	            recorded_i.putExtra("destination", (Serializable)mDestination);
+	            startService(recorded_i);
+	        }
+	        
+            // set recording to false
+            mRecording = false;
+            mAbort = false;
     	}
-        
-        playSound(Sound.QUIT);
-        
-        // send recorded intent
-        Intent recorded_i = new Intent(this, TalkieService.class);
-        recorded_i.setAction(TalkieService.ACTION_RECORDED);
-        recorded_i.putExtra("recfile", f);
-        recorded_i.putExtra("destination", (Serializable)mDestination);
-        startService(recorded_i);
     }
     
     private void playSound(Sound s) {
@@ -234,7 +262,7 @@ public class RecorderService extends Service {
         @Override
         public void onError(MediaRecorder mr, int what, int extra) {
             Log.d(TAG, "MediaRecorder-Error: " + String.valueOf(what) + " " + String.valueOf(extra));
-            playSound(Sound.SQUELSH_LONG);
+            playSound(Sound.SQUELSH_SHORT);
         }
         
     };
