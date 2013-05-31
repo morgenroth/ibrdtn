@@ -29,6 +29,10 @@ import java.util.Date;
 import java.util.List;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -38,10 +42,12 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.BundleID;
@@ -54,6 +60,8 @@ import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.TransferMode;
+import de.tubs.ibr.dtn.dtalkie.R;
+import de.tubs.ibr.dtn.dtalkie.TalkieActivity;
 import de.tubs.ibr.dtn.dtalkie.db.Message;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase;
 import de.tubs.ibr.dtn.dtalkie.db.MessageDatabase.Folder;
@@ -68,6 +76,8 @@ public class TalkieService extends IntentService {
 	
 	private static final String ACTION_RECEIVED = "de.tubs.ibr.dtn.dtalkie.RECEIVED";
 	private static final String ACTION_MARK_DELIVERED = "de.tubs.ibr.dtn.dtalkie.MARK_DELIVERED";
+	
+	private static final int MESSAGE_NOTIFICATION = 1;
 	
 	private ServiceError mServiceError = ServiceError.NO_ERROR;
 	
@@ -440,6 +450,9 @@ public class TalkieService extends IntentService {
             msg.setCreated(created);
             msg.setReceived(received);
             mDatabase.put(Folder.INBOX, msg);
+            
+            // create a notification for this message
+            createNotification();
 
             Intent play_i = new Intent(TalkieService.this, TalkieService.class);
             play_i.setAction(ACTION_PLAY_NEXT);
@@ -473,4 +486,47 @@ public class TalkieService extends IntentService {
             }
         }
     };
+    
+    private void createNotification()
+    {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        
+        // do not add notifications if autoplay is active
+        if (prefs.getBoolean("autoplay", false)) return;
+        
+        // get the number of marked messages
+        int mcount = mDatabase.getMarkedMessageCount(Folder.INBOX, false);
+        
+        // do not add a notification if there is no unread message
+        if (mcount <= 0) return;
+        
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+
+        // enable auto-cancel
+        builder.setAutoCancel(true);
+        
+        int defaults = 0;
+        
+        if (prefs.getBoolean("vibrateOnMessage", true)) {
+            defaults |= Notification.DEFAULT_VIBRATE;
+        }
+        
+        /** CREATE AN INTENT TO OPEN THE MESSAGES ACTIVITY **/
+        Intent resultIntent = new Intent(this, TalkieActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        
+        builder.setNumber(mcount);
+        builder.setContentTitle(getResources().getQuantityString(R.plurals.notification_title, mcount));
+        builder.setContentText(getResources().getQuantityString(R.plurals.notification_text, mcount));
+        builder.setSmallIcon(R.drawable.ic_mic);
+        builder.setDefaults(defaults);
+        builder.setWhen( System.currentTimeMillis() );
+        builder.setContentIntent(contentIntent);
+        builder.setLights(0xffff0000, 300, 1000);
+        builder.setSound( Uri.parse( prefs.getString("ringtoneOnMessage", "content://settings/system/notification_sound") ) );
+        
+        Notification notification = builder.getNotification();
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(MESSAGE_NOTIFICATION, notification);
+    }
 }

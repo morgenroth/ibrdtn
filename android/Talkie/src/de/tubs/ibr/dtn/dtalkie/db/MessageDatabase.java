@@ -156,6 +156,26 @@ public class MessageDatabase {
         return msg;
 	}
 	
+	public Integer getMarkedMessageCount(Folder f, Boolean val) {
+	    Integer ret = 0;
+	    
+        try {
+            Cursor cur = mDatabase.query(f.getTableName(), new String[] { "COUNT(*)" }, Message.MARKED + " = ?", new String[] { val ? "yes" : "no" }, null, null, null);
+
+            if (cur.moveToNext())
+            {
+                ret = cur.getInt(0);
+            }
+            
+            cur.close();
+        } catch (Exception e) {
+            // message not found
+            Log.e(TAG, "getMessage() failed", e);
+        }
+        
+        return ret;
+	}
+	
     public Message nextMarked(Folder f, Boolean val) {
         Message msg = null;
         
