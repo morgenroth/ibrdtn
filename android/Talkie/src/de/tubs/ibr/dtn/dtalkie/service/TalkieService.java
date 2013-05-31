@@ -31,6 +31,7 @@ import java.util.List;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -225,6 +226,9 @@ public class TalkieService extends IntentService {
             Sensor s = sensors.get(0);
             sm.registerListener(mSensorListener, s, SensorManager.SENSOR_DELAY_NORMAL);
         }
+        
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.registerOnSharedPreferenceChangeListener(mPrefListener);
 		
 		// create message database
 		mDatabase = new MessageDatabase(this);
@@ -264,6 +268,12 @@ public class TalkieService extends IntentService {
 		}
 		
 		Log.i(TAG, "Service created.");
+		
+        if (prefs.getBoolean("autoplay", false)) {
+            Intent play_i = new Intent(TalkieService.this, TalkieService.class);
+            play_i.setAction(TalkieService.ACTION_PLAY_NEXT);
+            startService(play_i);
+        }
 	}
 	
 	public ServiceError getServiceError() {
@@ -273,6 +283,9 @@ public class TalkieService extends IntentService {
 	@Override
 	public void onDestroy()
 	{
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.unregisterOnSharedPreferenceChangeListener(mPrefListener);
+        
         SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
         sm.unregisterListener(mSensorListener);
         
@@ -445,6 +458,19 @@ public class TalkieService extends IntentService {
         }
 
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        }
+    };
+    
+    public OnSharedPreferenceChangeListener mPrefListener = new OnSharedPreferenceChangeListener() {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+            if ("autoplay".equals(key)) {
+                if (prefs.getBoolean(key, false)) {
+                    Intent play_i = new Intent(TalkieService.this, TalkieService.class);
+                    play_i.setAction(TalkieService.ACTION_PLAY_NEXT);
+                    startService(play_i);
+                }
+            }
         }
     };
 }

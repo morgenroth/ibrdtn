@@ -4,13 +4,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
@@ -98,40 +94,12 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.main_menu, menu);
-        
-        MenuItem autoplay = menu.findItem(R.id.itemAutoPlay);
-        
-        MenuItemCompat.setShowAsAction(autoplay, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
         MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearList), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
     }
     
     @Override
-    public void onPrepareOptionsMenu(Menu menu) {
-        MenuItem autoplay = menu.findItem(R.id.itemAutoPlay);
-        
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-
-        // restore autoplay option
-        autoplay.setIcon(prefs.getBoolean("autoplay", false) ? R.drawable.ic_autoplay_pause : R.drawable.ic_autoplay);
-        autoplay.setChecked(prefs.getBoolean("autoplay", false));
-    }
-    
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        
         switch (item.getItemId()) {
-            case R.id.itemAutoPlay:
-            {
-                Editor edit = prefs.edit();
-                Boolean newvalue = (!prefs.getBoolean("autoplay", false));
-                edit.putBoolean("autoplay", newvalue);
-                item.setChecked(newvalue);
-                item.setIcon(newvalue ? R.drawable.ic_autoplay_pause : R.drawable.ic_autoplay);
-                edit.commit();
-                return true;
-            }
-                
             case R.id.itemClearList:
                 MessageDatabase db = mService.getDatabase();
                 db.clear(Folder.INBOX);
@@ -186,33 +154,14 @@ public class MessageFragment extends ListFragment implements LoaderManager.Loade
         }
     }
     
-    public OnSharedPreferenceChangeListener mPrefListener = new OnSharedPreferenceChangeListener() {
-        @Override
-        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-            if ("autoplay".equals(key)) {
-                if (prefs.getBoolean(key, false)) {
-                    Intent play_i = new Intent(getActivity(), TalkieService.class);
-                    play_i.setAction(TalkieService.ACTION_PLAY_NEXT);
-                    getActivity().startService(play_i);
-                }
-            }
-        }
-    };
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBound = false;
-        
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        prefs.registerOnSharedPreferenceChangeListener(mPrefListener);
     }
 
     @Override
     public void onDestroy() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        prefs.unregisterOnSharedPreferenceChangeListener(mPrefListener);
-        
         if (mBound) {
             getLoaderManager().destroyLoader(MESSAGE_LOADER_ID);
             getActivity().unbindService(mConnection);

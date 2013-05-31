@@ -6,7 +6,6 @@ import java.util.List;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -15,11 +14,7 @@ import android.media.AudioManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.support.v4.view.MenuItemCompat;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
@@ -90,49 +85,8 @@ public class RecordingFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         
-        // enable options menu
-        setHasOptionsMenu(true);
-        
         // set volume control to MUSIC
         getActivity().setVolumeControlStream(AudioManager.STREAM_MUSIC);
-    }
-    
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.record_menu, menu);
-        MenuItem autorec = menu.findItem(R.id.itemAutoRec);
-        MenuItemCompat.setShowAsAction(autorec, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-    }
-    
-    @Override
-    public void onPrepareOptionsMenu(Menu menu) {
-        MenuItem autorec = menu.findItem(R.id.itemAutoRec);
-        
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-
-        autorec.setIcon(prefs.getBoolean("sensor", false) ? R.drawable.ic_autorec_on : R.drawable.ic_autorec_off);
-        autorec.setChecked(prefs.getBoolean("sensor", false));
-    }
-    
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        
-        switch (item.getItemId()) {
-            case R.id.itemAutoRec:
-            {
-                Editor edit = prefs.edit();
-                Boolean newvalue = (!prefs.getBoolean("sensor", false));
-                edit.putBoolean("sensor", newvalue);
-                item.setChecked(newvalue);
-                item.setIcon(newvalue ? R.drawable.ic_autorec_on : R.drawable.ic_autorec_off);
-                edit.commit();
-                return true;
-            }
-            
-            default:
-                return super.onOptionsItemSelected(item);
-        }
     }
     
     @Override

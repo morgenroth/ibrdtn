@@ -21,8 +21,13 @@
  */
 package de.tubs.ibr.dtn.dtalkie;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.view.MenuItemCompat;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 public class TalkieActivity extends FragmentActivity {
 	
@@ -34,5 +39,27 @@ public class TalkieActivity extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.pref_menu, menu);
+        MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemPreferences), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.itemPreferences:
+            {
+                // Launch Preference activity
+                Intent i = new Intent(this, Preferences.class);
+                startActivity(i);
+                return true;
+            }
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

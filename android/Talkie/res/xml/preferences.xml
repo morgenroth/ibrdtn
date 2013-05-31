@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference android:key="autoplay" android:title="@string/pref_autoplay" android:summary="@string/pref_autoplay_desc" />
+    <CheckBoxPreference android:key="sensor" android:summary="@string/pref_autorec_desc" android:defaultValue="false" android:title="@string/pref_autorec" />
+    <PreferenceCategory android:key="notificationSettings" android:title="@string/pref_notification_settings">
+    	<RingtonePreference android:title="@string/pref_ringtone_on_message" android:summary="@string/pref_ringtone_on_message_desc" android:key="ringtoneOnMessage" android:showSilent="true" android:ringtoneType="notification" android:showDefault="true" android:defaultValue="content://settings/system/notification_sound"/>
+    	<CheckBoxPreference android:key="vibrateOnMessage" android:title="@string/pref_vibrate_on_message" android:summary="@string/pref_vibrate_on_message_desc" android:defaultValue="true" />
+    </PreferenceCategory>
+</PreferenceScreen>
