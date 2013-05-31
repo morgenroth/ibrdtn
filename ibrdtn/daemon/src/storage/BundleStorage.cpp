@@ -230,9 +230,5 @@ namespace dtn
 			_indexes.erase(index);
 		}
 
-		dtn::data::BundleSet createSet(){
-			//TODO implement me
-			return BundleSet();
-		}
 	}
 }

@@ -161,8 +161,6 @@ namespace dtn
 			 */
 			void detach(dtn::storage::BundleIndex *index);
 
-			dtn::data::BundleSet createSet();
-
 			/*** BEGIN: methods for unit-testing ***/
 
 			/**

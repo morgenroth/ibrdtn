@@ -106,7 +106,7 @@ namespace dtn
 			"CREATE INDEX IF NOT EXISTS bundles_destination_priority ON " + _tables[SQL_TABLE_BUNDLE] + " (destination, priority);",
 			"CREATE UNIQUE INDEX IF NOT EXISTS bundles_id ON " + _tables[SQL_TABLE_BUNDLE] + " (source_id, timestamp, sequencenumber, fragmentoffset);"
 			"CREATE INDEX IF NOT EXISTS bundles_expire ON " + _tables[SQL_TABLE_BUNDLE] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime);",
-			"CREATE TABLE IF NOT EXISTS '" + _tables[SQL_TABLE_PROPERTIES] + "' ( `key` TEXT PRIMARY KEY ASC ON CONFLICT REPLACE, `value` TEXT NOT NULL);"
+			//TODO//"CREATE TABLE IF NOT EXISTS '" + _tables[SQL_TABLE_PROPERTIES] + "' ( `key` TEXT PRIMARY KEY ASC ON CONFLICT REPLACE, `value` TEXT NOT NULL);"
 			"CREATE TABLE IF NOT EXISTS " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (`source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER DEFAULT NULL, `expiretime` INTEGER, PRIMARY KEY(`source_id`, `timestamp`, `sequencenumber`, `fragmentoffset`));"
 		};
 
@@ -174,8 +174,8 @@ namespace dtn
 			if (_st != NULL)
 				throw SQLiteQueryException("already prepared");
 
-			int err = sqlite3_prepare_v2(_database, _query.c_str(), static_cast<int>(_query.length()), &_st, 0);
 
+			int err = sqlite3_prepare_v2(_database, _query.c_str(), static_cast<int>(_query.length()), &_st, 0);
 			if ( err != SQLITE_OK )
 				throw SQLiteQueryException("failed to prepare statement: " + _query);
 		}
@@ -975,7 +975,7 @@ namespace dtn
 			 * Only if the actual time is bigger or equal than the time when the next bundle expires, deleteexpired is called.
 			 */
 			dtn::data::Timestamp exp_time = get_expire_time();
-			if ((timestamp < exp_time) || (exp_time == 0)) return;
+			if (timestamp < exp_time) return;
 
 			/*
 			 * Performanceverbesserung: Damit die Abfragen nicht jede Sekunde ausgeführt werden müssen, speichert man den Zeitpunkt an dem
@@ -984,7 +984,7 @@ namespace dtn
 			 */
 
 			try {
-				Statement st(_database, _sql_queries[EXPIRE_BUNDLE_FILENAMES]);
+				Statement st(_database, _sql_queries[SEEN_BUNDLE_EXPIRE]);
 
 				// query for blocks of expired bundles
 				sqlite3_bind_int64(*st, 1, timestamp.get<uint64_t>());

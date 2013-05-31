@@ -92,5 +92,6 @@ namespace dtn
 		{
 			return obj.deserialize(stream);
 		}
+
 	} /* namespace data */
 } /* namespace dtn */

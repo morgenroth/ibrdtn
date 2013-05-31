@@ -161,6 +161,8 @@ namespace dtn
 		{
 			// routine checked for throw() on 15.02.2013
 
+			dtn::data::BundleSetFactory::bundleSetFactory = new dtn::storage::SQLiteBundleSetFactory(_database);
+
 			//register Events
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
@@ -194,7 +196,7 @@ namespace dtn
 		void SQLiteBundleStorage::componentDown() throw ()
 		{
 			// routine checked for throw() on 15.02.2013
-
+			dtn::data::BundleSetFactory::bundleSetFactory = NULL;
 			//unregister Events
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
@@ -609,10 +611,6 @@ namespace dtn
 			eventBundleRemoved(id);
 		}
 
-		dtn::data::BundleSet SQLiteBundleStorage::createSet(){
-				//TODO keine default werte verwenden
-				return _setFactory.create(NULL,1024);
-		}
 
 		void SQLiteBundleStorage::wait()
 		{

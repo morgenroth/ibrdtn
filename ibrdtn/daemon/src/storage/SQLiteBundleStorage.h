@@ -140,7 +140,6 @@ namespace dtn
 			void eventBundleExpired(const dtn::data::BundleID &id) throw ();
 			void iterateDatabase(const dtn::data::MetaBundle &bundle);
 
-			dtn::data::BundleSet createSet();
 
 			/*** BEGIN: methods for unit-testing ***/
 

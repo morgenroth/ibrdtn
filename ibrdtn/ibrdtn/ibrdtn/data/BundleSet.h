@@ -59,6 +59,7 @@ namespace dtn
 			friend std::ostream &operator<<(std::ostream &stream, const BundleSet &obj);
 			friend std::istream &operator>>(std::istream &stream, BundleSet &obj);
 
+
 		private:
 			refcnt_ptr<BundleSetImpl> _set_impl;
 		};
