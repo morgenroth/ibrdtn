@@ -20,7 +20,7 @@
         </ListPreference>
         
         <CheckBoxPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="RunAsForegroundService"
             android:title="@string/runasforegroundservice"
             android:summary="@string/runasforegroundservice_description" />

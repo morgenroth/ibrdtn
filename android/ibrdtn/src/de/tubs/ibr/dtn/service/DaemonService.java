@@ -333,7 +333,7 @@ public class DaemonService extends Service {
                     break;
                     
                 case ONLINE:
-                	if (prefs.getBoolean("RunAsForegroundService", false)) {
+                	if (prefs.getBoolean("RunAsForegroundService", true)) {
 	                    // mark the notification as visible
 	                    _show_notification = true;
 	                    
@@ -453,7 +453,7 @@ public class DaemonService extends Service {
 			
 			if (!"RunAsForegroundService".equals(key)) return;
 			
-			if (sharedPreferences.getBoolean("RunAsForegroundService", false)
+			if (sharedPreferences.getBoolean("RunAsForegroundService", true)
 					&& mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
 
                 // mark the notification as visible
