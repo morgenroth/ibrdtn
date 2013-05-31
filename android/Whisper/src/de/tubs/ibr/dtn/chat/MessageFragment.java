@@ -16,7 +16,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import de.tubs.ibr.dtn.chat.core.Buddy;
 import de.tubs.ibr.dtn.chat.service.ChatService;
+import de.tubs.ibr.dtn.chat.service.Utils;
 
 public class MessageFragment extends Fragment {
 	
@@ -32,6 +34,7 @@ public class MessageFragment extends Fragment {
 	private MessageComposer mComposer = null;
 	private MessageList mMessageList = null;
 	private BuddyDisplay mBuddyDisplay = null;
+	private MenuItem mVoiceMenu = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
@@ -46,6 +49,15 @@ public class MessageFragment extends Fragment {
             
             // restore draft message
             restoreDraftMessage();
+            
+            if (mVoiceMenu != null) {
+                Buddy b = mService.getRoster().getBuddy(getShownBuddy());
+                if (Utils.isVoiceRecordingSupported(getActivity()) && b.hasVoice()) {
+                    mVoiceMenu.setVisible(true);
+                } else {
+                    mVoiceMenu.setVisible(false);
+                }
+            }
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
@@ -116,11 +128,23 @@ public class MessageFragment extends Fragment {
 		}
 	}
 	
-	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-	    inflater.inflate(R.menu.message_menu, menu);
-	    MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearMessages), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-	}
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.message_menu, menu);
+        MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemVoiceMessage), MenuItemCompat.SHOW_AS_ACTION_ALWAYS | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+        
+        mVoiceMenu = menu.findItem(R.id.itemVoiceMessage);
+        if (mService != null) {
+            Buddy b = mService.getRoster().getBuddy(getShownBuddy());
+            if (Utils.isVoiceRecordingSupported(getActivity()) && b.hasVoice()) {
+                mVoiceMenu.setVisible(true);
+            } else {
+                mVoiceMenu.setVisible(false);
+            }
+        }
+        
+        MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearMessages), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+    }
 	
 	private DialogInterface.OnClickListener message_delete_dialog = new DialogInterface.OnClickListener() {
 		public void onClick(DialogInterface dialog, int which) {
@@ -146,6 +170,10 @@ public class MessageFragment extends Fragment {
     			builder.setNegativeButton(getActivity().getResources().getString(android.R.string.no), null);
     			builder.show();
 	    		return true;
+	    		
+    		case R.id.itemVoiceMessage:
+    		    startVoiceRecording();
+    		    return true;
 	    	
 	    	default:
 	    		return super.onOptionsItemSelected(item);
@@ -216,5 +244,18 @@ public class MessageFragment extends Fragment {
 			getActivity().bindService(new Intent(getActivity(), ChatService.class), mConnection, Context.BIND_AUTO_CREATE);
 			mBound = true;
 		}
+	}
+	
+	private void startVoiceRecording() {
+        if (mService != null) {
+            Buddy b = mService.getRoster().getBuddy(getShownBuddy());
+            if (!b.hasVoice()) return;
+            
+            final Intent i = new Intent("de.tubs.ibr.dtn.dtalkie.RECORD_MESSAGE");
+            i.addCategory(Intent.CATEGORY_DEFAULT);
+            i.putExtra("destination", b.getVoiceEndpoint());
+            i.putExtra("singleton", true);
+            startActivity(i);
+        }
 	}
 }

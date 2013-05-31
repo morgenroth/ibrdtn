@@ -73,9 +73,11 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 	    if (0 != (getActivity().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE)) {
 	    	menu.findItem(R.id.itemDebugNotification).setVisible(true);
 	    	menu.findItem(R.id.itemDebugBuddyAdd).setVisible(true);
+	    	menu.findItem(R.id.itemDebugSendPresence).setVisible(true);
 	    } else {
 	    	menu.findItem(R.id.itemDebugNotification).setVisible(false);
 	    	menu.findItem(R.id.itemDebugBuddyAdd).setVisible(false);
+	    	menu.findItem(R.id.itemDebugSendPresence).setVisible(false);
 	    }
 	}
 
@@ -100,6 +102,11 @@ public class RosterFragment extends ListFragment implements LoaderManager.Loader
 	    	if (mService != null)
 				mService.startDebug(ChatService.Debug.BUDDY_ADD);
 	    	return true;
+	    	
+	    case R.id.itemDebugSendPresence:
+            if (mService != null)
+                mService.startDebug(ChatService.Debug.SEND_PRESENCE);
+	        return true;
     
 	    default:
 	        return super.onOptionsItemSelected(item);

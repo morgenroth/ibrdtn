@@ -7,6 +7,7 @@
     <string name="empty"></string>
     <string name="close">Close</string>
     <string name="clearmsg">Clear messages</string>
+    <string name="voicemsg">Record voice message</string>
     <string name="conversation_with">Conversation with</string>
     <string name="remove">Remove</string>
     <string name="nickname">Nickname</string>
@@ -38,6 +39,7 @@
     <string name="tts_when_on_headset_desc">Play messages via TTS when a headset is connected.</string>
     <string name="debug_notification">Debug Notification</string>
     <string name="debug_buddy_add">Add buddy</string>
+    <string name="debug_send_presence">Send presence</string>
     <string name="image_contact_symbol">Contact symbol</string>
     <string name="type_to_compose_text_enter_to_send">Type message</string>
 </resources>

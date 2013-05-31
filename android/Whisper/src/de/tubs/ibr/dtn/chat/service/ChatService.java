@@ -42,6 +42,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -69,7 +70,8 @@ public class ChatService extends IntentService {
 	
 	public enum Debug {
 		NOTIFICATION,
-		BUDDY_ADD
+		BUDDY_ADD,
+		SEND_PRESENCE
 	}
 	
 	private static final String TAG = "ChatService";
@@ -176,6 +178,7 @@ public class ChatService extends IntentService {
 			String nickname = null;
 			String presence = null;
 			String status = null;
+			String voiceeid = null;
 			
 			StringTokenizer tokenizer = new StringTokenizer(payload, "\n");
 			while (tokenizer.hasMoreTokens())
@@ -204,11 +207,15 @@ public class ChatService extends IntentService {
 				{
 					status = value;
 				}
+                else if (keyword.equalsIgnoreCase("Voice"))
+                {
+                    voiceeid = value;
+                }
 			}
 			
 			if (nickname != null)
 			{
-				getRoster().updatePresence(source.toString(), created, presence, nickname, status);
+				getRoster().updatePresence(source.toString(), created, presence, nickname, status, voiceeid);
 			}
 		}
 		
@@ -576,6 +583,12 @@ public class ChatService extends IntentService {
 					"Nickname: " + nickname + "\n" +
 					"Status: " + status;
 			
+			try {
+    			if (Utils.isVoiceRecordingSupported(this)) {
+    			    presence_message += "\n" + "Voice: " + _client.getDTNService().getEndpoint() + "/dtalkie";
+    			}
+			} catch (RemoteException e) { }
+			
 			BundleID ret = s.send(ChatService.PRESENCE_GROUP_EID, 3600, presence_message.getBytes());
 			
 			if (ret == null)
@@ -611,8 +624,15 @@ public class ChatService extends IntentService {
 			createNotification(b, msg);
 			break;
 		case BUDDY_ADD:
-			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World");
+			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World", "dtn://test/dtalkie");
 			break;
+			
+		case SEND_PRESENCE:
+	        // wake-up the chat service and queue a send presence task
+	        Intent i = new Intent(this, ChatService.class);
+	        i.setAction(AlarmReceiver.ACTION);
+	        startService(i);
+		    break;
 		}
 	}
 }

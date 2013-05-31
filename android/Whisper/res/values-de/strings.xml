@@ -7,6 +7,7 @@
     <string name="list_messages">Nachrichten</string>
     <string name="close">Schließen</string>
     <string name="clearmsg">Nachrichten löschen</string>
+    <string name="voicemsg">Sprachnachricht aufnehmen</string>
     <string name="conversation_with">Gespräch mit</string>
     <string name="remove">Löschen</string>
     <string name="nickname">Rufname</string>

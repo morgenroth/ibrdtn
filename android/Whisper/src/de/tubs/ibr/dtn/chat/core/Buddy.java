@@ -44,6 +44,7 @@ public class Buddy implements Comparable<Buddy> {
 	public static final String PRESENCE = "presence";
 	public static final String STATUS = "status";
 	public static final String DRAFTMSG = "draftmsg";
+	public static final String VOICEEID = "voiceeid";
 	
 	private Long id = null;
 	private String nickname = null;
@@ -52,6 +53,7 @@ public class Buddy implements Comparable<Buddy> {
 	private String presence = null;
 	private String status = null;
 	private String draftmsg = null;
+	private String voiceeid = null;
 
 	public Buddy(Context context, Cursor cursor, RosterAdapter.ColumnsMap cmap)
 	{
@@ -64,6 +66,7 @@ public class Buddy implements Comparable<Buddy> {
 		this.presence = cursor.getString(cmap.mColumnPresence);
 		this.status = cursor.getString(cmap.mColumnStatus);
 		this.draftmsg = cursor.getString(cmap.mColumnDraftMsg);
+		this.voiceeid = cursor.getString(cmap.mColumnVoiceEndpoint);
 		
 		// set the last seen parameter
 		if (!cursor.isNull(cmap.mColumnLastseen))
@@ -178,4 +181,12 @@ public class Buddy implements Comparable<Buddy> {
 		
 		return super.toString();
 	}
+	
+	public Boolean hasVoice() {
+	    return (voiceeid != null);
+	}
+	
+    public String getVoiceEndpoint() {
+        return voiceeid;
+    }
 }
