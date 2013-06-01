@@ -37,8 +37,6 @@ public class EventReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		String action = intent.getAction();
 		
-		Log.d("EventReceiver", "Intent received: " + action);
-		
 		if (action.equals(de.tubs.ibr.dtn.Intent.STATE))
 		{
 			String state = intent.getStringExtra("state");
@@ -50,27 +48,13 @@ public class EventReceiver extends BroadcastReceiver {
 				{
 					// register scheduled presence update
 					activatePresenceGenerator(context);
-					
-					// wake-up the chat service and queue a send presence task
-					Intent i = new Intent(context, ChatService.class);
-					i.setAction(AlarmReceiver.ACTION);
-					context.startService(i);
 				}
-				
-				// open activity
-				Intent i = new Intent(context, ChatService.class);
-				i.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
-				context.startService(i);
 			}
 			else if (state.equals("OFFLINE"))
 			{
 				// unregister scheduled presence update
 				deactivatePresenceGenerator(context);
 			}
-		}
-		else if (action.equals(de.tubs.ibr.dtn.Intent.REGISTRATION))
-		{
-			// registration successful
 		}
 		else if (action.equals(de.tubs.ibr.dtn.Intent.RECEIVE))
 		{

@@ -53,10 +53,6 @@
 	            <category android:name="android.intent.category.DEFAULT" />
 	        </intent-filter>
 	        <intent-filter>
-				<action android:name="de.tubs.ibr.dtn.intent.REGISTRATION" />
-	            <category android:name="de.tubs.ibr.dtn.intent.category.SESSION" />
-	        </intent-filter>
-	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
 	            <category android:name="de.tubs.ibr.dtn.intent.category.SESSION" />
 	        </intent-filter>
