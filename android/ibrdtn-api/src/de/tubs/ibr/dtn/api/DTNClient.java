@@ -30,17 +30,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.ResolveInfo;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.DTNService;
 
 public final class DTNClient {
 	
 	private static final String TAG = "DTNClient";
+	
+	private static final String PREF_SESSION_KEY = "dtn_session_key";
 
     // DTN service provided by IBR-DTN
     private DTNService mService = null;
@@ -57,19 +61,17 @@ public final class DTNClient {
 	
     private Boolean mBlocking = true;
     
-    private String mPackageName = null;
-    
     private SessionConnection mSessionHandler = null;
     
     private Boolean mShutdown = false;
     
     public DTNClient(SessionConnection handler) {
-    	this.mSessionHandler = handler;
+    	mSessionHandler = handler;
     }
     
     public DTNClient() {
     	// add dummy handler
-    	this.mSessionHandler = new SessionConnection() {
+    	mSessionHandler = new SessionConnection() {
 			public void onSessionConnected(Session session) { }
 
 			public void onSessionDisconnected() { }
@@ -86,7 +88,7 @@ public final class DTNClient {
 	}
 
 	public synchronized void setDataHandler(DataHandler handler) {
-		this.mHandler = handler;
+		mHandler = handler;
 	}
 	
 	public synchronized Session getSession() throws SessionDestroyedException, InterruptedException {
@@ -109,13 +111,13 @@ public final class DTNClient {
 	   
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
-			DTNClient.this.mService = DTNService.Stub.asInterface(service);
+			mService = DTNService.Stub.asInterface(service);
 			initializeSession(mRegistration);
 		}
 
 		public void onServiceDisconnected(ComponentName name) {
 			mSessionHandler.onSessionDisconnected();
-			DTNClient.this.mService = null;
+			mService = null;
 		}
 	};
 	
@@ -125,6 +127,14 @@ public final class DTNClient {
 			if (intent.getAction().equals(de.tubs.ibr.dtn.Intent.REGISTRATION))
 			{
 				Log.i(TAG, "registration successful");
+				
+				// store session key
+				String session_key = intent.getStringExtra("key");
+				
+				SharedPreferences pm = PreferenceManager.getDefaultSharedPreferences(mContext);
+				pm.edit().putString(PREF_SESSION_KEY, session_key).commit();
+				
+				// initialize the session
 				initializeSession(mRegistration);
 			}
 		}
@@ -135,7 +145,7 @@ public final class DTNClient {
 			// do not initialize if the service is not connected
 			if (mService == null) return;
 			
-			Session s = new Session(mService, mPackageName);
+			Session s = new Session(mContext, mService, mCallback);
 			
 			s.initialize();
 			
@@ -190,22 +200,30 @@ public final class DTNClient {
 		}
 	};
 	
-	public class Session
+	public static class Session
 	{
-		private DTNService service = null;
-		private DTNSession session = null;
-		private String packageName = null;
+		private Context mContext = null;
+		private DTNService mService = null;
+		private DTNSession mSession = null;
+		private DTNSessionCallback mCallback = null;
 		
-		public Session(DTNService service, String packageName) {
-			this.service = service;
-			this.packageName = packageName;
+		public Session(Context context, DTNService service, DTNSessionCallback callback) {
+			mContext = context;
+			mService = service;
+			mCallback = callback;
 		}
 		
 		public void initialize() throws RemoteException, SessionDestroyedException {
-			// try to resume the previous session
-			session = service.getSession(packageName);
+			SharedPreferences pm = PreferenceManager.getDefaultSharedPreferences(mContext);
+			if (!pm.contains(PREF_SESSION_KEY)) {
+				Log.i(TAG, "No session key available, need to register!");
+				throw new SessionDestroyedException();
+			}
 			
-			if (session == null)
+			// try to resume the previous session
+			mSession = mService.getSession(pm.getString(PREF_SESSION_KEY, ""));
+			
+			if (mSession == null)
 			{
 				Log.i(TAG, "Session not available, need to register!");
 				throw new SessionDestroyedException();
@@ -215,7 +233,7 @@ public final class DTNClient {
 		}
 		
 		public void destroy() {
-			if (this.session == null) return;
+			if (mSession == null) return;
 
 			// send intent to destroy the session in the daemon
 	    	Intent registrationIntent = new Intent(de.tubs.ibr.dtn.Intent.UNREGISTER);
@@ -227,11 +245,11 @@ public final class DTNClient {
 		 * Send a string as a bundle to the given destination.
 		 */
 		public BundleID send(Bundle bundle, byte[] data) throws SessionDestroyedException {
-			if (this.session == null) new SessionDestroyedException("session is null");
+			if (mSession == null) new SessionDestroyedException("session is null");
 			
 			try {
 				// send the message to the daemon
-				return session.send(null, bundle, data);
+				return mSession.send(null, bundle, data);
 			} catch (RemoteException e) {
 				 throw new SessionDestroyedException("send failed");
 			}
@@ -252,11 +270,11 @@ public final class DTNClient {
 		 * Send the content of a file descriptor as bundle
 		 */
 		public BundleID send(Bundle bundle, ParcelFileDescriptor fd, Long length) throws SessionDestroyedException {
-			if (this.session == null)  new SessionDestroyedException("session is null");
+			if (mSession == null)  new SessionDestroyedException("session is null");
 			
 			try {
 				// send the message to the daemon
-				return session.sendFileDescriptor(null, bundle, fd, length);
+				return mSession.sendFileDescriptor(null, bundle, fd, length);
 			} catch (RemoteException e) {
 				return null;
 			}
@@ -274,10 +292,10 @@ public final class DTNClient {
 		}
 		
 		public Boolean queryNext() throws SessionDestroyedException {
-			if (this.session == null) new SessionDestroyedException("session is null");
+			if (mSession == null) new SessionDestroyedException("session is null");
 			
 			try {
-				return this.session.queryNext(mCallback);
+				return mSession.queryNext(mCallback);
 			} catch (RemoteException e) {
 				new SessionDestroyedException("remote session error");
 			}
@@ -285,10 +303,10 @@ public final class DTNClient {
 		}
 		
 		public void delivered(BundleID id) throws SessionDestroyedException {
-			if (this.session == null) new SessionDestroyedException("session is null");
+			if (mSession == null) new SessionDestroyedException("session is null");
 			
 			try {
-				if (!this.session.delivered(id))
+				if (!mSession.delivered(id))
 					new SessionDestroyedException("remote session error");
 			} catch (RemoteException e) {
 				new SessionDestroyedException("remote session error");
@@ -305,10 +323,7 @@ public final class DTNClient {
 	 */
 	public synchronized void initialize(Context context, Registration reg) throws ServiceNotAvailableException {
 		// set the context
-		this.mContext = context;
-		
-  		// get package name
-  		mPackageName = context.getApplicationContext().getPackageName();
+		mContext = context;
 		
   		// store registration
   		mRegistration = reg;
@@ -322,7 +337,7 @@ public final class DTNClient {
   		
 		// register to daemon events
 		IntentFilter rfilter = new IntentFilter(de.tubs.ibr.dtn.Intent.REGISTRATION);
-		rfilter.addCategory(mPackageName);
+		rfilter.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
 		context.registerReceiver(mStateReceiver, rfilter );
   		
 		// Establish a connection with the service.
