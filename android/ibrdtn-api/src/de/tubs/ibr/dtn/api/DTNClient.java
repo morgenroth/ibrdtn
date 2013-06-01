@@ -132,6 +132,9 @@ public final class DTNClient {
 	
 	private void initializeSession(Registration reg) {
 		try {
+			// do not initialize if the service is not connected
+			if (mService == null) return;
+			
 			Session s = new Session(mService, mPackageName);
 			
 			s.initialize();
