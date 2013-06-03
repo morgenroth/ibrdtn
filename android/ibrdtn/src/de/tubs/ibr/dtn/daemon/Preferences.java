@@ -21,32 +21,32 @@
  */
 package de.tubs.ibr.dtn.daemon;
 
-import java.io.IOException;
-import java.net.NetworkInterface;
 import java.util.Calendar;
-import java.util.Enumeration;
 
 import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.net.ConnectivityManager;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -71,6 +71,7 @@ public class Preferences extends PreferenceActivity {
 	
 	private Switch actionBarSwitch = null;
 	private CheckBoxPreference checkBoxPreference = null;
+	private InterfacePreferenceCategory mInterfacePreference = null;
 	
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
@@ -197,22 +198,6 @@ public class Preferences extends PreferenceActivity {
 		Editor e = prefs.edit();
 		e.putString("endpoint_id", DaemonProcess.getUniqueEndpointID(context).toString());
 		
-		try {
-			// scan for known network devices
-			for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
-		    {
-	            NetworkInterface i = list.nextElement();
-	            String iface = i.getDisplayName();
-	            
-	            if (	iface.contains("wlan") ||
-	            		iface.contains("wifi") ||
-	            		iface.contains("eth")
-	            	) {
-	            	e.putBoolean("interface_" + iface, true);
-	            }
-		    }
-		} catch (IOException ex) { }
-		
 		// set preferences to initialized
 		e.putBoolean("initialized", true);
 		
@@ -232,6 +217,8 @@ public class Preferences extends PreferenceActivity {
 		initializeDefaultPreferences(this);
 
 		addPreferencesFromResource(R.xml.preferences);
+		
+		mInterfacePreference = (InterfacePreferenceCategory)findPreference("prefcat_interfaces");
 		
 		// connect daemon controls
         checkBoxPreference = (CheckBoxPreference) findPreference("enabledSwitch");
@@ -274,47 +261,7 @@ public class Preferences extends PreferenceActivity {
 				}
 	        });
 		}
-		
-		// list all network interfaces
-		try {
-			PreferenceCategory pc = (PreferenceCategory) findPreference("prefcat_interfaces");
-			
-			for(Enumeration<NetworkInterface> list = NetworkInterface.getNetworkInterfaces(); list.hasMoreElements();)
-		    {
-	            NetworkInterface i = list.nextElement();
-	            
-	            // skip virtual interfaces
-	            if (i.isVirtual()) continue;
-	            
-	            // do not work on non-multicast interfaces
-	            if (!i.supportsMulticast()) continue;
-	            
-	            // skip loopback device
-	            if (i.isLoopback()) continue;
-	            
-	            // skip rmnet
-	            if (i.getDisplayName().startsWith("rmnet")) continue;
-	            
-	            String iface = i.getDisplayName();
-	            CheckBoxPreference cb_i = new CheckBoxPreference(this);
-	            
-	            cb_i.setTitle(iface);
-	            
-	            if (i.isPointToPoint())
-	            {
-	            	cb_i.setSummary("Point-to-Point");
-	            }
-	            else if (i.isLoopback())
-	            {
-	            	cb_i.setSummary("Loopback");
-	            }
-	            
-	            cb_i.setKey("interface_" + iface);
-	            pc.addPreference(cb_i);
-	            cb_i.setDependency(pc.getDependency());
-		    }
-		} catch (IOException e) { }
-		
+
 		// set initial version
 		setVersion(null);
 	}
@@ -347,6 +294,8 @@ public class Preferences extends PreferenceActivity {
     @Override
 	protected void onPause() {
 		super.onPause();
+		
+		unregisterReceiver(mNetworkConditionListener);
 	}
 
 	@Override
@@ -368,5 +317,23 @@ public class Preferences extends PreferenceActivity {
 		if (!prefs.getBoolean("collect_stats_initialized", false)) {
 			showStatisticLoggerDialog(Preferences.this);
 		}
+		
+        IntentFilter filter =new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        registerReceiver(mNetworkConditionListener, filter);
+        
+        mInterfacePreference.updateInterfaceList();
 	}
+	
+    private BroadcastReceiver mNetworkConditionListener = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mInterfacePreference.updateInterfaceList();
+                }
+            });
+        }
+    };
 }

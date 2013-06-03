@@ -56,10 +56,10 @@
             android:summary="@string/pref_fragmentation_desc"
             android:title="@string/pref_fragmentation" />
     </PreferenceCategory>
-    <PreferenceCategory
+    <de.tubs.ibr.dtn.daemon.InterfacePreferenceCategory
         android:key="prefcat_interfaces"
         android:title="@string/interfaces" >
-    </PreferenceCategory>
+    </de.tubs.ibr.dtn.daemon.InterfacePreferenceCategory>
     <PreferenceCategory
         android:key="prefcat_security"
         android:title="@string/security" >
