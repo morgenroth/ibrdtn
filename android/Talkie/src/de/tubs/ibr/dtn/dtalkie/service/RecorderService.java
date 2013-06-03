@@ -74,9 +74,6 @@ public class RecorderService extends Service {
         mRecorder.setOnErrorListener(mErrorListener);
         mRecorder.setOnInfoListener(mInfoListener);
         
-        // set recorder default source
-        mRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
-        
         // init sound pool
         mSoundManager = new SoundFXManager();
         
@@ -141,6 +138,7 @@ public class RecorderService extends Service {
             mCurrentFile = File.createTempFile("record", ".3gp", path);
             
             synchronized(mRecLock) {
+                mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
                 mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
                 mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
                 mRecorder.setAudioSamplingRate(16000);
@@ -196,7 +194,6 @@ public class RecorderService extends Service {
     	synchronized(mRecLock) {
 	        // reset recorder
 	        mRecorder.reset();
-	        mRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
 	
 	        if (mAbort) {
 	            // TODO: add a good abort sound
