@@ -27,7 +27,6 @@ public class RecorderService extends Service {
 
     private MediaRecorder mRecorder = null;
     private SoundFXManager mSoundManager = null;
-//    private FileObserver mObserver = null;
     private File mCurrentFile = null;
     
     private Object mRecLock = new Object();
@@ -155,23 +154,7 @@ public class RecorderService extends Service {
             
             // make a noise
             playSound(Sound.BEEP);
-            
-//            mObserver = new FileObserver(tmpfile.getAbsolutePath(), FileObserver.CLOSE_WRITE) {
-//                @Override
-//                public void onEvent(int arg0, String arg1) {
-//                    if (arg0 == FileObserver.CLOSE_WRITE)
-//                    {
-//                        try {
-//                            Log.d(TAG, "observer finished");
-//                            finalizeRecording(tmpfile);
-//                            stopWatching();
-//                            mObserver = null;
-//                        } catch (Exception ex) { }
-//                    }
-//                }
-//            };
-//            
-//            mObserver.startWatching();
+
         } catch (IOException e) {
             Log.e(TAG, "can not start recording", e);
         }
