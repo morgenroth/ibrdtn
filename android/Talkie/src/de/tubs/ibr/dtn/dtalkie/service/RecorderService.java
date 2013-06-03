@@ -144,6 +144,7 @@ public class RecorderService extends Service {
             synchronized(mRecLock) {
                 mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
                 mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
+                mRecorder.setAudioSamplingRate(44100);
 	            mRecorder.setOutputFile(mCurrentFile.getAbsolutePath());
 	            mRecorder.prepare();
 	            mRecorder.start();
@@ -263,6 +264,11 @@ public class RecorderService extends Service {
         public void onError(MediaRecorder mr, int what, int extra) {
             Log.d(TAG, "MediaRecorder-Error: " + String.valueOf(what) + " " + String.valueOf(extra));
             playSound(Sound.SQUELSH_SHORT);
+            
+            // abort the recording
+            mAbort = true;
+            finalizeRecording(mCurrentFile);
+            mCurrentFile = null;
         }
         
     };
