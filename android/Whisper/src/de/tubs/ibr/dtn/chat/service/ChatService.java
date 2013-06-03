@@ -47,6 +47,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
+import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
@@ -585,7 +586,10 @@ public class ChatService extends IntentService {
 			
 			try {
     			if (Utils.isVoiceRecordingSupported(this)) {
-    			    presence_message += "\n" + "Voice: " + _client.getDTNService().getEndpoint() + "/dtalkie";
+    			    DTNService dtns = _client.getDTNService();
+    			    if (dtns != null) {
+    			        presence_message += "\n" + "Voice: " + dtns.getEndpoint() + "/dtalkie";
+    			    }
     			}
 			} catch (RemoteException e) { }
 			
