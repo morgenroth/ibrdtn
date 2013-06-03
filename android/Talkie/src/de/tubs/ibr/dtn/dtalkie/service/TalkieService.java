@@ -377,7 +377,13 @@ public class TalkieService extends IntentService {
                 // prepare player
                 Message msg = mDatabase.get(f, msgid);
                 mPlayer.setDataSource(msg.getFile().getAbsolutePath());
-                mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                
+                if (mOnEar) {
+                    mPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
+                } else {
+                    mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                }
+                
                 mPlayer.prepareAsync();
                 
                 synchronized(mPlayerLock) {
