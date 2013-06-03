@@ -143,7 +143,9 @@ public class RecorderService extends Service {
             synchronized(mRecLock) {
                 mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
                 mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-                mRecorder.setAudioSamplingRate(44100);
+                mRecorder.setAudioSamplingRate(16000);
+                mRecorder.setAudioChannels(1);
+                mRecorder.setAudioEncodingBitRate(23850);
 	            mRecorder.setOutputFile(mCurrentFile.getAbsolutePath());
 	            mRecorder.prepare();
 	            mRecorder.start();
