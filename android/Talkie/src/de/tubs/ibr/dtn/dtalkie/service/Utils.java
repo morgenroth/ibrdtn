@@ -1,6 +1,7 @@
 package de.tubs.ibr.dtn.dtalkie.service;
 
 import java.io.File;
+import java.io.IOException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -9,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Environment;
+import android.util.Log;
 import de.tubs.ibr.dtn.dtalkie.R;
 
 public class Utils {
@@ -17,6 +19,8 @@ public class Utils {
 	
 	public static int ANDROID_API_ACTIONBAR = 11;
 	public static int ANDROID_API_ACTIONBAR_SETICON = 14;
+	
+	private static final String TAG = "Utils";
 	
 	public static void showInstallServiceDialog(final Activity activity) {
 		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
@@ -77,6 +81,16 @@ public class Utils {
             if (!sharefolder.exists())
             {
                     sharefolder.mkdir();
+            }
+            
+            // add gallery hide file
+            File hideFile = new File(sharefolder.getPath() + File.separatorChar + ".nomedia");
+            if (!hideFile.exists()) {
+                try {
+                    hideFile.createNewFile();
+                } catch (IOException e) {
+                    Log.e(TAG, null, e);
+                }
             }
             
             return sharefolder;
