@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ShareBox</string>
+    <string name="action_settings">Settings</string>
+    <string name="empty"></string>
+
+    <string name="alert_missing_daemon">The DTN daemon is not installed. You need to install it and then re-install this application. Would you like to install it now?</string>
+    <string name="alert_reinstall_app">You need to re-install this application to grant necessary permissions. Would you like to do this now?</string>
+    <string name="alert_yes">Yes</string>
+    <string name="alert_no">No</string>
+    
+    <string name="preferences">Preferences</string>
+    <string name="pref_notification_settings">Notifications</string>
+    <string name="pref_vibrate_on_message">Vibrate</string>
+    <string name="pref_vibrate_on_message_desc">Vibrate on message reception</string>
+    <string name="pref_ringtone_on_message">Notification sound</string>
+    <string name="pref_ringtone_on_message_desc">Choose a notification sound for incoming messages.</string>
+
+</resources>

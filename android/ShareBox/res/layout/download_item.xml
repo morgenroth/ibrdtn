@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<de.tubs.ibr.dtn.dtalkie.MessageItem
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="6dip" >
+
+    <TextView
+        android:id="@+id/label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_toRightOf="@+id/icon"
+        android:singleLine="true"
+        android:text="@string/empty"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/bottomtext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/label"
+        android:layout_below="@+id/label"
+        android:singleLine="true"
+        android:text="@string/empty" />
+
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginLeft="4dp"
+        android:layout_centerVertical="true"
+        android:src="@drawable/ic_launcher" />
+
+    <TextView
+        android:id="@+id/sidetext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/bottomtext"
+        android:layout_alignBottom="@+id/bottomtext"
+        android:layout_alignParentRight="true"
+        android:singleLine="true"
+        android:text="@string/empty"
+        android:textColor="@color/light_yellow" />
+
+</de.tubs.ibr.dtn.dtalkie.MessageItem>
