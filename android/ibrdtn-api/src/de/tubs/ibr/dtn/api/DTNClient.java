@@ -302,6 +302,39 @@ public final class DTNClient {
 			return false;
 		}
 		
+		public Boolean query(BundleID id) throws SessionDestroyedException {
+		    if (mSession == null) new SessionDestroyedException("session is null");
+		    
+            try {
+                return mSession.query(mCallback, id);
+            } catch (RemoteException e) {
+                new SessionDestroyedException("remote session error");
+            }
+            return false;
+		}
+		
+        public Boolean queryInfoNext() throws SessionDestroyedException {
+            if (mSession == null) new SessionDestroyedException("session is null");
+            
+            try {
+                return mSession.queryInfoNext(mCallback);
+            } catch (RemoteException e) {
+                new SessionDestroyedException("remote session error");
+            }
+            return false;
+        }
+        
+        public Boolean queryInfo(BundleID id) throws SessionDestroyedException {
+            if (mSession == null) new SessionDestroyedException("session is null");
+            
+            try {
+                return mSession.queryInfo(mCallback, id);
+            } catch (RemoteException e) {
+                new SessionDestroyedException("remote session error");
+            }
+            return false;
+        }
+		
 		public void delivered(BundleID id) throws SessionDestroyedException {
 			if (mSession == null) new SessionDestroyedException("session is null");
 			

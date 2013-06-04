@@ -375,6 +375,36 @@ public class ClientSession {
      * This is the actual implementation of the DTNSession API
      */
     private final DTNSession.Stub mBinder = new DTNSession.Stub() {
+        public boolean queryInfo(DTNSessionCallback cb, BundleID id) throws RemoteException
+        {
+            synchronized (_serializer_callback) {
+                // set serializer for this query
+                _serializer_callback.setCallback(cb);
+
+                try {
+                    synchronized (mRegisterLock1) {
+                        // load the bundle into the register
+                        nativeSession.load(NativeSession.RegisterIndex.REG1, toSwig(id));
+
+                        // get the bundle
+                        nativeSession.getInfo(NativeSession.RegisterIndex.REG1);
+                    }
+
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+
+                    // bundle loaded - return true
+                    return true;
+                } catch (BundleNotFoundException e) {
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+
+                    // bundle not found - return false
+                    return false;
+                }
+            }
+        }
+        
         public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException
         {
             synchronized (_serializer_callback) {
@@ -388,6 +418,36 @@ public class ClientSession {
 
                         // get the bundle
                         nativeSession.get(NativeSession.RegisterIndex.REG1);
+                    }
+
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+
+                    // bundle loaded - return true
+                    return true;
+                } catch (BundleNotFoundException e) {
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+
+                    // bundle not found - return false
+                    return false;
+                }
+            }
+        }
+        
+        public boolean queryInfoNext(DTNSessionCallback cb) throws RemoteException
+        {
+            synchronized (_serializer_callback) {
+                // set serializer for this query
+                _serializer_callback.setCallback(cb);
+
+                try {
+                    synchronized (mRegisterLock1) {
+                        // load the next bundle into the register
+                        nativeSession.next(NativeSession.RegisterIndex.REG1);
+
+                        // get the bundle
+                        nativeSession.getInfo(NativeSession.RegisterIndex.REG1);
                     }
 
                     // set serializer back to null
