@@ -303,6 +303,9 @@ public class TalkieService extends IntentService {
 	    mClient = null;
 	    
 	    mPlayer.release();
+	    
+	    // close the database
+	    mDatabase.close();
 		
 		super.onDestroy();
 		Log.i(TAG, "Service destroyed.");
