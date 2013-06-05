@@ -49,8 +49,9 @@ public class DtnService extends IntentService {
     // process a status report
     public static final String REPORT_DELIVERED_INTENT = "de.tubs.ibr.dtn.sharebox.REPORT_DELIVERED";
     
-    // download a bundle
-    public static final String DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.DOWNLOAD";
+    // download or rejet a bundle
+    public static final String ACCEPT_DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.ACCEPT_DOWNLOAD";
+    public static final String REJECT_DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.REJECT_DOWNLOAD";
     
     // pending download intent
     public static final String PENDING_DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.PENDING_DOWNLOAD";
@@ -165,8 +166,32 @@ public class DtnService extends IntentService {
             
             Log.d(TAG, "Status report received for " + bundleid.toString() + " from " + source.toString());
         }
-        else if (DOWNLOAD_INTENT.equals(action))
+        else if (REJECT_DOWNLOAD_INTENT.equals(action))
         {
+            // dismiss notification if there are no more pending downloads
+            if (mDatabase.getPending() <= 1) {
+                mNotificationManager.cancel(PENDING_DOWNLOAD_NOTIFICATION);
+            }
+            
+            // retrieve the bundle ID of the intent
+            BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
+            
+            // mark the bundle as delivered
+            Intent i = new Intent(DtnService.this, DtnService.class);
+            i.setAction(MARK_DELIVERED_INTENT);
+            i.putExtra(PARCEL_KEY_BUNDLE_ID, bundleid);
+            startService(i);
+            
+            // delete the pending bundle
+            mDatabase.remove(bundleid);
+        }
+        else if (ACCEPT_DOWNLOAD_INTENT.equals(action))
+        {
+            // dismiss notification if there are no more pending downloads
+            if (mDatabase.getPending() <= 1) {
+                mNotificationManager.cancel(PENDING_DOWNLOAD_NOTIFICATION);
+            }
+            
             // retrieve the bundle ID of the intent
             BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
             
@@ -180,10 +205,13 @@ public class DtnService extends IntentService {
             
             // prepare final notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-            setNotificationSettings(builder);
             
             Intent resultIntent = new Intent(this, TransferListActivity.class);
             resultIntent.putExtra(PARCEL_KEY_BUNDLE_ID, bundleid);
+            
+            // mark the download as accepted
+            Download d = mDatabase.get(bundleid);
+            mDatabase.setState(d.getId(), 1);
 
             try {
                 mIsDownloading = true;
@@ -243,21 +271,39 @@ public class DtnService extends IntentService {
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
             setNotificationSettings(builder);
             
-            builder.setContentTitle(getResources().getQuantityString(R.plurals.notification_pending_download_title, 1));
-            builder.setContentText(getResources().getQuantityString(R.plurals.notification_pending_download_text, 1));
-            builder.setSmallIcon(R.drawable.ic_stat_download);
+            Intent resultIntent = new Intent(this, TransferListActivity.class);
+
+            // get the number of pending downloads
+            Integer pendingCount = mDatabase.getPending();
             
-            Intent resultIntent = new Intent(this, DtnService.class);
-            resultIntent.setAction(DOWNLOAD_INTENT);
-            resultIntent.putExtra(PARCEL_KEY_BUNDLE_ID, bundleid);
-            
-            // create the pending intent
-            PendingIntent contentIntent = PendingIntent.getService(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-            
-            builder.setWhen( System.currentTimeMillis() );
-            builder.setContentIntent(contentIntent);
-            
-            mNotificationManager.notify(PENDING_DOWNLOAD_NOTIFICATION, builder.build());
+            if (pendingCount > 0) {
+                builder.setContentTitle(getResources().getQuantityString(R.plurals.notification_pending_download_title, pendingCount));
+                builder.setContentText(getResources().getQuantityString(R.plurals.notification_pending_download_text, pendingCount));
+                builder.setSmallIcon(R.drawable.ic_stat_download);
+                
+                if (pendingCount == 1) {
+                    Intent dismissIntent = new Intent(this, DtnService.class);
+                    dismissIntent.setAction(REJECT_DOWNLOAD_INTENT);
+                    dismissIntent.putExtra(PARCEL_KEY_BUNDLE_ID, bundleid);
+                    PendingIntent piDismiss = PendingIntent.getService(this, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    
+                    Intent acceptIntent = new Intent(this, DtnService.class);
+                    acceptIntent.setAction(ACCEPT_DOWNLOAD_INTENT);
+                    acceptIntent.putExtra(PARCEL_KEY_BUNDLE_ID, bundleid);
+                    PendingIntent piAccept = PendingIntent.getService(this, 0, acceptIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                    
+                    builder.addAction(R.drawable.ic_stat_accept, getResources().getString(R.string.notification_accept_text), piAccept);
+                    builder.addAction(R.drawable.ic_stat_reject, getResources().getString(R.string.notification_reject_text), piDismiss);
+                }
+                
+                // create the pending intent
+                PendingIntent contentIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                
+                builder.setWhen( System.currentTimeMillis() );
+                builder.setContentIntent(contentIntent);
+                
+                mNotificationManager.notify(PENDING_DOWNLOAD_NOTIFICATION, builder.build());
+            }
         }
     }
     
@@ -358,6 +404,10 @@ public class DtnService extends IntentService {
                 i.setAction(MARK_DELIVERED_INTENT);
                 i.putExtra(PARCEL_KEY_BUNDLE_ID, received);
                 startService(i);
+
+                // set state to completed
+                Download d = mDatabase.get(received);
+                mDatabase.setState(d.getId(), 2);
             } else {
                 // create new download object
                 Download download_request = new Download(mBundle);
@@ -378,7 +428,7 @@ public class DtnService extends IntentService {
                 download_request.setLength(len);
                 
                 // set request to pending
-                download_request.setPending(true);
+                download_request.setState(0);
                 
                 // put download object into the database
                 mDatabase.put(download_request);
@@ -514,9 +564,10 @@ public class DtnService extends IntentService {
                             mReadFd = null;
                             
                             if (mExtractor != null) {
-                                // TODO: put files into the database
+                                // put files into the database
                                 for (File f : mExtractor.getFiles()) {
                                     Log.d(TAG, "Extracted file: " + f.getAbsolutePath());
+                                    mDatabase.put(new BundleID(mBundle), f);
                                     
                                     // add new file to the media library
                                     sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(f)));

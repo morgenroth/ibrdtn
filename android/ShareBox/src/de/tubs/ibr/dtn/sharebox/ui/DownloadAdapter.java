@@ -27,7 +27,7 @@ public class DownloadAdapter extends CursorAdapter {
         Download.TIMESTAMP,
         Download.LIFETIME,
         Download.LENGTH,
-        Download.PENDING,
+        Download.STATE,
         Download.BUNDLE_ID
     };
     
@@ -39,7 +39,7 @@ public class DownloadAdapter extends CursorAdapter {
     static final int COLUMN_DOWNLOAD_TIMESTAMP   = 3;
     static final int COLUMN_DOWNLOAD_LIFETIME    = 4;
     static final int COLUMN_DOWNLOAD_LENGTH      = 5;
-    static final int COLUMN_DOWNLOAD_PENDING     = 6;
+    static final int COLUMN_DOWNLOAD_STATE       = 6;
     static final int COLUMN_DOWNLOAD_BUNDLE_ID   = 7;
     
     private static final int CACHE_SIZE     = 50;
@@ -64,7 +64,7 @@ public class DownloadAdapter extends CursorAdapter {
         public int mColumnTimestamp;
         public int mColumnLifetime;
         public int mColumnLength;
-        public int mColumnPending;
+        public int mColumnState;
         public int mColumnBundleId;
 
         public ColumnsMap() {
@@ -73,7 +73,7 @@ public class DownloadAdapter extends CursorAdapter {
             mColumnTimestamp   = COLUMN_DOWNLOAD_TIMESTAMP;
             mColumnLifetime    = COLUMN_DOWNLOAD_LIFETIME;
             mColumnLength      = COLUMN_DOWNLOAD_LENGTH;
-            mColumnPending     = COLUMN_DOWNLOAD_PENDING;
+            mColumnState       = COLUMN_DOWNLOAD_STATE;
             mColumnBundleId    = COLUMN_DOWNLOAD_BUNDLE_ID;
         }
 
@@ -117,7 +117,7 @@ public class DownloadAdapter extends CursorAdapter {
             }
 
             try {
-                mColumnPending = cursor.getColumnIndexOrThrow(Download.PENDING);
+                mColumnState = cursor.getColumnIndexOrThrow(Download.STATE);
             } catch (IllegalArgumentException e) {
                 Log.w("colsMap", e.getMessage());
             }
@@ -143,20 +143,25 @@ public class DownloadAdapter extends CursorAdapter {
     }
 
     private int getItemViewType(Cursor cursor) {
-        int type = cursor.getInt(COLUMN_DOWNLOAD_PENDING);
+        int type = cursor.getInt(COLUMN_DOWNLOAD_STATE);
         switch (type) {
-            case 0:
+            default:
                 // is pending
                 return 1;
                 
-           default:
-               return 0;
+            case 1:
+                // is completed
+                return 2;
+                
+            case 2:
+                // is accepted
+                return 2;
         }
     }
     
     @Override
     public int getViewTypeCount() {
-        return 2;   // marked and non-marked messages
+        return 3;   // marked and non-marked messages
     }
 
     @Override

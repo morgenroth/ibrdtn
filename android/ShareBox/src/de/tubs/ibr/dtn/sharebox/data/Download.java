@@ -25,7 +25,7 @@ public class Download {
     public static final String TIMESTAMP = "timestamp";
     public static final String LIFETIME = "lifetime";
     public static final String LENGTH = "length";
-    public static final String PENDING = "pending";
+    public static final String STATE = "state";
     public static final String BUNDLE_ID = "bundleid";
     
     private Long mId = null;
@@ -34,7 +34,7 @@ public class Download {
     private Date mTimestamp = null;
     private Long mLifetime = null;
     private Long mLength = null;
-    private Boolean mPending = null;
+    private Integer mState = null;
     private BundleID mBundleId = null;
     
     public Download(Context context, Cursor cursor, DownloadAdapter.ColumnsMap cmap) {
@@ -52,7 +52,7 @@ public class Download {
         
         mLifetime = cursor.getLong(cmap.mColumnLifetime);
         mLength = cursor.getLong(cmap.mColumnLength);
-        mPending = (cursor.getLong(cmap.mColumnPending) == 1);
+        mState = cursor.getInt(cmap.mColumnState);
         
         // read bundle id from database
         setBundleId(BundleID.fromString(cursor.getString(cmap.mColumnBundleId)));
@@ -63,7 +63,7 @@ public class Download {
         mDestination = b.getDestination().toString();
         mTimestamp = b.getTimestamp().getDate();
         mLifetime = b.getLifetime();
-        mPending = true;
+        mState = 0;
         
         setBundleId(new BundleID(b));
     }
@@ -113,11 +113,15 @@ public class Download {
     }
 
     public Boolean isPending() {
-        return mPending;
+        return (mState == 0);
+    }
+    
+    public Integer getState() {
+        return mState;
     }
 
-    public void setPending(Boolean pending) {
-        mPending = pending;
+    public void setState(Integer state) {
+        mState = state;
     }
 
     public BundleID getBundleId() {

@@ -56,6 +56,10 @@ public class DownloadItem extends RelativeLayout {
         mLabel.setText(mDownload.getSource());
         mBottomText.setText(timestamp);
         
-        mSideText.setText(String.valueOf(mDownload.getLength()));
+        if (mDownload.isPending()) {
+            mSideText.setText("Pending");
+        } else {
+            mSideText.setText("Completed");
+        }
     }
 }

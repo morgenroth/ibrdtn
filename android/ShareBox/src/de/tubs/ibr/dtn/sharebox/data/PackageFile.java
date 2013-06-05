@@ -22,6 +22,10 @@ public class PackageFile {
     
     public PackageFile(Context context, Cursor cursor, PackageFileAdapter.ColumnsMap cmap) {
         mId = cursor.getLong(cmap.mColumnId);
+        mDownload = cursor.getLong(cmap.mColumnDownload);
+        mFilename = cursor.getString(cmap.mColumnFilename);
+        mLength = cursor.getLong(cmap.mColumnLength);
+
     }
     
     public PackageFile(String filename) {

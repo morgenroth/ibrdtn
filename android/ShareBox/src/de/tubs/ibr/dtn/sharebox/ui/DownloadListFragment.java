@@ -10,10 +10,20 @@ import android.os.IBinder;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.CursorAdapter;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import de.tubs.ibr.dtn.sharebox.DtnService;
+import de.tubs.ibr.dtn.sharebox.R;
+import de.tubs.ibr.dtn.sharebox.data.Database;
+import de.tubs.ibr.dtn.sharebox.data.Download;
 import de.tubs.ibr.dtn.sharebox.data.Utils;
 
 public class DownloadListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
@@ -81,70 +91,68 @@ public class DownloadListFragment extends ListFragment implements LoaderManager.
         setListShown(false);
     }
     
-//    @Override
-//    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-//        inflater.inflate(R.menu.main_menu, menu);
-//        MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearList), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-//    }
-//    
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//        switch (item.getItemId()) {
-//            case R.id.itemClearList:
-//                MessageDatabase db = mService.getDatabase();
-//                db.clear(Folder.INBOX);
-//                return true;
-//            
-//            default:
-//                return super.onOptionsItemSelected(item);
-//        }
-//    }
-//    
-//    @Override
-//    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
-//        super.onCreateContextMenu(menu, v, menuInfo);
-//        
-//        MenuInflater inflater = getActivity().getMenuInflater();
-//        inflater.inflate(R.menu.message_menu, menu);
-//    }
-//    
-//    @Override
-//    public boolean onContextItemSelected(MenuItem item) {
-//        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-//        
-//        if (info.targetView instanceof DownloadItem) {
-//            DownloadItem item = (DownloadItem)info.targetView;
-//            Download d = item.get();
-//
-//            switch (item.getItemId())
-//            {
-//            case R.id.itemDelete:
-//                if (mService != null) {
-//                    mService.getDatabase().remove(d.getId());
-//                }
-//                return true;
-//                
-//            case R.id.itemReply:
-//                Intent i = new Intent("de.tubs.ibr.dtn.dtalkie.RECORD_MESSAGE");
-//                i.addCategory(Intent.CATEGORY_DEFAULT);
-//                i.putExtra("destination", m.getSource());
-//                i.putExtra("singleton", true);
-//                startActivity(i);
-//                return true;
-//                
-//            default:
-//                return super.onContextItemSelected(item);
-//            }
-//        }
-//    
-//        return super.onContextItemSelected(item);
-//    }
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.main_menu, menu);
+        MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearList), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.itemClearList:
+                Database db = mService.getDatabase();
+                db.clear();
+                return true;
+            
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        
+        MenuInflater inflater = getActivity().getMenuInflater();
+        inflater.inflate(R.menu.item_menu, menu);
+    }
+    
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+        
+        if (info.targetView instanceof DownloadItem) {
+            DownloadItem di = (DownloadItem)info.targetView;
+            Download d = di.getObject();
+
+            switch (item.getItemId())
+            {
+            case R.id.itemDelete:
+                Intent rejectIntent = new Intent(getActivity(), DtnService.class);
+                rejectIntent.setAction(DtnService.REJECT_DOWNLOAD_INTENT);
+                rejectIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, d.getBundleId());
+                getActivity().startService(rejectIntent);
+                return true;
+                
+            default:
+                return super.onContextItemSelected(item);
+            }
+        }
+    
+        return super.onContextItemSelected(item);
+    }
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         DownloadItem item = (DownloadItem)v;
         if (item != null) {
-            // TODO: select item
+            if (item.getObject().isPending()) {
+                Intent acceptIntent = new Intent(getActivity(), DtnService.class);
+                acceptIntent.setAction(DtnService.ACCEPT_DOWNLOAD_INTENT);
+                acceptIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, item.getObject().getBundleId());
+                getActivity().startService(acceptIntent);
+            }
         }
     }
     
