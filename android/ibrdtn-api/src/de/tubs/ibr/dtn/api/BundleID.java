@@ -21,6 +21,8 @@
 
 package de.tubs.ibr.dtn.api;
 
+import java.util.StringTokenizer;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
@@ -78,6 +80,38 @@ public class BundleID implements Parcelable {
 					" " + String.valueOf(this.sequencenumber) + 
 					" " + this.source;
 		}
+	}
+	
+	public static BundleID fromString(String data) {
+	    BundleID ret = new BundleID();
+
+	    // split bundle id into tokens
+	    StringTokenizer tokenizer = new StringTokenizer( data );
+	    
+	    // get the number of tokens (fragment or not)
+	    int count = tokenizer.countTokens();
+	    
+	    // read the timestamp
+	    ret.timestamp = new Timestamp(Long.valueOf(tokenizer.nextToken()));
+	    
+	    // read the sequencenumber
+	    ret.sequencenumber = Long.valueOf(tokenizer.nextToken());
+
+	    if (count > 3) {
+	        // bundle id belongs to a fragment
+	        ret.fragment = true;
+	        
+	        // read the fragment offset
+	        ret.fragment_offset = Long.valueOf(tokenizer.nextToken());
+	    } else {
+	        ret.fragment = false;
+	        ret.fragment_offset = 0L;
+	    }
+	    
+	    // read the source endpoint
+	    ret.source = new SingletonEndpoint(tokenizer.nextToken());
+
+	    return ret;
 	}
 
 	public Timestamp getTimestamp() {
