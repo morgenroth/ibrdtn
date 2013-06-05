@@ -333,6 +333,8 @@ public class DtnService extends IntentService {
         
         private File mFile = null;
         private ParcelFileDescriptor mFd = null;
+        
+        private int mLastProgressValue = 0;
 
         @Override
         public void startBundle(Bundle bundle) {
@@ -426,6 +428,9 @@ public class DtnService extends IntentService {
 
         @Override
         public void endBlock() {
+            // reset progress
+            mLastProgressValue = 0;
+            
             if (mFd != null)
             {
                 // close filedescriptor
@@ -463,14 +468,15 @@ public class DtnService extends IntentService {
         public void progress(long offset, long length) {
             // if payload is written to a file descriptor, the progress
             // will be announced here
-            Log.d(TAG, offset + " of " + length + " bytes received");
             
-            // scale the progress numbers
-            int pos = Long.valueOf((offset * 1000) / (length * 1000)).intValue();
+            // scale the download progress to 0..100
+            Double pos = Double.valueOf(offset) / Double.valueOf(length) * 100.0;
             
-            if (mOngoingDownloadBuilder != null) {
+            if ((mOngoingDownloadBuilder != null) && (mLastProgressValue < pos.intValue())) {
+                mLastProgressValue = pos.intValue();
+                
                 // update notification
-                mOngoingDownloadBuilder.setProgress(1000, pos, false);
+                mOngoingDownloadBuilder.setProgress(100, pos.intValue(), false);
                 
                 // display the progress
                 mNotificationManager.notify(ONGOING_DOWNLOAD_NOTIFICATION, mOngoingDownloadBuilder.build());
