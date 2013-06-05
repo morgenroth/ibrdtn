@@ -17,13 +17,13 @@
     <string name="pref_ringtone_on_message">Notification sound</string>
     <string name="pref_ringtone_on_message_desc">Choose a notification sound for incoming messages.</string>
     
-    <string name="notification_ongoing_download_title">Download</string>
+    <string name="notification_ongoing_download_title">ShareBox Download</string>
     <string name="notification_ongoing_download_text">Download in progress</string>
     
-    <string name="notification_completed_download_title">Download completed</string>
+    <string name="notification_completed_download_title">ShareBox Download completed</string>
     <string name="notification_completed_download_text">Download has been completed</string>
     
-    <string name="notification_aborted_download_title">Download failed</string>
+    <string name="notification_aborted_download_title">ShareBox Download failed</string>
     <string name="notification_aborted_download_text">Download was aborted due to an error</string>
     
     <plurals name="notification_pending_download_title">
