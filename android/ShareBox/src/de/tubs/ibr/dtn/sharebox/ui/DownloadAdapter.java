@@ -27,7 +27,8 @@ public class DownloadAdapter extends CursorAdapter {
         Download.TIMESTAMP,
         Download.LIFETIME,
         Download.LENGTH,
-        Download.PENDING
+        Download.PENDING,
+        Download.BUNDLE_ID
     };
     
     // The indexes of the default columns which must be consistent
@@ -39,6 +40,7 @@ public class DownloadAdapter extends CursorAdapter {
     static final int COLUMN_DOWNLOAD_LIFETIME    = 4;
     static final int COLUMN_DOWNLOAD_LENGTH      = 5;
     static final int COLUMN_DOWNLOAD_PENDING     = 6;
+    static final int COLUMN_DOWNLOAD_BUNDLE_ID   = 7;
     
     private static final int CACHE_SIZE     = 50;
 
@@ -63,6 +65,7 @@ public class DownloadAdapter extends CursorAdapter {
         public int mColumnLifetime;
         public int mColumnLength;
         public int mColumnPending;
+        public int mColumnBundleId;
 
         public ColumnsMap() {
             mColumnSource      = COLUMN_DOWNLOAD_SOURCE;
@@ -71,6 +74,7 @@ public class DownloadAdapter extends CursorAdapter {
             mColumnLifetime    = COLUMN_DOWNLOAD_LIFETIME;
             mColumnLength      = COLUMN_DOWNLOAD_LENGTH;
             mColumnPending     = COLUMN_DOWNLOAD_PENDING;
+            mColumnBundleId    = COLUMN_DOWNLOAD_BUNDLE_ID;
         }
 
         public ColumnsMap(Cursor cursor) {
@@ -114,6 +118,12 @@ public class DownloadAdapter extends CursorAdapter {
 
             try {
                 mColumnPending = cursor.getColumnIndexOrThrow(Download.PENDING);
+            } catch (IllegalArgumentException e) {
+                Log.w("colsMap", e.getMessage());
+            }
+            
+            try {
+                mColumnBundleId = cursor.getColumnIndexOrThrow(Download.BUNDLE_ID);
             } catch (IllegalArgumentException e) {
                 Log.w("colsMap", e.getMessage());
             }

@@ -1,16 +1,22 @@
 package de.tubs.ibr.dtn.sharebox.data;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import de.tubs.ibr.dtn.sharebox.ui.DownloadAdapter;
-
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.provider.BaseColumns;
+import android.util.Log;
+import de.tubs.ibr.dtn.api.Bundle;
+import de.tubs.ibr.dtn.api.BundleID;
+import de.tubs.ibr.dtn.sharebox.ui.DownloadAdapter;
 
+@SuppressLint("SimpleDateFormat")
 public class Download {
 
-    @SuppressWarnings("unused")
     private final static String TAG = "Download";
     
     public static final String ID = BaseColumns._ID;
@@ -20,6 +26,7 @@ public class Download {
     public static final String LIFETIME = "lifetime";
     public static final String LENGTH = "length";
     public static final String PENDING = "pending";
+    public static final String BUNDLE_ID = "bundleid";
     
     private Long mId = null;
     private String mSource = null;
@@ -28,17 +35,37 @@ public class Download {
     private Long mLifetime = null;
     private Long mLength = null;
     private Boolean mPending = null;
+    private BundleID mBundleId = null;
     
     public Download(Context context, Cursor cursor, DownloadAdapter.ColumnsMap cmap) {
+        final DateFormat formatter = new SimpleDateFormat("yyyy-M-d hh:mm:ss");
+        
         mId = cursor.getLong(cmap.mColumnId);
         mSource = cursor.getString(cmap.mColumnSource);
         mDestination = cursor.getString(cmap.mColumnDestination);
+        
+        try {
+            mTimestamp = formatter.parse(cursor.getString(cmap.mColumnTimestamp));
+        } catch (ParseException e) {
+            Log.e(TAG, "failed to convert date");
+        }
+        
+        mLifetime = cursor.getLong(cmap.mColumnLifetime);
+        mLength = cursor.getLong(cmap.mColumnLength);
+        mPending = (cursor.getLong(cmap.mColumnPending) == 1);
+        
+        // read bundle id from database
+        setBundleId(BundleID.fromString(cursor.getString(cmap.mColumnBundleId)));
     }
     
-    public Download(String source, String destination) {
-        mSource = source;
-        mDestination = destination;
-        mTimestamp = new Date();
+    public Download(Bundle b) {
+        mSource = b.getSource().toString();
+        mDestination = b.getDestination().toString();
+        mTimestamp = b.getTimestamp().getDate();
+        mLifetime = b.getLifetime();
+        mPending = true;
+        
+        setBundleId(new BundleID(b));
     }
     
     public Long getId() {
@@ -91,5 +118,13 @@ public class Download {
 
     public void setPending(Boolean pending) {
         mPending = pending;
+    }
+
+    public BundleID getBundleId() {
+        return mBundleId;
+    }
+
+    public void setBundleId(BundleID bundleId) {
+        mBundleId = bundleId;
     }
 }

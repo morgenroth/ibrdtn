@@ -1,12 +1,23 @@
 package de.tubs.ibr.dtn.sharebox;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.LinkedList;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
@@ -22,6 +33,9 @@ import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.sharebox.data.Database;
+import de.tubs.ibr.dtn.sharebox.data.Download;
+import de.tubs.ibr.dtn.sharebox.data.Utils;
+import de.tubs.ibr.dtn.sharebox.ui.TransferListActivity;
 
 public class DtnService extends IntentService {
 
@@ -37,8 +51,28 @@ public class DtnService extends IntentService {
     // download a bundle
     public static final String DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.DOWNLOAD";
     
+    // pending download intent
+    public static final String PENDING_DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.PENDING_DOWNLOAD";
+    
+    // local endpoint
+    public static final String SHAREBOX_APP_ENDPOINT = "sharebox";
+    
     // group EID of this app
     public static final GroupEndpoint SHAREBOX_GROUP_EID = new GroupEndpoint("dtn://broadcast.dtn/sharebox");
+    
+    // ids for download notifications
+    private static final int ONGOING_DOWNLOAD_NOTIFICATION   = 1;
+    private static final int PENDING_DOWNLOAD_NOTIFICATION   = 2;
+    private static final int COMPLETED_DOWNLOAD_NOTIFICATION = 3;
+    private static final int ABORTED_DOWNLOAD_NOTIFICATION   = 4;
+    
+    // ids for upload notifications
+    public static final int ONGOING_UPLOAD_NOTIFICATION      = 5;
+    public static final int COMPLETED_UPLOAD_NOTIFICATION    = 6;
+    public static final int ABORTED_UPLOAD_NOTIFICATION      = 7;
+    
+    public static final String PARCEL_KEY_BUNDLE_ID = "bundleid";
+    public static final String PARCEL_KEY_SOURCE = "source";
 
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
@@ -49,6 +83,13 @@ public class DtnService extends IntentService {
     
     // should be set to true if a download is requested 
     private Boolean mIsDownloading = false;
+    
+    // while showing a notification for ongoing downloads we use
+    // this to store the notification builder
+    NotificationCompat.Builder mOngoingDownloadBuilder = null;
+    
+    // handle of the notification manager
+    NotificationManager mNotificationManager = null;
     
     private ServiceError mServiceError = ServiceError.NO_ERROR;
     
@@ -104,7 +145,7 @@ public class DtnService extends IntentService {
         else if (MARK_DELIVERED_INTENT.equals(action))
         {
             // retrieve the bundle ID of the intent
-            BundleID bundleid = intent.getParcelableExtra("bundleid");
+            BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
             
             try {
                 // mark the bundle ID as delivered
@@ -116,38 +157,106 @@ public class DtnService extends IntentService {
         else if (REPORT_DELIVERED_INTENT.equals(action))
         {
             // retrieve the source of the status report
-            SingletonEndpoint source = intent.getParcelableExtra("source");
+            SingletonEndpoint source = intent.getParcelableExtra(PARCEL_KEY_SOURCE);
             
             // retrieve the bundle ID of the intent
-            BundleID bundleid = intent.getParcelableExtra("bundleid");
+            BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
             
             Log.d(TAG, "Status report received for " + bundleid.toString() + " from " + source.toString());
         }
         else if (DOWNLOAD_INTENT.equals(action))
         {
             // retrieve the bundle ID of the intent
-            BundleID bundleid = intent.getParcelableExtra("bundleid");
+            BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
             
             Log.d(TAG, "Download request for " + bundleid.toString());
             
-            // TODO: create notification with progressbar
+            // create notification with progressbar
+            mOngoingDownloadBuilder = new NotificationCompat.Builder(this);
+            mOngoingDownloadBuilder.setContentTitle(getResources().getString(R.string.notification_ongoing_download_title));
+            mOngoingDownloadBuilder.setContentText(getResources().getString(R.string.notification_ongoing_download_text));
+            mOngoingDownloadBuilder.setSmallIcon(R.drawable.ic_launcher);
+            
+            // prepare final notification
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+            setNotificationSettings(builder);
+            
+            Intent resultIntent = new Intent(this, TransferListActivity.class);
+            resultIntent.putExtra(PARCEL_KEY_BUNDLE_ID, bundleid);
 
             try {
                 mIsDownloading = true;
                 mClient.getSession().query(bundleid);
                 
-                // TODO: show download completed notification
+                builder.setContentTitle(getResources().getString(R.string.notification_completed_download_title));
+                builder.setContentText(getResources().getString(R.string.notification_completed_download_text));
+                builder.setSmallIcon(R.drawable.ic_launcher);
+                
+                // create the pending intent
+                PendingIntent contentIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                builder.setContentIntent(contentIntent);
+                
+                builder.setWhen( System.currentTimeMillis() );
+
+                // show download completed notification
+                mNotificationManager.notify(bundleid.toString(), COMPLETED_DOWNLOAD_NOTIFICATION, builder.build());
             } catch (SessionDestroyedException e) {
                 Log.e(TAG, "Can not query for bundle", e);
                 
-                // TODO: show download aborted notification
+                builder.setContentTitle(getResources().getString(R.string.notification_aborted_download_title));
+                builder.setContentText(getResources().getString(R.string.notification_aborted_download_text));
+                builder.setSmallIcon(R.drawable.ic_launcher);
+                
+                // create the pending intent
+                PendingIntent contentIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                builder.setContentIntent(contentIntent);
+                
+                builder.setWhen( System.currentTimeMillis() );
+
+                // show download aborted notification
+                mNotificationManager.notify(bundleid.toString(), ABORTED_DOWNLOAD_NOTIFICATION, builder.build());
             } catch (InterruptedException e) {
                 Log.e(TAG, "Can not query for bundle", e);
                 
-                // TODO: show download aborted notification
+                builder.setContentTitle(getResources().getString(R.string.notification_aborted_download_title));
+                builder.setContentText(getResources().getString(R.string.notification_aborted_download_text));
+                builder.setSmallIcon(R.drawable.ic_launcher);
+                
+                // create the pending intent
+                PendingIntent contentIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                builder.setContentIntent(contentIntent);
+                
+                builder.setWhen( System.currentTimeMillis() );
+                
+                // show download aborted notification
+                mNotificationManager.notify(bundleid.toString(), ABORTED_DOWNLOAD_NOTIFICATION, builder.build());
             }
             
-            // TODO: clear notification with progressbar
+            // clear notification with progressbar
+            mNotificationManager.cancel(ONGOING_DOWNLOAD_NOTIFICATION);
+            mOngoingDownloadBuilder = null;
+        } else if (PENDING_DOWNLOAD_INTENT.equals(action)) {
+            // retrieve the bundle ID of the intent
+            BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
+            
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+            setNotificationSettings(builder);
+            
+            builder.setContentTitle(getResources().getQuantityString(R.plurals.notification_pending_download_title, 1));
+            builder.setContentText(getResources().getQuantityString(R.plurals.notification_pending_download_text, 1));
+            builder.setSmallIcon(R.drawable.ic_launcher);
+            
+            Intent resultIntent = new Intent(this, DtnService.class);
+            resultIntent.setAction(DOWNLOAD_INTENT);
+            resultIntent.putExtra(PARCEL_KEY_BUNDLE_ID, bundleid);
+            
+            // create the pending intent
+            PendingIntent contentIntent = PendingIntent.getService(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            
+            builder.setWhen( System.currentTimeMillis() );
+            builder.setContentIntent(contentIntent);
+            
+            mNotificationManager.notify(PENDING_DOWNLOAD_NOTIFICATION, builder.build());
         }
     }
     
@@ -169,6 +278,9 @@ public class DtnService extends IntentService {
     public void onCreate() {
         super.onCreate();
         
+        // get a handle of the notification service
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        
         // create message database
         mDatabase = new Database(this);
         
@@ -178,7 +290,7 @@ public class DtnService extends IntentService {
         // create registration with "sharebox" as endpoint
         // if the EID of this device is "dtn://device" then the
         // address of this app will be "dtn://device/sharebox"
-        Registration registration = new Registration("sharebox");
+        Registration registration = new Registration(SHAREBOX_APP_ENDPOINT);
         
         // additionally join a group
         registration.add(SHAREBOX_GROUP_EID);
@@ -218,31 +330,62 @@ public class DtnService extends IntentService {
 
         private Bundle mBundle = null;
         private LinkedList<Block> mBlocks = null;
+        
+        private File mFile = null;
+        private ParcelFileDescriptor mFd = null;
 
         @Override
         public void startBundle(Bundle bundle) {
             // store the bundle header locally
             mBundle = bundle;
-            mBlocks = new LinkedList<Block>();
         }
 
         @Override
         public void endBundle() {
-            // complete bundle received
-            BundleID received = new BundleID(mBundle);
-            
             if (mIsDownloading) {
+                // complete bundle received
+                BundleID received = new BundleID(mBundle);
+                
                 // mark the bundle as delivered if this was a complete download
                 Intent i = new Intent(DtnService.this, DtnService.class);
                 i.setAction(MARK_DELIVERED_INTENT);
-                i.putExtra("bundleid", received);
+                i.putExtra(PARCEL_KEY_BUNDLE_ID, received);
                 startService(i);
             } else {
-                // TODO: put download into the database
+                // create new download object
+                Download download_request = new Download(mBundle);
+                
+                // get payload length
+                long len = 0L;
+                
+                if (mBlocks != null) {
+                    for (Block b : mBlocks) {
+                        if (b.type == 1) {
+                            len += b.length;
+                            break;
+                        }
+                    }
+                }
+                
+                // set payload length
+                download_request.setLength(len);
+                
+                // set request to pending
+                download_request.setPending(true);
+                
+                // put download object into the database
+                mDatabase.put(download_request);
+                
+                // mark the bundle as delivered if this was a complete download
+                Intent i = new Intent(DtnService.this, DtnService.class);
+                i.setAction(PENDING_DOWNLOAD_INTENT);
+                i.putExtra(PARCEL_KEY_BUNDLE_ID, download_request.getBundleId());
+                startService(i);
             }
             
             // free the bundle header
             mBundle = null;
+            mBlocks = null;
         }
         
         @Override
@@ -251,8 +394,24 @@ public class DtnService extends IntentService {
             if (block.type == 1) {
                 // retrieve payload when downloading
                 if (mIsDownloading) {
-                    // return FILEDESCRIPTOR mode to received the payload using fd()
-                    return TransferMode.FILEDESCRIPTOR;
+                    File folder = Utils.getStoragePath();
+                    
+                    // create a new temporary file
+                    try {
+                        mFile = File.createTempFile("download", ".dat", folder);
+                        
+                        // return FILEDESCRIPTOR mode to received the payload using fd()
+                        return TransferMode.FILEDESCRIPTOR;
+                    } catch (IOException e) {
+                        Log.e(TAG, "Can not create temporary file.", e);
+                        mFile = null;
+                    }
+                    
+                    return TransferMode.NULL;
+                }
+                
+                if (mBlocks == null) {
+                    mBlocks = new LinkedList<Block>();
                 }
                 
                 // store the block data
@@ -267,13 +426,31 @@ public class DtnService extends IntentService {
 
         @Override
         public void endBlock() {
-            // nothing to do here.
+            if (mFd != null)
+            {
+                // close filedescriptor
+                try {
+                    mFd.close();
+                    mFd = null;
+                } catch (IOException e) {
+                    Log.e(TAG, "Can not close filedescriptor.", e);
+                }
+            }
         }
 
         @Override
         public ParcelFileDescriptor fd() {
-            // TODO: generate a new parcel file descriptor to recieve the content
-            // of the bundle
+            // create new filedescriptor
+            try {
+                mFd = ParcelFileDescriptor.open(mFile, 
+                        ParcelFileDescriptor.MODE_CREATE + 
+                        ParcelFileDescriptor.MODE_WRITE_ONLY);
+                
+                return mFd;
+            } catch (FileNotFoundException e) {
+                Log.e(TAG, "Can not create a filedescriptor.", e);
+            }
+            
             return null;
         }
 
@@ -288,9 +465,34 @@ public class DtnService extends IntentService {
             // will be announced here
             Log.d(TAG, offset + " of " + length + " bytes received");
             
-            if (mIsDownloading) {
-                // TODO: update notification
+            // scale the progress numbers
+            int pos = Long.valueOf((offset * 1000) / (length * 1000)).intValue();
+            
+            if (mOngoingDownloadBuilder != null) {
+                // update notification
+                mOngoingDownloadBuilder.setProgress(1000, pos, false);
+                
+                // display the progress
+                mNotificationManager.notify(ONGOING_DOWNLOAD_NOTIFICATION, mOngoingDownloadBuilder.build());
             }
         }
     };
+    
+    private void setNotificationSettings(NotificationCompat.Builder builder)
+    {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        
+        // enable auto-cancel
+        builder.setAutoCancel(true);
+        
+        int defaults = 0;
+        
+        if (prefs.getBoolean("vibrateOnMessage", true)) {
+            defaults |= Notification.DEFAULT_VIBRATE;
+        }
+        
+        builder.setDefaults(defaults);
+        builder.setLights(0xff0080ff, 300, 1000);
+        builder.setSound( Uri.parse( prefs.getString("ringtoneOnMessage", "content://settings/system/notification_sound") ) );
+    }
 }
