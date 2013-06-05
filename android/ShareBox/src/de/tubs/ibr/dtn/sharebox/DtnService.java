@@ -1,6 +1,7 @@
 package de.tubs.ibr.dtn.sharebox;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -331,8 +332,12 @@ public class DtnService extends IntentService {
         private Bundle mBundle = null;
         private LinkedList<Block> mBlocks = null;
         
-        private File mFile = null;
-        private ParcelFileDescriptor mFd = null;
+        private ParcelFileDescriptor mWriteFd = null;
+        private ParcelFileDescriptor mReadFd = null;
+        
+        private Object mExtractorLock = new Object();
+        private TarExtractor mExtractor = null;
+        private Thread mExtractorThread = null;
         
         private int mLastProgressValue = 0;
 
@@ -402,17 +407,33 @@ public class DtnService extends IntentService {
                     if (folder == null)
                         return TransferMode.NULL;
                     
-                    // create a new temporary file
+                    // create new filedescriptor
                     try {
-                        mFile = File.createTempFile("download", ".dat", folder);
+                        ParcelFileDescriptor[] p = ParcelFileDescriptor.createPipe();
+                        mReadFd = p[0];
+                        mWriteFd = p[1];
+                        
+                        synchronized(mExtractorLock) {
+                            while (mExtractor != null) {
+                                mExtractorLock.wait();
+                            }
+                            // create a new tar extractor
+                            mExtractor = new TarExtractor(new FileInputStream(mReadFd.getFileDescriptor()), folder);
+                            mExtractor.setOnStateChangeListener(mExtractorListener);
+                            mExtractorThread = new Thread(mExtractor);
+                            mExtractorThread.start();
+                        }
                         
                         // return FILEDESCRIPTOR mode to received the payload using fd()
                         return TransferMode.FILEDESCRIPTOR;
+                    } catch (FileNotFoundException e) {
+                        Log.e(TAG, "Can not create a filedescriptor.", e);
                     } catch (IOException e) {
-                        Log.e(TAG, "Can not create temporary file.", e);
-                        mFile = null;
+                        Log.e(TAG, "Can not create a filedescriptor.", e);
+                    } catch (InterruptedException e) {
+                        Log.e(TAG, "Interrupted while waiting for extractor clearance.", e);
                     }
-                    
+                        
                     return TransferMode.NULL;
                 }
                 
@@ -435,12 +456,12 @@ public class DtnService extends IntentService {
             // reset progress
             mLastProgressValue = 0;
             
-            if (mFd != null)
+            if (mWriteFd != null)
             {
                 // close filedescriptor
                 try {
-                    mFd.close();
-                    mFd = null;
+                    mWriteFd.close();
+                    mWriteFd = null;
                 } catch (IOException e) {
                     Log.e(TAG, "Can not close filedescriptor.", e);
                 }
@@ -449,18 +470,7 @@ public class DtnService extends IntentService {
 
         @Override
         public ParcelFileDescriptor fd() {
-            // create new filedescriptor
-            try {
-                mFd = ParcelFileDescriptor.open(mFile, 
-                        ParcelFileDescriptor.MODE_CREATE + 
-                        ParcelFileDescriptor.MODE_WRITE_ONLY);
-                
-                return mFd;
-            } catch (FileNotFoundException e) {
-                Log.e(TAG, "Can not create a filedescriptor.", e);
-            }
-            
-            return null;
+            return mWriteFd;
         }
 
         @Override
@@ -486,6 +496,56 @@ public class DtnService extends IntentService {
                 mNotificationManager.notify(ONGOING_DOWNLOAD_NOTIFICATION, mOngoingDownloadBuilder.build());
             }
         }
+        
+        private TarExtractor.OnStateChangeListener mExtractorListener = new TarExtractor.OnStateChangeListener() {
+
+            @Override
+            public void onStateChanged(int state) {
+                synchronized(mExtractorLock) {
+                    switch (state) {
+                        case 1:
+                            // successful
+                            try {
+                                mReadFd.close();
+                            } catch (IOException e) {
+                                Log.e(TAG, "Can not close filedescriptor.", e);
+                            }
+                            
+                            mReadFd = null;
+                            
+                            if (mExtractor != null) {
+                                // TODO: put files into the database
+                                for (File f : mExtractor.getFiles()) {
+                                    Log.d(TAG, "Extracted file: " + f.getAbsolutePath());
+                                    
+                                    // add new file to the media library
+                                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(f)));
+                                }
+                            }
+                            
+                            mExtractor = null;
+                            mExtractorThread = null;
+                            mExtractorLock.notifyAll();
+                            break;
+                            
+                        case -1:
+                            // error
+                            try {
+                                mReadFd.close();
+                            } catch (IOException e) {
+                                Log.e(TAG, "Can not close filedescriptor.", e);
+                            }
+                            
+                            mReadFd = null;
+                            mExtractor = null;
+                            mExtractorThread = null;
+                            mExtractorLock.notifyAll();
+                            break;
+                    }
+                }
+            }
+            
+        };
     };
     
     private void setNotificationSettings(NotificationCompat.Builder builder)
