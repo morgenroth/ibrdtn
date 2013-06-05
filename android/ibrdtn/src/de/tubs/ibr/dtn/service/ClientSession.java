@@ -166,6 +166,7 @@ public class ClientSession {
         private DTNSessionCallback _cb = null;
         private TransferMode _mode = TransferMode.NULL;
         private OutputStream _output = null;
+        private ParcelFileDescriptor _fd = null;
         private long _current = 0L;
         private long _length = 0L;
                 
@@ -206,8 +207,8 @@ public class ClientSession {
             if (TransferMode.FILEDESCRIPTOR.equals(_mode)) {
                 try {
                     // ask for a filedescriptor
-                    ParcelFileDescriptor target_fd = _cb.fd();
-                    _output = new FileOutputStream(target_fd.getFileDescriptor());
+                    _fd = _cb.fd();
+                    _output = new FileOutputStream(_fd.getFileDescriptor());
                     _length = payload_length;
                 } catch (RemoteException e) {
                     Log.e(TAG, "Remote call fd() failed", e);
@@ -231,6 +232,7 @@ public class ClientSession {
                 }
             }
             
+            _fd = null;
             _output = null;
             _mode = TransferMode.NULL;
             _length = 0L;
@@ -256,6 +258,15 @@ public class ClientSession {
                     _cb.progress(_current, _length);
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to put payload into the output stream", e);
+                    
+                    try {
+                        _output.close();
+                    } catch (IOException ex) {
+                        Log.e(TAG, "Error while closing output stream", ex);
+                    }
+                    
+                    _fd = null;
+                    _output = null;
                 } catch (RemoteException e) {
                     Log.e(TAG, "Remote call progress() failed", e);
                 }
