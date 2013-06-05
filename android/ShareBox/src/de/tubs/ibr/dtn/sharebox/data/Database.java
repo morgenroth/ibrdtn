@@ -174,7 +174,7 @@ public class Database {
         values.put(Download.TIMESTAMP, dateFormat.format(d.getTimestamp()));
         values.put(Download.LIFETIME, d.getLifetime());
         values.put(Download.LENGTH, d.getLength());
-        values.put(Download.STATE, d.getState());
+        values.put(Download.STATE, d.getState().getValue());
         
         // write bundle id to bundle_id
         values.put(Download.BUNDLE_ID, d.getBundleId().toString());

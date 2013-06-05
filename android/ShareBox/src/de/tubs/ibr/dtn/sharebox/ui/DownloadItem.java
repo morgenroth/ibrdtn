@@ -56,10 +56,22 @@ public class DownloadItem extends RelativeLayout {
         mLabel.setText(mDownload.getSource());
         mBottomText.setText(timestamp);
         
-        if (mDownload.isPending()) {
-            mSideText.setText("Pending");
-        } else {
-            mSideText.setText("Completed");
+        switch (mDownload.getState()) {
+        case PENDING:
+        	mSideText.setText(getContext().getString(R.string.state_pending));
+        	break;
+        	
+        case ACCEPTED:
+        	mSideText.setText(getContext().getString(R.string.state_accepted));
+        	break;
+        	
+        case DOWNLOADING:
+        	mSideText.setText(getContext().getString(R.string.state_downloading));
+        	break;
+        	
+        case COMPLETED:
+        	mSideText.setText(getContext().getString(R.string.state_completed));
+        	break;
         }
     }
 }

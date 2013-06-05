@@ -7,6 +7,11 @@
     
     <string name="remove">Remove</string>
     <string name="clear_list">Clear list</string>
+    
+    <string name="state_pending">Pending</string>
+    <string name="state_completed">Completed</string>
+    <string name="state_accepted">Accepted</string>
+    <string name="state_downloading">Downloading</string>
 
     <string name="alert_missing_daemon">The DTN daemon is not installed. You need to install it and then re-install this application. Would you like to install it now?</string>
     <string name="alert_reinstall_app">You need to re-install this application to grant necessary permissions. Would you like to do this now?</string>

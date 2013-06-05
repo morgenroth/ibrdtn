@@ -31,6 +31,7 @@ import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.sharebox.data.Database;
 import de.tubs.ibr.dtn.sharebox.data.Download;
 import de.tubs.ibr.dtn.sharebox.data.Utils;
+import de.tubs.ibr.dtn.sharebox.data.Download.State;
 
 public class DtnService extends IntentService {
 
@@ -332,7 +333,7 @@ public class DtnService extends IntentService {
                 download_request.setLength(len);
                 
                 // set request to pending
-                download_request.setState(0);
+                download_request.setState(State.PENDING);
                 
                 // put download object into the database
                 mDatabase.put(download_request);

@@ -34,8 +34,34 @@ public class Download {
     private Date mTimestamp = null;
     private Long mLifetime = null;
     private Long mLength = null;
-    private Integer mState = null;
+    private State mState = null;
     private BundleID mBundleId = null;
+    
+    public enum State {
+    	PENDING(0),
+    	ACCEPTED(1),
+    	DOWNLOADING(2),
+    	COMPLETED(3);
+    	
+    	private final int mValue;
+    	
+    	State(int value) {
+    		mValue = value;
+    	}
+    	
+    	public int getValue() {
+    		return mValue;
+    	}
+    	
+    	public static State fromInt(int value) {
+			for (State s : State.values()) {
+			    if (s.getValue() == value) {
+			        return s;
+			    }
+			}
+			return null;
+    	}
+    }
     
     public Download(Context context, Cursor cursor, DownloadAdapter.ColumnsMap cmap) {
         final DateFormat formatter = new SimpleDateFormat("yyyy-M-d hh:mm:ss");
@@ -52,7 +78,7 @@ public class Download {
         
         mLifetime = cursor.getLong(cmap.mColumnLifetime);
         mLength = cursor.getLong(cmap.mColumnLength);
-        mState = cursor.getInt(cmap.mColumnState);
+        mState = State.fromInt( cursor.getInt(cmap.mColumnState) );
         
         // read bundle id from database
         setBundleId(BundleID.fromString(cursor.getString(cmap.mColumnBundleId)));
@@ -63,7 +89,7 @@ public class Download {
         mDestination = b.getDestination().toString();
         mTimestamp = b.getTimestamp().getDate();
         mLifetime = b.getLifetime();
-        mState = 0;
+        mState = State.PENDING;
         
         setBundleId(new BundleID(b));
     }
@@ -113,14 +139,14 @@ public class Download {
     }
 
     public Boolean isPending() {
-        return (mState == 0);
+        return (State.PENDING.equals(mState));
     }
     
-    public Integer getState() {
+    public State getState() {
         return mState;
     }
 
-    public void setState(Integer state) {
+    public void setState(State state) {
         mState = state;
     }
 
