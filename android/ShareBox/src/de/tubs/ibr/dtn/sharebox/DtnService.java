@@ -175,7 +175,7 @@ public class DtnService extends IntentService {
             mOngoingDownloadBuilder = new NotificationCompat.Builder(this);
             mOngoingDownloadBuilder.setContentTitle(getResources().getString(R.string.notification_ongoing_download_title));
             mOngoingDownloadBuilder.setContentText(getResources().getString(R.string.notification_ongoing_download_text));
-            mOngoingDownloadBuilder.setSmallIcon(R.drawable.ic_launcher);
+            mOngoingDownloadBuilder.setSmallIcon(R.drawable.ic_stat_download);
             
             // prepare final notification
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
@@ -190,7 +190,7 @@ public class DtnService extends IntentService {
                 
                 builder.setContentTitle(getResources().getString(R.string.notification_completed_download_title));
                 builder.setContentText(getResources().getString(R.string.notification_completed_download_text));
-                builder.setSmallIcon(R.drawable.ic_launcher);
+                builder.setSmallIcon(R.drawable.ic_stat_download);
                 
                 // create the pending intent
                 PendingIntent contentIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -205,7 +205,7 @@ public class DtnService extends IntentService {
                 
                 builder.setContentTitle(getResources().getString(R.string.notification_aborted_download_title));
                 builder.setContentText(getResources().getString(R.string.notification_aborted_download_text));
-                builder.setSmallIcon(R.drawable.ic_launcher);
+                builder.setSmallIcon(R.drawable.ic_stat_download);
                 
                 // create the pending intent
                 PendingIntent contentIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -220,7 +220,7 @@ public class DtnService extends IntentService {
                 
                 builder.setContentTitle(getResources().getString(R.string.notification_aborted_download_title));
                 builder.setContentText(getResources().getString(R.string.notification_aborted_download_text));
-                builder.setSmallIcon(R.drawable.ic_launcher);
+                builder.setSmallIcon(R.drawable.ic_stat_download);
                 
                 // create the pending intent
                 PendingIntent contentIntent = PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -244,7 +244,7 @@ public class DtnService extends IntentService {
             
             builder.setContentTitle(getResources().getQuantityString(R.plurals.notification_pending_download_title, 1));
             builder.setContentText(getResources().getQuantityString(R.plurals.notification_pending_download_text, 1));
-            builder.setSmallIcon(R.drawable.ic_launcher);
+            builder.setSmallIcon(R.drawable.ic_stat_download);
             
             Intent resultIntent = new Intent(this, DtnService.class);
             resultIntent.setAction(DOWNLOAD_INTENT);
