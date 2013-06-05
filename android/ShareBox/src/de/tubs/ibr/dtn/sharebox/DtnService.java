@@ -398,6 +398,10 @@ public class DtnService extends IntentService {
                 if (mIsDownloading) {
                     File folder = Utils.getStoragePath();
                     
+                    // do not store any data if there is no space to store
+                    if (folder == null)
+                        return TransferMode.NULL;
+                    
                     // create a new temporary file
                     try {
                         mFile = File.createTempFile("download", ".dat", folder);
