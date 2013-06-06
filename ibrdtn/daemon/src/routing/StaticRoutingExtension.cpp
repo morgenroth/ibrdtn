@@ -189,30 +189,33 @@ namespace dtn
 
 						if (!routes.empty())
 						{
-							// this destination is not handles by any static route
-							ibrcommon::MutexLock l(db);
-							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+							// lock the neighbor database while searching for bundles
+							{
+								// this destination is not handles by any static route
+								ibrcommon::MutexLock l(db);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
-							// check if enough transfer slots available (threadhold reached)
-							if (!entry.isTransferThresholdReached())
-								throw NeighborDatabase::NoMoreTransfersAvailable();
+								// check if enough transfer slots available (threadhold reached)
+								if (!entry.isTransferThresholdReached())
+									throw NeighborDatabase::NoMoreTransfersAvailable();
 
-							// get the bundle filter of the neighbor
-							BundleFilter filter(entry, routes);
+								// get the bundle filter of the neighbor
+								BundleFilter filter(entry, routes);
 
-							// some debug
-							IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								// some debug
+								IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-							// query all bundles from the storage
-							list.clear();
-							(**this).getSeeker().get(filter, list);
+								// query all bundles from the storage
+								list.clear();
+								(**this).getSeeker().get(filter, list);
+							}
 
 							// send the bundles as long as we have resources
 							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								try {
 									// transfer the bundle to the neighbor
-									transferTo(entry, *iter);
+									transferTo(task.eid, *iter);
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						}
@@ -234,11 +237,8 @@ namespace dtn
 							try {
 								if (route.match(task.bundle.destination))
 								{
-									ibrcommon::MutexLock l(db);
-									NeighborDatabase::NeighborEntry &n = db.get(route.getDestination());
-
 									// transfer the bundle to the neighbor
-									transferTo(n, task.bundle);
+									transferTo(route.getDestination(), task.bundle);
 								}
 							} catch (const NeighborDatabase::NeighborNotAvailableException&) {
 								// neighbor is not available, can not forward this bundle

@@ -85,7 +85,6 @@ namespace dtn
 			 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
 			 */
 			void transferTo(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta);
-			void transferTo(NeighborDatabase::NeighborEntry &entry, const dtn::data::MetaBundle &meta);
 
 			/**
 			 * Returns true, if the bundle contains routing data.

@@ -157,20 +157,23 @@ namespace dtn
 					try {
 						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
 
-						// this destination is not handles by any static route
-						ibrcommon::MutexLock l(db);
-						NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+						// lock the neighbor database while searching for bundles
+						{
+							// this destination is not handles by any static route
+							ibrcommon::MutexLock l(db);
+							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
-						// check if enough transfer slots available (threadhold reached)
-						if (!entry.isTransferThresholdReached())
-							throw NeighborDatabase::NoMoreTransfersAvailable();
+							// check if enough transfer slots available (threadhold reached)
+							if (!entry.isTransferThresholdReached())
+								throw NeighborDatabase::NoMoreTransfersAvailable();
 
-						// create a new bundle filter
-						BundleFilter filter(entry);
+							// create a new bundle filter
+							BundleFilter filter(entry);
 
-						// query an unknown bundle from the storage, the list contains max. 10 items.
-						list.clear();
-						(**this).getSeeker().get(filter, list);
+							// query an unknown bundle from the storage, the list contains max. 10 items.
+							list.clear();
+							(**this).getSeeker().get(filter, list);
+						}
 
 						IBRCOMMON_LOGGER_DEBUG_TAG(NeighborRoutingExtension::TAG, 5) << "got " << list.size() << " items to transfer to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -179,7 +182,7 @@ namespace dtn
 						{
 							try {
 								// transfer the bundle to the neighbor
-								transferTo(entry, *iter);
+								transferTo(task.eid, *iter);
 							} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 						}
 					} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {

@@ -238,31 +238,35 @@ namespace dtn
 					try {
 						try {
 							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
-							NeighborDatabase &db = (**this).getNeighborDB();
 
-							ibrcommon::MutexLock l(db);
-							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+							// lock the neighbor database while searching for bundles
+							{
+								NeighborDatabase &db = (**this).getNeighborDB();
 
-							// check if enough transfer slots available (threadhold reached)
-							if (!entry.isTransferThresholdReached())
-								throw NeighborDatabase::NoMoreTransfersAvailable();
+								ibrcommon::MutexLock l(db);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
-							// get the bundle filter of the neighbor
-							BundleFilter filter(entry);
+								// check if enough transfer slots available (threadhold reached)
+								if (!entry.isTransferThresholdReached())
+									throw NeighborDatabase::NoMoreTransfersAvailable();
 
-							// some debug
-							IBRCOMMON_LOGGER_DEBUG_TAG(FloodRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								// get the bundle filter of the neighbor
+								BundleFilter filter(entry);
 
-							// query all bundles from the storage
-							list.clear();
-							(**this).getSeeker().get(filter, list);
+								// some debug
+								IBRCOMMON_LOGGER_DEBUG_TAG(FloodRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+
+								// query all bundles from the storage
+								list.clear();
+								(**this).getSeeker().get(filter, list);
+							}
 
 							// send the bundles as long as we have resources
 							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								try {
 									// transfer the bundle to the neighbor
-									transferTo(entry, *iter);
+									transferTo(task.eid, *iter);
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
