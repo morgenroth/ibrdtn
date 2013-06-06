@@ -25,7 +25,7 @@ public class TarExtractor implements Runnable {
     private OnStateChangeListener mListener = null;
     
     public interface OnStateChangeListener {
-        void onStateChanged(int state);
+        void onStateChanged(TarExtractor extractor, int state);
     }
     
     public TarExtractor(InputStream is, File targetDir) {
@@ -37,7 +37,7 @@ public class TarExtractor implements Runnable {
     public void run() {
         mExtractedFiles = new LinkedList<File>();
         
-        if (mListener != null) mListener.onStateChanged(0);
+        if (mListener != null) mListener.onStateChanged(this, 0);
         
         try {
             final TarArchiveInputStream tais = (TarArchiveInputStream) new ArchiveStreamFactory().createArchiveInputStream("tar", mInput);
@@ -85,19 +85,19 @@ public class TarExtractor implements Runnable {
             }
             
             tais.close();
-            if (mListener != null) mListener.onStateChanged(1);
+            if (mListener != null) mListener.onStateChanged(this, 1);
         } catch (ArchiveException e) {
             Log.e(TAG, null, e);
-            if (mListener != null) mListener.onStateChanged(-1);
+            if (mListener != null) mListener.onStateChanged(this, -1);
         } catch (IOException e) {
             Log.e(TAG, null, e);
-            if (mListener != null) mListener.onStateChanged(-1);
+            if (mListener != null) mListener.onStateChanged(this, -1);
         } catch (IllegalStateException e) {
             Log.e(TAG, null, e);
-            if (mListener != null) mListener.onStateChanged(-1);
+            if (mListener != null) mListener.onStateChanged(this, -1);
         } catch (IllegalArgumentException e) {
             Log.e(TAG, null, e);
-            if (mListener != null) mListener.onStateChanged(-1);
+            if (mListener != null) mListener.onStateChanged(this, -1);
         }
     }
     

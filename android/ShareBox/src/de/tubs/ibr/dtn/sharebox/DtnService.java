@@ -297,7 +297,6 @@ public class DtnService extends IntentService {
         private ParcelFileDescriptor mWriteFd = null;
         private ParcelFileDescriptor mReadFd = null;
         
-        private Object mExtractorLock = new Object();
         private TarExtractor mExtractor = null;
         private Thread mExtractorThread = null;
         
@@ -375,16 +374,11 @@ public class DtnService extends IntentService {
                         mReadFd = p[0];
                         mWriteFd = p[1];
                         
-                        synchronized(mExtractorLock) {
-                            while (mExtractor != null) {
-                                mExtractorLock.wait();
-                            }
-                            // create a new tar extractor
-                            mExtractor = new TarExtractor(new FileInputStream(mReadFd.getFileDescriptor()), folder);
-                            mExtractor.setOnStateChangeListener(mExtractorListener);
-                            mExtractorThread = new Thread(mExtractor);
-                            mExtractorThread.start();
-                        }
+                        // create a new tar extractor
+                        mExtractor = new TarExtractor(new FileInputStream(mReadFd.getFileDescriptor()), folder);
+                        mExtractor.setOnStateChangeListener(mExtractorListener);
+                        mExtractorThread = new Thread(mExtractor);
+                        mExtractorThread.start();
                         
                         // return FILEDESCRIPTOR mode to received the payload using fd()
                         return TransferMode.FILEDESCRIPTOR;
@@ -392,8 +386,6 @@ public class DtnService extends IntentService {
                         Log.e(TAG, "Can not create a filedescriptor.", e);
                     } catch (IOException e) {
                         Log.e(TAG, "Can not create a filedescriptor.", e);
-                    } catch (InterruptedException e) {
-                        Log.e(TAG, "Interrupted while waiting for extractor clearance.", e);
                     }
                         
                     return TransferMode.NULL;
@@ -428,6 +420,16 @@ public class DtnService extends IntentService {
                     Log.e(TAG, "Can not close filedescriptor.", e);
                 }
             }
+            
+            if (mExtractorThread != null) {
+            	try {
+					mExtractorThread.join();
+				} catch (InterruptedException e) {
+					Log.e(TAG, "interrupted in endBlock()", e);
+				}
+            	mExtractor = null;
+            	mExtractorThread = null;
+            }
         }
 
         @Override
@@ -457,46 +459,35 @@ public class DtnService extends IntentService {
         private TarExtractor.OnStateChangeListener mExtractorListener = new TarExtractor.OnStateChangeListener() {
 
             @Override
-            public void onStateChanged(int state) {
-                synchronized(mExtractorLock) {
-                    switch (state) {
-                        case 1:
-                            // successful
-                            try {
-                                mReadFd.close();
-                            } catch (IOException e) {
-                                Log.e(TAG, "Can not close filedescriptor.", e);
-                            }
-                            
-                            mReadFd = null;
-                            
-                            if (mExtractor != null) {
-                                // put files into the database
-                                for (File f : mExtractor.getFiles()) {
-                                    Log.d(TAG, "Extracted file: " + f.getAbsolutePath());
-                                    mDatabase.put(mBundleId, f);
-                                }
-                            }
-                            
-                            mExtractor = null;
-                            mExtractorThread = null;
-                            mExtractorLock.notifyAll();
-                            break;
-                            
-                        case -1:
-                            // error
-                            try {
-                                mReadFd.close();
-                            } catch (IOException e) {
-                                Log.e(TAG, "Can not close filedescriptor.", e);
-                            }
-                            
-                            mReadFd = null;
-                            mExtractor = null;
-                            mExtractorThread = null;
-                            mExtractorLock.notifyAll();
-                            break;
-                    }
+            public void onStateChanged(TarExtractor extractor, int state) {
+                switch (state) {
+                    case 1:
+                        // successful
+                        try {
+                            mReadFd.close();
+                        } catch (IOException e) {
+                            Log.e(TAG, "Can not close filedescriptor.", e);
+                        }
+                        
+                        mReadFd = null;
+                        
+                        // put files into the database
+                        for (File f : extractor.getFiles()) {
+                            Log.d(TAG, "Extracted file: " + f.getAbsolutePath());
+                            mDatabase.put(mBundleId, f);
+                        }
+                        break;
+                        
+                    case -1:
+                        // error
+                        try {
+                            mReadFd.close();
+                        } catch (IOException e) {
+                            Log.e(TAG, "Can not close filedescriptor.", e);
+                        }
+                        
+                        mReadFd = null;
+                        break;
                 }
             }
             
