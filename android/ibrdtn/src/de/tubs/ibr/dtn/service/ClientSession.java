@@ -570,7 +570,7 @@ public class ClientSession {
 
         @Override
         public BundleID sendFileDescriptor(DTNSessionCallback cb, Bundle bundle,
-                ParcelFileDescriptor fd, long length) throws RemoteException {
+                ParcelFileDescriptor fd) throws RemoteException {
             try {
                 if (Log.isLoggable(TAG, Log.DEBUG))
                     Log.d(TAG, "Received file descriptor as bundle payload.");
@@ -606,7 +606,7 @@ public class ClientSession {
                         nativeSession.put(RegisterIndex.REG2, b);
 
                         if (cb != null) {
-                            cb.progress(0, length);
+                            cb.progress(0, -1);
                         }
 
                         int offset = 0;
@@ -635,7 +635,7 @@ public class ClientSession {
 
                             // report progress
                             if (cb != null) {
-                                cb.progress(offset, length);
+                                cb.progress(offset, -1);
                             }
                         }
 

@@ -185,7 +185,7 @@ public class CollectorService extends IntentService {
 				ParcelFileDescriptor fd = ParcelFileDescriptor.open(efz, ParcelFileDescriptor.MODE_READ_ONLY);
 				try {
 					// send compressed data as bundle
-					_client.getSession().send(deliver_endpoint, 172800, fd, efz.length());
+					_client.getSession().send(deliver_endpoint, 172800, fd);
 					
 					Log.d(TAG, "data file sent");
 					

@@ -427,7 +427,7 @@ public class TalkieService extends IntentService {
             
             try {
                 ParcelFileDescriptor fd = ParcelFileDescriptor.open(recfile, ParcelFileDescriptor.MODE_READ_ONLY);
-                BundleID ret = mClient.getSession().send(destination, 1800, fd, recfile.length());
+                BundleID ret = mClient.getSession().send(destination, 1800, fd);
                 
                 if (ret == null)
                 {

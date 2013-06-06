@@ -269,12 +269,12 @@ public final class DTNClient {
 		/**
 		 * Send the content of a file descriptor as bundle
 		 */
-		public BundleID send(Bundle bundle, ParcelFileDescriptor fd, Long length) throws SessionDestroyedException {
+		public BundleID send(Bundle bundle, ParcelFileDescriptor fd) throws SessionDestroyedException {
 			if (mSession == null)  new SessionDestroyedException("session is null");
 			
 			try {
 				// send the message to the daemon
-				return mSession.sendFileDescriptor(null, bundle, fd, length);
+				return mSession.sendFileDescriptor(null, bundle, fd);
 			} catch (RemoteException e) {
 				return null;
 			}
@@ -283,12 +283,12 @@ public final class DTNClient {
 		/**
 		 * Send the content of a file descriptor as bundle
 		 */
-		public BundleID send(EID destination, long lifetime, ParcelFileDescriptor fd, Long length) throws SessionDestroyedException {
+		public BundleID send(EID destination, long lifetime, ParcelFileDescriptor fd) throws SessionDestroyedException {
 			Bundle bundle = new Bundle();
 			bundle.setDestination(destination);
 			bundle.setLifetime(lifetime);
 			
-			return send(bundle, fd, length);
+			return send(bundle, fd);
 		}
 		
 		public Boolean queryNext() throws SessionDestroyedException {
