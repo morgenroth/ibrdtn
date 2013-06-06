@@ -12,6 +12,7 @@ import android.widget.TextView;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.sharebox.DtnService;
 import de.tubs.ibr.dtn.sharebox.R;
+import de.tubs.ibr.dtn.sharebox.data.Utils;
 
 public class PendingDialog extends Activity {
     
@@ -68,8 +69,9 @@ public class PendingDialog extends Activity {
             }
         });
         
-        String htmlMessage = "<b>BundleID:</b> " + bundleid.getSource().toString() + "<br />" +
-                "<b>Length:</b> " + length.toString();
+        String htmlMessage = 
+                String.format(getString(R.string.transmission_summary_text),
+                        bundleid.getSource().toString(), Utils.humanReadableByteCount(length, true));
         
         // add content to the dialog
         TextView msg = (TextView) findViewById(R.id.message);

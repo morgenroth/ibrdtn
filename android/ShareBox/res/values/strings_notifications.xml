@@ -3,22 +3,26 @@
 	<string name="notification_accept_text">Accept</string>
     <string name="notification_reject_text">Reject</string>
     
-    <string name="notification_ongoing_download_title">ShareBox Download</string>
-    <string name="notification_ongoing_download_text">Download in progress</string>
+    <string name="notification_ongoing_download_title">Transmission</string>
+    <string name="notification_ongoing_download_text">Receiving %1$s</string>
     
-    <string name="notification_completed_download_title">ShareBox Download completed</string>
-    <string name="notification_completed_download_text">Download has been completed</string>
+    <string name="notification_completed_download_title">Transmission completed</string>
+    <string name="notification_completed_download_text">Received %1$s from %2$s</string>
     
-    <string name="notification_aborted_download_title">ShareBox Download failed</string>
-    <string name="notification_aborted_download_text">Download was aborted due to an error</string>
+    <string name="notification_aborted_download_title">Transmission failed</string>
+    <string name="notification_aborted_download_text">Could not receive transmission from %1$s</string>
+    
+    <string name="notification_pending_download_from">From %1$s</string>
     
     <plurals name="notification_pending_download_title">
-        <item quantity="one">Pending download</item>
-        <item quantity="other">Pending downloads</item>
+        <item quantity="one">Transmission request</item>
+        <item quantity="other">Transmission requests</item>
     </plurals>
     
     <plurals name="notification_pending_download_text">
-        <item quantity="one">You have a pending download</item>
-        <item quantity="other">You have multiple pending downloads</item>
+        <item quantity="one">You have a pending transmission</item>
+        <item quantity="other">You have %d pending transmissions</item>
     </plurals>
+    
+    <string name="transmission_summary_text">&lt;b>From:&lt;/b> %1$s&lt;br />&lt;b>Length:&lt;/b> %2$s</string>
 </resources>

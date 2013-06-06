@@ -177,12 +177,12 @@ public class DtnService extends IntentService {
             updatePendingDownloadNotification();
             
             // show ongoing download notification
-            mNotificationFactory.showDownload(bundleid);
+            mNotificationFactory.showDownload(bundleid, d.getLength());
             
             try {
                 mIsDownloading = true;
                 if (mClient.getSession().query(bundleid)) {
-                    mNotificationFactory.showDownloadCompleted(bundleid);
+                    mNotificationFactory.showDownloadCompleted(bundleid, d.getLength());
                 } else {
                     // set state to aborted
                     mDatabase.setState(d.getId(), Download.State.ABORTED);
