@@ -66,8 +66,7 @@ public class DownloadListFragment extends ListFragment implements LoaderManager.
     };
     
     /**
-     * Create a new instance of DetailsFragment, initialized to
-     * show the buddy with buddyId
+     * Create a new instance of DownloadListFragment
      */
     public static DownloadListFragment newInstance() {
         DownloadListFragment f = new DownloadListFragment();
