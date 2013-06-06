@@ -21,20 +21,18 @@
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         
         <service
-            android:name=".SendService"
-            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" >
+            android:name="de.tubs.ibr.dtn.sharebox.DtnService"
+            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION">
             <intent-filter>
                 <action android:name="de.tubs.ibr.dtn.intent.SENDFILE" />
+                <category android:name="de.tubs.ibr.dtn.intent.category.SERVICES" />
             </intent-filter>
         </service>
-        
-        <service android:name="de.tubs.ibr.dtn.sharebox.DtnService" />
         
 	    <receiver
 	        android:enabled="true"
