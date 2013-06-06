@@ -10,7 +10,6 @@ import android.app.IntentService;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
@@ -30,8 +29,8 @@ import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.sharebox.data.Database;
 import de.tubs.ibr.dtn.sharebox.data.Download;
-import de.tubs.ibr.dtn.sharebox.data.Utils;
 import de.tubs.ibr.dtn.sharebox.data.Download.State;
+import de.tubs.ibr.dtn.sharebox.data.Utils;
 
 public class DtnService extends IntentService {
 
@@ -151,9 +150,15 @@ public class DtnService extends IntentService {
             // retrieve the bundle ID of the intent
             BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
             
+            // delete the pending bundle
+            mDatabase.remove(bundleid);
+            
             // dismiss notification if there are no more pending downloads
-            if (mDatabase.getPending() <= 1) {
-                mNotificationFactory.cancelPendingDownload(bundleid);
+            int pending = mDatabase.getPending();
+            if (pending < 1) {
+                mNotificationFactory.cancelPending();
+            } else {
+                mNotificationFactory.showPendingDownload(bundleid, pending);
             }
             
             // mark the bundle as delivered
@@ -161,29 +166,34 @@ public class DtnService extends IntentService {
             i.setAction(MARK_DELIVERED_INTENT);
             i.putExtra(PARCEL_KEY_BUNDLE_ID, bundleid);
             startService(i);
-            
-            // delete the pending bundle
-            mDatabase.remove(bundleid);
         }
         else if (ACCEPT_DOWNLOAD_INTENT.equals(action))
         {
             // retrieve the bundle ID of the intent
             BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
             
-            // dismiss notification if there are no more pending downloads
-            if (mDatabase.getPending() <= 1) {
-                mNotificationFactory.cancelPendingDownload(bundleid);
-            }
-            
             Log.d(TAG, "Download request for " + bundleid.toString());
             
             // mark the download as accepted
             Download d = mDatabase.get(bundleid);
-            mDatabase.setState(d.getId(), 1);
-
+            mDatabase.setState(d.getId(), Download.State.ACCEPTED);
+            
+            // dismiss notification if there are no more pending downloads
+            int pending = mDatabase.getPending();
+            if (pending < 1) {
+                mNotificationFactory.cancelPending();
+            } else {
+                mNotificationFactory.showPendingDownload(bundleid, pending);
+            }
+            
+            // show ongoing download notification
+            mNotificationFactory.showDownload(bundleid);
+            
             try {
                 mIsDownloading = true;
                 mClient.getSession().query(bundleid);
+                
+                mNotificationFactory.showDownloadCompleted(bundleid);
             } catch (SessionDestroyedException e) {
                 Log.e(TAG, "Can not query for bundle", e);
                 
@@ -292,18 +302,11 @@ public class DtnService extends IntentService {
             // store the bundle header locally
             mBundle = bundle;
             mBundleId = new BundleID(bundle);
-            
-            // show ongoing download notification
-            mNotificationFactory.showOngoingDownload(mBundleId);
         }
 
         @Override
         public void endBundle() {
             if (mIsDownloading) {
-                // clear notification with progressbar
-                mNotificationFactory.cancelOngoingDownload(mBundleId);
-                mNotificationFactory.showDownloadCompleted(mBundleId);
-                
                 // mark the bundle as delivered if this was a complete download
                 Intent i = new Intent(DtnService.this, DtnService.class);
                 i.setAction(MARK_DELIVERED_INTENT);
@@ -312,7 +315,7 @@ public class DtnService extends IntentService {
 
                 // set state to completed
                 Download d = mDatabase.get(mBundleId);
-                mDatabase.setState(d.getId(), 2);
+                mDatabase.setState(d.getId(), Download.State.COMPLETED);
             } else {
                 // create new download object
                 Download download_request = new Download(mBundle);
@@ -444,7 +447,7 @@ public class DtnService extends IntentService {
             
             if (mIsDownloading && (mLastProgressValue < pos.intValue())) {
                 mLastProgressValue = pos.intValue();
-                mNotificationFactory.updateOngoingDownload(mBundleId, mLastProgressValue, 100);
+                mNotificationFactory.updateDownload(mBundleId, mLastProgressValue, 100);
             }
         }
         
@@ -469,9 +472,6 @@ public class DtnService extends IntentService {
                                 for (File f : mExtractor.getFiles()) {
                                     Log.d(TAG, "Extracted file: " + f.getAbsolutePath());
                                     mDatabase.put(mBundleId, f);
-                                    
-                                    // add new file to the media library
-                                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(f)));
                                 }
                             }
                             

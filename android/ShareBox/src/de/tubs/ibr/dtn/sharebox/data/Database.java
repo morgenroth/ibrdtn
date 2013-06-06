@@ -203,6 +203,9 @@ public class Database {
         
         notifyDataChanged();
         
+        // add new file to the media library
+        mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(f)));
+        
         return id;
     }
     
@@ -210,7 +213,12 @@ public class Database {
         Integer ret = 0;
         
         try {
-            Cursor cur = mDatabase.query(Database.TABLE_NAMES[0], new String[] { "COUNT(*)" }, Download.STATE + " = ?", new String[] { "0" }, null, null, null);
+            Cursor cur = mDatabase.query(
+                    Database.TABLE_NAMES[0],
+                    new String[] { "COUNT(*)" }, 
+                    Download.STATE + " = ?", 
+                    new String[] { String.valueOf( Download.State.PENDING.getValue() ) },
+                    null, null, null);
 
             if (cur.moveToNext())
             {
@@ -226,10 +234,10 @@ public class Database {
         return ret;
     }
     
-    public void setState(Long id, Integer state) {
+    public void setState(Long id, Download.State state) {
         ContentValues values = new ContentValues();
 
-        values.put(Download.STATE, state);
+        values.put(Download.STATE, state.getValue());
         
         // update message data
         mDatabase.update(Database.TABLE_NAMES[0], values, "_id = ?", new String[] { String.valueOf(id) });

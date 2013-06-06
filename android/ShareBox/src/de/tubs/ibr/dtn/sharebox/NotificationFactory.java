@@ -30,30 +30,31 @@ public class NotificationFactory {
     
     // while showing a notification for ongoing downloads we use
     // this to store the notification builder
-    NotificationCompat.Builder mOngoingDownloadBuilder = null;
+    NotificationCompat.Builder mDownloadBuilder = null;
     
     public NotificationFactory(Context context, NotificationManager manager) {
     	mContext = context;
     	mManager = manager;
     }
     
-    public void updateOngoingDownload(BundleID bundleid, int pos, int max) {
+    public void updateDownload(BundleID bundleid, int pos, int max) {
         // update notification
-        mOngoingDownloadBuilder.setProgress(max, pos, false);
+        mDownloadBuilder.setProgress(max, pos, false);
         
         // display the progress
-        mManager.notify(ONGOING_DOWNLOAD, mOngoingDownloadBuilder.build());
+        mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
     }
     
-    public void showOngoingDownload(BundleID bundleid) {
+    public void showDownload(BundleID bundleid) {
         // create notification with progressbar
-        mOngoingDownloadBuilder = new NotificationCompat.Builder(mContext);
-        mOngoingDownloadBuilder.setContentTitle(mContext.getResources().getString(R.string.notification_ongoing_download_title));
-        mOngoingDownloadBuilder.setContentText(mContext.getResources().getString(R.string.notification_ongoing_download_text));
-        mOngoingDownloadBuilder.setSmallIcon(R.drawable.ic_stat_download);
+        mDownloadBuilder = new NotificationCompat.Builder(mContext);
+        mDownloadBuilder.setContentTitle(mContext.getResources().getString(R.string.notification_ongoing_download_title));
+        mDownloadBuilder.setContentText(mContext.getResources().getString(R.string.notification_ongoing_download_text));
+        mDownloadBuilder.setSmallIcon(R.drawable.ic_stat_download);
+        mDownloadBuilder.setProgress(0, 0, true);
         
         // display the progress
-        mManager.notify(ONGOING_DOWNLOAD, mOngoingDownloadBuilder.build());
+        mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
     }
     
     public void showPendingDownload(BundleID bundleid, int pendingCount) {
@@ -91,52 +92,32 @@ public class NotificationFactory {
     }
     
     public void showDownloadCompleted(BundleID bundleid) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext);
+        // update notification
+        mDownloadBuilder.setContentTitle(mContext.getResources().getString(R.string.notification_completed_download_title));
+        mDownloadBuilder.setContentText(mContext.getResources().getString(R.string.notification_completed_download_text));
+        mDownloadBuilder.setProgress(0, 0, false);
         
-        Intent resultIntent = new Intent(mContext, TransferListActivity.class);
-        resultIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, bundleid);
-        
-        builder.setContentTitle(mContext.getResources().getString(R.string.notification_completed_download_title));
-        builder.setContentText(mContext.getResources().getString(R.string.notification_completed_download_text));
-        builder.setSmallIcon(R.drawable.ic_stat_download);
-        
-        // create the pending intent
-        PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        builder.setContentIntent(contentIntent);
-        
-        builder.setWhen( System.currentTimeMillis() );
-
-        // show download completed notification
-        mManager.notify(bundleid.toString(), COMPLETED_DOWNLOAD, builder.build());
+        // display the progress
+        mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
     }
 
 	public void showDownloadAborted(BundleID bundleid) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext);
+        // update notification
+        mDownloadBuilder.setContentTitle(mContext.getResources().getString(R.string.notification_aborted_download_title));
+        mDownloadBuilder.setContentText(mContext.getResources().getString(R.string.notification_aborted_download_text));
+        mDownloadBuilder.setProgress(0, 0, false);
         
-        Intent resultIntent = new Intent(mContext, TransferListActivity.class);
-        resultIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, bundleid);
-        
-        builder.setContentTitle(mContext.getResources().getString(R.string.notification_aborted_download_title));
-        builder.setContentText(mContext.getResources().getString(R.string.notification_aborted_download_text));
-        builder.setSmallIcon(R.drawable.ic_stat_download);
-        
-        // create the pending intent
-        PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        builder.setContentIntent(contentIntent);
-        
-        builder.setWhen( System.currentTimeMillis() );
-
-        // show download aborted notification
-        mManager.notify(bundleid.toString(), ABORTED_DOWNLOAD, builder.build());
+        // display the progress
+        mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
 	}
 	
-	public void cancelPendingDownload(BundleID bundleid) {
-		mManager.cancel(bundleid.toString(), PENDING_DOWNLOAD);
+	public void cancelPending() {
+		mManager.cancel(PENDING_DOWNLOAD);
 	}
 	
-	public void cancelOngoingDownload(BundleID bundleid) {
+	public void cancelDownload(BundleID bundleid) {
 		mManager.cancel(bundleid.toString(), ONGOING_DOWNLOAD);
-		mOngoingDownloadBuilder = null;
+		mDownloadBuilder = null;
 	}
 	
     private void setNotificationSettings(NotificationCompat.Builder builder)
