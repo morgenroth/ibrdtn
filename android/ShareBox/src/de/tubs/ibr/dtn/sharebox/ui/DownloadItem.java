@@ -72,6 +72,10 @@ public class DownloadItem extends RelativeLayout {
         case COMPLETED:
         	mSideText.setText(getContext().getString(R.string.state_completed));
         	break;
+        	
+        case ABORTED:
+            mSideText.setText(getContext().getString(R.string.state_aborted));
+            break;
         }
     }
 }

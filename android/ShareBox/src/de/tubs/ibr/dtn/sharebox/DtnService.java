@@ -191,9 +191,14 @@ public class DtnService extends IntentService {
             
             try {
                 mIsDownloading = true;
-                mClient.getSession().query(bundleid);
-                
-                mNotificationFactory.showDownloadCompleted(bundleid);
+                if (mClient.getSession().query(bundleid)) {
+                    mNotificationFactory.showDownloadCompleted(bundleid);
+                } else {
+                    // set state to aborted
+                    mDatabase.setState(d.getId(), Download.State.ABORTED);
+                    
+                    mNotificationFactory.showDownloadAborted(bundleid);
+                }
             } catch (SessionDestroyedException e) {
                 Log.e(TAG, "Can not query for bundle", e);
                 

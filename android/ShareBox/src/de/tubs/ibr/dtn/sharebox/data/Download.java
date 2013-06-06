@@ -41,7 +41,8 @@ public class Download {
     	PENDING(0),
     	ACCEPTED(1),
     	DOWNLOADING(2),
-    	COMPLETED(3);
+    	COMPLETED(3),
+    	ABORTED(4);
     	
     	private final int mValue;
     	
