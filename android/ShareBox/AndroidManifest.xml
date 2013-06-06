@@ -52,6 +52,15 @@
 	            <category android:name="de.tubs.ibr.dtn.intent.category.SESSION" />
 	        </intent-filter>
 	    </receiver>
+	    
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".ui.TransferListActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.tubs.ibr.dtn.sharebox.ui.TransferListActivity" />
+        </activity>
     </application>
 
 </manifest>
