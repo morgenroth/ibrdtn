@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<de.tubs.ibr.dtn.chat.RosterItem
+    xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/roster_item_layout"
     android:layout_width="fill_parent"
     android:orientation="horizontal"
     android:padding="4dp"
-    android:id="@+id/roster_item_layout">
+    android:id="@+id/roster_item">
 
     <ImageView
         android:id="@+id/icon"
@@ -39,7 +40,7 @@
 	        android:layout_below="@+id/label"
 	        android:ellipsize="marquee"
 	        android:singleLine="true"
-	        android:text="@string/example_text"
+	        android:text="@string/empty"
 	        android:textSize="12dp" />
 	    
     </RelativeLayout>
@@ -52,4 +53,4 @@
         android:layout_weight="0"
         android:src="@drawable/ic_draft" />
 
-</LinearLayout>
+</de.tubs.ibr.dtn.chat.RosterItem>

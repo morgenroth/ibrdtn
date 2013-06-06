@@ -29,13 +29,14 @@
 
 #include <wifip2p/CoreEngine.h>
 #include <wifip2p/WifiP2PInterface.h>
+#include <wifip2p/Logger.h>
 #include <list>
 
 namespace dtn
 {
 	namespace net
 	{
-		class WifiP2PManager : public dtn::daemon::IndependentComponent, public dtn::net::P2PDialupExtension, public wifip2p::WifiP2PInterface {
+		class WifiP2PManager : public dtn::daemon::IndependentComponent, public dtn::net::P2PDialupExtension, public wifip2p::WifiP2PInterface, public wifip2p::Logger {
 		public:
 			static const std::string TAG;
 
@@ -103,6 +104,20 @@ namespace dtn
 			 */
 			virtual void connectionLost(wifip2p::Connection conn);
 
+			/**
+			 * @see wifip2p::Logger::log(std::string tag, std::string msg)
+			 */
+			virtual void log(std::string tag, std::string msg);
+
+			/**
+			 * @see wifip2p::Logger::log_err(std::string tag, std::string msg)
+			 */
+			virtual void log_err(std::string tag, std::string msg);
+
+			/**
+			 * @see wifip2p::Logger::log_debug(int debug, std::string tag, std::string msg)
+			 */
+			virtual void log_debug(int debug, std::string tag, std::string msg);
 
 		private:
 			bool _running;

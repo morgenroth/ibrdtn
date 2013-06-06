@@ -165,9 +165,13 @@ namespace dtn
 				// read the bundle out of the storage
 				const dtn::data::Bundle bundle = storage.get(job.getBundle());
 
-				// create a dummy serializer
-				dtn::data::DefaultSerializer dummy(std::cout);
+				// build the dictionary for EID lookup
+				const dtn::data::Dictionary dict(bundle);
 
+				// create a default serializer
+				dtn::data::DefaultSerializer dummy(std::cout, dict);
+
+				// get the encoded length of the primary block
 				size_t header = dummy.getLength((const PrimaryBlock&)bundle);
 				header += 20; // two times SDNV through fragmentation
 

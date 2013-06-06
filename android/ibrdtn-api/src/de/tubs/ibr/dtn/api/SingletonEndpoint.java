@@ -21,11 +21,18 @@
 
 package de.tubs.ibr.dtn.api;
 
+import java.io.Serializable;
+
 import android.os.Parcel;
 
-public class SingletonEndpoint implements EID {
+public class SingletonEndpoint implements EID, Serializable {
 	
-	public static final SingletonEndpoint ME = new SingletonEndpoint("api:me");
+	/**
+     * serial id for serializable objects
+     */
+    private static final long serialVersionUID = -8294770576249979527L;
+    
+    public static final SingletonEndpoint ME = new SingletonEndpoint("api:me");
 	private String _eid = null;
 	
 	public SingletonEndpoint(String id)

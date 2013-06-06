@@ -52,10 +52,8 @@ namespace dtn
 		bool SQLiteBundleStorage::TaskIdle::_idle = false;
 
 		SQLiteBundleStorage::SQLiteBLOB::SQLiteBLOB(const ibrcommon::File &path)
-		 : _blobPath(path)
+		 : _file(path, "blob")
 		{
-			// generate a new temporary file
-			_file = ibrcommon::TemporaryFile(_blobPath, "blob");
 		}
 
 		SQLiteBundleStorage::SQLiteBLOB::~SQLiteBLOB()
@@ -68,12 +66,6 @@ namespace dtn
 		{
 			// close the file
 			_filestream.close();
-
-			// remove the old file
-			_file.remove();
-
-			// generate a new temporary file
-			_file = ibrcommon::TemporaryFile(_blobPath, "blob");
 
 			// open temporary file
 			_filestream.open(_file.getPath().c_str(), ios::in | ios::out | ios::trunc | ios::binary );
@@ -272,18 +264,17 @@ namespace dtn
 						// create a reference of the BLOB
 						ibrcommon::BLOB::Reference ref(blob);
 
-						// remove the corresponding file
-						blob->_file.remove();
-
 						try {
+							// remove the temporary file
+							blob->_file.remove();
+
 							// generate a hard-link, pointing to the BLOB file
 							if ( ::link(file.getPath().c_str(), blob->_file.getPath().c_str()) != 0 )
 							{
 								IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 25) << "hard-link failed (" << errno << ") " << blob->_file.getPath() << " -> " << file.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 								// copy the BLOB into a new file if hard-links are not supported
-								blob->_file = ibrcommon::TemporaryFile(_blobPath, "blob");
-								std::ofstream fout(blob->_file.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
+								std::ofstream fout(blob->_file.getPath().c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 
 								// open the filestream
 								ibrcommon::BLOB::iostream stream = ref.iostream();
@@ -295,6 +286,9 @@ namespace dtn
 							// add payload block to the bundle
 							bundle.push_back(ref);
 						} catch (const ibrcommon::Exception &ex) {
+							// remove the temporary file
+							blob->_file.remove();
+
 							IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, error) << "unable to load bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 							throw dtn::SerializationFailedException(ex.what());
 						}
@@ -378,21 +372,21 @@ namespace dtn
 									IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 25) << "hard-link failed (" << errno << ") " << tmpfile.getPath() << " -> " << blob._file.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 									// copy the BLOB into a new file if hard-links are not supported
-									tmpfile = ibrcommon::TemporaryFile(_blockPath, "payload");
-									std::ofstream fout(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
+									std::ofstream fout(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 
 									const std::streamsize length = stream.size();
 									ibrcommon::BLOB::copy(fout, (*stream), length);
 								}
 							} catch (const std::bad_cast&) {
 								// copy the BLOB into a new file this isn't a sqlite block object
-								tmpfile = ibrcommon::TemporaryFile(_blockPath, "payload");
-								std::ofstream fout(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
+								std::ofstream fout(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 
 								const std::streamsize length = stream.size();
 								ibrcommon::BLOB::copy(fout, (*stream), length);
 							}
 						} catch (const std::bad_cast&) {
+							// remove the tmp file
+							tmpfile.remove();
 							throw ibrcommon::Exception("not a payload block");
 						}
 
@@ -406,7 +400,7 @@ namespace dtn
 					{
 						ibrcommon::TemporaryFile tmpfile(_blockPath, "block");
 
-						std::ofstream filestream(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::binary);
+						std::ofstream filestream(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 						dtn::data::SeparateSerializer serializer(filestream);
 						serializer << block;
 						filestream.close();

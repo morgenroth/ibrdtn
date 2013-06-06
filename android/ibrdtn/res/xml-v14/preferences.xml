@@ -18,6 +18,12 @@
             android:summary="@string/routing_description"
             android:title="@string/routing" >
         </ListPreference>
+        
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="RunAsForegroundService"
+            android:title="@string/runasforegroundservice"
+            android:summary="@string/runasforegroundservice_description" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="prefcat_connection"
@@ -45,18 +51,10 @@
             android:summary="@string/pref_fragmentation_desc"
             android:title="@string/pref_fragmentation" />
     </PreferenceCategory>
-    <PreferenceCategory
+    <de.tubs.ibr.dtn.daemon.InterfacePreferenceCategory
         android:key="prefcat_interfaces"
         android:title="@string/interfaces" >
-    </PreferenceCategory>
-
-    <!--
-    <PreferenceCategory android:title="@string/statichost">
-        <CheckBoxPreference android:key="connect_static" android:title="@string/connect_static"/><EditTextPreference android:title="@string/host_name" android:key="host_name" android:defaultValue="dtn://"/><EditTextPreference android:title="@string/host_address" android:key="host_address" android:defaultValue="0.0.0.0"/>
-        <EditTextPreference android:title="@string/host_port" android:key="host_port" android:defaultValue="4556"/>
-    </PreferenceCategory>
-    -->
-
+    </de.tubs.ibr.dtn.daemon.InterfacePreferenceCategory>
     <PreferenceCategory
         android:key="prefcat_security"
         android:title="@string/security" >

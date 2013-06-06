@@ -39,6 +39,8 @@
     <string name="service_running">Dienst gestartet</string>
     <string name="development">Development</string>
     <string name="runasbackgroundservice">Daemon aktivieren</string>
+    <string name="runasforegroundservice">Vordergrunddienst</string>
+    <string name="runasforegroundservice_description">Markiert diesen Dienst als Vordergrundprozess.</string>
     <string name="wait">Bitte warten</string>
     <string name="clearingstorage">Speicher wird geleert.</string>
     <string name="security">Sicherheit</string>

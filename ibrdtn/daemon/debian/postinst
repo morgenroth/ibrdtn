@@ -1,42 +1,35 @@
-#!/bin/sh
+#!/bin/bash -e
 
-DAEMON_USER="dtnd"
+. /usr/share/debconf/confmodule
+
+if [ -n "$DEBIAN_SCRIPT_DEBUG" ]; then set -v -x; DEBIAN_SCRIPT_TRACE=1; fi
+${DEBIAN_SCRIPT_TRACE:+ echo "#42#DEBUG# RUNNING $0 $*" 1>&2 }
+
+invoke() {
+  if [ -x /usr/sbin/invoke-rc.d ]; then
+    invoke-rc.d ibrdtnd $1
+  else
+    /etc/init.d/ibrdtnd $1
+  fi
+}
+
+# stop the server
+set +e; invoke stop; set -e
 
 case "$1" in
   configure)
-	# Creating the user if it does not exist
-	adduser --ingroup daemon --system ${DAEMON_USER};
+    invoke start
+  ;;
 	
-	# create a log directory for the daemon process
-	LOG_DIR="/var/log/ibrdtn"
-	if [ ! -d "${LOG_DIR}" ]; then
-		mkdir -p ${LOG_DIR}
-		chown dtnd.adm ${LOG_DIR}
-		chmod 775 ${LOG_DIR}
-	fi
-	
-	# create a pid directory for the daemon process
-	PID_DIR="/var/run/ibrdtn"
-	if [ ! -d "${PID_DIR}" ]; then
-		mkdir -p ${PID_DIR}
-		chown dtnd.adm ${PID_DIR}
-		chmod 775 ${PID_DIR}
-	fi
-	;;
-	
-  abort-upgrade)
-	;;
-	
-  abort-remove)
-	;;
-	
-  abort-deconfigure)
-	;;
+  abort-upgrade|abort-remove|abort-configure)
+  ;;
 	
   *)
-	echo "$0: didn't understand being called with \`$1'" 1>&2
-	exit 0
-	;;
+    echo "$0: didn't understand being called with \`$1'" 1>&2
+    exit 0
+  ;;
 esac
+
+#DEBHELPER#
 
 exit 0

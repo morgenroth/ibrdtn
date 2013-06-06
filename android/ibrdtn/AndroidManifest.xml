@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="de.tubs.ibr.dtn"
     android:versionCode="32"
-    android:versionName="0.9.0-32" >
+    android:versionName="0.9.0" >
 
     <permission
         android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
@@ -127,6 +127,15 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
+        
+		<receiver
+			android:name=".service.NetworkStateReceiver"
+			android:label="NetworkStateReceiver">
+			<intent-filter>
+				<action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+				<action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
+			</intent-filter>
+		</receiver>
     </application>
 
 </manifest>

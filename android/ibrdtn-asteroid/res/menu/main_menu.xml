@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu
-  xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:title="@string/list_neighbors" android:id="@+id/itemNeighbors" android:alphabeticShortcut="@string/list_neighbors"></item>
-    <item android:id="@+id/itemShowLog" android:title="@string/showlog" android:alphabeticShortcut="@string/showlog"></item>
-</menu>

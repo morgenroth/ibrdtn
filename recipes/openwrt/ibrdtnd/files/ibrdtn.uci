@@ -110,13 +110,11 @@ config 'network'
 	option type			tcp
 	option interface	eth0
 	option port			4556
-#	option discovery	yes
 	
 #config 'network'
 #	option type			tcp
 #	option interface	wlan0
 #	option port			4556
-#	option discovery	no
 
 
 #####################################

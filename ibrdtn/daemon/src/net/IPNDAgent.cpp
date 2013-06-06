@@ -482,7 +482,7 @@ namespace dtn
 							// get the list of services
 							const std::list<DiscoveryService> &services = announce.getServices();
 
-							if (services.empty())
+							if (services.empty() && announce.isShort())
 							{
 								ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
 							}

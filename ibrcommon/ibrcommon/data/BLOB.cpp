@@ -321,16 +321,8 @@ namespace ibrcommon
 	}
 
 	FileBLOBProvider::TmpFileBLOB::TmpFileBLOB(const File &tmppath)
-	 : BLOB(), _filestream(), _fd(0)
+	 : BLOB(), _filestream(), _fd(0), _tmpfile(tmppath, "blob")
 	{
-		// check if path is a directory
-		if (!tmppath.isDirectory())
-		{
-			throw ibrcommon::IOException("BLOB::tmppath not initialized or path is not a directory.");
-		}
-
-		_tmpfile = ibrcommon::TemporaryFile(tmppath, "blob");
-		_tmpfile.update();
 	}
 
 	FileBLOBProvider::TmpFileBLOB::~TmpFileBLOB()

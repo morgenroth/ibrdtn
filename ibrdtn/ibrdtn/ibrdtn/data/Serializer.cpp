@@ -57,17 +57,7 @@ namespace dtn
 			_dictionary.clear();
 
 			// rebuild the dictionary
-			_dictionary.add(obj.destination);
-			_dictionary.add(obj.source);
-			_dictionary.add(obj.reportto);
-			_dictionary.add(obj.custodian);
-
-			// add EID of all secondary blocks
-			for (Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
-			{
-				const Block &b = (**iter);
-				_dictionary.add( b.getEIDList() );
-			}
+			_dictionary.add(obj);
 
 			// check if the bundle header could be compressed
 			_compressable = isCompressable(obj);

@@ -1,9 +1,14 @@
 package de.tubs.ibr.dtn.chat.service;
 
+import java.util.List;
+
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import de.tubs.ibr.dtn.chat.R;
 
@@ -55,4 +60,15 @@ public class Utils {
 		builder.setNegativeButton(activity.getResources().getString(R.string.alert_no), dialogClickListener);
 		builder.show();
 	}
+	
+    public static Boolean isVoiceRecordingSupported(Context context) {
+        final PackageManager pm = context.getPackageManager();
+        final Intent i = new Intent("de.tubs.ibr.dtn.dtalkie.RECORD_MESSAGE");
+        i.addCategory(Intent.CATEGORY_DEFAULT);
+        List<ResolveInfo> resolveInfo = pm.queryIntentActivities(i, PackageManager.MATCH_DEFAULT_ONLY);
+        if (resolveInfo.size() > 0) {
+            return true;
+        }
+        return false;
+    }
 }

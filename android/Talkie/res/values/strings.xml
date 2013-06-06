@@ -3,10 +3,10 @@
     <string name="app_name">Talkie</string>
     <string name="remove">Remove</string>
     <string name="clear_list">Clear list</string>
-    <string name="pleasewait">Please wait...</string>
     <string name="sending">Sending</string>
     <string name="new_message_received">New message received</string>
     <string name="from">From</string>
+    <string name="reply">Reply</string>
     <string name="button_talk">Talk</string>
     <string name="autorec">Auto-Record</string>
     <string name="autoplay">Auto-Play</string>
@@ -14,4 +14,29 @@
     <string name="alert_reinstall_app">You need to re-install this application to grant necessary permissions. Would you like to do this now?</string>
     <string name="alert_yes">Yes</string>
     <string name="alert_no">No</string>
+    
+    <plurals name="notification_title">
+        <item quantity="zero">No new messages</item>
+        <item quantity="one">New message</item>
+        <item quantity="other">New messages</item>
+    </plurals>
+    
+    <plurals name="notification_text">
+        <item quantity="zero">Talkie has no new messages</item>
+        <item quantity="one">Talkie has received a new message</item>
+        <item quantity="other">Talkie has received new messages</item>
+    </plurals>
+    
+    <string name="preferences">Preferences</string>
+    <string name="pref_notification_settings">Notifications</string>
+    <string name="pref_vibrate_on_message">Vibrate</string>
+    <string name="pref_vibrate_on_message_desc">Vibrate on message reception</string>
+    <string name="pref_ringtone_on_message">Notification sound</string>
+    <string name="pref_ringtone_on_message_desc">Choose a notification sound for incoming messages.</string>
+	<string name="pref_autoplay">Auto-Play</string>
+	<string name="pref_autoplay_desc">Automatically play incoming messages.</string>
+	<string name="pref_autorec">Auto-Record</string>
+	<string name="pref_autorec_desc">Record a message if the devices is on the ear.</string>
+	<string name="pref_ptt">Push-To-Talk</string>
+	<string name="pref_ptt_desc">Record the message while the button is pushed.</string>
 </resources>

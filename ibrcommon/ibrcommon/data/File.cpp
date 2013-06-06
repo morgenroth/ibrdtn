@@ -297,6 +297,12 @@ namespace ibrcommon
 
 	std::string TemporaryFile::tmpname(const File &path, const std::string prefix)
 	{
+		// check if path is a directory
+		if (!path.isDirectory())
+		{
+			throw ibrcommon::IOException("given path is not a directory.");
+		}
+
 		std::string pattern = path.getPath() + "/" + prefix + "XXXXXX";
 
 		std::vector<char> name(pattern.length() + 1);

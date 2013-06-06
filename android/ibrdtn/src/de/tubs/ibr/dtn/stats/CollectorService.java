@@ -91,15 +91,19 @@ public class CollectorService extends IntentService {
 		// destroy DTN client
 		if (_client != null) {
 			// unregister at the daemon
-			_client.unregister();
-		}
-		
-		if (_client != null) {		
+			try {
+				_client.getSession().destroy();
+			} catch (SessionDestroyedException e) {
+				Log.e(TAG, null, e);
+			} catch (InterruptedException e) {
+				Log.e(TAG, null, e);
+			}
+	
 			_client.terminate();
+			
+			// clear all variables
+			_client = null;
 		}
-		
-		// clear all variables
-		_client = null;
 		
 		super.onDestroy();
 	}

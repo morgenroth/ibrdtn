@@ -54,6 +54,8 @@ public class DaemonService extends Service {
     public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
     public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
     public static final String ACTION_RESTART = "de.tubs.ibr.dtn.action.RESTART";
+    
+    public static final String ACTION_NETWORK_CHANGED = "de.tubs.ibr.dtn.action.NETWORK_CHANGED";
    
     public static final String ACTION_UPDATE_NOTIFICATION = "de.tubs.ibr.dtn.action.UPDATE_NOTIFICATION";
     public static final String ACTION_INITIATE_CONNECTION = "de.tubs.ibr.dtn.action.INITIATE_CONNECTION";
@@ -107,6 +109,12 @@ public class DaemonService extends Service {
         @Override
         public String[] getVersion() throws RemoteException {
         	return DaemonService.this.mDaemonProcess.getVersion();
+        }
+
+        @Override
+        public String getEndpoint() throws RemoteException {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
+            return prefs.getString("endpoint_id", "dtn:none");
         }
     };
 
@@ -171,6 +179,10 @@ public class DaemonService extends Service {
         	}
         } else if (ACTION_CLEAR_STORAGE.equals(action)) {
         	mDaemonProcess.clearStorage();
+        } else if (ACTION_NETWORK_CHANGED.equals(action)) {
+        	// This intent tickle the service if something has changed in the
+        	// network configuration. If the service was enabled but terminated before,
+        	// it will be started now.
         }
         
         // stop the daemon if it should be offline
@@ -217,6 +229,10 @@ public class DaemonService extends Service {
         
         // start daemon if enabled
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        
+        // listen to preference changes
+        prefs.registerOnSharedPreferenceChangeListener(_pref_listener);
+        
         if (prefs.getBoolean("enabledSwitch", false)) {
             // startup the daemon process
             final Intent intent = new Intent(this, DaemonService.class);
@@ -230,6 +246,10 @@ public class DaemonService extends Service {
      */
     @Override
     public void onDestroy() {
+        // unlisten to preference changes
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.unregisterOnSharedPreferenceChangeListener(_pref_listener);
+        
         // stop looper that handles incoming intents
         mServiceLooper.quit();
 
@@ -288,6 +308,8 @@ public class DaemonService extends Service {
             // request notification update
             requestNotificationUpdate();
             
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
+            
             switch (state) {
                 case ERROR:
                     break;
@@ -297,7 +319,6 @@ public class DaemonService extends Service {
                     _p2p_manager.destroy();
                     
                     // disable foreground service only if the daemon has been switched off
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
                     if (!prefs.getBoolean("enabledSwitch", false)) {
                         // mark the notification as invisible
                         _show_notification = false;
@@ -312,15 +333,17 @@ public class DaemonService extends Service {
                     break;
                     
                 case ONLINE:
-                    // mark the notification as visible
-                    _show_notification = true;
-                    
-                    // create initial notification
-                    Notification n = buildNotification(R.drawable.ic_notification, getResources()
-                            .getString(R.string.notify_pending));
-
-                    // turn this to a foreground service (kill-proof)
-                    startForeground(1, n);
+                	if (prefs.getBoolean("RunAsForegroundService", true)) {
+	                    // mark the notification as visible
+	                    _show_notification = true;
+	                    
+	                    // create initial notification
+	                    Notification n = buildNotification(R.drawable.ic_notification, getResources()
+	                            .getString(R.string.notify_pending));
+	
+	                    // turn this to a foreground service (kill-proof)
+	                    startForeground(1, n);
+                	}
                     
                     // enable P2P manager
                     _p2p_manager.initialize();
@@ -421,4 +444,41 @@ public class DaemonService extends Service {
 
         return builder.getNotification();
     }
+    
+    private SharedPreferences.OnSharedPreferenceChangeListener _pref_listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+
+		@Override
+		public void onSharedPreferenceChanged(
+				SharedPreferences sharedPreferences, String key) {
+			
+			if (!"RunAsForegroundService".equals(key)) return;
+			
+			if (sharedPreferences.getBoolean("RunAsForegroundService", true)
+					&& mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
+
+                // mark the notification as visible
+                _show_notification = true;
+                
+                // create initial notification
+                Notification n = buildNotification(R.drawable.ic_notification, getResources()
+                        .getString(R.string.notify_pending));
+
+                // turn this to a foreground service (kill-proof)
+                startForeground(1, n);
+                
+                // request notification update
+                requestNotificationUpdate();
+                
+			} else {
+				
+	            // mark the notification as invisible
+	            _show_notification = false;
+	            
+	            // stop foreground service
+	            stopForeground(true);
+	            
+			}
+		}
+    	
+    };
 }

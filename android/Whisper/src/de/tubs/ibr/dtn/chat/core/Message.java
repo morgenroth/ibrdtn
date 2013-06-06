@@ -21,34 +21,66 @@
  */
 package de.tubs.ibr.dtn.chat.core;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class Message {
+import android.content.Context;
+import android.database.Cursor;
+import android.provider.BaseColumns;
+import android.util.Log;
+import de.tubs.ibr.dtn.chat.MessageAdapter;
 
+public class Message {
+	
+	private static final String TAG = "Message";
+
+	public static final String ID = BaseColumns._ID;
+	public static final String BUDDY = "buddy";
+	public static final String DIRECTION = "direction";
+	public static final String CREATED = "created";
+	public static final String RECEIVED = "received";
+	public static final String PAYLOAD = "payload";
+	public static final String SENTID = "sentid";
+	public static final String FLAGS = "flags";
+	
 	private Long msgid = null;
 	private Boolean incoming = null;
-	private Buddy buddy = null;
+	private Long buddyid = null;
 	private Date created = null;
 	private Date received = null;
 	private String payload = null;
 	private String sentid = null;
 	private Long flags = 0L;
 	
-	public Message(Long id, Boolean incoming, Date created, Date received, String payload)
+	public Message(Context context, Cursor cursor, MessageAdapter.ColumnsMap cmap)
 	{
-		this.msgid = id;
-		this.incoming = incoming;
-		this.created = created;
-		this.received = received;
-		this.payload = payload;
+		final DateFormat formatter = new SimpleDateFormat("yyyy-M-d hh:mm:ss");
+		
+		this.msgid = cursor.getLong(cmap.mColumnId);
+		this.buddyid = cursor.getLong(cmap.mColumnBuddy);
+		this.incoming = cursor.getString(cmap.mColumnDirection).equals("in");
+		
+		try {
+			this.created = formatter.parse(cursor.getString(cmap.mColumnCreated));
+			this.received = formatter.parse(cursor.getString(cmap.mColumnReceived));
+		} catch (ParseException e) {
+			Log.e(TAG, "failed to convert date");
+		}
+		
+		this.payload = cursor.getString(cmap.mColumnPayload);
+		
+		this.sentid = cursor.getString(cmap.mColumnSendId);
+		this.flags = cursor.getLong(cmap.mColumnFlags);
 	}
 	
-	public Buddy getBuddy() {
-		return buddy;
+	public Long getBuddyId() {
+		return buddyid;
 	}
 
-	public void setBuddy(Buddy buddy) {
-		this.buddy = buddy;
+	public void setBuddyId(Long buddyid) {
+		this.buddyid = buddyid;
 	}
 	
 	public Boolean isIncoming() {
@@ -91,7 +123,7 @@ public class Message {
 	}
 
 	public Long getFlags() {
-		return flags;
+		return (flags == null) ? 0 : flags;
 	}
 
 	public void setFlags(Long flags) {

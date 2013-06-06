@@ -331,12 +331,10 @@ ConfigurationTest::FakeConfiguration::FakeConfiguration()
 		<< "net_lan0_type = tcp					# we want to use TCP as protocol" << std::endl
 		<< "net_lan0_interface = eth0			# listen on interface eth0" << std::endl
 		<< "net_lan0_port = 4556				# with port 4556 (default)" << std::endl
-		<< "net_lan0_discovery = yes			# enable discovery (default)" << std::endl
 		<< "" << std::endl
 		<< "net_lan1_type = udp				# we want to use UDP as protocol" << std::endl
 		<< "net_lan1_interface = eth0			# listen on interface eth0 " << std::endl
 		<< "net_lan1_port = 4556				# with port 4556 (default)" << std::endl
-		<< "net_lan1_discovery = no			# disable discovery" << std::endl
 		<< "discovery_address = 224.0.0.1" << std::endl
 		<< "discovery_timeout = 5" << std::endl
 		<< "tcp_nodelay = yes" << std::endl
