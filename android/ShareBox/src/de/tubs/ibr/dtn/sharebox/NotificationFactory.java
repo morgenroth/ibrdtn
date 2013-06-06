@@ -66,6 +66,7 @@ public class NotificationFactory {
         builder.setContentText(mContext.getResources().getQuantityString(R.plurals.notification_pending_download_text, pendingCount));
         builder.setSmallIcon(R.drawable.ic_stat_download);
         builder.setWhen( System.currentTimeMillis() );
+        builder.setOnlyAlertOnce(true);
         
         if (pendingCount == 1) {
             Intent dismissIntent = new Intent(mContext, DtnService.class);
