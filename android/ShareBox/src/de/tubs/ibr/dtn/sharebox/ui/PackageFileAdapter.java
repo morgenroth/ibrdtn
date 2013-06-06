@@ -112,7 +112,7 @@ public class PackageFileAdapter extends CursorAdapter {
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
-        return mInflater.inflate(R.layout.packagefile_item, parent, false);
+        return mInflater.inflate(R.layout.packagefile_list_item, parent, false);
     }
     
     private boolean isCursorValid(Cursor cursor) {

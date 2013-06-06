@@ -1,7 +1,9 @@
 package de.tubs.ibr.dtn.sharebox.data;
 
 import java.io.File;
+import java.util.Locale;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -11,6 +13,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.text.format.DateUtils;
 import android.text.format.Time;
+import android.webkit.MimeTypeMap;
 import de.tubs.ibr.dtn.sharebox.R;
 
 public class Utils {
@@ -122,11 +125,22 @@ public class Utils {
         return DateUtils.formatDateTime(context, when, format_flags);
     }
     
-    public static String humanReadableByteCount(long bytes, boolean si) {
+	public static String humanReadableByteCount(long bytes, boolean si) {
         int unit = si ? 1000 : 1024;
         if (bytes < unit) return bytes + " B";
         int exp = (int) (Math.log(bytes) / Math.log(unit));
         String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
         return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
+    
+	public static String getMimeType(String url) {
+		String parts[] = url.split("\\.");
+		String extension = parts[parts.length - 1];
+		String type = null;
+		if (extension != null) {
+			MimeTypeMap mime = MimeTypeMap.getSingleton();
+			type = mime.getMimeTypeFromExtension(extension);
+		}
+		return type;
+	}
 }

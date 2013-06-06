@@ -66,6 +66,10 @@
             android:label="@string/title_activity_pending_dialog"
             android:theme="@style/Theme.Dialog"
             android:excludeFromRecents="true" />
+        
+        <activity android:icon="@drawable/ic_download"
+            android:name=".ui.PackageFileActivity"
+            android:label="@string/title_activity_download" />
     </application>
 
 </manifest>

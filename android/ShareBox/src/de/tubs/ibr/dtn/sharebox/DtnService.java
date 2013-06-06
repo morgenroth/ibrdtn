@@ -198,6 +198,12 @@ public class DtnService extends IntentService {
                 
                 mNotificationFactory.showDownloadAborted(bundleid);
             }
+        } else if (de.tubs.ibr.dtn.Intent.SENDFILE.equals(action)) {
+        	// external call!
+        	// send one or more files as bundle
+        	
+        	// first check the parameters
+        	intent.getParcelableArrayExtra("");
         }
     }
     

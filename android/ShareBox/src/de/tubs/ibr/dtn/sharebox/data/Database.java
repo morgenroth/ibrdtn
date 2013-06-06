@@ -296,6 +296,21 @@ public class Database {
         notifyDataChanged();
     }
     
+    public void remove(PackageFile pf) {
+    	File f = pf.getFile();
+
+    	// delete from database
+    	mDatabase.delete(Database.TABLE_NAMES[1], PackageFile.ID + " = ?", new String[] { pf.getId().toString() });
+    	
+    	// delete from storage
+    	f.delete();
+    	
+        // announce removed file from the media library
+        mContext.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(f.getParentFile())));
+    	
+    	notifyDataChanged();
+    }
+    
     public void remove(BundleID id) {
         Download d = get(id);
         if (d == null) return;

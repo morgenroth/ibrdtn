@@ -182,9 +182,9 @@ public class DownloadAdapter extends CursorAdapter {
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
         View view = null;
         if (getItemViewType(cursor) == 1) {
-            view = mInflater.inflate(R.layout.download_item, parent, false);
+            view = mInflater.inflate(R.layout.download_list_item, parent, false);
         } else {
-            view = mInflater.inflate(R.layout.download_item, parent, false);
+            view = mInflater.inflate(R.layout.download_list_item, parent, false);
         }
         return view;
     }

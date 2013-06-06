@@ -12,8 +12,10 @@
     <string name="state_downloading">Loading</string>
     <string name="state_aborted">Aborted</string>
     <string name="title_activity_pending_dialog">Transmission request</string>
+    <string name="title_activity_download">Transmission summary</string>
     
     <string name="button_accept">Accept</string>
     <string name="button_reject">Reject</string>
+    <string name="hint_no_handler_for_type">No handler for this type of file.</string>
 
 </resources>
