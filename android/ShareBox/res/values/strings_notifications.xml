@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="notification_accept_text">Accept</string>
+    <string name="notification_reject_text">Reject</string>
+    
+    <string name="notification_ongoing_download_title">ShareBox Download</string>
+    <string name="notification_ongoing_download_text">Download in progress</string>
+    
+    <string name="notification_completed_download_title">ShareBox Download completed</string>
+    <string name="notification_completed_download_text">Download has been completed</string>
+    
+    <string name="notification_aborted_download_title">ShareBox Download failed</string>
+    <string name="notification_aborted_download_text">Download was aborted due to an error</string>
+    
+    <plurals name="notification_pending_download_title">
+        <item quantity="one">Pending download</item>
+        <item quantity="other">Pending downloads</item>
+    </plurals>
+    
+    <plurals name="notification_pending_download_text">
+        <item quantity="one">You have a pending download</item>
+        <item quantity="other">You have multiple pending downloads</item>
+    </plurals>
+</resources>

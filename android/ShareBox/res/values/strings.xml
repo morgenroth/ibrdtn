@@ -14,38 +14,4 @@
     <string name="state_downloading">Downloading</string>
     <string name="state_aborted">Aborted</string>
 
-    <string name="alert_missing_daemon">The DTN daemon is not installed. You need to install it and then re-install this application. Would you like to install it now?</string>
-    <string name="alert_reinstall_app">You need to re-install this application to grant necessary permissions. Would you like to do this now?</string>
-    <string name="alert_yes">Yes</string>
-    <string name="alert_no">No</string>
-    
-    <string name="preferences">Preferences</string>
-    <string name="pref_notification_settings">Notifications</string>
-    <string name="pref_vibrate_on_message">Vibrate</string>
-    <string name="pref_vibrate_on_message_desc">Vibrate on message reception</string>
-    <string name="pref_ringtone_on_message">Notification sound</string>
-    <string name="pref_ringtone_on_message_desc">Choose a notification sound for incoming messages.</string>
-    
-    <string name="notification_accept_text">Accept</string>
-    <string name="notification_reject_text">Reject</string>
-    
-    <string name="notification_ongoing_download_title">ShareBox Download</string>
-    <string name="notification_ongoing_download_text">Download in progress</string>
-    
-    <string name="notification_completed_download_title">ShareBox Download completed</string>
-    <string name="notification_completed_download_text">Download has been completed</string>
-    
-    <string name="notification_aborted_download_title">ShareBox Download failed</string>
-    <string name="notification_aborted_download_text">Download was aborted due to an error</string>
-    
-    <plurals name="notification_pending_download_title">
-        <item quantity="one">Pending download</item>
-        <item quantity="other">Pending downloads</item>
-    </plurals>
-    
-    <plurals name="notification_pending_download_text">
-        <item quantity="one">You have a pending download</item>
-        <item quantity="other">You have multiple pending downloads</item>
-    </plurals>
-
 </resources>
