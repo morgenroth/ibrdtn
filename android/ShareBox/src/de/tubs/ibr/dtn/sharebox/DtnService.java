@@ -10,9 +10,11 @@ import android.app.IntentService;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
 import de.tubs.ibr.dtn.api.Bundle;
@@ -46,12 +48,6 @@ public class DtnService extends IntentService {
     // download or rejet a bundle
     public static final String ACCEPT_DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.ACCEPT_DOWNLOAD";
     public static final String REJECT_DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.REJECT_DOWNLOAD";
-    
-    // pending download intent
-//    public static final String PENDING_DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.PENDING_DOWNLOAD";
-    
-    // update the notification for pending downloads
-    public static final String UPDATE_PENDING_NOTIFICATION_INTENT = "de.tubs.ibr.dtn.sharebox.UPDATE_PENDING_NOTIFICATION";
     
     // local endpoint
     public static final String SHAREBOX_APP_ENDPOINT = "sharebox";
@@ -158,9 +154,7 @@ public class DtnService extends IntentService {
             mDatabase.remove(bundleid);
             
             // update pending download notification
-            Intent update_i = new Intent(DtnService.this, DtnService.class);
-            update_i.setAction(UPDATE_PENDING_NOTIFICATION_INTENT);
-            startService(update_i);
+            updatePendingDownloadNotification();
             
             // mark the bundle as delivered
             Intent i = new Intent(DtnService.this, DtnService.class);
@@ -180,9 +174,7 @@ public class DtnService extends IntentService {
             mDatabase.setState(d.getId(), Download.State.ACCEPTED);
             
             // update pending download notification
-            Intent i = new Intent(DtnService.this, DtnService.class);
-            i.setAction(UPDATE_PENDING_NOTIFICATION_INTENT);
-            startService(i);
+            updatePendingDownloadNotification();
             
             // show ongoing download notification
             mNotificationFactory.showDownload(bundleid);
@@ -205,15 +197,6 @@ public class DtnService extends IntentService {
                 Log.e(TAG, "Can not query for bundle", e);
                 
                 mNotificationFactory.showDownloadAborted(bundleid);
-            }
-        } else if (UPDATE_PENDING_NOTIFICATION_INTENT.equals(action)) {
-            // get the latest pending download
-            Download next = mDatabase.getLatestPending();
-            
-            if (next != null) {
-                mNotificationFactory.showPendingDownload(next.getBundleId(), next.getLength(), mDatabase.getPending());
-            } else {
-                mNotificationFactory.cancelPending();
             }
         }
     }
@@ -281,6 +264,21 @@ public class DtnService extends IntentService {
         super.onDestroy();
     }
     
+    private void updatePendingDownloadNotification() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        
+        // get the latest pending download
+        Download next = mDatabase.getLatestPending();
+        
+        if (next != null) {
+            if (prefs.getBoolean("notifications", true)) {
+                mNotificationFactory.showPendingDownload(next.getBundleId(), next.getLength(), mDatabase.getPending());
+            }
+        } else {
+            mNotificationFactory.cancelPending();
+        }
+    }
+    
     /**
      * This data handler is used to process incoming bundles
      */
@@ -344,9 +342,7 @@ public class DtnService extends IntentService {
                 mDatabase.put(download_request);
                 
                 // update pending download notification
-                Intent i = new Intent(DtnService.this, DtnService.class);
-                i.setAction(UPDATE_PENDING_NOTIFICATION_INTENT);
-                startService(i);
+                updatePendingDownloadNotification();
             }
             
             // free the bundle header

@@ -138,12 +138,14 @@ public class NotificationFactory {
         
         int defaults = 0;
         
-        if (prefs.getBoolean("vibrateOnMessage", true)) {
-            defaults |= Notification.DEFAULT_VIBRATE;
+        if (prefs.getBoolean("notifications", true)) {
+            if (prefs.getBoolean("notifications_pending_download_vibrate", true)) {
+                defaults |= Notification.DEFAULT_VIBRATE;
+            }
+            
+            builder.setDefaults(defaults);
+            builder.setLights(0xff0080ff, 300, 1000);
+            builder.setSound( Uri.parse( prefs.getString("notifications_pending_download_ringtone", "content://settings/system/notification_sound") ) );
         }
-        
-        builder.setDefaults(defaults);
-        builder.setLights(0xff0080ff, 300, 1000);
-        builder.setSound( Uri.parse( prefs.getString("ringtoneOnMessage", "content://settings/system/notification_sound") ) );
     }
 }
