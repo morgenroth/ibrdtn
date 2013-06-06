@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import de.tubs.ibr.dtn.api.BundleID;
+import de.tubs.ibr.dtn.sharebox.ui.PendingDialog;
 import de.tubs.ibr.dtn.sharebox.ui.TransferListActivity;
 
 public class NotificationFactory {
@@ -57,15 +58,14 @@ public class NotificationFactory {
         mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
     }
     
-    public void showPendingDownload(BundleID bundleid, int pendingCount) {
+    public void showPendingDownload(BundleID bundleid, long length, int pendingCount) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext);
         setNotificationSettings(builder);
-        
-        Intent resultIntent = new Intent(mContext, TransferListActivity.class);
         
         builder.setContentTitle(mContext.getResources().getQuantityString(R.plurals.notification_pending_download_title, pendingCount));
         builder.setContentText(mContext.getResources().getQuantityString(R.plurals.notification_pending_download_text, pendingCount));
         builder.setSmallIcon(R.drawable.ic_stat_download);
+        builder.setWhen( System.currentTimeMillis() );
         
         if (pendingCount == 1) {
             Intent dismissIntent = new Intent(mContext, DtnService.class);
@@ -80,13 +80,21 @@ public class NotificationFactory {
             
             builder.addAction(R.drawable.ic_stat_accept, mContext.getResources().getString(R.string.notification_accept_text), piAccept);
             builder.addAction(R.drawable.ic_stat_reject, mContext.getResources().getString(R.string.notification_reject_text), piDismiss);
+            
+            Intent resultIntent = new Intent(mContext, PendingDialog.class);
+            resultIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, bundleid);
+            resultIntent.putExtra(DtnService.PARCEL_KEY_LENGTH, length);
+            
+            // create the pending intent
+            PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            builder.setContentIntent(contentIntent);
+        } else {
+            Intent resultIntent = new Intent(mContext, TransferListActivity.class);
+            
+            // create the pending intent
+            PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            builder.setContentIntent(contentIntent);
         }
-        
-        // create the pending intent
-        PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        
-        builder.setWhen( System.currentTimeMillis() );
-        builder.setContentIntent(contentIntent);
         
         mManager.notify(PENDING_DOWNLOAD, builder.build());
     }

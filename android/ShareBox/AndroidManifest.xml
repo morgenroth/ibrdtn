@@ -61,6 +61,13 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="de.tubs.ibr.dtn.sharebox.ui.TransferListActivity" />
         </activity>
+        
+        <activity
+            android:icon="@drawable/ic_download"
+            android:name=".ui.PendingDialog"
+            android:label="@string/title_activity_pending_dialog"
+            android:theme="@style/Theme.Dialog"
+            android:excludeFromRecents="true" />
     </application>
 
 </manifest>

@@ -48,7 +48,10 @@ public class DtnService extends IntentService {
     public static final String REJECT_DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.REJECT_DOWNLOAD";
     
     // pending download intent
-    public static final String PENDING_DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.PENDING_DOWNLOAD";
+//    public static final String PENDING_DOWNLOAD_INTENT = "de.tubs.ibr.dtn.sharebox.PENDING_DOWNLOAD";
+    
+    // update the notification for pending downloads
+    public static final String UPDATE_PENDING_NOTIFICATION_INTENT = "de.tubs.ibr.dtn.sharebox.UPDATE_PENDING_NOTIFICATION";
     
     // local endpoint
     public static final String SHAREBOX_APP_ENDPOINT = "sharebox";
@@ -58,6 +61,7 @@ public class DtnService extends IntentService {
     
     public static final String PARCEL_KEY_BUNDLE_ID = "bundleid";
     public static final String PARCEL_KEY_SOURCE = "source";
+    public static final String PARCEL_KEY_LENGTH = "length";
 
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
@@ -153,13 +157,10 @@ public class DtnService extends IntentService {
             // delete the pending bundle
             mDatabase.remove(bundleid);
             
-            // dismiss notification if there are no more pending downloads
-            int pending = mDatabase.getPending();
-            if (pending < 1) {
-                mNotificationFactory.cancelPending();
-            } else {
-                mNotificationFactory.showPendingDownload(bundleid, pending);
-            }
+            // update pending download notification
+            Intent update_i = new Intent(DtnService.this, DtnService.class);
+            update_i.setAction(UPDATE_PENDING_NOTIFICATION_INTENT);
+            startService(update_i);
             
             // mark the bundle as delivered
             Intent i = new Intent(DtnService.this, DtnService.class);
@@ -178,13 +179,10 @@ public class DtnService extends IntentService {
             Download d = mDatabase.get(bundleid);
             mDatabase.setState(d.getId(), Download.State.ACCEPTED);
             
-            // dismiss notification if there are no more pending downloads
-            int pending = mDatabase.getPending();
-            if (pending < 1) {
-                mNotificationFactory.cancelPending();
-            } else {
-                mNotificationFactory.showPendingDownload(bundleid, pending);
-            }
+            // update pending download notification
+            Intent i = new Intent(DtnService.this, DtnService.class);
+            i.setAction(UPDATE_PENDING_NOTIFICATION_INTENT);
+            startService(i);
             
             // show ongoing download notification
             mNotificationFactory.showDownload(bundleid);
@@ -208,15 +206,14 @@ public class DtnService extends IntentService {
                 
                 mNotificationFactory.showDownloadAborted(bundleid);
             }
-        } else if (PENDING_DOWNLOAD_INTENT.equals(action)) {
-            // retrieve the bundle ID of the intent
-            BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
-
-            // get the number of pending downloads
-            Integer pendingCount = mDatabase.getPending();
+        } else if (UPDATE_PENDING_NOTIFICATION_INTENT.equals(action)) {
+            // get the latest pending download
+            Download next = mDatabase.getLatestPending();
             
-            if (pendingCount > 0) {
-            	mNotificationFactory.showPendingDownload(bundleid, pendingCount);
+            if (next != null) {
+                mNotificationFactory.showPendingDownload(next.getBundleId(), next.getLength(), mDatabase.getPending());
+            } else {
+                mNotificationFactory.cancelPending();
             }
         }
     }
@@ -346,10 +343,9 @@ public class DtnService extends IntentService {
                 // put download object into the database
                 mDatabase.put(download_request);
                 
-                // announce pending bundle
+                // update pending download notification
                 Intent i = new Intent(DtnService.this, DtnService.class);
-                i.setAction(PENDING_DOWNLOAD_INTENT);
-                i.putExtra(PARCEL_KEY_BUNDLE_ID, download_request.getBundleId());
+                i.setAction(UPDATE_PENDING_NOTIFICATION_INTENT);
                 startService(i);
             }
             

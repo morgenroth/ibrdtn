@@ -104,6 +104,31 @@ public class Database {
         mHelper.close();
     }
     
+    public Download getLatestPending() {
+        Download ret = null;
+               
+        try {
+            Cursor cur = mDatabase.query(
+                    Database.TABLE_NAMES[0], 
+                    DownloadAdapter.PROJECTION, 
+                    Download.STATE + " = ?", 
+                    new String[] { String.valueOf( Download.State.PENDING.getValue() ) },
+                    null, null, Download.TIMESTAMP + " DESC", "0, 1");
+            
+            if (cur.moveToNext())
+            {
+                ret = new Download(mContext, cur, new DownloadAdapter.ColumnsMap());
+            }
+            
+            cur.close();
+        } catch (Exception e) {
+            // download not found
+            Log.e(TAG, "get() failed", e);
+        }
+        
+        return ret;
+    }
+    
     public Download get(BundleID id) {
         Download d = null;
         

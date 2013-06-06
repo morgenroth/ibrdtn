@@ -4,14 +4,16 @@
     <string name="app_name">ShareBox</string>
     <string name="action_settings">Settings</string>
     <string name="empty"></string>
-    
     <string name="remove">Remove</string>
     <string name="clear_list">Clear list</string>
-    
     <string name="state_pending">Pending</string>
     <string name="state_completed">Completed</string>
     <string name="state_accepted">Accepted</string>
     <string name="state_downloading">Downloading</string>
     <string name="state_aborted">Aborted</string>
+    <string name="title_activity_pending_dialog">Pending Download</string>
+    
+    <string name="button_accept">Accept</string>
+    <string name="button_reject">Reject</string>
 
 </resources>
