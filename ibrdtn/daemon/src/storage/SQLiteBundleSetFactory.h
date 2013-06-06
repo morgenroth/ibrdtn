@@ -23,6 +23,7 @@ namespace dtn
 
 			protected:
 				dtn::data::BundleSetImpl* createBundleSet(dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size);
+				dtn::data::BundleSetImpl* createBundleSet(std::string name, dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size);
 
 			private:
 				SQLiteDatabase& _database;

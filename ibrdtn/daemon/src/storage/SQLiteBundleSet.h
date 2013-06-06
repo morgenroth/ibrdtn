@@ -25,10 +25,14 @@ namespace dtn
 			 * @param bf_size Initial size fo the bloom-filter.
 			 */
 			SQLiteBundleSet(dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
+			SQLiteBundleSet(std::string name, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
+
 			virtual ~SQLiteBundleSet();
 
 			virtual void add(const dtn::data::MetaBundle &bundle) throw ();
+
 			virtual void clear() throw ();
+
 			virtual bool has(const dtn::data::BundleID &bundle) const throw ();
 
 			virtual void expire(const dtn::data::Timestamp timestamp) throw ();
@@ -50,7 +54,12 @@ namespace dtn
 			virtual std::ostream &serialize(std::ostream &stream) const;
 			virtual std::istream &deserialize(std::istream &stream);
 
+			virtual std::string getType();
+			virtual bool isPersistent();
+			virtual std::string getName();
 		private:
+
+			std::string _name;
 
 			ibrcommon::BloomFilter _bf;
 
@@ -61,7 +70,12 @@ namespace dtn
 			dtn::storage::SQLiteDatabase& _database;
 
 			dtn::data::Timestamp _next_expiration;
+
 			void new_expire_time(const dtn::data::Timestamp &ttl) throw();
+
+			void rebuild_bloom_filter();
+
+			bool _isPersistent;
 		};
 	} /* namespace data */
 } /* namespace dtn */

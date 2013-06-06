@@ -160,5 +160,20 @@ namespace dtn
 
 			return stream;
 		}
+
+		std::string MemoryBundleSet::getType()
+		{
+			return "MemoryBundleSet";
+		}
+
+		bool MemoryBundleSet::isPersistent()
+		{
+			return false;
+		}
+
+		std::string MemoryBundleSet::getName()
+		{
+			return "";
+		}
 	} /* namespace data */
 } /* namespace dtn */

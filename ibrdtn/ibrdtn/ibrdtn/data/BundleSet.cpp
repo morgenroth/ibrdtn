@@ -1,12 +1,24 @@
 /*
  * BundleSet.cpp
  *
- *  Created on: 18.12.2012
- *      Author: morgenro
+ * Copyright (C) 2013 IBR, TU Braunschweig
  *
- *  recreated on: 04.04.2013
- *  as interface
- *  	Author: goltzsch
+ * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *  Created on: 18.12.2012
+ *  Recreated on: 04.04.2013  as interface
  */
 
 #include "ibrdtn/data/BundleSet.h"
@@ -20,6 +32,10 @@ namespace dtn
 		{ }
 
 		BundleSet::BundleSet(BundleSet::Listener *listener, Length bf_size) : _set_impl(BundleSetFactory::create(listener,bf_size))
+		{
+		}
+		BundleSet::BundleSet(std::string name,BundleSet::Listener *listener, Length bf_size)
+			: _set_impl(BundleSetFactory::create(name,listener,bf_size))
 		{
 		}
 
@@ -89,6 +105,21 @@ namespace dtn
 		std::istream &operator>>(std::istream &stream, BundleSet &obj)
 		{
 			return obj.deserialize(stream);
+		}
+
+		std::string BundleSet::getType()
+		{
+			return _set_impl->getType();
+		}
+
+		bool BundleSet::isNamed()
+		{
+			return _set_impl->isNamed();
+		}
+
+		std::string BundleSet::getName()
+		{
+			return _set_impl->getName();
 		}
 
 	} /* namespace data */

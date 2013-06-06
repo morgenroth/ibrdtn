@@ -52,6 +52,10 @@ namespace dtn
 			virtual std::ostream &serialize(std::ostream &stream) const;
             virtual std::istream &deserialize(std::istream &stream);
 
+			virtual std::string getType();
+			virtual bool isPersistent();
+			virtual std::string getName();
+
 
 		private:
 

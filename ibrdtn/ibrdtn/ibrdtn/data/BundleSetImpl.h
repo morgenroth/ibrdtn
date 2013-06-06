@@ -46,6 +46,10 @@ namespace dtn
 
 			virtual std::ostream& serialize(std::ostream &stream) const = 0;
 			virtual std::istream& deserialize(std::istream &stream) = 0;
+
+			virtual std::string getType() = 0;
+			virtual bool isPersistent() = 0;
+			virtual std::string getName() = 0;
 		public:
 			class ExpiringBundle
 			{
