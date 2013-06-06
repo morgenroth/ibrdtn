@@ -25,6 +25,9 @@ namespace dtn
 				 */
 				static BundleSetImpl* create(BundleSet::Listener* listener, Size bf_size);
 
+
+				static BundleSetImpl* create(std::string name, BundleSet::Listener* listener, Size bf_size);
+
 				/*
 				 * the BundleSetFactory, which creates the bundles
 				 */
@@ -32,6 +35,7 @@ namespace dtn
 
 			protected:
 				virtual BundleSetImpl* createBundleSet(BundleSet::Listener* listener, Size bf_size) = 0;
+				virtual BundleSetImpl* createBundleSet(std::string name, BundleSet::Listener* listener, Size bf_size) = 0;
 		};
 
 	} /* namespace data */
