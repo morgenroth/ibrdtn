@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <item android:id="@+id/itemDelete" android:title="@string/remove" android:icon="@drawable/ic_action_discard"></item>
+    <item android:id="@+id/itemDelete" android:title="@string/remove" android:icon="@drawable/ic_menu_discard"></item>
 </menu>
