@@ -3,7 +3,9 @@ package de.tubs.ibr.dtn.sharebox;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.LinkedList;
 
 import android.app.IntentService;
@@ -22,6 +24,7 @@ import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
+import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
@@ -203,7 +206,62 @@ public class DtnService extends IntentService {
         	// send one or more files as bundle
         	
         	// first check the parameters
-        	intent.getParcelableArrayExtra("");
+        	if (
+        			intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_FILES) &&
+        			intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION)
+        		)
+        	{
+        		// extract destination and files
+        		EID destination = (EID)intent.getSerializableExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION);
+        		String[] filenames = intent.getStringArrayExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_FILES);
+        		
+        		// default lifetime is one hour
+        		Long lifetime = intent.getLongExtra("lifetime", 3600L);
+        		
+        		// TODO: show send notification - infinite progress
+        		// show progress using callback handler?
+        		
+                try {
+                	// get the DTN session
+                	Session s = mClient.getSession();
+                	
+                	// create a pipe
+                	ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
+                	
+                	// convert filenames to files
+                	LinkedList<File> files = new LinkedList<File>();
+                	for (String filename : filenames) {
+                		files.add(new File(filename));
+                	}
+                	
+                	// create a helper thread
+                	OutputStream targetStream = new FileOutputStream(pipe[1].getFileDescriptor());
+                	Thread helper = new Thread(new TarCreator(targetStream, files));
+                	
+                	// start the helper thread
+                	helper.start();
+                	
+                	try {
+	                	// send the data
+	                	s.send(destination, lifetime, pipe[0]);
+                	} catch (Exception e) {
+                        pipe[0].close();
+                        pipe[1].close();
+                        
+                        // re-throw the exception to the next catch
+    	                throw e;
+                    } finally {
+    	                // wait until the helper thread is finished
+    	                helper.join();
+                    }
+	                
+	        		// TODO: change send notification into send completed
+                } catch (Exception e) {
+                    Log.e(TAG, "File send failed", e);
+                    
+            		// TODO: change send notification into send failed
+                }
+        	}
         }
     }
     
