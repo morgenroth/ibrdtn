@@ -61,6 +61,7 @@ namespace dtn
 			"SELECT " + _select_names[0] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
 			"SELECT DISTINCT destination FROM " + _tables[SQL_TABLE_BUNDLE],
 
+			//EXPIRE_*
 			"SELECT " + _select_names[1] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE expiretime <= ?;",
 			"SELECT filename FROM "+ _tables[SQL_TABLE_BUNDLE] +" as a, "+ _tables[SQL_TABLE_BLOCK] +" as b WHERE a.source_id = b.source_id AND a.timestamp = b.timestamp AND a.sequencenumber = b.sequencenumber AND a.fragmentoffset = b.fragmentoffset AND a.expiretime <= ?;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE expiretime <= ?;",
@@ -76,19 +77,26 @@ namespace dtn
 
 			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET procflags = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 
+			//BLOCK_*
 			"SELECT filename, blocktype FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? ORDER BY ordernumber ASC;",
 			"SELECT filename, blocktype FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? AND ordernumber = ?;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BLOCK] +";",
 			"INSERT INTO "+ _tables[SQL_TABLE_BLOCK] +" (source_id, timestamp, sequencenumber, fragmentoffset, blocktype, filename, ordernumber) VALUES (?,?,?,?,?,?,?);",
 
+			//SEEN_BUNDLE_*
 			"INSERT INTO " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime) VALUES (?,?,?,?,?);",
-			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + ";",
+			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name NOT null;",
 			"SELECT * FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
 			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE expiretime <= ?;",
 			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 			"SELECT * FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + ";",
 			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + ";",
 			"SELECT expiretime FROM "+ _tables[SQL_TABLE_SEEN_BUNDLES] +" ORDER BY expiretime ASC LIMIT 1;",
+
+			//NAMED_SEEN_BUNDLE_*
+			"INSERT INTO " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime, namae) VALUES (?,?,?,?,?,?);",
+			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name = ?;",
+			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + "WHERE name = ?;",
 
 			"VACUUM;",
 		};
@@ -107,7 +115,7 @@ namespace dtn
 			"CREATE UNIQUE INDEX IF NOT EXISTS bundles_id ON " + _tables[SQL_TABLE_BUNDLE] + " (source_id, timestamp, sequencenumber, fragmentoffset);"
 			"CREATE INDEX IF NOT EXISTS bundles_expire ON " + _tables[SQL_TABLE_BUNDLE] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime);",
 			"CREATE TABLE IF NOT EXISTS '" + _tables[SQL_TABLE_PROPERTIES] + "' ( `key` TEXT PRIMARY KEY ASC ON CONFLICT REPLACE, `value` TEXT NOT NULL);",
-			"CREATE TABLE IF NOT EXISTS " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (`source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER DEFAULT NULL, `expiretime` INTEGER, PRIMARY KEY(`source_id`, `timestamp`, `sequencenumber`, `fragmentoffset`));"
+			"CREATE TABLE IF NOT EXISTS " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (`source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER DEFAULT NULL, `expiretime` INTEGER, `name` TEXT, PRIMARY KEY(`source_id`, `timestamp`, `sequencenumber`, `fragmentoffset`));"
 		};
 
 		SQLiteDatabase::SQLBundleQuery::SQLBundleQuery()
@@ -175,7 +183,6 @@ namespace dtn
 				throw SQLiteQueryException("already prepared");
 
 			int err = sqlite3_prepare_v2(_database, _query.c_str(), static_cast<int>(_query.length()), &_st, 0);
-
 
 			if ( err != SQLITE_OK )
 				throw SQLiteQueryException("failed to prepare statement: " + _query);
@@ -394,13 +401,11 @@ namespace dtn
 
 			if (bundle.procflags & data::Bundle::FRAGMENT)
 			{
-				bundle.fragment = true;
 				bundle.offset = sqlite3_column_int64(*st, offset + 8);
 				bundle.appdatalength = sqlite3_column_int64(*st, offset + 9);
 			}
 			else
 			{
-				bundle.fragment = false;
 				bundle.offset = 0;
 				bundle.appdatalength = sqlite3_column_int64(*st, 9);
 			}
@@ -416,7 +421,7 @@ namespace dtn
 			bundle.net_priority = sqlite3_column_int(*st, 11);
 		}
 
-		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, const int offset) const throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			try {
 				bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
@@ -468,13 +473,31 @@ namespace dtn
 
 			const std::string source_id = bundle.source.getString();
 
+			sqlite3_bind_text(*st,1,source_id.c_str(),source_id.length(),SQLITE_TRANSIENT);
+			sqlite3_bind_int64(*st,2,bundle.timestamp.get<uint64_t>());
+			sqlite3_bind_int64(*st,3,bundle.sequencenumber.get<uint64_t>());
+			sqlite3_bind_int64(*st,4,bundle.offset.get<uint64_t>());
+			sqlite3_bind_int64(*st,5,bundle.expiretime.get<uint64_t>());
 
+			st.step();
+
+		}
+		void SQLiteDatabase::add_named_seen_bundle(std::string name, const dtn::data::MetaBundle &bundle) throw (SQLiteDatabase::SQLiteQueryException)
+		{
+			//inform database about (potentially) new expiretime
+			dtn::data::Timestamp TTL = bundle.timestamp + bundle.lifetime;
+			new_expire_time(TTL);
+
+			Statement st(_database, _sql_queries[NAMED_SEEN_BUNDLE_ADD]);
+
+			const std::string source_id = bundle.source.getString();
 
 			sqlite3_bind_text(*st,1,source_id.c_str(),source_id.length(),SQLITE_TRANSIENT);
 			sqlite3_bind_int64(*st,2,bundle.timestamp.get<uint64_t>());
 			sqlite3_bind_int64(*st,3,bundle.sequencenumber.get<uint64_t>());
 			sqlite3_bind_int64(*st,4,bundle.offset.get<uint64_t>());
 			sqlite3_bind_int64(*st,5,bundle.expiretime.get<uint64_t>());
+			sqlite3_bind_text(*st,6,name.c_str(),name.length(),SQLITE_TRANSIENT);
 
 			st.step();
 
@@ -499,6 +522,13 @@ namespace dtn
 		void SQLiteDatabase::clear_seen_bundles() throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			Statement st(_database, _sql_queries[SEEN_BUNDLE_CLEAR]);
+			st.step();
+		}
+
+		void SQLiteDatabase::clear_named_seen_bundles(std::string name) throw (SQLiteDatabase::SQLiteQueryException)
+		{
+			Statement st(_database,_sql_queries[NAMED_SEEN_BUNDLE_CLEAR]);
+			sqlite3_bind_text(*st,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
 			st.step();
 		}
 
@@ -540,7 +570,7 @@ namespace dtn
 
 		}
 
-		unsigned int SQLiteDatabase::count_seen_bundles() const throw (SQLiteDatabase::SQLiteQueryException)
+		dtn::data::Size SQLiteDatabase::count_seen_bundles() const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			int rows = 0;
 
@@ -554,7 +584,22 @@ namespace dtn
 			return rows;
 		}
 
-		void SQLiteDatabase::get(const BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException)
+		dtn::data::Size SQLiteDatabase::count_named_seen_bundles(std::string name) const throw (SQLiteDatabase::SQLiteQueryException)
+		{
+			int rows = 0;
+
+			Statement st(_database, _sql_queries[NAMED_SEEN_BUNDLE_COUNT]);
+			sqlite3_bind_text(*st,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
+
+			if (( st.step()) == SQLITE_ROW)
+			{
+				rows = sqlite3_column_int(*st, 0);
+			}
+
+			return rows;
+		}
+
+		void SQLiteDatabase::get(BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 
@@ -567,7 +612,7 @@ namespace dtn
 
 			try {
 				try {
-					const SQLBundleQuery &query = dynamic_cast<const SQLBundleQuery&>(cb);
+					SQLBundleQuery &query = dynamic_cast<SQLBundleQuery&>(cb);
 
 					// custom query string
 					std::string query_string = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset LIMIT ?,?;";
@@ -581,7 +626,7 @@ namespace dtn
 						int bind_offset = query.bind(*st, 1);
 
 						// query the database
-						__get(cb, st, ret, items_added, bind_offset, offset, query_limit);
+						__get(cb, st, ret, items_added, bind_offset, offset);
 
 						// increment the offset, because we might not have enough
 						offset += query_limit;
@@ -592,7 +637,7 @@ namespace dtn
 					while (unlimited || (items_added < query_limit))
 					{
 						// query the database
-						__get(cb, st, ret, items_added, 1, offset, query_limit);
+						__get(cb, st, ret, items_added, 1, offset);
 
 						// increment the offset, because we might not have enough
 						offset += query_limit;
@@ -605,9 +650,10 @@ namespace dtn
 			if (items_added == 0) throw dtn::storage::NoBundleFoundException();
 		}
 
-		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, const int bind_offset, const size_t offset, const size_t query_limit) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
+		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, int bind_offset, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
 		{
-			const bool unlimited = (cb.limit() <= 0);
+			bool unlimited = (cb.limit() <= 0);
+			size_t query_limit = (cb.limit() > 0) ? cb.limit() : 10;
 
 			// limit result according to callback result
 			sqlite3_bind_int64(*st, bind_offset, offset);
@@ -625,8 +671,8 @@ namespace dtn
 				// extract the primary values and set them in the bundle object
 				get(st, m, 0);
 
-				// check if the bundle is already expired
-				if ( !dtn::utils::Clock::isExpired( m.timestamp, m.lifetime ) )
+				// check if the bundle is already on the deletion list
+				if ( !contains_deletion(m) && !dtn::utils::Clock::isExpired( m.timestamp, m.lifetime ) )
 				{
 					// ask the filter if this bundle should be added to the return list
 					if (cb.shouldAdd(m))
