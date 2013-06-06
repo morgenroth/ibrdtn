@@ -37,18 +37,18 @@ public class PendingDialog extends Activity {
         mButtonReject.setText(getString(R.string.button_reject));
         
         // if there is no bundle id, finish this activity
-        if (!getIntent().hasExtra(DtnService.PARCEL_KEY_BUNDLE_ID)) finish();
+        if (!getIntent().hasExtra(DtnService.EXTRA_KEY_BUNDLE_ID)) finish();
         
         // get the bundle id
-        final BundleID bundleid = getIntent().getParcelableExtra(DtnService.PARCEL_KEY_BUNDLE_ID);
-        final Long length = getIntent().getLongExtra(DtnService.PARCEL_KEY_LENGTH, 0L);
+        final BundleID bundleid = getIntent().getParcelableExtra(DtnService.EXTRA_KEY_BUNDLE_ID);
+        final Long length = getIntent().getLongExtra(DtnService.EXTRA_KEY_LENGTH, 0L);
         
         mButtonAccept.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent acceptIntent = new Intent(PendingDialog.this, DtnService.class);
                 acceptIntent.setAction(DtnService.ACCEPT_DOWNLOAD_INTENT);
-                acceptIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, bundleid);
+                acceptIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, bundleid);
                 PendingDialog.this.startService(acceptIntent);
                 
                 // close the dialog
@@ -61,7 +61,7 @@ public class PendingDialog extends Activity {
             public void onClick(View v) {
                 Intent dismissIntent = new Intent(PendingDialog.this, DtnService.class);
                 dismissIntent.setAction(DtnService.REJECT_DOWNLOAD_INTENT);
-                dismissIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, bundleid);
+                dismissIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, bundleid);
                 PendingDialog.this.startService(dismissIntent);
                 
                 // close the dialog

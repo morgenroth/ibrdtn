@@ -131,7 +131,7 @@ public class DownloadListFragment extends ListFragment implements LoaderManager.
             case R.id.itemDelete:
                 Intent rejectIntent = new Intent(getActivity(), DtnService.class);
                 rejectIntent.setAction(DtnService.REJECT_DOWNLOAD_INTENT);
-                rejectIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, d.getBundleId());
+                rejectIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, d.getBundleId());
                 getActivity().startService(rejectIntent);
                 return true;
                 
@@ -149,8 +149,8 @@ public class DownloadListFragment extends ListFragment implements LoaderManager.
         if (item != null) {
             if (item.getObject().isPending()) {
                 Intent dialogIntent = new Intent(getActivity(), PendingDialog.class);
-                dialogIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, item.getObject().getBundleId());
-                dialogIntent.putExtra(DtnService.PARCEL_KEY_LENGTH, item.getObject().getLength());
+                dialogIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, item.getObject().getBundleId());
+                dialogIntent.putExtra(DtnService.EXTRA_KEY_LENGTH, item.getObject().getLength());
                 getActivity().startActivity(dialogIntent);
             }
         }

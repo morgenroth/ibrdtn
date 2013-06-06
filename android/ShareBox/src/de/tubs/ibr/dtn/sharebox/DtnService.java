@@ -55,9 +55,9 @@ public class DtnService extends IntentService {
     // group EID of this app
     public static final GroupEndpoint SHAREBOX_GROUP_EID = new GroupEndpoint("dtn://broadcast.dtn/sharebox");
     
-    public static final String PARCEL_KEY_BUNDLE_ID = "bundleid";
-    public static final String PARCEL_KEY_SOURCE = "source";
-    public static final String PARCEL_KEY_LENGTH = "length";
+    public static final String EXTRA_KEY_BUNDLE_ID = "bundleid";
+    public static final String EXTRA_KEY_SOURCE = "source";
+    public static final String EXTRA_KEY_LENGTH = "length";
 
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
@@ -126,7 +126,7 @@ public class DtnService extends IntentService {
         else if (MARK_DELIVERED_INTENT.equals(action))
         {
             // retrieve the bundle ID of the intent
-            BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
+            BundleID bundleid = intent.getParcelableExtra(EXTRA_KEY_BUNDLE_ID);
             
             try {
                 // mark the bundle ID as delivered
@@ -138,17 +138,17 @@ public class DtnService extends IntentService {
         else if (REPORT_DELIVERED_INTENT.equals(action))
         {
             // retrieve the source of the status report
-            SingletonEndpoint source = intent.getParcelableExtra(PARCEL_KEY_SOURCE);
+            SingletonEndpoint source = intent.getParcelableExtra(EXTRA_KEY_SOURCE);
             
             // retrieve the bundle ID of the intent
-            BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
+            BundleID bundleid = intent.getParcelableExtra(EXTRA_KEY_BUNDLE_ID);
             
             Log.d(TAG, "Status report received for " + bundleid.toString() + " from " + source.toString());
         }
         else if (REJECT_DOWNLOAD_INTENT.equals(action))
         {           
             // retrieve the bundle ID of the intent
-            BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
+            BundleID bundleid = intent.getParcelableExtra(EXTRA_KEY_BUNDLE_ID);
             
             // delete the pending bundle
             mDatabase.remove(bundleid);
@@ -159,13 +159,13 @@ public class DtnService extends IntentService {
             // mark the bundle as delivered
             Intent i = new Intent(DtnService.this, DtnService.class);
             i.setAction(MARK_DELIVERED_INTENT);
-            i.putExtra(PARCEL_KEY_BUNDLE_ID, bundleid);
+            i.putExtra(EXTRA_KEY_BUNDLE_ID, bundleid);
             startService(i);
         }
         else if (ACCEPT_DOWNLOAD_INTENT.equals(action))
         {
             // retrieve the bundle ID of the intent
-            BundleID bundleid = intent.getParcelableExtra(PARCEL_KEY_BUNDLE_ID);
+            BundleID bundleid = intent.getParcelableExtra(EXTRA_KEY_BUNDLE_ID);
             
             Log.d(TAG, "Download request for " + bundleid.toString());
             
@@ -310,7 +310,7 @@ public class DtnService extends IntentService {
                 // mark the bundle as delivered if this was a complete download
                 Intent i = new Intent(DtnService.this, DtnService.class);
                 i.setAction(MARK_DELIVERED_INTENT);
-                i.putExtra(PARCEL_KEY_BUNDLE_ID, mBundleId);
+                i.putExtra(EXTRA_KEY_BUNDLE_ID, mBundleId);
                 startService(i);
 
                 // set state to completed

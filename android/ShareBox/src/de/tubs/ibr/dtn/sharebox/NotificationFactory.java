@@ -75,20 +75,20 @@ public class NotificationFactory {
         if (pendingCount == 1) {
             Intent dismissIntent = new Intent(mContext, DtnService.class);
             dismissIntent.setAction(DtnService.REJECT_DOWNLOAD_INTENT);
-            dismissIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, bundleid);
+            dismissIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, bundleid);
             PendingIntent piDismiss = PendingIntent.getService(mContext, 0, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             
             Intent acceptIntent = new Intent(mContext, DtnService.class);
             acceptIntent.setAction(DtnService.ACCEPT_DOWNLOAD_INTENT);
-            acceptIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, bundleid);
+            acceptIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, bundleid);
             PendingIntent piAccept = PendingIntent.getService(mContext, 0, acceptIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             
             builder.addAction(R.drawable.ic_stat_accept, mContext.getResources().getString(R.string.notification_accept_text), piAccept);
             builder.addAction(R.drawable.ic_stat_reject, mContext.getResources().getString(R.string.notification_reject_text), piDismiss);
             
             Intent resultIntent = new Intent(mContext, PendingDialog.class);
-            resultIntent.putExtra(DtnService.PARCEL_KEY_BUNDLE_ID, bundleid);
-            resultIntent.putExtra(DtnService.PARCEL_KEY_LENGTH, length);
+            resultIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, bundleid);
+            resultIntent.putExtra(DtnService.EXTRA_KEY_LENGTH, length);
             
             builder.setContentText(String.format(mContext.getString(R.string.notification_pending_download_from), bundleid.toString()));
             builder.setTicker(mContext.getResources().getQuantityString(R.plurals.notification_pending_download_text, pendingCount, pendingCount));
