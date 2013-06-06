@@ -1,5 +1,7 @@
 package de.tubs.ibr.dtn.sharebox.data;
 
+import java.io.File;
+
 import android.content.Context;
 import android.database.Cursor;
 import android.provider.BaseColumns;
@@ -17,19 +19,19 @@ public class PackageFile {
     
     private Long mId = null;
     private Long mDownload = null;
-    private String mFilename = null;
+    private File mFile = null;
     private Long mLength = null;
     
     public PackageFile(Context context, Cursor cursor, PackageFileAdapter.ColumnsMap cmap) {
         mId = cursor.getLong(cmap.mColumnId);
         mDownload = cursor.getLong(cmap.mColumnDownload);
-        mFilename = cursor.getString(cmap.mColumnFilename);
+        mFile = new File(cursor.getString(cmap.mColumnFilename));
         mLength = cursor.getLong(cmap.mColumnLength);
 
     }
     
-    public PackageFile(String filename) {
-        mFilename = filename;
+    public PackageFile(File file) {
+        mFile = file;
     }
     
     public Long getId() {
@@ -44,12 +46,12 @@ public class PackageFile {
         mDownload = download;
     }
 
-    public String getFilename() {
-        return mFilename;
+    public File getFile() {
+        return mFile;
     }
 
-    public void setFilename(String filename) {
-        mFilename = filename;
+    public void setFile(File file) {
+        mFile = file;
     }
 
     public Long getLength() {

@@ -307,7 +307,7 @@ public class Database {
         
         // delete the files
         for (PackageFile pf : files) {
-            File f = new File(pf.getFilename());
+            File f = pf.getFile();
             f.delete();
             
             // announce removed file from the media library
