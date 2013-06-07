@@ -1,7 +1,5 @@
 package de.tubs.ibr.dtn.sharebox;
 
-import java.io.File;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -107,19 +105,21 @@ public class NotificationFactory {
      * Notification methods for ongoing uploads
      */
     
-    public void updateUpload(File currentFile, int currentFileNum, int maxFiles) {
+    public void updateUpload(String currentFile, int currentFileNum, int maxFiles) {
         // update notification
         mUploadBuilder.setProgress(maxFiles, currentFileNum, false);
         
         // status text
         String content = mContext.getString(R.string.notification_ongoing_upload_progress_text);
-        String subtext = mContext.getString(R.string.notification_ongoing_upload_progress_subtext);
         
         // write current file into the description
-        mUploadBuilder.setContentText(String.format(content, currentFile.getName()));
-        
-        // write the progress into the description
-        mUploadBuilder.setSubText(String.format(subtext, currentFileNum, maxFiles));
+        mUploadBuilder.setContentText(String.format(content, currentFile));
+
+//        // progress text
+//        String subtext = mContext.getString(R.string.notification_ongoing_upload_progress_subtext);
+//        
+//        // write the progress into the description
+//        mUploadBuilder.setSubText(String.format(subtext, currentFileNum, maxFiles));
         
         // display the progress
         mManager.notify(ONGOING_UPLOAD, mUploadBuilder.build());
