@@ -151,6 +151,10 @@ public class DownloadListFragment extends ListFragment implements LoaderManager.
                 dialogIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, item.getObject().getBundleId());
                 dialogIntent.putExtra(DtnService.EXTRA_KEY_LENGTH, item.getObject().getLength());
                 getActivity().startActivity(dialogIntent);
+            } else {
+                Intent summaryIntent = new Intent(getActivity(), PackageFileActivity.class);
+                summaryIntent.putExtra("download_id", item.getObject().getId());
+                getActivity().startActivity(summaryIntent);
             }
         }
     }
