@@ -6,6 +6,7 @@
     
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <uses-sdk
         android:minSdkVersion="10"
