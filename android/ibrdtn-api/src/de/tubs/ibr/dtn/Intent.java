@@ -41,8 +41,9 @@ public class Intent {
 	public static final String NEIGHBOR = "de.tubs.ibr.dtn.intent.NEIGHBOR";
 	
 	public static final String SENDFILE = "de.tubs.ibr.dtn.intent.SENDFILE";
+	public static final String SENDFILE_MULTIPLE = "de.tubs.ibr.dtn.intent.SEND_MULTIPLE";
 	
 	// required extras for the SENDFILE intent
     public static final String EXTRA_KEY_DESTINATION = "destination";
-    public static final String EXTRA_KEY_FILES = "files";
+    public static final String EXTRA_KEY_STREAM = "stream";
 }
