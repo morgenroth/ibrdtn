@@ -117,7 +117,7 @@ public class PackageFileListFragment extends ListFragment implements LoaderManag
     public boolean onContextItemSelected(MenuItem item) {
         AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         
-        if (info.targetView instanceof DownloadItem) {
+        if (info.targetView instanceof PackageFileItem) {
             PackageFileItem pfi = (PackageFileItem)info.targetView;
             PackageFile pf = pfi.getObject();
 
