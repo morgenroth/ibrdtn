@@ -73,9 +73,6 @@ public class PackageFileListFragment extends ListFragment implements LoaderManag
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         
-        // enable options menu
-        setHasOptionsMenu(true);
-        
         // enable context menu
         registerForContextMenu(getListView());
         
@@ -84,25 +81,6 @@ public class PackageFileListFragment extends ListFragment implements LoaderManag
         
         // Start out with a progress indicator.
         setListShown(false);
-    }
-    
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.main_menu, menu);
-        MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearList), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
-    }
-    
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.itemClearList:
-                Database db = mService.getDatabase();
-                db.remove(getArguments().getLong("download_id", -1));
-                return true;
-            
-            default:
-                return super.onOptionsItemSelected(item);
-        }
     }
     
     @Override
