@@ -13,9 +13,13 @@
     <string name="state_aborted">Aborted</string>
     <string name="title_activity_pending_dialog">Transmission request</string>
     <string name="title_activity_download">Transmission summary</string>
+    <string name="title_activity_sharewith">ShareBox</string>
     
     <string name="button_accept">Accept</string>
     <string name="button_reject">Reject</string>
     <string name="hint_no_handler_for_type">No handler for this type of file.</string>
+    
+    <string name="content_neighbor_icon">Neighbor icon</string>
+    <string name="list_no_neighbors">No neighbors available.</string>
 
 </resources>

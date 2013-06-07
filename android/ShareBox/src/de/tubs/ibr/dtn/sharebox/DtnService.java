@@ -6,16 +6,20 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Block;
@@ -26,6 +30,7 @@ import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
+import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionConnection;
@@ -106,6 +111,24 @@ public class DtnService extends IntentService {
     
     public Database getDatabase() {
         return mDatabase;
+    }
+    
+    public List<Node> getNeighbors() {
+        try {
+            // wait until the session is available
+            mClient.getSession();
+            
+            // query all neighbors
+            return mClient.getDTNService().getNeighbors();
+        } catch (SessionDestroyedException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        } catch (RemoteException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        }
+        
+        return new LinkedList<Node>();
     }
     
     @Override
@@ -207,83 +230,126 @@ public class DtnService extends IntentService {
         	
         	// first check the parameters
         	if (
-        			intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_FILES) &&
+        			intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_STREAM) &&
         			intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION)
         		)
         	{
         		// extract destination and files
         		EID destination = (EID)intent.getSerializableExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION);
-        		String[] filenames = intent.getStringArrayExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_FILES);
+        		Uri uri = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_STREAM);
         		
-        		// default lifetime is one hour
-        		Long lifetime = intent.getLongExtra("lifetime", 3600L);
+        		ArrayList<Uri> uris = new ArrayList<Uri>();
+        		uris.add(uri);
         		
-        		// show upload notification
-        		mNotificationFactory.showUpload(destination, filenames.length);
-        		
-                try {
-                	// get the DTN session
-                	Session s = mClient.getSession();
-                	
-                	// create a pipe
-                	ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
-                	
-                	// convert filenames to files
-                	LinkedList<File> files = new LinkedList<File>();
-                	for (String filename : filenames) {
-                		files.add(new File(filename));
-                	}
-                	
-                	// create a new output stream for the data
-                	OutputStream targetStream = new FileOutputStream(pipe[1].getFileDescriptor());
-                	
-                	// create a TarCreator and assign default listener to update progress
-                	TarCreator creator = new TarCreator(targetStream, files);
-                	creator.setOnStateChangeListener(mCreatorListener);
-
-                    // create a helper thread
-                	Thread helper = new Thread(creator);
-                	
-                	// start the helper thread
-                	helper.start();
-                	
-                	try {
-	                	// send the data
-	                	s.send(destination, lifetime, pipe[0]);
-                	} catch (Exception e) {
-                        pipe[0].close();
-                        pipe[1].close();
-                        
-                        // re-throw the exception to the next catch
-    	                throw e;
-                    } finally {
-    	                // wait until the helper thread is finished
-    	                helper.join();
-                    }
-	                
-	        		// change upload notification into send completed
-                	mNotificationFactory.showUploadCompleted(filenames.length);
-                } catch (Exception e) {
-                    Log.e(TAG, "File send failed", e);
-                    
-            		// change send notification into send failed
-                    mNotificationFactory.showUploadAborted(destination);
-                }
+                // default lifetime is one hour
+                Long lifetime = intent.getLongExtra("lifetime", 3600L);
+                
+                // forward to common send method
+                sendFiles(destination, lifetime, uris);
         	}
+        } else if (de.tubs.ibr.dtn.Intent.SENDFILE_MULTIPLE.equals(action)) {
+            // external call!
+            // send one or more files as bundle
+            
+            // first check the parameters
+            if (
+                    intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_STREAM) &&
+                    intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION)
+                )
+            {
+                // extract destination and files
+                EID destination = (EID)intent.getSerializableExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION);
+                ArrayList<Uri> uris = intent.getParcelableArrayListExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_STREAM);
+                
+                // default lifetime is one hour
+                Long lifetime = intent.getLongExtra("lifetime", 3600L);
+                
+                // forward to common send method
+                sendFiles(destination, lifetime, uris);
+            }
         }
     }
     
-    private TarCreator.OnStateChangeListener mCreatorListener = new TarCreator.OnStateChangeListener() {
+    private void sendFiles(EID destination, long lifetime, ArrayList<Uri> uris) {
+        // show upload notification
+        mNotificationFactory.showUpload(destination, uris.size());
         
-        @Override
-        public void onStateChanged(TarCreator creator, int state) {
+        try {
+            // get the DTN session
+            Session s = mClient.getSession();
+            
+            // create a pipe
+            final ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
+            
+            // create a new output stream for the data
+            OutputStream targetStream = new FileOutputStream(pipe[1].getFileDescriptor());
+            
+            // create a TarCreator and assign default listener to update progress
+            TarCreator creator = new TarCreator(this, targetStream, uris);
+            creator.setOnStateChangeListener(new TarCreator.OnStateChangeListener() {
+                
+                @Override
+                public void onStateChanged(TarCreator creator, int state) {
+                    Log.d(TAG, "TarCreator state changed to " + String.valueOf(state));
+                    
+                    switch (state) {
+                        case -1:
+                            // close pipes on error
+                            try {
+                                pipe[0].close();
+                                pipe[1].close();
+                            } catch (Exception e) {
+                                
+                            }
+                            break;
+                            
+                        case 1:
+                            // close write side on success
+                            try {
+                                pipe[1].close();
+                            } catch (Exception e) {
+                                
+                            }
+                            break;
+                    }
+                }
+                
+                @Override
+                public void onProgress(TarCreator creator, String currentFile, int currentFileNum, int maxFiles) {
+                    Log.d(TAG, "TarCreator processing file " + currentFile);
+                    mNotificationFactory.updateUpload(currentFile, currentFileNum, maxFiles);
+                }
+            });
+
+            // create a helper thread
+            Thread helper = new Thread(creator);
+            
+            // start the helper thread
+            helper.start();
+            
+            try {
+                // send the data
+                s.send(destination, lifetime, pipe[0]);
+            } catch (Exception e) {
+                pipe[0].close();
+                pipe[1].close();
+                
+                // re-throw the exception to the next catch
+                throw e;
+            } finally {
+                // wait until the helper thread is finished
+                helper.join();
+            }
+            
+            // change upload notification into send completed
+            mNotificationFactory.showUploadCompleted(uris.size());
+        } catch (Exception e) {
+            Log.e(TAG, "File send failed", e);
+            
+            // change send notification into send failed
+            mNotificationFactory.showUploadAborted(destination);
         }
-        
-        @Override
-        public void onProgress(TarCreator creator, File currentFile, int currentFileNum, int maxFiles) {
-            mNotificationFactory.updateUpload(currentFile, currentFileNum, maxFiles);
-        }
-    };
+    }
     
     SessionConnection mSession = new SessionConnection() {
 

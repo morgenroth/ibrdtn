@@ -70,6 +70,21 @@
         <activity android:icon="@drawable/ic_download"
             android:name=".ui.PackageFileActivity"
             android:label="@string/title_activity_download" />
+        
+        <activity android:icon="@drawable/ic_launcher"
+            android:name=".ui.ShareWithActivity"
+            android:label="@string/title_activity_sharewith">
+		    <intent-filter>
+		        <action android:name="android.intent.action.SEND" />
+		        <category android:name="android.intent.category.DEFAULT" />
+		        <data android:mimeType="image/*" />
+		    </intent-filter>
+		    <intent-filter>
+		        <action android:name="android.intent.action.SEND_MULTIPLE" />
+		        <category android:name="android.intent.category.DEFAULT" />
+		        <data android:mimeType="image/*" />
+		    </intent-filter>
+        </activity>
     </application>
 
 </manifest>
