@@ -218,8 +218,8 @@ public class DtnService extends IntentService {
         		// default lifetime is one hour
         		Long lifetime = intent.getLongExtra("lifetime", 3600L);
         		
-        		// TODO: show send notification - infinite progress
-        		// show progress using callback handler?
+        		// show upload notification
+        		mNotificationFactory.showUpload(destination, filenames.length);
         		
                 try {
                 	// get the DTN session
@@ -234,9 +234,15 @@ public class DtnService extends IntentService {
                 		files.add(new File(filename));
                 	}
                 	
-                	// create a helper thread
+                	// create a new output stream for the data
                 	OutputStream targetStream = new FileOutputStream(pipe[1].getFileDescriptor());
-                	Thread helper = new Thread(new TarCreator(targetStream, files));
+                	
+                	// create a TarCreator and assign default listener to update progress
+                	TarCreator creator = new TarCreator(targetStream, files);
+                	creator.setOnStateChangeListener(mCreatorListener);
+
+                    // create a helper thread
+                	Thread helper = new Thread(creator);
                 	
                 	// start the helper thread
                 	helper.start();
@@ -255,15 +261,29 @@ public class DtnService extends IntentService {
     	                helper.join();
                     }
 	                
-	        		// TODO: change send notification into send completed
+	        		// change upload notification into send completed
+                	mNotificationFactory.showUploadCompleted(filenames.length);
                 } catch (Exception e) {
                     Log.e(TAG, "File send failed", e);
                     
-            		// TODO: change send notification into send failed
+            		// change send notification into send failed
+                    mNotificationFactory.showUploadAborted(destination);
                 }
         	}
         }
     }
+    
+    private TarCreator.OnStateChangeListener mCreatorListener = new TarCreator.OnStateChangeListener() {
+        
+        @Override
+        public void onStateChanged(TarCreator creator, int state) {
+        }
+        
+        @Override
+        public void onProgress(TarCreator creator, File currentFile, int currentFileNum, int maxFiles) {
+            mNotificationFactory.updateUpload(currentFile, currentFileNum, maxFiles);
+        }
+    };
     
     SessionConnection mSession = new SessionConnection() {
 

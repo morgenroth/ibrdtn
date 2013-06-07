@@ -24,6 +24,7 @@ public class TarCreator implements Runnable {
 	private OnStateChangeListener mListener = null;
 	
     public interface OnStateChangeListener {
+        void onProgress(TarCreator creator, File currentFile, int currentFileNum, int maxFiles);
         void onStateChanged(TarCreator creator, int state);
     }
 
@@ -38,7 +39,12 @@ public class TarCreator implements Runnable {
 			// open a new tar output stream
 			final TarArchiveOutputStream taos = (TarArchiveOutputStream) new ArchiveStreamFactory().createArchiveOutputStream("tar", mOutput);
 			
+			int currentFile = 0;
+			
 			for (File f : mFiles) {
+			    currentFile++;
+			    if (mListener != null) mListener.onProgress(this, f, currentFile, mFiles.size());
+			    
 				// create a new entry
 				ArchiveEntry entry = taos.createArchiveEntry(f, f.getName());
 				

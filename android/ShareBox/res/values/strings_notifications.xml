@@ -5,13 +5,30 @@
     
     <string name="notification_ongoing_download_title">Transmission</string>
     <string name="notification_ongoing_download_text">Receiving %1$s</string>
-    
     <string name="notification_completed_download_title">Transmission completed</string>
     <string name="notification_completed_download_text">Received %1$s from %2$s</string>
-    
     <string name="notification_aborted_download_title">Transmission failed</string>
     <string name="notification_aborted_download_text">Could not receive transmission from %1$s</string>
     
+    <string name="notification_ongoing_upload_title">Transmission</string>
+    
+    <plurals name="notification_ongoing_upload_text">
+        <item quantity="one">Sending %d file</item>
+        <item quantity="other">Sending %d files</item>
+    </plurals>
+    
+    <string name="notification_ongoing_upload_progress_text">Sending %1$s</string>
+    <string name="notification_ongoing_upload_progress_subtext">%1$d / %1$d</string>
+    
+    <string name="notification_completed_upload_title">Transmission completed</string>
+    <plurals name="notification_completed_upload_text">
+        <item quantity="one">Sent %d file</item>
+        <item quantity="other">Sent %d files</item>
+    </plurals>
+    
+    <string name="notification_aborted_upload_title">Transmission failed</string>
+    <string name="notification_aborted_upload_text">Could not sent transmission to %1$s</string>
+
     <string name="notification_pending_download_from">From %1$s</string>
     
     <plurals name="notification_pending_download_title">

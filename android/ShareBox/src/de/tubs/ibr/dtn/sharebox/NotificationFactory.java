@@ -1,5 +1,7 @@
 package de.tubs.ibr.dtn.sharebox;
 
+import java.io.File;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -11,6 +13,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.text.Html;
 import de.tubs.ibr.dtn.api.BundleID;
+import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.sharebox.data.Utils;
 import de.tubs.ibr.dtn.sharebox.ui.PendingDialog;
 import de.tubs.ibr.dtn.sharebox.ui.TransferListActivity;
@@ -35,10 +38,18 @@ public class NotificationFactory {
     // this to store the notification builder
     NotificationCompat.Builder mDownloadBuilder = null;
     
+    // while showing a notification for ongoing uploads we use
+    // this to store the notification builder
+    NotificationCompat.Builder mUploadBuilder = null;
+    
     public NotificationFactory(Context context, NotificationManager manager) {
     	mContext = context;
     	mManager = manager;
     }
+    
+    /**
+     * Notification methods for ongoing downloads
+     */
     
     public void updateDownload(BundleID bundleid, int pos, int max) {
         // update notification
@@ -62,6 +73,101 @@ public class NotificationFactory {
         // display the progress
         mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
     }
+    
+    public void showDownloadCompleted(BundleID bundleid, long length) {
+        String bytesText = Utils.humanReadableByteCount(length, true);
+        
+        // update notification
+        mDownloadBuilder.setContentTitle(mContext.getString(R.string.notification_completed_download_title));
+        mDownloadBuilder.setContentText(String.format(mContext.getString(R.string.notification_completed_download_text), bytesText, bundleid.getSource()));
+        mDownloadBuilder.setProgress(0, 0, false);
+        mDownloadBuilder.setOngoing(false);
+        
+        // display the progress
+        mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
+    }
+
+    public void showDownloadAborted(BundleID bundleid) {
+        // update notification
+        mDownloadBuilder.setContentTitle(mContext.getString(R.string.notification_aborted_download_title));
+        mDownloadBuilder.setContentText(String.format(mContext.getString(R.string.notification_aborted_download_text), bundleid.getSource()));
+        mDownloadBuilder.setProgress(0, 0, false);
+        mDownloadBuilder.setOngoing(false);
+        
+        // display the progress
+        mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
+    }
+    
+    public void cancelDownload(BundleID bundleid) {
+        mManager.cancel(bundleid.toString(), ONGOING_DOWNLOAD);
+        mDownloadBuilder = null;
+    }
+    
+    /**
+     * Notification methods for ongoing uploads
+     */
+    
+    public void updateUpload(File currentFile, int currentFileNum, int maxFiles) {
+        // update notification
+        mUploadBuilder.setProgress(maxFiles, currentFileNum, false);
+        
+        // status text
+        String content = mContext.getString(R.string.notification_ongoing_upload_progress_text);
+        String subtext = mContext.getString(R.string.notification_ongoing_upload_progress_subtext);
+        
+        // write current file into the description
+        mUploadBuilder.setContentText(String.format(content, currentFile.getName()));
+        
+        // write the progress into the description
+        mUploadBuilder.setSubText(String.format(subtext, currentFileNum, maxFiles));
+        
+        // display the progress
+        mManager.notify(ONGOING_UPLOAD, mUploadBuilder.build());
+    }
+    
+    public void showUpload(EID destination, int maxFiles) {
+        // create notification with progressbar
+        mUploadBuilder = new NotificationCompat.Builder(mContext);
+        mUploadBuilder.setContentTitle(mContext.getString(R.string.notification_ongoing_upload_title));
+        mUploadBuilder.setContentText(mContext.getResources().getQuantityString(R.plurals.notification_ongoing_upload_text, maxFiles, maxFiles));
+        mUploadBuilder.setSmallIcon(R.drawable.ic_stat_download);
+        mUploadBuilder.setProgress(0, 0, true);
+        mUploadBuilder.setOngoing(true);
+        
+        // display the progress
+        mManager.notify(ONGOING_UPLOAD, mUploadBuilder.build());
+    }
+    
+    public void showUploadCompleted(int maxFiles) {
+        // update notification
+        mUploadBuilder.setContentTitle(mContext.getString(R.string.notification_completed_upload_title));
+        mUploadBuilder.setContentText(mContext.getResources().getQuantityString(R.plurals.notification_completed_upload_text, maxFiles, maxFiles));
+        mUploadBuilder.setProgress(0, 0, false);
+        mUploadBuilder.setOngoing(false);
+        
+        // display the progress
+        mManager.notify(ONGOING_UPLOAD, mUploadBuilder.build());
+    }
+
+    public void showUploadAborted(EID destination) {
+        // update notification
+        mUploadBuilder.setContentTitle(mContext.getString(R.string.notification_aborted_upload_title));
+        mUploadBuilder.setContentText(String.format(mContext.getString(R.string.notification_aborted_upload_text), destination.toString()));
+        mUploadBuilder.setProgress(0, 0, false);
+        mUploadBuilder.setOngoing(false);
+        
+        // display the progress
+        mManager.notify(ONGOING_UPLOAD, mUploadBuilder.build());
+    }
+    
+    public void cancelUpload() {
+        mManager.cancel(ONGOING_UPLOAD);
+        mUploadBuilder = null;
+    }
+    
+    /**
+     * Notification methods for pending downloads
+     */
     
     public void showPendingDownload(BundleID bundleid, long length, int pendingCount) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext);
@@ -116,37 +222,8 @@ public class NotificationFactory {
         mManager.notify(PENDING_DOWNLOAD, builder.build());
     }
     
-    public void showDownloadCompleted(BundleID bundleid, long length) {
-        String bytesText = Utils.humanReadableByteCount(length, true);
-        
-        // update notification
-        mDownloadBuilder.setContentTitle(mContext.getString(R.string.notification_completed_download_title));
-        mDownloadBuilder.setContentText(String.format(mContext.getString(R.string.notification_completed_download_text), bytesText, bundleid.getSource()));
-        mDownloadBuilder.setProgress(0, 0, false);
-        mDownloadBuilder.setOngoing(false);
-        
-        // display the progress
-        mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
-    }
-
-	public void showDownloadAborted(BundleID bundleid) {
-        // update notification
-        mDownloadBuilder.setContentTitle(mContext.getString(R.string.notification_aborted_download_title));
-        mDownloadBuilder.setContentText(String.format(mContext.getString(R.string.notification_aborted_download_text), bundleid.getSource()));
-        mDownloadBuilder.setProgress(0, 0, false);
-        mDownloadBuilder.setOngoing(false);
-        
-        // display the progress
-        mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
-	}
-	
 	public void cancelPending() {
 		mManager.cancel(PENDING_DOWNLOAD);
-	}
-	
-	public void cancelDownload(BundleID bundleid) {
-		mManager.cancel(bundleid.toString(), ONGOING_DOWNLOAD);
-		mDownloadBuilder = null;
 	}
 	
     private void setNotificationSettings(NotificationCompat.Builder builder)
