@@ -1,7 +1,6 @@
 package de.tubs.ibr.dtn.sharebox.data;
 
 import java.io.File;
-import java.util.Locale;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -125,7 +124,8 @@ public class Utils {
         return DateUtils.formatDateTime(context, when, format_flags);
     }
     
-	public static String humanReadableByteCount(long bytes, boolean si) {
+    @SuppressLint("DefaultLocale")
+    public static String humanReadableByteCount(long bytes, boolean si) {
         int unit = si ? 1000 : 1024;
         if (bytes < unit) return bytes + " B";
         int exp = (int) (Math.log(bytes) / Math.log(unit));
