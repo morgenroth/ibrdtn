@@ -149,17 +149,27 @@ namespace dtn
 					// check the full EID first
 					const std::string cn = _peer.getEID().getString();
 
-					// check using the hostname
-					std::string weak_cn = _peer.getEID().getHost();
+					try {
+						try {
+							dtn::security::SecurityCertificateManager::validateSubject(peer_cert, cn);
+						} catch (const dtn::security::SecurityCertificateException &ex) {
+							// check using the hostname
+							std::string weak_cn = _peer.getEID().getHost();
 
-					// strip leading "//"
-					if (weak_cn.find_first_of("//") == 0) {
-						weak_cn = weak_cn.substr(2, weak_cn.length() - 2);
-					}
+							// strip leading "//"
+							if (weak_cn.find_first_of("//") == 0) {
+								weak_cn = weak_cn.substr(2, weak_cn.length() - 2);
+							}
 
-					if (!dtn::security::SecurityCertificateManager::validateSubject(peer_cert, cn) &&
-							!dtn::security::SecurityCertificateManager::validateSubject(peer_cert, weak_cn)) {
-						throw ibrcommon::TLSCertificateVerificationException("certificate does not fit the EID");
+							try {
+								dtn::security::SecurityCertificateManager::validateSubject(peer_cert, weak_cn);
+							} catch (const dtn::security::SecurityCertificateException &ex_weak) {
+								throw ex;
+							}
+						}
+					} catch (const dtn::security::SecurityCertificateException &ex) {
+						IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						throw ibrcommon::TLSCertificateVerificationException(ex.what());
 					}
 				} catch (const std::exception&) {
 					if (dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
