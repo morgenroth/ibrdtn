@@ -145,7 +145,20 @@ namespace dtn
 				try{
 					ibrcommon::TLSStream &tls = dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream);
 					X509 *peer_cert = tls.activate();
-					if (!dtn::security::SecurityCertificateManager::validateSubject(peer_cert, _peer.getEID())) {
+
+					// check the full EID first
+					const std::string cn = _peer.getEID().getString();
+
+					// check using the hostname
+					std::string weak_cn = _peer.getEID().getHost();
+
+					// strip leading "//"
+					if (weak_cn.find_first_of("//") == 0) {
+						weak_cn = weak_cn.substr(2, weak_cn.length() - 2);
+					}
+
+					if (!dtn::security::SecurityCertificateManager::validateSubject(peer_cert, cn) &&
+							!dtn::security::SecurityCertificateManager::validateSubject(peer_cert, weak_cn)) {
 						throw ibrcommon::TLSCertificateVerificationException("certificate does not fit the EID");
 					}
 				} catch (const std::exception&) {

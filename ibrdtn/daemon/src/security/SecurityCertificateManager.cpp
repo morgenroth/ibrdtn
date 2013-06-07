@@ -145,9 +145,9 @@ namespace dtn
 		}
 
 		bool
-		SecurityCertificateManager::validateSubject(X509 *certificate, const dtn::data::EID &eid)
+		SecurityCertificateManager::validateSubject(X509 *certificate, const std::string &cn)
 		{
-			if(!certificate || eid.getString().empty()){
+			if(!certificate || cn.empty()){
 				return false;
 			}
 
@@ -171,7 +171,7 @@ namespace dtn
 			}
 			/* TODO this function returns an int, but the return value is undocumented */
 			/* the -1 indicates, that strlen() should be used to calculate the data length */
-			ASN1_STRING_set(eid_string, eid.getString().c_str(), -1);
+			ASN1_STRING_set(eid_string, cn.c_str(), -1);
 
 			utf8_eid_len = ASN1_STRING_to_UTF8(&utf8_eid, eid_string);
 			if(utf8_eid_len <= 0){
@@ -224,7 +224,7 @@ namespace dtn
 
 			char *subject_line = X509_NAME_oneline(cert_name, NULL, 0);
 			if(subject_line){
-				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, warning) << "Certificate does not fit. EID: " << eid.getString() << ", Certificate Subject: " << subject_line << "." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, warning) << "Certificate does not fit. Expected: " << cn << ", Certificate Subject: " << subject_line << "." << IBRCOMMON_LOGGER_ENDL;
 				delete subject_line;
 			}
 			return false;

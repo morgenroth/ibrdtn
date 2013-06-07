@@ -59,7 +59,7 @@ namespace dtn
 			 * \param eid The EID of the sender.
 			 * \return returns true if the EID fits, false otherwise
 			 */
-			static bool validateSubject(X509 *certificate, const dtn::data::EID &eid);
+			static bool validateSubject(X509 *certificate, const std::string &cn);
 
 			/*!
 			 * \brief checks if this class has already been initialized with a certificate and private key
