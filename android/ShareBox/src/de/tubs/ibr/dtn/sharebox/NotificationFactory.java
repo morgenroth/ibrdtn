@@ -81,6 +81,12 @@ public class NotificationFactory {
         mDownloadBuilder.setProgress(0, 0, false);
         mDownloadBuilder.setOngoing(false);
         
+        Intent resultIntent = new Intent(mContext, TransferListActivity.class);
+        
+        // create the pending intent
+        PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mDownloadBuilder.setContentIntent(contentIntent);
+        
         // display the progress
         mManager.notify(bundleid.toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
     }
