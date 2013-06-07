@@ -40,6 +40,10 @@
 	        android:name=".DtnReceiver"
 	        android:exported="true"
 	        android:permission="de.tubs.ibr.dtn.permission.DTN_SERVER">
+	        <intent-filter>
+	            <action android:name="de.tubs.ibr.dtn.intent.STATE" />
+	            <category android:name="android.intent.category.DEFAULT" />
+	        </intent-filter>
 	        <!-- Add intent filter for notification of incoming bundles -->
 	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />

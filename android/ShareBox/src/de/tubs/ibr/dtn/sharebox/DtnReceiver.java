@@ -28,6 +28,16 @@ public class DtnReceiver extends BroadcastReceiver {
             i.putExtra("bundleid", intent.getParcelableExtra("bundleid"));
             context.startService(i);
         }
+        else if (action.equals(de.tubs.ibr.dtn.Intent.STATE))
+        {
+            String state = intent.getStringExtra("state");
+            if (state.equals("ONLINE")) {
+                // trigger session registration
+                Intent i = new Intent(context, DtnService.class);
+                i.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
+                context.startService(i);
+            }
+        }
     }
 
 }
