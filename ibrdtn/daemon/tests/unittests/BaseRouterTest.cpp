@@ -116,12 +116,37 @@ void BaseRouterTest::testTransferTo()
 	/* test signature (const dtn::data::EID &destination, const dtn::data::BundleID &id) */
 	dtn::data::Bundle b;
 	dtn::routing::BaseRouter router;
-	dtn::routing::NeighborDatabase::NeighborEntry n(dtn::data::EID("dtn://no-neighbor"));
+
+	// EID of the neighbor to test
+	dtn::data::EID neighbor("dtn://no-neighbor");
+
 	ExtensionTest *ex = new ExtensionTest();
 	router.add(ex);
 	router.initialize();
-	ex->transferTo(n, b);
-	router.terminate();
+
+	dtn::core::Node n(neighbor);
+	n.add(dtn::core::Node::URI(dtn::core::Node::NODE_CONNECTED, dtn::core::Node::CONN_TCPIP, ""));
+	dtn::core::BundleCore::getInstance().getConnectionManager().add(n);
+
+	// get neighbor database
+	dtn::routing::NeighborDatabase &db = router.getNeighborDB();
+
+	// create the neighbor in the neighbor database
+	{
+		ibrcommon::MutexLock l(db);
+		dtn::routing::NeighborDatabase::NeighborEntry &entry = db.create(neighbor);
+	}
+
+	try {
+		ex->transferTo(neighbor, b);
+		router.terminate();
+	} catch (const ibrcommon::Exception &ex) {
+		std::cout << ex.what() << std::endl;
+		router.terminate();
+		throw;
+	}
+
+	dtn::core::BundleCore::getInstance().getConnectionManager().remove(n);
 }
 
 void BaseRouterTest::testRaiseEvent()
