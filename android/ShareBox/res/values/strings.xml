@@ -21,5 +21,7 @@
     
     <string name="content_neighbor_icon">Neighbor icon</string>
     <string name="list_no_neighbors">No neighbors available.</string>
+    <string name="list_no_downloads">No downloads</string>
+    <string name="list_no_files">No files</string>
 
 </resources>

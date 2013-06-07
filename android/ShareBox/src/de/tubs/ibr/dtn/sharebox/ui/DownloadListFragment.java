@@ -77,6 +77,8 @@ public class DownloadListFragment extends ListFragment implements LoaderManager.
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         
+        setEmptyText(getActivity().getResources().getString(R.string.list_no_downloads));
+        
         // enable options menu
         setHasOptionsMenu(true);
         

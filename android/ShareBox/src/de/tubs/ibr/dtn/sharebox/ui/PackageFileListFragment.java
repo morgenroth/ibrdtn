@@ -71,6 +71,8 @@ public class PackageFileListFragment extends ListFragment implements LoaderManag
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         
+        setEmptyText(getActivity().getResources().getString(R.string.list_no_files));
+        
         // enable context menu
         registerForContextMenu(getListView());
         
