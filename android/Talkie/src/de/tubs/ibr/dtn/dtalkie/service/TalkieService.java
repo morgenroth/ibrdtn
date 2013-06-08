@@ -90,6 +90,7 @@ public class TalkieService extends IntentService {
 	private MediaPlayer mPlayer = null;
 	
 	private SoundFXManager mSoundManager = null;
+	private NotificationManager mNotificationManager = null;
 	
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
@@ -229,6 +230,8 @@ public class TalkieService extends IntentService {
 	{
 		// call onCreate of the super-class
 		super.onCreate();
+		
+		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		
         SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
         List<Sensor> sensors = sm.getSensorList(Sensor.TYPE_PROXIMITY);
@@ -406,6 +409,10 @@ public class TalkieService extends IntentService {
             
             // mark the message as played
             mDatabase.mark(f, msgid, true);
+            
+            // remove notification is there are no more pending
+            // messages
+            removeNotification();
         }
         else if (ACTION_PLAY_NEXT.equals(action)) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(TalkieService.this);
@@ -496,6 +503,15 @@ public class TalkieService extends IntentService {
         }
     };
     
+    private void removeNotification() {
+        // get the number of marked messages
+        int mcount = mDatabase.getMarkedMessageCount(Folder.INBOX, false);
+        
+        if (mcount == 0) {
+        	mNotificationManager.cancel(MESSAGE_NOTIFICATION);
+        }
+    }
+    
     private void createNotification()
     {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -535,7 +551,6 @@ public class TalkieService extends IntentService {
         builder.setSound( Uri.parse( prefs.getString("ringtoneOnMessage", "content://settings/system/notification_sound") ) );
         
         Notification notification = builder.getNotification();
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(MESSAGE_NOTIFICATION, notification);
     }
 }
