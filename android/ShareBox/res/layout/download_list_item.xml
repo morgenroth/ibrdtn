@@ -1,49 +1,63 @@
-<?xml version="1.0" encoding="utf-8"?>
-<de.tubs.ibr.dtn.sharebox.ui.DownloadItem
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<de.tubs.ibr.dtn.sharebox.ui.DownloadItem xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="?android:attr/listPreferredItemHeight"
+    android:gravity="center_vertical"
     android:padding="6dip" >
+    
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_margin="12dp"
+        android:layout_centerVertical="true"
+        android:src="@drawable/ic_folder" />
+    
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerVertical="true"
+        android:layout_alignParentRight="true"
+        android:layout_toRightOf="@+id/icon">
 
     <TextView
         android:id="@+id/label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_toRightOf="@+id/icon"
         android:singleLine="true"
-        android:text="@string/empty"
+        android:text="@string/item_download_title"
         android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/bottomtext"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/label"
-        android:layout_below="@+id/label"
-        android:singleLine="true"
-        android:text="@string/empty" />
-
-    <ImageView
-        android:id="@+id/icon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="12dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginLeft="4dp"
-        android:layout_centerVertical="true"
-        android:src="@drawable/ic_folder" />
-
-    <TextView
-        android:id="@+id/sidetext"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/bottomtext"
-        android:layout_alignBottom="@+id/bottomtext"
-        android:layout_alignParentRight="true"
-        android:singleLine="true"
-        android:text="@string/empty"
-        android:textColor="@color/light_yellow" />
+	    <RelativeLayout
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content" >
+	        
+		    <TextView
+		        android:id="@+id/bottomtext"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:singleLine="true"
+		        android:layout_alignParentLeft="true"
+		        android:text="@string/item_download_text" />
+		    
+		    <TextView
+		        android:id="@+id/sidetext"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:singleLine="true"
+		        android:layout_alignParentRight="true"
+		        android:text="@string/item_download_side"
+		        android:textColor="@color/gray" />
+		    
+		    <ImageView
+                android:id="@+id/sideicon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_centerVertical="true"
+                android:layout_toLeftOf="@id/sidetext"
+                android:paddingRight="6dip"
+                android:src="@drawable/ic_state_accepted" />
+		</RelativeLayout>
+    </LinearLayout>
 
 </de.tubs.ibr.dtn.sharebox.ui.DownloadItem>

@@ -2,6 +2,7 @@ package de.tubs.ibr.dtn.sharebox.ui;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -15,7 +16,7 @@ public class DownloadItem extends RelativeLayout {
     
     private TextView mLabel = null;
     private TextView mBottomText = null;
-    private ImageView mIcon = null;
+    private ImageView mSideIcon = null;
     private TextView mSideText = null;
 
     public DownloadItem(Context context) {
@@ -32,7 +33,7 @@ public class DownloadItem extends RelativeLayout {
 
         mLabel = (TextView) findViewById(R.id.label);
         mBottomText = (TextView) findViewById(R.id.bottomtext);
-        mIcon = (ImageView) findViewById(R.id.icon);
+        mSideIcon = (ImageView) findViewById(R.id.sideicon);
         mSideText = (TextView) findViewById(R.id.sidetext);
     }
     
@@ -53,28 +54,37 @@ public class DownloadItem extends RelativeLayout {
     private void onDataChanged() {
         String timestamp = Utils.formatTimeStampString(getContext(), mDownload.getTimestamp().getTime());
         
-        mLabel.setText(mDownload.getSource());
-        mBottomText.setText(timestamp);
+        String title = getContext().getString(R.string.item_download_title);
+        String text = getContext().getString(R.string.item_download_text);
+        String side = getContext().getString(R.string.item_download_side);
+        
+        mLabel.setText(String.format(title, mDownload.getId(), Utils.humanReadableByteCount(mDownload.getLength(), true)));
+        mBottomText.setText(String.format(text, mDownload.getBundleId().getSource().toString()));
+        mSideText.setText(String.format(side, timestamp));
         
         switch (mDownload.getState()) {
         case PENDING:
-        	mSideText.setText(getContext().getString(R.string.state_pending));
+        	mSideIcon.setImageResource(R.drawable.ic_state_pending);
+        	mSideIcon.setVisibility(View.VISIBLE);
         	break;
         	
         case ACCEPTED:
-        	mSideText.setText(getContext().getString(R.string.state_accepted));
+        	mSideIcon.setImageResource(R.drawable.ic_state_accepted);
+        	mSideIcon.setVisibility(View.VISIBLE);
         	break;
         	
         case DOWNLOADING:
-        	mSideText.setText(getContext().getString(R.string.state_downloading));
+        	mSideIcon.setVisibility(View.GONE);
         	break;
         	
         case COMPLETED:
-        	mSideText.setText(getContext().getString(R.string.state_completed));
+        	mSideIcon.setImageResource(R.drawable.ic_state_completed);
+        	mSideIcon.setVisibility(View.VISIBLE);
         	break;
         	
         case ABORTED:
-            mSideText.setText(getContext().getString(R.string.state_aborted));
+        	mSideIcon.setImageResource(R.drawable.ic_state_aborted);
+        	mSideIcon.setVisibility(View.VISIBLE);
             break;
         }
     }
