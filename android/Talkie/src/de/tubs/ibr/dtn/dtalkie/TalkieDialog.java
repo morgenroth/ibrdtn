@@ -6,12 +6,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.ScaleAnimation;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
@@ -29,12 +32,16 @@ public class TalkieDialog extends Activity {
     private Handler mHandler = null;
     
     private ImageButton mRecButton = null;
+    private FrameLayout mRecIndicator = null;
     private Button mCancelButton = null;
     
     private Boolean mRecordingCompleted = false;
     
     private RecorderService mService = null;
     private Boolean mBound = false;
+    
+    private float mAnimScaleX = 1.0f;
+    private float mAnimScaleY = 1.0f;
     
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -61,6 +68,8 @@ public class TalkieDialog extends Activity {
                 stopRecording();
             }
         });
+        
+        mRecIndicator = (FrameLayout)findViewById(R.id.record_indicator);
         
         mCancelButton = (Button)findViewById(R.id.cancel);
         mCancelButton.setOnClickListener(new View.OnClickListener() {
@@ -152,15 +161,19 @@ public class TalkieDialog extends Activity {
         TalkieDialog.this.finish();
     }
     
-    @SuppressWarnings("deprecation")
     private void setIndicator(Float level) {
-        LayerDrawable d = (LayerDrawable)getResources().getDrawable(R.drawable.rec_background);
+    	float newScaleX = 1.0f + level;
+    	float newScaleY = 1.0f + level;
         
-        // 0 (large) .. 64 (small)
-        int size = Float.valueOf(64 * (1 - level) * 0.9f).intValue();
+        Animation a = new ScaleAnimation(mAnimScaleX, newScaleX, mAnimScaleY, newScaleY, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
         
-        d.setLayerInset(0, size, size, size, size);
-        mRecButton.setBackgroundDrawable(d);
+        mAnimScaleX = newScaleX;
+        mAnimScaleY = newScaleY;
+
+        a.setDuration(100);
+        a.setInterpolator(new LinearInterpolator());
+        a.startNow();
+        mRecIndicator.startAnimation(a);
     }
     
     private Runnable mUpdateAmplitude = new Runnable() {
@@ -173,7 +186,7 @@ public class TalkieDialog extends Activity {
                 float level = 0.0f;
                         
                 if (mMaxAmplitude > 0) {
-                    level = Float.valueOf(curamp) / mMaxAmplitude;
+                    level = Float.valueOf(curamp) / (0.6f * Float.valueOf(mMaxAmplitude));
                 }
                 
                 if (level < 0.4f) {
@@ -190,7 +203,8 @@ public class TalkieDialog extends Activity {
                     stopRecording();
                 }
             }
-            mHandler.postDelayed(mUpdateAmplitude, 100);
+            if (mUpdateAmplitude != null)
+            	mHandler.postDelayed(mUpdateAmplitude, 100);
         }
     };
 }

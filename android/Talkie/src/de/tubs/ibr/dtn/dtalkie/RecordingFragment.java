@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.graphics.drawable.LayerDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -23,6 +22,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.ScaleAnimation;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import de.tubs.ibr.dtn.dtalkie.service.RecorderService;
 import de.tubs.ibr.dtn.dtalkie.service.Utils;
@@ -36,6 +39,7 @@ public class RecordingFragment extends Fragment {
     private Boolean mBound = false;
     
     private ImageButton mRecordButton = null;
+    private FrameLayout mRecIndicator = null;
     
     private Boolean mUpdateAmplitudeSwitch = false;
     private int mMaxAmplitude = 0;
@@ -44,6 +48,8 @@ public class RecordingFragment extends Fragment {
     private Handler mHandler = null;
     
     private Boolean mRecording = false;
+    
+    private float mAnimScaleHeight = 1.0f;
     
     private SensorEventListener mSensorListener = new SensorEventListener() {
         public void onSensorChanged(SensorEvent event) {
@@ -105,6 +111,8 @@ public class RecordingFragment extends Fragment {
         
         mRecordButton = (ImageButton) v.findViewById(R.id.button_record);
         mRecordButton.setOnTouchListener(mTouchListener);
+        
+        mRecIndicator = (FrameLayout) v.findViewById(R.id.ptt_background);
         
         return v;
     }
@@ -215,14 +223,15 @@ public class RecordingFragment extends Fragment {
         }
     }
     
-    @SuppressWarnings("deprecation")
     private void setIndicator(Float level) {
-        LayerDrawable d = (LayerDrawable)getResources().getDrawable(R.drawable.ptt_background);
+        Animation a = new ScaleAnimation(1.0f, 1.0f, 1 - mAnimScaleHeight, 1 - level);
         
-        int height = this.getView().getMeasuredHeight();
-        
-        d.setLayerInset(1, 0, 0, 0, Float.valueOf(height * (level * 1.2f)).intValue());
-        mRecordButton.setBackgroundDrawable(d);
+        mAnimScaleHeight = level;
+
+        a.setDuration(100);
+        a.setInterpolator(new LinearInterpolator());
+        a.startNow();
+        mRecIndicator.startAnimation(a);
     }
     
     private Runnable mUpdateAmplitude = new Runnable() {
@@ -236,7 +245,7 @@ public class RecordingFragment extends Fragment {
                     float level = 0.0f;
                             
                     if (mMaxAmplitude > 0) {
-                        level = Float.valueOf(curamp) / mMaxAmplitude;
+                        level = Float.valueOf(curamp) / (0.8f * Float.valueOf(mMaxAmplitude));
                     }
                     
                     if (level < 0.4f) {
@@ -252,7 +261,8 @@ public class RecordingFragment extends Fragment {
                         stopRecording();
                     }
                 }
-                mHandler.postDelayed(mUpdateAmplitude, 100);
+                if (mUpdateAmplitude != null)
+                	mHandler.postDelayed(mUpdateAmplitude, 100);
             }
         }
     };

@@ -7,13 +7,25 @@
     android:gravity="center"
     android:orientation="vertical">
 
-    <ImageButton
-        android:id="@+id/button_record"
-        android:layout_width="160dp"
+    <FrameLayout
+		android:layout_width="160dp"
         android:layout_height="160dp"
-        android:layout_margin="32dp"
-        android:background="@drawable/rec_background"
-        android:src="@drawable/ic_mic" />
+        android:layout_margin="8dp"
+        android:layout_gravity="center">
+        <FrameLayout
+            android:id="@+id/record_indicator"
+            android:layout_width="64dp"
+	        android:layout_height="64dp"
+	        android:background="@drawable/rec_indicator_background"
+	        android:layout_gravity="center" />
+	    <ImageButton
+	        android:id="@+id/button_record"
+	        android:layout_width="64dp"
+	        android:layout_height="64dp"
+	        android:background="@drawable/rec_background"
+	        android:src="@drawable/ic_mic"
+	        android:layout_gravity="center" />
+    </FrameLayout>
     
 	<Button 
         android:id="@+id/cancel"
