@@ -8,9 +8,8 @@
     android:orientation="vertical">
 
     <FrameLayout
-		android:layout_width="160dp"
+		android:layout_width="match_parent"
         android:layout_height="160dp"
-        android:layout_margin="8dp"
         android:layout_gravity="center">
         <FrameLayout
             android:id="@+id/record_indicator"
@@ -27,12 +26,37 @@
 	        android:layout_gravity="center" />
     </FrameLayout>
     
-	<Button 
-        android:id="@+id/cancel"
-        style="?android:attr/buttonBarButtonStyle"
+    <LinearLayout
+        android:id="@+id/buttonPanel"
         android:layout_width="match_parent"
-        android:layout_height="0dip"
-        android:layout_weight="1"
-        android:text="@android:string/cancel"/>
+        android:layout_height="wrap_content"
+        android:divider="?android:attr/dividerHorizontal"
+        android:dividerPadding="0dip"
+        android:minHeight="@dimen/alert_dialog_button_bar_height"
+        android:orientation="vertical"
+        android:showDividers="beginning" >
+
+        <LinearLayout
+            style="?android:attr/buttonBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layoutDirection="locale"
+            android:measureWithLargestChild="true"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/cancel"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:layout_weight="1"
+                android:maxLines="2"
+                android:minHeight="@dimen/alert_dialog_button_bar_height"
+                android:textSize="14sp"
+                android:text="@android:string/cancel" />
+
+            </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>
