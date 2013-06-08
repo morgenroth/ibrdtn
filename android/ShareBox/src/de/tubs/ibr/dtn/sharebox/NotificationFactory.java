@@ -136,7 +136,7 @@ public class NotificationFactory {
         mUploadBuilder = new NotificationCompat.Builder(mContext);
         mUploadBuilder.setContentTitle(mContext.getString(R.string.notification_ongoing_upload_title));
         mUploadBuilder.setContentText(mContext.getResources().getQuantityString(R.plurals.notification_ongoing_upload_text, maxFiles, maxFiles));
-        mUploadBuilder.setSmallIcon(R.drawable.ic_stat_download);
+        mUploadBuilder.setSmallIcon(R.drawable.ic_stat_upload);
         mUploadBuilder.setProgress(0, 0, true);
         mUploadBuilder.setOngoing(true);
         
