@@ -287,6 +287,8 @@ public class DtnService extends IntentService {
             // create a TarCreator and assign default listener to update progress
             TarCreator creator = new TarCreator(this, targetStream, uris);
             creator.setOnStateChangeListener(new TarCreator.OnStateChangeListener() {
+            	
+            	private int mLastProgressValue = 0;
                 
                 @Override
                 public void onStateChanged(TarCreator creator, int state) {
@@ -315,10 +317,22 @@ public class DtnService extends IntentService {
                 }
                 
                 @Override
-                public void onProgress(TarCreator creator, String currentFile, int currentFileNum, int maxFiles) {
+                public void onFileProgress(TarCreator creator, String currentFile, int currentFileNum, int maxFiles) {
                     Log.d(TAG, "TarCreator processing file " + currentFile);
+                    mLastProgressValue = 0;
                     mNotificationFactory.updateUpload(currentFile, currentFileNum, maxFiles);
                 }
+
+				@Override
+				public void onCopyProgress(TarCreator creator, long offset, long length) {
+		            // scale the download progress to 0..100
+		            Double pos = Double.valueOf(offset) / Double.valueOf(length) * 100.0;
+		            
+		            if (mLastProgressValue < pos.intValue()) {
+		                mLastProgressValue = pos.intValue();
+		                mNotificationFactory.updateUpload(mLastProgressValue, 100);
+		            }
+				}
             });
 
             // create a helper thread

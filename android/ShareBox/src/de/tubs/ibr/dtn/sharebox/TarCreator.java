@@ -12,7 +12,6 @@ import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -32,7 +31,8 @@ public class TarCreator implements Runnable {
 	private Context mContext = null;
 	
     public interface OnStateChangeListener {
-        void onProgress(TarCreator creator, String currentFile, int currentFileNum, int maxFiles);
+        void onFileProgress(TarCreator creator, String currentFile, int currentFileNum, int maxFiles);
+        void onCopyProgress(TarCreator creator, long current, long max);
         void onStateChanged(TarCreator creator, int state);
     }
 
@@ -58,7 +58,7 @@ public class TarCreator implements Runnable {
 				    
 				    if (f.exists()) {
 				        // update notification
-    	                if (mListener != null) mListener.onProgress(this, f.getName(), currentFile, mUris.size());
+    	                if (mListener != null) mListener.onFileProgress(this, f.getName(), currentFile, mUris.size());
     				    
     	                // add file to tar archive
     				    add(taos, f);
@@ -84,7 +84,7 @@ public class TarCreator implements Runnable {
 			                Long filesize = cursor.getLong(columnIndexSize);
 			                
 			                // update notification
-		                    if (mListener != null) mListener.onProgress(this, filename, currentFile, mUris.size());
+		                    if (mListener != null) mListener.onFileProgress(this, filename, currentFile, mUris.size());
 
 		                    // add uri to tar archive
 		                    add(taos, uri, filename, filesize);
@@ -112,6 +112,24 @@ public class TarCreator implements Runnable {
         }
 	}
 	
+	private int copy(InputStream is, OutputStream os, long length)
+			throws IOException {
+		if (mListener != null)
+			mListener.onCopyProgress(this, 0, length);
+
+		byte[] buffer = new byte[8196];
+		int count = 0;
+		int n = 0;
+		while (-1 != (n = is.read(buffer))) {
+			os.write(buffer, 0, n);
+			count += n;
+
+			if (mListener != null)
+				mListener.onCopyProgress(this, count, length);
+		}
+		return count;
+	}
+	
 	private void add(TarArchiveOutputStream taos, Uri uri, String filename, long length) throws IOException {
         // open the content as stream
         final InputStream is = mContext.getContentResolver().openInputStream(uri);
@@ -131,7 +149,7 @@ public class TarCreator implements Runnable {
         taos.putArchiveEntry(entry);
         
         // copy the payload into the archive
-        IOUtils.copy(is, taos);
+        copy(is, taos, length);
         
         // close the source file
         is.close();
@@ -159,7 +177,7 @@ public class TarCreator implements Runnable {
         final InputStream is = new FileInputStream(f);
         
         // copy the payload into the archive
-        IOUtils.copy(is, taos);
+        copy(is, taos, f.length());
         
         // close the source file
         is.close();

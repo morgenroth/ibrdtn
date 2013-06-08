@@ -1,5 +1,7 @@
 package de.tubs.ibr.dtn.sharebox;
 
+import java.util.Date;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -41,6 +43,7 @@ public class NotificationFactory {
     // while showing a notification for ongoing uploads we use
     // this to store the notification builder
     NotificationCompat.Builder mUploadBuilder = null;
+    Long mUploadTimestamp = null;
     
     public NotificationFactory(Context context, NotificationManager manager) {
     	mContext = context;
@@ -126,9 +129,17 @@ public class NotificationFactory {
      * Notification methods for ongoing uploads
      */
     
+    public void updateUpload(int current, int max) {
+        // update notification
+        mUploadBuilder.setProgress(max, current, false);
+        
+        // display the progress
+        mManager.notify(mUploadTimestamp.toString(), ONGOING_UPLOAD, mUploadBuilder.build());
+    }
+    
     public void updateUpload(String currentFile, int currentFileNum, int maxFiles) {
         // update notification
-        mUploadBuilder.setProgress(maxFiles, currentFileNum, false);
+        mUploadBuilder.setProgress(1, 0, false);
         
         // status text
         String content = mContext.getString(R.string.notification_ongoing_upload_progress_text);
@@ -143,12 +154,13 @@ public class NotificationFactory {
 //        mUploadBuilder.setSubText(String.format(subtext, currentFileNum, maxFiles));
         
         // display the progress
-        mManager.notify(ONGOING_UPLOAD, mUploadBuilder.build());
+        mManager.notify(mUploadTimestamp.toString(), ONGOING_UPLOAD, mUploadBuilder.build());
     }
     
     public void showUpload(EID destination, int maxFiles) {
         // create notification with progressbar
         mUploadBuilder = new NotificationCompat.Builder(mContext);
+        mUploadTimestamp = (new Date()).getTime();
         mUploadBuilder.setContentTitle(mContext.getString(R.string.notification_ongoing_upload_title));
         mUploadBuilder.setContentText(mContext.getResources().getQuantityString(R.plurals.notification_ongoing_upload_text, maxFiles, maxFiles));
         mUploadBuilder.setSmallIcon(R.drawable.ic_stat_upload);
@@ -156,7 +168,7 @@ public class NotificationFactory {
         mUploadBuilder.setOngoing(true);
         
         // display the progress
-        mManager.notify(ONGOING_UPLOAD, mUploadBuilder.build());
+        mManager.notify(mUploadTimestamp.toString(), ONGOING_UPLOAD, mUploadBuilder.build());
     }
     
     public void showUploadCompleted(int maxFiles) {
@@ -175,7 +187,7 @@ public class NotificationFactory {
         mUploadBuilder.setContentIntent(contentIntent);
         
         // display the progress
-        mManager.notify(ONGOING_UPLOAD, mUploadBuilder.build());
+        mManager.notify(mUploadTimestamp.toString(), ONGOING_UPLOAD, mUploadBuilder.build());
     }
 
     public void showUploadAborted(EID destination) {
@@ -194,12 +206,15 @@ public class NotificationFactory {
         mUploadBuilder.setContentIntent(contentIntent);
         
         // display the progress
-        mManager.notify(ONGOING_UPLOAD, mUploadBuilder.build());
+        mManager.notify(mUploadTimestamp.toString(), ONGOING_UPLOAD, mUploadBuilder.build());
     }
     
     public void cancelUpload() {
-        mManager.cancel(ONGOING_UPLOAD);
-        mUploadBuilder = null;
+    	if (mUploadTimestamp != null) {
+	        mManager.cancel(mUploadTimestamp.toString(), ONGOING_UPLOAD);
+	        mUploadBuilder = null;
+	        mUploadTimestamp = null;
+    	}
     }
     
     /**
