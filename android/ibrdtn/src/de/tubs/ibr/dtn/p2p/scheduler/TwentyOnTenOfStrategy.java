@@ -1,14 +1,14 @@
 package de.tubs.ibr.dtn.p2p.scheduler;
 
-public class TenOnTwentyOfStrategy implements Strategy {
+public class TwentyOnTenOfStrategy implements Strategy {
 
     @Override
     public Slot getNextSlot(String info) {
         Slot s;
         if ("on".equals(info)) {
-            s = new Slot(State.OFF, 10, "off");
+            s = new Slot(State.OFF, 20, "off");
         } else {
-            s = new Slot(State.ON, 20, "on");
+            s = new Slot(State.ON, 10, "on");
         }
         return s;
     }

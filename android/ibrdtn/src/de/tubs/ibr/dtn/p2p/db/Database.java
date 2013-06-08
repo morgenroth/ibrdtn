@@ -22,7 +22,7 @@ public class Database {
 
     private static Object syncObject = new Object();
 
-    private static Database _instance;
+    private static volatile Database _instance;
 
     public static Database getInstance(Context context) {
         if (_instance == null) {
@@ -75,27 +75,27 @@ public class Database {
                 selectionArgs, null, null, null);
         if (c.getCount() == 0) {
             long ret = db.insert(PEER_TABLE, null, values);
-//            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Insert:" + peer.toString() + ":" + ret);
-//            }
+            // if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, "Insert:" + peer.toString() + ":" + ret);
+            // }
         } else {
             long ret = db.update(PEER_TABLE, values, selection, selectionArgs);
-//            if (Log.isLoggable(TAG, Log.DEBUG)) {
-                Log.d(TAG, "Update:" + peer.toString() + ":" + ret);
-//            }
+            // if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, "Update:" + peer.toString() + ":" + ret);
+            // }
         }
         c.close();
     }
 
-    public Peer selectPeer(String mac) {
+    public synchronized Peer selectPeer(String mac) {
         Peer p = null;
         String selection = String.format("%s = ?", MAC_ADDRESS_COLUMN);
         String[] selectionArgs = { mac };
         Cursor cursor = db.query(PEER_TABLE, ALL_PEER_TABLE_COLUMNS, selection,
                 selectionArgs, null, null, null);
-//        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Select peer " + mac + ",count:" + cursor.getCount());
-//        }
+        // if (Log.isLoggable(TAG, Log.DEBUG)) {
+        Log.d(TAG, "Select peer " + mac + ",count:" + cursor.getCount());
+        // }
         if (cursor.getCount() == 1 && cursor.moveToFirst()) {
             p = cursorToPeer(cursor);
         }
@@ -103,13 +103,13 @@ public class Database {
         return p;
     }
 
-    public Peer[] selectPeers() {
+    public synchronized Peer[] selectPeers() {
         Peer[] peers;
         Cursor cursor = db.query(PEER_TABLE, ALL_PEER_TABLE_COLUMNS, null,
                 null, null, null, null);
-//        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Select peers:" + cursor.getCount());
-//        }
+        // if (Log.isLoggable(TAG, Log.DEBUG)) {
+        Log.d(TAG, "Select peers:" + cursor.getCount());
+        // }
         peers = new Peer[cursor.getCount()];
         int i = 0;
         while (cursor.moveToNext()) {
@@ -119,16 +119,16 @@ public class Database {
         return peers;
     }
 
-    public Cursor selectPeersCursor() {
+    public synchronized Cursor selectPeersCursor() {
         Cursor c = db.query(PEER_TABLE, ALL_PEER_TABLE_COLUMNS, null, null,
                 null, null, null);
-//        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Select peers(cursor):" + c.getCount());
-//        }
+        // if (Log.isLoggable(TAG, Log.DEBUG)) {
+        Log.d(TAG, "Select peers(cursor):" + c.getCount());
+        // }
         return c;
     }
 
-    private synchronized Peer cursorToPeer(Cursor cursor) {
+    private Peer cursorToPeer(Cursor cursor) {
         String mac;
         String eid;
         Date lastContact;

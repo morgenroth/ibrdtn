@@ -12,8 +12,4 @@
         <intent android:action="de.tubs.ibr.dtn.p2p.action.OPEN_DB_DUMP_ACTIVITY" />
     </Preference>
 
-    <de.tubs.ibr.dtn.p2p.StartDiscoveryPreference android:title="@string/start_discovery" />
-
-    <de.tubs.ibr.dtn.p2p.StopDiscoveryPreference android:title="@string/stop_discovery" />
-
 </PreferenceScreen>

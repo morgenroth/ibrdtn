@@ -5,9 +5,11 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.p2p.scheduler.GridStrategie;
+import de.tubs.ibr.dtn.p2p.scheduler.ProbalisticStrategie;
 import de.tubs.ibr.dtn.p2p.scheduler.StategyAlwaysOn;
 import de.tubs.ibr.dtn.p2p.scheduler.Strategy;
-import de.tubs.ibr.dtn.p2p.scheduler.TenOnTwentyOfStrategy;
+import de.tubs.ibr.dtn.p2p.scheduler.TwentyOnTenOfStrategy;
 
 public final class SettingsUtil {
 
@@ -26,7 +28,11 @@ public final class SettingsUtil {
         if ("on".equals(type)) {
             s = new StategyAlwaysOn();
         } else if ("tentwenty".equals(type)) {
-            s = new TenOnTwentyOfStrategy();
+            s = new TwentyOnTenOfStrategy();
+        } else if ("grid".equals(type)) {
+            s = new GridStrategie();
+        } else if ("prob".equals(type)) {
+            s = new ProbalisticStrategie();
         }
         return s;
     }

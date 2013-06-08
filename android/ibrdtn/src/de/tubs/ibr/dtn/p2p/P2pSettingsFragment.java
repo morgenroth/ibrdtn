@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import de.tubs.ibr.dtn.R;
 
-@TargetApi(14)
+@TargetApi(16)
 public class P2pSettingsFragment extends PreferenceFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {

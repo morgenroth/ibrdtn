@@ -40,9 +40,9 @@ public class SchedulerService extends IntentService {
                 PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         am.cancel(sender);
-        // if (Log.isLoggable(TAG, Log.DEBUG)) {
+        SettingsUtil.setSchedulerInfo(this, "");
+        SettingsUtil.setNextScheduledCheck(this, 0);
         Log.d(TAG, "Scheduler stopped");
-        // }
     }
 
     private void checkState() {

@@ -42,22 +42,6 @@ public class WiFiP2pReceiver extends BroadcastReceiver {
         }
     }
 
-    // private void connectToPeer(Context context, Intent intent) {
-    // String mac = intent.getStringExtra(WiFiP2P4IbrDtnService.MAC_EXTRA);
-    // Intent i = new Intent(context, WiFiP2P4IbrDtnService.class);
-    // i.setAction(WiFiP2P4IbrDtnService.CONNECT_TO_PEER_ACTION);
-    // i.putExtra(WiFiP2P4IbrDtnService.MAC_EXTRA, mac);
-    // context.startService(i);
-    //
-    // }
-    //
-    // private void peerFound(Context context, Intent intent) {
-    // String mac = intent.getStringExtra(WiFiP2P4IbrDtnService.MAC_EXTRA);
-    // Intent i = new Intent(WiFiP2P4IbrDtnService.CONNECT_TO_PEER_ACTION);
-    // i.putExtra(WiFiP2P4IbrDtnService.MAC_EXTRA, mac);
-    // context.sendBroadcast(i);
-    // }
-
     private void peersChanged(Context context, Intent intent) {
         Intent i = new Intent(context, WiFiP2P4IbrDtnService.class);
         i.setAction(WiFiP2P4IbrDtnService.PEERS_CHANGED_ACTION);

@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.preference.SwitchPreference;
 import android.util.AttributeSet;
 
-@TargetApi(14)
+@TargetApi(16)
 public class P2pSwitchPreference extends SwitchPreference {
 
     public P2pSwitchPreference(Context context, AttributeSet attrs, int defStyle) {

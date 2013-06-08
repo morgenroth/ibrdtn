@@ -33,6 +33,7 @@
     <uses-sdk
         android:minSdkVersion="9"
         android:targetSdkVersion="17" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
 
     <application
         android:allowBackup="true"
@@ -116,11 +117,6 @@
         <activity
             android:name=".p2p.P2pSettingsActivity"
             android:label="@string/title_activity_p2p_settings" >
-            <intent-filter>
-                <action android:name=".activities.P2pSettingsActivity" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
         </activity>
 
         <receiver android:name=".p2p.service.WiFiP2pReceiver" >
@@ -137,16 +133,6 @@
                 <action android:name="android.net.wifi.p2p.DISCOVERY_STATE_CHANGE" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".p2p.service.WiFiReceiver" >
-            <intent-filter>
-                <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
-            </intent-filter>
-        </receiver>
-        <receiver android:name=".p2p.service.BootCompletedReceiver" >
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
 
         <service android:name=".p2p.service.WiFiP2P4IbrDtnService" >
         </service>
@@ -159,7 +145,6 @@
         <activity android:name=".p2p.DBDump" >
             <intent-filter>
                 <action android:name="de.tubs.ibr.dtn.p2p.action.OPEN_DB_DUMP_ACTIVITY" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

@@ -156,18 +156,9 @@ public class WiFiP2P4IbrDtnService extends IntentService {
     }
 
     private void connectToPeer(String mac) {
-//        WifiManager wifiMan = (WifiManager) this
-//                .getSystemService(Context.WIFI_SERVICE);
-//        WifiInfo wifiInf = wifiMan.getConnectionInfo();
-//        String macAddr = wifiInf.getMacAddress();
-
-//        Log.d(TAG, "mymac:" + macAddr + ", other mac: " + mac);
-
-//        if (macAddr.compareTo(mac) > 0) {
-            WifiP2pConfig config = new WifiP2pConfig();
-            config.deviceAddress = mac;
-            wifiP2pManager.connect(wifiDirectChannel, config, null);
-//        }
+        WifiP2pConfig config = new WifiP2pConfig();
+        config.deviceAddress = mac;
+        wifiP2pManager.connect(wifiDirectChannel, config, null);
     }
 
     private void discoverPeers() {

@@ -4,7 +4,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.os.Bundle;
 
-@TargetApi(14)
+@TargetApi(16)
 public class P2pSettingsActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
