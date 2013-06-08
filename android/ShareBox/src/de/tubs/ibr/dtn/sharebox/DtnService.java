@@ -203,26 +203,26 @@ public class DtnService extends IntentService {
             updatePendingDownloadNotification();
             
             // show ongoing download notification
-            mNotificationFactory.showDownload(bundleid, d.getLength());
+            mNotificationFactory.showDownload(d);
             
             try {
                 mIsDownloading = true;
                 if (mClient.getSession().query(bundleid)) {
-                    mNotificationFactory.showDownloadCompleted(bundleid, d.getLength());
+                    mNotificationFactory.showDownloadCompleted(d);
                 } else {
                     // set state to aborted
                     mDatabase.setState(d.getId(), Download.State.ABORTED);
                     
-                    mNotificationFactory.showDownloadAborted(bundleid);
+                    mNotificationFactory.showDownloadAborted(d);
                 }
             } catch (SessionDestroyedException e) {
                 Log.e(TAG, "Can not query for bundle", e);
                 
-                mNotificationFactory.showDownloadAborted(bundleid);
+                mNotificationFactory.showDownloadAborted(d);
             } catch (InterruptedException e) {
                 Log.e(TAG, "Can not query for bundle", e);
                 
-                mNotificationFactory.showDownloadAborted(bundleid);
+                mNotificationFactory.showDownloadAborted(d);
             }
         } else if (de.tubs.ibr.dtn.Intent.SENDFILE.equals(action)) {
         	// external call!
@@ -422,7 +422,7 @@ public class DtnService extends IntentService {
         
         if (next != null) {
             if (prefs.getBoolean("notifications", true)) {
-                mNotificationFactory.showPendingDownload(next.getBundleId(), next.getLength(), mDatabase.getPending());
+                mNotificationFactory.showPendingDownload(next, mDatabase.getPending());
             }
         } else {
             mNotificationFactory.cancelPending();
