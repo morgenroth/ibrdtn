@@ -67,15 +67,20 @@
         </activity>
         
         <activity
-            android:icon="@drawable/ic_download"
+            android:icon="@drawable/ic_launcher"
             android:name=".ui.PendingDialog"
             android:label="@string/title_activity_pending_dialog"
             android:theme="@style/Theme.Dialog"
             android:excludeFromRecents="true" />
         
-        <activity android:icon="@drawable/ic_download"
+        <activity android:icon="@drawable/ic_activity_download"
             android:name=".ui.PackageFileActivity"
-            android:label="@string/title_activity_download" />
+            android:label="@string/title_activity_download"
+            android:parentActivityName=".ui.TransferListActivity">
+			<meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="de.tubs.ibr.dtn.sharebox.ui.TransferListActivity" />
+		</activity>
         
         <activity android:icon="@drawable/ic_launcher"
             android:name=".ui.ShareWithActivity"
