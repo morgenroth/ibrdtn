@@ -67,11 +67,11 @@ public class TarExtractor implements Runnable {
                         int ext_delimiter = full_path.lastIndexOf('.');
                         int i = 1;
                         
-                        File newfile = new File(full_path.substring(0, ext_delimiter) + "_" + String.valueOf(i) + full_path.substring(ext_delimiter));
+                        File newfile = new File(full_path.substring(0, ext_delimiter - 1) + "_" + String.valueOf(i) + full_path.substring(ext_delimiter));
                         
                         while (newfile.exists()) {
                             i++;
-                            newfile = new File(full_path.substring(0, ext_delimiter) + "_" + String.valueOf(i) + full_path.substring(ext_delimiter));
+                            newfile = new File(full_path.substring(0, ext_delimiter - 1) + "_" + String.valueOf(i) + full_path.substring(ext_delimiter));
                         }
                         
                         outputFile = newfile;
