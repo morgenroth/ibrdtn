@@ -33,7 +33,7 @@ public class TarCreator implements Runnable {
     public interface OnStateChangeListener {
         void onFileProgress(TarCreator creator, String currentFile, int currentFileNum, int maxFiles);
         void onCopyProgress(TarCreator creator, long current, long max);
-        void onStateChanged(TarCreator creator, int state);
+        void onStateChanged(TarCreator creator, int state, Long bytes);
     }
 
 	public TarCreator(Context context, OutputStream output, List<Uri> uris) {
@@ -49,6 +49,7 @@ public class TarCreator implements Runnable {
 			final TarArchiveOutputStream taos = (TarArchiveOutputStream) new ArchiveStreamFactory().createArchiveOutputStream("tar", mOutput);
 			
 			int currentFile = 0;
+			long bytes = 0;
 			
 			for (Uri uri : mUris) {
 			    currentFile++;
@@ -111,6 +112,8 @@ public class TarCreator implements Runnable {
 
 		                    // add uri to tar archive
 		                    add(taos, uri, filename, filesize);
+		                    
+		                    bytes += filesize;
 			            }
 			        }
 				}
@@ -119,19 +122,19 @@ public class TarCreator implements Runnable {
 			// close the tar output stream
 			taos.close();
 			
-			if (mListener != null) mListener.onStateChanged(this, 1);
+			if (mListener != null) mListener.onStateChanged(this, 1, bytes);
         } catch (ArchiveException e) {
             Log.e(TAG, null, e);
-            if (mListener != null) mListener.onStateChanged(this, -1);
+            if (mListener != null) mListener.onStateChanged(this, -1, null);
         } catch (IOException e) {
             Log.e(TAG, null, e);
-            if (mListener != null) mListener.onStateChanged(this, -1);
+            if (mListener != null) mListener.onStateChanged(this, -1, null);
         } catch (IllegalStateException e) {
             Log.e(TAG, null, e);
-            if (mListener != null) mListener.onStateChanged(this, -1);
+            if (mListener != null) mListener.onStateChanged(this, -1, null);
         } catch (IllegalArgumentException e) {
             Log.e(TAG, null, e);
-            if (mListener != null) mListener.onStateChanged(this, -1);
+            if (mListener != null) mListener.onStateChanged(this, -1, null);
         }
 	}
 	

@@ -270,7 +270,7 @@ public class DtnService extends IntentService {
         }
     }
     
-    private void sendFiles(EID destination, long lifetime, ArrayList<Uri> uris) {
+    private void sendFiles(final EID destination, long lifetime, final ArrayList<Uri> uris) {
         // show upload notification
         mNotificationFactory.showUpload(destination, uris.size());
         
@@ -291,7 +291,7 @@ public class DtnService extends IntentService {
             	private int mLastProgressValue = 0;
                 
                 @Override
-                public void onStateChanged(TarCreator creator, int state) {
+                public void onStateChanged(TarCreator creator, int state, Long bytes) {
                     Log.d(TAG, "TarCreator state changed to " + String.valueOf(state));
                     
                     switch (state) {
@@ -303,9 +303,15 @@ public class DtnService extends IntentService {
                             } catch (Exception e) {
                                 
                             }
+                            
+                            // change send notification into send failed
+                            mNotificationFactory.showUploadAborted(destination);
                             break;
                             
                         case 1:
+                            // change upload notification into send completed
+                            mNotificationFactory.showUploadCompleted(uris.size(), bytes);
+                            
                             // close write side on success
                             try {
                                 pipe[1].close();
@@ -354,14 +360,8 @@ public class DtnService extends IntentService {
                 // wait until the helper thread is finished
                 helper.join();
             }
-            
-            // change upload notification into send completed
-            mNotificationFactory.showUploadCompleted(uris.size());
         } catch (Exception e) {
             Log.e(TAG, "File send failed", e);
-            
-            // change send notification into send failed
-            mNotificationFactory.showUploadAborted(destination);
         }
     }
     

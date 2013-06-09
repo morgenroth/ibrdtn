@@ -171,10 +171,12 @@ public class NotificationFactory {
         mManager.notify(mUploadTimestamp.toString(), ONGOING_UPLOAD, mUploadBuilder.build());
     }
     
-    public void showUploadCompleted(int maxFiles) {
+    public void showUploadCompleted(int maxFiles, long bytes) {
+    	String contentText = mContext.getResources().getQuantityString(R.plurals.notification_completed_upload_text, maxFiles, maxFiles);
+    	
         // update notification
         mUploadBuilder.setContentTitle(mContext.getString(R.string.notification_completed_upload_title));
-        mUploadBuilder.setContentText(mContext.getResources().getQuantityString(R.plurals.notification_completed_upload_text, maxFiles, maxFiles));
+        mUploadBuilder.setContentText(contentText + " (" + Utils.humanReadableByteCount(bytes, true) + ")");
         mUploadBuilder.setProgress(0, 0, false);
         mUploadBuilder.setOngoing(false);
         mUploadBuilder.setAutoCancel(true);
