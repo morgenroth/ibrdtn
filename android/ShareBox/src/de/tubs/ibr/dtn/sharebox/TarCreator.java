@@ -66,22 +66,45 @@ public class TarCreator implements Runnable {
 				} else {
 			        ContentResolver resolver = mContext.getContentResolver();
 			        
-			        // create projection for meta data
-			        String[] proj = { MediaStore.Images.Media.TITLE, MediaStore.Images.Media.SIZE };
-			        
 			        // create a cursor
-			        Cursor cursor = resolver.query(uri, proj, null, null, null);
+			        Cursor cursor = resolver.query(uri, null, null, null, null);
 			        
 			        if (cursor != null) {
-			            int columnIndexTitle = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.TITLE);
-			            int columnIndexSize = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE);
+			        	String filename = uri.getLastPathSegment();
+			        	
+			        	int columnIndexDisplayName = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+			        	int columnIndexTitle = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
+			            int columnIndexData = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+			            int columnIndexSize = cursor.getColumnIndex(MediaStore.MediaColumns.SIZE);
 			            
 			            if (cursor.moveToFirst()) {
 		                    MimeTypeMap mime = MimeTypeMap.getSingleton();
-		                    String type = mime.getExtensionFromMimeType(resolver.getType(uri));
-
-			                String filename = cursor.getString(columnIndexTitle) + "." + type;
-			                Long filesize = cursor.getLong(columnIndexSize);
+		                    String displayName = (columnIndexDisplayName == -1) ? null : cursor.getString(columnIndexDisplayName);
+		                    String data = (columnIndexData == -1) ? null : cursor.getString(columnIndexData);
+		                    String title = (columnIndexTitle == -1) ? null : cursor.getString(columnIndexTitle);
+			                Long filesize = (columnIndexSize == -1) ? null : cursor.getLong(columnIndexSize);
+			                
+			                Log.d(TAG, "Uri: " + uri.getPath() + ", Name: " + displayName + ", Data: " + data + ", Title: " + title + ", Size: " + filesize);
+			                
+			                if (displayName != null) {
+			                	// use displayName as filename if available
+			                	filename = displayName;
+			                } else if (data != null) {
+				                // use data as filename if available
+			                	filename = data;
+			                } else if (title != null) {
+				                // use title as filename if available
+			                	filename = title;
+			                }
+			                
+			                // check if the file has an extension
+			                int type_delim = filename.indexOf('.');
+			                if ((type_delim <= 1) || (type_delim >= filename.length())) {
+			                	String type = mime.getExtensionFromMimeType(resolver.getType(uri));
+			                	
+			                	// attach a type extension if there is none
+			                	filename += "." + type;
+			                }
 			                
 			                // update notification
 		                    if (mListener != null) mListener.onFileProgress(this, filename, currentFile, mUris.size());
