@@ -11,7 +11,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
-import android.text.Html;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.sharebox.data.Download;
@@ -65,9 +64,11 @@ public class NotificationFactory {
     public void showDownload(Download d) {
         String bytesText = Utils.humanReadableByteCount(d.getLength(), true);
         
+        String contentTitle = mContext.getString(R.string.notification_ongoing_download_title);
+        
         // create notification with progressbar
         mDownloadBuilder = new NotificationCompat.Builder(mContext);
-        mDownloadBuilder.setContentTitle(mContext.getString(R.string.notification_ongoing_download_title));
+        mDownloadBuilder.setContentTitle(String.format(contentTitle, d.getId()));
         mDownloadBuilder.setContentText(String.format(mContext.getString(R.string.notification_ongoing_download_text), bytesText));
         mDownloadBuilder.setSmallIcon(R.drawable.ic_stat_download);
         mDownloadBuilder.setProgress(0, 0, true);
@@ -83,7 +84,6 @@ public class NotificationFactory {
         Uri downloadUri = Uri.fromParts("download", d.getId().toString(), "");
         
         // update notification
-        mDownloadBuilder.setContentTitle(mContext.getString(R.string.notification_completed_download_title));
         mDownloadBuilder.setContentText(String.format(mContext.getString(R.string.notification_completed_download_text), bytesText, d.getBundleId().getSource()));
         mDownloadBuilder.setProgress(0, 0, false);
         mDownloadBuilder.setOngoing(false);
@@ -104,7 +104,6 @@ public class NotificationFactory {
 
     public void showDownloadAborted(Download d) {
         // update notification
-        mDownloadBuilder.setContentTitle(mContext.getString(R.string.notification_aborted_download_title));
         mDownloadBuilder.setContentText(String.format(mContext.getString(R.string.notification_aborted_download_text), d.getBundleId().getSource()));
         mDownloadBuilder.setProgress(0, 0, false);
         mDownloadBuilder.setOngoing(false);
@@ -145,13 +144,7 @@ public class NotificationFactory {
         String content = mContext.getString(R.string.notification_ongoing_upload_progress_text);
         
         // write current file into the description
-        mUploadBuilder.setContentText(String.format(content, currentFile));
-
-//        // progress text
-//        String subtext = mContext.getString(R.string.notification_ongoing_upload_progress_subtext);
-//        
-//        // write the progress into the description
-//        mUploadBuilder.setSubText(String.format(subtext, currentFileNum, maxFiles));
+        mUploadBuilder.setContentText(String.format(content, currentFileNum, maxFiles, currentFile));
         
         // display the progress
         mManager.notify(mUploadTimestamp.toString(), ONGOING_UPLOAD, mUploadBuilder.build());
@@ -172,11 +165,10 @@ public class NotificationFactory {
     }
     
     public void showUploadCompleted(int maxFiles, long bytes) {
-    	String contentText = mContext.getResources().getQuantityString(R.plurals.notification_completed_upload_text, maxFiles, maxFiles);
+    	String contentText = mContext.getString(R.string.notification_completed_upload_text);
     	
         // update notification
-        mUploadBuilder.setContentTitle(mContext.getString(R.string.notification_completed_upload_title));
-        mUploadBuilder.setContentText(contentText + " (" + Utils.humanReadableByteCount(bytes, true) + ")");
+        mUploadBuilder.setContentText(String.format(contentText, Utils.humanReadableByteCount(bytes, true)));
         mUploadBuilder.setProgress(0, 0, false);
         mUploadBuilder.setOngoing(false);
         mUploadBuilder.setAutoCancel(true);
@@ -194,7 +186,6 @@ public class NotificationFactory {
 
     public void showUploadAborted(EID destination) {
         // update notification
-        mUploadBuilder.setContentTitle(mContext.getString(R.string.notification_aborted_upload_title));
         mUploadBuilder.setContentText(String.format(mContext.getString(R.string.notification_aborted_upload_text), destination.toString()));
         mUploadBuilder.setProgress(0, 0, false);
         mUploadBuilder.setOngoing(false);
@@ -227,12 +218,31 @@ public class NotificationFactory {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext);
         setNotificationSettings(builder);
         
-        builder.setContentTitle(mContext.getResources().getQuantityString(R.plurals.notification_pending_download_title, pendingCount));
+        String contentTitle = mContext.getResources().getQuantityString(
+	    			R.plurals.notification_pending_download_title, 
+	    			pendingCount,
+	    			pendingCount,
+	    			d.getId(), 
+	    			Utils.humanReadableByteCount(d.getLength(), true)
+    			);
+        
+        String contentText = mContext.getResources().getQuantityString(
+	        		R.plurals.notification_pending_download_text,
+	        		pendingCount,
+	        		pendingCount,
+	        		d.getSource().toString()
+        		);
+        
+        builder.setContentTitle(contentTitle);
+        builder.setContentText(contentText);
+        builder.setTicker(mContext.getResources().getQuantityString(R.plurals.notification_pending_download_ticker, pendingCount, pendingCount));
         builder.setSmallIcon(R.drawable.ic_stat_download);
         builder.setWhen( System.currentTimeMillis() );
         builder.setOnlyAlertOnce(true);
         
         Uri downloadUri = Uri.fromParts("download", d.getId().toString(), "");
+        
+        Intent resultIntent = null;
         
         if (pendingCount == 1) {
             Intent dismissIntent = new Intent(mContext, DtnService.class);
@@ -250,33 +260,25 @@ public class NotificationFactory {
             builder.addAction(R.drawable.ic_stat_accept, mContext.getResources().getString(R.string.notification_accept_text), piAccept);
             builder.addAction(R.drawable.ic_stat_reject, mContext.getResources().getString(R.string.notification_reject_text), piDismiss);
             
-            Intent dialogIntent = new Intent(mContext, PendingDialog.class);
-            dialogIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, d.getBundleId());
-            dialogIntent.putExtra(DtnService.EXTRA_KEY_LENGTH, d.getLength());
-            dialogIntent.setData(downloadUri);
-
-            builder.setContentText(String.format(mContext.getString(R.string.notification_pending_download_from), d.getBundleId().toString()));
-            builder.setTicker(mContext.getResources().getQuantityString(R.plurals.notification_pending_download_text, pendingCount, pendingCount));
+            // open the transmission dialog on click
+            resultIntent = new Intent(mContext, PendingDialog.class);
+            resultIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, d.getBundleId());
+            resultIntent.putExtra(DtnService.EXTRA_KEY_LENGTH, d.getLength());
+            resultIntent.setData(downloadUri);
             
-            String htmlMessage = 
-                    String.format(mContext.getString(R.string.transmission_summary_text),
-                    		d.getBundleId().getSource().toString(), Utils.humanReadableByteCount(d.getLength(), true));
-            
-            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(Html.fromHtml(htmlMessage)));
-            
-            // create the pending intent
-            PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, dialogIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-            builder.setContentIntent(contentIntent);
+//            String htmlMessage = 
+//                    String.format(mContext.getString(R.string.transmission_summary_text),
+//                    		d.getBundleId().getSource().toString(), Utils.humanReadableByteCount(d.getLength(), true));
+//            
+//            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(Html.fromHtml(htmlMessage)));
         } else {
-            builder.setContentText(mContext.getResources().getQuantityString(R.plurals.notification_pending_download_text, pendingCount, pendingCount));
-            builder.setTicker(mContext.getResources().getQuantityString(R.plurals.notification_pending_download_text, pendingCount, pendingCount));
-            
-            Intent resultIntent = new Intent(mContext, TransferListActivity.class);
-            
-            // create the pending intent
-            PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-            builder.setContentIntent(contentIntent);
+        	// open main activity on click
+            resultIntent = new Intent(mContext, TransferListActivity.class);
         }
+        
+        // create the pending intent
+        PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(contentIntent);
         
         mManager.notify(PENDING_DOWNLOAD, builder.build());
     }
