@@ -14,6 +14,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
 import android.util.Log;
+import de.tubs.ibr.dtn.sharebox.data.Utils;
 
 public class TarExtractor implements Runnable {
     
@@ -61,21 +62,8 @@ public class TarExtractor implements Runnable {
                         }
                     }
                     
-                    // rename if the file already exists
-                    if (outputFile.exists()) {
-                        String full_path = outputFile.getAbsolutePath();
-                        int ext_delimiter = full_path.lastIndexOf('.');
-                        int i = 1;
-                        
-                        File newfile = new File(full_path.substring(0, ext_delimiter - 1) + "_" + String.valueOf(i) + full_path.substring(ext_delimiter));
-                        
-                        while (newfile.exists()) {
-                            i++;
-                            newfile = new File(full_path.substring(0, ext_delimiter - 1) + "_" + String.valueOf(i) + full_path.substring(ext_delimiter));
-                        }
-                        
-                        outputFile = newfile;
-                    }
+                    // generate a unique (non-existing) filename
+                    outputFile = Utils.getUniqueFilename(outputFile);
                     
                     final OutputStream ofs = new FileOutputStream(outputFile.getAbsolutePath());
                     IOUtils.copy(tais, ofs);

@@ -143,4 +143,34 @@ public class Utils {
 		}
 		return type;
 	}
+	
+	public static File getUniqueFilename(File f) {
+		File ret = f;
+		
+        // rename if the file already exists
+    	String filepath = f.getParentFile().getAbsolutePath();
+        final String filename = f.getName();
+        int ext_delimiter = filename.lastIndexOf('.');
+        
+        int i = 0;
+        
+        while (ret.exists()) {
+        	i++;
+        	
+        	String targetFilename = filename;
+        	
+            if (ext_delimiter == 0) {
+            	throw new IllegalArgumentException();
+            }
+            else if (ext_delimiter > 0) {
+            	targetFilename = filename.substring(0, ext_delimiter) + "_" + String.valueOf(i) + filename.substring(ext_delimiter);
+            } else {
+            	targetFilename = filename + "_" + String.valueOf(i);
+            }
+            
+            ret = new File(filepath + File.separator + targetFilename);
+        }
+
+        return ret;
+	}
 }
