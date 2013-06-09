@@ -51,76 +51,86 @@ public class TarCreator implements Runnable {
 			int currentFile = 0;
 			long bytes = 0;
 			
-			for (Uri uri : mUris) {
-			    currentFile++;
-			    
-				if (uri.getScheme() == "file") {
-				    File f = new File(uri.getPath());
+			try {
+				for (Uri uri : mUris) {
+				    currentFile++;
 				    
-				    if (f.exists()) {
-				        // update notification
-    	                if (mListener != null) mListener.onFileProgress(this, f.getName(), currentFile, mUris.size());
-    				    
-    	                // add file to tar archive
-    				    add(taos, f);
-				    }
-				} else {
-			        ContentResolver resolver = mContext.getContentResolver();
-			        
-			        // create a cursor
-			        Cursor cursor = resolver.query(uri, null, null, null, null);
-			        
-			        if (cursor != null) {
-			        	String filename = uri.getLastPathSegment();
-			        	
-			        	int columnIndexDisplayName = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
-			        	int columnIndexTitle = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
-			            int columnIndexData = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
-			            int columnIndexSize = cursor.getColumnIndex(MediaStore.MediaColumns.SIZE);
-			            
-			            if (cursor.moveToFirst()) {
-		                    MimeTypeMap mime = MimeTypeMap.getSingleton();
-		                    String displayName = (columnIndexDisplayName == -1) ? null : cursor.getString(columnIndexDisplayName);
-		                    String data = (columnIndexData == -1) ? null : cursor.getString(columnIndexData);
-		                    String title = (columnIndexTitle == -1) ? null : cursor.getString(columnIndexTitle);
-			                Long filesize = (columnIndexSize == -1) ? null : cursor.getLong(columnIndexSize);
-			                
-			                Log.d(TAG, "Uri: " + uri.getPath() + ", Name: " + displayName + ", Data: " + data + ", Title: " + title + ", Size: " + filesize);
-			                
-			                if (displayName != null) {
-			                	// use displayName as filename if available
-			                	filename = displayName;
-			                } else if (data != null) {
-				                // use data as filename if available
-			                	filename = data;
-			                } else if (title != null) {
-				                // use title as filename if available
-			                	filename = title;
-			                }
-			                
-			                // check if the file has an extension
-			                int type_delim = filename.indexOf('.');
-			                if ((type_delim <= 1) || (type_delim >= filename.length())) {
-			                	String type = mime.getExtensionFromMimeType(resolver.getType(uri));
-			                	
-			                	// attach a type extension if there is none
-			                	filename += "." + type;
-			                }
-			                
-			                // update notification
-		                    if (mListener != null) mListener.onFileProgress(this, filename, currentFile, mUris.size());
-
-		                    // add uri to tar archive
-		                    add(taos, uri, filename, filesize);
-		                    
-		                    bytes += filesize;
-			            }
-			        }
+					if (uri.getScheme() == "file") {
+					    File f = new File(uri.getPath());
+					    
+					    if (f.exists()) {
+					        // update notification
+	    	                if (mListener != null) mListener.onFileProgress(this, f.getName(), currentFile, mUris.size());
+	    				    
+	    	                // add file to tar archive
+	    				    add(taos, f);
+					    }
+					} else {
+				        ContentResolver resolver = mContext.getContentResolver();
+				        
+				        // create a cursor
+				        Cursor cursor = resolver.query(uri, null, null, null, null);
+				        
+				        if (cursor != null) {
+				        	try {
+					        	String filename = uri.getLastPathSegment();
+					        	
+					        	int columnIndexDisplayName = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
+					        	int columnIndexTitle = cursor.getColumnIndex(MediaStore.MediaColumns.TITLE);
+					            int columnIndexData = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+					            int columnIndexSize = cursor.getColumnIndex(MediaStore.MediaColumns.SIZE);
+					            
+					            if (cursor.moveToFirst()) {
+				                    MimeTypeMap mime = MimeTypeMap.getSingleton();
+				                    String displayName = (columnIndexDisplayName == -1) ? null : cursor.getString(columnIndexDisplayName);
+				                    String data = (columnIndexData == -1) ? null : cursor.getString(columnIndexData);
+				                    String title = (columnIndexTitle == -1) ? null : cursor.getString(columnIndexTitle);
+					                Long filesize = (columnIndexSize == -1) ? null : cursor.getLong(columnIndexSize);
+					                
+					                Log.d(TAG, "Uri: " + uri.getPath() + ", Name: " + displayName + ", Data: " + data + ", Title: " + title + ", Size: " + filesize);
+					                
+					                if (displayName != null) {
+					                	// use displayName as filename if available
+					                	filename = displayName;
+					                } else if (data != null) {
+						                // use data as filename if available
+					                	filename = (new File(data)).getName();
+					                } else if (title != null) {
+						                // use title as filename if available
+					                	filename = title;
+					                }
+					                
+					                // check if the file has an extension
+					                int type_delim = filename.indexOf('.');
+					                if ((type_delim <= 1) || (type_delim >= filename.length())) {
+					                	String type = mime.getExtensionFromMimeType(resolver.getType(uri));
+					                	
+					                	// attach a type extension if there is none
+					                	filename += "." + type;
+					                }
+					                
+					                // update notification
+				                    if (mListener != null) mListener.onFileProgress(this, filename, currentFile, mUris.size());
+		
+				                    // add uri to tar archive
+				                    add(taos, uri, filename, filesize);
+				                    
+				                    bytes += filesize;
+					            }
+				        	} finally {
+					            // close the cursor
+					            cursor.close();
+				        	}
+				        }
+					}
 				}
+	        } catch (IOException e) {
+	            Log.e(TAG, null, e);
+	            throw e;
+			} finally {
+				// close the tar output stream
+				taos.close();
 			}
-			
-			// close the tar output stream
-			taos.close();
 			
 			if (mListener != null) mListener.onStateChanged(this, 1, bytes);
         } catch (ArchiveException e) {
@@ -157,9 +167,6 @@ public class TarCreator implements Runnable {
 	}
 	
 	private void add(TarArchiveOutputStream taos, Uri uri, String filename, long length) throws IOException {
-        // open the content as stream
-        final InputStream is = mContext.getContentResolver().openInputStream(uri);
-        
         // create a new entry
         TarArchiveEntry entry = new TarArchiveEntry(filename);
         
@@ -174,11 +181,16 @@ public class TarCreator implements Runnable {
         // add entry to the archive
         taos.putArchiveEntry(entry);
         
-        // copy the payload into the archive
-        copy(is, taos, length);
+        // open the content as stream
+        final InputStream is = mContext.getContentResolver().openInputStream(uri);
         
-        // close the source file
-        is.close();
+        try {
+	        // copy the payload into the archive
+	        copy(is, taos, length);
+        } finally {
+            // close the source file
+            is.close();
+        }
         
         // finalize the archive entry
         taos.closeArchiveEntry();
@@ -202,11 +214,13 @@ public class TarCreator implements Runnable {
         // open the content as stream
         final InputStream is = new FileInputStream(f);
         
-        // copy the payload into the archive
-        copy(is, taos, f.length());
-        
-        // close the source file
-        is.close();
+        try {
+	        // copy the payload into the archive
+	        copy(is, taos, f.length());
+        } finally {
+	        // close the source file
+	        is.close();
+        }
         
         // finalize the archive entry
         taos.closeArchiveEntry();
