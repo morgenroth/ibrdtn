@@ -55,7 +55,7 @@ public class TarCreator implements Runnable {
 				for (Uri uri : mUris) {
 				    currentFile++;
 				    
-					if (uri.getScheme() == "file") {
+					if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
 					    File f = new File(uri.getPath());
 					    
 					    if (f.exists()) {
@@ -65,7 +65,8 @@ public class TarCreator implements Runnable {
 	    	                // add file to tar archive
 	    				    add(taos, f);
 					    }
-					} else {
+					}
+					else if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme())) {
 				        ContentResolver resolver = mContext.getContentResolver();
 				        
 				        // create a cursor
@@ -87,7 +88,7 @@ public class TarCreator implements Runnable {
 				                    String title = (columnIndexTitle == -1) ? null : cursor.getString(columnIndexTitle);
 					                Long filesize = (columnIndexSize == -1) ? null : cursor.getLong(columnIndexSize);
 					                
-					                Log.d(TAG, "Uri: " + uri.getPath() + ", Name: " + displayName + ", Data: " + data + ", Title: " + title + ", Size: " + filesize);
+					                Log.d(TAG, "Uri: " + uri.toString() + ", Name: " + displayName + ", Data: " + data + ", Title: " + title + ", Size: " + filesize);
 					                
 					                if (displayName != null) {
 					                	// use displayName as filename if available
@@ -122,6 +123,8 @@ public class TarCreator implements Runnable {
 					            cursor.close();
 				        	}
 				        }
+					} else {
+						// type not supported - skip the file
 					}
 				}
 	        } catch (IOException e) {
