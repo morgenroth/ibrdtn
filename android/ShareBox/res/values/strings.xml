@@ -31,4 +31,8 @@
     <string name="item_file_title">%1$d</string>
     <string name="item_file_text">%1$s</string>
 
+    <plurals name="listitem_multi_title">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
 </resources>

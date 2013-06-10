@@ -2,23 +2,29 @@ package de.tubs.ibr.dtn.sharebox.ui;
 
 import java.io.File;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.CursorAdapter;
+import android.util.SparseBooleanArray;
+import android.view.ActionMode;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -67,6 +73,9 @@ public class PackageFileListFragment extends ListFragment implements LoaderManag
         return f;
     }
     
+    @SuppressLint({
+            "NewApi", "InlinedApi"
+    })
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -76,12 +85,74 @@ public class PackageFileListFragment extends ListFragment implements LoaderManag
         // enable context menu
         registerForContextMenu(getListView());
         
+        // enable action bar selection
+        if (Build.VERSION.SDK_INT >= 11) {
+            getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+            getListView().setMultiChoiceModeListener(mMultiChoiceListener);
+        }
+        
         mAdapter = new PackageFileAdapter(getActivity(), null, new PackageFileAdapter.ColumnsMap());
         setListAdapter(mAdapter);
         
         // Start out with a progress indicator.
         setListShown(false);
     }
+    
+    @SuppressLint("NewApi")
+    private AbsListView.MultiChoiceModeListener mMultiChoiceListener = new AbsListView.MultiChoiceModeListener() {
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            switch (item.getItemId())
+            {
+            case R.id.itemDelete:
+                SparseBooleanArray selected = getListView().getCheckedItemPositions();
+                int cntChoice = getListView().getCount();
+                for (int i = 0; i < cntChoice; i++) {
+                    if (selected.get(i)) {
+                        View view = getListView().getChildAt(i);
+                        if (view instanceof PackageFileItem) {
+                            PackageFileItem pfi = (PackageFileItem)view;
+                            PackageFile pf = pfi.getObject();
+
+                            Database db = mService.getDatabase();
+                            db.remove(pf);
+                        }
+                    }
+                }
+                mode.finish();
+                return true;
+                
+            default:
+                return true;
+            }
+        }
+
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            String title = getResources().getQuantityString(R.plurals.listitem_multi_title, 1, 1);
+            mode.setTitle(title);
+            return true;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            MenuInflater inflater = getActivity().getMenuInflater();
+            inflater.inflate(R.menu.item_menu, menu);
+            return true;
+        }
+
+        @Override
+        public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+            int selectCount = getListView().getCheckedItemCount();
+            String title = getResources().getQuantityString(R.plurals.listitem_multi_title, selectCount, selectCount);
+            mode.setTitle(title);
+        }
+    };
     
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {

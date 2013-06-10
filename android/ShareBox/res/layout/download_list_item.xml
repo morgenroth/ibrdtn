@@ -2,7 +2,8 @@
     android:layout_width="wrap_content"
     android:layout_height="?android:attr/listPreferredItemHeight"
     android:gravity="center_vertical"
-    android:padding="6dip" >
+    android:padding="6dip"
+    android:background="@drawable/listitem_background">
     
     <ImageView
         android:id="@+id/icon"

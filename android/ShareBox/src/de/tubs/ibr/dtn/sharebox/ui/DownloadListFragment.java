@@ -1,10 +1,12 @@
 package de.tubs.ibr.dtn.sharebox.ui;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.ListFragment;
@@ -12,12 +14,15 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.CursorAdapter;
+import android.util.SparseBooleanArray;
+import android.view.ActionMode;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import de.tubs.ibr.dtn.sharebox.DtnService;
@@ -73,6 +78,7 @@ public class DownloadListFragment extends ListFragment implements LoaderManager.
         return f;
     }
     
+    @SuppressLint("NewApi")
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -81,6 +87,12 @@ public class DownloadListFragment extends ListFragment implements LoaderManager.
         
         // enable options menu
         setHasOptionsMenu(true);
+        
+        // enable action bar selection
+        if (Build.VERSION.SDK_INT >= 11) {
+            getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+            getListView().setMultiChoiceModeListener(mMultiChoiceListener);
+        }
         
         // enable context menu
         registerForContextMenu(getListView());
@@ -97,6 +109,65 @@ public class DownloadListFragment extends ListFragment implements LoaderManager.
         inflater.inflate(R.menu.main_menu, menu);
         MenuItemCompat.setShowAsAction(menu.findItem(R.id.itemClearList), MenuItemCompat.SHOW_AS_ACTION_NEVER | MenuItemCompat.SHOW_AS_ACTION_WITH_TEXT);
     }
+    
+    @SuppressLint("NewApi")
+    private AbsListView.MultiChoiceModeListener mMultiChoiceListener = new AbsListView.MultiChoiceModeListener() {
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            switch (item.getItemId())
+            {
+            case R.id.itemDelete:
+                SparseBooleanArray selected = getListView().getCheckedItemPositions();
+                int cntChoice = getListView().getCount();
+                for (int i = 0; i < cntChoice; i++) {
+                    if (selected.get(i)) {
+                        View view = getListView().getChildAt(i);
+                        if (view instanceof DownloadItem) {
+                            // delete all selected items
+                            DownloadItem di = (DownloadItem)view;
+                            Download d = di.getObject();
+        
+                            Intent rejectIntent = new Intent(getActivity(), DtnService.class);
+                            rejectIntent.setAction(DtnService.REJECT_DOWNLOAD_INTENT);
+                            rejectIntent.putExtra(DtnService.EXTRA_KEY_BUNDLE_ID, d.getBundleId());
+                            getActivity().startService(rejectIntent);
+                        }
+                    }
+                }
+                mode.finish();
+                return true;
+                
+            default:
+                return true;
+            }
+        }
+
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            String title = getResources().getQuantityString(R.plurals.listitem_multi_title, 1, 1);
+            mode.setTitle(title);
+            return true;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            MenuInflater inflater = getActivity().getMenuInflater();
+            inflater.inflate(R.menu.item_menu, menu);
+            return true;
+        }
+
+        @Override
+        public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+            int selectCount = getListView().getCheckedItemCount();
+            String title = getResources().getQuantityString(R.plurals.listitem_multi_title, selectCount, selectCount);
+            mode.setTitle(title);
+        }
+    };
     
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
