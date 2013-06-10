@@ -276,6 +276,12 @@ namespace dtn
 //			 */
 //			int prepareBundle(list<std::string> &filenames, dtn::data::Bundle &bundle);
 
+			/**
+			 * Purge a specific bundle out of the storage
+			 * This procedure do not throw any exception and cleans as much data
+			 * as possible references to the given bundle identifier.
+			 */
+			void purge(const dtn::data::BundleID &id) throw ();
 
 			/**
 			 * @see Component::getName()
