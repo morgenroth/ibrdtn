@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -40,6 +41,7 @@ import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.sharebox.data.Database;
 import de.tubs.ibr.dtn.sharebox.data.Download;
 import de.tubs.ibr.dtn.sharebox.data.Download.State;
+import de.tubs.ibr.dtn.sharebox.data.TruncatedInputStream;
 import de.tubs.ibr.dtn.sharebox.data.Utils;
 
 public class DtnService extends IntentService {
@@ -532,8 +534,10 @@ public class DtnService extends IntentService {
                         mReadFd = p[0];
                         mWriteFd = p[1];
                         
+                        InputStream is = new TruncatedInputStream(new FileInputStream(mReadFd.getFileDescriptor()), block.length);
+                        
                         // create a new tar extractor
-                        mExtractor = new TarExtractor(new FileInputStream(mReadFd.getFileDescriptor()), folder);
+                        mExtractor = new TarExtractor(is, folder);
                         mExtractor.setOnStateChangeListener(mExtractorListener);
                         mExtractorThread = new Thread(mExtractor);
                         mExtractorThread.start();
