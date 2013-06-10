@@ -45,6 +45,8 @@ public class PackageFileListFragment extends ListFragment implements LoaderManag
     private DtnService mService = null;
     private Boolean mBound = false;
     
+    private AbsListView.MultiChoiceModeListener mMultiChoiceListener = null;
+    
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName name, IBinder service) {
             mService = ((DtnService.LocalBinder)service).getService();
@@ -87,6 +89,61 @@ public class PackageFileListFragment extends ListFragment implements LoaderManag
         
         // enable action bar selection
         if (Build.VERSION.SDK_INT >= 11) {
+            mMultiChoiceListener = new AbsListView.MultiChoiceModeListener() {
+
+                @Override
+                public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                    switch (item.getItemId())
+                    {
+                    case R.id.itemDelete:
+                        SparseBooleanArray selected = getListView().getCheckedItemPositions();
+                        int cntChoice = getListView().getCount();
+                        for (int i = 0; i < cntChoice; i++) {
+                            if (selected.get(i)) {
+                                View view = getListView().getChildAt(i);
+                                if (view instanceof PackageFileItem) {
+                                    PackageFileItem pfi = (PackageFileItem)view;
+                                    PackageFile pf = pfi.getObject();
+
+                                    Database db = mService.getDatabase();
+                                    db.remove(pf);
+                                }
+                            }
+                        }
+                        mode.finish();
+                        return true;
+                        
+                    default:
+                        return true;
+                    }
+                }
+
+                @Override
+                public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                    String title = getResources().getQuantityString(R.plurals.listitem_multi_title, 1, 1);
+                    mode.setTitle(title);
+                    return true;
+                }
+
+                @Override
+                public void onDestroyActionMode(ActionMode mode) {
+                }
+
+                @Override
+                public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                    MenuInflater inflater = getActivity().getMenuInflater();
+                    inflater.inflate(R.menu.item_menu, menu);
+                    return true;
+                }
+
+                @Override
+                public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
+                    int selectCount = getListView().getCheckedItemCount();
+                    String title = getResources().getQuantityString(R.plurals.listitem_multi_title, selectCount, selectCount);
+                    mode.setTitle(title);
+                }
+            };
+            
             getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
             getListView().setMultiChoiceModeListener(mMultiChoiceListener);
         }
@@ -97,63 +154,7 @@ public class PackageFileListFragment extends ListFragment implements LoaderManag
         // Start out with a progress indicator.
         setListShown(false);
     }
-    
-    @SuppressLint("NewApi")
-    private AbsListView.MultiChoiceModeListener mMultiChoiceListener = new AbsListView.MultiChoiceModeListener() {
 
-        @Override
-        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            switch (item.getItemId())
-            {
-            case R.id.itemDelete:
-                SparseBooleanArray selected = getListView().getCheckedItemPositions();
-                int cntChoice = getListView().getCount();
-                for (int i = 0; i < cntChoice; i++) {
-                    if (selected.get(i)) {
-                        View view = getListView().getChildAt(i);
-                        if (view instanceof PackageFileItem) {
-                            PackageFileItem pfi = (PackageFileItem)view;
-                            PackageFile pf = pfi.getObject();
-
-                            Database db = mService.getDatabase();
-                            db.remove(pf);
-                        }
-                    }
-                }
-                mode.finish();
-                return true;
-                
-            default:
-                return true;
-            }
-        }
-
-        @Override
-        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-            String title = getResources().getQuantityString(R.plurals.listitem_multi_title, 1, 1);
-            mode.setTitle(title);
-            return true;
-        }
-
-        @Override
-        public void onDestroyActionMode(ActionMode mode) {
-        }
-
-        @Override
-        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-            MenuInflater inflater = getActivity().getMenuInflater();
-            inflater.inflate(R.menu.item_menu, menu);
-            return true;
-        }
-
-        @Override
-        public void onItemCheckedStateChanged(ActionMode mode, int position, long id, boolean checked) {
-            int selectCount = getListView().getCheckedItemCount();
-            String title = getResources().getQuantityString(R.plurals.listitem_multi_title, selectCount, selectCount);
-            mode.setTitle(title);
-        }
-    };
-    
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);

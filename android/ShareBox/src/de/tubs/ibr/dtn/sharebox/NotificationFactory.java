@@ -74,6 +74,11 @@ public class NotificationFactory {
         mDownloadBuilder.setProgress(0, 0, true);
         mDownloadBuilder.setOngoing(true);
         
+        // add default content intent
+        Intent resultIntent = new Intent(mContext, TransferListActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mDownloadBuilder.setContentIntent(contentIntent);
+        
         // display the progress
         mManager.notify(d.getBundleId().toString(), ONGOING_DOWNLOAD, mDownloadBuilder.build());
     }
@@ -159,6 +164,11 @@ public class NotificationFactory {
         mUploadBuilder.setSmallIcon(R.drawable.ic_stat_upload);
         mUploadBuilder.setProgress(0, 0, true);
         mUploadBuilder.setOngoing(true);
+        
+        // add default content intent
+        Intent resultIntent = new Intent(mContext, TransferListActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(mContext, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        mUploadBuilder.setContentIntent(contentIntent);
         
         // display the progress
         mManager.notify(mUploadTimestamp.toString(), ONGOING_UPLOAD, mUploadBuilder.build());
