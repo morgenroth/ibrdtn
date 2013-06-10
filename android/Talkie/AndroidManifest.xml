@@ -59,7 +59,7 @@
 	        </intent-filter>
 	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
-	            <category android:name="de.tubs.ibr.dtn.intent.category.SESSION" />
+	            <category android:name="de.tubs.ibr.dtn.dtalkie" />
 	        </intent-filter>
 	    </receiver>
     </application>

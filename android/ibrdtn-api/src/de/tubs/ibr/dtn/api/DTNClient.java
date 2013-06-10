@@ -370,7 +370,7 @@ public final class DTNClient {
   		
 		// register to daemon events
 		IntentFilter rfilter = new IntentFilter(de.tubs.ibr.dtn.Intent.REGISTRATION);
-		rfilter.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
+		rfilter.addCategory(context.getApplicationContext().getPackageName());
 		context.registerReceiver(mStateReceiver, rfilter );
   		
 		// Establish a connection with the service.
