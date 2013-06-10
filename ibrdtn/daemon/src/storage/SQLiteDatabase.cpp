@@ -338,9 +338,6 @@ namespace dtn
 
 		void SQLiteDatabase::get(const dtn::data::BundleID &id, dtn::data::MetaBundle &meta) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException)
 		{
-			// check if the bundle is already on the deletion list
-			if (contains_deletion(id)) throw dtn::storage::NoBundleFoundException();
-
 			// lock the prepared statement
 			Statement st(_database, _sql_queries[BUNDLE_GET_ID]);
 
@@ -515,8 +512,8 @@ namespace dtn
 				// extract the primary values and set them in the bundle object
 				get(st, m, 0);
 
-				// check if the bundle is already on the deletion list
-				if ( !contains_deletion(m) && !dtn::utils::Clock::isExpired( m.timestamp, m.lifetime ) )
+				// check if the bundle is already expired
+				if ( !dtn::utils::Clock::isExpired( m.timestamp, m.lifetime ) )
 				{
 					// ask the filter if this bundle should be added to the return list
 					if (cb.shouldAdd(m))
@@ -540,9 +537,6 @@ namespace dtn
 			int err = 0;
 
 			IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 25) << "get bundle from sqlite storage " << id.toString() << IBRCOMMON_LOGGER_ENDL;
-
-			// if bundle is deleted?
-			if (contains_deletion(id)) throw dtn::storage::NoBundleFoundException();
 
 			// do this while db is locked
 			Statement st(_database, _sql_queries[BUNDLE_GET_ID]);
@@ -773,9 +767,6 @@ namespace dtn
 
 			//update deprecated timer
 			update_expire_time();
-
-			// remove it from the deletion list
-			remove_deletion(id);
 		}
 
 		void SQLiteDatabase::clear() throw (SQLiteDatabase::SQLiteQueryException)
@@ -971,21 +962,6 @@ namespace dtn
 		const dtn::data::Timestamp& SQLiteDatabase::get_expire_time() const throw ()
 		{
 			return _next_expiration;
-		}
-
-		void SQLiteDatabase::add_deletion(const dtn::data::BundleID &id) throw ()
-		{
-			_deletion_list.insert(id);
-		}
-
-		void SQLiteDatabase::remove_deletion(const dtn::data::BundleID &id) throw ()
-		{
-			_deletion_list.erase(id);
-		}
-
-		bool SQLiteDatabase::contains_deletion(const dtn::data::BundleID &id) const throw ()
-		{
-			return (_deletion_list.find(id) != _deletion_list.end());
 		}
 
 		void SQLiteDatabase::set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset) const throw (SQLiteDatabase::SQLiteQueryException)

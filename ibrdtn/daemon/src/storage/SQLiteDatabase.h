@@ -326,13 +326,6 @@ namespace dtn
 			// next expiration
 			dtn::data::Timestamp _next_expiration;
 
-			void add_deletion(const dtn::data::BundleID &id) throw ();
-			void remove_deletion(const dtn::data::BundleID &id) throw ();
-			bool contains_deletion(const dtn::data::BundleID &id) const throw ();
-
-			// set of bundles to delete
-			std::set<dtn::data::BundleID> _deletion_list;
-
 			// listener for events on the database
 			DatabaseListener &_listener;
 
