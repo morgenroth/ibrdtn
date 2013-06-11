@@ -590,7 +590,8 @@ public class DaemonProcess {
 			}
 
 			// limit block size to 50 MB
-			p.println("limit_blocksize = 50M");
+			p.println("limit_blocksize = 250M");
+			p.println("limit_foreign_blocksize = 50M");
 
 			String secmode = preferences.getString("security_mode", "disabled");
 
