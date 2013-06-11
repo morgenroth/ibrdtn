@@ -84,6 +84,10 @@ namespace dtn
 
 			std::string getDelimiter() const;
 
+			/**
+			 * Return the EID with stripped application part
+			 * @return The EID without any application specific part
+			 */
 			EID getNode() const throw ();
 
 			bool hasApplication() const;
