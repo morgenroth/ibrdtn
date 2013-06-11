@@ -29,9 +29,6 @@ namespace dtn
 {
 	namespace net
 	{
-		ibrcommon::Mutex BundleTransfer::Slot::_slot_lock;
-		BundleTransfer::Slot::slot_map BundleTransfer::Slot::_slot_map;
-
 		BundleTransfer::BundleTransfer(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &bundle)
 		 : _slot(new Slot(neighbor, bundle))
 		{
@@ -44,29 +41,10 @@ namespace dtn
 		BundleTransfer::Slot::Slot(const dtn::data::EID &n, const dtn::data::MetaBundle &b)
 		 : neighbor(n), bundle(b), _completed(false), _aborted(false), _abort_reason(TransferAbortedEvent::REASON_UNDEFINED)
 		{
-			ibrcommon::MutexLock l(_slot_lock);
-			if (_slot_map.find(neighbor) == _slot_map.end())
-			{
-				_slot_map[neighbor] = 1;
-			}
-			else
-			{
-				++(_slot_map[neighbor]);
-			}
 		}
 
 		BundleTransfer::Slot::~Slot()
 		{
-			ibrcommon::MutexLock l(_slot_lock);
-			if (_slot_map[neighbor] == 1)
-			{
-				_slot_map.erase(neighbor);
-			}
-			else
-			{
-				--(_slot_map[neighbor]);
-			}
-
 			if (_aborted) {
 				// fire TransferAbortedEvent
 				dtn::net::TransferAbortedEvent::raise(neighbor, bundle, _abort_reason);
@@ -76,17 +54,6 @@ namespace dtn
 			} else {
 				dtn::routing::RequeueBundleEvent::raise(neighbor, bundle);
 			}
-		}
-
-		dtn::data::Size BundleTransfer::count(const dtn::data::EID &neighbor)
-		{
-			return Slot::count(neighbor);
-		}
-
-		dtn::data::Size BundleTransfer::Slot::count(const dtn::data::EID &neighbor)
-		{
-			ibrcommon::MutexLock l(_slot_lock);
-			return _slot_map[neighbor];
 		}
 
 		const dtn::data::EID& BundleTransfer::getNeighbor() const
