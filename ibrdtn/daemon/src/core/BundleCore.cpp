@@ -67,6 +67,7 @@ namespace dtn
 		dtn::data::EID BundleCore::local;
 
 		dtn::data::Length BundleCore::blocksizelimit = 0;
+		dtn::data::Length BundleCore::foreign_blocksizelimit = 0;
 		dtn::data::Length BundleCore::max_lifetime = 0;
 		dtn::data::Length BundleCore::max_timestamp_future = 0;
 		dtn::data::Size BundleCore::max_bundles_in_transit = 5;
@@ -132,6 +133,13 @@ namespace dtn
 			if (dtn::core::BundleCore::blocksizelimit > 0)
 			{
 				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Block size limited to " << dtn::core::BundleCore::blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			// set block size limit
+			dtn::core::BundleCore::foreign_blocksizelimit = config.getLimit("foreign_blocksize");
+			if (dtn::core::BundleCore::foreign_blocksizelimit > 0)
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Block size of foreign bundles limited to " << dtn::core::BundleCore::foreign_blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// set the lifetime limit
@@ -433,17 +441,6 @@ namespace dtn
 
 		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)
 		{
-			/*
-			 *
-			 * TODO: reject a bundle if...
-			 * ... it is expired (moved to validate(Bundle) to support AgeBlock for expiration)
-			 * ... already in the storage
-			 * ... a fragment of an already received bundle in the storage
-			 *
-			 * throw dtn::data::DefaultDeserializer::RejectedException();
-			 *
-			 */
-
 			// if we do not forward bundles
 			if (!BundleCore::forwarding)
 			{
@@ -483,16 +480,8 @@ namespace dtn
 
 		void BundleCore::validate(const dtn::data::Block&, const dtn::data::Number& size) const throw (dtn::data::Validator::RejectedException)
 		{
-			/*
-			 *
-			 * reject a block if
-			 * ... it exceeds the payload limit
-			 *
-			 * throw dtn::data::DefaultDeserializer::RejectedException();
-			 *
-			 */
-
 			// check for the size of the block
+			// reject a block if it exceeds the payload limit
 			if ((BundleCore::blocksizelimit > 0) && (size > BundleCore::blocksizelimit))
 			{
 				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
@@ -502,35 +491,33 @@ namespace dtn
 
 		void BundleCore::validate(const dtn::data::PrimaryBlock &bundle, const dtn::data::Block&, const dtn::data::Number& size) const throw (RejectedException)
 		{
-			/*
-			 *
-			 * reject a block if
-			 * ... it exceeds the payload limit
-			 *
-			 * throw dtn::data::DefaultDeserializer::RejectedException();
-			 *
-			 */
+			// check for the size of the foreign block
+			// reject a block if it exceeds the payload limit
+			if (BundleCore::foreign_blocksizelimit > 0) {
+				if (size > BundleCore::foreign_blocksizelimit) {
+					if (bundle.source.getNode() != dtn::core::BundleCore::local) {
+						if (bundle.destination.getNode() != dtn::core::BundleCore::local) {
+							IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "foreign bundle " << bundle.toString() << " rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
+							throw dtn::data::Validator::RejectedException("foreign block size is too big");
+						}
+					}
+				}
+			}
 
 			// check for the size of the block
-			if ((BundleCore::blocksizelimit > 0) && (size > BundleCore::blocksizelimit))
+			// reject a block if it exceeds the payload limit
+			if (BundleCore::blocksizelimit > 0)
 			{
-				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle " << bundle.toString() << " rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
-				throw dtn::data::Validator::RejectedException("block size is too big");
+				if (size > BundleCore::blocksizelimit)
+				{
+					IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle " << bundle.toString() << " rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
+					throw dtn::data::Validator::RejectedException("block size is too big");
+				}
 			}
 		}
 
 		void BundleCore::validate(const dtn::data::Bundle &b) const throw (dtn::data::Validator::RejectedException)
 		{
-			/*
-			 *
-			 * TODO: reject a bundle if
-			 * ... the security checks (DTNSEC) failed
-			 * ... a checksum mismatch is detected (CRC)
-			 *
-			 * throw dtn::data::DefaultDeserializer::RejectedException();
-			 *
-			 */
-
 			// reject bundles without destination
 			if (b.destination.isNone())
 			{
