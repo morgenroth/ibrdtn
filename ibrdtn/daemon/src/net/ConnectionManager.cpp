@@ -112,8 +112,12 @@ namespace dtn
 					case NODE_AVAILABLE:
 						if (n.doConnectImmediately())
 						{
-							// open the connection immediately
-							open(n);
+							try {
+								// open the connection immediately
+								open(n);
+							} catch (const ibrcommon::Exception&) {
+								// ignore errors
+							}
 						}
 						break;
 
@@ -341,12 +345,16 @@ namespace dtn
 
 			while (!_connect_nodes.empty())
 			{
-				open(_connect_nodes.front());
+				try {
+					open(_connect_nodes.front());
+				} catch (const ibrcommon::Exception&) {
+					// ignore errors
+				}
 				_connect_nodes.pop();
 			}
 		}
 
-		void ConnectionManager::open(const dtn::core::Node &node)
+		void ConnectionManager::open(const dtn::core::Node &node) throw (ibrcommon::Exception)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
 
@@ -363,7 +371,16 @@ namespace dtn
 				}
 			}
 
-			throw ConnectionNotAvailableException();
+			// throw dial-up exception if there are P2P dial-up connections available
+			if (node.hasDialup())
+			{
+				// trigger the dial-up connection
+				dialup(node);
+
+				throw dtn::core::P2PDialupException();
+			}
+
+			throw dtn::net::ConnectionNotAvailableException();
 		}
 
 		void ConnectionManager::dialup(const dtn::core::Node &n)

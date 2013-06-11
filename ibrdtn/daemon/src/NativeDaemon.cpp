@@ -526,7 +526,9 @@ namespace dtn
 			try {
 				const dtn::core::Node n = cm.getNeighbor(neighbor);
 				cm.open(n);
-			} catch (const dtn::net::NeighborNotAvailableException&) { }
+			} catch (const ibrcommon::Exception&) {
+				// ignore errors
+			}
 		}
 
 		void NativeDaemon::setLogging(const std::string &defaultTag, int logLevel) const throw ()

@@ -100,7 +100,7 @@ namespace dtn
 				};
 			};
 
-			void open(const dtn::core::Node &node);
+			void open(const dtn::core::Node &node) throw (ibrcommon::Exception);
 
 			/**
 			 * get a set with all neighbors
