@@ -206,7 +206,7 @@ namespace dtn
 			/**
 			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException);
+			virtual void get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException);
 
 			/**
 			 * Retrieve the meta data of a given bundle

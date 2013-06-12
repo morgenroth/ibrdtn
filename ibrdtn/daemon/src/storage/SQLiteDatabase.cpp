@@ -440,7 +440,7 @@ namespace dtn
 			st.reset();
 		}
 
-		void SQLiteDatabase::get(BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException)
+		void SQLiteDatabase::get(const BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 
@@ -453,7 +453,7 @@ namespace dtn
 
 			try {
 				try {
-					SQLBundleQuery &query = dynamic_cast<SQLBundleQuery&>(cb);
+					const SQLBundleQuery &query = dynamic_cast<const SQLBundleQuery&>(cb);
 
 					// custom query string
 					std::string query_string = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset LIMIT ?,?;";

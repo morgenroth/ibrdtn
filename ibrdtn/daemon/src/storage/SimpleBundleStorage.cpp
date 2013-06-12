@@ -249,7 +249,7 @@ namespace dtn
 			_datastore.setFaulty(mode);
 		}
 
-		void SimpleBundleStorage::get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
+		void SimpleBundleStorage::get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 

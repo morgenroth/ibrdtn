@@ -228,7 +228,7 @@ namespace dtn
 			return SQLiteBundleStorage::eid_set();
 		}
 
-		void SQLiteBundleStorage::get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
+		void SQLiteBundleStorage::get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
 			_database.get(cb, result);
