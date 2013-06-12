@@ -68,6 +68,7 @@ fi
 
 add_param $CONFFILE "ibrdtn.main.max_predated_timestamp" "limit_predated_timestamp"
 add_param $CONFFILE "ibrdtn.main.limit_lifetime" "limit_lifetime"
+add_param $CONFFILE "ibrdtn.main.foreign_blocksize" "limit_foreign_blocksize"
 
 add_param $CONFFILE "ibrdtn.discovery.address" "discovery_address"
 add_param $CONFFILE "ibrdtn.discovery.timeout" "discovery_timeout"

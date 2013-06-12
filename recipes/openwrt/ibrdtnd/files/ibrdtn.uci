@@ -17,7 +17,8 @@ config 'daemon' 'main'
 #	option debug		20
 
 	# block size limit
-#	option blocksize	512M
+#	option blocksize		512M
+#	option foreign_blocksize	128M
 
 
 #
