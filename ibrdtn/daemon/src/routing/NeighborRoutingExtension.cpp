@@ -132,7 +132,7 @@ namespace dtn
 							ibrcommon::MutexLock l(db);
 							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
-							// check if enough transfer slots available (threadhold reached)
+							// check if enough transfer slots available (threshold reached)
 							if (!entry.isTransferThresholdReached())
 								throw NeighborDatabase::NoMoreTransfersAvailable();
 
