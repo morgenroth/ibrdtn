@@ -56,6 +56,13 @@ namespace dtn
 				const dtn::data::EID eid;
 			};
 
+			class NoRouteKnownException : public ibrcommon::Exception
+			{
+			public:
+				NoRouteKnownException() : ibrcommon::Exception("No route known.") { };
+				virtual ~NoRouteKnownException() throw () { };
+			};
+
 			class NoMoreTransfersAvailable : public ibrcommon::Exception
 			{
 			public:
