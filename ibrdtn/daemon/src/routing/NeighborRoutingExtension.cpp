@@ -247,8 +247,10 @@ namespace dtn
 				{
 					const dtn::core::Node &n = (*iter);
 
-					// transfer the next bundle to this destination
-					_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin, n.getEID()) );
+					if (n.getEID() != queued.origin) {
+						// transfer the next bundle to this destination
+						_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin, n.getEID()) );
+					}
 				}
 
 				return;

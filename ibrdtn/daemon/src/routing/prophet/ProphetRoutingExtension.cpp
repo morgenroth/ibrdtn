@@ -235,7 +235,7 @@ namespace dtn
 
 			// If an incoming bundle is received, forward it to all connected neighbors
 			try {
-				dynamic_cast<const QueueBundleEvent&>(*evt);
+				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
 
 				// new bundles trigger a recheck for all neighbors
 				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
@@ -244,8 +244,10 @@ namespace dtn
 				{
 					const dtn::core::Node &n = (*iter);
 
-					// transfer the next bundle to this destination
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+					if (n.getEID() != queued.origin) {
+						// transfer the next bundle to this destination
+						_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+					}
 				}
 				return;
 			} catch (const std::bad_cast&) { };
