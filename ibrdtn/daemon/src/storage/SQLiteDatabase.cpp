@@ -94,9 +94,9 @@ namespace dtn
 			"SELECT expiretime FROM "+ _tables[SQL_TABLE_SEEN_BUNDLES] +" ORDER BY expiretime ASC LIMIT 1;",
 
 			//NAMED_SEEN_BUNDLE_*
-			"INSERT INTO " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime, namae) VALUES (?,?,?,?,?,?);",
+			"INSERT INTO " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime, name) VALUES (?,?,?,?,?,?);",
 			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name = ?;",
-			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + "WHERE name = ?;",
+			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name = ?;",
 
 			"VACUUM;",
 		};

@@ -28,7 +28,7 @@ namespace dtn
 		BundleSetImpl* BundleSetFactory::create(std::string name, BundleSet::Listener* listener, Size bf_size){
 
 			if(BundleSetFactory::bundleSetFactory != NULL)
-				return bundleSetFactory->createBundleSet(listener,bf_size);
+				return bundleSetFactory->createBundleSet(name,listener,bf_size);
 
 
 			return new MemoryBundleSet(listener,bf_size); //MemoryBundleSet does not support naming
