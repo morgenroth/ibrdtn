@@ -152,30 +152,37 @@ void BundleSetTest::orderTest(){
 
 void BundleSetTest::namingTest(){
 
-	dtn::data::BundleSet a; //unnamed bundle
-	CPPUNIT_ASSERT(!a.isNamed());
-	dtn::data::BundleSet b("testBundleSetB");
-	CPPUNIT_ASSERT(b.isNamed());
-	dtn::data::BundleSet c("testBundleSetC");
-	CPPUNIT_ASSERT(c.isNamed());
+	std::string name1 = "test1BundleSet1";
+	std::string name2 = "test2BundleSet2";
 
-	if(a.getType() == "MemoryBundleSet" || b.getType() == "MemoryBundleSet"){
+	dtn::data::BundleSet a; //unnamed bundle
+	dtn::data::BundleSet b(name1);
+	dtn::data::BundleSet c(name2);
+
+	CPPUNIT_ASSERT(!a.isNamed());
+
+	if(a.getType() == "MemoryBundleSet" || b.getType() == "MemoryBundleSet" || c.getType() == "MemoryBundleSet"){
 		return; //MemoryBundleSet does not support naming
 	}
+
+	CPPUNIT_ASSERT(b.isNamed());
+	CPPUNIT_ASSERT(c.isNamed());
+	CPPUNIT_ASSERT_EQUAL(name1,b.getName());
+	CPPUNIT_ASSERT_EQUAL(name2,c.getName());
 
 	genbundles(a,500,1,0);
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, a.size());
 	genbundles(b,500,1,0);
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, b.size());
-	//genbundles(c,500,1,0);
-	//CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, c.size());
+	genbundles(c,500,1,0);
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, c.size());
 
-	/*a.clear();
+	a.clear();
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, a.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, b.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, c.size());
 
-	b.clear();
+	/*b.clear();
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, a.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, b.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, c.size());
