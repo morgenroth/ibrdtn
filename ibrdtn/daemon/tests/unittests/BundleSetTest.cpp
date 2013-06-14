@@ -244,28 +244,55 @@ void BundleSetTest::namingTest(){
 
 
 }
+
+void BundleSetTest::performanceTest()
+{
+	BundleSet set("a");
+	tm.start();
+	int i = 1000;
+	MetaBundle last;
+	while(i>0)
+	{
+		i--;
+
+		if(i%2 == 0)
+		{
+			genbundles(set,100,10,15);
+		} else
+		{
+			set.clear();
+		}
+
+	}
+	tm.stop();
+
+	std::cout << std::endl << "completed after " << tm ;
+
+}
 void BundleSetTest::genbundles(dtn::data::BundleSet &l, int number, int offset, int max)
 {
 	int range = max - offset;
-	dtn::data::MetaBundle b;
 
 	for (int i = 0; i < number; ++i)
 	{
-		int random_integer = offset + (rand() % range);
-
-		b.lifetime = random_integer;
-		b.expiretime = random_integer;
-
-		b.timestamp = 1;
-		b.sequencenumber = random_integer;
-
-		stringstream ss; ss << rand();
-
-		b.source = dtn::data::EID("dtn://node" + ss.str() + "/application");
-
-
-		l.add(b);
+		l.add(genBundle(offset,range));
 	}
+}
+dtn::data::MetaBundle BundleSetTest::genBundle(int offset, int range)
+{
+	dtn::data::MetaBundle b;
+	int random_integer = offset + (rand() % range);
+
+	b.lifetime = random_integer;
+	b.expiretime = random_integer;
+
+	b.timestamp = 1;
+	b.sequencenumber = random_integer;
+
+	stringstream ss; ss << rand();
+
+	b.source = dtn::data::EID("dtn://node" + ss.str() + "/application");
+	return b;
 }
 BundleSetTest::ExpiredBundleCounter::ExpiredBundleCounter()
  : counter(0)

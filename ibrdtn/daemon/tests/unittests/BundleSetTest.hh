@@ -25,6 +25,7 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include <ibrcommon/TimeMeasurement.h>
 
 #include "config.h"
 #include "storage/BundleStorage.h"
@@ -35,6 +36,7 @@ class BundleSetTest : public CppUnit::TestFixture {
 	private:
 
 		ibrtest::EventSwitchLoop *esl;
+		ibrcommon::TimeMeasurement tm;
 
 
 		class ExpiredBundleCounter : public dtn::data::BundleSet::Listener
@@ -47,6 +49,7 @@ class BundleSetTest : public CppUnit::TestFixture {
 			int counter;
 		};
 		void genbundles(dtn::data::BundleSet &l, int number, int offset, int max);
+		dtn::data::MetaBundle genBundle(int offset, int range);
 
 	public:
 #define CPPUNIT_TEST_ALL_STORAGES(testMethod) \
@@ -62,6 +65,7 @@ class BundleSetTest : public CppUnit::TestFixture {
 		void containTest();
 		void orderTest();
 		void namingTest();
+		void performanceTest();
 
 		void setUp();
 		void tearDown();
@@ -77,6 +81,7 @@ class BundleSetTest : public CppUnit::TestFixture {
 		CPPUNIT_TEST_ALL_STORAGES(containTest);
 		CPPUNIT_TEST_ALL_STORAGES(orderTest);
 		CPPUNIT_TEST_ALL_STORAGES(namingTest);
+		CPPUNIT_TEST_ALL_STORAGES(performanceTest);
 		CPPUNIT_TEST_SUITE_END();
 
 		static size_t testCounter;
