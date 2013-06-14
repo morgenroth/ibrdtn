@@ -2,8 +2,8 @@
 
 dist_noinst_DATA = test-key.pem
 
-h_sources = data/TestSDNV.h data/TestBundleList.h data/TestBundleSet.h data/TestDictionary.h data/TestSerializer.h net/TestStreamConnection.h api/TestPlainSerializer.h utils/TestUtils.h data/TestExtensionBlock.h data/TestTrackingBlock.h
-cc_sources = data/TestSDNV.cpp data/TestBundleList.cpp data/TestBundleSet.cpp data/TestDictionary.cpp data/TestSerializer.cpp net/TestStreamConnection.cpp api/TestPlainSerializer.cpp utils/TestUtils.cpp data/TestExtensionBlock.cpp data/TestTrackingBlock.cpp Main.cpp
+h_sources = data/TestSDNV.h data/TestBundleList.h data/TestDictionary.h data/TestSerializer.h net/TestStreamConnection.h api/TestPlainSerializer.h utils/TestUtils.h data/TestExtensionBlock.h data/TestTrackingBlock.h
+cc_sources = data/TestSDNV.cpp data/TestBundleList.cpp data/TestDictionary.cpp data/TestSerializer.cpp net/TestStreamConnection.cpp api/TestPlainSerializer.cpp utils/TestUtils.cpp data/TestExtensionBlock.cpp data/TestTrackingBlock.cpp Main.cpp
 
 if DTNSEC
 h_sources += security/TestSecurityBlock.h security/PayloadConfidentialBlockTest.h security/PayloadIntegrityBlockTest.h
