@@ -169,7 +169,6 @@ void BundleSetTest::namingTest(){
 	CPPUNIT_ASSERT(c.isNamed());
 	CPPUNIT_ASSERT_EQUAL(name1,b.getName());
 	CPPUNIT_ASSERT_EQUAL(name2,c.getName());
-
 	genbundles(a,500,1,0);
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, a.size());
 	genbundles(b,500,1,0);
@@ -182,7 +181,7 @@ void BundleSetTest::namingTest(){
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, b.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, c.size());
 
-	/*b.clear();
+	b.clear();
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, a.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, b.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, c.size());
@@ -190,7 +189,7 @@ void BundleSetTest::namingTest(){
 	c.clear();
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, a.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, b.size());
-	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, c.size());*/
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, c.size());
 
 }
 void BundleSetTest::genbundles(dtn::data::BundleSet &l, int number, int offset, int max)

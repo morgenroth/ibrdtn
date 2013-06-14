@@ -85,12 +85,12 @@ namespace dtn
 
 			//SEEN_BUNDLE_*
 			"INSERT INTO " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime) VALUES (?,?,?,?,?);",
-			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name NOT null;",
+			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name IS null;",
 			"SELECT * FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
 			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE expiretime <= ?;",
 			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 			"SELECT * FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + ";",
-			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + ";",
+			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name IS null;",
 			"SELECT expiretime FROM "+ _tables[SQL_TABLE_SEEN_BUNDLES] +" ORDER BY expiretime ASC LIMIT 1;",
 
 			//NAMED_SEEN_BUNDLE_*
