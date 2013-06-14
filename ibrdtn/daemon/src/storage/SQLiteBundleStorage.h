@@ -64,8 +64,9 @@ namespace dtn
 			 * @param Pfad zum Ordner in denen die Datein gespeichert werden.
 			 * @param Dateiname der Datenbank
 			 * @param maximale Größe der Datenbank
+			 * @param should bundleSets be stored persistently in database? standard: false
 			 */
-			SQLiteBundleStorage(const ibrcommon::File &path, const dtn::data::Length &maxsize);
+			SQLiteBundleStorage(const ibrcommon::File &path, const dtn::data::Length &maxsize, bool usePersistentBundleSets = false);
 
 			/**
 			 * destructor
