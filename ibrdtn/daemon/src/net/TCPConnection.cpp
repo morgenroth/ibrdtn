@@ -633,8 +633,7 @@ namespace dtn
 						dtn::data::Bundle bundle = storage.get(transfer.getBundle());
 
 #ifdef WITH_BUNDLE_SECURITY
-						const dtn::daemon::Configuration::Security::Level seclevel =
-								dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
+						const int seclevel = dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
 
 						if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
 						{

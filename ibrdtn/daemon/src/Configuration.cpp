@@ -1066,7 +1066,7 @@ namespace dtn
 			return _path;
 		}
 
-		Configuration::Security::Level Configuration::Security::getLevel() const
+		int Configuration::Security::getLevel() const
 		{
 			return _level;
 		}

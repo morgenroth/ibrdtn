@@ -187,6 +187,16 @@ namespace dtn
 					throw VerificationFailedException("No PCB available!");
 			}
 
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
+			{
+				// check if the bundle is signed and throw an exception if not
+				//throw VerificationFailedException("Bundle is not signed");
+				IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 10) << "signature required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+				if (std::count(bundle.begin(), bundle.end(), dtn::security::PayloadIntegrityBlock::BLOCK_TYPE) == 0)
+					throw VerificationFailedException("No PIB available!");
+			}
+
 			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
 			{
 				// check if the bundle is signed and throw an exception if not

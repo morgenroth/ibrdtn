@@ -422,13 +422,14 @@ namespace dtn
 				{
 					SECURITY_LEVEL_NONE = 0,
 					SECURITY_LEVEL_AUTHENTICATED = 1,
-					SECURITY_LEVEL_ENCRYPTED = 2
+					SECURITY_LEVEL_ENCRYPTED = 2,
+					SECURITY_LEVEL_SIGNED = 4
 				};
 
 				/**
 				 * Get the configured security level
 				 */
-				Level getLevel() const;
+				int getLevel() const;
 
 				/**
 				 * Get the path to security related files
@@ -467,7 +468,7 @@ namespace dtn
 				ibrcommon::File _path;
 
 				// security level
-				Level _level;
+				int _level;
 
 				// local BAB key
 				ibrcommon::File _bab_default_key;
