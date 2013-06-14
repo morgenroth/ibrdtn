@@ -170,41 +170,78 @@ void BundleSetTest::namingTest(){
 	std::string name1 = "test1BundleSet1";
 	std::string name2 = "test2BundleSet2";
 
-	dtn::data::BundleSet a; //unnamed bundle
+	dtn::data::BundleSet a; //automatically named BundleSet
 	dtn::data::BundleSet b(name1);
-	dtn::data::BundleSet c(name2);
+	dtn::data::BundleSet c;
+	dtn::data::BundleSet d(name2);
+	dtn::data::BundleSet e(name2);
 
-	CPPUNIT_ASSERT(!a.isNamed());
-
-	if(a.getType() == "MemoryBundleSet" || b.getType() == "MemoryBundleSet" || c.getType() == "MemoryBundleSet"){
+	if(		a.getType() == "MemoryBundleSet" ||
+			b.getType() == "MemoryBundleSet" ||
+			c.getType() == "MemoryBundleSet" ||
+			d.getType() == "MemoryBundleSet" ||
+			e.getType() == "MemoryBundleSet" ){
 		return; //MemoryBundleSet does not support naming
 	}
 
-	CPPUNIT_ASSERT(b.isNamed());
-	CPPUNIT_ASSERT(c.isNamed());
+
+	//check persistency
+	CPPUNIT_ASSERT(!a.isPersistent());
+	CPPUNIT_ASSERT(b.isPersistent());
+	CPPUNIT_ASSERT(!c.isPersistent());
+	CPPUNIT_ASSERT(d.isPersistent());
+	CPPUNIT_ASSERT(e.isPersistent());
+
+	//check correct names in persistent bundles
 	CPPUNIT_ASSERT_EQUAL(name1,b.getName());
-	CPPUNIT_ASSERT_EQUAL(name2,c.getName());
+	CPPUNIT_ASSERT_EQUAL(name2,d.getName());
+
+
+	//create bundles in each set, check if size is correct
 	genbundles(a,500,1,0);
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, a.size());
 	genbundles(b,500,1,0);
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, b.size());
 	genbundles(c,500,1,0);
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, c.size());
+	genbundles(d,500,1,0);
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, d.size());
+	genbundles(e,500,1,0);
 
+	//bundle with same should have double as many bundles
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, d.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, e.size());
+
+	//clear each set individually, check if size is correct
 	a.clear();
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, a.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, b.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, c.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, d.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, e.size());
 
 	b.clear();
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, a.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, b.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, c.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, d.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, e.size());
 
 	c.clear();
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, a.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, b.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, c.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, d.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, e.size());
+
+	d.clear();
+	e.clear();
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, a.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, b.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, c.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, d.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, e.size());
+
 
 }
 void BundleSetTest::genbundles(dtn::data::BundleSet &l, int number, int offset, int max)
