@@ -76,6 +76,8 @@ namespace dtn
 
 			std::string _name;
 
+			int _name_id;
+
 			ibrcommon::BloomFilter _bf;
 
 			dtn::data::BundleSet::Listener *_listener;

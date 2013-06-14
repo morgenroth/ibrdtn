@@ -84,13 +84,13 @@ namespace dtn
 				SEEN_BUNDLE_CLEAR,
 				SEEN_BUNDLE_GET,
 				SEEN_BUNDLE_EXPIRE,
-				SEEN_BUNDLE_REMOVE,
 				SEEN_BUNDLE_GETALL,
 				SEEN_BUNDLE_COUNT,
 				SEEN_BUNDLE_EXPIRE_NEXT_TIMESTAMP,
 
 				BUNDLENAME_ADD,
 				BUNDLENAME_COUNT,
+				BUNDLENAME_GET_NAME_ID,
 
 				VACUUM,
 				SQL_QUERIES_END
@@ -267,7 +267,7 @@ namespace dtn
 			 * add a named seen bundle to the database
 			 * @param name name, bundle bundle
 			 */
-			void add_seen_bundle(std::string name, const dtn::data::MetaBundle &bundle) throw (SQLiteQueryException);
+			void add_seen_bundle(int name_id, const dtn::data::MetaBundle &bundle) throw (SQLiteQueryException);
 
 			/**
 			 * returns true, if database contains the bundle, false if not
@@ -277,7 +277,7 @@ namespace dtn
 			/*
 			 * removes all bundles from a named bundleset
 			 */
-			void clear_seen_bundles(std::string name) throw (SQLiteQueryException);
+			void clear_seen_bundles(int name_id) throw (SQLiteQueryException);
 
 			/*
 			 * removes specific bundle from database
@@ -292,12 +292,13 @@ namespace dtn
 			/*
 			 * returns number of seen bundles
 			 */
-			dtn::data::Size count_seen_bundles(std::string name) const throw (SQLiteQueryException);
+			dtn::data::Size count_seen_bundles(int name_id) const throw (SQLiteQueryException);
 
 			/*
 			 * adds a used bundlename
+			 * @return name_id
 			 */
-			void add_used_bundlename(std::string name) const throw (SQLiteQueryException);
+			int add_used_bundlename(std::string name) const throw (SQLiteQueryException);
 
 			/*
 			 * returns true, if a specific bundlename is used

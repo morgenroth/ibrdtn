@@ -35,13 +35,14 @@ namespace dtn
 			do {
 				_name = rand.gen_chars(32);
 			} while(_database.is_used_bundlename(_name));
-			_database.add_used_bundlename(_name);
+
+			_name_id = _database.add_used_bundlename(_name);
 		}
 
 		SQLiteBundleSet::SQLiteBundleSet(std::string name, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database)
 		 : _name(name),_bf(bf_size * 8), _listener(listener), _consistent(true),_database(database), _isPersistent(true)
 		{
-			_database.add_used_bundlename(_name);
+			_name_id = _database.add_used_bundlename(_name);
 		}
 
 		SQLiteBundleSet::~SQLiteBundleSet()
@@ -52,7 +53,7 @@ namespace dtn
 		void SQLiteBundleSet::add(const dtn::data::MetaBundle &bundle) throw()
 		{
 			// insert bundle id into database
-			_database.add_seen_bundle(_name,bundle);
+			_database.add_seen_bundle(_name_id,bundle);
 
 			//update expiretime, if necessary
 			new_expire_time(bundle.expiretime);
@@ -63,7 +64,7 @@ namespace dtn
 
 		void SQLiteBundleSet::clear() throw()
 		{
-			_database.clear_seen_bundles(_name);
+			_database.clear_seen_bundles(_name_id);
 		}
 
 		bool SQLiteBundleSet::has(const dtn::data::BundleID &bundle) const throw()
@@ -101,7 +102,7 @@ namespace dtn
 
 		dtn::data::Size SQLiteBundleSet::size() const throw()
 		{
-			return _database.count_seen_bundles(_name);
+			return _database.count_seen_bundles(_name_id);
 		}
 
 		dtn::data::Length SQLiteBundleSet::getLength() const throw()
