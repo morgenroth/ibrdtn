@@ -142,6 +142,11 @@ namespace dtn
 			 */
 			std::string getStorage() const;
 
+			/**
+			 * returns, whether Persistent BundleSets are used (stored in SQL database)
+			 */
+			std::string getUsePersistentBundleSets() const;
+
 			enum RoutingExtension
 			{
 				DEFAULT_ROUTING = 0,

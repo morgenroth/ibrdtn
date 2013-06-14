@@ -549,6 +549,11 @@ namespace dtn
 			return _conf.read<std::string>("storage", "default");
 		}
 
+		std::string Configuration::getUsePersistentBundleSets() const
+		{
+			return _conf.read<std::string>("use_persistent_bundlesets","no");
+		}
+
 		void Configuration::Network::load(const ibrcommon::ConfigFile &conf)
 		{
 			/**
