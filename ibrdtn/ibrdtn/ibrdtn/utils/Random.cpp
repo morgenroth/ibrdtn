@@ -23,6 +23,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <vector>
+#include <sys/time.h>
 
 namespace dtn
 {
@@ -30,8 +31,16 @@ namespace dtn
 	{
 		Random::Random()
 		{
-			// initialize a random seed
-			srand(static_cast<unsigned int>(time(0)));
+			static bool initialized = false;
+
+			if (!initialized) {
+				struct timeval time;
+				::gettimeofday(&time, NULL);
+
+				// initialize a random seed only once
+				srand(static_cast<unsigned int>((time.tv_sec * 100) + (time.tv_usec / 100)));
+				initialized = true;
+			}
 		}
 
 		Random::~Random()
