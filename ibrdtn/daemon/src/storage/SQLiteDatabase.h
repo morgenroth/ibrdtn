@@ -48,7 +48,8 @@ namespace dtn
 				SQL_TABLE_NODE_ROUTING_INFO = 4,
 				SQL_TABLE_PROPERTIES = 5,
 				SQL_TABLE_SEEN_BUNDLES = 6,
-				SQL_TABLE_END = 7
+				SQL_TABLE_BUNDLENAME = 7,
+				SQL_TABLE_END = 8
 			};
 
 			// enum of all possible statements
@@ -88,10 +89,8 @@ namespace dtn
 				SEEN_BUNDLE_COUNT,
 				SEEN_BUNDLE_EXPIRE_NEXT_TIMESTAMP,
 
-				NAMED_SEEN_BUNDLE_ADD,
-				NAMED_SEEN_BUNDLE_CLEAR,
-				NAMED_SEEN_BUNDLE_COUNT,
-
+				BUNDLENAME_ADD,
+				BUNDLENAME_COUNT,
 
 				VACUUM,
 				SQL_QUERIES_END
@@ -110,7 +109,7 @@ namespace dtn
 			static const std::string _sql_queries[SQL_QUERIES_END];
 
 			// array of the db structure as sql
-			static const int DB_STRUCTURE_END = 13;
+			static const int DB_STRUCTURE_END = 14;
 			static const std::string _db_structure[DB_STRUCTURE_END];
 
 			static const std::string TAG;
@@ -265,16 +264,10 @@ namespace dtn
 			void iterateAll() throw (SQLiteQueryException);
 
 			/**
-			 * add a seen bundle to the database
-			 * @param bundle
-			 */
-			void add_seen_bundle(const dtn::data::MetaBundle &bundle) throw (SQLiteQueryException);
-
-			/**
 			 * add a named seen bundle to the database
 			 * @param name name, bundle bundle
 			 */
-			void add_named_seen_bundle(std::string name, const dtn::data::MetaBundle &bundle) throw (SQLiteQueryException);
+			void add_seen_bundle(std::string name, const dtn::data::MetaBundle &bundle) throw (SQLiteQueryException);
 
 			/**
 			 * returns true, if database contains the bundle, false if not
@@ -282,15 +275,9 @@ namespace dtn
 			bool contains_seen_bundle(const dtn::data::BundleID &id) const throw (SQLiteQueryException);
 
 			/*
-			 * removes all seen bundles from database
-			 * does not remove named bundles!
-			 */
-			void clear_seen_bundles() throw (SQLiteQueryException);
-
-			/*
 			 * removes all bundles from a named bundleset
 			 */
-			void clear_named_seen_bundles(std::string name) throw (SQLiteQueryException);
+			void clear_seen_bundles(std::string name) throw (SQLiteQueryException);
 
 			/*
 			 * removes specific bundle from database
@@ -301,14 +288,22 @@ namespace dtn
 			 * returns a set of all bundles contained in the database
 			 */
 			std::set<dtn::data::MetaBundle> get_all_seen_bundles() throw (SQLiteQueryException);
+
 			/*
 			 * returns number of seen bundles
 			 */
-			dtn::data::Size count_seen_bundles() const throw (SQLiteQueryException);
+			dtn::data::Size count_seen_bundles(std::string name) const throw (SQLiteQueryException);
 
+			/*
+			 * adds a used bundlename
+			 */
+			void add_used_bundlename(std::string name) const throw (SQLiteQueryException);
 
-			dtn::data::Size count_named_seen_bundles(std::string name) const throw (SQLiteQueryException);
+			/*
+			 * returns true, if a specific bundlename is used
+			 */
 
+			bool is_used_bundlename(std::string name) const throw (SQLiteQueryException);
 
 			/*** BEGIN: methods for unit-testing ***/
 

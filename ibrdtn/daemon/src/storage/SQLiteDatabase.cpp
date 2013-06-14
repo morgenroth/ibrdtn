@@ -44,12 +44,12 @@ namespace dtn
 		};
 
 		const std::string SQLiteDatabase::_tables[SQL_TABLE_END] =
-				{ "bundles", "blocks", "routing", "routing_bundles", "routing_nodes", "properties", "seen_bundles" };
+				{ "bundles", "blocks", "routing", "routing_bundles", "routing_nodes", "properties", "seen_bundles", "used_bundlenames" };
 
 		// this is the version of a fresh created db scheme
-		const int SQLiteDatabase::DBSCHEMA_FRESH_VERSION = 4;
+		const int SQLiteDatabase::DBSCHEMA_FRESH_VERSION = 5;
 
-		const int SQLiteDatabase::DBSCHEMA_VERSION = 4;
+		const int SQLiteDatabase::DBSCHEMA_VERSION = 5;
 
 		const std::string SQLiteDatabase::QUERY_SCHEMAVERSION = "SELECT `value` FROM " + SQLiteDatabase::_tables[SQLiteDatabase::SQL_TABLE_PROPERTIES] + " WHERE `key` = 'version' LIMIT 0,1;";
 		const std::string SQLiteDatabase::SET_SCHEMAVERSION = "INSERT INTO " + SQLiteDatabase::_tables[SQLiteDatabase::SQL_TABLE_PROPERTIES] + " (`key`, `value`) VALUES ('version', ?);";
@@ -84,21 +84,20 @@ namespace dtn
 			"INSERT INTO "+ _tables[SQL_TABLE_BLOCK] +" (source_id, timestamp, sequencenumber, fragmentoffset, blocktype, filename, ordernumber) VALUES (?,?,?,?,?,?,?);",
 
 			//SEEN_BUNDLE_*
-			"INSERT INTO " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime) VALUES (?,?,?,?,?);",
-			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name IS null;",
+			"INSERT INTO " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime, name_id) VALUES (?,?,?,?,?,(SELECT id FROM " + _tables[SQL_TABLE_BUNDLENAME] + " WHERE name = ?));",
+			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name_id = ( SELECT id FROM " + _tables[SQL_TABLE_BUNDLENAME]  +" WHERE name = ?);",
 			"SELECT * FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
 			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE expiretime <= ?;",
 			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 			"SELECT * FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + ";",
-			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name IS null;",
+			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name_id = (SELECT id FROM " + _tables[SQL_TABLE_BUNDLENAME]  +" WHERE name = ?);",
 			"SELECT expiretime FROM "+ _tables[SQL_TABLE_SEEN_BUNDLES] +" ORDER BY expiretime ASC LIMIT 1;",
 
-			//NAMED_SEEN_BUNDLE_*
-			"INSERT INTO " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime, name) VALUES (?,?,?,?,?,?);",
-			"DELETE FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name = ?;",
-			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_SEEN_BUNDLES] + " WHERE name = ?;",
+			//BUNDLENAME_*
+			"INSERT INTO " + _tables[SQL_TABLE_BUNDLENAME] + " (name) VALUES (?);",
+			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_BUNDLENAME] + " WHERE name = ?;",
 
-			"VACUUM;",
+			"VACUUM;"
 		};
 
 		const std::string SQLiteDatabase::_db_structure[SQLiteDatabase::DB_STRUCTURE_END] =
@@ -115,7 +114,8 @@ namespace dtn
 			"CREATE UNIQUE INDEX IF NOT EXISTS bundles_id ON " + _tables[SQL_TABLE_BUNDLE] + " (source_id, timestamp, sequencenumber, fragmentoffset);"
 			"CREATE INDEX IF NOT EXISTS bundles_expire ON " + _tables[SQL_TABLE_BUNDLE] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime);",
 			"CREATE TABLE IF NOT EXISTS '" + _tables[SQL_TABLE_PROPERTIES] + "' ( `key` TEXT PRIMARY KEY ASC ON CONFLICT REPLACE, `value` TEXT NOT NULL);",
-			"CREATE TABLE IF NOT EXISTS " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (`source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER DEFAULT NULL, `expiretime` INTEGER, `name` TEXT, PRIMARY KEY(`source_id`, `timestamp`, `sequencenumber`, `fragmentoffset`));"
+			"CREATE TABLE IF NOT EXISTS " + _tables[SQL_TABLE_SEEN_BUNDLES] + " (`source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER DEFAULT NULL, `expiretime` INTEGER, `name_id` INTEGER, PRIMARY KEY(`source_id`, `timestamp`, `sequencenumber`, `fragmentoffset`));",
+			"CREATE TABLE IF NOT EXISTS " + _tables[SQL_TABLE_BUNDLENAME] + " (`id` INTEGER PRIMARY KEY, `name` TEXT NOT NULL UNIQUE);"
 		};
 
 		SQLiteDatabase::SQLBundleQuery::SQLBundleQuery()
@@ -463,32 +463,13 @@ namespace dtn
 			st.reset();
 		}
 
-		void SQLiteDatabase::add_seen_bundle(const dtn::data::MetaBundle &bundle) throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::add_seen_bundle(std::string name, const dtn::data::MetaBundle &bundle) throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			//inform database about (potentially) new expiretime
 			dtn::data::Timestamp TTL = bundle.timestamp + bundle.lifetime;
 			new_expire_time(TTL);
 
 			Statement st(_database, _sql_queries[SEEN_BUNDLE_ADD]);
-
-			const std::string source_id = bundle.source.getString();
-
-			sqlite3_bind_text(*st,1,source_id.c_str(),source_id.length(),SQLITE_TRANSIENT);
-			sqlite3_bind_int64(*st,2,bundle.timestamp.get<uint64_t>());
-			sqlite3_bind_int64(*st,3,bundle.sequencenumber.get<uint64_t>());
-			sqlite3_bind_int64(*st,4,bundle.offset.get<uint64_t>());
-			sqlite3_bind_int64(*st,5,bundle.expiretime.get<uint64_t>());
-
-			st.step();
-
-		}
-		void SQLiteDatabase::add_named_seen_bundle(std::string name, const dtn::data::MetaBundle &bundle) throw (SQLiteDatabase::SQLiteQueryException)
-		{
-			//inform database about (potentially) new expiretime
-			dtn::data::Timestamp TTL = bundle.timestamp + bundle.lifetime;
-			new_expire_time(TTL);
-
-			Statement st(_database, _sql_queries[NAMED_SEEN_BUNDLE_ADD]);
 
 			const std::string source_id = bundle.source.getString();
 
@@ -519,15 +500,9 @@ namespace dtn
 
 		}
 
-		void SQLiteDatabase::clear_seen_bundles() throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::clear_seen_bundles(std::string name) throw (SQLiteDatabase::SQLiteQueryException)
 		{
-			Statement st(_database, _sql_queries[SEEN_BUNDLE_CLEAR]);
-			st.step();
-		}
-
-		void SQLiteDatabase::clear_named_seen_bundles(std::string name) throw (SQLiteDatabase::SQLiteQueryException)
-		{
-			Statement st(_database,_sql_queries[NAMED_SEEN_BUNDLE_CLEAR]);
+			Statement st(_database,_sql_queries[SEEN_BUNDLE_CLEAR]);
 			sqlite3_bind_text(*st,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
 			st.step();
 		}
@@ -570,11 +545,12 @@ namespace dtn
 
 		}
 
-		dtn::data::Size SQLiteDatabase::count_seen_bundles() const throw (SQLiteDatabase::SQLiteQueryException)
+		dtn::data::Size SQLiteDatabase::count_seen_bundles(std::string name) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			int rows = 0;
 
 			Statement st(_database, _sql_queries[SEEN_BUNDLE_COUNT]);
+			sqlite3_bind_text(*st,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
 
 			if (( st.step()) == SQLITE_ROW)
 			{
@@ -584,19 +560,25 @@ namespace dtn
 			return rows;
 		}
 
-		dtn::data::Size SQLiteDatabase::count_named_seen_bundles(std::string name) const throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::add_used_bundlename(std::string name) const throw (SQLiteQueryException)
 		{
-			int rows = 0;
-
-			Statement st(_database, _sql_queries[NAMED_SEEN_BUNDLE_COUNT]);
+			Statement st(_database,_sql_queries[BUNDLENAME_ADD]);
 			sqlite3_bind_text(*st,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
 
-			if (( st.step()) == SQLITE_ROW)
-			{
+			st.step();
+		}
+
+		bool SQLiteDatabase::is_used_bundlename(std::string name) const throw (SQLiteQueryException)
+		{
+			int rows = 0;
+			Statement st(_database, _sql_queries[BUNDLENAME_COUNT]);
+			sqlite3_bind_text(*st,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
+
+			if (( st.step()) == SQLITE_ROW){
 				rows = sqlite3_column_int(*st, 0);
 			}
 
-			return rows;
+			return rows > 0;
 		}
 
 		void SQLiteDatabase::get(BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException)
