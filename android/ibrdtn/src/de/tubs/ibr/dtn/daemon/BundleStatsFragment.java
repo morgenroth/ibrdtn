@@ -54,8 +54,8 @@ public class BundleStatsFragment extends ListFragment implements
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
-        StatsListAdapter sla = (StatsListAdapter)this.getListAdapter();
-        StatsListAdapter.StatsEntry e = (StatsListAdapter.StatsEntry)sla.getItem(position);
+        BundleStatsListAdapter sla = (BundleStatsListAdapter)this.getListAdapter();
+        BundleStatsListAdapter.StatsEntry e = (BundleStatsListAdapter.StatsEntry)sla.getItem(position);
 
         // call super-method
         super.onListItemClick(l, v, position, id);
