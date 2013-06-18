@@ -24,16 +24,29 @@
 #include "ManagementConnection.h"
 #include "storage/BundleResult.h"
 #include "core/BundleCore.h"
-#include "core/GlobalEvent.h"
 #include "routing/prophet/ProphetRoutingExtension.h"
 #include "routing/prophet/DeliveryPredictabilityMap.h"
 
+#include "core/EventDispatcher.h"
+#include "core/GlobalEvent.h"
+#include "net/BundleReceivedEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
+#include "core/BundleGeneratedEvent.h"
+#include "core/BundleExpiredEvent.h"
+#include "routing/QueueBundleEvent.h"
+#include "routing/RequeueBundleEvent.h"
+#include "core/TimeAdjustmentEvent.h"
+
+#include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Utils.h>
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrcommon/link/LinkEvent.h>
 #include <ibrcommon/thread/RWLock.h>
+
+#include <iomanip>
 
 namespace dtn
 {
@@ -368,6 +381,45 @@ namespace dtn
 							/* no prophet routing extension found */
 							_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " ROUTING PROPHET EXTENSION NOT FOUND" << std::endl;
 						}
+					} else {
+						throw ibrcommon::Exception("malformed command");
+					}
+				}
+				else if (cmd[0] == "stats")
+				{
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
+					if ( cmd[1] == "info" ) {
+						_stream << ClientHandler::API_STATUS_OK << " STATS INFO" << std::endl;
+						_stream << "Uptime: " << dtn::utils::Clock::getUptime().get<size_t>() << std::endl;
+						_stream << std::endl;
+					} else if ( cmd[1] == "timesync" ) {
+						_stream << ClientHandler::API_STATUS_OK << " STATS TIMESYNC" << std::endl;
+						_stream << "Timestamp: " << dtn::utils::Clock::getTime().get<size_t>() << std::endl;
+						_stream << "Offset: " << std::setprecision(6) << dtn::utils::Clock::toDouble(dtn::utils::Clock::getOffset()) << std::endl;
+						_stream << "Rating: " << std::setprecision(16) << dtn::utils::Clock::getRating() << std::endl;
+						_stream << "Adjusted: " << dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::getCounter() << std::endl;
+						_stream << std::endl;
+					} else if ( cmd[1] == "bundles" ) {
+						_stream << ClientHandler::API_STATUS_OK << " STATS BUNDLES" << std::endl;
+						_stream << "Stored: " << dtn::core::BundleCore::getInstance().getStorage().count() << std::endl;
+						_stream << "Expired: " << dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::getCounter() << std::endl;
+						_stream << "Generated: " << dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::getCounter() << std::endl;
+						_stream << "Received: " << dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::getCounter() << std::endl;
+						_stream << "Transmitted: " << dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::getCounter() << std::endl;
+						_stream << "Aborted: " << dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::getCounter() << std::endl;
+						_stream << "Requeued: " << dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::getCounter() << std::endl;
+						_stream << "Queued: " << dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::getCounter() << std::endl;
+						_stream << std::endl;
+					} else if ( cmd[1] == "reset" ) {
+						dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::resetCounter();
+						_stream << ClientHandler::API_STATUS_ACCEPTED << " STATS RESET" << std::endl;
 					} else {
 						throw ibrcommon::Exception("malformed command");
 					}
