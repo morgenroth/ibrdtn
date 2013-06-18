@@ -56,14 +56,18 @@ namespace dtn
 
 			if (conf.hasReference())
 			{
+				// set clock rating to 1 since this node has a reference clock
+				_base_rating = 1.0;
+
 				// evaluate the current local time
 				if (dtn::utils::Clock::getTime() > 0) {
-					_base_rating = 1.0;
 					dtn::utils::Clock::setRating(1.0);
 				} else {
+					dtn::utils::Clock::setRating(0.0);
 					IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be wrong. Expiration disabled." << IBRCOMMON_LOGGER_ENDL;
 				}
 			} else {
+				dtn::utils::Clock::setRating(0.0);
 				_sigma = conf.getSigma();
 				_psi = conf.getPsi();
 			}
@@ -76,6 +80,10 @@ namespace dtn
 
 			// synchronize with other nodes
 			_sync  = conf.doSync();
+
+			if (_sync) {
+				IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, info) << "Time-Synchronization enabled: " << (conf.hasReference() ? "master mode" : "slave mode") << IBRCOMMON_LOGGER_ENDL;
+			}
 
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 		}
