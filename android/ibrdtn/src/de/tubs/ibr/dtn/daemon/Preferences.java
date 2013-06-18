@@ -68,7 +68,9 @@ public class Preferences extends PreferenceActivity {
 	private final String TAG = "Preferences";
 	
 	// These preferences show their value as summary
-	private final static String[] mSummaryPrefs = { "endpoint_id", "routing", "security_mode", "log_options", "log_debug_verbosity" };
+	private final static String[] mSummaryPrefs = {
+	    "endpoint_id", "routing", "security_mode", "log_options", "log_debug_verbosity", "timesync_mode"
+	    };
 	
 	private Boolean mBound = false;
 	private DTNService service = null;
