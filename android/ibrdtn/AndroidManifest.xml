@@ -73,6 +73,10 @@
             android:name="de.tubs.ibr.dtn.daemon.AppListActivity"
             android:label="@string/applist"
             android:theme="@android:style/Theme.NoTitleBar" />
+        <activity
+            android:name="de.tubs.ibr.dtn.daemon.StatsActivity"
+            android:icon="@drawable/ic_action_stats"
+            android:label="@string/stats_activity" />
 
         <receiver
             android:name=".service.OnBootReceiver"

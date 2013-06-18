@@ -191,6 +191,14 @@ public class Preferences extends PreferenceActivity {
 	    	return true;
 	    }
 	    
+	    case R.id.itemStats:
+	    {
+            // open statistic activity
+            Intent i = new Intent(Preferences.this, StatsActivity.class);
+            startActivity(i);
+            return true;
+	    }
+	    
 	    default:
 	        return super.onOptionsItemSelected(item);
 	    }
