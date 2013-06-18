@@ -102,6 +102,12 @@ namespace dtn
 			 */
 			static void setOffset(const struct timeval &tv);
 
+			/**
+			 * Returns the local offset of the clock
+			 * (prior set by setOffset)
+			 */
+			static const struct timeval& getOffset();
+
 			static const dtn::data::Timestamp TIMEVAL_CONVERSION;
 
 			/**
@@ -154,6 +160,11 @@ namespace dtn
 			 */
 			static double toDouble(const timeval &val);
 
+			/**
+			 * Return the seconds since the last start-up
+			 */
+			static dtn::data::Timestamp getUptime();
+
 		private:
 			/**
 			 * Timezone offset in hours
@@ -187,6 +198,8 @@ namespace dtn
 
 			static struct timeval _offset;
 			static bool _offset_init;
+
+			static const dtn::data::Timestamp _boot_timestamp;
 		};
 	}
 }
