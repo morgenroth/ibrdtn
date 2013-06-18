@@ -49,6 +49,7 @@ import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.p2p.P2PManager;
+import de.tubs.ibr.dtn.swig.NativeStats;
 
 public class DaemonService extends Service {
     public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
@@ -82,7 +83,9 @@ public class DaemonService extends Service {
 
     // This is the object that receives interactions from clients. See
     // RemoteService for a more complete example.
-    private final DTNService.Stub mBinder = new DTNService.Stub() {
+    private final DTNService.Stub mBinder = new LocalDTNService();
+        
+    public class LocalDTNService extends DTNService.Stub {
         public DaemonState getState() throws RemoteException {
             return DaemonService.this.mDaemonProcess.getState();
         }
@@ -116,7 +119,15 @@ public class DaemonService extends Service {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
             return prefs.getString("endpoint_id", "dtn:none");
         }
+        
+        public DaemonService getLocal() {
+            return DaemonService.this;
+        }
     };
+    
+    public NativeStats getStats() {
+        return mDaemonProcess.getStats();
+    }
 
     @Override
     public IBinder onBind(Intent intent) {

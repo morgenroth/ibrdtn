@@ -51,6 +51,7 @@ import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
 import de.tubs.ibr.dtn.swig.NativeDaemonException;
 import de.tubs.ibr.dtn.swig.NativeEventCallback;
 import de.tubs.ibr.dtn.swig.NativeNode;
+import de.tubs.ibr.dtn.swig.NativeStats;
 import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonProcess {
@@ -119,6 +120,10 @@ public class DaemonProcess {
 	public String[] getVersion() {
         StringVec version = mDaemon.getVersion();
         return new String[] { version.get(0), version.get(1) };
+	}
+	
+	public synchronized NativeStats getStats() {
+	    return mDaemon.getStats();
 	}
 	
 	public synchronized List<Node> getNeighbors() {
