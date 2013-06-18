@@ -392,6 +392,7 @@ namespace dtn
 					if ( cmd[1] == "info" ) {
 						_stream << ClientHandler::API_STATUS_OK << " STATS INFO" << std::endl;
 						_stream << "Uptime: " << dtn::utils::Clock::getUptime().get<size_t>() << std::endl;
+						_stream << "Neighbors: " << dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors().size() << std::endl;
 						_stream << std::endl;
 					} else if ( cmd[1] == "timesync" ) {
 						_stream << ClientHandler::API_STATUS_OK << " STATS TIMESYNC" << std::endl;

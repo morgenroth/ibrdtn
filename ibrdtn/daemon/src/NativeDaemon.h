@@ -84,7 +84,7 @@ namespace dtn
 		class NativeStats {
 		public:
 			NativeStats()
-			: uptime(0), timestamp(0),
+			: uptime(0), timestamp(0), neighbors(0),
 			  time_offset(0.0), time_rating(0.0), time_adjustments(0),
 			  bundles_stored(0), bundles_expired(0), bundles_generated(0),
 			  bundles_received(0), bundles_transmitted(0), bundles_aborted(0),
@@ -95,6 +95,7 @@ namespace dtn
 
 			size_t uptime;
 			size_t timestamp;
+			size_t neighbors;
 
 			double time_offset;
 			double time_rating;
