@@ -50,6 +50,16 @@
 #include "routing/prophet/ProphetRoutingExtension.h"
 #include "routing/flooding/FloodRoutingExtension.h"
 
+#include "core/GlobalEvent.h"
+#include "net/BundleReceivedEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
+#include "core/BundleGeneratedEvent.h"
+#include "core/BundleExpiredEvent.h"
+#include "routing/QueueBundleEvent.h"
+#include "routing/RequeueBundleEvent.h"
+#include "core/TimeAdjustmentEvent.h"
+
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
 #include "net/FileConvergenceLayer.h"
@@ -405,6 +415,29 @@ namespace dtn
 		std::string NativeDaemon::getLocalUri() const throw ()
 		{
 			return dtn::core::BundleCore::local.getString();
+		}
+
+		NativeStats NativeDaemon::getStats() const throw ()
+		{
+			NativeStats ret;
+
+			ret.uptime = dtn::utils::Clock::getUptime().get<size_t>();
+			ret.timestamp = dtn::utils::Clock::getTime().get<size_t>();
+
+			ret.time_offset = dtn::utils::Clock::toDouble(dtn::utils::Clock::getOffset());
+			ret.time_rating = dtn::utils::Clock::getRating();
+			ret.time_adjustments = dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::getCounter();
+
+			ret.bundles_stored = dtn::core::BundleCore::getInstance().getStorage().count();
+			ret.bundles_expired = dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::getCounter();
+			ret.bundles_generated = dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::getCounter();
+			ret.bundles_received = dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::getCounter();
+			ret.bundles_transmitted = dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::getCounter();
+			ret.bundles_aborted = dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::getCounter();
+			ret.bundles_requeued = dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::getCounter();
+			ret.bundles_queued = dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::getCounter();
+
+			return ret;
 		}
 
 		NativeNode NativeDaemon::getInfo(const std::string &neighbor_eid) const throw (NativeDaemonException)
