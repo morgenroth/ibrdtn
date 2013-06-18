@@ -10,7 +10,7 @@ import android.widget.TextView;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.swig.NativeStats;
 
-public class StatsListAdapter extends BaseAdapter {
+public class BundleStatsListAdapter extends BaseAdapter {
     private LayoutInflater mInflater = null;
     private NativeStats mData = null;
     private Context mContext = null;
@@ -26,7 +26,7 @@ public class StatsListAdapter extends BaseAdapter {
         public StatsEntry data;
     }
 
-    public StatsListAdapter(Context context) {
+    public BundleStatsListAdapter(Context context) {
         this.mContext = context;
         this.mInflater = LayoutInflater.from(context);
     }
@@ -37,7 +37,7 @@ public class StatsListAdapter extends BaseAdapter {
     }
 
     public int getCount() {
-        return 6;
+        return 8;
     }
 
     public Object getItem(int position) {
@@ -46,38 +46,50 @@ public class StatsListAdapter extends BaseAdapter {
         switch (position) {
             case 0:
                 // TODO: add localized string
-                e.title = "Uptime";
-                e.value = String.format("%d s", mData.getUptime());
+                e.title = "aborted";
+                e.value = Long.valueOf(mData.getBundles_aborted()).toString();
                 break;
                 
             case 1:
                 // TODO: add localized string
-                e.title = "Neighbors";
-                e.value = Long.valueOf(mData.getNeighbors()).toString();
+                e.title = "expired";
+                e.value = Long.valueOf(mData.getBundles_expired()).toString();
                 break;
                 
             case 2:
                 // TODO: add localized string
-                e.title = "Timestamp";
-                e.value = String.format("%d", mData.getTimestamp());
+                e.title = "generated";
+                e.value = Long.valueOf(mData.getBundles_generated()).toString();
                 break;
                 
             case 3:
                 // TODO: add localized string
-                e.title = "Clock offset";
-                e.value = String.format("%f s", mData.getTime_offset());
+                e.title = "queued";
+                e.value = Long.valueOf(mData.getBundles_queued()).toString();
                 break;
-                
+
             case 4:
                 // TODO: add localized string
-                e.title = "Clock rating";
-                e.value = String.format("%f", mData.getTime_rating());
+                e.title = "received";
+                e.value = Long.valueOf(mData.getBundles_received()).toString();
                 break;
                 
             case 5:
                 // TODO: add localized string
-                e.title = "Clock adjustments";
-                e.value = String.format("%d", mData.getTime_adjustments());
+                e.title = "requeued";
+                e.value = Long.valueOf(mData.getBundles_requeued()).toString();
+                break;
+                
+            case 6:
+                // TODO: add localized string
+                e.title = "stored";
+                e.value = Long.valueOf(mData.getBundles_stored()).toString();
+                break;
+                
+            case 7:
+                // TODO: add localized string
+                e.title = "transmitted";
+                e.value = Long.valueOf(mData.getBundles_transmitted()).toString();
                 break;
                 
             default:

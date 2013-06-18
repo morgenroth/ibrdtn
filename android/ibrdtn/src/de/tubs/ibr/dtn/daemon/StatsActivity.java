@@ -18,10 +18,10 @@ public class StatsActivity extends FragmentActivity {
         mTabHost = (FragmentTabHost)findViewById(android.R.id.tabhost);
         mTabHost.setup(this, getSupportFragmentManager(), R.id.realtabcontent);
 
-        mTabHost.addTab(mTabHost.newTabSpec("stats").setIndicator("Stats"),
+        mTabHost.addTab(mTabHost.newTabSpec("info").setIndicator("Info"),
                 StatsFragment.class, null);
         
-//        mTabHost.addTab(mTabHost.newTabSpec("neighbors").setIndicator("Neighbors"),
-//                NeighborListFragment.class, null);
+        mTabHost.addTab(mTabHost.newTabSpec("bundles").setIndicator("Bundles"),
+                BundleStatsFragment.class, null);
     }
 }
