@@ -400,8 +400,6 @@ namespace dtn
 
 				// set the local clock to the new timestamp
 				dtn::utils::Clock::setOffset(timeadj.offset);
-
-				IBRCOMMON_LOGGER_TAG("BundleCore", info) << "time adjusted by " << dtn::utils::Clock::toDouble(timeadj.offset) << "s; new rating: " << timeadj.rating << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::bad_cast&) { }
 		}
 
