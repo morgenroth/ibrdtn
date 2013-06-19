@@ -1,5 +1,10 @@
 package de.tubs.ibr.dtn.stats;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +15,7 @@ import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 import de.tubs.ibr.dtn.service.DaemonService;
 
+@SuppressLint("SimpleDateFormat")
 public class StatsLoader extends AsyncTaskLoader<Cursor> {
     
     private static final String TAG = "StatsLoader";
@@ -73,14 +79,21 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
     @Override
     public Cursor loadInBackground() {
         SQLiteDatabase db = mService.getStatsDatabase().getDB();
+        
+        final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Calendar cal = Calendar.getInstance();
+        cal.roll(Calendar.HOUR, -24);
+        
+        // generate a time limit (24 hours)
+        String timestamp_limit = formatter.format(cal.getTime());
 
         try {
             // limit to specific download
             return db.query(
                     StatsDatabase.TABLE_NAMES[0],
                     StatsEntry.PROJECTION,
-                    null,
-                    null,
+                    StatsEntry.TIMESTAMP + " >= ?",
+                    new String[] { timestamp_limit },
                     null, null, StatsEntry.TIMESTAMP + " ASC");
         } catch (Exception e) {
             Log.e(TAG, "loadInBackground() failed", e);

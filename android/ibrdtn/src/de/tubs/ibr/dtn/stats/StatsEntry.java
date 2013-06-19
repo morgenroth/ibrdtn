@@ -91,7 +91,7 @@ public class StatsEntry {
 
     @SuppressLint("SimpleDateFormat")
     public StatsEntry(Context context, Cursor cursor, ColumnsMap cmap) {
-        final DateFormat formatter = new SimpleDateFormat("yyyy-M-d hh:mm:ss");
+        final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         
         mId = cursor.getLong(cmap.mColumnId);
         
