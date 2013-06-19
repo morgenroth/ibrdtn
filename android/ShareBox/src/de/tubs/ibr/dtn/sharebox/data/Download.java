@@ -65,7 +65,7 @@ public class Download {
     }
     
     public Download(Context context, Cursor cursor, DownloadAdapter.ColumnsMap cmap) {
-        final DateFormat formatter = new SimpleDateFormat("yyyy-M-d hh:mm:ss");
+        final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         
         mId = cursor.getLong(cmap.mColumnId);
         mSource = cursor.getString(cmap.mColumnSource);

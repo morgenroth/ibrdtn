@@ -59,7 +59,7 @@ public class Message implements Comparable<Message> {
 	
     public Message(Context context, Cursor cursor, MessageAdapter.ColumnsMap cmap)
     {
-        final DateFormat formatter = new SimpleDateFormat("yyyy-M-d hh:mm:ss");
+        final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         
         mId = cursor.getLong(cmap.mColumnId);
         mSource = cursor.getString(cmap.mColumnSource);
