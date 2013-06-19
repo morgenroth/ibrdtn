@@ -1,6 +1,8 @@
 package de.tubs.ibr.dtn.stats;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
@@ -139,9 +141,23 @@ public class StatsDatabase {
         // store the message in the database
         Long id = mDatabase.insert(StatsDatabase.TABLE_NAMES[0], null, values);
         
+        // finally purge old data
+        purge();
+        
         notifyDataChanged();
         
         return id;
+    }
+    
+    public void purge() {
+        final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        
+        // generate a time limit (14 days)
+        Calendar cal = Calendar.getInstance();
+        cal.roll(Calendar.DATE, -14);
+        String timestamp_limit = formatter.format(cal.getTime());
+        
+        mDatabase.delete(StatsDatabase.TABLE_NAMES[0], StatsEntry.TIMESTAMP + " < ?", new String[] { timestamp_limit });
     }
 
     public void close()
