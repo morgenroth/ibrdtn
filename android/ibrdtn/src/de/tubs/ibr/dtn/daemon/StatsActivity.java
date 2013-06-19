@@ -24,6 +24,9 @@ public class StatsActivity extends FragmentActivity {
         mTabHost.addTab(mTabHost.newTabSpec("bundles").setIndicator("Bundles"),
                 BundleChartFragment.class, null);
         
+        mTabHost.addTab(mTabHost.newTabSpec("transfer").setIndicator("Transfer"),
+                TransferChartFragment.class, null);
+        
         mTabHost.addTab(mTabHost.newTabSpec("clock").setIndicator("Clock"),
                 ClockChartFragment.class, null);
     }

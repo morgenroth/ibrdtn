@@ -13,10 +13,10 @@ import com.michaelpardo.chartview.widget.LinearSeries.LinearPoint;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.stats.StatsEntry;
 
-public class BundleChartFragment extends StatsChartFragment {
+public class TransferChartFragment extends StatsChartFragment {
     
-    private Integer[] mChartMap = { 9, 8, 12, 7 };
-    private int[] mChartColors = { R.color.blue, R.color.yellow, R.color.green, R.color.red };
+    private Integer[] mChartMap = { 13, 11, 6, 10 };
+    private int[] mChartColors = { R.color.green, R.color.yellow, R.color.red, R.color.blue };
     
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
