@@ -51,10 +51,11 @@ public class BundleChartFragment extends StatsChartFragment {
         while (stats.moveToNext()) {
             StatsEntry e = new StatsEntry(getActivity(), stats, cmap);
             Long timestamp = e.getTimestamp().getTime() / 1000;
+            Long interval = timestamp - last_timestamp;
             
             for (int i = 0; i < mChartMap.length; i++) {
                 Double value = StatsListAdapter.getRowDouble(mChartMap[i], e);
-                LinearPoint p = new LinearPoint(Double.valueOf(timestamp), value);
+                LinearPoint p = new LinearPoint(Double.valueOf(timestamp), value / interval);
                 series.get(i).addPoint(p);
             }
             

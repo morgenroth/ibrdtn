@@ -81,7 +81,7 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
                     StatsEntry.PROJECTION,
                     null,
                     null,
-                    null, null, StatsEntry.TIMESTAMP + " DESC");
+                    null, null, StatsEntry.TIMESTAMP + " ASC");
         } catch (Exception e) {
             Log.e(TAG, "loadInBackground() failed", e);
         }
