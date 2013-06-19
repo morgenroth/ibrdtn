@@ -1,0 +1,3 @@
+[submodule "android/ChartView"]
+	path = android/ChartView
+	url = git://github.com/pardom/ChartView.git

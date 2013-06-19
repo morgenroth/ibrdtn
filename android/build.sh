@@ -18,6 +18,14 @@ cp ibrdtn-api/bin/classes.jar Whisper/libs/android-ibrdtn-api.jar
 cp ibrdtn-api/bin/classes.jar Talkie/libs/android-ibrdtn-api.jar
 cp ibrdtn-api/bin/classes.jar DTNExampleApp/libs/android-ibrdtn-api.jar
 
+### BUILD CHARTVIEW LIBRARY ###
+
+# update android project
+android update project -p ChartView/library -n chartview
+
+# build ChartView
+ant -f ChartView/library/build.xml clean ${BUILD_MODE}
+
 ### BUILD IBR-DTN DAEMON ###
 
 # build JNI part of the daemon
@@ -28,7 +36,7 @@ cd ibrdtn/jni
 cd ${WORKSPACE}
 
 # update android project
-android update project -p ibrdtn -n ibrdtn
+android update project -p ibrdtn -n ibrdtn --library ../ChartView/library
 
 # build IBR-DTN
 ant -f ibrdtn/build.xml clean ${BUILD_MODE}
