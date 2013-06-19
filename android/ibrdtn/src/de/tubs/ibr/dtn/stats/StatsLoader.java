@@ -81,10 +81,10 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
         SQLiteDatabase db = mService.getStatsDatabase().getDB();
         
         final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Calendar cal = Calendar.getInstance();
-        cal.roll(Calendar.HOUR, -24);
         
         // generate a time limit (24 hours)
+        Calendar cal = Calendar.getInstance();
+        cal.roll(Calendar.DATE, -1);
         String timestamp_limit = formatter.format(cal.getTime());
 
         try {
