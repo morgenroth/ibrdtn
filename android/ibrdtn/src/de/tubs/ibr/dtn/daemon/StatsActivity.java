@@ -22,9 +22,9 @@ public class StatsActivity extends FragmentActivity {
                 InfoChartFragment.class, null);
         
         mTabHost.addTab(mTabHost.newTabSpec("bundles").setIndicator("Bundles"),
-                InfoChartFragment.class, null);
+                BundleChartFragment.class, null);
         
         mTabHost.addTab(mTabHost.newTabSpec("clock").setIndicator("Clock"),
-                InfoChartFragment.class, null);
+                ClockChartFragment.class, null);
     }
 }
