@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Handler;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 import de.tubs.ibr.dtn.service.DaemonService;
@@ -18,7 +17,6 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
     private DaemonService mService = null;
     private Boolean mStarted = false;
     private Cursor mData = null;
-    private Handler mHandler = null;
 
     public StatsLoader(Context context, DaemonService service) {
         super(context);
@@ -45,8 +43,6 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
         onStopLoading();
         
         if (mStarted) {
-            mHandler.removeCallbacks(_update);
-            
             // unregister from intent receiver
             getContext().unregisterReceiver(_receiver);
             mStarted = false;
@@ -59,10 +55,7 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
             this.deliverResult(mData);
         }
         
-        mHandler = new Handler();
-        mHandler.postDelayed(_update, 1000);
-        
-        IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.EVENT);
+        IntentFilter filter = new IntentFilter(StatsDatabase.NOTIFY_DATABASE_UPDATED);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         getContext().registerReceiver(_receiver, filter);
         mStarted = true;
@@ -95,16 +88,6 @@ public class StatsLoader extends AsyncTaskLoader<Cursor> {
         
         return null;
     }
-    
-    private Runnable _update = new Runnable() {
-        @Override
-        public void run() {
-            onContentChanged();
-            
-            if (mStarted)
-                mHandler.postDelayed(_update, 1000);
-        }
-    };
 
     private BroadcastReceiver _receiver = new BroadcastReceiver() {
         @Override

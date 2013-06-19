@@ -19,9 +19,12 @@ public class StatsActivity extends FragmentActivity {
         mTabHost.setup(this, getSupportFragmentManager(), R.id.realtabcontent);
 
         mTabHost.addTab(mTabHost.newTabSpec("info").setIndicator("Info"),
-                StatsFragment.class, null);
+                InfoChartFragment.class, null);
         
         mTabHost.addTab(mTabHost.newTabSpec("bundles").setIndicator("Bundles"),
-                BundleStatsFragment.class, null);
+                InfoChartFragment.class, null);
+        
+        mTabHost.addTab(mTabHost.newTabSpec("clock").setIndicator("Clock"),
+                InfoChartFragment.class, null);
     }
 }

@@ -7,13 +7,13 @@ import android.content.IntentFilter;
 import android.os.Handler;
 import android.support.v4.content.AsyncTaskLoader;
 import de.tubs.ibr.dtn.service.DaemonService;
-import de.tubs.ibr.dtn.swig.NativeStats;
+import de.tubs.ibr.dtn.stats.StatsEntry;
 
-public class CurrentStatsLoader extends AsyncTaskLoader<NativeStats> {
+public class CurrentStatsLoader extends AsyncTaskLoader<StatsEntry> {
     
     private DaemonService mService = null;
     private Boolean mStarted = false;
-    private NativeStats mData = null;
+    private StatsEntry mData = null;
     private Handler mHandler = null;
 
     public CurrentStatsLoader(Context context, DaemonService service) {
@@ -23,7 +23,7 @@ public class CurrentStatsLoader extends AsyncTaskLoader<NativeStats> {
     }
     
     @Override
-    public void deliverResult(NativeStats data) {
+    public void deliverResult(StatsEntry data) {
         if (isReset()) {
             mData = null;
             return;
@@ -74,8 +74,8 @@ public class CurrentStatsLoader extends AsyncTaskLoader<NativeStats> {
     }
 
     @Override
-    public NativeStats loadInBackground() {
-        return mService.getStats();
+    public StatsEntry loadInBackground() {
+        return new StatsEntry(mService.getStats());
     }
     
     private Runnable _update = new Runnable() {
