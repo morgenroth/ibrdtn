@@ -142,6 +142,15 @@ public class DaemonService extends Service {
     public StatsDatabase getStatsDatabase() {
         return mStatsDatabase;
     }
+    
+    private Runnable mCollectStats = new Runnable() {
+        @Override
+        public void run() {
+            final Intent storeStatsIntent = new Intent(DaemonService.this, DaemonService.class);
+            storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
+            startService(storeStatsIntent);
+        }
+    };
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -221,6 +230,9 @@ public class DaemonService extends Service {
             storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
             startService(storeStatsIntent);
         } else if (ACTION_STORE_STATS.equals(action)) {
+            // cancel the next scheduled collection
+            mServiceHandler.removeCallbacks(mCollectStats);
+
             if (mStatsLastAction != null) {
                 Calendar now = Calendar.getInstance();
                 now.roll(Calendar.MINUTE, -1);
@@ -234,6 +246,9 @@ public class DaemonService extends Service {
                 mStatsDatabase.put( new StatsEntry( mDaemonProcess.getStats() ) );
                 mStatsLastAction = new Date();
             }
+            
+            // schedule next collection in 3 minutes
+            mServiceHandler.postDelayed(mCollectStats, 180000);
         }
         
         // stop the daemon if it should be offline
