@@ -151,35 +151,35 @@ public abstract class StatsListAdapter extends BaseAdapter {
                 
             case 6:
                 // TODO: add localized string
-                return "aborted";
+                return "Transfers aborted";
                 
             case 7:
                 // TODO: add localized string
-                return "expired";
+                return "Bundles expired";
                 
             case 8:
                 // TODO: add localized string
-                return "generated";
+                return "Bundles generated";
                 
             case 9:
                 // TODO: add localized string
-                return "queued";
+                return "Bundles queued";
 
             case 10:
                 // TODO: add localized string
-                return "received";
+                return "Bundles received";
                 
             case 11:
                 // TODO: add localized string
-                return "requeued";
+                return "Transfers requeued";
                 
             case 12:
                 // TODO: add localized string
-                return "stored";
+                return "Bundles stored";
                 
             case 13:
                 // TODO: add localized string
-                return "transmitted";
+                return "Transfers completed";
         }
         return null;
     }
