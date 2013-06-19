@@ -26,13 +26,28 @@ public class StatsDatabase {
     private static final String DATABASE_NAME = "stats";
     public static final String[] TABLE_NAMES = { "dtnd" };
     
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
     
     // Database creation sql statement
     private static final String DATABASE_CREATE_DTND = 
             "CREATE TABLE " + TABLE_NAMES[0] + " (" +
                 BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                StatsEntry.TIMESTAMP + " TEXT" +
+                StatsEntry.TIMESTAMP + " TEXT, " +
+                StatsEntry.UPTIME + " INTEGER, " +
+                StatsEntry.NEIGHBORS + " INTEGER, " +
+                
+                StatsEntry.CLOCK_OFFSET + " DOUBLE, " +
+                StatsEntry.CLOCK_RATING + " DOUBLE, " +
+                StatsEntry.CLOCK_ADJUSTMENTS + " INTEGER, " +
+                
+                StatsEntry.BUNDLE_ABORTED + " INTEGER, " +
+                StatsEntry.BUNDLE_EXPIRED + " INTEGER, " +
+                StatsEntry.BUNDLE_GENERATED + " INTEGER, " +
+                StatsEntry.BUNDLE_QUEUED + " INTEGER, " +
+                StatsEntry.BUNDLE_RECEIVED + " INTEGER, " +
+                StatsEntry.BUNDLE_REQUEUED + " INTEGER, " +
+                StatsEntry.BUNDLE_STORED + " INTEGER, " +
+                StatsEntry.BUNDLE_TRANSMITTED + " INTEGER" +
             ");";
 
     private class DBOpenHelper extends SQLiteOpenHelper {
@@ -71,6 +86,10 @@ public class StatsDatabase {
         mContext.sendBroadcast(i);
     }
     
+    public SQLiteDatabase getDB() {
+        return mDatabase;
+    }
+    
     public StatsEntry get(Long id) {
         StatsEntry se = null;
         
@@ -92,13 +111,30 @@ public class StatsDatabase {
     }
     
     public Long put(StatsEntry e) {
-        // TODO: store the stats object into the database
-        
+        // store the stats object into the database
         ContentValues values = new ContentValues();
         
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         
         values.put(StatsEntry.TIMESTAMP, dateFormat.format(e.getTimestamp()));
+
+        values.put(StatsEntry.UPTIME, e.getUptime());
+        values.put(StatsEntry.NEIGHBORS, e.getNeighbors());
+        
+        values.put(StatsEntry.CLOCK_OFFSET, e.getClockOffset());
+        values.put(StatsEntry.CLOCK_RATING, e.getClockRating());
+        values.put(StatsEntry.CLOCK_ADJUSTMENTS, e.getClockAdjustments());
+        
+        values.put(StatsEntry.BUNDLE_ABORTED, e.getBundleAborted());
+        values.put(StatsEntry.BUNDLE_EXPIRED, e.getBundleExpired());
+        values.put(StatsEntry.BUNDLE_GENERATED, e.getBundleGenerated());
+        values.put(StatsEntry.BUNDLE_QUEUED, e.getBundleQueued());
+        values.put(StatsEntry.BUNDLE_RECEIVED, e.getBundleReceived());
+        values.put(StatsEntry.BUNDLE_REQUEUED, e.getBundleRequeued());
+        values.put(StatsEntry.BUNDLE_STORED, e.getBundleStored());
+        values.put(StatsEntry.BUNDLE_TRANSMITTED, e.getBundleTransmitted());
+        
+        Log.d(TAG, "stats stored: " + e.toString());
         
         // store the message in the database
         Long id = mDatabase.insert(StatsDatabase.TABLE_NAMES[0], null, values);
