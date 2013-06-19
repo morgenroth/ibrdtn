@@ -97,13 +97,6 @@ public class LogListAdapter extends BaseAdapter {
         holder.textDate.setText(holder.msg.date);
         holder.textLog.setText(holder.msg.msg);
 
-        String tag;
-        if (LogMessage.LEVEL_LABELS.containsKey(holder.msg.level)) {
-            tag = LogMessage.LEVEL_LABELS.get(holder.msg.level);
-        } else {
-            tag = holder.msg.level;
-        }
-
         //holder.textTag.setText(tag + " (" + holder.msg.tag + ")");
         holder.textTag.setText(holder.msg.tag);
 

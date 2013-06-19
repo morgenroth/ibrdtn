@@ -483,6 +483,7 @@ public class DaemonService extends Service {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private Notification buildNotification(int icon, String text) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
