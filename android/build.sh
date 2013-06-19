@@ -20,6 +20,9 @@ cp ibrdtn-api/bin/classes.jar DTNExampleApp/libs/android-ibrdtn-api.jar
 
 ### BUILD CHARTVIEW LIBRARY ###
 
+# copy latest support library to chartview
+cp ibrdtn/libs/android-support-v4.jar ChartView/library/libs
+
 # update android project
 android update project -p ChartView/library -n chartview
 
