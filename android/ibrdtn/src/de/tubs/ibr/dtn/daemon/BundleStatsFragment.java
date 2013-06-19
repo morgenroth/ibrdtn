@@ -98,7 +98,7 @@ public class BundleStatsFragment extends ListFragment implements
 
     @Override
     public Loader<NativeStats> onCreateLoader(int id, Bundle args) {
-        return new StatsLoader(getActivity(), mService);
+        return new CurrentStatsLoader(getActivity(), mService);
     }
 
     @Override

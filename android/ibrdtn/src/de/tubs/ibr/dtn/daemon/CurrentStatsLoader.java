@@ -9,14 +9,14 @@ import android.support.v4.content.AsyncTaskLoader;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.swig.NativeStats;
 
-public class StatsLoader extends AsyncTaskLoader<NativeStats> {
+public class CurrentStatsLoader extends AsyncTaskLoader<NativeStats> {
     
     private DaemonService mService = null;
     private Boolean mStarted = false;
     private NativeStats mData = null;
     private Handler mHandler = null;
 
-    public StatsLoader(Context context, DaemonService service) {
+    public CurrentStatsLoader(Context context, DaemonService service) {
         super(context);
         mService = service;
         setUpdateThrottle(250);
