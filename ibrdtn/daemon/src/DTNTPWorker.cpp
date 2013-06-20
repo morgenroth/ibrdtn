@@ -214,8 +214,8 @@ namespace dtn
 						double last_sync = dtn::utils::Clock::toDouble(_last_sync_time);
 						double now = dtn::utils::Clock::toDouble(tv_now);
 
-						// at least one second should have passed
-						if (last_sync < (1 - now))
+						// the last sync must be in the past
+						if (last_sync < now)
 						{
 							// calculate the new clock rating
 							double timediff = now - last_sync;
@@ -508,16 +508,17 @@ namespace dtn
 						if (!age_it.next(b.end())) throw ibrcommon::Exception("second ageblock missing");
 						const dtn::data::AgeBlock &origin_age = dynamic_cast<const dtn::data::AgeBlock&>(**age_it);
 
-						timeval tv_age; timerclear(&tv_age);
-						tv_age.tv_usec = origin_age.getMicroseconds().get<suseconds_t>();
+						timeval tv_rtt_measured, tv_local_timestamp, tv_rtt, tv_prop_delay, tv_sync_delay, tv_peer_timestamp, tv_offset;
+
+						timerclear(&tv_rtt_measured);
+						tv_rtt_measured.tv_sec = origin_age.getSeconds().get<time_t>();
+						tv_rtt_measured.tv_usec = origin_age.getMicroseconds().get<suseconds_t>() % 1000000;
 
 						ibrcommon::BLOB::Reference ref = p.getBLOB();
 						ibrcommon::BLOB::iostream stream = ref.iostream();
 
 						// parse the received time sync message
 						TimeSyncMessage msg; (*stream) >> msg;
-
-						timeval tv_local_timestamp, tv_rtt, tv_prop_delay, tv_sync_delay, tv_peer_timestamp, tv_offset;
 
 						// store the current time in tv_local
 						dtn::utils::Clock::gettimeofday(&tv_local_timestamp);
@@ -527,14 +528,23 @@ namespace dtn
 						double rtt = dtn::utils::Clock::toDouble(tv_rtt);
 
 						// abort here if the rtt is negative or zero!
-						if (rtt <= 0.0) break;
+						if (rtt <= 0.0) {
+							IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "RTT " << rtt << " is too small" << IBRCOMMON_LOGGER_ENDL;
+							break;
+						}
 
-						// get the propagation delay
-						timersub(&tv_rtt, &tv_age, &tv_prop_delay);
-						double prop_delay = dtn::utils::Clock::toDouble(tv_prop_delay);
+						double prop_delay = 0.0;
 
-						// abort here if the propagation delay is negative or zero!
-						if (prop_delay <= 0.0) break;
+						// assume zero prop. delay if rtt is smaller than the
+						// time measured by the age block
+						double rtt_measured = dtn::utils::Clock::toDouble(tv_rtt_measured);
+						if (rtt <= rtt_measured) {
+							timerclear(&tv_prop_delay);
+							IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "Prop. delay " << prop_delay << " is smaller than the tracked time (" << rtt_measured << ")" << IBRCOMMON_LOGGER_ENDL;
+						} else {
+							timersub(&tv_rtt, &tv_rtt_measured, &tv_prop_delay);
+							prop_delay = dtn::utils::Clock::toDouble(tv_prop_delay);
+						}
 
 						// half the prop delay
 						tv_prop_delay.tv_sec /= 2;
