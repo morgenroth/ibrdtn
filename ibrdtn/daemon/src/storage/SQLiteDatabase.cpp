@@ -450,8 +450,8 @@ namespace dtn
 					"SELECT " + _select_names[0] + " FROM " + _tables[SQL_TABLE_BUNDLE];
 
 			size_t offset = 0;
-			bool unlimited = (cb.limit() <= 0);
-			size_t query_limit = (cb.limit() > 0) ? cb.limit() : 10;
+			const bool unlimited = (cb.limit() <= 0);
+			const size_t query_limit = 50;
 
 			try {
 				try {
