@@ -173,7 +173,14 @@ namespace dtn
 			 * Add a bundle to the purge vector of this daemon.
 			 * @param meta The bundle to purge.
 			 */
-			void addPurgedBundle(const dtn::data::MetaBundle &meta);
+			void setPurged(const dtn::data::MetaBundle &meta);
+
+			/**
+			 * This method returns true, if the given BundleID is purged.
+			 * @param id
+			 * @return
+			 */
+			bool isPurged(const dtn::data::BundleID &id);
 
 			/**
 			 * @see Component::getName()

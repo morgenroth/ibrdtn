@@ -126,7 +126,7 @@ namespace dtn
 						dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 
 						// add this bundle to the own purge vector
-						(**this).addPurgedBundle(meta);
+						(**this).setPurged(meta);
 					}
 					else
 					{

@@ -500,7 +500,7 @@ namespace dtn
 			return _known_bundles.add(meta);
 		}
 
-		// set the bundle as known
+		// check if the bundle is known
 		bool BaseRouter::isKnown(const dtn::data::BundleID &id)
 		{
 			ibrcommon::MutexLock l(_known_bundles_lock);
@@ -525,7 +525,14 @@ namespace dtn
 			return _known_bundles;
 		}
 
-		void BaseRouter::addPurgedBundle(const dtn::data::MetaBundle &meta)
+		// set the bundle as known
+		bool BaseRouter::isPurged(const dtn::data::BundleID &id)
+		{
+			ibrcommon::MutexLock l(_purged_bundles_lock);
+			return _purged_bundles.has(id);
+		}
+
+		void BaseRouter::setPurged(const dtn::data::MetaBundle &meta)
 		{
 			ibrcommon::MutexLock l(_purged_bundles_lock);
 			return _purged_bundles.add(meta);
