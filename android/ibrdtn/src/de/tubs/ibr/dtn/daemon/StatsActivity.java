@@ -18,16 +18,16 @@ public class StatsActivity extends FragmentActivity {
         mTabHost = (FragmentTabHost)findViewById(android.R.id.tabhost);
         mTabHost.setup(this, getSupportFragmentManager(), R.id.realtabcontent);
 
-        mTabHost.addTab(mTabHost.newTabSpec("info").setIndicator("Info"),
+        mTabHost.addTab(mTabHost.newTabSpec("info").setIndicator(getString(R.string.stats_tab_info)),
                 InfoChartFragment.class, null);
         
-        mTabHost.addTab(mTabHost.newTabSpec("bundles").setIndicator("Bundles"),
+        mTabHost.addTab(mTabHost.newTabSpec("bundles").setIndicator(getString(R.string.stats_tab_bundles)),
                 BundleChartFragment.class, null);
         
-        mTabHost.addTab(mTabHost.newTabSpec("transfer").setIndicator("Transfer"),
+        mTabHost.addTab(mTabHost.newTabSpec("transfer").setIndicator(getString(R.string.stats_tab_transfer)),
                 TransferChartFragment.class, null);
         
-        mTabHost.addTab(mTabHost.newTabSpec("clock").setIndicator("Clock"),
+        mTabHost.addTab(mTabHost.newTabSpec("clock").setIndicator(getString(R.string.stats_tab_clock)),
                 ClockChartFragment.class, null);
     }
 }

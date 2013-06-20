@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="stats_tab_info">Info</string>
+    <string name="stats_tab_bundles">Bundles</string>
+    <string name="stats_tab_transfer">Transfer</string>
+    <string name="stats_tab_clock">Clock</string>
+    
+    <string name="stats_title_uptime">Uptime</string>
+    <string name="stats_title_neighbors">Neighbors</string>
+    <string name="stats_title_timestamp">Timestamp</string>
+      
+    <string name="stats_title_clock_offset">Clock offset</string>
+    <string name="stats_title_clock_rating">Clock rating</string>
+    <string name="stats_title_clock_adjustment">Clock adjustments</string>
+      
+    <string name="stats_title_transfers_aborted">Transfers aborted</string>
+    <string name="stats_title_bundles_expired">Bundles expired</string>
+    <string name="stats_title_bundles_generated">Bundles generated</string>
+    <string name="stats_title_bundles_queued">Bundles queued</string>
+    <string name="stats_title_bundles_received">Bundles received</string>
+    <string name="stats_title_transfers_requeued">Transfers requeued</string>
+    <string name="stats_title_bundles_stored">Bundles stored</string>
+    <string name="stats_title_transfers_completed">Transfers completed</string>
+</resources>

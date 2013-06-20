@@ -48,7 +48,7 @@ public abstract class StatsListAdapter extends BaseAdapter {
         
         int mappos = getDataMapPosition(position);
         
-        e.title = getRowTitle(mappos);
+        e.title = getRowTitle(mContext, mappos);
         e.value = getRowString(mappos, mData);
         
         return e;
@@ -147,31 +147,31 @@ public abstract class StatsListAdapter extends BaseAdapter {
         RowType.RELATIVE
     };
     
-    private final static String[] mRowTitles = {
-      "Uptime",
-      "Neighbors",
-      "Timestamp",
+    private final static int[] mRowTitles = {
+      R.string.stats_title_uptime,
+      R.string.stats_title_neighbors,
+      R.string.stats_title_timestamp,
       
-      "Clock offset",
-      "Clock rating",
-      "Clock adjustments",
+      R.string.stats_title_clock_offset,
+      R.string.stats_title_clock_rating,
+      R.string.stats_title_clock_adjustment,
       
-      "Transfers aborted",
-      "Bundles expired",
-      "Bundles generated",
-      "Bundles queued",
-      "Bundles received",
-      "Transfers requeued",
-      "Bundles stored",
-      "Transfers completed"
+      R.string.stats_title_transfers_aborted,
+      R.string.stats_title_bundles_expired,
+      R.string.stats_title_bundles_generated,
+      R.string.stats_title_bundles_queued,
+      R.string.stats_title_bundles_received,
+      R.string.stats_title_transfers_requeued,
+      R.string.stats_title_bundles_stored,
+      R.string.stats_title_transfers_completed
     };
     
     public static RowType getRowType(int position) {
         return mRowTypes[position];
     }
     
-    public static String getRowTitle(int position) {
-        return mRowTitles[position];
+    public static String getRowTitle(Context context, int position) {
+        return context.getResources().getString(mRowTitles[position]);
     }
     
     public static Object getRowData(int row, StatsEntry data) {
