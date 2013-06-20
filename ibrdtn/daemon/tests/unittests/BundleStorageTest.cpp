@@ -133,6 +133,9 @@ void BundleStorageTest::setUp()
 
 void BundleStorageTest::tearDown()
 {
+	// clear all bundles
+	_storage->clear();
+
 	esl->stop();
 
 	try {
@@ -774,4 +777,106 @@ void BundleStorageTest::testFaultyStore(dtn::storage::BundleStorage &storage)
 
 	// retrieve the bundle
 	CPPUNIT_ASSERT_THROW( b = storage.get(id), dtn::storage::NoBundleFoundException );
+}
+
+void BundleStorageTest::testFragment()
+{
+	STORAGE_TEST(testFragment);
+}
+
+void BundleStorageTest::testFragment(dtn::storage::BundleStorage &storage)
+{
+	// Add fragment of a bundle to the storage
+	dtn::data::Bundle b;
+
+	// set standard variables
+	b.source = dtn::data::EID("dtn://node-one/test");
+	b.lifetime = 1;
+	b.destination = dtn::data::EID("dtn://node-two/test");
+
+	// add some payload
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	b.push_back(ref);
+
+	(*ref.iostream()) << "Hallo Welt" << std::endl;
+
+	// transform bundle into a fragment
+	b.procflags.setBit(dtn::data::PrimaryBlock::FRAGMENT, true);
+	b.fragmentoffset = 4;
+	b.appdatalength = 50;
+
+	// store the bundle
+	storage.store(b);
+
+	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
+
+	// create a non-fragment meta bundle
+	dtn::data::BundleID id(b);
+
+	dtn::data::Bundle retrieved = storage.get(id);
+
+	CPPUNIT_ASSERT(dtn::data::BundleID(retrieved) == id);
+}
+
+void BundleStorageTest::testQueryBloomFilter()
+{
+	STORAGE_TEST(testQueryBloomFilter);
+}
+
+void BundleStorageTest::testQueryBloomFilter(dtn::storage::BundleStorage &storage)
+{
+	// Add fragment of a bundle to the storage
+	dtn::data::Bundle b;
+
+	// set standard variables
+	b.source = dtn::data::EID("dtn://node-one/test");
+	b.lifetime = 1;
+	b.destination = dtn::data::EID("dtn://node-two/test");
+
+	// add some payload
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	b.push_back(ref);
+
+	(*ref.iostream()) << "Hallo Welt" << std::endl;
+
+	// create a non-fragment meta bundle
+	dtn::data::MetaBundle meta(b);
+
+	// transform bundle into a fragment
+	b.procflags.setBit(dtn::data::PrimaryBlock::FRAGMENT, true);
+	b.fragmentoffset = 4;
+	b.appdatalength = 50;
+
+	// store the bundle
+	storage.store(b);
+
+	// Add origin bundle into a bundle-set
+	dtn::data::BundleSet bs;
+	bs.add(meta);
+
+	class BundleFilter : public dtn::storage::BundleSelector
+	{
+	public:
+		BundleFilter(const ibrcommon::BloomFilter &filter)
+		 : _filter(filter)
+		{};
+
+		virtual ~BundleFilter() {};
+
+		virtual dtn::data::Size limit() const throw () { return 1; };
+
+		virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+		{
+			// select the bundle if it is in the filter
+			return _filter.contains(meta.toString());
+		};
+
+		const ibrcommon::BloomFilter &_filter;
+	} bundle_filter(bs.getBloomFilter());
+
+	dtn::storage::BundleResultList list;
+
+	CPPUNIT_ASSERT_THROW(storage.get(bundle_filter, list), dtn::storage::NoBundleFoundException);
+
+	CPPUNIT_ASSERT_EQUAL((size_t)0, list.size());
 }
