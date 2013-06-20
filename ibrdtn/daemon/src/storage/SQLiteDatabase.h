@@ -273,7 +273,7 @@ namespace dtn
 			 * @param bundle
 			 * @param offset
 			 */
-			void get(Statement &st, dtn::data::Bundle &bundle, int offset = 0) const throw (SQLiteQueryException);
+			void get(Statement &st, dtn::data::Bundle &bundle, const int offset = 0) const throw (SQLiteQueryException);
 
 			/**
 			 *
@@ -282,7 +282,7 @@ namespace dtn
 			 * @param bind_offset
 			 * @param limit
 			 */
-			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, int bind_offset, size_t offset) const throw (SQLiteQueryException, NoBundleFoundException, BundleSelectorException);
+			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, const int bind_offset, const size_t offset, const size_t query_limit) const throw (SQLiteQueryException, NoBundleFoundException, BundleSelectorException);
 
 			/**
 			 * updates the nextExpiredTime. The calling function has to have the databaselock.

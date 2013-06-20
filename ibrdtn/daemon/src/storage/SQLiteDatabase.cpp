@@ -397,7 +397,7 @@ namespace dtn
 			bundle.net_priority = sqlite3_column_int(*st, 11);
 		}
 
-		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, const int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			try {
 				bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
@@ -467,7 +467,7 @@ namespace dtn
 						int bind_offset = query.bind(*st, 1);
 
 						// query the database
-						__get(cb, st, ret, items_added, bind_offset, offset);
+						__get(cb, st, ret, items_added, bind_offset, offset, query_limit);
 
 						// increment the offset, because we might not have enough
 						offset += query_limit;
@@ -478,7 +478,7 @@ namespace dtn
 					while (unlimited || (items_added < query_limit))
 					{
 						// query the database
-						__get(cb, st, ret, items_added, 1, offset);
+						__get(cb, st, ret, items_added, 1, offset, query_limit);
 
 						// increment the offset, because we might not have enough
 						offset += query_limit;
@@ -491,10 +491,9 @@ namespace dtn
 			if (items_added == 0) throw dtn::storage::NoBundleFoundException();
 		}
 
-		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, int bind_offset, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
+		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, const int bind_offset, const size_t offset, const size_t query_limit) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
 		{
-			bool unlimited = (cb.limit() <= 0);
-			size_t query_limit = (cb.limit() > 0) ? cb.limit() : 10;
+			const bool unlimited = (cb.limit() <= 0);
 
 			// limit result according to callback result
 			sqlite3_bind_int64(*st, bind_offset, offset);
