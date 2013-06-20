@@ -123,65 +123,55 @@ public abstract class StatsListAdapter extends BaseAdapter {
         }
     }
     
+    public enum RowType {
+        ABSOLUTE,
+        RELATIVE
+    };
+    
+    private final static RowType[] mRowTypes = {
+        RowType.RELATIVE,
+        RowType.ABSOLUTE,
+        RowType.RELATIVE,
+        
+        RowType.ABSOLUTE,
+        RowType.ABSOLUTE,
+        RowType.RELATIVE,
+        
+        RowType.RELATIVE,
+        RowType.RELATIVE,
+        RowType.RELATIVE,
+        RowType.RELATIVE,
+        RowType.RELATIVE,
+        RowType.RELATIVE,
+        RowType.ABSOLUTE,
+        RowType.RELATIVE
+    };
+    
+    private final static String[] mRowTitles = {
+      "Uptime",
+      "Neighbors",
+      "Timestamp",
+      
+      "Clock offset",
+      "Clock rating",
+      "Clock adjustments",
+      
+      "Transfers aborted",
+      "Bundles expired",
+      "Bundles generated",
+      "Bundles queued",
+      "Bundles received",
+      "Transfers requeued",
+      "Bundles stored",
+      "Transfers completed"
+    };
+    
+    public static RowType getRowType(int position) {
+        return mRowTypes[position];
+    }
+    
     public static String getRowTitle(int position) {
-        switch (position) {
-            case 0:
-                // TODO: add localized string
-                return "Uptime";
-                
-            case 1:
-                // TODO: add localized string
-                return "Neighbors";
-                
-            case 2:
-                // TODO: add localized string
-                return "Timestamp";
-                
-            case 3:
-                // TODO: add localized string
-                return "Clock offset";
-                
-            case 4:
-                // TODO: add localized string
-                return "Clock rating";
-                
-            case 5:
-                // TODO: add localized string
-                return "Clock adjustments";
-                
-            case 6:
-                // TODO: add localized string
-                return "Transfers aborted";
-                
-            case 7:
-                // TODO: add localized string
-                return "Bundles expired";
-                
-            case 8:
-                // TODO: add localized string
-                return "Bundles generated";
-                
-            case 9:
-                // TODO: add localized string
-                return "Bundles queued";
-
-            case 10:
-                // TODO: add localized string
-                return "Bundles received";
-                
-            case 11:
-                // TODO: add localized string
-                return "Transfers requeued";
-                
-            case 12:
-                // TODO: add localized string
-                return "Bundles stored";
-                
-            case 13:
-                // TODO: add localized string
-                return "Transfers completed";
-        }
-        return null;
+        return mRowTitles[position];
     }
     
     public static Object getRowData(int row, StatsEntry data) {

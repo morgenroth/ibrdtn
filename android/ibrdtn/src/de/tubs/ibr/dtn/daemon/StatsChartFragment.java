@@ -1,5 +1,7 @@
 package de.tubs.ibr.dtn.daemon;
 
+import java.util.ArrayList;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -17,9 +19,12 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.michaelpardo.chartview.widget.ChartView;
+import com.michaelpardo.chartview.widget.LinearSeries;
+import com.michaelpardo.chartview.widget.LinearSeries.LinearPoint;
 
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.daemon.StatsListAdapter.RowType;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
 import de.tubs.ibr.dtn.stats.StatsEntry;
@@ -41,8 +46,6 @@ public abstract class StatsChartFragment extends Fragment {
     private ListView mListView = null;
     
     private StatsListAdapter mAdapter = null;
-    
-    protected abstract void plot(Cursor stats, ChartView chart);
     
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName name, IBinder s) {
@@ -79,13 +82,81 @@ public abstract class StatsChartFragment extends Fragment {
             mChartView.clearSeries();
             
             // plot the charts
-            plot(stats, mChartView);
+            plotChart(stats, mChartView);
         }
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
         }
     };
+    
+    private void plotChart(Cursor stats, ChartView chart) {
+        int charts_count = mAdapter.getDataRows();
+        
+        // create a new series list
+        ArrayList<LinearSeries> series = new ArrayList<LinearSeries>(charts_count);
+        
+        for (int i = 0; i < charts_count; i++) {
+            LinearSeries s = new LinearSeries();
+            s.setLineColor(getResources().getColor(mAdapter.getDataColor(i)));
+            s.setLineWidth(4);
+            series.add(s);
+        }
+        
+        StatsEntry.ColumnsMap cmap = new StatsEntry.ColumnsMap();
+        
+        int points = 0;
+        
+        // move before the first position
+        stats.moveToPosition(-1);
+        
+        StatsEntry last_entry = null;
+
+        while (stats.moveToNext()) {
+            // create an entry object
+            StatsEntry e = new StatsEntry(getActivity(), stats, cmap);
+            
+            if (last_entry != null) {
+                Double timestamp = Double.valueOf(e.getTimestamp().getTime()) / 1000.0;
+                
+                for (int i = 0; i < charts_count; i++) {
+                    int position = mAdapter.getDataMapPosition(i);
+                    
+                    Double value = StatsListAdapter.getRowDouble(position, e);
+                    LinearPoint p = null;
+                    
+                    if (StatsListAdapter.getRowType(position).equals(RowType.RELATIVE)) {
+                        Double last_timestamp = Double.valueOf(last_entry.getTimestamp().getTime()) / 1000.0;
+                        Double timestamp_diff = timestamp - last_timestamp;
+                        
+                        Double last_value = StatsListAdapter.getRowDouble(position, last_entry);
+                        
+                        if (value < last_value) {
+                            p = new LinearPoint(timestamp, 0);
+                        } else {
+                            p = new LinearPoint(timestamp, (value - last_value) / timestamp_diff);
+                        }
+                    } else {
+                        p = new LinearPoint(timestamp, value);
+                    }
+                    
+                    series.get(i).addPoint(p);
+                }
+                
+                points++;
+            }
+            
+            // store the last entry for the next round
+            last_entry = e;
+        }
+
+        if (points > 0) {
+            // Add chart view data
+            for (LinearSeries s : series) {
+                chart.addSeries(s);
+            }
+        }
+    }
     
     private LoaderManager.LoaderCallbacks<StatsEntry> mStatsLoader = new LoaderManager.LoaderCallbacks<StatsEntry>() {
         @Override
