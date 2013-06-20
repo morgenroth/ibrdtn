@@ -377,11 +377,13 @@ namespace dtn
 
 			if (bundle.procflags & data::Bundle::FRAGMENT)
 			{
+				bundle.fragment = true;
 				bundle.offset = sqlite3_column_int64(*st, offset + 8);
 				bundle.appdatalength = sqlite3_column_int64(*st, offset + 9);
 			}
 			else
 			{
+				bundle.fragment = false;
 				bundle.offset = 0;
 				bundle.appdatalength = sqlite3_column_int64(*st, 9);
 			}
