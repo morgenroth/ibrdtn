@@ -99,6 +99,10 @@ public abstract class StatsListAdapter extends BaseAdapter {
             // special case "seconds"
             return String.format("%d s", (Long)value);
         }
+        else if (position == 14) {
+            // special case "bytes"
+            return String.format("%d bytes", (Long)value);
+        }
         
         if (value instanceof String) {
             return (String)value;
@@ -144,7 +148,9 @@ public abstract class StatsListAdapter extends BaseAdapter {
         RowType.RELATIVE,
         RowType.RELATIVE,
         RowType.ABSOLUTE,
-        RowType.RELATIVE
+        RowType.RELATIVE,
+        
+        RowType.ABSOLUTE
     };
     
     private final static int[] mRowTitles = {
@@ -163,7 +169,9 @@ public abstract class StatsListAdapter extends BaseAdapter {
       R.string.stats_title_bundles_received,
       R.string.stats_title_transfers_requeued,
       R.string.stats_title_bundles_stored,
-      R.string.stats_title_transfers_completed
+      R.string.stats_title_transfers_completed,
+      
+      R.string.stats_title_storage_size
     };
     
     public static RowType getRowType(int position) {
@@ -217,6 +225,9 @@ public abstract class StatsListAdapter extends BaseAdapter {
 
             case 13:
                 return data.getBundleTransmitted();
+                
+            case 14:
+                return data.getStorageSize();
         }
         return null;
     }

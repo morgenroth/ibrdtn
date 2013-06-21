@@ -6,12 +6,11 @@ import de.tubs.ibr.dtn.R;
 
 public class InfoChartFragment extends StatsChartFragment {
     
-    private Integer[] mChartMap = { 0, 1 };
-    private int[] mChartColors = { R.color.blue, R.color.green };
+    private Integer[] mChartMap = { 0, 1, 14, 12 };
+    private int[] mChartColors = { R.color.blue, R.color.green, R.color.violett, R.color.yellow };
     
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        // TODO Auto-generated method stub
         super.onActivityCreated(savedInstanceState);
         
         // create a new data list adapter

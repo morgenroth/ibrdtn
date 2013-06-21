@@ -26,9 +26,9 @@ public class StatsDatabase {
     private Context mContext = null;
     
     private static final String DATABASE_NAME = "stats";
-    public static final String[] TABLE_NAMES = { "dtnd" };
+    public static final String[] TABLE_NAMES = { "dtnd", "cl" };
     
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 4;
     
     // Database creation sql statement
     private static final String DATABASE_CREATE_DTND = 
@@ -37,6 +37,7 @@ public class StatsDatabase {
                 StatsEntry.TIMESTAMP + " TEXT, " +
                 StatsEntry.UPTIME + " INTEGER, " +
                 StatsEntry.NEIGHBORS + " INTEGER, " +
+                StatsEntry.STORAGE_SIZE + " INTEGER, " +
                 
                 StatsEntry.CLOCK_OFFSET + " DOUBLE, " +
                 StatsEntry.CLOCK_RATING + " DOUBLE, " +
@@ -51,6 +52,15 @@ public class StatsDatabase {
                 StatsEntry.BUNDLE_STORED + " INTEGER, " +
                 StatsEntry.BUNDLE_TRANSMITTED + " INTEGER" +
             ");";
+    
+    private static final String DATABASE_CREATE_CL = 
+            "CREATE TABLE " + TABLE_NAMES[1] + " (" +
+                BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                ConvergenceLayerStatsEntry.TIMESTAMP + " TEXT, " +
+                ConvergenceLayerStatsEntry.CONVERGENCE_LAYER + " TEXT, " +
+                ConvergenceLayerStatsEntry.DATA_TAG + " TEXT, " +
+                ConvergenceLayerStatsEntry.DATA_VALUE + " DOUBLE" +
+            ");";
 
     private class DBOpenHelper extends SQLiteOpenHelper {
         
@@ -61,18 +71,23 @@ public class StatsDatabase {
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(DATABASE_CREATE_DTND);
+            db.execSQL(DATABASE_CREATE_CL);
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            Log.w(DBOpenHelper.class.getName(),
-                    "Upgrading database from version " + oldVersion + " to "
-                            + newVersion + ", which will destroy all old data");
-            
-            for (String table : TABLE_NAMES) {
-                db.execSQL("DROP TABLE IF EXISTS " + table);
+            if ((oldVersion == 2) && (newVersion == 3)) {
+                Log.w(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion);
+                db.execSQL(DATABASE_CREATE_CL);
+            } else {
+                Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
+                        + newVersion + ", which will destroy all old data");
+                
+                for (String table : TABLE_NAMES) {
+                    db.execSQL("DROP TABLE IF EXISTS " + table);
+                }
+                onCreate(db);
             }
-            onCreate(db);
         }
     };
     
@@ -92,7 +107,7 @@ public class StatsDatabase {
         return mDatabase;
     }
     
-    public StatsEntry get(Long id) {
+    public StatsEntry getStats(Long id) {
         StatsEntry se = null;
         
         try {
@@ -101,6 +116,26 @@ public class StatsDatabase {
             if (cur.moveToNext())
             {
                 se = new StatsEntry(mContext, cur, new StatsEntry.ColumnsMap());
+            }
+            
+            cur.close();
+        } catch (Exception e) {
+            // entry not found
+            Log.e(TAG, "get() failed", e);
+        }
+        
+        return se;
+    }
+    
+    public ConvergenceLayerStatsEntry getClStats(Long id) {
+        ConvergenceLayerStatsEntry se = null;
+        
+        try {
+            Cursor cur = mDatabase.query(StatsDatabase.TABLE_NAMES[1], ConvergenceLayerStatsEntry.PROJECTION, ConvergenceLayerStatsEntry.ID + " = ?", new String[] { id.toString() }, null, null, null, "0, 1");
+            
+            if (cur.moveToNext())
+            {
+                se = new ConvergenceLayerStatsEntry(mContext, cur, new ConvergenceLayerStatsEntry.ColumnsMap());
             }
             
             cur.close();
@@ -122,6 +157,7 @@ public class StatsDatabase {
 
         values.put(StatsEntry.UPTIME, e.getUptime());
         values.put(StatsEntry.NEIGHBORS, e.getNeighbors());
+        values.put(StatsEntry.STORAGE_SIZE, e.getStorageSize());
         
         values.put(StatsEntry.CLOCK_OFFSET, e.getClockOffset());
         values.put(StatsEntry.CLOCK_RATING, e.getClockRating());
@@ -136,13 +172,35 @@ public class StatsDatabase {
         values.put(StatsEntry.BUNDLE_STORED, e.getBundleStored());
         values.put(StatsEntry.BUNDLE_TRANSMITTED, e.getBundleTransmitted());
         
-        Log.d(TAG, "stats stored: " + e.toString());
-        
         // store the message in the database
         Long id = mDatabase.insert(StatsDatabase.TABLE_NAMES[0], null, values);
         
+        Log.d(TAG, "stats stored: " + e.toString());
+        
         // finally purge old data
         purge();
+        
+        notifyDataChanged();
+        
+        return id;
+    }
+    
+    public Long put(ConvergenceLayerStatsEntry e) {
+        // store the stats object into the database
+        ContentValues values = new ContentValues();
+        
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        
+        values.put(ConvergenceLayerStatsEntry.TIMESTAMP, dateFormat.format(e.getTimestamp()));
+
+        values.put(ConvergenceLayerStatsEntry.CONVERGENCE_LAYER, e.getConvergenceLayer());
+        values.put(ConvergenceLayerStatsEntry.DATA_TAG, e.getDataTag());
+        values.put(ConvergenceLayerStatsEntry.DATA_VALUE, e.getDataValue());
+        
+        // store the message in the database
+        Long id = mDatabase.insert(StatsDatabase.TABLE_NAMES[1], null, values);
+        
+        Log.d(TAG, "cl stats stored: " + e.toString());
         
         notifyDataChanged();
         
@@ -158,6 +216,7 @@ public class StatsDatabase {
         String timestamp_limit = formatter.format(cal.getTime());
         
         mDatabase.delete(StatsDatabase.TABLE_NAMES[0], StatsEntry.TIMESTAMP + " < ?", new String[] { timestamp_limit });
+        mDatabase.delete(StatsDatabase.TABLE_NAMES[1], ConvergenceLayerStatsEntry.TIMESTAMP + " < ?", new String[] { timestamp_limit });
     }
 
     public void close()

@@ -51,9 +51,11 @@ import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.p2p.P2PManager;
+import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
 import de.tubs.ibr.dtn.stats.StatsEntry;
 import de.tubs.ibr.dtn.swig.NativeStats;
+import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonService extends Service {
     public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
@@ -237,14 +239,10 @@ public class DaemonService extends Service {
                 Calendar now = Calendar.getInstance();
                 now.roll(Calendar.MINUTE, -1);
                 if (mStatsLastAction.before(now.getTime())) {
-                    // query the daemon stats and store them in the database
-                    mStatsDatabase.put( new StatsEntry( mDaemonProcess.getStats() ) );
-                    mStatsLastAction = new Date();
+                    refreshStats();
                 }
             } else {
-                // query the daemon stats and store them in the database
-                mStatsDatabase.put( new StatsEntry( mDaemonProcess.getStats() ) );
-                mStatsLastAction = new Date();
+                refreshStats();
             }
             
             // schedule next collection in 3 minutes
@@ -253,6 +251,21 @@ public class DaemonService extends Service {
         
         // stop the daemon if it should be offline
         if (mDaemonProcess.getState().equals(DaemonState.OFFLINE)) stopSelf(startId);
+    }
+    
+    private void refreshStats() {
+        NativeStats nstats = mDaemonProcess.getStats();
+        
+        // query the daemon stats and store them in the database
+        mStatsDatabase.put( new StatsEntry( nstats ) );
+        
+        StringVec tags = nstats.getTags();
+        for (int i = 0; i < tags.size(); i++) {
+            ConvergenceLayerStatsEntry e = new ConvergenceLayerStatsEntry(nstats, tags.get(i), i);
+            mStatsDatabase.put(e);
+        }
+        
+        mStatsLastAction = new Date();
     }
 
     public DaemonService() {

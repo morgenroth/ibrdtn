@@ -29,5 +29,8 @@ public class StatsActivity extends FragmentActivity {
         
         mTabHost.addTab(mTabHost.newTabSpec("clock").setIndicator(getString(R.string.stats_tab_clock)),
                 ClockChartFragment.class, null);
+        
+        mTabHost.addTab(mTabHost.newTabSpec("cl").setIndicator(getString(R.string.stats_tab_cl)),
+                ConvergenceLayerStatsChartFragment.class, null);
     }
 }

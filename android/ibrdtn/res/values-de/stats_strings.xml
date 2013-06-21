@@ -4,6 +4,7 @@
     <string name="stats_tab_bundles">Bündel</string>
     <string name="stats_tab_transfer">Übertragung</string>
     <string name="stats_tab_clock">Uhr</string>
+    <string name="stats_tab_cl">Konvergenzschicht</string>
     
     <string name="stats_title_uptime">Laufzeit</string>
     <string name="stats_title_neighbors">Nachbarn</string>
@@ -21,4 +22,6 @@
     <string name="stats_title_transfers_requeued">Neuübertragungen</string>
     <string name="stats_title_bundles_stored">Bündel gespeichert</string>
     <string name="stats_title_transfers_completed">Vollständige Übertragungen</string>
+    
+	<string name="stats_title_storage_size">Speichergröße</string>
 </resources>

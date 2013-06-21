@@ -11,7 +11,6 @@ public class ClockChartFragment extends StatsChartFragment {
     
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        // TODO Auto-generated method stub
         super.onActivityCreated(savedInstanceState);
         
         // create a new data list adapter
