@@ -96,6 +96,7 @@ namespace dtn
 			size_t uptime;
 			size_t timestamp;
 			size_t neighbors;
+			size_t storage_size;
 
 			double time_offset;
 			double time_rating;

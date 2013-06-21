@@ -425,6 +425,7 @@ namespace dtn
 			ret.uptime = dtn::utils::Clock::getUptime().get<size_t>();
 			ret.timestamp = dtn::utils::Clock::getTime().get<size_t>();
 			ret.neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors().size();
+			ret.storage_size = dtn::core::BundleCore::getInstance().getStorage().size();
 
 			ret.time_offset = dtn::utils::Clock::toDouble(dtn::utils::Clock::getOffset());
 			ret.time_rating = dtn::utils::Clock::getRating();
