@@ -366,7 +366,7 @@ namespace dtn
 				const dtn::data::BundleID &id = aborted.getBundleID();
 
 				try {
-					const dtn::data::MetaBundle meta = this->getStorage().get(id);;
+					const dtn::data::MetaBundle meta = this->getStorage().get(id);
 
 					if (!(meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)) return;
 
@@ -374,7 +374,7 @@ namespace dtn
 					if (meta.destination.getNode() == peer.getNode())
 					{
 						// bundle is not deliverable
-						dtn::core::BundlePurgeEvent::raise(id, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
+						dtn::core::BundlePurgeEvent::raise(meta, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
 					}
 				} catch (const dtn::storage::NoBundleFoundException&) { };
 
