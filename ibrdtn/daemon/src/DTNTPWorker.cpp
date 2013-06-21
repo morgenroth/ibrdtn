@@ -174,14 +174,15 @@ namespace dtn
 				// remove outdated blacklist entries
 				{
 					ibrcommon::MutexLock l(_blacklist_lock);
-					for (blacklist_map::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); ++iter)
+					for (blacklist_map::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end();)
 					{
 						const dtn::data::Timestamp &bl_age = (*iter).second;
 
 						// do not query again if the blacklist entry is valid
-						if (bl_age < t.getUnixTimestamp())
-						{
-							_sync_blacklist.erase((*iter).first);
+						if (bl_age < t.getUnixTimestamp()) {
+							_sync_blacklist.erase(iter++);
+						} else {
+							++iter;
 						}
 					}
 				}
