@@ -513,6 +513,11 @@ namespace dtn
 						// read the bundle (or the fragment if fragmentation is enabled)
 						deserializer >> bundle;
 
+						// report transmission amount
+						dtn::data::DefaultSerializer serializer(std::cout);
+						double data_len = static_cast<double>(serializer.getLength(bundle));
+						_callback.addStats("in", data_len);
+
 						// check the bundle
 						if ( ( bundle.destination == EID() ) || ( bundle.source == EID() ) )
 						{
@@ -687,6 +692,9 @@ namespace dtn
 							// get throughput
 							double duration = m.getMicroseconds();
 							double data_len = static_cast<double>(serializer.getLength(bundle));
+
+							// report transmission amount
+							_connection._callback.addStats("out", data_len);
 
 							double kbytes_per_second = (data_len / 1024.0) / (duration / 1000000.0);
 

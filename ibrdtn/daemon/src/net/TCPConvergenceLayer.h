@@ -118,6 +118,9 @@ namespace dtn
 			void componentRun() throw ();
 			void componentDown() throw ();
 
+			virtual void addStats(const std::string &tag, const double value);
+			virtual void setStats(const std::string &tag, const double value);
+
 		private:
 			/**
 			 * Listen to a specific interface
@@ -161,6 +164,8 @@ namespace dtn
 			ibrcommon::Mutex _portmap_lock;
 			std::map<ibrcommon::vinterface, unsigned int> _portmap;
 			unsigned int _any_port;
+
+			ibrcommon::Mutex _stats_lock;
 		};
 	}
 }

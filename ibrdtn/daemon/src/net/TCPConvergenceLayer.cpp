@@ -610,4 +610,16 @@ namespace dtn
 			}
 		}
 	}
+
+	void TCPConvergenceLayer::addStats(const std::string &tag, const double value)
+	{
+		ibrcommon::MutexLock l(_stats_lock);
+		ConvergenceLayer::addStats(tag, value);
+	}
+
+	void TCPConvergenceLayer::setStats(const std::string &tag, const double value)
+	{
+		ibrcommon::MutexLock l(_stats_lock);
+		ConvergenceLayer::setStats(tag, value);
+	}
 }
