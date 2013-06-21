@@ -37,6 +37,7 @@
 #include "core/BundleEvent.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
+#include "core/BundlePurgeEvent.h"
 #include "routing/NodeHandshakeEvent.h"
 #include "routing/StaticRouteChangeEvent.h"
 
@@ -221,6 +222,7 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
 		}
 
 		void BaseRouter::componentDown() throw ()
@@ -238,6 +240,7 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::remove(this);
 		}
 
 		/**
@@ -279,8 +282,7 @@ namespace dtn
 						IBRCOMMON_LOGGER_DEBUG_TAG(BaseRouter::TAG, 20) << "singleton bundle added to purge vector: " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// add it to the purge vector
-						ibrcommon::MutexLock l(_purged_bundles_lock);
-						_purged_bundles.add(event.getBundle());
+						setPurged(event.getBundle());
 					}
 
 					// lock the list of neighbors
@@ -431,6 +433,18 @@ namespace dtn
 				// do not pass this event to any extension
 				return;
 			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
+
+				// add the purged bundle to the purge vector
+				setPurged(purge.bundle);
+
+				// pass event to all extensions
+				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
+				__forward_event(evt);
+				return;
+			} catch (const std::bad_cast&) { }
 
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
