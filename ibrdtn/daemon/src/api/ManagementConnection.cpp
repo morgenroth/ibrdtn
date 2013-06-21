@@ -24,6 +24,7 @@
 #include "ManagementConnection.h"
 #include "storage/BundleResult.h"
 #include "core/BundleCore.h"
+#include "core/Node.h"
 #include "routing/prophet/ProphetRoutingExtension.h"
 #include "routing/prophet/DeliveryPredictabilityMap.h"
 
@@ -393,6 +394,7 @@ namespace dtn
 						_stream << ClientHandler::API_STATUS_OK << " STATS INFO" << std::endl;
 						_stream << "Uptime: " << dtn::utils::Clock::getUptime().get<size_t>() << std::endl;
 						_stream << "Neighbors: " << dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors().size() << std::endl;
+						_stream << "Storage-size: " << dtn::core::BundleCore::getInstance().getStorage().size() << std::endl;
 						_stream << std::endl;
 					} else if ( cmd[1] == "timesync" ) {
 						_stream << ClientHandler::API_STATUS_OK << " STATS TIMESYNC" << std::endl;
@@ -412,6 +414,19 @@ namespace dtn
 						_stream << "Requeued: " << dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::getCounter() << std::endl;
 						_stream << "Queued: " << dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::getCounter() << std::endl;
 						_stream << std::endl;
+					} else if ( cmd[1] == "convergencelayers" ) {
+						ConnectionManager::stats_list list = dtn::core::BundleCore::getInstance().getConnectionManager().getStats();
+
+						_stream << ClientHandler::API_STATUS_OK << " STATS CONVERGENCELAYERS" << std::endl;
+						for (ConnectionManager::stats_list::const_iterator iter = list.begin(); iter != list.end(); iter++) {
+							const ConnectionManager::stats_pair &pair = (*iter);
+							const ConvergenceLayer::stats_map &map = pair.second;
+
+							for (ConvergenceLayer::stats_map::const_iterator map_it = map.begin(); map_it != map.end(); map_it++) {
+								_stream << dtn::core::Node::toString(pair.first) << "|" << (*map_it).first << ": " << (*map_it).second << std::endl;
+							}
+						}
+						_stream << std::endl;
 					} else if ( cmd[1] == "reset" ) {
 						dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::resetCounter();
 						dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::resetCounter();
@@ -420,6 +435,10 @@ namespace dtn
 						dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::resetCounter();
 						dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::resetCounter();
 						dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::resetCounter();
+
+						// reset cl stats
+						dtn::core::BundleCore::getInstance().getConnectionManager().resetStats();
+
 						_stream << ClientHandler::API_STATUS_ACCEPTED << " STATS RESET" << std::endl;
 					} else {
 						throw ibrcommon::Exception("malformed command");
