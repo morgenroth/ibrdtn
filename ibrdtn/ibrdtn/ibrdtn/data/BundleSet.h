@@ -77,7 +77,7 @@ namespace dtn
 			friend std::istream &operator>>(std::istream &stream, BundleSet &obj);
 
 			std::string getType();
-			bool isNamed();
+			bool isPersistent();
 			std::string getName();
 
 

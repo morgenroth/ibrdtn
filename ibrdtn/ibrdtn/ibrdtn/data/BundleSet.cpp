@@ -112,9 +112,9 @@ namespace dtn
 			return _set_impl->getType();
 		}
 
-		bool BundleSet::isNamed()
+		bool BundleSet::isPersistent()
 		{
-			return _set_impl->isNamed();
+			return _set_impl->isPersistent();
 		}
 
 		std::string BundleSet::getName()
