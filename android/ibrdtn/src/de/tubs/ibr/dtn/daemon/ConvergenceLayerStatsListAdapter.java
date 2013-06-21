@@ -2,6 +2,7 @@ package de.tubs.ibr.dtn.daemon;
 
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -75,8 +76,22 @@ public class ConvergenceLayerStatsListAdapter extends BaseAdapter {
         holder.imageIcon.setBackgroundColor(mContext.getResources().getColor(mColorProvider.getColor(key)));
         holder.imageIcon.setImageResource(R.drawable.ic_log);
 
-        holder.textName.setText(holder.data.getConvergenceLayer() + " [" + holder.data.getDataTag() + "]: " + holder.data.getDataValue());
+        if ("in".equals(holder.data.getDataTag()) || "out".equals(holder.data.getDataTag()))
+        {
+            holder.textName.setText(holder.data.getConvergenceLayer() + " [" + holder.data.getDataTag() + "]: " + humanReadableByteCount(holder.data.getDataValue().longValue(), true));
+        } else {
+            holder.textName.setText(holder.data.getConvergenceLayer() + " [" + holder.data.getDataTag() + "]: " + holder.data.getDataValue());
+        }
 
         return convertView;
+    }
+    
+    @SuppressLint("DefaultLocale")
+    private static String humanReadableByteCount(long bytes, boolean si) {
+        int unit = si ? 1000 : 1024;
+        if (bytes < unit) return bytes + " B";
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
 }

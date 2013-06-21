@@ -88,6 +88,15 @@ public abstract class StatsListAdapter extends BaseAdapter {
     }
     
     @SuppressLint("DefaultLocale")
+    private static String humanReadableByteCount(long bytes, boolean si) {
+        int unit = si ? 1000 : 1024;
+        if (bytes < unit) return bytes + " B";
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+    }
+    
+    @SuppressLint("DefaultLocale")
     public static String getRowString(int position, StatsEntry data) {
         Object value = getRowData(position, data);
         
@@ -101,7 +110,7 @@ public abstract class StatsListAdapter extends BaseAdapter {
         }
         else if (position == 14) {
             // special case "bytes"
-            return String.format("%d bytes", (Long)value);
+            return humanReadableByteCount((Long)value, true);
         }
         
         if (value instanceof String) {
