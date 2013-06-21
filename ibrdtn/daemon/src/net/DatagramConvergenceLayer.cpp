@@ -319,5 +319,25 @@ namespace dtn
 		{
 			return DatagramConvergenceLayer::TAG;
 		}
+
+		void DatagramConvergenceLayer::eventReceived(const dtn::data::Bundle &bundle)
+		{
+			ibrcommon::MutexLock l(_stats_lock);
+
+			// report transmission amount
+			dtn::data::DefaultSerializer serializer(std::cout);
+			double data_len = static_cast<double>(serializer.getLength(bundle));
+			addStats("in", data_len);
+		}
+
+		void DatagramConvergenceLayer::eventForwarded(const dtn::data::Bundle &bundle)
+		{
+			ibrcommon::MutexLock l(_stats_lock);
+
+			// report transmission amount
+			dtn::data::DefaultSerializer serializer(std::cout);
+			double data_len = static_cast<double>(serializer.getLength(bundle));
+			addStats("out", data_len);
+		}
 	} /* namespace data */
 } /* namespace dtn */
