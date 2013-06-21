@@ -239,6 +239,37 @@ namespace dtn
 			_cl.erase( cl );
 		}
 
+		ConnectionManager::stats_list ConnectionManager::getStats()
+		{
+			ibrcommon::MutexLock l(_cl_lock);
+			stats_list stats;
+
+			for (std::set<ConvergenceLayer*>::const_iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			{
+				const ConvergenceLayer &cl = (**iter);
+				const ConvergenceLayer::stats_map &cl_stats = cl.getStats();
+				const dtn::core::Node::Protocol p = cl.getDiscoveryProtocol();
+
+				stats_pair entry;
+				entry.first = p;
+				entry.second = cl_stats;
+
+				stats.push_back(entry);
+			}
+
+			return stats;
+		}
+
+		void ConnectionManager::resetStats()
+		{
+			ibrcommon::MutexLock l(_cl_lock);
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			{
+				ConvergenceLayer &cl = (**iter);
+				cl.resetStats();
+			}
+		}
+
 		void ConnectionManager::add(P2PDialupExtension *ext)
 		{
 			ibrcommon::MutexLock l(_dialup_lock);

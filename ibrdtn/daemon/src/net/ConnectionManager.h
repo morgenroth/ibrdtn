@@ -134,6 +134,15 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
+			/**
+			 * Returns statistic data about all convergence-layers
+			 */
+			typedef std::pair<dtn::core::Node::Protocol, ConvergenceLayer::stats_map> stats_pair;
+			typedef std::list<stats_pair> stats_list;
+
+			stats_list getStats();
+			void resetStats();
+
 		protected:
 			/**
 			 * trigger for periodical discovery of nodes
