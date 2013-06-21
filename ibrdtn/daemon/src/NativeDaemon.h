@@ -109,6 +109,23 @@ namespace dtn
 			size_t bundles_aborted;
 			size_t bundles_requeued;
 			size_t bundles_queued;
+
+			const std::vector<std::string>& getTags() {
+				return _tags;
+			}
+
+			double getData(int index) {
+				return _data[index];
+			}
+
+			void addData(const std::string &tag, double data) {
+				_tags.push_back(tag);
+				_data.push_back(data);
+			}
+
+		private:
+			std::vector<std::string> _tags;
+			std::vector<double> _data;
 		};
 
 		class NativeDaemonException : public ibrcommon::Exception

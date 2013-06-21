@@ -37,6 +37,7 @@
 #include "storage/SimpleBundleStorage.h"
 
 #include "core/BundleCore.h"
+#include "net/ConnectionManager.h"
 #include "core/FragmentManager.h"
 #include "core/Node.h"
 #include "core/EventSwitch.h"
@@ -437,6 +438,21 @@ namespace dtn
 			ret.bundles_aborted = dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::getCounter();
 			ret.bundles_requeued = dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::getCounter();
 			ret.bundles_queued = dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::getCounter();
+
+			using dtn::net::ConnectionManager;
+			using dtn::net::ConvergenceLayer;
+
+			ConnectionManager::stats_list list = dtn::core::BundleCore::getInstance().getConnectionManager().getStats();
+
+			for (ConnectionManager::stats_list::const_iterator iter = list.begin(); iter != list.end(); iter++) {
+				const ConnectionManager::stats_pair &pair = (*iter);
+				const ConvergenceLayer::stats_map &map = pair.second;
+
+				for (ConvergenceLayer::stats_map::const_iterator map_it = map.begin(); map_it != map.end(); map_it++) {
+					std::string tag = dtn::core::Node::toString(pair.first) + "|" + (*map_it).first;
+					ret.addData(tag, (*map_it).second);
+				}
+			}
 
 			return ret;
 		}
