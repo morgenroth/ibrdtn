@@ -5,6 +5,7 @@
     <string name="stats_tab_transfer">Übertragung</string>
     <string name="stats_tab_clock">Uhr</string>
     <string name="stats_tab_cl">Konvergenzschicht</string>
+    <string name="stats_tab_storage">Speicher</string>
     
     <string name="stats_title_uptime">Laufzeit</string>
     <string name="stats_title_neighbors">Nachbarn</string>

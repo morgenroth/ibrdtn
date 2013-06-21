@@ -4,9 +4,9 @@ import android.content.Context;
 import android.os.Bundle;
 import de.tubs.ibr.dtn.R;
 
-public class InfoChartFragment extends StatsChartFragment {
+public class StorageChartFragment extends StatsChartFragment {
     
-    private Integer[] mChartMap = { 0 };
+    private Integer[] mChartMap = { 14 };
     private int[] mChartColors = { R.color.blue };
     
     @Override

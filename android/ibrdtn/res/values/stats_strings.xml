@@ -5,6 +5,7 @@
     <string name="stats_tab_transfer">Transfer</string>
     <string name="stats_tab_clock">Clock</string>
     <string name="stats_tab_cl">Convergence Layer</string>
+    <string name="stats_tab_storage">Storage</string>
     
     <string name="stats_title_uptime">Uptime</string>
     <string name="stats_title_neighbors">Neighbors</string>
