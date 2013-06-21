@@ -149,7 +149,7 @@ namespace dtn
 		{
 		}
 
-		std::string Node::toString(Node::Type type)
+		std::string Node::toString(const Node::Type type)
 		{
 			switch (type)
 			{
@@ -178,7 +178,7 @@ namespace dtn
 			return "unknown";
 		}
 
-		std::string Node::toString(Node::Protocol proto)
+		std::string Node::toString(const Node::Protocol proto)
 		{
 			switch (proto)
 			{
