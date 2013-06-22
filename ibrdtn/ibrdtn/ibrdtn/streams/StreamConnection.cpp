@@ -159,5 +159,21 @@ namespace dtn
 		{
 			_buf.enableIdleTimeout(seconds);
 		}
+
+		void StreamConnection::setMonitor(bool val)
+		{
+			_buf._monitor = val;
+		}
+
+		void StreamConnection::resetMonitorStats()
+		{
+			_buf._monitor_stats[0] = 0;
+			_buf._monitor_stats[1] = 0;
+		}
+
+		size_t StreamConnection::getMonitorStat(int index)
+		{
+			return _buf._monitor_stats[index];
+		}
 	}
 }
