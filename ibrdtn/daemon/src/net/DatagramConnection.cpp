@@ -87,9 +87,6 @@ namespace dtn
 					// read the bundle out of the stream
 					deserializer >> bundle;
 
-					// report received bundle
-					_callback.eventReceived(bundle);
-
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(_peer_eid, bundle, false);
 				}
@@ -534,9 +531,6 @@ namespace dtn
 
 					// write the bundle into the stream
 					serializer << bundle; _stream.flush();
-
-					// report forwarded bundle
-					_connection._callback.eventForwarded(bundle);
 
 					// the transmission was successful if the stream is still marked as good
 					if (_stream.good())

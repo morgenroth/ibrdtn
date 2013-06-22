@@ -47,9 +47,6 @@ namespace dtn
 
 			virtual void connectionUp(const DatagramConnection *conn) = 0;
 			virtual void connectionDown(const DatagramConnection *conn) = 0;
-
-			virtual void eventReceived(const dtn::data::Bundle &bundle) = 0;
-			virtual void eventForwarded(const dtn::data::Bundle &bundle) = 0;
 		};
 
 		class DatagramConnection : public ibrcommon::DetachedThread

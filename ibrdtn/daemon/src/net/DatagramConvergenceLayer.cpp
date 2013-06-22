@@ -71,6 +71,9 @@ namespace dtn
 
 			// forward the send request to DatagramService
 			_service->send(HEADER_SEGMENT, flags, seqno, destination, buf, len);
+
+			// traffic monitoring
+			addStats("out", len);
 		}
 
 		void DatagramConvergenceLayer::callback_ack(DatagramConnection&, const unsigned int &seqno, const std::string &destination) throw (DatagramException)
@@ -218,6 +221,9 @@ namespace dtn
 				try {
 					// Receive full frame from socket
 					len = _service->recvfrom(&data[0], maxlen, type, flags, seqno, address);
+
+					// traffic monitoring
+					addStats("in", len);
 				} catch (const DatagramException&) {
 					_running = false;
 					break;
@@ -321,26 +327,6 @@ namespace dtn
 		const std::string DatagramConvergenceLayer::getName() const
 		{
 			return DatagramConvergenceLayer::TAG;
-		}
-
-		void DatagramConvergenceLayer::eventReceived(const dtn::data::Bundle &bundle)
-		{
-			ibrcommon::MutexLock l(_stats_lock);
-
-			// report transmission amount
-			dtn::data::DefaultSerializer serializer(std::cout);
-			double data_len = static_cast<double>(serializer.getLength(bundle));
-			addStats("in", data_len);
-		}
-
-		void DatagramConvergenceLayer::eventForwarded(const dtn::data::Bundle &bundle)
-		{
-			ibrcommon::MutexLock l(_stats_lock);
-
-			// report transmission amount
-			dtn::data::DefaultSerializer serializer(std::cout);
-			double data_len = static_cast<double>(serializer.getLength(bundle));
-			addStats("out", data_len);
 		}
 	} /* namespace data */
 } /* namespace dtn */

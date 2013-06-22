@@ -79,9 +79,6 @@ namespace dtn
 			 */
 			virtual void raiseEvent(const dtn::core::Event *evt) throw ();
 
-			virtual void eventReceived(const dtn::data::Bundle &bundle);
-			virtual void eventForwarded(const dtn::data::Bundle &bundle);
-
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentRun() throw ();
@@ -117,8 +114,6 @@ namespace dtn
 			bool _running;
 
 			uint16_t _discovery_sn;
-
-			ibrcommon::Mutex _stats_lock;
 		};
 	} /* namespace data */
 } /* namespace dtn */
