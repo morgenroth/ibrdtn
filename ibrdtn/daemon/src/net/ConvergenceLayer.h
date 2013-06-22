@@ -72,7 +72,7 @@ namespace dtn
 
 			virtual void resetStats();
 
-			virtual const stats_map& getStats() const;
+			virtual const stats_map& getStats();
 
 		protected:
 			virtual void addStats(const std::string &tag, const double value);

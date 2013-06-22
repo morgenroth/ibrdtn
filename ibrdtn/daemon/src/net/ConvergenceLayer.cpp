@@ -34,7 +34,7 @@ namespace dtn
 			_stats.clear();
 		}
 
-		const ConvergenceLayer::stats_map& ConvergenceLayer::getStats() const {
+		const ConvergenceLayer::stats_map& ConvergenceLayer::getStats() {
 			return _stats;
 		}
 

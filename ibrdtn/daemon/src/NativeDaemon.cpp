@@ -418,7 +418,7 @@ namespace dtn
 			return dtn::core::BundleCore::local.getString();
 		}
 
-		NativeStats NativeDaemon::getStats() const throw ()
+		NativeStats NativeDaemon::getStats() throw ()
 		{
 			NativeStats ret;
 

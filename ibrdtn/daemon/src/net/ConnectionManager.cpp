@@ -246,7 +246,7 @@ namespace dtn
 
 			for (std::set<ConvergenceLayer*>::const_iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
 			{
-				const ConvergenceLayer &cl = (**iter);
+				ConvergenceLayer &cl = (**iter);
 				const ConvergenceLayer::stats_map &cl_stats = cl.getStats();
 				const dtn::core::Node::Protocol p = cl.getDiscoveryProtocol();
 

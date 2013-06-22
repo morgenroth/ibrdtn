@@ -213,7 +213,7 @@ namespace dtn
 			/**
 			 * Get statistical data
 			 */
-			NativeStats getStats() const throw ();
+			NativeStats getStats() throw ();
 
 			/**
 			 * Add a static connection to the neighbor with the given EID
