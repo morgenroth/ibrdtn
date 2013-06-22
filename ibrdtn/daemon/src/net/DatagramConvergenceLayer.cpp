@@ -42,6 +42,9 @@ namespace dtn
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
 		 : _service(ds), _running(false), _discovery_sn(0)
 		{
+			// initialize stats
+			addStats("out", 0.0);
+			addStats("in", 0.0);
 		}
 
 		DatagramConvergenceLayer::~DatagramConvergenceLayer()
