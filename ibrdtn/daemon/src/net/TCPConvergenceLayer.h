@@ -111,15 +111,15 @@ namespace dtn
 			 */
 			void raiseEvent(const Event *evt) throw ();
 
+			virtual void resetStats();
+			virtual const stats_map& getStats();
+
 		protected:
 			void __cancellation() throw ();
 
 			void componentUp() throw ();
 			void componentRun() throw ();
 			void componentDown() throw ();
-
-			virtual void addStats(const std::string &tag, const double value);
-			virtual void setStats(const std::string &tag, const double value);
 
 		private:
 			/**
@@ -164,8 +164,6 @@ namespace dtn
 			ibrcommon::Mutex _portmap_lock;
 			std::map<ibrcommon::vinterface, unsigned int> _portmap;
 			unsigned int _any_port;
-
-			ibrcommon::Mutex _stats_lock;
 		};
 	}
 }

@@ -611,15 +611,37 @@ namespace dtn
 		}
 	}
 
-	void TCPConvergenceLayer::addStats(const std::string &tag, const double value)
+	const ConvergenceLayer::stats_map& TCPConvergenceLayer::getStats()
 	{
-		ibrcommon::MutexLock l(_stats_lock);
-		ConvergenceLayer::addStats(tag, value);
+		double in = 0;
+		double out = 0;
+
+		// collect stats of all connections
+		ibrcommon::MutexLock l(_connections_cond);
+
+		for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
+		{
+			TCPConnection &conn = *(*iter);
+			in += (double)conn.getTrafficStats(0);
+			out += (double)conn.getTrafficStats(1);
+			conn.resetTrafficStats();
+		}
+
+		addStats("in", in);
+		addStats("out", out);
+
+		return ConvergenceLayer::getStats();
 	}
 
-	void TCPConvergenceLayer::setStats(const std::string &tag, const double value)
+	void TCPConvergenceLayer::resetStats()
 	{
-		ibrcommon::MutexLock l(_stats_lock);
-		ConvergenceLayer::setStats(tag, value);
+		// reset the stats of all connections
+		ibrcommon::MutexLock l(_connections_cond);
+
+		for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
+		{
+			TCPConnection &conn = *(*iter);
+			conn.resetTrafficStats();
+		}
 	}
 }
