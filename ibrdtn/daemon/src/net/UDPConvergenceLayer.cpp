@@ -60,6 +60,9 @@ namespace dtn
 		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, dtn::data::Length mtu)
 		 : _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
 		{
+			// initialize stats
+			addStats("out", 0.0);
+			addStats("in", 0.0);
 		}
 
 		UDPConvergenceLayer::~UDPConvergenceLayer()
