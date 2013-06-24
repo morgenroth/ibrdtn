@@ -7,7 +7,7 @@ from munin import MuninPlugin
 class DtnTrafficPlugin(MuninPlugin):
     title = "Traffic"
     args = "--base 1000 -l 0"
-    vlabel = "throughput"
+    vlabel = "bytes per ${graph_period}"
     scale = False
     category = "dtn"
     host = "localhost"
@@ -23,6 +23,7 @@ class DtnTrafficPlugin(MuninPlugin):
         
         for t in data:
             tag_label = t.split("|")
+            tag_label[0] = tag_label[0].replace(":", "-")
             label = tag_label[0].lower() + "_" + tag_label[1].lower()
             
             ret.append(
@@ -50,8 +51,6 @@ class DtnTrafficPlugin(MuninPlugin):
             ret[label] = float(v)
 
         return ret
-
-        return dict(storage=data['Stored'])
 
 if __name__ == "__main__":
     DtnTrafficPlugin().run()
