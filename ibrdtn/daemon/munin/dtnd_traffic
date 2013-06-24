@@ -45,6 +45,7 @@ class DtnTrafficPlugin(MuninPlugin):
 
         for t, v in data.items():
             tag_label = t.split("|")
+            tag_label[0] = tag_label[0].replace(":", "-")
             label = tag_label[0].lower() + "_" + tag_label[1].lower()
             ret[label] = float(v)
 
