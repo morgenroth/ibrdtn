@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import os
+import dtnstats
+from munin import MuninPlugin
+
+class DtnStoragePlugin(MuninPlugin):
+    title = "Storage"
+    args = "--base 1000 -l 0"
+    vlabel = "storage"
+    scale = False
+    category = "dtn"
+    host = "localhost"
+    port = 4550
+
+    @property
+    def fields(self):
+        return [("storage", dict(
+                label = "number of bundles",
+                info = 'The number of bundles in the storage of the DTN daemon.',
+                type = "GAUGE",
+                min = "0"))]
+
+    def execute(self):
+        stats = dtnstats.DtnStats(self.host, self.port)
+        stats.connect()
+        data = stats.bundles()
+        return dict(storage=data['Stored'])
+
+if __name__ == "__main__":
+    DtnStoragePlugin().run()
+

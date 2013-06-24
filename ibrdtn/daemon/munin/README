@@ -1,0 +1,5 @@
+For these munin plugins it is required to install python and
+the python-munin library:
+
+  https://github.com/samuel/python-munin
+
