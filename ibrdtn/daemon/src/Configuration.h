@@ -142,6 +142,11 @@ namespace dtn
 			 */
 			std::string getStorage() const;
 
+			/**
+			 * Returns true if traffic stats should be recorded
+			 */
+			bool enableTrafficStats() const;
+
 			enum RoutingExtension
 			{
 				DEFAULT_ROUTING = 0,

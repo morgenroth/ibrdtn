@@ -549,6 +549,10 @@ namespace dtn
 			return _conf.read<std::string>("storage", "default");
 		}
 
+		bool Configuration::enableTrafficStats() const {
+			return (_conf.read<std::string>("stats_traffic", "no") == "yes");
+		}
+
 		void Configuration::Network::load(const ibrcommon::ConfigFile &conf)
 		{
 			/**

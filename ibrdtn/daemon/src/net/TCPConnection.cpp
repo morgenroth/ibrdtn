@@ -402,8 +402,10 @@ namespace dtn
 			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
 			_protocol_stream->exceptions(std::ios::badbit | std::ios::eofbit);
 
-			// enable traffic monitoring
-			_protocol_stream->setMonitor(true);
+			if (dtn::daemon::Configuration::getInstance().enableTrafficStats()) {
+				// enable traffic monitoring
+				_protocol_stream->setMonitor(true);
+			}
 		}
 
 		void TCPConnection::connect()
