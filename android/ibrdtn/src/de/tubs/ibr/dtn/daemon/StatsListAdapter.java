@@ -142,7 +142,7 @@ public abstract class StatsListAdapter extends BaseAdapter {
     };
     
     private final static RowType[] mRowTypes = {
-        RowType.RELATIVE,
+        RowType.ABSOLUTE,
         RowType.ABSOLUTE,
         RowType.RELATIVE,
         
