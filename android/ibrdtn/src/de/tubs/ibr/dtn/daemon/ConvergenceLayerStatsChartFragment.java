@@ -108,15 +108,15 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
             // generate a data key for this series
             String key = e.getConvergenceLayer() + "|" + e.getDataTag();
             
-            // add a new series is there is none
-            if (!series.containsKey(key)) {
-                LinearSeries s = new LinearSeries();
-                s.setLineColor(getResources().getColor(mColorProvider.getColor(key)));
-                s.setLineWidth(4);
-                series.put(key, s);
-            }
-            
             if (last_map.containsKey(key)) {
+                // add a new series is there is none
+                if (!series.containsKey(key)) {
+                    LinearSeries s = new LinearSeries();
+                    s.setLineColor(getResources().getColor(mColorProvider.getColor(key)));
+                    s.setLineWidth(4);
+                    series.put(key, s);
+                }
+
                 ConvergenceLayerStatsEntry last_entry = last_map.get(key);
                 
                 Double timestamp = Double.valueOf(e.getTimestamp().getTime()) / 1000.0;
