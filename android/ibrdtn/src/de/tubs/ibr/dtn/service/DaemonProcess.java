@@ -585,6 +585,9 @@ public class DaemonProcess {
 			PrintStream p = new PrintStream(writer);
 			p.println("local_uri = " + preferences.getString("endpoint_id", getUniqueEndpointID(context).toString()));
 			p.println("routing = " + preferences.getString("routing", "default"));
+			
+			// enable traffic stats
+			p.println("stats_traffic = yes");
 
 			if (preferences.getBoolean("constrains_lifetime", false)) {
 				p.println("limit_lifetime = 1209600");
