@@ -27,8 +27,8 @@ class DtnTrafficPlugin(MuninPlugin):
             label = tag_label[0].lower() + "_" + tag_label[1].lower()
 
             desc = dict(
-                    label = tag_label[0] + " " + tag_label[1],
-                    info = 'Throughput (' + tag_label[1] + ') of ' + tag_label[0] + ' convergence layer',
+                    label = tag_label[0],
+                    info = 'Throughput of ' + tag_label[0] + ' convergence layer',
                     type = "COUNTER",
                     min = "0",
                     cdef = label+",8,*"
