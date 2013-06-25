@@ -7,8 +7,8 @@ from munin import MuninPlugin
 class DtnTrafficPlugin(MuninPlugin):
     title = "Traffic"
     args = "--base 1000 -l 0"
-    vlabel = "bytes per ${graph_period}"
-    scale = False
+    vlabel = "bit in (-) / out (+) per ${graph_period}"
+    scale = True
     category = "dtn"
     host = "localhost"
     port = 4550
@@ -23,17 +23,23 @@ class DtnTrafficPlugin(MuninPlugin):
         
         for t in data:
             tag_label = t.split("|")
-            tag_label[0] = tag_label[0].replace(":", "-")
+            tag_label[0] = tag_label[0].replace(":", "_")
             label = tag_label[0].lower() + "_" + tag_label[1].lower()
-            
-            ret.append(
-                (label, dict(
+
+            desc = dict(
                     label = tag_label[0] + " " + tag_label[1],
                     info = 'Throughput (' + tag_label[1] + ') of ' + tag_label[0] + ' convergence layer',
                     type = "COUNTER",
-                    min = "0")
-                )
-            )
+                    min = "0",
+                    cdef = label+",8,*"
+                   )
+
+            if tag_label[1].lower() == "in":
+                desc["graph"]="no"
+            else:
+                desc["negative"]=tag_label[0].lower() + "_in"
+            
+            ret.append((label, desc))
         
         return ret
 
@@ -46,7 +52,7 @@ class DtnTrafficPlugin(MuninPlugin):
 
         for t, v in data.items():
             tag_label = t.split("|")
-            tag_label[0] = tag_label[0].replace(":", "-")
+            tag_label[0] = tag_label[0].replace(":", "_")
             label = tag_label[0].lower() + "_" + tag_label[1].lower()
             ret[label] = v
 
