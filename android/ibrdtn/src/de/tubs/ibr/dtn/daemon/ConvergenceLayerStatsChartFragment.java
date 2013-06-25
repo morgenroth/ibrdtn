@@ -124,7 +124,7 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
                 Double last_timestamp = Double.valueOf(last_entry.getTimestamp().getTime()) / 1000.0;
                 Double timestamp_diff = timestamp - last_timestamp;
 
-                Double last_value = last_entry.getDataValue();
+                Long last_value = last_entry.getDataValue();
 
                 LinearPoint p = null;
 
