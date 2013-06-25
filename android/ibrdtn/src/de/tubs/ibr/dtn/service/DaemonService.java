@@ -245,8 +245,8 @@ public class DaemonService extends Service {
                 refreshStats();
             }
             
-            // schedule next collection in 3 minutes
-            mServiceHandler.postDelayed(mCollectStats, 180000);
+            // schedule next collection in 15 minutes
+            mServiceHandler.postDelayed(mCollectStats, 900000);
         }
         
         // stop the daemon if it should be offline
