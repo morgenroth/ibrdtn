@@ -613,8 +613,8 @@ namespace dtn
 
 	const ConvergenceLayer::stats_map& TCPConvergenceLayer::getStats()
 	{
-		double in = 0;
-		double out = 0;
+		size_t in = 0;
+		size_t out = 0;
 
 		// collect stats of all connections
 		ibrcommon::MutexLock l(_connections_cond);
@@ -622,8 +622,8 @@ namespace dtn
 		for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 		{
 			TCPConnection &conn = *(*iter);
-			in += (double)conn.getTrafficStats(0);
-			out += (double)conn.getTrafficStats(1);
+			in += conn.getTrafficStats(0);
+			out += conn.getTrafficStats(1);
 			conn.resetTrafficStats();
 		}
 

@@ -38,11 +38,11 @@ namespace dtn
 			return _stats;
 		}
 
-		void ConvergenceLayer::addStats(const std::string &tag, const double value) {
+		void ConvergenceLayer::addStats(const std::string &tag, const size_t value) {
 			_stats[tag] += value;
 		}
 
-		void ConvergenceLayer::setStats(const std::string &tag, const double value) {
+		void ConvergenceLayer::setStats(const std::string &tag, const size_t value) {
 			_stats[tag] = value;
 		}
 	}

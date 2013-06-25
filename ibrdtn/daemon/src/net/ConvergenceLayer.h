@@ -68,15 +68,15 @@ namespace dtn
 			/**
 			 * statistic methods
 			 */
-			typedef std::map<std::string, double> stats_map;
+			typedef std::map<std::string, size_t> stats_map;
 
 			virtual void resetStats();
 
 			virtual const stats_map& getStats();
 
 		protected:
-			virtual void addStats(const std::string &tag, const double value);
-			virtual void setStats(const std::string &tag, const double value);
+			virtual void addStats(const std::string &tag, const size_t value);
+			virtual void setStats(const std::string &tag, const size_t value);
 
 		private:
 			stats_map _stats;

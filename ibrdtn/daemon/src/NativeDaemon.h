@@ -84,7 +84,7 @@ namespace dtn
 		class NativeStats {
 		public:
 			NativeStats()
-			: uptime(0), timestamp(0), neighbors(0),
+			: uptime(0), timestamp(0), neighbors(0), storage_size(0),
 			  time_offset(0.0), time_rating(0.0), time_adjustments(0),
 			  bundles_stored(0), bundles_expired(0), bundles_generated(0),
 			  bundles_received(0), bundles_transmitted(0), bundles_aborted(0),
@@ -115,18 +115,18 @@ namespace dtn
 				return _tags;
 			}
 
-			double getData(int index) {
+			size_t getData(int index) {
 				return _data[index];
 			}
 
-			void addData(const std::string &tag, double data) {
+			void addData(const std::string &tag, size_t data) {
 				_tags.push_back(tag);
 				_data.push_back(data);
 			}
 
 		private:
 			std::vector<std::string> _tags;
-			std::vector<double> _data;
+			std::vector<size_t> _data;
 		};
 
 		class NativeDaemonException : public ibrcommon::Exception
