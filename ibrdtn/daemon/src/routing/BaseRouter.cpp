@@ -440,9 +440,7 @@ namespace dtn
 				// add the purged bundle to the purge vector
 				setPurged(purge.bundle);
 
-				// pass event to all extensions
-				ibrcommon::RWLock l(_extensions_mutex, ibrcommon::RWMutex::LOCK_READONLY);
-				__forward_event(evt);
+				// since no routing module is interested in purge events yet - we exit here
 				return;
 			} catch (const std::bad_cast&) { }
 
