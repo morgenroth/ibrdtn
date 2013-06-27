@@ -50,4 +50,14 @@ public class Timestamp {
 	{
 		return (getDate().getTime() / 1000) - Timestamp.TIMEVAL_CONVERSION;
 	}
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Timestamp) {
+            if (calendar != null) {
+                return calendar.equals(((Timestamp)o).calendar);
+            }
+        }
+        return super.equals(o);
+    }
 }
