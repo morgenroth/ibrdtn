@@ -275,16 +275,6 @@ namespace dtn
 
 				// if a transfer is completed, then release the transfer resource of the peer
 				try {
-					// add this bundle to the purge vector if it is delivered to its destination
-					if ((event.getBundle().procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)
-							&& ( event.getPeer().getNode() == event.getBundle().destination.getNode() ))
-					{
-						IBRCOMMON_LOGGER_DEBUG_TAG(BaseRouter::TAG, 20) << "singleton bundle added to purge vector: " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
-
-						// add it to the purge vector
-						setPurged(event.getBundle());
-					}
-
 					// lock the list of neighbors
 					ibrcommon::MutexLock l(_neighbor_database);
 					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
