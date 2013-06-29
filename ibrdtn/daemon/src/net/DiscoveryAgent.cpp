@@ -73,6 +73,15 @@ namespace dtn
 				{
 					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_LOWPAN, s.getParameters(), to_value, 20));
 				}
+                else if (s.getName() == "emailcl")
+                {
+                	// Set timeout
+					size_t configTime = dtn::daemon::Configuration::getInstance().getEMail().getNodeAvailableTime();
+					if(configTime > 0)
+					to_value = configTime;
+
+					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_EMAIL, s.getParameters(), to_value, 20));
+                }
 				else
 				{
 					n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));
