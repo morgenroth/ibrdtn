@@ -340,7 +340,8 @@ namespace dtn
 				while(it != _processedTasks.end())
 				{
 					if(!(*it)->checkForReturningMail()) {
-						dtn::core::BundleEvent::raise((*it)->getBundleID(), dtn::core::BUNDLE_DELIVERED);
+						dtn::net::BundleTransfer job = (*it)->getJob();
+						job.complete();
 						delete *it;
 						*it = NULL;
 						it = _processedTasks.erase(it);
@@ -379,17 +380,17 @@ namespace dtn
 			size_t timestamp = 0, sequencenumber = 0, fragmentoffset = 0;
 
 			try {
-				newBundle._procflags = toInt(header->findField("Bundle-Flags")->getValue()->generate());
-				newBundle._destination = header->findField("Bundle-Destination")->getValue()->generate();
+				newBundle.procflags = toInt(header->findField("Bundle-Flags")->getValue()->generate());
+				newBundle.destination = header->findField("Bundle-Destination")->getValue()->generate();
 				source = dtn::data::EID(header->findField("Bundle-Source")->getValue()->generate());
-				newBundle._source = source;
-				newBundle._reportto = header->findField("Bundle-Report-To")->getValue()->generate();
-				newBundle._custodian = header->findField("Bundle-Custodian")->getValue()->generate();
+				newBundle.source = source;
+				newBundle.reportto = header->findField("Bundle-Report-To")->getValue()->generate();
+				newBundle.custodian = header->findField("Bundle-Custodian")->getValue()->generate();
 				timestamp = toInt(header->findField("Bundle-Creation-Time")->getValue()->generate());
-				newBundle._timestamp = timestamp;
+				newBundle.timestamp = timestamp;
 				sequencenumber = toInt(header->findField("Bundle-Sequence-Number")->getValue()->generate());
-				newBundle._sequencenumber = sequencenumber;
-				newBundle._lifetime = toInt(header->findField("Bundle-Lifetime")->getValue()->generate());
+				newBundle.sequencenumber = sequencenumber;
+				newBundle.lifetime = toInt(header->findField("Bundle-Lifetime")->getValue()->generate());
 			}catch(vmime::exceptions::no_such_field&) {
 				throw IMAPException("Missing bundle headers in mail" + mailID);
 			}catch(InvalidConversion&) {
@@ -399,14 +400,14 @@ namespace dtn
 			// If bundle is a fragment both fields need to be set
 			try {
 				fragmentoffset = toInt(header->findField("Bundle-Fragment-Offset")->getValue()->generate());
-				newBundle._appdatalength = toInt(header->findField("Bundle-Total-Application-Data-Unit-Length")->getValue()->generate());
+				newBundle.appdatalength = toInt(header->findField("Bundle-Total-Application-Data-Unit-Length")->getValue()->generate());
 			}catch(vmime::exceptions::no_such_field&) {
 				fragmentoffset = 0;
-				newBundle._appdatalength = 0;
+				newBundle.appdatalength = 0;
 			}catch(InvalidConversion&) {
 				throw IMAPException("Wrong formatted fragment offset in mail" + mailID);
 			}
-			newBundle._fragmentoffset = fragmentoffset;
+			newBundle.fragmentoffset = fragmentoffset;
 
 			//Check if bundle is already in the storage
 			try {
@@ -518,7 +519,7 @@ namespace dtn
 			}
 
 			// Raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(newBundle._source, newBundle, false);
+			dtn::net::BundleReceivedEvent::raise(newBundle.source, newBundle, false);
 		}
 
 		void EMailImapService::returningMailCheck(vmime::ref<vmime::net::message> &msg)
@@ -563,7 +564,7 @@ namespace dtn
 				ibrcommon::Mutex l(_processedTasksMutex);
 				for(std::list<EMailSmtpService::Task*>::iterator iter = _processedTasks.begin(); iter != _processedTasks.end(); ++iter)
 				{
-					if((*iter)->getBundleID() == bid)
+					if((*iter)->getJob().getBundle() == bid)
 					{
 						dtn::routing::RequeueBundleEvent::raise((*iter)->getNode().getEID(), bid);
 						_processedTasks.erase(iter);

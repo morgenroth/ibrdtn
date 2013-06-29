@@ -24,6 +24,8 @@
 
 #include "Configuration.h"
 #include "core/Node.h"
+#include "net/BundleTransfer.h"
+#include "storage/BundleStorage.h"
 #include "ibrdtn/data/BundleID.h"
 
 #include <ibrcommon/thread/Thread.h>
@@ -51,7 +53,7 @@ namespace dtn
 				 * @param recipient The email address of the recipient
 				 */
 				Task(const dtn::core::Node &node,
-						const dtn::data::BundleID &bid,
+						const dtn::net::BundleTransfer &job,
 						std::string recipient);
 
 				/**
@@ -67,7 +69,7 @@ namespace dtn
 				/**
 				 * @return The bundle id
 				 */
-				const dtn::data::BundleID getBundleID();
+				const dtn::net::BundleTransfer getJob();
 
 				/**
 				 * @return The email address of the recipient
@@ -85,12 +87,12 @@ namespace dtn
 				/**
 				 * Stores the node
 				 */
-				const dtn::core::Node _node;
+				const dtn::core::Node& _node;
 
 				/**
 				 * Stores the bundle id
 				 */
-				const dtn::data::BundleID _bundleID;
+				const dtn::net::BundleTransfer _job;
 
 				/**
 				 * Stores the email address of the recipient

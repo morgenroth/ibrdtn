@@ -85,7 +85,7 @@ namespace dtn
 			 * @param job The needed information for processing the job
 			 */
 			void queue(const dtn::core::Node &node,
-					const ConvergenceLayer::Job &job);
+					const dtn::net::BundleTransfer &job);
 
 		private:
 			/**

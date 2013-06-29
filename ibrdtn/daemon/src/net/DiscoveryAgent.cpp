@@ -57,7 +57,7 @@ namespace dtn
 
 			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 			{
-				const dtn::data::Number to_value = (timeout == 0) ? _config.timeout() : timeout;
+				dtn::data::Number to_value = (timeout == 0) ? _config.timeout() : timeout;
 
 				const DiscoveryService &s = (*iter);
 

@@ -54,18 +54,18 @@ namespace dtn
 						dynamic_cast<const dtn::core::TimeEvent&>(*event);
 				if (time.getAction() == dtn::core::TIME_SECOND_TICK)
 				{
-					if(_lastSmtpTaskTime + _config.getSmtpSubmitInterval() < time.getTimestamp()
+					if(_lastSmtpTaskTime + _config.getSmtpSubmitInterval() < time.getTimestamp().get<size_t>()
 							&& _config.getSmtpSubmitInterval() > 0)
 					{
 						_smtp.submitQueue();
-						_lastSmtpTaskTime = time.getTimestamp();
+						_lastSmtpTaskTime = time.getTimestamp().get<size_t>();
 					}
 
-					if(_lastImapTaskTime + _config.getImapLookupInterval() < time.getTimestamp()
+					if(_lastImapTaskTime + _config.getImapLookupInterval() < time.getTimestamp().get<size_t>()
 							&& _config.getImapLookupInterval() > 0)
 					{
 						_imap.fetchMails();
-						_lastImapTaskTime = time.getTimestamp();
+						_lastImapTaskTime = time.getTimestamp().get<size_t>();
 					}
 				}
 			} catch (const std::bad_cast&) { };
@@ -83,13 +83,13 @@ namespace dtn
 		}
 
 		void EMailConvergenceLayer::queue(const dtn::core::Node &node,
-				const ConvergenceLayer::Job &job)
+				const dtn::net::BundleTransfer &job)
 		{
 			// Check if node supports email convergence layer
 			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_EMAIL);
 			if (uri_list.empty())
 			{
-				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle,
+				dtn::net::TransferAbortedEvent::raise(node.getEID(), job.getBundle(),
 						dtn::net::TransferAbortedEvent::REASON_UNDEFINED);
 				return;
 			}
@@ -98,7 +98,7 @@ namespace dtn
 			std::string recipient = dtn::utils::Utils::tokenize("//", node.getEID().getString())[1];
 
 			// Create new Task
-			EMailSmtpService::Task *t = new EMailSmtpService::Task(node, job._bundle, recipient);
+			EMailSmtpService::Task *t = new EMailSmtpService::Task(node, job, recipient);
 
 			// Submit Task
 			if(_config.getSmtpSubmitInterval() <= 0)
@@ -108,7 +108,7 @@ namespace dtn
 				_smtp.queueTask(t);
 			}
 
-			IBRCOMMON_LOGGER(info) << "EMail Convergence Layer: Bundle " << t->getBundleID().toString() << " stored in submit queue" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(info) << "EMail Convergence Layer: Bundle " << t->getJob().getBundle().toString() << " stored in submit queue" << IBRCOMMON_LOGGER_ENDL;
 
 		}
 	}

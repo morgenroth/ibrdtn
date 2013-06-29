@@ -135,7 +135,7 @@ namespace dtn
 
 					//Check if bundle is still in the storage
 					try {
-						_storage.get(t->getBundleID());
+						_storage.get(t->getJob().getBundle());
 					} catch (dtn::storage::NoBundleFoundException&) {
 						// Destroy Task
 						delete t;
@@ -152,17 +152,17 @@ namespace dtn
 							break;
 						if(dynamic_cast<vmime::exceptions::authentication_error*>(&e) != NULL)
 						{
-							dtn::net::TransferAbortedEvent::raise(t->getNode().getEID(), t->getBundleID(), dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+							dtn::net::TransferAbortedEvent::raise(t->getNode().getEID(), t->getJob().getBundle(), dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 							IBRCOMMON_LOGGER(error) << "EMail Convergence Layer: SMTP authentication error (username/password correct?)" << IBRCOMMON_LOGGER_ENDL;
 						}
 						else if(dynamic_cast<vmime::exceptions::connection_error*>(&e) != NULL)
 						{
-							dtn::net::TransferAbortedEvent::raise(t->getNode().getEID(), t->getBundleID(), dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+							dtn::net::TransferAbortedEvent::raise(t->getNode().getEID(), t->getJob().getBundle(), dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 							IBRCOMMON_LOGGER(error) << "EMail Convergence Layer: Unable to connect to the SMTP server" << IBRCOMMON_LOGGER_ENDL;
 						}
 						else
 						{
-							dtn::net::TransferAbortedEvent::raise(t->getNode().getEID(), t->getBundleID(), dtn::net::TransferAbortedEvent::REASON_UNDEFINED);
+							dtn::net::TransferAbortedEvent::raise(t->getNode().getEID(), t->getJob().getBundle(), dtn::net::TransferAbortedEvent::REASON_UNDEFINED);
 							IBRCOMMON_LOGGER(error) << "EMail Convergence Layer: SMTP error: " << e.what() << IBRCOMMON_LOGGER_ENDL;
 						}
 						// Delete task
@@ -282,7 +282,7 @@ namespace dtn
 			if(!isConnected())
 				connect();
 
-			const dtn::data::Bundle bundle = _storage.get(t->getBundleID());
+			const dtn::data::Bundle bundle = _storage.get(t->getJob().getBundle());
 
 			// Create new email
 			vmime::ref<vmime::message> msg = vmime::create <vmime::message>();
@@ -306,27 +306,27 @@ namespace dtn
 			// Insert header for primary block
 			header->appendField(hfFactory->create("Bundle-EMailCL-Version", "1"));
 			header->appendField(hfFactory->create("Bundle-Flags",
-					toString(bundle._procflags)));
+					bundle.procflags.toString()));
 			header->appendField(hfFactory->create("Bundle-Destination",
-					bundle._destination.getString()));
+					bundle.destination.getString()));
 			header->appendField(hfFactory->create("Bundle-Source",
-					bundle._source.getString()));
+					bundle.source.getString()));
 			header->appendField(hfFactory->create("Bundle-Report-To",
-					bundle._reportto.getString()));
+					bundle.reportto.getString()));
 			header->appendField(hfFactory->create("Bundle-Custodian",
-					bundle._custodian.getString()));
+					bundle.custodian.getString()));
 			header->appendField(hfFactory->create("Bundle-Creation-Time",
-					toString(bundle._timestamp)));
+					bundle.timestamp.toString()));
 			header->appendField(hfFactory->create("Bundle-Sequence-Number",
-					toString(bundle._sequencenumber)));
+					bundle.sequencenumber.toString()));
 			header->appendField(hfFactory->create("Bundle-Lifetime",
-					toString(bundle._lifetime)));
+					bundle.lifetime.toString()));
 			if(bundle.get(dtn::data::Bundle::FRAGMENT))
 			{
 				header->appendField(hfFactory->create("Bundle-Fragment-Offset",
-						toString(bundle._fragmentoffset)));
+						bundle.fragmentoffset.toString()));
 				header->appendField(hfFactory->create("Bundle-Total-Application-Data-Unit-Length",
-						toString(bundle._appdatalength)));
+						bundle.appdatalength.toString()));
 			}
 
 			// Count additional blocks
@@ -419,7 +419,7 @@ namespace dtn
 			_transport->send(msg);
 			dtn::net::TransferCompletedEvent::raise(t->getNode().getEID(), bundle);
 			dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
-			IBRCOMMON_LOGGER(info) << "EMail Convergence Layer: Bundle " << t->getBundleID().toString() << " for node " << t->getNode().getEID().getString() << " submitted via smtp" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(info) << "EMail Convergence Layer: Bundle " << t->getJob().getBundle().toString() << " for node " << t->getNode().getEID().getString() << " submitted via smtp" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		unsigned int EMailSmtpService::getProcFlags(const dtn::data::Block &block)
@@ -451,8 +451,8 @@ namespace dtn
 			return ss.str();
 		}
 
-		EMailSmtpService::Task::Task(const dtn::core::Node &node, const dtn::data::BundleID &bid, std::string recipient)
-		 : _node(node), _bundleID(bid), _recipient(recipient), _timesChecked(0) {}
+		EMailSmtpService::Task::Task(const dtn::core::Node &node, const dtn::net::BundleTransfer &job, std::string recipient)
+		 : _node(node), _job(job), _recipient(recipient), _timesChecked(0) {}
 
 		EMailSmtpService::Task::~Task() {}
 
@@ -461,9 +461,9 @@ namespace dtn
 			return _node;
 		}
 
-		const dtn::data::BundleID EMailSmtpService::Task::getBundleID()
+		const dtn::net::BundleTransfer EMailSmtpService::Task::getJob()
 		{
-			return _bundleID;
+			return _job;
 		}
 
 		std::string EMailSmtpService::Task::getRecipient()
