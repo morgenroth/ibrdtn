@@ -213,7 +213,7 @@ namespace dtn
 			}
 
 			ibrcommon::MutexLock l(_node_lock);
-			pair<nodemap::iterator,bool> ret = _nodes.insert( pair<dtn::data::EID, dtn::core::Node>(n.getEID(), n) );
+			pair<nodemap::iterator,bool> ret = _nodes.insert( pair<dtn::data::EID, dtn::core::Node>(node.getEID(), node) );
 
 			dtn::core::Node &db = (*(ret.first)).second;
 

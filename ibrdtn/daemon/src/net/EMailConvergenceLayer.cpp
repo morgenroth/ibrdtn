@@ -111,5 +111,15 @@ namespace dtn
 			IBRCOMMON_LOGGER(info) << "EMail Convergence Layer: Bundle " << t->getJob().getBundle().toString() << " stored in submit queue" << IBRCOMMON_LOGGER_ENDL;
 
 		}
+
+		const std::string EMailConvergenceLayer::getName() const
+		{
+			return "EMailConvergenceLayer";
+		}
+
+		void EMailConvergenceLayer::__cancellation() throw () {}
+		void EMailConvergenceLayer::componentUp() throw () {}
+		void EMailConvergenceLayer::componentRun() throw () {}
+		void EMailConvergenceLayer::componentDown() throw () {}
 	}
 }

@@ -22,6 +22,7 @@
 #ifndef EMAILCONVERGENCELAYER_H_
 #define EMAILCONVERGENCELAYER_H_
 
+#include "Component.h"
 #include "Configuration.h"
 
 #include "core/EventReceiver.h"
@@ -36,7 +37,8 @@ namespace dtn
 	{
 		class EMailConvergenceLayer : public dtn::net::ConvergenceLayer,
 			public dtn::core::EventReceiver,
-			public dtn::net::DiscoveryServiceProvider
+			public dtn::net::DiscoveryServiceProvider,
+			public dtn::daemon::IndependentComponent
 		{
 		public:
 			/**
@@ -86,6 +88,18 @@ namespace dtn
 			 */
 			void queue(const dtn::core::Node &node,
 					const dtn::net::BundleTransfer &job);
+
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
+		protected:
+			void __cancellation() throw ();
+
+			void componentUp() throw ();
+			void componentRun() throw ();
+			void componentDown() throw ();
 
 		private:
 			/**

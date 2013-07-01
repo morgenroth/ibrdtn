@@ -1279,9 +1279,7 @@ namespace dtn
 						case dtn::daemon::Configuration::NetConfig::NETWORK_EMAIL:
 						{
 							try {
-								EMailConvergenceLayer *email_cl = new EMailConvergenceLayer();
-								core.getConnectionManager().add(email_cl);
-								//if (__ibrdtn_daemon_ipnd != NULL) __ibrdtn_daemon_ipnd->addService(email_cl);
+								_components[RUNLEVEL_NETWORK].push_back( new EMailConvergenceLayer() );
 								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "EMail Convergence Layer (MCL) added" << IBRCOMMON_LOGGER_ENDL;
 							}catch(const ibrcommon::Exception &ex) {
 								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add EMail Convergence Layer (MCL): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
