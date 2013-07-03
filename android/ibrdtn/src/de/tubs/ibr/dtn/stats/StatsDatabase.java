@@ -212,7 +212,7 @@ public class StatsDatabase {
         
         // generate a time limit (14 days)
         Calendar cal = Calendar.getInstance();
-        cal.roll(Calendar.DATE, -14);
+        cal.add(Calendar.DATE, -14);
         String timestamp_limit = formatter.format(cal.getTime());
         
         mDatabase.delete(StatsDatabase.TABLE_NAMES[0], StatsEntry.TIMESTAMP + " < ?", new String[] { timestamp_limit });
