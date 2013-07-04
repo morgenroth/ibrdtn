@@ -472,7 +472,7 @@ namespace dtn
 							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
 
 							// lock the neighbor database while searching for bundles
-							{
+							try {
 								NeighborDatabase &db = (**this).getNeighborDB();
 
 								ibrcommon::MutexLock l(db);
@@ -482,27 +482,25 @@ namespace dtn
 								if (!entry.isTransferThresholdReached())
 									throw NeighborDatabase::NoMoreTransfersAvailable();
 
-								try {
-									// get the DeliveryPredictabilityMap of the potentially next hop
-									const DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
+								// get the DeliveryPredictabilityMap of the potentially next hop
+								const DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
 
-									// get the bundle filter of the neighbor
-									BundleFilter filter(entry, *_forwardingStrategy, dpm);
+								// get the bundle filter of the neighbor
+								BundleFilter filter(entry, *_forwardingStrategy, dpm);
 
-									// some debug output
-									IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								// some debug output
+								IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-									// query some unknown bundle from the storage, the list contains max. 10 items.
-									list.clear();
-									(**this).getSeeker().get(filter, list);
-								} catch (const NeighborDatabase::DatasetNotAvailableException&) {
-									// if there is no DeliveryPredictabilityMap for the next hop
-									// perform a routing handshake with the peer
-									(**this).doHandshake(task.eid);
-								} catch (const dtn::storage::BundleSelectorException&) {
-									// query a new summary vector from this neighbor
-									(**this).doHandshake(task.eid);
-								}
+								// query some unknown bundle from the storage, the list contains max. 10 items.
+								list.clear();
+								(**this).getSeeker().get(filter, list);
+							} catch (const NeighborDatabase::DatasetNotAvailableException&) {
+								// if there is no DeliveryPredictabilityMap for the next hop
+								// perform a routing handshake with the peer
+								(**this).doHandshake(task.eid);
+							} catch (const dtn::storage::BundleSelectorException&) {
+								// query a new summary vector from this neighbor
+								(**this).doHandshake(task.eid);
 							}
 
 							// send the bundles as long as we have resources
