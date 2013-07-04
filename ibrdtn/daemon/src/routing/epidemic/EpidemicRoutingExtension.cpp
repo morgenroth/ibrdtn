@@ -276,7 +276,7 @@ namespace dtn
 							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
 
 							// lock the neighbor database while searching for bundles
-							{
+							try {
 								NeighborDatabase &db = (**this).getNeighborDB();
 								ibrcommon::MutexLock l(db);
 								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
@@ -285,29 +285,27 @@ namespace dtn
 								if (!entry.isTransferThresholdReached())
 									throw NeighborDatabase::NoMoreTransfersAvailable();
 
+								// get the bundle filter of the neighbor
+								BundleFilter filter(entry);
+
+								// some debug output
+								IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+
+								// query some unknown bundle from the storage
+								list.clear();
+								(**this).getSeeker().get(filter, list);
+							} catch (const dtn::storage::BundleSelectorException&) {
+								// query a new summary vector from this neighbor
+								(**this).doHandshake(task.eid);
+							}
+
+							// send the bundles as long as we have resources
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
+							{
 								try {
-									// get the bundle filter of the neighbor
-									BundleFilter filter(entry);
-
-									// some debug output
-									IBRCOMMON_LOGGER_DEBUG_TAG(EpidemicRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
-
-									// query some unknown bundle from the storage
-									list.clear();
-									(**this).getSeeker().get(filter, list);
-								} catch (const dtn::storage::BundleSelectorException&) {
-									// query a new summary vector from this neighbor
-									(**this).doHandshake(task.eid);
-								}
-
-								// send the bundles as long as we have resources
-								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
-								{
-									try {
-										// transfer the bundle to the neighbor
-										transferTo(task.eid, *iter);
-									} catch (const NeighborDatabase::AlreadyInTransitException&) { };
-								}
+									// transfer the bundle to the neighbor
+									transferTo(task.eid, *iter);
+								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
