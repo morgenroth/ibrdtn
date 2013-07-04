@@ -22,8 +22,6 @@
  */
 package de.tubs.ibr.dtn.service;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -33,6 +31,7 @@ import java.util.Date;
 import android.content.Context;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
+import android.os.ParcelFileDescriptor.AutoCloseInputStream;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.Log;
@@ -166,7 +165,6 @@ public class ClientSession {
         private DTNSessionCallback _cb = null;
         private TransferMode _mode = TransferMode.NULL;
         private OutputStream _output = null;
-        private ParcelFileDescriptor _fd = null;
         private long _current = 0L;
         private long _length = 0L;
                 
@@ -207,8 +205,7 @@ public class ClientSession {
             if (TransferMode.FILEDESCRIPTOR.equals(_mode)) {
                 try {
                     // ask for a filedescriptor
-                    _fd = _cb.fd();
-                    _output = new FileOutputStream(_fd.getFileDescriptor());
+                    _output = new ParcelFileDescriptor.AutoCloseOutputStream(_cb.fd());
                     _length = payload_length;
                 } catch (RemoteException e) {
                     Log.e(TAG, "Remote call fd() failed", e);
@@ -232,7 +229,6 @@ public class ClientSession {
                 }
             }
             
-            _fd = null;
             _output = null;
             _mode = TransferMode.NULL;
             _length = 0L;
@@ -264,8 +260,7 @@ public class ClientSession {
                     } catch (IOException ex) {
                         Log.e(TAG, "Error while closing output stream", ex);
                     }
-                    
-                    _fd = null;
+
                     _output = null;
                 } catch (RemoteException e) {
                     Log.e(TAG, "Remote call progress() failed", e);
@@ -595,7 +590,7 @@ public class ClientSession {
                 b.setProcflags( new PrimaryBlockFlags( b.getProcflags().get() | bundle.getProcflags() ) );
 
                 // open the file descriptor
-                FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
+                AutoCloseInputStream stream = new AutoCloseInputStream(fd);
                 FileChannel inChannel = stream.getChannel();
 
                 try {
@@ -648,7 +643,6 @@ public class ClientSession {
                     try {
                         inChannel.close();
                         stream.close();
-                        fd.close();
                     } catch (IOException e) {
                         Log.e(TAG, "channel close failed", e);
                     }
