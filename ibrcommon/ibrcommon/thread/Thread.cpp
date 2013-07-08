@@ -181,10 +181,10 @@ namespace ibrcommon
 				return;
 			}
 
-			if ((ls == THREAD_CANCELLED) || (ls == THREAD_FINALIZED) || (ls == THREAD_JOINABLE)) return;
+			if ((ls == THREAD_CANCELLED) || (ls == THREAD_FINALIZED) || (ls == THREAD_JOINABLE) || (ls == THREAD_FINALIZING)) return;
 
 			// wait until a state is reached where cancellation is possible
-			ls.wait(THREAD_RUNNING | THREAD_JOINABLE | THREAD_FINALIZED);
+			ls.wait(THREAD_RUNNING | THREAD_JOINABLE | THREAD_FINALIZING | THREAD_FINALIZED);
 
 			// exit if the thread is not running
 			if (ls != THREAD_RUNNING) return;
