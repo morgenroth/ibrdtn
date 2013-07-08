@@ -12,3 +12,13 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1 (>= 0.8), ibrdtn1 (>= 0.
 Suggests: logrotate (>= 3.0.0)
 Description: The implementation of the bundle protocol of the IBR (TU Braunschweig).
 
+Package: ibrdtnd-dbg
+Section: debug
+Architecture: any
+Priority: extra
+Depends: ibrdtnd (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for ibrdtnd
+  The implementation of the bundle protocol of the IBR (TU Braunschweig).
+  .
+  This package contains the debugging symbols for ibrdtnd.
+

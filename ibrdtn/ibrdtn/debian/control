@@ -12,9 +12,19 @@ Architecture: any
 Depends: ibrdtn1 (= ${binary:Version}), libssl-dev (>= 0.9.8), ibrcommon-dev (>= 0.8), zlib1g-dev
 Description: Basic DTN library used by all IBR-DTN applications. This package contains the include files.
 
-
 Package: ibrdtn1
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libssl0.9.8 (>= 0.9.8) | libssl1.0.0 (>=1.0.0), ibrcommon1 (>= 0.6), zlib1g
 Description: Basic DTN library used by all IBR-DTN applications.
+
+Package: ibrdtn1-dbg
+Section: debug
+Architecture: any
+Priority: extra
+Depends: ibrdtn1 (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for ibrdtn1
+  ibrdtn is the basic DTN library used by all IBR-DTN applications.
+  .
+  This package contains the debugging symbols for ibrdtn1.
+

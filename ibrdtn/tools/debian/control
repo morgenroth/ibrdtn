@@ -11,3 +11,13 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1 (>= 0.8), ibrdtn1 (>= 0.8)
 Description: Tools (ping, send, recv, ...) to use in conjunction with IBR-DTN daemon.
 
+Package: ibrdtn-tools-dbg
+Section: debug
+Architecture: any
+Priority: extra
+Depends: ibrdtn-tools (= ${binary:Version}), ${misc:Depends}
+Description: debugging symbols for ibrdtn-tools
+  Tools (ping, send, recv, ...) to use in conjunction with IBR-DTN daemon.
+  .
+  This package contains the debugging symbols for ibrdtn-tools.
+
