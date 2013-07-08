@@ -30,6 +30,8 @@
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryServiceProvider.h"
 
+#include <ibrcommon/thread/RWMutex.h>
+
 #include <list>
 
 namespace dtn
@@ -108,8 +110,16 @@ namespace dtn
 
 			ibrcommon::Mutex _send_lock;
 
-			ibrcommon::Conditional _connection_cond;
-			std::list<DatagramConnection*> _connections;
+			// this conditional must be locked when iterating over the
+			// list of connections
+			ibrcommon::Conditional _cond_connections;
+
+			// this lock is used to protect a connection reference from
+			// being deleted while using it
+			ibrcommon::RWMutex _mutex_connection;
+
+			typedef std::list<DatagramConnection*> connection_list;
+			connection_list _connections;
 
 			bool _running;
 
