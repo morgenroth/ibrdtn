@@ -11,17 +11,22 @@ endif
 
 # debian files for package building
 EXTRA_DIST= \
-	debian/ibrdtnd.logrotate \
-	debian/ibrdtnd.default \
-	debian/compat \
-	debian/copyright \
 	debian/changelog \
-	debian/postinst \
-	debian/rules \
-	debian/init.d \
-	debian/conffiles \
+	debian/compat \
 	debian/control \
-	debian/docs \
+	debian/copyright \
+	debian/ibrdtnd.default \
+	debian/ibrdtnd.dirs \
+	debian/ibrdtnd.docs \
+	debian/ibrdtnd.init \
+	debian/ibrdtnd.install \
+	debian/ibrdtnd.logrotate \
+	debian/ibrdtnd.postinst \
+	debian/ibrdtnd.postrm \
+	debian/ibrdtnd.preinst \
+	debian/ibrdtnd.prerm \
+	debian/munin-plugins-ibrdtnd.install \
+	debian/rules \
 	debian/source \
 	debian/source/format
 
