@@ -353,6 +353,7 @@ AC_CONFIG_FILES([Makefile \
 	doc/Makefile \
 	man/Makefile \
 	scripts/Makefile \
+	munin/Makefile \
 	tests/Makefile \
 	tests/unittests/Makefile])
 	

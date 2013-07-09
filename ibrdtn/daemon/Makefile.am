@@ -6,7 +6,7 @@ if ANDROID
 noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
-SUBDIRS += etc doc man scripts tests
+SUBDIRS += etc doc man scripts tests munin
 endif
 
 # debian files for package building
