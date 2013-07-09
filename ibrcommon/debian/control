@@ -2,7 +2,7 @@ Source: ibrcommon
 Priority: extra
 Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
 Build-Depends: debhelper (>= 7.0), autotools-dev, libnl-3-dev (>= 3.2)| libnl3-dev (>= 3.0) | libnl-dev (>= 1.1), libnl-genl-3-dev (>= 3.2)| libnl3-dev (>= 3.0) | libnl-dev (>= 1.1), libnl-route-3-dev (>= 3.2)| libnl3-dev (>= 3.0) | libnl-dev (>= 1.1), libnl-nf-3-dev (>= 3.2) | libnl3-dev (>= 3.0) | libnl-dev (>= 1.1), libnl-cli-3-dev (>= 3.2)| libnl3-dev (>= 3.0) | libnl-dev (>= 1.1), libssl-dev (>= 0.9.8), cdbs (>= 0.4), pkg-config
-Standards-Version: 3.8.4
+Standards-Version: 3.9.4
 Section: libs
 Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
 
@@ -24,7 +24,7 @@ Architecture: any
 Priority: extra
 Depends: ibrcommon1 (= ${binary:Version}), ${misc:Depends}
 Description: debugging symbols for ibrcommon1
-  A library with common functions for C++.
-  .
-  This package contains the debugging symbols for ibrcommon1.
+	A library with common functions for C++.
+	.
+	This package contains the debugging symbols for ibrcommon1.
 

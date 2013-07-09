@@ -61,14 +61,14 @@ fi
 # create a log directory for the daemon process
 if [ ! -d "${LOG_DIR}" -a ! -L "${LOG_DIR}" ]; then
 	mkdir -p ${LOG_DIR}
-	chown dtnd.adm ${LOG_DIR}
+	chown dtnd:adm ${LOG_DIR}
 	chmod 775 ${LOG_DIR}
 fi
 
 # create a pid directory for the daemon process
 if [ ! -d "${PID_DIR}" -a ! -L "${PID_DIR}" ]; then
 	mkdir -p ${PID_DIR}
-	chown dtnd.adm ${PID_DIR}
+	chown dtnd:adm ${PID_DIR}
 	chmod 775 ${PID_DIR}
 fi
 

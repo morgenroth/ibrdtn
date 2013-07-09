@@ -2,15 +2,19 @@ Source: ibrdtnd
 Section: net
 Priority: standard
 Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
-Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev (>= 0.8), ibrdtn-dev (>= 0.8), libsqlite3-dev, libcurl4-openssl-dev (>= 7.18), libdaemon-dev (>= 0.12), cdbs (>= 0.4), pkg-config, dtndht-dev (>=0.2.2)
-Standards-Version: 3.8.4
+Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev (>= 0.10), ibrdtn-dev (>= 0.10), libsqlite3-dev, libcurl4-openssl-dev (>= 7.18), libdaemon-dev (>= 0.12), cdbs (>= 0.4), pkg-config, dtndht-dev (>=0.2.2)
+Standards-Version: 3.9.4
 Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
 
 Package: ibrdtnd
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1 (>= 0.8), ibrdtn1 (>= 0.8), libsqlite3-0, libcurl3 (>= 7.18), libdaemon0 (>= 0.12), dtndht1 (>=0.2.2)
-Suggests: logrotate (>= 3.0.0)
-Description: The implementation of the bundle protocol of the IBR (TU Braunschweig).
+Pre-Depends: debconf, adduser
+Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1, ibrdtn1, libsqlite3-0, libcurl3 (>= 7.18), libdaemon0 (>= 0.12), dtndht1
+Suggests: logrotate (>= 3.0.0), ibrdtn-tools
+Description: IBR-DTN daemon
+	The implementation of the bundle protocol of the IBR (TU Braunschweig).
+	.
+	This package contains the daemon binary of IBR-DTN.
 
 Package: ibrdtnd-dbg
 Section: debug
@@ -18,7 +22,13 @@ Architecture: any
 Priority: extra
 Depends: ibrdtnd (= ${binary:Version}), ${misc:Depends}
 Description: debugging symbols for ibrdtnd
-  The implementation of the bundle protocol of the IBR (TU Braunschweig).
-  .
-  This package contains the debugging symbols for ibrdtnd.
+	The implementation of the bundle protocol of the IBR (TU Braunschweig).
+	.
+	This package contains the debugging symbols for ibrdtnd.
+
+Package: munin-plugins-ibrdtnd
+Architecture: any
+Priority: optional
+Depends: ibrdtnd (>= 0.10), python, munin-plugins-core, ${misc:Depends}
+Description: Munin plugins for IBR-DTN
 

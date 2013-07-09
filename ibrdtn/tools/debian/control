@@ -2,14 +2,18 @@ Source: ibrdtn-tools
 Section: net
 Priority: extra
 Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
-Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev (>= 0.8), ibrdtn-dev (>= 0.8), cdbs (>= 0.4), pkg-config
-Standards-Version: 3.8.4
+Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev (>= 0.10), ibrdtn-dev (>= 0.10), cdbs (>= 0.4), pkg-config
+Standards-Version: 3.9.4
 Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
 
 Package: ibrdtn-tools
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1 (>= 0.8), ibrdtn1 (>= 0.8)
-Description: Tools (ping, send, recv, ...) to use in conjunction with IBR-DTN daemon.
+Pre-Depends: debconf
+Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1, ibrdtn1
+Description: IBR-DTN Tools
+	Tools (ping, send, recv, ...) to use in conjunction with IBR-DTN daemon.
+	.
+	This package contains the DTN tools for IBR-DTN.
 
 Package: ibrdtn-tools-dbg
 Section: debug
@@ -17,7 +21,7 @@ Architecture: any
 Priority: extra
 Depends: ibrdtn-tools (= ${binary:Version}), ${misc:Depends}
 Description: debugging symbols for ibrdtn-tools
-  Tools (ping, send, recv, ...) to use in conjunction with IBR-DTN daemon.
-  .
-  This package contains the debugging symbols for ibrdtn-tools.
+	Tools (ping, send, recv, ...) to use in conjunction with IBR-DTN daemon.
+	.
+	This package contains the debugging symbols for ibrdtn-tools.
 
