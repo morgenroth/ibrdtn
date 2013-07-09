@@ -63,7 +63,7 @@ namespace dtn
 		 * implementation of the BaseRouter class
 		 */
 		BaseRouter::BaseRouter()
-		 : _extension_state(false)
+		 : _extension_state(false), _next_expiration(0)
 		{
 			// register myself for all extensions
 			RoutingExtension::_router = this;
@@ -437,22 +437,40 @@ namespace dtn
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 				dtn::data::Timestamp expire_time = time.getTimestamp();
-				if (expire_time <= 60) expire_time = 0;
-				else expire_time -= 60;
 
-				{
-					ibrcommon::MutexLock l(_known_bundles_lock);
-					_known_bundles.expire(expire_time);
-				}
+				// do the expiration only every 60 seconds
+				if (expire_time > _next_expiration) {
+					// store the next expiration time
+					_next_expiration = expire_time + 60;
 
-				{
-					ibrcommon::MutexLock l(_purged_bundles_lock);
-					_purged_bundles.expire(expire_time);
-				}
+					// expire all bundles and neighbors one minute late
+					if (expire_time <= 60) expire_time = 0;
+					else expire_time -= 60;
 
-				{
-					ibrcommon::MutexLock l(_neighbor_database);
-					_neighbor_database.expire(time.getTimestamp());
+					{
+						ibrcommon::MutexLock l(_known_bundles_lock);
+						_known_bundles.expire(expire_time);
+					}
+
+					{
+						ibrcommon::MutexLock l(_purged_bundles_lock);
+						_purged_bundles.expire(expire_time);
+					}
+
+					{
+						ibrcommon::MutexLock l(_neighbor_database);
+
+						// get all active neighbors
+						const std::set<dtn::core::Node> neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+
+						// touch all active neighbors
+						for (std::set<dtn::core::Node>::const_iterator it = neighbors.begin(); it != neighbors.end(); it++) {
+							_neighbor_database.create( (*it).getEID() );
+						}
+
+						// check all neighbor entries for expiration
+						_neighbor_database.expire(time.getTimestamp());
+					}
 				}
 
 				// pass event to all extensions
