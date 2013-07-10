@@ -153,7 +153,7 @@ namespace dtn
 					// query for more bundles
 					storage.get(bundle_filter, list);
 
-					for (dtn::storage::BundleResultList::const_iterator iter = list.begin(); iter != list.end(); iter++)
+					for (dtn::storage::BundleResultList::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 					{
 						const dtn::data::MetaBundle &meta = (*iter);
 
