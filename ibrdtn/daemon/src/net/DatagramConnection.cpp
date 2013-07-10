@@ -526,17 +526,22 @@ namespace dtn
 					// get the next job
 					dtn::net::BundleTransfer job = queue.getnpop(true);
 
-					// read the bundle out of the storage
-					const dtn::data::Bundle bundle = storage.get(job.getBundle());
+					try {
+						// read the bundle out of the storage
+						const dtn::data::Bundle bundle = storage.get(job.getBundle());
 
-					// write the bundle into the stream
-					serializer << bundle; _stream.flush();
+						// write the bundle into the stream
+						serializer << bundle; _stream.flush();
 
-					// the transmission was successful if the stream is still marked as good
-					if (_stream.good())
-					{
-						// bundle send completely - raise bundle event
-						job.complete();
+						// the transmission was successful if the stream is still marked as good
+						if (_stream.good())
+						{
+							// bundle send completely - raise bundle event
+							job.complete();
+						}
+					} catch (const dtn::storage::NoBundleFoundException&) {
+						// could not load the bundle, abort the job
+						job.abort(dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 					}
 				}
 
