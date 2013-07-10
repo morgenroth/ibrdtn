@@ -27,7 +27,11 @@ public class Node {
 
         String[] split = data.split("\\s");
 
-        String url = "(\\bdtn://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])";
+        String url = "("
+                + "(\\bdtn://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])" // dtn://
+                + "|"
+                + "(\\bipn:[0-9]*)" // ipn:
+                + ")"; 
 
         final Pattern eidPattern = Pattern.compile(url);
         final Matcher eidMatcher = eidPattern.matcher(split[0]);
