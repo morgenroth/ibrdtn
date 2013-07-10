@@ -106,7 +106,7 @@ public class NodeConnection {
                 + "#"
                 + "(\\w+)" // type
                 + "#"
-                + "(\\w+)" // protocol
+                + "((\\w|:)+)" // protocol
                 + "#"
                 + "(.*)" // connection data
                 );
