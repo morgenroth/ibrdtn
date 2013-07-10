@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -109,6 +110,21 @@ public class RosterItem extends LinearLayout {
 			mHint.setImageResource(R.drawable.ic_draft);
 		} else {
 			mHint.setVisibility(View.GONE);
+		}
+		
+		if (mBuddy.getCountry() != null) {
+		    String resourceName = "ic_flag_" + mBuddy.getCountry().toLowerCase();
+		    
+		    Log.d(TAG, "Search for " + resourceName);
+		    int flagsId = getResources().getIdentifier(resourceName, "drawable", getContext().getPackageName());
+		    
+		    if (flagsId == 0) {
+		        mLabel.setCompoundDrawables(null, null, null, null);
+		    } else {
+		        mLabel.setCompoundDrawablesWithIntrinsicBounds(null, null, getResources().getDrawable(flagsId), null);
+		    }
+		} else {
+		    mLabel.setCompoundDrawables(null, null, null, null);
 		}
 		
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
