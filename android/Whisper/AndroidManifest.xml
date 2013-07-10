@@ -45,8 +45,6 @@
 		<service android:name=".service.ChatService" />
 		<service android:name=".service.TTSService" />
 		
-		<receiver android:process=":remote" android:name=".service.AlarmReceiver"></receiver>
-		
 	    <receiver android:enabled="true" android:name=".service.EventReceiver" android:exported="true" android:permission="de.tubs.ibr.dtn.permission.DTN_SERVER">
 	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.intent.STATE" />

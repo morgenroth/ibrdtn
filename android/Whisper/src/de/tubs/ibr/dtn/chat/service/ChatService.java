@@ -59,6 +59,7 @@ import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
+import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
@@ -82,6 +83,7 @@ public class ChatService extends IntentService {
 	public static final String MARK_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.MARK_DELIVERED";
 	public static final String REPORT_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.REPORT_DELIVERED";
 	
+	public final static String ACTION_PRESENCE_ALARM = "de.tubs.ibr.dtn.chat.PRESENCE_ALARM";
 	public static final String ACTION_SEND_MESSAGE = "de.tubs.ibr.dtn.chat.SEND_MESSAGE";
 	public static final String ACTION_REFRESH_PRESENCE = "de.tubs.ibr.dtn.chat.REFRESH_PRESENCE";
 	
@@ -281,7 +283,21 @@ public class ChatService extends IntentService {
 		_screen_off = false;
 		
 		// create a new client object
-		_client = new DTNClient();
+		_client = new DTNClient(new SessionConnection() {
+            @Override
+            public void onSessionConnected(Session arg0) {
+                // respect user settings
+                if (PreferenceManager.getDefaultSharedPreferences(ChatService.this).getBoolean("checkBroadcastPresence", false))
+                {
+                    // register scheduled presence update
+                    PresenceGenerator.activate(ChatService.this);
+                }
+            }
+
+            @Override
+            public void onSessionDisconnected() {
+            }
+		});
 
 		// create a roster object
 		this.roster = new Roster();
@@ -439,7 +455,7 @@ public class ChatService extends IntentService {
 		String action = intent.getAction();
 		
         // create a task to process concurrently
-        if (AlarmReceiver.ACTION.equals(action))
+        if (ACTION_PRESENCE_ALARM.equals(action))
         {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ChatService.this);
 			
@@ -641,7 +657,7 @@ public class ChatService extends IntentService {
 		case SEND_PRESENCE:
 	        // wake-up the chat service and queue a send presence task
 	        Intent i = new Intent(this, ChatService.class);
-	        i.setAction(AlarmReceiver.ACTION);
+	        i.setAction(ACTION_PRESENCE_ALARM);
 	        startService(i);
 		    break;
 		}

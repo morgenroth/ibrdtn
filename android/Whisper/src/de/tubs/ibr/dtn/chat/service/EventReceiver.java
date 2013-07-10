@@ -21,10 +21,6 @@
  */
 package de.tubs.ibr.dtn.chat.service;
 
-import java.util.Date;
-
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -47,13 +43,13 @@ public class EventReceiver extends BroadcastReceiver {
 				if (PreferenceManager.getDefaultSharedPreferences(context).getBoolean("checkBroadcastPresence", false))
 				{
 					// register scheduled presence update
-					activatePresenceGenerator(context);
+					PresenceGenerator.activate(context);
 				}
 			}
 			else if (state.equals("OFFLINE"))
 			{
 				// unregister scheduled presence update
-				deactivatePresenceGenerator(context);
+			    PresenceGenerator.deactivate(context);
 			}
 		}
 		else if (action.equals(de.tubs.ibr.dtn.Intent.RECEIVE))
@@ -72,37 +68,5 @@ public class EventReceiver extends BroadcastReceiver {
 			i.putExtra("bundleid", intent.getParcelableExtra("bundleid"));
 			context.startService(i);
 		}
-	}
-	
-	// activate alarm every 15 minutes
-	static public void activatePresenceGenerator(Context context)
-	{	
-		// create a new wakeup intent
-		Intent intent = new Intent(context, AlarmReceiver.class);
-		
-		// create pending intent
-		PendingIntent sender = PendingIntent.getBroadcast(context, AlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-		// Get the AlarmManager service
-		AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-		am.setInexactRepeating(AlarmManager.RTC_WAKEUP, new Date().getTime(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, sender);
-		
-		Log.i("EventReceiver", "Presence alarm set for every 15 minutes.");
-	}
-	
-	// deactivate alarm every 15 minutes
-	static public void deactivatePresenceGenerator(Context context)
-	{	
-		// create a new wakeup intent
-		Intent intent = new Intent(context, AlarmReceiver.class);
-		
-		// create pending intent
-		PendingIntent sender = PendingIntent.getBroadcast(context, AlarmReceiver.REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-		// Get the AlarmManager service
-		AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-		am.cancel(sender);
-		
-		Log.i("EventReceiver", "Presence alarm canceled.");
 	}
 }
