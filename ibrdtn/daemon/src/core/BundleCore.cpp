@@ -334,6 +334,7 @@ namespace dtn
 
 				return;
 			} catch (const dtn::storage::NoBundleFoundException&) {
+				return;
 			} catch (const std::bad_cast&) {}
 
 			try {
