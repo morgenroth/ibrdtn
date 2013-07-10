@@ -146,6 +146,9 @@ public class Roster {
 		
 		// update buddy data
 		database.update(TABLE_NAME_ROSTER, values, Buddy.ID + " = ?", new String[] { buddyId.toString() });
+		
+        // send refresh intent
+        notifyBuddyChanged(buddyId);
 	}
 	
 	public synchronized void clearMessages(Long buddyId)
@@ -278,6 +281,9 @@ public class Roster {
 		
 		// update buddy data
 		database.update(TABLE_NAME_ROSTER, values, Buddy.ID + " = ?", new String[] { bid.toString() });
+		
+        // send refresh intent
+        notifyBuddyChanged(bid);
 	}
 
 	public synchronized void reportSent(Long msgId, String sentId)
