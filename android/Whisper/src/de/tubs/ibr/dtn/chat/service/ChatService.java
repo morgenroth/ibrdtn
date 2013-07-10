@@ -184,6 +184,7 @@ public class ChatService extends IntentService {
 			String status = null;
 			String voiceeid = null;
 			String language = null;
+			String country = null;
 			
 			StringTokenizer tokenizer = new StringTokenizer(payload, "\n");
 			while (tokenizer.hasMoreTokens())
@@ -220,11 +221,15 @@ public class ChatService extends IntentService {
                 {
                     language = value;
                 }
+                else if (keyword.equalsIgnoreCase("Country"))
+                {
+                    country = value;
+                }
 			}
 			
 			if (nickname != null)
 			{
-				getRoster().updatePresence(source.toString(), created, presence, nickname, status, voiceeid, language);
+				getRoster().updatePresence(source.toString(), created, presence, nickname, status, voiceeid, language, country);
 			}
 		}
 		
@@ -605,7 +610,8 @@ public class ChatService extends IntentService {
 			String presence_message = "Presence: " + presence + "\n" +
 					"Nickname: " + nickname + "\n" +
 					"Status: " + status + "\n" +
-					"Language: " + Locale.getDefault().getLanguage();
+					"Language: " + Locale.getDefault().getLanguage() + "\n" +
+					"Country: " + Locale.getDefault().getCountry();
 			
 			try {
     			if (Utils.isVoiceRecordingSupported(this)) {
@@ -651,7 +657,7 @@ public class ChatService extends IntentService {
 			createNotification(b, msg);
 			break;
 		case BUDDY_ADD:
-			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World", "dtn://test/dtalkie", "en");
+			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World", "dtn://test/dtalkie", "en", "gb");
 			break;
 			
 		case SEND_PRESENCE:
