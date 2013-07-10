@@ -106,9 +106,9 @@ public class NodeConnection {
                 + "#"
                 + "(\\w+)" // type
                 + "#"
-                + "((\\w|:)+)" // protocol
+                + "([\\w:]+)" // protocol
                 + "#"
-                + "(.*)" // connection data
+                + "([\\w:,.;=/%]*)" // connection data
                 );
 
         final Matcher matcher = pattern.matcher(data);
