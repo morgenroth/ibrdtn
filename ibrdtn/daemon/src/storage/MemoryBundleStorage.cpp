@@ -94,7 +94,7 @@ namespace dtn
 			return _bundles.size();
 		}
 
-		void MemoryBundleStorage::get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
+		void MemoryBundleStorage::get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 

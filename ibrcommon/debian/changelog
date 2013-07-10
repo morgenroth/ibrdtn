@@ -1,8 +1,8 @@
-ibrcommon (0.9.0) UNRELEASED; urgency=low
+ibrcommon (0.11.0) UNRELEASED; urgency=low
 
   * Development revision
 
- -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 11 Mar 2013 21:59:20 +0100
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 02 Jul 2013 10:00:00 +0200
 
 ibrcommon (0.8.0) stable; urgency=low
 

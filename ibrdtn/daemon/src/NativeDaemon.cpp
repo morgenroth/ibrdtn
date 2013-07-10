@@ -37,6 +37,7 @@
 #include "storage/SimpleBundleStorage.h"
 
 #include "core/BundleCore.h"
+#include "net/ConnectionManager.h"
 #include "core/FragmentManager.h"
 #include "core/Node.h"
 #include "core/EventSwitch.h"
@@ -49,6 +50,16 @@
 #include "routing/epidemic/EpidemicRoutingExtension.h"
 #include "routing/prophet/ProphetRoutingExtension.h"
 #include "routing/flooding/FloodRoutingExtension.h"
+
+#include "core/GlobalEvent.h"
+#include "net/BundleReceivedEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
+#include "core/BundleGeneratedEvent.h"
+#include "core/BundleExpiredEvent.h"
+#include "routing/QueueBundleEvent.h"
+#include "routing/RequeueBundleEvent.h"
+#include "core/TimeAdjustmentEvent.h"
 
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
@@ -407,6 +418,46 @@ namespace dtn
 			return dtn::core::BundleCore::local.getString();
 		}
 
+		NativeStats NativeDaemon::getStats() throw ()
+		{
+			NativeStats ret;
+
+			ret.uptime = dtn::utils::Clock::getUptime().get<size_t>();
+			ret.timestamp = dtn::utils::Clock::getTime().get<size_t>();
+			ret.neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors().size();
+			ret.storage_size = dtn::core::BundleCore::getInstance().getStorage().size();
+
+			ret.time_offset = dtn::utils::Clock::toDouble(dtn::utils::Clock::getOffset());
+			ret.time_rating = dtn::utils::Clock::getRating();
+			ret.time_adjustments = dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::getCounter();
+
+			ret.bundles_stored = dtn::core::BundleCore::getInstance().getStorage().count();
+			ret.bundles_expired = dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::getCounter();
+			ret.bundles_generated = dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::getCounter();
+			ret.bundles_received = dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::getCounter();
+			ret.bundles_transmitted = dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::getCounter();
+			ret.bundles_aborted = dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::getCounter();
+			ret.bundles_requeued = dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::getCounter();
+			ret.bundles_queued = dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::getCounter();
+
+			using dtn::net::ConnectionManager;
+			using dtn::net::ConvergenceLayer;
+
+			ConnectionManager::stats_list list = dtn::core::BundleCore::getInstance().getConnectionManager().getStats();
+
+			for (ConnectionManager::stats_list::const_iterator iter = list.begin(); iter != list.end(); iter++) {
+				const ConnectionManager::stats_pair &pair = (*iter);
+				const ConvergenceLayer::stats_map &map = pair.second;
+
+				for (ConvergenceLayer::stats_map::const_iterator map_it = map.begin(); map_it != map.end(); map_it++) {
+					std::string tag = dtn::core::Node::toString(pair.first) + "|" + (*map_it).first;
+					ret.addData(tag, (*map_it).second);
+				}
+			}
+
+			return ret;
+		}
+
 		NativeNode NativeDaemon::getInfo(const std::string &neighbor_eid) const throw (NativeDaemonException)
 		{
 			NativeNode nn(neighbor_eid);
@@ -526,7 +577,9 @@ namespace dtn
 			try {
 				const dtn::core::Node n = cm.getNeighbor(neighbor);
 				cm.open(n);
-			} catch (const dtn::net::NeighborNotAvailableException&) { }
+			} catch (const ibrcommon::Exception&) {
+				// ignore errors
+			}
 		}
 
 		void NativeDaemon::setLogging(const std::string &defaultTag, int logLevel) const throw ()

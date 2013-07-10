@@ -22,7 +22,7 @@
 package de.tubs.ibr.dtn;
 
 public class Intent {
-    public static final String CATEGORY_SESSION = "de.tubs.ibr.dtn.intent.category.SESSION";
+    public static final String CATEGORY_SERVICES = "de.tubs.ibr.dtn.intent.category.SERVICES";
     
 	public static final String DTNAPP = "de.tubs.ibr.dtn.intent.DTNAPP";
 	
@@ -40,4 +40,9 @@ public class Intent {
 	public static final String NEIGHBOR = "de.tubs.ibr.dtn.intent.NEIGHBOR";
 	
 	public static final String SENDFILE = "de.tubs.ibr.dtn.intent.SENDFILE";
+	public static final String SENDFILE_MULTIPLE = "de.tubs.ibr.dtn.intent.SEND_MULTIPLE";
+	
+	// required extras for the SENDFILE intent
+    public static final String EXTRA_KEY_DESTINATION = "destination";
+    public static final String EXTRA_KEY_STREAM = "stream";
 }

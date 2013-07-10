@@ -29,5 +29,21 @@ namespace dtn
 		ConvergenceLayer::~ConvergenceLayer()
 		{
 		}
+
+		void ConvergenceLayer::resetStats() {
+			_stats.clear();
+		}
+
+		const ConvergenceLayer::stats_map& ConvergenceLayer::getStats() {
+			return _stats;
+		}
+
+		void ConvergenceLayer::addStats(const std::string &tag, const size_t value) {
+			_stats[tag] += value;
+		}
+
+		void ConvergenceLayer::setStats(const std::string &tag, const size_t value) {
+			_stats[tag] = value;
+		}
 	}
 }

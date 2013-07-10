@@ -45,6 +45,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.CheckBoxPreference;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
@@ -65,6 +66,11 @@ import de.tubs.ibr.dtn.stats.CollectorService;
 public class Preferences extends PreferenceActivity {
 	
 	private final String TAG = "Preferences";
+	
+	// These preferences show their value as summary
+	private final static String[] mSummaryPrefs = {
+	    "endpoint_id", "routing", "security_mode", "log_options", "log_debug_verbosity", "timesync_mode"
+	    };
 	
 	private Boolean mBound = false;
 	private DTNService service = null;
@@ -185,6 +191,14 @@ public class Preferences extends PreferenceActivity {
 	    	return true;
 	    }
 	    
+	    case R.id.itemStats:
+	    {
+            // open statistic activity
+            Intent i = new Intent(Preferences.this, StatsActivity.class);
+            startActivity(i);
+            return true;
+	    }
+	    
 	    default:
 	        return super.onOptionsItemSelected(item);
 	    }
@@ -264,6 +278,13 @@ public class Preferences extends PreferenceActivity {
 
 		// set initial version
 		setVersion(null);
+		
+        // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
+        // their values. When their values change, their summaries are updated
+        // to reflect the new value, per the Android Design guidelines.
+		for (String prefKey : mSummaryPrefs) {
+		    bindPreferenceSummaryToValue(findPreference(prefKey));
+		}
 	}
 	
 	@Override
@@ -336,4 +357,61 @@ public class Preferences extends PreferenceActivity {
             });
         }
     };
+    
+    /**
+     * A preference value change listener that updates the preference's summary
+     * to reflect its new value.
+     */
+    private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object value) {
+            String stringValue = value.toString();
+            
+            for (String prefKey : mSummaryPrefs) {
+                if (prefKey.equals(preference.getKey())) {
+                    if (preference instanceof ListPreference) {
+                        // For list preferences, look up the correct display value in
+                        // the preference's 'entries' list.
+                        ListPreference listPreference = (ListPreference) preference;
+                        int index = listPreference.findIndexOfValue(stringValue);
+
+                        // Set the summary to reflect the new value.
+                        preference.setSummary(
+                                index >= 0
+                                        ? listPreference.getEntries()[index]
+                                        : null);
+
+                    } else {
+                        // For all other preferences, set the summary to the value's
+                        // simple string representation.
+                        preference.setSummary(stringValue);
+                    }
+                    return true;
+                }
+            }
+            
+            return true;
+        }
+    };
+
+    /**
+     * Binds a preference's summary to its value. More specifically, when the
+     * preference's value is changed, its summary (line of text below the
+     * preference title) is updated to reflect the value. The summary is also
+     * immediately updated upon calling this method. The exact display format is
+     * dependent on the type of preference.
+     * 
+     * @see #sBindPreferenceSummaryToValueListener
+     */
+    private static void bindPreferenceSummaryToValue(Preference preference) {
+        // Set the listener to watch for value changes.
+        preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+
+        // Trigger the listener immediately with the preference's
+        // current value.
+        sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                PreferenceManager
+                        .getDefaultSharedPreferences(preference.getContext())
+                        .getString(preference.getKey(), ""));
+    }
 }

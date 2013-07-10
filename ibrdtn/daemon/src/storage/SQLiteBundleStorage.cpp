@@ -228,7 +228,7 @@ namespace dtn
 			return SQLiteBundleStorage::eid_set();
 		}
 
-		void SQLiteBundleStorage::get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
+		void SQLiteBundleStorage::get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
 			_database.get(cb, result);
@@ -318,6 +318,10 @@ namespace dtn
 				}
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+				// try to purge all referenced data
+				purge(id);
+
 				throw dtn::storage::NoBundleFoundException();
 			}
 
@@ -449,6 +453,15 @@ namespace dtn
 				eventBundleRemoved(id);
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		void SQLiteBundleStorage::purge(const dtn::data::BundleID &id) throw ()
+		{
+			try {
+				remove(id);
+			} catch (const ibrcommon::Exception &ex) {
+				// do nothing here.
 			}
 		}
 

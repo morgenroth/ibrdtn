@@ -22,8 +22,6 @@
  */
 package de.tubs.ibr.dtn.service;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -33,6 +31,7 @@ import java.util.Date;
 import android.content.Context;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
+import android.os.ParcelFileDescriptor.AutoCloseInputStream;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.Log;
@@ -85,7 +84,7 @@ public class ClientSession {
 	        // forward the notification as intent
 	        // create a new intent
 	        Intent notify = new Intent(de.tubs.ibr.dtn.Intent.RECEIVE);
-	        notify.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
+	        notify.addCategory(_package_name);
 	        notify.setPackage(_package_name);
 	        notify.putExtra("bundleid", toAndroid(swigId));
 
@@ -103,7 +102,7 @@ public class ClientSession {
             // forward the notification as intent
             // create a new intent
             Intent notify = new Intent(de.tubs.ibr.dtn.Intent.STATUS_REPORT);
-            notify.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
+            notify.addCategory(_package_name);
             notify.setPackage(_package_name);
             notify.putExtra("bundleid", toAndroid(swigId));
             notify.putExtra("source", (Parcelable)new SingletonEndpoint(source.getString()));
@@ -146,7 +145,7 @@ public class ClientSession {
             // forward the notification as intent
             // create a new intent
             Intent notify = new Intent(de.tubs.ibr.dtn.Intent.CUSTODY_SIGNAL);
-            notify.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
+            notify.addCategory(_package_name);
             notify.setPackage(_package_name);
             notify.putExtra("bundleid", toAndroid(swigId));
             notify.putExtra("source", (Parcelable)new SingletonEndpoint(source.getString()));
@@ -206,8 +205,7 @@ public class ClientSession {
             if (TransferMode.FILEDESCRIPTOR.equals(_mode)) {
                 try {
                     // ask for a filedescriptor
-                    ParcelFileDescriptor target_fd = _cb.fd();
-                    _output = new FileOutputStream(target_fd.getFileDescriptor());
+                    _output = new ParcelFileDescriptor.AutoCloseOutputStream(_cb.fd());
                     _length = payload_length;
                 } catch (RemoteException e) {
                     Log.e(TAG, "Remote call fd() failed", e);
@@ -256,6 +254,14 @@ public class ClientSession {
                     _cb.progress(_current, _length);
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to put payload into the output stream", e);
+                    
+                    try {
+                        _output.close();
+                    } catch (IOException ex) {
+                        Log.e(TAG, "Error while closing output stream", ex);
+                    }
+
+                    _output = null;
                 } catch (RemoteException e) {
                     Log.e(TAG, "Remote call progress() failed", e);
                 }
@@ -358,7 +364,7 @@ public class ClientSession {
 
             // send out registration intent to the application
             Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
-            broadcastIntent.addCategory(de.tubs.ibr.dtn.Intent.CATEGORY_SESSION);
+            broadcastIntent.addCategory(_package_name);
             broadcastIntent.setPackage(_package_name);
             broadcastIntent.putExtra("key", _package_name);
 
@@ -375,6 +381,36 @@ public class ClientSession {
      * This is the actual implementation of the DTNSession API
      */
     private final DTNSession.Stub mBinder = new DTNSession.Stub() {
+        public boolean queryInfo(DTNSessionCallback cb, BundleID id) throws RemoteException
+        {
+            synchronized (_serializer_callback) {
+                // set serializer for this query
+                _serializer_callback.setCallback(cb);
+
+                try {
+                    synchronized (mRegisterLock1) {
+                        // load the bundle into the register
+                        nativeSession.load(NativeSession.RegisterIndex.REG1, toSwig(id));
+
+                        // get the bundle
+                        nativeSession.getInfo(NativeSession.RegisterIndex.REG1);
+                    }
+
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+
+                    // bundle loaded - return true
+                    return true;
+                } catch (BundleNotFoundException e) {
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+
+                    // bundle not found - return false
+                    return false;
+                }
+            }
+        }
+        
         public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException
         {
             synchronized (_serializer_callback) {
@@ -388,6 +424,36 @@ public class ClientSession {
 
                         // get the bundle
                         nativeSession.get(NativeSession.RegisterIndex.REG1);
+                    }
+
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+
+                    // bundle loaded - return true
+                    return true;
+                } catch (BundleNotFoundException e) {
+                    // set serializer back to null
+                    _serializer_callback.setCallback(null);
+
+                    // bundle not found - return false
+                    return false;
+                }
+            }
+        }
+        
+        public boolean queryInfoNext(DTNSessionCallback cb) throws RemoteException
+        {
+            synchronized (_serializer_callback) {
+                // set serializer for this query
+                _serializer_callback.setCallback(cb);
+
+                try {
+                    synchronized (mRegisterLock1) {
+                        // load the next bundle into the register
+                        nativeSession.next(NativeSession.RegisterIndex.REG1);
+
+                        // get the bundle
+                        nativeSession.getInfo(NativeSession.RegisterIndex.REG1);
                     }
 
                     // set serializer back to null
@@ -499,7 +565,7 @@ public class ClientSession {
 
         @Override
         public BundleID sendFileDescriptor(DTNSessionCallback cb, Bundle bundle,
-                ParcelFileDescriptor fd, long length) throws RemoteException {
+                ParcelFileDescriptor fd) throws RemoteException {
             try {
                 if (Log.isLoggable(TAG, Log.DEBUG))
                     Log.d(TAG, "Received file descriptor as bundle payload.");
@@ -524,7 +590,7 @@ public class ClientSession {
                 b.setProcflags( new PrimaryBlockFlags( b.getProcflags().get() | bundle.getProcflags() ) );
 
                 // open the file descriptor
-                FileInputStream stream = new FileInputStream(fd.getFileDescriptor());
+                AutoCloseInputStream stream = new AutoCloseInputStream(fd);
                 FileChannel inChannel = stream.getChannel();
 
                 try {
@@ -535,7 +601,7 @@ public class ClientSession {
                         nativeSession.put(RegisterIndex.REG2, b);
 
                         if (cb != null) {
-                            cb.progress(0, length);
+                            cb.progress(0, -1);
                         }
 
                         int offset = 0;
@@ -564,7 +630,7 @@ public class ClientSession {
 
                             // report progress
                             if (cb != null) {
-                                cb.progress(offset, length);
+                                cb.progress(offset, -1);
                             }
                         }
 
@@ -577,7 +643,6 @@ public class ClientSession {
                     try {
                         inChannel.close();
                         stream.close();
-                        fd.close();
                     } catch (IOException e) {
                         Log.e(TAG, "channel close failed", e);
                     }

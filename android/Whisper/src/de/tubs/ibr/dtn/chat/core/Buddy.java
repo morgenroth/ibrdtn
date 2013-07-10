@@ -57,7 +57,7 @@ public class Buddy implements Comparable<Buddy> {
 
 	public Buddy(Context context, Cursor cursor, RosterAdapter.ColumnsMap cmap)
 	{
-		final DateFormat formatter = new SimpleDateFormat("yyyy-M-d HH:mm:ss");
+		final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 		this.id = cursor.getLong(cmap.mColumnId);
 		this.nickname = cursor.getString(cmap.mColumnNickname);

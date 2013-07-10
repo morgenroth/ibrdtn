@@ -77,7 +77,7 @@ namespace dtn
 		{
 			// If an incoming bundle is received, forward it to all connected neighbors
 			try {
-				dynamic_cast<const QueueBundleEvent&>(*evt);
+				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
 
 				// new bundles trigger a recheck for all neighbors
 				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
@@ -86,8 +86,10 @@ namespace dtn
 				{
 					const dtn::core::Node &n = (*iter);
 
-					// transfer the next bundle to this destination
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+					if (n.getEID() != queued.origin) {
+						// transfer the next bundle to this destination
+						_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+					}
 				}
 				return;
 			} catch (const std::bad_cast&) { };
@@ -272,16 +274,17 @@ namespace dtn
 						 */
 						try {
 							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
-							NeighborDatabase &db = (**this).getNeighborDB();
 
-							ibrcommon::MutexLock l(db);
-							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
-
-							// check if enough transfer slots available (threadhold reached)
-							if (!entry.isTransferThresholdReached())
-								throw NeighborDatabase::NoMoreTransfersAvailable();
-
+							// lock the neighbor database while searching for bundles
 							try {
+								NeighborDatabase &db = (**this).getNeighborDB();
+								ibrcommon::MutexLock l(db);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+
+								// check if enough transfer slots available (threshold reached)
+								if (!entry.isTransferThresholdReached())
+									throw NeighborDatabase::NoMoreTransfersAvailable();
+
 								// get the bundle filter of the neighbor
 								BundleFilter filter(entry);
 
@@ -291,18 +294,18 @@ namespace dtn
 								// query some unknown bundle from the storage
 								list.clear();
 								(**this).getSeeker().get(filter, list);
-
-								// send the bundles as long as we have resources
-								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
-								{
-									try {
-										// transfer the bundle to the neighbor
-										transferTo(entry, *iter);
-									} catch (const NeighborDatabase::AlreadyInTransitException&) { };
-								}
 							} catch (const dtn::storage::BundleSelectorException&) {
 								// query a new summary vector from this neighbor
 								(**this).doHandshake(task.eid);
+							}
+
+							// send the bundles as long as we have resources
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
+							{
+								try {
+									// transfer the bundle to the neighbor
+									transferTo(task.eid, *iter);
+								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {

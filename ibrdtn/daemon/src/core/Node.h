@@ -120,8 +120,8 @@ namespace dtn
 				friend std::ostream& operator<<(std::ostream&, const Node::Attribute&);
 			};
 
-			static std::string toString(Node::Type type);
-			static std::string toString(Node::Protocol proto);
+			static std::string toString(const Node::Type type);
+			static std::string toString(const Node::Protocol proto);
 			static Node::Protocol fromProtocolString(const std::string &protocol);
 
 			/**

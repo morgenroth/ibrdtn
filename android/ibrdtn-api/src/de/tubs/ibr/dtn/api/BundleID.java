@@ -21,6 +21,8 @@
 
 package de.tubs.ibr.dtn.api;
 
+import java.util.StringTokenizer;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
@@ -31,7 +33,7 @@ public class BundleID implements Parcelable {
 	private Timestamp timestamp = null;
 	private Long sequencenumber = null;
 	
-	private Boolean fragment = false;
+	private boolean fragment = false;
 	private Long fragment_offset = 0L;
 
 	public BundleID()
@@ -62,8 +64,34 @@ public class BundleID implements Parcelable {
 	public void setSource(SingletonEndpoint source) {
 		this.source = source;
 	}
-
+	
 	@Override
+    public boolean equals(Object o) {
+	    if (o instanceof BundleID) {
+	        BundleID foreign_id = (BundleID)o;
+
+	        if (timestamp != null)
+	            if (!timestamp.equals(foreign_id.timestamp)) return false;
+	        
+	        if (sequencenumber != null)
+	            if (!sequencenumber.equals(foreign_id.sequencenumber)) return false;
+	        
+	        if (source != null)
+	            if (!source.equals(foreign_id.source)) return false;
+	        
+	        if (fragment) {
+	            if (!foreign_id.fragment) return false;
+	            
+	            if (fragment_offset != null)
+	                if (!fragment_offset.equals(foreign_id.fragment_offset)) return false;
+	        }
+	        
+	        return true;
+	    }
+        return super.equals(o);
+    }
+
+    @Override
 	public String toString() {
 		if (fragment)
 		{
@@ -78,6 +106,38 @@ public class BundleID implements Parcelable {
 					" " + String.valueOf(this.sequencenumber) + 
 					" " + this.source;
 		}
+	}
+	
+	public static BundleID fromString(String data) {
+	    BundleID ret = new BundleID();
+
+	    // split bundle id into tokens
+	    StringTokenizer tokenizer = new StringTokenizer( data );
+	    
+	    // get the number of tokens (fragment or not)
+	    int count = tokenizer.countTokens();
+	    
+	    // read the timestamp
+	    ret.timestamp = new Timestamp(Long.valueOf(tokenizer.nextToken()));
+	    
+	    // read the sequencenumber
+	    ret.sequencenumber = Long.valueOf(tokenizer.nextToken());
+
+	    if (count > 3) {
+	        // bundle id belongs to a fragment
+	        ret.fragment = true;
+	        
+	        // read the fragment offset
+	        ret.fragment_offset = Long.valueOf(tokenizer.nextToken());
+	    } else {
+	        ret.fragment = false;
+	        ret.fragment_offset = 0L;
+	    }
+	    
+	    // read the source endpoint
+	    ret.source = new SingletonEndpoint(tokenizer.nextToken());
+
+	    return ret;
 	}
 
 	public Timestamp getTimestamp() {

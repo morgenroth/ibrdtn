@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="de.tubs.ibr.dtn"
     android:versionCode="32"
-    android:versionName="0.9.0" >
+    android:versionName="0.11" >
 
     <permission
         android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
@@ -60,35 +60,6 @@
             </intent-filter>
         </service>
         
-        <service
-            android:name=".sendfile.SendService"
-            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" >
-            <intent-filter>
-                <action android:name="de.tubs.ibr.dtn.intent.SENDFILE" />
-            </intent-filter>
-	        <intent-filter>
-				<action android:name="de.tubs.ibr.dtn.intent.REGISTRATION" />
-	            <category android:name="de.tubs.ibr.dtn.sendfile.SendService" />
-	        </intent-filter>
-	        <intent-filter>
-	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
-	            <category android:name="de.tubs.ibr.dtn.sendfile.SendService" />
-	        </intent-filter>
-        </service>
-        
-        <service
-            android:name=".sendfile.ReceiveService"
-            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" >
-	        <intent-filter>
-				<action android:name="de.tubs.ibr.dtn.intent.REGISTRATION" />
-	            <category android:name="de.tubs.ibr.dtn.sendfile.ReceiveService" />
-	        </intent-filter>
-	        <intent-filter>
-	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
-	            <category android:name="de.tubs.ibr.dtn.sendfile.ReceiveService" />
-	        </intent-filter>
-        </service>
-
         <activity
             android:name="de.tubs.ibr.dtn.daemon.NeighborActivity"
             android:icon="@drawable/ic_neighbors"
@@ -102,6 +73,10 @@
             android:name="de.tubs.ibr.dtn.daemon.AppListActivity"
             android:label="@string/applist"
             android:theme="@android:style/Theme.NoTitleBar" />
+        <activity
+            android:name="de.tubs.ibr.dtn.daemon.StatsActivity"
+            android:icon="@drawable/ic_action_stats"
+            android:label="@string/stats_activity" />
 
         <receiver
             android:name=".service.OnBootReceiver"

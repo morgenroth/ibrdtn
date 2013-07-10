@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="stats_tab_info">Info</string>
+    <string name="stats_tab_bundles">Bündel</string>
+    <string name="stats_tab_transfer">Übertragung</string>
+    <string name="stats_tab_clock">Uhr</string>
+    <string name="stats_tab_cl">Konvergenzschicht</string>
+    <string name="stats_tab_storage">Speicher</string>
+    
+    <string name="stats_title_uptime">Laufzeit</string>
+    <string name="stats_title_neighbors">Nachbarn</string>
+    <string name="stats_title_timestamp">Zeitstempel</string>
+      
+    <string name="stats_title_clock_offset">Zeitabweichung</string>
+    <string name="stats_title_clock_rating">Uhrenbewertung</string>
+    <string name="stats_title_clock_adjustment">Zeitanpassungen</string>
+      
+    <string name="stats_title_transfers_aborted">Abgebrochene Übertragungen</string>
+    <string name="stats_title_bundles_expired">Bündel abgelaufen</string>
+    <string name="stats_title_bundles_generated">Bündel generiert</string>
+    <string name="stats_title_bundles_queued">Bündel queued</string>
+    <string name="stats_title_bundles_received">Bündel empfangen</string>
+    <string name="stats_title_transfers_requeued">Neuübertragungen</string>
+    <string name="stats_title_bundles_stored">Bündel gespeichert</string>
+    <string name="stats_title_transfers_completed">Vollständige Übertragungen</string>
+    
+	<string name="stats_title_storage_size">Speichergröße</string>
+</resources>

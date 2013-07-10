@@ -68,6 +68,7 @@ fi
 
 add_param $CONFFILE "ibrdtn.main.max_predated_timestamp" "limit_predated_timestamp"
 add_param $CONFFILE "ibrdtn.main.limit_lifetime" "limit_lifetime"
+add_param $CONFFILE "ibrdtn.main.foreign_blocksize" "limit_foreign_blocksize"
 
 add_param $CONFFILE "ibrdtn.discovery.address" "discovery_address"
 add_param $CONFFILE "ibrdtn.discovery.timeout" "discovery_timeout"
@@ -107,6 +108,8 @@ add_param $CONFFILE "ibrdtn.dht.enable_ipv6" "dht_enable_ipv6"
 add_param $CONFFILE "ibrdtn.dht.bind_ipv4" "dht_bind_ipv4"
 add_param $CONFFILE "ibrdtn.dht.bind_ipv6" "dht_bind_ipv6"
 add_param $CONFFILE "ibrdtn.dht.ignore_neighbour_informations" "dht_ignore_neighbour_informations"
+add_param $CONFFILE "ibrdtn.dht.allow_neighbours_to_announce_me" "dht_allow_neighbours_to_announce_me"
+add_param $CONFFILE "ibrdtn.dht.allow_neighbour_announcement" "dht_allow_neighbour_announcement"
 
 
 # iterate through all network interfaces

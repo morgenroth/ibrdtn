@@ -75,14 +75,17 @@ namespace dtn
 			class ProcessBundleTask : public Task
 			{
 			public:
-				ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &origin);
+				ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &origin, const dtn::data::EID &nexthop);
 				virtual ~ProcessBundleTask();
 
 				virtual std::string toString();
 
 				const dtn::data::MetaBundle bundle;
 				const dtn::data::EID origin;
+				const dtn::data::EID nexthop;
 			};
+
+			bool shouldRouteTo(const dtn::data::MetaBundle &meta, const NeighborDatabase::NeighborEntry &n) const;
 
 			/**
 			 * hold queued tasks for later processing

@@ -30,7 +30,7 @@ namespace dtn
 	{
 		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream, const dtn::data::Length buffer_size)
 			: _buffer_size(buffer_size), _statebits(STREAM_SOB), _conn(conn), in_buf_(buffer_size), out_buf_(buffer_size), _stream(stream),
-			  _recv_size(0), _underflow_data_remain(0), _underflow_state(IDLE), _idle_timer(*this, 0)
+			  _recv_size(0), _underflow_data_remain(0), _underflow_state(IDLE), _idle_timer(*this, 0), _monitor(false), _monitor_stats(2, 0)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -301,6 +301,11 @@ namespace dtn
 					// write the segment to the stream
 					_stream << seg;
 					_stream.write(&out_buf_[0], seg._value.get<size_t>());
+
+					// record statistics
+					if (_monitor) {
+						_monitor_stats[1] += seg._value.get<size_t>();
+					}
 				}
 
 				return traits_type::not_eof(c);
@@ -366,6 +371,11 @@ namespace dtn
 
 					// to reject a bundle read all remaining data of this segment
 					_stream.read(&tmpbuf[0], (std::streamsize)readsize);
+
+					// record statistics
+					if (_monitor) {
+						_monitor_stats[0] += readsize;
+					}
 
 					// reset idle timeout
 					_idle_timer.reset();
@@ -604,6 +614,11 @@ namespace dtn
 
 					// here receive the data
 					_stream.read(&in_buf_[0], (std::streamsize)readsize);
+
+					// record statistics
+					if (_monitor) {
+						_monitor_stats[0] += readsize;
+					}
 
 					// reset idle timeout
 					_idle_timer.reset();

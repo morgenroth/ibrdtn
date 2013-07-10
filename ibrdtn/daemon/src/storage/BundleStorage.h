@@ -80,7 +80,7 @@ namespace dtn
 			/**
 			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException) = 0;
+			virtual void get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException) = 0;
 
 			/**
 			 * @see BundleSeeker::getDistinctDestinations()

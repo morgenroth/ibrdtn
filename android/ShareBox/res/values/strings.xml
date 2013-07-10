@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ShareBox</string>
+    <string name="action_settings">Settings</string>
+    <string name="empty"></string>
+    <string name="remove">Remove</string>
+    <string name="clear_list">Clear all</string>
+    <string name="state_pending">Pending</string>
+    <string name="state_completed">Completed</string>
+    <string name="state_accepted">Accepted</string>
+    <string name="state_downloading">Loading</string>
+    <string name="state_aborted">Aborted</string>
+    <string name="title_activity_pending_dialog">Transmission request</string>
+    <string name="title_activity_download">Archive</string>
+    <string name="title_activity_sharewith">ShareBox</string>
+    
+    <string name="button_accept">Accept</string>
+    <string name="button_reject">Reject</string>
+    <string name="hint_no_handler_for_type">No handler for this type of file.</string>
+    
+    <string name="content_neighbor_icon">Neighbor icon</string>
+    <string name="list_no_neighbors">No neighbors available.</string>
+    <string name="list_no_downloads">No downloads</string>
+    <string name="list_no_files">No files</string>
+    
+    <string name="item_download_title">Transmission #%1$d (%2$s)</string>
+    <string name="item_download_text">%1$s</string>
+    <string name="item_download_side">%1$s</string>
+    
+    <string name="item_file_title">%1$d</string>
+    <string name="item_file_text">%1$s</string>
+
+    <plurals name="listitem_multi_title">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+</resources>

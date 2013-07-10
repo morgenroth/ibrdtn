@@ -52,11 +52,6 @@ namespace dtn
 			 */
 			void complete();
 
-			/**
-			 * Get the number of current transfers
-			 */
-			static dtn::data::Size count(const dtn::data::EID &neighbor);
-
 		private:
 			class Slot {
 			public:
@@ -76,13 +71,7 @@ namespace dtn
 				 */
 				void complete();
 
-				static dtn::data::Size count(const dtn::data::EID &neighbor);
-
 			private:
-				static ibrcommon::Mutex _slot_lock;
-				typedef std::map<dtn::data::EID, dtn::data::Size> slot_map;
-				static slot_map _slot_map;
-
 				bool _completed;
 				bool _aborted;
 				TransferAbortedEvent::AbortReason _abort_reason;

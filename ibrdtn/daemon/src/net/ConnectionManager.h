@@ -100,7 +100,7 @@ namespace dtn
 				};
 			};
 
-			void open(const dtn::core::Node &node);
+			void open(const dtn::core::Node &node) throw (ibrcommon::Exception);
 
 			/**
 			 * get a set with all neighbors
@@ -133,6 +133,15 @@ namespace dtn
 			 * @see Component::getName()
 			 */
 			virtual const std::string getName() const;
+
+			/**
+			 * Returns statistic data about all convergence-layers
+			 */
+			typedef std::pair<dtn::core::Node::Protocol, ConvergenceLayer::stats_map> stats_pair;
+			typedef std::list<stats_pair> stats_list;
+
+			stats_list getStats();
+			void resetStats();
 
 		protected:
 			/**

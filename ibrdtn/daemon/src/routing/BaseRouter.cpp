@@ -37,6 +37,7 @@
 #include "core/BundleEvent.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
+#include "core/BundlePurgeEvent.h"
 #include "routing/NodeHandshakeEvent.h"
 #include "routing/StaticRouteChangeEvent.h"
 
@@ -62,7 +63,7 @@ namespace dtn
 		 * implementation of the BaseRouter class
 		 */
 		BaseRouter::BaseRouter()
-		 : _extension_state(false)
+		 : _extension_state(false), _next_expiration(0)
 		{
 			// register myself for all extensions
 			RoutingExtension::_router = this;
@@ -221,6 +222,7 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
 		}
 
 		void BaseRouter::componentDown() throw ()
@@ -238,6 +240,7 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::ConnectionEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::remove(this);
 		}
 
 		/**
@@ -272,17 +275,6 @@ namespace dtn
 
 				// if a transfer is completed, then release the transfer resource of the peer
 				try {
-					// add this bundle to the purge vector if it is delivered to its destination
-					if ((event.getBundle().procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)
-							&& ( event.getPeer().getNode() == event.getBundle().destination.getNode() ))
-					{
-						IBRCOMMON_LOGGER_DEBUG_TAG(BaseRouter::TAG, 20) << "singleton bundle added to purge vector: " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
-
-						// add it to the purge vector
-						ibrcommon::MutexLock l(_purged_bundles_lock);
-						_purged_bundles.add(event.getBundle());
-					}
-
 					// lock the list of neighbors
 					ibrcommon::MutexLock l(_neighbor_database);
 					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
@@ -433,24 +425,52 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 
 			try {
+				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
+
+				// add the purged bundle to the purge vector
+				setPurged(purge.bundle);
+
+				// since no routing module is interested in purge events yet - we exit here
+				return;
+			} catch (const std::bad_cast&) { }
+
+			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 				dtn::data::Timestamp expire_time = time.getTimestamp();
-				if (expire_time <= 60) expire_time = 0;
-				else expire_time -= 60;
 
-				{
-					ibrcommon::MutexLock l(_known_bundles_lock);
-					_known_bundles.expire(expire_time);
-				}
+				// do the expiration only every 60 seconds
+				if (expire_time > _next_expiration) {
+					// store the next expiration time
+					_next_expiration = expire_time + 60;
 
-				{
-					ibrcommon::MutexLock l(_purged_bundles_lock);
-					_purged_bundles.expire(expire_time);
-				}
+					// expire all bundles and neighbors one minute late
+					if (expire_time <= 60) expire_time = 0;
+					else expire_time -= 60;
 
-				{
-					ibrcommon::MutexLock l(_neighbor_database);
-					_neighbor_database.expire(time.getTimestamp());
+					{
+						ibrcommon::MutexLock l(_known_bundles_lock);
+						_known_bundles.expire(expire_time);
+					}
+
+					{
+						ibrcommon::MutexLock l(_purged_bundles_lock);
+						_purged_bundles.expire(expire_time);
+					}
+
+					{
+						ibrcommon::MutexLock l(_neighbor_database);
+
+						// get all active neighbors
+						const std::set<dtn::core::Node> neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+
+						// touch all active neighbors
+						for (std::set<dtn::core::Node>::const_iterator it = neighbors.begin(); it != neighbors.end(); it++) {
+							_neighbor_database.create( (*it).getEID() );
+						}
+
+						// check all neighbor entries for expiration
+						_neighbor_database.expire(time.getTimestamp());
+					}
 				}
 
 				// pass event to all extensions
@@ -500,7 +520,7 @@ namespace dtn
 			return _known_bundles.add(meta);
 		}
 
-		// set the bundle as known
+		// check if the bundle is known
 		bool BaseRouter::isKnown(const dtn::data::BundleID &id)
 		{
 			ibrcommon::MutexLock l(_known_bundles_lock);
@@ -525,7 +545,14 @@ namespace dtn
 			return _known_bundles;
 		}
 
-		void BaseRouter::addPurgedBundle(const dtn::data::MetaBundle &meta)
+		// set the bundle as known
+		bool BaseRouter::isPurged(const dtn::data::BundleID &id)
+		{
+			ibrcommon::MutexLock l(_purged_bundles_lock);
+			return _purged_bundles.has(id);
+		}
+
+		void BaseRouter::setPurged(const dtn::data::MetaBundle &meta)
 		{
 			ibrcommon::MutexLock l(_purged_bundles_lock);
 			return _purged_bundles.add(meta);

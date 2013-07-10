@@ -1,0 +1,77 @@
+#!/bin/bash -e
+#
+# summary of how this script can be called:
+#        * <new-preinst> install
+#        * <new-preinst> install <old-version>
+#        * <new-preinst> upgrade <old-version>
+#        * <old-preinst> abort-upgrade <new-version>
+#
+
+. /usr/share/debconf/confmodule
+
+if [ -n "$DEBIAN_SCRIPT_DEBUG" ]; then set -v -x; DEBIAN_SCRIPT_TRACE=1; fi
+${DEBIAN_SCRIPT_TRACE:+ echo "#42#DEBUG# RUNNING $0 $*" 1>&2 }
+
+export PATH=$PATH:/sbin:/usr/sbin:/bin:/usr/bin
+PID_DIR="/var/run/ibrdtn"
+LOG_DIR="/var/log/ibrdtn"
+DTND_USER="dtnd"
+
+stop_daemon() {
+    if [ ! -x /etc/init.d/ibrdtnd ]; then return; fi
+
+    set +e
+    if [ -x /usr/sbin/invoke-rc.d ]; then
+      cmd="invoke-rc.d ibrdtnd stop"
+    else
+      cmd="/etc/init.d/ibrdtnd stop"
+    fi
+    $cmd
+    errno=$?
+    set -e
+   
+    # 0=ok, 100=no init script (fresh install)
+    if [ "$errno" != 0 -a "$errno" != 100 ]; then
+      echo "${cmd/ */} returned $errno" 1>&2
+      echo "There is a DTN daemon running, but we failed in our attempts to stop it." 1>&2
+      echo "Stop it yourself and try again!" 1>&2
+      exit 1
+    fi
+}
+
+################################ main() ##########################
+
+# stop the service
+stop_daemon
+
+# creating dtnd user if he isn't already there
+if ! getent passwd ${DTND_USER} >/dev/null; then
+	# Adding system user: mysql.
+	adduser \
+	  --system \
+          --disabled-login \
+	  --ingroup daemon \
+	  --no-create-home \
+	  --home /nonexistent \
+	  --gecos "DTN daemon" \
+	  --shell /bin/false \
+	  ${DTND_USER}  >/dev/null
+fi
+
+# create a log directory for the daemon process
+if [ ! -d "${LOG_DIR}" -a ! -L "${LOG_DIR}" ]; then
+	mkdir -p ${LOG_DIR}
+	chown dtnd:adm ${LOG_DIR}
+	chmod 775 ${LOG_DIR}
+fi
+
+# create a pid directory for the daemon process
+if [ ! -d "${PID_DIR}" -a ! -L "${PID_DIR}" ]; then
+	mkdir -p ${PID_DIR}
+	chown dtnd:adm ${PID_DIR}
+	chmod 775 ${PID_DIR}
+fi
+
+#DEBHELPER#
+
+exit 0

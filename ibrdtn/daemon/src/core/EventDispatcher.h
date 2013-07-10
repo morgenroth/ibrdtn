@@ -25,7 +25,7 @@ namespace dtn
 			/**
 			 * never create a dispatcher
 			 */
-			EventDispatcher() : _processor(*this)
+			EventDispatcher() : _processor(*this), _stat_count(0)
 			{ };
 
 			class EventProcessorImpl : public EventProcessor {
@@ -44,10 +44,17 @@ namespace dtn
 						EventReceiver &receiver = (**iter);
 						receiver.raiseEvent(evt);
 					}
+
+					_dispatcher._stat_count++;
 				}
 
 				EventDispatcher<E> &_dispatcher;
 			};
+
+			void _reset() {
+				ibrcommon::MutexLock l(_dispatch_lock);
+				_stat_count = 0;
+			}
 
 			/**
 			 * deliver this event to all subscribers
@@ -58,6 +65,9 @@ namespace dtn
 				{
 					_processor.process(evt);
 					delete evt;
+
+					ibrcommon::MutexLock l(_dispatch_lock);
+					_stat_count++;
 				}
 				else
 				{
@@ -106,10 +116,19 @@ namespace dtn
 				instance()._remove(receiver);
 			}
 
+			static void resetCounter() {
+				instance()._reset();
+			}
+
+			static size_t getCounter() {
+				return instance()._stat_count;
+			}
+
 		private:
 			ibrcommon::Mutex _dispatch_lock;
 			std::list<EventReceiver*> _receivers;
 			EventProcessorImpl _processor;
+			size_t _stat_count;
 		};
 	}
 }

@@ -135,6 +135,8 @@ namespace dtn
 					::memcpy(&tmp[1], buf, length);
 				}
 
+				IBRCOMMON_LOGGER_DEBUG_TAG(LOWPANDatagramService::TAG, 20) << "sendto() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << identifier << IBRCOMMON_LOGGER_ENDL;
+
 				// send converted line
 				sock.sendto(&tmp[0], length + 1, 0, destaddr);
 			} catch (const ibrcommon::Exception&) {
@@ -188,6 +190,8 @@ namespace dtn
 
 				// disable auto-ack feature for broadcast
 				sock.setAutoAck(false);
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(LOWPANDatagramService::TAG, 20) << "sendto() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: broadcast" << IBRCOMMON_LOGGER_ENDL;
 
 				// send converted line
 				sock.sendto(&tmp[0], length + 1, 0, _addr_broadcast);

@@ -350,7 +350,7 @@ namespace dtn
 			double new_rtt = _avg_rtt;
 
 			// calculate average
-			new_rtt = (new_rtt * (1 - AVG_RTT_WEIGHT)) + (AVG_RTT_WEIGHT * value);
+			new_rtt = (new_rtt * AVG_RTT_WEIGHT) + ((1 - AVG_RTT_WEIGHT) * value);
 
 			// assign the new value
 			_avg_rtt = new_rtt;

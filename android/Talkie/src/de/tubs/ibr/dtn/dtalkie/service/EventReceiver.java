@@ -33,10 +33,20 @@ public class EventReceiver extends BroadcastReceiver {
 		
 		if (action.equals(de.tubs.ibr.dtn.Intent.RECEIVE))
 		{
-			// open activity
+			// received messages
 			Intent i = new Intent(context, TalkieService.class);
 			i.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
 			context.startService(i);
+		}
+		else if (action.equals(de.tubs.ibr.dtn.Intent.STATE))
+		{
+		    String state = intent.getStringExtra("state");
+            if (state.equals("ONLINE")) {
+                // trigger session registration
+                Intent i = new Intent(context, TalkieService.class);
+                i.setAction(de.tubs.ibr.dtn.Intent.RECEIVE);
+                context.startService(i);
+            }
 		}
 	}
 }

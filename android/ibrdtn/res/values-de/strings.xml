@@ -96,4 +96,6 @@
     <string name="list_no_neighbors">Keine Nachbarn gefunden.</string>
     <string name="pref_fragmentation_desc">Erlaubt reaktive Fragmentierung und Reassemblierung</string>
     <string name="pref_fragmentation">Unterstützung für Fragmentierung</string>
+    <string name="stats_activity">Statistik</string>
+    <string name="showstats">Statistik anzeigen</string>
 </resources>

@@ -51,6 +51,7 @@ import de.tubs.ibr.dtn.swig.NativeDaemonCallback;
 import de.tubs.ibr.dtn.swig.NativeDaemonException;
 import de.tubs.ibr.dtn.swig.NativeEventCallback;
 import de.tubs.ibr.dtn.swig.NativeNode;
+import de.tubs.ibr.dtn.swig.NativeStats;
 import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonProcess {
@@ -119,6 +120,10 @@ public class DaemonProcess {
 	public String[] getVersion() {
         StringVec version = mDaemon.getVersion();
         return new String[] { version.get(0), version.get(1) };
+	}
+	
+	public synchronized NativeStats getStats() {
+	    return mDaemon.getStats();
 	}
 	
 	public synchronized List<Node> getNeighbors() {
@@ -580,6 +585,9 @@ public class DaemonProcess {
 			PrintStream p = new PrintStream(writer);
 			p.println("local_uri = " + preferences.getString("endpoint_id", getUniqueEndpointID(context).toString()));
 			p.println("routing = " + preferences.getString("routing", "default"));
+			
+			// enable traffic stats
+			p.println("stats_traffic = yes");
 
 			if (preferences.getBoolean("constrains_lifetime", false)) {
 				p.println("limit_lifetime = 1209600");
@@ -590,7 +598,8 @@ public class DaemonProcess {
 			}
 
 			// limit block size to 50 MB
-			p.println("limit_blocksize = 50M");
+			p.println("limit_blocksize = 250M");
+			p.println("limit_foreign_blocksize = 50M");
 
 			String secmode = preferences.getString("security_mode", "disabled");
 

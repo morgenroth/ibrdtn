@@ -45,6 +45,16 @@ public class SingletonEndpoint implements EID, Serializable {
 		return _eid;
 	}
 	
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof SingletonEndpoint) {
+            if (_eid != null) {
+                return _eid.equals(((SingletonEndpoint)o)._eid);
+            }
+        }
+        return super.equals(o);
+    }
+
     public int describeContents() {
         return 0;
     }

@@ -9,6 +9,7 @@
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <application
         android:allowBackup="true"
@@ -53,8 +54,12 @@
 	        android:exported="true"
 	        android:permission="de.tubs.ibr.dtn.permission.DTN_SERVER">
 	        <intent-filter>
+	            <action android:name="de.tubs.ibr.dtn.intent.STATE" />
+	            <category android:name="android.intent.category.DEFAULT" />
+	        </intent-filter>
+	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
-	            <category android:name="de.tubs.ibr.dtn.intent.category.SESSION" />
+	            <category android:name="de.tubs.ibr.dtn.dtalkie" />
 	        </intent-filter>
 	    </receiver>
     </application>

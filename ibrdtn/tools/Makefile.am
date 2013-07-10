@@ -4,12 +4,13 @@ ACLOCAL_AMFLAGS = -I m4
 
 # debian files for package building
 EXTRA_DIST= \
-	debian/compat \
-	debian/copyright \
 	debian/changelog \
-	debian/rules \
+	debian/compat \
 	debian/control \
-	debian/docs \
+	debian/copyright \
+	debian/ibrdtn-tools.docs \
+	debian/ibrdtn-tools.install \
+	debian/rules \
 	debian/source \
 	debian/source/format
 

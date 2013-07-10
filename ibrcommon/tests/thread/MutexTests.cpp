@@ -20,6 +20,8 @@
  */
 
 #include "thread/MutexTests.h"
+#include "ibrcommon/thread/RWMutex.h"
+#include "ibrcommon/thread/RWLock.h"
 #include <stdlib.h>
 #include <iostream>
 #include <unistd.h>
@@ -87,4 +89,29 @@ void MutexTests::mutex_test01()
 	CPPUNIT_ASSERT(var);
 
 	t.join();
+}
+
+void MutexTests::rwmutex_test_readonly()
+{
+	ibrcommon::RWMutex rwm;
+
+	// lock the mutex for read-only access
+	ibrcommon::RWLock l(rwm, ibrcommon::RWMutex::LOCK_READONLY);
+
+	// try to lock the mutex for a second read-only access (should work)
+	CPPUNIT_ASSERT_NO_THROW(rwm.trylock(ibrcommon::RWMutex::LOCK_READONLY));
+
+	// try to lock the mutex for a read-write access (should fail)
+	CPPUNIT_ASSERT_THROW(rwm.trylock(ibrcommon::RWMutex::LOCK_READWRITE), ibrcommon::MutexException);
+}
+
+void MutexTests::rwmutex_test_readwrite()
+{
+	ibrcommon::RWMutex rwm;
+
+	// lock the mutex for read-only access
+	ibrcommon::RWLock l(rwm, ibrcommon::RWMutex::LOCK_READWRITE);
+
+	// try to lock the mutex for a read-only access (should fail)
+	CPPUNIT_ASSERT_THROW(rwm.trylock(ibrcommon::RWMutex::LOCK_READONLY), ibrcommon::MutexException);
 }

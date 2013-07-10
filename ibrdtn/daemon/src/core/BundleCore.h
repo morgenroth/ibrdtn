@@ -125,6 +125,12 @@ namespace dtn
 			static dtn::data::Length blocksizelimit;
 
 			/**
+			 * Define a global block size limit for foreign bundles (not addressed locally).
+			 * This is used in the validator to reject bundles while receiving.
+			 */
+			static dtn::data::Length foreign_blocksizelimit;
+
+			/**
 			 * Define the maximum lifetime for accepted bundles
 			 */
 			static dtn::data::Length max_lifetime;

@@ -549,6 +549,10 @@ namespace dtn
 			return _conf.read<std::string>("storage", "default");
 		}
 
+		bool Configuration::enableTrafficStats() const {
+			return (_conf.read<std::string>("stats_traffic", "no") == "yes");
+		}
+
 		void Configuration::Network::load(const ibrcommon::ConfigFile &conf)
 		{
 			/**
@@ -1066,7 +1070,7 @@ namespace dtn
 			return _path;
 		}
 
-		Configuration::Security::Level Configuration::Security::getLevel() const
+		int Configuration::Security::getLevel() const
 		{
 			return _level;
 		}

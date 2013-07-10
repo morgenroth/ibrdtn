@@ -54,11 +54,11 @@
 	        </intent-filter>
 	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.intent.RECEIVE" />
-	            <category android:name="de.tubs.ibr.dtn.intent.category.SESSION" />
+	            <category android:name="de.tubs.ibr.dtn.chat" />
 	        </intent-filter>
 	        <intent-filter>
 	            <action android:name="de.tubs.ibr.dtn.intent.STATUS_REPORT" />
-	            <category android:name="de.tubs.ibr.dtn.intent.category.SESSION" />
+	            <category android:name="de.tubs.ibr.dtn.chat" />
 	        </intent-filter>
 	    </receiver>
     </application>

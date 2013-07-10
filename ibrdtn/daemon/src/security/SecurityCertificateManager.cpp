@@ -144,11 +144,11 @@ namespace dtn
 			return SecurityCertificateManager::TAG;
 		}
 
-		bool
-		SecurityCertificateManager::validateSubject(X509 *certificate, const dtn::data::EID &eid)
+		void
+		SecurityCertificateManager::validateSubject(X509 *certificate, const std::string &cn) throw (SecurityCertificateException)
 		{
-			if(!certificate || eid.getString().empty()){
-				return false;
+			if(!certificate || cn.empty()){
+				throw SecurityCertificateException("certificate or common-name is empty");
 			}
 
 			X509_NAME *cert_name;
@@ -160,23 +160,22 @@ namespace dtn
 
 			/* retrieve the X509_NAME structure */
 			if(!(cert_name = X509_get_subject_name(certificate))){
-				return false;
+				throw SecurityCertificateException("Failed to retrieve the X509_NAME structure.");
 			}
 
 			/* convert the eid to an ASN1_STRING, it is needed later for comparison. */
 			eid_string = ASN1_STRING_type_new(V_ASN1_PRINTABLESTRING);
 			if(!eid_string){
-				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, error) << "Error while creating an ASN1_STRING." << IBRCOMMON_LOGGER_ENDL;
-				return false;
+				throw SecurityCertificateException("Error while creating an ASN1_STRING.");
 			}
 			/* TODO this function returns an int, but the return value is undocumented */
 			/* the -1 indicates, that strlen() should be used to calculate the data length */
-			ASN1_STRING_set(eid_string, eid.getString().c_str(), -1);
+			ASN1_STRING_set(eid_string, cn.c_str(), -1);
 
 			utf8_eid_len = ASN1_STRING_to_UTF8(&utf8_eid, eid_string);
 			if(utf8_eid_len <= 0){
-				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, error) << "ASN1_STRING_to_UTF8() returned " << utf8_eid_len << "." << IBRCOMMON_LOGGER_ENDL;
-				return false;
+				std::stringstream ss; ss << "ASN1_STRING_to_UTF8() returned " << utf8_eid_len << ".";
+				throw SecurityCertificateException(ss.str());
 			}
 
 			/* process all entries that are of type NID_commonName */
@@ -215,7 +214,7 @@ namespace dtn
 				if(memcmp(utf8_eid, utf8_cert_name, utf8_eid_len) == 0){
 					OPENSSL_free(utf8_cert_name);
 					OPENSSL_free(utf8_eid);
-					return true;
+					return;
 				}
 				OPENSSL_free(utf8_cert_name);
 			}
@@ -223,11 +222,14 @@ namespace dtn
 			OPENSSL_free(utf8_eid);
 
 			char *subject_line = X509_NAME_oneline(cert_name, NULL, 0);
-			if(subject_line){
-				IBRCOMMON_LOGGER_TAG(SecurityCertificateManager::TAG, warning) << "Certificate does not fit. EID: " << eid.getString() << ", Certificate Subject: " << subject_line << "." << IBRCOMMON_LOGGER_ENDL;
+			std::stringstream ss;
+
+			if (subject_line) {
+				ss << "Certificate does not fit. Expected: " << cn << ", Certificate Subject: " << subject_line << ".";
 				delete subject_line;
 			}
-			return false;
+
+			throw SecurityCertificateException(ss.str());
 		}
 	}
 }

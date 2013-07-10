@@ -81,6 +81,54 @@ namespace dtn
 			Type type;
 		};
 
+		class NativeStats {
+		public:
+			NativeStats()
+			: uptime(0), timestamp(0), neighbors(0), storage_size(0),
+			  time_offset(0.0), time_rating(0.0), time_adjustments(0),
+			  bundles_stored(0), bundles_expired(0), bundles_generated(0),
+			  bundles_received(0), bundles_transmitted(0), bundles_aborted(0),
+			  bundles_requeued(0), bundles_queued(0)
+			{ };
+
+			~NativeStats() { };
+
+			size_t uptime;
+			size_t timestamp;
+			size_t neighbors;
+			size_t storage_size;
+
+			double time_offset;
+			double time_rating;
+			size_t time_adjustments;
+
+			size_t bundles_stored;
+			size_t bundles_expired;
+			size_t bundles_generated;
+			size_t bundles_received;
+			size_t bundles_transmitted;
+			size_t bundles_aborted;
+			size_t bundles_requeued;
+			size_t bundles_queued;
+
+			const std::vector<std::string>& getTags() {
+				return _tags;
+			}
+
+			size_t getData(int index) {
+				return _data[index];
+			}
+
+			void addData(const std::string &tag, size_t data) {
+				_tags.push_back(tag);
+				_data.push_back(data);
+			}
+
+		private:
+			std::vector<std::string> _tags;
+			std::vector<size_t> _data;
+		};
+
 		class NativeDaemonException : public ibrcommon::Exception
 		{
 		public:
@@ -161,6 +209,11 @@ namespace dtn
 			 * Get neighbor info
 			 */
 			NativeNode getInfo(const std::string &neighbor_eid) const throw (NativeDaemonException);
+
+			/**
+			 * Get statistical data
+			 */
+			NativeStats getStats() throw ();
 
 			/**
 			 * Add a static connection to the neighbor with the given EID

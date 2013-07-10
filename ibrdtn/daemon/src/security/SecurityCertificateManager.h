@@ -38,6 +38,15 @@ namespace dtn
 {
 	namespace security
 	{
+		class SecurityCertificateException : public ibrcommon::Exception
+		{
+		public:
+			SecurityCertificateException(std::string what = "verification failed") : ibrcommon::Exception(what)
+			{};
+
+			virtual ~SecurityCertificateException() throw() {};
+		};
+
 		/*!
 		 * \brief This class is a manager to handle certificates
 		 */
@@ -59,7 +68,7 @@ namespace dtn
 			 * \param eid The EID of the sender.
 			 * \return returns true if the EID fits, false otherwise
 			 */
-			static bool validateSubject(X509 *certificate, const dtn::data::EID &eid);
+			static void validateSubject(X509 *certificate, const std::string &cn) throw (SecurityCertificateException);
 
 			/*!
 			 * \brief checks if this class has already been initialized with a certificate and private key

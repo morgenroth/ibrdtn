@@ -56,7 +56,7 @@ public class Message {
 	
 	public Message(Context context, Cursor cursor, MessageAdapter.ColumnsMap cmap)
 	{
-		final DateFormat formatter = new SimpleDateFormat("yyyy-M-d hh:mm:ss");
+		final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		
 		this.msgid = cursor.getLong(cmap.mColumnId);
 		this.buddyid = cursor.getLong(cmap.mColumnBuddy);

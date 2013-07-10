@@ -206,7 +206,7 @@ namespace dtn
 			/**
 			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException);
+			virtual void get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException);
 
 			/**
 			 * Retrieve the meta data of a given bundle
@@ -273,7 +273,7 @@ namespace dtn
 			 * @param bundle
 			 * @param offset
 			 */
-			void get(Statement &st, dtn::data::Bundle &bundle, int offset = 0) const throw (SQLiteQueryException);
+			void get(Statement &st, dtn::data::Bundle &bundle, const int offset = 0) const throw (SQLiteQueryException);
 
 			/**
 			 *
@@ -282,7 +282,7 @@ namespace dtn
 			 * @param bind_offset
 			 * @param limit
 			 */
-			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, int bind_offset, size_t offset) const throw (SQLiteQueryException, NoBundleFoundException, BundleSelectorException);
+			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, const int bind_offset, const size_t offset, const size_t query_limit) const throw (SQLiteQueryException, NoBundleFoundException, BundleSelectorException);
 
 			/**
 			 * updates the nextExpiredTime. The calling function has to have the databaselock.
@@ -325,13 +325,6 @@ namespace dtn
 
 			// next expiration
 			dtn::data::Timestamp _next_expiration;
-
-			void add_deletion(const dtn::data::BundleID &id) throw ();
-			void remove_deletion(const dtn::data::BundleID &id) throw ();
-			bool contains_deletion(const dtn::data::BundleID &id) const throw ();
-
-			// set of bundles to delete
-			std::set<dtn::data::BundleID> _deletion_list;
 
 			// listener for events on the database
 			DatabaseListener &_listener;

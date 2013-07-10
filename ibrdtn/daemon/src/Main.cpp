@@ -88,10 +88,10 @@ void sighandler(int signal)
 			_debug = true;
 		}
 
-		_dtnd.setDebug(true);
+		_dtnd.setDebug(99);
 		break;
 	case SIGUSR2:
-		_dtnd.setDebug(false);
+		_dtnd.setDebug(0);
 		break;
 	case SIGHUP:
 		_dtnd.reload();

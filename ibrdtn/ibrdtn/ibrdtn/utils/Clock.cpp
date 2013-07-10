@@ -38,6 +38,9 @@ namespace dtn
 
 		bool Clock::_modify_clock = false;
 
+		// store the timestamp at start-up
+		const dtn::data::Timestamp Clock::_boot_timestamp = Clock::getUnixTimestamp();
+
 		/**
 		 * The number of seconds between 1/1/1970 and 1/1/2000.
 		 */
@@ -205,6 +208,11 @@ namespace dtn
 			return offset + now.tv_sec;
 		}
 
+		const struct timeval& Clock::getOffset()
+		{
+			return Clock::_offset;
+		}
+
 		void Clock::setOffset(const struct timeval &tv)
 		{
 			if (!Clock::shouldModifyClock())
@@ -274,6 +282,14 @@ namespace dtn
 
 		double Clock::toDouble(const timeval &val) {
 			return static_cast<double>(val.tv_sec) + (static_cast<double>(val.tv_usec) / 1000000.0);
+		}
+
+		dtn::data::Timestamp Clock::getUptime()
+		{
+			if (Clock::getUnixTimestamp() < _boot_timestamp)
+				return 0;
+
+			return Clock::getUnixTimestamp() - _boot_timestamp;
 		}
 	}
 }

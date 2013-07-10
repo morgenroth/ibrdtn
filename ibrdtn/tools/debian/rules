@@ -5,3 +5,7 @@ include /usr/share/cdbs/1/class/autotools.mk
 
 
 # Add here any variable or target overrides you need.
+
+# debug flags
+DEB_DH_STRIP_ARGS := --dbg-package=ibrdtn-tools-dbg
+

@@ -64,6 +64,22 @@ namespace dtn
 			 * @param n
 			 */
 			virtual void open(const dtn::core::Node&) {};
+
+			/**
+			 * statistic methods
+			 */
+			typedef std::map<std::string, size_t> stats_map;
+
+			virtual void resetStats();
+
+			virtual const stats_map& getStats();
+
+		protected:
+			virtual void addStats(const std::string &tag, const size_t value);
+			virtual void setStats(const std::string &tag, const size_t value);
+
+		private:
+			stats_map _stats;
 		};
 	}
 }

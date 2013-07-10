@@ -3,6 +3,7 @@
 	<name>IBR-DTN Android</name>
 	<comment></comment>
 	<projects>
+		<project>ChartView</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

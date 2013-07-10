@@ -52,30 +52,33 @@ namespace dtn
 		 */
 		void RoutingExtension::transferTo(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta)
 		{
-			// lock the list of neighbors
-			ibrcommon::MutexLock l(_router->getNeighborDB());
-
-			// get the neighbor entry for the next hop
-			NeighborDatabase::NeighborEntry &entry = _router->getNeighborDB().get(destination);
-
-			// transfer bundle to the neighbor
-			transferTo(entry, meta);
-		}
-
-		void RoutingExtension::transferTo(NeighborDatabase::NeighborEntry &entry, const dtn::data::MetaBundle &meta)
-		{
 			// acquire the transfer of this bundle, could throw already in transit or no resource left exception
-			entry.acquireTransfer(meta);
+			{
+				// lock the list of neighbors
+				ibrcommon::MutexLock l(_router->getNeighborDB());
+
+				// get the neighbor entry for the next hop
+				NeighborDatabase::NeighborEntry &entry = _router->getNeighborDB().get(destination);
+
+				// acquire the transfer, could throw already in transit or no resource left exception
+				entry.acquireTransfer(meta);
+			}
 
 			try {
 				// create a new bundle transfer object
-				dtn::net::BundleTransfer transfer(entry.eid, meta);
+				dtn::net::BundleTransfer transfer(destination, meta);
 
 				// transfer the bundle to the next hop
 				dtn::core::BundleCore::getInstance().transferTo(transfer);
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle " << meta.toString() << " queued for " << entry.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle " << meta.toString() << " queued for " << destination.getString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::core::P2PDialupException&) {
+				// lock the list of neighbors
+				ibrcommon::MutexLock l(_router->getNeighborDB());
+
+				// get the neighbor entry for the next hop
+				NeighborDatabase::NeighborEntry &entry = _router->getNeighborDB().get(destination);
+
 				// release the transfer
 				entry.releaseTransfer(meta);
 

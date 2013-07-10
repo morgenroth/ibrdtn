@@ -24,6 +24,8 @@
 package de.tubs.ibr.dtn.service;
 
 import java.lang.ref.WeakReference;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import android.app.Notification;
@@ -49,6 +51,11 @@ import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.p2p.P2PManager;
+import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
+import de.tubs.ibr.dtn.stats.StatsDatabase;
+import de.tubs.ibr.dtn.stats.StatsEntry;
+import de.tubs.ibr.dtn.swig.NativeStats;
+import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonService extends Service {
     public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
@@ -60,6 +67,8 @@ public class DaemonService extends Service {
     public static final String ACTION_UPDATE_NOTIFICATION = "de.tubs.ibr.dtn.action.UPDATE_NOTIFICATION";
     public static final String ACTION_INITIATE_CONNECTION = "de.tubs.ibr.dtn.action.INITIATE_CONNECTION";
     public static final String ACTION_CLEAR_STORAGE = "de.tubs.ibr.dtn.action.CLEAR_STORAGE";
+    
+    public static final String ACTION_STORE_STATS = "de.tubs.ibr.dtn.action.STORE_STATS";
     
     public static final String PREFERENCE_NAME = "de.tubs.ibr.dtn.service_prefs";
 
@@ -79,10 +88,16 @@ public class DaemonService extends Service {
     
     // indicates if a notification is visible
     private Boolean _show_notification = false;
+    
+    // statistic database
+    private StatsDatabase mStatsDatabase = null;
+    private Date mStatsLastAction = null;
 
     // This is the object that receives interactions from clients. See
     // RemoteService for a more complete example.
-    private final DTNService.Stub mBinder = new DTNService.Stub() {
+    private final DTNService.Stub mBinder = new LocalDTNService();
+        
+    public class LocalDTNService extends DTNService.Stub {
         public DaemonState getState() throws RemoteException {
             return DaemonService.this.mDaemonProcess.getState();
         }
@@ -115,6 +130,27 @@ public class DaemonService extends Service {
         public String getEndpoint() throws RemoteException {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
             return prefs.getString("endpoint_id", "dtn:none");
+        }
+        
+        public DaemonService getLocal() {
+            return DaemonService.this;
+        }
+    };
+    
+    public NativeStats getStats() {
+        return mDaemonProcess.getStats();
+    }
+    
+    public StatsDatabase getStatsDatabase() {
+        return mStatsDatabase;
+    }
+    
+    private Runnable mCollectStats = new Runnable() {
+        @Override
+        public void run() {
+            final Intent storeStatsIntent = new Intent(DaemonService.this, DaemonService.class);
+            storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
+            startService(storeStatsIntent);
         }
     };
 
@@ -153,6 +189,10 @@ public class DaemonService extends Service {
                      
             // start-up the daemon
             mDaemonProcess.start();
+            
+            final Intent storeStatsIntent = new Intent(this, DaemonService.class);
+            storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
+            startService(storeStatsIntent);
         } else if (ACTION_SHUTDOWN.equals(action)) {
             // stop main loop
             mDaemonProcess.stop();
@@ -160,6 +200,10 @@ public class DaemonService extends Service {
             final Integer level = intent.getIntExtra("runlevel", 0);
             // restart the daemon into the given runlevel
             mDaemonProcess.restart(level);
+            
+            final Intent storeStatsIntent = new Intent(this, DaemonService.class);
+            storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
+            startService(storeStatsIntent);
         } else if (ACTION_UPDATE_NOTIFICATION.equals(action)) {
             // update state text in the notification 
             updateNotification();
@@ -183,10 +227,45 @@ public class DaemonService extends Service {
         	// This intent tickle the service if something has changed in the
         	// network configuration. If the service was enabled but terminated before,
         	// it will be started now.
+            
+            final Intent storeStatsIntent = new Intent(this, DaemonService.class);
+            storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
+            startService(storeStatsIntent);
+        } else if (ACTION_STORE_STATS.equals(action)) {
+            // cancel the next scheduled collection
+            mServiceHandler.removeCallbacks(mCollectStats);
+
+            if (mStatsLastAction != null) {
+                Calendar now = Calendar.getInstance();
+                now.roll(Calendar.MINUTE, -1);
+                if (mStatsLastAction.before(now.getTime())) {
+                    refreshStats();
+                }
+            } else {
+                refreshStats();
+            }
+            
+            // schedule next collection in 15 minutes
+            mServiceHandler.postDelayed(mCollectStats, 900000);
         }
         
         // stop the daemon if it should be offline
         if (mDaemonProcess.getState().equals(DaemonState.OFFLINE)) stopSelf(startId);
+    }
+    
+    private void refreshStats() {
+        NativeStats nstats = mDaemonProcess.getStats();
+        
+        // query the daemon stats and store them in the database
+        mStatsDatabase.put( new StatsEntry( nstats ) );
+        
+        StringVec tags = nstats.getTags();
+        for (int i = 0; i < tags.size(); i++) {
+            ConvergenceLayerStatsEntry e = new ConvergenceLayerStatsEntry(nstats, tags.get(i), i);
+            mStatsDatabase.put(e);
+        }
+        
+        mStatsLastAction = new Date();
     }
 
     public DaemonService() {
@@ -196,6 +275,10 @@ public class DaemonService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        
+        // open statistic database
+        mStatsDatabase = new StatsDatabase(this);
+        mStatsLastAction = null;
         
         // create daemon main thread
         mDaemonProcess = new DaemonProcess(this, mProcessHandler);
@@ -266,6 +349,9 @@ public class DaemonService extends Service {
         // remove notification
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         nm.cancel(1);
+        
+        // close statistic database
+        mStatsDatabase.close();
 
         // call super method
         super.onDestroy();
@@ -425,6 +511,7 @@ public class DaemonService extends Service {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private Notification buildNotification(int icon, String text) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 

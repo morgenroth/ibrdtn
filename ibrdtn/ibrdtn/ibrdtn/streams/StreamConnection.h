@@ -197,12 +197,20 @@ namespace dtn
 			 */
 			void enableIdleTimeout(const dtn::data::Timeout &seconds);
 
+			/**
+			 * traffic monitoring
+			 */
+			void setMonitor(bool val);
+			void resetMonitorStats();
+			size_t getMonitorStat(int index);
+
 		private:
 			/**
 			 * stream buffer class
 			 */
 			class StreamBuffer : public std::basic_streambuf<char, std::char_traits<char> >, public ibrcommon::TimerCallback
 			{
+			friend class StreamConnection;
 			public:
 				enum State
 				{
@@ -338,6 +346,10 @@ namespace dtn
 				State _underflow_state;
 
 				ibrcommon::Timer _idle_timer;
+
+				// traffic monitoring
+				bool _monitor;
+				std::vector<size_t> _monitor_stats;
 			};
 
 			void connectionTimeout();

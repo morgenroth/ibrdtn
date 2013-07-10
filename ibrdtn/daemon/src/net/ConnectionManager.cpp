@@ -112,8 +112,12 @@ namespace dtn
 					case NODE_AVAILABLE:
 						if (n.doConnectImmediately())
 						{
-							// open the connection immediately
-							open(n);
+							try {
+								// open the connection immediately
+								open(n);
+							} catch (const ibrcommon::Exception&) {
+								// ignore errors
+							}
 						}
 						break;
 
@@ -235,6 +239,37 @@ namespace dtn
 			_cl.erase( cl );
 		}
 
+		ConnectionManager::stats_list ConnectionManager::getStats()
+		{
+			ibrcommon::MutexLock l(_cl_lock);
+			stats_list stats;
+
+			for (std::set<ConvergenceLayer*>::const_iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			{
+				ConvergenceLayer &cl = (**iter);
+				const ConvergenceLayer::stats_map &cl_stats = cl.getStats();
+				const dtn::core::Node::Protocol p = cl.getDiscoveryProtocol();
+
+				stats_pair entry;
+				entry.first = p;
+				entry.second = cl_stats;
+
+				stats.push_back(entry);
+			}
+
+			return stats;
+		}
+
+		void ConnectionManager::resetStats()
+		{
+			ibrcommon::MutexLock l(_cl_lock);
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			{
+				ConvergenceLayer &cl = (**iter);
+				cl.resetStats();
+			}
+		}
+
 		void ConnectionManager::add(P2PDialupExtension *ext)
 		{
 			ibrcommon::MutexLock l(_dialup_lock);
@@ -341,12 +376,16 @@ namespace dtn
 
 			while (!_connect_nodes.empty())
 			{
-				open(_connect_nodes.front());
+				try {
+					open(_connect_nodes.front());
+				} catch (const ibrcommon::Exception&) {
+					// ignore errors
+				}
 				_connect_nodes.pop();
 			}
 		}
 
-		void ConnectionManager::open(const dtn::core::Node &node)
+		void ConnectionManager::open(const dtn::core::Node &node) throw (ibrcommon::Exception)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
 
@@ -363,7 +402,16 @@ namespace dtn
 				}
 			}
 
-			throw ConnectionNotAvailableException();
+			// throw dial-up exception if there are P2P dial-up connections available
+			if (node.hasDialup())
+			{
+				// trigger the dial-up connection
+				dialup(node);
+
+				throw dtn::core::P2PDialupException();
+			}
+
+			throw dtn::net::ConnectionNotAvailableException();
 		}
 
 		void ConnectionManager::dialup(const dtn::core::Node &n)
