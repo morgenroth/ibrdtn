@@ -24,6 +24,7 @@ package de.tubs.ibr.dtn.chat.service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Locale;
 import java.util.StringTokenizer;
 
 import android.app.IntentService;
@@ -180,6 +181,7 @@ public class ChatService extends IntentService {
 			String presence = null;
 			String status = null;
 			String voiceeid = null;
+			String language = null;
 			
 			StringTokenizer tokenizer = new StringTokenizer(payload, "\n");
 			while (tokenizer.hasMoreTokens())
@@ -212,11 +214,15 @@ public class ChatService extends IntentService {
                 {
                     voiceeid = value;
                 }
+                else if (keyword.equalsIgnoreCase("Language"))
+                {
+                    language = value;
+                }
 			}
 			
 			if (nickname != null)
 			{
-				getRoster().updatePresence(source.toString(), created, presence, nickname, status, voiceeid);
+				getRoster().updatePresence(source.toString(), created, presence, nickname, status, voiceeid, language);
 			}
 		}
 		
@@ -582,7 +588,8 @@ public class ChatService extends IntentService {
 			
 			String presence_message = "Presence: " + presence + "\n" +
 					"Nickname: " + nickname + "\n" +
-					"Status: " + status;
+					"Status: " + status + "\n" +
+					"Language: " + Locale.getDefault().getLanguage();
 			
 			try {
     			if (Utils.isVoiceRecordingSupported(this)) {
@@ -628,7 +635,7 @@ public class ChatService extends IntentService {
 			createNotification(b, msg);
 			break;
 		case BUDDY_ADD:
-			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World", "dtn://test/dtalkie");
+			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World", "dtn://test/dtalkie", "en");
 			break;
 			
 		case SEND_PRESENCE:
