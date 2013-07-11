@@ -139,7 +139,7 @@ namespace dtn
 		bool EID::operator<(const EID &other) const
 		{
 			if (_scheme < other._scheme) return true;
-			if (_scheme == other._scheme) return false;
+			if (_scheme != other._scheme) return false;
 
 			return _ssp < other._ssp;
 		}
