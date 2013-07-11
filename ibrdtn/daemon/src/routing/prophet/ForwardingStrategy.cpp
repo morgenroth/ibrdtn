@@ -22,11 +22,17 @@ namespace dtn
 
 		bool ForwardingStrategy::neighborDPIsGreater(const DeliveryPredictabilityMap& neighbor_dpm, const dtn::data::EID& destination) const
 		{
-			const DeliveryPredictabilityMap& dp_map = _prophet_router->_deliveryPredictabilityMap;
 			const dtn::data::EID destnode = destination.getNode();
 
 			try {
-				float local_pv = dp_map.get(destnode);
+				float local_pv = 0.0f;
+
+				// get the local value
+				{
+					ibrcommon::MutexLock dpm_lock(_prophet_router->_deliveryPredictabilityMap);
+					const DeliveryPredictabilityMap& dp_map = _prophet_router->_deliveryPredictabilityMap;
+					local_pv = dp_map.get(destnode);
+				}
 
 				try {
 					// retrieve the value from the DeliveryPredictabilityMap of the neighbor
