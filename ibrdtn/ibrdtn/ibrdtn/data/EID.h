@@ -113,8 +113,20 @@ namespace dtn
 			Compressed getCompressed() const;
 
 		private:
-			std::string _scheme;
+			enum Scheme {
+				SCHEME_DTN = 0,
+				SCHEME_CBHE = 1,
+				SCHEME_EXTENDED = 2
+			} _scheme;
+
+			static Scheme resolveScheme(const std::string &s);
+			static void extractCBHE(const std::string &ssp, Number &node, Number &app);
+
+			std::string _scheme_ext;
 			std::string _ssp;
+
+			Number _cbhe_node;
+			Number _cbhe_application;
 		};
 	}
 }
