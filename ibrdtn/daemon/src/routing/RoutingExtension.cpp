@@ -89,11 +89,11 @@ namespace dtn
 
 		bool RoutingExtension::isRouting(const dtn::data::EID &eid)
 		{
-			if (eid.getApplication() == "routing")
+			if (eid.isCompressable())
 			{
-				return true;
+				return (eid.getCompressed().second == 50);
 			}
-			else if ((eid.getScheme() == dtn::data::EID::CBHE_SCHEME) && (eid.getApplication() == "50"))
+			else if (eid.getApplication() == "routing")
 			{
 				return true;
 			}
