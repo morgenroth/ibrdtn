@@ -24,6 +24,9 @@
         
         <service android:name=".PingService" />
         
+        <activity android:label="@string/select_neighbor"
+            android:name=".NeighborChooserActivity" />
+        
 	    <receiver
 	        android:enabled="true"
 	        android:name=".DtnServiceReceiver"
