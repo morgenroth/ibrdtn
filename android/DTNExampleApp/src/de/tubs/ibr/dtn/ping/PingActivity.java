@@ -55,7 +55,12 @@ public class PingActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (SELECT_NEIGHBOR == requestCode) {
             if ((data != null) && data.hasExtra("endpoint")) {
-                mTextEid.setText( data.getStringExtra("endpoint") + "/echo" );
+                String endpoint = data.getStringExtra("endpoint");
+                if (endpoint.startsWith("ipn:")) {
+                    mTextEid.setText( endpoint + ".11" );
+                } else {
+                    mTextEid.setText( endpoint + "/echo" );
+                }
             }
             return;
         }
@@ -154,7 +159,12 @@ public class PingActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.hasExtra("localeid")) {
-                mTextEid.setText( intent.getStringExtra("localeid") + "/echo" );
+                String local_eid = intent.getStringExtra("localeid");
+                if (local_eid.startsWith("ipn:")) {
+                    mTextEid.setText( local_eid + ".11" );
+                } else {
+                    mTextEid.setText( local_eid + "/echo" );
+                }
             } else {
                 // update the displayed result
                 updateResult();
