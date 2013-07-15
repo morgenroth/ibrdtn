@@ -1,5 +1,8 @@
 package de.tubs.ibr.dtn.ping;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import android.app.IntentService;
 import android.content.Intent;
 import android.os.Binder;
@@ -15,6 +18,7 @@ import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
+import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionConnection;
@@ -90,6 +94,24 @@ public class PingService extends IntentService {
         }
         
         return null;
+    }
+    
+    public List<Node> getNeighbors() {
+        try {
+            // wait until the session is available
+            mClient.getSession();
+            
+            // query all neighbors
+            return mClient.getDTNService().getNeighbors();
+        } catch (SessionDestroyedException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        } catch (RemoteException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        }
+        
+        return new LinkedList<Node>();
     }
     
     private void doPing(SingletonEndpoint destination) {
