@@ -313,9 +313,19 @@ namespace dtn
 				// add the payload to the message
 				b.push_back(ref);
 
-				// set the source and destination
-				b.source = dtn::core::BundleCore::local.add("/dtntp");
-				b.destination = peer.add("/dtntp");
+				// set the source
+				if (dtn::core::BundleCore::local.isCompressable()) {
+					b.source = dtn::core::BundleCore::local.add(dtn::core::BundleCore::local.getDelimiter() + "60");
+				} else {
+					b.source = dtn::core::BundleCore::local.add(dtn::core::BundleCore::local.getDelimiter() + "dtntp");
+				}
+
+				// set the destination
+				if (peer.isCompressable()) {
+					b.destination = peer.add(peer.getDelimiter() + "60");
+				} else {
+					b.destination = peer.add(peer.getDelimiter() + "dtntp");
+				}
 
 				// set high priority
 				b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
