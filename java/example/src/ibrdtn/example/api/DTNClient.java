@@ -78,6 +78,10 @@ public class DTNClient {
             case SELECTIVE:
                 sabHandler = new SelectiveHandler(exClient, executor, payloadType);
                 break;
+            /* case WHATEVER:
+             * //implement your own;
+             * break;
+             */
         }
 
         exClient.setHandler(sabHandler);
