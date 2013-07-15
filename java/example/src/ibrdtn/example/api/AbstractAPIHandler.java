@@ -3,15 +3,11 @@ package ibrdtn.example.api;
 import ibrdtn.api.ExtendedClient;
 import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.BundleID;
-import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.example.Envelope;
 import ibrdtn.example.MessageData;
 import ibrdtn.example.callback.CallbackHandler;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,42 +25,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     protected ExecutorService executor;
     protected BundleID bundleID = new BundleID();
     protected Bundle bundle = null;
-    protected Queue<BundleID> queue;
-    protected boolean processing;
     protected PayloadType messageType;
-
-    protected void readByteArray(PayloadBlock payload) throws IOException {
-
-        byte[] bytes = new byte[32];
-        int readBytes = is.read(bytes);
-
-        StringBuilder sb = new StringBuilder();
-
-        for (byte b : bytes) {
-            sb.append(String.format("%02X ", b));
-        }
-
-        logger.log(Level.INFO, "Payload received: \n\t{0} ({1} bytes) [{2}]",
-                new Object[]{sb.toString(), readBytes, new String(bytes)});
-
-        if (payload != null) {
-            payload.setData(bytes);
-        }
-    }
-
-    protected void readObject(PayloadBlock payload) throws IOException, ClassNotFoundException {
-
-        ObjectInputStream ois = new ObjectInputStream(is);
-        MessageData data = (MessageData) ois.readObject();
-
-        //logger.log(Level.INFO, "Payload received: \n{0}", data);
-
-        if (payload != null) {
-            payload.setData(data);
-        }
-
-        forwardMessage(data);
-    }
 
     protected void forwardMessage(MessageData data) {
         Envelope envelope = new Envelope();
@@ -74,14 +35,6 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
         logger.log(Level.INFO, "Data received: {0}", envelope);
 
         CallbackHandler.getInstance().forwardMessage(envelope);
-    }
-
-    protected void endProcessingOfCurrentBundle() {
-        markDelivered();
-        processing = false;
-        if (!queue.isEmpty()) {
-            loadBundle(queue.poll());
-        }
     }
 
     protected void markDelivered() {
@@ -108,6 +61,4 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
             }
         });
     }
-
-    protected abstract void loadBundle(BundleID poll);
 }
