@@ -30,7 +30,9 @@ public class DTNExampleApp extends javax.swing.JFrame {
     private static final Logger logger = LogManager.getLogManager().getLogger("");
     private DTNClient dtnClient;
     private WindowHandler handler = null;
-    protected PayloadType payloadType = PayloadType.OBJECT;
+    protected String PRIMARY_EID = "ibr-1";
+    protected PayloadType PAYLOAD_TYPE = PayloadType.BYTE;
+    protected APIHandlerType HANDLER_TYPE = APIHandlerType.PASSTHROUGH;
 
     /**
      * Creates a new DTN demonstration app.
@@ -47,7 +49,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         logger.addHandler(handler);
 
         // Init connection to daemon
-        dtnClient = new DTNClient("1", PayloadType.OBJECT, APIHandlerType.PASSTHROUGH);
+        dtnClient = new DTNClient(PRIMARY_EID, PAYLOAD_TYPE, HANDLER_TYPE);
 
         logger.log(Level.INFO, dtnClient.getConfiguration());
 
@@ -544,20 +546,20 @@ public class DTNExampleApp extends javax.swing.JFrame {
     }//GEN-LAST:event_exitMenuItemActionPerformed
 
     private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
-        EID eid;
+        EID destination;
         /*
          * Switch between unicast and multicast.
          */
         if (rbUnicast.isSelected()) {
-            eid = new SingletonEndpoint(tfDestination.getText());
+            destination = new SingletonEndpoint(tfDestination.getText());
         } else {
-            eid = new GroupEndpoint(tfDestination.getText());
+            destination = new GroupEndpoint(tfDestination.getText());
         }
 
         EID me = new SingletonEndpoint("api:me");
 
         // Create bundle to send
-        Bundle bundle = new Bundle(eid, Constants.LIFETIME);
+        Bundle bundle = new Bundle(destination, Constants.LIFETIME);
         bundle.setPriority(Bundle.Priority.valueOf((String) cbPriority.getSelectedItem()));
 
         if (cbReports.isSelected()) {
@@ -583,7 +585,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         /*
          * Switch between binary and custom data format.
          */
-        switch (payloadType) {
+        switch (PAYLOAD_TYPE) {
             case OBJECT:
                 MessageData data = new MessageData();
                 data.setId(tfId.getText());

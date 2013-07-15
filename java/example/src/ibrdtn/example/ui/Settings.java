@@ -46,7 +46,7 @@ public class Settings extends JDialog {
             eid = eid.replaceAll(node + "/", "");
             tfEndpoint.setText(eid);
         } catch (APIException ex) {
-            logger.log(Level.WARNING, "Failed to get eid");
+            logger.log(Level.WARNING, "Failed to get EID");
         }
     }
 
@@ -186,12 +186,11 @@ public class Settings extends JDialog {
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
         dtnApp.getDtnClient().shutdown();
 
-        PayloadType payloadType = (PayloadType) cbPayloadType.getSelectedItem();
-        APIHandlerType apiHandlerType = (APIHandlerType) cbAPIType.getSelectedItem();
+        dtnApp.PRIMARY_EID = tfEndpoint.getText();
+        dtnApp.PAYLOAD_TYPE = (PayloadType) cbPayloadType.getSelectedItem();
+        dtnApp.HANDLER_TYPE = (APIHandlerType) cbAPIType.getSelectedItem();
 
-        dtnApp.payloadType = payloadType;
-
-        DTNClient dtnClient = new DTNClient(tfEndpoint.getText(), payloadType, apiHandlerType);
+        DTNClient dtnClient = new DTNClient(dtnApp.PRIMARY_EID, dtnApp.PAYLOAD_TYPE, dtnApp.HANDLER_TYPE);
         dtnApp.setDtnClient(dtnClient);
 
         if (cbEvents.isSelected()) {
