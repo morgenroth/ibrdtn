@@ -63,7 +63,7 @@ public class DTNClient {
      * @param apiType the API handling strategy
      */
     public DTNClient(String endpoint, PayloadType payloadType, APIHandlerType apiType) {
-        executor = Executors.newCachedThreadPool();
+        executor = Executors.newSingleThreadExecutor();
 
         this.endpoint = endpoint;
         this.payloadType = payloadType;
