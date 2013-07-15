@@ -79,12 +79,9 @@ public class Bundle {
     }
 
     public Bundle(EID destination, long lifetime) {
-        this.destination = destination;
+        setDestination(destination);
         this.lifetime = lifetime;
         setPriority(Priority.NORMAL);
-        if (destination instanceof SingletonEndpoint) {
-            setFlag(Flags.DESTINATION_IS_SINGLETON, true);
-        }
     }
 
     public Bundle() {
@@ -174,6 +171,9 @@ public class Bundle {
 
     public void setDestination(EID destination) {
         this.destination = destination;
+        if (destination instanceof SingletonEndpoint) {
+            setFlag(Flags.DESTINATION_IS_SINGLETON, true);
+        }
     }
 
     public EID getSource() {
@@ -190,7 +190,8 @@ public class Bundle {
 
     /**
      * Usually, the custodian is only set by the daemon.
-     * @param custodian 
+     *
+     * @param custodian
      */
     public void setCustodian(EID custodian) {
         this.custodian = custodian;
