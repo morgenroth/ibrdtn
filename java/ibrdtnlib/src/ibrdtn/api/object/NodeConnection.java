@@ -104,11 +104,11 @@ public class NodeConnection {
         final Pattern pattern = Pattern.compile(
                 "(\\d+)" // priority
                 + "#"
-                + "(\\w+)" // type
+                + "([\\w\\s]+)" // type
                 + "#"
                 + "([\\w:]+)" // protocol
                 + "#"
-                + "([\\w:,.;=/%]*)" // connection data
+                + "([-a-zA-Z0-9+&@#/%?=~_|!:,.;]*)" // connection data
                 );
 
         final Matcher matcher = pattern.matcher(data);

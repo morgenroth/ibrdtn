@@ -99,7 +99,7 @@ public class ConnectionRegExTest {
 
     public static void main(String[] args) {
         // dtn://sbase.dtn
-        String data = "ipn:1337 20#discovered#TCP#ip=::ffff:134.169.35.168;port=4556";
+        String data = "ipn:1234 10#static local#TCP#ip=quorra.ibr.cs.tu-bs.de;port=4559";//"ipn:1337 20#discovered#TCP#ip=::ffff:134.169.35.168;port=4556";
 
         String[] split = data.split("\\s");
 
@@ -120,11 +120,11 @@ public class ConnectionRegExTest {
         final Pattern pattern = Pattern.compile(
                 "(\\d+)" // priority
                 + "#"
-                + "(\\w+)" // type
+                + "([\\w\\s]+)" // type
                 + "#"
                 + "([\\w:]+)" // protocol
                 + "#"
-                + "([\\w:,.;=/%]*)" // connection data
+                + "([-a-zA-Z0-9+&@#/%?=~_|!:,.;]*)" // connection data
                 );
 
         final Matcher matcher = pattern.matcher(data);
