@@ -464,7 +464,7 @@ namespace dtn
 						const std::set<dtn::core::Node> neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
 						// touch all active neighbors
-						for (std::set<dtn::core::Node>::const_iterator it = neighbors.begin(); it != neighbors.end(); it++) {
+						for (std::set<dtn::core::Node>::const_iterator it = neighbors.begin(); it != neighbors.end(); ++it) {
 							_neighbor_database.create( (*it).getEID() );
 						}
 

@@ -726,8 +726,8 @@ namespace ibrcommon
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_flags = 0;
 
-		struct addrinfo *res;
-		int ret;
+		struct addrinfo *res = NULL;
+		int ret = 0;
 
 		const char *address = NULL;
 		const char *service = NULL;

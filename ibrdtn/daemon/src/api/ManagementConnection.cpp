@@ -418,11 +418,11 @@ namespace dtn
 						ConnectionManager::stats_list list = dtn::core::BundleCore::getInstance().getConnectionManager().getStats();
 
 						_stream << ClientHandler::API_STATUS_OK << " STATS CONVERGENCELAYERS" << std::endl;
-						for (ConnectionManager::stats_list::const_iterator iter = list.begin(); iter != list.end(); iter++) {
+						for (ConnectionManager::stats_list::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
 							const ConnectionManager::stats_pair &pair = (*iter);
 							const ConvergenceLayer::stats_map &map = pair.second;
 
-							for (ConvergenceLayer::stats_map::const_iterator map_it = map.begin(); map_it != map.end(); map_it++) {
+							for (ConvergenceLayer::stats_map::const_iterator map_it = map.begin(); map_it != map.end(); ++map_it) {
 								_stream << dtn::core::Node::toString(pair.first) << "|" << (*map_it).first << ": " << (*map_it).second << std::endl;
 							}
 						}

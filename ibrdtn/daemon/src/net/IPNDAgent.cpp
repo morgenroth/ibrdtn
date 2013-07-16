@@ -144,17 +144,21 @@ namespace dtn
 			// (hopefully only one per interface)
 			for (ibrcommon::socketset::const_iterator iter = fds.begin(); iter != fds.end(); ++iter)
 			{
-				ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
-
 				try {
-					// prevent broadcasting in the wrong address family
-					if (addr.family() != sock.get_family()) continue;
+					ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
-					sock.sendto(data.c_str(), data.length(), 0, addr);
-				} catch (const ibrcommon::socket_exception &e) {
-					IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 5) << "can not send message to " << addr.toString() << " via " << sock.get_address().toString() << "/" << iface.toString() << "; socket exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
-				} catch (const ibrcommon::vaddress::address_exception &ex) {
-					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					try {
+						// prevent broadcasting in the wrong address family
+						if (addr.family() != sock.get_family()) continue;
+
+						sock.sendto(data.c_str(), data.length(), 0, addr);
+					} catch (const ibrcommon::socket_exception &e) {
+						IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 5) << "can not send message to " << addr.toString() << " via " << sock.get_address().toString() << "/" << iface.toString() << "; socket exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::vaddress::address_exception &ex) {
+						IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
+				} catch (const std::bad_cast&) {
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "Socket for sending isn't a udpsocket." << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}

@@ -10,6 +10,10 @@ import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.view.MenuCompat;
+import android.support.v4.view.MenuItemCompat;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -17,13 +21,48 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 public class PingActivity extends Activity {
+    
+    private static final int SELECT_NEIGHBOR = 1;
 	
     private PingService mService = null;
     private boolean mBound = false;
     
     private EditText mTextEid = null;
     private TextView mResult = null;
-	
+    
+    @SuppressWarnings("deprecation")
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        MenuCompat.setShowAsAction(menu.findItem(R.id.itemSelectNeighbor), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.itemSelectNeighbor:
+                Intent select_neighbor = new Intent(this, NeighborChooserActivity.class);
+                startActivityForResult(select_neighbor, SELECT_NEIGHBOR);
+                return true;
+            
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (SELECT_NEIGHBOR == requestCode) {
+            if ((data != null) && data.hasExtra("endpoint")) {
+                mTextEid.setText( data.getStringExtra("endpoint") + "/echo" );
+            }
+            return;
+        }
+        
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {

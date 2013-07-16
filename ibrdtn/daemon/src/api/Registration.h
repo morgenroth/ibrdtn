@@ -267,11 +267,6 @@ namespace dtn
 				dtn::data::MetaBundle pop() throw (const ibrcommon::QueueUnblockedException);
 
 				/**
-				 * Get a set with all received bundles
-				 */
-				const dtn::data::BundleSet& getReceivedBundles() const throw ();
-
-				/**
 				 * Expire bundles in the received bundle set
 				 */
 				void expire(const dtn::data::Timestamp &timestamp) throw ();
@@ -286,7 +281,15 @@ namespace dtn
 				 */
 				void reset() throw ();
 
+				/**
+				 * Check if a bundle has been received before
+				 */
+				bool has(const dtn::data::BundleID &bundle) const throw ();
+
 			private:
+				// protect variables against concurrent altering
+				ibrcommon::Mutex _lock;
+
 				// all bundles have to remain in this set to avoid duplicate delivery
 				dtn::data::BundleSet _recv_bundles;
 

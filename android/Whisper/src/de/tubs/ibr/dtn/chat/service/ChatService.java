@@ -24,6 +24,7 @@ package de.tubs.ibr.dtn.chat.service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Locale;
 import java.util.StringTokenizer;
 
 import android.app.IntentService;
@@ -58,6 +59,7 @@ import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
+import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
@@ -81,6 +83,7 @@ public class ChatService extends IntentService {
 	public static final String MARK_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.MARK_DELIVERED";
 	public static final String REPORT_DELIVERED_INTENT = "de.tubs.ibr.dtn.chat.REPORT_DELIVERED";
 	
+	public final static String ACTION_PRESENCE_ALARM = "de.tubs.ibr.dtn.chat.PRESENCE_ALARM";
 	public static final String ACTION_SEND_MESSAGE = "de.tubs.ibr.dtn.chat.SEND_MESSAGE";
 	public static final String ACTION_REFRESH_PRESENCE = "de.tubs.ibr.dtn.chat.REFRESH_PRESENCE";
 	
@@ -180,6 +183,8 @@ public class ChatService extends IntentService {
 			String presence = null;
 			String status = null;
 			String voiceeid = null;
+			String language = null;
+			String country = null;
 			
 			StringTokenizer tokenizer = new StringTokenizer(payload, "\n");
 			while (tokenizer.hasMoreTokens())
@@ -212,11 +217,19 @@ public class ChatService extends IntentService {
                 {
                     voiceeid = value;
                 }
+                else if (keyword.equalsIgnoreCase("Language"))
+                {
+                    language = value;
+                }
+                else if (keyword.equalsIgnoreCase("Country"))
+                {
+                    country = value;
+                }
 			}
 			
 			if (nickname != null)
 			{
-				getRoster().updatePresence(source.toString(), created, presence, nickname, status, voiceeid);
+				getRoster().updatePresence(source.toString(), created, presence, nickname, status, voiceeid, language, country);
 			}
 		}
 		
@@ -275,7 +288,21 @@ public class ChatService extends IntentService {
 		_screen_off = false;
 		
 		// create a new client object
-		_client = new DTNClient();
+		_client = new DTNClient(new SessionConnection() {
+            @Override
+            public void onSessionConnected(Session arg0) {
+                // respect user settings
+                if (PreferenceManager.getDefaultSharedPreferences(ChatService.this).getBoolean("checkBroadcastPresence", false))
+                {
+                    // register scheduled presence update
+                    PresenceGenerator.activate(ChatService.this);
+                }
+            }
+
+            @Override
+            public void onSessionDisconnected() {
+            }
+		});
 
 		// create a roster object
 		this.roster = new Roster();
@@ -433,7 +460,7 @@ public class ChatService extends IntentService {
 		String action = intent.getAction();
 		
         // create a task to process concurrently
-        if (AlarmReceiver.ACTION.equals(action))
+        if (ACTION_PRESENCE_ALARM.equals(action))
         {
 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ChatService.this);
 			
@@ -582,7 +609,9 @@ public class ChatService extends IntentService {
 			
 			String presence_message = "Presence: " + presence + "\n" +
 					"Nickname: " + nickname + "\n" +
-					"Status: " + status;
+					"Status: " + status + "\n" +
+					"Language: " + Locale.getDefault().getLanguage() + "\n" +
+					"Country: " + Locale.getDefault().getCountry();
 			
 			try {
     			if (Utils.isVoiceRecordingSupported(this)) {
@@ -628,13 +657,13 @@ public class ChatService extends IntentService {
 			createNotification(b, msg);
 			break;
 		case BUDDY_ADD:
-			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World", "dtn://test/dtalkie");
+			getRoster().updatePresence(debug_source + "/" + String.valueOf((new Date()).getTime()), new Date(), "online", "Debug Buddy", "Hello World", "dtn://test/dtalkie", "en", "gb");
 			break;
 			
 		case SEND_PRESENCE:
 	        // wake-up the chat service and queue a send presence task
 	        Intent i = new Intent(this, ChatService.class);
-	        i.setAction(AlarmReceiver.ACTION);
+	        i.setAction(ACTION_PRESENCE_ALARM);
 	        startService(i);
 		    break;
 		}
