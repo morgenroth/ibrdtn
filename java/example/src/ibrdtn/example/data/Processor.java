@@ -1,11 +1,9 @@
-package ibrdtn.example.callback;
+package ibrdtn.example.data;
 
 import ibrdtn.api.ExtendedClient;
 import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.object.SingletonEndpoint;
-import ibrdtn.example.Envelope;
-import ibrdtn.example.MessageData;
 import ibrdtn.example.ui.DTNExampleApp;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
@@ -47,11 +45,11 @@ public class Processor implements Runnable {
             data.setId(String.valueOf(++messageId));
             data.setCorrelationId(envelope.getData().getId());
 
-            // Send response back to source
             SingletonEndpoint destination = new SingletonEndpoint(envelope.getBundleID().getSource());
             Bundle bundle = new Bundle(destination, 3600);
             bundle.appendBlock(new PayloadBlock(data));
 
+            // Send response back to source
             logger.log(Level.INFO, "Sending {0}", bundle);
 
             final Bundle finalBundle = bundle;

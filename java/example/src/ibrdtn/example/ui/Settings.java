@@ -16,19 +16,21 @@ import javax.swing.JFrame;
 
 /**
  * Settings dialog.
+ *
+ * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
 public class Settings extends JDialog {
 
     private static final Logger logger = Logger.getLogger(Settings.class.getName());
     private DTNExampleApp dtnApp;
 
-    /**
-     * Creates new form Settings
-     */
     public Settings(JFrame parent) {
+
         super(parent, true);
+
         initComponents();
         pack();
+
         Rectangle parentBounds = parent.getBounds();
         Dimension size = getSize();
         // Center in the parent
@@ -43,6 +45,7 @@ public class Settings extends JDialog {
         if (dtnApp.getDtnClient().getPayloadType().equals(PayloadType.BYTE)) {
             cbAutoResponse.setEnabled(false);
         }
+
         try {
             dtnApp.getDtnClient().getEC().getNodeName();
             String node = dtnApp.getDtnClient().getEC().getNodeName().toString();

@@ -9,7 +9,7 @@ import ibrdtn.api.object.EID;
 import ibrdtn.api.object.GroupEndpoint;
 import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.object.SingletonEndpoint;
-import ibrdtn.example.MessageData;
+import ibrdtn.example.data.MessageData;
 import ibrdtn.example.api.Constants;
 import ibrdtn.example.api.DTNClient;
 import ibrdtn.example.logging.WindowHandler;
@@ -730,14 +730,9 @@ public class DTNExampleApp extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(DTNExampleApp.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(DTNExampleApp.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(DTNExampleApp.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(DTNExampleApp.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                javax.swing.UnsupportedLookAndFeelException ex) {
+            logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 

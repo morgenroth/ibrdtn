@@ -6,6 +6,7 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
 /**
+ * Formats logging output.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
@@ -22,7 +23,7 @@ public final class LogFormatter extends Formatter {
                 record.getLevel().getLocalizedName())
                 .append(": ")
                 .append(formatMessage(record));
-                //.append(LINE_SEPARATOR);
+        //.append(LINE_SEPARATOR);
 
         if (record.getThrown() != null) {
             try {

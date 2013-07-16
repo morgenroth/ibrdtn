@@ -1,4 +1,4 @@
-package ibrdtn.example;
+package ibrdtn.example.data;
 
 import ibrdtn.api.object.BundleID;
 

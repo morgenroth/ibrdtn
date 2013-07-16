@@ -39,7 +39,7 @@ public class DTNClient {
     }
 
     /**
-     * Constructor allowing to choose between different payload types.
+     * Constructor allowing to choose between different payload types. Uses passthrough as the API handling strategy.
      *
      * @param endpoint the application's primary EID
      * @param type the expected payload format
@@ -84,6 +84,9 @@ public class DTNClient {
         connect();
     }
 
+    /**
+     * Opens the API connection to the DTN daemon.
+     */
     private void connect() {
         try {
             exClient.open();
@@ -99,6 +102,11 @@ public class DTNClient {
         }
     }
 
+    /**
+     * Sends the given Bundle to the daemon.
+     *
+     * @param bundle
+     */
     public void send(Bundle bundle) {
 
         logger.log(Level.INFO, "Sending {0}", bundle);
@@ -119,6 +127,9 @@ public class DTNClient {
         });
     }
 
+    /**
+     * Shuts down the API connection.
+     */
     public void shutdown() {
 
         logger.log(Level.INFO, "Shutting down {0}", endpoint);
@@ -157,6 +168,13 @@ public class DTNClient {
         logger.log(Level.INFO, "DTN connection closed");
     }
 
+    /**
+     * Enables/disables event notifications from the daemon.
+     *
+     * These are different from (custody) reports, which are received anyway.
+     *
+     * @param eventNotifications true if event notifications are to be enabled
+     */
     public void setEvents(boolean eventNotifications) {
         if (eventNotifications) {
             EventNotifier notifier = new EventNotifier();

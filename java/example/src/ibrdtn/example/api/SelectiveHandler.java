@@ -6,7 +6,7 @@ import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.BundleID;
 import ibrdtn.api.sab.Custody;
 import ibrdtn.api.sab.StatusReport;
-import ibrdtn.example.callback.Processor;
+import ibrdtn.example.data.Processor;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;

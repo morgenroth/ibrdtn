@@ -4,8 +4,8 @@ import ibrdtn.api.APIException;
 import ibrdtn.api.ExtendedClient;
 import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.BundleID;
-import ibrdtn.example.Envelope;
-import ibrdtn.example.MessageData;
+import ibrdtn.example.data.Envelope;
+import ibrdtn.example.data.MessageData;
 import static ibrdtn.example.api.PayloadType.BYTE;
 import static ibrdtn.example.api.PayloadType.OBJECT;
 import java.io.ByteArrayOutputStream;
@@ -18,6 +18,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Abstracts functionality common to all classes implementing a CallbackHandler, such as loading Bundles into the Bundle
+ * register or marking Bundles as delivered.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
@@ -36,7 +38,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     protected byte[] bytes;
 
     /**
-     * Mark the Bundle currently in the register as delivered.
+     * Marks the Bundle currently in the register as delivered.
      */
     protected void markDelivered() {
         final BundleID finalBundleID = this.bundleID;
@@ -63,7 +65,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     }
 
     /**
-     * Load the next bundle from the queue into the register and initiate the file transfer.
+     * Loads the next bundle from the queue into the register and initiate the file transfer.
      */
     protected void loadAndGet() {
         final ExtendedClient exClient = this.client;
@@ -81,7 +83,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     }
 
     /**
-     * Load the next bundle from the queue into the register and initiate transfer of the Bundle's meta data.
+     * Loads the next bundle from the queue into the register and initiate transfer of the Bundle's meta data.
      */
     protected void loadAndGetInfo() {
         final ExtendedClient exClient = this.client;
@@ -100,7 +102,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     }
 
     /**
-     * Initiate transfer of the Bundle's payload. Requires that is has been loaded into the register first.
+     * Initiates transfer of the Bundle's payload. Requires that is has been loaded into the register first.
      */
     protected void getPayload() {
         final ExtendedClient finalClient = this.client;
@@ -117,6 +119,10 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
         });
     }
 
+    /**
+     * Concurrently reads from a PipedInputStream lest the streams internal buffer runs full and creates a deadlock
+     * situation.
+     */
     class PipedStreamReader implements Runnable {
 
         @Override

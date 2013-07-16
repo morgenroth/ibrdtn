@@ -8,6 +8,7 @@ import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 
 /**
+ * Redirects logging output to GUI.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
