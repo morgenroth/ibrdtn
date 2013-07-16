@@ -55,7 +55,7 @@ public class PassthroughHandler extends AbstractAPIHandler {
 
     @Override
     public void endBundle() {
-        logger.log(Level.INFO, "Received: {0}:", bundle);
+        // logger.log(Level.INFO, "Received: {0}:", bundle);
 
         executor.execute(new Processor(envelope, client, executor));
 

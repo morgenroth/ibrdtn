@@ -6,6 +6,7 @@ import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.BundleID;
 import ibrdtn.api.sab.Custody;
 import ibrdtn.api.sab.StatusReport;
+import ibrdtn.example.callback.Processor;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
@@ -121,6 +122,9 @@ public class SelectiveHandler extends AbstractAPIHandler {
                 }
             }
         }
+
+        executor.execute(new Processor(envelope, client, executor));
+        // With the SelectiveHandler, when the payload has been received, the bundle is complete and can be deleted
         markDelivered();
     }
 

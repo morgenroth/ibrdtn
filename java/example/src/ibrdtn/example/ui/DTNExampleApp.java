@@ -372,6 +372,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.ipadx = 120;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(19, 12, 0, 0);
         jPanel3.add(tfPayload, gridBagConstraints);
 
@@ -525,7 +526,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(46, Short.MAX_VALUE))
         );
 
         pack();
@@ -535,64 +536,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
         dtnClient.shutdown();
         System.exit(0);
     }//GEN-LAST:event_exitMenuItemActionPerformed
-
-    private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
-        EID destination;
-        /*
-         * Switch between unicast and multicast.
-         */
-        if (rbUnicast.isSelected()) {
-            destination = new SingletonEndpoint(tfDestination.getText());
-        } else {
-            destination = new GroupEndpoint(tfDestination.getText());
-        }
-
-        EID me = new SingletonEndpoint("api:me");
-
-        // Create bundle to send
-        Bundle bundle = new Bundle(destination, Constants.LIFETIME);
-        bundle.setPriority(Bundle.Priority.valueOf((String) cbPriority.getSelectedItem()));
-
-        if (cbReports.isSelected()) {
-            bundle.setReportto(me);
-        }
-
-        if (cbCustody.isSelected()) {
-            bundle.setCustodian(me);
-            bundle.setFlag(Bundle.Flags.CUSTODY_REQUEST, true);
-        }
-
-        bundle.setFlag(Bundle.Flags.CUSTODY_REPORT, cbReports.isSelected());
-        bundle.setFlag(Bundle.Flags.DELETION_REPORT, cbReports.isSelected());
-        bundle.setFlag(Bundle.Flags.RECEPTION_REPORT, cbReports.isSelected());
-        bundle.setFlag(Bundle.Flags.FORWARD_REPORT, cbReports.isSelected());
-        bundle.setFlag(Bundle.Flags.DELIVERY_REPORT, cbReports.isSelected());
-        bundle.setFlag(Bundle.Flags.COMPRESSION_REQUEST, cbGZIP.isSelected());
-
-        // DTNSEC
-        bundle.setFlag(Bundle.Flags.DTNSEC_REQUEST_ENCRYPT, cbEncrypt.isSelected());
-        bundle.setFlag(Bundle.Flags.DTNSEC_REQUEST_SIGN, cbSign.isSelected());
-
-        /*
-         * Switch between binary and custom data format.
-         */
-        switch (PAYLOAD_TYPE) {
-            case OBJECT:
-                MessageData data = new MessageData();
-                data.setId(tfId.getText());
-                data.setCorrelationId(tfResponse.getText());
-                data.setText(tfPayload.getText());
-
-                bundle.appendBlock(new PayloadBlock(data));
-                break;
-            case BYTE:
-                String text = tfPayload.getText();
-                bundle.appendBlock(new PayloadBlock(text.getBytes()));
-                break;
-        }
-
-        dtnClient.send(bundle);
-    }//GEN-LAST:event_btnSendActionPerformed
 
     private void btnRemoveGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveGIDActionPerformed
         String group = tfGid.getText();
@@ -692,6 +635,64 @@ public class DTNExampleApp extends javax.swing.JFrame {
             logger.log(Level.SEVERE, "Switching encoding failed");
         }
     }//GEN-LAST:event_cbEncodingActionPerformed
+
+    private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
+        EID destination;
+        /*
+        * Switch between unicast and multicast.
+        */
+        if (rbUnicast.isSelected()) {
+            destination = new SingletonEndpoint(tfDestination.getText());
+        } else {
+            destination = new GroupEndpoint(tfDestination.getText());
+        }
+
+        EID me = new SingletonEndpoint("api:me");
+
+        // Create bundle to send
+        Bundle bundle = new Bundle(destination, Constants.LIFETIME);
+        bundle.setPriority(Bundle.Priority.valueOf((String) cbPriority.getSelectedItem()));
+
+        if (cbReports.isSelected()) {
+            bundle.setReportto(me);
+        }
+
+        if (cbCustody.isSelected()) {
+            bundle.setCustodian(me);
+            bundle.setFlag(Bundle.Flags.CUSTODY_REQUEST, true);
+        }
+
+        bundle.setFlag(Bundle.Flags.CUSTODY_REPORT, cbReports.isSelected());
+        bundle.setFlag(Bundle.Flags.DELETION_REPORT, cbReports.isSelected());
+        bundle.setFlag(Bundle.Flags.RECEPTION_REPORT, cbReports.isSelected());
+        bundle.setFlag(Bundle.Flags.FORWARD_REPORT, cbReports.isSelected());
+        bundle.setFlag(Bundle.Flags.DELIVERY_REPORT, cbReports.isSelected());
+        bundle.setFlag(Bundle.Flags.COMPRESSION_REQUEST, cbGZIP.isSelected());
+
+        // DTNSEC
+        bundle.setFlag(Bundle.Flags.DTNSEC_REQUEST_ENCRYPT, cbEncrypt.isSelected());
+        bundle.setFlag(Bundle.Flags.DTNSEC_REQUEST_SIGN, cbSign.isSelected());
+
+        /*
+        * Switch between binary and custom data format.
+        */
+        switch (PAYLOAD_TYPE) {
+            case OBJECT:
+            MessageData data = new MessageData();
+            data.setId(tfId.getText());
+            data.setCorrelationId(tfResponse.getText());
+            data.setText(tfPayload.getText());
+
+            bundle.appendBlock(new PayloadBlock(data));
+            break;
+            case BYTE:
+            String text = tfPayload.getText();
+            bundle.appendBlock(new PayloadBlock(text.getBytes()));
+            break;
+        }
+
+        dtnClient.send(bundle);
+    }//GEN-LAST:event_btnSendActionPerformed
 
     /**
      * Prints a string in the app's text area.
