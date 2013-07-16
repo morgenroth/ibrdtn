@@ -1,4 +1,4 @@
-package ibr.timpner.dtn;
+package ibrdtn.api.test;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

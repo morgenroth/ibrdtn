@@ -1,4 +1,4 @@
-package ibr.timpner.dtn;
+package ibrdtn.api.test;
 
 import ibrdtn.api.object.NodeConnection;
 import java.util.Collections;
