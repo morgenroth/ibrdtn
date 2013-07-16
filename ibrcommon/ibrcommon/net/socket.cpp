@@ -193,6 +193,16 @@ namespace ibrcommon
 		return bound_addr.ss_family;
 	}
 
+	bool basesocket::hasSupport(const sa_family_t family, const int type, const int protocol) throw ()
+	{
+		int fd = 0;
+		if ((fd = ::socket(family, type, protocol)) < 0) {
+			return false;
+		}
+		::close(fd);
+		return true;
+	}
+
 	void basesocket::init_socket(const vaddress &addr, int type, int protocol) throw (socket_exception)
 	{
 		try {

@@ -153,6 +153,11 @@ namespace ibrcommon {
 		sa_family_t get_family() const throw (socket_exception);
 		static sa_family_t get_family(int fd) throw (socket_exception);
 
+		/**
+		 * Checks if the given network protocol is supported
+		 */
+		static bool hasSupport(const sa_family_t family, const int type = SOCK_DGRAM, const int protocol = 0) throw ();
+
 	protected:
 		/**
 		 * The socket state determine if the socket file descriptor
