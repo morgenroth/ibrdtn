@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Connection information, only available with the according daemon extension.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */

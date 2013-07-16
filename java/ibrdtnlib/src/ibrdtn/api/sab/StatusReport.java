@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * A status report.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
@@ -53,21 +54,21 @@ public class StatusReport {
 
         // NOTIFY REPORT <src_eid> <timestamp>.<seq_nr>[.<frag_offset>:<frag_len>] <dst_eid> <reason_code> <type>\\[<timestamp>.<tmp_nanos>\\]
         final Pattern pattern = Pattern.compile(
-                start 
+                start
                 + "\\s"
                 + url
-                + "\\s(\\d+)\\.(\\d+)" 
-                + fragments 
-                + "\\s" 
-                + url 
-                + "\\s(\\d+)\\s" 
+                + "\\s(\\d+)\\.(\\d+)"
+                + fragments
+                + "\\s"
+                + url
+                + "\\s(\\d+)\\s"
                 + notificationType
                 + "(.*)"); // This takes care of possible repititions of <type>\\[<timestamp>.<tmp_nanos>\\]. This is not expected behavior, though.
         final Matcher matcher = pattern.matcher(data);
         matcher.find();
 
         source = new SingletonEndpoint(matcher.group(2));
-        
+
         timestamp = Long.parseLong(matcher.group(3));
         sequenceNumber = Long.parseLong(matcher.group(4));
 

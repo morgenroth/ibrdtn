@@ -5,7 +5,7 @@
  *
  * Written-by: 
  *  Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
- *  Julian Timpner<timpner@ibr.cs.tu-bs.de>
+ *  Julian Timpner      <timpner@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * A custody report.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
