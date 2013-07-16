@@ -1,31 +1,24 @@
 package ibrdtn.example.ui;
 
-import ibrdtn.api.APIException;
-import ibrdtn.example.api.APIHandlerType;
-import ibrdtn.example.api.PayloadType;
-import ibrdtn.example.api.DTNClient;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.ItemEvent;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 
 /**
  * Settings dialog.
  */
-public class Settings extends JDialog {
+public class About extends JDialog {
 
-    private static final Logger logger = Logger.getLogger(Settings.class.getName());
+    private static final Logger logger = Logger.getLogger(About.class.getName());
     private DTNExampleApp dtnApp;
 
     /**
      * Creates new form Settings
      */
-    public Settings(JFrame parent) {
+    public About(JFrame parent) {
         super(parent, true);
         initComponents();
         pack();
@@ -35,23 +28,8 @@ public class Settings extends JDialog {
         int x = Math.max(0, parentBounds.x + (parentBounds.width - size.width) / 2);
         int y = Math.max(0, parentBounds.y + (parentBounds.height - size.height) / 2);
         setLocation(new Point(x, y));
-        dtnApp = (DTNExampleApp) parent;
 
-        cbAPIType.setSelectedItem(dtnApp.getDtnClient().getApiType());
-        cbPayloadType.setSelectedItem(dtnApp.getDtnClient().getPayloadType());
-        cbAutoResponse.setSelected(DTNExampleApp.isAutoResponse);
-        if (dtnApp.getDtnClient().getPayloadType().equals(PayloadType.BYTE)) {
-            cbAutoResponse.setEnabled(false);
-        }
-        try {
-            dtnApp.getDtnClient().getEC().getNodeName();
-            String node = dtnApp.getDtnClient().getEC().getNodeName().toString();
-            String eid = dtnApp.getDtnClient().getEC().getEndpoint().toString();
-            eid = eid.replaceAll(node + "/", "");
-            tfEndpoint.setText(eid);
-        } catch (APIException ex) {
-            logger.log(Level.WARNING, "Failed to get EID");
-        }
+        dtnApp = (DTNExampleApp) parent;
     }
 
     /**
@@ -65,19 +43,12 @@ public class Settings extends JDialog {
         jLabel1 = new javax.swing.JLabel();
         mainPanel = new javax.swing.JPanel();
         closeButton = new javax.swing.JButton();
-        cbPayloadType = new javax.swing.JComboBox();
-        cbAPIType = new javax.swing.JComboBox();
+        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 80), new java.awt.Dimension(0, 80), new java.awt.Dimension(32767, 80));
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        cbEvents = new javax.swing.JCheckBox();
-        btnSave = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
-        tfEndpoint = new javax.swing.JTextField();
-        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 80), new java.awt.Dimension(0, 80), new java.awt.Dimension(32767, 80));
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(20, 0), new java.awt.Dimension(20, 0), new java.awt.Dimension(20, 32767));
         jLabel6 = new javax.swing.JLabel();
-        cbAutoResponse = new javax.swing.JCheckBox();
 
         jLabel1.setText("jLabel1");
 
@@ -96,105 +67,49 @@ public class Settings extends JDialog {
             }
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 7;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_END;
         mainPanel.add(closeButton, gridBagConstraints);
-
-        cbPayloadType.setModel(new DefaultComboBoxModel(PayloadType.values()));
-        cbPayloadType.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cbPayloadTypeItemStateChanged(evt);
-            }
-        });
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        mainPanel.add(cbPayloadType, gridBagConstraints);
-
-        cbAPIType.setModel(new DefaultComboBoxModel(APIHandlerType.values()));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        mainPanel.add(cbAPIType, gridBagConstraints);
-
-        jLabel2.setText("Payload type:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = 7;
+        mainPanel.add(filler2, gridBagConstraints);
+
+        jLabel2.setFont(new java.awt.Font("Ubuntu", 1, 15)); // NOI18N
+        jLabel2.setText("IBR-DTN Example Application");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.insets = new java.awt.Insets(15, 0, 15, 0);
         mainPanel.add(jLabel2, gridBagConstraints);
 
-        jLabel3.setText("API type:");
+        jLabel3.setText("http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.insets = new java.awt.Insets(25, 0, 25, 0);
         mainPanel.add(jLabel3, gridBagConstraints);
 
-        jLabel4.setText("Events:");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        mainPanel.add(jLabel4, gridBagConstraints);
-
-        cbEvents.setText("Enabled");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        mainPanel.add(cbEvents, gridBagConstraints);
-
-        btnSave.setText("Save");
-        btnSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSaveActionPerformed(evt);
-            }
-        });
+        jLabel4.setText("timpner@ibr.cs.tu-bs.de");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 6;
-        mainPanel.add(btnSave, gridBagConstraints);
+        gridBagConstraints.insets = new java.awt.Insets(1, 0, 1, 0);
+        mainPanel.add(jLabel4, gridBagConstraints);
 
-        jLabel5.setText("Primary EID:");
+        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ibrdtn/example/ui/images/logo.png"))); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = 0;
         mainPanel.add(jLabel5, gridBagConstraints);
 
-        tfEndpoint.setText("client-1");
-        tfEndpoint.setMinimumSize(new java.awt.Dimension(60, 27));
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        mainPanel.add(tfEndpoint, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 5;
-        mainPanel.add(filler2, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        mainPanel.add(filler1, gridBagConstraints);
-
-        jLabel6.setText("Auto-Response:");
+        jLabel6.setText("Julian Timpner");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.insets = new java.awt.Insets(16, 0, 16, 0);
         mainPanel.add(jLabel6, gridBagConstraints);
-
-        cbAutoResponse.setText("Enabled");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
-        mainPanel.add(cbAutoResponse, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
@@ -207,45 +122,8 @@ public class Settings extends JDialog {
         setVisible(false);
         dispose();
     }//GEN-LAST:event_closeButtonActionPerformed
-
-    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
-        dtnApp.getDtnClient().shutdown();
-
-        // Auto-response for object type payloads
-        DTNExampleApp.isAutoResponse = cbAutoResponse.isSelected();
-
-        dtnApp.PRIMARY_EID = tfEndpoint.getText();
-        dtnApp.PAYLOAD_TYPE = (PayloadType) cbPayloadType.getSelectedItem();
-        dtnApp.HANDLER_TYPE = (APIHandlerType) cbAPIType.getSelectedItem();
-
-        DTNClient dtnClient = new DTNClient(dtnApp.PRIMARY_EID, dtnApp.PAYLOAD_TYPE, dtnApp.HANDLER_TYPE);
-        dtnApp.setDtnClient(dtnClient);
-
-        if (cbEvents.isSelected()) {
-            dtnApp.getDtnClient().setEvents(true);
-            logger.log(Level.INFO, "Event notifications enabled.");
-        } else {
-            dtnApp.getDtnClient().setEvents(false);
-            logger.log(Level.INFO, "Event notifications disabled.");
-        }
-    }//GEN-LAST:event_btnSaveActionPerformed
-
-    private void cbPayloadTypeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbPayloadTypeItemStateChanged
-        if (evt.getItem().equals(PayloadType.OBJECT) && evt.getStateChange() == ItemEvent.SELECTED) {
-            cbAutoResponse.setEnabled(true);
-        } else if (evt.getItem().equals(PayloadType.BYTE) && evt.getStateChange() == ItemEvent.SELECTED) {
-            logger.log(Level.INFO, "Auto-response is only available with Payload Type Object.");
-            cbAutoResponse.setEnabled(false);
-        }
-    }//GEN-LAST:event_cbPayloadTypeItemStateChanged
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnSave;
-    private javax.swing.JComboBox cbAPIType;
-    private javax.swing.JCheckBox cbAutoResponse;
-    private javax.swing.JCheckBox cbEvents;
-    private javax.swing.JComboBox cbPayloadType;
     private javax.swing.JButton closeButton;
-    private javax.swing.Box.Filler filler1;
     private javax.swing.Box.Filler filler2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -254,6 +132,5 @@ public class Settings extends JDialog {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel mainPanel;
-    private javax.swing.JTextField tfEndpoint;
     // End of variables declaration//GEN-END:variables
 }

@@ -223,7 +223,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(14, Short.MAX_VALUE)
+                .addContainerGap(16, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(tfDestination, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -481,14 +481,19 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         helpMenu.setMnemonic('h');
         helpMenu.setText("Help");
-        helpMenu.setEnabled(false);
 
         contentsMenuItem.setMnemonic('c');
         contentsMenuItem.setText("Contents");
+        contentsMenuItem.setEnabled(false);
         helpMenu.add(contentsMenuItem);
 
         aboutMenuItem.setMnemonic('a');
         aboutMenuItem.setText("About");
+        aboutMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                aboutMenuItemActionPerformed(evt);
+            }
+        });
         helpMenu.add(aboutMenuItem);
 
         menuBar.add(helpMenu);
@@ -526,7 +531,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(46, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         pack();
@@ -639,8 +644,8 @@ public class DTNExampleApp extends javax.swing.JFrame {
     private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
         EID destination;
         /*
-        * Switch between unicast and multicast.
-        */
+         * Switch between unicast and multicast.
+         */
         if (rbUnicast.isSelected()) {
             destination = new SingletonEndpoint(tfDestination.getText());
         } else {
@@ -674,25 +679,29 @@ public class DTNExampleApp extends javax.swing.JFrame {
         bundle.setFlag(Bundle.Flags.DTNSEC_REQUEST_SIGN, cbSign.isSelected());
 
         /*
-        * Switch between binary and custom data format.
-        */
+         * Switch between binary and custom data format.
+         */
         switch (PAYLOAD_TYPE) {
             case OBJECT:
-            MessageData data = new MessageData();
-            data.setId(tfId.getText());
-            data.setCorrelationId(tfResponse.getText());
-            data.setText(tfPayload.getText());
+                MessageData data = new MessageData();
+                data.setId(tfId.getText());
+                data.setCorrelationId(tfResponse.getText());
+                data.setText(tfPayload.getText());
 
-            bundle.appendBlock(new PayloadBlock(data));
-            break;
+                bundle.appendBlock(new PayloadBlock(data));
+                break;
             case BYTE:
-            String text = tfPayload.getText();
-            bundle.appendBlock(new PayloadBlock(text.getBytes()));
-            break;
+                String text = tfPayload.getText();
+                bundle.appendBlock(new PayloadBlock(text.getBytes()));
+                break;
         }
 
         dtnClient.send(bundle);
     }//GEN-LAST:event_btnSendActionPerformed
+
+    private void aboutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_aboutMenuItemActionPerformed
+        new About(this).setVisible(true);
+    }//GEN-LAST:event_aboutMenuItemActionPerformed
 
     /**
      * Prints a string in the app's text area.

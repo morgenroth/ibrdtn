@@ -97,7 +97,8 @@ public class Settings extends JDialog {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_END;
         mainPanel.add(closeButton, gridBagConstraints);
 
         cbPayloadType.setModel(new DefaultComboBoxModel(PayloadType.values()));
@@ -155,7 +156,8 @@ public class Settings extends JDialog {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
+        gridBagConstraints.gridy = 5;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.PAGE_END;
         mainPanel.add(btnSave, gridBagConstraints);
 
         jLabel5.setText("Primary EID:");
