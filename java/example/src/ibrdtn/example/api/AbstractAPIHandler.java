@@ -8,7 +8,6 @@ import ibrdtn.example.Envelope;
 import ibrdtn.example.MessageData;
 import static ibrdtn.example.api.PayloadType.BYTE;
 import static ibrdtn.example.api.PayloadType.OBJECT;
-import ibrdtn.example.callback.CallbackHandler;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -35,16 +34,6 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     protected Thread t;
     protected Envelope envelope;
     protected byte[] bytes;
-
-    protected void forwardMessage(MessageData data) {
-//        Envelope envelope = new Envelope();
-//        envelope.setBundleID(bundleID);
-//        envelope.setData(data);
-//
-//        logger.log(Level.INFO, "Data received: {0}", envelope);
-
-        CallbackHandler.getInstance().forwardMessage(envelope);
-    }
 
     /**
      * Mark the Bundle currently in the register as delivered.

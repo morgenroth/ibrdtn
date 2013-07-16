@@ -57,7 +57,7 @@ public class PassthroughHandler extends AbstractAPIHandler {
     public void endBundle() {
         logger.log(Level.INFO, "Received: {0}:", bundle);
 
-        executor.execute(new Processor(envelope));
+        executor.execute(new Processor(envelope, client, executor));
 
         // Depending on the application's needs, it might make sense to pull markDelivered in the processing thread
         markDelivered();
