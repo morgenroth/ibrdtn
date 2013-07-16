@@ -12,8 +12,6 @@ import ibrdtn.api.object.SingletonEndpoint;
 import ibrdtn.example.MessageData;
 import ibrdtn.example.api.Constants;
 import ibrdtn.example.api.DTNClient;
-import ibrdtn.example.callback.AutoResponseCallback;
-import ibrdtn.example.callback.ICallback;
 import ibrdtn.example.logging.WindowHandler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -28,6 +26,7 @@ import javax.swing.text.DefaultCaret;
 public class DTNExampleApp extends javax.swing.JFrame {
 
     private static final Logger logger = LogManager.getLogManager().getLogger("");
+    public static boolean isAutoResponse = false;
     private DTNClient dtnClient;
     private WindowHandler handler = null;
     protected String PRIMARY_EID = "ibr-1";
@@ -116,7 +115,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
         tfResponse = new javax.swing.JTextField();
         tfId = new javax.swing.JTextField();
         btnSend = new javax.swing.JButton();
-        cbAutoResponse = new javax.swing.JCheckBox();
         jLabel3 = new javax.swing.JLabel();
         jSeparator3 = new javax.swing.JSeparator();
         menuBar = new javax.swing.JMenuBar();
@@ -370,7 +368,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         tfPayload.setText("IBR");
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.ipadx = 120;
@@ -379,7 +377,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         jLabel1.setText("ID:");
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         gridBagConstraints.insets = new java.awt.Insets(6, 18, 0, 0);
@@ -387,20 +385,20 @@ public class DTNExampleApp extends javax.swing.JFrame {
 
         jLabel2.setText("Reply-ID:");
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         gridBagConstraints.insets = new java.awt.Insets(11, 18, 0, 0);
         jPanel3.add(jLabel2, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 3;
         gridBagConstraints.gridheight = 2;
         gridBagConstraints.ipadx = 40;
         gridBagConstraints.insets = new java.awt.Insets(6, 7, 0, 0);
         jPanel3.add(tfResponse, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 3;
+        gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 2;
         gridBagConstraints.ipadx = 40;
         gridBagConstraints.insets = new java.awt.Insets(18, 7, 0, 0);
@@ -413,22 +411,15 @@ public class DTNExampleApp extends javax.swing.JFrame {
             }
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridx = 3;
         gridBagConstraints.gridy = 6;
         gridBagConstraints.ipadx = 14;
         gridBagConstraints.insets = new java.awt.Insets(1, 6, 18, 0);
         jPanel3.add(btnSend, gridBagConstraints);
 
-        cbAutoResponse.setText("Echo");
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 3;
-        gridBagConstraints.gridy = 5;
-        gridBagConstraints.insets = new java.awt.Insets(6, 7, 0, 0);
-        jPanel3.add(cbAutoResponse, gridBagConstraints);
-
         jLabel3.setText("Message:");
         gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
         gridBagConstraints.insets = new java.awt.Insets(24, 18, 0, 0);
@@ -436,7 +427,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 6;
+        gridBagConstraints.gridwidth = 4;
         gridBagConstraints.ipadx = 254;
         gridBagConstraints.ipady = 4;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -534,7 +525,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(14, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -600,12 +591,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
                 break;
         }
 
-        if (cbAutoResponse.isSelected()) {
-            ICallback callback = new AutoResponseCallback(this);
-            dtnClient.send(bundle, callback);
-        } else {
-            dtnClient.send(bundle);
-        }
+        dtnClient.send(bundle);
     }//GEN-LAST:event_btnSendActionPerformed
 
     private void btnRemoveGIDActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoveGIDActionPerformed
@@ -770,7 +756,6 @@ public class DTNExampleApp extends javax.swing.JFrame {
     private javax.swing.JButton btnRemoveEID;
     private javax.swing.JButton btnRemoveGID;
     private javax.swing.JButton btnSend;
-    private javax.swing.JCheckBox cbAutoResponse;
     private javax.swing.JCheckBox cbCustody;
     private javax.swing.JComboBox cbEncoding;
     private javax.swing.JCheckBox cbEncrypt;

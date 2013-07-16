@@ -6,11 +6,13 @@ import ibrdtn.api.object.PayloadBlock;
 import ibrdtn.api.object.SingletonEndpoint;
 import ibrdtn.example.Envelope;
 import ibrdtn.example.MessageData;
+import ibrdtn.example.ui.DTNExampleApp;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * A sample processor that triggers an automatic response to the message source.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
@@ -34,33 +36,37 @@ public class Processor implements Runnable {
 
     private void processMessage() {
 
-        MessageData data = new MessageData();
+        if (DTNExampleApp.isAutoResponse) {
 
-        logger.log(Level.INFO, "Building auto-response...");
+            MessageData data = new MessageData();
 
-        // Increment message ID for response
-        data.setId(String.valueOf(Integer.parseInt(envelope.getData().getId()) + 1));
-        data.setCorrelationId(envelope.getData().getId());
+            logger.log(Level.INFO, "Building auto-response...");
 
-        // Send response back to source
-        SingletonEndpoint destination = new SingletonEndpoint(envelope.getBundleID().getSource());
-        Bundle bundle = new Bundle(destination, 3600);
-        bundle.appendBlock(new PayloadBlock(data));
+            // Increment message ID for response
+            int messageId = Integer.parseInt(envelope.getData().getId());
+            data.setId(String.valueOf(++messageId));
+            data.setCorrelationId(envelope.getData().getId());
 
-        logger.log(Level.INFO, "Sending {0}", bundle);
+            // Send response back to source
+            SingletonEndpoint destination = new SingletonEndpoint(envelope.getBundleID().getSource());
+            Bundle bundle = new Bundle(destination, 3600);
+            bundle.appendBlock(new PayloadBlock(data));
 
-        final Bundle finalBundle = bundle;
+            logger.log(Level.INFO, "Sending {0}", bundle);
 
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
+            final Bundle finalBundle = bundle;
 
-                try {
-                    client.send(finalBundle);
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Unable to send bundle", e);
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+
+                    try {
+                        client.send(finalBundle);
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "Unable to send bundle", e);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 }

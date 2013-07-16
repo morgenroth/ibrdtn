@@ -7,6 +7,7 @@ import ibrdtn.example.api.DTNClient;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ItemEvent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
@@ -36,9 +37,12 @@ public class Settings extends JDialog {
         setLocation(new Point(x, y));
         dtnApp = (DTNExampleApp) parent;
 
-
         cbAPIType.setSelectedItem(dtnApp.getDtnClient().getApiType());
         cbPayloadType.setSelectedItem(dtnApp.getDtnClient().getPayloadType());
+        cbAutoResponse.setSelected(DTNExampleApp.isAutoResponse);
+        if (dtnApp.getDtnClient().getPayloadType().equals(PayloadType.BYTE)) {
+            cbAutoResponse.setEnabled(false);
+        }
         try {
             dtnApp.getDtnClient().getEC().getNodeName();
             String node = dtnApp.getDtnClient().getEC().getNodeName().toString();
@@ -72,6 +76,8 @@ public class Settings extends JDialog {
         tfEndpoint = new javax.swing.JTextField();
         filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 80), new java.awt.Dimension(0, 80), new java.awt.Dimension(32767, 80));
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(20, 0), new java.awt.Dimension(20, 0), new java.awt.Dimension(20, 32767));
+        jLabel6 = new javax.swing.JLabel();
+        cbAutoResponse = new javax.swing.JCheckBox();
 
         jLabel1.setText("jLabel1");
 
@@ -91,10 +97,15 @@ public class Settings extends JDialog {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 6;
         mainPanel.add(closeButton, gridBagConstraints);
 
         cbPayloadType.setModel(new DefaultComboBoxModel(PayloadType.values()));
+        cbPayloadType.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cbPayloadTypeItemStateChanged(evt);
+            }
+        });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
         gridBagConstraints.gridy = 0;
@@ -144,13 +155,13 @@ public class Settings extends JDialog {
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
+        gridBagConstraints.gridy = 6;
         mainPanel.add(btnSave, gridBagConstraints);
 
         jLabel5.setText("Primary EID:");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         mainPanel.add(jLabel5, gridBagConstraints);
 
@@ -158,18 +169,32 @@ public class Settings extends JDialog {
         tfEndpoint.setMinimumSize(new java.awt.Dimension(60, 27));
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridy = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
         mainPanel.add(tfEndpoint, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 2;
-        gridBagConstraints.gridy = 4;
+        gridBagConstraints.gridy = 5;
         mainPanel.add(filler2, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 0;
         mainPanel.add(filler1, gridBagConstraints);
+
+        jLabel6.setText("Auto-Response:");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        mainPanel.add(jLabel6, gridBagConstraints);
+
+        cbAutoResponse.setText("Enabled");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.LINE_START;
+        mainPanel.add(cbAutoResponse, gridBagConstraints);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
@@ -186,6 +211,9 @@ public class Settings extends JDialog {
     private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
         dtnApp.getDtnClient().shutdown();
 
+        // Auto-response for object type payloads
+        DTNExampleApp.isAutoResponse = cbAutoResponse.isSelected();
+
         dtnApp.PRIMARY_EID = tfEndpoint.getText();
         dtnApp.PAYLOAD_TYPE = (PayloadType) cbPayloadType.getSelectedItem();
         dtnApp.HANDLER_TYPE = (APIHandlerType) cbAPIType.getSelectedItem();
@@ -201,9 +229,19 @@ public class Settings extends JDialog {
             logger.log(Level.INFO, "Event notifications disabled.");
         }
     }//GEN-LAST:event_btnSaveActionPerformed
+
+    private void cbPayloadTypeItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbPayloadTypeItemStateChanged
+        if (evt.getItem().equals(PayloadType.OBJECT) && evt.getStateChange() == ItemEvent.SELECTED) {
+            cbAutoResponse.setEnabled(true);
+        } else if (evt.getItem().equals(PayloadType.BYTE) && evt.getStateChange() == ItemEvent.SELECTED) {
+            logger.log(Level.INFO, "Auto-response is only available with Payload Type Object.");
+            cbAutoResponse.setEnabled(false);
+        }
+    }//GEN-LAST:event_cbPayloadTypeItemStateChanged
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnSave;
     private javax.swing.JComboBox cbAPIType;
+    private javax.swing.JCheckBox cbAutoResponse;
     private javax.swing.JCheckBox cbEvents;
     private javax.swing.JComboBox cbPayloadType;
     private javax.swing.JButton closeButton;
@@ -214,6 +252,7 @@ public class Settings extends JDialog {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JTextField tfEndpoint;
     // End of variables declaration//GEN-END:variables

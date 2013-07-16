@@ -4,14 +4,7 @@ import ibrdtn.api.APIException;
 import ibrdtn.api.EventClient;
 import ibrdtn.api.ExtendedClient;
 import ibrdtn.api.object.Bundle;
-import ibrdtn.api.object.PayloadBlock;
-import ibrdtn.example.MessageData;
-import ibrdtn.example.callback.CallbackHandler;
-import ibrdtn.example.callback.ICallback;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -126,37 +119,6 @@ public class DTNClient {
         });
     }
 
-    public void send(Bundle bundle, ICallback callback) {
-        logger.log(Level.INFO, "Sending {0}", bundle);
-
-        if (callback != null) {
-            final PayloadBlock payload = bundle.getPayloadBlock();
-            if (payload != null) {
-                try {
-                    PipedInputStream in = new PipedInputStream();
-                    final PipedOutputStream out = new PipedOutputStream(in);
-                    executor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                payload.getData().writeTo(out);
-                            } catch (IOException ex) {
-                                logger.log(Level.SEVERE, "Failed writing payload to stream", ex);
-                            }
-                        }
-                    });
-                    ObjectInputStream ois = new ObjectInputStream(in);
-                    MessageData data = (MessageData) ois.readObject();
-                    CallbackHandler.getInstance().add(data.getId(), callback);
-                } catch (IOException | ClassNotFoundException ex) {
-                    logger.log(Level.SEVERE, "Failed reading payload", ex);
-                }
-            }
-        }
-
-        send(bundle);
-    }
-
     public void shutdown() {
 
         logger.log(Level.INFO, "Shutting down {0}", endpoint);
@@ -213,14 +175,6 @@ public class DTNClient {
                 }
             }
         }
-    }
-
-    public void addStaticCallback(String msgType, ICallback callback) {
-        CallbackHandler.getInstance().add(msgType, callback);
-    }
-
-    public CallbackHandler getCallbackHandler() {
-        return CallbackHandler.getInstance();
     }
 
     public String getConfiguration() {
