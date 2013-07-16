@@ -33,15 +33,15 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     protected Bundle bundle = null;
     protected PayloadType messageType;
     protected Thread t;
-    protected MessageData messageData;
+    protected Envelope envelope;
     protected byte[] bytes;
 
     protected void forwardMessage(MessageData data) {
-        Envelope envelope = new Envelope();
-        envelope.setBundleID(bundleID);
-        envelope.setData(data);
-
-        logger.log(Level.INFO, "Data received: {0}", envelope);
+//        Envelope envelope = new Envelope();
+//        envelope.setBundleID(bundleID);
+//        envelope.setData(data);
+//
+//        logger.log(Level.INFO, "Data received: {0}", envelope);
 
         CallbackHandler.getInstance().forwardMessage(envelope);
     }
@@ -135,7 +135,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
             switch (messageType) {
 
                 case BYTE:
-                    ByteArrayOutputStream buffer = null;
+                    ByteArrayOutputStream buffer;
 
                     try {
 
@@ -176,8 +176,12 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
                         String messageType = object.getClass().getCanonicalName();
                         if (messageType.equals(MessageData.class.getCanonicalName())) {
 
-                            messageData = (MessageData) object;
-                            logger.log(Level.INFO, "Received: {0}:", messageData);
+                            MessageData messageData = (MessageData) object;
+                            envelope = new Envelope();
+                            envelope.setBundleID(bundleID);
+                            envelope.setData(messageData);
+
+                            logger.log(Level.INFO, "Data received: {0}", envelope);
                             // Do further processing, for instance
 
                         } else {

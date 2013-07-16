@@ -6,6 +6,7 @@ import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.BundleID;
 import ibrdtn.api.sab.Custody;
 import ibrdtn.api.sab.StatusReport;
+import ibrdtn.example.callback.Processor;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
@@ -55,6 +56,10 @@ public class PassthroughHandler extends AbstractAPIHandler {
     @Override
     public void endBundle() {
         logger.log(Level.INFO, "Received: {0}:", bundle);
+
+        executor.execute(new Processor(envelope));
+
+        // Depending on the application's needs, it might make sense to pull markDelivered in the processing thread
         markDelivered();
     }
 
