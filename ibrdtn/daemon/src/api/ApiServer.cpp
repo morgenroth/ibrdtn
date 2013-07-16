@@ -54,9 +54,12 @@ namespace dtn
 		 : _shutdown(false), _garbage_collector(*this)
 		{
 			if (net.isLoopback()) {
+				if (ibrcommon::basesocket::hasSupport(AF_INET6)) {
+					ibrcommon::vaddress addr6(ibrcommon::vaddress::VADDR_LOCALHOST, port, AF_INET6);
+					_sockets.add(new ibrcommon::tcpserversocket(addr6, 5));
+				}
+
 				ibrcommon::vaddress addr4(ibrcommon::vaddress::VADDR_LOCALHOST, port, AF_INET);
-				ibrcommon::vaddress addr6(ibrcommon::vaddress::VADDR_LOCALHOST, port, AF_INET6);
-				_sockets.add(new ibrcommon::tcpserversocket(addr6, 5));
 				_sockets.add(new ibrcommon::tcpserversocket(addr4, 5));
 			}
 			else if (net.isAny()) {
