@@ -65,15 +65,18 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     }
 
     /**
-     * Loads the next bundle from the queue into the register and initiate the file transfer.
+     * Loads the given bundle from the queue into the register and initiates the file transfer.
      */
-    protected void loadAndGet() {
+    protected void loadAndGet(BundleID bundleId) {
+        final BundleID finalBundleId = bundleId;
         final ExtendedClient exClient = this.client;
+
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    exClient.loadAndGetBundle();
+                    exClient.loadBundle(finalBundleId);
+                    exClient.getBundle();
                     logger.log(Level.INFO, "New bundle loaded");
                 } catch (APIException e) {
                     logger.log(Level.WARNING, "Failed to load next bundle");

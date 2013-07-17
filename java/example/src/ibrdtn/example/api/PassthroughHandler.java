@@ -33,8 +33,8 @@ public class PassthroughHandler extends AbstractAPIHandler {
 
     @Override
     public void notify(final BundleID id) {
-        this.bundleID = id; // Required to later reference the bundle
-        loadAndGet();
+//        this.bundleID = id; // Required to later reference the bundle
+        loadAndGet(id);
     }
 
     @Override
