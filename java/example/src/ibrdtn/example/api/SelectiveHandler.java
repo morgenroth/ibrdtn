@@ -33,8 +33,7 @@ public class SelectiveHandler extends AbstractAPIHandler {
 
     @Override
     public void notify(BundleID id) {
-        this.bundleID = id; // Required to later reference the bundle
-        loadAndGetInfo();
+        loadAndGetInfo(id);
     }
 
     @Override

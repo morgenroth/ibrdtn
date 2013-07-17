@@ -33,7 +33,6 @@ public class PassthroughHandler extends AbstractAPIHandler {
 
     @Override
     public void notify(final BundleID id) {
-//        this.bundleID = id; // Required to later reference the bundle
         loadAndGet(id);
     }
 
@@ -59,7 +58,7 @@ public class PassthroughHandler extends AbstractAPIHandler {
 
         executor.execute(new Processor(envelope, client, executor));
 
-        // Depending on the application's needs, it might make sense to pull markDelivered in the processing thread
+        // Depending on the application's needs, it might make sense to pull markDelivered() into the processing thread
         markDelivered();
     }
 

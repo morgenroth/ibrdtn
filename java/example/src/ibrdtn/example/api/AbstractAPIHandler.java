@@ -30,7 +30,6 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     protected PipedOutputStream os;
     protected ExtendedClient client;
     protected ExecutorService executor;
-    protected BundleID bundleID = new BundleID();
     protected Bundle bundle = null;
     protected PayloadType messageType;
     protected Thread t;
@@ -41,7 +40,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
      * Marks the Bundle currently in the register as delivered.
      */
     protected void markDelivered() {
-        final BundleID finalBundleID = this.bundleID;
+        final BundleID finalBundleID = new BundleID(bundle);
         final ExtendedClient finalClient = this.client;
 
         executor.execute(new Runnable() {
@@ -86,15 +85,16 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     }
 
     /**
-     * Loads the next bundle from the queue into the register and initiate transfer of the Bundle's meta data.
+     * Loads the next bundle from the queue into the register and initiates transfer of the Bundle's meta data.
      */
-    protected void loadAndGetInfo() {
+    protected void loadAndGetInfo(BundleID bundleId) {
+        final BundleID finalBundleId = bundleId;
         final ExtendedClient exClient = this.client;
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    exClient.loadBundle();
+                    exClient.loadBundle(finalBundleId);
                     exClient.getBundleInfo();
                     logger.log(Level.INFO, "New bundle loaded, getting meta data");
                 } catch (APIException e) {
@@ -105,7 +105,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
     }
 
     /**
-     * Initiates transfer of the Bundle's payload. Requires that is has been loaded into the register first.
+     * Initiates transfer of the Bundle's payload. Requires loading the Bundle into the register first.
      */
     protected void getPayload() {
         final ExtendedClient finalClient = this.client;
@@ -176,7 +176,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
 
                             MessageData messageData = (MessageData) object;
                             envelope = new Envelope();
-                            envelope.setBundleID(bundleID);
+                            envelope.setBundleID(new BundleID(bundle));
                             envelope.setData(messageData);
 
                             logger.log(Level.INFO, "Data received: {0}", envelope);
