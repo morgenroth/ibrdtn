@@ -252,11 +252,11 @@ public class DataReceiver extends Thread implements SABHandler {
                     }
                     current_bundle.setDestination(dest);
                 } else if (keyword.equalsIgnoreCase("timestamp")) {
-                    current_bundle.setTimestamp(Long.parseLong(value));
+                    current_bundle.setTimestamp(new Timestamp(Long.parseLong(value)));
                 } else if (keyword.equalsIgnoreCase("sequencenumber")) {
-                    current_bundle.setSequencenumber(Long.parseLong(value));
+                    current_bundle.setSequenceNumber(Long.parseLong(value));
                 } else if (keyword.equalsIgnoreCase("Processing flags")) {
-                    current_bundle.setProcflags(Long.parseLong(value));
+                    current_bundle.setProcFlags(Long.parseLong(value));
                 } else if (keyword.equalsIgnoreCase("Reportto")) {
                     if (!value.equals("dtn:none")) {
                         current_bundle.setReportto(new SingletonEndpoint(value));
@@ -466,15 +466,18 @@ public class DataReceiver extends Thread implements SABHandler {
     }
 
     private BundleID parseBundleNotification(String data) {
+
         BundleID bundleID = new BundleID();
         String[] tokens = data.split(" ");
-        bundleID.setTimestamp(Long.parseLong(tokens[2]));
+
+        bundleID.setTimestamp(new Timestamp(Long.parseLong(tokens[2])));
         bundleID.setSequenceNumber(Long.parseLong(tokens[3]));
+
         if (tokens.length == 6) {
             bundleID.setFragOffset(Long.parseLong(tokens[4]));
-            bundleID.setSource(tokens[5]);
+            bundleID.setSource(new SingletonEndpoint(tokens[5]));
         } else if (tokens.length == 5) {
-            bundleID.setSource(tokens[4]);
+            bundleID.setSource(new SingletonEndpoint(tokens[4]));
         }
         return bundleID;
     }

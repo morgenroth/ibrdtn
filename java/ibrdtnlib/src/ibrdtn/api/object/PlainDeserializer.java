@@ -29,6 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import ibrdtn.api.Base64;
 import ibrdtn.api.NullOutputStream;
+import ibrdtn.api.Timestamp;
 import ibrdtn.api.sab.SABException;
 import ibrdtn.api.sab.SABHandler;
 
@@ -109,11 +110,11 @@ public class PlainDeserializer implements SABHandler {
                     } else if (keyword.equalsIgnoreCase("lifetime")) {
                         _currentBundle.lifetime = Long.parseLong(value);
                     } else if (keyword.equalsIgnoreCase("timestamp")) {
-                        _currentBundle.timestamp = Long.parseLong(value);
+                        _currentBundle.timestamp = new Timestamp(Long.parseLong(value));
                     } else if (keyword.equalsIgnoreCase("sequencenumber")) {
-                        _currentBundle.sequencenumber = Long.parseLong(value);
+                        _currentBundle.sequenceNumber = Long.parseLong(value);
                     } else if (keyword.equalsIgnoreCase("procflags")) {
-                        _currentBundle.procflags = Long.parseLong(value);
+                        _currentBundle.procFlags = Long.parseLong(value);
                     }
                     break;
                 case BLOCK:

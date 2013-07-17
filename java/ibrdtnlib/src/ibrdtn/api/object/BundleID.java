@@ -21,59 +21,48 @@
  */
 package ibrdtn.api.object;
 
-import ibrdtn.api.object.Bundle.Flags;
-import ibrdtn.api.object.Bundle.Priority;
+import ibrdtn.api.Timestamp;
 
-public class BundleID implements Comparable<BundleID> {
+public class BundleID {
 
-    private String source = null;
-    private Long timestamp = null;
+    private SingletonEndpoint source = null;
+    private Timestamp timestamp = null;
     private Long sequenceNumber = null;
-    private Long procflags = null;
+    private Long procFlags = null;
     private boolean isFragment = false;
     private Long fragOffset = null;
-    private String destination = null;
 
     public BundleID() {
     }
-    
-    public BundleID(Bundle b)
-	{
-		this.source = b.getSource().toString();
-		this.timestamp = b.getTimestamp();
-		this.sequenceNumber = b.getSequencenumber();
-		
-		this.fragment = b.get(Bundle.Flags.FRAGMENT);
-		this.fragment_offset = b.getFragmentOffset();
-	}
 
-    public BundleID(String source, Long timestamp, Long sequencenumber) {
-        this.source = source;
-        this.timestamp = timestamp;
-        this.sequenceNumber = sequencenumber;
+    public BundleID(Bundle b) {
+        this.source = b.getSource();
+        this.timestamp = b.getTimestamp();
+        this.sequenceNumber = b.getSequenceNumber();
+
+        this.isFragment = b.getFlag(Bundle.Flags.FRAGMENT);
+        this.fragOffset = b.getFragmentOffset();
     }
 
-    public String getSource() {
+    public BundleID(SingletonEndpoint source, Timestamp timestamp, Long sequenceNumber) {
+        this.source = source;
+        this.timestamp = timestamp;
+        this.sequenceNumber = sequenceNumber;
+    }
+
+    public SingletonEndpoint getSource() {
         return source;
     }
 
-    public void setSource(String source) {
+    public void setSource(SingletonEndpoint source) {
         this.source = source;
     }
 
-    public String getDestination() {
-        return destination;
-    }
-
-    public void setDestination(String destination) {
-        this.destination = destination;
-    }
-
-    public Long getTimestamp() {
+    public Timestamp getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Long timestamp) {
+    public void setTimestamp(Timestamp timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -86,14 +75,15 @@ public class BundleID implements Comparable<BundleID> {
     }
 
     public long getProcflags() {
-        return procflags;
+        return procFlags;
     }
 
-    public void setProcflags(Long procflags) {
-        this.procflags = procflags;
+    public void setProcflags(Long procFlags) {
+        this.procFlags = procFlags;
     }
 
     public void setFragOffset(long fragOffset) {
+        this.isFragment = true;
         this.fragOffset = fragOffset;
     }
 
@@ -101,42 +91,65 @@ public class BundleID implements Comparable<BundleID> {
         return fragOffset;
     }
 
-    public Priority getPriority() {
-        int priority = (int) (procflags >> Flags.PRIORITY.getOffset()) & 0b11;
-        // reduce the priority by modulo 3 since value 3 is not a valid priority
-        return Priority.values()[priority % Priority.values().length];
+    public boolean isFragment() {
+        return isFragment;
     }
 
-    public boolean isSingleton() {
-        int single = (int) (procflags >> Flags.DESTINATION_IS_SINGLETON.getOffset()) & 0b11;
-        if (single == 0) {
-            return false;
-        } else {
-            return true;
-        }
+    public void setFragment(boolean isFragment) {
+        this.isFragment = isFragment;
     }
 
     @Override
     public String toString() {
-        String fragString = " ";
-        if (fragOffset != null) {
-            fragString += String.valueOf(this.fragOffset) + " ";
+        if (isFragment) {
+            return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getValue()))
+                    + " " + String.valueOf(this.sequenceNumber)
+                    + " " + String.valueOf(this.fragOffset)
+                    + " " + this.source;
+        } else {
+            return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getValue()))
+                    + " " + String.valueOf(this.sequenceNumber)
+                    + " " + this.source;
         }
-        return String.valueOf(this.timestamp) + " " + String.valueOf(this.sequenceNumber) + fragString + this.source;
     }
 
     @Override
-    public int compareTo(BundleID o) {
-        final int BEFORE = -1;
-        final int EQUAL = 0;
-        final int AFTER = 1;
+    public boolean equals(Object obj) {
+        if (obj instanceof BundleID) {
+            BundleID foreignId = (BundleID) obj;
 
-        if (this.getPriority().ordinal() < o.getPriority().ordinal()) {
-            return BEFORE;
-        } else if (this.getPriority().ordinal() > o.getPriority().ordinal()) {
-            return AFTER;
-        } else {
-            return EQUAL;
+            if (timestamp != null) {
+                if (!timestamp.equals(foreignId.timestamp)) {
+                    return false;
+                }
+            }
+
+            if (sequenceNumber != null) {
+                if (!sequenceNumber.equals(foreignId.sequenceNumber)) {
+                    return false;
+                }
+            }
+
+            if (source != null) {
+                if (!source.equals(foreignId.source)) {
+                    return false;
+                }
+            }
+
+            if (isFragment) {
+                if (!foreignId.isFragment) {
+                    return false;
+                }
+
+                if (fragOffset != null) {
+                    if (!fragOffset.equals(foreignId.fragOffset)) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
+        return super.equals(obj);
     }
 }

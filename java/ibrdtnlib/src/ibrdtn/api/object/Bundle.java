@@ -22,6 +22,7 @@
  */
 package ibrdtn.api.object;
 
+import ibrdtn.api.Timestamp;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,13 +31,15 @@ public class Bundle {
 
     private static final Logger logger = Logger.getLogger(Bundle.class.getName());
     protected EID destination;
-    protected EID source;
-    protected EID custodian;
-    protected EID reportto;
+    protected SingletonEndpoint source;
+    protected SingletonEndpoint custodian;
+    protected SingletonEndpoint reportto;
     protected long lifetime;
-    protected Long timestamp;
-    protected Long sequencenumber;
-    protected long procflags;
+    protected Timestamp timestamp;
+    protected Long sequenceNumber;
+    protected long procFlags;
+    private Long appDataLength = null;
+    private Long fragmentOffset = null;
     protected LinkedList<Block> blocks = new LinkedList<Block>();
 
     public enum Priority {
@@ -55,7 +58,8 @@ public class Bundle {
         DESTINATION_IS_SINGLETON(4),
         APP_ACK_REQUEST(5),
         RESERVED_6(6),
-        PRIORITY(7),
+        PRIORITY_BIT1(7),
+        PRIORITY_BIT2(8),
         CLASSOFSERVICE_9(9),
         CLASSOFSERVICE_10(10),
         CLASSOFSERVICE_11(11),
@@ -93,15 +97,6 @@ public class Bundle {
         setPriority(Priority.NORMAL);
     }
 
-    public boolean isSingleton() {
-        int single = (int) (procflags >> Flags.DESTINATION_IS_SINGLETON.getOffset()) & 0b11;
-        if (single == 0) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
     /**
      * Set a flag in the bundle
      *
@@ -111,33 +106,142 @@ public class Bundle {
     public void setFlag(Flags flag, boolean value) {
         logger.log(Level.FINE, "Setting {0}", flag.toString());
         if (value) {
-            procflags |= 0b1L << flag.getOffset();
+            procFlags |= 0b1L << flag.getOffset();
         } else {
-            procflags &= ~(0b1L << flag.getOffset());
+            procFlags &= ~(0b1L << flag.getOffset());
         }
     }
 
     public Boolean getFlag(Flags flag) {
-        return (flag.getOffset() & this.procflags) > 0;
+        return (flag.getOffset() & this.procFlags) > 0;
     }
 
     public Priority getPriority() {
-        int priority = (int) (procflags >> Flags.PRIORITY.getOffset() & 0b11);
-        // reduce the priority by modulo 3 since value 3 is not a valid priority
-        return Priority.values()[priority % Priority.values().length];
+        if (getFlag(Flags.PRIORITY_BIT1)) {
+            return Priority.NORMAL;
+        }
+
+        if (getFlag(Flags.PRIORITY_BIT2)) {
+            return Priority.EXPEDITED;
+        }
+
+        return Priority.BULK;
     }
 
     public void setPriority(Priority p) {
-        procflags &= ~(0b11 << Flags.PRIORITY.getOffset());
-        procflags |= p.ordinal() << Flags.PRIORITY.getOffset();
+        switch (p) {
+            case BULK:
+                setFlag(Flags.PRIORITY_BIT1, false);
+                setFlag(Flags.PRIORITY_BIT2, false);
+                break;
+
+            case EXPEDITED:
+                setFlag(Flags.PRIORITY_BIT1, false);
+                setFlag(Flags.PRIORITY_BIT2, true);
+                break;
+
+            case NORMAL:
+                setFlag(Flags.PRIORITY_BIT1, true);
+                setFlag(Flags.PRIORITY_BIT2, false);
+                break;
+        }
     }
 
-    public long getProcflags() {
-        return procflags;
+    public EID getDestination() {
+        return destination;
     }
 
-    public void setProcflags(long procflags) {
-        this.procflags = procflags;
+    public void setDestination(EID destination) {
+        this.destination = destination;
+        if (destination instanceof SingletonEndpoint) {
+            setFlag(Flags.DESTINATION_IS_SINGLETON, true);
+        }
+    }
+
+    public SingletonEndpoint getSource() {
+        return source;
+    }
+
+    public void setSource(SingletonEndpoint source) {
+        this.source = source;
+    }
+
+    public SingletonEndpoint getCustodian() {
+        return custodian;
+    }
+
+    /**
+     * Usually, the custodian is only set by the daemon.
+     *
+     * @param custodian
+     */
+    public void setCustodian(SingletonEndpoint custodian) {
+        this.custodian = custodian;
+    }
+
+    public SingletonEndpoint getReportto() {
+        return reportto;
+    }
+
+    public void setReportto(SingletonEndpoint reportto) {
+        this.reportto = reportto;
+    }
+
+    public long getLifetime() {
+        return lifetime;
+    }
+
+    public void setLifetime(long lifetime) {
+        this.lifetime = lifetime;
+    }
+
+    public Timestamp getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Timestamp timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public Long getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    public void setSequenceNumber(Long sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
+    }
+
+    public Long getAppDataLength() {
+        return appDataLength;
+    }
+
+    public void setAppDataLength(Long appDataLength) {
+        this.appDataLength = appDataLength;
+    }
+
+    public Long getFragmentOffset() {
+        return fragmentOffset;
+    }
+
+    public void setFragmentOffset(Long fragmentOffset) {
+        this.fragmentOffset = fragmentOffset;
+    }
+
+    public long getProcFlags() {
+        return procFlags;
+    }
+
+    public void setProcFlags(long procFlags) {
+        this.procFlags = procFlags;
+    }
+
+    public boolean isSingleton() {
+        int single = (int) (procFlags >> Flags.DESTINATION_IS_SINGLETON.getOffset()) & 0b11;
+        if (single == 0) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /**
@@ -173,70 +277,6 @@ public class Bundle {
             }
         }
         return payload;
-    }
-
-    public EID getDestination() {
-        return destination;
-    }
-
-    public void setDestination(EID destination) {
-        this.destination = destination;
-        if (destination instanceof SingletonEndpoint) {
-            setFlag(Flags.DESTINATION_IS_SINGLETON, true);
-        }
-    }
-
-    public EID getSource() {
-        return source;
-    }
-
-    public void setSource(EID source) {
-        this.source = source;
-    }
-
-    public EID getCustodian() {
-        return custodian;
-    }
-
-    /**
-     * Usually, the custodian is only set by the daemon.
-     *
-     * @param custodian
-     */
-    public void setCustodian(EID custodian) {
-        this.custodian = custodian;
-    }
-
-    public EID getReportto() {
-        return reportto;
-    }
-
-    public void setReportto(EID reportto) {
-        this.reportto = reportto;
-    }
-
-    public long getLifetime() {
-        return lifetime;
-    }
-
-    public void setLifetime(long lifetime) {
-        this.lifetime = lifetime;
-    }
-
-    public Long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public Long getSequencenumber() {
-        return sequencenumber;
-    }
-
-    public void setSequencenumber(Long sequencenumber) {
-        this.sequencenumber = sequencenumber;
     }
 
     @Override
