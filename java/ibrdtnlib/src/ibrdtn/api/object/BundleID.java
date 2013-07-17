@@ -3,7 +3,8 @@
  * 
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
- * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+ * Written-by:  Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+ *              Julian Timpner      <timpner@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +30,22 @@ public class BundleID implements Comparable<BundleID> {
     private Long timestamp = null;
     private Long sequenceNumber = null;
     private Long procflags = null;
+    private boolean isFragment = false;
     private Long fragOffset = null;
     private String destination = null;
 
     public BundleID() {
     }
+    
+    public BundleID(Bundle b)
+	{
+		this.source = b.getSource().toString();
+		this.timestamp = b.getTimestamp();
+		this.sequenceNumber = b.getSequencenumber();
+		
+		this.fragment = b.get(Bundle.Flags.FRAGMENT);
+		this.fragment_offset = b.getFragmentOffset();
+	}
 
     public BundleID(String source, Long timestamp, Long sequencenumber) {
         this.source = source;

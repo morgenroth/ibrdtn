@@ -54,7 +54,13 @@ public class Bundle {
         CUSTODY_REQUEST(3),
         DESTINATION_IS_SINGLETON(4),
         APP_ACK_REQUEST(5),
+        RESERVED_6(6),
         PRIORITY(7),
+        CLASSOFSERVICE_9(9),
+        CLASSOFSERVICE_10(10),
+        CLASSOFSERVICE_11(11),
+        CLASSOFSERVICE_12(12),
+        CLASSOFSERVICE_13(13),
         RECEPTION_REPORT(14),
         CUSTODY_REPORT(15),
         FORWARD_REPORT(16),
@@ -78,24 +84,13 @@ public class Bundle {
         }
     }
 
+    public Bundle() {
+    }
+
     public Bundle(EID destination, long lifetime) {
         setDestination(destination);
         this.lifetime = lifetime;
         setPriority(Priority.NORMAL);
-    }
-
-    public Bundle() {
-    }
-
-    public void setPriority(Priority p) {
-        procflags &= ~(0b11 << Flags.PRIORITY.getOffset());
-        procflags |= p.ordinal() << Flags.PRIORITY.getOffset();
-    }
-
-    public Priority getPriority() {
-        int priority = (int) (procflags >> Flags.PRIORITY.getOffset() & 0b11);
-        // reduce the priority by modulo 3 since value 3 is not a valid priority
-        return Priority.values()[priority % Priority.values().length];
     }
 
     public boolean isSingleton() {
@@ -120,6 +115,21 @@ public class Bundle {
         } else {
             procflags &= ~(0b1L << flag.getOffset());
         }
+    }
+
+    public Boolean getFlag(Flags flag) {
+        return (flag.getOffset() & this.procflags) > 0;
+    }
+
+    public Priority getPriority() {
+        int priority = (int) (procflags >> Flags.PRIORITY.getOffset() & 0b11);
+        // reduce the priority by modulo 3 since value 3 is not a valid priority
+        return Priority.values()[priority % Priority.values().length];
+    }
+
+    public void setPriority(Priority p) {
+        procflags &= ~(0b11 << Flags.PRIORITY.getOffset());
+        procflags |= p.ordinal() << Flags.PRIORITY.getOffset();
     }
 
     public long getProcflags() {
