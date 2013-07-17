@@ -652,7 +652,7 @@ public class DTNExampleApp extends javax.swing.JFrame {
             destination = new GroupEndpoint(tfDestination.getText());
         }
 
-        EID me = new SingletonEndpoint("api:me");
+        SingletonEndpoint me = new SingletonEndpoint("api:me");
 
         // Create bundle to send
         Bundle bundle = new Bundle(destination, Constants.LIFETIME);

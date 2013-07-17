@@ -45,7 +45,7 @@ public class Processor implements Runnable {
             data.setId(String.valueOf(++messageId));
             data.setCorrelationId(envelope.getData().getId());
 
-            SingletonEndpoint destination = new SingletonEndpoint(envelope.getBundleID().getSource());
+            SingletonEndpoint destination = envelope.getBundleID().getSource();
             Bundle bundle = new Bundle(destination, 3600);
             bundle.appendBlock(new PayloadBlock(data));
 
