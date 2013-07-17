@@ -24,17 +24,17 @@ public class TransferChartFragment extends StatsChartFragment {
         }
 
         @Override
-        protected int getDataMapPosition(int position) {
+        public int getDataMapPosition(int position) {
             return mChartMap[position];
         }
 
         @Override
-        protected int getDataRows() {
+        public int getDataRows() {
             return mChartMap.length;
         }
 
         @Override
-        protected int getDataColor(int position) {
+        public int getDataColor(int position) {
             return mChartColors[position];
         }
     };

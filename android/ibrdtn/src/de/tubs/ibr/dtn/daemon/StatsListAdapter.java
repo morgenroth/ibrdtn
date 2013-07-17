@@ -37,9 +37,9 @@ public abstract class StatsListAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
-    protected abstract int getDataMapPosition(int position);
-    protected abstract int getDataRows();
-    protected abstract int getDataColor(int position);
+    public abstract int getDataMapPosition(int position);
+    public abstract int getDataRows();
+    public abstract int getDataColor(int position);
 
     public Object getItem(int position) {
         StatsData e = new StatsData();
@@ -107,6 +107,10 @@ public abstract class StatsListAdapter extends BaseAdapter {
         if (position == 0) {
             // special case "seconds"
             return String.format("%d s", (Long)value);
+        }
+        else if (position == 3) {
+            // special case "seconds"
+            return String.format("%f s", (Double)value);
         }
         else if (position == 14) {
             // special case "bytes"

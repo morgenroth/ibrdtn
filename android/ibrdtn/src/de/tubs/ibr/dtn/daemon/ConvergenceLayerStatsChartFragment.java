@@ -1,7 +1,9 @@
 package de.tubs.ibr.dtn.daemon;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -17,11 +19,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 
-import com.michaelpardo.chartview.widget.ChartView;
-import com.michaelpardo.chartview.widget.LinearSeries;
-import com.michaelpardo.chartview.widget.LinearSeries.LinearPoint;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.GraphView.GraphViewData;
+import com.jjoe64.graphview.GraphViewSeries;
+import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
+import com.jjoe64.graphview.LineGraphView;
 
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
@@ -29,6 +34,7 @@ import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsLoader;
+import de.tubs.ibr.dtn.stats.StatsUtils;
 
 public class ConvergenceLayerStatsChartFragment extends Fragment {
     
@@ -42,8 +48,11 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
     private Object mServiceLock = new Object();
     private DaemonService mService = null;
     
-    private ChartView mChartView = null;
+    private LinearLayout mChartView = null;
+    private GraphView mGraphView = null;
     private ListView mListView = null;
+    
+    private HashMap<String, GraphViewSeries> mData = null;
     
     private ConvergenceLayerStatsListAdapter mAdapter = null;
     
@@ -78,11 +87,8 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
 
         @Override
         public void onLoadFinished(Loader<Cursor> loader, Cursor stats) {
-            // clear the series
-            mChartView.clearSeries();
-            
             // plot the charts
-            plotChart(stats, mChartView);
+            plotChart(stats, mGraphView);
         }
 
         @Override
@@ -90,61 +96,50 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
         }
     };
     
-    private void plotChart(Cursor stats, ChartView chart) {
+    private void plotChart(Cursor stats, GraphView chart) {
         
-        HashMap<String, LinearSeries> series = new HashMap<String, LinearSeries>();
+        HashMap<String, ArrayList<GraphViewData>> series = new HashMap<String, ArrayList<GraphViewData>>();
 
-        ConvergenceLayerStatsEntry.ColumnsMap cmap = new ConvergenceLayerStatsEntry.ColumnsMap();
+        // convert data into an structured array
+        StatsUtils.convertData(getActivity(), stats, series);
         
-        // move before the first position
-        stats.moveToPosition(-1);
+        // get min/max timestamp of data-set
+        Double min_timestamp = 0.0;
+        Double max_timestamp = 0.0;
         
-        HashMap<String, ConvergenceLayerStatsEntry> last_map = new HashMap<String, ConvergenceLayerStatsEntry>();
-
-        while (stats.moveToNext()) {
-            // create an entry object
-            ConvergenceLayerStatsEntry e = new ConvergenceLayerStatsEntry(getActivity(), stats, cmap);
-            
-            // generate a data key for this series
-            String key = e.getConvergenceLayer() + "|" + e.getDataTag();
-            
-            if (last_map.containsKey(key)) {
-                // add a new series is there is none
-                if (!series.containsKey(key)) {
-                    LinearSeries s = new LinearSeries();
-                    s.setLineColor(getResources().getColor(mColorProvider.getColor(key)));
-                    s.setLineWidth(4);
-                    series.put(key, s);
-                }
-
-                ConvergenceLayerStatsEntry last_entry = last_map.get(key);
-                
-                Double timestamp = Double.valueOf(e.getTimestamp().getTime()) / 1000.0;
-                
-                Double last_timestamp = Double.valueOf(last_entry.getTimestamp().getTime()) / 1000.0;
-                Double timestamp_diff = timestamp - last_timestamp;
-
-                Long last_value = last_entry.getDataValue();
-
-                LinearPoint p = null;
-
-                if (e.getDataValue() < last_value) {
-                    p = new LinearPoint(timestamp, 0);
-                } else {
-                    p = new LinearPoint(timestamp, (e.getDataValue() - last_value) / timestamp_diff);
-                }
-
-                series.get(key).addPoint(p);
+        for (ArrayList<GraphViewData> dataset : series.values()) {
+            for (GraphViewData d : dataset) {
+                if ((min_timestamp == 0) || (min_timestamp > d.valueX)) min_timestamp = d.valueX;
+                if (max_timestamp < d.valueX) max_timestamp = d.valueX;
             }
-            
-            // store the last entry for the next round
-            last_map.put( key, e );
         }
+        
+        // generate timestamp labels
+        ArrayList<String> labels = new ArrayList<String>();
+        StatsUtils.generateTimestampLabels(getActivity(), min_timestamp, max_timestamp, labels);
 
-        // Add chart view data
-        for (LinearSeries s : series.values()) {
-            chart.addSeries(s);
+        // add one series for each data-set
+        for (Map.Entry<String, ArrayList<GraphViewData>> entry : series.entrySet()) {
+            ArrayList<GraphViewData> dataset = entry.getValue();
+            
+            GraphViewSeries gs = mData.get(entry.getKey());
+            
+            if (gs == null) {
+                int color = getResources().getColor(mColorProvider.getColor(entry.getKey()));
+                GraphViewSeriesStyle style = new GraphViewSeriesStyle(color, 5);
+                gs = new GraphViewSeries(entry.getKey(), style, dataset.toArray(new GraphViewData[dataset.size()]));
+                mGraphView.addSeries(gs);
+                mData.put(entry.getKey(), gs);
+                
+                // redraw the graph
+                mGraphView.redrawAll();
+            } else {
+                gs.resetData(dataset.toArray(new GraphViewData[dataset.size()]));
+            }
         }
+        
+        // change the horizontal labels
+        mGraphView.setHorizontalLabels(labels.toArray(new String[labels.size()]));
     }
     
     private LoaderManager.LoaderCallbacks<List<ConvergenceLayerStatsEntry>> mStatsLoader = new LoaderManager.LoaderCallbacks<List<ConvergenceLayerStatsEntry>>() {
@@ -169,9 +164,16 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.stats_chart_fragment, container, false);
         
+        // create a new holder for plot data
+        mData = new HashMap<String, GraphViewSeries>();
+        
         // Find the chart and list view
-        mChartView = (ChartView) v.findViewById(R.id.chart_view);
+        mChartView = (LinearLayout) v.findViewById(R.id.chart_view);
         mListView = (ListView) v.findViewById(R.id.list_view);
+        
+        // create a new LineGraphView
+        mGraphView = new LineGraphView(getActivity(), "");
+        mChartView.addView(mGraphView);
         
         return v;
     }
@@ -180,10 +182,6 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        // add label adapter
-        mChartView.setLabelAdapter(new StatsLabelAdapter(getActivity(), StatsLabelAdapter.Orientation.VERTICAL), ChartView.POSITION_LEFT);
-        mChartView.setLabelAdapter(new StatsLabelAdapter(getActivity(), StatsLabelAdapter.Orientation.HORIZONTAL), ChartView.POSITION_BOTTOM);
-        
         // create a new data list adapter
         mAdapter = new ConvergenceLayerStatsListAdapter(getActivity(), mColorProvider);
         mListView.setAdapter(mAdapter);
