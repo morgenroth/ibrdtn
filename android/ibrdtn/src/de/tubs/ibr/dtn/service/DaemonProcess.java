@@ -306,6 +306,7 @@ public class DaemonProcess {
         ret.put("checkIdleTimeout", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("checkFragmentation", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("timesync_mode", DaemonRunLevel.RUNLEVEL_API);
+        ret.put("storage_mode", DaemonRunLevel.RUNLEVEL_CORE);
         
         return ret;
     }
@@ -322,6 +323,7 @@ public class DaemonProcess {
         ret.add("log_options");
         ret.add("log_debug_verbosity");
         ret.add("log_enable_file");
+        ret.add("storage_mode");
         
         return ret;
     }
@@ -691,23 +693,28 @@ public class DaemonProcess {
 			p.println("net_interfaces = " + ifaces);
 			p.println("net_internet = " + internet_ifaces);
 
-			// storage path
-			File blobPath = DaemonStorageUtils.getStoragePath("blob");
-			if (blobPath != null) {
-				p.println("blob_path = " + blobPath.getPath());
-
-				// flush storage path
-				File[] files = blobPath.listFiles();
-				if (files != null) {
-					for (File f : files) {
-						f.delete();
-					}
-				}
+			String storage_mode = preferences.getString( "storage_mode", "disk-persistant" );
+			if ("disk".equals( storage_mode ) || "disk-persistant".equals( storage_mode )) {
+    			// storage path
+    			File blobPath = DaemonStorageUtils.getStoragePath("blob");
+    			if (blobPath != null) {
+    				p.println("blob_path = " + blobPath.getPath());
+    
+    				// flush storage path
+    				File[] files = blobPath.listFiles();
+    				if (files != null) {
+    					for (File f : files) {
+    						f.delete();
+    					}
+    				}
+    			}
 			}
 
-			File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
-			if (bundlePath != null) {
-				p.println("storage_path = " + bundlePath.getPath());
+			if ("disk-persistant".equals( storage_mode )) {
+    			File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
+    			if (bundlePath != null) {
+    				p.println("storage_path = " + bundlePath.getPath());
+    			}
 			}
 
 			// enable interface rebind
