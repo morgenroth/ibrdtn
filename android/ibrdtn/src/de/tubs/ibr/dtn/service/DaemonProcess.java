@@ -299,7 +299,7 @@ public class DaemonProcess {
     private HashMap<String, DaemonRunLevel> initializeRestartMap() {
         HashMap<String, DaemonRunLevel> ret = new HashMap<String, DaemonRunLevel>();
         
-        ret.put("endpoint_id", DaemonRunLevel.RUNLEVEL_API);
+        ret.put("endpoint_id", DaemonRunLevel.RUNLEVEL_CORE);
         ret.put("routing", DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS);
         ret.put("interface_", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("discovery_announce", DaemonRunLevel.RUNLEVEL_NETWORK);
