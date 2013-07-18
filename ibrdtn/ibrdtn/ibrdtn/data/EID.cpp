@@ -90,7 +90,15 @@ namespace dtn
 			if (node == 0)	return;
 
 			std::stringstream ss_ssp;
-			ss_ssp << node.toString() << "." << application.toString();
+
+			// add node ID
+			ss_ssp << node.get<size_t>();
+
+			// add node ID if larger than zero
+			if (application > 0) {
+				ss_ssp << "." << application.get<size_t>();
+			}
+
 			_ssp = ss_ssp.str();
 			_scheme = CBHE_SCHEME;
 		}
