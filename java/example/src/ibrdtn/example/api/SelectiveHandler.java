@@ -122,9 +122,15 @@ public class SelectiveHandler extends AbstractAPIHandler {
             }
         }
 
-        executor.execute(new Processor(envelope, client, executor));
-        // With the SelectiveHandler, when the payload has been received, the bundle is complete and can be deleted
+        /*
+         * With the SelectiveHandler, when the payload has been received, the bundle is complete and can be deleted
+         * 
+         * Bundle needs to be marked delivered before processing starts concurrently, as the transfer of new Bundles 
+         * might interfere otherwise.
+         */
         markDelivered();
+
+        executor.execute(new Processor(envelope, client, executor));
     }
 
     @Override
