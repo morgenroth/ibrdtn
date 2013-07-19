@@ -78,6 +78,12 @@ public class DaemonProcess {
     private static final String __CLOUD_PROTOCOL__ = "tcp";
     private static final String __CLOUD_ADDRESS__ = "134.169.35.130"; // quorra.ibr.cs.tu-bs.de";
     private static final String __CLOUD_PORT__ = "4559";
+    
+    public interface OnRestartListener {
+        public void OnStop();
+        public void OnReloadConfiguration();
+        public void OnStart();
+    };
 
 	/**
 	 * Loads all shared libraries in the right order with System.loadLibrary()
@@ -254,7 +260,7 @@ public class DaemonProcess {
         }
 	}
 	
-	public synchronized void restart(Integer runlevel) {
+	public synchronized void restart(Integer runlevel, OnRestartListener listener) {
 	    // restart the daemon
         DaemonRunLevel restore = mDaemon.getRunLevel();
         DaemonRunLevel rl = DaemonRunLevel.swigToEnum(runlevel);
@@ -263,17 +269,21 @@ public class DaemonProcess {
         if (restore.swigValue() <= rl.swigValue()) {
             // reload configuration
             onConfigurationChanged();
+            if (listener != null) listener.OnReloadConfiguration();
         }
         
 	    try {
 	        // bring the daemon down
 	        mDaemon.init(rl);
+	        if (listener != null) listener.OnStop();
 	        
 	        // reload configuration
 	        onConfigurationChanged();
+	        if (listener != null) listener.OnReloadConfiguration();
 	        
 	        // restore the old runlevel
 	        mDaemon.init(restore);
+	        if (listener != null) listener.OnStart();
 	    } catch (NativeDaemonException e) {
             Log.e(TAG, "error while restarting the daemon process", e);
         }

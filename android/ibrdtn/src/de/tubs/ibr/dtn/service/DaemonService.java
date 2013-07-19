@@ -54,6 +54,7 @@ import de.tubs.ibr.dtn.p2p.P2PManager;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
 import de.tubs.ibr.dtn.stats.StatsEntry;
+import de.tubs.ibr.dtn.swig.DaemonRunLevel;
 import de.tubs.ibr.dtn.swig.NativeStats;
 import de.tubs.ibr.dtn.swig.StringVec;
 
@@ -198,8 +199,32 @@ public class DaemonService extends Service {
             mDaemonProcess.stop();
         } else if (ACTION_RESTART.equals(action)) {
             final Integer level = intent.getIntExtra("runlevel", 0);
+            
             // restart the daemon into the given runlevel
-            mDaemonProcess.restart(level);
+            mDaemonProcess.restart(level, new DaemonProcess.OnRestartListener() {
+                @Override
+                public void OnStop() {
+                    if (level <= DaemonRunLevel.RUNLEVEL_CORE.swigValue()) {
+                        // shutdown the session manager
+                        mSessionManager.destroy();
+                    }
+                }
+                
+                @Override
+                public void OnStart() {
+                    if (level <= DaemonRunLevel.RUNLEVEL_CORE.swigValue()) {
+                        // re-initialize the session manager
+                        mSessionManager.initialize();
+                        
+                        // restore sessions
+                        mSessionManager.restoreRegistrations();
+                    }
+                }
+
+                @Override
+                public void OnReloadConfiguration() {
+                }
+            });
             
             final Intent storeStatsIntent = new Intent(this, DaemonService.class);
             storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
