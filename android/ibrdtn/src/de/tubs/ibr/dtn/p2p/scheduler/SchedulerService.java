@@ -16,10 +16,10 @@ public class SchedulerService extends IntentService {
 
     private static final String TAG = "SchedulerService";
 
-    public final static Integer CHECK_STATE_REQUEST_CODE = 9725;
+    public final static Integer RC_CHECK_STATE = 9725;
 
-    public final static String CHECK_STATE_ACTION = "de.tubs.ibr.dtn.p2p.action.CHECK_STATE";
-    public static final String STOP_SCHEDULER_ACTION = "de.tubs.ibr.dtn.p2p.action.STOP_SCHEDULER";
+    public final static String ACTION_CHECK_STATE = "de.tubs.ibr.dtn.p2p.action.CHECK_STATE";
+    public static final String ACTION_STOP_SCHEDULER = "de.tubs.ibr.dtn.p2p.action.STOP_SCHEDULER";
 
     public SchedulerService() {
         super("SchedulerService");
@@ -29,22 +29,33 @@ public class SchedulerService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         String action = intent.getAction();
 
-        if (CHECK_STATE_ACTION.equals(action)) {
+        if (ACTION_CHECK_STATE.equals(action)) {
             checkState();
-        } else if (STOP_SCHEDULER_ACTION.equals(action)) {
+        } else if (ACTION_STOP_SCHEDULER.equals(action)) {
             stopScheduler();
         }
     }
 
     private void stopScheduler() {
-        Intent i = new Intent(this, SchedulerService.class);
-        i.setAction(CHECK_STATE_ACTION);
-        
-        PendingIntent sender = PendingIntent.getService(this, CHECK_STATE_REQUEST_CODE, i, PendingIntent.FLAG_CANCEL_CURRENT);
+        // get the alarm manager
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        am.cancel(sender);
+        
+        // create an intent to check the state within the scheduler service
+        Intent i = new Intent(this, SchedulerService.class);
+        i.setAction(ACTION_CHECK_STATE);
+        
+        // create or get a pending intent
+        PendingIntent pi = PendingIntent.getService(this, RC_CHECK_STATE, i, PendingIntent.FLAG_CANCEL_CURRENT);
+        
+        // cancel the pending intent
+        am.cancel(pi);
+        pi.cancel();
+        
+        // clear the scheduler info
         SettingsUtil.setSchedulerInfo(this, "");
         SettingsUtil.setNextScheduledCheck(this, 0);
+        
+        // debug
         Log.d(TAG, "Scheduler stopped");
     }
 
@@ -83,13 +94,18 @@ public class SchedulerService extends IntentService {
     }
 
     public static void setNextScheduledCheck(Context context, long nextCheck) {
-        Intent i = new Intent(context, SchedulerService.class);
-        i.setAction(CHECK_STATE_ACTION);
+        // get the alarm manager
+        AlarmManager am = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
         
-        PendingIntent sender = PendingIntent.getService(context, CHECK_STATE_REQUEST_CODE, i, PendingIntent.FLAG_CANCEL_CURRENT);
-        AlarmManager am = (AlarmManager) context
-                .getSystemService(Context.ALARM_SERVICE);
-        am.set(AlarmManager.RTC_WAKEUP, nextCheck, sender);
+        // create an intent to check the state within the scheduler service
+        Intent i = new Intent(context, SchedulerService.class);
+        i.setAction(ACTION_CHECK_STATE);
+        
+        // create or get a pending intent
+        PendingIntent pi = PendingIntent.getService(context, RC_CHECK_STATE, i, PendingIntent.FLAG_CANCEL_CURRENT);
+        
+        // schedule the intent for later execution
+        am.set(AlarmManager.RTC_WAKEUP, nextCheck, pi);
     }
 
 }

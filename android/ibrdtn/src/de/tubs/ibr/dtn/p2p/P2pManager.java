@@ -57,7 +57,7 @@ public class P2pManager extends NativeP2pManager {
 
         // start the scheduler
         Intent i = new Intent(mService, SchedulerService.class);
-        i.setAction(SchedulerService.CHECK_STATE_ACTION);
+        i.setAction(SchedulerService.ACTION_CHECK_STATE);
         mService.startService(i);
     }
 
@@ -69,7 +69,7 @@ public class P2pManager extends NativeP2pManager {
         
         // stop the scheduler
         Intent i = new Intent(mService, SchedulerService.class);
-        i.setAction(SchedulerService.STOP_SCHEDULER_ACTION);
+        i.setAction(SchedulerService.ACTION_STOP_SCHEDULER);
         mService.startService(i);
     }
 
@@ -149,7 +149,7 @@ public class P2pManager extends NativeP2pManager {
                     WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
             if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
                 Intent i = new Intent(context, SchedulerService.class);
-                i.setAction(SchedulerService.CHECK_STATE_ACTION);
+                i.setAction(SchedulerService.ACTION_CHECK_STATE);
                 context.startService(i);
             } else {
             }
