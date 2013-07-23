@@ -454,6 +454,10 @@ public class DaemonService extends Service {
                     break;
                     
                 case OFFLINE:
+                    if (!prefs.getBoolean("p2p_enabled", false)) {
+                        _p2p_manager.pause();
+                    }
+                    
                     // disable P2P manager
                     _p2p_manager.destroy();
                     
@@ -486,6 +490,10 @@ public class DaemonService extends Service {
                     
                     // enable P2P manager
                     _p2p_manager.initialize();
+                    
+                    if (prefs.getBoolean("p2p_enabled", false)) {
+                        _p2p_manager.resume();
+                    }
                     break;
                     
                 case SUSPENDED:
@@ -591,32 +599,38 @@ public class DaemonService extends Service {
 		public void onSharedPreferenceChanged(
 				SharedPreferences sharedPreferences, String key) {
 			
-			if (!"RunAsForegroundService".equals(key)) return;
-			
-			if (sharedPreferences.getBoolean("RunAsForegroundService", true)
-					&& mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
-
-                // mark the notification as visible
-                _show_notification = true;
-                
-                // create initial notification
-                Notification n = buildNotification(R.drawable.ic_notification, getResources()
-                        .getString(R.string.notify_pending));
-
-                // turn this to a foreground service (kill-proof)
-                startForeground(1, n);
-                
-                // request notification update
-                requestNotificationUpdate();
-                
-			} else {
-				
-	            // mark the notification as invisible
-	            _show_notification = false;
-	            
-	            // stop foreground service
-	            stopForeground(true);
-	            
+			if ("RunAsForegroundService".equals(key)) {
+    			if (sharedPreferences.getBoolean("RunAsForegroundService", true)
+    					&& mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
+    
+                    // mark the notification as visible
+                    _show_notification = true;
+                    
+                    // create initial notification
+                    Notification n = buildNotification(R.drawable.ic_notification, getResources()
+                            .getString(R.string.notify_pending));
+    
+                    // turn this to a foreground service (kill-proof)
+                    startForeground(1, n);
+                    
+                    // request notification update
+                    requestNotificationUpdate();
+                    
+    			} else {
+    				
+    	            // mark the notification as invisible
+    	            _show_notification = false;
+    	            
+    	            // stop foreground service
+    	            stopForeground(true);
+    	            
+    			}
+			} else if ("p2p_enabled".equals(key)) {
+                if (sharedPreferences.getBoolean(key, false)) {
+                    _p2p_manager.resume();
+                } else {
+                    _p2p_manager.pause();
+                }
 			}
 		}
     	

@@ -54,10 +54,19 @@ public class P2pManager extends NativeP2pManager {
         filter.addAction("android.net.wifi.p2p.STATE_CHANGED");
         filter.addAction("android.net.wifi.p2p.DISCOVERY_STATE_CHANGE");
         mService.registerReceiver(mWifiEventReceiver, filter);
-
+    }
+    
+    public void resume() {
         // start the scheduler
         Intent i = new Intent(mService, SchedulerService.class);
         i.setAction(SchedulerService.ACTION_CHECK_STATE);
+        mService.startService(i);
+    }
+    
+    public void pause() {
+        // stop the scheduler
+        Intent i = new Intent(mService, SchedulerService.class);
+        i.setAction(SchedulerService.ACTION_STOP_SCHEDULER);
         mService.startService(i);
     }
 
@@ -66,11 +75,6 @@ public class P2pManager extends NativeP2pManager {
         
         // stop listening to wifi p2p events
         mService.unregisterReceiver(mWifiEventReceiver);
-        
-        // stop the scheduler
-        Intent i = new Intent(mService, SchedulerService.class);
-        i.setAction(SchedulerService.ACTION_STOP_SCHEDULER);
-        mService.startService(i);
     }
 
     public void fireInterfaceUp(String iface) {
