@@ -89,15 +89,6 @@ public final class SettingsUtil {
         return prefs.getBoolean("p2p_enabled", false);
     }
 
-    /**
-     * @param tag
-     * @return
-     * @deprecated
-     */
-    public static String pTag(String tag) {
-        return "de.hendrikfreytag.wifip2p4ibrdtn";
-    }
-
     public static String getEid(Context context) {
         SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(context);
