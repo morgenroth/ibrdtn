@@ -121,21 +121,6 @@
             android:label="@string/pref_p2p" >
         </activity>
 
-        <receiver android:name=".p2p.service.WiFiP2pReceiver" >
-            <intent-filter>
-                <action android:name="android.net.wifi.p2p.CONNECTION_STATE_CHANGE" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.net.wifi.p2p.PEERS_CHANGED" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.net.wifi.p2p.STATE_CHANGED" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.net.wifi.p2p.DISCOVERY_STATE_CHANGE" />
-            </intent-filter>
-        </receiver>
-
         <service android:name=".p2p.service.WiFiP2P4IbrDtnService" >
         </service>
         <service android:name=".p2p.scheduler.SchedulerService" >
