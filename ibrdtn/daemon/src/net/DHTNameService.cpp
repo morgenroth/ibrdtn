@@ -213,7 +213,7 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 					(struct dtn_convergence_layer*) malloc(
 							sizeof(struct dtn_convergence_layer));
 			clstruct->clname = (char*) malloc(cltype_.size());
-			clstruct->clnamelen = cltype_.size();
+			clstruct-> clnamelen = cltype_.size();
 			memcpy(clstruct->clname, cltype_.c_str(), cltype_.size());
 			struct dtn_convergence_layer_arg * arg =
 					(struct dtn_convergence_layer_arg*) malloc(
@@ -552,7 +552,6 @@ std::string dtn::dht::DHTNameService::getConvergenceLayerName(
 		//	case dtn::daemon::Configuration::NetConfig::NETWORK_HTTP:
 		//		cltype_ = "http";
 		//		break;
-
 	default:
 		throw ibrcommon::Exception("type of convergence layer not supported");
 	}
