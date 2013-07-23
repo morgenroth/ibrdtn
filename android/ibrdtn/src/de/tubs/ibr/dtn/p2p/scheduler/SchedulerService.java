@@ -16,6 +16,9 @@ public class SchedulerService extends IntentService {
 
     private static final String TAG = "SchedulerService";
 
+    public final static Integer CHECK_STATE_REQUEST_CODE = 9725;
+
+    public final static String CHECK_STATE_ACTION = "de.tubs.ibr.dtn.p2p.action.CHECK_STATE";
     public static final String STOP_SCHEDULER_ACTION = "de.tubs.ibr.dtn.p2p.action.STOP_SCHEDULER";
 
     public SchedulerService() {
@@ -26,18 +29,18 @@ public class SchedulerService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         String action = intent.getAction();
 
-        if (AlarmReceiver.ACTION.equals(action)) {
-            SchedulerService.this.checkState();
+        if (CHECK_STATE_ACTION.equals(action)) {
+            checkState();
         } else if (STOP_SCHEDULER_ACTION.equals(action)) {
-            this.stopScheduler();
+            stopScheduler();
         }
     }
 
     private void stopScheduler() {
-        Intent i = new Intent(this, AlarmReceiver.class);
-        PendingIntent sender = PendingIntent.getBroadcast(this,
-                AlarmReceiver.REQUEST_CODE, i,
-                PendingIntent.FLAG_CANCEL_CURRENT);
+        Intent i = new Intent(this, SchedulerService.class);
+        i.setAction(CHECK_STATE_ACTION);
+        
+        PendingIntent sender = PendingIntent.getService(this, CHECK_STATE_REQUEST_CODE, i, PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         am.cancel(sender);
         SettingsUtil.setSchedulerInfo(this, "");
@@ -80,10 +83,10 @@ public class SchedulerService extends IntentService {
     }
 
     public static void setNextScheduledCheck(Context context, long nextCheck) {
-        Intent intent = new Intent(context, AlarmReceiver.class);
-        PendingIntent sender = PendingIntent.getBroadcast(context,
-                AlarmReceiver.REQUEST_CODE, intent,
-                PendingIntent.FLAG_CANCEL_CURRENT);
+        Intent i = new Intent(context, SchedulerService.class);
+        i.setAction(CHECK_STATE_ACTION);
+        
+        PendingIntent sender = PendingIntent.getService(context, CHECK_STATE_REQUEST_CODE, i, PendingIntent.FLAG_CANCEL_CURRENT);
         AlarmManager am = (AlarmManager) context
                 .getSystemService(Context.ALARM_SERVICE);
         am.set(AlarmManager.RTC_WAKEUP, nextCheck, sender);

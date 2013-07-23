@@ -128,9 +128,6 @@
         <service android:name=".p2p.scheduler.SchedulerService" >
         </service>
 
-        <receiver android:name=".p2p.scheduler.AlarmReceiver" >
-        </receiver>
-
         <activity android:name=".p2p.DBDump" >
             <intent-filter>
                 <action android:name="de.tubs.ibr.dtn.p2p.action.OPEN_DB_DUMP_ACTIVITY" />

@@ -8,7 +8,6 @@ import android.content.IntentFilter;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
-import de.tubs.ibr.dtn.p2p.scheduler.AlarmReceiver;
 import de.tubs.ibr.dtn.p2p.scheduler.SchedulerService;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.swig.EID;
@@ -58,7 +57,7 @@ public class P2pManager extends NativeP2pManager {
 
         // start the scheduler
         Intent i = new Intent(mService, SchedulerService.class);
-        i.setAction(AlarmReceiver.ACTION);
+        i.setAction(SchedulerService.CHECK_STATE_ACTION);
         mService.startService(i);
     }
 
@@ -150,7 +149,7 @@ public class P2pManager extends NativeP2pManager {
                     WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
             if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
                 Intent i = new Intent(context, SchedulerService.class);
-                i.setAction(AlarmReceiver.ACTION);
+                i.setAction(SchedulerService.CHECK_STATE_ACTION);
                 context.startService(i);
             } else {
             }
