@@ -10,7 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import de.tubs.ibr.dtn.p2p.SettingsUtil;
-import de.tubs.ibr.dtn.p2p.service.WiFiP2P4IbrDtnService;
+import de.tubs.ibr.dtn.p2p.service.WifiP2pService;
 
 public class SchedulerService extends IntentService {
 
@@ -55,9 +55,9 @@ public class SchedulerService extends IntentService {
         if (nextCheck < System.currentTimeMillis()) {
             Slot slot = s.getNextSlot(schedulerInfo);
             nextCheck = System.currentTimeMillis() + slot.getDuration() * 1000;
-            Intent i = new Intent(this, WiFiP2P4IbrDtnService.class);
-            i.setAction(slot.getS() == State.ON ? WiFiP2P4IbrDtnService.START_DISCOVERY_ACTION
-                    : WiFiP2P4IbrDtnService.STOP_DISCOVERY_ACTION);
+            Intent i = new Intent(this, WifiP2pService.class);
+            i.setAction(slot.getS() == State.ON ? WifiP2pService.START_DISCOVERY_ACTION
+                    : WifiP2pService.STOP_DISCOVERY_ACTION);
             startService(i);
             SettingsUtil.setNextScheduledCheck(this, nextCheck);
             SettingsUtil.setSchedulerInfo(this, slot.getInfo());
@@ -65,9 +65,9 @@ public class SchedulerService extends IntentService {
             Log.d(TAG, "State: " + slot.getS() + " Next Check:"
                     + DateFormat.getTimeInstance().format(new Date(nextCheck)));
         } else {
-            Intent i = new Intent(this, WiFiP2P4IbrDtnService.class);
-            i.setAction(s.getCurrentState(schedulerInfo) == State.ON ? WiFiP2P4IbrDtnService.START_DISCOVERY_ACTION
-                    : WiFiP2P4IbrDtnService.STOP_DISCOVERY_ACTION);
+            Intent i = new Intent(this, WifiP2pService.class);
+            i.setAction(s.getCurrentState(schedulerInfo) == State.ON ? WifiP2pService.START_DISCOVERY_ACTION
+                    : WifiP2pService.STOP_DISCOVERY_ACTION);
             startService(i);
             SchedulerService.setNextScheduledCheck(this, nextCheck);
             Log.d(TAG,

@@ -121,7 +121,7 @@
             android:label="@string/pref_p2p" >
         </activity>
 
-        <service android:name=".p2p.service.WiFiP2P4IbrDtnService" >
+        <service android:name=".p2p.service.WifiP2pService" >
         </service>
         <service android:name=".p2p.scheduler.SchedulerService" >
         </service>

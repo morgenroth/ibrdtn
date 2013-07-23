@@ -10,7 +10,7 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.p2p.scheduler.AlarmReceiver;
 import de.tubs.ibr.dtn.p2p.scheduler.SchedulerService;
-import de.tubs.ibr.dtn.p2p.service.WiFiP2P4IbrDtnService;
+import de.tubs.ibr.dtn.p2p.service.WifiP2pService;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.swig.EID;
 import de.tubs.ibr.dtn.swig.NativeP2pManager;
@@ -93,9 +93,9 @@ public class P2PManager extends NativeP2pManager {
     @Override
     public void connect(String data) {
         // connect to the peer identified by "data"
-        Intent i = new Intent(mService, WiFiP2P4IbrDtnService.class);
-        i.setAction(WiFiP2P4IbrDtnService.CONNECT_TO_PEER_ACTION);
-        i.putExtra(WiFiP2P4IbrDtnService.MAC_EXTRA, data);
+        Intent i = new Intent(mService, WifiP2pService.class);
+        i.setAction(WifiP2pService.CONNECT_TO_PEER_ACTION);
+        i.putExtra(WifiP2pService.MAC_EXTRA, data);
         mService.startService(i);
         Log.i(TAG, "connect request: " + data);
     }
@@ -103,9 +103,9 @@ public class P2PManager extends NativeP2pManager {
     @Override
     public void disconnect(String data) {
         // disconnect from the peer identified by "data"
-        Intent i = new Intent(mService, WiFiP2P4IbrDtnService.class);
-        i.setAction(WiFiP2P4IbrDtnService.DISCONNECT_FROM_PEER_ACTION);
-        i.putExtra(WiFiP2P4IbrDtnService.MAC_EXTRA, data);
+        Intent i = new Intent(mService, WifiP2pService.class);
+        i.setAction(WifiP2pService.DISCONNECT_FROM_PEER_ACTION);
+        i.putExtra(WifiP2pService.MAC_EXTRA, data);
         mService.startService(i);
         Log.i(TAG, "disconnect request: " + data);
     }
@@ -133,15 +133,15 @@ public class P2PManager extends NativeP2pManager {
                     .getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
             Log.d(TAG, "DetailedState: " + netInfo.getDetailedState());
             if (netInfo.isConnected()) {
-                Intent i = new Intent(context, WiFiP2P4IbrDtnService.class);
-                i.setAction(WiFiP2P4IbrDtnService.CONNECTED_TO_PEER);
+                Intent i = new Intent(context, WifiP2pService.class);
+                i.setAction(WifiP2pService.CONNECTED_TO_PEER);
                 context.startService(i);
             }
         }
 
         private void peersChanged(Context context, Intent intent) {
-            Intent i = new Intent(context, WiFiP2P4IbrDtnService.class);
-            i.setAction(WiFiP2P4IbrDtnService.PEERS_CHANGED_ACTION);
+            Intent i = new Intent(context, WifiP2pService.class);
+            i.setAction(WifiP2pService.PEERS_CHANGED_ACTION);
             context.startService(i);
         }
 

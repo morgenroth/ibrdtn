@@ -28,9 +28,9 @@ import de.tubs.ibr.dtn.p2p.db.Peer;
 import de.tubs.ibr.dtn.service.DaemonService;
 
 @TargetApi(16)
-public class WiFiP2P4IbrDtnService extends IntentService {
+public class WifiP2pService extends IntentService {
 
-    public static final String TAG = "WiFiP2P4IbrDtnService";
+    public static final String TAG = "WifiP2pService";
 
     public static final String START_DISCOVERY_ACTION = "de.tubs.ibr.dtn.p2p.action.START_DISCOVERY";
     public static final String STOP_DISCOVERY_ACTION = "de.tubs.ibr.dtn.p2p.action.STOP_DISCOVERY";
@@ -52,7 +52,7 @@ public class WiFiP2P4IbrDtnService extends IntentService {
 
     private WifiP2pDnsSdServiceRequest serviceRequest;
 
-    public WiFiP2P4IbrDtnService() {
+    public WifiP2pService() {
         super(TAG);
     }
 
@@ -100,7 +100,7 @@ public class WiFiP2P4IbrDtnService extends IntentService {
                     public void onGroupInfoAvailable(WifiP2pGroup group) {
                         String iface = group.getInterface();
 
-                        Intent i = new Intent(WiFiP2P4IbrDtnService.this,
+                        Intent i = new Intent(WifiP2pService.this,
                                 DaemonService.class);
                         i.setAction(CONNECTION_CHANGED_ACTION);
                         i.putExtra(STATE_EXTRA, 1);
@@ -115,7 +115,7 @@ public class WiFiP2P4IbrDtnService extends IntentService {
             @Override
             public void onPeersAvailable(WifiP2pDeviceList peers) {
                 Log.d(TAG, "Peers available:" + peers.getDeviceList().size());
-                WiFiP2P4IbrDtnService.this.checkPeers(peers);
+                WifiP2pService.this.checkPeers(peers);
             }
         });
     }
@@ -185,7 +185,7 @@ public class WiFiP2P4IbrDtnService extends IntentService {
             @Override
             public void onDnsSdTxtRecordAvailable(String fullDomainName,
                     Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
-                Database db = Database.getInstance(WiFiP2P4IbrDtnService.this);
+                Database db = Database.getInstance(WifiP2pService.this);
                 db.open();
                 Peer p = db.selectPeer(srcDevice.deviceAddress);
                 if (p == null) {
@@ -208,7 +208,7 @@ public class WiFiP2P4IbrDtnService extends IntentService {
             @Override
             public void onDnsSdServiceAvailable(String instanceName,
                     String registrationType, WifiP2pDevice srcDevice) {
-                Database db = Database.getInstance(WiFiP2P4IbrDtnService.this);
+                Database db = Database.getInstance(WifiP2pService.this);
                 db.open();
                 Peer p = db.selectPeer(srcDevice.deviceAddress);
                 if (p == null) {
