@@ -236,10 +236,10 @@ public class PingService extends IntentService {
         // create a new DTN client
         mClient = new DTNClient(mSession);
         
-        // create registration with "example-app" as endpoint
+        // create registration with "ping" as endpoint
         // if the EID of this device is "dtn://device" then the
-        // address of this app will be "dtn://device/example-app"
-        Registration registration = new Registration("example-app");
+        // address of this app will be "dtn://device/ping"
+        Registration registration = new Registration("ping");
         
         // additionally join a group
         registration.add(PING_GROUP_EID);
