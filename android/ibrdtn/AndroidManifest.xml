@@ -116,7 +116,7 @@
 
         <activity
             android:name=".p2p.P2pSettingsActivity"
-            android:label="@string/title_activity_p2p_settings" >
+            android:label="@string/pref_p2p" >
         </activity>
 
         <receiver android:name=".p2p.service.WiFiP2pReceiver" >
