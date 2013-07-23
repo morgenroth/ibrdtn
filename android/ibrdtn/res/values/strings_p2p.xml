@@ -2,13 +2,13 @@
 <resources>
 
     <string name="pref_p2p_on">On</string>
-    <string name="pref_p2p_summary">Use P2P connection via Wi-Fi Direct</string>
+    <string name="pref_p2p_summary">Use direct connection to other devices.</string>
     <string name="pref_p2p_strategy">Strategy</string>
     <string name="pref_p2p_strategy_summary">The search strategy to use</string>
     <string name="pref_p2p_known_peers">Known peers</string>
     <string name="pref_p2p_known_peers_summary">Show list of known peers</string>
     <string name="pref_p2p_off">Off</string>
-    <string name="pref_p2p">Peer-to-peer</string>
+    <string name="pref_p2p">Wi-Fi Direct</string>
     <string name="show_database">Show database</string>
     <string name="start_discovery">Start discovery</string>
     <string name="stop_discovery">Stop discovery</string>
