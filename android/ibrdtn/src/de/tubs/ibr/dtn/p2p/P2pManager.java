@@ -15,7 +15,7 @@ import de.tubs.ibr.dtn.swig.EID;
 import de.tubs.ibr.dtn.swig.NativeP2pManager;
 
 @TargetApi(16)
-public class P2PManager extends NativeP2pManager {
+public class P2pManager extends NativeP2pManager {
 
     private final static String TAG = "P2PManager";
 
@@ -40,7 +40,7 @@ public class P2PManager extends NativeP2pManager {
      * 
      */
 
-    public P2PManager(DaemonService service) {
+    public P2pManager(DaemonService service) {
         super("P2P:WIFI");
         this.mService = service;
     }

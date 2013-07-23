@@ -50,7 +50,7 @@ import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
-import de.tubs.ibr.dtn.p2p.P2PManager;
+import de.tubs.ibr.dtn.p2p.P2pManager;
 import de.tubs.ibr.dtn.p2p.WifiP2pService;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
@@ -83,7 +83,7 @@ public class DaemonService extends Service {
     private SessionManager mSessionManager = null;
 
     // the P2P manager used for wifi direct control
-    private P2PManager _p2p_manager = null;
+    private P2pManager _p2p_manager = null;
 
     // the daemon process
     private DaemonProcess mDaemonProcess = null;
@@ -349,7 +349,7 @@ public class DaemonService extends Service {
         mSessionManager = new SessionManager(this);
         
         // create P2P Manager
-        _p2p_manager = new P2PManager(this);
+        _p2p_manager = new P2pManager(this);
         
         // initialize the basic daemon
         mDaemonProcess.initialize();
