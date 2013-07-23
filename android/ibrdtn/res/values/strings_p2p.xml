@@ -13,4 +13,9 @@
     <string name="start_discovery">Start discovery</string>
     <string name="stop_discovery">Stop discovery</string>
 
+    <string name="p2p_label_macaddress">MAC:</string>
+    <string name="p2p_label_eid">EID:</string>
+    <string name="p2p_label_lastcontact">Last contact:</string>
+    <string name="p2p_label_connected">Connected:</string>
+    
 </resources>

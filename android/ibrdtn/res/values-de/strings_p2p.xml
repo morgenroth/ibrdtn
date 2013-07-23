@@ -12,5 +12,10 @@
     <string name="show_database">Datenbank anzeigen</string>
     <string name="start_discovery">Suche starten</string>
     <string name="stop_discovery">Suche beenden</string>
+    
+    <string name="p2p_label_macaddress">MAC:</string>
+    <string name="p2p_label_eid">EID:</string>
+    <string name="p2p_label_lastcontact">Letzter Kontakt:</string>
+    <string name="p2p_label_connected">Verbunden:</string>
 
 </resources>

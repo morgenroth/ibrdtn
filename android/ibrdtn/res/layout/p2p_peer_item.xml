@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<de.tubs.ibr.dtn.p2p.PeerItem
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="6dip" >
+
+    <TextView
+        android:id="@+id/labelMacAddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:text="@string/p2p_label_macaddress"
+        android:layout_marginRight="4sp"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/labelEid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/labelMacAddress"
+        android:layout_below="@+id/labelMacAddress"
+        android:text="@string/p2p_label_eid"
+        android:layout_marginRight="4sp"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/labelLastContact"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/labelEid"
+        android:layout_below="@+id/labelEid"
+        android:text="@string/p2p_label_lastcontact"
+        android:layout_marginRight="4sp"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/labelConnected"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/labelLastContact"
+        android:layout_below="@+id/labelLastContact"
+        android:text="@string/p2p_label_connected"
+        android:layout_marginRight="4sp"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/mac"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/labelMacAddress"
+        android:layout_alignBottom="@+id/labelMacAddress"
+        android:layout_toRightOf="@+id/labelMacAddress" />
+
+    <TextView
+        android:id="@+id/eid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/labelEid"
+        android:layout_alignBottom="@+id/labelEid"
+        android:layout_toRightOf="@+id/labelEid" />
+
+    <TextView
+        android:id="@+id/contact"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/labelLastContact"
+        android:layout_alignBottom="@+id/labelLastContact"
+        android:layout_toRightOf="@+id/labelLastContact" />
+
+    <TextView
+        android:id="@+id/connected"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/labelConnected"
+        android:layout_alignBottom="@+id/labelConnected"
+        android:layout_toRightOf="@+id/labelConnected" />
+
+</de.tubs.ibr.dtn.p2p.PeerItem>

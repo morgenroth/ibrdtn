@@ -124,13 +124,13 @@ public class WifiP2pService extends IntentService {
         for (WifiP2pDevice device : peers.getDeviceList()) {
             Database db = Database.getInstance(this);
             db.open();
-            Peer peer = db.selectPeer(device.deviceAddress);
+            Peer peer = db.find(device.deviceAddress);
             if (peer == null) {
                 peer = new Peer(device.deviceAddress, "", new Date(), false);
-                db.insertPeer(peer);
+                db.put(this, peer);
             } else {
                 peer.setLastContact(new Date());
-                db.insertPeer(peer);
+                db.put(this, peer);
             }
             if (peer.hasEid()) {
                 peerDiscovered(peer);
@@ -186,15 +186,15 @@ public class WifiP2pService extends IntentService {
                     Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
                 Database db = Database.getInstance(WifiP2pService.this);
                 db.open();
-                Peer p = db.selectPeer(srcDevice.deviceAddress);
+                Peer p = db.find(srcDevice.deviceAddress);
                 if (p == null) {
                     p = new Peer(srcDevice.deviceAddress,
                             txtRecordMap.get("eid"), new Date(), false);
-                    db.insertPeer(p);
+                    db.put(WifiP2pService.this, p);
                 } else {
                     p.setLastContact(new Date());
                     p.setEid(txtRecordMap.get("eid"));
-                    db.insertPeer(p);
+                    db.put(WifiP2pService.this, p);
                 }
                 if (p.hasEid()) {
                     peerDiscovered(p);
@@ -209,15 +209,15 @@ public class WifiP2pService extends IntentService {
                     String registrationType, WifiP2pDevice srcDevice) {
                 Database db = Database.getInstance(WifiP2pService.this);
                 db.open();
-                Peer p = db.selectPeer(srcDevice.deviceAddress);
+                Peer p = db.find(srcDevice.deviceAddress);
                 if (p == null) {
                     p = new Peer(srcDevice.deviceAddress, "", new Date(), false);
-                    db.insertPeer(p);
+                    db.put(WifiP2pService.this, p);
                 } else {
                     srcDevice.deviceName = p.hasEid() ? p.getEid()
                             : srcDevice.deviceName;
                     p.setLastContact(new Date());
-                    db.insertPeer(p);
+                    db.put(WifiP2pService.this, p);
                 }
                 if (p.hasEid()) {
                     peerDiscovered(p);
