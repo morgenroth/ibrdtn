@@ -10,7 +10,6 @@ import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 import de.tubs.ibr.dtn.p2p.scheduler.AlarmReceiver;
 import de.tubs.ibr.dtn.p2p.scheduler.SchedulerService;
-import de.tubs.ibr.dtn.p2p.service.WifiP2pService;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.swig.EID;
 import de.tubs.ibr.dtn.swig.NativeP2pManager;

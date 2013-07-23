@@ -10,7 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import de.tubs.ibr.dtn.p2p.SettingsUtil;
-import de.tubs.ibr.dtn.p2p.service.WifiP2pService;
+import de.tubs.ibr.dtn.p2p.WifiP2pService;
 
 public class SchedulerService extends IntentService {
 

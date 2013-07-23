@@ -121,8 +121,10 @@
             android:label="@string/pref_p2p" >
         </activity>
 
-        <service android:name=".p2p.service.WifiP2pService" >
+        <!-- This service manages the Wi-Fi P2P capabilities of the device -->
+        <service android:name=".p2p.WifiP2pService" >
         </service>
+        
         <service android:name=".p2p.scheduler.SchedulerService" >
         </service>
 

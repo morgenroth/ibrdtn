@@ -1,4 +1,4 @@
-package de.tubs.ibr.dtn.p2p.service;
+package de.tubs.ibr.dtn.p2p;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -22,7 +22,6 @@ import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.util.Log;
-import de.tubs.ibr.dtn.p2p.SettingsUtil;
 import de.tubs.ibr.dtn.p2p.db.Database;
 import de.tubs.ibr.dtn.p2p.db.Peer;
 import de.tubs.ibr.dtn.service.DaemonService;
