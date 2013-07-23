@@ -180,11 +180,11 @@ namespace dtn
 
 		void ConnectionManager::add(const dtn::core::Node &n)
 		{
-			Node node = n;
-
 			// If node contains MCL
-			if(node.has(Node::CONN_EMAIL) && !node.getEID().getScheme().compare("mail") == 0)
+			if(n.has(Node::CONN_EMAIL) && !n.getEID().getScheme().compare("mail") == 0)
 			{
+				dtn::core::Node node = n;
+
 				std::list<Node::URI> uri = node.get(Node::CONN_EMAIL);
 				for(std::list<Node::URI>::iterator iter = uri.begin(); iter != uri.end(); iter++)
 				{
@@ -199,21 +199,22 @@ namespace dtn
 					// Announce faked node
 					updateNeighbor(fakeNode);
 
-					if(!isNeighbor(node))
-					{
-						// Add route to faked node
-						dtn::core::BundleCore::getInstance().addRoute(node.getEID(), fakeNode.getEID(), 0);
-					}
+					// Add route to faked node
+					dtn::core::BundleCore::getInstance().addRoute(node.getEID(), fakeNode.getEID(), 0);
 
 					node.remove((*iter));
 
 					if(node.getAll().size() == 0)
 						return;
 				}
+
+				updateNeighbor(node);
+
+				return;
 			}
 
 			ibrcommon::MutexLock l(_node_lock);
-			pair<nodemap::iterator,bool> ret = _nodes.insert( pair<dtn::data::EID, dtn::core::Node>(node.getEID(), node) );
+			pair<nodemap::iterator,bool> ret = _nodes.insert( pair<dtn::data::EID, dtn::core::Node>(n.getEID(), n) );
 
 			dtn::core::Node &db = (*(ret.first)).second;
 
@@ -221,7 +222,7 @@ namespace dtn
 				dtn::data::Size old = db.size();
 
 				// add all attributes to the node in the database
-				db += node;
+				db += n;
 
 				if (old != db.size()) {
 					// announce the new node

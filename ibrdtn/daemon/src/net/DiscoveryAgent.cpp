@@ -76,7 +76,7 @@ namespace dtn
                 else if (s.getName() == "emailcl")
                 {
                 	// Set timeout
-                	size_t to_value_mailcl = to_value;
+                	dtn::data::Number to_value_mailcl = to_value;
 					size_t configTime = dtn::daemon::Configuration::getInstance().getEMail().getNodeAvailableTime();
 					if(configTime > 0)
 						to_value_mailcl = configTime;
