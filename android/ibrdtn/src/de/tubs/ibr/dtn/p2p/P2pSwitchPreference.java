@@ -1,9 +1,10 @@
 package de.tubs.ibr.dtn.p2p;
 
-import android.annotation.*;
-import android.content.*;
-import android.preference.*;
-import android.util.*;
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.Intent;
+import android.preference.SwitchPreference;
+import android.util.AttributeSet;
 
 @TargetApi(14)
 public class P2pSwitchPreference extends SwitchPreference {

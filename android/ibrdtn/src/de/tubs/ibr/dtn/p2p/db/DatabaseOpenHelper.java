@@ -1,8 +1,9 @@
 package de.tubs.ibr.dtn.p2p.db;
 
-import android.content.*;
-import android.database.sqlite.*;
-import android.util.*;
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class DatabaseOpenHelper extends SQLiteOpenHelper {
 

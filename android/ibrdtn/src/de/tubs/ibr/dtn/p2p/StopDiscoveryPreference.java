@@ -1,9 +1,10 @@
 package de.tubs.ibr.dtn.p2p;
 
-import de.tubs.ibr.dtn.p2p.scheduler.*;
-import android.content.*;
-import android.preference.*;
-import android.util.*;
+import android.content.Context;
+import android.content.Intent;
+import android.preference.Preference;
+import android.util.AttributeSet;
+import de.tubs.ibr.dtn.p2p.scheduler.SchedulerService;
 
 public class StopDiscoveryPreference extends Preference {
 

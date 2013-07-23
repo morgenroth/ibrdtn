@@ -1,10 +1,13 @@
 package de.tubs.ibr.dtn.p2p;
 
-import android.content.*;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.preference.*;
-import de.tubs.ibr.dtn.*;
-import de.tubs.ibr.dtn.p2p.scheduler.*;
+import android.preference.PreferenceManager;
+import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.p2p.scheduler.StategyAlwaysOn;
+import de.tubs.ibr.dtn.p2p.scheduler.Strategy;
+import de.tubs.ibr.dtn.p2p.scheduler.TenOnTwentyOfStrategy;
 
 public final class SettingsUtil {
 

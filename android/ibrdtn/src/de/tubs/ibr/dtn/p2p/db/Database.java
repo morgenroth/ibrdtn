@@ -1,13 +1,20 @@
 package de.tubs.ibr.dtn.p2p.db;
 
-import static de.tubs.ibr.dtn.p2p.db.DatabaseOpenHelper.*;
+import static de.tubs.ibr.dtn.p2p.db.DatabaseOpenHelper.ALL_PEER_TABLE_COLUMNS;
+import static de.tubs.ibr.dtn.p2p.db.DatabaseOpenHelper.EID_COLUMN;
+import static de.tubs.ibr.dtn.p2p.db.DatabaseOpenHelper.EVER_CONNECTED_COLUMN;
+import static de.tubs.ibr.dtn.p2p.db.DatabaseOpenHelper.LAST_CONTACT_COLUMN;
+import static de.tubs.ibr.dtn.p2p.db.DatabaseOpenHelper.MAC_ADDRESS_COLUMN;
+import static de.tubs.ibr.dtn.p2p.db.DatabaseOpenHelper.PEER_TABLE;
 
-import java.util.*;
+import java.util.Date;
 
-import android.content.*;
-import android.database.*;
-import android.database.sqlite.*;
-import android.util.*;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 public class Database {
 

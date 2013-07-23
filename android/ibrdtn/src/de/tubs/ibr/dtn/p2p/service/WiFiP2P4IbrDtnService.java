@@ -1,23 +1,31 @@
 package de.tubs.ibr.dtn.p2p.service;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
-import android.annotation.*;
-import android.app.*;
-import android.content.*;
-import android.net.wifi.*;
-import android.net.wifi.p2p.*;
+import android.annotation.TargetApi;
+import android.app.IntentService;
+import android.content.Context;
+import android.content.Intent;
+import android.net.wifi.p2p.WifiP2pConfig;
+import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pDeviceList;
+import android.net.wifi.p2p.WifiP2pGroup;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.ChannelListener;
 import android.net.wifi.p2p.WifiP2pManager.DnsSdServiceResponseListener;
 import android.net.wifi.p2p.WifiP2pManager.DnsSdTxtRecordListener;
 import android.net.wifi.p2p.WifiP2pManager.GroupInfoListener;
 import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
-import android.net.wifi.p2p.nsd.*;
-import android.util.*;
-import de.tubs.ibr.dtn.p2p.*;
-import de.tubs.ibr.dtn.p2p.db.*;
-import de.tubs.ibr.dtn.service.*;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
+import android.util.Log;
+import de.tubs.ibr.dtn.p2p.SettingsUtil;
+import de.tubs.ibr.dtn.p2p.db.Database;
+import de.tubs.ibr.dtn.p2p.db.Peer;
+import de.tubs.ibr.dtn.service.DaemonService;
 
 @TargetApi(16)
 public class WiFiP2P4IbrDtnService extends IntentService {

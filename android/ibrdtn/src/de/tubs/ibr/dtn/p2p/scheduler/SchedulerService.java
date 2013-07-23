@@ -1,13 +1,16 @@
 package de.tubs.ibr.dtn.p2p.scheduler;
 
-import java.text.*;
-import java.util.*;
+import java.text.DateFormat;
+import java.util.Date;
 
-import android.app.*;
-import android.content.*;
-import android.util.*;
-import de.tubs.ibr.dtn.p2p.*;
-import de.tubs.ibr.dtn.p2p.service.*;
+import android.app.AlarmManager;
+import android.app.IntentService;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+import de.tubs.ibr.dtn.p2p.SettingsUtil;
+import de.tubs.ibr.dtn.p2p.service.WiFiP2P4IbrDtnService;
 
 public class SchedulerService extends IntentService {
 

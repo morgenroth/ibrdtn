@@ -1,12 +1,14 @@
 package de.tubs.ibr.dtn.p2p;
 
-import android.annotation.*;
-import android.app.*;
-import android.database.*;
-import android.os.*;
-import android.widget.*;
-import de.tubs.ibr.dtn.*;
-import de.tubs.ibr.dtn.p2p.db.*;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.database.Cursor;
+import android.os.Bundle;
+import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
+import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.p2p.db.Database;
+import de.tubs.ibr.dtn.p2p.db.DatabaseOpenHelper;
 
 @TargetApi(16)
 public class DBDump extends Activity {

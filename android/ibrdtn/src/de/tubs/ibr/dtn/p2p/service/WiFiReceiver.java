@@ -1,7 +1,9 @@
 package de.tubs.ibr.dtn.p2p.service;
 
-import android.content.*;
-import android.net.wifi.*;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.net.wifi.WifiManager;
 
 public class WiFiReceiver extends BroadcastReceiver {
 

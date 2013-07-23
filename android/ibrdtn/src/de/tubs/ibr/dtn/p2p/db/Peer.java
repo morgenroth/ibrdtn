@@ -1,7 +1,7 @@
 package de.tubs.ibr.dtn.p2p.db;
 
-import java.text.*;
-import java.util.*;
+import java.text.DateFormat;
+import java.util.Date;
 
 public class Peer {
 

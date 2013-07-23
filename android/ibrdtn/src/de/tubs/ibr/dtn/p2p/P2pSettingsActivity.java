@@ -1,8 +1,8 @@
 package de.tubs.ibr.dtn.p2p;
 
-import android.annotation.*;
-import android.app.*;
-import android.os.*;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.os.Bundle;
 
 @TargetApi(14)
 public class P2pSettingsActivity extends Activity {

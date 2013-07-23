@@ -1,11 +1,14 @@
 package de.tubs.ibr.dtn.p2p.service;
 
-import android.annotation.*;
-import android.content.*;
-import android.net.*;
-import android.net.wifi.p2p.*;
-import android.util.*;
-import de.tubs.ibr.dtn.p2p.scheduler.*;
+import android.annotation.TargetApi;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.net.NetworkInfo;
+import android.net.wifi.p2p.WifiP2pManager;
+import android.util.Log;
+import de.tubs.ibr.dtn.p2p.scheduler.AlarmReceiver;
+import de.tubs.ibr.dtn.p2p.scheduler.SchedulerService;
 
 @TargetApi(16)
 public class WiFiP2pReceiver extends BroadcastReceiver {
