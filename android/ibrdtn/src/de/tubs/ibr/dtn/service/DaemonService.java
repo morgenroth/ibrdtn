@@ -51,6 +51,7 @@ import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.p2p.P2PManager;
+import de.tubs.ibr.dtn.p2p.service.*;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
 import de.tubs.ibr.dtn.stats.StatsEntry;
@@ -272,6 +273,33 @@ public class DaemonService extends Service {
             
             // schedule next collection in 15 minutes
             mServiceHandler.postDelayed(mCollectStats, 900000);
+        } else if (WiFiP2P4IbrDtnService.CONNECTION_CHANGED_ACTION
+                .equals(action)) {
+            final int state = intent.getIntExtra(
+                    WiFiP2P4IbrDtnService.STATE_EXTRA, -1);
+            final String iface = intent
+                    .getStringExtra(WiFiP2P4IbrDtnService.INTERFACE_EXTRA);
+
+            switch (state) {
+            case 0:
+                Log.d(TAG, "Interface down: " + iface);
+                _p2p_manager.fireInterfaceDown(iface);
+                break;
+            case 1:
+                Log.d(TAG, "Interface up: " + iface);
+                _p2p_manager.fireInterfaceUp(iface);
+                break;
+            default:
+                Log.d(TAG, "Unknown state: " + iface);
+                break;
+
+            }
+        } else if (WiFiP2P4IbrDtnService.PEER_FOUND_ACTION.equals(action)) {
+            final String eid = intent
+                    .getStringExtra(WiFiP2P4IbrDtnService.EID_EXTRA);
+            final String mac = intent
+                    .getStringExtra(WiFiP2P4IbrDtnService.MAC_EXTRA);
+            _p2p_manager.fireDiscovered(eid, mac);
         }
         
         // stop the daemon if it should be offline

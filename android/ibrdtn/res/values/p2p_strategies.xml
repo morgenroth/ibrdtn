@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="p2p_strategy_names">
+        <item>Always On</item>
+        <item>10 On, 20 Off</item>
+    </string-array>
+    <string-array name="p2p_strategy_values">
+        <item>on</item>
+        <item>tentwenty</item>
+    </string-array>
+
+</resources>

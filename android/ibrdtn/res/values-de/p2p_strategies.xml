@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+        <string-array name="p2p_strategy_names">
+        <item>Immer an</item>
+        <item>10 An, 20 Aus</item>
+    </string-array>
+    <string-array name="p2p_strategy_values">
+        <item>on</item>
+        <item>tentwenty</item>
+    </string-array>
+</resources>

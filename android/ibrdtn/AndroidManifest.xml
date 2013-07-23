@@ -28,6 +28,7 @@
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"/>
+    <uses-permission android:name="de.hendrikfreytag.wifip2p4ibrdtn.permission.REQUEST_PEER_CONNECTION" />
 
     <uses-sdk
         android:minSdkVersion="9"
@@ -111,6 +112,57 @@
 				<action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
 			</intent-filter>
 		</receiver>
+
+        <activity
+            android:name=".p2p.P2pSettingsActivity"
+            android:label="@string/title_activity_p2p_settings" >
+            <intent-filter>
+                <action android:name=".activities.P2pSettingsActivity" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name=".p2p.service.WiFiP2pReceiver" >
+            <intent-filter>
+                <action android:name="android.net.wifi.p2p.CONNECTION_STATE_CHANGE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.net.wifi.p2p.PEERS_CHANGED" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.net.wifi.p2p.STATE_CHANGED" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.net.wifi.p2p.DISCOVERY_STATE_CHANGE" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".p2p.service.WiFiReceiver" >
+            <intent-filter>
+                <action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".p2p.service.BootCompletedReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name=".p2p.service.WiFiP2P4IbrDtnService" >
+        </service>
+        <service android:name=".p2p.scheduler.SchedulerService" >
+        </service>
+
+        <receiver android:name=".p2p.scheduler.AlarmReceiver" >
+        </receiver>
+
+        <activity android:name=".p2p.DBDump" >
+            <intent-filter>
+                <action android:name="de.tubs.ibr.dtn.p2p.action.OPEN_DB_DUMP_ACTIVITY" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
