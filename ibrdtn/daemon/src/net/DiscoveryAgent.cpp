@@ -57,7 +57,7 @@ namespace dtn
 
 			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 			{
-				dtn::data::Number to_value = (timeout == 0) ? _config.timeout() : timeout;
+				const dtn::data::Number to_value = (timeout == 0) ? _config.timeout() : timeout;
 
 				const DiscoveryService &s = (*iter);
 
@@ -76,11 +76,12 @@ namespace dtn
                 else if (s.getName() == "emailcl")
                 {
                 	// Set timeout
+                	size_t to_value_mailcl = to_value;
 					size_t configTime = dtn::daemon::Configuration::getInstance().getEMail().getNodeAvailableTime();
 					if(configTime > 0)
-					to_value = configTime;
+						to_value_mailcl = configTime;
 
-					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_EMAIL, s.getParameters(), to_value, 20));
+					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_EMAIL, s.getParameters(), to_value_mailcl, 20));
                 }
 				else
 				{
