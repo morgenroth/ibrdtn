@@ -44,7 +44,7 @@ public class P2pManager extends NativeP2pManager {
         this.mService = service;
     }
 
-    public void initialize() {
+    public void onCreate() {
         // daemon is up
         
         // listen to wifi p2p events
@@ -56,21 +56,21 @@ public class P2pManager extends NativeP2pManager {
         mService.registerReceiver(mWifiEventReceiver, filter);
     }
     
-    public void resume() {
+    public void onResume() {
         // start the scheduler
         Intent i = new Intent(mService, SchedulerService.class);
         i.setAction(SchedulerService.ACTION_ACTIVATE_SCHEDULER);
         mService.startService(i);
     }
     
-    public void pause() {
+    public void onPause() {
         // stop the scheduler
         Intent i = new Intent(mService, SchedulerService.class);
         i.setAction(SchedulerService.ACTION_DEACTIVATE_SCHEDULER);
         mService.startService(i);
     }
 
-    public void destroy() {
+    public void onDestroy() {
         // daemon goes down
         
         // stop listening to wifi p2p events
