@@ -59,14 +59,14 @@ public class P2pManager extends NativeP2pManager {
     public void resume() {
         // start the scheduler
         Intent i = new Intent(mService, SchedulerService.class);
-        i.setAction(SchedulerService.ACTION_CHECK_STATE);
+        i.setAction(SchedulerService.ACTION_ACTIVATE_SCHEDULER);
         mService.startService(i);
     }
     
     public void pause() {
         // stop the scheduler
         Intent i = new Intent(mService, SchedulerService.class);
-        i.setAction(SchedulerService.ACTION_STOP_SCHEDULER);
+        i.setAction(SchedulerService.ACTION_DEACTIVATE_SCHEDULER);
         mService.startService(i);
     }
 

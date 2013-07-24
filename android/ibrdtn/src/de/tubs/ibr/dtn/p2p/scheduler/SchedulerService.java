@@ -19,7 +19,9 @@ public class SchedulerService extends IntentService {
     public final static Integer RC_CHECK_STATE = 9725;
 
     public final static String ACTION_CHECK_STATE = "de.tubs.ibr.dtn.p2p.action.CHECK_STATE";
-    public static final String ACTION_STOP_SCHEDULER = "de.tubs.ibr.dtn.p2p.action.STOP_SCHEDULER";
+    
+    public static final String ACTION_ACTIVATE_SCHEDULER = "de.tubs.ibr.dtn.p2p.action.ACTIVATE_SCHEDULER";
+    public static final String ACTION_DEACTIVATE_SCHEDULER = "de.tubs.ibr.dtn.p2p.action.DEACTIVATE_SCHEDULER";
 
     public SchedulerService() {
         super("SchedulerService");
@@ -31,7 +33,9 @@ public class SchedulerService extends IntentService {
 
         if (ACTION_CHECK_STATE.equals(action)) {
             checkState();
-        } else if (ACTION_STOP_SCHEDULER.equals(action)) {
+        } else if (ACTION_ACTIVATE_SCHEDULER.equals(action)) {
+            checkState();
+        } else if (ACTION_DEACTIVATE_SCHEDULER.equals(action)) {
             stopScheduler();
         }
     }
