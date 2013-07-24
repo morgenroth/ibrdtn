@@ -99,8 +99,7 @@ public class WifiP2pService extends IntentService {
                     public void onGroupInfoAvailable(WifiP2pGroup group) {
                         String iface = group.getInterface();
 
-                        Intent i = new Intent(WifiP2pService.this,
-                                DaemonService.class);
+                        Intent i = new Intent(WifiP2pService.this, DaemonService.class);
                         i.setAction(CONNECTION_CHANGED_ACTION);
                         i.putExtra(STATE_EXTRA, 1);
                         i.putExtra(INTERFACE_EXTRA, iface);
@@ -150,8 +149,7 @@ public class WifiP2pService extends IntentService {
         i.putExtra(EID_EXTRA, peer.getEid());
         i.putExtra(MAC_EXTRA, peer.getMacAddress());
         startService(i);
-        Log.d(TAG,
-                "discovered peer:" + peer.getEid() + "," + peer.getMacAddress());
+        Log.d(TAG, "discovered peer:" + peer.getEid() + "," + peer.getMacAddress());
     }
 
     private void connectToPeer(String mac) {
@@ -182,14 +180,12 @@ public class WifiP2pService extends IntentService {
         DnsSdTxtRecordListener txtListener = new DnsSdTxtRecordListener() {
 
             @Override
-            public void onDnsSdTxtRecordAvailable(String fullDomainName,
-                    Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
+            public void onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
                 Database db = Database.getInstance(WifiP2pService.this);
                 db.open();
                 Peer p = db.find(srcDevice.deviceAddress);
                 if (p == null) {
-                    p = new Peer(srcDevice.deviceAddress,
-                            txtRecordMap.get("eid"), new Date(), false);
+                    p = new Peer(srcDevice.deviceAddress, txtRecordMap.get("eid"), new Date(), false);
                     db.put(WifiP2pService.this, p);
                 } else {
                     p.setLastContact(new Date());
@@ -203,10 +199,8 @@ public class WifiP2pService extends IntentService {
         };
 
         DnsSdServiceResponseListener srvListener = new DnsSdServiceResponseListener() {
-
             @Override
-            public void onDnsSdServiceAvailable(String instanceName,
-                    String registrationType, WifiP2pDevice srcDevice) {
+            public void onDnsSdServiceAvailable(String instanceName, String registrationType, WifiP2pDevice srcDevice) {
                 Database db = Database.getInstance(WifiP2pService.this);
                 db.open();
                 Peer p = db.find(srcDevice.deviceAddress);
@@ -214,8 +208,7 @@ public class WifiP2pService extends IntentService {
                     p = new Peer(srcDevice.deviceAddress, "", new Date(), false);
                     db.put(WifiP2pService.this, p);
                 } else {
-                    srcDevice.deviceName = p.hasEid() ? p.getEid()
-                            : srcDevice.deviceName;
+                    srcDevice.deviceName = p.hasEid() ? p.getEid() : srcDevice.deviceName;
                     p.setLastContact(new Date());
                     db.put(WifiP2pService.this, p);
                 }
@@ -225,12 +218,10 @@ public class WifiP2pService extends IntentService {
             }
         };
 
-        wifiP2pManager.setDnsSdResponseListeners(wifiDirectChannel,
-                srvListener, txtListener);
+        wifiP2pManager.setDnsSdResponseListeners(wifiDirectChannel, srvListener, txtListener);
 
         serviceRequest = WifiP2pDnsSdServiceRequest.newInstance();
-        wifiP2pManager.addServiceRequest(wifiDirectChannel, serviceRequest,
-                null);
+        wifiP2pManager.addServiceRequest(wifiDirectChannel, serviceRequest, null);
         wifiP2pManager.discoverServices(wifiDirectChannel, null);
     }
 }
