@@ -10,7 +10,7 @@
         android:defaultValue="on" />
 
     <Preference android:title="@string/show_database" >
-        <intent android:action="de.tubs.ibr.dtn.p2p.action.OPEN_DB_DUMP_ACTIVITY" />
+        <intent android:action="de.tubs.ibr.dtn.p2p.action.PEER_LIST_ACTIVITY" />
     </Preference>
 
 </PreferenceScreen>
