@@ -52,7 +52,6 @@ import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.p2p.P2pManager;
 import de.tubs.ibr.dtn.p2p.SettingsUtil;
-import de.tubs.ibr.dtn.p2p.WifiP2pService;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
 import de.tubs.ibr.dtn.stats.StatsEntry;
@@ -274,12 +273,10 @@ public class DaemonService extends Service {
             
             // schedule next collection in 15 minutes
             mServiceHandler.postDelayed(mCollectStats, 900000);
-        } else if (WifiP2pService.CONNECTION_CHANGED_ACTION
-                .equals(action)) {
-            final int state = intent.getIntExtra(
-                    WifiP2pService.STATE_EXTRA, -1);
+        } else if (P2pManager.CONNECTION_CHANGED_ACTION.equals(action)) {
+            final int state = intent.getIntExtra(P2pManager.STATE_EXTRA, -1);
             final String iface = intent
-                    .getStringExtra(WifiP2pService.INTERFACE_EXTRA);
+                    .getStringExtra(P2pManager.INTERFACE_EXTRA);
 
             switch (state) {
             case 0:
@@ -295,11 +292,9 @@ public class DaemonService extends Service {
                 break;
 
             }
-        } else if (WifiP2pService.PEER_FOUND_ACTION.equals(action)) {
-            final String eid = intent
-                    .getStringExtra(WifiP2pService.EID_EXTRA);
-            final String mac = intent
-                    .getStringExtra(WifiP2pService.MAC_EXTRA);
+        } else if (P2pManager.PEER_FOUND_ACTION.equals(action)) {
+            final String eid = intent.getStringExtra(P2pManager.EID_EXTRA);
+            final String mac = intent.getStringExtra(P2pManager.MAC_EXTRA);
             _p2p_manager.fireDiscovered(eid, mac);
         }
         
