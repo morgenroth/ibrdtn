@@ -199,6 +199,8 @@ public class P2pManager extends NativeP2pManager {
 
     @Override
     public void connect(String data) {
+        if (mWifiP2pChannel == null) return;
+        
         // get the peer object
         Peer p = Database.getInstance(mService).find(data);
         
@@ -224,6 +226,8 @@ public class P2pManager extends NativeP2pManager {
 
     @Override
     public void disconnect(String data) {
+        if (mWifiP2pChannel == null) return;
+        
         // disconnect from the peer identified by "data"
         Log.i(TAG, "disconnect request: " + data);
     }
