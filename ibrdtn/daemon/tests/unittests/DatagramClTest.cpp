@@ -169,6 +169,10 @@ void DatagramClTest::queueTest() {
 	}
 
 	const std::set<dtn::core::Node> nodes = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+
+	// check the number of nodes before accessing the first one
+	CPPUNIT_ASSERT_EQUAL((size_t)1, nodes.size());
+
 	const dtn::core::Node &n = (*nodes.begin());
 
 	// create BundleTransfer in a separate scope because the
