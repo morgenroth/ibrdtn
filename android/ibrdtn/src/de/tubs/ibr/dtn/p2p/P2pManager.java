@@ -1,6 +1,6 @@
 package de.tubs.ibr.dtn.p2p;
 
-import java.util.Date;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,6 +46,8 @@ public class P2pManager extends NativeP2pManager {
     private WifiP2pManager.Channel mWifiP2pChannel = null;
     private WifiP2pDnsSdServiceRequest mServiceRequest = null;
     private WifiP2pDnsSdServiceInfo mServiceInfo = null;
+    
+    private Calendar mLastDisco = null;
 
     /**
      * How to control the P2P API of the daemon
@@ -118,7 +120,7 @@ public class P2pManager extends NativeP2pManager {
         // create local service info
         Map<String, String> record = new HashMap<String, String>();
         record.put("eid", SettingsUtil.getEid(mService));
-        mServiceInfo = WifiP2pDnsSdServiceInfo.newInstance("_dtn", "_presence._tcp", record);
+        mServiceInfo = WifiP2pDnsSdServiceInfo.newInstance("DtnNode", "_dtn._tcp", record);
         
         // listen to wifi p2p events
         IntentFilter filter = new IntentFilter();
@@ -191,20 +193,33 @@ public class P2pManager extends NativeP2pManager {
     }
 
     public void fireDiscovered(String eid, String identifier) {
-        Log.d(TAG, "found peer: " + eid + ", " + identifier);
+        //Log.d(TAG, "found peer: " + eid + ", " + identifier);
         super.fireDiscovered(new EID(eid), identifier, 90, 10);
     }
 
     @Override
     public void connect(String data) {
-        Log.i(TAG, "connect request: " + data);
-
+        // get the peer object
+        Peer p = Database.getInstance(mService).find(data);
+        
+        // stop here, if there is no peer object
+        if (p == null) return;
+        
+        // stop here, if we already tried to connect within the last minute
+        if (p.getConnectState() > 1) return;
+        
+        // set the connection state to 2 (connecting)
+        p.setConnectState(2);
+        Database.getInstance(mService).updateState(p);
+        
         // connect to the peer identified by "data"
         WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = data;
         config.groupOwnerIntent = -1;
-        config.wps.setup = WpsInfo.INVALID;
+        config.wps.setup = WpsInfo.PBC;
         mWifiP2pManager.connect(mWifiP2pChannel, config, mActionListener);
+        
+        Log.i(TAG, "connect to " + p.toString());
     }
 
     @Override
@@ -261,8 +276,8 @@ public class P2pManager extends NativeP2pManager {
     };
 
     private void peerDiscovered(Peer peer) {
-        Log.d(TAG, "discovered peer:" + peer.getEid() + "," + peer.getMacAddress());
-        fireDiscovered(peer.getEid(), peer.getMacAddress());
+        //Log.d(TAG, "discovered peer:" + peer.getEndpoint() + "," + peer.getP2pAddress());
+        fireDiscovered(peer.getEndpoint(), peer.getP2pAddress());
     }
     
     /**
@@ -281,7 +296,7 @@ public class P2pManager extends NativeP2pManager {
     private PeerListListener mPeerListListener = new PeerListListener() {
         @Override
         public void onPeersAvailable(WifiP2pDeviceList peers) {
-            Log.d(TAG, "Peers available:" + peers.getDeviceList().size());
+            // Log.d(TAG, "Peers available:" + peers.getDeviceList().size());
             
             boolean allEIDs = true;
             for (WifiP2pDevice device : peers.getDeviceList()) {
@@ -289,13 +304,13 @@ public class P2pManager extends NativeP2pManager {
                 db.open();
                 Peer peer = db.find(device.deviceAddress);
                 if (peer == null) {
-                    peer = new Peer(device.deviceAddress, "", new Date(), false);
-                    db.put(mService, peer);
+                    peer = new Peer(device.deviceAddress);
+                    db.put(peer);
                 } else {
-                    peer.setLastContact(new Date());
-                    db.put(mService, peer);
+                    peer.touch();
+                    db.put(peer);
                 }
-                if (peer.hasEid()) {
+                if (peer.hasEndpoint()) {
                     peerDiscovered(peer);
                 } else {
                     allEIDs = false;
@@ -303,27 +318,43 @@ public class P2pManager extends NativeP2pManager {
             }
             // TODO bessere Bedingung finden, da EIDs geändert werden können
             if (!allEIDs) {
-                mWifiP2pManager.discoverServices(mWifiP2pChannel, mActionListener);
+                requestServiceDiscovery();
             }
         }
     };
+    
+    private void requestServiceDiscovery() {
+        if (mLastDisco != null) {
+            if (mLastDisco.after(Calendar.getInstance())) return;
+        }
+        
+        // only once per minute
+        mLastDisco = Calendar.getInstance();
+        mLastDisco.add(Calendar.MINUTE, 1);
+        
+        // start service discovery
+        mWifiP2pManager.discoverServices(mWifiP2pChannel, mActionListener);
+    }
 
     private DnsSdTxtRecordListener mRecordListener = new DnsSdTxtRecordListener() {
 
         @Override
         public void onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
+            Log.d(TAG, "DnsSdTxtRecord discovered: " + fullDomainName + ", " + txtRecordMap.toString());
+            
             Database db = Database.getInstance(mService);
             db.open();
             Peer p = db.find(srcDevice.deviceAddress);
             if (p == null) {
-                p = new Peer(srcDevice.deviceAddress, txtRecordMap.get("eid"), new Date(), false);
-                db.put(mService, p);
+                p = new Peer(srcDevice.deviceAddress);
+                p.setEndpoint(txtRecordMap.get("eid"));
+                db.put(p);
             } else {
-                p.setLastContact(new Date());
-                p.setEid(txtRecordMap.get("eid"));
-                db.put(mService, p);
+                p.touch();
+                p.setEndpoint(txtRecordMap.get("eid"));
+                db.put(p);
             }
-            if (p.hasEid()) {
+            if (p.hasEndpoint()) {
                 peerDiscovered(p);
             }
         }
@@ -332,18 +363,20 @@ public class P2pManager extends NativeP2pManager {
     private DnsSdServiceResponseListener mServiceResponseListener = new DnsSdServiceResponseListener() {
         @Override
         public void onDnsSdServiceAvailable(String instanceName, String registrationType, WifiP2pDevice srcDevice) {
+            Log.d(TAG, "SdService discovered: " + instanceName + ", " + registrationType);
+            
             Database db = Database.getInstance(mService);
             db.open();
             Peer p = db.find(srcDevice.deviceAddress);
             if (p == null) {
-                p = new Peer(srcDevice.deviceAddress, "", new Date(), false);
-                db.put(mService, p);
+                p = new Peer(srcDevice.deviceAddress);
+                db.put(p);
             } else {
-                srcDevice.deviceName = p.hasEid() ? p.getEid() : srcDevice.deviceName;
-                p.setLastContact(new Date());
-                db.put(mService, p);
+                srcDevice.deviceName = p.hasEndpoint() ? p.getEndpoint() : srcDevice.deviceName;
+                p.touch();
+                db.put(p);
             }
-            if (p.hasEid()) {
+            if (p.hasEndpoint()) {
                 peerDiscovered(p);
             }
         }

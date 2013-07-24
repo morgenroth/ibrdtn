@@ -11,8 +11,6 @@ import android.util.Log;
 
 public class Database {
 
-    private static final String TAG = "Database";
-
     private static Object syncObject = new Object();
 
     private static volatile Database _instance;
@@ -29,8 +27,9 @@ public class Database {
         return _instance;
     }
 
-    public SQLiteDatabase db;
-    private DatabaseOpenHelper helper;
+    private Context mContext = null;
+    public SQLiteDatabase db = null;
+    private DatabaseOpenHelper helper = null;
     
     public static final String NOTIFY_PEERS_CHANGED = "de.tubs.ibr.dtn.p2p.NOTIFY_PEERS_CHANGED";
     public static final String PEER_TABLE = "peers";
@@ -38,15 +37,16 @@ public class Database {
     private static final String CREATE_PEER_TABLE = 
                 "CREATE TABLE " + PEER_TABLE + " (" + 
                     Peer.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    Peer.MAC_ADDRESS + " TEXT, " +
-                    Peer.EID + " TEXT, " +
-                    Peer.LAST_CONTACT + " DATETIME, " +
-                    Peer.EVER_CONNECTED + " INTEGER" +
+                    Peer.P2P_ADDRESS + " TEXT, " +
+                    Peer.ENDPOINT + " TEXT, " +
+                    Peer.LAST_SEEN + " DATETIME, " +
+                    Peer.CONNECT_STATE + " INTEGER, " +
+                    Peer.CONNECT_UPDATE + " DATETIME" +
                 ");";
 
     private static class DatabaseOpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 1;
+        private static final int DATABASE_VERSION = 2;
         private static final String DATABASE_NAME = "p2p.db";
         private static final String TAG = "DatabaseOpenHelper";
 
@@ -75,6 +75,7 @@ public class Database {
     }
 
     private Database(Context context) {
+        this.mContext = context;
         this.helper = new DatabaseOpenHelper(context);
     }
 
@@ -96,32 +97,41 @@ public class Database {
      * @param peer
      *            Peer to insert or update in the database
      */
-    public synchronized void put(Context context, Peer peer) {
+    public synchronized void put(Peer peer) {
         ContentValues values = new ContentValues();
         
-        values.put(Peer.MAC_ADDRESS, peer.getMacAddress());
-        values.put(Peer.EID, peer.getEid());
-        values.put(Peer.LAST_CONTACT, peer.getLastContact().getTime());
-        values.put(Peer.EVER_CONNECTED, peer.isEverConnected() ? 1 : 0);
+        values.put(Peer.P2P_ADDRESS, peer.getP2pAddress());
+        
+        if (peer.getEndpoint() == null) {
+            values.putNull(Peer.ENDPOINT);
+        } else {
+            values.put(Peer.ENDPOINT, peer.getEndpoint());
+        }
+        
+        values.put(Peer.LAST_SEEN, peer.getLastSeen().getTime());
 
         // check if the entry already exists
-        Cursor c = db.query(PEER_TABLE, new String[] { Peer.MAC_ADDRESS }, Peer.MAC_ADDRESS + " = ?",
-                new String[] { peer.getMacAddress() }, null, null, null);
+        Cursor c = db.query(PEER_TABLE, new String[] { Peer.P2P_ADDRESS }, Peer.P2P_ADDRESS + " = ?",
+                new String[] { peer.getP2pAddress() }, null, null, null);
         
         if (c.getCount() == 0) {
-            long ret = db.insert(PEER_TABLE, null, values);
-            // if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Insert:" + peer.toString() + ":" + ret);
-            // }
+            values.put(Peer.CONNECT_STATE, peer.getConnectState());
+            
+            if (peer.getConnectUpdate() == null) {
+                values.putNull(Peer.CONNECT_UPDATE);
+            } else {
+                values.put(Peer.CONNECT_UPDATE, peer.getConnectUpdate().getTime());
+            }
+            
+            db.insert(PEER_TABLE, null, values);
         } else {
-            long ret = db.update(PEER_TABLE, values, Peer.MAC_ADDRESS + " = ?", new String[] { peer.getMacAddress() });
-            // if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Update:" + peer.toString() + ":" + ret);
-            // }
+            db.update(PEER_TABLE, values, Peer.P2P_ADDRESS + " = ?", new String[] { peer.getP2pAddress() });
         }
+        
+        // close the cursor
         c.close();
         
-        Database.notifyPeersChanged(context);
+        Database.notifyPeersChanged(mContext);
     }
     
     public static void notifyPeersChanged(Context context) {
@@ -131,17 +141,29 @@ public class Database {
 
     public synchronized Peer find(String mac) {
         Peer p = null;
-        String selection = String.format("%s = ?", Peer.MAC_ADDRESS);
-        String[] selectionArgs = { mac };
-        Cursor cursor = db.query(PEER_TABLE, PeerAdapter.PROJECTION, selection,
-                selectionArgs, null, null, null);
-        // if (Log.isLoggable(TAG, Log.DEBUG)) {
-        Log.d(TAG, "Select peer " + mac + ",count:" + cursor.getCount());
-        // }
-        if (cursor.getCount() == 1 && cursor.moveToFirst()) {
+        Cursor cursor = db.query(PEER_TABLE, PeerAdapter.PROJECTION, Peer.P2P_ADDRESS + " = ?", new String[] { mac }, null, null, null);
+
+        if (cursor.moveToFirst()) {
             p = new Peer(cursor, new PeerAdapter.ColumnsMap());
         }
+        
         cursor.close();
         return p;
+    }
+    
+    public synchronized void updateState(Peer peer) {
+        ContentValues values = new ContentValues();
+
+        values.put(Peer.CONNECT_STATE, peer.getConnectState());
+
+        if (peer.getConnectUpdate() == null) {
+            values.putNull(Peer.CONNECT_UPDATE);
+        } else {
+            values.put(Peer.CONNECT_UPDATE, peer.getConnectUpdate().getTime());
+        }
+
+        db.update(PEER_TABLE, values, Peer.P2P_ADDRESS + " = ?", new String[] { peer.getP2pAddress() });
+        
+        Database.notifyPeersChanged(mContext);
     }
 }

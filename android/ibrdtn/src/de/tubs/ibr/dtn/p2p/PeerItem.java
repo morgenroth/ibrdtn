@@ -49,12 +49,12 @@ public class PeerItem extends RelativeLayout {
     }
     
     private void onDataChanged() {
-        String date = StatsUtils.formatTimeStampString(getContext(), mPeer.getLastContact().getTime());
+        String date = StatsUtils.formatTimeStampString(getContext(), mPeer.getLastSeen().getTime());
 
-        mMacAddress.setText(mPeer.getMacAddress());
-        mEid.setText(mPeer.getEid());
+        mMacAddress.setText(mPeer.getP2pAddress());
+        mEid.setText(mPeer.getEndpoint());
         mLastContact.setText(date);
-        mConnected.setText(mPeer.isEverConnected() ? "1" : "0");
+        mConnected.setText(String.valueOf(mPeer.getConnectState()));
     }
     
 }

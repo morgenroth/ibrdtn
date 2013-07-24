@@ -21,19 +21,21 @@ public class PeerAdapter extends CursorAdapter {
 
     public static final String[] PROJECTION = new String[] {
         BaseColumns._ID,
-        Peer.MAC_ADDRESS,
-        Peer.EID,
-        Peer.LAST_CONTACT,
-        Peer.EVER_CONNECTED
+        Peer.P2P_ADDRESS,
+        Peer.ENDPOINT,
+        Peer.LAST_SEEN,
+        Peer.CONNECT_STATE,
+        Peer.CONNECT_UPDATE
     };
     
     // The indexes of the default columns which must be consistent
     // with above PROJECTION.
     static final int COLUMN_PEER_ID             = 0;
-    static final int COLUMN_PEER_MAC_ADDRESS    = 1;
-    static final int COLUMN_PEER_EID            = 2;
-    static final int COLUMN_PEER_LAST_CONTACT   = 3;
-    static final int COLUMN_PEER_EVER_CONNECTED = 4;
+    static final int COLUMN_PEER_P2P_ADDRESS    = 1;
+    static final int COLUMN_PEER_ENDPOINT       = 2;
+    static final int COLUMN_PEER_LAST_SEEN      = 3;
+    static final int COLUMN_PEER_CONNECT_STATE  = 4;
+    static final int COLUMN_PEER_CONNECT_UPDATE = 5;
     
     private static final int CACHE_SIZE     = 50;
 
@@ -51,17 +53,19 @@ public class PeerAdapter extends CursorAdapter {
     
     public static class ColumnsMap {
         public int mColumnId;
-        public int mColumnMacAddress;
-        public int mColumnEid;
-        public int mColumnLastContact;
-        public int mColumnEverConnected;
+        public int mColumnP2pAddress;
+        public int mColumnEndpoint;
+        public int mColumnLastSeen;
+        public int mColumnConnectState;
+        public int mColumnConnectUpdate;
 
         public ColumnsMap() {
             mColumnId               = COLUMN_PEER_ID;
-            mColumnMacAddress       = COLUMN_PEER_MAC_ADDRESS;
-            mColumnEid              = COLUMN_PEER_EID;
-            mColumnLastContact      = COLUMN_PEER_LAST_CONTACT;
-            mColumnEverConnected    = COLUMN_PEER_EVER_CONNECTED;
+            mColumnP2pAddress       = COLUMN_PEER_P2P_ADDRESS;
+            mColumnEndpoint         = COLUMN_PEER_ENDPOINT;
+            mColumnLastSeen         = COLUMN_PEER_LAST_SEEN;
+            mColumnConnectState     = COLUMN_PEER_CONNECT_STATE;
+            mColumnConnectUpdate    = COLUMN_PEER_CONNECT_UPDATE;
         }
 
         public ColumnsMap(Cursor cursor) {
@@ -74,25 +78,31 @@ public class PeerAdapter extends CursorAdapter {
             }
 
             try {
-                mColumnMacAddress = cursor.getColumnIndexOrThrow(Peer.MAC_ADDRESS);
+                mColumnP2pAddress = cursor.getColumnIndexOrThrow(Peer.P2P_ADDRESS);
             } catch (IllegalArgumentException e) {
                 Log.w("colsMap", e.getMessage());
             }
 
             try {
-                mColumnEid = cursor.getColumnIndexOrThrow(Peer.EID);
+                mColumnEndpoint = cursor.getColumnIndexOrThrow(Peer.ENDPOINT);
             } catch (IllegalArgumentException e) {
                 Log.w("colsMap", e.getMessage());
             }
 
             try {
-                mColumnLastContact = cursor.getColumnIndexOrThrow(Peer.LAST_CONTACT);
+                mColumnLastSeen = cursor.getColumnIndexOrThrow(Peer.LAST_SEEN);
             } catch (IllegalArgumentException e) {
                 Log.w("colsMap", e.getMessage());
             }
 
             try {
-                mColumnEverConnected = cursor.getColumnIndexOrThrow(Peer.EVER_CONNECTED);
+                mColumnConnectState = cursor.getColumnIndexOrThrow(Peer.CONNECT_STATE);
+            } catch (IllegalArgumentException e) {
+                Log.w("colsMap", e.getMessage());
+            }
+            
+            try {
+                mColumnConnectUpdate = cursor.getColumnIndexOrThrow(Peer.CONNECT_UPDATE);
             } catch (IllegalArgumentException e) {
                 Log.w("colsMap", e.getMessage());
             }
