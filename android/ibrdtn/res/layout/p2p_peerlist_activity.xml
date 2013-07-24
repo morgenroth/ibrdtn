@@ -7,7 +7,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".DBDump" >
+    tools:context=".PeerListActivity" >
 
     <fragment android:name="de.tubs.ibr.dtn.p2p.PeerListFragment"
         android:id="@+id/peer_list_fragment"

@@ -128,7 +128,7 @@
         <service android:name=".p2p.scheduler.SchedulerService" >
         </service>
 
-        <activity android:name=".p2p.DBDump" >
+        <activity android:name=".p2p.PeerListActivity" >
             <intent-filter>
                 <action android:name="de.tubs.ibr.dtn.p2p.action.OPEN_DB_DUMP_ACTIVITY" />
                 <category android:name="android.intent.category.DEFAULT" />
