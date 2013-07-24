@@ -1,6 +1,6 @@
 package de.tubs.ibr.dtn.p2p.scheduler;
 
-public class GridStrategie implements Strategy {
+public class GridStrategy implements Strategy {
 
     private static final int GRID[][] = { { 0, 1, 0, 0, 0 }, { 0, 1, 0, 0, 0 },
             { 0, 1, 0, 0, 0 }, { 1, 1, 1, 1, 1 }, { 0, 1, 0, 0, 0 } };

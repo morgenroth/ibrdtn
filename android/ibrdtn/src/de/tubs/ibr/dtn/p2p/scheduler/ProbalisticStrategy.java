@@ -2,7 +2,7 @@ package de.tubs.ibr.dtn.p2p.scheduler;
 
 import java.util.Random;
 
-public class ProbalisticStrategie implements Strategy {
+public class ProbalisticStrategy implements Strategy {
 
     @Override
     public Slot getNextSlot(String info) {
