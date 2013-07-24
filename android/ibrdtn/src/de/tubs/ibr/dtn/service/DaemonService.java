@@ -51,6 +51,7 @@ import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.p2p.P2pManager;
+import de.tubs.ibr.dtn.p2p.SettingsUtil;
 import de.tubs.ibr.dtn.p2p.WifiP2pService;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
@@ -454,7 +455,7 @@ public class DaemonService extends Service {
                     break;
                     
                 case OFFLINE:
-                    if (!prefs.getBoolean("p2p_enabled", false)) {
+                    if (!prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
                         _p2p_manager.pause();
                     }
                     
@@ -491,7 +492,7 @@ public class DaemonService extends Service {
                     // enable P2P manager
                     _p2p_manager.initialize();
                     
-                    if (prefs.getBoolean("p2p_enabled", false)) {
+                    if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
                         _p2p_manager.resume();
                     }
                     break;
@@ -625,7 +626,7 @@ public class DaemonService extends Service {
     	            stopForeground(true);
     	            
     			}
-			} else if ("p2p_enabled".equals(key)) {
+			} else if (SettingsUtil.KEY_P2P_ENABLED.equals(key)) {
                 if (sharedPreferences.getBoolean(key, false)) {
                     _p2p_manager.resume();
                 } else {

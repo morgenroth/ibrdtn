@@ -19,11 +19,15 @@ public final class SettingsUtil {
     private static final String KEY_NEXT_SCHEDULED_CHECK = "nextScheduledCheck";
     private static final String KEY_SCHEDULER_INFO = "schedulerInfo";
     private static final String KEY_SCHEDULER_STOPPED = "schedulerStopped";
+    
+    public static final String KEY_P2P_ENABLED = "p2p_enabled";
+    public static final String KEY_P2P_STRATEGY = "p2p_strategy";
+    public static final String KEY_ENDPOINT_ID = "endpoint_id";
 
     public static Strategy getStrategy(Context context) {
         SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(context);
-        String type = prefs.getString("p2p_strategy", "on");
+        String type = prefs.getString(KEY_P2P_STRATEGY, "on");
         Strategy s = null;
         if ("on".equals(type)) {
             s = new StategyAlwaysOn();
@@ -86,13 +90,13 @@ public final class SettingsUtil {
     public static boolean isPeerDiscoveryEnabled(Context context) {
         SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(context);
-        return prefs.getBoolean("p2p_enabled", false);
+        return prefs.getBoolean(KEY_P2P_ENABLED, false);
     }
 
     public static String getEid(Context context) {
         SharedPreferences prefs = PreferenceManager
                 .getDefaultSharedPreferences(context);
-        return prefs.getString("endpoint_id", "error");
+        return prefs.getString(KEY_ENDPOINT_ID, "dtn:none");
     }
 
 }
