@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.NetworkInfo;
+import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pDeviceList;
@@ -34,18 +35,10 @@ import de.tubs.ibr.dtn.swig.NativeP2pManager;
 @TargetApi(16)
 public class P2pManager extends NativeP2pManager {
 
-    private final static String TAG = "P2PManager";
+    private final static String TAG = "P2pManager";
     
     public static final String START_DISCOVERY_ACTION = "de.tubs.ibr.dtn.p2p.action.START_DISCOVERY";
     public static final String STOP_DISCOVERY_ACTION = "de.tubs.ibr.dtn.p2p.action.STOP_DISCOVERY";
-    
-    public static final String PEER_FOUND_ACTION = "de.tubs.ibr.dtn.p2p.action.PEER_FOUND";
-    public static final String EID_EXTRA = "de.tubs.ibr.dtn.p2p.extra.EID";
-    public static final String MAC_EXTRA = "de.tubs.ibr.dtn.p2p.extra.MAC";
-    
-    public static final String CONNECTION_CHANGED_ACTION = "de.tubs.ibr.dtn.p2p.action.CONNECTION_CHANGED";
-    public static final String STATE_EXTRA = "de.tubs.ibr.dtn.p2p.extra.STATE";
-    public static final String INTERFACE_EXTRA = "de.tubs.ibr.dtn.p2p.extra.INTERFACE";
 
     private DaemonService mService = null;
     
@@ -90,6 +83,21 @@ public class P2pManager extends NativeP2pManager {
             prefs.edit().putBoolean(SettingsUtil.KEY_P2P_ENABLED, false).commit();
         }
     };
+    
+    private WifiP2pManager.ActionListener mActionListener = new WifiP2pManager.ActionListener() {
+        @Override
+        public void onSuccess() {
+        }
+        
+        @Override
+        public void onFailure(int reason) {
+            if (reason == WifiP2pManager.P2P_UNSUPPORTED) {
+                Log.e(TAG, "Wi-Fi Direct is not supported by this device!");
+            } else {
+                Log.e(TAG, "P2P: " + reason);
+            }
+        }
+    };
 
     public void onCreate() {
         // daemon is up
@@ -131,11 +139,11 @@ public class P2pManager extends NativeP2pManager {
             mService.startService(i);
             
             // add local service description
-            mWifiP2pManager.addLocalService(mWifiP2pChannel, mServiceInfo, null);
+            mWifiP2pManager.addLocalService(mWifiP2pChannel, mServiceInfo, mActionListener);
             
             // add service discovery request
             mServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
-            mWifiP2pManager.addServiceRequest(mWifiP2pChannel, mServiceRequest, null);
+            mWifiP2pManager.addServiceRequest(mWifiP2pChannel, mServiceRequest, mActionListener);
         }
     }
     
@@ -146,14 +154,17 @@ public class P2pManager extends NativeP2pManager {
             i.setAction(SchedulerService.ACTION_DEACTIVATE_SCHEDULER);
             mService.startService(i);
             
+            // cancel all connection request
+            mWifiP2pManager.cancelConnect(mWifiP2pChannel, mActionListener);
+            
             // clear all service discovery requests
-            mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, null);
+            mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, mActionListener);
             
             // remove local service description
-            mWifiP2pManager.clearLocalServices(mWifiP2pChannel, null);
+            mWifiP2pManager.clearLocalServices(mWifiP2pChannel, mActionListener);
             
             // stop all peer discoveries
-            mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
+            mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, mActionListener);
         }
     }
 
@@ -191,7 +202,9 @@ public class P2pManager extends NativeP2pManager {
         // connect to the peer identified by "data"
         WifiP2pConfig config = new WifiP2pConfig();
         config.deviceAddress = data;
-        mWifiP2pManager.connect(mWifiP2pChannel, config, null);
+        config.groupOwnerIntent = -1;
+        config.wps.setup = WpsInfo.INVALID;
+        mWifiP2pManager.connect(mWifiP2pChannel, config, mActionListener);
     }
 
     @Override
@@ -216,29 +229,28 @@ public class P2pManager extends NativeP2pManager {
             } else if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
                 // TODO
             } else if (START_DISCOVERY_ACTION.equals(action)) {
-                mWifiP2pManager.discoverPeers(mWifiP2pChannel, null);
+                mWifiP2pManager.discoverPeers(mWifiP2pChannel, mActionListener);
             } else if (STOP_DISCOVERY_ACTION.equals(action)) {
-                mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, null);
+                mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, mActionListener);
             }
         }
         
         private void connectionChanged(Context context, Intent intent) {
-            NetworkInfo netInfo = intent
-                    .getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+            NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
             Log.d(TAG, "DetailedState: " + netInfo.getDetailedState());
+            
             if (netInfo.isConnected()) {
-                P2pManager.this.connectedToPeer();
+                // request group info to get the interface of the group
+                mWifiP2pManager.requestGroupInfo(mWifiP2pChannel, mGroupInfoListener);
             }
         }
 
         private void peersChanged(Context context, Intent intent) {
-            P2pManager.this.peersChanged();
+            mWifiP2pManager.requestPeers(mWifiP2pChannel, mPeerListListener);
         }
 
         private void discoveryChanged(Context context, Intent intent) {
-            int discoveryState = intent.getIntExtra(
-                    WifiP2pManager.EXTRA_DISCOVERY_STATE,
-                    WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
+            int discoveryState = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
             if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
                 Intent i = new Intent(context, SchedulerService.class);
                 i.setAction(SchedulerService.ACTION_CHECK_STATE);
@@ -247,66 +259,54 @@ public class P2pManager extends NativeP2pManager {
             }
         }
     };
-    
-    private void connectedToPeer() {
-        mWifiP2pManager.requestGroupInfo(mWifiP2pChannel,
-                new GroupInfoListener() {
-                    @Override
-                    public void onGroupInfoAvailable(WifiP2pGroup group) {
-                        String iface = group.getInterface();
-
-                        Intent i = new Intent(mService, DaemonService.class);
-                        i.setAction(CONNECTION_CHANGED_ACTION);
-                        i.putExtra(STATE_EXTRA, 1);
-                        i.putExtra(INTERFACE_EXTRA, iface);
-                        mService.startService(i);
-                    }
-                });
-    }
-
-    private void peersChanged() {
-        mWifiP2pManager.requestPeers(mWifiP2pChannel, new PeerListListener() {
-            @Override
-            public void onPeersAvailable(WifiP2pDeviceList peers) {
-                Log.d(TAG, "Peers available:" + peers.getDeviceList().size());
-                P2pManager.this.checkPeers(peers);
-            }
-        });
-    }
-
-    private void checkPeers(WifiP2pDeviceList peers) {
-        boolean allEIDs = true;
-        for (WifiP2pDevice device : peers.getDeviceList()) {
-            Database db = Database.getInstance(mService);
-            db.open();
-            Peer peer = db.find(device.deviceAddress);
-            if (peer == null) {
-                peer = new Peer(device.deviceAddress, "", new Date(), false);
-                db.put(mService, peer);
-            } else {
-                peer.setLastContact(new Date());
-                db.put(mService, peer);
-            }
-            if (peer.hasEid()) {
-                peerDiscovered(peer);
-            } else {
-                allEIDs = false;
-            }
-        }
-        // TODO bessere Bedingung finden, da EIDs geändert werden können
-        if (!allEIDs) {
-            mWifiP2pManager.discoverServices(mWifiP2pChannel, null);
-        }
-    }
 
     private void peerDiscovered(Peer peer) {
-        Intent i = new Intent(mService, DaemonService.class);
-        i.setAction(PEER_FOUND_ACTION);
-        i.putExtra(EID_EXTRA, peer.getEid());
-        i.putExtra(MAC_EXTRA, peer.getMacAddress());
-        mService.startService(i);
         Log.d(TAG, "discovered peer:" + peer.getEid() + "," + peer.getMacAddress());
+        fireDiscovered(peer.getEid(), peer.getMacAddress());
     }
+    
+    /**
+     * This listener is used to get the interface of new groups
+     */
+    private GroupInfoListener mGroupInfoListener = new GroupInfoListener() {
+        @Override
+        public void onGroupInfoAvailable(WifiP2pGroup group) {
+            String iface = group.getInterface();
+            
+            // add the interface
+            fireInterfaceUp(iface);
+        }
+    };
+    
+    private PeerListListener mPeerListListener = new PeerListListener() {
+        @Override
+        public void onPeersAvailable(WifiP2pDeviceList peers) {
+            Log.d(TAG, "Peers available:" + peers.getDeviceList().size());
+            
+            boolean allEIDs = true;
+            for (WifiP2pDevice device : peers.getDeviceList()) {
+                Database db = Database.getInstance(mService);
+                db.open();
+                Peer peer = db.find(device.deviceAddress);
+                if (peer == null) {
+                    peer = new Peer(device.deviceAddress, "", new Date(), false);
+                    db.put(mService, peer);
+                } else {
+                    peer.setLastContact(new Date());
+                    db.put(mService, peer);
+                }
+                if (peer.hasEid()) {
+                    peerDiscovered(peer);
+                } else {
+                    allEIDs = false;
+                }
+            }
+            // TODO bessere Bedingung finden, da EIDs geändert werden können
+            if (!allEIDs) {
+                mWifiP2pManager.discoverServices(mWifiP2pChannel, mActionListener);
+            }
+        }
+    };
 
     private DnsSdTxtRecordListener mRecordListener = new DnsSdTxtRecordListener() {
 

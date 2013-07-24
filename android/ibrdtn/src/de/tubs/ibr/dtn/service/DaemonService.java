@@ -273,29 +273,6 @@ public class DaemonService extends Service {
             
             // schedule next collection in 15 minutes
             mServiceHandler.postDelayed(mCollectStats, 900000);
-        } else if (P2pManager.CONNECTION_CHANGED_ACTION.equals(action)) {
-            final int state = intent.getIntExtra(P2pManager.STATE_EXTRA, -1);
-            final String iface = intent
-                    .getStringExtra(P2pManager.INTERFACE_EXTRA);
-
-            switch (state) {
-            case 0:
-                Log.d(TAG, "Interface down: " + iface);
-                _p2p_manager.fireInterfaceDown(iface);
-                break;
-            case 1:
-                Log.d(TAG, "Interface up: " + iface);
-                _p2p_manager.fireInterfaceUp(iface);
-                break;
-            default:
-                Log.d(TAG, "Unknown state: " + iface);
-                break;
-
-            }
-        } else if (P2pManager.PEER_FOUND_ACTION.equals(action)) {
-            final String eid = intent.getStringExtra(P2pManager.EID_EXTRA);
-            final String mac = intent.getStringExtra(P2pManager.MAC_EXTRA);
-            _p2p_manager.fireDiscovered(eid, mac);
         }
         
         // stop the daemon if it should be offline
