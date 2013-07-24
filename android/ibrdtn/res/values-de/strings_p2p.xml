@@ -17,5 +17,6 @@
     <string name="p2p_label_eid">EID:</string>
     <string name="p2p_label_lastcontact">Letzter Kontakt:</string>
     <string name="p2p_label_connected">Verbunden:</string>
+    <string name="p2p_label_state">Zustand:</string>
 
 </resources>

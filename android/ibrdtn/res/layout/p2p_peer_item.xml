@@ -37,12 +37,12 @@
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <TextView
-        android:id="@+id/labelConnected"
+        android:id="@+id/labelState"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/labelLastContact"
         android:layout_below="@+id/labelLastContact"
-        android:text="@string/p2p_label_connected"
+        android:text="@string/p2p_label_state"
         android:layout_marginRight="4sp"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
@@ -71,11 +71,11 @@
         android:layout_toRightOf="@+id/labelLastContact" />
 
     <TextView
-        android:id="@+id/connected"
+        android:id="@+id/state"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/labelConnected"
-        android:layout_alignBottom="@+id/labelConnected"
-        android:layout_toRightOf="@+id/labelConnected" />
+        android:layout_alignBaseline="@+id/labelState"
+        android:layout_alignBottom="@+id/labelState"
+        android:layout_toRightOf="@+id/labelState" />
 
 </de.tubs.ibr.dtn.p2p.PeerItem>

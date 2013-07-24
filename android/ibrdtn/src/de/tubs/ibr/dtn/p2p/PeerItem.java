@@ -18,7 +18,7 @@ public class PeerItem extends RelativeLayout {
     TextView mMacAddress = null;
     TextView mEid = null;
     TextView mLastContact = null;
-    TextView mConnected = null;
+    TextView mState = null;
 
     public PeerItem(Context context) {
         super(context);
@@ -35,7 +35,7 @@ public class PeerItem extends RelativeLayout {
         mMacAddress = (TextView) findViewById(R.id.mac);
         mEid = (TextView) findViewById(R.id.eid);
         mLastContact = (TextView) findViewById(R.id.contact);
-        mConnected = (TextView) findViewById(R.id.connected);        
+        mState = (TextView) findViewById(R.id.state);
     }
     
     public void bind(Peer p, int position) {
@@ -54,7 +54,7 @@ public class PeerItem extends RelativeLayout {
         mMacAddress.setText(mPeer.getP2pAddress());
         mEid.setText(mPeer.getEndpoint());
         mLastContact.setText(date);
-        mConnected.setText(String.valueOf(mPeer.getConnectState()));
+        mState.setText(String.valueOf(mPeer.getConnectState()));
     }
     
 }
