@@ -23,6 +23,7 @@ public class PeerAdapter extends CursorAdapter {
         BaseColumns._ID,
         Peer.P2P_ADDRESS,
         Peer.ENDPOINT,
+        Peer.LAST_SERVICE_DISCO,
         Peer.LAST_SEEN,
         Peer.CONNECT_STATE,
         Peer.CONNECT_UPDATE
@@ -33,9 +34,10 @@ public class PeerAdapter extends CursorAdapter {
     static final int COLUMN_PEER_ID             = 0;
     static final int COLUMN_PEER_P2P_ADDRESS    = 1;
     static final int COLUMN_PEER_ENDPOINT       = 2;
-    static final int COLUMN_PEER_LAST_SEEN      = 3;
-    static final int COLUMN_PEER_CONNECT_STATE  = 4;
-    static final int COLUMN_PEER_CONNECT_UPDATE = 5;
+    static final int COLUMN_PEER_LAST_SERVICE_DISCO = 3;
+    static final int COLUMN_PEER_LAST_SEEN      = 4;
+    static final int COLUMN_PEER_CONNECT_STATE  = 5;
+    static final int COLUMN_PEER_CONNECT_UPDATE = 6;
     
     private static final int CACHE_SIZE     = 50;
 
@@ -55,6 +57,7 @@ public class PeerAdapter extends CursorAdapter {
         public int mColumnId;
         public int mColumnP2pAddress;
         public int mColumnEndpoint;
+        public int mColumnLastServiceDisco;
         public int mColumnLastSeen;
         public int mColumnConnectState;
         public int mColumnConnectUpdate;
@@ -63,6 +66,7 @@ public class PeerAdapter extends CursorAdapter {
             mColumnId               = COLUMN_PEER_ID;
             mColumnP2pAddress       = COLUMN_PEER_P2P_ADDRESS;
             mColumnEndpoint         = COLUMN_PEER_ENDPOINT;
+            mColumnLastServiceDisco = COLUMN_PEER_LAST_SERVICE_DISCO;
             mColumnLastSeen         = COLUMN_PEER_LAST_SEEN;
             mColumnConnectState     = COLUMN_PEER_CONNECT_STATE;
             mColumnConnectUpdate    = COLUMN_PEER_CONNECT_UPDATE;
@@ -85,6 +89,12 @@ public class PeerAdapter extends CursorAdapter {
 
             try {
                 mColumnEndpoint = cursor.getColumnIndexOrThrow(Peer.ENDPOINT);
+            } catch (IllegalArgumentException e) {
+                Log.w("colsMap", e.getMessage());
+            }
+            
+            try {
+                mColumnLastServiceDisco = cursor.getColumnIndexOrThrow(Peer.LAST_SERVICE_DISCO);
             } catch (IllegalArgumentException e) {
                 Log.w("colsMap", e.getMessage());
             }

@@ -298,26 +298,28 @@ public class P2pManager extends NativeP2pManager {
         public void onPeersAvailable(WifiP2pDeviceList peers) {
             // Log.d(TAG, "Peers available:" + peers.getDeviceList().size());
             
-            boolean allEIDs = true;
+            boolean allEidsValid = true;
             for (WifiP2pDevice device : peers.getDeviceList()) {
                 Database db = Database.getInstance(mService);
                 db.open();
                 Peer peer = db.find(device.deviceAddress);
+                
                 if (peer == null) {
                     peer = new Peer(device.deviceAddress);
-                    db.put(peer);
                 } else {
                     peer.touch();
-                    db.put(peer);
                 }
-                if (peer.hasEndpoint()) {
+                
+                db.put(peer);
+                
+                if (peer.hasEndpoint() && peer.isEndpointValid()) {
                     peerDiscovered(peer);
                 } else {
-                    allEIDs = false;
+                    allEidsValid = false;
                 }
             }
-            // TODO bessere Bedingung finden, da EIDs geändert werden können
-            if (!allEIDs) {
+
+            if (!allEidsValid) {
                 requestServiceDiscovery();
             }
         }
@@ -345,18 +347,17 @@ public class P2pManager extends NativeP2pManager {
             Database db = Database.getInstance(mService);
             db.open();
             Peer p = db.find(srcDevice.deviceAddress);
+            
             if (p == null) {
                 p = new Peer(srcDevice.deviceAddress);
-                p.setEndpoint(txtRecordMap.get("eid"));
-                db.put(p);
             } else {
                 p.touch();
-                p.setEndpoint(txtRecordMap.get("eid"));
-                db.put(p);
             }
-            if (p.hasEndpoint()) {
-                peerDiscovered(p);
-            }
+            
+            p.setEndpoint(txtRecordMap.get("eid"));
+            db.put(p);
+            
+            peerDiscovered(p);
         }
     };
 
@@ -368,14 +369,15 @@ public class P2pManager extends NativeP2pManager {
             Database db = Database.getInstance(mService);
             db.open();
             Peer p = db.find(srcDevice.deviceAddress);
+            
             if (p == null) {
                 p = new Peer(srcDevice.deviceAddress);
-                db.put(p);
             } else {
-                srcDevice.deviceName = p.hasEndpoint() ? p.getEndpoint() : srcDevice.deviceName;
                 p.touch();
-                db.put(p);
             }
+            
+            db.put(p);
+            
             if (p.hasEndpoint()) {
                 peerDiscovered(p);
             }

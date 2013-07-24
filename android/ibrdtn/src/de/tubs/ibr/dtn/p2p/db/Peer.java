@@ -14,12 +14,14 @@ public class Peer {
     public static final String ID = BaseColumns._ID;
     public static final String P2P_ADDRESS = "address";
     public static final String ENDPOINT = "endpoint";
+    public static final String LAST_SERVICE_DISCO = "last_service_disco";
     public static final String LAST_SEEN = "last_seen";
     public static final String CONNECT_STATE = "connect_state";
     public static final String CONNECT_UPDATE = "connect_update";
 
     private String mP2pAddress = null;
     private String mEndpoint = null;
+    private Date mLastServiceDisco = null;
     private Date mLastSeen = null;
     private Integer mConnectState = 0;
     private Date mConnectUpdate = null;
@@ -27,6 +29,7 @@ public class Peer {
     public Peer(Cursor cursor, PeerAdapter.ColumnsMap cmap) {
         mP2pAddress = cursor.getString(cmap.mColumnP2pAddress);
         mEndpoint = cursor.getString(cmap.mColumnEndpoint);
+        mLastServiceDisco = new Date(cursor.getLong(cmap.mColumnLastServiceDisco));
         mLastSeen = new Date(cursor.getLong(cmap.mColumnLastSeen));
         mConnectState = cursor.getInt(cmap.mColumnConnectState);
         mConnectUpdate = new Date(cursor.getLong(cmap.mColumnConnectUpdate));
@@ -54,10 +57,27 @@ public class Peer {
 
     public void setEndpoint(String endpoint) {
         mEndpoint = endpoint;
+        mLastServiceDisco = new Date();
     }
     
     public boolean hasEndpoint() {
         return (mEndpoint != null);
+    }
+    
+    public boolean isEndpointValid() {
+        if (mEndpoint == null) return false;
+        if (mLastServiceDisco == null) return false;
+        
+        Calendar timeframe = Calendar.getInstance();
+        timeframe.add(Calendar.MINUTE, -30);
+        
+        if (mLastServiceDisco.before(timeframe.getTime())) return false;
+        
+        return true;
+    }
+    
+    public Date getLastServiceDisco() {
+        return mLastServiceDisco;
     }
 
     public Date getLastSeen() {

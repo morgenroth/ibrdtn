@@ -39,6 +39,7 @@ public class Database {
                     Peer.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     Peer.P2P_ADDRESS + " TEXT, " +
                     Peer.ENDPOINT + " TEXT, " +
+                    Peer.LAST_SERVICE_DISCO + " DATETIME, " +
                     Peer.LAST_SEEN + " DATETIME, " +
                     Peer.CONNECT_STATE + " INTEGER, " +
                     Peer.CONNECT_UPDATE + " DATETIME" +
@@ -46,7 +47,7 @@ public class Database {
 
     private static class DatabaseOpenHelper extends SQLiteOpenHelper {
 
-        private static final int DATABASE_VERSION = 2;
+        private static final int DATABASE_VERSION = 3;
         private static final String DATABASE_NAME = "p2p.db";
         private static final String TAG = "DatabaseOpenHelper";
 
@@ -106,6 +107,12 @@ public class Database {
             values.putNull(Peer.ENDPOINT);
         } else {
             values.put(Peer.ENDPOINT, peer.getEndpoint());
+        }
+
+        if (peer.getLastServiceDisco() == null) {
+            values.putNull(Peer.LAST_SERVICE_DISCO);
+        } else {
+            values.put(Peer.LAST_SERVICE_DISCO, peer.getLastServiceDisco().getTime());
         }
         
         values.put(Peer.LAST_SEEN, peer.getLastSeen().getTime());
