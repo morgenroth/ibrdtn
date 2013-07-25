@@ -1,13 +1,11 @@
-package ibrdtn.example.api;
+package ibrdtn.speedtest.api;
 
 import ibrdtn.api.APIException;
 import ibrdtn.api.ExtendedClient;
 import ibrdtn.api.object.Bundle;
 import ibrdtn.api.object.BundleID;
-import ibrdtn.example.data.Envelope;
-import ibrdtn.example.data.MessageData;
-import static ibrdtn.example.api.PayloadType.BYTE;
-import static ibrdtn.example.api.PayloadType.OBJECT;
+import ibrdtn.speedtest.data.Envelope;
+import ibrdtn.speedtest.data.MessageData;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -116,7 +114,7 @@ public abstract class AbstractAPIHandler implements ibrdtn.api.sab.CallbackHandl
                     logger.log(Level.INFO, "Requesting payload");
                     finalClient.getPayload();
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "Unable to get bundle payload.", e);
+                    logger.log(Level.SEVERE, "Unable to mark bundle as delivered.", e);
                 }
             }
         });

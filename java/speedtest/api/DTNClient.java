@@ -1,4 +1,4 @@
-package ibrdtn.example.api;
+package ibrdtn.speedtest.api;
 
 import ibrdtn.api.APIException;
 import ibrdtn.api.EventClient;
@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 public class DTNClient {
 
     private static final Logger logger = Logger.getLogger(DTNClient.class.getName());
-    private ExecutorService executor;
+    public ExecutorService executor;
     private ExtendedClient exClient = null;
     private EventClient eventClient = null;
     private ibrdtn.api.sab.CallbackHandler sabHandler = null;
@@ -52,7 +52,7 @@ public class DTNClient {
      * Constructor allowing to choose between different payload types and API handling strategies.
      *
      * @param endpoint the application's primary EID
-     * @param payloadType the expected payload format
+     * @param type the expected payload format
      * @param apiType the API handling strategy
      */
     public DTNClient(String endpoint, PayloadType payloadType, APIHandlerType apiType) {
@@ -109,7 +109,7 @@ public class DTNClient {
      */
     public void send(Bundle bundle) {
 
-        logger.log(Level.INFO, "Sending {0}", bundle);
+//        logger.log(Level.INFO, "Sending {0}", bundle);
 
         final Bundle finalBundle = bundle;
         final ExtendedClient finalClient = this.exClient;

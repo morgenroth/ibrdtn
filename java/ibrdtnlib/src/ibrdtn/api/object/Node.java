@@ -8,19 +8,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A Node instance holds connection informations of a neighboring node.
+ * A Node instance holds connection information of a neighboring node.
  *
  * @author Julian Timpner <timpner@ibr.cs.tu-bs.de>
  */
 public class Node {
 
     private static final Logger logger = Logger.getLogger(Node.class.getName());
-    private String eid;
+    private SingletonEndpoint eid;
     private List<NodeConnection> connections;
 
-    public Node(String s) {
+    public Node(SingletonEndpoint eid) {
+        this.eid = eid;
         connections = new LinkedList<>();
-        parse(s);
+    }
+
+    public Node(String connections) {
+        this.connections = new LinkedList<>();
+        parse(connections);
     }
 
     private void parse(String data) {
@@ -31,7 +36,7 @@ public class Node {
                 + "(\\bdtn://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|])" // dtn://
                 + "|"
                 + "(\\bipn:[0-9]*)" // ipn:
-                + ")"; 
+                + ")";
 
         final Pattern eidPattern = Pattern.compile(url);
         final Matcher eidMatcher = eidPattern.matcher(split[0]);
@@ -39,7 +44,7 @@ public class Node {
             logger.log(Level.WARNING, "Unexpected eid format: {0}", split[0]);
         }
 
-        eid = split[0];
+        eid = new SingletonEndpoint(split[0]);
 
         // dtn://dtnbucket.ibr.cs.tu-bs.de 20#discovered#TCP#ip=::ffff:134.169.35.178;port=4556; 20#discovered#UDP#ip=::ffff:134.169.35.178;port=4556;
         // dtn://sbase.dtn 20#discovered#TCP#ip=::ffff:134.169.35.168;port=4556
@@ -50,7 +55,7 @@ public class Node {
         }
     }
 
-    public String getEid() {
+    public SingletonEndpoint getEid() {
         return eid;
     }
 
