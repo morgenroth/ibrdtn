@@ -425,9 +425,13 @@ public class P2pManager extends NativeP2pManager {
             
             if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
                 Log.d(TAG, "Peer discovery has been stopped");
-                Intent i = new Intent(context, SchedulerService.class);
-                i.setAction(SchedulerService.ACTION_CHECK_STATE);
-                context.startService(i);
+                
+                // check scheduler state if P2P is enabled
+                if (ManagerState.ENABLED.equals(mManagerState)) {
+                    Intent i = new Intent(context, SchedulerService.class);
+                    i.setAction(SchedulerService.ACTION_CHECK_STATE);
+                    context.startService(i);
+                }
             }
             else if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
                 Log.d(TAG, "Peer discovery has been started");
@@ -449,6 +453,8 @@ public class P2pManager extends NativeP2pManager {
         }
         
         private void startDiscovery(Context context, Intent intent) {
+            if (!ManagerState.ENABLED.equals(mManagerState)) return;
+
             mWifiP2pManager.discoverPeers(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
                 @Override
                 public void onFailure(int reason) {
