@@ -100,4 +100,6 @@
     <string name="showstats">Statistik anzeigen</string>
     <string name="pref_storage">Speicher</string>
     <string name="pref_storage_description">Wie Bündel auf dem Gerät gespeichert werden.</string>
+    <string name="pref_cloudconnect_3g">Erlaube Mobilfunk als Uplink</string>
+    <string name="pref_cloudconnect_3g_description">Erlaube Cloud Connect Verbindungen über Mobilfunk.</string>
 </resources>
