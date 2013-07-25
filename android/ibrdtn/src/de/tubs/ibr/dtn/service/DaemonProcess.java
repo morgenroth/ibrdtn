@@ -317,6 +317,7 @@ public class DaemonProcess {
         ret.put("checkFragmentation", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("timesync_mode", DaemonRunLevel.RUNLEVEL_API);
         ret.put("storage_mode", DaemonRunLevel.RUNLEVEL_CORE);
+        ret.put("cloud_uplink_3g", DaemonRunLevel.RUNLEVEL_NETWORK);
         
         return ret;
     }
@@ -701,7 +702,10 @@ public class DaemonProcess {
 			}
 
 			p.println("net_interfaces = " + ifaces);
-			p.println("net_internet = " + internet_ifaces);
+			
+			if (!preferences.getBoolean("cloud_uplink_3g", false)) {
+			    p.println("net_internet = " + internet_ifaces);
+			}
 
 			String storage_mode = preferences.getString( "storage_mode", "disk-persistant" );
 			if ("disk".equals( storage_mode ) || "disk-persistant".equals( storage_mode )) {

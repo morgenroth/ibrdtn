@@ -50,7 +50,8 @@ import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
-import de.tubs.ibr.dtn.p2p.P2PManager;
+import de.tubs.ibr.dtn.p2p.P2pManager;
+import de.tubs.ibr.dtn.p2p.SettingsUtil;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
 import de.tubs.ibr.dtn.stats.StatsEntry;
@@ -82,7 +83,7 @@ public class DaemonService extends Service {
     private SessionManager mSessionManager = null;
 
     // the P2P manager used for wifi direct control
-    private P2PManager _p2p_manager = null;
+    private P2pManager _p2p_manager = null;
 
     // the daemon process
     private DaemonProcess mDaemonProcess = null;
@@ -321,7 +322,7 @@ public class DaemonService extends Service {
         mSessionManager = new SessionManager(this);
         
         // create P2P Manager
-        _p2p_manager = new P2PManager(this);
+        _p2p_manager = new P2pManager(this);
         
         // initialize the basic daemon
         mDaemonProcess.initialize();
@@ -426,6 +427,10 @@ public class DaemonService extends Service {
                     break;
                     
                 case OFFLINE:
+                    if (!prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
+                        _p2p_manager.pause();
+                    }
+                    
                     // disable P2P manager
                     _p2p_manager.destroy();
                     
@@ -457,7 +462,11 @@ public class DaemonService extends Service {
                 	}
                     
                     // enable P2P manager
-                    _p2p_manager.initialize();
+                    _p2p_manager.create();
+                    
+                    if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
+                        _p2p_manager.resume();
+                    }
                     break;
                     
                 case SUSPENDED:
@@ -563,32 +572,38 @@ public class DaemonService extends Service {
 		public void onSharedPreferenceChanged(
 				SharedPreferences sharedPreferences, String key) {
 			
-			if (!"RunAsForegroundService".equals(key)) return;
-			
-			if (sharedPreferences.getBoolean("RunAsForegroundService", true)
-					&& mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
-
-                // mark the notification as visible
-                _show_notification = true;
-                
-                // create initial notification
-                Notification n = buildNotification(R.drawable.ic_notification, getResources()
-                        .getString(R.string.notify_pending));
-
-                // turn this to a foreground service (kill-proof)
-                startForeground(1, n);
-                
-                // request notification update
-                requestNotificationUpdate();
-                
-			} else {
-				
-	            // mark the notification as invisible
-	            _show_notification = false;
-	            
-	            // stop foreground service
-	            stopForeground(true);
-	            
+			if ("RunAsForegroundService".equals(key)) {
+    			if (sharedPreferences.getBoolean("RunAsForegroundService", true)
+    					&& mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
+    
+                    // mark the notification as visible
+                    _show_notification = true;
+                    
+                    // create initial notification
+                    Notification n = buildNotification(R.drawable.ic_notification, getResources()
+                            .getString(R.string.notify_pending));
+    
+                    // turn this to a foreground service (kill-proof)
+                    startForeground(1, n);
+                    
+                    // request notification update
+                    requestNotificationUpdate();
+                    
+    			} else {
+    				
+    	            // mark the notification as invisible
+    	            _show_notification = false;
+    	            
+    	            // stop foreground service
+    	            stopForeground(true);
+    	            
+    			}
+			} else if (SettingsUtil.KEY_P2P_ENABLED.equals(key)) {
+                if (sharedPreferences.getBoolean(key, false)) {
+                    _p2p_manager.resume();
+                } else {
+                    _p2p_manager.pause();
+                }
 			}
 		}
     	
