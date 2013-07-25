@@ -10,7 +10,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
@@ -51,8 +50,10 @@ public class P2pManager extends NativeP2pManager {
     private enum ManagerState {
         UNINITIALIZED,
         INITIALIZED,
-        RUNNING,
-        PAUSED
+        PENDING,
+        ENABLED,
+        DISABLED,
+        NOT_SUPPORTED
     };
     
     private ManagerState mManagerState = ManagerState.UNINITIALIZED;
@@ -84,54 +85,145 @@ public class P2pManager extends NativeP2pManager {
     private WifiP2pManager.ChannelListener mChannelListener = new WifiP2pManager.ChannelListener() {
         @Override
         public void onChannelDisconnected() {
-            onPause();
-            onDestroy();
-            
-            // disable P2P switch
-            // this causes side effects: when terminating the whole app the wifi p2p
-            // switch if set to off until a user set it to on again
-
-            //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mService);
-            //prefs.edit().putBoolean(SettingsUtil.KEY_P2P_ENABLED, false).commit();
+            synchronized(P2pManager.this) {
+                onPause();
+                onDestroy();
+                mManagerState = ManagerState.NOT_SUPPORTED;
+            }
         }
     };
+    
+    public synchronized void create() {
+        if (ManagerState.NOT_SUPPORTED.equals(mManagerState)) return;
+        onCreate();
+    }
+    
+    public synchronized void destroy() {
+        if (ManagerState.NOT_SUPPORTED.equals(mManagerState)) return;
+        onDestroy();
+    }
+    
+    public synchronized void pause() {
+        if (ManagerState.NOT_SUPPORTED.equals(mManagerState)) return;
+        if (ManagerState.ENABLED.equals(mManagerState)) {
+            onP2pDisabled();
+        }
+        onPause();
+    }
+    
+    public synchronized void resume() {
+        if (ManagerState.NOT_SUPPORTED.equals(mManagerState)) return;
+        onResume();
+    }
 
-    public synchronized void onCreate() {
+    private synchronized void onCreate() {
         // daemon is up
+        Log.d(TAG, "onCreate() state: " + mManagerState.toString());
         
-        // listen to wifi p2p events
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        filter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
-        filter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        filter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
-        filter.addAction(START_DISCOVERY_ACTION);
-        filter.addAction(STOP_DISCOVERY_ACTION);
-        mService.registerReceiver(mP2pEventReceiver, filter);
-        
-        // listen to wifi p2p events
-        IntentFilter wifi_filter = new IntentFilter();
-        wifi_filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-        mService.registerReceiver(mWifiEventReceiver, wifi_filter);
+        // get the WifiP2pManager
+        mWifiP2pManager = (WifiP2pManager) mService.getSystemService(Context.WIFI_P2P_SERVICE);
         
         // set the current state
         mManagerState = ManagerState.INITIALIZED;
     }
     
-    public synchronized void onResume() {
-        WifiManager wifi = (WifiManager) mService.getSystemService(Context.WIFI_SERVICE);
-        if (!wifi.isWifiEnabled()) {
-            // set the current state
-            mManagerState = ManagerState.PAUSED;
-            return;
-        }
+    private synchronized void onResume() {
+        Log.d(TAG, "onResume() state: " + mManagerState.toString());
         
-        // get the WifiP2pManager
-        mWifiP2pManager = (WifiP2pManager) mService.getSystemService(Context.WIFI_P2P_SERVICE);
+        // transition only from INITIALIZED state
+        if (!ManagerState.INITIALIZED.equals(mManagerState)) return;
+        
+        // listen to wifi p2p events
+        IntentFilter p2p_filter = new IntentFilter();
+        p2p_filter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        p2p_filter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
+        p2p_filter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+        p2p_filter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+        p2p_filter.addAction(START_DISCOVERY_ACTION);
+        p2p_filter.addAction(STOP_DISCOVERY_ACTION);
+        mService.registerReceiver(mP2pEventReceiver, p2p_filter);
+        
+        // set the current state
+        mManagerState = ManagerState.PENDING;
         
         // create a new Wi-Fi P2P channel
         mWifiP2pChannel = mWifiP2pManager.initialize(mService, mService.getMainLooper(), mChannelListener);
+    }
+    
+    /**
+     * This method is called if the P2p has been initialized
+     */
+    private synchronized void onP2pEnabled() {
+        Log.d(TAG, "onP2pEnabled() state: " + mManagerState.toString());
         
+        // transition only from PENDING or DISABLED state
+        if (!(ManagerState.PENDING.equals(mManagerState) || ManagerState.DISABLED.equals(mManagerState))) return;
+        
+        // initialize service discovery mechanisms
+        initializeServiceDiscovery();
+        
+        // start the scheduler
+        Intent i = new Intent(mService, SchedulerService.class);
+        i.setAction(SchedulerService.ACTION_ACTIVATE_SCHEDULER);
+        mService.startService(i);
+        
+        // set the current state
+        mManagerState = ManagerState.ENABLED;
+    }
+    
+    private synchronized void onP2pDisabled() {
+        Log.d(TAG, "onP2pDisabled() state: " + mManagerState.toString());
+        
+        // stop the scheduler
+        Intent i = new Intent(mService, SchedulerService.class);
+        i.setAction(SchedulerService.ACTION_DEACTIVATE_SCHEDULER);
+        mService.startService(i);
+        
+        if (ManagerState.ENABLED.equals(mManagerState)) {
+            // cancel all connection request
+            mWifiP2pManager.cancelConnect(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onFailure(int reason) {
+                    Log.e(TAG, "cancellation of all connections failed: " + reason);
+                }
+
+                @Override
+                public void onSuccess() {
+                    Log.d(TAG, "all connects cancelled");
+                }
+            });
+            
+            // terminate service discovery mechanisms
+            terminateServiceDiscovery();
+        }
+        
+        // set the current state
+        mManagerState = ManagerState.DISABLED;
+    }
+    
+    private synchronized void onPause() {
+        Log.d(TAG, "onPause() state: " + mManagerState.toString());
+        
+        // stop listening to wifi p2p events
+        mService.unregisterReceiver(mP2pEventReceiver);
+        
+        // set the current state
+        mManagerState = ManagerState.INITIALIZED;
+    }
+
+    private synchronized void onDestroy() {
+        // daemon goes down
+        mLastDisco = null;
+        mServiceInfo = null;
+        mServiceRequest = null;
+        mWifiP2pChannel = null;
+        mWifiP2pManager = null;
+        
+        // set the current state
+        mManagerState = ManagerState.UNINITIALIZED;
+    }
+    
+    private void initializeServiceDiscovery() {
         // set service discovery listener
         mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, mServiceResponseListener, mRecordListener);
         
@@ -174,95 +266,47 @@ public class P2pManager extends NativeP2pManager {
                 Log.d(TAG, "service request added");
             }
         });
-        
-        // start the scheduler
-        Intent i = new Intent(mService, SchedulerService.class);
-        i.setAction(SchedulerService.ACTION_ACTIVATE_SCHEDULER);
-        mService.startService(i);
-        
-        // set the current state
-        mManagerState = ManagerState.RUNNING;
     }
     
-    public synchronized void onPause() {
-        if (mWifiP2pManager != null) {
-            // stop the scheduler
-            Intent i = new Intent(mService, SchedulerService.class);
-            i.setAction(SchedulerService.ACTION_DEACTIVATE_SCHEDULER);
-            mService.startService(i);
-            
-            // cancel all connection request
-            mWifiP2pManager.cancelConnect(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onFailure(int reason) {
-                    Log.e(TAG, "cancellation of all connections failed: " + reason);
-                }
+    private void terminateServiceDiscovery() {
+        // clear all service discovery requests
+        mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onFailure(int reason) {
+                Log.e(TAG, "cancellation of all service requests failed: " + reason);
+            }
 
-                @Override
-                public void onSuccess() {
-                    Log.d(TAG, "all connects cancelled");
-                }
-            });
-            
-            // clear all service discovery requests
-            mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onFailure(int reason) {
-                    Log.e(TAG, "cancellation of all service requests failed: " + reason);
-                }
-
-                @Override
-                public void onSuccess() {
-                    Log.d(TAG, "all service request cleared");
-                }
-            });
-            
-            // remove local service description
-            mWifiP2pManager.clearLocalServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onFailure(int reason) {
-                    Log.e(TAG, "clearing of all local services failed: " + reason);
-                }
-
-                @Override
-                public void onSuccess() {
-                    Log.d(TAG, "all local services cleared");
-                }
-            });
-            
-            // stop all peer discoveries
-            mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onFailure(int reason) {
-                    Log.e(TAG, "stop peer discovery failed: " + reason);
-                }
-
-                @Override
-                public void onSuccess() {
-                    Log.d(TAG, "peer discovery stopped");
-                }
-            });
-        }
+            @Override
+            public void onSuccess() {
+                Log.d(TAG, "all service request cleared");
+            }
+        });
         
-        // daemon goes down
-        mLastDisco = null;
-        mServiceInfo = null;
-        mServiceRequest = null;
-        mWifiP2pChannel = null;
-        mWifiP2pManager = null;
-        
-        // set the current state
-        mManagerState = ManagerState.INITIALIZED;
-    }
+        // remove local service description
+        mWifiP2pManager.clearLocalServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onFailure(int reason) {
+                Log.e(TAG, "clearing of all local services failed: " + reason);
+            }
 
-    public synchronized void onDestroy() {
-        if (mWifiP2pManager != null) {
-            // stop listening to wifi p2p events
-            mService.unregisterReceiver(mWifiEventReceiver);
-        }
+            @Override
+            public void onSuccess() {
+                Log.d(TAG, "all local services cleared");
+            }
+        });
         
-        // set the current state
-        mManagerState = ManagerState.UNINITIALIZED;
+        // stop all peer discoveries
+        mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onFailure(int reason) {
+                Log.e(TAG, "stop peer discovery failed: " + reason);
+            }
+
+            @Override
+            public void onSuccess() {
+                Log.d(TAG, "peer discovery stopped");
+            }
+        });
     }
 
     public void fireInterfaceUp(String iface) {
@@ -326,40 +370,6 @@ public class P2pManager extends NativeP2pManager {
         Log.i(TAG, "disconnect request: " + data);
     }
     
-    public BroadcastReceiver mWifiEventReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            
-            if (intent.getExtras() == null) {
-                Log.d(TAG, "Broadcast received: " + action);
-            } else {
-                Log.d(TAG, "Broadcast received: " + action + " | " + intent.getExtras().toString());
-            }
-
-            if (WifiManager.WIFI_STATE_CHANGED_ACTION.equals(action)) {
-                wifiStateChanged(context, intent);
-            }
-        }
-        
-        private void wifiStateChanged(Context context, Intent intent) {
-            synchronized(P2pManager.this) {
-                if (ManagerState.PAUSED.equals(mManagerState)) {
-                    onResume();
-                } else if (ManagerState.RUNNING.equals(mManagerState)) {
-                    WifiManager wifi = (WifiManager) mService.getSystemService(Context.WIFI_SERVICE);
-                    if (!wifi.isWifiEnabled()) {
-                        onPause();
-                        
-                        // set the current state
-                        mManagerState = ManagerState.PAUSED;
-                    }
-                }
-            }
-        }
-    };
-    
     public BroadcastReceiver mP2pEventReceiver = new BroadcastReceiver() {
 
         @Override
@@ -368,12 +378,6 @@ public class P2pManager extends NativeP2pManager {
             if (mWifiP2pManager == null) return;
             
             String action = intent.getAction();
-            
-            if (intent.getExtras() == null) {
-                Log.d(TAG, "Broadcast received: " + action);
-            } else {
-                Log.d(TAG, "Broadcast received: " + action + " | " + intent.getExtras().toString());
-            }
 
             if (WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
                 discoveryChanged(context, intent);
@@ -391,12 +395,24 @@ public class P2pManager extends NativeP2pManager {
         }
         
         private void connectionChanged(Context context, Intent intent) {
+            //WifiP2pInfo p2pInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
             NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-            Log.d(TAG, "DetailedState: " + netInfo.getDetailedState());
+            
+            // available with Android 4.3
+            // WifiP2pGroup p2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
+            // fireInterfaceDown( p2pGroup.getInterface() );
             
             if (netInfo.isConnected()) {
                 // request group info to get the interface of the group
-                mWifiP2pManager.requestGroupInfo(mWifiP2pChannel, mGroupInfoListener);
+                mWifiP2pManager.requestGroupInfo(mWifiP2pChannel, new GroupInfoListener() {
+                    @Override
+                    public void onGroupInfoAvailable(WifiP2pGroup group) {
+                        String iface = group.getInterface();
+                        
+                        // add the interface
+                        fireInterfaceUp(iface);
+                    }
+                });
             }
         }
 
@@ -408,14 +424,28 @@ public class P2pManager extends NativeP2pManager {
             int discoveryState = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
             
             if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
+                Log.d(TAG, "Peer discovery has been stopped");
                 Intent i = new Intent(context, SchedulerService.class);
                 i.setAction(SchedulerService.ACTION_CHECK_STATE);
                 context.startService(i);
             }
+            else if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
+                Log.d(TAG, "Peer discovery has been started");
+            }
+            
         }
         
         private void stateChanged(Context context, Intent intent) {
-            // TODO
+            int p2pState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, WifiP2pManager.WIFI_P2P_STATE_DISABLED);
+            
+            if (p2pState == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
+                Log.d(TAG, "Wi-Fi P2P has been disabled.");
+                onP2pDisabled();
+            }
+            else if (p2pState == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
+                Log.d(TAG, "Wi-Fi P2P has been enabled.");
+                onP2pEnabled();
+            }
         }
         
         private void startDiscovery(Context context, Intent intent) {
@@ -451,19 +481,6 @@ public class P2pManager extends NativeP2pManager {
         //Log.d(TAG, "discovered peer:" + peer.getEndpoint() + "," + peer.getP2pAddress());
         fireDiscovered(peer.getEndpoint(), peer.getP2pAddress());
     }
-    
-    /**
-     * This listener is used to get the interface of new groups
-     */
-    private GroupInfoListener mGroupInfoListener = new GroupInfoListener() {
-        @Override
-        public void onGroupInfoAvailable(WifiP2pGroup group) {
-            String iface = group.getInterface();
-            
-            // add the interface
-            fireInterfaceUp(iface);
-        }
-    };
     
     private PeerListListener mPeerListListener = new PeerListListener() {
         @Override

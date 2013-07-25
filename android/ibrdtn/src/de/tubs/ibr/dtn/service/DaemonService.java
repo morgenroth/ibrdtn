@@ -428,11 +428,11 @@ public class DaemonService extends Service {
                     
                 case OFFLINE:
                     if (!prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
-                        _p2p_manager.onPause();
+                        _p2p_manager.pause();
                     }
                     
                     // disable P2P manager
-                    _p2p_manager.onDestroy();
+                    _p2p_manager.destroy();
                     
                     // disable foreground service only if the daemon has been switched off
                     if (!prefs.getBoolean("enabledSwitch", false)) {
@@ -462,10 +462,10 @@ public class DaemonService extends Service {
                 	}
                     
                     // enable P2P manager
-                    _p2p_manager.onCreate();
+                    _p2p_manager.create();
                     
                     if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
-                        _p2p_manager.onResume();
+                        _p2p_manager.resume();
                     }
                     break;
                     
@@ -600,9 +600,9 @@ public class DaemonService extends Service {
     			}
 			} else if (SettingsUtil.KEY_P2P_ENABLED.equals(key)) {
                 if (sharedPreferences.getBoolean(key, false)) {
-                    _p2p_manager.onResume();
+                    _p2p_manager.resume();
                 } else {
-                    _p2p_manager.onPause();
+                    _p2p_manager.pause();
                 }
 			}
 		}
