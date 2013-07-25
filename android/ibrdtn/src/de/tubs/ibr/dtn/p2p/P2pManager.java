@@ -86,12 +86,16 @@ public class P2pManager extends NativeP2pManager {
         @Override
         public void onChannelDisconnected() {
             synchronized(P2pManager.this) {
-                onPause();
-                onDestroy();
-                mManagerState = ManagerState.NOT_SUPPORTED;
+            	// TODO: restart the stack? when?
             }
         }
     };
+    
+    private synchronized void shutdownForever() {
+        onPause();
+        onDestroy();
+        mManagerState = ManagerState.NOT_SUPPORTED;
+    }
     
     public synchronized void create() {
         if (ManagerState.NOT_SUPPORTED.equals(mManagerState)) return;
@@ -238,6 +242,7 @@ public class P2pManager extends NativeP2pManager {
             public void onFailure(int reason) {
                 if (reason == WifiP2pManager.P2P_UNSUPPORTED) {
                     Log.e(TAG, "failed to add local service: Wi-Fi Direct is not supported by this device!");
+                    shutdownForever();
                 } else {
                     Log.e(TAG, "failed to add local service: " + reason);
                 }
