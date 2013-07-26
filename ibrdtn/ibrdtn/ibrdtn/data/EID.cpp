@@ -373,7 +373,11 @@ namespace dtn
 			}
 
 			case SCHEME_DTN:
-				return "dtn:" + _ssp + "/" + _application;
+				if (_application.length() > 0) {
+					return "dtn:" + _ssp + "/" + _application;
+				} else {
+					return "dtn:" + _ssp;
+				}
 
 			default:
 				return _scheme + ":" + _ssp;
