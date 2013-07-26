@@ -87,10 +87,5 @@ namespace dtn
 			}
 		}
 
-		bool RoutingExtension::isRouting(const dtn::data::EID &eid)
-		{
-			return (eid.isApplication(50) || eid.isApplication("routing"));
-		}
-
 	} /* namespace routing */
 } /* namespace dtn */

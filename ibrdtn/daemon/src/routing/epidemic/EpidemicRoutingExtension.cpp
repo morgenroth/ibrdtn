@@ -211,7 +211,7 @@ namespace dtn
 
 					// do not forward any routing control message
 					// this is done by the neighbor routing module
-					if (isRouting(meta.source))
+					if (meta.source.isApplication("routing"))
 					{
 						return false;
 					}

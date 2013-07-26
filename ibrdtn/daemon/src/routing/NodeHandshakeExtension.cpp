@@ -250,10 +250,7 @@ namespace dtn
 			req.destination = origin;
 
 			// set destination application
-			if (req.destination.isCompressable())
-				req.destination.setApplication(50);
-			else
-				req.destination.setApplication("routing");
+			req.destination.setApplication("routing");
 
 			// limit the lifetime to 60 seconds
 			req.lifetime = 60;

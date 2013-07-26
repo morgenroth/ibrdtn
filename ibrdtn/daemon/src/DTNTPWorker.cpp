@@ -317,21 +317,13 @@ namespace dtn
 				b.source = dtn::core::BundleCore::local;
 
 				// set source application
-				if (dtn::core::BundleCore::local.isCompressable()) {
-					b.source.setApplication(60);
-				} else {
-					b.source.setApplication("dtntp");
-				}
+				b.source.setApplication("dtntp");
 
 				// set the destination
 				b.destination = peer;
 
 				// set destination application
-				if (peer.isCompressable()) {
-					b.destination.setApplication(60);
-				} else {
-					b.destination.setApplication("dtntp");
-				}
+				b.destination.setApplication("dtntp");
 
 				// set high priority
 				b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
