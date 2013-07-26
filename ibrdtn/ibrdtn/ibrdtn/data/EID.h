@@ -25,8 +25,7 @@
 #include <string>
 #include "ibrcommon/Exceptions.h"
 #include <ibrdtn/data/Number.h>
-
-using namespace std;
+#include <map>
 
 namespace dtn
 {
@@ -37,6 +36,11 @@ namespace dtn
 		public:
 			static const std::string DEFAULT_SCHEME;
 			static const std::string CBHE_SCHEME;
+
+			/**
+			 * Map an application string to a CBHE number
+			 */
+			static Number getApplicationNumber(const std::string &app);
 
 			EID();
 			EID(const std::string &scheme, const std::string &ssp);
@@ -138,6 +142,10 @@ namespace dtn
 			// CBHE scheme
 			Number _cbhe_node;
 			Number _cbhe_application;
+
+			// well-known CBHE numbers
+			typedef std::map<std::string, Number> cbhe_map;
+			static cbhe_map& getApplicationMap();
 		};
 	}
 }

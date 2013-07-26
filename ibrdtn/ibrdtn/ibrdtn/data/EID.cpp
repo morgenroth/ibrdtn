@@ -19,10 +19,15 @@
  *
  */
 
+#include "config.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/utils/Utils.h"
 #include <sstream>
 #include <iostream>
+
+#ifdef HAVE_OPENSSL
+#include <openssl/md5.h>
+#endif
 
 namespace dtn
 {
@@ -30,6 +35,24 @@ namespace dtn
 	{
 		const std::string EID::DEFAULT_SCHEME = "dtn";
 		const std::string EID::CBHE_SCHEME = "ipn";
+
+		// static initialization of the CBHE map
+		EID::cbhe_map& EID::getApplicationMap()
+		{
+			static cbhe_map app_map;
+
+			// initialize the application map
+			if (app_map.empty()) {
+				app_map["null"] = 1;
+				app_map["debugger"] = 2;
+				app_map["bundle-in-bundle"] = 5;
+				app_map["echo"] = 11;
+				app_map["routing"] = 50;
+				app_map["dtntp"] = 60;
+			}
+
+			return app_map;
+		}
 
 		EID::Scheme EID::resolveScheme(const std::string &s)
 		{
@@ -90,6 +113,55 @@ namespace dtn
 
 			// set the application part
 			application = ssp.substr(application_start + 1, ssp.length() - application_start - 1);
+		}
+
+		Number EID::getApplicationNumber(const std::string &app)
+		{
+			// an empty string returns zero
+			if (app.empty()) return 0;
+
+			// check if the string is a number
+			std::string::const_iterator char_it = app.begin();
+			while (char_it != app.end() && std::isdigit(*char_it)) ++char_it;
+
+			if (char_it == app.end()) {
+				// the string contains only digits
+				Number ret;
+
+				// convert the string into a number
+				std::stringstream ss(app);
+				ret.read(ss);
+
+				return ret;
+			}
+
+			// ask the well-known numbers
+			const cbhe_map &m = getApplicationMap();
+
+			// search for the application in the map
+			cbhe_map::const_iterator it = m.find(app);
+
+			// if there is a standard mapping
+			if (it != m.end()) {
+				// return the standard number
+				return (*it).second;
+			}
+
+			// there is no standard mapping, hash required
+#ifdef HAVE_OPENSSL
+			std::vector<unsigned char> hash(MD5_DIGEST_LENGTH);
+			MD5((unsigned char*)app.c_str(), app.length(), &hash[0]);
+
+			// use 4 byte as integer
+			uint32_t &number = (uint32_t&)hash[0];
+
+			// set the highest bit
+			number |= 0x80000000;
+
+			return Number(number);
+#else
+			return 0;
+#endif
 		}
 
 		EID::EID()
@@ -327,8 +399,8 @@ namespace dtn
 			switch (_scheme_type) {
 			case SCHEME_CBHE:
 			{
-				std::stringstream ss(app);
-				_cbhe_application.read(ss);
+				// get CBHE Number for the application string
+				_cbhe_application = EID::getApplicationNumber(app);
 				break;
 			}
 
@@ -372,7 +444,7 @@ namespace dtn
 		{
 			switch (_scheme_type) {
 			case SCHEME_CBHE:
-				return (app == getApplication());
+				return (_cbhe_application == getApplicationNumber(app));
 
 			case SCHEME_DTN:
 				return (_application == app);
