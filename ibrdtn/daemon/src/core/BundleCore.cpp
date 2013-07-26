@@ -342,7 +342,7 @@ namespace dtn
 				const dtn::data::MetaBundle &meta = completed.getBundle();
 				const dtn::data::EID &peer = completed.getPeer();
 
-				if ((meta.destination.getNode() == peer.getNode())
+				if ((meta.destination.sameHost(peer))
 						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 				{
 					// bundle has been delivered to its destination
@@ -372,7 +372,7 @@ namespace dtn
 					if (!(meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)) return;
 
 					// if the bundle has been sent by this module delete it
-					if (meta.destination.getNode() == peer.getNode())
+					if (meta.destination.sameHost(peer))
 					{
 						// bundle is not deliverable
 						dtn::core::BundlePurgeEvent::raise(meta, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
@@ -494,8 +494,8 @@ namespace dtn
 			// reject a block if it exceeds the payload limit
 			if (BundleCore::foreign_blocksizelimit > 0) {
 				if (size > BundleCore::foreign_blocksizelimit) {
-					if (bundle.source.getNode() != dtn::core::BundleCore::local) {
-						if (bundle.destination.getNode() != dtn::core::BundleCore::local) {
+					if (!bundle.source.sameHost(dtn::core::BundleCore::local)) {
+						if (!bundle.destination.sameHost(dtn::core::BundleCore::local)) {
 							IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "foreign bundle " << bundle.toString() << " rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
 							throw dtn::data::Validator::RejectedException("foreign block size is too big");
 						}

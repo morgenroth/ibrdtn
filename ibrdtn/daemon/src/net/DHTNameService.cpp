@@ -448,7 +448,7 @@ void dtn::dht::DHTNameService::componentDown() throw () {
 }
 
 void dtn::dht::DHTNameService::lookup(const dtn::data::EID &eid) {
-	if (dtn::core::BundleCore::local != eid.getNode()) {
+	if (!dtn::core::BundleCore::local.sameHost(eid)) {
 		if (this->_announced) {
 			std::string eid_ = eid.getNode().getString();
 			IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 30) << "DHT Lookup: " << eid_
@@ -562,9 +562,8 @@ void dtn::dht::DHTNameService::raiseEvent(const dtn::core::Event *evt) throw () 
 	try {
 		const dtn::routing::QueueBundleEvent &event =
 				dynamic_cast<const dtn::routing::QueueBundleEvent&> (*evt);
-		dtn::data::EID none;
-		if (event.bundle.destination != dtn::core::BundleCore::local.getNode()
-				&& event.bundle.destination != none) {
+		if (!event.bundle.destination.sameHost(dtn::core::BundleCore::local)
+				&& !event.bundle.destination.isNone()) {
 			lookup(event.bundle.destination);
 		}
 	} catch (const std::bad_cast&) {
@@ -573,7 +572,7 @@ void dtn::dht::DHTNameService::raiseEvent(const dtn::core::Event *evt) throw () 
 		const dtn::core::NodeEvent &nodeevent =
 				dynamic_cast<const dtn::core::NodeEvent&> (*evt);
 		const dtn::core::Node &n = nodeevent.getNode();
-		if (n.getEID() != dtn::core::BundleCore::local.getNode()) {
+		if (!n.getEID().sameHost(dtn::core::BundleCore::local)) {
 			switch (nodeevent.getAction()) {
 			case NODE_AVAILABLE:
 				if (isNeighbourAnnouncable(n))
@@ -905,7 +904,7 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 			}
 			dtn::data::EID n(neighbour__);
 			dtn::core::Node neighbourNode(n);
-			if (dtn::core::BundleCore::local != n.getNode()
+			if (!dtn::core::BundleCore::local.sameHost(n)
 					&& !core.getConnectionManager().isNeighbor(n)) {
 				dtn::core::BundleCore::getInstance().addRoute(n, node.getEID(),
 						DHT_PATH_EXPIRE_TIMEOUT);

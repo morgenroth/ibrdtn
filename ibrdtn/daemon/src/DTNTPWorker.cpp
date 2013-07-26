@@ -446,7 +446,7 @@ namespace dtn
 		void DTNTPWorker::callbackBundleReceived(const Bundle &b)
 		{
 			// do not sync with ourselves
-			if (b.source.getNode() == dtn::core::BundleCore::local) return;
+			if (b.source.sameHost(dtn::core::BundleCore::local)) return;
 
 			try {
 				// read payload block

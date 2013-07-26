@@ -89,7 +89,6 @@ namespace dtn
 
 		void ProphetRoutingExtension::responseHandshake(const dtn::data::EID& neighbor, const NodeHandshake& request, NodeHandshake& response)
 		{
-			const dtn::data::EID neighbor_node = neighbor.getNode();
 			if (request.hasRequest(DeliveryPredictabilityMap::identifier))
 			{
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
@@ -105,13 +104,14 @@ namespace dtn
 
 		void ProphetRoutingExtension::processHandshake(const dtn::data::EID& neighbor, NodeHandshake& response)
 		{
-			const dtn::data::EID neighbor_node = neighbor.getNode();
-
 			/* ignore neighbors, that have our EID */
-			if (neighbor_node == dtn::core::BundleCore::local) return;
+			if (neighbor.sameHost(dtn::core::BundleCore::local)) return;
 
 			try {
 				const DeliveryPredictabilityMap& neighbor_dp_map = response.get<DeliveryPredictabilityMap>();
+
+				// strip possible application part off the neighbor EID
+				const dtn::data::EID neighbor_node = neighbor.getNode();
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "delivery predictability map received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -312,7 +312,7 @@ namespace dtn
 				const dtn::data::MetaBundle &meta = completed.getBundle();
 				const dtn::data::EID &peer = completed.getPeer();
 
-				if ((meta.destination.getNode() == peer.getNode())
+				if (meta.destination.sameHost(peer)
 						/* send prophet ack only for singleton */
 						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 				{
