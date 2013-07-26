@@ -172,7 +172,7 @@ namespace dtn
 			// we only touch local and group bundles which might be delivered locally
 			if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 			{
-				if (meta.destination.getNode() != dtn::core::BundleCore::local)
+				if (!meta.destination.sameHost(dtn::core::BundleCore::local))
 				{
 					return;
 				}

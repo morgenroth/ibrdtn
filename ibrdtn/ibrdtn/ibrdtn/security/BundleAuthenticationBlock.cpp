@@ -58,7 +58,7 @@ namespace dtn
 			bab_begin.set(dtn::data::Block::DISCARD_IF_NOT_PROCESSED, true);
 
 			// set security source
-			if (key.reference != bundle.source.getNode()) bab_begin.setSecuritySource( key.reference );
+			if (!key.reference.sameHost(bundle.source)) bab_begin.setSecuritySource( key.reference );
 
 			dtn::data::Number correlator = createCorrelatorValue(bundle);
 			bab_begin.setCorrelator(correlator);

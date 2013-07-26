@@ -46,7 +46,7 @@ namespace dtn
 		DTNTPWorker::DTNTPWorker()
 		 : _sync_threshold(0.15f), _announce_rating(false), _base_rating(0.0), _psi(0.99), _sigma(1.0), _sync(false)
 		{
-			AbstractWorker::initialize("/dtntp", 60, true);
+			AbstractWorker::initialize("dtntp", true);
 
 			// initialize the last sync time to zero
 			timerclear(&_last_sync_time);
@@ -314,18 +314,16 @@ namespace dtn
 				b.push_back(ref);
 
 				// set the source
-				if (dtn::core::BundleCore::local.isCompressable()) {
-					b.source = dtn::core::BundleCore::local.add(dtn::core::BundleCore::local.getDelimiter() + "60");
-				} else {
-					b.source = dtn::core::BundleCore::local.add(dtn::core::BundleCore::local.getDelimiter() + "dtntp");
-				}
+				b.source = dtn::core::BundleCore::local;
+
+				// set source application
+				b.source.setApplication("dtntp");
 
 				// set the destination
-				if (peer.isCompressable()) {
-					b.destination = peer.add(peer.getDelimiter() + "60");
-				} else {
-					b.destination = peer.add(peer.getDelimiter() + "dtntp");
-				}
+				b.destination = peer;
+
+				// set destination application
+				b.destination.setApplication("dtntp");
 
 				// set high priority
 				b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -440,7 +438,7 @@ namespace dtn
 		void DTNTPWorker::callbackBundleReceived(const Bundle &b)
 		{
 			// do not sync with ourselves
-			if (b.source.getNode() == dtn::core::BundleCore::local) return;
+			if (b.source.sameHost(dtn::core::BundleCore::local)) return;
 
 			try {
 				// read payload block

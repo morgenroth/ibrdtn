@@ -33,7 +33,7 @@ namespace dtn
 	{
 		CapsuleWorker::CapsuleWorker()
 		{
-			AbstractWorker::initialize("/bundle-in-bundle", 2, true);
+			AbstractWorker::initialize("bundle-in-bundle", true);
 		}
 
 		CapsuleWorker::~CapsuleWorker()

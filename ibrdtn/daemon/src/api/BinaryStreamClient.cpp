@@ -74,7 +74,8 @@ namespace dtn
 			else
 			{
 				// contact received event
-				_eid = BundleCore::local.add( BundleCore::local.getDelimiter() + header._localeid.getSSP() );
+				_eid = BundleCore::local;
+				_eid.setApplication( header._localeid.getSSP() );
 			}
 
 			IBRCOMMON_LOGGER_DEBUG_TAG("BinaryStreamClient", 20) << "new client connected, handle: " << reg.getHandle() << "; eid: "<< _eid.getString() << IBRCOMMON_LOGGER_ENDL;

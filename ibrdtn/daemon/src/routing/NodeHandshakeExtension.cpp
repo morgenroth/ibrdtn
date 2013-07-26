@@ -199,7 +199,7 @@ namespace dtn
 		NodeHandshakeExtension::HandshakeEndpoint::HandshakeEndpoint(NodeHandshakeExtension &callback)
 		 : _callback(callback)
 		{
-			AbstractWorker::initialize("/routing", 50, true);
+			AbstractWorker::initialize("routing", true);
 		}
 
 		NodeHandshakeExtension::HandshakeEndpoint::~HandshakeEndpoint()
@@ -247,11 +247,10 @@ namespace dtn
 
 			// set the destination of the bundle
 			req.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+			req.destination = origin;
 
-			if (origin.isCompressable())
-				req.destination = origin.add(origin.getDelimiter() + "50");
-			else
-				req.destination = origin.add(origin.getDelimiter() + "routing");
+			// set destination application
+			req.destination.setApplication("routing");
 
 			// limit the lifetime to 60 seconds
 			req.lifetime = 60;

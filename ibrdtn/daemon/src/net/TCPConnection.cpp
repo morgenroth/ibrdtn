@@ -758,7 +758,7 @@ namespace dtn
 
 		bool TCPConnection::match(const dtn::data::EID &destination) const
 		{
-			return (_node.getEID() == destination.getNode());
+			return _node.getEID().sameHost(destination);
 		}
 
 		bool TCPConnection::match(const NodeEvent &evt) const

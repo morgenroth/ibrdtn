@@ -101,9 +101,10 @@ namespace dtn
 
 		Registration::Registration()
 		 : _handle(alloc_handle()),
-		   _default_eid(core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + _handle) ),
+		   _default_eid(core::BundleCore::local),
 		   _persistent(false), _detached(false), _expiry(0), _filter_fragments(true)
 		{
+			_default_eid.setApplication(_handle);
 		}
 
 		Registration::~Registration()

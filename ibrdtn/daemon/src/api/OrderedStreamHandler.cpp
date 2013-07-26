@@ -167,17 +167,22 @@ namespace dtn
 						{
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
-							_endpoint = dtn::core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + cmd[2] );
-
 							// error checking
-							if (_endpoint == dtn::data::EID())
+							if (cmd[2].length() <= 0)
 							{
 								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " INVALID ENDPOINT" << std::endl;
-								_endpoint = dtn::core::BundleCore::local;
 							}
 							else
 							{
+								// unsubscribe from old endpoint
+								_client.getRegistration().unsubscribe(_endpoint);
+
+								// set new application endpoint
+								_endpoint.setApplication(cmd[2]);
+
+								// subscribe to new endpoint
 								_client.getRegistration().subscribe(_endpoint);
+
 								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
 							}
 						}
