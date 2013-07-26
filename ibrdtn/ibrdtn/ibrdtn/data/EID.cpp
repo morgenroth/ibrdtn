@@ -60,39 +60,86 @@ namespace dtn
 			app = a;
 		}
 
-		EID::EID()
-		: _scheme(SCHEME_DTN), _scheme_ext(DEFAULT_SCHEME), _ssp("none"), _cbhe_node(0), _cbhe_application(0)
+		void EID::extractDTN(const std::string &ssp, std::string &node, std::string &application)
 		{
+			size_t first_char = 0;
+			const char delimiter = '/';
+
+			// first char not "/", e.g. "//node1" -> 2
+			first_char = ssp.find_first_not_of(delimiter);
+
+			// only "/" ? thats bad!
+			if (first_char == std::string::npos) {
+				node = "none";
+				application = "";
+				return;
+			}
+
+			// start of application part
+			size_t application_start = ssp.find_first_of(delimiter, first_char);
+
+			// no application part available
+			if (application_start == std::string::npos) {
+				node = ssp;
+				application = "";
+				return;
+			}
+
+			// set the node part
+			node = ssp.substr(0, application_start);
+
+			// set the application part
+			application = ssp.substr(application_start + 1, ssp.length() - application_start - 1);
+		}
+
+		EID::EID()
+		: _scheme_type(SCHEME_DTN), _scheme(DEFAULT_SCHEME), _ssp("none"), _application(), _cbhe_node(0), _cbhe_application(0)
+		{
+		}
+
+		EID::EID(const Scheme scheme_type, const std::string &scheme, const std::string &ssp, const std::string &application)
+		: _scheme_type(scheme_type), _scheme(scheme), _ssp(ssp), _application(application), _cbhe_node(0), _cbhe_application(0)
+		{
+			if (scheme_type == SCHEME_CBHE) {
+				throw dtn::InvalidDataException("This constructor does not work for CBHE schemes");
+			}
 		}
 
 		EID::EID(const std::string &scheme, const std::string &ssp)
-		 : _scheme(SCHEME_DTN), _scheme_ext(scheme), _ssp(ssp), _cbhe_node(0), _cbhe_application(0)
+		 : _scheme_type(SCHEME_EXTENDED), _scheme(scheme), _ssp(ssp), _application(), _cbhe_node(0), _cbhe_application(0)
 		{
-			dtn::utils::Utils::trim(_scheme_ext);
+			dtn::utils::Utils::trim(_scheme);
 			dtn::utils::Utils::trim(_ssp);
 
 			// resolve scheme
-			_scheme = resolveScheme(_scheme_ext);
+			_scheme_type = resolveScheme(_scheme);
 
-			// extract CBHE numbers
-			if (_scheme == SCHEME_CBHE) {
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
+				// extract CBHE numbers
 				extractCBHE(ssp, _cbhe_node, _cbhe_application);
-			}
+				break;
 
-			// TODO: checks for illegal characters
+			case SCHEME_DTN:
+				extractDTN(ssp, _ssp, _application);
+				break;
+
+			default:
+				break;
+			}
 		}
 
 		EID::EID(const std::string &orig_value)
-		: _scheme(SCHEME_DTN), _scheme_ext(DEFAULT_SCHEME), _ssp("none"), _cbhe_node(0), _cbhe_application(0)
+		: _scheme_type(SCHEME_DTN), _scheme(DEFAULT_SCHEME), _ssp("none"), _application(), _cbhe_node(0), _cbhe_application(0)
 		{
-			if (orig_value.length() == 0) {
-				throw dtn::InvalidDataException("given EID is empty!");
-			}
-
-			std::string value = orig_value;
-			dtn::utils::Utils::trim(value);
-
 			try {
+				if (orig_value.length() == 0) {
+					throw dtn::InvalidDataException("given EID is empty!");
+				}
+
+				std::string value = orig_value;
+				dtn::utils::Utils::trim(value);
+
 				// search for the delimiter
 				size_t delimiter = value.find_first_of(":");
 
@@ -101,80 +148,74 @@ namespace dtn
 					throw dtn::InvalidDataException("wrong EID format: " + value);
 
 				// the scheme is everything before the delimiter
-				_scheme_ext = value.substr(0, delimiter);
+				_scheme = value.substr(0, delimiter);
 
 				// the ssp is everything else
 				size_t startofssp = delimiter + 1;
-				_ssp = value.substr(startofssp, value.length() - startofssp);
+				const std::string ssp = value.substr(startofssp, value.length() - delimiter + 1);
 
 				// do syntax check
-				if (_scheme_ext.length() == 0) {
+				if (_scheme.length() == 0) {
 					throw dtn::InvalidDataException("scheme is empty!");
 				}
 
-				if (_ssp.length() == 0) {
+				if (ssp.length() == 0) {
 					throw dtn::InvalidDataException("SSP is empty!");
 				}
 
 				// resolve scheme
-				_scheme = resolveScheme(_scheme_ext);
+				_scheme_type = resolveScheme(_scheme);
 
-				// IPN conversion
-				if (_scheme == SCHEME_CBHE) {
-					extractCBHE(_ssp, _cbhe_node, _cbhe_application);
+				switch (_scheme_type) {
+				case SCHEME_CBHE:
+					// extract CBHE numbers
+					extractCBHE(ssp, _cbhe_node, _cbhe_application);
+					break;
+
+				case SCHEME_DTN:
+					// extract DTN scheme node/application
+					extractDTN(ssp, _ssp, _application);
+					break;
+
+				default:
+					_ssp = ssp;
+					break;
 				}
 			} catch (const std::exception&) {
-				_scheme = SCHEME_DTN;
-				_scheme_ext = DEFAULT_SCHEME;
+				_scheme_type = SCHEME_DTN;
+				_scheme = DEFAULT_SCHEME;
 				_ssp = "none";
 			}
 		}
 
 		EID::EID(const dtn::data::Number &node, const dtn::data::Number &application)
-		 : _scheme(SCHEME_DTN), _scheme_ext(EID::DEFAULT_SCHEME), _ssp("none"), _cbhe_node(node), _cbhe_application(application)
+		 : _scheme_type(SCHEME_CBHE), _scheme(EID::CBHE_SCHEME), _ssp("none"), _application(), _cbhe_node(node), _cbhe_application(application)
 		{
-			if (node == 0)	return;
-
-			std::stringstream ss_ssp;
-
-			// add node ID
-			ss_ssp << node.get<size_t>();
-
-			// add node ID if larger than zero
-			if (application > 0) {
-				ss_ssp << "." << application.get<size_t>();
+			// set dtn:none if the node is zero
+			if (node == 0) {
+				_scheme_type = SCHEME_DTN;
+				_scheme = EID::DEFAULT_SCHEME;
 			}
-
-			_ssp = ss_ssp.str();
-			_scheme = SCHEME_CBHE;
-			_scheme_ext = CBHE_SCHEME;
 		}
 
 		EID::~EID()
 		{
 		}
 
-		EID& EID::operator=(const EID &other)
-		{
-			_scheme = other._scheme;
-			_ssp = other._ssp;
-			_scheme_ext = other._scheme_ext;
-			_cbhe_node = other._cbhe_node;
-			_cbhe_application = other._cbhe_application;
-			return *this;
-		}
-
 		bool EID::operator==(const EID &other) const
 		{
-			if (_scheme != other._scheme) return false;
+			if (_scheme_type != other._scheme_type) return false;
 
-			// optimized comparison when using CBHE scheme
-			if (_scheme == SCHEME_CBHE) {
-				if (_cbhe_node != other._cbhe_node) return false;
-				return (_cbhe_application == other._cbhe_application);
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
+				return (_cbhe_node == other._cbhe_node) && (_cbhe_application == other._cbhe_application);
+
+			case SCHEME_DTN:
+				return (_ssp == other._ssp) && (_application == other._application);
+
+			default:
+				return (_scheme == other._scheme) && (_ssp == other._ssp);
 			}
-
-			return (_ssp == other._ssp) && (_scheme_ext == other._scheme_ext);
 		}
 
 		bool EID::operator==(const std::string &other) const
@@ -194,28 +235,49 @@ namespace dtn
 
 		bool EID::sameHost(const std::string& other) const
 		{
-			return ( EID(other) == getNode() );
+			return sameHost( EID(other) );
 		}
 
 		bool EID::sameHost(const EID &other) const
 		{
-			return ( other.getNode() == getNode() );
+			if (_scheme_type != other._scheme_type) return false;
+
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
+				return _cbhe_node == other._cbhe_node;
+
+			case SCHEME_DTN:
+				return _ssp == other._ssp;
+
+			default:
+				return (_scheme == other._scheme) && (_ssp == other._ssp);
+			}
 		}
 
 		bool EID::operator<(const EID &other) const
 		{
-			// optimized comparison when using CBHE scheme
-			if ((_scheme == SCHEME_CBHE) && (_scheme == other._scheme)) {
+			if (_scheme_type < other._scheme_type) return true;
+			if (_scheme_type != other._scheme_type) return false;
+
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
 				if (_cbhe_node < other._cbhe_node) return true;
 				if (_cbhe_node != other._cbhe_node) return false;
 
 				return (_cbhe_application < other._cbhe_application);
+
+			case SCHEME_DTN:
+				if (_ssp < other._ssp) return true;
+				if (_ssp != other._ssp) return false;
+
+				return (_application < other._application);
+
+			default:
+				if (_scheme < other._scheme) return true;
+				if (_scheme != other._scheme) return false;
+
+				return (_ssp < other._ssp);
 			}
-
-			if (_scheme_ext < other._scheme_ext) return true;
-			if (_scheme_ext != other._scheme_ext) return false;
-
-			return _ssp < other._ssp;
 		}
 
 		bool EID::operator>(const EID &other) const
@@ -225,12 +287,31 @@ namespace dtn
 
 		std::string EID::getString() const
 		{
-			return _scheme_ext + ":" + _ssp;
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
+			{
+				std::stringstream ss;
+				ss << "ipn:" << _cbhe_node.get<size_t>();
+
+				if (_cbhe_application > 0) {
+					ss << "." << _cbhe_application.get<size_t>();
+				}
+
+				return ss.str();
+			}
+
+			case SCHEME_DTN:
+				return "dtn:" + _ssp + "/" + _application;
+
+			default:
+				return _scheme + ":" + _ssp;
+			}
 		}
 
 		std::string EID::getApplication() const throw ()
 		{
-			if (_scheme == EID::SCHEME_CBHE)
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
 			{
 				if (_cbhe_application > 0) {
 					return _cbhe_application.toString();
@@ -239,113 +320,89 @@ namespace dtn
 				}
 			}
 
-			size_t first_char = 0;
-			const char delimiter = '/';
+			case SCHEME_DTN:
+				return _application;
 
-			// first char not "/", e.g. "//node1" -> 2
-			first_char = _ssp.find_first_not_of(delimiter);
-
-			// only "/" ? thats bad!
-			if (first_char == std::string::npos) {
-				return "";
-				//throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
+			default:
+				return _ssp;
 			}
-
-			// start of application part
-			size_t application_start = _ssp.find_first_of(delimiter, first_char);
-
-			// no application part available
-			if (application_start == std::string::npos)
-				return "";
-			
-			// return the application part
-			return _ssp.substr(application_start + 1, _ssp.length() - application_start - 1);
 		}
 
 		std::string EID::getHost() const throw ()
 		{
-			if (_scheme == EID::SCHEME_CBHE)
-			{
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
 				return _cbhe_node.toString();
-			}
-
-			size_t first_char = 0;
-			const char delimiter = '/';
-
-			// first char not "/", e.g. "//node1" -> 2
-			first_char = _ssp.find_first_not_of(delimiter);
-
-			// only "/" ? thats bad!
-			if (first_char == std::string::npos) {
-				return "none";
-				// throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
-			}
-
-			// start of application part
-			size_t application_start = _ssp.find_first_of(delimiter, first_char);
-
-			// no application part available
-			if (application_start == std::string::npos)
+			case SCHEME_DTN:
 				return _ssp;
-
-			// return the node part
-			return _ssp.substr(0, application_start);
+			default:
+				return _ssp;
+			}
 		}
 
-		const std::string& EID::getScheme() const
+		const std::string EID::getScheme() const
 		{
-			return _scheme_ext;
+			return _scheme;
 		}
 
-		const std::string& EID::getSSP() const
+		const std::string EID::getSSP() const
 		{
-			return _ssp;
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
+			{
+				std::stringstream ss;
+				ss << _cbhe_node.get<size_t>();
+
+				if (_cbhe_application > 0) {
+					ss << "." << _cbhe_application.get<size_t>();
+				}
+
+				return ss.str();
+			}
+			case SCHEME_DTN:
+				return _ssp + "/" + _application;
+			default:
+				return _ssp;
+			}
 		}
 
 		EID EID::getNode() const throw ()
 		{
-			return _scheme_ext + ":" + getHost();
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
+				return EID(_cbhe_node, 0);
+			case SCHEME_DTN:
+				return EID(_scheme_type, _scheme, _ssp, "");
+			default:
+				return EID(_scheme_type, _scheme, _ssp, "");
+			}
 		}
 
 		bool EID::hasApplication() const
 		{
-			// with a compressed bundle header we have another delimiter
-			if (_scheme == EID::SCHEME_CBHE)
-			{
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
 				return (_cbhe_application > 0);
+			case SCHEME_DTN:
+				return _application != "";
+			default:
+				return true;
 			}
-
-			// first char not "/", e.g. "//node1" -> 2
-			size_t first_char = _ssp.find_first_not_of("/");
-
-			// only "/" ? thats bad!
-			if (first_char == std::string::npos)
-				throw dtn::InvalidDataException("wrong eid format, ssp: " + _ssp);
-
-			// start of application part
-			size_t application_start = _ssp.find_first_of("/", first_char);
-
-			// no application part available
-			if (application_start == std::string::npos)
-				return false;
-
-			// return the application part
-			return true;
 		}
 
 		bool EID::isCompressable() const
 		{
-			return ((_scheme == SCHEME_CBHE) || ((_scheme == SCHEME_DTN) && (_ssp == "none")));
+			return ((_scheme_type == SCHEME_CBHE) || ((_scheme_type == SCHEME_DTN) && (_ssp == "none")));
 		}
 
 		bool EID::isNone() const
 		{
-			return (_scheme == SCHEME_DTN) && (_ssp == "none");
+			return (_scheme_type == SCHEME_DTN) && (_ssp == "none");
 		}
 
 		std::string EID::getDelimiter() const
 		{
-			if (_scheme == EID::SCHEME_CBHE) {
+			if (_scheme_type == EID::SCHEME_CBHE) {
 				return ".";
 			} else {
 				return "/";

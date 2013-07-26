@@ -51,8 +51,6 @@ namespace dtn
 
 			virtual ~EID();
 
-			EID& operator=(const EID &other);
-
 			bool operator==(const EID &other) const;
 
 			bool operator==(const std::string &other) const;
@@ -79,8 +77,8 @@ namespace dtn
 			std::string getString() const;
 			std::string getApplication() const throw ();
 			std::string getHost() const throw ();
-			const std::string& getScheme() const;
-			const std::string& getSSP() const;
+			const std::string getScheme() const;
+			const std::string getSSP() const;
 
 			std::string getDelimiter() const;
 
@@ -117,14 +115,31 @@ namespace dtn
 				SCHEME_DTN = 0,
 				SCHEME_CBHE = 1,
 				SCHEME_EXTENDED = 2
-			} _scheme;
+			} _scheme_type;
+
+			EID(const Scheme scheme_type, const std::string &scheme, const std::string &ssp, const std::string &application);
 
 			static Scheme resolveScheme(const std::string &s);
+
+			/**
+			 * Extract the CBHE node and application from an SSP string
+			 */
 			static void extractCBHE(const std::string &ssp, Number &node, Number &app);
 
-			std::string _scheme_ext;
+			/**
+			 * Extract the DTN node and application from an SSP string
+			 */
+			static void extractDTN(const std::string &ssp, std::string &node, std::string &application);
+
+			// abstract values
+			std::string _scheme;
 			std::string _ssp;
 
+			// DTN scheme
+			// the ssp carries the node part
+			std::string _application;
+
+			// CBHE scheme
 			Number _cbhe_node;
 			Number _cbhe_application;
 		};
