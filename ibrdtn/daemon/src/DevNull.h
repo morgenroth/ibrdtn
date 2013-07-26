@@ -36,7 +36,7 @@ namespace dtn
 		public:
 			DevNull()
 			{
-				AbstractWorker::initialize("/null", 0, true);
+				AbstractWorker::initialize("/null", 1, true);
 			};
 			virtual ~DevNull() {};
 
