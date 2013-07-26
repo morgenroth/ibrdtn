@@ -114,20 +114,22 @@ namespace dtn
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							ibrcommon::MutexLock l(_write_lock);
-							dtn::data::EID new_endpoint = dtn::core::BundleCore::local.add(dtn::core::BundleCore::local.getDelimiter() + cmd[2]);
-
-							// error checking
-							if (new_endpoint == dtn::data::EID())
-							{
+							if (cmd[2].length() <= 0) {
+								// send error notification
 								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " INVALID ENDPOINT" << std::endl;
-							}
-							else
-							{
-								/* unsubscribe from the old endpoint and subscribe to the new one */
+							} else {
 								Registration& reg = _client.getRegistration();
+
+								// un-subscribe previous registration
 								reg.unsubscribe(_endpoint);
-								reg.subscribe(new_endpoint);
-								_endpoint = new_endpoint;
+
+								// set new application endpoint
+								_endpoint.setApplication(cmd[2]);
+
+								// subscribe to new endpoint
+								reg.subscribe(_endpoint);
+
+								// send accepted notification
 								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
 							}
 						}
