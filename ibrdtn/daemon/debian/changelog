@@ -2,7 +2,37 @@ ibrdtnd (0.11.0) UNRELEASED; urgency=low
 
   * Development revision
 
- -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 02 Jul 2013 10:00:00 +0200
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 22 Jul 2013 11:38:32 +0200
+
+ibrdtnd (0.10.0) stable; urgency=low
+
+  * Asynchronous purging of bundles
+  * Use new socket abstraction layer of ibrcommon 0.10
+  * New generic datagram convergence layer with flow-control and error correction
+  * Implemented IEEE 802.15.4 ConvergenceLayer to work with INGA
+  * Improved CBHE/IPN scheme support
+  * Full IPv6 support
+  * Change default IPND discovery address to 224.0.0.1/ff02::1
+  * Allow multiple multicast addresses for discovery in the configuration
+  * Improved flow control for transmissions
+  * Improved time synchronization (DT-NTP)
+  * Internet-awareness for static routes and links
+  * Refactoring of the EventSwitch
+  * Behavior fixes and improvements for PRoPHET Routing
+  * Pro-active fragmentation support added
+  * Support for extended scheduling added (SchedulingBlock)
+  * Notify status reports and custody signals in the API
+  * Statistic Logger replaced by API management calls
+  * Added support for P2P connections via libwifip2p
+  * Better integration support via NativeDaemon class
+  * Allow more block payload encodings in the API (raw/base64)
+  * Added new routing option "none" to disable direct delivery
+  * Add "limit_foreign_blocksize" option to default configuration
+  * Allow "signed bundles only" as security constrain
+  * Build support for Android NDK
+  * Overall improved error handling and performance
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 22 Jul 2013 11:38:32 +0200
 
 ibrdtnd (0.8.0) stable; urgency=low
 

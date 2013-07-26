@@ -2,7 +2,25 @@ ibrdtn (0.11.0) UNRELEASED; urgency=low
 
   * Development revision
 
- -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 02 Jul 2013 10:00:00 +0200
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 22 Jul 2013 11:38:14 +0200
+
+ibrdtn (0.10.0) stable; urgency=low
+
+  * Reset sequence numbers on each timestamp incrementation
+  * Use new socket abstraction layer of ibrcommon 0.10
+  * New serializer method to check predicted bundle lengths
+  * New BundleSet class for organizing sets of bundles
+  * Redesign of class "Bundle" with iterators to access blocks
+  * Administrative Records are no longer parsed automatically
+  * New TrackingBlock for path tracking of a bundle
+  * Merging of bundle fragments fixed
+  * New SchedulingBlock for extended priorities added
+  * Improved stability of the bundle serializer / deserializer
+  * Add statistic interfaces to StreamConnection / StreamBuffer
+  * Build support for Android NDK
+  * Overall improved error handling and fixes
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 22 Jul 2013 11:38:14 +0200
 
 ibrdtn (0.8.0) stable; urgency=low
 
