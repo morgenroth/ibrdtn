@@ -57,13 +57,6 @@ namespace dtn
 
 			bool operator!=(const EID &other) const;
 
-			EID operator+(const std::string &suffix) const;
-
-			friend EID operator+(const EID &left, const std::string &right)
-			{
-				return EID(left.getString() + right);
-			}
-
 			EID add(const std::string &other) const {
 				return EID(this->getString() + other);
 			}
@@ -75,6 +68,9 @@ namespace dtn
 			bool operator>(const EID &other) const;
 
 			std::string getString() const;
+
+			void setApplication(const dtn::data::Number &app) throw ();
+			void setApplication(const std::string &app) throw ();
 			std::string getApplication() const throw ();
 			std::string getHost() const throw ();
 			const std::string getScheme() const;

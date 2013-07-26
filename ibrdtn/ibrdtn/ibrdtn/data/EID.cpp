@@ -228,11 +228,6 @@ namespace dtn
 			return !((*this) == other);
 		}
 
-		EID EID::operator+(const std::string& suffix) const
-		{
-			return EID(getString() + suffix);
-		}
-
 		bool EID::sameHost(const std::string& other) const
 		{
 			return sameHost( EID(other) );
@@ -305,6 +300,45 @@ namespace dtn
 
 			default:
 				return _scheme + ":" + _ssp;
+			}
+		}
+
+		void EID::setApplication(const Number &app) throw ()
+		{
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
+			{
+				_cbhe_application = app;
+				break;
+			}
+
+			case SCHEME_DTN:
+				_application = app.toString();
+				break;
+
+			default:
+				// not defined
+				break;
+			}
+		}
+
+		void EID::setApplication(const std::string &app) throw ()
+		{
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
+			{
+				std::stringstream ss(app);
+				_cbhe_application.read(ss);
+				break;
+			}
+
+			case SCHEME_DTN:
+				_application = app;
+				break;
+
+			default:
+				// not defined
+				break;
 			}
 		}
 
