@@ -298,7 +298,7 @@ namespace dtn
 			};
 
 			const std::string _handle;
-			const dtn::data::EID _default_eid;
+			dtn::data::EID _default_eid;
 
 			ibrcommon::Mutex _endpoints_lock;
 			std::set<dtn::data::EID> _endpoints;

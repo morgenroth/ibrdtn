@@ -166,38 +166,40 @@ namespace dtn
 							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							ibrcommon::MutexLock l(_write_lock);
-							dtn::data::EID new_endpoint = dtn::core::BundleCore::local.add(BundleCore::local.getDelimiter() + cmd[2]);
 
 							// error checking
-							if (new_endpoint == dtn::data::EID())
+							if (cmd[2].length() <= 0)
 							{
 								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " INVALID ENDPOINT" << std::endl;
 							}
 							else
 							{
+								dtn::data::EID new_endpoint = dtn::core::BundleCore::local;
+								new_endpoint.setApplication(cmd[2]);
+
 								_client.getRegistration().subscribe(new_endpoint);
 								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
 							}
 						}
 						else if (cmd[1] == "del")
 						{
-							dtn::data::EID del_endpoint = _endpoint;
-							if (cmd.size() >= 3)
-							{
-								del_endpoint = dtn::core::BundleCore::local.add( BundleCore::local.getDelimiter() + cmd[2] );
-							}
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 							ibrcommon::MutexLock l(_write_lock);
 
 							// error checking
-							if (del_endpoint == dtn::data::EID())
+							if (cmd[2].length() <= 0)
 							{
 								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " INVALID ENDPOINT" << std::endl;
 							}
 							else
 							{
+								dtn::data::EID del_endpoint = dtn::core::BundleCore::local;
+								del_endpoint.setApplication( cmd[2] );
+
 								_client.getRegistration().unsubscribe(del_endpoint);
 
+								// restore default endpoint if the standard endpoint has been removed
 								if(_endpoint == del_endpoint)
 								{
 									_endpoint = _client.getRegistration().getDefaultEID();

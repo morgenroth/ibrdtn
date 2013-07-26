@@ -117,12 +117,14 @@ namespace dtn
 
 									try {
 										// check if bundle is a routing bundle
-										if (sbt.job.getBundle().source == dtn::core::BundleCore::local.add("/routing"))
+										const dtn::data::EID &source = sbt.job.getBundle().source;
+
+										if (source.isApplication("routing") || source.isApplication(50))
 										{
 											// read the bundle out of the storage
 											const dtn::data::Bundle bundle = storage.get(sbt.job.getBundle());
 
-											if (bundle.destination == sbt.node.getEID().add("/routing"))
+											if (bundle.destination.isApplication("routing") || bundle.destination.isApplication(50))
 											{
 												// add this bundle to the blacklist
 												{

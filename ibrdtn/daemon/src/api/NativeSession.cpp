@@ -101,10 +101,8 @@ namespace dtn
 
 		void NativeSession::setEndpoint(const std::string &suffix) throw (NativeSessionException)
 		{
-			const dtn::data::EID new_endpoint = dtn::core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + suffix );
-
 			// error checking
-			if (new_endpoint == dtn::data::EID())
+			if (suffix.length() <= 0)
 			{
 				throw NativeSessionException("given endpoint is not acceptable");
 			}
@@ -112,8 +110,12 @@ namespace dtn
 			{
 				/* unsubscribe from the old endpoint and subscribe to the new one */
 				_registration.unsubscribe(_endpoint);
-				_registration.subscribe(new_endpoint);
-				_endpoint = new_endpoint;
+
+				// set new application part
+				_endpoint.setApplication(suffix);
+
+				// subscribe to new endpoint
+				_registration.subscribe(_endpoint);
 			}
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Endpoint set to " << _endpoint.getString() << IBRCOMMON_LOGGER_ENDL;
@@ -130,15 +132,15 @@ namespace dtn
 
 		void NativeSession::addEndpoint(const std::string &suffix) throw (NativeSessionException)
 		{
-			const dtn::data::EID new_endpoint = dtn::core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + suffix );
-
 			// error checking
-			if (new_endpoint == dtn::data::EID())
+			if (suffix.length() <= 0)
 			{
 				throw NativeSessionException("given endpoint is not acceptable");
 			}
 			else
 			{
+				dtn::data::EID new_endpoint = dtn::core::BundleCore::local;
+				new_endpoint.setApplication( suffix );
 				_registration.subscribe(new_endpoint);
 			}
 
@@ -147,15 +149,15 @@ namespace dtn
 
 		void NativeSession::removeEndpoint(const std::string &suffix) throw (NativeSessionException)
 		{
-			const dtn::data::EID old_endpoint = dtn::core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + suffix );
-
 			// error checking
-			if (old_endpoint == dtn::data::EID())
+			if (suffix.length() <= 0)
 			{
 				throw NativeSessionException("given endpoint is not acceptable");
 			}
 			else
 			{
+				dtn::data::EID old_endpoint = dtn::core::BundleCore::local;
+				old_endpoint.setApplication( suffix );
 				_registration.unsubscribe(old_endpoint);
 			}
 

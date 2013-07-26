@@ -314,17 +314,23 @@ namespace dtn
 				b.push_back(ref);
 
 				// set the source
+				b.source = dtn::core::BundleCore::local;
+
+				// set source application
 				if (dtn::core::BundleCore::local.isCompressable()) {
-					b.source = dtn::core::BundleCore::local.add(dtn::core::BundleCore::local.getDelimiter() + "60");
+					b.source.setApplication(60);
 				} else {
-					b.source = dtn::core::BundleCore::local.add(dtn::core::BundleCore::local.getDelimiter() + "dtntp");
+					b.source.setApplication("dtntp");
 				}
 
 				// set the destination
+				b.destination = peer;
+
+				// set destination application
 				if (peer.isCompressable()) {
-					b.destination = peer.add(peer.getDelimiter() + "60");
+					b.destination.setApplication(60);
 				} else {
-					b.destination = peer.add(peer.getDelimiter() + "dtntp");
+					b.destination.setApplication("dtntp");
 				}
 
 				// set high priority
