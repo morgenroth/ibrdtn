@@ -57,10 +57,6 @@ namespace dtn
 
 			bool operator!=(const EID &other) const;
 
-			EID add(const std::string &other) const {
-				return EID(this->getString() + other);
-			}
-
 			bool sameHost(const std::string &other) const;
 			bool sameHost(const EID &other) const;
 
