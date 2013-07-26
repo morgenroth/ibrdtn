@@ -19,7 +19,7 @@
  *
  */
 
-#include "config.h"
+#include "ibrdtn/config.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/utils/Utils.h"
 #include <sstream>
