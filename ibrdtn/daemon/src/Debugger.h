@@ -44,7 +44,7 @@ namespace dtn
 			public:
 				Debugger()
 				{
-					AbstractWorker::initialize("/debugger", 1, true);
+					AbstractWorker::initialize("debugger", true);
 				};
 				virtual ~Debugger() {};
 

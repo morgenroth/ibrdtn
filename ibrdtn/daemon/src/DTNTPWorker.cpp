@@ -46,7 +46,7 @@ namespace dtn
 		DTNTPWorker::DTNTPWorker()
 		 : _sync_threshold(0.15f), _announce_rating(false), _base_rating(0.0), _psi(0.99), _sigma(1.0), _sync(false)
 		{
-			AbstractWorker::initialize("/dtntp", 60, true);
+			AbstractWorker::initialize("dtntp", true);
 
 			// initialize the last sync time to zero
 			timerclear(&_last_sync_time);

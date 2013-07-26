@@ -147,16 +147,9 @@ namespace dtn
 			_groups.erase(endpoint);
 		}
 
-		void AbstractWorker::initialize(const std::string &uri, const dtn::data::Number &cbhe, bool async)
+		void AbstractWorker::initialize(const std::string &uri, bool async)
 		{
-			if (BundleCore::local.isCompressable())
-			{
-				_eid.setApplication(cbhe);
-			}
-			else
-			{
-				_eid.setApplication(uri);
-			}
+			_eid.setApplication(uri);
 
 			try {
 				if (async) _thread.start();

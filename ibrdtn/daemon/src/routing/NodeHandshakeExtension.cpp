@@ -199,7 +199,7 @@ namespace dtn
 		NodeHandshakeExtension::HandshakeEndpoint::HandshakeEndpoint(NodeHandshakeExtension &callback)
 		 : _callback(callback)
 		{
-			AbstractWorker::initialize("/routing", 50, true);
+			AbstractWorker::initialize("routing", true);
 		}
 
 		NodeHandshakeExtension::HandshakeEndpoint::~HandshakeEndpoint()
