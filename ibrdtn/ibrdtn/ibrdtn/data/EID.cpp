@@ -362,6 +362,26 @@ namespace dtn
 			}
 		}
 
+		bool EID::isApplication(const dtn::data::Number &app) const throw ()
+		{
+			if (_scheme_type != SCHEME_CBHE) return false;
+			return (_cbhe_application == app);
+		}
+
+		bool EID::isApplication(const std::string &app) const throw ()
+		{
+			switch (_scheme_type) {
+			case SCHEME_CBHE:
+				return (app == getApplication());
+
+			case SCHEME_DTN:
+				return (_application == app);
+
+			default:
+				return (app == _ssp);
+			}
+		}
+
 		std::string EID::getHost() const throw ()
 		{
 			switch (_scheme_type) {

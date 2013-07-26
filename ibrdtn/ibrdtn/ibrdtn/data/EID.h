@@ -72,6 +72,10 @@ namespace dtn
 			void setApplication(const dtn::data::Number &app) throw ();
 			void setApplication(const std::string &app) throw ();
 			std::string getApplication() const throw ();
+
+			bool isApplication(const dtn::data::Number &app) const throw ();
+			bool isApplication(const std::string &app) const throw ();
+
 			std::string getHost() const throw ();
 			const std::string getScheme() const;
 			const std::string getSSP() const;
