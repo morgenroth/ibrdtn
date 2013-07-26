@@ -79,8 +79,8 @@ namespace dtn
 			}
 
 			// set the source and destination address of the new block
-			if (key.reference != bundle.source.getNode()) pib.setSecuritySource( key.reference );
-			if (destination != bundle.destination.getNode()) pib.setSecurityDestination( destination );
+			if (!key.reference.sameHost(bundle.source)) pib.setSecuritySource( key.reference );
+			if (!destination.sameHost(bundle.destination)) pib.setSecurityDestination( destination );
 
 			pib.setResultSize(key);
 			pib.setCiphersuiteId(SecurityBlock::PIB_RSA_SHA256);
