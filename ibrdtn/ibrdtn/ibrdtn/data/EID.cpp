@@ -76,11 +76,16 @@ namespace dtn
 
 			std::stringstream ss(ssp);
 			ss >> n;
-			ss.get(delimiter);
-			ss >> a;
-
 			node = n;
-			app = a;
+
+			ss.get(delimiter);
+
+			if (delimiter == '.') {
+				ss >> a;
+				app = a;
+			} else {
+				app = 0;
+			}
 		}
 
 		void EID::extractDTN(const std::string &ssp, std::string &node, std::string &application)
@@ -213,7 +218,7 @@ namespace dtn
 				dtn::utils::Utils::trim(value);
 
 				// search for the delimiter
-				size_t delimiter = value.find_first_of(":");
+				const size_t delimiter = value.find_first_of(":");
 
 				// jump to default eid if the format is wrong
 				if (delimiter == std::string::npos)
@@ -223,7 +228,7 @@ namespace dtn
 				_scheme = value.substr(0, delimiter);
 
 				// the ssp is everything else
-				size_t startofssp = delimiter + 1;
+				const size_t startofssp = delimiter + 1;
 				const std::string ssp = value.substr(startofssp, value.length() - delimiter + 1);
 
 				// do syntax check
