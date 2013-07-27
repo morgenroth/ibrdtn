@@ -16,7 +16,8 @@ checksums          ${PKG_CHECKSUMS}
 depends_lib     \
                 port:pkgconfig \
                 port:ibrcommon \
-                port:zlib 
+                port:zlib \
+                port:glib2 
 configure.args   \
                 --with-compression \
                 --with-dtnsec \
