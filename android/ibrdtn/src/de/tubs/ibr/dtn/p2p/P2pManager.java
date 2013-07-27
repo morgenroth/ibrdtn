@@ -98,26 +98,38 @@ public class P2pManager extends NativeP2pManager {
     }
     
     public synchronized void create() {
-        if (ManagerState.NOT_SUPPORTED.equals(mManagerState)) return;
-        onCreate();
+        // allowed transition from UNINITIALIZED
+        if (ManagerState.UNINITIALIZED.equals(mManagerState)) {
+            onCreate();
+        }
     }
     
     public synchronized void destroy() {
-        if (ManagerState.NOT_SUPPORTED.equals(mManagerState)) return;
-        onDestroy();
+        // allowed transition from INITIALIZED
+        if (ManagerState.INITIALIZED.equals(mManagerState)) {
+            onDestroy();
+        }
     }
     
     public synchronized void pause() {
-        if (ManagerState.NOT_SUPPORTED.equals(mManagerState)) return;
-        if (ManagerState.ENABLED.equals(mManagerState)) {
-            onP2pDisabled();
+        // allowed transition from ENABLED, DISABLED, PENDING
+        if (    ManagerState.ENABLED.equals(mManagerState) ||
+                ManagerState.DISABLED.equals(mManagerState) ||
+                ManagerState.PENDING.equals(mManagerState)
+                ) {
+            if (ManagerState.ENABLED.equals(mManagerState)) {
+                onP2pDisabled();
+            }
+            
+            onPause();
         }
-        onPause();
     }
     
     public synchronized void resume() {
-        if (ManagerState.NOT_SUPPORTED.equals(mManagerState)) return;
-        onResume();
+        // allowed transition from INITIALIZED
+        if (ManagerState.INITIALIZED.equals(mManagerState)) {
+            onResume();
+        }
     }
 
     private synchronized void onCreate() {
@@ -314,21 +326,6 @@ public class P2pManager extends NativeP2pManager {
         });
     }
 
-    public void fireInterfaceUp(String iface) {
-        Log.d(TAG, "interface up:" + iface);
-        super.fireInterfaceUp(iface);
-    }
-
-    public void fireInterfaceDown(String iface) {
-        Log.d(TAG, "interface down:" + iface);
-        super.fireInterfaceDown(iface);
-    }
-
-    public void fireDiscovered(String eid, String identifier) {
-        //Log.d(TAG, "found peer: " + eid + ", " + identifier);
-        super.fireDiscovered(new EID(eid), identifier, 90, 10);
-    }
-
     @Override
     public void connect(String data) {
         if (mWifiP2pChannel == null) return;
@@ -375,7 +372,7 @@ public class P2pManager extends NativeP2pManager {
         Log.i(TAG, "disconnect request: " + data);
     }
     
-    public BroadcastReceiver mP2pEventReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver mP2pEventReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -490,7 +487,7 @@ public class P2pManager extends NativeP2pManager {
 
     private void peerDiscovered(Peer peer) {
         //Log.d(TAG, "discovered peer:" + peer.getEndpoint() + "," + peer.getP2pAddress());
-        fireDiscovered(peer.getEndpoint(), peer.getP2pAddress());
+        fireDiscovered(new EID(peer.getEndpoint()), peer.getP2pAddress(), 90, 10);
     }
     
     private PeerListListener mPeerListListener = new PeerListListener() {

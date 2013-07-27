@@ -323,6 +323,7 @@ public class DaemonService extends Service {
         
         // create P2P Manager
         _p2p_manager = new P2pManager(this);
+        _p2p_manager.create();
         
         // initialize the basic daemon
         mDaemonProcess.initialize();
@@ -358,6 +359,9 @@ public class DaemonService extends Service {
         // unlisten to preference changes
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.unregisterOnSharedPreferenceChangeListener(_pref_listener);
+        
+        // disable P2P manager
+        _p2p_manager.destroy();
         
         // stop looper that handles incoming intents
         mServiceLooper.quit();
@@ -431,9 +435,6 @@ public class DaemonService extends Service {
                         _p2p_manager.pause();
                     }
                     
-                    // disable P2P manager
-                    _p2p_manager.destroy();
-                    
                     // disable foreground service only if the daemon has been switched off
                     if (!prefs.getBoolean("enabledSwitch", false)) {
                         // mark the notification as invisible
@@ -460,9 +461,6 @@ public class DaemonService extends Service {
 	                    // turn this to a foreground service (kill-proof)
 	                    startForeground(1, n);
                 	}
-                    
-                    // enable P2P manager
-                    _p2p_manager.create();
                     
                     if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
                         _p2p_manager.resume();
