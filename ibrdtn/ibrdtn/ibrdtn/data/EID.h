@@ -34,8 +34,21 @@ namespace dtn
 		class EID
 		{
 		public:
-			static const std::string DEFAULT_SCHEME;
-			static const std::string CBHE_SCHEME;
+			enum Scheme {
+				SCHEME_DTN = 0,
+				SCHEME_CBHE = 1,
+				SCHEME_EXTENDED = 2
+			} _scheme_type;
+
+			/**
+			 * Resolves a scheme in a string to the corresponding enum
+			 */
+			static Scheme resolveScheme(const std::string &s);
+
+			/**
+			 * Returns the name of a scheme
+			 */
+			static const std::string getSchemeName(const Scheme s);
 
 			/**
 			 * Map an application string to a CBHE number
@@ -111,15 +124,10 @@ namespace dtn
 			Compressed getCompressed() const;
 
 		private:
-			enum Scheme {
-				SCHEME_DTN = 0,
-				SCHEME_CBHE = 1,
-				SCHEME_EXTENDED = 2
-			} _scheme_type;
-
+			/**
+			 * private constructor to create a modified EID
+			 */
 			EID(const Scheme scheme_type, const std::string &scheme, const std::string &ssp, const std::string &application);
-
-			static Scheme resolveScheme(const std::string &s);
 
 			/**
 			 * Extract the CBHE node and application from an SSP string

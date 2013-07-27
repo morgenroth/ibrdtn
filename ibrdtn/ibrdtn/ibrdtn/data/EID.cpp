@@ -33,9 +33,6 @@ namespace dtn
 {
 	namespace data
 	{
-		const std::string EID::DEFAULT_SCHEME = "dtn";
-		const std::string EID::CBHE_SCHEME = "ipn";
-
 		// static initialization of the CBHE map
 		EID::cbhe_map& EID::getApplicationMap()
 		{
@@ -54,12 +51,24 @@ namespace dtn
 			return app_map;
 		}
 
+		const std::string EID::getSchemeName(const Scheme s)
+		{
+			switch (s) {
+			case SCHEME_DTN:
+				return "dtn";
+			case SCHEME_CBHE:
+				return "ipn";
+			default:
+				return "";
+			}
+		}
+
 		EID::Scheme EID::resolveScheme(const std::string &s)
 		{
-			if (DEFAULT_SCHEME == s) {
+			if ("dtn" == s) {
 				return SCHEME_DTN;
 			}
-			else if (CBHE_SCHEME == s) {
+			else if ("ipn" == s) {
 				return SCHEME_CBHE;
 			}
 			else {
@@ -170,7 +179,7 @@ namespace dtn
 		}
 
 		EID::EID()
-		: _scheme_type(SCHEME_DTN), _scheme(DEFAULT_SCHEME), _ssp("none"), _application(), _cbhe_node(0), _cbhe_application(0)
+		: _scheme_type(SCHEME_DTN), _scheme(getSchemeName(SCHEME_DTN)), _ssp("none"), _application(), _cbhe_node(0), _cbhe_application(0)
 		{
 		}
 
@@ -207,7 +216,7 @@ namespace dtn
 		}
 
 		EID::EID(const std::string &orig_value)
-		: _scheme_type(SCHEME_DTN), _scheme(DEFAULT_SCHEME), _ssp("none"), _application(), _cbhe_node(0), _cbhe_application(0)
+		: _scheme_type(SCHEME_DTN), _scheme(getSchemeName(SCHEME_DTN)), _ssp("none"), _application(), _cbhe_node(0), _cbhe_application(0)
 		{
 			try {
 				if (orig_value.length() == 0) {
@@ -260,18 +269,18 @@ namespace dtn
 				}
 			} catch (const std::exception&) {
 				_scheme_type = SCHEME_DTN;
-				_scheme = DEFAULT_SCHEME;
+				_scheme = getSchemeName(SCHEME_DTN);
 				_ssp = "none";
 			}
 		}
 
 		EID::EID(const dtn::data::Number &node, const dtn::data::Number &application)
-		 : _scheme_type(SCHEME_CBHE), _scheme(EID::CBHE_SCHEME), _ssp("none"), _application(), _cbhe_node(node), _cbhe_application(application)
+		 : _scheme_type(SCHEME_CBHE), _scheme(getSchemeName(SCHEME_CBHE)), _ssp("none"), _application(), _cbhe_node(node), _cbhe_application(application)
 		{
 			// set dtn:none if the node is zero
 			if (node == 0) {
 				_scheme_type = SCHEME_DTN;
-				_scheme = EID::DEFAULT_SCHEME;
+				_scheme = getSchemeName(SCHEME_DTN);
 			}
 		}
 
