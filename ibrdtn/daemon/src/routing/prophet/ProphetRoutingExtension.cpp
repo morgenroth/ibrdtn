@@ -147,7 +147,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "ack'set received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// merge ack'set into the known bundles
-				for (AcknowledgementSet::const_iterator it = _acknowledgementSet.begin(); it != _acknowledgementSet.end(); ++it) {
+				for (AcknowledgementSet::const_iterator it = neighbor_ack_set.begin(); it != neighbor_ack_set.end(); ++it) {
 					(**this).setKnown(*it);
 				}
 
