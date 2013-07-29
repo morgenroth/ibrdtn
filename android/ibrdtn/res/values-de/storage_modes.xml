@@ -6,7 +6,7 @@
         <item>Hauptspeicher</item>
     </string-array>
     <string-array name="storage_modes_values">
-        <item>disk-persistant</item>
+        <item>disk-persistent</item>
         <item>disk</item>
         <item>memory</item>
     </string-array>
