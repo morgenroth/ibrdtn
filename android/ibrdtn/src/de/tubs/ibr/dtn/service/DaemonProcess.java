@@ -703,8 +703,8 @@ public class DaemonProcess {
 			p.println("net_interfaces = " + ifaces);
 			p.println("net_internet = " + internet_ifaces);
 
-			String storage_mode = preferences.getString( "storage_mode", "disk-persistant" );
-			if ("disk".equals( storage_mode ) || "disk-persistant".equals( storage_mode )) {
+			String storage_mode = preferences.getString( "storage_mode", "disk-persistent" );
+			if ("disk".equals( storage_mode ) || "disk-persistent".equals( storage_mode )) {
     			// storage path
     			File blobPath = DaemonStorageUtils.getStoragePath("blob");
     			if (blobPath != null) {
@@ -720,7 +720,7 @@ public class DaemonProcess {
     			}
 			}
 
-			if ("disk-persistant".equals( storage_mode )) {
+			if ("disk-persistent".equals( storage_mode )) {
     			File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
     			if (bundlePath != null) {
     				p.println("storage_path = " + bundlePath.getPath());
