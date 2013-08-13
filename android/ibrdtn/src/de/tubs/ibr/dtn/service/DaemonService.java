@@ -83,13 +83,13 @@ public class DaemonService extends Service {
     private SessionManager mSessionManager = null;
 
     // the P2P manager used for wifi direct control
-    private P2pManager _p2p_manager = null;
+    private P2pManager mP2pManager = null;
 
     // the daemon process
     private DaemonProcess mDaemonProcess = null;
     
     // indicates if a notification is visible
-    private Boolean _show_notification = false;
+    private Boolean mShowNotification = false;
     
     // statistic database
     private StatsDatabase mStatsDatabase = null;
@@ -322,8 +322,8 @@ public class DaemonService extends Service {
         mSessionManager = new SessionManager(this);
         
         // create P2P Manager
-        _p2p_manager = new P2pManager(this);
-        _p2p_manager.create();
+        mP2pManager = new P2pManager(this);
+        mP2pManager.create();
         
         // initialize the basic daemon
         mDaemonProcess.initialize();
@@ -361,7 +361,7 @@ public class DaemonService extends Service {
         prefs.unregisterOnSharedPreferenceChangeListener(_pref_listener);
         
         // disable P2P manager
-        _p2p_manager.destroy();
+        mP2pManager.destroy();
         
         // stop looper that handles incoming intents
         mServiceLooper.quit();
@@ -374,7 +374,7 @@ public class DaemonService extends Service {
         mDaemonProcess = null;
 
         // dereference P2P Manager
-        _p2p_manager = null;
+        mP2pManager = null;
         
         // remove notification
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -432,13 +432,13 @@ public class DaemonService extends Service {
                     
                 case OFFLINE:
                     if (!prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
-                        _p2p_manager.pause();
+                        mP2pManager.pause();
                     }
                     
                     // disable foreground service only if the daemon has been switched off
                     if (!prefs.getBoolean("enabledSwitch", false)) {
                         // mark the notification as invisible
-                        _show_notification = false;
+                        mShowNotification = false;
                         
                         // stop foreground service
                         stopForeground(true);
@@ -452,7 +452,7 @@ public class DaemonService extends Service {
                 case ONLINE:
                 	if (prefs.getBoolean("RunAsForegroundService", true)) {
 	                    // mark the notification as visible
-	                    _show_notification = true;
+	                    mShowNotification = true;
 	                    
 	                    // create initial notification
 	                    Notification n = buildNotification(R.drawable.ic_notification, getResources()
@@ -463,7 +463,7 @@ public class DaemonService extends Service {
                 	}
                     
                     if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
-                        _p2p_manager.resume();
+                        mP2pManager.resume();
                     }
                     break;
                     
@@ -538,7 +538,7 @@ public class DaemonService extends Service {
         }
         
         // update the notification only if it is visible
-        if (_show_notification) {
+        if (mShowNotification) {
             nm.notify(1, buildNotification(R.drawable.ic_notification, stateText));
         }
     }
@@ -575,7 +575,7 @@ public class DaemonService extends Service {
     					&& mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
     
                     // mark the notification as visible
-                    _show_notification = true;
+                    mShowNotification = true;
                     
                     // create initial notification
                     Notification n = buildNotification(R.drawable.ic_notification, getResources()
@@ -590,7 +590,7 @@ public class DaemonService extends Service {
     			} else {
     				
     	            // mark the notification as invisible
-    	            _show_notification = false;
+    	            mShowNotification = false;
     	            
     	            // stop foreground service
     	            stopForeground(true);
@@ -598,9 +598,9 @@ public class DaemonService extends Service {
     			}
 			} else if (SettingsUtil.KEY_P2P_ENABLED.equals(key)) {
                 if (sharedPreferences.getBoolean(key, false)) {
-                    _p2p_manager.resume();
+                    mP2pManager.resume();
                 } else {
-                    _p2p_manager.pause();
+                    mP2pManager.pause();
                 }
 			}
 		}
