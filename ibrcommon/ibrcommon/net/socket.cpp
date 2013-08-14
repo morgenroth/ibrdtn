@@ -84,6 +84,10 @@ namespace ibrcommon
 	int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
 	int basesocket::DEFAULT_SOCKET_FAMILY_ALTERNATIVE = AF_INET;
 
+	void initialize_socket() {
+		__init_sockets();
+	}
+
 	basesocket::basesocket()
 	 : _state(SOCKET_DOWN), _fd(-1), _family(PF_UNSPEC)
 	{

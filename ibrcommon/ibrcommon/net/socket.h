@@ -96,6 +96,8 @@ namespace ibrcommon {
 		std::string __what;
 	};
 
+	void initialize_socket();
+
 	/**
 	 * The basesocket is an interface for all kinds of sockets. The
 	 * methods allows to bring the socket up or down.
