@@ -249,7 +249,7 @@ public final class DTNClient {
 			
 			try {
 				// send the message to the daemon
-				return mSession.send(null, bundle, data);
+				return mSession.sendByteArray(null, bundle, data);
 			} catch (RemoteException e) {
 				 throw new SessionDestroyedException("send failed");
 			}
