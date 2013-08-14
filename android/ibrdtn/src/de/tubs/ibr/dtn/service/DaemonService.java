@@ -121,8 +121,8 @@ public class DaemonService extends Service {
         }
 
         @Override
-        public DTNSession getSession(String packageName) throws RemoteException {
-            ClientSession cs = mSessionManager.getSession(packageName);
+        public DTNSession getSession(String sessionKey) throws RemoteException {
+            ClientSession cs = mSessionManager.getSession(sessionKey);
             if (cs == null)
                 return null;
             return cs.getBinder();
