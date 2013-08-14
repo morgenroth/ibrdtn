@@ -512,7 +512,7 @@ public class ClientSession {
         }
 
         @Override
-        public BundleID send(DTNSessionCallback cb, Bundle bundle, byte[] data)
+        public BundleID sendByteArray(DTNSessionCallback cb, Bundle bundle, byte[] data)
                 throws RemoteException {
             try {
                 PrimaryBlock b = new PrimaryBlock();
