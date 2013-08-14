@@ -33,7 +33,7 @@ interface DTNSession {
 	 * It returns the BundleID of the transmitted bundle or null
 	 * if the send wasn't successful.
 	 */
-	BundleID send(DTNSessionCallback cb, in de.tubs.ibr.dtn.api.Bundle bundle, in byte[] data);
+	BundleID sendByteArray(DTNSessionCallback cb, in de.tubs.ibr.dtn.api.Bundle bundle, in byte[] data);
 	
 	/**
 	 * Send the content of a file descriptor as bundle

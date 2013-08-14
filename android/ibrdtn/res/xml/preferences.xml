@@ -25,7 +25,7 @@
         </ListPreference>
         
         <ListPreference
-            android:defaultValue="disk-persistant"
+            android:defaultValue="disk-persistent"
             android:entries="@array/storage_modes_names"
             android:entryValues="@array/storage_modes_values"
             android:key="storage_mode"

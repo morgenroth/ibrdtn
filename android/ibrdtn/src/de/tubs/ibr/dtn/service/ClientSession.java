@@ -86,6 +86,7 @@ public class ClientSession {
 	        Intent notify = new Intent(de.tubs.ibr.dtn.Intent.RECEIVE);
 	        notify.addCategory(_package_name);
 	        notify.setPackage(_package_name);
+	        notify.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
 	        notify.putExtra("bundleid", toAndroid(swigId));
 
 	        // send notification intent
@@ -104,6 +105,7 @@ public class ClientSession {
             Intent notify = new Intent(de.tubs.ibr.dtn.Intent.STATUS_REPORT);
             notify.addCategory(_package_name);
             notify.setPackage(_package_name);
+            notify.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
             notify.putExtra("bundleid", toAndroid(swigId));
             notify.putExtra("source", (Parcelable)new SingletonEndpoint(source.getString()));
             notify.putExtra("status", swigReport.getStatus());
@@ -147,6 +149,7 @@ public class ClientSession {
             Intent notify = new Intent(de.tubs.ibr.dtn.Intent.CUSTODY_SIGNAL);
             notify.addCategory(_package_name);
             notify.setPackage(_package_name);
+            notify.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
             notify.putExtra("bundleid", toAndroid(swigId));
             notify.putExtra("source", (Parcelable)new SingletonEndpoint(source.getString()));
             notify.putExtra("accepted", swigCustody.getCustody_accepted());
@@ -366,6 +369,7 @@ public class ClientSession {
             Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
             broadcastIntent.addCategory(_package_name);
             broadcastIntent.setPackage(_package_name);
+            broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
             broadcastIntent.putExtra("key", _package_name);
 
             // send notification intent
@@ -512,7 +516,7 @@ public class ClientSession {
         }
 
         @Override
-        public BundleID send(DTNSessionCallback cb, Bundle bundle, byte[] data)
+        public BundleID sendByteArray(DTNSessionCallback cb, Bundle bundle, byte[] data)
                 throws RemoteException {
             try {
                 PrimaryBlock b = new PrimaryBlock();

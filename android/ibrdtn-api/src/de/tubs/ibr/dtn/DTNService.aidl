@@ -46,16 +46,10 @@ interface DTNService {
 	List<Node> getNeighbors();
 	
 	/**
-	 * Deletes all bundles in the storage of the daemon.
-	 * (Do not work if the daemon is running.)
-	 */
-	void clearStorage();
-	
-	/**
 	 * Get a previously created session.
 	 * @returns null if the session is not available.
 	 */
-	DTNSession getSession(String packageName);
+	DTNSession getSession(String sessionKey);
 	
 	/**
 	 * Get the version of the daemon
