@@ -60,6 +60,8 @@ import de.tubs.ibr.dtn.swig.NativeStats;
 import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonService extends Service {
+    private static final String ACTION_INITIALIZE = "de.tubs.ibr.dtn.action.INITIALIZE";
+    
     public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
     public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
     public static final String ACTION_RESTART = "de.tubs.ibr.dtn.action.RESTART";
@@ -71,6 +73,9 @@ public class DaemonService extends Service {
     public static final String ACTION_CLEAR_STORAGE = "de.tubs.ibr.dtn.action.CLEAR_STORAGE";
     
     public static final String ACTION_STORE_STATS = "de.tubs.ibr.dtn.action.STORE_STATS";
+    
+    public static final String ACTION_START_DISCOVERY = "de.tubs.ibr.dtn.action.START_DISCOVERY";
+    public static final String ACTION_STOP_DISCOVERY = "de.tubs.ibr.dtn.action.STOP_DISCOVERY";
     
     public static final String PREFERENCE_NAME = "de.tubs.ibr.dtn.service_prefs";
 
@@ -273,10 +278,17 @@ public class DaemonService extends Service {
             
             // schedule next collection in 15 minutes
             mServiceHandler.postDelayed(mCollectStats, 900000);
+        } else if (ACTION_INITIALIZE.equals(action)) {
+            // initialize the daemon service
+            initialize();
+        } else if (ACTION_START_DISCOVERY.equals(action)) {
+            // TODO: start P2P discovery and enable IPND
+        } else if (ACTION_STOP_DISCOVERY.equals(action)) {
+            // TODO: stop P2P discovery and disable IPND
         }
         
         // stop the daemon if it should be offline
-        if (mDaemonProcess.getState().equals(DaemonState.OFFLINE)) stopSelf(startId);
+        if (mDaemonProcess.getState().equals(DaemonState.OFFLINE) && (startId != -1)) stopSelf(startId);
     }
     
     private void refreshStats() {
@@ -325,6 +337,22 @@ public class DaemonService extends Service {
         mP2pManager = new P2pManager(this);
         mP2pManager.create();
         
+        // start initialization of the daemon process
+        final Intent intent = new Intent(this, DaemonService.class);
+        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_INITIALIZE);
+        
+        // queue the initialization job as the first job of the handler
+        Message msg = mServiceHandler.obtainMessage();
+        msg.arg1 = -1; // invalid startId (this never leads to a stop of the service)
+        msg.obj = intent;
+        mServiceHandler.sendMessage(msg);
+    }
+    
+    /**
+     * Initialize the daemon service
+     * This should be the first job of the service after creation
+     */
+    private void initialize() {
         // initialize the basic daemon
         mDaemonProcess.initialize();
         
