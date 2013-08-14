@@ -100,22 +100,22 @@ public class DaemonService extends Service {
     private final DTNService.Stub mBinder = new LocalDTNService();
         
     public class LocalDTNService extends DTNService.Stub {
+        @Override
         public DaemonState getState() throws RemoteException {
             return DaemonService.this.mDaemonProcess.getState();
         }
 
+        @Override
         public boolean isRunning() throws RemoteException {
             return DaemonService.this.mDaemonProcess.getState().equals(DaemonState.ONLINE);
         }
 
+        @Override
         public List<Node> getNeighbors() throws RemoteException {
         	return DaemonService.this.mDaemonProcess.getNeighbors();
         }
 
-        public void clearStorage() throws RemoteException {
-        	DaemonService.this.mDaemonProcess.clearStorage();
-        }
-
+        @Override
         public DTNSession getSession(String packageName) throws RemoteException {
             ClientSession cs = mSessionManager.getSession(packageName);
             if (cs == null)
