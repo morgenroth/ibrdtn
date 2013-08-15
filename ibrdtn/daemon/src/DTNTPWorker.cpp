@@ -565,7 +565,7 @@ namespace dtn
 						tv_sync_delay.tv_sec = peer_age.getSeconds().get<time_t>();
 						tv_sync_delay.tv_usec = peer_age.getMicroseconds().get<suseconds_t>() % 1000000;
 
-#ifdef WIN32
+#ifdef __WIN32__
 						// TODO: implement win32 version
 #else
 						// add sync delay to the peer timestamp

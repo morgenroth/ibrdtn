@@ -80,7 +80,7 @@ void sighandler(int signal)
 		_shutdown_cond.signal(true);
 		break;
 	}
-#ifndef WIN32
+#ifndef __WIN32__
 	case SIGUSR1:
 		if (!_debug)
 		{

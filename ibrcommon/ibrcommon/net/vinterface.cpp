@@ -21,7 +21,7 @@
 
 #include "ibrcommon/config.h"
 
-#ifdef WIN32
+#ifdef __WIN32__
 #include <winsock2.h>
 #include <windows.h>
 #include <ntddndis.h>
@@ -72,7 +72,7 @@ namespace ibrcommon
 
 	uint32_t vinterface::getIndex() const
 	{
-#ifdef WIN32
+#ifdef __WIN32__
 		PULONG index = 0;
 		GetAdapterIndex(LPWSTR(_name.c_str()), index);
 		return (uint32_t)index;

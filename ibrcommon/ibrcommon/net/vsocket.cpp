@@ -28,7 +28,7 @@
 #include "ibrcommon/TimeMeasurement.h"
 #endif
 
-#ifdef WIN32
+#ifdef __WIN32__
 #include <winsock2.h>
 #include <windows.h>
 #else
@@ -112,7 +112,7 @@ namespace ibrcommon
 		int pipe_fds[2];
 
 		// create a pipe for interruption
-#ifdef WIN32
+#ifdef __WIN32__
 		if (::_pipe(pipe_fds, 1, _O_BINARY) < 0)
 #else
 		if (::pipe(pipe_fds) < 0)
@@ -136,7 +136,7 @@ namespace ibrcommon
 		if (_state != SOCKET_UP)
 			throw socket_exception("socket is not up");
 
-#ifndef WIN32
+#ifndef __WIN32__
 		this->close();
 		::close(_output_fd);
 #endif

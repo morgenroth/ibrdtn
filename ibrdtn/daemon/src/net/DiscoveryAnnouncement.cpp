@@ -28,7 +28,7 @@
 #include <iostream>
 #include <vector>
 
-#ifdef WIN32
+#ifdef __WIN32__
 #include <winsock2.h>
 #else
 #include <netinet/in.h>

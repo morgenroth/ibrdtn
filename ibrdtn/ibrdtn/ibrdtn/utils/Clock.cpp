@@ -223,7 +223,7 @@ namespace dtn
 					timerclear(&Clock::_offset);
 					Clock::_offset_init = true;
 				}
-#ifdef WIN32
+#ifdef __WIN32__
 				// TODO: add offset to time value
 #else
 				timeradd(&Clock::_offset, &tv, &Clock::_offset);
@@ -236,7 +236,7 @@ namespace dtn
 				struct timeval now;
 				::gettimeofday(&now, &tz);
 
-#ifdef WIN32
+#ifdef __WIN32__
 				// TODO: sub offset to time value
 #else
 				// adjust by the offset
@@ -261,7 +261,7 @@ namespace dtn
 					timerclear(&Clock::_offset);
 					Clock::_offset_init = true;
 				}
-#ifdef WIN32
+#ifdef __WIN32__
 				// TODO: sub offset to time value
 #else
 				timersub(&now, tv, &Clock::_offset);
@@ -270,7 +270,7 @@ namespace dtn
 			}
 			else
 			{
-#ifdef WIN32
+#ifdef __WIN32__
 				// TODO: set the local clock to the new value
 #else
 				// set the local clock to the new timestamp
@@ -292,7 +292,7 @@ namespace dtn
 					timerclear(&Clock::_offset);
 					Clock::_offset_init = true;
 				}
-#ifdef WIN32
+#ifdef __WIN32__
 				// TODO: adjust time value by offset
 #else
 				// add offset

@@ -36,7 +36,7 @@
 #include <libgen.h>
 #endif
 
-#ifdef WIN32
+#ifdef __WIN32__
 #include <io.h>
 #define FILE_DELIMITER_CHAR '\\'
 #define FILE_DELIMITER "\\"
@@ -110,7 +110,7 @@ namespace ibrcommon
 					_type = DT_REG;
 					break;
 
-#ifndef WIN32
+#ifndef __WIN32__
 				case S_IFLNK:
 					_type = DT_LNK;
 					break;
@@ -146,7 +146,7 @@ namespace ibrcommon
 			return errno;
 		}
 
-#if WIN32
+#if __WIN32__
 		while ((dirp = ::readdir(dp)) != NULL)
 #else
 		while (::readdir_r(dp, &dirp_data, &dirp) == 0)
@@ -159,7 +159,7 @@ namespace ibrcommon
 
 			std::string name = std::string(dirp->d_name);
 			std::stringstream ss; ss << getPath() << FILE_DELIMITER_CHAR << name;
-#if WIN32
+#if __WIN32__
 			File file(ss.str());
 #else
 			File file(ss.str(), dirp->d_type);
@@ -260,7 +260,7 @@ namespace ibrcommon
 			File::createDirectory(parent);
 
 			// create path
-#ifdef WIN32
+#ifdef __WIN32__
 			::mkdir(path.getPath().c_str());
 #else
 			::mkdir(path.getPath().c_str(), 0700);
@@ -331,7 +331,7 @@ namespace ibrcommon
 		std::vector<char> name(pattern.length() + 1);
 		::strcpy(&name[0], pattern.c_str());
 
-#ifdef WIN32
+#ifdef __WIN32__
 		// create temporary file - win32 style
 		int fd = -1;
 		if (_mktemp_s(&name[0], pattern.length() + 1) == 0) {

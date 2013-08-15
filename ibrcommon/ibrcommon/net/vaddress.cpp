@@ -23,7 +23,7 @@
 #include "ibrcommon/net/vaddress.h"
 #include "ibrcommon/net/socket.h"
 
-#ifdef WIN32
+#ifdef __WIN32__
 #include <winsock2.h>
 #include <wspiapi.h>
 #else

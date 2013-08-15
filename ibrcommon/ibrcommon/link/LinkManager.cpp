@@ -30,12 +30,10 @@
 
 #if defined HAVE_LIBNL || HAVE_LIBNL3
 #include "ibrcommon/link/NetLinkManager.h"
-#else
-#ifdef WIN32
+#elif __WIN32__
 #include "ibrcommon/link/Win32LinkManager.h"
 #else
 #include "ibrcommon/link/PosixLinkManager.h"
-#endif
 #endif
 
 namespace ibrcommon
@@ -44,12 +42,10 @@ namespace ibrcommon
 	{
 #if defined HAVE_LIBNL || HAVE_LIBNL3
 		static NetLinkManager lm;
-#else
-#ifdef WIN32
+#elif __WIN32__
 		static Win32LinkManager lm;
 #else
 		static PosixLinkManager lm;
-#endif
 #endif
 
 		return lm;

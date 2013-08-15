@@ -28,8 +28,9 @@
 #include <stdio.h>
 #include <signal.h>
 
-#ifdef _WIN32
+#ifdef __WIN32__
 #include <windows.h>
+#include <unistd.h>
 #elif MACOS
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -45,7 +46,7 @@ namespace ibrcommon
 {
 	size_t Thread::getNumberOfProcessors()
 	{
-#ifdef WIN32
+#ifdef __WIN32__
 		SYSTEM_INFO sysinfo;
 		GetSystemInfo(&sysinfo);
 		return sysinfo.dwNumberOfProcessors;
@@ -103,7 +104,7 @@ namespace ibrcommon
 	}
 
 	Thread::Thread(size_t size)
-#ifdef WIN32
+#ifdef __WIN32__
 	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(), stack(size), priority(0), _detached(false)
 #else
 	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), priority(0), _detached(false)

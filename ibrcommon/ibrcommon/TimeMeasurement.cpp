@@ -148,11 +148,10 @@ namespace ibrcommon
 	void TimeMeasurement::gettime(struct timespec *ts)
 	{
 		
-#ifdef WIN32
+#ifdef __WIN32__
 		// TODO: implement win32 specific method
 		uint64_t start = clock();
-#else
-#ifdef HAVE_MACH_MACH_TIME_H // OS X does not have clock_gettime, use clock_get_time
+#elif HAVE_MACH_MACH_TIME_H // OS X does not have clock_gettime, use clock_get_time
 		clock_serv_t cclock;
 		mach_timespec_t mts;
 		host_get_clock_service(mach_host_self(), REALTIME_CLOCK, &cclock);
@@ -162,7 +161,6 @@ namespace ibrcommon
 		ts->tv_nsec = mts.tv_nsec;
 #else
 		::clock_gettime(CLOCK_MONOTONIC, ts);
-#endif
 #endif
 	}
 }

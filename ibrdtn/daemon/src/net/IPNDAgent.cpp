@@ -34,7 +34,7 @@
 #include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/link/LinkManager.h>
 
-#ifdef WIN32
+#ifdef __WIN32__
 #define EADDRNOTAVAIL WSAEADDRNOTAVAIL
 #define EADDRINUSE WSAEADDRINUSE
 #endif

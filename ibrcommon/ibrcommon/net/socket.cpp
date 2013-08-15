@@ -24,7 +24,7 @@
 #include "ibrcommon/net/vsocket.h"
 #include "ibrcommon/Logger.h"
 
-#ifdef WIN32
+#ifdef __WIN32__
 #include <windows.h>
 #include <ws2tcpip.h>
 #else
@@ -49,7 +49,7 @@
 #define bzero(s,n) (memset((s), '\0', (n)), (void) 0)
 #endif
 
-#ifdef WIN32
+#ifdef __WIN32__
 #define EINPROGRESS WSAEINPROGRESS
 #define ECONNRESET WSAECONNRESET
 #define EAFNOSUPPORT WSAEAFNOSUPPORT
@@ -60,7 +60,7 @@
 
 namespace ibrcommon
 {
-#ifdef WIN32
+#ifdef __WIN32__
 	/**
 	 * wrapper to translate win32 method signature into linux/posix signature
 	 */
@@ -161,7 +161,7 @@ namespace ibrcommon
 
 	void basesocket::set_blocking_mode(bool val, int fd) const throw (socket_exception)
 	{
-#ifdef WIN32
+#ifdef __WIN32__
 		// set blocking mode - the win32 way
 		unsigned long block_mode = (val) ? 1 : 0;
 		ioctlsocket((fd == -1) ? _fd : fd, FIONBIO, &block_mode);
@@ -540,7 +540,7 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-#ifdef WIN32
+#ifdef __WIN32__
 		throw socket_exception("socket type not supported");
 #else
 		size_t len = 0;
@@ -640,7 +640,7 @@ namespace ibrcommon
 
 	void fileserversocket::bind(const File &file) throw (socket_exception)
 	{
-#ifndef WIN32
+#ifndef __WIN32__
 		// remove old sockets
 		unlink(file.getPath().c_str());
 
@@ -895,7 +895,7 @@ namespace ibrcommon
 					basesocket *current = (*iter);
 					int err = 0;
 					socklen_t len = sizeof(err);
-#ifdef WIN32
+#ifdef __WIN32__
 					::getsockopt(current->fd(), SOL_SOCKET, SO_ERROR, (char*)&err, &len);
 #else
 					::getsockopt(current->fd(), SOL_SOCKET, SO_ERROR, &err, &len);
