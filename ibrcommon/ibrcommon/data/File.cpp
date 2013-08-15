@@ -146,7 +146,11 @@ namespace ibrcommon
 			return errno;
 		}
 
+#if WIN32
+		while ((dirp = ::readdir(dp)) != NULL)
+#else
 		while (::readdir_r(dp, &dirp_data, &dirp) == 0)
+#endif
 		{
 			if (dirp == NULL) break;
 
@@ -155,7 +159,11 @@ namespace ibrcommon
 
 			std::string name = std::string(dirp->d_name);
 			std::stringstream ss; ss << getPath() << FILE_DELIMITER_CHAR << name;
+#if WIN32
+			File file(ss.str());
+#else
 			File file(ss.str(), dirp->d_type);
+#endif
 			files.push_back(file);
 		}
 		closedir(dp);
@@ -327,7 +335,7 @@ namespace ibrcommon
 		// create temporary file - win32 style
 		int fd = -1;
 		if (_mktemp_s(&name[0], pattern.length() + 1) == 0) {
-			fd = open(filename, O_CREAT, S_IREAD | S_IWRITE);
+			fd = open(&name[0], O_CREAT, S_IREAD | S_IWRITE);
 		}
 #else
 		int fd = mkstemp(&name[0]);
