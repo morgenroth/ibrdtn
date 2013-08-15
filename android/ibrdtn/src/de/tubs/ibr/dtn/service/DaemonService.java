@@ -449,6 +449,12 @@ public class DaemonService extends Service {
         public void onStateChanged(DaemonState state) {
             Log.d(TAG, "mDaemonStateReceiver: DaemonState: " + state);
             
+            // prepare broadcast intent
+            Intent broadcastIntent = new Intent();
+            broadcastIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
+            broadcastIntent.putExtra("state", state.name());
+            broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+            
             // request notification update
             requestNotificationUpdate();
             
@@ -493,6 +499,9 @@ public class DaemonService extends Service {
                     if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
                         mP2pManager.resume();
                     }
+                    
+                    // wake-up all apps in stopped-state when going online
+                    broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                     break;
                     
                 case SUSPENDED:
@@ -505,10 +514,6 @@ public class DaemonService extends Service {
             }
             
             // broadcast state change
-            Intent broadcastIntent = new Intent();
-            broadcastIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
-            broadcastIntent.putExtra("state", state.name());
-            broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
             sendBroadcast(broadcastIntent);
         }
 
