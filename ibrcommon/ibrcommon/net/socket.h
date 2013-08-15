@@ -30,6 +30,13 @@
 #include <string.h>
 #include <sys/time.h>
 
+#ifdef __WIN32__
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#endif
+
 namespace ibrcommon {
 	enum socket_error_code
 	{
