@@ -101,7 +101,7 @@ namespace ibrcommon
 		char str_address[256];
 		DWORD str_length = static_cast<DWORD>(sizeof str_address);
 		if (WSAAddressToString(sockaddr.lpSockaddr, sockaddr.iSockaddrLength, NULL, str_address, &str_length) == 0) {
-			return vaddress(std::string(str_address));
+			return vaddress(std::string(str_address), "");
 		}
 
 		throw ibrcommon::Exception("can not convert address into a string");
