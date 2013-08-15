@@ -161,7 +161,11 @@ namespace ibrcommon
 		pthread_attr_destroy(&attr);
 
 		_state.reset(THREAD_CREATED);
+#if __WIN32__
+		tid = pthread_t();
+#else
 		tid = 0;
+#endif
 		_detached = false;
 
 		pthread_attr_init(&attr);
@@ -169,7 +173,8 @@ namespace ibrcommon
 
 	int Thread::kill(int sig)
 	{
-		if (tid == 0) return -1;
+		if (pthread_equal(tid, pthread_t())) return -1;
+
 		return pthread_kill(tid, sig);
 	}
 
