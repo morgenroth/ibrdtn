@@ -144,7 +144,7 @@ namespace ibrcommon
 		ts.tv_nsec = (timeout % 1000l) * 1000000l;
 		pthread_delay_np(&ts);
 	#else
-		usleep(static_cast<useconds_t>(timeout) * 1000);
+		::usleep(static_cast<useconds_t>(timeout) * 1000);
 	#endif
 	}
 
