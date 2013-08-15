@@ -2,14 +2,14 @@ Source: ibrdtnd
 Section: net
 Priority: standard
 Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
-Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev (>= 0.10), ibrdtn-dev (>= 0.10), libsqlite3-dev, libcurl4-openssl-dev (>= 7.18), libdaemon-dev (>= 0.12), cdbs (>= 0.4), pkg-config, dtndht-dev (>=0.2.2)
+Build-Depends: cdbs, debhelper (>= 7.0), autotools-dev, ibrcommon-dev (>= 0.10), ibrdtn-dev (>= 0.10), libsqlite3-dev, libcurl4-openssl-dev (>= 7.18), libdaemon-dev (>= 0.12), cdbs (>= 0.4), pkg-config, dtndht-dev (>=0.2.2), libvmime-dev (>= 0.9.1)
 Standards-Version: 3.9.4
 Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
 
 Package: ibrdtnd
 Architecture: any
 Pre-Depends: debconf, adduser
-Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1, ibrdtn1, libsqlite3-0, libcurl3 (>= 7.18), libdaemon0 (>= 0.12), dtndht1
+Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1, ibrdtn1, libsqlite3-0, libcurl3 (>= 7.18), libdaemon0 (>= 0.12), dtndht1, libvmime0 (>= 0.9.1)
 Suggests: logrotate (>= 3.0.0), ibrdtn-tools
 Description: IBR-DTN daemon
 	The implementation of the bundle protocol of the IBR (TU Braunschweig).

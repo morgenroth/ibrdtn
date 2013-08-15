@@ -35,7 +35,7 @@ namespace dtn
 
 		void Event::setLoggable(bool val)
 		{
-			_loggable = false;
+			_loggable = val;
 		}
 
 		std::string Event::toString() const {
