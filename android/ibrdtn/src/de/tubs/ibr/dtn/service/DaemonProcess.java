@@ -334,7 +334,6 @@ public class DaemonProcess {
         ret.add("log_options");
         ret.add("log_debug_verbosity");
         ret.add("log_enable_file");
-        ret.add("storage_mode");
         
         return ret;
     }
