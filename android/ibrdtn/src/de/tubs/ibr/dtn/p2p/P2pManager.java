@@ -1,6 +1,10 @@
 package de.tubs.ibr.dtn.p2p;
 
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -190,6 +194,10 @@ public class P2pManager extends NativeP2pManager {
         Intent i = new Intent(mService, SchedulerService.class);
         i.setAction(SchedulerService.ACTION_ACTIVATE_SCHEDULER);
         mService.startService(i);
+        
+        // remove all inactive interfaces
+        HashSet<String> activeInterfaces = getActiveInterfaces();
+        mP2pInterfaces.retainAll(activeInterfaces);
         
         // bring up all p2p interfaces
         for (String iface : mP2pInterfaces) {
@@ -615,4 +623,23 @@ public class P2pManager extends NativeP2pManager {
             }
         }
     };
+    
+    private HashSet<String> getActiveInterfaces() {
+        HashSet<String> ret = new HashSet<String>();
+        
+        try {
+            ArrayList<NetworkInterface> ilist = Collections.list( NetworkInterface.getNetworkInterfaces() );
+            
+            // scan for known network devices
+            for (NetworkInterface i : ilist)
+            {
+                String iface = i.getDisplayName();
+                ret.add(iface);
+            }
+        } catch (SocketException e) {
+            Log.e(TAG, "failed to get active interfaces", e);
+        }
+        
+        return ret;
+    }
 }
