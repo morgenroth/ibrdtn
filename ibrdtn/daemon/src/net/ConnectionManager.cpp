@@ -383,7 +383,7 @@ namespace dtn
 
 		void ConnectionManager::check_autoconnect()
 		{
-			std::queue<dtn::core::Node> _connect_nodes;
+			std::queue<dtn::core::Node> connect_nodes;
 
 			dtn::data::Timeout interval = dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
 			if (interval == 0) return;
@@ -391,7 +391,7 @@ namespace dtn
 			if (_next_autoconnect < dtn::utils::Clock::getTime())
 			{
 				// search for non-connected but available nodes
-				ibrcommon::MutexLock l(_cl_lock);
+				ibrcommon::MutexLock l(_node_lock);
 				for (nodemap::const_iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 				{
 					const Node &n = (*iter).second;
@@ -399,7 +399,7 @@ namespace dtn
 
 					if (ul.empty() && n.isAvailable())
 					{
-						_connect_nodes.push(n);
+						connect_nodes.push(n);
 					}
 				}
 
@@ -407,31 +407,34 @@ namespace dtn
 				_next_autoconnect = dtn::utils::Clock::getTime() + interval;
 			}
 
-			while (!_connect_nodes.empty())
+			while (!connect_nodes.empty())
 			{
 				try {
-					open(_connect_nodes.front());
+					open(connect_nodes.front());
 				} catch (const ibrcommon::Exception&) {
 					// ignore errors
 				}
-				_connect_nodes.pop();
+				connect_nodes.pop();
 			}
 		}
 
 		void ConnectionManager::open(const dtn::core::Node &node) throw (ibrcommon::Exception)
 		{
-			ibrcommon::MutexLock l(_cl_lock);
-
-			// search for the right cl
-			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+			// lock convergence layers while iterating over them
 			{
-				ConvergenceLayer *cl = (*iter);
-				if (node.has(cl->getDiscoveryProtocol()))
-				{
-					cl->open(node);
+				ibrcommon::MutexLock l(_cl_lock);
 
-					// stop here, we queued the bundle already
-					return;
+				// search for the right cl
+				for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
+				{
+					ConvergenceLayer *cl = (*iter);
+					if (node.has(cl->getDiscoveryProtocol()))
+					{
+						cl->open(node);
+
+						// stop here, we queued the bundle already
+						return;
+					}
 				}
 			}
 
@@ -450,8 +453,6 @@ namespace dtn
 		void ConnectionManager::dialup(const dtn::core::Node &n)
 		{
 			// search for p2p_dialup connections
-			ibrcommon::MutexLock l(_cl_lock);
-
 			// get the list of all available URIs
 			std::list<Node::URI> uri_list = n.get(Node::NODE_P2P_DIALUP);
 
@@ -475,8 +476,6 @@ namespace dtn
 
 		void ConnectionManager::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
-			ibrcommon::MutexLock l(_cl_lock);
-
 			// get the list of all available URIs
 			std::list<Node::URI> uri_list = node.getAll();
 
@@ -484,6 +483,9 @@ namespace dtn
 			for (std::list<Node::URI>::const_iterator it = uri_list.begin(); it != uri_list.end(); ++it)
 			{
 				const Node::URI &uri = (*it);
+
+				// lock convergence layers while iterating over them
+				ibrcommon::MutexLock l(_cl_lock);
 
 				// search a matching convergence layer for this URI
 				for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
