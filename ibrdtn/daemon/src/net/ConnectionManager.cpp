@@ -383,7 +383,7 @@ namespace dtn
 
 		void ConnectionManager::check_autoconnect()
 		{
-			std::queue<dtn::core::Node> _connect_nodes;
+			std::queue<dtn::core::Node> connect_nodes;
 
 			dtn::data::Timeout interval = dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
 			if (interval == 0) return;
@@ -399,7 +399,7 @@ namespace dtn
 
 					if (ul.empty() && n.isAvailable())
 					{
-						_connect_nodes.push(n);
+						connect_nodes.push(n);
 					}
 				}
 
@@ -407,14 +407,14 @@ namespace dtn
 				_next_autoconnect = dtn::utils::Clock::getTime() + interval;
 			}
 
-			while (!_connect_nodes.empty())
+			while (!connect_nodes.empty())
 			{
 				try {
-					open(_connect_nodes.front());
+					open(connect_nodes.front());
 				} catch (const ibrcommon::Exception&) {
 					// ignore errors
 				}
-				_connect_nodes.pop();
+				connect_nodes.pop();
 			}
 		}
 
