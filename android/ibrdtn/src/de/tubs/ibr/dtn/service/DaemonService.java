@@ -465,7 +465,7 @@ public class DaemonService extends Service {
                     break;
                     
                 case OFFLINE:
-                    if (!prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
+                    if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
                         mP2pManager.pause();
                     }
                     
