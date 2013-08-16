@@ -2,6 +2,7 @@ package de.tubs.ibr.dtn.p2p;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import android.annotation.TargetApi;
@@ -46,6 +47,13 @@ public class P2pManager extends NativeP2pManager {
     private WifiP2pDnsSdServiceInfo mServiceInfo = null;
     
     private Calendar mLastDisco = null;
+    
+    /**
+     * The p2p interfaces are stored in this set. Every time
+     * the P2pManager goes into pause all interfaces are signaled
+     * as down. On resume the interfaces are signaled as active again.
+     */
+    private HashSet<String> mP2pInterfaces = new HashSet<String>();
     
     private enum ManagerState {
         UNINITIALIZED,
@@ -183,12 +191,25 @@ public class P2pManager extends NativeP2pManager {
         i.setAction(SchedulerService.ACTION_ACTIVATE_SCHEDULER);
         mService.startService(i);
         
+        // bring up all p2p interfaces
+        for (String iface : mP2pInterfaces) {
+            Log.d(TAG, "restore connection on interface " + iface);
+            fireInterfaceUp(iface);
+        }
+        
         // set the current state
         mManagerState = ManagerState.ENABLED;
     }
     
     private synchronized void onP2pDisabled() {
         Log.d(TAG, "onP2pDisabled() state: " + mManagerState.toString());
+        
+        // bring down all p2p interfaces
+        for (String iface : mP2pInterfaces) {
+            Log.d(TAG, "disable connection on interface " + iface);
+            
+            fireInterfaceDown(iface);
+        }
         
         // stop the scheduler
         Intent i = new Intent(mService, SchedulerService.class);
@@ -402,6 +423,7 @@ public class P2pManager extends NativeP2pManager {
             
             // available with Android 4.3
             // WifiP2pGroup p2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
+            // mP2pInterfaces.remove( p2pGroup.getInterface() );
             // fireInterfaceDown( p2pGroup.getInterface() );
             
             if (netInfo.isConnected()) {
@@ -410,6 +432,9 @@ public class P2pManager extends NativeP2pManager {
                     @Override
                     public void onGroupInfoAvailable(WifiP2pGroup group) {
                         String iface = group.getInterface();
+                        
+                        // add the interface to the interface set
+                        mP2pInterfaces.add(iface);
                         
                         // add the interface
                         fireInterfaceUp(iface);
