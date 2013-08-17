@@ -105,6 +105,8 @@ namespace dtn
 		{
 			try {
 				const NodeEvent &nodeevent = dynamic_cast<const NodeEvent&>(*evt);
+
+				ibrcommon::MutexLock l(_node_lock);
 				const Node &n = nodeevent.getNode();
 
 				switch (nodeevent.getAction())
