@@ -630,7 +630,7 @@ public class DaemonService extends Service {
     	            
     			}
 			} else if (SettingsUtil.KEY_P2P_ENABLED.equals(key)) {
-                if (sharedPreferences.getBoolean(key, false)) {
+                if (sharedPreferences.getBoolean(key, false) && mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
                     mP2pManager.resume();
                 } else {
                     mP2pManager.pause();
