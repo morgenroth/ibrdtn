@@ -245,6 +245,16 @@ namespace dtn
 			 */
 			void clearStorage() const throw ();
 
+			/**
+			 * Enable discovery mechanisms IPND beacons
+			 */
+			void startDiscovery() const throw ();
+
+			/**
+			 * Disable discovery mechanism like IPND beacons
+			 */
+			void stopDiscovery() const throw ();
+
 		private:
 			void init_up(DaemonRunLevel rl) throw (NativeDaemonException);
 			void init_down(DaemonRunLevel rl) throw (NativeDaemonException);

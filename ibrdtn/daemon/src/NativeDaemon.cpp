@@ -169,6 +169,16 @@ namespace dtn
 			dtn::core::BundleCore::getInstance().getStorage().clear();
 		}
 
+		void NativeDaemon::startDiscovery() const throw ()
+		{
+			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY);
+		}
+
+		void NativeDaemon::stopDiscovery() const throw ()
+		{
+			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY);
+		}
+
 		void NativeDaemon::bindEvents()
 		{
 			if (_eventcb != NULL) {
