@@ -62,6 +62,14 @@ namespace dtn
 		const std::set<dtn::data::EID> SchedulingBundleIndex::getDistinctDestinations()
 		{
 			std::set<dtn::data::EID> ret;
+
+			ibrcommon::MutexLock l(_index_mutex);
+			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
+			{
+				const dtn::data::MetaBundle &b = (*iter);
+				ret.insert(b.destination);
+			}
+
 			return ret;
 		}
 	} /* namespace routing */
