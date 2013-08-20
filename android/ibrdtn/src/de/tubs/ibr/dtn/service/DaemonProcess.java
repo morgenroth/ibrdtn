@@ -341,9 +341,9 @@ public class DaemonProcess {
     private SharedPreferences.OnSharedPreferenceChangeListener _pref_listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-            Log.d(TAG, "Preferences has changed " + key);
-
             if (mRestartMap.containsKey(key)) {
+                Log.d(TAG, "Preference " + key + " has changed => restart");
+                
                 // check runlevel and restart some runlevels if necessary
                 final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
                 intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
@@ -352,6 +352,8 @@ public class DaemonProcess {
             }
             else if (key.equals("enabledSwitch"))
             {
+                Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getBoolean(key, false) ));
+                
                 if (prefs.getBoolean(key, false)) {
                     // startup the daemon process
                     final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
@@ -366,6 +368,8 @@ public class DaemonProcess {
             }
             else if (key.startsWith("interface_"))
             {
+                Log.d(TAG, "Preference " + key + " has changed => restart");
+                
                 // a interface has been removed or added
                 // check runlevel and restart some runlevels if necessary
                 final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
@@ -375,7 +379,8 @@ public class DaemonProcess {
             }
             else if (key.equals("cloud_uplink"))
             {
-                Log.d(TAG, key + " == " + String.valueOf( prefs.getBoolean(key, false) ));
+                Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getBoolean(key, false) ));
+                
                 synchronized(DaemonProcess.this) {
                     if (prefs.getBoolean(key, false)) {
                         mDaemon.addConnection(__CLOUD_EID__.toString(),
@@ -388,7 +393,7 @@ public class DaemonProcess {
             }
             else if (key.startsWith("log_options"))
             {
-                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                Log.d(TAG, "Preference " + key + " has changed to " + prefs.getString(key, "<not set>"));
                 
                 int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
                 int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
@@ -406,7 +411,7 @@ public class DaemonProcess {
             }
             else if (key.startsWith("log_debug_verbosity"))
             {
-                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                Log.d(TAG, "Preference " + key + " has changed to " + prefs.getString(key, "<not set>"));
                 
                 int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
                 int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
@@ -421,7 +426,7 @@ public class DaemonProcess {
             }
             else if (key.startsWith("log_enable_file"))
             {
-                Log.d(TAG, key + " == " + prefs.getBoolean(key, false));
+                Log.d(TAG, "Preference " + key + " has changed to " + prefs.getBoolean(key, false));
                 
                 // set logfile options
                 String logFilePath = null;
@@ -450,6 +455,8 @@ public class DaemonProcess {
                     }
                 }
             } else if (mConfigurationSet.contains(key)) {
+                Log.d(TAG, "Preference " + key + " has changed");
+                
                 // default action
                 onConfigurationChanged();
             }
