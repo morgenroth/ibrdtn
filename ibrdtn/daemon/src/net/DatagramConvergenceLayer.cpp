@@ -146,6 +146,7 @@ namespace dtn
 
 		void DatagramConvergenceLayer::connectionDown(const DatagramConnection *conn)
 		{
+			ibrcommon::MutexLock l(_cond_connections);
 			ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
 
 			const connection_list::iterator i = std::find(_connections.begin(), _connections.end(), conn);
@@ -155,7 +156,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Down: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 				_connections.erase(i);
 
-				ibrcommon::MutexLock l(_cond_connections);
+				// decrement the number of connections
 				--_active_conns;
 				_cond_connections.signal(true);
 			}
