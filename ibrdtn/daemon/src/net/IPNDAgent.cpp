@@ -25,6 +25,7 @@
 #include "net/P2PDialupEvent.h"
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
+#include "core/GlobalEvent.h"
 
 #include <ibrdtn/data/Exceptions.h>
 
@@ -47,7 +48,7 @@ namespace dtn
 
 		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _send_socket_state(false)
+		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _send_socket_state(false), _enabled(true)
 		{
 			// bind to receive socket
 			_recv_socket.add(new ibrcommon::multicastsocket(port));
@@ -165,6 +166,9 @@ namespace dtn
 
 		void IPNDAgent::sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
 		{
+			// stop send announcements if discovery beacons are disabled
+			if (!_enabled) return;
+
 			DiscoveryAnnouncement announcement(_version, dtn::core::BundleCore::local);
 
 			// set sequencenumber
@@ -304,6 +308,20 @@ namespace dtn
 			} catch (std::bad_cast&) {
 
 			}
+
+			try {
+				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
+				if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY) {
+					// start sending discovery beacons
+					_enabled = true;
+				}
+				else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY) {
+					// suspend discovery beacons
+					_enabled = false;
+				}
+			} catch (const std::bad_cast&) {
+
+			}
 		}
 
 		void IPNDAgent::eventNotify(const ibrcommon::LinkEvent &evt)
@@ -407,13 +425,19 @@ namespace dtn
 				IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
-			// listen on P2P dial-up events
+			// listen to P2P dial-up events
 			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::add(this);
+
+			// listen to global events (discovery start/stop)
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
 		}
 
 		void IPNDAgent::componentDown() throw ()
 		{
-			// un-listen on P2P dial-up events
+			// un-listen to global events (discovery start/stop)
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
+
+			// un-listen to P2P dial-up events
 			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::remove(this);
 
 			// unsubscribe to NetLink events

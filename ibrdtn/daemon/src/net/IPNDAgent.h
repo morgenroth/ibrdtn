@@ -84,6 +84,7 @@ namespace dtn
 			ibrcommon::vsocket _recv_socket;
 			ibrcommon::vsocket _send_socket;
 			bool _send_socket_state;
+			bool _enabled;
 
 			std::set<ibrcommon::vaddress> _destinations;
 
