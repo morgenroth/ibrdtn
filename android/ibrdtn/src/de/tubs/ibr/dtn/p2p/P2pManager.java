@@ -27,6 +27,7 @@ import android.net.wifi.p2p.WifiP2pManager.GroupInfoListener;
 import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
+import android.os.Build;
 import android.util.Log;
 import de.tubs.ibr.dtn.p2p.db.Database;
 import de.tubs.ibr.dtn.p2p.db.Peer;
@@ -428,13 +429,24 @@ public class P2pManager extends NativeP2pManager {
         private void connectionChanged(Context context, Intent intent) {
             //WifiP2pInfo p2pInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
             NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
-            
-            // available with Android 4.3
-            // WifiP2pGroup p2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
-            // mP2pInterfaces.remove( p2pGroup.getInterface() );
-            // fireInterfaceDown( p2pGroup.getInterface() );
-            
-            if (netInfo.isConnected()) {
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                // available since Android 4.3
+                WifiP2pGroup p2pGroup = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_GROUP);
+                String iface = p2pGroup.getInterface();
+                
+                Log.d(TAG, "connection changed " + netInfo.toString() + " | " + p2pGroup.toString());
+                
+                if (netInfo.isConnected() && (iface != null)) {
+                    Log.d(TAG, "connection up " + iface);
+                    mP2pInterfaces.add( iface );
+                    fireInterfaceUp( iface );
+                } else if (mP2pInterfaces.contains(iface)) {
+                    Log.d(TAG, "connection down " + iface);
+                    mP2pInterfaces.remove( iface );
+                    fireInterfaceDown( iface );
+                }
+            } else if (netInfo.isConnected()) {
                 // request group info to get the interface of the group
                 mWifiP2pManager.requestGroupInfo(mWifiP2pChannel, new GroupInfoListener() {
                     @Override
