@@ -10,6 +10,7 @@
 
 #include "storage/BundleIndex.h"
 #include <ibrdtn/data/Number.h>
+#include <ibrcommon/thread/Mutex.h>
 
 namespace dtn
 {
@@ -85,6 +86,7 @@ namespace dtn
 
 			typedef std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY> priority_index;
 			priority_index _priority_index;
+			ibrcommon::Mutex _index_mutex;
 		};
 	} /* namespace routing */
 } /* namespace dtn */
