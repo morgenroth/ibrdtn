@@ -104,14 +104,30 @@ namespace dtn
 			void connectionDown(const DatagramConnection *conn);
 
 		private:
-			DatagramConnection& getConnection(const std::string &identifier);
+			class ConnectionNotAvailableException : public ibrcommon::Exception {
+			public:
+				ConnectionNotAvailableException(const std::string what = "connection not available")
+				 : ibrcommon::Exception(what) {
+				}
+
+				virtual ~ConnectionNotAvailableException() throw () {
+				}
+			};
+
+			/**
+			 * Returns a connection matching the given identifier.
+			 * To use this method securely a lock on _cond_connections is required.
+			 *
+			 * @param identifier The identifier of the connection.
+			 * @param create If this parameter is set to true a new connection is created if it does not exists.
+			 */
+			DatagramConnection& getConnection(const std::string &identifier, bool create) throw (ConnectionNotAvailableException);
 
 			DatagramService *_service;
 
 			ibrcommon::Mutex _send_lock;
 
-			// this conditional must be locked when iterating over the
-			// list of connections
+			// conditional to protect _active_conns
 			ibrcommon::Conditional _cond_connections;
 
 			// this lock is used to protect a connection reference from
@@ -121,6 +137,11 @@ namespace dtn
 			typedef std::list<DatagramConnection*> connection_list;
 			connection_list _connections;
 
+			// the number of active connections
+			// (lock _cond_connections while modifying it)
+			int _active_conns;
+
+			// false, if the main thread is cancelled
 			bool _running;
 
 			uint16_t _discovery_sn;

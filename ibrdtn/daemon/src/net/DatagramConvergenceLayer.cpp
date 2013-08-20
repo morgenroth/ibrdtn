@@ -41,7 +41,7 @@ namespace dtn
 		const std::string DatagramConvergenceLayer::TAG = "DatagramConvergenceLayer";
 
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
-		 : _service(ds), _running(false), _discovery_sn(0)
+		 : _service(ds), _active_conns(0), _running(false), _discovery_sn(0)
 		{
 			// initialize stats
 			addStats("out", 0);
@@ -53,7 +53,7 @@ namespace dtn
 			// wait until all connections are down
 			{
 				ibrcommon::MutexLock l(_cond_connections);
-				while (_connections.size() != 0) _cond_connections.wait();
+				while (_active_conns != 0) _cond_connections.wait();
 			}
 
 			join();
@@ -98,35 +98,39 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "job queued for " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// lock the connection list while working with it
-			ibrcommon::RWLock lc(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
+			ibrcommon::RWLock lc(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
 
 			// get a new or the existing connection for this address
-			DatagramConnection &conn = getConnection( uri.value );
+			DatagramConnection &conn = getConnection( uri.value, true );
 
 			// queue the job to the connection
 			conn.queue(job);
 		}
 
-		DatagramConnection& DatagramConvergenceLayer::getConnection(const std::string &identifier)
+		DatagramConnection& DatagramConvergenceLayer::getConnection(const std::string &identifier, bool create) throw (ConnectionNotAvailableException)
 		{
 			DatagramConnection *connection = NULL;
 
+			// Test if connection for this address already exist
+			for(connection_list::const_iterator i = _connections.begin(); i != _connections.end(); ++i)
 			{
-				// lock the list of connections while iterating or adding new connections
+				if ((*i)->getIdentifier() == identifier)
+					return *(*i);
+			}
+
+			// throw exception if we should not create new connections
+			if (!create) throw ConnectionNotAvailableException();
+
+			// Connection does not exist, create one and put it into the list
+			connection = new DatagramConnection(identifier, _service->getParameter(), (*this));
+
+			// add a new connection to the list of connections
+			_connections.push_back(connection);
+
+			// increment the number of active connections
+			{
 				ibrcommon::MutexLock l(_cond_connections);
-
-				// Test if connection for this address already exist
-				for(connection_list::const_iterator i = _connections.begin(); i != _connections.end(); ++i)
-				{
-					if ((*i)->getIdentifier() == identifier)
-						return *(*i);
-				}
-
-				// Connection does not exist, create one and put it into the list
-				connection = new DatagramConnection(identifier, _service->getParameter(), (*this));
-
-				// add a new connection to the list of connections
-				_connections.push_back(connection);
+				++_active_conns;
 				_cond_connections.signal(true);
 			}
 
@@ -143,15 +147,16 @@ namespace dtn
 		void DatagramConvergenceLayer::connectionDown(const DatagramConnection *conn)
 		{
 			ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
-			ibrcommon::MutexLock lc(_cond_connections);
 
 			const connection_list::iterator i = std::find(_connections.begin(), _connections.end(), conn);
 
 			if (i != _connections.end())
 			{
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Down: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
-
 				_connections.erase(i);
+
+				ibrcommon::MutexLock l(_cond_connections);
+				--_active_conns;
 				_cond_connections.signal(true);
 			}
 			else
@@ -180,7 +185,6 @@ namespace dtn
 
 			// shutdown all connections
 			ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
-			ibrcommon::MutexLock l(_cond_connections);
 			for(connection_list::const_iterator i = _connections.begin(); i != _connections.end(); ++i)
 			{
 				(*i)->shutdown();
@@ -273,10 +277,10 @@ namespace dtn
 
 						{
 							// lock the connection list while working with it
-							ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
+							ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
 
 							// Connection instance for this address
-							DatagramConnection& connection = getConnection(address);
+							DatagramConnection& connection = getConnection(address, true);
 							connection.setPeerEID(announce.getEID());
 						}
 
@@ -290,10 +294,10 @@ namespace dtn
 				}
 				else if ( type == HEADER_SEGMENT )
 				{
-					ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
+					ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
 
 					// Connection instance for this address
-					DatagramConnection& connection = getConnection(address);
+					DatagramConnection& connection = getConnection(address, true);
 
 					try {
 						// Decide in which queue to write based on the src address
@@ -305,13 +309,17 @@ namespace dtn
 				}
 				else if ( type == HEADER_ACK )
 				{
-					ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
+					try {
+						ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
 
-					// Connection instance for this address
-					DatagramConnection& connection = getConnection(address);
+						// Connection instance for this address
+						DatagramConnection& connection = getConnection(address, false);
 
-					// Decide in which queue to write based on the src address
-					connection.ack(seqno);
+						// Decide in which queue to write based on the src address
+						connection.ack(seqno);
+					} catch (const ConnectionNotAvailableException &ex) {
+						// connection does not exists - ignore the ACK
+					}
 				}
 
 				yield();
