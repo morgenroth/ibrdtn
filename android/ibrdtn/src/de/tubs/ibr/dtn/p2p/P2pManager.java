@@ -52,6 +52,7 @@ public class P2pManager extends NativeP2pManager {
     private WifiP2pDnsSdServiceInfo mServiceInfo = null;
     
     private Calendar mLastDisco = null;
+    private Boolean mDiscoInProgress = null;
     
     /**
      * The p2p interfaces are stored in this set. Every time
@@ -154,6 +155,7 @@ public class P2pManager extends NativeP2pManager {
         
         // set the current state
         mManagerState = ManagerState.INITIALIZED;
+        mDiscoInProgress = false;
     }
     
     private synchronized void onResume() {
@@ -343,17 +345,19 @@ public class P2pManager extends NativeP2pManager {
         });
         
         // stop all peer discoveries
-        mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onFailure(int reason) {
-                Log.e(TAG, "stop peer discovery failed: " + reason);
-            }
-
-            @Override
-            public void onSuccess() {
-                Log.d(TAG, "peer discovery stopped");
-            }
-        });
+        if (mDiscoInProgress) {
+            mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onFailure(int reason) {
+                    Log.e(TAG, "stop peer discovery failed: " + reason);
+                }
+    
+                @Override
+                public void onSuccess() {
+                    Log.d(TAG, "peer discovery stopped");
+                }
+            });
+        }
     }
 
     @Override
@@ -473,6 +477,9 @@ public class P2pManager extends NativeP2pManager {
             if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
                 Log.d(TAG, "Peer discovery has been stopped");
                 
+                // mark disco as stopped
+                mDiscoInProgress = false;
+                
                 // check scheduler state if P2P is enabled
                 if (ManagerState.ENABLED.equals(mManagerState)) {
                     Intent i = new Intent(context, SchedulerService.class);
@@ -482,6 +489,7 @@ public class P2pManager extends NativeP2pManager {
             }
             else if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
                 Log.d(TAG, "Peer discovery has been started");
+                mDiscoInProgress = true;
             }
             
         }
@@ -501,6 +509,7 @@ public class P2pManager extends NativeP2pManager {
         
         private void startDiscovery(Context context, Intent intent) {
             if (!ManagerState.ENABLED.equals(mManagerState)) return;
+            if (mDiscoInProgress) return;
 
             mWifiP2pManager.discoverPeers(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
                 @Override
@@ -516,6 +525,8 @@ public class P2pManager extends NativeP2pManager {
         }
         
         private void stopDiscovery(Context context, Intent intent) {
+            if (!mDiscoInProgress) return;
+            
             mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
                 @Override
                 public void onFailure(int reason) {
