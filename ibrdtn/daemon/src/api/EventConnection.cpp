@@ -100,8 +100,8 @@ namespace dtn
 				case dtn::core::GlobalEvent::GLOBAL_IDLE:
 					_stream << "idle";
 					break;
-				case dtn::core::GlobalEvent::GLOBAL_POWERSAVE:
-					_stream << "powersave";
+				case dtn::core::GlobalEvent::GLOBAL_RESUME:
+					_stream << "resume";
 					break;
 				case dtn::core::GlobalEvent::GLOBAL_RELOAD:
 					_stream << "reload";
@@ -117,6 +117,12 @@ namespace dtn
 					break;
 				case dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
 					_stream << "internet unavailable";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY:
+					_stream << "start discovery";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY:
+					_stream << "stop discovery";
 					break;
 				default:
 					break;

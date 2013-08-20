@@ -297,8 +297,8 @@ namespace dtn
 				case dtn::core::GlobalEvent::GLOBAL_IDLE:
 					action = "idle";
 					break;
-				case dtn::core::GlobalEvent::GLOBAL_POWERSAVE:
-					action = "powersave";
+				case dtn::core::GlobalEvent::GLOBAL_RESUME:
+					action = "resume";
 					break;
 				case dtn::core::GlobalEvent::GLOBAL_RELOAD:
 					action = "reload";
@@ -314,6 +314,12 @@ namespace dtn
 					break;
 				case dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
 					action = "internet unavailable";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY:
+					action = "discovery start";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY:
+					action = "discovery stop";
 					break;
 				default:
 					break;

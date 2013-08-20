@@ -277,11 +277,11 @@ namespace dtn
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
 						_stream << ClientHandler::API_STATUS_OK << " RELOAD" << std::endl;
 					}
-					else if (cmd[1] == "powersave")
+					else if (cmd[1] == "resume")
 					{
 						// send powersave signal
-						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_POWERSAVE);
-						_stream << ClientHandler::API_STATUS_OK << " POWERSAVE" << std::endl;
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RESUME);
+						_stream << ClientHandler::API_STATUS_OK << " RESUME" << std::endl;
 					}
 					else if (cmd[1] == "suspend")
 					{
@@ -289,11 +289,17 @@ namespace dtn
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SUSPEND);
 						_stream << ClientHandler::API_STATUS_OK << " SUSPEND" << std::endl;
 					}
-					else if (cmd[1] == "wakeup")
+					else if (cmd[1] == "start_discovery")
 					{
 						// send wakeup signal
-						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_WAKEUP);
-						_stream << ClientHandler::API_STATUS_OK << " WAKEUP" << std::endl;
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY);
+						_stream << ClientHandler::API_STATUS_OK << " DISCOVERY START" << std::endl;
+					}
+					else if (cmd[1] == "stop_discovery")
+					{
+						// send wakeup signal
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY);
+						_stream << ClientHandler::API_STATUS_OK << " DISCOVERY STOP" << std::endl;
 					}
 					else if (cmd[1] == "internet_off")
 					{
