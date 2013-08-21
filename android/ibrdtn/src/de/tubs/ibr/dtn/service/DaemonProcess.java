@@ -61,6 +61,7 @@ public class DaemonProcess {
 	private DaemonProcessHandler mHandler = null;
 	private Context mContext = null;
 	private DaemonState _state = DaemonState.OFFLINE;
+	private Boolean mDiscoveryEnabled = null;
 	
     private WifiManager.MulticastLock _mcast_lock = null;
 
@@ -121,6 +122,7 @@ public class DaemonProcess {
 		this.mDaemon = new NativeDaemon(mDaemonCallback, mEventCallback);
 		this.mContext = context;
 		this.mHandler = handler;
+		this.mDiscoveryEnabled = true;
 	}
 
 	public String[] getVersion() {
@@ -229,12 +231,6 @@ public class DaemonProcess {
     }
 	
 	public synchronized void start() {
-	    WifiManager wifi_manager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
-
-        // listen to multicast packets
-        _mcast_lock = wifi_manager.createMulticastLock(TAG);
-        _mcast_lock.acquire();
-
         // reload daemon configuration
         onConfigurationChanged();
         
@@ -251,12 +247,6 @@ public class DaemonProcess {
             mDaemon.init(DaemonRunLevel.RUNLEVEL_API);
         } catch (NativeDaemonException e) {
             Log.e(TAG, "error while stopping the daemon process", e);
-        }
-
-	    // release multicast lock
-        if (_mcast_lock != null) {
-            _mcast_lock.release();
-            _mcast_lock = null;
         }
 	}
 	
@@ -541,6 +531,14 @@ public class DaemonProcess {
 			else if (DaemonRunLevel.RUNLEVEL_API.equals(level)) {
 			    setState(DaemonState.OFFLINE);
 			}
+			else if (DaemonRunLevel.RUNLEVEL_NETWORK.equals(level)) {
+			    // restore previous discovery state
+			    if (mDiscoveryEnabled) {
+			        startDiscovery();
+			    } else {
+			        stopDiscovery();
+			    }
+			}
 		}
 	};
 	
@@ -748,5 +746,35 @@ public class DaemonProcess {
 		} catch (IOException e) {
 			Log.e(TAG, "Problem writing config", e);
 		}
+	}
+	
+	public synchronized void startDiscovery() {
+        // set discovery flag to true
+        mDiscoveryEnabled = true;
+        
+        WifiManager wifi_manager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
+
+        if (_mcast_lock == null) {
+            // listen to multicast packets
+            _mcast_lock = wifi_manager.createMulticastLock(TAG);
+            _mcast_lock.acquire();
+        }
+        
+        // start discovery mechanism in the daemon
+        mDaemon.startDiscovery();
+	}
+	
+	public synchronized void stopDiscovery() {
+	    // set discovery flag to false
+	    mDiscoveryEnabled = false;
+	    
+	    // stop discovery mechanism in the daemon
+	    mDaemon.stopDiscovery();
+	    
+	    // release multicast lock
+        if (_mcast_lock != null) {
+            _mcast_lock.release();
+            _mcast_lock = null;
+        }
 	}
 }

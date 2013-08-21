@@ -282,9 +282,11 @@ public class DaemonService extends Service {
             // initialize the daemon service
             initialize();
         } else if (ACTION_START_DISCOVERY.equals(action)) {
-            // TODO: start P2P discovery and enable IPND
+            // start P2P discovery and enable IPND
+            mDaemonProcess.startDiscovery();
         } else if (ACTION_STOP_DISCOVERY.equals(action)) {
-            // TODO: stop P2P discovery and disable IPND
+            // stop P2P discovery and disable IPND
+            mDaemonProcess.stopDiscovery();
         }
         
         // stop the daemon if it should be offline
