@@ -50,13 +50,16 @@ namespace dtn
 
 		DatagramConvergenceLayer::~DatagramConvergenceLayer()
 		{
+			// wait until the component thread is terminated
+			join();
+
 			// wait until all connections are down
 			{
 				ibrcommon::MutexLock l(_cond_connections);
 				while (_active_conns != 0) _cond_connections.wait();
 			}
 
-			join();
+			// delete the associated service
 			delete _service;
 		}
 
@@ -88,6 +91,9 @@ namespace dtn
 
 		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
+			// do not queue any new jobs if the convergence layer goes down
+			if (!_running) return;
+
 			const std::list<dtn::core::Node::URI> uri_list = node.get(_service->getProtocol());
 			if (uri_list.empty()) return;
 
