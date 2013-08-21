@@ -265,7 +265,7 @@ namespace dtn
 
 		void NativeDaemon::raiseEvent(const Event *evt) throw ()
 		{
-			std::string event = evt->getName();
+			const std::string event = evt->getName();
 			std::string action;
 			std::vector<std::string> data;
 
