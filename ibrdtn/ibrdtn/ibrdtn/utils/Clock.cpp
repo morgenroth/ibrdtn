@@ -223,11 +223,8 @@ namespace dtn
 					timerclear(&Clock::_offset);
 					Clock::_offset_init = true;
 				}
-#ifdef __WIN32__
-				// TODO: add offset to time value
-#else
+
 				timeradd(&Clock::_offset, &tv, &Clock::_offset);
-#endif
 				IBRCOMMON_LOGGER_TAG("Clock", info) << "new local offset: " << Clock::toDouble(_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 			}
 			else
@@ -236,12 +233,10 @@ namespace dtn
 				struct timeval now;
 				::gettimeofday(&now, &tz);
 
-#ifdef __WIN32__
-				// TODO: sub offset to time value
-#else
 				// adjust by the offset
 				timersub(&now, &tv, &now);
 
+#ifndef __WIN32__
 				// set the local clock to the new timestamp
 				::settimeofday(&now, &tz);
 #endif
@@ -261,18 +256,12 @@ namespace dtn
 					timerclear(&Clock::_offset);
 					Clock::_offset_init = true;
 				}
-#ifdef __WIN32__
-				// TODO: sub offset to time value
-#else
 				timersub(&now, tv, &Clock::_offset);
 				IBRCOMMON_LOGGER_TAG("Clock", info) << "new local offset: " << Clock::toDouble(_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
-#endif
 			}
 			else
 			{
-#ifdef __WIN32__
-				// TODO: set the local clock to the new value
-#else
+#ifndef __WIN32__
 				// set the local clock to the new timestamp
 				::settimeofday(tv, &tz);
 #endif
@@ -292,12 +281,9 @@ namespace dtn
 					timerclear(&Clock::_offset);
 					Clock::_offset_init = true;
 				}
-#ifdef __WIN32__
-				// TODO: adjust time value by offset
-#else
+
 				// add offset
 				timersub(tv, &Clock::_offset, tv);
-#endif
 			}
 		}
 
