@@ -149,8 +149,39 @@ namespace ibrcommon
 	{
 		
 #ifdef __WIN32__
-		// TODO: implement win32 specific method
-		uint64_t start = clock();
+	    LARGE_INTEGER t;
+	    FILETIME f;
+	    double microseconds;
+	    static LARGE_INTEGER offset;
+	    static double frequencyToMicroseconds;
+	    static int initialized = 0;
+	    static BOOL usePerformanceCounter = 0;
+
+	    if (!initialized) {
+	        LARGE_INTEGER performanceFrequency;
+	        initialized = 1;
+	        usePerformanceCounter = QueryPerformanceFrequency(&performanceFrequency);
+	        if (usePerformanceCounter) {
+	            QueryPerformanceCounter(&offset);
+	            frequencyToMicroseconds = (double)performanceFrequency.QuadPart / 1000000.;
+	        } else {
+	            offset = getFILETIMEoffset();
+	            frequencyToMicroseconds = 10.;
+	        }
+	    }
+	    if (usePerformanceCounter) QueryPerformanceCounter(&t);
+	    else {
+	        GetSystemTimeAsFileTime(&f);
+	        t.QuadPart = f.dwHighDateTime;
+	        t.QuadPart <<= 32;
+	        t.QuadPart |= f.dwLowDateTime;
+	    }
+
+	    t.QuadPart -= offset.QuadPart;
+	    microseconds = (double)t.QuadPart / frequencyToMicroseconds;
+	    t.QuadPart = microseconds;
+	    ts->tv_sec = t.QuadPart / 1000000;
+	    ts->tv_usec = t.QuadPart % 1000000;
 #elif HAVE_MACH_MACH_TIME_H // OS X does not have clock_gettime, use clock_get_time
 		clock_serv_t cclock;
 		mach_timespec_t mts;
