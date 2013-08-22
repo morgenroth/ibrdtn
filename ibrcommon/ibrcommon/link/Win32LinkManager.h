@@ -14,9 +14,7 @@
 #include <list>
 
 #include <winsock2.h>
-#include <ntddndis.h>
-#include <ws2ipdef.h>
-#include <naptypes.h>
+#include <ddk/ntddndis.h>
 #include <iphlpapi.h>
 
 namespace ibrcommon

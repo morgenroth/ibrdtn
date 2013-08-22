@@ -8,6 +8,7 @@
 #include "ibrcommon/config.h"
 #include "ibrcommon/link/Win32LinkManager.h"
 #include <sstream>
+#include <ws2tcpip.h>
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -115,32 +116,32 @@ namespace ibrcommon
 
 		for (PIP_ADAPTER_ADDRESSES pCurrAddresses = pAddresses; pCurrAddresses->Next != NULL; pCurrAddresses = pCurrAddresses->Next)
 		{
-			std::string name(pCurrAddresses->AdapterName);
+			const std::string name(pCurrAddresses->AdapterName);
+
 			if (iface.toString() == name) {
-				PIP_ADAPTER_UNICAST_ADDRESS pUnicast = pCurrAddresses->FirstUnicastAddress;
-				if (pUnicast) {
-					for (; pUnicast != NULL; pUnicast->Next) {
-						// skip transient addresses
-						if (pUnicast->Flags & IP_ADAPTER_ADDRESS_TRANSIENT) continue;
+				PIP_ADAPTER_UNICAST_ADDRESS pUnicast;
 
-						if (scope.length() > 0) {
-							// scope filter only available with IPv6
-							if (pUnicast->Address.lpSockaddr->sa_family == AF_INET6) {
-								// get ipv6 specific address
-								sockaddr_in6 *addr6 = (sockaddr_in6*)pUnicast->Address.lpSockaddr;
+				for (pUnicast = pCurrAddresses->FirstUnicastAddress; pUnicast != NULL; pUnicast = pUnicast->Next) {
+					// skip transient addresses
+					if (pUnicast->Flags & IP_ADAPTER_ADDRESS_TRANSIENT) continue;
 
-								// if the id is set, then this scope is link-local
-								if (addr6->sin6_scope_id == 0) {
-									if (scope != vaddress::SCOPE_GLOBAL) continue;
-								} else {
-									if (scope != vaddress::SCOPE_LINKLOCAL) continue;
-								}
+					if (scope.length() > 0) {
+						// scope filter only available with IPv6
+						if (pUnicast->Address.lpSockaddr->sa_family == AF_INET6) {
+							// get ipv6 specific address
+							sockaddr_in6 *addr6 = (sockaddr_in6*)pUnicast->Address.lpSockaddr;
+
+							// if the id is set, then this scope is link-local
+							if (addr6->sin6_scope_id == 0) {
+								if (scope != vaddress::SCOPE_GLOBAL) continue;
+							} else {
+								if (scope != vaddress::SCOPE_LINKLOCAL) continue;
 							}
 						}
-
-						// cast to a sockaddr
-						ret.push_back( getAddress(pUnicast->Address) );
 					}
+
+					// cast to a sockaddr
+					ret.push_back( getAddress(pUnicast->Address) );
 				}
 
 				break;
