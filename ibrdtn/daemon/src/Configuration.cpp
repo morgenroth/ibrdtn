@@ -515,12 +515,12 @@ namespace dtn
 				if ( gethostname(&hostname_array[0], hostname_array.size()) != 0 )
 				{
 					// error
-					return "local";
+					return "dtn://local";
 				}
 
 				return "dtn://" + std::string(&hostname_array[0]);
 			}
-			return "noname";
+			return "dtn://noname";
 		}
 
 		const std::list<Configuration::NetConfig>& Configuration::Network::getInterfaces() const
