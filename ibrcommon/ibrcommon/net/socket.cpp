@@ -288,7 +288,7 @@ namespace ibrcommon
 		this->close();
 	}
 
-	ssize_t clientsocket::send(const char *data, size_t len, int flags) throw (socket_error)
+	ssize_t clientsocket::send(const char *data, size_t len, int flags) throw (socket_exception)
 	{
 		ssize_t ret = ::send(this->fd(), data, len, flags);
 		if (ret == -1) {
@@ -313,7 +313,7 @@ namespace ibrcommon
 		return ret;
 	}
 
-	ssize_t clientsocket::recv(char *data, size_t len, int flags) throw (socket_error)
+	ssize_t clientsocket::recv(char *data, size_t len, int flags) throw (socket_exception)
 	{
 		ssize_t ret = ::recv(this->fd(), data, len, flags);
 		if (ret == -1) {
@@ -331,7 +331,7 @@ namespace ibrcommon
 		return ret;
 	}
 
-	void clientsocket::set(CLIENT_OPTION opt, bool val) throw (socket_error)
+	void clientsocket::set(CLIENT_OPTION opt, bool val) throw (socket_exception)
 	{
 		switch (opt) {
 		case NO_DELAY:
