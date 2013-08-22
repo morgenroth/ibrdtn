@@ -1263,7 +1263,12 @@ namespace ibrcommon
 
 			if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
-				throw socket_raw_error(errno, "setsockopt()");
+#ifdef __WIN32__
+				int errcode = WSAGetLastError();
+#else
+				int errcode = errno;
+#endif
+				throw socket_raw_error(errcode, "setsockopt()");
 			}
 		} else {
 			struct ipv6_mreq req;
