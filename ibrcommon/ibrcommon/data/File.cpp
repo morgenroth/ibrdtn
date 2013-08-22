@@ -52,7 +52,7 @@ namespace ibrcommon
 	{
 	}
 
-	File::File(const std::string &path, const FILE_TYPE t)
+	File::File(const std::string &path, const unsigned char t)
 	 : _path(path), _type(t)
 	{
 		resolveAbsolutePath();
@@ -130,7 +130,7 @@ namespace ibrcommon
 	File::~File()
 	{}
 
-	File::FILE_TYPE File::getType() const
+	unsigned char File::getType() const
 	{
 		return _type;
 	}

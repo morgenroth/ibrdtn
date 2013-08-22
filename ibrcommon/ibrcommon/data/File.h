@@ -76,7 +76,7 @@ namespace ibrcommon
 		 * @see update()
 		 * @return The filetype of the file (e.g. DT_REG, DT_LNK, DT_DIR, DT_UNKNOWN)
 		 */
-		FILE_TYPE getType() const;
+		unsigned char getType() const;
 
 		/**
 		 * Get all files in the directory. The given path in the constructor
@@ -172,11 +172,11 @@ namespace ibrcommon
 		bool operator<(const ibrcommon::File &other) const;
 
 	private:
-		File(const std::string &path, const FILE_TYPE t);
+		File(const std::string &path, const unsigned char t);
 		void resolveAbsolutePath();
 		void removeSlash();
 		std::string _path;
-		FILE_TYPE _type;
+		unsigned char _type;
 	};
 
 	/**
