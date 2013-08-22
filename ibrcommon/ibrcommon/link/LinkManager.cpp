@@ -27,6 +27,7 @@
 #include <list>
 #include <string>
 #include <typeinfo>
+#include <unistd.h>
 
 #if defined HAVE_LIBNL || HAVE_LIBNL3
 #include "ibrcommon/link/NetLinkManager.h"
@@ -105,6 +106,10 @@ namespace ibrcommon
 	void LinkManager::raiseEvent(const LinkEvent &lme)
 	{
 		IBRCOMMON_LOGGER_DEBUG_TAG("LinkManager", 65) << "event raised " << lme.toString() << IBRCOMMON_LOGGER_ENDL;
+
+		// wait some time until the event is reported to the subscribers
+		// this avoids bind issues if an address is not really ready
+		if (lme.getAction() == LinkEvent::ACTION_ADDRESS_ADDED) ::usleep(1000000);
 
 		// get the corresponding interface
 		const vinterface &iface = lme.getInterface();
