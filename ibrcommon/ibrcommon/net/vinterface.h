@@ -46,7 +46,10 @@ namespace ibrcommon
 		const static std::string ANY;
 
 		vinterface();
-		vinterface(std::string name);
+		vinterface(const std::string &name);
+#ifdef __WIN32__
+		vinterface(const std::string &name, const std::wstring &friendlyName);
+#endif
 		virtual ~vinterface();
 
 		bool isLoopback() const;
@@ -58,6 +61,10 @@ namespace ibrcommon
 		bool empty() const;
 		bool up() const;
 
+#ifdef __WIN32__
+		const std::wstring& getFriendlyName() const;
+#endif
+
 		bool operator<(const vinterface &obj) const;
 		bool operator==(const vinterface &obj) const;
 		bool operator!=(const vinterface &obj) const;
@@ -66,6 +73,9 @@ namespace ibrcommon
 
 	private:
 		std::string _name;
+#ifdef __WIN32__
+		std::wstring _friendlyName;
+#endif
 	};
 }
 

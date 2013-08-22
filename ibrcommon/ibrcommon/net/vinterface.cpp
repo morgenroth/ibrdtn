@@ -44,10 +44,17 @@ namespace ibrcommon
 	{
 	}
 
-	vinterface::vinterface(std::string name)
+	vinterface::vinterface(const std::string &name)
 	 : _name(name)
 	{
 	}
+
+#ifdef __WIN32__
+	vinterface::vinterface(const std::string &name, const std::wstring &friendlyName)
+	 : _name(name), _friendlyName(friendlyName)
+	{
+	}
+#endif
 
 	vinterface::~vinterface()
 	{
@@ -58,6 +65,13 @@ namespace ibrcommon
 		if (_name.length() == 0) return "<any>";
 		return _name;
 	}
+
+#ifdef __WIN32__
+	const std::wstring& vinterface::getFriendlyName() const
+	{
+		return _friendlyName;
+	}
+#endif
 
 	bool vinterface::isLoopback() const
 	{
