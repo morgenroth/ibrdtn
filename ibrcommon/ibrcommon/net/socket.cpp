@@ -27,6 +27,9 @@
 #ifdef __WIN32__
 #include <windows.h>
 #include <ws2tcpip.h>
+#ifndef AI_ADDRCONFIG
+#define AI_ADDRCONFIG 0
+#endif
 #else
 #include <arpa/inet.h>
 #include <sys/select.h>
