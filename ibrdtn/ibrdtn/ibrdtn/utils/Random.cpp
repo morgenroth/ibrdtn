@@ -52,12 +52,12 @@ namespace dtn
 			return ::rand();
 		}
 
-		const std::string Random::gen_chars(const dtn::data::Length &size) const
+		const std::string Random::gen_chars(const size_t &size) const
 		{
 			static const char text[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 			std::vector<char> dst(size);
-			const dtn::data::Length len = size - 1;
-			for ( dtn::data::Length i = 0; i <= len; ++i )
+			const size_t len = size - 1;
+			for ( size_t i = 0; i <= len; ++i )
 			{
 				dst[i] = text[::rand() % (sizeof text - 1)];
 			}
