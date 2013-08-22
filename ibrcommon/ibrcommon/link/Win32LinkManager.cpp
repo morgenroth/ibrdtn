@@ -154,4 +154,24 @@ namespace ibrcommon
 		return ret;
 	}
 
+	std::set<ibrcommon::vinterface> Win32LinkManager::getInterfaces() const
+	{
+		std::set<ibrcommon::vinterface> ret;
+
+		PIP_ADAPTER_ADDRESSES pAddresses = getAdapterInfo();
+
+		for (PIP_ADAPTER_ADDRESSES pCurrAddresses = pAddresses; pCurrAddresses->Next != NULL; pCurrAddresses = pCurrAddresses->Next)
+		{
+			const std::string name(pCurrAddresses->AdapterName);
+			const std::wstring friendlyName(pCurrAddresses->FriendlyName);
+
+			ibrcommon::vinterface iface(name, friendlyName);
+			ret.insert(iface);
+		}
+
+		freeAdapterInfo(pAddresses);
+
+		return ret;
+	}
+
 } /* namespace ibrcommon */

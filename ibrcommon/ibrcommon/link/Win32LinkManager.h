@@ -12,6 +12,7 @@
 #include "ibrcommon/net/vinterface.h"
 #include "ibrcommon/net/vaddress.h"
 #include <list>
+#include <set>
 
 #include <winsock2.h>
 #include <ddk/ntddndis.h>
@@ -27,6 +28,8 @@ namespace ibrcommon
 
 		const vinterface getInterface(int index) const;
 		const std::list<vaddress> getAddressList(const vinterface &iface, const std::string &scope = "");
+
+		std::set<ibrcommon::vinterface> getInterfaces() const;
 
 	private:
 		void freeAdapterInfo(IP_ADAPTER_ADDRESSES *pAddresses) const;
