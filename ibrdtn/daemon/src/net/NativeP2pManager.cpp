@@ -61,19 +61,19 @@ namespace dtn
 			P2PDialupExtension::fireConnected(eid, uri);
 		}
 
-		void NativeP2pManager::fireInterfaceUp(const std::string &interface)
+		void NativeP2pManager::fireInterfaceUp(const std::string &i)
 		{
 			// create a new interface object
-			const ibrcommon::vinterface iface(interface);
+			const ibrcommon::vinterface iface(i);
 
 			// fire the interface event
 			P2PDialupExtension::fireInterfaceUp(iface);
 		}
 
-		void NativeP2pManager::fireInterfaceDown(const std::string &interface)
+		void NativeP2pManager::fireInterfaceDown(const std::string &i)
 		{
 			// create a new interface object
-			const ibrcommon::vinterface iface(interface);
+			const ibrcommon::vinterface iface(i);
 
 			// fire the interface event
 			P2PDialupExtension::fireInterfaceDown(iface);

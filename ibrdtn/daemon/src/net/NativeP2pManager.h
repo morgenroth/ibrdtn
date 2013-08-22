@@ -25,6 +25,7 @@
 #include "net/P2PDialupExtension.h"
 #include "core/Node.h"
 #include <ibrdtn/data/EID.h>
+#include <string>
 
 namespace dtn
 {
@@ -71,10 +72,10 @@ namespace dtn
 			virtual void fireConnected(const dtn::data::EID &eid, const std::string &identifier, size_t timeout, int priority);
 
 			// method for JNI
-			virtual void fireInterfaceUp(const std::string &interface);
+			virtual void fireInterfaceUp(const std::string &iface);
 
 			// method for JNI
-			virtual void fireInterfaceDown(const std::string &interface);
+			virtual void fireInterfaceDown(const std::string &iface);
 		};
 	} /* namespace net */
 } /* namespace dtn */
