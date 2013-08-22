@@ -50,6 +50,87 @@
 
 namespace ibrcommon
 {
+#ifdef __WIN32__
+	static int win32_pipe( int handles[2] )
+	{
+			SOCKET s;
+			struct sockaddr_in serv_addr;
+			int len = sizeof( serv_addr );
+
+			handles[0] = handles[1] = INVALID_SOCKET;
+
+			if ( ( s = socket( AF_INET, SOCK_STREAM, 0 ) ) == INVALID_SOCKET )
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to create socket: %ui", WSAGetLastError()))); */
+					return -1;
+			}
+
+			memset( &serv_addr, 0, sizeof( serv_addr ) );
+			serv_addr.sin_family = AF_INET;
+			serv_addr.sin_port = htons(0);
+			serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+			if (bind(s, (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to bind: %ui", WSAGetLastError()))); */
+					closesocket(s);
+					return -1;
+			}
+			if (listen(s, 1) == SOCKET_ERROR)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to listen: %ui", WSAGetLastError()))); */
+					closesocket(s);
+					return -1;
+			}
+			if (getsockname(s, (SOCKADDR *) & serv_addr, &len) == SOCKET_ERROR)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to getsockname: %ui", WSAGetLastError()))); */
+					closesocket(s);
+					return -1;
+			}
+			if ((handles[1] = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to create socket 2: %ui", WSAGetLastError()))); */
+					closesocket(s);
+					return -1;
+			}
+
+			if (connect(handles[1], (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to connect socket: %ui", WSAGetLastError()))); */
+					closesocket(s);
+					return -1;
+			}
+			if ((handles[0] = accept(s, (SOCKADDR *) & serv_addr, &len)) == INVALID_SOCKET)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to accept socket: %ui", WSAGetLastError()))); */
+					closesocket(handles[1]);
+					handles[1] = INVALID_SOCKET;
+					closesocket(s);
+					return -1;
+			}
+			closesocket(s);
+			return 0;
+	}
+
+	static int piperead( int s, char *buf, int len )
+	{
+			int ret = recv(s, buf, len, 0);
+
+			if (ret < 0 && WSAGetLastError() == WSAECONNRESET)
+					/* EOF on the pipe! (win32 socket based implementation) */
+					ret = 0;
+			return ret;
+	}
+
+#define __compat_pipe(a) win32_pipe(a)
+#define pipewrite(a,b,c) send(a,b,c,0)
+
+#else
+#define __compat_pipe(a) ::pipe(a)
+#define piperead(a,b,c) read(a,b,c)
+#define pipewrite(a,b,c) write(a,b,c)
+#endif
+
 #ifdef HAVE_FEATURES_H
 #define __compat_select ::select
 #else
@@ -112,11 +193,7 @@ namespace ibrcommon
 		int pipe_fds[2];
 
 		// create a pipe for interruption
-#ifdef __WIN32__
-		if (::_pipe(pipe_fds, 1, _O_BINARY) < 0)
-#else
-		if (::pipe(pipe_fds) < 0)
-#endif
+		if (__compat_pipe(pipe_fds) < 0)
 		{
 			IBRCOMMON_LOGGER_TAG("pipesocket", error) << "Error " << errno << " creating pipe" << IBRCOMMON_LOGGER_ENDL;
 			throw socket_exception("failed to create pipe");
@@ -136,17 +213,15 @@ namespace ibrcommon
 		if (_state != SOCKET_UP)
 			throw socket_exception("socket is not up");
 
-#ifndef __WIN32__
 		this->close();
 		::close(_output_fd);
-#endif
 
 		_state = SOCKET_DOWN;
 	}
 
 	void vsocket::pipesocket::read(char *buf, size_t len) throw (socket_exception)
 	{
-		ssize_t ret = ::read(this->fd(), buf, len);
+		ssize_t ret = piperead(this->fd(), buf, len);
 		if (ret == -1)
 			throw socket_exception("read error");
 		if (ret == 0)
@@ -155,7 +230,7 @@ namespace ibrcommon
 
 	void vsocket::pipesocket::write(const char *buf, size_t len) throw (socket_exception)
 	{
-		ssize_t ret = ::write(_output_fd, buf, len);
+		ssize_t ret = pipewrite(_output_fd, buf, len);
 		if (ret == -1)
 			throw socket_exception("write error");
 	}
@@ -468,7 +543,10 @@ namespace ibrcommon
 
 	vsocket::~vsocket()
 	{
-		_pipe.down();
+		try {
+			_pipe.down();
+		} catch (const socket_exception &ex) {
+		}
 	}
 
 	void vsocket::add(basesocket *socket)
