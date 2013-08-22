@@ -166,6 +166,13 @@ namespace ibrcommon
 		return _service;
 	}
 
+	void vaddress::setService(const uint32_t port)
+	{
+		std::stringstream ss;
+		ss << port;
+		_service = ss.str();
+	}
+
 	void vaddress::setService(const std::string &service)
 	{
 		_service = service;
