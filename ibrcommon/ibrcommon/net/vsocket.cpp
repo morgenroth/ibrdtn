@@ -127,8 +127,8 @@ namespace ibrcommon
 
 #else
 #define __compat_pipe(a) ::pipe(a)
-#define piperead(a,b,c) read(a,b,c)
-#define pipewrite(a,b,c) write(a,b,c)
+#define piperead(a,b,c) ::read(a,b,c)
+#define pipewrite(a,b,c) ::write(a,b,c)
 #endif
 
 #ifdef HAVE_FEATURES_H
