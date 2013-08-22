@@ -77,11 +77,16 @@ namespace ibrcommon
 		static bool initialized = false;
 		if (initialized) return 0;
 		WSADATA wsa;
-		return WSAStartup(MAKEWORD(2,0),&wsa);
+		return WSAStartup(MAKEWORD(2,2),&wsa);
 	}
+
+#define __close closesocket
+#define __errno WSAGetLastError()
 #else
 #define __compat_setsockopt ::setsockopt
 #define __init_sockets int a
+#define __close ::close
+#define __errno errno
 #endif
 
 	int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
@@ -133,7 +138,7 @@ namespace ibrcommon
 
 	void basesocket::close() throw (socket_exception)
 	{
-		int ret = ::close(this->fd());
+		int ret = __close(this->fd());
 		if (ret == -1)
 			throw socket_exception("close error");
 
@@ -250,7 +255,7 @@ namespace ibrcommon
 		if ((fd = ::socket(family, type, protocol)) < 0) {
 			return false;
 		}
-		::close(fd);
+		__close(fd);
 		return true;
 	}
 
@@ -259,7 +264,7 @@ namespace ibrcommon
 		try {
 			_family = addr.family();
 			if ((_fd = ::socket(_family, type, protocol)) < 0) {
-				throw socket_raw_error(errno, "cannot create socket");
+				throw socket_raw_error(__errno, "cannot create socket");
 			}
 		} catch (const vaddress::address_exception&) {
 			// if not address is set use DEFAULT_SOCKET_FAMILY
@@ -275,7 +280,7 @@ namespace ibrcommon
 			}
 			else
 			{
-				throw socket_raw_error(errno, "cannot create socket");
+				throw socket_raw_error(__errno, "cannot create socket");
 			}
 		}
 	}
@@ -284,7 +289,7 @@ namespace ibrcommon
 	{
 		_family = static_cast<sa_family_t>(domain);
 		if ((_fd = ::socket(domain, type, protocol)) < 0) {
-			throw socket_raw_error(errno, "cannot create socket");
+			throw socket_raw_error(__errno, "cannot create socket");
 		}
 	}
 
@@ -294,7 +299,7 @@ namespace ibrcommon
 
 		if (ret < 0) {
 			// error
-			int bind_err = errno;
+			int bind_err = __errno;
 
 			char addr_str[256];
 			char serv_str[256];
@@ -343,7 +348,7 @@ namespace ibrcommon
 	{
 		ssize_t ret = ::send(this->fd(), data, len, flags);
 		if (ret == -1) {
-			switch (errno)
+			switch (__errno)
 			{
 			case EPIPE:
 				// connection has been reset
@@ -368,7 +373,7 @@ namespace ibrcommon
 	{
 		ssize_t ret = ::recv(this->fd(), data, len, flags);
 		if (ret == -1) {
-			switch (errno)
+			switch (__errno)
 			{
 			case EPIPE:
 				// connection has been reset
@@ -517,7 +522,7 @@ namespace ibrcommon
 		freeaddrinfo(res);
 
 		if (len == -1) {
-			throw socket_raw_error(errno);
+			throw socket_raw_error(__errno);
 		}
 	}
 
@@ -620,7 +625,7 @@ namespace ibrcommon
 			this->listen(_listen);
 		} catch (const socket_exception&) {
 			// clean-up socket
-			::close(_fd);
+			__close(_fd);
 			_fd = -1;
 			throw;
 		};
@@ -692,7 +697,7 @@ namespace ibrcommon
 			this->listen(_listen);
 		} catch (const socket_exception&) {
 			// clean-up socket
-			::close(_fd);
+			__close(_fd);
 			_fd = -1;
 			throw;
 		};
@@ -847,14 +852,14 @@ namespace ibrcommon
 
 				// connect to the current address using the created socket
 				if (::connect(fd, walk->ai_addr, walk->ai_addrlen) != 0) {
-					if (errno != EINPROGRESS) {
+					if (__errno != EINPROGRESS) {
 						// the connect failed, so we close the socket immediately
-						::close(fd);
+						__close(fd);
 
 						/* Hier kann eine Fehlermeldung hin, z.B. mit warn() */
 						if ((walk->ai_next == NULL) && (probesocket.size() == 0))
 						{
-							throw socket_raw_error(errno);
+							throw socket_raw_error(__errno);
 						}
 						continue;
 					}
@@ -1005,7 +1010,7 @@ namespace ibrcommon
 			this->bind(_address);
 		} catch (const socket_exception&) {
 			// clean-up socket
-			::close(_fd);
+			__close(_fd);
 			_fd = -1;
 			throw;
 		};
@@ -1263,12 +1268,7 @@ namespace ibrcommon
 
 			if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
-#ifdef __WIN32__
-				int errcode = WSAGetLastError();
-#else
-				int errcode = errno;
-#endif
-				throw socket_raw_error(errcode, "setsockopt()");
+				throw socket_raw_error(__errno, "setsockopt()");
 			}
 		} else {
 			struct ipv6_mreq req;
@@ -1285,7 +1285,7 @@ namespace ibrcommon
 
 			if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
-				throw socket_raw_error(errno, "setsockopt()");
+				throw socket_raw_error(__errno, "setsockopt()");
 			}
 		}
 #else
@@ -1303,7 +1303,7 @@ namespace ibrcommon
 
 		if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 		{
-			throw socket_raw_error(errno, "setsockopt()");
+			throw socket_raw_error(__errno, "setsockopt()");
 		}
 #endif
 
