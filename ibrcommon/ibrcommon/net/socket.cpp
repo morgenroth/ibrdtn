@@ -1089,7 +1089,7 @@ namespace ibrcommon
 					throw socket_exception("setsockopt(IP_MULTICAST_LOOP)");
 				}
 
-				unsigned char ttl = 255; // Multicast TTL
+				unsigned char ttl = 7; // Multicast TTL
 				if ( __compat_setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0 )
 				{
 					throw socket_exception("setsockopt(IP_MULTICAST_TTL)");
