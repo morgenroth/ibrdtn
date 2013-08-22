@@ -100,8 +100,13 @@ namespace dtn
 
 			ibrcommon::vsocket _sockets;
 			bool _shutdown;
-			std::list<Registration> _registrations;
-			std::list<ClientHandler*> _connections;
+
+			typedef std::list<Registration*> registration_list;
+			registration_list _registrations;
+
+			typedef std::list<ClientHandler*> client_list;
+			client_list _connections;
+
 			ibrcommon::Mutex _connection_lock;
 			ibrcommon::Mutex _registration_lock;
 			ibrcommon::Timer _garbage_collector;
