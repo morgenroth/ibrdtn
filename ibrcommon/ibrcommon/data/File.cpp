@@ -21,6 +21,8 @@
 
 #include "ibrcommon/config.h"
 #include "ibrcommon/data/File.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 #include <sstream>
 #include <errno.h>
 #include <sys/stat.h>
@@ -334,7 +336,15 @@ namespace ibrcommon
 #ifdef __WIN32__
 		// create temporary file - win32 style
 		int fd = -1;
-		if (_mktemp_s(&name[0], pattern.length() + 1) == 0) {
+
+		// since _mktemp is not thread-safe and _mktemp_s not available in mingw
+		// we have to lock this method globally
+		ibrcommon::Mutex temp_mutex;
+		ibrcommon::MutexLock l(temp_mutex);
+
+		// create temporary name
+		if (_mktemp(&name[0], pattern.length() + 1) == 0) {
+			// create and open the temporary file
 			fd = open(&name[0], O_CREAT, S_IREAD | S_IWRITE);
 		}
 #else
