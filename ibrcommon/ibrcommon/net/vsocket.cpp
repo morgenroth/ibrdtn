@@ -727,15 +727,21 @@ namespace ibrcommon
 			// call the linux-like select with given timeout
 			int res = __compat_select(high_fd + 1, &fds_read, &fds_write, &fds_error, tv);
 
+#ifdef __WIN32__
+			int errcode = WSAGetLastError();
+#else
+			int errcode = errno;
+#endif
+
 			if (res < 0) {
-				if (errno == EINTR) {
+				if (errcode == EINTR) {
 					// signal has been caught - handle it as interruption
 					continue;
 				}
-				else if (errno == 0) {
+				else if (errcode == 0) {
 					throw vsocket_interrupt("select call has been interrupted");
 				}
-				throw socket_raw_error(errno, "unknown select error");
+				throw socket_raw_error(errcode, "unknown select error");
 			}
 
 
