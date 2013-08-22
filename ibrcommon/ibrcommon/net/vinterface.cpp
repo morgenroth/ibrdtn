@@ -24,9 +24,8 @@
 #ifdef __WIN32__
 #include <winsock2.h>
 #include <windows.h>
-#include <ntddndis.h>
-#include <ws2ipdef.h>
-#include <naptypes.h>
+#include <ddk/ntddndis.h>
+#include <ws2tcpip.h>
 #include <iphlpapi.h>
 #else
 #include <net/if.h>
