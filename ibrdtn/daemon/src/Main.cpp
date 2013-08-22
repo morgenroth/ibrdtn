@@ -33,9 +33,15 @@
 #include <set>
 
 #include <sys/types.h>
+#include <unistd.h>
+
+#ifdef __WIN32__
+#define LOG_PID 0
+#define LOG_DAEMON 0
+#else
 #include <syslog.h>
 #include <pwd.h>
-#include <unistd.h>
+#endif
 
 #include "NativeDaemon.h"
 
@@ -108,6 +114,7 @@ int __daemon_run()
 	// catch process signals
 	signal(SIGINT, sighandler);
 	signal(SIGTERM, sighandler);
+#ifndef __WIN32__
 	signal(SIGHUP, sighandler);
 	signal(SIGQUIT, sighandler);
 	signal(SIGUSR1, sighandler);
@@ -117,6 +124,7 @@ int __daemon_run()
 	sigemptyset(&blockset);
 	sigaddset(&blockset, SIGPIPE);
 	::sigprocmask(SIG_BLOCK, &blockset, NULL);
+#endif
 
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
