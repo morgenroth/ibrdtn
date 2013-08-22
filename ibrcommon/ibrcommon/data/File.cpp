@@ -350,7 +350,7 @@ namespace ibrcommon
 #else
 		int fd = mkstemp(&name[0]);
 #endif
-		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
+		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary file.");
 		::close(fd);
 
 		return std::string(name.begin(), name.end());
