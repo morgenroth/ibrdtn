@@ -22,6 +22,7 @@
 
 #include <ibrcommon/Exceptions.h>
 #include <ibrdtn/data/Exceptions.h>
+#include <ibrdtn/utils/Random.h>
 
 #include <sstream>
 #include <sys/types.h>
@@ -398,7 +399,8 @@ namespace dtn
 			SDNV<E>& random()
 			{
 				// for compatibility use 32-bit here
-				uint32_t val = get_random_number();
+				dtn::utils::Random r;
+				uint32_t val = (uint32_t)r.gen_number();
 				(*this) = static_cast<E>(val);
 				return (*this);
 			}
@@ -490,8 +492,6 @@ namespace dtn
 				obj.decode(stream);
 				return stream;
 			}
-
-			uint32_t get_random_number();
 
 			E _value;
 		};

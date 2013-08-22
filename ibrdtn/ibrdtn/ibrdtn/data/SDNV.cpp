@@ -28,10 +28,5 @@ namespace dtn
 {
 	namespace data
 	{
-		template<class E>
-		uint32_t SDNV<E>::get_random_number() {
-			dtn::utils::Random r;
-			return static_cast<uint32_t>(r.gen_number());
-		}
 	}
 }
