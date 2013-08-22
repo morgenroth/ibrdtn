@@ -80,102 +80,106 @@ namespace dtn
 
 		void ClientHandler::run() throw ()
 		{
-			// signal the active connection to the server
-			_srv.connectionUp(this);
+			try {
+				// signal the active connection to the server
+				_srv.connectionUp(this);
 
-			std::string buffer;
+				std::string buffer;
 
-			while (_stream->good())
-			{
-				if (_handler != NULL)
+				while (_stream->good())
 				{
-					_handler->setup();
-					_handler->run();
-					_handler->finally();
-					delete _handler;
-					_handler = NULL;
-
-					// end this stream, return to the previous stage
-					(*_stream) << ClientHandler::API_STATUS_OK << " SWITCHED TO LEVEL 0" << std::endl;
-
-					continue;
-				}
-
-				getline(*_stream, buffer);
-
-				// search for '\r\n' and remove the '\r'
-				std::string::reverse_iterator iter = buffer.rbegin();
-				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
-
-				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.empty()) continue;
-
-				try {
-					if (cmd[0] == "protocol")
+					if (_handler != NULL)
 					{
-						if (cmd[1] == "tcpcl")
+						_handler->setup();
+						_handler->run();
+						_handler->finally();
+						delete _handler;
+						_handler = NULL;
+
+						// end this stream, return to the previous stage
+						(*_stream) << ClientHandler::API_STATUS_OK << " SWITCHED TO LEVEL 0" << std::endl;
+
+						continue;
+					}
+
+					getline(*_stream, buffer);
+
+					// search for '\r\n' and remove the '\r'
+					std::string::reverse_iterator iter = buffer.rbegin();
+					if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
+
+					std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
+					if (cmd.empty()) continue;
+
+					try {
+						if (cmd[0] == "protocol")
 						{
-							// switch to binary protocol (old style api)
-							_handler = new BinaryStreamClient(*this, *_stream);
-							continue;
-						}
-						else if (cmd[1] == "management")
-						{
-							// switch to the management protocol
-							_handler = new ManagementConnection(*this, *_stream);
-							continue;
-						}
-						else if (cmd[1] == "event")
-						{
-							// switch to the management protocol
-							_handler = new EventConnection(*this, *_stream);
-							continue;
-						}
-						else if (cmd[1] == "extended")
-						{
-							// switch to the extended api
-							_handler = new ExtendedApiHandler(*this, *_stream);
-							continue;
-						}
-						else if (cmd[1] == "streaming")
-						{
-							// switch to the streaming api
-							_handler = new OrderedStreamHandler(*this, *_stream);
-							continue;
-						}
-						else if (cmd[1] == "p2p_extension")
-						{
-							if (cmd.size() < 3) {
-								error(API_STATUS_NOT_ACCEPTABLE, "P2P TYPE REQUIRED");
+							if (cmd[1] == "tcpcl")
+							{
+								// switch to binary protocol (old style api)
+								_handler = new BinaryStreamClient(*this, *_stream);
 								continue;
 							}
+							else if (cmd[1] == "management")
+							{
+								// switch to the management protocol
+								_handler = new ManagementConnection(*this, *_stream);
+								continue;
+							}
+							else if (cmd[1] == "event")
+							{
+								// switch to the management protocol
+								_handler = new EventConnection(*this, *_stream);
+								continue;
+							}
+							else if (cmd[1] == "extended")
+							{
+								// switch to the extended api
+								_handler = new ExtendedApiHandler(*this, *_stream);
+								continue;
+							}
+							else if (cmd[1] == "streaming")
+							{
+								// switch to the streaming api
+								_handler = new OrderedStreamHandler(*this, *_stream);
+								continue;
+							}
+							else if (cmd[1] == "p2p_extension")
+							{
+								if (cmd.size() < 3) {
+									error(API_STATUS_NOT_ACCEPTABLE, "P2P TYPE REQUIRED");
+									continue;
+								}
 
-							if (cmd[2] == "wifi") {
-								// switch to the streaming api
-								_handler = new ApiP2PExtensionHandler(*this, *_stream, dtn::core::Node::CONN_P2P_WIFI);
-								continue;
-							} else if (cmd[2] == "bt") {
-								// switch to the streaming api
-								_handler = new ApiP2PExtensionHandler(*this, *_stream, dtn::core::Node::CONN_P2P_BT);
-								continue;
-							} else {
-								error(API_STATUS_NOT_ACCEPTABLE, "P2P TYPE UNKNOWN");
-								continue;
+								if (cmd[2] == "wifi") {
+									// switch to the streaming api
+									_handler = new ApiP2PExtensionHandler(*this, *_stream, dtn::core::Node::CONN_P2P_WIFI);
+									continue;
+								} else if (cmd[2] == "bt") {
+									// switch to the streaming api
+									_handler = new ApiP2PExtensionHandler(*this, *_stream, dtn::core::Node::CONN_P2P_BT);
+									continue;
+								} else {
+									error(API_STATUS_NOT_ACCEPTABLE, "P2P TYPE UNKNOWN");
+									continue;
+								}
+							}
+							else
+							{
+								error(API_STATUS_NOT_ACCEPTABLE, "UNKNOWN PROTOCOL");
 							}
 						}
 						else
 						{
-							error(API_STATUS_NOT_ACCEPTABLE, "UNKNOWN PROTOCOL");
+							// forward to standard command set
+							processCommand(cmd);
 						}
+					} catch (const std::exception&) {
+						error(API_STATUS_BAD_REQUEST, "PROTOCOL ERROR");
 					}
-					else
-					{
-						// forward to standard command set
-						processCommand(cmd);
-					}
-				} catch (const std::exception&) {
-					error(API_STATUS_BAD_REQUEST, "PROTOCOL ERROR");
 				}
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG("ClientHandler", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
