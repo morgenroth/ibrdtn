@@ -247,7 +247,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_ARG_WITH([mingw32-pthread],
 		AS_HELP_STRING([--with-mingw32-pthread=PATH], [Build with ming32-pthread support]),
 		[
-			PTHREAD_LIBS="-L${withval} -lpthreadGC2"
+			PTHREAD_LIBS="-L${withval} -lpthreadGCE2"
 			PTHREAD_CFLAGS="-I${withval}"
 			AC_MSG_NOTICE([using mingw32-pthread library in ${withval}])
 		], [
