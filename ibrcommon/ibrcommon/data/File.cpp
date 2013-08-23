@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <cerrno>
+#include <fstream>
 
 #if !defined(HAVE_FEATURES_H) || defined(ANDROID)
 #include <libgen.h>
@@ -81,25 +82,47 @@ namespace ibrcommon
 
 	void File::resolveAbsolutePath()
 	{
+#ifndef __WIN32__
 		std::string::iterator iter = _path.begin();
 
 		if ((*iter) != FILE_DELIMITER_CHAR)
 		{
 			_path = "." + std::string(FILE_DELIMITER) + _path;
 		}
+#endif
 	}
 
 	bool File::exists() const
 	{
+#ifdef __WIN32__
+		DWORD st = GetFileAttributesA(_path.c_str());
+		if (st == INVALID_FILE_ATTRIBUTES)
+			return false;
+
+		return true;
+#else
 		struct stat st;
 		if( stat(_path.c_str(), &st ) == 0)
 			return true;
 
 		return false;
+#endif
 	}
 
 	void File::update()
 	{
+#ifdef __WIN32__
+		DWORD s = GetFileAttributesA(_path.c_str());
+		if (s == INVALID_FILE_ATTRIBUTES) {
+			_type = DT_UNKNOWN;
+		}
+		else if (s & FILE_ATTRIBUTE_DIRECTORY) {
+			_type = DT_DIR;
+		}
+		else {
+			_type = DT_REG;
+		}
+#else
 		struct stat s;
 
 		if ( stat(_path.c_str(), &s) == 0 )
@@ -112,11 +135,9 @@ namespace ibrcommon
 					_type = DT_REG;
 					break;
 
-#ifndef __WIN32__
 				case S_IFLNK:
 					_type = DT_LNK;
 					break;
-#endif
 
 				case S_IFDIR:
 					_type = DT_DIR;
@@ -127,6 +148,7 @@ namespace ibrcommon
 					break;
 			}
 		}
+#endif
 	}
 
 	File::~File()
@@ -250,7 +272,7 @@ namespace ibrcommon
 
 	File File::getParent() const
 	{
-		size_t pos = _path.find_last_of('/');
+		size_t pos = _path.find_last_of(FILE_DELIMITER_CHAR);
 		return File(_path.substr(0, pos));
 	}
 
@@ -339,19 +361,28 @@ namespace ibrcommon
 
 		// since _mktemp is not thread-safe and _mktemp_s not available in mingw
 		// we have to lock this method globally
-		ibrcommon::Mutex temp_mutex;
+		static ibrcommon::Mutex temp_mutex;
 		ibrcommon::MutexLock l(temp_mutex);
 
 		// create temporary name
-		if (_mktemp(&name[0], pattern.length() + 1) == 0) {
+		if (_mktemp(&name[0]) == NULL) {
+			if (errno == EINVAL) {
+				throw ibrcommon::IOException("_mktemp(): Bad parameter.");
+			}
+			else if (errno == EEXIST) {
+				throw ibrcommon::IOException("_mktemp(): Out of unique filenames.");
+			}
+		} else {
 			// create and open the temporary file
-			fd = open(&name[0], O_CREAT, S_IREAD | S_IWRITE);
+			std::fstream file(&name[0], std::fstream::out | std::fstream::trunc);
+			if (!file.good())
+				throw ibrcommon::IOException("Could not create a temporary file.");
 		}
 #else
 		int fd = mkstemp(&name[0]);
-#endif
 		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary file.");
 		::close(fd);
+#endif
 
 		return std::string(name.begin(), name.end());
 	}
