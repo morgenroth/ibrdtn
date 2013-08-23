@@ -33,30 +33,103 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "ibrdtnd.h"
+#include "NativeDaemon.h"
 
-/**
- * setup logging capabilities
- */
+// marker if the shutdown was called
+ibrcommon::Conditional _shutdown_cond;
+bool _shutdown = false;
 
-// logging options
-unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
+// daemon instance
+dtn::daemon::NativeDaemon _dtnd;
 
-// error filter
-const unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
-
-// logging filter, everything but debug, err and crit
-const unsigned char logstd = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | logerr);
+// key for registry access
+const char* _subkey = "Software\\IBR-DTN";
 
 SERVICE_STATUS          ServiceStatus;
 SERVICE_STATUS_HANDLE   hStatus;
 
+void ibrdtn_daemon_shutdown() {
+	ibrcommon::MutexLock l(_shutdown_cond);
+	_shutdown = true;
+	_shutdown_cond.signal(true);
+}
+
 int InitService() {
-	// create a configuration
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	bool error = false;
 
-	// TODO: need to initialize the configuration here
+	// enable ring-buffer
+	ibrcommon::Logger::enableBuffer(200);
 
+	// enable asynchronous logging feature (thread-safe)
+	ibrcommon::Logger::enableAsync();
+
+	// load the configuration file
+	_dtnd.setLogging("DTNEngine", 1);
+
+	// read configuration from registry
+	HKEY hKey = 0;
+	char buf[255] = {0};
+	DWORD dwType = 0;
+	DWORD dwBufSize = sizeof(buf);
+	DWORD dwValue = 0;
+
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, _subkey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+	{
+		int logLevel = 1;
+
+		dwType = REG_DWORD;
+		dwBufSize = sizeof(dwValue);
+		if ( RegQueryValueEx(hKey, "loglevel", NULL, &dwType, (LPBYTE)&dwValue, &dwBufSize) == ERROR_SUCCESS )
+		{
+			logLevel = dwValue;
+		}
+		else
+		{
+			error = true;
+		}
+
+		dwType = REG_DWORD;
+		dwBufSize = sizeof(dwValue);
+		if ( RegQueryValueEx(hKey, "debuglevel", NULL, &dwType, (LPBYTE)&dwValue, &dwBufSize) == ERROR_SUCCESS )
+		{
+			_dtnd.setDebug(dwValue);
+		}
+		else
+		{
+			error = true;
+		}
+
+		dwType = REG_SZ;
+		dwBufSize = sizeof(buf);
+		if ( RegQueryValueEx(hKey, "logfile", NULL, &dwType, (BYTE*)buf, &dwBufSize) == ERROR_SUCCESS )
+		{
+			_dtnd.setLogFile(buf, logLevel);
+		}
+		else
+		{
+			error = true;
+		}
+
+		dwType = REG_SZ;
+		dwBufSize = sizeof(buf);
+		if ( RegQueryValueEx(hKey, "configfile", NULL, &dwType, (BYTE*)buf, &dwBufSize) == ERROR_SUCCESS )
+		{
+			_dtnd.setConfigFile(buf);
+		}
+		else
+		{
+			error = true;
+		}
+
+		RegCloseKey(hKey);
+	}
+	else
+	{
+		// can not open registry
+		error = true;
+	}
+
+	if (error) return -1;
 	return 0;
 
 	// return -1 on failure
@@ -96,7 +169,7 @@ void ServiceMain(int argc, char** argv) {
 	ServiceStatus.dwCheckPoint = 0;
 	ServiceStatus.dwWaitHint = 0;
 
-	hStatus = RegisterServiceCtrlHandler("IBR-DTN", (LPHANDLER_FUNCTION)ControlHandler);
+	hStatus = RegisterServiceCtrlHandler("DtnStack", (LPHANDLER_FUNCTION)ControlHandler);
 
 	if (hStatus == (SERVICE_STATUS_HANDLE)0)
 	{
@@ -118,37 +191,17 @@ void ServiceMain(int argc, char** argv) {
 		return;
 	}
 
-	// create a configuration
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-
-	// enable ring-buffer
-	ibrcommon::Logger::enableBuffer(200);
-
-	ibrcommon::Logger::enableAsync(); // enable asynchronous logging feature (thread-safe)
-
-	// load the configuration file
-	conf.load();
-
-	try {
-		const ibrcommon::File &lf = conf.getLogger().getLogfile();
-		ibrcommon::Logger::setLogfile(lf, ibrcommon::Logger::LOGGER_ALL ^ ibrcommon::Logger::LOGGER_DEBUG, logopts);
-	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
-
-	// greeting
-	IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
-
-	try {
-		const ibrcommon::File &lf = conf.getLogger().getLogfile();
-		IBRCOMMON_LOGGER(info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
-	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
+	// initialize the daemon up to runlevel "Routing Extensions"
+	_dtnd.init(dtn::daemon::RUNLEVEL_ROUTING_EXTENSIONS);
 
 	// We report the running status to SCM.
 	ServiceStatus.dwCurrentState = SERVICE_RUNNING;
 	SetServiceStatus (hStatus, &ServiceStatus);
 
-	ibrdtn_daemon_initialize();
+	ibrcommon::MutexLock l(_shutdown_cond);
+	while (!_shutdown) _shutdown_cond.wait();
 
-	ibrdtn_daemon_main_loop();
+	_dtnd.init(dtn::daemon::RUNLEVEL_ZERO);
 
 	// stop the asynchronous logger
 	ibrcommon::Logger::stop();
