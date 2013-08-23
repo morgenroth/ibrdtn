@@ -25,7 +25,6 @@
 
 #ifdef __WIN32__
 #include <winsock2.h>
-#include <wspiapi.h>
 #else
 #include <arpa/inet.h>
 #include <netdb.h>
