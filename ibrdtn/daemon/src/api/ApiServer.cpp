@@ -278,7 +278,7 @@ namespace dtn
 						reg->attach();
 						if(!reg->isPersistent()){
 							IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "release registration " << reg->getHandle() << IBRCOMMON_LOGGER_ENDL;
-							iter = _registrations.erase(iter);
+							_registrations.erase(iter++);
 							delete reg;
 						}
 						else

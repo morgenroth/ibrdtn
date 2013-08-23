@@ -277,7 +277,7 @@ namespace dtn
 			// remove the respective connection from the local list structure.
 			for (; conn_it != connections.end(); ++conn_it) {
 				if (conn_it->getNetworkIntf() == conn.getNetworkIntf()) {
-					conn_it = connections.erase(conn_it);
+					connections.erase(conn_it++);
 					std::cout << "Connection removed from being locally registered." << std::endl;
 				}
 			}

@@ -344,7 +344,7 @@ namespace dtn
 						job.complete();
 						delete *it;
 						*it = NULL;
-						it = _processedTasks.erase(it);
+						_processedTasks.erase(it++);
 					}
 				}
 			}
