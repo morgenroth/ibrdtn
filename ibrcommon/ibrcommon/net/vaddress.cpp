@@ -22,9 +22,15 @@
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/vaddress.h"
 #include "ibrcommon/net/socket.h"
+
+#ifdef __WIN32__
+#include <winsock2.h>
+#else
 #include <arpa/inet.h>
-#include <string.h>
 #include <netdb.h>
+#endif
+
+#include <string.h>
 
 namespace ibrcommon
 {
@@ -157,6 +163,13 @@ namespace ibrcommon
 	{
 		if (_service.length() == 0) throw service_not_set();
 		return _service;
+	}
+
+	void vaddress::setService(const uint32_t port)
+	{
+		std::stringstream ss;
+		ss << port;
+		_service = ss.str();
 	}
 
 	void vaddress::setService(const std::string &service)

@@ -67,6 +67,16 @@ AM_SANITY_CHECK
 
 AC_LANG_CPLUSPLUS
 
+# Option to build for win32
+AC_ARG_ENABLE([win32],
+	AS_HELP_STRING([--enable-win32], [Enable compile switches for win32 systems]), [
+		AC_DEFINE(WIN32, [1], [Compiling for Win32!])
+		AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
+		AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
+
+		# do win32 related library checking
+	])
+
 # ANDROID configuration
 # We generate a mostly static configuration for Android as PKG_CHECK_MODULES obviously does not work with the Android NDK
 AC_ARG_ENABLE([android],
@@ -221,6 +231,7 @@ AS_IF([test "x$enable_android" = "xyes"], [
 AM_CONDITIONAL(DTNSEC, test x$with_dtnsec = xyes)
 AM_CONDITIONAL(COMPRESSION, test x$with_compression = xyes)
 AM_CONDITIONAL(ANDROID, test x$enable_android = xyes)
+AM_CONDITIONAL(WIN32, test x$enable_win32 = xyes)
 
 AC_SUBST(REQUIRES_LIBS)
 

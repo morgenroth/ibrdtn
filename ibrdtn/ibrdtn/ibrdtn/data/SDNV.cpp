@@ -22,6 +22,7 @@
  */
 
 #include "ibrdtn/data/SDNV.h"
+#include <ibrdtn/utils/Random.h>
 
 namespace dtn
 {

@@ -38,7 +38,7 @@ namespace dtn
 				::gettimeofday(&time, NULL);
 
 				// initialize a random seed only once
-				srand(static_cast<unsigned int>((time.tv_sec * 100) + (time.tv_usec / 100)));
+				::srand(static_cast<unsigned int>((time.tv_sec * 100) + (time.tv_usec / 100)));
 				initialized = true;
 			}
 		}
@@ -47,14 +47,19 @@ namespace dtn
 		{
 		}
 
-		const std::string Random::gen_chars(const dtn::data::Length &size) const
+		int Random::gen_number() const
+		{
+			return ::rand();
+		}
+
+		const std::string Random::gen_chars(const size_t &size) const
 		{
 			static const char text[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 			std::vector<char> dst(size);
-			const dtn::data::Length len = size - 1;
-			for ( dtn::data::Length i = 0; i <= len; ++i )
+			const size_t len = size - 1;
+			for ( size_t i = 0; i <= len; ++i )
 			{
-				dst[i] = text[rand() % (sizeof text - 1)];
+				dst[i] = text[::rand() % (sizeof text - 1)];
 			}
 			return std::string(dst.begin(), dst.end());
 		}

@@ -19,6 +19,7 @@
  *
  */
 
+#include "config.h"
 #include "DTNTPWorker.h"
 #include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"
@@ -35,6 +36,10 @@
 #include <ibrcommon/Logger.h>
 
 #include <sys/time.h>
+
+#ifdef __WIN32__
+#define suseconds_t long
+#endif
 
 namespace dtn
 {

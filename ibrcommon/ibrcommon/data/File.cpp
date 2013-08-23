@@ -21,6 +21,8 @@
 
 #include "ibrcommon/config.h"
 #include "ibrcommon/data/File.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 #include <sstream>
 #include <errno.h>
 #include <sys/stat.h>
@@ -31,9 +33,19 @@
 #include <unistd.h>
 #include <cstring>
 #include <cerrno>
+#include <fstream>
 
 #if !defined(HAVE_FEATURES_H) || defined(ANDROID)
 #include <libgen.h>
+#endif
+
+#ifdef __WIN32__
+#include <io.h>
+#define FILE_DELIMITER_CHAR '\\'
+#define FILE_DELIMITER "\\"
+#else
+#define FILE_DELIMITER_CHAR '/'
+#define FILE_DELIMITER "/"
 #endif
 
 namespace ibrcommon
@@ -62,7 +74,7 @@ namespace ibrcommon
 	{
 		std::string::iterator iter = _path.end(); --iter;
 
-		if ((*iter) == '/')
+		if ((*iter) == FILE_DELIMITER_CHAR)
 		{
 			_path.erase(iter);
 		}
@@ -70,25 +82,47 @@ namespace ibrcommon
 
 	void File::resolveAbsolutePath()
 	{
+#ifndef __WIN32__
 		std::string::iterator iter = _path.begin();
 
-		if ((*iter) != '/')
+		if ((*iter) != FILE_DELIMITER_CHAR)
 		{
-			_path = "./" + _path;
+			_path = "." + std::string(FILE_DELIMITER) + _path;
 		}
+#endif
 	}
 
 	bool File::exists() const
 	{
+#ifdef __WIN32__
+		DWORD st = GetFileAttributesA(_path.c_str());
+		if (st == INVALID_FILE_ATTRIBUTES)
+			return false;
+
+		return true;
+#else
 		struct stat st;
 		if( stat(_path.c_str(), &st ) == 0)
 			return true;
 
 		return false;
+#endif
 	}
 
 	void File::update()
 	{
+#ifdef __WIN32__
+		DWORD s = GetFileAttributesA(_path.c_str());
+		if (s == INVALID_FILE_ATTRIBUTES) {
+			_type = DT_UNKNOWN;
+		}
+		else if (s & FILE_ATTRIBUTE_DIRECTORY) {
+			_type = DT_DIR;
+		}
+		else {
+			_type = DT_REG;
+		}
+#else
 		struct stat s;
 
 		if ( stat(_path.c_str(), &s) == 0 )
@@ -114,6 +148,7 @@ namespace ibrcommon
 					break;
 			}
 		}
+#endif
 	}
 
 	File::~File()
@@ -135,7 +170,11 @@ namespace ibrcommon
 			return errno;
 		}
 
+#if __WIN32__
+		while ((dirp = ::readdir(dp)) != NULL)
+#else
 		while (::readdir_r(dp, &dirp_data, &dirp) == 0)
+#endif
 		{
 			if (dirp == NULL) break;
 
@@ -143,8 +182,12 @@ namespace ibrcommon
 			// std::string name = std::string(dirp->d_name, dirp->d_reclen);
 
 			std::string name = std::string(dirp->d_name);
-			std::stringstream ss; ss << getPath() << "/" << name;
+			std::stringstream ss; ss << getPath() << FILE_DELIMITER_CHAR << name;
+#if __WIN32__
+			File file(ss.str());
+#else
 			File file(ss.str(), dirp->d_type);
+#endif
 			files.push_back(file);
 		}
 		closedir(dp);
@@ -182,7 +225,7 @@ namespace ibrcommon
 
 	File File::get(string filename) const
 	{
-		stringstream ss; ss << getPath() << "/" << filename;
+		stringstream ss; ss << getPath() << FILE_DELIMITER_CHAR << filename;
 		File file(ss.str());
 
 		return file;
@@ -229,7 +272,7 @@ namespace ibrcommon
 
 	File File::getParent() const
 	{
-		size_t pos = _path.find_last_of('/');
+		size_t pos = _path.find_last_of(FILE_DELIMITER_CHAR);
 		return File(_path.substr(0, pos));
 	}
 
@@ -241,7 +284,11 @@ namespace ibrcommon
 			File::createDirectory(parent);
 
 			// create path
+#ifdef __WIN32__
+			::mkdir(path.getPath().c_str());
+#else
 			::mkdir(path.getPath().c_str(), 0700);
+#endif
 
 			// update file information
 			path.update();
@@ -303,14 +350,39 @@ namespace ibrcommon
 			throw ibrcommon::IOException("given path is not a directory.");
 		}
 
-		std::string pattern = path.getPath() + "/" + prefix + "XXXXXX";
+		std::string pattern = path.getPath() + FILE_DELIMITER_CHAR + prefix + "XXXXXX";
 
 		std::vector<char> name(pattern.length() + 1);
 		::strcpy(&name[0], pattern.c_str());
 
+#ifdef __WIN32__
+		// create temporary file - win32 style
+		int fd = -1;
+
+		// since _mktemp is not thread-safe and _mktemp_s not available in mingw
+		// we have to lock this method globally
+		static ibrcommon::Mutex temp_mutex;
+		ibrcommon::MutexLock l(temp_mutex);
+
+		// create temporary name
+		if (_mktemp(&name[0]) == NULL) {
+			if (errno == EINVAL) {
+				throw ibrcommon::IOException("_mktemp(): Bad parameter.");
+			}
+			else if (errno == EEXIST) {
+				throw ibrcommon::IOException("_mktemp(): Out of unique filenames.");
+			}
+		} else {
+			// create and open the temporary file
+			std::fstream file(&name[0], std::fstream::out | std::fstream::trunc);
+			if (!file.good())
+				throw ibrcommon::IOException("Could not create a temporary file.");
+		}
+#else
 		int fd = mkstemp(&name[0]);
-		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
+		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary file.");
 		::close(fd);
+#endif
 
 		return std::string(name.begin(), name.end());
 	}

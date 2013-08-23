@@ -23,7 +23,17 @@
 #define VADDRESS_H_
 
 #include "ibrcommon/Exceptions.h"
+#include <stdint.h>
+
+#ifdef __WIN32__
+#include <winsock2.h>
+#else
 #include <sys/socket.h>
+#endif
+
+#ifndef sa_family_t
+typedef unsigned short int sa_family_t;
+#endif
 
 namespace ibrcommon
 {
@@ -79,6 +89,7 @@ namespace ibrcommon
 			const std::string address() const throw (address_not_set);
 			const std::string service() const throw (service_not_set);
 
+			void setService(const uint32_t port);
 			void setService(const std::string &service);
 
 			bool operator<(const vaddress &dhs) const;

@@ -45,6 +45,15 @@ namespace ibrcommon
 	class File
 	{
 	public:
+#ifdef __WIN32__
+		enum FILE_TYPE {
+			DT_REG,
+			DT_LNK,
+			DT_DIR,
+			DT_UNKNOWN
+		};
+#endif
+
 		/**
 		 * Instantiate a File object without a reference to a file.
 		 */

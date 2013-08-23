@@ -23,7 +23,7 @@
 #define EID_H_
 
 #include <string>
-#include "ibrcommon/Exceptions.h"
+#include <ibrcommon/Exceptions.h>
 #include <ibrdtn/data/Number.h>
 #include <map>
 

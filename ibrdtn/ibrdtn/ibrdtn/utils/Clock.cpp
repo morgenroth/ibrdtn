@@ -19,6 +19,7 @@
  *
  */
 
+#include "ibrdtn/config.h"
 #include "ibrdtn/utils/Clock.h"
 #include "ibrdtn/data/AgeBlock.h"
 
@@ -222,6 +223,7 @@ namespace dtn
 					timerclear(&Clock::_offset);
 					Clock::_offset_init = true;
 				}
+
 				timeradd(&Clock::_offset, &tv, &Clock::_offset);
 				IBRCOMMON_LOGGER_TAG("Clock", info) << "new local offset: " << Clock::toDouble(_offset) << "s" << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -234,8 +236,10 @@ namespace dtn
 				// adjust by the offset
 				timersub(&now, &tv, &now);
 
+#ifndef __WIN32__
 				// set the local clock to the new timestamp
 				::settimeofday(&now, &tz);
+#endif
 			}
 		}
 
@@ -257,8 +261,10 @@ namespace dtn
 			}
 			else
 			{
+#ifndef __WIN32__
 				// set the local clock to the new timestamp
 				::settimeofday(tv, &tz);
+#endif
 			}
 		}
 
@@ -275,6 +281,7 @@ namespace dtn
 					timerclear(&Clock::_offset);
 					Clock::_offset_init = true;
 				}
+
 				// add offset
 				timersub(tv, &Clock::_offset, tv);
 			}

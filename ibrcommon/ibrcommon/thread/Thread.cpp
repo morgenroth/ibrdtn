@@ -28,8 +28,9 @@
 #include <stdio.h>
 #include <signal.h>
 
-#ifdef _WIN32
+#ifdef __WIN32__
 #include <windows.h>
+#include <unistd.h>
 #elif MACOS
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -45,7 +46,7 @@ namespace ibrcommon
 {
 	size_t Thread::getNumberOfProcessors()
 	{
-#ifdef WIN32
+#ifdef __WIN32__
 		SYSTEM_INFO sysinfo;
 		GetSystemInfo(&sysinfo);
 		return sysinfo.dwNumberOfProcessors;
@@ -103,7 +104,11 @@ namespace ibrcommon
 	}
 
 	Thread::Thread(size_t size)
+#ifdef __WIN32__
+	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(), stack(size), priority(0), _detached(false)
+#else
 	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), priority(0), _detached(false)
+#endif
 	{
 		pthread_attr_init(&attr);
 	}
@@ -139,7 +144,7 @@ namespace ibrcommon
 		ts.tv_nsec = (timeout % 1000l) * 1000000l;
 		pthread_delay_np(&ts);
 	#else
-		usleep(static_cast<useconds_t>(timeout) * 1000);
+		::usleep(static_cast<useconds_t>(timeout) * 1000);
 	#endif
 	}
 
@@ -156,7 +161,11 @@ namespace ibrcommon
 		pthread_attr_destroy(&attr);
 
 		_state.reset(THREAD_CREATED);
+#if __WIN32__
+		tid = pthread_t();
+#else
 		tid = 0;
+#endif
 		_detached = false;
 
 		pthread_attr_init(&attr);
@@ -164,7 +173,8 @@ namespace ibrcommon
 
 	int Thread::kill(int sig)
 	{
-		if (tid == 0) return -1;
+		if (pthread_equal(tid, pthread_t())) return -1;
+
 		return pthread_kill(tid, sig);
 	}
 

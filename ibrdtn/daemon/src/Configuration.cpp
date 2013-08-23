@@ -30,6 +30,11 @@
 
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/link/LinkManager.h>
+
+#ifdef __WIN32__
+#include <ibrcommon/link/Win32LinkManager.h>
+#endif
 
 #include <getopt.h>
 #include <unistd.h>
@@ -231,6 +236,9 @@ namespace dtn
 						{"interface", required_argument, 0, 'i'},
 						{"configuration", required_argument, 0, 'c'},
 						{"debug", required_argument, 0, 'd'},
+#ifdef __WIN32__
+						{"interfaces", no_argument, 0, 'I'},
+#endif
 						{0, 0, 0, 0}
 				};
 
@@ -281,6 +289,9 @@ namespace dtn
 					std::cout << " --nodiscovery   disable discovery module" << std::endl;
 					std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
 					std::cout << " --timestamp     enables timestamps for logging instead of datetime values" << std::endl;
+#ifdef __WIN32__
+					std::cout << " --interfaces    list all available interfaces" << std::endl;
+#endif
 					exit(0);
 					break;
 
@@ -323,6 +334,30 @@ namespace dtn
 				case 't':
 					_daemon._threads = atoi(optarg);
 					break;
+
+#ifdef __WIN32__
+				case 'I':
+				{
+					ibrcommon::LinkManager &lm = ibrcommon::LinkManager::getInstance();
+					try {
+						ibrcommon::Win32LinkManager &wlm = dynamic_cast<ibrcommon::Win32LinkManager&>(lm);
+
+						std::set<ibrcommon::vinterface> ifs = wlm.getInterfaces();
+
+						std::cout << "Available interfaces:" << std::endl;
+
+						for (std::set<ibrcommon::vinterface>::const_iterator it = ifs.begin(); it != ifs.end(); ++it)
+						{
+							const ibrcommon::vinterface &iface = (*it);
+							std::cout << iface.toString() << '\t';
+							std::wcout << iface.getFriendlyName() << std::endl;
+						}
+					} catch (const std::bad_cast&) {
+					}
+					exit(0);
+					break;
+				}
+#endif
 
 				case '?':
 					/* getopt_long already printed an error message. */
@@ -515,12 +550,12 @@ namespace dtn
 				if ( gethostname(&hostname_array[0], hostname_array.size()) != 0 )
 				{
 					// error
-					return "local";
+					return "dtn://local";
 				}
 
 				return "dtn://" + std::string(&hostname_array[0]);
 			}
-			return "noname";
+			return "dtn://noname";
 		}
 
 		const std::list<Configuration::NetConfig>& Configuration::Network::getInterfaces() const
