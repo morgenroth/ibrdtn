@@ -53,7 +53,7 @@ namespace dtn
 
 		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _send_socket_state(false), _port(port), _enabled(true)
+		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _state(false), _port(port), _enabled(true)
 		{
 			switch (_config.version())
 			{
@@ -429,14 +429,11 @@ namespace dtn
 			// unsubscribe to NetLink events
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
 
-			// shutdown the send socket
-			_send_socket.destroy();
-
 			// mark the send socket as down
 			_state = false;
 
-			// shutdown the receive socket
-			_socket.down();
+			// shutdown and destroy all sockets
+			_socket.destroy();
 
 			ibrcommon::JoinableThread::stop();
 			ibrcommon::JoinableThread::join();
