@@ -53,6 +53,9 @@ namespace dtn
 
 		IPNDAgent::IPNDAgent(int port)
 		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
+#ifndef __WIN32__
+		   _virtual_mcast_iface("__virtual_multicast_interface__"),
+#endif
 		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _state(false), _port(port), _enabled(true)
 		{
 			switch (_config.version())
@@ -392,6 +395,38 @@ namespace dtn
 			} catch (const ibrcommon::socket_exception &ex) {
 				IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+
+#ifndef __WIN32__
+			std::set<sa_family_t> bound_set;
+
+			// create a socket for each multicast address and bind explicit
+			// to the multicast addresses
+			for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); ++it_addr)
+			{
+				const ibrcommon::vaddress &addr = (*it_addr);
+				sa_family_t fam = addr.family();
+
+				if (bound_set.find(fam) == bound_set.end()) {
+					const ibrcommon::vaddress any_addr(_port, fam);
+
+					// create a multicast socket and bind to given addr
+					ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(any_addr);
+
+					try {
+						// bring up
+						msock->up();
+
+						// add mcast socket to vsocket
+						_socket.add(msock, _virtual_mcast_iface);
+					} catch (const ibrcommon::socket_exception &ex) {
+						IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "failed to set-up multicast socket on " << any_addr.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						delete msock;
+					}
+
+					bound_set.insert(fam);
+				}
+			}
+#endif
 
 			// join multicast groups
 			try {
