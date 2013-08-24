@@ -19,7 +19,7 @@
  *
  */
 
-#include "config.h"
+#include "ibrdtn/config.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Exceptions.h"
