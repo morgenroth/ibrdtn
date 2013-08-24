@@ -27,12 +27,9 @@
 
 #ifdef __WIN32__
 #include <winsock2.h>
+typedef unsigned short int sa_family_t;
 #else
 #include <sys/socket.h>
-#endif
-
-#ifndef sa_family_t
-typedef unsigned short int sa_family_t;
 #endif
 
 namespace ibrcommon
