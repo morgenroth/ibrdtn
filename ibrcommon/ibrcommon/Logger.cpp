@@ -38,6 +38,10 @@
 #include <android/log.h>
 #endif
 
+#ifdef __WIN32__
+#include <winsock2.h>
+#endif
+
 namespace ibrcommon
 {
 	std::string Logger::_default_tag = "Core";
