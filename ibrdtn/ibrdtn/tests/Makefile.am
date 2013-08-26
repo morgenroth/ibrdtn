@@ -16,7 +16,7 @@ cc_sources += data/TestCompressedPayloadBlock.cpp
 endif
 
 AM_CPPFLAGS = $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS)
-AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) -L@top_srcdir@/ibrdtn/.libs -librdtn
+AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) -L@top_builddir@/ibrdtn/.libs -librdtn
 
 AM_CPPFLAGS += -I@top_srcdir@
 

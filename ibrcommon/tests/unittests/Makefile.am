@@ -21,7 +21,7 @@ unittest_SOURCES = \
 	stopandwaitTest.cpp
 
 AM_CPPFLAGS = $(DEBUG_CFLAGS)
-AM_LDFLAGS = -L@top_srcdir@/ibrcommon/.libs -librcommon
+AM_LDFLAGS = -L@top_builddir@/ibrcommon/.libs -librcommon
 
 check_PROGRAMS = unittest
 unittest_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -I@top_srcdir@/tests/unittests -I@top_srcdir@
