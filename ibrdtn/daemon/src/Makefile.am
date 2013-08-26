@@ -57,12 +57,12 @@ libdtnd_la_LIBADD = $(dtnd_libs)
 dtnd_SOURCES = Main.cpp
 dtnd_LDADD = libdtnd.la
 if WIN32
-dtnd_LDFLAGS = -static-libgcc -static-libstdc++ -all-static
+#dtnd_LDFLAGS = -static-libgcc -static-libstdc++ -all-static
 endif
 if WIN32_NTSERVICE
 dtnserv_SOURCES = NTService.cpp
 dtnserv_LDADD = libdtnd.la
-dtnserv_LDFLAGS = -static-libgcc -static-libstdc++ -all-static
+#dtnserv_LDFLAGS = -static-libgcc -static-libstdc++ -all-static
 sbin_PROGRAMS += dtnserv
 endif
 endif
