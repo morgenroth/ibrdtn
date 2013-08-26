@@ -23,10 +23,8 @@ unittest_SOURCES = \
 AM_CPPFLAGS = $(DEBUG_CFLAGS)
 AM_LDFLAGS = -L@top_srcdir@/ibrcommon/.libs -librcommon
 
-AM_CPPFLAGS += -I@top_srcdir@ -I@top_srcdir@/tests/unittests
-
 check_PROGRAMS = unittest
-unittest_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -Wall
+unittest_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -I@top_srcdir@/tests/unittests -I@top_srcdir@
 unittest_LDFLAGS = ${AM_LDFLAGS} ${CPPUNIT_LIBS}
 
 TESTS = unittest

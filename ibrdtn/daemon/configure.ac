@@ -116,8 +116,14 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_CHECK_LIB([rt], [clock_gettime])
 	AC_CHECK_LIB([m], [pow])
 
+	# check for ibrcommon library
+	LOCAL_IBRCOMMON_VERSION=0.10
+	LOCAL_CHECK_IBRCOMMON
+	AC_SUBST(ibrcommon_CFLAGS)
+	AC_SUBST(ibrcommon_LIBS)
+	
 	# check for ibrdtn library
-	LOCAL_IBRDTN_VERSION=0.8
+	LOCAL_IBRDTN_VERSION=0.10
 	LOCAL_CHECK_IBRDTN
 	AC_SUBST(ibrdtn_CFLAGS)
 	AC_SUBST(ibrdtn_LIBS)

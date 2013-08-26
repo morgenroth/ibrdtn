@@ -16,12 +16,12 @@ cc_sources += data/TestCompressedPayloadBlock.cpp
 endif
 
 AM_CPPFLAGS = $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS)
-AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) -L@top_srcdir@/ibrdtn/.libs -librcommon -librdtn
+AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) -L@top_srcdir@/ibrdtn/.libs -librdtn
 
-AM_CPPFLAGS += -I@top_srcdir@ -I@top_srcdir@/tests
+AM_CPPFLAGS += -I@top_srcdir@
 
 check_PROGRAMS = testsuite
-testsuite_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -I../../src -Wall
+testsuite_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -I@top_srcdir@/tests
 testsuite_LDFLAGS = ${AM_LDFLAGS} ${CPPUNIT_LIBS}
 testsuite_SOURCES = $(h_sources) $(cc_sources)
 
