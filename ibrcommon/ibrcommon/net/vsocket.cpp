@@ -411,8 +411,8 @@ namespace ibrcommon
 		}
 	}
 
-	vsocket::SelectGuard::SelectGuard(SocketState &state, int &counter)
-	 : _state(state), _counter(counter)
+	vsocket::SelectGuard::SelectGuard(SocketState &state, int &counter, ibrcommon::vsocket &sock)
+	 : _state(state), _counter(counter), _sock(sock)
 	{
 		// set the current state to SELECT
 		try {
@@ -440,6 +440,15 @@ namespace ibrcommon
 					_state.set(SocketState::PENDING_DOWN);
 				} else {
 					_state.set(SocketState::IDLE);
+				}
+			}
+			else
+			{
+				// call interrupt once more if necessary
+				if (_state.get() == SocketState::SAFE_REQUEST) {
+					_sock.interrupt();
+				} else if (_state.get() == SocketState::DOWN_REQUEST) {
+					_sock.interrupt();
 				}
 			}
 		} catch (const ibrcommon::Conditional::ConditionalAbortException&) {
@@ -598,7 +607,7 @@ namespace ibrcommon
 
 		while (true)
 		{
-			SelectGuard guard(_state, _select_count);
+			SelectGuard guard(_state, _select_count, *this);
 
 			FD_ZERO(&fds_read);
 			FD_ZERO(&fds_write);
