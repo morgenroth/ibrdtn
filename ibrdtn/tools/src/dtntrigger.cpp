@@ -31,6 +31,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#ifdef __WIN32__
+#include <windows.h>
+#define sleep(x) Sleep(x*1000)
+#endif
 
 // set this variable to false to stop the app
 bool _running = true;

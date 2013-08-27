@@ -37,6 +37,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifdef __WIN32__
+#include <windows.h>
+#define sleep(x) Sleep(x*1000)
+#endif
+
 using namespace ibrcommon;
 
 void print_help()
