@@ -151,7 +151,7 @@ namespace dtn
 						sock.read((char*)&buf, 1024);
 					}
 
-					::sleep(2);
+					ibrcommon::Thread::sleep(2000);
 				} catch (const ibrcommon::vsocket_interrupt&) {
 					return;
 				} catch (const ibrcommon::vsocket_timeout&) { };

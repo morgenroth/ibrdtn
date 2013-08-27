@@ -55,7 +55,7 @@ void ThreadTest::DetachedTestThread::run() throw ()
 	}
 
 	while (_run) {
-		::usleep(_time);
+		ibrcommon::Thread::sleep(_time);
 	}
 }
 
@@ -89,12 +89,12 @@ void ThreadTest::TestThread::run() throw ()
 {
 	if (_time == 0)
 	{
-		while (_running) ::usleep(1000);
+		while (_running) ibrcommon::Thread::sleep(100);
 	}
 	else
 	{
 		for (size_t i = 0; i < _time; ++i)
-			::usleep(1000);
+			ibrcommon::Thread::sleep(100);
 	}
 }
 
@@ -108,7 +108,7 @@ void ThreadTest::thread_test01()
 	TestThread t;
 	t.start();
 
-	::usleep(1000);
+	ibrcommon::Thread::sleep(100);
 
 	t.stop();
 	t.join();
@@ -118,10 +118,10 @@ void ThreadTest::thread_test01()
 
 void ThreadTest::thread_test02()
 {
-	TestThread t(2000);
+	TestThread t(2);
 	t.start();
 
-	::usleep(1000);
+	ibrcommon::Thread::sleep(100);
 
 	t.join();
 

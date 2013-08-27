@@ -84,7 +84,7 @@ void MutexTests::mutex_test01()
 
 	m1.leave();
 
-	::sleep(2);
+	ibrcommon::Thread::sleep(2000);
 
 	CPPUNIT_ASSERT(var);
 

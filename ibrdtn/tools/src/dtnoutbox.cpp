@@ -37,11 +37,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifdef __WIN32__
-#include <windows.h>
-#define sleep(x) Sleep(x*1000)
-#endif
-
 using namespace ibrcommon;
 
 void print_help()
@@ -162,7 +157,7 @@ int main(int argc, char** argv)
             	if (files.size() <= 2)
             	{
                     // wait some seconds
-                    sleep(10);
+            		ibrcommon::Thread::sleep(10000);
 
                     continue;
             	}
@@ -214,7 +209,7 @@ int main(int argc, char** argv)
             	if (_running)
             	{
 					// wait some seconds
-					sleep(10);
+            		ibrcommon::Thread::sleep(10000);
             	}
             }
 
@@ -233,7 +228,7 @@ int main(int argc, char** argv)
         	if (_running)
         	{
 				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
-				sleep(backoff);
+				ibrcommon::Thread::sleep(backoff * 1000);
 
 				// if backoff < 10 minutes
 				if (backoff < 600)
@@ -249,7 +244,7 @@ int main(int argc, char** argv)
         	if (_running)
         	{
 				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
-				sleep(backoff);
+				ibrcommon::Thread::sleep(backoff * 1000);
 
 				// if backoff < 10 minutes
 				if (backoff < 600)

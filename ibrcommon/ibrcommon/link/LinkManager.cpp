@@ -109,7 +109,7 @@ namespace ibrcommon
 
 		// wait some time until the event is reported to the subscribers
 		// this avoids bind issues if an address is not really ready
-		if (lme.getAction() == LinkEvent::ACTION_ADDRESS_ADDED) ::usleep(1000000);
+		if (lme.getAction() == LinkEvent::ACTION_ADDRESS_ADDED) ibrcommon::Thread::sleep(1000);
 
 		// get the corresponding interface
 		const vinterface &iface = lme.getInterface();
