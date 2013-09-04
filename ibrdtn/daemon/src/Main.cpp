@@ -170,7 +170,7 @@ int __daemon_run()
 	}
 
 	// load the configuration file
-	conf.load();
+	conf.load(true);
 
 	try {
 		const ibrcommon::File &lf = conf.getLogger().getLogfile();

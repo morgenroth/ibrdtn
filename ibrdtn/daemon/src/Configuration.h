@@ -97,8 +97,8 @@ namespace dtn
 			/**
 			 * load the configuration from a file
 			 */
-			void load();
-			void load(string filename);
+			void load(bool quiet = false);
+			void load(const std::string &filename, bool quiet = false);
 
 			void params(int argc, char *argv[]);
 

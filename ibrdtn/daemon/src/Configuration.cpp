@@ -380,21 +380,21 @@ namespace dtn
 			_logger._timestamps = timestamp;
 		}
 
-		void Configuration::load()
+		void Configuration::load(bool quiet)
 		{
-			load(_filename);
+			load(_filename, quiet);
 		}
 
-		void Configuration::load(string filename)
+		void Configuration::load(const std::string &filename, bool quiet)
 		{
 			try {
 				// load main configuration
 				_conf = ibrcommon::ConfigFile(filename);
 				_filename = filename;
 
-				IBRCOMMON_LOGGER_TAG("Configuration", info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
+				if (!quiet) IBRCOMMON_LOGGER_TAG("Configuration", info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::ConfigFile::file_not_found&) {
-				IBRCOMMON_LOGGER_TAG("Configuration", info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
+				if (!quiet) IBRCOMMON_LOGGER_TAG("Configuration", info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
 				_conf = ConfigFile();
 
 				// set the default user to nobody
