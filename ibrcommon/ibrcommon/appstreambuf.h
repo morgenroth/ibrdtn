@@ -56,7 +56,7 @@ namespace ibrcommon
 		 * @param command A command to execute and connect to with output or input.
 		 * @param mode Specifies the mode to work read only or write only.
 		 */
-		appstreambuf(std::string command, appstreambuf::Mode mode);
+		appstreambuf(const std::string &command, appstreambuf::Mode mode);
 		virtual ~appstreambuf();
 
 	protected:
