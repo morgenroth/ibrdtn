@@ -24,7 +24,7 @@
 
 namespace ibrcommon
 {
-	appstreambuf::appstreambuf(std::string command, appstreambuf::Mode mode)
+	appstreambuf::appstreambuf(const std::string &command, appstreambuf::Mode mode)
 	 : m_buf( BUF_SIZE+1 )
 	{
 		// execute the command
