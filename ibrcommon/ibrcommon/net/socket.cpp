@@ -267,7 +267,7 @@ namespace ibrcommon
 				throw socket_raw_error(__errno, "cannot create socket");
 			}
 		} catch (const vaddress::address_exception&) {
-			// if not address is set use DEFAULT_SOCKET_FAMILY
+			// if no address is set use DEFAULT_SOCKET_FAMILY
 			if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY, type, protocol)) > -1) {
 				_family = static_cast<sa_family_t>(DEFAULT_SOCKET_FAMILY);
 			}
