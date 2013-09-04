@@ -170,20 +170,21 @@ namespace ibrcommon
 
 		try {
 			try {
-				std::string service = this->service();
-				ss << "[" << this->address() << "]:" + service;
+				const std::string service = this->service();
+				const std::string address = this->address();
+				ss << "[" << address << "]:" + service;
 			} catch (const service_not_set&) {
 				ss << this->address();
 			}
 
 			try {
-				std::string scope = this->scope();
+				const std::string scope = this->scope();
 				ss << " (" << scope << ")";
 			} catch (const scope_not_set&) { }
 		} catch (const address_not_set&) {
 			ss << "<any>";
 			try {
-				std::string service = this->service();
+				const std::string service = this->service();
 				ss << ":" + service;
 			} catch (const service_not_set&) { }
 		}
