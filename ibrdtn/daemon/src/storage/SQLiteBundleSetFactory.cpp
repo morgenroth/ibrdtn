@@ -36,7 +36,7 @@ namespace dtn {
 		{
 			return new SQLiteBundleSet(listener,bf_size,_database);
 		}
-		dtn::data::BundleSetImpl* SQLiteBundleSetFactory::createBundleSet(std::string name, dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size)
+		dtn::data::BundleSetImpl* SQLiteBundleSetFactory::createBundleSet(const std::string &name, dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size)
 		{
 			return new SQLiteBundleSet(name,listener,bf_size,_database);
 		}

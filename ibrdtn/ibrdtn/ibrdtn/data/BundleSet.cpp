@@ -31,10 +31,10 @@ namespace dtn
 		BundleSet::Listener::~Listener()
 		{ }
 
-		BundleSet::BundleSet(BundleSet::Listener *listener, Length bf_size) : _set_impl(BundleSetFactory::create(listener,bf_size))
+		BundleSet::BundleSet(BundleSet::Listener *listener, Size bf_size) : _set_impl(BundleSetFactory::create(listener,bf_size))
 		{
 		}
-		BundleSet::BundleSet(std::string name,BundleSet::Listener *listener, Length bf_size)
+		BundleSet::BundleSet(std::string name,BundleSet::Listener *listener, Size bf_size)
 			: _set_impl(BundleSetFactory::create(name,listener,bf_size))
 		{
 		}

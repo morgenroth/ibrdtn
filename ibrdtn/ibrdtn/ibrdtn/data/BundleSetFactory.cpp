@@ -40,7 +40,7 @@ namespace dtn
 
 		}
 
-		BundleSetImpl* BundleSetFactory::create(std::string name, BundleSet::Listener* listener, Size bf_size){
+		BundleSetImpl* BundleSetFactory::create(const std::string &name, BundleSet::Listener* listener, Size bf_size){
 
 			if(BundleSetFactory::bundleSetFactory != NULL)
 				return bundleSetFactory->createBundleSet(name,listener,bf_size);

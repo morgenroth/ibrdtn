@@ -359,9 +359,6 @@ namespace dtn
 
 		void SQLiteDatabase::get(const dtn::data::BundleID &id, dtn::data::MetaBundle &meta) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException)
 		{
-			// check if the bundle is already on the deletion list
-			if (contains_deletion(id)) throw dtn::storage::NoBundleFoundException();
-
 			// lock the prepared statement
 			Statement st(_database, _sql_queries[BUNDLE_GET_ID]);
 
@@ -401,11 +398,14 @@ namespace dtn
 
 			if (bundle.procflags & data::Bundle::FRAGMENT)
 			{
+				bundle.fragment = true;
 				bundle.offset = sqlite3_column_int64(*st, offset + 8);
 				bundle.appdatalength = sqlite3_column_int64(*st, offset + 9);
 			}
 			else
 			{
+				bundle.fragment = false;
+				bundle.offset = sqlite3_column_int64(*st, offset + 8);
 				bundle.offset = 0;
 				bundle.appdatalength = sqlite3_column_int64(*st, 9);
 			}
@@ -421,7 +421,7 @@ namespace dtn
 			bundle.net_priority = sqlite3_column_int(*st, 11);
 		}
 
-		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, const int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			try {
 				bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
@@ -573,7 +573,7 @@ namespace dtn
 			return rows > 0;
 		}
 
-		void SQLiteDatabase::get(BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException)
+		void SQLiteDatabase::get(const BundleSelector &cb, BundleResult &ret) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 
@@ -586,7 +586,7 @@ namespace dtn
 
 			try {
 				try {
-					SQLBundleQuery &query = dynamic_cast<SQLBundleQuery&>(cb);
+					const SQLBundleQuery &query = dynamic_cast<const SQLBundleQuery&>(cb);
 
 					// custom query string
 					std::string query_string = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset LIMIT ?,?;";
@@ -600,7 +600,7 @@ namespace dtn
 						int bind_offset = query.bind(*st, 1);
 
 						// query the database
-						__get(cb, st, ret, items_added, bind_offset, offset);
+						__get(cb, st, ret, items_added, bind_offset, offset, query_limit);
 
 						// increment the offset, because we might not have enough
 						offset += query_limit;
@@ -611,7 +611,7 @@ namespace dtn
 					while (unlimited || (items_added < query_limit))
 					{
 						// query the database
-						__get(cb, st, ret, items_added, 1, offset);
+						__get(cb, st, ret, items_added, 1, offset, query_limit);
 
 						// increment the offset, because we might not have enough
 						offset += query_limit;
@@ -623,11 +623,9 @@ namespace dtn
 
 			if (items_added == 0) throw dtn::storage::NoBundleFoundException();
 		}
-
-		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, int bind_offset, size_t offset) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
+		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, const int bind_offset, const size_t offset, const size_t query_limit) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
 		{
-			bool unlimited = (cb.limit() <= 0);
-			size_t query_limit = (cb.limit() > 0) ? cb.limit() : 10;
+			const bool unlimited = (cb.limit() <= 0);
 
 			// limit result according to callback result
 			sqlite3_bind_int64(*st, bind_offset, offset);
@@ -645,8 +643,8 @@ namespace dtn
 				// extract the primary values and set them in the bundle object
 				get(st, m, 0);
 
-				// check if the bundle is already on the deletion list
-				if ( !contains_deletion(m) && !dtn::utils::Clock::isExpired( m.timestamp, m.lifetime ) )
+				// check if the bundle is already expired
+				if ( !dtn::utils::Clock::isExpired( m.timestamp, m.lifetime ) )
 				{
 					// ask the filter if this bundle should be added to the return list
 					if (cb.shouldAdd(m))
@@ -670,9 +668,6 @@ namespace dtn
 			int err = 0;
 
 			IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteDatabase", 25) << "get bundle from sqlite storage " << id.toString() << IBRCOMMON_LOGGER_ENDL;
-
-			// if bundle is deleted?
-			if (contains_deletion(id)) throw dtn::storage::NoBundleFoundException();
 
 			// do this while db is locked
 			Statement st(_database, _sql_queries[BUNDLE_GET_ID]);
@@ -903,9 +898,6 @@ namespace dtn
 
 			//update deprecated timer
 			update_expire_time();
-
-			// remove it from the deletion list
-			remove_deletion(id);
 		}
 
 		void SQLiteDatabase::clear() throw (SQLiteDatabase::SQLiteQueryException)
@@ -1117,21 +1109,6 @@ namespace dtn
 		const dtn::data::Timestamp& SQLiteDatabase::get_expire_time() const throw ()
 		{
 			return _next_expiration;
-		}
-
-		void SQLiteDatabase::add_deletion(const dtn::data::BundleID &id) throw ()
-		{
-			_deletion_list.insert(id);
-		}
-
-		void SQLiteDatabase::remove_deletion(const dtn::data::BundleID &id) throw ()
-		{
-			_deletion_list.erase(id);
-		}
-
-		bool SQLiteDatabase::contains_deletion(const dtn::data::BundleID &id) const throw ()
-		{
-			return (_deletion_list.find(id) != _deletion_list.end());
 		}
 
 		void SQLiteDatabase::set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
