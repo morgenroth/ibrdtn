@@ -22,7 +22,7 @@
 #ifndef STREAMBLOCK_H_
 #define STREAMBLOCK_H_
 
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/ExtensionBlock.h"
 
@@ -41,7 +41,7 @@ namespace dtn
 				virtual dtn::data::Block* create();
 			};
 
-			static const char BLOCK_TYPE = 242;
+			static const dtn::data::block_t BLOCK_TYPE;
 
 			enum STREAM_FLAGS
 			{
@@ -52,19 +52,19 @@ namespace dtn
 			StreamBlock();
 			virtual ~StreamBlock();
 
-			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual Length getLength() const;
+			virtual std::ostream &serialize(std::ostream &stream, Length &length) const;
+			virtual std::istream &deserialize(std::istream &stream, const Length &length);
 
-			void setSequenceNumber(size_t seq);
-			size_t getSequenceNumber() const;
+			void setSequenceNumber(Number seq);
+			const Number& getSequenceNumber() const;
 
 			void set(STREAM_FLAGS flag, const bool &value);
 			bool get(STREAM_FLAGS flag) const;
 
 		private:
-			dtn::data::SDNV _seq;
-			size_t _streamflags;
+			Number _seq;
+			Bitset<STREAM_FLAGS> _streamflags;
 		};
 
 		/**

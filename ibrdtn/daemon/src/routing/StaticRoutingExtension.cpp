@@ -27,7 +27,6 @@
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/ConnectionEvent.h"
-#include "routing/RequeueBundleEvent.h"
 #include "core/NodeEvent.h"
 #include "storage/SimpleBundleStorage.h"
 #include "core/TimeEvent.h"
@@ -48,8 +47,10 @@ namespace dtn
 {
 	namespace routing
 	{
-		StaticRoutingExtension::StaticRoutingExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker), next_expire(0)
+		const std::string StaticRoutingExtension::TAG = "StaticRoutingExtension";
+
+		StaticRoutingExtension::StaticRoutingExtension()
+		 : next_expire(0)
 		{
 		}
 
@@ -59,7 +60,7 @@ namespace dtn
 
 			// delete all static routes
 			for (std::list<StaticRoute*>::iterator iter = _routes.begin();
-					iter != _routes.end(); iter++)
+					iter != _routes.end(); ++iter)
 			{
 				StaticRoute *route = (*iter);
 				delete route;
@@ -82,7 +83,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return _entry.getFreeTransferSlots(); };
+				virtual dtn::data::Size limit() const throw () { return _entry.getFreeTransferSlots(); };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
@@ -94,7 +95,7 @@ namespace dtn
 
 					// do not forward any routing control message
 					// this is done by the neighbor routing module
-					if (isRouting(meta.source))
+					if (meta.source.isApplication("routing"))
 					{
 						return false;
 					}
@@ -128,7 +129,7 @@ namespace dtn
 
 					// search for one rule that match
 					for (std::list<const StaticRoute*>::const_iterator iter = _routes.begin();
-							iter != _routes.end(); iter++)
+							iter != _routes.end(); ++iter)
 					{
 						const StaticRoute &route = (**iter);
 
@@ -149,7 +150,7 @@ namespace dtn
 			// announce static routes here
 			const std::multimap<std::string, std::string> &routes = dtn::daemon::Configuration::getInstance().getNetwork().getStaticRoutes();
 
-			for (std::multimap<std::string, std::string>::const_iterator iter = routes.begin(); iter != routes.end(); iter++)
+			for (std::multimap<std::string, std::string>::const_iterator iter = routes.begin(); iter != routes.end(); ++iter)
 			{
 				const dtn::data::EID nexthop((*iter).second);
 				dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_ADD, nexthop, (*iter).first);
@@ -166,7 +167,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					std::auto_ptr<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG(5) << "processing static routing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 5) << "processing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
@@ -176,7 +177,7 @@ namespace dtn
 
 						// look for routes to this node
 						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
-								iter != _routes.end(); iter++)
+								iter != _routes.end(); ++iter)
 						{
 							const StaticRoute *route = (*iter);
 							if (route->getDestination() == task.eid)
@@ -186,32 +187,35 @@ namespace dtn
 							}
 						}
 
-						if (routes.size() > 0)
+						if (!routes.empty())
 						{
-							// this destination is not handles by any static route
-							ibrcommon::MutexLock l(db);
-							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+							// lock the neighbor database while searching for bundles
+							{
+								// this destination is not handles by any static route
+								ibrcommon::MutexLock l(db);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
-							// check if enough transfer slots available (threadhold reached)
-							if (!entry.isTransferThresholdReached())
-								throw NeighborDatabase::NoMoreTransfersAvailable();
+								// check if enough transfer slots available (threshold reached)
+								if (!entry.isTransferThresholdReached())
+									throw NeighborDatabase::NoMoreTransfersAvailable();
 
-							// get the bundle filter of the neighbor
-							BundleFilter filter(entry, routes);
+								// get the bundle filter of the neighbor
+								BundleFilter filter(entry, routes);
 
-							// some debug
-							IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								// some debug
+								IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-							// query all bundles from the storage
-							list.clear();
-							_seeker.get(filter, list);
+								// query all bundles from the storage
+								list.clear();
+								(**this).getSeeker().get(filter, list);
+							}
 
 							// send the bundles as long as we have resources
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								try {
 									// transfer the bundle to the neighbor
-									transferTo(entry, *iter);
+									transferTo(task.eid, *iter);
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						}
@@ -222,22 +226,19 @@ namespace dtn
 
 					try {
 						const ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
-						IBRCOMMON_LOGGER_DEBUG(50) << "search static route for " << task.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 50) << "search static route for " << task.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						// look for routes to this node
 						for (std::list<StaticRoute*>::const_iterator iter = _routes.begin();
-								iter != _routes.end(); iter++)
+								iter != _routes.end(); ++iter)
 						{
 							const StaticRoute &route = (**iter);
-							IBRCOMMON_LOGGER_DEBUG(50) << "check static route: " << route.toString() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 50) << "check static route: " << route.toString() << IBRCOMMON_LOGGER_ENDL;
 							try {
 								if (route.match(task.bundle.destination))
 								{
-									ibrcommon::MutexLock l(db);
-									NeighborDatabase::NeighborEntry &n = db.get(route.getDestination());
-
 									// transfer the bundle to the neighbor
-									transferTo(n, task.bundle);
+									transferTo(route.getDestination(), task.bundle);
 								}
 							} catch (const NeighborDatabase::NeighborNotAvailableException&) {
 								// neighbor is not available, can not forward this bundle
@@ -261,7 +262,7 @@ namespace dtn
 							}
 							else
 							{
-								iter++;
+								++iter;
 							}
 						}
 
@@ -291,7 +292,7 @@ namespace dtn
 
 						// delete all static routes
 						for (std::list<StaticRoute*>::iterator iter = _routes.begin();
-								iter != _routes.end(); iter++)
+								iter != _routes.end(); ++iter)
 						{
 							StaticRoute *route = (*iter);
 							delete route;
@@ -326,13 +327,13 @@ namespace dtn
 									next_expire = route->getExpiration();
 								}
 
-								iter++;
+								++iter;
 							}
 						}
 					} catch (const bad_cast&) { };
 
 				} catch (const std::exception &ex) {
-					IBRCOMMON_LOGGER_DEBUG(20) << "static routing failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(StaticRoutingExtension::TAG, 15) << "terminated due to " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 
@@ -356,6 +357,11 @@ namespace dtn
 				{
 					_taskqueue.push( new SearchNextBundleTask(n.getEID()) );
 				}
+				else if (nodeevent.getAction() == NODE_DATA_ADDED)
+				{
+					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+				}
+
 				return;
 			} catch (const std::bad_cast&) { };
 
@@ -413,13 +419,13 @@ namespace dtn
 #ifdef HAVE_REGEX_H
 					r = new StaticRegexRoute(route.pattern, route.nexthop);
 #else
-					size_t et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
+					dtn::data::Timestamp et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
 					r = new EIDRoute(route.pattern, route.nexthop, et);
 #endif
 				}
 				else
 				{
-					size_t et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
+					dtn::data::Timestamp et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
 					r = new EIDRoute(route.destination, route.nexthop, et);
 				}
 
@@ -443,12 +449,15 @@ namespace dtn
 
 		void StaticRoutingExtension::componentUp() throw ()
 		{
+			// reset the task queue
+			_taskqueue.reset();
+
 			// routine checked for throw() on 15.02.2013
 			try {
 				// run the thread
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("StaticRoutingExtension", error) << "failed to start routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(StaticRoutingExtension::TAG, error) << "componentUp failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -460,11 +469,11 @@ namespace dtn
 				stop();
 				join();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("StaticRoutingExtension", error) << "failed to stop routing component\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(StaticRoutingExtension::TAG, error) << "componentDown failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		StaticRoutingExtension::EIDRoute::EIDRoute(const dtn::data::EID &match, const dtn::data::EID &nexthop, size_t et)
+		StaticRoutingExtension::EIDRoute::EIDRoute(const dtn::data::EID &match, const dtn::data::EID &nexthop, const dtn::data::Timestamp &et)
 		 : _nexthop(nexthop), _match(match), expiretime(et)
 		{
 		}
@@ -475,7 +484,7 @@ namespace dtn
 
 		bool StaticRoutingExtension::EIDRoute::match(const dtn::data::EID &eid) const
 		{
-			return (_match == eid.getNode());
+			return _match.sameHost(eid);
 		}
 
 		const dtn::data::EID& StaticRoutingExtension::EIDRoute::getDestination() const
@@ -494,7 +503,7 @@ namespace dtn
 			return ss.str();
 		}
 
-		size_t StaticRoutingExtension::EIDRoute::getExpiration() const
+		const dtn::data::Timestamp& StaticRoutingExtension::EIDRoute::getExpiration() const
 		{
 			return expiretime;
 		}
@@ -562,7 +571,7 @@ namespace dtn
 
 		/****************************************/
 
-		StaticRoutingExtension::ExpireTask::ExpireTask(size_t t)
+		StaticRoutingExtension::ExpireTask::ExpireTask(dtn::data::Timestamp t)
 		 : timestamp(t)
 		{
 
@@ -576,7 +585,7 @@ namespace dtn
 		std::string StaticRoutingExtension::ExpireTask::toString()
 		{
 			std::stringstream ss;
-			ss << "ExpireTask: " << timestamp;
+			ss << "ExpireTask: " << timestamp.toString();
 			return ss.str();
 		}
 	}

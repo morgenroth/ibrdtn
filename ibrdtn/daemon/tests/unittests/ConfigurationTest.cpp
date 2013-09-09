@@ -106,13 +106,6 @@ void ConfigurationTest::testVersion()
 	CPPUNIT_ASSERT(conf.version() != "0.0.0");
 }
 
-void ConfigurationTest::testGetNotifyCommand()
-{
-	/* test signature () */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_THROW(conf.getNotifyCommand(), dtn::daemon::Configuration::ParameterNotSetException);
-}
-
 void ConfigurationTest::testGetStorage()
 {
 	/* test signature () const */
@@ -124,8 +117,8 @@ void ConfigurationTest::testGetLimit()
 {
 	/* test signature (std::string) */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((size_t)0, conf.getLimit("test"));
-	CPPUNIT_ASSERT_EQUAL((size_t)20000000, conf.getLimit("storage"));
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Length)0, conf.getLimit("test"));
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Length)20000000, conf.getLimit("storage"));
 }
 
 /*=== BEGIN tests for class 'Discovery' ===*/
@@ -155,7 +148,7 @@ void ConfigurationTest::testDiscoveryVersion()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((char)2, conf.getDiscovery().version());
+	CPPUNIT_ASSERT_EQUAL(2, conf.getDiscovery().version());
 }
 
 void ConfigurationTest::testDiscoveryAddress()
@@ -180,52 +173,6 @@ void ConfigurationTest::testDiscoveryTimeout()
 }
 
 /*=== END   tests for class 'Discovery' ===*/
-
-/*=== BEGIN tests for class 'Statistic' ===*/
-
-void ConfigurationTest::testStatisticEnabled()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(true, conf.getStatistic().enabled());
-}
-
-void ConfigurationTest::testStatisticLogfile()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT(ibrcommon::File("/tmp/ibrdtn.stats") == conf.getStatistic().logfile());
-}
-
-void ConfigurationTest::testStatisticType()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(std::string("stdout"), conf.getStatistic().type());
-}
-
-void ConfigurationTest::testStatisticInterval()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((unsigned int)2, conf.getStatistic().interval());
-}
-
-void ConfigurationTest::testStatisticAddress()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(std::string("127.0.0.1"), conf.getStatistic().address());
-}
-
-void ConfigurationTest::testStatisticPort()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((unsigned int)1234, conf.getStatistic().port());
-}
-
-/*=== END   tests for class 'Statistic' ===*/
 
 /*=== BEGIN tests for class 'Debug' ===*/
 
@@ -325,7 +272,7 @@ void ConfigurationTest::testGetTCPChunkSize()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL((size_t)1024, conf.getNetwork().getTCPChunkSize());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Length)1024, conf.getNetwork().getTCPChunkSize());
 }
 
 /*=== END   tests for class 'Network' ===*/
@@ -335,13 +282,6 @@ void ConfigurationTest::testGetDiscovery()
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 	CPPUNIT_ASSERT_EQUAL(true, conf.getDiscovery().enabled());
-}
-
-void ConfigurationTest::testGetStatistic()
-{
-	/* test signature () const */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(true, conf.getStatistic().enabled());
 }
 
 void ConfigurationTest::testGetDebug()
@@ -391,12 +331,10 @@ ConfigurationTest::FakeConfiguration::FakeConfiguration()
 		<< "net_lan0_type = tcp					# we want to use TCP as protocol" << std::endl
 		<< "net_lan0_interface = eth0			# listen on interface eth0" << std::endl
 		<< "net_lan0_port = 4556				# with port 4556 (default)" << std::endl
-		<< "net_lan0_discovery = yes			# enable discovery (default)" << std::endl
 		<< "" << std::endl
 		<< "net_lan1_type = udp				# we want to use UDP as protocol" << std::endl
 		<< "net_lan1_interface = eth0			# listen on interface eth0 " << std::endl
 		<< "net_lan1_port = 4556				# with port 4556 (default)" << std::endl
-		<< "net_lan1_discovery = no			# disable discovery" << std::endl
 		<< "discovery_address = 224.0.0.1" << std::endl
 		<< "discovery_timeout = 5" << std::endl
 		<< "tcp_nodelay = yes" << std::endl

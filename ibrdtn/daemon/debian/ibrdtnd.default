@@ -2,9 +2,8 @@
 # sourced by /etc/init.d/ibrdtnd
 # installed at /etc/default/ibrdtnd by the maintainer scripts
 
-#
-# This is a POSIX shell fragment
-#
+# Set to '0' to explicitly disable starting IBR-DTN daemon
+#ENABLED=0
 
 # Additional options that are passed to the Daemon.
 DAEMON_OPTS="-c /etc/ibrdtn/ibrdtnd.conf"

@@ -20,11 +20,14 @@
  */
 
 #include "ibrdtn/data/AgeBlock.h"
+#include <ibrcommon/TimeMeasurement.h>
 
 namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t AgeBlock::BLOCK_TYPE = 10;
+
 		dtn::data::Block* AgeBlock::Factory::create()
 		{
 			return new AgeBlock();
@@ -43,65 +46,64 @@ namespace dtn
 		{
 		}
 
-		size_t AgeBlock::getMicroseconds() const
+		dtn::data::Number AgeBlock::getMicroseconds() const
 		{
 			ibrcommon::TimeMeasurement time = this->_time;
 			time.stop();
-
-			return _age.getValue() + time.getMicroseconds();
+			return _age + static_cast<size_t>(time.getMicroseconds());
 		}
 
-		size_t AgeBlock::getSeconds() const
+		dtn::data::Number AgeBlock::getSeconds() const
 		{
 			return (getMicroseconds()) / 1000000;
 		}
 
-		void AgeBlock::addMicroseconds(size_t value)
+		void AgeBlock::addMicroseconds(const dtn::data::Number &value)
 		{
 			_age += value;
 		}
 
-		void AgeBlock::setMicroseconds(size_t value)
+		void AgeBlock::setMicroseconds(const dtn::data::Number &value)
 		{
 			_age = value;
 		}
 
-		void AgeBlock::addSeconds(size_t value)
+		void AgeBlock::addSeconds(const dtn::data::Number &value)
 		{
 			_age += (value * 1000000);
 		}
 
-		void AgeBlock::setSeconds(size_t value)
+		void AgeBlock::setSeconds(const dtn::data::Number &value)
 		{
 			_age = value * 1000000;
 		}
 
-		size_t AgeBlock::getLength() const
+		dtn::data::Length AgeBlock::getLength() const
 		{
-			return SDNV(getMicroseconds()).getLength();
+			return getMicroseconds().getLength();
 		}
 
-		std::ostream& AgeBlock::serialize(std::ostream &stream, size_t &length) const
+		std::ostream& AgeBlock::serialize(std::ostream &stream, dtn::data::Length &length) const
 		{
-			SDNV value(getMicroseconds());
+			const dtn::data::Number value = getMicroseconds();
 			stream << value;
 			length += value.getLength();
 			return stream;
 		}
 
-		std::istream& AgeBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& AgeBlock::deserialize(std::istream &stream, const dtn::data::Length&)
 		{
 			stream >> _age;
 			_time.start();
 			return stream;
 		}
 
-		size_t AgeBlock::getLength_strict() const
+		dtn::data::Length AgeBlock::getLength_strict() const
 		{
 			return 1;
 		}
 
-		std::ostream& AgeBlock::serialize_strict(std::ostream &stream, size_t &length) const
+		std::ostream& AgeBlock::serialize_strict(std::ostream &stream, dtn::data::Length &length) const
 		{
 			// we have to ignore the age field, because this is very dynamic data
 			stream << (char)0;

@@ -21,6 +21,8 @@
 
 #include "ibrcommon/config.h"
 #include "ibrcommon/data/File.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 #include <sstream>
 #include <errno.h>
 #include <sys/stat.h>
@@ -31,9 +33,19 @@
 #include <unistd.h>
 #include <cstring>
 #include <cerrno>
+#include <fstream>
 
 #if !defined(HAVE_FEATURES_H) || defined(ANDROID)
 #include <libgen.h>
+#endif
+
+#ifdef __WIN32__
+#include <io.h>
+#define FILE_DELIMITER_CHAR '\\'
+#define FILE_DELIMITER "\\"
+#else
+#define FILE_DELIMITER_CHAR '/'
+#define FILE_DELIMITER "/"
 #endif
 
 namespace ibrcommon
@@ -43,14 +55,14 @@ namespace ibrcommon
 	{
 	}
 
-	File::File(const string path, const unsigned char t)
+	File::File(const std::string &path, const unsigned char t)
 	 : _path(path), _type(t)
 	{
 		resolveAbsolutePath();
 		removeSlash();
 	}
 
-	File::File(const string path)
+	File::File(const std::string &path)
 	 : _path(path), _type(DT_UNKNOWN)
 	{
 		resolveAbsolutePath();
@@ -60,9 +72,9 @@ namespace ibrcommon
 
 	void File::removeSlash()
 	{
-		std::string::iterator iter = _path.end(); iter--;
+		std::string::iterator iter = _path.end(); --iter;
 
-		if ((*iter) == '/')
+		if ((*iter) == FILE_DELIMITER_CHAR)
 		{
 			_path.erase(iter);
 		}
@@ -70,31 +82,52 @@ namespace ibrcommon
 
 	void File::resolveAbsolutePath()
 	{
+#ifndef __WIN32__
 		std::string::iterator iter = _path.begin();
 
-		if ((*iter) != '/')
+		if ((*iter) != FILE_DELIMITER_CHAR)
 		{
-			_path = "./" + _path;
+			_path = "." + std::string(FILE_DELIMITER) + _path;
 		}
+#endif
 	}
 
 	bool File::exists() const
 	{
+#ifdef __WIN32__
+		DWORD st = GetFileAttributesA(_path.c_str());
+		if (st == INVALID_FILE_ATTRIBUTES)
+			return false;
+
+		return true;
+#else
 		struct stat st;
 		if( stat(_path.c_str(), &st ) == 0)
 			return true;
 
 		return false;
+#endif
 	}
 
 	void File::update()
 	{
+#ifdef __WIN32__
+		DWORD s = GetFileAttributesA(_path.c_str());
+		if (s == INVALID_FILE_ATTRIBUTES) {
+			_type = DT_UNKNOWN;
+		}
+		else if (s & FILE_ATTRIBUTE_DIRECTORY) {
+			_type = DT_DIR;
+		}
+		else {
+			_type = DT_REG;
+		}
+#else
 		struct stat s;
-		int type;
 
 		if ( stat(_path.c_str(), &s) == 0 )
 		{
-			type = s.st_mode & S_IFMT;
+			int type = s.st_mode & S_IFMT;
 
 			switch (type)
 			{
@@ -115,6 +148,7 @@ namespace ibrcommon
 					break;
 			}
 		}
+#endif
 	}
 
 	File::~File()
@@ -125,21 +159,35 @@ namespace ibrcommon
 		return _type;
 	}
 
-	int File::getFiles(list<File> &files) const
+	int File::getFiles(std::list<File> &files) const
 	{
 		if (!isDirectory()) return -1;
 
 		DIR *dp;
+		struct dirent dirp_data;
 		struct dirent *dirp;
 		if((dp = opendir(_path.c_str())) == NULL) {
 			return errno;
 		}
 
-		while ((dirp = readdir(dp)) != NULL)
+#if __WIN32__
+		while ((dirp = ::readdir(dp)) != NULL)
+#else
+		while (::readdir_r(dp, &dirp_data, &dirp) == 0)
+#endif
 		{
-			string name = string(dirp->d_name);
-			stringstream ss; ss << getPath() << "/" << name;
+			if (dirp == NULL) break;
+
+			// TODO: check if the name is always limited by a zero
+			// std::string name = std::string(dirp->d_name, dirp->d_reclen);
+
+			std::string name = std::string(dirp->d_name);
+			std::stringstream ss; ss << getPath() << FILE_DELIMITER_CHAR << name;
+#if __WIN32__
+			File file(ss.str());
+#else
 			File file(ss.str(), dirp->d_type);
+#endif
 			files.push_back(file);
 		}
 		closedir(dp);
@@ -149,12 +197,7 @@ namespace ibrcommon
 
 	bool File::isSystem() const
 	{
-		try {
-			if ((_path.substr(_path.length() - 2, 2) == "..") || (_path.substr(_path.length() - 1, 1) == ".")) return true;
-		} catch (const std::out_of_range&) {
-			return false;
-		}
-		return false;
+		return ((getBasename() == "..") || (getBasename() == "."));
 	}
 
 	bool File::isDirectory() const
@@ -173,8 +216,8 @@ namespace ibrcommon
 #if !defined(ANDROID) && defined(HAVE_FEATURES_H)
 		return std::string(basename(_path.c_str()));
 #else
-		char path[_path.length()];
-		::memcpy(&path, _path.c_str(), _path.length());
+		char path[_path.length()+1];
+		::memcpy(&path, _path.c_str(), _path.length()+1);
 
 		return std::string(basename(path));
 #endif
@@ -182,7 +225,7 @@ namespace ibrcommon
 
 	File File::get(string filename) const
 	{
-		stringstream ss; ss << getPath() << "/" << filename;
+		stringstream ss; ss << getPath() << FILE_DELIMITER_CHAR << filename;
 		File file(ss.str());
 
 		return file;
@@ -190,8 +233,6 @@ namespace ibrcommon
 
 	int File::remove(bool recursive)
 	{
-		int ret;
-
 		if (isSystem()) return -1;
 		if (_type == DT_UNKNOWN) return -1;
 
@@ -199,6 +240,8 @@ namespace ibrcommon
 		{
 			if (recursive)
 			{
+				int ret = 0;
+
 				// container for all files
 				list<File> files;
 
@@ -206,11 +249,12 @@ namespace ibrcommon
 				if ((ret = getFiles(files)) < 0)
 					return ret;
 
-				for (list<File>::iterator iter = files.begin(); iter != files.end(); iter++)
+				for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
 				{
-					if (!(*iter).isSystem())
+					ibrcommon::File &file = (*iter);
+					if (!file.isSystem())
 					{
-						if ((ret = (*iter).remove(recursive)) < 0)
+						if ((ret = file.remove(recursive)) < 0)
 							return ret;
 					}
 				}
@@ -228,7 +272,7 @@ namespace ibrcommon
 
 	File File::getParent() const
 	{
-		size_t pos = _path.find_last_of('/');
+		size_t pos = _path.find_last_of(FILE_DELIMITER_CHAR);
 		return File(_path.substr(0, pos));
 	}
 
@@ -240,7 +284,11 @@ namespace ibrcommon
 			File::createDirectory(parent);
 
 			// create path
+#ifdef __WIN32__
+			::mkdir(path.getPath().c_str());
+#else
 			::mkdir(path.getPath().c_str(), 0700);
+#endif
 
 			// update file information
 			path.update();
@@ -251,7 +299,7 @@ namespace ibrcommon
 	{
 		struct stat filestatus;
 		stat( getPath().c_str(), &filestatus );
-		return filestatus.st_size;
+		return static_cast<size_t>(filestatus.st_size);
 	}
 
 	time_t File::lastaccess() const
@@ -296,14 +344,46 @@ namespace ibrcommon
 
 	std::string TemporaryFile::tmpname(const File &path, const std::string prefix)
 	{
-		std::string pattern = path.getPath() + "/" + prefix + "XXXXXX";
-		char name[pattern.length()];
-		::strcpy(name, pattern.c_str());
+		// check if path is a directory
+		if (!path.isDirectory())
+		{
+			throw ibrcommon::IOException("given path is not a directory.");
+		}
 
-		int fd = mkstemp(name);
-		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
+		std::string pattern = path.getPath() + FILE_DELIMITER_CHAR + prefix + "XXXXXX";
+
+		std::vector<char> name(pattern.length() + 1);
+		::strcpy(&name[0], pattern.c_str());
+
+#ifdef __WIN32__
+		// create temporary file - win32 style
+		int fd = -1;
+
+		// since _mktemp is not thread-safe and _mktemp_s not available in mingw
+		// we have to lock this method globally
+		static ibrcommon::Mutex temp_mutex;
+		ibrcommon::MutexLock l(temp_mutex);
+
+		// create temporary name
+		if (_mktemp(&name[0]) == NULL) {
+			if (errno == EINVAL) {
+				throw ibrcommon::IOException("_mktemp(): Bad parameter.");
+			}
+			else if (errno == EEXIST) {
+				throw ibrcommon::IOException("_mktemp(): Out of unique filenames.");
+			}
+		} else {
+			// create and open the temporary file
+			std::fstream file(&name[0], std::fstream::out | std::fstream::trunc);
+			if (!file.good())
+				throw ibrcommon::IOException("Could not create a temporary file.");
+		}
+#else
+		int fd = mkstemp(&name[0]);
+		if (fd == -1) throw ibrcommon::IOException("Could not create a temporary file.");
 		::close(fd);
+#endif
 
-		return std::string(name);
+		return std::string(name.begin(), name.end());
 	}
 }

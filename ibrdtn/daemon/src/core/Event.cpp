@@ -25,8 +25,18 @@ namespace dtn
 {
 	namespace core
 	{
-		Event::Event(int p) : prio(p) { };
-		Event::~Event() {};
+		Event::Event(int p) : prio(p), _loggable(true) { }
+		Event::~Event() {}
+
+		bool Event::isLoggable() const
+		{
+			return _loggable;
+		}
+
+		void Event::setLoggable(bool val)
+		{
+			_loggable = val;
+		}
 
 		std::string Event::toString() const {
 			return this->getName() + ": " + this->getMessage();

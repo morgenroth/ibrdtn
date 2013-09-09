@@ -47,9 +47,9 @@ namespace dtn
 			}
 		}
 
-		ExtensionBlock::Factory& ExtensionBlock::FactoryList::get(const char type) throw (ibrcommon::Exception)
+		ExtensionBlock::Factory& ExtensionBlock::FactoryList::get(const block_t type) throw (ibrcommon::Exception)
 		{
-			std::map<char, ExtensionBlock::Factory*>::iterator iter = fmap.find(type);
+			std::map<block_t, ExtensionBlock::Factory*>::iterator iter = fmap.find(type);
 
 			if (iter != fmap.end())
 			{
@@ -59,7 +59,7 @@ namespace dtn
 			throw ibrcommon::Exception("Factory not available");
 		}
 
-		void ExtensionBlock::FactoryList::add(const char type, Factory *f) throw (ibrcommon::Exception)
+		void ExtensionBlock::FactoryList::add(const block_t type, Factory *f) throw (ibrcommon::Exception)
 		{
 			try {
 				get(type);
@@ -69,12 +69,12 @@ namespace dtn
 			}
 		}
 
-		void ExtensionBlock::FactoryList::remove(const char type)
+		void ExtensionBlock::FactoryList::remove(const block_t type)
 		{
 			fmap.erase(type);
 		}
 
-		ExtensionBlock::Factory::Factory(char type)
+		ExtensionBlock::Factory::Factory(block_t type)
 		 : _type(type)
 		{
 			ExtensionBlock::FactoryList::initialize();
@@ -86,7 +86,7 @@ namespace dtn
 			ExtensionBlock::factories->remove(_type);
 		}
 
-		ExtensionBlock::Factory& ExtensionBlock::Factory::get(char type) throw (ibrcommon::Exception)
+		ExtensionBlock::Factory& ExtensionBlock::Factory::get(block_t type) throw (ibrcommon::Exception)
 		{
 			ExtensionBlock::FactoryList::initialize();
 			return ExtensionBlock::factories->get(type);
@@ -111,19 +111,19 @@ namespace dtn
 			return _blobref;
 		}
 
-		void ExtensionBlock::setType(char type)
+		void ExtensionBlock::setType(block_t type)
 		{
 			_blocktype = type;
 		}
 
-		size_t ExtensionBlock::getLength() const
+		Length ExtensionBlock::getLength() const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::BLOB::iostream io = blobref.iostream();
 			return io.size();
 		}
 
-		std::ostream& ExtensionBlock::serialize(std::ostream &stream, size_t &length) const
+		std::ostream& ExtensionBlock::serialize(std::ostream &stream, Length &) const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::BLOB::iostream io = blobref.iostream();
@@ -137,7 +137,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& ExtensionBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& ExtensionBlock::deserialize(std::istream &stream, const Length &length)
 		{
 			// lock the BLOB
 			ibrcommon::BLOB::iostream io = _blobref.iostream();

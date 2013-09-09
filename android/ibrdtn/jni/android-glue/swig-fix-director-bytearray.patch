@@ -1,0 +1,15 @@
+--- java.swg.orig	2013-06-06 17:13:12.101357422 +0200
++++ java.swg	2013-06-06 17:13:57.193358463 +0200
+@@ -1312,8 +1312,10 @@
+   (jenv)->SetByteArrayRegion(jb, 0, $2, (jbyte *)$1);
+   $input = jb;
+ }
+-%typemap(directorargout) (char *STRING, size_t LENGTH)
+-%{(jenv)->GetByteArrayRegion($input, 0, $2, (jbyte *)$1); %}
++%typemap(directorargout) (char *STRING, size_t LENGTH) {
++    (jenv)->GetByteArrayRegion($input, 0, $2, (jbyte *)$1);
++    (jenv)->DeleteLocalRef($input);
++}
+ %apply (char *STRING, size_t LENGTH) { (char *STRING, int LENGTH) }
+ 
+ /* java keywords */

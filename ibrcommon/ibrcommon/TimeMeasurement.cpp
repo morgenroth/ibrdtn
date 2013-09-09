@@ -24,6 +24,7 @@
 #include <iostream>
 #include <iomanip>
 #include <stdio.h>
+#include <time.h>
 
 #ifdef HAVE_FEATURES_H
 #include <features.h>
@@ -31,6 +32,8 @@
 
 #ifdef HAVE_MACH_MACH_TIME_H
 #include <mach/mach_time.h>
+#include <mach/clock.h>
+#include <mach/mach.h>
 #endif
 
 namespace ibrcommon
@@ -46,66 +49,44 @@ namespace ibrcommon
 
 	void TimeMeasurement::start()
 	{
-#ifdef HAVE_MACH_MACH_TIME_H
-		_uint64_start = mach_absolute_time();
-#else
-		// set sending time
-		clock_gettime(CLOCK_MONOTONIC, &_start);
-
-#endif
+		// set start time
+		gettime(&_start);
 	}
 
 	void TimeMeasurement::stop()
 	{
-#ifdef HAVE_MACH_MACH_TIME_H
-		_uint64_end = mach_absolute_time();
-#else
-		// set receiving time
-		clock_gettime(CLOCK_MONOTONIC, &_end);
-#endif
+		// set stop time
+		gettime(&_end);
 	}
 
-	float TimeMeasurement::getMilliseconds() const
+	double TimeMeasurement::getMilliseconds() const
 	{
-		// calc difference
-		uint64_t timeElapsed = getNanoseconds();
+		struct timespec diff;
+		getTime(diff);
 
-		// make it readable
-		float delay_ms = (float)timeElapsed / 1000000;
+		// merge seconds and nanoseconds
+		double delay_us = ((double)diff.tv_sec * 1000.0) + ((double)diff.tv_nsec / 1000000.0);
 
-		return delay_ms;
+		return delay_us;
 	}
 
-	uint64_t TimeMeasurement::getNanoseconds() const
+	double TimeMeasurement::getMicroseconds() const
 	{
-		// calc difference
-#ifdef HAVE_MACH_MACH_TIME_H
-		int64_t val = TimeMeasurement::timespecDiff(_uint64_end, _uint64_start);
-#else
-		int64_t val = TimeMeasurement::timespecDiff(&_end, &_start);
-#endif
+		struct timespec diff;
+		getTime(diff);
 
-		if (val < 0) return 0;
-		return val;
+		// merge seconds and nanoseconds
+		double delay_us = ((double)diff.tv_sec * 1000000.0) + ((double)diff.tv_nsec / 1000.0);
+
+		return delay_us;
 	}
 
-	float TimeMeasurement::getMicroseconds() const
+	time_t TimeMeasurement::getSeconds() const
 	{
-		// calc difference
-		uint64_t timeElapsed = getNanoseconds();
-
-		// make it readable
-		float delay_m = (float)timeElapsed / 1000;
-
-		return delay_m;
+		return _end.tv_sec - _start.tv_sec;
 	}
 
-	float TimeMeasurement::getSeconds() const
-	{
-		return getMilliseconds() / 1000;
-	}
-
-	std::ostream& TimeMeasurement::format(std::ostream &stream, const float value)
+	std::ostream& TimeMeasurement::format(std::ostream &stream, const double value)
 	{
 #ifdef __UCLIBC__
 		char buf[32];
@@ -119,57 +100,119 @@ namespace ibrcommon
 
 	std::ostream &operator<<(std::ostream &stream, const TimeMeasurement &measurement)
 	{
-		// calc difference
-#ifdef HAVE_MACH_MACH_TIME_H
-		uint64_t timeElapsed = TimeMeasurement::timespecDiff(measurement._uint64_end, measurement._uint64_start);
-#else
-		uint64_t timeElapsed = TimeMeasurement::timespecDiff(&(measurement._end), &(measurement._start));
-#endif
+		struct timespec diff;
+		measurement.getTime(diff);
 
-		// make it readable
-		float delay_ms = (float)timeElapsed / 1000000;
-		float delay_sec = delay_ms / 1000;
-		float delay_min = delay_sec / 60;
-		float delay_h = delay_min / 60;
+		// convert nanoseconds to milliseconds
+		double delay_ms = (double)diff.tv_nsec / 1000000.0;
 
-		if (delay_h > 1)
+		if (diff.tv_sec < 1)
 		{
-			TimeMeasurement::format(stream, delay_h); stream << " h";
+			TimeMeasurement::format(stream, delay_ms); stream << " ms";
+			return stream;
 		}
-		else if (delay_min > 1)
+
+		// convert time interval to seconds
+		double seconds = (double)diff.tv_sec + (delay_ms / 1000.0);
+
+		if (diff.tv_sec >= 3600)
 		{
-			TimeMeasurement::format(stream, delay_min); stream << " m";
+			TimeMeasurement::format(stream, seconds / 3600.0); stream << " h";
 		}
-		else if (delay_sec > 1)
+		else if (diff.tv_sec >= 60)
 		{
-			TimeMeasurement::format(stream, delay_sec); stream << " s";
+			TimeMeasurement::format(stream, seconds / 60.0); stream << " m";
 		}
 		else
 		{
-			TimeMeasurement::format(stream, delay_ms); stream << " ms";
+			TimeMeasurement::format(stream, seconds); stream << " s";
 		}
 
 		return stream;
 	}
 
-	int64_t TimeMeasurement::timespecDiff(const uint64_t &timeA, const uint64_t &timeB)
+	void TimeMeasurement::getTime(struct timespec &diff) const
 	{
-		int64_t duration = timeA - timeB;
-
-#ifdef HAVE_MACH_MACH_TIME_H
-		mach_timebase_info_data_t info;
-		mach_timebase_info(&info);
-
-		/* Convert to nanoseconds */
-		duration *= info.numer;
-		duration /= info.denom;
-#endif
-		return duration;
+		if ((_end.tv_nsec - _start.tv_nsec) < 0)
+		{
+			diff.tv_sec = _end.tv_sec - _start.tv_sec - 1;
+			diff.tv_nsec = (1000000000 + _end.tv_nsec) - _start.tv_nsec;
+		}
+		else
+		{
+			diff.tv_sec = _end.tv_sec - _start.tv_sec;
+			diff.tv_nsec = _end.tv_nsec - _start.tv_nsec;
+		}
 	}
 
-	int64_t TimeMeasurement::timespecDiff(const struct timespec *timeA_p, const struct timespec *timeB_p)
+#ifdef __WIN32__
+	LARGE_INTEGER TimeMeasurement::getFILETIMEoffset() const
 	{
-		//Casting to 64Bit, otherwise it caps out at ~ 5 secs for 32bit machines
-		return ( ( (int64_t)(timeA_p->tv_sec) * 1e9 + (int64_t)(timeA_p->tv_nsec)) -  ( (int64_t)(timeB_p->tv_sec) * 1e9 + (int64_t)(timeB_p->tv_nsec)) );
+		SYSTEMTIME s;
+		FILETIME f;
+		LARGE_INTEGER t;
+
+		s.wYear = 1970;
+		s.wMonth = 1;
+		s.wDay = 1;
+		s.wHour = 0;
+		s.wMinute = 0;
+		s.wSecond = 0;
+		s.wMilliseconds = 0;
+		SystemTimeToFileTime(&s, &f);
+		t.QuadPart = f.dwHighDateTime;
+		t.QuadPart <<= 32;
+		t.QuadPart |= f.dwLowDateTime;
+		return (t);
+	}
+#endif
+
+	void TimeMeasurement::gettime(struct timespec *ts)
+	{
+#ifdef __WIN32__
+	    LARGE_INTEGER t;
+	    FILETIME f;
+	    double microseconds;
+	    static LARGE_INTEGER offset;
+	    static double frequencyToMicroseconds;
+	    static int initialized = 0;
+	    static BOOL usePerformanceCounter = 0;
+
+	    if (!initialized) {
+	        LARGE_INTEGER performanceFrequency;
+	        initialized = 1;
+	        usePerformanceCounter = QueryPerformanceFrequency(&performanceFrequency);
+	        if (usePerformanceCounter) {
+	            QueryPerformanceCounter(&offset);
+	            frequencyToMicroseconds = (double)performanceFrequency.QuadPart / 1000000.;
+	        } else {
+	            offset = getFILETIMEoffset();
+	            frequencyToMicroseconds = 10.;
+	        }
+	    }
+	    if (usePerformanceCounter) QueryPerformanceCounter(&t);
+	    else {
+	        GetSystemTimeAsFileTime(&f);
+	        t.QuadPart = f.dwHighDateTime;
+	        t.QuadPart <<= 32;
+	        t.QuadPart |= f.dwLowDateTime;
+	    }
+
+	    t.QuadPart -= offset.QuadPart;
+	    microseconds = (double)t.QuadPart / frequencyToMicroseconds;
+	    t.QuadPart = microseconds;
+	    ts->tv_sec = t.QuadPart / 1000000;
+	    ts->tv_nsec = (t.QuadPart % 1000000) * 1000;
+#elif HAVE_MACH_MACH_TIME_H // OS X does not have clock_gettime, use clock_get_time
+		clock_serv_t cclock;
+		mach_timespec_t mts;
+		host_get_clock_service(mach_host_self(), REALTIME_CLOCK, &cclock);
+		clock_get_time(cclock, &mts);
+		mach_port_deallocate(mach_task_self(), cclock);
+		ts->tv_sec = mts.tv_sec;
+		ts->tv_nsec = mts.tv_nsec;
+#else
+		::clock_gettime(CLOCK_MONOTONIC, ts);
+#endif
 	}
 }

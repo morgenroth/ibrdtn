@@ -28,6 +28,7 @@
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
 
+#include <ibrdtn/data/BundleBuilder.h>
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/Serializer.h>
@@ -45,14 +46,14 @@ namespace dtn
 {
 	namespace storage
 	{
+		const std::string SQLiteBundleStorage::TAG = "SQLiteBundleStorage";
+
 		ibrcommon::Mutex SQLiteBundleStorage::TaskIdle::_mutex;
 		bool SQLiteBundleStorage::TaskIdle::_idle = false;
 
 		SQLiteBundleStorage::SQLiteBLOB::SQLiteBLOB(const ibrcommon::File &path)
-		 : _blobPath(path)
+		 : _file(path, "blob")
 		{
-			// generate a new temporary file
-			_file = ibrcommon::TemporaryFile(_blobPath, "blob");
 		}
 
 		SQLiteBundleStorage::SQLiteBLOB::~SQLiteBLOB()
@@ -66,18 +67,12 @@ namespace dtn
 			// close the file
 			_filestream.close();
 
-			// remove the old file
-			_file.remove();
-
-			// generate a new temporary file
-			_file = ibrcommon::TemporaryFile(_blobPath, "blob");
-
 			// open temporary file
 			_filestream.open(_file.getPath().c_str(), ios::in | ios::out | ios::trunc | ios::binary );
 
 			if (!_filestream.is_open())
 			{
-				IBRCOMMON_LOGGER(error) << "can not open temporary file " << _file.getPath() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, error) << "can not open temporary file " << _file.getPath() << IBRCOMMON_LOGGER_ENDL;
 				throw ibrcommon::CanNotOpenFileException(_file);
 			}
 		}
@@ -91,7 +86,7 @@ namespace dtn
 
 			if (!_filestream.is_open())
 			{
-				IBRCOMMON_LOGGER(error) << "can not open temporary file " << _file.getPath() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, error) << "can not open temporary file " << _file.getPath() << IBRCOMMON_LOGGER_ENDL;
 				throw ibrcommon::CanNotOpenFileException(_file);
 			}
 		}
@@ -107,7 +102,7 @@ namespace dtn
 			ibrcommon::BLOB::_filelimit.post();
 		}
 
-		size_t SQLiteBundleStorage::SQLiteBLOB::__get_size()
+		std::streamsize SQLiteBundleStorage::SQLiteBLOB::__get_size()
 		{
 			return _file.size();
 		}
@@ -117,9 +112,12 @@ namespace dtn
 			return ibrcommon::BLOB::Reference(new SQLiteBLOB(_blobPath));
 		}
 
-		SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const size_t &maxsize)
+		SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const dtn::data::Length &maxsize)
 		 : BundleStorage(maxsize), _database(path.get("sqlite.db"), *this)
 		{
+			// use sqlite storage as BLOB provider, auto delete off
+			ibrcommon::BLOB::changeProvider(this, false);
+
 			// set the block path
 			_blockPath = path.get("blocks");
 			_blobPath = path.get("blob");
@@ -127,19 +125,10 @@ namespace dtn
 
 		SQLiteBundleStorage::~SQLiteBundleStorage()
 		{
-			stop();
-			join();
 		}
 
 		void SQLiteBundleStorage::componentRun() throw ()
 		{
-			try {
-				// iterate through all bundles to generate indexes
-				_database.iterateAll();
-			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			}
-
 			// loop until aborted
 			try {
 				while (true)
@@ -191,9 +180,16 @@ namespace dtn
 				// open the database and create all folders and files if needed
 				_database.open();
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-		};
+
+			try {
+				// iterate through all bundles to generate indexes
+				_database.iterateAll();
+			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
 
 		void SQLiteBundleStorage::componentDown() throw ()
 		{
@@ -209,9 +205,12 @@ namespace dtn
 				// close the database
 				_database.close();
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-		};
+
+			stop();
+			join();
+		}
 
 		void SQLiteBundleStorage::__cancellation() throw ()
 		{
@@ -224,12 +223,12 @@ namespace dtn
 				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
 				return _database.getDistinctDestinations();
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 			return SQLiteBundleStorage::eid_set();
 		}
 
-		void SQLiteBundleStorage::get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
+		void SQLiteBundleStorage::get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
 			_database.get(cb, result);
@@ -237,22 +236,22 @@ namespace dtn
 
 		dtn::data::Bundle SQLiteBundleStorage::get(const dtn::data::BundleID &id)
 		{
+			SQLiteDatabase::blocklist blocks;
+			dtn::data::Bundle bundle;
+
 			try {
 				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
-
-				SQLiteDatabase::blocklist blocks;
-				dtn::data::Bundle bundle;
 
 				// query the data base for the bundle
 				_database.get(id, bundle, blocks);
 
-				for (SQLiteDatabase::blocklist::const_iterator iter = blocks.begin(); iter != blocks.end(); iter++)
+				for (SQLiteDatabase::blocklist::const_iterator iter = blocks.begin(); iter != blocks.end(); ++iter)
 				{
 					const SQLiteDatabase::blocklist_entry &entry = (*iter);
 					const int blocktyp = entry.first;
 					const ibrcommon::File &file = entry.second;
 
-					IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteBundleStorage", 50) << "add block: " << file.getPath() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 50) << "add block: " << file.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 					// load block from file
 					std::ifstream is(file.getPath().c_str(), std::ios::binary | std::ios::in);
@@ -262,54 +261,76 @@ namespace dtn
 						// create a new BLOB object
 						SQLiteBLOB *blob = new SQLiteBLOB(_blobPath);
 
-						// remove the corresponding file
-						blob->_file.remove();
+						// create a reference of the BLOB
+						ibrcommon::BLOB::Reference ref(blob);
 
-						// generate a hardlink, pointing to the BLOB file
-						if ( ::link(file.getPath().c_str(), blob->_file.getPath().c_str()) == 0)
-						{
-							// create a reference of the BLOB
-							ibrcommon::BLOB::Reference ref(blob);
+						try {
+							// remove the temporary file
+							blob->_file.remove();
+
+							// generate a hard-link, pointing to the BLOB file
+							if ( ::link(file.getPath().c_str(), blob->_file.getPath().c_str()) != 0 )
+							{
+								IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 25) << "hard-link failed (" << errno << ") " << blob->_file.getPath() << " -> " << file.getPath() << IBRCOMMON_LOGGER_ENDL;
+
+								// copy the BLOB into a new file if hard-links are not supported
+								std::ofstream fout(blob->_file.getPath().c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+
+								// open the filestream
+								ibrcommon::BLOB::iostream stream = ref.iostream();
+
+								const std::streamsize length = stream.size();
+								ibrcommon::BLOB::copy(fout, (*stream), length);
+							}
 
 							// add payload block to the bundle
 							bundle.push_back(ref);
-						}
-						else
-						{
-							delete blob;
-							IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", error) << "unable to load bundle: failed to create a hard-link" << IBRCOMMON_LOGGER_ENDL;
+						} catch (const ibrcommon::Exception &ex) {
+							// remove the temporary file
+							blob->_file.remove();
+
+							IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, error) << "unable to load bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+							throw dtn::SerializationFailedException(ex.what());
 						}
 					}
 					else
 					{
-						// read the block
-						dtn::data::Block &block = dtn::data::SeparateDeserializer(is, bundle).readBlock();
-
-						// close the file
-						is.close();
-
-						// modify the age block if present
 						try {
-							dtn::data::AgeBlock &agebl = dynamic_cast<dtn::data::AgeBlock&>(block);
+							// read the block
+							dtn::data::Block &block = dtn::data::SeparateDeserializer(is, bundle).readBlock();
 
-							// modify the AgeBlock with the age of the file
-							time_t age = file.lastaccess() - file.lastmodify();
+							// close the file
+							is.close();
 
-							agebl.addSeconds(age);
-						} catch (const std::bad_cast&) { };
+							// modify the age block if present
+							try {
+								dtn::data::AgeBlock &agebl = dynamic_cast<dtn::data::AgeBlock&>(block);
+
+								// modify the AgeBlock with the age of the file
+								time_t age = file.lastaccess() - file.lastmodify();
+
+								agebl.addSeconds(age);
+							} catch (const std::bad_cast&) { };
+						} catch (dtn::data::BundleBuilder::DiscardBlockException &ex) {
+							// skip extensions block
+						}
 					}
 				}
-
-				return bundle;
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+				// try to purge all referenced data
+				purge(id);
+
 				throw dtn::storage::NoBundleFoundException();
 			}
+
+			return bundle;
 		}
 
 		void SQLiteBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteBundleStorage", 25) << "store bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 25) << "store bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 
@@ -323,53 +344,77 @@ namespace dtn
 				// create a bundle id
 				const dtn::data::BundleID id(bundle);
 
-				// get all blocks of the bundle
-				const dtn::data::Bundle::block_list &blocklist = bundle.getBlocks();
-
 				// index number for order of the blocks
 				int index = 1;
 
 				// number of bytes stored
-				int storedBytes = 0;
+				dtn::data::Length storedBytes = 0;
 
-				for(dtn::data::Bundle::block_list::const_iterator it = blocklist.begin() ;it != blocklist.end(); it++)
+				for(dtn::data::Bundle::const_iterator it = bundle.begin() ;it != bundle.end(); ++it)
 				{
 					const dtn::data::Block &block = (**it);
 
-					// create a temporary file
-					ibrcommon::TemporaryFile tmpfile(_blockPath, "block");
+					if (block.getType() == dtn::data::PayloadBlock::BLOCK_TYPE)
+					{
+						// create a temporary file
+						ibrcommon::TemporaryFile tmpfile(_blockPath, "payload");
 
-					try {
 						try {
 							const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(block);
 							ibrcommon::BLOB::Reference ref = payload.getBLOB();
 							ibrcommon::BLOB::iostream stream = ref.iostream();
 
-							const SQLiteBLOB &blob = dynamic_cast<const SQLiteBLOB&>(*ref);
+							try {
+								const SQLiteBLOB &blob = dynamic_cast<const SQLiteBLOB&>(*ref);
 
-							// first remove the tmp file
-							tmpfile.remove();
+								// first remove the tmp file
+								tmpfile.remove();
 
-							// make a hardlink to the origin blob file
-							if ( ::link(blob._file.getPath().c_str(), tmpfile.getPath().c_str()) != 0 )
-							{
-								tmpfile = ibrcommon::TemporaryFile(_blockPath, "block");
-								throw ibrcommon::Exception("hard-link failed");
+								// make a hard-link to the origin blob file
+								if ( ::link(blob._file.getPath().c_str(), tmpfile.getPath().c_str()) != 0 )
+								{
+									IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 25) << "hard-link failed (" << errno << ") " << tmpfile.getPath() << " -> " << blob._file.getPath() << IBRCOMMON_LOGGER_ENDL;
+
+									// copy the BLOB into a new file if hard-links are not supported
+									std::ofstream fout(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+
+									const std::streamsize length = stream.size();
+									ibrcommon::BLOB::copy(fout, (*stream), length);
+								}
+							} catch (const std::bad_cast&) {
+								// copy the BLOB into a new file this isn't a sqlite block object
+								std::ofstream fout(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
+
+								const std::streamsize length = stream.size();
+								ibrcommon::BLOB::copy(fout, (*stream), length);
 							}
 						} catch (const std::bad_cast&) {
-							throw ibrcommon::Exception("not a Payload or SQLiteBLOB");
+							// remove the tmp file
+							tmpfile.remove();
+							throw ibrcommon::Exception("not a payload block");
 						}
 
-						storedBytes += _blockPath.size();
-					} catch (const ibrcommon::Exception&) {
-						std::ofstream filestream(tmpfile.getPath().c_str(), std::ios_base::out | std::ios::binary);
+						// add determine the amount of stored bytes
+						storedBytes += tmpfile.size();
+
+						// store the block into the database
+						_database.store(id, index, block, tmpfile);
+					}
+					else
+					{
+						ibrcommon::TemporaryFile tmpfile(_blockPath, "block");
+
+						std::ofstream filestream(tmpfile.getPath().c_str(), std::ofstream::out | std::ofstream::trunc | std::ofstream::binary);
 						dtn::data::SeparateSerializer serializer(filestream);
 						serializer << block;
-						storedBytes += serializer.getLength(block);
 						filestream.close();
-					}
 
-					_database.store(id, index, block, tmpfile);
+						// add determine the amount of stored bytes
+						storedBytes += tmpfile.size();
+
+						// store the block into the database
+						_database.store(id, index, block, tmpfile);
+					}
 
 					// increment index
 					index++;
@@ -387,33 +432,37 @@ namespace dtn
 					// this bundle has no request for custody transfers
 				}
 
-				IBRCOMMON_LOGGER_DEBUG_TAG("SQLiteBundleStorage", 10) << "bundle " << bundle.toString() << " stored" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 10) << "bundle " << bundle.toString() << " stored" << IBRCOMMON_LOGGER_ENDL;
 
 				// raise bundle added event
 				eventBundleAdded(bundle);
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_database.rollback();
 			}
 		}
 
 		void SQLiteBundleStorage::remove(const dtn::data::BundleID &id)
 		{
-			_tasks.push(new TaskRemove(id));
-		}
-
-		void SQLiteBundleStorage::TaskRemove::run(SQLiteBundleStorage &storage)
-		{
 			// remove the bundle in locked state
 			try {
-				ibrcommon::RWLock l(storage._global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
-				storage._database.remove(_id);
-			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			}
+				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+				_database.remove(id);
 
-			// raise bundle removed event
-			storage.eventBundleRemoved(_id);
+				// raise bundle removed event
+				eventBundleRemoved(id);
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		void SQLiteBundleStorage::purge(const dtn::data::BundleID &id) throw ()
+		{
+			try {
+				remove(id);
+			} catch (const ibrcommon::Exception &ex) {
+				// do nothing here.
+			}
 		}
 
 		void SQLiteBundleStorage::clearAll()
@@ -428,7 +477,7 @@ namespace dtn
 			try {
 				_database.clear();
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			//Delete Folder SQL_TABLE_BLOCK containing Blocks
@@ -442,18 +491,18 @@ namespace dtn
 				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
 				return _database.empty();
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 			return true;
 		}
 
-		unsigned int SQLiteBundleStorage::count()
+		dtn::data::Size SQLiteBundleStorage::count()
 		{
 			try {
 				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
 				return _database.count();
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 			return 0;
 		}
@@ -496,7 +545,7 @@ namespace dtn
 				ibrcommon::RWLock l(storage._global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 				storage._database.expire(_timestamp);
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -518,11 +567,11 @@ namespace dtn
 					ibrcommon::RWLock l(storage._global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 					storage._database.vacuum();
 				} catch (const ibrcommon::Exception &ex) {
-					IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				// here we can do some IDLE stuff...
-				::sleep(1);
+				ibrcommon::Thread::sleep(1000);
 
 				ibrcommon::MutexLock l(TaskIdle::_mutex);
 				if (!TaskIdle::_idle) return;
@@ -544,7 +593,7 @@ namespace dtn
 				// update the custodian of this bundle with the new one
 				_database.update(SQLiteDatabase::UPDATE_CUSTODIAN, id, custodian);
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG("SQLiteBundleStorage", critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -554,10 +603,21 @@ namespace dtn
 			eventBundleAdded(bundle);
 		}
 
-		void SQLiteBundleStorage::eventBundleExpired(const dtn::data::BundleID &id)
+		void SQLiteBundleStorage::eventBundleExpired(const dtn::data::BundleID &id) throw ()
 		{
 			// raise bundle removed event
 			eventBundleRemoved(id);
+		}
+
+		void SQLiteBundleStorage::wait()
+		{
+			_tasks.wait(ibrcommon::Queue<Task*>::QUEUE_EMPTY);
+		}
+
+		void SQLiteBundleStorage::setFaulty(bool mode)
+		{
+			_faulty = mode;
+			_database.setFaulty(mode);
 		}
 	}
 }

@@ -50,14 +50,14 @@ namespace dtn
 			_provider.push_back(provider);
 		}
 
-		void DiscoveryAgent::received(const dtn::data::EID &source, const std::list<DiscoveryService> &services, size_t timeout)
+		void DiscoveryAgent::received(const dtn::data::EID &source, const std::list<DiscoveryService> &services, const dtn::data::Number &timeout)
 		{
 			// convert the announcement into NodeEvents
 			Node n(source);
 
-			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 			{
-				size_t to_value = (timeout == 0) ? _config.timeout() : timeout;
+				const dtn::data::Number to_value = (timeout == 0) ? _config.timeout() : timeout;
 
 				const DiscoveryService &s = (*iter);
 
@@ -73,6 +73,16 @@ namespace dtn
 				{
 					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_LOWPAN, s.getParameters(), to_value, 20));
 				}
+                else if (s.getName() == "emailcl")
+                {
+                	// Set timeout
+                	dtn::data::Number to_value_mailcl = to_value;
+					size_t configTime = dtn::daemon::Configuration::getInstance().getEMail().getNodeAvailableTime();
+					if(configTime > 0)
+						to_value_mailcl = configTime;
+
+					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_EMAIL, s.getParameters(), to_value_mailcl, 20));
+                }
 				else
 				{
 					n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));
@@ -88,7 +98,7 @@ namespace dtn
 				// first check if another announcement was sent during the same seconds
 				if (_last_announce_sent != dtn::utils::Clock::getTime())
 				{
-					IBRCOMMON_LOGGER_DEBUG(55) << "reply with discovery announcement" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "reply with discovery announcement" << IBRCOMMON_LOGGER_ENDL;
 
 					sendAnnoucement(_sn, _provider);
 
@@ -106,7 +116,7 @@ namespace dtn
 			// check if announcements are enabled
 			if (_config.announce())
 			{
-				IBRCOMMON_LOGGER_DEBUG(55) << "send discovery announcement" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "send discovery announcement" << IBRCOMMON_LOGGER_ENDL;
 
 				sendAnnoucement(_sn, _provider);
 

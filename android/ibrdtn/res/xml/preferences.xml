@@ -1,37 +1,151 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="@string/service">
-        <CheckBoxPreference android:key="enabledSwitch" android:title="@string/runasbackgroundservice" android:disableDependentsState="true"/>
-	</PreferenceCategory>
-	<PreferenceCategory android:title="@string/general" android:key="prefcat_general">    
-        <EditTextPreference android:key="endpoint_id" android:title="@string/endpoint_id" android:summary="@string/eid_description"></EditTextPreference>
-        <ListPreference android:key="routing" android:title="@string/routing" android:summary="@string/routing_description" android:entries="@array/routing_scheme_names" android:entryValues="@array/routing_scheme_values" android:defaultValue="prophet"></ListPreference>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/service" >
+        <CheckBoxPreference
+            android:key="enabledSwitch"
+            android:title="@string/runasbackgroundservice" />
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/pref_connection" android:key="prefcat_connection">
-        <CheckBoxPreference android:summary="@string/pref_cloudconnect_summary" android:title="@string/pref_cloudconnect_title" android:key="cloud_uplink" android:defaultValue="false"></CheckBoxPreference>
-        <CheckBoxPreference android:summary="@string/discovery_announce_desc" android:title="@string/discovery_announce" android:key="discovery_announce" android:defaultValue="true"></CheckBoxPreference>
-        <CheckBoxPreference android:summary="@string/autodisconnect_desc" android:title="@string/autodisconnect" android:key="checkIdleTimeout" android:defaultValue="true" />
+    <PreferenceCategory
+        android:key="prefcat_general"
+        android:title="@string/general" >
+        <EditTextPreference
+            android:key="endpoint_id"
+            android:summary="@string/eid_description"
+            android:title="@string/endpoint_id" >
+        </EditTextPreference>
+
+        <ListPreference
+            android:defaultValue="prophet"
+            android:entries="@array/routing_scheme_names"
+            android:entryValues="@array/routing_scheme_values"
+            android:key="routing"
+            android:summary="@string/routing_description"
+            android:title="@string/routing" >
+        </ListPreference>
+        
+        <ListPreference
+            android:defaultValue="disk-persistent"
+            android:entries="@array/storage_modes_names"
+            android:entryValues="@array/storage_modes_values"
+            android:key="storage_mode"
+            android:summary="@string/pref_storage_description"
+            android:title="@string/pref_storage" >
+        </ListPreference>
+        
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="RunAsForegroundService"
+            android:title="@string/runasforegroundservice"
+            android:summary="@string/runasforegroundservice_description" />
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/interfaces" android:key="prefcat_interfaces">
+    <PreferenceCategory
+        android:key="prefcat_connection"
+        android:title="@string/pref_connection" >
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="cloud_uplink"
+            android:summary="@string/pref_cloudconnect_summary"
+            android:title="@string/pref_cloudconnect_title" >
+        </CheckBoxPreference>
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="cloud_uplink_3g"
+            android:summary="@string/pref_cloudconnect_3g_description"
+            android:title="@string/pref_cloudconnect_3g" >
+        </CheckBoxPreference>
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="discovery_announce"
+            android:summary="@string/discovery_announce_desc"
+            android:title="@string/discovery_announce" >
+        </CheckBoxPreference>
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="checkIdleTimeout"
+            android:summary="@string/autodisconnect_desc"
+            android:title="@string/autodisconnect" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="checkFragmentation"
+            android:summary="@string/pref_fragmentation_desc"
+            android:title="@string/pref_fragmentation" />
+    </PreferenceCategory>
+    <de.tubs.ibr.dtn.daemon.InterfacePreferenceCategory
+        android:key="prefcat_interfaces"
+        android:title="@string/interfaces" >
+    </de.tubs.ibr.dtn.daemon.InterfacePreferenceCategory>
+    <PreferenceCategory
+        android:key="prefcat_security"
+        android:title="@string/security" >
+        <CheckBoxPreference
+            android:key="constrains_lifetime"
+            android:summary="@string/pref_constrains_lifetime_summary"
+            android:title="@string/pref_constrains_lifetime" />
+        <CheckBoxPreference
+            android:key="constrains_timestamp"
+            android:summary="@string/pref_constrains_timestamp_summary"
+            android:title="@string/pref_constrains_timestamp" />
+
+        <ListPreference
+            android:defaultValue="disabled"
+            android:entries="@array/security_modes_names"
+            android:entryValues="@array/security_modes_values"
+            android:key="security_mode"
+            android:summary="@string/pref_security_mode_desc"
+            android:title="@string/pref_security_mode" />
+
+        <EditTextPreference
+            android:key="security_bab_key"
+            android:summary="@string/pref_bab_key_desc"
+            android:title="@string/pref_bab_key" />
     </PreferenceCategory>
     
-<!-- 
-    <PreferenceCategory android:title="@string/statichost">
-        <CheckBoxPreference android:key="connect_static" android:title="@string/connect_static"/><EditTextPreference android:title="@string/host_name" android:key="host_name" android:defaultValue="dtn://"/><EditTextPreference android:title="@string/host_address" android:key="host_address" android:defaultValue="0.0.0.0"/>
-        <EditTextPreference android:title="@string/host_port" android:key="host_port" android:defaultValue="4556"/>
-    </PreferenceCategory>
- -->
- 
-    <PreferenceCategory android:title="@string/security" android:key="prefcat_security">
-        <CheckBoxPreference android:title="@string/pref_constrains_lifetime" android:key="constrains_lifetime" android:summary="@string/pref_constrains_lifetime_summary"/>
-        <CheckBoxPreference android:title="@string/pref_constrains_timestamp" android:key="constrains_timestamp" android:summary="@string/pref_constrains_timestamp_summary"/>
-        <ListPreference android:summary="@string/pref_security_mode_desc" android:title="@string/pref_security_mode" android:key="security_mode" android:entries="@array/security_modes_names" android:entryValues="@array/security_modes_values" android:defaultValue="disabled"/>
-        <EditTextPreference android:summary="@string/pref_bab_key_desc" android:title="@string/pref_bab_key" android:key="security_bab_key"/>
+    <PreferenceCategory
+        android:key="prefcat_timesync"
+        android:title="@string/timesync" >
+        <ListPreference
+            android:defaultValue="disabled"
+            android:entries="@array/timesync_modes_names"
+            android:entryValues="@array/timesync_modes_values"
+            android:key="timesync_mode"
+            android:summary="@string/pref_timesync_mode_desc"
+            android:title="@string/pref_timesync_mode" />
+
     </PreferenceCategory>
     
-    <PreferenceCategory android:title="System">
-<!--    <CheckBoxPreference android:summary="Enable debugging output" android:title="Debug" android:key="debug"/> -->
-		<CheckBoxPreference android:summary="@string/pref_collect_stats_desc" android:title="@string/pref_collect_stats" android:key="collect_stats" />
-        <Preference android:title="@string/system_version" android:key="system_version"/>
-	</PreferenceCategory>
+    <PreferenceCategory
+        android:key="prefcat_logging"
+        android:title="@string/pref_logging" >
+        <ListPreference
+            android:defaultValue="1"
+            android:entries="@array/log_options_names"
+            android:entryValues="@array/log_options_values"
+            android:key="log_options"
+            android:summary="@string/pref_log_options_desc"
+            android:title="@string/pref_log_options" />
+
+        <EditTextPreference
+            android:defaultValue="99"
+            android:key="log_debug_verbosity"
+            android:summary="@string/pref_log_debug_verbosity_desc"
+            android:title="@string/pref_log_debug_verbosity" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="log_enable_file"
+            android:summary="@string/pref_log_enable_file_desc"
+            android:title="@string/pref_log_enable_file" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_system" >
+        <CheckBoxPreference
+            android:key="collect_stats"
+            android:summary="@string/pref_collect_stats_desc"
+            android:title="@string/pref_collect_stats" />
+
+        <Preference
+            android:key="system_version"
+            android:title="@string/system_version" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

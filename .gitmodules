@@ -1,0 +1,3 @@
+[submodule "android/GraphView"]
+	path = android/GraphView
+	url = git@github.com:jjoe64/GraphView.git

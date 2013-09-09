@@ -58,11 +58,13 @@ namespace dtn
 			case GlobalEvent::GLOBAL_BUSY:
 				return "Switched to BUSY mode.";
 			case GlobalEvent::GLOBAL_SUSPEND:
-				return "Go into suspend mode.";
-			case GlobalEvent::GLOBAL_POWERSAVE:
-				return "Go into powersave mode.";
-			case GlobalEvent::GLOBAL_WAKEUP:
-				return "Wake-up components.";
+				return "Suspend components.";
+			case GlobalEvent::GLOBAL_RESUME:
+				return "Resume components.";
+			case GlobalEvent::GLOBAL_START_DISCOVERY:
+				return "Start peer discovery.";
+			case GlobalEvent::GLOBAL_STOP_DISCOVERY:
+				return "Stop peer discovery.";
 			case GlobalEvent::GLOBAL_INTERNET_AVAILABLE:
 				return "Internet connection is available.";
 			case GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:

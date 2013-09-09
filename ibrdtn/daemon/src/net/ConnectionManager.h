@@ -24,6 +24,7 @@
 
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
+#include "net/P2PDialupExtension.h"
 #include "net/BundleReceiver.h"
 #include "core/EventReceiver.h"
 #include <ibrdtn/data/EID.h>
@@ -71,7 +72,20 @@ namespace dtn
 			 */
 			void remove(ConvergenceLayer *cl);
 
-			void queue(const dtn::data::EID &eid, const dtn::data::BundleID &b);
+			/**
+			 * Add a p2p dial-up extension
+			 */
+			void add(P2PDialupExtension *ext);
+
+			/**
+			 * Remove a p2p dial-up extension
+			 */
+			void remove(P2PDialupExtension *ext);
+
+			/**
+			 * queue a bundle for transmission
+			 */
+			void queue(const dtn::net::BundleTransfer &job);
 
 			/**
 			 * method to receive new events from the EventSwitch
@@ -86,9 +100,7 @@ namespace dtn
 				};
 			};
 
-			void open(const dtn::core::Node &node);
-
-			void queue(const ConvergenceLayer::Job &job);
+			void open(const dtn::core::Node &node) throw (ibrcommon::Exception);
 
 			/**
 			 * get a set with all neighbors
@@ -122,6 +134,15 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
+			/**
+			 * Returns statistic data about all convergence-layers
+			 */
+			typedef std::pair<dtn::core::Node::Protocol, ConvergenceLayer::stats_map> stats_pair;
+			typedef std::list<stats_pair> stats_list;
+
+			stats_list getStats();
+			void resetStats();
+
 		protected:
 			/**
 			 * trigger for periodical discovery of nodes
@@ -134,9 +155,14 @@ namespace dtn
 
 		private:
 			/**
+			 * establish a dial-up connection to the given node
+			 */
+			void dialup(const dtn::core::Node &n);
+
+			/**
 			 *  queue a bundle for delivery
 			 */
-			void queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job);
 
 			/**
 			 * checks for timed out nodes
@@ -158,14 +184,15 @@ namespace dtn
 			 */
 			dtn::core::Node& getNode(const dtn::data::EID &eid) throw (NeighborNotAvailableException);
 
-			// if set to true, this module will shutdown
-			bool _shutdown;
-
 			// mutex for the list of convergence layers
 			ibrcommon::Mutex _cl_lock;
 
 			// contains all configured convergence layers
 			std::set<ConvergenceLayer*> _cl;
+
+			// dial-up extensions
+			ibrcommon::Mutex _dialup_lock;
+			std::set<P2PDialupExtension*> _dialups;
 
 			// mutex for the lists of nodes
 			ibrcommon::Mutex _node_lock;
@@ -175,7 +202,7 @@ namespace dtn
 			nodemap _nodes;
 
 			// next timestamp for autoconnect check
-			size_t _next_autoconnect;
+			dtn::data::Timestamp _next_autoconnect;
 		};
 	}
 }

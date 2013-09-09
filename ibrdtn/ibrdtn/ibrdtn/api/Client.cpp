@@ -19,11 +19,7 @@
  *
  */
 
-
-
-
 #include "ibrdtn/api/Client.h"
-#include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/streams/StreamDataSegment.h"
@@ -58,8 +54,13 @@ namespace dtn
 			try {
 				while (!_client.eof() && _running)
 				{
-					dtn::api::Bundle b;
-					_client >> b;
+					dtn::data::Bundle b;
+
+					// To receive a bundle, we construct a default deserializer. Such a deserializer
+					// convert a byte stream into a bundle object. If this deserialization fails
+					// an exception will be thrown.
+					dtn::data::DefaultDeserializer(_client) >> b;
+
 					_client.received(b);
 					yield();
 				}
@@ -84,12 +85,12 @@ namespace dtn
 		}
 
 		Client::Client(const std::string &app, const dtn::data::EID &group, ibrcommon::socketstream &stream, const COMMUNICATION_MODE mode)
-		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _group(group), _receiver(*this)
+		  : StreamConnection(*this, stream), lastack(0), _stream(stream), _mode(mode), _app(app), _group(group), _receiver(*this)
 		{
 		}
 
 		Client::Client(const std::string &app, ibrcommon::socketstream &stream, const COMMUNICATION_MODE mode)
-		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _group(), _receiver(*this)
+		  : StreamConnection(*this, stream), lastack(0), _stream(stream), _mode(mode), _app(app), _group(), _receiver(*this)
 		{
 		}
 
@@ -99,7 +100,7 @@ namespace dtn
 				// stop the receiver
 				_receiver.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(20) << "ThreadException in Client destructor: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("Client", 20) << "ThreadException in Client destructor: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 			
 			// Close the stream. This releases all reading or writing threads.
@@ -116,13 +117,13 @@ namespace dtn
 			if (_app.length() > 0) localeid = EID("api:" + _app);
 
 			// connection flags
-			char flags = 0;
+			dtn::data::Bitset<dtn::streams::StreamContactHeader::HEADER_BITS> flags;
 
 			// request acknowledgements
-			flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+			flags.setBit(dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS, true);
 
 			// set comm. mode
-			if (_mode == MODE_SENDONLY) flags |= HANDSHAKE_SENDONLY;
+			if (_mode == MODE_SENDONLY) flags.setBit(dtn::streams::StreamContactHeader::HANDSHAKE_SENDONLY, true);
 
 			// receive API banner
 			std::string buffer;
@@ -148,7 +149,7 @@ namespace dtn
 				// run the receiver
 				_receiver.start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start Client::Receiver\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("Client", error) << "failed to start Client::Receiver\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -177,12 +178,12 @@ namespace dtn
 			}
 		}
 
-		void Client::eventBundleAck(size_t ack) throw ()
+		void Client::eventBundleAck(const dtn::data::Length &ack) throw ()
 		{
 			lastack = ack;
 		}
 
-		void Client::received(const dtn::api::Bundle &b)
+		void Client::received(const dtn::data::Bundle &b)
 		{
 			// if we are in send only mode...
 			if (_mode != dtn::api::Client::MODE_SENDONLY)
@@ -193,7 +194,19 @@ namespace dtn
 			// ... then discard the received bundle
 		}
 
-		dtn::api::Bundle Client::getBundle(size_t timeout) throw (ConnectionException)
+		void Client::operator<<(const dtn::data::Bundle &b)
+		{
+			// To send a bundle, we construct a default serializer. Such a serializer convert
+			// the bundle data to the standardized form as byte stream.
+			dtn::data::DefaultSerializer(*this) << b;
+
+			// Since this method is used to serialize bundles into an StreamConnection, we need to call
+			// a flush on the StreamConnection. This signals the stream to set the bundle end flag on
+			// the last segment of streaming.
+			flush();
+		}
+
+		dtn::data::Bundle Client::getBundle(const dtn::data::Timeout timeout) throw (ConnectionException)
 		{
 			try {
 				return _inqueue.getnpop(true, timeout * 1000);

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="example_item_title">Example Item Title</string>
     <string name="example_item_text">Example Item Text</string>
     <string name="content_colormark">Colormark of the log entry</string>
@@ -7,9 +8,12 @@
     <string name="content_app_icon">Application icon</string>
     <string name="content_neighbor_icon">Neighbor icon</string>
     <string name="permlab_dtnCommunication">DTN Communication</string>
-    <string name="permdesc_dtnCommunication">Allows to register to the DTN service and send/receive bundles.</string>
+    <string name="permdesc_dtnCommunication">Allows the app to register to DTN services and send/receive bundles.</string>
+    <string name="permlab_dtnCommunicationServer">DTN Daemon</string>
+    <string name="permdesc_dtnCommunicationServer">Allows the app to send notifications to DTN applications.</string>
     <string name="service_name">DTN Service</string>
     <string name="app_name">IBR-DTN</string>
+    <string name="app_name_daemon">IBR-DTN Daemon</string>
     <string name="applist">Applications</string>
     <string name="launch_daemon">Enable service</string>
     <string name="endpoint_id">Endpoint ID</string>
@@ -19,12 +23,14 @@
     <string name="eid_description">The endpoint identifier of this device.</string>
     <string name="routing_description">The routing scheme to use.</string>
     <string name="configure">Configuration</string>
-    <string name="list_neighbors">List neighbors</string>
+    <string name="list_neighbors">Neighbors</string>
+    <string name="showneighbors">Show neighbors</string>
     <string name="list_logs">Logs</string>
+    <string name="list_logs_paused">Logs (PAUSED)</string>
     <string name="showlog">Show log</string>
     <string name="clearlog">Clear log</string>
     <string name="clearstorage">Clear storage</string>
-	<string name="service_stopped">DTN Service stopped</string>
+    <string name="service_stopped">DTN Service stopped</string>
     <string name="service_started">DTN Service started</string>
     <string name="discovery">Discovery</string>
     <string name="discovery_announce">Announce</string>
@@ -35,9 +41,12 @@
     <string name="service_running">Service running</string>
     <string name="development">Development</string>
     <string name="runasbackgroundservice">Activate daemon</string>
+    <string name="runasforegroundservice">Foreground Service</string>
+    <string name="runasforegroundservice_description">Run the service as foreground process.</string>
     <string name="wait">Please wait</string>
     <string name="clearingstorage">Clearing storage.</string>
     <string name="security">Security</string>
+    <string name="timesync">Time-synchronization</string>
     <string name="constrains">Constrains</string>
     <string name="pref_constrains_lifetime">Lifetime</string>
     <string name="pref_constrains_timestamp">Timestamp</string>
@@ -47,6 +56,8 @@
     <string name="pref_bab_key_desc">Specify the authorization key.</string>
     <string name="pref_security_mode">Security Policy</string>
     <string name="pref_security_mode_desc">Specify the security policy for the network.</string>
+    <string name="pref_timesync_mode">Synchronization mode</string>
+    <string name="pref_timesync_mode_desc">Defines the behavior of this nodes regarding time-synchronization.</string>
     <string name="pref_collect_stats">Collect statistic data</string>
     <string name="pref_collect_stats_desc">Statistic data is collected in background and transmitted to the DTN research community</string>
     <string name="general">General</string>
@@ -57,10 +68,14 @@
     <string name="toast_startup_completed">Daemon startup completed!</string>
     <string name="state_disabled">Disabled</string>
     <string name="state_enabled">Enabled</string>
-	<string name="state_suspended">Suspended</string>
+    <string name="state_suspended">Suspended</string>
     <string name="state_unkown">Unknown</string>
-    <string name="notify_neighbors">Available neighbors</string>
+    <string name="notify_neighbors">Neighbors</string>
     <string name="notify_no_neighbors">No neighbors</string>
+    <string name="notify_pending">Initializing</string>
+    <string name="notify_error">Error</string>
+    <string name="notify_suspended">Suspended</string>
+    <string name="notify_offline">Offline</string>
     <string name="system_version">Version</string>
     <string name="statichost">Static Uplink</string>
     <string name="host_name">Node EID</string>
@@ -74,12 +89,29 @@
     <string name="alteratecloudstate">Alterate connection to the Cloud</string>
     <string name="alert_statistic_logger_title">Thank you for using IBR-DTN</string>
     <string name="alert_statistic_logger_dialog">Since this is research related software we ask for your support and the permission to collect statistical data about exchanged bundles of this device. These data is transmitted via DTN to the researchers who made this software. Do you allow the collection and transmission of statistical data?</string>
-    <string name="dialog_wait_starting">Activating DTN stack</string>
-    <string name="dialog_wait_stopping">Deactivating DTN stack</string>
-    <string name="notify_error">Service failed</string>
     <string name="senddatanow">Send collected data</string>
     <string name="list_apps">Show DTN apps</string>
     <string name="pref_cloudconnect_title">Cloud connect</string>
     <string name="pref_cloudconnect_summary">Enable a static uplink to the DTN bone</string>
     <string name="pref_connection">Connection</string>
+    <string name="log_play">Play logcat</string>
+    <string name="log_pause">Pause logcat</string>
+    <string name="pref_logging">Logging</string>
+    <string name="pref_system">System</string>
+    <string name="pref_log_options">Log Level</string>
+    <string name="pref_log_options_desc">Select logging level</string>
+    <string name="pref_log_debug_verbosity">Debug Verbosity Level</string>
+    <string name="pref_log_debug_verbosity_desc">Requires logging level DEBUG</string>
+    <string name="pref_log_enable_file">Log to File</string>
+    <string name="pref_log_enable_file_desc">Also log into files in ibrdtn/logs/ on your external storage.</string>
+    <string name="list_no_log">No logs found.</string>
+    <string name="list_no_neighbors">No neighbors found.</string>
+    <string name="pref_fragmentation_desc">Allow reactive fragmentation and reassembling</string>
+    <string name="pref_fragmentation">Fragmentation support</string>
+    <string name="stats_activity">Statistics</string>
+    <string name="showstats">Show statistics</string>
+    <string name="pref_storage">Storage</string>
+    <string name="pref_storage_description">How to store bundles on the device.</string>
+    <string name="pref_cloudconnect_3g">Allow 3G uplink</string>
+    <string name="pref_cloudconnect_3g_description">Allow Cloud connect connections over mobile connections.</string>
 </resources>

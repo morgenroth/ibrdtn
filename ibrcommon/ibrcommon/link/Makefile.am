@@ -17,14 +17,20 @@ if NETLINK
 h_sources += NetLinkManager.h
 cc_sources += NetLinkManager.cpp
 else
+if WIN32
+h_sources += Win32LinkManager.h
+cc_sources += Win32LinkManager.cpp
+else
 h_sources += PosixLinkManager.h
 cc_sources += PosixLinkManager.cpp
+endif
 endif
 
 #Install the headers in a versioned directory
 library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/link
 library_include_HEADERS = $(h_sources)
 
+AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(NL_CFLAGS) $(NL_ROUTE_CFLAGS) $(NL_GENL_CFLAGS)
 AM_LDFLAGS = $(PTHREAD_LIBS) $(NL_LIBS) $(NL_ROUTE_LIBS) $(NL_GENL_LIBS)
 
@@ -32,8 +38,8 @@ if ANDROID
 noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
-noinst_LTLIBRARIES = liblink.la
-liblink_la_SOURCES = $(h_sources) $(cc_sources)
+noinst_LTLIBRARIES = libibrcommon_link.la
+libibrcommon_link_la_SOURCES = $(h_sources) $(cc_sources)
 endif
 
 Android.mk: Makefile.am

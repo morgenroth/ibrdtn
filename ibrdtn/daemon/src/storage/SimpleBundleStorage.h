@@ -29,6 +29,7 @@
 #include "core/EventReceiver.h"
 
 #include "storage/DataStorage.h"
+#include "storage/MetaStorage.h"
 
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/thread/AtomicCounter.h>
@@ -42,8 +43,6 @@
 #include <set>
 #include <map>
 
-using namespace dtn::data;
-
 namespace dtn
 {
 	namespace storage
@@ -51,13 +50,15 @@ namespace dtn
 		/**
 		 * This storage holds all bundles and fragments in the system memory.
 		 */
-		class SimpleBundleStorage : public DataStorage::Callback, public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, public BundleList::Listener
+		class SimpleBundleStorage : public DataStorage::Callback, public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, public dtn::data::BundleList::Listener
 		{
+			static const std::string TAG;
+
 		public:
 			/**
 			 * Constructor
 			 */
-			SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize = 0, size_t buffer_limit = 0);
+			SimpleBundleStorage(const ibrcommon::File &workdir, const dtn::data::Length maxsize = 0, const unsigned int buffer_limit = 0);
 
 			/**
 			 * Destructor
@@ -81,7 +82,7 @@ namespace dtn
 			/**
 			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException);
+			virtual void get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException);
 
 			/**
 			 * @see BundleSeeker::getDistinctDestinations()
@@ -115,7 +116,7 @@ namespace dtn
 			/**
 			 * @sa BundleStorage::count()
 			 */
-			unsigned int count();
+			dtn::data::Size count();
 
 			/**
 			 * @sa BundleStorage::releaseCustody();
@@ -139,10 +140,25 @@ namespace dtn
 			virtual void eventDataStorageRemoveFailed(const dtn::storage::DataStorage::Hash &hash, const ibrcommon::Exception&);
 			virtual void iterateDataStorage(const dtn::storage::DataStorage::Hash &hash, dtn::storage::DataStorage::istream &stream);
 
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Wait until all the data has been stored to the disk
+			 */
+			virtual void wait();
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * or retrieve a bundle will fail.
+			 */
+			virtual void setFaulty(bool mode);
+
+			/*** END: methods for unit-testing ***/
+
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
-			virtual void eventBundleExpired(const dtn::data::MetaBundle &b);
+			virtual void eventBundleExpired(const dtn::data::MetaBundle &b) throw ();
 
 		private:
 			class BundleContainer : public DataStorage::Container
@@ -158,54 +174,19 @@ namespace dtn
 				const dtn::data::Bundle _bundle;
 			};
 
-			dtn::data::Bundle __get(const dtn::data::MetaBundle&);
+			void __remove(const dtn::data::MetaBundle &meta);
+			void __store(const dtn::data::Bundle &bundle, const dtn::data::Length &bundle_size);
 
-			// bundle list
-			dtn::data::BundleList _list;
+			typedef std::map<DataStorage::Hash, dtn::data::Bundle> pending_map;
+			ibrcommon::RWMutex _pending_lock;
+			pending_map _pending_bundles;
 
-			// This object manage data stored on disk
+			// This object manages data stored on disk
 			DataStorage _datastore;
 
-			ibrcommon::RWMutex _bundleslock;
-			std::map<DataStorage::Hash, dtn::data::Bundle> _pending_bundles;
-			std::map<dtn::data::MetaBundle, DataStorage::Hash> _stored_bundles;
-
-			typedef std::map<dtn::data::BundleID, size_t> size_map;
-			size_map _bundle_lengths;
-
-			struct CMP_BUNDLE_PRIORITY
-			{
-				bool operator() (const dtn::data::MetaBundle& lhs, const dtn::data::MetaBundle& rhs) const
-				{
-					if (lhs.getPriority() > rhs.getPriority())
-						return true;
-
-					if (lhs.getPriority() != rhs.getPriority())
-						return false;
-
-					if (lhs.timestamp < rhs.timestamp)
-						return true;
-
-					if (lhs.timestamp != rhs.timestamp)
-						return false;
-
-					if (lhs.sequencenumber < rhs.sequencenumber)
-						return true;
-
-					if (lhs.sequencenumber != rhs.sequencenumber)
-						return false;
-
-					if (rhs.fragment)
-					{
-						if (!lhs.fragment) return true;
-						return (lhs.offset < rhs.offset);
-					}
-
-					return false;
-				}
-			};
-
-			std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY> _priority_index;
+			// stores all the meta data in memory
+			ibrcommon::RWMutex _meta_lock;
+			MetaStorage _metastore;
 		};
 	}
 }

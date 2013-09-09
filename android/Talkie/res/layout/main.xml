@@ -1,24 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical" >
 
-	<ListView
-	    android:id="@+id/listMessage"
-	    android:layout_width="match_parent"
-	    android:layout_height="match_parent"
-	    android:layout_weight="1">
-	
-	    <!-- Preview: listitem=@layout/message_item -->
-	</ListView>
-
-    <ImageButton
-        android:id="@+id/buttonTalk"
+    <fragment
+        android:id="@+id/message_fragment"
+        android:name="de.tubs.ibr.dtn.dtalkie.MessageFragment"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
-        android:layout_centerInParent="true"
-        android:background="@drawable/button_record"
-        android:src="@drawable/ic_mic" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        tools:layout="@android:layout/list_content" />
+
+    <fragment
+        android:id="@+id/rec_fragment"
+        android:name="de.tubs.ibr.dtn.dtalkie.RecordingFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:layout="@layout/recording_fragment" />
 
 </LinearLayout>

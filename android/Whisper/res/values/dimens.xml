@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="chat_item_avatar_on_right_text_indent">50dip</dimen>
+    <dimen name="chat_item_text_padding_left_right">12dip</dimen>
+    <dimen name="chat_item_text_padding_top">5dip</dimen>
+
+    <dimen name="avatar_width_height">48dip</dimen>
+
+    <dimen name="input_text_height">48dip</dimen>
+    <dimen name="input_text_height_adjusted">8dip</dimen>
+</resources>

@@ -95,13 +95,6 @@ namespace dtn
 				void auth(dtn::data::Bundle &bundle) const throw (KeyMissingException);
 
 				/**
-				 * This method should be called early as possible. It triggers a procedure to
-				 * prepare the public key of some EID for later usage.
-				 * @param eid The EID of the owner of the requested public key.
-				 */
-				void prefetchKey(const dtn::data::EID &eid);
-
-				/**
 				 * This method verifies the bundle and removes all auth or integrity block
 				 * if they could validated.
 				 * @param bundle The bundle to verify.

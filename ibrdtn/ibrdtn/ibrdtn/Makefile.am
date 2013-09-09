@@ -9,7 +9,7 @@ endif
 noinst_HEADERS = config.h
 
 h_sources = ibrdtn.h
-cc_sources = 
+cc_sources = dummy.cpp
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
@@ -31,17 +31,21 @@ lib_LTLIBRARIES= libibrdtn.la
 libibrdtn_la_SOURCES= $(h_sources) $(cc_sources)
 libibrdtn_la_LIBADD= $(ibrdtn_libs)
 libibrdtn_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
+if WIN32
+libibrdtn_la_LDFLAGS += -no-undefined
+endif
 endif
 
 Android.mk: Makefile.am
 	$(ANDROGENIZER) -:PROJECT $(GENERIC_LIBRARY_NAME) \
 		-:REL_TOP $(top_srcdir) -:ABS_TOP $(abs_top_srcdir) \
-		-:STATIC ibrdtn \
+		-:SHARED ibrdtn \
 		-:SOURCES $(h_sources) $(cc_sources) \
 		-:CPPFLAGS $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
 			$(subst lib,libibrdtn_, $(ibrdtn_libs)) \
+			-lz \
+			-lgnustl_shared \
 		-:LIBFILTER_WHOLE ibrdtn_api ibrdtn_data ibrdtn_streams ibrdtn_utils ibrdtn_security \
-			ibrcommon \
 		-:SUBDIR $(patsubst %,ibrdtn/%, $(SUBDIRS)) \
 		> $@

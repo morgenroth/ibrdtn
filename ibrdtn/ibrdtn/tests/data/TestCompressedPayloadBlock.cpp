@@ -42,18 +42,18 @@ void TestCompressedPayloadBlock::compressTest(void)
 	// generate some test data
 	{
 		ibrcommon::BLOB::iostream stream = ref.iostream();
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 10000; ++i)
 		{
 			(*stream) << "0123456789";
 		}
 	}
 
 	// add a payload block
-	size_t origin_psize = b.push_back(ref).getLength();
+	const dtn::data::Length origin_psize = b.push_back(ref).getLength();
 
 	dtn::data::CompressedPayloadBlock::compress(b, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
 
-	dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+	dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
 
 	CPPUNIT_ASSERT(origin_psize > p.getLength());
 }
@@ -66,30 +66,30 @@ void TestCompressedPayloadBlock::extractTest(void)
 	// generate some test data
 	{
 		ibrcommon::BLOB::iostream stream = ref.iostream();
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 10000; ++i)
 		{
 			(*stream) << "0123456789";
 		}
 	}
 
 	// add a payload block
-	size_t origin_psize = b.push_back(ref).getLength();
+	const dtn::data::Length origin_psize = b.push_back(ref).getLength();
 
 	dtn::data::CompressedPayloadBlock::compress(b, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
 	dtn::data::CompressedPayloadBlock::extract(b);
 
-	dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+	dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
 
 	CPPUNIT_ASSERT_EQUAL(origin_psize, p.getLength());
 
 	// detailed check of the payload
 	{
 		ibrcommon::BLOB::iostream stream = p.getBLOB().iostream();
-		for (int i = 0; i < 10000; i++)
+		for (int i = 0; i < 10000; ++i)
 		{
 			char buf[10];
 			(*stream).read(buf, 10);
-			CPPUNIT_ASSERT_EQUAL((size_t)(*stream).gcount(), (size_t)10);
+			CPPUNIT_ASSERT_EQUAL((*stream).gcount(), (std::streamsize)10);
 			CPPUNIT_ASSERT_EQUAL(std::string(buf, 10), std::string("0123456789"));
 		}
 	}

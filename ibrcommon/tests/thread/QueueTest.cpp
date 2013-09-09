@@ -52,7 +52,7 @@ void QueueTest::TestThread::run() throw ()
 			std::string data = _queue.getnpop(true);
 			_count++;
 
-			if (_time > 0) ::usleep(_time);
+			if (_time > 0) ibrcommon::Thread::sleep(_time);
 
 			if ((_max > 0) && (_max <= _count)) return;
 		}
@@ -75,7 +75,7 @@ void QueueTest::tsq_test01()
 	TestThread t;
 	t.start();
 
-	::usleep(1000);
+	ibrcommon::Thread::sleep(100);
 
 	t.stop();
 	t.join();
@@ -102,7 +102,7 @@ void QueueTest::tsq_test03()
 	t._queue.push("hallo");
 	t._queue.push("welt");
 
-	::sleep(1);
+	ibrcommon::Thread::sleep(100);
 
 	t._queue.abort();
 	t.join();
@@ -112,13 +112,13 @@ void QueueTest::tsq_test03()
 
 void QueueTest::tsq_test04()
 {
-	TestThread t(2000);
+	TestThread t(200);
 	t.start();
 
 	t._queue.push("hallo");
 	t._queue.push("welt");
 
-	::usleep(1000);
+	ibrcommon::Thread::sleep(100);
 
 	t._queue.abort();
 	t.join();
@@ -128,18 +128,18 @@ void QueueTest::tsq_test04()
 
 void QueueTest::tsq_test05()
 {
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 100; ++i)
 	{
 		TestThread t(200 / (i+1));
 		t.start();
 
-		for (int j = 0; j < i; j++)
+		for (int j = 0; j < i; ++j)
 		{
 			t._queue.push("hallo");
 			t._queue.push("welt");
 		}
 
-		::usleep(i);
+		ibrcommon::Thread::sleep(i);
 
 		t._queue.abort();
 		t.join();

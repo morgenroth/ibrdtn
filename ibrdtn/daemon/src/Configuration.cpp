@@ -30,6 +30,11 @@
 
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/link/LinkManager.h>
+
+#ifdef __WIN32__
+#include <ibrcommon/link/Win32LinkManager.h>
+#endif
 
 #include <getopt.h>
 #include <unistd.h>
@@ -47,23 +52,18 @@ namespace dtn
 {
 	namespace daemon
 	{
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, const std::string &u, bool d)
-		 : name(n), type(t), url(u), mtu(0), port(0), discovery(d)
+		Configuration::NetConfig::NetConfig(std::string n, NetType t, const std::string &u)
+		 : name(n), type(t), url(u), mtu(0), port(0)
 		{
 		}
 
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vinterface &i, int p, bool d)
-		 : name(n), type(t), iface(i), port(p), discovery(d)
+		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vinterface &i, int p)
+		 : name(n), type(t), iface(i), mtu(1500), port(p)
 		{
 		}
 
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vaddress &a, int p, bool d)
-		 : name(n), type(t), iface(), address(a), port(p), discovery(d)
-		{
-		}
-
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, int p, bool d)
-		 : name(n), type(t), iface(), port(p), discovery(d)
+		Configuration::NetConfig::NetConfig(std::string n, NetType t, int p)
+		 : name(n), type(t), iface(), mtu(1500), port(p)
 		{
 		}
 
@@ -71,7 +71,7 @@ namespace dtn
 		{
 		}
 
-		std::string Configuration::version()
+		std::string Configuration::version() const
 		{
 			std::stringstream ss;
 			ss << PACKAGE_VERSION;
@@ -91,55 +91,59 @@ namespace dtn
 		{}
 
 		Configuration::Discovery::Discovery()
-		 : _enabled(true), _timeout(5), _crosslayer(false) {};
-
-		Configuration::Statistic::Statistic() {};
+		 : _enabled(true), _timeout(5), _crosslayer(false) {}
 
 		Configuration::Debug::Debug()
-		 : _enabled(false), _quiet(false), _level(0) {};
+		 : _enabled(false), _quiet(false), _level(0) {}
 
 		Configuration::Logger::Logger()
-		 : _quiet(false), _options(0), _timestamps(false) {};
+		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {}
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false)
-		{};
+		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false)
+		{}
 
 		Configuration::Security::Security()
-		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false)
-		{};
+		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false), _tlsOptionalOnBadClock(false), _level(SECURITY_LEVEL_NONE), _disableEncryption(false)
+		{}
 
 		Configuration::Daemon::Daemon()
 		 : _daemonize(false), _kill(false), _threads(0)
-		{};
+		{}
 
 		Configuration::TimeSync::TimeSync()
-		 : _reference(true), _sync(false), _discovery(false)
-		{};
+		 : _reference(true), _sync(false), _discovery(false), _sigma(1.001f), _psi(0.8f), _sync_level(0.10f)
+		{}
 
 		Configuration::DHT::DHT()
-		 : _enabled(true), _port(0), _ipv4(true), _ipv6(true), _blacklist(true),
+		 : _enabled(true), _port(0), _dnsbootstrapping(true), _ipv4(true), _ipv6(true), _blacklist(true), _selfannounce(true),
 			_minRating(1), _allowNeighbourToAnnounceMe(true), _allowNeighbourAnnouncement(true),
 			_ignoreDHTNeighbourInformations(false)
-		{};
+		{}
 
-		Configuration::Discovery::~Discovery() {};
-		Configuration::Statistic::~Statistic() {};
-		Configuration::Debug::~Debug() {};
-		Configuration::Logger::~Logger() {};
-		Configuration::Network::~Network() {};
-		Configuration::Daemon::~Daemon() {};
-		Configuration::TimeSync::~TimeSync() {};
-		Configuration::DHT::~DHT() {};
+		Configuration::P2P::P2P()
+		 : _ctrl_path(""), _enabled(false)
+		{}
+
+		Configuration::EMail::EMail()
+		 : _smtpPort(25), _smtpUseTLS(false), _smtpUseSSL(false), _smtpNeedAuth(false), _smtpInterval(60), _smtpConnectionTimeout(-1), _smtpKeepAliveTimeout(30),
+		   _imapPort(143), _imapUseTLS(false), _imapUseSSL(false), _imapInterval(60), _imapConnectionTimeout(-1), _imapPurgeMail(false),
+		   _availableTime(1800), _returningMailsCheck(3)
+		{}
+
+		Configuration::Discovery::~Discovery() {}
+		Configuration::Debug::~Debug() {}
+		Configuration::Logger::~Logger() {}
+		Configuration::Network::~Network() {}
+		Configuration::Daemon::~Daemon() {}
+		Configuration::TimeSync::~TimeSync() {}
+		Configuration::DHT::~DHT() {}
+		Configuration::P2P::~P2P() {}
+		Configuration::EMail::~EMail() {}
 
 		const Configuration::Discovery& Configuration::getDiscovery() const
 		{
 			return _disco;
-		}
-
-		const Configuration::Statistic& Configuration::getStatistic() const
-		{
-			return _stats;
 		}
 
 		const Configuration::Debug& Configuration::getDebug() const
@@ -177,9 +181,23 @@ namespace dtn
 			return _dht;
 		}
 
-		Configuration& Configuration::getInstance()
+		const Configuration::P2P& Configuration::getP2P() const
+		{
+			return _p2p;
+		}
+
+		const Configuration::EMail& Configuration::getEMail() const
+		{
+			return _email;
+		}
+
+		Configuration& Configuration::getInstance(bool reset)
 		{
 			static Configuration conf;
+
+			// reset configuration
+			if (reset) conf = Configuration();
+
 			return conf;
 		}
 
@@ -190,6 +208,10 @@ namespace dtn
 			int disco = _disco._enabled;
 			int badclock = dtn::utils::Clock::isBad();
 			int timestamp = _logger._timestamps;
+			int showversion = 0;
+
+			// set number of threads to the number of available cpus
+			_daemon._threads = static_cast<dtn::data::Size>(ibrcommon::Thread::getNumberOfProcessors());
 
 			while (1)
 			{
@@ -200,6 +222,7 @@ namespace dtn
 						{"nodiscovery", no_argument, &disco, 0},
 						{"badclock", no_argument, &badclock, 1},
 						{"timestamp", no_argument, &timestamp, 1},
+						{"version", no_argument, &showversion, 1},
 
 						/* These options don't set a flag. We distinguish them by their indices. */
 						{"help", no_argument, 0, 'h'},
@@ -210,10 +233,12 @@ namespace dtn
 #endif
 
 						{"quiet", no_argument, 0, 'q'},
-						{"version", no_argument, 0, 'v'},
 						{"interface", required_argument, 0, 'i'},
 						{"configuration", required_argument, 0, 'c'},
 						{"debug", required_argument, 0, 'd'},
+#ifdef __WIN32__
+						{"interfaces", no_argument, 0, 'I'},
+#endif
 						{0, 0, 0, 0}
 				};
 
@@ -258,16 +283,20 @@ namespace dtn
 					std::cout << " -d <level>      enable debugging and set a verbose level" << std::endl;
 					std::cout << " -q              enables the quiet mode (no logging to the console)" << std::endl;
 					std::cout << " -t <threads>    specify a number of threads for parallel event processing" << std::endl;
+					std::cout << " -v              be verbose - show NOTICE log messages" << std::endl;
+					std::cout << " --version       show version and exit" << std::endl;
 					std::cout << " --noapi         disable API module" << std::endl;
 					std::cout << " --nodiscovery   disable discovery module" << std::endl;
 					std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
 					std::cout << " --timestamp     enables timestamps for logging instead of datetime values" << std::endl;
+#ifdef __WIN32__
+					std::cout << " --interfaces    list all available interfaces" << std::endl;
+#endif
 					exit(0);
 					break;
 
 				case 'v':
-					std::cout << "IBR-DTN version: " << version() << std::endl;
-					exit(0);
+					_logger._verbose = true;
 					break;
 
 				case 'q':
@@ -306,6 +335,30 @@ namespace dtn
 					_daemon._threads = atoi(optarg);
 					break;
 
+#ifdef __WIN32__
+				case 'I':
+				{
+					ibrcommon::LinkManager &lm = ibrcommon::LinkManager::getInstance();
+					try {
+						ibrcommon::Win32LinkManager &wlm = dynamic_cast<ibrcommon::Win32LinkManager&>(lm);
+
+						std::set<ibrcommon::vinterface> ifs = wlm.getInterfaces();
+
+						std::cout << "Available interfaces:" << std::endl;
+
+						for (std::set<ibrcommon::vinterface>::const_iterator it = ifs.begin(); it != ifs.end(); ++it)
+						{
+							const ibrcommon::vinterface &iface = (*it);
+							std::cout << iface.toString() << '\t';
+							std::wcout << iface.getFriendlyName() << std::endl;
+						}
+					} catch (const std::bad_cast&) {
+					}
+					exit(0);
+					break;
+				}
+#endif
+
 				case '?':
 					/* getopt_long already printed an error message. */
 					break;
@@ -316,27 +369,32 @@ namespace dtn
 				}
 			}
 
+			if (showversion == 1) {
+				std::cout << "IBR-DTN version: " << version() << std::endl;
+				exit(0);
+			}
+
 			_doapi = doapi;
 			_disco._enabled = disco;
 			dtn::utils::Clock::setBad(badclock);
 			_logger._timestamps = timestamp;
 		}
 
-		void Configuration::load()
+		void Configuration::load(bool quiet)
 		{
-			load(_filename);
+			load(_filename, quiet);
 		}
 
-		void Configuration::load(string filename)
+		void Configuration::load(const std::string &filename, bool quiet)
 		{
 			try {
 				// load main configuration
 				_conf = ibrcommon::ConfigFile(filename);
 				_filename = filename;
 
-				IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
+				if (!quiet) IBRCOMMON_LOGGER_TAG("Configuration", info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::ConfigFile::file_not_found&) {
-				IBRCOMMON_LOGGER(info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
+				if (!quiet) IBRCOMMON_LOGGER_TAG("Configuration", info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
 				_conf = ConfigFile();
 
 				// set the default user to nobody
@@ -345,23 +403,20 @@ namespace dtn
 
 			// load all configuration extensions
 			_disco.load(_conf);
-			_stats.load(_conf);
 			_debug.load(_conf);
 			_logger.load(_conf);
 			_network.load(_conf);
 			_security.load(_conf);
 			_timesync.load(_conf);
 			_dht.load(_conf);
+			_p2p.load(_conf);
+			_email.load(_conf);
 		}
 
 		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
 		{
 			_timeout = conf.read<unsigned int>("discovery_timeout", 5);
 			_crosslayer = (conf.read<std::string>("discovery_crosslayer", "no") == "yes");
-		}
-
-		void Configuration::Statistic::load(const ibrcommon::ConfigFile&)
-		{
 		}
 
 		void Configuration::Logger::load(const ibrcommon::ConfigFile &conf)
@@ -394,9 +449,9 @@ namespace dtn
 				_discovery = (conf.read<std::string>("time_discovery_announcements") == "yes");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 
-			_sigma = conf.read<float>("time_sigma", 1.001);
-			_psi = conf.read<float>("time_psi", 0.9);
-			_sync_level = conf.read<float>("time_sync_level", 0.15);
+			_sigma = conf.read<float>("time_sigma", 1.001f);
+			_psi = conf.read<float>("time_psi", 0.9f);
+			_sync_level = conf.read<float>("time_sync_level", 0.15f);
 
 			// enable the clock modify feature
 			dtn::utils::Clock::setModifyClock(conf.read<std::string>("time_set_clock", "no") == "yes");
@@ -427,6 +482,50 @@ namespace dtn
 			if (_minRating < 0)	_minRating = 0;
 		}
 
+		void Configuration::P2P::load(const ibrcommon::ConfigFile &conf)
+		{
+			try {
+				_ctrl_path = conf.read<std::string>("p2p_ctrlpath");
+				_enabled = true;
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+				// do nothing here...
+				_enabled = false;
+			}
+		}
+
+		void Configuration::EMail::load(const ibrcommon::ConfigFile &conf)
+		{
+			std::string tmp;
+			_address = conf.read<std::string> ("email_address", "root@localhost");
+			_smtpServer = conf.read<std::string> ("email_smtp_server", "localhost");
+			_smtpPort = conf.read<int> ("email_smtp_port", 25);
+			_smtpUsername = conf.read<std::string> ("email_smtp_username", "root");
+			_smtpPassword = conf.read<std::string> ("email_smtp_password", "");
+			_smtpInterval = conf.read<size_t> ("email_smtp_submit_interval", 60);
+			_smtpConnectionTimeout = conf.read<size_t> ("email_smtp_connection_timeout", -1);
+			_smtpKeepAliveTimeout = conf.read<size_t> ("email_smtp_keep_alive", 30);
+			_smtpNeedAuth = (conf.read<std::string> ("email_smtp_need_authentication", "no") == "yes");
+			_smtpUseTLS = (conf.read<std::string> ("email_smtp_socket_type", "") == "tls");
+			_smtpUseSSL = (conf.read<std::string> ("email_smtp_socket_type", "") == "ssl");
+			_imapServer = conf.read<std::string> ("email_imap_server", "localhost");
+			_imapPort = conf.read<int> ("email_imap_port", 143);
+			_imapUsername = conf.read<std::string> ("email_imap_username", _smtpUsername);
+			_imapPassword = conf.read<std::string> ("email_imap_password", _smtpPassword);
+			tmp = conf.read<string> ("email_imap_folder", "");
+			_imapFolder = dtn::utils::Utils::tokenize("/", tmp);
+			_imapInterval = conf.read<size_t> ("email_imap_lookup_interval", 60);
+			_imapConnectionTimeout = conf.read<size_t> ("email_imap_connection_timeout", -1);
+			_imapUseTLS = (conf.read<std::string> ("email_imap_socket_type", "") == "tls");
+			_imapUseSSL = (conf.read<std::string> ("email_imap_socket_type", "") == "ssl");
+			_imapPurgeMail = (conf.read<std::string> ("email_imap_purge_mail", "no") == "yes");
+			tmp = conf.read<string> ("email_certs_ca", "");
+			_tlsCACerts = dtn::utils::Utils::tokenize(",", tmp);
+			tmp = conf.read<string> ("email_certs_user", "");
+			_tlsUserCerts = dtn::utils::Utils::tokenize(",", tmp);
+			_availableTime = conf.read<size_t> ("email_node_available_time", 1800);
+			_returningMailsCheck = conf.read<size_t> ("email_returning_mails_checks", 3);
+		}
+
 		bool Configuration::Debug::quiet() const
 		{
 			return _quiet;
@@ -442,28 +541,21 @@ namespace dtn
 			return _level;
 		}
 
-		std::string Configuration::getNodename()
+		std::string Configuration::getNodename() const
 		{
 			try {
 				return _conf.read<string>("local_uri");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
-				char *hostname_array = new char[64];
-				if ( gethostname(hostname_array, 64) != 0 )
+				std::vector<char> hostname_array(64);
+				if ( gethostname(&hostname_array[0], hostname_array.size()) != 0 )
 				{
 					// error
-					delete[] hostname_array;
-					return "local";
+					return "dtn://local";
 				}
 
-				string hostname(hostname_array);
-				delete[] hostname_array;
-
-				stringstream ss;
-				ss << "dtn://" << hostname;
-				ss >> hostname;
-
-				return hostname;
+				return "dtn://" + std::string(&hostname_array[0]);
 			}
+			return "dtn://noname";
 		}
 
 		const std::list<Configuration::NetConfig>& Configuration::Network::getInterfaces() const
@@ -479,7 +571,7 @@ namespace dtn
 				std::string address_str = Configuration::getInstance()._conf.read<string>("discovery_address");
 				std::vector<std::string> addresses = dtn::utils::Utils::tokenize(" ", address_str);
 
-				for (std::vector<std::string>::iterator iter = addresses.begin(); iter != addresses.end(); iter++) {
+				for (std::vector<std::string>::iterator iter = addresses.begin(); iter != addresses.end(); ++iter) {
 					ret.insert( ibrcommon::vaddress(*iter, port(), AF_UNSPEC) );
 				}
 			} catch (const ConfigFile::key_not_found&) {
@@ -506,7 +598,7 @@ namespace dtn
 
 		Configuration::NetConfig Configuration::getAPIInterface() const
 		{
-			size_t port = _conf.read<size_t>("api_port", 4550);
+			int port = _conf.read<int>("api_port", 4550);
 
 			try {
 				std::string interface_name = _conf.read<std::string>("api_interface");
@@ -517,9 +609,9 @@ namespace dtn
 				}
 
 				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(interface_name), port);
-			} catch (const ConfigFile::key_not_found&) {
-				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK), port);
-			}
+			} catch (const ConfigFile::key_not_found&) { }
+
+			return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK), port);
 		}
 
 		ibrcommon::File Configuration::getAPISocket() const
@@ -536,6 +628,10 @@ namespace dtn
 		std::string Configuration::getStorage() const
 		{
 			return _conf.read<std::string>("storage", "default");
+		}
+
+		bool Configuration::enableTrafficStats() const {
+			return (_conf.read<std::string>("stats_traffic", "no") == "yes");
 		}
 
 		void Configuration::Network::load(const ibrcommon::ConfigFile &conf)
@@ -587,6 +683,11 @@ namespace dtn
 				if (protocol == "dgram:udp") p = Node::CONN_DGRAM_UDP;
 				if (protocol == "dgram:ethernet") p = Node::CONN_DGRAM_ETHERNET;
 				if (protocol == "dgram:lowpan") p = Node::CONN_DGRAM_LOWPAN;
+				if (protocol == "email") {
+					p = Node::CONN_EMAIL;
+					ss.clear();
+					ss << "email=" << conf.read<std::string>(prefix + "email", "root@localhost") << ";";
+				}
 
 				bool node_exists = false;
 
@@ -594,7 +695,7 @@ namespace dtn
 						dtn::core::Node::NODE_STATIC_GLOBAL : dtn::core::Node::NODE_STATIC_LOCAL;
 
 				// get node
-				for (std::list<Node>::iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+				for (std::list<Node>::iterator iter = _nodes.begin(); iter != _nodes.end(); ++iter)
 				{
 					dtn::core::Node &n = (*iter);
 
@@ -629,24 +730,24 @@ namespace dtn
 
 			if(_routing == "prophet"){
 				/* read prophet parameters */
-				_prophet_config.p_encounter_max = conf.read<float>("prophet_p_encounter_max", 0.7);
+				_prophet_config.p_encounter_max = conf.read<float>("prophet_p_encounter_max", 0.7f);
 				if(_prophet_config.p_encounter_max > 1 || _prophet_config.p_encounter_max <= 0)
-					_prophet_config.p_encounter_max = 0.7;
-				_prophet_config.p_encounter_first = conf.read<float>("prophet_p_encounter_first", 0.5);
+					_prophet_config.p_encounter_max = 0.7f;
+				_prophet_config.p_encounter_first = conf.read<float>("prophet_p_encounter_first", 0.5f);
 				if(_prophet_config.p_encounter_first > 1 || _prophet_config.p_encounter_first <= 0)
-					_prophet_config.p_encounter_first = 0.5;
-				_prophet_config.p_first_threshold = conf.read<float>("prophet_p_first_threshold", 0.1);
+					_prophet_config.p_encounter_first = 0.5f;
+				_prophet_config.p_first_threshold = conf.read<float>("prophet_p_first_threshold", 0.1f);
 				if(_prophet_config.p_first_threshold < 0 || _prophet_config.p_first_threshold >= _prophet_config.p_encounter_first)
 					_prophet_config.p_first_threshold = 0; //disable first threshold on misconfiguration
-				_prophet_config.beta = conf.read<float>("prophet_beta", 0.9);
+				_prophet_config.beta = conf.read<float>("prophet_beta", 0.9f);
 				if(_prophet_config.beta < 0 || _prophet_config.beta > 1)
-					_prophet_config.beta = 0.9;
-				_prophet_config.gamma = conf.read<float>("prophet_gamma", 0.999);
+					_prophet_config.beta = 0.9f;
+				_prophet_config.gamma = conf.read<float>("prophet_gamma", 0.999f);
 				if(_prophet_config.gamma <= 0 || _prophet_config.gamma > 1)
-					_prophet_config.gamma = 0.999;
-				_prophet_config.delta = conf.read<float>("prophet_delta", 0.01);
+					_prophet_config.gamma = 0.999f;
+				_prophet_config.delta = conf.read<float>("prophet_delta", 0.01f);
 				if(_prophet_config.delta < 0 || _prophet_config.delta > 1)
-					_prophet_config.delta = 0.01;
+					_prophet_config.delta = 0.01f;
 				_prophet_config.time_unit = conf.read<ibrcommon::Timer::time_t>("prophet_time_unit", 1);
 				if(_prophet_config.time_unit < 1)
 					_prophet_config.time_unit = 1;
@@ -675,7 +776,7 @@ namespace dtn
 			else try
 			{
 				vector<string> nets = dtn::utils::Utils::tokenize(" ", conf.read<string>("net_interfaces") );
-				for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+				for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
 				{
 					std::string netname = (*iter);
 
@@ -683,7 +784,6 @@ namespace dtn
 					std::string key_port = "net_" + netname + "_port";
 					std::string key_interface = "net_" + netname + "_interface";
 					std::string key_address = "net_" + netname + "_address";
-					std::string key_discovery = "net_" + netname + "_discovery";
 					std::string key_path = "net_" + netname + "_path";
 					std::string key_mtu = "net_" + netname + "_mtu";
 
@@ -698,14 +798,14 @@ namespace dtn
 					if (type_name == "dgram:udp") type = Configuration::NetConfig::NETWORK_DGRAM_UDP;
 					if (type_name == "dgram:lowpan") type = Configuration::NetConfig::NETWORK_DGRAM_LOWPAN;
 					if (type_name == "dgram:ethernet") type = Configuration::NetConfig::NETWORK_DGRAM_ETHERNET;
+					if (type_name == "email") type = Configuration::NetConfig::NETWORK_EMAIL;
 
 					switch (type)
 					{
 						case Configuration::NetConfig::NETWORK_HTTP:
 						{
 							Configuration::NetConfig nc(netname, type,
-									conf.read<std::string>(key_address, "http://localhost/"),
-									conf.read<std::string>(key_discovery, "yes") == "no");
+									conf.read<std::string>(key_address, "http://localhost/"));
 
 							_interfaces.push_back(nc);
 							break;
@@ -714,8 +814,7 @@ namespace dtn
 						case Configuration::NetConfig::NETWORK_FILE:
 						{
 							Configuration::NetConfig nc(netname, type,
-									conf.read<std::string>(key_path, ""),
-									conf.read<std::string>(key_discovery, "yes") == "no");
+									conf.read<std::string>(key_path, ""));
 
 							_interfaces.push_back(nc);
 							break;
@@ -724,17 +823,15 @@ namespace dtn
 						default:
 						{
 							int port = conf.read<int>(key_port, 4556);
-							bool discovery = (conf.read<std::string>(key_discovery, "yes") == "yes");
 							int mtu = conf.read<int>(key_mtu, 1280);
 
 							try {
 								ibrcommon::vinterface iface(conf.read<std::string>(key_interface));
-								Configuration::NetConfig nc(netname, type, iface, port, discovery);
+								Configuration::NetConfig nc(netname, type, iface, port);
 								nc.mtu = mtu;
 								_interfaces.push_back(nc);
 							} catch (const ConfigFile::key_not_found&) {
-								ibrcommon::vaddress addr;
-								Configuration::NetConfig nc(netname, type, addr, port, discovery);
+								Configuration::NetConfig nc(netname, type, port);
 								nc.mtu = mtu;
 								_interfaces.push_back(nc);
 							}
@@ -757,7 +854,7 @@ namespace dtn
 			/**
 			 * auto connect interval
 			 */
-			_auto_connect = conf.read<size_t>("net_autoconnect", 0);
+			_auto_connect = conf.read<dtn::data::Timeout>("net_autoconnect", 0);
 
 			/**
 			 * fragmentation support
@@ -769,7 +866,7 @@ namespace dtn
 			 */
 			try {
 				std::vector<string> inets = dtn::utils::Utils::tokenize(" ", conf.read<string>("net_internet") );
-				for (std::vector<string>::const_iterator iter = inets.begin(); iter != inets.end(); iter++)
+				for (std::vector<string>::const_iterator iter = inets.begin(); iter != inets.end(); ++iter)
 				{
 					ibrcommon::vinterface inet_dev(*iter);
 					_internet_devices.insert(inet_dev);
@@ -792,12 +889,12 @@ namespace dtn
 			return _nodes;
 		}
 
-		int Configuration::getTimezone()
+		int Configuration::getTimezone() const
 		{
 			return _conf.read<int>( "timezone", 0 );
 		}
 
-		ibrcommon::File Configuration::getPath(string name)
+		ibrcommon::File Configuration::getPath(string name) const
 		{
 			stringstream ss;
 			ss << name << "_path";
@@ -805,9 +902,9 @@ namespace dtn
 
 			try {
 				return ibrcommon::File(_conf.read<string>(key));
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
+			} catch (const ConfigFile::key_not_found&) { }
+
+			throw ParameterNotSetException();
 		}
 
 		bool Configuration::Discovery::enabled() const
@@ -825,27 +922,19 @@ namespace dtn
 			return (Configuration::getInstance()._conf.read<int>("discovery_short", 0) == 1);
 		}
 
-		char Configuration::Discovery::version() const
+		int Configuration::Discovery::version() const
 		{
 			return Configuration::getInstance()._conf.read<int>("discovery_version", 2);
 		}
 
-		bool Configuration::doAPI()
+		bool Configuration::doAPI() const
 		{
 			return _doapi;
 		}
 
-		string Configuration::getNotifyCommand()
-		{
-			try {
-				return _conf.read<string>("notify_cmd");
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
-		}
-
 		Configuration::RoutingExtension Configuration::Network::getRoutingExtension() const
 		{
+			if ( _routing == "none" ) return NO_ROUTING;
 			if ( _routing == "epidemic" ) return EPIDEMIC_ROUTING;
 			if ( _routing == "flooding" ) return FLOOD_ROUTING;
 			if ( _routing == "prophet" ) return PROPHET_ROUTING;
@@ -873,17 +962,17 @@ namespace dtn
 			return _tcp_nodelay;
 		}
 
-		size_t Configuration::Network::getTCPChunkSize() const
+		dtn::data::Length Configuration::Network::getTCPChunkSize() const
 		{
 			return _tcp_chunksize;
 		}
 
-		size_t Configuration::Network::getTCPIdleTimeout() const
+		dtn::data::Timeout Configuration::Network::getTCPIdleTimeout() const
 		{
 			return _tcp_idle_timeout;
 		}
 
-		size_t Configuration::Network::getAutoConnect() const
+		dtn::data::Timeout Configuration::Network::getAutoConnect() const
 		{
 			return _auto_connect;
 		}
@@ -898,41 +987,7 @@ namespace dtn
 			return _internet_devices;
 		}
 
-		bool Configuration::Statistic::enabled() const
-		{
-			return Configuration::getInstance()._conf.keyExists("statistic_type");
-		}
-
-		ibrcommon::File Configuration::Statistic::logfile() const throw (ParameterNotSetException)
-		{
-			try {
-				return ibrcommon::File(Configuration::getInstance()._conf.read<std::string>("statistic_file"));
-			} catch (const ConfigFile::key_not_found&) {
-				throw ParameterNotSetException();
-			}
-		}
-
-		std::string Configuration::Statistic::type() const
-		{
-			return Configuration::getInstance()._conf.read<std::string>("statistic_type", "stdout");
-		}
-
-		unsigned int Configuration::Statistic::interval() const
-		{
-			return Configuration::getInstance()._conf.read<unsigned int>("statistic_interval", 300);
-		}
-
-		std::string Configuration::Statistic::address() const
-		{
-			return Configuration::getInstance()._conf.read<std::string>("statistic_address", "127.0.0.1");
-		}
-
-		unsigned int Configuration::Statistic::port() const
-		{
-			return Configuration::getInstance()._conf.read<unsigned int>("statistic_port", 1234);
-		}
-
-		size_t Configuration::getLimit(const std::string &suffix) const
+		dtn::data::Size Configuration::getLimit(const std::string &suffix) const
 		{
 			std::string unparsed = _conf.read<std::string>("limit_" + suffix, "0");
 
@@ -944,19 +999,19 @@ namespace dtn
 			switch (multiplier)
 			{
 			default:
-				return (size_t)value;
+				return static_cast<dtn::data::Size>(value);
 				break;
 
 			case 'G':
-				return (size_t)(value * 1000000000);
+				return static_cast<dtn::data::Size>(value * 1000000000);
 				break;
 
 			case 'M':
-				return (size_t)(value * 1000000);
+				return static_cast<dtn::data::Size>(value * 1000000);
 				break;
 
 			case 'K':
-				return (size_t)(value * 1000);
+				return static_cast<dtn::data::Size>(value * 1000);
 				break;
 			}
 
@@ -977,7 +1032,7 @@ namespace dtn
 
 				if (!_cert.exists())
 				{
-					IBRCOMMON_LOGGER(warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					activateTLS = false;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
@@ -990,7 +1045,7 @@ namespace dtn
 
 				if (!_key.exists())
 				{
-					IBRCOMMON_LOGGER(warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					activateTLS = false;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
@@ -1001,7 +1056,7 @@ namespace dtn
 			try{
 				_trustedCAPath = conf.read<std::string>("security_trusted_ca_path");
 				if(!_trustedCAPath.isDirectory()){
-					IBRCOMMON_LOGGER(warning) << "Trusted CA Path " << _trustedCAPath.getPath() << " does not exists or is no directory!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "Trusted CA Path " << _trustedCAPath.getPath() << " does not exists or is no directory!" << IBRCOMMON_LOGGER_ENDL;
 					activateTLS = false;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
@@ -1050,7 +1105,7 @@ namespace dtn
 
 					if (!_cert.exists())
 					{
-						IBRCOMMON_LOGGER(warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Configuration", warning) << "Certificate file " << _cert.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::ConfigFile::key_not_found&) { }
 
@@ -1060,7 +1115,7 @@ namespace dtn
 
 					if (!_key.exists())
 					{
-						IBRCOMMON_LOGGER(warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("Configuration", warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const ibrcommon::ConfigFile::key_not_found&) { }
 			}
@@ -1071,14 +1126,14 @@ namespace dtn
 
 				if (!_bab_default_key.exists())
 				{
-					IBRCOMMON_LOGGER(warning) << "KEY file " << _bab_default_key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("Configuration", warning) << "KEY file " << _bab_default_key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
 			}
 #endif
-		};
+		}
 
-		Configuration::Security::~Security() {};
+		Configuration::Security::~Security() {}
 
 		bool Configuration::Security::enabled() const
 		{
@@ -1097,13 +1152,12 @@ namespace dtn
 			return _tlsRequired;
 		}
 
-#ifdef WITH_BUNDLE_SECURITY
 		const ibrcommon::File& Configuration::Security::getPath() const
 		{
 			return _path;
 		}
 
-		Configuration::Security::Level Configuration::Security::getLevel() const
+		int Configuration::Security::getLevel() const
 		{
 			return _level;
 		}
@@ -1112,8 +1166,7 @@ namespace dtn
 		{
 			return _bab_default_key;
 		}
-#endif
-#if defined WITH_BUNDLE_SECURITY || defined WITH_TLS
+
 		const ibrcommon::File& Configuration::Security::getCertificate() const
 		{
 			return _cert;
@@ -1123,8 +1176,7 @@ namespace dtn
 		{
 			return _key;
 		}
-#endif
-#ifdef WITH_TLS
+
 		const ibrcommon::File& Configuration::Security::getTrustedCAPath() const
 		{
 			return _trustedCAPath;
@@ -1134,7 +1186,6 @@ namespace dtn
 		{
 			return _disableEncryption;
 		}
-#endif
 
 		bool Configuration::Logger::quiet() const
 		{
@@ -1145,6 +1196,11 @@ namespace dtn
 		{
 			if (_logfile.getPath() == "") throw Configuration::ParameterNotSetException();
 			return _logfile;
+		}
+
+		bool Configuration::Logger::verbose() const
+		{
+			return _verbose;
 		}
 
 		bool Configuration::Logger::display_timestamps() const
@@ -1172,7 +1228,7 @@ namespace dtn
 			return _kill;
 		}
 
-		size_t Configuration::Daemon::getThreads() const
+		dtn::data::Size Configuration::Daemon::getThreads() const
 		{
 			return _threads;
 		}
@@ -1250,7 +1306,7 @@ namespace dtn
 
 		bool Configuration::DHT::isIPBootstrappingEnabled() const
 		{
-			return _bootstrappingips.size() > 0;
+			return !_bootstrappingips.empty();
 		}
 
 		std::vector<string> Configuration::DHT::getIPBootstrappingIPs() const
@@ -1310,6 +1366,140 @@ namespace dtn
 		bool Configuration::DHT::ignoreDHTNeighbourInformations() const
 		{
 			return _ignoreDHTNeighbourInformations;
+		}
+
+		bool Configuration::P2P::enabled() const
+		{
+			return _enabled;
+		}
+
+		const std::string Configuration::P2P::getCtrlPath() const
+		{
+			return _ctrl_path;
+		}
+
+		std::string Configuration::EMail::getOwnAddress() const
+		{
+			return _address;
+		}
+
+		std::string Configuration::EMail::getSmtpServer() const
+		{
+			return _smtpServer;
+		}
+
+		int Configuration::EMail::getSmtpPort() const
+		{
+			return _smtpPort;
+		}
+
+		std::string Configuration::EMail::getSmtpUsername() const
+		{
+			return _smtpUsername;
+		}
+
+		std::string Configuration::EMail::getSmtpPassword() const
+		{
+			return _smtpPassword;
+		}
+
+		size_t Configuration::EMail::getSmtpSubmitInterval() const
+		{
+			return _smtpInterval;
+		}
+
+		size_t Configuration::EMail::getSmtpConnectionTimeout() const
+		{
+			return _smtpConnectionTimeout;
+		}
+		size_t Configuration::EMail::getSmtpKeepAliveTimeout() const
+		{
+			return _smtpKeepAliveTimeout * 1000;
+		}
+
+		bool Configuration::EMail::smtpAuthenticationNeeded() const
+		{
+			return _smtpNeedAuth;
+		}
+
+		bool Configuration::EMail::smtpUseTLS() const
+		{
+			return _smtpUseTLS;
+		}
+
+		bool Configuration::EMail::smtpUseSSL() const
+		{
+			return _smtpUseSSL;
+		}
+
+		std::string Configuration::EMail::getImapServer() const
+		{
+			return _imapServer;
+		}
+
+		int Configuration::EMail::getImapPort() const
+		{
+			return _imapPort;
+		}
+
+		std::string Configuration::EMail::getImapUsername() const
+		{
+			return _imapUsername;
+		}
+
+		std::string Configuration::EMail::getImapPassword() const
+		{
+			return _imapPassword;
+		}
+
+		std::vector<std::string> Configuration::EMail::getImapFolder() const
+		{
+			return _imapFolder;
+		}
+
+		size_t Configuration::EMail::getImapLookupInterval() const
+		{
+			return _imapInterval;
+		}
+
+		size_t Configuration::EMail::getImapConnectionTimeout() const
+		{
+			return _imapConnectionTimeout;
+		}
+
+		bool Configuration::EMail::imapUseTLS() const
+		{
+			return _imapUseTLS;
+		}
+
+		bool Configuration::EMail::imapUseSSL() const
+		{
+			return _imapUseSSL;
+		}
+
+		bool Configuration::EMail::imapPurgeMail() const
+		{
+			return _imapPurgeMail;
+		}
+
+		std::vector<std::string> Configuration::EMail::getTlsCACerts() const
+		{
+			return _tlsCACerts;
+		}
+
+		std::vector<std::string> Configuration::EMail::getTlsUserCerts() const
+		{
+			return _tlsUserCerts;
+		}
+
+		size_t Configuration::EMail::getNodeAvailableTime() const
+		{
+			return _availableTime;
+		}
+
+		size_t Configuration::EMail::getReturningMailChecks() const
+		{
+			return _returningMailsCheck;
 		}
 	}
 }

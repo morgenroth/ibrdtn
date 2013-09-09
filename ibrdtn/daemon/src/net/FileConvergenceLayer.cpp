@@ -21,7 +21,6 @@
 
 #include "Configuration.h"
 #include "net/FileConvergenceLayer.h"
-#include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/EventDispatcher.h"
@@ -31,7 +30,6 @@
 #include "core/TimeEvent.h"
 #include "routing/BaseRouter.h"
 #include "routing/NodeHandshake.h"
-#include "routing/RequeueBundleEvent.h"
 #include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
@@ -52,7 +50,7 @@ namespace dtn
 		{
 		}
 
-		FileConvergenceLayer::StoreBundleTask::StoreBundleTask(const dtn::core::Node &n, const ConvergenceLayer::Job &j)
+		FileConvergenceLayer::StoreBundleTask::StoreBundleTask(const dtn::core::Node &n, const dtn::net::BundleTransfer &j)
 		 : FileConvergenceLayer::Task(TASK_STORE, n), job(j)
 		{
 		}
@@ -108,7 +106,7 @@ namespace dtn
 							case Task::TASK_STORE:
 							{
 								try {
-									const StoreBundleTask &sbt = dynamic_cast<const StoreBundleTask&>(*t);
+									StoreBundleTask &sbt = dynamic_cast<StoreBundleTask&>(*t);
 									dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 									// get the file path of the node
@@ -119,12 +117,14 @@ namespace dtn
 
 									try {
 										// check if bundle is a routing bundle
-										if (sbt.job._bundle.source == (dtn::core::BundleCore::local + "/routing"))
+										const dtn::data::EID &source = sbt.job.getBundle().source;
+
+										if (source.isApplication("routing"))
 										{
 											// read the bundle out of the storage
-											const dtn::data::Bundle bundle = storage.get(sbt.job._bundle);
+											const dtn::data::Bundle bundle = storage.get(sbt.job.getBundle());
 
-											if (bundle._destination == (sbt.node.getEID() + "/routing"))
+											if (bundle.destination.isApplication("routing"))
 											{
 												// add this bundle to the blacklist
 												{
@@ -132,7 +132,7 @@ namespace dtn
 													if (_blacklist.find(bundle) != _blacklist.end())
 													{
 														// send transfer aborted event
-														dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
+														sbt.job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED);
 														continue;
 													}
 													_blacklist.add(bundle);
@@ -142,19 +142,18 @@ namespace dtn
 												replyHandshake(bundle, bundles);
 
 												// raise bundle event
-												dtn::net::TransferCompletedEvent::raise(sbt.node.getEID(), bundle);
-												dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+												sbt.job.complete();
 												continue;
 											}
 										}
 
 										// check if bundle is already in the path
-										for (std::list<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+										for (std::list<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); ++iter)
 										{
-											if ((*iter) == sbt.job._bundle)
+											if ((*iter) == sbt.job.getBundle())
 											{
 												// send transfer aborted event
-												dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
+												sbt.job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED);
 												continue;
 											}
 										}
@@ -163,11 +162,11 @@ namespace dtn
 
 										try {
 											// read the bundle out of the storage
-											const dtn::data::Bundle bundle = storage.get(sbt.job._bundle);
+											const dtn::data::Bundle bundle = storage.get(sbt.job.getBundle());
 
 											std::fstream fs(filename.getPath().c_str(), std::fstream::out);
 
-											IBRCOMMON_LOGGER(info) << "write bundle " << sbt.job._bundle.toString() << " to file " << filename.getPath() << IBRCOMMON_LOGGER_ENDL;
+											IBRCOMMON_LOGGER_TAG("FileConvergenceLayer", info) << "write bundle " << sbt.job.getBundle().toString() << " to file " << filename.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 											dtn::data::DefaultSerializer s(fs);
 
@@ -175,18 +174,16 @@ namespace dtn
 											s << bundle;
 
 											// raise bundle event
-											dtn::net::TransferCompletedEvent::raise(sbt.node.getEID(), bundle);
-											dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+											sbt.job.complete();
 										} catch (const ibrcommon::Exception&) {
 											filename.remove();
 											throw;
 										}
 									} catch (const dtn::storage::NoBundleFoundException&) {
 										// send transfer aborted event
-										dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+										sbt.job.abort(dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 									} catch (const ibrcommon::Exception&) {
 										// something went wrong - requeue transfer for later
-										dtn::routing::RequeueBundleEvent::raise(sbt.node.getEID(), sbt.job._bundle);
 									}
 
 								} catch (const std::bad_cast&) { }
@@ -194,7 +191,7 @@ namespace dtn
 							}
 						}
 					} catch (const std::exception &ex) {
-						IBRCOMMON_LOGGER(error) << "error while processing file convergencelayer task: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("FileConvergenceLayer", error) << "error while processing file convergencelayer task: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					delete t;
 				}
@@ -252,7 +249,7 @@ namespace dtn
 			// get a reference to the router
 			dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
 
-			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); iter++)
+			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); ++iter)
 			{
 				const ibrcommon::File &f = (*iter);
 
@@ -303,11 +300,11 @@ namespace dtn
 				catch (const dtn::data::Validator::RejectedException &ex)
 				{
 					// display the rejection
-					IBRCOMMON_LOGGER(warning) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("FileConvergenceLayer", warning) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 				catch (const dtn::InvalidDataException &ex) {
 					// display the rejection
-					IBRCOMMON_LOGGER(warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("FileConvergenceLayer", warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 		}
@@ -317,7 +314,7 @@ namespace dtn
 			std::list<dtn::core::Node::URI> uris = n.get(dtn::core::Node::CONN_FILE);
 
 			// abort the transfer, if no URI exists
-			if (uris.size() == 0) throw ibrcommon::Exception("path not defined");
+			if (uris.empty()) throw ibrcommon::Exception("path not defined");
 
 			// get the URI of the file path
 			const std::string &uri = uris.front().value;
@@ -335,7 +332,7 @@ namespace dtn
 			// list all files in the folder
 			path.getFiles(files);
 
-			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); iter++)
+			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); ++iter)
 			{
 				const ibrcommon::File &f = (*iter);
 
@@ -363,7 +360,7 @@ namespace dtn
 					// put the meta bundle in the list
 					ret.push_back(meta);
 				} catch (const std::exception&) {
-					IBRCOMMON_LOGGER_DEBUG(34) << "bundle in file " << f.getPath() << " invalid or expired" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("FileConvergenceLayer", 34) << "bundle in file " << f.getPath() << " invalid or expired" << IBRCOMMON_LOGGER_ENDL;
 
 					// delete the file
 					ibrcommon::File(f).remove();
@@ -373,7 +370,7 @@ namespace dtn
 			return ret;
 		}
 
-		void FileConvergenceLayer::queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job)
+		void FileConvergenceLayer::queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job)
 		{
 			_tasks.push(new StoreBundleTask(n, job));
 		}
@@ -381,7 +378,7 @@ namespace dtn
 		void FileConvergenceLayer::replyHandshake(const dtn::data::Bundle &bundle, std::list<dtn::data::MetaBundle> &bl)
 		{
 			// read the ecm
-			const dtn::data::PayloadBlock &p = bundle.getBlock<dtn::data::PayloadBlock>();
+			const dtn::data::PayloadBlock &p = bundle.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference ref = p.getBLOB();
 			dtn::routing::NodeHandshake request;
 
@@ -403,7 +400,7 @@ namespace dtn
 					dtn::data::BundleSet vec;
 
 					// add bundles in the path
-					for (std::list<dtn::data::MetaBundle>::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
+					for (std::list<dtn::data::MetaBundle>::const_iterator iter = bl.begin(); iter != bl.end(); ++iter)
 					{
 						vec.add(*iter);
 					}
@@ -411,7 +408,7 @@ namespace dtn
 					// add bundles from the blacklist
 					{
 						ibrcommon::MutexLock l(_blacklist_mutex);
-						for (std::set<dtn::data::MetaBundle>::const_iterator iter = _blacklist.begin(); iter != _blacklist.end(); iter++)
+						for (std::set<dtn::data::MetaBundle>::const_iterator iter = _blacklist.begin(); iter != _blacklist.end(); ++iter)
 						{
 							vec.add(*iter);
 						}
@@ -428,14 +425,14 @@ namespace dtn
 				dtn::data::Bundle answer;
 
 				// set the source of the bundle
-				answer._source = bundle._destination;
+				answer.source = bundle.destination;
 
 				// set the destination of the bundle
 				answer.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-				answer._destination = bundle._source;
+				answer.destination = bundle.source;
 
 				// limit the lifetime to 60 seconds
-				answer._lifetime = 60;
+				answer.lifetime = 60;
 
 				// set high priority
 				answer.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -455,7 +452,7 @@ namespace dtn
 				schl.setLimit(1);
 
 				// raise default bundle received event
-				dtn::net::BundleReceivedEvent::raise(bundle._destination.getNode(), answer, false);
+				dtn::net::BundleReceivedEvent::raise(bundle.destination.getNode(), answer, false);
 			}
 		}
 	} /* namespace net */

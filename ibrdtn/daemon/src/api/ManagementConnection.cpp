@@ -21,18 +21,34 @@
 
 #include "config.h"
 #include "Configuration.h"
+#include "DTNTPWorker.h"
 #include "ManagementConnection.h"
 #include "storage/BundleResult.h"
 #include "core/BundleCore.h"
-#include "core/GlobalEvent.h"
+#include "core/Node.h"
 #include "routing/prophet/ProphetRoutingExtension.h"
 #include "routing/prophet/DeliveryPredictabilityMap.h"
 
+#include "core/EventDispatcher.h"
+#include "core/GlobalEvent.h"
+#include "net/BundleReceivedEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
+#include "core/BundleGeneratedEvent.h"
+#include "core/BundleExpiredEvent.h"
+#include "routing/QueueBundleEvent.h"
+#include "routing/RequeueBundleEvent.h"
+#include "core/TimeAdjustmentEvent.h"
+
+#include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Utils.h>
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrcommon/link/LinkEvent.h>
+#include <ibrcommon/thread/RWLock.h>
+
+#include <iomanip>
 
 namespace dtn
 {
@@ -64,7 +80,7 @@ namespace dtn
 				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.size() == 0) continue;
+				if (cmd.empty()) continue;
 
 				if (cmd[0] == "exit")
 				{
@@ -101,9 +117,9 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return 0; };
+				virtual dtn::data::Size limit() const throw () { return 0; };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle&) const throw (dtn::storage::BundleSelectorException)
 				{
 					return true;
 				}
@@ -119,7 +135,7 @@ namespace dtn
 						const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
 						_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
-						for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
+						for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); ++iter)
 						{
 							_stream << (*iter).getEID().getString() << std::endl;
 						}
@@ -262,11 +278,11 @@ namespace dtn
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
 						_stream << ClientHandler::API_STATUS_OK << " RELOAD" << std::endl;
 					}
-					else if (cmd[1] == "powersave")
+					else if (cmd[1] == "resume")
 					{
 						// send powersave signal
-						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_POWERSAVE);
-						_stream << ClientHandler::API_STATUS_OK << " POWERSAVE" << std::endl;
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RESUME);
+						_stream << ClientHandler::API_STATUS_OK << " RESUME" << std::endl;
 					}
 					else if (cmd[1] == "suspend")
 					{
@@ -274,11 +290,17 @@ namespace dtn
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SUSPEND);
 						_stream << ClientHandler::API_STATUS_OK << " SUSPEND" << std::endl;
 					}
-					else if (cmd[1] == "wakeup")
+					else if (cmd[1] == "start_discovery")
 					{
 						// send wakeup signal
-						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_WAKEUP);
-						_stream << ClientHandler::API_STATUS_OK << " WAKEUP" << std::endl;
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY);
+						_stream << ClientHandler::API_STATUS_OK << " DISCOVERY START" << std::endl;
+					}
+					else if (cmd[1] == "stop_discovery")
+					{
+						// send wakeup signal
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY);
+						_stream << ClientHandler::API_STATUS_OK << " DISCOVERY STOP" << std::endl;
 					}
 					else if (cmd[1] == "internet_off")
 					{
@@ -307,7 +329,7 @@ namespace dtn
 						try {
 							bcore.getStorage().get(filter, blist);
 
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = blist.begin(); iter != blist.end(); ++iter)
 							{
 								const dtn::data::MetaBundle &b = *iter;
 								_stream << b.toString() << ";" << b.destination.getString() << ";" << std::endl;
@@ -324,9 +346,13 @@ namespace dtn
 
 					if ( cmd[1] == "prophet" )
 					{
-						typedef dtn::routing::BaseRouter::Extension RoutingExtension;
-						const std::list<RoutingExtension*>& routingExtensions = dtn::core::BundleCore::getInstance().getRouter().getExtensions();
-						std::list<RoutingExtension*>::const_iterator it;
+						dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
+
+						// lock the extension list during the processing
+						ibrcommon::RWLock l(router.getExtensionMutex(), ibrcommon::RWMutex::LOCK_READONLY);
+
+						const dtn::routing::BaseRouter::extension_list& routingExtensions = router.getExtensions();
+						dtn::routing::BaseRouter::extension_list::const_iterator it;
 
 						/* find the prophet extension in the BaseRouter */
 
@@ -345,10 +371,10 @@ namespace dtn
 									ibrcommon::ThreadsafeReference<const dtn::routing::AcknowledgementSet> ack_set = prophet_extension.getAcknowledgementSet();
 
 									_stream << ClientHandler::API_STATUS_OK << " ROUTING PROPHET ACKNOWLEDGEMENTS" << std::endl;
-									for (dtn::routing::AcknowledgementSet::const_iterator iter = (*ack_set).begin(); iter != (*ack_set).end(); iter++)
+									for (dtn::routing::AcknowledgementSet::const_iterator iter = (*ack_set).begin(); iter != (*ack_set).end(); ++iter)
 									{
 										const dtn::data::MetaBundle &ack = (*iter);
-										_stream << ack.toString() << " | " << ack.expiretime << std::endl;
+										_stream << ack.toString() << " | " << ack.expiretime.toString() << std::endl;
 									}
 									_stream << std::endl;
 								} else {
@@ -363,6 +389,72 @@ namespace dtn
 							/* no prophet routing extension found */
 							_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " ROUTING PROPHET EXTENSION NOT FOUND" << std::endl;
 						}
+					} else {
+						throw ibrcommon::Exception("malformed command");
+					}
+				}
+				else if (cmd[0] == "stats")
+				{
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
+					if ( cmd[1] == "info" ) {
+						_stream << ClientHandler::API_STATUS_OK << " STATS INFO" << std::endl;
+						_stream << "Uptime: " << dtn::utils::Clock::getUptime().get<size_t>() << std::endl;
+						_stream << "Neighbors: " << dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors().size() << std::endl;
+						_stream << "Storage-size: " << dtn::core::BundleCore::getInstance().getStorage().size() << std::endl;
+						_stream << std::endl;
+					} else if ( cmd[1] == "timesync" ) {
+						_stream << ClientHandler::API_STATUS_OK << " STATS TIMESYNC" << std::endl;
+						_stream << "Timestamp: " << dtn::utils::Clock::getTime().get<size_t>() << std::endl;
+						_stream << "Offset: " << std::setprecision(6) << dtn::utils::Clock::toDouble(dtn::utils::Clock::getOffset()) << std::endl;
+						_stream << "Rating: " << std::setprecision(16) << dtn::utils::Clock::getRating() << std::endl;
+						_stream << "Adjusted: " << dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::getCounter() << std::endl;
+
+						const dtn::daemon::DTNTPWorker::TimeSyncState &state = dtn::daemon::DTNTPWorker::getState();
+
+						_stream << "Base: " << std::setprecision(16) << state.base_rating << std::endl;
+						_stream << "Psi: " << std::setprecision(16) << state.psi << std::endl;
+						_stream << "Sigma: " << std::setprecision(16) << state.sigma << std::endl;
+						_stream << "Threshold: " << std::setprecision(6) << state.sync_threshold << std::endl;
+
+						_stream << std::endl;
+					} else if ( cmd[1] == "bundles" ) {
+						_stream << ClientHandler::API_STATUS_OK << " STATS BUNDLES" << std::endl;
+						_stream << "Stored: " << dtn::core::BundleCore::getInstance().getStorage().count() << std::endl;
+						_stream << "Expired: " << dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::getCounter() << std::endl;
+						_stream << "Generated: " << dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::getCounter() << std::endl;
+						_stream << "Received: " << dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::getCounter() << std::endl;
+						_stream << "Transmitted: " << dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::getCounter() << std::endl;
+						_stream << "Aborted: " << dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::getCounter() << std::endl;
+						_stream << "Requeued: " << dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::getCounter() << std::endl;
+						_stream << "Queued: " << dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::getCounter() << std::endl;
+						_stream << std::endl;
+					} else if ( cmd[1] == "convergencelayers" ) {
+						ConnectionManager::stats_list list = dtn::core::BundleCore::getInstance().getConnectionManager().getStats();
+
+						_stream << ClientHandler::API_STATUS_OK << " STATS CONVERGENCELAYERS" << std::endl;
+						for (ConnectionManager::stats_list::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
+							const ConnectionManager::stats_pair &pair = (*iter);
+							const ConvergenceLayer::stats_map &map = pair.second;
+
+							for (ConvergenceLayer::stats_map::const_iterator map_it = map.begin(); map_it != map.end(); ++map_it) {
+								_stream << dtn::core::Node::toString(pair.first) << "|" << (*map_it).first << ": " << (*map_it).second << std::endl;
+							}
+						}
+						_stream << std::endl;
+					} else if ( cmd[1] == "reset" ) {
+						dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::net::BundleReceivedEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::resetCounter();
+						dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::resetCounter();
+
+						// reset cl stats
+						dtn::core::BundleCore::getInstance().getConnectionManager().resetStats();
+
+						_stream << ClientHandler::API_STATUS_ACCEPTED << " STATS RESET" << std::endl;
 					} else {
 						throw ibrcommon::Exception("malformed command");
 					}

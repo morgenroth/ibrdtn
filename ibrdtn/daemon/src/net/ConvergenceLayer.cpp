@@ -26,31 +26,24 @@ namespace dtn
 {
 	namespace net
 	{
-		ConvergenceLayer::ConvergenceLayer()
-		{
-		}
-
 		ConvergenceLayer::~ConvergenceLayer()
 		{
 		}
 
-		ConvergenceLayer::Job::Job()
-		{
+		void ConvergenceLayer::resetStats() {
+			_stats.clear();
 		}
 
-		ConvergenceLayer::Job::Job(const dtn::data::EID &eid, const dtn::data::BundleID &b)
-		 : _bundle(b), _destination(eid)
-		{
+		const ConvergenceLayer::stats_map& ConvergenceLayer::getStats() {
+			return _stats;
 		}
 
-		ConvergenceLayer::Job::~Job()
-		{
+		void ConvergenceLayer::addStats(const std::string &tag, const size_t value) {
+			_stats[tag] += value;
 		}
 
-		void ConvergenceLayer::Job::clear()
-		{
-			_bundle = dtn::data::BundleID();
-			_destination = dtn::data::EID();
+		void ConvergenceLayer::setStats(const std::string &tag, const size_t value) {
+			_stats[tag] = value;
 		}
 	}
 }

@@ -9,66 +9,67 @@
 #include "core/BundleCore.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
+#include <vector>
 
 namespace dtn
 {
 	namespace routing
 	{
-		const size_t DeliveryPredictabilityMap::identifier = NodeHandshakeItem::DELIVERY_PREDICTABILITY_MAP;
+		const dtn::data::Number DeliveryPredictabilityMap::identifier = NodeHandshakeItem::DELIVERY_PREDICTABILITY_MAP;
 
 		DeliveryPredictabilityMap::DeliveryPredictabilityMap()
-		: NeighborDataset(DeliveryPredictabilityMap::identifier), _beta(0.0), _gamma(0.0), _lastAgingTime(0), _time_unit(0)
+		: NeighborDataSetImpl(DeliveryPredictabilityMap::identifier), _beta(0.0), _gamma(0.0), _lastAgingTime(0), _time_unit(0)
 		{
 		}
 
 		DeliveryPredictabilityMap::DeliveryPredictabilityMap(const size_t &time_unit, const float &beta, const float &gamma)
-		: NeighborDataset(DeliveryPredictabilityMap::identifier), _beta(beta), _gamma(gamma), _lastAgingTime(0), _time_unit(time_unit)
+		: NeighborDataSetImpl(DeliveryPredictabilityMap::identifier), _beta(beta), _gamma(gamma), _lastAgingTime(0), _time_unit(time_unit)
 		{
 		}
 
 		DeliveryPredictabilityMap::~DeliveryPredictabilityMap() {
 		}
 
-		size_t DeliveryPredictabilityMap::getIdentifier() const
+		const dtn::data::Number& DeliveryPredictabilityMap::getIdentifier() const
 		{
 			return identifier;
 		}
 
-		size_t DeliveryPredictabilityMap::getLength() const
+		dtn::data::Length DeliveryPredictabilityMap::getLength() const
 		{
-			size_t len = 0;
+			dtn::data::Length len = 0;
 			for(predictmap::const_iterator it = _predictmap.begin(); it != _predictmap.end(); ++it)
 			{
 				/* calculate length of the EID */
 				const std::string eid = it->first.getString();
-				size_t eid_len = eid.length();
-				len += data::SDNV(eid_len).getLength() + eid_len;
+				dtn::data::Length eid_len = eid.length();
+				len += data::Number(eid_len).getLength() + eid_len;
 
 				/* calculate length of the float in fixed notation */
 				const float& f = it->second;
 				std::stringstream ss;
 				ss << f << std::flush;
 
-				size_t float_len = ss.str().length();
-				len += data::SDNV(float_len).getLength() + float_len;
+				dtn::data::Length float_len = ss.str().length();
+				len += data::Number(float_len).getLength() + float_len;
 			}
-			return data::SDNV(_predictmap.size()).getLength() + len;
+			return data::Number(_predictmap.size()).getLength() + len;
 		}
 
 		std::ostream& DeliveryPredictabilityMap::serialize(std::ostream& stream) const
 		{
-			stream << data::SDNV(_predictmap.size());
+			stream << data::Number(_predictmap.size());
 			for(predictmap::const_iterator it = _predictmap.begin(); it != _predictmap.end(); ++it)
 			{
 				const std::string eid = it->first.getString();
-				stream << data::SDNV(eid.length()) << eid;
+				stream << data::Number(eid.length()) << eid;
 
 				const float& f = it->second;
 				/* write f into a stringstream to get final length */
 				std::stringstream ss;
 				ss << f << std::flush;
 
-				stream << data::SDNV(ss.str().length());
+				stream << data::Number(ss.str().length());
 				stream << ss.str();
 			}
 			IBRCOMMON_LOGGER_DEBUG_TAG("DeliveryPredictabilityMap", 20) << "Serialized with " << _predictmap.size() << " items." << IBRCOMMON_LOGGER_ENDL;
@@ -78,31 +79,43 @@ namespace dtn
 
 		std::istream& DeliveryPredictabilityMap::deserialize(std::istream& stream)
 		{
-			data::SDNV elements_read(0);
-			data::SDNV map_size;
+			data::Number elements_read(0);
+			data::Number map_size;
 			stream >> map_size;
 
 			while(elements_read < map_size)
 			{
 				/* read the EID */
-				data::SDNV eid_len;
+				data::Number eid_len;
 				stream >> eid_len;
-				char eid_cstr[eid_len.getValue()+1];
-				stream.read(eid_cstr, sizeof(eid_cstr)-1);
-				eid_cstr[sizeof(eid_cstr)-1] = 0;
-				data::EID eid(eid_cstr);
+
+				// create a buffer for the EID
+				std::vector<char> eid_cstr(eid_len.get<size_t>());
+
+				// read the EID string
+				stream.read(&eid_cstr[0], eid_cstr.size());
+
+				// convert the string into an EID object
+				dtn::data::EID eid(std::string(eid_cstr.begin(), eid_cstr.end()));
+
 				if(eid == data::EID())
 					throw dtn::InvalidDataException("EID could not be casted, while parsing a dp_map.");
 
 				/* read the probability (float) */
 				float f;
-				data::SDNV float_len;
+				dtn::data::Number float_len;
 				stream >> float_len;
-				char f_cstr[float_len.getValue()+1];
-				stream.read(f_cstr, sizeof(f_cstr)-1);
-				f_cstr[sizeof(f_cstr)-1] = 0;
 
-				std::stringstream ss(f_cstr);
+				// create a buffer for the data string
+				std::vector<char> f_cstr(float_len.get<size_t>());
+
+				// read the data string
+				stream.read(&f_cstr[0], f_cstr.size());
+
+				// convert string data into a stringstream
+				std::stringstream ss(std::string(f_cstr.begin(), f_cstr.end()));
+
+				// convert string data into a float
 				ss >> f;
 				if(ss.fail())
 					throw dtn::InvalidDataException("Float could not be casted, while parsing a dp_map.");
@@ -176,12 +189,12 @@ namespace dtn
 
 		void DeliveryPredictabilityMap::age(const float &p_first_threshold)
 		{
-			size_t current_time = dtn::utils::Clock::getUnixTimestamp();
+			const dtn::data::Timestamp current_time = dtn::utils::Clock::getUnixTimestamp();
 
 			// prevent double aging
 			if (current_time <= _lastAgingTime) return;
 
-			unsigned int k = (current_time - _lastAgingTime) / _time_unit;
+			const dtn::data::Timestamp k = (current_time - _lastAgingTime) / _time_unit;
 
 			predictmap::iterator it;
 			for(it = _predictmap.begin(); it != _predictmap.end();)
@@ -192,7 +205,7 @@ namespace dtn
 					continue;
 				}
 
-				it->second *= pow(_gamma, (int)k);
+				it->second *= pow(_gamma, k.get<int>());
 
 				if(it->second < p_first_threshold)
 				{

@@ -24,7 +24,7 @@
 
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Exceptions.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/Serializer.h"
 #include <ibrcommon/Exceptions.h>
@@ -56,64 +56,74 @@ namespace dtn
 
 			virtual ~Block();
 
+			/**
+			 * assignment operator
+			 */
+			Block& operator=(const Block &block);
+
+			/**
+			 * allow comparison with the block type only
+			 */
+			bool operator==(const block_t &id) const;
+
 			virtual void addEID(const dtn::data::EID &eid);
 			virtual void clearEIDs();
 			virtual const eid_list& getEIDList() const;
 
-			const char& getType() const { return _blocktype; }
+			const block_t& getType() const { return _blocktype; }
 
 			void set(ProcFlags flag, const bool &value);
 			bool get(ProcFlags flag) const;
-			const size_t& getProcessingFlags() const;
+			const Bitset<ProcFlags>& getProcessingFlags() const;
 
 			/**
 			 * Serialize the derived block payload.
 			 * @param stream A output stream to serialize into.
 			 * @return The same reference as given with the stream parameter.
 			 */
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const = 0;
+			virtual std::ostream &serialize(std::ostream &stream, Length &length) const = 0;
 
 			/**
 			 * Deserialize the derived block payload.
 			 * @param stream A input stream to deserialize from.
 			 * @return The same reference as given with the stream parameter.
 			 */
-			virtual std::istream &deserialize(std::istream &stream, const size_t length) = 0;
+			virtual std::istream &deserialize(std::istream &stream, const Length &length) = 0;
 
 			/**
 			 * Return the length of the payload, if this were an abstract block. It is
 			 * the length put in the third field, after block type and processing flags.
 			 */
-			virtual size_t getLength() const = 0;
+			virtual Length getLength() const = 0;
 
 			/**
 			 * Return the length of the payload in strict format
 			 */
-			virtual size_t getLength_strict() const;
+			virtual Length getLength_strict() const;
 
 			/**
 			Serialize the block in a strict way. Dynamic fields are set to the last deserialized value.
 			@param stream the stream to be written into
 			@return the same stream as the parameter for chaining
 			*/
-			virtual std::ostream &serialize_strict(std::ostream &stream, size_t &length) const;
+			virtual std::ostream &serialize_strict(std::ostream &stream, Length &length) const;
 
 		protected:
 			/**
 			 * The constructor of this class is protected to prevent instantiation of this abstract class.
 			 * @param blocktype The type of the block.
 			 */
-			Block(char blocktype);
+			Block(block_t blocktype);
 
 			// block type of this block
-			char _blocktype;
+			block_t _blocktype;
 
 			// the list of EID references embedded in this block
 			eid_list _eids;
 
 		private:
 			// block processing flags
-			size_t _procflags;
+			Bitset<ProcFlags> _procflags;
 		};
 	}
 }

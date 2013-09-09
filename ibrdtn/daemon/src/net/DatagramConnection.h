@@ -29,6 +29,7 @@
 #include <ibrcommon/thread/Conditional.h>
 #include <streambuf>
 #include <iostream>
+#include <vector>
 #include <stdint.h>
 
 namespace dtn
@@ -41,7 +42,7 @@ namespace dtn
 		{
 		public:
 			virtual ~DatagramConnectionCallback() {};
-			virtual void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, int len) throw (DatagramException) = 0;
+			virtual void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, const dtn::data::Length &len) throw (DatagramException) = 0;
 			virtual void callback_ack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException) = 0;
 
 			virtual void connectionUp(const DatagramConnection *conn) = 0;
@@ -51,6 +52,8 @@ namespace dtn
 		class DatagramConnection : public ibrcommon::DetachedThread
 		{
 		public:
+			static const std::string TAG;
+
 			DatagramConnection(const std::string &identifier, const DatagramService::Parameter &params, DatagramConnectionCallback &callback);
 			virtual ~DatagramConnection();
 
@@ -68,14 +71,14 @@ namespace dtn
 			 * Queue job for delivery to another node
 			 * @param job
 			 */
-			void queue(const ConvergenceLayer::Job &job);
+			void queue(const dtn::net::BundleTransfer &job);
 
 			/**
 			 * queue data for delivery to the stream
 			 * @param buf
 			 * @param len
 			 */
-			void queue(const char &flags, const unsigned int &seqno, const char *buf, int len);
+			void queue(const char &flags, const unsigned int &seqno, const char *buf, const dtn::data::Length &len);
 
 			/**
 			 * This method is called by the DatagramCL, if an ACK is received.
@@ -90,10 +93,24 @@ namespace dtn
 			void setPeerEID(const dtn::data::EID &peer);
 
 		private:
+			enum SEND_FLOW {
+				SEND_IDLE,
+				SEND_WAIT_ACK,
+				SEND_NEXT,
+				SEND_ERROR
+			} _send_state;
+
+			enum RECV_FLOW {
+				RECV_IDLE,
+				RECV_HEAD,
+				RECV_TRANSMISSION,
+				RECV_ERROR
+			} _recv_state;
+
 			class Stream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
 			{
 			public:
-				Stream(DatagramConnection &conn, const size_t maxmsglen, const unsigned int maxseqno);
+				Stream(DatagramConnection &conn, const dtn::data::Length &maxmsglen);
 				virtual ~Stream();
 
 				/**
@@ -101,7 +118,7 @@ namespace dtn
 				 * @param buf Buffer with received data
 				 * @param len Length of the buffer
 				 */
-				void queue(const char &flags, const unsigned int &seqno, const char *buf, int len);
+				void queue(const char *buf, const dtn::data::Length &len) throw (DatagramException);
 
 				/**
 				 * Close the stream to terminate all blocking
@@ -116,24 +133,19 @@ namespace dtn
 
 			private:
 				// buffer size and maximum message size
-				const size_t _buf_size;
+				const dtn::data::Length _buf_size;
 
-				// maximum count of sequence numbers
-				const unsigned int _maxseqno;
-
-				// state for incoming segments
-				char _in_state;
-
-				// out flags
-				char _out_state;
+				// will be set to true if the next segment is the last
+				// of the bundle
+				bool _last_segment;
 
 				// buffer for incoming data to queue
 				// the underflow method will block until
 				// this buffer contains any data
-				char *_queue_buf;
+				std::vector<char> _queue_buf;
 
 				// the number of bytes available in the queue buffer
-				int _queue_buf_len;
+				dtn::data::Length _queue_buf_len;
 
 				// conditional to lock the queue buffer and the
 				// corresponding length variable
@@ -141,17 +153,11 @@ namespace dtn
 
 				// outgoing data from the upper layer is stored
 				// here first and processed by the overflow() method
-				char *_out_buf;
+				std::vector<char> _out_buf;
 
 				// incoming data to deliver data to the upper layer
 				// is stored in this buffer by the underflow() method
-				char *_in_buf;
-
-				// next expected incoming sequence number
-				unsigned int in_seq_num_;
-
-				// next outgoing sequence number
-				unsigned int out_seq_num_;
+				std::vector<char> _in_buf;
 
 				// this variable is set to true to shutdown
 				// this stream
@@ -171,21 +177,18 @@ namespace dtn
 				void finally() throw ();
 				void __cancellation() throw ();
 
-				void clearQueue();
-
-				ibrcommon::Queue<ConvergenceLayer::Job> queue;
+				ibrcommon::Queue<dtn::net::BundleTransfer> queue;
 
 			private:
-				ConvergenceLayer::Job _current_job;
 				DatagramConnection::Stream &_stream;
 
 				// callback to the corresponding connection object
 				DatagramConnection &_connection;
 			};
 
-			void stream_send(const char &flags, const unsigned int &seqno, const char *buf, int len) throw (DatagramException);
+			void stream_send(const char *buf, const dtn::data::Length &len, bool last) throw (DatagramException);
 
-			void adjust_rtt(float value);
+			void adjust_rtt(double value);
 
 			DatagramConnectionCallback &_callback;
 			const std::string _identifier;
@@ -193,12 +196,18 @@ namespace dtn
 			DatagramConnection::Sender _sender;
 
 			ibrcommon::Conditional _ack_cond;
-			size_t _last_ack;
-			size_t _wait_ack;
+			unsigned int _last_ack;
+			unsigned int _next_seqno;
+
+			// stores the head of each connection
+			// the head is hold back until at least a second
+			// or the last segment was received
+			std::vector<char> _head_buf;
+			dtn::data::Length _head_len;
 
 			const DatagramService::Parameter _params;
 
-			size_t _avg_rtt;
+			double _avg_rtt;
 
 			dtn::data::EID _peer_eid;
 		};

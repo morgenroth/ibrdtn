@@ -31,7 +31,6 @@ class BaseRouterTest : public CppUnit::TestFixture {
 		void testAddExtension();
 		void testTransferTo();
 		void testRaiseEvent();
-		void testGetBundle();
 		void testGetStorage();
 		void testIsKnown();
 		void testSetKnown();
@@ -47,7 +46,6 @@ class BaseRouterTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testAddExtension);
 			CPPUNIT_TEST(testTransferTo);
 			CPPUNIT_TEST(testRaiseEvent);
-			CPPUNIT_TEST(testGetBundle);
 			CPPUNIT_TEST(testGetStorage);
 			CPPUNIT_TEST(testIsKnown);
 			CPPUNIT_TEST(testSetKnown);

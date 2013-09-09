@@ -29,6 +29,7 @@
 #include "Component.h"
 #include "Configuration.h"
 #include "core/Event.h"
+#include "core/EventReceiver.h"
 #include "net/DiscoveryServiceProvider.h"
 
 #include <ibrdtn/data/EID.h>
@@ -169,7 +170,7 @@ protected:
 	 * Executes the main loop with dtn_dht_periodic.
 	 * After exiting the main loop, the DHT is shut down.
 	 */
-	void componentRun() throw ();;
+	void componentRun() throw ();
 	/**
 	 * Calls the interrupt pipe to exit the main loop.
 	 * And so ends up the main loop indirectly

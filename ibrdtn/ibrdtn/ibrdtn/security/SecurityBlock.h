@@ -115,7 +115,7 @@ namespace dtn
 
 				const std::string getValue() const;
 				TLV_TYPES getType() const;
-				size_t getLength() const;
+				dtn::data::Length getLength() const;
 
 				friend std::ostream& operator<<(std::ostream &stream, const TLV &tlv);
 				friend std::istream& operator>>(std::istream &stream, TLV &tlv);
@@ -135,16 +135,16 @@ namespace dtn
 				friend std::istream& operator>>(std::istream &stream, TLVList &tlvlist);
 
 				const std::string get(TLV_TYPES type) const;
-				void get(TLV_TYPES type, unsigned char *value, size_t length) const;
+				void get(TLV_TYPES type, unsigned char *value, dtn::data::Length length) const;
 				void set(TLV_TYPES type, std::string value);
-				void set(TLV_TYPES type, const unsigned char *value, size_t length);
+				void set(TLV_TYPES type, const unsigned char *value, dtn::data::Length length);
 				void remove(TLV_TYPES type);
 
 				const std::string toString() const;
-				size_t getLength() const;
+				dtn::data::Length getLength() const;
 
 			private:
-				size_t getPayloadLength() const;
+				dtn::data::Length getPayloadLength() const;
 			};
 
 			/** does nothing */
@@ -154,21 +154,21 @@ namespace dtn
 			Returns the length of this Block
 			@return the length
 			*/
-			virtual size_t getLength() const;
+			virtual dtn::data::Length getLength() const;
 
 			/**
 			Returns the length of this Block if it would serialized in mutable
 			canonical form
 			@return the length in mutable canonical form
 			*/
-			virtual size_t getLength_mutable() const;
+			virtual dtn::data::Length getLength_mutable() const;
 
 			/**
 			Serializes this Block into stream
 			@param the stream in which should be written
 			@return the same stream as the input stream
 			*/
-			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
+			virtual std::ostream &serialize(std::ostream &stream, dtn::data::Length &length) const;
 
 			/**
 			 * Serializes this block in a strict form. That skips all dynamic field like
@@ -176,13 +176,13 @@ namespace dtn
 			 * @param stream
 			 * @return
 			 */
-			virtual std::ostream &serialize_strict(std::ostream &stream, size_t &length) const;
+			virtual std::ostream &serialize_strict(std::ostream &stream, dtn::data::Length &length) const;
 
 			/**
 			Parses the SecurityBlock from a Stream
 			@param stream the stream to read from
 			*/
-			virtual std::istream &deserialize(std::istream &stream, const size_t length);
+			virtual std::istream &deserialize(std::istream &stream, const dtn::data::Length &length);
 
 			/**
 			Returns the Security source of a SecurityBlock or dtn:none if none exists
@@ -240,13 +240,13 @@ namespace dtn
 		protected:
 			/** the ciphersuite id tells what type of encryption, signature or MAC
 			is used */
-			uint64_t _ciphersuite_id;
+			dtn::data::Number _ciphersuite_id;
 			/** the ciphersuite flags tell if security result or parameters are
 			used, if the security destination or source is set and if a correlator
 			is used */
-			uint64_t _ciphersuite_flags;
+			dtn::data::Bitset<CIPHERSUITE_FLAGS> _ciphersuite_flags;
 			/** a correlator binds several security blocks in a bundle together */
-			uint64_t _correlator;
+			dtn::data::Number _correlator;
 
 			/** you can find e.g. key information, tags, salts,
 			initialization_vectors stored als TLVs here */
@@ -289,7 +289,7 @@ namespace dtn
 			Sets the correlator
 			@param corr correlator value
 			*/
-			void setCorrelator(const uint64_t corr);
+			void setCorrelator(const dtn::data::Number &corr);
 
 			/**
 			Checks if the given correlator value is used in the bundle
@@ -297,7 +297,7 @@ namespace dtn
 			@param correlator the correlator to be tested for uniqueness
 			@return false if correlator is unique, true otherwise
 			*/
-			static bool isCorrelatorPresent(const dtn::data::Bundle &bundle, const uint64_t correlator);
+			static bool isCorrelatorPresent(const dtn::data::Bundle &bundle, const dtn::data::Number &correlator);
 
 			/**
 			Creates a unique correlatorvalue for bundle
@@ -305,7 +305,7 @@ namespace dtn
 			created
 			@return a unique correlator
 			*/
-			static uint64_t createCorrelatorValue(const dtn::data::Bundle &bundle);
+			static dtn::data::Number createCorrelatorValue(const dtn::data::Bundle &bundle);
 
 			/**
 			Canonicalizes the block into the stream.
@@ -324,7 +324,7 @@ namespace dtn
 			PayloadIntegrityBlock).
 			@return the size of the serialized security result
 			*/
-			virtual size_t getSecurityResultSize() const;
+			virtual dtn::data::Length getSecurityResultSize() const;
 
 			/**
 			Fills salt and key with random numbers.
@@ -332,7 +332,7 @@ namespace dtn
 			@param key pointer to key
 			@param key_size size of key
 			*/
-			static void createSaltAndKey(uint32_t& salt, unsigned char * key, size_t key_size);
+			static void createSaltAndKey(uint32_t& salt, unsigned char * key, dtn::data::Length key_size);
 
 			/**
 			Adds a key as a TLV to a string. The key is encrypted using the public
@@ -344,7 +344,7 @@ namespace dtn
 			@param rsa object containing the public key for encryption of the
 			symmetric key
 			*/
-			static void addKey(TLVList& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa);
+			static void addKey(TLVList& security_parameter, unsigned char const * const key, dtn::data::Length key_size, RSA * rsa);
 
 			/**
 			Reads a symmetric key TLV object from a string.
@@ -355,7 +355,7 @@ namespace dtn
 			symmetric key
 			@return true if the key has been successfully decrypted
 			*/
-			static bool getKey(const TLVList& security_parameter, unsigned char * key, size_t key_size, RSA * rsa);
+			static bool getKey(const TLVList& security_parameter, unsigned char * key, dtn::data::Length key_size, RSA * rsa);
 
 			/**
 			Adds a salt TLV object to a string.
@@ -376,7 +376,7 @@ namespace dtn
 			@param to destination of the EIDs
 			@param skip how much EIDs should be skipped at the beginning
 			*/
-			static void copyEID(const dtn::data::Block& from, dtn::data::Block& to, size_t skip = 0);
+			static void copyEID(const dtn::data::Block& from, dtn::data::Block& to, dtn::data::Length skip = 0);
 
 			/**
 			Encrypts a Block. The used initialisation vector will be written into the
@@ -386,13 +386,13 @@ namespace dtn
 			If this is the first block, don't forget to add the key and salt to its
 			security parameters.
 			@param bundle the bundle which contains block
-			@param block the block which shall be encrypted and encapsulated
+			@param it The iterator pointing to the block which shall be encrypted and encapsulated
 			@param salt the salt to be used
 			@param ephemeral_key the key to be used
 			@return the Security Block which replaced block
 			*/
 			template <class T>
-			static T& encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
+			static T& encryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
 			/**
 			Decrypts the block which is held in the SecurityBlock replaces it.
@@ -405,14 +405,14 @@ namespace dtn
 			@param ephemeral_key the key
 			@return true if tag verification succeeded, false if not
 			*/
-			static void decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
+			static void decryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
 			/**
 			Calculates the Size of the stream and adds a fragment range item to ciphersuite_params
 			@param ciphersuite_params the string which will get a fragment range TLV added
 			@param stream the stream which size will be calculated
 			*/
-			static void addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, size_t payload_length);
+			static void addFragmentRange(TLVList& ciphersuite_params, const dtn::data::Number &fragmentoffset, const dtn::data::Number &payload_length);
 
 		private:
 			/** not implemented */
@@ -422,10 +422,12 @@ namespace dtn
 		};
 
 		template <class T>
-		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
+		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, dtn::data::Bundle::iterator &it, uint32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
+			const dtn::data::Block &block = (**it);
+
 			// insert ESB, block can be removed after encryption, because bundle will destroy it
-			T& esb = bundle.insert<T>(block);
+			T& esb = bundle.insert<T>(it);
 
 			// take eid list
 			copyEID(block, esb);
@@ -449,7 +451,7 @@ namespace dtn
 
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 
-			bundle.remove(block);
+			bundle.erase(it++);
 
 			return esb;
 		}

@@ -45,7 +45,7 @@ TestBundleList::ExpiredBundleCounter::~ExpiredBundleCounter()
 {
 }
 
-void TestBundleList::ExpiredBundleCounter::eventBundleExpired(const dtn::data::MetaBundle&)
+void TestBundleList::ExpiredBundleCounter::eventBundleExpired(const dtn::data::MetaBundle&) throw ()
 {
 	//std::cout << "Bundle expired " << b.bundle.toString() << std::endl;
 	counter++;
@@ -56,17 +56,17 @@ void TestBundleList::genbundles(dtn::data::BundleList &l, int number, int offset
 	int range = max - offset;
 	dtn::data::Bundle b;
 
-	for (int i = 0; i < number; i++)
+	for (int i = 0; i < number; ++i)
 	{
 		int random_integer = offset + (rand() % range);
 
-		b._lifetime = random_integer;
-		b._timestamp = 0;
-		b._sequencenumber = random_integer;
+		b.lifetime = random_integer;
+		b.timestamp = 0;
+		b.sequencenumber = random_integer;
 
 		stringstream ss; ss << rand();
 
-		b._source = dtn::data::EID("dtn://node" + ss.str() + "/application");
+		b.source = dtn::data::EID("dtn://node" + ss.str() + "/application");
 
 		l.add(b);
 	}
@@ -82,14 +82,14 @@ void TestBundleList::orderTest(void)
 	genbundles(l, 1000, 0, 500);
 	genbundles(l, 1000, 600, 1000);
 
-	for (int i = 0; i < 550; i++)
+	for (int i = 0; i < 550; ++i)
 	{
 		l.expire(i);
 	}
 
 	CPPUNIT_ASSERT(ebc.counter == 1000);
 
-	for (int i = 0; i < 1050; i++)
+	for (int i = 0; i < 1050; ++i)
 	{
 		l.expire(i);
 	}

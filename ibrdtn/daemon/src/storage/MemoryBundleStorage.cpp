@@ -26,6 +26,8 @@
 #include "core/BundleExpiredEvent.h"
 #include "core/BundleEvent.h"
 
+#include <ibrdtn/utils/Clock.h>
+
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
 
@@ -33,7 +35,9 @@ namespace dtn
 {
 	namespace storage
 	{
-		MemoryBundleStorage::MemoryBundleStorage(size_t maxsize)
+		const std::string MemoryBundleStorage::TAG = "MemoryBundleStorage";
+
+		MemoryBundleStorage::MemoryBundleStorage(const dtn::data::Length maxsize)
 		 : BundleStorage(maxsize), _list(this)
 		{
 		}
@@ -69,7 +73,7 @@ namespace dtn
 
 		const std::string MemoryBundleStorage::getName() const
 		{
-			return "MemoryBundleStorage";
+			return MemoryBundleStorage::TAG;
 		}
 
 		bool MemoryBundleStorage::empty()
@@ -84,22 +88,25 @@ namespace dtn
 			// it is safe to delete this bundle now. (depending on the routing algorithm.)
 		}
 
-		unsigned int MemoryBundleStorage::count()
+		dtn::data::Size MemoryBundleStorage::count()
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 			return _bundles.size();
 		}
 
-		void MemoryBundleStorage::get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
+		void MemoryBundleStorage::get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException)
 		{
 			size_t items_added = 0;
 
 			// we have to iterate through all bundles
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (prio_bundle_set::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); iter++)
+			for (prio_bundle_set::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && ((cb.limit() == 0) || (items_added < cb.limit())); ++iter)
 			{
 				const dtn::data::MetaBundle &bundle = (*iter);
+
+				// skip expired bundles
+				if ( dtn::utils::Clock::isExpired( bundle.timestamp, bundle.lifetime ) ) continue;
 
 				if ( cb.shouldAdd(bundle) )
 				{
@@ -116,17 +123,21 @@ namespace dtn
 			try {
 				ibrcommon::MutexLock l(_bundleslock);
 
-				for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+				for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 				{
 					const dtn::data::Bundle &bundle = (*iter);
 					if (id == bundle)
 					{
+						if (_faulty) {
+							throw dtn::SerializationFailedException("bundle get failed due to faulty setting");
+						}
+
 						return bundle;
 					}
 				}
 			} catch (const dtn::SerializationFailedException &ex) {
 				// bundle loading failed
-				IBRCOMMON_LOGGER(error) << "Error while loading bundle data: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(MemoryBundleStorage::TAG, error) << "Error while loading bundle data: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 				// the bundle is broken, delete it
 				remove(id);
@@ -143,10 +154,10 @@ namespace dtn
 
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
 				const dtn::data::Bundle &bundle = (*iter);
-				ret.insert(bundle._destination);
+				ret.insert(bundle.destination);
 			}
 
 			return ret;
@@ -156,13 +167,14 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 
+			if (_faulty) return;
+
 			// get size of the bundle
 			dtn::data::DefaultSerializer s(std::cout);
-			size_t size = s.getLength(bundle);
+			dtn::data::Length size = s.getLength(bundle);
 
 			// increment the storage size
 			allocSpace(size);
-			_bundle_lengths[bundle] = size;
 
 			// insert Container
 			pair<set<dtn::data::Bundle>::iterator,bool> ret = _bundles.insert( bundle );
@@ -172,12 +184,17 @@ namespace dtn
 				_list.add(dtn::data::MetaBundle(bundle));
 				_priority_index.insert( bundle );
 
+				_bundle_lengths[bundle] = size;
+
 				// raise bundle added event
 				eventBundleAdded(bundle);
 			}
 			else
 			{
-				IBRCOMMON_LOGGER_DEBUG(5) << "Storage: got bundle duplicate " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				// free the previously allocated space
+				freeSpace(size);
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(MemoryBundleStorage::TAG, 5) << "got bundle duplicate " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -185,67 +202,43 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
-			{
-				if ( id == (*iter) )
-				{
-					// remove item in the bundlelist
-					dtn::data::Bundle bundle = (*iter);
+			// search for the bundle in the bundle list
+			const bundle_list::const_iterator iter = find(_bundles.begin(), _bundles.end(), id);
 
-					// remove it from the bundle list
-					_priority_index.erase(bundle);
-					_list.remove(bundle);
+			// if no bundle was found throw an exception
+			if (iter == _bundles.end()) throw NoBundleFoundException();
 
-					// get size of the bundle
-					dtn::data::DefaultSerializer s(std::cout);
-					size_t size = s.getLength(bundle);
+			// remove item in the bundlelist
+			const dtn::data::Bundle &bundle = (*iter);
+			_list.remove(bundle);
 
-					// decrement the storage size
-					freeSpace(size);
+			// raise bundle removed event
+			eventBundleRemoved(bundle);
 
-					// remove the container
-					_bundles.erase(iter);
-
-					// raise bundle removed event
-					eventBundleRemoved(bundle);
-
-					return;
-				}
-			}
-
-			throw NoBundleFoundException();
+			// erase the bundle
+			__erase(iter);
 		}
 
 		dtn::data::MetaBundle MemoryBundleStorage::remove(const ibrcommon::BloomFilter &filter)
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
-				const dtn::data::Bundle &bundle = (*iter);
-
-				if ( filter.contains(bundle.toString()) )
+				if ( filter.contains((*iter).toString()) )
 				{
-					// erase the bundle out of the priority index
-					_priority_index.erase(bundle);
+					const dtn::data::MetaBundle bundle = (*iter);
 
-					// remove it from the bundle list
+					// remove item in the bundlelist
 					_list.remove(bundle);
-
-					// get the storage size of this bundle
-					size_t len = _bundle_lengths[bundle];
-					_bundle_lengths.erase(bundle);
-
-					// decrement the storage size
-					freeSpace(len);
-
-					// remove the container
-					_bundles.erase(iter);
 
 					// raise bundle removed event
 					eventBundleRemoved(bundle);
 
-					return (MetaBundle)bundle;
+					// erase the bundle
+					__erase(iter);
+
+					return bundle;
 				}
 			}
 
@@ -256,9 +249,9 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (bundle_list::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
-				const dtn::data::Bundle bundle = (*iter);
+				const dtn::data::Bundle &bundle = (*iter);
 
 				// raise bundle removed event
 				eventBundleRemoved(bundle);
@@ -273,37 +266,44 @@ namespace dtn
 			clearSpace();
 		}
 
-		void MemoryBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b)
+		void MemoryBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
 		{
-			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			// search for the bundle in the bundle list
+			const bundle_list::iterator iter = find(_bundles.begin(), _bundles.end(), b);
+
+			// if the bundle was found ...
+			if (iter != _bundles.end())
 			{
-				if ( b == (*iter) )
-				{
-					dtn::data::Bundle bundle = (*iter);
+				// raise bundle removed event
+				eventBundleRemoved(b);
 
-					// erase the bundle out of the priority index
-					_priority_index.erase(bundle);
+				// raise bundle event
+				dtn::core::BundleEvent::raise( b, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
 
-					// get the storage size of this bundle
-					size_t len = _bundle_lengths[bundle];
-					_bundle_lengths.erase(bundle);
+				// raise an event
+				dtn::core::BundleExpiredEvent::raise( b );
 
-					// decrement the storage size
-					freeSpace(len);
-
-					_bundles.erase(iter);
-
-					// raise bundle removed event
-					eventBundleRemoved(bundle);
-					break;
-				}
+				// erase the bundle
+				__erase(iter);
 			}
+		}
 
-			// raise bundle event
-			dtn::core::BundleEvent::raise( b, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
+		void MemoryBundleStorage::__erase(const bundle_list::iterator &iter)
+		{
+			const dtn::data::Bundle &bundle = (*iter);
 
-			// raise an event
-			dtn::core::BundleExpiredEvent::raise( b );
+			// erase the bundle out of the priority index
+			_priority_index.erase(bundle);
+
+			// get the storage size of this bundle
+			dtn::data::Length len = _bundle_lengths[bundle];
+			_bundle_lengths.erase(bundle);
+
+			// decrement the storage size
+			freeSpace(len);
+
+			// remove bundle from bundle list
+			_bundles.erase(iter);
 		}
 	}
 }

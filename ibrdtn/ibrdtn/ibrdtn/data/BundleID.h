@@ -22,6 +22,7 @@
 #ifndef BUNDLEID_H_
 #define BUNDLEID_H_
 
+#include <ibrdtn/data/Number.h>
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Bundle.h"
 
@@ -32,8 +33,8 @@ namespace dtn
 		class BundleID
 		{
 		public:
-			BundleID(const dtn::data::EID source = dtn::data::EID(), const size_t timestamp = 0, const size_t sequencenumber = 0, const bool fragment = false, const size_t offset = 0);
-			BundleID(const dtn::data::Bundle &b);
+			BundleID(const dtn::data::EID source = dtn::data::EID(), const dtn::data::Timestamp &timestamp = 0, const dtn::data::Number &sequencenumber = 0, const bool fragment = false, const dtn::data::Number &offset = 0);
+			BundleID(const dtn::data::PrimaryBlock &b);
 			virtual ~BundleID();
 
 			bool operator!=(const BundleID& other) const;
@@ -41,18 +42,17 @@ namespace dtn
 			bool operator<(const BundleID& other) const;
 			bool operator>(const BundleID& other) const;
 
-			string toString() const;
-			size_t getTimestamp() const;
+			std::string toString() const;
 
 			friend std::ostream &operator<<(std::ostream &stream, const BundleID &obj);
 			friend std::istream &operator>>(std::istream &stream, BundleID &obj);
 
 			dtn::data::EID source;
-			size_t timestamp;
-			size_t sequencenumber;
+			dtn::data::Timestamp timestamp;
+			dtn::data::Number sequencenumber;
 
 			bool fragment;
-			size_t offset;
+			dtn::data::Number offset;
 		};
 	}
 }

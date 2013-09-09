@@ -36,8 +36,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		RetransmissionExtension::RetransmissionExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker)
+		RetransmissionExtension::RetransmissionExtension()
 		{
 		}
 
@@ -57,8 +56,19 @@ namespace dtn
 
 					if ( data.getTimestamp() <= time.getTimestamp() )
 					{
-						// retransmit the bundle
-						dtn::core::BundleCore::getInstance().transferTo(data.destination, data);
+						try {
+							const dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(data);
+
+							// retransmit the bundle
+							dtn::net::BundleTransfer transfer(data.destination, meta);
+							dtn::core::BundleCore::getInstance().transferTo(transfer);
+						} catch (const dtn::core::P2PDialupException&) {
+							// do nothing here
+							dtn::routing::RequeueBundleEvent::raise(data.destination, data);
+						} catch (const ibrcommon::Exception&) {
+							// do nothing here
+							dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+						}
 
 						// remove the item off the queue
 						_queue.pop();
@@ -131,8 +141,8 @@ namespace dtn
 				// delete all matching elements in the queue
 				ibrcommon::MutexLock l(_mutex);
 
-				size_t elements = _queue.size();
-				for (size_t i = 0; i < elements; i++)
+				dtn::data::Size elements = _queue.size();
+				for (dtn::data::Size i = 0; i < elements; ++i)
 				{
 					const RetransmissionData &data = _queue.front();
 
@@ -174,12 +184,12 @@ namespace dtn
 			return true;
 		}
 
-		size_t RetransmissionExtension::RetransmissionData::getCount() const
+		dtn::data::Size RetransmissionExtension::RetransmissionData::getCount() const
 		{
 			return _count;
 		}
 
-		size_t RetransmissionExtension::RetransmissionData::getTimestamp() const
+		const dtn::data::Timestamp& RetransmissionExtension::RetransmissionData::getTimestamp() const
 		{
 			return _timestamp;
 		}
@@ -188,8 +198,8 @@ namespace dtn
 		{
 			_count++;
 			_timestamp = dtn::utils::Clock::getTime();
-			size_t backoff = pow((float)retry, (int)_count -1);
-			_timestamp += backoff;
+			float backoff = ::pow((float)retry, (int)_count -1);
+			_timestamp += static_cast<dtn::data::Size>(backoff);
 
 			return (*this);
 		}
@@ -198,13 +208,13 @@ namespace dtn
 		{
 			_count++;
 			_timestamp = dtn::utils::Clock::getTime();
-			size_t backoff = pow((float)retry, (int)_count -1);
-			_timestamp += backoff;
+			float backoff = ::pow((float)retry, (int)_count -1);
+			_timestamp += static_cast<dtn::data::Size>(backoff);
 
 			return (*this);
 		}
 
-		RetransmissionExtension::RetransmissionData::RetransmissionData(const dtn::data::BundleID &id, dtn::data::EID d, size_t r)
+		RetransmissionExtension::RetransmissionData::RetransmissionData(const dtn::data::BundleID &id, const dtn::data::EID &d, const dtn::data::Size r)
 		 : dtn::data::BundleID(id), destination(d), _timestamp(0), _count(0), retry(r)
 		{
 			(*this)++;

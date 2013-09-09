@@ -22,6 +22,7 @@
 #ifndef SECURITYKEYMANAGER_H_
 #define SECURITYKEYMANAGER_H_
 
+#include "Configuration.h"
 #include <ibrdtn/security/SecurityKey.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/DTNTime.h>
@@ -36,7 +37,7 @@ namespace dtn
 {
 	namespace security
 	{
-		class SecurityKeyManager
+		class SecurityKeyManager : public dtn::daemon::Configuration::OnChangeListener
 		{
 		public:
 			class KeyNotFoundException : public ibrcommon::Exception
@@ -48,12 +49,16 @@ namespace dtn
 				virtual ~KeyNotFoundException() throw() {};
 			};
 
+			static const std::string TAG;
+
 			static SecurityKeyManager& getInstance();
 
 			virtual ~SecurityKeyManager();
-			void initialize(const ibrcommon::File &path, const ibrcommon::File &ca, const ibrcommon::File &key);
 
-			void prefetchKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC);
+			/**
+			 * Listen for changes of the configuration
+			 */
+			virtual void onConfigurationChanged(const dtn::daemon::Configuration &conf) throw ();
 
 			bool hasKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const;
 			dtn::security::SecurityKey get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const throw (SecurityKeyManager::KeyNotFoundException);

@@ -29,6 +29,8 @@
 #include "net/DiscoveryService.h"
 #include "Configuration.h"
 
+#include <ibrdtn/data/Number.h>
+
 #include <list>
 
 namespace dtn
@@ -41,7 +43,7 @@ namespace dtn
 			DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config);
 			virtual ~DiscoveryAgent() = 0;
 
-			void received(const dtn::data::EID &source, const std::list<DiscoveryService> &services, size_t timeout = 0);
+			void received(const dtn::data::EID &source, const std::list<DiscoveryService> &services, const dtn::data::Number &timeout = 0);
 
 			void addService(dtn::net::DiscoveryServiceProvider *provider);
 
@@ -56,7 +58,7 @@ namespace dtn
 			std::list<Neighbor> _neighbors;
 			uint16_t _sn;
 			std::list<dtn::net::DiscoveryServiceProvider*> _provider;
-			size_t _last_announce_sent;
+			dtn::data::Timestamp _last_announce_sent;
 		};
 	}
 }

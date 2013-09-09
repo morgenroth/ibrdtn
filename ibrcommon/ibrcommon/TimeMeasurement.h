@@ -27,6 +27,15 @@
 #include <sys/types.h>
 #include <stdint.h>
 
+/**
+ * On windows the timespec is defined in the pthread
+ * headers.
+ */
+#ifdef __WIN32__
+#include <windows.h>
+#include <pthread.h>
+#endif
+
 namespace ibrcommon
 {
 	class TimeMeasurement
@@ -37,25 +46,26 @@ namespace ibrcommon
 
 		void start();
 		void stop();
+		
+		double getMicroseconds() const;
+		double getMilliseconds() const;
 
-		uint64_t getNanoseconds() const;
-		float getMicroseconds() const;
-		float getMilliseconds() const;
-		float getSeconds() const;
+		void getTime(struct timespec &diff) const;
+		time_t getSeconds() const;
 
 		friend std::ostream &operator<<(std::ostream &stream, const TimeMeasurement &measurement);
 
-		static std::ostream& format(std::ostream &stream, const float value);
+		static std::ostream& format(std::ostream &stream, const double value);
 
 	private:
-		static int64_t timespecDiff(const struct timespec *timeA_p, const struct timespec *timeB_p);
-		static int64_t timespecDiff(const uint64_t &stop, const uint64_t &start);
+		void gettime(struct timespec *ts);
+
+#ifdef __WIN32__
+		LARGE_INTEGER getFILETIMEoffset() const;
+#endif
 
 		struct timespec _start;
 		struct timespec _end;
-
-		uint64_t _uint64_start;
-		uint64_t _uint64_end;
 	};
 }
 

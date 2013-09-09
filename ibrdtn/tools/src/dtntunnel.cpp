@@ -32,13 +32,6 @@
 // Base for send and receive bundle to/from the IBR-DTN daemon.
 #include "ibrdtn/api/Client.h"
 
-// Container for bundles.
-#include "ibrdtn/api/Bundle.h"
-#include "ibrdtn/api/BLOBBundle.h"
-
-// Container for bundles carrying strings.
-#include "ibrdtn/api/StringBundle.h"
-
 //  TCP client implemented as a stream.
 #include <ibrcommon/net/socket.h>
 
@@ -67,7 +60,7 @@
 #include <linux/if.h>
 #include <linux/if_tun.h>
 
-int tun_alloc(char *dev, int flags) {
+int tun_alloc(char *dev, short int flags) {
 
   struct ifreq ifr;
   int fd, err;
@@ -118,7 +111,7 @@ size_t throughput_data_up[5] = { 0, 0, 0, 0, 0 };
 size_t throughput_data_down[5] = { 0, 0, 0, 0, 0 };
 int throughput_pos = 0;
 
-void add_throughput_data(size_t amount, int updown) {
+void add_throughput_data(ssize_t amount, int updown) {
 	if (updown == 0) {
 		throughput_data_down[throughput_pos] += amount;
 	} else {
@@ -130,9 +123,9 @@ void timer_display_throughput(int) {
 	float throughput_sum_up = 0;
 	float throughput_sum_down = 0;
 
-	for (int i = 0; i < 5; i++) {
-		throughput_sum_up += throughput_data_up[i];
-		throughput_sum_down += throughput_data_down[i];
+	for (int i = 0; i < 5; ++i) {
+		throughput_sum_up += static_cast<float>(throughput_data_up[i]);
+		throughput_sum_down += static_cast<float>(throughput_data_down[i]);
 	}
 
 	std::cout << "  up: " << setiosflags(ios::right) << setw(12) << setiosflags(ios::fixed) << setprecision(2) << (throughput_sum_up/1024) << " kB/s ";
@@ -189,13 +182,13 @@ class TUN2BundleGateway : public dtn::api::Client
 			if (_fd == -1) throw ibrcommon::Exception("Tunnel closed.");
 
 			char data[65536];
-			int ret = ::read(_fd, data, sizeof(data));
-
-			add_throughput_data(ret, 1);
+			ssize_t ret = ::read(_fd, data, sizeof(data));
 
 			if (ret == -1) {
 				throw ibrcommon::Exception("Error: failed to read from tun device");
 			}
+
+			add_throughput_data(ret, 1);
 
 			// create a blob
 			ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
@@ -204,8 +197,11 @@ class TUN2BundleGateway : public dtn::api::Client
 			blob.iostream()->write(data, ret);
 
 			// create a new bundle
-			dtn::api::BLOBBundle b(endpoint, blob);
-			b.setLifetime(lifetime);
+			dtn::data::Bundle b;
+
+			b.destination = endpoint;
+			b.push_back(blob);
+			b.lifetime = lifetime;
 
 			// transmit the packet
 			(*this) << b;
@@ -230,9 +226,9 @@ class TUN2BundleGateway : public dtn::api::Client
 		 * to overload the Client::received()-method. This will be call on a incoming bundles
 		 * by another thread.
 		 */
-		void received(const dtn::api::Bundle &b)
+		void received(const dtn::data::Bundle &b)
 		{
-			ibrcommon::BLOB::Reference ref = b.getData();
+			ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 			ibrcommon::BLOB::iostream stream = ref.iostream();
 			char data[65536];
 			stream->read(data, sizeof(data));
@@ -346,7 +342,7 @@ int main(int argc, char *argv[])
 	}
 
 	int optindex = 0;
-	for (index = optind; index < argc; index++)
+	for (index = optind; index < argc; ++index)
 	{
 		switch (optindex)
 		{

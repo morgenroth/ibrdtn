@@ -34,6 +34,8 @@ class MutexTests : public CPPUNIT_NS :: TestFixture
 	CPPUNIT_TEST_SUITE (MutexTests);
 	CPPUNIT_TEST (mutex_test01);
 	CPPUNIT_TEST (mutex_trylock);
+	CPPUNIT_TEST (rwmutex_test_readonly);
+	CPPUNIT_TEST (rwmutex_test_readwrite);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -58,6 +60,8 @@ protected:
 
 	void mutex_test01();
 	void mutex_trylock();
+	void rwmutex_test_readonly();
+	void rwmutex_test_readwrite();
 };
 
 #endif /* MUTEXTESTS_H_ */

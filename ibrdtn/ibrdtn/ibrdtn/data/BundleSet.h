@@ -8,6 +8,7 @@
 #ifndef BUNDLESET_H_
 #define BUNDLESET_H_
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/MetaBundle.h"
 #include <ibrcommon/data/BloomFilter.h>
 #include <set>
@@ -22,34 +23,34 @@ namespace dtn
 			class Listener {
 			public:
 				virtual ~Listener() = 0;
-				virtual void eventBundleExpired(const dtn::data::MetaBundle&) = 0;
+				virtual void eventBundleExpired(const dtn::data::MetaBundle&) throw () = 0;
 			};
 
 			/**
 			 * @param bf_size Initial size fo the bloom-filter.
 			 */
-			BundleSet(Listener *listener = NULL, size_t bf_size = 1024);
+			BundleSet(Listener *listener = NULL, Length bf_size = 1024);
 			virtual ~BundleSet();
 
-			virtual void add(const dtn::data::MetaBundle &bundle);
-			virtual void clear();
-			virtual bool has(const dtn::data::BundleID &bundle) const;
+			virtual void add(const dtn::data::MetaBundle &bundle) throw ();
+			virtual void clear() throw ();
+			virtual bool has(const dtn::data::BundleID &bundle) const throw ();
 
-			virtual void expire(const size_t timestamp);
+			virtual void expire(const Timestamp timestamp) throw ();
 
 			/**
 			 * Returns the number of elements in this set
 			 */
-			virtual size_t size() const;
+			virtual Size size() const throw ();
 
 			/**
 			 * Returns the data length of the serialized BundleSet
 			 */
-			size_t getLength() const;
+			Length getLength() const throw ();
 
-			const ibrcommon::BloomFilter& getBloomFilter() const;
+			const ibrcommon::BloomFilter& getBloomFilter() const throw ();
 
-			std::set<dtn::data::MetaBundle> getNotIn(ibrcommon::BloomFilter &filter) const;
+			std::set<dtn::data::MetaBundle> getNotIn(ibrcommon::BloomFilter &filter) const throw ();
 
 			friend std::ostream &operator<<(std::ostream &stream, const BundleSet &obj);
 			friend std::istream &operator>>(std::istream &stream, BundleSet &obj);

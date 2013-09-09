@@ -33,11 +33,19 @@
 #include <set>
 
 #include <sys/types.h>
-#include <syslog.h>
-#include <pwd.h>
 #include <unistd.h>
 
-#include "ibrdtnd.h"
+#ifdef __WIN32__
+#define LOG_PID 0
+#define LOG_DAEMON 0
+#else
+#include <syslog.h>
+#include <pwd.h>
+#endif
+
+#include "NativeDaemon.h"
+
+dtn::daemon::NativeDaemon _dtnd;
 
 /**
  * setup logging capabilities
@@ -49,8 +57,8 @@ unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG
 // error filter
 const unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
 
-// logging filter, everything but debug, err and crit
-const unsigned char logstd = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | logerr);
+// logging filter, everything but debug, notice, err and crit
+const unsigned char logstd = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE | logerr);
 
 // syslog filter, everything but DEBUG and NOTICE
 const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
@@ -59,6 +67,7 @@ const unsigned char logsys = ibrcommon::Logger::LOGGER_ALL ^ (ibrcommon::Logger:
 bool _debug = false;
 
 // marker if the shutdown was called
+ibrcommon::Conditional _shutdown_cond;
 bool _shutdown = false;
 
 // on interruption do this!
@@ -71,9 +80,13 @@ void sighandler(int signal)
 	{
 	case SIGTERM:
 	case SIGINT:
+	{
+		ibrcommon::MutexLock l(_shutdown_cond);
 		_shutdown = true;
-		ibrdtn_daemon_shutdown();
+		_shutdown_cond.signal(true);
 		break;
+	}
+#ifndef __WIN32__
 	case SIGUSR1:
 		if (!_debug)
 		{
@@ -81,14 +94,15 @@ void sighandler(int signal)
 			_debug = true;
 		}
 
-		ibrdtn_daemon_runtime_debug(true);
+		_dtnd.setDebug(99);
 		break;
 	case SIGUSR2:
-		ibrdtn_daemon_runtime_debug(false);
+		_dtnd.setDebug(0);
 		break;
 	case SIGHUP:
-		ibrdtn_daemon_reload();
+		_dtnd.reload();
 		break;
+#endif
 	default:
 		// dummy handler
 		break;
@@ -100,6 +114,7 @@ int __daemon_run()
 	// catch process signals
 	signal(SIGINT, sighandler);
 	signal(SIGTERM, sighandler);
+#ifndef __WIN32__
 	signal(SIGHUP, sighandler);
 	signal(SIGQUIT, sighandler);
 	signal(SIGUSR1, sighandler);
@@ -109,6 +124,7 @@ int __daemon_run()
 	sigemptyset(&blockset);
 	sigaddset(&blockset, SIGPIPE);
 	::sigprocmask(SIG_BLOCK, &blockset, NULL);
+#endif
 
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
@@ -130,8 +146,13 @@ int __daemon_run()
 
 	if (!conf.getDebug().quiet())
 	{
-		// add logging to the cout
-		ibrcommon::Logger::addStream(std::cout, logstd, logopts);
+		if (conf.getLogger().verbose()) {
+			// add logging to the cout
+			ibrcommon::Logger::addStream(std::cout, logstd | ibrcommon::Logger::LOGGER_NOTICE, logopts);
+		} else {
+			// add logging to the cout
+			ibrcommon::Logger::addStream(std::cout, logstd, logopts);
+		}
 
 		// add logging to the cerr
 		ibrcommon::Logger::addStream(std::cerr, logerr, logopts);
@@ -149,27 +170,15 @@ int __daemon_run()
 	}
 
 	// load the configuration file
-	conf.load();
+	conf.load(true);
 
 	try {
 		const ibrcommon::File &lf = conf.getLogger().getLogfile();
 		ibrcommon::Logger::setLogfile(lf, ibrcommon::Logger::LOGGER_ALL ^ ibrcommon::Logger::LOGGER_DEBUG, logopts);
 	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
 
-	// greeting
-	IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
-
-	if (conf.getDebug().enabled())
-	{
-		IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebug().level() << IBRCOMMON_LOGGER_ENDL;
-	}
-
-	try {
-		const ibrcommon::File &lf = conf.getLogger().getLogfile();
-		IBRCOMMON_LOGGER(info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
-	} catch (const dtn::daemon::Configuration::ParameterNotSetException&) { };
-
-	ibrdtn_daemon_initialize();
+	// initialize the daemon up to runlevel "Routing Extensions"
+	_dtnd.init(dtn::daemon::RUNLEVEL_ROUTING_EXTENSIONS);
 
 #ifdef HAVE_LIBDAEMON
 	if (conf.getDaemon().daemonize())
@@ -180,13 +189,16 @@ int __daemon_run()
 	}
 #endif
 
-	ibrdtn_daemon_main_loop();
+	ibrcommon::MutexLock l(_shutdown_cond);
+	while (!_shutdown) _shutdown_cond.wait();
+
+	_dtnd.init(dtn::daemon::RUNLEVEL_ZERO);
 
 	// stop the asynchronous logger
 	ibrcommon::Logger::stop();
 
 	return 0;
-};
+}
 
 static char* __daemon_pidfile__ = NULL;
 

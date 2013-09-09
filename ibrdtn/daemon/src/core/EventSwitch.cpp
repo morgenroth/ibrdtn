@@ -47,6 +47,18 @@ namespace dtn
 		void EventSwitch::componentUp() throw ()
 		{
 			// routine checked for throw() on 15.02.2013
+
+			// clear all queues
+			_queue.clear();
+			_prio_queue.clear();
+			_low_queue.clear();
+
+			// reset component state
+			_running = true;
+			_shutdown = false;
+
+			// reset aborted conditional
+			_queue_cond.reset();
 		}
 
 		void EventSwitch::componentDown() throw ()
@@ -67,7 +79,7 @@ namespace dtn
 			} catch (const ibrcommon::Conditional::ConditionalAbortException&) {};
 		}
 
-		bool EventSwitch::empty()
+		bool EventSwitch::empty() const
 		{
 			return (_low_queue.empty() && _queue.empty() && _prio_queue.empty());
 		}
@@ -88,7 +100,6 @@ namespace dtn
 
 				if (!_prio_queue.empty())
 				{
-//					IBRCOMMON_LOGGER_DEBUG(1) << "process element of priority queue" << IBRCOMMON_LOGGER_ENDL;
 					t = _prio_queue.front();
 					_prio_queue.pop_front();
 				}
@@ -132,7 +143,7 @@ namespace dtn
 			// create worker threads
 			std::list<Worker*> wlist;
 
-			for (size_t i = 0; i < threads; i++)
+			for (size_t i = 0; i < threads; ++i)
 			{
 				Worker *w = new Worker(*this);
 				w->start();
@@ -146,9 +157,10 @@ namespace dtn
 				}
 			} catch (const ibrcommon::Conditional::ConditionalAbortException&) { };
 
-			for (std::list<Worker*>::iterator iter = wlist.begin(); iter != wlist.end(); iter++)
+			for (std::list<Worker*>::iterator iter = wlist.begin(); iter != wlist.end(); ++iter)
 			{
 				Worker *w = (*iter);
+				w->stop();
 				w->join();
 				delete w;
 			}

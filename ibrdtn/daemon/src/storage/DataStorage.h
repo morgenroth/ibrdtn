@@ -28,6 +28,7 @@
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Semaphore.h>
+#include <memory>
 
 #ifndef DATASTORAGE_H_
 #define DATASTORAGE_H_
@@ -94,7 +95,7 @@ namespace dtn
 				virtual void iterateDataStorage(const Hash &hash, DataStorage::istream &stream) = 0;
 			};
 
-			DataStorage(Callback &callback, const ibrcommon::File &path, size_t write_buffer = 0, bool initialize = false);
+			DataStorage(Callback &callback, const ibrcommon::File &path, unsigned int write_buffer = 0, bool initialize = false);
 			virtual ~DataStorage();
 
 			const Hash store(Container *data);
@@ -112,6 +113,21 @@ namespace dtn
 			 * iterate through all the data and call the iterateDataStorage() on each dataset
 			 */
 			void iterateAll();
+
+			/**
+			 * reset the data storage
+			 */
+			void reset();
+
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * a bundle will fail.
+			 */
+			void setFaulty(bool mode);
+
+			/*** END: methods for unit-testing ***/
 
 		protected:
 			void run() throw ();
@@ -131,7 +147,7 @@ namespace dtn
 				virtual ~StoreDataTask();
 
 				const Hash hash;
-				Container *container;
+				std::auto_ptr<Container> _container;
 			};
 
 			class RemoveDataTask : public Task
@@ -148,6 +164,7 @@ namespace dtn
 			ibrcommon::Queue< Task* > _tasks;
 			ibrcommon::Semaphore _store_sem;
 			bool _store_limited;
+			bool _faulty;
 
 			ibrcommon::Mutex _global_mutex;
 		};

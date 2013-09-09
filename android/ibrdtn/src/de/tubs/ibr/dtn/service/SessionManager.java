@@ -21,8 +21,6 @@
  */
 package de.tubs.ibr.dtn.service;
 
-import ibrdtn.api.Base64;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -39,22 +37,20 @@ import android.content.SharedPreferences.Editor;
 import android.util.Base64InputStream;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.util.Base64;
 
 public class SessionManager {
 	
 	private final String TAG = "SessionManager";
-	private Boolean _state = false;
 	
 	private Context _context = null;
-	private DaemonManager _manager = null;
 	
 	private HashMap<String, ClientSession> _sessions = new HashMap<String, ClientSession>();
 	private HashMap<String, Registration> _registrations = new HashMap<String, Registration>();
 	
-	public SessionManager(Context context, DaemonManager manager)
+	public SessionManager(Context context)
 	{
 		this._context = context;
-		this._manager = manager;
 	}
 	
 	public synchronized void initialize()
@@ -63,23 +59,22 @@ public class SessionManager {
 		for (Entry<String, Registration> entry : _registrations.entrySet())
 		{
 			// create a new session
-			ClientSession session = new ClientSession(this._context, this._manager, entry.getValue(), entry.getKey());
+			ClientSession session = new ClientSession(this._context, entry.getValue(), entry.getKey());
 			_sessions.put(entry.getKey(), session);
-			session.initialize();
 		}
-		_state = true;
 	}
 	
-	public synchronized void terminate()
+	public synchronized void destroy()
 	{
-		// daemon goes down, destroy all sessions
-		for (ClientSession session : _sessions.values())
-		{
-			session.terminate();
-		}
-		
+        // save registrations
+        saveRegistrations();
+        
+        // daemon goes down, destroy all sessions
+        for (ClientSession s : _sessions.values()) {
+            s.destroy();
+        }
+        
 		_sessions.clear();
-		_state = false;
 	}
 	
 	public void restoreRegistrations()
@@ -123,7 +118,7 @@ public class SessionManager {
 		}
 	}
 	
-	public void saveRegistrations()
+	private void saveRegistrations()
 	{
 		SharedPreferences prefs = this._context.getSharedPreferences("registrations", Context.MODE_PRIVATE);
 		Editor edit = prefs.edit();
@@ -173,47 +168,35 @@ public class SessionManager {
 		// abort if the registration is already known
 		if (_registrations.containsKey(packageName))
 		{
-			Registration previous_reg = _registrations.get(packageName);
-			
-			if (previous_reg != null) {
-				// abort if the registration has not been changed
-				if (previous_reg.equals(reg)) return;
-			}
-			
-			Log.d(TAG, "terminate and remove old registration");
-			
-			// remove previous registation
-			_registrations.remove(packageName);
-			
-			// add registration to the hashmap
-			_registrations.put(packageName, reg);
-			
-			// terminate the session if the daemon is running
-			if (_state)
-			{
-				// daemon is up
-				// destroy the session
-				_sessions.get(packageName).terminate();
-				_sessions.remove(packageName);
-			}
+            Registration previous_reg = _registrations.get(packageName);
+            
+            if (previous_reg != null) {
+                // abort if the registration has not been changed
+                if (previous_reg.equals(reg)) return;
+            } 
+		        
+			// update the registration
+            // remove previous registation
+            _registrations.remove(packageName);
+            
+            // add registration to the hashmap
+            _registrations.put(packageName, reg);
+		    
+            // get the existing session
+            _sessions.get(packageName).update(reg);
 		}
 		else
 		{
 			// add registration to the hashmap
 			_registrations.put(packageName, reg);
+
+            // create a new session
+            ClientSession session = new ClientSession(this._context, reg, packageName);
+            _sessions.put(packageName, session);
 		}
 
 		// save registration in the preferences
 		saveRegistration(packageName, reg);
-		
-		if (_state)
-		{
-			// daemon is up
-			// create a new session
-			ClientSession session = new ClientSession(this._context, this._manager, _registrations.get(packageName), packageName);
-			_sessions.put(packageName, session);
-			session.initialize();
-		}
 	}
 	
 	public synchronized void unregister(String packageName)
@@ -228,13 +211,10 @@ public class SessionManager {
 		
 		_registrations.remove(packageName);
 
-		if (_state)
-		{
-			// daemon is up
-			// destroy the session
-			_sessions.get(packageName).terminate();
-			_sessions.remove(packageName);
-		}
+		// daemon is up
+		// destroy the session
+		_sessions.get(packageName).destroy();
+		_sessions.remove(packageName);
 		
 		// save current registration state
 		saveRegistrations();

@@ -32,14 +32,17 @@
 #include <ibrdtn/utils/Clock.h>
 
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/thread/RWLock.h>
 #include <ibrcommon/Logger.h>
 
 namespace dtn
 {
 	namespace routing
 	{
-		NodeHandshakeExtension::NodeHandshakeExtension(dtn::storage::BundleSeeker &seeker)
-		 : Extension(seeker), _endpoint(*this)
+		const std::string NodeHandshakeExtension::TAG = "NodeHandshakeExtension";
+
+		NodeHandshakeExtension::NodeHandshakeExtension()
+		 : _endpoint(*this)
 		{
 		}
 
@@ -72,7 +75,7 @@ namespace dtn
 				const dtn::data::BundleSet vec = (**this).getPurgedBundles();
 
 				// create an item
-				BloomFilterSummaryVector *item = new BloomFilterSummaryVector(vec);
+				BloomFilterPurgeVector *item = new BloomFilterPurgeVector(vec);
 
 				// add it to the handshake
 				answer.addItem(item);
@@ -83,6 +86,8 @@ namespace dtn
 		{
 			try {
 				const BloomFilterSummaryVector bfsv = answer.get<BloomFilterSummaryVector>();
+
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "summary vector received from " << source.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// get the summary vector (bloomfilter) of this ECM
 				const ibrcommon::BloomFilter &filter = bfsv.getVector().getBloomFilter();
@@ -100,25 +105,71 @@ namespace dtn
 			try {
 				const BloomFilterPurgeVector bfpv = answer.get<BloomFilterPurgeVector>();
 
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "purge vector received from " << source.getString() << IBRCOMMON_LOGGER_ENDL;
+
 				// get the purge vector (bloomfilter) of this ECM
 				const ibrcommon::BloomFilter &purge = bfpv.getVector().getBloomFilter();
 
+				// get a reference to the storage
 				dtn::storage::BundleStorage &storage = (**this).getStorage();
 
-				while (true)
+				// create a bundle filter which selects bundles contained in the received
+				// purge vector but not addressed locally
+				class BundleFilter : public dtn::storage::BundleSelector
 				{
-					// delete bundles in the purge vector
-					const dtn::data::MetaBundle meta = storage.remove(purge);
+				public:
+					BundleFilter(const ibrcommon::BloomFilter &filter)
+					 : _filter(filter)
+					{};
 
-					// log the purged bundle
-					IBRCOMMON_LOGGER(notice) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					virtual ~BundleFilter() {};
 
-					// gen a report
-					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, StatusReportBlock::DEPLETED_STORAGE);
+					virtual dtn::data::Size limit() const throw () { return 100; };
 
-					// add this bundle to the own purge vector
-					(**this).addPurgedBundle(meta);
-				}
+					virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+					{
+						// do not select locally addressed bundles
+						if (meta.destination.getNode() == dtn::core::BundleCore::local)
+							return false;
+
+						// do not purge non-singleton bundles
+						if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+							return false;
+
+						// select the bundle if it is in the filter
+						return _filter.contains(meta.toString());
+					};
+
+					const ibrcommon::BloomFilter &_filter;
+				} bundle_filter(purge);
+
+				dtn::storage::BundleResultList list;
+
+				// while we are getting more results from the storage
+				do {
+					// delete all previous results
+					list.clear();
+
+					// query for more bundles
+					storage.get(bundle_filter, list);
+
+					for (dtn::storage::BundleResultList::const_iterator iter = list.begin(); iter != list.end(); ++iter)
+					{
+						const dtn::data::MetaBundle &meta = (*iter);
+
+						// delete bundle from storage
+						storage.remove(meta);
+
+						// log the purged bundle
+						IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+
+						// gen a report
+						dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, StatusReportBlock::NO_ADDITIONAL_INFORMATION);
+
+						// add this bundle to the own purge vector
+						(**this).setPurged(meta);
+					}
+				} while (!list.empty());
 			} catch (std::exception&) { };
 		}
 
@@ -145,15 +196,10 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		const std::list<BaseRouter::Extension*>& NodeHandshakeExtension::getExtensions()
-		{
-			return (**this).getExtensions();
-		}
-
 		NodeHandshakeExtension::HandshakeEndpoint::HandshakeEndpoint(NodeHandshakeExtension &callback)
 		 : _callback(callback)
 		{
-			AbstractWorker::initialize("/routing", 50, true);
+			AbstractWorker::initialize("routing", true);
 		}
 
 		NodeHandshakeExtension::HandshakeEndpoint::~HandshakeEndpoint()
@@ -188,31 +234,26 @@ namespace dtn
 			// create a new request for the summary vector of the neighbor
 			NodeHandshake request(NodeHandshake::HANDSHAKE_REQUEST);
 
-			// walk through all extensions to process the contents of the response
-			const std::list<BaseRouter::Extension*>& extensions = _callback.getExtensions();
+			// walk through all extensions to generate a request
+			(*_callback).requestHandshake(origin, request);
 
-			for (std::list<BaseRouter::Extension*>::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
-			{
-				BaseRouter::Extension &extension = (**iter);
-				extension.requestHandshake(origin, request);
-			}
+			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake query from " << origin.getString() << ": " << request.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// create a new bundle
 			dtn::data::Bundle req;
 
 			// set the source of the bundle
-			req._source = getWorkerURI();
+			req.source = getWorkerURI();
 
 			// set the destination of the bundle
 			req.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+			req.destination = origin;
 
-			if (origin.isCompressable())
-				req._destination = origin + origin.getDelimiter() + "50";
-			else
-				req._destination = origin + origin.getDelimiter() + "routing";
+			// set destination application
+			req.destination.setApplication("routing");
 
 			// limit the lifetime to 60 seconds
-			req._lifetime = 60;
+			req.lifetime = 60;
 
 			// set high priority
 			req.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -241,7 +282,7 @@ namespace dtn
 		void NodeHandshakeExtension::processHandshake(const dtn::data::Bundle &bundle)
 		{
 			// read the ecm
-			const dtn::data::PayloadBlock &p = bundle.getBlock<dtn::data::PayloadBlock>();
+			const dtn::data::PayloadBlock &p = bundle.find<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference ref = p.getBLOB();
 			NodeHandshake handshake;
 
@@ -251,33 +292,31 @@ namespace dtn
 				(*s) >> handshake;
 			}
 
+			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake received from " << bundle.source.getString() << ": " << handshake.toString() << IBRCOMMON_LOGGER_ENDL;
+
 			// if this is a request answer with an summary vector
 			if (handshake.getType() == NodeHandshake::HANDSHAKE_REQUEST)
 			{
 				// create a new request for the summary vector of the neighbor
 				NodeHandshake response(NodeHandshake::HANDSHAKE_RESPONSE);
 
-				// walk through all extensions to process the contents of the response
-				const std::list<BaseRouter::Extension*>& extensions = (**this).getExtensions();
+				// lock the extension list during the processing
+				(**this).responseHandshake(bundle.source, handshake, response);
 
-				for (std::list<BaseRouter::Extension*>::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
-				{
-					BaseRouter::Extension &extension = (**iter);
-					extension.responseHandshake(bundle._source, handshake, response);
-				}
+				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake reply to " << bundle.source.getString() << ": " << response.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				// create a new bundle
 				dtn::data::Bundle answer;
 
 				// set the source of the bundle
-				answer._source = _endpoint.getWorkerURI();
+				answer.source = _endpoint.getWorkerURI();
 
 				// set the destination of the bundle
 				answer.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-				answer._destination = bundle._source;
+				answer.destination = bundle.source;
 
 				// limit the lifetime to 60 seconds
-				answer._lifetime = 60;
+				answer.lifetime = 60;
 
 				// set high priority
 				answer.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
@@ -303,21 +342,15 @@ namespace dtn
 				_endpoint.send(answer);
 
 				// call handshake completed event
-				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_REPLIED, bundle._source );
+				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_REPLIED, bundle.source.getNode() );
 			}
 			else if (handshake.getType() == NodeHandshake::HANDSHAKE_RESPONSE)
 			{
 				// walk through all extensions to process the contents of the response
-				const std::list<BaseRouter::Extension*>& extensions = (**this).getExtensions();
-
-				for (std::list<BaseRouter::Extension*>::const_iterator iter = extensions.begin(); iter != extensions.end(); iter++)
-				{
-					BaseRouter::Extension &extension = (**iter);
-					extension.processHandshake(bundle._source, handshake);
-				}
+				(**this).processHandshake(bundle.source, handshake);
 
 				// call handshake completed event
-				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_COMPLETED, bundle._source );
+				NodeHandshakeEvent::raiseEvent( NodeHandshakeEvent::HANDSHAKE_COMPLETED, bundle.source.getNode() );
 			}
 		}
 	} /* namespace routing */

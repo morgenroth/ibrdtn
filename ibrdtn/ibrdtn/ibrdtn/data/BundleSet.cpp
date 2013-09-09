@@ -6,6 +6,7 @@
  */
 
 #include "ibrdtn/data/BundleSet.h"
+#include <vector>
 
 namespace dtn
 {
@@ -14,7 +15,7 @@ namespace dtn
 		BundleSet::Listener::~Listener()
 		{ }
 
-		BundleSet::BundleSet(BundleSet::Listener *listener, size_t bf_size)
+		BundleSet::BundleSet(BundleSet::Listener *listener, Length bf_size)
 		 : _bf(bf_size * 8), _listener(listener), _consistent(true)
 		{
 		}
@@ -23,7 +24,7 @@ namespace dtn
 		{
 		}
 
-		void BundleSet::add(const dtn::data::MetaBundle &bundle)
+		void BundleSet::add(const dtn::data::MetaBundle &bundle) throw ()
 		{
 			// insert bundle id to the private list
 			pair<std::set<dtn::data::MetaBundle>::iterator,bool> ret = _bundles.insert(bundle);
@@ -35,7 +36,7 @@ namespace dtn
 			_bf.insert(bundle.toString());
 		}
 
-		void BundleSet::clear()
+		void BundleSet::clear() throw ()
 		{
 			_consistent = true;
 			_bundles.clear();
@@ -43,7 +44,7 @@ namespace dtn
 			_bf.clear();
 		}
 
-		bool BundleSet::has(const dtn::data::BundleID &bundle) const
+		bool BundleSet::has(const dtn::data::BundleID &bundle) const throw ()
 		{
 			// check bloom-filter first
 			if (_bf.contains(bundle.toString())) {
@@ -51,19 +52,19 @@ namespace dtn
 				// the bundles set. This happen if the BundleSet gets deserialized.
 				if (!_consistent) return true;
 
-				std::set<dtn::data::MetaBundle>::iterator iter = _bundles.find(bundle);
+				std::set<dtn::data::MetaBundle>::iterator iter = _bundles.find(dtn::data::MetaBundle::mockUp(bundle));
 				return (iter != _bundles.end());
 			}
 
 			return false;
 		}
 
-		size_t BundleSet::size() const
+		Size BundleSet::size() const throw ()
 		{
 			return _bundles.size();
 		}
 
-		void BundleSet::expire(const size_t timestamp)
+		void BundleSet::expire(const Timestamp timestamp) throw ()
 		{
 			bool commit = false;
 
@@ -96,19 +97,19 @@ namespace dtn
 			{
 				// rebuild the bloom-filter
 				_bf.clear();
-				for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+				for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 				{
 					_bf.insert( (*iter).toString() );
 				}
 			}
 		}
 
-		const ibrcommon::BloomFilter& BundleSet::getBloomFilter() const
+		const ibrcommon::BloomFilter& BundleSet::getBloomFilter() const throw ()
 		{
 			return _bf;
 		}
 
-		std::set<dtn::data::MetaBundle> BundleSet::getNotIn(ibrcommon::BloomFilter &filter) const
+		std::set<dtn::data::MetaBundle> BundleSet::getNotIn(ibrcommon::BloomFilter &filter) const throw ()
 		{
 			std::set<dtn::data::MetaBundle> ret;
 
@@ -116,7 +117,7 @@ namespace dtn
 //			if (filter == _bf) return ret;
 
 			// iterate through all items to find the differences
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
 				if (!filter.contains( (*iter).toString() ) )
 				{
@@ -159,14 +160,14 @@ namespace dtn
 			return !(((*this) < other) || ((*this) == other));
 		}
 
-		size_t BundleSet::getLength() const
+		Length BundleSet::getLength() const throw ()
 		{
-			return dtn::data::SDNV(_bf.size()).getLength() + _bf.size();
+			return dtn::data::Number(_bf.size()).getLength() + _bf.size();
 		}
 
 		std::ostream &operator<<(std::ostream &stream, const BundleSet &obj)
 		{
-			dtn::data::SDNV size(obj._bf.size());
+			dtn::data::Number size(obj._bf.size());
 			stream << size;
 
 			const char *data = reinterpret_cast<const char*>(obj._bf.table());
@@ -177,15 +178,15 @@ namespace dtn
 
 		std::istream &operator>>(std::istream &stream, BundleSet &obj)
 		{
-			dtn::data::SDNV count;
+			dtn::data::Number count;
 			stream >> count;
 
-			char buffer[count.getValue()];
+			std::vector<char> buffer(count.get<size_t>());
 
-			stream.read(buffer, count.getValue());
+			stream.read(&buffer[0], buffer.size());
 
 			obj.clear();
-			obj._bf.load((unsigned char*)buffer, count.getValue());
+			obj._bf.load((unsigned char*)&buffer[0], buffer.size());
 
 			// set the set to in-consistent mode
 			obj._consistent = false;

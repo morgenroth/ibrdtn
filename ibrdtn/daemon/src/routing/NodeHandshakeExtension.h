@@ -22,7 +22,7 @@
 #ifndef NODEHANDSHAKEEXTENSION_H_
 #define NODEHANDSHAKEEXTENSION_H_
 
-#include "routing/BaseRouter.h"
+#include "routing/RoutingExtension.h"
 #include "core/AbstractWorker.h"
 
 #include <ibrcommon/thread/Mutex.h>
@@ -33,10 +33,12 @@ namespace dtn
 {
 	namespace routing
 	{
-		class NodeHandshakeExtension : public BaseRouter::Extension
+		class NodeHandshakeExtension : public RoutingExtension
 		{
+			static const std::string TAG;
+
 		public:
-			NodeHandshakeExtension(dtn::storage::BundleSeeker &seeker);
+			NodeHandshakeExtension();
 			virtual ~NodeHandshakeExtension();
 
 			void notify(const dtn::core::Event *evt) throw ();
@@ -62,7 +64,6 @@ namespace dtn
 
 		protected:
 			void processHandshake(const dtn::data::Bundle &bundle);
-			const std::list<BaseRouter::Extension*>& getExtensions();
 
 		private:
 			class HandshakeEndpoint : public dtn::core::AbstractWorker
@@ -80,7 +81,7 @@ namespace dtn
 
 			private:
 				NodeHandshakeExtension &_callback;
-				std::map<dtn::data::EID, size_t> _blacklist;
+				std::map<dtn::data::EID, dtn::data::Timestamp> _blacklist;
 				ibrcommon::Mutex _blacklist_lock;
 			};
 

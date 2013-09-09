@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-    <group android:checkableBehavior="all">
-    	<item android:id="@+id/itemAutoPlay" android:title="@string/autoplay" android:icon="@drawable/ic_autoplay"></item>
-    	<item android:id="@+id/itemAutoRec" android:title="@string/autorec" android:icon="@drawable/ic_autorec_on"></item>
-    </group>
     <item android:id="@+id/itemClearList" android:title="@string/clear_list" android:icon="@drawable/ic_discard"></item>
 </menu>

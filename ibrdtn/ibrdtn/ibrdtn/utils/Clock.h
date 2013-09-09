@@ -22,10 +22,45 @@
 #ifndef CLOCK_H_
 #define CLOCK_H_
 
-#include <sys/types.h>
 #include <sys/time.h>
 
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/BundleID.h"
+
+#ifdef __WIN32__
+/**
+ * timeradd / timersub macros are not available on win32
+ */
+#ifndef timerclear
+#define timerclear(a) \
+	(a)->tv_set = 0; (a)->tv_usec = 0
+#endif
+
+#ifndef timeradd
+#define timeradd(a, b, result) \
+    do { \
+        (result)->tv_sec = (a)->tv_sec + (b)->tv_sec; \
+        (result)->tv_usec = (a)->tv_usec + (b)->tv_usec; \
+        if ((result)->tv_usec >= 1000000L) { \
+            ++(result)->tv_sec; \
+            (result)->tv_usec -= 1000000L; \
+        } \
+    } while (0)
+#endif
+
+#ifndef timersub
+#define timersub(a, b, result) \
+    do { \
+        (result)->tv_sec = (a)->tv_sec - (b)->tv_sec; \
+        (result)->tv_usec = (a)->tv_usec - (b)->tv_usec; \
+        if ((result)->tv_usec < 0) { \
+            --(result)->tv_sec; \
+            (result)->tv_usec += 1000000L; \
+        } \
+    } while (0)
+#endif
+#endif
 
 namespace dtn
 {
@@ -38,13 +73,13 @@ namespace dtn
 			 * Return the current unix timestamp adjusted by
 			 * the configured timezone offset
 			 */
-			static size_t getUnixTimestamp();
+			static dtn::data::Timestamp getUnixTimestamp();
 
 			/**
 			 * Return the current DTN timestamp adjusted by
 			 * the configured timezone offset
 			 */
-			static size_t getTime();
+			static dtn::data::Timestamp getTime();
 
 			/**
 			 * Check if a bundle is expired
@@ -56,18 +91,18 @@ namespace dtn
 			 * This method is deprecated because it does not recognize the AgeBlock
 			 * as alternative age verification.
 			 */
-			static bool isExpired(size_t timestamp, size_t lifetime = 0) __attribute__ ((deprecated));
+			static bool isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime = 0) __attribute__ ((deprecated));
 
 			/**
 			 * Return the time of expiration of the given bundle
 			 */
-			static size_t getExpireTime(const dtn::data::Bundle &b);
+			static dtn::data::Timestamp getExpireTime(const dtn::data::Bundle &b);
 
 			/**
 			 * This method is deprecated because it does not recognize the AgeBlock
 			 * as alternative age verification.
 			 */
-			static size_t getExpireTime(size_t timestamp, size_t lifetime) __attribute__ ((deprecated));
+			static dtn::data::Timestamp getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime) __attribute__ ((deprecated));
 
 			/**
 			 * Returns the timestamp when this lifetime is going to be expired
@@ -75,7 +110,13 @@ namespace dtn
 			 * @param lifetime The lifetime in seconds.
 			 * @return A DTN timestamp.
 			 */
-			static size_t getExpireTime(size_t lifetime);
+			static dtn::data::Timestamp getExpireTime(const dtn::data::Number &lifetime);
+
+			/**
+			 * Returns the calculated lifetime in seconds based on the BundleID and the
+			 * expiretime
+			 */
+			static dtn::data::Number getLifetime(const dtn::data::BundleID &id, const dtn::data::Timestamp &expiretime);
 
 			/**
 			 * Tells the internal clock the offset to the common network time.
@@ -95,7 +136,13 @@ namespace dtn
 			 */
 			static void setOffset(const struct timeval &tv);
 
-			static const uint32_t TIMEVAL_CONVERSION;
+			/**
+			 * Returns the local offset of the clock
+			 * (prior set by setOffset)
+			 */
+			static const struct timeval& getOffset();
+
+			static const dtn::data::Timestamp TIMEVAL_CONVERSION;
 
 			/**
 			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
@@ -147,6 +194,11 @@ namespace dtn
 			 */
 			static double toDouble(const timeval &val);
 
+			/**
+			 * Return the seconds since the last start-up
+			 */
+			static dtn::data::Timestamp getUptime();
+
 		private:
 			/**
 			 * Timezone offset in hours
@@ -175,11 +227,13 @@ namespace dtn
 			Clock();
 			virtual ~Clock();
 
-			static bool __isExpired(size_t timestamp, size_t lifetime = 0);
-			static size_t __getExpireTime(size_t timestamp, size_t lifetime);
+			static bool __isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime = 0);
+			static dtn::data::Timestamp __getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime);
 
 			static struct timeval _offset;
 			static bool _offset_init;
+
+			static const dtn::data::Timestamp _boot_timestamp;
 		};
 	}
 }

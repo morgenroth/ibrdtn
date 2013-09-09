@@ -11,6 +11,7 @@
 #include "storage/BundleResult.h"
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/MetaBundle.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrcommon/Exceptions.h>
 
 namespace dtn
@@ -42,7 +43,7 @@ namespace dtn
 			 * Limit the number of selected items.
 			 * @return The limit as number of items.
 			 */
-			virtual size_t limit() const { return 1; };
+			virtual dtn::data::Size limit() const throw () { return 1; };
 
 			/**
 			 * This method is called by the storage to determine if one bundle

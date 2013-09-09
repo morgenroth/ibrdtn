@@ -21,12 +21,10 @@
 
 #include "config.h"
 #include "ibrdtn/api/Client.h"
-#include "ibrdtn/api/FileBundle.h"
 #include "ibrcommon/net/socket.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrdtn/data/PayloadBlock.h"
-#include "ibrdtn/api/BLOBBundle.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
@@ -64,7 +62,7 @@ map<string,string> readconfiguration(int argc, char** argv)
     ret["outbox"] = argv[argc - 2];
     ret["destination"] = argv[argc - 1];
 
-    for (int i = 0; i < (argc - 3); i++)
+    for (int i = 0; i < (argc - 3); ++i)
     {
         string arg = argv[i];
 
@@ -123,7 +121,7 @@ int main(int argc, char** argv)
     }
 
     // backoff for reconnect
-    size_t backoff = 2;
+    unsigned int backoff = 2;
 
     // check outbox for files
 	File outbox(conf["outbox"]);
@@ -159,14 +157,14 @@ int main(int argc, char** argv)
             	if (files.size() <= 2)
             	{
                     // wait some seconds
-                    sleep(10);
+            		ibrcommon::Thread::sleep(10000);
 
                     continue;
             	}
 
             	stringstream file_list;
 
-            	for (list<File>::iterator iter = files.begin(); iter != files.end(); iter++)
+            	for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
             	{
 					File &f = (*iter);
 
@@ -195,7 +193,15 @@ int main(int argc, char** argv)
 
             	// create a new bundle
     			dtn::data::EID destination = EID(conf["destination"]);
-    			dtn::api::BLOBBundle b(destination, blob);
+
+    			// create a new bundle
+    			dtn::data::Bundle b;
+
+    			// set destination
+    			b.destination = destination;
+
+    			// add payload block using the blob
+    			b.push_back(blob);
 
                 // send the bundle
     			client << b; client.flush();
@@ -203,7 +209,7 @@ int main(int argc, char** argv)
             	if (_running)
             	{
 					// wait some seconds
-					sleep(10);
+            		ibrcommon::Thread::sleep(10000);
             	}
             }
 
@@ -222,7 +228,7 @@ int main(int argc, char** argv)
         	if (_running)
         	{
 				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
-				sleep(backoff);
+				ibrcommon::Thread::sleep(backoff * 1000);
 
 				// if backoff < 10 minutes
 				if (backoff < 600)
@@ -238,7 +244,7 @@ int main(int argc, char** argv)
         	if (_running)
         	{
 				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
-				sleep(backoff);
+				ibrcommon::Thread::sleep(backoff * 1000);
 
 				// if backoff < 10 minutes
 				if (backoff < 600)

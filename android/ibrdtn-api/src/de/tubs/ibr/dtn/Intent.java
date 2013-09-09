@@ -22,6 +22,8 @@
 package de.tubs.ibr.dtn;
 
 public class Intent {
+    public static final String CATEGORY_SERVICES = "de.tubs.ibr.dtn.intent.category.SERVICES";
+    
 	public static final String DTNAPP = "de.tubs.ibr.dtn.intent.DTNAPP";
 	
 	public static final String REGISTRATION = "de.tubs.ibr.dtn.intent.REGISTRATION";
@@ -29,8 +31,18 @@ public class Intent {
 	public static final String UNREGISTER = "de.tubs.ibr.dtn.intent.UNREGISTER";
 	
 	public static final String RECEIVE = "de.tubs.ibr.dtn.intent.RECEIVE";
+	public static final String STATUS_REPORT = "de.tubs.ibr.dtn.intent.STATUS_REPORT";
+	public static final String CUSTODY_SIGNAL = "de.tubs.ibr.dtn.intent.CUSTODY_SIGNAL";
+	
 	public static final String STATE = "de.tubs.ibr.dtn.intent.STATE";
 	public static final String EVENT = "de.tubs.ibr.dtn.intent.EVENT";
 	
 	public static final String NEIGHBOR = "de.tubs.ibr.dtn.intent.NEIGHBOR";
+	
+	public static final String SENDFILE = "de.tubs.ibr.dtn.intent.SENDFILE";
+	public static final String SENDFILE_MULTIPLE = "de.tubs.ibr.dtn.intent.SEND_MULTIPLE";
+	
+	// required extras for the SENDFILE intent
+    public static final String EXTRA_KEY_DESTINATION = "destination";
+    public static final String EXTRA_KEY_STREAM = "stream";
 }

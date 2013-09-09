@@ -27,6 +27,7 @@
 #include "api/EventConnection.h"
 #include "api/ExtendedApiHandler.h"
 #include "api/OrderedStreamHandler.h"
+#include "api/ApiP2PExtensionHandler.h"
 #include "core/BundleCore.h"
 #include <ibrcommon/Logger.h>
 #include <ibrdtn/utils/Utils.h>
@@ -79,82 +80,106 @@ namespace dtn
 
 		void ClientHandler::run() throw ()
 		{
-			// signal the active connection to the server
-			_srv.connectionUp(this);
+			try {
+				// signal the active connection to the server
+				_srv.connectionUp(this);
 
-			std::string buffer;
+				std::string buffer;
 
-			while (_stream->good())
-			{
-				if (_handler != NULL)
+				while (_stream->good())
 				{
-					_handler->setup();
-					_handler->run();
-					_handler->finally();
-					delete _handler;
-					_handler = NULL;
-
-					// end this stream, return to the previous stage
-					(*_stream) << ClientHandler::API_STATUS_OK << " SWITCHED TO LEVEL 0" << std::endl;
-
-					continue;
-				}
-
-				getline(*_stream, buffer);
-
-				// search for '\r\n' and remove the '\r'
-				std::string::reverse_iterator iter = buffer.rbegin();
-				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
-
-				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.size() == 0) continue;
-
-				try {
-					if (cmd[0] == "protocol")
+					if (_handler != NULL)
 					{
-						if (cmd[1] == "tcpcl")
+						_handler->setup();
+						_handler->run();
+						_handler->finally();
+						delete _handler;
+						_handler = NULL;
+
+						// end this stream, return to the previous stage
+						(*_stream) << ClientHandler::API_STATUS_OK << " SWITCHED TO LEVEL 0" << std::endl;
+
+						continue;
+					}
+
+					getline(*_stream, buffer);
+
+					// search for '\r\n' and remove the '\r'
+					std::string::reverse_iterator iter = buffer.rbegin();
+					if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
+
+					std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
+					if (cmd.empty()) continue;
+
+					try {
+						if (cmd[0] == "protocol")
 						{
-							// switch to binary protocol (old style api)
-							_handler = new BinaryStreamClient(*this, *_stream);
-							continue;
-						}
-						else if (cmd[1] == "management")
-						{
-							// switch to the management protocol
-							_handler = new ManagementConnection(*this, *_stream);
-							continue;
-						}
-						else if (cmd[1] == "event")
-						{
-							// switch to the management protocol
-							_handler = new EventConnection(*this, *_stream);
-							continue;
-						}
-						else if (cmd[1] == "extended")
-						{
-							// switch to the extended api
-							_handler = new ExtendedApiHandler(*this, *_stream);
-							continue;
-						}
-						else if (cmd[1] == "streaming")
-						{
-							// switch to the streaming api
-							_handler = new OrderedStreamHandler(*this, *_stream);
-							continue;
+							if (cmd[1] == "tcpcl")
+							{
+								// switch to binary protocol (old style api)
+								_handler = new BinaryStreamClient(*this, *_stream);
+								continue;
+							}
+							else if (cmd[1] == "management")
+							{
+								// switch to the management protocol
+								_handler = new ManagementConnection(*this, *_stream);
+								continue;
+							}
+							else if (cmd[1] == "event")
+							{
+								// switch to the management protocol
+								_handler = new EventConnection(*this, *_stream);
+								continue;
+							}
+							else if (cmd[1] == "extended")
+							{
+								// switch to the extended api
+								_handler = new ExtendedApiHandler(*this, *_stream);
+								continue;
+							}
+							else if (cmd[1] == "streaming")
+							{
+								// switch to the streaming api
+								_handler = new OrderedStreamHandler(*this, *_stream);
+								continue;
+							}
+							else if (cmd[1] == "p2p_extension")
+							{
+								if (cmd.size() < 3) {
+									error(API_STATUS_NOT_ACCEPTABLE, "P2P TYPE REQUIRED");
+									continue;
+								}
+
+								if (cmd[2] == "wifi") {
+									// switch to the streaming api
+									_handler = new ApiP2PExtensionHandler(*this, *_stream, dtn::core::Node::CONN_P2P_WIFI);
+									continue;
+								} else if (cmd[2] == "bt") {
+									// switch to the streaming api
+									_handler = new ApiP2PExtensionHandler(*this, *_stream, dtn::core::Node::CONN_P2P_BT);
+									continue;
+								} else {
+									error(API_STATUS_NOT_ACCEPTABLE, "P2P TYPE UNKNOWN");
+									continue;
+								}
+							}
+							else
+							{
+								error(API_STATUS_NOT_ACCEPTABLE, "UNKNOWN PROTOCOL");
+							}
 						}
 						else
 						{
-							error(API_STATUS_NOT_ACCEPTABLE, "UNKNOWN PROTOCOL");
+							// forward to standard command set
+							processCommand(cmd);
 						}
+					} catch (const std::exception&) {
+						error(API_STATUS_BAD_REQUEST, "PROTOCOL ERROR");
 					}
-					else
-					{
-						// forward to standard command set
-						processCommand(cmd);
-					}
-				} catch (const std::exception&) {
-					error(API_STATUS_BAD_REQUEST, "PROTOCOL ERROR");
 				}
+			} catch (const ibrcommon::socket_exception &ex) {
+				IBRCOMMON_LOGGER_TAG("ClientHandler", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -172,7 +197,7 @@ namespace dtn
 
 		void ClientHandler::finally() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "ApiConnection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("ClientHandler", 60) << "ApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 
 			// remove the client from the list in ApiServer
 			_srv.connectionDown(this);
@@ -194,9 +219,9 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return 0; };
+				virtual dtn::data::Size limit() const throw () { return 0; };
 
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
+				virtual bool shouldAdd(const dtn::data::MetaBundle&) const throw (dtn::storage::BundleSelectorException)
 				{
 					return true;
 				}
@@ -212,17 +237,20 @@ namespace dtn
 						if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
 
 						ibrcommon::MutexLock l(_write_lock);
-						_endpoint = dtn::core::BundleCore::local + "/" + cmd[2];
-
-						// error checking
-						if (_endpoint == dtn::data::EID())
-						{
+						if (cmd[2].length() <= 0) {
+							// send error notification
 							(*_stream) << API_STATUS_NOT_ACCEPTABLE << " INVALID ENDPOINT" << std::endl;
-							_endpoint = dtn::core::BundleCore::local;
-						}
-						else
-						{
+						} else {
+							// un-subscribe previous registration
+							_registration->unsubscribe(_endpoint);
+
+							// set new application endpoint
+							_endpoint.setApplication(cmd[2]);
+
+							// subscribe to new endpoint
 							_registration->subscribe(_endpoint);
+
+							// send accepted notification
 							(*_stream) << API_STATUS_ACCEPTED << " OK" << std::endl;
 						}
 					}
@@ -278,7 +306,7 @@ namespace dtn
 						const std::set<dtn::data::EID> list = _registration->getSubscriptions();
 
 						(*_stream) << API_STATUS_OK << " REGISTRATION LIST" << std::endl;
-						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 						{
 							(*_stream) << (*iter).getString() << std::endl;
 						}

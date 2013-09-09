@@ -44,8 +44,8 @@ namespace dtn
 		public:
 			static const std::string TAG;
 
-			ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::File &socket);
-			ApiServer(dtn::storage::BundleSeeker &seeker, const ibrcommon::vinterface &net, int port = 4550);
+			ApiServer(const ibrcommon::File &socket);
+			ApiServer(const ibrcommon::vinterface &net, int port = 4550);
 			virtual ~ApiServer();
 
 			/**
@@ -82,7 +82,7 @@ namespace dtn
 			virtual void connectionDown(ClientHandler *conn);
 
 			void componentUp() throw ();
-			void componentRun() throw ();;
+			void componentRun() throw ();
 			void componentDown() throw ();
 
 		private:
@@ -100,13 +100,16 @@ namespace dtn
 
 			ibrcommon::vsocket _sockets;
 			bool _shutdown;
-			std::list<Registration> _registrations;
-			std::list<ClientHandler*> _connections;
+
+			typedef std::list<Registration*> registration_list;
+			registration_list _registrations;
+
+			typedef std::list<ClientHandler*> client_list;
+			client_list _connections;
+
 			ibrcommon::Mutex _connection_lock;
 			ibrcommon::Mutex _registration_lock;
 			ibrcommon::Timer _garbage_collector;
-
-			dtn::storage::BundleSeeker &_seeker;
 		};
 	}
 }

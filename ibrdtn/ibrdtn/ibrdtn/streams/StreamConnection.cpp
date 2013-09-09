@@ -33,7 +33,7 @@ namespace dtn
 {
 	namespace streams
 	{
-		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream, const size_t buffer_size)
+		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream, const dtn::data::Length buffer_size)
 		 : std::iostream(&_buf), _callback(cb), _buf(*this, stream, buffer_size), _shutdown_reason(CONNECTION_SHUTDOWN_NOTSET)
 		{
 		}
@@ -42,13 +42,13 @@ namespace dtn
 		{
 		}
 
-		void StreamConnection::handshake(const dtn::data::EID &eid, const size_t timeout, const char flags)
+		void StreamConnection::handshake(const dtn::data::EID &eid, const dtn::data::Timeout &timeout, const dtn::data::Bitset<StreamContactHeader::HEADER_BITS> &flags)
 		{
 			// create a new header
 			dtn::streams::StreamContactHeader header(eid);
 
 			// set timeout
-			header._keepalive = timeout;
+			header._keepalive = static_cast<uint16_t>(timeout);
 
 			// set flags
 			header._flags = flags;
@@ -111,6 +111,9 @@ namespace dtn
 						break;
 					case CONNECTION_SHUTDOWN_PEER_SHUTDOWN:
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
+						_buf.abort();
+						_callback.eventShutdown(csc);
+						break;
 					case CONNECTION_SHUTDOWN_NOTSET:
 						_buf.abort();
 						_callback.eventShutdown(csc);
@@ -129,20 +132,20 @@ namespace dtn
 			_callback.eventShutdown(csc);
 		}
 
-		void StreamConnection::eventBundleAck(size_t ack)
+		void StreamConnection::eventBundleAck(const dtn::data::Length &ack)
 		{
 			_callback.eventBundleAck(ack);
 		}
 
 		void StreamConnection::eventBundleRefused()
 		{
-			IBRCOMMON_LOGGER_DEBUG(20) << "bundle has been refused" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamConnection", 20) << "bundle has been refused" << IBRCOMMON_LOGGER_ENDL;
 			_callback.eventBundleRefused();
 		}
 
 		void StreamConnection::eventBundleForwarded()
 		{
-			IBRCOMMON_LOGGER_DEBUG(20) << "bundle has been forwarded" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("StreamConnection", 20) << "bundle has been forwarded" << IBRCOMMON_LOGGER_ENDL;
 			_callback.eventBundleForwarded();
 		}
 
@@ -152,9 +155,25 @@ namespace dtn
 			_callback.eventTimeout();
 		}
 
-		void StreamConnection::enableIdleTimeout(size_t seconds)
+		void StreamConnection::enableIdleTimeout(const dtn::data::Timeout &seconds)
 		{
 			_buf.enableIdleTimeout(seconds);
+		}
+
+		void StreamConnection::setMonitor(bool val)
+		{
+			_buf._monitor = val;
+		}
+
+		void StreamConnection::resetMonitorStats()
+		{
+			_buf._monitor_stats[0] = 0;
+			_buf._monitor_stats[1] = 0;
+		}
+
+		size_t StreamConnection::getMonitorStat(int index)
+		{
+			return _buf._monitor_stats[index];
 		}
 	}
 }

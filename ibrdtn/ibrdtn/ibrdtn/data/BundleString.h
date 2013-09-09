@@ -22,6 +22,7 @@
 #ifndef BUNDLESTRING_H_
 #define BUNDLESTRING_H_
 
+#include <ibrdtn/data/Number.h>
 #include <string>
 
 namespace dtn
@@ -31,7 +32,7 @@ namespace dtn
 		class BundleString : public std::string
 		{
 		public:
-			BundleString(std::string value);
+			BundleString(const std::string &value);
 			BundleString();
 			virtual ~BundleString();
 			
@@ -39,7 +40,7 @@ namespace dtn
 			 * This method returns the length of the full encoded bundle string.
 			 * @return The length of the full encoded bundle string
 			 */
-			size_t getLength() const;
+			Length getLength() const;
 
 		private:
 			friend std::ostream &operator<<(std::ostream &stream, const BundleString &bstring);

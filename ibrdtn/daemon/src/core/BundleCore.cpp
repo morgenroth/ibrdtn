@@ -63,12 +63,14 @@ namespace dtn
 {
 	namespace core
 	{
+		const std::string BundleCore::TAG = "BundleCore";
 		dtn::data::EID BundleCore::local;
 
-		size_t BundleCore::blocksizelimit = 0;
-		size_t BundleCore::max_lifetime = 0;
-		size_t BundleCore::max_timestamp_future = 0;
-		size_t BundleCore::max_bundles_in_transit = 5;
+		dtn::data::Length BundleCore::blocksizelimit = 0;
+		dtn::data::Length BundleCore::foreign_blocksizelimit = 0;
+		dtn::data::Length BundleCore::max_lifetime = 0;
+		dtn::data::Length BundleCore::max_timestamp_future = 0;
+		dtn::data::Size BundleCore::max_bundles_in_transit = 5;
 
 		bool BundleCore::forwarding = true;
 
@@ -79,7 +81,7 @@ namespace dtn
 		}
 
 		BundleCore::BundleCore()
-		 : _clock(1), _storage(NULL), _router(NULL), _globally_connected(true)
+		 : _clock(1), _storage(NULL), _seeker(NULL), _router(NULL), _globally_connected(true)
 		{
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
@@ -100,14 +102,7 @@ namespace dtn
 		void BundleCore::componentUp() throw ()
 		{
 			// routine checked for throw() on 15.02.2013
-			const std::set<ibrcommon::vinterface> &global_nets = dtn::daemon::Configuration::getInstance().getNetwork().getInternetDevices();
-			for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); iter++)
-			{
-				ibrcommon::LinkManager::getInstance().addEventListener(*iter, this);
-			}
-
-			// check connection state
-			check_connection_state();
+			onConfigurationChanged(dtn::daemon::Configuration::getInstance());
 
 			_connectionmanager.initialize();
 			_clock.initialize();
@@ -124,9 +119,86 @@ namespace dtn
 			_clock.terminate();
 		}
 
+		void BundleCore::onConfigurationChanged(const dtn::daemon::Configuration &config) throw ()
+		{
+			// set the timezone
+			dtn::utils::Clock::setTimezone(config.getTimezone());
+
+			// set local eid
+			dtn::core::BundleCore::local = config.getNodename();
+			IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
+
+			// set block size limit
+			dtn::core::BundleCore::blocksizelimit = config.getLimit("blocksize");
+			if (dtn::core::BundleCore::blocksizelimit > 0)
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Block size limited to " << dtn::core::BundleCore::blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			// set block size limit
+			dtn::core::BundleCore::foreign_blocksizelimit = config.getLimit("foreign_blocksize");
+			if (dtn::core::BundleCore::foreign_blocksizelimit > 0)
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Block size of foreign bundles limited to " << dtn::core::BundleCore::foreign_blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			// set the lifetime limit
+			dtn::core::BundleCore::max_lifetime = config.getLimit("lifetime");
+			if (dtn::core::BundleCore::max_lifetime > 0)
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Lifetime limited to " << dtn::core::BundleCore::max_lifetime << " seconds" << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			// set the timestamp limit
+			dtn::core::BundleCore::max_timestamp_future = config.getLimit("predated_timestamp");
+			if (dtn::core::BundleCore::max_timestamp_future > 0)
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Pre-dated timestamp limited to " << dtn::core::BundleCore::max_timestamp_future << " seconds in the future" << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			// set the maximum count of bundles in transit (bundles to send to the CL queue)
+			dtn::data::Size transit_limit = config.getLimit("bundles_in_transit");
+			if (transit_limit > 0)
+			{
+				dtn::core::BundleCore::max_bundles_in_transit = transit_limit;
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Limit the number of bundles in transit to " << dtn::core::BundleCore::max_bundles_in_transit << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			// enable or disable forwarding of bundles
+			if (config.getNetwork().doForwarding())
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Forwarding of bundles enabled." << IBRCOMMON_LOGGER_ENDL;
+				BundleCore::forwarding = true;
+			}
+			else
+			{
+				IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Forwarding of bundles disabled." << IBRCOMMON_LOGGER_ENDL;
+				BundleCore::forwarding = false;
+			}
+
+			const std::set<ibrcommon::vinterface> &global_nets = config.getNetwork().getInternetDevices();
+
+			// remove myself from all listeners
+			ibrcommon::LinkManager::getInstance().removeEventListener(this);
+
+			// add all listener in the configuration
+			for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); ++iter)
+			{
+				ibrcommon::LinkManager::getInstance().addEventListener(*iter, this);
+			}
+
+			// check connection state
+			check_connection_state();
+		}
+
 		void BundleCore::setStorage(dtn::storage::BundleStorage *storage)
 		{
 			_storage = storage;
+		}
+
+		void BundleCore::setSeeker(dtn::storage::BundleSeeker *seeker)
+		{
+			_seeker = seeker;
 		}
 
 		void BundleCore::setRouter(dtn::routing::BaseRouter *router)
@@ -153,23 +225,32 @@ namespace dtn
 			return *_storage;
 		}
 
+		dtn::storage::BundleSeeker& BundleCore::getSeeker()
+		{
+			if (_seeker == NULL)
+			{
+				throw ibrcommon::Exception("No bundle seeker is set! Use BundleCore::setSeeker() to set a seeker.");
+			}
+			return *_seeker;
+		}
+
 		WallClock& BundleCore::getClock()
 		{
 			return _clock;
 		}
 
-		void BundleCore::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle)
+		void BundleCore::transferTo(dtn::net::BundleTransfer &transfer) throw (P2PDialupException)
 		{
 			try {
-				_connectionmanager.queue(destination, bundle);
+				_connectionmanager.queue(transfer);
 			} catch (const dtn::net::NeighborNotAvailableException &ex) {
 				// signal interruption of the transfer
-				dtn::net::TransferAbortedEvent::raise(destination, bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+				transfer.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			} catch (const dtn::net::ConnectionNotAvailableException &ex) {
-				// signal interruption of the transfer
-				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
+			} catch (const P2PDialupException&) {
+				// re-throw the P2PDialupException
+				throw;
 			} catch (const ibrcommon::Exception&) {
-				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
 			}
 		}
 
@@ -178,7 +259,7 @@ namespace dtn
 			return _connectionmanager;
 		}
 
-		void BundleCore::addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, size_t timeout)
+		void BundleCore::addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, const dtn::data::Timeout timeout)
 		{
 			dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_ADD, nexthop, destination, timeout);
 		}
@@ -217,15 +298,14 @@ namespace dtn
 					if (bundle.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
 					try {
 						// check for a custody signal
-						dtn::data::PayloadBlock &payload = bundle.getBlock<dtn::data::PayloadBlock>();
+						dtn::data::PayloadBlock &payload = bundle.find<dtn::data::PayloadBlock>();
 
 						CustodySignalBlock custody;
 						custody.read(payload);
 
-						dtn::data::BundleID id(custody._source, custody._bundle_timestamp.getValue(), custody._bundle_sequence.getValue(), (custody._fragment_length.getValue() > 0), custody._fragment_offset.getValue());
-						getStorage().releaseCustody(bundle._source, id);
+						getStorage().releaseCustody(bundle.source, custody.bundleid);
 
-						IBRCOMMON_LOGGER_DEBUG(5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						delivered = true;
 					} catch (const AdministrativeBlock::WrongRecordException&) {
@@ -245,12 +325,16 @@ namespace dtn
 						dtn::core::BundleEvent::raise(meta, BUNDLE_DELETED, StatusReportBlock::DESTINATION_ENDPOINT_ID_UNINTELLIGIBLE);
 					}
 
-					// delete the bundle
-					dtn::core::BundlePurgeEvent::raise(meta);
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						// delete the bundle
+						dtn::core::BundlePurgeEvent::raise(meta);
+					}
 				}
 
 				return;
 			} catch (const dtn::storage::NoBundleFoundException&) {
+				return;
 			} catch (const std::bad_cast&) {}
 
 			try {
@@ -258,7 +342,7 @@ namespace dtn
 				const dtn::data::MetaBundle &meta = completed.getBundle();
 				const dtn::data::EID &peer = completed.getPeer();
 
-				if ((meta.destination.getNode() == peer.getNode())
+				if ((meta.destination.sameHost(peer))
 						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 				{
 					// bundle has been delivered to its destination
@@ -268,7 +352,7 @@ namespace dtn
 					IBRCOMMON_LOGGER_TAG("BundleCore", notice) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// gen a report
-					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 				}
 
 				return;
@@ -283,15 +367,15 @@ namespace dtn
 				const dtn::data::BundleID &id = aborted.getBundleID();
 
 				try {
-					const dtn::data::MetaBundle meta = this->getStorage().get(id);;
+					const dtn::data::MetaBundle meta = this->getStorage().get(id);
 
 					if (!(meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)) return;
 
 					// if the bundle has been sent by this module delete it
-					if (meta.destination.getNode() == peer.getNode())
+					if (meta.destination.sameHost(peer))
 					{
 						// bundle is not deliverable
-						dtn::core::BundlePurgeEvent::raise(id, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
+						dtn::core::BundlePurgeEvent::raise(meta, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
 					}
 				} catch (const dtn::storage::NoBundleFoundException&) { };
 
@@ -317,42 +401,24 @@ namespace dtn
 
 				// set the local clock to the new timestamp
 				dtn::utils::Clock::setOffset(timeadj.offset);
-
-				IBRCOMMON_LOGGER(info) << "time adjusted by " << dtn::utils::Clock::toDouble(timeadj.offset) << "s; new rating: " << timeadj.rating << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::bad_cast&) { }
 		}
 
-		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)
+		void BundleCore::validate(const dtn::data::MetaBundle &obj) const throw (dtn::data::Validator::RejectedException)
 		{
-			/*
-			 *
-			 * TODO: reject a bundle if...
-			 * ... it is expired (moved to validate(Bundle) to support AgeBlock for expiration)
-			 * ... already in the storage
-			 * ... a fragment of an already received bundle in the storage
-			 *
-			 * throw dtn::data::DefaultDeserializer::RejectedException();
-			 *
-			 */
-
-			// if we do not forward bundles
-			if (!BundleCore::forwarding)
-			{
-				if (!p._destination.sameHost(BundleCore::local))
-				{
-					// ... we reject all non-local bundles.
-					IBRCOMMON_LOGGER(warning) << "non-local bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
-					throw dtn::data::Validator::RejectedException("bundle is not local");
-				}
+			if (dtn::utils::Clock::isExpired(obj.expiretime)) {
+				// ... bundle is expired
+				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 35) << "bundle rejected: bundle has expired (" << obj.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
 			// check if the lifetime of the bundle is too long
 			if (BundleCore::max_lifetime > 0)
 			{
-				if (p._lifetime > BundleCore::max_lifetime)
+				if (obj.lifetime > BundleCore::max_lifetime)
 				{
 					// ... we reject bundles with such a long lifetime
-					IBRCOMMON_LOGGER(warning) << "lifetime of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 35) << "lifetime of bundle rejected: " << obj.toString() << IBRCOMMON_LOGGER_ENDL;
 					throw dtn::data::Validator::RejectedException("lifetime of the bundle is too long");
 				}
 			}
@@ -363,57 +429,105 @@ namespace dtn
 				// first check if the local clock is reliable
 				if (dtn::utils::Clock::getRating() > 0)
 					// then check the timestamp
-					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < p._timestamp)
+					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < obj.timestamp)
 					{
 						// ... we reject bundles with a timestamp so far in the future
-						IBRCOMMON_LOGGER(warning) << "timestamp of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "timestamp of bundle rejected: " << obj.toString() << IBRCOMMON_LOGGER_ENDL;
 						throw dtn::data::Validator::RejectedException("timestamp is too far in the future");
 					}
 			}
 		}
 
-		void BundleCore::validate(const dtn::data::Block&, const size_t size) const throw (dtn::data::Validator::RejectedException)
+		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)
 		{
-			/*
-			 *
-			 * reject a block if
-			 * ... it exceeds the payload limit
-			 *
-			 * throw dtn::data::DefaultDeserializer::RejectedException();
-			 *
-			 */
+			// if we do not forward bundles
+			if (!BundleCore::forwarding)
+			{
+				if (!p.destination.sameHost(BundleCore::local))
+				{
+					// ... we reject all non-local bundles.
+					IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "non-local bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+					throw dtn::data::Validator::RejectedException("bundle is not local");
+				}
+			}
 
+			// check if the lifetime of the bundle is too long
+			if (BundleCore::max_lifetime > 0)
+			{
+				if (p.lifetime > BundleCore::max_lifetime)
+				{
+					// ... we reject bundles with such a long lifetime
+					IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "lifetime of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+					throw dtn::data::Validator::RejectedException("lifetime of the bundle is too long");
+				}
+			}
+
+			// check if the timestamp is in the future
+			if (BundleCore::max_timestamp_future > 0)
+			{
+				// first check if the local clock is reliable
+				if (dtn::utils::Clock::getRating() > 0)
+					// then check the timestamp
+					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < p.timestamp)
+					{
+						// ... we reject bundles with a timestamp so far in the future
+						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "timestamp of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+						throw dtn::data::Validator::RejectedException("timestamp is too far in the future");
+					}
+			}
+		}
+
+		void BundleCore::validate(const dtn::data::Block&, const dtn::data::Number& size) const throw (dtn::data::Validator::RejectedException)
+		{
 			// check for the size of the block
+			// reject a block if it exceeds the payload limit
 			if ((BundleCore::blocksizelimit > 0) && (size > BundleCore::blocksizelimit))
 			{
-				IBRCOMMON_LOGGER(warning) << "bundle rejected: block size of " << size << " is too big" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("block size is too big");
+			}
+		}
+
+		void BundleCore::validate(const dtn::data::PrimaryBlock &bundle, const dtn::data::Block&, const dtn::data::Number& size) const throw (RejectedException)
+		{
+			// check for the size of the foreign block
+			// reject a block if it exceeds the payload limit
+			if (BundleCore::foreign_blocksizelimit > 0) {
+				if (size > BundleCore::foreign_blocksizelimit) {
+					if (!bundle.source.sameHost(dtn::core::BundleCore::local)) {
+						if (!bundle.destination.sameHost(dtn::core::BundleCore::local)) {
+							IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "foreign bundle " << bundle.toString() << " rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
+							throw dtn::data::Validator::RejectedException("foreign block size is too big");
+						}
+					}
+				}
+			}
+
+			// check for the size of the block
+			// reject a block if it exceeds the payload limit
+			if (BundleCore::blocksizelimit > 0)
+			{
+				if (size > BundleCore::blocksizelimit)
+				{
+					IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle " << bundle.toString() << " rejected: block size of " << size.toString() << " is too big" << IBRCOMMON_LOGGER_ENDL;
+					throw dtn::data::Validator::RejectedException("block size is too big");
+				}
 			}
 		}
 
 		void BundleCore::validate(const dtn::data::Bundle &b) const throw (dtn::data::Validator::RejectedException)
 		{
-			/*
-			 *
-			 * TODO: reject a bundle if
-			 * ... the security checks (DTNSEC) failed
-			 * ... a checksum mismatch is detected (CRC)
-			 *
-			 * throw dtn::data::DefaultDeserializer::RejectedException();
-			 *
-			 */
-
 			// reject bundles without destination
-			if (b._destination.isNone())
+			if (b.destination.isNone())
 			{
-				IBRCOMMON_LOGGER(warning) << "bundle rejected: the destination is null" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: the destination is null" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle destination is none");
 			}
 
 			// check if the bundle is expired
 			if (dtn::utils::Clock::isExpired(b))
 			{
-				IBRCOMMON_LOGGER(warning) << "bundle rejected: bundle has expired (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: bundle has expired (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
@@ -422,14 +536,13 @@ namespace dtn
 			try {
 				dtn::security::SecurityManager::getInstance().fastverify(b);
 			} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(5) << "[bundle rejected] security checks failed, reason: " << ex.what() << ", bundle: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 5) << "[bundle rejected] security checks failed, reason: " << ex.what() << ", bundle: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("security checks failed");
 			}
 #endif
 
 			// check for invalid blocks
-			const dtn::data::Bundle::block_list &bl = b.getBlocks();
-			for (dtn::data::Bundle::block_list::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
+			for (dtn::data::Bundle::const_iterator iter = b.begin(); iter != b.end(); ++iter)
 			{
 				try {
 					const dtn::data::ExtensionBlock &e = dynamic_cast<const dtn::data::ExtensionBlock&>(**iter);
@@ -457,41 +570,36 @@ namespace dtn
 		void BundleCore::processBlocks(dtn::data::Bundle &b)
 		{
 			// walk through the block and process them when needed
-			const dtn::data::Bundle::block_list blist = b.getBlocks();
-
-			for (dtn::data::Bundle::block_list::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
+			for (dtn::data::Bundle::iterator iter = b.begin(); iter != b.end(); ++iter)
 			{
 				const dtn::data::Block &block = (**iter);
-				switch (block.getType())
-				{
 #ifdef WITH_BUNDLE_SECURITY
-					case dtn::security::PayloadConfidentialBlock::BLOCK_TYPE:
-					{
-						// try to decrypt the bundle
-						try {
-							dtn::security::SecurityManager::getInstance().decrypt(b);
-						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-							// decrypt needed, but no key is available
-							IBRCOMMON_LOGGER(warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
-						} catch (const dtn::security::SecurityManager::DecryptException &ex) {
-							// decrypt failed
-							IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-						}
-						break;
+				if (block.getType() == dtn::security::PayloadConfidentialBlock::BLOCK_TYPE)
+				{
+					// try to decrypt the bundle
+					try {
+						dtn::security::SecurityManager::getInstance().decrypt(b);
+					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+						// decrypt needed, but no key is available
+						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
+					} catch (const dtn::security::SecurityManager::DecryptException &ex) {
+						// decrypt failed
+						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
+					break;
+				}
 #endif
 
 #ifdef WITH_COMPRESSION
-					case dtn::data::CompressedPayloadBlock::BLOCK_TYPE:
-					{
-						// try to decompress the bundle
-						try {
-							dtn::data::CompressedPayloadBlock::extract(b);
-						} catch (const ibrcommon::Exception&) { };
-						break;
-					}
-#endif
+				if (block.getType() == dtn::data::CompressedPayloadBlock::BLOCK_TYPE)
+				{
+					// try to decompress the bundle
+					try {
+						dtn::data::CompressedPayloadBlock::extract(b);
+					} catch (const ibrcommon::Exception&) { };
+					break;
 				}
+#endif
 			}
 		}
 
@@ -526,7 +634,7 @@ namespace dtn
 				setGloballyConnected(true);
 			} else {
 				bool found = false;
-				for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); iter++)
+				for (std::set<ibrcommon::vinterface>::const_iterator iter = global_nets.begin(); iter != global_nets.end(); ++iter)
 				{
 					const ibrcommon::vinterface &iface = (*iter);
 					if (!iface.getAddresses(ibrcommon::vaddress::SCOPE_GLOBAL).empty()) {

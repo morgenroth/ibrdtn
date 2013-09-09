@@ -19,7 +19,7 @@
  *
  */
 
-#include "config.h"
+#include "ibrcommon/config.h"
 #include "ibrcommon/Logger.h"
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -27,15 +27,25 @@
 #include <algorithm>
 #include <sys/time.h>
 #include <iomanip>
+#include <vector>
 #include <unistd.h>
 
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #endif
 
+#ifdef ANDROID
+#include <android/log.h>
+#endif
+
+#ifdef __WIN32__
+#include <winsock2.h>
+#endif
+
 namespace ibrcommon
 {
 	std::string Logger::_default_tag = "Core";
+	std::string Logger::_android_tag_prefix = "IBR-DTN/";
 	Logger::LogWriter Logger::_logwriter;
 
 	Logger::Logger(LogLevel level, const std::string &tag, int debug_verbosity)
@@ -45,12 +55,22 @@ namespace ibrcommon
 	}
 
 	Logger::Logger(const Logger &obj)
-	 : std::stringstream(obj.str()), _level(obj._level), _tag(obj._tag), _debug_verbosity(obj._debug_verbosity), _logtime(obj._logtime)
+	 : _level(obj._level), _tag(obj._tag), _debug_verbosity(obj._debug_verbosity), _logtime(obj._logtime), _data(obj._data)
 	{
 	}
 
 	Logger::~Logger()
 	{
+	}
+
+	void Logger::setMessage(const std::string &data)
+	{
+		_data = data;
+	}
+
+	const std::string& Logger::str() const
+	{
+		return _data;
 	}
 
 	Logger Logger::emergency(const std::string &tag)
@@ -103,12 +123,22 @@ namespace ibrcommon
 		_verbosity = verbosity;
 	}
 
+	unsigned char Logger::getLogMask()
+	{
+		return Logger::_logwriter.getLogMask();
+	}
+
 	int Logger::getVerbosity()
 	{
 		return Logger::_logwriter.getVerbosity();
 	}
 
-	int Logger::LogWriter::getVerbosity()
+	unsigned char Logger::LogWriter::getLogMask() const
+	{
+		return _global_logmask;
+	}
+
+	int Logger::LogWriter::getVerbosity() const
 	{
 		return _verbosity;
 	}
@@ -125,6 +155,7 @@ namespace ibrcommon
 
 	void Logger::LogWriter::addStream(std::ostream &stream, const unsigned char logmask, const unsigned char options)
 	{
+		_global_logmask |= logmask;
 		_logger.push_back( Logger::LoggerOutput(stream, logmask, options) );
 	}
 
@@ -140,11 +171,14 @@ namespace ibrcommon
 
 	void Logger::LogWriter::enableSyslog(const char *name, int option, int facility, const unsigned char logmask)
 	{
+#if ( defined HAVE_SYSLOG_H || defined ANDROID )
 #ifdef HAVE_SYSLOG_H
 		// init syslog
 		::openlog(name, option, facility);
+#endif
 		_syslog = true;
 		_syslog_mask = logmask;
+		_global_logmask |= logmask;
 #endif
 	}
 
@@ -152,7 +186,7 @@ namespace ibrcommon
 	{
 		if (_verbosity >= logger._debug_verbosity)
 		{
-			for (std::list<LoggerOutput>::iterator iter = _logger.begin(); iter != _logger.end(); iter++)
+			for (std::list<LoggerOutput>::iterator iter = _logger.begin(); iter != _logger.end(); ++iter)
 			{
 				LoggerOutput &output = (*iter);
 				output.log(logger);
@@ -167,12 +201,60 @@ namespace ibrcommon
 				}
 			}
 
-#ifdef HAVE_SYSLOG_H
-			// additionally log to the syslog
+#if ( defined HAVE_SYSLOG_H || defined ANDROID )
+			// additionally log to the syslog/android logcat
 			if (_syslog)
 			{
 				if (logger._level & _syslog_mask)
 				{
+#ifdef ANDROID
+					std::string log_tag = Logger::_default_tag;
+					if (logger._tag.length() > 0) {
+						log_tag = logger._tag;
+					}
+
+					// add additional prefix for android tags to seperate them from other logcat messages
+					log_tag = Logger::_android_tag_prefix + log_tag;
+
+					switch (logger._level)
+					{
+					case LOGGER_EMERG:
+						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_ALERT:
+						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_CRIT:
+						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_ERR:
+						__android_log_print(ANDROID_LOG_ERROR, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_WARNING:
+						__android_log_print(ANDROID_LOG_WARN, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_NOTICE:
+						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_INFO:
+						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					case LOGGER_DEBUG:
+						__android_log_print(ANDROID_LOG_DEBUG, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+
+					default:
+						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
+						break;
+					}
+#else
 					switch (logger._level)
 					{
 					case LOGGER_EMERG:
@@ -211,6 +293,7 @@ namespace ibrcommon
 						::syslog( LOG_NOTICE, "%s", logger.str().c_str() );
 						break;
 					}
+#endif
 				}
 			}
 #endif
@@ -227,7 +310,8 @@ namespace ibrcommon
 			if (_options & LOG_DATETIME)
 			{
 				// get timestamp
-				std::string timestamp(asctime( localtime(&log._logtime.tv_sec) ));
+				time_t secs = log._logtime.tv_sec;
+				std::string timestamp(asctime( localtime(&secs) ));
 				timestamp.erase(std::remove(timestamp.begin(), timestamp.end(), '\n'), timestamp.end());
 				prefixes.push_back(timestamp);
 			}
@@ -289,14 +373,12 @@ namespace ibrcommon
 
 			if (_options & LOG_HOSTNAME)
 			{
-				char *hostname_array = new char[64];
-				if ( gethostname(hostname_array, 64) == 0 )
+				std::vector<char> hostname_array(64);
+				if ( gethostname(&hostname_array[0], 64) == 0 )
 				{
-					std::string hostname(hostname_array);
+					std::string hostname(&hostname_array[0]);
 					prefixes.push_back(hostname);
 				}
-
-				delete[] hostname_array;
 			}
 
 			if (_options & LOG_TAG)
@@ -304,12 +386,12 @@ namespace ibrcommon
 				if (log._tag.length() > 0) {
 					prefixes.push_back(log._tag);
 				} else {
-					prefixes.push_back(_default_tag);
+					prefixes.push_back(Logger::_default_tag);
 				}
 			}
 
 			// print prefixes
-			for (std::list<std::string>::const_iterator iter = prefixes.begin(); iter != prefixes.end(); iter++)
+			for (std::list<std::string>::const_iterator iter = prefixes.begin(); iter != prefixes.end(); ++iter)
 			{
 				if (iter == prefixes.begin())
 				{
@@ -363,7 +445,7 @@ namespace ibrcommon
 			_use_queue = true;
 			start();
 		} catch (const ibrcommon::ThreadException &ex) {
-			IBRCOMMON_LOGGER(error) << "failed to start LogWriter\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("LogWriter", error) << "enableAsync failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 	
@@ -385,7 +467,7 @@ namespace ibrcommon
 	}
 
 	Logger::LogWriter::LogWriter()
-	 : _verbosity(0), _syslog(0), _syslog_mask(0), _queue(50), _use_queue(false), _buffer_size(0), _buffer(NULL),
+	 : _global_logmask(0), _verbosity(0), _syslog(0), _syslog_mask(0), _queue(50), _use_queue(false), _buffer_size(0), _buffer(NULL),
 	   _logfile_output(NULL), _logfile_logmask(0), _logfile_options(0)
 	// limit queue to 50 entries
 	{
@@ -424,9 +506,14 @@ namespace ibrcommon
 			_logfile_stream.close();
 		}
 
+		// stop here if the logmask is zero
+		// this can be used to disable file logging
+		if (logmask == 0) return;
+
 		_logfile = logfile;
 		_logfile_logmask = logmask;
 		_logfile_options = options;
+		_global_logmask |= logmask;
 
 		// open the new logfile
 		_logfile_stream.open(_logfile.getPath().c_str(), std::ios::out | std::ios::app);
@@ -476,7 +563,7 @@ namespace ibrcommon
 
 		LoggerOutput output(stream, logmask, options);
 
-		for (std::list<Logger>::const_iterator iter = _buffer->begin(); iter != _buffer->end(); iter++)
+		for (std::list<Logger>::const_iterator iter = _buffer->begin(); iter != _buffer->end(); ++iter)
 		{
 			const Logger &l = (*iter);
 			output.log(l);
@@ -524,7 +611,7 @@ namespace ibrcommon
 				while (!q.empty())
 				{
 					Logger &log = q.front();
-					try { log.flush(); } catch (const std::exception&) {};
+					try { flush(log); } catch (const std::exception&) {};
 
 					q.pop();
 				}

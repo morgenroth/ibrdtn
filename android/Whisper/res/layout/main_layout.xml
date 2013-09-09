@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/fragment_container"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" />
+    android:layout_height="match_parent">
+    
+    <fragment android:name="de.tubs.ibr.dtn.chat.MeFragment"
+        android:id="@+id/me_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    
+    <fragment android:name="de.tubs.ibr.dtn.chat.RosterFragment"
+        android:id="@+id/roster_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent" />
+
+</LinearLayout>

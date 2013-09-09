@@ -22,6 +22,8 @@
 #include "Random.h"
 #include <time.h>
 #include <stdlib.h>
+#include <vector>
+#include <sys/time.h>
 
 namespace dtn
 {
@@ -29,25 +31,37 @@ namespace dtn
 	{
 		Random::Random()
 		{
-			// initialize a random seed
-			srand(time(0));
+			static bool initialized = false;
+
+			if (!initialized) {
+				struct timeval time;
+				::gettimeofday(&time, NULL);
+
+				// initialize a random seed only once
+				::srand(static_cast<unsigned int>((time.tv_sec * 100) + (time.tv_usec / 100)));
+				initialized = true;
+			}
 		}
 
 		Random::~Random()
 		{
 		}
 
-		const std::string Random::gen_chars(size_t size) const
+		int Random::gen_number() const
+		{
+			return ::rand();
+		}
+
+		const std::string Random::gen_chars(const size_t &size) const
 		{
 			static const char text[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-			char dst[size];
-			int i, len = size - 1;
-			for ( i = 0; i < len; ++i )
+			std::vector<char> dst(size);
+			const size_t len = size - 1;
+			for ( size_t i = 0; i <= len; ++i )
 			{
-				dst[i] = text[rand() % (sizeof text - 1)];
+				dst[i] = text[::rand() % (sizeof text - 1)];
 			}
-			dst[i] = '\0';
-			return dst;
-		};
+			return std::string(dst.begin(), dst.end());
+		}
 	}
 }

@@ -166,7 +166,7 @@ namespace ibrcommon
 		bool b = true;
 		string sup = s;
 		for( string::iterator p = sup.begin(); p != sup.end(); ++p )
-			*p = toupper(*p);  // make string all caps
+			*p = static_cast<char>(toupper(*p));  // make string all caps
 		if( sup==string("FALSE") || sup==string("F") ||
 			sup==string("NO") || sup==string("N") ||
 			sup==string("0") || sup==string("NONE") )

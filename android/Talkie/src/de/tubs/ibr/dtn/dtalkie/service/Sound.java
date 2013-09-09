@@ -24,6 +24,13 @@ package de.tubs.ibr.dtn.dtalkie.service;
 import java.util.HashMap;
 
 public class Sound {
+    public static final Sound BEEP = new Sound("beep.mp3");
+    public static final Sound CONFIRM = new Sound("confirm.mp3");
+    public static final Sound QUIT = new Sound("quit.mp3");
+    public static final Sound RING = new Sound("ring.mp3");
+    public static final Sound SQUELSH_LONG = new Sound("squelsh_long.mp3");
+    public static final Sound SQUELSH_SHORT = new Sound("squelsh_short.mp3");
+    
 	private String filename = null;
 	private HashMap<Integer, Integer> poolMap = new HashMap<Integer, Integer>();
 	

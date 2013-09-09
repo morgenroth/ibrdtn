@@ -48,7 +48,8 @@ namespace dtn
 				REQUEST_FRAGMENTATION = 1 << 1,
 				REQUEST_NEGATIVE_ACKNOWLEDGMENTS = 1 << 2,
 				/* this flag is implementation specific and not in the draft */
-				REQUEST_TLS = 1 << 7
+				REQUEST_TLS = 1 << 7,
+				HANDSHAKE_SENDONLY = 0x80//!< The client only send bundle and do not want to received any bundle.
 			};
 
 			StreamContactHeader();
@@ -60,7 +61,7 @@ namespace dtn
 			const EID getEID() const;
 
 			EID _localeid;
-			char _flags;
+			dtn::data::Bitset<HEADER_BITS> _flags;
 			uint16_t _keepalive;
 
 			friend std::ostream &operator<<(std::ostream &stream, const StreamContactHeader &h);

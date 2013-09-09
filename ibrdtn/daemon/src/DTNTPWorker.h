@@ -92,14 +92,40 @@ namespace dtn
 				MSG_TYPE type;
 
 				timeval origin_timestamp;
-				float origin_rating;
+				double origin_rating;
 
 				timeval peer_timestamp;
-				float peer_rating;
+				double peer_rating;
 
 				friend std::ostream &operator<<(std::ostream &stream, const DTNTPWorker::TimeSyncMessage &obj);
 				friend std::istream &operator>>(std::istream &stream, DTNTPWorker::TimeSyncMessage &obj);
 			};
+
+			class TimeSyncState {
+			public:
+				TimeSyncState();
+				virtual ~TimeSyncState();
+
+				// sync threshold
+				float sync_threshold;
+
+				// the base rating used to determine the current clock rating
+				double base_rating;
+
+				// the local rating is at least decremented by this value between each synchronization
+				double psi;
+
+				// current value for sigma
+				double sigma;
+
+				// timestamp of the last synchronization with another (better) clock
+				timeval last_sync_time;
+			};
+
+			/**
+			 * Get the global time sync state
+			 */
+			static const TimeSyncState& getState();
 
 		private:
 			static const unsigned int PROTO_VERSION;
@@ -130,7 +156,7 @@ namespace dtn
 			 * @param timestamp
 			 * @param quality
 			 */
-			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality) const;
+			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, dtn::data::Timestamp &timestamp, float &quality) const;
 
 			/**
 			 * Synchronize this clock with another one
@@ -139,33 +165,24 @@ namespace dtn
 			 */
 			void sync(const TimeSyncMessage &msg, const struct timeval &tv, const struct timeval &local, const struct timeval &remote);
 
-			// sync threshold
-			float _sync_threshold;
+			/**
+			 * global synchronization state
+			 */
+			static TimeSyncState _sync_state;
 
 			// send discovery announcements with the local clock rating
 			bool _announce_rating;
 
-			// the base rating used to determine the current clock rating
-			double _base_rating;
-
-			// the local rating is at least decremented by this value between each synchronization
-			double _psi;
-
-			// current value for sigma
-			double _sigma;
-
 			// synchronize with other nodes
 			bool _sync;
-
-			// timestamp of the last synchronization with another (better) clock
-			timeval _last_sync_time;
 
 			// Mutex to lock the synchronization process
 			ibrcommon::Mutex _sync_lock;
 
 			// manage a list of recently sync'd nodes
 			ibrcommon::Mutex _blacklist_lock;
-			std::map<EID, size_t> _sync_blacklist;
+			typedef std::map<EID, dtn::data::Timestamp> blacklist_map;
+			blacklist_map _sync_blacklist;
 		};
 	}
 }

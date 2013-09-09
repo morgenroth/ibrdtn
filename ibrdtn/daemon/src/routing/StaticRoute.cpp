@@ -12,6 +12,6 @@ namespace dtn
 	namespace routing
 	{
 		// virtual destructor
-		StaticRoute::~StaticRoute() {};
+		StaticRoute::~StaticRoute() {}
 	}
 }

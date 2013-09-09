@@ -29,8 +29,8 @@ namespace dtn
 {
 	namespace data
 	{
-		Block::Block(char blocktype)
-		 : _blocktype(blocktype), _procflags(0)
+		Block::Block(block_t blocktype)
+		 : _blocktype(blocktype)
 		{
 		}
 
@@ -38,17 +38,35 @@ namespace dtn
 		{
 		}
 
+		Block& Block::operator=(const Block &block)
+		{
+			bool last_block = _procflags.getBit(LAST_BLOCK);
+			_procflags = block._procflags;
+			_procflags.setBit(LAST_BLOCK, last_block);
+
+			_eids = block._eids;
+			return (*this);
+		}
+
+		bool Block::operator==(const block_t &id) const
+		{
+			return (id == _blocktype);
+		}
+
 		void Block::addEID(const EID &eid)
 		{
 			_eids.push_back(eid);
 
-			// add proc flag if not set
-			_procflags |= Block::BLOCK_CONTAINS_EIDS;
+			// add proc. flag
+			_procflags.setBit(Block::BLOCK_CONTAINS_EIDS, true);
 		}
 
 		void Block::clearEIDs()
 		{
 			_eids.clear();
+
+			// clear proc. flag
+			_procflags.setBit(Block::BLOCK_CONTAINS_EIDS, false);
 		}
 
 		const Block::eid_list& Block::getEIDList() const
@@ -58,32 +76,25 @@ namespace dtn
 
 		void Block::set(ProcFlags flag, const bool &value)
 		{
-			if (value)
-			{
-				_procflags |= flag;
-			}
-			else
-			{
-				_procflags &= ~(flag);
-			}
+			_procflags.setBit(flag, value);
 		}
 
 		bool Block::get(ProcFlags flag) const
 		{
-			return (_procflags & flag);
+			return _procflags.getBit(flag);
 		}
 
-		const size_t& Block::getProcessingFlags() const
+		const Bitset<Block::ProcFlags>& Block::getProcessingFlags() const
 		{
 			return _procflags;
 		}
 
-		size_t Block::getLength_strict() const
+		Length Block::getLength_strict() const
 		{
 			return getLength();
 		}
 
-		std::ostream& Block::serialize_strict(std::ostream &stream, size_t &length) const
+		std::ostream& Block::serialize_strict(std::ostream &stream, Length &length) const
 		{
 			return serialize(stream, length);
 		}

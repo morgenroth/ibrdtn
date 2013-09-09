@@ -48,6 +48,8 @@ namespace dtn
 	{
 		class SQLiteBundleStorage: public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::BLOB::Provider, public SQLiteDatabase::DatabaseListener
 		{
+			static const std::string TAG;
+
 		public:
 			/**
 			 * create a new BLOB object within this storage
@@ -61,7 +63,7 @@ namespace dtn
 			 * @param Dateiname der Datenbank
 			 * @param maximale Größe der Datenbank
 			 */
-			SQLiteBundleStorage(const ibrcommon::File &path, const size_t &maxsize);
+			SQLiteBundleStorage(const ibrcommon::File &path, const dtn::data::Length &maxsize);
 
 			/**
 			 * destructor
@@ -85,7 +87,7 @@ namespace dtn
 			/**
 			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException);
+			virtual void get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException);
 
 			/**
 			 * @see BundleSeeker::getDistinctDestinations()
@@ -117,7 +119,7 @@ namespace dtn
 			/**
 			 * @return the count of bundles in the storage
 			 */
-			unsigned int count();
+			dtn::data::Size count();
 
 			/**
 			 * @sa BundleStorage::releaseCustody();
@@ -133,11 +135,26 @@ namespace dtn
 			/**
 			 * callbacks for the sqlite database
 			 */
-			void eventBundleExpired(const dtn::data::BundleID &id);
+			void eventBundleExpired(const dtn::data::BundleID &id) throw ();
 			void iterateDatabase(const dtn::data::MetaBundle &bundle);
 
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Wait until all the data has been stored to the disk
+			 */
+			virtual void wait();
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * or retrieve a bundle will fail.
+			 */
+			virtual void setFaulty(bool mode);
+
+			/*** END: methods for unit-testing ***/
+
 		protected:
-			virtual void componentRun() throw ();;
+			virtual void componentRun() throw ();
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();
@@ -195,19 +212,6 @@ namespace dtn
 				bool _abort;
 			};
 
-			class TaskRemove : public Task
-			{
-			public:
-				TaskRemove(const dtn::data::BundleID &id)
-				 : _id(id) { };
-
-				virtual ~TaskRemove() {};
-				virtual void run(SQLiteBundleStorage &storage);
-
-			private:
-				const dtn::data::BundleID _id;
-			};
-
 			class TaskIdle : public Task
 			{
 			public:
@@ -223,14 +227,14 @@ namespace dtn
 			class TaskExpire : public Task
 			{
 			public:
-				TaskExpire(size_t timestamp)
+				TaskExpire(const dtn::data::Timestamp &timestamp)
 				: _timestamp(timestamp) { };
 
 				virtual ~TaskExpire() {};
 				virtual void run(SQLiteBundleStorage &storage);
 
 			private:
-				size_t _timestamp;
+				const dtn::data::Timestamp _timestamp;
 			};
 
 			/**
@@ -254,13 +258,12 @@ namespace dtn
 					return _filestream;
 				}
 
-				size_t __get_size();
+				std::streamsize __get_size();
 
 			private:
 				SQLiteBLOB(const ibrcommon::File &path);
 				std::fstream _filestream;
-				ibrcommon::File _file;
-				ibrcommon::File _blobPath;
+				ibrcommon::TemporaryFile _file;
 			};
 
 
@@ -273,6 +276,12 @@ namespace dtn
 //			 */
 //			int prepareBundle(list<std::string> &filenames, dtn::data::Bundle &bundle);
 
+			/**
+			 * Purge a specific bundle out of the storage
+			 * This procedure do not throw any exception and cleans as much data
+			 * as possible references to the given bundle identifier.
+			 */
+			void purge(const dtn::data::BundleID &id) throw ();
 
 			/**
 			 * @see Component::getName()

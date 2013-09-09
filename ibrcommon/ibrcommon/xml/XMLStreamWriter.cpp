@@ -29,13 +29,13 @@ namespace ibrcommon
 		XMLStreamWriter *writer = static_cast<XMLStreamWriter*>(context);
 		writer->_stream.write(buffer, len);
 		return len;
-	};
+	}
 
-	int XMLStreamWriter::__close_callback(void * context)
+	int XMLStreamWriter::__close_callback(void*)
 	{
 		//XMLStreamWriter *writer = static_cast<XMLStreamWriter*>(context);
 		return 0;
-	};
+	}
 
 	XMLStreamWriter::XMLStreamWriter(std::ostream &stream)
 	 : _stream(stream)
@@ -101,7 +101,7 @@ namespace ibrcommon
 		}
 	}
 
-	void XMLStreamWriter::addData(const char *data, const size_t len)
+	void XMLStreamWriter::addData(const char *data, const int len)
 	{
 		if (xmlTextWriterWriteRawLen(_writer, BAD_CAST data, len) < 0)
 		{

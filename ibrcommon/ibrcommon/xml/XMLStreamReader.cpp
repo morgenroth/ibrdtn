@@ -97,11 +97,11 @@ namespace ibrcommon
 
 			if (stream.eof())
 			{
-				xmlParseChunk(ctx, chars, stream.gcount(), 1);
+				xmlParseChunk(ctx, chars, static_cast<int>(stream.gcount()), 1);
 			}
 			else
 			{
-				xmlParseChunk(ctx, chars, stream.gcount(), 0);
+				xmlParseChunk(ctx, chars, static_cast<int>(stream.gcount()), 0);
 			}
 		}
 	}

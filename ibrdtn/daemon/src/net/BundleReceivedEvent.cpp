@@ -31,7 +31,7 @@ namespace dtn
 		// static semaphore to limit the number of received bundles in transit between CL and storage
 		ibrcommon::Semaphore BundleReceivedEvent::_sem(5);
 
-		BundleReceivedEvent::BundleReceivedEvent(const dtn::data::EID &p, const dtn::data::Bundle &b, const bool &local)
+		BundleReceivedEvent::BundleReceivedEvent(const dtn::data::EID &p, const dtn::data::Bundle &b, const bool local)
 		 : Event(-1), peer(p), bundle(b), fromlocal(local)
 		{
 			// allocate semaphore slot
@@ -44,7 +44,7 @@ namespace dtn
 			_sem.post();
 		}
 
-		void BundleReceivedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local)
+		void BundleReceivedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool local)
 		{
 			// raise the new event
 			dtn::core::EventDispatcher<BundleReceivedEvent>::raise( new BundleReceivedEvent(peer, bundle, local), true );

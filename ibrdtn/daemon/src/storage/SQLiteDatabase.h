@@ -56,8 +56,7 @@ namespace dtn
 				BUNDLE_GET_ITERATOR,
 				BUNDLE_GET_FILTER,
 				BUNDLE_GET_ID,
-				FRAGMENT_GET_ID,
-				BUNDLE_GET_FRAGMENT,
+				GET_DISTINCT_DESTINATIONS,
 
 				EXPIRE_BUNDLES,
 				EXPIRE_BUNDLE_FILENAMES,
@@ -68,18 +67,14 @@ namespace dtn
 				COUNT_ENTRIES,
 
 				BUNDLE_DELETE,
-				FRAGMENT_DELETE,
 				BUNDLE_CLEAR,
 				BUNDLE_STORE,
 				BUNDLE_UPDATE_CUSTODIAN,
-				FRAGMENT_UPDATE_CUSTODIAN,
 
 				PROCFLAGS_SET,
 
 				BLOCK_GET_ID,
-				BLOCK_GET_ID_FRAGMENT,
 				BLOCK_GET,
-				BLOCK_GET_FRAGMENT,
 				BLOCK_CLEAR,
 				BLOCK_STORE,
 
@@ -87,6 +82,7 @@ namespace dtn
 				SQL_QUERIES_END
 			};
 
+			static const int DBSCHEMA_FRESH_VERSION;
 			static const int DBSCHEMA_VERSION;
 			static const std::string QUERY_SCHEMAVERSION;
 			static const std::string SET_SCHEMAVERSION;
@@ -101,6 +97,8 @@ namespace dtn
 			// array of the db structure as sql
 			static const std::string _db_structure[11];
 
+			static const std::string TAG;
+
 		public:
 			enum UPDATE_VALUES
 			{
@@ -111,7 +109,7 @@ namespace dtn
 			{
 			public:
 				virtual ~DatabaseListener() = 0;
-				virtual void eventBundleExpired(const dtn::data::BundleID&) = 0;
+				virtual void eventBundleExpired(const dtn::data::BundleID&) throw () = 0;
 				virtual void iterateDatabase(const dtn::data::MetaBundle&) = 0;
 			};
 
@@ -125,7 +123,7 @@ namespace dtn
 				 * returns the user-defined sql query
 				 * @return
 				 */
-				virtual const std::string getWhere() const = 0;
+				virtual const std::string getWhere() const throw () = 0;
 
 				/**
 				 * bind all custom values to the statement
@@ -133,7 +131,7 @@ namespace dtn
 				 * @param offset
 				 * @return
 				 */
-				virtual size_t bind(sqlite3_stmt*, size_t offset) const
+				virtual int bind(sqlite3_stmt*, int offset) const throw ()
 				{
 					return offset;
 				}
@@ -142,7 +140,7 @@ namespace dtn
 			class SQLiteQueryException : public ibrcommon::Exception
 			{
 			public:
-				SQLiteQueryException(string what = "Unable to execute Querry.") throw(): Exception(what)
+				SQLiteQueryException(string what = "Unable to execute Querry.") throw() : Exception(what)
 				{
 				}
 			};
@@ -154,8 +152,8 @@ namespace dtn
 				~Statement();
 
 				sqlite3_stmt* operator*();
-				void prepare();
-				void reset();
+				void prepare() throw (SQLiteQueryException);
+				void reset() throw ();
 				int step() throw (SQLiteQueryException);
 
 			private:
@@ -173,7 +171,7 @@ namespace dtn
 			/**
 			 * open the database
 			 */
-			void open();
+			void open() throw (SQLiteQueryException);
 
 			/**
 			 * close the database
@@ -185,70 +183,80 @@ namespace dtn
 			 * Expire all bundles with a lifetime lower than the given timestamp.
 			 * @param timestamp
 			 */
-			void expire(size_t timestamp);
+			void expire(const dtn::data::Timestamp &timestamp) throw ();
 
 			/**
 			 * Shrink down the database.
 			 */
-			void vacuum();
+			void vacuum() throw (SQLiteQueryException);
 
 			/**
 			 * Update
 			 * @param id
 			 * @param
 			 */
-			void update(UPDATE_VALUES, const dtn::data::BundleID &id, const dtn::data::EID&);
+			void update(UPDATE_VALUES, const dtn::data::BundleID &id, const dtn::data::EID&) throw (SQLiteQueryException);
 
 			/**
 			 * Delete an entry in the database.
 			 * @param id
 			 */
-			void remove(const dtn::data::BundleID &id);
+			void remove(const dtn::data::BundleID &id) throw (SQLiteQueryException);
 
 			/**
 			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException);
+			virtual void get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException, BundleSelectorException);
 
 			/**
 			 * Retrieve the meta data of a given bundle
 			 * @param id
 			 * @return
 			 */
-			void get(const dtn::data::BundleID &id, dtn::data::MetaBundle &meta) const;
+			void get(const dtn::data::BundleID &id, dtn::data::MetaBundle &meta) const throw (SQLiteQueryException, NoBundleFoundException);
 
 			/**
 			 * Retrieve the data of a given bundle
 			 * @param id
 			 * @return
 			 */
-			void get(const dtn::data::BundleID &id, dtn::data::Bundle &bundle, blocklist &blocks) const;
+			void get(const dtn::data::BundleID &id, dtn::data::Bundle &bundle, blocklist &blocks) const throw (SQLiteQueryException, NoBundleFoundException);
 
 			/**
 			 *
 			 * @param bundle
 			 */
-			void store(const dtn::data::Bundle &bundle);
-			void store(const dtn::data::BundleID &id, int index, const dtn::data::Block &block, const ibrcommon::File &file);
-			void transaction();
-			void rollback();
-			void commit();
+			void store(const dtn::data::Bundle &bundle) throw (SQLiteQueryException);
+			void store(const dtn::data::BundleID &id, int index, const dtn::data::Block &block, const ibrcommon::File &file) throw (SQLiteQueryException);
+			void transaction() throw (SQLiteQueryException);
+			void rollback() throw (SQLiteQueryException);
+			void commit() throw (SQLiteQueryException);
 
-			bool empty() const;
+			bool empty() const throw (SQLiteQueryException);
 
-			unsigned int count() const;
+			dtn::data::Size count() const throw (SQLiteQueryException);
 
-			void clear();
+			void clear() throw (SQLiteQueryException);
 
 			/**
 			 * @see BundleSeeker::getDistinctDestinations()
 			 */
-			virtual const eid_set getDistinctDestinations();
+			virtual const eid_set getDistinctDestinations() throw (SQLiteQueryException);
 
 			/**
 			 * iterate through all the bundles and call the iterateDatabase() on each bundle
 			 */
-			void iterateAll();
+			void iterateAll() throw (SQLiteQueryException);
+
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * a bundle will fail.
+			 */
+			void setFaulty(bool mode);
+
+			/*** END: methods for unit-testing ***/
 
 		private:
 			/**
@@ -257,7 +265,7 @@ namespace dtn
 			 * @param bundle
 			 * @param offset
 			 */
-			void get(Statement &st, dtn::data::MetaBundle &bundle, size_t offset = 0) const;
+			void get(Statement &st, dtn::data::MetaBundle &bundle, int offset = 0) const throw (SQLiteQueryException);
 
 			/**
 			 * Retrieve meta data from the database and put them into a bundle structure.
@@ -265,7 +273,7 @@ namespace dtn
 			 * @param bundle
 			 * @param offset
 			 */
-			void get(Statement &st, dtn::data::Bundle &bundle, size_t offset = 0) const;
+			void get(Statement &st, dtn::data::Bundle &bundle, const int offset = 0) const throw (SQLiteQueryException);
 
 			/**
 			 *
@@ -274,41 +282,41 @@ namespace dtn
 			 * @param bind_offset
 			 * @param limit
 			 */
-			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, size_t bind_offset, size_t offset) const;
+			void __get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, const int bind_offset, const size_t offset, const size_t query_limit) const throw (SQLiteQueryException, NoBundleFoundException, BundleSelectorException);
 
 			/**
 			 * updates the nextExpiredTime. The calling function has to have the databaselock.
 			 */
-			void update_expire_time();
+			void update_expire_time() throw (SQLiteQueryException);
 
 			/**
 			 * lower the next expire time if the ttl is lower than the current expire time
 			 * @param ttl
 			 */
-			void new_expire_time(size_t ttl);
-			void reset_expire_time();
-			size_t get_expire_time();
+			void new_expire_time(const dtn::data::Timestamp &ttl) throw ();
+			void reset_expire_time() throw ();
+			const dtn::data::Timestamp& get_expire_time() const throw ();
 
-			void set_bundleid(Statement &st, const dtn::data::BundleID &id, size_t offset = 0) const;
-			void get_bundleid(Statement &st, dtn::data::BundleID &id, size_t offset = 0) const;
+			void set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
+			void get_bundleid(Statement &st, dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
 
 			/**
 			 * get database version
 			 */
-			int getVersion();
+			int getVersion() throw (SQLiteQueryException);
 
 			/**
 			 * set database version
 			 * @param version
 			 */
-			void setVersion(int version);
+			void setVersion(int version) throw (SQLiteQueryException);
 
 			/**
 			 * upgrade the database to new version
 			 * @param oldVersion Current version of the database.
 			 * @param newVersion Required version.
 			 */
-			void doUpgrade(int oldVersion, int newVersion);
+			void doUpgrade(int oldVersion, int newVersion) throw (ibrcommon::Exception);
 
 			ibrcommon::File _file;
 
@@ -316,17 +324,12 @@ namespace dtn
 			sqlite3 *_database;
 
 			// next expiration
-			size_t _next_expiration;
-
-			void add_deletion(const dtn::data::BundleID &id);
-			void remove_deletion(const dtn::data::BundleID &id);
-			bool contains_deletion(const dtn::data::BundleID &id) const;
-
-			// set of bundles to delete
-			std::set<dtn::data::BundleID> _deletion_list;
+			dtn::data::Timestamp _next_expiration;
 
 			// listener for events on the database
 			DatabaseListener &_listener;
+
+			bool _faulty;
 		};
 	} /* namespace storage */
 } /* namespace dtn */

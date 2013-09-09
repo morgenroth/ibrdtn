@@ -33,6 +33,8 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t CompressedPayloadBlock::BLOCK_TYPE = 202;
+
 		dtn::data::Block* CompressedPayloadBlock::Factory::create()
 		{
 			return new CompressedPayloadBlock();
@@ -47,18 +49,19 @@ namespace dtn
 		{
 		}
 
-		size_t CompressedPayloadBlock::getLength() const
+		Length CompressedPayloadBlock::getLength() const
 		{
 			return _algorithm.getLength() + _origin_size.getLength();
 		}
 
-		std::ostream& CompressedPayloadBlock::serialize(std::ostream &stream, size_t &length) const
+		std::ostream& CompressedPayloadBlock::serialize(std::ostream &stream, Length &len) const
 		{
 			stream << _algorithm << _origin_size;
+			len -= _algorithm.getLength() + _origin_size.getLength();
 			return stream;
 		}
 
-		std::istream& CompressedPayloadBlock::deserialize(std::istream &stream, const size_t length)
+		std::istream& CompressedPayloadBlock::deserialize(std::istream &stream, const Length&)
 		{
 			stream >> _algorithm;
 			stream >> _origin_size;
@@ -72,22 +75,24 @@ namespace dtn
 
 		CompressedPayloadBlock::COMPRESS_ALGS CompressedPayloadBlock::getAlgorithm() const
 		{
-			return COMPRESS_ALGS( _algorithm.getValue() );
+			return CompressedPayloadBlock::COMPRESS_ALGS(_algorithm.get<size_t>());
 		}
 
-		void CompressedPayloadBlock::setOriginSize(size_t s)
+		void CompressedPayloadBlock::setOriginSize(const Number &s)
 		{
 			_origin_size = s;
 		}
 
-		size_t CompressedPayloadBlock::getOriginSize() const
+		const Number& CompressedPayloadBlock::getOriginSize() const
 		{
-			return _origin_size.getValue();
+			return _origin_size;
 		}
 
 		void CompressedPayloadBlock::compress(dtn::data::Bundle &b, CompressedPayloadBlock::COMPRESS_ALGS alg)
 		{
-			dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+			Bundle::iterator p_it = b.find(dtn::data::PayloadBlock::BLOCK_TYPE);
+			if (p_it == b.end()) throw ibrcommon::Exception("Payload block missing.");
+			dtn::data::PayloadBlock &p = dynamic_cast<dtn::data::PayloadBlock&>(**p_it);
 
 			// get a data container for the compressed payload
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -110,19 +115,21 @@ namespace dtn
 			cpb.setOriginSize(p.getLength());
 
 			// add the new payload block to the bundle
-			b.insert(p, ref);
+			b.insert(p_it, ref);
 
 			// delete the old payload block
-			b.remove(p);
+			b.erase(p_it);
 		}
 
 		void CompressedPayloadBlock::extract(dtn::data::Bundle &b)
 		{
 			// get the CPB first
-			dtn::data::CompressedPayloadBlock &cpb = b.getBlock<CompressedPayloadBlock>();
+			dtn::data::CompressedPayloadBlock &cpb = b.find<CompressedPayloadBlock>();
 
 			// get the payload block
-			dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+			Bundle::iterator p_it = b.find(dtn::data::PayloadBlock::BLOCK_TYPE);
+			if (p_it == b.end()) throw ibrcommon::Exception("Payload block missing.");
+			dtn::data::PayloadBlock &p = dynamic_cast<dtn::data::PayloadBlock&>(**p_it);
 
 			// get a data container for the uncompressed payload
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -138,10 +145,10 @@ namespace dtn
 			}
 
 			// add the new payload block to the bundle
-			b.insert(p, ref);
+			b.insert(p_it, ref);
 
 			// delete the old payload block
-			b.remove(p);
+			b.erase(p_it);
 
 			// delete the CPB
 			b.remove(cpb);
@@ -154,10 +161,10 @@ namespace dtn
 				case COMPRESSION_ZLIB:
 				{
 #ifdef HAVE_ZLIB
-					const size_t CHUNK_SIZE = 16384;
+					const uInt CHUNK_SIZE = 16384;
 
 					int ret, flush;
-					unsigned have;
+					uInt have;
 					unsigned char in[CHUNK_SIZE];
 					unsigned char out[CHUNK_SIZE];
 					z_stream strm;
@@ -173,7 +180,7 @@ namespace dtn
 
 					do {
 						is.read((char*)&in, CHUNK_SIZE);
-						strm.avail_in = is.gcount();
+						strm.avail_in = static_cast<uInt>(is.gcount());
 
 						flush = is.eof() ? Z_FINISH : Z_NO_FLUSH;
 						strm.next_in = in;
@@ -195,7 +202,6 @@ namespace dtn
 							{
 								(void)deflateEnd(&strm);
 								throw ibrcommon::Exception("decompression failed. output stream went wrong.");
-								break;
 							}
 
 						} while (strm.avail_out == 0);
@@ -222,10 +228,10 @@ namespace dtn
 				case COMPRESSION_ZLIB:
 				{
 #ifdef HAVE_ZLIB
-					const size_t CHUNK_SIZE = 16384;
+					const uInt CHUNK_SIZE = 16384;
 
 					int ret;
-					unsigned have;
+					uInt have;
 					unsigned char in[CHUNK_SIZE];
 					unsigned char out[CHUNK_SIZE];
 					z_stream strm;
@@ -242,7 +248,7 @@ namespace dtn
 
 					do {
 						is.read((char*)&in, CHUNK_SIZE);
-						strm.avail_in = is.gcount();
+						strm.avail_in = static_cast<uInt>(is.gcount());
 
 						// we're done if there is no more input
 						if ((strm.avail_in == 0) && (ret != Z_STREAM_END))

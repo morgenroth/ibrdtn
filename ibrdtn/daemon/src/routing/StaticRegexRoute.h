@@ -22,6 +22,7 @@ namespace dtn
 
 			bool match(const dtn::data::EID &eid) const;
 			const dtn::data::EID& getDestination() const;
+			const dtn::data::Timestamp& getExpiration() const;
 
 			/**
 			 * copy and assignment operators
@@ -42,6 +43,7 @@ namespace dtn
 			std::string _regex_str;
 			regex_t _regex;
 			bool _invalid;
+			const dtn::data::Timestamp _expire;
 		};
 	}
 }

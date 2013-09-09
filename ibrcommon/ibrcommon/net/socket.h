@@ -30,6 +30,13 @@
 #include <string.h>
 #include <sys/time.h>
 
+#ifdef __WIN32__
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#endif
+
 namespace ibrcommon {
 	enum socket_error_code
 	{
@@ -96,6 +103,8 @@ namespace ibrcommon {
 		std::string __what;
 	};
 
+	void initialize_socket();
+
 	/**
 	 * The basesocket is an interface for all kinds of sockets. The
 	 * methods allows to bring the socket up or down.
@@ -152,6 +161,11 @@ namespace ibrcommon {
 		 */
 		sa_family_t get_family() const throw (socket_exception);
 		static sa_family_t get_family(int fd) throw (socket_exception);
+
+		/**
+		 * Checks if the given network protocol is supported
+		 */
+		static bool hasSupport(const sa_family_t family, const int type = SOCK_DGRAM, const int protocol = 0) throw ();
 
 	protected:
 		/**
@@ -215,10 +229,10 @@ namespace ibrcommon {
 		virtual void up() throw (socket_exception);
 		virtual void down() throw (socket_exception);
 
-		int send(const char *data, size_t len, int flags = 0) throw (socket_error);
-		int recv(char *data, size_t len, int flags = 0) throw (socket_error);
+		ssize_t send(const char *data, size_t len, int flags = 0) throw (socket_exception);
+		ssize_t recv(char *data, size_t len, int flags = 0) throw (socket_exception);
 
-		void set(CLIENT_OPTION opt, bool val) throw (socket_error);
+		void set(CLIENT_OPTION opt, bool val) throw (socket_exception);
 
 	protected:
 		clientsocket();
@@ -253,7 +267,7 @@ namespace ibrcommon {
 		virtual void up() throw (socket_exception) = 0;
 		virtual void down() throw (socket_exception) = 0;
 
-		virtual size_t recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
+		virtual ssize_t recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception);
 		virtual void sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception);
 
 	protected:

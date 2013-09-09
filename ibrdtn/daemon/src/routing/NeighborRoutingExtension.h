@@ -22,7 +22,7 @@
 #ifndef NEIGHBORROUTINGEXTENSION_H_
 #define NEIGHBORROUTINGEXTENSION_H_
 
-#include "routing/BaseRouter.h"
+#include "routing/RoutingExtension.h"
 #include "routing/NeighborDatabase.h"
 #include "core/Node.h"
 
@@ -37,10 +37,12 @@ namespace dtn
 {
 	namespace routing
 	{
-		class NeighborRoutingExtension : public BaseRouter::Extension, public ibrcommon::JoinableThread
+		class NeighborRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
 		{
+			static const std::string TAG;
+
 		public:
-			NeighborRoutingExtension(dtn::storage::BundleSeeker &seeker);
+			NeighborRoutingExtension();
 			virtual ~NeighborRoutingExtension();
 
 			void notify(const dtn::core::Event *evt) throw ();
@@ -73,14 +75,17 @@ namespace dtn
 			class ProcessBundleTask : public Task
 			{
 			public:
-				ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &origin);
+				ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &origin, const dtn::data::EID &nexthop);
 				virtual ~ProcessBundleTask();
 
 				virtual std::string toString();
 
 				const dtn::data::MetaBundle bundle;
 				const dtn::data::EID origin;
+				const dtn::data::EID nexthop;
 			};
+
+			bool shouldRouteTo(const dtn::data::MetaBundle &meta, const NeighborDatabase::NeighborEntry &n) const;
 
 			/**
 			 * hold queued tasks for later processing

@@ -36,15 +36,15 @@ namespace dtn
 			class Chunk
 			{
 			public:
-				Chunk(size_t, size_t);
+				Chunk(Length, Length);
 				virtual ~Chunk();
 
 				bool operator<(const Chunk &other) const;
 
-				size_t offset;
-				size_t length;
+				Length offset;
+				Length length;
 
-				static bool isComplete(size_t length, const std::set<Chunk> &chunks);
+				static bool isComplete(Length length, const std::set<Chunk> &chunks);
 			};
 
 			class Container
@@ -59,8 +59,8 @@ namespace dtn
 				friend Container &operator<<(Container &c, dtn::data::Bundle &obj);
 
 			private:
-				bool contains(size_t offset, size_t length) const;
-				void add(size_t offset, size_t length);
+				bool contains(Length offset, Length length) const;
+				void add(Length offset, Length length);
 
 				dtn::data::Bundle _bundle;
 				ibrcommon::BLOB::Reference _blob;
@@ -69,7 +69,7 @@ namespace dtn
 				bool _hasLastFragBlocksAdded;
 
 				std::set<Chunk> _chunks;
-				size_t _appdatalength;
+				Length _appdatalength;
 			};
 
 			static Container getContainer();

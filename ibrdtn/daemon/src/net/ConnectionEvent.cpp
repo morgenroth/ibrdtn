@@ -62,7 +62,7 @@ namespace dtn
 			case CONNECTION_SETUP:
 				return "connection setup " + peer.getString();
 			}
-
+			return "unknown event";
 		}
 
 		const string ConnectionEvent::className = "ConnectionEvent";

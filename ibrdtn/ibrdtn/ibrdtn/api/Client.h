@@ -1,5 +1,5 @@
 /*
- * ApiClient.h
+ * Client.h
  *
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
@@ -19,11 +19,10 @@
  *
  */
 
-
 #ifndef CLIENT_H_
 #define CLIENT_H_
 
-#include "ibrdtn/api/Bundle.h"
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/streams/StreamConnection.h"
 #include <ibrcommon/net/socketstream.h>
@@ -31,9 +30,6 @@
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/thread/Queue.h>
-
-using namespace dtn::data;
-using namespace dtn::streams;
 
 namespace dtn
 {
@@ -81,7 +77,7 @@ namespace dtn
 		 * receiving part of the communication and calls the received() methods which should be
 		 * overwritten.
 		 */
-		class Client : public StreamConnection, public StreamConnection::Callback
+		class Client : public dtn::streams::StreamConnection, public dtn::streams::StreamConnection::Callback
 		{
 		private:
 			/**
@@ -127,16 +123,6 @@ namespace dtn
 
 				bool _running;
 			};
-
-			/**
-			 * This are the handshake flags.
-			 */
-			enum HANDSHAKE_FLAGS
-			{
-				HANDSHAKE_NONE = 0x0,    //!< No handshake option is set.
-				HANDSHAKE_SENDONLY = 0x80//!< The client only send bundle and do not want to received any bundle.
-			};
-
 
 		public:
 			/**
@@ -195,7 +181,7 @@ namespace dtn
 			 * the last ACK'd bundle size in the lastack variable.
 			 * @param ack ACK'd bundle size
 			 */
-			virtual void eventBundleAck(size_t ack) throw ();
+			virtual void eventBundleAck(const dtn::data::Length &ack) throw ();
 
 			/**
 			 * The shutdown event callback method can overloaded to handle shutdown
@@ -220,7 +206,7 @@ namespace dtn
 			 * a successful connection handshake. In this call the header of the
 			 * corresponding daemon is available.
 			 */
-			virtual void eventConnectionUp(const StreamContactHeader&) throw () {};
+			virtual void eventConnectionUp(const dtn::streams::StreamContactHeader&) throw () {};
 
 			/**
 			 * The bundle refused event callback method can overloaded to handle
@@ -235,16 +221,21 @@ namespace dtn
 			virtual void eventBundleForwarded() throw () {};
 
 			/**
+			 * Send a bundle to the daemon
+			 */
+			void operator<<(const dtn::data::Bundle &b);
+
+			/**
 			 * This method is for synchronous API usage only. It blocks until a bundle
 			 * is received and return it. If the connection is closed during the get() call
 			 * an exception is thrown
 			 * @param timeout
 			 * @return
 			 */
-			dtn::api::Bundle getBundle(size_t timeout = 0) throw (ConnectionException);
+			dtn::data::Bundle getBundle(const dtn::data::Timeout timeout = 0) throw (ConnectionException);
 
 			// public variable
-			size_t lastack;
+			dtn::data::Length lastack;
 
 		protected:
 			/**
@@ -259,7 +250,7 @@ namespace dtn
 			 * asynchronous API mode you should overload this method to receive bundles.
 			 * @param b The received bundle.
 			 */
-			virtual void received(const dtn::api::Bundle &b);
+			virtual void received(const dtn::data::Bundle &b);
 
 		private:
 			// tcp stream reference to send/receive data to the daemon
@@ -278,7 +269,7 @@ namespace dtn
 			Client::AsyncReceiver _receiver;
 
 			// the queue for incoming bundles, when used in synchronous mode
-			ibrcommon::Queue<dtn::api::Bundle> _inqueue;
+			ibrcommon::Queue<dtn::data::Bundle> _inqueue;
 		};
 	}
 }

@@ -53,14 +53,7 @@ interface DTNSessionCallback {
 	/**
 	 * This method is called if callback mode is set to SIMPLE
 	 * 
-	 * Hand-over the full payload as byte array. 
+	 * Hand-over partial payload as byte array. 
 	 */
 	void payload(in byte[] data);
-	
-	/**
-	 * This method is called if callback mode is set to PASSTHROUGH
-	 * 
-	 * Hand-over a part of the base64 encoded payload data. 
-	 */
-	void characters(String data);
 }

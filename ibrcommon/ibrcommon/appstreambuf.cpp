@@ -24,7 +24,7 @@
 
 namespace ibrcommon
 {
-	appstreambuf::appstreambuf(std::string command, appstreambuf::Mode mode)
+	appstreambuf::appstreambuf(const std::string &command, appstreambuf::Mode mode)
 	 : m_buf( BUF_SIZE+1 )
 	{
 		// execute the command
@@ -86,9 +86,10 @@ namespace ibrcommon
 			*iend++ = std::char_traits<char>::to_char_type(m);
 		}
 
+		const size_t avail_data = (iend - ibegin);
+
 		// write the data
-		int ret = 0;
-		if ((ret = fwrite(pbase(), sizeof(char), (iend - ibegin), _handle)) != (iend - ibegin))
+		if (fwrite(ibegin, sizeof(char), avail_data, _handle) != avail_data)
 		{
 			return std::char_traits<char>::eof();
 		}

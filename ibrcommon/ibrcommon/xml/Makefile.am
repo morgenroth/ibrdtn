@@ -13,6 +13,7 @@ cc_sources = \
 library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/xml
 library_include_HEADERS = $(h_sources)
 
+AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir) $(LIBXML_CFLAGS)
 AM_LDFLAGS = $(LIBXML_LIBS)
 
@@ -20,8 +21,8 @@ if ANDROID
 noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
-noinst_LTLIBRARIES = libxml.la
-libxml_la_SOURCES = $(h_sources) $(cc_sources)
+noinst_LTLIBRARIES = libibrcommon_xml.la
+libibrcommon_xml_la_SOURCES = $(h_sources) $(cc_sources)
 endif
 
 Android.mk: Makefile.am

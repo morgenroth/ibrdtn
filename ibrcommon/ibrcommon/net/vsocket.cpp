@@ -21,26 +21,116 @@
 
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/vsocket.h"
-#include "ibrcommon/TimeMeasurement.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Logger.h"
 
-#include <algorithm>
-#include <netdb.h>
+#ifndef HAVE_FEATURES_H
+#include "ibrcommon/TimeMeasurement.h"
+#endif
+
+#ifdef __WIN32__
+#include <winsock2.h>
+#include <windows.h>
+#else
 #include <sys/socket.h>
-#include <sys/types.h>
+#include <netdb.h>
 #include <netinet/tcp.h>
 #include <sys/un.h>
+#include <arpa/inet.h>
+#endif
+
+#include <algorithm>
+#include <sys/types.h>
 #include <errno.h>
 #include <sstream>
 #include <string.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <arpa/inet.h>
 #include <unistd.h>
 
 namespace ibrcommon
 {
+#ifdef __WIN32__
+	static int win32_pipe( int handles[2] )
+	{
+			SOCKET s;
+			struct sockaddr_in serv_addr;
+			int len = sizeof( serv_addr );
+
+			handles[0] = handles[1] = INVALID_SOCKET;
+
+			if ( ( s = socket( AF_INET, SOCK_STREAM, 0 ) ) == INVALID_SOCKET )
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to create socket: %ui", WSAGetLastError()))); */
+					return -1;
+			}
+
+			memset( &serv_addr, 0, sizeof( serv_addr ) );
+			serv_addr.sin_family = AF_INET;
+			serv_addr.sin_port = htons(0);
+			serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+			if (bind(s, (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to bind: %ui", WSAGetLastError()))); */
+					closesocket(s);
+					return -1;
+			}
+			if (listen(s, 1) == SOCKET_ERROR)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to listen: %ui", WSAGetLastError()))); */
+					closesocket(s);
+					return -1;
+			}
+			if (getsockname(s, (SOCKADDR *) & serv_addr, &len) == SOCKET_ERROR)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to getsockname: %ui", WSAGetLastError()))); */
+					closesocket(s);
+					return -1;
+			}
+			if ((handles[1] = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to create socket 2: %ui", WSAGetLastError()))); */
+					closesocket(s);
+					return -1;
+			}
+
+			if (connect(handles[1], (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to connect socket: %ui", WSAGetLastError()))); */
+					closesocket(s);
+					return -1;
+			}
+			if ((handles[0] = accept(s, (SOCKADDR *) & serv_addr, &len)) == INVALID_SOCKET)
+			{
+	/*              ereport(LOG, (errmsg_internal("pgpipe failed to accept socket: %ui", WSAGetLastError()))); */
+					closesocket(handles[1]);
+					handles[1] = INVALID_SOCKET;
+					closesocket(s);
+					return -1;
+			}
+			closesocket(s);
+			return 0;
+	}
+
+	static int piperead( int s, char *buf, int len )
+	{
+			int ret = recv(s, buf, len, 0);
+
+			if (ret < 0 && WSAGetLastError() == WSAECONNRESET)
+					/* EOF on the pipe! (win32 socket based implementation) */
+					ret = 0;
+			return ret;
+	}
+
+#define __compat_pipe(a) win32_pipe(a)
+#define pipewrite(a,b,c) send(a,b,c,0)
+
+#else
+#define __compat_pipe(a) ::pipe(a)
+#define piperead(a,b,c) ::read(a,b,c)
+#define pipewrite(a,b,c) ::write(a,b,c)
+#endif
+
 #ifdef HAVE_FEATURES_H
 #define __compat_select ::select
 #else
@@ -60,7 +150,7 @@ namespace ibrcommon
 		int ret = ::select(nfds, readfds, writefds, exceptfds, &to_copy);
 		tm.stop();
 
-		uint64_t us = tm.getMicroseconds();
+		size_t us = tm.getMicroseconds();
 
 		while ((us > 1000000) && (timeout->tv_sec > 0))
 		{
@@ -68,7 +158,7 @@ namespace ibrcommon
 			timeout->tv_sec--;
 		}
 
-		if (us >= (uint64_t)timeout->tv_usec)
+		if (us >= static_cast<size_t>(timeout->tv_usec))
 		{
 			timeout->tv_usec = 0;
 		}
@@ -103,9 +193,9 @@ namespace ibrcommon
 		int pipe_fds[2];
 
 		// create a pipe for interruption
-		if (::pipe(pipe_fds) < 0)
+		if (__compat_pipe(pipe_fds) < 0)
 		{
-			IBRCOMMON_LOGGER(error) << "Error " << errno << " creating pipe" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_TAG("pipesocket", error) << "Error " << errno << " creating pipe" << IBRCOMMON_LOGGER_ENDL;
 			throw socket_exception("failed to create pipe");
 		}
 
@@ -125,12 +215,13 @@ namespace ibrcommon
 
 		this->close();
 		::close(_output_fd);
+
 		_state = SOCKET_DOWN;
 	}
 
 	void vsocket::pipesocket::read(char *buf, size_t len) throw (socket_exception)
 	{
-		int ret = ::read(this->fd(), buf, len);
+		ssize_t ret = piperead(this->fd(), buf, len);
 		if (ret == -1)
 			throw socket_exception("read error");
 		if (ret == 0)
@@ -139,7 +230,7 @@ namespace ibrcommon
 
 	void vsocket::pipesocket::write(const char *buf, size_t len) throw (socket_exception)
 	{
-		int ret = ::write(_output_fd, buf, len);
+		ssize_t ret = pipewrite(_output_fd, buf, len);
 		if (ret == -1)
 			throw socket_exception("write error");
 	}
@@ -335,7 +426,7 @@ namespace ibrcommon
 
 	void vsocket::SocketState::__change(STATE s)
 	{
-		IBRCOMMON_LOGGER_DEBUG(66) << "SocketState transition: " << __getname(_state) << " -> " << __getname(s) << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("SocketState", 90) << "SocketState transition: " << __getname(_state) << " -> " << __getname(s) << IBRCOMMON_LOGGER_ENDL;
 		_state = s;
 		ibrcommon::Conditional::signal(true);
 	}
@@ -408,15 +499,15 @@ namespace ibrcommon
 		}
 	}
 
-	vsocket::SelectGuard::SelectGuard(SocketState &state, int &counter)
-	 : _state(state), _counter(counter)
+	vsocket::SelectGuard::SelectGuard(SocketState &state, int &counter, ibrcommon::vsocket &sock)
+	 : _state(state), _counter(counter), _sock(sock)
 	{
 		// set the current state to SELECT
 		try {
 			ibrcommon::MutexLock l(_state);
 			_state.setwait(SocketState::SELECT, SocketState::DOWN);
 			_counter++;
-			IBRCOMMON_LOGGER_DEBUG(66) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SelectGuard", 90) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
 		} catch (const SocketState::state_exception&) {
 			throw vsocket_interrupt("select interrupted while waiting for IDLE socket");
 		}
@@ -428,7 +519,7 @@ namespace ibrcommon
 		try {
 			ibrcommon::MutexLock l(_state);
 			_counter--;
-			IBRCOMMON_LOGGER_DEBUG(66) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("SelectGuard", 90) << "SelectGuard counter set to " << _counter << IBRCOMMON_LOGGER_ENDL;
 
 			if (_counter == 0) {
 				if (_state.get() == SocketState::SAFE_REQUEST) {
@@ -437,6 +528,15 @@ namespace ibrcommon
 					_state.set(SocketState::PENDING_DOWN);
 				} else {
 					_state.set(SocketState::IDLE);
+				}
+			}
+			else
+			{
+				// call interrupt once more if necessary
+				if (_state.get() == SocketState::SAFE_REQUEST) {
+					_sock.interrupt();
+				} else if (_state.get() == SocketState::DOWN_REQUEST) {
+					_sock.interrupt();
 				}
 			}
 		} catch (const ibrcommon::Conditional::ConditionalAbortException&) {
@@ -452,7 +552,10 @@ namespace ibrcommon
 
 	vsocket::~vsocket()
 	{
-		_pipe.down();
+		try {
+			_pipe.down();
+		} catch (const socket_exception &ex) {
+		}
 	}
 
 	void vsocket::add(basesocket *socket)
@@ -474,7 +577,7 @@ namespace ibrcommon
 		_sockets.erase(socket);
 
 		// search for the same socket in the map
-		for (std::map<vinterface, socketset>::iterator iter = _socket_map.begin(); iter != _socket_map.end(); iter++)
+		for (std::map<vinterface, socketset>::iterator iter = _socket_map.begin(); iter != _socket_map.end(); ++iter)
 		{
 			socketset &set = (*iter).second;
 			set.erase(socket);
@@ -497,7 +600,7 @@ namespace ibrcommon
 	{
 		down();
 
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++)
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter)
 		{
 			basesocket *sock = (*iter);
 			delete sock;
@@ -531,12 +634,12 @@ namespace ibrcommon
 			_state.setwait(SocketState::PENDING_UP, SocketState::IDLE);
 		}
 		
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter) {
 			try {
 				if (!(*iter)->ready()) (*iter)->up();
 			} catch (const socket_exception&) {
 				// rewind all previously up'ped sockets
-				for (socketset::iterator riter = _sockets.begin(); riter != iter; riter++) {
+				for (socketset::iterator riter = _sockets.begin(); riter != iter; ++riter) {
 					(*riter)->down();
 				}
 
@@ -570,7 +673,7 @@ namespace ibrcommon
 
 		// shut-down all the sockets
 		ibrcommon::MutexLock l(_socket_lock);
-		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); iter++) {
+		for (socketset::iterator iter = _sockets.begin(); iter != _sockets.end(); ++iter) {
 			try {
 				if ((*iter)->ready()) (*iter)->down();
 			} catch (const socket_exception&) { }
@@ -595,7 +698,7 @@ namespace ibrcommon
 
 		while (true)
 		{
-			SelectGuard guard(_state, _select_count);
+			SelectGuard guard(_state, _select_count, *this);
 
 			FD_ZERO(&fds_read);
 			FD_ZERO(&fds_write);
@@ -608,7 +711,7 @@ namespace ibrcommon
 			{
 				ibrcommon::MutexLock l(_socket_lock);
 				for (socketset::iterator iter = _sockets.begin();
-						iter != _sockets.end(); iter++)
+						iter != _sockets.end(); ++iter)
 				{
 					basesocket &sock = (**iter);
 					if (!sock.ready()) continue;
@@ -633,15 +736,21 @@ namespace ibrcommon
 			// call the linux-like select with given timeout
 			int res = __compat_select(high_fd + 1, &fds_read, &fds_write, &fds_error, tv);
 
+#ifdef __WIN32__
+			int errcode = WSAGetLastError();
+#else
+			int errcode = errno;
+#endif
+
 			if (res < 0) {
-				if (errno == EINTR) {
+				if (errcode == EINTR) {
 					// signal has been caught - handle it as interruption
 					continue;
 				}
-				else if (errno == 0) {
+				else if (errcode == 0) {
 					throw vsocket_interrupt("select call has been interrupted");
 				}
-				throw socket_raw_error(errno, "unknown select error");
+				throw socket_raw_error(errcode, "unknown select error");
 			}
 
 
@@ -650,7 +759,7 @@ namespace ibrcommon
 
 			if (FD_ISSET(_pipe.fd(), &fds_read))
 			{
-				IBRCOMMON_LOGGER_DEBUG(25) << "unblocked by self-pipe-trick" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("vsocket::select", 90) << "unblocked by self-pipe-trick" << IBRCOMMON_LOGGER_ENDL;
 
 				// this was an interrupt with the self-pipe-trick
 				ibrcommon::MutexLock l(_socket_lock);
@@ -663,7 +772,7 @@ namespace ibrcommon
 
 			ibrcommon::MutexLock l(_socket_lock);
 			for (socketset::iterator iter = _sockets.begin();
-					iter != _sockets.end(); iter++)
+					iter != _sockets.end(); ++iter)
 			{
 				basesocket *sock = (*iter);
 

@@ -26,6 +26,7 @@ cc_sources = \
 library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/ssl
 library_include_HEADERS = $(h_sources)
 
+AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir) $(OPENSSL_CFLAGS)
 AM_LDFLAGS = $(OPENSSL_LIBS)
 
@@ -33,8 +34,8 @@ if ANDROID
 noinst_DATA = Android.mk
 CLEANFILES = Android.mk
 else
-noinst_LTLIBRARIES = libssl.la
-libssl_la_SOURCES = $(h_sources) $(cc_sources)
+noinst_LTLIBRARIES = libibrcommon_ssl.la
+libibrcommon_ssl_la_SOURCES = $(h_sources) $(cc_sources)
 endif
 
 Android.mk: Makefile.am

@@ -44,7 +44,7 @@ void TimerTest::timer_test01()
 	timer.set(60);
 	timer.start();
 
-	::sleep(2);
+	ibrcommon::Thread::sleep(2000);
 
 	timer.stop();
 	timer.join();

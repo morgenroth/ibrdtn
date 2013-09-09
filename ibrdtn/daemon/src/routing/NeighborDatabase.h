@@ -26,9 +26,11 @@
 #include <ibrdtn/data/BundleSet.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/BundleID.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrcommon/data/BloomFilter.h>
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/thread/ThreadsafeState.h>
+#include <algorithm>
 #include <map>
 
 namespace dtn
@@ -52,6 +54,13 @@ namespace dtn
 				virtual ~BloomfilterNotAvailableException() throw () { };
 
 				const dtn::data::EID eid;
+			};
+
+			class NoRouteKnownException : public ibrcommon::Exception
+			{
+			public:
+				NoRouteKnownException() : ibrcommon::Exception("No route known.") { };
+				virtual ~NoRouteKnownException() throw () { };
 			};
 
 			class NoMoreTransfersAvailable : public ibrcommon::Exception
@@ -94,19 +103,13 @@ namespace dtn
 				 * @param bf The bloomfilter object
 				 * @param lifetime The desired lifetime of this bloomfilter
 				 */
-				void update(const ibrcommon::BloomFilter &bf, const size_t lifetime = 0);
+				void update(const ibrcommon::BloomFilter &bf, const dtn::data::Number &lifetime = 0);
 
 				void reset();
 
 				void add(const dtn::data::MetaBundle&);
 
 				bool has(const dtn::data::BundleID&, const bool require_bloomfilter = false) const;
-
-				/**
-				 * acquire resource to send a filter request.
-				 * The resources are reset once if the filter expires.
-				 */
-				void acquireFilterRequest() throw (NoMoreTransfersAvailable);
 
 				/**
 				 * Acquire transfer resources. If no resources is left,
@@ -117,8 +120,8 @@ namespace dtn
 				/**
 				 * @return the number of free transfer slots
 				 */
-				size_t getFreeTransferSlots() const;
-				
+				dtn::data::Size getFreeTransferSlots() const;
+
 				/**
 				 * @return True, if the threshold of free transfer slots is reached.
 				 */
@@ -137,20 +140,36 @@ namespace dtn
 				 * trigger expire mechanisms for bloomfilter and bundle summary
 				 * @param timestamp
 				 */
-				void expire(const size_t timestamp);
+				void expire(const dtn::data::Timestamp &timestamp);
+
+				/**
+				 * Determine if the neighbor entry is expired
+				 */
+				bool isExpired(const dtn::data::Timestamp &timestamp) const;
+
+				/**
+				 * Returns the last update of this entry
+				 */
+				const dtn::data::Timestamp& getLastUpdate() const;
+
+				/**
+				 * updates the last update timestamp
+				 */
+				void touch();
 
 				/**
 				 * Retrieve a specific data-set.
 				 */
 				template <class T>
-				T& getDataset() const throw (DatasetNotAvailableException)
+				const T& getDataset() const throw (DatasetNotAvailableException)
 				{
-					dataset_map::const_iterator iter = _datasets.find(T::identifier);
+					NeighborDataset item(T::identifier);
+					data_set::const_iterator iter = _datasets.find(item);
 
 					if (iter == _datasets.end()) throw DatasetNotAvailableException();
 
 					try {
-						return dynamic_cast<T&>(*(*iter).second);
+						return dynamic_cast<const T&>(**iter);
 					} catch (const std::bad_cast&) {
 						throw DatasetNotAvailableException();
 					}
@@ -160,7 +179,7 @@ namespace dtn
 				 * Put a data-set into the entry.
 				 * The old data-set gets replaced.
 				 */
-				void putDataset(NeighborDataset *dset);
+				void putDataset(NeighborDataset &dset);
 
 				/**
 				 * Remove a data-set.
@@ -168,11 +187,11 @@ namespace dtn
 				template <class T>
 				void removeDataset()
 				{
-					dataset_map::iterator it = _datasets.find(T::identifier);
+					NeighborDataset item(T::identifier);
+					data_set::iterator it = _datasets.find(item);
 
 					if (it == _datasets.end()) return;
 
-					delete it->second;
 					_datasets.erase(it);
 				}
 
@@ -184,12 +203,11 @@ namespace dtn
 				// bloomfilter used as summary vector
 				ibrcommon::BloomFilter _filter;
 				dtn::data::BundleSet _summary;
-				size_t _filter_expire;
+				dtn::data::Timestamp _filter_expire;
 
 				// extended neighbor data
-				typedef std::map<size_t, NeighborDataset*> dataset_map;
-				typedef pair<size_t, NeighborDataset*> dataset_pair;
-				dataset_map _datasets;
+				typedef std::set<NeighborDataset> data_set;
+				data_set _datasets;
 
 				enum FILTER_REQUEST_STATE
 				{
@@ -200,6 +218,8 @@ namespace dtn
 				};
 
 				ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE> _filter_state;
+
+				dtn::data::Timestamp _last_update;
 			};
 
 			NeighborDatabase();
@@ -231,7 +251,7 @@ namespace dtn
 			 * trigger expire mechanisms for bloomfilter and bundle summary
 			 * @param timestamp
 			 */
-			void expire(const size_t timestamp);
+			void expire(const dtn::data::Timestamp &timestamp);
 
 		private:
 			typedef std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* > neighbor_map;

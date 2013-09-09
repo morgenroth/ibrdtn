@@ -21,16 +21,10 @@
  */
 package de.tubs.ibr.dtn.chat.core;
 
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -38,11 +32,17 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.BaseColumns;
 import android.util.Log;
+import de.tubs.ibr.dtn.api.BundleID;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.chat.MessageAdapter;
+import de.tubs.ibr.dtn.chat.RosterAdapter;
 
-public class Roster extends LinkedList<Buddy> {
+@SuppressLint("SimpleDateFormat")
+public class Roster {
 	
-	public final static String REFRESH = "de.tubs.ibr.dtn.chat.ROSTER_REFRESH";
+	public final static String NOTIFY_ROSTER_CHANGED = "de.tubs.ibr.dtn.chat.NOTIFY_ROSTER_CHANGED";
 	
 	private final String TAG = "Roster";
 	
@@ -50,25 +50,40 @@ public class Roster extends LinkedList<Buddy> {
 	private SQLiteDatabase database = null;
 	private Context context = null;
 	
-	private Timer refresh_timer = null;
-
-	/**
-	 * unique serial id
-	 */
-	private static final long serialVersionUID = -2251362993764970200L;
+	public static final String TABLE_NAME_ROSTER = "roster";
+	public static final String TABLE_NAME_MESSAGES = "messages";
 	
+	private static final String DATABASE_CREATE_ROSTER =
+			"CREATE TABLE " + TABLE_NAME_ROSTER + " (" +
+				BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+				Buddy.NICKNAME + " TEXT NOT NULL, " +
+				Buddy.ENDPOINT + " TEXT NOT NULL, " +
+				Buddy.LASTSEEN + " TEXT, " +
+				Buddy.PRESENCE + " TEXT, " +
+				Buddy.STATUS + " TEXT, " +
+				Buddy.DRAFTMSG + " TEXT, " +
+				Buddy.VOICEEID + " TEXT, " +
+				Buddy.LANGUAGE + " TEXT, " +
+				Buddy.COUNTRY + " TEXT" +
+			");";
+	
+	private static final String DATABASE_CREATE_MESSAGES = 
+			"CREATE TABLE " + TABLE_NAME_MESSAGES + " (" +
+				BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+				Message.BUDDY + " INTEGER NOT NULL, " + 
+				Message.DIRECTION + " TEXT NOT NULL, " +
+				Message.CREATED + " TEXT NOT NULL, " +
+				Message.RECEIVED + " TEXT NOT NULL, " +
+				Message.PAYLOAD + " TEXT NOT NULL, " +
+				Message.SENTID + " TEXT, " +
+				Message.FLAGS + " INTEGER NOT NULL" +
+			");";
+
 	private class DBOpenHelper extends SQLiteOpenHelper {
 		
 		private static final String DATABASE_NAME = "dtnchat_user";
-		private static final int DATABASE_VERSION = 8;
+		private static final int DATABASE_VERSION = 12;
 		
-		// Database creation sql statement
-		private static final String DATABASE_CREATE_ROSTER = "create table roster (_id integer primary key autoincrement, "
-				+ "nickname text not null, endpoint text not null, lastseen text, presence text, status text, draftmsg text);";
-		
-		private static final String DATABASE_CREATE_MESSAGES = "create table messages (_id integer primary key autoincrement, "
-				+ "buddy integer not null, direction text not null, created text not null, received text not null, payload text not null, flags integer not null);";
-
 		public DBOpenHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
 		}
@@ -89,12 +104,7 @@ public class Roster extends LinkedList<Buddy> {
 			onCreate(db);
 		}
 	};
-
-	public Roster()
-	{
-		refresh_timer = new Timer();
-	}
-
+	
 	@Override
 	protected void finalize() throws Throwable {
 		close();
@@ -103,59 +113,14 @@ public class Roster extends LinkedList<Buddy> {
 
 	public void open(Context context) throws SQLException
 	{
-		final DateFormat formatter = new SimpleDateFormat("yyyy-M-d HH:mm:ss");
-		
 		this.context = context;
 		_helper = new DBOpenHelper(context);
 		database = _helper.getWritableDatabase();
-		
-		// load all buddies
-		Cursor cur = database.query("roster", new String[] { "_id", "nickname", "endpoint", "presence", "status", "lastseen", "draftmsg" }, null, null, null, null, null, null);
-		Log.i(TAG, "query for buddies");
-		
-		cur.moveToFirst();
-		while (!cur.isAfterLast())
-		{
-			Buddy buddy = new Buddy(cur.getString(1), cur.getString(2), cur.getString(3), cur.getString(4), cur.getString(6) );
-			
-			// set the last seen parameter
-			if (!cur.isNull(5))
-			{
-				try {
-					buddy.setLastSeen( formatter.parse( cur.getString(5) ) );
-				} catch (ParseException e) {
-					Log.e(TAG, "failed to convert date: " + cur.getString(5));
-				}
-			}
-			
-			this.add( buddy );
-			
-			// schedule new refresh task
-			scheduleRefresh(buddy);
-			
-			cur.moveToNext();
-		}
-		
-		cur.close();
 	}
 	
-	private class RefreshScheduleTask extends TimerTask {
-		private Buddy buddy = null;
-		
-		public RefreshScheduleTask(Buddy buddy) {
-			this.buddy = buddy;
-		}
-		
-		public void run() {
-			Roster.this.notifyBuddyChanged(this.buddy);
-		}
-	}
-	
-	private void scheduleRefresh(Buddy buddy)
+	public SQLiteDatabase getDatabase()
 	{
-		Calendar cal = buddy.getExpiration();
-		cal.add(Calendar.MINUTE, 1);
-		refresh_timer.schedule(new RefreshScheduleTask(buddy), cal.getTime());
+		return database;
 	}
 	
 	public void close()
@@ -163,219 +128,311 @@ public class Roster extends LinkedList<Buddy> {
 		_helper.close();
 	}
 	
-	public List<Message> getMessages(Buddy buddy)
+	public String getDraftMessage(Long buddyId) {
+		Buddy b = getBuddy(buddyId);
+		if (b == null) return "";
+		return b.getDraftMessage();
+	}
+	
+	public void setDraftMessage(Long buddyId, String message) {
+		ContentValues values = new ContentValues();
+		
+		if (message != null)
+		{
+			values.put(Buddy.DRAFTMSG, message);
+		}
+		else
+		{
+			values.putNull(Buddy.DRAFTMSG);
+		}
+		
+		// update buddy data
+		database.update(TABLE_NAME_ROSTER, values, Buddy.ID + " = ?", new String[] { buddyId.toString() });
+		
+        // send refresh intent
+        notifyBuddyChanged(buddyId);
+	}
+	
+	public synchronized void clearMessages(Long buddyId)
 	{
-		final DateFormat formatter = new SimpleDateFormat("yyyy-M-d hh:mm:ss");
-		LinkedList<Message> msgs = new LinkedList<Message>();
+		try {
+			database.delete(TABLE_NAME_MESSAGES, Message.BUDDY + " = ?", new String[] { String.valueOf(buddyId) });
+			
+			// send refresh intent
+			notifyBuddyChanged(buddyId);
+		} catch (Exception e) {
+			// buddy not found
+		}
+	}
+	
+	public Message getMessage(BundleID id) {
+		Message msg = null;
 		
 		try {
-			// get buddy id
-			String buddyid = String.valueOf( getId(buddy) );
-
-			// load the last 20 messages
-			Cursor cur = database.query("messages", new String[] { "direction", "created", "received", "payload" }, "buddy = ?", new String[] { buddyid }, null, null, "created DESC", "0, 20");
-			Log.i(TAG, "query for messages");
-	
-			cur.moveToLast();
-			while (!cur.isBeforeFirst())
+			Cursor cur = database.query(TABLE_NAME_MESSAGES, MessageAdapter.PROJECTION, Message.SENTID + " = ?", new String[] { id.toString() }, null, null, null, "0, 1");
+			
+			if (cur.moveToNext())
 			{
-				try {
-					Boolean incoming = cur.getString(0).equals("in");
-					Date created = formatter.parse(cur.getString(1));
-					Date received = formatter.parse(cur.getString(2));
-					String payload = cur.getString(3);
-					
-					msgs.add( new Message(incoming, created, received, payload) );
-				} catch (ParseException e) {
-					Log.e(TAG, "failed to convert date: " + cur.getString(1));
-				}
-				cur.moveToPrevious();
+				msg = new Message(this.context, cur, new MessageAdapter.ColumnsMap());
 			}
 			
 			cur.close();
 		} catch (Exception e) {
 			// buddyid not found
+			Log.e(TAG, "getMessage() failed", e);
 		}
 		
-		return msgs;
+		return msg;
 	}
 	
-	private void createBuddy(String endpointid)
+	public Message getMessage(Long id)
 	{
-		ContentValues values = new ContentValues();
-		
-		values.put("nickname", endpointid);
-		values.putNull("lastseen");
-		values.put("endpoint", endpointid);
-		values.putNull("presence");
-		values.putNull("status");
-		values.putNull("draftmsg");
-		
-		// store the new buddy
-		database.insert("roster", null, values);
-	}
-	
-	public void store(Buddy buddy)
-	{
-		ContentValues values = new ContentValues();
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		
-		values.put("nickname", buddy.getNickname());
-		
-		if (buddy.getLastSeen() != null)
-		{
-			values.put("lastseen", dateFormat.format(buddy.getLastSeen()));
-		}
-		
-		if (buddy.getPresence() != null)
-		{
-			values.put("presence", buddy.getPresence());
-			Log.i(TAG, "New presence for " + buddy.getNickname() + ": " + buddy.getPresence());
-		}
-		else
-		{
-			values.putNull("presence");
-		}
-		
-		if (buddy.getStatus() != null)
-		{
-			values.put("status", buddy.getStatus());
-			Log.i(TAG, "New status for " + buddy.getNickname() + ": " + buddy.getStatus());
-		}
-		else
-		{
-			values.putNull("status");
-		}
-		
-		if (buddy.getDraftMessage() != null)
-		{
-			values.put("draftmsg", buddy.getDraftMessage());
-		}
-		else
-		{
-			values.putNull("draftmsg");
-		}
-		
-		// update buddy data
-		database.update("roster", values, "endpoint = ?", new String[] { buddy.getEndpoint() });
-		
-		// schedule new refresh task
-		scheduleRefresh(buddy);
-		
-		// send refresh intent
-		notifyBuddyChanged(buddy);
-	}
-	
-	private int getId(Buddy buddy) throws Exception
-	{
-		Cursor cur = database.query("roster", new String[] { "_id" }, "endpoint = ?", new String[] { buddy.getEndpoint() }, null, null, null);
+		Message msg = null;
 		
 		try {
-			cur.moveToFirst();
+			Cursor cur = database.query(TABLE_NAME_MESSAGES, MessageAdapter.PROJECTION, Message.ID + " = ?", new String[] { id.toString() }, null, null, null, "0, 1");
 			
-			if (cur.isAfterLast()) throw new Exception("buddy not found!");
+			if (cur.moveToNext())
+			{
+				msg = new Message(this.context, cur, new MessageAdapter.ColumnsMap());
+			}
 			
-			return cur.getInt(0);
-		} finally {
 			cur.close();
-		}
-	}
-	
-	public void clearMessages(Buddy buddy)
-	{
-		try {
-			// get buddy id
-			String buddyid = String.valueOf( getId(buddy) );
-		
-			database.delete("messages", "buddy = ?", new String[] { buddyid });
-			
-			// send refresh intent
-			notifyBuddyChanged(buddy);
 		} catch (Exception e) {
-			// buddy not found
+			// message not found
 		}
+		
+		return msg;
 	}
 	
-	public void storeMessage(Message msg)
+	public synchronized Long createMessage(String buddy, Date created, Date received, Boolean incoming, String payload, Long flags)
+	{
+		Long bid = getBuddyId(buddy);
+		return createMessage(bid, created, received, incoming, payload, flags);
+	}
+	
+	public synchronized Long createMessage(Long buddyId, Date created, Date received, Boolean incoming, String payload, Long flags)
 	{
 		ContentValues values = new ContentValues();
 		
-		if (msg.isIncoming())
+		// create a new message
+		if (incoming)
 		{
-			values.put("direction", "in");
+			values.put(Message.DIRECTION, "in");
 		}
 		else
 		{
-			values.put("direction", "out");
+			values.put(Message.DIRECTION, "out");
 		}
 		
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 		try {
-			values.put("buddy", getId(msg.getBuddy()));
-			values.put("created", dateFormat.format(msg.getCreated()));
-			values.put("received", dateFormat.format(msg.getReceived()));
-			values.put("payload", msg.getPayload());
-			values.put("flags", 0);
+			values.put(Message.BUDDY, buddyId);
+			
+			if (created == null)
+				values.putNull(Message.CREATED);
+			else
+				values.put(Message.CREATED, dateFormat.format(created));
+			
+			if (received == null)
+				values.putNull(Message.RECEIVED);
+			else
+				values.put(Message.RECEIVED, dateFormat.format(received));
+			
+			values.put(Message.PAYLOAD, payload);
+			values.put(Message.FLAGS, flags);
 			
 			// store the message in the database
-			database.insert("messages", null, values);
+			long msgid = database.insert(TABLE_NAME_MESSAGES, null, values);
 			
 			// send refresh intent
-			notifyBuddyChanged(msg.getBuddy());
+			notifyBuddyChanged(buddyId);
+			
+			return msgid;
+		} catch (Exception e) {
+			// could not store buddy message
+		}
+		
+		return null;
+	}
+	
+	public void updatePresence(String buddyId, Date created, String presence, String nickname, String status, String voiceeid, String language, String country)
+	{
+		Long bid = getBuddyId(buddyId);
+		
+		// check if lastseen is newer than this message
+		Buddy buddy = getBuddy(bid);
+		if ((buddy.getLastSeen() != null) && buddy.getLastSeen().after(created))
+			return;
+		
+		ContentValues values = new ContentValues();
+		
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		
+		values.put(Buddy.LASTSEEN, dateFormat.format(created));
+		values.put(Buddy.PRESENCE, presence);
+		values.put(Buddy.NICKNAME, nickname);
+		values.put(Buddy.STATUS, status);
+		
+		if (voiceeid != null) {
+		    values.put(Buddy.VOICEEID, voiceeid);
+		} else {
+		    values.putNull(Buddy.VOICEEID);
+		}
+		
+        if (language != null) {
+            values.put(Buddy.LANGUAGE, language);
+        } else {
+            values.putNull(Buddy.LANGUAGE);
+        }
+        
+        if (country != null) {
+            values.put(Buddy.COUNTRY, country);
+        } else {
+            values.putNull(Buddy.COUNTRY);
+        }
+		
+		// update buddy data
+		database.update(TABLE_NAME_ROSTER, values, Buddy.ID + " = ?", new String[] { bid.toString() });
+		
+        // send refresh intent
+        notifyBuddyChanged(bid);
+	}
+
+	public synchronized void reportSent(Long msgId, String sentId)
+	{
+		ContentValues values = new ContentValues();
+		
+		Message msg = getMessage(msgId);
+		
+		if (msg == null) return;
+		
+		// updates this message
+		if (sentId != null)
+		{
+			values.put(Message.SENTID, sentId);
+		}
+		
+		// set flags to sent
+		msg.setFlags(msg.getFlags() | 1);
+		
+		// updates this message
+		values.put(Message.FLAGS, msg.getFlags());
+
+		try {
+			// update buddy data
+			database.update(TABLE_NAME_MESSAGES, values, Message.ID + " = ?", new String[] { msgId.toString() });
+			
+			// send refresh intent
+			notifyBuddyChanged(msg.getBuddyId());
 		} catch (Exception e) {
 			// could not store buddy message
 		}
 	}
 	
-	public void remove(Buddy buddy)
+	public synchronized void reportDelivery(SingletonEndpoint source, BundleID id)
+	{
+		ContentValues values = new ContentValues();
+		
+		// get message matching the bundle id
+		Message msg = this.getMessage(id);
+		
+		if (msg == null) return;
+		
+		// set flags to delivered
+		msg.setFlags(msg.getFlags() | 2);
+		
+		// updates this message
+		values.put(Message.FLAGS, msg.getFlags());
+
+		try {
+			// update buddy data
+			database.update(TABLE_NAME_MESSAGES, values, Message.ID + " = ?", new String[] { msg.getMsgId().toString() });
+			
+			// send refresh intent
+			notifyBuddyChanged(msg.getBuddyId());
+		} catch (Exception e) {
+			// could not store buddy message
+		}
+	}
+	
+	public void removeBuddy(Long buddyId)
 	{
 		// remove all messages first
-		clearMessages(buddy);
+		clearMessages(buddyId);
 		
 		try {
-			// get buddy id
-			String buddyid = String.valueOf( getId(buddy) );
-		
-			database.delete("roster", "_id = ?", new String[] { buddyid });
+			database.delete(TABLE_NAME_ROSTER, Buddy.ID + " = ?", new String[] { String.valueOf(buddyId) });
 		} catch (Exception e) {
 			// buddy not found
 		}
 		
-		// remove the buddy out of the list
-		super.remove(buddy);
-		
 		// send refresh intent
-		notifyBuddyChanged(buddy);
+		notifyBuddyChanged(buddyId);
 	}
 	
-	public Buddy get(String endpointid)
-	{
-		for (Buddy b : this)
-		{
-			if (b.getEndpoint().equals(endpointid))
-			{
-				return b;
+	public Buddy getBuddy(Long buddyId) {
+		Buddy ret = null;
+		
+		try {
+			Cursor cur = database.query(TABLE_NAME_ROSTER, RosterAdapter.PROJECTION, Buddy.ID + " = ?",
+					new String[] { String.valueOf(buddyId) }, null, null, null, "0, 1");
+
+			if (cur.moveToNext()) {
+				ret = new Buddy(this.context, cur, new RosterAdapter.ColumnsMap());
+			}
+
+			cur.close();
+		} catch (Exception e) {
+			// buddy not found
+		}
+		
+		return ret;
+	}
+	
+	public Long getBuddyId(String endpoint) {
+		Long ret = null;
+		
+		try {
+			Cursor cur = database.query(TABLE_NAME_ROSTER, new String[] {
+					Buddy.ID }, Buddy.ENDPOINT + " = ?",
+					new String[] { endpoint }, null, null, null, "0, 1");
+
+			if (cur.moveToNext()) {
+				ret = cur.getLong(0);
+			}
+
+			cur.close();
+		} catch (Exception e) {
+			// buddy not found
+		}
+		
+		// if there is no buddy entry, create one
+		if (ret == null) {
+			ContentValues values = new ContentValues();
+
+			try {
+				values.put(Buddy.NICKNAME, endpoint);
+				values.put(Buddy.ENDPOINT, endpoint);
+				
+				// store the message in the database
+				ret = database.insert(TABLE_NAME_ROSTER, null, values);
+				
+				// send refresh intent
+				notifyBuddyChanged(ret);
+			} catch (Exception e) {
+				// could not store buddy message
 			}
 		}
 		
-		// buddy not found, create a new one
-		Buddy buddy = new Buddy(endpointid, endpointid, null, null, null);
-		this.add(buddy);
-		
-		// create a new buddy in the database
-		createBuddy(endpointid);
-		
-		// send refresh intent
-		notifyBuddyChanged(buddy);
-		
-		return buddy;
+		return ret;
 	}
 	
-	public void notifyBuddyChanged(Buddy buddy) {
+	public void notifyBuddyChanged(Long buddyId) {
 		if (context != null) {
-			Intent i = new Intent(Roster.REFRESH);
-			i.putExtra("buddy", buddy.getEndpoint());
+			Intent i = new Intent(Roster.NOTIFY_ROSTER_CHANGED);
+			i.putExtra("buddyId", buddyId);
 			context.sendBroadcast(i);
 		}
 	}

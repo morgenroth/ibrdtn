@@ -43,7 +43,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 		void testGetAPIInterface();
 		void testGetAPISocket();
 		void testVersion();
-		void testGetNotifyCommand();
 		void testGetStorage();
 		void testGetLimit();
 		/*=== BEGIN tests for class 'Discovery' ===*/
@@ -55,15 +54,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 		void testDiscoveryPort();
 		void testDiscoveryTimeout();
 		/*=== END   tests for class 'Discovery' ===*/
-
-		/*=== BEGIN tests for class 'Statistic' ===*/
-		void testStatisticEnabled();
-		void testStatisticLogfile();
-		void testStatisticType();
-		void testStatisticInterval();
-		void testStatisticAddress();
-		void testStatisticPort();
-		/*=== END   tests for class 'Statistic' ===*/
 
 		/*=== BEGIN tests for class 'Debug' ===*/
 		void testDebugLevel();
@@ -88,7 +78,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 		/*=== END   tests for class 'Network' ===*/
 
 		void testGetDiscovery();
-		void testGetStatistic();
 		void testGetDebug();
 		void testGetLogger();
 		void testGetNetwork();
@@ -107,7 +96,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testGetAPIInterface);
 			CPPUNIT_TEST(testGetAPISocket);
 			CPPUNIT_TEST(testVersion);
-			CPPUNIT_TEST(testGetNotifyCommand);
 			CPPUNIT_TEST(testGetStorage);
 			CPPUNIT_TEST(testGetLimit);
 			CPPUNIT_TEST(testDiscoveryEnabled);
@@ -117,12 +105,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testDiscoveryAddress);
 			CPPUNIT_TEST(testDiscoveryPort);
 			CPPUNIT_TEST(testDiscoveryTimeout);
-			CPPUNIT_TEST(testStatisticEnabled);
-			CPPUNIT_TEST(testStatisticLogfile);
-			CPPUNIT_TEST(testStatisticType);
-			CPPUNIT_TEST(testStatisticInterval);
-			CPPUNIT_TEST(testStatisticAddress);
-			CPPUNIT_TEST(testStatisticPort);
 			CPPUNIT_TEST(testDebugLevel);
 			CPPUNIT_TEST(testDebugEnabled);
 			CPPUNIT_TEST(testDebugQuiet);
@@ -137,7 +119,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testGetTCPOptionNoDelay);
 			CPPUNIT_TEST(testGetTCPChunkSize);
 			CPPUNIT_TEST(testGetDiscovery);
-			CPPUNIT_TEST(testGetStatistic);
 			CPPUNIT_TEST(testGetDebug);
 			CPPUNIT_TEST(testGetLogger);
 			CPPUNIT_TEST(testGetNetwork);

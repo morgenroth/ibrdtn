@@ -22,8 +22,6 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
-//#define __IBRCOMMON_MULTITHREADED__
-
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/data/File.h>
@@ -67,30 +65,31 @@
 	ibrcommon::Logger::getVerbosity()
 
 #define IBRCOMMON_LOGGER(level) \
-	{ \
-		ibrcommon::Logger log = ibrcommon::Logger::level(""); \
-		log
+	if (ibrcommon::LogLevel::level & ibrcommon::Logger::getLogMask()) { \
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::level(""); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
 
 #define IBRCOMMON_LOGGER_TAG(tag, level) \
-	{ \
-		ibrcommon::Logger log = ibrcommon::Logger::level(tag); \
-		log
+	if (ibrcommon::LogLevel::level & ibrcommon::Logger::getLogMask()) { \
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::level(tag); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
 
 #define IBRCOMMON_LOGGER_DEBUG(verbosity) \
 	if (ibrcommon::Logger::getVerbosity() >= verbosity) \
 	{ \
-		ibrcommon::Logger log = ibrcommon::Logger::debug("", verbosity); \
-		log
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::debug("", verbosity); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
 
 #define IBRCOMMON_LOGGER_DEBUG_TAG(tag, verbosity) \
 	if (ibrcommon::Logger::getVerbosity() >= verbosity) \
 	{ \
-		ibrcommon::Logger log = ibrcommon::Logger::debug(tag, verbosity); \
-		log
+		ibrcommon::Logger __macro_ibrcommon_logger = ibrcommon::Logger::debug(tag, verbosity); \
+		std::stringstream __macro_ibrcommon_stream; __macro_ibrcommon_stream
 
 #define IBRCOMMON_LOGGER_ENDL \
 		std::flush; \
-		log.print(); \
+		__macro_ibrcommon_logger.setMessage(__macro_ibrcommon_stream.str()); \
+		__macro_ibrcommon_logger.print(); \
 	}
 
 #define IBRCOMMON_LOGGER_ex(level) \
@@ -101,12 +100,26 @@
 
 namespace ibrcommon
 {
+	namespace LogLevel {
+		enum LogLevel
+		{
+			emergency =	1 << 0,	/* system is unusable */
+			alert =		1 << 1,	/* action must be taken immediately */
+			critical =	1 << 2,	/* critical conditions */
+			error =		1 << 3,	/* error conditions */
+			warning = 	1 << 4,	/* warning conditions */
+			notice = 	1 << 5,	/* normal but significant condition */
+			info = 		1 << 6,	/* informational */
+			debug =		1 << 7	/* debug-level messages */
+		};
+	}
+
 	/**
 	 * @class Logger
 	 *
 	 * The Logger class is the heart of the logging framework.
 	 */
-	class Logger : public std::stringstream
+	class Logger
 	{
 	public:
 		enum LogOptions
@@ -135,6 +148,16 @@ namespace ibrcommon
 		Logger(const Logger&);
 		virtual ~Logger();
 
+		/**
+		 * Set the logging message
+		 */
+		void setMessage(const std::string &data);
+
+		/**
+		 * Returns the logging message as string
+		 */
+		const std::string& str() const;
+
 		static Logger emergency(const std::string &tag);
 		static Logger alert(const std::string &tag);
 		static Logger critical(const std::string &tag);
@@ -149,6 +172,11 @@ namespace ibrcommon
 		 * @param verbosity A verbosity level as number. Higher value leads to more output.
 		 */
 		static void setVerbosity(const int verbosity);
+
+		/**
+		 * Returns the global logging mask
+		 */
+		static unsigned char getLogMask();
 
 		/**
 		 * Get the global verbosity of the logger.
@@ -183,9 +211,9 @@ namespace ibrcommon
 
 		/**
 		 * enable the asynchronous logging
-		 * This starts a seperate thread and a thread-safe queue to
+		 * This starts a separate thread and a thread-safe queue to
 		 * queue all logging messages first and call the log routine by
-		 * the thread. This option is nessacary, if the stream to log into
+		 * the thread. This option is necessary, if the stream to log into
 		 * are not thread-safe by itself.
 		 */
 		static void enableAsync();
@@ -204,7 +232,7 @@ namespace ibrcommon
 
 		/**
 		 * stops the asynchronous logging thread
-		 * you need to call this before your programm is going down, if you have
+		 * you need to call this before your program is going down, if you have
 		 * called enableAsync() before. 
 		 */
 		static void stop();
@@ -258,7 +286,10 @@ namespace ibrcommon
 			 * Get the global verbosity of the logger.
 			 * @return The verbosity level as number. Higher value leads to more output.
 			 */
-			int getVerbosity();
+			int getVerbosity() const;
+
+
+			unsigned char getLogMask() const;
 
 			/**
 			 * Add a standard output stream to the logging framework.
@@ -322,6 +353,7 @@ namespace ibrcommon
 			 */
 			void flush(const Logger &logger);
 
+			unsigned char _global_logmask;
 			int _verbosity;
 			bool _syslog;
 			unsigned char _syslog_mask;
@@ -347,7 +379,10 @@ namespace ibrcommon
 		int _debug_verbosity;
 		struct timeval _logtime;
 
+		std::string _data;
+
 		static std::string _default_tag;
+		static std::string _android_tag_prefix;
 		static LogWriter _logwriter;
 	};
 }

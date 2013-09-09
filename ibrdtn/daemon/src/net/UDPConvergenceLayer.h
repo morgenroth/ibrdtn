@@ -50,7 +50,7 @@ namespace dtn
 			 * @param[in] broadcast If true, the broadcast feature for this socket is enabled.
 			 * @param[in] mtu The maximum bundle size.
 			 */
-			UDPConvergenceLayer(ibrcommon::vinterface net, int port, unsigned int mtu = 1280);
+			UDPConvergenceLayer(ibrcommon::vinterface net, int port, dtn::data::Length mtu = 1280);
 
 			/**
 			 * Desktruktor
@@ -65,7 +65,7 @@ namespace dtn
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
-			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job);
 
 			/**
 			 * @see Component::getName()
@@ -76,7 +76,7 @@ namespace dtn
 
 		protected:
 			virtual void componentUp() throw ();
-			virtual void componentRun() throw ();;
+			virtual void componentRun() throw ();
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();
 
@@ -90,7 +90,7 @@ namespace dtn
 
 			static const int DEFAULT_PORT;
 
-			unsigned int m_maxmsgsize;
+			dtn::data::Length m_maxmsgsize;
 
 			ibrcommon::Mutex m_writelock;
 			ibrcommon::Mutex m_readlock;

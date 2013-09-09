@@ -39,6 +39,8 @@ namespace dtn
 		class Registration
 		{
 		public:
+			static const std::string TAG;
+
 			enum NOTIFY_CALL
 			{
 				NOTIFY_BUNDLE_AVAILABLE = 0,
@@ -82,7 +84,7 @@ namespace dtn
 			/**
 			 * constructor of the registration
 			 */
-			Registration(dtn::storage::BundleSeeker &seeker);
+			Registration();
 
 			/**
 			 * destructor of the registration
@@ -156,7 +158,7 @@ namespace dtn
 			 * notify a bundle as delivered (and delete it if singleton destination)
 			 * @param id
 			 */
-			void delivered(const dtn::data::MetaBundle &m);
+			void delivered(const dtn::data::MetaBundle &m) const;
 
 			/**
 			 * returns a default EID based on the registration handle
@@ -206,6 +208,11 @@ namespace dtn
 			bool isPersistent() const;
 
 			/**
+			 * Allows to disable the re-assemble of fragments
+			 */
+			void setFilterFragments(bool val);
+
+			/**
 			 * gets the expire time of this registration if it is persistent
 			 * @see ibrcommon::Timer::get_current_time()
 			 * @exception NotPersistentException the registration is not persistent
@@ -233,21 +240,65 @@ namespace dtn
 			void underflow();
 
 		private:
-			class RegistrationQueue : public dtn::storage::BundleResult, public ibrcommon::Queue<dtn::data::MetaBundle> {
+			class RegistrationQueue : public dtn::storage::BundleResult {
 			public:
+				/**
+				 * Constructor
+				 */
 				RegistrationQueue();
+
+				/**
+				 * Destructor
+				 */
 				virtual ~RegistrationQueue();
 
+				/**
+				 * Put a bundle into the registration queue
+				 * This method is used by the storage.
+				 * @see dtn::storage::BundleResult::put()
+				 */
 				virtual void put(const dtn::data::MetaBundle &bundle) throw ();
 
-				dtn::data::BundleSet& getReceivedBundles();
+				/**
+				 * Get the next bundle of the queue.
+				 * An exception is thrown if the queue is empty or the queue has been aborted
+				 * before.
+				 */
+				dtn::data::MetaBundle pop() throw (const ibrcommon::QueueUnblockedException);
+
+				/**
+				 * Expire bundles in the received bundle set
+				 */
+				void expire(const dtn::data::Timestamp &timestamp) throw ();
+
+				/**
+				 * Abort all blocking call on the queue
+				 */
+				void abort() throw ();
+
+				/**
+				 * Reset the queue state. If called, blocking calls are allowed again.
+				 */
+				void reset() throw ();
+
+				/**
+				 * Check if a bundle has been received before
+				 */
+				bool has(const dtn::data::BundleID &bundle) const throw ();
 
 			private:
+				// protect variables against concurrent altering
+				ibrcommon::Mutex _lock;
+
+				// all bundles have to remain in this set to avoid duplicate delivery
 				dtn::data::BundleSet _recv_bundles;
+
+				// queue where the currently queued bundles are stored
+				ibrcommon::Queue<dtn::data::MetaBundle> _queue;
 			};
 
 			const std::string _handle;
-			const dtn::data::EID _default_eid;
+			dtn::data::EID _default_eid;
 
 			ibrcommon::Mutex _endpoints_lock;
 			std::set<dtn::data::EID> _endpoints;
@@ -269,7 +320,7 @@ namespace dtn
 			ibrcommon::Mutex _attach_lock;
 			ibrcommon::Timer::time_t _expiry;
 
-			dtn::storage::BundleSeeker &_seeker;
+			bool _filter_fragments;
 		};
 	}
 }

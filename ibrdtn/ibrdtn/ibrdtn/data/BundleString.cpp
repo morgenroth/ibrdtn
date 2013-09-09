@@ -21,13 +21,14 @@
 
 #include "ibrdtn/config.h"
 #include "ibrdtn/data/BundleString.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
+#include <vector>
 
 namespace dtn
 {
 	namespace data
 	{
-		BundleString::BundleString(std::string value)
+		BundleString::BundleString(const std::string &value)
 		 : std::string(value)
 		{
 		}
@@ -40,34 +41,34 @@ namespace dtn
 		{
 		}
 
-		size_t BundleString::getLength() const
+		Length BundleString::getLength() const
 		{
-			dtn::data::SDNV sdnv(length());
-			return sdnv.getLength() + length();
+			dtn::data::Number str_len(length());
+			return str_len.getLength() + length();
 		}
 
 		std::ostream &operator<<(std::ostream &stream, const BundleString &bstring)
 		{
 			std::string data = (std::string)bstring;
-			dtn::data::SDNV sdnv(data.length());
-			stream << sdnv << data;
+			dtn::data::Number str_len(data.length());
+			stream << str_len << data;
 			return stream;
 		}
 
 		std::istream &operator>>(std::istream &stream, BundleString &bstring)
 		{
-			dtn::data::SDNV length;
+			dtn::data::Number length;
 			stream >> length;
-			std::streamsize data_len = length.getValue();
+			std::streamsize data_len = length.get<std::streamsize>();
 
 			// clear the content
 			((std::string&)bstring) = "";
 			
 			if (data_len > 0)
 			{
-				char data[data_len];
-				stream.read(data, data_len);
-				bstring.assign(data, data_len);
+				std::vector<char> data(data_len);
+				stream.read(&data[0], data.size());
+				bstring.assign(&data[0], data.size());
 			}
 
 			return stream;

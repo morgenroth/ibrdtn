@@ -31,7 +31,7 @@ namespace dtn
 	{
 		NeighborDatabase::NeighborEntry::NeighborEntry()
 		 : eid(), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED, FILTER_FINAL)
-		{};
+		{}
 
 		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &e)
 		 : eid(e), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED, FILTER_FINAL)
@@ -39,21 +39,16 @@ namespace dtn
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
 		{
-			for (dataset_map::iterator it = _datasets.begin(); it != _datasets.end(); it++)
-			{
-				delete it->second;
-			}
-			_datasets.clear();
 		}
 
-		void NeighborDatabase::NeighborEntry::update(const ibrcommon::BloomFilter &bf, const size_t lifetime)
+		void NeighborDatabase::NeighborEntry::update(const ibrcommon::BloomFilter &bf, const dtn::data::Number &lifetime)
 		{
 			ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
 			_filter = bf;
 
 			if (lifetime == 0)
 			{
-				_filter_expire = std::numeric_limits<std::size_t>::max();
+				_filter_expire = std::numeric_limits<dtn::data::Size>::max();
 			}
 			else
 			{
@@ -93,14 +88,30 @@ namespace dtn
 			return _summary.has(id);
 		}
 
-		void NeighborDatabase::NeighborEntry::expire(const size_t timestamp)
+		bool NeighborDatabase::NeighborEntry::isExpired(const dtn::data::Timestamp &timestamp) const
+		{
+			// expired after 15 minutes
+			return (_last_update + 900) < timestamp;
+		}
+
+		const dtn::data::Timestamp& NeighborDatabase::NeighborEntry::getLastUpdate() const
+		{
+			return _last_update;
+		}
+
+		void NeighborDatabase::NeighborEntry::touch()
+		{
+			_last_update = dtn::utils::Clock::getTime();
+		}
+
+		void NeighborDatabase::NeighborEntry::expire(const dtn::data::Timestamp &timestamp)
 		{
 			{
 				ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
 
 				if ((_filter_expire > 0) && (_filter_expire < timestamp))
 				{
-					IBRCOMMON_LOGGER_DEBUG(15) << "summary vector of " << eid.getString() << " is expired" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 15) << "summary vector of " << eid.getString() << " is expired" << IBRCOMMON_LOGGER_ENDL;
 
 					// set the filter state to expired once
 					l = FILTER_EXPIRED;
@@ -113,45 +124,44 @@ namespace dtn
 			_summary.expire(timestamp);
 		}
 
-		void NeighborDatabase::expire(const size_t timestamp)
+		void NeighborDatabase::expire(const dtn::data::Timestamp &timestamp)
 		{
-			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (neighbor_map::iterator iter = _entries.begin(); iter != _entries.end(); )
 			{
-				(*iter).second->expire(timestamp);
+				NeighborEntry &entry = (*iter->second);
+
+				if (entry.isExpired(timestamp)) {
+					delete (*iter).second;
+					_entries.erase(iter++);
+				} else {
+					entry.expire(timestamp);
+					++iter;
+				}
 			}
-		}
-
-		void NeighborDatabase::NeighborEntry::acquireFilterRequest() throw (NoMoreTransfersAvailable)
-		{
-			ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
-
-			if (l != FILTER_EXPIRED)
-				throw NoMoreTransfersAvailable();
-
-			// set the state to zero
-			l = FILTER_AWAITING;
 		}
 
 		void NeighborDatabase::NeighborEntry::acquireTransfer(const dtn::data::BundleID &id) throw (NoMoreTransfersAvailable, AlreadyInTransitException)
 		{
 			ibrcommon::MutexLock l(_transit_lock);
 
-			// check if the bundle is already in transit
-			if (_transit_bundles.find(id) != _transit_bundles.end()) throw AlreadyInTransitException();
-
 			// check if enough resources available to transfer the bundle
 			if (_transit_bundles.size() >= dtn::core::BundleCore::max_bundles_in_transit) throw NoMoreTransfersAvailable();
+
+			// check if the bundle is already in transit
+			if (_transit_bundles.find(id) != _transit_bundles.end()) throw AlreadyInTransitException();
 
 			// insert the bundle into the transit list
 			_transit_bundles.insert(id);
 
-			IBRCOMMON_LOGGER_DEBUG(20) << "acquire transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "acquire transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		size_t NeighborDatabase::NeighborEntry::getFreeTransferSlots() const
+		dtn::data::Size NeighborDatabase::NeighborEntry::getFreeTransferSlots() const
 		{
-			if (dtn::core::BundleCore::max_bundles_in_transit <= _transit_bundles.size()) return 0;
-			return dtn::core::BundleCore::max_bundles_in_transit - _transit_bundles.size();
+			const dtn::data::Size transit_bundles = _transit_bundles.size();
+
+			if (dtn::core::BundleCore::max_bundles_in_transit <= transit_bundles) return 0;
+			return dtn::core::BundleCore::max_bundles_in_transit - transit_bundles;
 		}
 
 		bool NeighborDatabase::NeighborEntry::isTransferThresholdReached() const
@@ -164,17 +174,16 @@ namespace dtn
 			ibrcommon::MutexLock l(_transit_lock);
 			_transit_bundles.erase(id);
 
-			IBRCOMMON_LOGGER_DEBUG(20) << "release transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "release transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		void NeighborDatabase::NeighborEntry::putDataset(NeighborDataset *dset)
+		void NeighborDatabase::NeighborEntry::putDataset(NeighborDataset &dset)
 		{
-			pair<dataset_map::iterator, bool> ret = _datasets.insert( dataset_pair(dset->id, dset) );
+			pair<data_set::iterator, bool> ret = _datasets.insert( dset );
 
 			if (!ret.second) {
 				_datasets.erase(ret.first);
-				delete ret.first->second;
-				_datasets.insert( dataset_pair(dset->id, dset) );
+				_datasets.insert( dset );
 			}
 		}
 
@@ -184,9 +193,10 @@ namespace dtn
 
 		NeighborDatabase::~NeighborDatabase()
 		{
+			ibrcommon::MutexLock l(*this);
 			std::set<dtn::data::EID> ret;
 
-			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (neighbor_map::const_iterator iter = _entries.begin(); iter != _entries.end(); ++iter)
 			{
 				delete (*iter).second;
 			}
@@ -202,6 +212,9 @@ namespace dtn
 				iter = itm.first;
 			}
 
+			// set last update timestamp
+			(*(*iter).second).touch();
+
 			return *(*iter).second;
 		}
 
@@ -216,12 +229,20 @@ namespace dtn
 				throw NeighborNotAvailableException();
 			}
 
+			// set last update timestamp
+			(*(*iter).second).touch();
+
 			return *(*iter).second;
 		}
 
 		void NeighborDatabase::remove(const dtn::data::EID &eid)
 		{
-			_entries.erase(eid);
+			neighbor_map::iterator iter = _entries.find(eid);
+			if (iter == _entries.end())
+			{
+				delete (*iter).second;
+				_entries.erase(iter);
+			}
 		}
 	}
 }

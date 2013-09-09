@@ -25,15 +25,15 @@ namespace dtn
 
 			std::string getMessage() const;
 
-			static void raise(const timeval &offset, const float &rating);
+			static void raise(const timeval &offset, const double &rating);
 
 			static const std::string className;
 
 			timeval offset;
-			float rating;
+			double rating;
 
 		private:
-			TimeAdjustmentEvent(const timeval &offset, const float &rating);
+			TimeAdjustmentEvent(const timeval &offset, const double &rating);
 		};
 	} /* namespace core */
 } /* namespace dtn */

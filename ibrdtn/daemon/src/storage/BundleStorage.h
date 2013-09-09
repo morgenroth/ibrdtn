@@ -80,7 +80,7 @@ namespace dtn
 			/**
 			 * @see BundleSeeker::get(BundleSelector &cb, BundleResult &result)
 			 */
-			virtual void get(BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException) = 0;
+			virtual void get(const BundleSelector &cb, BundleResult &result) throw (NoBundleFoundException, BundleSelectorException) = 0;
 
 			/**
 			 * @see BundleSeeker::getDistinctDestinations()
@@ -121,12 +121,12 @@ namespace dtn
 			/**
 			 * @return the count of bundles in the storage
 			 */
-			virtual unsigned int count() { return 0; };
+			virtual dtn::data::Size count() { return 0; };
 
 			/**
 			 * Get the current size
 			 */
-			size_t size() const;
+			dtn::data::Length size() const;
 
 			/**
 			 * This method is called if another node accepts custody for a
@@ -160,23 +160,40 @@ namespace dtn
 			 */
 			void detach(dtn::storage::BundleIndex *index);
 
+			/*** BEGIN: methods for unit-testing ***/
+
+			/**
+			 * Wait until all the data has been stored and is not cached anymore
+			 */
+			virtual void wait() { };
+
+			/**
+			 * Set the storage to faulty. If set to true, each try to store
+			 * or retrieve a bundle will fail.
+			 */
+			virtual void setFaulty(bool mode) { _faulty = mode; };
+
+			/*** END: methods for unit-testing ***/
+
 		protected:
 			/**
 			 * constructor
 			 */
-			BundleStorage(size_t maxsize);
+			BundleStorage(const dtn::data::Length &maxsize);
 
-			void allocSpace(size_t size) throw (StorageSizeExeededException);
-			void freeSpace(size_t size);
-			void clearSpace();
+			void allocSpace(const dtn::data::Length &size) throw (StorageSizeExeededException);
+			void freeSpace(const dtn::data::Length &size) throw ();
+			void clearSpace() throw ();
 
-			void eventBundleAdded(const dtn::data::MetaBundle &b);
-			void eventBundleRemoved(const dtn::data::BundleID &id);
+			void eventBundleAdded(const dtn::data::MetaBundle &b) throw ();
+			void eventBundleRemoved(const dtn::data::BundleID &id) throw ();
+
+			bool _faulty;
 
 		private:
 			ibrcommon::Mutex _sizelock;
-			size_t _maxsize;
-			size_t _currentsize;
+			const dtn::data::Length _maxsize;
+			dtn::data::Length _currentsize;
 
 			ibrcommon::Mutex _index_lock;
 			typedef std::set<dtn::storage::BundleIndex*> index_list;

@@ -74,7 +74,7 @@ void TestStreamConnection::connectionUpDown()
 		void eventError() throw () {};
 		void eventBundleRefused() throw () {};
 		void eventBundleForwarded() throw () {};
-		void eventBundleAck(size_t ack) throw ()
+		void eventBundleAck(const dtn::data::Length &ack) throw ()
 		{
 			std::cout << "server: ack received, value: " << ack << std::endl;
 		};
@@ -93,7 +93,7 @@ void TestStreamConnection::connectionUpDown()
 					ibrcommon::socketset fds;
 					_sockets.select(&fds, NULL, NULL, NULL);
 
-					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
+					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); ++iter)
 					{
 						ibrcommon::serversocket &servsock = dynamic_cast<ibrcommon::serversocket&>(**iter);
 
@@ -149,7 +149,7 @@ void TestStreamConnection::connectionUpDown()
 		void eventError() throw () {};
 		void eventBundleRefused() throw () {};
 		void eventBundleForwarded() throw () {};
-		void eventBundleAck(size_t) throw ()
+		void eventBundleAck(const dtn::data::Length &ack) throw ()
 		{
 			// std::cout << "client: ack received, value: " << ack << std::endl;
 		};
@@ -173,7 +173,7 @@ void TestStreamConnection::connectionUpDown()
 
 				// create testing pattern, chunk-wise to conserve memory
 				char pattern[2048];
-				for (size_t i = 0; i < sizeof(pattern); i++)
+				for (size_t i = 0; i < sizeof(pattern); ++i)
 				{
 					pattern[i] = '0';
 					pattern[i] += i % 10;
@@ -234,7 +234,7 @@ void TestStreamConnection::connectionUpDown()
 	cl.start();
 
 	try {
-		for (int i = 0; i < 2000; i++)
+		for (int i = 0; i < 2000; ++i)
 		{
 			cl.send(8192);
 		}

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".TalkieDialog"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <FrameLayout
+		android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:layout_gravity="center">
+        <FrameLayout
+            android:id="@+id/record_indicator"
+            android:layout_width="64dp"
+	        android:layout_height="64dp"
+	        android:background="@drawable/rec_indicator_background"
+	        android:layout_gravity="center" />
+	    <ImageButton
+	        android:id="@+id/button_record"
+	        android:layout_width="64dp"
+	        android:layout_height="64dp"
+	        android:background="@drawable/rec_background"
+	        android:src="@drawable/ic_mic"
+	        android:layout_gravity="center" />
+    </FrameLayout>
+    
+    <LinearLayout
+        android:id="@+id/buttonPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:divider="?android:attr/dividerHorizontal"
+        android:dividerPadding="0dip"
+        android:minHeight="@dimen/alert_dialog_button_bar_height"
+        android:orientation="vertical"
+        android:showDividers="beginning" >
+
+        <LinearLayout
+            style="?android:attr/buttonBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layoutDirection="locale"
+            android:measureWithLargestChild="true"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/cancel"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:layout_weight="1"
+                android:maxLines="2"
+                android:minHeight="@dimen/alert_dialog_button_bar_height"
+                android:textSize="14sp"
+                android:text="@android:string/cancel" />
+
+            </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

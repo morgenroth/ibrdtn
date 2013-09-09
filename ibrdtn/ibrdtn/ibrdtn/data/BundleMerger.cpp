@@ -51,10 +51,10 @@ namespace dtn
 			return _bundle;
 		}
 
-		bool BundleMerger::Container::contains(size_t offset, size_t length) const
+		bool BundleMerger::Container::contains(Length offset, Length length) const
 		{
 			// check if the offered payload is already in the chunk list
-			for (std::set<Chunk>::const_iterator iter = _chunks.begin(); iter != _chunks.end(); iter++)
+			for (std::set<Chunk>::const_iterator iter = _chunks.begin(); iter != _chunks.end(); ++iter)
 			{
 				const Chunk &chunk = (*iter);
 
@@ -69,7 +69,7 @@ namespace dtn
 			return false;
 		}
 
-		void BundleMerger::Container::add(size_t offset, size_t length)
+		void BundleMerger::Container::add(Length offset, Length length)
 		{
 			BundleMerger::Chunk chunk(offset, length);
 			_chunks.insert(chunk);
@@ -85,9 +85,9 @@ namespace dtn
 
 			if (c._initialized)
 			{
-				if (	(c._bundle._timestamp != obj._timestamp) ||
-						(c._bundle._sequencenumber != obj._sequencenumber) ||
-						(c._bundle._source != obj._source) )
+				if (	(c._bundle.timestamp != obj.timestamp) ||
+						(c._bundle.sequencenumber != obj.sequencenumber) ||
+						(c._bundle.source != obj.source) )
 					throw ibrcommon::Exception("This fragment does not belongs to the others.");
 			}
 			else
@@ -96,10 +96,10 @@ namespace dtn
 				c._bundle = obj;
 
 				// store the app data length
-				c._appdatalength = obj._appdatalength;
+				c._appdatalength = obj.appdatalength.get<dtn::data::Length>();
 
 				// remove all block of the copy
-				c._bundle.clearBlocks();
+				c._bundle.clear();
 
 				// mark the copy as non-fragment
 				c._bundle.set(dtn::data::Bundle::FRAGMENT, false);
@@ -114,62 +114,63 @@ namespace dtn
 			}
 
 			ibrcommon::BLOB::iostream stream = c._blob.iostream();
-			(*stream).seekp(obj._fragmentoffset);
+			(*stream).seekp(obj.fragmentoffset.get<std::streampos>());
 
-			dtn::data::PayloadBlock &p = obj.getBlock<dtn::data::PayloadBlock>();
-			const size_t plength = p.getLength();
+			dtn::data::PayloadBlock &p = obj.find<dtn::data::PayloadBlock>();
+			const Length plength = p.getLength();
 
 			// skip write operation if chunk is already in the merged bundle
-			if (c.contains(obj._fragmentoffset, plength)) return c;
-
-			ibrcommon::BLOB::Reference ref = p.getBLOB();
-			ibrcommon::BLOB::iostream s = ref.iostream();
+			if (c.contains(obj.fragmentoffset.get<dtn::data::Length>(), plength)) return c;
 
 			// copy payload of the fragment into the new blob
-			(*stream) << (*s).rdbuf() << std::flush;
+			{
+				ibrcommon::BLOB::Reference ref = p.getBLOB();
+				ibrcommon::BLOB::iostream s = ref.iostream();
+				(*stream) << (*s).rdbuf() << std::flush;
+			}
 
 			// add the chunk to the list of chunks
-			c.add(obj._fragmentoffset, plength);
+			c.add(obj.fragmentoffset.get<dtn::data::Length>(), plength);
 
-			//check if fragment is the first one
-			//add blocks only once
-			if(!c._hasFirstFragBlocksAdded && obj._fragmentoffset == 0)
+			// check if fragment is the first one
+			// add blocks only once
+			if (!c._hasFirstFragBlocksAdded && obj.fragmentoffset == 0)
 			{
 				c._hasFirstFragBlocksAdded = true;
 
-				Block &bundle_payloadBlock = c._bundle.getBlock<dtn::data::PayloadBlock>();
+				dtn::data::Bundle::iterator payload_it = obj.find(dtn::data::PayloadBlock::BLOCK_TYPE);
 
-				for(size_t i = 0; i < obj.blockCount(); ++i)
+				// abort if the bundle do not contains a payload block
+				if (payload_it == obj.end()) throw ibrcommon::Exception("Payload block missing.");
+
+				// iterate from begin to the payload block
+				for (dtn::data::Bundle::iterator block_it = obj.begin(); block_it != payload_it; ++block_it)
 				{
-					//get the current block and type
-					Block &current_block = obj.getBlock(i);
-					char block_type = current_block.getType();
+					// get the current block and type
+					Block &current_block = (**block_it);
+					block_t block_type = current_block.getType();
 
-					if(block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
+					// search the position of the payload block
+					dtn::data::Bundle::iterator p = c._bundle.find(dtn::data::PayloadBlock::BLOCK_TYPE);
+					if (p == c._bundle.end()) throw ibrcommon::Exception("Payload block missing.");
+
+					try
 					{
-						//leave loop when payloadblock is reached
-						break;
+						ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+
+						// insert new Block before payload block and copy block
+						dtn::data::Block &block = c._bundle.insert(p, f);
+						block = current_block;
+
+						IBRCOMMON_LOGGER_DEBUG_TAG("BundleMerger", 5) << "Reassemble: Added Block before Payload: " << obj.toString() << "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 					}
-					else
+					catch(const ibrcommon::Exception &ex)
 					{
-						try
-						{
-							ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+						// insert new Block before payload block and copy block
+						dtn::data::Block &block = c._bundle.insert<dtn::data::ExtensionBlock>(p);
+						block = current_block;
 
-							//insert new Block before payload block and copy block
-							dtn::data::Block &block = c._bundle.insert(f,bundle_payloadBlock);
-							block = current_block;
-
-							IBRCOMMON_LOGGER_DEBUG(5) << "Reassemble: Added Block before Payload: " << obj.toString()<< "  " << block_type << "Blocklist-Position:  " << i << IBRCOMMON_LOGGER_ENDL;
-						}
-						catch(const ibrcommon::Exception &ex)
-						{
-							//insert new Block before payload block and copy block
-							dtn::data::Block &block = c._bundle.insert<dtn::data::ExtensionBlock>(bundle_payloadBlock);
-							block = current_block;
-
-							IBRCOMMON_LOGGER_DEBUG(5) << "Reassemble: Added Block before Payload: " << obj.toString()<< "  " << block_type << "Blocklist-Position:  " << i << IBRCOMMON_LOGGER_ENDL;
-						}
+						IBRCOMMON_LOGGER_DEBUG_TAG("BundleMerger", 5) << "Reassemble: Added Block before Payload: " << obj.toString() << "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 
@@ -177,42 +178,40 @@ namespace dtn
 
 			//check if fragment is the last one
 			//add blocks only once
-			if(!c._hasLastFragBlocksAdded && obj._fragmentoffset + plength == obj._appdatalength)
+			if(!c._hasLastFragBlocksAdded && obj.fragmentoffset + plength == obj.appdatalength)
 			{
 				c._hasLastFragBlocksAdded = true;
 
-				bool isAfterPayload = false;
+				// start to iterate after the payload block
+				dtn::data::Bundle::iterator payload_it = obj.find(dtn::data::PayloadBlock::BLOCK_TYPE);
 
-				for(size_t i = 0; i < obj.blockCount(); ++i)
+				// abort if the bundle do not contains a payload block
+				if (payload_it == obj.end()) throw ibrcommon::Exception("Payload block missing.");
+
+				// start with the block after the payload block
+				for (payload_it++; payload_it != obj.end(); ++payload_it)
 				{
 					//get the current block and type
-					Block &current_block = obj.getBlock(i);
-					char block_type = current_block.getType();
+					Block &current_block = (**payload_it);
+					block_t block_type = current_block.getType();
 
-					if(block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
+					try
 					{
-						isAfterPayload = true;
+						ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+
+						//push back new Block after payload block and copy block
+						dtn::data::Block &block = c._bundle.push_back(f);
+						block = current_block;
+
+						IBRCOMMON_LOGGER_DEBUG_TAG("BundleMerger", 5) << "Reassemble: Added Block after Payload: " << obj.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 					}
-					else if(isAfterPayload)
+					catch(const ibrcommon::Exception &ex)
 					{
-						try
-						{
-							ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+						//push back new Block after payload block and copy block
+						dtn::data::Block &block = c._bundle.push_back<dtn::data::ExtensionBlock>();
+						block = current_block;
 
-							//push back new Block after payload block and copy block
-							dtn::data::Block &block = c._bundle.push_back(f);
-							block = current_block;
-
-							IBRCOMMON_LOGGER_DEBUG(5) << "Reassemble: Added Block after Payload: " << obj.toString()<< "  " << block_type << "Blocklist-Position:  " << i << IBRCOMMON_LOGGER_ENDL;
-						}
-						catch(const ibrcommon::Exception &ex)
-						{
-							//push back new Block after payload block and copy block
-							dtn::data::Block &block = c._bundle.push_back<dtn::data::ExtensionBlock>();
-							block = current_block;
-
-							IBRCOMMON_LOGGER_DEBUG(5) << "Reassemble: Added Block after Payload: " << obj.toString()<< "  " << block_type << "Blocklist-Position:  " << i << IBRCOMMON_LOGGER_ENDL;
-						}
+						IBRCOMMON_LOGGER_DEBUG_TAG("BundleMerger", 5) << "Reassemble: Added Block after Payload: " << obj.toString()<< "  " << block_type << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 			}
@@ -231,7 +230,7 @@ namespace dtn
 			return Container(ref);
 		}
 
-		BundleMerger::Chunk::Chunk(size_t o, size_t l)
+		BundleMerger::Chunk::Chunk(Length o, Length l)
 		 : offset(o), length(l)
 		{
 		}
@@ -248,12 +247,12 @@ namespace dtn
 			return (length < other.length);
 		}
 
-		bool BundleMerger::Chunk::isComplete(size_t length, const std::set<Chunk> &chunks)
+		bool BundleMerger::Chunk::isComplete(Length length, const std::set<Chunk> &chunks)
 		{
 			// check if the bundle payload is complete
-			size_t position = 0;
+			Length position = 0;
 
-			for (std::set<Chunk>::const_iterator iter = chunks.begin(); iter != chunks.end(); iter++)
+			for (std::set<Chunk>::const_iterator iter = chunks.begin(); iter != chunks.end(); ++iter)
 			{
 				const Chunk &chunk = (*iter);
 

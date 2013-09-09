@@ -21,26 +21,76 @@
  */
 package de.tubs.ibr.dtn.chat.core;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-public class Buddy implements Comparable<Buddy> {
+import android.content.Context;
+import android.database.Cursor;
+import android.provider.BaseColumns;
+import android.util.Log;
+import de.tubs.ibr.dtn.chat.RosterAdapter;
 
+public class Buddy implements Comparable<Buddy> {
+	
+	private static final String TAG = "Buddy";
+
+	public static final String ID = BaseColumns._ID;
+	public static final String NICKNAME = "nickname";
+	public static final String ENDPOINT = "endpoint";
+	public static final String LASTSEEN = "lastseen";
+	public static final String PRESENCE = "presence";
+	public static final String STATUS = "status";
+	public static final String DRAFTMSG = "draftmsg";
+	public static final String VOICEEID = "voiceeid";
+	public static final String LANGUAGE = "language";
+	public static final String COUNTRY = "country";
+	
+	private Long id = null;
 	private String nickname = null;
 	private String endpoint = null;
 	private Date lastseen = null;
 	private String presence = null;
 	private String status = null;
 	private String draftmsg = null;
+	private String voiceeid = null;
+	private String language = null;
+	private String country = null;
 
-	public Buddy(String nickname, String endpoint, String presence, String status, String draftmsg)
+	public Buddy(Context context, Cursor cursor, RosterAdapter.ColumnsMap cmap)
 	{
-		this.nickname = nickname;
-		this.endpoint = endpoint;
+		final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+		this.id = cursor.getLong(cmap.mColumnId);
+		this.nickname = cursor.getString(cmap.mColumnNickname);
+		this.endpoint = cursor.getString(cmap.mColumnEndpoint);
 		this.lastseen = null;
-		this.presence = presence;
-		this.status = status;
-		this.draftmsg = draftmsg;
+		this.presence = cursor.getString(cmap.mColumnPresence);
+		this.status = cursor.getString(cmap.mColumnStatus);
+		this.draftmsg = cursor.getString(cmap.mColumnDraftMsg);
+		this.voiceeid = cursor.getString(cmap.mColumnVoiceEndpoint);
+		this.language = cursor.getString(cmap.mColumnLanguage);
+		this.country = cursor.getString(cmap.mColumnCountry);
+		
+		// set the last seen parameter
+		if (!cursor.isNull(cmap.mColumnLastseen))
+		{
+			try {
+				this.lastseen = formatter.parse( cursor.getString(cmap.mColumnLastseen) );
+			} catch (ParseException e) {
+				Log.e(TAG, "failed to convert date: " + cursor.getString(cmap.mColumnLastseen));
+			}
+		}
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public Date getLastSeen() {
@@ -137,4 +187,28 @@ public class Buddy implements Comparable<Buddy> {
 		
 		return super.toString();
 	}
+	
+	public Boolean hasVoice() {
+	    return (voiceeid != null);
+	}
+	
+    public String getVoiceEndpoint() {
+        return voiceeid;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
 }

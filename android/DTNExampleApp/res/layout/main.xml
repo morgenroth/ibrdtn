@@ -4,9 +4,43 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <TextView
-        android:layout_width="fill_parent"
+    <LinearLayout
+        android:layout_width="match_parent"
+		android:layout_height="0dp"
+        android:orientation="vertical"
+        android:layout_weight="1">
+	    <TextView
+	        android:id="@+id/textResult"
+	        android:layout_width="fill_parent"
+	        android:layout_height="fill_parent"
+	        android:gravity="center"
+	        android:textSize="24sp"
+	        android:text="@string/resultText_default" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/hello" />
+        android:orientation="horizontal" >
+        
+	    <EditText
+	        android:id="@+id/editEid"
+	        android:layout_width="0dp"
+	        android:layout_height="wrap_content"
+	        android:ems="10"
+	        android:layout_weight="1"
+	        android:hint="@string/hintDestination" >
+	
+	        <requestFocus />
+	    </EditText>
+	
+	    <Button
+	        android:id="@+id/buttonPing"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="@string/buttonPing"
+	        android:layout_weight="0" />
+    
+    </LinearLayout>
 
 </LinearLayout>

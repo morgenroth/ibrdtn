@@ -48,25 +48,24 @@ namespace ibrcommon
 		try {
 			trylock();
 			leave();
-			return false;
 		} catch (const ibrcommon::MutexException&) {
 			return true;
 		}
+
+		return false;
 	}
 
-	void Conditional::signal (bool broadcast)
+	void Conditional::signal (bool broadcast) throw ()
 	{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 		// assert a locked Conditional
 		assert(isLocked());
 #endif
 
-		int ret = 0;
-
 		if (broadcast)
-			ret = pthread_cond_broadcast( &cond );
+			pthread_cond_broadcast( &cond );
 		else
-			ret = pthread_cond_signal( &cond );
+			pthread_cond_signal( &cond );
 	}
 
 	void Conditional::wait(size_t timeout) throw (ConditionalAbortException)
@@ -130,7 +129,7 @@ namespace ibrcommon
 #endif
 	}
 
-	void Conditional::gettimeout(size_t msec, struct timespec *ts)
+	void Conditional::gettimeout(size_t msec, struct timespec *ts) throw ()
 	{
 #if _POSIX_TIMERS > 0 && defined(HAVE_PTHREAD_CONDATTR_SETCLOCK)
 	#if defined(_POSIX_MONOTONIC_CLOCK)
@@ -152,7 +151,7 @@ namespace ibrcommon
 		}
 	}
 
-	void Conditional::abort()
+	void Conditional::abort() throw ()
 	{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 		// assert a locked Conditional
@@ -163,7 +162,7 @@ namespace ibrcommon
 		_abort = true;
 	}
 
-	void Conditional::reset()
+	void Conditional::reset() throw ()
 	{
 		_abort = false;
 	}

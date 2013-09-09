@@ -28,7 +28,7 @@ import android.os.Parcel;
 public class GroupEndpoint implements EID, Serializable {
 	
 	/**
-	 * serial id for serializable objects 
+	 * serial id for serializable objects
 	 */
 	private static final long serialVersionUID = -5010680868276381487L;
 	
@@ -46,7 +46,9 @@ public class GroupEndpoint implements EID, Serializable {
 	
 	public boolean equals(Object o) {
 		if (o instanceof GroupEndpoint) {
-			return this._eid.equals(((GroupEndpoint)o)._eid);
+		    if (_eid != null) {
+		        return _eid.equals(((GroupEndpoint)o)._eid);
+		    }
 		}
 		return super.equals(o);
 	}

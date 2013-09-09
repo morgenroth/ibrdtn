@@ -25,6 +25,7 @@
 #include "ibrcommon/Exceptions.h"
 #include <streambuf>
 #include "ibrcommon/thread/Conditional.h"
+#include <vector>
 
 namespace ibrcommon
 {
@@ -59,13 +60,13 @@ namespace ibrcommon
 		size_t _buf_size;
 
 		// input buffer
-		char *_input_buf;
+		std::vector<char> _input_buf;
 
 		// interim buffer
-		char *_interim_buf;
+		std::vector<char> _interim_buf;
 
 		// output buffer
-		char *_output_buf;
+		std::vector<char> _output_buf;
 	};
 }
 

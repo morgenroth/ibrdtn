@@ -61,7 +61,7 @@ namespace dtn
 				throw ibrcommon::socket_exception("socket is not up");
 
 #ifdef HAVE_SYS_INOTIFY_H
-			for (watch_map::iterator iter = _watch_map.begin(); iter != _watch_map.end(); iter++)
+			for (watch_map::iterator iter = _watch_map.begin(); iter != _watch_map.end(); ++iter)
 			{
 				const int wd = (*iter).first;
 				inotify_rm_watch(this->fd(), wd);
@@ -82,7 +82,7 @@ namespace dtn
 #endif
 		}
 
-		int inotifysocket::read(char *data, size_t len) throw (ibrcommon::socket_exception)
+		ssize_t inotifysocket::read(char *data, size_t len) throw (ibrcommon::socket_exception)
 		{
 #ifdef HAVE_SYS_INOTIFY_H
 			return ::read(this->fd(), data, len);
@@ -103,7 +103,7 @@ namespace dtn
 
 		void FileMonitor::watch(const ibrcommon::File &watch)
 		{
-			IBRCOMMON_LOGGER_DEBUG(5) << "watch on: " << watch.getPath() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("FileMonitor", 5) << "watch on: " << watch.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 			if (!watch.isDirectory())
 				throw ibrcommon::Exception("can not watch files, please specify a directory");
@@ -145,13 +145,13 @@ namespace dtn
 					_socket.select(&fds, NULL, NULL, NULL);
 
 					// receive from all sockets
-					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); iter++)
+					for (ibrcommon::socketset::iterator iter = fds.begin(); iter != fds.end(); ++iter)
 					{
 						inotifysocket &sock = dynamic_cast<inotifysocket&>(**iter);
 						sock.read((char*)&buf, 1024);
 					}
 
-					::sleep(2);
+					ibrcommon::Thread::sleep(2000);
 				} catch (const ibrcommon::vsocket_interrupt&) {
 					return;
 				} catch (const ibrcommon::vsocket_timeout&) { };
@@ -171,30 +171,30 @@ namespace dtn
 
 		void FileMonitor::scan()
 		{
-			IBRCOMMON_LOGGER_DEBUG(5) << "scan for file changes" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("FileMonitor", 5) << "scan for file changes" << IBRCOMMON_LOGGER_ENDL;
 
 			std::set<ibrcommon::File> watch_set;
 
-			for (watch_set::iterator iter = _watchset.begin(); iter != _watchset.end(); iter++)
+			for (watch_set::iterator iter = _watchset.begin(); iter != _watchset.end(); ++iter)
 			{
 				const ibrcommon::File &path = (*iter);
 				std::list<ibrcommon::File> files;
 
 				if (path.getFiles(files) == 0)
 				{
-					for (std::list<ibrcommon::File>::iterator iter = files.begin(); iter != files.end(); iter++)
+					for (std::list<ibrcommon::File>::iterator iter = files.begin(); iter != files.end(); ++iter)
 					{
 						watch_set.insert(*iter);
 					}
 				}
 				else
 				{
-					IBRCOMMON_LOGGER(error) << "scan of " << path.getPath() << " failed" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("FileMonitor", error) << "scan of " << path.getPath() << " failed" << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
 			// check for new directories
-			for (std::set<ibrcommon::File>::iterator iter = watch_set.begin(); iter != watch_set.end(); iter++)
+			for (std::set<ibrcommon::File>::iterator iter = watch_set.begin(); iter != watch_set.end(); ++iter)
 			{
 				const ibrcommon::File &path = (*iter);
 				if (path.isDirectory() && !path.isSystem())
@@ -214,12 +214,12 @@ namespace dtn
 				if (watch_set.find(path) == watch_set.end())
 				{
 					dtn::core::BundleCore::getInstance().getConnectionManager().remove(node);
-					IBRCOMMON_LOGGER_DEBUG(5) << "Node on drive gone: " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("FileMonitor", 5) << "Node on drive gone: " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 					_active_paths.erase(iter++);
 				}
 				else
 				{
-					iter++;
+					++iter;
 				}
 			}
 		}
@@ -243,7 +243,7 @@ namespace dtn
 
 					_active_paths[path] = n;
 
-					IBRCOMMON_LOGGER_DEBUG(5) << "Node on drive found: " << n.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("FileMonitor", 5) << "Node on drive found: " << n.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 
 				} catch (const ibrcommon::ConfigFile::key_not_found&) {};
 			}

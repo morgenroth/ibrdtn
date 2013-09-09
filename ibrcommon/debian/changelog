@@ -1,3 +1,24 @@
+ibrcommon (0.11.0) UNRELEASED; urgency=low
+
+  * Development revision
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 22 Jul 2013 11:37:53 +0200
+
+ibrcommon (0.10.0) stable; urgency=low
+
+  * Adaptations for recent compilers
+  * Full IPv6 support
+  * Restructured socket / address abstraction layer
+  * Improved IEEE 802.15.4 support
+  * Improved Netlink support
+  * Better OSX support
+  * Build support for Android NDK
+  * Improved logging performance
+  * Added TAG support to the logger
+  * Overall improved error handling and fixes
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 22 Jul 2013 11:37:53 +0200
+
 ibrcommon (0.8.0) stable; urgency=low
 
   * Base64 decoding / encoding refactored

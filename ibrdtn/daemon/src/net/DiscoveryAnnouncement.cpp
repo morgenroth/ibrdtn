@@ -19,13 +19,20 @@
  *
  */
 
+#include "config.h"
 #include "net/DiscoveryAnnouncement.h"
 #include <ibrdtn/data/Exceptions.h>
-#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/Number.h>
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <iostream>
+#include <vector>
+
+#ifdef __WIN32__
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
 
 using namespace dtn::data;
 
@@ -78,7 +85,7 @@ namespace dtn
 
 		const DiscoveryService& DiscoveryAnnouncement::getService(string name) const
 		{
-			for (std::list<DiscoveryService>::const_iterator iter = _services.begin(); iter != _services.end(); iter++)
+			for (std::list<DiscoveryService>::const_iterator iter = _services.begin(); iter != _services.end(); ++iter)
 			{
 				if ((*iter).getName() == name)
 				{
@@ -115,20 +122,20 @@ namespace dtn
 					}
 
 					dtn::data::BundleString eid(announcement._canonical_eid.getString());
-					dtn::data::SDNV beacon_len;
+					dtn::data::Number beacon_len;
 
 					// determine the beacon length
 					beacon_len += eid.getLength();
 
 					// add service block length
-					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 					{
 						beacon_len += (*iter).getLength();
 					}
 
 					stream << (unsigned char)DiscoveryAnnouncement::DISCO_VERSION_00 << announcement._flags << beacon_len << eid;
 
-					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 					{
 						stream << (*iter);
 					}
@@ -166,9 +173,9 @@ namespace dtn
 
 					if ( flags && DiscoveryAnnouncement::BEACON_SERVICE_BLOCK )
 					{
-						stream << dtn::data::SDNV(services.size());
+						stream << dtn::data::Number(services.size());
 
-						for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+						for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 						{
 							stream << (*iter);
 						}
@@ -185,9 +192,9 @@ namespace dtn
 					// uint32_t inet_addr;
 					uint16_t inet_port = htons(4556);
 					std::string eid = announcement._canonical_eid.getString();
-					uint16_t eid_len = htons(eid.length());
+					uint16_t eid_len = htons((uint16_t)eid.length());
 					unsigned int add_zeros = (4 - (eid.length() % 4)) % 4;
-					uint16_t length = htons(12 + eid.length() + add_zeros);
+					uint16_t length = htons(static_cast<uint16_t>(12 + eid.length() + add_zeros));
 
 
 					stream << (unsigned char)cl_type;
@@ -212,7 +219,7 @@ namespace dtn
 					stream.write((char*)&eid_len, 2);
 					stream << eid;
 
-					for (unsigned int i = 0; i < add_zeros; i++)
+					for (unsigned int i = 0; i < add_zeros; ++i)
 					{
 						stream.write((char*)&zero, 1);
 					}
@@ -237,17 +244,17 @@ namespace dtn
 			else
 			{
 				// read IPND version of the frame
-				version = stream.get();
+				version = (unsigned char)stream.get();
 			}
 
 			switch (version)
 			{
 			case DiscoveryAnnouncement::DISCO_VERSION_00:
 			{
-				IBRCOMMON_LOGGER_DEBUG(60) << "beacon version 1 received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAnnouncement", 60) << "beacon version 1 received" << IBRCOMMON_LOGGER_ENDL;
 
-				dtn::data::SDNV beacon_len;
-				dtn::data::SDNV eid_len;
+				dtn::data::Number beacon_len;
+				dtn::data::Number eid_len;
 
 				stream.get((char&)announcement._flags);
 
@@ -258,10 +265,13 @@ namespace dtn
 					return stream;
 				}
 
-				stream >> beacon_len; int remain = beacon_len.getValue();
+				stream >> beacon_len;
+				int remain = beacon_len.get<int>();
 
 				dtn::data::BundleString eid;
-				stream >> eid; remain -= eid.getLength();
+				stream >> eid;
+				remain -= static_cast<int>(eid.getLength());
+
 				announcement._canonical_eid = dtn::data::EID((std::string)eid);
 
 				// get the services
@@ -276,18 +286,18 @@ namespace dtn
 					DiscoveryService service;
 					stream >> service;
 					services.push_back(service);
-					remain -= service.getLength();
+					remain -= static_cast<int>(service.getLength());
 				}
 				break;
 			}
 
 			case DiscoveryAnnouncement::DISCO_VERSION_01:
 			{
-				IBRCOMMON_LOGGER_DEBUG(60) << "beacon version 2 received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAnnouncement", 60) << "beacon version 2 received" << IBRCOMMON_LOGGER_ENDL;
 
 				stream.get((char&)announcement._flags);
 
-				IBRCOMMON_LOGGER_DEBUG(65) << "beacon flags: " << hex << (int)announcement._flags << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAnnouncement", 85) << "beacon flags: " << hex << (int)announcement._flags << IBRCOMMON_LOGGER_ENDL;
 
 				uint16_t sn = 0;
 				stream.read((char*)&sn, 2);
@@ -295,7 +305,7 @@ namespace dtn
 				// convert from network byte order
 				uint16_t sequencenumber = ntohs(sn);
 
-				IBRCOMMON_LOGGER_DEBUG(65) << "beacon sequence number: " << sequencenumber << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAnnouncement", 85) << "beacon sequence number: " << sequencenumber << IBRCOMMON_LOGGER_ENDL;
 
 				if (announcement._flags & DiscoveryAnnouncement::BEACON_CONTAINS_EID)
 				{
@@ -304,7 +314,7 @@ namespace dtn
 
 					announcement._canonical_eid = dtn::data::EID((std::string)eid);
 
-					IBRCOMMON_LOGGER_DEBUG(65) << "beacon eid: " << (std::string)eid << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAnnouncement", 85) << "beacon eid: " << (std::string)eid << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				if (announcement._flags & DiscoveryAnnouncement::BEACON_SERVICE_BLOCK)
@@ -313,22 +323,22 @@ namespace dtn
 					list<DiscoveryService> &services = announcement._services;
 
 					// read the number of services
-					dtn::data::SDNV num_services;
+					dtn::data::Number num_services;
 					stream >> num_services;
 
-					IBRCOMMON_LOGGER_DEBUG(65) << "beacon services (" << num_services.getValue() << "): " << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAnnouncement", 85) << "beacon services (" << num_services.toString() << "): " << IBRCOMMON_LOGGER_ENDL;
 
 					// clear the services
 					services.clear();
 
-					for (unsigned int i = 0; i < num_services.getValue(); i++)
+					for (unsigned int i = 0; num_services > i; ++i)
 					{
 						// decode the service blocks
 						DiscoveryService service;
 						stream >> service;
 						services.push_back(service);
 
-						IBRCOMMON_LOGGER_DEBUG(65) << "\t " << service.getName() << " [" << service.getParameters() << "]" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAnnouncement", 85) << "\t " << service.getName() << " [" << service.getParameters() << "]" << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 
@@ -349,7 +359,7 @@ namespace dtn
 				uint16_t inet_port;
 				uint16_t eid_len;
 
-				IBRCOMMON_LOGGER_DEBUG(60) << "beacon IPDiscovery (DTN2) frame received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAnnouncement", 60) << "beacon IPDiscovery (DTN2) frame received" << IBRCOMMON_LOGGER_ENDL;
 
 				stream.read((char*)&cl_type, 1);
 				stream.read((char*)&interval, 1);
@@ -358,17 +368,17 @@ namespace dtn
 				stream.read((char*)&inet_port, 2);
 				stream.read((char*)&eid_len, 2);
 
-				char eid[eid_len];
-				stream.read((char*)&eid, eid_len);
+				std::vector<char> eid(eid_len);
+				stream.read(&eid[0], eid.size());
 
 				announcement._version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
-				announcement._canonical_eid = EID(std::string(eid));
+				announcement._canonical_eid = EID(std::string(eid.begin(), eid.end()));
 
 				break;
 			}
 
 			default:
-				IBRCOMMON_LOGGER_DEBUG(60) << "unknown beacon received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAnnouncement", 60) << "unknown beacon received" << IBRCOMMON_LOGGER_ENDL;
 
 				// Error, throw Exception!
 				throw InvalidProtocolException("The received data does not match the discovery protocol.");

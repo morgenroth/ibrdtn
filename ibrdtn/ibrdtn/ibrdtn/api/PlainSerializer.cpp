@@ -33,8 +33,30 @@ namespace dtn
 {
 	namespace api
 	{
-		PlainSerializer::PlainSerializer(std::ostream &stream, bool skip_payload)
-		 : _stream(stream), _skip_payload(skip_payload)
+		PlainSerializer::Encoding PlainSerializer::parseEncoding(const std::string &data)
+		{
+			if (data == "raw") return PlainSerializer::RAW;
+			if (data == "base64") return PlainSerializer::BASE64;
+			if (data == "skip") return PlainSerializer::SKIP_PAYLOAD;
+			return PlainSerializer::INVALID;
+		}
+
+		std::string PlainSerializer::printEncoding(const PlainSerializer::Encoding &enc)
+		{
+			switch (enc) {
+			case PlainSerializer::RAW:
+				return "raw";
+			case PlainSerializer::BASE64:
+				return "base64";
+			case PlainSerializer::SKIP_PAYLOAD:
+				return "skip";
+			default:
+				return "invalid";
+			}
+		}
+
+		PlainSerializer::PlainSerializer(std::ostream &stream, Encoding enc)
+		 : _stream(stream), _encoding(enc)
 		{
 		}
 
@@ -47,15 +69,13 @@ namespace dtn
 			// serialize the primary block
 			(*this) << (dtn::data::PrimaryBlock&)obj;
 
-			// serialize all secondary blocks
-			const dtn::data::Bundle::block_list &list = obj.getBlocks();
-
 			// block count
-			_stream << "Blocks: " << list.size() << std::endl;
+			_stream << "Blocks: " << obj.size() << std::endl;
 
-			for (dtn::data::Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			// serialize all secondary blocks
+			for (dtn::data::Bundle::const_iterator iter = obj.begin(); iter != obj.end(); ++iter)
 			{
-				const dtn::data::Block &b = (*(*iter));
+				const dtn::data::Block &b = (**iter);
 				_stream << std::endl;
 				(*this) << b;
 			}
@@ -67,19 +87,19 @@ namespace dtn
 
 		dtn::data::Serializer& PlainSerializer::operator<<(const dtn::data::PrimaryBlock &obj)
 		{
-			_stream << "Processing flags: " << obj._procflags << std::endl;
-			_stream << "Timestamp: " << obj._timestamp << std::endl;
-			_stream << "Sequencenumber: " << obj._sequencenumber << std::endl;
-			_stream << "Source: " << obj._source.getString() << std::endl;
-			_stream << "Destination: " << obj._destination.getString() << std::endl;
-			_stream << "Reportto: " << obj._reportto.getString() << std::endl;
-			_stream << "Custodian: " << obj._custodian.getString() << std::endl;
-			_stream << "Lifetime: " << obj._lifetime << std::endl;
+			_stream << "Processing flags: " << obj.procflags.toString() << std::endl;
+			_stream << "Timestamp: " << obj.timestamp.toString() << std::endl;
+			_stream << "Sequencenumber: " << obj.sequencenumber.toString() << std::endl;
+			_stream << "Source: " << obj.source.getString() << std::endl;
+			_stream << "Destination: " << obj.destination.getString() << std::endl;
+			_stream << "Reportto: " << obj.reportto.getString() << std::endl;
+			_stream << "Custodian: " << obj.custodian.getString() << std::endl;
+			_stream << "Lifetime: " << obj.lifetime.toString() << std::endl;
 
-			if (obj._procflags & dtn::data::PrimaryBlock::FRAGMENT)
+			if (obj.procflags & dtn::data::PrimaryBlock::FRAGMENT)
 			{
-				_stream << "Fragment offset: " << obj._fragmentoffset << std::endl;
-				_stream << "Application data length: " << obj._appdatalength << std::endl;
+				_stream << "Fragment offset: " << obj.fragmentoffset.toString() << std::endl;
+				_stream << "Application data length: " << obj.appdatalength.toString() << std::endl;
 			}
 
 			return (*this);
@@ -130,25 +150,41 @@ namespace dtn
 			{
 				std::list<dtn::data::EID> eid_list = obj.getEIDList();
 
-				for (std::list<dtn::data::EID>::const_iterator iter = eid_list.begin(); iter != eid_list.end(); iter++)
+				for (std::list<dtn::data::EID>::const_iterator iter = eid_list.begin(); iter != eid_list.end(); ++iter)
 				{
 					_stream << "EID: " << (*iter).getString() << std::endl;
 				}
 			}
 
 			_stream << "Length: " << obj.getLength() << std::endl;
+			_stream << "Encoding: " << PlainSerializer::printEncoding(_encoding) << std::endl;
 
-
-			if(!_skip_payload){
+			if (_encoding != SKIP_PAYLOAD)
+			{
 				try {
-
 					_stream << std::endl;
 
 					// put data here
-					ibrcommon::Base64Stream b64(_stream, false, 80);
-					size_t slength = 0;
-					obj.serialize(b64, slength);
-					b64 << std::flush;
+					dtn::data::Length slength = 0;
+					switch(_encoding)
+					{
+						case BASE64:
+						{
+							ibrcommon::Base64Stream b64(_stream, false, 80);
+							obj.serialize(b64, slength);
+							b64 << std::flush;
+							break;
+						}
+
+						case RAW:
+							obj.serialize(_stream, slength);
+							_stream << std::flush;
+							break;
+
+						default:
+							break;
+					}
+
 				} catch (const std::exception &ex) {
 					std::cerr << ex.what() << std::endl;
 				}
@@ -159,36 +195,17 @@ namespace dtn
 			return (*this);
 		}
 
-		dtn::data::Serializer &PlainSerializer::serialize(ibrcommon::BLOB::iostream &obj, size_t limit){
-			size_t len = obj.size();
-			if(limit < len && limit > 0)
-			{
-				len = limit;
-			}
-
-			_stream << "Length: " << len << std::endl;
-			_stream << std::endl;
-
-			ibrcommon::Base64Stream b64(_stream, false, 80);
-			ibrcommon::BLOB::copy(b64, *obj, len);
-			b64 << std::flush;
-
-			_stream << std::endl;
-
-			return *this;
-		}
-
-		size_t PlainSerializer::getLength(const dtn::data::Bundle &obj)
+		dtn::data::Length PlainSerializer::getLength(const dtn::data::Bundle&)
 		{
 			return 0;
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::PrimaryBlock &obj) const
+		dtn::data::Length PlainSerializer::getLength(const dtn::data::PrimaryBlock&) const
 		{
 			return 0;
 		}
 
-		size_t PlainSerializer::getLength(const dtn::data::Block &obj) const
+		dtn::data::Length PlainSerializer::getLength(const dtn::data::Block&) const
 		{
 			return 0;
 		}
@@ -207,7 +224,7 @@ namespace dtn
 			dtn::data::BundleBuilder builder(obj);
 
 			// clear all blocks
-			obj.clearBlocks();
+			obj.clear();
 
 			// read the primary block
 			(*this) >> (dtn::data::PrimaryBlock&)obj;
@@ -220,10 +237,12 @@ namespace dtn
 			{
 				try {
 					readBlock(builder);
+				} catch (const dtn::data::BundleBuilder::DiscardBlockException &ex) {
+					IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 5) << "unknown block has been discarded " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				} catch (const UnknownBlockException &ex) {
-					IBRCOMMON_LOGGER_DEBUG(5) << "unknown administrative block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 5) << "unknown administrative block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				} catch (const BlockNotProcessableException &ex) {
-					IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
@@ -237,7 +256,6 @@ namespace dtn
 			// read until the first empty line appears
 			while (_stream.good())
 			{
-				std::stringstream ss;
 				getline(_stream, data);
 
 				std::string::reverse_iterator iter = data.rbegin();
@@ -258,49 +276,43 @@ namespace dtn
 				// assign header value
 				if (values[0] == "Processing flags")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj._procflags;
+					obj.procflags.fromString(values[1]);
 				}
 				else if (values[0] == "Timestamp")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj._timestamp;
+					obj.timestamp.fromString(values[1]);
 				}
 				else if (values[0] == "Sequencenumber")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj._sequencenumber;
+					obj.sequencenumber.fromString(values[1]);
 				}
 				else if (values[0] == "Source")
 				{
-					obj._source = values[1];
+					obj.source = values[1];
 				}
 				else if (values[0] == "Destination")
 				{
-					obj._destination = values[1];
+					obj.destination = values[1];
 				}
 				else if (values[0] == "Reportto")
 				{
-					obj._reportto = values[1];
+					obj.reportto = values[1];
 				}
 				else if (values[0] == "Custodian")
 				{
-					obj._custodian = values[1];
+					obj.custodian = values[1];
 				}
 				else if (values[0] == "Lifetime")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj._lifetime;
+					obj.lifetime.fromString(values[1]);
 				}
 				else if (values[0] == "Fragment offset")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj._fragmentoffset;
+					obj.fragmentoffset.fromString(values[1]);
 				}
 				else if (values[0] == "Application data length")
 				{
-					ss.clear(); ss.str(values[1]);
-					ss >> obj._appdatalength;
+					obj.appdatalength.fromString(values[1]);
 				}
 			}
 
@@ -310,7 +322,8 @@ namespace dtn
 		dtn::data::Deserializer& PlainDeserializer::operator>>(dtn::data::Block &obj)
 		{
 			std::string data;
-			size_t blocksize = 0;
+			dtn::data::Length blocksize = 0;
+			PlainSerializer::Encoding enc = PlainSerializer::BASE64;
 
 			// read until the first empty line appears
 			while (_stream.good())
@@ -338,7 +351,7 @@ namespace dtn
 				{
 					std::vector<std::string> flags = dtn::utils::Utils::tokenize(" ", values[1]);
 
-					for (std::vector<std::string>::const_iterator iter = flags.begin(); iter != flags.end(); iter++)
+					for (std::vector<std::string>::const_iterator iter = flags.begin(); iter != flags.end(); ++iter)
 					{
 						const std::string &value = (*iter);
 						if (value == "LAST_BLOCK")
@@ -378,12 +391,31 @@ namespace dtn
 					std::stringstream ss; ss.str(values[1]);
 					ss >> blocksize;
 				}
+				else if (values[0] == "Encoding")
+				{
+					std::stringstream ss; ss << values[1]; ss.clear(); ss >> values[1];
+					enc = PlainSerializer::parseEncoding(values[1]);
+				}
 			}
 
 			// then read the payload
-			IBRCOMMON_LOGGER_DEBUG(20) << "API expecting payload size of " << blocksize << IBRCOMMON_LOGGER_ENDL;
-			ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
-			obj.deserialize(base64_decoder, blocksize);
+			IBRCOMMON_LOGGER_DEBUG_TAG("PlainDeserializer", 20) << "API expecting payload size of " << blocksize << IBRCOMMON_LOGGER_ENDL;
+
+			switch(enc)
+			{
+				case PlainSerializer::BASE64:
+					{
+						ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
+						obj.deserialize(base64_decoder, blocksize);
+						break;
+					}
+				case PlainSerializer::RAW:
+					obj.deserialize(_stream, blocksize);
+					break;
+
+				default:
+					break;
+			}
 
 			std::string buffer;
 
@@ -405,7 +437,8 @@ namespace dtn
 		dtn::data::Deserializer& PlainDeserializer::operator>>(ibrcommon::BLOB::iostream &obj)
 		{
 			std::string data;
-			size_t blocksize = 0;
+			dtn::data::Length blocksize = 0;
+			PlainSerializer::Encoding enc = PlainSerializer::BASE64;
 
 			// read until the first empty line appears
 			while (_stream.good())
@@ -431,12 +464,29 @@ namespace dtn
 					std::stringstream ss; ss.str(values[1]);
 					ss >> blocksize;
 				}
+				else if (values[0] == "Encoding")
+				{
+					std::stringstream ss; ss << values[1]; ss.clear(); ss >> values[1];
+					enc = PlainSerializer::parseEncoding(values[1]);
+				}
 			}
 
 			// then read the payload
-			ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
-			ibrcommon::BLOB::copy(*obj, base64_decoder, blocksize);
-			//*obj.iostream() << base64_decoder.rdbuf() << std::flush;
+			switch (enc)
+			{
+				case PlainSerializer::BASE64:
+					{
+						ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
+						ibrcommon::BLOB::copy(*obj, base64_decoder, blocksize);
+						break;
+					}
+				case PlainSerializer::RAW:
+					ibrcommon::BLOB::copy(*obj, _stream, blocksize);
+					break;
+
+				default:
+					break;
+			}
 
 			std::string buffer;
 
@@ -455,37 +505,127 @@ namespace dtn
 			return (*this);
 		}
 
-		dtn::data::Deserializer& PlainDeserializer::operator>>(std::ostream &stream)
+		void PlainSerializer::writeData(const dtn::data::Block &block)
 		{
-			ibrcommon::Base64Stream b64(stream, true);
-			std::string data;
+			_stream << "Length: " << block.getLength() << std::endl;
+			_stream << "Encoding: " << PlainSerializer::printEncoding(_encoding) << std::endl;
+			_stream << std::endl;
 
-			while (b64.good())
+			size_t slength = 0;
+
+			switch(_encoding)
 			{
+				case BASE64:
+				{
+					// put data here
+					ibrcommon::Base64Stream b64(_stream, false, 80);
+					block.serialize(b64, slength);
+					b64 << std::flush;
+					break;
+				}
+
+				case RAW:
+					block.serialize(_stream, slength);
+					break;
+
+				default:
+					break;
+			}
+			_stream << std::endl;
+		}
+
+		void PlainSerializer::writeData(std::istream &stream, const dtn::data::Length &len)
+		{
+			_stream << "Length: " << len << std::endl;
+			_stream << "Encoding: " << PlainSerializer::printEncoding(_encoding) << std::endl;
+			_stream << std::endl;
+
+			switch(_encoding)
+			{
+				case BASE64:
+				{
+					ibrcommon::Base64Stream b64(_stream, false, 80);
+					ibrcommon::BLOB::copy(b64, stream, len);
+					b64 << std::flush;
+					break;
+				}
+
+				case RAW:
+					ibrcommon::BLOB::copy(_stream, stream, len);
+					_stream << std::flush;
+					break;
+
+				default:
+					break;
+			}
+			_stream << std::endl;
+		}
+
+		void PlainDeserializer::readData(std::ostream &stream)
+		{
+			std::string data;
+			dtn::data::Length len = 0;
+			PlainSerializer::Encoding enc = PlainSerializer::BASE64;
+
+			// read headers until an empty line
+			while (true)
+			{
+				// read the block type (first line)
 				getline(_stream, data);
 
 				std::string::reverse_iterator iter = data.rbegin();
 				if ( (*iter) == '\r' ) data = data.substr(0, data.length() - 1);
 
-//				// strip off the last char
-//				data.erase(data.size() - 1);
-
-				// abort after the first empty line
+				// abort if the line data is empty
 				if (data.size() == 0) break;
 
-				// put the line into the stream decoder
-				b64 << data;
+				// split header value
+				std::vector<std::string> values = dtn::utils::Utils::tokenize(":", data, 1);
+
+				if (values[0] == "Length")
+				{
+					std::stringstream ss; ss.str(values[1]);
+					ss >> len;
+				}
+				else if (values[0] == "Encoding")
+				{
+					std::stringstream ss; ss << values[1]; ss.clear(); ss >> values[1];
+					enc = PlainSerializer::parseEncoding(values[1]);
+				}
+				else
+				{
+					throw dtn::InvalidDataException("unknown block header");
+				}
 			}
 
-			b64 << std::flush;
+			if (enc == PlainSerializer::BASE64)
+			{
+				ibrcommon::Base64Stream b64(stream, true);
 
-			return (*this);
+				while (b64.good())
+				{
+					getline(_stream, data);
+
+					std::string::reverse_iterator iter = data.rbegin();
+					if ( (*iter) == '\r' ) data = data.substr(0, data.length() - 1);
+
+					// abort after the first empty line
+					if (data.size() == 0) break;
+
+					// put the line into the stream decoder
+					b64 << data;
+				}
+
+				b64 << std::flush;
+			} else if (enc == PlainSerializer::RAW) {
+				ibrcommon::BLOB::copy(stream, _stream, len);
+			}
 		}
 
 		dtn::data::Block& PlainDeserializer::readBlock(dtn::data::BundleBuilder &builder)
 		{
 			std::string buffer;
-			int block_type;
+			dtn::data::block_t block_type;
 
 			// read the block type (first line)
 			getline(_stream, buffer);
@@ -502,17 +642,24 @@ namespace dtn
 			if (values[0] == "Block")
 			{
 				std::stringstream ss; ss.str(values[1]);
-				ss >> block_type;
+				int type;
+				ss >> type;
+				block_type = static_cast<dtn::data::block_t>(type);
 			}
 			else
 			{
 				throw dtn::InvalidDataException("need block type as first header");
 			}
 
-			dtn::data::Block &block = builder.insert(block_type, 0);
-			(*this) >> block;
-
-			return block;
+			try {
+				const dtn::data::Bitset<dtn::data::Block::ProcFlags> procflags;
+				dtn::data::Block &block = builder.insert(block_type, procflags);
+				(*this) >> block;
+				return block;
+			} catch (dtn::data::BundleBuilder::DiscardBlockException &ex) {
+				// TODO: skip block
+				throw;
+			}
 		}
 	}
 }

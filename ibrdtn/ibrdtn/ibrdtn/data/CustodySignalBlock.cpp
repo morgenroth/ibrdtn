@@ -30,8 +30,8 @@ namespace dtn
 	namespace data
 	{
 		CustodySignalBlock::CustodySignalBlock()
-		 : AdministrativeBlock(32), _custody_accepted(false), _reason(NO_ADDITIONAL_INFORMATION), _fragment_offset(0),
-		 _fragment_length(0), _timeofsignal(), _bundle_timestamp(0), _bundle_sequence(0)
+		 : AdministrativeBlock(32), custody_accepted(false), reason(NO_ADDITIONAL_INFORMATION),
+		 fragment_length(0), timeofsignal()
 		{
 		}
 
@@ -43,32 +43,35 @@ namespace dtn
 		{
 			ibrcommon::BLOB::Reference r = p.getBLOB();
 			ibrcommon::BLOB::iostream stream = r.iostream();
-			(*stream) >> _admfield;
+			(*stream).get(_admfield);
 
 			// check type field
 			if ((_admfield >> 4) != 2) throw WrongRecordException();
 
-			char status; (*stream) >> status;
+			char status = 0;
+			(*stream).get(status);
 
 			// decode custody acceptance
-			_custody_accepted = (status & 0x01);
+			custody_accepted = (status & 0x01);
 
 			// decode reason flag
-			_reason = REASON_CODE(status >> 1);
+			reason = REASON_CODE(status >> 1);
 
 			if ( refsFragment() )
 			{
-				(*stream) >> _fragment_offset;
-				(*stream) >> _fragment_length;
+				bundleid.fragment = true;
+
+				(*stream) >> bundleid.offset;
+				(*stream) >> fragment_length;
 			}
 
-			(*stream) >> _timeofsignal;
-			(*stream) >> _bundle_timestamp;
-			(*stream) >> _bundle_sequence;
+			(*stream) >> timeofsignal;
+			(*stream) >> bundleid.timestamp;
+			(*stream) >> bundleid.sequencenumber;
 
 			BundleString source;
 			(*stream) >> source;
-			_source = EID(source);
+			bundleid.source = EID(source);
 		}
 
 		void CustodySignalBlock::write(dtn::data::PayloadBlock &p) const
@@ -80,28 +83,28 @@ namespace dtn
 			stream.clear();
 
 			// write the content
-			(*stream) << _admfield;
+			(*stream).put(_admfield);
 
 			// encode reason flag
-			char status = (_reason << 1);
+			char status = static_cast<char>(reason << 1);
 
 			// encode custody acceptance
-			if (_custody_accepted) status |= 0x01;
+			if (custody_accepted) status |= 0x01;
 
 			// write the status byte
-			(*stream) << status;
+			(*stream).put(status);
 
 			if ( refsFragment() )
 			{
-				(*stream) << _fragment_offset;
-				(*stream) << _fragment_length;
+				(*stream) << bundleid.offset;
+				(*stream) << fragment_length;
 			}
 
-			BundleString sourceid(_source.getString());
+			BundleString sourceid(bundleid.source.getString());
 
-			(*stream) << _timeofsignal
-			   << _bundle_timestamp
-			   << _bundle_sequence
+			(*stream) << timeofsignal
+			   << bundleid.timestamp
+			   << bundleid.sequencenumber
 			   << sourceid;
 		}
 
@@ -110,15 +113,16 @@ namespace dtn
 			// set bundle parameter
 			if (other.get(Bundle::FRAGMENT))
 			{
-				_fragment_offset = other.offset;
-				_fragment_length = other.appdatalength;
+				bundleid.offset = other.offset;
+				fragment_length = other.appdatalength;
 
-				if (!(_admfield & 1)) _admfield += 1;
+				setFragment(true);
+				bundleid.fragment = true;
 			}
 
-			_bundle_timestamp = other.timestamp;
-			_bundle_sequence = other.sequencenumber;
-			_source = other.source;
+			bundleid.timestamp = other.timestamp;
+			bundleid.sequencenumber = other.sequencenumber;
+			bundleid.source = other.source;
 		}
 
 		void CustodySignalBlock::setMatch(const dtn::data::Bundle& other)
@@ -126,29 +130,30 @@ namespace dtn
 			// set bundle parameter
 			if (other.get(Bundle::FRAGMENT))
 			{
-				_fragment_offset = other._fragmentoffset;
-				_fragment_length = other._appdatalength;
+				bundleid.offset = other.fragmentoffset;
+				fragment_length = other.appdatalength;
 
-				if (!(_admfield & 1)) _admfield += 1;
+				setFragment(true);
+				bundleid.fragment = true;
 			}
 
-			_bundle_timestamp = other._timestamp;
-			_bundle_sequence = other._sequencenumber;
-			_source = other._source;
+			bundleid.timestamp = other.timestamp;
+			bundleid.sequencenumber = other.sequencenumber;
+			bundleid.source = other.source;
 		}
 
 		bool CustodySignalBlock::match(const Bundle& other) const
 		{
-			if (_bundle_timestamp != other._timestamp) return false;
-			if (_bundle_sequence != other._sequencenumber) return false;
-			if (_source != other._source) return false;
+			if (bundleid.timestamp != other.timestamp) return false;
+			if (bundleid.sequencenumber != other.sequencenumber) return false;
+			if (bundleid.source != other.source) return false;
 
 			// set bundle parameter
 			if (other.get(Bundle::FRAGMENT))
 			{
-				if (!(_admfield & 1)) return false;
-				if (_fragment_offset != other._fragmentoffset) return false;
-				if (_fragment_length != other._appdatalength) return false;
+				if (!bundleid.fragment) return false;
+				if (bundleid.offset != other.fragmentoffset) return false;
+				if (fragment_length != other.appdatalength) return false;
 			}
 
 			return true;

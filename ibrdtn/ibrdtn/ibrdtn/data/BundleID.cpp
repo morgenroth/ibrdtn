@@ -21,21 +21,21 @@
 
 #include "ibrdtn/config.h"
 #include "ibrdtn/data/BundleID.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/BundleString.h"
 
 namespace dtn
 {
 	namespace data
 	{
-		BundleID::BundleID(const dtn::data::EID s, const size_t t, const size_t sq, const bool f, const size_t o)
+		BundleID::BundleID(const dtn::data::EID s, const dtn::data::Timestamp &t, const dtn::data::Number &sq, const bool f, const dtn::data::Number &o)
 		: source(s), timestamp(t), sequencenumber(sq), fragment(f), offset(o)
 		{
 		}
 
-		BundleID::BundleID(const dtn::data::Bundle &b)
-		: source(b._source), timestamp(b._timestamp), sequencenumber(b._sequencenumber),
-		fragment(b.get(dtn::data::Bundle::FRAGMENT)), offset(b._fragmentoffset)
+		BundleID::BundleID(const dtn::data::PrimaryBlock &b)
+		: source(b.source), timestamp(b.timestamp), sequencenumber(b.sequencenumber),
+		fragment(b.get(dtn::data::Bundle::FRAGMENT)), offset(b.fragmentoffset)
 		{
 		}
 
@@ -88,19 +88,14 @@ namespace dtn
 			return true;
 		}
 
-		size_t BundleID::getTimestamp() const
-		{
-			return timestamp;
-		}
-
-		string BundleID::toString() const
+		std::string BundleID::toString() const
 		{
 			stringstream ss;
-			ss << "[" << timestamp << "." << sequencenumber;
+			ss << "[" << timestamp.toString() << "." << sequencenumber.toString();
 
 			if (fragment)
 			{
-				ss << "." << offset;
+				ss << "." << offset.toString();
 			}
 
 			ss << "] " << source.getString();
@@ -110,28 +105,19 @@ namespace dtn
 
 		std::ostream &operator<<(std::ostream &stream, const BundleID &obj)
 		{
-			dtn::data::SDNV timestamp(obj.timestamp);
-			dtn::data::SDNV sequencenumber(obj.sequencenumber);
-			dtn::data::SDNV offset(obj.offset);
 			dtn::data::BundleString source(obj.source.getString());
 
-			stream << timestamp << sequencenumber << offset << source;
+			stream << obj.timestamp << obj.sequencenumber << obj.offset << source;
 
 			return stream;
 		}
 
 		std::istream &operator>>(std::istream &stream, BundleID &obj)
 		{
-			dtn::data::SDNV timestamp;
-			dtn::data::SDNV sequencenumber;
-			dtn::data::SDNV offset;
 			dtn::data::BundleString source;
 
-			stream >> timestamp >> sequencenumber >> offset >> source;
+			stream >> obj.timestamp >> obj.sequencenumber >> obj.offset >> source;
 
-			obj.timestamp = timestamp.getValue();
-			obj.sequencenumber = sequencenumber.getValue();
-			obj.offset = offset.getValue();
 			obj.source = dtn::data::EID(source);
 
 			return stream;

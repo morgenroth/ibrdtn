@@ -49,6 +49,14 @@ namespace dtn
 	{
 		EventDebugger::EventDebugger()
 		{
+		}
+
+		EventDebugger::~EventDebugger()
+		{
+		}
+
+		void EventDebugger::componentUp() throw ()
+		{
 			dtn::core::EventDispatcher<dtn::core::CustodyEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundleEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
@@ -75,7 +83,7 @@ namespace dtn
 			*/
 		}
 
-		EventDebugger::~EventDebugger()
+		void EventDebugger::componentDown() throw ()
 		{
 			dtn::core::EventDispatcher<dtn::core::CustodyEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::BundleEvent>::remove(this);
@@ -100,7 +108,15 @@ namespace dtn
 		void EventDebugger::raiseEvent(const Event *evt) throw ()
 		{
 			// print event
-			IBRCOMMON_LOGGER_TAG(evt->getName(), notice) << evt->getMessage() << IBRCOMMON_LOGGER_ENDL;
+			if (evt->isLoggable())
+			{
+				IBRCOMMON_LOGGER_TAG(evt->getName(), notice) << evt->getMessage() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		const std::string EventDebugger::getName() const
+		{
+			return "EventDebugger";
 		}
 	}
 }

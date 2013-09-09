@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<level-list xmlns:android="http://schemas.android.com/apk/res/android">
-  <!-- Button: gray -->
-  <item android:maxLevel="0" android:drawable="@drawable/button_oval_gray" />
-  <!-- Button: blue -->
-  <item android:maxLevel="1"  android:drawable="@drawable/button_oval_blue" />
-  <!-- Button: red -->
-  <item android:maxLevel="2"  android:drawable="@drawable/button_oval_red" />
-</level-list>

@@ -22,18 +22,26 @@
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/socket.h"
 #include "ibrcommon/net/vsocket.h"
-#include "ibrcommon/TimeMeasurement.h"
 #include "ibrcommon/Logger.h"
 
+#ifdef __WIN32__
+#include <windows.h>
+#include <ws2tcpip.h>
+#ifndef AI_ADDRCONFIG
+#define AI_ADDRCONFIG 0
+#endif
+#else
 #include <arpa/inet.h>
 #include <sys/select.h>
-#include <string.h>
-#include <fcntl.h>
 #include <netinet/tcp.h>
 #include <sys/un.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <netdb.h>
+#endif
+
+#include <string.h>
+#include <fcntl.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include <sstream>
@@ -44,19 +52,60 @@
 #define bzero(s,n) (memset((s), '\0', (n)), (void) 0)
 #endif
 
+#ifdef __WIN32__
+#define EINPROGRESS WSAEINPROGRESS
+#define ECONNRESET WSAECONNRESET
+#define EAFNOSUPPORT WSAEAFNOSUPPORT
+#define ENOBUFS WSAENOBUFS
+#define EPROTONOSUPPORT WSAEPROTONOSUPPORT
+#define ELOOP WSAELOOP
+#endif
+
 namespace ibrcommon
 {
+#ifdef __WIN32__
+	/**
+	 * wrapper to translate win32 method signature into linux/posix signature
+	 */
+	int __compat_setsockopt(int __fd, int __level, int __optname, __const void *__optval, socklen_t __optlen)
+	{
+		return ::setsockopt(__fd, __level, __optname, (char*)__optval, __optlen);
+	}
+
+	int __init_sockets()
+	{
+		static bool initialized = false;
+		if (initialized) return 0;
+		WSADATA wsa;
+		return WSAStartup(MAKEWORD(2,2),&wsa);
+	}
+
+#define __close closesocket
+#define __errno WSAGetLastError()
+#else
+#define __compat_setsockopt ::setsockopt
+#define __init_sockets int a
+#define __close ::close
+#define __errno errno
+#endif
+
 	int basesocket::DEFAULT_SOCKET_FAMILY = AF_INET6;
 	int basesocket::DEFAULT_SOCKET_FAMILY_ALTERNATIVE = AF_INET;
+
+	void initialize_socket() {
+		__init_sockets();
+	}
 
 	basesocket::basesocket()
 	 : _state(SOCKET_DOWN), _fd(-1), _family(PF_UNSPEC)
 	{
+		__init_sockets();
 	}
 
 	basesocket::basesocket(int fd)
 	 : _state(SOCKET_UNMANAGED), _fd(fd), _family(PF_UNSPEC)
 	{
+		__init_sockets();
 	}
 
 	basesocket::~basesocket()
@@ -89,7 +138,7 @@ namespace ibrcommon
 
 	void basesocket::close() throw (socket_exception)
 	{
-		int ret = ::close(this->fd());
+		int ret = __close(this->fd());
 		if (ret == -1)
 			throw socket_exception("close error");
 
@@ -120,6 +169,11 @@ namespace ibrcommon
 
 	void basesocket::set_blocking_mode(bool val, int fd) const throw (socket_exception)
 	{
+#ifdef __WIN32__
+		// set blocking mode - the win32 way
+		unsigned long block_mode = (val) ? 1 : 0;
+		ioctlsocket((fd == -1) ? _fd : fd, FIONBIO, &block_mode);
+#else
 		int opts;
 		opts = fcntl((fd == -1) ? _fd : fd, F_GETFL);
 		if (opts < 0) {
@@ -134,13 +188,14 @@ namespace ibrcommon
 		if (fcntl((fd == -1) ? _fd : fd, F_SETFL, opts) < 0) {
 			throw socket_exception("cannot set non-blocking");
 		}
+#endif
 	}
 
 	void basesocket::set_keepalive(bool val, int fd) const throw (socket_exception)
 	{
 		/* Set the option active */
 		int optval = (val ? 1 : 0);
-		if (::setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
+		if (__compat_setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) < 0) {
 			throw ibrcommon::socket_exception("can not activate keepalives");
 		}
 	}
@@ -152,7 +207,7 @@ namespace ibrcommon
 
 		linger.l_onoff = (val ? 1 : 0);
 		linger.l_linger = l;
-		if (::setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_LINGER, &linger, sizeof(linger)) < 0) {
+		if (__compat_setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_LINGER, &linger, sizeof(linger)) < 0) {
 			throw ibrcommon::socket_exception("can not set linger option");
 		}
 	}
@@ -160,7 +215,7 @@ namespace ibrcommon
 	void basesocket::set_reuseaddr(bool val, int fd) const throw (socket_exception)
 	{
 		int on = (val ? 1: 0);
-		if (::setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
+		if (__compat_setsockopt((fd == -1) ? _fd : fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
 		{
 			throw socket_exception("setsockopt(SO_REUSEADDR) failed");
 		}
@@ -169,7 +224,7 @@ namespace ibrcommon
 	void basesocket::set_nodelay(bool val, int fd) const throw (socket_exception)
 	{
 		int set = (val ? 1 : 0);
-		if (::setsockopt((fd == -1) ? _fd : fd, IPPROTO_TCP, TCP_NODELAY, (char *)&set, sizeof(set)) < 0) {
+		if (__compat_setsockopt((fd == -1) ? _fd : fd, IPPROTO_TCP, TCP_NODELAY, &set, sizeof(set)) < 0) {
 			throw socket_exception("set no delay option failed");
 		}
 	}
@@ -194,37 +249,47 @@ namespace ibrcommon
 		return bound_addr.ss_family;
 	}
 
+	bool basesocket::hasSupport(const sa_family_t family, const int type, const int protocol) throw ()
+	{
+		int fd = 0;
+		if ((fd = ::socket(family, type, protocol)) < 0) {
+			return false;
+		}
+		__close(fd);
+		return true;
+	}
+
 	void basesocket::init_socket(const vaddress &addr, int type, int protocol) throw (socket_exception)
 	{
 		try {
 			_family = addr.family();
 			if ((_fd = ::socket(_family, type, protocol)) < 0) {
-				throw socket_raw_error(errno, "cannot create socket");
+				throw socket_raw_error(__errno, "cannot create socket");
 			}
 		} catch (const vaddress::address_exception&) {
-			// if not address is set use DEFAULT_SOCKET_FAMILY
+			// if no address is set use DEFAULT_SOCKET_FAMILY
 			if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY, type, protocol)) > -1) {
-				_family = DEFAULT_SOCKET_FAMILY;
+				_family = static_cast<sa_family_t>(DEFAULT_SOCKET_FAMILY);
 			}
 			// if that fails switch to the alternative SOCKET_FAMILY
 			else if ((_fd = ::socket(DEFAULT_SOCKET_FAMILY_ALTERNATIVE, type, protocol)) > -1) {
-				_family = DEFAULT_SOCKET_FAMILY_ALTERNATIVE;
+				_family = static_cast<sa_family_t>(DEFAULT_SOCKET_FAMILY_ALTERNATIVE);
 
 				// set the alternative socket family as default
 				DEFAULT_SOCKET_FAMILY = DEFAULT_SOCKET_FAMILY_ALTERNATIVE;
 			}
 			else
 			{
-				throw socket_raw_error(errno, "cannot create socket");
+				throw socket_raw_error(__errno, "cannot create socket");
 			}
 		}
 	}
 
 	void basesocket::init_socket(int domain, int type, int protocol) throw (socket_exception)
 	{
-		_family = domain;
+		_family = static_cast<sa_family_t>(domain);
 		if ((_fd = ::socket(domain, type, protocol)) < 0) {
-			throw socket_raw_error(errno, "cannot create socket");
+			throw socket_raw_error(__errno, "cannot create socket");
 		}
 	}
 
@@ -234,7 +299,7 @@ namespace ibrcommon
 
 		if (ret < 0) {
 			// error
-			int bind_err = errno;
+			int bind_err = __errno;
 
 			char addr_str[256];
 			char serv_str[256];
@@ -279,11 +344,11 @@ namespace ibrcommon
 		this->close();
 	}
 
-	int clientsocket::send(const char *data, size_t len, int flags) throw (socket_error)
+	ssize_t clientsocket::send(const char *data, size_t len, int flags) throw (socket_exception)
 	{
-		int ret = ::send(this->fd(), data, len, flags);
+		ssize_t ret = ::send(this->fd(), data, len, flags);
 		if (ret == -1) {
-			switch (errno)
+			switch (__errno)
 			{
 			case EPIPE:
 				// connection has been reset
@@ -304,11 +369,11 @@ namespace ibrcommon
 		return ret;
 	}
 
-	int clientsocket::recv(char *data, size_t len, int flags) throw (socket_error)
+	ssize_t clientsocket::recv(char *data, size_t len, int flags) throw (socket_exception)
 	{
-		int ret = ::recv(this->fd(), data, len, flags);
+		ssize_t ret = ::recv(this->fd(), data, len, flags);
 		if (ret == -1) {
-			switch (errno)
+			switch (__errno)
 			{
 			case EPIPE:
 				// connection has been reset
@@ -322,7 +387,7 @@ namespace ibrcommon
 		return ret;
 	}
 
-	void clientsocket::set(CLIENT_OPTION opt, bool val) throw (socket_error)
+	void clientsocket::set(CLIENT_OPTION opt, bool val) throw (socket_exception)
 	{
 		switch (opt) {
 		case NO_DELAY:
@@ -400,7 +465,7 @@ namespace ibrcommon
 	{
 	}
 
-	size_t datagramsocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
+	ssize_t datagramsocket::recvfrom(char *buf, size_t buflen, int flags, ibrcommon::vaddress &addr) throw (socket_exception)
 	{
 		struct sockaddr_storage clientAddress;
 		socklen_t clientAddressLength = sizeof(clientAddress);
@@ -424,7 +489,7 @@ namespace ibrcommon
 
 	void datagramsocket::sendto(const char *buf, size_t buflen, int flags, const ibrcommon::vaddress &addr) throw (socket_exception)
 	{
-		ssize_t ret = 0;
+		int ret = 0;
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
 
@@ -450,13 +515,14 @@ namespace ibrcommon
 			throw socket_exception("getaddrinfo(): " + std::string(gai_strerror(ret)));
 		}
 
-		ret = ::sendto(this->fd(), buf, buflen, flags, res->ai_addr, res->ai_addrlen);
+		ssize_t len = 0;
+		len = ::sendto(this->fd(), buf, buflen, flags, res->ai_addr, res->ai_addrlen);
 
 		// free the addrinfo struct
 		freeaddrinfo(res);
 
-		if (ret == -1) {
-			throw socket_raw_error(errno);
+		if (len == -1) {
+			throw socket_raw_error(__errno);
 		}
 	}
 
@@ -482,7 +548,10 @@ namespace ibrcommon
 		if (_state != SOCKET_DOWN)
 			throw socket_exception("socket is already up");
 
-		int len = 0;
+#ifdef __WIN32__
+		throw socket_exception("socket type not supported");
+#else
+		size_t len = 0;
 		struct sockaddr_un saun;
 
 		/*
@@ -510,10 +579,11 @@ namespace ibrcommon
 		 */
 		len = sizeof(saun.sun_family) + strlen(saun.sun_path);
 
-		if (::connect(_fd, (struct sockaddr *)&saun, len) < 0) {
+		if (::connect(_fd, (struct sockaddr *)&saun, static_cast<socklen_t>(len)) < 0) {
 			this->close();
 			throw socket_exception("Could not connect to the named socket.");
 		}
+#endif
 
 		_state = SOCKET_UP;
 	}
@@ -555,7 +625,7 @@ namespace ibrcommon
 			this->listen(_listen);
 		} catch (const socket_exception&) {
 			// clean-up socket
-			::close(_fd);
+			__close(_fd);
 			_fd = -1;
 			throw;
 		};
@@ -578,6 +648,7 @@ namespace ibrcommon
 
 	void fileserversocket::bind(const File &file) throw (socket_exception)
 	{
+#ifndef __WIN32__
 		// remove old sockets
 		unlink(file.getPath().c_str());
 
@@ -589,7 +660,8 @@ namespace ibrcommon
 		address_length = sizeof(address.sun_family) + strlen(address.sun_path);
 
 		// bind to the socket
-		basesocket::bind(_fd, (struct sockaddr *) &address, address_length);
+		basesocket::bind(_fd, (struct sockaddr *) &address, static_cast<socklen_t>(address_length));
+#endif
 	}
 
 	tcpserversocket::tcpserversocket(const int port, int listen)
@@ -625,7 +697,7 @@ namespace ibrcommon
 			this->listen(_listen);
 		} catch (const socket_exception&) {
 			// clean-up socket
-			::close(_fd);
+			__close(_fd);
 			_fd = -1;
 			throw;
 		};
@@ -726,8 +798,8 @@ namespace ibrcommon
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_flags = 0;
 
-		struct addrinfo *res;
-		int ret;
+		struct addrinfo *res = NULL;
+		int ret = 0;
 
 		const char *address = NULL;
 		const char *service = NULL;
@@ -780,14 +852,14 @@ namespace ibrcommon
 
 				// connect to the current address using the created socket
 				if (::connect(fd, walk->ai_addr, walk->ai_addrlen) != 0) {
-					if (errno != EINPROGRESS) {
+					if (__errno != EINPROGRESS) {
 						// the connect failed, so we close the socket immediately
-						::close(fd);
+						__close(fd);
 
 						/* Hier kann eine Fehlermeldung hin, z.B. mit warn() */
 						if ((walk->ai_next == NULL) && (probesocket.size() == 0))
 						{
-							throw socket_raw_error(errno);
+							throw socket_raw_error(__errno);
 						}
 						continue;
 					}
@@ -827,11 +899,15 @@ namespace ibrcommon
 				}
 
 				// error checking for all returned sockets
-				for (socketset::iterator iter = probeset.begin(); iter != probeset.end(); iter++) {
+				for (socketset::iterator iter = probeset.begin(); iter != probeset.end(); ++iter) {
 					basesocket *current = (*iter);
 					int err = 0;
 					socklen_t len = sizeof(err);
+#ifdef __WIN32__
+					::getsockopt(current->fd(), SOL_SOCKET, SO_ERROR, (char*)&err, &len);
+#else
 					::getsockopt(current->fd(), SOL_SOCKET, SO_ERROR, &err, &len);
+#endif
 
 					switch (err) {
 					case 0:
@@ -934,7 +1010,7 @@ namespace ibrcommon
 			this->bind(_address);
 		} catch (const socket_exception&) {
 			// clean-up socket
-			::close(_fd);
+			__close(_fd);
 			_fd = -1;
 			throw;
 		};
@@ -978,8 +1054,6 @@ namespace ibrcommon
 			service = addr.service().c_str();
 		} catch (const vaddress::service_not_set&) { };
 
-		std::string errinfo = "with address: " + addr.toString();
-
 		if (0 != ::getaddrinfo(address, service, &hints, &res))
 			throw socket_exception("failed to getaddrinfo with address: " + addr.toString());
 
@@ -1010,19 +1084,19 @@ namespace ibrcommon
 			case AF_INET: {
 #ifdef HAVE_FEATURES_H
 				int val = 1;
-				if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+				if ( __compat_setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 				{
 					throw socket_exception("setsockopt(IP_MULTICAST_LOOP)");
 				}
 
-				unsigned char ttl = 255; // Multicast TTL
-				if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0 )
+				unsigned char ttl = 7; // Multicast TTL
+				if ( __compat_setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0 )
 				{
 					throw socket_exception("setsockopt(IP_MULTICAST_TTL)");
 				}
 #endif
 //				unsigned char ittl = 255; // IP TTL
-//				if ( ::setsockopt(this->fd(), IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl)) < 0 )
+//				if ( __compat_setsockopt(this->fd(), IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl)) < 0 )
 //				{
 //					throw socket_exception("setsockopt(IP_TTL)");
 //				}
@@ -1032,20 +1106,20 @@ namespace ibrcommon
 			case AF_INET6: {
 #ifdef HAVE_FEATURES_H
 				int val = 1;
-				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+				if ( __compat_setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 				{
 					throw socket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
 				}
 
 //				unsigned char ttl = 255; // Multicast TTL
-//				if ( ::setsockopt(this_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0 )
+//				if ( __compat_setsockopt(this_fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0 )
 //				{
 //					throw socket_exception("setsockopt(IPV6_MULTICAST_HOPS)");
 //				}
 #endif
 
 //				unsigned char ittl = 255; // IP TTL
-//				if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &ittl, sizeof(ittl)) < 0 )
+//				if ( __compat_setsockopt(_fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &ittl, sizeof(ittl)) < 0 )
 //				{
 //					throw socket_exception("setsockopt(IPV6_HOPLIMIT)");
 //				}
@@ -1064,7 +1138,7 @@ namespace ibrcommon
 		case AF_INET: {
 #ifdef HAVE_FEATURES_H
 			int val = 0;
-			if ( ::setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+			if ( __compat_setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 			{
 				throw socket_exception("setsockopt(IP_MULTICAST_LOOP)");
 			}
@@ -1075,7 +1149,7 @@ namespace ibrcommon
 		case AF_INET6: {
 #ifdef HAVE_FEATURES_H
 			int val = 0;
-			if ( ::setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
+			if ( __compat_setsockopt(_fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (const char *)&val, sizeof(val)) < 0 )
 			{
 				throw socket_exception("setsockopt(IPV6_MULTICAST_LOOP)");
 			}
@@ -1127,7 +1201,7 @@ namespace ibrcommon
 		::memset(&iface_addr, 0, sizeof(iface_addr));
 
 		const std::list<vaddress> iface_addrs = iface.getAddresses();
-		for (std::list<vaddress>::const_iterator iter = iface_addrs.begin(); iter != iface_addrs.end(); iter++) {
+		for (std::list<vaddress>::const_iterator iter = iface_addrs.begin(); iter != iface_addrs.end(); ++iter) {
 			const vaddress &addr = (*iter);
 
 			if ((ret = ::getaddrinfo(addr.address().c_str(), NULL, &hints, &res)) == 0) {
@@ -1149,7 +1223,7 @@ namespace ibrcommon
 		::memset(&mcast_addr, 0, sizeof(mcast_addr));
 
 		int level = 0;
-		ssize_t ret = 0;
+		int ret = 0;
 
 		struct addrinfo hints, *res;
 		memset(&hints, 0, sizeof hints);
@@ -1192,9 +1266,9 @@ namespace ibrcommon
 			// set the right interface
 			__copy_device_address(&req.imr_interface, iface);
 
-			if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
+			if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
-				throw socket_raw_error(errno, "setsockopt()");
+				throw socket_raw_error(__errno, "setsockopt()");
 			}
 		} else {
 			struct ipv6_mreq req;
@@ -1209,9 +1283,9 @@ namespace ibrcommon
 			// set the right interface
 			req.ipv6mr_interface = iface.getIndex();
 
-			if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
+			if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 			{
-				throw socket_raw_error(errno, "setsockopt()");
+				throw socket_raw_error(__errno, "setsockopt()");
 			}
 		}
 #else
@@ -1227,14 +1301,14 @@ namespace ibrcommon
 		// set the right interface here
 		req.gr_interface = iface.getIndex();
 
-		if ( ::setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
+		if ( __compat_setsockopt(this->fd(), level, optname, &req, sizeof(req)) == -1 )
 		{
-			throw socket_raw_error(errno, "setsockopt()");
+			throw socket_raw_error(__errno, "setsockopt()");
 		}
 #endif
 
 		// successful!
-		IBRCOMMON_LOGGER_DEBUG(5) << "multicast operation (" << optname << ") successful with " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
+		IBRCOMMON_LOGGER_DEBUG_TAG("multicastsocket", 70) << "multicast operation (" << optname << ") successful with " << group.toString() << " on " << iface.toString() << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	void basesocket::check_socket_error(const int err) const throw (socket_exception)

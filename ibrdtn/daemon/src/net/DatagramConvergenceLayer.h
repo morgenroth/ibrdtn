@@ -23,11 +23,14 @@
 #define DATAGRAMCONVERGENCELAYER_H_
 
 #include "Component.h"
+#include "core/EventReceiver.h"
 #include "net/DatagramService.h"
 #include "net/DatagramConnection.h"
 #include "net/ConvergenceLayer.h"
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryServiceProvider.h"
+
+#include <ibrcommon/thread/RWMutex.h>
 
 #include <list>
 
@@ -39,6 +42,8 @@ namespace dtn
 			public EventReceiver, public DatagramConnectionCallback
 		{
 		public:
+			static const std::string TAG;
+
 			enum HEADER_FLAGS
 			{
 				HEADER_UNKOWN = 0,
@@ -63,7 +68,7 @@ namespace dtn
 			 * @param n Node reference
 			 * @param job Job reference
 			 */
-			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+			void queue(const dtn::core::Node &n, const dtn::net::BundleTransfer &job);
 
 			/**
 			 * @see Component::getName()
@@ -78,7 +83,7 @@ namespace dtn
 
 		protected:
 			virtual void componentUp() throw ();
-			virtual void componentRun() throw ();;
+			virtual void componentRun() throw ();
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();
 
@@ -91,7 +96,7 @@ namespace dtn
 			 * @param buf
 			 * @param len
 			 */
-			void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, int len) throw (DatagramException);
+			void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, const dtn::data::Length &len) throw (DatagramException);
 
 			void callback_ack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException);
 
@@ -99,15 +104,44 @@ namespace dtn
 			void connectionDown(const DatagramConnection *conn);
 
 		private:
-			DatagramConnection& getConnection(const std::string &identifier);
+			class ConnectionNotAvailableException : public ibrcommon::Exception {
+			public:
+				ConnectionNotAvailableException(const std::string what = "connection not available")
+				 : ibrcommon::Exception(what) {
+				}
+
+				virtual ~ConnectionNotAvailableException() throw () {
+				}
+			};
+
+			/**
+			 * Returns a connection matching the given identifier.
+			 * To use this method securely a lock on _cond_connections is required.
+			 *
+			 * @param identifier The identifier of the connection.
+			 * @param create If this parameter is set to true a new connection is created if it does not exists.
+			 */
+			DatagramConnection& getConnection(const std::string &identifier, bool create) throw (ConnectionNotAvailableException);
 
 			DatagramService *_service;
 
 			ibrcommon::Mutex _send_lock;
 
-			ibrcommon::Conditional _connection_cond;
-			std::list<DatagramConnection*> _connections;
+			// conditional to protect _active_conns
+			ibrcommon::Conditional _cond_connections;
 
+			// this lock is used to protect a connection reference from
+			// being deleted while using it
+			ibrcommon::RWMutex _mutex_connection;
+
+			typedef std::list<DatagramConnection*> connection_list;
+			connection_list _connections;
+
+			// the number of active connections
+			// (lock _cond_connections while modifying it)
+			int _active_conns;
+
+			// false, if the main thread is cancelled
 			bool _running;
 
 			uint16_t _discovery_sn;

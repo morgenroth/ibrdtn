@@ -59,7 +59,7 @@ namespace dtn
 				};
 
 				/** The block type of this class. */
-				static const char BLOCK_TYPE = SecurityBlock::EXTENSION_SECURITY_BLOCK;
+				static const dtn::data::block_t BLOCK_TYPE;
 
 				/** does nothing */
 				virtual ~ExtensionSecurityBlock();
@@ -71,7 +71,7 @@ namespace dtn
 				@param bundle the bundle to which block belongs
 				@param block the to be encrypted block
 				*/
-				static void encrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::data::Block &block, const dtn::data::EID& source, const dtn::data::EID& destination);
+				static void encrypt(dtn::data::Bundle& bundle, const SecurityKey &key, dtn::data::Bundle::iterator it, const dtn::data::EID& source, const dtn::data::EID& destination);
 
 				/**
 				Decrypts the given block and replaces the ESB with the original block in
@@ -83,7 +83,7 @@ namespace dtn
 				replaced, false otherwise. when false the encrypted block will remain as
 				it was
 				*/
-				static void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::security::ExtensionSecurityBlock &block);
+				static void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, dtn::data::Bundle::iterator it);
 
 				/**
 				Decrypts all blocks in the bundle which have correlator as their
@@ -97,7 +97,7 @@ namespace dtn
 				block will remain encrypted inside the bundle. the other blocks will 
 				decrypted, so recovering the failed block may be impossible.
 				*/
-				static void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, uint64_t correlator = 0);
+				static void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::data::Number &correlator = 0);
 
 			protected:
 				/**

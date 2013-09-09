@@ -66,6 +66,12 @@ namespace dtn
 				case dtn::core::NODE_UNAVAILABLE:
 					_stream << "unavailable";
 					break;
+				case dtn::core::NODE_DATA_ADDED:
+					_stream << "data_added";
+					break;
+				case dtn::core::NODE_DATA_REMOVED:
+					_stream << "data_removed";
+					break;
 				default:
 					break;
 				}
@@ -94,8 +100,8 @@ namespace dtn
 				case dtn::core::GlobalEvent::GLOBAL_IDLE:
 					_stream << "idle";
 					break;
-				case dtn::core::GlobalEvent::GLOBAL_POWERSAVE:
-					_stream << "powersave";
+				case dtn::core::GlobalEvent::GLOBAL_RESUME:
+					_stream << "resume";
 					break;
 				case dtn::core::GlobalEvent::GLOBAL_RELOAD:
 					_stream << "reload";
@@ -111,6 +117,12 @@ namespace dtn
 					break;
 				case dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
 					_stream << "internet unavailable";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY:
+					_stream << "start discovery";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY:
+					_stream << "stop discovery";
 					break;
 				default:
 					break;
@@ -130,20 +142,20 @@ namespace dtn
 				_stream << "Local: " << (received.fromlocal ? "true" : "false") << std::endl;
 
 				// write the bundle data
-				_stream << "Source: " << received.bundle._source.getString() << std::endl;
-				_stream << "Timestamp: " << received.bundle._timestamp << std::endl;
-				_stream << "Sequencenumber: " << received.bundle._sequencenumber << std::endl;
-				_stream << "Lifetime: " << received.bundle._lifetime << std::endl;
-				_stream << "Procflags: " << received.bundle._procflags << std::endl;
+				_stream << "Source: " << received.bundle.source.getString() << std::endl;
+				_stream << "Timestamp: " << received.bundle.timestamp.toString() << std::endl;
+				_stream << "Sequencenumber: " << received.bundle.sequencenumber.toString() << std::endl;
+				_stream << "Lifetime: " << received.bundle.lifetime.toString() << std::endl;
+				_stream << "Procflags: " << received.bundle.procflags.toString() << std::endl;
 
 				// write the destination eid
-				_stream << "Destination: " << received.bundle._destination.getString() << std::endl;
+				_stream << "Destination: " << received.bundle.destination.getString() << std::endl;
 
 				if (received.bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
 				{
 					// write fragmentation values
-					_stream << "Appdatalength: " << received.bundle._appdatalength << std::endl;
-					_stream << "Fragmentoffset: " << received.bundle._fragmentoffset << std::endl;
+					_stream << "Appdatalength: " << received.bundle.appdatalength.toString() << std::endl;
+					_stream << "Fragmentoffset: " << received.bundle.fragmentoffset.toString() << std::endl;
 				}
 
 				// close the event
@@ -171,10 +183,10 @@ namespace dtn
 
 				// write the bundle data
 				_stream << "Source: " << custody.getBundle().source.getString() << std::endl;
-				_stream << "Timestamp: " << custody.getBundle().timestamp << std::endl;
-				_stream << "Sequencenumber: " << custody.getBundle().sequencenumber << std::endl;
-				_stream << "Lifetime: " << custody.getBundle().lifetime << std::endl;
-				_stream << "Procflags: " << custody.getBundle().procflags << std::endl;
+				_stream << "Timestamp: " << custody.getBundle().timestamp.toString() << std::endl;
+				_stream << "Sequencenumber: " << custody.getBundle().sequencenumber.toString() << std::endl;
+				_stream << "Lifetime: " << custody.getBundle().lifetime.toString() << std::endl;
+				_stream << "Procflags: " << custody.getBundle().procflags.toString() << std::endl;
 
 				// write the destination eid
 				_stream << "Destination: " << custody.getBundle().destination.getString() << std::endl;
@@ -182,8 +194,8 @@ namespace dtn
 				if (custody.getBundle().fragment)
 				{
 					// write fragmentation values
-					_stream << "Appdatalength: " << custody.getBundle().appdatalength << std::endl;
-					_stream << "Fragmentoffset: " << custody.getBundle().offset << std::endl;
+					_stream << "Appdatalength: " << custody.getBundle().appdatalength.toString() << std::endl;
+					_stream << "Fragmentoffset: " << custody.getBundle().offset.toString() << std::endl;
 				}
 
 				// close the event
@@ -199,13 +211,13 @@ namespace dtn
 
 				// write the bundle data
 				_stream << "Source: " << aborted.getBundleID().source.getString() << std::endl;
-				_stream << "Timestamp: " << aborted.getBundleID().timestamp << std::endl;
-				_stream << "Sequencenumber: " << aborted.getBundleID().sequencenumber << std::endl;
+				_stream << "Timestamp: " << aborted.getBundleID().timestamp.toString() << std::endl;
+				_stream << "Sequencenumber: " << aborted.getBundleID().sequencenumber.toString() << std::endl;
 
 				if (aborted.getBundleID().fragment)
 				{
 					// write fragmentation values
-					_stream << "Fragmentoffset: " << aborted.getBundleID().offset << std::endl;
+					_stream << "Fragmentoffset: " << aborted.getBundleID().offset.toString() << std::endl;
 				}
 
 				// close the event
@@ -222,10 +234,10 @@ namespace dtn
 
 				// write the bundle data
 				_stream << "Source: " << completed.getBundle().source.getString() << std::endl;
-				_stream << "Timestamp: " << completed.getBundle().timestamp << std::endl;
-				_stream << "Sequencenumber: " << completed.getBundle().sequencenumber << std::endl;
-				_stream << "Lifetime: " << completed.getBundle().lifetime << std::endl;
-				_stream << "Procflags: " << completed.getBundle().procflags << std::endl;
+				_stream << "Timestamp: " << completed.getBundle().timestamp.toString() << std::endl;
+				_stream << "Sequencenumber: " << completed.getBundle().sequencenumber.toString() << std::endl;
+				_stream << "Lifetime: " << completed.getBundle().lifetime.toString() << std::endl;
+				_stream << "Procflags: " << completed.getBundle().procflags.toString() << std::endl;
 
 				// write the destination eid
 				_stream << "Destination: " << completed.getBundle().destination.getString() << std::endl;
@@ -233,8 +245,8 @@ namespace dtn
 				if (completed.getBundle().fragment)
 				{
 					// write fragmentation values
-					_stream << "Appdatalength: " << completed.getBundle().appdatalength << std::endl;
-					_stream << "Fragmentoffset: " << completed.getBundle().offset << std::endl;
+					_stream << "Appdatalength: " << completed.getBundle().appdatalength.toString() << std::endl;
+					_stream << "Fragmentoffset: " << completed.getBundle().offset.toString() << std::endl;
 				}
 
 				// close the event
@@ -283,10 +295,10 @@ namespace dtn
 
 				// write the bundle data
 				_stream << "Source: " << queued.bundle.source.getString() << std::endl;
-				_stream << "Timestamp: " << queued.bundle.timestamp << std::endl;
-				_stream << "Sequencenumber: " << queued.bundle.sequencenumber << std::endl;
-				_stream << "Lifetime: " << queued.bundle.lifetime << std::endl;
-				_stream << "Procflags: " << queued.bundle.procflags << std::endl;
+				_stream << "Timestamp: " << queued.bundle.timestamp.toString() << std::endl;
+				_stream << "Sequencenumber: " << queued.bundle.sequencenumber.toString() << std::endl;
+				_stream << "Lifetime: " << queued.bundle.lifetime.toString() << std::endl;
+				_stream << "Procflags: " << queued.bundle.procflags.toString() << std::endl;
 
 				// write the destination eid
 				_stream << "Destination: " << queued.bundle.destination.getString() << std::endl;
@@ -294,8 +306,8 @@ namespace dtn
 				if (queued.bundle.fragment)
 				{
 					// write fragmentation values
-					_stream << "Appdatalength: " << queued.bundle.appdatalength << std::endl;
-					_stream << "Fragmentoffset: " << queued.bundle.offset << std::endl;
+					_stream << "Appdatalength: " << queued.bundle.appdatalength.toString() << std::endl;
+					_stream << "Fragmentoffset: " << queued.bundle.offset.toString() << std::endl;
 				}
 
 				// close the event
@@ -320,7 +332,7 @@ namespace dtn
 				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
-				if (cmd.size() == 0) continue;
+				if (cmd.empty()) continue;
 
 				// return to previous level
 				if (cmd[0] == "exit") break;

@@ -25,13 +25,15 @@ namespace dtn
 {
 	namespace data
 	{
+		const dtn::data::block_t StreamBlock::BLOCK_TYPE = 242;
+
 		dtn::data::Block* StreamBlock::Factory::create()
 		{
 			return new StreamBlock();
 		}
 
 		StreamBlock::StreamBlock()
-		: dtn::data::Block(StreamBlock::BLOCK_TYPE), _seq(0), _streamflags(0)
+		: dtn::data::Block(StreamBlock::BLOCK_TYPE), _seq(0)
 		{
 		}
 
@@ -40,51 +42,43 @@ namespace dtn
 
 		}
 
-		size_t StreamBlock::getLength() const
+		Length StreamBlock::getLength() const
 		{
-			return dtn::data::SDNV(_streamflags).getLength() + _seq.getLength();
+			return _streamflags.getLength() + _seq.getLength();
 		}
 
-		std::ostream& StreamBlock::serialize(std::ostream &stream, size_t&) const
+		std::ostream& StreamBlock::serialize(std::ostream &stream, Length&) const
 		{
-			stream << dtn::data::SDNV(_streamflags);
+			stream << _streamflags;
 			stream << _seq;
 			return stream;
 		}
 
-		std::istream& StreamBlock::deserialize(std::istream &stream, const size_t)
+		std::istream& StreamBlock::deserialize(std::istream &stream, const Length&)
 		{
-			dtn::data::SDNV flags;
-			stream >> flags; _streamflags = flags.getValue();
+			stream >> _streamflags;
 			stream >> _seq;
 			return stream;
 		}
 
 		void StreamBlock::set(STREAM_FLAGS flag, const bool &value)
 		{
-			if (value)
-			{
-				_streamflags |= flag;
-			}
-			else
-			{
-				_streamflags &= ~(flag);
-			}
+			_streamflags.setBit(flag, value);
 		}
 
 		bool StreamBlock::get(STREAM_FLAGS flag) const
 		{
-			return (_streamflags & flag);
+			return _streamflags.getBit(flag);
 		}
 
-		void StreamBlock::setSequenceNumber(size_t seq)
+		void StreamBlock::setSequenceNumber(Number seq)
 		{
 			_seq = seq;
 		}
 
-		size_t StreamBlock::getSequenceNumber() const
+		const Number& StreamBlock::getSequenceNumber() const
 		{
-			return _seq.getValue();
+			return _seq;
 		}
 	} /* namespace data */
 } /* namespace dtn */

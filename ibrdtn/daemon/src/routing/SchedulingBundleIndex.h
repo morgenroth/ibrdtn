@@ -9,6 +9,8 @@
 #define SCHEDULINGBUNDLEINDEX_H_
 
 #include "storage/BundleIndex.h"
+#include <ibrdtn/data/Number.h>
+#include <ibrcommon/thread/Mutex.h>
 
 namespace dtn
 {
@@ -29,7 +31,7 @@ namespace dtn
 			 * @param cb The instance of the callback filter class.
 			 * @return A list of bundles.
 			 */
-			virtual void get(dtn::storage::BundleSelector &cb, dtn::storage::BundleResult &result) throw (dtn::storage::NoBundleFoundException, dtn::storage::BundleSelectorException);
+			virtual void get(const dtn::storage::BundleSelector &cb, dtn::storage::BundleResult &result) throw (dtn::storage::NoBundleFoundException, dtn::storage::BundleSelectorException);
 
 			/**
 			 * Return a set of distinct destinations for all bundles in the storage.
@@ -60,7 +62,7 @@ namespace dtn
 
 					// use payloadlength for not fragmented bundles and
 					// appdatalength for fragments
-					size_t complete_payloadlength_lhs, complete_payloadlength_rhs;
+					dtn::data::Number complete_payloadlength_lhs, complete_payloadlength_rhs;
 
 					if (lhs.fragment)
 						complete_payloadlength_lhs = lhs.appdatalength;
@@ -78,18 +80,13 @@ namespace dtn
 					if (complete_payloadlength_lhs != complete_payloadlength_rhs)
 						return false;
 
-					if (lhs.sequencenumber < rhs.sequencenumber)
-						return true;
-					if (lhs.sequencenumber != rhs.sequencenumber)
-						return false;
-
-					// sequencenumber is equal, bundles have to be fragments
-					return (lhs.offset < rhs.offset);
+					return lhs < rhs;
 				}
 			};
 
 			typedef std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY> priority_index;
 			priority_index _priority_index;
+			ibrcommon::Mutex _index_mutex;
 		};
 	} /* namespace routing */
 } /* namespace dtn */

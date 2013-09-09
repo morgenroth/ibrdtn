@@ -20,10 +20,17 @@
  *    THIS FILE BASES ON DTN_2.4.0/SERVLIB/BUNDLING/SDNV.H
  */
 
+#include <ibrcommon/Exceptions.h>
+#include <ibrdtn/data/Exceptions.h>
+#include <ibrdtn/utils/Random.h>
+
+#include <sstream>
 #include <sys/types.h>
 #include <iostream>
 #include <stdio.h>
 #include <stdint.h>
+#include <limits>
+#include <cstdlib>
 
 #ifndef _SDNV_H_
 #define _SDNV_H_
@@ -50,6 +57,15 @@ namespace dtn
 {
 	namespace data
 	{
+		class ValueOutOfRangeException : public dtn::InvalidDataException
+		{
+		public:
+			ValueOutOfRangeException(const std::string &what = "The value is out of range.") throw() : dtn::InvalidDataException(what)
+			{
+			};
+		};
+
+		template<class E>
 		class SDNV
 		{
 		public:
@@ -63,93 +79,421 @@ namespace dtn
 			 * Constructor for a SDNV object
 			 * @param value The new value of the SDNV
 			 */
-			SDNV(const uint64_t value);
+			SDNV(const E value) : _value(value) {
+			}
 
-			/**
-			 * Empty constructor for a SDNV object
-			 */
-			SDNV();
+			SDNV() : _value(0) {
+			}
 
 			/**
 			 * Destructor
 			 * @return
 			 */
-			~SDNV();
+			~SDNV() {
+			}
 
 			/**
 			 * Determine the encoded length of the value.
 			 * @return The length of the encoded value.
 			 */
-			size_t getLength() const;
+			size_t getLength() const
+			{
+				size_t val_len = 0;
+				E tmp = _value;
 
-			static size_t getLength(const uint64_t &value);
-			static size_t getLength(const unsigned char *data);
+				do {
+					tmp = tmp >> 7;
+					val_len++;
+				} while (tmp != 0);
 
-			/**
-			 * Returns the decoded value.
-			 * @return The decoded value.
-			 */
-			uint64_t getValue() const;
+				return val_len;
+			}
 
-			/**
-			 * Decode a SDNV out of a existing char array.
-			 * @param data The char array.
-			 * @param len The size of the array. (overflow protection)
-			 * @return The size of the encoded SDNV.
-			 */
-			size_t decode(const char *data, const size_t len);
+			template<typename T>
+			T get() const {
+				return static_cast<T>(_value);
+			}
 
-			/**
-			 * Encode a SDNV and write it to a data array.
-			 * @param data The data array to write to.
-			 * @param len The size of the array. (overflow protection)
-			 * @return The size of the written data.
-			 */
-			size_t encode(char *data, const size_t len) const;
+			const E& get() const {
+				return _value;
+			}
 
-			size_t operator=(const size_t &value);
+			const SDNV& operator=(const E value) {
+				_value = value;
+				return (*this);
+			}
 
-			bool operator==(const SDNV &value) const;
-			bool operator!=(const SDNV &value) const;
+			bool operator==(const E value) const
+			{
+				return (value == _value);
+			}
 
-			SDNV operator+(const SDNV &value);
-			SDNV& operator+=(const SDNV &value);
+			bool operator==(const SDNV<E> &value) const
+			{
+				return (value._value == _value);
+			}
 
-			SDNV operator-(const SDNV &value);
-			SDNV& operator-=(const SDNV &value);
+			bool operator!=(const E value) const
+			{
+				return (value != _value);
+			}
 
-			bool operator&(const size_t &value) const;
+			bool operator!=(const SDNV<E> &value) const
+			{
+				return (value._value != _value);
+			}
 
-			bool operator<(const SDNV &value) const;
-			bool operator<=(const SDNV &value) const;
-			bool operator>(const SDNV &value) const;
-			bool operator>=(const SDNV &value) const;
+			SDNV<E> operator+(const E value)
+			{
+				E result = _value + value;
+				return SDNV<E>(result);
+			}
+
+			SDNV<E> operator+(const SDNV<E> &value)
+			{
+				E result = _value + value._value;
+				return SDNV<E>(result);
+			}
+
+			friend
+			SDNV<E> operator+(const SDNV<E> &left, const SDNV<E> &right)
+			{
+				SDNV<E> ret(left);
+				ret += right;
+				return ret;
+			}
+
+			friend
+			SDNV<E> operator+(const SDNV<E> &left, const E right)
+			{
+				SDNV<E> ret(left);
+				ret += right;
+				return ret;
+			}
+
+			SDNV<E>& operator+=(const E value)
+			{
+				_value += value;
+				return (*this);
+			}
+
+			SDNV<E>& operator+=(const SDNV<E> &value)
+			{
+				_value += value._value;
+				return (*this);
+			}
+
+			SDNV<E>& operator++() // prefix
+			{
+				++_value;
+				return (*this);
+			}
+
+			SDNV<E> operator++(int) // postfix
+			{
+				SDNV<E> prev(*this);
+				++_value;
+				return prev;
+			}
+
+			SDNV<E> operator-(const E value)
+			{
+				E result = _value - value;
+				return SDNV<E>(result);
+			}
+
+			SDNV<E> operator-(const SDNV<E> &value)
+			{
+				E result = _value - value._value;
+				return SDNV<E>(result);
+			}
+
+			friend
+			SDNV<E> operator-(const SDNV<E> &left, const SDNV<E> &right)
+			{
+				SDNV<E> ret(left);
+				ret -= right;
+				return ret;
+			}
+
+			friend
+			SDNV<E> operator-(const SDNV<E> &left, const E right)
+			{
+				SDNV<E> ret(left);
+				ret -= right;
+				return ret;
+			}
+
+			SDNV<E>& operator-=(const E value)
+			{
+				_value -= value;
+				return (*this);
+			}
+
+			SDNV<E>& operator-=(const SDNV<E> &value)
+			{
+				_value -= value._value;
+				return (*this);
+			}
+
+			SDNV<E>& operator--() // prefix
+			{
+				--_value;
+				return (*this);
+			}
+
+			SDNV<E> operator--(int) // postfix
+			{
+				SDNV<E> prev(*this);
+				--_value;
+				return prev;
+			}
+
+			SDNV<E> operator/(const E value)
+			{
+				E result = _value / value;
+				return SDNV<E>(result);
+			}
+
+			SDNV<E> operator/(const SDNV<E> &value)
+			{
+				E result = _value / value._value;
+				return SDNV<E>(result);
+			}
+
+			friend
+			SDNV<E> operator/(const SDNV<E> &left, const SDNV<E> &right)
+			{
+				SDNV<E> ret(left);
+				ret /= right;
+				return ret;
+			}
+
+			friend
+			SDNV<E> operator/(const SDNV<E> &left, const E right)
+			{
+				SDNV<E> ret(left);
+				ret /= right;
+				return ret;
+			}
+
+			SDNV<E>& operator/=(const E value)
+			{
+				_value /= value;
+				return (*this);
+			}
+
+			SDNV<E>& operator/=(const SDNV<E> &value)
+			{
+				_value /= value._value;
+				return (*this);
+			}
+
+			SDNV<E> operator*(const E value)
+			{
+				E result = _value * value;
+				return SDNV<E>(result);
+			}
+
+			SDNV<E> operator*(const SDNV<E> &value)
+			{
+				E result = _value * value._value;
+				return SDNV<E>(result);
+			}
+
+			friend
+			SDNV<E> operator*(const SDNV<E> &left, const SDNV<E> &right)
+			{
+				SDNV<E> ret(left);
+				ret *= right;
+				return ret;
+			}
+
+			friend
+			SDNV<E> operator*(const SDNV<E> &left, const E right)
+			{
+				SDNV<E> ret(left);
+				ret *= right;
+				return ret;
+			}
+
+			SDNV<E>& operator*=(const E value)
+			{
+				_value *= value;
+				return (*this);
+			}
+
+			SDNV<E>& operator*=(const SDNV<E> &value)
+			{
+				_value *= value._value;
+				return (*this);
+			}
+
+			bool operator&(const SDNV<E> &value) const
+			{
+				return (value._value & _value);
+			}
+
+			bool operator|(const SDNV<E> &value) const
+			{
+				return (value._value | _value);
+			}
+
+			SDNV<E>& operator&=(const SDNV<E> &value)
+			{
+				_value &= value._value;
+				return (*this);
+			}
+
+			SDNV<E>& operator|=(const SDNV<E> &value)
+			{
+				_value |= value._value;
+				return (*this);
+			}
+
+			bool operator<(const E value) const
+			{
+				return (_value < value);
+			}
+
+			bool operator<=(const E value) const
+			{
+				return (_value <= value);
+			}
+
+			bool operator>(const E value) const
+			{
+				return (_value > value);
+			}
+
+			bool operator>=(const E value) const
+			{
+				return (_value >= value);
+			}
+
+			bool operator<(const SDNV<E> &value) const
+			{
+				return (_value < value._value);
+			}
+
+			bool operator<=(const SDNV<E> &value) const
+			{
+				return (_value <= value._value);
+			}
+
+			bool operator>(const SDNV<E> &value) const
+			{
+				return (_value > value._value);
+			}
+
+			bool operator>=(const SDNV<E> &value) const
+			{
+				return (_value >= value._value);
+			}
+
+			static SDNV<E> max()
+			{
+				return std::numeric_limits<E>::max();
+			}
+
+			SDNV<E>& random()
+			{
+				// for compatibility use 32-bit here
+				dtn::utils::Random r;
+				uint32_t val = (uint32_t)r.gen_number();
+				(*this) = static_cast<E>(val);
+				return (*this);
+			}
+
+			std::string toString() const {
+				std::stringstream ss;
+				ss << _value;
+				return ss.str();
+			}
+
+			void fromString(const std::string &data) {
+				std::stringstream ss; ss.str(data);
+				ss >> _value;
+			}
+
+			void read(std::istream &stream) {
+				stream >> _value;
+			}
+
+			void encode(std::ostream &stream) const
+			{
+				unsigned char buffer[10];
+				unsigned char *bp = &buffer[0];
+				uint64_t val = _value;
+
+				const size_t val_len = getLength();
+
+				if (!(val_len > 0)) throw ValueOutOfRangeException("ERROR(SDNV): !(val_len > 0)");
+				if (!(val_len <= SDNV::MAX_LENGTH)) throw ValueOutOfRangeException("ERROR(SDNV): !(val_len <= MAX_LENGTH)");
+
+				// Now advance bp to the last byte and fill it in backwards with the value bytes.
+				bp += val_len;
+				unsigned char high_bit = 0; // for the last octet
+				do {
+					--bp;
+					*bp = (unsigned char)(high_bit | (val & 0x7f));
+					high_bit = (1 << 7); // for all but the last octet
+					val = val >> 7;
+				} while (val != 0);
+
+				if (!(bp == &buffer[0])) throw ValueOutOfRangeException("ERROR(SDNV): !(bp == buffer)");
+
+				// write encoded value to the stream
+				stream.write((const char*)&buffer[0], val_len);
+			}
+
+			void decode(std::istream &stream)
+			{
+				size_t val_len = 0;
+				unsigned char bp = 0;
+				unsigned char start = 0;
+
+				int carry = 0;
+
+				_value = 0;
+				do {
+					stream.get((char&)bp);
+
+					_value = (_value << 7) | (bp & 0x7f);
+					++val_len;
+
+					if ((bp & (1 << 7)) == 0)
+						break; // all done;
+
+					// check if the value fits into sizeof(E)
+					if ((val_len % 8) == 0) ++carry;
+
+					if ((sizeof(E) + carry) < val_len)
+						throw ValueOutOfRangeException("ERROR(SDNV): overflow value in sdnv");
+
+					if (start == 0) start = bp;
+				} while (1);
+
+				if ((val_len > SDNV::MAX_LENGTH) || ((val_len == SDNV::MAX_LENGTH) && (start != 0x81)))
+					throw ValueOutOfRangeException("ERROR(SDNV): overflow value in sdnv");
+			}
 
 		private:
-			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV &obj);
-			friend std::istream &operator>>(std::istream &stream, dtn::data::SDNV &obj);
+			friend
+			std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV<E> &obj)
+			{
+				obj.encode(stream);
+				return stream;
+			}
 
-			// INLINE-FUNCTIONS
-			inline static size_t encoding_len(uint16_t val){ return encoding_len((uint64_t)val); }
-			inline static size_t encoding_len(uint32_t val){ return encoding_len((uint64_t)val); }
-			inline static int encode(uint16_t val, char* bp, size_t len){ return encode((uint64_t)val, (unsigned char*)bp, len); }
-			inline static int encode(uint32_t val, char* bp, size_t len){ return encode((uint64_t)val, (unsigned char*)bp, len); }
-			inline static int encode(uint64_t val, char* bp, size_t len){ return encode(val, (unsigned char*)bp, len); }
-			inline static int encode(float val, char* bp, size_t len){ return encode(val, (unsigned char*)bp, len); }
-			inline static int decode(char* bp, size_t len, uint64_t* val){ return decode((unsigned char*)bp, len, val); }
-			inline static int decode(char* bp, size_t len, uint32_t* val){ return decode((unsigned char*)bp, len, val); }
+			friend
+			std::istream &operator>>(std::istream &stream, dtn::data::SDNV<E> &obj)
+			{
+				obj.decode(stream);
+				return stream;
+			}
 
-			static size_t encoding_len(uint64_t val);
-			static size_t encoding_len(float val_f);
-			static int encode(uint64_t val, unsigned char* bp, size_t len);
-			static int encode(float val_f, unsigned char* bp, size_t len);
-			static int decode(const unsigned char* bp, size_t len, float* val_f);
-			static int decode(const unsigned char* bp, size_t len, uint64_t* val);
-			static int decode(const unsigned char* bp, size_t len, uint32_t* val);
-			static int decode(const unsigned char* bp, size_t len, uint16_t* val);
-			static size_t len(const unsigned char* bp);
-
-			uint64_t _value;
+			E _value;
 		};
 	}
 }

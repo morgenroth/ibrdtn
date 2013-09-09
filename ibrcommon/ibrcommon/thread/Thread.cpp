@@ -26,11 +26,16 @@
 #include <stdexcept>
 #include <pthread.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <signal.h>
 
-#ifdef ANDROID
-#define PAGE_SIZE sysconf(_SC_PAGESIZE)
+#ifdef __WIN32__
+#include <windows.h>
+#include <unistd.h>
+#elif MACOS
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#else
+#include <unistd.h>
 #endif
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
@@ -39,6 +44,31 @@
 
 namespace ibrcommon
 {
+	size_t Thread::getNumberOfProcessors()
+	{
+#ifdef __WIN32__
+		SYSTEM_INFO sysinfo;
+		GetSystemInfo(&sysinfo);
+		return sysinfo.dwNumberOfProcessors;
+#elif MACOS
+		int nm[2];
+		size_t len = 4;
+		uint32_t count;
+
+		nm[0] = CTL_HW; nm[1] = HW_AVAILCPU;
+		sysctl(nm, 2, &count, &len, NULL, 0);
+
+		if(count < 1) {
+			nm[1] = HW_NCPU;
+			sysctl(nm, 2, &count, &len, NULL, 0);
+			if(count < 1) { count = 1; }
+		}
+		return count;
+#else
+		return sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+	}
+
 	void* Thread::__execute__(void *obj) throw ()
 	{
 #ifdef __DEVELOPMENT_ASSERTIONS__
@@ -74,7 +104,11 @@ namespace ibrcommon
 	}
 
 	Thread::Thread(size_t size)
+#ifdef __WIN32__
+	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(), stack(size), priority(0), _detached(false)
+#else
 	 : _state(THREAD_CREATED, THREAD_FINALIZED), tid(0), stack(size), priority(0), _detached(false)
+#endif
 	{
 		pthread_attr_init(&attr);
 	}
@@ -97,17 +131,20 @@ namespace ibrcommon
 	#endif
 	}
 
-	void Thread::sleep(size_t timeout)
+	void Thread::sleep(time_t timeout)
 	{
+	#if defined(HAVE_PTHREAD_DELAY)
 		timespec ts;
 		ts.tv_sec = timeout / 1000l;
 		ts.tv_nsec = (timeout % 1000l) * 1000000l;
-	#if defined(HAVE_PTHREAD_DELAY)
 		pthread_delay(&ts);
 	#elif defined(HAVE_PTHREAD_DELAY_NP)
+		timespec ts;
+		ts.tv_sec = timeout / 1000l;
+		ts.tv_nsec = (timeout % 1000l) * 1000000l;
 		pthread_delay_np(&ts);
 	#else
-		usleep(timeout * 1000);
+		::usleep(static_cast<useconds_t>(timeout) * 1000);
 	#endif
 	}
 
@@ -116,9 +153,28 @@ namespace ibrcommon
 		pthread_attr_destroy(&attr);
 	}
 
+	void Thread::reset() throw (ThreadException)
+	{
+		if ( _state != THREAD_FINALIZED )
+			throw ThreadException(0, "invalid state for reset");
+
+		pthread_attr_destroy(&attr);
+
+		_state.reset(THREAD_CREATED);
+#if __WIN32__
+		tid = pthread_t();
+#else
+		tid = 0;
+#endif
+		_detached = false;
+
+		pthread_attr_init(&attr);
+	}
+
 	int Thread::kill(int sig)
 	{
-		if (tid == 0) return -1;
+		if (pthread_equal(tid, pthread_t())) return -1;
+
 		return pthread_kill(tid, sig);
 	}
 
@@ -135,10 +191,10 @@ namespace ibrcommon
 				return;
 			}
 
-			if ((ls == THREAD_CANCELLED) || (ls == THREAD_FINALIZED) || (ls == THREAD_JOINABLE)) return;
+			if ((ls == THREAD_CANCELLED) || (ls == THREAD_FINALIZED) || (ls == THREAD_JOINABLE) || (ls == THREAD_FINALIZING)) return;
 
 			// wait until a state is reached where cancellation is possible
-			ls.wait(THREAD_RUNNING | THREAD_JOINABLE | THREAD_FINALIZED);
+			ls.wait(THREAD_RUNNING | THREAD_JOINABLE | THREAD_FINALIZING | THREAD_FINALIZED);
 
 			// exit if the thread is not running
 			if (ls != THREAD_RUNNING) return;
@@ -154,6 +210,11 @@ namespace ibrcommon
 	bool Thread::equal(pthread_t t1, pthread_t t2)
 	{
 		return (pthread_equal(t1, t2) != 0);
+	}
+
+	bool Thread::isFinalized() throw ()
+	{
+		return _state == THREAD_FINALIZED;
 	}
 
 	JoinableThread::JoinableThread(size_t size)

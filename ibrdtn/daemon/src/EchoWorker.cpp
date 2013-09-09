@@ -34,13 +34,13 @@ namespace dtn
 	{
 		EchoWorker::EchoWorker()
 		{
-			AbstractWorker::initialize("/echo", 11, true);
+			AbstractWorker::initialize("echo", true);
 		}
 
 		void EchoWorker::callbackBundleReceived(const Bundle &b)
 		{
 			try {
-				const PayloadBlock &payload = b.getBlock<PayloadBlock>();
+				const PayloadBlock &payload = b.find<PayloadBlock>();
 
 				// generate a echo
 				Bundle echo;
@@ -50,24 +50,24 @@ namespace dtn
 				echo.push_back(ref);
 
 				// set destination and mark the bundle as singleton destination
-				echo._destination = b._source;
+				echo.destination = b.source;
 				echo.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 
 				// set the source of the bundle
-				echo._source = getWorkerURI();
+				echo.source = getWorkerURI();
 
 				// set the lifetime to the same value as the received bundle
-				echo._lifetime = b._lifetime;
+				echo.lifetime = b.lifetime;
 
 				try {
-					const dtn::data::TrackingBlock &tracking = b.getBlock<dtn::data::TrackingBlock>();
+					const dtn::data::TrackingBlock &tracking = b.find<dtn::data::TrackingBlock>();
 					dtn::data::TrackingBlock &target = echo.push_back<dtn::data::TrackingBlock>();
 
 					// copy tracking block
 					target = tracking;
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
-				IBRCOMMON_LOGGER_DEBUG(5) << "echo request received, replying!" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("EchoWorker", 5) << "echo request received, replying!" << IBRCOMMON_LOGGER_ENDL;
 
 				// send it
 				transmit( echo );

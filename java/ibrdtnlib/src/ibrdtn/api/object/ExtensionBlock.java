@@ -21,22 +21,26 @@
 package ibrdtn.api.object;
 
 public class ExtensionBlock extends Block {
-	
-	private Data _data;
 
-	public ExtensionBlock(int type, Data data) {
-		super(type);
-		_data = data;
-	}
+    private Data _data;
 
-	@Override
-	Data getData() {
-		return _data;
-	}
+    public ExtensionBlock(int type) {
+        super(type);
+    }
 
-	public String toString() {
-		return "ExtensionBlock: length="+_data.size()
-			+",type="+getType();
-	}
+    public ExtensionBlock(int type, Data data) {
+        super(type);
+        _data = data;
+    }
 
+    @Override
+    public Data getData() {
+        return _data;
+    }
+
+    @Override
+    public String toString() {
+        return "ExtensionBlock: length=" + _data.size()
+                + ",type=" + getType();
+    }
 }

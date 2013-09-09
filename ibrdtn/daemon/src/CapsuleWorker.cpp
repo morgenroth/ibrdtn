@@ -33,7 +33,7 @@ namespace dtn
 	{
 		CapsuleWorker::CapsuleWorker()
 		{
-			AbstractWorker::initialize("/bundle-in-bundle", 2, true);
+			AbstractWorker::initialize("bundle-in-bundle", true);
 		}
 
 		CapsuleWorker::~CapsuleWorker()
@@ -43,16 +43,18 @@ namespace dtn
 		void CapsuleWorker::callbackBundleReceived(const dtn::data::Bundle &capsule)
 		{
 			try {
-				const PayloadBlock &payload = capsule.getBlock<PayloadBlock>();
+				const PayloadBlock &payload = capsule.find<PayloadBlock>();
 				ibrcommon::BLOB::iostream stream = payload.getBLOB().iostream();
 
 				// read the number of bundles
-				SDNV nob; (*stream) >> nob;
+				dtn::data::Number nob;
+				(*stream) >> nob;
 
 				// read all offsets
-				for (size_t i = 0; i < (nob.getValue() - 1); i++)
+				for (size_t i = 0; (nob - 1) > i; ++i)
 				{
-					SDNV offset; (*stream) >> offset;
+					dtn::data::Number offset;
+					(*stream) >> offset;
 				}
 
 				// create a deserializer for all bundles
@@ -61,18 +63,18 @@ namespace dtn
 
 				try {
 					// read all bundles
-					for (size_t i = 0; i < nob.getValue(); i++)
+					for (size_t i = 0; nob > i; ++i)
 					{
 						// deserialize the next bundle
 						deserializer >> b;
 
 						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(capsule._source, b, false);
+						dtn::net::BundleReceivedEvent::raise(capsule.source, b, false);
 					}
 				}
 				catch (const dtn::InvalidDataException &ex) {
 					// display the rejection
-					IBRCOMMON_LOGGER(warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG("CapsuleWorker", warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 		}

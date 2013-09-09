@@ -34,7 +34,12 @@ namespace dtn
 			Random();
 			virtual ~Random();
 
-			const std::string gen_chars(size_t length) const;
+			/**
+			 * generates a 32-bit random number
+			 */
+			int gen_number() const;
+
+			const std::string gen_chars(const size_t &length) const;
 		};
 	}
 }

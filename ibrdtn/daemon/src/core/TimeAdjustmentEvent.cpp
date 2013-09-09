@@ -15,7 +15,7 @@ namespace dtn
 {
 	namespace core
 	{
-		TimeAdjustmentEvent::TimeAdjustmentEvent(const timeval &o, const float &r)
+		TimeAdjustmentEvent::TimeAdjustmentEvent(const timeval &o, const double &r)
 		 : offset(o), rating(r)
 		{
 		}
@@ -24,7 +24,7 @@ namespace dtn
 		{
 		}
 
-		void TimeAdjustmentEvent::raise(const timeval &offset, const float &rating)
+		void TimeAdjustmentEvent::raise(const timeval &offset, const double &rating)
 		{
 			dtn::core::EventDispatcher<TimeAdjustmentEvent>::raise( new TimeAdjustmentEvent(offset, rating) );
 		}

@@ -20,191 +20,192 @@
  */
 
 #include "ibrdtn/data/Dictionary.h"
-#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/Bundle.h"
 #include <map>
 #include <stdexcept>
-#include <string.h>
 #include <iostream>
-
-using namespace std;
+#include <vector>
 
 namespace dtn
 {
-namespace data
-{
-	Dictionary::Dictionary()
+	namespace data
 	{
-	}
-
-	/**
-	 * create a dictionary with all EID of the given bundle
-	 */
-	Dictionary::Dictionary(const dtn::data::Bundle &bundle)
-	{
-		// rebuild the dictionary
-		add(bundle._destination);
-		add(bundle._source);
-		add(bundle._reportto);
-		add(bundle._custodian);
-
-		// add EID of all secondary blocks
-		const Bundle::block_list &list = bundle.getBlocks();
-
-		for (Bundle::block_list::const_iterator iter = list.begin(); iter != list.end(); iter++)
+		Dictionary::Dictionary()
 		{
-			const Block &b = (*(*iter));
-			add( b.getEIDList() );
 		}
-	}
 
-	Dictionary::Dictionary(const Dictionary &d)
-	{
-		this->operator=(d);
-	}
-
-	/**
-	 * assign operator
-	 */
-	Dictionary& Dictionary::operator=(const Dictionary &d)
-	{
-		_bytestream.str(d._bytestream.str());
-		return (*this);
-	}
-
-	Dictionary::~Dictionary()
-	{
-	}
-
-	size_t Dictionary::get(const std::string value) const
-	{
-		std::string bytes = _bytestream.str();
-		const char *bytebegin = bytes.c_str();
-		const char *bytepos = bytebegin;
-		const char *byteend = bytebegin + bytes.length() + 1;
-
-		if (bytes.length() <= 0) return std::string::npos;
-
-		while (bytepos < byteend)
+		/**
+		 * create a dictionary with all EID of the given bundle
+		 */
+		Dictionary::Dictionary(const dtn::data::Bundle &bundle)
 		{
-			std::string dictstr(bytepos);
+			add(bundle);
+		}
 
-			if (dictstr == value)
+		Dictionary::Dictionary(const Dictionary &d)
+		{
+			this->operator=(d);
+		}
+
+		/**
+		 * assign operator
+		 */
+		Dictionary& Dictionary::operator=(const Dictionary &d)
+		{
+			_bytestream.str(d._bytestream.str());
+			return (*this);
+		}
+
+		Dictionary::~Dictionary()
+		{
+		}
+
+		Number Dictionary::get(const std::string &value) const throw (EntryNotFoundException)
+		{
+			std::string bytes = _bytestream.str();
+			const char *bytebegin = bytes.c_str();
+			const char *bytepos = bytebegin;
+			const char *byteend = bytebegin + bytes.length() + 1;
+
+			if (bytes.length() <= 0) throw EntryNotFoundException();
+
+			while (bytepos < byteend)
 			{
-				return bytepos - bytebegin;
+				std::string dictstr(bytepos);
+
+				if (dictstr == value)
+				{
+					return bytepos - bytebegin;
+				}
+
+				bytepos += dictstr.length() + 1;
 			}
 
-			bytepos += dictstr.length() + 1;
+			 throw EntryNotFoundException();
 		}
 
-		return std::string::npos;
-	}
-
-	bool Dictionary::exists(const std::string value) const
-	{
-		std::string bytes = _bytestream.str();
-		const char *bytepos = bytes.c_str();
-		const char *byteend = bytepos + bytes.length();
-
-		if (bytes.length() <= 0) return false;
-
-		while (bytepos < byteend)
+		bool Dictionary::exists(const std::string &value) const
 		{
-			std::string dictstr(bytepos);
+			std::string bytes = _bytestream.str();
+			const char *bytepos = bytes.c_str();
+			const char *byteend = bytepos + bytes.length();
 
-			if (dictstr == value)
+			if (bytes.length() <= 0) return false;
+
+			while (bytepos < byteend)
 			{
-				return true;
+				std::string dictstr(bytepos);
+
+				if (dictstr == value)
+				{
+					return true;
+				}
+
+				bytepos += dictstr.length() + 1;
 			}
 
-			bytepos += dictstr.length() + 1;
+			return false;
 		}
 
-		return false;
-	}
-
-	void Dictionary::add(const std::string value)
-	{
-		if (!exists(value))
+		void Dictionary::add(const std::string &value)
 		{
-			_bytestream << value << '\0';
+			if (!exists(value))
+			{
+				_bytestream << value << '\0';
+			}
 		}
-	}
 
-	void Dictionary::add(const EID &eid)
-	{
-		add(eid.getScheme());
-		add(eid.getSSP());
-	}
-
-	void Dictionary::add(const list<EID> &eids)
-	{
-		list<EID>::const_iterator iter = eids.begin();
-
-		while (iter != eids.end())
+		void Dictionary::add(const EID &eid)
 		{
-			add(*iter);
-			iter++;
+			add(eid.getScheme());
+			add(eid.getSSP());
+		}
+
+		void Dictionary::add(const list<EID> &eids)
+		{
+			list<EID>::const_iterator iter = eids.begin();
+
+			while (iter != eids.end())
+			{
+				add(*iter);
+				++iter;
+			}
+		}
+
+		void Dictionary::add(const Bundle &bundle)
+		{
+			// rebuild the dictionary
+			add(bundle.destination);
+			add(bundle.source);
+			add(bundle.reportto);
+			add(bundle.custodian);
+
+			// add EID of all secondary blocks
+			for (Bundle::const_iterator iter = bundle.begin(); iter != bundle.end(); ++iter)
+			{
+				const Block &b = (**iter);
+				add( b.getEIDList() );
+			}
+		}
+
+		EID Dictionary::get(const Number &scheme, const Number &ssp)
+		{
+			char buffer[1024];
+
+			_bytestream.seekg(scheme.get<std::streampos>());
+			_bytestream.get(buffer, 1024, '\0');
+			std::string scheme_str(buffer);
+
+			_bytestream.seekg(ssp.get<std::streampos>());
+			_bytestream.get(buffer, 1024, '\0');
+			std::string ssp_str(buffer);
+
+			return EID(scheme_str, ssp_str);
+		}
+
+		void Dictionary::clear()
+		{
+			_bytestream.str("");
+		}
+
+		Size Dictionary::getSize() const
+		{
+			return _bytestream.str().length();
+		}
+
+		dtn::data::Dictionary::Reference Dictionary::getRef(const EID &eid) const
+		{
+			const std::string scheme = eid.getScheme();
+			const std::string ssp = eid.getSSP();
+			return make_pair(get(scheme), get(ssp));
+		}
+
+		std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj)
+		{
+			dtn::data::Number length(obj.getSize());
+			stream << length;
+			stream << obj._bytestream.str();
+
+			return stream;
+		}
+
+		std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj)
+		{
+			dtn::data::Number length;
+			stream >> length;
+
+			// if the dictionary size if zero throw a exception
+			if (length == 0)
+				throw dtn::InvalidDataException("Dictionary size is zero!");
+
+			obj._bytestream.str("");
+			std::vector<char> data(length.get<size_t>());
+			stream.read(&data[0], data.size());
+			obj._bytestream.write(&data[0], data.size());
+
+			return stream;
 		}
 	}
-
-	EID Dictionary::get(size_t scheme, size_t ssp)
-	{
-		char buffer[1024];
-
-		_bytestream.seekg(scheme);
-		_bytestream.get(buffer, 1024, '\0');
-		string scheme_str(buffer);
-
-		_bytestream.seekg(ssp);
-		_bytestream.get(buffer, 1024, '\0');
-		string ssp_str(buffer);
-
-		return EID(scheme_str, ssp_str);
-	}
-
-	void Dictionary::clear()
-	{
-		_bytestream.str("");
-	}
-
-	size_t Dictionary::getSize() const
-	{
-		return _bytestream.str().length();
-	}
-
-	pair<size_t, size_t> Dictionary::getRef(const EID &eid) const
-	{
-		const string scheme = eid.getScheme();
-		const string ssp = eid.getSSP();
-		return make_pair(get(scheme), get(ssp));
-	}
-
-	std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj)
-	{
-		dtn::data::SDNV length(obj.getSize());
-		stream << length;
-		stream << obj._bytestream.str();
-
-		return stream;
-	}
-
-	std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj)
-	{
-		dtn::data::SDNV length;
-		stream >> length;
-
-		// if the dictionary size if zero throw a exception
-		if (length.getValue() <= 0)
-			throw dtn::InvalidDataException("Dictionary size is zero!");
-
-		obj._bytestream.str("");
-		char data[length.getValue()];
-		stream.read(data, length.getValue());
-		obj._bytestream.write(data, length.getValue());
-
-		return stream;
-	}
-}
 }

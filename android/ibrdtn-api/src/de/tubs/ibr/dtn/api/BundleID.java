@@ -21,18 +21,19 @@
 
 package de.tubs.ibr.dtn.api;
 
-import java.util.Date;
+import java.util.StringTokenizer;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 
 public class BundleID implements Parcelable {
 	
-	private String source = null;
-	private Date timestamp = null;
+	private SingletonEndpoint source = null;
+	private Timestamp timestamp = null;
 	private Long sequencenumber = null;
 	
-	private Boolean fragment = false;
+	private boolean fragment = false;
 	private Long fragment_offset = 0L;
 
 	public BundleID()
@@ -41,50 +42,109 @@ public class BundleID implements Parcelable {
 	
 	public BundleID(Bundle b)
 	{
-		this.source = b.source;
-		this.timestamp = b.timestamp;
-		this.sequencenumber = b.sequencenumber;
-		//this.fragment = b.procflags && 0x08;
-		this.fragment_offset = b.fragment_offset;
+		this.source = b.getSource();
+		this.timestamp = b.getTimestamp();
+		this.sequencenumber = b.getSequencenumber();
+		
+		this.fragment = b.get(ProcFlags.FRAGMENT);
+		this.fragment_offset = b.getFragmentOffset();
 	}
 	
-	public BundleID(String source, Date timestamp, Long sequencenumber)
+	public BundleID(SingletonEndpoint source, Timestamp timestamp, Long sequencenumber)
 	{
 		this.source = source;
 		this.timestamp = timestamp;
 		this.sequencenumber = sequencenumber;
 	}
 
-	public String getSource() {
+	public SingletonEndpoint getSource() {
 		return source;
 	}
 
-	public void setSource(String source) {
+	public void setSource(SingletonEndpoint source) {
 		this.source = source;
 	}
-
+	
 	@Override
+    public boolean equals(Object o) {
+	    if (o instanceof BundleID) {
+	        BundleID foreign_id = (BundleID)o;
+
+	        if (timestamp != null)
+	            if (!timestamp.equals(foreign_id.timestamp)) return false;
+	        
+	        if (sequencenumber != null)
+	            if (!sequencenumber.equals(foreign_id.sequencenumber)) return false;
+	        
+	        if (source != null)
+	            if (!source.equals(foreign_id.source)) return false;
+	        
+	        if (fragment) {
+	            if (!foreign_id.fragment) return false;
+	            
+	            if (fragment_offset != null)
+	                if (!fragment_offset.equals(foreign_id.fragment_offset)) return false;
+	        }
+	        
+	        return true;
+	    }
+        return super.equals(o);
+    }
+
+    @Override
 	public String toString() {
 		if (fragment)
 		{
-			return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getTime())) + 
+			return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getValue())) + 
 					" " + String.valueOf(this.sequencenumber) + 
 					" " + String.valueOf(this.fragment_offset) + 
 					" " + this.source;
 		}
 		else
 		{
-			return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getTime())) + 
+			return ((this.timestamp == null) ? "null" : String.valueOf(this.timestamp.getValue())) + 
 					" " + String.valueOf(this.sequencenumber) + 
 					" " + this.source;
 		}
 	}
+	
+	public static BundleID fromString(String data) {
+	    BundleID ret = new BundleID();
 
-	public Date getTimestamp() {
+	    // split bundle id into tokens
+	    StringTokenizer tokenizer = new StringTokenizer( data );
+	    
+	    // get the number of tokens (fragment or not)
+	    int count = tokenizer.countTokens();
+	    
+	    // read the timestamp
+	    ret.timestamp = new Timestamp(Long.valueOf(tokenizer.nextToken()));
+	    
+	    // read the sequencenumber
+	    ret.sequencenumber = Long.valueOf(tokenizer.nextToken());
+
+	    if (count > 3) {
+	        // bundle id belongs to a fragment
+	        ret.fragment = true;
+	        
+	        // read the fragment offset
+	        ret.fragment_offset = Long.valueOf(tokenizer.nextToken());
+	    } else {
+	        ret.fragment = false;
+	        ret.fragment_offset = 0L;
+	    }
+	    
+	    // read the source endpoint
+	    ret.source = new SingletonEndpoint(tokenizer.nextToken());
+
+	    return ret;
+	}
+
+	public Timestamp getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(Date timestamp) {
+	public void setTimestamp(Timestamp timestamp) {
 		this.timestamp = timestamp;
 	}
 
@@ -101,24 +161,32 @@ public class BundleID implements Parcelable {
 	}
 
 	public void writeToParcel(Parcel dest, int flags) {
-		dest.writeString(source);
-		dest.writeLong( (timestamp == null) ? 0L : timestamp.getTime() );
+		if (source == null) dest.writeString("");
+		else dest.writeString(source.toString());
+		
+		dest.writeLong( (timestamp == null) ? 0L : timestamp.getValue() );
 		dest.writeLong( (sequencenumber == null) ? 0L : sequencenumber );
-//		dest.writeBooleanArray(new boolean[] {fragment});
-//		dest.writeLong( (fragment_offset == null) ? 0L : fragment_offset );
+		
+		dest.writeBooleanArray(new boolean[] {fragment});
+		dest.writeLong( (fragment_offset == null) ? 0L : fragment_offset );
 	}
 	
     public static final Creator<BundleID> CREATOR = new Creator<BundleID>() {
         public BundleID createFromParcel(final Parcel source) {
         	BundleID id = new BundleID();
-        	id.source = source.readString();
+        	
+        	String s_eid = source.readString();
+        	if (s_eid.length() == 0) id.source = null;
+        	else id.source = new SingletonEndpoint(s_eid);
+        	
         	Long ts = source.readLong();
-        	id.timestamp = (ts == 0) ? null : new Date( ts );
+        	id.timestamp = (ts == 0) ? null : new Timestamp( ts );
         	id.sequencenumber = source.readLong();
-//        	boolean[] barray = new boolean[1];
-//        	source.readBooleanArray(barray);
-//        	id.fragment = barray[0];
-//        	id.fragment_offset = source.readLong();
+        	
+        	boolean[] barray = { false };
+        	source.readBooleanArray(barray);
+        	id.fragment = barray[0];
+        	id.fragment_offset = source.readLong();
         	return id;
         }
 

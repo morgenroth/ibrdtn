@@ -1,21 +1,10 @@
 ## sub directory
 
 h_sources = \
-	BLOBBundle.h \
-	APIClient.h \
 	Client.h \
-	FileBundle.h \
-	StringBundle.h \
-	Bundle.h \
-	dtn_api.h \
 	PlainSerializer.h
 
 cc_sources = \
-	BLOBBundle.cpp \
-	FileBundle.cpp \
-	StringBundle.cpp \
-	Bundle.cpp \
-	APIClient.cpp \
 	Client.cpp \
 	PlainSerializer.cpp
 
@@ -41,5 +30,4 @@ Android.mk: Makefile.am
 		-:SOURCES $(h_sources) $(cc_sources) \
 		-:CPPFLAGS $(AM_CPPFLAGS) \
 		-:LDFLAGS $(AM_LDFLAGS) \
-		-:LIBFILTER_STATIC ibrcommon \
 		> $@

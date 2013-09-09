@@ -22,7 +22,7 @@ namespace dtn
 			virtual bool match(const dtn::data::EID &eid) const = 0;
 			virtual const dtn::data::EID& getDestination() const = 0;
 			virtual const std::string toString() const = 0;
-			virtual size_t getExpiration() const { return 0; };
+			virtual const dtn::data::Timestamp& getExpiration() const = 0;
 		};
 	}
 }

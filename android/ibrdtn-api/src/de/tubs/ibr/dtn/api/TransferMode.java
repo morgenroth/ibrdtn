@@ -27,7 +27,6 @@ import android.os.Parcelable;
 public enum TransferMode implements Parcelable {
 	SIMPLE,
 	FILEDESCRIPTOR,
-	PASSTHROUGH,
 	NULL;
 
     public int describeContents() {

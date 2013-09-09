@@ -3,7 +3,7 @@
 # ibrdtn
 #
 #############################################################
-IBRDTN_VERSION:=0.8.0
+IBRDTN_VERSION:=0.10.0
 IBRDTN_SOURCE:=ibrdtn-$(IBRDTN_VERSION).tar.gz
 IBRDTN_SITE:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 IBRDTN_LIBTOOL_PATCH:=NO

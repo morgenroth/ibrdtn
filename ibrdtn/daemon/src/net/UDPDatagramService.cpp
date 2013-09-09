@@ -26,6 +26,10 @@
 #include <vector>
 #include <string.h>
 
+#ifdef __WIN32__
+#define EADDRINUSE WSAEADDRINUSE
+#endif
+
 namespace dtn
 {
 	namespace net
@@ -85,7 +89,7 @@ namespace dtn
 					// convert the port into a string
 					std::stringstream ss; ss << _bind_port;
 
-					for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+					for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); ++iter) {
 						ibrcommon::vaddress &addr = (*iter);
 
 						// handle the addresses according to their family
@@ -147,13 +151,13 @@ namespace dtn
 		void UDPDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const ibrcommon::vaddress &destination, const char *buf, size_t length) throw (DatagramException)
 		{
 			try {
-				char tmp[length + 2];
+				std::vector<char> tmp(length + 2);
 
 				// add a 2-byte header - type of frame first
 				tmp[0] = type;
 
 				// flags (4-bit) + seqno (4-bit)
-				tmp[1] = (0xf0 & (flags << 4)) | (0x0f & seqno);
+				tmp[1] = static_cast<char>((0xf0 & (flags << 4)) | (0x0f & seqno));
 
 				// copy payload to the new buffer
 				::memcpy(&tmp[2], buf, length);
@@ -162,11 +166,11 @@ namespace dtn
 
 				// create vaddress
 				ibrcommon::socketset sockset = _vsocket.getAll();
-				for (ibrcommon::socketset::iterator iter = sockset.begin(); iter != sockset.end(); iter++) {
+				for (ibrcommon::socketset::iterator iter = sockset.begin(); iter != sockset.end(); ++iter) {
 					if ((*iter) == _msock) continue;
 					try {
 						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
-						sock.sendto(tmp, length + 2, 0, destination);
+						sock.sendto(&tmp[0], length + 2, 0, destination);
 						return;
 					} catch (const ibrcommon::Exception&) {
 					} catch (const std::bad_cast&) { }
@@ -193,13 +197,13 @@ namespace dtn
 				ibrcommon::socketset readfds;
 				_vsocket.select(&readfds, NULL, NULL, NULL);
 
-				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); iter++) {
+				for (ibrcommon::socketset::iterator iter = readfds.begin(); iter != readfds.end(); ++iter) {
 					try {
 						ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
-						char tmp[length + 2];
+						std::vector<char> tmp(length + 2);
 						ibrcommon::vaddress peeraddr;
-						size_t ret = sock.recvfrom(tmp, length + 2, 0, peeraddr);
+						size_t ret = sock.recvfrom(&tmp[0], length + 2, 0, peeraddr);
 
 						// first byte if the type
 						type = tmp[0];
@@ -244,12 +248,10 @@ namespace dtn
 		 */
 		const std::string UDPDatagramService::getServiceDescription() const
 		{
-			std::string address;
-
 			// get all addresses
 			std::list<ibrcommon::vaddress> addrs = _iface.getAddresses();
 
-			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); iter++) {
+			for (std::list<ibrcommon::vaddress>::iterator iter = addrs.begin(); iter != addrs.end(); ++iter) {
 				ibrcommon::vaddress &addr = (*iter);
 
 				try {
@@ -329,7 +331,7 @@ namespace dtn
 					port = p[1];
 				}
 
-				param_iter++;
+				++param_iter;
 			}
 
 			address = ibrcommon::vaddress(addr, port);

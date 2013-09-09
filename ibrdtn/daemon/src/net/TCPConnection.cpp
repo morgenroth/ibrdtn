@@ -29,9 +29,7 @@
 #include "net/TCPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
 #include "net/ConnectionEvent.h"
-#include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
-#include "routing/RequeueBundleEvent.h"
 
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/TimeMeasurement.h>
@@ -58,6 +56,8 @@ namespace dtn
 {
 	namespace net
 	{
+		const std::string TCPConnection::TAG = "TCPConnection";
+
 		/*
 		 * class TCPConnection
 		 */
@@ -66,7 +66,6 @@ namespace dtn
 		   _keepalive_sender(*this, _keepalive_timeout), _timeout(timeout), _lastack(0), _keepalive_timeout(0),
 		   _callback(tcpsrv), _flags(0), _aborted(false)
 		{
-			// if _socket is set to NULL, then we are the server
 		}
 
 		TCPConnection::~TCPConnection()
@@ -78,8 +77,10 @@ namespace dtn
 			_sender.join();
 
 			// clean-up
-			if (_protocol_stream != NULL) {
+			{
+				ibrcommon::RWLock l(_protocol_stream_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
 				delete _protocol_stream;
+				_protocol_stream = NULL;
 			}
 
 			if (_sec_stream != NULL) {
@@ -93,9 +94,9 @@ namespace dtn
 			}
 		}
 
-		void TCPConnection::queue(const dtn::data::BundleID &bundle)
+		void TCPConnection::queue(const dtn::net::BundleTransfer &job)
 		{
-			_sender.push(bundle);
+			_sender.push(job);
 		}
 
 		const dtn::streams::StreamContactHeader& TCPConnection::getHeader() const
@@ -110,7 +111,7 @@ namespace dtn
 
 		void TCPConnection::rejectTransmission()
 		{
-			_protocol_stream->reject();
+			(*getProtocolStream()).reject();
 		}
 
 		void TCPConnection::eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases) throw ()
@@ -126,7 +127,7 @@ namespace dtn
 				// stop the receiver thread
 				this->stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -138,22 +139,45 @@ namespace dtn
 		{
 #ifdef WITH_TLS
 			/* if both nodes support TLS, activate it */
-			if ((_peer._flags & dtn::streams::StreamContactHeader::REQUEST_TLS)
-					&& (_flags & dtn::streams::StreamContactHeader::REQUEST_TLS))
+			if (_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_TLS)
+					&& _flags.getBit(dtn::streams::StreamContactHeader::REQUEST_TLS))
 			{
 				try{
 					ibrcommon::TLSStream &tls = dynamic_cast<ibrcommon::TLSStream&>(*_sec_stream);
 					X509 *peer_cert = tls.activate();
-					if (!dtn::security::SecurityCertificateManager::validateSubject(peer_cert, _peer.getEID())) {
-						throw ibrcommon::TLSCertificateVerificationException("certificate does not fit the EID");
+
+					// check the full EID first
+					const std::string cn = _peer.getEID().getString();
+
+					try {
+						try {
+							dtn::security::SecurityCertificateManager::validateSubject(peer_cert, cn);
+						} catch (const dtn::security::SecurityCertificateException &ex) {
+							// check using the hostname
+							std::string weak_cn = _peer.getEID().getHost();
+
+							// strip leading "//"
+							if (weak_cn.find_first_of("//") == 0) {
+								weak_cn = weak_cn.substr(2, weak_cn.length() - 2);
+							}
+
+							try {
+								dtn::security::SecurityCertificateManager::validateSubject(peer_cert, weak_cn);
+							} catch (const dtn::security::SecurityCertificateException &ex_weak) {
+								throw ex;
+							}
+						}
+					} catch (const dtn::security::SecurityCertificateException &ex) {
+						IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						throw ibrcommon::TLSCertificateVerificationException(ex.what());
 					}
 				} catch (const std::exception&) {
 					if (dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
 						/* close the connection */
-						IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 20) << "TLS failed, closing the connection." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 20) << "TLS failed, closing the connection." << IBRCOMMON_LOGGER_ENDL;
 						throw;
 					} else {
-						IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 20) << "TLS failed, continuing unauthenticated." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 20) << "TLS failed, continuing unauthenticated." << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 			} else {
@@ -162,7 +186,7 @@ namespace dtn
 					/* close the connection */
 					throw ibrcommon::TLSException("TLS not supported by peer.");
 				} else if(_flags & dtn::streams::StreamContactHeader::REQUEST_TLS){
-					IBRCOMMON_LOGGER_TAG("TCPConnection", notice) << "TLS not supported by peer. Continuing without TLS." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, notice) << "TLS not supported by peer. Continuing without TLS." << IBRCOMMON_LOGGER_ENDL;
 				}
 				/* else: this node does not support TLS, should have already printed a warning */
 			}
@@ -184,7 +208,7 @@ namespace dtn
 				// initiate extended handshake (e.g. TLS)
 				initiateExtendedHandshake();
 			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG("TCPConnection", warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 				// abort the connection
 				shutdown();
@@ -201,12 +225,14 @@ namespace dtn
 				_socket_stream->setTimeout(timeout);
 			}
 
-			// enable idle timeout
-			size_t _idle_timeout = dtn::daemon::Configuration::getInstance().getNetwork().getTCPIdleTimeout();
-			if (_idle_timeout > 0)
-			{
-				_protocol_stream->enableIdleTimeout(_idle_timeout);
-			}
+			try {
+				// enable idle timeout
+				size_t _idle_timeout = dtn::daemon::Configuration::getInstance().getNetwork().getTCPIdleTimeout();
+				if (_idle_timeout > 0)
+				{
+					(*getProtocolStream()).enableIdleTimeout(_idle_timeout);
+				}
+			} catch (const ibrcommon::Exception&) {};
 
 			// raise up event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
@@ -214,7 +240,7 @@ namespace dtn
 
 		void TCPConnection::eventConnectionDown() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 40) << "eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 40) << "eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				// shutdown the keepalive sender thread
@@ -223,7 +249,7 @@ namespace dtn
 				// stop the sender
 				_sender.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (_peer._localeid != dtn::data::EID())
@@ -235,41 +261,51 @@ namespace dtn
 
 		void TCPConnection::eventBundleRefused() throw ()
 		{
-			try {
-				const dtn::data::BundleID bundle = _sentqueue.getnpop();
+			ibrcommon::Queue<dtn::net::BundleTransfer>::Locked l = _sentqueue.exclusive();
 
-				// requeue the bundle
-				TransferAbortedEvent::raise(EID(_node.getEID()), bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
-
-				// set ACK to zero
-				_lastack = 0;
-
-			} catch (const ibrcommon::QueueUnblockedException&) {
-				// pop on empty queue!
-				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << "transfer refused without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
+			// stop here if the queue is already empty
+			if (l.empty()) {
+				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, error) << "transfer refused without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
+				return;
 			}
+
+			// get the job on top of the sent queue
+			dtn::net::BundleTransfer &job = l.front();
+
+			// abort the transmission
+			job.abort(dtn::net::TransferAbortedEvent::REASON_REFUSED);
+
+			// set ACK to zero
+			_lastack = 0;
+
+			// release the job
+			l.pop();
 		}
 
 		void TCPConnection::eventBundleForwarded() throw ()
 		{
-			try {
-				const dtn::data::MetaBundle bundle = _sentqueue.getnpop();
+			ibrcommon::Queue<dtn::net::BundleTransfer>::Locked l = _sentqueue.exclusive();
 
-				// signal completion of the transfer
-				TransferCompletedEvent::raise(_node.getEID(), bundle);
-
-				// raise bundle event
-				dtn::core::BundleEvent::raise(bundle, BUNDLE_FORWARDED);
-
-				// set ACK to zero
-				_lastack = 0;
-			} catch (const ibrcommon::QueueUnblockedException&) {
-				// pop on empty queue!
-				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << "transfer completed without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
+			// stop here if the queue is already empty
+			if (l.empty()) {
+				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, error) << "transfer completed without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
+				return;
 			}
+
+			// get the job on top of the sent queue
+			dtn::net::BundleTransfer &job = l.front();
+
+			// mark job as complete
+			job.complete();
+
+			// set ACK to zero
+			_lastack = 0;
+
+			// release the job
+			l.pop();
 		}
 
-		void TCPConnection::eventBundleAck(size_t ack) throw ()
+		void TCPConnection::eventBundleAck(const dtn::data::Length &ack) throw ()
 		{
 			_lastack = ack;
 		}
@@ -280,20 +316,22 @@ namespace dtn
 			try {
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		void TCPConnection::shutdown() throw ()
 		{
-			// shutdown
-			_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			try {
+				// shutdown
+				(*getProtocolStream()).shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			} catch (const ibrcommon::Exception&) {};
 
 			try {
 				// abort the connection thread
 				ibrcommon::DetachedThread::stop();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_TAG("TCPConnection", error) << "shutdown failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, error) << "shutdown failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -308,7 +346,7 @@ namespace dtn
 
 		void TCPConnection::finally() throw ()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "TCPConnection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 60) << "TCPConnection down" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				// shutdown the keepalive sender thread
@@ -357,10 +395,17 @@ namespace dtn
 #endif
 
 			// create a new stream connection
-			int chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
-			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
+			dtn::data::Length chunksize = dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize();
 
+			ibrcommon::RWLock l(_protocol_stream_mutex, ibrcommon::RWMutex::LOCK_READWRITE);
+			if (_protocol_stream != NULL) delete _protocol_stream;
+			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
 			_protocol_stream->exceptions(std::ios::badbit | std::ios::eofbit);
+
+			if (dtn::daemon::Configuration::getInstance().enableTrafficStats()) {
+				// enable traffic monitoring
+				_protocol_stream->setMonitor(true);
+			}
 		}
 
 		void TCPConnection::connect()
@@ -379,7 +424,7 @@ namespace dtn
 			try {
 				const std::list<dtn::core::Node::URI> uri_list = _node.get(dtn::core::Node::CONN_TCPIP);
 
-				for (std::list<dtn::core::Node::URI>::const_iterator iter = uri_list.begin(); iter != uri_list.end(); iter++)
+				for (std::list<dtn::core::Node::URI>::const_iterator iter = uri_list.begin(); iter != uri_list.end(); ++iter)
 				{
 					// break-out if the connection has been aborted
 					if (_aborted) throw ibrcommon::socket_exception("connection has been aborted");
@@ -392,7 +437,7 @@ namespace dtn
 						// create a virtual address to connect to
 						ibrcommon::vaddress addr(address, port);
 
-						IBRCOMMON_LOGGER_DEBUG(15) << "Initiate TCP connection to " << address << ":" << port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 15) << "Initiate TCP connection to " << address << ":" << port << IBRCOMMON_LOGGER_ENDL;
 
 						// create a new tcpsocket
 						timeval tv;
@@ -426,10 +471,8 @@ namespace dtn
 
 			} catch (const ibrcommon::socket_exception&) {
 				// error on open, requeue all bundles in the queue
-				IBRCOMMON_LOGGER(warning) << "connection to " << _node.toString() << " failed" << IBRCOMMON_LOGGER_ENDL;
-				if (_protocol_stream != NULL) {
-					_protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-				}
+				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << "connection to " << _node.toString() << " failed" << IBRCOMMON_LOGGER_ENDL;
+				(*getProtocolStream()).shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 				throw;
 			} catch (const bad_cast&) { };
 		}
@@ -443,14 +486,13 @@ namespace dtn
 				} else {
 					// accept remote connection as server
 					__setup_socket(_socket, true);
-
-					// add default TCP connection
-					_node.clear();
-					_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, "0.0.0.0", 0, 30) );
 				}
 
+				TCPConnection::safe_streamconnection sc = getProtocolStream();
+				std::iostream &stream = (*sc);
+
 				// do the handshake
-				_protocol_stream->handshake(dtn::core::BundleCore::local, _timeout, _flags);
+				(*sc).handshake(dtn::core::BundleCore::local, _timeout, _flags);
 
 				// start the sender
 				_sender.start();
@@ -458,17 +500,26 @@ namespace dtn
 				// start keepalive sender
 				_keepalive_sender.start();
 
-				while (!_protocol_stream->eof())
+				// create a deserializer for next bundle
+				dtn::data::DefaultDeserializer deserializer(stream, dtn::core::BundleCore::getInstance());
+
+				while (!(*sc).eof())
 				{
 					try {
 						// create a new empty bundle
 						dtn::data::Bundle bundle;
 
-						// deserialize the bundle
-						(*this) >> bundle;
+						// check if the stream is still good
+						if (!stream.good()) throw ibrcommon::IOException("stream went bad");
+
+						// enable/disable fragmentation support according to the contact header.
+						deserializer.setFragmentationSupport(_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION));
+
+						// read the bundle (or the fragment if fragmentation is enabled)
+						deserializer >> bundle;
 
 						// check the bundle
-						if ( ( bundle._destination == EID() ) || ( bundle._source == EID() ) )
+						if ( ( bundle.destination == EID() ) || ( bundle.source == EID() ) )
 						{
 							// invalid bundle!
 							throw dtn::data::Validator::RejectedException("destination or source EID is null");
@@ -483,108 +534,34 @@ namespace dtn
 						rejectTransmission();
 
 						// display the rejection
-						IBRCOMMON_LOGGER(warning) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					catch (const dtn::InvalidDataException &ex) {
 						// bundle rejected
 						rejectTransmission();
 
 						// display the rejection
-						IBRCOMMON_LOGGER(warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					yield();
 				}
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				if (_protocol_stream != NULL) _protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				try {
+					(*getProtocolStream()).shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				} catch (const ibrcommon::Exception&) {};
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 10) << "run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
-				if (_protocol_stream != NULL) _protocol_stream->shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 10) << "run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				try {
+					(*getProtocolStream()).shutdown(dtn::streams::StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				} catch (const ibrcommon::Exception&) {};
 			}
 		}
 
-
-		TCPConnection& operator>>(TCPConnection &conn, dtn::data::Bundle &bundle)
+		TCPConnection::safe_streamconnection TCPConnection::getProtocolStream() throw (ibrcommon::Exception)
 		{
-			std::iostream &stream = (*conn._protocol_stream);
-
-			// check if the stream is still good
-			if (!stream.good()) throw ibrcommon::IOException("stream went bad");
-
-			// create a deserializer for next bundle
-			dtn::data::DefaultDeserializer deserializer(stream, dtn::core::BundleCore::getInstance());
-
-			// enable/disable fragmentation support according to the contact header.
-			deserializer.setFragmentationSupport(conn._peer._flags & dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION);
-
-			// read the bundle (or the fragment if fragmentation is enabled)
-			deserializer >> bundle;
-
-			return conn;
-		}
-
-		TCPConnection& operator<<(TCPConnection &conn, const dtn::data::Bundle &bundle)
-		{
-			// prepare a measurement
-			ibrcommon::TimeMeasurement m;
-
-			std::iostream &stream = (*conn._protocol_stream);
-
-			// get the offset, if this bundle has been reactively fragmented before
-			size_t offset = 0;
-			if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation()
-					&& !bundle.get(dtn::data::PrimaryBlock::DONT_FRAGMENT))
-			{
-				offset = dtn::core::FragmentManager::getOffset(conn.getNode().getEID(), bundle);
-			}
-
-			// create a serializer
-			dtn::data::DefaultSerializer serializer(stream);
-
-			// put the bundle into the sentqueue
-			conn._sentqueue.push(bundle);
-
-			// start the measurement
-			m.start();
-
-			try {
-				// activate exceptions for this method
-				if (!stream.good()) throw ibrcommon::IOException("stream went bad");
-
-				if (offset > 0)
-				{
-					// transmit the fragment
-					serializer << dtn::data::BundleFragment(bundle, offset, -1);
-				}
-				else
-				{
-					// transmit the bundle
-					serializer << bundle;
-				}
-
-				// flush the stream
-				stream << std::flush;
-
-				// stop the time measurement
-				m.stop();
-
-				// get throughput
-				double kbytes_per_second = (serializer.getLength(bundle) / m.getSeconds()) / 1024;
-
-				// print out throughput
-				IBRCOMMON_LOGGER_DEBUG(5) << "transfer finished after " << m << " with "
-						<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << IBRCOMMON_LOGGER_ENDL;
-
-			} catch (const ibrcommon::Exception &ex) {
-				// the connection not available
-				IBRCOMMON_LOGGER_DEBUG(10) << "connection error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-
-				// forward exception
-				throw;
-			}
-
-			return conn;
+			return safe_streamconnection(_protocol_stream, _protocol_stream_mutex);
 		}
 
 		TCPConnection::KeepaliveSender::KeepaliveSender(TCPConnection &connection, size_t &keepalive_timeout)
@@ -638,7 +615,7 @@ namespace dtn
 		void TCPConnection::Sender::__cancellation() throw ()
 		{
 			// cancel the main thread in here
-			ibrcommon::Queue<dtn::data::BundleID>::abort();
+			ibrcommon::Queue<dtn::net::BundleTransfer>::abort();
 		}
 
 		void TCPConnection::Sender::run() throw ()
@@ -646,17 +623,22 @@ namespace dtn
 			try {
 				dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
-				while (_connection.good())
+				TCPConnection::safe_streamconnection sc = _connection.getProtocolStream();
+				std::iostream &stream = (*sc);
+
+				// create a serializer
+				dtn::data::DefaultSerializer serializer(stream);
+
+				while (stream.good())
 				{
-					dtn::data::BundleID transfer = ibrcommon::Queue<dtn::data::BundleID>::getnpop(true);
+					dtn::net::BundleTransfer transfer = ibrcommon::Queue<dtn::net::BundleTransfer>::getnpop(true);
 
 					try {
 						// read the bundle out of the storage
-						dtn::data::Bundle bundle = storage.get(transfer);
+						dtn::data::Bundle bundle = storage.get(transfer.getBundle());
 
 #ifdef WITH_BUNDLE_SECURITY
-						const dtn::daemon::Configuration::Security::Level seclevel =
-								dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
+						const int seclevel = dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
 
 						if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
 						{
@@ -664,25 +646,60 @@ namespace dtn
 								dtn::security::SecurityManager::getInstance().auth(bundle);
 							} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 								// sign requested, but no key is available
-								IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(TCPConnection::TAG, warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
 							}
 						}
 #endif
+
 						// send bundle
-						_connection << bundle;
+						// get the offset, if this bundle has been reactively fragmented before
+						size_t offset = 0;
+						if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation()
+								&& !bundle.get(dtn::data::PrimaryBlock::DONT_FRAGMENT))
+						{
+							offset = dtn::core::FragmentManager::getOffset(_connection.getNode().getEID(), bundle);
+						}
+
+						// put the bundle into the sentqueue
+						_connection._sentqueue.push(transfer);
+
+						try {
+							// activate exceptions for this method
+							if (!stream.good()) throw ibrcommon::IOException("stream went bad");
+
+							if (offset > 0)
+							{
+								// transmit the fragment
+								serializer << dtn::data::BundleFragment(bundle, offset, -1);
+							}
+							else
+							{
+								// transmit the bundle
+								serializer << bundle;
+							}
+
+							// flush the stream
+							stream << std::flush;
+						} catch (const ibrcommon::Exception &ex) {
+							// the connection not available
+							IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 10) << "connection error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+							// forward exception
+							throw;
+						}
 					} catch (const dtn::storage::NoBundleFoundException&) {
 						// send transfer aborted event
-						TransferAbortedEvent::raise(_connection._node.getEID(), transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+						transfer.abort(dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 					}
 
 					// idle a little bit
 					yield();
 				}
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 50) << "Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 50) << "Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
 				return;
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG_TAG("TCPConnection", 10) << "Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 10) << "Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			_connection.stop();
@@ -690,58 +707,39 @@ namespace dtn
 
 		void TCPConnection::clearQueue()
 		{
-			// requeue all bundles still queued
-			try {
-				while (true)
-				{
-					const dtn::data::BundleID id = _sender.getnpop();
-
-					// raise transfer abort event for all bundles without an ACK
-					dtn::routing::RequeueBundleEvent::raise(_node.getEID(), id);
-				}
-			} catch (const ibrcommon::QueueUnblockedException&) {
-				// queue emtpy
-			}
-
 			// requeue all bundles still in transit
-			try {
-				while (true)
+			ibrcommon::Queue<dtn::net::BundleTransfer>::Locked l = _sentqueue.exclusive();
+
+			while (!l.empty())
+			{
+				// get the job on top of the sent queue
+				const dtn::net::BundleTransfer &job = l.front();
+
+				if ((_lastack > 0) && (_peer._flags.getBit(dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION)))
 				{
-					const dtn::data::BundleID id = _sentqueue.getnpop();
-
-					if ((_lastack > 0) && (_peer._flags & dtn::streams::StreamContactHeader::REQUEST_FRAGMENTATION))
-					{
-						// some data are already acknowledged
-						// store this information in the fragment manager
-						dtn::core::FragmentManager::setOffset(_peer.getEID(), id, _lastack);
-
-						// raise transfer abort event for all bundles without an ACK
-						dtn::routing::RequeueBundleEvent::raise(_node.getEID(), id);
-					}
-					else
-					{
-						// raise transfer abort event for all bundles without an ACK
-						dtn::routing::RequeueBundleEvent::raise(_node.getEID(), id);
-					}
-
-					// set last ack to zero
-					_lastack = 0;
+					// some data are already acknowledged
+					// store this information in the fragment manager
+					dtn::core::FragmentManager::setOffset(_peer.getEID(), job.getBundle(), _lastack);
 				}
-			} catch (const ibrcommon::QueueUnblockedException&) {
-				// queue emtpy
+
+				// set last ack to zero
+				_lastack = 0;
+
+				// release the job
+				l.pop();
 			}
 		}
 
 #ifdef WITH_TLS
 		void dtn::net::TCPConnection::enableTLS()
 		{
-			_flags |= dtn::streams::StreamContactHeader::REQUEST_TLS;
+			_flags.setBit(dtn::streams::StreamContactHeader::REQUEST_TLS, true);
 		}
 #endif
 
 		void TCPConnection::keepalive()
 		{
-			_protocol_stream->keepalive();
+			(*getProtocolStream()).keepalive();
 		}
 
 		bool TCPConnection::good() const
@@ -760,13 +758,32 @@ namespace dtn
 
 		bool TCPConnection::match(const dtn::data::EID &destination) const
 		{
-			return (_node.getEID() == destination.getNode());
+			return _node.getEID().sameHost(destination);
 		}
 
 		bool TCPConnection::match(const NodeEvent &evt) const
 		{
 			const dtn::core::Node &n = evt.getNode();
 			return match(n);
+		}
+
+		size_t TCPConnection::getTrafficStats(int index)
+		{
+			try {
+				safe_streamconnection sc = getProtocolStream();
+				return (*sc).getMonitorStat(index);
+			} catch (const ibrcommon::Exception&) {
+				return 0;
+			}
+		}
+
+		void TCPConnection::resetTrafficStats()
+		{
+			try {
+				safe_streamconnection sc = getProtocolStream();
+				return (*sc).resetMonitorStats();
+			} catch (const ibrcommon::Exception&) {
+			}
 		}
 	}
 }

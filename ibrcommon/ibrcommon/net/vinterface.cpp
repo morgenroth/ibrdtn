@@ -22,7 +22,16 @@
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/vinterface.h"
 #include "ibrcommon/net/vsocket.h"
+
+#ifdef __WIN32__
+#include <winsock2.h>
+#include <windows.h>
+#include <ddk/ntddndis.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+#else
 #include <net/if.h>
+#endif
 
 namespace ibrcommon
 {
@@ -34,10 +43,17 @@ namespace ibrcommon
 	{
 	}
 
-	vinterface::vinterface(std::string name)
+	vinterface::vinterface(const std::string &name)
 	 : _name(name)
 	{
 	}
+
+#ifdef __WIN32__
+	vinterface::vinterface(const std::string &name, const std::wstring &friendlyName)
+	 : _name(name), _friendlyName(friendlyName)
+	{
+	}
+#endif
 
 	vinterface::~vinterface()
 	{
@@ -48,6 +64,13 @@ namespace ibrcommon
 		if (_name.length() == 0) return "<any>";
 		return _name;
 	}
+
+#ifdef __WIN32__
+	const std::wstring& vinterface::getFriendlyName() const
+	{
+		return _friendlyName;
+	}
+#endif
 
 	bool vinterface::isLoopback() const
 	{
@@ -61,7 +84,13 @@ namespace ibrcommon
 
 	uint32_t vinterface::getIndex() const
 	{
-		return ::if_nametoindex(_name.c_str());
+#ifdef __WIN32__
+		PULONG index = 0;
+		GetAdapterIndex(LPWSTR(_name.c_str()), index);
+		return (uint32_t)index;
+#else
+		return if_nametoindex(_name.c_str());
+#endif
 	}
 
 	const std::list<vaddress> vinterface::getAddresses(const std::string &scope) const

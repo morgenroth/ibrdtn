@@ -22,6 +22,7 @@
 #ifndef BUNDLELIST_H_
 #define BUNDLELIST_H_
 
+#include <ibrdtn/data/Number.h>
 #include <ibrdtn/data/MetaBundle.h>
 #include <set>
 
@@ -29,23 +30,42 @@ namespace dtn
 {
 	namespace data
 	{
-		class BundleList : public std::set<dtn::data::MetaBundle>
+		class BundleList
 		{
 		public:
 			class Listener {
 			public:
 				virtual ~Listener() = 0;
-				virtual void eventBundleExpired(const dtn::data::MetaBundle&) = 0;
+				virtual void eventBundleExpired(const dtn::data::MetaBundle&) throw () = 0;
 			};
 
 			BundleList(BundleList::Listener *listener = NULL);
 			virtual ~BundleList();
 
-			virtual void add(const dtn::data::MetaBundle &bundle);
-			virtual void remove(const dtn::data::MetaBundle &bundle);
-			virtual void clear();
+			virtual void add(const dtn::data::MetaBundle &bundle) throw ();
+			virtual void remove(const dtn::data::MetaBundle &bundle) throw ();
+			virtual void clear() throw ();
 
-			virtual void expire(const size_t timestamp);
+			virtual void expire(const Timestamp &timestamp) throw ();
+
+			typedef std::set<dtn::data::MetaBundle> meta_set;
+			typedef meta_set::iterator iterator;
+			typedef meta_set::const_iterator const_iterator;
+
+			iterator begin() { return _meta_bundles.begin(); }
+			iterator end() { return _meta_bundles.end(); }
+
+			const_iterator begin() const { return _meta_bundles.begin(); }
+			const_iterator end() const { return _meta_bundles.end(); }
+
+			template<class T>
+			iterator find(const T &b) { return _meta_bundles.find(b); }
+
+			template<class T>
+			const_iterator find(const T &b) const { return _meta_bundles.find(b); }
+
+			bool empty() const { return _meta_bundles.empty(); }
+			Size size() const { return _meta_bundles.size(); }
 
 		private:
 			class ExpiringBundle
@@ -63,6 +83,7 @@ namespace dtn
 			};
 
 			std::set<ExpiringBundle> _bundles;
+			std::set<dtn::data::MetaBundle> _meta_bundles;
 
 			BundleList::Listener *_listener;
 		};

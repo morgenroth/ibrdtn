@@ -26,16 +26,13 @@
 namespace ibrcommon
 {
 	socketstream::socketstream(clientsocket *sock, size_t buffer_size)
-	 : std::iostream(this), errmsg(ERROR_NONE), _bufsize(buffer_size), in_buf_(NULL), out_buf_(NULL)
+	 : std::iostream(this), errmsg(ERROR_NONE), _bufsize(buffer_size), in_buf_(_bufsize), out_buf_(_bufsize)
 	{
 		// clear the local timer
 		timerclear(&_timeout);
 
-		in_buf_ = new char[_bufsize];
-		out_buf_ = new char[_bufsize];
-
 		// mark the buffer as free
-		setp(out_buf_, out_buf_ + _bufsize - 1);
+		setp(&out_buf_[0], &out_buf_[0] + _bufsize - 1);
 		setg(0, 0, 0);
 
 		_socket.add(sock);
@@ -45,9 +42,6 @@ namespace ibrcommon
 	socketstream::~socketstream()
 	{
 		_socket.destroy();
-
-		delete[] in_buf_;
-		delete[] out_buf_;
 	}
 
 	void socketstream::close()
@@ -72,11 +66,11 @@ namespace ibrcommon
 
 	std::char_traits<char>::int_type socketstream::overflow(std::char_traits<char>::int_type c)
 	{
-		char *ibegin = out_buf_;
+		char *ibegin = &out_buf_[0];
 		char *iend = pptr();
 
 		// mark the buffer as free
-		setp(out_buf_, out_buf_ + _bufsize - 1);
+		setp(&out_buf_[0], &out_buf_[0] + _bufsize - 1);
 
 		if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 		{
@@ -86,7 +80,7 @@ namespace ibrcommon
 		// if there is nothing to send, just return
 		if ((iend - ibegin) == 0)
 		{
-			IBRCOMMON_LOGGER_DEBUG(90) << "tcpstream::overflow() nothing to sent" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 80) << "overflow() nothing to sent" << IBRCOMMON_LOGGER_ENDL;
 			return std::char_traits<char>::not_eof(c);
 		}
 
@@ -100,15 +94,15 @@ namespace ibrcommon
 			}
 
 			// bytes to send
-			size_t bytes = (iend - ibegin);
+			ssize_t bytes = (iend - ibegin);
 
 			// send the data
 			clientsocket &sock = static_cast<clientsocket&>(**(writeset.begin()));
 
-			int ret = sock.send(out_buf_, (iend - ibegin), 0);
+			ssize_t ret = sock.send(&out_buf_[0], (iend - ibegin), 0);
 
 			// check how many bytes are sent
-			if ((size_t)ret < bytes)
+			if (ret < bytes)
 			{
 				// we did not sent all bytes
 				char *resched_begin = ibegin + ret;
@@ -124,13 +118,13 @@ namespace ibrcommon
 				char *buffer_begin = ibegin + bytes_left;
 
 				// mark the buffer as free
-				setp(buffer_begin, out_buf_ + _bufsize - 1);
+				setp(buffer_begin, &out_buf_[0] + _bufsize - 1);
 			}
 		} catch (const vsocket_interrupt &e) {
 			errmsg = ERROR_CLOSED;
 			close();
-			IBRCOMMON_LOGGER_DEBUG(40) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
-			throw e;
+			IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 85) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+			throw;
 		} catch (const socket_error &err) {
 			if (err.code() == ERROR_AGAIN) {
 				return overflow(c);
@@ -143,7 +137,7 @@ namespace ibrcommon
 			close();
 
 			// create a detailed exception message
-			std::stringstream ss; ss << "<tcpstream> send() in tcpstream failed: " << err.code();
+			std::stringstream ss; ss << "send() failed: " << err.code();
 			throw stream_exception(ss.str());
 		} catch (const socket_exception &ex) {
 			// set the last error code
@@ -181,26 +175,26 @@ namespace ibrcommon
 			clientsocket &sock = static_cast<clientsocket&>(**(readset.begin()));
 
 			// read some bytes
-			int bytes = sock.recv(in_buf_, _bufsize, 0);
+			ssize_t bytes = sock.recv(&in_buf_[0], _bufsize, 0);
 
 			// end of stream
 			if (bytes == 0)
 			{
 				errmsg = ERROR_CLOSED;
 				close();
-				IBRCOMMON_LOGGER_DEBUG(40) << "<tcpstream> recv() returned zero: " << errno << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 85) << "recv() returned zero: " << errno << IBRCOMMON_LOGGER_ENDL;
 				return std::char_traits<char>::eof();
 			}
 
 			// Since the input buffer content is now valid (or is new)
 			// the get pointer should be initialized (or reset).
-			setg(in_buf_, in_buf_, in_buf_ + bytes);
+			setg(&in_buf_[0], &in_buf_[0], &in_buf_[0] + bytes);
 
-			return std::char_traits<char>::not_eof((unsigned char) in_buf_[0]);
+			return std::char_traits<char>::not_eof(in_buf_[0]);
 		} catch (const vsocket_interrupt &e) {
 			errmsg = ERROR_CLOSED;
 			close();
-			IBRCOMMON_LOGGER_DEBUG(40) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 85) << "select interrupted: " << e.what() << IBRCOMMON_LOGGER_ENDL;
 			return std::char_traits<char>::eof();
 		} catch (const socket_error &err) {
 			// set the last error code
@@ -209,9 +203,9 @@ namespace ibrcommon
 			// close the stream/socket due to failures
 			close();
 
-			IBRCOMMON_LOGGER_DEBUG(40) << "<tcpstream> recv() failed: " << err.code() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 75) << "recv() failed: " << err.code() << IBRCOMMON_LOGGER_ENDL;
 		} catch (const socket_exception &ex) {
-			IBRCOMMON_LOGGER_DEBUG(40) << "<tcpstream> recv() failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("socketstream", 75) << "recv() failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		return std::char_traits<char>::eof();

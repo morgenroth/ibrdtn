@@ -43,7 +43,7 @@ namespace dtn
 			virtual void __cancellation() throw ();
 
 			virtual void put(dtn::data::Bundle &b);
-			virtual dtn::data::MetaBundle get(size_t timeout = 0);
+			virtual dtn::data::MetaBundle get(const dtn::data::Timeout timeout = 0);
 			virtual void delivered(const dtn::data::MetaBundle &m);
 
 		private:
@@ -68,7 +68,7 @@ namespace dtn
 			dtn::data::EID _peer;
 			dtn::data::EID _endpoint;
 			bool _group;
-			size_t _lifetime;
+			dtn::data::Number _lifetime;
 		};
 	} /* namespace api */
 } /* namespace dtn */
