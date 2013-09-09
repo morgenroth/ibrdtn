@@ -47,14 +47,23 @@ namespace dtn
 	{
 		const unsigned int DTNTPWorker::PROTO_VERSION = 1;
 		const std::string DTNTPWorker::TAG = "DTNTPWorker";
+		DTNTPWorker::TimeSyncState DTNTPWorker::_sync_state;
+
+		DTNTPWorker::TimeSyncState::TimeSyncState()
+		 : sync_threshold(0.15f), base_rating(0.0), psi(0.99), sigma(1.0)
+		{
+			// initialize the last sync time to zero
+			timerclear(&last_sync_time);
+		}
+
+		DTNTPWorker::TimeSyncState::~TimeSyncState()
+		{
+		}
 
 		DTNTPWorker::DTNTPWorker()
-		 : _sync_threshold(0.15f), _announce_rating(false), _base_rating(0.0), _psi(0.99), _sigma(1.0), _sync(false)
+		 : _announce_rating(false), _sync(false)
 		{
 			AbstractWorker::initialize("dtntp", true);
-
-			// initialize the last sync time to zero
-			timerclear(&_last_sync_time);
 
 			// get global configuration for time synchronization
 			const dtn::daemon::Configuration::TimeSync &conf = dtn::daemon::Configuration::getInstance().getTimeSync();
@@ -62,7 +71,7 @@ namespace dtn
 			if (conf.hasReference())
 			{
 				// set clock rating to 1 since this node has a reference clock
-				_base_rating = 1.0;
+				_sync_state.base_rating = 1.0;
 
 				// evaluate the current local time
 				if (dtn::utils::Clock::getTime() > 0) {
@@ -73,15 +82,15 @@ namespace dtn
 				}
 			} else {
 				dtn::utils::Clock::setRating(0.0);
-				_sigma = conf.getSigma();
-				_psi = conf.getPsi();
+				_sync_state.sigma = conf.getSigma();
+				_sync_state.psi = conf.getPsi();
 			}
 
 			// check if we should announce our own rating via discovery
 			_announce_rating = conf.sendDiscoveryAnnouncements();
 
 			// store the sync threshold locally
-			_sync_threshold = conf.getSyncLevel();
+			_sync_state.sync_threshold = conf.getSyncLevel();
 
 			// synchronize with other nodes
 			_sync  = conf.doSync();
@@ -212,12 +221,12 @@ namespace dtn
 				else
 				{
 					// before we can age our rating we should have been synchronized at least one time
-					if (timerisset(&_last_sync_time))
+					if (timerisset(&_sync_state.last_sync_time))
 					{
 						timeval tv_now;
 						dtn::utils::Clock::gettimeofday(&tv_now);
 
-						double last_sync = dtn::utils::Clock::toDouble(_last_sync_time);
+						double last_sync = dtn::utils::Clock::toDouble(_sync_state.last_sync_time);
 						double now = dtn::utils::Clock::toDouble(tv_now);
 
 						// the last sync must be in the past
@@ -225,7 +234,7 @@ namespace dtn
 						{
 							// calculate the new clock rating
 							double timediff = now - last_sync;
-							dtn::utils::Clock::setRating(_base_rating * (1.0 / (::pow(_sigma, timediff))));
+							dtn::utils::Clock::setRating(_sync_state.base_rating * (1.0 / (::pow(_sync_state.sigma, timediff))));
 						}
 					}
 				}
@@ -267,7 +276,7 @@ namespace dtn
 			if (timestamp == dtn::utils::Clock::getTime()) return false;
 
 			// do not sync if the quality is worse than ours
-			if ((quality * (1 - _sync_threshold)) <= dtn::utils::Clock::getRating()) return false;
+			if ((quality * (1 - _sync_state.sync_threshold)) <= dtn::utils::Clock::getRating()) return false;
 
 			return true;
 		}
@@ -392,7 +401,7 @@ namespace dtn
 		}
 
 		bool DTNTPWorker::hasReference() const {
-			return (_sigma == 1.0);
+			return (_sync_state.sigma == 1.0);
 		}
 
 		void DTNTPWorker::sync(const TimeSyncMessage &msg, const struct timeval &tv_offset, const struct timeval &tv_local, const struct timeval &tv_remote)
@@ -409,35 +418,35 @@ namespace dtn
 			double remote_time = dtn::utils::Clock::toDouble(tv_remote);
 
 			// adjust sigma if we sync'd at least twice
-			if (timerisset(&_last_sync_time))
+			if (timerisset(&_sync_state.last_sync_time))
 			{
-				double lastsync_time = dtn::utils::Clock::toDouble(_last_sync_time);
+				double lastsync_time = dtn::utils::Clock::toDouble(_sync_state.last_sync_time);
 
 				// adjust sigma
 				double t_stable = local_time - lastsync_time;
 
 				if (t_stable > 0.0) {
-					double sigma_base = (1 / ::pow(_psi, 1/t_stable));
+					double sigma_base = (1 / ::pow(_sync_state.psi, 1/t_stable));
 					double sigma_adjustment = ::fabs(remote_time - local_time) / t_stable * msg.peer_rating;
-					_sigma = sigma_base + sigma_adjustment;
+					_sync_state.sigma = sigma_base + sigma_adjustment;
 
-					IBRCOMMON_LOGGER_DEBUG_TAG(DTNTPWorker::TAG, 25) << "new sigma: " << _sigma << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG(DTNTPWorker::TAG, 25) << "new sigma: " << _sync_state.sigma << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
 			if (local_time > remote_time) {
 				// determine the new base rating
-				_base_rating = msg.peer_rating * (remote_time / local_time);
+				_sync_state.base_rating = msg.peer_rating * (remote_time / local_time);
 			} else {
 				// determine the new base rating
-				_base_rating = msg.peer_rating * (local_time / remote_time);
+				_sync_state.base_rating = msg.peer_rating * (local_time / remote_time);
 			}
 
 			// trigger time adjustment event
-			dtn::core::TimeAdjustmentEvent::raise(tv_offset, _base_rating);
+			dtn::core::TimeAdjustmentEvent::raise(tv_offset, _sync_state.base_rating);
 
 			// store the timestamp of the last synchronization
-			dtn::utils::Clock::gettimeofday(&_last_sync_time);
+			dtn::utils::Clock::gettimeofday(&_sync_state.last_sync_time);
 		}
 
 		void DTNTPWorker::callbackBundleReceived(const Bundle &b)
@@ -592,6 +601,11 @@ namespace dtn
 					}
 				}
 			} catch (const ibrcommon::Exception&) { };
+		}
+
+		const DTNTPWorker::TimeSyncState& DTNTPWorker::getState()
+		{
+			return DTNTPWorker::_sync_state;
 		}
 	}
 }

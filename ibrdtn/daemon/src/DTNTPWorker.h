@@ -101,6 +101,32 @@ namespace dtn
 				friend std::istream &operator>>(std::istream &stream, DTNTPWorker::TimeSyncMessage &obj);
 			};
 
+			class TimeSyncState {
+			public:
+				TimeSyncState();
+				virtual ~TimeSyncState();
+
+				// sync threshold
+				float sync_threshold;
+
+				// the base rating used to determine the current clock rating
+				double base_rating;
+
+				// the local rating is at least decremented by this value between each synchronization
+				double psi;
+
+				// current value for sigma
+				double sigma;
+
+				// timestamp of the last synchronization with another (better) clock
+				timeval last_sync_time;
+			};
+
+			/**
+			 * Get the global time sync state
+			 */
+			static const TimeSyncState& getState();
+
 		private:
 			static const unsigned int PROTO_VERSION;
 			static const std::string TAG;
@@ -139,26 +165,16 @@ namespace dtn
 			 */
 			void sync(const TimeSyncMessage &msg, const struct timeval &tv, const struct timeval &local, const struct timeval &remote);
 
-			// sync threshold
-			float _sync_threshold;
+			/**
+			 * global synchronization state
+			 */
+			static TimeSyncState _sync_state;
 
 			// send discovery announcements with the local clock rating
 			bool _announce_rating;
 
-			// the base rating used to determine the current clock rating
-			double _base_rating;
-
-			// the local rating is at least decremented by this value between each synchronization
-			double _psi;
-
-			// current value for sigma
-			double _sigma;
-
 			// synchronize with other nodes
 			bool _sync;
-
-			// timestamp of the last synchronization with another (better) clock
-			timeval _last_sync_time;
 
 			// Mutex to lock the synchronization process
 			ibrcommon::Mutex _sync_lock;
