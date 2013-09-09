@@ -131,6 +131,7 @@ namespace dtn
 				NeighborEntry &entry = (*iter->second);
 
 				if (entry.isExpired(timestamp)) {
+					delete (*iter).second;
 					_entries.erase(iter++);
 				} else {
 					entry.expire(timestamp);
@@ -236,7 +237,12 @@ namespace dtn
 
 		void NeighborDatabase::remove(const dtn::data::EID &eid)
 		{
-			_entries.erase(eid);
+			neighbor_map::iterator iter = _entries.find(eid);
+			if (iter == _entries.end())
+			{
+				delete (*iter).second;
+				_entries.erase(iter);
+			}
 		}
 	}
 }

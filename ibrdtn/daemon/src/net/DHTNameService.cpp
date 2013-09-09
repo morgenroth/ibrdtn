@@ -213,18 +213,36 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 					(struct dtn_convergence_layer*) malloc(
 							sizeof(struct dtn_convergence_layer));
 			clstruct->clname = (char*) malloc(cltype_.size());
-			clstruct-> clnamelen = cltype_.size();
+			clstruct->clnamelen = cltype_.size();
 			memcpy(clstruct->clname, cltype_.c_str(), cltype_.size());
 			struct dtn_convergence_layer_arg * arg =
 					(struct dtn_convergence_layer_arg*) malloc(
 							sizeof(struct dtn_convergence_layer_arg));
 			arg->key = (char*) malloc(5);
 			arg->key[4] = '\n';
+
+#ifdef HAVE_VMIME
+			if(cltype_ == "email") {
+				memcpy(arg->key, "email", 5);
+				arg->keylen = 5;
+				const std::string &email =
+					dtn::daemon::Configuration::getInstance().getEMail().getOwnAddress();
+				arg->value = (char*) malloc(email.size());
+				memcpy(arg->value, email.c_str(), email.size());
+				arg->valuelen = email.size();
+			}else{
+#endif
+
 			memcpy(arg->key, "port", 4);
 			arg->keylen = 4;
 			arg->value = (char*) malloc(port_.size());
 			memcpy(arg->value, port_.c_str(), port_.size());
 			arg->valuelen = port_.size();
+
+#ifdef HAVE_VMIME
+			}
+#endif
+
 			arg->next = NULL;
 			clstruct->args = arg;
 			clstruct->next = _context.clayer;
@@ -430,7 +448,7 @@ void dtn::dht::DHTNameService::componentDown() throw () {
 }
 
 void dtn::dht::DHTNameService::lookup(const dtn::data::EID &eid) {
-	if (dtn::core::BundleCore::local != eid.getNode()) {
+	if (!dtn::core::BundleCore::local.sameHost(eid)) {
 		if (this->_announced) {
 			std::string eid_ = eid.getNode().getString();
 			IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 30) << "DHT Lookup: " << eid_
@@ -528,6 +546,9 @@ std::string dtn::dht::DHTNameService::getConvergenceLayerName(
 	case dtn::daemon::Configuration::NetConfig::NETWORK_UDP:
 		cltype_ = "udp";
 		break;
+	case dtn::daemon::Configuration::NetConfig::NETWORK_EMAIL:
+		cltype_ = "email";
+		break;
 		//	case dtn::daemon::Configuration::NetConfig::NETWORK_HTTP:
 		//		cltype_ = "http";
 		//		break;
@@ -541,9 +562,8 @@ void dtn::dht::DHTNameService::raiseEvent(const dtn::core::Event *evt) throw () 
 	try {
 		const dtn::routing::QueueBundleEvent &event =
 				dynamic_cast<const dtn::routing::QueueBundleEvent&> (*evt);
-		dtn::data::EID none;
-		if (event.bundle.destination != dtn::core::BundleCore::local.getNode()
-				&& event.bundle.destination != none) {
+		if (!event.bundle.destination.sameHost(dtn::core::BundleCore::local)
+				&& !event.bundle.destination.isNone()) {
 			lookup(event.bundle.destination);
 		}
 	} catch (const std::bad_cast&) {
@@ -552,7 +572,7 @@ void dtn::dht::DHTNameService::raiseEvent(const dtn::core::Event *evt) throw () 
 		const dtn::core::NodeEvent &nodeevent =
 				dynamic_cast<const dtn::core::NodeEvent&> (*evt);
 		const dtn::core::Node &n = nodeevent.getNode();
-		if (n.getEID() != dtn::core::BundleCore::local.getNode()) {
+		if (!n.getEID().sameHost(dtn::core::BundleCore::local)) {
 			switch (nodeevent.getAction()) {
 			case NODE_AVAILABLE:
 				if (isNeighbourAnnouncable(n))
@@ -830,6 +850,8 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 			proto__ = Node::CONN_TCPIP;
 		} else if (clname__ == "udp") {
 			proto__ = Node::CONN_UDPIP;
+		} else if (clname__ == "email") {
+			proto__ = Node::CONN_EMAIL;
 		} else {
 			proto__ = Node::CONN_UNDEFINED;
 			//TODO find the right string to be added to service string
@@ -882,7 +904,7 @@ void dtn_dht_handle_lookup_result(const struct dtn_dht_lookup_result *result) {
 			}
 			dtn::data::EID n(neighbour__);
 			dtn::core::Node neighbourNode(n);
-			if (dtn::core::BundleCore::local != n.getNode()
+			if (!dtn::core::BundleCore::local.sameHost(n)
 					&& !core.getConnectionManager().isNeighbor(n)) {
 				dtn::core::BundleCore::getInstance().addRoute(n, node.getEID(),
 						DHT_PATH_EXPIRE_TIMEOUT);

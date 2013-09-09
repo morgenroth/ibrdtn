@@ -87,19 +87,5 @@ namespace dtn
 			}
 		}
 
-		bool RoutingExtension::isRouting(const dtn::data::EID &eid)
-		{
-			if (eid.getApplication() == "routing")
-			{
-				return true;
-			}
-			else if ((eid.getScheme() == dtn::data::EID::CBHE_SCHEME) && (eid.getApplication() == "50"))
-			{
-				return true;
-			}
-
-			return false;
-		}
-
 	} /* namespace routing */
 } /* namespace dtn */

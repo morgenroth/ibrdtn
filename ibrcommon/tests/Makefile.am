@@ -33,12 +33,10 @@ endif
 EXTRA_DIST = base64-dec.dat base64-enc.dat test-key.pem
 
 AM_CPPFLAGS = $(DEBUG_CFLAGS) $(OPENSSL_CFLAGS)
-AM_LDFLAGS = -L@top_srcdir@/ibrcommon/.libs -librcommon $(OPENSSL_LIBS)
-
-AM_CPPFLAGS += -I@top_srcdir@ -I@top_srcdir@/tests
+AM_LDFLAGS = -L@top_builddir@/ibrcommon/.libs -librcommon $(OPENSSL_LIBS)
 
 check_PROGRAMS = testsuite
-testsuite_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -Wall
+testsuite_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -I@top_srcdir@/tests -I@top_srcdir@
 testsuite_LDFLAGS = ${AM_LDFLAGS} ${CPPUNIT_LIBS}
 testsuite_SOURCES = $(h_sources) $(cc_sources) Main.cpp
 

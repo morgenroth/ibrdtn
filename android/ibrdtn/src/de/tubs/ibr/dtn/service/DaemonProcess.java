@@ -61,6 +61,7 @@ public class DaemonProcess {
 	private DaemonProcessHandler mHandler = null;
 	private Context mContext = null;
 	private DaemonState _state = DaemonState.OFFLINE;
+	private Boolean mDiscoveryEnabled = null;
 	
     private WifiManager.MulticastLock _mcast_lock = null;
 
@@ -78,6 +79,12 @@ public class DaemonProcess {
     private static final String __CLOUD_PROTOCOL__ = "tcp";
     private static final String __CLOUD_ADDRESS__ = "134.169.35.130"; // quorra.ibr.cs.tu-bs.de";
     private static final String __CLOUD_PORT__ = "4559";
+    
+    public interface OnRestartListener {
+        public void OnStop();
+        public void OnReloadConfiguration();
+        public void OnStart();
+    };
 
 	/**
 	 * Loads all shared libraries in the right order with System.loadLibrary()
@@ -115,6 +122,7 @@ public class DaemonProcess {
 		this.mDaemon = new NativeDaemon(mDaemonCallback, mEventCallback);
 		this.mContext = context;
 		this.mHandler = handler;
+		this.mDiscoveryEnabled = true;
 	}
 
 	public String[] getVersion() {
@@ -223,12 +231,6 @@ public class DaemonProcess {
     }
 	
 	public synchronized void start() {
-	    WifiManager wifi_manager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
-
-        // listen to multicast packets
-        _mcast_lock = wifi_manager.createMulticastLock(TAG);
-        _mcast_lock.acquire();
-
         // reload daemon configuration
         onConfigurationChanged();
         
@@ -246,15 +248,9 @@ public class DaemonProcess {
         } catch (NativeDaemonException e) {
             Log.e(TAG, "error while stopping the daemon process", e);
         }
-
-	    // release multicast lock
-        if (_mcast_lock != null) {
-            _mcast_lock.release();
-            _mcast_lock = null;
-        }
 	}
 	
-	public synchronized void restart(Integer runlevel) {
+	public synchronized void restart(Integer runlevel, OnRestartListener listener) {
 	    // restart the daemon
         DaemonRunLevel restore = mDaemon.getRunLevel();
         DaemonRunLevel rl = DaemonRunLevel.swigToEnum(runlevel);
@@ -263,17 +259,21 @@ public class DaemonProcess {
         if (restore.swigValue() <= rl.swigValue()) {
             // reload configuration
             onConfigurationChanged();
+            if (listener != null) listener.OnReloadConfiguration();
         }
         
 	    try {
 	        // bring the daemon down
 	        mDaemon.init(rl);
+	        if (listener != null) listener.OnStop();
 	        
 	        // reload configuration
 	        onConfigurationChanged();
+	        if (listener != null) listener.OnReloadConfiguration();
 	        
 	        // restore the old runlevel
 	        mDaemon.init(restore);
+	        if (listener != null) listener.OnStart();
 	    } catch (NativeDaemonException e) {
             Log.e(TAG, "error while restarting the daemon process", e);
         }
@@ -299,13 +299,15 @@ public class DaemonProcess {
     private HashMap<String, DaemonRunLevel> initializeRestartMap() {
         HashMap<String, DaemonRunLevel> ret = new HashMap<String, DaemonRunLevel>();
         
-        ret.put("endpoint_id", DaemonRunLevel.RUNLEVEL_API);
+        ret.put("endpoint_id", DaemonRunLevel.RUNLEVEL_CORE);
         ret.put("routing", DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS);
         ret.put("interface_", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("discovery_announce", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("checkIdleTimeout", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("checkFragmentation", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("timesync_mode", DaemonRunLevel.RUNLEVEL_API);
+        ret.put("storage_mode", DaemonRunLevel.RUNLEVEL_CORE);
+        ret.put("cloud_uplink_3g", DaemonRunLevel.RUNLEVEL_NETWORK);
         
         return ret;
     }
@@ -329,9 +331,9 @@ public class DaemonProcess {
     private SharedPreferences.OnSharedPreferenceChangeListener _pref_listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-            Log.d(TAG, "Preferences has changed " + key);
-
             if (mRestartMap.containsKey(key)) {
+                Log.d(TAG, "Preference " + key + " has changed => restart");
+                
                 // check runlevel and restart some runlevels if necessary
                 final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
                 intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
@@ -340,6 +342,8 @@ public class DaemonProcess {
             }
             else if (key.equals("enabledSwitch"))
             {
+                Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getBoolean(key, false) ));
+                
                 if (prefs.getBoolean(key, false)) {
                     // startup the daemon process
                     final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
@@ -354,6 +358,8 @@ public class DaemonProcess {
             }
             else if (key.startsWith("interface_"))
             {
+                Log.d(TAG, "Preference " + key + " has changed => restart");
+                
                 // a interface has been removed or added
                 // check runlevel and restart some runlevels if necessary
                 final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
@@ -363,7 +369,8 @@ public class DaemonProcess {
             }
             else if (key.equals("cloud_uplink"))
             {
-                Log.d(TAG, key + " == " + String.valueOf( prefs.getBoolean(key, false) ));
+                Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getBoolean(key, false) ));
+                
                 synchronized(DaemonProcess.this) {
                     if (prefs.getBoolean(key, false)) {
                         mDaemon.addConnection(__CLOUD_EID__.toString(),
@@ -376,7 +383,7 @@ public class DaemonProcess {
             }
             else if (key.startsWith("log_options"))
             {
-                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                Log.d(TAG, "Preference " + key + " has changed to " + prefs.getString(key, "<not set>"));
                 
                 int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
                 int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
@@ -394,7 +401,7 @@ public class DaemonProcess {
             }
             else if (key.startsWith("log_debug_verbosity"))
             {
-                Log.d(TAG, key + " == " + prefs.getString(key, "<not set>"));
+                Log.d(TAG, "Preference " + key + " has changed to " + prefs.getString(key, "<not set>"));
                 
                 int logLevel = Integer.valueOf(prefs.getString("log_options", "0"));
                 int debugVerbosity = Integer.valueOf(prefs.getString("log_debug_verbosity", "0"));
@@ -409,7 +416,7 @@ public class DaemonProcess {
             }
             else if (key.startsWith("log_enable_file"))
             {
-                Log.d(TAG, key + " == " + prefs.getBoolean(key, false));
+                Log.d(TAG, "Preference " + key + " has changed to " + prefs.getBoolean(key, false));
                 
                 // set logfile options
                 String logFilePath = null;
@@ -438,6 +445,8 @@ public class DaemonProcess {
                     }
                 }
             } else if (mConfigurationSet.contains(key)) {
+                Log.d(TAG, "Preference " + key + " has changed");
+                
                 // default action
                 onConfigurationChanged();
             }
@@ -522,6 +531,14 @@ public class DaemonProcess {
 			else if (DaemonRunLevel.RUNLEVEL_API.equals(level)) {
 			    setState(DaemonState.OFFLINE);
 			}
+			else if (DaemonRunLevel.RUNLEVEL_NETWORK.equals(level)) {
+			    // restore previous discovery state
+			    if (mDiscoveryEnabled) {
+			        startDiscovery();
+			    } else {
+			        stopDiscovery();
+			    }
+			}
 		}
 	};
 	
@@ -585,6 +602,9 @@ public class DaemonProcess {
 			PrintStream p = new PrintStream(writer);
 			p.println("local_uri = " + preferences.getString("endpoint_id", getUniqueEndpointID(context).toString()));
 			p.println("routing = " + preferences.getString("routing", "default"));
+			
+			// enable traffic stats
+			p.println("stats_traffic = yes");
 
 			if (preferences.getBoolean("constrains_lifetime", false)) {
 				p.println("limit_lifetime = 1209600");
@@ -686,25 +706,33 @@ public class DaemonProcess {
 			}
 
 			p.println("net_interfaces = " + ifaces);
-			p.println("net_internet = " + internet_ifaces);
-
-			// storage path
-			File blobPath = DaemonStorageUtils.getStoragePath("blob");
-			if (blobPath != null) {
-				p.println("blob_path = " + blobPath.getPath());
-
-				// flush storage path
-				File[] files = blobPath.listFiles();
-				if (files != null) {
-					for (File f : files) {
-						f.delete();
-					}
-				}
+			
+			if (!preferences.getBoolean("cloud_uplink_3g", false)) {
+			    p.println("net_internet = " + internet_ifaces);
 			}
 
-			File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
-			if (bundlePath != null) {
-				p.println("storage_path = " + bundlePath.getPath());
+			String storage_mode = preferences.getString( "storage_mode", "disk-persistent" );
+			if ("disk".equals( storage_mode ) || "disk-persistent".equals( storage_mode )) {
+    			// storage path
+    			File blobPath = DaemonStorageUtils.getStoragePath("blob");
+    			if (blobPath != null) {
+    				p.println("blob_path = " + blobPath.getPath());
+    
+    				// flush storage path
+    				File[] files = blobPath.listFiles();
+    				if (files != null) {
+    					for (File f : files) {
+    						f.delete();
+    					}
+    				}
+    			}
+			}
+
+			if ("disk-persistent".equals( storage_mode )) {
+    			File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
+    			if (bundlePath != null) {
+    				p.println("storage_path = " + bundlePath.getPath());
+    			}
 			}
 
 			// enable interface rebind
@@ -718,5 +746,35 @@ public class DaemonProcess {
 		} catch (IOException e) {
 			Log.e(TAG, "Problem writing config", e);
 		}
+	}
+	
+	public synchronized void startDiscovery() {
+        // set discovery flag to true
+        mDiscoveryEnabled = true;
+        
+        WifiManager wifi_manager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
+
+        if (_mcast_lock == null) {
+            // listen to multicast packets
+            _mcast_lock = wifi_manager.createMulticastLock(TAG);
+            _mcast_lock.acquire();
+        }
+        
+        // start discovery mechanism in the daemon
+        mDaemon.startDiscovery();
+	}
+	
+	public synchronized void stopDiscovery() {
+	    // set discovery flag to false
+	    mDiscoveryEnabled = false;
+	    
+	    // stop discovery mechanism in the daemon
+	    mDaemon.stopDiscovery();
+	    
+	    // release multicast lock
+        if (_mcast_lock != null) {
+            _mcast_lock.release();
+            _mcast_lock = null;
+        }
 	}
 }

@@ -98,7 +98,7 @@ namespace dtn
 				case SecurityKey::KEY_SHARED:
 				{
 					// read a symmetric key required for BAB signing
-					const ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".mac");
+					const ibrcommon::File keyfile = _path.get(hash(keydata.reference) + ".mac");
 
 					if (!keyfile.exists())
 					{
@@ -125,7 +125,7 @@ namespace dtn
 				case SecurityKey::KEY_PUBLIC:
 				case SecurityKey::KEY_PRIVATE:
 				{
-					const ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
+					const ibrcommon::File keyfile = _path.get(hash(keydata.reference) + ".pem");
 
 					if (!keyfile.exists())
 					{

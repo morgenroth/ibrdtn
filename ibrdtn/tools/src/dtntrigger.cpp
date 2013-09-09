@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-
 // set this variable to false to stop the app
 bool _running = true;
 
@@ -229,7 +228,7 @@ int main(int argc, char** argv)
 			if (_running)
 			{
 				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
-				sleep(backoff);
+				ibrcommon::Thread::sleep(backoff * 1000);
 
 				// if backoff < 10 minutes
 				if (backoff < 600)
@@ -245,7 +244,7 @@ int main(int argc, char** argv)
 			if (_running)
 			{
 				cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
-				sleep(backoff);
+				ibrcommon::Thread::sleep(backoff * 1000);
 
 				// if backoff < 10 minutes
 				if (backoff < 600)

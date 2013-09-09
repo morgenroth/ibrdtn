@@ -37,9 +37,9 @@ public abstract class StatsListAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
-    protected abstract int getDataMapPosition(int position);
-    protected abstract int getDataRows();
-    protected abstract int getDataColor(int position);
+    public abstract int getDataMapPosition(int position);
+    public abstract int getDataRows();
+    public abstract int getDataColor(int position);
 
     public Object getItem(int position) {
         StatsData e = new StatsData();
@@ -88,6 +88,15 @@ public abstract class StatsListAdapter extends BaseAdapter {
     }
     
     @SuppressLint("DefaultLocale")
+    private static String humanReadableByteCount(long bytes, boolean si) {
+        int unit = si ? 1000 : 1024;
+        if (bytes < unit) return bytes + " B";
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+    }
+    
+    @SuppressLint("DefaultLocale")
     public static String getRowString(int position, StatsEntry data) {
         Object value = getRowData(position, data);
         
@@ -98,6 +107,14 @@ public abstract class StatsListAdapter extends BaseAdapter {
         if (position == 0) {
             // special case "seconds"
             return String.format("%d s", (Long)value);
+        }
+        else if (position == 3) {
+            // special case "seconds"
+            return String.format("%f s", (Double)value);
+        }
+        else if (position == 14) {
+            // special case "bytes"
+            return humanReadableByteCount((Long)value, true);
         }
         
         if (value instanceof String) {
@@ -129,14 +146,14 @@ public abstract class StatsListAdapter extends BaseAdapter {
     };
     
     private final static RowType[] mRowTypes = {
-        RowType.RELATIVE,
-        RowType.ABSOLUTE,
-        RowType.RELATIVE,
-        
         RowType.ABSOLUTE,
         RowType.ABSOLUTE,
         RowType.RELATIVE,
         
+        RowType.ABSOLUTE,
+        RowType.ABSOLUTE,
+        RowType.RELATIVE,
+        
         RowType.RELATIVE,
         RowType.RELATIVE,
         RowType.RELATIVE,
@@ -144,7 +161,9 @@ public abstract class StatsListAdapter extends BaseAdapter {
         RowType.RELATIVE,
         RowType.RELATIVE,
         RowType.ABSOLUTE,
-        RowType.RELATIVE
+        RowType.RELATIVE,
+        
+        RowType.ABSOLUTE
     };
     
     private final static int[] mRowTitles = {
@@ -163,7 +182,9 @@ public abstract class StatsListAdapter extends BaseAdapter {
       R.string.stats_title_bundles_received,
       R.string.stats_title_transfers_requeued,
       R.string.stats_title_bundles_stored,
-      R.string.stats_title_transfers_completed
+      R.string.stats_title_transfers_completed,
+      
+      R.string.stats_title_storage_size
     };
     
     public static RowType getRowType(int position) {
@@ -217,6 +238,9 @@ public abstract class StatsListAdapter extends BaseAdapter {
 
             case 13:
                 return data.getBundleTransmitted();
+                
+            case 14:
+                return data.getStorageSize();
         }
         return null;
     }

@@ -49,7 +49,7 @@ public class RosterLoader extends AsyncTaskLoader<Cursor> {
 		} else {
 			// load all buddies
 			return db.query(Roster.TABLE_NAME_ROSTER, RosterAdapter.PROJECTION,
-					null, null, null, null, null, null);
+					null, null, null, null, Buddy.NICKNAME);
 		}
 	}
 

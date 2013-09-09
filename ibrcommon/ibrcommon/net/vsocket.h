@@ -203,11 +203,12 @@ namespace ibrcommon
 		class SelectGuard
 		{
 		public:
-			SelectGuard(SocketState &state, int &counter);
+			SelectGuard(SocketState &state, int &counter, ibrcommon::vsocket &sock);
 			virtual ~SelectGuard();
 		private:
 			SocketState &_state;
 			int &_counter;
+			ibrcommon::vsocket &_sock;
 		};
 
 		void interrupt();

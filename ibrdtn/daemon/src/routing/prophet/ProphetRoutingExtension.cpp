@@ -89,7 +89,6 @@ namespace dtn
 
 		void ProphetRoutingExtension::responseHandshake(const dtn::data::EID& neighbor, const NodeHandshake& request, NodeHandshake& response)
 		{
-			const dtn::data::EID neighbor_node = neighbor.getNode();
 			if (request.hasRequest(DeliveryPredictabilityMap::identifier))
 			{
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
@@ -105,13 +104,14 @@ namespace dtn
 
 		void ProphetRoutingExtension::processHandshake(const dtn::data::EID& neighbor, NodeHandshake& response)
 		{
-			const dtn::data::EID neighbor_node = neighbor.getNode();
-
 			/* ignore neighbors, that have our EID */
-			if (neighbor_node == dtn::core::BundleCore::local) return;
+			if (neighbor.sameHost(dtn::core::BundleCore::local)) return;
 
 			try {
 				const DeliveryPredictabilityMap& neighbor_dp_map = response.get<DeliveryPredictabilityMap>();
+
+				// strip possible application part off the neighbor EID
+				const dtn::data::EID neighbor_node = neighbor.getNode();
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "delivery predictability map received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -147,7 +147,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "ack'set received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// merge ack'set into the known bundles
-				for (AcknowledgementSet::const_iterator it = _acknowledgementSet.begin(); it != _acknowledgementSet.end(); ++it) {
+				for (AcknowledgementSet::const_iterator it = neighbor_ack_set.begin(); it != neighbor_ack_set.end(); ++it) {
 					(**this).setKnown(*it);
 				}
 
@@ -312,7 +312,7 @@ namespace dtn
 				const dtn::data::MetaBundle &meta = completed.getBundle();
 				const dtn::data::EID &peer = completed.getPeer();
 
-				if ((meta.destination.getNode() == peer.getNode())
+				if (meta.destination.sameHost(peer)
 						/* send prophet ack only for singleton */
 						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 				{
@@ -400,7 +400,7 @@ namespace dtn
 
 					// do not forward any routing control message
 					// this is done by the neighbor routing module
-					if (isRouting(meta.source))
+					if (meta.source.isApplication("routing"))
 					{
 						return false;
 					}
@@ -472,7 +472,7 @@ namespace dtn
 							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
 
 							// lock the neighbor database while searching for bundles
-							{
+							try {
 								NeighborDatabase &db = (**this).getNeighborDB();
 
 								ibrcommon::MutexLock l(db);
@@ -482,27 +482,25 @@ namespace dtn
 								if (!entry.isTransferThresholdReached())
 									throw NeighborDatabase::NoMoreTransfersAvailable();
 
-								try {
-									// get the DeliveryPredictabilityMap of the potentially next hop
-									const DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
+								// get the DeliveryPredictabilityMap of the potentially next hop
+								const DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
 
-									// get the bundle filter of the neighbor
-									BundleFilter filter(entry, *_forwardingStrategy, dpm);
+								// get the bundle filter of the neighbor
+								BundleFilter filter(entry, *_forwardingStrategy, dpm);
 
-									// some debug output
-									IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								// some debug output
+								IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-									// query some unknown bundle from the storage, the list contains max. 10 items.
-									list.clear();
-									(**this).getSeeker().get(filter, list);
-								} catch (const NeighborDatabase::DatasetNotAvailableException&) {
-									// if there is no DeliveryPredictabilityMap for the next hop
-									// perform a routing handshake with the peer
-									(**this).doHandshake(task.eid);
-								} catch (const dtn::storage::BundleSelectorException&) {
-									// query a new summary vector from this neighbor
-									(**this).doHandshake(task.eid);
-								}
+								// query some unknown bundle from the storage, the list contains max. 10 items.
+								list.clear();
+								(**this).getSeeker().get(filter, list);
+							} catch (const NeighborDatabase::DatasetNotAvailableException&) {
+								// if there is no DeliveryPredictabilityMap for the next hop
+								// perform a routing handshake with the peer
+								(**this).doHandshake(task.eid);
+							} catch (const dtn::storage::BundleSelectorException&) {
+								// query a new summary vector from this neighbor
+								(**this).doHandshake(task.eid);
 							}
 
 							// send the bundles as long as we have resources

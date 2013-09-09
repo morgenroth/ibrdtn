@@ -35,7 +35,7 @@ void netlinktest :: baseTest (void)
 		std::cout << " " << (*iter).toString() << std::endl;
 	}
 
-	//::sleep(560);
+	//ibrcommon::Thread::sleep(560000);
 }
 void netlinktest::upUpTest (void)
 {

@@ -3,7 +3,6 @@ package de.tubs.ibr.dtn.sharebox;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -20,6 +19,7 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.ParcelFileDescriptor.AutoCloseOutputStream;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -284,7 +284,7 @@ public class DtnService extends IntentService {
             final ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
             
             // create a new output stream for the data
-            OutputStream targetStream = new FileOutputStream(pipe[1].getFileDescriptor());
+            final OutputStream targetStream = new AutoCloseOutputStream(pipe[1]);
             
             // create a TarCreator and assign default listener to update progress
             TarCreator creator = new TarCreator(this, targetStream, uris);
@@ -301,7 +301,7 @@ public class DtnService extends IntentService {
                             // close pipes on error
                             try {
                                 pipe[0].close();
-                                pipe[1].close();
+                                targetStream.close();
                             } catch (Exception e) {
                                 
                             }
@@ -316,7 +316,7 @@ public class DtnService extends IntentService {
                             
                             // close write side on success
                             try {
-                                pipe[1].close();
+                                targetStream.close();
                             } catch (Exception e) {
                                 
                             }
@@ -354,7 +354,7 @@ public class DtnService extends IntentService {
                 s.send(destination, lifetime, pipe[0]);
             } catch (Exception e) {
                 pipe[0].close();
-                pipe[1].close();
+                targetStream.close();
                 
                 // re-throw the exception to the next catch
                 throw e;

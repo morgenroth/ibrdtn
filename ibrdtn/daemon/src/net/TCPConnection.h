@@ -119,6 +119,9 @@ namespace dtn
 			void enableTLS();
 #endif
 
+			size_t getTrafficStats(int index);
+			void resetTrafficStats();
+
 		protected:
 			void rejectTransmission();
 

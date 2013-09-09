@@ -83,7 +83,7 @@ void FakeDatagramService::shutdown() {
 void FakeDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const std::string &address, const char *buf, size_t length) throw (DatagramException) {
 	if (type == dtn::net::DatagramConvergenceLayer::HEADER_SEGMENT) {
 		// wait 50ms and queue an ack
-		::usleep(50000);
+		ibrcommon::Thread::sleep(50);
 
 		genAck((seqno + 1) % 4, address);
 	}

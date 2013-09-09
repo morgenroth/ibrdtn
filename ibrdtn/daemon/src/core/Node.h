@@ -57,7 +57,8 @@ namespace dtn
 				CONN_DGRAM_LOWPAN = 8,
 				CONN_DGRAM_ETHERNET = 9,
 				CONN_P2P_WIFI = 10,
-				CONN_P2P_BT = 11
+				CONN_P2P_BT = 11,
+				CONN_EMAIL = 12
 			};
 
 			/**
@@ -120,8 +121,8 @@ namespace dtn
 				friend std::ostream& operator<<(std::ostream&, const Node::Attribute&);
 			};
 
-			static std::string toString(Node::Type type);
-			static std::string toString(Node::Protocol proto);
+			static std::string toString(const Node::Type type);
+			static std::string toString(const Node::Protocol proto);
 			static Node::Protocol fromProtocolString(const std::string &protocol);
 
 			/**

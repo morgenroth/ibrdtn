@@ -23,7 +23,7 @@
 #define BUNDLEPURGEEVENT_H_
 
 #include "core/Event.h"
-#include <ibrdtn/data/BundleID.h>
+#include <ibrdtn/data/MetaBundle.h>
 #include <ibrdtn/data/StatusReportBlock.h>
 
 namespace dtn
@@ -38,14 +38,14 @@ namespace dtn
 			const std::string getName() const;
 			std::string getMessage() const;
 
-			const dtn::data::BundleID bundle;
+			const dtn::data::MetaBundle bundle;
 			const dtn::data::StatusReportBlock::REASON_CODE reason;
 
-			static void raise(const dtn::data::BundleID &id, dtn::data::StatusReportBlock::REASON_CODE reason = dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
+			static void raise(const dtn::data::MetaBundle &meta, dtn::data::StatusReportBlock::REASON_CODE reason = dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 			static const std::string className;
 
 		private:
-			BundlePurgeEvent(const dtn::data::BundleID &id, dtn::data::StatusReportBlock::REASON_CODE reason);
+			BundlePurgeEvent(const dtn::data::MetaBundle &meta, dtn::data::StatusReportBlock::REASON_CODE reason);
 		};
 	} /* namespace core */
 } /* namespace dtn */

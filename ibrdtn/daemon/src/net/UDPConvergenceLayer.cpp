@@ -60,6 +60,9 @@ namespace dtn
 		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, dtn::data::Length mtu)
 		 : _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
 		{
+			// initialize stats
+			addStats("out", 0.0);
+			addStats("in", 0.0);
 		}
 
 		UDPConvergenceLayer::~UDPConvergenceLayer()
@@ -248,6 +251,9 @@ namespace dtn
 				// send converted line back to client.
 				sock.sendto(data.c_str(), data.length(), 0, addr);
 
+				// add statistic data
+				addStats("out", data.length());
+
 				// success
 				return;
 			}
@@ -273,6 +279,9 @@ namespace dtn
 
 				ibrcommon::vaddress fromaddr;
 				size_t len = sock->recvfrom(&data[0], m_maxmsgsize, 0, fromaddr);
+
+				// add statistic data
+				addStats("int", len);
 
 				std::stringstream ss; ss << "udp://" << fromaddr.toString();
 				sender = dtn::data::EID(ss.str());

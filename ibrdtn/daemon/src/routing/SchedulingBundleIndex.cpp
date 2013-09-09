@@ -21,11 +21,13 @@ namespace dtn
 
 		void SchedulingBundleIndex::add(const dtn::data::MetaBundle &b)
 		{
+			ibrcommon::MutexLock l(_index_mutex);
 			_priority_index.insert(b);
 		}
 
 		void SchedulingBundleIndex::remove(const dtn::data::BundleID &id)
 		{
+			ibrcommon::MutexLock l(_index_mutex);
 			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
 			{
 				const dtn::data::MetaBundle &b = (*iter);
@@ -41,6 +43,7 @@ namespace dtn
 			bool unlimited = (cb.limit() <= 0);
 			size_t added = 0;
 
+			ibrcommon::MutexLock l(_index_mutex);
 			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
 			{
 				const dtn::data::MetaBundle &b = (*iter);
@@ -59,6 +62,14 @@ namespace dtn
 		const std::set<dtn::data::EID> SchedulingBundleIndex::getDistinctDestinations()
 		{
 			std::set<dtn::data::EID> ret;
+
+			ibrcommon::MutexLock l(_index_mutex);
+			for (priority_index::const_iterator iter = _priority_index.begin(); iter != _priority_index.end(); ++iter)
+			{
+				const dtn::data::MetaBundle &b = (*iter);
+				ret.insert(b.destination);
+			}
+
 			return ret;
 		}
 	} /* namespace routing */

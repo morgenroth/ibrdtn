@@ -95,7 +95,7 @@ namespace dtn
 
 					// do not forward any routing control message
 					// this is done by the neighbor routing module
-					if (isRouting(meta.source))
+					if (meta.source.isApplication("routing"))
 					{
 						return false;
 					}
@@ -484,7 +484,7 @@ namespace dtn
 
 		bool StaticRoutingExtension::EIDRoute::match(const dtn::data::EID &eid) const
 		{
-			return (_match == eid.getNode());
+			return _match.sameHost(eid);
 		}
 
 		const dtn::data::EID& StaticRoutingExtension::EIDRoute::getDestination() const

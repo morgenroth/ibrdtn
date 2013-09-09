@@ -50,12 +50,18 @@ import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
-import de.tubs.ibr.dtn.p2p.P2PManager;
+import de.tubs.ibr.dtn.p2p.P2pManager;
+import de.tubs.ibr.dtn.p2p.SettingsUtil;
+import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
 import de.tubs.ibr.dtn.stats.StatsEntry;
+import de.tubs.ibr.dtn.swig.DaemonRunLevel;
 import de.tubs.ibr.dtn.swig.NativeStats;
+import de.tubs.ibr.dtn.swig.StringVec;
 
 public class DaemonService extends Service {
+    private static final String ACTION_INITIALIZE = "de.tubs.ibr.dtn.action.INITIALIZE";
+    
     public static final String ACTION_STARTUP = "de.tubs.ibr.dtn.action.STARTUP";
     public static final String ACTION_SHUTDOWN = "de.tubs.ibr.dtn.action.SHUTDOWN";
     public static final String ACTION_RESTART = "de.tubs.ibr.dtn.action.RESTART";
@@ -68,6 +74,9 @@ public class DaemonService extends Service {
     
     public static final String ACTION_STORE_STATS = "de.tubs.ibr.dtn.action.STORE_STATS";
     
+    public static final String ACTION_START_DISCOVERY = "de.tubs.ibr.dtn.action.START_DISCOVERY";
+    public static final String ACTION_STOP_DISCOVERY = "de.tubs.ibr.dtn.action.STOP_DISCOVERY";
+    
     public static final String PREFERENCE_NAME = "de.tubs.ibr.dtn.service_prefs";
 
     private final String TAG = "DaemonService";
@@ -79,13 +88,13 @@ public class DaemonService extends Service {
     private SessionManager mSessionManager = null;
 
     // the P2P manager used for wifi direct control
-    private P2PManager _p2p_manager = null;
+    private P2pManager mP2pManager = null;
 
     // the daemon process
     private DaemonProcess mDaemonProcess = null;
     
     // indicates if a notification is visible
-    private Boolean _show_notification = false;
+    private Boolean mShowNotification = false;
     
     // statistic database
     private StatsDatabase mStatsDatabase = null;
@@ -96,24 +105,24 @@ public class DaemonService extends Service {
     private final DTNService.Stub mBinder = new LocalDTNService();
         
     public class LocalDTNService extends DTNService.Stub {
+        @Override
         public DaemonState getState() throws RemoteException {
             return DaemonService.this.mDaemonProcess.getState();
         }
 
+        @Override
         public boolean isRunning() throws RemoteException {
             return DaemonService.this.mDaemonProcess.getState().equals(DaemonState.ONLINE);
         }
 
+        @Override
         public List<Node> getNeighbors() throws RemoteException {
         	return DaemonService.this.mDaemonProcess.getNeighbors();
         }
 
-        public void clearStorage() throws RemoteException {
-        	DaemonService.this.mDaemonProcess.clearStorage();
-        }
-
-        public DTNSession getSession(String packageName) throws RemoteException {
-            ClientSession cs = mSessionManager.getSession(packageName);
+        @Override
+        public DTNSession getSession(String sessionKey) throws RemoteException {
+            ClientSession cs = mSessionManager.getSession(sessionKey);
             if (cs == null)
                 return null;
             return cs.getBinder();
@@ -196,8 +205,32 @@ public class DaemonService extends Service {
             mDaemonProcess.stop();
         } else if (ACTION_RESTART.equals(action)) {
             final Integer level = intent.getIntExtra("runlevel", 0);
+            
             // restart the daemon into the given runlevel
-            mDaemonProcess.restart(level);
+            mDaemonProcess.restart(level, new DaemonProcess.OnRestartListener() {
+                @Override
+                public void OnStop() {
+                    if (level <= DaemonRunLevel.RUNLEVEL_CORE.swigValue()) {
+                        // shutdown the session manager
+                        mSessionManager.destroy();
+                    }
+                }
+                
+                @Override
+                public void OnStart() {
+                    if (level <= DaemonRunLevel.RUNLEVEL_CORE.swigValue()) {
+                        // re-initialize the session manager
+                        mSessionManager.initialize();
+                        
+                        // restore sessions
+                        mSessionManager.restoreRegistrations();
+                    }
+                }
+
+                @Override
+                public void OnReloadConfiguration() {
+                }
+            });
             
             final Intent storeStatsIntent = new Intent(this, DaemonService.class);
             storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
@@ -237,22 +270,42 @@ public class DaemonService extends Service {
                 Calendar now = Calendar.getInstance();
                 now.roll(Calendar.MINUTE, -1);
                 if (mStatsLastAction.before(now.getTime())) {
-                    // query the daemon stats and store them in the database
-                    mStatsDatabase.put( new StatsEntry( mDaemonProcess.getStats() ) );
-                    mStatsLastAction = new Date();
+                    refreshStats();
                 }
             } else {
-                // query the daemon stats and store them in the database
-                mStatsDatabase.put( new StatsEntry( mDaemonProcess.getStats() ) );
-                mStatsLastAction = new Date();
+                refreshStats();
             }
             
-            // schedule next collection in 3 minutes
-            mServiceHandler.postDelayed(mCollectStats, 180000);
+            // schedule next collection in 15 minutes
+            mServiceHandler.postDelayed(mCollectStats, 900000);
+        } else if (ACTION_INITIALIZE.equals(action)) {
+            // initialize the daemon service
+            initialize();
+        } else if (ACTION_START_DISCOVERY.equals(action)) {
+            // start P2P discovery and enable IPND
+            mDaemonProcess.startDiscovery();
+        } else if (ACTION_STOP_DISCOVERY.equals(action)) {
+            // stop P2P discovery and disable IPND
+            mDaemonProcess.stopDiscovery();
         }
         
         // stop the daemon if it should be offline
-        if (mDaemonProcess.getState().equals(DaemonState.OFFLINE)) stopSelf(startId);
+        if (mDaemonProcess.getState().equals(DaemonState.OFFLINE) && (startId != -1)) stopSelf(startId);
+    }
+    
+    private void refreshStats() {
+        NativeStats nstats = mDaemonProcess.getStats();
+        
+        // query the daemon stats and store them in the database
+        mStatsDatabase.put( new StatsEntry( nstats ) );
+        
+        StringVec tags = nstats.getTags();
+        for (int i = 0; i < tags.size(); i++) {
+            ConvergenceLayerStatsEntry e = new ConvergenceLayerStatsEntry(nstats, tags.get(i), i);
+            mStatsDatabase.put(e);
+        }
+        
+        mStatsLastAction = new Date();
     }
 
     public DaemonService() {
@@ -283,8 +336,25 @@ public class DaemonService extends Service {
         mSessionManager = new SessionManager(this);
         
         // create P2P Manager
-        _p2p_manager = new P2PManager(this);
+        mP2pManager = new P2pManager(this);
+        mP2pManager.create();
         
+        // start initialization of the daemon process
+        final Intent intent = new Intent(this, DaemonService.class);
+        intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_INITIALIZE);
+        
+        // queue the initialization job as the first job of the handler
+        Message msg = mServiceHandler.obtainMessage();
+        msg.arg1 = -1; // invalid startId (this never leads to a stop of the service)
+        msg.obj = intent;
+        mServiceHandler.sendMessage(msg);
+    }
+    
+    /**
+     * Initialize the daemon service
+     * This should be the first job of the service after creation
+     */
+    private void initialize() {
         // initialize the basic daemon
         mDaemonProcess.initialize();
         
@@ -320,6 +390,9 @@ public class DaemonService extends Service {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.unregisterOnSharedPreferenceChangeListener(_pref_listener);
         
+        // disable P2P manager
+        mP2pManager.destroy();
+        
         // stop looper that handles incoming intents
         mServiceLooper.quit();
 
@@ -331,7 +404,7 @@ public class DaemonService extends Service {
         mDaemonProcess = null;
 
         // dereference P2P Manager
-        _p2p_manager = null;
+        mP2pManager = null;
         
         // remove notification
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -378,6 +451,12 @@ public class DaemonService extends Service {
         public void onStateChanged(DaemonState state) {
             Log.d(TAG, "mDaemonStateReceiver: DaemonState: " + state);
             
+            // prepare broadcast intent
+            Intent broadcastIntent = new Intent();
+            broadcastIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
+            broadcastIntent.putExtra("state", state.name());
+            broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+            
             // request notification update
             requestNotificationUpdate();
             
@@ -388,13 +467,14 @@ public class DaemonService extends Service {
                     break;
                     
                 case OFFLINE:
-                    // disable P2P manager
-                    _p2p_manager.destroy();
+                    if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
+                        mP2pManager.pause();
+                    }
                     
                     // disable foreground service only if the daemon has been switched off
                     if (!prefs.getBoolean("enabledSwitch", false)) {
                         // mark the notification as invisible
-                        _show_notification = false;
+                        mShowNotification = false;
                         
                         // stop foreground service
                         stopForeground(true);
@@ -408,7 +488,7 @@ public class DaemonService extends Service {
                 case ONLINE:
                 	if (prefs.getBoolean("RunAsForegroundService", true)) {
 	                    // mark the notification as visible
-	                    _show_notification = true;
+	                    mShowNotification = true;
 	                    
 	                    // create initial notification
 	                    Notification n = buildNotification(R.drawable.ic_notification, getResources()
@@ -418,8 +498,12 @@ public class DaemonService extends Service {
 	                    startForeground(1, n);
                 	}
                     
-                    // enable P2P manager
-                    _p2p_manager.initialize();
+                    if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
+                        mP2pManager.resume();
+                    }
+                    
+                    // wake-up all apps in stopped-state when going online
+                    broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                     break;
                     
                 case SUSPENDED:
@@ -432,10 +516,6 @@ public class DaemonService extends Service {
             }
             
             // broadcast state change
-            Intent broadcastIntent = new Intent();
-            broadcastIntent.setAction(de.tubs.ibr.dtn.Intent.STATE);
-            broadcastIntent.putExtra("state", state.name());
-            broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
             sendBroadcast(broadcastIntent);
         }
 
@@ -493,7 +573,7 @@ public class DaemonService extends Service {
         }
         
         // update the notification only if it is visible
-        if (_show_notification) {
+        if (mShowNotification) {
             nm.notify(1, buildNotification(R.drawable.ic_notification, stateText));
         }
     }
@@ -525,32 +605,38 @@ public class DaemonService extends Service {
 		public void onSharedPreferenceChanged(
 				SharedPreferences sharedPreferences, String key) {
 			
-			if (!"RunAsForegroundService".equals(key)) return;
-			
-			if (sharedPreferences.getBoolean("RunAsForegroundService", true)
-					&& mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
-
-                // mark the notification as visible
-                _show_notification = true;
-                
-                // create initial notification
-                Notification n = buildNotification(R.drawable.ic_notification, getResources()
-                        .getString(R.string.notify_pending));
-
-                // turn this to a foreground service (kill-proof)
-                startForeground(1, n);
-                
-                // request notification update
-                requestNotificationUpdate();
-                
-			} else {
-				
-	            // mark the notification as invisible
-	            _show_notification = false;
-	            
-	            // stop foreground service
-	            stopForeground(true);
-	            
+			if ("RunAsForegroundService".equals(key)) {
+    			if (sharedPreferences.getBoolean("RunAsForegroundService", true)
+    					&& mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
+    
+                    // mark the notification as visible
+                    mShowNotification = true;
+                    
+                    // create initial notification
+                    Notification n = buildNotification(R.drawable.ic_notification, getResources()
+                            .getString(R.string.notify_pending));
+    
+                    // turn this to a foreground service (kill-proof)
+                    startForeground(1, n);
+                    
+                    // request notification update
+                    requestNotificationUpdate();
+                    
+    			} else {
+    				
+    	            // mark the notification as invisible
+    	            mShowNotification = false;
+    	            
+    	            // stop foreground service
+    	            stopForeground(true);
+    	            
+    			}
+			} else if (SettingsUtil.KEY_P2P_ENABLED.equals(key)) {
+                if (sharedPreferences.getBoolean(key, false) && mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
+                    mP2pManager.resume();
+                } else {
+                    mP2pManager.pause();
+                }
 			}
 		}
     	

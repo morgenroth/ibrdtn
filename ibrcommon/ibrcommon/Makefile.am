@@ -17,7 +17,6 @@ h_sources = \
 	appstreambuf.h \
 	Exceptions.h \
 	refcnt_ptr.h \
-	SyslogStream.h \
 	TimeMeasurement.h \
 	Logger.h \
 	TLSExceptions.h \
@@ -25,13 +24,18 @@ h_sources = \
 
 cc_sources = \
 	appstreambuf.cpp \
-	SyslogStream.cpp \
 	TimeMeasurement.cpp \
 	Logger.cpp
+
+if ! WIN32
+h_sources += SyslogStream.h
+cc_sources += SyslogStream.cpp
+endif
 
 library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
 
+AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(NL_CFLAGS) $(NL_ROUTE_CFLAGS) $(NL_GENL_CFLAGS)
 AM_LDFLAGS = $(PTHREAD_LIBS) $(NL_LIBS) $(NL_ROUTE_LIBS) $(NL_GENL_LIBS)
 
@@ -57,6 +61,9 @@ lib_LTLIBRARIES = libibrcommon.la
 libibrcommon_la_SOURCES = $(h_sources) $(cc_sources)
 libibrcommon_la_LIBADD = $(ibrcommon_libs)
 libibrcommon_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
+if WIN32
+libibrcommon_la_LDFLAGS += -no-undefined
+endif
 endif
 
 Android.mk: Makefile.am

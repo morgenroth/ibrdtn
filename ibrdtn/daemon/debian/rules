@@ -5,3 +5,7 @@ include /usr/share/cdbs/1/class/autotools.mk
 
 # extra configure flags
 DEB_CONFIGURE_EXTRA_FLAGS := --with-curl --with-sqlite --with-lowpan --with-dtnsec --with-compression --with-tls --sysconfdir=/etc/ibrdtn
+
+# debug flags
+DEB_DH_STRIP_ARGS := --dbg-package=ibrdtnd-dbg
+

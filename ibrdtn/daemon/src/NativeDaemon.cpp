@@ -37,6 +37,7 @@
 #include "storage/SimpleBundleStorage.h"
 
 #include "core/BundleCore.h"
+#include "net/ConnectionManager.h"
 #include "core/FragmentManager.h"
 #include "core/Node.h"
 #include "core/EventSwitch.h"
@@ -97,6 +98,10 @@
 
 #ifdef WITH_WIFIP2P
 #include "net/WifiP2PManager.h"
+#endif
+
+#ifdef HAVE_VMIME
+#include "net/EMailConvergenceLayer.h"
 #endif
 
 #ifdef WITH_BUNDLE_SECURITY
@@ -162,6 +167,16 @@ namespace dtn
 		void NativeDaemon::clearStorage() const throw ()
 		{
 			dtn::core::BundleCore::getInstance().getStorage().clear();
+		}
+
+		void NativeDaemon::startDiscovery() const throw ()
+		{
+			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY);
+		}
+
+		void NativeDaemon::stopDiscovery() const throw ()
+		{
+			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY);
 		}
 
 		void NativeDaemon::bindEvents()
@@ -250,7 +265,7 @@ namespace dtn
 
 		void NativeDaemon::raiseEvent(const Event *evt) throw ()
 		{
-			std::string event = evt->getName();
+			const std::string event = evt->getName();
 			std::string action;
 			std::vector<std::string> data;
 
@@ -292,8 +307,8 @@ namespace dtn
 				case dtn::core::GlobalEvent::GLOBAL_IDLE:
 					action = "idle";
 					break;
-				case dtn::core::GlobalEvent::GLOBAL_POWERSAVE:
-					action = "powersave";
+				case dtn::core::GlobalEvent::GLOBAL_RESUME:
+					action = "resume";
 					break;
 				case dtn::core::GlobalEvent::GLOBAL_RELOAD:
 					action = "reload";
@@ -309,6 +324,12 @@ namespace dtn
 					break;
 				case dtn::core::GlobalEvent::GLOBAL_INTERNET_UNAVAILABLE:
 					action = "internet unavailable";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY:
+					action = "discovery start";
+					break;
+				case dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY:
+					action = "discovery stop";
 					break;
 				default:
 					break;
@@ -417,13 +438,14 @@ namespace dtn
 			return dtn::core::BundleCore::local.getString();
 		}
 
-		NativeStats NativeDaemon::getStats() const throw ()
+		NativeStats NativeDaemon::getStats() throw ()
 		{
 			NativeStats ret;
 
 			ret.uptime = dtn::utils::Clock::getUptime().get<size_t>();
 			ret.timestamp = dtn::utils::Clock::getTime().get<size_t>();
 			ret.neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors().size();
+			ret.storage_size = dtn::core::BundleCore::getInstance().getStorage().size();
 
 			ret.time_offset = dtn::utils::Clock::toDouble(dtn::utils::Clock::getOffset());
 			ret.time_rating = dtn::utils::Clock::getRating();
@@ -437,6 +459,21 @@ namespace dtn
 			ret.bundles_aborted = dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::getCounter();
 			ret.bundles_requeued = dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::getCounter();
 			ret.bundles_queued = dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::getCounter();
+
+			using dtn::net::ConnectionManager;
+			using dtn::net::ConvergenceLayer;
+
+			ConnectionManager::stats_list list = dtn::core::BundleCore::getInstance().getConnectionManager().getStats();
+
+			for (ConnectionManager::stats_list::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
+				const ConnectionManager::stats_pair &pair = (*iter);
+				const ConvergenceLayer::stats_map &map = pair.second;
+
+				for (ConvergenceLayer::stats_map::const_iterator map_it = map.begin(); map_it != map.end(); ++map_it) {
+					std::string tag = dtn::core::Node::toString(pair.first) + "|" + (*map_it).first;
+					ret.addData(tag, (*map_it).second);
+				}
+			}
 
 			return ret;
 		}
@@ -1263,6 +1300,19 @@ namespace dtn
 							}
 							break;
 						}
+
+#ifdef HAVE_VMIME
+						case dtn::daemon::Configuration::NetConfig::NETWORK_EMAIL:
+						{
+							try {
+								_components[RUNLEVEL_NETWORK].push_back( new EMailConvergenceLayer() );
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "EMail Convergence Layer (MCL) added" << IBRCOMMON_LOGGER_ENDL;
+							}catch(const ibrcommon::Exception &ex) {
+								IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, error) << "Failed to add EMail Convergence Layer (MCL): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+							}
+							break;
+						}
+#endif
 
 						default:
 							break;

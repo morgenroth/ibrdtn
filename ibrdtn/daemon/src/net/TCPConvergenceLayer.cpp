@@ -610,4 +610,38 @@ namespace dtn
 			}
 		}
 	}
+
+	const ConvergenceLayer::stats_map& TCPConvergenceLayer::getStats()
+	{
+		size_t in = 0;
+		size_t out = 0;
+
+		// collect stats of all connections
+		ibrcommon::MutexLock l(_connections_cond);
+
+		for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
+		{
+			TCPConnection &conn = *(*iter);
+			in += conn.getTrafficStats(0);
+			out += conn.getTrafficStats(1);
+			conn.resetTrafficStats();
+		}
+
+		addStats("in", in);
+		addStats("out", out);
+
+		return ConvergenceLayer::getStats();
+	}
+
+	void TCPConvergenceLayer::resetStats()
+	{
+		// reset the stats of all connections
+		ibrcommon::MutexLock l(_connections_cond);
+
+		for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
+		{
+			TCPConnection &conn = *(*iter);
+			conn.resetTrafficStats();
+		}
+	}
 }

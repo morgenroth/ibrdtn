@@ -22,9 +22,15 @@
 #include "ibrcommon/config.h"
 #include "ibrcommon/net/vaddress.h"
 #include "ibrcommon/net/socket.h"
+
+#ifdef __WIN32__
+#include <winsock2.h>
+#else
 #include <arpa/inet.h>
-#include <string.h>
 #include <netdb.h>
+#endif
+
+#include <string.h>
 
 namespace ibrcommon
 {
@@ -159,6 +165,13 @@ namespace ibrcommon
 		return _service;
 	}
 
+	void vaddress::setService(const uint32_t port)
+	{
+		std::stringstream ss;
+		ss << port;
+		_service = ss.str();
+	}
+
 	void vaddress::setService(const std::string &service)
 	{
 		_service = service;
@@ -170,20 +183,21 @@ namespace ibrcommon
 
 		try {
 			try {
-				std::string service = this->service();
-				ss << "[" << this->address() << "]:" + service;
+				const std::string service = this->service();
+				const std::string address = this->address();
+				ss << "[" << address << "]:" + service;
 			} catch (const service_not_set&) {
 				ss << this->address();
 			}
 
 			try {
-				std::string scope = this->scope();
+				const std::string scope = this->scope();
 				ss << " (" << scope << ")";
 			} catch (const scope_not_set&) { }
 		} catch (const address_not_set&) {
 			ss << "<any>";
 			try {
-				std::string service = this->service();
+				const std::string service = this->service();
 				ss << ":" + service;
 			} catch (const service_not_set&) { }
 		}

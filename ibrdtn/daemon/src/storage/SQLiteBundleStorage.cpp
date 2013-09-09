@@ -578,7 +578,7 @@ namespace dtn
 				}
 
 				// here we can do some IDLE stuff...
-				::sleep(1);
+				ibrcommon::Thread::sleep(1000);
 
 				ibrcommon::MutexLock l(TaskIdle::_mutex);
 				if (!TaskIdle::_idle) return;

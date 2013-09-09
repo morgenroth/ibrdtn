@@ -27,9 +27,12 @@
 #include <list>
 #include <string>
 #include <typeinfo>
+#include <unistd.h>
 
 #if defined HAVE_LIBNL || HAVE_LIBNL3
 #include "ibrcommon/link/NetLinkManager.h"
+#elif __WIN32__
+#include "ibrcommon/link/Win32LinkManager.h"
 #else
 #include "ibrcommon/link/PosixLinkManager.h"
 #endif
@@ -40,6 +43,8 @@ namespace ibrcommon
 	{
 #if defined HAVE_LIBNL || HAVE_LIBNL3
 		static NetLinkManager lm;
+#elif __WIN32__
+		static Win32LinkManager lm;
 #else
 		static PosixLinkManager lm;
 #endif
@@ -101,6 +106,10 @@ namespace ibrcommon
 	void LinkManager::raiseEvent(const LinkEvent &lme)
 	{
 		IBRCOMMON_LOGGER_DEBUG_TAG("LinkManager", 65) << "event raised " << lme.toString() << IBRCOMMON_LOGGER_ENDL;
+
+		// wait some time until the event is reported to the subscribers
+		// this avoids bind issues if an address is not really ready
+		if (lme.getAction() == LinkEvent::ACTION_ADDRESS_ADDED) ibrcommon::Thread::sleep(1000);
 
 		// get the corresponding interface
 		const vinterface &iface = lme.getInterface();

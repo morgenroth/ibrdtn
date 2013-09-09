@@ -24,6 +24,15 @@
             android:title="@string/routing" >
         </ListPreference>
         
+        <ListPreference
+            android:defaultValue="disk-persistent"
+            android:entries="@array/storage_modes_names"
+            android:entryValues="@array/storage_modes_values"
+            android:key="storage_mode"
+            android:summary="@string/pref_storage_description"
+            android:title="@string/pref_storage" >
+        </ListPreference>
+        
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="RunAsForegroundService"
@@ -38,6 +47,12 @@
             android:key="cloud_uplink"
             android:summary="@string/pref_cloudconnect_summary"
             android:title="@string/pref_cloudconnect_title" >
+        </CheckBoxPreference>
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="cloud_uplink_3g"
+            android:summary="@string/pref_cloudconnect_3g_description"
+            android:title="@string/pref_cloudconnect_3g" >
         </CheckBoxPreference>
         <CheckBoxPreference
             android:defaultValue="true"

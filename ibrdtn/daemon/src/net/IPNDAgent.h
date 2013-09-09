@@ -73,17 +73,23 @@ namespace dtn
 			void __cancellation() throw ();
 
 		private:
-			void leave_interface(const ibrcommon::vinterface &iface) throw ();
-			void join_interface(const ibrcommon::vinterface &iface) throw ();
+			void join(const ibrcommon::vinterface &iface) throw ();
+			void leave(const ibrcommon::vinterface &iface) throw ();
+
+			void join(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ();
+			void leave(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ();
+
 			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
 
-			void listen(const ibrcommon::vinterface &iface) throw ();
-			void unlisten(const ibrcommon::vinterface &iface) throw ();
+#ifndef __WIN32__
+			ibrcommon::vinterface _virtual_mcast_iface;
+#endif
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;
-			ibrcommon::vsocket _recv_socket;
-			ibrcommon::vsocket _send_socket;
-			bool _send_socket_state;
+			ibrcommon::vsocket _socket;
+			bool _state;
+			int _port;
+			bool _enabled;
 
 			std::set<ibrcommon::vaddress> _destinations;
 

@@ -51,7 +51,9 @@ public class RosterAdapter extends CursorAdapter {
     	Buddy.PRESENCE,
     	Buddy.STATUS,
     	Buddy.DRAFTMSG,
-    	Buddy.VOICEEID
+    	Buddy.VOICEEID,
+    	Buddy.LANGUAGE,
+    	Buddy.COUNTRY
     };
 	
     // The indexes of the default columns which must be consistent
@@ -64,6 +66,8 @@ public class RosterAdapter extends CursorAdapter {
     static final int COLUMN_ROSTER_STATUS   = 5;
     static final int COLUMN_ROSTER_DRAFTMSG = 6;
     static final int COLUMN_ROSTER_VOICEEID = 7;
+    static final int COLUMN_ROSTER_LANGUAGE = 8;
+    static final int COLUMN_ROSTER_COUNTRY  = 9;
     
     private static final int CACHE_SIZE     = 50;
     
@@ -124,6 +128,8 @@ public class RosterAdapter extends CursorAdapter {
         public int mColumnStatus;
         public int mColumnDraftMsg;
         public int mColumnVoiceEndpoint;
+        public int mColumnLanguage;
+        public int mColumnCountry;
 
         public ColumnsMap() {
         	mColumnId       = COLUMN_ROSTER_ID;
@@ -134,6 +140,8 @@ public class RosterAdapter extends CursorAdapter {
         	mColumnStatus   = COLUMN_ROSTER_STATUS;
         	mColumnDraftMsg = COLUMN_ROSTER_DRAFTMSG;
         	mColumnVoiceEndpoint = COLUMN_ROSTER_VOICEEID;
+        	mColumnLanguage = COLUMN_ROSTER_LANGUAGE;
+        	mColumnCountry = COLUMN_ROSTER_COUNTRY;
         }
 
         public ColumnsMap(Cursor cursor) {
@@ -183,6 +191,18 @@ public class RosterAdapter extends CursorAdapter {
             
             try {
                 mColumnVoiceEndpoint = cursor.getColumnIndexOrThrow(Buddy.VOICEEID);
+            } catch (IllegalArgumentException e) {
+                Log.w("colsMap", e.getMessage());
+            }
+            
+            try {
+                mColumnLanguage = cursor.getColumnIndexOrThrow(Buddy.LANGUAGE);
+            } catch (IllegalArgumentException e) {
+                Log.w("colsMap", e.getMessage());
+            }
+            
+            try {
+                mColumnCountry = cursor.getColumnIndexOrThrow(Buddy.COUNTRY);
             } catch (IllegalArgumentException e) {
                 Log.w("colsMap", e.getMessage());
             }

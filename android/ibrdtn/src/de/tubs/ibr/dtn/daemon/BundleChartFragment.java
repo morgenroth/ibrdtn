@@ -6,12 +6,11 @@ import de.tubs.ibr.dtn.R;
 
 public class BundleChartFragment extends StatsChartFragment {
     
-    private Integer[] mChartMap = { 9, 8, 12, 7 };
-    private int[] mChartColors = { R.color.blue, R.color.yellow, R.color.green, R.color.red };
+    private Integer[] mChartMap = { 9, 8, 7 };
+    private int[] mChartColors = { R.color.blue, R.color.yellow, R.color.red };
     
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
-        // TODO Auto-generated method stub
         super.onActivityCreated(savedInstanceState);
         
         // create a new data list adapter
@@ -25,17 +24,17 @@ public class BundleChartFragment extends StatsChartFragment {
         }
 
         @Override
-        protected int getDataMapPosition(int position) {
+        public int getDataMapPosition(int position) {
             return mChartMap[position];
         }
 
         @Override
-        protected int getDataRows() {
+        public int getDataRows() {
             return mChartMap.length;
         }
 
         @Override
-        protected int getDataColor(int position) {
+        public int getDataColor(int position) {
             return mChartColors[position];
         }
     };

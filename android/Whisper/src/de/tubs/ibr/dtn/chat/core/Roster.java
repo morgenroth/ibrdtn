@@ -62,7 +62,9 @@ public class Roster {
 				Buddy.PRESENCE + " TEXT, " +
 				Buddy.STATUS + " TEXT, " +
 				Buddy.DRAFTMSG + " TEXT, " +
-				Buddy.VOICEEID + " TEXT" +
+				Buddy.VOICEEID + " TEXT, " +
+				Buddy.LANGUAGE + " TEXT, " +
+				Buddy.COUNTRY + " TEXT" +
 			");";
 	
 	private static final String DATABASE_CREATE_MESSAGES = 
@@ -80,7 +82,7 @@ public class Roster {
 	private class DBOpenHelper extends SQLiteOpenHelper {
 		
 		private static final String DATABASE_NAME = "dtnchat_user";
-		private static final int DATABASE_VERSION = 10;
+		private static final int DATABASE_VERSION = 12;
 		
 		public DBOpenHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -146,6 +148,9 @@ public class Roster {
 		
 		// update buddy data
 		database.update(TABLE_NAME_ROSTER, values, Buddy.ID + " = ?", new String[] { buddyId.toString() });
+		
+        // send refresh intent
+        notifyBuddyChanged(buddyId);
 	}
 	
 	public synchronized void clearMessages(Long buddyId)
@@ -252,7 +257,7 @@ public class Roster {
 		return null;
 	}
 	
-	public void updatePresence(String buddyId, Date created, String presence, String nickname, String status, String voiceeid)
+	public void updatePresence(String buddyId, Date created, String presence, String nickname, String status, String voiceeid, String language, String country)
 	{
 		Long bid = getBuddyId(buddyId);
 		
@@ -276,8 +281,23 @@ public class Roster {
 		    values.putNull(Buddy.VOICEEID);
 		}
 		
+        if (language != null) {
+            values.put(Buddy.LANGUAGE, language);
+        } else {
+            values.putNull(Buddy.LANGUAGE);
+        }
+        
+        if (country != null) {
+            values.put(Buddy.COUNTRY, country);
+        } else {
+            values.putNull(Buddy.COUNTRY);
+        }
+		
 		// update buddy data
 		database.update(TABLE_NAME_ROSTER, values, Buddy.ID + " = ?", new String[] { bid.toString() });
+		
+        // send refresh intent
+        notifyBuddyChanged(bid);
 	}
 
 	public synchronized void reportSent(Long msgId, String sentId)

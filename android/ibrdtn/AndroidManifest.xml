@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="de.tubs.ibr.dtn"
     android:versionCode="32"
-    android:versionName="0.9.0" >
+    android:versionName="0.11" >
 
     <permission
         android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
@@ -28,10 +28,14 @@
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION" />
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"/>
+    
+    <!-- This app uses wifi direct if available -->
+    <uses-feature android:name="android.hardware.wifi.direct" android:required="false" />
 
     <uses-sdk
         android:minSdkVersion="9"
-        android:targetSdkVersion="17" />
+        android:targetSdkVersion="18" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
 
     <application
         android:allowBackup="true"
@@ -111,6 +115,22 @@
 				<action android:name="android.net.wifi.WIFI_STATE_CHANGED" />
 			</intent-filter>
 		</receiver>
+
+        <activity
+            android:name=".p2p.P2pSettingsActivity"
+            android:label="@string/pref_p2p" >
+        </activity>
+
+        <!-- This intent service schedules on/off for the Wi-Fi P2P connectivity -->
+        <service android:name=".p2p.scheduler.SchedulerService" >
+        </service>
+
+        <activity android:name=".p2p.PeerListActivity" >
+            <intent-filter>
+                <action android:name="de.tubs.ibr.dtn.p2p.action.PEER_LIST_ACTIVITY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

@@ -37,7 +37,7 @@ import de.tubs.ibr.dtn.chat.core.Message;
 public class MessageAdapter extends CursorAdapter {
 
 	@SuppressWarnings("unused")
-	private final static String TAG = "MessageView";
+	private final static String TAG = "MessageAdapter";
 	
 	private LayoutInflater mInflater = null;
 	private Context mContext = null;

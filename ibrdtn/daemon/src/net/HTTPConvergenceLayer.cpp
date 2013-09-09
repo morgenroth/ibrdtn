@@ -364,7 +364,7 @@ namespace dtn
 					//curl_easy_getinfo (curl, CURLINFO_NUM_CONNECTS, &connects);
 
 					/* Wait some time an retry to connect */
-					sleep(CONN_TIMEOUT);  // Wenn Verbindung nicht hergestellt werden konnte warte 5 sec.
+					ibrcommon::Thread::sleep(CONN_TIMEOUT);  // Wenn Verbindung nicht hergestellt werden konnte warte 5 sec.
 					IBRCOMMON_LOGGER_DEBUG_TAG("HTTPConvergenceLayer", 10) << "http error: " << "Couldn't connect to server ... wait " << CONN_TIMEOUT/1000 << "s until retry" << IBRCOMMON_LOGGER_ENDL;
 				}
 

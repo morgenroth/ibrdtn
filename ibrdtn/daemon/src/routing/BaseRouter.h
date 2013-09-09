@@ -247,6 +247,8 @@ namespace dtn
 			NeighborDatabase _neighbor_database;
 			NodeHandshakeExtension _nh_extension;
 			RetransmissionExtension _retransmission_extension;
+
+			dtn::data::Timestamp _next_expiration;
 		};
 	}
 }

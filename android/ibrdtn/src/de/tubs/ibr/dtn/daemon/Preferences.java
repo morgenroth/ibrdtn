@@ -69,7 +69,7 @@ public class Preferences extends PreferenceActivity {
 	
 	// These preferences show their value as summary
 	private final static String[] mSummaryPrefs = {
-	    "endpoint_id", "routing", "security_mode", "log_options", "log_debug_verbosity", "timesync_mode"
+	    "endpoint_id", "routing", "security_mode", "log_options", "log_debug_verbosity", "timesync_mode", "storage_mode"
 	    };
 	
 	private Boolean mBound = false;

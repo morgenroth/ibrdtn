@@ -539,6 +539,7 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER_ex(critical) << "failed to encrypt the symmetric AES key" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
+				return;
 			}
 			security_parameter.set(SecurityBlock::key_information, std::string(reinterpret_cast<char *>(&encrypted_key[0]), encrypted_key_len));
 		}
@@ -693,28 +694,28 @@ namespace dtn
 		bool SecurityBlock::isSecuritySource(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityBlock", 30) << "check security source: " << getSecuritySource(bundle).getString() << " == " << eid.getNode().getString() << IBRCOMMON_LOGGER_ENDL;
-			return getSecuritySource(bundle) == eid.getNode();
+			return getSecuritySource(bundle).sameHost(eid);
 		}
 
 		bool SecurityBlock::isSecurityDestination(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG("SecurityBlock", 30) << "check security destination: " << getSecurityDestination(bundle).getString() << " == " << eid.getNode().getString() << IBRCOMMON_LOGGER_ENDL;
-			return getSecurityDestination(bundle) == eid.getNode();
+			return getSecurityDestination(bundle).sameHost(eid);
 		}
 		
 		const dtn::data::EID SecurityBlock::getSecuritySource(const dtn::data::Bundle& bundle) const
 		{
-			dtn::data::EID source = getSecuritySource();
-			if (source == dtn::data::EID())
-				source = bundle.source.getNode();
+			const dtn::data::EID source = getSecuritySource();
+			if (source.isNone())
+				return bundle.source.getNode();
 			return source;
 		}
 
 		const dtn::data::EID SecurityBlock::getSecurityDestination(const dtn::data::Bundle& bundle) const
 		{
-			dtn::data::EID destination = getSecurityDestination();
-			if (destination == dtn::data::EID())
-				destination = bundle.destination.getNode();
+			const dtn::data::EID destination = getSecurityDestination();
+			if (destination.isNone())
+				return bundle.destination.getNode();
 			return destination;
 		}
 	}

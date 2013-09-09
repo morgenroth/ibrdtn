@@ -7,13 +7,12 @@
     android:layout_height="match_parent"
     android:orientation="horizontal" >
     
-    <com.michaelpardo.chartview.widget.ChartView
+    <LinearLayout
+        android:orientation="horizontal"
         android:id="@+id/chart_view"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_margin="8dp"
-        chartview:gridLineColor="#E5E5E5"
-        chartview:gridLineWidth="1dp"
         android:layout_weight="1" />
     
 	<ListView

@@ -401,6 +401,11 @@ namespace dtn
 			if (_protocol_stream != NULL) delete _protocol_stream;
 			_protocol_stream = new dtn::streams::StreamConnection(*this, (_sec_stream == NULL) ? *_socket_stream : *_sec_stream, chunksize);
 			_protocol_stream->exceptions(std::ios::badbit | std::ios::eofbit);
+
+			if (dtn::daemon::Configuration::getInstance().enableTrafficStats()) {
+				// enable traffic monitoring
+				_protocol_stream->setMonitor(true);
+			}
 		}
 
 		void TCPConnection::connect()
@@ -645,10 +650,8 @@ namespace dtn
 							}
 						}
 #endif
-						// send bundle
-						// prepare a measurement
-						ibrcommon::TimeMeasurement m;
 
+						// send bundle
 						// get the offset, if this bundle has been reactively fragmented before
 						size_t offset = 0;
 						if (dtn::daemon::Configuration::getInstance().getNetwork().doFragmentation()
@@ -659,9 +662,6 @@ namespace dtn
 
 						// put the bundle into the sentqueue
 						_connection._sentqueue.push(transfer);
-
-						// start the measurement
-						m.start();
 
 						try {
 							// activate exceptions for this method
@@ -680,20 +680,6 @@ namespace dtn
 
 							// flush the stream
 							stream << std::flush;
-
-							// stop the time measurement
-							m.stop();
-
-							// get throughput
-							double duration = m.getMicroseconds();
-							double data_len = static_cast<double>(serializer.getLength(bundle));
-
-							double kbytes_per_second = (data_len / 1024.0) / (duration / 1000000.0);
-
-							// print out throughput
-							IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 5) << "transfer finished after " << m << " with "
-									<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << IBRCOMMON_LOGGER_ENDL;
-
 						} catch (const ibrcommon::Exception &ex) {
 							// the connection not available
 							IBRCOMMON_LOGGER_DEBUG_TAG(TCPConnection::TAG, 10) << "connection error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -772,13 +758,32 @@ namespace dtn
 
 		bool TCPConnection::match(const dtn::data::EID &destination) const
 		{
-			return (_node.getEID() == destination.getNode());
+			return _node.getEID().sameHost(destination);
 		}
 
 		bool TCPConnection::match(const NodeEvent &evt) const
 		{
 			const dtn::core::Node &n = evt.getNode();
 			return match(n);
+		}
+
+		size_t TCPConnection::getTrafficStats(int index)
+		{
+			try {
+				safe_streamconnection sc = getProtocolStream();
+				return (*sc).getMonitorStat(index);
+			} catch (const ibrcommon::Exception&) {
+				return 0;
+			}
+		}
+
+		void TCPConnection::resetTrafficStats()
+		{
+			try {
+				safe_streamconnection sc = getProtocolStream();
+				return (*sc).resetMonitorStats();
+			} catch (const ibrcommon::Exception&) {
+			}
 		}
 	}
 }

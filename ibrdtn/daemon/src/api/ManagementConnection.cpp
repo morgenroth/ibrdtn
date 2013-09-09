@@ -24,6 +24,7 @@
 #include "ManagementConnection.h"
 #include "storage/BundleResult.h"
 #include "core/BundleCore.h"
+#include "core/Node.h"
 #include "routing/prophet/ProphetRoutingExtension.h"
 #include "routing/prophet/DeliveryPredictabilityMap.h"
 
@@ -276,11 +277,11 @@ namespace dtn
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
 						_stream << ClientHandler::API_STATUS_OK << " RELOAD" << std::endl;
 					}
-					else if (cmd[1] == "powersave")
+					else if (cmd[1] == "resume")
 					{
 						// send powersave signal
-						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_POWERSAVE);
-						_stream << ClientHandler::API_STATUS_OK << " POWERSAVE" << std::endl;
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RESUME);
+						_stream << ClientHandler::API_STATUS_OK << " RESUME" << std::endl;
 					}
 					else if (cmd[1] == "suspend")
 					{
@@ -288,11 +289,17 @@ namespace dtn
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SUSPEND);
 						_stream << ClientHandler::API_STATUS_OK << " SUSPEND" << std::endl;
 					}
-					else if (cmd[1] == "wakeup")
+					else if (cmd[1] == "start_discovery")
 					{
 						// send wakeup signal
-						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_WAKEUP);
-						_stream << ClientHandler::API_STATUS_OK << " WAKEUP" << std::endl;
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY);
+						_stream << ClientHandler::API_STATUS_OK << " DISCOVERY START" << std::endl;
+					}
+					else if (cmd[1] == "stop_discovery")
+					{
+						// send wakeup signal
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY);
+						_stream << ClientHandler::API_STATUS_OK << " DISCOVERY STOP" << std::endl;
 					}
 					else if (cmd[1] == "internet_off")
 					{
@@ -393,6 +400,7 @@ namespace dtn
 						_stream << ClientHandler::API_STATUS_OK << " STATS INFO" << std::endl;
 						_stream << "Uptime: " << dtn::utils::Clock::getUptime().get<size_t>() << std::endl;
 						_stream << "Neighbors: " << dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors().size() << std::endl;
+						_stream << "Storage-size: " << dtn::core::BundleCore::getInstance().getStorage().size() << std::endl;
 						_stream << std::endl;
 					} else if ( cmd[1] == "timesync" ) {
 						_stream << ClientHandler::API_STATUS_OK << " STATS TIMESYNC" << std::endl;
@@ -412,6 +420,19 @@ namespace dtn
 						_stream << "Requeued: " << dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::getCounter() << std::endl;
 						_stream << "Queued: " << dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::getCounter() << std::endl;
 						_stream << std::endl;
+					} else if ( cmd[1] == "convergencelayers" ) {
+						ConnectionManager::stats_list list = dtn::core::BundleCore::getInstance().getConnectionManager().getStats();
+
+						_stream << ClientHandler::API_STATUS_OK << " STATS CONVERGENCELAYERS" << std::endl;
+						for (ConnectionManager::stats_list::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
+							const ConnectionManager::stats_pair &pair = (*iter);
+							const ConvergenceLayer::stats_map &map = pair.second;
+
+							for (ConvergenceLayer::stats_map::const_iterator map_it = map.begin(); map_it != map.end(); ++map_it) {
+								_stream << dtn::core::Node::toString(pair.first) << "|" << (*map_it).first << ": " << (*map_it).second << std::endl;
+							}
+						}
+						_stream << std::endl;
 					} else if ( cmd[1] == "reset" ) {
 						dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::resetCounter();
 						dtn::core::EventDispatcher<dtn::core::BundleGeneratedEvent>::resetCounter();
@@ -420,6 +441,10 @@ namespace dtn
 						dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::resetCounter();
 						dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::resetCounter();
 						dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::resetCounter();
+
+						// reset cl stats
+						dtn::core::BundleCore::getInstance().getConnectionManager().resetStats();
+
 						_stream << ClientHandler::API_STATUS_ACCEPTED << " STATS RESET" << std::endl;
 					} else {
 						throw ibrcommon::Exception("malformed command");

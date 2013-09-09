@@ -25,7 +25,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
-import de.tubs.ibr.dtn.chat.service.EventReceiver;
+import de.tubs.ibr.dtn.chat.service.PresenceGenerator;
 
 public class Preferences extends PreferenceActivity {
 	@SuppressWarnings("deprecation")
@@ -49,9 +49,9 @@ public class Preferences extends PreferenceActivity {
 		public void onSharedPreferenceChanged(SharedPreferences prefs, String text) {
 			if (text.equals("checkBroadcastPresence")) {
 				if (prefs.getBoolean(text, false)) {
-					EventReceiver.activatePresenceGenerator(Preferences.this);
+				    PresenceGenerator.activate(Preferences.this);
 				} else {
-					EventReceiver.deactivatePresenceGenerator(Preferences.this);
+				    PresenceGenerator.deactivate(Preferences.this);
 				}
 			}
 		}

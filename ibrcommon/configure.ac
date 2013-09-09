@@ -67,6 +67,27 @@ AM_SANITY_CHECK
 
 AC_LANG_CPLUSPLUS
 
+# Option to build for win32
+AC_ARG_ENABLE([win32],
+	AS_HELP_STRING([--enable-win32], [Enable compile switches for win32 systems]), [
+		AC_DEFINE(WIN32, [1], [Compiling for Win32!])
+		AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
+		AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
+
+		# do win32 related library checking
+		AC_CHECK_LIB([ws2_32], [main], [
+			LIBS="$LIBS -lws2_32"
+			WIN32_LIBS_EXTRA="-lws2_32"
+			AC_SUBST(WIN32_LIBS_EXTRA)
+		], AC_ERROR([lib ws2_32 not found]))
+
+		AC_CHECK_LIB([iphlpapi], [main], [
+			LIBS="$LIBS -liphlpapi"
+			WIN32_LIBS_EXTRA="-liphlpapi"
+			AC_SUBST(WIN32_LIBS_EXTRA)
+		], AC_ERROR([lib iphlpapi not found]))
+	])
+
 # ANDROID configuration
 # We generate a mostly static configuration for Android as PKG_CHECK_MODULES obviously does not work with the Android NDK
 AC_ARG_ENABLE([android],
@@ -221,52 +242,63 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	dnl check for pthread library
 	dnl -----------------------------------------------
 
-	THREADLIB=error
+	AC_SUBST(REQUIRES_LIBS)
 
-	AC_CHECK_LIB(pthread, pthread_attr_init,
-		THREADLIB="pthread")
+	AC_ARG_WITH([mingw32-pthread],
+		AS_HELP_STRING([--with-mingw32-pthread=PATH], [Build with ming32-pthread support]),
+		[
+			PTHREAD_LIBS="-L${withval} -lpthreadGCE2"
+			PTHREAD_CFLAGS="-I${withval}"
+			AC_MSG_NOTICE([using mingw32-pthread library in ${withval}])
+		], [
+			THREADLIB=error
 
-	if test "x$THREADLIB" = xerror; then
-		AC_CHECK_LIB(pthreads, pthread_attr_init,
-			THREADLIB="pthreads")
-	fi
+			AC_CHECK_LIB(pthread, pthread_attr_init,
+				THREADLIB="pthread")
 
-	if test "x$THREADLIB" = xerror; then
-		AC_CHECK_LIB(thread, pthread_attr_init,
-			THREADLIB="thread")
-	fi
+			if test "x$THREADLIB" = xerror; then
+				AC_CHECK_LIB(pthreads, pthread_attr_init,
+					THREADLIB="pthreads")
+			fi
 
-	PTHREAD_LIBS="-l$THREADLIB"
-	PTHREAD_CFLAGS=""
+			if test "x$THREADLIB" = xerror; then
+				AC_CHECK_LIB(thread, pthread_attr_init,
+					THREADLIB="thread")
+			fi
 
-	AC_CHECK_LIB($THREADLIB,pthread_create, [])
-	AC_CHECK_LIB($THREADLIB,pthread_mutex_init, [])
-	AC_CHECK_LIB($THREADLIB,pthread_cond_init, [])
+			PTHREAD_LIBS="-l$THREADLIB"
+			PTHREAD_CFLAGS=""
 
-	AC_CHECK_LIB($THREADLIB,pthread_condattr_setclock,[
-		AC_DEFINE(HAVE_PTHREAD_CONDATTR_SETCLOCK, [1], ["pthread clocking"])
-	])
-	AC_CHECK_LIB($THREADLIB,pthread_setconcurrency,[
-		AC_DEFINE(HAVE_PTHREAD_SETCONCURRENCY, [1], ["pthread concurrency"])
-	])
+			AC_CHECK_LIB($THREADLIB,pthread_create, [])
+			AC_CHECK_LIB($THREADLIB,pthread_mutex_init, [])
+			AC_CHECK_LIB($THREADLIB,pthread_cond_init, [])
 
-	AC_CHECK_LIB($THREADLIB,pthread_yield,[
-		AC_DEFINE(HAVE_PTHREAD_YIELD, [1], ["pthread yield"],[
-			AC_CHECK_LIB($tlib,pthread_yield_np,[
-				AC_DEFINE(HAVE_PTHREAD_YIELD_NP, [1], ["pthread yield np"])
+			AC_CHECK_LIB($THREADLIB,pthread_condattr_setclock,[
+				AC_DEFINE(HAVE_PTHREAD_CONDATTR_SETCLOCK, [1], ["pthread clocking"])
 			])
-		])
-	])
+			AC_CHECK_LIB($THREADLIB,pthread_setconcurrency,[
+				AC_DEFINE(HAVE_PTHREAD_SETCONCURRENCY, [1], ["pthread concurrency"])
+			])
 
-	AC_CHECK_LIB($THREADLIB,pthread_delay,[
-		AC_DEFINE(HAVE_PTHREAD_DELAY, [1], ["pthread delay"])
-	])
-	AC_CHECK_LIB($THREADLIB,pthread_delay_np,[
-		AC_DEFINE(HAVE_PTHREAD_DELAY_NP, [1], ["pthread delay np"])
-	])
-	AC_CHECK_LIB($THREADLIB,pthread_setschedprio,[
-		AC_DEFINE(HAVE_PTHREAD_SETSCHEDPRIO, [1], ["pthread scheduling"])
-	])
+			AC_CHECK_LIB($THREADLIB,pthread_yield,[
+				AC_DEFINE(HAVE_PTHREAD_YIELD, [1], ["pthread yield"],[
+					AC_CHECK_LIB($tlib,pthread_yield_np,[
+						AC_DEFINE(HAVE_PTHREAD_YIELD_NP, [1], ["pthread yield np"])
+					])
+				])
+			])
+
+			AC_CHECK_LIB($THREADLIB,pthread_delay,[
+				AC_DEFINE(HAVE_PTHREAD_DELAY, [1], ["pthread delay"])
+			])
+			AC_CHECK_LIB($THREADLIB,pthread_delay_np,[
+				AC_DEFINE(HAVE_PTHREAD_DELAY_NP, [1], ["pthread delay np"])
+			])
+			AC_CHECK_LIB($THREADLIB,pthread_setschedprio,[
+				AC_DEFINE(HAVE_PTHREAD_SETSCHEDPRIO, [1], ["pthread scheduling"])
+			])
+		]
+	)
 
 	AC_SUBST(PTHREAD_CFLAGS)
 	AC_SUBST(PTHREAD_LIBS)
@@ -338,7 +370,6 @@ AS_IF([test "x$enable_android" = "xyes"], [
 		use_xml="no"
 	])
 
-	AC_SUBST(REQUIRES_LIBS)
 
 #ANDROID else end
 ])
@@ -349,6 +380,7 @@ AM_CONDITIONAL(LOWPAN, test x$use_lowpan = xyes)
 AM_CONDITIONAL(NETLINK, test x$use_netlink = xyes)
 AM_CONDITIONAL(LIBXML, test x$use_xml = xyes)
 AM_CONDITIONAL(ANDROID, test x$enable_android = xyes)
+AM_CONDITIONAL(WIN32, test x$enable_win32 = xyes)
 
 
 dnl -----------------------------------------------

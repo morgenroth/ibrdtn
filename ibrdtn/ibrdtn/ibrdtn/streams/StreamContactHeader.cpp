@@ -19,12 +19,18 @@
  *
  */
 
+#include "ibrdtn/config.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/BundleString.h"
 #include <typeinfo>
+
+#ifdef __WIN32__
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
 
 using namespace dtn::data;
 

@@ -84,7 +84,7 @@ namespace dtn
 		class NativeStats {
 		public:
 			NativeStats()
-			: uptime(0), timestamp(0), neighbors(0),
+			: uptime(0), timestamp(0), neighbors(0), storage_size(0),
 			  time_offset(0.0), time_rating(0.0), time_adjustments(0),
 			  bundles_stored(0), bundles_expired(0), bundles_generated(0),
 			  bundles_received(0), bundles_transmitted(0), bundles_aborted(0),
@@ -96,6 +96,7 @@ namespace dtn
 			size_t uptime;
 			size_t timestamp;
 			size_t neighbors;
+			size_t storage_size;
 
 			double time_offset;
 			double time_rating;
@@ -109,6 +110,23 @@ namespace dtn
 			size_t bundles_aborted;
 			size_t bundles_requeued;
 			size_t bundles_queued;
+
+			const std::vector<std::string>& getTags() {
+				return _tags;
+			}
+
+			size_t getData(int index) {
+				return _data[index];
+			}
+
+			void addData(const std::string &tag, size_t data) {
+				_tags.push_back(tag);
+				_data.push_back(data);
+			}
+
+		private:
+			std::vector<std::string> _tags;
+			std::vector<size_t> _data;
 		};
 
 		class NativeDaemonException : public ibrcommon::Exception
@@ -195,7 +213,7 @@ namespace dtn
 			/**
 			 * Get statistical data
 			 */
-			NativeStats getStats() const throw ();
+			NativeStats getStats() throw ();
 
 			/**
 			 * Add a static connection to the neighbor with the given EID
@@ -226,6 +244,16 @@ namespace dtn
 			 * Delete all bundles in the storage
 			 */
 			void clearStorage() const throw ();
+
+			/**
+			 * Enable discovery mechanisms IPND beacons
+			 */
+			void startDiscovery() const throw ();
+
+			/**
+			 * Disable discovery mechanism like IPND beacons
+			 */
+			void stopDiscovery() const throw ();
 
 		private:
 			void init_up(DaemonRunLevel rl) throw (NativeDaemonException);

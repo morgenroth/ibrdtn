@@ -26,6 +26,10 @@
 #include <vector>
 #include <string.h>
 
+#ifdef __WIN32__
+#define EADDRINUSE WSAEADDRINUSE
+#endif
+
 namespace dtn
 {
 	namespace net

@@ -54,8 +54,13 @@ namespace dtn
 		 : _shutdown(false), _garbage_collector(*this)
 		{
 			if (net.isLoopback()) {
-				ibrcommon::vaddress addr(ibrcommon::vaddress::VADDR_LOCALHOST, port);
-				_sockets.add(new ibrcommon::tcpserversocket(addr, 5));
+				if (ibrcommon::basesocket::hasSupport(AF_INET6)) {
+					ibrcommon::vaddress addr6(ibrcommon::vaddress::VADDR_LOCALHOST, port, AF_INET6);
+					_sockets.add(new ibrcommon::tcpserversocket(addr6, 5));
+				}
+
+				ibrcommon::vaddress addr4(ibrcommon::vaddress::VADDR_LOCALHOST, port, AF_INET);
+				_sockets.add(new ibrcommon::tcpserversocket(addr4, 5));
 			}
 			else if (net.isAny()) {
 				ibrcommon::vaddress addr(ibrcommon::vaddress::VADDR_ANY, port);
@@ -183,12 +188,12 @@ namespace dtn
 							ibrcommon::MutexLock l1(_registration_lock);
 							
 							// create a new registration
-							Registration reg;
+							Registration *reg = new Registration();
 							_registrations.push_back(reg);
-							IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "new registration " << reg->getHandle() << IBRCOMMON_LOGGER_ENDL;
 
 							// create a new clienthandler for the new registration
-							obj  = new ClientHandler(*this, _registrations.back(), conn);
+							obj  = new ClientHandler(*this, *_registrations.back(), conn);
 						}
 
 						// one again in locked state we push the new connection in the connection list
@@ -228,26 +233,28 @@ namespace dtn
 				ibrcommon::MutexLock l(_connection_lock);
 
 				// shutdown all clients
-				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
+				for (client_list::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 				{
 					(*iter)->stop();
 				}
 			}
 
 			// wait until all clients are down
-			while (_connections.size() > 0) ::sleep(1);
+			while (_connections.size() > 0) ibrcommon::Thread::sleep(1000);
 		}
 
 		Registration& ApiServer::getRegistration(const std::string &handle)
 		{
 			ibrcommon::MutexLock l(_registration_lock);
-			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
+			for (registration_list::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
 			{
-				if (*iter == handle)
+				Registration &reg = (**iter);
+
+				if (reg == handle)
 				{
-					if (iter->isPersistent()){
-						iter->attach();
-						return *iter;
+					if (reg.isPersistent()){
+						reg.attach();
+						return reg;
 					}
 					break;
 				}
@@ -262,18 +269,21 @@ namespace dtn
 				ibrcommon::MutexLock l(_registration_lock);
 
 				// remove non-persistent and detached registrations
-				for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end();)
+				for (registration_list::iterator iter = _registrations.begin(); iter != _registrations.end();)
 				{
 					try
 					{
-						iter->attach();
-						if(!iter->isPersistent()){
-							IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "release registration " << iter->getHandle() << IBRCOMMON_LOGGER_ENDL;
-							iter = _registrations.erase(iter);
+						Registration *reg = (*iter);
+
+						reg->attach();
+						if(!reg->isPersistent()){
+							IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "release registration " << reg->getHandle() << IBRCOMMON_LOGGER_ENDL;
+							_registrations.erase(iter++);
+							delete reg;
 						}
 						else
 						{
-							iter->detach();
+							reg->detach();
 							++iter;
 						}
 					}
@@ -306,7 +316,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_connection_lock);
 
 			// remove this object out of the list
-			for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
+			for (client_list::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 			{
 				if (obj == (*iter))
 				{
@@ -327,12 +337,15 @@ namespace dtn
 			{
 				ibrcommon::MutexLock l(_registration_lock);
 				// remove the registration
-				for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
+				for (registration_list::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
 				{
-					if (reg == (*iter))
+					Registration *r = (*iter);
+
+					if (reg == (*r))
 					{
 						IBRCOMMON_LOGGER_DEBUG_TAG("ApiServer", 5) << "release registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
 						_registrations.erase(iter);
+						delete r;
 						break;
 					}
 				}
@@ -348,7 +361,7 @@ namespace dtn
 				if (queued.bundle.fragment) return;
 
 				ibrcommon::MutexLock l(_connection_lock);
-				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
+				for (client_list::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
 				{
 					ClientHandler &conn = **iter;
 					if (conn.getRegistration().hasSubscribed(queued.bundle.destination))
@@ -384,25 +397,27 @@ namespace dtn
 			size_t current_time = ibrcommon::Timer::get_current_time();
 
 			// find the registration that expires next
-			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
+			for (registration_list::iterator iter = _registrations.begin(); iter != _registrations.end(); ++iter)
 			{
 				try
 				{
-					iter->attach();
-					if(!iter->isPersistent()){
+					Registration &reg = (**iter);
+
+					reg.attach();
+					if(!reg.isPersistent()){
 						/* found an expired registration, trigger the timer */
-						iter->detach();
+						reg.detach();
 						new_timeout = 0;
 						persistentFound = true;
 						break;
 					}
 					else
 					{
-						size_t expire_time = iter->getExpireTime();
+						size_t expire_time = reg.getExpireTime();
 						/* we dont have to check if the expire time is smaller then the current_time
 							since isPersistent() would have returned false */
 						size_t expire_timeout = expire_time - current_time;
-						iter->detach();
+						reg.detach();
 
 						/* if persistentFound is false, no persistent registration was found yet */
 						if(!persistentFound)

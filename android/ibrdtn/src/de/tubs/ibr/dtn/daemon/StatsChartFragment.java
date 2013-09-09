@@ -13,22 +13,26 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 
-import com.michaelpardo.chartview.widget.ChartView;
-import com.michaelpardo.chartview.widget.LinearSeries;
-import com.michaelpardo.chartview.widget.LinearSeries.LinearPoint;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.GraphView.GraphViewData;
+import com.jjoe64.graphview.GraphViewSeries;
+import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
+import com.jjoe64.graphview.LineGraphView;
 
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
-import de.tubs.ibr.dtn.daemon.StatsListAdapter.RowType;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
 import de.tubs.ibr.dtn.stats.StatsEntry;
 import de.tubs.ibr.dtn.stats.StatsLoader;
+import de.tubs.ibr.dtn.stats.StatsUtils;
 
 public abstract class StatsChartFragment extends Fragment {
     
@@ -42,8 +46,11 @@ public abstract class StatsChartFragment extends Fragment {
     private Object mServiceLock = new Object();
     private DaemonService mService = null;
     
-    private ChartView mChartView = null;
+    private LinearLayout mChartView = null;
+    private LineGraphView mGraphView = null;
     private ListView mListView = null;
+    
+    private SparseArray<GraphViewSeries> mData = null;
     
     private StatsListAdapter mAdapter = null;
     
@@ -78,11 +85,8 @@ public abstract class StatsChartFragment extends Fragment {
 
         @Override
         public void onLoadFinished(Loader<Cursor> loader, Cursor stats) {
-            // clear the series
-            mChartView.clearSeries();
-            
             // plot the charts
-            plotChart(stats, mChartView);
+            plotChart(stats, mGraphView);
         }
 
         @Override
@@ -90,72 +94,51 @@ public abstract class StatsChartFragment extends Fragment {
         }
     };
     
-    private void plotChart(Cursor stats, ChartView chart) {
+    private void plotChart(Cursor stats, GraphView chart) {
         int charts_count = mAdapter.getDataRows();
         
-        // create a new series list
-        ArrayList<LinearSeries> series = new ArrayList<LinearSeries>(charts_count);
+        ArrayList<ArrayList<GraphViewData>> data = new ArrayList<ArrayList<GraphViewData>>(charts_count);
         
+        // convert data into an structured array
+        StatsUtils.convertData(getActivity(), stats, data, mAdapter);
+        
+        // get min/max timestamp of data-set
+        Double min_timestamp = 0.0;
+        Double max_timestamp = 0.0;
+        
+        for (ArrayList<GraphViewData> dataset : data) {
+            for (GraphViewData d : dataset) {
+                if ((min_timestamp == 0) || (min_timestamp > d.valueX)) min_timestamp = d.valueX;
+                if (max_timestamp < d.valueX) max_timestamp = d.valueX;
+            }
+        }
+        
+        // generate timestamp labels
+        ArrayList<String> labels = new ArrayList<String>();
+        StatsUtils.generateTimestampLabels(getActivity(), min_timestamp, max_timestamp, labels);
+        
+        // add one series for each data-set
         for (int i = 0; i < charts_count; i++) {
-            LinearSeries s = new LinearSeries();
-            s.setLineColor(getResources().getColor(mAdapter.getDataColor(i)));
-            s.setLineWidth(4);
-            series.add(s);
-        }
-        
-        StatsEntry.ColumnsMap cmap = new StatsEntry.ColumnsMap();
-        
-        int points = 0;
-        
-        // move before the first position
-        stats.moveToPosition(-1);
-        
-        StatsEntry last_entry = null;
-
-        while (stats.moveToNext()) {
-            // create an entry object
-            StatsEntry e = new StatsEntry(getActivity(), stats, cmap);
+            ArrayList<GraphViewData> dataset = data.get(i);
             
-            if (last_entry != null) {
-                Double timestamp = Double.valueOf(e.getTimestamp().getTime()) / 1000.0;
-                
-                for (int i = 0; i < charts_count; i++) {
-                    int position = mAdapter.getDataMapPosition(i);
-                    
-                    Double value = StatsListAdapter.getRowDouble(position, e);
-                    LinearPoint p = null;
-                    
-                    if (StatsListAdapter.getRowType(position).equals(RowType.RELATIVE)) {
-                        Double last_timestamp = Double.valueOf(last_entry.getTimestamp().getTime()) / 1000.0;
-                        Double timestamp_diff = timestamp - last_timestamp;
-                        
-                        Double last_value = StatsListAdapter.getRowDouble(position, last_entry);
-                        
-                        if (value < last_value) {
-                            p = new LinearPoint(timestamp, 0);
-                        } else {
-                            p = new LinearPoint(timestamp, (value - last_value) / timestamp_diff);
-                        }
-                    } else {
-                        p = new LinearPoint(timestamp, value);
-                    }
-                    
-                    series.get(i).addPoint(p);
-                }
-                
-                points++;
-            }
+            GraphViewSeries gs = mData.get(i);
             
-            // store the last entry for the next round
-            last_entry = e;
-        }
-
-        if (points > 0) {
-            // Add chart view data
-            for (LinearSeries s : series) {
-                chart.addSeries(s);
+            if (gs == null) {
+                GraphViewSeriesStyle style = new GraphViewSeriesStyle(getResources().getColor(mAdapter.getDataColor(i)), 5);
+                String text = StatsListAdapter.getRowTitle(getActivity(), i);
+                gs = new GraphViewSeries(text, style, dataset.toArray(new GraphViewData[dataset.size()]));
+                mGraphView.addSeries(gs);
+                mData.setValueAt(i, gs);
+                
+                // redraw the graph
+                mGraphView.redrawAll();
+            } else {
+                gs.resetData(dataset.toArray(new GraphViewData[dataset.size()]));
             }
         }
+        
+        // change the horizontal labels
+        mGraphView.setHorizontalLabels(labels.toArray(new String[labels.size()]));
     }
     
     private LoaderManager.LoaderCallbacks<StatsEntry> mStatsLoader = new LoaderManager.LoaderCallbacks<StatsEntry>() {
@@ -177,23 +160,28 @@ public abstract class StatsChartFragment extends Fragment {
     };
 
     @Override
+    public void onDestroyView() {
+        mGraphView = null;
+        mData = null;
+        super.onDestroyView();
+    }
+    
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.stats_chart_fragment, container, false);
         
+        // create a new holder for plot data
+        mData = new SparseArray<GraphViewSeries>();
+        
         // Find the chart and list view
-        mChartView = (ChartView) v.findViewById(R.id.chart_view);
         mListView = (ListView) v.findViewById(R.id.list_view);
+        mChartView = (LinearLayout) v.findViewById(R.id.chart_view);
+        
+        // create a new LineGraphView
+        mGraphView = new LineGraphView(getActivity(), "");
+        mChartView.addView(mGraphView);
         
         return v;
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        // add label adapter
-        mChartView.setLabelAdapter(new StatsLabelAdapter(getActivity(), StatsLabelAdapter.Orientation.VERTICAL), ChartView.POSITION_LEFT);
-        mChartView.setLabelAdapter(new StatsLabelAdapter(getActivity(), StatsLabelAdapter.Orientation.HORIZONTAL), ChartView.POSITION_BOTTOM);
     }
     
     protected void setStatsListAdapter(StatsListAdapter adapter) {

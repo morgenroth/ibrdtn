@@ -22,6 +22,8 @@ public class StatsEntry {
     
     public static final String UPTIME = "uptime";
     public static final String NEIGHBORS = "neighbors";
+    public static final String STORAGE_SIZE = "storage_size";
+    
     public static final String CLOCK_OFFSET = "clock_offset";
     public static final String CLOCK_RATING = "clock_rating";
     public static final String CLOCK_ADJUSTMENTS = "clock_adjustments";
@@ -39,6 +41,7 @@ public class StatsEntry {
     private Date mTimestamp = null;
     private Long mUptime = null;
     private Long mNeighbors = null;
+    private Long mStorageSize = null;
     private Double mClockOffset = null;
     private Double mClockRating = null;
     private Long mClockAdjustments = null;
@@ -56,6 +59,7 @@ public class StatsEntry {
         StatsEntry.TIMESTAMP,
         StatsEntry.UPTIME,
         StatsEntry.NEIGHBORS,
+        StatsEntry.STORAGE_SIZE,
         StatsEntry.CLOCK_OFFSET,
         StatsEntry.CLOCK_RATING,
         StatsEntry.CLOCK_ADJUSTMENTS,
@@ -76,18 +80,20 @@ public class StatsEntry {
     
     static final int COLUMN_STATS_UPTIME             = 2;
     static final int COLUMN_STATS_NEIGHBORS          = 3;
-    static final int COLUMN_STATS_CLOCK_OFFSET       = 4;
-    static final int COLUMN_STATS_CLOCK_RATING       = 5;
-    static final int COLUMN_STATS_CLOCK_ADJUSTMENTS  = 6;
+    static final int COLUMN_STATS_STORAGE_SIZE       = 4;
     
-    static final int COLUMN_STATS_BUNDLE_ABORTED     = 7;
-    static final int COLUMN_STATS_BUNDLE_EXPIRED     = 8;
-    static final int COLUMN_STATS_BUNDLE_GENERATED   = 9;
-    static final int COLUMN_STATS_BUNDLE_QUEUED      = 10;
-    static final int COLUMN_STATS_BUNDLE_RECEIVED    = 11;
-    static final int COLUMN_STATS_BUNDLE_REQUEUED    = 12;
-    static final int COLUMN_STATS_BUNDLE_STORED      = 13;
-    static final int COLUMN_STATS_BUNDLE_TRANSMITTED = 14;
+    static final int COLUMN_STATS_CLOCK_OFFSET       = 5;
+    static final int COLUMN_STATS_CLOCK_RATING       = 6;
+    static final int COLUMN_STATS_CLOCK_ADJUSTMENTS  = 7;
+    
+    static final int COLUMN_STATS_BUNDLE_ABORTED     = 8;
+    static final int COLUMN_STATS_BUNDLE_EXPIRED     = 9;
+    static final int COLUMN_STATS_BUNDLE_GENERATED   = 10;
+    static final int COLUMN_STATS_BUNDLE_QUEUED      = 11;
+    static final int COLUMN_STATS_BUNDLE_RECEIVED    = 12;
+    static final int COLUMN_STATS_BUNDLE_REQUEUED    = 13;
+    static final int COLUMN_STATS_BUNDLE_STORED      = 14;
+    static final int COLUMN_STATS_BUNDLE_TRANSMITTED = 15;
 
     @SuppressLint("SimpleDateFormat")
     public StatsEntry(Context context, Cursor cursor, ColumnsMap cmap) {
@@ -97,6 +103,7 @@ public class StatsEntry {
         
         mNeighbors = cursor.getLong(cmap.mColumnNeighbors);
         mUptime = cursor.getLong(cmap.mColumnUptime);
+        mStorageSize = cursor.getLong(cmap.mColumnStorageSize);
         mClockOffset = cursor.getDouble(cmap.mColumnClockOffset);
         mClockRating = cursor.getDouble(cmap.mColumnClockRating);
         mClockAdjustments = cursor.getLong(cmap.mColumnClockAdjustments);
@@ -120,6 +127,7 @@ public class StatsEntry {
         mTimestamp = (new Timestamp(stats.getTimestamp())).getDate();
         mNeighbors = stats.getNeighbors();
         mUptime = stats.getUptime();
+        mStorageSize = stats.getStorage_size();
         mClockOffset = stats.getTime_offset();
         mClockRating = stats.getTime_rating();
         mClockAdjustments = stats.getTime_adjustments();
@@ -249,10 +257,19 @@ public class StatsEntry {
         mUptime = uptime;
     }
 
+    public Long getStorageSize() {
+        return mStorageSize;
+    }
+
+    public void setStorageSize(Long storageSize) {
+        mStorageSize = storageSize;
+    }
+
     public static class ColumnsMap {
         public int mColumnId;
         public int mColumnTimestamp;
         public int mColumnNeighbors;
+        public int mColumnStorageSize;
         public int mColumnUptime;
         public int mColumnClockOffset;
         public int mColumnClockRating;
@@ -270,6 +287,7 @@ public class StatsEntry {
             mColumnTimestamp   = COLUMN_STATS_TIMESTAMP;
             mColumnNeighbors = COLUMN_STATS_NEIGHBORS;
             mColumnUptime = COLUMN_STATS_UPTIME;
+            mColumnStorageSize = COLUMN_STATS_STORAGE_SIZE;
             mColumnClockOffset = COLUMN_STATS_CLOCK_OFFSET;
             mColumnClockRating = COLUMN_STATS_CLOCK_RATING;
             mColumnClockAdjustments = COLUMN_STATS_CLOCK_ADJUSTMENTS;

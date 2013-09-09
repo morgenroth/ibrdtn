@@ -209,13 +209,13 @@ namespace dtn
 			if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 			{
 				// do not forward local bundles
-				if (meta.destination.getNode() == dtn::core::BundleCore::local)
+				if (meta.destination.sameHost(dtn::core::BundleCore::local))
 				{
 					return false;
 				}
 
 				// do not forward bundles for other nodes
-				if (n.eid != meta.destination.getNode())
+				if (!meta.destination.sameHost(n.eid))
 				{
 					return false;
 				}

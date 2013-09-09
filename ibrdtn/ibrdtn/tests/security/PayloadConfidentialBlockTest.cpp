@@ -139,7 +139,9 @@ void PayloadConfidentialBlockTest::decryptTest(void)
 	}
 
 	dtn::data::Bundle b;
-	b.source = pubkey.reference.add("/test");
+	b.source = pubkey.reference;
+	b.source.setApplication("test");
+
 	b.destination = dtn::data::EID("dtn://destination/test");
 
 	encrypt(pubkey, b);

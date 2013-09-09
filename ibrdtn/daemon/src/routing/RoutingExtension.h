@@ -86,13 +86,6 @@ namespace dtn
 			 */
 			void transferTo(const dtn::data::EID &destination, const dtn::data::MetaBundle &meta);
 
-			/**
-			 * Returns true, if the bundle contains routing data.
-			 * @param meta
-			 * @return
-			 */
-			static bool isRouting(const dtn::data::EID &eid);
-
 		protected:
 			BaseRouter& operator*();
 

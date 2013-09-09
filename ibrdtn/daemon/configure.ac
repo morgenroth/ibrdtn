@@ -40,6 +40,19 @@ AC_PROG_LIBTOOL
 
 AC_LANG_CPLUSPLUS
 
+# Option to build for win32
+AC_ARG_ENABLE([win32],
+	AS_HELP_STRING([--enable-win32], [Enable compile switches for win32 systems]), [
+		AC_DEFINE(WIN32, [1], [Compiling for Win32!])
+		AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
+		AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
+
+		# do win32 related library checking
+		AC_CHECK_LIB([ws2_32], [main],[LIBS="$LIBS -lws2_32"], AC_ERROR([lib ws2_32 not found]))
+
+		AC_ARG_ENABLE([ntservice], AS_HELP_STRING([--enable-ntservice], [Build an NT Service (requires --enable-win32)]))
+	])
+
 # ANDROID configuration
 # We generate a mostly static configuration for Android as PKG_CHECK_MODULES obviously does not work with the Android NDK
 AC_ARG_ENABLE([android],
@@ -103,8 +116,14 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_CHECK_LIB([rt], [clock_gettime])
 	AC_CHECK_LIB([m], [pow])
 
+	# check for ibrcommon library
+	LOCAL_IBRCOMMON_VERSION=0.10
+	LOCAL_CHECK_IBRCOMMON
+	AC_SUBST(ibrcommon_CFLAGS)
+	AC_SUBST(ibrcommon_LIBS)
+	
 	# check for ibrdtn library
-	LOCAL_IBRDTN_VERSION=0.8
+	LOCAL_IBRDTN_VERSION=0.10
 	LOCAL_CHECK_IBRDTN
 	AC_SUBST(ibrdtn_CFLAGS)
 	AC_SUBST(ibrdtn_LIBS)
@@ -125,18 +144,26 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_MSG_WARN([Unable to create PDF version of the documentation.])
 	fi
 
-	PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
-		use_daemon="yes"
-		AC_SUBST(DAEMON_CFLAGS)
-		AC_SUBST(DAEMON_LIBS)
-		AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
-		AC_CHECK_LIB(daemon, daemon_reset_sigs, [
-			AC_DEFINE(HAVE_DAEMON_RESET_SIGS, [1], ["daemon library has daemon_reset_sigs() and daemon_unblock_sigs() functions"])
-		])
-	], [
-		use_daemon="no"
-		AC_MSG_WARN([daemon library not found, daemonize features disabled])
-	])
+	AC_ARG_ENABLE([libdaemon],
+		AS_HELP_STRING([--disable-libdaemon], [Build without libdaemon support]),
+		[
+			use_daemon="no"
+			AC_MSG_NOTICE([libdaemon support disabled])
+		], [
+			PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
+				use_daemon="yes"
+				AC_SUBST(DAEMON_CFLAGS)
+				AC_SUBST(DAEMON_LIBS)
+				AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
+				AC_CHECK_LIB(daemon, daemon_reset_sigs, [
+					AC_DEFINE(HAVE_DAEMON_RESET_SIGS, [1], ["daemon library has daemon_reset_sigs() and daemon_unblock_sigs() functions"])
+				])
+			], [
+				use_daemon="no"
+				AC_MSG_WARN([daemon library not found, daemonize features disabled])
+			])
+		]
+	)
 
 	AC_ARG_WITH(curl,
 		AS_HELP_STRING([--with-curl], [Build with libcurl
@@ -279,19 +306,27 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	dnl optional parameter: DHT support
 	dnl -----------------------------------------------
 
-	PKG_CHECK_MODULES([DTNDHT], dtndht >= 0.2.2 , [
-				with_dht="yes"
-				AC_SUBST(DTNDHT_CFLAGS)
-				AC_SUBST(DTNDHT_LIBS)
-				AC_DEFINE(WITH_DHT_NAMESERVICE, [1], ["dht nameservice support enabled"])
-				AC_CHECK_HEADERS([arpa/inet.h])
-				AC_CHECK_HEADERS([fcntl.h])
-				AC_CHECK_HEADERS([netinet/in.h])
-				AC_CHECK_HEADERS([sys/socket.h])
-			], [
-				with_dht="no"
-				AC_MSG_WARN([dtndht library not found. dht support is disabled.])
-			])
+	AC_ARG_ENABLE([dtndht],
+		AS_HELP_STRING([--disable-dtndht], [Build without dtndht support]),
+		[
+			with_dht="no"
+			AC_MSG_NOTICE([DTNDHT support disabled])
+		], [
+			PKG_CHECK_MODULES([DTNDHT], dtndht >= 0.2.2 , [
+						with_dht="yes"
+						AC_SUBST(DTNDHT_CFLAGS)
+						AC_SUBST(DTNDHT_LIBS)
+						AC_DEFINE(WITH_DHT_NAMESERVICE, [1], ["dht nameservice support enabled"])
+						AC_CHECK_HEADERS([arpa/inet.h])
+						AC_CHECK_HEADERS([fcntl.h])
+						AC_CHECK_HEADERS([netinet/in.h])
+						AC_CHECK_HEADERS([sys/socket.h])
+					], [
+						with_dht="no"
+						AC_MSG_WARN([dtndht library not found. dht support is disabled.])
+					])
+		]
+	)
 
 
 	dnl -----------------------------------------------
@@ -308,6 +343,20 @@ AS_IF([test "x$enable_android" = "xyes"], [
 				AC_MSG_WARN([wifi-p2p library not found. wifi-p2p support is disabled.])
 			])
 
+    dnl -----------------------------------------------
+    dnl optional parameter: VMime support
+    dnl -----------------------------------------------
+
+    PKG_CHECK_MODULES([VMIME], vmime >= 0.9.1 , [
+                with_vmime="yes"
+                AC_SUBST(VMIME_CFLAGS)
+                AC_SUBST(VMIME_LIBS)
+                AC_DEFINE(HAVE_VMIME, [1], ["Email Convergence Layer is available"])
+                AC_CHECK_HEADERS([vmime/utility/smartPtrInt.hpp])
+            ], [
+                with_vmime="no"
+                AC_MSG_WARN([VMime library not found. Email Convergence Layer is disabled.])
+            ])
 
 	dnl -----------------------------------------------
 	dnl check for regex capabilities
@@ -333,6 +382,9 @@ AM_CONDITIONAL(DTNDHT, test x$with_dht = xyes)
 AM_CONDITIONAL(REGEX, test x$have_regex = xyes)
 AM_CONDITIONAL(ANDROID, test x$enable_android = xyes)
 AM_CONDITIONAL(WIFIP2P, test x$with_wifi_p2p = xyes)
+AM_CONDITIONAL(VMIME, test x$with_vmime = xyes)
+AM_CONDITIONAL(WIN32, test x$enable_win32 = xyes)
+AM_CONDITIONAL(WIN32_NTSERVICE, test x$enable_ntservice = xyes)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
@@ -353,6 +405,7 @@ AC_CONFIG_FILES([Makefile \
 	doc/Makefile \
 	man/Makefile \
 	scripts/Makefile \
+	munin/Makefile \
 	tests/Makefile \
 	tests/unittests/Makefile])
 	

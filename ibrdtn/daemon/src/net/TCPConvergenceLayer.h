@@ -111,6 +111,9 @@ namespace dtn
 			 */
 			void raiseEvent(const Event *evt) throw ();
 
+			virtual void resetStats();
+			virtual const stats_map& getStats();
+
 		protected:
 			void __cancellation() throw ();
 

@@ -70,7 +70,7 @@ namespace dtn
 							<< "CoreEngine is not able to successfully communicate with SupplicantHandle. "
 							<< "Exception raised: " << ex.what()
 							<< IBRCOMMON_LOGGER_ENDL;
-					::sleep(2);
+					ibrcommon::Thread::sleep(2000);
 				}
 			}
 
@@ -257,7 +257,7 @@ namespace dtn
 			// push the actually announced connection to the local private list<Connection>
 			connections.push_back(conn);
 
-			::sleep(2);
+			ibrcommon::Thread::sleep(2000);
 
 			// announce the new p2p interface
 			fireInterfaceUp(iface);
@@ -277,7 +277,7 @@ namespace dtn
 			// remove the respective connection from the local list structure.
 			for (; conn_it != connections.end(); ++conn_it) {
 				if (conn_it->getNetworkIntf() == conn.getNetworkIntf()) {
-					conn_it = connections.erase(conn_it);
+					connections.erase(conn_it++);
 					std::cout << "Connection removed from being locally registered." << std::endl;
 				}
 			}

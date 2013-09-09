@@ -25,12 +25,9 @@
 	        android:id="@+id/label"
 	        android:layout_width="fill_parent"
 	        android:layout_height="wrap_content"
-	        android:layout_alignTop="@+id/icon"
-	        android:layout_toRightOf="@+id/icon"
-	        android:layout_weight="1"
 	        android:gravity="center_vertical"
 	        android:text="@string/nickname"
-	        android:textSize="18dp" />
+	        android:textSize="18sp" />
 	
 	    <TextView
 	        android:id="@+id/bottomtext"
@@ -41,7 +38,7 @@
 	        android:ellipsize="marquee"
 	        android:singleLine="true"
 	        android:text="@string/empty"
-	        android:textSize="12dp" />
+	        android:textSize="12sp" />
 	    
     </RelativeLayout>
     

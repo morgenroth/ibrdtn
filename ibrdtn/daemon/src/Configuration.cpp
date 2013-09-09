@@ -30,6 +30,11 @@
 
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/link/LinkManager.h>
+
+#ifdef __WIN32__
+#include <ibrcommon/link/Win32LinkManager.h>
+#endif
 
 #include <getopt.h>
 #include <unistd.h>
@@ -120,6 +125,12 @@ namespace dtn
 		 : _ctrl_path(""), _enabled(false)
 		{}
 
+		Configuration::EMail::EMail()
+		 : _smtpPort(25), _smtpUseTLS(false), _smtpUseSSL(false), _smtpNeedAuth(false), _smtpInterval(60), _smtpConnectionTimeout(-1), _smtpKeepAliveTimeout(30),
+		   _imapPort(143), _imapUseTLS(false), _imapUseSSL(false), _imapInterval(60), _imapConnectionTimeout(-1), _imapPurgeMail(false),
+		   _availableTime(1800), _returningMailsCheck(3)
+		{}
+
 		Configuration::Discovery::~Discovery() {}
 		Configuration::Debug::~Debug() {}
 		Configuration::Logger::~Logger() {}
@@ -128,6 +139,7 @@ namespace dtn
 		Configuration::TimeSync::~TimeSync() {}
 		Configuration::DHT::~DHT() {}
 		Configuration::P2P::~P2P() {}
+		Configuration::EMail::~EMail() {}
 
 		const Configuration::Discovery& Configuration::getDiscovery() const
 		{
@@ -172,6 +184,11 @@ namespace dtn
 		const Configuration::P2P& Configuration::getP2P() const
 		{
 			return _p2p;
+		}
+
+		const Configuration::EMail& Configuration::getEMail() const
+		{
+			return _email;
 		}
 
 		Configuration& Configuration::getInstance(bool reset)
@@ -219,6 +236,9 @@ namespace dtn
 						{"interface", required_argument, 0, 'i'},
 						{"configuration", required_argument, 0, 'c'},
 						{"debug", required_argument, 0, 'd'},
+#ifdef __WIN32__
+						{"interfaces", no_argument, 0, 'I'},
+#endif
 						{0, 0, 0, 0}
 				};
 
@@ -269,6 +289,9 @@ namespace dtn
 					std::cout << " --nodiscovery   disable discovery module" << std::endl;
 					std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
 					std::cout << " --timestamp     enables timestamps for logging instead of datetime values" << std::endl;
+#ifdef __WIN32__
+					std::cout << " --interfaces    list all available interfaces" << std::endl;
+#endif
 					exit(0);
 					break;
 
@@ -312,6 +335,30 @@ namespace dtn
 					_daemon._threads = atoi(optarg);
 					break;
 
+#ifdef __WIN32__
+				case 'I':
+				{
+					ibrcommon::LinkManager &lm = ibrcommon::LinkManager::getInstance();
+					try {
+						ibrcommon::Win32LinkManager &wlm = dynamic_cast<ibrcommon::Win32LinkManager&>(lm);
+
+						std::set<ibrcommon::vinterface> ifs = wlm.getInterfaces();
+
+						std::cout << "Available interfaces:" << std::endl;
+
+						for (std::set<ibrcommon::vinterface>::const_iterator it = ifs.begin(); it != ifs.end(); ++it)
+						{
+							const ibrcommon::vinterface &iface = (*it);
+							std::cout << iface.toString() << '\t';
+							std::wcout << iface.getFriendlyName() << std::endl;
+						}
+					} catch (const std::bad_cast&) {
+					}
+					exit(0);
+					break;
+				}
+#endif
+
 				case '?':
 					/* getopt_long already printed an error message. */
 					break;
@@ -333,21 +380,21 @@ namespace dtn
 			_logger._timestamps = timestamp;
 		}
 
-		void Configuration::load()
+		void Configuration::load(bool quiet)
 		{
-			load(_filename);
+			load(_filename, quiet);
 		}
 
-		void Configuration::load(string filename)
+		void Configuration::load(const std::string &filename, bool quiet)
 		{
 			try {
 				// load main configuration
 				_conf = ibrcommon::ConfigFile(filename);
 				_filename = filename;
 
-				IBRCOMMON_LOGGER_TAG("Configuration", info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
+				if (!quiet) IBRCOMMON_LOGGER_TAG("Configuration", info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::ConfigFile::file_not_found&) {
-				IBRCOMMON_LOGGER_TAG("Configuration", info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
+				if (!quiet) IBRCOMMON_LOGGER_TAG("Configuration", info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
 				_conf = ConfigFile();
 
 				// set the default user to nobody
@@ -363,6 +410,7 @@ namespace dtn
 			_timesync.load(_conf);
 			_dht.load(_conf);
 			_p2p.load(_conf);
+			_email.load(_conf);
 		}
 
 		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
@@ -445,6 +493,39 @@ namespace dtn
 			}
 		}
 
+		void Configuration::EMail::load(const ibrcommon::ConfigFile &conf)
+		{
+			std::string tmp;
+			_address = conf.read<std::string> ("email_address", "root@localhost");
+			_smtpServer = conf.read<std::string> ("email_smtp_server", "localhost");
+			_smtpPort = conf.read<int> ("email_smtp_port", 25);
+			_smtpUsername = conf.read<std::string> ("email_smtp_username", "root");
+			_smtpPassword = conf.read<std::string> ("email_smtp_password", "");
+			_smtpInterval = conf.read<size_t> ("email_smtp_submit_interval", 60);
+			_smtpConnectionTimeout = conf.read<size_t> ("email_smtp_connection_timeout", -1);
+			_smtpKeepAliveTimeout = conf.read<size_t> ("email_smtp_keep_alive", 30);
+			_smtpNeedAuth = (conf.read<std::string> ("email_smtp_need_authentication", "no") == "yes");
+			_smtpUseTLS = (conf.read<std::string> ("email_smtp_socket_type", "") == "tls");
+			_smtpUseSSL = (conf.read<std::string> ("email_smtp_socket_type", "") == "ssl");
+			_imapServer = conf.read<std::string> ("email_imap_server", "localhost");
+			_imapPort = conf.read<int> ("email_imap_port", 143);
+			_imapUsername = conf.read<std::string> ("email_imap_username", _smtpUsername);
+			_imapPassword = conf.read<std::string> ("email_imap_password", _smtpPassword);
+			tmp = conf.read<string> ("email_imap_folder", "");
+			_imapFolder = dtn::utils::Utils::tokenize("/", tmp);
+			_imapInterval = conf.read<size_t> ("email_imap_lookup_interval", 60);
+			_imapConnectionTimeout = conf.read<size_t> ("email_imap_connection_timeout", -1);
+			_imapUseTLS = (conf.read<std::string> ("email_imap_socket_type", "") == "tls");
+			_imapUseSSL = (conf.read<std::string> ("email_imap_socket_type", "") == "ssl");
+			_imapPurgeMail = (conf.read<std::string> ("email_imap_purge_mail", "no") == "yes");
+			tmp = conf.read<string> ("email_certs_ca", "");
+			_tlsCACerts = dtn::utils::Utils::tokenize(",", tmp);
+			tmp = conf.read<string> ("email_certs_user", "");
+			_tlsUserCerts = dtn::utils::Utils::tokenize(",", tmp);
+			_availableTime = conf.read<size_t> ("email_node_available_time", 1800);
+			_returningMailsCheck = conf.read<size_t> ("email_returning_mails_checks", 3);
+		}
+
 		bool Configuration::Debug::quiet() const
 		{
 			return _quiet;
@@ -469,12 +550,12 @@ namespace dtn
 				if ( gethostname(&hostname_array[0], hostname_array.size()) != 0 )
 				{
 					// error
-					return "local";
+					return "dtn://local";
 				}
 
 				return "dtn://" + std::string(&hostname_array[0]);
 			}
-			return "noname";
+			return "dtn://noname";
 		}
 
 		const std::list<Configuration::NetConfig>& Configuration::Network::getInterfaces() const
@@ -554,6 +635,10 @@ namespace dtn
 			return _conf.read<std::string>("use_persistent_bundlesets","no");
 		}
 
+		bool Configuration::enableTrafficStats() const {
+			return (_conf.read<std::string>("stats_traffic", "no") == "yes");
+		}
+
 		void Configuration::Network::load(const ibrcommon::ConfigFile &conf)
 		{
 			/**
@@ -603,6 +688,11 @@ namespace dtn
 				if (protocol == "dgram:udp") p = Node::CONN_DGRAM_UDP;
 				if (protocol == "dgram:ethernet") p = Node::CONN_DGRAM_ETHERNET;
 				if (protocol == "dgram:lowpan") p = Node::CONN_DGRAM_LOWPAN;
+				if (protocol == "email") {
+					p = Node::CONN_EMAIL;
+					ss.clear();
+					ss << "email=" << conf.read<std::string>(prefix + "email", "root@localhost") << ";";
+				}
 
 				bool node_exists = false;
 
@@ -713,6 +803,7 @@ namespace dtn
 					if (type_name == "dgram:udp") type = Configuration::NetConfig::NETWORK_DGRAM_UDP;
 					if (type_name == "dgram:lowpan") type = Configuration::NetConfig::NETWORK_DGRAM_LOWPAN;
 					if (type_name == "dgram:ethernet") type = Configuration::NetConfig::NETWORK_DGRAM_ETHERNET;
+					if (type_name == "email") type = Configuration::NetConfig::NETWORK_EMAIL;
 
 					switch (type)
 					{
@@ -1290,6 +1381,130 @@ namespace dtn
 		const std::string Configuration::P2P::getCtrlPath() const
 		{
 			return _ctrl_path;
+		}
+
+		std::string Configuration::EMail::getOwnAddress() const
+		{
+			return _address;
+		}
+
+		std::string Configuration::EMail::getSmtpServer() const
+		{
+			return _smtpServer;
+		}
+
+		int Configuration::EMail::getSmtpPort() const
+		{
+			return _smtpPort;
+		}
+
+		std::string Configuration::EMail::getSmtpUsername() const
+		{
+			return _smtpUsername;
+		}
+
+		std::string Configuration::EMail::getSmtpPassword() const
+		{
+			return _smtpPassword;
+		}
+
+		size_t Configuration::EMail::getSmtpSubmitInterval() const
+		{
+			return _smtpInterval;
+		}
+
+		size_t Configuration::EMail::getSmtpConnectionTimeout() const
+		{
+			return _smtpConnectionTimeout;
+		}
+		size_t Configuration::EMail::getSmtpKeepAliveTimeout() const
+		{
+			return _smtpKeepAliveTimeout * 1000;
+		}
+
+		bool Configuration::EMail::smtpAuthenticationNeeded() const
+		{
+			return _smtpNeedAuth;
+		}
+
+		bool Configuration::EMail::smtpUseTLS() const
+		{
+			return _smtpUseTLS;
+		}
+
+		bool Configuration::EMail::smtpUseSSL() const
+		{
+			return _smtpUseSSL;
+		}
+
+		std::string Configuration::EMail::getImapServer() const
+		{
+			return _imapServer;
+		}
+
+		int Configuration::EMail::getImapPort() const
+		{
+			return _imapPort;
+		}
+
+		std::string Configuration::EMail::getImapUsername() const
+		{
+			return _imapUsername;
+		}
+
+		std::string Configuration::EMail::getImapPassword() const
+		{
+			return _imapPassword;
+		}
+
+		std::vector<std::string> Configuration::EMail::getImapFolder() const
+		{
+			return _imapFolder;
+		}
+
+		size_t Configuration::EMail::getImapLookupInterval() const
+		{
+			return _imapInterval;
+		}
+
+		size_t Configuration::EMail::getImapConnectionTimeout() const
+		{
+			return _imapConnectionTimeout;
+		}
+
+		bool Configuration::EMail::imapUseTLS() const
+		{
+			return _imapUseTLS;
+		}
+
+		bool Configuration::EMail::imapUseSSL() const
+		{
+			return _imapUseSSL;
+		}
+
+		bool Configuration::EMail::imapPurgeMail() const
+		{
+			return _imapPurgeMail;
+		}
+
+		std::vector<std::string> Configuration::EMail::getTlsCACerts() const
+		{
+			return _tlsCACerts;
+		}
+
+		std::vector<std::string> Configuration::EMail::getTlsUserCerts() const
+		{
+			return _tlsUserCerts;
+		}
+
+		size_t Configuration::EMail::getNodeAvailableTime() const
+		{
+			return _availableTime;
+		}
+
+		size_t Configuration::EMail::getReturningMailChecks() const
+		{
+			return _returningMailsCheck;
 		}
 	}
 }

@@ -33,7 +33,7 @@ public class BundleID implements Parcelable {
 	private Timestamp timestamp = null;
 	private Long sequencenumber = null;
 	
-	private Boolean fragment = false;
+	private boolean fragment = false;
 	private Long fragment_offset = 0L;
 
 	public BundleID()
@@ -64,8 +64,34 @@ public class BundleID implements Parcelable {
 	public void setSource(SingletonEndpoint source) {
 		this.source = source;
 	}
-
+	
 	@Override
+    public boolean equals(Object o) {
+	    if (o instanceof BundleID) {
+	        BundleID foreign_id = (BundleID)o;
+
+	        if (timestamp != null)
+	            if (!timestamp.equals(foreign_id.timestamp)) return false;
+	        
+	        if (sequencenumber != null)
+	            if (!sequencenumber.equals(foreign_id.sequencenumber)) return false;
+	        
+	        if (source != null)
+	            if (!source.equals(foreign_id.source)) return false;
+	        
+	        if (fragment) {
+	            if (!foreign_id.fragment) return false;
+	            
+	            if (fragment_offset != null)
+	                if (!fragment_offset.equals(foreign_id.fragment_offset)) return false;
+	        }
+	        
+	        return true;
+	    }
+        return super.equals(o);
+    }
+
+    @Override
 	public String toString() {
 		if (fragment)
 		{

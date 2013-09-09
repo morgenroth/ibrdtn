@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import os
+import dtnstats
+from munin import MuninPlugin
+
+class DtnNeighborsPlugin(MuninPlugin):
+    title = "Neighbors"
+    args = "-l 0"
+    vlabel = "Neighbors"
+    scale = False
+    category = "dtn"
+    host = "localhost"
+    port = 4550
+
+    @property
+    def fields(self):
+        return [("neighbors", dict(
+                label = "neighbors",
+                info = 'The number of neighbors seen (connected or discovered) by the DTN daemon.',
+                type = "GAUGE",
+                min = "0"))]
+
+    def execute(self):
+        stats = dtnstats.DtnStats(self.host, self.port)
+        stats.connect()
+        data = stats.info()
+        return dict(neighbors=data['Neighbors'])
+
+if __name__ == "__main__":
+    DtnNeighborsPlugin().run()
+

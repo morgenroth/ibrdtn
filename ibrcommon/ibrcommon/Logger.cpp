@@ -19,7 +19,7 @@
  *
  */
 
-#include "config.h"
+#include "ibrcommon/config.h"
 #include "ibrcommon/Logger.h"
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -36,6 +36,10 @@
 
 #ifdef ANDROID
 #include <android/log.h>
+#endif
+
+#ifdef __WIN32__
+#include <winsock2.h>
 #endif
 
 namespace ibrcommon
@@ -306,7 +310,8 @@ namespace ibrcommon
 			if (_options & LOG_DATETIME)
 			{
 				// get timestamp
-				std::string timestamp(asctime( localtime(&log._logtime.tv_sec) ));
+				time_t secs = log._logtime.tv_sec;
+				std::string timestamp(asctime( localtime(&secs) ));
 				timestamp.erase(std::remove(timestamp.begin(), timestamp.end(), '\n'), timestamp.end());
 				prefixes.push_back(timestamp);
 			}

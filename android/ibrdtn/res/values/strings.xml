@@ -110,4 +110,8 @@
     <string name="pref_fragmentation">Fragmentation support</string>
     <string name="stats_activity">Statistics</string>
     <string name="showstats">Show statistics</string>
+    <string name="pref_storage">Storage</string>
+    <string name="pref_storage_description">How to store bundles on the device.</string>
+    <string name="pref_cloudconnect_3g">Allow 3G uplink</string>
+    <string name="pref_cloudconnect_3g_description">Allow Cloud connect connections over mobile connections.</string>
 </resources>

@@ -108,7 +108,7 @@ namespace dtn
 						if (b.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 						{
 							// remove the bundle from the storage
-							dtn::core::BundlePurgeEvent::raise(id);
+							dtn::core::BundlePurgeEvent::raise(b);
 						}
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG("AbstractWorker", 15) << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -133,7 +133,7 @@ namespace dtn
 			dtn::core::BundleCore::processBlocks(bundle);
 		}
 
-		AbstractWorker::AbstractWorker() : _thread(*this)
+		AbstractWorker::AbstractWorker() : _eid(BundleCore::local), _thread(*this)
 		{
 		}
 
@@ -147,16 +147,9 @@ namespace dtn
 			_groups.erase(endpoint);
 		}
 
-		void AbstractWorker::initialize(const std::string &uri, const dtn::data::Number &cbhe, bool async)
+		void AbstractWorker::initialize(const std::string &uri, bool async)
 		{
-			if (BundleCore::local.getScheme() == dtn::data::EID::CBHE_SCHEME)
-			{
-				_eid = BundleCore::local.add(BundleCore::local.getDelimiter() + cbhe.toString());
-			}
-			else
-			{
-				_eid = BundleCore::local.add(uri);
-			}
+			_eid.setApplication(uri);
 
 			try {
 				if (async) _thread.start();

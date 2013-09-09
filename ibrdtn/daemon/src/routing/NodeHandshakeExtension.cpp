@@ -110,15 +110,56 @@ namespace dtn
 				// get the purge vector (bloomfilter) of this ECM
 				const ibrcommon::BloomFilter &purge = bfpv.getVector().getBloomFilter();
 
+				// get a reference to the storage
 				dtn::storage::BundleStorage &storage = (**this).getStorage();
 
-				while (true)
+				// create a bundle filter which selects bundles contained in the received
+				// purge vector but not addressed locally
+				class BundleFilter : public dtn::storage::BundleSelector
 				{
-					// delete bundles in the purge vector
-					const dtn::data::MetaBundle meta = storage.remove(purge);
+				public:
+					BundleFilter(const ibrcommon::BloomFilter &filter)
+					 : _filter(filter)
+					{};
 
-					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					virtual ~BundleFilter() {};
+
+					virtual dtn::data::Size limit() const throw () { return 100; };
+
+					virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 					{
+						// do not select locally addressed bundles
+						if (meta.destination.getNode() == dtn::core::BundleCore::local)
+							return false;
+
+						// do not purge non-singleton bundles
+						if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+							return false;
+
+						// select the bundle if it is in the filter
+						return _filter.contains(meta.toString());
+					};
+
+					const ibrcommon::BloomFilter &_filter;
+				} bundle_filter(purge);
+
+				dtn::storage::BundleResultList list;
+
+				// while we are getting more results from the storage
+				do {
+					// delete all previous results
+					list.clear();
+
+					// query for more bundles
+					storage.get(bundle_filter, list);
+
+					for (dtn::storage::BundleResultList::const_iterator iter = list.begin(); iter != list.end(); ++iter)
+					{
+						const dtn::data::MetaBundle &meta = (*iter);
+
+						// delete bundle from storage
+						storage.remove(meta);
+
 						// log the purged bundle
 						IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 10) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -128,11 +169,7 @@ namespace dtn
 						// add this bundle to the own purge vector
 						(**this).setPurged(meta);
 					}
-					else
-					{
-						IBRCOMMON_LOGGER_TAG(NodeHandshakeExtension::TAG, warning) << source.getString() << " requested to purge a bundle with a non-singleton destination: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
-					}
-				}
+				} while (!list.empty());
 			} catch (std::exception&) { };
 		}
 
@@ -162,7 +199,7 @@ namespace dtn
 		NodeHandshakeExtension::HandshakeEndpoint::HandshakeEndpoint(NodeHandshakeExtension &callback)
 		 : _callback(callback)
 		{
-			AbstractWorker::initialize("/routing", 50, true);
+			AbstractWorker::initialize("routing", true);
 		}
 
 		NodeHandshakeExtension::HandshakeEndpoint::~HandshakeEndpoint()
@@ -210,11 +247,10 @@ namespace dtn
 
 			// set the destination of the bundle
 			req.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+			req.destination = origin;
 
-			if (origin.isCompressable())
-				req.destination = origin.add(origin.getDelimiter() + "50");
-			else
-				req.destination = origin.add(origin.getDelimiter() + "routing");
+			// set destination application
+			req.destination.setApplication("routing");
 
 			// limit the lifetime to 60 seconds
 			req.lifetime = 60;

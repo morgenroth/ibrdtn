@@ -29,6 +29,7 @@
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/thread/RWLock.h>
 
 #include <string.h>
 #include <vector>
@@ -40,19 +41,25 @@ namespace dtn
 		const std::string DatagramConvergenceLayer::TAG = "DatagramConvergenceLayer";
 
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
-		 : _service(ds), _running(false), _discovery_sn(0)
+		 : _service(ds), _active_conns(0), _running(false), _discovery_sn(0)
 		{
+			// initialize stats
+			addStats("out", 0);
+			addStats("in", 0);
 		}
 
 		DatagramConvergenceLayer::~DatagramConvergenceLayer()
 		{
+			// wait until the component thread is terminated
+			join();
+
 			// wait until all connections are down
 			{
-				ibrcommon::MutexLock l(_connection_cond);
-				while (_connections.size() != 0) _connection_cond.wait();
+				ibrcommon::MutexLock l(_cond_connections);
+				while (_active_conns != 0) _cond_connections.wait();
 			}
 
-			join();
+			// delete the associated service
 			delete _service;
 		}
 
@@ -68,6 +75,9 @@ namespace dtn
 
 			// forward the send request to DatagramService
 			_service->send(HEADER_SEGMENT, flags, seqno, destination, buf, len);
+
+			// traffic monitoring
+			addStats("out", len);
 		}
 
 		void DatagramConvergenceLayer::callback_ack(DatagramConnection&, const unsigned int &seqno, const std::string &destination) throw (DatagramException)
@@ -81,6 +91,9 @@ namespace dtn
 
 		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
+			// do not queue any new jobs if the convergence layer goes down
+			if (!_running) return;
+
 			const std::list<dtn::core::Node::URI> uri_list = node.get(_service->getProtocol());
 			if (uri_list.empty()) return;
 
@@ -91,29 +104,41 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "job queued for " << node.getEID().getString() << IBRCOMMON_LOGGER_ENDL;
 
 			// lock the connection list while working with it
-			ibrcommon::MutexLock lc(_connection_cond);
+			ibrcommon::RWLock lc(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
 
 			// get a new or the existing connection for this address
-			DatagramConnection &conn = getConnection( uri.value );
+			DatagramConnection &conn = getConnection( uri.value, true );
 
 			// queue the job to the connection
 			conn.queue(job);
 		}
 
-		DatagramConnection& DatagramConvergenceLayer::getConnection(const std::string &identifier)
+		DatagramConnection& DatagramConvergenceLayer::getConnection(const std::string &identifier, bool create) throw (ConnectionNotAvailableException)
 		{
+			DatagramConnection *connection = NULL;
+
 			// Test if connection for this address already exist
-			for(std::list<DatagramConnection*>::iterator i = _connections.begin(); i != _connections.end(); ++i)
+			for(connection_list::const_iterator i = _connections.begin(); i != _connections.end(); ++i)
 			{
 				if ((*i)->getIdentifier() == identifier)
 					return *(*i);
 			}
 
-			// Connection does not exist, create one and put it into the list
-			DatagramConnection *connection = new DatagramConnection(identifier, _service->getParameter(), (*this));
+			// throw exception if we should not create new connections
+			if (!create) throw ConnectionNotAvailableException();
 
+			// Connection does not exist, create one and put it into the list
+			connection = new DatagramConnection(identifier, _service->getParameter(), (*this));
+
+			// add a new connection to the list of connections
 			_connections.push_back(connection);
-			_connection_cond.signal(true);
+
+			// increment the number of active connections
+			{
+				ibrcommon::MutexLock l(_cond_connections);
+				++_active_conns;
+				_cond_connections.signal(true);
+			}
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Selected identifier: " << connection->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
@@ -127,16 +152,19 @@ namespace dtn
 
 		void DatagramConvergenceLayer::connectionDown(const DatagramConnection *conn)
 		{
-			ibrcommon::MutexLock lc(_connection_cond);
+			ibrcommon::MutexLock l(_cond_connections);
+			ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
 
-			const std::list<DatagramConnection*>::iterator i = std::find(_connections.begin(), _connections.end(), conn);
+			const connection_list::iterator i = std::find(_connections.begin(), _connections.end(), conn);
 
 			if (i != _connections.end())
 			{
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Down: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
-
 				_connections.erase(i);
-				_connection_cond.signal(true);
+
+				// decrement the number of connections
+				--_active_conns;
+				_cond_connections.signal(true);
 			}
 			else
 			{
@@ -163,8 +191,8 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 
 			// shutdown all connections
-			ibrcommon::MutexLock l(_connection_cond);
-			for(std::list<DatagramConnection*>::iterator i = _connections.begin(); i != _connections.end(); ++i)
+			ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
+			for(connection_list::const_iterator i = _connections.begin(); i != _connections.end(); ++i)
 			{
 				(*i)->shutdown();
 			}
@@ -215,6 +243,9 @@ namespace dtn
 				try {
 					// Receive full frame from socket
 					len = _service->recvfrom(&data[0], maxlen, type, flags, seqno, address);
+
+					// traffic monitoring
+					addStats("in", len);
 				} catch (const DatagramException&) {
 					_running = false;
 					break;
@@ -253,10 +284,10 @@ namespace dtn
 
 						{
 							// lock the connection list while working with it
-							ibrcommon::MutexLock lc(_connection_cond);
+							ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
 
 							// Connection instance for this address
-							DatagramConnection& connection = getConnection(address);
+							DatagramConnection& connection = getConnection(address, true);
 							connection.setPeerEID(announce.getEID());
 						}
 
@@ -270,10 +301,10 @@ namespace dtn
 				}
 				else if ( type == HEADER_SEGMENT )
 				{
-					ibrcommon::MutexLock lc(_connection_cond);
+					ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READWRITE);
 
 					// Connection instance for this address
-					DatagramConnection& connection = getConnection(address);
+					DatagramConnection& connection = getConnection(address, true);
 
 					try {
 						// Decide in which queue to write based on the src address
@@ -285,13 +316,17 @@ namespace dtn
 				}
 				else if ( type == HEADER_ACK )
 				{
-					ibrcommon::MutexLock lc(_connection_cond);
+					try {
+						ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
 
-					// Connection instance for this address
-					DatagramConnection& connection = getConnection(address);
+						// Connection instance for this address
+						DatagramConnection& connection = getConnection(address, false);
 
-					// Decide in which queue to write based on the src address
-					connection.ack(seqno);
+						// Decide in which queue to write based on the src address
+						connection.ack(seqno);
+					} catch (const ConnectionNotAvailableException &ex) {
+						// connection does not exists - ignore the ACK
+					}
 				}
 
 				yield();

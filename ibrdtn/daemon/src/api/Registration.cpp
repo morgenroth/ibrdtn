@@ -101,9 +101,10 @@ namespace dtn
 
 		Registration::Registration()
 		 : _handle(alloc_handle()),
-		   _default_eid(core::BundleCore::local.add( dtn::core::BundleCore::local.getDelimiter() + _handle) ),
+		   _default_eid(core::BundleCore::local),
 		   _persistent(false), _detached(false), _expiry(0), _filter_fragments(true)
 		{
+			_default_eid.setApplication(_handle);
 		}
 
 		Registration::~Registration()
@@ -225,8 +226,8 @@ namespace dtn
 #endif
 			{
 			public:
-				BundleFilter(const std::set<dtn::data::EID> endpoints, const dtn::data::BundleSet &bundles, bool loopback, bool fragment_filter)
-				 : _endpoints(endpoints), _bundles(bundles), _loopback(loopback), _fragment_filter(fragment_filter)
+				BundleFilter(const std::set<dtn::data::EID> endpoints, const RegistrationQueue &queue, bool loopback, bool fragment_filter)
+				 : _endpoints(endpoints), _queue(queue), _loopback(loopback), _fragment_filter(fragment_filter)
 				{};
 
 				virtual ~BundleFilter() {};
@@ -257,7 +258,7 @@ namespace dtn
 
 					IBRCOMMON_LOGGER_DEBUG_TAG(Registration::TAG, 30) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-					if (_bundles.has(meta))
+					if (_queue.has(meta))
 					{
 						return false;
 					}
@@ -307,10 +308,10 @@ namespace dtn
 
 			private:
 				const std::set<dtn::data::EID> _endpoints;
-				const dtn::data::BundleSet &_bundles;
+				const RegistrationQueue &_queue;
 				const bool _loopback;
 				const bool _fragment_filter;
-			} filter(_endpoints, _queue.getReceivedBundles(), false, fragment_conf && _filter_fragments);
+			} filter(_endpoints, _queue, false, fragment_conf && _filter_fragments);
 
 			// query the database for more bundles
 			ibrcommon::MutexLock l(_endpoints_lock);
@@ -334,8 +335,10 @@ namespace dtn
 		void Registration::RegistrationQueue::put(const dtn::data::MetaBundle &bundle) throw ()
 		{
 			try {
-				_recv_bundles.add(bundle);
 				_queue.push(bundle);
+
+				ibrcommon::MutexLock l(_lock);
+				_recv_bundles.add(bundle);
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(Registration::TAG, 10) << "[RegistrationQueue] add bundle to list of delivered bundles: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::Exception&) { }
@@ -346,13 +349,15 @@ namespace dtn
 			return _queue.getnpop(false);
 		}
 
-		const dtn::data::BundleSet& Registration::RegistrationQueue::getReceivedBundles() const throw ()
+		bool Registration::RegistrationQueue::has(const dtn::data::BundleID &bundle) const throw ()
 		{
-			return _recv_bundles;
+			ibrcommon::MutexLock l(const_cast<ibrcommon::Mutex&>(_lock));
+			return _recv_bundles.has(bundle);
 		}
 
 		void Registration::RegistrationQueue::expire(const dtn::data::Timestamp &timestamp) throw ()
 		{
+			ibrcommon::MutexLock l(_lock);
 			_recv_bundles.expire(timestamp);
 		}
 

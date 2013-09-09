@@ -74,7 +74,7 @@ namespace dtn
 				virtual void callbackBundleReceived(const Bundle &b) = 0;
 
 			protected:
-				void initialize(const std::string &uri, const dtn::data::Number &cbhe, bool async);
+				void initialize(const std::string &uri, bool async);
 				void transmit(const Bundle &bundle);
 
 				EID _eid;

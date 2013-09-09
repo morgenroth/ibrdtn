@@ -4,6 +4,8 @@
     <string name="stats_tab_bundles">Bundles</string>
     <string name="stats_tab_transfer">Transfer</string>
     <string name="stats_tab_clock">Clock</string>
+    <string name="stats_tab_cl">Convergence Layer</string>
+    <string name="stats_tab_storage">Storage</string>
     
     <string name="stats_title_uptime">Uptime</string>
     <string name="stats_title_neighbors">Neighbors</string>
@@ -21,4 +23,6 @@
     <string name="stats_title_transfers_requeued">Transfers requeued</string>
     <string name="stats_title_bundles_stored">Bundles stored</string>
     <string name="stats_title_transfers_completed">Transfers completed</string>
+    
+    <string name="stats_title_storage_size">Storage size</string>
 </resources>

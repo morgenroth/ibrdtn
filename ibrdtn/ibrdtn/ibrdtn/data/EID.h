@@ -23,10 +23,9 @@
 #define EID_H_
 
 #include <string>
-#include "ibrcommon/Exceptions.h"
+#include <ibrcommon/Exceptions.h>
 #include <ibrdtn/data/Number.h>
-
-using namespace std;
+#include <map>
 
 namespace dtn
 {
@@ -35,8 +34,26 @@ namespace dtn
 		class EID
 		{
 		public:
-			static const std::string DEFAULT_SCHEME;
-			static const std::string CBHE_SCHEME;
+			enum Scheme {
+				SCHEME_DTN = 0,
+				SCHEME_CBHE = 1,
+				SCHEME_EXTENDED = 2
+			} _scheme_type;
+
+			/**
+			 * Resolves a scheme in a string to the corresponding enum
+			 */
+			static Scheme resolveScheme(const std::string &s);
+
+			/**
+			 * Returns the name of a scheme
+			 */
+			static const std::string getSchemeName(const Scheme s);
+
+			/**
+			 * Map an application string to a CBHE number
+			 */
+			static Number getApplicationNumber(const std::string &app);
 
 			EID();
 			EID(const std::string &scheme, const std::string &ssp);
@@ -51,24 +68,11 @@ namespace dtn
 
 			virtual ~EID();
 
-			EID& operator=(const EID &other);
-
 			bool operator==(const EID &other) const;
 
 			bool operator==(const std::string &other) const;
 
 			bool operator!=(const EID &other) const;
-
-			EID operator+(const std::string &suffix) const;
-
-			friend EID operator+(const EID &left, const std::string &right)
-			{
-				return EID(left.getString() + right);
-			}
-
-			EID add(const std::string &other) const {
-				return EID(this->getString() + other);
-			}
 
 			bool sameHost(const std::string &other) const;
 			bool sameHost(const EID &other) const;
@@ -77,10 +81,17 @@ namespace dtn
 			bool operator>(const EID &other) const;
 
 			std::string getString() const;
+
+			void setApplication(const dtn::data::Number &app) throw ();
+			void setApplication(const std::string &app) throw ();
 			std::string getApplication() const throw ();
+
+			bool isApplication(const dtn::data::Number &app) const throw ();
+			bool isApplication(const std::string &app) const throw ();
+
 			std::string getHost() const throw ();
-			const std::string& getScheme() const;
-			const std::string& getSSP() const;
+			const std::string getScheme() const;
+			const std::string getSSP() const;
 
 			std::string getDelimiter() const;
 
@@ -113,8 +124,36 @@ namespace dtn
 			Compressed getCompressed() const;
 
 		private:
+			/**
+			 * private constructor to create a modified EID
+			 */
+			EID(const Scheme scheme_type, const std::string &scheme, const std::string &ssp, const std::string &application);
+
+			/**
+			 * Extract the CBHE node and application from an SSP string
+			 */
+			static void extractCBHE(const std::string &ssp, Number &node, Number &app);
+
+			/**
+			 * Extract the DTN node and application from an SSP string
+			 */
+			static void extractDTN(const std::string &ssp, std::string &node, std::string &application);
+
+			// abstract values
 			std::string _scheme;
 			std::string _ssp;
+
+			// DTN scheme
+			// the ssp carries the node part
+			std::string _application;
+
+			// CBHE scheme
+			Number _cbhe_node;
+			Number _cbhe_application;
+
+			// well-known CBHE numbers
+			typedef std::map<std::string, Number> cbhe_map;
+			static cbhe_map& getApplicationMap();
 		};
 	}
 }
