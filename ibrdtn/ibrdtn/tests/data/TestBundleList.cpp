@@ -20,6 +20,7 @@
  */
 
 #include "data/TestBundleList.h"
+#include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
 #include <iostream>
@@ -61,7 +62,7 @@ void TestBundleList::genbundles(dtn::data::BundleList &l, int number, int offset
 		int random_integer = offset + (rand() % range);
 
 		b.lifetime = random_integer;
-		b.timestamp = 0;
+		b.timestamp = 1;
 		b.sequencenumber = random_integer;
 
 		stringstream ss; ss << rand();
