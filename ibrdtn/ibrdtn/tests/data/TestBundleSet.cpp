@@ -62,7 +62,7 @@ void TestBundleSet::genbundles(dtn::data::BundleSet &l, int number, int offset, 
 		int random_integer = offset + (rand() % range);
 
 		b.lifetime = random_integer;
-		b.timestamp = 0;
+		b.timestamp = 1;
 		b.sequencenumber = random_integer;
 
 		stringstream ss; ss << rand();
