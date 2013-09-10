@@ -227,8 +227,8 @@ namespace dtn
 			{
 				ibrcommon::MutexLock l(_blacklist_lock);
 				// only query once each 60 seconds
-				if (_blacklist[origin] > dtn::utils::Clock::getUnixTimestamp()) return;
-				_blacklist[origin] = dtn::utils::Clock::getUnixTimestamp() + 60;
+				if (_blacklist[origin] > dtn::utils::Clock::getMonotonicTimestamp()) return;
+				_blacklist[origin] = dtn::utils::Clock::getMonotonicTimestamp() + 60;
 			}
 
 			// create a new request for the summary vector of the neighbor
