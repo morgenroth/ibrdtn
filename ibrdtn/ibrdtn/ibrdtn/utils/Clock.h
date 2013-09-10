@@ -241,8 +241,6 @@ namespace dtn
 			static struct timeval _offset;
 			static bool _offset_init;
 
-			static const dtn::data::Timestamp _boot_timestamp;
-
 			static ibrcommon::MonotonicClock _monotonic_clock;
 		};
 	}

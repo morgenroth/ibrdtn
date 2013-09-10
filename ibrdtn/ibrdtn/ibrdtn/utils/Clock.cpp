@@ -39,9 +39,6 @@ namespace dtn
 
 		bool Clock::_modify_clock = false;
 
-		// store the timestamp at start-up
-		const dtn::data::Timestamp Clock::_boot_timestamp = Clock::getUnixTimestamp();
-
 		/**
 		 * The number of seconds between 1/1/1970 and 1/1/2000.
 		 */
@@ -306,10 +303,7 @@ namespace dtn
 
 		dtn::data::Timestamp Clock::getUptime()
 		{
-			if (Clock::getUnixTimestamp() < _boot_timestamp)
-				return 0;
-
-			return Clock::getUnixTimestamp() - _boot_timestamp;
+			return Clock::getMonotonicTimestamp();
 		}
 	}
 }
