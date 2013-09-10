@@ -56,7 +56,7 @@ config 'daemon' 'storage'
 # all available neighbors.
 #
 config 'daemon' 'main'
-	# values: default | epidemic | flooding
+	# values: none | default | epidemic | flooding | prophet
 	option	routing		default
 #	option	forwarding	no
 

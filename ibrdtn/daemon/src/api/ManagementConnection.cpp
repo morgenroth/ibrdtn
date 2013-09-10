@@ -21,6 +21,7 @@
 
 #include "config.h"
 #include "Configuration.h"
+#include "DTNTPWorker.h"
 #include "ManagementConnection.h"
 #include "storage/BundleResult.h"
 #include "core/BundleCore.h"
@@ -408,6 +409,14 @@ namespace dtn
 						_stream << "Offset: " << std::setprecision(6) << dtn::utils::Clock::toDouble(dtn::utils::Clock::getOffset()) << std::endl;
 						_stream << "Rating: " << std::setprecision(16) << dtn::utils::Clock::getRating() << std::endl;
 						_stream << "Adjusted: " << dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::getCounter() << std::endl;
+
+						const dtn::daemon::DTNTPWorker::TimeSyncState &state = dtn::daemon::DTNTPWorker::getState();
+
+						_stream << "Base: " << std::setprecision(16) << state.base_rating << std::endl;
+						_stream << "Psi: " << std::setprecision(16) << state.psi << std::endl;
+						_stream << "Sigma: " << std::setprecision(16) << state.sigma << std::endl;
+						_stream << "Threshold: " << std::setprecision(6) << state.sync_threshold << std::endl;
+
 						_stream << std::endl;
 					} else if ( cmd[1] == "bundles" ) {
 						_stream << ClientHandler::API_STATUS_OK << " STATS BUNDLES" << std::endl;
