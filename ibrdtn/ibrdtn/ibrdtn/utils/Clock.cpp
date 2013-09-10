@@ -111,6 +111,8 @@ namespace dtn
 					}
 					return getTime() + seconds_left;
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+
+				return __getExpireTime(getTime(), b.lifetime);
 			}
 
 			return __getExpireTime(b.timestamp, b.lifetime);
