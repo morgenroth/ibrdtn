@@ -206,7 +206,7 @@ namespace dtn
 			int c;
 			int doapi = _doapi;
 			int disco = _disco._enabled;
-			int badclock = dtn::utils::Clock::isBad();
+			int badclock = false;
 			int timestamp = _logger._timestamps;
 			int showversion = 0;
 
@@ -376,7 +376,7 @@ namespace dtn
 
 			_doapi = doapi;
 			_disco._enabled = disco;
-			dtn::utils::Clock::setBad(badclock);
+			if (badclock) dtn::utils::Clock::setBad(true);
 			_logger._timestamps = timestamp;
 		}
 
