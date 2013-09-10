@@ -57,7 +57,7 @@ namespace dtn
 
 		bool Clock::isBad()
 		{
-			return _badclock;
+			return _badclock || (Clock::getRating() == 0);
 		}
 
 		void Clock::setBad(bool val)
@@ -169,7 +169,7 @@ namespace dtn
 		bool Clock::__isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
 			// if the quality of time is zero or the clock is bad, then never expire a bundle
-			if ((Clock::getRating() == 0) || dtn::utils::Clock::isBad()) return false;
+			if (dtn::utils::Clock::isBad()) return false;
 
 			// calculate sigma based on the quality of time and the original lifetime
 			const double sigma_error = lifetime.get<double>() * (1 - Clock::getRating());
