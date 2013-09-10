@@ -400,7 +400,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_sync_lock);
 
 			// if the received quality of time is worse than ours, ignore it
-			if (dtn::utils::Clock::getRating() >= msg.peer_rating) return;
+			if ((msg.peer_rating * (1 - _sync_threshold)) <= dtn::utils::Clock::getRating()) return;
 
 			double local_time = dtn::utils::Clock::toDouble(tv_local);
 			double remote_time = dtn::utils::Clock::toDouble(tv_remote);
