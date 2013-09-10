@@ -30,7 +30,7 @@ namespace dtn
 	namespace utils
 	{
 		int Clock::_timezone = 0;
-		double Clock::_rating = 0;
+		double Clock::_rating = 1.0;
 		bool Clock::_badclock = false;
 
 		struct timeval Clock::_offset;
@@ -61,6 +61,7 @@ namespace dtn
 
 		void Clock::setBad(bool val)
 		{
+			if (val) Clock::setRating(0.0);
 			_badclock = val;
 		}
 
