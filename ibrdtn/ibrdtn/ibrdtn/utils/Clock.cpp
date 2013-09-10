@@ -47,6 +47,11 @@ namespace dtn
 		 */
 		const dtn::data::Timestamp Clock::TIMEVAL_CONVERSION = 946684800;
 
+		/**
+		 * Class to generate a monotonic timestamp
+		 */
+		ibrcommon::MonotonicClock Clock::_monotonic_clock;
+
 		Clock::Clock()
 		{
 		}
@@ -199,6 +204,11 @@ namespace dtn
 			}
 
 			return (dtn::data::Timestamp(now.tv_sec) - TIMEVAL_CONVERSION) + offset;
+		}
+
+		dtn::data::Timestamp Clock::getMonotonicTimestamp()
+		{
+			return _monotonic_clock.getSeconds();
 		}
 
 		dtn::data::Timestamp Clock::getUnixTimestamp()

@@ -28,6 +28,8 @@
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/BundleID.h"
 
+#include <ibrcommon/MonotonicClock.h>
+
 #ifdef __WIN32__
 /**
  * timeradd / timersub macros are not available on win32
@@ -69,6 +71,12 @@ namespace dtn
 		class Clock
 		{
 		public:
+			/**
+			 * Return a monotonic timestamp, valid within the current
+			 * process only
+			 */
+			static dtn::data::Timestamp getMonotonicTimestamp();
+
 			/**
 			 * Return the current unix timestamp adjusted by
 			 * the configured timezone offset
@@ -234,6 +242,8 @@ namespace dtn
 			static bool _offset_init;
 
 			static const dtn::data::Timestamp _boot_timestamp;
+
+			static ibrcommon::MonotonicClock _monotonic_clock;
 		};
 	}
 }
