@@ -18,6 +18,7 @@ h_sources = \
 	Exceptions.h \
 	refcnt_ptr.h \
 	TimeMeasurement.h \
+	MonotonicClock.h \
 	Logger.h \
 	TLSExceptions.h \
 	Iterator.h
@@ -25,6 +26,7 @@ h_sources = \
 cc_sources = \
 	appstreambuf.cpp \
 	TimeMeasurement.cpp \
+	MonotonicClock.cpp \
 	Logger.cpp
 
 if ! WIN32
