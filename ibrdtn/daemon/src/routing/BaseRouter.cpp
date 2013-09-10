@@ -41,6 +41,7 @@
 #include "routing/NodeHandshakeEvent.h"
 #include "routing/StaticRouteChangeEvent.h"
 
+#include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/TrackingBlock.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
@@ -341,6 +342,17 @@ namespace dtn
 						// lets see if signatures and hashes are correct and remove them if possible
 						dtn::security::SecurityManager::getInstance().verify(bundle);
 #endif
+
+						// add age block if local clock is bad
+						if (dtn::utils::Clock::isBad()) {
+							// check for ageblock
+							try {
+								bundle.find<dtn::data::AgeBlock>();
+							} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+								// add a new ageblock
+								bundle.push_front<dtn::data::AgeBlock>();
+							}
+						}
 
 						// increment value in the scope control hop limit block
 						try {
