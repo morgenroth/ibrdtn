@@ -37,7 +37,7 @@ namespace dtn
 		std::string TimeAdjustmentEvent::getMessage() const
 		{
 			std::stringstream ss;
-			ss << "time adjusted by " << dtn::utils::Clock::toDouble(offset) << "s, new rating is " << rating;
+			ss << "time adjusted by " << dtn::utils::Clock::toDouble(offset) << "s, based on clock with rating " << rating;
 			return ss.str();
 		}
 
