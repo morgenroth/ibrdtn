@@ -27,15 +27,6 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-/**
- * On windows the timespec is defined in the pthread
- * headers.
- */
-#ifdef __WIN32__
-#include <windows.h>
-#include <pthread.h>
-#endif
-
 namespace ibrcommon
 {
 	class TimeMeasurement
@@ -58,12 +49,6 @@ namespace ibrcommon
 		static std::ostream& format(std::ostream &stream, const double value);
 
 	private:
-		void gettime(struct timespec *ts);
-
-#ifdef __WIN32__
-		LARGE_INTEGER getFILETIMEoffset() const;
-#endif
-
 		struct timespec _start;
 		struct timespec _end;
 	};

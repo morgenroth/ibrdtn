@@ -187,13 +187,16 @@ namespace dtn
 
 				// remove outdated blacklist entries
 				{
+					// get current monotonic timestamp
+					const dtn::data::Timestamp mt = dtn::utils::Clock::getMonotonicTimestamp();
+
 					ibrcommon::MutexLock l(_blacklist_lock);
 					for (blacklist_map::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end();)
 					{
 						const dtn::data::Timestamp &bl_age = (*iter).second;
 
 						// do not query again if the blacklist entry is valid
-						if (bl_age < t.getUnixTimestamp()) {
+						if (bl_age < mt) {
 							_sync_blacklist.erase(iter++);
 						} else {
 							++iter;
@@ -294,14 +297,14 @@ namespace dtn
 					const dtn::data::Timestamp &bl_age = _sync_blacklist[peer];
 
 					// do not query again if the blacklist entry is valid
-					if (bl_age > dtn::utils::Clock::getUnixTimestamp())
+					if (bl_age > dtn::utils::Clock::getMonotonicTimestamp())
 					{
 						return;
 					}
 				}
 
 				// create a new blacklist entry
-				_sync_blacklist[peer] = dtn::utils::Clock::getUnixTimestamp() + 60;
+				_sync_blacklist[peer] = dtn::utils::Clock::getMonotonicTimestamp() + 60;
 			}
 
 			// send a time sync bundle
@@ -412,7 +415,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_sync_lock);
 
 			// if the received quality of time is worse than ours, ignore it
-			if (dtn::utils::Clock::getRating() >= msg.peer_rating) return;
+			if ((msg.peer_rating * (1 - _sync_state.sync_threshold)) <= dtn::utils::Clock::getRating()) return;
 
 			double local_time = dtn::utils::Clock::toDouble(tv_local);
 			double remote_time = dtn::utils::Clock::toDouble(tv_remote);
@@ -593,9 +596,9 @@ namespace dtn
 						// sync to this time message
 						sync(msg, tv_offset, tv_local_timestamp, tv_peer_timestamp);
 
-						// remove the blacklist entry
+						// update the blacklist entry
 						ibrcommon::MutexLock l(_blacklist_lock);
-						_sync_blacklist.erase(b.source.getNode());
+						_sync_blacklist[b.source.getNode()] = dtn::utils::Clock::getMonotonicTimestamp() + 30;
 
 						break;
 					}

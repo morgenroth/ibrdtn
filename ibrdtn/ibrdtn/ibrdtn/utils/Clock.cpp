@@ -39,13 +39,15 @@ namespace dtn
 
 		bool Clock::_modify_clock = false;
 
-		// store the timestamp at start-up
-		const dtn::data::Timestamp Clock::_boot_timestamp = Clock::getUnixTimestamp();
-
 		/**
 		 * The number of seconds between 1/1/1970 and 1/1/2000.
 		 */
 		const dtn::data::Timestamp Clock::TIMEVAL_CONVERSION = 946684800;
+
+		/**
+		 * Class to generate a monotonic timestamp
+		 */
+		ibrcommon::MonotonicClock Clock::_monotonic_clock;
 
 		Clock::Clock()
 		{
@@ -201,6 +203,11 @@ namespace dtn
 			return (dtn::data::Timestamp(now.tv_sec) - TIMEVAL_CONVERSION) + offset;
 		}
 
+		dtn::data::Timestamp Clock::getMonotonicTimestamp()
+		{
+			return _monotonic_clock.getSeconds();
+		}
+
 		dtn::data::Timestamp Clock::getUnixTimestamp()
 		{
 			struct timeval now;
@@ -296,10 +303,7 @@ namespace dtn
 
 		dtn::data::Timestamp Clock::getUptime()
 		{
-			if (Clock::getUnixTimestamp() < _boot_timestamp)
-				return 0;
-
-			return Clock::getUnixTimestamp() - _boot_timestamp;
+			return Clock::getMonotonicTimestamp();
 		}
 	}
 }

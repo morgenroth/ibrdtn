@@ -65,7 +65,7 @@ namespace dtn
 			_deliveryPredictabilityMap.set(core::BundleCore::local, 1.0);
 
 			// define the first exchange timestamp
-			_next_exchange_timestamp = dtn::utils::Clock::getUnixTimestamp() + _next_exchange_timeout;
+			_next_exchange_timestamp = dtn::utils::Clock::getMonotonicTimestamp() + _next_exchange_timeout;
 
 			// write something to the syslog
 			IBRCOMMON_LOGGER_TAG(ProphetRoutingExtension::TAG, info) << "Initializing PRoPHET routing module" << IBRCOMMON_LOGGER_ENDL;
@@ -223,12 +223,14 @@ namespace dtn
 				}
 
 				ibrcommon::MutexLock l(_next_exchange_mutex);
-				if ((_next_exchange_timestamp > 0) && (_next_exchange_timestamp < time.getUnixTimestamp()))
+				const dtn::data::Timestamp now = dtn::utils::Clock::getMonotonicTimestamp();
+
+				if ((_next_exchange_timestamp > 0) && (_next_exchange_timestamp < now))
 				{
 					_taskqueue.push( new NextExchangeTask() );
 
 					// define the next exchange timestamp
-					_next_exchange_timestamp = time.getUnixTimestamp() + _next_exchange_timeout;
+					_next_exchange_timestamp = now + _next_exchange_timeout;
 				}
 				return;
 			} catch (const std::bad_cast&) { };
@@ -563,7 +565,7 @@ namespace dtn
 				return _p_encounter_max;
 			}
 
-			const dtn::data::Timestamp currentTime = dtn::utils::Clock::getUnixTimestamp();
+			const dtn::data::Timestamp currentTime = dtn::utils::Clock::getMonotonicTimestamp();
 			const dtn::data::Timestamp time_diff = currentTime - it->second;
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(currentTime >= it->second && "the ageMap timestamp should be smaller than the current timestamp");
@@ -600,7 +602,7 @@ namespace dtn
 				_deliveryPredictabilityMap.set(neighbor, _p_encounter_first);
 			}
 
-			_ageMap[neighbor] = dtn::utils::Clock::getUnixTimestamp();
+			_ageMap[neighbor] = dtn::utils::Clock::getMonotonicTimestamp();
 		}
 
 		void ProphetRoutingExtension::age()
