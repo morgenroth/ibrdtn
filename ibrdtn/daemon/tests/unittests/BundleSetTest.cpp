@@ -166,7 +166,12 @@ void BundleSetTest::orderTest(){
 
 }
 
-void BundleSetTest::namingTest(){
+void BundleSetTest::namingTest()
+{
+	// do not test naming without sqlite bundle storage
+	// named bundle-set without sqlite is currently not supported
+	if (dynamic_cast<dtn::storage::SQLiteBundleStorage*>(_storage) == NULL)
+		return;
 
 	std::string name1 = "test1BundleSet1";
 	std::string name2 = "test2BundleSet2";
