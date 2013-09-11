@@ -833,6 +833,12 @@ namespace dtn
 
 		void NativeDaemon::init_core() throw (NativeDaemonException)
 		{
+			// enable link manager
+			ibrcommon::LinkManager::initialize();
+
+			// get the core
+			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
+
 			// reset and get configuration
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
@@ -845,13 +851,9 @@ namespace dtn
 				conf.load();
 			}
 
-			// enable and configure link manager
+			//configure link manager
 			size_t interval = conf.getNetwork().getLinkRequestInterval();
 			ibrcommon::LinkManager::setLinkRequestInterval(interval);
-			ibrcommon::LinkManager::initialize();
-
-			// get the core
-			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
 
 			// greeting
 			if (conf.getDebug().enabled())
