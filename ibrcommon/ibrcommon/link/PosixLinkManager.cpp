@@ -26,7 +26,7 @@
 
 namespace ibrcommon
 {
-	PosixLinkManager::PosixLinkManager() : _lm(LinkMonitor(*this,_link_request_interval))
+	PosixLinkManager::PosixLinkManager() : _lm(LinkMonitor(*this))
 	{
 	}
 

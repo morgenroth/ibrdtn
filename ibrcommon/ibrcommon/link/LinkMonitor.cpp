@@ -30,7 +30,7 @@
 #include <algorithm>
 
 namespace ibrcommon {
-	LinkMonitor::LinkMonitor(LinkManager &lm, size_t link_request_interval) : _lm(lm), _running(true)
+	LinkMonitor::LinkMonitor(LinkManager &lm) : _lm(lm), _running(true)
 	{
 	}
 

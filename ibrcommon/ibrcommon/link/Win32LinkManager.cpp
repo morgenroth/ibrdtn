@@ -20,7 +20,7 @@
 
 namespace ibrcommon
 {
-	Win32LinkManager::Win32LinkManager() : _lm(LinkMonitor(*this,_link_request_interval))
+	Win32LinkManager::Win32LinkManager() : _lm(LinkMonitor(*this))
 	{
 	}
 

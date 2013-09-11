@@ -35,7 +35,7 @@ namespace ibrcommon {
 	class LinkMonitor : public ibrcommon::JoinableThread {
 
 	public:
-		LinkMonitor(LinkManager &lm, size_t link_request_interval);
+		LinkMonitor(LinkManager &lm);
 		virtual ~LinkMonitor();
 
 	protected:
