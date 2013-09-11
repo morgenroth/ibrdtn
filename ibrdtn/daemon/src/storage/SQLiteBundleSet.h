@@ -69,37 +69,6 @@ namespace dtn
 			virtual std::istream &deserialize(std::istream &stream);
 
 		private:
-			/**
-			 * add a named seen bundle to the database
-			 * @param name name, bundle bundle
-			 */
-			void add_seen_bundle(int name_id, const dtn::data::MetaBundle &bundle) throw (SQLiteDatabase::SQLiteQueryException);
-
-			/**
-			 * returns true, if database contains the bundle, false if not
-			 */
-			bool contains_seen_bundle(const dtn::data::BundleID &id) const throw (SQLiteDatabase::SQLiteQueryException);
-
-			/*
-			 * removes all bundles from a named bundleset
-			 */
-			void clear_seen_bundles(int name_id) throw (SQLiteDatabase::SQLiteQueryException);
-
-			/*
-			 * removes specific bundle from database
-			 */
-			void erase_seen_bundle(const dtn::data::BundleID &id) throw (SQLiteDatabase::SQLiteQueryException);
-
-			/*
-			 * returns a set of all bundles contained in the database
-			 */
-			std::set<dtn::data::MetaBundle> get_all_seen_bundles() const throw (SQLiteDatabase::SQLiteQueryException);
-
-			/*
-			 * returns number of seen bundles
-			 */
-			dtn::data::Size count_seen_bundles(int name_id) const throw (SQLiteDatabase::SQLiteQueryException);
-
 			const int _name_id;
 
 			ibrcommon::BloomFilter _bf;

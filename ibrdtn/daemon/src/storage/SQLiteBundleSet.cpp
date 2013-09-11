@@ -40,30 +40,71 @@ namespace dtn
 
 		void SQLiteBundleSet::add(const dtn::data::MetaBundle &bundle) throw ()
 		{
-			// insert bundle id into database
-			add_seen_bundle(_name_id, bundle);
+			// inform database about (potentially) new expiretime
+			dtn::data::Timestamp TTL = bundle.timestamp + bundle.lifetime;
+			new_expire_time(TTL);
 
-			//update expiretime, if necessary
-			new_expire_time(bundle.expiretime);
+			try {
+				// insert bundle id into database
+				SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_ADD]);
 
-			// add bundle to the bloomfilter
-			_bf.insert(bundle.toString());
+				const std::string source_id = bundle.source.getString();
+
+				sqlite3_bind_text(*st,1,source_id.c_str(),source_id.length(),SQLITE_TRANSIENT);
+				sqlite3_bind_int64(*st,2,bundle.timestamp.get<uint64_t>());
+				sqlite3_bind_int64(*st,3,bundle.sequencenumber.get<uint64_t>());
+				sqlite3_bind_int64(*st,4,bundle.offset.get<uint64_t>());
+				sqlite3_bind_int64(*st,5,bundle.expiretime.get<uint64_t>());
+				sqlite3_bind_int64(*st,6, _name_id);
+
+				st.step();
+
+				// update expiretime, if necessary
+				new_expire_time(bundle.expiretime);
+
+				// add bundle to the bloomfilter
+				_bf.insert(bundle.toString());
+			} catch (const SQLiteDatabase::SQLiteQueryException&) {
+				// error
+			}
 		}
 
 		void SQLiteBundleSet::clear() throw ()
 		{
-			clear_seen_bundles(_name_id);
+			try {
+				SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_CLEAR]);
+				sqlite3_bind_int64(*st,1, _name_id);
+
+				st.step();
+			} catch (const SQLiteDatabase::SQLiteQueryException&) {
+				// error
+			}
 		}
 
-		bool SQLiteBundleSet::has(const dtn::data::BundleID &bundle) const throw ()
+		bool SQLiteBundleSet::has(const dtn::data::BundleID &id) const throw ()
 		{
 			// check bloom-filter first
-			if (_bf.contains(bundle.toString())) {
-				// Return true if the bloom-filter is not consistent with
-				// the bundles set. This happen if the MemoryBundleSet gets deserialized.
-				if (!_consistent) return true;
+			if (!_bf.contains(id.toString())) return false;
 
-				return contains_seen_bundle(bundle);
+			// Return true if the bloom-filter is not consistent with
+			// the bundles set. This happen if the MemoryBundleSet gets deserialized.
+			if (!_consistent) return true;
+
+			try {
+				SQLiteDatabase::Statement st( const_cast<sqlite3*>(_database._database), _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_GET]);
+
+				const std::string source_id = id.source.getString();
+				sqlite3_bind_text(*st,1,source_id.c_str(),source_id.length(),SQLITE_TRANSIENT);
+				sqlite3_bind_int64(*st,2,id.timestamp.get<uint64_t>());
+				sqlite3_bind_int64(*st,3,id.sequencenumber.get<uint64_t>());
+				sqlite3_bind_int64(*st,4,id.offset.get<uint64_t>());
+
+				// TODO: check for name_id ?
+
+				if (st.step() == SQLITE_ROW)
+					return true;
+			} catch (const SQLiteDatabase::SQLiteQueryException&) {
+				// error
 			}
 
 			return false;
@@ -90,7 +131,21 @@ namespace dtn
 
 		dtn::data::Size SQLiteBundleSet::size() const throw ()
 		{
-			return count_seen_bundles(_name_id);
+			int rows = 0;
+
+			try {
+				SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_COUNT]);
+				sqlite3_bind_int64(*st, 1, _name_id);
+
+				if (( st.step()) == SQLITE_ROW)
+				{
+					rows = sqlite3_column_int(*st, 0);
+				}
+			} catch (const SQLiteDatabase::SQLiteQueryException&) {
+				// error
+			}
+
+			return rows;
 		}
 
 		dtn::data::Length SQLiteBundleSet::getLength() const throw ()
@@ -107,16 +162,31 @@ namespace dtn
 		{
 			std::set<dtn::data::MetaBundle> ret;
 
-			//get bundles from db
-			std::set<dtn::data::MetaBundle> bundles = get_all_seen_bundles();
+			try {
+				SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_GETALL]);
 
-			// iterate through all items to find the differences
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
-			{
-				if (!filter.contains( (*iter).toString() ) )
+				std::set<dtn::data::MetaBundle> ret;
+
+				while (st.step() == SQLITE_ROW)
 				{
-					ret.insert( (*iter) );
+					const char* source_id_ptr = reinterpret_cast<const char*> (sqlite3_column_text(*st,0));
+					std::string source_id(source_id_ptr);
+					int timestamp = sqlite3_column_int64(*st,1);
+					int sequencenumber = sqlite3_column_int64(*st,2);
+					int fragmenetoffset = sqlite3_column_int64(*st,3);
+
+					// TODO: check for name_id ?
+
+					dtn::data::BundleID id(dtn::data::EID(source_id),timestamp,sequencenumber,fragmenetoffset);
+					dtn::data::MetaBundle bundle = dtn::data::MetaBundle::mockUp(id);
+
+					if (!filter.contains( bundle.toString() ) )
+					{
+						ret.insert( bundle );
+					}
 				}
+			} catch (const SQLiteDatabase::SQLiteQueryException&) {
+				// error
 			}
 
 			return ret;
@@ -163,95 +233,32 @@ namespace dtn
 		{
 			// rebuild the bloom-filter
 			_bf.clear();
-			std::set<dtn::data::MetaBundle> bundles = get_all_seen_bundles();
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
-			{
-				_bf.insert( (*iter).toString() );
+
+			try {
+				SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_GETALL]);
+
+				std::set<dtn::data::MetaBundle> ret;
+
+				while(st.step() == SQLITE_ROW)
+				{
+					const char* source_id_ptr = reinterpret_cast<const char*> (sqlite3_column_text(*st,0));
+					std::string source_id(source_id_ptr);
+					int timestamp = sqlite3_column_int64(*st,1);
+					int sequencenumber = sqlite3_column_int64(*st,2);
+					int fragmenetoffset = sqlite3_column_int64(*st,3);
+
+					// TODO: check for name_id ?
+
+					dtn::data::BundleID id(dtn::data::EID(source_id),timestamp,sequencenumber,fragmenetoffset);
+					dtn::data::MetaBundle bundle = dtn::data::MetaBundle::mockUp(id);
+
+					_bf.insert( bundle.toString() );
+				}
+
+				_consistent = true;
+			} catch (const SQLiteDatabase::SQLiteQueryException&) {
+				// error
 			}
-			_consistent = true;
-		}
-
-		void SQLiteBundleSet::add_seen_bundle(int name_id, const dtn::data::MetaBundle &bundle) throw (SQLiteDatabase::SQLiteQueryException)
-		{
-			//inform database about (potentially) new expiretime
-			dtn::data::Timestamp TTL = bundle.timestamp + bundle.lifetime;
-			new_expire_time(TTL);
-
-			SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_ADD]);
-
-			const std::string source_id = bundle.source.getString();
-
-			sqlite3_bind_text(*st,1,source_id.c_str(),source_id.length(),SQLITE_TRANSIENT);
-			sqlite3_bind_int64(*st,2,bundle.timestamp.get<uint64_t>());
-			sqlite3_bind_int64(*st,3,bundle.sequencenumber.get<uint64_t>());
-			sqlite3_bind_int64(*st,4,bundle.offset.get<uint64_t>());
-			sqlite3_bind_int64(*st,5,bundle.expiretime.get<uint64_t>());
-			sqlite3_bind_int64(*st,6,name_id);
-
-			st.step();
-
-		}
-
-		bool SQLiteBundleSet::contains_seen_bundle(const dtn::data::BundleID &id) const throw (SQLiteDatabase::SQLiteQueryException)
-		{
-			SQLiteDatabase::Statement st( const_cast<sqlite3*>(_database._database), _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_GET]);
-
-			const std::string source_id = id.source.getString();
-			sqlite3_bind_text(*st,1,source_id.c_str(),source_id.length(),SQLITE_TRANSIENT);
-			sqlite3_bind_int64(*st,2,id.timestamp.get<uint64_t>());
-			sqlite3_bind_int64(*st,3,id.sequencenumber.get<uint64_t>());
-			sqlite3_bind_int64(*st,4,id.offset.get<uint64_t>());
-
-			if (st.step() == SQLITE_ROW)
-				return true;
-			return false;
-
-		}
-
-		void SQLiteBundleSet::clear_seen_bundles(int name_id) throw (SQLiteDatabase::SQLiteQueryException)
-		{
-			SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_CLEAR]);
-			sqlite3_bind_int64(*st,1,name_id);
-
-			st.step();
-		}
-
-		std::set<dtn::data::MetaBundle> SQLiteBundleSet::get_all_seen_bundles() const throw (SQLiteDatabase::SQLiteQueryException)
-		{
-			SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_GETALL]);
-
-			std::set<dtn::data::MetaBundle> ret;
-
-			while(st.step() == SQLITE_ROW){
-
-				const char* source_id_ptr = reinterpret_cast<const char*> (sqlite3_column_text(*st,0));
-				std::string source_id(source_id_ptr);
-				int timestamp = sqlite3_column_int64(*st,1);
-				int sequencenumber = sqlite3_column_int64(*st,2);
-				int fragmenetoffset = sqlite3_column_int64(*st,3);
-
-				dtn::data::BundleID id(dtn::data::EID(source_id),timestamp,sequencenumber,fragmenetoffset);
-				dtn::data::MetaBundle bundle = dtn::data::MetaBundle::mockUp(id);
-
-				ret.insert(bundle);
-			}
-
-			return ret;
-		}
-
-		dtn::data::Size SQLiteBundleSet::count_seen_bundles(int name_id) const throw (SQLiteDatabase::SQLiteQueryException)
-		{
-			int rows = 0;
-
-			SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::SEEN_BUNDLE_COUNT]);
-			sqlite3_bind_int64(*st,1,name_id);
-
-			if (( st.step()) == SQLITE_ROW)
-			{
-				rows = sqlite3_column_int(*st, 0);
-			}
-
-			return rows;
 		}
 	} /* namespace data */
 } /* namespace dtn */
