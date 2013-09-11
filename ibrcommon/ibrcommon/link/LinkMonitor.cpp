@@ -30,7 +30,7 @@
 #include <algorithm>
 
 namespace ibrcommon {
-	LinkMonitor::LinkMonitor(LinkManager *lm, size_t link_request_interval) : _lm(lm), _running(true)
+	LinkMonitor::LinkMonitor(LinkManager &lm, size_t link_request_interval) : _lm(lm), _running(true)
 	{
 	}
 
@@ -47,11 +47,11 @@ namespace ibrcommon {
 		while(_running)
 		{
 
-			std::set<vinterface> ifaces = _lm->getMonitoredInterfaces();
+			std::set<vinterface> ifaces = _lm.getMonitoredInterfaces();
 			for(std::set<vinterface>::iterator iface_iter = ifaces.begin(); iface_iter != ifaces.end(); iface_iter++)
 			{
 				//get current addresses from LinkManager
-				std::list<vaddress> new_addresses = _lm->getAddressList(*iface_iter);
+				std::list<vaddress> new_addresses = _lm.getAddressList(*iface_iter);
 				//get old addresses from map
 				std::set<vaddress> old_addresses;
 				if(_iface_adr_map.size() > 0)
@@ -75,7 +75,7 @@ namespace ibrcommon {
 						action = LinkEvent::ACTION_ADDRESS_REMOVED;
 						IBRCOMMON_LOGGER_DEBUG_TAG("LinkMonitor", 5) << "address REMOVED:" << (*adr_iter).address() << " on interface " << (*iface_iter).toString() <<  IBRCOMMON_LOGGER_ENDL;
 						LinkEvent lme(action, *(iface_iter), *(adr_iter));;
-						_lm->raiseEvent(lme);
+						_lm.raiseEvent(lme);
 				}
 
 				addresses.clear();
@@ -91,12 +91,12 @@ namespace ibrcommon {
 						action = LinkEvent::ACTION_ADDRESS_ADDED;
 						IBRCOMMON_LOGGER_DEBUG_TAG("LinkMonitor", 5) << "address ADDED:" << (*adr_iter).address() << " on interface " << (*iface_iter).toString() <<  IBRCOMMON_LOGGER_ENDL;
 						LinkEvent lme(action, *(iface_iter), *(adr_iter));;
-						_lm->raiseEvent(lme);
+						_lm.raiseEvent(lme);
 				}
 			}
 
 			try {
-				cond.wait(_lm->getLinkRequestInterval());
+				cond.wait(_lm.getLinkRequestInterval());
 			} catch (const Conditional::ConditionalAbortException &e){
 				//reached, if conditional timed out
 			}

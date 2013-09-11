@@ -29,7 +29,7 @@ namespace ibrcommon
 		const std::list<vaddress> getAddressList(const vinterface &iface, const std::string &scope = "");
 
 	private:
-		LinkMonitor *_lr;
+		LinkMonitor _lm;
 	};
 } /* namespace ibrcommon */
 #endif /* POSIXLINKMANAGER_H_ */

@@ -40,7 +40,7 @@ namespace ibrcommon
 		IP_ADAPTER_ADDRESSES* getAdapterInfo() const;
 		vaddress getAddress(SOCKET_ADDRESS &address) const;
 
-		LinkMonitor *_lr;
+		LinkMonitor _lm;
 	};
 } /* namespace ibrcommon */
 #endif /* DEFAULTLINKMANAGER_H_ */

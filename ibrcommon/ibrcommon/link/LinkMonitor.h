@@ -35,7 +35,7 @@ namespace ibrcommon {
 	class LinkMonitor : public ibrcommon::JoinableThread {
 
 	public:
-		LinkMonitor(LinkManager *lm, size_t link_request_interval);
+		LinkMonitor(LinkManager &lm, size_t link_request_interval);
 		virtual ~LinkMonitor();
 
 	protected:
@@ -43,7 +43,7 @@ namespace ibrcommon {
 		void __cancellation() throw ();
 	private:
 		bool _running;
-		LinkManager *_lm;
+		LinkManager &_lm;
 
 		std::map<vinterface,std::set<vaddress> > _iface_adr_map;
 	};
