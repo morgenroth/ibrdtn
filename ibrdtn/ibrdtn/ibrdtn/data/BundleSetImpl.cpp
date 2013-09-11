@@ -30,13 +30,16 @@ namespace dtn
 	{
 		BundleSetImpl::~BundleSetImpl()
 		{
-
 		}
-		BundleSetImpl::ExpiringBundle::ExpiringBundle(const MetaBundle &b) : bundle(b)
-		{ }
+
+		BundleSetImpl::ExpiringBundle::ExpiringBundle(const MetaBundle &b)
+		 : bundle(b)
+		{
+		}
 
 		BundleSetImpl::ExpiringBundle::~ExpiringBundle()
-		{ }
+		{
+		}
 
 		bool BundleSetImpl::ExpiringBundle::operator!=(const ExpiringBundle& other) const
 		{
@@ -62,8 +65,5 @@ namespace dtn
 		{
 			return !(((*this) < other) || ((*this) == other));
 		}
+	}
 }
-}
-
-
-

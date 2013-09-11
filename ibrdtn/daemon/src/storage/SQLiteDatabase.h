@@ -264,6 +264,16 @@ namespace dtn
 			void iterateAll() throw (SQLiteQueryException);
 
 			/**
+			 * creates an anonymous bundle-set and returns its ID
+			 */
+			int createBundleSet() const throw (SQLiteQueryException);
+
+			/**
+			 * creates a named bundle-set or returns the ID of an existing bundle-set
+			 */
+			int createBundleSet(const std::string &name) const throw (SQLiteQueryException);
+
+			/**
 			 * add a named seen bundle to the database
 			 * @param name name, bundle bundle
 			 */
@@ -293,18 +303,6 @@ namespace dtn
 			 * returns number of seen bundles
 			 */
 			dtn::data::Size count_seen_bundles(int name_id) const throw (SQLiteQueryException);
-
-			/*
-			 * adds a used bundlename
-			 * @return name_id
-			 */
-			int add_used_bundlename(std::string name) const throw (SQLiteQueryException);
-
-			/*
-			 * returns true, if a specific bundlename is used
-			 */
-
-			bool is_used_bundlename(std::string name) const throw (SQLiteQueryException);
 
 			/*** BEGIN: methods for unit-testing ***/
 
@@ -375,6 +373,18 @@ namespace dtn
 			 * @param newVersion Required version.
 			 */
 			void doUpgrade(int oldVersion, int newVersion) throw (ibrcommon::Exception);
+
+			/*
+			 * adds a used bundlename
+			 * @return name_id
+			 */
+			int add_used_bundlename(const std::string &name) const throw (SQLiteQueryException);
+
+			/*
+			 * returns true, if a specific bundlename is used
+			 */
+
+			bool is_used_bundlename(const std::string &name) const throw (SQLiteQueryException);
 
 			ibrcommon::File _file;
 

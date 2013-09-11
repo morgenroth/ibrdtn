@@ -529,7 +529,6 @@ namespace dtn
 			}
 
 			return ret;
-
 		}
 
 		dtn::data::Size SQLiteDatabase::count_seen_bundles(int name_id) const throw (SQLiteDatabase::SQLiteQueryException)
@@ -547,7 +546,23 @@ namespace dtn
 			return rows;
 		}
 
-		int SQLiteDatabase::add_used_bundlename(std::string name) const throw (SQLiteQueryException)
+		int SQLiteDatabase::createBundleSet() const throw (SQLiteQueryException)
+		{
+			std::string name;
+			dtn::utils::Random rand;
+			do {
+				name = rand.gen_chars(32);
+			} while(is_used_bundlename(name));
+
+			return add_used_bundlename(name);
+		}
+
+		int SQLiteDatabase::createBundleSet(const std::string &name) const throw (SQLiteQueryException)
+		{
+			return add_used_bundlename(name);
+		}
+
+		int SQLiteDatabase::add_used_bundlename(const std::string &name) const throw (SQLiteQueryException)
 		{
 			Statement st1(_database,_sql_queries[BUNDLENAME_ADD]);
 			sqlite3_bind_text(*st1,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
@@ -560,7 +575,7 @@ namespace dtn
 			return sqlite3_column_int64(*st2,0);
 		}
 
-		bool SQLiteDatabase::is_used_bundlename(std::string name) const throw (SQLiteQueryException)
+		bool SQLiteDatabase::is_used_bundlename(const std::string &name) const throw (SQLiteQueryException)
 		{
 			int rows = 0;
 			Statement st(_database, _sql_queries[BUNDLENAME_COUNT]);
@@ -623,6 +638,7 @@ namespace dtn
 
 			if (items_added == 0) throw dtn::storage::NoBundleFoundException();
 		}
+
 		void SQLiteDatabase::__get(const BundleSelector &cb, Statement &st, BundleResult &ret, size_t &items_added, const int bind_offset, const size_t offset, const size_t query_limit) const throw (SQLiteDatabase::SQLiteQueryException, NoBundleFoundException, BundleSelectorException)
 		{
 			const bool unlimited = (cb.limit() <= 0);

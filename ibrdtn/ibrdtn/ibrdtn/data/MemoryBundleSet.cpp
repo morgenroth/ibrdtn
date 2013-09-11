@@ -122,7 +122,7 @@ namespace dtn
 			return _bf;
 		}
 
-		std::set<dtn::data::MetaBundle> MemoryBundleSet::getNotIn(ibrcommon::BloomFilter &filter) const throw ()
+		std::set<dtn::data::MetaBundle> MemoryBundleSet::getNotIn(const ibrcommon::BloomFilter &filter) const throw ()
 		{
 			std::set<dtn::data::MetaBundle> ret;
 
@@ -175,19 +175,21 @@ namespace dtn
 			return stream;
 		}
 
-		std::string MemoryBundleSet::getType()
+		const std::string& MemoryBundleSet::getType() const
 		{
-			return "MemoryBundleSet";
+			const static std::string type("MemoryBundleSet");
+			return type;
 		}
 
-		bool MemoryBundleSet::isPersistent()
+		bool MemoryBundleSet::isPersistent() const
 		{
 			return false;
 		}
 
-		std::string MemoryBundleSet::getName()
+		const std::string& MemoryBundleSet::getName() const
 		{
-			return "";
+			const static std::string name("");
+			return name;
 		}
 	} /* namespace data */
 } /* namespace dtn */

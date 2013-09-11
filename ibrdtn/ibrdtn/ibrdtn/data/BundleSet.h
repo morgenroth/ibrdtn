@@ -42,17 +42,45 @@ namespace dtn
 			};
 
 			/**
+			 * Creates a new bundle-set with the default bundle-set factory
 			 * @param bf_size Initial size fo the bloom-filter.
 			 */
 			BundleSet(BundleSet::Listener *listener = NULL, Length bf_size = 1024);
-			BundleSet(std::string name,BundleSet::Listener *listener = NULL, Length bf_size = 1024);
+
+			/**
+			 * Creates a new bundle-set with the default bundle-set factory
+			 * @param bf_size Initial size fo the bloom-filter.
+			 */
+			BundleSet(const std::string &name, BundleSet::Listener *listener = NULL, Length bf_size = 1024);
+
+			/**
+			 * Creates a bundle-set instance with a given implementation
+			 */
 			BundleSet(BundleSetImpl* ptr);
+
+			/**
+			 * Destructor
+			 */
 			virtual ~BundleSet();
 
+			/**
+			 * Add a bundle to this bundle-set
+			 */
 			virtual void add(const dtn::data::MetaBundle &bundle) throw ();
+
+			/**
+			 * Clear all entries
+			 */
 			virtual void clear() throw ();
+
+			/**
+			 * Check if a specific bundle is in this bundle-set
+			 */
 			virtual bool has(const dtn::data::BundleID &bundle) const throw ();
 
+			/**
+			 * Remove expired bundles in this bundle-set
+			 */
 			virtual void expire(const Timestamp timestamp) throw ();
 
 			/**
@@ -60,15 +88,20 @@ namespace dtn
 			 */
 			virtual Size size() const throw ();
 
-
 			/**
 			 * Returns the data length of the serialized BundleSet
 			 */
 			Length getLength() const throw ();
 
+			/**
+			 * Return the bloom-filter object of this bundle-set
+			 */
 			const ibrcommon::BloomFilter& getBloomFilter() const throw ();
 
-			std::set<dtn::data::MetaBundle> getNotIn(ibrcommon::BloomFilter &filter) const throw ();
+			/**
+			 * Return bundles not in the given bloom-filter
+			 */
+			std::set<dtn::data::MetaBundle> getNotIn(const ibrcommon::BloomFilter &filter) const throw ();
 
 			std::ostream& serialize(std::ostream &stream) const;
 			std::istream& deserialize(std::istream &stream);
@@ -76,10 +109,9 @@ namespace dtn
 			friend std::ostream &operator<<(std::ostream &stream, const BundleSet &obj);
 			friend std::istream &operator>>(std::istream &stream, BundleSet &obj);
 
-			std::string getType();
-			bool isPersistent();
-			std::string getName();
-
+			const std::string& getType() const;
+			bool isPersistent() const;
+			const std::string& getName() const;
 
 		private:
 			refcnt_ptr<BundleSetImpl> _set_impl;

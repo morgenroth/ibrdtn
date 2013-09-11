@@ -29,20 +29,14 @@ namespace dtn
 	namespace storage
 	{
 		SQLiteBundleSet::SQLiteBundleSet(dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database)
-		 : _bf(bf_size * 8), _listener(listener), _consistent(true),_database(database),_isPersistent(false)
+		 : _name(), _name_id(_database.createBundleSet()), _bf(bf_size * 8), _listener(listener), _consistent(true),_database(database),_isPersistent(false)
 		{
-			dtn::utils::Random rand;
-			do {
-				_name = rand.gen_chars(32);
-			} while(_database.is_used_bundlename(_name));
 
-			_name_id = _database.add_used_bundlename(_name);
 		}
 
-		SQLiteBundleSet::SQLiteBundleSet(std::string name, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database)
-		 : _name(name),_bf(bf_size * 8), _listener(listener), _consistent(true),_database(database), _isPersistent(true)
+		SQLiteBundleSet::SQLiteBundleSet(const std::string &name, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database)
+		 : _name(name), _name_id(_database.createBundleSet(_name)), _bf(bf_size * 8), _listener(listener), _consistent(true),_database(database), _isPersistent(true)
 		{
-			_name_id = _database.add_used_bundlename(_name);
 		}
 
 		SQLiteBundleSet::~SQLiteBundleSet()
@@ -53,7 +47,7 @@ namespace dtn
 		void SQLiteBundleSet::add(const dtn::data::MetaBundle &bundle) throw()
 		{
 			// insert bundle id into database
-			_database.add_seen_bundle(_name_id,bundle);
+			_database.add_seen_bundle(_name_id, bundle);
 
 			//update expiretime, if necessary
 			new_expire_time(bundle.expiretime);
@@ -110,13 +104,12 @@ namespace dtn
 			return dtn::data::Number(_bf.size()).getLength() + _bf.size();
 		}
 
-
 		const ibrcommon::BloomFilter& SQLiteBundleSet::getBloomFilter() const throw()
 		{
 			return _bf;
 		}
 
-		std::set<dtn::data::MetaBundle> SQLiteBundleSet::getNotIn(ibrcommon::BloomFilter &filter) const throw()
+		std::set<dtn::data::MetaBundle> SQLiteBundleSet::getNotIn(const ibrcommon::BloomFilter &filter) const throw()
 		{
 			std::set<dtn::data::MetaBundle> ret;
 
@@ -134,8 +127,6 @@ namespace dtn
 
 			return ret;
 		}
-
-
 
 		std::ostream& SQLiteBundleSet::serialize(std::ostream &stream) const
 		{
@@ -166,21 +157,20 @@ namespace dtn
 			return stream;
 		}
 
-		std::string SQLiteBundleSet::getType()
+		const std::string& SQLiteBundleSet::getType() const
 		{
 			return "SQLiteBundleSet";
 		}
 
-		bool SQLiteBundleSet::isPersistent()
+		bool SQLiteBundleSet::isPersistent() const
 		{
 			return _isPersistent;
 		}
 
-		std::string SQLiteBundleSet::getName()
+		const std::string& SQLiteBundleSet::getName() const
 		{
 			return _name;
 		}
-
 
 		void SQLiteBundleSet::new_expire_time(const dtn::data::Timestamp &ttl) throw ()
 		{
@@ -201,6 +191,5 @@ namespace dtn
 			}
 			_consistent = true;
 		}
-
 	} /* namespace data */
 } /* namespace dtn */

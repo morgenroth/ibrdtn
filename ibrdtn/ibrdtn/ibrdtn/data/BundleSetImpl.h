@@ -57,15 +57,16 @@ namespace dtn
 
 			virtual const ibrcommon::BloomFilter& getBloomFilter() const throw() = 0;
 
-			virtual std::set<dtn::data::MetaBundle> getNotIn(ibrcommon::BloomFilter &filter) const throw () = 0;
+			virtual std::set<dtn::data::MetaBundle> getNotIn(const ibrcommon::BloomFilter &filter) const throw () = 0;
 
 			virtual std::ostream& serialize(std::ostream &stream) const = 0;
 			virtual std::istream& deserialize(std::istream &stream) = 0;
 
-			virtual std::string getType() = 0;
-			virtual bool isPersistent() = 0;
-			virtual std::string getName() = 0;
-		public:
+			virtual const std::string& getType() const = 0;
+			virtual bool isPersistent() const = 0;
+			virtual const std::string& getName() const = 0;
+
+		protected:
 			class ExpiringBundle
 			{
 			public:
@@ -79,7 +80,6 @@ namespace dtn
 
 				const dtn::data::MetaBundle &bundle;
 			};
-
 		};
 	} /* namespace data */
 } /* namespace dtn */

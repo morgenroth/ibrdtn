@@ -30,7 +30,6 @@ namespace dtn
 {
 	namespace storage
 	{
-
 		class SQLiteBundleSetFactory : public dtn::data::BundleSetFactory{
 			public:
 				SQLiteBundleSetFactory(SQLiteDatabase& db);
@@ -43,7 +42,6 @@ namespace dtn
 			private:
 				SQLiteDatabase& _database;
 		};
-
 	} /* namespace storage */
 } /* namespace dtn */
 #endif /* SQLITEBUNDLESETFACTORY_H_ */

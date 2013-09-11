@@ -61,18 +61,16 @@ namespace dtn
 
 			const ibrcommon::BloomFilter& getBloomFilter() const throw ();
 
-			std::set<dtn::data::MetaBundle> getNotIn(ibrcommon::BloomFilter &filter) const throw ();
+			std::set<dtn::data::MetaBundle> getNotIn(const ibrcommon::BloomFilter &filter) const throw ();
 
 			virtual std::ostream &serialize(std::ostream &stream) const;
             virtual std::istream &deserialize(std::istream &stream);
 
-			virtual std::string getType();
-			virtual bool isPersistent();
-			virtual std::string getName();
-
+			virtual const std::string& getType() const;
+			virtual bool isPersistent() const;
+			virtual const std::string& getName() const;
 
 		private:
-
 			std::set<dtn::data::MetaBundle> _bundles;
 			std::set<BundleSetImpl::ExpiringBundle> _expire;
 

@@ -29,17 +29,21 @@ namespace dtn
 	namespace data
 	{
 		BundleSet::Listener::~Listener()
-		{ }
-
-		BundleSet::BundleSet(BundleSet::Listener *listener, Size bf_size) : _set_impl(BundleSetFactory::create(listener,bf_size))
-		{
-		}
-		BundleSet::BundleSet(std::string name,BundleSet::Listener *listener, Size bf_size)
-			: _set_impl(BundleSetFactory::create(name,listener,bf_size))
 		{
 		}
 
-		BundleSet::BundleSet(BundleSetImpl* ptr) : _set_impl(ptr)
+		BundleSet::BundleSet(BundleSet::Listener *listener, Size bf_size)
+		 : _set_impl(BundleSetFactory::create(listener, bf_size))
+		{
+		}
+
+		BundleSet::BundleSet(const std::string &name, BundleSet::Listener *listener, Size bf_size)
+		 : _set_impl(BundleSetFactory::create(name, listener, bf_size))
+		{
+		}
+
+		BundleSet::BundleSet(BundleSetImpl* ptr)
+		 : _set_impl(ptr)
 		{
 		}
 
@@ -77,7 +81,7 @@ namespace dtn
 			return _set_impl->getBloomFilter();
 		}
 
-		std::set<dtn::data::MetaBundle> BundleSet::getNotIn(ibrcommon::BloomFilter &filter) const throw ()
+		std::set<dtn::data::MetaBundle> BundleSet::getNotIn(const ibrcommon::BloomFilter &filter) const throw ()
 		{
 			return _set_impl->getNotIn(filter);
 		}
@@ -107,20 +111,19 @@ namespace dtn
 			return obj.deserialize(stream);
 		}
 
-		std::string BundleSet::getType()
+		const std::string& BundleSet::getType() const
 		{
 			return _set_impl->getType();
 		}
 
-		bool BundleSet::isPersistent()
+		bool BundleSet::isPersistent() const
 		{
 			return _set_impl->isPersistent();
 		}
 
-		std::string BundleSet::getName()
+		const std::string& BundleSet::getName() const
 		{
 			return _set_impl->getName();
 		}
-
 	} /* namespace data */
 } /* namespace dtn */
