@@ -40,6 +40,21 @@ namespace dtn
 				dtn::data::BundleSetImpl* createBundleSet(const std::string &name, dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size);
 
 			private:
+				/**
+				 * creates an anonymous bundle-set and returns its ID
+				 */
+				int create() const throw (SQLiteDatabase::SQLiteQueryException);
+
+				/**
+				 * creates a named bundle-set or returns the ID of an existing bundle-set
+				 */
+				int create(const std::string &name) const throw (SQLiteDatabase::SQLiteQueryException);
+
+				/*
+				 * returns true, if a specific bundle-set name exists
+				 */
+				bool exists(const std::string &name) const throw (SQLiteDatabase::SQLiteQueryException);
+
 				SQLiteDatabase& _database;
 		};
 	} /* namespace storage */

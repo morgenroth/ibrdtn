@@ -39,6 +39,9 @@ namespace dtn
 	{
 		class SQLiteDatabase : public BundleSeeker
 		{
+			friend class SQLiteBundleSetFactory;
+			friend class SQLiteBundleSet;
+
 			enum SQL_TABLES
 			{
 				SQL_TABLE_BUNDLE = 0,
@@ -263,47 +266,6 @@ namespace dtn
 			 */
 			void iterateAll() throw (SQLiteQueryException);
 
-			/**
-			 * creates an anonymous bundle-set and returns its ID
-			 */
-			int createBundleSet() const throw (SQLiteQueryException);
-
-			/**
-			 * creates a named bundle-set or returns the ID of an existing bundle-set
-			 */
-			int createBundleSet(const std::string &name) const throw (SQLiteQueryException);
-
-			/**
-			 * add a named seen bundle to the database
-			 * @param name name, bundle bundle
-			 */
-			void add_seen_bundle(int name_id, const dtn::data::MetaBundle &bundle) throw (SQLiteQueryException);
-
-			/**
-			 * returns true, if database contains the bundle, false if not
-			 */
-			bool contains_seen_bundle(const dtn::data::BundleID &id) const throw (SQLiteQueryException);
-
-			/*
-			 * removes all bundles from a named bundleset
-			 */
-			void clear_seen_bundles(int name_id) throw (SQLiteQueryException);
-
-			/*
-			 * removes specific bundle from database
-			 */
-			void erase_seen_bundle(const dtn::data::BundleID &id) throw (SQLiteQueryException);
-
-			/*
-			 * returns a set of all bundles contained in the database
-			 */
-			std::set<dtn::data::MetaBundle> get_all_seen_bundles() throw (SQLiteQueryException);
-
-			/*
-			 * returns number of seen bundles
-			 */
-			dtn::data::Size count_seen_bundles(int name_id) const throw (SQLiteQueryException);
-
 			/*** BEGIN: methods for unit-testing ***/
 
 			/**
@@ -373,18 +335,6 @@ namespace dtn
 			 * @param newVersion Required version.
 			 */
 			void doUpgrade(int oldVersion, int newVersion) throw (ibrcommon::Exception);
-
-			/*
-			 * adds a used bundlename
-			 * @return name_id
-			 */
-			int add_used_bundlename(const std::string &name) const throw (SQLiteQueryException);
-
-			/*
-			 * returns true, if a specific bundlename is used
-			 */
-
-			bool is_used_bundlename(const std::string &name) const throw (SQLiteQueryException);
 
 			ibrcommon::File _file;
 

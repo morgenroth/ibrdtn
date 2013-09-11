@@ -38,12 +38,51 @@ namespace dtn
 
 		dtn::data::BundleSetImpl* SQLiteBundleSetFactory::createBundleSet(dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size)
 		{
-			return new SQLiteBundleSet(listener,bf_size,_database);
+			return new SQLiteBundleSet(create(), listener, bf_size, _database);
 		}
 
 		dtn::data::BundleSetImpl* SQLiteBundleSetFactory::createBundleSet(const std::string &name, dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size)
 		{
-			return new SQLiteBundleSet(name,listener,bf_size,_database);
+			return new SQLiteBundleSet(create(name), listener, bf_size, _database);
+		}
+
+		int SQLiteBundleSetFactory::create() const throw (SQLiteDatabase::SQLiteQueryException)
+		{
+			std::string name;
+			dtn::utils::Random rand;
+			do {
+				name = rand.gen_chars(32);
+			} while (exists(name));
+
+			// TODO: solve race condition between exists() and create
+
+			return create(name);
+		}
+
+		int SQLiteBundleSetFactory::create(const std::string &name) const throw (SQLiteDatabase::SQLiteQueryException)
+		{
+			SQLiteDatabase::Statement st1(_database._database, _database._sql_queries[SQLiteDatabase::BUNDLENAME_ADD]);
+			sqlite3_bind_text(*st1,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
+
+			st1.step();
+
+			SQLiteDatabase::Statement st2(_database._database, _database._sql_queries[SQLiteDatabase::BUNDLENAME_GET_NAME_ID]);
+			sqlite3_bind_text(*st2,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
+			st2.step();
+			return sqlite3_column_int64(*st2,0);
+		}
+
+		bool SQLiteBundleSetFactory::exists(const std::string &name) const throw (SQLiteDatabase::SQLiteQueryException)
+		{
+			int rows = 0;
+			SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::BUNDLENAME_COUNT]);
+			sqlite3_bind_text(*st,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
+
+			if (( st.step()) == SQLITE_ROW){
+				rows = sqlite3_column_int(*st, 0);
+			}
+
+			return rows > 0;
 		}
 	} /* namespace storage */
 } /* namespace dtn */

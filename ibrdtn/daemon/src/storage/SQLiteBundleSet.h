@@ -39,8 +39,7 @@ namespace dtn
 			/**
 			 * @param bf_size Initial size fo the bloom-filter.
 			 */
-			SQLiteBundleSet(dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
-			SQLiteBundleSet(const std::string &name, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
+			SQLiteBundleSet(const int id, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
 
 			virtual ~SQLiteBundleSet();
 
@@ -69,12 +68,37 @@ namespace dtn
 			virtual std::ostream &serialize(std::ostream &stream) const;
 			virtual std::istream &deserialize(std::istream &stream);
 
-			virtual const std::string& getType() const;
-			virtual bool isPersistent() const;
-			virtual const std::string& getName() const;
-
 		private:
-			const std::string _name;
+			/**
+			 * add a named seen bundle to the database
+			 * @param name name, bundle bundle
+			 */
+			void add_seen_bundle(int name_id, const dtn::data::MetaBundle &bundle) throw (SQLiteDatabase::SQLiteQueryException);
+
+			/**
+			 * returns true, if database contains the bundle, false if not
+			 */
+			bool contains_seen_bundle(const dtn::data::BundleID &id) const throw (SQLiteDatabase::SQLiteQueryException);
+
+			/*
+			 * removes all bundles from a named bundleset
+			 */
+			void clear_seen_bundles(int name_id) throw (SQLiteDatabase::SQLiteQueryException);
+
+			/*
+			 * removes specific bundle from database
+			 */
+			void erase_seen_bundle(const dtn::data::BundleID &id) throw (SQLiteDatabase::SQLiteQueryException);
+
+			/*
+			 * returns a set of all bundles contained in the database
+			 */
+			std::set<dtn::data::MetaBundle> get_all_seen_bundles() const throw (SQLiteDatabase::SQLiteQueryException);
+
+			/*
+			 * returns number of seen bundles
+			 */
+			dtn::data::Size count_seen_bundles(int name_id) const throw (SQLiteDatabase::SQLiteQueryException);
 
 			const int _name_id;
 
@@ -92,7 +116,7 @@ namespace dtn
 
 			void rebuild_bloom_filter();
 
-			bool _isPersistent;
+			bool _persistent;
 		};
 	} /* namespace data */
 } /* namespace dtn */
