@@ -39,7 +39,7 @@
 
 namespace ibrcommon
 {
-	size_t LinkManager::_link_request_interval = 5000;
+	size_t LinkManager::_link_request_interval = 1000; //initial value, needed if Configuration is not available
 	LinkManager& LinkManager::getInstance()
 	{
 #if defined HAVE_LIBNL || HAVE_LIBNL3
