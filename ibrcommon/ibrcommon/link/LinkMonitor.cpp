@@ -15,7 +15,7 @@
 #include <algorithm>
 
 namespace ibrcommon {
-	LinkMonitor::LinkMonitor(LinkManager *lm, size_t link_request_interval) : _lm(lm), _running(true), _link_request_interval(link_request_interval)
+	LinkMonitor::LinkMonitor(LinkManager *lm, size_t link_request_interval) : _lm(lm), _running(true)
 	{
 	}
 
@@ -77,7 +77,7 @@ namespace ibrcommon {
 
 			try {
 				//cond.wait(dtn::daemon::Configuration::getInstance().getNetwork().getLinkRequestInterval());
-				cond.wait(_link_request_interval);
+				cond.wait(_lm->getLinkRequestInterval());
 			} catch (const Conditional::ConditionalAbortException &e){
 				//reached, if conditional timed out
 			}

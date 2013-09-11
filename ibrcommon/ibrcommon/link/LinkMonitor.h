@@ -30,8 +30,6 @@ namespace ibrcommon {
 		bool _running;
 		LinkManager *_lm;
 
-		size_t _link_request_interval;
-
 		std::map<vinterface,std::set<vaddress> > _iface_adr_map;
 	};
 

@@ -132,6 +132,11 @@ namespace ibrcommon
 		_link_request_interval = interval;
 	}
 
+	size_t LinkManager::getLinkRequestInterval()
+	{
+		return _link_request_interval;
+	}
+
 	std::set<vinterface> LinkManager::getMonitoredInterfaces() //mit const geht mutex nich
 	{
 		ibrcommon::MutexLock l(_listener_mutex);
