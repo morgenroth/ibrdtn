@@ -448,6 +448,9 @@ namespace dtn
 			// set the local clock to the new timestamp
 			dtn::utils::Clock::setOffset(tv_offset);
 
+			// update the current local rating
+			dtn::utils::Clock::setRating(_sync_state.base_rating * (1.0 / (::pow(_sync_state.sigma, 0.001))));
+
 			// store the timestamp of the last synchronization
 			dtn::utils::Clock::gettimeofday(&_sync_state.last_sync_time);
 
