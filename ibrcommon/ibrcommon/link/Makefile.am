@@ -24,7 +24,7 @@ cc_sources += Win32LinkManager.cpp \
 	      LinkMonitor.cpp
 else
 h_sources += PosixLinkManager.h \
-	     LinkMonitor.h 
+	     LinkMonitor.h
 cc_sources += PosixLinkManager.cpp \
 	      LinkMonitor.cpp
 endif
