@@ -104,9 +104,6 @@ namespace dtn
 			// create a multicast socket and bind to given addr
 			ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(addr);
 
-			// add multicast socket to _socket
-			_socket.add(msock, iface);
-
 			// if we are in UP state
 			if (_state) {
 				try {
@@ -132,8 +129,13 @@ namespace dtn
 					}
 				} catch (const ibrcommon::socket_exception &ex) {
 					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "failed to set-up socket on " << iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					delete msock;
+					return;
 				}
 			}
+
+			// add multicast socket to _socket
+			_socket.add(msock, iface);
 		}
 
 		void IPNDAgent::leave(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ()
@@ -404,53 +406,54 @@ namespace dtn
 			for (std::set<ibrcommon::vaddress>::const_iterator it_addr = _destinations.begin(); it_addr != _destinations.end(); ++it_addr)
 			{
 				const ibrcommon::vaddress &addr = (*it_addr);
-				sa_family_t fam = addr.family();
 
-				if (bound_set.find(fam) == bound_set.end()) {
-					const ibrcommon::vaddress any_addr(_port, fam);
+				try {
+					sa_family_t fam = addr.family();
 
-					// create a multicast socket and bind to given addr
-					ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(any_addr);
+					if (bound_set.find(fam) == bound_set.end()) {
+						const ibrcommon::vaddress any_addr(_port, fam);
 
-					try {
-						// bring up
-						msock->up();
+						// create a multicast socket and bind to given addr
+						ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(any_addr);
 
-						// add mcast socket to vsocket
-						_socket.add(msock, _virtual_mcast_iface);
-					} catch (const ibrcommon::socket_exception &ex) {
-						IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "failed to set-up multicast socket on " << any_addr.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-						delete msock;
+						try {
+							// bring up
+							msock->up();
+
+							// add mcast socket to vsocket
+							_socket.add(msock, _virtual_mcast_iface);
+						} catch (const ibrcommon::socket_exception &ex) {
+							IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "failed to set-up multicast socket on " << any_addr.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+							delete msock;
+						}
+
+						bound_set.insert(fam);
 					}
-
-					bound_set.insert(fam);
+				} catch (const ibrcommon::vaddress::address_exception &ex) {
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "unsupported multicast address " << addr.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 #endif
-
-			// join multicast groups
-			try {
-				ibrcommon::MutexLock l(_interface_lock);
-
-				for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); ++it_iface)
-				{
-					const ibrcommon::vinterface &iface = (*it_iface);
-
-					// subscribe to NetLink events on our interfaces
-					ibrcommon::LinkManager::getInstance().addEventListener(iface, this);
-
-					// join to all multicast addresses on this interface
-					join(iface);
-				}
-			} catch (std::bad_cast&) {
-				throw ibrcommon::socket_exception("no multicast socket found");
-			}
 
 			// listen to P2P dial-up events
 			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::add(this);
 
 			// listen to global events (discovery start/stop)
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
+
+			// join multicast groups
+			ibrcommon::MutexLock l(_interface_lock);
+
+			for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); ++it_iface)
+			{
+				const ibrcommon::vinterface &iface = (*it_iface);
+
+				// subscribe to NetLink events on our interfaces
+				ibrcommon::LinkManager::getInstance().addEventListener(iface, this);
+
+				// join to all multicast addresses on this interface
+				join(iface);
+			}
 		}
 
 		void IPNDAgent::componentDown() throw ()
@@ -476,101 +479,103 @@ namespace dtn
 
 		void IPNDAgent::componentRun() throw ()
 		{
-			ibrcommon::TimeMeasurement tm;
-			tm.start();
+			struct timeval tv;
 
-			while (true)
-			{
-				ibrcommon::socketset fds;
+			// every second we want to transmit a discovery message, timeout of 1 seconds
+			tv.tv_sec = 1;
+			tv.tv_usec = 0;
 
-				struct timeval tv;
+			try {
+				while (true)
+				{
+					ibrcommon::socketset fds;
 
-				// every second we want to transmit a discovery message, timeout of 1 seconds
-				tv.tv_sec = 0;
-				tv.tv_usec = 100000;
+					try {
+						// select on all bound sockets
+						_socket.select(&fds, NULL, NULL, &tv);
 
-				try {
-					// select on all bound sockets
-					_socket.select(&fds, NULL, NULL, &tv);
+						// receive from all sockets
+						for (ibrcommon::socketset::const_iterator iter = fds.begin(); iter != fds.end(); ++iter)
+						{
+							ibrcommon::multicastsocket &sock = dynamic_cast<ibrcommon::multicastsocket&>(**iter);
 
-					// receive from all sockets
-					for (ibrcommon::socketset::const_iterator iter = fds.begin(); iter != fds.end(); ++iter)
-					{
-						ibrcommon::multicastsocket &sock = dynamic_cast<ibrcommon::multicastsocket&>(**iter);
+							char data[1500];
+							ibrcommon::vaddress sender;
+							DiscoveryAnnouncement announce(_version);
 
-						char data[1500];
-						ibrcommon::vaddress sender;
-						DiscoveryAnnouncement announce(_version);
+							std::list<DiscoveryService> ret_services;
+							dtn::data::EID ret_source;
 
-						std::list<DiscoveryService> ret_services;
-						dtn::data::EID ret_source;
+							ssize_t len = sock.recvfrom(data, 1500, 0, sender);
 
-						ssize_t len = sock.recvfrom(data, 1500, 0, sender);
+							if (len < 0) return;
 
-						if (len < 0) return;
+							stringstream ss;
+							ss.write(data, len);
 
-						stringstream ss;
-						ss.write(data, len);
+							try {
+								ss >> announce;
 
-						try {
-							ss >> announce;
-
-							if (announce.isShort())
-							{
-								// generate name with the sender address
-								ret_source = dtn::data::EID("udp://[" + sender.address() + "]:4556");
-							}
-							else
-							{
-								ret_source = announce.getEID();
-							}
-
-							// get the list of services
-							const std::list<DiscoveryService> &services = announce.getServices();
-
-							if (services.empty() && announce.isShort())
-							{
-								ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
-							}
-
-							// add all services to the return set
-							for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter) {
-								const DiscoveryService &service = (*iter);
-
-								// add source address if not set
-								if ( (service.getParameters().find("port=") != std::string::npos) &&
-										(service.getParameters().find("ip=") == std::string::npos) ) {
-									// create a new service object
-									dtn::net::DiscoveryService ret_service(service.getName(), "ip=" + sender.address() + ";" + service.getParameters());
-
-									// add service to the return set
-									ret_services.push_back(ret_service);
+								if (announce.isShort())
+								{
+									// generate name with the sender address
+									ret_source = dtn::data::EID("udp://[" + sender.address() + "]:4556");
 								}
 								else
 								{
-									// add service to the return set
-									ret_services.push_back(service);
+									ret_source = announce.getEID();
 								}
+
+								// get the list of services
+								const std::list<DiscoveryService> &services = announce.getServices();
+
+								if (services.empty() && announce.isShort())
+								{
+									ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
+								}
+
+								// add all services to the return set
+								for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter) {
+									const DiscoveryService &service = (*iter);
+
+									// add source address if not set
+									if ( (service.getParameters().find("port=") != std::string::npos) &&
+											(service.getParameters().find("ip=") == std::string::npos) ) {
+										// create a new service object
+										dtn::net::DiscoveryService ret_service(service.getName(), "ip=" + sender.address() + ";" + service.getParameters());
+
+										// add service to the return set
+										ret_services.push_back(ret_service);
+									}
+									else
+									{
+										// add service to the return set
+										ret_services.push_back(service);
+									}
+								}
+
+								// announce the received services
+								received(ret_source, ret_services);
+							} catch (const dtn::InvalidDataException&) {
+							} catch (const ibrcommon::IOException&) {
 							}
-
-							// announce the received services
-							received(ret_source, ret_services);
-						} catch (const dtn::InvalidDataException&) {
-						} catch (const ibrcommon::IOException&) {
 						}
+					} catch (const ibrcommon::vsocket_timeout&) {
+						// timeout reached
+						timeout();
 
-						yield();
+						// reset timeout to 1 second
+						tv.tv_sec = 1;
+						tv.tv_usec = 0;
 					}
-				} catch (const ibrcommon::vsocket_interrupt&) {
-					return;
-				} catch (const ibrcommon::vsocket_timeout&) { };
 
-				// trigger timeout, if one second is elapsed
-				tm.stop(); if (tm.getMilliseconds() > 1000.0)
-				{
-					tm.start();
-					timeout();
+					yield();
 				}
+			} catch (const ibrcommon::vsocket_interrupt&) {
+				// vsocket has been interrupted - exit now
+			} catch (const ibrcommon::socket_exception &ex) {
+				// unexpected error - exit now
+				IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "unexpected error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
