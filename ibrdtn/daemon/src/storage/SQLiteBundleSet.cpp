@@ -28,8 +28,8 @@ namespace dtn
 {
 	namespace storage
 	{
-		SQLiteBundleSet::SQLiteBundleSet(const int id, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database)
-		 : _name_id(id), _bf(bf_size * 8), _listener(listener), _consistent(true),_database(database), _persistent(true)
+		SQLiteBundleSet::SQLiteBundleSet(const int id, bool persistant, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database)
+		 : _name_id(id), _bf(bf_size * 8), _listener(listener), _consistent(true),_database(database), _persistent(persistant)
 		{
 		}
 

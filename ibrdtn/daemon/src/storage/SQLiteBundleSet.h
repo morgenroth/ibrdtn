@@ -39,7 +39,7 @@ namespace dtn
 			/**
 			 * @param bf_size Initial size fo the bloom-filter.
 			 */
-			SQLiteBundleSet(const int id, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
+			SQLiteBundleSet(const int id, bool persistant, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
 
 			virtual ~SQLiteBundleSet();
 
@@ -116,7 +116,7 @@ namespace dtn
 
 			void rebuild_bloom_filter();
 
-			bool _persistent;
+			const bool _persistent;
 		};
 	} /* namespace data */
 } /* namespace dtn */
