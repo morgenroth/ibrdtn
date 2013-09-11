@@ -581,9 +581,9 @@ namespace dtn
 						// sync to this time message
 						sync(msg, tv_offset, tv_local_timestamp, tv_peer_timestamp);
 
-						// remove the blacklist entry
+						// update the blacklist entry
 						ibrcommon::MutexLock l(_blacklist_lock);
-						_sync_blacklist.erase(b.source.getNode());
+						_sync_blacklist[b.source.getNode()] = dtn::utils::Clock::getUnixTimestamp() + 30;
 
 						break;
 					}
