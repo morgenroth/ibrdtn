@@ -39,6 +39,11 @@ namespace dtn
 			MetaBundle(const dtn::data::Bundle &b);
 			virtual ~MetaBundle();
 
+			bool operator!=(const MetaBundle& other) const;
+			bool operator==(const MetaBundle& other) const;
+			bool operator<(const MetaBundle& other) const;
+			bool operator>(const MetaBundle& other) const;
+
 			int getPriority() const;
 			bool get(dtn::data::PrimaryBlock::FLAGS flag) const;
 
