@@ -31,7 +31,6 @@
 #include "routing/RequeueBundleEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "routing/StaticRouteChangeEvent.h"
-#include "core/TimeAdjustmentEvent.h"
 
 #include <ibrcommon/data/BLOB.h>
 #include <ibrdtn/data/CustodySignalBlock.h>
@@ -85,7 +84,6 @@ namespace dtn
 		{
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::add(this);
-			dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::add(this);
 			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
 		}
@@ -94,7 +92,6 @@ namespace dtn
 		{
 			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::BundlePurgeEvent>::remove(this);
-			dtn::core::EventDispatcher<dtn::core::TimeAdjustmentEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::TransferCompletedEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
 		}
@@ -394,13 +391,6 @@ namespace dtn
 				} catch (const dtn::storage::NoBundleFoundException&) { };
 
 				return;
-			} catch (const std::bad_cast&) { }
-
-			try {
-				const dtn::core::TimeAdjustmentEvent &timeadj = dynamic_cast<const dtn::core::TimeAdjustmentEvent&>(*evt);
-
-				// set the local clock to the new timestamp
-				dtn::utils::Clock::setOffset(timeadj.offset);
 			} catch (const std::bad_cast&) { }
 		}
 

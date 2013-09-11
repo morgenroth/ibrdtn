@@ -430,11 +430,14 @@ namespace dtn
 				_base_rating = msg.peer_rating * (local_time / remote_time);
 			}
 
-			// trigger time adjustment event
-			dtn::core::TimeAdjustmentEvent::raise(tv_offset, _base_rating);
+			// set the local clock to the new timestamp
+			dtn::utils::Clock::setOffset(tv_offset);
 
 			// store the timestamp of the last synchronization
 			dtn::utils::Clock::gettimeofday(&_last_sync_time);
+
+			// trigger time adjustment event
+			dtn::core::TimeAdjustmentEvent::raise(tv_offset, _base_rating);
 		}
 
 		void DTNTPWorker::callbackBundleReceived(const Bundle &b)
