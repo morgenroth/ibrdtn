@@ -22,10 +22,22 @@ namespace ibrcommon
 {
 	Win32LinkManager::Win32LinkManager()
 	{
+		_lr = new LinkMonitor(this, _link_request_interval);
 	}
 
 	Win32LinkManager::~Win32LinkManager()
 	{
+		down();
+		delete _lr;
+	}
+	void Win32LinkManager::up() throw()
+	{
+		_lr->start();
+	}
+
+	void Win32LinkManager::down() throw()
+	{
+		_lr->stop();
 	}
 
 	void Win32LinkManager::freeAdapterInfo(IP_ADAPTER_ADDRESSES *pAddresses) const

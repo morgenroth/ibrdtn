@@ -34,6 +34,7 @@ namespace ibrcommon
 {
 	class LinkManager
 	{
+		friend class LinkMonitor;
 	public:
 		class EventCallback
 		{
@@ -58,10 +59,18 @@ namespace ibrcommon
 
 		static LinkManager& getInstance();
 		static void initialize();
+		static void setLinkRequestInterval(size_t interval);
 
 	protected:
+		/*
+		 * returns a set of interfaces, containing all interfaces with an eventListener
+		 */
+		std::set<vinterface> getMonitoredInterfaces();
+
 		ibrcommon::Mutex _listener_mutex;
 		std::map<ibrcommon::vinterface, std::set<LinkManager::EventCallback* > > _listener;
+
+		static size_t _link_request_interval;
 	};
 }
 

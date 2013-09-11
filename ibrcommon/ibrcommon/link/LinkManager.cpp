@@ -39,6 +39,7 @@
 
 namespace ibrcommon
 {
+	size_t LinkManager::_link_request_interval = 1; // NUR DAS KOMMT BEIM POSIXLINKMANAGER AN
 	LinkManager& LinkManager::getInstance()
 	{
 #if defined HAVE_LIBNL || HAVE_LIBNL3
@@ -124,5 +125,24 @@ namespace ibrcommon
 				(*iter)->eventNotify((LinkEvent&)lme);
 			} catch (const std::exception&) { };
 		}
+	}
+
+	void LinkManager::setLinkRequestInterval(size_t interval)
+	{
+		_link_request_interval = interval;
+	}
+
+	std::set<vinterface> LinkManager::getMonitoredInterfaces() //mit const geht mutex nich
+	{
+		ibrcommon::MutexLock l(_listener_mutex);
+
+		std::set<vinterface> interfaces;
+		std::map<ibrcommon::vinterface, std::set<LinkManager::EventCallback* > >::iterator it;
+		for(it = _listener.begin();it != _listener.end(); it++)
+		{
+			interfaces.insert((*it).first);
+		}
+
+		return interfaces;
 	}
 }

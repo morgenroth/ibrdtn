@@ -28,10 +28,24 @@ namespace ibrcommon
 {
 	PosixLinkManager::PosixLinkManager()
 	{
+		_lr = new LinkMonitor(this, _link_request_interval);
 	}
 
 	PosixLinkManager::~PosixLinkManager()
 	{
+		down();
+		delete _lr;
+	}
+
+	void PosixLinkManager::up() throw()
+	{
+
+		_lr->start();
+	}
+
+	void PosixLinkManager::down() throw()
+	{
+		_lr->stop();
 	}
 
 	const vinterface PosixLinkManager::getInterface(int index) const
