@@ -63,6 +63,8 @@ namespace dtn
 			 */
 			virtual ~BundleSet();
 
+			// TODO: copy constructor with real copies needed!!!
+
 			/**
 			 * Add a bundle to this bundle-set
 			 */

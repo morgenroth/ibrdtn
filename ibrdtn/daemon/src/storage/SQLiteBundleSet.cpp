@@ -119,11 +119,9 @@ namespace dtn
 			if (timestamp == 0) return;
 
 			// expire in database
-			_database.expire(timestamp);
-
-			// raise expired event
-			if (_listener != NULL)
-				_listener->eventBundleExpired(dtn::data::MetaBundle()); //TODO was sinnvolles übergeben
+			// TODO: hand-over the listener to the database to let it
+			// trigger the bundle expired event
+			_database.expire(timestamp, _listener);
 
 			if (commit)
 				rebuild_bloom_filter();
@@ -227,6 +225,11 @@ namespace dtn
 			{
 				_next_expiration = ttl;
 			}
+
+			// update global expire time
+			_database.new_expire_time(ttl);
+			// TODO: this should no longer necessary if the expiration
+			// is no longer done by the database
 		}
 
 		void SQLiteBundleSet::rebuild_bloom_filter()
@@ -239,7 +242,7 @@ namespace dtn
 
 				std::set<dtn::data::MetaBundle> ret;
 
-				while(st.step() == SQLITE_ROW)
+				while (st.step() == SQLITE_ROW)
 				{
 					const char* source_id_ptr = reinterpret_cast<const char*> (sqlite3_column_text(*st,0));
 					std::string source_id(source_id_ptr);
