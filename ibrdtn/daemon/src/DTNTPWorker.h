@@ -65,12 +65,6 @@ namespace dtn
 			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
 				throw(NoServiceHereException);
 
-//			/**
-//			 * Determine the current local clock rating
-//			 * @return The rating as double value.
-//			 */
-//			double getClockRating() const;
-
 			/**
 			 * TimeSyncMessage
 			 * This class represent a sync message which is used to exchange data about
