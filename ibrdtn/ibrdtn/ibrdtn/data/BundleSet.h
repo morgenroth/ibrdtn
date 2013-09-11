@@ -109,10 +109,6 @@ namespace dtn
 			friend std::ostream &operator<<(std::ostream &stream, const BundleSet &obj);
 			friend std::istream &operator>>(std::istream &stream, BundleSet &obj);
 
-			const std::string& getType() const;
-			bool isPersistent() const;
-			const std::string& getName() const;
-
 		private:
 			refcnt_ptr<BundleSetImpl> _set_impl;
 		};

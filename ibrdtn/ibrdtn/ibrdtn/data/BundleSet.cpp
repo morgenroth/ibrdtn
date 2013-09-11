@@ -110,20 +110,5 @@ namespace dtn
 		{
 			return obj.deserialize(stream);
 		}
-
-		const std::string& BundleSet::getType() const
-		{
-			return _set_impl->getType();
-		}
-
-		bool BundleSet::isPersistent() const
-		{
-			return _set_impl->isPersistent();
-		}
-
-		const std::string& BundleSet::getName() const
-		{
-			return _set_impl->getName();
-		}
 	} /* namespace data */
 } /* namespace dtn */

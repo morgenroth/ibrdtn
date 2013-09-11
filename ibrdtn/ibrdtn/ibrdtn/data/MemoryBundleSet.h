@@ -66,10 +66,6 @@ namespace dtn
 			virtual std::ostream &serialize(std::ostream &stream) const;
             virtual std::istream &deserialize(std::istream &stream);
 
-			virtual const std::string& getType() const;
-			virtual bool isPersistent() const;
-			virtual const std::string& getName() const;
-
 		private:
 			std::set<dtn::data::MetaBundle> _bundles;
 			std::set<BundleSetImpl::ExpiringBundle> _expire;

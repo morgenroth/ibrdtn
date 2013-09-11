@@ -174,22 +174,5 @@ namespace dtn
 
 			return stream;
 		}
-
-		const std::string& MemoryBundleSet::getType() const
-		{
-			const static std::string type("MemoryBundleSet");
-			return type;
-		}
-
-		bool MemoryBundleSet::isPersistent() const
-		{
-			return false;
-		}
-
-		const std::string& MemoryBundleSet::getName() const
-		{
-			const static std::string name("");
-			return name;
-		}
 	} /* namespace data */
 } /* namespace dtn */
