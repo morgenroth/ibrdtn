@@ -26,6 +26,7 @@
 #include "core/EventReceiver.h"
 #include "net/DiscoveryServiceProvider.h"
 #include "Configuration.h"
+#include <time.h>
 
 namespace dtn
 {
@@ -113,7 +114,15 @@ namespace dtn
 				double sigma;
 
 				// timestamp of the last synchronization with another (better) clock
-				timeval last_sync_time;
+				struct timespec last_sync_time;
+
+				// defines if the last_sync_time is set
+				bool last_sync_set;
+
+				/**
+				 * Get the time of the last sync as double
+				 */
+				static double toDouble(const timespec &val);
 			};
 
 			/**
@@ -122,6 +131,36 @@ namespace dtn
 			static const TimeSyncState& getState();
 
 		private:
+			class SyncPeer {
+			public:
+				SyncPeer();
+				virtual ~SyncPeer();
+
+				enum State {
+					STATE_IDLE = 0,
+					STATE_PREPARE = 1,
+					STATE_REQUEST = 2,
+					STATE_SYNC = 3
+				};
+
+				/**
+				 * Touch the entry to prevent expiration
+				 */
+				void touch();
+
+				/**
+				 * Returns true if the peer entry is expired
+				 */
+				bool isExpired() const;
+
+				State state;
+				struct timespec request_monotonic_time;
+				timeval request_timestamp;
+
+			private:
+				dtn::data::Timestamp _touched;
+			};
+
 			static const unsigned int PROTO_VERSION;
 			static const std::string TAG;
 
@@ -174,9 +213,9 @@ namespace dtn
 			ibrcommon::Mutex _sync_lock;
 
 			// manage a list of recently sync'd nodes
-			ibrcommon::Mutex _blacklist_lock;
-			typedef std::map<EID, dtn::data::Timestamp> blacklist_map;
-			blacklist_map _sync_blacklist;
+			ibrcommon::Mutex _peer_lock;
+			typedef std::map<EID, SyncPeer> peer_map;
+			peer_map _peers;
 		};
 	}
 }

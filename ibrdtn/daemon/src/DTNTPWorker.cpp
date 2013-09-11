@@ -50,14 +50,19 @@ namespace dtn
 		DTNTPWorker::TimeSyncState DTNTPWorker::_sync_state;
 
 		DTNTPWorker::TimeSyncState::TimeSyncState()
-		 : sync_threshold(0.15f), base_rating(0.0), psi(0.99), sigma(1.0)
+		 : sync_threshold(0.15f), base_rating(0.0), psi(0.99), sigma(1.0), last_sync_set(false)
 		{
 			// initialize the last sync time to zero
-			timerclear(&last_sync_time);
+			last_sync_time.tv_sec = 0;
+			last_sync_time.tv_nsec = 0;
 		}
 
 		DTNTPWorker::TimeSyncState::~TimeSyncState()
 		{
+		}
+
+		double DTNTPWorker::TimeSyncState::toDouble(const timespec &val) {
+			return static_cast<double>(val.tv_sec) + (static_cast<double>(val.tv_nsec) / 1000000000.0);
 		}
 
 		DTNTPWorker::DTNTPWorker()
@@ -190,14 +195,14 @@ namespace dtn
 					// get current monotonic timestamp
 					const dtn::data::Timestamp mt = dtn::utils::Clock::getMonotonicTimestamp();
 
-					ibrcommon::MutexLock l(_blacklist_lock);
-					for (blacklist_map::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end();)
+					ibrcommon::MutexLock l(_peer_lock);
+					for (peer_map::iterator iter = _peers.begin(); iter != _peers.end();)
 					{
-						const dtn::data::Timestamp &bl_age = (*iter).second;
+						const SyncPeer &peer = (*iter).second;
 
 						// do not query again if the blacklist entry is valid
-						if (bl_age < mt) {
-							_sync_blacklist.erase(iter++);
+						if (peer.isExpired()) {
+							_peers.erase(iter++);
 						} else {
 							++iter;
 						}
@@ -224,20 +229,19 @@ namespace dtn
 				else
 				{
 					// before we can age our rating we should have been synchronized at least one time
-					if (timerisset(&_sync_state.last_sync_time))
+					if (_sync_state.last_sync_set)
 					{
-						timeval tv_now;
-						dtn::utils::Clock::gettimeofday(&tv_now);
+						struct timespec ts_now, ts_diff;
+						ibrcommon::MonotonicClock::gettime(ts_now);
+						ibrcommon::MonotonicClock::diff(_sync_state.last_sync_time, ts_now, ts_diff);
 
-						double last_sync = dtn::utils::Clock::toDouble(_sync_state.last_sync_time);
-						double now = dtn::utils::Clock::toDouble(tv_now);
+						double last_sync = TimeSyncState::toDouble(ts_diff);
 
 						// the last sync must be in the past
-						if (last_sync < now)
+						if (last_sync)
 						{
 							// calculate the new clock rating
-							double timediff = now - last_sync;
-							dtn::utils::Clock::setRating(_sync_state.base_rating * (1.0 / (::pow(_sync_state.sigma, timediff))));
+							dtn::utils::Clock::setRating(_sync_state.base_rating * (1.0 / (::pow(_sync_state.sigma, last_sync))));
 						}
 					}
 				}
@@ -289,22 +293,25 @@ namespace dtn
 			// get the EID of the peer
 			const dtn::data::EID &peer = node.getEID();
 
-			// check sync blacklist
+			// check sync peers
 			{
-				ibrcommon::MutexLock l(_blacklist_lock);
-				if (_sync_blacklist.find(peer) != _sync_blacklist.end())
+				ibrcommon::MutexLock l(_peer_lock);
+				const peer_map::const_iterator it = _peers.find(peer);
+				if (it != _peers.end())
 				{
-					const dtn::data::Timestamp &bl_age = _sync_blacklist[peer];
+					const SyncPeer &peer = (*it).second;
 
-					// do not query again if the blacklist entry is valid
-					if (bl_age > dtn::utils::Clock::getMonotonicTimestamp())
+					// do not query again if the peer was already queried
+					if (peer.state != SyncPeer::STATE_IDLE)
 					{
 						return;
 					}
 				}
 
-				// create a new blacklist entry
-				_sync_blacklist[peer] = dtn::utils::Clock::getMonotonicTimestamp() + 60;
+				// create a new peer entry
+				SyncPeer &p = _peers[peer];
+				p.touch();
+				p.state = SyncPeer::STATE_PREPARE;
 			}
 
 			// send a time sync bundle
@@ -322,6 +329,14 @@ namespace dtn
 
 					// create a new timesync request
 					TimeSyncMessage msg;
+
+					ibrcommon::MutexLock l(_peer_lock);
+
+					// add sync parameters to the peer entry
+					SyncPeer &p = _peers[peer];
+					p.request_timestamp = msg.origin_timestamp;
+					ibrcommon::MonotonicClock::gettime(p.request_monotonic_time);
+					p.state = SyncPeer::STATE_REQUEST;
 
 					// write the message
 					(*stream) << msg;
@@ -421,12 +436,14 @@ namespace dtn
 			double remote_time = dtn::utils::Clock::toDouble(tv_remote);
 
 			// adjust sigma if we sync'd at least twice
-			if (timerisset(&_sync_state.last_sync_time))
+			if (_sync_state.last_sync_set)
 			{
-				double lastsync_time = dtn::utils::Clock::toDouble(_sync_state.last_sync_time);
+				struct timespec ts_now, ts_diff;
+				ibrcommon::MonotonicClock::gettime(ts_now);
+				ibrcommon::MonotonicClock::diff(_sync_state.last_sync_time, ts_now, ts_diff);
 
 				// adjust sigma
-				double t_stable = local_time - lastsync_time;
+				double t_stable = TimeSyncState::toDouble(ts_diff);
 
 				if (t_stable > 0.0) {
 					double sigma_base = (1 / ::pow(_sync_state.psi, 1/t_stable));
@@ -452,7 +469,8 @@ namespace dtn
 			dtn::utils::Clock::setRating(_sync_state.base_rating * (1.0 / (::pow(_sync_state.sigma, 0.001))));
 
 			// store the timestamp of the last synchronization
-			dtn::utils::Clock::gettimeofday(&_sync_state.last_sync_time);
+			ibrcommon::MonotonicClock::gettime(_sync_state.last_sync_time);
+			_sync_state.last_sync_set = true;
 
 			// trigger time adjustment event
 			dtn::core::TimeAdjustmentEvent::raise(tv_offset, _sync_state.base_rating);
@@ -552,11 +570,38 @@ namespace dtn
 						// parse the received time sync message
 						TimeSyncMessage msg; (*stream) >> msg;
 
+						// do peer checks
+						{
+							ibrcommon::MutexLock l(_peer_lock);
+
+							// check if the peer entry exists
+							const peer_map::const_iterator it = _peers.find(b.source.getNode());
+							if (it == _peers.end()) break;
+
+							const SyncPeer &p = (*it).second;
+
+							// check if the peer entry is in the right state
+							if (p.state != SyncPeer::STATE_REQUEST)
+								break;
+
+							// check if response matches the request
+							if ((p.request_timestamp.tv_sec != msg.origin_timestamp.tv_sec) ||
+									(p.request_timestamp.tv_usec != msg.origin_timestamp.tv_usec))
+								break;
+
+							// determine the RTT of the message exchange
+							struct timespec diff, now;
+							ibrcommon::MonotonicClock::gettime(now);
+							ibrcommon::MonotonicClock::diff(p.request_monotonic_time, now, diff);
+
+							tv_rtt.tv_sec = diff.tv_sec;
+							tv_rtt.tv_usec = diff.tv_nsec / 1000;
+						}
+
 						// store the current time in tv_local
 						dtn::utils::Clock::gettimeofday(&tv_local_timestamp);
 
-						// determine the RTT of the message exchange
-						timersub(&tv_local_timestamp, &msg.origin_timestamp, &tv_rtt);
+						// convert timeval RTT into double value
 						double rtt = dtn::utils::Clock::toDouble(tv_rtt);
 
 						// abort here if the rtt is negative or zero!
@@ -603,8 +648,10 @@ namespace dtn
 						sync(msg, tv_offset, tv_local_timestamp, tv_peer_timestamp);
 
 						// update the blacklist entry
-						ibrcommon::MutexLock l(_blacklist_lock);
-						_sync_blacklist[b.source.getNode()] = dtn::utils::Clock::getMonotonicTimestamp() + 30;
+						ibrcommon::MutexLock l(_peer_lock);
+						SyncPeer &p = _peers[b.source.getNode()];
+						p.state = SyncPeer::STATE_SYNC;
+						p.touch();
 
 						break;
 					}
@@ -615,6 +662,32 @@ namespace dtn
 		const DTNTPWorker::TimeSyncState& DTNTPWorker::getState()
 		{
 			return DTNTPWorker::_sync_state;
+		}
+
+		DTNTPWorker::SyncPeer::SyncPeer()
+		 : state(STATE_IDLE)
+		{
+			request_monotonic_time.tv_sec = 0;
+			request_monotonic_time.tv_nsec = 0;
+
+			request_timestamp.tv_sec = 0;
+			request_timestamp.tv_usec = 0;
+
+			touch();
+		}
+
+		DTNTPWorker::SyncPeer::~SyncPeer()
+		{
+		}
+
+		void DTNTPWorker::SyncPeer::touch()
+		{
+			_touched = dtn::utils::Clock::getMonotonicTimestamp();
+		}
+
+		bool DTNTPWorker::SyncPeer::isExpired() const
+		{
+			return ((_touched + 60) < dtn::utils::Clock::getMonotonicTimestamp());
 		}
 	}
 }
