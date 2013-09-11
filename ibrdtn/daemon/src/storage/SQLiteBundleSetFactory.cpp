@@ -38,12 +38,12 @@ namespace dtn
 
 		dtn::data::BundleSetImpl* SQLiteBundleSetFactory::createBundleSet(dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size)
 		{
-			return new SQLiteBundleSet(create(), listener, bf_size, _database);
+			return new SQLiteBundleSet(create(), false, listener, bf_size, _database);
 		}
 
 		dtn::data::BundleSetImpl* SQLiteBundleSetFactory::createBundleSet(const std::string &name, dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size)
 		{
-			return new SQLiteBundleSet(create(name), listener, bf_size, _database);
+			return new SQLiteBundleSet(create(name), true, listener, bf_size, _database);
 		}
 
 		int SQLiteBundleSetFactory::create() const throw (SQLiteDatabase::SQLiteQueryException)
