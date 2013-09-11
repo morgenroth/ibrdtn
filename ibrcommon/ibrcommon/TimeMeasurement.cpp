@@ -23,6 +23,7 @@
 #include "ibrcommon/TimeMeasurement.h"
 #include "ibrcommon/MonotonicClock.h"
 
+#include <stdio.h>
 #include <iostream>
 #include <iomanip>
 

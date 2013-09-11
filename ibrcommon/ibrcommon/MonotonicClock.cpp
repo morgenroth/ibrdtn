@@ -5,10 +5,8 @@
  *      Author: morgenro
  */
 
+#include "ibrcommon/config.h"
 #include "ibrcommon/MonotonicClock.h"
-
-#include <stdio.h>
-#include <time.h>
 
 #ifdef HAVE_FEATURES_H
 #include <features.h>
