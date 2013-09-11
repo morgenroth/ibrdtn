@@ -43,7 +43,7 @@ namespace ibrcommon {
 		void __cancellation() throw ();
 	private:
 		bool _running;
-		LinkManager &_lm;
+		LinkManager &_lmgr;
 
 		std::map<vinterface,std::set<vaddress> > _iface_adr_map;
 	};

@@ -30,7 +30,9 @@
 #include <algorithm>
 
 namespace ibrcommon {
-	LinkMonitor::LinkMonitor(LinkManager &lm) : _lm(lm), _running(true)
+
+	ibrcommon::Conditional cond;
+	LinkMonitor::LinkMonitor(LinkManager &lm) : _lmgr(lm), _running(true)
 	{
 	}
 
@@ -41,17 +43,15 @@ namespace ibrcommon {
 
 	void LinkMonitor::run() throw()
 	{
-		ibrcommon::Conditional cond;
 		ibrcommon::MutexLock l(cond);
-		cond.signal(true);
 		while(_running)
 		{
 
-			std::set<vinterface> ifaces = _lm.getMonitoredInterfaces();
+			std::set<vinterface> ifaces = _lmgr.getMonitoredInterfaces();
 			for(std::set<vinterface>::iterator iface_iter = ifaces.begin(); iface_iter != ifaces.end(); iface_iter++)
 			{
 				//get current addresses from LinkManager
-				std::list<vaddress> new_addresses = _lm.getAddressList(*iface_iter);
+				std::list<vaddress> new_addresses = _lmgr.getAddressList(*iface_iter);
 				//get old addresses from map
 				std::set<vaddress> old_addresses;
 				if(_iface_adr_map.size() > 0)
@@ -75,7 +75,7 @@ namespace ibrcommon {
 						action = LinkEvent::ACTION_ADDRESS_REMOVED;
 						IBRCOMMON_LOGGER_DEBUG_TAG("LinkMonitor", 5) << "address REMOVED:" << (*adr_iter).address() << " on interface " << (*iface_iter).toString() <<  IBRCOMMON_LOGGER_ENDL;
 						LinkEvent lme(action, *(iface_iter), *(adr_iter));;
-						_lm.raiseEvent(lme);
+						_lmgr.raiseEvent(lme);
 				}
 
 				addresses.clear();
@@ -91,12 +91,12 @@ namespace ibrcommon {
 						action = LinkEvent::ACTION_ADDRESS_ADDED;
 						IBRCOMMON_LOGGER_DEBUG_TAG("LinkMonitor", 5) << "address ADDED:" << (*adr_iter).address() << " on interface " << (*iface_iter).toString() <<  IBRCOMMON_LOGGER_ENDL;
 						LinkEvent lme(action, *(iface_iter), *(adr_iter));;
-						_lm.raiseEvent(lme);
+						_lmgr.raiseEvent(lme);
 				}
 			}
 
 			try {
-				cond.wait(_lm.getLinkRequestInterval());
+				cond.wait(_lmgr.getLinkRequestInterval());
 			} catch (const Conditional::ConditionalAbortException &e){
 				//reached, if conditional timed out
 			}
@@ -107,6 +107,8 @@ namespace ibrcommon {
 	{
 			IBRCOMMON_LOGGER_DEBUG_TAG("LinkRequester", 1) << "LinkRequester CANCELLED" << IBRCOMMON_LOGGER_ENDL;
 			_running = false;
+			ibrcommon::MutexLock l(cond);
+			cond.signal(true);
 	}
 }
 
