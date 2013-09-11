@@ -28,9 +28,11 @@ namespace ibrcommon {
 		MonotonicClock();
 		virtual ~MonotonicClock();
 
+		void get(struct timeval &tv) const;
 		void get(struct timespec &ts) const;
 		time_t getSeconds() const;
 
+		static void gettime(struct timeval &tv);
 		static void gettime(struct timespec &ts);
 
 		static void diff(const struct timespec &start, const struct timespec &end, struct timespec &diff);

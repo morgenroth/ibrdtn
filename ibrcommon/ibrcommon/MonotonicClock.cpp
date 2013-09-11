@@ -31,6 +31,15 @@ namespace ibrcommon {
 	{
 	}
 
+	void MonotonicClock::get(struct timeval &tv) const
+	{
+		struct timespec ts;
+		get(ts);
+
+		tv.tv_sec = ts.tv_sec;
+		tv.tv_usec = ts.tv_nsec / 1000;
+	}
+
 	void MonotonicClock::get(struct timespec &ts) const
 	{
 		struct timespec now;
@@ -66,6 +75,15 @@ namespace ibrcommon {
 		return (t);
 	}
 #endif
+
+	void MonotonicClock::gettime(struct timeval &tv)
+	{
+		struct timespec ts;
+		gettime(ts);
+
+		tv.tv_sec = ts.tv_sec;
+		tv.tv_usec = ts.tv_nsec / 1000;
+	}
 
 	void MonotonicClock::gettime(struct timespec &ts)
 	{
