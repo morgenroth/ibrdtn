@@ -8,7 +8,7 @@
 #ifndef MONOTONICCLOCK_H_
 #define MONOTONICCLOCK_H_
 
-#include <time.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <stdint.h>
 
@@ -39,7 +39,7 @@ namespace ibrcommon {
 
 	private:
 #ifdef __WIN32__
-		static LARGE_INTEGER getFILETIMEoffset() const;
+		static LARGE_INTEGER getFILETIMEoffset();
 #endif
 
 		struct timespec _start;
