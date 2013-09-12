@@ -486,8 +486,6 @@ void BundleStorageTest::testRestore(dtn::storage::BundleStorage &storage)
 		// shutdown the storage
 		c.terminate();
 
-		// check if the storage is empty now
-		CPPUNIT_ASSERT_EQUAL(true, storage.empty());
 		// reboot the storage system
 		c.initialize();
 		c.startup();
