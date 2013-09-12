@@ -28,6 +28,64 @@ namespace dtn
 {
 	namespace storage
 	{
+		SQLiteBundleSet::Factory::Factory(SQLiteDatabase& db)
+		 : _database(db)
+		{
+		}
+
+		SQLiteBundleSet::Factory::~Factory()
+		{
+		}
+
+		dtn::data::BundleSetImpl* SQLiteBundleSet::Factory::create(dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size)
+		{
+			return new SQLiteBundleSet(create(), false, listener, bf_size, _database);
+		}
+
+		dtn::data::BundleSetImpl* SQLiteBundleSet::Factory::create(const std::string &name, dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size)
+		{
+			return new SQLiteBundleSet(create(name), true, listener, bf_size, _database);
+		}
+
+		int SQLiteBundleSet::Factory::create() const throw (SQLiteDatabase::SQLiteQueryException)
+		{
+			std::string name;
+			dtn::utils::Random rand;
+			do {
+				name = rand.gen_chars(32);
+			} while (exists(name));
+
+			// TODO: solve race condition between exists() and create
+
+			return create(name);
+		}
+
+		int SQLiteBundleSet::Factory::create(const std::string &name) const throw (SQLiteDatabase::SQLiteQueryException)
+		{
+			SQLiteDatabase::Statement st1(_database._database, _database._sql_queries[SQLiteDatabase::BUNDLENAME_ADD]);
+			sqlite3_bind_text(*st1,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
+
+			st1.step();
+
+			SQLiteDatabase::Statement st2(_database._database, _database._sql_queries[SQLiteDatabase::BUNDLENAME_GET_NAME_ID]);
+			sqlite3_bind_text(*st2,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
+			st2.step();
+			return sqlite3_column_int64(*st2,0);
+		}
+
+		bool SQLiteBundleSet::Factory::exists(const std::string &name) const throw (SQLiteDatabase::SQLiteQueryException)
+		{
+			int rows = 0;
+			SQLiteDatabase::Statement st(_database._database, _database._sql_queries[SQLiteDatabase::BUNDLENAME_COUNT]);
+			sqlite3_bind_text(*st,1,name.c_str(),name.length(),SQLITE_TRANSIENT);
+
+			if (( st.step()) == SQLITE_ROW){
+				rows = sqlite3_column_int(*st, 0);
+			}
+
+			return rows > 0;
+		}
+
 		SQLiteBundleSet::SQLiteBundleSet(const int id, bool persistant, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database)
 		 : _name_id(id), _bf(bf_size * 8), _listener(listener), _consistent(true),_database(database), _persistent(persistant)
 		{
@@ -36,6 +94,23 @@ namespace dtn
 		SQLiteBundleSet::~SQLiteBundleSet()
 		{
 			clear();
+		}
+
+		/**
+		 * copies the current bundle-set into a new temporary one
+		 */
+		refcnt_ptr<dtn::data::BundleSetImpl> SQLiteBundleSet::copy() const
+		{
+			return refcnt_ptr<dtn::data::BundleSetImpl>(NULL);
+		}
+
+		/**
+		 * clears the bundle-set and copy all entries from the given
+		 * one into this bundle-set
+		 */
+		void SQLiteBundleSet::assign(const refcnt_ptr<BundleSetImpl>&)
+		{
+
 		}
 
 		void SQLiteBundleSet::add(const dtn::data::MetaBundle &bundle) throw ()

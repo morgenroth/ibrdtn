@@ -27,7 +27,6 @@
 #include "storage/BundleStorage.h"
 #include "storage/SQLiteDatabase.h"
 #include "storage/SQLiteBundleSet.h"
-#include "storage/SQLiteBundleSetFactory.h"
 
 #include "Component.h"
 #include "core/EventReceiver.h"
@@ -302,10 +301,6 @@ namespace dtn
 			ibrcommon::Queue<Task*> _tasks;
 
 			ibrcommon::RWMutex _global_lock;
-
-			SQLiteBundleSetFactory _setFactory;
-
-//			ibrcommon::AccessLockContext _al_context;
 		};
 	}
 }

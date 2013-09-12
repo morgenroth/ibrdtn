@@ -36,12 +36,50 @@ namespace dtn
 		class SQLiteBundleSet : public dtn::data::BundleSetImpl
 		{
 		public:
+			class Factory : public dtn::data::BundleSet::Factory {
+				public:
+					Factory(SQLiteDatabase& db);
+					~Factory();
+
+					dtn::data::BundleSetImpl* create(dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size);
+					dtn::data::BundleSetImpl* create(const std::string &name, dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size);
+
+				private:
+					/**
+					 * creates an anonymous bundle-set and returns its ID
+					 */
+					int create() const throw (SQLiteDatabase::SQLiteQueryException);
+
+					/**
+					 * creates a named bundle-set or returns the ID of an existing bundle-set
+					 */
+					int create(const std::string &name) const throw (SQLiteDatabase::SQLiteQueryException);
+
+					/*
+					 * returns true, if a specific bundle-set name exists
+					 */
+					bool exists(const std::string &name) const throw (SQLiteDatabase::SQLiteQueryException);
+
+					SQLiteDatabase& _database;
+			};
+
 			/**
 			 * @param bf_size Initial size fo the bloom-filter.
 			 */
 			SQLiteBundleSet(const int id, bool persistant, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
 
 			virtual ~SQLiteBundleSet();
+
+			/**
+			 * copies the current bundle-set into a new temporary one
+			 */
+			virtual refcnt_ptr<BundleSetImpl> copy() const;
+
+			/**
+			 * clears the bundle-set and copy all entries from the given
+			 * one into this bundle-set
+			 */
+			virtual void assign(const refcnt_ptr<BundleSetImpl>&);
 
 			virtual void add(const dtn::data::MetaBundle &bundle) throw ();
 
