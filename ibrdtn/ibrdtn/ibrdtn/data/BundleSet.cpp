@@ -30,6 +30,12 @@ namespace dtn
 	{
 		BundleSet::Factory* BundleSet::__factory__ = NULL;
 
+		void BundleSet::setFactory(dtn::data::BundleSet::Factory *f)
+		{
+			if (__factory__ != NULL) delete __factory__;
+			__factory__ = f;
+		}
+
 		BundleSet::Listener::~Listener()
 		{
 		}

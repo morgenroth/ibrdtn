@@ -122,6 +122,11 @@ namespace dtn
 			friend std::ostream &operator<<(std::ostream &stream, const BundleSet &obj);
 			friend std::istream &operator>>(std::istream &stream, BundleSet &obj);
 
+			/**
+			 * assigns the current factory for bundle-sets
+			 */
+			static void setFactory(dtn::data::BundleSet::Factory*);
+
 		private:
 			static BundleSetImpl* __create(Listener* listener, Size bf_size);
 			static BundleSetImpl* __create(const std::string &name, Listener* listener, Size bf_size);
