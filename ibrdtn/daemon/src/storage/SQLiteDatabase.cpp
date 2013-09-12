@@ -91,7 +91,7 @@ namespace dtn
 			"SELECT " + _select_names[2] + " FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ? AND expiretime <= ?;",
 			"DELETE FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ? AND expiretime <= ?;",
 			"SELECT " + _select_names[2] + " FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ?;",
-			"SELECT COUNT(ROWID) FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ?);",
+			"SELECT COUNT(*) FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ?;",
 			"SELECT expiretime FROM "+ _tables[SQL_TABLE_BUNDLE_SET] +" WHERE set_id = ? ORDER BY expiretime ASC LIMIT 1;",
 			"INSERT INTO " + _tables[SQL_TABLE_BUNDLE_SET] + " SELECT " + _select_names[2] + ", ? FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ?;",
 
