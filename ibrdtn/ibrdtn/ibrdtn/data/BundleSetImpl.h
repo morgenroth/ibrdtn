@@ -39,6 +39,17 @@ namespace dtn
 			 */
 			virtual ~BundleSetImpl() = 0;
 
+			/**
+			 * copies the current bundle-set into a new temporary one
+			 */
+			virtual refcnt_ptr<BundleSetImpl> copy() const = 0;
+
+			/**
+			 * clears the bundle-set and copy all entries from the given
+			 * one into this bundle-set
+			 */
+			virtual void assign(const refcnt_ptr<BundleSetImpl>&) = 0;
+
 			virtual void add(const dtn::data::MetaBundle &bundle) throw () = 0;
 			virtual void clear() throw () = 0;
 			virtual bool has(const dtn::data::BundleID &bundle) const throw () = 0;

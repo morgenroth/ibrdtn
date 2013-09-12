@@ -41,6 +41,14 @@ namespace dtn
 				virtual void eventBundleExpired(const dtn::data::MetaBundle&) = 0;
 			};
 
+			class Factory {
+			public:
+				virtual ~Factory() = 0;
+
+				virtual BundleSetImpl* create(Listener* listener, Size bf_size) = 0;
+				virtual BundleSetImpl* create(const std::string &name, Listener* listener, Size bf_size) = 0;
+			};
+
 			/**
 			 * Creates a new bundle-set with the default bundle-set factory
 			 * @param bf_size Initial size fo the bloom-filter.
@@ -54,16 +62,19 @@ namespace dtn
 			BundleSet(const std::string &name, BundleSet::Listener *listener = NULL, Length bf_size = 1024);
 
 			/**
-			 * Creates a bundle-set instance with a given implementation
-			 */
-			BundleSet(BundleSetImpl* ptr);
-
-			/**
 			 * Destructor
 			 */
 			virtual ~BundleSet();
 
-			// TODO: copy constructor with real copies needed!!!
+			/**
+			 * Copy constructor
+			 */
+			BundleSet(const BundleSet&);
+
+			/**
+			 * Generates a copy of the given bundle-setCopies a bundle-set
+			 */
+			BundleSet& operator=(const BundleSet&);
 
 			/**
 			 * Add a bundle to this bundle-set
@@ -112,7 +123,15 @@ namespace dtn
 			friend std::istream &operator>>(std::istream &stream, BundleSet &obj);
 
 		private:
+			static BundleSetImpl* __create(Listener* listener, Size bf_size);
+			static BundleSetImpl* __create(const std::string &name, Listener* listener, Size bf_size);
+
 			refcnt_ptr<BundleSetImpl> _set_impl;
+
+			/**
+			 * standard bundle-set factory
+			 */
+			static dtn::data::BundleSet::Factory *__factory__;
 		};
 	} /* namespace data */
 } /* namespace dtn */

@@ -27,20 +27,59 @@ namespace dtn
 {
 	namespace data
 	{
+		ibrcommon::File MemoryBundleSet::__store_path__;
+		bool MemoryBundleSet::__store_path_set__ = false;
 
 		MemoryBundleSet::MemoryBundleSet(BundleSet::Listener *listener, Length bf_size)
-		 : _bf(bf_size * 8), _listener(listener), _consistent(true)
+		 : _name(), _bf_size(bf_size), _bf(bf_size * 8), _listener(listener), _consistent(true)
 		{
+		}
+
+		MemoryBundleSet::MemoryBundleSet(const std::string &name, BundleSet::Listener *listener, Length bf_size)
+		 : _name(name), _bf_size(bf_size), _bf(bf_size * 8), _listener(listener), _consistent(true)
+		{
+			restore();
 		}
 
 		MemoryBundleSet::~MemoryBundleSet()
 		{
+			store();
+		}
+
+		refcnt_ptr<BundleSetImpl> MemoryBundleSet::copy() const
+		{
+			MemoryBundleSet *set = new MemoryBundleSet(_listener, _bf_size);
+
+			for (bundle_set::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			{
+				set->add(*iter);
+			}
+
+			return refcnt_ptr<BundleSetImpl>(set);
+		}
+
+		void MemoryBundleSet::assign(const refcnt_ptr<BundleSetImpl> &other)
+		{
+			// clear all bundles first
+			clear();
+
+			// cast the given set to a MemoryBundleSet
+			const MemoryBundleSet *set = dynamic_cast<const MemoryBundleSet*>(other.getPointer());
+
+			// incompatible bundle-set implementation - abort here
+			if (set == NULL) return;
+
+			// add all bundles
+			for (bundle_set::const_iterator iter = set->_bundles.begin(); iter != set->_bundles.end(); iter++)
+			{
+				add(*iter);
+			}
 		}
 
 		void MemoryBundleSet::add(const dtn::data::MetaBundle &bundle) throw ()
 		{
 			// insert bundle id to the private list
-			pair<std::set<dtn::data::MetaBundle>::iterator,bool> ret = _bundles.insert(bundle);
+			pair<bundle_set::iterator,bool> ret = _bundles.insert(bundle);
 
 			BundleSetImpl::ExpiringBundle exb(*ret.first);
 			_expire.insert(exb);
@@ -65,7 +104,7 @@ namespace dtn
 				// the bundles set. This happen if the MemoryBundleSet gets deserialized.
 				if (!_consistent) return true;
 
-				std::set<dtn::data::MetaBundle>::iterator iter = _bundles.find(dtn::data::MetaBundle::mockUp(bundle));
+				bundle_set::iterator iter = _bundles.find(dtn::data::MetaBundle::mockUp(bundle));
 				return (iter != _bundles.end());
 			}
 
@@ -84,7 +123,7 @@ namespace dtn
 			// we can not expire bundles if we have no idea of time
 			if (timestamp == 0) return;
 
-			std::set<BundleSetImpl::ExpiringBundle>::iterator iter = _expire.begin();
+			expire_set::iterator iter = _expire.begin();
 
 			while (iter != _expire.end())
 			{
@@ -110,7 +149,7 @@ namespace dtn
 			{
 				// rebuild the bloom-filter
 				_bf.clear();
-				for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
+				for (bundle_set::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 				{
 					_bf.insert( (*iter).toString() );
 				}
@@ -122,15 +161,15 @@ namespace dtn
 			return _bf;
 		}
 
-		std::set<dtn::data::MetaBundle> MemoryBundleSet::getNotIn(const ibrcommon::BloomFilter &filter) const throw ()
+		MemoryBundleSet::bundle_set MemoryBundleSet::getNotIn(const ibrcommon::BloomFilter &filter) const throw ()
 		{
-			std::set<dtn::data::MetaBundle> ret;
+			bundle_set ret;
 
 //			// if the lists are equal return an empty list
 //			if (filter == _bf) return ret;
 
 			// iterate through all items to find the differences
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
+			for (bundle_set::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
 				if (!filter.contains( (*iter).toString() ) )
 				{
@@ -174,5 +213,38 @@ namespace dtn
 
 			return stream;
 		}
+
+		void MemoryBundleSet::setPath(const ibrcommon::File &path)
+		{
+			// copy the file object
+			ibrcommon::File p = path;
+
+			// create path
+			ibrcommon::File::createDirectory(p);
+
+			if (p.exists() && p.isDirectory()) {
+				__store_path__ = p;
+				__store_path_set__ = true;
+			}
+		}
+
+        void MemoryBundleSet::store()
+        {
+        	// abort if the store path is not set
+        	if (!MemoryBundleSet::__store_path_set__) return;
+
+        	// abort it the name is not set
+        	if (_name.length() == 0) return;
+
+        	// TODO: ...
+        }
+
+        void MemoryBundleSet::restore()
+        {
+        	// abort if the store path is not set
+        	if (!MemoryBundleSet::__store_path_set__) return;
+
+        	// TODO: ...
+        }
 	} /* namespace data */
 } /* namespace dtn */

@@ -22,33 +22,63 @@
  */
 
 #include "ibrdtn/data/BundleSet.h"
-#include "ibrdtn/data/BundleSetFactory.h"
+#include "ibrdtn/data/MemoryBundleSet.h"
 
 namespace dtn
 {
 	namespace data
 	{
+		BundleSet::Factory* BundleSet::__factory__ = NULL;
+
 		BundleSet::Listener::~Listener()
 		{
 		}
 
+		BundleSet::Factory::~Factory()
+		{
+		}
+
+		BundleSetImpl* BundleSet::__create(Listener* listener, Size bf_size)
+		{
+			if (BundleSet::__factory__ != NULL)
+				return BundleSet::__factory__->create(listener,bf_size);
+
+			// by default, return a memory bundle-set
+			return new MemoryBundleSet(listener, bf_size);
+		}
+
+		BundleSetImpl* BundleSet::__create(const std::string &name, Listener* listener, Size bf_size)
+		{
+			if (BundleSet::__factory__ != NULL)
+				return BundleSet::__factory__->create(name, listener, bf_size);
+
+			// by default, return a memory bundle-set
+			return new MemoryBundleSet(name, listener, bf_size);
+		}
+
 		BundleSet::BundleSet(BundleSet::Listener *listener, Size bf_size)
-		 : _set_impl(BundleSetFactory::create(listener, bf_size))
+		 : _set_impl(BundleSet::__create(listener, bf_size))
 		{
 		}
 
 		BundleSet::BundleSet(const std::string &name, BundleSet::Listener *listener, Size bf_size)
-		 : _set_impl(BundleSetFactory::create(name, listener, bf_size))
+		 : _set_impl(BundleSet::__create(name, listener, bf_size))
 		{
 		}
 
-		BundleSet::BundleSet(BundleSetImpl* ptr)
-		 : _set_impl(ptr)
+		BundleSet::BundleSet(const BundleSet &other)
+		 : _set_impl(other._set_impl->copy())
 		{
 		}
 
 		BundleSet::~BundleSet()
 		{
+		}
+
+		BundleSet& BundleSet::operator=(const BundleSet &other)
+		{
+			_set_impl->assign(other._set_impl);
+			return (*this);
 		}
 
 		void BundleSet::add(const dtn::data::MetaBundle &bundle) throw ()
