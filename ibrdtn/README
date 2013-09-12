@@ -1,11 +1,11 @@
 ### required and optional packages ###
 
-To build the all IBR-DTN packages from SVN, you need to install some packages.
+To build the all IBR-DTN packages from GIT, you need to install some packages.
 With this command you could install all required and optional packages. 
 
 sudo apt-get install build-essential libssl-dev libz-dev libsqlite3-dev \
   libcurl4-gnutls-dev libdaemon-dev automake autoconf pkg-config libtool libcppunit-dev \
-  libnl-3-dev libnl-cli-3-dev libnl-genl-3-dev libnl-nf-3-dev libnl-route-3-dev
+  libnl-3-dev libnl-cli-3-dev libnl-genl-3-dev libnl-nf-3-dev libnl-route-3-dev libarchive-dev
 
 
 ### Compilation with debugging symbols ###

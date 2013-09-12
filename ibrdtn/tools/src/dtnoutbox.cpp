@@ -36,6 +36,11 @@
 #include <csignal>
 #include <sys/types.h>
 #include <unistd.h>
+#ifdef HAVE_LIBARCHIVE
+#include <archive.h>
+#include <archive_entry.h>
+#include <fcntl.h>
+#endif
 
 using namespace ibrcommon;
 
@@ -49,6 +54,7 @@ void print_help()
         cout << "* optional parameters *" << endl;
         cout << " -h|--help        display this text" << endl;
         cout << " -w|--workdir     temporary work directory" << endl;
+        cout << " -k|--keep        keep files in outbox" << endl;
 }
 
 map<string,string> readconfiguration(int argc, char** argv)
@@ -57,12 +63,11 @@ map<string,string> readconfiguration(int argc, char** argv)
     if (argc < 4) { print_help(); exit(0); }
 
     map<string,string> ret;
+    ret["name"] = argv[1];
+    ret["outbox"] = argv[2];
+    ret["destination"] = argv[3];
 
-    ret["name"] = argv[argc - 3];
-    ret["outbox"] = argv[argc - 2];
-    ret["destination"] = argv[argc - 1];
-
-    for (int i = 0; i < (argc - 3); ++i)
+    for (int i = 4; i < argc; ++i)
     {
         string arg = argv[i];
 
@@ -73,10 +78,16 @@ map<string,string> readconfiguration(int argc, char** argv)
             exit(0);
         }
 
-        if ((arg == "-w" || arg == "--workdir") && (argc > i))
+        if (arg == "-w" || arg == "--workdir")
         {
             ret["workdir"] = argv[i + 1];
         }
+
+        if (arg == "-k" || arg == "--keep")
+        {
+            ret["keep"] = "1";
+        }
+
     }
 
     return ret;
@@ -97,11 +108,65 @@ void term(int signal)
     }
 }
 
+void
+write_archive(std::string out_path, const char **filename, size_t num_files)
+{
+  struct archive *a;
+  struct archive_entry *entry;
+  struct stat st;
+  char buff[8192];
+  int len;
+  int fd;
+
+  struct timespec ts;
+ clock_gettime(CLOCK_REALTIME, &ts);
+
+  a = archive_write_new();
+  archive_write_set_format_ustar(a);
+  archive_write_open_filename(a, out_path.c_str());
+  while (num_files != 0) {
+
+    stat(*filename, &st);
+    entry = archive_entry_new();
+    archive_entry_set_size(entry, st.st_size);
+    archive_entry_set_filetype(entry, AE_IFREG);
+    archive_entry_set_perm(entry, 0644);
+
+    //set filename in archive to relative paths
+    std::string path(*filename);
+    unsigned slash_pos = path.find_last_of('/',path.length());
+    std::string rel_name = path.substr(slash_pos+1,path.length() - slash_pos);
+    archive_entry_set_pathname(entry, rel_name.c_str());
+
+    //set timestamps
+    archive_entry_set_atime(entry, ts.tv_sec, ts.tv_nsec); //accesstime
+    archive_entry_set_birthtime(entry, ts.tv_sec, ts.tv_nsec); //creationtime
+    archive_entry_set_ctime(entry, ts.tv_sec, ts.tv_nsec); //time, inode changed
+    archive_entry_set_mtime(entry, ts.tv_sec, ts.tv_nsec); //modification time
+
+    archive_write_header(a, entry);
+    fd = open(*filename, O_RDONLY);
+    len = read(fd, buff, sizeof(buff));
+    while ( len > 0 ) {
+        archive_write_data(a, buff, len);
+        len = read(fd, buff, sizeof(buff));
+    }
+    close(fd);
+    archive_entry_free(entry);
+    filename++;
+    num_files--;
+  }
+  archive_write_close(a);
+  archive_write_free(a);
+}
+
+
 /*
  * main application method
  */
 int main(int argc, char** argv)
 {
+	bool keep_files = false;
     // catch process signals
     signal(SIGINT, term);
     signal(SIGTERM, term);
@@ -119,6 +184,12 @@ int main(int argc, char** argv)
     		ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), true);
     	}
     }
+
+    //check keep parameter
+    if (conf.find("keep") != conf.end())
+	{
+		keep_files = true;
+	}
 
     // backoff for reconnect
     unsigned int backoff = 2;
@@ -157,19 +228,26 @@ int main(int argc, char** argv)
             	if (files.size() <= 2)
             	{
                     // wait some seconds
-            		ibrcommon::Thread::sleep(10000);
+            		ibrcommon::Thread::sleep(10000); //TODO konfigurierbar machen?
 
                     continue;
             	}
 
             	stringstream file_list;
-
+            	size_t num_files = files.size()-2; //-2 because of . and ..
+            	size_t prefix_length = 11;
+            	const char **file_list_ptr = new const char*[num_files];
+            	size_t counter = 0;
             	for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
             	{
 					File &f = (*iter);
 
 					// skip system files ("." and "..")
 					if (f.isSystem()) continue;
+
+					file_list_ptr[counter] = new char[100];
+					file_list_ptr[counter] = f.getPath().c_str();
+					counter++;
 
 					// add the file to the filelist
 					file_list << f.getBasename() << " ";
@@ -178,19 +256,39 @@ int main(int argc, char** argv)
             	// output of all files to send
             	cout << "files: " << file_list.str() << endl;
 
+#ifdef HAVE_LIBARCHIVE
+            	write_archive("/tmp/test.tar",file_list_ptr,num_files);
+
+            	//delete files, if wanted
+            	if(!keep_files)
+            	{
+            		list<File>::iterator file_iter = files.begin();
+            		while(file_iter != files.end())
+            		{
+            			(*file_iter++).remove(false);
+            		}
+            	}
+            	ifstream stream;
+            	stream.open("/tmp/test.tar", std::ifstream::in);
+#else
             	// "--remove-files" deletes files after adding
-            	stringstream cmd; cmd << "tar --remove-files -cO -C " << outbox.getPath() << " " << file_list.str();
+            	//depending on configuration, this option is passed to tar or not
+            	std::string remove_string = " --remove-files";
+            	if(keep_files)
+            		remove_string = "";
+            	stringstream cmd;
+            	cmd << "tar" << remove_string << " -cO -C " << outbox.getPath() << " " << file_list.str();
 
             	// make a tar archive
             	appstreambuf app(cmd.str(), appstreambuf::MODE_READ);
             	istream stream(&app);
 
+#endif
     			// create a blob
             	ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 
     			// stream the content of "tar" to the payload block
     			(*blob.iostream()) << stream.rdbuf();
-
             	// create a new bundle
     			dtn::data::EID destination = EID(conf["destination"]);
 

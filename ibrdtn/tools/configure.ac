@@ -78,6 +78,13 @@ PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
 	AC_MSG_WARN([daemon library not found, daemonize features disabled])
 ])
 
+PKG_CHECK_MODULES(ARCHIVE, libarchive, [
+	AC_SUBST(ARCHIVE_CFLAGS)
+	AC_SUBST(ARCHIVE_LIBS)
+	AC_DEFINE(HAVE_LIBARCHIVE, [1], ["libarchive is available"])
+], [
+	AC_MSG_WARN([libarchive not found, fallback to unix-tar])
+])
 AM_CONDITIONAL([TUNNEL], [test x$has_tun = xyes])
 
 dnl -----------------------------------------------
