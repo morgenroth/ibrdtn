@@ -334,7 +334,7 @@ namespace dtn
 				SQLiteDatabase::Statement st(_sqldb._database, SQLiteDatabase::_sql_queries[SQLiteDatabase::BUNDLE_SET_COUNT]);
 				sqlite3_bind_int64(*st, 1, _set_id);
 
-				if (( st.step()) == SQLITE_ROW)
+				if (st.step() == SQLITE_ROW)
 				{
 					rows = sqlite3_column_int(*st, 0);
 				}
