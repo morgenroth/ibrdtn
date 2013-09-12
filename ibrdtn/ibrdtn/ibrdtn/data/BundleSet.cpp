@@ -46,8 +46,10 @@ namespace dtn
 
 		BundleSetImpl* BundleSet::__create(Listener* listener, Size bf_size)
 		{
-			if (BundleSet::__factory__ != NULL)
-				return BundleSet::__factory__->create(listener,bf_size);
+			if (BundleSet::__factory__ != NULL) {
+				BundleSetImpl *set = BundleSet::__factory__->create(listener,bf_size);
+				if (set != NULL) return set;
+			}
 
 			// by default, return a memory bundle-set
 			return new MemoryBundleSet(listener, bf_size);
@@ -55,8 +57,10 @@ namespace dtn
 
 		BundleSetImpl* BundleSet::__create(const std::string &name, Listener* listener, Size bf_size)
 		{
-			if (BundleSet::__factory__ != NULL)
-				return BundleSet::__factory__->create(name, listener, bf_size);
+			if (BundleSet::__factory__ != NULL) {
+				BundleSetImpl *set = BundleSet::__factory__->create(name, listener, bf_size);
+				if (set != NULL) return set;
+			}
 
 			// by default, return a memory bundle-set
 			return new MemoryBundleSet(name, listener, bf_size);
