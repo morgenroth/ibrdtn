@@ -39,7 +39,6 @@ namespace dtn
 	{
 		class SQLiteDatabase : public BundleSeeker
 		{
-			friend class SQLiteBundleSetFactory;
 			friend class SQLiteBundleSet;
 
 			enum SQL_TABLES
@@ -50,8 +49,8 @@ namespace dtn
 				SQL_TABLE_BUNDLE_ROUTING_INFO = 3,
 				SQL_TABLE_NODE_ROUTING_INFO = 4,
 				SQL_TABLE_PROPERTIES = 5,
-				SQL_TABLE_SEEN_BUNDLES = 6,
-				SQL_TABLE_BUNDLENAME = 7,
+				SQL_TABLE_BUNDLE_SET = 6,
+				SQL_TABLE_BUNDLE_SET_NAME = 7,
 				SQL_TABLE_END = 8
 			};
 
@@ -83,17 +82,19 @@ namespace dtn
 				BLOCK_CLEAR,
 				BLOCK_STORE,
 
-				SEEN_BUNDLE_ADD,
-				SEEN_BUNDLE_CLEAR,
-				SEEN_BUNDLE_GET,
-				SEEN_BUNDLE_EXPIRE,
-				SEEN_BUNDLE_GETALL,
-				SEEN_BUNDLE_COUNT,
-				SEEN_BUNDLE_EXPIRE_NEXT_TIMESTAMP,
+				BUNDLE_SET_ADD,
+				BUNDLE_SET_CLEAR,
+				BUNDLE_SET_GET,
+				BUNDLE_SET_GET_EXPIRED,
+				BUNDLE_SET_EXPIRE,
+				BUNDLE_SET_GET_ALL,
+				BUNDLE_SET_COUNT,
+				BUNDLE_SET_EXPIRE_NEXT_TIMESTAMP,
+				BUNDLE_SET_COPY,
 
-				BUNDLENAME_ADD,
-				BUNDLENAME_COUNT,
-				BUNDLENAME_GET_NAME_ID,
+				BUNDLE_SET_NAME_ADD,
+				BUNDLE_SET_NAME_GET_ID,
+				BUNDLE_SET_NAME_REMOVE,
 
 				VACUUM,
 				SQL_QUERIES_END
@@ -104,7 +105,7 @@ namespace dtn
 			static const std::string QUERY_SCHEMAVERSION;
 			static const std::string SET_SCHEMAVERSION;
 
-			static const std::string _select_names[2];
+			static const std::string _select_names[3];
 
 			static const std::string _tables[SQL_TABLE_END];
 
@@ -112,7 +113,7 @@ namespace dtn
 			static const std::string _sql_queries[SQL_QUERIES_END];
 
 			// array of the db structure as sql
-			static const int DB_STRUCTURE_END = 14;
+			static const int DB_STRUCTURE_END = 15;
 			static const std::string _db_structure[DB_STRUCTURE_END];
 
 			static const std::string TAG;

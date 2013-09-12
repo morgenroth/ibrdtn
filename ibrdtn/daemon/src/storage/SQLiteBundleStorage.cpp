@@ -125,12 +125,39 @@ namespace dtn
 			// set the block path
 			_blockPath = path.get("blocks");
 			_blobPath = path.get("blob");
+
+			try {
+				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+
+				// delete all old BLOB container
+				_blobPath.remove(true);
+
+				// create BLOB folder
+				ibrcommon::File::createDirectory( _blobPath );
+
+				// create the bundle folder
+				ibrcommon::File::createDirectory( _blockPath );
+
+				// open the database and create all folders and files if needed
+				_database.open();
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		SQLiteBundleStorage::~SQLiteBundleStorage()
 		{
 			// stop factory from creating SQLiteBundleSets
 			dtn::data::BundleSet::setFactory(NULL);
+
+			try {
+				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
+
+				// close the database
+				_database.close();
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void SQLiteBundleStorage::componentRun() throw ()
@@ -172,24 +199,6 @@ namespace dtn
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
 
 			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
-
-				// delete all old BLOB container
-				_blobPath.remove(true);
-
-				// create BLOB folder
-				ibrcommon::File::createDirectory( _blobPath );
-
-				// create the bundle folder
-				ibrcommon::File::createDirectory( _blockPath );
-
-				// open the database and create all folders and files if needed
-				_database.open();
-			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			}
-
-			try {
 				// iterate through all bundles to generate indexes
 				_database.iterateAll();
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
@@ -204,15 +213,6 @@ namespace dtn
 			//unregister Events
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
-
-			try {
-				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READWRITE);
-
-				// close the database
-				_database.close();
-			} catch (const ibrcommon::Exception &ex) {
-				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			}
 
 			stop();
 			join();
