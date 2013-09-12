@@ -88,6 +88,51 @@ namespace dtn
 			return true;
 		}
 
+		bool BundleID::operator<(const PrimaryBlock& other) const
+		{
+			if (source < other.source) return true;
+			if (source != other.source) return false;
+
+			if (timestamp < other.timestamp) return true;
+			if (timestamp != other.timestamp) return false;
+
+			if (sequencenumber < other.sequencenumber) return true;
+			if (sequencenumber != other.sequencenumber) return false;
+
+			if (other.get(PrimaryBlock::FRAGMENT))
+			{
+				if (!fragment) return true;
+				return (offset < other.fragmentoffset);
+			}
+
+			return false;
+		}
+
+		bool BundleID::operator>(const PrimaryBlock& other) const
+		{
+			return !(((*this) < other) || ((*this) == other));
+		}
+
+		bool BundleID::operator!=(const PrimaryBlock& other) const
+		{
+			return !((*this) == other);
+		}
+
+		bool BundleID::operator==(const PrimaryBlock& other) const
+		{
+			if (other.timestamp != timestamp) return false;
+			if (other.sequencenumber != sequencenumber) return false;
+			if (other.source != source) return false;
+			if (other.get(PrimaryBlock::FRAGMENT) != fragment) return false;
+
+			if (fragment)
+			{
+				if (other.fragmentoffset != offset) return false;
+			}
+
+			return true;
+		}
+
 		std::string BundleID::toString() const
 		{
 			stringstream ss;
