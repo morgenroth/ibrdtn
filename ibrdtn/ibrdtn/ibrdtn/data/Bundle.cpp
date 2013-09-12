@@ -67,32 +67,32 @@ namespace dtn
 
 		bool Bundle::operator==(const BundleID& other) const
 		{
-			return other == (*this);
+			return other == (const PrimaryBlock&)(*this);
 		}
 
 		bool Bundle::operator==(const MetaBundle& other) const
 		{
-			return other == (*this);
+			return other == (const PrimaryBlock&)(*this);
 		}
 
 		bool Bundle::operator!=(const Bundle& other) const
 		{
-			return PrimaryBlock(*this) != other;
+			return (const PrimaryBlock&)(*this) != (const PrimaryBlock&)other;
 		}
 
 		bool Bundle::operator==(const Bundle& other) const
 		{
-			return PrimaryBlock(*this) == other;
+			return (const PrimaryBlock&)(*this) == (const PrimaryBlock&)other;
 		}
 
 		bool Bundle::operator<(const Bundle& other) const
 		{
-			return PrimaryBlock(*this) < other;
+			return (const PrimaryBlock&)(*this) < (const PrimaryBlock&)other;
 		}
 
 		bool Bundle::operator>(const Bundle& other) const
 		{
-			return PrimaryBlock(*this) > other;
+			return (const PrimaryBlock&)(*this) > (const PrimaryBlock&)other;
 		}
 
 		void Bundle::remove(const dtn::data::Block &block)
