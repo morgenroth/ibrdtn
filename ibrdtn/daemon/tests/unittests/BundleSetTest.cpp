@@ -55,7 +55,7 @@ void BundleSetTest::setUp()
 			if (path.exists()) path.remove(true);
 			ibrcommon::File::createDirectory(path);
 
-			_storage = new dtn::storage::SQLiteBundleStorage(path, 0);
+			_storage = new dtn::storage::SQLiteBundleStorage(path, 0, true);
 
 			break;
 
@@ -136,16 +136,17 @@ void BundleSetTest::containTest(){
 	CPPUNIT_ASSERT(l.has(b1) == true);
 	CPPUNIT_ASSERT(l.has(b2) == true);
 }
+
 void BundleSetTest::orderTest(){
 
 	dtn::data::BundleSet l;
 
-	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0,l.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, l.size());
 
 	genbundles(l, 500, 0, 500);
 	genbundles(l, 500, 600, 1000);
 
-	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000,l.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, l.size());
 
 
 	for (int i = 0; i < 550; ++i)
@@ -154,21 +155,25 @@ void BundleSetTest::orderTest(){
 	}
 
 
-	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500,l.size());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, l.size());
 
 	for (int i = 0; i < 1050; ++i)
 	{
 		l.expire(i);
 	}
 
-	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0,l.size());
-
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, l.size());
 }
 
-void BundleSetTest::namingTest(){
+void BundleSetTest::namingTest()
+{
+	// do not test naming without sqlite bundle storage
+	// named bundle-set without sqlite is currently not supported
+	if (dynamic_cast<dtn::storage::SQLiteBundleStorage*>(_storage) == NULL)
+		return;
 
-	std::string name1 = "test1BundleSet1";
-	std::string name2 = "test2BundleSet2";
+	const std::string name1 = "test1BundleSet1";
+	const std::string name2 = "test2BundleSet2";
 
 	dtn::data::BundleSet a; //automatically named BundleSet
 	dtn::data::BundleSet b(name1);
@@ -176,43 +181,22 @@ void BundleSetTest::namingTest(){
 	dtn::data::BundleSet d(name2);
 	dtn::data::BundleSet e(name2);
 
-	if(		a.getType() == "MemoryBundleSet" ||
-			b.getType() == "MemoryBundleSet" ||
-			c.getType() == "MemoryBundleSet" ||
-			d.getType() == "MemoryBundleSet" ||
-			e.getType() == "MemoryBundleSet" ){
-		return; //MemoryBundleSet does not support naming
-	}
-
-
-	//check persistency
-	CPPUNIT_ASSERT(!a.isPersistent());
-	CPPUNIT_ASSERT(b.isPersistent());
-	CPPUNIT_ASSERT(!c.isPersistent());
-	CPPUNIT_ASSERT(d.isPersistent());
-	CPPUNIT_ASSERT(e.isPersistent());
-
-	//check correct names in persistent bundles
-	CPPUNIT_ASSERT_EQUAL(name1,b.getName());
-	CPPUNIT_ASSERT_EQUAL(name2,d.getName());
-
-
-	//create bundles in each set, check if size is correct
-	genbundles(a,500,1,0);
+	// create bundles in each set, check if size is correct
+	genbundles(a, 500, 1, 0);
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, a.size());
-	genbundles(b,500,1,0);
+	genbundles(b, 500, 1, 0);
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, b.size());
-	genbundles(c,500,1,0);
+	genbundles(c, 500, 1, 0);
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, c.size());
-	genbundles(d,500,1,0);
+	genbundles(d, 500, 1, 0);
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, d.size());
-	genbundles(e,500,1,0);
+	genbundles(e, 500, 1, 0);
 
-	//bundle with same should have double as many bundles
+	// bundle with same should have double as many bundles
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, d.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1000, e.size());
 
-	//clear each set individually, check if size is correct
+	// clear each set individually, check if size is correct
 	a.clear();
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, a.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)500, b.size());
@@ -241,34 +225,29 @@ void BundleSetTest::namingTest(){
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, c.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, d.size());
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, e.size());
-
-
 }
 
 void BundleSetTest::performanceTest()
 {
-	BundleSet set("a");
-	tm.start();
-	int i = 1000;
-	MetaBundle last;
-	while(i>0)
-	{
-		i--;
+	BundleSet set;
 
-		if(i%2 == 0)
-		{
+	// start measurement
+	tm.start();
+
+	for (int i = 0; i < 1000; ++i) {
+		if (i%2 == 0) {
 			genbundles(set,100,10,15);
-		} else
-		{
+		} else {
 			set.clear();
 		}
-
 	}
+
+	// stop measurement
 	tm.stop();
 
 	std::cout << std::endl << "completed after " << tm ;
-
 }
+
 void BundleSetTest::genbundles(dtn::data::BundleSet &l, int number, int offset, int max)
 {
 	int range = max - offset;
@@ -278,6 +257,7 @@ void BundleSetTest::genbundles(dtn::data::BundleSet &l, int number, int offset, 
 		l.add(genBundle(offset,range));
 	}
 }
+
 dtn::data::MetaBundle BundleSetTest::genBundle(int offset, int range)
 {
 	dtn::data::MetaBundle b;
@@ -294,6 +274,7 @@ dtn::data::MetaBundle BundleSetTest::genBundle(int offset, int range)
 	b.source = dtn::data::EID("dtn://node" + ss.str() + "/application");
 	return b;
 }
+
 BundleSetTest::ExpiredBundleCounter::ExpiredBundleCounter()
  : counter(0)
 {
@@ -308,4 +289,3 @@ void BundleSetTest::ExpiredBundleCounter::eventBundleExpired(const dtn::data::Me
 {
 	counter++;
 }
-

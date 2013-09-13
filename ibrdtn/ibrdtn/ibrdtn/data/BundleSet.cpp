@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,29 +23,73 @@
  */
 
 #include "ibrdtn/data/BundleSet.h"
-#include "ibrdtn/data/BundleSetFactory.h"
+#include "ibrdtn/data/MemoryBundleSet.h"
 
 namespace dtn
 {
 	namespace data
 	{
+		BundleSet::Factory* BundleSet::__factory__ = NULL;
+
+		void BundleSet::setFactory(dtn::data::BundleSet::Factory *f)
+		{
+			if (__factory__ != NULL) delete __factory__;
+			__factory__ = f;
+		}
+
 		BundleSet::Listener::~Listener()
-		{ }
-
-		BundleSet::BundleSet(BundleSet::Listener *listener, Size bf_size) : _set_impl(BundleSetFactory::create(listener,bf_size))
-		{
-		}
-		BundleSet::BundleSet(std::string name,BundleSet::Listener *listener, Size bf_size)
-			: _set_impl(BundleSetFactory::create(name,listener,bf_size))
 		{
 		}
 
-		BundleSet::BundleSet(BundleSetImpl* ptr) : _set_impl(ptr)
+		BundleSet::Factory::~Factory()
+		{
+		}
+
+		BundleSetImpl* BundleSet::__create(Listener* listener, Size bf_size)
+		{
+			if (BundleSet::__factory__ != NULL) {
+				BundleSetImpl *set = BundleSet::__factory__->create(listener,bf_size);
+				if (set != NULL) return set;
+			}
+
+			// by default, return a memory bundle-set
+			return new MemoryBundleSet(listener, bf_size);
+		}
+
+		BundleSetImpl* BundleSet::__create(const std::string &name, Listener* listener, Size bf_size)
+		{
+			if (BundleSet::__factory__ != NULL) {
+				BundleSetImpl *set = BundleSet::__factory__->create(name, listener, bf_size);
+				if (set != NULL) return set;
+			}
+
+			// by default, return a memory bundle-set
+			return new MemoryBundleSet(name, listener, bf_size);
+		}
+
+		BundleSet::BundleSet(BundleSet::Listener *listener, Size bf_size)
+		 : _set_impl(BundleSet::__create(listener, bf_size))
+		{
+		}
+
+		BundleSet::BundleSet(const std::string &name, BundleSet::Listener *listener, Size bf_size)
+		 : _set_impl(BundleSet::__create(name, listener, bf_size))
+		{
+		}
+
+		BundleSet::BundleSet(const BundleSet &other)
+		 : _set_impl(other._set_impl->copy())
 		{
 		}
 
 		BundleSet::~BundleSet()
 		{
+		}
+
+		BundleSet& BundleSet::operator=(const BundleSet &other)
+		{
+			_set_impl->assign(other._set_impl);
+			return (*this);
 		}
 
 		void BundleSet::add(const dtn::data::MetaBundle &bundle) throw ()
@@ -77,7 +122,7 @@ namespace dtn
 			return _set_impl->getBloomFilter();
 		}
 
-		std::set<dtn::data::MetaBundle> BundleSet::getNotIn(ibrcommon::BloomFilter &filter) const throw ()
+		std::set<dtn::data::MetaBundle> BundleSet::getNotIn(const ibrcommon::BloomFilter &filter) const throw ()
 		{
 			return _set_impl->getNotIn(filter);
 		}
@@ -106,21 +151,5 @@ namespace dtn
 		{
 			return obj.deserialize(stream);
 		}
-
-		std::string BundleSet::getType()
-		{
-			return _set_impl->getType();
-		}
-
-		bool BundleSet::isPersistent()
-		{
-			return _set_impl->isPersistent();
-		}
-
-		std::string BundleSet::getName()
-		{
-			return _set_impl->getName();
-		}
-
 	} /* namespace data */
 } /* namespace dtn */

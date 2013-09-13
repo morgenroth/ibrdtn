@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,30 +24,40 @@
 #ifndef LINKREQUESTER_H_
 #define LINKREQUESTER_H_
 
-
-#include <list>
-#include "LinkManager.h"
+#include "ibrcommon/link/LinkManager.h"
+#include "ibrcommon/thread/Conditional.h"
 #include "ibrcommon/net/vinterface.h"
 #include "ibrcommon/net/vaddress.h"
 #include "ibrcommon/thread/Thread.h"
 
-namespace ibrcommon {
+#include <set>
+#include <map>
 
-	class LinkMonitor : public ibrcommon::JoinableThread {
-
+namespace ibrcommon
+{
+	class LinkMonitor : public ibrcommon::JoinableThread
+	{
 	public:
+		static const std::string TAG;
+
 		LinkMonitor(LinkManager &lm);
 		virtual ~LinkMonitor();
+
+		void add(const ibrcommon::vinterface &iface) throw ();
+		void remove() throw ();
 
 	protected:
 		void run() throw ();
 		void __cancellation() throw ();
+
 	private:
+		ibrcommon::Conditional _cond;
 		bool _running;
 		LinkManager &_lmgr;
 
-		std::map<vinterface,std::set<vaddress> > _iface_adr_map;
+		typedef std::set<vaddress> addr_set;
+		typedef std::map< vinterface, addr_set > iface_map;
+		iface_map _addr_map;
 	};
-
 }
 #endif /* LINKREQUESTER_H_ */

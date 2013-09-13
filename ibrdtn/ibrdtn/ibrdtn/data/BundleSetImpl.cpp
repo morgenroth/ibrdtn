@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +31,16 @@ namespace dtn
 	{
 		BundleSetImpl::~BundleSetImpl()
 		{
-
 		}
-		BundleSetImpl::ExpiringBundle::ExpiringBundle(const MetaBundle &b) : bundle(b)
-		{ }
+
+		BundleSetImpl::ExpiringBundle::ExpiringBundle(const MetaBundle &b)
+		 : bundle(b)
+		{
+		}
 
 		BundleSetImpl::ExpiringBundle::~ExpiringBundle()
-		{ }
+		{
+		}
 
 		bool BundleSetImpl::ExpiringBundle::operator!=(const ExpiringBundle& other) const
 		{
@@ -62,8 +66,5 @@ namespace dtn
 		{
 			return !(((*this) < other) || ((*this) == other));
 		}
+	}
 }
-}
-
-
-

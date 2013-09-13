@@ -35,6 +35,10 @@ namespace ibrcommon
 
 		std::set<ibrcommon::vinterface> getInterfaces() const;
 
+		virtual void addEventListener(const vinterface &iface, LinkManager::EventCallback *cb) throw ();
+		virtual void removeEventListener(const vinterface&, LinkManager::EventCallback*) throw ();
+		virtual void removeEventListener(LinkManager::EventCallback*) throw ();
+
 	private:
 		void freeAdapterInfo(IP_ADAPTER_ADDRESSES *pAddresses) const;
 		IP_ADAPTER_ADDRESSES* getAdapterInfo() const;

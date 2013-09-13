@@ -632,7 +632,7 @@ namespace dtn
 
 		std::string Configuration::getUsePersistentBundleSets() const
 		{
-			return _conf.read<std::string>("use_persistent_bundlesets","no");
+			return _conf.read<std::string>("use_persistent_bundlesets", "no");
 		}
 
 		bool Configuration::enableTrafficStats() const {

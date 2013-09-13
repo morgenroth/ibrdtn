@@ -42,6 +42,11 @@ namespace dtn
 			bool operator<(const BundleID& other) const;
 			bool operator>(const BundleID& other) const;
 
+			bool operator<(const PrimaryBlock& other) const;
+			bool operator>(const PrimaryBlock& other) const;
+			bool operator!=(const PrimaryBlock& other) const;
+			bool operator==(const PrimaryBlock& other) const;
+
 			std::string toString() const;
 
 			friend std::ostream &operator<<(std::ostream &stream, const BundleID &obj);

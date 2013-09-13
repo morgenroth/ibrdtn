@@ -28,6 +28,10 @@ namespace ibrcommon
 		const vinterface getInterface(int index) const;
 		const std::list<vaddress> getAddressList(const vinterface &iface, const std::string &scope = "");
 
+		virtual void addEventListener(const vinterface &iface, LinkManager::EventCallback *cb) throw ();
+		virtual void removeEventListener(const vinterface&, LinkManager::EventCallback*) throw ();
+		virtual void removeEventListener(LinkManager::EventCallback*) throw ();
+
 	private:
 		LinkMonitor _lm;
 	};

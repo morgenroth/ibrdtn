@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,93 +23,154 @@
 
 #include "ibrcommon/link/LinkMonitor.h"
 #include "ibrcommon/link/LinkEvent.h"
-#include "ibrcommon/thread/Conditional.h"
 #include "ibrcommon/Logger.h"
-#include <stdio.h>
-
 
 #include <algorithm>
 
-namespace ibrcommon {
+namespace ibrcommon
+{
+	const std::string LinkMonitor::TAG = "LinkMonitor";
 
-	ibrcommon::Conditional cond;
-	LinkMonitor::LinkMonitor(LinkManager &lm) : _lmgr(lm), _running(true)
+	LinkMonitor::LinkMonitor(LinkManager &lm)
+	 : _lmgr(lm), _running(true)
 	{
 	}
 
 	LinkMonitor::~LinkMonitor()
 	{
+		// wait until the run-loop is finished
 		join();
 	}
 
-	void LinkMonitor::run() throw()
+	void LinkMonitor::add(const ibrcommon::vinterface &iface) throw ()
 	{
-		ibrcommon::MutexLock l(cond);
-		while(_running)
-		{
+		// check if there exists an address set for this interface
+		if (_addr_map.find(iface) != _addr_map.end()) return;
 
-			std::set<vinterface> ifaces = _lmgr.getMonitoredInterfaces();
-			for(std::set<vinterface>::iterator iface_iter = ifaces.begin(); iface_iter != ifaces.end(); iface_iter++)
-			{
-				//get current addresses from LinkManager
-				std::list<vaddress> new_addresses = _lmgr.getAddressList(*iface_iter);
-				//get old addresses from map
-				std::set<vaddress> old_addresses;
-				if(_iface_adr_map.size() > 0)
-					old_addresses = _iface_adr_map.at(*iface_iter);
+		// get all addresses on this interface
+		std::list<vaddress> addr = _lmgr.getAddressList(iface);
 
+		// add all addresses of the interface to the known addresses list
+		_addr_map[iface].insert(addr.begin(), addr.end());
+	}
 
+	void LinkMonitor::remove() throw ()
+	{
+		// get all monitored interfaces
+		const std::set<vinterface> ifaces = _lmgr.getMonitoredInterfaces();
 
-				new_addresses.sort();
-				std::list<vaddress> addresses;
+		// remove no longer monitored interfaces
+		for (iface_map::iterator it = _addr_map.begin(); it != _addr_map.end();) {
+			const ibrcommon::vinterface &iface = (*it).first;
 
-				LinkEvent::Action action = LinkEvent::ACTION_UNKOWN;
-
-				//find deleted addresses by difference between old and new addresses
-				std::set_difference(old_addresses.begin(),old_addresses.end(),new_addresses.begin(),new_addresses.end(), std::back_inserter(addresses));
-				for(std::list<vaddress>::iterator adr_iter = addresses.begin(); adr_iter != addresses.end(); adr_iter++)
-				{
-						//remove deleted address from map
-						_iface_adr_map[*(iface_iter)].erase(*adr_iter);
-
-						//raise event
-						action = LinkEvent::ACTION_ADDRESS_REMOVED;
-						IBRCOMMON_LOGGER_DEBUG_TAG("LinkMonitor", 5) << "address REMOVED:" << (*adr_iter).address() << " on interface " << (*iface_iter).toString() <<  IBRCOMMON_LOGGER_ENDL;
-						LinkEvent lme(action, *(iface_iter), *(adr_iter));;
-						_lmgr.raiseEvent(lme);
-				}
-
-				addresses.clear();
-
-				//find added addresses by difference between new and old addresses
-				std::set_difference(new_addresses.begin(),new_addresses.end(),old_addresses.begin(),old_addresses.end(), std::back_inserter(addresses));
-				for(std::list<vaddress>::iterator adr_iter = addresses.begin(); adr_iter != addresses.end(); adr_iter++)
-				{
-						//add new address to map
-						_iface_adr_map[*(iface_iter)].insert(*adr_iter);
-
-						//raise event
-						action = LinkEvent::ACTION_ADDRESS_ADDED;
-						IBRCOMMON_LOGGER_DEBUG_TAG("LinkMonitor", 5) << "address ADDED:" << (*adr_iter).address() << " on interface " << (*iface_iter).toString() <<  IBRCOMMON_LOGGER_ENDL;
-						LinkEvent lme(action, *(iface_iter), *(adr_iter));;
-						_lmgr.raiseEvent(lme);
-				}
-			}
-
-			try {
-				cond.wait(_lmgr.getLinkRequestInterval());
-			} catch (const Conditional::ConditionalAbortException &e){
-				//reached, if conditional timed out
+			if (ifaces.find(iface) == ifaces.end()) {
+				// remove the entry
+				_addr_map.erase(it++);
+			} else {
+				++it;
 			}
 		}
 	}
 
-	void LinkMonitor::__cancellation() throw()
+	void LinkMonitor::run() throw ()
 	{
-			IBRCOMMON_LOGGER_DEBUG_TAG("LinkRequester", 1) << "LinkRequester CANCELLED" << IBRCOMMON_LOGGER_ENDL;
-			_running = false;
-			ibrcommon::MutexLock l(cond);
-			cond.signal(true);
+		ibrcommon::MutexLock l(_cond);
+
+		while(_running)
+		{
+			// get all monitored interfaces
+			const std::set<vinterface> ifaces = _lmgr.getMonitoredInterfaces();
+
+			// check each interface for changed addresses
+			for(std::set<vinterface>::const_iterator iface_iter = ifaces.begin(); iface_iter != ifaces.end(); iface_iter++)
+			{
+				const ibrcommon::vinterface &iface = (*iface_iter);
+
+				// get current addresses from LinkManager
+				std::list<vaddress> addr_new = _lmgr.getAddressList(iface);
+
+				// sort all new addresses
+				addr_new.sort();
+
+				// check if there exists an address set for this interface
+				if (_addr_map.find(iface) == _addr_map.end()) {
+					// create a new address set
+					_addr_map[iface] = addr_set();
+				}
+
+				// get the address set of last known addresses
+				addr_set &addr_old = _addr_map[iface];
+
+				// create a set for address differences
+				std::list<vaddress> addr_diff;
+
+				// find deleted addresses by difference between old and new addresses
+				std::set_difference(addr_old.begin(), addr_old.end(), addr_new.begin(), addr_new.end(), std::back_inserter(addr_diff));
+
+				// announce each removed address with a LinkEvent
+				for(std::list<vaddress>::const_iterator addr_iter = addr_diff.begin(); addr_iter != addr_diff.end(); addr_iter++)
+				{
+					const ibrcommon::vaddress &addr = (*addr_iter);
+
+					// remove deleted address from map
+					addr_old.erase(addr);
+
+					// debug
+					IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 60) << "address " << addr.address() << " removed from interface " << iface.toString() <<  IBRCOMMON_LOGGER_ENDL;
+
+					// raise event
+					LinkEvent lme(LinkEvent::ACTION_ADDRESS_REMOVED, iface, addr);
+					_lmgr.raiseEvent(lme);
+				}
+
+				// clear the result set
+				addr_diff.clear();
+
+				// find added addresses by difference between new and old addresses
+				std::set_difference(addr_new.begin(), addr_new.end(), addr_old.begin(), addr_old.end(), std::back_inserter(addr_diff));
+
+				// announce each added address with a LinkEvent
+				for(std::list<vaddress>::const_iterator addr_iter = addr_diff.begin(); addr_iter != addr_diff.end(); addr_iter++)
+				{
+					const ibrcommon::vaddress &addr = (*addr_iter);
+
+					// add new address to map
+					addr_old.insert(addr);
+
+					// debug
+					IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 60) << "address " << addr.address() << " added to interface " << iface.toString() <<  IBRCOMMON_LOGGER_ENDL;
+
+					// raise event
+					LinkEvent lme(LinkEvent::ACTION_ADDRESS_ADDED, iface, addr);
+					_lmgr.raiseEvent(lme);
+				}
+			}
+
+			// take breath
+			yield();
+
+			try {
+				// wait until the next check
+				_cond.wait(_lmgr.getLinkRequestInterval());
+			} catch (const Conditional::ConditionalAbortException &e){
+				// reached, if conditional timed out
+				if (e.reason == Conditional::ConditionalAbortException::COND_TIMEOUT) continue;
+
+				// exit on abort
+				return;
+			}
+		}
+	}
+
+	void LinkMonitor::__cancellation() throw ()
+	{
+		// debug
+		IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 60) << "cancelled" << IBRCOMMON_LOGGER_ENDL;
+
+		// shutdown the run-loop
+		ibrcommon::MutexLock l(_cond);
+		_running = false;
+		_cond.signal(true);
 	}
 }
 

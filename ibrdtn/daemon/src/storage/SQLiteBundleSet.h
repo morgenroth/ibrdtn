@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +29,7 @@
 #include "storage/SQLiteDatabase.h"
 #include "ibrdtn/data/MetaBundle.h"
 #include <ibrcommon/data/BloomFilter.h>
+#include <ibrcommon/thread/Mutex.h>
 
 namespace dtn
 {
@@ -36,13 +38,53 @@ namespace dtn
 		class SQLiteBundleSet : public dtn::data::BundleSetImpl
 		{
 		public:
+			class Factory : public dtn::data::BundleSet::Factory {
+				public:
+					Factory(SQLiteDatabase& db);
+					~Factory();
+
+					dtn::data::BundleSetImpl* create(dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size);
+					dtn::data::BundleSetImpl* create(const std::string &name, dtn::data::BundleSet::Listener* listener, dtn::data::Size bf_size);
+
+					/**
+					 * creates an anonymous bundle-set and returns its ID
+					 */
+					static size_t create(SQLiteDatabase &db) throw (SQLiteDatabase::SQLiteQueryException);
+
+					/**
+					 * creates a named bundle-set or returns the ID of an existing bundle-set
+					 */
+					static size_t create(SQLiteDatabase &db, const std::string &name) throw (SQLiteDatabase::SQLiteQueryException);
+					static size_t __create(SQLiteDatabase &db, const std::string &name, bool persistent) throw (SQLiteDatabase::SQLiteQueryException);
+
+					/*
+					 * returns true, if a specific bundle-set name exists
+					 */
+					static bool __exists(SQLiteDatabase &db, const std::string &name, bool persistent) throw (SQLiteDatabase::SQLiteQueryException);
+
+				private:
+					static ibrcommon::Mutex _create_lock;
+
+					SQLiteDatabase& _sqldb;
+			};
+
 			/**
 			 * @param bf_size Initial size fo the bloom-filter.
 			 */
-			SQLiteBundleSet(dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
-			SQLiteBundleSet(std::string name, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
+			SQLiteBundleSet(const size_t id, bool persistant, dtn::data::BundleSet::Listener *listener, dtn::data::Size bf_size, dtn::storage::SQLiteDatabase& database);
 
 			virtual ~SQLiteBundleSet();
+
+			/**
+			 * copies the current bundle-set into a new temporary one
+			 */
+			virtual refcnt_ptr<BundleSetImpl> copy() const;
+
+			/**
+			 * clears the bundle-set and copy all entries from the given
+			 * one into this bundle-set
+			 */
+			virtual void assign(const refcnt_ptr<BundleSetImpl>&);
 
 			virtual void add(const dtn::data::MetaBundle &bundle) throw ();
 
@@ -64,27 +106,32 @@ namespace dtn
 
 			const ibrcommon::BloomFilter& getBloomFilter() const throw();
 
-			std::set<dtn::data::MetaBundle> getNotIn(ibrcommon::BloomFilter &filter) const throw();
+			std::set<dtn::data::MetaBundle> getNotIn(const ibrcommon::BloomFilter &filter) const throw();
 
 			virtual std::ostream &serialize(std::ostream &stream) const;
 			virtual std::istream &deserialize(std::istream &stream);
 
-			virtual std::string getType();
-			virtual bool isPersistent();
-			virtual std::string getName();
 		private:
+			void get_bundleid(SQLiteDatabase::Statement &st, dtn::data::BundleID &id, int offset = 0) const throw (SQLiteDatabase::SQLiteQueryException);
 
-			std::string _name;
+			// remove this bundle-set from the database
+			void destroy();
 
-			int _name_id;
+			const size_t _set_id;
 
+			// The initial size of the bloom-filter
+			dtn::data::Length _bf_size;
+
+			// The bloom-filter with all the bundles
 			ibrcommon::BloomFilter _bf;
 
+			// The assigned listener
 			dtn::data::BundleSet::Listener *_listener;
 
+			// Mark the bloom-filter and set of bundles as consistent
 			bool _consistent;
 
-			dtn::storage::SQLiteDatabase& _database;
+			dtn::storage::SQLiteDatabase& _sqldb;
 
 			dtn::data::Timestamp _next_expiration;
 
@@ -92,7 +139,7 @@ namespace dtn
 
 			void rebuild_bloom_filter();
 
-			bool _isPersistent;
+			const bool _persistent;
 		};
 	} /* namespace data */
 } /* namespace dtn */

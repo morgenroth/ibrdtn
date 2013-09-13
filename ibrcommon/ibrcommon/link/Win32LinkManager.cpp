@@ -185,4 +185,30 @@ namespace ibrcommon
 		return ret;
 	}
 
+	void Win32LinkManager::addEventListener(const vinterface &iface, LinkManager::EventCallback *cb) throw ()
+	{
+		// initialize LinkManager with new listened interface
+		_lm.add(iface);
+
+		// call super-method
+		LinkManager::addEventListener(iface, cb);
+	}
+
+	void Win32LinkManager::removeEventListener(const vinterface &iface, LinkManager::EventCallback *cb) throw ()
+	{
+		// call super-method
+		LinkManager::removeEventListener(iface, cb);
+
+		// remove no longer monitored interfaces
+		_lm.remove();
+	}
+
+	void Win32LinkManager::removeEventListener(LinkManager::EventCallback *cb) throw ()
+	{
+		// call super-method
+		LinkManager::removeEventListener(cb);
+
+		// remove no longer monitored interfaces
+		_lm.remove();
+	}
 } /* namespace ibrcommon */

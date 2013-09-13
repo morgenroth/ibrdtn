@@ -64,7 +64,7 @@ namespace dtn
 		 * implementation of the BaseRouter class
 		 */
 		BaseRouter::BaseRouter()
-		 : _extension_state(false), _next_expiration(0)
+		 : _known_bundles("router-known-bundles"), _purged_bundles("router-purged-bundles"), _extension_state(false), _next_expiration(0)
 		{
 			// register myself for all extensions
 			RoutingExtension::_router = this;

@@ -102,6 +102,46 @@ namespace dtn
 			return (const BundleID&)*this == (const BundleID&)other;
 		}
 
+		bool MetaBundle::operator<(const BundleID& other) const
+		{
+			return (const BundleID&)*this < other;
+		}
+
+		bool MetaBundle::operator>(const BundleID& other) const
+		{
+			return (const BundleID&)*this > other;
+		}
+
+		bool MetaBundle::operator!=(const BundleID& other) const
+		{
+			return (const BundleID&)*this != other;
+		}
+
+		bool MetaBundle::operator==(const BundleID& other) const
+		{
+			return (const BundleID&)*this == other;
+		}
+
+		bool MetaBundle::operator<(const PrimaryBlock& other) const
+		{
+			return (const BundleID&)*this < other;
+		}
+
+		bool MetaBundle::operator>(const PrimaryBlock& other) const
+		{
+			return (const BundleID&)*this > other;
+		}
+
+		bool MetaBundle::operator!=(const PrimaryBlock& other) const
+		{
+			return (const BundleID&)*this != other;
+		}
+
+		bool MetaBundle::operator==(const PrimaryBlock& other) const
+		{
+			return (const BundleID&)*this == other;
+		}
+
 		int MetaBundle::getPriority() const
 		{
 			// read priority

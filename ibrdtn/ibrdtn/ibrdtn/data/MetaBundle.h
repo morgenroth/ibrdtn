@@ -44,6 +44,16 @@ namespace dtn
 			bool operator<(const MetaBundle& other) const;
 			bool operator>(const MetaBundle& other) const;
 
+			bool operator!=(const BundleID& other) const;
+			bool operator==(const BundleID& other) const;
+			bool operator<(const BundleID& other) const;
+			bool operator>(const BundleID& other) const;
+
+			bool operator!=(const PrimaryBlock& other) const;
+			bool operator==(const PrimaryBlock& other) const;
+			bool operator<(const PrimaryBlock& other) const;
+			bool operator>(const PrimaryBlock& other) const;
+
 			int getPriority() const;
 			bool get(dtn::data::PrimaryBlock::FLAGS flag) const;
 

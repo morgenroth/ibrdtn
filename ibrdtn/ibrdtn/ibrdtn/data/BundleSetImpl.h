@@ -4,6 +4,7 @@
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
  * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ * Written-by: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +40,17 @@ namespace dtn
 			 */
 			virtual ~BundleSetImpl() = 0;
 
+			/**
+			 * copies the current bundle-set into a new temporary one
+			 */
+			virtual refcnt_ptr<BundleSetImpl> copy() const = 0;
+
+			/**
+			 * clears the bundle-set and copy all entries from the given
+			 * one into this bundle-set
+			 */
+			virtual void assign(const refcnt_ptr<BundleSetImpl>&) = 0;
+
 			virtual void add(const dtn::data::MetaBundle &bundle) throw () = 0;
 			virtual void clear() throw () = 0;
 			virtual bool has(const dtn::data::BundleID &bundle) const throw () = 0;
@@ -57,15 +69,12 @@ namespace dtn
 
 			virtual const ibrcommon::BloomFilter& getBloomFilter() const throw() = 0;
 
-			virtual std::set<dtn::data::MetaBundle> getNotIn(ibrcommon::BloomFilter &filter) const throw () = 0;
+			virtual std::set<dtn::data::MetaBundle> getNotIn(const ibrcommon::BloomFilter &filter) const throw () = 0;
 
 			virtual std::ostream& serialize(std::ostream &stream) const = 0;
 			virtual std::istream& deserialize(std::istream &stream) = 0;
 
-			virtual std::string getType() = 0;
-			virtual bool isPersistent() = 0;
-			virtual std::string getName() = 0;
-		public:
+		protected:
 			class ExpiringBundle
 			{
 			public:
@@ -79,7 +88,6 @@ namespace dtn
 
 				const dtn::data::MetaBundle &bundle;
 			};
-
 		};
 	} /* namespace data */
 } /* namespace dtn */
