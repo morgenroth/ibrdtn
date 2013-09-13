@@ -98,9 +98,9 @@ namespace dtn
 			_sync_state.sync_threshold = conf.getSyncLevel();
 
 			// synchronize with other nodes
-			_sync  = conf.doSync();
+			_sync = conf.doSync();
 
-			if (_sync) {
+			if (_sync || _announce_rating) {
 				IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, info) << "Time-Synchronization enabled: " << (conf.hasReference() ? "master mode" : "slave mode") << IBRCOMMON_LOGGER_ENDL;
 			}
 
