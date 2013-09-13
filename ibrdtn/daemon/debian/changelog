@@ -1,3 +1,15 @@
+ibrdtnd (0.10.1) stable; urgency=medium
+
+  * Fix processing of Prophet Acknowledgement Set
+  * Fix dead-lock in ConnectionManager
+  * Fix segfault in ConnectionManager
+  * Fix segfault when using extended scheduling
+  * Fix possible segfault when using DatagramConvergenceLayer
+  * Missing getDistinctDestinations() method in SchedulingBundleIndex implemented
+  * Improved behavior with bad clocks and time-synchronization
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Fri, 13 Sep 2013 10:50:40 +0200
+
 ibrdtnd (0.10.0) stable; urgency=low
 
   * Asynchronous purging of bundles
