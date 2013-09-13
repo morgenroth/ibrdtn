@@ -56,10 +56,26 @@ namespace ibrcommon
 
 		void raiseEvent(const LinkEvent &lme);
 
+		/**
+		 * Return the singleton instance of the LinkManager
+		 */
 		static LinkManager& getInstance();
+
+		/**
+		 * Initialize the LinkManager
+		 */
 		static void initialize();
+
+		/**
+		 * Set the interval for checking address changes on interfaces
+		 */
 		static void setLinkRequestInterval(size_t interval);
+
+		/**
+		 * Get the interval for checking address changes on interfaces
+		 */
 		static size_t getLinkRequestInterval();
+
 		/*
 		 * returns a set of interfaces, containing all interfaces with an eventListener
 		 */
@@ -67,7 +83,10 @@ namespace ibrcommon
 
 	protected:
 		ibrcommon::Mutex _listener_mutex;
-		std::map<ibrcommon::vinterface, std::set<LinkManager::EventCallback* > > _listener;
+
+		typedef std::set<LinkManager::EventCallback* > callback_set;
+		typedef std::map<ibrcommon::vinterface, callback_set> listener_map;
+		listener_map _listener;
 
 		static size_t _link_request_interval;
 	};
