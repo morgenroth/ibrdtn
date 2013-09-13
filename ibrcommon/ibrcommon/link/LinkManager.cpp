@@ -39,7 +39,9 @@
 
 namespace ibrcommon
 {
-	size_t LinkManager::_link_request_interval = 1000; //initial value, needed if Configuration is not available
+	// default value for LinkMonitor checks
+	size_t LinkManager::_link_request_interval = 5000;
+
 	LinkManager& LinkManager::getInstance()
 	{
 #if defined HAVE_LIBNL || HAVE_LIBNL3
@@ -56,9 +58,9 @@ namespace ibrcommon
 	void LinkManager::initialize()
 	{
 		static bool initialized = false;
-		if(!initialized){
+		if (!initialized) {
 			getInstance().up();
-			initialized=true;
+			initialized = true;
 		}
 	}
 
