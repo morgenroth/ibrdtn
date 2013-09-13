@@ -1,0 +1,38 @@
+Release Guide
+=============
+
+Enter the directories of each package and create a new
+changelog entry:
+
+dch -v "0.10.1" -D stable "Next release"
+
+Then edit the changelog to match the latest changes:
+
+git log release/<last-release>..HEAD -- <directory>
+
+
+Update the recipes
+==================
+
+recipes/openwrt/ibrcommon
+recipes/openwrt/ibrdtn-tools
+recipes/openwrt/ibrdtn
+recipes/openwrt/ibrdtnd
+
+recipes/buildroot/ibrcommon
+recipes/buildroot/ibrdtn-tools
+recipes/buildroot/ibrdtn
+recipes/buildroot/ibrdtnd
+
+
+Update the doxygen file
+=======================
+
+ibrdtn/ibrdtnsuite.doxyfile
+
+
+Update the Manifest of the Android daemon
+=========================================
+
+android/ibrdtn/AndroidManifest.xml
+
