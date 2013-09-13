@@ -61,24 +61,29 @@ namespace ibrcommon
 
 		tm.start();
 		int ret = ::select(nfds, readfds, writefds, exceptfds, &to_copy);
-		tm.stop();
 
-		size_t us = tm.getMicroseconds();
+		// on timeout set the timeout value to zero
+	    if (ret == 0)
+	    {
+	    	timeout->tv_sec = 0;
+	    	timeout->tv_usec = 0;
+	    }
+	    else
+	    {
+			tm.stop();
 
-		while ((us > 1000000) && (timeout->tv_sec > 0))
-		{
-			us -= 1000000;
-			timeout->tv_sec--;
-		}
+			struct timespec time_spend;
+			tm.getTime(time_spend);
 
-		if (us >= static_cast<size_t>(timeout->tv_usec))
-		{
-			timeout->tv_usec = 0;
-		}
-		else
-		{
-			timeout->tv_usec -= us;
-		}
+			do {
+				timeout->tv_sec = timeout->tv_sec - time_spend.tv_sec;
+				timeout->tv_usec = timeout->tv_usec - (time_spend.tv_nsec / 1000);
+				if (timeout->tv_usec < 0) {
+					--timeout->tv_sec;
+					timeout->tv_usec += 1000000L;
+				}
+			} while (0);
+	    }
 
 		return ret;
 	}
