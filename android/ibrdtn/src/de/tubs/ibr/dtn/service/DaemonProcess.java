@@ -381,7 +381,7 @@ public class DaemonProcess {
                 // check runlevel and restart some runlevels if necessary
                 final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
                 intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-                intent.putExtra("runlevel", mRestartMap.get("interface_").swigValue() - 1);
+                intent.putExtra("runlevel", mRestartMap.get(key).swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
             }
             else if (key.equals("cloud_uplink"))
