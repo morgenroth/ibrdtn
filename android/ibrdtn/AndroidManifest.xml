@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="de.tubs.ibr.dtn"
     android:versionCode="32"
-    android:versionName="0.10" >
+    android:versionName="0.10.1" >
 
     <permission
         android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
