@@ -183,8 +183,19 @@ public class DaemonProcess {
         preferences.registerOnSharedPreferenceChangeListener(_pref_listener);
 
         // enable debug based on prefs
-        int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
-        int debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
+        int logLevel = 0;
+        try {
+            logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
+        } catch (java.lang.NumberFormatException e) {
+            // invalid number
+        }
+        
+        int debugVerbosity = 0;
+        try {
+            debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
+        } catch (java.lang.NumberFormatException e) {
+            // invalid number
+        }
         
         // disable debugging if the log level is lower than 3
         if (logLevel < 3) debugVerbosity = 0;
