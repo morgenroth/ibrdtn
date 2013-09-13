@@ -65,6 +65,9 @@ public final class DTNClient {
     
     private Boolean mShutdown = false;
     
+    // marker to know if the client was initialized
+    private Boolean mInitialized = false;
+    
     public DTNClient(SessionConnection handler) {
     	mSessionHandler = handler;
     }
@@ -372,6 +375,9 @@ public final class DTNClient {
 		IntentFilter rfilter = new IntentFilter(de.tubs.ibr.dtn.Intent.REGISTRATION);
 		rfilter.addCategory(context.getApplicationContext().getPackageName());
 		context.registerReceiver(mStateReceiver, rfilter );
+		
+        // mark this client as initialized
+        mInitialized = true;
   		
 		// Establish a connection with the service.
 		context.bindService(bindIntent, mConnection, Context.BIND_AUTO_CREATE);
@@ -385,11 +391,16 @@ public final class DTNClient {
 		mShutdown = true;
 		notifyAll();
 		
-		// unregister to daemon events
-		mContext.unregisterReceiver(mStateReceiver);
-		
-        // Detach our existing connection.
-		mContext.unbindService(mConnection);
+		if (mInitialized) {
+    		// unregister to daemon events
+    		mContext.unregisterReceiver(mStateReceiver);
+    		
+            // Detach our existing connection.
+    		mContext.unbindService(mConnection);
+    		
+            // mark this client as uninitialized
+            mInitialized = false;
+		}
 	}
 	
 	public DTNService getDTNService() {
