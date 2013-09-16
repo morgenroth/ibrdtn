@@ -139,7 +139,7 @@ ssize_t my_write_callback( struct archive *, void *blob_ptr, const void *buffer,
 	char* cast_buf = (char*) buffer;
 	BLOB::Reference blob = *((BLOB::Reference*) blob_ptr);
 	BLOB::iostream s = blob.iostream();
-	(*s).write(cast_buf,length);
+	(*s).write(cast_buf, length);
 	return length;
 }
 
@@ -173,7 +173,7 @@ void write_archive( ibrcommon::BLOB::Reference *blob, const char **filename, siz
 		stat(*filename, &st);
 		entry = archive_entry_new();
 		archive_entry_set_size(entry, st.st_size);
-		archive_entry_set_filetype(entry, AE_IFREG);
+		archive_entry_set_filetype(entry, AE_IFREG );
 		archive_entry_set_perm(entry, 0644);
 
 		//set filename in archive to relative paths
@@ -205,11 +205,12 @@ void write_archive( ibrcommon::BLOB::Reference *blob, const char **filename, siz
 	archive_write_free(a);
 }
 
-class ObservedFile {
+class ObservedFile
+{
 public:
-	ObservedFile(File file);
+	ObservedFile( File file );
 	~ObservedFile();
-	bool lastSizesEqual(size_t n);
+	bool lastSizesEqual( size_t n );
 	void addSize();
 	void send();
 	size_t getLastSent();
@@ -219,22 +220,21 @@ public:
 
 };
 
-ObservedFile::ObservedFile(File file) : file(file),last_sent(0)
+ObservedFile::ObservedFile( File file )
+		: file(file), last_sent(0)
 {
 }
 ObservedFile::~ObservedFile()
 {
 	sizes.clear();
 }
-bool ObservedFile::lastSizesEqual(size_t n)
+bool ObservedFile::lastSizesEqual( size_t n )
 {
-	if(n > sizes.size())
-		return false;
+	if (n > sizes.size()) return false;
 
-	for(int i = 1; i <= n; i++)
+	for (int i = 1; i <= n; i++)
 	{
-		if(sizes.at(sizes.size() - i) != sizes.at(sizes.size() - i - 1))
-			return false;
+		if (sizes.at(sizes.size() - i) != sizes.at(sizes.size() - i - 1)) return false;
 	}
 	return true;
 }
@@ -244,7 +244,7 @@ void ObservedFile::addSize()
 }
 void ObservedFile::send()
 {
-	time_t  timev;
+	time_t timev;
 	last_sent = time(&timev);
 	sizes.clear();
 }
@@ -312,8 +312,6 @@ int main( int argc, char** argv )
 			// reset backoff if connected
 			backoff = 2;
 
-			//TODO files wieder löschen, wenn vom benutzer gelöscht
-
 			// check the connection
 			while (_running)
 			{
@@ -326,19 +324,16 @@ int main( int argc, char** argv )
 
 					//only add file if its not under observation
 					bool new_file = true;
-					for(list<ObservedFile>::iterator of_iter = observed_files.begin();
-							of_iter != observed_files.end();
-							++of_iter)
+					for (list<ObservedFile>::iterator of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
 					{
-						if((*iter).getPath() == (*of_iter).file.getPath())
+						if ((*iter).getPath() == (*of_iter).file.getPath())
 						{
 							new_file = false;
 							break;
 						}
 
 					}
-					if(new_file)
-						observed_files.push_back(ObservedFile(*iter));
+					if (new_file) observed_files.push_back(ObservedFile(*iter));
 				}
 
 				if (observed_files.size() == 0)
@@ -358,24 +353,24 @@ int main( int argc, char** argv )
 					ObservedFile &of = (*iter);
 
 					//check existance
-					if(!of.file.exists())
+					if (!of.file.exists())
 					{
 						observed_files.erase(iter);
 						//if no files to observe: stop, otherwise continue with next file
-						if(observed_files.size() == 0)
+						if (observed_files.size() == 0)
 							break;
 						else
 							continue;
 					}
 
 					// add the file to the files_to_send, if it has not been sent (with the latest timestamp)...
-					size_t latest_timestamp = max(of.file.lastmodify(),of.file.laststatchange());
+					size_t latest_timestamp = max(of.file.lastmodify(), of.file.laststatchange());
 					of.addSize();
 
-					if(of.last_sent < latest_timestamp)
+					if (of.last_sent < latest_timestamp)
 					{
 						//... and its size did not change the last x rounds
-						if(of.lastSizesEqual(_conf_rounds))
+						if (of.lastSizesEqual(_conf_rounds))
 						{
 							of.send();
 							files_to_send << of.file.getBasename() << " ";
@@ -384,8 +379,7 @@ int main( int argc, char** argv )
 					}
 				}
 
-
-				if(!counter)
+				if (!counter)
 				{
 					cout << "no files to send " << endl;
 				}
@@ -393,8 +387,8 @@ int main( int argc, char** argv )
 				{
 					cout << "files: " << files_to_send.str() << endl;
 
-				// create a blob
-				ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
+					// create a blob
+					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 #ifdef HAVE_LIBARCHIVE
 
 					write_archive(&blob, files_to_send_ptr, counter);
