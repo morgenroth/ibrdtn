@@ -56,7 +56,7 @@ void print_help()
 	cout << " -w|--workdir     temporary work directory" << endl;
 	cout << " -k|--keep        keep files in outbox" << endl;
 	cout << " -i <interval>	   interval in milliseconds, in which <outbox> is scanned for new/changed files. default: 5000" << endl;
-	cout << " -n <number>	   number of intervals, after which a unchanged file is considered as written. default: 3" << endl;
+	cout << " -r <number>	   number of rounds of intervals, after which a unchanged file is considered as written. default: 3" << endl;
 
 }
 
@@ -102,7 +102,7 @@ map<string,string> readconfiguration( int argc, char** argv )
 			ret["interval"] = argv[++i];
 		}
 
-		if (arg == "-n")
+		if (arg == "-r")
 		{
 			ret["rounds"] = argv[++i];
 		}
@@ -205,6 +205,50 @@ void write_archive( ibrcommon::BLOB::Reference *blob, const char **filename, siz
 	archive_write_free(a);
 }
 
+class ObservedFile {
+public:
+	ObservedFile(File file);
+	~ObservedFile();
+	bool lastSizesEqual(size_t n);
+	void addSize();
+	void send();
+	size_t getLastSent();
+	File file;
+	size_t last_sent;
+	vector<size_t> sizes;
+
+};
+
+ObservedFile::ObservedFile(File file) : file(file),last_sent(0)
+{
+}
+ObservedFile::~ObservedFile()
+{
+	sizes.clear();
+}
+bool ObservedFile::lastSizesEqual(size_t n)
+{
+	if(n > sizes.size())
+		return false;
+
+	for(int i = 1; i <= n; i++)
+	{
+		if(sizes.at(sizes.size() - i) != sizes.at(sizes.size() - i - 1))
+			return false;
+	}
+	return true;
+}
+void ObservedFile::addSize()
+{
+	sizes.push_back(file.size());
+}
+void ObservedFile::send()
+{
+	time_t  timev;
+	last_sent = time(&timev);
+	sizes.clear();
+}
+
 /*
  * main application method
  */
@@ -219,7 +263,9 @@ int main( int argc, char** argv )
 	map<string,string> conf = readconfiguration(argc, argv);
 	size_t _conf_interval = atoi(conf["interval"].c_str());
 	size_t _conf_rounds = atoi(conf["rounds"].c_str());
-	size_t _conf_stable_interval = _conf_interval * _conf_rounds / 1000; //in seconds!
+
+	//init list of observered files
+	list<ObservedFile> observed_files;
 
 	// init working directory
 	if (conf.find("workdir") != conf.end())
@@ -266,22 +312,36 @@ int main( int argc, char** argv )
 			// reset backoff if connected
 			backoff = 2;
 
-			//map of sent files with their timestamp
-			map<std::string,size_t> files_sent;
-			//TODO files wieder löschen, wenn vom benutzer gelöscht?
-
-			//map of files with a counter how often they were scanned
-			map<std::string,size_t> files_seen;
-
+			//TODO files wieder löschen, wenn vom benutzer gelöscht
 
 			// check the connection
 			while (_running)
 			{
 				list<File> files;
 				outbox.getFiles(files);
+				for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
+				{
+					// skip system files ("." and "..")
+					if ((*iter).isSystem()) continue;
 
-				// <= 2 because of "." and ".."
-				if (files.size() <= 2)
+					//only add file if its not under observation
+					bool new_file = true;
+					for(list<ObservedFile>::iterator of_iter = observed_files.begin();
+							of_iter != observed_files.end();
+							++of_iter)
+					{
+						if((*iter).getPath() == (*of_iter).file.getPath())
+						{
+							new_file = false;
+							break;
+						}
+
+					}
+					if(new_file)
+						observed_files.push_back(ObservedFile(*iter));
+				}
+
+				if (observed_files.size() == 0)
 				{
 					cout << "no files to send " << endl;
 					// wait some seconds
@@ -290,35 +350,36 @@ int main( int argc, char** argv )
 					continue;
 				}
 
-				stringstream file_list;
-				const char **file_list_ptr = new const char*[files.size() -2]; //-2 because of . and ..
+				stringstream files_to_send;
+				const char **files_to_send_ptr = new const char*[observed_files.size()];
 				size_t counter = 0;
-				for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
+				for (list<ObservedFile>::iterator iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
-					File &f = (*iter);
+					ObservedFile &of = (*iter);
 
-					// skip system files ("." and "..")
-					if (f.isSystem()) continue;
-
-
-					// add the file to the filelist, if it has not been sent (with the latest timestamp)
-					size_t latest_timestamp = max(f.lastmodify(),f.laststatchange());
-
-					//only consider files with a new timestamp
-					if(files_sent[f.getPath()] < latest_timestamp)
+					//check existance
+					if(!of.file.exists())
 					{
-						//TODO größe betrachten!!!
-						time_t  timev;
-						time(&timev);
-						cout << latest_timestamp << "+" << _conf_stable_interval << endl;
-						cout << latest_timestamp + _conf_stable_interval << "<=" << timev << endl;
-						if(latest_timestamp + _conf_stable_interval <= timev)
-						{
-							cout << "true" << endl;
-							files_sent[f.getPath()] = latest_timestamp;
+						observed_files.erase(iter);
+						//if no files to observe: stop, otherwise continue with next file
+						if(observed_files.size() == 0)
+							break;
+						else
+							continue;
+					}
 
-							file_list << f.getBasename() << " ";
-							file_list_ptr[counter++] = f.getPath().c_str();
+					// add the file to the files_to_send, if it has not been sent (with the latest timestamp)...
+					size_t latest_timestamp = max(of.file.lastmodify(),of.file.laststatchange());
+					of.addSize();
+
+					if(of.last_sent < latest_timestamp)
+					{
+						//... and its size did not change the last x rounds
+						if(of.lastSizesEqual(_conf_rounds))
+						{
+							of.send();
+							files_to_send << of.file.getBasename() << " ";
+							files_to_send_ptr[counter++] = of.file.getPath().c_str();
 						}
 					}
 				}
@@ -330,13 +391,13 @@ int main( int argc, char** argv )
 				}
 				else
 				{
-					cout << "files: " << file_list.str() << endl;
+					cout << "files: " << files_to_send.str() << endl;
 
 				// create a blob
 				ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 #ifdef HAVE_LIBARCHIVE
 
-					write_archive(&blob, file_list_ptr, counter);
+					write_archive(&blob, files_to_send_ptr, counter);
 
 					//delete files, if wanted
 					if (!keep_files)
