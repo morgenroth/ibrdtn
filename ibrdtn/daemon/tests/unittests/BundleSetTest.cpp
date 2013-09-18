@@ -249,6 +249,27 @@ void BundleSetTest::performanceTest()
 	std::cout << std::endl << "completed after " << tm ;
 }
 
+
+void BundleSetTest::persistanceTest()
+{
+	size_t num_bundles = 1000;
+	size_t size_before = 0;
+	size_t size_after = 0;
+
+	stringstream ss; ss << rand();
+	{
+		BundleSet set(ss.str());
+		genbundles(set,num_bundles,10,15);
+		size_before = set.size();
+	}
+	CPPUNIT_ASSERT_EQUAL(num_bundles,size_before);
+	{
+		BundleSet set(ss.str());
+		size_after = set.size();
+	}
+	CPPUNIT_ASSERT_EQUAL(num_bundles,size_after);
+}
+
 void BundleSetTest::genbundles(dtn::data::BundleSet &l, int number, int offset, int max)
 {
 	int range = max - offset;
