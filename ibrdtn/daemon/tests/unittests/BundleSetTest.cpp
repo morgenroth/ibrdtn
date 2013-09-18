@@ -37,6 +37,7 @@ std::vector<std::string> BundleSetTest::_storage_names;
 CPPUNIT_TEST_SUITE_REGISTRATION(BundleSetTest);
 void BundleSetTest::setUp()
 {
+	srand ( time(NULL) );
 	// create a new event switch
 	esl = new ibrtest::EventSwitchLoop();
 
