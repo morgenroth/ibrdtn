@@ -15,8 +15,12 @@ sbin_PROGRAMS = dtntunnel
 endif
 
 dtnping_SOURCES = dtnping.cpp
-dtninbox_SOURCES = dtninbox.cpp
-dtnoutbox_SOURCES = dtnoutbox.cpp
+dtninbox_SOURCES = dtninbox.cpp \
+		  ToolUtils.h \
+		  ToolUtils.cpp
+dtnoutbox_SOURCES = dtnoutbox.cpp \
+		  ToolUtils.h \
+		  ToolUtils.cpp
 dtnrecv_SOURCES = dtnrecv.cpp
 dtnsend_SOURCES = dtnsend.cpp
 dtntunnel_SOURCES = dtntunnel.cpp

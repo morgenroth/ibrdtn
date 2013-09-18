@@ -29,6 +29,8 @@
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
 
+#include "ToolUtils.h"
+
 #include <stdlib.h>
 #include <iostream>
 #include <map>
@@ -127,83 +129,7 @@ void term( int signal )
 	}
 }
 
-/*
- * #### CALLBACKS FOR LIBARCHIVE ####
- */
-int my_open_callback( struct archive *, void *blob_iostream )
-{
-	return ARCHIVE_OK;
-}
-ssize_t my_write_callback( struct archive *, void *blob_ptr, const void *buffer, size_t length )
-{
-	char* cast_buf = (char*) buffer;
-	BLOB::Reference blob = *((BLOB::Reference*) blob_ptr);
-	BLOB::iostream s = blob.iostream();
-	(*s).write(cast_buf, length);
-	return length;
-}
 
-int my_close_callback( struct archive *, void *blob_iostream )
-{
-	return ARCHIVE_OK;
-}
-/*
- * #### END CALLBACKS FOR LIBARCHIVE ####
- */
-void write_archive( ibrcommon::BLOB::Reference *blob, const char **filename, size_t num_files )
-{
-	struct archive *a;
-	struct archive_entry *entry;
-	struct stat st;
-	char buff[8192];
-	int len;
-	int fd;
-
-	struct timespec ts;
-	clock_gettime(CLOCK_REALTIME, &ts);
-
-	//create new archive, set format to tar, use callbacks (above this method)
-	a = archive_write_new();
-	archive_write_set_format_ustar(a);
-	archive_write_open(a, blob, &my_open_callback, &my_write_callback, my_close_callback);
-
-	while (num_files != 0)
-	{
-
-		stat(*filename, &st);
-		entry = archive_entry_new();
-		archive_entry_set_size(entry, st.st_size);
-		archive_entry_set_filetype(entry, AE_IFREG );
-		archive_entry_set_perm(entry, 0644);
-
-		//set filename in archive to relative paths
-		std::string path(*filename);
-		unsigned slash_pos = path.find_last_of('/', path.length());
-		std::string rel_name = path.substr(slash_pos + 1, path.length() - slash_pos);
-		archive_entry_set_pathname(entry, rel_name.c_str());
-
-		//set timestamps
-		archive_entry_set_atime(entry, ts.tv_sec, ts.tv_nsec); //accesstime
-		archive_entry_set_birthtime(entry, ts.tv_sec, ts.tv_nsec); //creationtime
-		archive_entry_set_ctime(entry, ts.tv_sec, ts.tv_nsec); //time, inode changed
-		archive_entry_set_mtime(entry, ts.tv_sec, ts.tv_nsec); //modification time
-
-		archive_write_header(a, entry);
-		fd = open(*filename, O_RDONLY);
-		len = read(fd, buff, sizeof(buff));
-		while (len > 0)
-		{
-			archive_write_data(a, buff, len);
-			len = read(fd, buff, sizeof(buff));
-		}
-		close(fd);
-		archive_entry_free(entry);
-		filename++;
-		num_files--;
-	}
-	archive_write_close(a);
-	archive_write_free(a);
-}
 
 class ObservedFile
 {
@@ -389,9 +315,10 @@ int main( int argc, char** argv )
 
 					// create a blob
 					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
-#ifdef HAVE_LIBARCHIVE
 
-					write_archive(&blob, files_to_send_ptr, counter);
+//use libarchive or commandline fallback
+#ifdef HAVE_LIBARCHIVE
+					ToolUtils::write_tar_archive(&blob, files_to_send_ptr, counter);
 
 					//delete files, if wanted
 					if (!keep_files)
@@ -403,12 +330,11 @@ int main( int argc, char** argv )
 						}
 					}
 #else
-//use commandline fallback
 					// "--remove-files" deletes files after adding
 					//depending on configuration, this option is passed to tar or not
 					std::string remove_string = " --remove-files";
 					if(keep_files)
-					remove_string = "";
+						remove_string = "";
 					stringstream cmd;
 					cmd << "tar" << remove_string << " -cO -C " << outbox.getPath() << " " << file_list.str();
 
