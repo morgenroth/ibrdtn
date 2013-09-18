@@ -187,11 +187,21 @@ namespace dtn
 
 		std::ostream& MemoryBundleSet::serialize(std::ostream &stream) const
 		{
-			dtn::data::Number size(_bf.size());
-			stream << size;
+			dtn::data::Number bf_size(_bf.size());
+			stream << bf_size;
 
 			const char *data = reinterpret_cast<const char*>(_bf.table());
 			stream.write(data, _bf.size());
+
+			//write number of bundles
+			dtn::data::Number bundles_size(_bundles.size());
+			stream << bundles_size;
+
+			bundle_set::iterator iter = _bundles.begin();
+			while( iter != _bundles.end())
+			{
+				stream << (*iter++);
+			}
 
 			return stream;
 		}
@@ -210,6 +220,17 @@ namespace dtn
 
 			// set the set to in-consistent mode
 			_consistent = false;
+
+			//read number of bundles
+			stream >> count;
+			int i = 0;
+			while( i < count.get<size_t>())
+			{
+				MetaBundle b;
+				stream >> b;
+				_bundles.insert(b);
+				i++;
+			}
 
 			return stream;
 		}
@@ -236,7 +257,28 @@ namespace dtn
         	// abort it the name is not set
         	if (_name.length() == 0) return;
 
-        	// TODO: ...
+        	// create directory, if it does not existt
+        	if (!__store_path__.exists())
+        		ibrcommon::File::createDirectory(__store_path__);
+
+        	//delete file for bundles, if it exists
+        	std::stringstream ss; ss << __store_path__.getPath() << "/" << _name;
+        	ibrcommon::File path_bundles(ss.str().c_str());
+        	if(path_bundles.exists())
+        		path_bundles.remove();
+
+        	//open file
+        	ofstream output_file;
+        	output_file.open(ss.str().c_str());
+
+        	serialize(output_file);
+
+        	//std::set<dtn::data::MetaBundle>::iterator bundle_iter = _bundles.begin();
+        	//while(bundle_iter != _bundles.end())
+        	//{
+        		//output_file << *(bundle_iter++);
+        	//}
+        	output_file.close();
         }
 
         void MemoryBundleSet::restore()
@@ -244,7 +286,14 @@ namespace dtn
         	// abort if the store path is not set
         	if (!MemoryBundleSet::__store_path_set__) return;
 
-        	// TODO: ...
+        	std::stringstream ss; ss << __store_path__.getPath() << "/" << _name;
+
+        	ifstream input_file;
+        	input_file.open(ss.str().c_str());
+
+        	deserialize(input_file);
+
+        	input_file.close();
         }
 	} /* namespace data */
 } /* namespace dtn */
