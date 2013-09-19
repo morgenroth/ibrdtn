@@ -110,12 +110,12 @@ namespace dtn
 			std::set<dtn::data::MetaBundle> getNotIn(const ibrcommon::BloomFilter &filter) const throw ();
 
 			/**
-			 * Serialize the bloom-filter and the bundles of this bundle-set into a stream
+			 * Serialize the bloom-filter of this bundle-set into a stream
 			 */
 			virtual std::ostream &serialize(std::ostream &stream) const;
 
 			/**
-			 * Load the bloom-filter and the bundles from a stream
+			 * Load the bloom-filter from a stream
 			 */
             virtual std::istream &deserialize(std::istream &stream);
 
