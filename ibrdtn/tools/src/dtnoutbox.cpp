@@ -340,7 +340,7 @@ int main( int argc, char** argv )
 					if(keep_files)
 						remove_string = "";
 					stringstream cmd;
-					cmd << "tar" << remove_string << " -cO -C " << outbox.getPath() << " " << file_list.str();
+					cmd << "tar" << remove_string << " -cO -C " << outbox.getPath() << " " << files_to_send.str();
 
 					// make a tar archive
 					appstreambuf app(cmd.str(), appstreambuf::MODE_READ);
