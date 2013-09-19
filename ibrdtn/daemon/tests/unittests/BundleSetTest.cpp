@@ -24,6 +24,7 @@
 #include "Component.h"
 
 #include "storage/MemoryBundleStorage.h"
+#include "ibrdtn/data/MemoryBundleSet.h"
 
 #ifdef HAVE_SQLITE
 #include "storage/SQLiteBundleStorage.h"
@@ -46,6 +47,9 @@ void BundleSetTest::setUp()
 	//MemoryBundleSet
 	case 0: {
 		_storage = new dtn::storage::MemoryBundleStorage();
+
+		ibrcommon::File path("/tmp/memory-bundleset-test");
+		MemoryBundleSet::setPath(path);
 		break;
 	}
 
@@ -91,6 +95,7 @@ void BundleSetTest::tearDown()
 	esl = NULL;
 
 	delete _storage;
+
 }
 
 /*========================== tests below ==========================*/
