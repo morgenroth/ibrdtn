@@ -29,7 +29,6 @@ namespace dtn
 {
 	namespace data
 	{
-		ibrcommon::File __path("/tmp/bundles"); //TODO where configure this?
 		BundleSet::Factory* BundleSet::__factory__ = NULL;
 
 		void BundleSet::setFactory(dtn::data::BundleSet::Factory *f)
@@ -65,9 +64,7 @@ namespace dtn
 			}
 
 			// by default, return a memory bundle-set
-			MemoryBundleSet* mbs = new MemoryBundleSet(name, listener, bf_size);
-			mbs->setPath(__path);
-			return mbs;
+			return new MemoryBundleSet(name, listener, bf_size);
 		}
 
 		BundleSet::BundleSet(BundleSet::Listener *listener, Size bf_size)
