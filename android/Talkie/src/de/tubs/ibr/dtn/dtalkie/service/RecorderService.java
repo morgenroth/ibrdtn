@@ -157,6 +157,14 @@ public class RecorderService extends Service {
 
         } catch (IOException e) {
             Log.e(TAG, "can not start recording", e);
+            
+            // make a noise
+            playSound(Sound.SQUELSH_SHORT);
+        } catch (java.lang.RuntimeException e) {
+            Log.e(TAG, "can not start recording", e);
+            
+            // make a noise
+            playSound(Sound.SQUELSH_SHORT);
         }
     }
     
@@ -168,8 +176,12 @@ public class RecorderService extends Service {
 	
 	        Log.i(TAG, "stop recording audio");
 	        
-	        // stop the recorder
-	        mRecorder.stop();
+	        try {
+	            // stop the recorder
+	            mRecorder.stop();
+	        } catch (java.lang.IllegalStateException e) {
+	            // error - not recording
+	        }
     	}
     }
     

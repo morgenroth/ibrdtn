@@ -185,8 +185,19 @@ public class DaemonProcess {
         preferences.registerOnSharedPreferenceChangeListener(_pref_listener);
 
         // enable debug based on prefs
-        int logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
-        int debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
+        int logLevel = 0;
+        try {
+            logLevel = Integer.valueOf(preferences.getString("log_options", "0"));
+        } catch (java.lang.NumberFormatException e) {
+            // invalid number
+        }
+        
+        int debugVerbosity = 0;
+        try {
+            debugVerbosity = Integer.valueOf(preferences.getString("log_debug_verbosity", "0"));
+        } catch (java.lang.NumberFormatException e) {
+            // invalid number
+        }
         
         // disable debugging if the log level is lower than 3
         if (logLevel < 3) debugVerbosity = 0;
@@ -364,7 +375,7 @@ public class DaemonProcess {
                 // check runlevel and restart some runlevels if necessary
                 final Intent intent = new Intent(DaemonProcess.this.mContext, DaemonService.class);
                 intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_RESTART);
-                intent.putExtra("runlevel", mRestartMap.get("interface_").swigValue() - 1);
+                intent.putExtra("runlevel", mRestartMap.get(key).swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
             }
             else if (key.equals("cloud_uplink"))
