@@ -48,11 +48,18 @@ namespace dtn
 
 		void BundleList::remove(const dtn::data::MetaBundle &bundle) throw ()
 		{
-			// delete bundle id in the private list
-			_bundles.erase(bundle);
+			// search for the bundle in the public list
+			const std::set<dtn::data::MetaBundle>::iterator it = _meta_bundles.find(bundle);
 
-			// delete bundle id in the public list
-			_meta_bundles.erase(bundle);
+			// only if the bundle is in the public list
+			if (it != _meta_bundles.end())
+			{
+				// remove the bundle from the set of expiring bundles
+				_bundles.erase(*it);
+
+				// remove the bundle from the public list
+				_meta_bundles.erase(it);
+			}
 		}
 
 		void BundleList::clear() throw ()
