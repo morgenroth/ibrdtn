@@ -83,6 +83,13 @@ namespace ibrcommon
 					timeout->tv_usec += 1000000L;
 				}
 			} while (0);
+
+			// adjust timeout value if that falls below zero
+			if (timeout->tv_sec < 0)
+			{
+				timeout->tv_sec = 0;
+				timeout->tv_usec = 0;
+			}
 	    }
 
 		return ret;
