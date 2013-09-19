@@ -1,8 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
 
 # what flags you want to pass to the C compiler & linker
-AM_CPPFLAGS = @ibrdtn_CFLAGS@ @DAEMON_CFLAGS@ @ARCHIVE_CFLAGS@
-AM_LDFLAGS = @ibrdtn_LIBS@ @DAEMON_LIBS@ @ARCHIVE_LIBS@
+AM_CPPFLAGS = @ibrdtn_CFLAGS@ @DAEMON_CFLAGS@ @ARCHIVE_CFLAGS@  -I@top_srcdir@/src/tffs
+AM_LDFLAGS = @ibrdtn_LIBS@ @DAEMON_LIBS@ @ARCHIVE_LIBS@ -L@top_srcdir@/src/tffs -ltffs
 
 INCLUDES = -I@top_srcdir@/src
 
@@ -14,13 +14,15 @@ if TUNNEL
 sbin_PROGRAMS = dtntunnel
 endif
 
+##TODO header weg:wq
 dtnping_SOURCES = dtnping.cpp
 dtninbox_SOURCES = dtninbox.cpp \
 		  ToolUtils.h \
 		  ToolUtils.cpp
 dtnoutbox_SOURCES = dtnoutbox.cpp \
 		  ToolUtils.h \
-		  ToolUtils.cpp
+		  ToolUtils.cpp \
+		  tffs/tffs.h
 dtnrecv_SOURCES = dtnrecv.cpp
 dtnsend_SOURCES = dtnsend.cpp
 dtntunnel_SOURCES = dtntunnel.cpp

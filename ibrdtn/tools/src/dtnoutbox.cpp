@@ -30,6 +30,10 @@
 #include "ibrcommon/appstreambuf.h"
 
 #include "ToolUtils.h"
+extern "C"
+{
+#include "tffs/tffs.h"
+}
 
 #include <stdlib.h>
 #include <iostream>
@@ -158,7 +162,7 @@ bool ObservedFile::lastSizesEqual( size_t n )
 {
 	if (n > sizes.size()) return false;
 
-	for (int i = 1; i <= n; i++)
+	for (size_t i = 1; i <= n; i++)
 	{
 		if (sizes.at(sizes.size() - i) != sizes.at(sizes.size() - i - 1)) return false;
 	}
