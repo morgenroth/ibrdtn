@@ -283,10 +283,10 @@ namespace dtn
 			size_t i = 0;
 			while( i < num_bundles)
 			{
-			MetaBundle b;
-			input_file >> b;
-			_bundles.insert(b);
-			i++;
+				MetaBundle b;
+				input_file >> b;
+				_bundles.insert(b);
+				i++;
 			}
 
 			input_file.close();
