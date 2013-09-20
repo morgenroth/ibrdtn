@@ -27,6 +27,8 @@ public class HeadsetService extends Service {
     public static final String LEAVE_HEADSET_MODE = "de.tubs.ibr.dtn.dtalkie.LEAVE_HEADSET_MODE";
     public static final String MEDIA_BUTTON_PRESSED = "de.tubs.ibr.dtn.dtalkie.MEDIA_BUTTON_PRESSED";
     
+    public static Boolean ENABLED = false;
+    
     private volatile Looper mServiceLooper;
     private volatile ServiceHandler mServiceHandler;
     
@@ -73,7 +75,8 @@ public class HeadsetService extends Service {
                 ComponentName receiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
                 mAudioManager.registerMediaButtonEventReceiver(receiver);
                 
-                Log.d(TAG, "registered");
+                // acquire auto-play lock
+                ENABLED = true;
             }
             
             // set service mode to persistent
@@ -84,10 +87,12 @@ public class HeadsetService extends Service {
             stopForeground(true);
             
             if (mPersistent) {
+                // remove auto-play lock
+                ENABLED = false;
+                
                 // unlisten to media button events
                 ComponentName receiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
                 mAudioManager.unregisterMediaButtonEventReceiver(receiver);
-                Log.d(TAG, "unregistered");
                 
                 // unbind from recorder service
                 unbindService(mConnection);

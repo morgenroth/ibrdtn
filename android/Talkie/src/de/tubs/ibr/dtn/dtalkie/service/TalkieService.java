@@ -282,7 +282,7 @@ public class TalkieService extends IntentService {
 		
 		Log.i(TAG, "Service created.");
 		
-        if (prefs.getBoolean("autoplay", false)) {
+        if (prefs.getBoolean("autoplay", false) || HeadsetService.ENABLED) {
             Intent play_i = new Intent(TalkieService.this, TalkieService.class);
             play_i.setAction(TalkieService.ACTION_PLAY_NEXT);
             startService(play_i);
@@ -416,7 +416,7 @@ public class TalkieService extends IntentService {
         }
         else if (ACTION_PLAY_NEXT.equals(action)) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(TalkieService.this);
-            if (prefs.getBoolean("autoplay", false)) {
+            if (prefs.getBoolean("autoplay", false) || HeadsetService.ENABLED) {
                 Message next = mDatabase.nextMarked(Folder.INBOX, false);
                 
                 if (next != null) {
@@ -517,7 +517,7 @@ public class TalkieService extends IntentService {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
         // do not add notifications if autoplay is active
-        if (prefs.getBoolean("autoplay", false)) return;
+        if (prefs.getBoolean("autoplay", false) || HeadsetService.ENABLED) return;
         
         // get the number of marked messages
         int mcount = mDatabase.getMarkedMessageCount(Folder.INBOX, false);
