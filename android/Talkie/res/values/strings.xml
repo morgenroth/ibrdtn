@@ -28,6 +28,7 @@
     </plurals>
     
     <string name="preferences">Preferences</string>
+    <string name="handset_mode">Handset Mode</string>
     <string name="pref_notification_settings">Notifications</string>
     <string name="pref_vibrate_on_message">Vibrate</string>
     <string name="pref_vibrate_on_message_desc">Vibrate on message reception</string>

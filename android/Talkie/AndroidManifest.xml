@@ -43,7 +43,7 @@
             </intent-filter>
         </activity>
         
-        <activity android:icon="@drawable/ic_settings" android:name=".Preferences" android:label="@string/preferences" />
+        <activity android:icon="@drawable/ic_action_settings" android:name=".Preferences" android:label="@string/preferences" />
         
 		<service android:name=".service.TalkieService" />
 		<service android:name=".service.RecorderService" />
