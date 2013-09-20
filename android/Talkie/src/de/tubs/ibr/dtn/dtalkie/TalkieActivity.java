@@ -27,6 +27,7 @@ import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import de.tubs.ibr.dtn.dtalkie.service.HeadsetService;
 
 public class TalkieActivity extends FragmentActivity {
 	
@@ -38,6 +39,11 @@ public class TalkieActivity extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        
+        // disable background service
+        Intent i = new Intent(this, HeadsetService.class);
+        i.setAction(HeadsetService.LEAVE_HEADSET_MODE);
+        startService(i);
     }
 
     @Override
@@ -55,6 +61,18 @@ public class TalkieActivity extends FragmentActivity {
                 // Launch Preference activity
                 Intent i = new Intent(this, Preferences.class);
                 startActivity(i);
+                return true;
+            }
+            
+            case R.id.itemHeadsetMode:
+            {
+                // start background service
+                Intent i = new Intent(this, HeadsetService.class);
+                i.setAction(HeadsetService.ENTER_HEADSET_MODE);
+                startService(i);
+                
+                // finish the activity
+                finish();
                 return true;
             }
         }
