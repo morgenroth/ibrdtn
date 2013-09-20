@@ -23,11 +23,11 @@
 
 package de.tubs.ibr.dtn.service;
 
-import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -166,18 +166,16 @@ public class DaemonService extends Service {
         return mBinder;
     }
 
-    private static final class ServiceHandler extends Handler {
-        private final WeakReference<DaemonService> mService; 
-        
-        public ServiceHandler(Looper looper, DaemonService service) {
+    @SuppressLint("HandlerLeak")
+    private final class ServiceHandler extends Handler {
+        public ServiceHandler(Looper looper) {
             super(looper);
-            mService = new WeakReference<DaemonService>(service);
         }
 
         @Override
         public void handleMessage(Message msg) {
             Intent intent = (Intent) msg.obj;
-            mService.get().onHandleIntent(intent, msg.arg1);
+            onHandleIntent(intent, msg.arg1);
         }
     }
     
@@ -330,7 +328,7 @@ public class DaemonService extends Service {
         HandlerThread thread = new HandlerThread("DaemonService_IntentThread");
         thread.start();
         mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper, this);
+        mServiceHandler = new ServiceHandler(mServiceLooper);
 
         // create a session manager
         mSessionManager = new SessionManager(this);
@@ -418,7 +416,7 @@ public class DaemonService extends Service {
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public void onStart(Intent intent, int startId) {
         /*
          * If no explicit intent is given start as ACTION_STARTUP. When this
          * service crashes, Android restarts it without an Intent. Thus
@@ -441,7 +439,11 @@ public class DaemonService extends Service {
         msg.arg1 = startId;
         msg.obj = intent;
         mServiceHandler.sendMessage(msg);
+    }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        onStart(intent, startId);
         return START_STICKY;
     }
 
