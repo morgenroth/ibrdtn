@@ -49,6 +49,12 @@
 		<service android:name=".service.TalkieService" />
 		<service android:name=".service.RecorderService" />
 		
+		<receiver android:name=".service.MediaButtonReceiver">
+		    <intent-filter>
+		        <action android:name="android.intent.action.MEDIA_BUTTON" />
+		    </intent-filter>
+		</receiver>
+		
 	    <receiver
 	        android:enabled="true"
 	        android:name=".service.EventReceiver"

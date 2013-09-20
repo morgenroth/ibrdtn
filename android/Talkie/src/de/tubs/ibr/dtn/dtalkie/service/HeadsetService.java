@@ -4,25 +4,51 @@ import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.media.AudioManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
+import android.view.KeyEvent;
 import de.tubs.ibr.dtn.dtalkie.R;
 import de.tubs.ibr.dtn.dtalkie.TalkieActivity;
 
 public class HeadsetService extends Service {
     
+    private static final String TAG = "HeadsetService";
     public static final String ENTER_HEADSET_MODE = "de.tubs.ibr.dtn.dtalkie.ENTER_HEADSET_MODE";
     public static final String LEAVE_HEADSET_MODE = "de.tubs.ibr.dtn.dtalkie.LEAVE_HEADSET_MODE";
+    public static final String MEDIA_BUTTON_PRESSED = "de.tubs.ibr.dtn.dtalkie.MEDIA_BUTTON_PRESSED";
     
     private volatile Looper mServiceLooper;
     private volatile ServiceHandler mServiceHandler;
     
     private Boolean mPersistent = false;
+    private AudioManager mAudioManager = null;
+    
+    private RecorderService mRecService = null;
+    private Boolean mRecording = false;
+    
+    private int mMaxAmplitude = 0;
+    private int mIdleCounter = 0;
+    private Handler mHandler = null;
+    
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mRecService = ((RecorderService.LocalBinder)service).getService();
+        }
+
+        public void onServiceDisconnected(ComponentName name) {
+            mRecService = null;
+        }
+    };
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -39,6 +65,17 @@ public class HeadsetService extends Service {
             // turn this to a foreground service (kill-proof)
             startForeground(1, n);
             
+            if (!mPersistent) {
+                // bind to recorder service
+                bindService(new Intent(this, RecorderService.class), mConnection, Context.BIND_AUTO_CREATE);
+                
+                // listen to media button events
+                ComponentName receiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
+                mAudioManager.registerMediaButtonEventReceiver(receiver);
+                
+                Log.d(TAG, "registered");
+            }
+            
             // set service mode to persistent
             mPersistent = true;
         }
@@ -46,8 +83,55 @@ public class HeadsetService extends Service {
             // turn this to a foreground service (kill-proof)
             stopForeground(true);
             
+            if (mPersistent) {
+                // unlisten to media button events
+                ComponentName receiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
+                mAudioManager.unregisterMediaButtonEventReceiver(receiver);
+                Log.d(TAG, "unregistered");
+                
+                // unbind from recorder service
+                unbindService(mConnection);
+            }
+            
             // set service mode to persistent
             mPersistent = false;
+        }
+        else if (MEDIA_BUTTON_PRESSED.equals(action) && mPersistent) {
+            KeyEvent event = (KeyEvent)intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+            
+            if (KeyEvent.KEYCODE_MEDIA_PLAY == event.getKeyCode()) {
+                startRecording();
+                Log.d(TAG, event.toString());
+            }
+            else if (KeyEvent.KEYCODE_MEDIA_STOP == event.getKeyCode()) {
+                stopRecording();
+                Log.d(TAG, event.toString());
+            }
+        }
+    }
+    
+    private void startRecording() {
+        if (mRecording) return;
+        mRecording = true;
+        
+        mMaxAmplitude = 0;
+        mIdleCounter = 0;
+        
+        mHandler.postDelayed(mUpdateIdle, 100);
+
+        if (mRecService != null) {
+            mRecService.startRecording(RecorderService.TALKIE_GROUP_EID);
+        }
+    }
+    
+    private void stopRecording() {
+        if (!mRecording) return;
+        mRecording = false;
+        
+        mHandler.removeCallbacks(mUpdateIdle);
+        
+        if (mRecService != null) {
+            mRecService.stopRecording();
         }
     }
     
@@ -78,10 +162,21 @@ public class HeadsetService extends Service {
         onStart(intent, startId);
         return START_NOT_STICKY;
     }
-
+    
     @Override
     public void onCreate() {
         super.onCreate();
+        
+        // init persist state
+        mPersistent = false;
+        
+        // init bound state
+        mRecording = false;
+        
+        mHandler = new Handler();
+        
+        // get the audio manager
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         
         HandlerThread thread = new HandlerThread("HeadsetService");
         thread.start();
@@ -114,4 +209,31 @@ public class HeadsetService extends Service {
 
         return builder.getNotification();
     }
+    
+    private Runnable mUpdateIdle = new Runnable() {
+        @Override
+        public void run() {
+            int curamp = mRecService.getMaxAmplitude();
+            if (mMaxAmplitude < curamp) mMaxAmplitude = curamp;
+            
+            float level = 0.0f;
+            
+            if (mMaxAmplitude > 0) {
+                level = Float.valueOf(curamp) / (0.8f * Float.valueOf(mMaxAmplitude));
+            }
+            
+            if (level < 0.4f) {
+                mIdleCounter++;
+            } else {
+                mIdleCounter = 0;
+            }
+            
+            // if there is no sound for 2 seconds
+            if (mIdleCounter >= 20) {
+                stopRecording();
+            } else {
+                mHandler.postDelayed(mUpdateIdle, 100);
+            }
+        }
+    };
 }
