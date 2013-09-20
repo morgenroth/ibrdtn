@@ -27,8 +27,11 @@
         <item quantity="other">Talkie has received new messages</item>
     </plurals>
     
+    <string name="service_headset_name">Talkie Headset Mode</string>
+    <string name="service_headset_desc">Control me with the media buttons</string>
+    
     <string name="preferences">Preferences</string>
-    <string name="handset_mode">Handset Mode</string>
+    <string name="headset_mode">Headset Mode</string>
     <string name="pref_notification_settings">Notifications</string>
     <string name="pref_vibrate_on_message">Vibrate</string>
     <string name="pref_vibrate_on_message_desc">Vibrate on message reception</string>
