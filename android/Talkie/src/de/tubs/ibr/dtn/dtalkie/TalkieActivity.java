@@ -21,7 +21,9 @@
  */
 package de.tubs.ibr.dtn.dtalkie;
 
+import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
@@ -77,5 +79,31 @@ public class TalkieActivity extends FragmentActivity {
             }
         }
         return super.onOptionsItemSelected(item);
+    }
+    
+    @Override
+	public void onResume() {
+		super.onResume();
+		
+		// set output to speaker
+		setAudioOutput();
+	}
+
+	@SuppressWarnings("deprecation")
+	private void setAudioOutput() {
+        AudioManager am = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+
+        if (am.isBluetoothA2dpOn()) {
+        	// play without speaker
+        	am.setSpeakerphoneOn(false);
+        }
+        else if (am.isWiredHeadsetOn()) {
+        	// play without speaker
+        	am.setSpeakerphoneOn(false);
+        }
+        else {
+        	// without headset, enable speaker
+        	am.setSpeakerphoneOn(true);
+        }
     }
 }

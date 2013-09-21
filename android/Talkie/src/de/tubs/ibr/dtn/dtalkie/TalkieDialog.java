@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.Animation;
@@ -59,7 +60,25 @@ public class TalkieDialog extends Activity {
         });
     }
 
-    @Override
+    @SuppressWarnings("deprecation")
+	private void setAudioOutput() {
+        AudioManager am = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+
+        if (am.isBluetoothA2dpOn()) {
+        	// play without speaker
+        	am.setSpeakerphoneOn(false);
+        }
+        else if (am.isWiredHeadsetOn()) {
+        	// play without speaker
+        	am.setSpeakerphoneOn(false);
+        }
+        else {
+        	// without headset, enable speaker
+        	am.setSpeakerphoneOn(true);
+        }
+    }
+
+	@Override
     protected void onPause() {
         // we are going out of scope - stop recording
         stopRecording();
@@ -78,6 +97,9 @@ public class TalkieDialog extends Activity {
     	filter.addAction(RecorderService.EVENT_RECORDING_EVENT);
     	filter.addAction(RecorderService.EVENT_RECORDING_INDICATOR);
     	registerReceiver(mRecorderEventReceiver, filter);
+    	
+        // set output to speaker
+		setAudioOutput();
     	
     	// start voice recording
     	startRecording();
