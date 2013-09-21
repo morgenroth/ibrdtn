@@ -2,10 +2,10 @@ package de.tubs.ibr.dtn.dtalkie;
 
 import java.util.List;
 
-import android.content.ComponentName;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -13,8 +13,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -35,17 +33,8 @@ public class RecordingFragment extends Fragment {
     @SuppressWarnings("unused")
     private static final String TAG = "RecordingFragment";
     
-    private RecorderService mService = null;
-    private Boolean mBound = false;
-    
     private ImageButton mRecordButton = null;
     private FrameLayout mRecIndicator = null;
-    
-    private Boolean mUpdateAmplitudeSwitch = false;
-    private int mMaxAmplitude = 0;
-    private int mIdleCounter = 0;
-    
-    private Handler mHandler = null;
     
     private Boolean mRecording = false;
     
@@ -94,16 +83,6 @@ public class RecordingFragment extends Fragment {
         }
     };
     
-    private ServiceConnection mConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mService = ((RecorderService.LocalBinder)service).getService();
-        }
-
-        public void onServiceDisconnected(ComponentName name) {
-            mService = null;
-        }
-    };
-    
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
@@ -124,24 +103,6 @@ public class RecordingFragment extends Fragment {
         // set volume control to MUSIC
         getActivity().setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
-    
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mBound = false;
-        mHandler = new Handler();
-    }
-
-    @Override
-    public void onDestroy() {
-        if (mBound) {
-            getActivity().unbindService(mConnection);
-            mBound = false;
-        }
-        
-        mHandler = null;
-        super.onDestroy();
-    }
 
     @Override
     public void onPause() {
@@ -151,17 +112,20 @@ public class RecordingFragment extends Fragment {
         // we are going out of scope - stop recording
         stopRecording();
         
+        // unregister from recorder events
+        getActivity().unregisterReceiver(mRecorderEventReceiver);
+        
         super.onPause();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        
-        if (!mBound) {
-            getActivity().bindService(new Intent(getActivity(), RecorderService.class), mConnection, Context.BIND_AUTO_CREATE);
-            mBound = true;
-        }
+
+    	IntentFilter filter = new IntentFilter();
+    	filter.addAction(RecorderService.EVENT_RECORDING_EVENT);
+    	filter.addAction(RecorderService.EVENT_RECORDING_INDICATOR);
+    	getActivity().registerReceiver(mRecorderEventReceiver, filter);
         
         SensorManager sm = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         List<Sensor> sensors = sm.getSensorList(Sensor.TYPE_PROXIMITY);
@@ -178,41 +142,24 @@ public class RecordingFragment extends Fragment {
         // lock screen orientation
         Utils.lockScreenOrientation(getActivity());
         
+        // get recording preferences
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        if (!prefs.getBoolean("ptt", false)) {
-            // start amplitude update
-            mUpdateAmplitudeSwitch = true;
-            mHandler.postDelayed(mUpdateAmplitude, 100);
-        } else {
-            // set indicator level to zero
-            setIndicator(1.0f);
-        }
-        
-        if (mService != null) {
-            mService.startRecording(RecorderService.TALKIE_GROUP_EID);
-        }
+        boolean indicator = !prefs.getBoolean("ptt", false);
+        boolean auto_stop = !prefs.getBoolean("ptt", false);
+
+        // start recording
+        RecorderService.startRecording(getActivity(), RecorderService.TALKIE_GROUP_EID, indicator, auto_stop);
     }
     
     private void stopRecording() {
         if (!mRecording) return;
         mRecording = false;
         
-        // stop amplitude update
-        mUpdateAmplitudeSwitch = false;
-        mHandler.removeCallbacks(mUpdateAmplitude);
-        
-        // set indicator level to zero
-        setIndicator(0.0f);
-        
         // unlock screen orientation
         Utils.unlockScreenOrientation(getActivity());
         
-        if (mService != null) {
-            mService.stopRecording();
-        }
-        
-        mMaxAmplitude = 0;
-        mIdleCounter = 0;
+        // stop recording
+        RecorderService.stopRecording(getActivity());
     }
     
     private void toggleRecording() {
@@ -223,47 +170,65 @@ public class RecordingFragment extends Fragment {
         }
     }
     
+    private BroadcastReceiver mRecorderEventReceiver = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (RecorderService.EVENT_RECORDING_EVENT.equals(intent.getAction())) {
+				String action = intent.getStringExtra(RecorderService.EXTRA_RECORDING_ACTION);
+				
+				if (RecorderService.ACTION_START_RECORDING.equals(action)) {
+			        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+			        
+			        // show full indicator when dynamic indicator is disabled
+			        if (prefs.getBoolean("ptt", false)) {
+			        	setIndicator(1.0f, 0);
+			        } else {
+			        	setIndicator(0.0f, 0);
+			        }
+				}
+				else if (RecorderService.ACTION_STOP_RECORDING.equals(action)) {
+			        // set indicator level to zero
+			        setIndicator(0.0f, 0);
+			        
+			        mRecording = false;
+			        
+			        // unlock screen orientation
+			        Utils.unlockScreenOrientation(getActivity());
+				}
+				else if (RecorderService.ACTION_ABORT_RECORDING.equals(action)) {
+			        // set indicator level to zero
+			        setIndicator(0.0f, 0);
+			        
+			        mRecording = false;
+			        
+			        // unlock screen orientation
+			        Utils.unlockScreenOrientation(getActivity());
+				}
+			}
+			else if (RecorderService.EVENT_RECORDING_INDICATOR.equals(intent.getAction())) {
+				// read indicator value
+				float level = intent.getFloatExtra(RecorderService.EXTRA_LEVEL_NORMALIZED, 0.0f);
+				
+		        // set indicator level
+		        setIndicator(level);
+			}
+		}
+    	
+    };
+    
     private void setIndicator(Float level) {
+    	setIndicator(level, 100);
+    }
+    
+    private void setIndicator(Float level, int duration) {
         Animation a = new ScaleAnimation(1.0f, 1.0f, 1 - mAnimScaleHeight, 1 - level);
         
         mAnimScaleHeight = level;
 
-        a.setDuration(100);
+        a.setDuration(duration);
         a.setInterpolator(new LinearInterpolator());
         a.startNow();
         mRecIndicator.startAnimation(a);
     }
-    
-    private Runnable mUpdateAmplitude = new Runnable() {
-        @Override
-        public void run() {
-            if (mUpdateAmplitudeSwitch) {
-                if (mService != null) {
-                    int curamp = mService.getMaxAmplitude();
-                    if (mMaxAmplitude < curamp) mMaxAmplitude = curamp;
-                    
-                    float level = 0.0f;
-                            
-                    if (mMaxAmplitude > 0) {
-                        level = Float.valueOf(curamp) / (0.8f * Float.valueOf(mMaxAmplitude));
-                    }
-                    
-                    if (level < 0.4f) {
-                        mIdleCounter++;
-                    } else {
-                        mIdleCounter = 0;
-                    }
-                    
-                    setIndicator(level);
-                    
-                    // if there is no sound for 2 seconds
-                    if (mIdleCounter >= 20) {
-                        stopRecording();
-                    }
-                }
-                if (mUpdateAmplitude != null)
-                	mHandler.postDelayed(mUpdateAmplitude, 100);
-            }
-        }
-    };
 }

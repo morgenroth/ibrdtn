@@ -4,10 +4,11 @@ import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -35,29 +36,14 @@ public class HeadsetService extends Service {
     private Boolean mPersistent = false;
     private AudioManager mAudioManager = null;
     
-    private RecorderService mRecService = null;
     private Boolean mRecording = false;
     
-    private int mMaxAmplitude = 0;
-    private int mIdleCounter = 0;
-    private Handler mHandler = null;
-    
-    private ServiceConnection mConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            mRecService = ((RecorderService.LocalBinder)service).getService();
-        }
-
-        public void onServiceDisconnected(ComponentName name) {
-            mRecService = null;
-        }
-    };
-
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
     
-    public void onHandleIntent(Intent intent, int startId) {
+    protected void onHandleIntent(Intent intent, int startId) {
         String action = intent.getAction();
         
         if (ENTER_HEADSET_MODE.equals(action)) {
@@ -68,9 +54,6 @@ public class HeadsetService extends Service {
             startForeground(1, n);
             
             if (!mPersistent) {
-                // bind to recorder service
-                bindService(new Intent(this, RecorderService.class), mConnection, Context.BIND_AUTO_CREATE);
-                
                 // listen to media button events
                 ComponentName receiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
                 mAudioManager.registerMediaButtonEventReceiver(receiver);
@@ -93,9 +76,6 @@ public class HeadsetService extends Service {
                 // unlisten to media button events
                 ComponentName receiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
                 mAudioManager.unregisterMediaButtonEventReceiver(receiver);
-                
-                // unbind from recorder service
-                unbindService(mConnection);
             }
             
             // set service mode to persistent
@@ -119,25 +99,16 @@ public class HeadsetService extends Service {
         if (mRecording) return;
         mRecording = true;
         
-        mMaxAmplitude = 0;
-        mIdleCounter = 0;
-        
-        mHandler.postDelayed(mUpdateIdle, 100);
-
-        if (mRecService != null) {
-            mRecService.startRecording(RecorderService.TALKIE_GROUP_EID);
-        }
+        // start recording
+        RecorderService.startRecording(this, RecorderService.TALKIE_GROUP_EID, false, true);
     }
     
     private void stopRecording() {
         if (!mRecording) return;
         mRecording = false;
         
-        mHandler.removeCallbacks(mUpdateIdle);
-        
-        if (mRecService != null) {
-            mRecService.stopRecording();
-        }
+        // stop recording
+        RecorderService.stopRecording(this);
     }
     
     @SuppressLint("HandlerLeak")
@@ -178,8 +149,6 @@ public class HeadsetService extends Service {
         // init bound state
         mRecording = false;
         
-        mHandler = new Handler();
-        
         // get the audio manager
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         
@@ -188,12 +157,40 @@ public class HeadsetService extends Service {
         
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper);
+        
+    	IntentFilter filter = new IntentFilter();
+    	filter.addAction(RecorderService.EVENT_RECORDING_EVENT);
+    	registerReceiver(mRecorderEventReceiver, filter);
     }
 
     @Override
     public void onDestroy() {
+        // unregister from recorder events
+        unregisterReceiver(mRecorderEventReceiver);
+        
         mServiceLooper.quit();
     }
+    
+    private BroadcastReceiver mRecorderEventReceiver = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (RecorderService.EVENT_RECORDING_EVENT.equals(intent.getAction())) {
+				String action = intent.getStringExtra(RecorderService.EXTRA_RECORDING_ACTION);
+				
+				if (RecorderService.ACTION_START_RECORDING.equals(action)) {
+
+				}
+				else if (RecorderService.ACTION_STOP_RECORDING.equals(action)) {
+					mRecording = false;
+				}
+				else if (RecorderService.ACTION_ABORT_RECORDING.equals(action)) {
+					mRecording = false;
+				}
+			}
+		}
+    	
+    };
     
     private Notification buildNotification() {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
@@ -214,31 +211,4 @@ public class HeadsetService extends Service {
 
         return builder.getNotification();
     }
-    
-    private Runnable mUpdateIdle = new Runnable() {
-        @Override
-        public void run() {
-            int curamp = mRecService.getMaxAmplitude();
-            if (mMaxAmplitude < curamp) mMaxAmplitude = curamp;
-            
-            float level = 0.0f;
-            
-            if (mMaxAmplitude > 0) {
-                level = Float.valueOf(curamp) / (0.8f * Float.valueOf(mMaxAmplitude));
-            }
-            
-            if (level < 0.4f) {
-                mIdleCounter++;
-            } else {
-                mIdleCounter = 0;
-            }
-            
-            // if there is no sound for 2 seconds
-            if (mIdleCounter >= 20) {
-                stopRecording();
-            } else {
-                mHandler.postDelayed(mUpdateIdle, 100);
-            }
-        }
-    };
 }

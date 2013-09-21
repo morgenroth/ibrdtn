@@ -280,7 +280,7 @@ public class TalkieService extends IntentService {
 		    mServiceError = ServiceError.PERMISSION_NOT_GRANTED;
 		}
 		
-		Log.i(TAG, "Service created.");
+		Log.d(TAG, "Service created.");
 		
         if (prefs.getBoolean("autoplay", false) || HeadsetService.ENABLED) {
             Intent play_i = new Intent(TalkieService.this, TalkieService.class);
@@ -311,7 +311,7 @@ public class TalkieService extends IntentService {
 	    mDatabase.close();
 		
 		super.onDestroy();
-		Log.i(TAG, "Service destroyed.");
+		Log.d(TAG, "Service destroyed.");
 	}
 	
 	public MessageDatabase getDatabase() {

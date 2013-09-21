@@ -9,8 +9,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import de.tubs.ibr.dtn.api.EID;
+import de.tubs.ibr.dtn.api.GroupEndpoint;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.dtalkie.R;
 
 public class Utils {
@@ -106,5 +110,38 @@ public class Utils {
 
     public static void unlockScreenOrientation(Activity activity) {
         activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+    }
+    
+    public static EID getEndpoint(Bundle extras, String eid_key, String singleton_key, EID default_value) {
+        EID destination = default_value;
+        Boolean singleton = true;
+        
+        if (extras == null)
+        	return destination;
+    	
+        if (extras.containsKey(eid_key)) {
+            String dstr = extras.getString(eid_key);
+            if (extras.containsKey(singleton_key)) {
+                singleton = extras.getBoolean(singleton_key);
+            }
+            if (singleton) {
+                destination = new SingletonEndpoint(dstr);
+            } else {
+                destination = new GroupEndpoint(dstr);
+            }
+        }
+        
+        return destination;
+    }
+    
+    public static void putEndpoint(Intent intent, EID endpoint, String eid_key, String singleton_key) {
+    	if (endpoint instanceof SingletonEndpoint) {
+    		intent.putExtra(eid_key, endpoint.toString());
+    		intent.putExtra(singleton_key, true);
+    	}
+    	else {
+    		intent.putExtra(eid_key, endpoint.toString());
+    		intent.putExtra(singleton_key, false);
+    	}
     }
 }
