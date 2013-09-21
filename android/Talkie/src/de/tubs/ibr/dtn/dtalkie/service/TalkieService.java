@@ -36,6 +36,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.media.AudioManager;
+import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
@@ -84,6 +85,8 @@ public class TalkieService extends IntentService {
 	
 	private SoundFXManager mSoundManager = null;
 	private NotificationManager mNotificationManager = null;
+	
+	private AudioManager mAudioManager = null;
 	
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
@@ -225,6 +228,9 @@ public class TalkieService extends IntentService {
 		super.onCreate();
 		
 		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		
+        // get the audio-manager
+        mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.registerOnSharedPreferenceChangeListener(mPrefListener);
@@ -303,9 +309,46 @@ public class TalkieService extends IntentService {
 	private void playSound(Sound s) {
 		mSoundManager.play(this, AudioManager.STREAM_VOICE_CALL, s);
 	}
+	
+    OnAudioFocusChangeListener mAudioFocusChangeListener = new OnAudioFocusChangeListener() {
+		@Override
+		public void onAudioFocusChange(int focusChange) {
+			// AudioFocus changed
+			Log.d(TAG, "Audio Focus changed to " + focusChange);
+
+			synchronized(mPlayerLock) {
+				// do nothing if not playing
+				if (!mPlaying) return;
+				
+				if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+		            // focus lost
+					mPlayer.pause();
+				} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+		            // focus lost
+					mPlayer.pause();
+		        } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+		            // focus returned
+		        	mPlayer.start();
+		        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+		        	mPlayer.stop();
+		        }
+			}
+		}
+    };
     
     private MediaPlayer.OnPreparedListener mPrepareListener = new MediaPlayer.OnPreparedListener() {
         public void onPrepared(MediaPlayer mp) {
+    		// request audio focus
+    		int result = mAudioManager.requestAudioFocus(mAudioFocusChangeListener,
+                    AudioManager.STREAM_VOICE_CALL,
+                    // Request transient focus.
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+
+			if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+				// focus not granted
+				return;
+			}
+			
             playSound(Sound.BEEP);
             mp.start();
         }
@@ -325,6 +368,9 @@ public class TalkieService extends IntentService {
                 // signal the change of the playback state
                 mPlayerLock.notifyAll();
             }
+            
+            // return audio focus
+            mAudioManager.abandonAudioFocus(mAudioFocusChangeListener);
             
             // enqueue the next audio file if auto-playback is enabled
             Intent play_i = new Intent(TalkieService.this, TalkieService.class);
