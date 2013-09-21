@@ -14,6 +14,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.media.AudioManager;
+import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaRecorder;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -67,6 +68,8 @@ public class RecorderService extends Service {
     
     private volatile Looper mServiceLooper;
     private volatile ServiceHandler mServiceHandler;
+    
+    private AudioManager mAudioManager = null;
     
     /**
      * static methods for better control of recorder service
@@ -140,6 +143,9 @@ public class RecorderService extends Service {
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper);
         
+        // get the audio-manager
+        mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        
         SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
         List<Sensor> sensors = sm.getSensorList(Sensor.TYPE_PROXIMITY);
         if (sensors.size() > 0) {
@@ -191,11 +197,42 @@ public class RecorderService extends Service {
         // call super method
         super.onDestroy();
     }
+    
+    OnAudioFocusChangeListener mAudioFocusChangeListener = new OnAudioFocusChangeListener() {
+		@Override
+		public void onAudioFocusChange(int focusChange) {
+			// AudioFocus changed
+			Log.d(TAG, "Audio Focus changed to " + focusChange);
+
+			if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+	            // focus lost
+				abortRecording();
+			} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+	            // focus lost
+				abortRecording();
+	        } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+	            // focus returned
+	        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+				abortRecording();
+	        }
+		}
+    };
 
     private void startRecording(EID destination, boolean indicator, boolean auto_stop)
     {
     	synchronized(mRecLock) {
     		if (mRecording) return;
+    		
+    		// request audio focus
+    		int result = mAudioManager.requestAudioFocus(mAudioFocusChangeListener,
+                    AudioManager.STREAM_VOICE_CALL,
+                    // Request transient focus.
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+
+			if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+				// focus not granted
+				return;
+			}
     		
             // set recording parameters
             mDestination = destination;
@@ -295,6 +332,8 @@ public class RecorderService extends Service {
     private void finalizeRecording(File f)
     {
     	synchronized(mRecLock) {
+    		if (!mRecording) return;
+    		
 	        // reset recorder
 	        mRecorder.reset();
 	
@@ -320,6 +359,9 @@ public class RecorderService extends Service {
             mRecording = false;
             mRecLock.notifyAll();
             mAbort = false;
+            
+            // return audio focus
+            mAudioManager.abandonAudioFocus(mAudioFocusChangeListener);
     	}
     }
     
