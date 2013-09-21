@@ -58,6 +58,14 @@ public class HeadsetService extends Service {
                 ComponentName receiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
                 mAudioManager.registerMediaButtonEventReceiver(receiver);
                 
+                // listen to bluetooth events
+                @SuppressWarnings("deprecation")
+				IntentFilter filter = new IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED);
+                registerReceiver(mBluetoothStateReceiver, filter);
+                
+                // start bluetooth headset connection
+                mAudioManager.startBluetoothSco();
+                                
                 // acquire auto-play lock
                 ENABLED = true;
             }
@@ -72,6 +80,11 @@ public class HeadsetService extends Service {
             if (mPersistent) {
                 // remove auto-play lock
                 ENABLED = false;
+                
+                unregisterReceiver(mBluetoothStateReceiver);
+                
+                // disconnect from bluetooth headset
+                mAudioManager.stopBluetoothSco();
                 
                 // unlisten to media button events
                 ComponentName receiver = new ComponentName(getPackageName(), MediaButtonReceiver.class.getName());
@@ -94,6 +107,23 @@ public class HeadsetService extends Service {
             }
         }
     }
+    
+    private BroadcastReceiver mBluetoothStateReceiver = new BroadcastReceiver() {
+		@SuppressWarnings("deprecation")
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (AudioManager.ACTION_SCO_AUDIO_STATE_CHANGED.equals(intent.getAction())) {
+				int state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, AudioManager.SCO_AUDIO_STATE_DISCONNECTED);
+				
+				if (state == AudioManager.SCO_AUDIO_STATE_DISCONNECTED) {
+					Log.d(TAG, "headset not connected");
+				}
+				else if ( state == AudioManager.SCO_AUDIO_STATE_CONNECTED) {
+					Log.d(TAG, "headset connected");
+				}
+			}
+		}
+    };
     
     private void startRecording() {
         if (mRecording) return;
