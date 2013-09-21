@@ -18,9 +18,6 @@ import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.dtalkie.R;
 
 public class Utils {
-//	public static int ANDROID_API_ACTIONBAR = 16;
-//	public static int ANDROID_API_ACTIONBAR_SETICON = 17;
-	
 	public static int ANDROID_API_ACTIONBAR = 11;
 	public static int ANDROID_API_ACTIONBAR_SETICON = 14;
 	

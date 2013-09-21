@@ -109,6 +109,14 @@ public class HeadsetService extends Service {
         
         // stop recording
         RecorderService.stopRecording(this);
+        
+        // stop other stuff
+        eventRecordingStopped();
+    }
+    
+    private void eventRecordingStopped() {
+        // set recording to false
+        mRecording = false;
     }
     
     @SuppressLint("HandlerLeak")
@@ -182,10 +190,10 @@ public class HeadsetService extends Service {
 
 				}
 				else if (RecorderService.ACTION_STOP_RECORDING.equals(action)) {
-					mRecording = false;
+					eventRecordingStopped();
 				}
 				else if (RecorderService.ACTION_ABORT_RECORDING.equals(action)) {
-					mRecording = false;
+					eventRecordingStopped();
 				}
 			}
 		}

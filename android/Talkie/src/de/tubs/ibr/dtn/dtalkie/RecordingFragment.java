@@ -100,8 +100,8 @@ public class RecordingFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         
-        // set volume control to MUSIC
-        getActivity().setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        // set volume control to VOICE_CALL
+        getActivity().setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
     }
 
     @Override

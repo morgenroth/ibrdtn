@@ -26,7 +26,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 import android.app.IntentService;
 import android.app.Notification;
@@ -36,10 +35,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -81,8 +76,6 @@ public class TalkieService extends IntentService {
 	
 	private ServiceError mServiceError = ServiceError.NO_ERROR;
 	
-	private Boolean mOnEar = false;
-
 	private MessageDatabase mDatabase = null;
 	
 	private Object mPlayerLock = new Object();
@@ -232,13 +225,6 @@ public class TalkieService extends IntentService {
 		super.onCreate();
 		
 		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		
-        SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
-        List<Sensor> sensors = sm.getSensorList(Sensor.TYPE_PROXIMITY);
-        if (sensors.size() > 0) {
-            Sensor s = sensors.get(0);
-            sm.registerListener(mSensorListener, s, SensorManager.SENSOR_DELAY_NORMAL);
-        }
         
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.registerOnSharedPreferenceChangeListener(mPrefListener);
@@ -248,8 +234,7 @@ public class TalkieService extends IntentService {
 		
         // init sound pool
         mSoundManager = new SoundFXManager();
-        mSoundManager.initialize(AudioManager.STREAM_VOICE_CALL, 4);
-        mSoundManager.initialize(AudioManager.STREAM_MUSIC, 4);
+        mSoundManager.initialize(AudioManager.STREAM_VOICE_CALL, 2);
         
         mSoundManager.load(this, Sound.BEEP);
         mSoundManager.load(this, Sound.CONFIRM);
@@ -299,9 +284,6 @@ public class TalkieService extends IntentService {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.unregisterOnSharedPreferenceChangeListener(mPrefListener);
         
-        SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sm.unregisterListener(mSensorListener);
-        
         mClient.terminate();
 	    mClient = null;
 	    
@@ -319,11 +301,7 @@ public class TalkieService extends IntentService {
 	}
 	
 	private void playSound(Sound s) {
-		if (mOnEar) {
-			mSoundManager.play(this, AudioManager.STREAM_VOICE_CALL, s);
-		} else {
-			mSoundManager.play(this, AudioManager.STREAM_MUSIC, s);
-		}
+		mSoundManager.play(this, AudioManager.STREAM_VOICE_CALL, s);
 	}
     
     private MediaPlayer.OnPreparedListener mPrepareListener = new MediaPlayer.OnPreparedListener() {
@@ -383,13 +361,7 @@ public class TalkieService extends IntentService {
                 // prepare player
                 Message msg = mDatabase.get(f, msgid);
                 mPlayer.setDataSource(msg.getFile().getAbsolutePath());
-                
-                if (mOnEar) {
-                    mPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
-                } else {
-                    mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                }
-                
+                mPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
                 mPlayer.prepareAsync();
                 
                 synchronized(mPlayerLock) {
@@ -475,20 +447,6 @@ public class TalkieService extends IntentService {
             startService(play_i);
         }
     }
-    
-    private SensorEventListener mSensorListener = new SensorEventListener() {
-        public void onSensorChanged(SensorEvent event) {
-            if (event.values.length > 0) {
-                float current = event.values[0];
-                float maxRange = event.sensor.getMaximumRange();
-                boolean far = (current == maxRange);
-                mOnEar = !far;
-            }
-        }
-
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        }
-    };
     
     public OnSharedPreferenceChangeListener mPrefListener = new OnSharedPreferenceChangeListener() {
         @Override

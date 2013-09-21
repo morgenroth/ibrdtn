@@ -3,16 +3,11 @@ package de.tubs.ibr.dtn.dtalkie.service;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaRecorder;
@@ -54,7 +49,6 @@ public class RecorderService extends Service {
     
     private Object mRecLock = new Object();
     private Boolean mRecording = false;
-    private Boolean mOnEar = false;
     private Boolean mAbort = false;
 
     private EID mDestination = null;
@@ -146,13 +140,6 @@ public class RecorderService extends Service {
         // get the audio-manager
         mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         
-        SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
-        List<Sensor> sensors = sm.getSensorList(Sensor.TYPE_PROXIMITY);
-        if (sensors.size() > 0) {
-            Sensor s = sensors.get(0);
-            sm.registerListener(mSensorListener, s, SensorManager.SENSOR_DELAY_NORMAL);
-        }
-        
         // handler for indicator level updates
         mHandler = new Handler();
         
@@ -166,8 +153,7 @@ public class RecorderService extends Service {
         // init sound pool
         mSoundManager = new SoundFXManager();
         
-        mSoundManager.initialize(AudioManager.STREAM_VOICE_CALL, 4);
-        mSoundManager.initialize(AudioManager.STREAM_MUSIC, 4);
+        mSoundManager.initialize(AudioManager.STREAM_VOICE_CALL, 2);
         
         mSoundManager.load(this, Sound.BEEP);
         mSoundManager.load(this, Sound.QUIT);
@@ -175,7 +161,6 @@ public class RecorderService extends Service {
         mSoundManager.load(this, Sound.SQUELSH_SHORT);
         
         mRecording = false;
-        mOnEar = false;
         mAbort = false;
     }
 
@@ -183,9 +168,6 @@ public class RecorderService extends Service {
     public void onDestroy() {
     	// stop ongoing recording on destroy
         stopRecording();
-        
-        SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sm.unregisterListener(mSensorListener);
         
         // release all recoder resources
         mRecorder.release();
@@ -233,7 +215,7 @@ public class RecorderService extends Service {
 				// focus not granted
 				return;
 			}
-    		
+			
             // set recording parameters
             mDestination = destination;
             mAutoStop = auto_stop;
@@ -366,26 +348,8 @@ public class RecorderService extends Service {
     }
     
     private void playSound(Sound s) {
-        if (mOnEar) {
-            mSoundManager.play(this, AudioManager.STREAM_VOICE_CALL, s);
-        } else {
-            mSoundManager.play(this, AudioManager.STREAM_MUSIC, s);
-        }
+    	mSoundManager.play(this, AudioManager.STREAM_VOICE_CALL, s);
     }
-    
-    private SensorEventListener mSensorListener = new SensorEventListener() {
-        public void onSensorChanged(SensorEvent event) {
-            if (event.values.length > 0) {
-                float current = event.values[0];
-                float maxRange = event.sensor.getMaximumRange();
-                boolean far = (current == maxRange);
-                mOnEar = !far;
-            }
-        }
-
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        }
-    };
     
     private MediaRecorder.OnErrorListener mErrorListener = new MediaRecorder.OnErrorListener() {
 
