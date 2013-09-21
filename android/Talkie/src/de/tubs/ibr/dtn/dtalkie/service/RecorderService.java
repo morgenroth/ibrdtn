@@ -187,15 +187,13 @@ public class RecorderService extends Service {
 			Log.d(TAG, "Audio Focus changed to " + focusChange);
 
 			if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-	            // focus lost
-				abortRecording();
+	            // focus lost - never mind
 			} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
-	            // focus lost
-				abortRecording();
+	            // focus lost - never mind
 	        } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
 	            // focus returned
 	        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-				abortRecording();
+	        	RecorderService.abortRecording(RecorderService.this);
 	        }
 		}
     };
@@ -292,14 +290,18 @@ public class RecorderService extends Service {
             // only stop recording in state RECORDING
             if (!mRecording) return;
     
-            Log.i(TAG, "stop recording audio");
-            
-            // stop the recorder
-            mRecorder.stop();
+            Log.i(TAG, "abort recording audio");
             
             // set recording to false
             mAbort = true;
             
+	        try {
+	            // stop the recorder
+	            mRecorder.stop();
+	        } catch (java.lang.IllegalStateException e) {
+	            // error - not recording
+	        }
+                        
 	        // wait until mRecording is false
 	        while (mRecording) {
 				try {
