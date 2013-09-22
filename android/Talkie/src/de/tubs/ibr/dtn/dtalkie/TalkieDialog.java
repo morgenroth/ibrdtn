@@ -17,6 +17,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.dtalkie.service.RecorderService;
+import de.tubs.ibr.dtn.dtalkie.service.Sound;
+import de.tubs.ibr.dtn.dtalkie.service.SoundFXManager;
 import de.tubs.ibr.dtn.dtalkie.service.Utils;
 
 public class TalkieDialog extends Activity {
@@ -29,6 +31,8 @@ public class TalkieDialog extends Activity {
     private Button mCancelButton = null;
     
     private Boolean mRecordingCompleted = false;
+    
+    private SoundFXManager mSoundManager = null;
     
     private float mAnimScaleX = 1.0f;
     private float mAnimScaleY = 1.0f;
@@ -58,9 +62,25 @@ public class TalkieDialog extends Activity {
                 stopRecording();
             }
         });
+        
+        // init sound pool
+        mSoundManager = new SoundFXManager(AudioManager.STREAM_VOICE_CALL, 2);
+        
+        mSoundManager.load(this, Sound.BEEP);
+        mSoundManager.load(this, Sound.QUIT);
+        mSoundManager.load(this, Sound.SQUELSH_LONG);
+        mSoundManager.load(this, Sound.SQUELSH_SHORT);
     }
+    
+    @Override
+	protected void onDestroy() {
+	    // free sound manager resources
+	    mSoundManager.release();
+	    
+		super.onDestroy();
+	}
 
-    @SuppressWarnings("deprecation")
+	@SuppressWarnings("deprecation")
 	private void setAudioOutput() {
         AudioManager am = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
@@ -129,10 +149,16 @@ public class TalkieDialog extends Activity {
 				String action = intent.getStringExtra(RecorderService.EXTRA_RECORDING_ACTION);
 				
 				if (RecorderService.ACTION_START_RECORDING.equals(action)) {
+			        // make a noise
+					mSoundManager.play(TalkieDialog.this, Sound.BEEP);
+
 			        // set indicator level to zero
 			        setIndicator(0.0f);
 				}
 				else if (RecorderService.ACTION_STOP_RECORDING.equals(action)) {
+					// make a noise
+					mSoundManager.play(TalkieDialog.this, Sound.QUIT);
+
 			        // set indicator level to zero
 			        setIndicator(0.0f);
 			        
@@ -140,6 +166,9 @@ public class TalkieDialog extends Activity {
 			        TalkieDialog.this.finish();
 				}
 				else if (RecorderService.ACTION_ABORT_RECORDING.equals(action)) {
+					// make a noise
+					mSoundManager.play(TalkieDialog.this, Sound.SQUELSH_SHORT);
+
 			        // set indicator level to zero
 			        setIndicator(0.0f);
 			        

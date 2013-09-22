@@ -44,7 +44,6 @@ public class RecorderService extends Service {
     public static final String EXTRA_RECORDING_ACTION = "action";
 
     private MediaRecorder mRecorder = null;
-    private SoundFXManager mSoundManager = null;
     private File mCurrentFile = null;
     
     private Object mRecLock = new Object();
@@ -149,16 +148,6 @@ public class RecorderService extends Service {
         // set recorder listener
         mRecorder.setOnErrorListener(mErrorListener);
         mRecorder.setOnInfoListener(mInfoListener);
-        
-        // init sound pool
-        mSoundManager = new SoundFXManager();
-        
-        mSoundManager.initialize(AudioManager.STREAM_VOICE_CALL, 2);
-        
-        mSoundManager.load(this, Sound.BEEP);
-        mSoundManager.load(this, Sound.QUIT);
-        mSoundManager.load(this, Sound.SQUELSH_LONG);
-        mSoundManager.load(this, Sound.SQUELSH_SHORT);
         
         mRecording = false;
         mAbort = false;
@@ -349,10 +338,6 @@ public class RecorderService extends Service {
     	}
     }
     
-    private void playSound(Sound s) {
-    	mSoundManager.play(this, AudioManager.STREAM_VOICE_CALL, s);
-    }
-    
     private MediaRecorder.OnErrorListener mErrorListener = new MediaRecorder.OnErrorListener() {
 
         @Override
@@ -404,18 +389,12 @@ public class RecorderService extends Service {
 	}
 	
 	private void eventRecordingFailed() {
-		// make a noise
-        playSound(Sound.SQUELSH_SHORT);
-        
         Intent i = new Intent(EVENT_RECORDING_EVENT);
         i.putExtra(EXTRA_RECORDING_ACTION, ACTION_ABORT_RECORDING);
         sendBroadcast(i);
 	}
 	
 	private void eventRecordingStarted() {
-        // make a noise
-        playSound(Sound.BEEP);
-        
         Intent i = new Intent(EVENT_RECORDING_EVENT);
         i.putExtra(EXTRA_RECORDING_ACTION, ACTION_START_RECORDING);
         sendBroadcast(i);
@@ -431,9 +410,6 @@ public class RecorderService extends Service {
 	}
 	
 	private void eventRecordingStopped() {
-		// make a noise
-		playSound(Sound.QUIT);
-		
         // stop amplitude update
         mHandler.removeCallbacks(mUpdateAmplitude);
         

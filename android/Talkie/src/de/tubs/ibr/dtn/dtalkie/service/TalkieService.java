@@ -239,8 +239,7 @@ public class TalkieService extends IntentService {
 		mDatabase = new MessageDatabase(this);
 		
         // init sound pool
-        mSoundManager = new SoundFXManager();
-        mSoundManager.initialize(AudioManager.STREAM_VOICE_CALL, 2);
+        mSoundManager = new SoundFXManager(AudioManager.STREAM_VOICE_CALL, 2);
         
         mSoundManager.load(this, Sound.BEEP);
         mSoundManager.load(this, Sound.CONFIRM);
@@ -297,6 +296,9 @@ public class TalkieService extends IntentService {
 	    
 	    // close the database
 	    mDatabase.close();
+	    
+	    // free sound manager resources
+	    mSoundManager.release();
 		
 		super.onDestroy();
 		Log.d(TAG, "Service destroyed.");
@@ -307,7 +309,7 @@ public class TalkieService extends IntentService {
 	}
 	
 	private void playSound(Sound s) {
-		mSoundManager.play(this, AudioManager.STREAM_VOICE_CALL, s);
+		mSoundManager.play(this, s);
 	}
 	
     OnAudioFocusChangeListener mAudioFocusChangeListener = new OnAudioFocusChangeListener() {

@@ -38,6 +38,8 @@ public class HeadsetService extends Service {
     
     private Boolean mRecording = false;
     
+    private SoundFXManager mSoundManager = null;
+    
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -187,6 +189,14 @@ public class HeadsetService extends Service {
         // init bound state
         mRecording = false;
         
+        // init sound pool
+        mSoundManager = new SoundFXManager(AudioManager.STREAM_VOICE_CALL, 2);
+        
+        mSoundManager.load(this, Sound.BEEP);
+        mSoundManager.load(this, Sound.QUIT);
+        mSoundManager.load(this, Sound.SQUELSH_LONG);
+        mSoundManager.load(this, Sound.SQUELSH_SHORT);
+        
         // get the audio manager
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         
@@ -207,6 +217,9 @@ public class HeadsetService extends Service {
         unregisterReceiver(mRecorderEventReceiver);
         
         mServiceLooper.quit();
+        
+	    // free sound manager resources
+	    mSoundManager.release();
     }
     
     private BroadcastReceiver mRecorderEventReceiver = new BroadcastReceiver() {
@@ -217,13 +230,20 @@ public class HeadsetService extends Service {
 				String action = intent.getStringExtra(RecorderService.EXTRA_RECORDING_ACTION);
 				
 				if (RecorderService.ACTION_START_RECORDING.equals(action)) {
-
+			        // make a noise
+					mSoundManager.play(HeadsetService.this, Sound.BEEP);
 				}
 				else if (RecorderService.ACTION_STOP_RECORDING.equals(action)) {
 					eventRecordingStopped();
+					
+					// make a noise
+					mSoundManager.play(HeadsetService.this, Sound.QUIT);
 				}
 				else if (RecorderService.ACTION_ABORT_RECORDING.equals(action)) {
 					eventRecordingStopped();
+					
+					// make a noise
+					mSoundManager.play(HeadsetService.this, Sound.SQUELSH_SHORT);
 				}
 			}
 		}

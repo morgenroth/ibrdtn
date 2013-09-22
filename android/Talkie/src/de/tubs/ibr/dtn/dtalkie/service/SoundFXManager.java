@@ -22,9 +22,7 @@
 package de.tubs.ibr.dtn.dtalkie.service;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map.Entry;
-
+import java.util.LinkedList;
 
 import android.content.Context;
 import android.media.AudioManager;
@@ -34,39 +32,81 @@ import android.util.Log;
 public class SoundFXManager {
 	
 	private final static String TAG = "SoundFXManager";
-	private HashMap<Integer, SoundPool> poolMap = new HashMap<Integer, SoundPool>();
+	
+	private int mStreamType = 0;
+	private SoundPool mPool = null;
+	private LinkedList<Sound> mSounds = new LinkedList<Sound>();
+	
+	private SoundPool.OnLoadCompleteListener mCompleteListener = new SoundPool.OnLoadCompleteListener() {
+		@Override
+		public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
+			synchronized(mSounds) {
+				for (Sound s : mSounds) {
+					if (s.getSoundId() == sampleId) {
+						s.setReady(true);
+						mSounds.notifyAll();
+						return;
+					}
+				}
+			}
+		}
+	};
+	
+    public SoundFXManager(int streamType, int maxStreams) {
+    	mStreamType = streamType;
+    	mPool = new SoundPool(maxStreams, streamType, 0);
+    	mPool.setOnLoadCompleteListener(mCompleteListener);
+    }
+    
+    public void release() {
+    	mPool.release();
+    	mSounds.clear();
+    }
 	
 	public void load(Context context, Sound s) {
-		for (Entry<Integer, SoundPool> entry: poolMap.entrySet()) {
-			try {
-				int id = entry.getValue().load(context.getAssets().openFd(s.getFilename()), 1);
-				s.setSoundId(entry.getKey(), id);
-			} catch (IOException e) {
-				Log.e(TAG, "sound loading failed.", e);
+		try {
+			synchronized(mSounds) {
+				int id = mPool.load(context.getAssets().openFd(s.getFilename()), 1);
+				Sound local_sound = new Sound(s);
+				local_sound.setSoundId(id);
+				mSounds.add(local_sound);
 			}
+		} catch (IOException e) {
+			Log.e(TAG, "sound loading failed.", e);
 		}
 	}
 	
-    public void initialize(int streamType, int maxStreams) {
-    	poolMap.put(streamType, new SoundPool(maxStreams, streamType, 0));
-    }
-    
-    public void play(Context context, int streamType, Sound s) {
-    	if (!poolMap.containsKey(streamType)) {
-    		Log.e(TAG, "stream-type not initialized!");
-    		return;
-    	}
-    	
-    	SoundPool sp = poolMap.get(streamType);
-
+    public void play(Context context, Sound s) {
         /* Updated: The next 4 lines calculate the current volume in a scale of 0.0 to 1.0 */
         AudioManager mgr = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
-        float streamVolumeCurrent = mgr.getStreamVolume(streamType);
-        float streamVolumeMax = mgr.getStreamMaxVolume(streamType);
+        float streamVolumeCurrent = mgr.getStreamVolume(mStreamType);
+        float streamVolumeMax = mgr.getStreamMaxVolume(mStreamType);
         
         float volume = streamVolumeCurrent / streamVolumeMax;
         
-        /* Play the sound with the correct volume */
-        sp.play(s.getSoundId(streamType), volume, volume, 1, 0, 1f);
+        // get right sound id
+        for (Sound ls : mSounds) {
+        	if (ls.equals(s)) {
+                /* Play the sound with the correct volume */
+                mPool.play(ls.getSoundId(), volume, volume, 1, 0, 1f);
+                return;
+        	}
+        }
+    }
+    
+    public boolean isLoadCompleted() throws InterruptedException {
+    	boolean ready = false;
+    	
+    	synchronized(mSounds) {
+			ready = true;
+    		for (Sound s : mSounds) {
+    			if (!s.isReady()) {
+    				ready = false;
+    				break;
+    			}
+    		}
+    	}
+    	
+    	return ready;
     }
 }

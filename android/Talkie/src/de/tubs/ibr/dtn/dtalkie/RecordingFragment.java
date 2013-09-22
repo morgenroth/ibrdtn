@@ -20,6 +20,8 @@ import android.view.animation.ScaleAnimation;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import de.tubs.ibr.dtn.dtalkie.service.RecorderService;
+import de.tubs.ibr.dtn.dtalkie.service.Sound;
+import de.tubs.ibr.dtn.dtalkie.service.SoundFXManager;
 import de.tubs.ibr.dtn.dtalkie.service.Utils;
 
 public class RecordingFragment extends Fragment {
@@ -31,6 +33,7 @@ public class RecordingFragment extends Fragment {
     private FrameLayout mRecIndicator = null;
     
     private Boolean mRecording = false;
+    private SoundFXManager mSoundManager = null;
     
     private float mAnimScaleHeight = 1.0f;
     
@@ -76,6 +79,27 @@ public class RecordingFragment extends Fragment {
     }
 
     @Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+        // init sound pool
+        mSoundManager = new SoundFXManager(AudioManager.STREAM_VOICE_CALL, 2);
+        
+        mSoundManager.load(getActivity(), Sound.BEEP);
+        mSoundManager.load(getActivity(), Sound.QUIT);
+        mSoundManager.load(getActivity(), Sound.SQUELSH_LONG);
+        mSoundManager.load(getActivity(), Sound.SQUELSH_SHORT);
+	}
+
+	@Override
+	public void onDestroy() {
+	    // free sound manager resources
+	    mSoundManager.release();
+	    
+		super.onDestroy();
+	}
+
+	@Override
     public void onPause() {
         // we are going out of scope - stop recording
         stopRecording();
@@ -139,6 +163,9 @@ public class RecordingFragment extends Fragment {
 				String action = intent.getStringExtra(RecorderService.EXTRA_RECORDING_ACTION);
 				
 				if (RecorderService.ACTION_START_RECORDING.equals(action)) {
+			        // make a noise
+					mSoundManager.play(getActivity(), Sound.BEEP);
+					
 			        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 			        
 			        // mark as recording
@@ -162,6 +189,9 @@ public class RecordingFragment extends Fragment {
 			        
 			        // unlock screen orientation
 			        Utils.unlockScreenOrientation(getActivity());
+			        
+					// make a noise
+					mSoundManager.play(getActivity(), Sound.QUIT);
 				}
 				else if (RecorderService.ACTION_ABORT_RECORDING.equals(action)) {
 			        // set indicator level to zero
@@ -172,6 +202,9 @@ public class RecordingFragment extends Fragment {
 			        
 			        // unlock screen orientation
 			        Utils.unlockScreenOrientation(getActivity());
+			        
+					// make a noise
+					mSoundManager.play(getActivity(), Sound.SQUELSH_SHORT);
 				}
 			}
 			else if (RecorderService.EVENT_RECORDING_INDICATOR.equals(intent.getAction())) {
