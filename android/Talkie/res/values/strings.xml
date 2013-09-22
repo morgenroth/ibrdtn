@@ -28,7 +28,7 @@
     </plurals>
     
     <string name="service_headset_name">Talkie Headset Mode</string>
-    <string name="service_headset_desc">Control me with the media buttons</string>
+    <string name="service_headset_desc">Push the headset button to talk</string>
     
     <string name="preferences">Preferences</string>
     <string name="headset_mode">Headset Mode</string>

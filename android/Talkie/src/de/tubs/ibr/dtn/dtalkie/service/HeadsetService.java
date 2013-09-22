@@ -99,13 +99,16 @@ public class HeadsetService extends Service {
         else if (MEDIA_BUTTON_PRESSED.equals(action) && mPersistent) {
             KeyEvent event = (KeyEvent)intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
             
+            //Log.d(TAG, event.toString());
+            
             if (KeyEvent.KEYCODE_MEDIA_PLAY == event.getKeyCode()) {
-                startRecording();
-                Log.d(TAG, event.toString());
+                if (KeyEvent.ACTION_DOWN == event.getAction()) startRecording();
             }
             else if (KeyEvent.KEYCODE_MEDIA_STOP == event.getKeyCode()) {
-                stopRecording();
-                Log.d(TAG, event.toString());
+            	if (KeyEvent.ACTION_DOWN == event.getAction()) stopRecording();
+            }
+            else if (KeyEvent.KEYCODE_HEADSETHOOK == event.getKeyCode()) {
+            	if (KeyEvent.ACTION_DOWN == event.getAction()) toggleRecording();
             }
         }
     }
@@ -126,6 +129,14 @@ public class HeadsetService extends Service {
 			}
 		}
     };
+    
+    private void toggleRecording() {
+    	if (mRecording) {
+    		stopRecording();
+    	} else {
+    		startRecording();
+    	}
+    }
     
     private void startRecording() {
         if (mRecording) return;
