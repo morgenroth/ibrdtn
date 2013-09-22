@@ -222,6 +222,15 @@ public class RecordingFragment extends Fragment {
     }
     
     private void setIndicator(Float level, int duration) {
+    	if (duration == 0 && level == 1.0f) {
+    		// make indicator invisible
+    		mRecIndicator.setVisibility(View.INVISIBLE);
+    		return;
+    	}
+    	
+    	// set indicator to visible
+    	mRecIndicator.setVisibility(View.VISIBLE);
+    	
         Animation a = new ScaleAnimation(1.0f, 1.0f, 1 - mAnimScaleHeight, 1 - level);
         
         mAnimScaleHeight = level;
