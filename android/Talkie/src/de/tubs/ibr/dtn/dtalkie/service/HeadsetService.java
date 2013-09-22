@@ -99,16 +99,38 @@ public class HeadsetService extends Service {
         else if (MEDIA_BUTTON_PRESSED.equals(action) && mPersistent) {
             KeyEvent event = (KeyEvent)intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
             
-            //Log.d(TAG, event.toString());
-            
             if (KeyEvent.KEYCODE_MEDIA_PLAY == event.getKeyCode()) {
-                if (KeyEvent.ACTION_DOWN == event.getAction()) startRecording();
+            	// only handle button down events
+                if (KeyEvent.ACTION_DOWN != event.getAction()) return;
+                
+            	// ignore if in-call or signalling call
+            	if (mAudioManager.getMode() != AudioManager.MODE_NORMAL) return;
+            	
+            	// start recording
+            	startRecording();
             }
             else if (KeyEvent.KEYCODE_MEDIA_STOP == event.getKeyCode()) {
-            	if (KeyEvent.ACTION_DOWN == event.getAction()) stopRecording();
+            	// only handle button down events
+                if (KeyEvent.ACTION_DOWN != event.getAction()) return;
+                
+                // stop recording
+            	stopRecording();
             }
             else if (KeyEvent.KEYCODE_HEADSETHOOK == event.getKeyCode()) {
-            	if (KeyEvent.ACTION_DOWN == event.getAction()) toggleRecording();
+            	// only handle button down events
+                if (KeyEvent.ACTION_DOWN != event.getAction()) return;
+
+                // if we're currently recording ...
+            	if (mRecording) {
+            		// stop recording
+            		stopRecording();
+            	} else {
+                	// ignore if in-call or signalling call
+                	if (mAudioManager.getMode() != AudioManager.MODE_NORMAL) return;
+                	
+                	// start recording
+            		startRecording();
+            	}
             }
         }
     }
@@ -129,14 +151,6 @@ public class HeadsetService extends Service {
 			}
 		}
     };
-    
-    private void toggleRecording() {
-    	if (mRecording) {
-    		stopRecording();
-    	} else {
-    		startRecording();
-    	}
-    }
     
     private void startRecording() {
         if (mRecording) return;
