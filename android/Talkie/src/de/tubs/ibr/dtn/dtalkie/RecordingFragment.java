@@ -1,16 +1,10 @@
 package de.tubs.ibr.dtn.dtalkie;
 
-import java.util.List;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -39,29 +33,6 @@ public class RecordingFragment extends Fragment {
     private Boolean mRecording = false;
     
     private float mAnimScaleHeight = 1.0f;
-    
-    private SensorEventListener mSensorListener = new SensorEventListener() {
-        public void onSensorChanged(SensorEvent event) {
-            if (event.values.length > 0) {
-                float current = event.values[0];
-                float maxRange = event.sensor.getMaximumRange();
-                boolean far = (current == maxRange);
-                
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                if (prefs.getBoolean("sensor", false)) 
-                {
-                    if (far) {
-                        stopRecording();
-                    } else {
-                        startRecording();
-                    }
-                }
-            }
-        }
-
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        }
-    };
     
     private OnTouchListener mTouchListener = new OnTouchListener() {
         @Override
@@ -106,9 +77,6 @@ public class RecordingFragment extends Fragment {
 
     @Override
     public void onPause() {
-        SensorManager sm = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
-        sm.unregisterListener(mSensorListener);
-
         // we are going out of scope - stop recording
         stopRecording();
         
@@ -126,13 +94,6 @@ public class RecordingFragment extends Fragment {
     	filter.addAction(RecorderService.EVENT_RECORDING_EVENT);
     	filter.addAction(RecorderService.EVENT_RECORDING_INDICATOR);
     	getActivity().registerReceiver(mRecorderEventReceiver, filter);
-        
-        SensorManager sm = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
-        List<Sensor> sensors = sm.getSensorList(Sensor.TYPE_PROXIMITY);
-        if (sensors.size() > 0) {
-            Sensor sensor = sensors.get(0);
-            sm.registerListener(mSensorListener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
-        }
     }
     
     private void startRecording() {
@@ -180,10 +141,15 @@ public class RecordingFragment extends Fragment {
 				if (RecorderService.ACTION_START_RECORDING.equals(action)) {
 			        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 			        
+			        // mark as recording
+			        mRecording = true;
+			        
 			        // show full indicator when dynamic indicator is disabled
 			        if (prefs.getBoolean("ptt", false)) {
+			        	// set indicator level to full
 			        	setIndicator(1.0f, 0);
 			        } else {
+			        	// set indicator level to zero
 			        	setIndicator(0.0f, 0);
 			        }
 				}
@@ -191,6 +157,7 @@ public class RecordingFragment extends Fragment {
 			        // set indicator level to zero
 			        setIndicator(0.0f, 0);
 			        
+			        // mark as not recording
 			        mRecording = false;
 			        
 			        // unlock screen orientation
@@ -199,7 +166,8 @@ public class RecordingFragment extends Fragment {
 				else if (RecorderService.ACTION_ABORT_RECORDING.equals(action)) {
 			        // set indicator level to zero
 			        setIndicator(0.0f, 0);
-			        
+
+			        // mark as not recording
 			        mRecording = false;
 			        
 			        // unlock screen orientation
@@ -214,7 +182,7 @@ public class RecordingFragment extends Fragment {
 		        setIndicator(level);
 			}
 		}
-    	
+
     };
     
     private void setIndicator(Float level) {
