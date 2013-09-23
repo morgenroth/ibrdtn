@@ -22,7 +22,9 @@ dtninbox_SOURCES = dtninbox.cpp \
 dtnoutbox_SOURCES = dtnoutbox.cpp \
 		  ToolUtils.h \
 		  ToolUtils.cpp \
-		  tffs/tffs.h
+		  tffs/tffs.h \
+		  FATFile.h \
+		  FATFile.cpp
 dtnrecv_SOURCES = dtnrecv.cpp
 dtnsend_SOURCES = dtnsend.cpp
 dtntunnel_SOURCES = dtntunnel.cpp
