@@ -23,6 +23,8 @@ dtnoutbox_SOURCES = dtnoutbox.cpp \
 		  ToolUtils.h \
 		  ToolUtils.cpp \
 		  tffs/tffs.h \
+		  ObservedFile.h \
+		  ObservedFile.cpp \
 		  FATFile.h \
 		  FATFile.cpp
 dtnrecv_SOURCES = dtnrecv.cpp
