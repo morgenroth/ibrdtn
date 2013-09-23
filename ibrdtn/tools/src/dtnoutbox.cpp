@@ -30,10 +30,18 @@
 #include "ibrcommon/appstreambuf.h"
 
 #include "ToolUtils.h"
+#include "ObservedFile.h"
+
+#define HAVE_LIBTFFS 1
+
+#ifdef HAVE_LIBTFFS
 extern "C"
 {
 #include "tffs/tffs.h"
+#include "FATFile.h"
 }
+#endif
+
 
 #include <stdlib.h>
 #include <iostream>
@@ -48,6 +56,7 @@ extern "C"
 #include <fcntl.h>
 #endif
 
+
 using namespace ibrcommon;
 
 void print_help()
@@ -55,7 +64,11 @@ void print_help()
 	cout << "-- dtnoutbox (IBR-DTN) --" << endl;
 	cout << "Syntax: dtnoutbox [options] <name> <outbox> <destination>" << endl;
 	cout << " <name>           the application name" << endl;
-	cout << " <outbox>         directory with outgoing files" << endl;
+#ifdef HAVE_LIBTFFS
+	cout << " <outbox>         location of outgoing files, only vfat-images (*.img)" << endl;
+#else
+	cout << " <outbox>         directory of outgoing files" << endl;
+#endif
 	cout << " <destination>    the destination EID for all outgoing files" << endl;
 	cout << "* optional parameters *" << endl;
 	cout << " -h|--help        display this text" << endl;
@@ -81,6 +94,15 @@ map<string,string> readconfiguration( int argc, char** argv )
 	ret["destination"] = argv[3];
 	ret["interval"] = "5000"; //default value
 	ret["rounds"] = "3"; //default value
+
+	//if outbox argument is an image, assume vfat
+	//size_t dot_pos = ret["outbox"].find_last_of(".",ret["outbox"].length());
+	//std:string file_ext = ret["outbox"].substr(dot_pos+1,3);
+	//if(file_ext == "img")
+		//ret["vfat"] = "1";
+	//else
+		//ret["vfat"] = "0";
+
 
 	for (int i = 4; i < argc; ++i)
 	{
@@ -135,49 +157,6 @@ void term( int signal )
 
 
 
-class ObservedFile
-{
-public:
-	ObservedFile( File file );
-	~ObservedFile();
-	bool lastSizesEqual( size_t n );
-	void addSize();
-	void send();
-	size_t getLastSent();
-	File file;
-	size_t last_sent;
-	vector<size_t> sizes;
-
-};
-
-ObservedFile::ObservedFile( File file )
-		: file(file), last_sent(0)
-{
-}
-ObservedFile::~ObservedFile()
-{
-	sizes.clear();
-}
-bool ObservedFile::lastSizesEqual( size_t n )
-{
-	if (n > sizes.size()) return false;
-
-	for (size_t i = 1; i <= n; i++)
-	{
-		if (sizes.at(sizes.size() - i) != sizes.at(sizes.size() - i - 1)) return false;
-	}
-	return true;
-}
-void ObservedFile::addSize()
-{
-	sizes.push_back(file.size());
-}
-void ObservedFile::send()
-{
-	time_t timev;
-	last_sent = time(&timev);
-	sizes.clear();
-}
 
 /*
  * main application method
@@ -193,9 +172,9 @@ int main( int argc, char** argv )
 	map<string,string> conf = readconfiguration(argc, argv);
 	size_t _conf_interval = atoi(conf["interval"].c_str());
 	size_t _conf_rounds = atoi(conf["rounds"].c_str());
+	//bool _conf_vfat = atoi(conf["vfat"].c_str());
 
-	//init list of observered files
-	list<ObservedFile> observed_files;
+
 
 	// init working directory
 	if (conf.find("workdir") != conf.end())
@@ -218,7 +197,23 @@ int main( int argc, char** argv )
 	unsigned int backoff = 2;
 
 	// check outbox for files
-	File outbox(conf["outbox"]);
+#ifdef HAVE_LIBTFFS
+		FATFile outbox(conf["outbox"]);
+		list<FATFile> avail_files;
+		list<FATFile>::iterator iter;
+		list<ObservedFile<FATFile> >::iterator of_iter;
+		list<ObservedFile<FATFile> > observed_files;
+#else
+		File outbox(conf["outbox"]);
+		list<File> avail_files;
+		list<File>::iterator iter;
+		list<ObservedFile<File> >::iterator of_iter;
+		list<ObservedFile<File> > observed_files;
+#endif
+
+	//create vfat image, if neccecary
+		//TODO ...
+
 
 	// loop, if no stop if requested
 	while (_running)
@@ -245,30 +240,33 @@ int main( int argc, char** argv )
 			// check the connection
 			while (_running)
 			{
-				list<File> files;
-				outbox.getFiles(files);
-				for (list<File>::iterator iter = files.begin(); iter != files.end(); ++iter)
+
+
+				outbox.getFiles(avail_files);
+
+				for (iter = avail_files.begin(); iter != avail_files.end(); ++iter)
 				{
 					// skip system files ("." and "..")
 					if ((*iter).isSystem()) continue;
 
 					//only add file if its not under observation
 					bool new_file = true;
-					for (list<ObservedFile>::iterator of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
+					for ( of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
 					{
-						if ((*iter).getPath() == (*of_iter).file.getPath())
+						if ((*iter).getPath() == (*of_iter).getPath())
 						{
 							new_file = false;
 							break;
 						}
 
 					}
-					if (new_file) observed_files.push_back(ObservedFile(*iter));
+					if (new_file)
+						observed_files.push_back(ObservedFile<typeof(*iter)>((*iter).getPath()));
 				}
 
 				if (observed_files.size() == 0)
 				{
-					cout << "no files to send " << endl;
+					cout << "no files to send " << observed_files.size() << endl;
 					// wait some seconds
 					ibrcommon::Thread::sleep(_conf_interval);
 
@@ -278,14 +276,14 @@ int main( int argc, char** argv )
 				stringstream files_to_send;
 				const char **files_to_send_ptr = new const char*[observed_files.size()];
 				size_t counter = 0;
-				for (list<ObservedFile>::iterator iter = observed_files.begin(); iter != observed_files.end(); ++iter)
+				for (of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
 				{
-					ObservedFile &of = (*iter);
+					ObservedFile<typeof(*iter)> &of = (*of_iter);
 
 					//check existance
-					if (!of.file.exists())
+					if (!of.exists())
 					{
-						observed_files.erase(iter);
+						observed_files.erase(of_iter);
 						//if no files to observe: stop, otherwise continue with next file
 						if (observed_files.size() == 0)
 							break;
@@ -294,24 +292,24 @@ int main( int argc, char** argv )
 					}
 
 					// add the file to the files_to_send, if it has not been sent (with the latest timestamp)...
-					size_t latest_timestamp = max(of.file.lastmodify(), of.file.laststatchange());
+					size_t latest_timestamp = of.getLastTimestamp();
 					of.addSize();
 
-					if (of.last_sent < latest_timestamp)
+					if (of.getLastSent() < latest_timestamp)
 					{
 						//... and its size did not change the last x rounds
 						if (of.lastSizesEqual(_conf_rounds))
 						{
 							of.send();
-							files_to_send << of.file.getBasename() << " ";
-							files_to_send_ptr[counter++] = of.file.getPath().c_str();
+							files_to_send << of.getBasename() << " ";
+							files_to_send_ptr[counter++] = of.getPath().c_str();
 						}
 					}
 				}
 
 				if (!counter)
 				{
-					cout << "no files to send " << endl;
+					cout << "no files to send B" << endl;
 				}
 				else
 				{
@@ -327,10 +325,10 @@ int main( int argc, char** argv )
 					//delete files, if wanted
 					if (!keep_files)
 					{
-						list<File>::iterator file_iter = files.begin();
-						while (file_iter != files.end())
+						iter = avail_files.begin();
+						while (iter != avail_files.end())
 						{
-							(*file_iter++).remove(false);
+							(*iter++).remove(false);
 						}
 					}
 #else
