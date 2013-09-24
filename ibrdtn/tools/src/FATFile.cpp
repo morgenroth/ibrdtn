@@ -7,21 +7,14 @@
 
 #include "FATFile.h"
 
-//#ifdef HAVE_LIBTFFS
-#define BUF_SIZE 1024 //buffer size for vfat file reads
-//#endif
+string FATFile::_img_path = "";
 
-FATFile::FATFile() : File(), _img_path(""), htffs(0),hdir(0),hfile(0), ret(-1)
+FATFile::FATFile() : File(), htffs(0),hdir(0),hfile(0), ret(-1)
 {
 	update();
 }
 
-FATFile::FATFile( string img_path) : File("/"), _img_path(img_path), htffs(0),hdir(0),hfile(0), ret(-1)
-{
-	update();
-}
-
-FATFile::FATFile( string img_path, string file_path ) : File(file_path), _img_path(img_path), htffs(0),hdir(0),hfile(0),ret(-1)
+FATFile::FATFile( string file_path) : File(file_path), htffs(0),hdir(0),hfile(0), ret(-1)
 {
 	update();
 }
@@ -43,7 +36,7 @@ int FATFile::getFiles( list<FATFile> &files)
 	{
 		if ((ret = TFFS_readdir(hdir, &dirent)) == TFFS_OK) {
 
-			files.push_back(FATFile(_img_path,string(dirent.d_name)));
+			files.push_back(FATFile(string(dirent.d_name)));
 		}
 		else if (ret == ERR_TFFS_LAST_DIRENTRY) { // end of directory
 			break;
@@ -76,7 +69,9 @@ FATFile FATFile::getParent()
 
 bool FATFile::exists()
 {
-	return set_dirent_to_current();
+	mount_tffs();
+	open_tffs();
+	return (set_dirent_to_current() == 1);
 }
 
 void FATFile::update()
@@ -109,7 +104,7 @@ time_t FATFile::lastaccess()
 	tm.tm_mday = dirent.crttime.day;
 	tm.tm_hour = dirent.crttime.hour;
 	tm.tm_min  = dirent.crttime.min;
-	tm.tm_sec  = 0; //TODO
+	tm.tm_sec  = dirent.crttime.sec / 2; //somehow, libtffs writes seconds from 0-119;
 	return mktime(&tm);
 }
 
@@ -122,11 +117,6 @@ time_t FATFile::laststatchange()
 {
 	return lastaccess();
 }
-
-//void FATFile::createDirectory( File& path )
-//{
-	//TODO problem: static
-//}
 
 void FATFile::setImgPath(string img_path)
 {
@@ -159,20 +149,21 @@ int FATFile::set_dirent_to_current()
 	//iterate directory
 	while( 1 )
 	{
-		if ((ret = TFFS_readdir(hdir, &dirent)) == TFFS_OK) {
-			if(dirent.d_name == getBasename())
-			{
-				return 1;
-			}
-		}
-		else if (ret == ERR_TFFS_LAST_DIRENTRY) { // end of directory
-			return 0;
-		}
-		else {
-			cout << "ERROR: TFFS_readdir" << ret << endl;
-			return -1;
+		ret = TFFS_readdir(hdir, &dirent);
+		switch (ret)
+		{
+			case TFFS_OK:
+				if(dirent.d_name == getBasename())
+					return 1;
+				break;
+
+			case ERR_TFFS_LAST_DIRENTRY:
+				return 0;
+
+			default:
+				return -1;
 		}
 	}
-	return 0;
+	return -1;
 }
 

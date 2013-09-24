@@ -39,10 +39,11 @@ public:
 	time_t lastmodify();
 	time_t laststatchange();
 
-	void setImgPath(string img_path);
+	static void setImgPath(string img_path);
+
 
 private:
-	string _img_path;
+	static string _img_path;
 
 	//handles
 	tffs_handle_t htffs;
@@ -56,6 +57,7 @@ private:
 	int mount_tffs();
 	int open_tffs();
 	int set_dirent_to_current();
+
 
 };
 
