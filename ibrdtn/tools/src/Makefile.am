@@ -20,13 +20,11 @@ dtninbox_SOURCES = dtninbox.cpp \
 		  ToolUtils.h \
 		  ToolUtils.cpp
 dtnoutbox_SOURCES = dtnoutbox.cpp \
-		  ToolUtils.h \
-		  ToolUtils.cpp \
 		  tffs/tffs.h \
-		  ObservedFile.h \
-		  ObservedFile.cpp \
 		  FATFile.h \
-		  FATFile.cpp
+		  FATFile.cpp \
+		  ToolUtils.h \
+		  ToolUtils.cpp
 dtnrecv_SOURCES = dtnrecv.cpp
 dtnsend_SOURCES = dtnsend.cpp
 dtntunnel_SOURCES = dtntunnel.cpp
