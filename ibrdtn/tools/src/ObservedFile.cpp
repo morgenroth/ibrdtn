@@ -1,8 +1,8 @@
 #include "ObservedFile.h"
-					//size_t latest_timestamp = max(of.lastmodify(), of.laststatchange());
 
 template<typename T>
-inline ObservedFile<T>::ObservedFile( std::string path ) : _last_sent(-1)
+inline ObservedFile<T>::ObservedFile( std::string path )
+		: _file(path.substr(2,path.length()-2)),_last_sent(0)
 {
 }
 
@@ -26,13 +26,13 @@ inline string ObservedFile<T>::getPath()
 template<typename T>
 inline bool ObservedFile<T>::exists()
 {
-	return _file.exists;
+	return _file.exists();
 }
 
 template<typename T>
 inline time_t ObservedFile<T>::getLastTimestamp()
 {
-	return  max(_file.lastmodify(),_file.laststatchange());
+	return max(_file.lastmodify(), _file.laststatchange());
 }
 
 template<typename T>
@@ -66,8 +66,6 @@ inline void ObservedFile<T>::addSize()
 {
 	_sizes.push_back(_file.size());
 }
-
-
 
 template<typename T>
 inline size_t ObservedFile<T>::getLastSent()
