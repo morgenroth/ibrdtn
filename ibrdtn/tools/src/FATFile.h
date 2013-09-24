@@ -50,7 +50,7 @@ private:
 	tdir_handle_t hdir;
 	tfile_handle_t hfile;
 
-	size_t ret;
+	int32 ret;
 	dirent_t dirent;
 
 	//tffs methods
