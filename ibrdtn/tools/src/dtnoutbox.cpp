@@ -82,6 +82,7 @@ void print_help()
 	cout << " --badclock         assumes a bad clock on the system, the only indicator to send a file is its size" << endl;
 	cout << " --consider-swp     do not ignore these files: *~* and *.swp" << endl;
 	cout << " --consider-invis   do not ignores these files: .*" << endl;
+	cout << " -q| --quiet		 only print error messages" << endl;
 
 }
 
@@ -144,6 +145,9 @@ map<string,string> readconfiguration( int argc, char** argv )
 		if (arg == "--consider-invis")
 			ret["consider_invis"] = "1";
 
+		if (arg == "-q" || arg == "--quiet")
+			ret["quiet"] = "1";
+
 	}
 
 	return ret;
@@ -169,7 +173,6 @@ static bool isSwap(string filename)
 	bool tilde = filename.find("~",0) != filename.npos;
 	bool swp   = filename.find(".swp",filename.length()-4) != filename.npos;
 
-	cout << "files" << filename << tilde << swp << endl;
 	return (tilde || swp);
 }
 
@@ -218,6 +221,13 @@ int main( int argc, char** argv )
 	if (conf.find("consider_invis") != conf.end())
 	{
 		_conf_consider_invis = true;
+	}
+
+	//check consider-invis parameter
+	bool _conf_quiet = false;
+	if (conf.find("quiet") != conf.end())
+	{
+		_conf_quiet = true;
 	}
 
 	// init working directory
@@ -317,7 +327,8 @@ int main( int argc, char** argv )
 
 				if (observed_files.size() == 0)
 				{
-					cout << "no files to send: directory empty" << observed_files.size() << endl;
+					if (!_conf_quiet)
+						cout << "no files to send: directory empty" << observed_files.size() << endl;
 
 					// wait some seconds
 					ibrcommon::Thread::sleep(_conf_interval);
@@ -330,7 +341,6 @@ int main( int argc, char** argv )
 				for (of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
 				{
 					ObservedFile<typeof(*iter)> &of = (*of_iter);
-					cout << "files checking:" << of.getBasename() << endl;
 					//check existance
 					if (!of.exists())
 					{
@@ -347,7 +357,6 @@ int main( int argc, char** argv )
 					size_t latest_timestamp = of.getLastTimestamp();
 					//two indicators to send:
 					bool send_time = (of.getLastSent() < latest_timestamp) || _conf_badclock;
-					cout << "files size:"<< of.getLastSent() << "<"<< latest_timestamp << endl;
 					bool send_size = of.lastSizesEqual(_conf_rounds);
 					if (send_time && send_size)
 					{
@@ -370,11 +379,13 @@ int main( int argc, char** argv )
 
 				if (!counter)
 				{
-					cout << "no files to send: files do not fulfill requirements (yet)" << endl;
+					if(!_conf_quiet)
+						cout << "no files to send: files do not fulfill requirements (yet)" << endl;
 				}
 				else
 				{
-					cout << "files: " << files_to_send_ss.str() << endl;
+					if(!_conf_quiet)
+						cout << "files: " << files_to_send_ss.str() << endl;
 
 					// create a blob
 					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
