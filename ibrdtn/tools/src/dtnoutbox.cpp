@@ -247,6 +247,7 @@ int main( int argc, char** argv )
 
 	// check outbox for files
 #ifdef HAVE_LIBTFFS
+		File outbox_img(conf["outbox"]);
 		FATFile outbox(conf["outbox"]);
 		FATFile::setImgPath(conf["outbox"]);
 		list<FATFile> avail_files;
@@ -255,6 +256,13 @@ int main( int argc, char** argv )
 		list<ObservedFile<FATFile>* > files_to_send;
 		list<ObservedFile<FATFile> >::iterator of_iter;
 		list<ObservedFile<FATFile>* >::iterator of_ptr_iter;
+		// TODO create vfat image, if nessecary
+		if(!outbox_img.exists())
+		{
+			cout << "ERROR: img file not found" << endl;
+			return -1;
+		}
+
 #else
 		File outbox(conf["outbox"]);
 		list<File> avail_files;
@@ -265,8 +273,6 @@ int main( int argc, char** argv )
 		list<ObservedFile<File>* >::iterator of_ptr_iter;
 #endif
 
-	//create vfat image, if nessecary
-		//TODO ...
 
 	// loop, if no stop if requested
 	while (_running)
@@ -307,28 +313,24 @@ int main( int argc, char** argv )
 					if (!_conf_consider_swp && isSwap((*iter).getBasename())) continue;
 					if (!_conf_consider_invis && isInvis((*iter).getBasename())) continue;
 
-					//only add file if its not under observation yet //TODO ohne extra iteration
+					//only add file if its not under observation yet
 					bool new_file = true;
 					for ( of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
 					{
 						if ((*iter).getPath() == (*of_iter).getPath())
 						{
-							new_file = false;
-							break;
+							new_file = false; break;
 						}
 
 					}
-					if (new_file)
-					{
-						observed_files.push_back(ObservedFile<typeof(*iter)>((*iter).getPath()));
-					}
-
+					if(new_file)
+							observed_files.push_back(ObservedFile<typeof(*iter)>((*iter).getPath()));
 				}
 
 				if (observed_files.size() == 0)
 				{
 					if (!_conf_quiet)
-						cout << "no files to send: directory empty" << observed_files.size() << endl;
+						cout << "no files to send: directory empty" << endl;
 
 					// wait some seconds
 					ibrcommon::Thread::sleep(_conf_interval);
