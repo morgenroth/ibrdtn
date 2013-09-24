@@ -14,6 +14,10 @@
 #include <archive.h>
 #include <archive_entry.h>
 #include <fcntl.h>
+extern "C"
+{
+#include "tffs/tffs.h"
+}
 #endif
 
 class ToolUtils
@@ -21,7 +25,6 @@ class ToolUtils
 public:
 	ToolUtils();
 	virtual ~ToolUtils();
-#ifdef HAVE_LIBARCHIVE
 	/**
 	 * write tar archive to payload block
 	 */
@@ -30,16 +33,24 @@ public:
 	 * read tar archive from payload block
 	 */
 	static void read_tar_archive( const char *extract_folder, ibrcommon::BLOB::Reference *blob );
-#endif
+
+	static void set_img_path(std::string img_path);
 private:
-#ifdef HAVE_LIBARCHIVE
 	//CALLBACKS FOR LIBARCHIVE
 	static int close_callback( struct archive *, void *blob_iostream );
 	static ssize_t write_callback( struct archive *, void *blob_ptr, const void *buffer, size_t length );
 	static int open_callback( struct archive *, void *blob_iostream );
 
 	static ssize_t read_callback( struct archive *a, void *client_data, const void **buff );
-#endif
+
+	static std::string _img_path;
+
+	//handles
+	static tffs_handle_t htffs;
+	static tdir_handle_t hdir;
+	static tfile_handle_t hfile;
+	static int32 ret;
+
 };
 
 #endif /* TOOLUTILS_H_ */

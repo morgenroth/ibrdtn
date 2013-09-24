@@ -6,8 +6,17 @@
  */
 
 #include "ToolUtils.h"
-
+#include <stdlib.h>
+#include <string.h>
 using namespace ibrcommon;
+
+
+std::string ToolUtils::_img_path = "";
+tffs_handle_t ToolUtils::htffs = 0;
+tdir_handle_t ToolUtils::hdir = 0;
+tfile_handle_t ToolUtils::hfile = 0;
+int32 ToolUtils::ret= 0;
+#define BUFF_SIZE 8192
 
 #ifdef HAVE_LIBARCHIVE
 ToolUtils::ToolUtils()
@@ -29,18 +38,21 @@ int ToolUtils::open_callback( struct archive *, void *blob_iostream )
 ssize_t ToolUtils::write_callback( struct archive *, void *blob_ptr, const void *buffer, size_t length )
 {
 	char* cast_buf = (char*) buffer;
+
 	BLOB::Reference blob = *((BLOB::Reference*) blob_ptr);
 	BLOB::iostream os = blob.iostream();
+
 	(*os).write(cast_buf, length);
+
 	return length;
 }
 
+
+
 ssize_t ToolUtils::read_callback( struct archive *a, void *client_data, const void **buffer )
 {
-	cout << "read_callback" << endl;
 	struct path_and_blob *data = (path_and_blob*) client_data;
 
-	cout << data->path << endl;
 	BLOB::iostream is = data->blob->iostream();
 
 
@@ -88,12 +100,13 @@ void ToolUtils::read_tar_archive( const char *extract_folder, ibrcommon::BLOB::R
 	}
 	archive_read_free(a);
 }
+
 void ToolUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char **filenames, size_t num_files )
 {
 	struct archive *a;
 	struct archive_entry *entry;
 	struct stat st;
-	char buff[8192];
+	char buff[BUFF_SIZE];
 	int len;
 	int fd;
 
@@ -108,11 +121,21 @@ void ToolUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char 
 	while (num_files != 0)
 	{
 
-		stat(*filenames, &st);
-		entry = archive_entry_new();
-		archive_entry_set_size(entry, st.st_size);
-		archive_entry_set_filetype(entry, AE_IFREG );
-		archive_entry_set_perm(entry, 0644);
+		if (_img_path == "")
+		{
+			stat(*filenames, &st);
+			entry = archive_entry_new();
+			archive_entry_set_size(entry, st.st_size);
+			archive_entry_set_filetype(entry, AE_IFREG );
+			archive_entry_set_perm(entry, 0644);
+		}
+		else
+		{
+			entry = archive_entry_new();
+			archive_entry_set_size(entry, 1337); //TODO echte size setzen
+			archive_entry_set_filetype(entry, AE_IFREG );
+			archive_entry_set_perm(entry, 0644);
+		}
 
 		//set filename in archive to relative paths
 		std::string path(*filenames);
@@ -127,20 +150,89 @@ void ToolUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char 
 		archive_entry_set_mtime(entry, ts.tv_sec, ts.tv_nsec); //modification time
 
 		archive_write_header(a, entry);
-		fd = open(*filenames, O_RDONLY);
-		len = read(fd, buff, sizeof(buff));
+
+		if(_img_path == "")
+		{
+			fd = open(*filenames, O_RDONLY);
+			len = read(fd, buff, BUFF_SIZE);
+		}
+		else
+		{
+			//mount tffs
+			byte* path = const_cast<char *>(_img_path.c_str());
+			if ((ret = TFFS_mount(path, &htffs)) != TFFS_OK)
+			{
+				cout << "ERROR: TFFS_mount" << ret << endl;
+				return;
+			}
+
+			//open file
+				//remove leading "././"
+				string filename(*filenames);
+				char* file = const_cast<char *>(filename.substr(4,filename.length()-4).c_str());
+			//char* file = const_cast<char *>(*filenames);
+			cout << file << endl;
+			if ((ret = TFFS_fopen(htffs, file, "r", &hfile)) != TFFS_OK)
+			{
+				cout << "ERROR: TFFS_fopen" << ret << endl;
+				return;
+			}
+
+			memset(buff, 0, BUFF_SIZE);
+			//read file
+			if (( ret = TFFS_fread(hfile,BUFF_SIZE,(unsigned char*) buff)) < 0)
+			{
+				if( ret == ERR_TFFS_FILE_EOF)
+				{
+					len = 0;
+					break;
+				}
+				cout << "ERROR: TFFS_fread" << ret << endl;
+				return;
+			}
+			len = ret;
+		}
 		while (len > 0)
 		{
 			archive_write_data(a, buff, len);
-			len = read(fd, buff, sizeof(buff));
+			if(_img_path == "")
+				len = read(fd, buff, sizeof(buff));
+			else
+			{
+				if (( ret  = TFFS_fread(hfile,sizeof(buff),(unsigned char*) buff)) < 0)
+				{
+					if( ret == ERR_TFFS_FILE_EOF)
+					{
+						len = 0;
+						break;
+					}
+					cout << "ERROR: TFFS_fread" << ret << endl;
+					return;
+				}
+				len = ret;
+			}
+
 		}
-		close(fd);
+		if(_img_path == "")
+			close(fd);
+		else
+		{
+			if ((ret = TFFS_fclose(hfile)) != TFFS_OK) {
+				cout << "ERROR: TFFS_fclose" << ret;
+				return;
+			}
+		}
 		archive_entry_free(entry);
 		filenames++;
 		num_files--;
 	}
 	archive_write_close(a);
 	archive_write_free(a);
+}
+
+void ToolUtils::set_img_path( std::string img_path )
+{
+	_img_path = img_path;
 }
 
 #endif
