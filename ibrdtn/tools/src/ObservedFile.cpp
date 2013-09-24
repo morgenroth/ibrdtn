@@ -2,7 +2,7 @@
 
 template<typename T>
 inline ObservedFile<T>::ObservedFile( std::string path )
-		: _file(path.substr(2,path.length()-2)),_last_sent(0)
+		: _file(path),_last_sent(0)
 {
 }
 
