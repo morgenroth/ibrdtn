@@ -124,9 +124,6 @@ int main(int argc, char** argv)
     // backoff for reconnect
     unsigned int backoff = 2;
 
-    // check outbox for files // TODO ??
-	File outbox(conf["outbox"]); // TODO ??
-
     // loop, if no stop if requested
     while (_running)
     {
