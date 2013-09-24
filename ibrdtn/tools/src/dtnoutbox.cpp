@@ -66,22 +66,22 @@ void print_help()
 {
 	cout << "-- dtnoutbox (IBR-DTN) --" << endl;
 	cout << "Syntax: dtnoutbox [options] <name> <outbox> <destination>" << endl;
-	cout << " <name>           the application name" << endl;
+	cout << " <name>             the application name" << endl;
 #ifdef HAVE_LIBTFFS
-	cout << " <outbox>         location of outgoing files, only vfat-images (*.img)" << endl;
+	cout << " <outbox>           location of outgoing files, only vfat-images (*.img)" << endl;
 #else
-	cout << " <outbox>         directory of outgoing files" << endl;
+	cout << " <outbox>           directory of outgoing files" << endl;
 #endif
-	cout << " <destination>    the destination EID for all outgoing files" << endl;
+	cout << " <destination>      the destination EID for all outgoing files" << endl << endl;
 	cout << "* optional parameters *" << endl;
-	cout << " -h|--help        display this text" << endl;
-	cout << " -w|--workdir     temporary work directory" << endl;
-	cout << " -k|--keep        keep files in outbox" << endl;
-	cout << " -i <interval>	   interval in milliseconds, in which <outbox> is scanned for new/changed files. default: 5000" << endl;
-	cout << " -r <number>	   number of rounds of intervals, after which a unchanged file is considered as written. default: 3" << endl;
-	cout << " -b|--badclock	   assumes a bad clock on the system, the only indicator to send a file is its size" << endl;
-	cout << " --consider-swp   do not ignore these files: *~* and *.swp" << endl;
-	cout << " --consider-invis do not ignores these files: .*" << endl;
+	cout << " -h|--help          display this text" << endl;
+	cout << " -w|--workdir <dir> temporary work directory" << endl;
+	cout << " -k|--keep          keep files in outbox" << endl;
+	cout << " -i <interval>      interval in milliseconds, in which <outbox> is scanned for new/changed files. default: 5000" << endl;
+	cout << " -r <number>        number of rounds of intervals, after which a unchanged file is considered as written. default: 3" << endl;
+	cout << " --badclock         assumes a bad clock on the system, the only indicator to send a file is its size" << endl;
+	cout << " --consider-swp     do not ignore these files: *~* and *.swp" << endl;
+	cout << " --consider-invis   do not ignores these files: .*" << endl;
 
 }
 
@@ -133,7 +133,7 @@ map<string,string> readconfiguration( int argc, char** argv )
 		}
 
 
-		if (arg == "-b" || arg == "--badclock")
+		if (arg == "--badclock")
 		{
 			ret["badclock"] = "1";
 		}
