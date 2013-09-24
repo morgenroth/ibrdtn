@@ -76,12 +76,12 @@ void print_help()
 	cout << "* optional parameters *" << endl;
 	cout << " -h|--help          display this text" << endl;
 	cout << " -w|--workdir <dir> temporary work directory" << endl;
-	cout << " -k|--keep          keep files in outbox" << endl;
 	cout << " -i <interval>      interval in milliseconds, in which <outbox> is scanned for new/changed files. default: 5000" << endl;
 	cout << " -r <number>        number of rounds of intervals, after which a unchanged file is considered as written. default: 3" << endl;
 	cout << " --badclock         assumes a bad clock on the system, the only indicator to send a file is its size" << endl;
 	cout << " --consider-swp     do not ignore these files: *~* and *.swp" << endl;
 	cout << " --consider-invis   do not ignores these files: .*" << endl;
+	cout << " --no-keep          do no t keep files in outbox" << endl;
 	cout << " -q| --quiet		 only print error messages" << endl;
 
 }
@@ -118,11 +118,6 @@ map<string,string> readconfiguration( int argc, char** argv )
 			ret["workdir"] = argv[++i];
 		}
 
-		if (arg == "-k" || arg == "--keep")
-		{
-			ret["keep"] = "1";
-		}
-
 		if (arg == "-i")
 		{
 			ret["interval"] = argv[++i];
@@ -144,6 +139,9 @@ map<string,string> readconfiguration( int argc, char** argv )
 
 		if (arg == "--consider-invis")
 			ret["consider_invis"] = "1";
+
+		if ( arg == "--no-keep")
+			ret["no-keep"] = "1";
 
 		if (arg == "-q" || arg == "--quiet")
 			ret["quiet"] = "1";
@@ -196,10 +194,10 @@ int main( int argc, char** argv )
 	size_t _conf_rounds = atoi(conf["rounds"].c_str());
 
 	//check keep parameter
-	bool _conf_keep = false;
-	if (conf.find("keep") != conf.end())
+	bool _conf_keep = true;
+	if (conf.find("no-keep") != conf.end())
 	{
-		_conf_keep = true;
+		_conf_keep = false;
 	}
 
 	//check badclock parameter
@@ -257,6 +255,13 @@ int main( int argc, char** argv )
 		list<ObservedFile<FATFile> >::iterator of_iter;
 		list<ObservedFile<FATFile>* >::iterator of_ptr_iter;
 		// TODO create vfat image, if nessecary
+
+		if(outbox_img.getPath().substr(outbox_img.getPath().length()-4) != ".img")
+		{
+			cout << "ERROR: this is not an img file" << endl;
+			return -1;
+		}
+
 		if(!outbox_img.exists())
 		{
 			cout << "ERROR: img file not found" << endl;
@@ -271,8 +276,15 @@ int main( int argc, char** argv )
 		list<ObservedFile<File>* > files_to_send;
 		list<ObservedFile<File> >::iterator of_iter;
 		list<ObservedFile<File>* >::iterator of_ptr_iter;
-#endif
 
+		if(!outbox.isDirectory())
+		{
+			cout << "ERROR: this is not a directory" << endl;
+			return -1;
+		}
+		if(!outbox.exists())
+			File::createDirectory(outbox);
+#endif
 
 	// loop, if no stop if requested
 	while (_running)
@@ -317,14 +329,21 @@ int main( int argc, char** argv )
 					bool new_file = true;
 					for ( of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
 					{
-						if ((*iter).getPath() == (*of_iter).getPath())
+						if ((*iter).getPath() == (*of_iter).getPath().substr(2))
 						{
 							new_file = false; break;
 						}
 
 					}
 					if(new_file)
-							observed_files.push_back(ObservedFile<typeof(*iter)>((*iter).getPath()));
+					{
+							//remove leading "./"
+							string path = (*iter).getPath();
+							if(path.substr(2) == "./")
+							string path = path.substr(2);
+
+							observed_files.push_back(ObservedFile<typeof(*iter)>(path));
+					}
 				}
 
 				if (observed_files.size() == 0)
@@ -382,7 +401,7 @@ int main( int argc, char** argv )
 				if (!counter)
 				{
 					if(!_conf_quiet)
-						cout << "no files to send: files do not fulfill requirements (yet)" << endl;
+						cout << "no files to send: requirements not fulfilled" << endl;
 				}
 				else
 				{
@@ -396,11 +415,10 @@ int main( int argc, char** argv )
 #ifdef HAVE_LIBARCHIVE
 	//if libarchive is available, check if libtffs can be used
 	#ifdef HAVE_LIBTFFS
-					cout << "pseudo send" << endl;
-					//ToolUtils::write_tar_archive_from_vfat(&blob, files_to_send_ptr, counter);
-	#else
-					ToolUtils::write_tar_archive(&blob, files_to_send_ptr, counter);
+					ToolUtils::set_img_path(conf["outbox"]);
 	#endif
+					ToolUtils::write_tar_archive(&blob, files_to_send_ptr, counter);
+
 					//delete files, if wanted
 					if (!_conf_keep)
 					{
