@@ -246,7 +246,7 @@ int main( int argc, char** argv )
 	// check outbox for files
 #ifdef HAVE_LIBTFFS
 		File outbox_img(conf["outbox"]);
-		FATFile outbox(conf["outbox"]);
+		FATFile outbox;
 		FATFile::setImgPath(conf["outbox"]);
 		list<FATFile> avail_files;
 		list<FATFile>::iterator iter;
@@ -425,7 +425,7 @@ int main( int argc, char** argv )
 						iter = avail_files.begin();
 						while (iter != avail_files.end())
 						{
-							(*iter++).remove(false);
+							(*iter++).remove(true);
 						}
 					}
 //or commandline fallback
