@@ -196,7 +196,7 @@ void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfi
 
 	//iterate tarfiles
 	vector<tarfile>::iterator iter;
-	for(iter = tarfiles.begin(); iter <= tarfiles.end(); iter++)
+	for(iter = tarfiles.begin(); iter < tarfiles.end(); iter++)
 	{
 		tarfile tf = (*iter);
 
@@ -230,14 +230,19 @@ void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfi
 			if (( ret = TFFS_fread(hfile,BUFF_SIZE,(unsigned char*) buff)) < 0)
 			{
 					if( ret == ERR_TFFS_FILE_EOF)
-					{
 						len = 0;
-						break;
+
+					else
+					{
+						cout << "ERROR: TFFS_fread" << ret << endl;
+						return;
 					}
-					cout << "ERROR: TFFS_fread" << ret << endl;
-					return;
+
 			}
-			len = ret;
+			else
+			{
+					len = ret;
+			}
 		}
 
 		//write buffer to archive
@@ -253,7 +258,7 @@ void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfi
 					if( ret == ERR_TFFS_FILE_EOF)
 					{
 						len = 0;
-						break;
+						continue;
 					}
 					cout << "ERROR: TFFS_fread" << ret << endl;
 					return;
