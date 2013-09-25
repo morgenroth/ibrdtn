@@ -78,11 +78,15 @@ void print_help()
 	cout << " -w|--workdir <dir> temporary work directory" << endl;
 	cout << " -i <interval>      interval in milliseconds, in which <outbox> is scanned for new/changed files. default: 5000" << endl;
 	cout << " -r <number>        number of rounds of intervals, after which a unchanged file is considered as written. default: 3" << endl;
+#ifdef HAVE_LIBTFFS
+	cout << " -p <path>          path of outbox within vfat image. default: /" << endl;
+#endif
+	cout << endl;
 	cout << " --badclock         assumes a bad clock on the system, the only indicator to send a file is its size" << endl;
 	cout << " --consider-swp     do not ignore these files: *~* and *.swp" << endl;
 	cout << " --consider-invis   do not ignores these files: .*" << endl;
 	cout << " --no-keep          do no t keep files in outbox" << endl;
-	cout << " -q| --quiet		 only print error messages" << endl;
+	cout << " --quiet		     only print error messages" << endl;
 
 }
 
@@ -99,8 +103,10 @@ map<string,string> readconfiguration( int argc, char** argv )
 	ret["name"] = argv[1];
 	ret["outbox"] = argv[2];
 	ret["destination"] = argv[3];
-	ret["interval"] = "5000"; //default value
-	ret["rounds"] = "3"; //default value
+	//default values:
+	ret["interval"] = "5000";
+	ret["rounds"] = "3";
+	ret["path"] = "/";
 
 	for (int i = 4; i < argc; ++i)
 	{
@@ -114,25 +120,16 @@ map<string,string> readconfiguration( int argc, char** argv )
 		}
 
 		if (arg == "-w" || arg == "--workdir")
-		{
 			ret["workdir"] = argv[++i];
-		}
 
 		if (arg == "-i")
-		{
 			ret["interval"] = argv[++i];
-		}
 
 		if (arg == "-r")
-		{
 			ret["rounds"] = argv[++i];
-		}
-
 
 		if (arg == "--badclock")
-		{
 			ret["badclock"] = "1";
-		}
 
 		if (arg == "--consider-swp")
 			ret["consider_swp"] = "1";
@@ -143,8 +140,11 @@ map<string,string> readconfiguration( int argc, char** argv )
 		if ( arg == "--no-keep")
 			ret["no-keep"] = "1";
 
-		if (arg == "-q" || arg == "--quiet")
+		if ( arg == "--quiet")
 			ret["quiet"] = "1";
+
+		if (arg == "-p")
+			ret["path"] = argv[++i];
 
 	}
 
@@ -246,8 +246,8 @@ int main( int argc, char** argv )
 	// check outbox for files
 #ifdef HAVE_LIBTFFS
 		File outbox_img(conf["outbox"]);
-		FATFile outbox;
 		FATFile::setImgPath(conf["outbox"]);
+		FATFile outbox(conf["path"]);
 		list<FATFile> avail_files;
 		list<FATFile>::iterator iter;
 		list<ObservedFile<FATFile> > observed_files;
@@ -285,6 +285,7 @@ int main( int argc, char** argv )
 		if(!outbox.exists())
 			File::createDirectory(outbox);
 #endif
+
 
 	// loop, if no stop if requested
 	while (_running)
