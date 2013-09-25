@@ -329,7 +329,7 @@ int main( int argc, char** argv )
 					bool new_file = true;
 					for ( of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
 					{
-						if ((*iter).getPath() == (*of_iter).getPath().substr(2))
+						if ((*iter).getPath() == (*of_iter).getPath())
 						{
 							new_file = false; break;
 						}
@@ -339,8 +339,8 @@ int main( int argc, char** argv )
 					{
 							//remove leading "./"
 							string path = (*iter).getPath();
-							if(path.substr(2) == "./")
-							string path = path.substr(2);
+							if(path.substr(0,2) == "./")
+									path = path.substr(2);
 
 							observed_files.push_back(ObservedFile<typeof(*iter)>(path));
 					}

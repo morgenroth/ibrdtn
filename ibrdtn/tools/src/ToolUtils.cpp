@@ -167,9 +167,9 @@ void ToolUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char 
 			}
 
 			//open file
-				//remove leading "././"
+				//remove leading "./"
 				string filename(*filenames);
-				char* file = const_cast<char *>(filename.substr(4,filename.length()-4).c_str());
+				char* file = const_cast<char *>(filename.substr(2).c_str());
 			//char* file = const_cast<char *>(*filenames);
 			cout << file << endl;
 			if ((ret = TFFS_fopen(htffs, file, "r", &hfile)) != TFFS_OK)
