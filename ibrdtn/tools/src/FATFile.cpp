@@ -36,8 +36,7 @@ int FATFile::getFiles( list<FATFile> &files)
 			string newpath = path + "/" + dirent.d_name;
 
 			FATFile f(newpath);
-			if(!f.isSystem())
-				files.push_back(f);
+			files.push_back(f);
 		}
 		else if (ret == ERR_TFFS_LAST_DIRENTRY) { // end of directory
 			break;
