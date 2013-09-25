@@ -9,7 +9,7 @@
 
 string FATFile::_img_path = "";
 
-FATFile::FATFile() : File(), htffs(0),hdir(0),hfile(0), ret(-1)
+FATFile::FATFile() : File("/"), htffs(0),hdir(0),hfile(0), ret(-1)
 {
 	update();
 }
@@ -25,18 +25,19 @@ FATFile::~FATFile()
 
 int FATFile::getFiles( list<FATFile> &files)
 {
-	//if(!isDirectory())
-		//return -1;
-
 	mount_tffs();
-	open_tffs();
+	opendir_tffs();
 
-	//iterate directory
+	string path = getPath();
 	while( 1 )
 	{
-		if ((ret = TFFS_readdir(hdir, &dirent)) == TFFS_OK) {
+		if ((ret = TFFS_readdir(hdir, &dirent)) == TFFS_OK)
+		{
+			string newpath = path + "/" + dirent.d_name;
 
-			files.push_back(FATFile(string(dirent.d_name)));
+			FATFile f(newpath);
+			if(!f.isSystem())
+				files.push_back(f);
 		}
 		else if (ret == ERR_TFFS_LAST_DIRENTRY) { // end of directory
 			break;
@@ -54,7 +55,57 @@ int FATFile::getFiles( list<FATFile> &files)
 
 int FATFile::remove( bool recursive )
 {
-	//TODO not implemented yet, because not needed
+	if (isSystem()) return -1;
+	//if (_type == DT_UNKNOWN) return -1;
+
+	if(isDirectory())
+	{
+		if(recursive)
+		{
+			int ret = 0;
+
+			// container for all files
+			list<FATFile> files;
+
+			// get all files in this directory
+			if ((ret = getFiles(files)) < 0)
+				return ret;
+
+			for (list<FATFile>::iterator iter = files.begin(); iter != files.end(); ++iter)
+			{
+			FATFile &file = (*iter);
+			if (!file.isSystem())
+			{
+				if ((ret = file.remove(recursive)) < 0)
+					return ret;
+				}
+			}
+			//remove dir
+			mount_tffs();
+			opendir_tffs();
+			string path = getPath();
+			byte* byte_path = const_cast<char *>(path.c_str());
+			if ((ret = TFFS_rmdir(htffs, byte_path)) != TFFS_OK)
+			{
+				cout << "ERROR: TFFS_rmdir" << ret << endl;
+				return -1;
+			}
+			}
+	}
+	else
+	{
+		//remove file
+		mount_tffs();
+		opendir_tffs();
+		string path = getPath();
+		byte* byte_path = const_cast<char *>(path.c_str());
+		if ((ret = TFFS_rmfile(htffs, byte_path)) != TFFS_OK)
+		{
+			cout << "ERROR: TFFS_rmfile" << ret << endl;
+			return -1;
+		}
+	}
+	return 0;
 }
 
 FATFile FATFile::get( string filename )
@@ -70,7 +121,7 @@ FATFile FATFile::getParent()
 bool FATFile::exists()
 {
 	mount_tffs();
-	open_tffs();
+	opendir_tffs();
 	//remove leading "./"
 	string path = getPath();
 	if(path == "/" || path.empty())
@@ -78,8 +129,6 @@ bool FATFile::exists()
 
 	if( path.length() > 2 && path.substr(0,2) == "./")
 			path = path.substr(2);
-
-	cout << "files exist? " << path << endl;
 
 	byte* byte_path = const_cast<char *>(path.c_str());
 	if ((ret = TFFS_fopen(htffs, byte_path, "r", &hfile)) != TFFS_OK) {
@@ -91,7 +140,7 @@ bool FATFile::exists()
 void FATFile::update()
 {
 	mount_tffs();
-	open_tffs();
+	opendir_tffs();
 	set_dirent_to_current();
 	ubyte attr = dirent.dir_attr;
 	if( attr & DIR_ATTR_DIRECTORY)
@@ -101,7 +150,7 @@ void FATFile::update()
 size_t FATFile::size()
 {
 	mount_tffs();
-	open_tffs();
+	opendir_tffs();
 	set_dirent_to_current();
 	return dirent.dir_file_size;
 }
@@ -109,7 +158,7 @@ size_t FATFile::size()
 time_t FATFile::lastaccess()
 {
 	mount_tffs();
-	open_tffs();
+	opendir_tffs();
 	set_dirent_to_current();
 
 	struct tm tm;
@@ -147,10 +196,24 @@ int FATFile::mount_tffs()
 	return 0;
 }
 
-int FATFile::open_tffs()
+int FATFile::opendir_tffs()
 {
-	if ((ret = TFFS_opendir(htffs, "/", &hdir)) != TFFS_OK) {
-		cout << "ERROR: TFFS_opendir" << ret << endl;
+
+	string path = getPath();
+	string cur_dir;
+	if(path.length() == 0)
+		cur_dir = "/";
+	else if(isDirectory())
+		cur_dir = path.substr(1);
+	else
+	{
+		size_t slashpos = path.find_last_of("/");
+		cur_dir = path.substr(1,slashpos);
+	}
+	byte* byte_cur_dir = const_cast<char *>(cur_dir.c_str());
+	if ((ret = TFFS_opendir(htffs, byte_cur_dir, &hdir)) != TFFS_OK)
+	{
+		cout << "ERROR: TFFS_opendir" << ret << cur_dir << endl;
 		return -1;
 	}
 	return 0;
