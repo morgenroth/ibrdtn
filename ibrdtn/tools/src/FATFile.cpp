@@ -71,7 +71,21 @@ bool FATFile::exists()
 {
 	mount_tffs();
 	open_tffs();
-	return (set_dirent_to_current() == 1);
+	//remove leading "./"
+	string path = getPath();
+	if(path == "/" || path.empty())
+		return true; //root always exists
+
+	if( path.length() > 2 && path.substr(0,2) == "./")
+			path = path.substr(2);
+
+	cout << "files exist? " << path << endl;
+
+	byte* byte_path = const_cast<char *>(path.c_str());
+	if ((ret = TFFS_fopen(htffs, byte_path, "r", &hfile)) != TFFS_OK) {
+		return false;
+	}
+	return true;
 }
 
 void FATFile::update()
