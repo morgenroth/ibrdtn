@@ -1,5 +1,5 @@
 /*
- * ToolUtils.h
+ * TarUtils.h
  *
  *  Created on: Sep 16, 2013
  *      Author: goltzsch
@@ -20,11 +20,11 @@ extern "C"
 }
 #endif
 
-class ToolUtils
+class TarUtils
 {
 public:
-	ToolUtils();
-	virtual ~ToolUtils();
+	TarUtils();
+	virtual ~TarUtils();
 	/**
 	 * write tar archive to payload block
 	 */

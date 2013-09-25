@@ -1,28 +1,28 @@
 /*
- * ToolUtils.cpp
+ * TarUtils.cpp
  *
  *  Created on: Sep 16, 2013
  *      Author: goltzsch
  */
 
-#include "ToolUtils.h"
+#include "TarUtils.h"
 #include <stdlib.h>
 #include <string.h>
 using namespace ibrcommon;
 
 
-std::string ToolUtils::_img_path = "";
-tffs_handle_t ToolUtils::htffs = 0;
-tdir_handle_t ToolUtils::hdir = 0;
-tfile_handle_t ToolUtils::hfile = 0;
-int32 ToolUtils::ret= 0;
+std::string TarUtils::_img_path = "";
+tffs_handle_t TarUtils::htffs = 0;
+tdir_handle_t TarUtils::hdir = 0;
+tfile_handle_t TarUtils::hfile = 0;
+int32 TarUtils::ret= 0;
 #define BUFF_SIZE 8192
 
 #ifdef HAVE_LIBARCHIVE
-ToolUtils::ToolUtils()
+TarUtils::TarUtils()
 {
 }
-ToolUtils::~ToolUtils()
+TarUtils::~TarUtils()
 {
 }
 struct path_and_blob
@@ -30,12 +30,12 @@ struct path_and_blob
 	const char *path;
 	BLOB::Reference *blob;
 };
-int ToolUtils::open_callback( struct archive *, void *blob_iostream )
+int TarUtils::open_callback( struct archive *, void *blob_iostream )
 {
 	return ARCHIVE_OK;
 }
 
-ssize_t ToolUtils::write_callback( struct archive *, void *blob_ptr, const void *buffer, size_t length )
+ssize_t TarUtils::write_callback( struct archive *, void *blob_ptr, const void *buffer, size_t length )
 {
 	char* cast_buf = (char*) buffer;
 
@@ -49,7 +49,7 @@ ssize_t ToolUtils::write_callback( struct archive *, void *blob_ptr, const void 
 
 
 
-ssize_t ToolUtils::read_callback( struct archive *a, void *client_data, const void **buffer )
+ssize_t TarUtils::read_callback( struct archive *a, void *client_data, const void **buffer )
 {
 	struct path_and_blob *data = (path_and_blob*) client_data;
 
@@ -71,12 +71,12 @@ ssize_t ToolUtils::read_callback( struct archive *a, void *client_data, const vo
 	return len;
 }
 
-int ToolUtils::close_callback( struct archive *, void *blob_iostream )
+int TarUtils::close_callback( struct archive *, void *blob_iostream )
 {
 	return ARCHIVE_OK;
 }
 
-void ToolUtils::read_tar_archive( const char *extract_folder, ibrcommon::BLOB::Reference *blob )
+void TarUtils::read_tar_archive( const char *extract_folder, ibrcommon::BLOB::Reference *blob )
 {
 	void *void_blob = (void*) blob;
 	struct archive *a;
@@ -101,7 +101,7 @@ void ToolUtils::read_tar_archive( const char *extract_folder, ibrcommon::BLOB::R
 	archive_read_free(a);
 }
 
-void ToolUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char **filenames, size_t num_files )
+void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char **filenames, size_t num_files )
 {
 	struct archive *a;
 	struct archive_entry *entry;
@@ -167,10 +167,7 @@ void ToolUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char 
 			}
 
 			//open file
-				//remove leading "./"
-				string filename(*filenames);
-				char* file = const_cast<char *>(filename.substr(2).c_str());
-			//char* file = const_cast<char *>(*filenames);
+			char* file = const_cast<char *>(*filenames);
 			cout << file << endl;
 			if ((ret = TFFS_fopen(htffs, file, "r", &hfile)) != TFFS_OK)
 			{
@@ -230,7 +227,7 @@ void ToolUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char 
 	archive_write_free(a);
 }
 
-void ToolUtils::set_img_path( std::string img_path )
+void TarUtils::set_img_path( std::string img_path )
 {
 	_img_path = img_path;
 }

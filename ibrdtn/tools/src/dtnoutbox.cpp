@@ -29,7 +29,7 @@
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
 
-#include "ToolUtils.h"
+#include "TarUtils.h"
 
 
 #define HAVE_LIBTFFS 1
@@ -415,9 +415,9 @@ int main( int argc, char** argv )
 #ifdef HAVE_LIBARCHIVE
 	//if libarchive is available, check if libtffs can be used
 	#ifdef HAVE_LIBTFFS
-					ToolUtils::set_img_path(conf["outbox"]);
+					TarUtils::set_img_path(conf["outbox"]);
 	#endif
-					ToolUtils::write_tar_archive(&blob, files_to_send_ptr, counter);
+					TarUtils::write_tar_archive(&blob, files_to_send_ptr, counter);
 
 					//delete files, if wanted
 					if (!_conf_keep)

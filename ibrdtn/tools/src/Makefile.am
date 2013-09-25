@@ -17,14 +17,14 @@ endif
 ##TODO header weg:wq
 dtnping_SOURCES = dtnping.cpp
 dtninbox_SOURCES = dtninbox.cpp \
-		  ToolUtils.h \
-		  ToolUtils.cpp
+		  TarUtils.h \
+		  TarUtils.cpp
 dtnoutbox_SOURCES = dtnoutbox.cpp \
 		  tffs/tffs.h \
 		  FATFile.h \
 		  FATFile.cpp \
-		  ToolUtils.h \
-		  ToolUtils.cpp
+		  TarUtils.h \
+		  TarUtils.cpp
 dtnrecv_SOURCES = dtnrecv.cpp
 dtnsend_SOURCES = dtnsend.cpp
 dtntunnel_SOURCES = dtntunnel.cpp

@@ -30,7 +30,7 @@
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
 
-#include "ToolUtils.h"
+#include "TarUtils.h"
 
 #include <stdlib.h>
 #include <iostream>
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
             	// get the reference to the blob
             	ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 #ifdef HAVE_LIBARCHIVE
-            	ToolUtils::read_tar_archive(conf["inbox"].c_str(),&ref);
+            	TarUtils::read_tar_archive(conf["inbox"].c_str(),&ref);
 #else
                 // create the extract command
                 stringstream cmdstream; cmdstream << "tar -x -C " << conf["inbox"];
