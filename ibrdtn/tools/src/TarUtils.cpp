@@ -8,6 +8,9 @@
 #include "TarUtils.h"
 #include <stdlib.h>
 #include <string.h>
+
+#include "FATFile.cpp" //TODO doof!
+#include "ObservedFile.cpp" //TODO doof!
 using namespace ibrcommon;
 
 
@@ -101,59 +104,107 @@ void TarUtils::read_tar_archive( const char *extract_folder, ibrcommon::BLOB::Re
 	archive_read_free(a);
 }
 
-void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char **filenames, size_t num_files )
+void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<FATFile> *> files_to_send)
 {
-	struct archive *a;
-	struct archive_entry *entry;
+
+	vector<tarfile> tarfiles;
+	list<ObservedFile<FATFile> *>::iterator of_ptr_iter;
+	for(of_ptr_iter = files_to_send.begin(); of_ptr_iter != files_to_send.end(); of_ptr_iter++)
+	{
+		ObservedFile<FATFile> of = (**of_ptr_iter);
+
+		tarfile tf;
+		tf.filename = of.getPath().c_str();
+
+		struct archive_entry *e;
+		e= archive_entry_new();
+		archive_entry_set_size(e, of.size());
+		if(of.isDirectory())
+		{
+			archive_entry_set_filetype(e, AE_IFDIR);
+			archive_entry_set_perm(e, 0755);
+		}
+		else
+		{
+			archive_entry_set_filetype(e, AE_IFREG );
+			archive_entry_set_perm(e, 0644);
+		}
+
+
+		archive_entry_set_pathname(e, rel_filename(of.getPath()).c_str());
+
+		//set timestamps
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
+		archive_entry_set_atime(e, ts.tv_sec, ts.tv_nsec); //accesstime
+		archive_entry_set_birthtime(e, ts.tv_sec, ts.tv_nsec); //creationtime
+		archive_entry_set_ctime(e, ts.tv_sec, ts.tv_nsec); //time, inode changed
+		archive_entry_set_mtime(e, ts.tv_sec, ts.tv_nsec); //modification time
+
+		tf.entry = e;
+		tarfiles.push_back(tf);
+	}
+	write_tar_archive(blob,tarfiles);
+}
+
+void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<File> *> files_to_send)
+{
+	vector<tarfile> tarfiles;
+	list<ObservedFile<File> *>::iterator of_ptr_iter;
 	struct stat st;
+	for(of_ptr_iter = files_to_send.begin(); of_ptr_iter != files_to_send.end(); of_ptr_iter++)
+	{
+		ObservedFile<File> of = (**of_ptr_iter);
+
+		tarfile tf;
+		tf.filename = of.getPath().c_str();
+
+		struct archive_entry *e;
+		e= archive_entry_new();
+
+		stat(of.getPath().c_str(),&st);
+		archive_entry_copy_stat(e,&st);
+
+		archive_entry_set_pathname(e, rel_filename(of.getPath()).c_str());
+
+		//set timestamps
+		/*struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
+		archive_entry_set_atime(e, ts.tv_sec, ts.tv_nsec); //accesstime
+		archive_entry_set_birthtime(e, ts.tv_sec, ts.tv_nsec); //creationtime
+		archive_entry_set_ctime(e, ts.tv_sec, ts.tv_nsec); //time, inode changed
+		archive_entry_set_mtime(e, ts.tv_sec, ts.tv_nsec); //modification time*/
+
+		tf.entry = e;
+		tarfiles.push_back(tf);
+	}
+	write_tar_archive(blob,tarfiles);
+
+}
+
+
+void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfile> tarfiles)
+{
 	char buff[BUFF_SIZE];
-	int len;
+	size_t len;
 	int fd;
-
-	struct timespec ts;
-	clock_gettime(CLOCK_REALTIME, &ts);
-
 	//create new archive, set format to tar, use callbacks (above this method)
+	struct archive *a;
 	a = archive_write_new();
 	archive_write_set_format_ustar(a);
 	archive_write_open(a, blob, &open_callback, &write_callback, &close_callback);
 
-	while (num_files != 0)
+	//iterate tarfiles
+	vector<tarfile>::iterator iter;
+	for(iter = tarfiles.begin(); iter <= tarfiles.end(); iter++)
 	{
+		tarfile tf = (*iter);
 
-		if (_img_path == "")
-		{
-			stat(*filenames, &st);
-			entry = archive_entry_new();
-			archive_entry_set_size(entry, st.st_size);
-			archive_entry_set_filetype(entry, AE_IFREG );
-			archive_entry_set_perm(entry, 0644);
-		}
-		else
-		{
-			entry = archive_entry_new();
-			archive_entry_set_size(entry, 1337); //TODO echte size setzen
-			archive_entry_set_filetype(entry, AE_IFREG );
-			archive_entry_set_perm(entry, 0644);
-		}
-
-		//set filename in archive to relative paths
-		std::string path(*filenames);
-		unsigned slash_pos = path.find_last_of('/', path.length());
-		std::string rel_name = path.substr(slash_pos + 1, path.length() - slash_pos);
-		archive_entry_set_pathname(entry, rel_name.c_str());
-
-		//set timestamps
-		archive_entry_set_atime(entry, ts.tv_sec, ts.tv_nsec); //accesstime
-		archive_entry_set_birthtime(entry, ts.tv_sec, ts.tv_nsec); //creationtime
-		archive_entry_set_ctime(entry, ts.tv_sec, ts.tv_nsec); //time, inode changed
-		archive_entry_set_mtime(entry, ts.tv_sec, ts.tv_nsec); //modification time
-
-		archive_write_header(a, entry);
+		archive_write_header(a, tf.entry);
 
 		if(_img_path == "")
 		{
-			fd = open(*filenames, O_RDONLY);
+			fd = open(tf.filename, O_RDONLY);
 			len = read(fd, buff, BUFF_SIZE);
 		}
 		else
@@ -167,8 +218,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char *
 			}
 
 			//open file
-			char* file = const_cast<char *>(*filenames);
-			cout << file << endl;
+			byte* file = const_cast<char *>(tf.filename);
 			if ((ret = TFFS_fopen(htffs, file, "r", &hfile)) != TFFS_OK)
 			{
 				cout << "ERROR: TFFS_fopen" << ret << endl;
@@ -179,16 +229,18 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char *
 			//read file
 			if (( ret = TFFS_fread(hfile,BUFF_SIZE,(unsigned char*) buff)) < 0)
 			{
-				if( ret == ERR_TFFS_FILE_EOF)
-				{
-					len = 0;
-					break;
-				}
-				cout << "ERROR: TFFS_fread" << ret << endl;
-				return;
+					if( ret == ERR_TFFS_FILE_EOF)
+					{
+						len = 0;
+						break;
+					}
+					cout << "ERROR: TFFS_fread" << ret << endl;
+					return;
 			}
 			len = ret;
 		}
+
+		//write buffer to archive
 		while (len > 0)
 		{
 			archive_write_data(a, buff, len);
@@ -210,6 +262,8 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char *
 			}
 
 		}
+
+		//close files
 		if(_img_path == "")
 			close(fd);
 		else
@@ -219,17 +273,23 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, const char *
 				return;
 			}
 		}
-		archive_entry_free(entry);
-		filenames++;
-		num_files--;
+		archive_entry_free(tf.entry); //TODO nötig?
 	}
 	archive_write_close(a);
 	archive_write_free(a);
+
 }
+
 
 void TarUtils::set_img_path( std::string img_path )
 {
 	_img_path = img_path;
+}
+
+std::string TarUtils::rel_filename(std::string n)
+{
+	unsigned slash_pos = n.find_last_of('/', n.length());
+	return n.substr(slash_pos + 1, n.length() - slash_pos);
 }
 
 #endif

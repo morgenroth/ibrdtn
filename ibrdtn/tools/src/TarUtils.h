@@ -5,10 +5,13 @@
  *      Author: goltzsch
  */
 
-#ifndef TOOLUTILS_H_
-#define TOOLUTILS_H_
+#ifndef TARUTILS_H_
+#define TARUTILS_H_
 #include "config.h"
 #include "ibrcommon/data/BLOB.h"
+
+#include "FATFile.h"
+#include "ObservedFile.h"
 
 #ifdef HAVE_LIBARCHIVE
 #include <archive.h>
@@ -19,16 +22,26 @@ extern "C"
 #include "tffs/tffs.h"
 }
 #endif
-
+struct tarfile
+{
+	const char *filename;
+	archive_entry *entry;
+};
 class TarUtils
 {
 public:
 	TarUtils();
 	virtual ~TarUtils();
 	/**
-	 * write tar archive to payload block
+	 * write tar archive to payload block, FATFile version
 	 */
-	static void write_tar_archive( ibrcommon::BLOB::Reference *blob, const char **filenames, size_t num_files );
+	static void write_tar_archive( ibrcommon::BLOB::Reference* blob, list<ObservedFile<FATFile> *> files_to_send );
+
+	/**
+	 * write tar archive to payload block, FATFile version
+	 */
+	static void write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<ibrcommon::File> *> files_to_send );
+
 	/*
 	 * read tar archive from payload block
 	 */
@@ -36,6 +49,11 @@ public:
 
 	static void set_img_path(std::string img_path);
 private:
+	 //* write tar archive to payload block, interfal version
+	static void write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfile> tarfiles);
+
+	static string rel_filename(string);
+
 	//CALLBACKS FOR LIBARCHIVE
 	static int close_callback( struct archive *, void *blob_iostream );
 	static ssize_t write_callback( struct archive *, void *blob_ptr, const void *buffer, size_t length );
@@ -53,4 +71,4 @@ private:
 
 };
 
-#endif /* TOOLUTILS_H_ */
+#endif /* TARUTILS_H_ */

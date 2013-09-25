@@ -388,14 +388,11 @@ int main( int argc, char** argv )
 				//mark files as send and create lists for tar
 				size_t counter = 0;
 				stringstream files_to_send_ss;
-				files_to_send_ss.clear();
-				const char **files_to_send_ptr = new const char*[observed_files.size()];
 				for(of_ptr_iter = files_to_send.begin(); of_ptr_iter != files_to_send.end(); of_ptr_iter++)
 				{
 							(*of_ptr_iter)->send();
 							files_to_send_ss << (*of_ptr_iter)->getBasename() << " ";
-							files_to_send_ptr[counter++] = (*of_ptr_iter)->getPath().c_str();
-
+							counter++;
 				}
 
 				if (!counter)
@@ -417,7 +414,7 @@ int main( int argc, char** argv )
 	#ifdef HAVE_LIBTFFS
 					TarUtils::set_img_path(conf["outbox"]);
 	#endif
-					TarUtils::write_tar_archive(&blob, files_to_send_ptr, counter);
+					TarUtils::write_tar_archive(&blob, files_to_send);
 
 					//delete files, if wanted
 					if (!_conf_keep)

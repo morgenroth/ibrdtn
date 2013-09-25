@@ -14,7 +14,7 @@ inline ObservedFile<T>::~ObservedFile()
 template<typename T>
 inline int ObservedFile<T>::getFiles( list<T> files )
 {
-	_file.getFiles(files);
+	return _file.getFiles(files);
 }
 
 template<typename T>
@@ -39,6 +39,18 @@ template<typename T>
 inline string ObservedFile<T>::getBasename()
 {
 	return _file.getBasename();
+}
+
+template<typename T>
+inline size_t ObservedFile<T>::size()
+{
+	return _file.size();
+}
+
+template<typename T>
+inline bool ObservedFile<T>::isDirectory()
+{
+	return _file.isDirectory();
 }
 
 template<typename T>

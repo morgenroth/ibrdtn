@@ -25,6 +25,8 @@ public:
 	string getPath();
 	bool exists();
 	string getBasename();
+	size_t size();
+	bool isDirectory();
 
 	time_t getLastTimestamp();
 	bool lastSizesEqual( size_t n );
