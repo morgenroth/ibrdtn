@@ -1,8 +1,23 @@
 /*
  * TarUtils.cpp
  *
+ * Copyright (C) 2013 IBR, TU Braunschweig
+ *
+ * Written-by: David Goltzsche <goltzsch@ibr.cs.tu-bs.de>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
  *  Created on: Sep 16, 2013
- *      Author: goltzsch
  */
 
 #include "TarUtils.h"
@@ -166,14 +181,6 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 		archive_entry_copy_stat(e,&st);
 
 		archive_entry_set_pathname(e, rel_filename(of.getPath()).c_str());
-
-		//set timestamps
-		/*struct timespec ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
-		archive_entry_set_atime(e, ts.tv_sec, ts.tv_nsec); //accesstime
-		archive_entry_set_birthtime(e, ts.tv_sec, ts.tv_nsec); //creationtime
-		archive_entry_set_ctime(e, ts.tv_sec, ts.tv_nsec); //time, inode changed
-		archive_entry_set_mtime(e, ts.tv_sec, ts.tv_nsec); //modification time*/
 
 		tf.entry = e;
 		tarfiles.push_back(tf);
