@@ -248,7 +248,7 @@ int main( int argc, char** argv )
 		File outbox_img(conf["outbox"]);
 		FATFile::setImgPath(conf["outbox"]);
 		FATFile outbox(conf["path"]);
-		list<FATFile> avail_files;
+		list<FATFile> avail_files, new_files, old_files, deleted_files;
 		list<FATFile>::iterator iter;
 		list<ObservedFile<FATFile> > observed_files;
 		list<ObservedFile<FATFile>* > files_to_send;
@@ -270,7 +270,7 @@ int main( int argc, char** argv )
 
 #else
 		File outbox(conf["outbox"]);
-		list<File> avail_files;
+		list<File> avail_files, new_files, old_files, deleted_files;
 		list<File>::iterator iter;
 		list<ObservedFile<File> > observed_files;
 		list<ObservedFile<File>* > files_to_send;
@@ -285,7 +285,6 @@ int main( int argc, char** argv )
 		if(!outbox.exists())
 			File::createDirectory(outbox);
 #endif
-
 
 	// loop, if no stop if requested
 	while (_running)
@@ -313,39 +312,44 @@ int main( int argc, char** argv )
 			while (_running)
 			{
 
-				//get all files
+				deleted_files.clear();
+				new_files.clear();
+				old_files.clear();
+
+				//store old files
+				old_files = avail_files;
 				avail_files.clear();
+
+				//get all files
 				outbox.getFiles(avail_files);
 
-				//check for new files in all files
-				for (iter = avail_files.begin(); iter != avail_files.end(); ++iter)
+				//determine deleted files
+				set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files));
+				//determine new files
+				set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files));
+
+				//remove deleted files from observation
+				for (iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
+				{
+					ObservedFile<typeof(*iter)> toFind((*iter).getPath());
+					of_iter = std::find(observed_files.begin(),observed_files.end(),toFind);
+					observed_files.erase(of_iter);
+
+				}
+
+				//add new files to observation
+				for (iter = new_files.begin(); iter != new_files.end(); ++iter)
 				{
 					// skip system files ("." and "..")
 					if ((*iter).isSystem()) continue;
 
+					//skip invisible and swap-files, if wanted
 					if (!_conf_consider_swp && isSwap((*iter).getBasename())) continue;
 					if (!_conf_consider_invis && isInvis((*iter).getBasename())) continue;
 
-					//only add file if its not under observation yet
-					bool new_file = true;
-					for ( of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
-					{
-						if ((*iter).getPath() == (*of_iter).getPath())
-						{
-							new_file = false; break;
-						}
-
-					}
-					if(new_file)
-					{
-							//remove leading "./"
-							string path = (*iter).getPath();
-							if(path.substr(0,2) == "./")
-									path = path.substr(2);
-
-							observed_files.push_back(ObservedFile<typeof(*iter)>(path));
-					}
+					observed_files.push_back(ObservedFile<typeof(*iter)>((*iter).getPath()));
 				}
+
 
 				if (observed_files.size() == 0)
 				{
@@ -363,17 +367,6 @@ int main( int argc, char** argv )
 				for (of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
 				{
 					ObservedFile<typeof(*iter)> &of = (*of_iter);
-					//check existance
-					if (!of.exists())
-					{
-						observed_files.erase(of_iter);
-						//if no files to observe: stop, otherwise continue with next file
-						if (observed_files.size() == 0)
-							break;
-						else
-							continue;
-					}
-
 					of.addSize(); //measure current size
 
 					size_t latest_timestamp = of.getLastTimestamp();
@@ -386,7 +379,7 @@ int main( int argc, char** argv )
 					}
 				}
 
-				//mark files as send and create lists for tar
+				//mark files as send and create list for tar
 				size_t counter = 0;
 				stringstream files_to_send_ss;
 				for(of_ptr_iter = files_to_send.begin(); of_ptr_iter != files_to_send.end(); of_ptr_iter++)
