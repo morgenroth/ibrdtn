@@ -33,13 +33,13 @@ public:
 	void send();
 	void addSize();
 	size_t getLastSent();
+	bool operator==(ObservedFile other);
 
 private:
 	T _file;
 	size_t _last_sent;
 	std::vector<size_t> _sizes;
 };
-
 
 
 #endif /* OBSERVEDFILE_H_ */

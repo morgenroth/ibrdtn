@@ -84,3 +84,9 @@ inline size_t ObservedFile<T>::getLastSent()
 {
 	return _last_sent;
 }
+
+template<typename T>
+inline bool ObservedFile<T>::operator==(ObservedFile other)
+{
+	return (other.getPath() == getPath());
+}
