@@ -46,6 +46,8 @@ int FATFile::getFiles( list<FATFile> &files)
 			return -1;
 		}
 	}
+	closedir_tffs();
+	umount_tffs();
 	return 0;
 
 
@@ -54,6 +56,7 @@ int FATFile::getFiles( list<FATFile> &files)
 
 int FATFile::remove( bool recursive )
 {
+	cout << "deleting" << getPath() << endl;
 	if (isSystem()) return -1;
 	//if (_type == DT_UNKNOWN) return -1;
 
@@ -89,7 +92,9 @@ int FATFile::remove( bool recursive )
 				cout << "ERROR: TFFS_rmdir" << ret << endl;
 				return -1;
 			}
-			}
+			closedir_tffs();
+			umount_tffs();
+		}
 	}
 	else
 	{
@@ -103,6 +108,8 @@ int FATFile::remove( bool recursive )
 			cout << "ERROR: TFFS_rmfile" << ret << endl;
 			return -1;
 		}
+		closedir_tffs();
+		umount_tffs();
 	}
 	return 0;
 }
@@ -124,7 +131,11 @@ bool FATFile::exists()
 	//remove leading "./"
 	string path = getPath();
 	if(path == "/" || path.empty())
+	{
+		closedir_tffs();
+		umount_tffs();
 		return true; //root always exists
+	}
 
 	if( path.length() > 2 && path.substr(0,2) == "./")
 			path = path.substr(2);
@@ -133,6 +144,8 @@ bool FATFile::exists()
 	if ((ret = TFFS_fopen(htffs, byte_path, "r", &hfile)) != TFFS_OK) {
 		return false;
 	}
+	closedir_tffs();
+	umount_tffs();
 	return true;
 }
 
@@ -144,6 +157,8 @@ void FATFile::update()
 	ubyte attr = dirent.dir_attr;
 	if( attr & DIR_ATTR_DIRECTORY)
 		_type = DT_DIR;
+	closedir_tffs();
+	umount_tffs();
 }
 
 size_t FATFile::size()
@@ -151,6 +166,8 @@ size_t FATFile::size()
 	mount_tffs();
 	opendir_tffs();
 	set_dirent_to_current();
+	closedir_tffs();
+	umount_tffs();
 	return dirent.dir_file_size;
 }
 
@@ -167,6 +184,8 @@ time_t FATFile::lastaccess()
 	tm.tm_hour = dirent.crttime.hour;
 	tm.tm_min  = dirent.crttime.min;
 	tm.tm_sec  = dirent.crttime.sec / 2; //somehow, libtffs writes seconds from 0-119;
+	closedir_tffs();
+	umount_tffs();
 	return mktime(&tm);
 }
 
@@ -189,6 +208,15 @@ int FATFile::mount_tffs()
 {
 	byte* path = const_cast<char *>(_img_path.c_str());
 	if ((ret = TFFS_mount(path, &htffs)) != TFFS_OK) {
+		cout << "ERROR: TFFS_mount" << ret << _img_path << endl;
+		return -1;
+	}
+	return 0;
+}
+
+int FATFile::umount_tffs()
+{
+	if ((ret = TFFS_umount(htffs)) != TFFS_OK) {
 		cout << "ERROR: TFFS_mount" << ret << endl;
 		return -1;
 	}
@@ -213,6 +241,15 @@ int FATFile::opendir_tffs()
 	if ((ret = TFFS_opendir(htffs, byte_cur_dir, &hdir)) != TFFS_OK)
 	{
 		cout << "ERROR: TFFS_opendir" << ret << cur_dir << endl;
+		return -1;
+	}
+	return 0;
+}
+int FATFile::closedir_tffs()
+{
+	if ((ret = TFFS_closedir(hdir)) != TFFS_OK)
+	{
+		cout << "ERROR: TFFS_opendir" << ret << endl;
 		return -1;
 	}
 	return 0;

@@ -55,7 +55,9 @@ private:
 
 	//tffs methods
 	int mount_tffs();
+	int umount_tffs();
 	int opendir_tffs();
+	int closedir_tffs();
 	int set_dirent_to_current();
 
 
