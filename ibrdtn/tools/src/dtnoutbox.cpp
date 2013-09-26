@@ -354,7 +354,7 @@ int main( int argc, char** argv )
 				if (observed_files.size() == 0)
 				{
 					if (!_conf_quiet)
-						cout << "no files to send: directory empty" << endl;
+						cout << "0 files to send: directory empty" << endl;
 
 					// wait some seconds
 					ibrcommon::Thread::sleep(_conf_interval);
@@ -392,12 +392,18 @@ int main( int argc, char** argv )
 				if (!counter)
 				{
 					if(!_conf_quiet)
-						cout << "no files to send: requirements not fulfilled" << endl;
+						cout << "0 files to send: requirements not fulfilled" << endl;
 				}
 				else
 				{
 					if(!_conf_quiet)
-						cout << "files: " << files_to_send_ss.str() << endl;
+					{
+						string s = " ";
+						size_t size = files_to_send.size();
+						if(size > 1) s = "s";
+
+						cout << files_to_send.size() << " file" << s << " to send: " << files_to_send_ss.str() << endl;
+					}
 
 					// create a blob
 					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
