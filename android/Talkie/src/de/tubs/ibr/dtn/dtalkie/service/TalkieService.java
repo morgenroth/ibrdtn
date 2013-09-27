@@ -26,7 +26,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 import android.app.IntentService;
 import android.app.Notification;
@@ -36,11 +35,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.media.AudioManager;
+import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
@@ -81,8 +77,6 @@ public class TalkieService extends IntentService {
 	
 	private ServiceError mServiceError = ServiceError.NO_ERROR;
 	
-	private Boolean mOnEar = false;
-
 	private MessageDatabase mDatabase = null;
 	
 	private Object mPlayerLock = new Object();
@@ -91,6 +85,8 @@ public class TalkieService extends IntentService {
 	
 	private SoundFXManager mSoundManager = null;
 	private NotificationManager mNotificationManager = null;
+	
+	private AudioManager mAudioManager = null;
 	
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
@@ -233,12 +229,8 @@ public class TalkieService extends IntentService {
 		
 		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		
-        SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
-        List<Sensor> sensors = sm.getSensorList(Sensor.TYPE_PROXIMITY);
-        if (sensors.size() > 0) {
-            Sensor s = sensors.get(0);
-            sm.registerListener(mSensorListener, s, SensorManager.SENSOR_DELAY_NORMAL);
-        }
+        // get the audio-manager
+        mAudioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.registerOnSharedPreferenceChangeListener(mPrefListener);
@@ -247,9 +239,7 @@ public class TalkieService extends IntentService {
 		mDatabase = new MessageDatabase(this);
 		
         // init sound pool
-        mSoundManager = new SoundFXManager();
-        mSoundManager.initialize(AudioManager.STREAM_VOICE_CALL, 4);
-        mSoundManager.initialize(AudioManager.STREAM_MUSIC, 4);
+        mSoundManager = new SoundFXManager(AudioManager.STREAM_VOICE_CALL, 2);
         
         mSoundManager.load(this, Sound.BEEP);
         mSoundManager.load(this, Sound.CONFIRM);
@@ -280,9 +270,9 @@ public class TalkieService extends IntentService {
 		    mServiceError = ServiceError.PERMISSION_NOT_GRANTED;
 		}
 		
-		Log.i(TAG, "Service created.");
+		Log.d(TAG, "Service created.");
 		
-        if (prefs.getBoolean("autoplay", false)) {
+        if (prefs.getBoolean("autoplay", false) || HeadsetService.ENABLED) {
             Intent play_i = new Intent(TalkieService.this, TalkieService.class);
             play_i.setAction(TalkieService.ACTION_PLAY_NEXT);
             startService(play_i);
@@ -299,9 +289,6 @@ public class TalkieService extends IntentService {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         prefs.unregisterOnSharedPreferenceChangeListener(mPrefListener);
         
-        SensorManager sm = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sm.unregisterListener(mSensorListener);
-        
         mClient.terminate();
 	    mClient = null;
 	    
@@ -309,9 +296,12 @@ public class TalkieService extends IntentService {
 	    
 	    // close the database
 	    mDatabase.close();
+	    
+	    // free sound manager resources
+	    mSoundManager.release();
 		
 		super.onDestroy();
-		Log.i(TAG, "Service destroyed.");
+		Log.d(TAG, "Service destroyed.");
 	}
 	
 	public MessageDatabase getDatabase() {
@@ -319,15 +309,48 @@ public class TalkieService extends IntentService {
 	}
 	
 	private void playSound(Sound s) {
-		if (mOnEar) {
-			mSoundManager.play(this, AudioManager.STREAM_VOICE_CALL, s);
-		} else {
-			mSoundManager.play(this, AudioManager.STREAM_MUSIC, s);
-		}
+		mSoundManager.play(this, s);
 	}
+	
+    OnAudioFocusChangeListener mAudioFocusChangeListener = new OnAudioFocusChangeListener() {
+		@Override
+		public void onAudioFocusChange(int focusChange) {
+			// AudioFocus changed
+			Log.d(TAG, "Audio Focus changed to " + focusChange);
+
+			synchronized(mPlayerLock) {
+				// do nothing if not playing
+				if (!mPlaying) return;
+				
+				if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+		            // focus lost
+					mPlayer.pause();
+				} else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+		            // focus lost
+					mPlayer.pause();
+		        } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+		            // focus returned
+		        	mPlayer.start();
+		        } else if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+		        	mPlayer.stop();
+		        }
+			}
+		}
+    };
     
     private MediaPlayer.OnPreparedListener mPrepareListener = new MediaPlayer.OnPreparedListener() {
         public void onPrepared(MediaPlayer mp) {
+    		// request audio focus
+    		int result = mAudioManager.requestAudioFocus(mAudioFocusChangeListener,
+                    AudioManager.STREAM_VOICE_CALL,
+                    // Request transient focus.
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+
+			if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+				// focus not granted
+				return;
+			}
+			
             playSound(Sound.BEEP);
             mp.start();
         }
@@ -347,6 +370,9 @@ public class TalkieService extends IntentService {
                 // signal the change of the playback state
                 mPlayerLock.notifyAll();
             }
+            
+            // return audio focus
+            mAudioManager.abandonAudioFocus(mAudioFocusChangeListener);
             
             // enqueue the next audio file if auto-playback is enabled
             Intent play_i = new Intent(TalkieService.this, TalkieService.class);
@@ -383,13 +409,7 @@ public class TalkieService extends IntentService {
                 // prepare player
                 Message msg = mDatabase.get(f, msgid);
                 mPlayer.setDataSource(msg.getFile().getAbsolutePath());
-                
-                if (mOnEar) {
-                    mPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
-                } else {
-                    mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                }
-                
+                mPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
                 mPlayer.prepareAsync();
                 
                 synchronized(mPlayerLock) {
@@ -416,7 +436,7 @@ public class TalkieService extends IntentService {
         }
         else if (ACTION_PLAY_NEXT.equals(action)) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(TalkieService.this);
-            if (prefs.getBoolean("autoplay", false)) {
+            if (prefs.getBoolean("autoplay", false) || HeadsetService.ENABLED) {
                 Message next = mDatabase.nextMarked(Folder.INBOX, false);
                 
                 if (next != null) {
@@ -476,20 +496,6 @@ public class TalkieService extends IntentService {
         }
     }
     
-    private SensorEventListener mSensorListener = new SensorEventListener() {
-        public void onSensorChanged(SensorEvent event) {
-            if (event.values.length > 0) {
-                float current = event.values[0];
-                float maxRange = event.sensor.getMaximumRange();
-                boolean far = (current == maxRange);
-                mOnEar = !far;
-            }
-        }
-
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        }
-    };
-    
     public OnSharedPreferenceChangeListener mPrefListener = new OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
@@ -517,7 +523,7 @@ public class TalkieService extends IntentService {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
         // do not add notifications if autoplay is active
-        if (prefs.getBoolean("autoplay", false)) return;
+        if (prefs.getBoolean("autoplay", false) || HeadsetService.ENABLED) return;
         
         // get the number of marked messages
         int mcount = mDatabase.getMarkedMessageCount(Folder.INBOX, false);

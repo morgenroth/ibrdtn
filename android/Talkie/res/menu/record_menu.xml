@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <group android:checkableBehavior="all">
-    	<item android:id="@+id/itemAutoRec" android:title="@string/autorec" android:icon="@drawable/ic_autorec_on"></item>
+    	<item android:id="@+id/itemAutoRec" android:title="@string/autorec" android:icon="@drawable/ic_action_autorec"></item>
     </group>
 </menu>

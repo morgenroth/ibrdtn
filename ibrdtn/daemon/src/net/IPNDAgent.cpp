@@ -560,6 +560,11 @@ namespace dtn
 							} catch (const ibrcommon::IOException&) {
 							}
 						}
+
+						// trigger an artificial timeout if the remaining timeout value is zero or below
+						if ( tv.tv_sec <= 0 && tv.tv_usec <= 0 )
+            				throw ibrcommon::vsocket_timeout("timeout");
+
 					} catch (const ibrcommon::vsocket_timeout&) {
 						// timeout reached
 						timeout();

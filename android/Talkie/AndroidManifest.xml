@@ -4,12 +4,13 @@
     android:versionCode="13"
     android:versionName="1.1" >
 
-	<uses-sdk android:minSdkVersion="10" android:targetSdkVersion="17" />
+	<uses-sdk android:minSdkVersion="10" android:targetSdkVersion="18" />
     
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
     <application
         android:allowBackup="true"
@@ -43,10 +44,17 @@
             </intent-filter>
         </activity>
         
-        <activity android:icon="@drawable/ic_settings" android:name=".Preferences" android:label="@string/preferences" />
+        <activity android:icon="@drawable/ic_action_settings" android:name=".Preferences" android:label="@string/preferences" />
         
+        <service android:name=".service.HeadsetService" />
 		<service android:name=".service.TalkieService" />
 		<service android:name=".service.RecorderService" />
+		
+		<receiver android:name=".service.MediaButtonReceiver">
+		    <intent-filter>
+		        <action android:name="android.intent.action.MEDIA_BUTTON" />
+		    </intent-filter>
+		</receiver>
 		
 	    <receiver
 	        android:enabled="true"

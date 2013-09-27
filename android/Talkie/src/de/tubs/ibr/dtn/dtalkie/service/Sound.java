@@ -21,7 +21,6 @@
  */
 package de.tubs.ibr.dtn.dtalkie.service;
 
-import java.util.HashMap;
 
 public class Sound {
     public static final Sound BEEP = new Sound("beep.mp3");
@@ -31,26 +30,47 @@ public class Sound {
     public static final Sound SQUELSH_LONG = new Sound("squelsh_long.mp3");
     public static final Sound SQUELSH_SHORT = new Sound("squelsh_short.mp3");
     
-	private String filename = null;
-	private HashMap<Integer, Integer> poolMap = new HashMap<Integer, Integer>();
+	private String mFilename = null;
+	private int mId = 0;
+	private boolean mReady = false;
+	
+	public Sound(Sound s) {
+		this.setFilename(s.getFilename());
+	}
 	
 	public Sound(String filename) {
 		this.setFilename(filename);
 	}
 
 	public String getFilename() {
-		return filename;
+		return mFilename;
 	}
 
 	public void setFilename(String filename) {
-		this.filename = filename;
+		this.mFilename = filename;
 	}
 
-	public Integer getSoundId(int streamType) {
-		return this.poolMap.get(streamType);
+	public Integer getSoundId() {
+		return mId;
 	}
 
-	public void setSoundId(int streamType, int soundId) {
-		this.poolMap.put(streamType, soundId);
+	public void setSoundId(int soundId) {
+		mId = soundId;
+	}
+
+	public boolean isReady() {
+		return mReady;
+	}
+
+	public void setReady(boolean mReady) {
+		this.mReady = mReady;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Sound) {
+			return mFilename.equals(((Sound)o).getFilename());
+		}
+		return super.equals(o);
 	}
 }
