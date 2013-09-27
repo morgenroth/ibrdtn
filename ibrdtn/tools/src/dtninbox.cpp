@@ -154,7 +154,7 @@ int main(int argc, char** argv)
             	// get the reference to the blob
             	ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 #ifdef HAVE_LIBARCHIVE
-            	TarUtils::read_tar_archive(conf["inbox"].c_str(),&ref);
+            	TarUtils::read_tar_archive(conf["inbox"],&ref);
 #else
                 // create the extract command
                 stringstream cmdstream; cmdstream << "tar -x -C " << conf["inbox"];

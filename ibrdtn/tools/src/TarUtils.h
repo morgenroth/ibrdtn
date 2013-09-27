@@ -53,14 +53,14 @@ public:
 	static void write_tar_archive( ibrcommon::BLOB::Reference* blob, list<ObservedFile<FATFile> *> files_to_send );
 
 	/**
-	 * write tar archive to payload block, FATFile version
+	 * write tar archive to payload block, File version
 	 */
 	static void write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<ibrcommon::File> *> files_to_send );
 
 	/*
 	 * read tar archive from payload block
 	 */
-	static void read_tar_archive( const char *extract_folder, ibrcommon::BLOB::Reference *blob );
+	static void read_tar_archive( string extract_folder, ibrcommon::BLOB::Reference *blob );
 
 	static void set_img_path(std::string img_path);
 private:
