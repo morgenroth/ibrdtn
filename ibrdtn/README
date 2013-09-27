@@ -5,8 +5,11 @@ With this command you could install all required and optional packages.
 
 sudo apt-get install build-essential libssl-dev libz-dev libsqlite3-dev \
   libcurl4-gnutls-dev libdaemon-dev automake autoconf pkg-config libtool libcppunit-dev \
-  libnl-3-dev libnl-cli-3-dev libnl-genl-3-dev libnl-nf-3-dev libnl-route-3-dev libarchive-dev
+  libnl-3-dev libnl-cli-3-dev libnl-genl-3-dev libnl-nf-3-dev libnl-route-3-dev
 
+optional:
+  libarchive-dev
+  libttfs (not a package, sources at http://code.google.com/p/tffs-lib/)
 
 ### Compilation with debugging symbols ###
 
