@@ -32,10 +32,14 @@
 #include <archive.h>
 #include <archive_entry.h>
 #include <fcntl.h>
+
+#define HAVE_LIBTFFS 1//TODO
+#ifdef HAVE_LIBTFFS
 extern "C"
 {
 #include "tffs/tffs.h"
 }
+#endif
 #endif
 struct tarfile
 {
@@ -47,34 +51,37 @@ class TarUtils
 public:
 	TarUtils();
 	virtual ~TarUtils();
+
+#ifdef HAVE_LIBTFFS
 	/**
 	 * write tar archive to payload block, FATFile version
 	 */
 	static void write_tar_archive( ibrcommon::BLOB::Reference* blob, list<ObservedFile<FATFile> *> files_to_send );
 
+	/*
+	 * set path of vfat-image, "" if not on image
+	 */
+	static void set_img_path(std::string img_path);
+#else
+
 	/**
 	 * write tar archive to payload block, File version
 	 */
 	static void write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<ibrcommon::File> *> files_to_send );
+#endif
 
 	/*
-	 * read tar archive from payload block
+	 * read tar archive from payload block, write to file
 	 */
 	static void read_tar_archive( string extract_folder, ibrcommon::BLOB::Reference *blob );
 
-	static void set_img_path(std::string img_path);
 private:
-	 //* write tar archive to payload block, interfal version
+	 /*
+	  * write tar archive to payload block, internal version
+	  */
 	static void write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfile> tarfiles);
 
 	static string rel_filename(string);
-
-	//CALLBACKS FOR LIBARCHIVE
-	static int close_callback( struct archive *, void *blob_iostream );
-	static ssize_t write_callback( struct archive *, void *blob_ptr, const void *buffer, size_t length );
-	static int open_callback( struct archive *, void *blob_iostream );
-
-	static ssize_t read_callback( struct archive *a, void *client_data, const void **buff );
 
 	static std::string _img_path;
 
@@ -84,6 +91,11 @@ private:
 	static tfile_handle_t hfile;
 	static int32 ret;
 
+	//CALLBACKS FOR LIBARCHIVE
+	static int close_callback( struct archive *, void *blob_iostream );
+	static ssize_t write_callback( struct archive *, void *blob_ptr, const void *buffer, size_t length );
+	static int open_callback( struct archive *, void *blob_iostream );
+	static ssize_t read_callback( struct archive *a, void *client_data, const void **buff );
 };
 
 #endif /* TARUTILS_H_ */

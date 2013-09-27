@@ -19,7 +19,9 @@
  *
  *  Created on: Sep 23, 2013
  */
+
 #include "FATFile.h"
+#ifdef HAVE_LIBTFFS
 
 string FATFile::_img_path = "";
 
@@ -293,4 +295,4 @@ int FATFile::set_dirent_to_current()
 	}
 	return -1;
 }
-
+#endif

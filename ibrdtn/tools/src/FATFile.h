@@ -81,5 +81,5 @@ private:
 
 
 };
-#endif
+#endif /* HAVE_LIBTFFS */
 #endif /* FATFILE_H_ */

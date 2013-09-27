@@ -64,12 +64,12 @@ ssize_t TarUtils::write_callback( struct archive *, void *blob_ptr, const void *
 
 
 
-ssize_t TarUtils::read_callback( struct archive *a, void *client_data, const void **buffer )
+ssize_t TarUtils::read_callback( struct archive *a, void *blob_ptr, const void **buffer )
 {
 	int len = BUFF_SIZE;
 	char *cbuff = new char[len];
 
-	BLOB::Reference *blob = (BLOB::Reference*) client_data;
+	BLOB::Reference *blob = (BLOB::Reference*) blob_ptr;
 	BLOB::iostream is = blob->iostream();
 
 	(*is).read(cbuff,len);
@@ -110,6 +110,7 @@ void TarUtils::read_tar_archive( string extract_folder, ibrcommon::BLOB::Referen
 	archive_read_free(a);
 }
 
+#ifdef HAVE_LIBARCHIVE
 void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<FATFile> *> files_to_send)
 {
 
@@ -153,11 +154,16 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 	write_tar_archive(blob,tarfiles);
 }
 
+void TarUtils::set_img_path( std::string img_path )
+{
+	_img_path = img_path;
+}
+#else
+
 void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<File> *> files_to_send)
 {
 	vector<tarfile> tarfiles;
 	list<ObservedFile<File> *>::iterator of_ptr_iter;
-	struct stat st;
 	for(of_ptr_iter = files_to_send.begin(); of_ptr_iter != files_to_send.end(); of_ptr_iter++)
 	{
 		ObservedFile<File> of = (**of_ptr_iter);
@@ -168,6 +174,8 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 		struct archive_entry *e;
 		e= archive_entry_new();
 
+		//get stat and copy to archive
+		struct stat st;
 		stat(of.getPath().c_str(),&st);
 		archive_entry_copy_stat(e,&st);
 
@@ -179,6 +187,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 	write_tar_archive(blob,tarfiles);
 
 }
+#endif
 
 
 void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfile> tarfiles)
@@ -200,11 +209,13 @@ void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfi
 
 		archive_write_header(a, tf.entry);
 
+		//write normal file
 		if(_img_path == "")
 		{
 			fd = open(tf.filename, O_RDONLY);
 			len = read(fd, buff, BUFF_SIZE);
 		}
+		//write file on vfat-image
 		else
 		{
 			//mount tffs
@@ -266,7 +277,7 @@ void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfi
 
 		}
 
-		//close files
+		//close file
 		if(_img_path == "")
 			close(fd);
 		else
@@ -276,17 +287,11 @@ void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfi
 				return;
 			}
 		}
-		archive_entry_free(tf.entry); //TODO nötig?
+		archive_entry_free(tf.entry);
 	}
 	archive_write_close(a);
 	archive_write_free(a);
 
-}
-
-
-void TarUtils::set_img_path( std::string img_path )
-{
-	_img_path = img_path;
 }
 
 std::string TarUtils::rel_filename(std::string n)
