@@ -80,7 +80,7 @@ void print_help()
 	cout << " -i <interval>      interval in milliseconds, in which <outbox> is scanned for new/changed files. default: 5000" << endl;
 	cout << " -r <number>        number of rounds of intervals, after which a unchanged file is considered as written. default: 3" << endl;
 #ifdef HAVE_LIBTFFS
-	cout << " -p <path>          path of outbox within vfat image. default: /" << endl;
+	cout << " -p <path>          path of outbox within vfat-image. default: /" << endl;
 #endif
 	cout << endl;
 	cout << " --badclock         assumes a bad clock on the system, the only indicator to send a file is its size" << endl;
