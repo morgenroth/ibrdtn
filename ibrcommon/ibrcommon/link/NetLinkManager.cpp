@@ -24,13 +24,10 @@
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Logger.h"
 
-#include <netlink/netlink.h>
-#include <netlink/route/addr.h>
-#include <netlink/route/link.h>
-#include <netlink/route/rtnl.h>
-#include <netlink/socket.h>
-#include <netlink/msg.h>
 #include <netlink/object-api.h>
+#include <netlink/route/link.h>
+#include <netlink/route/addr.h>
+#include <netlink/route/rtnl.h>
 
 #include <netdb.h>
 #include <sys/socket.h>
@@ -53,14 +50,6 @@
 
 namespace ibrcommon
 {
-#ifdef HAVE_LIBNL3
-typedef nl_object nl_object_header;
-#else
-	struct nl_object_header {
-		NLHDR_COMMON
-	};
-#endif
-
 	vaddress rtnl_addr_get_local_vaddress(struct rtnl_addr *obj) {
 		struct nl_addr *naddr = rtnl_addr_get_local(obj);
 		if (!naddr) return vaddress();
@@ -109,10 +98,7 @@ typedef nl_object nl_object_header;
 	{
 		if (obj == NULL) return;
 
-		// get the header of the nl_object first
-		nl_object_header *header = static_cast<nl_object_header*>(nl_object_priv(obj));
-
-		switch (header->ce_msgtype) {
+		switch (nl_object_get_msgtype(obj)) {
 			case RTM_NEWLINK: {
 				LinkEvent::Action evt_action = LinkEvent::ACTION_UNKOWN;
 

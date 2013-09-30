@@ -30,7 +30,6 @@
 #include "ibrcommon/thread/Conditional.h"
 #include "ibrcommon/thread/Thread.h"
 
-#include <netlink/netlink.h>
 #include <netlink/cache.h>
 #include <map>
 
