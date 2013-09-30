@@ -52,23 +52,15 @@ public:
 	TarUtils();
 	virtual ~TarUtils();
 
-#ifdef HAVE_LIBTFFS
 	/**
 	 * write tar archive to payload block, FATFile version
 	 */
-	static void write_tar_archive( ibrcommon::BLOB::Reference* blob, list<ObservedFile<FATFile> *> files_to_send );
+	static void write_tar_archive( ibrcommon::BLOB::Reference* blob, list<ObservedFile*> files_to_send );
 
 	/*
 	 * set path of vfat-image, "" if not on image
 	 */
 	static void set_img_path(std::string img_path);
-#else
-
-	/**
-	 * write tar archive to payload block, File version
-	 */
-	static void write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<ibrcommon::File> *> files_to_send );
-#endif
 
 	/*
 	 * read tar archive from payload block, write to file

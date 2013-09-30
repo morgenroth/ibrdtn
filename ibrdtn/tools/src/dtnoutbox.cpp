@@ -30,7 +30,7 @@
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
 
-#include "TarUtils.h"
+//#include "TarUtils.h"
 
 
 #define HAVE_LIBTFFS 1
@@ -39,12 +39,13 @@
 extern "C"
 {
 #include "tffs/tffs.h"
-#include "FATFile.h"
 }
 #endif
 
+
 #include "ObservedFile.h"
-#include "ObservedFile.cpp" //TODO doof!
+#include "ObservedFATFile.h"
+//#include "ObservedNormalFile.cpp"
 
 #include <stdlib.h>
 #include <iostream>
@@ -69,7 +70,7 @@ void print_help()
 	cout << "Syntax: dtnoutbox [options] <name> <outbox> <destination>" << endl;
 	cout << " <name>             the application name" << endl;
 #ifdef HAVE_LIBTFFS
-	cout << " <outbox>           location of outgoing files, only vfat-images (*.img)" << endl;
+	cout << " <outbox>           location of outgoing files, directory or vfat-image (*.img)" << endl;
 #else
 	cout << " <outbox>           directory of outgoing files" << endl;
 #endif
@@ -86,7 +87,11 @@ void print_help()
 	cout << " --badclock         assumes a bad clock on the system, the only indicator to send a file is its size" << endl;
 	cout << " --consider-swp     do not ignore these files: *~* and *.swp" << endl;
 	cout << " --consider-invis   do not ignores these files: .*" << endl;
-	cout << " --no-keep          do no t keep files in outbox" << endl;
+	cout << " --no-keep          do not keep files in outbox";
+#ifdef HAVE_LIBTFFS
+	cout << " WARNING: this option will be ignored on fat images";
+#endif
+	cout << endl;
 	cout << " --quiet		     only print error messages" << endl;
 
 }
@@ -194,7 +199,7 @@ int main( int argc, char** argv )
 	size_t _conf_interval = atoi(conf["interval"].c_str());
 	size_t _conf_rounds = atoi(conf["rounds"].c_str());
 
-	//check keep parameter
+	/*//check keep parameter
 	bool _conf_keep = true;
 	if (conf.find("no-keep") != conf.end())
 	{
@@ -206,7 +211,7 @@ int main( int argc, char** argv )
 	if (conf.find("badclock") != conf.end())
 	{
 		_conf_badclock= true;
-	}
+	}*/
 
 	//check consider-swp parameter
 	bool _conf_consider_swp = false;
@@ -240,52 +245,45 @@ int main( int argc, char** argv )
 		}
 	}
 
-
 	// backoff for reconnect
 	unsigned int backoff = 2;
 
-	// check outbox for files
-#ifdef HAVE_LIBTFFS
-		File outbox_img(conf["outbox"]);
-		FATFile::setImgPath(conf["outbox"]);
-		FATFile outbox(conf["path"]);
-		list<FATFile> avail_files, new_files, old_files, deleted_files;
-		list<FATFile>::iterator iter;
-		list<ObservedFile<FATFile> > observed_files;
-		list<ObservedFile<FATFile>* > files_to_send;
-		list<ObservedFile<FATFile> >::iterator of_iter;
-		list<ObservedFile<FATFile>* >::iterator of_ptr_iter;
-		// TODO create vfat image, if nessecary
+	File outbox_file(conf["outbox"]);
 
-		if(outbox_img.getPath().substr(outbox_img.getPath().length()-4) != ".img")
+	list<ObservedFile*> observed_files, avail_files, new_files, old_files, deleted_files;
+	list<ObservedFile*>::iterator iter;
+	list<ObservedFile*>::iterator iter2;
+
+	ObservedFile* outbox;
+
+	ObservedFile::setConfigRounds(_conf_rounds);
+
+	if(outbox_file.getPath().substr(outbox_file.getPath().length()-4) == ".img")
+	{
+		if(!outbox_file.exists())
 		{
-			cout << "ERROR: this is not an img file" << endl;
+			cout << "ERROR: image not found" << endl;
 			return -1;
 		}
 
-		if(!outbox_img.exists())
+		ObservedFile::setConfigImgPath(conf["outbox"]);
+		outbox = new ObservedFATFile(conf["path"]);
+	}
+	else
+	{
+		if(!outbox_file.exists())
 		{
-			cout << "ERROR: img file not found" << endl;
-			return -1;
+			File::createDirectory(outbox_file);
 		}
 
-#else
-		File outbox(conf["outbox"]);
-		list<File> avail_files, new_files, old_files, deleted_files;
-		list<File>::iterator iter;
-		list<ObservedFile<File> > observed_files;
-		list<ObservedFile<File>* > files_to_send;
-		list<ObservedFile<File> >::iterator of_iter;
-		list<ObservedFile<File>* >::iterator of_ptr_iter;
+		/*outbox = new ObservedNormalFile(outbox(conf["outbox"]));
+		if(!outbox->isDirectory())
 
-		if(!outbox.isDirectory())
 		{
 			cout << "ERROR: this is not a directory" << endl;
 			return -1;
-		}
-		if(!outbox.exists())
-			File::createDirectory(outbox);
-#endif
+		}*/
+	}
 
 	// loop, if no stop if requested
 	while (_running)
@@ -322,7 +320,7 @@ int main( int argc, char** argv )
 				avail_files.clear();
 
 				//get all files
-				outbox.getFiles(avail_files);
+				outbox->getFiles(avail_files);
 
 				//determine deleted files
 				set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files));
@@ -332,9 +330,8 @@ int main( int argc, char** argv )
 				//remove deleted files from observation
 				for (iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
 				{
-					ObservedFile<typeof(*iter)> toFind((*iter).getPath());
-					of_iter = std::find(observed_files.begin(),observed_files.end(),toFind);
-					observed_files.erase(of_iter);
+					iter2 = std::find(observed_files.begin(),observed_files.end(),(*iter));
+					observed_files.erase(iter2);
 
 				}
 
@@ -342,13 +339,13 @@ int main( int argc, char** argv )
 				for (iter = new_files.begin(); iter != new_files.end(); ++iter)
 				{
 					// skip system files ("." and "..")
-					if ((*iter).isSystem()) continue;
+					if ((*iter)->isSystem()) continue;
 
 					//skip invisible and swap-files, if wanted
-					if (!_conf_consider_swp && isSwap((*iter).getBasename())) continue;
-					if (!_conf_consider_invis && isInvis((*iter).getBasename())) continue;
+					if (!_conf_consider_swp && isSwap((*iter)->getBasename())) continue;
+					if (!_conf_consider_invis && isInvis((*iter)->getBasename())) continue;
 
-					observed_files.push_back(ObservedFile<typeof(*iter)>((*iter).getPath()));
+					observed_files.push_back( new ObservedFATFile((*iter)->getPath()));
 				}
 
 
@@ -364,7 +361,8 @@ int main( int argc, char** argv )
 				}
 
 				//find files to send
-				files_to_send.clear();
+				//TODO das hier in comperator
+				/*files_to_send.clear();
 				for (of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
 				{
 					ObservedFile<typeof(*iter)> &of = (*of_iter);
@@ -378,15 +376,14 @@ int main( int argc, char** argv )
 					{
 						files_to_send.push_back(&of);
 					}
-				}
+				}*/
 
 				//mark files as send and create list for tar
 				size_t counter = 0;
 				stringstream files_to_send_ss;
-				for(of_ptr_iter = files_to_send.begin(); of_ptr_iter != files_to_send.end(); of_ptr_iter++)
+				for(iter = observed_files.begin(); iter != observed_files.end(); iter++)
 				{
-							(*of_ptr_iter)->send();
-							files_to_send_ss << (*of_ptr_iter)->getBasename() << " ";
+							files_to_send_ss << (*iter)->getBasename() << " ";
 							counter++;
 				}
 
@@ -400,10 +397,10 @@ int main( int argc, char** argv )
 					if(!_conf_quiet)
 					{
 						string s = " ";
-						size_t size = files_to_send.size();
+						size_t size = observed_files.size();
 						if(size > 1) s = "s";
 
-						cout << files_to_send.size() << " file" << s << " to send: " << files_to_send_ss.str() << endl;
+						cout << observed_files.size() << " file" << s << " to send: " << files_to_send_ss.str() << endl;
 					}
 
 					// create a blob
@@ -413,9 +410,9 @@ int main( int argc, char** argv )
 #ifdef HAVE_LIBARCHIVE
 	//if libarchive is available, check if libtffs can be used
 	#ifdef HAVE_LIBTFFS
-					TarUtils::set_img_path(conf["outbox"]);
+					//TarUtils::set_img_path(conf["outbox"]);
 	#endif
-					TarUtils::write_tar_archive(&blob, files_to_send);
+					/*TarUtils::write_tar_archive(&blob, files_to_send);
 
 					//delete files, if wanted
 					if (!_conf_keep)
@@ -425,7 +422,7 @@ int main( int argc, char** argv )
 						{
 							(*iter++).remove(true);
 						}
-					}
+					}*/
 //or commandline fallback
 #else
 					// "--remove-files" deletes files after adding

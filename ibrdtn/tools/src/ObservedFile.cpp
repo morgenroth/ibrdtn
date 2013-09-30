@@ -1,92 +1,52 @@
+/*
+ * ObservedFile.cpp
+ *
+ *  Created on: Sep 30, 2013
+ *      Author: goltzsch
+ */
+
 #include "ObservedFile.h"
 
-template<typename T>
-inline ObservedFile<T>::ObservedFile( std::string path )
-		: _file(path),_last_sent(0)
+
+string ObservedFile::_conf_imgpath = "";
+size_t ObservedFile::_conf_rounds = 0;
+
+
+ObservedFile::ObservedFile() : _last_sent(0)
+{
+}
+ObservedFile::~ObservedFile()
 {
 }
 
-template<typename T>
-inline ObservedFile<T>::~ObservedFile()
-{
-}
 
-template<typename T>
-inline int ObservedFile<T>::getFiles( list<T> files )
+bool ObservedFile::lastHashesEqual( size_t n )
 {
-	return _file.getFiles(files);
-}
-
-template<typename T>
-inline string ObservedFile<T>::getPath()
-{
-	return _file.getPath();
-}
-
-template<typename T>
-inline bool ObservedFile<T>::exists()
-{
-	return _file.exists();
-}
-
-template<typename T>
-inline time_t ObservedFile<T>::getLastTimestamp()
-{
-	return max(_file.lastmodify(), _file.laststatchange());
-}
-
-template<typename T>
-inline string ObservedFile<T>::getBasename()
-{
-	return _file.getBasename();
-}
-
-template<typename T>
-inline size_t ObservedFile<T>::size()
-{
-	return _file.size();
-}
-
-template<typename T>
-inline bool ObservedFile<T>::isDirectory()
-{
-	return _file.isDirectory();
-}
-
-template<typename T>
-inline bool ObservedFile<T>::lastSizesEqual( size_t n )
-{
-	if (n > _sizes.size()) return false;
+	if (n > _hashes.size()) return false;
 
 	for (size_t i = 1; i <= n; i++)
 	{
-		if (_sizes.at(_sizes.size() - i) != _sizes.at(_sizes.size() - i - 1)) return false;
+		if (_hashes.at(_hashes.size() - i) != _hashes.at(_hashes.size() - i - 1)) return false;
 	}
 	return true;
 }
 
-template<typename T>
-inline void ObservedFile<T>::send()
+void ObservedFile::setConfigImgPath( string path )
 {
-	time_t tm;
-	_last_sent = time(&tm);
-	_sizes.clear();
+	_conf_imgpath = path;
 }
 
-template<typename T>
-inline void ObservedFile<T>::addSize()
+void ObservedFile::setConfigRounds( size_t rounds )
 {
-	_sizes.push_back(_file.size());
+	_conf_rounds = rounds;
 }
 
-template<typename T>
-inline size_t ObservedFile<T>::getLastSent()
+bool ObservedFile::operator ==( ObservedFile* other )
 {
-	return _last_sent;
+	return (getHash() == other->getHash());
 }
 
-template<typename T>
-inline bool ObservedFile<T>::operator==(ObservedFile other)
+void ObservedFile::log()
 {
-	return (other.getPath() == getPath());
+	_hashes.push_back(getHash());
 }

@@ -24,8 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "FATFile.cpp" //TODO doof!
-#include "ObservedFile.cpp" //TODO doof!
 using namespace ibrcommon;
 
 
@@ -110,23 +108,22 @@ void TarUtils::read_tar_archive( string extract_folder, ibrcommon::BLOB::Referen
 	archive_read_free(a);
 }
 
-#ifdef HAVE_LIBARCHIVE
-void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<FATFile> *> files_to_send)
+void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile*> files_to_send)
 {
 
 	vector<tarfile> tarfiles;
-	list<ObservedFile<FATFile> *>::iterator of_ptr_iter;
-	for(of_ptr_iter = files_to_send.begin(); of_ptr_iter != files_to_send.end(); of_ptr_iter++)
+	list<ObservedFile*>::iterator of_iter;
+	for(of_iter = files_to_send.begin(); of_iter != files_to_send.end(); of_iter++)
 	{
-		ObservedFile<FATFile> of = (**of_ptr_iter);
+		ObservedFile* of = (*of_iter);
 
 		tarfile tf;
-		tf.filename = of.getPath().c_str();
+		tf.filename = of->getPath().c_str();
 
 		struct archive_entry *e;
 		e= archive_entry_new();
-		archive_entry_set_size(e, of.size());
-		if(of.isDirectory())
+		archive_entry_set_size(e, of->size());
+		if(of->isDirectory())
 		{
 			archive_entry_set_filetype(e, AE_IFDIR);
 			archive_entry_set_perm(e, 0755);
@@ -138,7 +135,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 		}
 
 
-		archive_entry_set_pathname(e, rel_filename(of.getPath()).c_str());
+		archive_entry_set_pathname(e, rel_filename(of->getPath()).c_str());
 
 		//set timestamps
 		struct timespec ts;
@@ -158,9 +155,8 @@ void TarUtils::set_img_path( std::string img_path )
 {
 	_img_path = img_path;
 }
-#else
 
-void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<File> *> files_to_send)
+/*void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<File> *> files_to_send)
 {
 	vector<tarfile> tarfiles;
 	list<ObservedFile<File> *>::iterator of_ptr_iter;
@@ -187,8 +183,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 	write_tar_archive(blob,tarfiles);
 
 }
-#endif
-
+*/
 
 void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfile> tarfiles)
 {

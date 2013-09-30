@@ -23,14 +23,13 @@
 #include "FATFile.h"
 #ifdef HAVE_LIBTFFS
 
-string FATFile::_img_path = "";
-
-FATFile::FATFile() : File("/"), htffs(0),hdir(0),hfile(0), ret(-1)
+FATFile::FATFile( string file_path) : File(file_path) , htffs(0),hdir(0),hfile(0), ret(-1)
 {
 	update();
 }
 
-FATFile::FATFile( string file_path) : File(file_path), htffs(0),hdir(0),hfile(0), ret(-1)
+
+FATFile::FATFile( const string img_path, const string file_path) : File(file_path), _img_path(img_path) , htffs(0),hdir(0),hfile(0), ret(-1)
 {
 	update();
 }
@@ -215,11 +214,6 @@ time_t FATFile::laststatchange()
 	return lastaccess();
 }
 
-void FATFile::setImgPath(string img_path)
-{
-	_img_path = img_path;
-}
-
 int FATFile::mount_tffs()
 {
 	byte* path = const_cast<char *>(_img_path.c_str());
@@ -270,8 +264,6 @@ int FATFile::closedir_tffs()
 	}
 	return 0;
 }
-
-
 
 int FATFile::set_dirent_to_current()
 {

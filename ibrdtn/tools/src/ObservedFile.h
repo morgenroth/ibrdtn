@@ -4,42 +4,48 @@
  *  Created on: Sep 20, 2013
  *      Author: goltzsch
  */
-
-#ifndef OBSERVEDFILE_H_
-#define OBSERVEDFILE_H_
-
 #include <vector>
 #include <list>
 #include <string>
 
+#ifndef OBSERVEDFILE_H_
+#define OBSERVEDFILE_H_
+
+
 using namespace std;
 
-template <class T>
 class ObservedFile
 {
 public:
-	ObservedFile(std::string path);
+	ObservedFile();
 	virtual ~ObservedFile();
 
-	int getFiles(list<T> files);
-	string getPath();
-	bool exists();
-	string getBasename();
-	size_t size();
-	bool isDirectory();
+	virtual int getFiles(list<ObservedFile*> files) = 0;
+	virtual string getPath() = 0;
+	virtual bool exists() = 0;
+	virtual string getBasename() = 0;
+	virtual size_t size() = 0;
+	virtual bool isSystem() = 0;
+	virtual bool isDirectory() = 0;
 
-	time_t getLastTimestamp();
-	bool lastSizesEqual( size_t n );
-	void send();
-	void addSize();
-	size_t getLastSent();
-	bool operator==(ObservedFile other);
+	virtual unsigned char* getHash() = 0;
 
-private:
-	T _file;
+
+	bool operator==(ObservedFile* other);
+	void log();
+
+	static void setConfigImgPath(string path);
+	static void setConfigRounds(size_t rounds);
+protected:
+	bool lastHashesEqual( size_t n );
+	std::vector<unsigned char*> _hashes;
 	size_t _last_sent;
-	std::vector<size_t> _sizes;
+
+	static string _conf_imgpath;
+	static size_t _conf_rounds;
+	static bool _conf_badclock;
 };
+
 
 
 #endif /* OBSERVEDFILE_H_ */

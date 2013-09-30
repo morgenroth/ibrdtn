@@ -42,7 +42,6 @@ using namespace std;
 class FATFile: public ibrcommon::File
 {
 public:
-	FATFile();
 	FATFile(const string img_path);
 	FATFile(const string img_path,const string file_path);
 	virtual ~FATFile();
@@ -58,11 +57,9 @@ public:
 	time_t lastmodify();
 	time_t laststatchange();
 
-	static void setImgPath(string img_path);
-
 
 private:
-	static string _img_path;
+	string _img_path;
 
 	//handles
 	tffs_handle_t htffs;

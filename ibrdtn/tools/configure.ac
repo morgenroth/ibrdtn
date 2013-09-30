@@ -85,6 +85,17 @@ PKG_CHECK_MODULES(ARCHIVE, libarchive, [
 ], [
 	AC_MSG_WARN([libarchive not found, fallback to unix-tar])
 ])
+
+TFFSHEADER=/home/goltzsch/workspace/ibrdtn-repo/ibrdtn/tools/src/tffs/tffs.h
+
+AC_CHECK_HEADER(${TFFSHEADER},[
+	AC_DEFINE(HAVE_LIBTFFS, [1], ["tffs.h  found"])
+], [  
+    AC_MSG_WARN(["tffs.h not found"])
+])
+
+
+
 AM_CONDITIONAL([TUNNEL], [test x$has_tun = xyes])
 
 dnl -----------------------------------------------
