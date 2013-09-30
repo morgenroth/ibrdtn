@@ -25,6 +25,7 @@
 #include "ibrcommon/Logger.h"
 
 #include <netlink/object-api.h>
+#include <netlink/cache-api.h>
 #include <netlink/route/link.h>
 #include <netlink/route/addr.h>
 #include <netlink/route/rtnl.h>
