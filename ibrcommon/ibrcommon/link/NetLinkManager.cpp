@@ -51,6 +51,12 @@
 
 namespace ibrcommon
 {
+#ifndef HAVE_LIBNL3
+	struct nl_object_header {
+		NLHDR_COMMON
+	};
+#endif
+
 	vaddress rtnl_addr_get_local_vaddress(struct rtnl_addr *obj) {
 		struct nl_addr *naddr = rtnl_addr_get_local(obj);
 		if (!naddr) return vaddress();
@@ -99,7 +105,11 @@ namespace ibrcommon
 	{
 		if (obj == NULL) return;
 
+#ifdef HAVE_LIBNL3
 		switch (nl_object_get_msgtype(obj)) {
+#else
+		switch (static_cast<nl_object_header*>(nl_object_priv(obj))->ce_msgtype) {
+#endif
 			case RTM_NEWLINK: {
 				LinkEvent::Action evt_action = LinkEvent::ACTION_UNKOWN;
 
