@@ -59,6 +59,7 @@ config 'daemon' 'main'
 	# values: none | default | epidemic | flooding | prophet
 	option	routing		default
 #	option	forwarding	no
+#	option	fragmentation	yes
 
 #
 # static routing rules
