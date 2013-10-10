@@ -338,13 +338,6 @@ int main( int argc, char** argv )
 
 				}
 
-				//print number of observed files TODO remove
-				size_t num_of = observed_files.size();
-				string s = "";
-				if(num_of != 1) s = "s";
-				cout << num_of << " observed file" << s << endl;
-
-
 				//tick all files
 				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
@@ -366,27 +359,17 @@ int main( int argc, char** argv )
 
 				}
 
+				if(!_conf_quiet)
+					cout << files_to_send.size() << "/" << observed_files.size() << " files to send: " << files_to_send_ss.str() << endl;
 
 				if (!files_to_send.size())
 				{
-					if(!_conf_quiet)
-						cout << "0 files to send" << endl;
 					// wait some seconds
 					ibrcommon::Thread::sleep(_conf_interval);
-
 					continue;
 				}
 				else
 				{
-					if(!_conf_quiet)
-					{
-						string s = " ";
-						size_t size = files_to_send.size();
-						if(size > 1) s = "s";
-
-						cout << size << " file" << s << " to send: " << files_to_send_ss.str() << endl;
-					}
-
 					// create a blob
 					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 
