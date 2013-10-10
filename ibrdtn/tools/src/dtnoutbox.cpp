@@ -320,9 +320,17 @@ int main( int argc, char** argv )
 				set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files),ObservedFile::compare);
 
 				//remove deleted files from observation
+				bool deleted = false;
 				for (iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
 				{
-					//TODO !!!
+					for(iter2 = observed_files.begin();iter2 != observed_files.end();++iter2)
+					{
+							observed_files.erase(iter2);
+							deleted = true;
+							break;
+					}
+					if(deleted)
+						break;
 				}
 
 				//add new files to observation
