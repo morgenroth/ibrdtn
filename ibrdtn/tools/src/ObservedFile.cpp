@@ -6,10 +6,11 @@
  */
 
 #include "ObservedFile.h"
-
+#include <stdio.h>
 
 string ObservedFile::_conf_imgpath = "";
 size_t ObservedFile::_conf_rounds = 0;
+bool ObservedFile::_conf_badclock = false;
 
 
 ObservedFile::ObservedFile() : _last_sent(0)
@@ -19,6 +20,9 @@ ObservedFile::~ObservedFile()
 {
 }
 
+void ObservedFile::setConfigBadclock( bool badclock )
+{
+}
 
 bool ObservedFile::lastHashesEqual( size_t n )
 {
@@ -41,12 +45,18 @@ void ObservedFile::setConfigRounds( size_t rounds )
 	_conf_rounds = rounds;
 }
 
-bool ObservedFile::operator ==( ObservedFile* other )
-{
-	return (getHash() == other->getHash());
-}
-
-void ObservedFile::log()
+void ObservedFile::tick()
 {
 	_hashes.push_back(getHash());
+}
+
+void ObservedFile::send()
+{
+	_hashes.clear();
+}
+
+bool ObservedFile::compare( ObservedFile* a, ObservedFile* b )
+{
+	bool eq =  (a->getHash() == b->getHash());
+	return !eq;
 }

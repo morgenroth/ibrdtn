@@ -23,13 +23,8 @@
 #include "FATFile.h"
 #ifdef HAVE_LIBTFFS
 
-FATFile::FATFile( string file_path) : File(file_path) , htffs(0),hdir(0),hfile(0), ret(-1)
-{
-	update();
-}
 
-
-FATFile::FATFile( const string img_path, const string file_path) : File(file_path), _img_path(img_path) , htffs(0),hdir(0),hfile(0), ret(-1)
+FATFile::FATFile( const string file_path, const string img_path) : File(file_path), _img_path(img_path) , htffs(0),hdir(0),hfile(0), ret(-1)
 {
 	update();
 }
@@ -50,7 +45,7 @@ int FATFile::getFiles( list<FATFile> &files)
 		{
 			string newpath = path + "/" + dirent.d_name;
 
-			FATFile f(newpath);
+			FATFile f(newpath,_img_path);
 			files.push_back(f);
 		}
 		else if (ret == ERR_TFFS_LAST_DIRENTRY) { // end of directory

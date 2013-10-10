@@ -68,11 +68,6 @@ public:
 	static void read_tar_archive( string extract_folder, ibrcommon::BLOB::Reference *blob );
 
 private:
-	 /*
-	  * write tar archive to payload block, internal version
-	  */
-	static void write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfile> tarfiles);
-
 	static string rel_filename(string);
 
 	static std::string _img_path;

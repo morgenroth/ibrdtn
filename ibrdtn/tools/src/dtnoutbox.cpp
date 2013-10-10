@@ -30,8 +30,7 @@
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
 
-//#include "TarUtils.h"
-
+#include "TarUtils.h"
 
 #define HAVE_LIBTFFS 1
 
@@ -45,7 +44,6 @@ extern "C"
 
 #include "ObservedFile.h"
 #include "ObservedFATFile.h"
-//#include "ObservedNormalFile.cpp"
 
 #include <stdlib.h>
 #include <iostream>
@@ -87,9 +85,8 @@ void print_help()
 	cout << " --badclock         assumes a bad clock on the system, the only indicator to send a file is its size" << endl;
 	cout << " --consider-swp     do not ignore these files: *~* and *.swp" << endl;
 	cout << " --consider-invis   do not ignores these files: .*" << endl;
+#ifndef HAVE_LIBTFFS
 	cout << " --no-keep          do not keep files in outbox";
-#ifdef HAVE_LIBTFFS
-	cout << " WARNING: this option will be ignored on fat images";
 #endif
 	cout << endl;
 	cout << " --quiet		     only print error messages" << endl;
@@ -250,9 +247,12 @@ int main( int argc, char** argv )
 
 	File outbox_file(conf["outbox"]);
 
-	list<ObservedFile*> observed_files, avail_files, new_files, old_files, deleted_files;
+	list<ObservedFile*> avail_files, new_files, old_files, deleted_files, observed_files, files_to_send;
+	set<string> sent_hashes;
 	list<ObservedFile*>::iterator iter;
 	list<ObservedFile*>::iterator iter2;
+
+	std::vector<unsigned char*> _sent_hashes;
 
 	ObservedFile* outbox;
 
@@ -262,7 +262,7 @@ int main( int argc, char** argv )
 	{
 		if(!outbox_file.exists())
 		{
-			cout << "ERROR: image not found" << endl;
+			cout << "ERROR: image not found! please create image before starting dtnoutbox" << endl;
 			return -1;
 		}
 
@@ -272,17 +272,7 @@ int main( int argc, char** argv )
 	else
 	{
 		if(!outbox_file.exists())
-		{
 			File::createDirectory(outbox_file);
-		}
-
-		/*outbox = new ObservedNormalFile(outbox(conf["outbox"]));
-		if(!outbox->isDirectory())
-
-		{
-			cout << "ERROR: this is not a directory" << endl;
-			return -1;
-		}*/
 	}
 
 	// loop, if no stop if requested
@@ -322,85 +312,79 @@ int main( int argc, char** argv )
 				//get all files
 				outbox->getFiles(avail_files);
 
+				avail_files.begin();
+
 				//determine deleted files
-				set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files));
+				set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files),ObservedFile::compare);
 				//determine new files
-				set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files));
+				set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files),ObservedFile::compare);
 
 				//remove deleted files from observation
 				for (iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
 				{
-					iter2 = std::find(observed_files.begin(),observed_files.end(),(*iter));
-					observed_files.erase(iter2);
-
+					//TODO !!!
 				}
 
 				//add new files to observation
 				for (iter = new_files.begin(); iter != new_files.end(); ++iter)
 				{
-					// skip system files ("." and "..")
-					if ((*iter)->isSystem()) continue;
-
 					//skip invisible and swap-files, if wanted
 					if (!_conf_consider_swp && isSwap((*iter)->getBasename())) continue;
 					if (!_conf_consider_invis && isInvis((*iter)->getBasename())) continue;
 
-					observed_files.push_back( new ObservedFATFile((*iter)->getPath()));
+
+					ObservedFile* of = new ObservedFATFile((*iter)->getPath()); //TODO generisch
+					observed_files.push_back(of);
+
+				}
+
+				//print number of observed files TODO remove
+				size_t num_of = observed_files.size();
+				string s = "";
+				if(num_of != 1) s = "s";
+				cout << num_of << " observed file" << s << endl;
+
+
+				//tick all files
+				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
+				{
+					(*iter)->tick();
+				}
+
+				//find files to send, create list
+				stringstream files_to_send_ss;
+				files_to_send.clear();
+				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
+				{
+					if(sent_hashes.find((*iter)->getHash()) == sent_hashes.end() && (*iter)->lastHashesEqual(_conf_rounds))
+					{
+						(*iter)->send();
+						sent_hashes.insert((*iter)->getHash());
+						files_to_send_ss << (*iter)->getBasename() << " ";
+						files_to_send.push_back(*iter);
+					}
+
 				}
 
 
-				if (observed_files.size() == 0)
+				if (!files_to_send.size())
 				{
-					if (!_conf_quiet)
-						cout << "0 files to send: directory empty" << endl;
-
+					if(!_conf_quiet)
+						cout << "0 files to send" << endl;
 					// wait some seconds
 					ibrcommon::Thread::sleep(_conf_interval);
 
 					continue;
-				}
-
-				//find files to send
-				//TODO das hier in comperator
-				/*files_to_send.clear();
-				for (of_iter = observed_files.begin(); of_iter != observed_files.end(); ++of_iter)
-				{
-					ObservedFile<typeof(*iter)> &of = (*of_iter);
-					of.addSize(); //measure current size
-
-					size_t latest_timestamp = of.getLastTimestamp();
-					//two indicators to send:
-					bool send_time = (of.getLastSent() < latest_timestamp) || _conf_badclock;
-					bool send_size = of.lastSizesEqual(_conf_rounds);
-					if (send_time && send_size)
-					{
-						files_to_send.push_back(&of);
-					}
-				}*/
-
-				//mark files as send and create list for tar
-				size_t counter = 0;
-				stringstream files_to_send_ss;
-				for(iter = observed_files.begin(); iter != observed_files.end(); iter++)
-				{
-							files_to_send_ss << (*iter)->getBasename() << " ";
-							counter++;
-				}
-
-				if (!counter)
-				{
-					if(!_conf_quiet)
-						cout << "0 files to send: requirements not fulfilled" << endl;
 				}
 				else
 				{
 					if(!_conf_quiet)
 					{
 						string s = " ";
-						size_t size = observed_files.size();
+						size_t size = files_to_send.size();
 						if(size > 1) s = "s";
 
-						cout << observed_files.size() << " file" << s << " to send: " << files_to_send_ss.str() << endl;
+						cout << size << " file" << s << " to send: " << files_to_send_ss.str() << endl;
 					}
 
 					// create a blob
@@ -410,19 +394,9 @@ int main( int argc, char** argv )
 #ifdef HAVE_LIBARCHIVE
 	//if libarchive is available, check if libtffs can be used
 	#ifdef HAVE_LIBTFFS
-					//TarUtils::set_img_path(conf["outbox"]);
+					TarUtils::set_img_path(conf["outbox"]);
 	#endif
-					/*TarUtils::write_tar_archive(&blob, files_to_send);
-
-					//delete files, if wanted
-					if (!_conf_keep)
-					{
-						iter = avail_files.begin();
-						while (iter != avail_files.end())
-						{
-							(*iter++).remove(true);
-						}
-					}*/
+					TarUtils::write_tar_archive(&blob, files_to_send);
 //or commandline fallback
 #else
 					// "--remove-files" deletes files after adding
@@ -455,6 +429,10 @@ int main( int argc, char** argv )
 					// send the bundle
 					client << b;
 					client.flush();
+
+					//check whether hashes need to be deleted
+					if(sent_hashes.size() >= 10000)
+						sent_hashes.clear();
 				}
 				if (_running)
 				{

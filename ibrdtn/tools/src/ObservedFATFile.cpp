@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <sstream>
 #include <stdlib.h>
 #include "ObservedFATFile.h"
 #include "FATFile.cpp"
@@ -15,16 +16,15 @@
 #include <openssl/md5.h>
 #endif
 
-ObservedFATFile::ObservedFATFile(string path) : ObservedFile(),_file(path)
+ObservedFATFile::ObservedFATFile(string file_path) : ObservedFile(),_file(file_path,_conf_imgpath)
 {
-	cout << "konstr of: " << _conf_imgpath<< endl;
 }
 
 ObservedFATFile::~ObservedFATFile()
 {
 }
 
-int ObservedFATFile::getFiles( list<ObservedFile*> files )
+int ObservedFATFile::getFiles( list<ObservedFile*>& files )
 {
 
 	list<FATFile> fatfiles;
@@ -32,10 +32,11 @@ int ObservedFATFile::getFiles( list<ObservedFile*> files )
 	int ret = _file.getFiles(fatfiles);
 	for(ff_iter = fatfiles.begin(); ff_iter != fatfiles.end(); ff_iter++)
 	{
+		if((*ff_iter).isSystem())
+			continue;
+
 		if((*ff_iter).isDirectory())
-		{
 			(*ff_iter).getFiles(fatfiles);
-		}
 		else
 		{
 			ObservedFile* of = new ObservedFATFile((*ff_iter).getPath());
@@ -43,7 +44,6 @@ int ObservedFATFile::getFiles( list<ObservedFile*> files )
 		}
 	}
 	return ret;
-
 }
 
 string ObservedFATFile::getPath()
@@ -75,16 +75,12 @@ bool ObservedFATFile::isDirectory()
 	return _file.isDirectory();
 }
 
-unsigned char* ObservedFATFile::getHash()
+string ObservedFATFile::getHash()
 {
-	string path = getPath();
-	time_t stamp = _file.lastmodify();
-	size_t size = _file.size();
-	unsigned char mchar[sizeof(getPath()) + sizeof(stamp) + sizeof(size)];
-	memcpy(mchar,&path,sizeof(path));
-	memcpy(mchar+sizeof(path)+1,&stamp,sizeof(stamp));
-	memcpy(mchar+sizeof(path)+sizeof(size)+1,&size,sizeof(&size));
-	unsigned char * md = (unsigned char*) malloc(MD5_DIGEST_LENGTH);
-	MD5(mchar,sizeof(mchar),md);
-	return md;
+	stringstream ss;
+	ss << getPath() << _file.lastmodify() << _file.size();
+	string toHash = ss.str();
+	unsigned char hash[MD5_DIGEST_LENGTH];
+	MD5((unsigned char*)toHash.c_str(), toHash.length(), hash);
+	return string((char*)hash);
 }

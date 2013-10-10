@@ -111,82 +111,6 @@ void TarUtils::read_tar_archive( string extract_folder, ibrcommon::BLOB::Referen
 void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile*> files_to_send)
 {
 
-	vector<tarfile> tarfiles;
-	list<ObservedFile*>::iterator of_iter;
-	for(of_iter = files_to_send.begin(); of_iter != files_to_send.end(); of_iter++)
-	{
-		ObservedFile* of = (*of_iter);
-
-		tarfile tf;
-		tf.filename = of->getPath().c_str();
-
-		struct archive_entry *e;
-		e= archive_entry_new();
-		archive_entry_set_size(e, of->size());
-		if(of->isDirectory())
-		{
-			archive_entry_set_filetype(e, AE_IFDIR);
-			archive_entry_set_perm(e, 0755);
-		}
-		else
-		{
-			archive_entry_set_filetype(e, AE_IFREG );
-			archive_entry_set_perm(e, 0644);
-		}
-
-
-		archive_entry_set_pathname(e, rel_filename(of->getPath()).c_str());
-
-		//set timestamps
-		struct timespec ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
-		archive_entry_set_atime(e, ts.tv_sec, ts.tv_nsec); //accesstime
-		archive_entry_set_birthtime(e, ts.tv_sec, ts.tv_nsec); //creationtime
-		archive_entry_set_ctime(e, ts.tv_sec, ts.tv_nsec); //time, inode changed
-		archive_entry_set_mtime(e, ts.tv_sec, ts.tv_nsec); //modification time
-
-		tf.entry = e;
-		tarfiles.push_back(tf);
-	}
-	write_tar_archive(blob,tarfiles);
-}
-
-void TarUtils::set_img_path( std::string img_path )
-{
-	_img_path = img_path;
-}
-
-/*void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<File> *> files_to_send)
-{
-	vector<tarfile> tarfiles;
-	list<ObservedFile<File> *>::iterator of_ptr_iter;
-	for(of_ptr_iter = files_to_send.begin(); of_ptr_iter != files_to_send.end(); of_ptr_iter++)
-	{
-		ObservedFile<File> of = (**of_ptr_iter);
-
-		tarfile tf;
-		tf.filename = of.getPath().c_str();
-
-		struct archive_entry *e;
-		e= archive_entry_new();
-
-		//get stat and copy to archive
-		struct stat st;
-		stat(of.getPath().c_str(),&st);
-		archive_entry_copy_stat(e,&st);
-
-		archive_entry_set_pathname(e, rel_filename(of.getPath()).c_str());
-
-		tf.entry = e;
-		tarfiles.push_back(tf);
-	}
-	write_tar_archive(blob,tarfiles);
-
-}
-*/
-
-void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfile> tarfiles)
-{
 	char buff[BUFF_SIZE];
 	size_t len;
 	int fd;
@@ -196,21 +120,45 @@ void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfi
 	archive_write_set_format_ustar(a);
 	archive_write_open(a, blob, &open_callback, &write_callback, &close_callback);
 
-	//iterate tarfiles
-	vector<tarfile>::iterator iter;
-	for(iter = tarfiles.begin(); iter < tarfiles.end(); iter++)
+	list<ObservedFile*>::iterator of_iter;
+	for(of_iter = files_to_send.begin(); of_iter != files_to_send.end(); of_iter++)
 	{
-		tarfile tf = (*iter);
+		ObservedFile* of = (*of_iter);
 
-		archive_write_header(a, tf.entry);
+		const char* filename = of->getPath().c_str();
+		cout << "here:" << filename << endl;
+		struct archive_entry *entry;
+		entry= archive_entry_new();
+		archive_entry_set_size(entry, of->size());
+		if(of->isDirectory())
+		{
+			archive_entry_set_filetype(entry, AE_IFDIR);
+			archive_entry_set_perm(entry, 0755);
+		}
+		else
+		{
+			archive_entry_set_filetype(entry, AE_IFREG );
+			archive_entry_set_perm(entry, 0644);
+		}
 
-		//write normal file
+
+		archive_entry_set_pathname(entry, rel_filename(of->getPath()).c_str());
+
+		//set timestamps
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
+		archive_entry_set_atime(entry, ts.tv_sec, ts.tv_nsec); //accesstime
+		archive_entry_set_birthtime(entry, ts.tv_sec, ts.tv_nsec); //creationtime
+		archive_entry_set_ctime(entry, ts.tv_sec, ts.tv_nsec); //time, inode changed
+		archive_entry_set_mtime(entry, ts.tv_sec, ts.tv_nsec); //modification time
+
+		//read normal file
 		if(_img_path == "")
 		{
-			fd = open(tf.filename, O_RDONLY);
+			fd = open(filename, O_RDONLY);
 			len = read(fd, buff, BUFF_SIZE);
 		}
-		//write file on vfat-image
+		//read file on vfat-image
 		else
 		{
 			//mount tffs
@@ -222,10 +170,10 @@ void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfi
 			}
 
 			//open file
-			byte* file = const_cast<char *>(tf.filename);
+			byte* file = const_cast<char *>(filename);
 			if ((ret = TFFS_fopen(htffs, file, "r", &hfile)) != TFFS_OK)
 			{
-				cout << "ERROR: TFFS_fopen" << ret << endl;
+				cout << "ERROR: TFFS_fopen" << ret << filename << endl;
 				return;
 			}
 
@@ -282,13 +230,46 @@ void TarUtils::write_tar_archive(	ibrcommon::BLOB::Reference *blob, vector<tarfi
 				return;
 			}
 		}
-		archive_entry_free(tf.entry);
+		archive_entry_free(entry);
 	}
 	archive_write_close(a);
 	archive_write_free(a);
 
 }
 
+void TarUtils::set_img_path( std::string img_path )
+{
+_img_path = img_path;
+}
+
+/*void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<File> *> files_to_send)
+{
+vector<tarfile> tarfiles;
+	list<ObservedFile<File> *>::iterator of_ptr_iter;
+	for(of_ptr_iter = files_to_send.begin(); of_ptr_iter != files_to_send.end(); of_ptr_iter++)
+	{
+		ObservedFile<File> of = (**of_ptr_iter);
+
+		tarfile tf;
+		tf.filename = of.getPath().c_str();
+
+		struct archive_entry *e;
+		e= archive_entry_new();
+
+		//get stat and copy to archive
+		struct stat st;
+		stat(of.getPath().c_str(),&st);
+		archive_entry_copy_stat(e,&st);
+
+		archive_entry_set_pathname(e, rel_filename(of.getPath()).c_str());
+
+		tf.entry = e;
+		tarfiles.push_back(tf);
+	}
+	write_tar_archive(blob,tarfiles);
+
+}
+*/
 std::string TarUtils::rel_filename(std::string n)
 {
 	unsigned slash_pos = n.find_last_of('/', n.length());

@@ -14,17 +14,17 @@
 class ObservedFATFile: public ObservedFile
 {
 public:
-	ObservedFATFile(string path);
+	ObservedFATFile(string file_path);
 	virtual ~ObservedFATFile();
 
-	virtual int getFiles(list<ObservedFile*> files);
+	virtual int getFiles(list<ObservedFile*>& files);
 	virtual string getPath();
 	virtual bool exists();
 	virtual string getBasename();
 	virtual size_t size();
 	virtual bool isSystem();
 	virtual bool isDirectory();
-	virtual unsigned char* getHash();
+	virtual string getHash();
 
 private:
 	FATFile _file;
