@@ -51,6 +51,7 @@ void print_help()
         cout << "* optional parameters *" << endl;
         cout << " -h|--help        display this text" << endl;
         cout << " -w|--workdir     temporary work directory" << endl;
+        cout << " --quiet		     only print error messages" << endl;
 }
 
 map<string,string> readconfiguration(int argc, char** argv)
@@ -78,6 +79,9 @@ map<string,string> readconfiguration(int argc, char** argv)
         {
             ret["workdir"] = argv[i + 1];
         }
+
+		if ( arg == "--quiet")
+			ret["quiet"] = "1";
     }
 
     return ret;
@@ -109,6 +113,13 @@ int main(int argc, char** argv)
 
     // read the configuration
     map<string,string> conf = readconfiguration(argc, argv);
+
+	//check quiet parameter
+	bool _conf_quiet = false;
+	if (conf.find("quiet") != conf.end())
+	{
+		_conf_quiet = true;
+	}
 
     // init working directory
     if (conf.find("workdir") != conf.end())
@@ -150,7 +161,8 @@ int main(int argc, char** argv)
             {
             	// receive the bundle
             	dtn::data::Bundle b = client.getBundle();
-
+            	if(!_conf_quiet)
+            		cout << "received bundle: " << b.toString() << endl;
             	// get the reference to the blob
             	ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 #ifdef HAVE_LIBARCHIVE
