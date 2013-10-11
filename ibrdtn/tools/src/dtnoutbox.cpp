@@ -319,18 +319,25 @@ int main( int argc, char** argv )
 
 				//determine deleted files
 				set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files),ObservedFile::compare);
-				//determine new files
-				set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files),ObservedFile::compare);
-
 				//remove deleted files from observation
 				for (iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
 				{
 					for(iter2 = observed_files.begin();iter2 != observed_files.end();++iter2)
 					{
-							observed_files.erase(iter2);
-							break;
+							if((*iter2)->getHash() == (*iter)->getHash())
+							{
+								observed_files.erase(iter2);
+								break;
+							}
 					}
 				}
+				//rerun loop, if files have been deleted
+				if(deleted_files.size() > 0)
+					break;
+
+
+				//determine new files
+				set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files),ObservedFile::compare);
 
 				//add new files to observation
 				for (iter = new_files.begin(); iter != new_files.end(); ++iter)
@@ -348,6 +355,7 @@ int main( int argc, char** argv )
 					observed_files.push_back(of);
 
 				}
+
 
 				//tick all files
 				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
