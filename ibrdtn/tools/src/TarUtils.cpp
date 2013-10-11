@@ -64,16 +64,15 @@ ssize_t TarUtils::write_callback( struct archive *, void *blob_ptr, const void *
 
 ssize_t TarUtils::read_callback( struct archive *a, void *blob_ptr, const void **buffer )
 {
-	int len = BUFF_SIZE;
-	char *cbuff = new char[len];
+	char *cbuff = new char[BUFF_SIZE];
 
 	BLOB::Reference *blob = (BLOB::Reference*) blob_ptr;
 	BLOB::iostream is = blob->iostream();
 
-	(*is).read(cbuff,len);
+	(*is).read(cbuff,BUFF_SIZE);
 
 	*buffer = cbuff;
-	return len;
+	return BUFF_SIZE;
 }
 
 int TarUtils::close_callback( struct archive *, void *blob_iostream )
@@ -151,6 +150,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 		archive_entry_set_ctime(entry, ts.tv_sec, ts.tv_nsec); //time, inode changed
 		archive_entry_set_mtime(entry, ts.tv_sec, ts.tv_nsec); //modification time
 
+		archive_write_header(a,entry);
 		//read normal file
 		if(_img_path == "")
 		{
@@ -195,11 +195,14 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 					len = ret;
 			}
 		}
-
 		//write buffer to archive
 		while (len > 0)
 		{
-			archive_write_data(a, buff, len);
+			if( (ret = archive_write_data(a, buff, len)) < 0)
+			{
+				cout << "ERROR: archive_write_data " << ret << endl;
+				return;
+			}
 			if(_img_path == "")
 				len = read(fd, buff, sizeof(buff));
 			else
