@@ -27,7 +27,7 @@
 #ifndef FATFILE_H_
 #define FATFILE_H_
 
-#define HAVE_LIBTFFS 1 //TODO
+#define HAVE_LIBTFFS 1 //TODO libtffs include
 #ifdef HAVE_LIBTFFS
 #include "ibrcommon/data/File.h"
 #include <list>

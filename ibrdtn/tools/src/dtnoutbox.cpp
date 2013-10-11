@@ -32,8 +32,6 @@
 
 #include "TarUtils.h"
 
-#define HAVE_LIBTFFS 1
-
 #ifdef HAVE_LIBTFFS
 extern "C"
 {
@@ -42,9 +40,8 @@ extern "C"
 #endif
 
 
-#include "ObservedFile.h"
 #include "ObservedFATFile.h"
-#include "ObservedNormalFile.cpp" //TODO
+#include "ObservedNormalFile.h"
 
 #include <stdlib.h>
 #include <iostream>
@@ -196,20 +193,6 @@ int main( int argc, char** argv )
 	map<string,string> conf = readconfiguration(argc, argv);
 	size_t _conf_interval = atoi(conf["interval"].c_str());
 	size_t _conf_rounds = atoi(conf["rounds"].c_str());
-
-	/*//check keep parameter
-	bool _conf_keep = true;
-	if (conf.find("no-keep") != conf.end())
-	{
-		_conf_keep = false;
-	}
-
-	//check badclock parameter
-	bool _conf_badclock = false;
-	if (conf.find("badclock") != conf.end())
-	{
-		_conf_badclock= true;
-	}*/
 
 	//check consider-swp parameter
 	bool _conf_consider_swp = false;

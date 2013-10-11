@@ -25,6 +25,8 @@ dtnoutbox_SOURCES = dtnoutbox.cpp \
 		  ObservedFile.cpp \
 		  ObservedFATFile.h \
 		  ObservedFATFile.cpp \
+		  ObservedNormalFile.h \
+		  ObservedNormalFile.cpp \
 		  TarUtils.h \
 		  TarUtils.cpp
 dtnrecv_SOURCES = dtnrecv.cpp

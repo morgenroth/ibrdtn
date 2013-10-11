@@ -33,7 +33,6 @@
 #include <archive_entry.h>
 #include <fcntl.h>
 
-#define HAVE_LIBTFFS 1//TODO
 #ifdef HAVE_LIBTFFS
 extern "C"
 {
