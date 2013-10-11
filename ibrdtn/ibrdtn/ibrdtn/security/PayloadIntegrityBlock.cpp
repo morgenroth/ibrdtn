@@ -183,33 +183,6 @@ namespace dtn
 			SecurityKey::free(pkey);
 		}
 
-		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle, const SecurityKey &key, const bool all)
-		{
-			dtn::data::Bundle::find_iterator it(bundle.begin(), PayloadIntegrityBlock::BLOCK_TYPE);
-
-			// search for valid PIB
-			while (it.next(bundle.end()))
-			{
-				const PayloadIntegrityBlock &pib = dynamic_cast<const PayloadIntegrityBlock&>(**it);
-
-				// check if the PIB is valid
-				try {
-					verify(bundle, key, pib);
-
-					// found an valid PIB, remove it
-					bundle.remove(pib);
-
-					// remove all previous pibs if all = true
-					if (all)
-					{
-						bundle.erase(std::remove(bundle.begin(), (dtn::data::Bundle::iterator&)it, PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());
-					}
-
-					return;
-				} catch (const ibrcommon::Exception&) { };
-			}
-		}
-
 		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle)
 		{
 			bundle.erase(std::remove(bundle.begin(), bundle.end(), PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());

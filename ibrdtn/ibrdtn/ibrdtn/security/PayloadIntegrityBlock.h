@@ -77,14 +77,6 @@ namespace dtn
 				static void verify(const dtn::data::Bundle &bundle, const SecurityKey &key);
 
 				/**
-				Seeks for a valid PIB in the stack and removes all blocks above and the 
-				PIB block itself.
-				@param bundle the bundle to be tested
-				@return the number of removed blocks
-				*/
-				static void strip(dtn::data::Bundle& bundle, const SecurityKey &key, const bool all = false);
-
-				/**
 				Removes all PayloadIntegrityBlocks from a bundle
 				@param bundle the bundle, which shall be cleaned from pibs
 				*/
