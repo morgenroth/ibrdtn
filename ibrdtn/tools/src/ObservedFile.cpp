@@ -28,11 +28,14 @@ bool ObservedFile::lastHashesEqual( size_t n )
 {
 	if (n > _hashes.size()) return false;
 
-	for (size_t i = 1; i <= n; i++)
+	vector<string>::iterator iter = _hashes.end() - n;
+	bool equal = true;
+	while(iter != _hashes.end()-1)
 	{
-		if (_hashes.at(_hashes.size() - i) != _hashes.at(_hashes.size() - i - 1)) return false;
+		if((*iter) != (*(++iter)))
+			equal = false;
 	}
-	return true;
+	return equal;
 }
 
 void ObservedFile::setConfigImgPath( string path )

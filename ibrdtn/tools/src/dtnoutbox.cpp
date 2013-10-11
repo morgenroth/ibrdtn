@@ -369,7 +369,6 @@ int main( int argc, char** argv )
 						files_to_send_ss << (*iter)->getBasename() << " ";
 						files_to_send.push_back(*iter);
 					}
-
 				}
 
 				if(!_conf_quiet)
