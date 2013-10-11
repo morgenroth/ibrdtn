@@ -105,6 +105,7 @@ void TarUtils::read_tar_archive( string extract_folder, ibrcommon::BLOB::Referen
 		archive_read_data_into_fd(a,fd);
 		close(fd);
 	}
+
 	archive_read_free(a);
 }
 
@@ -125,8 +126,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 	{
 		ObservedFile* of = (*of_iter);
 
-		const char* filename = of->getPath().c_str();
-		cout << "here:" << filename << endl;
+		string filename = of->getPath();
 		struct archive_entry *entry;
 		entry= archive_entry_new();
 		archive_entry_set_size(entry, of->size());
@@ -141,7 +141,6 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 			archive_entry_set_perm(entry, 0644);
 		}
 
-
 		archive_entry_set_pathname(entry, rel_filename(of->getPath()).c_str());
 
 		//set timestamps
@@ -155,7 +154,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 		//read normal file
 		if(_img_path == "")
 		{
-			fd = open(filename, O_RDONLY);
+			fd = open(filename.c_str(), O_RDONLY);
 			len = read(fd, buff, BUFF_SIZE);
 		}
 		//read file on vfat-image
@@ -170,7 +169,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 			}
 
 			//open file
-			byte* file = const_cast<char *>(filename);
+			byte* file = const_cast<char*>(filename.c_str());
 			if ((ret = TFFS_fopen(htffs, file, "r", &hfile)) != TFFS_OK)
 			{
 				cout << "ERROR: TFFS_fopen" << ret << filename << endl;

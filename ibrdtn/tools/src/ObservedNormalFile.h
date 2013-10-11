@@ -16,16 +16,16 @@ public:
 	ObservedNormalFile(string path);
 	virtual ~ObservedNormalFile();
 
-	virtual int getFiles(list<ObservedFile*> files);
+	virtual int getFiles(list<ObservedFile*>& files);
 	virtual string getPath();
 	virtual bool exists();
 	virtual string getBasename();
 	virtual size_t size();
+	virtual bool isSystem();
 	virtual bool isDirectory();
 
-	virtual time_t getLastTimestamp();
-	virtual void addSize();
-	virtual bool operator==(ObservedFile* other);
+	virtual string getHash();
+
 private:
 	ibrcommon::File _file;
 };

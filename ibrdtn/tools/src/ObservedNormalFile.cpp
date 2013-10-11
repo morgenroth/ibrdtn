@@ -7,32 +7,34 @@
 
 #include "ObservedNormalFile.h"
 
-ObservedNormalFile::ObservedNormalFile(string path) : _file(path),_last_sent(0)
-{
-	// TODO Auto-generated constructor stub
+#define HAVE_OPENSSL 1 //TODO
+#ifdef HAVE_OPENSSL
+#include <openssl/md5.h>
+#endif
 
+ObservedNormalFile::ObservedNormalFile(string path) : _file(path)
+{
 }
 
 ObservedNormalFile::~ObservedNormalFile()
 {
-	// TODO Auto-generated destructor stub
 }
 
-int ObservedNormalFile::getFiles( list<ObservedFile*> files )
+int ObservedNormalFile::getFiles(list<ObservedFile*>& files)
 {
-
 	list<ibrcommon::File> normalfiles;
-	list<ibrcommon::File>::iterator ff_iter;
+	list<ibrcommon::File>::iterator nf_iter;
 	int ret = _file.getFiles(normalfiles);
-	for(ff_iter = normalfiles.begin(); ff_iter != normalfiles.end(); ff_iter++)
+	for(nf_iter = normalfiles.begin(); nf_iter != normalfiles.end(); nf_iter++)
 	{
-		if((*ff_iter).isDirectory())
-		{
-			(*ff_iter).getFiles(normalfiles);
-		}
+		if((*nf_iter).isSystem())
+			continue;
+
+		if((*nf_iter).isDirectory())
+			(*nf_iter).getFiles(normalfiles);
 		else
 		{
-			const ObservedFile* of = new ObservedFATFile((*ff_iter).getPath());
+			ObservedFile* of = new ObservedNormalFile((*nf_iter).getPath());
 			files.push_back(of);
 		}
 	}
@@ -60,22 +62,21 @@ size_t ObservedNormalFile::size()
 	return _file.size();
 }
 
+bool ObservedNormalFile::isSystem()
+{
+	return _file.isSystem();
+}
 bool ObservedNormalFile::isDirectory()
 {
 	return _file.isDirectory();
 }
 
-time_t ObservedNormalFile::getLastTimestamp()
+string ObservedNormalFile::getHash()
 {
-	return max(_file.lastmodify(), _file.laststatchange());
-}
-
-void ObservedNormalFile::addSize()
-{
-	_sizes.push_back(_file.size());
-}
-
-bool ObservedNormalFile::operator ==( ObservedFile* other )
-{
-	return (other->getPath() == getPath());
+	stringstream ss;
+	ss << getPath() << _file.lastmodify() << _file.size();
+	string toHash = ss.str();
+	unsigned char hash[MD5_DIGEST_LENGTH];
+	MD5((unsigned char*)toHash.c_str(), toHash.length(), hash);
+	return string((char*)hash);
 }

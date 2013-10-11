@@ -44,6 +44,7 @@ extern "C"
 
 #include "ObservedFile.h"
 #include "ObservedFATFile.h"
+#include "ObservedNormalFile.cpp" //TODO
 
 #include <stdlib.h>
 #include <iostream>
@@ -224,7 +225,7 @@ int main( int argc, char** argv )
 		_conf_consider_invis = true;
 	}
 
-	//check consider-invis parameter
+	//check quiet parameter
 	bool _conf_quiet = false;
 	if (conf.find("quiet") != conf.end())
 	{
@@ -258,8 +259,10 @@ int main( int argc, char** argv )
 
 	ObservedFile::setConfigRounds(_conf_rounds);
 
+	bool _conf_fat = false;
 	if(outbox_file.getPath().substr(outbox_file.getPath().length()-4) == ".img")
 	{
+		_conf_fat = true;
 		if(!outbox_file.exists())
 		{
 			cout << "ERROR: image not found! please create image before starting dtnoutbox" << endl;
@@ -273,6 +276,8 @@ int main( int argc, char** argv )
 	{
 		if(!outbox_file.exists())
 			File::createDirectory(outbox_file);
+
+		outbox = new ObservedNormalFile(conf["outbox"]);
 	}
 
 	// loop, if no stop if requested
@@ -341,7 +346,11 @@ int main( int argc, char** argv )
 					if (!_conf_consider_invis && isInvis((*iter)->getBasename())) continue;
 
 
-					ObservedFile* of = new ObservedFATFile((*iter)->getPath()); //TODO generisch
+					ObservedFile* of;
+					if(_conf_fat)
+						of = new ObservedFATFile((*iter)->getPath());
+					else
+						of = new ObservedNormalFile((*iter)->getPath());
 					observed_files.push_back(of);
 
 				}
@@ -385,7 +394,8 @@ int main( int argc, char** argv )
 #ifdef HAVE_LIBARCHIVE
 	//if libarchive is available, check if libtffs can be used
 	#ifdef HAVE_LIBTFFS
-					TarUtils::set_img_path(conf["outbox"]);
+					if(_conf_fat)
+						TarUtils::set_img_path(conf["outbox"]);
 	#endif
 					TarUtils::write_tar_archive(&blob, files_to_send);
 //or commandline fallback
