@@ -388,7 +388,7 @@ namespace dtn
 					// finally create a bundle received event
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_RECEIVED);
 #ifdef WITH_BUNDLE_SECURITY
-				} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
+				} catch (const dtn::security::VerificationFailedException &ex) {
 					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 #endif
 				} catch (const ibrcommon::IOException &ex) {

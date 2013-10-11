@@ -525,7 +525,7 @@ namespace dtn
 			// do a fast security check
 			try {
 				dtn::security::SecurityManager::getInstance().fastverify(b);
-			} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
+			} catch (const dtn::security::VerificationFailedException &ex) {
 				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 5) << "[bundle rejected] security checks failed, reason: " << ex.what() << ", bundle: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("security checks failed");
 			}
@@ -572,7 +572,7 @@ namespace dtn
 					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 						// decrypt needed, but no key is available
 						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
-					} catch (const dtn::security::SecurityManager::DecryptException &ex) {
+					} catch (const dtn::security::DecryptException &ex) {
 						// decrypt failed
 						IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}

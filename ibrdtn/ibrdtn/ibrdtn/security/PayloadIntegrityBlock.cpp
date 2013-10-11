@@ -119,18 +119,18 @@ namespace dtn
 			{
 				if (!sb.isSecuritySource(bundle, key.reference))
 				{
-					throw ibrcommon::Exception("key not match the security source");
+					throw VerificationFailedException("key not match the security source");
 				}
 			}
 
 			// check the correct algorithm
 			if (sb._ciphersuite_id != SecurityBlock::PIB_RSA_SHA256)
 			{
-				throw ibrcommon::Exception("can not verify the PIB because of an invalid algorithm");
+				throw VerificationFailedException("can not verify the PIB because of an invalid algorithm");
 			}
 
 			EVP_PKEY *pkey = key.getEVP();
-			if (pkey == NULL) throw ibrcommon::Exception("verification error");
+			if (pkey == NULL) throw VerificationFailedException("verification error");
 
 			ibrcommon::RSASHA256Stream rs2s(pkey, true);
 
@@ -143,11 +143,11 @@ namespace dtn
 
 			if (ret == 0)
 			{
-				throw ibrcommon::Exception("verification failed");
+				throw VerificationFailedException("verification failed");
 			}
 			else if (ret < 0)
 			{
-				throw ibrcommon::Exception("verification error");
+				throw VerificationFailedException("verification error");
 			}
 		}
 

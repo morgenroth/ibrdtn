@@ -161,9 +161,6 @@ namespace dtn
 					break;
 				} catch (const SecurityKeyManager::KeyNotFoundException&) {
 					// no key for this node found
-				} catch (const ibrcommon::Exception &ex) {
-					// verification failed
-					throw SecurityManager::VerificationFailedException(ex.what());
 				}
 			}
 		}

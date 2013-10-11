@@ -80,7 +80,7 @@ namespace dtn
 				}
 			}
 
-			throw ibrcommon::Exception("element not found");
+			throw ElementMissingException();
 		}
 
 		void SecurityBlock::TLVList::get(TLV_TYPES type, unsigned char *value, dtn::data::Length length) const
@@ -628,7 +628,7 @@ namespace dtn
 			// verify the decrypt tag
 			if (!decrypt.verify(tag))
 			{
-				throw ibrcommon::Exception("decryption of block failed - tag is bad");
+				throw DecryptException("decryption of block failed - tag is bad");
 			}
 
 			// deserialize block
