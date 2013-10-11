@@ -117,18 +117,6 @@ namespace dtn
 				static const std::string calcHash(const dtn::data::Bundle &bundle, const SecurityKey &key, PayloadIntegrityBlock& ignore);
 
 				/**
-				Checks if the signature of sb matches to the bundle.
-				@param bundle the bundle to be checked
-				@param sb the PIB containing the signature
-				@param use_eid if set to true, the security source and destination will 
-				be checked before the bundle, to avoid computation on bundles with the 
-				wrong key
-				@return returns 1 for a correct signature, 0 for failure and -1 if some 
-				other error occurred.
-				*/
-				static void verify(const dtn::data::Bundle& bundle, const SecurityKey &key, const PayloadIntegrityBlock &sb, const bool use_eid = true);
-
-				/**
 				Set key_size to new_size, when _security_result is empty at the mutable
 				canonicialization process and no RSA object is set to calculate the size
 				of _security_result.
