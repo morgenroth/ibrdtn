@@ -253,8 +253,6 @@ int main( int argc, char** argv )
 	list<ObservedFile*>::iterator iter;
 	list<ObservedFile*>::iterator iter2;
 
-	std::vector<unsigned char*> _sent_hashes;
-
 	ObservedFile* outbox;
 
 	ObservedFile::setConfigRounds(_conf_rounds);
@@ -362,12 +360,15 @@ int main( int argc, char** argv )
 				files_to_send.clear();
 				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
-					if(sent_hashes.find((*iter)->getHash()) == sent_hashes.end() && (*iter)->lastHashesEqual(_conf_rounds))
+					if(  sent_hashes.find((*iter)->getHash()) == sent_hashes.end())
 					{
+						if ((*iter)->lastHashesEqual(_conf_rounds))
+						{
 						(*iter)->send();
 						sent_hashes.insert((*iter)->getHash());
 						files_to_send_ss << (*iter)->getBasename() << " ";
 						files_to_send.push_back(*iter);
+						}
 					}
 				}
 
@@ -388,10 +389,14 @@ int main( int argc, char** argv )
 //use libarchive...
 #ifdef HAVE_LIBARCHIVE
 	//if libarchive is available, check if libtffs can be used
-	#ifdef HAVE_LIBTFFS
 					if(_conf_fat)
+					{
 						TarUtils::set_img_path(conf["outbox"]);
-	#endif
+						TarUtils::set_outbox_path(conf["path"]);
+					}
+					else
+						TarUtils::set_outbox_path(conf["outbox"]);
+
 					TarUtils::write_tar_archive(&blob, files_to_send);
 //or commandline fallback
 #else

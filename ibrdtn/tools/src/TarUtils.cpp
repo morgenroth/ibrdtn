@@ -28,6 +28,7 @@ using namespace ibrcommon;
 
 
 std::string TarUtils::_img_path = "";
+std::string TarUtils::_outbox_path = "";
 tffs_handle_t TarUtils::htffs = 0;
 tdir_handle_t TarUtils::hdir = 0;
 tfile_handle_t TarUtils::hfile = 0;
@@ -85,6 +86,7 @@ void TarUtils::read_tar_archive( string extract_folder, ibrcommon::BLOB::Referen
 {
 	struct archive *a;
 	struct archive_entry *entry;
+	int ret,fd;
 
 
 	a = archive_read_new();
@@ -94,13 +96,19 @@ void TarUtils::read_tar_archive( string extract_folder, ibrcommon::BLOB::Referen
 
 	archive_read_open(a, (void*) blob, &open_callback, &read_callback, &close_callback);
 
-	int ret,fd;
 
 	while ((ret = archive_read_next_header(a, &entry)) == ARCHIVE_OK )
 	{
 		string filename = archive_entry_pathname(entry);
 		string path = extract_folder + "/" + filename;
+		string dirs = dir_path(path);
+		mkdir(dirs.c_str(),0777);
 		fd = open(path.c_str(),O_CREAT|O_WRONLY,0666);
+		if(fd < 0)
+		{
+			cout << "ERROR: cannot open file " << path << endl;
+			return;
+		}
 		archive_read_data_into_fd(a,fd);
 		close(fd);
 	}
@@ -241,41 +249,23 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 
 void TarUtils::set_img_path( std::string img_path )
 {
-_img_path = img_path;
+	_img_path = img_path;
 }
 
-/*void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<ObservedFile<File> *> files_to_send)
+void TarUtils::set_outbox_path( std::string outbox_path )
 {
-vector<tarfile> tarfiles;
-	list<ObservedFile<File> *>::iterator of_ptr_iter;
-	for(of_ptr_iter = files_to_send.begin(); of_ptr_iter != files_to_send.end(); of_ptr_iter++)
-	{
-		ObservedFile<File> of = (**of_ptr_iter);
-
-		tarfile tf;
-		tf.filename = of.getPath().c_str();
-
-		struct archive_entry *e;
-		e= archive_entry_new();
-
-		//get stat and copy to archive
-		struct stat st;
-		stat(of.getPath().c_str(),&st);
-		archive_entry_copy_stat(e,&st);
-
-		archive_entry_set_pathname(e, rel_filename(of.getPath()).c_str());
-
-		tf.entry = e;
-		tarfiles.push_back(tf);
-	}
-	write_tar_archive(blob,tarfiles);
-
+	_outbox_path = outbox_path;
 }
-*/
+
 std::string TarUtils::rel_filename(std::string n)
 {
-	unsigned slash_pos = n.find_last_of('/', n.length());
-	return n.substr(slash_pos + 1, n.length() - slash_pos);
+	return n.substr(_outbox_path.length()+1,n.length()-_outbox_path.length()-1);
+}
+
+std::string TarUtils::dir_path(std::string p)
+{
+	unsigned slash_pos = p.find_last_of('/', p.length());
+	return p.substr(0, slash_pos);
 }
 
 #endif

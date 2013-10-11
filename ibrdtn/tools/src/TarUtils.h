@@ -63,14 +63,22 @@ public:
 	static void set_img_path(std::string img_path);
 
 	/*
+	 * set path of outbox
+	 */
+	static void set_outbox_path(std::string outbox_path);
+
+
+	/*
 	 * read tar archive from payload block, write to file
 	 */
 	static void read_tar_archive( string extract_folder, ibrcommon::BLOB::Reference *blob );
 
 private:
 	static string rel_filename(string);
+	static string dir_path(string);
 
 	static std::string _img_path;
+	static std::string _outbox_path;
 
 	//handles
 	static tffs_handle_t htffs;
