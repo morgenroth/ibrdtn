@@ -101,3 +101,41 @@ void PayloadIntegrityBlockTest::verifyTest(void)
 
 	dtn::security::PayloadIntegrityBlock::verify(recv_b, pubkey);
 }
+
+void PayloadIntegrityBlockTest::verifyCompromisedTest(void)
+{
+	dtn::data::Bundle b;
+	b.source = dtn::data::EID("dtn://test");
+	b.destination = pubkey.reference;
+
+	// add payload block
+	dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
+
+	// write some payload
+	(*p.getBLOB().iostream()) << _testdata << std::flush;
+
+	// sign the bundle with PIB
+	dtn::security::PayloadIntegrityBlock::sign(b, pkey, pkey.reference);
+
+	std::stringstream ss;
+	dtn::data::DefaultSerializer dser(ss);
+	dser << b;
+
+	dtn::security::PayloadIntegrityBlock::verify(b, pubkey);
+
+	// decode the bundle
+	ss.clear();
+	dtn::data::DefaultDeserializer ddser(ss);
+	dtn::data::Bundle recv_b;
+	ddser >> recv_b;
+
+	// change the payload
+	dtn::data::PayloadBlock &payload = recv_b.find<dtn::data::PayloadBlock>();
+	ibrcommon::BLOB::Reference ref = payload.getBLOB();
+	{
+		ibrcommon::BLOB::iostream stream = ref.iostream();
+		(*stream) << "This is a compromised payload." << std::flush;
+	}
+
+	CPPUNIT_ASSERT_THROW(dtn::security::PayloadIntegrityBlock::verify(recv_b, pubkey), dtn::security::VerificationFailedException);
+}
