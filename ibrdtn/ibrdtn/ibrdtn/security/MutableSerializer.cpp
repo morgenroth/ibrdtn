@@ -1,5 +1,5 @@
 /*
- * MutualSerializer.cpp
+ * MutableSerializer.cpp
  *
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
@@ -20,7 +20,7 @@
  */
 
 #include "ibrdtn/config.h"
-#include "ibrdtn/security/MutualSerializer.h"
+#include "ibrdtn/security/MutableSerializer.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/EID.h"
@@ -55,16 +55,16 @@ namespace dtn
 {
 	namespace security
 	{
-		MutualSerializer::MutualSerializer(std::ostream& stream, const dtn::data::Block *ignore)
+		MutableSerializer::MutableSerializer(std::ostream& stream, const dtn::data::Block *ignore)
 		 : dtn::data::DefaultSerializer(stream), _ignore(ignore), _ignore_previous_bundles(ignore != NULL)
 		 {
 		 }
 
-		MutualSerializer::~MutualSerializer()
+		MutableSerializer::~MutableSerializer()
 		{
 		}
 
-		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::PrimaryBlock &obj)
+		dtn::data::Serializer& MutableSerializer::operator<<(const dtn::data::PrimaryBlock &obj)
 		{
 			// we want to ignore all block before "ignore"
 			if (_ignore != NULL) _ignore_previous_bundles = true;
@@ -94,7 +94,7 @@ namespace dtn
 			return *this;
 		}
 
-		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::Block &obj)
+		dtn::data::Serializer& MutableSerializer::operator<<(const dtn::data::Block &obj)
 		{
 			// do we ignore the current block?
 			if (_ignore_previous_bundles && (&obj != _ignore))
@@ -151,7 +151,7 @@ namespace dtn
 			return (*this);
 		}
 
-		dtn::data::Length MutualSerializer::getLength(const dtn::data::Bundle&)
+		dtn::data::Length MutableSerializer::getLength(const dtn::data::Bundle&)
 		{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(false);
@@ -159,7 +159,7 @@ namespace dtn
 			return 0;
 		}
 
-		dtn::data::Length MutualSerializer::getLength(const dtn::data::PrimaryBlock &obj) const
+		dtn::data::Length MutableSerializer::getLength(const dtn::data::PrimaryBlock &obj) const
 		{
 			// predict the block length
 			// length in bytes
@@ -187,7 +187,7 @@ namespace dtn
 			return length;
 		}
 
-		dtn::data::Length MutualSerializer::getLength(const dtn::data::Block &obj) const
+		dtn::data::Length MutableSerializer::getLength(const dtn::data::Block &obj) const
 		{
 			dtn::data::Length len = 0;
 
@@ -223,14 +223,14 @@ namespace dtn
 		}
 
 
-		dtn::data::Serializer& MutualSerializer::operator<<(const uint32_t value)
+		dtn::data::Serializer& MutableSerializer::operator<<(const uint32_t value)
 		{
 			uint32_t be = htonl(value);
 			_stream.write(reinterpret_cast<char*>(&be), sizeof(uint32_t));
 			return *this;
 		}
 
-		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::EID& value)
+		dtn::data::Serializer& MutableSerializer::operator<<(const dtn::data::EID& value)
 		{
 			uint32_t length = static_cast<uint32_t>(value.getString().length());
 			(*this) << length;
@@ -239,7 +239,7 @@ namespace dtn
 			return *this;
 		}
 
-		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::Number& value)
+		dtn::data::Serializer& MutableSerializer::operator<<(const dtn::data::Number& value)
 		{
 			// endianess muahahaha ...
 			// and now we are gcc centric, even older versions work
@@ -248,7 +248,7 @@ namespace dtn
 			return *this;
 		}
 
-		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::security::SecurityBlock::TLVList& list)
+		dtn::data::Serializer& MutableSerializer::operator<<(const dtn::security::SecurityBlock::TLVList& list)
 		{
 			(*this) << dtn::data::Number(list.getLength());
 			_stream << list.toString();

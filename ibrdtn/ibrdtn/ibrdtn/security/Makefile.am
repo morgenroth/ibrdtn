@@ -4,7 +4,7 @@ h_sources = \
 	SecurityBlock.h \
 	BundleAuthenticationBlock.h \
 	PayloadIntegrityBlock.h \
-	MutualSerializer.h \
+	MutableSerializer.h \
 	StrictSerializer.h \
 	PayloadConfidentialBlock.h \
 	ExtensionSecurityBlock.h \
@@ -14,7 +14,7 @@ cc_sources = \
 	SecurityBlock.cpp \
 	BundleAuthenticationBlock.cpp \
 	PayloadIntegrityBlock.cpp \
-	MutualSerializer.cpp \
+	MutableSerializer.cpp \
 	StrictSerializer.cpp \
 	PayloadConfidentialBlock.cpp \
 	ExtensionSecurityBlock.cpp \

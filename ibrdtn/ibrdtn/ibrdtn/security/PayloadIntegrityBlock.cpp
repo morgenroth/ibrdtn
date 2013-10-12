@@ -20,7 +20,7 @@
  */
 
 #include "ibrdtn/security/PayloadIntegrityBlock.h"
-#include "ibrdtn/security/MutualSerializer.h"
+#include "ibrdtn/security/MutableSerializer.h"
 #include "ibrdtn/data/Bundle.h"
 
 #include <ibrcommon/ssl/RSASHA256Stream.h>
@@ -95,7 +95,7 @@ namespace dtn
 			ibrcommon::RSASHA256Stream rs2s(pkey);
 
 			// serialize the bundle in the mutable form
-			dtn::security::MutualSerializer ms(rs2s, &ignore);
+			dtn::security::MutableSerializer ms(rs2s, &ignore);
 			(dtn::data::DefaultSerializer&)ms << bundle; rs2s << std::flush;
 
 			int return_code = rs2s.getSign().first;
@@ -137,7 +137,7 @@ namespace dtn
 				ibrcommon::RSASHA256Stream rs2s(pkey, true);
 
 				// serialize the bundle in the mutable form
-				dtn::security::MutualSerializer ms(rs2s, &sb);
+				dtn::security::MutableSerializer ms(rs2s, &sb);
 				(dtn::data::DefaultSerializer&)ms << bundle; rs2s << std::flush;
 
 				try {

@@ -1,5 +1,5 @@
 /*
- * MutualSerializer.h
+ * MutableSerializer.h
  *
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef __MUTUAL_SERIALIZER_H__
-#define __MUTUAL_SERIALIZER_H__
+#ifndef __MUTABLE_SERIALIZER_H__
+#define __MUTABLE_SERIALIZER_H__
 
 #include "ibrdtn/data/Serializer.h"
 #include "ibrdtn/security/SecurityBlock.h"
@@ -41,7 +41,7 @@ namespace dtn
 		the payload block, the PayloadIntegrityBlock and the 
 		PayloadConfidentialBlock.
 		*/
-		class MutualSerializer : public dtn::data::DefaultSerializer
+		class MutableSerializer : public dtn::data::DefaultSerializer
 		{
 			public:
 				/**
@@ -50,14 +50,14 @@ namespace dtn
 				static const dtn::data::Length sdnv_size = 8;
 				
 				/**
-				Creates a MutualSerializer which will stream into stream
+				Creates a MutableSerializer which will stream into stream
 				@param stream the stream in which the mutable canonical form will be 
 				written into
 				*/
-				MutualSerializer(std::ostream& stream, const dtn::data::Block *ignore = NULL);
+				MutableSerializer(std::ostream& stream, const dtn::data::Block *ignore = NULL);
 				
 				/** does nothing */
-				virtual ~MutualSerializer();
+				virtual ~MutableSerializer();
 				
 				/**
 				Serializes the primary block in mutable canonical form. The usual rules 

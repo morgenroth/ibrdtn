@@ -85,7 +85,7 @@ namespace dtn
 			virtual ~ElementMissingException() throw() {};
 		};
 
-		class MutualSerializer;
+		class MutableSerializer;
 		class StrictSerializer;
 
 		/**
@@ -104,7 +104,7 @@ namespace dtn
 		class SecurityBlock : public dtn::data::Block
 		{
 			friend class StrictSerializer;
-			friend class MutualSerializer;
+			friend class MutableSerializer;
 		public:
 			/** the block id for each block type */
 			enum BLOCK_TYPES
@@ -358,7 +358,7 @@ namespace dtn
 			@param stream the stream to be written into
 			@return the same stream as the parameter for chaining
 			*/
-			virtual MutualSerializer &serialize_mutable(MutualSerializer &serializer, bool include_security_result = true) const;
+			virtual MutableSerializer &serialize_mutable(MutableSerializer &serializer, bool include_security_result = true) const;
 
 			/**
 			Returns the size of the security result if it would be serialized, even
