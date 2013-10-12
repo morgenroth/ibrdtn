@@ -462,13 +462,15 @@ namespace dtn
 			return stream;
 		}
 
-		dtn::security::MutualSerializer& SecurityBlock::serialize_mutable(dtn::security::MutualSerializer &serializer) const
+		dtn::security::MutualSerializer& SecurityBlock::serialize_mutable(dtn::security::MutualSerializer &serializer, bool include_security_result) const
 		{
 			serializer << _ciphersuite_id;
 			serializer << _ciphersuite_flags;
 
 			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
-				serializer << _ciphersuite_flags;
+			{
+				serializer << _correlator;
+			}
 
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
 			{
@@ -477,28 +479,11 @@ namespace dtn
 
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
 			{
-				serializer << _security_result;
-			}
-
-			return serializer;
-		}
-
-		dtn::security::MutualSerializer& SecurityBlock::serialize_mutable_without_security_result(dtn::security::MutualSerializer &serializer) const
-		{
-			serializer << _ciphersuite_id;
-			serializer << _ciphersuite_flags;
-
-			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
-				serializer << _ciphersuite_flags;
-
-			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
-			{
-				serializer << _ciphersuite_params;
-			}
-
-			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
-			{
-				serializer << dtn::data::Number(getSecurityResultSize());
+				if (include_security_result) {
+					serializer << _security_result;
+				} else {
+					serializer << dtn::data::Number(getSecurityResultSize());
+				}
 			}
 
 			return serializer;

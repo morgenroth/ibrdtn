@@ -358,8 +358,7 @@ namespace dtn
 			@param stream the stream to be written into
 			@return the same stream as the parameter for chaining
 			*/
-			virtual MutualSerializer &serialize_mutable(MutualSerializer &serializer) const;
-			virtual MutualSerializer &serialize_mutable_without_security_result(MutualSerializer &serializer) const;
+			virtual MutualSerializer &serialize_mutable(MutualSerializer &serializer, bool include_security_result = true) const;
 
 			/**
 			Returns the size of the security result if it would be serialized, even

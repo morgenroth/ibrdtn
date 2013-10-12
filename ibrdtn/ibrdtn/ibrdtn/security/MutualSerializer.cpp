@@ -137,7 +137,7 @@ namespace dtn
 					// write size of the payload in the block
 					(*this) << dtn::data::Number(sb.getLength_mutable());
 
-					sb.serialize_mutable_without_security_result(*this);
+					sb.serialize_mutable(*this, false);
 				}
 			} catch (const std::bad_cast&) {
 				// write size of the payload in the block
