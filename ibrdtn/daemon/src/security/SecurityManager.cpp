@@ -132,6 +132,9 @@ namespace dtn
 
 							// remove all previous pibs if all = true
 							bundle.erase(std::remove(bundle.begin(), (dtn::data::Bundle::iterator&)it, PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());
+
+							// un-set the verify bit
+							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, false);
 						}
 					}
 				}
