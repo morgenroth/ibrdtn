@@ -105,15 +105,15 @@ namespace dtn
 					if (pib.isSecurityDestination(bundle, dtn::core::BundleCore::local))
 					{
 						try {
-							dtn::security::PayloadIntegrityBlock::strip(bundle, key);
+							dtn::security::PayloadIntegrityBlock::strip(bundle, key, true);
 
 							// set the verify bit, after verification
 							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
 
 							IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 5) << "Bundle from " << bundle.source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
 							return;
-						} catch (const ibrcommon::Exception&) {
-							throw VerificationFailedException();
+						} catch (const ibrcommon::Exception &e) {
+							throw VerificationFailedException(e.what());
 						}
 					}
 					else
@@ -125,12 +125,14 @@ namespace dtn
 							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
 
 							IBRCOMMON_LOGGER_DEBUG_TAG("SecurityManager", 5) << "Bundle from " << bundle.source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
-						} catch (const ibrcommon::Exception&) {
-							throw VerificationFailedException();
+						} catch (const ibrcommon::Exception &e) {
+							throw VerificationFailedException(e.what());
 						}
 					}
+				} catch (const VerificationFailedException&) {
+					throw;
 				} catch (const ibrcommon::Exception&) {
-					// key not found?
+					// key not found - ignore that
 				}
 			}
 		}

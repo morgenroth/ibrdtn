@@ -192,21 +192,22 @@ namespace dtn
 			{
 				const PayloadIntegrityBlock &pib = dynamic_cast<const PayloadIntegrityBlock&>(**it);
 
+				// skip this block if the security source does not match the key
+				if (!pib.isSecuritySource(bundle, key.reference)) continue;
+
 				// check if the PIB is valid
-				try {
-					verify(bundle, key, pib);
+				verify(bundle, key, pib);
 
-					// found an valid PIB, remove it
-					bundle.remove(pib);
+				// found an valid PIB, remove it
+				bundle.remove(pib);
 
-					// remove all previous pibs if all = true
-					if (all)
-					{
-						bundle.erase(std::remove(bundle.begin(), (dtn::data::Bundle::iterator&)it, PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());
-					}
+				// remove all previous pibs if all = true
+				if (all)
+				{
+					bundle.erase(std::remove(bundle.begin(), (dtn::data::Bundle::iterator&)it, PayloadIntegrityBlock::BLOCK_TYPE), bundle.end());
+				}
 
-					return;
-				} catch (const ibrcommon::Exception&) { };
+				return;
 			}
 		}
 
