@@ -91,7 +91,7 @@ string ObservedNormalFile::getHash()
 	stringstream ss;
 	ss << getPath() << _file.lastmodify() << _file.size();
 	string toHash = ss.str();
-	unsigned char hash[MD5_DIGEST_LENGTH];
-	MD5((unsigned char*)toHash.c_str(), toHash.length(), hash);
-	return string((char*)hash);
+	char hash[MD5_DIGEST_LENGTH];
+	MD5((unsigned char*)toHash.c_str(), toHash.length(), (unsigned char*) hash);
+	return string(hash);
 }
