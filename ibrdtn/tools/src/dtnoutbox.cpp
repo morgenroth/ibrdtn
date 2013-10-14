@@ -39,7 +39,6 @@ extern "C"
 }
 #endif
 
-
 #include "ObservedFATFile.h"
 #include "ObservedNormalFile.h"
 
@@ -56,7 +55,6 @@ extern "C"
 #include <archive_entry.h>
 #include <fcntl.h>
 #endif
-
 
 using namespace ibrcommon;
 
@@ -180,6 +178,15 @@ static bool isInvis(string filename)
 	return filename.at(0) == '.';
 }
 
+static set<string> hashes;
+static bool inHashes(string hash)
+{
+	if(hashes.empty())
+		return false;
+
+	return (hashes.find(hash) != hashes.end());
+}
+
 /*
  * main application method
  */
@@ -232,7 +239,6 @@ int main( int argc, char** argv )
 	File outbox_file(conf["outbox"]);
 
 	list<ObservedFile*> avail_files, new_files, old_files, deleted_files, observed_files, files_to_send;
-	set<string> sent_hashes;
 	list<ObservedFile*>::iterator iter;
 	list<ObservedFile*>::iterator iter2;
 
@@ -351,12 +357,13 @@ int main( int argc, char** argv )
 				files_to_send.clear();
 				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
-					if(  sent_hashes.find((*iter)->getHash()) == sent_hashes.end())
+					if(!inHashes((*iter)->getHash()))
 					{
 						if ((*iter)->lastHashesEqual(_conf_rounds))
 						{
 						(*iter)->send();
-						sent_hashes.insert((*iter)->getHash());
+						string hash = (*iter)->getHash();
+						hashes.insert(hash);
 						files_to_send_ss << (*iter)->getBasename() << " ";
 						files_to_send.push_back(*iter);
 						}
@@ -423,8 +430,8 @@ int main( int argc, char** argv )
 					client.flush();
 
 					//check whether hashes need to be deleted
-					if(sent_hashes.size() >= 10000)
-						sent_hashes.clear();
+					if(hashes.size() >= 10000)
+						hashes.clear();
 				}
 				if (_running)
 				{
