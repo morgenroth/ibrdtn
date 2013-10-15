@@ -30,7 +30,7 @@
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
 
-#include "TarUtils.h"
+#include "io/TarUtils.h"
 
 #ifdef HAVE_LIBTFFS
 extern "C"
@@ -39,8 +39,8 @@ extern "C"
 }
 #endif
 
-#include "ObservedFATFile.h"
-#include "ObservedNormalFile.h"
+#include "io/ObservedFATFile.h"
+#include "io/ObservedNormalFile.h"
 
 #include <stdlib.h>
 #include <iostream>
@@ -178,14 +178,14 @@ static bool isInvis(string filename)
 	return filename.at(0) == '.';
 }
 
-static set<string> hashes;
+static std::set<string> hashes;
 static bool inHashes(string hash)
 {
 	const char* hash1 = hash.c_str();
 	if(hashes.empty())
 		return false;
 
-	set<string>::iterator iter;
+	std::set<string>::iterator iter;
 	for(iter = hashes.begin(); iter != hashes.end();iter++)
 	{
 		const char* hash2 = (*iter).c_str();
@@ -247,9 +247,9 @@ int main( int argc, char** argv )
 
 	File outbox_file(conf["outbox"]);
 
-	list<ObservedFile*> avail_files, new_files, old_files, deleted_files, observed_files, files_to_send;
-	list<ObservedFile*>::iterator iter;
-	list<ObservedFile*>::iterator iter2;
+	std::list<ObservedFile*> avail_files, new_files, old_files, deleted_files, observed_files, files_to_send;
+	std::list<ObservedFile*>::iterator iter;
+	std::list<ObservedFile*>::iterator iter2;
 
 	ObservedFile* outbox;
 
@@ -309,12 +309,13 @@ int main( int argc, char** argv )
 				//store old files
 				old_files = avail_files;
 				avail_files.clear();
+				//TODO pointer löschen
 
 				//get all files
 				outbox->getFiles(avail_files);
 
 				//determine deleted files
-				set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files),ObservedFile::namecompare);
+				std::set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files),ObservedFile::namecompare);
 				//remove deleted files from observation
 				for (iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
 				{
@@ -332,7 +333,7 @@ int main( int argc, char** argv )
 					break;
 
 				//determine new files
-				set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files),ObservedFile::namecompare);
+				std::set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files),ObservedFile::namecompare);
 
 				//add new files to observation
 				for (iter = new_files.begin(); iter != new_files.end(); ++iter)
@@ -340,7 +341,6 @@ int main( int argc, char** argv )
 					//skip invisible and swap-files, if wanted
 					if (!_conf_consider_swp && isSwap((*iter)->getBasename())) continue;
 					if (!_conf_consider_invis && isInvis((*iter)->getBasename())) continue;
-
 
 					ObservedFile* of;
 					if(_conf_fat)
@@ -357,7 +357,7 @@ int main( int argc, char** argv )
 					(*iter)->tick();
 				}
 
-				//find files to send, create list
+				//find files to send, create std::list
 				stringstream files_to_send_ss;
 				files_to_send.clear();
 				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
@@ -444,6 +444,7 @@ int main( int argc, char** argv )
 					ibrcommon::Thread::sleep(_conf_interval);
 				}
 			}
+
 
 			// close the client connection
 			client.close();

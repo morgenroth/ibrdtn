@@ -30,7 +30,7 @@
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
 
-#include "TarUtils.h"
+#include "io/TarUtils.h"
 
 #include <stdlib.h>
 #include <iostream>

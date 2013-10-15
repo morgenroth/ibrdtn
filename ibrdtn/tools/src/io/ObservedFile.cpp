@@ -21,10 +21,8 @@
  */
 
 #include "ObservedFile.h"
-#include <stdio.h> //TODO weg
-#include <iostream> //TODO weg
-
-string ObservedFile::_conf_imgpath = "";
+#include "string.h"
+std::string ObservedFile::_conf_imgpath = "";
 size_t ObservedFile::_conf_rounds = 0;
 
 ObservedFile::ObservedFile() : _last_sent(0)
@@ -49,7 +47,7 @@ bool ObservedFile::lastHashesEqual( size_t n )
 	return true;
 }
 
-void ObservedFile::setConfigImgPath( string path )
+void ObservedFile::setConfigImgPath( std::string path )
 {
 	_conf_imgpath = path;
 }
@@ -78,7 +76,7 @@ bool ObservedFile::hashcompare( ObservedFile* a, ObservedFile* b )
 
 bool ObservedFile::namecompare( ObservedFile* a, ObservedFile* b )
 {
-	string p1= a->getPath();
-	string p2 = b->getPath();
+	std::string p1= a->getPath();
+	std::string p2 = b->getPath();
 	return (p1 != p2);
 }

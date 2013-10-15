@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS = foreign
+AUTOMAKE_OPTIONS = foreign subdir-objects
 
 # what flags you want to pass to the C compiler & linker
 AM_CPPFLAGS = @ibrdtn_CFLAGS@ @DAEMON_CFLAGS@ @ARCHIVE_CFLAGS@  -I@top_srcdir@/src/tffs
@@ -17,18 +17,20 @@ endif
 ##TODO header weg:wq
 dtnping_SOURCES = dtnping.cpp
 dtninbox_SOURCES = dtninbox.cpp \
-		  TarUtils.h \
-		  TarUtils.cpp
+		  io/TarUtils.h \
+		  io/TarUtils.cpp
 dtnoutbox_SOURCES = dtnoutbox.cpp \
 		  tffs/tffs.h \
-		  ObservedFile.h \
-		  ObservedFile.cpp \
-		  ObservedFATFile.h \
-		  ObservedFATFile.cpp \
-		  ObservedNormalFile.h \
-		  ObservedNormalFile.cpp \
-		  TarUtils.h \
-		  TarUtils.cpp
+		  io/FATFile.h \
+		  io/FATFile.cpp \
+		  io/ObservedFile.h \
+		  io/ObservedFile.cpp \
+		  io/ObservedFATFile.h \
+		  io/ObservedFATFile.cpp \
+		  io/ObservedNormalFile.h \
+		  io/ObservedNormalFile.cpp \
+		  io/TarUtils.h \
+		  io/TarUtils.cpp
 dtnrecv_SOURCES = dtnrecv.cpp
 dtnsend_SOURCES = dtnsend.cpp
 dtntunnel_SOURCES = dtntunnel.cpp

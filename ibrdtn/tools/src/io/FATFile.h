@@ -42,13 +42,13 @@ using namespace std;
 class FATFile: public ibrcommon::File
 {
 public:
-	FATFile(const string img_path);
-	FATFile(const string img_path,const string file_path);
+	FATFile(const std::string img_path);
+	FATFile(const std::string img_path,const string file_path);
 	virtual ~FATFile();
 
 	int getFiles(list<FATFile> &files);
 	int remove(bool recursive);
-	FATFile get(string filename);
+	FATFile get(std::string filename);
 	FATFile getParent();
 	bool exists();
 	void update();
@@ -59,7 +59,7 @@ public:
 
 
 private:
-	string _img_path;
+	std::string _img_path;
 
 	//handles
 	tffs_handle_t htffs;

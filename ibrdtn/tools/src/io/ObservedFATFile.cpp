@@ -24,14 +24,13 @@
 #include <sstream>
 #include <stdlib.h>
 #include "ObservedFATFile.h"
-#include "FATFile.cpp"
 
 #include "ibrdtn/config.h"
 #ifdef HAVE_OPENSSL
 #include <openssl/md5.h>
 #endif
 
-ObservedFATFile::ObservedFATFile(string file_path) : ObservedFile(),_file(file_path,_conf_imgpath)
+ObservedFATFile::ObservedFATFile(std::string file_path) : ObservedFile(),_file(file_path,_conf_imgpath)
 {
 }
 
@@ -39,11 +38,11 @@ ObservedFATFile::~ObservedFATFile()
 {
 }
 
-int ObservedFATFile::getFiles( list<ObservedFile*>& files )
+int ObservedFATFile::getFiles( std::list<ObservedFile*>& files )
 {
 
-	list<FATFile> fatfiles;
-	list<FATFile>::iterator ff_iter;
+	std::list<FATFile> fatfiles;
+	std::list<FATFile>::iterator ff_iter;
 	int ret = _file.getFiles(fatfiles);
 	for(ff_iter = fatfiles.begin(); ff_iter != fatfiles.end(); ff_iter++)
 	{
@@ -61,7 +60,7 @@ int ObservedFATFile::getFiles( list<ObservedFile*>& files )
 	return ret;
 }
 
-string ObservedFATFile::getPath()
+std::string ObservedFATFile::getPath()
 {
 	return _file.getPath();
 }
@@ -71,7 +70,7 @@ bool ObservedFATFile::exists()
 	return _file.exists();
 }
 
-string ObservedFATFile::getBasename()
+std::string ObservedFATFile::getBasename()
 {
 	return _file.getBasename();
 }
@@ -90,12 +89,12 @@ bool ObservedFATFile::isDirectory()
 	return _file.isDirectory();
 }
 
-string ObservedFATFile::getHash()
+std::string ObservedFATFile::getHash()
 {
-	stringstream ss;
+	std::stringstream ss;
 	ss << getPath() << _file.lastmodify() << _file.size();
-	string toHash = ss.str();
+	std::string toHash = ss.str();
 	unsigned char hash[MD5_DIGEST_LENGTH];
 	MD5((unsigned char*)toHash.c_str(), toHash.length(), hash);
-	return string((char*)hash);
+	return std::string((char*)hash);
 }

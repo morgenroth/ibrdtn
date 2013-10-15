@@ -24,7 +24,7 @@
 #ifdef HAVE_LIBTFFS
 
 
-FATFile::FATFile( const string file_path, const string img_path) : File(file_path), _img_path(img_path) , htffs(0),hdir(0),hfile(0), ret(-1)
+FATFile::FATFile( const std::string file_path, const string img_path) : File(file_path), _img_path(img_path) , htffs(0),hdir(0),hfile(0), ret(-1)
 {
 	update();
 }
@@ -38,12 +38,12 @@ int FATFile::getFiles( list<FATFile> &files)
 	mount_tffs();
 	opendir_tffs();
 
-	string path = getPath();
+	std::string path = getPath();
 	while( 1 )
 	{
 		if ((ret = TFFS_readdir(hdir, &dirent)) == TFFS_OK)
 		{
-			string newpath = path + "/" + dirent.d_name;
+			std::string newpath = path + "/" + dirent.d_name;
 
 			FATFile f(newpath,_img_path);
 			files.push_back(f);
@@ -95,7 +95,7 @@ int FATFile::remove( bool recursive )
 			//remove dir
 			mount_tffs();
 			opendir_tffs();
-			string path = getPath();
+			std::string path = getPath();
 			byte* byte_path = const_cast<char *>(path.c_str());
 			if ((ret = TFFS_rmdir(htffs, byte_path)) != TFFS_OK)
 			{
@@ -111,7 +111,7 @@ int FATFile::remove( bool recursive )
 		//remove file
 		mount_tffs();
 		opendir_tffs();
-		string path = getPath();
+		std::string path = getPath();
 		byte* byte_path = const_cast<char *>(path.c_str());
 		if ((ret = TFFS_rmfile(htffs, byte_path)) != TFFS_OK)
 		{
@@ -124,7 +124,7 @@ int FATFile::remove( bool recursive )
 	return 0;
 }
 
-FATFile FATFile::get( string filename )
+FATFile FATFile::get( std::string filename )
 {
 	//TODO not implemented yet, because not needed
 }
@@ -139,7 +139,7 @@ bool FATFile::exists()
 	mount_tffs();
 	opendir_tffs();
 	//remove leading "./"
-	string path = getPath();
+	std::string path = getPath();
 	if(path == "/" || path.empty())
 	{
 		closedir_tffs();
@@ -231,8 +231,8 @@ int FATFile::umount_tffs()
 int FATFile::opendir_tffs()
 {
 
-	string path = getPath();
-	string cur_dir;
+	std::string path = getPath();
+	std::string cur_dir;
 	if(path.length() == 0)
 		cur_dir = "/";
 	else if(isDirectory())
