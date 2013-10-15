@@ -24,9 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-using namespace ibrcommon;
-
-
 std::string TarUtils::_img_path = "";
 std::string TarUtils::_outbox_path = "";
 tffs_handle_t TarUtils::htffs = 0;
@@ -53,8 +50,8 @@ ssize_t TarUtils::write_callback( struct archive *, void *blob_ptr, const void *
 {
 	char* cast_buf = (char*) buffer;
 
-	BLOB::Reference blob = *((BLOB::Reference*) blob_ptr);
-	BLOB::iostream os = blob.iostream();
+	ibrcommon::BLOB::Reference blob = *((ibrcommon::BLOB::Reference*) blob_ptr);
+	ibrcommon::BLOB::iostream os = blob.iostream();
 
 	(*os).write(cast_buf, length);
 
@@ -67,8 +64,8 @@ ssize_t TarUtils::read_callback( struct archive *a, void *blob_ptr, const void *
 {
 	char *cbuff = new char[BUFF_SIZE];
 
-	BLOB::Reference *blob = (BLOB::Reference*) blob_ptr;
-	BLOB::iostream is = blob->iostream();
+	ibrcommon::BLOB::Reference *blob = (ibrcommon::BLOB::Reference*) blob_ptr;
+	ibrcommon::BLOB::iostream is = blob->iostream();
 
 	(*is).read(cbuff,BUFF_SIZE);
 

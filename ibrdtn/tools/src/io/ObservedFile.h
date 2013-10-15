@@ -26,16 +26,13 @@
 #ifndef OBSERVEDFILE_H_
 #define OBSERVEDFILE_H_
 
-
-using namespace std;
-
 class ObservedFile
 {
 public:
 	ObservedFile();
 	virtual ~ObservedFile();
 
-	virtual int getFiles(list<ObservedFile*>& files) = 0;
+	virtual int getFiles(std::list<ObservedFile*>& files) = 0;
 	virtual std::string getPath() = 0;
 	virtual bool exists() = 0;
 	virtual std::string getBasename() = 0;

@@ -37,8 +37,6 @@ extern "C" //libtffs does not support c++
 #include "tffs/tffs.h"
 }
 
-using namespace std;
-
 class FATFile: public ibrcommon::File
 {
 public:
