@@ -21,16 +21,19 @@
  */
 
 #include "config.h"
-#include "ibrdtn/api/Client.h"
-#include "ibrcommon/net/socket.h"
-#include "ibrcommon/thread/Mutex.h"
-#include "ibrcommon/thread/MutexLock.h"
-#include "ibrdtn/data/PayloadBlock.h"
-#include "ibrcommon/data/BLOB.h"
-#include "ibrcommon/data/File.h"
-#include "ibrcommon/appstreambuf.h"
+#include <ibrdtn/api/Client.h>
+#include <ibrcommon/net/socket.h>
+#include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/MutexLock.h>
+#include <ibrdtn/data/PayloadBlock.h>
+#include <ibrcommon/data/BLOB.h>
+#include <ibrcommon/data/File.h>
+#include <ibrcommon/appstreambuf.h>
 
 #include "io/TarUtils.h"
+#include "io/ObservedFATFile.h"
+#include "io/ObservedNormalFile.h"
+
 
 #ifdef HAVE_LIBTFFS
 extern "C"
@@ -38,9 +41,6 @@ extern "C"
 #include "tffs/tffs.h"
 }
 #endif
-
-#include "io/ObservedFATFile.h"
-#include "io/ObservedNormalFile.h"
 
 #include <stdlib.h>
 #include <iostream>

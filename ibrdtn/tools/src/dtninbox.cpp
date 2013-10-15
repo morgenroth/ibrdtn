@@ -19,18 +19,16 @@
  *
  */
 
-#include "config.h"
-#include "ibrdtn/api/Client.h"
-#include "ibrcommon/net/socket.h"
-#include "ibrcommon/thread/Mutex.h"
-#include "ibrcommon/thread/MutexLock.h"
-#include "ibrdtn/data/PayloadBlock.h"
-#include "ibrdtn/data/Bundle.h"
-#include "ibrcommon/data/BLOB.h"
-#include "ibrcommon/data/File.h"
-#include "ibrcommon/appstreambuf.h"
-
-#include "io/TarUtils.h"
+#include <config.h>
+#include <ibrdtn/api/Client.h>
+#include <ibrcommon/net/socket.h>
+#include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/MutexLock.h>
+#include <ibrdtn/data/PayloadBlock.h>
+#include <ibrdtn/data/Bundle.h>
+#include <ibrcommon/data/BLOB.h>
+#include <ibrcommon/data/File.h>
+#include <ibrcommon/appstreambuf.h>
 
 #include <stdlib.h>
 #include <iostream>
@@ -39,6 +37,8 @@
 #include <csignal>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "io/TarUtils.h"
 
 using namespace ibrcommon;
 

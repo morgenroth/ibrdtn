@@ -23,12 +23,11 @@
 #ifndef TARUTILS_H_
 #define TARUTILS_H_
 #include "config.h"
-#include "ibrcommon/data/BLOB.h"
-
+#ifdef HAVE_LIBARCHIVE
 #include "FATFile.h"
 #include "ObservedFile.h"
 
-#ifdef HAVE_LIBARCHIVE
+#include <ibrcommon/data/BLOB.h>
 #include <archive.h>
 #include <archive_entry.h>
 #include <fcntl.h>

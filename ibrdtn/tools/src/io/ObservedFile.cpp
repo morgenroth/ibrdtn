@@ -21,7 +21,7 @@
  */
 
 #include "ObservedFile.h"
-#include "string.h"
+#include <string.h>
 std::string ObservedFile::_conf_imgpath = "";
 size_t ObservedFile::_conf_rounds = 0;
 

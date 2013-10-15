@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include "ObservedFATFile.h"
 
-#include "ibrdtn/config.h"
+#include <ibrdtn/config.h>
 #ifdef HAVE_OPENSSL
 #include <openssl/md5.h>
 #endif

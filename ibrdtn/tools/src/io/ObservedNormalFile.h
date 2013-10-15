@@ -21,7 +21,7 @@
  */
 
 #include "ObservedFile.h"
-#include "ibrcommon/data/File.h"
+#include <ibrcommon/data/File.h>
 
 #ifndef OBSERVEDNORMALFILE_H_
 #define OBSERVEDNORMALFILE_H_
