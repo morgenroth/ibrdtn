@@ -48,7 +48,8 @@ public:
 
 	void tick();
 	void send();
-	static bool compare(ObservedFile* a, ObservedFile* b);
+	static bool hashcompare(ObservedFile* a, ObservedFile* b);
+	static bool namecompare(ObservedFile* a, ObservedFile* b);
 	static void setConfigImgPath(string path);
 	static void setConfigRounds(size_t rounds);
 	static void setConfigBadclock(bool badclock);

@@ -313,10 +313,8 @@ int main( int argc, char** argv )
 				//get all files
 				outbox->getFiles(avail_files);
 
-				avail_files.begin();
-
 				//determine deleted files
-				set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files),ObservedFile::compare);
+				set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files),ObservedFile::namecompare);
 				//remove deleted files from observation
 				for (iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
 				{
@@ -333,9 +331,8 @@ int main( int argc, char** argv )
 				if(deleted_files.size() > 0)
 					break;
 
-
 				//determine new files
-				set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files),ObservedFile::compare);
+				set_difference(avail_files.begin(),avail_files.end(),old_files.begin(),old_files.end(),std::back_inserter(new_files),ObservedFile::namecompare);
 
 				//add new files to observation
 				for (iter = new_files.begin(); iter != new_files.end(); ++iter)
@@ -351,7 +348,6 @@ int main( int argc, char** argv )
 					else
 						of = new ObservedNormalFile((*iter)->getPath());
 					observed_files.push_back(of);
-
 				}
 
 

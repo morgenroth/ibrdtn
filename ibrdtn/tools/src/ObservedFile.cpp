@@ -21,6 +21,8 @@
  */
 
 #include "ObservedFile.h"
+#include <stdio.h> //TODO weg
+#include <iostream> //TODO weg
 
 string ObservedFile::_conf_imgpath = "";
 size_t ObservedFile::_conf_rounds = 0;
@@ -67,8 +69,16 @@ void ObservedFile::send()
 	_hashes.clear();
 }
 
-bool ObservedFile::compare( ObservedFile* a, ObservedFile* b )
+bool ObservedFile::hashcompare( ObservedFile* a, ObservedFile* b )
 {
-	bool eq =  (a->getHash() == b->getHash());
-	return !eq;
+	const char* hash1 = a->getHash().c_str();
+	const char* hash2 = b->getHash().c_str();
+	return (memcmp(hash1,hash2,sizeof(*hash1)) != 0);
+}
+
+bool ObservedFile::namecompare( ObservedFile* a, ObservedFile* b )
+{
+	string p1= a->getPath();
+	string p2 = b->getPath();
+	return (p1 != p2);
 }
