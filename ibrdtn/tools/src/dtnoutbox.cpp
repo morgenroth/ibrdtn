@@ -181,10 +181,19 @@ static bool isInvis(string filename)
 static set<string> hashes;
 static bool inHashes(string hash)
 {
+	const char* hash1 = hash.c_str();
 	if(hashes.empty())
 		return false;
 
-	return (hashes.find(hash) != hashes.end());
+	set<string>::iterator iter;
+	for(iter = hashes.begin(); iter != hashes.end();iter++)
+	{
+		const char* hash2 = (*iter).c_str();
+		int ret = memcmp(hash1,hash2,sizeof(hash1));
+		if(ret == 0)
+			return true;
+	}
+	return false;
 }
 
 /*

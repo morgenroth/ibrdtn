@@ -38,9 +38,10 @@ bool ObservedFile::lastHashesEqual( size_t n )
 
 	for (size_t i = 1; i < n; i++)
 	{
-		string hash1 = _hashes.at(_hashes.size() - i);
-		string hash2 = _hashes.at(_hashes.size() - i - 1);
-		if(hash1 != hash2)
+		const char* hash1 = _hashes.at(_hashes.size() - i).c_str();
+		const char* hash2 = _hashes.at(_hashes.size() - i - 1).c_str();
+		int ret = memcmp(hash1,hash2,sizeof(hash1));
+		if(ret != 0)
 			return false;
 	}
 	return true;
