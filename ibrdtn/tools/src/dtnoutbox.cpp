@@ -196,6 +196,10 @@ static bool inHashes(string hash)
 	return false;
 }
 
+static bool deleteAll( ObservedFile* ptr){
+	delete ptr;
+	return true;
+}
 /*
  * main application method
  */
@@ -309,7 +313,6 @@ int main( int argc, char** argv )
 				//store old files
 				old_files = avail_files;
 				avail_files.clear();
-				//TODO pointer löschen
 
 				//get all files
 				outbox->getFiles(avail_files);
@@ -323,6 +326,7 @@ int main( int argc, char** argv )
 					{
 							if((*iter2)->getHash() == (*iter)->getHash())
 							{
+								delete (*iter);
 								observed_files.erase(iter2);
 								break;
 							}
@@ -428,6 +432,7 @@ int main( int argc, char** argv )
 					client << b;
 					client.flush();
 				}
+
 				//check whether hashes need to be deleted
 				if(hashes.size() >= 10000)
 					hashes.clear();
@@ -438,6 +443,7 @@ int main( int argc, char** argv )
 				}
 			}
 
+			observed_files.remove_if(deleteAll);
 
 			// close the client connection
 			client.close();
