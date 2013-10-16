@@ -27,14 +27,15 @@
 #ifndef FATFILE_H_
 #define FATFILE_H_
 
-#define HAVE_LIBTFFS 1 //TODO libtffs include
+#include "../config.h"
+
 #ifdef HAVE_LIBTFFS
 #include <ibrcommon/data/File.h>
 #include <list>
 #include <dirent.h>
 extern "C" //libtffs does not support c++
 {
-#include "tffs/tffs.h"
+#include <tffs.h>
 }
 
 class FATFile: public ibrcommon::File

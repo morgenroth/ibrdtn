@@ -86,12 +86,28 @@ PKG_CHECK_MODULES(ARCHIVE, libarchive, [
 	AC_MSG_WARN([libarchive not found, fallback to unix-tar])
 ])
 
-TFFSHEADER=/home/goltzsch/workspace/ibrdtn-repo/ibrdtn/tools/src/tffs/tffs.h
+AC_ARG_WITH([tffs],
+AS_HELP_STRING([--with-tffs=PATH], [set the tffs path for fat-image support in dtnoutbox]), [
+	tffs_path=${withval}
+	]
+)
 
-AC_CHECK_HEADER(${TFFSHEADER},[
-	AC_DEFINE(HAVE_LIBTFFS, [1], ["tffs.h  found"])
-], [  
-    AC_MSG_WARN(["tffs.h not found"])
+AS_IF([test -z "${tffs_path}"], [
+	AC_MSG_WARN([tffs library path not defined. tffs support is disabled. use --with-tffs set path])
+])
+
+AS_IF([test -n "${tffs_path}"], [
+	
+	AC_CHECK_FILE("${tffs_path}/inc/tffs.h",[
+		AC_DEFINE(HAVE_LIBTFFS, [1], ["tffs  found"])
+		tffs_LIBS="-L${tffs_path} -ltffs"
+		tffs_CFLAGS="-I${tffs_path}"
+		AC_SUBST(tffs_LIBS)
+		AC_SUBST(tffs_CFLAGS)
+		AC_MSG_NOTICE([using libtffs in ${tffs_path}])
+	], [
+		AC_MSG_WARN(["tffs path defined, but tffs.h not found"])
+	])
 ])
 
 

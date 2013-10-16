@@ -38,7 +38,7 @@
 #ifdef HAVE_LIBTFFS
 extern "C"
 {
-#include "tffs/tffs.h"
+#include <tffs.h>
 }
 #endif
 
