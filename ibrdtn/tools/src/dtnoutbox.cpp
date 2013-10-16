@@ -366,11 +366,11 @@ int main( int argc, char** argv )
 					{
 						if ((*iter)->lastHashesEqual(_conf_rounds))
 						{
-						(*iter)->send();
-						string hash = (*iter)->getHash();
-						hashes.insert(hash);
-						files_to_send_ss << (*iter)->getBasename() << " ";
-						files_to_send.push_back(*iter);
+							(*iter)->send();
+							string hash = (*iter)->getHash();
+							hashes.insert(hash);
+							files_to_send_ss << (*iter)->getBasename() << " ";
+							files_to_send.push_back(*iter);
 						}
 					}
 				}
@@ -378,13 +378,7 @@ int main( int argc, char** argv )
 				if(!_conf_quiet)
 					cout << files_to_send.size() << "/" << observed_files.size() << " files to send: " << files_to_send_ss.str() << endl;
 
-				if (!files_to_send.size())
-				{
-					// wait some seconds
-					ibrcommon::Thread::sleep(_conf_interval);
-					continue;
-				}
-				else
+				if (files_to_send.size())
 				{
 					// create a blob
 					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
@@ -433,11 +427,10 @@ int main( int argc, char** argv )
 					// send the bundle
 					client << b;
 					client.flush();
-
-					//check whether hashes need to be deleted
-					if(hashes.size() >= 10000)
-						hashes.clear();
 				}
+				//check whether hashes need to be deleted
+				if(hashes.size() >= 10000)
+					hashes.clear();
 				if (_running)
 				{
 					// wait some seconds
