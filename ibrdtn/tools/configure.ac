@@ -100,7 +100,7 @@ AS_IF([test -n "${tffs_path}"], [
 	AC_CHECK_FILE("${tffs_path}/inc/tffs.h",[
 		AC_DEFINE(HAVE_LIBTFFS, [1], ["tffs  found"])
 		tffs_LIBS="-L${tffs_path} -ltffs"
-		tffs_CFLAGS="-I${tffs_path}"
+		tffs_CFLAGS="-I${tffs_path}/inc"
 		AC_SUBST(tffs_LIBS)
 		AC_SUBST(tffs_CFLAGS)
 		AC_MSG_NOTICE([using libtffs in ${tffs_path}])
