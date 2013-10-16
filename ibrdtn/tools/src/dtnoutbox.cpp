@@ -155,12 +155,36 @@ bool _running = true;
 // global connection
 ibrcommon::socketstream *_conn = NULL;
 
-void term( int signal )
+//global wait conditional
+ibrcommon::Conditional _wait_cond;
+bool _wait_abort = false;
+
+void sighandler(int signal)
 {
-	if (signal >= 1)
+	switch (signal)
 	{
-		_running = false;
-		if (_conn != NULL) _conn->close();
+	case SIGTERM:
+	case SIGINT:
+	{
+		//stop waiting and stop running, on SIGINT or SIGTERM
+		ibrcommon::MutexLock l(_wait_cond);
+        _running = false;
+		_wait_cond.signal(true);
+        if (_conn != NULL) _conn->close();
+        break;
+	}
+#ifndef __WIN32__
+	case SIGUSR1:
+	{
+		//stop waiting on SIGUSR1 -> "quickscan"
+		ibrcommon::MutexLock l(_wait_cond);
+		_wait_abort = true;
+		_wait_cond.signal(true);
+		break;
+	}
+#endif
+	default:
+		break;
 	}
 }
 
@@ -205,8 +229,13 @@ static bool deleteAll( ObservedFile* ptr){
 int main( int argc, char** argv )
 {
 	// catch process signals
-	signal(SIGINT, term);
-	signal(SIGTERM, term);
+    signal(SIGINT, sighandler);
+    signal(SIGTERM, sighandler);
+#ifndef __WIN32__
+	signal(SIGUSR1, sighandler);
+	signal(SIGUSR2, sighandler);
+#endif
+
 
 	// read the configuration
 	map<string, string> conf = readconfiguration(argc, argv);
@@ -444,8 +473,11 @@ int main( int argc, char** argv )
 					hashes.clear();
 				if (_running)
 				{
-					// wait some seconds
-					ibrcommon::Thread::sleep(_conf_interval);
+					// wait defined seconds
+					ibrcommon::MutexLock l(_wait_cond);
+					_wait_cond.wait(_conf_interval);
+					if(_wait_abort)
+						_wait_abort = false;
 				}
 			}
 
