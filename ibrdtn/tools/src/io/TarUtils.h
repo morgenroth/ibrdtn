@@ -78,11 +78,13 @@ private:
 	static std::string _img_path;
 	static std::string _outbox_path;
 
-	//handles
+	//tffs handles
+#ifdef HAVE_LIBTFFS
 	static tffs_handle_t htffs;
 	static tdir_handle_t hdir;
 	static tfile_handle_t hfile;
-	static int32 ret;
+#endif
+	static int ret;
 
 	//CALLBACKS FOR LIBARCHIVE
 	static int close_callback( struct archive *, void *blob_iostream );

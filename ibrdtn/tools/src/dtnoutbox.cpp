@@ -31,15 +31,20 @@
 #include <ibrcommon/appstreambuf.h>
 
 #include "io/TarUtils.h"
-#include "io/ObservedFATFile.h"
 #include "io/ObservedNormalFile.h"
 
-
 #ifdef HAVE_LIBTFFS
+#include "io/ObservedFATFile.h"
 extern "C"
 {
 #include <tffs.h>
 }
+#endif
+
+#ifdef HAVE_LIBARCHIVE
+#include <archive.h>
+#include <archive_entry.h>
+#include <fcntl.h>
 #endif
 
 #include <stdlib.h>
@@ -49,12 +54,6 @@ extern "C"
 #include <csignal>
 #include <sys/types.h>
 #include <unistd.h>
-
-#ifdef HAVE_LIBARCHIVE
-#include <archive.h>
-#include <archive_entry.h>
-#include <fcntl.h>
-#endif
 
 using namespace ibrcommon;
 
@@ -210,7 +209,7 @@ int main( int argc, char** argv )
 	signal(SIGTERM, term);
 
 	// read the configuration
-	map<string,string> conf = readconfiguration(argc, argv);
+	map<string, string> conf = readconfiguration(argc, argv);
 	size_t _conf_interval = atoi(conf["interval"].c_str());
 	size_t _conf_rounds = atoi(conf["rounds"].c_str());
 
@@ -262,6 +261,7 @@ int main( int argc, char** argv )
 	bool _conf_fat = false;
 	if(outbox_file.getPath().substr(outbox_file.getPath().length()-4) == ".img")
 	{
+#ifdef HAVE_LIBTFFS
 		_conf_fat = true;
 		if(!outbox_file.exists())
 		{
@@ -271,6 +271,10 @@ int main( int argc, char** argv )
 
 		ObservedFile::setConfigImgPath(conf["outbox"]);
 		outbox = new ObservedFATFile(conf["path"]);
+#else
+		cout << "ERROR: image-file provided, but dtnoutbox has been compiled without libtffs support!" << endl;
+		return -1;
+#endif
 	}
 	else
 	{
@@ -347,10 +351,12 @@ int main( int argc, char** argv )
 					if (!_conf_consider_invis && isInvis((*iter)->getBasename())) continue;
 
 					ObservedFile* of;
-					if(_conf_fat)
-						of = new ObservedFATFile((*iter)->getPath());
-					else
+					if(!_conf_fat)
 						of = new ObservedNormalFile((*iter)->getPath());
+#ifdef HAVE_LIBTFFS
+					else
+						of = new ObservedFATFile((*iter)->getPath());
+#endif
 					observed_files.push_back(of);
 				}
 

@@ -24,13 +24,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define BUFF_SIZE 8192
+
 std::string TarUtils::_img_path = "";
 std::string TarUtils::_outbox_path = "";
+int TarUtils::ret = 0;
+
+#ifdef HAVE_LIBTFFS
 tffs_handle_t TarUtils::htffs = 0;
 tdir_handle_t TarUtils::hdir = 0;
 tfile_handle_t TarUtils::hfile = 0;
-int32 TarUtils::ret = 0;
-#define BUFF_SIZE 8192
+#endif
 
 #ifdef HAVE_LIBARCHIVE
 TarUtils::TarUtils()
@@ -162,6 +166,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 			fd = open(filename.c_str(), O_RDONLY);
 			len = read(fd, buff, BUFF_SIZE);
 		}
+#ifdef HAVE_LIBTFFS
 		//read file on vfat-image
 		else
 		{
@@ -200,6 +205,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 					len = ret;
 			}
 		}
+#endif
 		//write buffer to archive
 		while (len > 0)
 		{
@@ -210,6 +216,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 			}
 			if(_img_path == "")
 				len = read(fd, buff, sizeof(buff));
+#ifdef HAVE_LIBTFFS
 			else
 			{
 				if (( ret  = TFFS_fread(hfile,sizeof(buff),(unsigned char*) buff)) < 0)
@@ -224,12 +231,14 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 				}
 				len = ret;
 			}
+#endif HAVE_LIBTFFS
 
 		}
 
 		//close file
 		if(_img_path == "")
 			close(fd);
+#ifdef HAVE_LIBTFFS
 		else
 		{
 			if ((ret = TFFS_fclose(hfile)) != TFFS_OK) {
@@ -237,6 +246,7 @@ void TarUtils::write_tar_archive( ibrcommon::BLOB::Reference *blob, list<Observe
 				return;
 			}
 		}
+#endif
 		archive_entry_free(entry);
 	}
 	archive_write_close(a);

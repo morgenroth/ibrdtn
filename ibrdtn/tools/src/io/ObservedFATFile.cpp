@@ -20,6 +20,8 @@
  *  Created on: Sep 30, 2013
  */
 
+#include "../config.h"
+#ifdef HAVE_LIBTFFS
 #include <string.h>
 #include <sstream>
 #include <stdlib.h>
@@ -98,3 +100,4 @@ std::string ObservedFATFile::getHash()
 	MD5((unsigned char*)toHash.c_str(), toHash.length(), hash);
 	return std::string((char*)hash);
 }
+#endif /* HAVE_LIBTFFS*/

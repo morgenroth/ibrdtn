@@ -19,7 +19,7 @@
  *
  */
 
-#include <config.h>
+#include "config.h"
 #include <ibrdtn/api/Client.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -51,7 +51,7 @@ void print_help()
         cout << "* optional parameters *" << endl;
         cout << " -h|--help        display this text" << endl;
         cout << " -w|--workdir     temporary work directory" << endl;
-        cout << " --quiet		     only print error messages" << endl;
+        cout << " --quiet		   only print error messages" << endl;
 }
 
 map<string,string> readconfiguration(int argc, char** argv)
@@ -163,6 +163,7 @@ int main(int argc, char** argv)
             	dtn::data::Bundle b = client.getBundle();
             	if(!_conf_quiet)
             		cout << "received bundle: " << b.toString() << endl;
+
             	// get the reference to the blob
             	ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 #ifdef HAVE_LIBARCHIVE

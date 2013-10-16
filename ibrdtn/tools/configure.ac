@@ -97,7 +97,6 @@ AS_IF([test -z "${tffs_path}"], [
 ])
 
 AS_IF([test -n "${tffs_path}"], [
-	
 	AC_CHECK_FILE("${tffs_path}/inc/tffs.h",[
 		AC_DEFINE(HAVE_LIBTFFS, [1], ["tffs  found"])
 		tffs_LIBS="-L${tffs_path} -ltffs"

@@ -20,6 +20,7 @@
  *  Created on: Sep 30, 2013
  */
 
+#ifdef HAVE_LIBTFFS
 #include "ObservedFile.h"
 #include "FATFile.h"
 
@@ -46,3 +47,4 @@ private:
 };
 
 #endif /* OBSERVEDFATFILE_H_ */
+#endif /* HAVE_LIBTFFS*/
