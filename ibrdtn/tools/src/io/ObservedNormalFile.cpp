@@ -27,7 +27,7 @@
 #include <openssl/md5.h>
 #endif
 
-ObservedNormalFile::ObservedNormalFile(string path) : _file(path)
+ObservedNormalFile::ObservedNormalFile(const std::string& path) : _file(path)
 {
 }
 
@@ -57,7 +57,7 @@ int ObservedNormalFile::getFiles(list<ObservedFile*>& files)
 
 }
 
-string ObservedNormalFile::getPath()
+std::string ObservedNormalFile::getPath()
 {
 	return _file.getPath();
 }
@@ -67,7 +67,7 @@ bool ObservedNormalFile::exists()
 	return _file.exists();
 }
 
-string ObservedNormalFile::getBasename()
+std::string ObservedNormalFile::getBasename()
 {
 	return _file.getBasename();
 }
@@ -86,12 +86,12 @@ bool ObservedNormalFile::isDirectory()
 	return _file.isDirectory();
 }
 
-string ObservedNormalFile::getHash()
+std::string ObservedNormalFile::getHash()
 {
-	stringstream ss;
+	std::stringstream ss;
 	ss << getPath() << _file.lastmodify() << _file.size();
-	string toHash = ss.str();
+	std::string toHash = ss.str();
 	char hash[MD5_DIGEST_LENGTH];
 	MD5((unsigned char*)toHash.c_str(), toHash.length(), (unsigned char*) hash);
-	return string(hash);
+	return std::string(hash);
 }

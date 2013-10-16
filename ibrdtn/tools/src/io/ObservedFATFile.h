@@ -29,7 +29,7 @@
 class ObservedFATFile : public ObservedFile
 {
 public:
-	ObservedFATFile(std::string file_path);
+	ObservedFATFile(const std::string& file_path);
 	virtual ~ObservedFATFile();
 
 	virtual int getFiles(std::list<ObservedFile*>& files);

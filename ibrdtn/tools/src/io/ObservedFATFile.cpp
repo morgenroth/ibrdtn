@@ -30,7 +30,7 @@
 #include <openssl/md5.h>
 #endif
 
-ObservedFATFile::ObservedFATFile(std::string file_path) : ObservedFile(),_file(file_path,_conf_imgpath)
+ObservedFATFile::ObservedFATFile(const std::string& file_path) : ObservedFile(),_file(file_path,_conf_imgpath)
 {
 }
 

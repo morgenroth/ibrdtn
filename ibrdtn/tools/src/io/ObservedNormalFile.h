@@ -29,18 +29,18 @@
 class ObservedNormalFile: public ObservedFile
 {
 public:
-	ObservedNormalFile(string path);
+	ObservedNormalFile(const std::string& path);
 	virtual ~ObservedNormalFile();
 
 	virtual int getFiles(list<ObservedFile*>& files);
-	virtual string getPath();
+	virtual std::string getPath();
 	virtual bool exists();
-	virtual string getBasename();
+	virtual std::string getBasename();
 	virtual size_t size();
 	virtual bool isSystem();
 	virtual bool isDirectory();
 
-	virtual string getHash();
+	virtual std::string getHash();
 
 private:
 	ibrcommon::File _file;
