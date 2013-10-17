@@ -188,7 +188,7 @@ void sighandler(int signal)
 	}
 }
 
-static bool isSwap(string filename)
+bool isSwap(string filename)
 {
 	bool tilde = filename.find("~",0) != filename.npos;
 	bool swp   = filename.find(".swp",filename.length()-4) != filename.npos;
@@ -196,13 +196,13 @@ static bool isSwap(string filename)
 	return (tilde || swp);
 }
 
-static bool isInvis(string filename)
+bool isInvis(string filename)
 {
 	return filename.at(0) == '.';
 }
 
-static std::set<string> hashes;
-static bool inHashes(string hash)
+std::set<string> hashes;
+bool inHashes(string hash)
 {
 	const char* hash1 = hash.c_str();
 	if(hashes.empty())
@@ -219,7 +219,7 @@ static bool inHashes(string hash)
 	return false;
 }
 
-static bool deleteAll( ObservedFile* ptr){
+bool deleteAll( ObservedFile* ptr){
 	delete ptr;
 	return true;
 }
