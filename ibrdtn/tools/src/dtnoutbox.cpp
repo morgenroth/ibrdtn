@@ -55,6 +55,7 @@ extern "C"
 #include <csignal>
 #include <sys/types.h>
 #include <unistd.h>
+#include <regex.h>
 #include <getopt.h>
 using namespace ibrcommon;
 
@@ -78,6 +79,9 @@ string _conf_workdir;
 size_t _conf_interval = 5000;
 size_t _conf_rounds = 3;
 string _conf_path = "/";
+string _conf_regex_str = "^\.";
+regex_t _conf_regex;
+int _conf_invert = false;
 int _conf_quiet = false;
 int _conf_fat = false;
 
@@ -100,6 +104,8 @@ void print_help()
 #ifdef HAVE_LIBTFFS
 	cout << " -p|--path <path>           path of outbox within vfat-image. default: /" << endl;
 #endif
+	cout << " -R|--regex <regex>         all files in <outbox> matching this regular expression will be ignored. default: ^\." << endl;
+	cout << " -I|--invert       		 invert above  regexp"<< endl;
 	cout << " -q|--quiet                 only print error messages" << endl;
 
 	_running = false; //stop this app, after printing help
@@ -133,7 +139,7 @@ void read_configuration(int argc, char** argv)
 	{
 		/* getopt_long stores the option index here. */
 		int option_index = 0;
-		int c = getopt_long (argc, argv, "hw:i:r:p:R:q",
+		int c = getopt_long (argc, argv, "hw:i:r:p:R:qI",
 				long_options, &option_index);
 		/* Detect the end of the options. */
 		if (c == -1)
@@ -166,13 +172,20 @@ void read_configuration(int argc, char** argv)
 		case 'p':
 			_conf_path = std::string(optarg);
 			break;
+		case 'R':
+			_conf_regex_str = std::string(optarg);
+			break;
 		case 'q':
 			_conf_quiet = true;
+			break;
+		case 'I':
+			_conf_invert = true;
 			break;
 		case '?':
 			break;
 		default:
-			printf("error: %c\n",c);
+			abort();
+			break;
 		}
 	}
 	// print help if there are not enough or too many remaining parameters
@@ -180,6 +193,13 @@ void read_configuration(int argc, char** argv)
 	{
 		print_help();
 		exit(0);
+	}
+
+	//compile regex, if set
+	if(_conf_regex_str.length() > 0 && regcomp(&_conf_regex,_conf_regex_str.c_str(),0))
+	{
+		cout << "ERROR: invalid regex: " << optarg << endl;
+		exit(-1);
 	}
 
 	_conf_name = std::string(argv[optind]);
@@ -348,8 +368,20 @@ int main( int argc, char** argv )
 				//add new files to observation
 				for (iter = new_files.begin(); iter != new_files.end(); ++iter)
 				{
-					//TODO regexp auswerten
 
+					int reg_ret = regexec(&_conf_regex,(*iter)->getBasename().c_str(), 0, NULL, 0);
+					if(!reg_ret && !_conf_invert)
+						continue;
+					if(reg_ret && _conf_invert)
+						continue;
+
+					//print error message, if regex error occurs
+					if(reg_ret && reg_ret != REG_NOMATCH)
+					{
+							char msgbuf[100];
+							regerror(reg_ret,&_conf_regex,msgbuf,sizeof(msgbuf));
+							cout << "ERROR: regex match failed : " << std::string(msgbuf) << endl;
+					}
 					ObservedFile* of;
 					if(!_conf_fat)
 						of = new ObservedNormalFile((*iter)->getPath());
@@ -451,6 +483,8 @@ int main( int argc, char** argv )
 			}
 
 			observed_files.remove_if(deleteAll);
+
+			regfree(&_conf_regex);
 
 			// close the client connection
 			client.close();
