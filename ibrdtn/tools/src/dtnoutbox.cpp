@@ -55,100 +55,8 @@ extern "C"
 #include <csignal>
 #include <sys/types.h>
 #include <unistd.h>
-
+#include <getopt.h>
 using namespace ibrcommon;
-
-void print_help()
-{
-	cout << "-- dtnoutbox (IBR-DTN) --" << endl;
-	cout << "Syntax: dtnoutbox [options] <name> <outbox> <destination>" << endl;
-	cout << " <name>             the application name" << endl;
-#ifdef HAVE_LIBTFFS
-	cout << " <outbox>           location of outgoing files, directory or vfat-image (*.img)" << endl;
-#else
-	cout << " <outbox>           directory of outgoing files" << endl;
-#endif
-	cout << " <destination>      the destination EID for all outgoing files" << endl << endl;
-	cout << "* optional parameters *" << endl;
-	cout << " -h|--help          display this text" << endl;
-	cout << " -w|--workdir <dir> temporary work directory" << endl;
-	cout << " -i <interval>      interval in milliseconds, in which <outbox> is scanned for new/changed files. default: 5000" << endl;
-	cout << " -r <number>        number of rounds of intervals, after which a unchanged file is considered as written. default: 3" << endl;
-#ifdef HAVE_LIBTFFS
-	cout << " -p <path>          path of outbox within vfat-image. default: /" << endl;
-#endif
-	cout << endl;
-	cout << " --badclock         assumes a bad clock on the system, the only indicator to send a file is its size" << endl;
-	cout << " --consider-swp     do not ignore these files: *~* and *.swp" << endl;
-	cout << " --consider-invis   do not ignores these files: .*" << endl;
-#ifndef HAVE_LIBTFFS
-	cout << " --no-keep          do not keep files in outbox";
-#endif
-	cout << endl;
-	cout << " --quiet		     only print error messages" << endl;
-
-}
-
-map<string,string> readconfiguration( int argc, char** argv )
-{
-	// print help if not enough parameters are set
-	if (argc < 4)
-	{
-		print_help();
-		exit(0);
-	}
-
-	map<string,string> ret;
-	ret["name"] = argv[1];
-	ret["outbox"] = argv[2];
-	ret["destination"] = argv[3];
-	//default values:
-	ret["interval"] = "5000";
-	ret["rounds"] = "3";
-	ret["path"] = "/";
-
-	for (int i = 4; i < argc; ++i)
-	{
-		string arg = argv[i];
-
-		// print help if requested
-		if (arg == "-h" || arg == "--help")
-		{
-			print_help();
-			exit(0);
-		}
-
-		if (arg == "-w" || arg == "--workdir")
-			ret["workdir"] = argv[++i];
-
-		if (arg == "-i")
-			ret["interval"] = argv[++i];
-
-		if (arg == "-r")
-			ret["rounds"] = argv[++i];
-
-		if (arg == "--badclock")
-			ret["badclock"] = "1";
-
-		if (arg == "--consider-swp")
-			ret["consider_swp"] = "1";
-
-		if (arg == "--consider-invis")
-			ret["consider_invis"] = "1";
-
-		if ( arg == "--no-keep")
-			ret["no-keep"] = "1";
-
-		if ( arg == "--quiet")
-			ret["quiet"] = "1";
-
-		if (arg == "-p")
-			ret["path"] = argv[++i];
-
-	}
-
-	return ret;
-}
 
 // set this variable to false to stop the app
 bool _running = true;
@@ -160,6 +68,124 @@ ibrcommon::socketstream *_conn = NULL;
 ibrcommon::Conditional _wait_cond;
 bool _wait_abort = false;
 
+//global conf values
+string _conf_name;
+string _conf_outbox;
+string _conf_destination;
+
+//optional paramters
+string _conf_workdir;
+size_t _conf_interval = 5000;
+size_t _conf_rounds = 3;
+string _conf_path = "/";
+int _conf_quiet = false;
+int _conf_fat = false;
+
+void print_help()
+{
+	cout << "-- dtnoutbox (IBR-DTN) --" << endl;
+	cout << "Syntax: dtnoutbox [options] <name> <outbox> <destination>" << endl;
+	cout << " <name>                     the application name" << endl;
+#ifdef HAVE_LIBTFFS
+	cout << " <outbox>                   location of outgoing files, directory or vfat-image" << endl;
+#else
+	cout << " <outbox>                   directory of outgoing files" << endl;
+#endif
+	cout << " <destination>              the destination EID for all outgoing files" << endl << endl;
+	cout << "* optional parameters *" << endl;
+	cout << " -h|--help                  display this text" << endl;
+	cout << " -w|--workdir <dir>         temporary work directory" << endl;
+	cout << " -i|--interval <interval>   interval in milliseconds, in which <outbox> is scanned for new/changed files. default: 5000" << endl;
+	cout << " -r|--rounds <number>       number of rounds of intervals, after which a unchanged file is considered as written. default: 3" << endl;
+#ifdef HAVE_LIBTFFS
+	cout << " -p|--path <path>           path of outbox within vfat-image. default: /" << endl;
+#endif
+	cout << " -q|--quiet                 only print error messages" << endl;
+
+	_running = false; //stop this app, after printing help
+
+}
+
+struct option long_options[] =
+{
+    {"name",required_argument,0, 'n'},
+    {"outbox",required_argument,0, 'o'},
+    {"destination",  required_argument, 0, 'd'},
+    {"help", no_argument, 0, 'h'},
+    {"workdir", required_argument, 0, 'w'},
+    {"interval", required_argument, 0, 'i'},
+    {"rounds", required_argument, 0, 'r'},
+    {"path", required_argument, 0, 'p'},
+    {"regex", required_argument, 0, 'R'},
+    {"quiet", no_argument, 0, 'q'},
+    {0, 0, 0, 0}
+};
+void read_configuration(int argc, char** argv)
+{
+	// print help if not enough parameters are set
+	if (argc < 4)
+	{
+		print_help();
+		exit(0);
+	}
+
+	while(1)
+	{
+		/* getopt_long stores the option index here. */
+		int option_index = 0;
+		int c = getopt_long (argc, argv, "hw:i:r:p:R:q",
+				long_options, &option_index);
+		/* Detect the end of the options. */
+		if (c == -1)
+			break;
+
+		switch (c)
+		{
+		case 0:
+			/* If this option set a flag, do nothing else now. */
+			if (long_options[option_index].flag != 0)
+				break;
+			printf ("option %s", long_options[option_index].name);
+			if (optarg)
+				printf (" with arg %s", optarg);
+			printf ("\n");
+			break;
+
+		case 'h':
+			print_help();
+			break;
+		case 'w':
+			_conf_workdir = std::string(optarg);
+			break;
+		case 'i':
+			_conf_interval = atoi(optarg);
+			break;
+		case 'r':
+			_conf_rounds = atoi(optarg);
+			break;
+		case 'p':
+			_conf_path = std::string(optarg);
+			break;
+		case 'q':
+			_conf_quiet = true;
+			break;
+		case '?':
+			break;
+		default:
+			printf("error: %c\n",c);
+		}
+	}
+	// print help if there are not enough or too many remaining parameters
+	if (argc - optind != 3)
+	{
+		print_help();
+		exit(0);
+	}
+
+	_conf_name = std::string(argv[optind]);
+	_conf_outbox = std::string(argv[optind+1]);
+	_conf_destination = std::string(argv[optind+2]);
+}
 void sighandler(int signal)
 {
 	switch (signal)
@@ -189,21 +215,6 @@ void sighandler(int signal)
 	}
 }
 
-bool isSwap(string filename)
-{
-	bool tilde = filename.find("~",0) != filename.npos;
-	bool swp   = filename.find(".swp",filename.length()-4) != filename.npos;
-
-	return (tilde || swp);
-}
-
-bool isInvis(string filename)
-{
-	return filename.at(0) == '.';
-}
-
-FileHashList sent_hashes;
-
 bool deleteAll( ObservedFile* ptr){
 	delete ptr;
 	return true;
@@ -223,35 +234,11 @@ int main( int argc, char** argv )
 
 
 	// read the configuration
-	map<string, string> conf = readconfiguration(argc, argv);
-	size_t _conf_interval = atoi(conf["interval"].c_str());
-	size_t _conf_rounds = atoi(conf["rounds"].c_str());
-
-	//check consider-swp parameter
-	bool _conf_consider_swp = false;
-	if (conf.find("consider_swp") != conf.end())
-	{
-		_conf_consider_swp = true;
-	}
-
-	//check consider-invis parameter
-	bool _conf_consider_invis = false;
-	if (conf.find("consider_invis") != conf.end())
-	{
-		_conf_consider_invis = true;
-	}
-
-	//check quiet parameter
-	bool _conf_quiet = false;
-	if (conf.find("quiet") != conf.end())
-	{
-		_conf_quiet = true;
-	}
-
+	read_configuration(argc,argv);
 	// init working directory
-	if (conf.find("workdir") != conf.end())
+	if (_conf_workdir.length() > 0)
 	{
-		ibrcommon::File blob_path(conf["workdir"]);
+		ibrcommon::File blob_path(_conf_workdir);
 
 		if (blob_path.exists())
 		{
@@ -262,18 +249,18 @@ int main( int argc, char** argv )
 	// backoff for reconnect
 	unsigned int backoff = 2;
 
-	File outbox_file(conf["outbox"]);
+	File outbox_file(_conf_outbox);
 
 	std::list<ObservedFile*> avail_files, new_files, old_files, deleted_files, observed_files, files_to_send;
 	std::list<ObservedFile*>::iterator iter;
 	std::list<ObservedFile*>::iterator iter2;
+	FileHashList sent_hashes;
 
 	ObservedFile* outbox;
 
 	ObservedFile::setConfigRounds(_conf_rounds);
 
-	bool _conf_fat = false;
-	if(outbox_file.getPath().substr(outbox_file.getPath().length()-4) == ".img")
+	if(!outbox_file.getType() == DT_DIR)
 	{
 #ifdef HAVE_LIBTFFS
 		_conf_fat = true;
@@ -283,8 +270,8 @@ int main( int argc, char** argv )
 			return -1;
 		}
 
-		ObservedFile::setConfigImgPath(conf["outbox"]);
-		outbox = new ObservedFATFile(conf["path"]);
+		ObservedFile::setConfigImgPath(_conf_outbox);
+		outbox = new ObservedFATFile(_conf_path);
 #else
 		cout << "ERROR: image-file provided, but dtnoutbox has been compiled without libtffs support!" << endl;
 		return -1;
@@ -295,7 +282,7 @@ int main( int argc, char** argv )
 		if(!outbox_file.exists())
 			File::createDirectory(outbox_file);
 
-		outbox = new ObservedNormalFile(conf["outbox"]);
+		outbox = new ObservedNormalFile(_conf_outbox);
 	}
 
 	// loop, if no stop if requested
@@ -311,7 +298,7 @@ int main( int argc, char** argv )
 			_conn = &conn;
 
 			// Initiate a client for synchronous receiving
-			dtn::api::Client client(conf["name"], conn, dtn::api::Client::MODE_SENDONLY);
+			dtn::api::Client client(_conf_name, conn, dtn::api::Client::MODE_SENDONLY);
 
 			// Connect to the server. Actually, this function initiate the
 			// stream protocol by starting the thread and sending the contact header.
@@ -361,9 +348,7 @@ int main( int argc, char** argv )
 				//add new files to observation
 				for (iter = new_files.begin(); iter != new_files.end(); ++iter)
 				{
-					//skip invisible and swap-files, if wanted
-					if (!_conf_consider_swp && isSwap((*iter)->getBasename())) continue;
-					if (!_conf_consider_invis && isInvis((*iter)->getBasename())) continue;
+					//TODO regexp auswerten
 
 					ObservedFile* of;
 					if(!_conf_fat)
@@ -414,11 +399,11 @@ int main( int argc, char** argv )
 	//if libarchive is available, check if libtffs can be used
 					if(_conf_fat)
 					{
-						TarUtils::set_img_path(conf["outbox"]);
-						TarUtils::set_outbox_path(conf["path"]);
+						TarUtils::set_img_path(_conf_outbox);
+						TarUtils::set_outbox_path(_conf_path);
 					}
 					else
-						TarUtils::set_outbox_path(conf["outbox"]);
+						TarUtils::set_outbox_path(_conf_outbox);
 
 					TarUtils::write_tar_archive(&blob, files_to_send);
 //or commandline fallback
@@ -439,7 +424,7 @@ int main( int argc, char** argv )
 					(*blob.iostream()) << stream.rdbuf();
 #endif
 					// create a new bundle
-					dtn::data::EID destination = EID(conf["destination"]);
+					dtn::data::EID destination = EID(_conf_destination);
 
 					// create a new bundle
 					dtn::data::Bundle b;
