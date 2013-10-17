@@ -77,27 +77,23 @@ std::string ObservedFATFile::getBasename()
 	return _file.getBasename();
 }
 
-size_t ObservedFATFile::size()
+void ObservedFATFile::update()
 {
-	return _file.size();
-}
+	//update size
+	_size = _file.size();
 
-bool ObservedFATFile::isSystem()
-{
-	return _file.isSystem();
-}
-bool ObservedFATFile::isDirectory()
-{
-	return _file.isDirectory();
-}
+	//update isSystem
+	_is_system = _file.isSystem();
 
-std::string ObservedFATFile::getHash()
-{
+	//update isDirectory
+	_is_directory = _file.isDirectory();
+
+	//update hash
 	std::stringstream ss;
 	ss << getPath() << _file.lastmodify() << _file.size();
 	std::string toHash = ss.str();
-	unsigned char hash[MD5_DIGEST_LENGTH];
-	MD5((unsigned char*)toHash.c_str(), toHash.length(), hash);
-	return std::string((char*)hash);
+	char hash[MD5_DIGEST_LENGTH];
+	MD5((unsigned char*)toHash.c_str(), toHash.length(), (unsigned char*) hash);
+	_hash = std::string(hash);
 }
 #endif /* HAVE_LIBTFFS*/

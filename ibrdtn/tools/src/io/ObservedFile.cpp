@@ -56,7 +56,25 @@ void ObservedFile::setConfigRounds( size_t rounds )
 {
 	_conf_rounds = rounds;
 }
+size_t ObservedFile::size() const
+{
+	return _size;
+}
 
+bool ObservedFile::isSystem() const
+{
+	return _is_system;
+}
+
+bool ObservedFile::isDirectory() const
+{
+	return _is_directory;
+}
+
+std::string ObservedFile::getHash() const
+{
+	return _hash;
+}
 void ObservedFile::tick()
 {
 	_hashes.push_back(getHash());

@@ -72,26 +72,22 @@ std::string ObservedNormalFile::getBasename()
 	return _file.getBasename();
 }
 
-size_t ObservedNormalFile::size()
+void ObservedNormalFile::update()
 {
-	return _file.size();
-}
+	//update size
+	_size = _file.size();
 
-bool ObservedNormalFile::isSystem()
-{
-	return _file.isSystem();
-}
-bool ObservedNormalFile::isDirectory()
-{
-	return _file.isDirectory();
-}
+	//update isSystem
+	_is_system = _file.isSystem();
 
-std::string ObservedNormalFile::getHash()
-{
+	//update isDirectory
+	_is_directory = _file.isDirectory();
+
+	//update hash
 	std::stringstream ss;
 	ss << getPath() << _file.lastmodify() << _file.size();
 	std::string toHash = ss.str();
 	char hash[MD5_DIGEST_LENGTH];
 	MD5((unsigned char*)toHash.c_str(), toHash.length(), (unsigned char*) hash);
-	return std::string(hash);
+	_hash = std::string(hash);
 }

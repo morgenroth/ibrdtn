@@ -376,9 +376,10 @@ int main( int argc, char** argv )
 				}
 
 
-				//tick all files
+				//tick and update all files
 				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
+					(*iter)->update();
 					(*iter)->tick();
 				}
 

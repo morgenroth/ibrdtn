@@ -36,11 +36,12 @@ public:
 	virtual std::string getPath() = 0;
 	virtual bool exists() = 0;
 	virtual std::string getBasename() = 0;
-	virtual size_t size() = 0;
-	virtual bool isSystem() = 0;
-	virtual bool isDirectory() = 0;
+	virtual void update() = 0;
 
-	virtual std::string getHash() = 0;
+	virtual size_t size() const;
+	virtual bool isSystem() const;
+	virtual bool isDirectory() const;
+	virtual std::string getHash() const;
 
 	void tick();
 	void send();
@@ -57,6 +58,12 @@ protected:
 
 	static std::string _conf_imgpath;
 	static size_t _conf_rounds;
+
+	//updated vars
+	size_t _size;
+	bool _is_system;
+	bool _is_directory;
+	std::string _hash;
 };
 
 

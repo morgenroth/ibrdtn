@@ -37,10 +37,7 @@ public:
 	virtual std::string getPath();
 	virtual bool exists();
 	virtual std::string getBasename();
-	virtual size_t size();
-	virtual bool isSystem();
-	virtual bool isDirectory();
-	virtual std::string getHash();
+	virtual void update();
 
 private:
 	FATFile _file;
