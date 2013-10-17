@@ -32,6 +32,7 @@
 
 #include "io/TarUtils.h"
 #include "io/ObservedNormalFile.h"
+#include "io/FileHashList.h"
 
 #ifdef HAVE_LIBTFFS
 #include "io/ObservedFATFile.h"
@@ -201,23 +202,7 @@ bool isInvis(string filename)
 	return filename.at(0) == '.';
 }
 
-std::set<string> hashes;
-bool inHashes(string hash)
-{
-	const char* hash1 = hash.c_str();
-	if(hashes.empty())
-		return false;
-
-	std::set<string>::iterator iter;
-	for(iter = hashes.begin(); iter != hashes.end();iter++)
-	{
-		const char* hash2 = (*iter).c_str();
-		int ret = memcmp(hash1,hash2,sizeof(hash1));
-		if(ret == 0)
-			return true;
-	}
-	return false;
-}
+FileHashList sent_hashes;
 
 bool deleteAll( ObservedFile* ptr){
 	delete ptr;
@@ -355,6 +340,7 @@ int main( int argc, char** argv )
 				//remove deleted files from observation
 				for (iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
 				{
+					sent_hashes.removeAll((*iter)->getHash());
 					for(iter2 = observed_files.begin();iter2 != observed_files.end();++iter2)
 					{
 							if((*iter2)->getHash() == (*iter)->getHash())
@@ -401,13 +387,13 @@ int main( int argc, char** argv )
 				files_to_send.clear();
 				for (iter = observed_files.begin(); iter != observed_files.end(); ++iter)
 				{
-					if(!inHashes((*iter)->getHash()))
+					if(!sent_hashes.contains((*iter)))
 					{
 						if ((*iter)->lastHashesEqual(_conf_rounds))
 						{
 							(*iter)->send();
 							string hash = (*iter)->getHash();
-							hashes.insert(hash);
+							sent_hashes.add(FileHash(*iter));
 							files_to_send_ss << (*iter)->getBasename() << " ";
 							files_to_send.push_back(*iter);
 						}
@@ -468,9 +454,6 @@ int main( int argc, char** argv )
 					client.flush();
 				}
 
-				//check whether hashes need to be deleted
-				if(hashes.size() >= 10000)
-					hashes.clear();
 				if (_running)
 				{
 					// wait defined seconds

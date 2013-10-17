@@ -21,6 +21,10 @@ dtninbox_SOURCES = dtninbox.cpp \
 		  io/TarUtils.cpp
 dtnoutbox_SOURCES = dtnoutbox.cpp \
 		  tffs/tffs.h \
+		  io/FileHash.h \
+		  io/FileHash.cpp \
+		  io/FileHashList.h \
+		  io/FileHashList.cpp \
 		  io/FATFile.h \
 		  io/FATFile.cpp \
 		  io/ObservedFile.h \
