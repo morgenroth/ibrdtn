@@ -1,5 +1,5 @@
 /*
- * FileHash.cpp
+ * FileHashList.cpp
  *
  * Copyright (C) 2013 IBR, TU Braunschweig
  *
