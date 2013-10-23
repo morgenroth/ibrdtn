@@ -21,6 +21,7 @@
  */
 
 #include "config.h"
+#ifdef HAVE_LIBARCHIVE //compilation without libarchive not possible
 #include <ibrdtn/api/Client.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -40,9 +41,7 @@ extern "C"
 {
 #include <tffs.h>
 }
-#endif
 
-#ifdef HAVE_LIBARCHIVE
 #include <archive.h>
 #include <archive_entry.h>
 #include <fcntl.h>
@@ -344,6 +343,7 @@ int main( int argc, char** argv )
 
 				//determine deleted files
 				std::set_difference(old_files.begin(),old_files.end(),avail_files.begin(),avail_files.end(),std::back_inserter(deleted_files),ObservedFile::namecompare);
+
 				//remove deleted files from observation
 				for (iter = deleted_files.begin(); iter != deleted_files.end(); ++iter)
 				{
@@ -426,9 +426,7 @@ int main( int argc, char** argv )
 					// create a blob
 					ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 
-//use libarchive...
-#ifdef HAVE_LIBARCHIVE
-	//if libarchive is available, check if libtffs can be used
+					//set paths, depends on file location (normal file system or fat image)
 					if(_conf_fat)
 					{
 						TarUtils::set_img_path(_conf_outbox);
@@ -438,23 +436,7 @@ int main( int argc, char** argv )
 						TarUtils::set_outbox_path(_conf_outbox);
 
 					TarUtils::write_tar_archive(&blob, files_to_send);
-//or commandline fallback
-#else
-					// "--remove-files" deletes files after adding
-					//depending on configuration, this option is passed to tar or not
-					std::string remove_string = " --remove-files";
-					if(_conf_keep)
-						remove_string = "";
-					stringstream cmd;
-					cmd << "tar" << remove_string << " -cO -C " << outbox.getPath() << " " << files_to_send_ss.str();
 
-					// make a tar archive
-					appstreambuf app(cmd.str(), appstreambuf::MODE_READ);
-					istream stream(&app);
-
-					// stream the content of "tar" to the payload block
-					(*blob.iostream()) << stream.rdbuf();
-#endif
 					// create a new bundle
 					dtn::data::EID destination = EID(_conf_destination);
 
@@ -537,3 +519,5 @@ int main( int argc, char** argv )
 
 	return (EXIT_SUCCESS);
 }
+
+#endif /* HAVE_LIBARCHIVE*/

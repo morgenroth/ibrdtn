@@ -83,7 +83,7 @@ PKG_CHECK_MODULES(ARCHIVE, libarchive, [
 	AC_SUBST(ARCHIVE_LIBS)
 	AC_DEFINE(HAVE_LIBARCHIVE, [1], ["libarchive is available"])
 ], [
-	AC_MSG_WARN([libarchive not found, fallback to unix-tar])
+	AC_MSG_WARN([libarchive not found, dtninbox and dtnoutbox will not be compiled])
 ])
 
 AC_ARG_WITH([tffs],

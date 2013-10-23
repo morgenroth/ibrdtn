@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#ifdef HAVE_LIBARCHIVE //compilation without libarchive not possible
 #include <ibrdtn/api/Client.h>
 #include <ibrcommon/net/socket.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -166,22 +167,8 @@ int main(int argc, char** argv)
 
             	// get the reference to the blob
             	ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
-#ifdef HAVE_LIBARCHIVE
+
             	TarUtils::read_tar_archive(conf["inbox"],&ref);
-#else
-                // create the extract command
-                stringstream cmdstream; cmdstream << "tar -x -C " << conf["inbox"];
-
-                // create a tar handler
-                appstreambuf extractor(cmdstream.str(), appstreambuf::MODE_WRITE);
-                ostream stream(&extractor);
-
-                // write the payload to the extractor
-               	stream << ref.iostream()->rdbuf();
-
-                // flush the stream
-                stream.flush();
-#endif
             }
 
             // close the client connection
@@ -232,3 +219,4 @@ int main(int argc, char** argv)
 
     return (EXIT_SUCCESS);
 }
+#endif /* HAVE_LIBARCHIVE*/
