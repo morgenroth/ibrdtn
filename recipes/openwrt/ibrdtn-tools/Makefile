@@ -24,7 +24,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/ibrdtn-tools
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=ibrdtn
+  DEPENDS:=ibrdtn +libarchive
   TITLE:=DTN Tools
 endef
 
