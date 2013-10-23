@@ -78,7 +78,7 @@ string _conf_workdir;
 size_t _conf_interval = 5000;
 size_t _conf_rounds = 3;
 string _conf_path = "/";
-string _conf_regex_str = "^\.";
+string _conf_regex_str = "^\\.";
 regex_t _conf_regex;
 int _conf_invert = false;
 int _conf_quiet = false;
