@@ -84,6 +84,18 @@ int _conf_invert = false;
 int _conf_quiet = false;
 int _conf_fat = false;
 
+struct option long_options[] =
+{
+    {"destination",  required_argument, 0, 'd'},
+    {"help", no_argument, 0, 'h'},
+    {"workdir", required_argument, 0, 'w'},
+    {"interval", required_argument, 0, 'i'},
+    {"rounds", required_argument, 0, 'r'},
+    {"path", required_argument, 0, 'p'},
+    {"regex", required_argument, 0, 'R'},
+    {"quiet", no_argument, 0, 'q'},
+    {0, 0, 0, 0}
+};
 void print_help()
 {
 	cout << "-- dtnoutbox (IBR-DTN) --" << endl;
@@ -111,27 +123,13 @@ void print_help()
 
 }
 
-struct option long_options[] =
-{
-    {"name",required_argument,0, 'n'},
-    {"outbox",required_argument,0, 'o'},
-    {"destination",  required_argument, 0, 'd'},
-    {"help", no_argument, 0, 'h'},
-    {"workdir", required_argument, 0, 'w'},
-    {"interval", required_argument, 0, 'i'},
-    {"rounds", required_argument, 0, 'r'},
-    {"path", required_argument, 0, 'p'},
-    {"regex", required_argument, 0, 'R'},
-    {"quiet", no_argument, 0, 'q'},
-    {0, 0, 0, 0}
-};
 void read_configuration(int argc, char** argv)
 {
 	// print help if not enough parameters are set
-	if (argc < 4)
+	if (argc < 3)
 	{
 		print_help();
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 
 	while(1)
@@ -158,6 +156,7 @@ void read_configuration(int argc, char** argv)
 
 		case 'h':
 			print_help();
+			exit(EXIT_SUCCESS);
 			break;
 		case 'w':
 			_conf_workdir = std::string(optarg);
@@ -205,6 +204,7 @@ void read_configuration(int argc, char** argv)
 	_conf_outbox = std::string(argv[optind+1]);
 	_conf_destination = std::string(argv[optind+2]);
 }
+
 void sighandler(int signal)
 {
 	switch (signal)

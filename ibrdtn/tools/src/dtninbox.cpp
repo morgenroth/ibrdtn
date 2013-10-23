@@ -155,7 +155,7 @@ int main(int argc, char** argv)
 
     if (_conf_workdir.length() > 0)
     {
-    	ibrcommon::File blob_path(_conf_workdir);
+	ibrcommon::File blob_path(_conf_workdir);
 
     	if (blob_path.exists())
     	{
@@ -192,13 +192,13 @@ int main(int argc, char** argv)
             {
             	// receive the bundle
             	dtn::data::Bundle b = client.getBundle();
-            	if(!_conf_quiet)
-            		cout << "received bundle: " << b.toString() << endl;
+		if(!_conf_quiet)
+			cout << "received bundle: " << b.toString() << endl;
 
             	// get the reference to the blob
             	ibrcommon::BLOB::Reference ref = b.find<dtn::data::PayloadBlock>().getBLOB();
 
-            	TarUtils::read_tar_archive(_conf_inbox,&ref);
+		TarUtils::read_tar_archive(_conf_inbox,&ref);
             }
 
             // close the client connection
