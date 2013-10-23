@@ -201,8 +201,11 @@ void read_configuration(int argc, char** argv)
 	}
 
 	_conf_name = std::string(argv[optind]);
-	_conf_outbox = std::string(argv[optind+1]);
 	_conf_destination = std::string(argv[optind+2]);
+	_conf_outbox = std::string(argv[optind+1]);
+	//check outbox path for trailing slash
+	if(_conf_outbox.at(_conf_outbox.length()-1) == '/')
+		_conf_outbox = _conf_outbox.substr(0,_conf_outbox.length() -1);
 }
 
 void sighandler(int signal)

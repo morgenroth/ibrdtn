@@ -100,7 +100,7 @@ void TarUtils::read_tar_archive( string extract_folder, ibrcommon::BLOB::Referen
 
 	while ((ret = archive_read_next_header(a, &entry)) == ARCHIVE_OK )
 	{
-		string filename = archive_entry_pathname(entry);
+		string filename = string(archive_entry_pathname(entry));
 		string path = extract_folder + "/" + filename;
 		string dirs = dir_path(path);
 		mkdir(dirs.c_str(),0777);
