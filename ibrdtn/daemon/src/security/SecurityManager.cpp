@@ -26,10 +26,6 @@
 #include <ibrdtn/security/PayloadIntegrityBlock.h>
 #include <ibrcommon/Logger.h>
 
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
-
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
 #endif
