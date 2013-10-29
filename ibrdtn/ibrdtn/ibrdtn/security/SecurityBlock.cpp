@@ -468,7 +468,7 @@ namespace dtn
 			serializer << _ciphersuite_flags;
 
 			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
-				serializer << _ciphersuite_flags;
+				serializer << _correlator;
 
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
 			{
@@ -489,7 +489,7 @@ namespace dtn
 			serializer << _ciphersuite_flags;
 
 			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
-				serializer << _ciphersuite_flags;
+				serializer << _correlator;
 
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
 			{
