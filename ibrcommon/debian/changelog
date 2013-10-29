@@ -1,3 +1,10 @@
+ibrcommon (0.10.2) stable; urgency=medium
+
+  * Fix timing issue in select method for vsockets
+  * Added support for libnl 3.2.21
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Tue, 29 Oct 2013 09:25:03 +0100
+
 ibrcommon (0.10.1) stable; urgency=medium
 
   * Fix "missing bytes" failure in appstreambuf

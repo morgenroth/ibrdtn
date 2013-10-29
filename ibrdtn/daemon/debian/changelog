@@ -1,3 +1,9 @@
+ibrdtnd (0.10.2) stable; urgency=medium
+
+  * Security: Fix misbehavior while checking PIB
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Tue, 29 Oct 2013 09:25:18 +0100
+
 ibrdtnd (0.10.1) stable; urgency=medium
 
   * Fix processing of Prophet Acknowledgement Set
