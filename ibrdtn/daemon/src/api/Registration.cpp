@@ -58,10 +58,9 @@ namespace dtn
 		const std::string Registration::TAG = "Registration";
 		std::set<std::string> Registration::_handles;
 
-		const std::string Registration::alloc_handle()
+		const std::string Registration::gen_handle()
 		{
 			static dtn::utils::Random rand;
-
 			std::string new_handle = rand.gen_chars(16);
 
 			// if the local host is configured with an IPN address
@@ -74,34 +73,43 @@ namespace dtn
 				new_handle = ss.str();
 			}
 
-			while (_handles.find(new_handle) != _handles.end())
-			{
-				new_handle = rand.gen_chars(16);
+			return new_handle;
+		}
 
-				// if the local host is configured with an IPN address
-				if (dtn::core::BundleCore::local.isCompressable())
-				{
-					// .. then use 32-bit numbers only
-					uint32_t *int_handle = (uint32_t*)new_handle.c_str();
-					std::stringstream ss;
-					ss << *int_handle;
-					new_handle = ss.str();
-				}
+		const std::string& Registration::alloc_handle(const std::string &handle)
+		{
+			ibrcommon::MutexLock l(_handle_lock);
+			std::pair<std::set<std::string>::iterator, bool> ret = _handles.insert(handle);
+
+			while (!ret.second) {
+				ret = _handles.insert(gen_handle());
 			}
 
-			Registration::_handles.insert(new_handle);
+			return (*ret.first);
+		}
 
-			return new_handle;
+		const std::string& Registration::alloc_handle()
+		{
+			return alloc_handle(gen_handle());
 		}
 
 		void Registration::free_handle(const std::string &handle)
 		{
-			Registration::_handles.erase(handle);
+			ibrcommon::MutexLock l(_handle_lock);
+			_handles.erase(handle);
+		}
+
+		Registration::Registration(const std::string &handle)
+		 : _handle(alloc_handle(handle)),
+		   _default_eid(core::BundleCore::local), _no_more_bundles(false),
+		   _persistent(false), _detached(false), _expiry(0), _filter_fragments(true)
+		{
+			_default_eid.setApplication(_handle);
 		}
 
 		Registration::Registration()
 		 : _handle(alloc_handle()),
-		   _default_eid(core::BundleCore::local),
+		   _default_eid(core::BundleCore::local), _no_more_bundles(false),
 		   _persistent(false), _detached(false), _expiry(0), _filter_fragments(true)
 		{
 			_default_eid.setApplication(_handle);

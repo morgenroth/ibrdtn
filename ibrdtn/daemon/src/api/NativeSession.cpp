@@ -53,6 +53,18 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session created" << IBRCOMMON_LOGGER_ENDL;
 		}
 
+		NativeSession::NativeSession(NativeSessionCallback *session_cb, NativeSerializerCallback *serializer_cb, const std::string &handle)
+		 : _registration(handle), _receiver(*this), _session_cb(session_cb), _serializer_cb(serializer_cb)
+		{
+			// set the local endpoint to the default
+			_endpoint = _registration.getDefaultEID();
+
+			// listen to QueueBundleEvents
+			dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::add(&_receiver);
+
+			IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 15) << "Session created" << IBRCOMMON_LOGGER_ENDL;
+		}
+
 		NativeSession::~NativeSession()
 		{
 			// invalidate the callback pointer
@@ -477,6 +489,11 @@ namespace dtn
 			} catch (const dtn::data::CustodySignalBlock::WrongRecordException&) {
 				// this is not a custody report
 			}
+		}
+
+		const std::string& NativeSession::getHandle() const
+		{
+			return _registration.getHandle();
 		}
 	} /* namespace net */
 } /* namespace dtn */
