@@ -26,7 +26,8 @@ public class ApiDatabase implements Closeable {
 			"CREATE TABLE " + TABLE_NAME_SESSIONS + " (" +
 				BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
 				Session.PACKAGE_NAME + " TEXT NOT NULL, " +
-				Session.SESSION_KEY + " TEXT NOT NULL" +
+				Session.SESSION_KEY + " TEXT NOT NULL, " +
+				Session.DEFAULT_ENDPOINT + " TEXT" +
 			");";
 	
 	private static final String DATABASE_CREATE_ENDPOINTS = 
@@ -131,7 +132,16 @@ public class ApiDatabase implements Closeable {
 		return null;
 	}
 	
-	public Session createSession(String packageName) {
+	public Session createSession(String packageName, String defaultEndpoint) {
+		// TODO: implement this
+		return null;
+	}
+	
+	public void removeEndpoint(Endpoint e) {
+		// TODO: implement this
+	}
+	
+	public Endpoint createEndpoint(Session s, String endpoint, boolean singleton, boolean fqeid) {
 		// TODO: implement this
 		return null;
 	}

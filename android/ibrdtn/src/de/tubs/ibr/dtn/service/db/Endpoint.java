@@ -3,8 +3,9 @@ package de.tubs.ibr.dtn.service.db;
 import android.content.Context;
 import android.database.Cursor;
 import android.provider.BaseColumns;
+import de.tubs.ibr.dtn.api.GroupEndpoint;
 
-public class Endpoint {
+public class Endpoint implements Comparable<Endpoint> {
 	
 	private static final String TAG = "Endpoint";
 
@@ -78,5 +79,34 @@ public class Endpoint {
 
 	public void setFqeid(Boolean fqeid) {
 		mFqeid = fqeid;
-	}	
+	}
+
+	@Override
+	public int hashCode() {
+		return mEndpoint.hashCode() ^ mSingleton.hashCode() ^ mFqeid.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return mEndpoint;
+	}
+
+	@Override
+	public int compareTo(Endpoint another) {
+		return mEndpoint.compareTo(another.mEndpoint);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof Endpoint) {
+			return mEndpoint.equals(((Endpoint)o).mEndpoint);
+		}
+		if (o instanceof GroupEndpoint) {
+			if (isSingleton()) return false;
+			if (!isFqeid()) return false;
+			GroupEndpoint group = (GroupEndpoint)o;
+			return group.toString().equals(mEndpoint);
+		}
+		return super.equals(o);
+	}
 }

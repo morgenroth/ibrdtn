@@ -43,6 +43,7 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.Timestamp;
 import de.tubs.ibr.dtn.api.TransferMode;
+import de.tubs.ibr.dtn.service.db.Endpoint;
 import de.tubs.ibr.dtn.service.db.Session;
 import de.tubs.ibr.dtn.swig.BundleNotFoundException;
 import de.tubs.ibr.dtn.swig.DtnNumber;
@@ -302,6 +303,13 @@ public class ClientSession {
 
 		// initialize native session class
 		mNativeSession = new NativeSession(mSessionCallback, mSerializerCallback, mSession.getSessionKey());
+		
+		try {
+			// set default endpoint
+			if (session.getDefaultEndpoint() != null) mNativeSession.setEndpoint(session.getDefaultEndpoint());
+		} catch (NativeSessionException e) {
+			Log.e(TAG, "can not set default endpoint", e);
+		}
 
         // start-up receiver thread
         mReceiverThread.start();
@@ -329,9 +337,23 @@ public class ClientSession {
 	        mSerializerCallback.delete();
 	    }
 	}
+
+	public void addEndpoint(Endpoint e) throws NativeSessionException {
+		if (e.isFqeid()) {
+			de.tubs.ibr.dtn.swig.EID eid = new de.tubs.ibr.dtn.swig.EID(e.getEndpoint());
+			mNativeSession.addRegistration(eid);
+		} else {
+			mNativeSession.addEndpoint(e.getEndpoint());
+		}
+	}
 	
-	public NativeSession getNative() {
-		return mNativeSession;
+	public void removeEndpoint(Endpoint e) throws NativeSessionException {
+		if (e.isFqeid()) {
+			de.tubs.ibr.dtn.swig.EID eid = new de.tubs.ibr.dtn.swig.EID(e.getEndpoint());
+			mNativeSession.removeRegistration(eid);
+		} else {
+			mNativeSession.removeEndpoint(e.getEndpoint());
+		}
 	}
 
     /**

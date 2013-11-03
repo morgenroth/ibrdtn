@@ -27,9 +27,12 @@ import java.util.List;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.service.db.ApiDatabase;
+import de.tubs.ibr.dtn.service.db.Endpoint;
 import de.tubs.ibr.dtn.service.db.Session;
+import de.tubs.ibr.dtn.swig.NativeSessionException;
 
 public class SessionManager {
 	
@@ -79,11 +82,40 @@ public class SessionManager {
 	}
 	
 	private void restore(Session s, ClientSession client) {
-		// TODO: restore session registration
+		// restore session endpoints
+		List<Endpoint> endpoints = mDatabase.getEndpoints(s);
+		
+		for (Endpoint e : endpoints) {
+			try {
+				client.addEndpoint(e);
+			} catch (NativeSessionException e1) {
+				Log.e(TAG, "can not restore endpoint registration " + e, e1);
+			}
+		}
 	}
 	
 	private void apply(Session s, ClientSession client, Registration reg) {
-		// TODO: update session registration
+		// check default session endpoint
+		if (reg.getEndpoint() != s.getDefaultEndpoint()) {
+			if (reg.getEndpoint() != null) {
+				s.setDefaultEndpoint(reg.getEndpoint());
+			}
+		}
+		
+		// get already registered endpoints
+		List<Endpoint> endpoints = mDatabase.getEndpoints(s);
+		
+		// iterate through new endpoints
+		for (GroupEndpoint group : reg.getGroups()) {
+			// check if this group is registered
+			for (Endpoint e : endpoints) {
+				if (e.equals(group)) {
+					// TODO: ...
+				}
+			}
+		}
+		
+		// TODO: complete this...
 	}
 
 	public synchronized void register(String packageName, Registration reg)
@@ -94,7 +126,7 @@ public class SessionManager {
 		if (s == null)
 		{
 			// create a new registration
-			s = mDatabase.createSession(packageName);
+			s = mDatabase.createSession(packageName, reg.getEndpoint());
 			
 			// restore the session instance
 			ClientSession client = new ClientSession(this, s);
