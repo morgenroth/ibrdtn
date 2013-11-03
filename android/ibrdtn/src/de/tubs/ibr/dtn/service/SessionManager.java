@@ -21,216 +21,161 @@
  */
 package de.tubs.ibr.dtn.service;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OptionalDataException;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.util.Base64InputStream;
+import android.content.Intent;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Registration;
-import de.tubs.ibr.dtn.util.Base64;
+import de.tubs.ibr.dtn.service.db.ApiDatabase;
+import de.tubs.ibr.dtn.service.db.Session;
 
 public class SessionManager {
 	
 	private final String TAG = "SessionManager";
 	
-	private Context _context = null;
+	private Context mContext = null;
+	private final ApiDatabase mDatabase = new ApiDatabase();
 	
-	private HashMap<String, ClientSession> _sessions = new HashMap<String, ClientSession>();
-	private HashMap<String, Registration> _registrations = new HashMap<String, Registration>();
+	private HashMap<Session, ClientSession> mSessions = new HashMap<Session, ClientSession>();
 	
 	public SessionManager(Context context)
 	{
-		this._context = context;
+		mContext = context;
 	}
 	
 	public synchronized void initialize()
 	{
+		// open database
+		mDatabase.open(mContext);
+		
 		// daemon goes up, create all sessions
-		for (Entry<String, Registration> entry : _registrations.entrySet())
-		{
-			// create a new session
-			ClientSession session = new ClientSession(this._context, entry.getValue(), entry.getKey());
-			_sessions.put(entry.getKey(), session);
+		List<Session> sessions = mDatabase.getSessions();
+		
+		for (Session s : sessions) {
+			// restore the session instance
+			ClientSession client = new ClientSession(this, s);
+			
+			// restore session registration
+			restore(s, client);
+			
+			// put the client session into the client list
+			mSessions.put(s, client);
 		}
 	}
 	
 	public synchronized void destroy()
 	{
-        // save registrations
-        saveRegistrations();
-        
         // daemon goes down, destroy all sessions
-        for (ClientSession s : _sessions.values()) {
+        for (ClientSession s : mSessions.values()) {
             s.destroy();
         }
         
-		_sessions.clear();
-	}
-	
-	public void restoreRegistrations()
-	{
-		SharedPreferences prefs = this._context.getSharedPreferences("registrations", Context.MODE_PRIVATE);
-		Map<String, ?> m = prefs.getAll();
-		for (Entry<String, ?> entry : m.entrySet())
-		{
-			String data = (String)entry.getValue();
-			
-			try {
-				ObjectInputStream ois = new ObjectInputStream(new Base64InputStream( new ByteArrayInputStream(data.getBytes()), android.util.Base64.DEFAULT ));
-				Object regobj = ois.readObject();
-				ois.close();
-				
-				if (regobj instanceof Registration) {
-					// re-register registration
-					Registration reg = (Registration)regobj;
-					register(entry.getKey(), reg);
-					Log.d(TAG, "registration restored for " + entry.getKey());
-				} else {
-					// delete registration
-					Editor ed = prefs.edit();
-					ed.remove(entry.getKey());
-					ed.commit();
-				}
-			} catch (OptionalDataException e) {
-				Log.e(TAG, "error on restore registrations", e);
-			} catch (ClassNotFoundException e) {
-				Log.e(TAG, "error on restore registrations", e);
-			} catch (IOException e) {
-				Log.e(TAG, "error on restore registrations", e);
-			} catch (java.lang.IllegalArgumentException e) {
-				Log.e(TAG, "error on restore registrations", e);
-				
-				// destroy all registrations
-				Editor ed = prefs.edit();
-				ed.clear();
-				ed.commit();
-			}
-		}
-	}
-	
-	private void saveRegistrations()
-	{
-		SharedPreferences prefs = this._context.getSharedPreferences("registrations", Context.MODE_PRIVATE);
-		Editor edit = prefs.edit();
-		edit.clear();
+		mSessions.clear();
 		
-		for (Entry<String, Registration> entry : _registrations.entrySet())
-		{
-			try {
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				ObjectOutputStream oos = new ObjectOutputStream(baos);
-				oos.writeObject(entry.getValue());
-				edit.putString(entry.getKey(), Base64.encodeBytes( baos.toByteArray() ) );
-				Log.d(TAG, "registration saved for " + entry.getKey());
-			} catch (IOException e) {
-				Log.e(TAG, "error on save registrations", e);
-			}
-		}
-		
-		edit.commit();
+		// close the database
+		mDatabase.close();
 	}
 	
-	public void saveRegistration(String packageName, Registration reg)
-	{
-		SharedPreferences prefs = this._context.getSharedPreferences("registrations", Context.MODE_PRIVATE);
-		Editor edit = prefs.edit();
-
-		try {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			ObjectOutputStream oos = new ObjectOutputStream(baos);
-			oos.writeObject(reg);
-			edit.putString(packageName, Base64.encodeBytes( baos.toByteArray() ) );
-			Log.d(TAG, "registration saved for " + packageName);
-		} catch (IOException e) {
-			Log.e(TAG, "error on save registration", e);
-		}
-
-		edit.commit();
+	private void restore(Session s, ClientSession client) {
+		// TODO: restore session registration
 	}
 	
+	private void apply(Session s, ClientSession client, Registration reg) {
+		// TODO: update session registration
+	}
+
 	public synchronized void register(String packageName, Registration reg)
 	{
-    	// register an application
-    	// - add it to the list of applications
-    	// - if the daemon is running, create a session
-		Log.i(TAG, "register application: " + packageName + "; " + reg.getEndpoint());
+		// get session object
+		Session s = mDatabase.getSessionByPackageName(packageName);
 		
-		// abort if the registration is already known
-		if (_registrations.containsKey(packageName))
+		if (s == null)
 		{
-            Registration previous_reg = _registrations.get(packageName);
-            
-            if (previous_reg != null) {
-                // abort if the registration has not been changed
-                if (previous_reg.equals(reg)) return;
-            } 
-		        
-			// update the registration
-            // remove previous registation
-            _registrations.remove(packageName);
-            
-            // add registration to the hashmap
-            _registrations.put(packageName, reg);
-		    
-            // get the existing session
-            _sessions.get(packageName).update(reg);
+			// create a new registration
+			s = mDatabase.createSession(packageName);
+			
+			// restore the session instance
+			ClientSession client = new ClientSession(this, s);
+			
+			// apply registration to the session
+			apply(s, client, reg);
+			
+			// put the new client session into the client list
+			mSessions.put(s, client);
 		}
 		else
 		{
-			// add registration to the hashmap
-			_registrations.put(packageName, reg);
-
-            // create a new session
-            ClientSession session = new ClientSession(this._context, reg, packageName);
-            _sessions.put(packageName, session);
+			// get existing session object
+			ClientSession client = mSessions.get(s);
+			
+			// update registration
+			apply(s, client, reg);
 		}
+		
+        // send out registration intent to the application with the existing session key
+        Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
+        broadcastIntent.addCategory(s.getPackageName());
+        broadcastIntent.setPackage(s.getPackageName());
+        broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+        broadcastIntent.putExtra("key", s.getSessionKey());
 
-		// save registration in the preferences
-		saveRegistration(packageName, reg);
+        // send notification intent
+        mContext.sendBroadcast(broadcastIntent);
 	}
 	
 	public synchronized void unregister(String packageName)
 	{
-    	// unregister an application
-    	// - remove it from the list of application
-    	// - destroy the corresponding session, if exists
-		Log.i(TAG, "unregister application: " + packageName);
+		Session s = mDatabase.getSessionByPackageName(packageName);
 		
-		// stop here if there is no registration
-		if (!_registrations.containsKey(packageName)) return;
+		// silently return if the session does not exists
+		if (s == null) return;
 		
-		_registrations.remove(packageName);
-
-		// daemon is up
-		// destroy the session
-		_sessions.get(packageName).destroy();
-		_sessions.remove(packageName);
+		Log.i(TAG, "destroy session " + s);
 		
-		// save current registration state
-		saveRegistrations();
+		// destroy active session
+		mSessions.get(s).destroy();
+		
+		// remove session from active session list
+		mSessions.remove(s);
+		
+		// delete session from database
+		mDatabase.removeSession(s);
 	}
 	
-	public synchronized ClientSession getSession(String packageName)
+	public synchronized ClientSession getSession(String[] packageNames, String sessionKey)
 	{
-		ClientSession s = _sessions.get(packageName);
+		Session s = mDatabase.getSession(sessionKey);
 		
-		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "returned session: " + s.getPackageName());
-		
-		return s;
+		if (checkPermissions(packageNames, s)) {
+			// access granted
+			return mSessions.get(s);
+		} else {
+			// access denied
+			return null;
+		}
 	}
 	
-	public synchronized void removeSession(String packageName)
+	private boolean checkPermissions(String[] packageNames, Session session)
 	{
-		_sessions.remove(packageName);
+		// return false if the requested session does not exist
+		if (session == null) return false;
+		
+		// check if session is allowed to access by one of the package names
+		for (String packageName : packageNames) {
+			if (packageName.equals(session.getPackageName())) {
+				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "access to session " + session + " granted");
+				return true;
+			}
+		}
+		
+		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "access to session " + session + " denied");
+		
+		return false;
+	}
+	
+	public Context getContext() {
+		return mContext;
 	}
 }

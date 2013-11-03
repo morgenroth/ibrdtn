@@ -28,7 +28,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Date;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseInputStream;
@@ -41,10 +40,10 @@ import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.DTNSessionCallback;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
-import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.Timestamp;
 import de.tubs.ibr.dtn.api.TransferMode;
+import de.tubs.ibr.dtn.service.db.Session;
 import de.tubs.ibr.dtn.swig.BundleNotFoundException;
 import de.tubs.ibr.dtn.swig.DtnNumber;
 import de.tubs.ibr.dtn.swig.NativeSerializerCallback;
@@ -60,13 +59,10 @@ public class ClientSession {
 
 	private final static String TAG = "ClientSession";
 
-	private String _package_name = null;
+	private SessionManager mManager = null;
+	private Session mSession = null;
 
-	private Context context = null;
-
-	private Object mRegistrationLock = new Object();
-	private Registration _registration = null;
-	
+	// locks for bundle register slot 1 and 2
 	private Object mRegisterLock1 = new Object();
 	private Object mRegisterLock2 = new Object();
 
@@ -76,7 +72,7 @@ public class ClientSession {
 	 * see http://stackoverflow.com/questions/8168517/generating-java-interface-
 	 * with-swig/8246375#8246375
 	 */
-	private final NativeSessionCallback _session_callback = new NativeSessionCallback() {
+	private final NativeSessionCallback mSessionCallback = new NativeSessionCallback() {
 
 		@Override
 		public void notifyBundle(de.tubs.ibr.dtn.swig.BundleID swigId)
@@ -84,15 +80,15 @@ public class ClientSession {
 	        // forward the notification as intent
 	        // create a new intent
 	        Intent notify = new Intent(de.tubs.ibr.dtn.Intent.RECEIVE);
-	        notify.addCategory(_package_name);
-	        notify.setPackage(_package_name);
+	        notify.addCategory(mSession.getPackageName());
+	        notify.setPackage(mSession.getPackageName());
 	        notify.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
 	        notify.putExtra("bundleid", toAndroid(swigId));
 
 	        // send notification intent
-	        context.sendBroadcast(notify);
+	        mManager.getContext().sendBroadcast(notify);
 
-	        Log.d(TAG, "RECEIVE intent (" + swigId.toString() + ") sent to " + _package_name);
+	        Log.d(TAG, "RECEIVE intent (" + swigId.toString() + ") sent to " + mSession.getPackageName());
 		}
 
 		@Override
@@ -103,8 +99,8 @@ public class ClientSession {
             // forward the notification as intent
             // create a new intent
             Intent notify = new Intent(de.tubs.ibr.dtn.Intent.STATUS_REPORT);
-            notify.addCategory(_package_name);
-            notify.setPackage(_package_name);
+            notify.addCategory(mSession.getPackageName());
+            notify.setPackage(mSession.getPackageName());
             notify.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
             notify.putExtra("bundleid", toAndroid(swigId));
             notify.putExtra("source", (Parcelable)new SingletonEndpoint(source.getString()));
@@ -134,9 +130,9 @@ public class ClientSession {
             }
             
             // send notification intent
-            context.sendBroadcast(notify);
+            mManager.getContext().sendBroadcast(notify);
 
-            Log.d(TAG, "STATUS_REPORT intent [" + swigId.toString() + "] sent to " + _package_name);
+            Log.d(TAG, "STATUS_REPORT intent [" + swigId.toString() + "] sent to " + mSession.getPackageName());
 		}
 
 		@Override
@@ -147,8 +143,8 @@ public class ClientSession {
             // forward the notification as intent
             // create a new intent
             Intent notify = new Intent(de.tubs.ibr.dtn.Intent.CUSTODY_SIGNAL);
-            notify.addCategory(_package_name);
-            notify.setPackage(_package_name);
+            notify.addCategory(mSession.getPackageName());
+            notify.setPackage(mSession.getPackageName());
             notify.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
             notify.putExtra("bundleid", toAndroid(swigId));
             notify.putExtra("source", (Parcelable)new SingletonEndpoint(source.getString()));
@@ -156,9 +152,9 @@ public class ClientSession {
             notify.putExtra("timeofsignal", toAndroid(swigCustody.getTimeofsignal()));
 
             // send notification intent
-            context.sendBroadcast(notify);
+            mManager.getContext().sendBroadcast(notify);
 
-            Log.d(TAG, "CUSTODY_SIGNAL intent [" + swigId.toString() + "] sent to " + _package_name);
+            Log.d(TAG, "CUSTODY_SIGNAL intent [" + swigId.toString() + "] sent to " + mSession.getPackageName());
 		}
 
 	};
@@ -279,7 +275,7 @@ public class ClientSession {
         }
     }
 
-	private final Thread _receiver_thread = new Thread() {
+	private final Thread mReceiverThread = new Thread() {
 
         @Override
         public void run() {
@@ -288,7 +284,7 @@ public class ClientSession {
         	
             try {
                 while (!this.isInterrupted()) {
-                    ClientSession.this.nativeSession.receive();
+                    ClientSession.this.mNativeSession.receive();
                 }
             } catch (NativeSessionException e) {
                 Log.e(TAG, "Receiver thread terminated.", e);
@@ -297,88 +293,45 @@ public class ClientSession {
 	    
 	};
 
-	private final SerializerCallback _serializer_callback = new SerializerCallback();
-    private final NativeSession nativeSession = new NativeSession(_session_callback, _serializer_callback);
+	private final SerializerCallback mSerializerCallback = new SerializerCallback();
+    private NativeSession mNativeSession = null;
 
-	public ClientSession(Context context, Registration reg, String packageName) {
-		this.context = context;
-		this._package_name = packageName;
+	public ClientSession(SessionManager manager, Session session) {
+		mManager = manager;
+		mSession = session;
 
-		synchronized(mRegistrationLock) {
-		    this._registration = reg;
-
-            // Register application
-            register(_registration);
-		}
+		// initialize native session class
+		mNativeSession = new NativeSession(mSessionCallback, mSerializerCallback, mSession.getSessionKey());
 
         // start-up receiver thread
-        _receiver_thread.start();
+        mReceiverThread.start();
 	}
 	
 	/**
 	 * destroy the session
 	 */
 	public void destroy() {
-	    this.nativeSession.destroy();
+	    mNativeSession.destroy();
 
 	    try {
-	        this._receiver_thread.join();
+	        mReceiverThread.join();
         } catch (InterruptedException e) {
             Log.e(TAG, "Join on receiver thread failed.", e);
         }
 	    
-	    this.nativeSession.delete();
+	    mNativeSession.delete();
 	    
-	    synchronized(_serializer_callback) {
-	        this._session_callback.delete();
+	    synchronized(mSerializerCallback) {
+	        mSessionCallback.delete();
 	    }
 	    
-	    synchronized(_serializer_callback) {
-	        this._serializer_callback.delete();
+	    synchronized(mSerializerCallback) {
+	        mSerializerCallback.delete();
 	    }
 	}
 	
-	public void update(Registration reg) {
-	    synchronized(mRegistrationLock) {
-	        this._registration = reg;
-
-	        // remove all registrations
-	        nativeSession.clearRegistration();
-
-	        // register again
-	        register(_registration);
-	    }
-	}
-
-	public void register(Registration reg)
-	{
-		try {
-		    // set local endpoint
-            nativeSession.setEndpoint(reg.getEndpoint());
-            
-            if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "endpoint registered: " + reg.getEndpoint());
-
-            for (GroupEndpoint group : reg.getGroups()) {
-                de.tubs.ibr.dtn.swig.EID swigEid = new de.tubs.ibr.dtn.swig.EID(group.toString());
-                nativeSession.addRegistration(swigEid);
-                
-                if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "registration added: " + group.toString());
-            }
-
-            // send out registration intent to the application
-            Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
-            broadcastIntent.addCategory(_package_name);
-            broadcastIntent.setPackage(_package_name);
-            broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-            broadcastIntent.putExtra("key", _package_name);
-
-            // send notification intent
-            context.sendBroadcast(broadcastIntent);
-
-            Log.d(TAG, "REGISTRATION intent sent to " + _package_name);
-        } catch (NativeSessionException e) {
-            Log.e(TAG, "registration failed", e);
-        }
+	public NativeSession getNative() {
+		return mNativeSession;
 	}
 
     /**
@@ -387,27 +340,27 @@ public class ClientSession {
     private final DTNSession.Stub mBinder = new DTNSession.Stub() {
         public boolean queryInfo(DTNSessionCallback cb, BundleID id) throws RemoteException
         {
-            synchronized (_serializer_callback) {
+            synchronized (mSerializerCallback) {
                 // set serializer for this query
-                _serializer_callback.setCallback(cb);
+                mSerializerCallback.setCallback(cb);
 
                 try {
                     synchronized (mRegisterLock1) {
                         // load the bundle into the register
-                        nativeSession.load(NativeSession.RegisterIndex.REG1, toSwig(id));
+                        mNativeSession.load(NativeSession.RegisterIndex.REG1, toSwig(id));
 
                         // get the bundle
-                        nativeSession.getInfo(NativeSession.RegisterIndex.REG1);
+                        mNativeSession.getInfo(NativeSession.RegisterIndex.REG1);
                     }
 
                     // set serializer back to null
-                    _serializer_callback.setCallback(null);
+                    mSerializerCallback.setCallback(null);
 
                     // bundle loaded - return true
                     return true;
                 } catch (BundleNotFoundException e) {
                     // set serializer back to null
-                    _serializer_callback.setCallback(null);
+                    mSerializerCallback.setCallback(null);
 
                     // bundle not found - return false
                     return false;
@@ -417,27 +370,27 @@ public class ClientSession {
         
         public boolean query(DTNSessionCallback cb, BundleID id) throws RemoteException
         {
-            synchronized (_serializer_callback) {
+            synchronized (mSerializerCallback) {
                 // set serializer for this query
-                _serializer_callback.setCallback(cb);
+                mSerializerCallback.setCallback(cb);
 
                 try {
                     synchronized (mRegisterLock1) {
                         // load the bundle into the register
-                        nativeSession.load(NativeSession.RegisterIndex.REG1, toSwig(id));
+                        mNativeSession.load(NativeSession.RegisterIndex.REG1, toSwig(id));
 
                         // get the bundle
-                        nativeSession.get(NativeSession.RegisterIndex.REG1);
+                        mNativeSession.get(NativeSession.RegisterIndex.REG1);
                     }
 
                     // set serializer back to null
-                    _serializer_callback.setCallback(null);
+                    mSerializerCallback.setCallback(null);
 
                     // bundle loaded - return true
                     return true;
                 } catch (BundleNotFoundException e) {
                     // set serializer back to null
-                    _serializer_callback.setCallback(null);
+                    mSerializerCallback.setCallback(null);
 
                     // bundle not found - return false
                     return false;
@@ -447,27 +400,27 @@ public class ClientSession {
         
         public boolean queryInfoNext(DTNSessionCallback cb) throws RemoteException
         {
-            synchronized (_serializer_callback) {
+            synchronized (mSerializerCallback) {
                 // set serializer for this query
-                _serializer_callback.setCallback(cb);
+                mSerializerCallback.setCallback(cb);
 
                 try {
                     synchronized (mRegisterLock1) {
                         // load the next bundle into the register
-                        nativeSession.next(NativeSession.RegisterIndex.REG1);
+                        mNativeSession.next(NativeSession.RegisterIndex.REG1);
 
                         // get the bundle
-                        nativeSession.getInfo(NativeSession.RegisterIndex.REG1);
+                        mNativeSession.getInfo(NativeSession.RegisterIndex.REG1);
                     }
 
                     // set serializer back to null
-                    _serializer_callback.setCallback(null);
+                    mSerializerCallback.setCallback(null);
 
                     // bundle loaded - return true
                     return true;
                 } catch (BundleNotFoundException e) {
                     // set serializer back to null
-                    _serializer_callback.setCallback(null);
+                    mSerializerCallback.setCallback(null);
 
                     // bundle not found - return false
                     return false;
@@ -477,27 +430,27 @@ public class ClientSession {
 
         public boolean queryNext(DTNSessionCallback cb) throws RemoteException
         {
-            synchronized (_serializer_callback) {
+            synchronized (mSerializerCallback) {
                 // set serializer for this query
-                _serializer_callback.setCallback(cb);
+                mSerializerCallback.setCallback(cb);
 
                 try {
                     synchronized (mRegisterLock1) {
                         // load the next bundle into the register
-                        nativeSession.next(NativeSession.RegisterIndex.REG1);
+                        mNativeSession.next(NativeSession.RegisterIndex.REG1);
 
                         // get the bundle
-                        nativeSession.get(NativeSession.RegisterIndex.REG1);
+                        mNativeSession.get(NativeSession.RegisterIndex.REG1);
                     }
 
                     // set serializer back to null
-                    _serializer_callback.setCallback(null);
+                    mSerializerCallback.setCallback(null);
 
                     // bundle loaded - return true
                     return true;
                 } catch (BundleNotFoundException e) {
                     // set serializer back to null
-                    _serializer_callback.setCallback(null);
+                    mSerializerCallback.setCallback(null);
 
                     // bundle not found - return false
                     return false;
@@ -508,7 +461,7 @@ public class ClientSession {
         public boolean delivered(BundleID id) throws RemoteException
         {
             try {
-                nativeSession.delivered(toSwig(id));
+                mNativeSession.delivered(toSwig(id));
                 return true;
             } catch (BundleNotFoundException e) {
                 return false;
@@ -543,21 +496,21 @@ public class ClientSession {
 
                 synchronized (mRegisterLock2) {
                     // put the primary block into the register
-                    nativeSession.put(RegisterIndex.REG2, b);
+                    mNativeSession.put(RegisterIndex.REG2, b);
 
                     if (cb != null) {
                         cb.progress(0, data.length);
                     }
 
                     // add data
-                    nativeSession.write(RegisterIndex.REG2, data);
+                    mNativeSession.write(RegisterIndex.REG2, data);
 
                     if (cb != null) {
                         cb.progress(data.length, data.length);
                     }
 
                     // send the bundle
-                    ret = nativeSession.send(RegisterIndex.REG2);
+                    ret = mNativeSession.send(RegisterIndex.REG2);
                 }
 
                 return toAndroid(ret);
@@ -602,7 +555,7 @@ public class ClientSession {
 
                     synchronized (mRegisterLock2) {
                         // put the primary block into the register
-                        nativeSession.put(RegisterIndex.REG2, b);
+                        mNativeSession.put(RegisterIndex.REG2, b);
 
                         if (cb != null) {
                             cb.progress(0, -1);
@@ -624,7 +577,7 @@ public class ClientSession {
                             buffer.get(data);
 
                             // write buffer to register 2
-                            nativeSession.write(RegisterIndex.REG2, data, offset);
+                            mNativeSession.write(RegisterIndex.REG2, data, offset);
 
                             // increment written data
                             offset += count;
@@ -639,7 +592,7 @@ public class ClientSession {
                         }
 
                         // send the bundle
-                        ret = nativeSession.send(RegisterIndex.REG2);
+                        ret = mNativeSession.send(RegisterIndex.REG2);
                     }
 
                     return toAndroid(ret);
@@ -661,11 +614,6 @@ public class ClientSession {
 	public DTNSession getBinder()
 	{
 		return mBinder;
-	}
-
-	public String getPackageName()
-	{
-		return _package_name;
 	}
 	
 	private static de.tubs.ibr.dtn.swig.BundleID toSwig(BundleID id)

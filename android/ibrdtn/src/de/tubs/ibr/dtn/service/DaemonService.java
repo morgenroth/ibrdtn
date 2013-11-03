@@ -34,6 +34,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -122,7 +123,10 @@ public class DaemonService extends Service {
 
         @Override
         public DTNSession getSession(String sessionKey) throws RemoteException {
-            ClientSession cs = mSessionManager.getSession(sessionKey);
+        	int caller = Binder.getCallingUid();
+        	String[] packageNames = DaemonService.this.getPackageManager().getPackagesForUid(caller);
+        	
+            ClientSession cs = mSessionManager.getSession(packageNames, sessionKey);
             if (cs == null)
                 return null;
             return cs.getBinder();
@@ -219,9 +223,6 @@ public class DaemonService extends Service {
                     if (level <= DaemonRunLevel.RUNLEVEL_CORE.swigValue()) {
                         // re-initialize the session manager
                         mSessionManager.initialize();
-                        
-                        // restore sessions
-                        mSessionManager.restoreRegistrations();
                     }
                 }
 
@@ -361,9 +362,6 @@ public class DaemonService extends Service {
 
         if (Log.isLoggable(TAG, Log.DEBUG))
             Log.d(TAG, "DaemonService created");
-
-        // restore sessions
-        mSessionManager.restoreRegistrations();
         
         // start daemon if enabled
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
