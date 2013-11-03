@@ -56,6 +56,7 @@ namespace dtn
 	namespace api
 	{
 		const std::string Registration::TAG = "Registration";
+		ibrcommon::Mutex Registration::_handle_lock;
 		std::set<std::string> Registration::_handles;
 
 		const std::string Registration::gen_handle()
