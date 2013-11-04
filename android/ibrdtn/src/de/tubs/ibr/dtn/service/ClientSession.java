@@ -337,6 +337,11 @@ public class ClientSession {
 	        mSerializerCallback.delete();
 	    }
 	}
+	
+    public void addEndpoint(GroupEndpoint group) throws NativeSessionException {
+        de.tubs.ibr.dtn.swig.EID eid = new de.tubs.ibr.dtn.swig.EID(group.toString());
+        mNativeSession.addRegistration(eid);
+    }
 
 	public void addEndpoint(Endpoint e) throws NativeSessionException {
 		if (e.isFqeid()) {

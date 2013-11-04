@@ -70,11 +70,11 @@ public class SessionManager {
 	
 	public synchronized void destroy()
 	{
-        // daemon goes down, destroy all sessions
-        for (ClientSession s : mSessions.values()) {
-            s.destroy();
-        }
-        
+		// daemon goes down, destroy all sessions
+		for (ClientSession s : mSessions.values()) {
+			s.destroy();
+		}
+		
 		mSessions.clear();
 		
 		// close the database
@@ -94,72 +94,90 @@ public class SessionManager {
 		}
 	}
 	
-	private void apply(Session s, ClientSession client, Registration reg) {
-		// check default session endpoint
-		if (reg.getEndpoint() != s.getDefaultEndpoint()) {
-			if (reg.getEndpoint() != null) {
-				s.setDefaultEndpoint(reg.getEndpoint());
+	private void apply(Session s, ClientSession client, Registration reg) throws NativeSessionException {
+		// set default session endpoint
+		mDatabase.setDefaultEndpoint(s, reg.getEndpoint());
+		
+		// iterate through new endpoints
+		for (GroupEndpoint group : reg.getGroups()) {
+			if (mDatabase.createEndpoint(s, group) != null) {
+				client.addEndpoint(group);
 			}
 		}
 		
 		// get already registered endpoints
 		List<Endpoint> endpoints = mDatabase.getEndpoints(s);
 		
-		// iterate through new endpoints
-		for (GroupEndpoint group : reg.getGroups()) {
-			// check if this group is registered
-			for (Endpoint e : endpoints) {
+		// iterate through endpoints
+		for (Endpoint e : endpoints) {
+			// check if the endpoint is still registered
+			boolean active = false;
+			
+			// check if registered as group
+			for (GroupEndpoint group : reg.getGroups()) {
 				if (e.equals(group)) {
-					// TODO: ...
+					// mark as active
+					active = true;
+					break;
 				}
 			}
+			
+			if (!active) {
+				// remove registered endpoint
+				mDatabase.removeEndpoint(e);
+				
+				// remove endpoint from active client
+				client.removeEndpoint(e);
+			}
 		}
-		
-		// TODO: complete this...
 	}
 
 	public synchronized void register(String packageName, Registration reg)
 	{
 		// get session object
-		Session s = mDatabase.getSessionByPackageName(packageName);
+		Session s = mDatabase.getSession(packageName);
 		
-		if (s == null)
-		{
-			// create a new registration
-			s = mDatabase.createSession(packageName, reg.getEndpoint());
+		try {
+			if (s == null)
+			{
+				// create a new registration
+				s = mDatabase.createSession(packageName, reg.getEndpoint());
+				
+				// restore the session instance
+				ClientSession client = new ClientSession(this, s);
+				
+				// apply registration to the session
+				apply(s, client, reg);
+				
+				// put the new client session into the client list
+				mSessions.put(s, client);
+			}
+			else
+			{
+				// get existing session object
+				ClientSession client = mSessions.get(s);
+				
+				// update registration
+				apply(s, client, reg);
+			}
 			
-			// restore the session instance
-			ClientSession client = new ClientSession(this, s);
-			
-			// apply registration to the session
-			apply(s, client, reg);
-			
-			// put the new client session into the client list
-			mSessions.put(s, client);
+			// send out registration intent to the application with the existing session key
+			Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
+			broadcastIntent.addCategory(s.getPackageName());
+			broadcastIntent.setPackage(s.getPackageName());
+			broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+			broadcastIntent.putExtra("key", s.getSessionKey());
+	
+			// send notification intent
+			mContext.sendBroadcast(broadcastIntent);
+		} catch (NativeSessionException e) {
+			Log.e(TAG, "failure while registering a session", e);
 		}
-		else
-		{
-			// get existing session object
-			ClientSession client = mSessions.get(s);
-			
-			// update registration
-			apply(s, client, reg);
-		}
-		
-        // send out registration intent to the application with the existing session key
-        Intent broadcastIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTRATION);
-        broadcastIntent.addCategory(s.getPackageName());
-        broadcastIntent.setPackage(s.getPackageName());
-        broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-        broadcastIntent.putExtra("key", s.getSessionKey());
-
-        // send notification intent
-        mContext.sendBroadcast(broadcastIntent);
 	}
 	
 	public synchronized void unregister(String packageName)
 	{
-		Session s = mDatabase.getSessionByPackageName(packageName);
+		Session s = mDatabase.getSession(packageName);
 		
 		// silently return if the session does not exists
 		if (s == null) return;
@@ -178,33 +196,16 @@ public class SessionManager {
 	
 	public synchronized ClientSession getSession(String[] packageNames, String sessionKey)
 	{
-		Session s = mDatabase.getSession(sessionKey);
-		
-		if (checkPermissions(packageNames, s)) {
-			// access granted
-			return mSessions.get(s);
-		} else {
-			// access denied
-			return null;
-		}
-	}
-	
-	private boolean checkPermissions(String[] packageNames, Session session)
-	{
-		// return false if the requested session does not exist
-		if (session == null) return false;
-		
-		// check if session is allowed to access by one of the package names
 		for (String packageName : packageNames) {
-			if (packageName.equals(session.getPackageName())) {
-				if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "access to session " + session + " granted");
-				return true;
+			Session s = mDatabase.getSession(packageName, sessionKey);
+			if (s != null) {
+				// access granted
+				return mSessions.get(s);
 			}
 		}
-		
-		if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "access to session " + session + " denied");
-		
-		return false;
+
+		// access denied
+		return null;
 	}
 	
 	public Context getContext() {

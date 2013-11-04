@@ -6,8 +6,6 @@ import android.provider.BaseColumns;
 
 public class Session implements Comparable<Session> {
 	
-	private static final String TAG = "Session";
-
 	public static final String ID = BaseColumns._ID;
 	public static final String PACKAGE_NAME = "packageName";
 	public static final String SESSION_KEY = "sessionKey";

@@ -4,11 +4,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.provider.BaseColumns;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
 
 public class Endpoint implements Comparable<Endpoint> {
 	
-	private static final String TAG = "Endpoint";
-
 	public static final String ID = BaseColumns._ID;
 	public static final String SESSION = "session";
 	public static final String ENDPOINT = "endpoint";
@@ -95,6 +94,21 @@ public class Endpoint implements Comparable<Endpoint> {
 	public int compareTo(Endpoint another) {
 		return mEndpoint.compareTo(another.mEndpoint);
 	}
+	
+	public GroupEndpoint asGroup() {
+	    if (isSingleton() || !isFqeid()) return null;
+	    return new GroupEndpoint(mEndpoint);
+	}
+	
+	public SingletonEndpoint asSingleton(String base) {
+	    if (!isSingleton()) return null;
+	    
+	    if (isFqeid()) {
+	        return new SingletonEndpoint(mEndpoint);
+	    } else {
+	        return new SingletonEndpoint(base + "/" + mEndpoint);
+	    }
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -102,10 +116,8 @@ public class Endpoint implements Comparable<Endpoint> {
 			return mEndpoint.equals(((Endpoint)o).mEndpoint);
 		}
 		if (o instanceof GroupEndpoint) {
-			if (isSingleton()) return false;
-			if (!isFqeid()) return false;
 			GroupEndpoint group = (GroupEndpoint)o;
-			return group.toString().equals(mEndpoint);
+			return group.equals(asGroup());
 		}
 		return super.equals(o);
 	}
