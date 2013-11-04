@@ -338,6 +338,10 @@ public class ClientSession {
 	    }
 	}
 	
+	public void setDefaultEndpoint(String endpoint) throws NativeSessionException {
+	    mNativeSession.setEndpoint(endpoint);
+	}
+	
     public void addEndpoint(GroupEndpoint group) throws NativeSessionException {
         de.tubs.ibr.dtn.swig.EID eid = new de.tubs.ibr.dtn.swig.EID(group.toString());
         mNativeSession.addRegistration(eid);
