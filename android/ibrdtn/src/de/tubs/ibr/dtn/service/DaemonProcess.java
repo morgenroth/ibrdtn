@@ -305,9 +305,9 @@ public class DaemonProcess {
         }
     }
     
-    final HashMap<String, DaemonRunLevel> mRestartMap = initializeRestartMap();
+    private final static HashMap<String, DaemonRunLevel> mRestartMap = initializeRestartMap();
     
-    private HashMap<String, DaemonRunLevel> initializeRestartMap() {
+    private final static HashMap<String, DaemonRunLevel> initializeRestartMap() {
         HashMap<String, DaemonRunLevel> ret = new HashMap<String, DaemonRunLevel>();
         
         ret.put("endpoint_id", DaemonRunLevel.RUNLEVEL_CORE);
@@ -323,9 +323,9 @@ public class DaemonProcess {
         return ret;
     }
     
-    final HashSet<String> mConfigurationSet = initializeConfigurationSet();
+    private final static HashSet<String> mConfigurationSet = initializeConfigurationSet();
     
-    private HashSet<String> initializeConfigurationSet() {
+    private final static HashSet<String> initializeConfigurationSet() {
         HashSet<String> ret = new HashSet<String>();
               
         ret.add("constrains_lifetime");
