@@ -1,5 +1,7 @@
 config BR2_PACKAGE_IBRCOMMON
 	bool "ibrcommon"
+        select BR2_PACKAGE_LIBNL
+        select BR2_PACKAGE_OPENSSL
 	help
 	  IBR common library
 
