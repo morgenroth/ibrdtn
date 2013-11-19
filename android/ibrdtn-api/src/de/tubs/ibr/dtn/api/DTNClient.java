@@ -81,6 +81,10 @@ public final class DTNClient {
 	 * exists. If set to false, the method would return null if there is no active session.
 	 * @param val
 	 */
+    public Session getSession() throws SessionDestroyedException, InterruptedException {
+        return getSession(true);
+    }
+    
 	public synchronized Session getSession(boolean blocking) throws SessionDestroyedException, InterruptedException {
 		if (blocking)
 		{
@@ -131,11 +135,13 @@ public final class DTNClient {
 	};
 	
 	private void initializeSession(Registration reg) {
+	    Session s = null;
+	    
 		try {
 			// do not initialize if the service is not connected
 			if (mService == null) return;
 			
-			Session s = new Session(mContext, mService);
+			s = new Session(mContext, mService);
 			
 			s.initialize();
 			
@@ -143,14 +149,15 @@ public final class DTNClient {
 				mSession = s;
 				notifyAll();
 			}
-			
-			mSessionHandler.onSessionConnected(s);
 		} catch (Exception e) {
 	    	Intent registrationIntent = new Intent(de.tubs.ibr.dtn.Intent.REGISTER);
 	    	registrationIntent.putExtra("app", PendingIntent.getBroadcast(mContext, 0, new Intent(), 0)); // boilerplate
 	    	registrationIntent.putExtra("registration", (Parcelable)reg);
 	    	mContext.startService(registrationIntent);
+	    	return;
 		}
+		
+		mSessionHandler.onSessionConnected(s);
 	}
 	
 	public static class Session
