@@ -52,14 +52,9 @@ public final class DTNClient {
     // session object
 	private Session mSession = null;
 	
-	// data handler which processes incoming bundles
-	private DataHandler mHandler = null;
-	
 	private Context mContext = null;
 	
 	private Registration mRegistration = null;
-	
-    private Boolean mBlocking = true;
     
     private SessionConnection mSessionHandler = null;
     
@@ -82,20 +77,12 @@ public final class DTNClient {
     }
 	
 	/**
-	 * If blocking is enabled, the getSession() method will block until a valid session
+	 * If blocking is enabled, this method will block until a valid session
 	 * exists. If set to false, the method would return null if there is no active session.
 	 * @param val
 	 */
-	public synchronized void setBlocking(Boolean val) {
-		mBlocking = val;
-	}
-
-	public synchronized void setDataHandler(DataHandler handler) {
-		mHandler = handler;
-	}
-	
-	public synchronized Session getSession() throws SessionDestroyedException, InterruptedException {
-		if (mBlocking)
+	public synchronized Session getSession(boolean blocking) throws SessionDestroyedException, InterruptedException {
+		if (blocking)
 		{
 			while (mSession == null)
 			{
@@ -148,7 +135,7 @@ public final class DTNClient {
 			// do not initialize if the service is not connected
 			if (mService == null) return;
 			
-			Session s = new Session(mContext, mService, mCallback);
+			Session s = new Session(mContext, mService);
 			
 			s.initialize();
 			
@@ -166,54 +153,59 @@ public final class DTNClient {
 		}
 	}
 	
-	private de.tubs.ibr.dtn.api.DTNSessionCallback mCallback = new de.tubs.ibr.dtn.api.DTNSessionCallback.Stub() {
-		public void startBundle(Bundle bundle) throws RemoteException {
-			if (mHandler == null) return;
-			mHandler.startBundle(bundle);
-		}
-
-		public void endBundle() throws RemoteException {
-			if (mHandler == null) return;
-			mHandler.endBundle();
-		}
-
-		public TransferMode startBlock(Block block) throws RemoteException {
-			if (mHandler == null) return TransferMode.NULL;
-			return mHandler.startBlock(block);
-		}
-
-		public void endBlock() throws RemoteException {
-			if (mHandler == null) return;
-			mHandler.endBlock();
-		}
-
-		public ParcelFileDescriptor fd() throws RemoteException {
-			if (mHandler == null) return null;
-			return mHandler.fd();
-		}
-
-		public void progress(long current, long length) throws RemoteException {
-			if (mHandler == null) return;
-			mHandler.progress(current, length);
-		}
-
-		public void payload(byte[] data) throws RemoteException {
-			if (mHandler == null) return;
-			mHandler.payload(data);
-		}
-	};
-	
 	public static class Session
 	{
 		private Context mContext = null;
 		private DTNService mService = null;
 		private DTNSession mSession = null;
-		private DTNSessionCallback mCallback = null;
 		
-		public Session(Context context, DTNService service, DTNSessionCallback callback) {
+	    // data handler which processes incoming bundles
+	    private DataHandler mHandler = null;
+	    
+	    public synchronized void setDataHandler(DataHandler handler) {
+	        mHandler = handler;
+	    }
+
+	    private de.tubs.ibr.dtn.api.DTNSessionCallback mCallback = new de.tubs.ibr.dtn.api.DTNSessionCallback.Stub() {
+	        public void startBundle(Bundle bundle) throws RemoteException {
+	            if (mHandler == null) return;
+	            mHandler.startBundle(bundle);
+	        }
+
+	        public void endBundle() throws RemoteException {
+	            if (mHandler == null) return;
+	            mHandler.endBundle();
+	        }
+
+	        public TransferMode startBlock(Block block) throws RemoteException {
+	            if (mHandler == null) return TransferMode.NULL;
+	            return mHandler.startBlock(block);
+	        }
+
+	        public void endBlock() throws RemoteException {
+	            if (mHandler == null) return;
+	            mHandler.endBlock();
+	        }
+
+	        public ParcelFileDescriptor fd() throws RemoteException {
+	            if (mHandler == null) return null;
+	            return mHandler.fd();
+	        }
+
+	        public void progress(long current, long length) throws RemoteException {
+	            if (mHandler == null) return;
+	            mHandler.progress(current, length);
+	        }
+
+	        public void payload(byte[] data) throws RemoteException {
+	            if (mHandler == null) return;
+	            mHandler.payload(data);
+	        }
+	    };
+		
+		public Session(Context context, DTNService service) {
 			mContext = context;
 			mService = service;
-			mCallback = callback;
 		}
 		
 		public void initialize() throws RemoteException, SessionDestroyedException {
