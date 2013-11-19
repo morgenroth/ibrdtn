@@ -40,21 +40,25 @@ public class StreamEndpoint implements Callback {
     private Handler mHandler = null;
     
     private DtnInputStream.PacketListener mPacketListener = null;
+    private StreamFilter mFilter = null;
+    private DataHandler mPlainBundleHandler = null;
     
     // TODO: clear closed / expired streams
     private HashMap<StreamId, DtnInputStream> mStreams = new HashMap<StreamId, DtnInputStream>();
 
-    public StreamEndpoint(Context context, DTNClient.Session session, DtnInputStream.PacketListener listener) {
+    public StreamEndpoint(Context context, DTNClient.Session session, DtnInputStream.PacketListener listener, DataHandler handler) {
         mSession = session;
+        mPlainBundleHandler = handler;
         mSession.setDataHandler(mDataHandler);
         mContext = context;
         
         mHandlerThread = new HandlerThread("Receiver");
-        Looper looper = mHandlerThread.getLooper();
-        mHandler = new Handler(looper, this);
         
         // start own handler
         mHandlerThread.start();
+        
+        Looper looper = mHandlerThread.getLooper();
+        mHandler = new Handler(looper, this);
         
         // register to RECEIVE intents
         IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.RECEIVE);
@@ -76,9 +80,13 @@ public class StreamEndpoint implements Callback {
         mHandlerThread.quit();
     }
     
+    public void setFilter(StreamFilter filter) {
+        mFilter = filter;
+    }
+    
     public DtnOutputStream createStream(EID destination, long lifetime, MediaType media, byte[] meta) {
         int correlator = generateCorrelator();
-        return new DtnOutputStream(mSession, correlator, destination, lifetime, media, meta);
+        return new DtnOutputStream(mContext, mSession, correlator, destination, lifetime, media, meta);
     }
     
     private int generateCorrelator() {
@@ -90,8 +98,10 @@ public class StreamEndpoint implements Callback {
         @Override
         public void onReceive(Context context, Intent intent) {
             Message msg = mHandler.obtainMessage();
+            
             msg.what = RECEIVE_BUNDLE;
             msg.obj = null;
+            
             mHandler.sendMessage(msg);
         }
     };
@@ -138,13 +148,15 @@ public class StreamEndpoint implements Callback {
                 
                 DtnInputStream target = null;
                 
-                // get existing input stream
-                target = mStreams.get(mId);
-                
-                if (target == null) {
-                    // create new input stream
-                    target = new DtnInputStream(mId, mPacketListener);
-                    mStreams.put(mId, target);
+                synchronized(mStreams) {
+                    // get existing input stream
+                    target = mStreams.get(mId);
+                    
+                    if (target == null) {
+                        // create new input stream
+                        target = new DtnInputStream(mId, mPacketListener);
+                        mStreams.put(mId, target);
+                    }
                 }
                 
                 switch (header.type) {
@@ -194,18 +206,31 @@ public class StreamEndpoint implements Callback {
 
         @Override
         public void startBundle(Bundle bundle) {
-            id = new StreamId();
-            id.correlator = 0;
-            id.source = bundle.getSource();
+            if ((mFilter == null) || mFilter.onHandleStream(bundle)) {
+                id = new StreamId();
+                id.correlator = 0;
+                id.source = bundle.getSource();
+            }
+            else if (mPlainBundleHandler != null) {
+                id = null;
+                mPlainBundleHandler.startBundle(bundle);
+            }
         }
 
         @Override
         public void endBundle() {
-            id = null;
+            if ((id == null) && (mPlainBundleHandler != null)) {
+                mPlainBundleHandler.endBundle();
+                return;
+            }
         }
 
         @Override
         public TransferMode startBlock(Block block) {
+            if ((id == null) && (mPlainBundleHandler != null)) {
+                return mPlainBundleHandler.startBlock(block);
+            }
+            
             // only parse payload
             if (block.type == 1) {
                 parser = new PayloadParser(id);
@@ -216,23 +241,35 @@ public class StreamEndpoint implements Callback {
 
         @Override
         public void endBlock() {
+            if ((id == null) && (mPlainBundleHandler != null)) {
+                mPlainBundleHandler.endBlock();
+                return;
+            }
+
             parser.close();
             parser = null;
         }
 
         @Override
         public void payload(byte[] data) {
-            // not used here
+            if ((id == null) && (mPlainBundleHandler != null)) {
+                mPlainBundleHandler.payload(data);
+            }
         }
 
         @Override
         public ParcelFileDescriptor fd() {
+            if ((id == null) && (mPlainBundleHandler != null)) {
+                return mPlainBundleHandler.fd();
+            }
             return parser.getSinkFd();
         }
 
         @Override
         public void progress(long current, long length) {
-            // not used here
+            if ((id == null) && (mPlainBundleHandler != null)) {
+                mPlainBundleHandler.progress(current, length);
+            }
         }
     };
 

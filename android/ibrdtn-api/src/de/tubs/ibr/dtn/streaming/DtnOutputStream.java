@@ -4,16 +4,28 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
+import de.tubs.ibr.dtn.api.Bundle;
+import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
+import de.tubs.ibr.dtn.api.SingletonEndpoint;
+import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 
 public class DtnOutputStream {
     
     private static final String TAG = "DtnOutputStream";
     
+    private BundleID mAckedId = null;
+    private BundleID mSentId = null;
+    
+    private Context mContext = null;
     private DTNClient.Session mSession = null;
     private StreamHeader mHeader = null;
     private EID mDestination = null;
@@ -25,7 +37,8 @@ public class DtnOutputStream {
     
     private DataOutputStream mOutput = null;
     
-    public DtnOutputStream(DTNClient.Session session, int correlator, EID destination, long lifetime, MediaType media, byte[] meta) {
+    public DtnOutputStream(Context context, DTNClient.Session session, int correlator, EID destination, long lifetime, MediaType media, byte[] meta) {
+        mContext = context;
         mSession = session;
         mDestination = destination;
         mLifetime = lifetime;
@@ -36,16 +49,49 @@ public class DtnOutputStream {
         mHeader.media = media;
         mHeader.offset = 0;
         
+        // register to RECEIVE intents
+        IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.STATUS_REPORT);
+        filter.addCategory(context.getPackageName());
+        context.registerReceiver(mReceiver, filter);
+        
         // start the sending thread
         mSender.start();
     }
     
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            try {
+                mAckedId = intent.getParcelableExtra("bundleid");
+                flush();
+            } catch (IOException e) {
+                Log.e(TAG, "flush failed", e);
+            }
+        }
+    };
+    
     private Thread mSender = new Thread() {
         @Override
         public void run() {
+            // create bundle proto-type
+            Bundle bundle = new Bundle();
+            
+            // set destination
+            bundle.setDestination(mDestination);
+            
+            // set lifetime
+            bundle.setLifetime(mLifetime);
+            
+            // set status report requests for bundle reception
+            bundle.set(ProcFlags.REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
+            
+            // set destination for status reports
+            bundle.setReportto(SingletonEndpoint.ME);
+            
             try {
                 byte[] dataHeader = createHeaderMessage();
-                mSession.send(mDestination, mLifetime, dataHeader);
+                
+                mSentId = mSession.send(bundle, dataHeader);
                 
                 while (!isInterrupted()) {
                     ParcelFileDescriptor[] fds = null;
@@ -71,7 +117,7 @@ public class DtnOutputStream {
                     }
                     
                     // start send process
-                    mSession.send(mDestination, mLifetime, fds[0]);
+                    mSentId = mSession.send(bundle, fds[0]);
                 }
                 
                 byte[] dataFin = createFinMessage();
@@ -105,14 +151,22 @@ public class DtnOutputStream {
         Frame f = new Frame();
         f.data = data;
         Frame.write(mOutput, f);
+        
+        flush();
     }
     
-    public synchronized void flush() throws IOException {
+    private synchronized void flush() throws IOException {
+        if (mSentId == null) return;
+        if (mAckedId == null) return;
+        
+        if (!mSentId.equals(mAckedId)) return;
+        
         // do not flush if the header has not been written yet
         if (!mHeaderWritten) return;
         
         if (mOutput != null) mOutput.close();
         mOutput = null;
+        mAckedId = null;
         notifyAll();
     }
     
@@ -123,6 +177,9 @@ public class DtnOutputStream {
      * @throws InterruptedException 
      */
     public void close() throws IOException, InterruptedException {
+        // unregister status report receiver
+        mContext.unregisterReceiver(mReceiver);
+        
         synchronized(this) {
             // mark this stream as finalized
             mFinalized = true;
@@ -138,7 +195,7 @@ public class DtnOutputStream {
         mSender.join();
     }
     
-    public byte[] createHeaderMessage() throws IOException {
+    private byte[] createHeaderMessage() throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         DataOutputStream stream = new DataOutputStream(output);
         
@@ -158,7 +215,7 @@ public class DtnOutputStream {
         return output.toByteArray();
     }
     
-    public byte[] createFinMessage() throws IOException {
+    private byte[] createFinMessage() throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         DataOutputStream stream = new DataOutputStream(output);
         
