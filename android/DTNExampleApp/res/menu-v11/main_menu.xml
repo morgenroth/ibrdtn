@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item android:id="@+id/itemSelectNeighbor" android:title="@string/select_neighbor" android:icon="@drawable/ic_action_neighbors"></item>
+    <item android:id="@+id/itemEnableStreaming" android:title="@string/enable_streaming" android:icon="@drawable/ic_enable_streaming" android:checkable="true"></item>
 </menu>

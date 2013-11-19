@@ -45,6 +45,17 @@ public class PingActivity extends Activity {
                 Intent select_neighbor = new Intent(this, NeighborChooserActivity.class);
                 startActivityForResult(select_neighbor, SELECT_NEIGHBOR);
                 return true;
+                
+            case R.id.itemEnableStreaming:
+                if (item.isChecked()) {
+                    item.setChecked(false);
+                    stop_stream();
+                }
+                else if (!item.isChecked()) {
+                    item.setChecked(true);
+                    start_stream();
+                }
+                return true;
             
             default:
                 return super.onOptionsItemSelected(item);
@@ -139,6 +150,18 @@ public class PingActivity extends Activity {
         Intent i = new Intent(this, PingService.class);
         i.setAction(PingService.PING_INTENT);
         i.putExtra("destination", mTextEid.getText().toString());
+        startService(i);
+    }
+    
+    private void start_stream() {
+        Intent i = new Intent(this, PingService.class);
+        i.setAction(PingService.STREAM_START_INTENT);
+        startService(i);
+    }
+    
+    private void stop_stream() {
+        Intent i = new Intent(this, PingService.class);
+        i.setAction(PingService.STREAM_STOP_INTENT);
         startService(i);
     }
     

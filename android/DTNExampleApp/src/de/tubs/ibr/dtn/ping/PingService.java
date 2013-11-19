@@ -1,7 +1,12 @@
 package de.tubs.ibr.dtn.ping;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -25,6 +30,13 @@ import de.tubs.ibr.dtn.api.SessionConnection;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 import de.tubs.ibr.dtn.api.TransferMode;
+import de.tubs.ibr.dtn.streaming.DtnInputStream;
+import de.tubs.ibr.dtn.streaming.DtnOutputStream;
+import de.tubs.ibr.dtn.streaming.Frame;
+import de.tubs.ibr.dtn.streaming.MediaType;
+import de.tubs.ibr.dtn.streaming.StreamEndpoint;
+import de.tubs.ibr.dtn.streaming.StreamFilter;
+import de.tubs.ibr.dtn.streaming.StreamId;
 
 public class PingService extends IntentService {
     
@@ -39,12 +51,16 @@ public class PingService extends IntentService {
     
     // this intent send out a PING message
     public static final String PING_INTENT = "de.tubs.ibr.dtn.example.PING";
+    
+    public static final String STREAM_START_INTENT = "de.tubs.ibr.dtn.example.STREAM_START";
+    public static final String STREAM_STOP_INTENT = "de.tubs.ibr.dtn.example.STREAM_STOP";
 
     // indicates updated data to other components
     public static final String DATA_UPDATED = "de.tubs.ibr.dtn.example.DATA_UPDATED";
     
     // group EID of this app
     public static final GroupEndpoint PING_GROUP_EID = new GroupEndpoint("dtn://broadcast.dtn/ping");
+    public static final GroupEndpoint STREAM_GROUP_EID = new GroupEndpoint("dtn://broadcast.dtn/streaming");
     
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
@@ -53,11 +69,17 @@ public class PingService extends IntentService {
     // The communication with the DTN service is done using the DTNClient
     private DTNClient mClient = null;
     
+    private StreamEndpoint mStreamEndpoint = null;
+    private DtnOutputStream mStream = null;
+    
     // Hold the last ping result
     private Double mLastMeasurement = 0.0;
     
     // Hold the start time of the last ping
     private Long mStart = 0L;
+    
+    ScheduledExecutorService mExecutor = null;
+    Future<?> mStreamJob = null;
     
     public PingService() {
         super(TAG);
@@ -205,13 +227,79 @@ public class PingService extends IntentService {
             // send out the ping
             doPing(destination);
         }
+        else if (STREAM_START_INTENT.equals(action))
+        {
+            Log.d(TAG, "create stream");
+            mStream = mStreamEndpoint.createStream(STREAM_GROUP_EID, 10, MediaType.BINARY, null);
+            
+            mStreamJob = mExecutor.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(TAG, "send stream packet");
+                    try {
+                        mStream.put("Hello World!".getBytes());
+                    } catch (InterruptedException e) {
+                        Log.d(TAG, "interrupted while sending", e);
+                    } catch (IOException e) {
+                        Log.d(TAG, "error while sending", e);
+                    }
+                }
+            }, 0, 1, TimeUnit.SECONDS);
+        }
+        else if (STREAM_STOP_INTENT.equals(action))
+        {
+            if (mStreamJob != null) {
+                mStreamJob.cancel(false);
+                mStreamJob = null;
+                
+                try {
+                    mStream.close();
+                } catch (InterruptedException e) {
+                    Log.d(TAG, "interrupted while closing", e);
+                } catch (IOException e) {
+                    Log.d(TAG, "error while closing", e);
+                }
+            }
+        }
     }
+    
+    DtnInputStream.PacketListener mPacketStreamListener = new DtnInputStream.PacketListener() {
+
+        @Override
+        public void onInitial(StreamId id, MediaType type, byte[] data) {
+            Log.d(TAG, "initial stream packet received");
+        }
+
+        @Override
+        public void onFrameReceived(StreamId id, Frame frame) {
+            Log.d(TAG, "stream packet received");
+        }
+
+        @Override
+        public void onFinish(StreamId id) {
+            Log.d(TAG, "final stream packet received");
+        }
+        
+    };
     
     SessionConnection mSession = new SessionConnection() {
 
         @Override
         public void onSessionConnected(Session session) {
             Log.d(TAG, "Session connected");
+            
+            // create streaming endpoint with own data handler as fallback
+            mStreamEndpoint = new StreamEndpoint(PingService.this, session, mPacketStreamListener, mDataHandler);
+            
+            StreamFilter filter = new StreamFilter() {
+                @Override
+                public boolean onHandleStream(Bundle bundle) {
+                    return bundle.getDestination().toString().contains("stream");
+                }
+            };
+            
+            // set filter to decide with bundles are handles as stream
+            mStreamEndpoint.setFilter(filter);
             
             String localeid = getLocalEndpoint();
             if (localeid != null) {
@@ -233,6 +321,9 @@ public class PingService extends IntentService {
     public void onCreate() {
         super.onCreate();
         
+        // get new executor
+        mExecutor = Executors.newScheduledThreadPool(1);
+        
         // create a new DTN client
         mClient = new DTNClient(mSession);
         
@@ -243,9 +334,7 @@ public class PingService extends IntentService {
         
         // additionally join a group
         registration.add(PING_GROUP_EID);
-        
-        // register own data handler for incoming bundles
-        mClient.setDataHandler(mDataHandler);
+        registration.add(STREAM_GROUP_EID);
         
         try {
             // initialize the connection to the DTN service
@@ -262,9 +351,30 @@ public class PingService extends IntentService {
 
     @Override
     public void onDestroy() {
+        // release stream endpoint
+        if (mStreamEndpoint != null) {
+            mStreamEndpoint.release();
+        }
+        
         // terminate the DTN service
         mClient.terminate();
         mClient = null;
+        
+        if (mStreamJob != null) {
+            mStreamJob.cancel(false);
+            mStreamJob = null;
+            
+            try {
+                mStream.close();
+            } catch (InterruptedException e) {
+                Log.d(TAG, "interrupted while closing", e);
+            } catch (IOException e) {
+                Log.d(TAG, "error while closing", e);
+            }
+        }
+        
+        // shutdown executor
+        mExecutor.shutdown();
         
         super.onDestroy();
     }
