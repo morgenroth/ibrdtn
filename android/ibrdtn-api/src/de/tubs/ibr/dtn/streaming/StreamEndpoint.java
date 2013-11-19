@@ -76,9 +76,9 @@ public class StreamEndpoint implements Callback {
         mHandlerThread.quit();
     }
     
-    public DtnOutputStream createStream(EID destination, long lifetime) {
+    public DtnOutputStream createStream(EID destination, long lifetime, MediaType media, byte[] meta) {
         int correlator = generateCorrelator();
-        return new DtnOutputStream(mSession, correlator, destination, lifetime);
+        return new DtnOutputStream(mSession, correlator, destination, lifetime, media, meta);
     }
     
     private int generateCorrelator() {

@@ -42,12 +42,19 @@ public class Frame implements Comparable<Frame> {
 
         Frame ret = new Frame();
         ret.data = new byte[length];
-        stream.read(ret.data);
+        if (length > 0) {
+            stream.read(ret.data);
+        }
+        
         return ret;
     }
     
     public static void write(DataOutputStream stream, Frame frame) throws IOException {
-        SDNV.Write(stream, frame.data.length);
-        stream.write(frame.data);
+        if (frame.data == null) {
+            SDNV.Write(stream, 0);
+        } else {
+            SDNV.Write(stream, frame.data.length);
+            stream.write(frame.data);
+        }
     }
 }
