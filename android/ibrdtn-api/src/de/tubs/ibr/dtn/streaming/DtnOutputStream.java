@@ -36,6 +36,9 @@ public class DtnOutputStream {
     private boolean mHeaderWritten = false;
     private boolean mFinalized = false;
     
+    private static final int MIN_FRAMES = 100;
+    private int mFrames = 0;
+    
     private DataOutputStream mOutput = null;
     
     private int generateCorrelator() {
@@ -170,6 +173,8 @@ public class DtnOutputStream {
         f.data = data;
         Frame.write(mOutput, f);
         
+        mFrames++;
+        
         flush();
     }
     
@@ -182,9 +187,13 @@ public class DtnOutputStream {
         // do not flush if the header has not been written yet
         if (!mHeaderWritten) return;
         
+        // fill the bundles at least with this amount of frames
+        if (mFrames < MIN_FRAMES) return;
+        
         if (mOutput != null) mOutput.close();
         mOutput = null;
         mAckedId = null;
+        mFrames = 0;
         notifyAll();
     }
     
