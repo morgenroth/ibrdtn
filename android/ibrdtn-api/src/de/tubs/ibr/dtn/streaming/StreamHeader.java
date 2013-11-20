@@ -29,17 +29,17 @@ public class StreamHeader {
         ret.type = BundleType.valueOf( stream.readChar() );
         
         // read correlator
-        ret.correlator = SDNV.Read(stream);
+        ret.correlator = stream.readInt();
 
         switch (ret.type) {
             case INITIAL:
                 ret.media = MediaType.valueOf( stream.readChar() );
                 break;
             case DATA:
-                ret.offset = SDNV.Read(stream);
+                ret.offset = stream.readInt();
                 break;
             case FIN:
-                ret.offset = SDNV.Read(stream);
+                ret.offset = stream.readInt();
                 break;
             default:
                 break;
@@ -51,17 +51,17 @@ public class StreamHeader {
     public static void write(DataOutputStream stream, StreamHeader header) throws IOException {
         stream.writeChar(VERSION);
         stream.writeChar(header.type.code);
-        SDNV.Write(stream, header.correlator);
+        stream.writeInt(header.correlator);
         
         switch (header.type) {
             case INITIAL:
                 stream.writeChar(header.media.code);
                 break;
             case DATA:
-                SDNV.Write(stream, header.offset);
+                stream.writeInt(header.offset);
                 break;
             case FIN:
-                SDNV.Write(stream, header.offset);
+                stream.writeInt(header.offset);
                 break;
             default:
                 break;

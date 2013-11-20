@@ -46,7 +46,7 @@ public class Frame implements Comparable<Frame> {
     }
     
     public static Frame parse(DataInputStream stream) throws IOException {
-        int length = SDNV.Read(stream);
+        int length = stream.readInt();
 
         Frame ret = new Frame();
         ret.data = new byte[length];
@@ -59,9 +59,9 @@ public class Frame implements Comparable<Frame> {
     
     public static void write(DataOutputStream stream, Frame frame) throws IOException {
         if (frame.data == null) {
-            SDNV.Write(stream, 0);
+            stream.writeInt(0);
         } else {
-            SDNV.Write(stream, frame.data.length);
+            stream.writeInt(frame.data.length);
             stream.write(frame.data);
         }
     }
