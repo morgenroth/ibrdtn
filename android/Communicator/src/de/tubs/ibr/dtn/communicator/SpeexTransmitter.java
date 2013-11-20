@@ -8,6 +8,7 @@ import java.io.IOException;
 import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.util.Log;
 
@@ -26,8 +27,6 @@ public class SpeexTransmitter extends Thread implements Closeable {
     /**
      * Audio Parameters
      */
-    private static final int BUFFER_SIZE = 4096;
-    
     private static final int FREQUENCY = 22050;
     private static final FrequencyBand BAND = FrequencyBand.NARROW_BAND;
     private static final int QUALITY = 8;
@@ -47,8 +46,11 @@ public class SpeexTransmitter extends Thread implements Closeable {
         // create an encoder
         SpeexEncoder encoder = new SpeexEncoder(BAND, QUALITY);
         
+        // get the minimum buffer size
+        int buffer_size = 3 * AudioTrack.getMinBufferSize(FREQUENCY, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        
         // create an AudioSource
-        mAudioRec = new AudioRecord(MediaRecorder.AudioSource.MIC, FREQUENCY, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, BUFFER_SIZE);
+        mAudioRec = new AudioRecord(MediaRecorder.AudioSource.MIC, FREQUENCY, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, buffer_size);
         
         // create meta data header
         ByteArrayOutputStream bytearray_stream = new ByteArrayOutputStream();

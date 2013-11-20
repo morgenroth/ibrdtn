@@ -19,12 +19,11 @@ import de.tubs.ibr.dtn.streaming.Frame;
 public class SpeexReceiver extends Thread implements Closeable {
     
     private static final String TAG = "SpeexReceiver";
-    private static final int BUFFER_SIZE = 4096;
     
     private AudioTrack mAudioTrack = null;
     private SpeexDecoder mDecoder = null;
     
-    private LinkedBlockingQueue<Frame> mFrameBuffer = new LinkedBlockingQueue<Frame>(20);
+    private LinkedBlockingQueue<Frame> mFrameBuffer = new LinkedBlockingQueue<Frame>(512);
     
     public SpeexReceiver(byte[] meta) {
         // decode meta data
@@ -45,8 +44,11 @@ public class SpeexReceiver extends Thread implements Closeable {
             // create an decoder
             mDecoder = new SpeexDecoder(band);
 
+            // get the minimum buffer size
+            int buffer_size = 3 * AudioTrack.getMinBufferSize(frequency, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+            
             // create an AudioSink
-            mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, frequency, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, BUFFER_SIZE, AudioTrack.MODE_STREAM);
+            mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, frequency, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, buffer_size, AudioTrack.MODE_STREAM);
             
             // start playback mode
             mAudioTrack.play();
