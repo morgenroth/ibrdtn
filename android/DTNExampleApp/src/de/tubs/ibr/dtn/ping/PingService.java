@@ -1,6 +1,7 @@
 package de.tubs.ibr.dtn.ping;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -230,21 +231,31 @@ public class PingService extends IntentService {
         else if (STREAM_START_INTENT.equals(action))
         {
             Log.d(TAG, "create stream");
-            mStream = mStreamEndpoint.createStream(STREAM_GROUP_EID, 10, MediaType.BINARY, null);
             
-            mStreamJob = mExecutor.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d(TAG, "send stream packet");
-                    try {
-                        mStream.put("Hello World!".getBytes());
-                    } catch (InterruptedException e) {
-                        Log.d(TAG, "interrupted while sending", e);
-                    } catch (IOException e) {
-                        Log.d(TAG, "error while sending", e);
+            // create DTN stream
+            try {
+                mStream = new DtnOutputStream(PingService.this, mClient.getSession());
+                mStream.connect(STREAM_GROUP_EID, MediaType.BINARY, null);
+                mStream.setLifetime(10);
+                
+                mStreamJob = mExecutor.scheduleWithFixedDelay(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(TAG, "send stream packet");
+                        try {
+                            mStream.write("Hello World!".getBytes());
+                        } catch (InterruptedException e) {
+                            Log.d(TAG, "interrupted while sending", e);
+                        } catch (IOException e) {
+                            Log.d(TAG, "error while sending", e);
+                        }
                     }
-                }
-            }, 0, 1, TimeUnit.SECONDS);
+                }, 0, 1, TimeUnit.SECONDS);
+            } catch (SessionDestroyedException e1) {
+                Log.e(TAG, "could not start the stream", e1);
+            } catch (InterruptedException e1) {
+                Log.e(TAG, "could not start the stream", e1);
+            }
         }
         else if (STREAM_STOP_INTENT.equals(action))
         {
@@ -264,22 +275,25 @@ public class PingService extends IntentService {
     }
     
     DtnInputStream.PacketListener mPacketStreamListener = new DtnInputStream.PacketListener() {
-
         @Override
         public void onInitial(StreamId id, MediaType type, byte[] data) {
-            Log.d(TAG, "initial stream packet received");
+            Log.d(TAG, "stream initiated: " + id);
         }
 
         @Override
         public void onFrameReceived(StreamId id, Frame frame) {
-            Log.d(TAG, "stream packet received");
+            Log.d(TAG, "stream packet received: " + id);
+            try {
+                Log.d(TAG, "payload: " + new String(frame.data, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                // hm? UTF-8 not supported?
+            }
         }
 
         @Override
         public void onFinish(StreamId id) {
-            Log.d(TAG, "final stream packet received");
+            Log.d(TAG, "stream closed: " + id);
         }
-        
     };
     
     SessionConnection mSession = new SessionConnection() {
