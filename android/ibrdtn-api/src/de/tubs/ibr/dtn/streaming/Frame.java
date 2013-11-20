@@ -12,6 +12,14 @@ public class Frame implements Comparable<Frame> {
     public int number;
     
     @Override
+    public String toString() {
+        if (data == null) {
+            return "frame<" + offset + "." + number + ">[0]";
+        }
+        return "frame<" + offset + "." + number + ">[" + data.length + "]";
+    }
+
+    @Override
     public int compareTo(Frame another) {
         if (offset > another.offset) {
             return 1;
