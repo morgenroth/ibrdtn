@@ -29,8 +29,15 @@ public class DtnInputStream implements Closeable {
         return mId;
     }
     
-    // put initial data into the stream
+    /**
+     * put initial data into the stream
+     * @param type
+     * @param data
+     */
     public synchronized void put(MediaType type, byte[] data) {
+        // only initialize once
+        if (mType != null) return;
+        
         mType = type;
         
         if (mListener != null) mListener.onInitial(mId, mType, data);
@@ -38,7 +45,10 @@ public class DtnInputStream implements Closeable {
         deliverFrames();
     }
     
-    // put data frame into the stream
+    /**
+     * put data frame into the stream
+     * @param frames
+     */
     public synchronized void put(Collection<Frame> frames) {
         // drop all frames if finalized
         if (mFinalized) return;
@@ -78,7 +88,9 @@ public class DtnInputStream implements Closeable {
         }
     }
     
-    // finalize the stream
+    /**
+     * finalize the stream
+     */
     public synchronized void close() {
         mFinalized = true;
         mDataQueue.clear();
