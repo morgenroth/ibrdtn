@@ -72,4 +72,9 @@ public class SingletonEndpoint implements EID, Serializable {
             return new SingletonEndpoint[size];
         }
     };
+
+    @Override
+    public int hashCode() {
+        return _eid.hashCode();
+    }
 }

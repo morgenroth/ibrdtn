@@ -70,4 +70,9 @@ public class GroupEndpoint implements EID, Serializable {
             return new GroupEndpoint[size];
         }
     };
+    
+    @Override
+    public int hashCode() {
+        return _eid.hashCode();
+    }
 }
