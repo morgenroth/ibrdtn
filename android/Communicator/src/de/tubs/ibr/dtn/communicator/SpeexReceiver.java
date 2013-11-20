@@ -66,11 +66,16 @@ public class SpeexReceiver extends Thread implements Closeable {
         while (AudioTrack.PLAYSTATE_STOPPED != mAudioTrack.getPlayState()) {
             try {
                 Frame frame = mFrameBuffer.take();
+                
+                if (frame.data == null) {
+                    // end found
+                    mAudioTrack.stop();
+                    break;
+                }
+                
                 short[] audio_data = mDecoder.decode(frame.data);
                 
-                synchronized(mAudioTrack) {
-                    mAudioTrack.write(audio_data, 0, audio_data.length);
-                }
+                mAudioTrack.write(audio_data, 0, audio_data.length);
             } catch (InterruptedException e) {
                 Log.e(TAG, "interrupted", e);
             }
@@ -81,9 +86,7 @@ public class SpeexReceiver extends Thread implements Closeable {
 
     @Override
     public void close() {
-        synchronized(mAudioTrack) {
-            mAudioTrack.stop();
-        }
+        mFrameBuffer.offer(new Frame());
     }
 
     public void push(Frame frame) {
