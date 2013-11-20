@@ -26,7 +26,7 @@ import de.tubs.ibr.dtn.streaming.StreamId;
 
 public class CommService extends Service {
     
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "CommService";
     
     private static final int NOTIFICATION_ID = 1;
     
@@ -93,8 +93,6 @@ public class CommService extends Service {
 
         @Override
         public void onFrameReceived(StreamId id, Frame frame) {
-            Log.d(TAG, "stream packet received: " + id);
-            
             SpeexReceiver receiver = mReceivers.get(id);
             if (receiver != null) {
                 receiver.push(frame);
