@@ -150,7 +150,7 @@ public class StreamEndpoint implements Callback {
                 }
                 
                 switch (header.type) {
-                    case DATA:
+                    case DATA: {
                         // read all frames
                         LinkedList<Frame> frames = new LinkedList<Frame>();
     
@@ -170,16 +170,21 @@ public class StreamEndpoint implements Callback {
                         // push frames
                         target.put(frames);
                         break;
-                    case FIN:
-                        target.close();
+                    }
+                    case FIN: {
+                        Frame f = new Frame();
+                        f.offset = header.offset;
+                        target.put(f);
                         break;
-                    case INITIAL:
+                    }
+                    case INITIAL: {
                         // read meta data
                         Frame f = Frame.parse(mInput);
                         
                         // push data-type and meta-data
                         target.put(header.media, f.data);
                         break;
+                    }
                     default:
                         break;
                 }

@@ -62,13 +62,26 @@ public class DtnInputStream implements Closeable {
             }
         }
         
-        // no delivery until the initial is received
-        if (mType == null) return;
+        deliverFrames();
+    }
+    
+    public synchronized void put(Frame f) {
+        // drop all frames if finalized
+        if (mFinalized) return;
+        
+        // insert expected frames only into the queue
+        // (re-ordering)
+        if (f.offset >= mNext) {
+            mDataQueue.offer(f);
+        }
         
         deliverFrames();
     }
     
     private void deliverFrames() {
+        // no delivery until the initial is received
+        if (mType == null) return;
+        
         // check head for delivery
         Frame head = mDataQueue.peek();
         
@@ -77,8 +90,15 @@ public class DtnInputStream implements Closeable {
             // retrieve the head of the queue
             head = mDataQueue.poll();
             
-            // deliver this frame
-            if (mListener != null) mListener.onFrameReceived(mId, head);
+            if (head.data == null) {
+                // final frame
+                if (mListener != null) mListener.onFinish(mId);
+                close();
+                return;
+            } else {
+                // deliver this frame
+                if (mListener != null) mListener.onFrameReceived(mId, head);
+            }
             
             // remind the expected next frame
             mNext = head.offset + 1;
@@ -94,7 +114,5 @@ public class DtnInputStream implements Closeable {
     public synchronized void close() {
         mFinalized = true;
         mDataQueue.clear();
-        
-        if (mListener != null) mListener.onFinish(mId);
     }
 }
