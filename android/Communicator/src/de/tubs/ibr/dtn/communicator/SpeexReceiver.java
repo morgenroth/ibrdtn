@@ -88,12 +88,20 @@ public class SpeexReceiver extends Thread implements Closeable {
 
     @Override
     public void close() {
-        mFrameBuffer.offer(new Frame());
+        try {
+            mFrameBuffer.put(new Frame());
+        } catch (InterruptedException e) {
+            Log.e(TAG, "aborted", e);
+        }
     }
 
     public void push(Frame frame) {
-        // add new frame to the buffer
-        mFrameBuffer.offer(frame);
+        try {
+            // add new frame to the buffer
+            mFrameBuffer.put(frame);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "aborted", e);
+        }
     }
     
     private FrequencyBand readFrequencyBand(DataInputStream stream) throws IOException {
