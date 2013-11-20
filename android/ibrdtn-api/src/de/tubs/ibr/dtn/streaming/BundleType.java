@@ -1,9 +1,10 @@
 package de.tubs.ibr.dtn.streaming;
 
 public enum BundleType {
-    INITIAL(0),
-    DATA(1),
-    FIN(2);
+    UNKOWN(0),
+    INITIAL(1),
+    DATA(2),
+    FIN(3);
     
     public int code = 0;
     
@@ -14,10 +15,12 @@ public enum BundleType {
     public static BundleType valueOf(int i) {
         switch (i) {
             default:
-                return INITIAL;
+                return UNKOWN;
             case 1:
-                return DATA;
+                return INITIAL;
             case 2:
+                return DATA;
+            case 3:
                 return FIN;
         }
     }

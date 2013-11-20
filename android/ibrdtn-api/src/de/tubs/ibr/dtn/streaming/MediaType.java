@@ -1,10 +1,11 @@
 package de.tubs.ibr.dtn.streaming;
 
 public enum MediaType {
-    BINARY(0),
-    MEDIA_AUDIO(1),
-    MEDIA_VIDEO(2),
-    MEDIA_MIXED(3);
+    UNKNOWN(0),
+    BINARY(1),
+    MEDIA_AUDIO(2),
+    MEDIA_VIDEO(3),
+    MEDIA_MIXED(4);
     
     public int code = 0;
     
@@ -15,12 +16,14 @@ public enum MediaType {
     public static MediaType valueOf(int i) {
         switch (i) {
             default:
-                return BINARY;
+                return UNKNOWN;
             case 1:
-                return MEDIA_AUDIO;
+                return BINARY;
             case 2:
-                return MEDIA_VIDEO;
+                return MEDIA_AUDIO;
             case 3:
+                return MEDIA_VIDEO;
+            case 4:
                 return MEDIA_MIXED;
         }
     }
