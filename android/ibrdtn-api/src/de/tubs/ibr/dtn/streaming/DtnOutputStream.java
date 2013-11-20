@@ -3,6 +3,7 @@ package de.tubs.ibr.dtn.streaming;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.UUID;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -37,25 +38,19 @@ public class DtnOutputStream {
     
     private DataOutputStream mOutput = null;
     
-    public DtnOutputStream(Context context, DTNClient.Session session, int correlator, EID destination, long lifetime, MediaType media, byte[] meta) {
+    private int generateCorrelator() {
+        UUID uuid = UUID.randomUUID();
+        return Long.valueOf(uuid.getMostSignificantBits()).intValue();
+    }
+    
+    public DtnOutputStream(Context context, DTNClient.Session session) {
         mContext = context;
         mSession = session;
-        mDestination = destination;
-        mLifetime = lifetime;
-        
-        mHeader = new StreamHeader();
-        mHeader.type = BundleType.INITIAL;
-        mHeader.correlator = correlator;
-        mHeader.media = media;
-        mHeader.offset = 0;
         
         // register to RECEIVE intents
         IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.STATUS_REPORT);
         filter.addCategory(context.getPackageName());
         context.registerReceiver(mReceiver, filter);
-        
-        // start the sending thread
-        mSender.start();
     }
     
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -89,8 +84,10 @@ public class DtnOutputStream {
             bundle.setReportto(SingletonEndpoint.ME);
             
             try {
-                byte[] dataHeader = createHeaderMessage();
+                // compose initial bundle payload
+                byte[] dataHeader = composeInitial();
                 
+                // send initial bundle
                 mSentId = mSession.send(bundle, dataHeader);
                 
                 while (!isInterrupted()) {
@@ -120,7 +117,10 @@ public class DtnOutputStream {
                     mSentId = mSession.send(bundle, fds[0]);
                 }
                 
-                byte[] dataFin = createFinMessage();
+                // compose final bundle payload
+                byte[] dataFin = composeFin();
+                
+                // send final bundle
                 mSession.send(mDestination, mLifetime, dataFin);
             } catch (IOException e) {
                 Log.e(TAG, "error while creating a pipe", e);
@@ -129,6 +129,24 @@ public class DtnOutputStream {
             }
         }
     };
+    
+    public void setLifetime(long lifetime) {
+        mLifetime = lifetime;
+    }
+    
+    public synchronized void connect(EID destination, MediaType media, byte[] meta) {
+        mDestination = destination;
+        mMeta = meta;
+        
+        mHeader = new StreamHeader();
+        mHeader.type = BundleType.INITIAL;
+        mHeader.correlator = generateCorrelator();
+        mHeader.media = media;
+        mHeader.offset = 0;
+        
+        // start the sending thread
+        mSender.start();
+    }
 
     /**
      * write a frame into the packet stream
@@ -136,7 +154,7 @@ public class DtnOutputStream {
      * @throws InterruptedException 
      * @throws IOException 
      */
-    public synchronized void put(byte[] data) throws InterruptedException, IOException {
+    public synchronized void write(byte[] data) throws InterruptedException, IOException {
         // wait until a stream is ready
         while (mOutput == null) wait();
         
@@ -195,7 +213,7 @@ public class DtnOutputStream {
         mSender.join();
     }
     
-    private byte[] createHeaderMessage() throws IOException {
+    private byte[] composeInitial() throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         DataOutputStream stream = new DataOutputStream(output);
         
@@ -215,7 +233,7 @@ public class DtnOutputStream {
         return output.toByteArray();
     }
     
-    private byte[] createFinMessage() throws IOException {
+    private byte[] composeFin() throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         DataOutputStream stream = new DataOutputStream(output);
         

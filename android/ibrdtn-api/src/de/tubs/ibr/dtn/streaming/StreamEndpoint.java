@@ -5,7 +5,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.UUID;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -23,9 +22,9 @@ import de.tubs.ibr.dtn.api.Bundle;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.DataHandler;
-import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.TransferMode;
+import de.tubs.ibr.dtn.util.TruncatedInputStream;
 
 public class StreamEndpoint implements Callback {
     
@@ -49,6 +48,7 @@ public class StreamEndpoint implements Callback {
     public StreamEndpoint(Context context, DTNClient.Session session, DtnInputStream.PacketListener listener, DataHandler handler) {
         mSession = session;
         mPlainBundleHandler = handler;
+        mPacketListener = listener;
         mSession.setDataHandler(mDataHandler);
         mContext = context;
         
@@ -84,16 +84,6 @@ public class StreamEndpoint implements Callback {
         mFilter = filter;
     }
     
-    public DtnOutputStream createStream(EID destination, long lifetime, MediaType media, byte[] meta) {
-        int correlator = generateCorrelator();
-        return new DtnOutputStream(mContext, mSession, correlator, destination, lifetime, media, meta);
-    }
-    
-    private int generateCorrelator() {
-        UUID uuid = UUID.randomUUID();
-        return Long.valueOf(uuid.getMostSignificantBits()).intValue();
-    }
-    
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -109,14 +99,14 @@ public class StreamEndpoint implements Callback {
     private class PayloadParser extends Thread implements Closeable {
         private ParcelFileDescriptor mSinkFd = null;
         private DataInputStream mInput = null;
-        private StreamId mId = null;
+        private StreamId mStreamId = null;
         
-        public PayloadParser(StreamId id) {
-            mId = id;
+        public PayloadParser(StreamId id, long payload_length) {
+            mStreamId = id;
             
             try {
                 ParcelFileDescriptor[] fds = ParcelFileDescriptor.createPipe();
-                mInput = new DataInputStream(new ParcelFileDescriptor.AutoCloseInputStream(fds[0]));
+                mInput = new DataInputStream(new TruncatedInputStream(new ParcelFileDescriptor.AutoCloseInputStream(fds[0]), payload_length));
                 mSinkFd = fds[1];
             } catch (IOException e) {
                 Log.e(TAG, "failed to create pipe", e);
@@ -129,8 +119,8 @@ public class StreamEndpoint implements Callback {
         
         public void close() {
             try {
-                mInput.close();
                 join();
+                mInput.close();
             } catch (InterruptedException e) {
                 Log.e(TAG, "failed to join", e);
             } catch (IOException e) {
@@ -144,18 +134,18 @@ public class StreamEndpoint implements Callback {
                 StreamHeader header = StreamHeader.parse(mInput);
                 
                 // assign correlator to stream id
-                mId.correlator = header.correlator;
+                mStreamId.correlator = header.correlator;
                 
                 DtnInputStream target = null;
                 
                 synchronized(mStreams) {
                     // get existing input stream
-                    target = mStreams.get(mId);
+                    target = mStreams.get(mStreamId);
                     
                     if (target == null) {
                         // create new input stream
-                        target = new DtnInputStream(mId, mPacketListener);
-                        mStreams.put(mId, target);
+                        target = new DtnInputStream(mStreamId, mPacketListener);
+                        mStreams.put(mStreamId, target);
                     }
                 }
                 
@@ -174,7 +164,7 @@ public class StreamEndpoint implements Callback {
                                 index++;
                             }
                         } catch (IOException e) {
-                            Log.d(TAG, "decoding stopped");
+                            //Log.d(TAG, "decoding stopped");
                         }
                         
                         // push frames
@@ -201,39 +191,51 @@ public class StreamEndpoint implements Callback {
     
     private DataHandler mDataHandler = new DataHandler() {
 
-        private StreamId id = null;
+        private BundleID bundle_id = null;
+        private StreamId stream_id = null;
         private PayloadParser parser = null;
 
         @Override
         public void startBundle(Bundle bundle) {
             if ((mFilter == null) || mFilter.onHandleStream(bundle)) {
-                id = new StreamId();
-                id.correlator = 0;
-                id.source = bundle.getSource();
+                stream_id = new StreamId();
+                stream_id.correlator = 0;
+                stream_id.source = bundle.getSource();
+                
+                bundle_id = new BundleID(bundle);
             }
             else if (mPlainBundleHandler != null) {
-                id = null;
+                stream_id = null;
                 mPlainBundleHandler.startBundle(bundle);
             }
         }
 
         @Override
         public void endBundle() {
-            if ((id == null) && (mPlainBundleHandler != null)) {
+            if ((stream_id == null) && (mPlainBundleHandler != null)) {
                 mPlainBundleHandler.endBundle();
                 return;
             }
+            
+            // mark as delivered
+            Message msg = mHandler.obtainMessage();
+            msg.what = MARK_DELIVERED;
+            msg.obj = bundle_id;
+            mHandler.sendMessage(msg);
+            
+            bundle_id = null;
         }
 
         @Override
         public TransferMode startBlock(Block block) {
-            if ((id == null) && (mPlainBundleHandler != null)) {
+            if ((stream_id == null) && (mPlainBundleHandler != null)) {
                 return mPlainBundleHandler.startBlock(block);
             }
             
             // only parse payload
             if (block.type == 1) {
-                parser = new PayloadParser(id);
+                parser = new PayloadParser(stream_id, block.length);
+                parser.start();
                 return TransferMode.FILEDESCRIPTOR;
             }
             return TransferMode.NULL;
@@ -241,25 +243,27 @@ public class StreamEndpoint implements Callback {
 
         @Override
         public void endBlock() {
-            if ((id == null) && (mPlainBundleHandler != null)) {
+            if ((stream_id == null) && (mPlainBundleHandler != null)) {
                 mPlainBundleHandler.endBlock();
                 return;
             }
 
-            parser.close();
-            parser = null;
+            if (parser != null) {
+                parser.close();
+                parser = null;
+            }
         }
 
         @Override
         public void payload(byte[] data) {
-            if ((id == null) && (mPlainBundleHandler != null)) {
+            if ((stream_id == null) && (mPlainBundleHandler != null)) {
                 mPlainBundleHandler.payload(data);
             }
         }
 
         @Override
         public ParcelFileDescriptor fd() {
-            if ((id == null) && (mPlainBundleHandler != null)) {
+            if ((stream_id == null) && (mPlainBundleHandler != null)) {
                 return mPlainBundleHandler.fd();
             }
             return parser.getSinkFd();
@@ -267,7 +271,7 @@ public class StreamEndpoint implements Callback {
 
         @Override
         public void progress(long current, long length) {
-            if ((id == null) && (mPlainBundleHandler != null)) {
+            if ((stream_id == null) && (mPlainBundleHandler != null)) {
                 mPlainBundleHandler.progress(current, length);
             }
         }
