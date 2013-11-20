@@ -428,6 +428,10 @@ public final class DTNClient {
             // Detach our existing connection.
     		mContext.unbindService(mConnection);
     		
+    		if (mService != null) {
+    		    mConnection.onServiceDisconnected(null);
+    		}
+    		
             // mark this client as uninitialized
             mInitialized = false;
 		}
