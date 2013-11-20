@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -15,13 +16,15 @@ import com.purplefrog.speexjni.SpeexDecoder;
 
 import de.tubs.ibr.dtn.streaming.Frame;
 
-public class SpeexReceiver implements Closeable {
+public class SpeexReceiver extends Thread implements Closeable {
     
     private static final String TAG = "SpeexReceiver";
     private static final int BUFFER_SIZE = 4096;
     
     private AudioTrack mAudioTrack = null;
     private SpeexDecoder mDecoder = null;
+    
+    private LinkedBlockingQueue<Frame> mFrameBuffer = new LinkedBlockingQueue<Frame>(20);
     
     public SpeexReceiver(byte[] meta) {
         // decode meta data
@@ -39,11 +42,11 @@ public class SpeexReceiver implements Closeable {
             // read band parameters
             FrequencyBand band = readFrequencyBand(meta_stream);
             
-            // create an AudioSink
-            mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, frequency, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, BUFFER_SIZE, AudioTrack.MODE_STREAM);
-            
             // create an decoder
             mDecoder = new SpeexDecoder(band);
+
+            // create an AudioSink
+            mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, frequency, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, BUFFER_SIZE, AudioTrack.MODE_STREAM);
             
             // start playback mode
             mAudioTrack.play();
@@ -57,20 +60,35 @@ public class SpeexReceiver implements Closeable {
             }
         }
     }
+    
+    @Override
+    public void run() {
+        while (AudioTrack.PLAYSTATE_STOPPED != mAudioTrack.getPlayState()) {
+            try {
+                Frame frame = mFrameBuffer.take();
+                short[] audio_data = mDecoder.decode(frame.data);
+                
+                synchronized(mAudioTrack) {
+                    mAudioTrack.write(audio_data, 0, audio_data.length);
+                }
+            } catch (InterruptedException e) {
+                Log.e(TAG, "interrupted", e);
+            }
+        }
+        
+        mAudioTrack.release();
+    }
 
     @Override
     public void close() {
-        if (mAudioTrack != null) {
+        synchronized(mAudioTrack) {
             mAudioTrack.stop();
-            mAudioTrack.release();
-            mAudioTrack = null;
         }
     }
 
     public void push(Frame frame) {
-        short[] audio_data = mDecoder.decode(frame.data);
-        if (AudioTrack.PLAYSTATE_STOPPED != mAudioTrack.getPlayState())
-            mAudioTrack.write(audio_data, 0, audio_data.length);
+        // add new frame to the buffer
+        mFrameBuffer.offer(frame);
     }
     
     private FrequencyBand readFrequencyBand(DataInputStream stream) throws IOException {

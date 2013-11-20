@@ -87,6 +87,8 @@ public class CommService extends Service {
             
             SpeexReceiver receiver = new SpeexReceiver(data);
             mReceivers.put(id, receiver);
+            
+            receiver.start();
         }
 
         @Override
