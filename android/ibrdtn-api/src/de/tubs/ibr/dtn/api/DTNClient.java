@@ -176,37 +176,68 @@ public final class DTNClient {
 	    private de.tubs.ibr.dtn.api.DTNSessionCallback mCallback = new de.tubs.ibr.dtn.api.DTNSessionCallback.Stub() {
 	        public void startBundle(Bundle bundle) throws RemoteException {
 	            if (mHandler == null) return;
-	            mHandler.startBundle(bundle);
+	            
+	            try {
+	                mHandler.startBundle(bundle);
+	            } catch (Exception e) {
+	                Log.e(TAG, "Exception thrown in API callback!", e);
+	            }
 	        }
 
 	        public void endBundle() throws RemoteException {
 	            if (mHandler == null) return;
-	            mHandler.endBundle();
+	            try {
+	                mHandler.endBundle();
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception thrown in API callback!", e);
+                }
 	        }
 
 	        public TransferMode startBlock(Block block) throws RemoteException {
 	            if (mHandler == null) return TransferMode.NULL;
-	            return mHandler.startBlock(block);
+	            try {
+	                return mHandler.startBlock(block);
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception thrown in API callback!", e);
+                }
+	            return TransferMode.NULL;
 	        }
 
 	        public void endBlock() throws RemoteException {
 	            if (mHandler == null) return;
-	            mHandler.endBlock();
+	            try {
+	                mHandler.endBlock();
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception thrown in API callback!", e);
+                }
 	        }
 
 	        public ParcelFileDescriptor fd() throws RemoteException {
 	            if (mHandler == null) return null;
-	            return mHandler.fd();
+	            try {
+	                return mHandler.fd();
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception thrown in API callback!", e);
+                }
+	            return null;
 	        }
 
 	        public void progress(long current, long length) throws RemoteException {
 	            if (mHandler == null) return;
-	            mHandler.progress(current, length);
+	            try {
+	                mHandler.progress(current, length);
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception thrown in API callback!", e);
+                }
 	        }
 
 	        public void payload(byte[] data) throws RemoteException {
 	            if (mHandler == null) return;
-	            mHandler.payload(data);
+	            try {
+	                mHandler.payload(data);
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception thrown in API callback!", e);
+                }
 	        }
 	    };
 		
