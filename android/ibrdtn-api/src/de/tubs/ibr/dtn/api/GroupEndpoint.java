@@ -25,7 +25,7 @@ import java.io.Serializable;
 
 import android.os.Parcel;
 
-public class GroupEndpoint implements EID, Serializable {
+public class GroupEndpoint implements EID, Serializable, Comparable<GroupEndpoint> {
 	
 	/**
 	 * serial id for serializable objects
@@ -74,5 +74,10 @@ public class GroupEndpoint implements EID, Serializable {
     @Override
     public int hashCode() {
         return _eid.hashCode();
+    }
+    
+    @Override
+    public int compareTo(GroupEndpoint another) {
+        return _eid.compareTo(another._eid);
     }
 }

@@ -24,7 +24,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class Timestamp {
+public class Timestamp implements Comparable<Timestamp> {
 	
 	public final static Long TIMEVAL_CONVERSION = 946684800L;
 	
@@ -59,5 +59,10 @@ public class Timestamp {
             }
         }
         return super.equals(o);
+    }
+
+    @Override
+    public int compareTo(Timestamp another) {
+        return calendar.compareTo(another.calendar);
     }
 }

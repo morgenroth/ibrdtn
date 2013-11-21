@@ -27,7 +27,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 
-public class BundleID implements Parcelable {
+public class BundleID implements Parcelable, Comparable<BundleID> {
 	
 	private SingletonEndpoint source = null;
 	private Timestamp timestamp = null;
@@ -194,4 +194,28 @@ public class BundleID implements Parcelable {
             return new BundleID[size];
         }
     };
+
+    @Override
+    public int compareTo(BundleID another) {
+        if (another == null) return 1;
+        
+        if (source.compareTo(another.source) > 0) return 1;
+        if (source.compareTo(another.source) < 0) return -1;
+        
+        if (timestamp.compareTo(another.timestamp) > 0) return 1;
+        if (timestamp.compareTo(another.timestamp) < 0) return -1;
+        
+        if (sequencenumber.compareTo(another.sequencenumber) > 0) return 1;
+        if (sequencenumber.compareTo(another.sequencenumber) < 0) return -1;
+        
+        if (fragment) {
+            if (!another.fragment) return 1;
+            return fragment_offset.compareTo(another.fragment_offset);
+        }
+        else {
+            if (another.fragment) return -1;
+        }
+        
+        return 0;
+    }
 }

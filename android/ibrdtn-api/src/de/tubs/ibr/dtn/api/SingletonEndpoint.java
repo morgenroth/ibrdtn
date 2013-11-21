@@ -25,7 +25,7 @@ import java.io.Serializable;
 
 import android.os.Parcel;
 
-public class SingletonEndpoint implements EID, Serializable {
+public class SingletonEndpoint implements EID, Serializable, Comparable<SingletonEndpoint> {
 	
 	/**
      * serial id for serializable objects
@@ -76,5 +76,10 @@ public class SingletonEndpoint implements EID, Serializable {
     @Override
     public int hashCode() {
         return _eid.hashCode();
+    }
+
+    @Override
+    public int compareTo(SingletonEndpoint another) {
+        return _eid.compareTo(another._eid);
     }
 }
