@@ -32,6 +32,7 @@ public class CommService extends Service {
     
     public static final GroupEndpoint COMM_STREAM_ENDPOINT = new GroupEndpoint("dtn://broadcast.dtn/communicator");
     
+    public static final String COMM_STATE = "de.tubs.ibr.dtn.communicator.STATE";
     public static final String OPEN_COMM_CHANNEL = "de.tubs.ibr.dtn.communicator.OPEN_COMM";
     public static final String CLOSE_COMM_CHANNEL = "de.tubs.ibr.dtn.communicator.CLOSE_COMM";
     
@@ -120,25 +121,32 @@ public class CommService extends Service {
         public void handleMessage(Message msg) {
             Intent intent = (Intent) msg.obj;
             onHandleIntent(intent, msg.arg1);
-            stopSelf(msg.arg1);
+            if (mTransmitter == null) stopSelf(msg.arg1);
         }
     }
     
     protected void onHandleIntent(Intent intent, int startId) {
         String action = intent.getAction();
         if (OPEN_COMM_CHANNEL.equals(action)) {
-            if (mSession != null) {
+            if ((mSession != null) && (mTransmitter == null)) {
                 mTransmitter = new SpeexTransmitter(this, mSession, COMM_STREAM_ENDPOINT);
-                
-                // TODO: make a noise
                 mTransmitter.start();
+                
+                // send stick intent
+                Intent i = new Intent(COMM_STATE);
+                i.putExtra("recording", true);
+                sendStickyBroadcast(i);
             }
         }
         else if (CLOSE_COMM_CHANNEL.equals(action)) {
             if (mTransmitter != null) {
                 mTransmitter.close();
-                // TODO: make a noise
                 mTransmitter = null;
+                
+                // send stick intent
+                Intent i = new Intent(COMM_STATE);
+                i.putExtra("recording", false);
+                sendStickyBroadcast(i);
             }
         }
     }
@@ -197,10 +205,20 @@ public class CommService extends Service {
             // The service has not been found
             Log.e(TAG, "The app has no permission to access the DTN service. It is important to install the DTN service first and then the app.", e);
         }
+        
+        // send stick intent
+        Intent i = new Intent(COMM_STATE);
+        i.putExtra("recording", false);
+        sendStickyBroadcast(i);
     }
 
     @Override
     public void onDestroy() {
+        if (mTransmitter != null) {
+            mTransmitter.close();
+            mTransmitter = null;
+        }
+        
         mClient.terminate();
         super.onDestroy();
     }

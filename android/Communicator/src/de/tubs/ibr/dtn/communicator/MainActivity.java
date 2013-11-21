@@ -4,9 +4,11 @@ package de.tubs.ibr.dtn.communicator;
 import java.io.IOException;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.media.AudioManager;
 import android.media.SoundPool;
@@ -43,6 +45,21 @@ public class MainActivity extends Activity {
             Log.d(TAG, "service disconnected");
         }
     };
+    
+    private BroadcastReceiver mStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getBooleanExtra("recording", false)) {
+                mTransmissionIndicator.startAnimation(mTransmissionAnim);
+                mTransmissionIndicator.setVisibility(View.VISIBLE);
+                mActivated = true;
+            } else {
+                mTransmissionIndicator.clearAnimation();
+                mTransmissionIndicator.setVisibility(View.INVISIBLE);
+                mActivated = false;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +84,6 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 if (!mActivated) {
-                    mActivated = true;
                     Log.d(TAG, "start recording");
                     
                     // play chirp sound
@@ -80,18 +96,11 @@ public class MainActivity extends Activity {
                         // interrupted
                     }
                     
-                    mTransmissionIndicator.startAnimation(mTransmissionAnim);
-                    mTransmissionIndicator.setVisibility(View.VISIBLE);
-                    
                     Intent i = new Intent(MainActivity.this, CommService.class);
                     i.setAction(CommService.OPEN_COMM_CHANNEL);
                     startService(i);
                 } else {
-                    mActivated = false;
                     Log.d(TAG, "stop recording");
-                    
-                    mTransmissionIndicator.clearAnimation();
-                    mTransmissionIndicator.setVisibility(View.INVISIBLE);
                     
                     Intent i = new Intent(MainActivity.this, CommService.class);
                     i.setAction(CommService.CLOSE_COMM_CHANNEL);
@@ -112,10 +121,19 @@ public class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
         bindService(new Intent(this, CommService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+        
+        IntentFilter filter = new IntentFilter(CommService.COMM_STATE);
+        Intent state = registerReceiver(mStateReceiver, filter);
+        
+        if (state != null) {
+            mStateReceiver.onReceive(this, state);
+        }
     }
 
     @Override
     protected void onStop() {
+        unregisterReceiver(mStateReceiver);
+        
         unbindService(mServiceConnection);
         super.onStop();
     }
