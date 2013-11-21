@@ -73,6 +73,13 @@ public class MainActivity extends Activity {
                     // play chirp sound
                     mSounds.play(mChirpSound, 1.0f, 1.0f, 1, 0, 1.0f);
                     
+                    // wait until the sound is done
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        // interrupted
+                    }
+                    
                     mTransmissionIndicator.startAnimation(mTransmissionAnim);
                     mTransmissionIndicator.setVisibility(View.VISIBLE);
                     
