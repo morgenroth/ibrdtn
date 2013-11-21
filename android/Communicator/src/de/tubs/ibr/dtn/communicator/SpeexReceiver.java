@@ -45,7 +45,7 @@ public class SpeexReceiver extends Thread implements Closeable {
             mDecoder = new SpeexDecoder(band);
 
             // get the minimum buffer size
-            int buffer_size = 3 * AudioTrack.getMinBufferSize(frequency, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+            int buffer_size = 2 * AudioTrack.getMinBufferSize(frequency, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
             
             // create an AudioSink
             mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, frequency, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT, buffer_size, AudioTrack.MODE_STREAM);
