@@ -4,6 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,17 +15,18 @@ import android.content.IntentFilter;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.Bundle;
+import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 import de.tubs.ibr.dtn.api.BundleID;
 import de.tubs.ibr.dtn.api.DTNClient;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
-import de.tubs.ibr.dtn.api.Bundle.ProcFlags;
 
 public class DtnOutputStream {
     
     private static final String TAG = "DtnOutputStream";
     
+    private BundleID mPrevAckedId = null;
     private BundleID mAckedId = null;
     private BundleID mSentId = null;
     
@@ -35,11 +39,14 @@ public class DtnOutputStream {
 
     private boolean mHeaderWritten = false;
     private boolean mFinalized = false;
+    private boolean mFirstFlush = false;
     
-    private static final int MIN_FRAMES = 100;
-    private int mFrames = 0;
+    private long mRttBegin = 0L;
+    private Float mRttValue = null;
+    private static final float RTT_ALPHA = 0.125f;
     
     private DataOutputStream mOutput = null;
+    private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(2);
     
     private int generateCorrelator() {
         UUID uuid = UUID.randomUUID();
@@ -59,11 +66,25 @@ public class DtnOutputStream {
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            try {
-                mAckedId = intent.getParcelableExtra("bundleid");
-                flush();
-            } catch (IOException e) {
-                Log.e(TAG, "flush failed", e);
+            BundleID acked = intent.getParcelableExtra("bundleid");
+            
+            synchronized(DtnOutputStream.this) {
+                if (acked.compareTo(mPrevAckedId) > 0) {
+                    mPrevAckedId = acked;
+                    mAckedId = acked;
+                    
+                    // get measured RTT
+                    float sampleRtt = System.currentTimeMillis() - mRttBegin;
+                    
+                    if (mRttValue == null) {
+                        mRttValue = sampleRtt;
+                        mFirstFlush = true;
+                    } else {
+                        mRttValue = (1 - RTT_ALPHA) * mRttValue + RTT_ALPHA * sampleRtt;
+                    }
+    
+                    scheduleFlush();
+                }
             }
         }
     };
@@ -90,6 +111,9 @@ public class DtnOutputStream {
                 // compose initial bundle payload
                 byte[] dataHeader = composeInitial();
                 
+                // start time measurement
+                mRttBegin = System.currentTimeMillis();
+                
                 // send initial bundle
                 mSentId = mSession.send(bundle, dataHeader);
                 
@@ -115,6 +139,9 @@ public class DtnOutputStream {
                         // notify all waiting threads
                         DtnOutputStream.this.notifyAll();
                     }
+                    
+                    // start time measurement
+                    mRttBegin = System.currentTimeMillis();
                     
                     // start send process
                     mSentId = mSession.send(bundle, fds[0]);
@@ -172,13 +199,19 @@ public class DtnOutputStream {
         Frame f = new Frame();
         f.data = data;
         Frame.write(mOutput, f);
+        mOutput.flush();
         
-        mFrames++;
-        
-        flush();
+        scheduleFlush();
     }
     
     private synchronized void flush() throws IOException {
+        if (mOutput != null) mOutput.close();
+        mOutput = null;
+        mFirstFlush = false;
+        notifyAll();
+    }
+    
+    private synchronized void scheduleFlush() {
         if (mSentId == null) return;
         if (mAckedId == null) return;
         
@@ -187,14 +220,23 @@ public class DtnOutputStream {
         // do not flush if the header has not been written yet
         if (!mHeaderWritten) return;
         
-        // fill the bundles at least with this amount of frames
-        if (mFrames < MIN_FRAMES) return;
-        
-        if (mOutput != null) mOutput.close();
-        mOutput = null;
+        // clear ackedId to prevent further calls
         mAckedId = null;
-        mFrames = 0;
-        notifyAll();
+        
+        // delay
+        Float delay = mRttValue * (mFirstFlush ? 1.2f : 1f);
+        
+        // schedule flush
+        mExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    flush();
+                } catch (IOException e) {
+                    Log.e(TAG, "flush failed", e);
+                }
+            }
+        }, delay.intValue(), TimeUnit.MILLISECONDS);
     }
     
     /**
@@ -220,6 +262,9 @@ public class DtnOutputStream {
         
         // wait until the sender is finished
         mSender.join();
+        
+        // close executor
+        mExecutor.shutdown();
     }
     
     private byte[] composeInitial() throws IOException {
@@ -254,5 +299,9 @@ public class DtnOutputStream {
         StreamHeader.write(stream, header);
         
         return output.toByteArray();
+    }
+    
+    public float getDelay() {
+        return mRttValue;
     }
 }
