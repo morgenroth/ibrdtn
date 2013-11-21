@@ -4,8 +4,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import de.tubs.ibr.dtn.api.SDNV;
-
 public class Frame implements Comparable<Frame> {
     public byte[] data;
     public int offset;
