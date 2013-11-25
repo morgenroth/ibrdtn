@@ -1,8 +1,6 @@
 
 package de.tubs.ibr.dtn.communicator;
 
-import java.io.IOException;
-
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -10,9 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.media.AudioManager;
-import android.media.SoundPool;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.Menu;
@@ -28,11 +25,14 @@ public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
     private ImageButton mToggle = null;
     private FrameLayout mTransmissionIndicator = null;
-    private Animation mTransmissionAnim = null;
     
-    private boolean mActivated = false;
-    private SoundPool mSounds = null;
-    private int mChirpSound = 0;
+    private Animation mAnimTransmit = null;
+    private Animation mAnimPlay = null;
+    
+    private boolean mRecording = false;
+    private boolean mPlaying = false;
+    
+    private Handler mHandler = null;
     
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -46,18 +46,50 @@ public class MainActivity extends Activity {
         }
     };
     
+    private void updateAnimation() {
+        if (mRecording) {
+            mTransmissionIndicator.setBackgroundResource(R.drawable.transmission_indicator);
+            mTransmissionIndicator.startAnimation(mAnimTransmit);
+            mTransmissionIndicator.setVisibility(View.VISIBLE);
+        }
+        else if (mPlaying) {
+            mTransmissionIndicator.setBackgroundResource(R.drawable.transmission_indicator_play);
+            mTransmissionIndicator.startAnimation(mAnimPlay);
+            mTransmissionIndicator.setVisibility(View.VISIBLE);
+        }
+    }
+    
     private BroadcastReceiver mStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getBooleanExtra("recording", false)) {
-                mTransmissionIndicator.startAnimation(mTransmissionAnim);
-                mTransmissionIndicator.setVisibility(View.VISIBLE);
-                mActivated = true;
-            } else {
-                mTransmissionIndicator.clearAnimation();
-                mTransmissionIndicator.setVisibility(View.INVISIBLE);
-                mActivated = false;
-            }
+            mRecording = intent.getBooleanExtra("recording", false);
+            mPlaying = intent.getBooleanExtra("playing", false);
+            updateAnimation();
+        }
+    };
+    
+    Animation.AnimationListener mAnimListener = new Animation.AnimationListener() {
+        @Override
+        public void onAnimationStart(Animation animation) {
+        }
+        
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+        }
+        
+        @Override
+        public void onAnimationEnd(Animation animation) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (mPlaying || mRecording) {
+                        updateAnimation();
+                    } else {
+                        mTransmissionIndicator.setVisibility(View.INVISIBLE);
+                        mTransmissionIndicator.clearAnimation();
+                    }
+                }
+            });
         }
     };
 
@@ -66,35 +98,23 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
-        // load sound pool
-        mSounds = new SoundPool(1, AudioManager.STREAM_SYSTEM, 0);
-        try {
-            mChirpSound = mSounds.load(getAssets().openFd("chirp.mp3"), 1);
-        } catch (IOException e) {
-            Log.e(TAG, "sound loading failed.", e);
-        }
+        mHandler = new Handler();
         
         mTransmissionIndicator = (FrameLayout)findViewById(R.id.indicator_transmission);
         mTransmissionIndicator.setVisibility(View.INVISIBLE);
         
-        mTransmissionAnim = AnimationUtils.loadAnimation(this, R.anim.transmission);
+        mAnimTransmit = AnimationUtils.loadAnimation(this, R.anim.transmission);
+        mAnimTransmit.setAnimationListener(mAnimListener);
+        
+        mAnimPlay = AnimationUtils.loadAnimation(this, R.anim.playing);
+        mAnimPlay.setAnimationListener(mAnimListener);
         
         mToggle = (ImageButton)findViewById(R.id.button_transmission);
         mToggle.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!mActivated) {
+                if (!mRecording) {
                     Log.d(TAG, "start recording");
-                    
-                    // play chirp sound
-                    mSounds.play(mChirpSound, 1.0f, 1.0f, 1, 0, 1.0f);
-                    
-                    // wait until the sound is done
-                    try {
-                        Thread.sleep(300);
-                    } catch (InterruptedException e) {
-                        // interrupted
-                    }
                     
                     Intent i = new Intent(MainActivity.this, CommService.class);
                     i.setAction(CommService.OPEN_COMM_CHANNEL);
@@ -140,7 +160,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        if (mSounds != null) mSounds.release();
+        mHandler = null;
         super.onDestroy();
     }
 }

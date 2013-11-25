@@ -1,10 +1,13 @@
 package de.tubs.ibr.dtn.communicator;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -51,6 +54,14 @@ public class CommService extends Service {
     private SpeexTransmitter mTransmitter = null;
     
     private HashMap<StreamId, SpeexReceiver> mReceivers = new HashMap<StreamId, SpeexReceiver>();
+    
+    private boolean mPlaying = false;
+    private boolean mRecording = false;
+    
+    private SoundPool mSounds = null;
+    private int mChirpSound = 0;
+    private int mAckSound = 0;
+    private int mChanOpen = 0;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -89,11 +100,32 @@ public class CommService extends Service {
             SpeexReceiver receiver = new SpeexReceiver(data);
             mReceivers.put(id, receiver);
             
+            // start audio receiver
             receiver.start();
         }
 
         @Override
         public void onFrameReceived(StreamId id, Frame frame) {
+            if (!mPlaying) {
+                // play open channel sound
+                mSounds.play(mChanOpen, 0.5f, 0.5f, 1, 0, 1.0f);
+                
+                // wait until the sound is done
+                try {
+                    Thread.sleep(150);
+                } catch (InterruptedException e) {
+                    // interrupted
+                }
+                
+                // set playing mark
+                mPlaying = true;
+                
+                // send stick intent
+                Intent i = new Intent(COMM_STATE);
+                i.putExtra("playing", mPlaying);
+                i.putExtra("recording", mRecording);
+                sendStickyBroadcast(i);
+            }
             SpeexReceiver receiver = mReceivers.get(id);
             if (receiver != null) {
                 receiver.push(frame);
@@ -108,6 +140,16 @@ public class CommService extends Service {
             if (receiver != null) {
                 receiver.close();
                 mReceivers.remove(id);
+            }
+            
+            if (mReceivers.size() == 0) {
+                mPlaying = false;
+                
+                // send stick intent
+                Intent i = new Intent(COMM_STATE);
+                i.putExtra("playing", mPlaying);
+                i.putExtra("recording", mRecording);
+                sendStickyBroadcast(i);
             }
         }
     };
@@ -130,11 +172,27 @@ public class CommService extends Service {
         if (OPEN_COMM_CHANNEL.equals(action)) {
             if ((mSession != null) && (mTransmitter == null)) {
                 mTransmitter = new SpeexTransmitter(this, mSession, COMM_STREAM_ENDPOINT);
+                
+                // play chirp sound
+                mSounds.play(mChirpSound, 1.0f, 1.0f, 1, 0, 1.0f);
+                
+                // wait until the sound is done
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    // interrupted
+                }
+                
+                // start recording
                 mTransmitter.start();
+                
+                // set recording mark
+                mRecording = true;
                 
                 // send stick intent
                 Intent i = new Intent(COMM_STATE);
-                i.putExtra("recording", true);
+                i.putExtra("playing", mPlaying);
+                i.putExtra("recording", mRecording);
                 sendStickyBroadcast(i);
             }
         }
@@ -143,9 +201,16 @@ public class CommService extends Service {
                 mTransmitter.close();
                 mTransmitter = null;
                 
+                // play ack sound
+                mSounds.play(mAckSound, 1.0f, 1.0f, 1, 0, 1.0f);
+                
+                // remove recording mark
+                mRecording = false;
+                
                 // send stick intent
                 Intent i = new Intent(COMM_STATE);
-                i.putExtra("recording", false);
+                i.putExtra("playing", mPlaying);
+                i.putExtra("recording", mRecording);
                 sendStickyBroadcast(i);
             }
         }
@@ -176,6 +241,16 @@ public class CommService extends Service {
         mBuilder.setSmallIcon(R.drawable.ic_launcher_flat);
         mBuilder.setOngoing(true);
         mNotification = mBuilder.build();
+        
+        // load sound pool
+        mSounds = new SoundPool(1, AudioManager.STREAM_SYSTEM, 0);
+        try {
+            mChirpSound = mSounds.load(getAssets().openFd("chirp.mp3"), 1);
+            mAckSound = mSounds.load(getAssets().openFd("ack.mp3"), 1);
+            mChanOpen = mSounds.load(getAssets().openFd("channel-open.mp3"), 1);
+        } catch (IOException e) {
+            Log.e(TAG, "sound loading failed.", e);
+        }
         
         HandlerThread thread = new HandlerThread(TAG);
         thread.start();
@@ -214,6 +289,8 @@ public class CommService extends Service {
 
     @Override
     public void onDestroy() {
+        if (mSounds != null) mSounds.release();
+        
         if (mTransmitter != null) {
             mTransmitter.close();
             mTransmitter = null;
