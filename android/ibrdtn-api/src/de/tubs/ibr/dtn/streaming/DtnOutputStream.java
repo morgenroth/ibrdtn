@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -39,11 +40,10 @@ public class DtnOutputStream {
 
     private boolean mHeaderWritten = false;
     private boolean mFinalized = false;
-    private boolean mFirstFlush = false;
     
     private long mRttBegin = 0L;
     private Float mRttValue = null;
-    private static final float RTT_ALPHA = 0.125f;
+    private Future<?> mFlushSchedule = null;
     
     private DataOutputStream mOutput = null;
     private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(2);
@@ -74,14 +74,7 @@ public class DtnOutputStream {
                     mAckedId = acked;
                     
                     // get measured RTT
-                    float sampleRtt = System.currentTimeMillis() - mRttBegin;
-                    
-                    if (mRttValue == null) {
-                        mRttValue = sampleRtt;
-                        mFirstFlush = true;
-                    } else {
-                        mRttValue = (1 - RTT_ALPHA) * mRttValue + RTT_ALPHA * sampleRtt;
-                    }
+                    mRttValue = Float.valueOf(System.currentTimeMillis() - mRttBegin);
     
                     scheduleFlush();
                 }
@@ -140,11 +133,8 @@ public class DtnOutputStream {
                         DtnOutputStream.this.notifyAll();
                     }
                     
-                    // start time measurement
-                    mRttBegin = System.currentTimeMillis();
-                    
                     // start send process
-                    mSentId = mSession.send(bundle, fds[0]);
+                    mSession.send(mDestination, mLifetime, fds[0]);
                 }
                 
                 // compose final bundle payload
@@ -207,27 +197,29 @@ public class DtnOutputStream {
     private synchronized void flush() throws IOException {
         if (mOutput != null) mOutput.close();
         mOutput = null;
-        mFirstFlush = false;
         notifyAll();
     }
     
     private synchronized void scheduleFlush() {
-        if (mSentId == null) return;
-        if (mAckedId == null) return;
+        // need sent and ack'd bundle ID
+        if ((mSentId == null) || (mAckedId == null)) return;
         
-        if (!mSentId.equals(mAckedId)) return;
+        // only schedule once
+        if (mFlushSchedule != null) return;
         
         // do not flush if the header has not been written yet
         if (!mHeaderWritten) return;
+        
+        if (!mSentId.equals(mAckedId)) return;
         
         // clear ackedId to prevent further calls
         mAckedId = null;
         
         // delay
-        Float delay = mRttValue * (mFirstFlush ? 1.2f : 1f);
+        Float delay = mRttValue * 0.2f;
         
         // schedule flush
-        mExecutor.schedule(new Runnable() {
+        mFlushSchedule = mExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -236,7 +228,7 @@ public class DtnOutputStream {
                     Log.e(TAG, "flush failed", e);
                 }
             }
-        }, delay.intValue(), TimeUnit.MILLISECONDS);
+        }, delay.intValue(), mRttValue.intValue(), TimeUnit.MILLISECONDS);
     }
     
     /**
@@ -248,6 +240,9 @@ public class DtnOutputStream {
     public void close() throws IOException, InterruptedException {
         // unregister status report receiver
         mContext.unregisterReceiver(mReceiver);
+        
+        if (mFlushSchedule != null)
+            mFlushSchedule.cancel(false);
         
         synchronized(this) {
             // mark this stream as finalized
