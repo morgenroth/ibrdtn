@@ -1,8 +1,10 @@
 package de.tubs.ibr.dtn.streaming;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 
-public class StreamId {
+public class StreamId implements Parcelable {
     public SingletonEndpoint source = null;
     public int correlator = 0;
     
@@ -29,4 +31,31 @@ public class StreamId {
         if (source == null) return correlator;
         return source.hashCode() ^ correlator;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(correlator);
+        dest.writeParcelable(source, flags);
+    }
+    
+    public static final Creator<StreamId> CREATOR = new Creator<StreamId>() {
+        public StreamId createFromParcel(final Parcel source) {
+            StreamId id = new StreamId();
+            
+            id.correlator = source.readInt();
+            id.source = source.readParcelable(SingletonEndpoint.class.getClassLoader());
+            
+            return id;
+        }
+
+        @Override
+        public StreamId[] newArray(int size) {
+            return new StreamId[size];
+        }
+    };
 }

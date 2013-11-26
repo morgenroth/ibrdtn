@@ -4,7 +4,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class Frame implements Comparable<Frame> {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class Frame implements Parcelable, Comparable<Frame> {
     public byte[] data;
     public int offset;
     public int number;
@@ -45,6 +48,14 @@ public class Frame implements Comparable<Frame> {
     
     public static Frame parse(DataInputStream stream) throws IOException {
         int length = stream.readInt();
+        
+        if (length < 0) {
+            throw new IOException("negative frame length decoded");
+        }
+        
+        if (length > 512000) {
+            throw new IOException("invalid frame length decoded");
+        }
 
         Frame ret = new Frame();
         ret.data = new byte[length];
@@ -63,4 +74,38 @@ public class Frame implements Comparable<Frame> {
             stream.write(frame.data);
         }
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(offset);
+        dest.writeInt(number);
+        
+        dest.writeInt(data.length);
+        dest.writeByteArray(data);
+    }
+    
+    public static final Creator<Frame> CREATOR = new Creator<Frame>() {
+        public Frame createFromParcel(final Parcel source) {
+            Frame frame = new Frame();
+            
+            frame.offset = source.readInt();
+            frame.number = source.readInt();
+            
+            int size = source.readInt();
+            frame.data = new byte[size];
+            source.readByteArray(frame.data);
+            
+            return frame;
+        }
+
+        @Override
+        public Frame[] newArray(int size) {
+            return new Frame[size];
+        }
+    };
 }
