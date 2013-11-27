@@ -206,30 +206,6 @@ public class CommService extends Service {
             
             // start audio receiver
             receiver.start();
-
-            if (!mPlaying) {
-                // send stick intent
-                Intent i = new Intent(COMM_STATE);
-                i.putExtra("playing", mPlaying);
-                i.putExtra("recording", mRecording);
-                sendStickyBroadcast(i);
-                
-                // play open channel sound
-                mSounds.play(mChanOpen, 0.5f, 0.5f, 1, 0, 1.0f);
-                
-                // wait until the sound is done
-                try {
-                    Thread.sleep(150);
-                } catch (InterruptedException e) {
-                    // interrupted
-                }
-                
-                // set playing mark
-                mPlaying = true;
-                
-                // broadcast service state
-                broadcastState();
-            }
         }
         else if (FRAME_COMM_TRANSMISSION.equals(action)) {
             StreamId id = intent.getParcelableExtra("stream_id");
@@ -238,6 +214,23 @@ public class CommService extends Service {
             SpeexReceiver receiver = mReceivers.get(id);
             if (receiver != null) {
                 receiver.push(frame);
+                
+                if (!mPlaying) {
+                    // send stick intent
+                    Intent i = new Intent(COMM_STATE);
+                    i.putExtra("playing", mPlaying);
+                    i.putExtra("recording", mRecording);
+                    sendStickyBroadcast(i);
+                    
+                    // play open channel sound
+                    mSounds.play(mChanOpen, 0.5f, 0.5f, 1, 0, 1.0f);
+                    
+                    // set playing mark
+                    mPlaying = true;
+                    
+                    // broadcast service state
+                    broadcastState();
+                }
             }
         }
         else if (CLOSE_COMM_TRANSMISSION.equals(action)) {
