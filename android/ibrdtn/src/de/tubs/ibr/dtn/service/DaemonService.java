@@ -112,11 +112,6 @@ public class DaemonService extends Service {
         }
 
         @Override
-        public boolean isRunning() throws RemoteException {
-            return DaemonService.this.mDaemonProcess.getState().equals(DaemonState.ONLINE);
-        }
-
-        @Override
         public List<Node> getNeighbors() throws RemoteException {
         	return DaemonService.this.mDaemonProcess.getNeighbors();
         }

@@ -31,11 +31,6 @@ interface DTNService {
 	DaemonState getState();
 	
 	/**
-	 * Determine if the daemon is running or not.
-	 */
-	boolean isRunning();
-	
-	/**
 	 * Get the local endpoint
 	 */
 	String getEndpoint();
