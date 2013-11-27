@@ -372,6 +372,9 @@ public class DtnService extends IntentService {
         @Override
         public void onSessionConnected(Session session) {
             Log.d(TAG, "Session connected");
+            
+            // register own data handler for incoming bundles
+            session.setDataHandler(mDataHandler);
         }
 
         @Override
@@ -401,9 +404,6 @@ public class DtnService extends IntentService {
         
         // additionally join a group
         registration.add(SHAREBOX_GROUP_EID);
-        
-        // register own data handler for incoming bundles
-        mClient.setDataHandler(mDataHandler);
         
         try {
             // initialize the connection to the DTN service

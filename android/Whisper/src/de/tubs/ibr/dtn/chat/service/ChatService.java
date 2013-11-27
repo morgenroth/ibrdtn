@@ -290,13 +290,16 @@ public class ChatService extends IntentService {
 		// create a new client object
 		_client = new DTNClient(new SessionConnection() {
             @Override
-            public void onSessionConnected(Session arg0) {
+            public void onSessionConnected(Session session) {
                 // respect user settings
                 if (PreferenceManager.getDefaultSharedPreferences(ChatService.this).getBoolean("checkBroadcastPresence", false))
                 {
                     // register scheduled presence update
                     PresenceGenerator.activate(ChatService.this);
                 }
+                
+                // register own data handler for incoming bundles
+                session.setDataHandler(_data_handler);
             }
 
             @Override
@@ -311,9 +314,6 @@ public class ChatService extends IntentService {
 		// create registration
     	_registration = new Registration("chat");
     	_registration.add(PRESENCE_GROUP_EID);
-		
-		// register own data handler for incoming bundles
-		_client.setDataHandler(_data_handler);
 		
 		try {
 			_client.initialize(this, _registration);
