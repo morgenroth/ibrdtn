@@ -3,6 +3,8 @@ package de.tubs.ibr.dtn.streaming;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -48,9 +50,24 @@ public class DtnStreamTransmitter {
     private DataOutputStream mOutput = null;
     private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(2);
     
+    private Queue<Frame> mFramePool = new LinkedList<Frame>();
+    
     private int generateCorrelator() {
         UUID uuid = UUID.randomUUID();
         return Long.valueOf(uuid.getMostSignificantBits()).intValue();
+    }
+    
+    private synchronized Frame obtainFrame() {
+        Frame f = mFramePool.poll();
+        if (f == null) {
+            f = new Frame();
+        }
+        return f;
+    }
+    
+    private synchronized void releaseFrame(Frame f) {
+        f.clear();
+        mFramePool.add(f);
     }
     
     public DtnStreamTransmitter(Context context, DTNClient.Session session) {
@@ -186,11 +203,14 @@ public class DtnStreamTransmitter {
         }
         
         // new frame to write
-        Frame f = new Frame();
+        Frame f = obtainFrame();
         f.data = data;
-        Frame.write(mOutput, f);
-        mOutput.flush();
+        f.write(mOutput);
         
+        // release the frame back to the pool
+        releaseFrame(f);
+        
+        // flush now
         scheduleFlush();
     }
     
@@ -274,10 +294,12 @@ public class DtnStreamTransmitter {
         StreamHeader.write(stream, header);
         
         // write meta data
-        Frame meta = new Frame();
+        Frame meta = obtainFrame();
         meta.data = mMeta;
+        meta.write(stream);
         
-        Frame.write(stream, meta);
+        // release the frame back to the pool
+        releaseFrame(meta);
         
         return output.toByteArray();
     }

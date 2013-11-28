@@ -190,7 +190,8 @@ public class DtnStreamReceiver {
                         try {
                             int index = 0;
                             while (true) {
-                                Frame f = Frame.parse(mInput);
+                                Frame f = target.obtainFrame();
+                                f.parse(mInput);
                                 f.number = index;
                                 f.offset = header.offset;
                                 frames.add(f);
@@ -201,18 +202,19 @@ public class DtnStreamReceiver {
                         }
                         
                         // push frames
-                        target.push(frames);
+                        target.pushFrame(frames);
                         break;
                     }
                     case FIN: {
-                        Frame f = new Frame();
+                        Frame f = target.obtainFrame();
                         f.offset = header.offset;
-                        target.push(f);
+                        target.pushFrame(f);
                         break;
                     }
                     case INITIAL: {
                         // read meta data
-                        Frame f = Frame.parse(mInput);
+                        Frame f = target.obtainFrame();
+                        f.parse(mInput);
                         
                         // push data-type and meta-data
                         target.initialize(header.media, f.data);

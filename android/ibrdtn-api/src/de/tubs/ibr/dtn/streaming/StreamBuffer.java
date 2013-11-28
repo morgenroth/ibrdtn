@@ -1,12 +1,14 @@
 package de.tubs.ibr.dtn.streaming;
 
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class StreamBuffer {
 
     private int mNext = 0;
+    private Queue<Frame> mFramePool = new LinkedList<Frame>();
     private Queue<Frame> mDataQueue = new PriorityQueue<Frame>();
     private DtnStreamReceiver.StreamListener mListener = null;
     private MediaType mType = null;
@@ -38,11 +40,19 @@ public class StreamBuffer {
         deliverFrames();
     }
     
+    public synchronized Frame obtainFrame() {
+        Frame f = mFramePool.poll();
+        if (f == null) {
+            f = new Frame();
+        }
+        return f;
+    }
+    
     /**
      * put data frame into the stream
      * @param frames
      */
-    public synchronized void push(Collection<Frame> frames) {
+    public synchronized void pushFrame(Collection<Frame> frames) {
         // drop all frames if finalized
         if (mFinalized) return;
         
@@ -58,7 +68,7 @@ public class StreamBuffer {
         deliverFrames();
     }
     
-    public synchronized void push(Frame f) {
+    public synchronized void pushFrame(Frame f) {
         // drop all frames if finalized
         if (mFinalized) return;
         
@@ -95,6 +105,10 @@ public class StreamBuffer {
             
             // remind the expected next frame
             mNext = head.offset + 1;
+            
+            // release the frame back to the pool
+            head.clear();
+            mFramePool.add(head);
             
             // peek at the next frame
             head = mDataQueue.peek();

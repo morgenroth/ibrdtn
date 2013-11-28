@@ -12,6 +12,12 @@ public class Frame implements Parcelable, Comparable<Frame> {
     public int offset;
     public int number;
     
+    public void clear() {
+        data = null;
+        offset = 0;
+        number = 0;
+    }
+    
     @Override
     public String toString() {
         if (data == null) {
@@ -46,7 +52,7 @@ public class Frame implements Parcelable, Comparable<Frame> {
         return super.equals(o);
     }
     
-    public static Frame parse(DataInputStream stream) throws IOException {
+    public void parse(DataInputStream stream) throws IOException {
         int length = stream.readInt();
         
         if (length < 0) {
@@ -57,21 +63,18 @@ public class Frame implements Parcelable, Comparable<Frame> {
             throw new IOException("invalid frame length decoded");
         }
 
-        Frame ret = new Frame();
-        ret.data = new byte[length];
+        data = new byte[length];
         if (length > 0) {
-            stream.read(ret.data);
+            stream.read(data);
         }
-        
-        return ret;
     }
     
-    public static void write(DataOutputStream stream, Frame frame) throws IOException {
-        if (frame.data == null) {
+    public void write(DataOutputStream stream) throws IOException {
+        if (data == null) {
             stream.writeInt(0);
         } else {
-            stream.writeInt(frame.data.length);
-            stream.write(frame.data);
+            stream.writeInt(data.length);
+            stream.write(data);
         }
     }
 
