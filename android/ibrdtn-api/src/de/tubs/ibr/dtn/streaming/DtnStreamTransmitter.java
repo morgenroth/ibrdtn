@@ -295,8 +295,4 @@ public class DtnStreamTransmitter {
         
         return output.toByteArray();
     }
-    
-    public float getDelay() {
-        return mRttValue;
-    }
 }
