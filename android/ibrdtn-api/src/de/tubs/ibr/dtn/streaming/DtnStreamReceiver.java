@@ -26,7 +26,7 @@ import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.util.TruncatedInputStream;
 
-public class StreamEndpoint implements Callback {
+public class DtnStreamReceiver implements Callback {
     
     private static final String TAG = "DtnStreamEndpoint";
     
@@ -38,17 +38,23 @@ public class StreamEndpoint implements Callback {
     private HandlerThread mHandlerThread = null;
     private Handler mHandler = null;
     
-    private DtnInputStream.PacketListener mPacketListener = null;
+    private StreamListener mListener = null;
     private StreamFilter mFilter = null;
     private DataHandler mPlainBundleHandler = null;
     
     // TODO: clear closed / expired streams
-    private HashMap<StreamId, DtnInputStream> mStreams = new HashMap<StreamId, DtnInputStream>();
+    private HashMap<StreamId, StreamBuffer> mStreams = new HashMap<StreamId, StreamBuffer>();
+    
+    public interface StreamListener {
+        public void onInitial(StreamId id, MediaType type, byte[] data);
+        public void onFrameReceived(StreamId id, Frame frame);
+        public void onFinish(StreamId id);
+    };
 
-    public StreamEndpoint(Context context, DTNClient.Session session, DtnInputStream.PacketListener listener, DataHandler handler) {
+    public DtnStreamReceiver(Context context, DTNClient.Session session, StreamListener listener, DataHandler handler) {
         mSession = session;
         mPlainBundleHandler = handler;
-        mPacketListener = listener;
+        mListener = listener;
         mSession.setDataHandler(mDataHandler);
         mContext = context;
         
@@ -136,7 +142,7 @@ public class StreamEndpoint implements Callback {
                 // assign correlator to stream id
                 mStreamId.correlator = header.correlator;
                 
-                DtnInputStream target = null;
+                StreamBuffer target = null;
                 
                 synchronized(mStreams) {
                     // get existing input stream
@@ -144,7 +150,7 @@ public class StreamEndpoint implements Callback {
                     
                     if (target == null) {
                         // create new input stream
-                        target = new DtnInputStream(mStreamId, mPacketListener);
+                        target = new StreamBuffer(mStreamId, mListener);
                         mStreams.put(mStreamId, target);
                     }
                 }
@@ -168,13 +174,13 @@ public class StreamEndpoint implements Callback {
                         }
                         
                         // push frames
-                        target.put(frames);
+                        target.push(frames);
                         break;
                     }
                     case FIN: {
                         Frame f = new Frame();
                         f.offset = header.offset;
-                        target.put(f);
+                        target.push(f);
                         break;
                     }
                     case INITIAL: {
@@ -182,7 +188,7 @@ public class StreamEndpoint implements Callback {
                         Frame f = Frame.parse(mInput);
                         
                         // push data-type and meta-data
-                        target.put(header.media, f.data);
+                        target.initialize(header.media, f.data);
                         break;
                     }
                     default:

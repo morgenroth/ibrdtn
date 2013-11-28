@@ -23,7 +23,7 @@ import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.SingletonEndpoint;
 
-public class DtnOutputStream {
+public class DtnStreamTransmitter {
     
     private static final String TAG = "DtnOutputStream";
     
@@ -53,7 +53,7 @@ public class DtnOutputStream {
         return Long.valueOf(uuid.getMostSignificantBits()).intValue();
     }
     
-    public DtnOutputStream(Context context, DTNClient.Session session) {
+    public DtnStreamTransmitter(Context context, DTNClient.Session session) {
         mContext = context;
         mSession = session;
         
@@ -68,7 +68,7 @@ public class DtnOutputStream {
         public void onReceive(Context context, Intent intent) {
             BundleID acked = intent.getParcelableExtra("bundleid");
             
-            synchronized(DtnOutputStream.this) {
+            synchronized(DtnStreamTransmitter.this) {
                 if (acked.compareTo(mPrevAckedId) > 0) {
                     mPrevAckedId = acked;
                     mAckedId = acked;
@@ -113,7 +113,7 @@ public class DtnOutputStream {
                 while (!isInterrupted()) {
                     ParcelFileDescriptor[] fds = null;
                     
-                    synchronized(DtnOutputStream.this) {
+                    synchronized(DtnStreamTransmitter.this) {
                         // abort processing if finalized
                         if (mFinalized) break;
                         
@@ -130,7 +130,7 @@ public class DtnOutputStream {
                         mOutput = new DataOutputStream(new ParcelFileDescriptor.AutoCloseOutputStream(fds[1]));
                         
                         // notify all waiting threads
-                        DtnOutputStream.this.notifyAll();
+                        DtnStreamTransmitter.this.notifyAll();
                     }
                     
                     // start send process

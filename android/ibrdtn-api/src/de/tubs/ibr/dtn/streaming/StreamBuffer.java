@@ -1,26 +1,19 @@
 package de.tubs.ibr.dtn.streaming;
 
-import java.io.Closeable;
 import java.util.Collection;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
-public class DtnInputStream implements Closeable {
+public class StreamBuffer {
 
     private int mNext = 0;
     private Queue<Frame> mDataQueue = new PriorityQueue<Frame>();
-    private PacketListener mListener = null;
+    private DtnStreamReceiver.StreamListener mListener = null;
     private MediaType mType = null;
     private boolean mFinalized = false;
     private StreamId mId = null;
     
-    public interface PacketListener {
-        public void onInitial(StreamId id, MediaType type, byte[] data);
-        public void onFrameReceived(StreamId id, Frame frame);
-        public void onFinish(StreamId id);
-    }
-    
-    public DtnInputStream(StreamId id, PacketListener listener) {
+    public StreamBuffer(StreamId id, DtnStreamReceiver.StreamListener listener) {
         mListener = listener;
         mId = id;
     }
@@ -34,7 +27,7 @@ public class DtnInputStream implements Closeable {
      * @param type
      * @param data
      */
-    public synchronized void put(MediaType type, byte[] data) {
+    public synchronized void initialize(MediaType type, byte[] data) {
         // only initialize once
         if (mType != null) return;
         
@@ -49,7 +42,7 @@ public class DtnInputStream implements Closeable {
      * put data frame into the stream
      * @param frames
      */
-    public synchronized void put(Collection<Frame> frames) {
+    public synchronized void push(Collection<Frame> frames) {
         // drop all frames if finalized
         if (mFinalized) return;
         
@@ -65,7 +58,7 @@ public class DtnInputStream implements Closeable {
         deliverFrames();
     }
     
-    public synchronized void put(Frame f) {
+    public synchronized void push(Frame f) {
         // drop all frames if finalized
         if (mFinalized) return;
         
@@ -111,7 +104,7 @@ public class DtnInputStream implements Closeable {
     /**
      * finalize the stream
      */
-    public synchronized void close() {
+    private synchronized void close() {
         mFinalized = true;
         mDataQueue.clear();
     }
