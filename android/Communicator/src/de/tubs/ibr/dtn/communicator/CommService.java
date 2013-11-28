@@ -22,10 +22,9 @@ import de.tubs.ibr.dtn.api.GroupEndpoint;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionConnection;
-import de.tubs.ibr.dtn.streaming.DtnInputStream;
+import de.tubs.ibr.dtn.streaming.DtnStreamReceiver;
 import de.tubs.ibr.dtn.streaming.Frame;
 import de.tubs.ibr.dtn.streaming.MediaType;
-import de.tubs.ibr.dtn.streaming.StreamEndpoint;
 import de.tubs.ibr.dtn.streaming.StreamId;
 
 public class CommService extends Service {
@@ -48,7 +47,7 @@ public class CommService extends Service {
     private DTNClient mClient = null;
     private Session mSession = null;
     
-    private StreamEndpoint mStreamEndpoint = null;
+    private DtnStreamReceiver mStreamEndpoint = null;
     
     private NotificationCompat.Builder mBuilder = null;
     private Notification mNotification = null;
@@ -83,7 +82,7 @@ public class CommService extends Service {
             CommService.this.startForeground(NOTIFICATION_ID, mNotification);
             
             // create streaming endpoint with own data handler as fallback
-            mStreamEndpoint = new StreamEndpoint(CommService.this, session, mPacketStreamListener, null);
+            mStreamEndpoint = new DtnStreamReceiver(CommService.this, session, mStreamListener, null);
         }
 
         @Override
@@ -97,7 +96,7 @@ public class CommService extends Service {
         }
     };
     
-    DtnInputStream.PacketListener mPacketStreamListener = new DtnInputStream.PacketListener() {
+    DtnStreamReceiver.StreamListener mStreamListener = new DtnStreamReceiver.StreamListener() {
         @Override
         public void onInitial(StreamId id, MediaType type, byte[] data) {
             // start playing

@@ -17,7 +17,7 @@ import com.purplefrog.speexjni.SpeexEncoder;
 
 import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.EID;
-import de.tubs.ibr.dtn.streaming.DtnOutputStream;
+import de.tubs.ibr.dtn.streaming.DtnStreamTransmitter;
 import de.tubs.ibr.dtn.streaming.MediaType;
 
 public class SpeexTransmitter extends Thread implements Closeable {
@@ -32,11 +32,11 @@ public class SpeexTransmitter extends Thread implements Closeable {
     private static final int QUALITY = 8;
     
     private AudioRecord mAudioRec = null;
-    private DtnOutputStream mStream = null;
+    private DtnStreamTransmitter mStream = null;
     private EID mDestination = null;
     
     public SpeexTransmitter(Context context, Session session, EID destination) {
-        mStream = new DtnOutputStream(context, session);
+        mStream = new DtnStreamTransmitter(context, session);
         mStream.setLifetime(300);
         mDestination = destination;
     }
