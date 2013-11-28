@@ -1,6 +1,8 @@
 package de.tubs.ibr.dtn.streaming;
 
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -14,6 +16,8 @@ public class StreamBuffer {
     private MediaType mType = null;
     private boolean mFinalized = false;
     private StreamId mId = null;
+    
+    private Date mExpiration = null;
     
     public StreamBuffer(StreamId id, DtnStreamReceiver.StreamListener listener) {
         mListener = listener;
@@ -95,7 +99,6 @@ public class StreamBuffer {
             
             if (head.data == null) {
                 // final frame
-                if (mListener != null) mListener.onFinish(mId);
                 close();
                 return;
             } else {
@@ -119,7 +122,32 @@ public class StreamBuffer {
      * finalize the stream
      */
     private synchronized void close() {
+        if (mListener != null) mListener.onFinish(mId);
         mFinalized = true;
         mDataQueue.clear();
+    }
+    
+    public void prolong(int lifetime) {
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.SECOND, lifetime);
+        mExpiration = c.getTime();
+    }
+    
+    public boolean isFinalized() {
+        return mFinalized;
+    }
+    
+    public boolean isGarbage() {
+        if (isFinalized()) return true;
+        
+        // without an expiration date, this will never be garbage
+        if (mExpiration == null) return false;
+        
+        if (mExpiration.before(new Date())) {
+            close();
+            return true;
+        }
+
+        return false;
     }
 }

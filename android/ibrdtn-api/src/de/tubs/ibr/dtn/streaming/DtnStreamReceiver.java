@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -39,13 +41,11 @@ public class DtnStreamReceiver {
     private Handler mHandler = null;
     
     private ScheduledExecutorService mProcessor = null;
+    private Future<?> mGarbageCollector = null;
     
     private StreamListener mListener = null;
     private StreamFilter mFilter = null;
     private DataHandler mPlainBundleHandler = null;
-    
-    // TODO: clear closed / expired streams
-    private HashMap<StreamId, StreamBuffer> mStreams = new HashMap<StreamId, StreamBuffer>();
     
     public interface StreamListener {
         public void onInitial(StreamId id, MediaType type, byte[] data);
@@ -72,6 +72,14 @@ public class DtnStreamReceiver {
         // create a new executor service
         mProcessor = Executors.newScheduledThreadPool(2);
         
+        // schedule garbage collection
+        mGarbageCollector = mProcessor.scheduleWithFixedDelay(new Runnable() {
+            @Override
+            public void run() {
+                mDataHandler.gc();
+            }
+        }, 1, 1, TimeUnit.MINUTES);
+        
         // register to RECEIVE intents
         IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.RECEIVE);
         filter.addCategory(context.getPackageName());
@@ -88,6 +96,9 @@ public class DtnStreamReceiver {
         // release registration to RECEIVE intents
         mContext.unregisterReceiver(mReceiver);
         
+        // abort garbage collection
+        mGarbageCollector.cancel(false);
+        
         // stop executor service
         mProcessor.shutdown();
         
@@ -99,7 +110,7 @@ public class DtnStreamReceiver {
         mFilter = filter;
     }
     
-    private Handler.Callback mReceiverCallback = new Handler.Callback() {
+    private final Handler.Callback mReceiverCallback = new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
             if (msg.what == RECEIVE_BUNDLE) {
@@ -128,7 +139,7 @@ public class DtnStreamReceiver {
         }
     };
     
-    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Message msg = mHandler.obtainMessage();
@@ -140,25 +151,114 @@ public class DtnStreamReceiver {
         }
     };
     
-    private class PayloadParser implements Runnable {
-        private ParcelFileDescriptor mSinkFd = null;
-        private DataInputStream mInput = null;
-        private StreamId mStreamId = null;
+    private final StreamDataHandler mDataHandler = new StreamDataHandler();
+    
+    private class StreamDataHandler implements DataHandler, Runnable {
         
-        public PayloadParser(StreamId id, long payload_length) {
-            mStreamId = id;
-            
-            try {
-                ParcelFileDescriptor[] fds = ParcelFileDescriptor.createPipe();
-                mInput = new DataInputStream(new TruncatedInputStream(new ParcelFileDescriptor.AutoCloseInputStream(fds[0]), payload_length));
-                mSinkFd = fds[1];
-            } catch (IOException e) {
-                Log.e(TAG, "failed to create pipe", e);
+        private HashMap<StreamId, StreamBuffer> mStreams = new HashMap<StreamId, StreamBuffer>();
+
+        private Bundle mBundle = null;
+        private StreamId mStreamId = null;
+        private Block mBlock = null;
+         
+        private DataInputStream mInput = null;
+
+        @Override
+        public void startBundle(Bundle bundle) {
+            if ((mFilter == null) || mFilter.onHandleStream(bundle)) {
+                mStreamId = new StreamId();
+                mStreamId.correlator = 0;
+                mStreamId.source = bundle.getSource();
+                
+                mBundle = bundle;
+            }
+            else if (mPlainBundleHandler != null) {
+                mStreamId = null;
+                mPlainBundleHandler.startBundle(bundle);
             }
         }
-        
-        public ParcelFileDescriptor getSinkFd() {
-            return mSinkFd;
+
+        @Override
+        public void endBundle() {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
+                mPlainBundleHandler.endBundle();
+                return;
+            }
+            
+            // mark as delivered
+            Message msg = mHandler.obtainMessage();
+            msg.what = MARK_DELIVERED;
+            msg.obj = new BundleID(mBundle);
+            mHandler.sendMessage(msg);
+        }
+
+        @Override
+        public TransferMode startBlock(Block block) {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
+                return mPlainBundleHandler.startBlock(block);
+            }
+            
+            // only parse payload
+            if (block.type == 1) {
+                mBlock = block;
+                return TransferMode.FILEDESCRIPTOR;
+            }
+            return TransferMode.NULL;
+        }
+
+        @Override
+        public void endBlock() {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
+                mPlainBundleHandler.endBlock();
+                return;
+            }
+            
+            try {
+                // need to wait here until run is done
+                synchronized(this) {
+                    while (mInput != null) {
+                        this.wait();
+                    }
+                }
+            } catch (InterruptedException e) {
+                Log.e(TAG, "interrupted while waiting for completion", e);
+            }
+            
+            mBlock = null;
+        }
+
+        @Override
+        public void payload(byte[] data) {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
+                mPlainBundleHandler.payload(data);
+            }
+        }
+
+        @Override
+        public ParcelFileDescriptor fd() {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
+                return mPlainBundleHandler.fd();
+            }
+            
+            if (mBlock != null) {
+                try {
+                    ParcelFileDescriptor[] fds = ParcelFileDescriptor.createPipe();
+                    mInput = new DataInputStream(new TruncatedInputStream(new ParcelFileDescriptor.AutoCloseInputStream(fds[0]), mBlock.length));
+                    mProcessor.submit(this);
+                    return fds[1];
+                } catch (IOException e) {
+                    Log.e(TAG, "failed to create pipe", e);
+                }
+            }
+            
+            return null;
+        }
+
+        @Override
+        public void progress(long current, long length) {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
+                mPlainBundleHandler.progress(current, length);
+            }
         }
         
         @Override
@@ -180,6 +280,9 @@ public class DtnStreamReceiver {
                         target = new StreamBuffer(mStreamId, mListener);
                         mStreams.put(mStreamId, target);
                     }
+                    
+                    // prolong stream validity
+                    target.prolong(mBundle.getLifetime().intValue());
                 }
                 
                 switch (header.type) {
@@ -223,105 +326,40 @@ public class DtnStreamReceiver {
                     default:
                         break;
                 }
+                
+                if (target.isFinalized()) {
+                    synchronized(mStreams) {
+                        //Log.d(TAG, "stream released: " + mStreamId);
+                        mStreams.remove(mStreamId);
+                    }
+                }
             } catch (IOException e) {
                 Log.e(TAG, "error while parsing", e);
             } finally {
-                try {
-                    mInput.close();
-                } catch (IOException e) {
-                    Log.e(TAG, "failed to close", e);
+                close();
+            }
+        }
+        
+        private synchronized void close() {
+            try {
+                mInput.close();
+            } catch (IOException e) {
+                Log.e(TAG, "failed to close", e);
+            }
+            mInput = null;
+            notifyAll();
+        }
+        
+        // garbage collection: clear closed / expired streams
+        public void gc() {
+            synchronized(mStreams) {
+                for (StreamId id : mStreams.keySet()) {
+                    StreamBuffer buf = mStreams.get(id);
+                    if (buf.isGarbage()) {
+                        mStreams.remove(id);
+                        //Log.d(TAG, "stream wiped: " + id);
+                    }
                 }
-            }
-        }
-    }
-    
-    private DataHandler mDataHandler = new DataHandler() {
-
-        private BundleID mBundleId = null;
-        private StreamId mStreamId = null;
-        private Block mBlock = null;
-
-        @Override
-        public void startBundle(Bundle bundle) {
-            if ((mFilter == null) || mFilter.onHandleStream(bundle)) {
-                mStreamId = new StreamId();
-                mStreamId.correlator = 0;
-                mStreamId.source = bundle.getSource();
-                
-                mBundleId = new BundleID(bundle);
-            }
-            else if (mPlainBundleHandler != null) {
-                mStreamId = null;
-                mPlainBundleHandler.startBundle(bundle);
-            }
-        }
-
-        @Override
-        public void endBundle() {
-            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
-                mPlainBundleHandler.endBundle();
-                return;
-            }
-            
-            // mark as delivered
-            Message msg = mHandler.obtainMessage();
-            msg.what = MARK_DELIVERED;
-            msg.obj = mBundleId;
-            mHandler.sendMessage(msg);
-            
-            mBundleId = null;
-        }
-
-        @Override
-        public TransferMode startBlock(Block block) {
-            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
-                return mPlainBundleHandler.startBlock(block);
-            }
-            
-            // only parse payload
-            if (block.type == 1) {
-                mBlock = block;
-                return TransferMode.FILEDESCRIPTOR;
-            }
-            return TransferMode.NULL;
-        }
-
-        @Override
-        public void endBlock() {
-            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
-                mPlainBundleHandler.endBlock();
-                return;
-            }
-            
-            mBlock = null;
-        }
-
-        @Override
-        public void payload(byte[] data) {
-            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
-                mPlainBundleHandler.payload(data);
-            }
-        }
-
-        @Override
-        public ParcelFileDescriptor fd() {
-            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
-                return mPlainBundleHandler.fd();
-            }
-            
-            if (mBlock != null) {
-                PayloadParser parser = new PayloadParser(mStreamId, mBlock.length);
-                mProcessor.submit(parser);
-                return parser.getSinkFd();
-            } else {
-                return null;
-            }
-        }
-
-        @Override
-        public void progress(long current, long length) {
-            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
-                mPlainBundleHandler.progress(current, length);
             }
         }
     };
