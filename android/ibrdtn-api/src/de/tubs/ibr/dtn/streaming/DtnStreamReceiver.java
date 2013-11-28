@@ -1,19 +1,18 @@
 package de.tubs.ibr.dtn.streaming;
 
-import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
-import android.os.Handler.Callback;
 import android.os.HandlerThread;
-import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
@@ -26,7 +25,7 @@ import de.tubs.ibr.dtn.api.SessionDestroyedException;
 import de.tubs.ibr.dtn.api.TransferMode;
 import de.tubs.ibr.dtn.util.TruncatedInputStream;
 
-public class DtnStreamReceiver implements Callback {
+public class DtnStreamReceiver {
     
     private static final String TAG = "DtnStreamEndpoint";
     
@@ -35,8 +34,11 @@ public class DtnStreamReceiver implements Callback {
     
     private DTNClient.Session mSession = null;
     private Context mContext = null;
+    
     private HandlerThread mHandlerThread = null;
     private Handler mHandler = null;
+    
+    private ScheduledExecutorService mProcessor = null;
     
     private StreamListener mListener = null;
     private StreamFilter mFilter = null;
@@ -58,13 +60,17 @@ public class DtnStreamReceiver implements Callback {
         mSession.setDataHandler(mDataHandler);
         mContext = context;
         
+        // create handler for receiver and data processor
         mHandlerThread = new HandlerThread("Receiver");
         
-        // start own handler
+        // start both handlers
         mHandlerThread.start();
         
-        Looper looper = mHandlerThread.getLooper();
-        mHandler = new Handler(looper, this);
+        // create new handler
+        mHandler = new Handler(mHandlerThread.getLooper(), mReceiverCallback);
+        
+        // create a new executor service
+        mProcessor = Executors.newScheduledThreadPool(2);
         
         // register to RECEIVE intents
         IntentFilter filter = new IntentFilter(de.tubs.ibr.dtn.Intent.RECEIVE);
@@ -82,13 +88,45 @@ public class DtnStreamReceiver implements Callback {
         // release registration to RECEIVE intents
         mContext.unregisterReceiver(mReceiver);
         
-        // stop handler thread
+        // stop executor service
+        mProcessor.shutdown();
+        
+        // stop handlers
         mHandlerThread.quit();
     }
     
     public void setFilter(StreamFilter filter) {
         mFilter = filter;
     }
+    
+    private Handler.Callback mReceiverCallback = new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+            if (msg.what == RECEIVE_BUNDLE) {
+                try {
+                    BundleID id = (BundleID)msg.obj;
+                    if (id == null) {
+                        while (mSession.queryNext());
+                    } else {
+                        while (mSession.query(id));
+                    }
+                } catch (SessionDestroyedException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+            else if (msg.what == MARK_DELIVERED) {
+                try {
+                    BundleID id = (BundleID)msg.obj;
+                    mSession.delivered(id);
+                } catch (SessionDestroyedException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+            return false;
+        }
+    };
     
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -102,7 +140,7 @@ public class DtnStreamReceiver implements Callback {
         }
     };
     
-    private class PayloadParser extends Thread implements Closeable {
+    private class PayloadParser implements Runnable {
         private ParcelFileDescriptor mSinkFd = null;
         private DataInputStream mInput = null;
         private StreamId mStreamId = null;
@@ -123,17 +161,6 @@ public class DtnStreamReceiver implements Callback {
             return mSinkFd;
         }
         
-        public void close() {
-            try {
-                join();
-                mInput.close();
-            } catch (InterruptedException e) {
-                Log.e(TAG, "failed to join", e);
-            } catch (IOException e) {
-                Log.e(TAG, "failed to close", e);
-            }
-        }
-
         @Override
         public void run() {
             try {
@@ -196,34 +223,40 @@ public class DtnStreamReceiver implements Callback {
                 }
             } catch (IOException e) {
                 Log.e(TAG, "error while parsing", e);
+            } finally {
+                try {
+                    mInput.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "failed to close", e);
+                }
             }
         }
     }
     
     private DataHandler mDataHandler = new DataHandler() {
 
-        private BundleID bundle_id = null;
-        private StreamId stream_id = null;
-        private PayloadParser parser = null;
+        private BundleID mBundleId = null;
+        private StreamId mStreamId = null;
+        private Block mBlock = null;
 
         @Override
         public void startBundle(Bundle bundle) {
             if ((mFilter == null) || mFilter.onHandleStream(bundle)) {
-                stream_id = new StreamId();
-                stream_id.correlator = 0;
-                stream_id.source = bundle.getSource();
+                mStreamId = new StreamId();
+                mStreamId.correlator = 0;
+                mStreamId.source = bundle.getSource();
                 
-                bundle_id = new BundleID(bundle);
+                mBundleId = new BundleID(bundle);
             }
             else if (mPlainBundleHandler != null) {
-                stream_id = null;
+                mStreamId = null;
                 mPlainBundleHandler.startBundle(bundle);
             }
         }
 
         @Override
         public void endBundle() {
-            if ((stream_id == null) && (mPlainBundleHandler != null)) {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
                 mPlainBundleHandler.endBundle();
                 return;
             }
@@ -231,22 +264,21 @@ public class DtnStreamReceiver implements Callback {
             // mark as delivered
             Message msg = mHandler.obtainMessage();
             msg.what = MARK_DELIVERED;
-            msg.obj = bundle_id;
+            msg.obj = mBundleId;
             mHandler.sendMessage(msg);
             
-            bundle_id = null;
+            mBundleId = null;
         }
 
         @Override
         public TransferMode startBlock(Block block) {
-            if ((stream_id == null) && (mPlainBundleHandler != null)) {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
                 return mPlainBundleHandler.startBlock(block);
             }
             
             // only parse payload
             if (block.type == 1) {
-                parser = new PayloadParser(stream_id, block.length);
-                parser.start();
+                mBlock = block;
                 return TransferMode.FILEDESCRIPTOR;
             }
             return TransferMode.NULL;
@@ -254,63 +286,41 @@ public class DtnStreamReceiver implements Callback {
 
         @Override
         public void endBlock() {
-            if ((stream_id == null) && (mPlainBundleHandler != null)) {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
                 mPlainBundleHandler.endBlock();
                 return;
             }
-
-            if (parser != null) {
-                parser.close();
-                parser = null;
-            }
+            
+            mBlock = null;
         }
 
         @Override
         public void payload(byte[] data) {
-            if ((stream_id == null) && (mPlainBundleHandler != null)) {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
                 mPlainBundleHandler.payload(data);
             }
         }
 
         @Override
         public ParcelFileDescriptor fd() {
-            if ((stream_id == null) && (mPlainBundleHandler != null)) {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
                 return mPlainBundleHandler.fd();
             }
-            return parser.getSinkFd();
+            
+            if (mBlock != null) {
+                PayloadParser parser = new PayloadParser(mStreamId, mBlock.length);
+                mProcessor.submit(parser);
+                return parser.getSinkFd();
+            } else {
+                return null;
+            }
         }
 
         @Override
         public void progress(long current, long length) {
-            if ((stream_id == null) && (mPlainBundleHandler != null)) {
+            if ((mStreamId == null) && (mPlainBundleHandler != null)) {
                 mPlainBundleHandler.progress(current, length);
             }
         }
     };
-
-    @Override
-    public boolean handleMessage(Message msg) {
-        if (msg.what == RECEIVE_BUNDLE) {
-            try {
-                BundleID id = (BundleID)msg.obj;
-                if (id == null) {
-                    while (mSession.queryNext());
-                } else {
-                    while (mSession.query(id));
-                }
-            } catch (SessionDestroyedException e) {
-                e.printStackTrace();
-            }
-            return true;
-        }
-        else if (msg.what == MARK_DELIVERED) {
-            try {
-                BundleID id = (BundleID)msg.obj;
-                mSession.delivered(id);
-            } catch (SessionDestroyedException e) {
-                e.printStackTrace();
-            }
-            return true;
-        }
-        return false;
-    }}
+}
