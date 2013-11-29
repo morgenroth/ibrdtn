@@ -36,7 +36,7 @@ import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.swig.EID;
 import de.tubs.ibr.dtn.swig.NativeP2pManager;
 
-@TargetApi(16)
+@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 public class P2pManager extends NativeP2pManager {
 
     private final static String TAG = "P2pManager";
@@ -94,6 +94,8 @@ public class P2pManager extends NativeP2pManager {
     public P2pManager(DaemonService service) {
         super("P2P:WIFI");
         this.mService = service;
+        
+        createServiceDiscoveryListener();
     }
     
     private WifiP2pManager.ChannelListener mChannelListener = new WifiP2pManager.ChannelListener() {
@@ -158,6 +160,7 @@ public class P2pManager extends NativeP2pManager {
         mDiscoInProgress = false;
     }
     
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private synchronized void onResume() {
         Log.d(TAG, "onResume() state: " + mManagerState.toString());
         
@@ -169,7 +172,11 @@ public class P2pManager extends NativeP2pManager {
         p2p_filter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         p2p_filter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         p2p_filter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        p2p_filter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+        
+        if (Build.VERSION.SDK_INT >= 16) {
+            p2p_filter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+        }
+        
         p2p_filter.addAction(START_DISCOVERY_ACTION);
         p2p_filter.addAction(STOP_DISCOVERY_ACTION);
         mService.registerReceiver(mP2pEventReceiver, p2p_filter);
@@ -271,7 +278,11 @@ public class P2pManager extends NativeP2pManager {
         mManagerState = ManagerState.UNINITIALIZED;
     }
     
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void initializeServiceDiscovery() {
+        // do nothing if the SDK version is too small
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
+        
         // set service discovery listener
         mWifiP2pManager.setDnsSdResponseListeners(mWifiP2pChannel, mServiceResponseListener, mRecordListener);
         
@@ -317,7 +328,11 @@ public class P2pManager extends NativeP2pManager {
         });
     }
     
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void terminateServiceDiscovery() {
+        // do nothing if the SDK version is too small
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
+        
         // clear all service discovery requests
         mWifiP2pManager.clearServiceRequests(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
             @Override
@@ -430,6 +445,7 @@ public class P2pManager extends NativeP2pManager {
             }
         }
         
+        @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
         private void connectionChanged(Context context, Intent intent) {
             //WifiP2pInfo p2pInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
             NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
@@ -471,7 +487,11 @@ public class P2pManager extends NativeP2pManager {
             mWifiP2pManager.requestPeers(mWifiP2pChannel, mPeerListListener);
         }
 
+        @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
         private void discoveryChanged(Context context, Intent intent) {
+            // do nothing if the SDK version is too small
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
+            
             int discoveryState = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
             
             if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
@@ -524,7 +544,11 @@ public class P2pManager extends NativeP2pManager {
             });
         }
         
+        @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
         private void stopDiscovery(Context context, Intent intent) {
+            // do nothing if the SDK version is too small
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
+            
             if (!mDiscoInProgress) return;
             
             mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
@@ -578,7 +602,11 @@ public class P2pManager extends NativeP2pManager {
         }
     };
     
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void requestServiceDiscovery() {
+        // do nothing if the SDK version is too small
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
+        
         if (mLastDisco != null) {
             if (mLastDisco.after(Calendar.getInstance())) return;
         }
@@ -601,51 +629,59 @@ public class P2pManager extends NativeP2pManager {
         });
     }
 
-    private DnsSdTxtRecordListener mRecordListener = new DnsSdTxtRecordListener() {
-
-        @Override
-        public void onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
-            Log.d(TAG, "DnsSdTxtRecord discovered: " + fullDomainName + ", " + txtRecordMap.toString());
-            
-            Database db = Database.getInstance(mService);
-            db.open();
-            Peer p = db.find(srcDevice.deviceAddress);
-            
-            if (p == null) {
-                p = new Peer(srcDevice.deviceAddress);
-            } else {
-                p.touch();
-            }
-            
-            p.setEndpoint(txtRecordMap.get("eid"));
-            db.put(p);
-            
-            peerDiscovered(p);
-        }
-    };
-
-    private DnsSdServiceResponseListener mServiceResponseListener = new DnsSdServiceResponseListener() {
-        @Override
-        public void onDnsSdServiceAvailable(String instanceName, String registrationType, WifiP2pDevice srcDevice) {
-            Log.d(TAG, "SdService discovered: " + instanceName + ", " + registrationType);
-            
-            Database db = Database.getInstance(mService);
-            db.open();
-            Peer p = db.find(srcDevice.deviceAddress);
-            
-            if (p == null) {
-                p = new Peer(srcDevice.deviceAddress);
-            } else {
-                p.touch();
-            }
-            
-            db.put(p);
-            
-            if (p.hasEndpoint()) {
+    private DnsSdTxtRecordListener mRecordListener = null;
+    private DnsSdServiceResponseListener mServiceResponseListener = null;
+    
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    private void createServiceDiscoveryListener() {
+        // do nothing if the SDK version is too small
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
+        
+        mRecordListener = new DnsSdTxtRecordListener() {
+            @Override
+            public void onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
+                Log.d(TAG, "DnsSdTxtRecord discovered: " + fullDomainName + ", " + txtRecordMap.toString());
+                
+                Database db = Database.getInstance(mService);
+                db.open();
+                Peer p = db.find(srcDevice.deviceAddress);
+                
+                if (p == null) {
+                    p = new Peer(srcDevice.deviceAddress);
+                } else {
+                    p.touch();
+                }
+                
+                p.setEndpoint(txtRecordMap.get("eid"));
+                db.put(p);
+                
                 peerDiscovered(p);
             }
-        }
-    };
+        };
+        
+        mServiceResponseListener = new DnsSdServiceResponseListener() {
+            @Override
+            public void onDnsSdServiceAvailable(String instanceName, String registrationType, WifiP2pDevice srcDevice) {
+                Log.d(TAG, "SdService discovered: " + instanceName + ", " + registrationType);
+                
+                Database db = Database.getInstance(mService);
+                db.open();
+                Peer p = db.find(srcDevice.deviceAddress);
+                
+                if (p == null) {
+                    p = new Peer(srcDevice.deviceAddress);
+                } else {
+                    p.touch();
+                }
+                
+                db.put(p);
+                
+                if (p.hasEndpoint()) {
+                    peerDiscovered(p);
+                }
+            }
+        };
+    }
     
     private HashSet<String> getActiveInterfaces() {
         HashSet<String> ret = new HashSet<String>();

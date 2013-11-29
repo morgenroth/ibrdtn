@@ -26,8 +26,8 @@ package de.tubs.ibr.dtn.service;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -35,6 +35,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -330,8 +331,10 @@ public class DaemonService extends Service {
         mSessionManager = new SessionManager(this);
         
         // create P2P Manager
-        mP2pManager = new P2pManager(this);
-        mP2pManager.create();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            mP2pManager = new P2pManager(this);
+            mP2pManager.create();
+        }
         
         // start initialization of the daemon process
         final Intent intent = new Intent(this, DaemonService.class);
@@ -382,7 +385,7 @@ public class DaemonService extends Service {
         prefs.unregisterOnSharedPreferenceChangeListener(_pref_listener);
         
         // disable P2P manager
-        mP2pManager.destroy();
+        if (mP2pManager != null) mP2pManager.destroy();
         
         // stop looper that handles incoming intents
         mServiceLooper.quit();
@@ -442,6 +445,7 @@ public class DaemonService extends Service {
 
     private DaemonProcessHandler mProcessHandler = new DaemonProcessHandler() {
 
+        @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
         @Override
         public void onStateChanged(DaemonState state) {
             Log.d(TAG, "mDaemonStateReceiver: DaemonState: " + state);
@@ -463,7 +467,7 @@ public class DaemonService extends Service {
                     
                 case OFFLINE:
                     if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
-                        mP2pManager.pause();
+                        if (mP2pManager != null) mP2pManager.pause();
                     }
                     
                     // disable foreground service only if the daemon has been switched off
@@ -494,11 +498,13 @@ public class DaemonService extends Service {
                 	}
                     
                     if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
-                        mP2pManager.resume();
+                        if (mP2pManager != null) mP2pManager.resume();
                     }
                     
-                    // wake-up all apps in stopped-state when going online
-                    broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+                        // wake-up all apps in stopped-state when going online
+                        broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                    }
                     break;
                     
                 case SUSPENDED:
@@ -628,9 +634,9 @@ public class DaemonService extends Service {
     			}
 			} else if (SettingsUtil.KEY_P2P_ENABLED.equals(key)) {
                 if (sharedPreferences.getBoolean(key, false) && mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
-                    mP2pManager.resume();
+                    if (mP2pManager != null) mP2pManager.resume();
                 } else {
-                    mP2pManager.pause();
+                    if (mP2pManager != null) mP2pManager.pause();
                 }
 			}
 		}
