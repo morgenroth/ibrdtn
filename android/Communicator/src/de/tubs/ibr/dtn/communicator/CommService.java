@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -277,6 +278,15 @@ public class CommService extends Service {
         mBuilder.setContentText("Say 'ok, Computer...'");
         mBuilder.setSmallIcon(R.drawable.ic_launcher_flat);
         mBuilder.setOngoing(true);
+        mBuilder.setWhen(0);
+        
+        Intent notifyIntent = new Intent(this, MainActivity.class);
+        notifyIntent.setAction("android.intent.action.MAIN");
+        notifyIntent.addCategory("android.intent.category.LAUNCHER");
+
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notifyIntent, 0);
+        mBuilder.setContentIntent(contentIntent);
+        
         mNotification = mBuilder.build();
         
         // load sound pool
