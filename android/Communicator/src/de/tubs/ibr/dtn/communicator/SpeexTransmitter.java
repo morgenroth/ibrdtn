@@ -27,8 +27,8 @@ public class SpeexTransmitter extends Thread implements Closeable {
     /**
      * Audio Parameters
      */
-    private static final int FREQUENCY = 22050;
-    private static final FrequencyBand BAND = FrequencyBand.NARROW_BAND;
+    private static final int FREQUENCY = 44100;
+    private static final FrequencyBand BAND = FrequencyBand.WIDE_BAND;
     private static final int QUALITY = 8;
     
     private AudioRecord mAudioRec = null;
