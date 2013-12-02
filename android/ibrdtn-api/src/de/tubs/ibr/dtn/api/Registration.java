@@ -99,4 +99,29 @@ public class Registration implements Parcelable, Serializable {
 		groups.addAll(this.groups);
 		dest.writeTypedList(groups);
 	}
+
+    @Override
+    public int hashCode() {
+        int ret = 0;
+        if (endpoint != null) endpoint.hashCode();
+        
+        for (GroupEndpoint group : groups) {
+            ret ^= group.hashCode();
+        }
+
+        return ret;
+    }
+
+    @Override
+    public String toString() {
+        String ret = endpoint + "[ ";
+        
+        for (GroupEndpoint group : groups) {
+            ret += group.toString() + " ";
+        }
+        
+        ret += "]";
+        
+        return ret;
+    }
 }
