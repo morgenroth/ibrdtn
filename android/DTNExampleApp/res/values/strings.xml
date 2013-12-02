@@ -8,4 +8,5 @@
     <string name="list_no_neighbors">No neighbors</string>
     <string name="select_neighbor">Select neighbor</string>
     <string name="enable_streaming">Streaming</string>
+    <string name="switch_streaming">Switch Group</string>
 </resources>

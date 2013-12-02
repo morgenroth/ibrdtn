@@ -54,13 +54,17 @@ public class PingService extends IntentService {
     
     public static final String STREAM_START_INTENT = "de.tubs.ibr.dtn.example.STREAM_START";
     public static final String STREAM_STOP_INTENT = "de.tubs.ibr.dtn.example.STREAM_STOP";
+    public static final String STREAM_SWITCH_GROUP = "de.tubs.ibr.dtn.example.STREAM_SWITCH";
 
     // indicates updated data to other components
     public static final String DATA_UPDATED = "de.tubs.ibr.dtn.example.DATA_UPDATED";
     
     // group EID of this app
     public static final GroupEndpoint PING_GROUP_EID = new GroupEndpoint("dtn://broadcast.dtn/ping");
-    public static final GroupEndpoint STREAM_GROUP_EID = new GroupEndpoint("dtn://broadcast.dtn/streaming");
+    public static final GroupEndpoint STREAM_GROUP1_EID = new GroupEndpoint("dtn://broadcast.dtn/streaming1");
+    public static final GroupEndpoint STREAM_GROUP2_EID = new GroupEndpoint("dtn://broadcast.dtn/streaming2");
+    
+    private GroupEndpoint mStreamGroup = null;
     
     // This is the object that receives interactions from clients.  See
     // RemoteService for a more complete example.
@@ -234,7 +238,7 @@ public class PingService extends IntentService {
             // create DTN stream
             try {
                 mTransmitter = new DtnStreamTransmitter(PingService.this, mClient.getSession());
-                mTransmitter.connect(STREAM_GROUP_EID, MediaType.BINARY, null);
+                mTransmitter.connect(mStreamGroup, MediaType.BINARY, null);
                 mTransmitter.setLifetime(10);
                 
                 mStreamJob = mExecutor.scheduleWithFixedDelay(new Runnable() {
@@ -271,6 +275,26 @@ public class PingService extends IntentService {
                 }
             }
         }
+        else if (STREAM_SWITCH_GROUP.equals(action))
+        {
+            try {
+                mClient.getSession().leave(mStreamGroup);
+    
+                if (STREAM_GROUP2_EID.equals(mStreamGroup)) {
+                    // set current stream group
+                    mStreamGroup = STREAM_GROUP1_EID;
+                } else {
+                    // set current stream group
+                    mStreamGroup = STREAM_GROUP2_EID;
+                }
+                
+                mClient.getSession().join(mStreamGroup);
+            } catch (SessionDestroyedException e) {
+                Log.e(TAG, "session destroyed", e);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "interrupted", e);
+            }
+        }
     }
     
     DtnStreamReceiver.StreamListener mStreamListener = new DtnStreamReceiver.StreamListener() {
@@ -295,11 +319,20 @@ public class PingService extends IntentService {
         }
     };
     
-    SessionConnection mSession = new SessionConnection() {
+    SessionConnection mSessionConnection = new SessionConnection() {
 
         @Override
         public void onSessionConnected(Session session) {
             Log.d(TAG, "Session connected");
+            
+            try {
+                // list all registered endpoints
+                for (GroupEndpoint group : session.getGroups()) {
+                    Log.d(TAG, "Group: " + group);
+                }
+            } catch (SessionDestroyedException e) {
+                Log.e(TAG, "can not get group list", e);
+            }
             
             // create streaming endpoint with own data handler as fallback
             mReceiver = new DtnStreamReceiver(PingService.this, session, mStreamListener, mDataHandler);
@@ -338,7 +371,7 @@ public class PingService extends IntentService {
         mExecutor = Executors.newScheduledThreadPool(1);
         
         // create a new DTN client
-        mClient = new DTNClient(mSession);
+        mClient = new DTNClient(mSessionConnection);
         
         // create registration with "ping" as endpoint
         // if the EID of this device is "dtn://device" then the
@@ -347,7 +380,10 @@ public class PingService extends IntentService {
         
         // additionally join a group
         registration.add(PING_GROUP_EID);
-        registration.add(STREAM_GROUP_EID);
+        registration.add(STREAM_GROUP1_EID);
+
+        // set current stream group
+        mStreamGroup = STREAM_GROUP1_EID;
         
         try {
             // initialize the connection to the DTN service
