@@ -35,10 +35,18 @@ public class SpeexTransmitter extends Thread implements Closeable {
     private DtnStreamTransmitter mStream = null;
     private EID mDestination = null;
     
-    public SpeexTransmitter(Context context, Session session, EID destination) {
+    private StateListener mListener = null;
+    
+    public interface StateListener {
+        void onAir();
+        void onStopped();
+    }
+    
+    public SpeexTransmitter(Context context, Session session, EID destination, StateListener listener) {
         mStream = new DtnStreamTransmitter(context, session);
         mStream.setLifetime(300);
         mDestination = destination;
+        mListener = listener;
     }
     
     @Override
@@ -71,6 +79,9 @@ public class SpeexTransmitter extends Thread implements Closeable {
         // initiate recording
         mAudioRec.startRecording();
         
+        // callback for state
+        if (mListener != null) mListener.onAir();
+        
         int frameSize = encoder.getFrameSize();
         short[] buf = new short[frameSize];
         
@@ -87,9 +98,12 @@ public class SpeexTransmitter extends Thread implements Closeable {
         } catch (InterruptedException e) {
             Log.e(TAG, "interrupted while transmitting", e);
         }
-
+        
         // release recording resources
         mAudioRec.release();
+        
+        // callback for state
+        if (mListener != null) mListener.onStopped();
     }
     
     @Override

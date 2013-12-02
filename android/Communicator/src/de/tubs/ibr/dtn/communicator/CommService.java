@@ -41,7 +41,6 @@ public class CommService extends Service {
     public static final String CLOSE_COMM_CHANNEL = "de.tubs.ibr.dtn.communicator.CLOSE_COMM";
     
     public static final String OPEN_COMM_TRANSMISSION = "de.tubs.ibr.dtn.communicator.OPEN_TRANS";
-    public static final String FRAME_COMM_TRANSMISSION = "de.tubs.ibr.dtn.communicator.FRAME_TRANS";
     public static final String CLOSE_COMM_TRANSMISSION = "de.tubs.ibr.dtn.communicator.CLOSE_TRANS";
     
     // The communication with the DTN service is done using the DTNClient
@@ -100,28 +99,38 @@ public class CommService extends Service {
     DtnStreamReceiver.StreamListener mStreamListener = new DtnStreamReceiver.StreamListener() {
         @Override
         public void onInitial(StreamId id, MediaType type, byte[] data) {
+            Log.d(TAG, "incoming transmission: " + id);
+            
+            SpeexReceiver receiver = new SpeexReceiver(data);
+            mReceivers.put(id, receiver);
+            
             // start playing
             Intent ti = new Intent(CommService.this, CommService.class);
             ti.setAction(CommService.OPEN_COMM_TRANSMISSION);
             ti.putExtra("stream_id", (Parcelable)id);
-            ti.putExtra("data", data);
-            ti.putExtra("type", type);
             startService(ti);
         }
 
         @Override
         public void onFrameReceived(StreamId id, Frame frame) {
-            // forward frame
-            Intent ti = new Intent(CommService.this, CommService.class);
-            ti.setAction(CommService.FRAME_COMM_TRANSMISSION);
-            ti.putExtra("stream_id", (Parcelable)id);
-            ti.putExtra("frame", (Parcelable)frame);
-            startService(ti);
+            SpeexReceiver receiver = mReceivers.get(id);
+            if (receiver != null) {
+                receiver.push(frame);
+            }
         }
 
         @Override
         public void onFinish(StreamId id) {
-            // stop play service
+            Log.d(TAG, "incoming transmission closed: " + id);
+            
+            SpeexReceiver receiver = mReceivers.get(id);
+            
+            if (receiver != null) {
+                receiver.close();
+                mReceivers.remove(id);
+            }
+            
+            // stop service
             Intent ti = new Intent(CommService.this, CommService.class);
             ti.setAction(CommService.CLOSE_COMM_TRANSMISSION);
             ti.putExtra("stream_id", (Parcelable)id);
@@ -150,108 +159,73 @@ public class CommService extends Service {
         sendStickyBroadcast(i);
     }
     
+    private SpeexTransmitter.StateListener mTransmitterListener = new SpeexTransmitter.StateListener() {
+        @Override
+        public void onAir() {
+            Log.d(TAG, "channel open");
+        }
+
+        @Override
+        public void onStopped() {
+            Log.d(TAG, "channel closed");
+            
+            Intent i = new Intent(CommService.this, CommService.class);
+            i.setAction(CommService.CLOSE_COMM_CHANNEL);
+            startService(i);
+        }
+    };
+    
     protected void onHandleIntent(Intent intent, int startId) {
         String action = intent.getAction();
+        
         if (OPEN_COMM_CHANNEL.equals(action)) {
-            if ((mSession != null) && !mRecording) {
-                mTransmitter = new SpeexTransmitter(this, mSession, COMM_STREAM_ENDPOINT);
-                
-                // play chirp sound
-                mSounds.play(mChirpSound, 1.0f, 1.0f, 1, 0, 1.0f);
-                
-                // wait until the sound is done
-                try {
-                    Thread.sleep(300);
-                } catch (InterruptedException e) {
-                    // interrupted
-                }
-                
-                // start recording
-                mTransmitter.start();
-                
-                Log.d(TAG, "channel open");
-                
-                // set recording mark
-                mRecording = true;
-                
-                // broadcast service state
-                broadcastState();
+            if ((mSession == null) || mRecording) return;
+            
+            mTransmitter = new SpeexTransmitter(this, mSession, COMM_STREAM_ENDPOINT, mTransmitterListener);
+            
+            // play chirp sound
+            mSounds.play(mChirpSound, 1.0f, 1.0f, 1, 0, 1.0f);
+            
+            // wait until the sound is done
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                // interrupted
             }
+            
+            // start recording
+            mTransmitter.start();
+            
+            // set recording mark
+            mRecording = true;
         }
         else if (CLOSE_COMM_CHANNEL.equals(action)) {
-            if (mRecording) {
-                mTransmitter.close();
-                mTransmitter = null;
-                
-                // play ack sound
-                mSounds.play(mAckSound, 1.0f, 1.0f, 1, 0, 1.0f);
-                
-                Log.d(TAG, "channel closed");
-                
-                // remove recording mark
-                mRecording = false;
-                
-                // broadcast service state
-                broadcastState();
-            }
+            if (!mRecording) return;
+
+            mTransmitter.close();
+            mTransmitter = null;
+            
+            // play ack sound
+            mSounds.play(mAckSound, 1.0f, 1.0f, 1, 0, 1.0f);
+            
+            // remove recording mark
+            mRecording = false;
         }
         else if (OPEN_COMM_TRANSMISSION.equals(action)) {
-            StreamId id = intent.getParcelableExtra("stream_id");
-            byte[] data = intent.getByteArrayExtra("data");
+            // play open channel sound
+            mSounds.play(mChanOpen, 0.5f, 0.5f, 1, 0, 1.0f);
             
-            Log.d(TAG, "incoming transmission: " + id);
-            
-            SpeexReceiver receiver = new SpeexReceiver(data);
-            mReceivers.put(id, receiver);
-            
-            // start audio receiver
-            receiver.start();
-        }
-        else if (FRAME_COMM_TRANSMISSION.equals(action)) {
-            StreamId id = intent.getParcelableExtra("stream_id");
-            Frame frame = intent.getParcelableExtra("frame");
-            
-            SpeexReceiver receiver = mReceivers.get(id);
-            if (receiver != null) {
-                receiver.push(frame);
-                
-                if (!mPlaying) {
-                    // send stick intent
-                    Intent i = new Intent(COMM_STATE);
-                    i.putExtra("playing", mPlaying);
-                    i.putExtra("recording", mRecording);
-                    sendStickyBroadcast(i);
-                    
-                    // play open channel sound
-                    mSounds.play(mChanOpen, 0.5f, 0.5f, 1, 0, 1.0f);
-                    
-                    // set playing mark
-                    mPlaying = true;
-                    
-                    // broadcast service state
-                    broadcastState();
-                }
-            }
+            // set playing mark
+            mPlaying = true;
         }
         else if (CLOSE_COMM_TRANSMISSION.equals(action)) {
-            StreamId id = intent.getParcelableExtra("stream_id");
-            
-            Log.d(TAG, "incoming transmission closed: " + id);
-            
-            SpeexReceiver receiver = mReceivers.get(id);
-            
-            if (receiver != null) {
-                receiver.close();
-                mReceivers.remove(id);
-                
-                if (mReceivers.size() == 0) {
-                    mPlaying = false;
-                    
-                    // broadcast service state
-                    broadcastState();
-                }
+            if (mReceivers.size() == 0) {
+                mPlaying = false;
             }
         }
+        
+        // broadcast service state
+        broadcastState();
     }
     
     @Override

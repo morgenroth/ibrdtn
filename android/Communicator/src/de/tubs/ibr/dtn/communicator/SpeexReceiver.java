@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -16,14 +15,12 @@ import com.purplefrog.speexjni.SpeexDecoder;
 
 import de.tubs.ibr.dtn.streaming.Frame;
 
-public class SpeexReceiver extends Thread implements Closeable {
+public class SpeexReceiver implements Closeable {
     
     private static final String TAG = "SpeexReceiver";
     
     private AudioTrack mAudioTrack = null;
     private SpeexDecoder mDecoder = null;
-    
-    private LinkedBlockingQueue<Frame> mFrameBuffer = new LinkedBlockingQueue<Frame>(512);
     
     public SpeexReceiver(byte[] meta) {
         // decode meta data
@@ -64,44 +61,14 @@ public class SpeexReceiver extends Thread implements Closeable {
     }
     
     @Override
-    public void run() {
-        while (AudioTrack.PLAYSTATE_STOPPED != mAudioTrack.getPlayState()) {
-            try {
-                Frame frame = mFrameBuffer.take();
-                
-                if (frame.data == null) {
-                    // end found
-                    mAudioTrack.stop();
-                    break;
-                }
-                
-                short[] audio_data = mDecoder.decode(frame.data);
-                
-                mAudioTrack.write(audio_data, 0, audio_data.length);
-            } catch (InterruptedException e) {
-                Log.e(TAG, "interrupted", e);
-            }
-        }
-        
+    public void close() {
+        mAudioTrack.stop();
         mAudioTrack.release();
     }
 
-    @Override
-    public void close() {
-        try {
-            mFrameBuffer.put(new Frame());
-        } catch (InterruptedException e) {
-            Log.e(TAG, "aborted", e);
-        }
-    }
-
     public void push(Frame frame) {
-        try {
-            // add new frame to the buffer
-            mFrameBuffer.put(frame);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "aborted", e);
-        }
+        short[] audio_data = mDecoder.decode(frame.data);
+        mAudioTrack.write(audio_data, 0, audio_data.length);
     }
     
     private FrequencyBand readFrequencyBand(DataInputStream stream) throws IOException {
