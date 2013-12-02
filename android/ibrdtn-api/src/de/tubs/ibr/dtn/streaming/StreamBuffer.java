@@ -52,6 +52,11 @@ public class StreamBuffer {
         return f;
     }
     
+    private synchronized void releaseFrame(Frame f) {
+        f.clear();
+        mFramePool.add(f);
+    }
+    
     /**
      * put data frame into the stream
      * @param frames
@@ -110,8 +115,7 @@ public class StreamBuffer {
             mNext = head.offset + 1;
             
             // release the frame back to the pool
-            head.clear();
-            mFramePool.add(head);
+            releaseFrame(head);
             
             // peek at the next frame
             head = mDataQueue.peek();
