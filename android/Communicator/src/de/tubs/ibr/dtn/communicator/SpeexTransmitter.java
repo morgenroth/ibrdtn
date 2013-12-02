@@ -37,6 +37,9 @@ public class SpeexTransmitter extends Thread implements Closeable {
     
     private StateListener mListener = null;
     
+    private short mMaxLevel = 0;
+    private int mSilenceCounter = 0;
+    
     public interface StateListener {
         void onAir();
         void onStopped();
@@ -88,6 +91,10 @@ public class SpeexTransmitter extends Thread implements Closeable {
         try {
             while (AudioRecord.RECORDSTATE_STOPPED != mAudioRec.getRecordingState()) {
                 mAudioRec.read(buf, 0, frameSize);
+                
+                // check if still speaking
+                if (!isSpeaking(buf)) break;
+                
                 byte[] data = encoder.encode(buf);
                 mStream.write(data);
             }
@@ -101,6 +108,7 @@ public class SpeexTransmitter extends Thread implements Closeable {
         
         // release recording resources
         mAudioRec.release();
+        mAudioRec = null;
         
         // callback for state
         if (mListener != null) mListener.onStopped();
@@ -109,5 +117,31 @@ public class SpeexTransmitter extends Thread implements Closeable {
     @Override
     public void close() {
         if (mAudioRec != null) mAudioRec.stop();
+    }
+    
+    private boolean isSpeaking(short[] buf) {
+        short maxLevel = 0;
+        
+        for (int i = 0; i < buf.length; i++) {
+            if (maxLevel < buf[i]) {
+                maxLevel = buf[i];
+            }
+        }
+        
+        if (mMaxLevel < maxLevel) {
+            mMaxLevel = maxLevel;
+        }
+        
+        Float thresh = Float.valueOf(mMaxLevel) * 0.5f;
+
+        // count the number of max
+        if (maxLevel > thresh.shortValue()) {
+            mSilenceCounter = 0;
+        } else {
+            mSilenceCounter++;
+        }
+        
+        // user is speaking if there is no gap longer than 2 seconds
+        return (mSilenceCounter < 200);
     }
 }
