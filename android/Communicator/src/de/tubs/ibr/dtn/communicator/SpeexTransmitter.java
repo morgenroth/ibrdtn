@@ -55,7 +55,7 @@ public class SpeexTransmitter extends Thread implements Closeable {
         SpeexEncoder encoder = new SpeexEncoder(BAND, QUALITY);
         
         // get the minimum buffer size
-        int buffer_size = 2 * AudioTrack.getMinBufferSize(FREQUENCY, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        int buffer_size = 32 * AudioTrack.getMinBufferSize(FREQUENCY, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
         
         // create an AudioSource
         mAudioRec = new AudioRecord(MediaRecorder.AudioSource.MIC, FREQUENCY, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, buffer_size);
