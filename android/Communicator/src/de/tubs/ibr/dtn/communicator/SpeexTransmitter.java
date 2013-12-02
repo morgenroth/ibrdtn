@@ -39,7 +39,8 @@ public class SpeexTransmitter extends Thread implements Closeable {
     
     private short mMaxLevel = 0;
     private int mSilenceCounter = 0;
-    private int mSkipCounter = 200;
+    private int mSkipFrames = 5;
+    private int mSkipCounter = 100;
     
     public interface StateListener {
         void onAir();
@@ -96,8 +97,12 @@ public class SpeexTransmitter extends Thread implements Closeable {
                 // check if still speaking
                 if (!isSpeaking(buf)) break;
                 
-                byte[] data = encoder.encode(buf);
-                mStream.write(data);
+                if (mSkipFrames > 0) {
+                    mSkipFrames--;
+                } else {
+                    byte[] data = encoder.encode(buf);
+                    mStream.write(data);
+                }
             }
             
             mStream.close();
@@ -139,7 +144,7 @@ public class SpeexTransmitter extends Thread implements Closeable {
             mMaxLevel = maxLevel;
         }
         
-        Float thresh = Float.valueOf(mMaxLevel) * 0.5f;
+        Float thresh = Float.valueOf(mMaxLevel) * 0.2f;
 
         // count the number of max
         if (maxLevel > thresh.shortValue()) {
@@ -149,6 +154,6 @@ public class SpeexTransmitter extends Thread implements Closeable {
         }
         
         // user is speaking if there is no gap longer than 2 seconds
-        return (mSilenceCounter < 200);
+        return (mSilenceCounter < 100);
     }
 }
