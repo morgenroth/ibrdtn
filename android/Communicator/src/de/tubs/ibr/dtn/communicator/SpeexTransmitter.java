@@ -39,6 +39,7 @@ public class SpeexTransmitter extends Thread implements Closeable {
     
     private short mMaxLevel = 0;
     private int mSilenceCounter = 0;
+    private int mSkipCounter = 200;
     
     public interface StateListener {
         void onAir();
@@ -121,6 +122,12 @@ public class SpeexTransmitter extends Thread implements Closeable {
     
     private boolean isSpeaking(short[] buf) {
         short maxLevel = 0;
+        
+        // ignore the initial seconds completely
+        if (mSkipCounter > 0) {
+            mSkipCounter--;
+            return true;
+        }
         
         for (int i = 0; i < buf.length; i++) {
             if (maxLevel < buf[i]) {
