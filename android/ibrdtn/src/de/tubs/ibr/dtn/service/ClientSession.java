@@ -27,10 +27,11 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Date;
-
+import android.annotation.TargetApi;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseInputStream;
+import android.os.Build;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.Log;
@@ -75,7 +76,8 @@ public class ClientSession {
 	 */
 	private final NativeSessionCallback mSessionCallback = new NativeSessionCallback() {
 
-		@Override
+		@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+        @Override
 		public void notifyBundle(de.tubs.ibr.dtn.swig.BundleID swigId)
 		{
 	        // forward the notification as intent
@@ -92,7 +94,8 @@ public class ClientSession {
 	        Log.d(TAG, "RECEIVE intent (" + swigId.toString() + ") sent to " + mSession.getPackageName());
 		}
 
-		@Override
+		@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+        @Override
 		public void notifyStatusReport(de.tubs.ibr.dtn.swig.EID source, de.tubs.ibr.dtn.swig.StatusReportBlock swigReport)
 		{
 		    de.tubs.ibr.dtn.swig.BundleID swigId = swigReport.getBundleid();
@@ -136,7 +139,8 @@ public class ClientSession {
             Log.d(TAG, "STATUS_REPORT intent [" + swigId.toString() + "] sent to " + mSession.getPackageName());
 		}
 
-		@Override
+		@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
+        @Override
 		public void notifyCustodySignal(de.tubs.ibr.dtn.swig.EID source, de.tubs.ibr.dtn.swig.CustodySignalBlock swigCustody)
 		{
 		    de.tubs.ibr.dtn.swig.BundleID swigId = swigCustody.getBundleid();
