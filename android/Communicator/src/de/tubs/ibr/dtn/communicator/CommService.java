@@ -249,7 +249,7 @@ public class CommService extends Service {
         // prepare service notification
         mBuilder = new NotificationCompat.Builder(this);
         mBuilder.setContentTitle(getString(R.string.app_name));
-        mBuilder.setContentText("Say 'ok, Computer...'");
+        mBuilder.setContentText("Ready");
         mBuilder.setSmallIcon(R.drawable.ic_launcher_flat);
         mBuilder.setOngoing(true);
         mBuilder.setWhen(0);
