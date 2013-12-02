@@ -195,6 +195,36 @@ public class SessionManager {
 		mDatabase.removeSession(s);
 	}
 	
+	public synchronized void join(ClientSession client, Session s, GroupEndpoint group) throws NativeSessionException {
+        // add new endpoint
+        if (mDatabase.createEndpoint(s, group) != null) {
+            client.addEndpoint(group);
+        }
+	}
+	
+    public synchronized void leave(ClientSession client, Session s, GroupEndpoint group) throws NativeSessionException {
+        // get already registered endpoints
+        List<Endpoint> endpoints = mDatabase.getEndpoints(s);
+        
+        // iterate through endpoints
+        for (Endpoint e : endpoints) {
+            // check if registered as group
+            if (e.equals(group)) {
+                // remove registered endpoint
+                mDatabase.removeEndpoint(e);
+                
+                // remove endpoint from active client
+                client.removeEndpoint(e);
+                
+                break;
+            }
+        }
+    }
+    
+    public synchronized List<Endpoint> getEndpoints(Session s) throws NativeSessionException {
+        return mDatabase.getEndpoints(s);
+    }
+	
 	public synchronized ClientSession getSession(String[] packageNames, String sessionKey)
 	{
 		for (String packageName : packageNames) {

@@ -26,12 +26,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.ParcelFileDescriptor.AutoCloseInputStream;
-import android.os.Build;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.Log;
@@ -643,6 +646,46 @@ public class ClientSession {
                 Log.e(TAG, "sendFileDescriptor failed", e);
                 return null;
             }
+        }
+
+        @Override
+        public boolean join(GroupEndpoint group) throws RemoteException {
+            try {
+                mManager.join(ClientSession.this, mSession, group);
+                return true;
+            } catch (NativeSessionException e) {
+                // TODO remove stack-trace
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        @Override
+        public boolean leave(GroupEndpoint group) throws RemoteException {
+            try {
+                mManager.leave(ClientSession.this, mSession, group);
+                return true;
+            } catch (NativeSessionException e) {
+                // TODO remove stack-trace
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        @Override
+        public List<GroupEndpoint> getGroups() throws RemoteException {
+            ArrayList<GroupEndpoint> ret = new ArrayList<GroupEndpoint>();
+            
+            try {
+                List<Endpoint> eids = mManager.getEndpoints(mSession);
+                for (Endpoint e : eids) {
+                    if (!e.isSingleton()) ret.add(e.asGroup());
+                }
+            } catch (NativeSessionException e) {
+                // Error
+            }
+            
+            return ret;
         }
     };
 
