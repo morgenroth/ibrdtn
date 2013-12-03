@@ -65,51 +65,53 @@ public class SpeexTransmitter extends Thread implements Closeable {
         // create an AudioSource
         mAudioRec = new AudioRecord(MediaRecorder.AudioSource.MIC, FREQUENCY, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, buffer_size);
         
-        // create meta data header
-        ByteArrayOutputStream bytearray_stream = new ByteArrayOutputStream();
-        DataOutputStream meta_stream = new DataOutputStream(bytearray_stream);
-        
-        try {
-            meta_stream.writeChar(1); // version
-            meta_stream.writeInt(FREQUENCY);
-            meta_stream.writeChar(BAND.code);
-        } catch (IOException e) {
-            Log.e(TAG, "can not create meta data", e);
-            return;
-        }
-        
-        // start streaming
-        mStream.connect(mDestination, MediaType.MEDIA_AUDIO, bytearray_stream.toByteArray());
-
-        // initiate recording
-        mAudioRec.startRecording();
-        
-        // callback for state
-        if (mListener != null) mListener.onAir();
-        
-        int frameSize = encoder.getFrameSize();
-        short[] buf = new short[frameSize];
-        
-        try {
-            while (AudioRecord.RECORDSTATE_STOPPED != mAudioRec.getRecordingState()) {
-                mAudioRec.read(buf, 0, frameSize);
-                
-                // check if still speaking
-                if (!isSpeaking(buf)) break;
-                
-                if (mSkipFrames > 0) {
-                    mSkipFrames--;
-                } else {
-                    byte[] data = encoder.encode(buf);
-                    mStream.write(data);
-                }
+        if (mAudioRec.getState() == AudioRecord.STATE_INITIALIZED) {
+            // create meta data header
+            ByteArrayOutputStream bytearray_stream = new ByteArrayOutputStream();
+            DataOutputStream meta_stream = new DataOutputStream(bytearray_stream);
+            
+            try {
+                meta_stream.writeChar(1); // version
+                meta_stream.writeInt(FREQUENCY);
+                meta_stream.writeChar(BAND.code);
+            } catch (IOException e) {
+                Log.e(TAG, "can not create meta data", e);
+                return;
             }
             
-            mStream.close();
-        } catch (IOException e) {
-            Log.e(TAG, "error while transmitting", e);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "interrupted while transmitting", e);
+            // start streaming
+            mStream.connect(mDestination, MediaType.MEDIA_AUDIO, bytearray_stream.toByteArray());
+    
+            // initiate recording
+            mAudioRec.startRecording();
+        
+            // callback for state
+            if (mListener != null) mListener.onAir();
+            
+            int frameSize = encoder.getFrameSize();
+            short[] buf = new short[frameSize];
+            
+            try {
+                while (AudioRecord.RECORDSTATE_STOPPED != mAudioRec.getRecordingState()) {
+                    mAudioRec.read(buf, 0, frameSize);
+                    
+                    // check if still speaking
+                    if (!isSpeaking(buf)) break;
+                    
+                    if (mSkipFrames > 0) {
+                        mSkipFrames--;
+                    } else {
+                        byte[] data = encoder.encode(buf);
+                        mStream.write(data);
+                    }
+                }
+                
+                mStream.close();
+            } catch (IOException e) {
+                Log.e(TAG, "error while transmitting", e);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "interrupted while transmitting", e);
+            }
         }
         
         // release recording resources
