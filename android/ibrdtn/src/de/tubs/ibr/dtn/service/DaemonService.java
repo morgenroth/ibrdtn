@@ -490,8 +490,7 @@ public class DaemonService extends Service {
 	                    mShowNotification = true;
 	                    
 	                    // create initial notification
-	                    Notification n = buildNotification(R.drawable.ic_notification, getResources()
-	                            .getString(R.string.notify_pending));
+	                    Notification n = buildNotification(R.drawable.ic_notification);
 	
 	                    // turn this to a foreground service (kill-proof)
 	                    startForeground(1, n);
@@ -541,6 +540,18 @@ public class DaemonService extends Service {
     
     private void updateNotification() {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        
+        // update the notification only if it is visible
+        if (mShowNotification) {
+            nm.notify(1, buildNotification(R.drawable.ic_notification));
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    private Notification buildNotification(int icon) {
+        
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
+        String content = prefs.getString("endpoint_id", "dtn:none");
         String stateText = "";
 
         // check state and display daemon state instead of neighbors
@@ -555,14 +566,7 @@ public class DaemonService extends Service {
                 stateText = getResources().getString(R.string.notify_offline);
                 break;
             case ONLINE:
-                // if the daemon is online, query for the number of neighbors and display it
-            	List<Node> neighbors = mDaemonProcess.getNeighbors();
-        
-                if (neighbors.size() > 0) {
-                    stateText = getResources().getString(R.string.notify_neighbors) + ": " + neighbors.size();
-                } else {
-                    stateText = getResources().getString(R.string.notify_no_neighbors);
-                }
+                stateText = getResources().getString(R.string.notify_online);
                 break;
             case SUSPENDED:
                 stateText = getResources().getString(R.string.notify_suspended);
@@ -573,22 +577,19 @@ public class DaemonService extends Service {
                 break;
         }
         
-        // update the notification only if it is visible
-        if (mShowNotification) {
-            nm.notify(1, buildNotification(R.drawable.ic_notification, stateText));
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    private Notification buildNotification(int icon, String text) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
         builder.setContentTitle(getResources().getString(R.string.service_name));
-        builder.setContentText(text);
+        builder.setContentText(content);
+        
         builder.setSmallIcon(icon);
         builder.setOngoing(true);
         builder.setOnlyAlertOnce(true);
         builder.setWhen(0);
+        builder.setTicker(stateText);
+        
+        List<Node> neighbors = mDaemonProcess.getNeighbors();
+        builder.setNumber(neighbors.size());
 
         Intent notifyIntent = new Intent(this, Preferences.class);
         notifyIntent.setAction("android.intent.action.MAIN");
@@ -614,8 +615,7 @@ public class DaemonService extends Service {
                     mShowNotification = true;
                     
                     // create initial notification
-                    Notification n = buildNotification(R.drawable.ic_notification, getResources()
-                            .getString(R.string.notify_pending));
+                    Notification n = buildNotification(R.drawable.ic_notification);
     
                     // turn this to a foreground service (kill-proof)
                     startForeground(1, n);
