@@ -115,20 +115,24 @@ namespace dtn
 				_blocks.erase(it++);
 			}
 
-			// set the last block bit
-			iterator last = end();
-			--last;
-			(**last).set(dtn::data::Block::LAST_BLOCK, true);
+			if (size() > 0) {
+				// set the last block bit
+				iterator last = end();
+				--last;
+				(**last).set(dtn::data::Block::LAST_BLOCK, true);
+			}
 		}
 
 		void Bundle::erase(iterator it)
 		{
 			_blocks.erase(it);
 
-			// set the last block bit
-			iterator last = end();
-			--last;
-			(**last).set(dtn::data::Block::LAST_BLOCK, true);
+			if (size() > 0) {
+				// set the last block bit
+				iterator last = end();
+				--last;
+				(**last).set(dtn::data::Block::LAST_BLOCK, true);
+			}
 		}
 
 		void Bundle::clear()
