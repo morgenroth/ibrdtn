@@ -100,7 +100,7 @@ namespace dtn
 		 : _quiet(false), _options(0), _timestamps(false), _verbose(false) {}
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false), _link_request_interval(5000)
+		 : _routing("default"), _forwarding(true), _prefer_direct(true), _tcp_nodelay(true), _tcp_chunksize(4096), _tcp_idle_timeout(0), _default_net("lo"), _use_default_net(false), _auto_connect(0), _fragmentation(false), _scheduling(false), _link_request_interval(5000)
 		{}
 
 		Configuration::Security::Security()
@@ -770,6 +770,11 @@ namespace dtn
 			_forwarding = (conf.read<std::string>("routing_forwarding", "yes") == "yes");
 
 			/**
+			 * prefer direct routes
+			 */
+			_prefer_direct = (conf.read<std::string>("routing_prefer_direct", "yes") == "yes");
+
+			/**
 			 * get network interfaces
 			 */
 			_interfaces.clear();
@@ -955,6 +960,11 @@ namespace dtn
 		bool Configuration::Network::doForwarding() const
 		{
 			return _forwarding;
+		}
+
+		bool Configuration::Network::doPreferDirect() const
+		{
+			return _prefer_direct;
 		}
 
 		bool Configuration::Network::doFragmentation() const

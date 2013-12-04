@@ -267,6 +267,19 @@ namespace dtn
 				{
 					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 				}
+				else if (nodeevent.getAction() == NODE_UNAVAILABLE)
+				{
+					// new bundles trigger a re-check for all neighbors
+					const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+
+					for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
+					{
+						const dtn::core::Node &n = (*iter);
+
+						// transfer the next bundle to this destination
+						_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+					}
+				}
 
 				return;
 			} catch (const std::bad_cast&) { };
@@ -384,8 +397,8 @@ namespace dtn
 			class BundleFilter : public dtn::storage::BundleSelector
 			{
 			public:
-				BundleFilter(const NeighborDatabase::NeighborEntry &entry, ForwardingStrategy &strategy, const DeliveryPredictabilityMap &dpm)
-				 : _entry(entry), _strategy(strategy), _dpm(dpm)
+				BundleFilter(const NeighborDatabase::NeighborEntry &entry, ForwardingStrategy &strategy, const DeliveryPredictabilityMap &dpm, const std::set<dtn::core::Node> &neighbors)
+				 : _entry(entry), _strategy(strategy), _dpm(dpm), _neighbors(neighbors)
 				{ };
 
 				virtual ~BundleFilter() {};
@@ -428,6 +441,18 @@ namespace dtn
 						return false;
 					}
 
+					// if this is a singleton bundle ...
+					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+					{
+						const dtn::core::Node n(meta.destination.getNode());
+
+						// do not forward the bundle if the final destination is available
+						if (_neighbors.find(n) != _neighbors.end())
+						{
+							return false;
+						}
+					}
+
 					// do not forward bundles already known by the destination
 					// throws BloomfilterNotAvailableException if no filter is available or it is expired
 					try {
@@ -452,9 +477,14 @@ namespace dtn
 				const NeighborDatabase::NeighborEntry &_entry;
 				const ForwardingStrategy &_strategy;
 				const DeliveryPredictabilityMap &_dpm;
+				const std::set<dtn::core::Node> &_neighbors;
 			};
 
+			// list for bundles
 			dtn::storage::BundleResultList list;
+
+			// set of known neighbors
+			std::set<dtn::core::Node> neighbors;
 
 			while (true)
 			{
@@ -487,8 +517,16 @@ namespace dtn
 								// get the DeliveryPredictabilityMap of the potentially next hop
 								const DeliveryPredictabilityMap &dpm = entry.getDataset<DeliveryPredictabilityMap>();
 
+								if (dtn::daemon::Configuration::getInstance().getNetwork().doPreferDirect()) {
+									// get current neighbor list
+									neighbors = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+								} else {
+									// "prefer direct" option disabled - clear the list of neighbors
+									neighbors.clear();
+								}
+
 								// get the bundle filter of the neighbor
-								BundleFilter filter(entry, *_forwardingStrategy, dpm);
+								const BundleFilter filter(entry, *_forwardingStrategy, dpm, neighbors);
 
 								// some debug output
 								IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;

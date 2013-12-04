@@ -318,6 +318,7 @@ namespace dtn
 				std::list<NetConfig> _interfaces;
 				std::string _routing;
 				bool _forwarding;
+				bool _prefer_direct;
 				bool _tcp_nodelay;
 				dtn::data::Length _tcp_chunksize;
 				dtn::data::Timeout _tcp_idle_timeout;
@@ -356,6 +357,13 @@ namespace dtn
 				 * @return True, if forwarding is enabled.
 				 */
 				bool doForwarding() const;
+
+				/**
+				 * Define if direct routes are preferred instead of spreading bundles to all
+				 * neighbors.
+				 * @return True, if direct routes should preferred
+				 */
+				bool doPreferDirect() const;
 
 				/**
 				 * @return True, is tcp options NODELAY should be set.
