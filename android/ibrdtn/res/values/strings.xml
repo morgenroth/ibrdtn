@@ -76,6 +76,7 @@
     <string name="notify_error">Error</string>
     <string name="notify_suspended">Suspended</string>
     <string name="notify_offline">Offline</string>
+    <string name="notify_online">Online</string>
     <string name="system_version">Version</string>
     <string name="statichost">Static Uplink</string>
     <string name="host_name">Node EID</string>
