@@ -100,6 +100,9 @@ namespace dtn
 			virtual void eventBundleForwarded() throw ();
 			virtual void eventBundleAck(const dtn::data::Length &ack) throw ();
 
+			virtual void addTrafficIn(size_t) throw ();
+			virtual void addTrafficOut(size_t) throw ();
+
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
 			/**
@@ -118,9 +121,6 @@ namespace dtn
 			 */
 			void enableTLS();
 #endif
-
-			size_t getTrafficStats(int index);
-			void resetTrafficStats();
 
 		protected:
 			void rejectTransmission();

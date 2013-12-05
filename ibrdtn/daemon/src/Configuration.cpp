@@ -635,10 +635,6 @@ namespace dtn
 			return _conf.read<std::string>("use_persistent_bundlesets", "no");
 		}
 
-		bool Configuration::enableTrafficStats() const {
-			return (_conf.read<std::string>("stats_traffic", "no") == "yes");
-		}
-
 		void Configuration::Network::load(const ibrcommon::ConfigFile &conf)
 		{
 			/**

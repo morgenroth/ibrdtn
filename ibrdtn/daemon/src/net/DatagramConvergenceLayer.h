@@ -81,6 +81,10 @@ namespace dtn
 			 */
 			virtual void raiseEvent(const dtn::core::Event *evt) throw ();
 
+			virtual void resetStats();
+
+			virtual void getStats(ConvergenceLayer::stats_map &data) const;
+
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentRun() throw ();
@@ -145,6 +149,10 @@ namespace dtn
 			bool _running;
 
 			uint16_t _discovery_sn;
+
+			// stats variables
+			size_t _stats_in;
+			size_t _stats_out;
 		};
 	} /* namespace data */
 } /* namespace dtn */

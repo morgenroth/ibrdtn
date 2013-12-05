@@ -277,15 +277,18 @@ namespace dtn
 			ibrcommon::MutexLock l(_cl_lock);
 			stats_list stats;
 
+			ConvergenceLayer::stats_map data;
+
 			for (std::set<ConvergenceLayer*>::const_iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
 			{
 				ConvergenceLayer &cl = (**iter);
-				const ConvergenceLayer::stats_map &cl_stats = cl.getStats();
-				const dtn::core::Node::Protocol p = cl.getDiscoveryProtocol();
+
+				// generate stats map
+				cl.getStats(data);
 
 				stats_pair entry;
-				entry.first = p;
-				entry.second = cl_stats;
+				entry.first = cl.getDiscoveryProtocol();
+				entry.second = data;
 
 				stats.push_back(entry);
 			}

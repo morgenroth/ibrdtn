@@ -30,20 +30,12 @@ namespace dtn
 		{
 		}
 
-		void ConvergenceLayer::resetStats() {
-			_stats.clear();
+		void ConvergenceLayer::resetStats()
+		{
 		}
 
-		const ConvergenceLayer::stats_map& ConvergenceLayer::getStats() {
-			return _stats;
-		}
-
-		void ConvergenceLayer::addStats(const std::string &tag, const size_t value) {
-			_stats[tag] += value;
-		}
-
-		void ConvergenceLayer::setStats(const std::string &tag, const size_t value) {
-			_stats[tag] = value;
+		void ConvergenceLayer::getStats(ConvergenceLayer::stats_map&) const
+		{
 		}
 	}
 }

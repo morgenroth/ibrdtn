@@ -74,6 +74,10 @@ namespace dtn
 
 			void eventNotify(const ibrcommon::LinkEvent &evt);
 
+			virtual void resetStats();
+
+			virtual void getStats(ConvergenceLayer::stats_map &data) const;
+
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentRun() throw ();
@@ -97,7 +101,9 @@ namespace dtn
 
 			bool _running;
 
-
+			// stats variables
+			size_t _stats_in;
+			size_t _stats_out;
 		};
 	}
 }

@@ -53,7 +53,7 @@ namespace dtn
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		TCPConvergenceLayer::TCPConvergenceLayer()
-		 : _vsocket_state(false), _any_port(0)
+		 : _vsocket_state(false), _any_port(0), _stats_in(0), _stats_out(0)
 		{
 		}
 
@@ -494,6 +494,18 @@ namespace dtn
 			}
 		}
 
+		void TCPConvergenceLayer::addTrafficIn(size_t amount) throw ()
+		{
+			ibrcommon::MutexLock l(_stats_lock);
+			_stats_in += amount;
+		}
+
+		void TCPConvergenceLayer::addTrafficOut(size_t amount) throw ()
+		{
+			ibrcommon::MutexLock l(_stats_lock);
+			_stats_out += amount;
+		}
+
 		void TCPConvergenceLayer::componentRun() throw ()
 		{
 			try {
@@ -611,37 +623,15 @@ namespace dtn
 		}
 	}
 
-	const ConvergenceLayer::stats_map& TCPConvergenceLayer::getStats()
+	void TCPConvergenceLayer::getStats(ConvergenceLayer::stats_map &data) const
 	{
-		size_t in = 0;
-		size_t out = 0;
-
-		// collect stats of all connections
-		ibrcommon::MutexLock l(_connections_cond);
-
-		for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
-		{
-			TCPConnection &conn = *(*iter);
-			in += conn.getTrafficStats(0);
-			out += conn.getTrafficStats(1);
-			conn.resetTrafficStats();
-		}
-
-		addStats("in", in);
-		addStats("out", out);
-
-		return ConvergenceLayer::getStats();
+		data["in"] = _stats_in;
+		data["out"] = _stats_out;
 	}
 
 	void TCPConvergenceLayer::resetStats()
 	{
-		// reset the stats of all connections
-		ibrcommon::MutexLock l(_connections_cond);
-
-		for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); ++iter)
-		{
-			TCPConnection &conn = *(*iter);
-			conn.resetTrafficStats();
-		}
+		_stats_in = 0;
+		_stats_out = 0;
 	}
 }

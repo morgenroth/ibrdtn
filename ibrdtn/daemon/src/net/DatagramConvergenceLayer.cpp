@@ -41,11 +41,8 @@ namespace dtn
 		const std::string DatagramConvergenceLayer::TAG = "DatagramConvergenceLayer";
 
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
-		 : _service(ds), _active_conns(0), _running(false), _discovery_sn(0)
+		 : _service(ds), _active_conns(0), _running(false), _discovery_sn(0), _stats_in(0), _stats_out(0)
 		{
-			// initialize stats
-			addStats("out", 0);
-			addStats("in", 0);
 		}
 
 		DatagramConvergenceLayer::~DatagramConvergenceLayer()
@@ -63,6 +60,18 @@ namespace dtn
 			delete _service;
 		}
 
+		void DatagramConvergenceLayer::resetStats()
+		{
+			_stats_in = 0;
+			_stats_out = 0;
+		}
+
+		void DatagramConvergenceLayer::getStats(ConvergenceLayer::stats_map &data) const
+		{
+			data["in"] = _stats_in;
+			data["out"] = _stats_out;
+		}
+
 		dtn::core::Node::Protocol DatagramConvergenceLayer::getDiscoveryProtocol() const
 		{
 			return _service->getProtocol();
@@ -77,7 +86,7 @@ namespace dtn
 			_service->send(HEADER_SEGMENT, flags, seqno, destination, buf, len);
 
 			// traffic monitoring
-			addStats("out", len);
+			_stats_out += len;
 		}
 
 		void DatagramConvergenceLayer::callback_ack(DatagramConnection&, const unsigned int &seqno, const std::string &destination) throw (DatagramException)
@@ -245,7 +254,7 @@ namespace dtn
 					len = _service->recvfrom(&data[0], maxlen, type, flags, seqno, address);
 
 					// traffic monitoring
-					addStats("in", len);
+					_stats_in += len;
 				} catch (const DatagramException&) {
 					_running = false;
 					break;

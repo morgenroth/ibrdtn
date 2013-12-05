@@ -112,7 +112,8 @@ namespace dtn
 			void raiseEvent(const Event *evt) throw ();
 
 			virtual void resetStats();
-			virtual const stats_map& getStats();
+
+			virtual void getStats(ConvergenceLayer::stats_map &data) const;
 
 		protected:
 			void __cancellation() throw ();
@@ -150,6 +151,16 @@ namespace dtn
 			 */
 			void connectionDown(TCPConnection *conn);
 
+			/**
+			 * Reports inbound traffic amount
+			 */
+			void addTrafficIn(size_t) throw ();
+
+			/**
+			 * Reports outbound traffic amount
+			 */
+			void addTrafficOut(size_t) throw ();
+
 			static const int DEFAULT_PORT;
 
 			ibrcommon::vsocket _vsocket;
@@ -164,6 +175,11 @@ namespace dtn
 			ibrcommon::Mutex _portmap_lock;
 			std::map<ibrcommon::vinterface, unsigned int> _portmap;
 			unsigned int _any_port;
+
+			// stats variables
+			ibrcommon::Mutex _stats_lock;
+			size_t _stats_in;
+			size_t _stats_out;
 		};
 	}
 }

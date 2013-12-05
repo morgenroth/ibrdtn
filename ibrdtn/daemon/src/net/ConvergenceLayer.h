@@ -72,14 +72,7 @@ namespace dtn
 
 			virtual void resetStats();
 
-			virtual const stats_map& getStats();
-
-		protected:
-			virtual void addStats(const std::string &tag, const size_t value);
-			virtual void setStats(const std::string &tag, const size_t value);
-
-		private:
-			stats_map _stats;
+			virtual void getStats(ConvergenceLayer::stats_map &data) const;
 		};
 	}
 }

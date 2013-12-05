@@ -148,10 +148,6 @@ namespace dtn
 			 */
 
 			std::string getUsePersistentBundleSets() const;
-			/**
-			 * Returns true if traffic stats should be recorded
-			 */
-			bool enableTrafficStats() const;
 
 			enum RoutingExtension
 			{
