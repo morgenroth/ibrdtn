@@ -272,28 +272,14 @@ namespace dtn
 			_cl.erase( cl );
 		}
 
-		ConnectionManager::stats_list ConnectionManager::getStats()
+		void ConnectionManager::getStats(dtn::net::ConvergenceLayer::stats_data &data)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
-			stats_list stats;
-
-			ConvergenceLayer::stats_map data;
-
 			for (std::set<ConvergenceLayer*>::const_iterator iter = _cl.begin(); iter != _cl.end(); ++iter)
 			{
 				ConvergenceLayer &cl = (**iter);
-
-				// generate stats map
 				cl.getStats(data);
-
-				stats_pair entry;
-				entry.first = cl.getDiscoveryProtocol();
-				entry.second = data;
-
-				stats.push_back(entry);
 			}
-
-			return stats;
 		}
 
 		void ConnectionManager::resetStats()

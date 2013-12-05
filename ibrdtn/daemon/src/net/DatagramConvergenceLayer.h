@@ -83,7 +83,7 @@ namespace dtn
 
 			virtual void resetStats();
 
-			virtual void getStats(ConvergenceLayer::stats_map &data) const;
+			virtual void getStats(ConvergenceLayer::stats_data &data) const;
 
 		protected:
 			virtual void componentUp() throw ();
@@ -106,6 +106,9 @@ namespace dtn
 
 			void connectionUp(const DatagramConnection *conn);
 			void connectionDown(const DatagramConnection *conn);
+
+			void reportSuccess(size_t retries, double rtt);
+			void reportFailure();
 
 		private:
 			class ConnectionNotAvailableException : public ibrcommon::Exception {
@@ -151,8 +154,12 @@ namespace dtn
 			uint16_t _discovery_sn;
 
 			// stats variables
+
 			size_t _stats_in;
 			size_t _stats_out;
+			double _stats_rtt;
+			size_t _stats_retries;
+			size_t _stats_failure;
 		};
 	} /* namespace data */
 } /* namespace dtn */

@@ -430,16 +430,14 @@ namespace dtn
 						_stream << "Queued: " << dtn::core::EventDispatcher<dtn::routing::QueueBundleEvent>::getCounter() << std::endl;
 						_stream << std::endl;
 					} else if ( cmd[1] == "convergencelayers" ) {
-						ConnectionManager::stats_list list = dtn::core::BundleCore::getInstance().getConnectionManager().getStats();
-
 						_stream << ClientHandler::API_STATUS_OK << " STATS CONVERGENCELAYERS" << std::endl;
-						for (ConnectionManager::stats_list::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
-							const ConnectionManager::stats_pair &pair = (*iter);
-							const ConvergenceLayer::stats_map &map = pair.second;
 
-							for (ConvergenceLayer::stats_map::const_iterator map_it = map.begin(); map_it != map.end(); ++map_it) {
-								_stream << dtn::core::Node::toString(pair.first) << "|" << (*map_it).first << ": " << (*map_it).second << std::endl;
-							}
+						dtn::net::ConvergenceLayer::stats_data data;
+						dtn::core::BundleCore::getInstance().getConnectionManager().getStats(data);
+
+						for (dtn::net::ConvergenceLayer::stats_data::const_iterator iter = data.begin(); iter != data.end(); ++iter) {
+							const dtn::net::ConvergenceLayer::stats_pair &pair = (*iter);
+								_stream << pair.first << ": " << pair.second << std::endl;
 						}
 						_stream << std::endl;
 					} else if ( cmd[1] == "reset" ) {

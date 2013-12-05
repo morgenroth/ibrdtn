@@ -303,6 +303,9 @@ namespace dtn
 						// adjust the average rtt
 						adjust_rtt(tm.getMilliseconds());
 
+						// report result
+						_callback.reportSuccess(i, tm.getMilliseconds());
+
 						return;
 					} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
 						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack timeout for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
@@ -317,6 +320,9 @@ namespace dtn
 
 				// maximum number of retransmissions hit
 				_send_state = SEND_ERROR;
+
+				// report failure
+				_callback.reportFailure();
 
 				// transmission failed - abort the stream
 				throw DatagramException("transmission failed - abort the stream");

@@ -41,7 +41,8 @@ namespace dtn
 		const std::string DatagramConvergenceLayer::TAG = "DatagramConvergenceLayer";
 
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
-		 : _service(ds), _active_conns(0), _running(false), _discovery_sn(0), _stats_in(0), _stats_out(0)
+		 : _service(ds), _active_conns(0), _running(false), _discovery_sn(0),
+		   _stats_in(0), _stats_out(0), _stats_rtt(0.0), _stats_retries(0), _stats_failure(0)
 		{
 		}
 
@@ -64,12 +65,40 @@ namespace dtn
 		{
 			_stats_in = 0;
 			_stats_out = 0;
+			_stats_rtt = 0.0;
+			_stats_retries = 0;
+			_stats_failure = 0;
 		}
 
-		void DatagramConvergenceLayer::getStats(ConvergenceLayer::stats_map &data) const
+		void DatagramConvergenceLayer::getStats(ConvergenceLayer::stats_data &data) const
 		{
-			data["in"] = _stats_in;
-			data["out"] = _stats_out;
+			std::stringstream ss_format;
+
+			static const std::string IN_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|in";
+			static const std::string OUT_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|out";
+
+			static const std::string RTT_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|rtt";
+			static const std::string RETRIES_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|retries";
+			static const std::string FAIL_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|fail";
+
+			ss_format << _stats_in;
+			data[IN_TAG] = ss_format.str();
+			ss_format.str("");
+
+			ss_format << _stats_out;
+			data[OUT_TAG] = ss_format.str();
+			ss_format.str("");
+
+			ss_format << _stats_rtt;
+			data[RTT_TAG] = ss_format.str();
+			ss_format.str("");
+
+			ss_format << _stats_retries;
+			data[RETRIES_TAG] = ss_format.str();
+			ss_format.str("");
+
+			ss_format << _stats_failure;
+			data[FAIL_TAG] = ss_format.str();
 		}
 
 		dtn::core::Node::Protocol DatagramConvergenceLayer::getDiscoveryProtocol() const
@@ -152,6 +181,17 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Selected identifier: " << connection->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
 			return *connection;
+		}
+
+		void DatagramConvergenceLayer::reportSuccess(size_t retries, double rtt)
+		{
+			_stats_rtt = rtt;
+			_stats_retries += retries;
+		}
+
+		void DatagramConvergenceLayer::reportFailure()
+		{
+			_stats_failure++;
 		}
 
 		void DatagramConvergenceLayer::connectionUp(const DatagramConnection *conn)

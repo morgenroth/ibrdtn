@@ -115,18 +115,18 @@ namespace dtn
 				return _tags;
 			}
 
-			size_t getData(int index) {
+			const std::string& getData(int index) {
 				return _data[index];
 			}
 
-			void addData(const std::string &tag, size_t data) {
+			void addData(const std::string &tag, const std::string &data) {
 				_tags.push_back(tag);
 				_data.push_back(data);
 			}
 
 		private:
 			std::vector<std::string> _tags;
-			std::vector<size_t> _data;
+			std::vector<std::string> _data;
 		};
 
 		class NativeDaemonException : public ibrcommon::Exception

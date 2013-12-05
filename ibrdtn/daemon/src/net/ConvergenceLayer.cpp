@@ -34,7 +34,7 @@ namespace dtn
 		{
 		}
 
-		void ConvergenceLayer::getStats(ConvergenceLayer::stats_map&) const
+		void ConvergenceLayer::getStats(ConvergenceLayer::stats_data&) const
 		{
 		}
 	}

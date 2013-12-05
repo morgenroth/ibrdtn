@@ -137,10 +137,7 @@ namespace dtn
 			/**
 			 * Returns statistic data about all convergence-layers
 			 */
-			typedef std::pair<dtn::core::Node::Protocol, ConvergenceLayer::stats_map> stats_pair;
-			typedef std::list<stats_pair> stats_list;
-
-			stats_list getStats();
+			void getStats(dtn::net::ConvergenceLayer::stats_data &data);
 			void resetStats();
 
 		protected:

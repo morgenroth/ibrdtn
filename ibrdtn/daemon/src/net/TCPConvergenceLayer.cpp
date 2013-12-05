@@ -623,10 +623,19 @@ namespace dtn
 		}
 	}
 
-	void TCPConvergenceLayer::getStats(ConvergenceLayer::stats_map &data) const
+	void TCPConvergenceLayer::getStats(ConvergenceLayer::stats_data &data) const
 	{
-		data["in"] = _stats_in;
-		data["out"] = _stats_out;
+		std::stringstream ss_format;
+
+		static const std::string IN_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|in";
+		static const std::string OUT_TAG = dtn::core::Node::toString(getDiscoveryProtocol()) + "|out";
+
+		ss_format << _stats_in;
+		data[IN_TAG] = ss_format.str();
+		ss_format.str("");
+
+		ss_format << _stats_out;
+		data[OUT_TAG] = ss_format.str();
 	}
 
 	void TCPConvergenceLayer::resetStats()

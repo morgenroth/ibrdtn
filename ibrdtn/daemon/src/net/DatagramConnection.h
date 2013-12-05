@@ -47,6 +47,9 @@ namespace dtn
 
 			virtual void connectionUp(const DatagramConnection *conn) = 0;
 			virtual void connectionDown(const DatagramConnection *conn) = 0;
+
+			virtual void reportSuccess(size_t retries, double rtt) { };
+			virtual void reportFailure() { };
 		};
 
 		class DatagramConnection : public ibrcommon::DetachedThread

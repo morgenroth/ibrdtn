@@ -113,7 +113,7 @@ namespace dtn
 
 			virtual void resetStats();
 
-			virtual void getStats(ConvergenceLayer::stats_map &data) const;
+			virtual void getStats(ConvergenceLayer::stats_data &data) const;
 
 		protected:
 			void __cancellation() throw ();

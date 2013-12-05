@@ -68,11 +68,12 @@ namespace dtn
 			/**
 			 * statistic methods
 			 */
-			typedef std::map<std::string, size_t> stats_map;
+			typedef std::pair<string, string> stats_pair;
+			typedef std::map<string, string> stats_data;
 
 			virtual void resetStats();
 
-			virtual void getStats(ConvergenceLayer::stats_map &data) const;
+			virtual void getStats(ConvergenceLayer::stats_data &data) const;
 		};
 	}
 }
