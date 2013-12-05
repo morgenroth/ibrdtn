@@ -295,7 +295,8 @@ namespace dtn
 
 					// traffic monitoring
 					_stats_in += len;
-				} catch (const DatagramException&) {
+				} catch (const DatagramException &ex) {
+					IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << "recvfrom() failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					_running = false;
 					break;
 				}
