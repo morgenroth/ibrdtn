@@ -327,6 +327,13 @@ namespace dtn
 				// transmission failed - abort the stream
 				throw DatagramException("transmission failed - abort the stream");
 			}
+			else
+			{
+				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 30) << "transmit frame seqno: " << seqno << IBRCOMMON_LOGGER_ENDL;
+
+				// send the datagram
+				_callback.callback_send(*this, flags, seqno, getIdentifier(), buf, len);
+			}
 
 			// if this is the last segment switch directly to IDLE
 			_send_state = last ? SEND_IDLE : SEND_NEXT;
