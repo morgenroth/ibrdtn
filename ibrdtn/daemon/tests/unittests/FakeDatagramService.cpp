@@ -31,6 +31,7 @@ FakeDatagramService::FakeDatagramService() : _iface("fake0"), _discovery_sn(0), 
 	_params.flowcontrol = DatagramService::FLOW_STOPNWAIT;
 	_params.initial_timeout = 2000;		// initial timeout 2 seconds
 	_params.seq_check = true;		// no sequence number checks
+	_params.retry_limit = 5;
 }
 
 FakeDatagramService::~FakeDatagramService() {

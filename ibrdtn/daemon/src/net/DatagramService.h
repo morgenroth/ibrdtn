@@ -43,7 +43,8 @@ namespace dtn
 			enum FLOWCONTROL
 			{
 				FLOW_NONE = 0,
-				FLOW_STOPNWAIT = 1
+				FLOW_STOPNWAIT = 1,
+				FLOW_SLIDING_WINDOW = 2
 			};
 
 			enum HEADER_FLAGS
@@ -61,6 +62,7 @@ namespace dtn
 				size_t max_msg_length;
 				size_t initial_timeout;
 				bool seq_check;
+				size_t retry_limit;
 			};
 
 			virtual ~DatagramService() = 0;

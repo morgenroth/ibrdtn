@@ -45,6 +45,7 @@ namespace dtn
 			_params.flowcontrol = DatagramService::FLOW_STOPNWAIT;
 			_params.initial_timeout = 50;		// initial timeout 50ms
 			_params.seq_check = true;
+			_params.retry_limit = 5;
 		}
 
 		UDPDatagramService::~UDPDatagramService()

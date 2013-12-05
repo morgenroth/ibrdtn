@@ -248,9 +248,6 @@ namespace dtn
 
 		void DatagramConnection::stream_send(const char *buf, const dtn::data::Length &len, bool last) throw (DatagramException)
 		{
-			// measure the time until the ack is received
-			ibrcommon::TimeMeasurement tm;
-
 			// build the right flags
 			char flags = 0;
 
@@ -267,11 +264,14 @@ namespace dtn
 
 			if (_params.flowcontrol == DatagramService::FLOW_STOPNWAIT)
 			{
+				// measure the time until the ack is received
+				ibrcommon::TimeMeasurement tm;
+
 				// start time measurement
 				tm.start();
 
 				// max. 5 retries
-				for (int i = 0; i < 5; ++i)
+				for (size_t i = 0; i < _params.retry_limit; ++i)
 				{
 					IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 30) << "transmit frame seqno: " << seqno << IBRCOMMON_LOGGER_ENDL;
 
