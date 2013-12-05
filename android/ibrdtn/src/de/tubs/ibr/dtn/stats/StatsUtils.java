@@ -62,7 +62,7 @@ public class StatsUtils {
                 Double last_timestamp = Double.valueOf(last_entry.getTimestamp().getTime()) / 1000.0;
                 Double timestamp_diff = timestamp - last_timestamp;
 
-                Long last_value = last_entry.getDataValue();
+                Double last_value = last_entry.getDataValue();
 
                 GraphViewData p = null;
 
