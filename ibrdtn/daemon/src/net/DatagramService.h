@@ -57,6 +57,14 @@ namespace dtn
 			class Parameter
 			{
 			public:
+				// default constructor
+				Parameter()
+				: flowcontrol(FLOW_NONE), max_seq_numbers(2), max_msg_length(1024),
+				  initial_timeout(50), seq_check(true), retry_limit(5) { }
+
+				// destructor
+				virtual ~Parameter() { }
+
 				FLOWCONTROL flowcontrol;
 				unsigned int max_seq_numbers;
 				size_t max_msg_length;

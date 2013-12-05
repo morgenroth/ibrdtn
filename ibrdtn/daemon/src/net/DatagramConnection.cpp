@@ -239,7 +239,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 15) << "sequence number received " << seqno << ", expected " << ex.expected_seqno << IBRCOMMON_LOGGER_ENDL;
 			}
 
-			if (_params.flowcontrol == DatagramService::FLOW_STOPNWAIT)
+			if (_params.flowcontrol != DatagramService::FLOW_NONE)
 			{
 				// send ack for this message
 				_callback.callback_ack(*this, _next_seqno, getIdentifier());
@@ -294,11 +294,11 @@ namespace dtn
 							_ack_cond.wait(&ts);
 						}
 
-						// success!
-						_send_state = last ? SEND_IDLE : SEND_NEXT;
-
 						// stop the measurement
 						tm.stop();
+
+						// success!
+						_send_state = last ? SEND_IDLE : SEND_NEXT;
 
 						// adjust the average rtt
 						adjust_rtt(tm.getMilliseconds());
@@ -327,20 +327,143 @@ namespace dtn
 				// transmission failed - abort the stream
 				throw DatagramException("transmission failed - abort the stream");
 			}
+			else if (_params.flowcontrol == DatagramService::FLOW_SLIDING_WINDOW)
+			{
+				try {
+					// lock the ACK variables and frame window
+					ibrcommon::MutexLock l(_ack_cond);
+
+					// timeout value
+					struct timespec ts;
+
+					// set timeout to twice the average round-trip-time
+					ibrcommon::Conditional::gettimeout(static_cast<size_t>(_avg_rtt * 2) + 1, &ts);
+
+					// wait until window has at least one free slot
+					while (sw_frames_full()) _ack_cond.wait(&ts);
+
+					// add new frame to the window
+					_sw_frames.push_back(window_frame());
+
+					window_frame &new_frame = _sw_frames.back();
+
+					new_frame.flags = flags;
+					new_frame.seqno = seqno;
+					new_frame.buf.assign(buf, buf+len);
+					new_frame.retry = 0;
+
+					// start RTT measurement
+					new_frame.tm.start();
+
+					// send the datagram
+					_callback.callback_send(*this, new_frame.flags, new_frame.seqno, getIdentifier(), &new_frame.buf[0], new_frame.buf.size());
+
+					// increment next sequence number
+					_last_ack = (seqno + 1) % _params.max_seq_numbers;
+
+					// enter the wait state
+					_send_state = SEND_WAIT_ACK;
+
+					// set timeout to twice the average round-trip-time
+					ibrcommon::Conditional::gettimeout(static_cast<size_t>(_avg_rtt * 2) + 1, &ts);
+
+					// wait until one more slot is available
+					// or no more frames are to ACK (if this was the last frame)
+					while ((last && !_sw_frames.empty()) || (!last && sw_frames_full()))
+					{
+						_ack_cond.wait(&ts);
+					}
+				} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
+					// timeout - retransmit the whole window
+					sw_timeout(last);
+				}
+
+				// if this is the last segment switch directly to IDLE
+				_send_state = last ? SEND_IDLE : SEND_NEXT;
+			}
 			else
 			{
 				IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 30) << "transmit frame seqno: " << seqno << IBRCOMMON_LOGGER_ENDL;
 
 				// send the datagram
 				_callback.callback_send(*this, flags, seqno, getIdentifier(), buf, len);
+
+				// if this is the last segment switch directly to IDLE
+				_send_state = last ? SEND_IDLE : SEND_NEXT;
+
+				// increment next sequence number
+				ibrcommon::MutexLock l(_ack_cond);
+				_last_ack = (seqno + 1) % _params.max_seq_numbers;
 			}
+		}
 
-			// if this is the last segment switch directly to IDLE
-			_send_state = last ? SEND_IDLE : SEND_NEXT;
+		bool DatagramConnection::sw_frames_full()
+		{
+			return _sw_frames.size() >= (_params.max_seq_numbers / 2);
+		}
 
-			// increment next sequence number
-			ibrcommon::MutexLock l(_ack_cond);
-			_last_ack = (seqno + 1) % _params.max_seq_numbers;
+		void DatagramConnection::sw_timeout(bool last)
+		{
+			// timeout value
+			struct timespec ts;
+
+			while (true) {
+				try {
+					ibrcommon::MutexLock l(_ack_cond);
+
+					// fail -> increment the future timeout
+					adjust_rtt(static_cast<double>(_avg_rtt) * 2);
+
+					if (_sw_frames.size() > 0)
+					{
+						window_frame &front_frame = _sw_frames.front();
+
+						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack timeout for seqno " << front_frame.seqno << IBRCOMMON_LOGGER_ENDL;
+
+						if (front_frame.retry > _params.retry_limit) {
+							// maximum number of retransmissions hit
+							_send_state = SEND_ERROR;
+
+							// report failure
+							_callback.reportFailure();
+
+							// transmission failed - abort the stream
+							throw DatagramException("transmission failed - abort the stream");
+						}
+					}
+
+					// retransmit the window
+					for (std::list<window_frame>::iterator it = _sw_frames.begin(); it != _sw_frames.end(); ++it)
+					{
+						window_frame &retry_frame = _sw_frames.front();
+
+						// send the datagram
+						_callback.callback_send(*this, retry_frame.flags, retry_frame.seqno, getIdentifier(), &retry_frame.buf[0], retry_frame.buf.size());
+
+						// increment retry counter
+						retry_frame.retry++;
+					}
+
+					// enter the wait state
+					_send_state = SEND_WAIT_ACK;
+
+					// set timeout to twice the average round-trip-time
+					ibrcommon::Conditional::gettimeout(static_cast<size_t>(_avg_rtt * 2) + 1, &ts);
+
+					// wait until one more slot is available
+					// or no more frames are to ACK (if this was the last frame)
+					while ((last && !_sw_frames.empty()) || (!last && sw_frames_full()))
+					{
+						_ack_cond.wait(&ts);
+					}
+				} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
+					// timeout again - repeat at while loop
+					continue;
+				}
+
+				// done
+				return;
+			}
 		}
 
 		void DatagramConnection::ack(const unsigned int &seqno)
@@ -348,7 +471,33 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack received for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
 
 			ibrcommon::MutexLock l(_ack_cond);
-			_last_ack = seqno;
+
+			switch (_params.flowcontrol) {
+				case DatagramService::FLOW_SLIDING_WINDOW:
+					if (_sw_frames.size() > 0) {
+						window_frame &f = _sw_frames.front();
+
+						if (seqno == ((f.seqno + 1) % _params.max_seq_numbers)) {
+							// stop the measurement
+							f.tm.stop();
+
+							// adjust the average rtt
+							adjust_rtt(f.tm.getMilliseconds());
+
+							// report result
+							_callback.reportSuccess(f.retry, f.tm.getMilliseconds());
+
+							// remove front element
+							_sw_frames.pop_front();
+						}
+					}
+					break;
+
+				default:
+					_last_ack = seqno;
+					break;
+			}
+
 			_ack_cond.signal(true);
 		}
 

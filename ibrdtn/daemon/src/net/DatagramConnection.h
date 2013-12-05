@@ -27,6 +27,7 @@
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Conditional.h>
+#include <ibrcommon/TimeMeasurement.h>
 #include <streambuf>
 #include <iostream>
 #include <vector>
@@ -189,9 +190,25 @@ namespace dtn
 				DatagramConnection &_connection;
 			};
 
+			/**
+			 * Send a new frame
+			 */
 			void stream_send(const char *buf, const dtn::data::Length &len, bool last) throw (DatagramException);
 
+			/**
+			 * Adjust the average RTT by the new measured value
+			 */
 			void adjust_rtt(double value);
+
+			/**
+			 * True, if the sliding window buffer is exhausted
+			 */
+			bool sw_frames_full();
+
+			/**
+			 * Retransmit the whole sliding window buffer on a timeout
+			 */
+			void sw_timeout(bool last);
 
 			DatagramConnectionCallback &_callback;
 			const std::string _identifier;
@@ -213,6 +230,24 @@ namespace dtn
 			double _avg_rtt;
 
 			dtn::data::EID _peer_eid;
+
+			// buffer for sliding window approach
+			class window_frame {
+			public:
+				// default constructor
+				window_frame()
+				: flags(0), seqno(0), retry(0) { }
+
+				// destructor
+				virtual ~window_frame() { }
+
+				char flags;
+				unsigned int seqno;
+				std::vector<char> buf;
+				unsigned int retry;
+				ibrcommon::TimeMeasurement tm;
+			};
+			std::list<window_frame> _sw_frames;
 		};
 	} /* namespace data */
 } /* namespace dtn */
