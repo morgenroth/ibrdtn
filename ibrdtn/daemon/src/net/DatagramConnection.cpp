@@ -435,7 +435,7 @@ namespace dtn
 					// retransmit the window
 					for (std::list<window_frame>::iterator it = _sw_frames.begin(); it != _sw_frames.end(); ++it)
 					{
-						window_frame &retry_frame = _sw_frames.front();
+						window_frame &retry_frame = (*it);
 
 						// send the datagram
 						_callback.callback_send(*this, retry_frame.flags, retry_frame.seqno, getIdentifier(), &retry_frame.buf[0], retry_frame.buf.size());
