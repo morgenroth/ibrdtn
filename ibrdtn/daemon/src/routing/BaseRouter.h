@@ -34,7 +34,6 @@
 #include "routing/RetransmissionExtension.h"
 
 #include <ibrdtn/data/BundleSet.h>
-#include <ibrdtn/data/DTNTime.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/MetaBundle.h>
 
