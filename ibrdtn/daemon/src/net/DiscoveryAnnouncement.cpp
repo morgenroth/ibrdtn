@@ -116,12 +116,12 @@ namespace dtn
 				{
 					if (services.empty())
 					{
-						unsigned char flags = DiscoveryAnnouncement::BEACON_SHORT | announcement._flags;
+						const unsigned char flags = DiscoveryAnnouncement::BEACON_SHORT | announcement._flags;
 						stream << (unsigned char)DiscoveryAnnouncement::DISCO_VERSION_00 << flags;
 						return stream;
 					}
 
-					dtn::data::BundleString eid(announcement._canonical_eid.getString());
+					const dtn::data::BundleString eid(announcement._canonical_eid.getString());
 					dtn::data::Number beacon_len;
 
 					// determine the beacon length
@@ -162,12 +162,12 @@ namespace dtn
 					stream << flags;
 
 					// sequencenumber
-					uint16_t sn = htons(announcement._sn);
-					stream.write( (char*)&sn, 2 );
+					const uint16_t sn = htons(announcement._sn);
+					stream.write( (const char*)&sn, 2 );
 
 					if ( flags && DiscoveryAnnouncement::BEACON_CONTAINS_EID )
 					{
-						dtn::data::BundleString eid(announcement._canonical_eid.getString());
+						const dtn::data::BundleString eid(announcement._canonical_eid.getString());
 						stream << eid;
 					}
 
@@ -272,7 +272,7 @@ namespace dtn
 				stream >> eid;
 				remain -= static_cast<int>(eid.getLength());
 
-				announcement._canonical_eid = dtn::data::EID((std::string)eid);
+				announcement._canonical_eid = dtn::data::EID((const std::string&)eid);
 
 				// get the services
 				list<DiscoveryService> &services = announcement._services;
@@ -312,7 +312,7 @@ namespace dtn
 					dtn::data::BundleString eid;
 					stream >> eid;
 
-					announcement._canonical_eid = dtn::data::EID((std::string)eid);
+					announcement._canonical_eid = dtn::data::EID((const std::string&)eid);
 
 					IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAnnouncement", 85) << "beacon eid: " << (std::string)eid << IBRCOMMON_LOGGER_ENDL;
 				}
