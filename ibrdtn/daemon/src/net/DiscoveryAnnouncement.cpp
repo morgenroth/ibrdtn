@@ -165,13 +165,13 @@ namespace dtn
 					const uint16_t sn = htons(announcement._sn);
 					stream.write( (const char*)&sn, 2 );
 
-					if ( flags && DiscoveryAnnouncement::BEACON_CONTAINS_EID )
+					if ( flags & DiscoveryAnnouncement::BEACON_CONTAINS_EID )
 					{
 						const dtn::data::BundleString eid(announcement._canonical_eid.getString());
 						stream << eid;
 					}
 
-					if ( flags && DiscoveryAnnouncement::BEACON_SERVICE_BLOCK )
+					if ( flags & DiscoveryAnnouncement::BEACON_SERVICE_BLOCK )
 					{
 						stream << dtn::data::Number(services.size());
 
