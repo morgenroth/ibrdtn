@@ -139,6 +139,14 @@ namespace dtn
 			static void gettimeofday(struct timeval *tv);
 
 			/**
+			 * Get the time of the day like ::gettimeofday(), but
+			 * correct the value by the known clock offset and the bundle
+			 * protocol time offset.
+			 * @param tv
+			 */
+			static void getdtntimeofday(struct timeval *tv);
+
+			/**
 			 * set the local offset of the clock
 			 * @param tv
 			 */

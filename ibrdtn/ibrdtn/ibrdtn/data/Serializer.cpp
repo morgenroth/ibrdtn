@@ -27,6 +27,7 @@
 #include "ibrdtn/data/ExtensionBlock.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/MetaBundle.h"
+#include "ibrdtn/data/DTNTime.h"
 #include "ibrdtn/utils/Clock.h"
 #include <ibrcommon/refcnt_ptr.h>
 #include <ibrcommon/Logger.h>

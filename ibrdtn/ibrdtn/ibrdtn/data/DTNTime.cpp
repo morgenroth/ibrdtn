@@ -45,7 +45,7 @@ namespace dtn
 		void DTNTime::set()
 		{
 			timeval tv;
-			dtn::utils::Clock::gettimeofday(&tv);
+			dtn::utils::Clock::getdtntimeofday(&tv);
 			_seconds = tv.tv_sec;
 			_nanoseconds = Number(tv.tv_usec) * 1000;
 		}

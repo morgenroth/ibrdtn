@@ -189,18 +189,12 @@ namespace dtn
 		dtn::data::Timestamp Clock::getTime()
 		{
 			struct timeval now;
-			Clock::gettimeofday(&now);
+			Clock::getdtntimeofday(&now);
 
 			// timezone
 			dtn::data::Timestamp offset = Clock::getTimezone() * 3600;
 
-			// do we believe we are before the year 2000?
-			if (dtn::data::Timestamp(now.tv_sec) < TIMEVAL_CONVERSION)
-			{
-				return 0;
-			}
-
-			return (dtn::data::Timestamp(now.tv_sec) - TIMEVAL_CONVERSION) + offset;
+			return dtn::data::Timestamp(now.tv_sec);
 		}
 
 		dtn::data::Timestamp Clock::getMonotonicTimestamp()
@@ -294,6 +288,36 @@ namespace dtn
 
 				// add offset
 				timersub(tv, &Clock::_offset, tv);
+			}
+		}
+
+		void Clock::getdtntimeofday(struct timeval *tv)
+		{
+			struct timezone tz;
+			::gettimeofday(tv, &tz);
+
+			// correct by the local offset
+			if (!Clock::shouldModifyClock())
+			{
+				if (!Clock::_offset_init)
+				{
+					timerclear(&Clock::_offset);
+					Clock::_offset_init = true;
+				}
+
+				// add offset
+				timersub(tv, &Clock::_offset, tv);
+			}
+
+			// do we believe we are before the year 2000?
+			if (dtn::data::Timestamp(tv->tv_sec) < TIMEVAL_CONVERSION)
+			{
+				tv->tv_sec = 0;
+			}
+			else
+			{
+				// do bundle protocol time conversion
+				tv->tv_sec -= TIMEVAL_CONVERSION.get<time_t>();
 			}
 		}
 
