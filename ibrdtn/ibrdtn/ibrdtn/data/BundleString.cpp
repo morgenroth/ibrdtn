@@ -43,14 +43,14 @@ namespace dtn
 
 		Length BundleString::getLength() const
 		{
-			dtn::data::Number str_len(length());
+			const dtn::data::Number str_len(length());
 			return str_len.getLength() + length();
 		}
 
 		std::ostream &operator<<(std::ostream &stream, const BundleString &bstring)
 		{
-			std::string data = (std::string)bstring;
-			dtn::data::Number str_len(data.length());
+			const std::string &data = (std::string)bstring;
+			const dtn::data::Number str_len(data.length());
 			stream << str_len << data;
 			return stream;
 		}
@@ -59,7 +59,7 @@ namespace dtn
 		{
 			dtn::data::Number length;
 			stream >> length;
-			std::streamsize data_len = length.get<std::streamsize>();
+			const std::streamsize data_len = length.get<std::streamsize>();
 
 			// clear the content
 			((std::string&)bstring) = "";
