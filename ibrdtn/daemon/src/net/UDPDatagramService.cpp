@@ -206,10 +206,10 @@ namespace dtn
 						ibrcommon::vaddress peeraddr;
 						size_t ret = sock.recvfrom(&tmp[0], length + 2, 0, peeraddr);
 
-						// first byte if the type
+						// first byte is the type
 						type = tmp[0];
 
-						// second byte if flags (4-bit) + seqno (4-bit)
+						// second byte is flags (4-bit) + seqno (4-bit)
 						flags = 0x0f & (tmp[1] >> 4);
 						seqno = 0x0f & tmp[1];
 
