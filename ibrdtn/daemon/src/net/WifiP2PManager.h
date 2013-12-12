@@ -88,37 +88,37 @@ namespace dtn
 			/**
 			 * @see wifip2p::WifiP2PInterface::peerFound(wifip2p::Peer peer)
 			 */
-			virtual void peerFound(wifip2p::Peer peer);
+			virtual void peerFound(const wifip2p::Peer &peer);
 
 			/**
 			 * @see wifip2p::WifiP2PInterface::connectionRequest(wifip2p::Peer peer)
 			 */
-			virtual void connectionRequest(wifip2p::Peer peer);
+			virtual void connectionRequest(const wifip2p::Peer &peer);
 
 			/**
 			 * @see wifip2p::WifiP2PInterface::connectionEstablished(wifip2p::Connection conn)
 			 */
-			virtual void connectionEstablished(wifip2p::Connection conn);
+			virtual void connectionEstablished(const wifip2p::Connection &conn);
 
 			/**
 			 * @see wifip2p::WifiP2PInterface::connectionLost(wifip2p::Connection conn)
 			 */
-			virtual void connectionLost(wifip2p::Connection conn);
+			virtual void connectionLost(const wifip2p::Connection &conn);
 
 			/**
 			 * @see wifip2p::Logger::log(std::string tag, std::string msg)
 			 */
-			virtual void log(std::string tag, std::string msg);
+			virtual void log(const std::string &tag, const std::string &msg);
 
 			/**
 			 * @see wifip2p::Logger::log_err(std::string tag, std::string msg)
 			 */
-			virtual void log_err(std::string tag, std::string msg);
+			virtual void log_err(const std::string &tag, const std::string &msg);
 
 			/**
 			 * @see wifip2p::Logger::log_debug(int debug, std::string tag, std::string msg)
 			 */
-			virtual void log_debug(int debug, std::string tag, std::string msg);
+			virtual void log_debug(int debug, const std::string &tag, const std::string &msg);
 
 		private:
 			bool _running;

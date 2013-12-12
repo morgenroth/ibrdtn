@@ -169,7 +169,7 @@ namespace dtn
 			}
 		}
 
-		void WifiP2PManager::peerFound(wifip2p::Peer peer) {
+		void WifiP2PManager::peerFound(const wifip2p::Peer &peer) {
 			// create an EID for the discovered node
 			const dtn::data::EID remote_peer_eid(peer.getName());
 
@@ -214,7 +214,7 @@ namespace dtn
 
 		}
 
-		void WifiP2PManager::connectionRequest(wifip2p::Peer peer) {
+		void WifiP2PManager::connectionRequest(const wifip2p::Peer &peer) {
 
 			list<wifip2p::Connection>::iterator conn_it = connections.begin();
 			bool contained = false;
@@ -247,7 +247,7 @@ namespace dtn
 
 		}
 
-		void WifiP2PManager::connectionEstablished(wifip2p::Connection conn) {
+		void WifiP2PManager::connectionEstablished(const wifip2p::Connection &conn) {
 
 			// create a new interface object
 			const ibrcommon::vinterface iface(conn.getNetworkIntf().getName());
@@ -264,7 +264,7 @@ namespace dtn
 
 		}
 
-		void WifiP2PManager::connectionLost(wifip2p::Connection conn) {
+		void WifiP2PManager::connectionLost(const wifip2p::Connection &conn) {
 
 			// create a new interface object
 			const ibrcommon::vinterface iface(conn.getNetworkIntf().getName());
@@ -296,17 +296,17 @@ namespace dtn
 
 		}
 
-		void WifiP2PManager::log(std::string tag, std::string msg)
+		void WifiP2PManager::log(const std::string &tag, const std::string &msg)
 		{
 			IBRCOMMON_LOGGER_TAG(WifiP2PManager::TAG + "[" + tag + "]", notice) << msg << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		void WifiP2PManager::log_err(std::string tag, std::string msg)
+		void WifiP2PManager::log_err(const std::string &tag, const std::string &msg)
 		{
 			IBRCOMMON_LOGGER_TAG(WifiP2PManager::TAG + "[" + tag + "]", error) << msg << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		void WifiP2PManager::log_debug(int debug, std::string tag, std::string msg)
+		void WifiP2PManager::log_debug(int debug, const std::string &tag, const std::string &msg)
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG(WifiP2PManager::TAG + "[" + tag + "]", debug) << msg << IBRCOMMON_LOGGER_ENDL;
 		}
