@@ -41,9 +41,9 @@ namespace dtn
 	{
 		class ApiServer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ApiServerInterface, public ibrcommon::TimerCallback
 		{
-		public:
 			static const std::string TAG;
 
+		public:
 			ApiServer(const ibrcommon::File &socket);
 			ApiServer(const ibrcommon::vinterface &net, int port = 4550);
 			virtual ~ApiServer();

@@ -37,9 +37,9 @@ namespace dtn
 	{
 		class MemoryBundleStorage : public BundleStorage, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent, public BundleList::Listener
 		{
-		public:
 			static const std::string TAG;
 
+		public:
 			MemoryBundleStorage(const dtn::data::Length maxsize = 0);
 			virtual ~MemoryBundleStorage();
 

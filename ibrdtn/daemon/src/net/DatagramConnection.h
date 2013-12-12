@@ -55,9 +55,9 @@ namespace dtn
 
 		class DatagramConnection : public ibrcommon::DetachedThread
 		{
-		public:
 			static const std::string TAG;
 
+		public:
 			DatagramConnection(const std::string &identifier, const DatagramService::Parameter &params, DatagramConnectionCallback &callback);
 			virtual ~DatagramConnection();
 

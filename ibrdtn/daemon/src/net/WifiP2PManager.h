@@ -36,10 +36,11 @@ namespace dtn
 {
 	namespace net
 	{
-		class WifiP2PManager : public dtn::daemon::IndependentComponent, public dtn::net::P2PDialupExtension, public wifip2p::WifiP2PInterface, public wifip2p::Logger {
-		public:
+		class WifiP2PManager : public dtn::daemon::IndependentComponent, public dtn::net::P2PDialupExtension, public wifip2p::WifiP2PInterface, public wifip2p::Logger
+		{
 			static const std::string TAG;
 
+		public:
 			WifiP2PManager(const std::string &ctrlpath);
 			virtual ~WifiP2PManager();
 

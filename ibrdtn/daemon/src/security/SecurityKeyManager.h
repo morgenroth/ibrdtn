@@ -38,6 +38,8 @@ namespace dtn
 	{
 		class SecurityKeyManager : public dtn::daemon::Configuration::OnChangeListener
 		{
+			static const std::string TAG;
+
 		public:
 			class KeyNotFoundException : public ibrcommon::Exception
 			{
@@ -47,8 +49,6 @@ namespace dtn
 
 				virtual ~KeyNotFoundException() throw() {};
 			};
-
-			static const std::string TAG;
 
 			static SecurityKeyManager& getInstance();
 

@@ -139,10 +139,11 @@ namespace dtn
 
 		class NativeEventLoop;
 
-		class NativeDaemon : public dtn::core::EventReceiver {
-		public:
+		class NativeDaemon : public dtn::core::EventReceiver
+		{
 			static const std::string TAG;
 
+		public:
 			/**
 			 * Constructor
 			 */

@@ -62,9 +62,9 @@ namespace dtn
 		 */
 		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver, public dtn::data::Validator, public ibrcommon::LinkManager::EventCallback, public dtn::daemon::Configuration::OnChangeListener
 		{
-		public:
 			static const std::string TAG;
 
+		public:
 			static dtn::data::EID local;
 
 			static BundleCore& getInstance();

@@ -50,10 +50,11 @@ namespace dtn
 		/*!
 		 * \brief This class is a manager to handle certificates
 		 */
-		class SecurityCertificateManager : public dtn::daemon::IntegratedComponent, public dtn::daemon::Configuration::OnChangeListener {
-		public:
+		class SecurityCertificateManager : public dtn::daemon::IntegratedComponent, public dtn::daemon::Configuration::OnChangeListener
+		{
 			static const std::string TAG;
 
+		public:
 			SecurityCertificateManager();
 			virtual ~SecurityCertificateManager();
 
