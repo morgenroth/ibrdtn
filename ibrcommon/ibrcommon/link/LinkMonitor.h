@@ -37,9 +37,9 @@ namespace ibrcommon
 {
 	class LinkMonitor : public ibrcommon::JoinableThread
 	{
-	public:
 		static const std::string TAG;
 
+	public:
 		LinkMonitor(LinkManager &lm);
 		virtual ~LinkMonitor();
 
