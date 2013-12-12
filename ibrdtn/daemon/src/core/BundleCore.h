@@ -145,7 +145,6 @@ namespace dtn
 			 */
 			static bool forwarding;
 
-
 			/**
 			 * Defines how many bundles should be in transit at once
 			 */
