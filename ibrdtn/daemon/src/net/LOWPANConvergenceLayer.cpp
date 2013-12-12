@@ -48,6 +48,8 @@ namespace dtn
 {
 	namespace net
 	{
+		const size_t LOWPANConvergenceLayer::BUFF_SIZE = 115;
+
 		LOWPANConvergenceLayer::LOWPANConvergenceLayer(const ibrcommon::vinterface &net, uint16_t panid, unsigned int mtu)
 			: DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
 			_net(net), _panid(panid), _ipnd_buf(BUFF_SIZE), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)

@@ -82,8 +82,6 @@ namespace dtn
 			 */
 			virtual void send_cb(const char *buf, const size_t len, const ibrcommon::vaddress &addr);
 
-			static const size_t BUFF_SIZE = 115;
-
 			void remove(const LOWPANConnection *conn);
 
 		protected:
@@ -95,6 +93,8 @@ namespace dtn
 			virtual void sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers);
 
 		private:
+			static const size_t BUFF_SIZE;
+
 			ibrcommon::vsocket _vsocket;
 
 			ibrcommon::vaddress _addr_broadcast;
