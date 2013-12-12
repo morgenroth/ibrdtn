@@ -55,7 +55,7 @@ namespace dtn
 			/**
 			 * this method updates the given values
 			 */
-			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
+			void update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
 				throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;

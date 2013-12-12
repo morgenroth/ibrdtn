@@ -21,8 +21,8 @@
 
 #include "config.h"
 #include "Configuration.h"
-#include "net/DiscoveryAnnouncement.h"
-#include "net/DiscoveryAnnouncement.h"
+#include "net/DiscoveryBeacon.h"
+#include "net/DiscoveryBeacon.h"
 #include "core/Node.h"
 
 #include <ibrdtn/utils/Utils.h>
@@ -1270,7 +1270,7 @@ namespace dtn
 			return _sync;
 		}
 
-		bool Configuration::TimeSync::sendDiscoveryAnnouncements() const
+		bool Configuration::TimeSync::sendDiscoveryBeacons() const
 		{
 			return _discovery;
 		}

@@ -27,7 +27,7 @@
 
 #include "Component.h"
 #include "net/DiscoveryAgent.h"
-#include "net/DiscoveryAnnouncement.h"
+#include "net/DiscoveryBeacon.h"
 #include "core/EventReceiver.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vsocket.h>
@@ -79,13 +79,13 @@ namespace dtn
 			void join(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ();
 			void leave(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ();
 
-			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
+			void send(const DiscoveryBeacon &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr);
 
 #ifndef __WIN32__
 			ibrcommon::vinterface _virtual_mcast_iface;
 #endif
 
-			DiscoveryAnnouncement::DiscoveryVersion _version;
+			DiscoveryBeacon::Protocol _version;
 			ibrcommon::vsocket _socket;
 			bool _state;
 			int _port;

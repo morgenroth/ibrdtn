@@ -71,7 +71,7 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		void EMailConvergenceLayer::update(const ibrcommon::vinterface&, DiscoveryAnnouncement &announcement)
+		void EMailConvergenceLayer::update(const ibrcommon::vinterface&, DiscoveryBeacon &announcement)
 			throw (DiscoveryServiceProvider::NoServiceHereException)
 		{
 			announcement.addService(DiscoveryService("emailcl", "email=" + _config.getOwnAddress()));

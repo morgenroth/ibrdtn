@@ -64,7 +64,7 @@ namespace dtn
 			 * It publishes the email address of the EMail Convergence Layer
 			 */
 			void update(const ibrcommon::vinterface&,
-					DiscoveryAnnouncement &announcement)
+					DiscoveryBeacon &announcement)
 					throw (DiscoveryServiceProvider::NoServiceHereException);
 
 			/**

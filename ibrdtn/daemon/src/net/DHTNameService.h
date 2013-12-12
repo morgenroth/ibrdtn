@@ -151,7 +151,7 @@ public:
 	 * this method updates the given values for discovery service
 	 * It publishes the port number of the DHT instance
 	 */
-	void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
+	void update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
 			throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
 

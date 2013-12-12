@@ -798,7 +798,7 @@ void dtn::dht::DHTNameService::bootstrappingIPs() {
 
 // TODO Nur für Interfaces zulassen, auf denen ich gebunden bin!
 
-void dtn::dht::DHTNameService::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
+void dtn::dht::DHTNameService::update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
 		throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException) {
 	if (this->_initialized) {
 		stringstream service;

@@ -23,7 +23,7 @@
 #define DISCOVERYAGENT_H_
 
 #include "core/Node.h"
-#include "net/DiscoveryAnnouncement.h"
+#include "net/DiscoveryBeacon.h"
 #include "net/DiscoveryServiceProvider.h"
 #include "net/DiscoveryService.h"
 #include "Configuration.h"

@@ -249,7 +249,7 @@ namespace dtn
 
 		void DatagramConvergenceLayer::sendAnnoucement()
 		{
-			DiscoveryAnnouncement announcement(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local);
+			DiscoveryBeacon announcement(DiscoveryBeacon::DISCO_VERSION_01, dtn::core::BundleCore::local);
 
 			// set sequencenumber
 			announcement.setSequencenumber(_discovery_sn);
@@ -308,7 +308,7 @@ namespace dtn
 				{
 					try {
 						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() Announcement received" << IBRCOMMON_LOGGER_ENDL;
-						DiscoveryAnnouncement announce;
+						DiscoveryBeacon announce;
 						stringstream ss;
 						ss.write(&data[0], len);
 						ss >> announce;

@@ -546,7 +546,7 @@ namespace dtn
 			public:
 				bool hasReference() const;
 				bool doSync() const;
-				bool sendDiscoveryAnnouncements() const;
+				bool sendDiscoveryBeacons() const;
 
 				float getSigma() const;
 				float getPsi() const;

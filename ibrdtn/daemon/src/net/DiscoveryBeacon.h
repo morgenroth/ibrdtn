@@ -1,5 +1,5 @@
 /*
- * DiscoveryAnnouncement.h
+ * DiscoveryBeacon.h
  *
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef DISCOVERYANNOUNCEMENT_H_
-#define DISCOVERYANNOUNCEMENT_H_
+#ifndef DISCOVERYBEACON_H_
+#define DISCOVERYBEACON_H_
 
 #include <ibrdtn/data/SDNV.h>
 #include <ibrdtn/data/EID.h>
@@ -33,7 +33,7 @@ namespace dtn
 {
 	namespace net
 	{
-		class DiscoveryAnnouncement
+		class DiscoveryBeacon
 		{
 			enum BEACON_FLAGS_V1
 			{
@@ -49,16 +49,16 @@ namespace dtn
 			};
 
 		public:
-			enum DiscoveryVersion
+			enum Protocol
 			{
 				DTND_IPDISCOVERY = 0x00,
 				DISCO_VERSION_00 = 0x01,
 				DISCO_VERSION_01 = 0x02
 			};
 
-			DiscoveryAnnouncement(const DiscoveryVersion version = DISCO_VERSION_00, dtn::data::EID eid = dtn::data::EID());
+			DiscoveryBeacon(const Protocol version = DISCO_VERSION_00, const dtn::data::EID &eid = dtn::data::EID());
 
-			virtual ~DiscoveryAnnouncement();
+			virtual ~DiscoveryBeacon();
 
 			void setEID(const dtn::data::EID &eid);
 			dtn::data::EID getEID() const;
@@ -68,15 +68,15 @@ namespace dtn
 			void addService(DiscoveryService service);
 			const DiscoveryService& getService(string name) const;
 
-			string toString() const;
+			std::string toString() const;
 
 			void setSequencenumber(uint16_t sequence);
 
 			bool isShort();
 
 		private:
-			friend std::ostream &operator<<(std::ostream &stream, const DiscoveryAnnouncement &announcement);
-			friend std::istream &operator>>(std::istream &stream, DiscoveryAnnouncement &announcement);
+			friend std::ostream &operator<<(std::ostream &stream, const DiscoveryBeacon &announcement);
+			friend std::istream &operator>>(std::istream &stream, DiscoveryBeacon &announcement);
 
 			unsigned int _version;
 			unsigned char _flags;
@@ -89,4 +89,4 @@ namespace dtn
 	}
 }
 
-#endif /* DISCOVERYANNOUNCEMENT_H_ */
+#endif /* DISCOVERYBEACON_H_ */

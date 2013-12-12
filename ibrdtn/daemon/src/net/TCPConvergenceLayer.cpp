@@ -171,7 +171,7 @@ namespace dtn
 			return dtn::core::Node::CONN_TCPIP;
 		}
 
-		void TCPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void TCPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
 			ibrcommon::MutexLock l(_interface_lock);
 

@@ -92,7 +92,7 @@ namespace dtn
 			}
 
 			// check if we should announce our own rating via discovery
-			_announce_rating = conf.sendDiscoveryAnnouncements();
+			_announce_rating = conf.sendDiscoveryBeacons();
 
 			// store the sync threshold locally
 			_sync_state.sync_threshold = conf.getSyncLevel();
@@ -378,7 +378,7 @@ namespace dtn
 		}
 
 
-		void DTNTPWorker::update(const ibrcommon::vinterface&, DiscoveryAnnouncement &announcement) throw(NoServiceHereException)
+		void DTNTPWorker::update(const ibrcommon::vinterface&, DiscoveryBeacon &announcement) throw(NoServiceHereException)
 		{
 			if (!_announce_rating) throw NoServiceHereException("Discovery of time sync mechanisms disabled.");
 

@@ -22,7 +22,7 @@
 #include "Configuration.h"
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryService.h"
-#include "net/DiscoveryAnnouncement.h"
+#include "net/DiscoveryBeacon.h"
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"
 #include "core/NodeEvent.h"

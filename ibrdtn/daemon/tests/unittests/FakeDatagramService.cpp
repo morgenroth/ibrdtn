@@ -20,7 +20,7 @@
  */
 
 #include "FakeDatagramService.h"
-#include "net/DiscoveryAnnouncement.h"
+#include "net/DiscoveryBeacon.h"
 #include <string.h>
 #include <unistd.h>
 
@@ -38,7 +38,7 @@ FakeDatagramService::~FakeDatagramService() {
 }
 
 void FakeDatagramService::fakeDiscovery() {
-	dtn::net::DiscoveryAnnouncement announcement(dtn::net::DiscoveryAnnouncement::DISCO_VERSION_01, _fake_peer);
+	dtn::net::DiscoveryBeacon announcement(dtn::net::DiscoveryBeacon::DISCO_VERSION_01, _fake_peer);
 
 	// set sequencenumber
 	announcement.setSequencenumber(_discovery_sn);

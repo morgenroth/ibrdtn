@@ -63,7 +63,7 @@ namespace dtn
 			 * @param name
 			 * @param data
 			 */
-			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
+			void update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
 				throw(NoServiceHereException);
 
 			/**

@@ -72,7 +72,7 @@ namespace dtn
 			return dtn::core::Node::CONN_LOWPAN;
 		}
 
-		void LOWPANConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void LOWPANConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
 			if (iface == _net)
 			{
@@ -210,7 +210,7 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 60) << "LOWPAN IPND beacon send started" << IBRCOMMON_LOGGER_ENDL;
 
-			DiscoveryAnnouncement announcement(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local);
+			DiscoveryBeacon announcement(DiscoveryBeacon::DISCO_VERSION_01, dtn::core::BundleCore::local);
 
 			// set sequencenumber
 			announcement.setSequencenumber(sn);
@@ -281,7 +281,7 @@ namespace dtn
 
 						// Check for extended header and retrieve if available
 						if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {
-							DiscoveryAnnouncement announce;
+							DiscoveryBeacon announce;
 							stringstream ss;
 							ss.write(&data[2], len-2);
 							ss >> announce;

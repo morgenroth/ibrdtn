@@ -56,21 +56,21 @@ namespace dtn
 #ifndef __WIN32__
 		   _virtual_mcast_iface("__virtual_multicast_interface__"),
 #endif
-		   _version(DiscoveryAnnouncement::DISCO_VERSION_01), _state(false), _port(port), _enabled(true)
+		   _version(DiscoveryBeacon::DISCO_VERSION_01), _state(false), _port(port), _enabled(true)
 		{
 			switch (_config.version())
 			{
 			case 2:
-				_version = DiscoveryAnnouncement::DISCO_VERSION_01;
+				_version = DiscoveryBeacon::DISCO_VERSION_01;
 				break;
 
 			case 1:
-				_version = DiscoveryAnnouncement::DISCO_VERSION_00;
+				_version = DiscoveryBeacon::DISCO_VERSION_00;
 				break;
 
 			case 0:
 				IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
-				_version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
+				_version = DiscoveryBeacon::DTND_IPDISCOVERY;
 				break;
 			};
 		}
@@ -204,7 +204,7 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr)
+		void IPNDAgent::send(const DiscoveryBeacon &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr)
 		{
 			// serialize announcement
 			stringstream ss; ss << a;
@@ -241,7 +241,7 @@ namespace dtn
 			// stop send announcements if discovery beacons are disabled
 			if (!_enabled) return;
 
-			DiscoveryAnnouncement announcement(_version, dtn::core::BundleCore::local);
+			DiscoveryBeacon announcement(_version, dtn::core::BundleCore::local);
 
 			// set sequencenumber
 			announcement.setSequencenumber(sn);
@@ -501,7 +501,7 @@ namespace dtn
 
 							char data[1500];
 							ibrcommon::vaddress sender;
-							DiscoveryAnnouncement announce(_version);
+							DiscoveryBeacon announce(_version);
 
 							std::list<DiscoveryService> ret_services;
 							dtn::data::EID ret_source;

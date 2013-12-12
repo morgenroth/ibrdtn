@@ -22,7 +22,7 @@
 #ifndef _DISCOVERYSERVICEPROVIDER_H
 #define	_DISCOVERYSERVICEPROVIDER_H
 
-#include "net/DiscoveryAnnouncement.h"
+#include "net/DiscoveryBeacon.h"
 #include <ibrcommon/net/vinterface.h>
 #include <string>
 
@@ -56,7 +56,7 @@ namespace dtn
 			 * @param name
 			 * @param data
 			 */
-			virtual void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
+			virtual void update(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon)
 				throw(NoServiceHereException) = 0;
 		};
 	}

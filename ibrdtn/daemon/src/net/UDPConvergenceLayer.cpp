@@ -93,7 +93,7 @@ namespace dtn
 			return dtn::core::Node::CONN_UDPIP;
 		}
 
-		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement) throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement) throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
 			// announce port only if we are bound to any interface
 			if (_net.empty()) {

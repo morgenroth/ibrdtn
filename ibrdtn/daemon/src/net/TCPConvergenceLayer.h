@@ -101,7 +101,7 @@ namespace dtn
 			/**
 			 * this method updates the given values
 			 */
-			void update(const ibrcommon::vinterface &iface, DiscoveryAnnouncement &announcement)
+			void update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
 				throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
 			void eventNotify(const ibrcommon::LinkEvent &evt);
