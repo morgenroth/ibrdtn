@@ -20,8 +20,6 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 	DiscoveryServiceProvider.h \
 	IPNDAgent.cpp \
 	IPNDAgent.h \
-	Neighbor.cpp \
-	Neighbor.h \
 	TCPConnection.cpp \
 	TCPConnection.h \
 	TCPConvergenceLayer.cpp \

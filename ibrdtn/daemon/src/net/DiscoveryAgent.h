@@ -23,7 +23,6 @@
 #define DISCOVERYAGENT_H_
 
 #include "core/Node.h"
-#include "net/Neighbor.h"
 #include "net/DiscoveryAnnouncement.h"
 #include "net/DiscoveryServiceProvider.h"
 #include "net/DiscoveryService.h"
@@ -55,7 +54,6 @@ namespace dtn
 			const dtn::daemon::Configuration::Discovery &_config;
 
 		private:
-			std::list<Neighbor> _neighbors;
 			uint16_t _sn;
 			std::list<dtn::net::DiscoveryServiceProvider*> _provider;
 			dtn::data::Timestamp _last_announce_sent;
