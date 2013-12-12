@@ -23,11 +23,9 @@
 #define LOWPANCONVERGENCELAYER_H_
 
 #include "Component.h"
-#include "core/EventReceiver.h"
 #include "net/ConvergenceLayer.h"
 #include "net/LOWPANConnection.h"
-#include "net/DiscoveryAgent.h"
-#include "net/DiscoveryServiceProvider.h"
+#include "net/DiscoveryBeaconHandler.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vsocket.h>
 #include <ibrcommon/net/lowpanstream.h>
@@ -45,7 +43,7 @@ namespace dtn
 		/**
 		 * This class implements a ConvergenceLayer for LOWPAN.
 		 */
-		class LOWPANConvergenceLayer : public DiscoveryAgent, public ConvergenceLayer, public dtn::daemon::IndependentComponent, public ibrcommon::lowpanstream_callback, public EventReceiver, public DiscoveryServiceProvider
+		class LOWPANConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public ibrcommon::lowpanstream_callback, public DiscoveryBeaconHandler
 		{
 		public:
 			LOWPANConvergenceLayer(const ibrcommon::vinterface &net, uint16_t panid, unsigned int mtu = 115); //MTU is actually 127...
@@ -55,8 +53,10 @@ namespace dtn
 			/**
 			 * this method updates the given values
 			 */
-			void update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
-				throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
+			void onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
+				throw (dtn::net::DiscoveryBeaconHandler::NoServiceHereException);
+
+			void onAdvertiseBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw ();
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
@@ -71,8 +71,6 @@ namespace dtn
 			 * @see Component::getName()
 			 */
 			virtual const std::string getName() const;
-
-			virtual void raiseEvent(const Event *evt) throw ();
 
 			/**
 			 * Callback interface for sending data back from the lowpanstream to the CL
@@ -90,8 +88,6 @@ namespace dtn
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();
 
-			virtual void sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers);
-
 		private:
 			static const size_t BUFF_SIZE;
 
@@ -100,8 +96,6 @@ namespace dtn
 			ibrcommon::vaddress _addr_broadcast;
 			ibrcommon::vinterface _net;
 			uint16_t _panid;
-			std::vector<char> _ipnd_buf;
-			int _ipnd_buf_len;
 
 			ibrcommon::Mutex _connection_lock;
 			std::list<LOWPANConnection*> ConnectionList;

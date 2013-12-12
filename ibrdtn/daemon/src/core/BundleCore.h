@@ -33,6 +33,7 @@
 
 #include "net/ConnectionManager.h"
 #include "net/ConvergenceLayer.h"
+#include "net/DiscoveryAgent.h"
 
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/EID.h>
@@ -89,6 +90,11 @@ namespace dtn
 			 * @return The connection manager reference
 			 */
 			dtn::net::ConnectionManager& getConnectionManager();
+
+			/**
+			 * Make the discovery agent avilable to other modules.
+			 */
+			dtn::net::DiscoveryAgent& getDiscoveryAgent();
 
 			/**
 			 * Add a static route to the static routing module.
@@ -201,6 +207,9 @@ namespace dtn
 
 			// manager class for connections
 			dtn::net::ConnectionManager _connectionmanager;
+
+			// discovery agent handling all the discovery stuff
+			dtn::net::DiscoveryAgent _disco_agent;
 
 			/**
 			 * In this boolean we store the connection state.

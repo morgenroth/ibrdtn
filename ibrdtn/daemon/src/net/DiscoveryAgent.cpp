@@ -26,6 +26,8 @@
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"
 #include "core/NodeEvent.h"
+#include "core/GlobalEvent.h"
+#include "core/EventDispatcher.h"
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
@@ -36,8 +38,9 @@ namespace dtn
 {
 	namespace net
 	{
-		DiscoveryAgent::DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config)
-		 : _config(config), _sn(0), _last_announce_sent(0)
+		DiscoveryAgent::DiscoveryAgent()
+		 : _config(dtn::daemon::Configuration::getInstance().getDiscovery()),
+		   _enabled(true), _sn(0), _adv_next(0), _last_announce_sent(0)
 		{
 		}
 
@@ -45,19 +48,119 @@ namespace dtn
 		{
 		}
 
-		void DiscoveryAgent::addService(DiscoveryServiceProvider *provider)
+		const std::string DiscoveryAgent::getName() const
 		{
-			_provider.push_back(provider);
+			return "DiscoveryAgent";
 		}
 
-		void DiscoveryAgent::received(const dtn::data::EID &source, const std::list<DiscoveryService> &services, const dtn::data::Number &timeout)
+		void DiscoveryAgent::raiseEvent(const Event *evt) throw ()
+		{
+			try {
+				dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+				const dtn::data::Timestamp ts = dtn::utils::Clock::getMonotonicTimestamp();
+
+				if (_config.announce() && (_adv_next <= ts)) {
+					// advertise me
+					onAdvertise();
+
+					// next advertisement in one second
+					_adv_next = ts + 1;
+				}
+			} catch (const std::bad_cast&) {
+
+			}
+
+			try {
+				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
+				if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY) {
+					// start sending discovery beacons
+					_enabled = true;
+				}
+				else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY) {
+					// suspend discovery beacons
+					_enabled = false;
+				}
+			} catch (const std::bad_cast&) {
+
+			}
+		}
+
+		void DiscoveryAgent::componentUp() throw ()
+		{
+			// listen to global events (discovery start/stop)
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
+
+			// listen to time events
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+		}
+
+		void DiscoveryAgent::componentDown() throw ()
+		{
+			// un-listen to global events (discovery start/stop)
+			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
+
+			// un-listen to time events
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
+		}
+
+		void DiscoveryAgent::registerService(const ibrcommon::vinterface &iface, dtn::net::DiscoveryBeaconHandler *handler)
+		{
+			ibrcommon::MutexLock l(_provider_lock);
+			handler_list &list = _providers[iface];
+			list.push_back(handler);
+		}
+
+		void DiscoveryAgent::unregisterService(const ibrcommon::vinterface &iface, dtn::net::DiscoveryBeaconHandler *handler)
+		{
+			ibrcommon::MutexLock l(_provider_lock);
+			if (_providers.find(iface) == _providers.end()) return;
+
+			handler_list &list = _providers[iface];
+
+			for (handler_list::iterator it = list.begin(); it != list.end(); ++it) {
+				if ((*it) == handler) {
+					list.erase(it);
+					if (list.empty()) _providers.erase(iface);
+					return;
+				}
+			}
+		}
+
+		DiscoveryBeacon DiscoveryAgent::obtainBeacon() const
+		{
+			DiscoveryBeacon::Protocol version;
+
+			switch (_config.version())
+			{
+			case 2:
+				version = DiscoveryBeacon::DISCO_VERSION_01;
+				break;
+
+			case 1:
+				version = DiscoveryBeacon::DISCO_VERSION_00;
+				break;
+
+			case 0:
+				IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
+				version = DiscoveryBeacon::DTND_IPDISCOVERY;
+				break;
+			};
+
+			DiscoveryBeacon beacon(version, dtn::core::BundleCore::local);
+
+			return beacon;
+		}
+
+		void DiscoveryAgent::onBeaconReceived(const DiscoveryBeacon &beacon)
 		{
 			// convert the announcement into NodeEvents
-			Node n(source);
+			Node n(beacon.getEID());
+
+			const std::list<DiscoveryService> &services = beacon.getServices();
 
 			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 			{
-				const dtn::data::Number to_value = (timeout == 0) ? _config.timeout() : timeout;
+				const dtn::data::Number to_value = _config.timeout();
 
 				const DiscoveryService &s = (*iter);
 
@@ -96,33 +199,87 @@ namespace dtn
 			if (!_config.announce())
 			{
 				// first check if another announcement was sent during the same seconds
-				if (_last_announce_sent != dtn::utils::Clock::getTime())
+				if (_last_announce_sent != dtn::utils::Clock::getMonotonicTimestamp())
 				{
-					IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "reply with discovery announcement" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "reply with discovery beacon" << IBRCOMMON_LOGGER_ENDL;
 
-					sendAnnoucement(_sn, _provider);
-
-					// increment sequencenumber
-					_sn++;
-
-					// save the time of the last sent announcement
-					_last_announce_sent = dtn::utils::Clock::getTime();
+					// reply with an own announcement
+					onAdvertise();
 				}
 			}
 		}
 
-		void DiscoveryAgent::timeout()
+		void DiscoveryAgent::onAdvertise()
 		{
 			// check if announcements are enabled
-			if (_config.announce())
+			if (!_enabled) return;
+
+			IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "advertise discovery beacon" << IBRCOMMON_LOGGER_ENDL;
+
+			DiscoveryBeacon::Protocol version;
+
+			switch (_config.version())
 			{
-				IBRCOMMON_LOGGER_DEBUG_TAG("DiscoveryAgent", 55) << "send discovery announcement" << IBRCOMMON_LOGGER_ENDL;
+			case 2:
+				version = DiscoveryBeacon::DISCO_VERSION_01;
+				break;
 
-				sendAnnoucement(_sn, _provider);
+			case 1:
+				version = DiscoveryBeacon::DISCO_VERSION_00;
+				break;
 
-				// increment sequencenumber
-				_sn++;
+			case 0:
+				IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
+				version = DiscoveryBeacon::DTND_IPDISCOVERY;
+				break;
+			};
+
+			DiscoveryBeacon beacon(version, dtn::core::BundleCore::local);
+
+			// set sequencenumber
+			beacon.setSequencenumber(_sn);
+
+			ibrcommon::MutexLock l(_provider_lock);
+
+			for (handler_map::const_iterator it_p = _providers.begin(); it_p != _providers.end(); ++it_p)
+			{
+				const ibrcommon::vinterface &iface = (*it_p).first;
+				const handler_list &plist = (*it_p).second;
+
+				// clear all services
+				beacon.clearServices();
+
+				// collect services from providers
+				if (!_config.shortbeacon())
+				{
+					for (handler_list::const_iterator iter = plist.begin(); iter != plist.end(); ++iter)
+					{
+						DiscoveryBeaconHandler &handler = (**iter);
+
+						try {
+							// update service information
+							handler.onUpdateBeacon(iface, beacon);
+						} catch (const dtn::net::DiscoveryBeaconHandler::NoServiceHereException&) {
+
+						}
+					}
+				}
+
+				// broadcast announcement
+				for (handler_list::const_iterator iter = plist.begin(); iter != plist.end(); ++iter)
+				{
+					DiscoveryBeaconHandler &handler = (**iter);
+
+					// broadcast beacon
+					handler.onAdvertiseBeacon(iface, beacon);
+				}
 			}
+
+			// save the time of the last sent announcement
+			_last_announce_sent = dtn::utils::Clock::getTime();
+
+			// increment sequencenumber
+			_sn++;
 		}
 	}
 }

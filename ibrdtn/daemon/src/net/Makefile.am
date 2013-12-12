@@ -17,7 +17,8 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 	DiscoveryBeacon.h \
 	DiscoveryService.cpp \
 	DiscoveryService.h \
-	DiscoveryServiceProvider.h \
+	DiscoveryBeaconHandler.cpp \
+	DiscoveryBeaconHandler.h \
 	IPNDAgent.cpp \
 	IPNDAgent.h \
 	TCPConnection.cpp \

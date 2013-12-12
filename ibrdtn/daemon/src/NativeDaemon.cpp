@@ -1384,33 +1384,6 @@ namespace dtn
 					ipnd->bind(i);
 				}
 
-				/**
-				 * register apps at the IPND
-				 */
-				for (app_list::iterator it = _apps.begin(); it != _apps.end(); ++it)
-				{
-			 		try {
-			 			DiscoveryServiceProvider *dsp = dynamic_cast<DiscoveryServiceProvider*>(*it);
-			 			if (dsp != NULL) {
-			 				ipnd->addService(dsp);
-			 			}
-			 		} catch (const std::bad_cast&) { }
-				}
-
-				/**
-				 * register convergence layers at the IPND
-				 */
-			 	component_list &clist = _components[RUNLEVEL_NETWORK];
-			 	for (component_list::iterator it = clist.begin(); it != clist.end(); ++it)
-			 	{
-			 		try {
-			 			DiscoveryServiceProvider *dsp = dynamic_cast<DiscoveryServiceProvider*>(*it);
-			 			if (dsp != NULL) {
-			 				ipnd->addService(dsp);
-			 			}
-			 		} catch (const std::bad_cast&) { }
-			 	}
-
 				_components[RUNLEVEL_NETWORK].push_back(ipnd);
 			}
 			else

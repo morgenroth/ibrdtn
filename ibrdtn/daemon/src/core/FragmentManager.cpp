@@ -23,7 +23,6 @@
 #include "core/EventDispatcher.h"
 #include "core/FragmentManager.h"
 #include "core/BundleCore.h"
-#include "core/TimeEvent.h"
 #include "core/BundlePurgeEvent.h"
 #include "net/BundleReceivedEvent.h"
 #include "routing/QueueBundleEvent.h"

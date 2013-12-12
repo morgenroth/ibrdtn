@@ -93,7 +93,7 @@ namespace dtn
 			return dtn::core::Node::CONN_UDPIP;
 		}
 
-		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement) throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void UDPConvergenceLayer::onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement) throw (dtn::net::DiscoveryBeaconHandler::NoServiceHereException)
 		{
 			// announce port only if we are bound to any interface
 			if (_net.empty()) {
@@ -105,7 +105,7 @@ namespace dtn
 			}
 
 			// do not announce if this is not our interface
-			if (iface != _net) throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+			if (iface != _net) throw dtn::net::DiscoveryBeaconHandler::NoServiceHereException();
 			
 			// determine if we should enable crosslayer discovery by sending out our own address
 			bool crosslayer = dtn::daemon::Configuration::getInstance().getDiscovery().enableCrosslayer();

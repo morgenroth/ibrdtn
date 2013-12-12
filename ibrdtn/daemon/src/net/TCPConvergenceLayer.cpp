@@ -171,7 +171,7 @@ namespace dtn
 			return dtn::core::Node::CONN_TCPIP;
 		}
 
-		void TCPConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void TCPConvergenceLayer::onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw (dtn::net::DiscoveryBeaconHandler::NoServiceHereException)
 		{
 			ibrcommon::MutexLock l(_interface_lock);
 
@@ -181,7 +181,7 @@ namespace dtn
 				// ... set the port only
 				ibrcommon::MutexLock l(_portmap_lock);
 				service << "port=" << _portmap[iface] << ";";
-				announcement.addService( DiscoveryService("tcpcl", service.str()));
+				beacon.addService( DiscoveryService("tcpcl", service.str()));
 				return;
 			}
 
@@ -222,7 +222,7 @@ namespace dtn
 								// fill in the ip address
 								ibrcommon::MutexLock l(_portmap_lock);
 								service << "ip=" << addr.address() << ";port=" << _portmap[iface] << ";";
-								announcement.addService( DiscoveryService("tcpcl", service.str()));
+								beacon.addService( DiscoveryService("tcpcl", service.str()));
 
 								// set the announce mark
 								announced = true;
@@ -241,13 +241,13 @@ namespace dtn
 						// ... set the port only
 						ibrcommon::MutexLock l(_portmap_lock);
 						service << "port=" << _portmap[iface] << ";";
-						announcement.addService( DiscoveryService("tcpcl", service.str()));
+						beacon.addService( DiscoveryService("tcpcl", service.str()));
 					}
 					return;
 				}
 			}
 
-			throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+			throw dtn::net::DiscoveryBeaconHandler::NoServiceHereException();
 		}
 
 		const std::string TCPConvergenceLayer::getName() const

@@ -25,7 +25,6 @@
 #include "net/P2PDialupEvent.h"
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
-#include "core/GlobalEvent.h"
 
 #include <ibrdtn/data/Exceptions.h>
 
@@ -52,27 +51,12 @@ namespace dtn
 		const std::string IPNDAgent::TAG = "IPNDAgent";
 
 		IPNDAgent::IPNDAgent(int port)
-		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
+		 :
 #ifndef __WIN32__
 		   _virtual_mcast_iface("__virtual_multicast_interface__"),
 #endif
-		   _version(DiscoveryBeacon::DISCO_VERSION_01), _state(false), _port(port), _enabled(true)
+		   _state(false), _port(port)
 		{
-			switch (_config.version())
-			{
-			case 2:
-				_version = DiscoveryBeacon::DISCO_VERSION_01;
-				break;
-
-			case 1:
-				_version = DiscoveryBeacon::DISCO_VERSION_00;
-				break;
-
-			case 0:
-				IBRCOMMON_LOGGER_TAG("DiscoveryAgent", info) << "DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
-				_version = DiscoveryBeacon::DTND_IPDISCOVERY;
-				break;
-			};
 		}
 
 		IPNDAgent::~IPNDAgent()
@@ -236,48 +220,6 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
-		{
-			// stop send announcements if discovery beacons are disabled
-			if (!_enabled) return;
-
-			DiscoveryBeacon announcement(_version, dtn::core::BundleCore::local);
-
-			// set sequencenumber
-			announcement.setSequencenumber(sn);
-
-			ibrcommon::MutexLock l(_interface_lock);
-
-			for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); ++it_iface)
-			{
-				const ibrcommon::vinterface &iface = (*it_iface);
-
-				// clear all services
-				announcement.clearServices();
-
-				if (!_config.shortbeacon())
-				{
-					// add services
-					for (std::list<DiscoveryServiceProvider*>::iterator iter = providers.begin(); iter != providers.end(); ++iter)
-					{
-						DiscoveryServiceProvider &provider = (**iter);
-
-						try {
-							// update service information
-							provider.update(iface, announcement);
-						} catch (const dtn::net::DiscoveryServiceProvider::NoServiceHereException&) {
-
-						}
-					}
-				}
-
-				for (std::set<ibrcommon::vaddress>::iterator iter = _destinations.begin(); iter != _destinations.end(); ++iter) {
-					send(announcement, iface, (*iter));
-				}
-			}
-		}
-
-
 		void IPNDAgent::raiseEvent(const Event *evt) throw ()
 		{
 			try {
@@ -328,20 +270,6 @@ namespace dtn
 					}
 				}
 			} catch (std::bad_cast&) {
-
-			}
-
-			try {
-				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
-				if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_START_DISCOVERY) {
-					// start sending discovery beacons
-					_enabled = true;
-				}
-				else if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_STOP_DISCOVERY) {
-					// suspend discovery beacons
-					_enabled = false;
-				}
-			} catch (const std::bad_cast&) {
 
 			}
 		}
@@ -438,9 +366,6 @@ namespace dtn
 			// listen to P2P dial-up events
 			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::add(this);
 
-			// listen to global events (discovery start/stop)
-			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::add(this);
-
 			// join multicast groups
 			ibrcommon::MutexLock l(_interface_lock);
 
@@ -458,9 +383,6 @@ namespace dtn
 
 		void IPNDAgent::componentDown() throw ()
 		{
-			// un-listen to global events (discovery start/stop)
-			dtn::core::EventDispatcher<dtn::core::GlobalEvent>::remove(this);
-
 			// un-listen to P2P dial-up events
 			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::remove(this);
 
@@ -485,6 +407,9 @@ namespace dtn
 			tv.tv_sec = 1;
 			tv.tv_usec = 0;
 
+			// get the reference to the discovery agent
+			dtn::net::DiscoveryAgent &agent = dtn::core::BundleCore::getInstance().getDiscoveryAgent();
+
 			try {
 				while (true)
 				{
@@ -501,10 +426,7 @@ namespace dtn
 
 							char data[1500];
 							ibrcommon::vaddress sender;
-							DiscoveryBeacon announce(_version);
-
-							std::list<DiscoveryService> ret_services;
-							dtn::data::EID ret_source;
+							DiscoveryBeacon beacon = agent.obtainBeacon();
 
 							ssize_t len = sock.recvfrom(data, 1500, 0, sender);
 
@@ -514,48 +436,37 @@ namespace dtn
 							ss.write(data, len);
 
 							try {
-								ss >> announce;
+								ss >> beacon;
 
-								if (announce.isShort())
+								if (beacon.isShort())
 								{
 									// generate name with the sender address
-									ret_source = dtn::data::EID("udp://[" + sender.address() + "]:4556");
-								}
-								else
-								{
-									ret_source = announce.getEID();
+									beacon.setEID( dtn::data::EID("udp://[" + sender.address() + "]:4556") );
 								}
 
-								// get the list of services
-								const std::list<DiscoveryService> &services = announce.getServices();
+								DiscoveryBeacon::service_list &services = beacon.getServices();
 
-								if (services.empty() && announce.isShort())
+								// add generated tcpcl service if the services list is empty
+								if (services.empty() && beacon.isShort())
 								{
-									ret_services.push_back(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
+									beacon.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
 								}
 
 								// add all services to the return set
-								for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter) {
-									const DiscoveryService &service = (*iter);
+								for (dtn::net::DiscoveryBeacon::service_list::iterator iter = services.begin(); iter != services.end(); ++iter) {
+									DiscoveryService &service = (*iter);
 
 									// add source address if not set
 									if ( (service.getParameters().find("port=") != std::string::npos) &&
 											(service.getParameters().find("ip=") == std::string::npos) ) {
-										// create a new service object
-										dtn::net::DiscoveryService ret_service(service.getName(), "ip=" + sender.address() + ";" + service.getParameters());
 
-										// add service to the return set
-										ret_services.push_back(ret_service);
-									}
-									else
-									{
-										// add service to the return set
-										ret_services.push_back(service);
+										// update service entry
+										service.update("ip=" + sender.address() + ";" + service.getParameters());
 									}
 								}
 
 								// announce the received services
-								received(ret_source, ret_services);
+								agent.onBeaconReceived(beacon);
 							} catch (const dtn::InvalidDataException&) {
 							} catch (const ibrcommon::IOException&) {
 							}
@@ -563,12 +474,9 @@ namespace dtn
 
 						// trigger an artificial timeout if the remaining timeout value is zero or below
 						if ( tv.tv_sec <= 0 && tv.tv_usec <= 0 )
-            				throw ibrcommon::vsocket_timeout("timeout");
+							throw ibrcommon::vsocket_timeout("timeout");
 
 					} catch (const ibrcommon::vsocket_timeout&) {
-						// timeout reached
-						timeout();
-
 						// reset timeout to 1 second
 						tv.tv_sec = 1;
 						tv.tv_usec = 0;

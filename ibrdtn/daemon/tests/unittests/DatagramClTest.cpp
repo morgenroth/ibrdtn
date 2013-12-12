@@ -14,7 +14,6 @@
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrcommon/thread/Thread.h>
-#include "core/TimeEvent.h"
 #include <ibrdtn/utils/Clock.h>
 #include "core/BundleCore.h"
 #include <ibrcommon/data/File.h>

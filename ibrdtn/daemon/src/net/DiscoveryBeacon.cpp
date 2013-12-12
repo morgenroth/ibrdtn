@@ -49,7 +49,7 @@ namespace dtn
 		{
 		}
 
-		bool DiscoveryBeacon::isShort()
+		bool DiscoveryBeacon::isShort() const
 		{
 			switch (_version)
 			{
@@ -68,12 +68,17 @@ namespace dtn
 			_canonical_eid = eid;
 		}
 
-		dtn::data::EID DiscoveryBeacon::getEID() const
+		const dtn::data::EID& DiscoveryBeacon::getEID() const
 		{
 			return _canonical_eid;
 		}
 
-		const std::list<DiscoveryService>& DiscoveryBeacon::getServices() const
+		DiscoveryBeacon::service_list& DiscoveryBeacon::getServices()
+		{
+			return _services;
+		}
+
+		const DiscoveryBeacon::service_list& DiscoveryBeacon::getServices() const
 		{
 			return _services;
 		}
@@ -83,9 +88,9 @@ namespace dtn
 			_services.clear();
 		}
 
-		const DiscoveryService& DiscoveryBeacon::getService(string name) const
+		const DiscoveryService& DiscoveryBeacon::getService(const std::string &name) const
 		{
-			for (std::list<DiscoveryService>::const_iterator iter = _services.begin(); iter != _services.end(); ++iter)
+			for (service_list::const_iterator iter = _services.begin(); iter != _services.end(); ++iter)
 			{
 				if ((*iter).getName() == name)
 				{
@@ -96,7 +101,20 @@ namespace dtn
 			throw dtn::MissingObjectException("No service found with tag " + name);
 		}
 
-		void DiscoveryBeacon::addService(DiscoveryService service)
+		DiscoveryService& DiscoveryBeacon::getService(const std::string &name)
+		{
+			for (service_list::iterator iter = _services.begin(); iter != _services.end(); ++iter)
+			{
+				if ((*iter).getName() == name)
+				{
+					return (*iter);
+				}
+			}
+
+			throw dtn::MissingObjectException("No service found with tag " + name);
+		}
+
+		void DiscoveryBeacon::addService(const DiscoveryService &service)
 		{
 			_services.push_back(service);
 		}
@@ -108,7 +126,7 @@ namespace dtn
 
 		std::ostream &operator<<(std::ostream &stream, const DiscoveryBeacon &announcement)
 		{
-			const list<DiscoveryService> &services = announcement._services;
+			const dtn::net::DiscoveryBeacon::service_list &services = announcement._services;
 
 			switch (announcement._version)
 			{
@@ -128,14 +146,14 @@ namespace dtn
 					beacon_len += eid.getLength();
 
 					// add service block length
-					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
+					for (dtn::net::DiscoveryBeacon::service_list::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 					{
 						beacon_len += (*iter).getLength();
 					}
 
 					stream << (unsigned char)DiscoveryBeacon::DISCO_VERSION_00 << announcement._flags << beacon_len << eid;
 
-					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
+					for (dtn::net::DiscoveryBeacon::service_list::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 					{
 						stream << (*iter);
 					}
@@ -175,7 +193,7 @@ namespace dtn
 					{
 						stream << dtn::data::Number(services.size());
 
-						for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
+						for (dtn::net::DiscoveryBeacon::service_list::const_iterator iter = services.begin(); iter != services.end(); ++iter)
 						{
 							stream << (*iter);
 						}
@@ -275,7 +293,7 @@ namespace dtn
 				announcement._canonical_eid = dtn::data::EID((const std::string&)eid);
 
 				// get the services
-				list<DiscoveryService> &services = announcement._services;
+				dtn::net::DiscoveryBeacon::service_list &services = announcement._services;
 
 				// clear the services
 				services.clear();
@@ -320,7 +338,7 @@ namespace dtn
 				if (announcement._flags & DiscoveryBeacon::BEACON_SERVICE_BLOCK)
 				{
 					// get the services
-					list<DiscoveryService> &services = announcement._services;
+					dtn::net::DiscoveryBeacon::service_list &services = announcement._services;
 
 					// read the number of services
 					dtn::data::Number num_services;

@@ -30,7 +30,7 @@
 #include "net/ConvergenceLayer.h"
 #include "net/TCPConnection.h"
 #include "net/DiscoveryService.h"
-#include "net/DiscoveryServiceProvider.h"
+#include "net/DiscoveryBeaconHandler.h"
 
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrcommon/net/vsocket.h>
@@ -49,7 +49,7 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for TCP/IP.
 		 * http://tools.ietf.org/html/draft-irtf-dtnrg-tcp-clayer-02
 		 */
-		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ConvergenceLayer, public DiscoveryServiceProvider, public ibrcommon::LinkManager::EventCallback
+		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ConvergenceLayer, public DiscoveryBeaconHandler, public ibrcommon::LinkManager::EventCallback
 		{
 			friend class TCPConnection;
 
@@ -101,8 +101,7 @@ namespace dtn
 			/**
 			 * this method updates the given values
 			 */
-			void update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
-				throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
+			void onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw (NoServiceHereException);
 
 			void eventNotify(const ibrcommon::LinkEvent &evt);
 

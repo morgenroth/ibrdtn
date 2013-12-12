@@ -42,7 +42,7 @@ namespace dtn
 {
 	namespace net
 	{
-		class IPNDAgent : public DiscoveryAgent, public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback
+		class IPNDAgent : public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback
 		{
 			static const std::string TAG;
 
@@ -66,7 +66,6 @@ namespace dtn
 			void raiseEvent(const Event *evt) throw ();
 
 		protected:
-			void sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &provider);
 			virtual void componentRun() throw ();
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
@@ -85,11 +84,9 @@ namespace dtn
 			ibrcommon::vinterface _virtual_mcast_iface;
 #endif
 
-			DiscoveryBeacon::Protocol _version;
 			ibrcommon::vsocket _socket;
 			bool _state;
 			int _port;
-			bool _enabled;
 
 			std::set<ibrcommon::vaddress> _destinations;
 

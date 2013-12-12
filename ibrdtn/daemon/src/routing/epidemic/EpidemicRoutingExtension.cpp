@@ -26,7 +26,6 @@
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "core/NodeEvent.h"
-#include "core/TimeEvent.h"
 #include "core/Node.h"
 #include "net/ConnectionEvent.h"
 #include "net/ConnectionManager.h"

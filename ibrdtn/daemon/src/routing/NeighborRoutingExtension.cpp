@@ -23,7 +23,6 @@
 #include "routing/NeighborRoutingExtension.h"
 #include "routing/QueueBundleEvent.h"
 #include "core/BundleCore.h"
-#include "core/TimeEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/ConnectionEvent.h"

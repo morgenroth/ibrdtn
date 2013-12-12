@@ -1,5 +1,5 @@
 /* 
- * DiscoveryServiceProvider.h
+ * DiscoveryBeaconHandler.h
  *
  * Copyright (C) 2011 IBR, TU Braunschweig
  *
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef _DISCOVERYSERVICEPROVIDER_H
-#define	_DISCOVERYSERVICEPROVIDER_H
+#ifndef _DISCOVERYBEACONHANDLER_H
+#define	_DISCOVERYBEACONHANDLER_H
 
 #include "net/DiscoveryBeacon.h"
 #include <ibrcommon/net/vinterface.h>
@@ -30,37 +30,27 @@ namespace dtn
 {
 	namespace net
 	{
-		class DiscoveryServiceEntry {
-		public:
-			std::string name;
-			std::string data;
-		};
-
-		class DiscoveryServiceProvider
+		class DiscoveryBeaconHandler
 		{
 		public:
 			class NoServiceHereException : public ibrcommon::Exception
 			{
 			public:
-				NoServiceHereException(string what = "No service available.") throw() : ibrcommon::Exception(what)
+				NoServiceHereException(std::string what = "No service available.") throw() : ibrcommon::Exception(what)
 				{
 				};
 
 				virtual ~NoServiceHereException() throw() {};
 			};
 
-			virtual ~DiscoveryServiceProvider() {};
+			virtual ~DiscoveryBeaconHandler() = 0;
 
-			/**
-			 * Updates an discovery service block with current values
-			 * @param name
-			 * @param data
-			 */
-			virtual void update(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon)
-				throw(NoServiceHereException) = 0;
+			virtual void onAdvertiseBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw ();
+
+			virtual void onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw (NoServiceHereException);
 		};
 	}
 }
 
-#endif	/* _DISCOVERYSERVICEPROVIDER_H */
+#endif	/* _DISCOVERYBEACONHANDLER_H */
 

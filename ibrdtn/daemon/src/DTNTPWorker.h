@@ -24,7 +24,7 @@
 
 #include "core/AbstractWorker.h"
 #include "core/EventReceiver.h"
-#include "net/DiscoveryServiceProvider.h"
+#include "net/DiscoveryBeaconHandler.h"
 #include "Configuration.h"
 #include <time.h>
 
@@ -32,7 +32,7 @@ namespace dtn
 {
 	namespace daemon
 	{
-		class DTNTPWorker : public dtn::core::AbstractWorker, public dtn::core::EventReceiver, public dtn::net::DiscoveryServiceProvider
+		class DTNTPWorker : public dtn::core::AbstractWorker, public dtn::core::EventReceiver, public dtn::net::DiscoveryBeaconHandler
 		{
 		public:
 			/**
@@ -63,7 +63,7 @@ namespace dtn
 			 * @param name
 			 * @param data
 			 */
-			void update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
+			void onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
 				throw(NoServiceHereException);
 
 			/**

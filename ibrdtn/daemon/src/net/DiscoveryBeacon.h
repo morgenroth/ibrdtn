@@ -60,19 +60,23 @@ namespace dtn
 
 			virtual ~DiscoveryBeacon();
 
-			void setEID(const dtn::data::EID &eid);
-			dtn::data::EID getEID() const;
+			typedef std::list<DiscoveryService> service_list;
 
-			const std::list<DiscoveryService>& getServices() const;
+			void setEID(const dtn::data::EID &eid);
+			const dtn::data::EID& getEID() const;
+
+			service_list& getServices();
+			const service_list& getServices() const;
 			void clearServices();
-			void addService(DiscoveryService service);
-			const DiscoveryService& getService(string name) const;
+			void addService(const DiscoveryService &service);
+			const DiscoveryService& getService(const std::string &name) const;
+			DiscoveryService& getService(const std::string &name);
 
 			std::string toString() const;
 
 			void setSequencenumber(uint16_t sequence);
 
-			bool isShort();
+			bool isShort() const;
 
 		private:
 			friend std::ostream &operator<<(std::ostream &stream, const DiscoveryBeacon &announcement);
@@ -84,7 +88,7 @@ namespace dtn
 			uint16_t _sn;
 			dtn::data::BundleString _bloomfilter;
 
-			std::list<DiscoveryService> _services;
+			service_list _services;
 		};
 	}
 }

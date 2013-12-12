@@ -377,8 +377,7 @@ namespace dtn
 			}
 		}
 
-
-		void DTNTPWorker::update(const ibrcommon::vinterface&, DiscoveryBeacon &announcement) throw(NoServiceHereException)
+		void DTNTPWorker::onUpdateBeacon(const ibrcommon::vinterface&, DiscoveryBeacon &announcement) throw (NoServiceHereException)
 		{
 			if (!_announce_rating) throw NoServiceHereException("Discovery of time sync mechanisms disabled.");
 

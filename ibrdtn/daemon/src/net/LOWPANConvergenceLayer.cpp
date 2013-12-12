@@ -51,8 +51,7 @@ namespace dtn
 		const size_t LOWPANConvergenceLayer::BUFF_SIZE = 115;
 
 		LOWPANConvergenceLayer::LOWPANConvergenceLayer(const ibrcommon::vinterface &net, uint16_t panid, unsigned int mtu)
-			: DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
-			_net(net), _panid(panid), _ipnd_buf(BUFF_SIZE), _ipnd_buf_len(0), m_maxmsgsize(mtu), _running(false)
+			: _net(net), _panid(panid), m_maxmsgsize(mtu), _running(false)
 		{
 			// convert the panid into a string
 			std::stringstream ss;
@@ -72,7 +71,7 @@ namespace dtn
 			return dtn::core::Node::CONN_LOWPAN;
 		}
 
-		void LOWPANConvergenceLayer::update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void LOWPANConvergenceLayer::onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement) throw(dtn::net::DiscoveryBeaconHandler::NoServiceHereException)
 		{
 			if (iface == _net)
 			{
@@ -92,7 +91,7 @@ namespace dtn
 			}
 			else
 			{
-				 throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+				 throw dtn::net::DiscoveryBeaconHandler::NoServiceHereException();
 			}
 		}
 
@@ -182,14 +181,12 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::componentUp() throw ()
 		{
-			// routine checked for throw() on 15.02.2013
-			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
-
 			try {
 				_vsocket.add(new ibrcommon::lowpansocket(_panid, _net));
 				_vsocket.up();
 
-				addService(this);
+				dtn::net::DiscoveryAgent &agent = dtn::core::BundleCore::getInstance().getDiscoveryAgent();
+				agent.registerService(_net, this);
 			} catch (const ibrcommon::socket_exception &ex) {
 				IBRCOMMON_LOGGER_TAG("LOWPANConvergenceLayer", error) << "bind to " << _net.toString() << ":" << _panid << " failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -200,58 +197,46 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::componentDown() throw ()
 		{
+			dtn::net::DiscoveryAgent &agent = dtn::core::BundleCore::getInstance().getDiscoveryAgent();
+			agent.unregisterService(_net, this);
+
 			_vsocket.destroy();
-			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 			stop();
 			join();
 		}
 
-		void LOWPANConvergenceLayer::sendAnnoucement(const uint16_t &sn, std::list<dtn::net::DiscoveryServiceProvider*> &providers)
+		void LOWPANConvergenceLayer::onAdvertiseBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw ()
 		{
+			if (_net != iface) return;
+
 			IBRCOMMON_LOGGER_DEBUG_TAG("LOWPANConvergenceLayer", 60) << "LOWPAN IPND beacon send started" << IBRCOMMON_LOGGER_ENDL;
 
-			DiscoveryBeacon announcement(DiscoveryBeacon::DISCO_VERSION_01, dtn::core::BundleCore::local);
+			std::vector<char> ipnd_buf(BUFF_SIZE);
 
-			// set sequencenumber
-			announcement.setSequencenumber(sn);
-
-			// clear all services
-			announcement.clearServices();
-
-			// add services
-			for (std::list<dtn::net::DiscoveryServiceProvider*>::iterator iter = providers.begin(); iter != providers.end(); ++iter)
-			{
-				dtn::net::DiscoveryServiceProvider &provider = (**iter);
-
-				try {
-					// update service information
-					provider.update(_net, announcement);
-				} catch (const dtn::net::DiscoveryServiceProvider::NoServiceHereException&) {
-
-				}
-			}
 			// Set extended header bit. Everything else 0
-			_ipnd_buf[0] = 0x08;
+			ipnd_buf[0] = 0x08;
 			// Set discovery bit in extended header
-			_ipnd_buf[1] = (char)0x80;
+			ipnd_buf[1] = (char)0x80;
 
 			// serialize announcement
 			stringstream ss;
-			ss << announcement;
+			ss << beacon;
 
 			dtn::data::Length len = ss.str().size();
 			if (len > 113)
 				IBRCOMMON_LOGGER_TAG("LOWPANConvergenceLayer", error) << "Discovery announcement to big (" << len << ")" << IBRCOMMON_LOGGER_ENDL;
 
 			// copy data infront of the 2 byte header
-			memcpy(&_ipnd_buf[2], ss.str().c_str(), len);
+			memcpy(&ipnd_buf[2], ss.str().c_str(), len);
 
 			// send out broadcast frame
-			send_cb(&_ipnd_buf[0], len + 2, _addr_broadcast);
+			send_cb(&ipnd_buf[0], len + 2, _addr_broadcast);
 		}
 
 		void LOWPANConvergenceLayer::componentRun() throw ()
 		{
+			dtn::net::DiscoveryAgent &agent = dtn::core::BundleCore::getInstance().getDiscoveryAgent();
+
 			while (_running)
 			{
 				try {
@@ -281,11 +266,11 @@ namespace dtn
 
 						// Check for extended header and retrieve if available
 						if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {
-							DiscoveryBeacon announce;
+							DiscoveryBeacon announce = agent.obtainBeacon();
 							stringstream ss;
 							ss.write(&data[2], len-2);
 							ss >> announce;
-							DiscoveryAgent::received(announce.getEID(), announce.getServices(), 30);
+							agent.onBeaconReceived(announce);
 							continue;
 						}
 
@@ -303,17 +288,6 @@ namespace dtn
 
 				yield();
 			}
-		}
-
-		void LOWPANConvergenceLayer::raiseEvent(const Event *evt) throw ()
-		{
-			try {
-				const TimeEvent &time=dynamic_cast<const TimeEvent&>(*evt);
-				if (time.getAction() == TIME_SECOND_TICK)
-					if (time.getTimestamp().get<size_t>() % 5 == 0)
-						timeout();
-			} catch (const std::bad_cast&)
-			{}
 		}
 
 		void LOWPANConvergenceLayer::__cancellation() throw ()

@@ -256,6 +256,11 @@ namespace dtn
 			return _connectionmanager;
 		}
 
+		dtn::net::DiscoveryAgent& BundleCore::getDiscoveryAgent()
+		{
+			return _disco_agent;
+		}
+
 		void BundleCore::addRoute(const dtn::data::EID &destination, const dtn::data::EID &nexthop, const dtn::data::Timeout timeout)
 		{
 			dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_ADD, nexthop, destination, timeout);

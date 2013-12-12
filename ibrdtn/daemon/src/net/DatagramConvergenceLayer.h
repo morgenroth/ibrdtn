@@ -27,8 +27,6 @@
 #include "net/DatagramService.h"
 #include "net/DatagramConnection.h"
 #include "net/ConvergenceLayer.h"
-#include "net/DiscoveryAgent.h"
-#include "net/DiscoveryServiceProvider.h"
 
 #include <ibrcommon/thread/RWMutex.h>
 
@@ -38,8 +36,8 @@ namespace dtn
 {
 	namespace net
 	{
-		class DatagramConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent,
-			public EventReceiver, public DatagramConnectionCallback
+		class DatagramConvergenceLayer : public dtn::net::ConvergenceLayer, public dtn::daemon::IndependentComponent,
+			public dtn::core::EventReceiver, public dtn::net::DatagramConnectionCallback
 		{
 			static const std::string TAG;
 
