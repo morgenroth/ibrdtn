@@ -34,13 +34,18 @@ namespace dtn
 		{
 		public:
 			DiscoveryService();
-			DiscoveryService(std::string name, std::string parameters);
+			DiscoveryService(const std::string &name, const std::string &parameters);
 			virtual ~DiscoveryService();
 
 			dtn::data::Length getLength() const;
 
 			const std::string& getName() const;
 			const std::string& getParameters() const;
+
+			/**
+			 * Update the parameters of this service
+			 */
+			void update(const std::string &parameters);
 
 		protected:
 			std::string _service_name;

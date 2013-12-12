@@ -34,7 +34,7 @@ namespace dtn
 		{
 		}
 
-		DiscoveryService::DiscoveryService(std::string name, std::string parameters)
+		DiscoveryService::DiscoveryService(const std::string &name, const std::string &parameters)
 		 : _service_name(name), _service_parameters(parameters)
 		{
 		}
@@ -59,6 +59,11 @@ namespace dtn
 		const std::string& DiscoveryService::getParameters() const
 		{
 			return _service_parameters;
+		}
+
+		void DiscoveryService::update(const std::string &parameters)
+		{
+			_service_parameters = parameters;
 		}
 
 		std::ostream &operator<<(std::ostream &stream, const DiscoveryService &service)
