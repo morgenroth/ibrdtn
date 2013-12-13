@@ -403,6 +403,9 @@ namespace dtn
 
 				// subscribe to NetLink events on our interfaces
 				ibrcommon::LinkManager::getInstance().addEventListener(_net, this);
+
+				// register as discovery handler for this interface
+				dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(_net, this);
 			} catch (const ibrcommon::socket_exception &ex) {
 				IBRCOMMON_LOGGER_TAG("UDPConvergenceLayer", error) << "bind failed (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -412,6 +415,9 @@ namespace dtn
 		{
 			// unsubscribe to NetLink events
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
+
+			// unregister as discovery handler for this interface
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(_net, this);
 
 			_vsocket.destroy();
 			stop();
