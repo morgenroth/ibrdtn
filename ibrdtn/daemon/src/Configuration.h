@@ -71,9 +71,7 @@ namespace dtn
 					NETWORK_EMAIL = 9
 				};
 
-				NetConfig(std::string name, NetType type, const std::string &url);
-				NetConfig(std::string name, NetType type, const ibrcommon::vinterface &iface, int port);
-				NetConfig(std::string name, NetType type, int port);
+				NetConfig(const std::string &name, NetType type);
 				virtual ~NetConfig();
 
 				std::string name;

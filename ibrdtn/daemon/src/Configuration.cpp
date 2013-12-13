@@ -52,18 +52,8 @@ namespace dtn
 {
 	namespace daemon
 	{
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, const std::string &u)
-		 : name(n), type(t), url(u), mtu(0), port(0)
-		{
-		}
-
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::vinterface &i, int p)
-		 : name(n), type(t), iface(i), mtu(1500), port(p)
-		{
-		}
-
-		Configuration::NetConfig::NetConfig(std::string n, NetType t, int p)
-		 : name(n), type(t), iface(), mtu(1500), port(p)
+		Configuration::NetConfig::NetConfig(const std::string &n, NetType t)
+		 : name(n), type(t), iface(ibrcommon::vinterface::ANY), mtu(0), port(0)
 		{
 		}
 
@@ -598,20 +588,22 @@ namespace dtn
 
 		Configuration::NetConfig Configuration::getAPIInterface() const
 		{
-			int port = _conf.read<int>("api_port", 4550);
+			Configuration::NetConfig nc("api", Configuration::NetConfig::NETWORK_TCP);
+
+			nc.port = _conf.read<int>("api_port", 4550);
 
 			try {
-				std::string interface_name = _conf.read<std::string>("api_interface");
+				const std::string interface_name = _conf.read<std::string>("api_interface");
 
-				if (interface_name == "any")
+				if (interface_name != "any")
 				{
-					return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::ANY), port);
+					nc.iface = ibrcommon::vinterface(interface_name);
 				}
+			} catch (const ConfigFile::key_not_found&) {
+				nc.iface = ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK);
+			}
 
-				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(interface_name), port);
-			} catch (const ConfigFile::key_not_found&) { }
-
-			return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(ibrcommon::vinterface::LOOPBACK), port);
+			return nc;
 		}
 
 		ibrcommon::File Configuration::getAPISocket() const
@@ -777,7 +769,17 @@ namespace dtn
 
 			if (_use_default_net)
 			{
-				_interfaces.push_back( Configuration::NetConfig("default", Configuration::NetConfig::NETWORK_TCP, _default_net, 4556) );
+				// create a new netconfig object
+				Configuration::NetConfig nc("default", Configuration::NetConfig::NETWORK_TCP);
+
+				// set default interface
+				nc.iface = ibrcommon::vinterface(_default_net);
+
+				// set default port
+				nc.port = 4556;
+
+				// add to interfaces list
+				_interfaces.push_back( nc );
 			}
 			else try
 			{
@@ -806,45 +808,40 @@ namespace dtn
 					if (type_name == "dgram:ethernet") type = Configuration::NetConfig::NETWORK_DGRAM_ETHERNET;
 					if (type_name == "email") type = Configuration::NetConfig::NETWORK_EMAIL;
 
+					// create a new netconfig object
+					Configuration::NetConfig nc(netname, type);
+
 					switch (type)
 					{
 						case Configuration::NetConfig::NETWORK_HTTP:
 						{
-							Configuration::NetConfig nc(netname, type,
-									conf.read<std::string>(key_address, "http://localhost/"));
-
-							_interfaces.push_back(nc);
+							nc.url = conf.read<std::string>(key_address, "http://localhost/");
 							break;
 						}
 
 						case Configuration::NetConfig::NETWORK_FILE:
 						{
-							Configuration::NetConfig nc(netname, type,
-									conf.read<std::string>(key_path, ""));
-
-							_interfaces.push_back(nc);
+							nc.url = conf.read<std::string>(key_path, "");
 							break;
 						}
 
 						default:
 						{
-							int port = conf.read<int>(key_port, 4556);
-							int mtu = conf.read<int>(key_mtu, 1280);
+							nc.port = conf.read<int>(key_port, 4556);
+							nc.mtu = conf.read<int>(key_mtu, 1280);
 
 							try {
-								ibrcommon::vinterface iface(conf.read<std::string>(key_interface));
-								Configuration::NetConfig nc(netname, type, iface, port);
-								nc.mtu = mtu;
-								_interfaces.push_back(nc);
+								nc.iface = ibrcommon::vinterface(conf.read<std::string>(key_interface));
 							} catch (const ConfigFile::key_not_found&) {
-								Configuration::NetConfig nc(netname, type, port);
-								nc.mtu = mtu;
-								_interfaces.push_back(nc);
+								// no interface assigned
 							}
 
 							break;
 						}
 					}
+
+					// add to interfaces list
+					_interfaces.push_back(nc);
 				}
 			} catch (const ConfigFile::key_not_found&) {
 				// stop the one network is not found.
