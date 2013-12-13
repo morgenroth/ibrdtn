@@ -96,7 +96,7 @@ namespace dtn
 		void UDPConvergenceLayer::onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement) throw (dtn::net::DiscoveryBeaconHandler::NoServiceHereException)
 		{
 			// announce port only if we are bound to any interface
-			if (_net.empty()) {
+			if (_net.isAny()) {
 				std::stringstream service;
 				// ... set the port only
 				service << "port=" << _port << ";";

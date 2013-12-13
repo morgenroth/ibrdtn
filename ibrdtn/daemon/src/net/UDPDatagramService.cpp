@@ -80,7 +80,7 @@ namespace dtn
 				// add multicast socket to receiver sockets
 				_vsocket.add(_msock);
 
-				if (_iface.empty()) {
+				if (_iface.isAny()) {
 					// bind socket to interface
 					_vsocket.add(new ibrcommon::udpsocket(_bind_port));
 				} else {

@@ -77,7 +77,7 @@ namespace dtn
 			// do not allow any futher binding if we already bound to any interface
 			if (_any_port > 0) return;
 
-			if (net.empty()) {
+			if (net.isAny()) {
 				// bind to any interface
 				_vsocket.add(new ibrcommon::tcpserversocket(port));
 				_any_port = port;
