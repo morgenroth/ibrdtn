@@ -21,6 +21,7 @@
 
 #include "net/LOWPANConvergenceLayer.h"
 #include "net/LOWPANConnection.h"
+#include "net/DiscoveryAgent.h"
 #include "core/EventDispatcher.h"
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"

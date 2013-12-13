@@ -23,6 +23,7 @@
 #include "net/P2PDialupEvent.h"
 #include "net/TCPConvergenceLayer.h"
 #include "net/ConnectionEvent.h"
+#include "net/DiscoveryAgent.h"
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
 
