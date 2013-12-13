@@ -267,11 +267,20 @@ namespace dtn
 
 						// Check for extended header and retrieve if available
 						if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {
-							DiscoveryBeacon announce = agent.obtainBeacon();
+							DiscoveryBeacon beacon = agent.obtainBeacon();
 							stringstream ss;
 							ss.write(&data[2], len-2);
-							ss >> announce;
-							agent.onBeaconReceived(announce);
+							ss >> beacon;
+
+							// ignore own beacons
+							if (beacon.getEID() == dtn::core::BundleCore::local) continue;
+
+							// do not accept short beacons
+							if (!beacon.isShort())
+							{
+								agent.onBeaconReceived(beacon);
+							}
+
 							continue;
 						}
 
