@@ -22,6 +22,7 @@
 #ifndef DISCOVERYSERVICE_H_
 #define DISCOVERYSERVICE_H_
 
+#include "core/Node.h"
 #include <ibrdtn/data/Number.h>
 #include <stdlib.h>
 #include <iostream>
@@ -46,6 +47,12 @@ namespace dtn
 			 * Update the parameters of this service
 			 */
 			void update(const std::string &parameters);
+
+			/**
+			 * convert a protocol identifier to a tag
+			 */
+			static std::string asTag(const dtn::core::Node::Protocol proto);
+			static dtn::core::Node::Protocol asProtocol(const std::string &tag);
 
 		protected:
 			std::string _service_name;

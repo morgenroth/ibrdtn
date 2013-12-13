@@ -66,6 +66,101 @@ namespace dtn
 			_service_parameters = parameters;
 		}
 
+		dtn::core::Node::Protocol DiscoveryService::asProtocol(const std::string &tag)
+		{
+			if (tag == "undefined") {
+				return dtn::core::Node::CONN_UNDEFINED;
+			}
+			else if (tag == "udpcl") {
+				return dtn::core::Node::CONN_UDPIP;
+			}
+			else if (tag == "tcpcl") {
+				return dtn::core::Node::CONN_TCPIP;
+			}
+			else if (tag == "lowpan") {
+				return dtn::core::Node::CONN_LOWPAN;
+			}
+			else if (tag == "bt") {
+				return dtn::core::Node::CONN_BLUETOOTH;
+			}
+			else if (tag == "http") {
+				return dtn::core::Node::CONN_HTTP;
+			}
+			else if (tag == "file") {
+				return dtn::core::Node::CONN_FILE;
+			}
+			else if (tag == "dgram:udp") {
+				return dtn::core::Node::CONN_DGRAM_UDP;
+			}
+			else if (tag == "dgram:eth") {
+				return dtn::core::Node::CONN_DGRAM_ETHERNET;
+			}
+			else if (tag == "dgram:lowpan") {
+				return dtn::core::Node::CONN_DGRAM_LOWPAN;
+			}
+			else if (tag == "p2p:wifi") {
+				return dtn::core::Node::CONN_P2P_WIFI;
+			}
+			else if (tag == "p2p:bt") {
+				return dtn::core::Node::CONN_P2P_BT;
+			}
+			else if (tag == "email") {
+				return dtn::core::Node::CONN_EMAIL;
+			}
+
+			return dtn::core::Node::CONN_UNSUPPORTED;
+		}
+
+		std::string DiscoveryService::asTag(const dtn::core::Node::Protocol proto)
+		{
+			switch (proto)
+			{
+			case dtn::core::Node::CONN_UNSUPPORTED:
+				return "unsupported";
+
+			case dtn::core::Node::CONN_UNDEFINED:
+				return "undefined";
+
+			case dtn::core::Node::CONN_UDPIP:
+				return "udpcl";
+
+			case dtn::core::Node::CONN_TCPIP:
+				return "tcpcl";
+
+			case dtn::core::Node::CONN_LOWPAN:
+				return "lowpan";
+
+			case dtn::core::Node::CONN_BLUETOOTH:
+				return "bt";
+
+			case dtn::core::Node::CONN_HTTP:
+				return "http";
+
+			case dtn::core::Node::CONN_FILE:
+				return "file";
+
+			case dtn::core::Node::CONN_DGRAM_UDP:
+				return "dgram:udp";
+
+			case dtn::core::Node::CONN_DGRAM_ETHERNET:
+				return "dgram:eth";
+
+			case dtn::core::Node::CONN_DGRAM_LOWPAN:
+				return "dgram:lowpan";
+
+			case dtn::core::Node::CONN_P2P_WIFI:
+				return "p2p:wifi";
+
+			case dtn::core::Node::CONN_P2P_BT:
+				return "p2p:bt";
+
+			case dtn::core::Node::CONN_EMAIL:
+				return "email";
+			}
+
+			return "unknown";
+		}
+
 		std::ostream &operator<<(std::ostream &stream, const DiscoveryService &service)
 		{
 			BundleString name(service._service_name);
