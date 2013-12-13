@@ -101,18 +101,33 @@ namespace dtn
 			// routine checked for throw() on 15.02.2013
 			onConfigurationChanged(dtn::daemon::Configuration::getInstance());
 
+			// initialize connection manager
 			_connectionmanager.initialize();
+
+			// initialize wall clock
 			_clock.initialize();
+
+			// initialize discovery agent
+			_disco_agent.initialize();
 
 			// start a clock
 			_clock.startup();
+
+			// start discovery agent
+			_disco_agent.startup();
 		}
 
 		void BundleCore::componentDown() throw ()
 		{
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
 
+			// terminate discovery agent
+			_disco_agent.terminate();
+
+			// terminate connection manager
 			_connectionmanager.terminate();
+
+			// terminate wall clock
 			_clock.terminate();
 		}
 
