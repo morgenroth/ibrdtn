@@ -29,7 +29,6 @@
 #include "core/EventReceiver.h"
 #include "net/ConvergenceLayer.h"
 #include "net/TCPConnection.h"
-#include "net/DiscoveryService.h"
 #include "net/DiscoveryBeaconHandler.h"
 
 #include <ibrcommon/link/LinkManager.h>
@@ -108,7 +107,7 @@ namespace dtn
 			/**
 			 * @see EventReceiver::raiseEvent()
 			 */
-			void raiseEvent(const Event *evt) throw ();
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			virtual void resetStats();
 

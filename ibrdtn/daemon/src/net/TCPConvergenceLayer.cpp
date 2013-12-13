@@ -255,7 +255,7 @@ namespace dtn
 			return TCPConvergenceLayer::TAG;
 		}
 
-		void TCPConvergenceLayer::raiseEvent(const Event *evt) throw ()
+		void TCPConvergenceLayer::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::net::P2PDialupEvent &dialup = dynamic_cast<const dtn::net::P2PDialupEvent&>(*evt);
