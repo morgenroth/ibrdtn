@@ -263,7 +263,7 @@ namespace dtn
 			}
 		}
 
-		void NativeDaemon::raiseEvent(const Event *evt) throw ()
+		void NativeDaemon::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			const std::string event = evt->getName();
 			std::string action;

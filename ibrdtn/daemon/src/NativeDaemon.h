@@ -234,7 +234,7 @@ namespace dtn
 			/**
 			 * @see dtn::core::EventReceiver::raiseEvent()
 			 */
-			virtual void raiseEvent(const Event *evt) throw ();
+			virtual void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			/**
 			 * Returns version information about the native daemon
