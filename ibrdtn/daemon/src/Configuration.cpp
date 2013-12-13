@@ -784,16 +784,16 @@ namespace dtn
 				vector<string> nets = dtn::utils::Utils::tokenize(" ", conf.read<string>("net_interfaces") );
 				for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
 				{
-					std::string netname = (*iter);
+					const std::string &netname = (*iter);
 
-					std::string key_type = "net_" + netname + "_type";
-					std::string key_port = "net_" + netname + "_port";
-					std::string key_interface = "net_" + netname + "_interface";
-					std::string key_address = "net_" + netname + "_address";
-					std::string key_path = "net_" + netname + "_path";
-					std::string key_mtu = "net_" + netname + "_mtu";
+					const std::string key_type = "net_" + netname + "_type";
+					const std::string key_port = "net_" + netname + "_port";
+					const std::string key_interface = "net_" + netname + "_interface";
+					const std::string key_address = "net_" + netname + "_address";
+					const std::string key_path = "net_" + netname + "_path";
+					const std::string key_mtu = "net_" + netname + "_mtu";
 
-					std::string type_name = conf.read<string>(key_type, "tcp");
+					const std::string type_name = conf.read<string>(key_type, "tcp");
 					Configuration::NetConfig::NetType type = Configuration::NetConfig::NETWORK_UNKNOWN;
 
 					if (type_name == "tcp") type = Configuration::NetConfig::NETWORK_TCP;
