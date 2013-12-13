@@ -62,6 +62,9 @@ namespace dtn
 			// unsubscribe to NetLink events
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
 
+			// un-register as discovery handler
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(this);
+
 			join();
 
 			// delete all sockets
@@ -98,6 +101,9 @@ namespace dtn
 
 				// subscribe to NetLink events on our interfaces
 				ibrcommon::LinkManager::getInstance().addEventListener(net, this);
+
+				// register as discovery handler for this interface
+				dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(net, this);
 
 				// store port of the interface
 				{
@@ -284,6 +290,9 @@ namespace dtn
 
 						// un-subscribe to NetLink events on our interfaces
 						ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
+
+						// un-register as discovery handler for this interface
+						dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(dialup.iface, this);
 
 						// remove all sockets on this interface
 						unlisten(dialup.iface);
