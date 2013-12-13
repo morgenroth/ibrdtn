@@ -115,10 +115,6 @@ size_t FakeDatagramService::recvfrom(char *buf, size_t length, char &type, char 
 	return ret;
 }
 
-const std::string FakeDatagramService::getServiceTag() const {
-	return "dgram:fake";
-}
-
 const std::string FakeDatagramService::getServiceDescription() const {
 	return "addr=42;tsap=1";
 }
@@ -128,7 +124,7 @@ const ibrcommon::vinterface& FakeDatagramService::getInterface() const {
 }
 
 dtn::core::Node::Protocol FakeDatagramService::getProtocol() const {
-	return dtn::core::Node::CONN_UNDEFINED;
+	return dtn::core::Node::CONN_BLUETOOTH;
 }
 
 const dtn::net::DatagramService::Parameter& FakeDatagramService::getParameter() const {

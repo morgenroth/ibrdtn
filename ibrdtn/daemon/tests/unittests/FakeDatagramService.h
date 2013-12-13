@@ -51,8 +51,6 @@ public:
 
 	size_t recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (dtn::net::DatagramException);
 
-	const std::string getServiceTag() const;
-
 	const std::string getServiceDescription() const;
 
 	const ibrcommon::vinterface& getInterface() const;
