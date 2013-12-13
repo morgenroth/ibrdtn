@@ -461,15 +461,12 @@ namespace dtn
 								{
 									// generate name with the sender address
 									beacon.setEID( dtn::data::EID("udp://[" + sender.address() + "]:4556") );
+
+									// add generated tcpcl service if the services list is empty
+									beacon.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
 								}
 
 								DiscoveryBeacon::service_list &services = beacon.getServices();
-
-								// add generated tcpcl service if the services list is empty
-								if (services.empty() || beacon.isShort())
-								{
-									beacon.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
-								}
 
 								// add source address if not set
 								for (dtn::net::DiscoveryBeacon::service_list::iterator iter = services.begin(); iter != services.end(); ++iter) {
