@@ -26,8 +26,7 @@
 #define IPNDAGENT_H_
 
 #include "Component.h"
-#include "net/DiscoveryAgent.h"
-#include "net/DiscoveryBeacon.h"
+#include "net/DiscoveryBeaconHandler.h"
 #include "core/EventReceiver.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/vsocket.h>
@@ -42,7 +41,7 @@ namespace dtn
 {
 	namespace net
 	{
-		class IPNDAgent : public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback
+		class IPNDAgent : public dtn::core::EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback, public DiscoveryBeaconHandler
 		{
 			static const std::string TAG;
 
@@ -63,7 +62,12 @@ namespace dtn
 			/**
 			 * @see EventReceiver::raiseEvent()
 			 */
-			void raiseEvent(const Event *evt) throw ();
+			void raiseEvent(const dtn::core::Event *evt) throw ();
+
+			/**
+			 * This method is called by the DiscoveryAgent every time a beacon is ready for advertisement
+			 */
+			void onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ();
 
 		protected:
 			virtual void componentRun() throw ();

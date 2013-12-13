@@ -22,6 +22,7 @@
 #include "Configuration.h"
 
 #include "net/IPNDAgent.h"
+#include "net/DiscoveryAgent.h"
 #include "net/P2PDialupEvent.h"
 #include "core/BundleCore.h"
 #include "core/EventDispatcher.h"
@@ -188,10 +189,10 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::send(const DiscoveryBeacon &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr)
+		void IPNDAgent::onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ()
 		{
 			// serialize announcement
-			stringstream ss; ss << a;
+			stringstream ss; ss << beacon;
 			const std::string data = ss.str();
 
 			// get all sockets for the given interface
@@ -204,15 +205,21 @@ namespace dtn
 				try {
 					ibrcommon::udpsocket &sock = dynamic_cast<ibrcommon::udpsocket&>(**iter);
 
-					try {
-						// prevent broadcasting in the wrong address family
-						if (addr.family() != sock.get_family()) continue;
+					// send beacon to all addresses
+					for (std::set<ibrcommon::vaddress>::const_iterator addr_it = _destinations.begin(); addr_it != _destinations.end(); ++addr_it)
+					{
+						const ibrcommon::vaddress &addr = (*addr_it);
 
-						sock.sendto(data.c_str(), data.length(), 0, addr);
-					} catch (const ibrcommon::socket_exception &e) {
-						IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 5) << "can not send message to " << addr.toString() << " via " << sock.get_address().toString() << "/" << iface.toString() << "; socket exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
-					} catch (const ibrcommon::vaddress::address_exception &ex) {
-						IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						try {
+							// prevent broadcasting in the wrong address family
+							if (addr.family() != sock.get_family()) continue;
+
+							sock.sendto(data.c_str(), data.length(), 0, addr);
+						} catch (const ibrcommon::socket_exception &e) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 5) << "can not send message to " << addr.toString() << " via " << sock.get_address().toString() << "/" << iface.toString() << "; socket exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const ibrcommon::vaddress::address_exception &ex) {
+							IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						}
 					}
 				} catch (const std::bad_cast&) {
 					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "Socket for sending isn't a udpsocket." << IBRCOMMON_LOGGER_ENDL;
@@ -220,7 +227,7 @@ namespace dtn
 			}
 		}
 
-		void IPNDAgent::raiseEvent(const Event *evt) throw ()
+		void IPNDAgent::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::net::P2PDialupEvent &dialup = dynamic_cast<const dtn::net::P2PDialupEvent&>(*evt);
@@ -243,6 +250,9 @@ namespace dtn
 						// subscribe to NetLink events on our interfaces
 						ibrcommon::LinkManager::getInstance().addEventListener(dialup.iface, this);
 
+						// register as discovery handler for this interface
+						dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(dialup.iface, this);
+
 						// join to all multicast addresses on this interface
 						join(dialup.iface);
 						break;
@@ -263,6 +273,9 @@ namespace dtn
 
 						// subscribe to NetLink events on our interfaces
 						ibrcommon::LinkManager::getInstance().removeEventListener(dialup.iface, this);
+
+						// un-register as discovery handler for this interface
+						dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(dialup.iface, this);
 
 						// leave the multicast groups on the interface
 						leave(dialup.iface);
@@ -366,7 +379,7 @@ namespace dtn
 			// listen to P2P dial-up events
 			dtn::core::EventDispatcher<dtn::net::P2PDialupEvent>::add(this);
 
-			// join multicast groups
+			// join multicast groups and register as discovery handler
 			ibrcommon::MutexLock l(_interface_lock);
 
 			for (std::set<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); ++it_iface)
@@ -375,6 +388,9 @@ namespace dtn
 
 				// subscribe to NetLink events on our interfaces
 				ibrcommon::LinkManager::getInstance().addEventListener(iface, this);
+
+				// register as discovery handler for this interface
+				dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(iface, this);
 
 				// join to all multicast addresses on this interface
 				join(iface);
@@ -388,6 +404,9 @@ namespace dtn
 
 			// unsubscribe to NetLink events
 			ibrcommon::LinkManager::getInstance().removeEventListener(this);
+
+			// un-register as discovery handler for this interface
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(this);
 
 			// mark the send socket as down
 			_state = false;
