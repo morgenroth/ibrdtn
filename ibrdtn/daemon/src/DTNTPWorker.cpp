@@ -105,10 +105,16 @@ namespace dtn
 			}
 
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+
+			// register as discovery handler for all interfaces
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(this);
 		}
 
 		DTNTPWorker::~DTNTPWorker()
 		{
+			// unregister as discovery handler for all interfaces
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(this);
+
 			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
 		}
 
