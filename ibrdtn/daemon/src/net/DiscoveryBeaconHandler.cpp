@@ -29,7 +29,7 @@ namespace dtn
 		{
 		}
 
-		void DiscoveryBeaconHandler::onAdvertiseBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw ()
+		void DiscoveryBeaconHandler::onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ()
 		{
 		}
 

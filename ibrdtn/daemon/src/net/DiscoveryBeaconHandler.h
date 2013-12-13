@@ -45,7 +45,7 @@ namespace dtn
 
 			virtual ~DiscoveryBeaconHandler() = 0;
 
-			virtual void onAdvertiseBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw ();
+			virtual void onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ();
 
 			virtual void onUpdateBeacon(const ibrcommon::vinterface &iface, DiscoveryBeacon &beacon) throw (NoServiceHereException);
 		};
