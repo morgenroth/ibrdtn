@@ -53,6 +53,8 @@ namespace dtn
 			void onBeaconReceived(const DiscoveryBeacon &beacon);
 
 			void registerService(const ibrcommon::vinterface &iface, dtn::net::DiscoveryBeaconHandler *handler);
+			void registerService(dtn::net::DiscoveryBeaconHandler *handler);
+
 			void unregisterService(const ibrcommon::vinterface &iface, const dtn::net::DiscoveryBeaconHandler *handler);
 			void unregisterService(const dtn::net::DiscoveryBeaconHandler *handler);
 
@@ -81,6 +83,8 @@ namespace dtn
 			typedef std::pair<ibrcommon::vinterface, handler_list> handler_map_entry;
 
 			handler_map _providers;
+
+			const ibrcommon::vinterface _any_iface;
 		};
 	}
 }
