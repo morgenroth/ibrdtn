@@ -38,7 +38,7 @@ namespace dtn
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
 
-			void raiseEvent(const Event *evt) throw ();
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			virtual const std::string getName() const;
 		};

@@ -48,7 +48,7 @@ namespace dtn
 			/**
 			 * method to receive global events
 			 */
-			void raiseEvent(const Event *evt) throw ();
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			void onBeaconReceived(const DiscoveryBeacon &beacon);
 

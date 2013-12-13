@@ -105,7 +105,7 @@ namespace dtn
 			dtn::core::BundleGeneratedEvent::raise(bundle);
 		}
 
-		void StatusReportGenerator::raiseEvent(const Event *evt) throw ()
+		void StatusReportGenerator::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const BundleEvent &bundleevent = dynamic_cast<const BundleEvent&>(*evt);

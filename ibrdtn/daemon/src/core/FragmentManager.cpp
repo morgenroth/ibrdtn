@@ -155,7 +155,7 @@ namespace dtn
 			join();
 		}
 
-		void FragmentManager::raiseEvent(const Event *evt) throw ()
+		void FragmentManager::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);

@@ -53,7 +53,7 @@ namespace dtn
 			return "DiscoveryAgent";
 		}
 
-		void DiscoveryAgent::raiseEvent(const Event *evt) throw ()
+		void DiscoveryAgent::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				dynamic_cast<const dtn::core::TimeEvent&>(*evt);

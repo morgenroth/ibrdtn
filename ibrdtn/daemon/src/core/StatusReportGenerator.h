@@ -36,7 +36,7 @@ namespace dtn
 			StatusReportGenerator();
 			virtual ~StatusReportGenerator();
 
-			void raiseEvent(const Event *evt) throw ();
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 		private:
 			/**

@@ -75,7 +75,7 @@ namespace dtn
 			void componentRun() throw ();
 			void componentDown() throw ();
 
-			void raiseEvent(const Event *evt) throw ();
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 
 			const std::string getName() const;
 
