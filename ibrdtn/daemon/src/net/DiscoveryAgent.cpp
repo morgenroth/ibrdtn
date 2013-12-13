@@ -183,6 +183,9 @@ namespace dtn
 
 		void DiscoveryAgent::onBeaconReceived(const DiscoveryBeacon &beacon)
 		{
+			// ignore own beacons
+			if (beacon.getEID() == dtn::core::BundleCore::local) return;
+
 			// convert the announcement into NodeEvents
 			Node n(beacon.getEID());
 
@@ -194,31 +197,26 @@ namespace dtn
 
 				const DiscoveryService &s = (*iter);
 
-				if (s.getName() == "tcpcl")
+				// get protocol from tag
+				dtn::core::Node::Protocol p = DiscoveryService::asProtocol(s.getName());
+
+				if (p == dtn::core::Node::CONN_EMAIL)
 				{
-					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_TCPIP, s.getParameters(), to_value, 20));
-				}
-				else if (s.getName() == "udpcl")
-				{
-					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_UDPIP, s.getParameters(), to_value, 20));
-				}
-				else if (s.getName() == "lowpancl")
-				{
-					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_LOWPAN, s.getParameters(), to_value, 20));
-				}
-                else if (s.getName() == "emailcl")
-                {
-                	// Set timeout
-                	dtn::data::Number to_value_mailcl = to_value;
+					// Set timeout
+					dtn::data::Number to_value_mailcl = to_value;
 					size_t configTime = dtn::daemon::Configuration::getInstance().getEMail().getNodeAvailableTime();
 					if(configTime > 0)
 						to_value_mailcl = configTime;
 
 					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_EMAIL, s.getParameters(), to_value_mailcl, 20));
-                }
-				else
+				}
+				else if ((p == dtn::core::Node::CONN_UNSUPPORTED) || (p == dtn::core::Node::CONN_UNDEFINED))
 				{
 					n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));
+				}
+				else
+				{
+					n.add(Node::URI(Node::NODE_DISCOVERED, p, s.getParameters(), to_value, 20));
 				}
 			}
 

@@ -466,16 +466,15 @@ namespace dtn
 								DiscoveryBeacon::service_list &services = beacon.getServices();
 
 								// add generated tcpcl service if the services list is empty
-								if (services.empty() && beacon.isShort())
+								if (services.empty() || beacon.isShort())
 								{
 									beacon.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
 								}
 
-								// add all services to the return set
+								// add source address if not set
 								for (dtn::net::DiscoveryBeacon::service_list::iterator iter = services.begin(); iter != services.end(); ++iter) {
 									DiscoveryService &service = (*iter);
 
-									// add source address if not set
 									if ( (service.getParameters().find("port=") != std::string::npos) &&
 											(service.getParameters().find("ip=") == std::string::npos) ) {
 
@@ -484,7 +483,7 @@ namespace dtn
 									}
 								}
 
-								// announce the received services
+								// announce the received beacon
 								agent.onBeaconReceived(beacon);
 							} catch (const dtn::InvalidDataException&) {
 							} catch (const ibrcommon::IOException&) {

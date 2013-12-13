@@ -23,7 +23,7 @@
 #define DATAGRAMCONVERGENCELAYER_H_
 
 #include "Component.h"
-#include "core/EventReceiver.h"
+#include "net/DiscoveryBeaconHandler.h"
 #include "net/DatagramService.h"
 #include "net/DatagramConnection.h"
 #include "net/ConvergenceLayer.h"
@@ -37,7 +37,7 @@ namespace dtn
 	namespace net
 	{
 		class DatagramConvergenceLayer : public dtn::net::ConvergenceLayer, public dtn::daemon::IndependentComponent,
-			public dtn::core::EventReceiver, public dtn::net::DatagramConnectionCallback
+			public dtn::net::DatagramConnectionCallback, public DiscoveryBeaconHandler
 		{
 			static const std::string TAG;
 
@@ -73,24 +73,17 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
-			/**
-			 * Public method for event callbacks
-			 * @param evt
-			 */
-			virtual void raiseEvent(const dtn::core::Event *evt) throw ();
-
 			virtual void resetStats();
 
 			virtual void getStats(ConvergenceLayer::stats_data &data) const;
+
+			void onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ();
 
 		protected:
 			virtual void componentUp() throw ();
 			virtual void componentRun() throw ();
 			virtual void componentDown() throw ();
 			void __cancellation() throw ();
-
-			void sendAnnoucement();
-
 			/**
 			 * callback send for connections
 			 * @param connection
@@ -149,10 +142,7 @@ namespace dtn
 			// false, if the main thread is cancelled
 			bool _running;
 
-			uint16_t _discovery_sn;
-
 			// stats variables
-
 			size_t _stats_in;
 			size_t _stats_out;
 			double _stats_rtt;

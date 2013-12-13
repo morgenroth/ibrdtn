@@ -23,9 +23,6 @@
 #include "net/DatagramConnection.h"
 
 #include "core/BundleCore.h"
-#include "core/EventDispatcher.h"
-#include "core/TimeEvent.h"
-#include "core/NodeEvent.h"
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -41,7 +38,7 @@ namespace dtn
 		const std::string DatagramConvergenceLayer::TAG = "DatagramConvergenceLayer";
 
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
-		 : _service(ds), _active_conns(0), _running(false), _discovery_sn(0),
+		 : _service(ds), _active_conns(0), _running(false),
 		   _stats_in(0), _stats_out(0), _stats_rtt(0.0), _stats_retries(0), _stats_failure(0)
 		{
 		}
@@ -224,12 +221,14 @@ namespace dtn
 		void DatagramConvergenceLayer::componentUp() throw ()
 		{
 			// routine checked for throw() on 15.02.2013
-			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
 			try {
 				_service->bind();
 			} catch (const std::exception &e) {
 				IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << "bind to " << _service->getInterface().toString() << " failed (" << e.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
+
+			// register for discovery beacon handling
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(_service->getInterface(), this);
 
 			// set the running variable
 			_running = true;
@@ -237,7 +236,8 @@ namespace dtn
 
 		void DatagramConvergenceLayer::componentDown() throw ()
 		{
-			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
+			// un-register for discovery beacon handling
+			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(_service->getInterface(), this);
 
 			// shutdown all connections
 			ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
@@ -247,20 +247,14 @@ namespace dtn
 			}
 		}
 
-		void DatagramConvergenceLayer::sendAnnoucement()
+		void DatagramConvergenceLayer::onAdvertiseBeacon(const ibrcommon::vinterface &iface, const DiscoveryBeacon &beacon) throw ()
 		{
-			DiscoveryBeacon announcement(DiscoveryBeacon::DISCO_VERSION_01, dtn::core::BundleCore::local);
-
-			// set sequencenumber
-			announcement.setSequencenumber(_discovery_sn);
-			_discovery_sn++;
-
-			// clear all services
-			announcement.clearServices();
+			// only handler beacons for this interface
+			if (iface != _service->getInterface()) return;
 
 			// serialize announcement
 			stringstream ss;
-			ss << announcement;
+			ss << beacon;
 
 			std::streamsize len = ss.str().size();
 
@@ -285,6 +279,9 @@ namespace dtn
 			std::vector<char> data(maxlen);
 			size_t len = 0;
 
+			// get the reference to the discovery agent
+			dtn::net::DiscoveryAgent &agent = dtn::core::BundleCore::getInstance().getDiscoveryAgent();
+
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() entered" << IBRCOMMON_LOGGER_ENDL;
 
 			while (_running)
@@ -308,29 +305,24 @@ namespace dtn
 				{
 					try {
 						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() Announcement received" << IBRCOMMON_LOGGER_ENDL;
-						DiscoveryBeacon announce;
+
+						DiscoveryBeacon beacon = agent.obtainBeacon();
+
 						stringstream ss;
 						ss.write(&data[0], len);
-						ss >> announce;
+						ss >> beacon;
 
 						// ignore own beacons
-						if (announce.getEID() == dtn::core::BundleCore::local) continue;
+						if (beacon.getEID() == dtn::core::BundleCore::local) continue;
 
-						// convert the announcement into NodeEvents
-						Node n(announce.getEID());
-
-						// timeout value
-						size_t to_value = 30;
-
-						// add
-						n.add(Node::URI(Node::NODE_DISCOVERED, _service->getProtocol(), address, to_value, 20));
-
-						const std::list<DiscoveryService> services = announce.getServices();
-						for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); ++iter)
+						if (beacon.isShort())
 						{
-							const DiscoveryService &s = (*iter);
-							n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value, 20));
+							// can not generate node name from short beacons
+							continue;
 						}
+
+						// add discovered service entry
+						beacon.addService(dtn::net::DiscoveryService(_service->getServiceTag(), address));
 
 						{
 							// lock the connection list while working with it
@@ -338,11 +330,11 @@ namespace dtn
 
 							// Connection instance for this address
 							DatagramConnection& connection = getConnection(address, true);
-							connection.setPeerEID(announce.getEID());
+							connection.setPeerEID(beacon.getEID());
 						}
 
-						// announce NodeInfo to ConnectionManager
-						dtn::core::BundleCore::getInstance().getConnectionManager().updateNeighbor(n);
+						// announce the received beacon
+						agent.onBeaconReceived(beacon);
 					} catch (const ibrcommon::Exception&) {
 						// catch wrong formats
 					}
@@ -381,17 +373,6 @@ namespace dtn
 
 				yield();
 			}
-		}
-
-		void DatagramConvergenceLayer::raiseEvent(const Event *evt) throw ()
-		{
-			try {
-				const TimeEvent &time=dynamic_cast<const TimeEvent&>(*evt);
-				if (time.getAction() == TIME_SECOND_TICK)
-					if (time.getTimestamp().get<size_t>() % 5 == 0)
-						sendAnnoucement();
-			} catch (const std::bad_cast&)
-			{}
 		}
 
 		void DatagramConvergenceLayer::__cancellation() throw ()
