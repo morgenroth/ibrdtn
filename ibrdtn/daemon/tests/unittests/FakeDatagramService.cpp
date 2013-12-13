@@ -52,7 +52,7 @@ void FakeDatagramService::fakeDiscovery() {
 	ss << announcement;
 
 	Message msg;
-	msg.type = DatagramConvergenceLayer::HEADER_BROADCAST;
+	msg.type = dtn::net::DatagramConvergenceLayer::HEADER_BROADCAST;
 	msg.flags = 0;
 	msg.seqno = 0;
 	msg.address = "fakeaddr";
@@ -66,7 +66,7 @@ void FakeDatagramService::fakeDiscovery() {
 
 void FakeDatagramService::genAck(const unsigned int seqno, const std::string &address) {
 	Message msg;
-	msg.type = DatagramConvergenceLayer::HEADER_ACK;
+	msg.type = dtn::net::DatagramConvergenceLayer::HEADER_ACK;
 	msg.flags = 0;
 	msg.seqno = seqno;
 	msg.address = address;
@@ -81,7 +81,7 @@ void FakeDatagramService::shutdown() {
 	_recv_queue.abort();
 }
 
-void FakeDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const std::string &address, const char *buf, size_t length) throw (DatagramException) {
+void FakeDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const std::string &address, const char *buf, size_t length) throw (dtn::net::DatagramException) {
 	if (type == dtn::net::DatagramConvergenceLayer::HEADER_SEGMENT) {
 		// wait 50ms and queue an ack
 		ibrcommon::Thread::sleep(50);
@@ -90,11 +90,11 @@ void FakeDatagramService::send(const char &type, const char &flags, const unsign
 	}
 }
 
-void FakeDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const char *buf, size_t length) throw (DatagramException) {
+void FakeDatagramService::send(const char &type, const char &flags, const unsigned int &seqno, const char *buf, size_t length) throw (dtn::net::DatagramException) {
 	// no ack here!
 }
 
-size_t FakeDatagramService::recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (DatagramException) {
+size_t FakeDatagramService::recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (dtn::net::DatagramException) {
 	size_t ret = 0;
 
 	msg_queue::Locked lq = _recv_queue.exclusive();
@@ -109,7 +109,7 @@ size_t FakeDatagramService::recvfrom(char *buf, size_t length, char &type, char 
 		::memcpy(buf, &msg.data[0], (ret > length) ? length : ret);
 		lq.pop();
 	} catch (const ibrcommon::QueueUnblockedException&) {
-		throw DatagramException("unblocked");
+		throw dtn::net::DatagramException("unblocked");
 	}
 
 	return ret;

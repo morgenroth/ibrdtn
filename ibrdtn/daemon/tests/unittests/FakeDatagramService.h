@@ -41,15 +41,15 @@ public:
 	FakeDatagramService();
 	virtual ~FakeDatagramService();
 
-	void bind() throw (DatagramException);
+	void bind() throw (dtn::net::DatagramException);
 
 	void shutdown();
 
-	void send(const char &type, const char &flags, const unsigned int &seqno, const std::string &address, const char *buf, size_t length) throw (DatagramException);
+	void send(const char &type, const char &flags, const unsigned int &seqno, const std::string &address, const char *buf, size_t length) throw (dtn::net::DatagramException);
 
-	void send(const char &type, const char &flags, const unsigned int &seqno, const char *buf, size_t length) throw (DatagramException);
+	void send(const char &type, const char &flags, const unsigned int &seqno, const char *buf, size_t length) throw (dtn::net::DatagramException);
 
-	size_t recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (DatagramException);
+	size_t recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (dtn::net::DatagramException);
 
 	const std::string getServiceTag() const;
 
