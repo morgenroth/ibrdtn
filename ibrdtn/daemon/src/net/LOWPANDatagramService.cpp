@@ -276,15 +276,6 @@ namespace dtn
 		}
 
 		/**
-		 * Get the tag for this service used in discovery messages.
-		 * @return The tag as string.
-		 */
-		const std::string LOWPANDatagramService::getServiceTag() const
-		{
-			return "dgram:lowpan";
-		}
-
-		/**
 		 * Get the service description for this convergence layer. This
 		 * data is used to contact this node.
 		 * @return The service description as string.

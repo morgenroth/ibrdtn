@@ -234,15 +234,6 @@ namespace dtn
 		}
 
 		/**
-		 * Get the tag for this service used in discovery messages.
-		 * @return The tag as string.
-		 */
-		const std::string UDPDatagramService::getServiceTag() const
-		{
-			return "dgram:udp";
-		}
-
-		/**
 		 * Get the service description for this convergence layer. This
 		 * data is used to contact this node.
 		 * @return The service description as string.

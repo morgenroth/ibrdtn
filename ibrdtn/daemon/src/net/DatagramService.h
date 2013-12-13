@@ -117,7 +117,7 @@ namespace dtn
 			 * Get the tag for this service used in discovery messages.
 			 * @return The tag as string.
 			 */
-			virtual const std::string getServiceTag() const = 0;
+			virtual const std::string getServiceTag() const;
 
 			/**
 			 * Get the service description for this convergence layer. This
