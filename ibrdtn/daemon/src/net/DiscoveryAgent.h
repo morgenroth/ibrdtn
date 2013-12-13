@@ -53,7 +53,8 @@ namespace dtn
 			void onBeaconReceived(const DiscoveryBeacon &beacon);
 
 			void registerService(const ibrcommon::vinterface &iface, dtn::net::DiscoveryBeaconHandler *handler);
-			void unregisterService(const ibrcommon::vinterface &iface, dtn::net::DiscoveryBeaconHandler *handler);
+			void unregisterService(const ibrcommon::vinterface &iface, const dtn::net::DiscoveryBeaconHandler *handler);
+			void unregisterService(const dtn::net::DiscoveryBeaconHandler *handler);
 
 			DiscoveryBeacon obtainBeacon() const;
 

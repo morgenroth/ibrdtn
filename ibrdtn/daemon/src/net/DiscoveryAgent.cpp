@@ -110,7 +110,30 @@ namespace dtn
 			list.push_back(handler);
 		}
 
-		void DiscoveryAgent::unregisterService(const ibrcommon::vinterface &iface, dtn::net::DiscoveryBeaconHandler *handler)
+		void DiscoveryAgent::unregisterService(const dtn::net::DiscoveryBeaconHandler *handler)
+		{
+			ibrcommon::MutexLock l(_provider_lock);
+
+			// walk though all interfaces
+			for (handler_map::iterator it_p = _providers.begin(); it_p != _providers.end();)
+			{
+				handler_list &list = (*it_p).second;
+
+				for (handler_list::iterator it = list.begin(); it != list.end(); ++it) {
+					if ((*it) == handler) {
+						list.erase(it);
+						break;
+					}
+				}
+
+				if (list.empty())
+					_providers.erase(it_p++);
+				else
+					++it_p;
+			}
+		}
+
+		void DiscoveryAgent::unregisterService(const ibrcommon::vinterface &iface, const dtn::net::DiscoveryBeaconHandler *handler)
 		{
 			ibrcommon::MutexLock l(_provider_lock);
 			if (_providers.find(iface) == _providers.end()) return;
