@@ -1352,17 +1352,7 @@ namespace dtn
 				// get the discovery port
 				int disco_port = conf.getDiscovery().port();
 
-				// collect all interfaces of convergence layer instances
-				std::set<ibrcommon::vinterface> interfaces;
-
-				const std::list<dtn::daemon::Configuration::NetConfig> &nets = conf.getNetwork().getInterfaces();
-				for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
-				{
-					const dtn::daemon::Configuration::NetConfig &net = (*iter);
-					if (!net.iface.empty())
-						interfaces.insert(net.iface);
-				}
-
+				// create the IPND agent
 				dtn::net::IPNDAgent *ipnd = new dtn::net::IPNDAgent( disco_port );
 
 				try {
@@ -1376,12 +1366,12 @@ namespace dtn
 					ipnd->add(ibrcommon::vaddress("224.0.0.142", disco_port, AF_INET));
 				}
 
-				for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); ++iter)
+				// add all CL interfaces to discovery
+				for (std::list<dtn::daemon::Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); ++iter)
 				{
-					const ibrcommon::vinterface &i = (*iter);
-
-					// add interfaces to discovery
-					ipnd->bind(i);
+					const dtn::daemon::Configuration::NetConfig &net = (*iter);
+					if (!net.iface.empty())
+						ipnd->bind(net.iface);
 				}
 
 				_components[RUNLEVEL_NETWORK].push_back(ipnd);
