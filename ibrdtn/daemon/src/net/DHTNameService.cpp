@@ -75,6 +75,9 @@ bool dtn::dht::DHTNameService::setNonBlockingInterruptPipe() {
 }
 
 void dtn::dht::DHTNameService::componentUp() throw () {
+	// register as discovery beacon handler
+	dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(this);
+
 	// creating interrupt pipe
 	if (pipe(_interrupt_pipe) < 0) {
 		IBRCOMMON_LOGGER_TAG("DHTNameService", error) << "Error " << errno << " creating pipe"
@@ -437,6 +440,9 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 }
 
 void dtn::dht::DHTNameService::componentDown() throw () {
+	// un-register as discovery beacon handler
+	dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(this);
+
 	this->_exiting = true;
 	IBRCOMMON_LOGGER_DEBUG_TAG("DHTNameService", 25) << "DHT will be shut down"
 				<< IBRCOMMON_LOGGER_ENDL;
@@ -798,20 +804,20 @@ void dtn::dht::DHTNameService::bootstrappingIPs() {
 
 // TODO Nur für Interfaces zulassen, auf denen ich gebunden bin!
 
-void dtn::dht::DHTNameService::update(const ibrcommon::vinterface &iface, DiscoveryBeacon &announcement)
-		throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException) {
+void dtn::dht::DHTNameService::onUpdateBeacon(const ibrcommon::vinterface&, DiscoveryBeacon &beacon)
+		throw (dtn::net::DiscoveryBeaconHandler::NoServiceHereException) {
 	if (this->_initialized) {
 		stringstream service;
 		service << "port=" << this->_context.port << ";";
 		if (!this->_config.isNeighbourAllowedToAnnounceMe()) {
 			service << "proxy=false;";
 		}
-		announcement.addService( DiscoveryService("dhtns", service.str()));
+		beacon.addService( DiscoveryService("dhtns", service.str()));
 	} else {
 		if(!this->_config.isNeighbourAllowedToAnnounceMe()) {
-			announcement.addService( DiscoveryService("dhtns", "proxy=false;"));
+			beacon.addService( DiscoveryService("dhtns", "proxy=false;"));
 		} else {
-			throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+			throw dtn::net::DiscoveryBeaconHandler::NoServiceHereException();
 		}
 	}
 }
