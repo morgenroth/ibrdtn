@@ -77,7 +77,7 @@ public class ApiDatabase implements Closeable {
 		super.finalize();
 	}
 
-	public void open(Context context) throws SQLException
+	public synchronized void open(Context context) throws SQLException
 	{
 		mContext = context;
 		mHelper = new DBOpenHelper(mContext);
@@ -91,11 +91,13 @@ public class ApiDatabase implements Closeable {
 		return mDatabase;
 	}
 	
-	public void close()
+	public synchronized void close()
 	{
-		mHelper.close();
-		
-		Log.d(TAG, "API database closed");
+		if (mHelper != null) {
+		    mHelper.close();
+		    mHelper = null;
+		    Log.d(TAG, "API database closed");
+		}
 	}
 	
 	public List<Session> getSessions() {
