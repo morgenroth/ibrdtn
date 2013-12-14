@@ -189,15 +189,19 @@ public class DaemonService extends Service {
         String action = intent.getAction();
 
         if (ACTION_STARTUP.equals(action)) {
-            // do nothing if the daemon is already up
-            if (mDaemonProcess.getState().equals(DaemonState.ONLINE)) return;
-                     
-            // start-up the daemon
-            mDaemonProcess.start();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             
-            final Intent storeStatsIntent = new Intent(this, DaemonService.class);
-            storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
-            startService(storeStatsIntent);
+            // only start if the daemon is offline or in error state
+            // and if the daemon switch is on
+            if ((mDaemonProcess.getState().equals(DaemonState.OFFLINE) || mDaemonProcess.getState().equals(DaemonState.ERROR))
+                && prefs.getBoolean("enabledSwitch", false)) {
+                // start-up the daemon
+                mDaemonProcess.start();
+                
+                final Intent storeStatsIntent = new Intent(this, DaemonService.class);
+                storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
+                startService(storeStatsIntent);
+            }
         } else if (ACTION_SHUTDOWN.equals(action)) {
             // stop main loop
             mDaemonProcess.stop();
