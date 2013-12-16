@@ -66,8 +66,6 @@ namespace dtn
 		BaseRouter::BaseRouter()
 		 : _known_bundles("router-known-bundles"), _purged_bundles("router-purged-bundles"), _extension_state(false), _next_expiration(0)
 		{
-			// register myself for all extensions
-			RoutingExtension::_router = this;
 		}
 
 		BaseRouter::~BaseRouter()

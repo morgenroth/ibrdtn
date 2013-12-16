@@ -88,10 +88,6 @@ namespace dtn
 
 		protected:
 			BaseRouter& operator*();
-
-		private:
-			friend class BaseRouter;
-			static BaseRouter *_router;
 		};
 	} /* namespace routing */
 } /* namespace dtn */
