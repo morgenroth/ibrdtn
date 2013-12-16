@@ -68,7 +68,7 @@ namespace dtn
 				dtn::net::BundleTransfer transfer(destination, meta);
 
 				// transfer the bundle to the next hop
-				dtn::core::BundleCore::getInstance().transferTo(transfer);
+				dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(RoutingExtension::TAG, 20) << "bundle " << meta.toString() << " queued for " << destination.getString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::core::P2PDialupException&) {
@@ -83,6 +83,8 @@ namespace dtn
 
 				// and abort the query
 				throw NeighborDatabase::NeighborNotAvailableException();
+			} catch (const ibrcommon::Exception &e) {
+				// ignore any other error
 			}
 		}
 

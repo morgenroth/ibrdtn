@@ -85,7 +85,7 @@ namespace dtn
 			/**
 			 * queue a bundle for transmission
 			 */
-			void queue(const dtn::net::BundleTransfer &job);
+			void queue(dtn::net::BundleTransfer &job);
 
 			/**
 			 * method to receive new events from the EventSwitch

@@ -61,7 +61,7 @@ namespace dtn
 
 							// retransmit the bundle
 							dtn::net::BundleTransfer transfer(data.destination, meta);
-							dtn::core::BundleCore::getInstance().transferTo(transfer);
+							dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
 						} catch (const dtn::core::P2PDialupException&) {
 							// do nothing here
 							dtn::routing::RequeueBundleEvent::raise(data.destination, data);

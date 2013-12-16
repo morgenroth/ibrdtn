@@ -496,7 +496,7 @@ namespace dtn
 			throw ConnectionNotAvailableException();
 		}
 
-		void ConnectionManager::queue(const dtn::net::BundleTransfer &job)
+		void ConnectionManager::queue(dtn::net::BundleTransfer &job)
 		{
 			ibrcommon::MutexLock l(_node_lock);
 
@@ -512,18 +512,23 @@ namespace dtn
 
 			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 50) << "search for node " << job.getNeighbor().getString() << IBRCOMMON_LOGGER_ENDL;
 
-			// queue to a node
-			const Node &n = getNode(job.getNeighbor());
-			IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
-
 			try {
-				queue(n, job);
-			} catch (const P2PDialupException&) {
-				// trigger the dial-up connection
-				dialup(n);
+				// queue to a node
+				const Node &n = getNode(job.getNeighbor());
+				IBRCOMMON_LOGGER_DEBUG_TAG("ConnectionManager", 2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
 
-				// re-throw P2PDialupException
-				throw;
+				try {
+					queue(n, job);
+				} catch (const P2PDialupException&) {
+					// trigger the dial-up connection
+					dialup(n);
+
+					// re-throw P2PDialupException
+					throw;
+				}
+			} catch (const dtn::net::NeighborNotAvailableException &ex) {
+				// signal interruption of the transfer
+				job.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}
 		}
 
