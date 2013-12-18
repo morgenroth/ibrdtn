@@ -66,10 +66,15 @@ namespace dtn
 		BaseRouter::BaseRouter()
 		 : _known_bundles("router-known-bundles"), _purged_bundles("router-purged-bundles"), _extension_state(false), _next_expiration(0)
 		{
+			// make the router globally available
+			dtn::core::BundleCore::getInstance().setRouter(this);
 		}
 
 		BaseRouter::~BaseRouter()
 		{
+			// unregister this router from the core
+			dtn::core::BundleCore::getInstance().setRouter(NULL);
+
 			// delete all extensions
 			clearExtensions();
 		}

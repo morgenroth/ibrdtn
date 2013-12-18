@@ -1062,17 +1062,12 @@ namespace dtn
 			// create the base router
 			dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter();
 
-			// make the router globally available
-			dtn::core::BundleCore::getInstance().setRouter(router);
-
 			// add the router to the components list
 			_components[RUNLEVEL_ROUTING].push_back(router);
 		}
 
 		void NativeDaemon::shutdown_routing() const throw (NativeDaemonException)
 		{
-			// set the global router to NULL
-			dtn::core::BundleCore::getInstance().setRouter(NULL);
 		}
 
 		void NativeDaemon::init_api() throw (NativeDaemonException)
