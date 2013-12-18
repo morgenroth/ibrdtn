@@ -106,7 +106,7 @@ namespace dtn
 				const dtn::data::MetaBundle &bundle = (*iter);
 
 				// skip expired bundles
-				if ( dtn::utils::Clock::isExpired( bundle.timestamp, bundle.lifetime ) ) continue;
+				if ( dtn::utils::Clock::isExpired( bundle ) ) continue;
 
 				if ( cb.shouldAdd(bundle) )
 				{

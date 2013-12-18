@@ -531,7 +531,7 @@ namespace dtn
 				get(st, m, 0);
 
 				// check if the bundle is already expired
-				if ( !dtn::utils::Clock::isExpired( m.timestamp, m.lifetime ) )
+				if ( !dtn::utils::Clock::isExpired( m ) )
 				{
 					// ask the filter if this bundle should be added to the return list
 					if (cb.shouldAdd(m))

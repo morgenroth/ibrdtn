@@ -416,7 +416,7 @@ namespace dtn
 
 		void BundleCore::validate(const dtn::data::MetaBundle &obj) const throw (dtn::data::Validator::RejectedException)
 		{
-			if (dtn::utils::Clock::isExpired(obj.expiretime)) {
+			if (dtn::utils::Clock::isExpired(obj)) {
 				// ... bundle is expired
 				IBRCOMMON_LOGGER_DEBUG_TAG("BundleCore", 35) << "bundle rejected: bundle has expired (" << obj.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle is expired");
