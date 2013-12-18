@@ -55,7 +55,7 @@ namespace dtn
 
 		dtn::data::Number AgeBlock::getSeconds() const
 		{
-			return (getMicroseconds()) / 1000000;
+			return getMicroseconds() / 1000000;
 		}
 
 		void AgeBlock::addMicroseconds(const dtn::data::Number &value)
