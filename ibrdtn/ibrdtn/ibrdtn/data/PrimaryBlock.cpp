@@ -138,11 +138,6 @@ namespace dtn
 			return !(((*this) < other) || ((*this) == other));
 		}
 
-		bool PrimaryBlock::isExpired() const
-		{
-			return dtn::utils::Clock::isExpired(lifetime + timestamp, lifetime);
-		}
-
 		std::string PrimaryBlock::toString() const
 		{
 			return dtn::data::BundleID(*this).toString();

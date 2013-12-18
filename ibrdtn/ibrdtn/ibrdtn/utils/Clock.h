@@ -96,10 +96,10 @@ namespace dtn
 			static bool isExpired(const dtn::data::Bundle &b);
 
 			/**
-			 * This method is deprecated because it does not recognize the AgeBlock
-			 * as alternative age verification.
+			 * Check if a meta bundle is expired
+			 * @return True if the meta bundle is expired
 			 */
-			static bool isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime = 0) __attribute__ ((deprecated));
+			static bool isExpired(const dtn::data::MetaBundle &m);
 
 			/**
 			 * Return the time of expiration of the given bundle

@@ -22,6 +22,7 @@
 #include "ibrdtn/config.h"
 #include "ibrdtn/utils/Clock.h"
 #include "ibrdtn/data/AgeBlock.h"
+#include "ibrdtn/data/MetaBundle.h"
 
 #include <ibrcommon/Logger.h>
 #include <iomanip>
@@ -164,9 +165,15 @@ namespace dtn
 			return __isExpired(b.timestamp, b.lifetime);
 		}
 
-		bool Clock::isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
+		bool Clock::isExpired(const dtn::data::MetaBundle &m)
 		{
-			return __isExpired(timestamp, lifetime);
+			// if the quality of time is zero or the clock is bad, then never expire a bundle
+			if (dtn::utils::Clock::isBad()) return false;
+
+			// expiration adjusted by quality of time
+			if ( Clock::getTime() > m.expiretime ) return true;
+
+			return false;
 		}
 
 		bool Clock::__isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)

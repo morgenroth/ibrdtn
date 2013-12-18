@@ -95,12 +95,6 @@ namespace dtn
 			PrimaryBlock();
 			virtual ~PrimaryBlock();
 
-			/**
-			 * This method is deprecated because it does not recognize the AgeBlock
-			 * as alternative age verification.
-			 */
-			bool isExpired() const DEPRECATED;
-
 			std::string toString() const;
 
 			void set(FLAGS flag, bool value);
