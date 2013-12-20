@@ -463,7 +463,7 @@ namespace dtn
 									beacon.setEID( dtn::data::EID("udp://[" + sender.address() + "]:4556") );
 
 									// add generated tcpcl service if the services list is empty
-									beacon.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender.address() + ";port=4556;"));
+									beacon.addService(dtn::net::DiscoveryService(dtn::core::Node::CONN_TCPIP, "ip=" + sender.address() + ";port=4556;"));
 								}
 
 								DiscoveryBeacon::service_list &services = beacon.getServices();

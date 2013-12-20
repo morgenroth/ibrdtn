@@ -31,11 +31,17 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryService::DiscoveryService()
+		 : _service_protocol(dtn::core::Node::CONN_UNDEFINED)
+		{
+		}
+
+		DiscoveryService::DiscoveryService(const dtn::core::Node::Protocol p, const std::string &parameters)
+		 : _service_protocol(p), _service_name(asTag(p)), _service_parameters(parameters)
 		{
 		}
 
 		DiscoveryService::DiscoveryService(const std::string &name, const std::string &parameters)
-		 : _service_name(name), _service_parameters(parameters)
+		 : _service_protocol(asProtocol(name)), _service_name(name), _service_parameters(parameters)
 		{
 		}
 
@@ -49,6 +55,11 @@ namespace dtn
 			BundleString parameters(_service_parameters);
 
 			return name.getLength() + parameters.getLength();
+		}
+
+		dtn::core::Node::Protocol DiscoveryService::getProtocol() const
+		{
+			return _service_protocol;
 		}
 
 		const std::string& DiscoveryService::getName() const
@@ -178,8 +189,9 @@ namespace dtn
 
 			stream >> name >> parameters;
 
-			service._service_name = (std::string)name;
-			service._service_parameters = (std::string)parameters;
+			service._service_protocol = DiscoveryService::asProtocol((const std::string&)name);
+			service._service_name = (const std::string&)name;
+			service._service_parameters = (const std::string&)parameters;
 
 			return stream;
 		}

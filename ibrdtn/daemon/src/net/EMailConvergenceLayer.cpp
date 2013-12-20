@@ -75,7 +75,7 @@ namespace dtn
 		void EMailConvergenceLayer::onAdvertiseBeacon(const ibrcommon::vinterface&, DiscoveryBeacon &beacon)
 			throw (DiscoveryBeaconHandler::NoServiceHereException)
 		{
-			beacon.addService(DiscoveryService("emailcl", "email=" + _config.getOwnAddress()));
+			beacon.addService(DiscoveryService(getDiscoveryProtocol(), "email=" + _config.getOwnAddress()));
 		}
 
 		dtn::core::Node::Protocol EMailConvergenceLayer::getDiscoveryProtocol() const

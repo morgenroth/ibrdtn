@@ -322,7 +322,7 @@ namespace dtn
 						}
 
 						// add discovered service entry
-						beacon.addService(dtn::net::DiscoveryService(_service->getServiceTag(), address));
+						beacon.addService(dtn::net::DiscoveryService(_service->getProtocol(), address));
 
 						{
 							// lock the connection list while working with it

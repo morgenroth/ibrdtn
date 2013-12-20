@@ -100,7 +100,7 @@ namespace dtn
 				std::stringstream service;
 				// ... set the port only
 				service << "port=" << _port << ";";
-				announcement.addService( DiscoveryService("udpcl", service.str()));
+				announcement.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 				return;
 			}
 
@@ -138,7 +138,7 @@ namespace dtn
 						std::stringstream service;
 						// fill in the ip address
 						service << "ip=" << addr.address() << ";port=" << _port << ";";
-						announcement.addService( DiscoveryService("udpcl", service.str()));
+						announcement.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 
 						// set the announce mark
 						announced = true;
@@ -155,7 +155,7 @@ namespace dtn
 				// announce at least our local port
 				std::stringstream service;
 				service << "port=" << _port << ";";
-				announcement.addService( DiscoveryService("udpcl", service.str()));
+				announcement.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 			}
 		}
 

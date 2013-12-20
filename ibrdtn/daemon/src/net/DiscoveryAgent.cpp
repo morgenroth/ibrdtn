@@ -198,7 +198,7 @@ namespace dtn
 				const DiscoveryService &s = (*iter);
 
 				// get protocol from tag
-				dtn::core::Node::Protocol p = DiscoveryService::asProtocol(s.getName());
+				const dtn::core::Node::Protocol p = s.getProtocol();
 
 				if (p == dtn::core::Node::CONN_EMAIL)
 				{

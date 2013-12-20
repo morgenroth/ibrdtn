@@ -188,7 +188,7 @@ namespace dtn
 				// ... set the port only
 				ibrcommon::MutexLock l(_portmap_lock);
 				service << "port=" << _portmap[iface] << ";";
-				beacon.addService( DiscoveryService("tcpcl", service.str()));
+				beacon.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 				return;
 			}
 
@@ -229,7 +229,7 @@ namespace dtn
 								// fill in the ip address
 								ibrcommon::MutexLock l(_portmap_lock);
 								service << "ip=" << addr.address() << ";port=" << _portmap[iface] << ";";
-								beacon.addService( DiscoveryService("tcpcl", service.str()));
+								beacon.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 
 								// set the announce mark
 								announced = true;
@@ -248,7 +248,7 @@ namespace dtn
 						// ... set the port only
 						ibrcommon::MutexLock l(_portmap_lock);
 						service << "port=" << _portmap[iface] << ";";
-						beacon.addService( DiscoveryService("tcpcl", service.str()));
+						beacon.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 					}
 					return;
 				}

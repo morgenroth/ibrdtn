@@ -88,7 +88,7 @@ namespace dtn
 				//FIXME better naming for address and panid. This will need updates to the service parser.
 				service << "ip=" << address.addr.short_addr << ";port=" << _panid << ";";
 
-				announcement.addService( DiscoveryService("lowpancl", service.str()));
+				announcement.addService( DiscoveryService(getDiscoveryProtocol(), service.str()));
 			}
 			else
 			{
