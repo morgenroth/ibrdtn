@@ -77,7 +77,7 @@ namespace dtn
 			else if (tag == "tcpcl") {
 				return dtn::core::Node::CONN_TCPIP;
 			}
-			else if (tag == "lowpan") {
+			else if (tag == "lowpancl") {
 				return dtn::core::Node::CONN_LOWPAN;
 			}
 			else if (tag == "bt") {
@@ -128,7 +128,7 @@ namespace dtn
 				return "tcpcl";
 
 			case dtn::core::Node::CONN_LOWPAN:
-				return "lowpan";
+				return "lowpancl";
 
 			case dtn::core::Node::CONN_BLUETOOTH:
 				return "bt";
