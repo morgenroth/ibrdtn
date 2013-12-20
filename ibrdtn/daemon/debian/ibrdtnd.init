@@ -54,7 +54,8 @@ do_start()
 	if [ ! -d ${PIDDIR} ]; then
 		mkdir -p ${PIDDIR}
 		chown ${DAEMON_USER} ${PIDDIR}
-		chgrp ${DAEMON_USER} ${PIDDIR}
+		# TODO: set the right group
+		#chgrp ${DAEMON_USER} ${PIDDIR}
 	fi
 
 	# Return
