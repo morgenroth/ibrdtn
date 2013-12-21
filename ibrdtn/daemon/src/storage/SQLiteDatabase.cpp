@@ -636,7 +636,7 @@ namespace dtn
 			else
 			{
 				try {
-					const dtn::data::PayloadBlock &pblock = bundle.find<const dtn::data::PayloadBlock>();
+					const dtn::data::PayloadBlock &pblock = bundle.find<dtn::data::PayloadBlock>();
 					sqlite3_bind_int64(*st, 11, pblock.getLength() );
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 					sqlite3_bind_int64(*st, 11, 0 );
@@ -647,14 +647,14 @@ namespace dtn
 			sqlite3_bind_int64(*st, 13, dtn::data::MetaBundle(bundle).getPriority());
 
 			try {
-				const dtn::data::ScopeControlHopLimitBlock &schl = bundle.find<const dtn::data::ScopeControlHopLimitBlock>();
+				const dtn::data::ScopeControlHopLimitBlock &schl = bundle.find<dtn::data::ScopeControlHopLimitBlock>();
 				sqlite3_bind_int64(*st, 14, schl.getHopsToLive().get<uint64_t>() );
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				sqlite3_bind_null(*st, 14 );
 			}
 
 			try {
-				const dtn::data::SchedulingBlock &sched = bundle.find<const dtn::data::SchedulingBlock>();
+				const dtn::data::SchedulingBlock &sched = bundle.find<dtn::data::SchedulingBlock>();
 				sqlite3_bind_int(*st, 15, sched.getPriority().get<int>() );
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				sqlite3_bind_int64(*st, 15, 0 );
