@@ -309,9 +309,12 @@ namespace dtn
 									transferTo(task.eid, *iter);
 								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
-						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-						} catch (const dtn::storage::NoBundleFoundException&) {
+						} catch (const NeighborDatabase::NoMoreTransfersAvailable &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const NeighborDatabase::NeighborNotAvailableException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						} catch (const dtn::storage::NoBundleFoundException &ex) {
+							IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "task " << t->toString() << " aborted: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						} catch (const std::bad_cast&) { };
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG(FloodRoutingExtension::TAG, 20) << "task failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
