@@ -139,7 +139,7 @@ namespace dtn
 				allocSpace(bundle_size);
 
 				// extract meta data
-				dtn::data::MetaBundle meta(bundle);
+				const dtn::data::MetaBundle meta(bundle);
 
 				// lock the bundle lists
 				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
@@ -358,7 +358,7 @@ namespace dtn
 			// accept custody if requested
 			try {
 				// create meta data object
-				dtn::data::MetaBundle meta(bundle);
+				const dtn::data::MetaBundle meta(bundle);
 
 				dtn::data::EID custodian = BundleStorage::acceptCustody(meta);
 

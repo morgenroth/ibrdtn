@@ -181,13 +181,14 @@ namespace dtn
 
 			if (ret.second)
 			{
-				_list.add(dtn::data::MetaBundle(bundle));
-				_priority_index.insert( bundle );
+				const dtn::data::MetaBundle m(bundle);
+				_list.add(m);
+				_priority_index.insert(m);
 
-				_bundle_lengths[bundle] = size;
+				_bundle_lengths[m] = size;
 
 				// raise bundle added event
-				eventBundleAdded(bundle);
+				eventBundleAdded(m);
 			}
 			else
 			{
@@ -209,11 +210,11 @@ namespace dtn
 			if (iter == _bundles.end()) throw NoBundleFoundException();
 
 			// remove item in the bundlelist
-			const dtn::data::Bundle &bundle = (*iter);
-			_list.remove(bundle);
+			const dtn::data::MetaBundle m(*iter);
+			_list.remove(m);
 
 			// raise bundle removed event
-			eventBundleRemoved(bundle);
+			eventBundleRemoved(m);
 
 			// erase the bundle
 			__erase(iter);
@@ -290,14 +291,14 @@ namespace dtn
 
 		void MemoryBundleStorage::__erase(const bundle_list::iterator &iter)
 		{
-			const dtn::data::Bundle &bundle = (*iter);
+			const dtn::data::MetaBundle m(*iter);
 
 			// erase the bundle out of the priority index
-			_priority_index.erase(bundle);
+			_priority_index.erase(m);
 
 			// get the storage size of this bundle
-			dtn::data::Length len = _bundle_lengths[bundle];
-			_bundle_lengths.erase(bundle);
+			dtn::data::Length len = _bundle_lengths[m];
+			_bundle_lengths.erase(m);
 
 			// decrement the storage size
 			freeSpace(len);

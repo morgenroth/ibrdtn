@@ -321,6 +321,7 @@ namespace dtn
 
 			try {
 				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+				const dtn::data::MetaBundle m(received.bundle);
 
 				// Store incoming bundles into the storage
 				try {
@@ -330,13 +331,13 @@ namespace dtn
 						getStorage().store(received.bundle);
 
 						// set the bundle as known
-						setKnown(received.bundle);
+						setKnown(m);
 
 						// raise the queued event to notify all receivers about the new bundle
-						QueueBundleEvent::raise(received.bundle, received.peer);
+						QueueBundleEvent::raise(m, received.peer);
 					}
 					// if the bundle is not known
-					else if (!filterKnown(received.bundle))
+					else if (!filterKnown(m))
 					{
 						// security methods modifies the bundle, thus we need a copy of it
 						dtn::data::Bundle bundle = received.bundle;
@@ -374,14 +375,14 @@ namespace dtn
 							ibrcommon::MutexLock l(_neighbor_database);
 
 							// add the bundle to the summary vector of the neighbor
-							_neighbor_database.get(received.peer).add(received.bundle);
+							_neighbor_database.get(received.peer).add(m);
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 						// store the bundle into a storage module
 						getStorage().store(bundle);
 
 						// raise the queued event to notify all receivers about the new bundle
-						QueueBundleEvent::raise(received.bundle, received.peer);
+						QueueBundleEvent::raise(m, received.peer);
 					}
 					else
 					{
@@ -389,7 +390,7 @@ namespace dtn
 					}
 
 					// finally create a bundle received event
-					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_RECEIVED);
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_RECEIVED);
 #ifdef WITH_BUNDLE_SECURITY
 				} catch (const dtn::security::VerificationFailedException &ex) {
 					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Security checks failed (" << ex.what() << "), bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
