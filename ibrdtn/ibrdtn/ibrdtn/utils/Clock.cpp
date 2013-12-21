@@ -108,7 +108,7 @@ namespace dtn
 			{
 				// use the AgeBlock to verify the age
 				try {
-					const dtn::data::AgeBlock &agebl = b.find<const dtn::data::AgeBlock>();
+					const dtn::data::AgeBlock &agebl = b.find<dtn::data::AgeBlock>();
 					dtn::data::Number seconds_left = 0;
 					if (b.lifetime > agebl.getSeconds()) {
 						seconds_left = b.lifetime - agebl.getSeconds();
@@ -158,7 +158,7 @@ namespace dtn
 		{
 			// use the AgeBlock to verify the age
 			try {
-				const dtn::data::AgeBlock &agebl = b.find<const dtn::data::AgeBlock>();
+				const dtn::data::AgeBlock &agebl = b.find<dtn::data::AgeBlock>();
 				return (b.lifetime < agebl.getSeconds());
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
