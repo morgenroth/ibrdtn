@@ -96,7 +96,7 @@ fi
 
 # check for debugging option
 if [ -n "$DEBUG_LEVEL" ]; then
-	DEBUG_ARGS="-d ${DEBUG_LEVEL}"
+	DEBUG_ARGS="-v -d ${DEBUG_LEVEL}"
 else
 	DEBUG_ARGS=""
 fi
