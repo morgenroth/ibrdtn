@@ -90,6 +90,9 @@ namespace dtn
 			bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 			bundle.destination = b.reportto;
 
+			// set lifetime to the origin bundle lifetime
+			bundle.lifetime = b.lifetime;
+
 			// set bundle parameter
 			report.bundleid = b;
 
