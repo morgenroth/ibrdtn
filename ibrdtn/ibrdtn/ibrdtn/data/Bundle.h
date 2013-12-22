@@ -131,8 +131,6 @@ namespace dtn
 
 			void clear();
 
-			std::string toString() const;
-
 			Size size() const;
 
 			bool allEIDsInCBHE() const;
