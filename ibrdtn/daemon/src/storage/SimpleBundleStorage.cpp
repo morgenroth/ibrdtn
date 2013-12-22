@@ -284,7 +284,7 @@ namespace dtn
 				}
 
 				// search for the bundle in the meta storage
-				const dtn::data::MetaBundle &meta = _metastore.find(dtn::data::MetaBundle::mockUp(id));
+				const dtn::data::MetaBundle &meta = _metastore.find(dtn::data::MetaBundle::create(id));
 
 				// create a hash for the data storage
 				DataStorage::Hash hash(meta.toString());
@@ -379,7 +379,7 @@ namespace dtn
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
 			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
-			const dtn::data::MetaBundle &meta = _metastore.find(dtn::data::MetaBundle::mockUp(id));
+			const dtn::data::MetaBundle &meta = _metastore.find(dtn::data::MetaBundle::create(id));
 
 			// first check if the bundles is already marked as removed
 			if (!_metastore.isRemoved(meta))

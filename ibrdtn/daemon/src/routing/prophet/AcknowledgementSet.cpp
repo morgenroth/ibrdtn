@@ -53,7 +53,7 @@ namespace dtn
 
 		bool AcknowledgementSet::has(const dtn::data::BundleID &id) const throw ()
 		{
-			dtn::data::BundleList::const_iterator iter = _bundles.find(dtn::data::MetaBundle::mockUp(id));
+			dtn::data::BundleList::const_iterator iter = _bundles.find(dtn::data::MetaBundle::create(id));
 			return !(iter == _bundles.end());
 		}
 

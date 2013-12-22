@@ -300,7 +300,7 @@ namespace dtn
 						dtn::data::BundleID id;
 						get_bundleid(st, id);
 
-						const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::mockUp(id);
+						const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::create(id);
 
 						// raise bundle expired event
 						_listener->eventBundleExpired(bundle);
@@ -374,7 +374,7 @@ namespace dtn
 
 					if ( !filter.contains( id.toString() ) )
 					{
-						const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::mockUp(id);
+						const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::create(id);
 						ret.insert( bundle );
 					}
 				}
@@ -439,7 +439,7 @@ namespace dtn
 					// get the bundle id
 					get_bundleid(st, id);
 
-					const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::mockUp(id);
+					const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::create(id);
 
 					_bf.insert( bundle.toString() );
 				}
