@@ -360,7 +360,8 @@ namespace dtn
 				// create meta data object
 				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
-				dtn::data::EID custodian = BundleStorage::acceptCustody(meta);
+				// accept custody
+				const dtn::data::EID custodian = BundleStorage::acceptCustody(meta);
 
 				// container for the custody accepted bundle
 				dtn::data::Bundle ca_bundle = bundle;

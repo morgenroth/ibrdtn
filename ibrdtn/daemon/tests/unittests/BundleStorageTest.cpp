@@ -809,11 +809,11 @@ void BundleStorageTest::testFragment(dtn::storage::BundleStorage &storage)
 	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.count());
 
 	// create a non-fragment meta bundle
-	dtn::data::BundleID id(b);
+	const dtn::data::BundleID id(b);
 
-	dtn::data::Bundle retrieved = storage.get(id);
+	const dtn::data::Bundle retrieved = storage.get(id);
 
-	CPPUNIT_ASSERT(dtn::data::BundleID(retrieved) == id);
+	CPPUNIT_ASSERT_EQUAL(id, (const dtn::data::BundleID&)retrieved);
 }
 
 void BundleStorageTest::testQueryBloomFilter()
