@@ -51,6 +51,8 @@ namespace dtn
 		 : BundleID(id), received(), lifetime(0), destination(), reportto(),
 		   custodian(), appdatalength(0), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
 		{
+			// fake fragment bit
+			setFragment(id.isFragment());
 		}
 
 		MetaBundle::MetaBundle(const dtn::data::Bundle &b)

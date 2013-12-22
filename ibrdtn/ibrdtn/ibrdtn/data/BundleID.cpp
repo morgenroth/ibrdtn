@@ -29,12 +29,12 @@ namespace dtn
 	namespace data
 	{
 		BundleID::BundleID()
-		 : source(), timestamp(0), sequencenumber(0), _fragment(false)
+		 : source(), timestamp(0), sequencenumber(0), fragmentoffset(0), _fragment(false)
 		{
 		}
 
 		BundleID::BundleID(const BundleID &id)
-		 : source(id.source), timestamp(id.timestamp), sequencenumber(id.sequencenumber), _fragment(id.isFragment())
+		 : source(id.source), timestamp(id.timestamp), sequencenumber(id.sequencenumber), fragmentoffset(id.fragmentoffset), _fragment(id.isFragment())
 		{
 		}
 
@@ -47,6 +47,7 @@ namespace dtn
 			source = id.source;
 			timestamp = id.timestamp;
 			sequencenumber = id.sequencenumber;
+			fragmentoffset = id.fragmentoffset;
 			_fragment = id._fragment;
 			return (*this);
 		}
