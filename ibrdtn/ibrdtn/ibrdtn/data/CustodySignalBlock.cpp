@@ -59,9 +59,9 @@ namespace dtn
 
 			if ( refsFragment() )
 			{
-				bundleid.fragment = true;
+				bundleid.setFragment(true);
 
-				(*stream) >> bundleid.offset;
+				(*stream) >> bundleid.fragmentoffset;
 				(*stream) >> fragment_length;
 			}
 
@@ -96,7 +96,7 @@ namespace dtn
 
 			if ( refsFragment() )
 			{
-				(*stream) << bundleid.offset;
+				(*stream) << bundleid.fragmentoffset;
 				(*stream) << fragment_length;
 			}
 
@@ -113,11 +113,10 @@ namespace dtn
 			// set bundle parameter
 			if (other.get(Bundle::FRAGMENT))
 			{
-				bundleid.offset = other.offset;
+				bundleid.fragmentoffset = other.fragmentoffset;
 				fragment_length = other.appdatalength;
 
-				setFragment(true);
-				bundleid.fragment = true;
+				bundleid.setFragment(true);
 			}
 
 			bundleid.timestamp = other.timestamp;
@@ -130,11 +129,10 @@ namespace dtn
 			// set bundle parameter
 			if (other.get(Bundle::FRAGMENT))
 			{
-				bundleid.offset = other.fragmentoffset;
+				bundleid.fragmentoffset = other.fragmentoffset;
 				fragment_length = other.appdatalength;
 
-				setFragment(true);
-				bundleid.fragment = true;
+				bundleid.setFragment(true);
 			}
 
 			bundleid.timestamp = other.timestamp;
@@ -151,8 +149,8 @@ namespace dtn
 			// set bundle parameter
 			if (other.get(Bundle::FRAGMENT))
 			{
-				if (!bundleid.fragment) return false;
-				if (bundleid.offset != other.fragmentoffset) return false;
+				if (!bundleid.isFragment()) return false;
+				if (bundleid.fragmentoffset != other.fragmentoffset) return false;
 				if (fragment_length != other.appdatalength) return false;
 			}
 

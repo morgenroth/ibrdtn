@@ -24,7 +24,6 @@
 
 #include <ibrdtn/data/Number.h>
 #include "ibrdtn/data/EID.h"
-#include "ibrdtn/data/Bundle.h"
 
 namespace dtn
 {
@@ -33,8 +32,7 @@ namespace dtn
 		class BundleID
 		{
 		public:
-			BundleID(const dtn::data::EID source = dtn::data::EID(), const dtn::data::Timestamp &timestamp = 0, const dtn::data::Number &sequencenumber = 0, const bool fragment = false, const dtn::data::Number &offset = 0);
-			BundleID(const dtn::data::PrimaryBlock &b);
+			BundleID();
 			virtual ~BundleID();
 
 			bool operator!=(const BundleID& other) const;
@@ -42,10 +40,9 @@ namespace dtn
 			bool operator<(const BundleID& other) const;
 			bool operator>(const BundleID& other) const;
 
-			bool operator<(const PrimaryBlock& other) const;
-			bool operator>(const PrimaryBlock& other) const;
-			bool operator!=(const PrimaryBlock& other) const;
-			bool operator==(const PrimaryBlock& other) const;
+			// copy operator
+			BundleID(const BundleID &id);
+			BundleID& operator=(const BundleID &id);
 
 			std::string toString() const;
 
@@ -56,8 +53,13 @@ namespace dtn
 			dtn::data::Timestamp timestamp;
 			dtn::data::Number sequencenumber;
 
-			bool fragment;
-			dtn::data::Number offset;
+			dtn::data::Number fragmentoffset;
+
+			virtual bool isFragment() const;
+			virtual void setFragment(bool val);
+
+		private:
+			bool _fragment;
 		};
 	}
 }

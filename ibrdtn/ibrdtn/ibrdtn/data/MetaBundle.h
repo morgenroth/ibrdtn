@@ -69,6 +69,9 @@ namespace dtn
 			Number payloadlength;
 			Integer net_priority;
 
+			bool isFragment() const;
+			void setFragment(bool val);
+
 			/**
 			 * Creates a mock-up MetaBundle using a BundleID.
 			 * Such object are incomplete and should only used in a limited

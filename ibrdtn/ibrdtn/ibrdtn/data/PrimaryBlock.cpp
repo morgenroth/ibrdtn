@@ -33,7 +33,7 @@ namespace dtn
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
 		PrimaryBlock::PrimaryBlock()
-		 : timestamp(0), sequencenumber(0), lifetime(3600), fragmentoffset(0), appdatalength(0)
+		 : lifetime(3600), appdatalength(0)
 		{
 			relabel();
 
@@ -92,55 +92,34 @@ namespace dtn
 			}
 		}
 
+		bool PrimaryBlock::isFragment() const
+		{
+			return get(FRAGMENT);
+		}
+
+		void PrimaryBlock::setFragment(bool val)
+		{
+			set(FRAGMENT, val);
+		}
+
 		bool PrimaryBlock::operator!=(const PrimaryBlock& other) const
 		{
-			return !((*this) == other);
+			return (const BundleID&)*this != (const BundleID&)other;
 		}
 
 		bool PrimaryBlock::operator==(const PrimaryBlock& other) const
 		{
-			if (other.timestamp != timestamp) return false;
-			if (other.sequencenumber != sequencenumber) return false;
-			if (other.source != source) return false;
-			if (other.get(PrimaryBlock::FRAGMENT) != get(PrimaryBlock::FRAGMENT)) return false;
-
-			if (get(PrimaryBlock::FRAGMENT))
-			{
-				if (other.fragmentoffset != fragmentoffset) return false;
-				if (other.appdatalength != appdatalength) return false;
-			}
-
-			return true;
+			return (const BundleID&)*this == (const BundleID&)other;
 		}
 
 		bool PrimaryBlock::operator<(const PrimaryBlock& other) const
 		{
-			if (source < other.source) return true;
-			if (source != other.source) return false;
-
-			if (timestamp < other.timestamp) return true;
-			if (timestamp != other.timestamp) return false;
-
-			if (sequencenumber < other.sequencenumber) return true;
-			if (sequencenumber != other.sequencenumber) return false;
-
-			if (other.get(PrimaryBlock::FRAGMENT))
-			{
-				if (!get(PrimaryBlock::FRAGMENT)) return true;
-				return (fragmentoffset < other.fragmentoffset);
-			}
-
-			return false;
+			return (const BundleID&)*this < other;
 		}
 
 		bool PrimaryBlock::operator>(const PrimaryBlock& other) const
 		{
-			return !(((*this) < other) || ((*this) == other));
-		}
-
-		std::string PrimaryBlock::toString() const
-		{
-			return dtn::data::BundleID(*this).toString();
+			return (const BundleID&)*this > other;
 		}
 
 		void PrimaryBlock::relabel()

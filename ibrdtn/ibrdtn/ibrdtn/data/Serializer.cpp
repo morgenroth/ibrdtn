@@ -659,10 +659,9 @@ namespace dtn
 			obj.custodian = pb.custodian;
 			obj.destination = pb.destination;
 			obj.expiretime = dtn::utils::Clock::getExpireTime(pb.timestamp, pb.lifetime);
-			obj.fragment = pb.get(dtn::data::PrimaryBlock::FRAGMENT);
 			obj.hopcount = 0;
 			obj.lifetime = pb.lifetime;
-			obj.offset = pb.fragmentoffset;
+			obj.fragmentoffset = pb.fragmentoffset;
 			obj.procflags = pb.procflags;
 			obj.received = dtn::data::DTNTime();
 			obj.reportto = pb.reportto;

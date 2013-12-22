@@ -162,6 +162,16 @@ namespace dtn
 		{
 			return procflags.getBit(flag);
 		}
+
+		bool MetaBundle::isFragment() const
+		{
+			return get(dtn::data::PrimaryBlock::FRAGMENT);
+		}
+
+		void MetaBundle::setFragment(bool val)
+		{
+			procflags.setBit(dtn::data::PrimaryBlock::FRAGMENT, val);
+		}
 	}
 }
 

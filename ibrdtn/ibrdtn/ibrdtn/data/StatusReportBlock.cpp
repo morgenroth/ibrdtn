@@ -55,7 +55,7 @@ namespace dtn
 
 			if ( refsFragment() )
 			{
-				(*stream) << bundleid.offset;
+				(*stream) << bundleid.fragmentoffset;
 				(*stream) << fragment_length;
 			}
 
@@ -94,9 +94,9 @@ namespace dtn
 
 			if ( refsFragment() )
 			{
-				bundleid.fragment = true;
+				bundleid.setFragment(true);
 
-				(*stream) >> bundleid.offset;
+				(*stream) >> bundleid.fragmentoffset;
 				(*stream) >> fragment_length;
 			}
 

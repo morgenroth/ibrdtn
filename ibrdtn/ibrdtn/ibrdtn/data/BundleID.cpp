@@ -28,19 +28,27 @@ namespace dtn
 {
 	namespace data
 	{
-		BundleID::BundleID(const dtn::data::EID s, const dtn::data::Timestamp &t, const dtn::data::Number &sq, const bool f, const dtn::data::Number &o)
-		: source(s), timestamp(t), sequencenumber(sq), fragment(f), offset(o)
+		BundleID::BundleID()
+		 : source(), timestamp(0), sequencenumber(0), _fragment(false)
 		{
 		}
 
-		BundleID::BundleID(const dtn::data::PrimaryBlock &b)
-		: source(b.source), timestamp(b.timestamp), sequencenumber(b.sequencenumber),
-		fragment(b.get(dtn::data::Bundle::FRAGMENT)), offset(b.fragmentoffset)
+		BundleID::BundleID(const BundleID &id)
+		 : source(id.source), timestamp(id.timestamp), sequencenumber(id.sequencenumber), _fragment(id.isFragment())
 		{
 		}
 
 		BundleID::~BundleID()
 		{
+		}
+
+		BundleID& BundleID::operator=(const BundleID &id)
+		{
+			source = id.source;
+			timestamp = id.timestamp;
+			sequencenumber = id.sequencenumber;
+			_fragment = id._fragment;
+			return (*this);
 		}
 
 		bool BundleID::operator<(const BundleID& other) const
@@ -54,10 +62,10 @@ namespace dtn
 			if (sequencenumber < other.sequencenumber) return true;
 			if (sequencenumber != other.sequencenumber) return false;
 
-			if (other.fragment)
+			if (other.isFragment())
 			{
-				if (!fragment) return true;
-				return (offset < other.offset);
+				if (!isFragment()) return true;
+				return (fragmentoffset < other.fragmentoffset);
 			}
 
 			return false;
@@ -78,59 +86,24 @@ namespace dtn
 			if (other.timestamp != timestamp) return false;
 			if (other.sequencenumber != sequencenumber) return false;
 			if (other.source != source) return false;
-			if (other.fragment != fragment) return false;
+			if (other.isFragment() != isFragment()) return false;
 
-			if (fragment)
+			if (isFragment())
 			{
-				if (other.offset != offset) return false;
+				if (other.fragmentoffset != fragmentoffset) return false;
 			}
 
 			return true;
 		}
 
-		bool BundleID::operator<(const PrimaryBlock& other) const
+		bool BundleID::isFragment() const
 		{
-			if (source < other.source) return true;
-			if (source != other.source) return false;
-
-			if (timestamp < other.timestamp) return true;
-			if (timestamp != other.timestamp) return false;
-
-			if (sequencenumber < other.sequencenumber) return true;
-			if (sequencenumber != other.sequencenumber) return false;
-
-			if (other.get(PrimaryBlock::FRAGMENT))
-			{
-				if (!fragment) return true;
-				return (offset < other.fragmentoffset);
-			}
-
-			return false;
+			return _fragment;
 		}
 
-		bool BundleID::operator>(const PrimaryBlock& other) const
+		void BundleID::setFragment(bool val)
 		{
-			return !(((*this) < other) || ((*this) == other));
-		}
-
-		bool BundleID::operator!=(const PrimaryBlock& other) const
-		{
-			return !((*this) == other);
-		}
-
-		bool BundleID::operator==(const PrimaryBlock& other) const
-		{
-			if (other.timestamp != timestamp) return false;
-			if (other.sequencenumber != sequencenumber) return false;
-			if (other.source != source) return false;
-			if (other.get(PrimaryBlock::FRAGMENT) != fragment) return false;
-
-			if (fragment)
-			{
-				if (other.fragmentoffset != offset) return false;
-			}
-
-			return true;
+			_fragment = val;
 		}
 
 		std::string BundleID::toString() const
@@ -138,9 +111,9 @@ namespace dtn
 			stringstream ss;
 			ss << "[" << timestamp.toString() << "." << sequencenumber.toString();
 
-			if (fragment)
+			if (isFragment())
 			{
-				ss << "." << offset.toString();
+				ss << "." << fragmentoffset.toString();
 			}
 
 			ss << "] " << source.getString();
@@ -152,7 +125,7 @@ namespace dtn
 		{
 			dtn::data::BundleString source(obj.source.getString());
 
-			stream << obj.timestamp << obj.sequencenumber << obj.offset << source;
+			stream << obj.timestamp << obj.sequencenumber << obj.fragmentoffset << source;
 
 			return stream;
 		}
@@ -161,7 +134,7 @@ namespace dtn
 		{
 			dtn::data::BundleString source;
 
-			stream >> obj.timestamp >> obj.sequencenumber >> obj.offset >> source;
+			stream >> obj.timestamp >> obj.sequencenumber >> obj.fragmentoffset >> source;
 
 			obj.source = dtn::data::EID(source);
 

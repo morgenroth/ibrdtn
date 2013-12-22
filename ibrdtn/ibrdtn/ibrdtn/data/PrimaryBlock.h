@@ -24,6 +24,7 @@
 
 #include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/EID.h"
+#include "ibrdtn/data/BundleID.h"
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/Serializer.h"
 #include <ibrcommon/thread/Mutex.h>
@@ -43,7 +44,7 @@ namespace dtn
 	{
 		static const unsigned char BUNDLE_VERSION = 0x06;
 
-		class PrimaryBlock
+		class PrimaryBlock : public BundleID
 		{
 		public:
 			/**
@@ -95,13 +96,14 @@ namespace dtn
 			PrimaryBlock();
 			virtual ~PrimaryBlock();
 
-			std::string toString() const;
-
 			void set(FLAGS flag, bool value);
 			bool get(FLAGS flag) const;
 
 			PRIORITY getPriority() const;
 			void setPriority(PRIORITY p);
+
+			bool isFragment() const;
+			void setFragment(bool val);
 
 			/**
 			 * relabel the primary block with a new sequence number and a timestamp
@@ -114,13 +116,9 @@ namespace dtn
 			bool operator>(const PrimaryBlock& other) const;
 
 			Bitset<FLAGS> procflags;
-			Timestamp timestamp;
-			Number sequencenumber;
 			Number lifetime;
-			Number fragmentoffset;
 			Number appdatalength;
 
-			EID source;
 			EID destination;
 			EID reportto;
 			EID custodian;
