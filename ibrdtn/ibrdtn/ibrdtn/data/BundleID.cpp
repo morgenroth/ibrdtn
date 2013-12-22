@@ -126,7 +126,16 @@ namespace dtn
 		{
 			dtn::data::BundleString source(obj.source.getString());
 
-			stream << obj.timestamp << obj.sequencenumber << obj.fragmentoffset << source;
+			stream << obj.timestamp << obj.sequencenumber;
+
+			if (obj.isFragment()) {
+				stream.put(1);
+				stream << obj.fragmentoffset;
+			} else {
+				stream.put(0);
+			}
+
+			stream << source;
 
 			return stream;
 		}
@@ -135,8 +144,19 @@ namespace dtn
 		{
 			dtn::data::BundleString source;
 
-			stream >> obj.timestamp >> obj.sequencenumber >> obj.fragmentoffset >> source;
+			stream >> obj.timestamp >> obj.sequencenumber;
 
+			uint8_t frag = 0;
+			stream.get((char&)frag);
+
+			if (frag == 1) {
+				stream >> obj.fragmentoffset;
+				obj.setFragment(true);
+			} else {
+				obj.setFragment(false);
+			}
+
+			stream >> source;
 			obj.source = dtn::data::EID(source);
 
 			return stream;
