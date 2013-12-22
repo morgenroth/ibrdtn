@@ -501,7 +501,7 @@ namespace dtn
 
 		std::string SimpleBundleStorage::BundleContainer::getKey() const
 		{
-			return dtn::data::BundleID(_bundle).toString();
+			return _bundle.toString();
 		}
 
 		std::ostream& SimpleBundleStorage::BundleContainer::serialize(std::ostream &stream)
