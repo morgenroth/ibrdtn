@@ -31,7 +31,7 @@ namespace dtn
 {
 	namespace data
 	{
-		MetaBundle MetaBundle::mockUp(const dtn::data::BundleID &id)
+		MetaBundle MetaBundle::create(const dtn::data::BundleID &id)
 		{
 			return MetaBundle(id);
 		}

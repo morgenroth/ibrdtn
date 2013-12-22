@@ -77,7 +77,7 @@ namespace dtn
 			 * Such object are incomplete and should only used in a limited
 			 * fashion.
 			 */
-			static MetaBundle mockUp(const dtn::data::BundleID &id);
+			static MetaBundle create(const dtn::data::BundleID &id);
 
 		private:
 			MetaBundle(const dtn::data::BundleID &id);
