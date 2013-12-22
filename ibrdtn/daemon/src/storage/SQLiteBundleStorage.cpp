@@ -348,7 +348,8 @@ namespace dtn
 				_database.store(bundle);
 
 				// create a bundle id
-				const dtn::data::BundleID id(bundle);
+				const dtn::data::BundleID &id = bundle;
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 				// index number for order of the blocks
 				int index = 1;
@@ -430,7 +431,7 @@ namespace dtn
 
 				try {
 					// the bundle is stored sucessfully, we could accept custody if it is requested
-					const dtn::data::EID custodian = acceptCustody(bundle);
+					const dtn::data::EID custodian = acceptCustody(meta);
 
 					// update the custody address of this bundle
 					_database.update(SQLiteDatabase::UPDATE_CUSTODIAN, bundle, custodian);
@@ -441,7 +442,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(SQLiteBundleStorage::TAG, 10) << "bundle " << bundle.toString() << " stored" << IBRCOMMON_LOGGER_ENDL;
 
 				// raise bundle added event
-				eventBundleAdded(bundle);
+				eventBundleAdded(meta);
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteBundleStorage::TAG, critical) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_database.rollback();

@@ -156,7 +156,7 @@ namespace dtn
 			dtn::core::BundleGeneratedEvent::raise(b);
 
 			// raise the custody rejected event
-			dtn::core::CustodyEvent::raise(b, dtn::core::CUSTODY_REJECT);
+			dtn::core::CustodyEvent::raise(dtn::data::MetaBundle::create(b), dtn::core::CUSTODY_REJECT);
 		}
 
 		dtn::data::Length BundleStorage::size() const

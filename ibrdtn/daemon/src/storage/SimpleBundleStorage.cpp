@@ -74,7 +74,7 @@ namespace dtn
 
 				// get the reference to the bundle
 				const dtn::data::Bundle &b = _pending_bundles[hash];
-				meta = dtn::data::MetaBundle(b);
+				meta = dtn::data::MetaBundle::create(b);
 			}
 
 			{
@@ -139,7 +139,7 @@ namespace dtn
 				allocSpace(bundle_size);
 
 				// extract meta data
-				const dtn::data::MetaBundle meta(bundle);
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 				// lock the bundle lists
 				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
@@ -148,7 +148,7 @@ namespace dtn
 				_metastore.store(meta, bundle_size);
 
 				// raise bundle added event
-				eventBundleAdded(bundle);
+				eventBundleAdded(meta);
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(SimpleBundleStorage::TAG, 10) << "bundle restored " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::exception&) {
@@ -358,7 +358,7 @@ namespace dtn
 			// accept custody if requested
 			try {
 				// create meta data object
-				const dtn::data::MetaBundle meta(bundle);
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 				dtn::data::EID custodian = BundleStorage::acceptCustody(meta);
 
@@ -401,7 +401,7 @@ namespace dtn
 		void SimpleBundleStorage::__store(const dtn::data::Bundle &bundle, const dtn::data::Length &bundle_size)
 		{
 			// create meta bundle object
-			const dtn::data::MetaBundle meta(bundle);
+			const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 			// create a new container and hash
 			std::auto_ptr<BundleContainer> bc(new BundleContainer(bundle));

@@ -57,7 +57,7 @@ namespace dtn
 					if ( data.getTimestamp() <= time.getTimestamp() )
 					{
 						try {
-							const dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(data);
+							const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(dtn::core::BundleCore::getInstance().getStorage().get(data));
 
 							// retransmit the bundle
 							dtn::net::BundleTransfer transfer(data.destination, meta);

@@ -306,7 +306,7 @@ namespace dtn
 
 					if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
 					{
-						const dtn::data::MetaBundle meta = getStorage().get(event.getBundleID());
+						const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(getStorage().get(event.getBundleID()));
 
 						// add the transferred bundle to the bloomfilter of the receiver
 						entry.add(meta);
@@ -321,7 +321,7 @@ namespace dtn
 
 			try {
 				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
-				const dtn::data::MetaBundle m(received.bundle);
+				const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(received.bundle);
 
 				// Store incoming bundles into the storage
 				try {
@@ -399,17 +399,17 @@ namespace dtn
 					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
-					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
 					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
-					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				} catch (const ibrcommon::Exception &ex) {
 					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, error) << "Bundle " << received.bundle.toString() << " dropped: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 					// raise BundleEvent because we have to drop the bundle
-					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+					dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				}
 
 				// no routing extension should be interested in this event
@@ -420,8 +420,10 @@ namespace dtn
 			try {
 				const dtn::core::BundleGeneratedEvent &generated = dynamic_cast<const dtn::core::BundleGeneratedEvent&>(*evt);
 				
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(generated.bundle);
+
 				// set the bundle as known
-				setKnown(generated.bundle);
+				setKnown(meta);
 
 				// Store incoming bundles into the storage
 				try {
@@ -429,7 +431,7 @@ namespace dtn
 					getStorage().store(generated.bundle);
 
 					// raise the queued event to notify all receivers about the new bundle
- 					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
+ 					QueueBundleEvent::raise(meta, dtn::core::BundleCore::local);
 				} catch (const ibrcommon::IOException &ex) {
 					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {

@@ -181,7 +181,7 @@ namespace dtn
 
 			if (ret.second)
 			{
-				const dtn::data::MetaBundle m(bundle);
+				const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(bundle);
 				_list.add(m);
 				_priority_index.insert(m);
 
@@ -210,7 +210,7 @@ namespace dtn
 			if (iter == _bundles.end()) throw NoBundleFoundException();
 
 			// remove item in the bundlelist
-			const dtn::data::MetaBundle m(*iter);
+			const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(*iter);
 			_list.remove(m);
 
 			// raise bundle removed event
@@ -228,7 +228,7 @@ namespace dtn
 			{
 				if ( filter.contains((*iter).toString()) )
 				{
-					const dtn::data::MetaBundle bundle = (*iter);
+					const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::create(*iter);
 
 					// remove item in the bundlelist
 					_list.remove(bundle);
@@ -291,7 +291,7 @@ namespace dtn
 
 		void MemoryBundleStorage::__erase(const bundle_list::iterator &iter)
 		{
-			const dtn::data::MetaBundle m(*iter);
+			const dtn::data::MetaBundle m = dtn::data::MetaBundle::create(*iter);
 
 			// erase the bundle out of the priority index
 			_priority_index.erase(m);

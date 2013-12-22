@@ -644,7 +644,7 @@ namespace dtn
 			}
 
 			sqlite3_bind_int64(*st, 12, TTL.get<uint64_t>());
-			sqlite3_bind_int64(*st, 13, dtn::data::MetaBundle(bundle).getPriority());
+			sqlite3_bind_int64(*st, 13, bundle.getPriority());
 
 			try {
 				const dtn::data::ScopeControlHopLimitBlock &schl = bundle.find<dtn::data::ScopeControlHopLimitBlock>();

@@ -102,13 +102,16 @@ namespace dtn
 						prepareBundle(b);
 						_worker.callbackBundleReceived( b );
 
+						// create meta bundle for futher processing
+						const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(b);
+
 						// raise bundle event
-						dtn::core::BundleEvent::raise(b, BUNDLE_DELIVERED);
+						dtn::core::BundleEvent::raise(meta, BUNDLE_DELIVERED);
 
 						if (b.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 						{
 							// remove the bundle from the storage
-							dtn::core::BundlePurgeEvent::raise(b);
+							dtn::core::BundlePurgeEvent::raise(meta);
 						}
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG_TAG("AbstractWorker", 15) << ex.what() << IBRCOMMON_LOGGER_ENDL;

@@ -283,6 +283,7 @@ namespace dtn
 				connect();
 
 			const dtn::data::Bundle bundle = _storage.get(t->getJob().getBundle());
+			const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 			// Create new email
 			vmime::ref<vmime::message> msg = vmime::create <vmime::message>();
@@ -417,8 +418,8 @@ namespace dtn
 
 			}
 			_transport->send(msg);
-			dtn::net::TransferCompletedEvent::raise(t->getNode().getEID(), bundle);
-			dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+			dtn::net::TransferCompletedEvent::raise(t->getNode().getEID(), meta);
+			dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_FORWARDED);
 			IBRCOMMON_LOGGER(info) << "EMail Convergence Layer: Bundle " << t->getJob().getBundle().toString() << " for node " << t->getNode().getEID().getString() << " submitted via smtp" << IBRCOMMON_LOGGER_ENDL;
 		}
 

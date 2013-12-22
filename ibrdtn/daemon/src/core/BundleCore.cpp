@@ -384,7 +384,8 @@ namespace dtn
 				const dtn::data::BundleID &id = aborted.getBundleID();
 
 				try {
-					const dtn::data::MetaBundle meta = this->getStorage().get(id);
+					// create meta bundle for futher processing
+					const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(getStorage().get(id));
 
 					if (!(meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)) return;
 
@@ -566,7 +567,7 @@ namespace dtn
 					if (e.get(dtn::data::Block::TRANSMIT_STATUSREPORT_IF_NOT_PROCESSED))
 					{
 						// transmit status report, because we can not process this block
-						dtn::core::BundleEvent::raise(b, BUNDLE_RECEIVED, dtn::data::StatusReportBlock::BLOCK_UNINTELLIGIBLE);
+						dtn::core::BundleEvent::raise(dtn::data::MetaBundle::create(b), BUNDLE_RECEIVED, dtn::data::StatusReportBlock::BLOCK_UNINTELLIGIBLE);
 					}
 				} catch (const std::bad_cast&) { }
 			}

@@ -496,7 +496,7 @@ namespace dtn
 								dtn::data::BundleID id = readBundleID(cmd, 2);
 
 								// announce this bundle as delivered
-								dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(id);
+								dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(dtn::core::BundleCore::getInstance().getStorage().get(id));
 								_client.getRegistration().delivered(meta);
 
 								ibrcommon::MutexLock l(_write_lock);

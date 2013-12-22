@@ -117,12 +117,12 @@ void BundleSetTest::containTest(){
 	CPPUNIT_ASSERT(l.has(b1) == false);
 	CPPUNIT_ASSERT(l.has(b2) == false);
 
-	l.add(b1);
+	l.add(dtn::data::MetaBundle::create(b1));
 
 	CPPUNIT_ASSERT(l.has(b1) == true);
 	CPPUNIT_ASSERT(l.has(b2) == false);
 
-	l.add(b2);
+	l.add(dtn::data::MetaBundle::create(b2));
 
 	CPPUNIT_ASSERT(l.has(b1) == true);
 	CPPUNIT_ASSERT(l.has(b2) == true);
@@ -132,12 +132,12 @@ void BundleSetTest::containTest(){
 	CPPUNIT_ASSERT(l.has(b1) == false);
 	CPPUNIT_ASSERT(l.has(b2) == false);
 
-	l.add(b1);
+	l.add(dtn::data::MetaBundle::create(b1));
 
 	CPPUNIT_ASSERT(l.has(b1) == true);
 	CPPUNIT_ASSERT(l.has(b2) == false);
 
-	l.add(b2);
+	l.add(dtn::data::MetaBundle::create(b2));
 
 	CPPUNIT_ASSERT(l.has(b1) == true);
 	CPPUNIT_ASSERT(l.has(b2) == true);

@@ -838,7 +838,7 @@ void BundleStorageTest::testQueryBloomFilter(dtn::storage::BundleStorage &storag
 	(*ref.iostream()) << "Hallo Welt" << std::endl;
 
 	// create a non-fragment meta bundle
-	dtn::data::MetaBundle meta(b);
+	const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(b);
 
 	// transform bundle into a fragment
 	b.procflags.setBit(dtn::data::PrimaryBlock::FRAGMENT, true);
