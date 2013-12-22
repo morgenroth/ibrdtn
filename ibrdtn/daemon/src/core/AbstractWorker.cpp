@@ -59,7 +59,7 @@ namespace dtn
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 
 				// ignore fragments - we can not deliver them directly to the client
-				if (queued.bundle.fragment) return;
+				if (queued.bundle.isFragment()) return;
 
 				// check for bundle destination
 				if (queued.bundle.destination == _worker._eid)

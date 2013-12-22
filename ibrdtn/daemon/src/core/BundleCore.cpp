@@ -300,7 +300,7 @@ namespace dtn
 				const dtn::data::MetaBundle &meta = queued.bundle;
 
 				// ignore fragments
-				if (meta.fragment) return;
+				if (meta.isFragment()) return;
 
 				// if the destination is equal this node...
 				if (meta.destination == local)

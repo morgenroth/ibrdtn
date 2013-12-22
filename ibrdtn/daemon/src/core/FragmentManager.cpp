@@ -94,7 +94,7 @@ namespace dtn
 						const dtn::data::MetaBundle &m = (*iter);
 						if (meta.payloadlength > 0)
 						{
-							BundleMerger::Chunk chunk(m.offset.get<dtn::data::Length>(), m.payloadlength.get<dtn::data::Length>());
+							BundleMerger::Chunk chunk(m.fragmentoffset.get<dtn::data::Length>(), m.payloadlength.get<dtn::data::Length>());
 							chunks.insert(chunk);
 						}
 					}
@@ -161,7 +161,7 @@ namespace dtn
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 
 				// process fragments
-				if (queued.bundle.fragment) signal(queued.bundle);
+				if (queued.bundle.isFragment()) signal(queued.bundle);
 			} catch (const std::bad_cast&) {}
 		}
 
@@ -197,7 +197,7 @@ namespace dtn
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// fragments only
-					if (!meta.fragment) return false;
+					if (!meta.isFragment()) return false;
 
 					// with the same unique bundle id
 					if (meta.source != _similar.source) return false;

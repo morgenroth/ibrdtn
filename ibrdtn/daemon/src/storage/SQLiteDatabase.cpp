@@ -395,14 +395,14 @@ namespace dtn
 
 			if (bundle.procflags & data::Bundle::FRAGMENT)
 			{
-				bundle.fragment = true;
-				bundle.offset = sqlite3_column_int64(*st, offset + 8);
+				bundle.setFragment(true);
+				bundle.fragmentoffset = sqlite3_column_int64(*st, offset + 8);
 				bundle.appdatalength = sqlite3_column_int64(*st, offset + 9);
 			}
 			else
 			{
-				bundle.fragment = false;
-				bundle.offset = 0;
+				bundle.setFragment(false);
+				bundle.fragmentoffset = 0;
 				bundle.appdatalength = sqlite3_column_int64(*st, 9);
 			}
 
@@ -989,9 +989,9 @@ namespace dtn
 			sqlite3_bind_int64(*st, offset + 2, id.timestamp.get<uint64_t>());
 			sqlite3_bind_int64(*st, offset + 3, id.sequencenumber.get<uint64_t>());
 
-			if (id.fragment)
+			if (id.isFragment())
 			{
-				sqlite3_bind_int64(*st, offset + 4, id.offset.get<uint64_t>());
+				sqlite3_bind_int64(*st, offset + 4, id.fragmentoffset.get<uint64_t>());
 			}
 			else
 			{
@@ -1005,8 +1005,8 @@ namespace dtn
 			id.timestamp = sqlite3_column_int64(*st, offset + 1);
 			id.sequencenumber = sqlite3_column_int64(*st, offset + 2);
 
-			id.fragment = (sqlite3_column_text(*st, offset + 3) != NULL);
-			id.offset = sqlite3_column_int64(*st, offset + 3);
+			id.setFragment(sqlite3_column_text(*st, offset + 3) != NULL);
+			id.fragmentoffset = sqlite3_column_int64(*st, offset + 3);
 		}
 
 		void SQLiteDatabase::setFaulty(bool mode)

@@ -51,7 +51,6 @@ namespace dtn
 
 			static const std::string className;
 
-			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason reason = REASON_UNDEFINED);
 			static void raise(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason reason = REASON_UNDEFINED);
 
 			const dtn::data::EID& getPeer() const;
@@ -64,7 +63,6 @@ namespace dtn
 
 			const dtn::data::EID _peer;
 			const dtn::data::BundleID _bundle;
-			TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason reason);
 			TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason reason);
 		};
 	}

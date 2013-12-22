@@ -246,7 +246,7 @@ namespace dtn
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// filter fragments if requested
-					if (meta.fragment && _fragment_filter)
+					if (meta.isFragment() && _fragment_filter)
 					{
 						return false;
 					}

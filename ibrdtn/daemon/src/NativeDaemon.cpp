@@ -245,7 +245,7 @@ namespace dtn
 			{
 				// add fragmentation values
 				data.push_back("Appdatalength: " + b.appdatalength.toString());
-				data.push_back("Fragmentoffset: " + b.offset.toString());
+				data.push_back("Fragmentoffset: " + b.fragmentoffset.toString());
 			}
 		}
 
@@ -256,10 +256,10 @@ namespace dtn
 			data.push_back("Timestamp: " + b.timestamp.toString());
 			data.push_back("Sequencenumber: " + b.sequencenumber.toString());
 
-			if (b.fragment)
+			if (b.isFragment())
 			{
 				// add fragmentation values
-				data.push_back("Fragmentoffset: " + b.offset.toString());
+				data.push_back("Fragmentoffset: " + b.fragmentoffset.toString());
 			}
 		}
 

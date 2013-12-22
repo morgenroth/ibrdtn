@@ -943,7 +943,7 @@ namespace dtn
 				_stream << report.bundleid.timestamp.toString() << "." << report.bundleid.sequencenumber.toString();
 
 				if (report.refsFragment()) {
-					_stream << "." << report.bundleid.offset.toString() << ":" << report.fragment_length.toString() << " ";
+					_stream << "." << report.bundleid.fragmentoffset.toString() << ":" << report.fragment_length.toString() << " ";
 				} else {
 					_stream << " ";
 				}
@@ -1000,7 +1000,7 @@ namespace dtn
 				_stream << custody.bundleid.timestamp.toString() << "." << custody.bundleid.sequencenumber.toString();
 
 				if (custody.refsFragment()) {
-					_stream << "." << custody.bundleid.offset.toString() << ":" << custody.fragment_length.toString() << " ";
+					_stream << "." << custody.bundleid.fragmentoffset.toString() << ":" << custody.fragment_length.toString() << " ";
 				} else {
 					_stream << " ";
 				}
@@ -1030,9 +1030,9 @@ namespace dtn
 		{
 			stream << id.timestamp.toString() << " " << id.sequencenumber.toString() << " ";
 
-			if (id.fragment)
+			if (id.isFragment())
 			{
-				stream << id.offset.toString() << " ";
+				stream << id.fragmentoffset.toString() << " ";
 			}
 
 			stream << id.source.getString();
@@ -1042,10 +1042,7 @@ namespace dtn
 		{
 			// load bundle id
 			std::stringstream ss;
-			dtn::data::Timestamp timestamp = 0;
-			dtn::data::Number sequencenumber = 0;
-			bool fragment = false;
-			dtn::data::Number offset = 0;
+			dtn::data::BundleID id;
 
 			if ((data.size() - start) < 3)
 			{
@@ -1054,7 +1051,7 @@ namespace dtn
 
 			// read timestamp
 			ss.clear(); ss.str(data[start]);
-			timestamp.read(ss);
+			id.timestamp.read(ss);
 
 			if(ss.fail())
 			{
@@ -1063,7 +1060,7 @@ namespace dtn
 
 			// read sequence number
 			ss.clear(); ss.str(data[start+1]);
-			sequencenumber.read(ss);
+			id.sequencenumber.read(ss);
 
 			if(ss.fail())
 			{
@@ -1073,11 +1070,11 @@ namespace dtn
 			// read fragment offset
 			if ((data.size() - start) > 3)
 			{
-				fragment = true;
+				id.setFragment(true);
 
 				// read sequence number
 				ss.clear(); ss.str(data[start+2]);
-				offset.read(ss);
+				id.fragmentoffset.read(ss);
 
 				if(ss.fail())
 				{
@@ -1088,8 +1085,8 @@ namespace dtn
 			// read EID
 			ss.clear(); dtn::data::EID eid(data[data.size() - 1]);
 
-			// construct bundle id
-			return dtn::data::BundleID(eid, timestamp, sequencenumber, fragment, offset);
+			// return bundle id
+			return id;
 		}
 	}
 }

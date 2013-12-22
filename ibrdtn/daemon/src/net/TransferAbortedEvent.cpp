@@ -26,11 +26,6 @@ namespace dtn
 {
 	namespace net
 	{
-		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason r)
-		 : reason(r), _peer(peer), _bundle(bundle)
-		{
-		}
-
 		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason r)
 		 : reason(r), _peer(peer), _bundle(id)
 		{
@@ -39,12 +34,6 @@ namespace dtn
 		TransferAbortedEvent::~TransferAbortedEvent()
 		{
 
-		}
-
-		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason r)
-		{
-			// raise the new event
-			dtn::core::EventDispatcher<TransferAbortedEvent>::raise( new TransferAbortedEvent(peer, bundle, r) );
 		}
 
 		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason r)

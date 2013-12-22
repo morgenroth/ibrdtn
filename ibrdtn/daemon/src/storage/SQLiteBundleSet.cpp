@@ -215,7 +215,7 @@ namespace dtn
 				sqlite3_bind_text(*st, 2, source_id.c_str(), static_cast<int>(source_id.length()), SQLITE_TRANSIENT);
 				sqlite3_bind_int64(*st, 3, bundle.timestamp.get<uint64_t>());
 				sqlite3_bind_int64(*st, 4, bundle.sequencenumber.get<uint64_t>());
-				sqlite3_bind_int64(*st, 5, bundle.fragment ? bundle.offset.get<uint64_t>() : -1);
+				sqlite3_bind_int64(*st, 5, bundle.isFragment() ? bundle.fragmentoffset.get<uint64_t>() : -1);
 				sqlite3_bind_int64(*st, 6, bundle.expiretime.get<uint64_t>());
 
 				st.step();
@@ -263,8 +263,8 @@ namespace dtn
 				sqlite3_bind_int64(*st, 3, id.timestamp.get<uint64_t>());
 				sqlite3_bind_int64(*st, 4, id.sequencenumber.get<uint64_t>());
 
-				if (id.fragment) {
-					sqlite3_bind_int64(*st, 5, id.offset.get<uint64_t>());
+				if (id.isFragment()) {
+					sqlite3_bind_int64(*st, 5, id.fragmentoffset.get<uint64_t>());
 				} else {
 					sqlite3_bind_int64(*st, 5, -1);
 				}
@@ -456,12 +456,12 @@ namespace dtn
 			id.timestamp = sqlite3_column_int64(*st, offset + 1);
 			id.sequencenumber = sqlite3_column_int64(*st, offset + 2);
 			dtn::data::Number fragmentoffset = 0;
-			id.fragment = (sqlite3_column_int64(*st, offset + 2) >= 0);
+			id.setFragment(sqlite3_column_int64(*st, offset + 2) >= 0);
 
-			if (id.fragment) {
-				id.offset = sqlite3_column_int64(*st, offset + 3);
+			if (id.isFragment()) {
+				id.fragmentoffset = sqlite3_column_int64(*st, offset + 3);
 			} else {
-				id.offset = 0;
+				id.fragmentoffset = 0;
 			}
 		}
 	} /* namespace data */

@@ -64,12 +64,12 @@ namespace dtn
 					// appdatalength for fragments
 					dtn::data::Number complete_payloadlength_lhs, complete_payloadlength_rhs;
 
-					if (lhs.fragment)
+					if (lhs.isFragment())
 						complete_payloadlength_lhs = lhs.appdatalength;
 					else
 						complete_payloadlength_lhs = lhs.payloadlength;
 
-					if (rhs.fragment)
+					if (rhs.isFragment())
 						complete_payloadlength_rhs = rhs.appdatalength;
 					else
 						complete_payloadlength_rhs = rhs.payloadlength;
