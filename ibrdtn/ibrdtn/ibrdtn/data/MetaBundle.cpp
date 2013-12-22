@@ -36,6 +36,11 @@ namespace dtn
 			return MetaBundle(id);
 		}
 
+		MetaBundle MetaBundle::create(const dtn::data::Bundle &bundle)
+		{
+			return MetaBundle(bundle);
+		}
+
 		MetaBundle::MetaBundle()
 		 : BundleID(), received(), lifetime(0), destination(), reportto(),
 		   custodian(), appdatalength(0), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)

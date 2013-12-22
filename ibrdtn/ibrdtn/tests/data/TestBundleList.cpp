@@ -69,7 +69,7 @@ void TestBundleList::genbundles(dtn::data::BundleList &l, int number, int offset
 
 		b.source = dtn::data::EID("dtn://node" + ss.str() + "/application");
 
-		l.add(b);
+		l.add(dtn::data::MetaBundle::create(b));
 	}
 }
 

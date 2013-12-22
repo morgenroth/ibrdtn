@@ -36,7 +36,6 @@ namespace dtn
 		{
 		public:
 			MetaBundle();
-			MetaBundle(const dtn::data::Bundle &b);
 			virtual ~MetaBundle();
 
 			bool operator!=(const MetaBundle& other) const;
@@ -78,9 +77,11 @@ namespace dtn
 			 * fashion.
 			 */
 			static MetaBundle create(const dtn::data::BundleID &id);
+			static MetaBundle create(const dtn::data::Bundle &bundle);
 
 		private:
 			MetaBundle(const dtn::data::BundleID &id);
+			MetaBundle(const dtn::data::Bundle &b);
 		};
 	}
 }
