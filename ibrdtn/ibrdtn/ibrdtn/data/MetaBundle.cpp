@@ -43,15 +43,15 @@ namespace dtn
 
 		MetaBundle::MetaBundle()
 		 : BundleID(), received(), lifetime(0), destination(), reportto(),
-		   custodian(), appdatalength(0), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
+		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
 		{
 		}
 
 		MetaBundle::MetaBundle(const dtn::data::BundleID &id)
 		 : BundleID(id), received(), lifetime(0), destination(), reportto(),
-		   custodian(), appdatalength(0), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
+		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
 		{
-			// fake fragment bit
+			// apply fragment bit
 			setFragment(id.isFragment());
 		}
 

@@ -48,7 +48,7 @@ namespace dtn
 			timestamp = id.timestamp;
 			sequencenumber = id.sequencenumber;
 			fragmentoffset = id.fragmentoffset;
-			_fragment = id._fragment;
+			setFragment(id._fragment);
 			return (*this);
 		}
 
