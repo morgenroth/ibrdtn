@@ -102,7 +102,7 @@ namespace dtn
 			for (MetaStorage::const_iterator it = _metastore.begin(); it != _metastore.end(); ++it)
 			{
 				const dtn::data::MetaBundle &meta = (*it);
-				DataStorage::Hash it_hash(meta.toString());
+				DataStorage::Hash it_hash(meta);
 
 				if (it_hash == hash)
 				{
@@ -287,7 +287,7 @@ namespace dtn
 				const dtn::data::MetaBundle &meta = _metastore.find(dtn::data::MetaBundle::create(id));
 
 				// create a hash for the data storage
-				DataStorage::Hash hash(meta.toString());
+				DataStorage::Hash hash(meta);
 
 				// check pending bundles
 				{
@@ -389,7 +389,7 @@ namespace dtn
 				_metastore.markRemoved(meta);
 
 				// create the hash for data storage removal
-				DataStorage::Hash hash(meta.toString());
+				DataStorage::Hash hash(meta);
 
 				// create a background task for removing the bundle
 				_datastore.remove(hash);
@@ -444,7 +444,7 @@ namespace dtn
 				_metastore.markRemoved(meta);
 
 				// create the hash for data storage removal
-				DataStorage::Hash hash(meta.toString());
+				DataStorage::Hash hash(meta);
 
 				// create a background task for removing the bundle
 				_datastore.remove(hash);
@@ -466,7 +466,7 @@ namespace dtn
 				// remove item in the bundlelist
 				const dtn::data::MetaBundle &meta = (*iter);
 
-				DataStorage::Hash hash(meta.toString());
+				DataStorage::Hash hash(meta);
 
 				// create a background task for removing the bundle
 				_datastore.remove(hash);
@@ -477,7 +477,7 @@ namespace dtn
 
 		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
 		{
-			DataStorage::Hash hash(b.toString());
+			DataStorage::Hash hash(b);
 
 			// create a background task for removing the bundle
 			_datastore.remove(hash);
@@ -501,7 +501,9 @@ namespace dtn
 
 		std::string SimpleBundleStorage::BundleContainer::getKey() const
 		{
-			return _bundle.toString();
+			std::stringstream ss;
+			ss << _bundle;
+			return ss.str();
 		}
 
 		std::ostream& SimpleBundleStorage::BundleContainer::serialize(std::ostream &stream)

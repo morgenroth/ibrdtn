@@ -40,8 +40,8 @@ namespace dtn
 		 : value("this-hash-value-is-empty")
 		{}
 
-		DataStorage::Hash::Hash(const std::string &key)
-		 : value(DataStorage::Hash::hash(key))
+		DataStorage::Hash::Hash(const dtn::data::BundleID &id)
+		 : value(DataStorage::Hash::hash(id))
 		{ }
 
 		DataStorage::Hash::Hash(const DataStorage::Container &container)
@@ -59,6 +59,13 @@ namespace dtn
 		bool DataStorage::Hash::operator<(const DataStorage::Hash &other) const
 		{
 			return (value < other.value);
+		}
+
+		std::string DataStorage::Hash::hash(const dtn::data::BundleID &id)
+		{
+			std::stringstream ss;
+			ss << id;
+			return hash(ss.str());
 		}
 
 		std::string DataStorage::Hash::hash(const std::string &value)

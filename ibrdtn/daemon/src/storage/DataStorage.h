@@ -22,6 +22,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <ibrdtn/data/BundleID.h>
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -59,7 +60,7 @@ namespace dtn
 			{
 			public:
 				Hash();
-				Hash(const std::string &key);
+				Hash(const dtn::data::BundleID &id);
 				Hash(const DataStorage::Container &container);
 				Hash(const ibrcommon::File &file);
 				virtual ~Hash();
@@ -70,6 +71,7 @@ namespace dtn
 				std::string value;
 
 			private:
+				static std::string hash(const dtn::data::BundleID &id);
 				static std::string hash(const std::string &value);
 			};
 
