@@ -19,6 +19,7 @@
  *
  */
 
+#include "config.h"
 #include "routing/NodeHandshakeExtension.h"
 #include "routing/NodeHandshakeEvent.h"
 
@@ -30,6 +31,10 @@
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
+
+#ifdef WITH_COMPRESSION
+#include <ibrdtn/data/CompressedPayloadBlock.h>
+#endif
 
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/thread/RWLock.h>
@@ -234,6 +239,11 @@ namespace dtn
 			// create a new request for the summary vector of the neighbor
 			NodeHandshake request(NodeHandshake::HANDSHAKE_REQUEST);
 
+#ifdef WITH_COMPRESSION
+			// request compressed answer
+			request.addRequest(NodeHandshakeItem::REQUEST_COMPRESSED_ANSWER);
+#endif
+
 			// walk through all extensions to generate a request
 			(*_callback).requestHandshake(origin, request);
 
@@ -337,6 +347,18 @@ namespace dtn
 
 				// add an age block (to prevent expiring due to wrong clocks)
 				answer.push_front<dtn::data::AgeBlock>();
+
+#ifdef WITH_COMPRESSION
+				// compress bundle if requested
+				if (handshake.hasRequest(NodeHandshakeItem::REQUEST_COMPRESSED_ANSWER))
+				{
+					try {
+						dtn::data::CompressedPayloadBlock::compress(answer, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
+					} catch (const ibrcommon::Exception &ex) {
+						IBRCOMMON_LOGGER_TAG(TAG, warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					};
+				}
+#endif
 
 				// transfer the bundle to the neighbor
 				_endpoint.send(answer);
