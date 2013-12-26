@@ -438,10 +438,7 @@ namespace dtn
 				{
 					// get the bundle id
 					get_bundleid(st, id);
-
-					const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::create(id);
-
-					_bf.insert( bundle.toString() );
+					_bf.insert( id.toString() );
 				}
 
 				_consistent = true;
