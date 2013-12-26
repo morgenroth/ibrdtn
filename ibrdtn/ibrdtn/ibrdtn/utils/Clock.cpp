@@ -104,18 +104,18 @@ namespace dtn
 
 		dtn::data::Timestamp Clock::getExpireTime(const dtn::data::Bundle &b)
 		{
-			if ((b.timestamp == 0) || dtn::utils::Clock::isBad())
-			{
+			try {
 				// use the AgeBlock to verify the age
-				try {
-					const dtn::data::AgeBlock &agebl = b.find<dtn::data::AgeBlock>();
-					dtn::data::Number seconds_left = 0;
-					if (b.lifetime > agebl.getSeconds()) {
-						seconds_left = b.lifetime - agebl.getSeconds();
-					}
-					return getTime() + seconds_left;
-				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+				const dtn::data::AgeBlock &agebl = b.find<dtn::data::AgeBlock>();
+				dtn::data::Number seconds_left = 0;
+				if (b.lifetime > agebl.getSeconds()) {
+					seconds_left = b.lifetime - agebl.getSeconds();
+				}
+				return getTime() + seconds_left;
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
+			if (dtn::utils::Clock::isBad())
+			{
 				return __getExpireTime(getTime(), b.lifetime);
 			}
 
