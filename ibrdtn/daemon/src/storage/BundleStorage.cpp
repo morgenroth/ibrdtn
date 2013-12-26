@@ -62,7 +62,7 @@ namespace dtn
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 				{
 					// select the bundle if it is in the filter
-					return _filter.contains(meta.toString());
+					return meta.isIn(_filter);
 				};
 
 				const ibrcommon::BloomFilter &_filter;

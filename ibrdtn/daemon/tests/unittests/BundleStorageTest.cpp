@@ -659,9 +659,9 @@ void BundleStorageTest::testRemoveBloomfilter(dtn::storage::BundleStorage &stora
 	}
 
 	ibrcommon::BloomFilter bf;
-	bf.insert(bundles[1].toString());
-	bf.insert(bundles[4].toString());
-	bf.insert(bundles[11].toString());
+	bundles[1].addTo(bf);
+	bundles[4].addTo(bf);
+	bundles[11].addTo(bf);
 
 	// remove the bundles marked in the bloom-filter
 	CPPUNIT_ASSERT_THROW( while (true) storage.remove(bf), dtn::storage::NoBundleFoundException );
@@ -866,7 +866,7 @@ void BundleStorageTest::testQueryBloomFilter(dtn::storage::BundleStorage &storag
 		virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const throw (dtn::storage::BundleSelectorException)
 		{
 			// select the bundle if it is in the filter
-			return _filter.contains(meta.toString());
+			return meta.isIn(_filter);
 		};
 
 		const ibrcommon::BloomFilter &_filter;

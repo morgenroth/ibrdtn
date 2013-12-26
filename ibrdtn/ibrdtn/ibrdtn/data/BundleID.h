@@ -22,8 +22,9 @@
 #ifndef BUNDLEID_H_
 #define BUNDLEID_H_
 
-#include <ibrdtn/data/Number.h>
+#include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/EID.h"
+#include <ibrcommon/data/BloomFilter.h>
 
 namespace dtn
 {
@@ -57,6 +58,16 @@ namespace dtn
 
 			virtual bool isFragment() const;
 			virtual void setFragment(bool val);
+
+			/**
+			 * Add this BundleID to the BloomFilter
+			 */
+			void addTo(ibrcommon::BloomFilter &bf) const;
+
+			/**
+			 * Check if this BundleID is part of the BloomFilter
+			 */
+			bool isIn(const ibrcommon::BloomFilter &bf) const;
 
 		private:
 			bool _fragment;

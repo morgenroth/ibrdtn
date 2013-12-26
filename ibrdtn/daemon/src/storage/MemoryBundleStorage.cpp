@@ -226,7 +226,7 @@ namespace dtn
 
 			for (bundle_list::iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
-				if ( filter.contains((*iter).toString()) )
+				if ( (*iter).isIn(filter) )
 				{
 					const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::create(*iter);
 

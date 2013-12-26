@@ -77,7 +77,7 @@ namespace dtn
 		{
 			if (_filter_state == FILTER_AVAILABLE)
 			{
-				if (_filter.contains(id.toString()))
+				if (id.isIn(_filter))
 					return true;
 			}
 			else if (require_bloomfilter)

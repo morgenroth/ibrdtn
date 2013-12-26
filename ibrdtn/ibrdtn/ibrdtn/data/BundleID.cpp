@@ -107,6 +107,20 @@ namespace dtn
 			_fragment = val;
 		}
 
+		void BundleID::addTo(ibrcommon::BloomFilter &bf) const
+		{
+			std::stringstream ss;
+			ss << (*this);
+			bf.insert(ss.str());
+		}
+
+		bool BundleID::isIn(const ibrcommon::BloomFilter &bf) const
+		{
+			std::stringstream ss;
+			ss << (*this);
+			return bf.contains(ss.str());
+		}
+
 		std::string BundleID::toString() const
 		{
 			stringstream ss;

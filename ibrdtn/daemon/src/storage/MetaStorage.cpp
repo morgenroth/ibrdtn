@@ -64,7 +64,7 @@ namespace dtn
 				// skip removal-marked bundles
 				if (_removal_set.find(bundle) != _removal_set.end()) continue;
 
-				if (filter.contains(bundle.toString()))
+				if (bundle.isIn(filter))
 				{
 					return bundle;
 				}

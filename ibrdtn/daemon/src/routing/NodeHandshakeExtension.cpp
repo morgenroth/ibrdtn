@@ -137,7 +137,7 @@ namespace dtn
 							return false;
 
 						// select the bundle if it is in the filter
-						return _filter.contains(meta.toString());
+						return meta.isIn(_filter);
 					};
 
 					const ibrcommon::BloomFilter &_filter;

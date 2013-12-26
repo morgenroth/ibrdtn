@@ -224,7 +224,7 @@ namespace dtn
 				new_expire_time(bundle.expiretime);
 
 				// add bundle to the bloomfilter
-				_bf.insert(bundle.toString());
+				bundle.addTo(_bf);
 			} catch (const SQLiteDatabase::SQLiteQueryException&) {
 				// error
 			}
@@ -248,7 +248,7 @@ namespace dtn
 		bool SQLiteBundleSet::has(const dtn::data::BundleID &id) const throw ()
 		{
 			// check bloom-filter first
-			if (!_bf.contains(id.toString())) return false;
+			if (!id.isIn(_bf)) return false;
 
 			// Return true if the bloom-filter is not consistent with
 			// the bundles set. This happen if the MemoryBundleSet gets deserialized.
@@ -372,7 +372,7 @@ namespace dtn
 					// get the bundle id
 					get_bundleid(st, id);
 
-					if ( !filter.contains( id.toString() ) )
+					if ( ! id.isIn(filter) )
 					{
 						const dtn::data::MetaBundle bundle = dtn::data::MetaBundle::create(id);
 						ret.insert( bundle );
@@ -438,7 +438,7 @@ namespace dtn
 				{
 					// get the bundle id
 					get_bundleid(st, id);
-					_bf.insert( id.toString() );
+					id.addTo(_bf);
 				}
 
 				_consistent = true;

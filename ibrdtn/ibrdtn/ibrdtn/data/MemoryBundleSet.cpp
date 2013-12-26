@@ -85,7 +85,7 @@ namespace dtn
 			_expire.insert(exb);
 
 			// add bundle to the bloomfilter
-			_bf.insert(bundle.toString());
+			bundle.addTo(_bf);
 		}
 
 		void MemoryBundleSet::clear() throw ()
@@ -99,7 +99,7 @@ namespace dtn
 		bool MemoryBundleSet::has(const dtn::data::BundleID &bundle) const throw ()
 		{
 			// check bloom-filter first
-			if (_bf.contains(bundle.toString())) {
+			if (bundle.isIn(_bf)) {
 				// Return true if the bloom-filter is not consistent with
 				// the bundles set. This happen if the MemoryBundleSet gets deserialized.
 				if (!_consistent) return true;
@@ -151,7 +151,7 @@ namespace dtn
 				_bf.clear();
 				for (bundle_set::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 				{
-					_bf.insert( (*iter).toString() );
+					(*iter).addTo(_bf);
 				}
 			}
 		}
@@ -171,7 +171,7 @@ namespace dtn
 			// iterate through all items to find the differences
 			for (bundle_set::const_iterator iter = _bundles.begin(); iter != _bundles.end(); ++iter)
 			{
-				if (!filter.contains( (*iter).toString() ) )
+				if (!(*iter).isIn(filter))
 				{
 					ret.insert( (*iter) );
 				}
