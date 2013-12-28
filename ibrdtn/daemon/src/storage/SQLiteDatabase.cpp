@@ -39,8 +39,8 @@ namespace dtn
 		const std::string SQLiteDatabase::TAG = "SQLiteDatabase";
 
 		const std::string SQLiteDatabase::_select_names[3] = {
-				"source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, netpriority",
-				"source, timestamp, sequencenumber, fragmentoffset, procflags",
+				"source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, netpriority, bytes",
+				"source, timestamp, sequencenumber, fragmentoffset, procflags, bytes",
 				"`source_id`, `timestamp`, `sequencenumber`, `fragmentoffset`, `expiretime`"
 		};
 
@@ -48,9 +48,9 @@ namespace dtn
 				{ "bundles", "blocks", "routing", "routing_bundles", "routing_nodes", "properties", "bundle_set", "bundle_set_names" };
 
 		// this is the version of a fresh created db scheme
-		const int SQLiteDatabase::DBSCHEMA_FRESH_VERSION = 6;
+		const int SQLiteDatabase::DBSCHEMA_FRESH_VERSION = 7;
 
-		const int SQLiteDatabase::DBSCHEMA_VERSION = 6;
+		const int SQLiteDatabase::DBSCHEMA_VERSION = 7;
 
 		const std::string SQLiteDatabase::QUERY_SCHEMAVERSION = "SELECT `value` FROM " + SQLiteDatabase::_tables[SQLiteDatabase::SQL_TABLE_PROPERTIES] + " WHERE `key` = 'version' LIMIT 0,1;";
 		const std::string SQLiteDatabase::SET_SCHEMAVERSION = "INSERT INTO " + SQLiteDatabase::_tables[SQLiteDatabase::SQL_TABLE_PROPERTIES] + " (`key`, `value`) VALUES ('version', ?);";
@@ -73,7 +73,7 @@ namespace dtn
 
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +";",
-			"INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (source_id, timestamp, sequencenumber, fragmentoffset, source, destination, reportto, custodian, procflags, lifetime, appdatalength, expiretime, priority, hopcount, netpriority) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
+			"INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (source_id, timestamp, sequencenumber, fragmentoffset, source, destination, reportto, custodian, procflags, lifetime, appdatalength, expiretime, priority, hopcount, netpriority, bytes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
 			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET custodian = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 
 			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET procflags = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
@@ -106,7 +106,7 @@ namespace dtn
 		const std::string SQLiteDatabase::_db_structure[SQLiteDatabase::DB_STRUCTURE_END] =
 		{
 			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BLOCK] + "` ( `key` INTEGER PRIMARY KEY ASC, `source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL DEFAULT 0, `blocktype` INTEGER NOT NULL, `filename` TEXT NOT NULL, `ordernumber` INTEGER NOT NULL);",
-			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BUNDLE] + "` ( `key` INTEGER PRIMARY KEY ASC, `source_id` TEXT NOT NULL, `source` TEXT NOT NULL, `destination` TEXT NOT NULL, `reportto` TEXT NOT NULL, `custodian` TEXT NOT NULL, `procflags` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `lifetime` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL DEFAULT 0, `appdatalength` INTEGER NOT NULL DEFAULT 0, `expiretime` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `hopcount` INTEGER DEFAULT NULL, `netpriority` INTEGER NOT NULL DEFAULT 0);",
+			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BUNDLE] + "` ( `key` INTEGER PRIMARY KEY ASC, `source_id` TEXT NOT NULL, `source` TEXT NOT NULL, `destination` TEXT NOT NULL, `reportto` TEXT NOT NULL, `custodian` TEXT NOT NULL, `procflags` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `lifetime` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL DEFAULT 0, `appdatalength` INTEGER NOT NULL DEFAULT 0, `expiretime` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `hopcount` INTEGER DEFAULT NULL, `netpriority` INTEGER NOT NULL DEFAULT 0, `bytes` INTEGER NOT NULL DEFAULT 0);",
 			"CREATE TABLE IF NOT EXISTS "+ _tables[SQL_TABLE_ROUTING] +" (INTEGER PRIMARY KEY ASC, Key int, Routing text);",
 			"CREATE TABLE IF NOT EXISTS "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" (INTEGER PRIMARY KEY ASC, BundleID text, Key int, Routing text);",
 			"CREATE TABLE IF NOT EXISTS "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +" (INTEGER PRIMARY KEY ASC, EID text, Key int, Routing text);",
@@ -453,7 +453,7 @@ namespace dtn
 				get(st, m, 0);
 
 				// call iteration callback
-				_listener.iterateDatabase(m);
+				_listener.iterateDatabase(m, sqlite3_column_int(*st, 12));
 			}
 
 			st.reset();
@@ -611,7 +611,7 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::store(const dtn::data::Bundle &bundle) throw (SQLiteDatabase::SQLiteQueryException)
+		void SQLiteDatabase::store(const dtn::data::Bundle &bundle, const dtn::data::Length &size) throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			int err;
 
@@ -659,6 +659,9 @@ namespace dtn
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				sqlite3_bind_int64(*st, 15, 0 );
 			}
+
+			// set bundle size
+			sqlite3_bind_int64(*st, 16, size);
 
 			err = st.step();
 
@@ -754,8 +757,30 @@ namespace dtn
 			}
 		}
 
-		void SQLiteDatabase::remove(const dtn::data::BundleID &id) throw (SQLiteDatabase::SQLiteQueryException)
+		dtn::data::Length SQLiteDatabase::remove(const dtn::data::BundleID &id) throw (SQLiteDatabase::SQLiteQueryException)
 		{
+			// return value (size of the bundle in bytes)
+			dtn::data::Length ret = 0;
+
+			{
+				// lock the database
+				Statement st(_database, _sql_queries[BUNDLE_GET_ID]);
+
+				// bind bundle id to the statement
+				set_bundleid(st, id);
+
+				// execute the query and check for error
+				if (st.step() != SQLITE_ROW)
+				{
+					// no bundle found - stop here
+					return ret;
+				}
+				else
+				{
+					ret = sqlite3_column_int(*st, 12);
+				}
+			}
+
 			{
 				// lock the database
 				Statement st(_database, _sql_queries[BLOCK_GET_ID]);
@@ -785,6 +810,9 @@ namespace dtn
 
 			//update deprecated timer
 			update_expire_time();
+
+			// return the size of the removed bundle
+			return ret;
 		}
 
 		void SQLiteDatabase::clear() throw (SQLiteDatabase::SQLiteQueryException)
@@ -912,7 +940,7 @@ namespace dtn
 					dtn::core::BundleExpiredEvent::raise(id);
 
 					// raise bundle removed event
-					_listener.eventBundleExpired(id);
+					_listener.eventBundleExpired(id, sqlite3_column_int(*st, 5));
 				}
 			} catch (const SQLiteDatabase::SQLiteQueryException &ex) {
 				IBRCOMMON_LOGGER_TAG(SQLiteDatabase::TAG, error) << ex.what() << IBRCOMMON_LOGGER_ENDL;

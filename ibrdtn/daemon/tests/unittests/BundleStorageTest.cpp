@@ -335,18 +335,7 @@ void BundleStorageTest::testSize(dtn::storage::BundleStorage &storage)
 		ssize += ss.str().length();
 	}
 
-#ifdef HAVE_SQLITE
-	try {
-		dynamic_cast<dtn::storage::SQLiteBundleStorage&>(storage);
-
-		// TODO: fix .size() implementation in SQLiteBundleStorage
-		//CPPUNIT_ASSERT((dtn::data::Length)p.getLength() <= storage.size());
-	} catch (const std::bad_cast&) {
-#endif
-		CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
-#ifdef HAVE_SQLITE
-	}
-#endif
+	CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
 }
 
 void BundleStorageTest::testSizeExpiration()
@@ -385,18 +374,7 @@ void BundleStorageTest::testSizeExpiration(dtn::storage::BundleStorage &storage)
 		timestamp = b.timestamp;
 	}
 
-#ifdef HAVE_SQLITE
-	try {
-		dynamic_cast<dtn::storage::SQLiteBundleStorage&>(storage);
-
-		// TODO: fix .size() implementation in SQLiteBundleStorage
-		//CPPUNIT_ASSERT((dtn::data::Length)p.getLength() <= storage.size());
-	} catch (const std::bad_cast&) {
-#endif
-		CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
-#ifdef HAVE_SQLITE
-	}
-#endif
+	CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
 
 	TestEventListener<dtn::core::TimeEvent> evtl;
 
@@ -421,18 +399,7 @@ void BundleStorageTest::testSizeExpiration(dtn::storage::BundleStorage &storage)
 	// expect storage size of zero
 	ssize = 0;
 
-#ifdef HAVE_SQLITE
-	try {
-		dynamic_cast<dtn::storage::SQLiteBundleStorage&>(storage);
-
-		// TODO: fix .size() implementation in SQLiteBundleStorage
-		//CPPUNIT_ASSERT((dtn::data::Length)p.getLength() <= storage.size());
-	} catch (const std::bad_cast&) {
-#endif
-		CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
-#ifdef HAVE_SQLITE
-	}
-#endif
+	CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
 }
 
 void BundleStorageTest::testReleaseCustody()

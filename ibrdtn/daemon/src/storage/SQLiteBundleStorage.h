@@ -109,11 +109,6 @@ namespace dtn
 			void clear();
 
 			/**
-			 * Clears the hole database.
-			 */
-			void clearAll();
-
-			/**
 			 * @return True, if no bundles in the storage.
 			 */
 			bool empty();
@@ -137,8 +132,8 @@ namespace dtn
 			/**
 			 * callbacks for the sqlite database
 			 */
-			void eventBundleExpired(const dtn::data::BundleID &id) throw ();
-			void iterateDatabase(const dtn::data::MetaBundle &bundle);
+			void eventBundleExpired(const dtn::data::BundleID &id, const dtn::data::Length size) throw ();
+			void iterateDatabase(const dtn::data::MetaBundle &bundle, const dtn::data::Length size);
 
 
 			/*** BEGIN: methods for unit-testing ***/
@@ -279,13 +274,6 @@ namespace dtn
 //			 *  @return A number bigges than zero is returned indicating an error. Zero is returned if no error occurred.
 //			 */
 //			int prepareBundle(list<std::string> &filenames, dtn::data::Bundle &bundle);
-
-			/**
-			 * Purge a specific bundle out of the storage
-			 * This procedure do not throw any exception and cleans as much data
-			 * as possible references to the given bundle identifier.
-			 */
-			void purge(const dtn::data::BundleID &id) throw ();
 
 			/**
 			 * @see Component::getName()
