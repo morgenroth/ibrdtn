@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
+import com.jjoe64.graphview.CustomLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphView.GraphViewData;
 import com.jjoe64.graphview.GraphViewSeries;
@@ -102,21 +103,6 @@ public abstract class StatsChartFragment extends Fragment {
         // convert data into an structured array
         StatsUtils.convertData(getActivity(), stats, data, mAdapter);
         
-        // get min/max timestamp of data-set
-        Double min_timestamp = 0.0;
-        Double max_timestamp = 0.0;
-        
-        for (ArrayList<GraphViewData> dataset : data) {
-            for (GraphViewData d : dataset) {
-                if ((min_timestamp == 0) || (min_timestamp > d.valueX)) min_timestamp = d.valueX;
-                if (max_timestamp < d.valueX) max_timestamp = d.valueX;
-            }
-        }
-        
-        // generate timestamp labels
-        ArrayList<String> labels = new ArrayList<String>();
-        StatsUtils.generateTimestampLabels(getActivity(), min_timestamp, max_timestamp, labels);
-        
         // add one series for each data-set
         for (int i = 0; i < charts_count; i++) {
             ArrayList<GraphViewData> dataset = data.get(i);
@@ -137,8 +123,16 @@ public abstract class StatsChartFragment extends Fragment {
             }
         }
         
-        // change the horizontal labels
-        mGraphView.setHorizontalLabels(labels.toArray(new String[labels.size()]));
+        final Context context = getActivity();
+        mGraphView.setCustomLabelFormatter(new CustomLabelFormatter() {
+            @Override
+            public String formatLabel(double value, boolean isValueX) {
+                if (isValueX) {
+                    return StatsUtils.formatTimeStampString(context, Double.valueOf(value * 1000.0).longValue());
+                }
+                return null;
+            }
+        });
     }
     
     private LoaderManager.LoaderCallbacks<StatsEntry> mStatsLoader = new LoaderManager.LoaderCallbacks<StatsEntry>() {

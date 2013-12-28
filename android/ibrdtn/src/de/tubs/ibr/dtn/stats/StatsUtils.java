@@ -14,21 +14,6 @@ import de.tubs.ibr.dtn.daemon.StatsListAdapter;
 import de.tubs.ibr.dtn.daemon.StatsListAdapter.RowType;
 
 public class StatsUtils {
-    public static void generateTimestampLabels(Context context, Double min_timestamp, Double max_timestamp, ArrayList<String> labels) {
-        if (max_timestamp > min_timestamp) {
-            // adjust labels
-            Double step_value = (max_timestamp - min_timestamp) / 6.0;
-            
-            for (Double i = min_timestamp; i < max_timestamp; i += step_value) {
-                String date_text = StatsUtils.formatTimeStampString(context, Double.valueOf(i * 1000.0).longValue());
-                labels.add(date_text);
-            }
-        }
-        
-        String date_text = StatsUtils.formatTimeStampString(context, Double.valueOf(max_timestamp * 1000.0).longValue());
-        labels.add(date_text);
-    }
-    
     public static void convertData(Context context, Cursor stats, HashMap<String, ArrayList<GraphViewData>> series) {
         ConvergenceLayerStatsEntry.ColumnsMap cmap = new ConvergenceLayerStatsEntry.ColumnsMap();
         
