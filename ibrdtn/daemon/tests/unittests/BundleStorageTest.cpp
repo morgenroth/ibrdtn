@@ -311,32 +311,125 @@ void BundleStorageTest::testSize()
 
 void BundleStorageTest::testSize(dtn::storage::BundleStorage &storage)
 {
-	/* test signature () const */
-	dtn::data::Bundle b;
-	b.source = dtn::data::EID("dtn://node-one/test");
+	dtn::data::Length ssize = 0;
+	CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
 
-	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
-	b.push_back(ref);
+	for (int i = 0; i < 1000; ++i)
+	{
+		dtn::data::Bundle b;
+		b.source = dtn::data::EID("dtn://node-one/test");
 
-	(*ref.iostream()) << "Hallo Welt" << std::endl;
+		// create a payload block
+		ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+		b.push_back(ref);
 
-	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.size());
+		// add some payload
+		(*ref.iostream()) << "Hallo Welt" << std::endl;
 
-	storage.store(b);
+		// store this bundle
+		storage.store(b);
+
+		// remember bundle size
+		std::stringstream ss;
+		dtn::data::DefaultSerializer(ss) << b;
+		ssize += ss.str().length();
+	}
 
 #ifdef HAVE_SQLITE
 	try {
 		dynamic_cast<dtn::storage::SQLiteBundleStorage&>(storage);
-		const dtn::data::PayloadBlock &p = b.find<dtn::data::PayloadBlock>();
 
 		// TODO: fix .size() implementation in SQLiteBundleStorage
 		//CPPUNIT_ASSERT((dtn::data::Length)p.getLength() <= storage.size());
 	} catch (const std::bad_cast&) {
 #endif
+		CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
+#ifdef HAVE_SQLITE
+	}
+#endif
+}
+
+void BundleStorageTest::testSizeExpiration()
+{
+	STORAGE_TEST(testSizeExpiration);
+}
+
+void BundleStorageTest::testSizeExpiration(dtn::storage::BundleStorage &storage)
+{
+	dtn::data::Length ssize = 0;
+	dtn::data::Timestamp timestamp;
+	CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
+
+	for (int i = 0; i < 1000; ++i)
+	{
+		dtn::data::Bundle b;
+		b.source = dtn::data::EID("dtn://node-one/test");
+		b.lifetime = 20;
+
+		// create a payload block
+		ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+		b.push_back(ref);
+
+		// add some payload
+		(*ref.iostream()) << "Hallo Welt" << std::endl;
+
+		// store this bundle
+		storage.store(b);
+
+		// remember bundle size
 		std::stringstream ss;
 		dtn::data::DefaultSerializer(ss) << b;
+		ssize += ss.str().length();
 
-		CPPUNIT_ASSERT_EQUAL((dtn::data::Length)ss.str().length(), storage.size());
+		// remember timestamp
+		timestamp = b.timestamp;
+	}
+
+#ifdef HAVE_SQLITE
+	try {
+		dynamic_cast<dtn::storage::SQLiteBundleStorage&>(storage);
+
+		// TODO: fix .size() implementation in SQLiteBundleStorage
+		//CPPUNIT_ASSERT((dtn::data::Length)p.getLength() <= storage.size());
+	} catch (const std::bad_cast&) {
+#endif
+		CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
+#ifdef HAVE_SQLITE
+	}
+#endif
+
+	TestEventListener<dtn::core::TimeEvent> evtl;
+
+	// raise time event to trigger expiration
+	dtn::core::TimeEvent::raise(timestamp + 21, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
+
+	// wait until the time event has been processed
+	{
+		ibrcommon::Thread::sleep(2000);
+
+		ibrcommon::MutexLock l(evtl.event_cond);
+		while (evtl.event_counter == 0) evtl.event_cond.wait(20000);
+	}
+
+	// special case for storages deferred mechanisms (SimpleBundleStorage)
+	// wait until all tasks of the storage are processed
+	storage.wait();
+
+	// should be empty now
+	CPPUNIT_ASSERT_EQUAL(true, storage.empty());
+
+	// expect storage size of zero
+	ssize = 0;
+
+#ifdef HAVE_SQLITE
+	try {
+		dynamic_cast<dtn::storage::SQLiteBundleStorage&>(storage);
+
+		// TODO: fix .size() implementation in SQLiteBundleStorage
+		//CPPUNIT_ASSERT((dtn::data::Length)p.getLength() <= storage.size());
+	} catch (const std::bad_cast&) {
+#endif
+		CPPUNIT_ASSERT_EQUAL(ssize, storage.size());
 #ifdef HAVE_SQLITE
 	}
 #endif

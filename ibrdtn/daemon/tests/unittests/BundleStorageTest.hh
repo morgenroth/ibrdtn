@@ -34,6 +34,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testEmpty(dtn::storage::BundleStorage &storage);
 		void testCount(dtn::storage::BundleStorage &storage);
 		void testSize(dtn::storage::BundleStorage &storage);
+		void testSizeExpiration(dtn::storage::BundleStorage &storage);
 		void testReleaseCustody(dtn::storage::BundleStorage &storage);
 		void testRaiseEvent(dtn::storage::BundleStorage &storage);
 		void testConcurrentStoreGet(dtn::storage::BundleStorage &storage);
@@ -66,6 +67,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testEmpty();
 		void testCount();
 		void testSize();
+		void testSizeExpiration();
 		void testReleaseCustody();
 		void testRaiseEvent();
 		void testConcurrentStoreGet();
@@ -99,6 +101,7 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		CPPUNIT_TEST_ALL_STORAGES(testEmpty);
 		CPPUNIT_TEST_ALL_STORAGES(testCount);
 		CPPUNIT_TEST_ALL_STORAGES(testSize);
+		CPPUNIT_TEST_ALL_STORAGES(testSizeExpiration);
 		CPPUNIT_TEST_ALL_STORAGES(testReleaseCustody);
 		CPPUNIT_TEST_ALL_STORAGES(testRaiseEvent);
 		CPPUNIT_TEST_ALL_STORAGES(testConcurrentStoreGet);

@@ -47,7 +47,7 @@ namespace dtn
 		const std::string SimpleBundleStorage::TAG = "SimpleBundleStorage";
 
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, const dtn::data::Length maxsize, const unsigned int buffer_limit)
-		 : BundleStorage(maxsize), _datastore(*this, workdir, buffer_limit), _metastore(*this)
+		 : BundleStorage(maxsize), _datastore(*this, workdir, buffer_limit), _metastore(this)
 		{
 		}
 
@@ -86,11 +86,8 @@ namespace dtn
 
 			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 
-			// decrement the storage size
-			freeSpace( _metastore.getSize(meta) );
-
-			// remove it
-			_metastore.remove(meta);
+			// remove bundle and decrement the storage size
+			freeSpace( _metastore.remove(meta) );
 		}
 
 		void SimpleBundleStorage::eventDataStorageRemoved(const dtn::storage::DataStorage::Hash &hash)
@@ -106,11 +103,8 @@ namespace dtn
 
 				if (it_hash == hash)
 				{
-					// decrement the storage size
-					freeSpace( _metastore.getSize(meta) );
-
-					// remove it
-					_metastore.remove(meta);
+					// remove bundle and decrement the storage size
+					freeSpace( _metastore.remove(meta) );
 
 					return;
 				}
@@ -135,7 +129,7 @@ namespace dtn
 				ds >> bundle;
 				
 				// allocate space for the bundle
-				dtn::data::Length bundle_size = static_cast<dtn::data::Length>( (*stream).tellg() );
+				const dtn::data::Length bundle_size = static_cast<dtn::data::Length>( (*stream).tellg() );
 				allocSpace(bundle_size);
 
 				// extract meta data
@@ -153,7 +147,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG_TAG(SimpleBundleStorage::TAG, 10) << "bundle restored " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::exception&) {
 				// report this error to the console
-				IBRCOMMON_LOGGER_TAG(SimpleBundleStorage::TAG, error) << "Unable to restore bundle in file " << hash.value << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_TAG(SimpleBundleStorage::TAG, error) << "Unable to restore bundle from file " << hash.value << IBRCOMMON_LOGGER_ENDL;
 
 				// error while reading file
 				_datastore.remove(hash);
@@ -350,7 +344,7 @@ namespace dtn
 		{
 			// get the bundle size
 			dtn::data::DefaultSerializer s(std::cout);
-			dtn::data::Length bundle_size = s.getLength(bundle);
+			const dtn::data::Length bundle_size = s.getLength(bundle);
 			
 			// allocate space for the bundle
 			allocSpace(bundle_size);

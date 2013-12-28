@@ -25,23 +25,13 @@ namespace dtn
 {
 	namespace storage
 	{
-		MetaStorage::MetaStorage(dtn::data::BundleList::Listener &expire_listener)
-		 : _expire_listener(expire_listener), _list(this)
+		MetaStorage::MetaStorage(dtn::data::BundleList::Listener *expire_listener)
+		 : _list(expire_listener)
 		{
 		}
 
 		MetaStorage::~MetaStorage()
 		{
-		}
-
-		void MetaStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
-		{
-			_expire_listener.eventBundleExpired(b);
-
-			// remove the bundle out of all lists
-			_priority_index.erase(b);
-			_bundle_lengths.erase(b);
-			_removal_set.erase(b);
 		}
 
 		bool MetaStorage::has(const dtn::data::MetaBundle &m) const throw ()
@@ -102,14 +92,31 @@ namespace dtn
 			_priority_index.insert(meta);
 		}
 
-		void MetaStorage::remove(const dtn::data::MetaBundle &meta) throw ()
+		dtn::data::Length MetaStorage::remove(const dtn::data::MetaBundle &meta) throw ()
 		{
-			_bundle_lengths.erase(meta);
+			// get length of the stored bundle
+			size_map::iterator it = _bundle_lengths.find(meta);
+
+			// nothing to remove
+			if (it == _bundle_lengths.end()) return 0;
+
+			// store number of bytes for return
+			dtn::data::Length ret = (*it).second;
+
+			// remove length entry
+			_bundle_lengths.erase(it);
+
+			// remove the bundle from removal set
 			_removal_set.erase(meta);
 
-			const dtn::data::MetaBundle mcopy = meta;
-			_list.remove(mcopy);
-			_priority_index.erase(mcopy);
+			// remove the bundle from BundleList
+			_list.remove(meta);
+
+			// remove bundle from priority index
+			_priority_index.erase(meta);
+
+			// return released number of bytes
+			return ret;
 		}
 
 		void MetaStorage::markRemoved(const dtn::data::MetaBundle &meta) throw ()
@@ -145,15 +152,6 @@ namespace dtn
 			_list.clear();
 			_bundle_lengths.clear();
 			_removal_set.clear();
-		}
-
-		dtn::data::Length MetaStorage::getSize(const dtn::data::MetaBundle &meta) throw (NoBundleFoundException)
-		{
-			size_map::const_iterator it = _bundle_lengths.find(meta);
-			if (it == _bundle_lengths.end())
-				throw NoBundleFoundException();
-
-			return (*it).second;
 		}
 	} /* namespace storage */
 } /* namespace dtn */

@@ -32,7 +32,7 @@ namespace dtn
 {
 	namespace storage
 	{
-		class MetaStorage : public dtn::data::BundleList::Listener
+		class MetaStorage
 		{
 		public:
 			struct CMP_BUNDLE_PRIORITY
@@ -54,8 +54,6 @@ namespace dtn
 		private:
 			priority_set _priority_index;
 
-			dtn::data::BundleList::Listener &_expire_listener;
-
 			// bundle list
 			dtn::data::BundleList _list;
 
@@ -66,7 +64,7 @@ namespace dtn
 			id_set _removal_set;
 
 		public:
-			MetaStorage(dtn::data::BundleList::Listener &expire_listener);
+			MetaStorage(dtn::data::BundleList::Listener *expire_listener);
 			virtual ~MetaStorage();
 
 			typedef priority_set::iterator iterator;
@@ -100,7 +98,11 @@ namespace dtn
 
 			void store(const dtn::data::MetaBundle &meta, const dtn::data::Length &space) throw ();
 
-			void remove(const dtn::data::MetaBundle &meta) throw ();
+			/**
+			 * Remove a data entry completely and returns the number of
+			 * released bytes.
+			 */
+			dtn::data::Length remove(const dtn::data::MetaBundle &meta) throw ();
 
 			/**
 			 * Mark a bundle as removed. Such a bundle is still reachable
@@ -117,14 +119,6 @@ namespace dtn
 			 * Delete all bundles
 			 */
 			void clear() throw ();
-
-			/**
-			 * Get the size of the bundle
-			 */
-			dtn::data::Length getSize(const dtn::data::MetaBundle &meta) throw (NoBundleFoundException);
-
-		protected:
-			virtual void eventBundleExpired(const dtn::data::MetaBundle &b) throw ();
 		};
 	} /* namespace storage */
 } /* namespace dtn */
