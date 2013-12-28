@@ -1,7 +1,7 @@
 package de.tubs.ibr.dtn.daemon;
 
 import java.util.ArrayList;
-
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -19,14 +19,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-
 import com.jjoe64.graphview.CustomLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphView.GraphViewData;
 import com.jjoe64.graphview.GraphViewSeries;
 import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
 import com.jjoe64.graphview.LineGraphView;
-
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonService;
@@ -35,7 +33,7 @@ import de.tubs.ibr.dtn.stats.StatsEntry;
 import de.tubs.ibr.dtn.stats.StatsLoader;
 import de.tubs.ibr.dtn.stats.StatsUtils;
 
-public abstract class StatsChartFragment extends Fragment {
+public abstract class StatsChartFragment extends Fragment implements CustomLabelFormatter {
     
     // The loader's unique id. Loader ids are specific to the Activity or
     // Fragment in which they reside.
@@ -122,17 +120,15 @@ public abstract class StatsChartFragment extends Fragment {
                 gs.resetData(dataset.toArray(new GraphViewData[dataset.size()]));
             }
         }
-        
-        final Context context = getActivity();
-        mGraphView.setCustomLabelFormatter(new CustomLabelFormatter() {
-            @Override
-            public String formatLabel(double value, boolean isValueX) {
-                if (isValueX) {
-                    return StatsUtils.formatTimeStampString(context, Double.valueOf(value * 1000.0).longValue());
-                }
-                return null;
-            }
-        });
+    }
+    
+    @SuppressLint("DefaultLocale")
+    @Override
+    public String formatLabel(double value, boolean isValueX) {
+        if (isValueX) {
+            return StatsUtils.formatTimeStampString(getActivity(), Double.valueOf(value * 1000.0).longValue());
+        }
+        return String.format("%.2f", value);
     }
     
     private LoaderManager.LoaderCallbacks<StatsEntry> mStatsLoader = new LoaderManager.LoaderCallbacks<StatsEntry>() {
@@ -173,6 +169,7 @@ public abstract class StatsChartFragment extends Fragment {
         
         // create a new LineGraphView
         mGraphView = new LineGraphView(getActivity(), "");
+        mGraphView.setCustomLabelFormatter(this);
         mChartView.addView(mGraphView);
         
         return v;

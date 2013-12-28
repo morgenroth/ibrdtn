@@ -3,6 +3,7 @@ package de.tubs.ibr.dtn.stats;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.Cursor;
 import android.text.format.DateUtils;
@@ -115,6 +116,29 @@ public class StatsUtils {
             // store the last entry for the next round
             last_entry = e;
         }
+    }
+    
+    @SuppressLint("DefaultLocale")
+    public static String formatByteString(long bytes, boolean si) {
+        int unit = si ? 1000 : 1024;
+        if (bytes < unit) return bytes + " B";
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+    }
+    
+    @SuppressLint("DefaultLocale")
+    public static String formatTimeString(double seconds) {
+        if (seconds > 86400) {
+            return String.format("%.0fd", seconds / 86400.0);
+        }
+        else if (seconds > 3600) {
+            return String.format("%.0fh", seconds / 3600.0);
+        }
+        else if (seconds > 60) {
+            return String.format("%.0fm", seconds / 60.0);
+        }
+        return String.format("%.0fs", seconds);
     }
     
     public static String formatTimeStampString(Context context, long when) {

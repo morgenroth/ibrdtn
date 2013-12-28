@@ -37,7 +37,7 @@ import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsLoader;
 import de.tubs.ibr.dtn.stats.StatsUtils;
 
-public class ConvergenceLayerStatsChartFragment extends Fragment {
+public class ConvergenceLayerStatsChartFragment extends Fragment implements CustomLabelFormatter {
     
     // The loader's unique id. Loader ids are specific to the Activity or
     // Fragment in which they reside.
@@ -123,17 +123,15 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
                 gs.resetData(dataset.toArray(new GraphViewData[dataset.size()]));
             }
         }
-        
-        final Context context = getActivity();
-        mGraphView.setCustomLabelFormatter(new CustomLabelFormatter() {
-            @Override
-            public String formatLabel(double value, boolean isValueX) {
-                if (isValueX) {
-                    return StatsUtils.formatTimeStampString(context, Double.valueOf(value * 1000.0).longValue());
-                }
-                return null;
-            }
-        });
+    }
+    
+    @Override
+    public String formatLabel(double value, boolean isValueX) {
+        if (isValueX) {
+            return StatsUtils.formatTimeStampString(getActivity(), Double.valueOf(value * 1000.0).longValue());
+        } else {
+            return StatsUtils.formatByteString(Double.valueOf(value).intValue(), true);
+        }
     }
     
     private LoaderManager.LoaderCallbacks<List<ConvergenceLayerStatsEntry>> mStatsLoader = new LoaderManager.LoaderCallbacks<List<ConvergenceLayerStatsEntry>>() {
@@ -167,6 +165,7 @@ public class ConvergenceLayerStatsChartFragment extends Fragment {
         
         // create a new LineGraphView
         mGraphView = new LineGraphView(getActivity(), "");
+        mGraphView.setCustomLabelFormatter(this);
         mChartView.addView(mGraphView);
         
         return v;
