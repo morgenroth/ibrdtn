@@ -6,7 +6,6 @@
      >
      
 	<RelativeLayout
-	    xmlns:android="http://schemas.android.com/apk/res/android"
 	    android:id="@+id/layoutTitleBar"
 	    android:layout_width="match_parent"
 	    android:layout_height="?android:attr/listPreferredItemHeight"
@@ -45,7 +44,7 @@
 	        android:layout_alignParentTop="true"
 	        android:layout_margin="2dp"
 	        android:background="@null"
-	        android:src="@drawable/icon"
+	        android:src="@drawable/ic_launcher"
 	        android:visibility="invisible" />
 	
 	</RelativeLayout>
