@@ -33,7 +33,8 @@
 #include <cassert>
 #endif
 
-#include <endian.h>
+// include C code for platform-independent endianess conversion
+#include "ibrdtn/data/endian.c"
 
 namespace dtn
 {
@@ -226,7 +227,7 @@ namespace dtn
 		dtn::data::Serializer& MutableSerializer::operator<<(const dtn::data::Number& value)
 		{
 			// convert to big endian if necessary
-			uint64_t be = htobe64(value.get<uint64_t>());
+			uint64_t be = GUINT64_TO_BE(value.get<uint64_t>());
 			_stream.write(reinterpret_cast<char*>(&be), sizeof(uint64_t));
 			return *this;
 		}

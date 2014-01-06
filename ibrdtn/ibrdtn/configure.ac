@@ -98,6 +98,9 @@ AS_IF([test "x$enable_android" = "xyes"], [
 
 	ibrcommon_LIBS="-librcommon"
 	AC_SUBST(ibrcommon_LIBS)
+	
+	# define have endian.h header
+	AC_DEFINE(HAVE_ENDIAN_H, [1], [])
 
 	# OpenSSL
 	AC_DEFINE(WITH_BUNDLE_SECURITY, [1], [])
@@ -142,6 +145,19 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_FUNC_MALLOC
 	AC_FUNC_MKTIME
 	AC_CHECK_FUNCS([gettimeofday sqrt])
+	
+	# at least one endian header is required on non-WIN32
+	AC_CHECK_HEADERS([endian.h machine/endian.h])
+	
+	dnl -----------------------------------------------
+	dnl check for glib support
+	dnl -----------------------------------------------
+	PKG_CHECK_MODULES([GLIB], [glib-2.0], [
+		AC_SUBST(GLIB_CFLAGS)
+		AC_SUBST(GLIB_LIBS)
+		AC_DEFINE(HAVE_GLIB, [1], ["glib library is available"])
+		REQUIRES_LIBS="$REQUIRES_LIBS glib-2.0"
+	])
 
 	dnl -----------------------------------------------
 	dnl optional parameter: DTN security support
@@ -158,11 +174,6 @@ AS_IF([test "x$enable_android" = "xyes"], [
 				AC_SUBST(OPENSSL_CFLAGS)
 				AC_SUBST(OPENSSL_LIBS)
 				REQUIRES_LIBS="$REQUIRES_LIBS openssl"
-				
-				# endian header is required
-				AC_CHECK_HEADERS([endian.h], [], [
-					AC_MSG_ERROR([endian.h is necessary to include bundle security protocol!])
-				])
 			], [
 				with_dtnsec="no"
 				AC_MSG_WARN([DTNSEC enabled, but no openssl libraries are found. Security extensions are disabled.])

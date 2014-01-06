@@ -24,7 +24,9 @@
 #include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/BundleString.h"
 #include <string.h>
-#include <endian.h>
+
+// include C code for platform-independent endianess conversion
+#include "ibrdtn/data/endian.c"
 
 namespace dtn
 {
@@ -133,12 +135,12 @@ namespace dtn
 			if (len < 25) return 0;
 
 			// add timestamp data
-			tmp = htobe64(timestamp.get<uint64_t>());
+			tmp = GUINT64_TO_BE(timestamp.get<uint64_t>());
 			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
 			data += sizeof(tmp);
 
 			// add sequencenumber
-			tmp = htobe64(sequencenumber.get<uint64_t>());
+			tmp = GUINT64_TO_BE(sequencenumber.get<uint64_t>());
 			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
 			data += sizeof(tmp);
 
@@ -147,7 +149,7 @@ namespace dtn
 			data += sizeof(uint8_t);
 
 			// add fragment offset
-			tmp = htobe64(fragmentoffset.get<uint64_t>());
+			tmp = GUINT64_TO_BE(fragmentoffset.get<uint64_t>());
 			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
 			data += sizeof(tmp);
 
