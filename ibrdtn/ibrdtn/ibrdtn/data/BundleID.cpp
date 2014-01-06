@@ -24,19 +24,7 @@
 #include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/BundleString.h"
 #include <string.h>
-
 #include <endian.h>
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#ifdef ANDROID
-#include <byteswap.h>
-#define GUINT64_TO_BE(x)  bswap_64(x)
-#else
-#include <bits/byteswap.h>
-#define GUINT64_TO_BE(x)  __bswap_64(x)
-#endif
-#else
-#define GUINT64_TO_BE(x) (x)
-#endif
 
 namespace dtn
 {
@@ -139,23 +127,34 @@ namespace dtn
 
 		size_t BundleID::raw(unsigned char *data, size_t len) const
 		{
-			// leave if there is not enough space
+			uint64_t tmp = 0;
+
+			// stop here if there is not enough space
 			if (len < 25) return 0;
 
-			(uint64_t&)(*data) = GUINT64_TO_BE(timestamp.get<uint64_t>());
-			data += 8;
+			// add timestamp data
+			tmp = htobe64(timestamp.get<uint64_t>());
+			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
+			data += sizeof(tmp);
 
-			(uint64_t&)(*data) = GUINT64_TO_BE(sequencenumber.get<uint64_t>());
-			data += 8;
+			// add sequencenumber
+			tmp = htobe64(sequencenumber.get<uint64_t>());
+			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
+			data += sizeof(tmp);
 
+			// add fragment yes/no
 			(uint8_t&)(*data) = isFragment() ? 1 : 0;
-			data += 1;
+			data += sizeof(uint8_t);
 
-			(uint64_t&)(*data) = GUINT64_TO_BE(fragmentoffset.get<uint64_t>());
-			data += 8;
+			// add fragment offset
+			tmp = htobe64(fragmentoffset.get<uint64_t>());
+			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
+			data += sizeof(tmp);
 
+			// get source endpoint string
 			const std::string s = source.getString();
 
+			// copy source endpoint into data array
 			::strncpy((char*)data, s.c_str(), len - 25);
 
 			if ((len - 25) < s.length()) {
