@@ -23,11 +23,27 @@
 #include "ibrdtn/data/BundleID.h"
 #include "ibrdtn/data/Number.h"
 #include "ibrdtn/data/BundleString.h"
+#include <string.h>
+
+#include <endian.h>
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#ifdef ANDROID
+#include <byteswap.h>
+#define GUINT64_TO_BE(x)  bswap_64(x)
+#else
+#include <bits/byteswap.h>
+#define GUINT64_TO_BE(x)  __bswap_64(x)
+#endif
+#else
+#define GUINT64_TO_BE(x) (x)
+#endif
 
 namespace dtn
 {
 	namespace data
 	{
+		const unsigned int BundleID::RAW_LENGTH_MAX = 25 + 1024 + 1 + 1024;
+
 		BundleID::BundleID()
 		 : source(), timestamp(0), sequencenumber(0), fragmentoffset(0), _fragment(false)
 		{
@@ -109,16 +125,44 @@ namespace dtn
 
 		void BundleID::addTo(ibrcommon::BloomFilter &bf) const
 		{
-			std::stringstream ss;
-			ss << (*this);
-			bf.insert(ss.str());
+			unsigned char data[RAW_LENGTH_MAX];
+			const size_t data_len = raw((unsigned char*)&data, RAW_LENGTH_MAX);
+			bf.insert((unsigned char*)&data, data_len);
 		}
 
 		bool BundleID::isIn(const ibrcommon::BloomFilter &bf) const
 		{
-			std::stringstream ss;
-			ss << (*this);
-			return bf.contains(ss.str());
+			unsigned char data[RAW_LENGTH_MAX];
+			const size_t data_len = raw((unsigned char*)&data, RAW_LENGTH_MAX);
+			return bf.contains((unsigned char*)&data, data_len);
+		}
+
+		size_t BundleID::raw(unsigned char *data, size_t len) const
+		{
+			// leave if there is not enough space
+			if (len < 25) return 0;
+
+			(uint64_t&)(*data) = GUINT64_TO_BE(timestamp.get<uint64_t>());
+			data += 8;
+
+			(uint64_t&)(*data) = GUINT64_TO_BE(sequencenumber.get<uint64_t>());
+			data += 8;
+
+			(uint8_t&)(*data) = isFragment() ? 1 : 0;
+			data += 1;
+
+			(uint64_t&)(*data) = GUINT64_TO_BE(fragmentoffset.get<uint64_t>());
+			data += 8;
+
+			const std::string s = source.getString();
+
+			::strncpy((char*)data, s.c_str(), len - 25);
+
+			if ((len - 25) < s.length()) {
+				return len;
+			} else {
+				return 25 + s.length();
+			}
 		}
 
 		std::string BundleID::toString() const

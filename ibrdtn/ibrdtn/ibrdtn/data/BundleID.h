@@ -69,7 +69,13 @@ namespace dtn
 			 */
 			bool isIn(const ibrcommon::BloomFilter &bf) const;
 
+			/**
+			 * Generate a RAW data array of the BundleID
+			 */
+			size_t raw(unsigned char *data, size_t len) const;
+
 		private:
+			static const unsigned int RAW_LENGTH_MAX;
 			bool _fragment;
 		};
 	}
