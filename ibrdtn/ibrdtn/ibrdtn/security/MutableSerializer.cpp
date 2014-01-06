@@ -33,23 +33,7 @@
 #include <cassert>
 #endif
 
-#ifdef HAVE_GLIB
-#include <glib.h>
-#else
-// needed for Debian Lenny whichs older clibrary does not provide htobe64(x)
 #include <endian.h>
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#ifdef ANDROID
-#include <byteswap.h>
-#define GUINT64_TO_BE(x)  bswap_64(x)
-#else
-#include <bits/byteswap.h>
-#define GUINT64_TO_BE(x)  __bswap_64(x)
-#endif
-#else
-#define GUINT64_TO_BE(x) (x)
-#endif
-#endif
 
 namespace dtn
 {
@@ -241,9 +225,8 @@ namespace dtn
 
 		dtn::data::Serializer& MutableSerializer::operator<<(const dtn::data::Number& value)
 		{
-			// endianess muahahaha ...
-			// and now we are gcc centric, even older versions work
-			uint64_t be = GUINT64_TO_BE(value.get<uint64_t>());
+			// convert to big endian if necessary
+			uint64_t be = htobe64(value.get<uint64_t>());
 			_stream.write(reinterpret_cast<char*>(&be), sizeof(uint64_t));
 			return *this;
 		}
