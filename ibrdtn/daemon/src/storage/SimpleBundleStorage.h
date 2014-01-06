@@ -167,7 +167,19 @@ namespace dtn
 				BundleContainer(const dtn::data::Bundle &b);
 				virtual ~BundleContainer();
 
-				std::string getKey() const;
+				/**
+				 * create a unique identifier from the bundle ID
+				 */
+				static std::string createId(const dtn::data::BundleID &id);
+
+				/**
+				 * get the unique identifier for this bundle container
+				 */
+				std::string getId() const;
+
+				/**
+				 * write the container to a stream object
+				 */
 				std::ostream& serialize(std::ostream &stream);
 
 			private:

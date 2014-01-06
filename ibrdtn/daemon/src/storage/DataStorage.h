@@ -52,7 +52,7 @@ namespace dtn
 			{
 			public:
 				virtual ~Container() = 0;
-				virtual std::string getKey() const = 0;
+				virtual std::string getId() const = 0;
 				virtual std::ostream& serialize(std::ostream &stream) = 0;
 			};
 
@@ -60,7 +60,7 @@ namespace dtn
 			{
 			public:
 				Hash();
-				Hash(const dtn::data::BundleID &id);
+				Hash(const std::string &value);
 				Hash(const DataStorage::Container &container);
 				Hash(const ibrcommon::File &file);
 				virtual ~Hash();
@@ -69,10 +69,6 @@ namespace dtn
 				bool operator<(const Hash &other) const;
 
 				std::string value;
-
-			private:
-				static std::string hash(const dtn::data::BundleID &id);
-				static std::string hash(const std::string &value);
 			};
 
 			class istream : public ibrcommon::File
