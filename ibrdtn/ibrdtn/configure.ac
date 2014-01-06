@@ -147,8 +147,14 @@ AS_IF([test "x$enable_android" = "xyes"], [
 	AC_CHECK_FUNCS([gettimeofday sqrt])
 	
 	# at least one endian header is required on non-WIN32
-	AC_CHECK_HEADERS([endian.h machine/endian.h])
-	
+	has_endian_h=no
+
+	# check POSIX endian.h
+	AC_CHECK_HEADERS([endian.h], [has_endian_h=yes])
+
+	# check OSX endian.h
+	AC_CHECK_HEADERS([machine/endian.h], [has_endian_h=yes])
+
 	dnl -----------------------------------------------
 	dnl check for glib support
 	dnl -----------------------------------------------
@@ -157,6 +163,12 @@ AS_IF([test "x$enable_android" = "xyes"], [
 		AC_SUBST(GLIB_LIBS)
 		AC_DEFINE(HAVE_GLIB, [1], ["glib library is available"])
 		REQUIRES_LIBS="$REQUIRES_LIBS glib-2.0"
+	], [
+		AS_IF([test "x$has_endian_h" = "xyes"],[
+			AC_MSG_NOTICE([use endian.h for endianess conversion])
+		],[
+			AC_MSG_ERROR([whether glib2 or endian.h was found])
+		])
 	])
 
 	dnl -----------------------------------------------
