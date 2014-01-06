@@ -159,21 +159,9 @@ AS_IF([test "x$enable_android" = "xyes"], [
 				AC_SUBST(OPENSSL_LIBS)
 				REQUIRES_LIBS="$REQUIRES_LIBS openssl"
 				
-				dnl -----------------------------------------------
-				dnl check for glib support
-				dnl -----------------------------------------------
-				PKG_CHECK_MODULES([GLIB], [glib-2.0], [
-					AC_SUBST(GLIB_CFLAGS)
-					AC_SUBST(GLIB_LIBS)
-					AC_DEFINE(HAVE_GLIB, [1], ["glib library is available"])
-					REQUIRES_LIBS="$REQUIRES_LIBS glib-2.0"
-				], [
-					# alternatively endian header is required
-					AC_CHECK_HEADERS([endian.h], [
-						AC_MSG_NOTICE([use endian.h instead of glib.])
-					], [
-						AC_MSG_ERROR([glib or endian.h is necessary to include bundle security protocol!])
-					])
+				# endian header is required
+				AC_CHECK_HEADERS([endian.h], [], [
+					AC_MSG_ERROR([endian.h is necessary to include bundle security protocol!])
 				])
 			], [
 				with_dtnsec="no"
