@@ -1,6 +1,7 @@
 package de.tubs.ibr.dtn.daemon;
 
 import java.util.ArrayList;
+
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
@@ -14,17 +15,20 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
 import android.util.SparseArray;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+
 import com.jjoe64.graphview.CustomLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GraphView.GraphViewData;
 import com.jjoe64.graphview.GraphViewSeries;
 import com.jjoe64.graphview.GraphViewSeries.GraphViewSeriesStyle;
 import com.jjoe64.graphview.LineGraphView;
+
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.service.DaemonService;
@@ -101,6 +105,9 @@ public abstract class StatsChartFragment extends Fragment implements CustomLabel
         // convert data into an structured array
         StatsUtils.convertData(getActivity(), stats, data, mAdapter);
         
+        // get line width in pixels
+        Float lineWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getActivity().getResources().getDisplayMetrics());
+        
         // add one series for each data-set
         for (int i = 0; i < charts_count; i++) {
             ArrayList<GraphViewData> dataset = data.get(i);
@@ -108,7 +115,8 @@ public abstract class StatsChartFragment extends Fragment implements CustomLabel
             GraphViewSeries gs = mData.get(i);
             
             if (gs == null) {
-                GraphViewSeriesStyle style = new GraphViewSeriesStyle(getResources().getColor(mAdapter.getDataColor(i)), 5);
+                GraphViewSeriesStyle style = new GraphViewSeriesStyle(getResources().getColor(mAdapter.getDataColor(i)), lineWidth.intValue());
+                
                 String text = StatsListAdapter.getRowTitle(getActivity(), i);
                 gs = new GraphViewSeries(text, style, dataset.toArray(new GraphViewData[dataset.size()]));
                 mGraphView.addSeries(gs);
@@ -169,6 +177,7 @@ public abstract class StatsChartFragment extends Fragment implements CustomLabel
         
         // create a new LineGraphView
         mGraphView = new LineGraphView(getActivity(), "");
+        mGraphView.getGraphViewStyle().setTextSize(getResources().getDimension(R.dimen.stats_axis_text));
         mGraphView.setCustomLabelFormatter(this);
         mChartView.addView(mGraphView);
         

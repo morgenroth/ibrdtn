@@ -16,6 +16,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -104,6 +105,9 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
         // convert data into an structured array
         StatsUtils.convertData(getActivity(), stats, series);
         
+        // get line width in pixels
+        Float lineWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 2, getActivity().getResources().getDisplayMetrics());
+        
         // add one series for each data-set
         for (Map.Entry<String, ArrayList<GraphViewData>> entry : series.entrySet()) {
             ArrayList<GraphViewData> dataset = entry.getValue();
@@ -112,7 +116,7 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
             
             if (gs == null) {
                 int color = getResources().getColor(mColorProvider.getColor(entry.getKey()));
-                GraphViewSeriesStyle style = new GraphViewSeriesStyle(color, 5);
+                GraphViewSeriesStyle style = new GraphViewSeriesStyle(color, lineWidth.intValue());
                 gs = new GraphViewSeries(entry.getKey(), style, dataset.toArray(new GraphViewData[dataset.size()]));
                 mGraphView.addSeries(gs);
                 mData.put(entry.getKey(), gs);
@@ -165,6 +169,7 @@ public class ConvergenceLayerStatsChartFragment extends Fragment implements Cust
         
         // create a new LineGraphView
         mGraphView = new LineGraphView(getActivity(), "");
+        mGraphView.getGraphViewStyle().setTextSize(getResources().getDimension(R.dimen.stats_axis_text));
         mGraphView.setCustomLabelFormatter(this);
         mChartView.addView(mGraphView);
         
