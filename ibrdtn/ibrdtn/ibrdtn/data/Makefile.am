@@ -30,7 +30,8 @@ h_sources = \
 	SchedulingBlock.h \
 	Number.h \
 	MemoryBundleSet.h \
-	BundleSetImpl.h
+	BundleSetImpl.h \
+	Endianess.h
 
 cc_sources = \
 	Serializer.cpp \

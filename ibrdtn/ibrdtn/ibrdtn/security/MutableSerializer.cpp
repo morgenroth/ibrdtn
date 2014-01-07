@@ -33,8 +33,8 @@
 #include <cassert>
 #endif
 
-// include C code for platform-independent endianess conversion
-#include "ibrdtn/data/endian.c"
+// include code for platform-independent endianess conversion
+#include "ibrdtn/data/Endianess.h"
 
 namespace dtn
 {

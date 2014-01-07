@@ -25,8 +25,8 @@
 #include "ibrdtn/data/BundleString.h"
 #include <string.h>
 
-// include C code for platform-independent endianess conversion
-#include "ibrdtn/data/endian.c"
+// include code for platform-independent endianess conversion
+#include "ibrdtn/data/Endianess.h"
 
 namespace dtn
 {

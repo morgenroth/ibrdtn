@@ -19,6 +19,10 @@
  *
  */
 
+// DO NOT INCLUDE THIS FILE IN A HEADER FILE!
+
+#include <stdint.h>
+
 #ifndef IBRDTN_ENDIAN_C_
 #define IBRDTN_ENDIAN_C_
 
