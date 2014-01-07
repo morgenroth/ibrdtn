@@ -73,8 +73,9 @@ AC_ARG_ENABLE([win32],
 		AC_DEFINE(WIN32, [1], [Compiling for Win32!])
 		AC_DEFINE(WINVER, [0x0601], [Minimum platform is Windows 7])
 		AC_DEFINE(_WIN32_WINNT, [0x0601], [Minimum platform is Windows 7])
-
-		# do win32 related library checking
+		
+		# set activate win32 check exceptions
+		enable_win32=yes
 	])
 
 # ANDROID configuration
@@ -167,7 +168,10 @@ AS_IF([test "x$enable_android" = "xyes"], [
 		AS_IF([test "x$has_endian_h" = "xyes"],[
 			AC_MSG_NOTICE([use endian.h for endianess conversion])
 		],[
-			AC_MSG_ERROR([whether glib2 or endian.h was found])
+			# stop configure on non-win32 platforms
+			AS_IF([test "x$enable_win32" = "xyes"], [], [
+				AC_MSG_ERROR([whether glib2 or endian.h was found])
+			])
 		])
 	])
 
