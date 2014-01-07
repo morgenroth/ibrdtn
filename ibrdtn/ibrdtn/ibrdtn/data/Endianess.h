@@ -23,8 +23,18 @@
 
 #include <stdint.h>
 
-#ifndef IBRDTN_ENDIAN_C_
-#define IBRDTN_ENDIAN_C_
+#ifndef ENDIANESS_H_
+#define ENDIANESS_H_
+
+namespace dtn
+{
+	namespace data
+	{
+		uint16_t bswap16(uint16_t x);
+		uint32_t bswap32(uint32_t x);
+		uint64_t bswap64(uint64_t x);
+	}
+}
 
 #ifdef HAVE_GLIB
 	// GLIB provides optimized macros for endianess conversion
@@ -52,44 +62,21 @@
 		#ifdef htobe16
 		#define GUINT16_TO_BE(x) htobe16(x)
 		#else
-			uint16_t GUINT16_TO_BE(uint16_t x) {
-				union { uint16_t u16; uint8_t v[2]; } ret;
-				ret.v[0] = (uint8_t)(x >> 8);
-				ret.v[1] = (uint8_t) x;
-				return ret.u16;
-			}
+		#define GUINT16_TO_BE(x) dtn::data::bswap16(x)
 		#endif
 
 		// if POSIX htobe32 is available use it
 		#ifdef htobe32
 		#define GUINT32_TO_BE(x) htobe32(x)
 		#else
-			uint32_t GUINT32_TO_BE(uint32_t x) {
-				union { uint32_t u32; uint8_t v[4]; } ret;
-				ret.v[0] = (uint8_t)(x >> 24);
-				ret.v[1] = (uint8_t)(x >> 16);
-				ret.v[2] = (uint8_t)(x >> 8);
-				ret.v[3] = (uint8_t) x;
-				return ret.u32;
-			}
+		#define GUINT32_TO_BE(x) dtn::data::bswap32(x)
 		#endif
 
 		// if POSIX htobe64 is available use it
 		#ifdef htobe64
 		#define GUINT64_TO_BE(x) htobe64(x)
 		#else
-			uint64_t GUINT64_TO_BE(uint64_t x) {
-				union { uint64_t u64; uint8_t v[8]; } ret;
-				ret.v[0] = (uint8_t)(x >> 56);
-				ret.v[1] = (uint8_t)(x >> 48);
-				ret.v[2] = (uint8_t)(x >> 40);
-				ret.v[3] = (uint8_t)(x >> 32);
-				ret.v[4] = (uint8_t)(x >> 24);
-				ret.v[5] = (uint8_t)(x >> 16);
-				ret.v[6] = (uint8_t)(x >> 8);
-				ret.v[7] = (uint8_t) x;
-				return ret.u64;
-			}
+		#define GUINT64_TO_BE(x) dtn::data::bswap64(x)
 		#endif
 	#else
 		// system byte order is equal to network byte order
@@ -100,4 +87,4 @@
 	#endif
 #endif
 
-#endif /* IBRDTN_ENDIAN_C_ */
+#endif /* ENDIANESS_H_ */

@@ -31,7 +31,8 @@ h_sources = \
 	Number.h \
 	MemoryBundleSet.h \
 	BundleSetImpl.h \
-	Endianess.h
+	Endianess.h \
+	Endianess.cpp
 
 cc_sources = \
 	Serializer.cpp \
