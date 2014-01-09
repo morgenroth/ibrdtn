@@ -51,7 +51,8 @@ namespace dtn
 			{
 				SEGMENT_FIRST = 0x02,
 				SEGMENT_LAST = 0x01,
-				SEGMENT_MIDDLE = 0x00
+				SEGMENT_MIDDLE = 0x00,
+				NACK_TEMPORARY = 0x04
 			};
 
 			class Parameter

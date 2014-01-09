@@ -232,10 +232,18 @@ namespace dtn
 					// decode the header (1 byte)
 					// IGNORE: compat: 00
 
+					// reset flags to zero
+					flags = 0;
+
 					// type: 01 = DATA, 10 = DISCO, 11 = ACK, 00 = NACK
 					switch (tmp[0] & (0x03 << 4)) {
 					case (0x01 << 4):
 						type = DatagramConvergenceLayer::HEADER_SEGMENT;
+
+						// flags: 10 = first, 00 = middle, 01 = last, 11 = both
+						if (tmp[0] & 0x02) flags |= DatagramService::SEGMENT_FIRST;
+						if (tmp[0] & 0x01) flags |= DatagramService::SEGMENT_LAST;
+
 						break;
 					case (0x02 << 4):
 						type = DatagramConvergenceLayer::HEADER_BROADCAST;
@@ -245,16 +253,15 @@ namespace dtn
 						break;
 					default:
 						type = DatagramConvergenceLayer::HEADER_NACK;
+
+						// flags: 10 = temporary
+						if (tmp[0] & 0x02) flags |= DatagramService::NACK_TEMPORARY;
+
 						break;
 					}
 
 					// seq.no: xx (2 bit)
 					seqno = (tmp[0] & (0x03 << 2)) >> 2;
-
-					// flags: 10 = first, 00 = middle, 01 = last, 11 = both
-					flags = 0;
-					if (tmp[0] & 0x02) flags |= DatagramService::SEGMENT_FIRST;
-					if (tmp[0] & 0x01) flags |= DatagramService::SEGMENT_LAST;
 
 					if (ret > 1) {
 						// copy payload into the buffer

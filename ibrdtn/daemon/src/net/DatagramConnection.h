@@ -45,6 +45,7 @@ namespace dtn
 			virtual ~DatagramConnectionCallback() {};
 			virtual void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, const dtn::data::Length &len) throw (DatagramException) = 0;
 			virtual void callback_ack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException) = 0;
+			virtual void callback_nack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException) = 0;
 
 			virtual void connectionUp(const DatagramConnection *conn) = 0;
 			virtual void connectionDown(const DatagramConnection *conn) = 0;
@@ -91,6 +92,11 @@ namespace dtn
 			void ack(const unsigned int &seqno);
 
 			/**
+			 * This method is called by the DatagramCL, if an permanent NACK is received.
+			 */
+			void nack(const unsigned int &seqno, const bool temporary);
+
+			/**
 			 * Assign a peer EID to this connection
 			 * @param peer The EID of this peer.
 			 */
@@ -122,13 +128,23 @@ namespace dtn
 				 * @param buf Buffer with received data
 				 * @param len Length of the buffer
 				 */
-				void queue(const char *buf, const dtn::data::Length &len) throw (DatagramException);
+				void queue(const char *buf, const dtn::data::Length &len, bool isFirst) throw (DatagramException);
 
 				/**
 				 * Close the stream to terminate all blocking
 				 * calls on it.
 				 */
 				void close();
+
+				/**
+				 * Skip the outgoing frame set
+				 */
+				void skip();
+
+				/**
+				 * Reject the current incoming frame set
+				 */
+				void reject();
 
 			protected:
 				virtual int sync();
@@ -138,6 +154,9 @@ namespace dtn
 			private:
 				// buffer size and maximum message size
 				const dtn::data::Length _buf_size;
+
+				// true, if the next segment if the first of the bundle
+				bool _first_segment;
 
 				// will be set to true if the next segment is the last
 				// of the bundle
@@ -150,6 +169,9 @@ namespace dtn
 
 				// the number of bytes available in the queue buffer
 				dtn::data::Length _queue_buf_len;
+
+				// true if the frame in the queue is the head of the frame-set
+				bool _queue_buf_head;
 
 				// conditional to lock the queue buffer and the
 				// corresponding length variable
@@ -167,6 +189,14 @@ namespace dtn
 				// this stream
 				bool _abort;
 
+				// this variable is set to true if the outgoing
+				// frame set should be skipped
+				bool _skip;
+
+				// this variable is set to true if the incoming
+				// frame set should skipped
+				bool _reject;
+
 				// callback to the corresponding connection object
 				DatagramConnection &_callback;
 			};
@@ -176,6 +206,11 @@ namespace dtn
 			public:
 				Sender(DatagramConnection &conn, Stream &stream);
 				~Sender();
+
+				/**
+				 * skip the current bundle
+				 */
+				void skip() throw ();
 
 				void run() throw ();
 				void finally() throw ();
@@ -188,6 +223,8 @@ namespace dtn
 
 				// callback to the corresponding connection object
 				DatagramConnection &_connection;
+
+				bool _skip;
 			};
 
 			/**

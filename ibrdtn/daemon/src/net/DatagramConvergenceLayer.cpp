@@ -124,6 +124,15 @@ namespace dtn
 			_service->send(HEADER_ACK, 0, seqno, destination, NULL, 0);
 		}
 
+		void DatagramConvergenceLayer::callback_nack(DatagramConnection&, const unsigned int &seqno, const std::string &destination) throw (DatagramException)
+		{
+			// only on sender at once
+			ibrcommon::MutexLock l(_send_lock);
+
+			// forward the send request to DatagramService
+			_service->send(HEADER_NACK, 0, seqno, destination, NULL, 0);
+		}
+
 		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const dtn::net::BundleTransfer &job)
 		{
 			// do not queue any new jobs if the convergence layer goes down
@@ -364,10 +373,29 @@ namespace dtn
 						// Connection instance for this address
 						DatagramConnection& connection = getConnection(address, false);
 
+						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 20) << "ack received for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
+
 						// Decide in which queue to write based on the src address
 						connection.ack(seqno);
 					} catch (const ConnectionNotAvailableException &ex) {
 						// connection does not exists - ignore the ACK
+					}
+				}
+				else if ( type == HEADER_NACK )
+				{
+					// the peer refused the current bundle
+					try {
+						ibrcommon::RWLock rwl(_mutex_connection, ibrcommon::RWMutex::LOCK_READONLY);
+
+						// Connection instance for this address
+						DatagramConnection& connection = getConnection(address, false);
+
+						IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 20) << "nack received for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
+
+						// Decide in which queue to write based on the src address
+						connection.nack(seqno, flags & DatagramService::NACK_TEMPORARY);
+					} catch (const ConnectionNotAvailableException &ex) {
+						// connection does not exists - ignore the NACK
 					}
 				}
 

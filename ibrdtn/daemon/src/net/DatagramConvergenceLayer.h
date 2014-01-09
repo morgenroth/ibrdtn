@@ -95,6 +95,8 @@ namespace dtn
 
 			void callback_ack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException);
 
+			void callback_nack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException);
+
 			void connectionUp(const DatagramConnection *conn);
 			void connectionDown(const DatagramConnection *conn);
 
