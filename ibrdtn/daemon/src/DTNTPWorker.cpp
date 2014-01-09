@@ -83,7 +83,7 @@ namespace dtn
 					dtn::utils::Clock::setRating(1.0);
 				} else {
 					dtn::utils::Clock::setRating(0.0);
-					IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be wrong. Expiration disabled." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "Expiration limited due to wrong local clock." << IBRCOMMON_LOGGER_ENDL;
 				}
 			} else {
 				dtn::utils::Clock::setRating(0.0);
@@ -227,7 +227,7 @@ namespace dtn
 						if (t.getTimestamp() > 0)
 						{
 							dtn::utils::Clock::setRating(1.0);
-							IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be okay again. Expiration enabled." << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_TAG(DTNTPWorker::TAG, warning) << "The local clock seems to be okay again." << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				}
