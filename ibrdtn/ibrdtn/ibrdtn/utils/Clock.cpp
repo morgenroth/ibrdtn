@@ -33,7 +33,6 @@ namespace dtn
 	{
 		int Clock::_timezone = 0;
 		double Clock::_rating = 1.0;
-		bool Clock::_badclock = false;
 
 		struct timeval Clock::_offset;
 		bool Clock::_offset_init = false;
@@ -56,17 +55,6 @@ namespace dtn
 
 		Clock::~Clock()
 		{
-		}
-
-		bool Clock::isBad()
-		{
-			return _badclock || (Clock::getRating() == 0);
-		}
-
-		void Clock::setBad(bool val)
-		{
-			if (val) Clock::setRating(0.0);
-			_badclock = val;
 		}
 
 		int Clock::getTimezone()
@@ -104,19 +92,20 @@ namespace dtn
 
 		dtn::data::Timestamp Clock::getExpireTime(const dtn::data::Bundle &b)
 		{
-			try {
-				// use the AgeBlock to verify the age
-				const dtn::data::AgeBlock &agebl = b.find<dtn::data::AgeBlock>();
-				dtn::data::Number seconds_left = 0;
-				if (b.lifetime > agebl.getSeconds()) {
-					seconds_left = b.lifetime - agebl.getSeconds();
-				}
-				return getTime() + seconds_left;
-			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
-
-			if (dtn::utils::Clock::isBad())
+			if (b.timestamp == 0)
 			{
-				return __getExpireTime(getTime(), b.lifetime);
+				try {
+					// use the AgeBlock to verify the age
+					const dtn::data::AgeBlock &agebl = b.find<dtn::data::AgeBlock>();
+					dtn::data::Number seconds_left = 0;
+					if (b.lifetime > agebl.getSeconds()) {
+						seconds_left = b.lifetime - agebl.getSeconds();
+					}
+					return getTime() + seconds_left;
+				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+					// if there is no AgeBlock this bundle is not valid
+					return 0;
+				}
 			}
 
 			return __getExpireTime(b.timestamp, b.lifetime);
@@ -132,65 +121,49 @@ namespace dtn
 			return __getExpireTime(getTime(), lifetime);
 		}
 
-		dtn::data::Number Clock::getLifetime(const dtn::data::BundleID &id, const dtn::data::Timestamp &expiretime)
-		{
-			// if the timestamp of the bundle is larger than the expiretime
-			// the bundle is invalid
-			if (id.timestamp > expiretime) return 0;
-
-			// else the lifetime is the difference between the timestamp and the expiretime
-			return id.timestamp - expiretime;
-		}
-
 		dtn::data::Number Clock::__getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
-			// if the quality of time is zero, return standard expire time
-			if (Clock::getRating() == 0) return timestamp + lifetime;
+			// if our own clock or the bundles timestamp is invalid use the current timestamp
+			if ((getRating() == 0.0) || timestamp == 0) return getTime() + lifetime;
 
-			// calculate sigma based on the quality of time and the original lifetime
-			double sigma_error = lifetime.get<double>() * (1 - Clock::getRating());
-
-			// expiration adjusted by quality of time
-			return timestamp + lifetime + dtn::data::Number(static_cast<dtn::data::Size>(sigma_error));
+			return timestamp + lifetime;
 		}
 
 		bool Clock::isExpired(const dtn::data::Bundle &b)
 		{
-			// use the AgeBlock to verify the age
-			try {
-				const dtn::data::AgeBlock &agebl = b.find<dtn::data::AgeBlock>();
-				return (b.lifetime < agebl.getSeconds());
-			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+			if (b.timestamp == 0)
+			{
+				// use the AgeBlock to verify the age
+				try {
+					const dtn::data::AgeBlock &agebl = b.find<dtn::data::AgeBlock>();
+					return (b.lifetime < agebl.getSeconds());
+				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+					// if there is no AgeBlock this bundle is not valid
+					return true;
+				}
+			}
 
-			return __isExpired(b.timestamp, b.lifetime);
+			return isExpired(b.timestamp, b.lifetime);
 		}
 
 		bool Clock::isExpired(const dtn::data::MetaBundle &m)
 		{
-			// if the quality of time is zero or the clock is bad, then never expire a bundle
-			if (dtn::utils::Clock::isBad()) return false;
-
 			// expiration adjusted by quality of time
 			if ( Clock::getTime() > m.expiretime ) return true;
 
 			return false;
 		}
 
-		bool Clock::__isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
+		bool Clock::isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime)
 		{
-			// if the quality of time is zero or the clock is bad, then never expire a bundle
-			if (dtn::utils::Clock::isBad()) return false;
+			// can not check invalid timestamp
+			// assume bundle has an age block and trust on later checks
+			if (timestamp == 0) return false;
 
-			// calculate sigma based on the quality of time and the original lifetime
-			const double sigma_error = lifetime.get<double>() * (1 - Clock::getRating());
+			// disable expiration if clock rating is too bad
+			if (getRating() == 0.0) return false;
 
-			// calculate adjusted expire time
-			const dtn::data::Timestamp expiretime = timestamp + lifetime + dtn::data::Number(static_cast<dtn::data::Size>(sigma_error));
-
-			// expiration adjusted by quality of time
-			if ( Clock::getTime() > expiretime) return true;
-
-			return false;
+			return Clock::getTime() > __getExpireTime(timestamp, lifetime);
 		}
 
 		dtn::data::Timestamp Clock::getTime()

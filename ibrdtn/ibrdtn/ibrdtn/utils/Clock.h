@@ -90,6 +90,12 @@ namespace dtn
 			static dtn::data::Timestamp getTime();
 
 			/**
+			 * Check if a timestamp is expired
+			 * @return True if the timestamp is expired
+			 */
+			static bool isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime);
+
+			/**
 			 * Check if a bundle is expired
 			 * @return True if the bundle is expired
 			 */
@@ -119,12 +125,6 @@ namespace dtn
 			 * @return A DTN timestamp.
 			 */
 			static dtn::data::Timestamp getExpireTime(const dtn::data::Number &lifetime);
-
-			/**
-			 * Returns the calculated lifetime in seconds based on the BundleID and the
-			 * expiretime
-			 */
-			static dtn::data::Number getLifetime(const dtn::data::BundleID &id, const dtn::data::Timestamp &expiretime);
 
 			/**
 			 * Tells the internal clock the offset to the common network time.
@@ -159,18 +159,6 @@ namespace dtn
 			static const struct timeval& getOffset();
 
 			static const dtn::data::Timestamp TIMEVAL_CONVERSION;
-
-			/**
-			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
-			 * to detect expiration.
-			 * @return True, if the local clock is marked as bad
-			 */
-			static bool isBad();
-
-			/**
-			 * Set the bad state of the clock returned by Clock::isBad()
-			 */
-			static void setBad(bool val);
 
 			/**
 			 * Specify a timezone offset in hours
@@ -229,12 +217,6 @@ namespace dtn
 			static double _rating;
 
 			/**
-			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
-			 * to detect expiration.
-			 */
-			static bool _badclock;
-
-			/**
 			 * if set to true, the function settimeofday() and setOffset() will modify the clock of the host
 			 * instead of storing the local offset.
 			 */
@@ -243,7 +225,6 @@ namespace dtn
 			Clock();
 			virtual ~Clock();
 
-			static bool __isExpired(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime = 0);
 			static dtn::data::Timestamp __getExpireTime(const dtn::data::Timestamp &timestamp, const dtn::data::Number &lifetime);
 
 			static struct timeval _offset;
