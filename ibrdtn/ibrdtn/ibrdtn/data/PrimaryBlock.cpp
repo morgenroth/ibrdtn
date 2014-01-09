@@ -29,13 +29,14 @@ namespace dtn
 	namespace data
 	{
 		Number PrimaryBlock::__sequencenumber = 0;
+		Number PrimaryBlock::__sequencenumber_abs = 0;
 		Timestamp PrimaryBlock::__last_timestamp = 0;
 		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
-		PrimaryBlock::PrimaryBlock()
+		PrimaryBlock::PrimaryBlock(bool zero_timestamp)
 		 : lifetime(3600), appdatalength(0)
 		{
-			relabel();
+			relabel(zero_timestamp);
 
 			// by default set destination as singleton bit
 			set(DESTINATION_IS_SINGLETON, true);
@@ -122,25 +123,31 @@ namespace dtn
 			return (const BundleID&)*this > other;
 		}
 
-		void PrimaryBlock::relabel()
+		void PrimaryBlock::relabel(bool zero_timestamp)
 		{
-			if (dtn::utils::Clock::isBad())
+			if ((dtn::utils::Clock::getRating() > 0.0) && !zero_timestamp)
 			{
-				timestamp = 0;
+				timestamp = dtn::utils::Clock::getTime();
+
+				ibrcommon::MutexLock l(__sequence_lock);
+				if (timestamp > __last_timestamp) {
+					__last_timestamp = timestamp;
+					__sequencenumber = 0;
+				}
+
+				sequencenumber = __sequencenumber;
+				__sequencenumber++;
 			}
 			else
 			{
-				timestamp = dtn::utils::Clock::getTime();
-			}
+				// set timestamp to zero
+				timestamp = 0;
 
-			ibrcommon::MutexLock l(__sequence_lock);
-			if (timestamp > __last_timestamp) {
-				__last_timestamp = timestamp;
-				__sequencenumber = 0;
+				// assign absolute sequence number
+				ibrcommon::MutexLock l(__sequence_lock);
+				sequencenumber = __sequencenumber_abs;
+				__sequencenumber_abs++;
 			}
-
-			sequencenumber = __sequencenumber;
-			__sequencenumber++;
 		}
 	}
 }

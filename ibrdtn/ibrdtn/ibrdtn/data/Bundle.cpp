@@ -30,7 +30,8 @@ namespace dtn
 {
 	namespace data
 	{
-		Bundle::Bundle()
+		Bundle::Bundle(bool zero_timestamp)
+		 : PrimaryBlock(zero_timestamp)
 		{
 			// if the timestamp is not set, add a ageblock
 			if (timestamp == 0)

@@ -93,7 +93,7 @@ namespace dtn
 				IBRDTN_REQUEST_COMPRESSION = 1 << 0x1F
 			};
 
-			PrimaryBlock();
+			PrimaryBlock(bool zero_timestamp = false);
 			virtual ~PrimaryBlock();
 
 			void set(FLAGS flag, bool value);
@@ -108,7 +108,7 @@ namespace dtn
 			/**
 			 * relabel the primary block with a new sequence number and a timestamp
 			 */
-			void relabel();
+			void relabel(bool zero_timestamp = false);
 
 			bool operator==(const PrimaryBlock& other) const;
 			bool operator!=(const PrimaryBlock& other) const;
@@ -126,6 +126,7 @@ namespace dtn
 		private:
 			static ibrcommon::Mutex __sequence_lock;
 			static Number __sequencenumber;
+			static Number __sequencenumber_abs;
 			static Timestamp __last_timestamp;
 		};
 	}
