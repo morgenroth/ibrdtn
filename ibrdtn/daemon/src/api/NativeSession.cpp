@@ -317,9 +317,6 @@ namespace dtn
 
 		dtn::data::BundleID NativeSession::send(RegisterIndex ri) throw ()
 		{
-			// create a new sequence number
-			_bundle[ri].relabel();
-
 			// forward the bundle to the storage processing
 			dtn::api::Registration::processIncomingBundle(_endpoint, _bundle[ri]);
 

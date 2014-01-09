@@ -512,14 +512,10 @@ namespace dtn
 			// check address fields for "api:me", this has to be replaced
 			static const dtn::data::EID clienteid("api:me");
 
-			// set the source address to the sending EID
-			bundle.source = source;
+			// create a new sequence number
+			bundle.relabel();
 
-			if (bundle.destination == clienteid) bundle.destination = source;
-			if (bundle.reportto == clienteid) bundle.reportto = source;
-			if (bundle.custodian == clienteid) bundle.custodian = source;
-
-			// if the timestamp is not set, add a ageblock
+			// if the relabeling results in a zero timestamp, add an ageblock
 			if (bundle.timestamp == 0)
 			{
 				// check for ageblock
@@ -530,6 +526,13 @@ namespace dtn
 					bundle.push_front<dtn::data::AgeBlock>();
 				}
 			}
+
+			// set the source address to the sending EID
+			bundle.source = source;
+
+			if (bundle.destination == clienteid) bundle.destination = source;
+			if (bundle.reportto == clienteid) bundle.reportto = source;
+			if (bundle.custodian == clienteid) bundle.custodian = source;
 
 			// modify TrackingBlock
 			try {

@@ -175,9 +175,6 @@ namespace dtn
 					dtn::data::Bundle bundle;
 					dtn::data::DefaultDeserializer(_connection) >> bundle;
 
-					// create a new sequence number
-					bundle.relabel();
-
 					// process the new bundle
 					dtn::api::Registration::processIncomingBundle(_eid, bundle);
 				}

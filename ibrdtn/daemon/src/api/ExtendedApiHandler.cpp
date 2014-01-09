@@ -520,9 +520,6 @@ namespace dtn
 						}
 						else if (cmd[1] == "send")
 						{
-							// create a new sequence number
-							_bundle_reg.relabel();
-
 							// forward the bundle to the storage processing
 							dtn::api::Registration::processIncomingBundle(_endpoint, _bundle_reg);
 
