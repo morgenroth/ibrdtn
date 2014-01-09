@@ -451,6 +451,13 @@ namespace dtn
 
 		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)
 		{
+			// check if the bundle is expired
+			if (dtn::utils::Clock::isExpired(p.timestamp, p.lifetime))
+			{
+				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: bundle has expired (" << p.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("bundle is expired");
+			}
+
 			// if we do not forward bundles
 			if (!BundleCore::forwarding)
 			{
@@ -535,8 +542,8 @@ namespace dtn
 				throw dtn::data::Validator::RejectedException("bundle destination is none");
 			}
 
-			// check if the bundle is expired
-			if (dtn::utils::Clock::isExpired(b))
+			// check bundle expiration again for bundles with age block
+			if ((b.timestamp == 0) && dtn::utils::Clock::isExpired(b))
 			{
 				IBRCOMMON_LOGGER_TAG("BundleCore", warning) << "bundle rejected: bundle has expired (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle is expired");
