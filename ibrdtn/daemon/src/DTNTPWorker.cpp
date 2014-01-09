@@ -320,11 +320,8 @@ namespace dtn
 				p.state = SyncPeer::STATE_PREPARE;
 			}
 
-			// send a time sync bundle
-			dtn::data::Bundle b;
-
-			// add an age block
-			b.push_back<dtn::data::AgeBlock>();
+			// generate a time sync bundle with a zero timestamp (+age block)
+			dtn::data::Bundle b(true);
 
 			try {
 				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
@@ -498,7 +495,9 @@ namespace dtn
 					case TimeSyncMessage::TIMESYNC_REQUEST:
 					{
 						dtn::data::Bundle response = b;
-						response.relabel();
+
+						// relabel with a zero timestamp
+						response.relabel(true);
 
 						// set the lifetime of the bundle to 60 seconds
 						response.lifetime = 60;

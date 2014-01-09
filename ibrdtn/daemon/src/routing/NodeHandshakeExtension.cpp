@@ -249,8 +249,8 @@ namespace dtn
 
 			IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake query from " << origin.getString() << ": " << request.toString() << IBRCOMMON_LOGGER_ENDL;
 
-			// create a new bundle
-			dtn::data::Bundle req;
+			// create a new bundle with a zero timestamp (+age block)
+			dtn::data::Bundle req(true);
 
 			// set the source of the bundle
 			req.source = getWorkerURI();
@@ -282,9 +282,6 @@ namespace dtn
 			dtn::data::ScopeControlHopLimitBlock &schl = req.push_front<dtn::data::ScopeControlHopLimitBlock>();
 			schl.setLimit(1);
 
-			// add an age block (to prevent expiring due to wrong clocks)
-			req.push_front<dtn::data::AgeBlock>();
-
 			// send the bundle
 			transmit(req);
 		}
@@ -315,8 +312,8 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(NodeHandshakeExtension::TAG, 15) << "handshake reply to " << bundle.source.getString() << ": " << response.toString() << IBRCOMMON_LOGGER_ENDL;
 
-				// create a new bundle
-				dtn::data::Bundle answer;
+				// create a new bundle with a zero timestamp (+age block)
+				dtn::data::Bundle answer(true);
 
 				// set the source of the bundle
 				answer.source = _endpoint.getWorkerURI();
@@ -344,9 +341,6 @@ namespace dtn
 				// add a schl block
 				dtn::data::ScopeControlHopLimitBlock &schl = answer.push_front<dtn::data::ScopeControlHopLimitBlock>();
 				schl.setLimit(1);
-
-				// add an age block (to prevent expiring due to wrong clocks)
-				answer.push_front<dtn::data::AgeBlock>();
 
 #ifdef WITH_COMPRESSION
 				// compress bundle if requested
