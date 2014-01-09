@@ -366,7 +366,7 @@ namespace dtn
 
 			_doapi = doapi;
 			_disco._enabled = disco;
-			if (badclock) dtn::utils::Clock::setBad(true);
+			if (badclock) dtn::utils::Clock::setRating(0.0);
 			_logger._timestamps = timestamp;
 		}
 
