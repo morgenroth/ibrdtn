@@ -133,9 +133,6 @@ namespace dtn
 
 		void BundleCore::onConfigurationChanged(const dtn::daemon::Configuration &config) throw ()
 		{
-			// set the timezone
-			dtn::utils::Clock::setTimezone(config.getTimezone());
-
 			// set local eid
 			dtn::core::BundleCore::local = config.getNodename();
 			IBRCOMMON_LOGGER_TAG(BundleCore::TAG, info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;

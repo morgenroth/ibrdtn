@@ -36,7 +36,6 @@ fi
 create_file $CONFFILE
 
 add_param $CONFFILE "ibrdtn.main.uri" "local_uri"
-add_param $CONFFILE "ibrdtn.main.timezone" "timezone"
 add_param $CONFFILE "ibrdtn.main.routing" "routing"
 add_param $CONFFILE "ibrdtn.main.fragmentation" "fragmentation"
 

@@ -893,11 +893,6 @@ namespace dtn
 			return _nodes;
 		}
 
-		int Configuration::getTimezone() const
-		{
-			return _conf.read<int>( "timezone", 0 );
-		}
-
 		ibrcommon::File Configuration::getPath(string name) const
 		{
 			stringstream ss;

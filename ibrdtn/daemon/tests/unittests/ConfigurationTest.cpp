@@ -64,13 +64,6 @@ void ConfigurationTest::testGetNodename()
 	CPPUNIT_ASSERT_EQUAL(std::string("dtn://node.dtn"), conf.getNodename());
 }
 
-void ConfigurationTest::testGetTimezone()
-{
-	/* test signature () */
-	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(1, conf.getTimezone());
-}
-
 void ConfigurationTest::testGetPath()
 {
 	/* test signature (string name) */
@@ -318,7 +311,6 @@ ConfigurationTest::FakeConfiguration::FakeConfiguration()
 	stream << "local_uri = dtn://node.dtn" << std::endl
 		<< "blob_path = /tmp" << std::endl
 		<< "storage_path = /var/spool/ibrdtn/bundles" << std::endl
-		<< "timezone = +1" << std::endl
 		<< "limit_blocksize = 1.3G" << std::endl
 		<< "limit_storage = 20M" << std::endl
 		<< "" << std::endl

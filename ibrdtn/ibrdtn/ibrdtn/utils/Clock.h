@@ -78,14 +78,12 @@ namespace dtn
 			static dtn::data::Timestamp getMonotonicTimestamp();
 
 			/**
-			 * Return the current unix timestamp adjusted by
-			 * the configured timezone offset
+			 * Return the current unix timestamp
 			 */
 			static dtn::data::Timestamp getUnixTimestamp();
 
 			/**
-			 * Return the current DTN timestamp adjusted by
-			 * the configured timezone offset
+			 * Return the current DTN timestamp
 			 */
 			static dtn::data::Timestamp getTime();
 
@@ -161,16 +159,6 @@ namespace dtn
 			static const dtn::data::Timestamp TIMEVAL_CONVERSION;
 
 			/**
-			 * Specify a timezone offset in hours
-			 */
-			static int getTimezone();
-
-			/**
-			 * Set a timezone offset in hours
-			 */
-			static void setTimezone(int val);
-
-			/**
 			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
 			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives
 			 * an abstract knowledge about the rating of the local clock.
@@ -204,11 +192,6 @@ namespace dtn
 			static dtn::data::Timestamp getUptime();
 
 		private:
-			/**
-			 * Timezone offset in hours
-			 */
-			static int _timezone;
-
 			/**
 			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
 			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives

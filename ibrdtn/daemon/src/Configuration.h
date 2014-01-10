@@ -106,13 +106,6 @@ namespace dtn
 			std::string getNodename() const;
 
 			/**
-			 * Returns the manual timezone difference in hours.
-			 * @return A positive or negative number containing the
-			 * timezone offset in hours.
-			 */
-			int getTimezone() const;
-
-			/**
 			 * Generic command to get a specific path. If "name" is
 			 * set to "foo" then the parameter "foo_path" is returned.
 			 * @param name The prefix of the path to get.

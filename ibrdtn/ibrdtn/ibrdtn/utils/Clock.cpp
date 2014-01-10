@@ -31,7 +31,6 @@ namespace dtn
 {
 	namespace utils
 	{
-		int Clock::_timezone = 0;
 		double Clock::_rating = 1.0;
 
 		struct timeval Clock::_offset;
@@ -55,16 +54,6 @@ namespace dtn
 
 		Clock::~Clock()
 		{
-		}
-
-		int Clock::getTimezone()
-		{
-			return _timezone;
-		}
-
-		void Clock::setTimezone(int val)
-		{
-			_timezone = val;
 		}
 
 		double Clock::getRating()
@@ -171,9 +160,6 @@ namespace dtn
 			struct timeval now;
 			Clock::getdtntimeofday(&now);
 
-			// timezone
-			dtn::data::Timestamp offset = Clock::getTimezone() * 3600;
-
 			return dtn::data::Timestamp(now.tv_sec);
 		}
 
@@ -187,10 +173,7 @@ namespace dtn
 			struct timeval now;
 			Clock::gettimeofday(&now);
 
-			// timezone
-			dtn::data::Timestamp offset = Clock::getTimezone() * 3600;
-
-			return offset + now.tv_sec;
+			return now.tv_sec;
 		}
 
 		const struct timeval& Clock::getOffset()
