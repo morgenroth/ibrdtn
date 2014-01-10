@@ -84,7 +84,7 @@ namespace ibrcommon
 #define __errno WSAGetLastError()
 #else
 #define __compat_setsockopt ::setsockopt
-#define __init_sockets int a
+#define __init_sockets void
 #define __close ::close
 #define __errno errno
 #endif
