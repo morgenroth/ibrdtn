@@ -395,6 +395,19 @@ namespace dtn
 							/* no prophet routing extension found */
 							_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " ROUTING PROPHET EXTENSION NOT FOUND" << std::endl;
 						}
+					} else if ( cmd[1] == "static" ) {
+						if (cmd.size() < 5) throw ibrcommon::Exception("not enough parameters");
+
+						if (cmd[2] == "add")
+						{
+							dtn::core::BundleCore::getInstance().addRoute(cmd[3], cmd[4]);
+							_stream << ClientHandler::API_STATUS_OK << " ROUTE ADDED FOR " << cmd[3] << " THROUGH " << cmd[4] << std::endl;
+						}
+						else if (cmd[2] == "del")
+						{
+							dtn::core::BundleCore::getInstance().removeRoute(cmd[3], cmd[4]);
+							_stream << ClientHandler::API_STATUS_OK << " ROUTE REMOVED FOR " << cmd[3] << " THROUGH " << cmd[4] << std::endl;
+						}
 					} else {
 						throw ibrcommon::Exception("malformed command");
 					}
