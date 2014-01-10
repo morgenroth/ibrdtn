@@ -254,14 +254,21 @@ void BundleStorageTest::testClear(dtn::storage::BundleStorage &storage)
 	b.source = dtn::data::EID("dtn://node-one/test");
 
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Length)0, storage.size());
 
 	storage.store(b);
 
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)1, storage.count());
+	CPPUNIT_ASSERT(0 < storage.size());
 
 	storage.clear();
 
+	// special case for storages deferred mechanisms (SimpleBundleStorage)
+	// wait until all tasks of the storage are processed
+	storage.wait();
+
 	CPPUNIT_ASSERT_EQUAL((dtn::data::Size)0, storage.count());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Length)0, storage.size());
 }
 
 void BundleStorageTest::testEmpty()
@@ -282,6 +289,10 @@ void BundleStorageTest::testEmpty(dtn::storage::BundleStorage &storage)
 	CPPUNIT_ASSERT_EQUAL(false, storage.empty());
 
 	storage.clear();
+
+	// special case for storages deferred mechanisms (SimpleBundleStorage)
+	// wait until all tasks of the storage are processed
+	storage.wait();
 
 	CPPUNIT_ASSERT_EQUAL(true, storage.empty());
 }

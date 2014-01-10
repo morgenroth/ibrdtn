@@ -193,6 +193,7 @@ namespace dtn
 				// clear all data structures
 				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);
 				_metastore.clear();
+				clearSpace();
 			} catch (const ibrcommon::Exception &ex) {
 				IBRCOMMON_LOGGER_TAG("SimpleBundleStorage", error) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -466,8 +467,6 @@ namespace dtn
 				// create a background task for removing the bundle
 				_datastore.remove(hash);
 			}
-
-			_metastore.clear();
 		}
 
 		void SimpleBundleStorage::eventBundleExpired(const dtn::data::MetaBundle &b) throw ()
