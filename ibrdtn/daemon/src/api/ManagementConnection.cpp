@@ -339,6 +339,12 @@ namespace dtn
 						// last line empty
 						_stream << std::endl;
 					}
+					else if (cmd[1] == "clear")
+					{
+						// clear the storage
+						dtn::core::BundleCore::getInstance().getStorage().clear();
+						_stream << ClientHandler::API_STATUS_OK << " STORAGE CLEARED" << std::endl;
+					}
 				}
 				else if (cmd[0] == "routing")
 				{
