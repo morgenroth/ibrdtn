@@ -43,6 +43,7 @@
     <string name="runasforegroundservice_description">Markiert diesen Dienst als Vordergrundprozess.</string>
     <string name="wait">Bitte warten</string>
     <string name="clearingstorage">Speicher wird geleert.</string>
+    <string name="toast_storage_cleared">Speicher geleert</string>
     <string name="security">Sicherheit</string>
     <string name="timesync">Zeitsynchronisierung</string>
     <string name="constrains">Beschränkungen</string>

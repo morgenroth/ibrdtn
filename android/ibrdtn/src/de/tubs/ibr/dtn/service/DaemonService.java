@@ -45,6 +45,7 @@ import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.DaemonState;
 import de.tubs.ibr.dtn.R;
@@ -253,6 +254,7 @@ public class DaemonService extends Service {
         	}
         } else if (ACTION_CLEAR_STORAGE.equals(action)) {
         	mDaemonProcess.clearStorage();
+        	Toast.makeText(this, R.string.toast_storage_cleared, Toast.LENGTH_SHORT).show();
         } else if (ACTION_NETWORK_CHANGED.equals(action)) {
         	// This intent tickle the service if something has changed in the
         	// network configuration. If the service was enabled but terminated before,
