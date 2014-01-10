@@ -196,7 +196,6 @@ namespace dtn
 			int c;
 			int doapi = _doapi;
 			int disco = _disco._enabled;
-			int badclock = false;
 			int timestamp = _logger._timestamps;
 			int showversion = 0;
 
@@ -210,7 +209,6 @@ namespace dtn
 						/* These options set a flag. */
 						{"noapi", no_argument, &doapi, 0},
 						{"nodiscovery", no_argument, &disco, 0},
-						{"badclock", no_argument, &badclock, 1},
 						{"timestamp", no_argument, &timestamp, 1},
 						{"version", no_argument, &showversion, 1},
 
@@ -277,7 +275,6 @@ namespace dtn
 					std::cout << " --version       show version and exit" << std::endl;
 					std::cout << " --noapi         disable API module" << std::endl;
 					std::cout << " --nodiscovery   disable discovery module" << std::endl;
-					std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
 					std::cout << " --timestamp     enables timestamps for logging instead of datetime values" << std::endl;
 #ifdef __WIN32__
 					std::cout << " --interfaces    list all available interfaces" << std::endl;
@@ -366,7 +363,6 @@ namespace dtn
 
 			_doapi = doapi;
 			_disco._enabled = disco;
-			if (badclock) dtn::utils::Clock::setRating(0.0);
 			_logger._timestamps = timestamp;
 		}
 
