@@ -105,8 +105,8 @@ public abstract class StatsListAdapter extends BaseAdapter {
         }
         
         if (position == 0) {
-            // special case "seconds"
-            return String.format("%d s", (Long)value);
+            // special case "time" in d:h:m:s
+            return String.format("%dd %dh %dm %ds", (Long)value / 86400, (Long)value / 3600, (Long)value / 60, (Long)value % 60);
         }
         else if (position == 3) {
             // special case "seconds"
