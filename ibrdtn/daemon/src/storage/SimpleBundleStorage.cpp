@@ -513,17 +513,17 @@ namespace dtn
 
 		std::string SimpleBundleStorage::BundleContainer::createId(const dtn::data::BundleID &id)
 		{
-			unsigned char data[4096];
-			const size_t data_len = id.raw((unsigned char*)&data, 4096);
+			std::stringstream ss_hash, ss_raw;
+			ss_raw << id;
 
-			std::stringstream ss;
-
-			for (size_t i = 0; i < data_len; ++i)
+			int c = 0xff & ss_raw.get();
+			while (ss_raw.good())
 			{
-				ss << std::hex << std::setw( 2 ) << std::setfill( '0' ) << (int)data[i];
+				ss_hash << std::hex << std::setw( 2 ) << std::setfill( '0' ) << c;
+				c = 0xff & ss_raw.get();
 			}
 
-			return ss.str();
+			return ss_hash.str();
 		}
 
 		std::ostream& SimpleBundleStorage::BundleContainer::serialize(std::ostream &stream)
