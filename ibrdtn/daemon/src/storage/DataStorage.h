@@ -65,6 +65,7 @@ namespace dtn
 				Hash(const ibrcommon::File &file);
 				virtual ~Hash();
 
+				bool operator!=(const Hash &other) const;
 				bool operator==(const Hash &other) const;
 				bool operator<(const Hash &other) const;
 

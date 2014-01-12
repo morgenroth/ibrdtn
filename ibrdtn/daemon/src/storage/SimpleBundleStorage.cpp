@@ -129,12 +129,25 @@ namespace dtn
 				// load a bundle into the storage
 				ds >> bundle;
 				
+				// extract meta data
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
+
+				// check if the hash is different
+				DataStorage::Hash hash2(BundleContainer::createId(meta));
+				if (hash != hash2)
+				{
+					// if hash does not match, remove old file
+					_datastore.remove(hash);
+
+					// and store bundle again
+					store(bundle);
+
+					return;
+				}
+
 				// allocate space for the bundle
 				const dtn::data::Length bundle_size = static_cast<dtn::data::Length>( (*stream).tellg() );
 				allocSpace(bundle_size);
-
-				// extract meta data
-				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(bundle);
 
 				// lock the bundle lists
 				ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READWRITE);

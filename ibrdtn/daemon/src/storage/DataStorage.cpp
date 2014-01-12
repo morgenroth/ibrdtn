@@ -52,6 +52,11 @@ namespace dtn
 		DataStorage::Hash::Hash(const ibrcommon::File &file) : value(file.getBasename()) {}
 		DataStorage::Hash::~Hash() {}
 
+		bool DataStorage::Hash::operator!=(const DataStorage::Hash &other) const
+		{
+			return (value != other.value);
+		}
+
 		bool DataStorage::Hash::operator==(const DataStorage::Hash &other) const
 		{
 			return (value == other.value);
