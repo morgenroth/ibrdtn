@@ -26,12 +26,15 @@ package de.tubs.ibr.dtn.service;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
@@ -79,6 +82,7 @@ public class DaemonService extends Service {
     
     public static final String ACTION_START_DISCOVERY = "de.tubs.ibr.dtn.action.START_DISCOVERY";
     public static final String ACTION_STOP_DISCOVERY = "de.tubs.ibr.dtn.action.STOP_DISCOVERY";
+    public static final String EXTRA_DISCOVERY_DURATION = "de.tubs.ibr.dtn.intent.DISCOVERY_DURATION";
     
     public static final String PREFERENCE_NAME = "de.tubs.ibr.dtn.service_prefs";
 
@@ -283,9 +287,41 @@ public class DaemonService extends Service {
             // initialize the daemon service
             initialize();
         } else if (ACTION_START_DISCOVERY.equals(action)) {
+            if (intent.hasExtra(EXTRA_DISCOVERY_DURATION)) {
+                final Long duration = intent.getLongExtra(EXTRA_DISCOVERY_DURATION, 120);
+                
+                // stop discovery after the duration
+                Intent stopIntent = new Intent(this, DaemonService.class);
+                stopIntent.setAction(DaemonService.ACTION_STOP_DISCOVERY);
+                
+                PendingIntent pi = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+                // get the AlarmManager service
+                AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                am.set(AlarmManager.RTC_WAKEUP, new Date().getTime() + (duration * 1000), pi);
+                
+                Log.i(TAG, "Discovery stop scheduled in " + duration + " seconds.");
+            }
+            
             // start P2P discovery and enable IPND
             mDaemonProcess.startDiscovery();
         } else if (ACTION_STOP_DISCOVERY.equals(action)) {
+            // create a new wakeup intent
+            Intent stopIntent = new Intent(this, DaemonService.class);
+            intent.setAction(DaemonService.ACTION_STOP_DISCOVERY);
+            
+            // check if the presence alarm is already active
+            PendingIntent pi = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_NO_CREATE);
+            
+            if (pi != null) {
+                // get the AlarmManager service
+                AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                am.cancel(pi);
+                pi.cancel();
+                
+                Log.i(TAG, "Scheduled discovery stop canceled.");
+            }
+            
             // stop P2P discovery and disable IPND
             mDaemonProcess.stopDiscovery();
         }
