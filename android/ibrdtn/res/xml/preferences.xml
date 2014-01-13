@@ -43,6 +43,13 @@
         android:key="prefcat_connection"
         android:title="@string/pref_connection" >
         <ListPreference
+            android:defaultValue="smart"
+            android:entries="@array/discovery_modes_names"
+            android:entryValues="@array/discovery_modes_values"
+            android:key="discovery_mode"
+            android:title="@string/pref_discovery_title" >
+        </ListPreference>
+        <ListPreference
             android:defaultValue="off"
             android:entries="@array/uplink_modes_names"
             android:entryValues="@array/uplink_modes_values"

@@ -62,6 +62,7 @@ public class DaemonProcess {
 	private Context mContext = null;
 	private DaemonState mState = DaemonState.OFFLINE;
 	private Boolean mDiscoveryEnabled = null;
+	private Boolean mDiscoveryActive = null;
 	
     private WifiManager.MulticastLock mMcastLock = null;
 
@@ -122,7 +123,8 @@ public class DaemonProcess {
 		this.mDaemon = new NativeDaemon(mDaemonCallback, mEventCallback);
 		this.mContext = context;
 		this.mHandler = handler;
-		this.mDiscoveryEnabled = true;
+		this.mDiscoveryEnabled = false;
+		this.mDiscoveryActive = true;
 	}
 
 	public String[] getVersion() {
@@ -751,6 +753,8 @@ public class DaemonProcess {
 	}
 	
 	public synchronized void startDiscovery() {
+	    if (mDiscoveryActive) return;
+	    
         // set discovery flag to true
         mDiscoveryEnabled = true;
         
@@ -764,9 +768,13 @@ public class DaemonProcess {
         
         // start discovery mechanism in the daemon
         mDaemon.startDiscovery();
+        
+        mDiscoveryActive = true;
 	}
 	
 	public synchronized void stopDiscovery() {
+	    if (!mDiscoveryActive) return;
+	    
 	    // set discovery flag to false
 	    mDiscoveryEnabled = false;
 	    
@@ -778,5 +786,7 @@ public class DaemonProcess {
             mMcastLock.release();
             mMcastLock = null;
         }
+        
+        mDiscoveryActive = false;
 	}
 }

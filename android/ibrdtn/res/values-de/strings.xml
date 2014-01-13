@@ -81,4 +81,5 @@
     <string name="pref_storage">Speicher</string>
     <string name="pref_storage_description">Wie Bündel auf dem Gerät gespeichert werden.</string>
     <string name="toast_discovery_started">Discovery gestartet</string>
+    <string name="pref_discovery_title">Discover Strategie</string>
 </resources>

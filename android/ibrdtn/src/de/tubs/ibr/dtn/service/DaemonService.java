@@ -267,6 +267,17 @@ public class DaemonService extends Service {
             final Intent storeStatsIntent = new Intent(this, DaemonService.class);
             storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
             startService(storeStatsIntent);
+            
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            
+            // if discovery is configured as "smart"
+            if ("smart".equals(prefs.getString(SettingsUtil.KEY_DISCOVERY_MODE, "smart"))) {
+                // enable discovery for 2 minutes
+                final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
+                discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
+                discoIntent.putExtra(EXTRA_DISCOVERY_DURATION, 120L);
+                startService(discoIntent);
+            }
         } else if (ACTION_STORE_STATS.equals(action)) {
             // cancel the next scheduled collection
             mServiceHandler.removeCallbacks(mCollectStats);
@@ -523,6 +534,14 @@ public class DaemonService extends Service {
                         // stop service
                         stopSelf();
                     }
+                    
+                    // if discovery is configured as some kind of active
+                    if (!"off".equals(prefs.getString(SettingsUtil.KEY_DISCOVERY_MODE, "smart"))) {
+                        // disable discovery
+                        final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
+                        discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STOP_DISCOVERY);
+                        startService(discoIntent);
+                    }
 
                     break;
                     
@@ -545,6 +564,22 @@ public class DaemonService extends Service {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
                         // wake-up all apps in stopped-state when going online
                         broadcastIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                    }
+                    
+                    // if discovery is configured as "smart"
+                    if ("smart".equals(prefs.getString(SettingsUtil.KEY_DISCOVERY_MODE, "smart"))) {
+                        // enable discovery for 2 minutes
+                        final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
+                        discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
+                        discoIntent.putExtra(EXTRA_DISCOVERY_DURATION, 120L);
+                        startService(discoIntent);
+                    }
+                    // if discovery is configured as "on"
+                    else if ("on".equals(prefs.getString(SettingsUtil.KEY_DISCOVERY_MODE, "smart"))) {
+                        // enable discovery
+                        final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
+                        discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
+                        startService(discoIntent);
                     }
                     break;
                     
@@ -679,6 +714,31 @@ public class DaemonService extends Service {
                     if (mP2pManager != null) mP2pManager.resume();
                 } else {
                     if (mP2pManager != null) mP2pManager.pause();
+                }
+			} else if (SettingsUtil.KEY_DISCOVERY_MODE.equals(key)) {
+			    final String disco_mode = sharedPreferences.getString(key, "smart");
+			    
+                // if discovery is configured as "on"
+                if ("on".equals(disco_mode)) {
+                    // enable discovery
+                    final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
+                    discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
+                    startService(discoIntent);
+                }
+                // if discovery is configured as "off"
+                else if ("off".equals(disco_mode)) {
+                    // disable discovery
+                    final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
+                    discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STOP_DISCOVERY);
+                    startService(discoIntent);
+                }
+                // if discovery is configured as "smart"
+                else if ("smart".equals(disco_mode)) {
+                    // enable discovery for 2 minutes
+                    final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
+                    discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
+                    discoIntent.putExtra(EXTRA_DISCOVERY_DURATION, 120L);
+                    startService(discoIntent);
                 }
 			}
 		}

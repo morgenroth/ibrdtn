@@ -23,6 +23,8 @@ public final class SettingsUtil {
     public static final String KEY_P2P_ENABLED = "p2p_enabled";
     public static final String KEY_P2P_STRATEGY = "p2p_strategy";
     public static final String KEY_ENDPOINT_ID = "endpoint_id";
+    
+    public static final String KEY_DISCOVERY_MODE = "discovery_mode";
 
     public static Strategy getStrategy(Context context) {
         SharedPreferences prefs = PreferenceManager
