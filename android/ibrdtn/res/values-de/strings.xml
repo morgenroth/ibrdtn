@@ -31,8 +31,6 @@
     <string name="service_started">DTN Dienst gestartet</string>
     <string name="service_stopped">DTN Dienst beendet</string>
     <string name="discovery">Discovery</string>
-    <string name="discovery_announce">Aktiv ankündigen</string>
-    <string name="discovery_announce_desc">Wenn aktiviert werden jede Sekunde Discovery-Nachrichten ausgesendet.</string>
     <string name="interfaces">Schnittstellen</string>
     <string name="discovery_multicast">Multicast</string>
     <string name="discovery_multicast_desc">Verwende Multicast zur Nachbarerkennung.</string>
@@ -83,24 +81,17 @@
     <string name="connect_static">Verbindung aktiv</string>
     <string name="apps">Apps</string>
     <string name="apps_subtitle">Installierte DTN Anwendungen</string>
-    <string name="clouduplink_on">Verbinde mit Cloud</string>
-    <string name="clouduplink_off">Trenne Cloudverbindung</string>
-    <string name="alteratecloudstate">Verändere Cloudverbindung</string>
     <string name="alert_statistic_logger_title">Danke dass Sie IBR-DTN verwenden</string>
     <string name="alert_statistic_logger_dialog">Da es sich hierbei um Software aus der Forschung handelt bitten wir Sie um Unterstützung und hätten gerne die Erlaubnis statistische Daten über ausgetauschte Bündel zu sammeln. Diese Daten werden mittels DTN an die Forscher die diese Software entwickelt haben übertragen. Erlauben Sie die Sammlung und Übertragung von statistischen Daten?</string>
     <string name="senddatanow">Gesammelte Daten übertragen</string>
     <string name="list_apps">DTN Anwendungen</string>
-    <string name="pref_cloudconnect_title">Cloud connect</string>
-    <string name="pref_cloudconnect_summary">Verwendet eine statische Verbindung zum DTN bone</string>
+    <string name="pref_uplink_title">Cloud connect</string>
+    <string name="pref_uplink_summary">Verwendet eine statische Verbindung zum DTN bone</string>
     <string name="pref_connection">Verbindung</string>
     <string name="list_no_log">Keine Einträge gefunden.</string>
     <string name="list_no_neighbors">Keine Nachbarn gefunden.</string>
-    <string name="pref_fragmentation_desc">Erlaubt reaktive Fragmentierung und Reassemblierung</string>
-    <string name="pref_fragmentation">Unterstützung für Fragmentierung</string>
     <string name="stats_activity">Statistik</string>
     <string name="showstats">Statistik anzeigen</string>
     <string name="pref_storage">Speicher</string>
     <string name="pref_storage_description">Wie Bündel auf dem Gerät gespeichert werden.</string>
-    <string name="pref_cloudconnect_3g">Erlaube Mobilfunk als Uplink</string>
-    <string name="pref_cloudconnect_3g_description">Erlaube Cloud Connect Verbindungen über Mobilfunk.</string>
 </resources>

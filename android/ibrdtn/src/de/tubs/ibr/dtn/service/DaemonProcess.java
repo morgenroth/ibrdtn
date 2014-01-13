@@ -313,12 +313,10 @@ public class DaemonProcess {
         ret.put("endpoint_id", DaemonRunLevel.RUNLEVEL_CORE);
         ret.put("routing", DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS);
         ret.put("interface_", DaemonRunLevel.RUNLEVEL_NETWORK);
-        ret.put("discovery_announce", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("checkIdleTimeout", DaemonRunLevel.RUNLEVEL_NETWORK);
-        ret.put("checkFragmentation", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("timesync_mode", DaemonRunLevel.RUNLEVEL_API);
         ret.put("storage_mode", DaemonRunLevel.RUNLEVEL_CORE);
-        ret.put("cloud_uplink_3g", DaemonRunLevel.RUNLEVEL_NETWORK);
+        ret.put("uplink_mode", DaemonRunLevel.RUNLEVEL_NETWORK);
         
         return ret;
     }
@@ -378,12 +376,12 @@ public class DaemonProcess {
                 intent.putExtra("runlevel", mRestartMap.get("interface_").swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
             }
-            else if (key.equals("cloud_uplink"))
+            else if (key.equals("uplink_mode"))
             {
-                Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getBoolean(key, false) ));
+                Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getString(key, "off") ));
                 
                 synchronized(DaemonProcess.this) {
-                    if (prefs.getBoolean(key, false)) {
+                    if (!"off".equals(prefs.getString(key, "off"))) {
                         mDaemon.addConnection(__CLOUD_EID__.toString(),
                                 __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
                     } else {
@@ -532,7 +530,7 @@ public class DaemonProcess {
 			if (DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS.equals(level)) {
 			    // enable cloud-uplink
 			    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonProcess.this.mContext);
-                if (prefs.getBoolean("cloud_uplink", false)) {
+                if (!"off".equals(prefs.getString("uplink_mode", "off"))) {
                     mDaemon.addConnection(__CLOUD_EID__.toString(),
                             __CLOUD_PROTOCOL__, __CLOUD_ADDRESS__, __CLOUD_PORT__);
                 }
@@ -682,18 +680,11 @@ public class DaemonProcess {
 				p.println("tcp_idle_timeout = 30");
 			}
 			
-			if (preferences.getBoolean("checkFragmentation", true)) {
-			    p.println("fragmentation = yes");
-			}
+			// enable fragmentation support
+			p.println("fragmentation = yes");
 
 			// set multicast address for discovery
 			p.println("discovery_address = ff02::142 224.0.0.142");
-
-			if (preferences.getBoolean("discovery_announce", true)) {
-				p.println("discovery_announce = 1");
-			} else {
-				p.println("discovery_announce = 0");
-			}
 
 			String internet_ifaces = "";
 			String ifaces = "";
@@ -718,7 +709,7 @@ public class DaemonProcess {
 
 			p.println("net_interfaces = " + ifaces);
 			
-			if (!preferences.getBoolean("cloud_uplink_3g", false)) {
+			if ("on".equals(preferences.getString("uplink_mode", "off"))) {
 			    p.println("net_internet = " + internet_ifaces);
 			}
 

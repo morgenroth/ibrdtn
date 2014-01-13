@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="uplink_modes_names">
+        <item>Off</item>
+        <item>Wi-Fi only</item>
+        <item>On</item>
+    </string-array>
+    <string-array name="uplink_modes_values">
+        <item>off</item>
+        <item>wifi</item>
+        <item>on</item>
+    </string-array>
+</resources>
