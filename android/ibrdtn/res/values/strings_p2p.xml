@@ -5,8 +5,6 @@
     <string name="pref_p2p_summary">Use direct connection to other devices.</string>
     <string name="pref_p2p_strategy">Strategy</string>
     <string name="pref_p2p_strategy_summary">The search strategy to use</string>
-    <string name="pref_p2p_known_peers">Known peers</string>
-    <string name="pref_p2p_known_peers_summary">Show list of known peers</string>
     <string name="pref_p2p_off">Off</string>
     <string name="pref_p2p">Wi-Fi Direct</string>
     <string name="show_database">Show database</string>
@@ -16,7 +14,6 @@
     <string name="p2p_label_macaddress">MAC:</string>
     <string name="p2p_label_eid">EID:</string>
     <string name="p2p_label_lastcontact">Last contact:</string>
-    <string name="p2p_label_connected">Connected:</string>
     <string name="p2p_label_state">State:</string>
     
 </resources>
