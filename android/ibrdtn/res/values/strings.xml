@@ -109,4 +109,5 @@
     <string name="pref_storage_description">How to store bundles on the device.</string>
     <string name="pref_cloudconnect_3g">Allow 3G uplink</string>
     <string name="pref_cloudconnect_3g_description">Allow Cloud connect connections over mobile connections.</string>
+    <string name="toast_discovery_started">Discovery started</string>
 </resources>
