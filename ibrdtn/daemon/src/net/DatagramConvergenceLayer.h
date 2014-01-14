@@ -28,8 +28,6 @@
 #include "net/DatagramConnection.h"
 #include "net/ConvergenceLayer.h"
 
-#include <ibrcommon/thread/RWMutex.h>
-
 #include <list>
 
 namespace dtn
@@ -103,6 +101,8 @@ namespace dtn
 			void reportSuccess(size_t retries, double rtt);
 			void reportFailure();
 
+			void receive() throw ();
+
 		private:
 			class ConnectionNotAvailableException : public ibrcommon::Exception {
 			public:
@@ -115,6 +115,93 @@ namespace dtn
 			};
 
 			/**
+			 * The receiver is a thread and receives data from the
+			 * datagram service and generates actions to process.
+			 */
+			class Receiver : public ibrcommon::JoinableThread {
+			public:
+				Receiver(DatagramConvergenceLayer &cl);
+				virtual ~Receiver();
+
+				void init() throw ();
+
+				void run() throw ();
+				void __cancellation() throw ();
+
+			private:
+				DatagramConvergenceLayer &_cl;
+			};
+
+			class Action {
+			public:
+				Action() {};
+				virtual ~Action() {};
+			};
+
+			class SegmentReceived : public Action {
+			public:
+				SegmentReceived(size_t maxlen) : seqno(0), flags(0), data(maxlen), len(0) {};
+				virtual ~SegmentReceived() {};
+
+				std::string address;
+				unsigned int seqno;
+				char flags;
+				std::vector<char> data;
+				size_t len;
+			};
+
+			class BeaconReceived : public Action {
+			public:
+				BeaconReceived() {};
+				virtual ~BeaconReceived() {};
+
+				std::string address;
+				DiscoveryBeacon data;
+			};
+
+			class AckReceived : public Action {
+			public:
+				AckReceived() : seqno(0) {};
+				virtual ~AckReceived() {};
+
+				std::string address;
+				unsigned int seqno;
+			};
+
+			class NackReceived : public Action {
+			public:
+				NackReceived() : seqno(0), temporary(false) {};
+				virtual ~NackReceived() {};
+
+				std::string address;
+				unsigned int seqno;
+				bool temporary;
+			};
+
+			class QueueBundle : public Action {
+			public:
+				QueueBundle(const BundleTransfer &bt) : job(bt) {};
+				virtual ~QueueBundle() {};
+
+				BundleTransfer job;
+				std::string uri;
+			};
+
+			class ConnectionDown : public Action {
+			public:
+				ConnectionDown() {};
+				virtual ~ConnectionDown() {};
+
+				std::string id;
+			};
+
+			class Shutdown : public Action {
+			public:
+				Shutdown() {};
+				virtual ~Shutdown() {};
+			};
+
+			/**
 			 * Returns a connection matching the given identifier.
 			 * To use this method securely a lock on _cond_connections is required.
 			 *
@@ -123,16 +210,21 @@ namespace dtn
 			 */
 			DatagramConnection& getConnection(const std::string &identifier, bool create) throw (ConnectionNotAvailableException);
 
+			// associated datagram service
 			DatagramService *_service;
 
+			// this thread receives data from the datagram service
+			// and generates actions to process
+			Receiver _receiver;
+
+			// actions are queued here until they get processed
+			ibrcommon::Queue<Action*> _action_queue;
+
+			// on any send operation this mutex should be locked
 			ibrcommon::Mutex _send_lock;
 
 			// conditional to protect _active_conns
 			ibrcommon::Conditional _cond_connections;
-
-			// this lock is used to protect a connection reference from
-			// being deleted while using it
-			ibrcommon::RWMutex _mutex_connection;
 
 			typedef std::list<DatagramConnection*> connection_list;
 			connection_list _connections;
