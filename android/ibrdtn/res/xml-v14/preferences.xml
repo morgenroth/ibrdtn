@@ -124,7 +124,8 @@
             android:defaultValue="99"
             android:key="log_debug_verbosity"
             android:summary="@string/pref_log_debug_verbosity_desc"
-            android:title="@string/pref_log_debug_verbosity" />
+            android:title="@string/pref_log_debug_verbosity"
+            android:inputType="number" />
 
         <CheckBoxPreference
             android:defaultValue="false"
