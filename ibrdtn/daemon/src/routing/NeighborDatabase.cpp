@@ -151,7 +151,7 @@ namespace dtn
 			// insert the bundle into the transit list
 			_transit_bundles.insert(id);
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "acquire transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "acquire transfer of " << id.toString() << " to " << eid.getString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		dtn::data::Size NeighborDatabase::NeighborEntry::getFreeTransferSlots() const
@@ -171,7 +171,7 @@ namespace dtn
 		{
 			_transit_bundles.erase(id);
 
-			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "release transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG_TAG("NeighborDatabase", 20) << "release transfer of " << id.toString() << " to " << eid.getString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NeighborDatabase::NeighborEntry::putDataset(NeighborDataset &dset)
