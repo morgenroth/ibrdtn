@@ -1080,7 +1080,7 @@ namespace dtn
 			}
 
 			// read EID
-			ss.clear(); dtn::data::EID eid(data[data.size() - 1]);
+			id.source = dtn::data::EID(data[data.size() - 1]);
 
 			// return bundle id
 			return id;
