@@ -318,13 +318,21 @@ namespace dtn
 
 						return;
 					} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
-						IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack timeout for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
+						if (e.reason == ibrcommon::Conditional::ConditionalAbortException::COND_TIMEOUT)
+						{
+							IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConnection::TAG, 20) << "ack timeout for seqno " << seqno << IBRCOMMON_LOGGER_ENDL;
 
-						// fail -> increment the future timeout
-						adjust_rtt(static_cast<double>(_avg_rtt) * 2);
+							// fail -> increment the future timeout
+							adjust_rtt(static_cast<double>(_avg_rtt) * 2);
 
-						// retransmit the frame
-						continue;
+							// retransmit the frame
+							continue;
+						}
+						else
+						{
+							// aborted
+							break;
+						}
 					}
 				}
 
@@ -384,8 +392,22 @@ namespace dtn
 						_ack_cond.wait(&ts);
 					}
 				} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
-					// timeout - retransmit the whole window
-					sw_timeout(last);
+					if (e.reason == ibrcommon::Conditional::ConditionalAbortException::COND_TIMEOUT)
+					{
+						// timeout - retransmit the whole window
+						sw_timeout(last);
+					}
+					else
+					{
+						// maximum number of retransmissions hit
+						_send_state = SEND_ERROR;
+
+						// report failure
+						_callback.reportFailure();
+
+						// transmission failed - abort the stream
+						throw DatagramException("transmission failed - abort the stream");
+					}
 				}
 
 				// if this is the last segment switch directly to IDLE
@@ -467,8 +489,11 @@ namespace dtn
 						_ack_cond.wait(&ts);
 					}
 				} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
-					// timeout again - repeat at while loop
-					continue;
+					if (e.reason == ibrcommon::Conditional::ConditionalAbortException::COND_TIMEOUT)
+					{
+						// timeout again - repeat at while loop
+						continue;
+					}
 				}
 
 				// done
