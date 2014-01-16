@@ -40,7 +40,7 @@ namespace dtn
 		const std::string DatagramConvergenceLayer::TAG = "DatagramConvergenceLayer";
 
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
-		 : _service(ds), _receiver(*this), _active_conns(0), _running(false),
+		 : _service(ds), _receiver(*this), _running(false),
 		   _stats_in(0), _stats_out(0), _stats_rtt(0.0), _stats_retries(0), _stats_failure(0)
 		{
 		}
@@ -53,7 +53,7 @@ namespace dtn
 			// wait until all connections are down
 			{
 				ibrcommon::MutexLock l(_cond_connections);
-				while (_active_conns != 0) _cond_connections.wait();
+				while (_connections.size() > 0) _cond_connections.wait();
 			}
 
 			// delete the associated service
@@ -186,13 +186,14 @@ namespace dtn
 			// Connection does not exist, create one and put it into the list
 			connection = new DatagramConnection(identifier, _service->getParameter(), (*this));
 
-			// add a new connection to the list of connections
-			_connections.push_back(connection);
-
 			// increment the number of active connections
 			{
 				ibrcommon::MutexLock l(_cond_connections);
-				++_active_conns;
+
+				// add a new connection to the list of connections
+				_connections.push_back(connection);
+
+				// signal the modified connection list
 				_cond_connections.signal(true);
 			}
 
@@ -381,7 +382,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "componentRun() entered" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
-				while (_running || (_active_conns > 0))
+				while (_running || (_connections.size() > 0))
 				{
 					Action *action = _action_queue.getnpop(true);
 
@@ -460,8 +461,7 @@ namespace dtn
 								// delete the connection
 								delete (*i);
 
-								// decrement the number of connections
-								--_active_conns;
+								// signal the modified connection list
 								_cond_connections.signal(true);
 								break;
 							}

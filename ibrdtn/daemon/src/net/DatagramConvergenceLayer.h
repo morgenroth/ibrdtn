@@ -243,10 +243,6 @@ namespace dtn
 			typedef std::list<DatagramConnection*> connection_list;
 			connection_list _connections;
 
-			// the number of active connections
-			// (lock _cond_connections while modifying it)
-			int _active_conns;
-
 			// false, if the main thread is cancelled
 			bool _running;
 
