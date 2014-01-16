@@ -102,6 +102,11 @@ namespace dtn
 			 */
 			void setPeerEID(const dtn::data::EID &peer);
 
+			/**
+			 * Returns the peer EID of this connection
+			 */
+			const dtn::data::EID& getPeerEID();
+
 		private:
 			enum SEND_FLOW {
 				SEND_IDLE,

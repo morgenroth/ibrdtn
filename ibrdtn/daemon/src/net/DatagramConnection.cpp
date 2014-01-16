@@ -527,6 +527,11 @@ namespace dtn
 			_peer_eid = peer;
 		}
 
+		const dtn::data::EID& DatagramConnection::getPeerEID()
+		{
+			return _peer_eid;
+		}
+
 		void DatagramConnection::adjust_rtt(double value)
 		{
 			// convert current avg to float
