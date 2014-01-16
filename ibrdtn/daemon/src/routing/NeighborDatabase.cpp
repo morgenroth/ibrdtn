@@ -215,9 +215,9 @@ namespace dtn
 			return *(*iter).second;
 		}
 
-		NeighborDatabase::NeighborEntry& NeighborDatabase::get(const dtn::data::EID &eid) throw (NeighborNotAvailableException)
+		NeighborDatabase::NeighborEntry& NeighborDatabase::get(const dtn::data::EID &eid, bool noCached) throw (NeighborNotAvailableException)
 		{
-			if (!dtn::core::BundleCore::getInstance().getConnectionManager().isNeighbor(eid))
+			if (noCached && !dtn::core::BundleCore::getInstance().getConnectionManager().isNeighbor(eid))
 				throw NeighborDatabase::NeighborNotAvailableException();
 
 			neighbor_map::iterator iter = _entries.find(eid);

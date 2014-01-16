@@ -57,7 +57,7 @@ namespace dtn
 				ibrcommon::MutexLock l((**this).getNeighborDB());
 
 				// get the neighbor entry for the next hop
-				NeighborDatabase::NeighborEntry &entry = (**this).getNeighborDB().get(destination);
+				NeighborDatabase::NeighborEntry &entry = (**this).getNeighborDB().get(destination, true);
 
 				// acquire the transfer, could throw already in transit or no resource left exception
 				entry.acquireTransfer(meta);

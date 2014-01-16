@@ -129,7 +129,7 @@ namespace dtn
 						{
 							// this destination is not handles by any static route
 							ibrcommon::MutexLock l(db);
-							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+							NeighborDatabase::NeighborEntry &entry = db.get(task.eid, true);
 
 							// check if enough transfer slots available (threshold reached)
 							if (!entry.isTransferThresholdReached())
@@ -171,7 +171,7 @@ namespace dtn
 						{
 							// this destination is not handles by any static route
 							ibrcommon::MutexLock l(db);
-							NeighborDatabase::NeighborEntry &entry = db.get(task.nexthop);
+							NeighborDatabase::NeighborEntry &entry = db.get(task.nexthop, true);
 
 							if (!shouldRouteTo(task.bundle, entry))
 								throw NeighborDatabase::NoRouteKnownException();

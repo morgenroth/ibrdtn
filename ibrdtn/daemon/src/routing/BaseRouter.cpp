@@ -265,7 +265,7 @@ namespace dtn
 				else if (event.getAction() == NODE_UNAVAILABLE)
 				{
 					ibrcommon::MutexLock l(_neighbor_database);
-					_neighbor_database.create( event.getNode().getEID() ).reset();
+					_neighbor_database.get( event.getNode().getEID() ).reset();
 				}
 
 				// pass event to all extensions
@@ -301,7 +301,7 @@ namespace dtn
 				try {
 					// lock the list of neighbors
 					ibrcommon::MutexLock l(_neighbor_database);
-					NeighborDatabase::NeighborEntry &entry = _neighbor_database.create(event.getPeer());
+					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
 					entry.releaseTransfer(event.getBundleID());
 
 					if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
@@ -472,7 +472,7 @@ namespace dtn
 
 						// touch all active neighbors
 						for (std::set<dtn::core::Node>::const_iterator it = neighbors.begin(); it != neighbors.end(); ++it) {
-							_neighbor_database.create( (*it).getEID() );
+							_neighbor_database.get( (*it).getEID() );
 						}
 
 						// check all neighbor entries for expiration

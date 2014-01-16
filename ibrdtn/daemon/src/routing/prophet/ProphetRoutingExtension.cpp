@@ -131,7 +131,7 @@ namespace dtn
 					NeighborDataset ds(new DeliveryPredictabilityMap(neighbor_dp_map));
 
 					ibrcommon::MutexLock l(db);
-					db.create(neighbor_node).putDataset(ds);
+					db.get(neighbor_node).putDataset(ds);
 				}
 
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
@@ -508,7 +508,7 @@ namespace dtn
 								NeighborDatabase &db = (**this).getNeighborDB();
 
 								ibrcommon::MutexLock l(db);
-								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.eid, true);
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())

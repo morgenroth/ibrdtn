@@ -276,7 +276,7 @@ namespace dtn
 								NeighborDatabase &db = (**this).getNeighborDB();
 
 								ibrcommon::MutexLock l(db);
-								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.eid, true);
 
 								// check if enough transfer slots available (threshold reached)
 								if (!entry.isTransferThresholdReached())

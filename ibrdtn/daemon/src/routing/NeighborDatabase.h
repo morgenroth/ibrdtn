@@ -228,9 +228,10 @@ namespace dtn
 			 * Query a neighbor entry of the database. It throws an exception
 			 * if the neighbor is not available.
 			 * @param eid The EID of the neighbor
+			 * @param noCached Only returns an entry if the neighbor is available
 			 * @return The neighbor entry reference.
 			 */
-			NeighborDatabase::NeighborEntry& get(const dtn::data::EID &eid) throw (NeighborNotAvailableException);
+			NeighborDatabase::NeighborEntry& get(const dtn::data::EID &eid, bool noCached = false) throw (NeighborNotAvailableException);
 
 			/**
 			 * Query a neighbor entry of the database. If the entry does not
