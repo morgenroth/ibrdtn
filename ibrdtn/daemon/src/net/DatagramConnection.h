@@ -54,7 +54,7 @@ namespace dtn
 			virtual void reportFailure() { };
 		};
 
-		class DatagramConnection : public ibrcommon::DetachedThread
+		class DatagramConnection : public ibrcommon::JoinableThread
 		{
 			static const std::string TAG;
 

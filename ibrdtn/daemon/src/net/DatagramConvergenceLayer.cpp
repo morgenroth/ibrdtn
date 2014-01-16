@@ -457,6 +457,9 @@ namespace dtn
 								IBRCOMMON_LOGGER_DEBUG_TAG(DatagramConvergenceLayer::TAG, 10) << "Down: " << cd.id << IBRCOMMON_LOGGER_ENDL;
 								_connections.erase(i);
 
+								// delete the connection
+								delete (*i);
+
 								// decrement the number of connections
 								--_active_conns;
 								_cond_connections.signal(true);
@@ -468,7 +471,6 @@ namespace dtn
 					try {
 						NodeGone &gone = dynamic_cast<NodeGone&>(*action);
 
-						ibrcommon::MutexLock l(_cond_connections);
 						for (connection_list::iterator i = _connections.begin(); i != _connections.end(); ++i)
 						{
 							if ((*i)->getPeerEID() == gone.eid)

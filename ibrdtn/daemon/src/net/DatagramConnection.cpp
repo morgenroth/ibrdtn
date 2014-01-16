@@ -54,6 +54,9 @@ namespace dtn
 			// do not destroy this instance as long as
 			// the sender thread is running
 			_sender.join();
+
+			// join ourself
+			join();
 		}
 
 		void DatagramConnection::shutdown()
