@@ -23,6 +23,8 @@
 #include "net/DatagramConnection.h"
 
 #include "core/BundleCore.h"
+#include "core/NodeEvent.h"
+#include "core/EventDispatcher.h"
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -56,6 +58,20 @@ namespace dtn
 
 			// delete the associated service
 			delete _service;
+		}
+
+		void DatagramConvergenceLayer::raiseEvent(const dtn::core::Event *evt) throw ()
+		{
+			try {
+				const dtn::core::NodeEvent &event = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+
+				if (event.getAction() == NODE_UNAVAILABLE)
+				{
+					NodeGone *gone = new NodeGone();
+					gone->eid = event.getNode().getEID();
+					_action_queue.push(gone);
+				}
+			} catch (const std::bad_cast&) { };
 		}
 
 		void DatagramConvergenceLayer::resetStats()
@@ -217,6 +233,9 @@ namespace dtn
 				IBRCOMMON_LOGGER_TAG(DatagramConvergenceLayer::TAG, error) << "bind to " << _service->getInterface().toString() << " failed (" << e.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
 
+			// register for NodeEvent objects
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+
 			// register for discovery beacon handling
 			dtn::core::BundleCore::getInstance().getDiscoveryAgent().registerService(_service->getInterface(), this);
 
@@ -228,6 +247,9 @@ namespace dtn
 		{
 			// un-register for discovery beacon handling
 			dtn::core::BundleCore::getInstance().getDiscoveryAgent().unregisterService(_service->getInterface(), this);
+
+			// un-register for NodeEvent objects
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
 
 			_action_queue.push(new Shutdown());
 		}
@@ -438,6 +460,21 @@ namespace dtn
 								// decrement the number of connections
 								--_active_conns;
 								_cond_connections.signal(true);
+								break;
+							}
+						}
+					} catch (const std::bad_cast&) { };
+
+					try {
+						NodeGone &gone = dynamic_cast<NodeGone&>(*action);
+
+						ibrcommon::MutexLock l(_cond_connections);
+						for (connection_list::iterator i = _connections.begin(); i != _connections.end(); ++i)
+						{
+							if ((*i)->getPeerEID() == gone.eid)
+							{
+								// shutdown the connection
+								(*i)->shutdown();
 								break;
 							}
 						}
