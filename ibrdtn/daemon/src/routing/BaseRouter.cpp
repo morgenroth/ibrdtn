@@ -264,8 +264,10 @@ namespace dtn
 				}
 				else if (event.getAction() == NODE_UNAVAILABLE)
 				{
-					ibrcommon::MutexLock l(_neighbor_database);
-					_neighbor_database.get( event.getNode().getEID() ).reset();
+					try {
+						ibrcommon::MutexLock l(_neighbor_database);
+						_neighbor_database.get( event.getNode().getEID() ).reset();
+					} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 				}
 
 				// pass event to all extensions
@@ -311,6 +313,7 @@ namespace dtn
 						// add the transferred bundle to the bloomfilter of the receiver
 						entry.add(meta);
 					}
+				} catch (const NeighborDatabase::NeighborNotAvailableException&) {
 				} catch (const dtn::storage::NoBundleFoundException&) { };
 
 				// pass event to all extensions
@@ -472,7 +475,9 @@ namespace dtn
 
 						// touch all active neighbors
 						for (std::set<dtn::core::Node>::const_iterator it = neighbors.begin(); it != neighbors.end(); ++it) {
-							_neighbor_database.get( (*it).getEID() );
+							try {
+								_neighbor_database.get( (*it).getEID() );
+							} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 						}
 
 						// check all neighbor entries for expiration
