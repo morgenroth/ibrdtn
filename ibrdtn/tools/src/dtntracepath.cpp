@@ -37,9 +37,10 @@
 class ProbeBundle : public dtn::data::Bundle
 {
 public:
-	ProbeBundle(const dtn::data::EID &d, bool tracking)
+	ProbeBundle(const dtn::data::EID &d, bool tracking, bool group)
 	{
 		destination = d;
+		set(DESTINATION_IS_SINGLETON, !group);
 
 		if (tracking) {
 			push_back<dtn::data::TrackingBlock>();
@@ -183,10 +184,10 @@ class Tracer : public dtn::api::Client
 			::fflush(stdout);
 		}
 
-		void tracepath(const dtn::data::EID &destination, size_t timeout, unsigned char options, bool tracking)
+		void tracepath(const dtn::data::EID &destination, bool group, size_t timeout, unsigned char options, bool tracking)
 		{
 			// create a bundle
-			ProbeBundle b(destination, tracking);
+			ProbeBundle b(destination, tracking, group);
 
 			// set lifetime
 			b.lifetime = timeout;
@@ -259,6 +260,7 @@ void print_help()
 	cout << " -f              request forward report" << endl;
 	cout << " -r              request reception report" << endl;
 	cout << " -p              add tracking block to record the bundle path" << endl;
+	cout << " -g              destination is a group endpoint" << endl;
 }
 
 int main(int argc, char *argv[])
@@ -270,6 +272,7 @@ int main(int argc, char *argv[])
 	// deletion = 0x08
 	unsigned char report_options = 0x02;
 	bool tracking = false;
+	bool group = false;
 
 	size_t timeout = 10;
 	int opt = 0;
@@ -282,7 +285,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	while ((opt = getopt(argc, argv, "ht:fdrp")) != -1)
+	while ((opt = getopt(argc, argv, "ht:fdrpg")) != -1)
 	{
 		switch (opt)
 		{
@@ -309,6 +312,10 @@ int main(int argc, char *argv[])
 		case 'p':
 			tracking = true;
 			break;
+
+		case 'g':
+			group = true;
+			break;
 		}
 	}
 
@@ -328,7 +335,7 @@ int main(int argc, char *argv[])
 		tracer.connect();
 
 		// target address
-		tracer.tracepath(trace_destination, timeout, report_options, tracking);
+		tracer.tracepath(trace_destination, group, timeout, report_options, tracking);
 
 		// Shutdown the client connection.
 		tracer.close();
