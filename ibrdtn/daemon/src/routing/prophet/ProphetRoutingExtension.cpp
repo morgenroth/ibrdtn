@@ -452,6 +452,15 @@ namespace dtn
 							return false;
 						}
 					}
+					else
+					{
+						// if this is a non-singleton, check if the peer knows a way to the source
+						try {
+							if (_dpm.get(meta.source.getNode()) <= 0.0) return false;
+						} catch (const dtn::routing::DeliveryPredictabilityMap::ValueNotFoundException&) {
+							return false;
+						}
+					}
 
 					// do not forward bundles already known by the destination
 					// throws BloomfilterNotAvailableException if no filter is available or it is expired
