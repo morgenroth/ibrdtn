@@ -126,13 +126,13 @@ namespace dtn
 				}
 
 				// store a copy of the map in the neighbor database
-				{
+				try {
 					NeighborDatabase &db = (**this).getNeighborDB();
 					NeighborDataset ds(new DeliveryPredictabilityMap(neighbor_dp_map));
 
 					ibrcommon::MutexLock l(db);
 					db.get(neighbor_node).putDataset(ds);
-				}
+				} catch (const NeighborNotAvailableException&) { };
 
 				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
 
