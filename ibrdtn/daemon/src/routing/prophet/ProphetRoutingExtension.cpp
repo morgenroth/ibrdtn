@@ -113,17 +113,7 @@ namespace dtn
 				// strip possible application part off the neighbor EID
 				const dtn::data::EID neighbor_node = neighbor.getNode();
 
-				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "delivery predictability map received from " << neighbor.getString() << IBRCOMMON_LOGGER_ENDL;
-
-				// update the encounter on every routing handshake
-				{
-					ibrcommon::MutexLock l(_deliveryPredictabilityMap);
-
-					age();
-
-					/* update predictability for this neighbor */
-					updateNeighbor(neighbor_node);
-				}
+				IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "delivery predictability map received from " << neighbor_node.getString() << IBRCOMMON_LOGGER_ENDL;
 
 				// store a copy of the map in the neighbor database
 				try {
@@ -134,11 +124,8 @@ namespace dtn
 					db.get(neighbor_node).putDataset(ds);
 				} catch (const NeighborNotAvailableException&) { };
 
-				ibrcommon::MutexLock l(_deliveryPredictabilityMap);
-
-				/* update the dp_map */
-				_deliveryPredictabilityMap.update(neighbor_node, neighbor_dp_map, _p_encounter_first);
-
+				/* update predictability for this neighbor */
+				updateNeighbor(neighbor_node, neighbor_dp_map);
 			} catch (std::exception&) { }
 
 			try {
@@ -608,7 +595,7 @@ namespace dtn
 			age_map::const_iterator it = _ageMap.find(neighbor);
 			if(it == _ageMap.end())
 			{
-				/* In this case, we got a transitive update for the node earlier but havent encountered it ourselves */
+				/* In this case, we got a transitive update for the node we have not encountered before */
 				return _p_encounter_max;
 			}
 
@@ -623,12 +610,18 @@ namespace dtn
 			}
 			else
 			{
-				return _p_encounter_max * static_cast<float>(time_diff.get<size_t>() / _i_typ);
+				return _p_encounter_max * time_diff.get<float>() / static_cast<float>(_i_typ);
 			}
 		}
 
-		void ProphetRoutingExtension::updateNeighbor(const dtn::data::EID &neighbor)
+		void ProphetRoutingExtension::updateNeighbor(const dtn::data::EID &neighbor, const DeliveryPredictabilityMap& neighbor_dp_map)
 		{
+			// update the encounter on every routing handshake
+			ibrcommon::MutexLock l(_deliveryPredictabilityMap);
+
+			// age the local predictability map
+			age();
+
 			/**
 			 * Calculate new value for this encounter
 			 */
@@ -650,6 +643,9 @@ namespace dtn
 			}
 
 			_ageMap[neighbor] = dtn::utils::Clock::getMonotonicTimestamp();
+
+			/* update the dp_map */
+			_deliveryPredictabilityMap.update(neighbor, neighbor_dp_map, _p_encounter_first);
 		}
 
 		void ProphetRoutingExtension::age()

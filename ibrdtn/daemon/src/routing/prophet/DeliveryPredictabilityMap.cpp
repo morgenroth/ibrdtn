@@ -156,33 +156,35 @@ namespace dtn
 			_predictmap.clear();
 		}
 
-		void DeliveryPredictabilityMap::update(const dtn::data::EID &origin, const DeliveryPredictabilityMap &dpm, const float &p_encounter_first)
+		void DeliveryPredictabilityMap::update(const dtn::data::EID &host_b, const DeliveryPredictabilityMap &dpm, const float &p_encounter_first)
 		{
-			float neighbor_dp = p_encounter_first;
+			float p_ab = 0.0f;
 
 			try {
-				neighbor_dp = this->get(origin);
-			} catch (const DeliveryPredictabilityMap::ValueNotFoundException&) { }
+				p_ab = get(host_b);
+			} catch (const DeliveryPredictabilityMap::ValueNotFoundException&) {
+				p_ab = p_encounter_first;
+			}
 
 			/**
 			 * Calculate transitive values
 			 */
 			for (predictmap::const_iterator it = dpm._predictmap.begin(); it != dpm._predictmap.end(); ++it)
 			{
-				if ((it->first != origin) && (it->first != dtn::core::BundleCore::local))
-				{
-					float dp = 0;
+				const dtn::data::EID &host_c = it->first;
+				const float &p_bc = it->second;
 
-					predictmap::iterator dp_it;
-					if((dp_it = _predictmap.find(it->first)) != _predictmap.end())
-						dp = dp_it->second;
+				// do not update values for the origin host
+				if (host_b.sameHost(host_c)) continue;
 
-					dp = max(dp, neighbor_dp * it->second * _beta);
+				// do not process values with our own EID
+				if (dtn::core::BundleCore::local.sameHost(host_c)) continue;
 
-					if(dp_it != _predictmap.end())
-						dp_it->second = dp;
-					else
-						_predictmap[it->first] = dp;
+				predictmap::iterator dp_it;
+				if ((dp_it = _predictmap.find(host_c)) != _predictmap.end()) {
+					dp_it->second = max(dp_it->second, p_ab * p_bc * _beta);
+				} else {
+					_predictmap[host_c] = p_ab * p_bc * _beta;
 				}
 			}
 		}

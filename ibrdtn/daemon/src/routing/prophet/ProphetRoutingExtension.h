@@ -94,7 +94,7 @@ namespace dtn
 			 * Updates the DeliveryPredictabilityMap in the event that a neighbor has been encountered.
 			 * \warning The _deliveryPredictabilityMap has to be locked before calling this function
 			 */
-			void updateNeighbor(const dtn::data::EID& neighbor);
+			void updateNeighbor(const dtn::data::EID& neighbor, const DeliveryPredictabilityMap& neighbor_dp_map);
 
 			/*!
 			 * Age all entries in the DeliveryPredictabilityMap.
