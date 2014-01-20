@@ -51,8 +51,8 @@ namespace dtn
 			void clear();
 
 			/*!
-			 * Updates the DeliveryPredictabilityMap with one recieved by a neighbor.
-			 * \param dpm the DeliveryPredictabilityMap recieved from the neighbor
+			 * Updates the DeliveryPredictabilityMap with one received by a neighbor.
+			 * \param dpm the DeliveryPredictabilityMap received from the neighbor
 			 * \warning The _deliveryPredictabilityMap has to be locked before calling this function
 			 */
 			void update(const dtn::data::EID &origin, const DeliveryPredictabilityMap &dpm, const float &p_encounter_first);
