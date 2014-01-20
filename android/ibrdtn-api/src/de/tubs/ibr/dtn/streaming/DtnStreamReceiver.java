@@ -129,7 +129,9 @@ public class DtnStreamReceiver {
             else if (msg.what == MARK_DELIVERED) {
                 try {
                     BundleID id = (BundleID)msg.obj;
-                    mSession.delivered(id);
+                    if (id != null) {
+                        mSession.delivered(id);
+                    }
                 } catch (SessionDestroyedException e) {
                     e.printStackTrace();
                 }

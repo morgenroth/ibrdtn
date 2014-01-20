@@ -146,6 +146,7 @@ public class CommService extends Service {
         @Override
         public void handleMessage(Message msg) {
             Intent intent = (Intent) msg.obj;
+            if (intent == null) return;
             onHandleIntent(intent, msg.arg1);
             if (!mRecording && !mPlaying) stopSelf(msg.arg1);
         }
