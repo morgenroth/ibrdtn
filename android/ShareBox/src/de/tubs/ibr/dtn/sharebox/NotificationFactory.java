@@ -89,7 +89,7 @@ public class NotificationFactory {
         Uri downloadUri = Uri.fromParts("download", d.getId().toString(), "");
         
         // update notification
-        mDownloadBuilder.setContentText(String.format(mContext.getString(R.string.notification_completed_download_text), bytesText, d.getBundleId().getSource()));
+        mDownloadBuilder.setContentText(String.format(mContext.getString(R.string.notification_completed_download_text), bytesText));
         mDownloadBuilder.setProgress(0, 0, false);
         mDownloadBuilder.setOngoing(false);
         mDownloadBuilder.setAutoCancel(true);
