@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
@@ -31,7 +30,6 @@ import de.tubs.ibr.dtn.api.DTNClient.Session;
 import de.tubs.ibr.dtn.api.DataHandler;
 import de.tubs.ibr.dtn.api.EID;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
-import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.api.ServiceNotAvailableException;
 import de.tubs.ibr.dtn.api.SessionConnection;
@@ -115,13 +113,14 @@ public class DtnService extends IntentService {
         return mDatabase;
     }
     
-    public List<Node> getNeighbors() {
+    public Intent getSelectNeighborIntent() {
         try {
             // wait until the session is available
             mClient.getSession();
             
-            // query all neighbors
-            return mClient.getDTNService().getNeighbors();
+            // get pending intent for neighbor list
+            android.os.Bundle b = mClient.getDTNService().getSelectNeighborIntent();
+            return b.getParcelable(de.tubs.ibr.dtn.Intent.INTENT_KEY);
         } catch (SessionDestroyedException e) {
             Log.e(TAG, "can not query for neighbors", e);
         } catch (InterruptedException e) {
@@ -130,7 +129,7 @@ public class DtnService extends IntentService {
             Log.e(TAG, "can not query for neighbors", e);
         }
         
-        return new LinkedList<Node>();
+        return null;
     }
     
     @Override
