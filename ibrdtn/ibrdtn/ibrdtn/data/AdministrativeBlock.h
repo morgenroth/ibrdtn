@@ -24,16 +24,11 @@ namespace dtn
 				};
 			};
 
-			AdministrativeBlock(char admfield);
+			AdministrativeBlock();
 			virtual ~AdministrativeBlock() = 0;
-
-			virtual bool refsFragment() const;
-			virtual void setFragment(bool val);
 
 			virtual void read(const dtn::data::PayloadBlock &p) throw (WrongRecordException) = 0;
 			virtual void write(dtn::data::PayloadBlock &p) const = 0;
-
-			char _admfield;
 		};
 	} /* namespace data */
 } /* namespace dtn */

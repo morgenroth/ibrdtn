@@ -96,12 +96,6 @@ namespace dtn
 			// set bundle parameter
 			report.bundleid = b;
 
-			if (b.get(Bundle::FRAGMENT))
-			{
-				report.fragment_length = b.appdatalength;
-				report._admfield |= 1;
-			}
-
 			dtn::data::PayloadBlock &payload = bundle.push_back<dtn::data::PayloadBlock>();
 			report.write(payload);
 

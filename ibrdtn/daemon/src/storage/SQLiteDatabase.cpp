@@ -406,7 +406,7 @@ namespace dtn
 				bundle.appdatalength = sqlite3_column_int64(*st, 9);
 			}
 
-			bundle.payloadlength = sqlite3_column_int64(*st, 9);
+			bundle.setPayloadLength(sqlite3_column_int64(*st, 9));
 
 			if (sqlite3_column_type(*st, offset + 10) != SQLITE_NULL)
 			{

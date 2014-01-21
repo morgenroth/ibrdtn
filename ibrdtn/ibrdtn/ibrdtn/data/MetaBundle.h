@@ -65,7 +65,6 @@ namespace dtn
 			Bitset<dtn::data::PrimaryBlock::FLAGS> procflags;
 			Number expiretime;
 			Number hopcount;
-			Number payloadlength;
 			Integer net_priority;
 
 			bool isFragment() const;

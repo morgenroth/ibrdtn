@@ -66,7 +66,6 @@ namespace dtn
 
 			char status;
 			char reasoncode;
-			Number fragment_length;
 			DTNTime timeof_receipt;
 			DTNTime timeof_custodyaccept;
 			DTNTime timeof_forwarding;

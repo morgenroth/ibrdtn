@@ -939,8 +939,8 @@ namespace dtn
 				// format the bundle ID and write it to the stream
 				_stream << report.bundleid.timestamp.toString() << "." << report.bundleid.sequencenumber.toString();
 
-				if (report.refsFragment()) {
-					_stream << "." << report.bundleid.fragmentoffset.toString() << ":" << report.fragment_length.toString() << " ";
+				if (report.bundleid.isFragment()) {
+					_stream << "." << report.bundleid.fragmentoffset.toString() << ":" << report.bundleid.getPayloadLength().toString() << " ";
 				} else {
 					_stream << " ";
 				}
@@ -996,8 +996,8 @@ namespace dtn
 				// format the bundle ID and write it to the stream
 				_stream << custody.bundleid.timestamp.toString() << "." << custody.bundleid.sequencenumber.toString();
 
-				if (custody.refsFragment()) {
-					_stream << "." << custody.bundleid.fragmentoffset.toString() << ":" << custody.fragment_length.toString() << " ";
+				if (custody.bundleid.isFragment()) {
+					_stream << "." << custody.bundleid.fragmentoffset.toString() << ":" << custody.bundleid.getPayloadLength().toString() << " ";
 				} else {
 					_stream << " ";
 				}

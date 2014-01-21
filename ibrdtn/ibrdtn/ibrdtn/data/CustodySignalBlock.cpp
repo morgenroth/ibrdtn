@@ -30,8 +30,7 @@ namespace dtn
 	namespace data
 	{
 		CustodySignalBlock::CustodySignalBlock()
-		 : AdministrativeBlock(32), custody_accepted(false), reason(NO_ADDITIONAL_INFORMATION),
-		 fragment_length(0), timeofsignal()
+		 : custody_accepted(false), reason(NO_ADDITIONAL_INFORMATION), timeofsignal()
 		{
 		}
 
@@ -43,10 +42,12 @@ namespace dtn
 		{
 			ibrcommon::BLOB::Reference r = p.getBLOB();
 			ibrcommon::BLOB::iostream stream = r.iostream();
-			(*stream).get(_admfield);
+
+			char admfield;
+			(*stream).get(admfield);
 
 			// check type field
-			if ((_admfield >> 4) != 2) throw WrongRecordException();
+			if ((admfield >> 4) != 2) throw WrongRecordException();
 
 			char status = 0;
 			(*stream).get(status);
@@ -57,12 +58,15 @@ namespace dtn
 			// decode reason flag
 			reason = REASON_CODE(status >> 1);
 
-			if ( refsFragment() )
+			if ( admfield & 0x01 )
 			{
 				bundleid.setFragment(true);
 
 				(*stream) >> bundleid.fragmentoffset;
-				(*stream) >> fragment_length;
+
+				dtn::data::Number tmp;
+				(*stream) >> tmp;
+				bundleid.setPayloadLength(tmp);
 			}
 
 			(*stream) >> timeofsignal;
@@ -82,8 +86,10 @@ namespace dtn
 			// clear the whole data first
 			stream.clear();
 
+			char admfield = bundleid.isFragment() ? 33 : 32;
+
 			// write the content
-			(*stream).put(_admfield);
+			(*stream).put(admfield);
 
 			// encode reason flag
 			char status = static_cast<char>(reason << 1);
@@ -94,10 +100,10 @@ namespace dtn
 			// write the status byte
 			(*stream).put(status);
 
-			if ( refsFragment() )
+			if ( bundleid.isFragment() )
 			{
 				(*stream) << bundleid.fragmentoffset;
-				(*stream) << fragment_length;
+				(*stream) << bundleid.getPayloadLength();
 			}
 
 			BundleString sourceid(bundleid.source.getString());
@@ -111,51 +117,18 @@ namespace dtn
 		void CustodySignalBlock::setMatch(const dtn::data::MetaBundle& other)
 		{
 			// set bundle parameter
-			if (other.get(Bundle::FRAGMENT))
-			{
-				bundleid.fragmentoffset = other.fragmentoffset;
-				fragment_length = other.appdatalength;
-
-				bundleid.setFragment(true);
-			}
-
-			bundleid.timestamp = other.timestamp;
-			bundleid.sequencenumber = other.sequencenumber;
-			bundleid.source = other.source;
+			bundleid = other;
 		}
 
 		void CustodySignalBlock::setMatch(const dtn::data::Bundle& other)
 		{
 			// set bundle parameter
-			if (other.get(Bundle::FRAGMENT))
-			{
-				bundleid.fragmentoffset = other.fragmentoffset;
-				fragment_length = other.appdatalength;
-
-				bundleid.setFragment(true);
-			}
-
-			bundleid.timestamp = other.timestamp;
-			bundleid.sequencenumber = other.sequencenumber;
-			bundleid.source = other.source;
+			bundleid = other;
 		}
 
 		bool CustodySignalBlock::match(const Bundle& other) const
 		{
-			if (bundleid.timestamp != other.timestamp) return false;
-			if (bundleid.sequencenumber != other.sequencenumber) return false;
-			if (bundleid.source != other.source) return false;
-
-			// set bundle parameter
-			if (other.get(Bundle::FRAGMENT))
-			{
-				if (!bundleid.isFragment()) return false;
-				if (bundleid.fragmentoffset != other.fragmentoffset) return false;
-				if (fragment_length != other.appdatalength) return false;
-			}
-
-			return true;
+			return other == bundleid;
 		}
-
 	}
 }

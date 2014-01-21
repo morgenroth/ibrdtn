@@ -56,6 +56,9 @@ namespace dtn
 
 			dtn::data::Number fragmentoffset;
 
+			virtual dtn::data::Number getPayloadLength() const;
+			virtual void setPayloadLength(const dtn::data::Number &value);
+
 			virtual bool isFragment() const;
 			virtual void setFragment(bool val);
 
@@ -77,6 +80,7 @@ namespace dtn
 		private:
 			static const unsigned int RAW_LENGTH_MAX;
 			bool _fragment;
+			dtn::data::Number _payloadlength;
 		};
 	}
 }

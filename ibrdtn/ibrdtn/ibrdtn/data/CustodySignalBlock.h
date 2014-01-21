@@ -63,7 +63,6 @@ namespace dtn
 
 			bool custody_accepted;
 			REASON_CODE reason;
-			Number fragment_length;
 			DTNTime timeofsignal;
 			dtn::data::BundleID bundleid;
 		};

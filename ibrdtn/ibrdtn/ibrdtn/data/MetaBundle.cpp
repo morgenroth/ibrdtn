@@ -43,13 +43,13 @@ namespace dtn
 
 		MetaBundle::MetaBundle()
 		 : BundleID(), received(), lifetime(0), destination(), reportto(),
-		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
+		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(Number::max()), net_priority(0)
 		{
 		}
 
 		MetaBundle::MetaBundle(const dtn::data::BundleID &id)
 		 : BundleID(id), received(), lifetime(0), destination(), reportto(),
-		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
+		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(Number::max()), net_priority(0)
 		{
 			// apply fragment bit
 			setFragment(id.isFragment());
@@ -57,7 +57,7 @@ namespace dtn
 
 		MetaBundle::MetaBundle(const dtn::data::Bundle &b)
 		 : BundleID(b), lifetime(b.lifetime), destination(b.destination), reportto(b.reportto),
-		   custodian(b.custodian), appdatalength(b.appdatalength), procflags(b.procflags), expiretime(0), hopcount(Number::max()), payloadlength(0), net_priority(0)
+		   custodian(b.custodian), appdatalength(b.appdatalength), procflags(b.procflags), expiretime(0), hopcount(Number::max()), net_priority(0)
 		{
 			expiretime = dtn::utils::Clock::getExpireTime(b);
 
@@ -75,14 +75,6 @@ namespace dtn
 			try {
 				const dtn::data::SchedulingBlock &sblock = b.find<dtn::data::SchedulingBlock>();
 				net_priority = sblock.getPriority();
-			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
-
-			/**
-			 * read the payload length
-			 */
-			try {
-				const dtn::data::PayloadBlock &pblock = b.find<dtn::data::PayloadBlock>();
-				payloadlength = pblock.getLength();
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 		}
 

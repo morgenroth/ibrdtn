@@ -35,12 +35,13 @@ namespace dtn
 		const unsigned int BundleID::RAW_LENGTH_MAX = 25 + 1024 + 1 + 1024;
 
 		BundleID::BundleID()
-		 : source(), timestamp(0), sequencenumber(0), fragmentoffset(0), _fragment(false)
+		 : source(), timestamp(0), sequencenumber(0), fragmentoffset(0), _fragment(false), _payloadlength(0)
 		{
 		}
 
 		BundleID::BundleID(const BundleID &id)
-		 : source(id.source), timestamp(id.timestamp), sequencenumber(id.sequencenumber), fragmentoffset(id.fragmentoffset), _fragment(id.isFragment())
+		 : source(id.source), timestamp(id.timestamp), sequencenumber(id.sequencenumber),
+		   fragmentoffset(id.fragmentoffset), _fragment(id.isFragment()), _payloadlength(id.getPayloadLength())
 		{
 		}
 
@@ -54,7 +55,8 @@ namespace dtn
 			timestamp = id.timestamp;
 			sequencenumber = id.sequencenumber;
 			fragmentoffset = id.fragmentoffset;
-			setFragment(id._fragment);
+			setFragment(id.isFragment());
+			setPayloadLength(id.getPayloadLength());
 			return (*this);
 		}
 
@@ -72,7 +74,10 @@ namespace dtn
 			if (other.isFragment())
 			{
 				if (!isFragment()) return true;
-				return (fragmentoffset < other.fragmentoffset);
+				if (fragmentoffset < other.fragmentoffset) return true;
+				if (fragmentoffset != other.fragmentoffset) return false;
+
+				return (getPayloadLength() < other.getPayloadLength());
 			}
 
 			return false;
@@ -98,9 +103,20 @@ namespace dtn
 			if (isFragment())
 			{
 				if (other.fragmentoffset != fragmentoffset) return false;
+				if (other.getPayloadLength() != getPayloadLength()) return false;
 			}
 
 			return true;
+		}
+
+		dtn::data::Number BundleID::getPayloadLength() const
+		{
+			return _payloadlength;
+		}
+
+		void BundleID::setPayloadLength(const dtn::data::Number &value)
+		{
+			_payloadlength = value;
 		}
 
 		bool BundleID::isFragment() const
@@ -149,7 +165,12 @@ namespace dtn
 			data += sizeof(uint8_t);
 
 			// add fragment offset
-			tmp = GUINT64_TO_BE(fragmentoffset.get<uint64_t>());
+			tmp = isFragment() ? 0 : GUINT64_TO_BE(fragmentoffset.get<uint64_t>());
+			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
+			data += sizeof(tmp);
+
+			// add fragment length
+			tmp = isFragment() ? 0 : GUINT64_TO_BE(getPayloadLength().get<uint64_t>());
 			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
 			data += sizeof(tmp);
 
@@ -174,6 +195,7 @@ namespace dtn
 			if (isFragment())
 			{
 				ss << "." << fragmentoffset.toString();
+				ss << "." << getPayloadLength().toString();
 			}
 
 			ss << "] " << source.getString();
@@ -190,6 +212,7 @@ namespace dtn
 			if (obj.isFragment()) {
 				stream.put(1);
 				stream << obj.fragmentoffset;
+				stream << obj.getPayloadLength();
 			} else {
 				stream.put(0);
 			}
@@ -210,6 +233,9 @@ namespace dtn
 
 			if (frag == 1) {
 				stream >> obj.fragmentoffset;
+				dtn::data::Number tmp;
+				stream >> tmp;
+				obj.setPayloadLength(tmp);
 				obj.setFragment(true);
 			} else {
 				obj.setFragment(false);

@@ -92,9 +92,9 @@ namespace dtn
 					for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 					{
 						const dtn::data::MetaBundle &m = (*iter);
-						if (meta.payloadlength > 0)
+						if (meta.getPayloadLength() > 0)
 						{
-							BundleMerger::Chunk chunk(m.fragmentoffset.get<dtn::data::Length>(), m.payloadlength.get<dtn::data::Length>());
+							BundleMerger::Chunk chunk(m.fragmentoffset.get<dtn::data::Length>(), m.getPayloadLength().get<dtn::data::Length>());
 							chunks.insert(chunk);
 						}
 					}
@@ -109,7 +109,7 @@ namespace dtn
 					{
 						const dtn::data::MetaBundle &meta = (*iter);
 
-						if (meta.payloadlength > 0)
+						if (meta.getPayloadLength() > 0)
 						{
 							IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "fragment: " << (*iter).toString() << IBRCOMMON_LOGGER_ENDL;
 

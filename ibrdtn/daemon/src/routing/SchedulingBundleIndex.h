@@ -67,12 +67,12 @@ namespace dtn
 					if (lhs.isFragment())
 						complete_payloadlength_lhs = lhs.appdatalength;
 					else
-						complete_payloadlength_lhs = lhs.payloadlength;
+						complete_payloadlength_lhs = lhs.getPayloadLength();
 
 					if (rhs.isFragment())
 						complete_payloadlength_rhs = rhs.appdatalength;
 					else
-						complete_payloadlength_rhs = rhs.payloadlength;
+						complete_payloadlength_rhs = rhs.getPayloadLength();
 
 
 					if (complete_payloadlength_lhs < complete_payloadlength_rhs)

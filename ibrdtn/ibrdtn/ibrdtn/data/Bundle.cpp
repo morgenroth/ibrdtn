@@ -289,6 +289,16 @@ namespace dtn
 			}
 		}
 
+		dtn::data::Number Bundle::getPayloadLength() const
+		{
+			try {
+				const dtn::data::PayloadBlock &payload = find<dtn::data::PayloadBlock>();
+				return payload.getLength();
+			} catch (const NoSuchBlockFoundException&) {
+				return 0;
+			}
+		}
+
 		Bundle::const_iterator Bundle::find(block_t blocktype) const
 		{
 			return std::find(begin(), end(), blocktype);
