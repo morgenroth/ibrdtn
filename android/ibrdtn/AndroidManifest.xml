@@ -69,6 +69,12 @@
             android:icon="@drawable/ic_neighbors"
             android:label="@string/list_neighbors" />
         <activity
+            android:name="de.tubs.ibr.dtn.daemon.api.SelectNeighborActivity"
+            android:icon="@drawable/ic_neighbors"
+            android:label="@string/select_neighbor"
+            android:permission="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"
+            android:exported="true" />
+        <activity
             android:name=".daemon.LogActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:icon="@drawable/ic_log"

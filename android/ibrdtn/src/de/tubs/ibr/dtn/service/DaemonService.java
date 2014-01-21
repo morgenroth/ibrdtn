@@ -39,6 +39,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -56,6 +57,7 @@ import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
+import de.tubs.ibr.dtn.daemon.api.SelectNeighborActivity;
 import de.tubs.ibr.dtn.p2p.P2pManager;
 import de.tubs.ibr.dtn.p2p.SettingsUtil;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
@@ -146,6 +148,14 @@ public class DaemonService extends Service {
         
         public DaemonService getLocal() {
             return DaemonService.this;
+        }
+
+        @Override
+        public Bundle getSelectNeighborIntent() throws RemoteException {
+            Bundle ret = new Bundle();
+            Intent intent = new Intent(DaemonService.this, SelectNeighborActivity.class);
+            ret.putParcelable(de.tubs.ibr.dtn.Intent.INTENT_KEY, intent);
+            return ret;
         }
     };
     

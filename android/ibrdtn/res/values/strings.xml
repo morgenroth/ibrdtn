@@ -23,6 +23,7 @@
     <string name="eid_description">The endpoint identifier of this device.</string>
     <string name="routing_description">The routing scheme to use.</string>
     <string name="list_neighbors">Neighbors</string>
+    <string name="select_neighbor">Select neighbor</string>
     <string name="showneighbors">Show neighbors</string>
     <string name="list_logs">Logs</string>
     <string name="list_logs_paused">Logs (PAUSED)</string>

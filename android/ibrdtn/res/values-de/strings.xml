@@ -22,6 +22,7 @@
     <string name="eid_description">Die Endpoint ID von diesem Dienst.</string>
     <string name="routing_description">Der zu verwendende Wegewahl-Algorithmus.</string>
     <string name="list_neighbors">Nachbarn</string>
+    <string name="select_neighbor">Nachbarn auswählen</string>
     <string name="showneighbors">Nachbarn anzeigen</string>
     <string name="list_logs">Logs</string>
     <string name="list_logs_paused">Logs (PAUSE)</string>
