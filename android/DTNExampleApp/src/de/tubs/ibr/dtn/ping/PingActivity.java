@@ -1,5 +1,6 @@
 package de.tubs.ibr.dtn.ping;
 
+import de.tubs.ibr.dtn.api.Node;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -42,8 +43,8 @@ public class PingActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.itemSelectNeighbor:
-                Intent select_neighbor = new Intent(this, NeighborChooserActivity.class);
-                startActivityForResult(select_neighbor, SELECT_NEIGHBOR);
+                Intent intent = mService.getSelectNeighborIntent();
+                startActivityForResult(intent, SELECT_NEIGHBOR);
                 return true;
                 
             case R.id.itemEnableStreaming:
@@ -68,16 +69,24 @@ public class PingActivity extends Activity {
         }
     }
     
+    private void onNeighborSelected(Node n) {
+        String endpoint = n.endpoint.toString();
+        
+        if (endpoint.startsWith("ipn:")) {
+            endpoint = endpoint + ".11";
+        } else {
+            endpoint = endpoint + "/echo";
+        }
+        
+        mTextEid.setText(endpoint);
+    }
+    
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (SELECT_NEIGHBOR == requestCode) {
-            if ((data != null) && data.hasExtra("endpoint")) {
-                String endpoint = data.getStringExtra("endpoint");
-                if (endpoint.startsWith("ipn:")) {
-                    mTextEid.setText( endpoint + ".11" );
-                } else {
-                    mTextEid.setText( endpoint + "/echo" );
-                }
+            if ((data != null) && data.hasExtra(de.tubs.ibr.dtn.Intent.NODE_KEY)) {
+                Node n = data.getParcelableExtra(de.tubs.ibr.dtn.Intent.NODE_KEY);
+                onNeighborSelected(n);
             }
             return;
         }

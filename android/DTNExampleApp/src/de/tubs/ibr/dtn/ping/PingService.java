@@ -122,6 +122,25 @@ public class PingService extends IntentService {
         return null;
     }
     
+    public Intent getSelectNeighborIntent() {
+        try {
+            // wait until the session is available
+            mClient.getSession();
+            
+            // get pending intent for neighbor list
+            android.os.Bundle b = mClient.getDTNService().getSelectNeighborIntent();
+            return b.getParcelable(de.tubs.ibr.dtn.Intent.INTENT_KEY);
+        } catch (SessionDestroyedException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        } catch (InterruptedException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        } catch (RemoteException e) {
+            Log.e(TAG, "can not query for neighbors", e);
+        }
+        
+        return null;
+    }
+    
     public List<Node> getNeighbors() {
         try {
             // wait until the session is available
