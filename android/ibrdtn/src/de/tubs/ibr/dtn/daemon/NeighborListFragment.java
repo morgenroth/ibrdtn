@@ -43,6 +43,8 @@ import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.Node;
+import de.tubs.ibr.dtn.daemon.data.NeighborListAdapter;
+import de.tubs.ibr.dtn.daemon.data.NeighborListLoader;
 import de.tubs.ibr.dtn.service.DaemonService;
 
 public class NeighborListFragment extends ListFragment implements

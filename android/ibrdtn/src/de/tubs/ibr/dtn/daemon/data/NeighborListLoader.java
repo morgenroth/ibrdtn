@@ -1,4 +1,4 @@
-package de.tubs.ibr.dtn.daemon;
+package de.tubs.ibr.dtn.daemon.data;
 
 import java.util.LinkedList;
 import java.util.List;

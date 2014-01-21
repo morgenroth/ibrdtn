@@ -20,12 +20,13 @@
  *
  */
 
-package de.tubs.ibr.dtn.daemon;
+package de.tubs.ibr.dtn.daemon.data;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import de.tubs.ibr.dtn.daemon.LogMessage;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.support.v4.content.Loader;

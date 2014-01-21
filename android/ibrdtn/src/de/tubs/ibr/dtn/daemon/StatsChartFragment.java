@@ -31,10 +31,12 @@ import com.jjoe64.graphview.LineGraphView;
 
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.daemon.data.CurrentStatsLoader;
+import de.tubs.ibr.dtn.daemon.data.StatsListAdapter;
+import de.tubs.ibr.dtn.daemon.data.StatsLoader;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
 import de.tubs.ibr.dtn.stats.StatsEntry;
-import de.tubs.ibr.dtn.stats.StatsLoader;
 import de.tubs.ibr.dtn.stats.StatsUtils;
 
 public abstract class StatsChartFragment extends Fragment implements CustomLabelFormatter {

@@ -11,8 +11,8 @@ import android.text.format.Time;
 
 import com.jjoe64.graphview.GraphView.GraphViewData;
 
-import de.tubs.ibr.dtn.daemon.StatsListAdapter;
-import de.tubs.ibr.dtn.daemon.StatsListAdapter.RowType;
+import de.tubs.ibr.dtn.daemon.data.StatsListAdapter;
+import de.tubs.ibr.dtn.daemon.data.StatsListAdapter.RowType;
 
 public class StatsUtils {
     public static void convertData(Context context, Cursor stats, HashMap<String, ArrayList<GraphViewData>> series) {

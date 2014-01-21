@@ -1,4 +1,4 @@
-package de.tubs.ibr.dtn.daemon;
+package de.tubs.ibr.dtn.daemon.data;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -12,6 +12,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.daemon.LogMessage;
 
 public class LogListAdapter extends BaseAdapter {
     private LayoutInflater inflater = null;

@@ -1,4 +1,4 @@
-package de.tubs.ibr.dtn.stats;
+package de.tubs.ibr.dtn.daemon.data;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -14,21 +14,21 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 import de.tubs.ibr.dtn.service.DaemonService;
+import de.tubs.ibr.dtn.stats.StatsDatabase;
+import de.tubs.ibr.dtn.stats.StatsEntry;
 
 @SuppressLint("SimpleDateFormat")
-public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
+public class StatsLoader extends AsyncTaskLoader<Cursor> {
     
-    private static final String TAG = "ConvergenceLayerStatsLoader";
+    private static final String TAG = "StatsLoader";
     
     private DaemonService mService = null;
     private Boolean mStarted = false;
     private Cursor mData = null;
-    private String mConvergenceLayer = null;
 
-    public ConvergenceLayerStatsLoader(Context context, DaemonService service, String convergencecayer) {
+    public StatsLoader(Context context, DaemonService service) {
         super(context);
         mService = service;
-        mConvergenceLayer = convergencecayer;
         setUpdateThrottle(250);
     }
     
@@ -90,23 +90,13 @@ public class ConvergenceLayerStatsLoader extends AsyncTaskLoader<Cursor> {
         String timestamp_limit = formatter.format(cal.getTime());
 
         try {
-            if (mConvergenceLayer == null) {
-                // limit to specific download
-                return db.query(
-                        StatsDatabase.TABLE_NAMES[1],
-                        ConvergenceLayerStatsEntry.PROJECTION,
-                        ConvergenceLayerStatsEntry.TIMESTAMP + " >= ?",
-                        new String[] { timestamp_limit },
-                        null, null, ConvergenceLayerStatsEntry.TIMESTAMP + " ASC");
-            } else {
-                // limit to specific download
-                return db.query(
-                        StatsDatabase.TABLE_NAMES[1],
-                        ConvergenceLayerStatsEntry.PROJECTION,
-                        ConvergenceLayerStatsEntry.TIMESTAMP + " >= ? AND " + ConvergenceLayerStatsEntry.CONVERGENCE_LAYER + " = ?",
-                        new String[] { timestamp_limit, mConvergenceLayer },
-                        null, null, ConvergenceLayerStatsEntry.TIMESTAMP + " ASC");
-            }
+            // limit to specific download
+            return db.query(
+                    StatsDatabase.TABLE_NAMES[0],
+                    StatsEntry.PROJECTION,
+                    StatsEntry.TIMESTAMP + " >= ?",
+                    new String[] { timestamp_limit },
+                    null, null, StatsEntry.TIMESTAMP + " ASC");
         } catch (Exception e) {
             Log.e(TAG, "loadInBackground() failed", e);
         }

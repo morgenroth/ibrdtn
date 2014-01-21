@@ -1,4 +1,4 @@
-package de.tubs.ibr.dtn.daemon;
+package de.tubs.ibr.dtn.daemon.data;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

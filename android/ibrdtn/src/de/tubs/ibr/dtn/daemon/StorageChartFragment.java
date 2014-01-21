@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.daemon.data.StatsListAdapter;
 import de.tubs.ibr.dtn.stats.StatsUtils;
 
 public class StorageChartFragment extends StatsChartFragment {

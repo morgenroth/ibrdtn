@@ -32,10 +32,12 @@ import com.jjoe64.graphview.LineGraphView;
 
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
+import de.tubs.ibr.dtn.daemon.data.ConvergenceLayerStatsListAdapter;
+import de.tubs.ibr.dtn.daemon.data.ConvergenceLayerStatsLoader;
+import de.tubs.ibr.dtn.daemon.data.CurrentConvergenceLayerStatsLoader;
 import de.tubs.ibr.dtn.service.DaemonService;
 import de.tubs.ibr.dtn.service.DaemonService.LocalDTNService;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
-import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsLoader;
 import de.tubs.ibr.dtn.stats.StatsUtils;
 
 public class ConvergenceLayerStatsChartFragment extends Fragment implements CustomLabelFormatter {
