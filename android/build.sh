@@ -12,23 +12,6 @@ android update project -p ibrdtn-api -n android-ibrdtn-api
 # build IBR-DTN API
 ant -f ibrdtn-api/build.xml clean ${BUILD_MODE}
 
-# copy API .jar to all DTN apps
-cp ibrdtn-api/bin/classes.jar ibrdtn/libs/android-ibrdtn-api.jar
-cp ibrdtn-api/bin/classes.jar Whisper/libs/android-ibrdtn-api.jar
-cp ibrdtn-api/bin/classes.jar Talkie/libs/android-ibrdtn-api.jar
-cp ibrdtn-api/bin/classes.jar DTNExampleApp/libs/android-ibrdtn-api.jar
-
-### BUILD CHARTVIEW LIBRARY ###
-
-# copy latest support library to chartview
-cp ibrdtn/libs/android-support-v4.jar ChartView/library/libs
-
-# update android project
-android update project -p ChartView/library -n chartview
-
-# build ChartView
-ant -f ChartView/library/build.xml clean ${BUILD_MODE}
-
 ### BUILD IBR-DTN DAEMON ###
 
 # build JNI part of the daemon
@@ -39,7 +22,7 @@ cd ibrdtn/jni
 cd ${WORKSPACE}
 
 # update android project
-android update project -p ibrdtn -n ibrdtn --library ../ChartView/library
+android update project -p ibrdtn -n ibrdtn
 
 # build IBR-DTN
 ant -f ibrdtn/build.xml clean ${BUILD_MODE}
@@ -49,7 +32,7 @@ ant -f ibrdtn/build.xml clean ${BUILD_MODE}
 # update android project
 android update project -p Whisper -n Whisper
 
-# build IBR-DTN API
+# build project
 ant -f Whisper/build.xml clean ${BUILD_MODE}
 
 ### BUILD TALKIE ###
@@ -57,6 +40,21 @@ ant -f Whisper/build.xml clean ${BUILD_MODE}
 # update android project
 android update project -p Talkie -n Talkie
 
-# build IBR-DTN API
+# build project
 ant -f Talkie/build.xml clean ${BUILD_MODE}
 
+### BUILD DTN example app ###
+
+# update android project
+android update project -p DTNExampleApp -n DTNExampleApp
+
+# build project
+ant -f DTNExampleApp/build.xml clean ${BUILD_MODE}
+
+### BUILD Communicator ###
+
+# update android project
+android update project -p Communicator -n Communicator
+
+# build project
+ant -f Communicator/build.xml clean ${BUILD_MODE}
