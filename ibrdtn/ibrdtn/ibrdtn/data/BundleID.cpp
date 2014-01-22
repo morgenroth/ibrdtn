@@ -32,7 +32,7 @@ namespace dtn
 {
 	namespace data
 	{
-		const unsigned int BundleID::RAW_LENGTH_MAX = 25 + 1024 + 1 + 1024;
+		const unsigned int BundleID::RAW_LENGTH_MAX = 33 + 1024 + 1 + 1024;
 
 		BundleID::BundleID()
 		 : source(), timestamp(0), sequencenumber(0), fragmentoffset(0), _fragment(false), _payloadlength(0)
@@ -148,7 +148,7 @@ namespace dtn
 			uint64_t tmp = 0;
 
 			// stop here if there is not enough space
-			if (len < 25) return 0;
+			if (len < 33) return 0;
 
 			// add timestamp data
 			tmp = GUINT64_TO_BE(timestamp.get<uint64_t>());
@@ -170,8 +170,7 @@ namespace dtn
 			data += sizeof(tmp);
 
 			// add fragment length
-			tmp = isFragment() ? getPayloadLength() : 0;
-			tmp = GUINT64_TO_BE(tmp);
+			tmp = isFragment() ? GUINT64_TO_BE(getPayloadLength()) : 0;
 			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
 			data += sizeof(tmp);
 
@@ -179,12 +178,12 @@ namespace dtn
 			const std::string s = source.getString();
 
 			// copy source endpoint into data array
-			::strncpy((char*)data, s.c_str(), len - 25);
+			::strncpy((char*)data, s.c_str(), len - 33);
 
-			if ((len - 25) < s.length()) {
+			if ((len - 33) < s.length()) {
 				return len;
 			} else {
-				return 25 + s.length();
+				return 33 + s.length();
 			}
 		}
 
