@@ -262,6 +262,11 @@ namespace dtn
 			void clear() throw (SQLiteQueryException);
 
 			/**
+			 * Returns true, if the bundle ID is stored in the database
+			 */
+			bool contains(const dtn::data::BundleID &id) throw (SQLiteDatabase::SQLiteQueryException);
+
+			/**
 			 * @see BundleSeeker::getDistinctDestinations()
 			 */
 			virtual const eid_set getDistinctDestinations() throw (SQLiteQueryException);

@@ -306,7 +306,7 @@ namespace dtn
 		{
 			try {
 				// announce this bundle as delivered
-				dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(dtn::core::BundleCore::getInstance().getStorage().get(id));
+				const dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().info(id);
 				_registration.delivered(meta);
 
 				IBRCOMMON_LOGGER_DEBUG_TAG(NativeSession::TAG, 20) << "Bundle " << id.toString() << " marked as delivered" << IBRCOMMON_LOGGER_ENDL;

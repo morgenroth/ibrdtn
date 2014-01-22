@@ -48,6 +48,8 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testFaultyStore(dtn::storage::BundleStorage &storage);
 		void testQueryBloomFilter(dtn::storage::BundleStorage &storage);
 		void testFragment(dtn::storage::BundleStorage &storage);
+		void testContains(dtn::storage::BundleStorage &storage);
+		void testInfo(dtn::storage::BundleStorage &storage);
 
 	public:
 #define CPPUNIT_TEST_ALL_STORAGES(testMethod) \
@@ -81,6 +83,8 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		void testFaultyStore();
 		void testQueryBloomFilter();
 		void testFragment();
+		void testContains();
+		void testInfo();
 
 		void setUp();
 		void tearDown();
@@ -115,6 +119,8 @@ class BundleStorageTest : public CppUnit::TestFixture {
 		CPPUNIT_TEST_ALL_STORAGES(testFaultyStore);
 		CPPUNIT_TEST_ALL_STORAGES(testQueryBloomFilter);
 		CPPUNIT_TEST_ALL_STORAGES(testFragment);
+		CPPUNIT_TEST_ALL_STORAGES(testContains);
+		CPPUNIT_TEST_ALL_STORAGES(testInfo);
 		CPPUNIT_TEST_SUITE_END();
 
 		static size_t testCounter;

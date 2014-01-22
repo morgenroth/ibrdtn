@@ -841,6 +841,18 @@ namespace dtn
 			reset_expire_time();
 		}
 
+		bool SQLiteDatabase::contains(const dtn::data::BundleID &id) throw (SQLiteDatabase::SQLiteQueryException)
+		{
+			// lock the prepared statement
+			Statement st(_database, _sql_queries[BUNDLE_GET_ID]);
+
+			// bind bundle id to the statement
+			set_bundleid(st, id);
+
+			// execute the query and check for error
+			return !((st.step() != SQLITE_ROW) || _faulty);
+		}
+
 		bool SQLiteDatabase::empty() const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			Statement st(_database, _sql_queries[EMPTY_CHECK]);

@@ -386,6 +386,22 @@ namespace dtn
 			}
 		}
 
+		bool SimpleBundleStorage::contains(const dtn::data::BundleID &id)
+		{
+			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+
+			// search for the bundle in the meta storage
+			return _metastore.contains(id);
+		}
+
+		dtn::data::MetaBundle SimpleBundleStorage::info(const dtn::data::BundleID &id)
+		{
+			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);
+
+			// search for the bundle in the meta storage
+			return _metastore.find(dtn::data::MetaBundle::create(id));
+		}
+
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
 			ibrcommon::RWLock l(_meta_lock, ibrcommon::RWMutex::LOCK_READONLY);

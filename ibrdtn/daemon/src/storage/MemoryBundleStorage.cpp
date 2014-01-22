@@ -199,6 +199,28 @@ namespace dtn
 			}
 		}
 
+		bool MemoryBundleStorage::contains(const dtn::data::BundleID &id)
+		{
+			ibrcommon::MutexLock l(_bundleslock);
+			return (_bundle_lengths.find(id) != _bundle_lengths.end());
+		}
+
+		dtn::data::MetaBundle MemoryBundleStorage::info(const dtn::data::BundleID &id)
+		{
+			ibrcommon::MutexLock l(_bundleslock);
+
+			for (dtn::data::BundleList::const_iterator iter = _list.begin(); iter != _list.end(); ++iter)
+			{
+				const dtn::data::MetaBundle &meta = (*iter);
+				if (id == meta)
+				{
+					return meta;
+				}
+			}
+
+			throw NoBundleFoundException();
+		}
+
 		void MemoryBundleStorage::remove(const dtn::data::BundleID &id)
 		{
 			ibrcommon::MutexLock l(_bundleslock);

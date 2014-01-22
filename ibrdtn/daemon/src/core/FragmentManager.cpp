@@ -69,6 +69,9 @@ namespace dtn
 
 		void FragmentManager::componentRun() throw ()
 		{
+			// get reference to the storage
+			dtn::storage::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
+
 			// TODO: scan storage for fragments to reassemble on startup
 
 			dtn::storage::BundleResultList list;
@@ -79,13 +82,18 @@ namespace dtn
 				{
 					dtn::data::MetaBundle meta = _incoming.getnpop(true);
 
+					// skip merge if complete bundle is already in the storage
+					dtn::data::BundleID origin(meta);
+					origin.setFragment(false);
+					if (storage.contains(origin)) continue;
+
 					// search for matching bundles
 					list.clear();
 					search(meta, list);
 
 					IBRCOMMON_LOGGER_DEBUG_TAG(FragmentManager::TAG, 20) << "found " << list.size() << " fragments similar to bundle " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-					// TODO: drop fragments if other fragments available containing the same payload
+					// TODO: drop fragments if other fragments available containing the same payload or larger payload
 
 					// check first if all fragment are available
 					std::set<BundleMerger::Chunk> chunks;
@@ -135,9 +143,9 @@ namespace dtn
 						dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, merged, true);
 
 						// delete all fragments of the merged bundle
-						for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
+						if (merged.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 						{
-							if ((*iter).get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); ++iter)
 							{
 								dtn::core::BundlePurgeEvent::raise(*iter);
 							}

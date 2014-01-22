@@ -887,6 +887,79 @@ void BundleStorageTest::testFragment(dtn::storage::BundleStorage &storage)
 	CPPUNIT_ASSERT_EQUAL(id, (const dtn::data::BundleID&)retrieved);
 }
 
+void BundleStorageTest::testContains()
+{
+	STORAGE_TEST(testContains);
+}
+
+void BundleStorageTest::testContains(dtn::storage::BundleStorage &storage)
+{
+	// Add fragment of a bundle to the storage
+	dtn::data::Bundle b;
+
+	// set standard variables
+	b.source = dtn::data::EID("dtn://node-one/test");
+	b.lifetime = 1;
+	b.destination = dtn::data::EID("dtn://node-two/test");
+
+	// add some payload
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	b.push_back(ref);
+
+	(*ref.iostream()) << "Hallo Welt" << std::endl;
+
+	// transform bundle into a fragment
+	b.procflags.setBit(dtn::data::PrimaryBlock::FRAGMENT, true);
+	b.fragmentoffset = 4;
+	b.appdatalength = 50;
+
+	// store the bundle
+	storage.store(b);
+
+	// check if bundle is in the storage
+	CPPUNIT_ASSERT(storage.contains(b));
+
+	// check if bundle with other fragment off is not in the storage
+	b.fragmentoffset = 0;
+	CPPUNIT_ASSERT(!storage.contains(b));
+}
+
+void BundleStorageTest::testInfo()
+{
+	STORAGE_TEST(testInfo);
+}
+
+void BundleStorageTest::testInfo(dtn::storage::BundleStorage &storage)
+{
+	// Add fragment of a bundle to the storage
+	dtn::data::Bundle b;
+
+	// set standard variables
+	b.source = dtn::data::EID("dtn://node-one/test");
+	b.lifetime = 1;
+	b.destination = dtn::data::EID("dtn://node-two/test");
+
+	// add some payload
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	b.push_back(ref);
+
+	(*ref.iostream()) << "Hallo Welt" << std::endl;
+
+	// transform bundle into a fragment
+	b.procflags.setBit(dtn::data::PrimaryBlock::FRAGMENT, true);
+	b.fragmentoffset = 4;
+	b.appdatalength = 50;
+
+	// store the bundle
+	storage.store(b);
+
+	// get meta bundle from the storage
+	dtn::data::MetaBundle meta = storage.info(b);
+
+	// check if meta bundle and origin bundle are equal
+	CPPUNIT_ASSERT_EQUAL((dtn::data::BundleID&)b, (dtn::data::BundleID&)meta);
+}
+
 void BundleStorageTest::testQueryBloomFilter()
 {
 	STORAGE_TEST(testQueryBloomFilter);

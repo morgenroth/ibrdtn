@@ -79,7 +79,7 @@ namespace dtn
 			bool empty() throw ();
 			size_t size() throw ();
 
-			bool has(const dtn::data::MetaBundle &m) const throw ();
+			bool contains(const dtn::data::BundleID &id) const throw ();
 			void expire(const dtn::data::Timestamp &timestamp) throw ();
 
 			template<class T>

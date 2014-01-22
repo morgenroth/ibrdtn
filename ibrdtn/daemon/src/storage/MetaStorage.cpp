@@ -34,10 +34,9 @@ namespace dtn
 		{
 		}
 
-		bool MetaStorage::has(const dtn::data::MetaBundle &m) const throw ()
+		bool MetaStorage::contains(const dtn::data::BundleID &id) const throw ()
 		{
-			dtn::data::BundleList::const_iterator it = _list.find(m);
-			return (it != _list.end());
+			return (_bundle_lengths.find(id) != _bundle_lengths.end());
 		}
 
 		void MetaStorage::expire(const dtn::data::Timestamp &timestamp) throw ()
@@ -121,7 +120,7 @@ namespace dtn
 
 		void MetaStorage::markRemoved(const dtn::data::MetaBundle &meta) throw ()
 		{
-			if (has(meta)) {
+			if (contains(meta)) {
 				_removal_set.insert(meta);
 			}
 		}

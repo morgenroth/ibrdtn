@@ -307,12 +307,12 @@ namespace dtn
 					bool delivered = false;
 
 					// process this bundle locally
-					dtn::data::Bundle bundle = getStorage().get(meta);
+					const dtn::data::Bundle bundle = getStorage().get(meta);
 
 					if (bundle.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
 					try {
 						// check for a custody signal
-						dtn::data::PayloadBlock &payload = bundle.find<dtn::data::PayloadBlock>();
+						const dtn::data::PayloadBlock &payload = bundle.find<dtn::data::PayloadBlock>();
 
 						CustodySignalBlock custody;
 						custody.read(payload);
@@ -382,7 +382,7 @@ namespace dtn
 
 				try {
 					// create meta bundle for futher processing
-					const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(getStorage().get(id));
+					const dtn::data::MetaBundle meta = getStorage().info(id);
 
 					if (!(meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)) return;
 

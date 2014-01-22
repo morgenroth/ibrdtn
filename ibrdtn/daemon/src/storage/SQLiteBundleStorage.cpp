@@ -459,6 +459,28 @@ namespace dtn
 			}
 		}
 
+		bool SQLiteBundleStorage::contains(const dtn::data::BundleID &id)
+		{
+			try {
+				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				return _database.contains(id);
+			} catch (const SQLiteDatabase::SQLiteQueryException&) {
+				return false;
+			}
+		}
+
+		dtn::data::MetaBundle SQLiteBundleStorage::info(const dtn::data::BundleID &id)
+		{
+			try {
+				ibrcommon::RWLock l(_global_lock, ibrcommon::RWMutex::LOCK_READONLY);
+				dtn::data::MetaBundle ret;
+				_database.get(id, ret);
+				return ret;
+			} catch (const SQLiteDatabase::SQLiteQueryException&) {
+				throw dtn::storage::NoBundleFoundException();
+			}
+		}
+
 		void SQLiteBundleStorage::remove(const dtn::data::BundleID &id)
 		{
 			// remove the bundle in locked state

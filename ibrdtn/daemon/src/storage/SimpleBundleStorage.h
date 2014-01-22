@@ -72,6 +72,17 @@ namespace dtn
 			virtual void store(const dtn::data::Bundle &bundle);
 
 			/**
+			 * This method returns true if the requested bundle is
+			 * stored in the storage.
+			 */
+			virtual bool contains(const dtn::data::BundleID &id);
+
+			/**
+			 * Get meta data about a specific bundle ID
+			 */
+			virtual dtn::data::MetaBundle info(const dtn::data::BundleID &id);
+
+			/**
 			 * This method returns a specific bundle which is identified by
 			 * its id.
 			 * @param id The ID of the bundle to return.

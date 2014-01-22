@@ -308,7 +308,7 @@ namespace dtn
 
 					if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
 					{
-						const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(getStorage().get(event.getBundleID()));
+						const dtn::data::MetaBundle meta = getStorage().info(event.getBundleID());
 
 						// add the transferred bundle to the bloomfilter of the receiver
 						entry.add(meta);
