@@ -40,7 +40,7 @@ namespace dtn
 		 : _panid(panid), _iface(iface)
 		{
 			// set connection parameters
-			_params.max_msg_length = 114;
+			_params.max_msg_length = 115;
 			_params.max_seq_numbers = 4;
 			_params.flowcontrol = DatagramService::FLOW_STOPNWAIT;
 			_params.initial_timeout = 2000;		// initial timeout 2 seconds
