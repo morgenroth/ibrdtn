@@ -165,12 +165,12 @@ namespace dtn
 			data += sizeof(uint8_t);
 
 			// add fragment offset
-			tmp = isFragment() ? 0 : GUINT64_TO_BE(fragmentoffset.get<uint64_t>());
+			tmp = isFragment() ? GUINT64_TO_BE(fragmentoffset.get<uint64_t>()) : 0;
 			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
 			data += sizeof(tmp);
 
 			// add fragment length
-			tmp = isFragment() ? 0 : GUINT64_TO_BE(getPayloadLength().get<uint64_t>());
+			tmp = isFragment() ? GUINT64_TO_BE(getPayloadLength().get<uint64_t>()) : 0;
 			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
 			data += sizeof(tmp);
 
