@@ -701,6 +701,16 @@ public class ClientSession {
 		swigId.setSequencenumber(new DtnNumber(id.getSequencenumber()));
 		swigId.setTimestamp(new DtnNumber(id.getTimestamp().getValue()));
 		
+		if (id.isFragment()) {
+            swigId.setFragment(true);
+            swigId.setFragmentoffset(new DtnNumber(id.getFragmentOffset()));
+            swigId.setPayloadLength(id.getFragmentPayload());
+		} else {
+            swigId.setFragment(false);
+            swigId.setFragmentoffset(new DtnNumber(0));
+            swigId.setPayloadLength(0);
+		}
+		
 		return swigId;
 	}
 	
@@ -712,7 +722,7 @@ public class ClientSession {
 		de.tubs.ibr.dtn.swig.PrimaryBlock ret = new de.tubs.ibr.dtn.swig.PrimaryBlock();
 		ret.setCustodian(new de.tubs.ibr.dtn.swig.EID(bundle.getCustodian().toString()));
 		ret.setDestination(new de.tubs.ibr.dtn.swig.EID(bundle.getDestination().toString()));
-		ret.setFragmentoffset( new DtnNumber( bundle.getFragmentOffset() ) );
+		
 		ret.setLifetime( new DtnNumber( bundle.getLifetime().longValue() ) );
 		ret.setProcflags( new PrimaryBlockFlags( bundle.getProcflags().longValue() ) );
 		ret.setReportto(new de.tubs.ibr.dtn.swig.EID(bundle.getReportto().toString()));
@@ -720,6 +730,18 @@ public class ClientSession {
 		ret.setSource(new de.tubs.ibr.dtn.swig.EID(bundle.getSource().toString()));
 
 		ret.setTimestamp( new DtnNumber( bundle.getTimestamp().getValue() ) );
+		
+        if (bundle.get(Bundle.ProcFlags.FRAGMENT)) {
+            ret.setFragment(true);
+            ret.setFragmentoffset(new DtnNumber(bundle.getFragmentOffset()));
+            ret.setPayloadLength(bundle.getFragmentPayload());
+            ret.setAppdatalength(new DtnNumber(bundle.getAppDataLength()));
+        } else {
+            ret.setFragment(false);
+            ret.setFragmentoffset(new DtnNumber(0));
+            ret.setPayloadLength(0);
+            ret.setAppdatalength(new DtnNumber(0));
+        }
 		
 		return ret;
 	}
@@ -747,6 +769,11 @@ public class ClientSession {
 		if (block.get(PrimaryBlock.FLAGS.FRAGMENT)) {
 			ret.setAppDataLength( block.getAppdatalength().get() );
 			ret.setFragmentOffset( block.getFragmentoffset().get() );
+			ret.setFragmentPayload( block.getPayloadLength() );
+		} else {
+            ret.setAppDataLength( 0L );
+            ret.setFragmentOffset( 0L );
+            ret.setFragmentPayload( 0L );
 		}
 		
 		return ret;
@@ -769,6 +796,16 @@ public class ClientSession {
 		long swigTime = swigId.getTimestamp().get();
 		Timestamp ts = new Timestamp(swigTime);
 		id.setTimestamp(ts);
+		
+		if (swigId.isFragment()) {
+		    id.setFragment(true);
+		    id.setFragmentOffset(swigId.getFragmentoffset().get());
+		    id.setFragmentPayload(swigId.getPayloadLength());
+		} else {
+            id.setFragment(false);
+            id.setFragmentOffset(0L);
+            id.setFragmentPayload(0L);
+		}
 		
 		return id;
 	}
