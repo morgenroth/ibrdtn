@@ -60,6 +60,7 @@ namespace dtn
 				BUNDLE_GET_ITERATOR,
 				BUNDLE_GET_FILTER,
 				BUNDLE_GET_ID,
+				BUNDLE_GET_LENGTH_ID,
 				GET_DISTINCT_DESTINATIONS,
 
 				EXPIRE_BUNDLES,
@@ -106,6 +107,8 @@ namespace dtn
 			static const std::string SET_SCHEMAVERSION;
 
 			static const std::string _select_names[3];
+
+			static const std::string _where_filter[2];
 
 			static const std::string _tables[SQL_TABLE_END];
 
@@ -318,7 +321,6 @@ namespace dtn
 			const dtn::data::Timestamp& get_expire_time() const throw ();
 
 			void set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
-			void get_bundleid(Statement &st, dtn::data::BundleID &id, int offset = 0) const throw (SQLiteQueryException);
 
 			/**
 			 * get database version

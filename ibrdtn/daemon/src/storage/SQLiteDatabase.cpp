@@ -38,19 +38,24 @@ namespace dtn
 
 		const std::string SQLiteDatabase::TAG = "SQLiteDatabase";
 
-		const std::string SQLiteDatabase::_select_names[3] = {
-				"source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount, netpriority, bytes",
-				"source, timestamp, sequencenumber, fragmentoffset, procflags, bytes",
-				"`source_id`, `timestamp`, `sequencenumber`, `fragmentoffset`, `expiretime`"
+		const std::string SQLiteDatabase::_select_names[] = {
+				"source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, expiretime, fragmentoffset, appdatalength, hopcount, netpriority, payloadlength, bytes",
+				"source, timestamp, sequencenumber, fragmentoffset, payloadlength, bytes",
+				"`source`, `timestamp`, `sequencenumber`, `fragmentoffset`, `fragmentlength`, `expiretime`"
 		};
 
-		const std::string SQLiteDatabase::_tables[SQL_TABLE_END] =
+		const std::string SQLiteDatabase::_where_filter[] = {
+				"source = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? AND fragmentlength = ?",
+				"a.source = b.source AND a.timestamp = b.timestamp AND a.sequencenumber = b.sequencenumber AND a.fragmentoffset = b.fragmentoffset AND a.fragmentlength = b.fragmentlength"
+		};
+
+		const std::string SQLiteDatabase::_tables[] =
 				{ "bundles", "blocks", "routing", "routing_bundles", "routing_nodes", "properties", "bundle_set", "bundle_set_names" };
 
 		// this is the version of a fresh created db scheme
-		const int SQLiteDatabase::DBSCHEMA_FRESH_VERSION = 7;
+		const int SQLiteDatabase::DBSCHEMA_FRESH_VERSION = 8;
 
-		const int SQLiteDatabase::DBSCHEMA_VERSION = 7;
+		const int SQLiteDatabase::DBSCHEMA_VERSION = 8;
 
 		const std::string SQLiteDatabase::QUERY_SCHEMAVERSION = "SELECT `value` FROM " + SQLiteDatabase::_tables[SQLiteDatabase::SQL_TABLE_PROPERTIES] + " WHERE `key` = 'version' LIMIT 0,1;";
 		const std::string SQLiteDatabase::SET_SCHEMAVERSION = "INSERT INTO " + SQLiteDatabase::_tables[SQLiteDatabase::SQL_TABLE_PROPERTIES] + " (`key`, `value`) VALUES ('version', ?);";
@@ -58,36 +63,37 @@ namespace dtn
 		const std::string SQLiteDatabase::_sql_queries[SQL_QUERIES_END] =
 		{
 			"SELECT " + _select_names[0] + " FROM " + _tables[SQL_TABLE_BUNDLE],
-			"SELECT " + _select_names[0] + " FROM " + _tables[SQL_TABLE_BUNDLE] + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset LIMIT ?,?;",
-			"SELECT " + _select_names[0] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
+			"SELECT " + _select_names[0] + " FROM " + _tables[SQL_TABLE_BUNDLE] + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset, fragmentlength LIMIT ?,?;",
+			"SELECT " + _select_names[0] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE " + _where_filter[0] + " LIMIT 1;",
+			"SELECT bytes FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE " + _where_filter[0] + " LIMIT 1;",
 			"SELECT DISTINCT destination FROM " + _tables[SQL_TABLE_BUNDLE],
 
 			//EXPIRE_*
 			"SELECT " + _select_names[1] + " FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE expiretime <= ?;",
-			"SELECT filename FROM "+ _tables[SQL_TABLE_BUNDLE] +" as a, "+ _tables[SQL_TABLE_BLOCK] +" as b WHERE a.source_id = b.source_id AND a.timestamp = b.timestamp AND a.sequencenumber = b.sequencenumber AND a.fragmentoffset = b.fragmentoffset AND a.expiretime <= ?;",
+			"SELECT filename FROM "+ _tables[SQL_TABLE_BUNDLE] +" as a, "+ _tables[SQL_TABLE_BLOCK] +" as b WHERE " + _where_filter[1] + " AND a.expiretime <= ?;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE expiretime <= ?;",
 			"SELECT expiretime FROM "+ _tables[SQL_TABLE_BUNDLE] +" ORDER BY expiretime ASC LIMIT 1;",
 
 			"SELECT ROWID FROM "+ _tables[SQL_TABLE_BUNDLE] +" LIMIT 1;",
 			"SELECT COUNT(ROWID) FROM "+ _tables[SQL_TABLE_BUNDLE] +";",
 
-			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
+			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE " + _where_filter[0] + ";",
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +";",
-			"INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (source_id, timestamp, sequencenumber, fragmentoffset, source, destination, reportto, custodian, procflags, lifetime, appdatalength, expiretime, priority, hopcount, netpriority, bytes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
-			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET custodian = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
+			"INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (source, timestamp, sequencenumber, fragmentoffset, fragmentlength, destination, reportto, custodian, procflags, lifetime, appdatalength, expiretime, priority, hopcount, netpriority, payloadlength, bytes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
+			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET custodian = ? WHERE " + _where_filter[0] + ";",
 
-			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET procflags = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
+			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET procflags = ? WHERE " + _where_filter[0] + ";",
 
 			//BLOCK_*
-			"SELECT filename, blocktype FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? ORDER BY ordernumber ASC;",
-			"SELECT filename, blocktype FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? AND ordernumber = ?;",
+			"SELECT filename, blocktype FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE " + _where_filter[0] + " ORDER BY ordernumber ASC;",
+			"SELECT filename, blocktype FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE " + _where_filter[0] + " AND ordernumber = ?;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BLOCK] +";",
-			"INSERT INTO "+ _tables[SQL_TABLE_BLOCK] +" (source_id, timestamp, sequencenumber, fragmentoffset, blocktype, filename, ordernumber) VALUES (?,?,?,?,?,?,?);",
+			"INSERT INTO "+ _tables[SQL_TABLE_BLOCK] +" (source, timestamp, sequencenumber, fragmentoffset, fragmentlength, blocktype, filename, ordernumber) VALUES (?,?,?,?,?,?,?,?);",
 
 			//BUNDLE_SET_*
-			"INSERT INTO " + _tables[SQL_TABLE_BUNDLE_SET] + " (set_id, source_id, timestamp, sequencenumber, fragmentoffset, expiretime) VALUES (?,?,?,?,?,?);",
+			"INSERT INTO " + _tables[SQL_TABLE_BUNDLE_SET] + " (set_id, source, timestamp, sequencenumber, fragmentoffset, fragmentlength, expiretime) VALUES (?,?,?,?,?,?,?);",
 			"DELETE FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ?;",
-			"SELECT " + _select_names[2] + " FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ? AND source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? LIMIT 1;",
+			"SELECT " + _select_names[2] + " FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ? AND " + _where_filter[0] + " LIMIT 1;",
 			"SELECT " + _select_names[2] + " FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ? AND expiretime <= ?;",
 			"DELETE FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ? AND expiretime <= ?;",
 			"SELECT " + _select_names[2] + " FROM " + _tables[SQL_TABLE_BUNDLE_SET] + " WHERE set_id = ?;",
@@ -105,19 +111,19 @@ namespace dtn
 
 		const std::string SQLiteDatabase::_db_structure[SQLiteDatabase::DB_STRUCTURE_END] =
 		{
-			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BLOCK] + "` ( `key` INTEGER PRIMARY KEY ASC, `source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL DEFAULT 0, `blocktype` INTEGER NOT NULL, `filename` TEXT NOT NULL, `ordernumber` INTEGER NOT NULL);",
-			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BUNDLE] + "` ( `key` INTEGER PRIMARY KEY ASC, `source_id` TEXT NOT NULL, `source` TEXT NOT NULL, `destination` TEXT NOT NULL, `reportto` TEXT NOT NULL, `custodian` TEXT NOT NULL, `procflags` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `lifetime` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL DEFAULT 0, `appdatalength` INTEGER NOT NULL DEFAULT 0, `expiretime` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `hopcount` INTEGER DEFAULT NULL, `netpriority` INTEGER NOT NULL DEFAULT 0, `bytes` INTEGER NOT NULL DEFAULT 0);",
-			"CREATE TABLE IF NOT EXISTS "+ _tables[SQL_TABLE_ROUTING] +" (INTEGER PRIMARY KEY ASC, Key int, Routing text);",
-			"CREATE TABLE IF NOT EXISTS "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" (INTEGER PRIMARY KEY ASC, BundleID text, Key int, Routing text);",
-			"CREATE TABLE IF NOT EXISTS "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +" (INTEGER PRIMARY KEY ASC, EID text, Key int, Routing text);",
-			"CREATE TRIGGER IF NOT EXISTS blocks_autodelete AFTER DELETE ON " + _tables[SQL_TABLE_BUNDLE] + " FOR EACH ROW BEGIN DELETE FROM " + _tables[SQL_TABLE_BLOCK] + " WHERE " + _tables[SQL_TABLE_BLOCK] + ".source_id = OLD.source_id AND " + _tables[SQL_TABLE_BLOCK] + ".timestamp = OLD.timestamp AND " + _tables[SQL_TABLE_BLOCK] + ".sequencenumber = OLD.sequencenumber AND " + _tables[SQL_TABLE_BLOCK] + ".fragmentoffset = old.fragmentoffset; END;",
-			"CREATE INDEX IF NOT EXISTS blocks_bid ON " + _tables[SQL_TABLE_BLOCK] + " (source_id, timestamp, sequencenumber, fragmentoffset);",
+			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BLOCK] + "` ( `key` INTEGER PRIMARY KEY ASC, `source` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL DEFAULT 0, `fragmentlength` INTEGER NOT NULL DEFAULT 0, `blocktype` INTEGER NOT NULL, `filename` TEXT NOT NULL, `ordernumber` INTEGER NOT NULL);",
+			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BUNDLE] + "` ( `key` INTEGER PRIMARY KEY ASC, `source` TEXT NOT NULL, `destination` TEXT NOT NULL, `reportto` TEXT NOT NULL, `custodian` TEXT NOT NULL, `procflags` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `lifetime` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL DEFAULT 0, `appdatalength` INTEGER NOT NULL DEFAULT 0, `fragmentlength` INTEGER NOT NULL DEFAULT 0, `expiretime` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `hopcount` INTEGER DEFAULT NULL, `netpriority` INTEGER NOT NULL DEFAULT 0, `payloadlength` INTEGER NOT NULL DEFAULT 0, `bytes` INTEGER NOT NULL DEFAULT 0);",
+			"CREATE TABLE IF NOT EXISTS "+ _tables[SQL_TABLE_ROUTING] +" (INTEGER PRIMARY KEY ASC, KEY INT, Routing TEXT);",
+			"CREATE TABLE IF NOT EXISTS "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" (INTEGER PRIMARY KEY ASC, BundleID TEXT, KEY INT, Routing TEXT);",
+			"CREATE TABLE IF NOT EXISTS "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +" (INTEGER PRIMARY KEY ASC, EID text, KEY INT, Routing TEXT);",
+			"CREATE TRIGGER IF NOT EXISTS blocks_autodelete AFTER DELETE ON " + _tables[SQL_TABLE_BUNDLE] + " FOR EACH ROW BEGIN DELETE FROM " + _tables[SQL_TABLE_BLOCK] + " WHERE " + _tables[SQL_TABLE_BLOCK] + ".source = OLD.source AND " + _tables[SQL_TABLE_BLOCK] + ".timestamp = OLD.timestamp AND " + _tables[SQL_TABLE_BLOCK] + ".sequencenumber = OLD.sequencenumber AND " + _tables[SQL_TABLE_BLOCK] + ".fragmentoffset = OLD.fragmentoffset AND " + _tables[SQL_TABLE_BLOCK] + ".fragmentlength = OLD.fragmentlength; END;",
+			"CREATE INDEX IF NOT EXISTS blocks_bid ON " + _tables[SQL_TABLE_BLOCK] + " (source, timestamp, sequencenumber, fragmentoffset, fragmentlength);",
 			"CREATE INDEX IF NOT EXISTS bundles_destination ON " + _tables[SQL_TABLE_BUNDLE] + " (destination);",
 			"CREATE INDEX IF NOT EXISTS bundles_destination_priority ON " + _tables[SQL_TABLE_BUNDLE] + " (destination, priority);",
-			"CREATE UNIQUE INDEX IF NOT EXISTS bundles_id ON " + _tables[SQL_TABLE_BUNDLE] + " (source_id, timestamp, sequencenumber, fragmentoffset);"
-			"CREATE INDEX IF NOT EXISTS bundles_expire ON " + _tables[SQL_TABLE_BUNDLE] + " (source_id, timestamp, sequencenumber, fragmentoffset, expiretime);",
+			"CREATE UNIQUE INDEX IF NOT EXISTS bundles_id ON " + _tables[SQL_TABLE_BUNDLE] + " (source, timestamp, sequencenumber, fragmentoffset, fragmentlength);"
+			"CREATE INDEX IF NOT EXISTS bundles_expire ON " + _tables[SQL_TABLE_BUNDLE] + " (source, timestamp, sequencenumber, fragmentoffset, fragmentlength, expiretime);",
 			"CREATE TABLE IF NOT EXISTS '" + _tables[SQL_TABLE_PROPERTIES] + "' ( `key` TEXT PRIMARY KEY ASC ON CONFLICT REPLACE, `value` TEXT NOT NULL);",
-			"CREATE TABLE IF NOT EXISTS " + _tables[SQL_TABLE_BUNDLE_SET] + " (`source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL, `expiretime` INTEGER, `set_id` INTEGER, PRIMARY KEY(`set_id`, `source_id`, `timestamp`, `sequencenumber`, `fragmentoffset`));",
+			"CREATE TABLE IF NOT EXISTS " + _tables[SQL_TABLE_BUNDLE_SET] + " (`source` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER NOT NULL, `fragmentlength` INTEGER NOT NULL, `expiretime` INTEGER, `set_id` INTEGER, PRIMARY KEY(`set_id`, `source`, `timestamp`, `sequencenumber`, `fragmentoffset`, `fragmentlength`));",
 			"CREATE TABLE IF NOT EXISTS " + _tables[SQL_TABLE_BUNDLE_SET_NAME] + " (`id` INTEGER PRIMARY KEY, `name` TEXT NOT NULL, `persistent` INTEGER NOT NULL);",
 			"CREATE UNIQUE INDEX IF NOT EXISTS bundle_set_names_index ON " + _tables[SQL_TABLE_BUNDLE_SET_NAME] + " (`name`, `persistent`);"
 		};
@@ -176,6 +182,7 @@ namespace dtn
 
 			case SQLITE_ERROR:
 				throw SQLiteQueryException("Database error: " + std::string(sqlite3_errmsg(_database)));
+
 			default:
 				return ret;
 			}
@@ -378,7 +385,7 @@ namespace dtn
 		void SQLiteDatabase::get(Statement &st, dtn::data::MetaBundle &bundle, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
 			try {
-				bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 0) );
+				bundle.source = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset) );
 				bundle.destination = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 1) );
 				bundle.reportto = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 2) );
 				bundle.custodian = dtn::data::EID( (const char*) sqlite3_column_text(*st, offset + 3) );
@@ -391,30 +398,35 @@ namespace dtn
 			bundle.timestamp = sqlite3_column_int64(*st, offset + 5);
 			bundle.sequencenumber = sqlite3_column_int64(*st, offset + 6);
 			bundle.lifetime = sqlite3_column_int64(*st, offset + 7);
-			bundle.expiretime = dtn::utils::Clock::getExpireTime(bundle.timestamp, bundle.lifetime);
+			bundle.expiretime = sqlite3_column_int64(*st, offset + 8);
 
 			if (bundle.procflags & data::Bundle::FRAGMENT)
 			{
 				bundle.setFragment(true);
-				bundle.fragmentoffset = sqlite3_column_int64(*st, offset + 8);
-				bundle.appdatalength = sqlite3_column_int64(*st, offset + 9);
+				bundle.fragmentoffset = sqlite3_column_int64(*st, offset + 9);
+				bundle.appdatalength = sqlite3_column_int64(*st, offset + 10);
 			}
 			else
 			{
 				bundle.setFragment(false);
 				bundle.fragmentoffset = 0;
-				bundle.appdatalength = sqlite3_column_int64(*st, 9);
+				bundle.appdatalength = 0;
 			}
 
-			bundle.setPayloadLength(sqlite3_column_int64(*st, 9));
-
-			if (sqlite3_column_type(*st, offset + 10) != SQLITE_NULL)
+			if (sqlite3_column_type(*st, offset + 11) != SQLITE_NULL)
 			{
-				bundle.hopcount = sqlite3_column_int64(*st, 10);
+				bundle.hopcount = sqlite3_column_int64(*st, 11);
+			}
+			else
+			{
+				bundle.hopcount = 0;
 			}
 
 			// restore net priority
-			bundle.net_priority = sqlite3_column_int(*st, 11);
+			bundle.net_priority = sqlite3_column_int(*st, 12);
+
+			// set payload length
+			bundle.setPayloadLength(sqlite3_column_int64(*st, offset + 13));
 		}
 
 		void SQLiteDatabase::get(Statement &st, dtn::data::Bundle &bundle, const int offset) const throw (SQLiteDatabase::SQLiteQueryException)
@@ -433,11 +445,12 @@ namespace dtn
 			bundle.timestamp = sqlite3_column_int64(*st, offset + 5);
 			bundle.sequencenumber = sqlite3_column_int64(*st, offset + 6);
 			bundle.lifetime = sqlite3_column_int64(*st, offset + 7);
+			// offset = 8 -> expiretime
 
 			if (bundle.procflags & data::Bundle::FRAGMENT)
 			{
-				bundle.fragmentoffset = sqlite3_column_int64(*st, offset + 8);
-				bundle.appdatalength = sqlite3_column_int64(*st, offset + 9);
+				bundle.fragmentoffset = sqlite3_column_int64(*st, offset + 9);
+				bundle.appdatalength = sqlite3_column_int64(*st, offset + 10);
 			}
 		}
 
@@ -453,7 +466,7 @@ namespace dtn
 				get(st, m, 0);
 
 				// call iteration callback
-				_listener.iterateDatabase(m, sqlite3_column_int(*st, 12));
+				_listener.iterateDatabase(m, sqlite3_column_int(*st, 14));
 			}
 
 			st.reset();
@@ -475,7 +488,7 @@ namespace dtn
 					const SQLBundleQuery &query = dynamic_cast<const SQLBundleQuery&>(cb);
 
 					// custom query string
-					std::string query_string = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset LIMIT ?,?;";
+					std::string query_string = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset, fragmentlength LIMIT ?,?;";
 
 					// create statement for custom query
 					Statement st(_database, query_string);
@@ -615,14 +628,10 @@ namespace dtn
 		{
 			int err;
 
-			const dtn::data::EID _sourceid = bundle.source;
-			dtn::data::Number TTL = bundle.timestamp + bundle.lifetime;
-
 			Statement st(_database, _sql_queries[BUNDLE_STORE]);
 
 			set_bundleid(st, bundle);
 
-			sqlite3_bind_text(*st, 5, bundle.source.getString().c_str(), static_cast<int>(bundle.source.getString().length()), SQLITE_TRANSIENT);
 			sqlite3_bind_text(*st, 6, bundle.destination.getString().c_str(), static_cast<int>(bundle.destination.getString().length()), SQLITE_TRANSIENT);
 			sqlite3_bind_text(*st, 7, bundle.reportto.getString().c_str(), static_cast<int>(bundle.reportto.getString().length()), SQLITE_TRANSIENT);
 			sqlite3_bind_text(*st, 8, bundle.custodian.getString().c_str(), static_cast<int>(bundle.custodian.getString().length()), SQLITE_TRANSIENT);
@@ -635,15 +644,12 @@ namespace dtn
 			}
 			else
 			{
-				try {
-					const dtn::data::PayloadBlock &pblock = bundle.find<dtn::data::PayloadBlock>();
-					sqlite3_bind_int64(*st, 11, pblock.getLength() );
-				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
-					sqlite3_bind_int64(*st, 11, 0 );
-				}
+				sqlite3_bind_int64(*st, 11, -1);
 			}
 
-			sqlite3_bind_int64(*st, 12, TTL.get<uint64_t>());
+			dtn::data::Timestamp expire_time = dtn::utils::Clock::getExpireTime(bundle);
+			sqlite3_bind_int64(*st, 12, expire_time.get<uint64_t>());
+
 			sqlite3_bind_int64(*st, 13, bundle.getPriority());
 
 			try {
@@ -660,8 +666,11 @@ namespace dtn
 				sqlite3_bind_int64(*st, 15, 0 );
 			}
 
+			// set payload length
+			sqlite3_bind_int64(*st, 16, bundle.getPayloadLength().get<uint64_t>());
+
 			// set bundle size
-			sqlite3_bind_int64(*st, 16, size);
+			sqlite3_bind_int64(*st, 17, size);
 
 			err = st.step();
 
@@ -683,7 +692,7 @@ namespace dtn
 			}
 
 			// set new expire time
-			new_expire_time(TTL);
+			new_expire_time(expire_time);
 		}
 
 		void SQLiteDatabase::store(const dtn::data::BundleID &id, int index, const dtn::data::Block &block, const ibrcommon::File &file) throw (SQLiteDatabase::SQLiteQueryException)
@@ -697,13 +706,13 @@ namespace dtn
 			set_bundleid(st, id);
 
 			// set the block type
-			sqlite3_bind_int(*st, 5, blocktyp);
+			sqlite3_bind_int(*st, 6, blocktyp);
 
 			// the filename of the block data
-			sqlite3_bind_text(*st, 6, file.getPath().c_str(), static_cast<int>(file.getPath().size()), SQLITE_TRANSIENT);
+			sqlite3_bind_text(*st, 7, file.getPath().c_str(), static_cast<int>(file.getPath().size()), SQLITE_TRANSIENT);
 
 			// the ordering number
-			sqlite3_bind_int(*st, 7, index);
+			sqlite3_bind_int(*st, 8, index);
 
 			// execute the query and store the block in the database
 			if (st.step() != SQLITE_DONE)
@@ -764,7 +773,7 @@ namespace dtn
 
 			{
 				// lock the database
-				Statement st(_database, _sql_queries[BUNDLE_GET_ID]);
+				Statement st(_database, _sql_queries[BUNDLE_GET_LENGTH_ID]);
 
 				// bind bundle id to the statement
 				set_bundleid(st, id);
@@ -777,7 +786,7 @@ namespace dtn
 				}
 				else
 				{
-					ret = sqlite3_column_int(*st, 12);
+					ret = sqlite3_column_int(*st, 0);
 				}
 			}
 
@@ -931,12 +940,26 @@ namespace dtn
 			try {
 				Statement st(_database, _sql_queries[EXPIRE_BUNDLES]);
 
+				dtn::data::BundleID id;
+
 				// query expired bundles
 				sqlite3_bind_int64(*st, 1, timestamp.get<uint64_t>());
 				while (st.step() == SQLITE_ROW)
 				{
-					dtn::data::BundleID id;
-					get_bundleid(st, id);
+					id.source = dtn::data::EID((const char*)sqlite3_column_text(*st, 0));
+					id.timestamp = sqlite3_column_int64(*st, 1);
+					id.sequencenumber = sqlite3_column_int64(*st, 2);
+
+					id.setFragment(sqlite3_column_int64(*st, 3) >= 0);
+
+					if (id.isFragment()) {
+						id.fragmentoffset = sqlite3_column_int64(*st, 3);
+					} else {
+						id.fragmentoffset = 0;
+					}
+
+					id.setPayloadLength(sqlite3_column_int64(*st, 4));
+
 					dtn::core::BundleExpiredEvent::raise(id);
 
 					// raise bundle removed event
@@ -1012,29 +1035,20 @@ namespace dtn
 
 		void SQLiteDatabase::set_bundleid(Statement &st, const dtn::data::BundleID &id, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
 		{
-			const std::string source_id = id.source.getString();
-			sqlite3_bind_text(*st, offset + 1, source_id.c_str(), static_cast<int>(source_id.length()), SQLITE_TRANSIENT);
+			sqlite3_bind_text(*st, offset + 1, id.source.getString().c_str(), static_cast<int>(id.source.getString().length()), SQLITE_TRANSIENT);
 			sqlite3_bind_int64(*st, offset + 2, id.timestamp.get<uint64_t>());
 			sqlite3_bind_int64(*st, offset + 3, id.sequencenumber.get<uint64_t>());
 
 			if (id.isFragment())
 			{
 				sqlite3_bind_int64(*st, offset + 4, id.fragmentoffset.get<uint64_t>());
+				sqlite3_bind_int64(*st, offset + 5, id.getPayloadLength().get<uint64_t>());
 			}
 			else
 			{
 				sqlite3_bind_int64(*st, offset + 4, -1);
+				sqlite3_bind_int64(*st, offset + 5, -1);
 			}
-		}
-
-		void SQLiteDatabase::get_bundleid(Statement &st, dtn::data::BundleID &id, int offset) const throw (SQLiteDatabase::SQLiteQueryException)
-		{
-			id.source = dtn::data::EID((const char*)sqlite3_column_text(*st, offset + 0));
-			id.timestamp = sqlite3_column_int64(*st, offset + 1);
-			id.sequencenumber = sqlite3_column_int64(*st, offset + 2);
-
-			id.setFragment(sqlite3_column_text(*st, offset + 3) != NULL);
-			id.fragmentoffset = sqlite3_column_int64(*st, offset + 3);
 		}
 
 		void SQLiteDatabase::setFaulty(bool mode)

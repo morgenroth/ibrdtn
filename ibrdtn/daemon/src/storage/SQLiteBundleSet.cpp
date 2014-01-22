@@ -201,22 +201,24 @@ namespace dtn
 
 		void SQLiteBundleSet::add(const dtn::data::MetaBundle &bundle) throw ()
 		{
-			// inform database about (potentially) new expiretime
-			dtn::data::Timestamp TTL = bundle.timestamp + bundle.lifetime;
-			new_expire_time(TTL);
-
 			try {
 				// insert bundle id into database
 				SQLiteDatabase::Statement st(_sqldb._database, SQLiteDatabase::_sql_queries[SQLiteDatabase::BUNDLE_SET_ADD]);
 
-				const std::string source_id = bundle.source.getString();
-
 				sqlite3_bind_int64(*st, 1, _set_id);
-				sqlite3_bind_text(*st, 2, source_id.c_str(), static_cast<int>(source_id.length()), SQLITE_TRANSIENT);
+				sqlite3_bind_text(*st, 2, bundle.source.getString().c_str(), static_cast<int>(bundle.source.getString().length()), SQLITE_TRANSIENT);
 				sqlite3_bind_int64(*st, 3, bundle.timestamp.get<uint64_t>());
 				sqlite3_bind_int64(*st, 4, bundle.sequencenumber.get<uint64_t>());
-				sqlite3_bind_int64(*st, 5, bundle.isFragment() ? bundle.fragmentoffset.get<uint64_t>() : -1);
-				sqlite3_bind_int64(*st, 6, bundle.expiretime.get<uint64_t>());
+
+				if (bundle.isFragment()) {
+					sqlite3_bind_int64(*st, 5, bundle.fragmentoffset.get<uint64_t>());
+					sqlite3_bind_int64(*st, 6, bundle.getPayloadLength().get<uint64_t>());
+				} else {
+					sqlite3_bind_int64(*st, 5, -1);
+					sqlite3_bind_int64(*st, 6, -1);
+				}
+
+				sqlite3_bind_int64(*st, 7, bundle.expiretime.get<uint64_t>());
 
 				st.step();
 
@@ -257,16 +259,17 @@ namespace dtn
 			try {
 				SQLiteDatabase::Statement st( const_cast<sqlite3*>(_sqldb._database), SQLiteDatabase::_sql_queries[SQLiteDatabase::BUNDLE_SET_GET]);
 
-				const std::string source_id = id.source.getString();
 				sqlite3_bind_int64(*st, 1, _set_id);
-				sqlite3_bind_text(*st, 2, source_id.c_str(), static_cast<int>(source_id.length()), SQLITE_TRANSIENT);
+				sqlite3_bind_text(*st, 2, id.source.getString().c_str(), static_cast<int>(id.source.getString().length()), SQLITE_TRANSIENT);
 				sqlite3_bind_int64(*st, 3, id.timestamp.get<uint64_t>());
 				sqlite3_bind_int64(*st, 4, id.sequencenumber.get<uint64_t>());
 
 				if (id.isFragment()) {
 					sqlite3_bind_int64(*st, 5, id.fragmentoffset.get<uint64_t>());
+					sqlite3_bind_int64(*st, 6, id.getPayloadLength().get<uint64_t>());
 				} else {
 					sqlite3_bind_int64(*st, 5, -1);
+					sqlite3_bind_int64(*st, 6, -1);
 				}
 
 				if (st.step() == SQLITE_ROW)
@@ -457,8 +460,10 @@ namespace dtn
 
 			if (id.isFragment()) {
 				id.fragmentoffset = sqlite3_column_int64(*st, offset + 3);
+				id.setPayloadLength(sqlite3_column_int64(*st, offset + 4));
 			} else {
 				id.fragmentoffset = 0;
+				id.setPayloadLength(0);
 			}
 		}
 	} /* namespace data */
