@@ -31,6 +31,8 @@ class TestBundleID : public CPPUNIT_NS :: TestFixture
 	CPPUNIT_TEST_SUITE (TestBundleID);
 	CPPUNIT_TEST (rawTest);
 	CPPUNIT_TEST (performanceTest);
+	CPPUNIT_TEST (payloadLengthTest);
+	CPPUNIT_TEST (copyTest);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -40,6 +42,8 @@ public:
 protected:
 	void performanceTest(void);
 	void rawTest(void);
+	void payloadLengthTest(void);
+	void copyTest(void);
 };
 
 #endif /* TESTBUNDLEID_H_ */

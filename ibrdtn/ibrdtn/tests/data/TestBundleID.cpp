@@ -112,3 +112,60 @@ void TestBundleID::performanceTest(void)
 
 	std::cout << std::endl << i << " hashes per second" << std::endl;
 }
+
+void TestBundleID::payloadLengthTest(void)
+{
+	dtn::data::Bundle b;
+	b.source = dtn::data::EID("dtn://node1/app1");
+	b.destination = dtn::data::EID("dtn://node2/app2");
+	b.lifetime = 3600;
+	b.timestamp = 12345678;
+	b.sequencenumber = 1234;
+
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	{
+		ibrcommon::BLOB::iostream stream = ref.iostream();
+		for (int i = 0; i < 10; ++i)
+			(*stream) << "hello world" << std::flush;
+	}
+
+	b.push_back(ref);
+
+	dtn::data::BundleID id(b);
+
+	CPPUNIT_ASSERT_EQUAL(110, id.getPayloadLength().get<int>());
+}
+
+void TestBundleID::copyTest(void)
+{
+	dtn::data::Bundle b;
+	b.set(dtn::data::PrimaryBlock::FRAGMENT, true);
+	b.source = dtn::data::EID("dtn://node1/app1");
+	b.destination = dtn::data::EID("dtn://node2/app2");
+	b.lifetime = 3600;
+	b.timestamp = 12345678;
+	b.sequencenumber = 1234;
+	b.fragmentoffset = 12;
+	b.appdatalength = 200;
+
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
+	{
+		ibrcommon::BLOB::iostream stream = ref.iostream();
+		for (int i = 0; i < 10; ++i)
+			(*stream) << "hello world" << std::flush;
+	}
+
+	b.push_back(ref);
+
+	dtn::data::BundleID id1(b);
+	dtn::data::BundleID id2(id1);
+	dtn::data::BundleID id3;
+	id3 = id1;
+
+	CPPUNIT_ASSERT_EQUAL((const dtn::data::BundleID&)b, id1);
+	CPPUNIT_ASSERT_EQUAL((const dtn::data::BundleID&)b, id2);
+	CPPUNIT_ASSERT_EQUAL((const dtn::data::BundleID&)b, id3);
+
+	dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(id3);
+	CPPUNIT_ASSERT_EQUAL((const dtn::data::BundleID&)b, (const dtn::data::BundleID&)meta);
+}
