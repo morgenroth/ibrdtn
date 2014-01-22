@@ -858,7 +858,7 @@ namespace dtn
 			/**
 			 * fragmentation support
 			 */
-			_fragmentation = (conf.read<std::string>("fragmentation", "no") == "yes");
+			_fragmentation = (conf.read<std::string>("fragmentation", "yes") == "yes");
 
 			/**
 			 * read internet devices
