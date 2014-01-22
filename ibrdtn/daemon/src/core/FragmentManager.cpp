@@ -115,7 +115,7 @@ namespace dtn
 
 							try {
 								// load bundle from storage
-								dtn::data::Bundle bundle = dtn::core::BundleCore::getInstance().getStorage().get(*iter);
+								const dtn::data::Bundle bundle = dtn::core::BundleCore::getInstance().getStorage().get(*iter);
 
 								// merge the bundle
 								c << bundle;
