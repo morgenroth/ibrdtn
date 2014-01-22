@@ -1030,6 +1030,7 @@ namespace dtn
 			if (id.isFragment())
 			{
 				stream << id.fragmentoffset.toString() << " ";
+				stream << id.getPayloadLength().toString() << " ";
 			}
 
 			stream << id.source.getString();
@@ -1072,6 +1073,10 @@ namespace dtn
 				// read sequence number
 				ss.clear(); ss.str(data[start+2]);
 				id.fragmentoffset.read(ss);
+
+				// read sequence number
+				ss.clear(); ss.str(data[start+3]);
+				id.getPayloadLength().read(ss);
 
 				if(ss.fail())
 				{

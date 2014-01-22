@@ -218,6 +218,7 @@ namespace dtn
 				{
 					// write fragmentation values
 					_stream << "Fragmentoffset: " << aborted.getBundleID().fragmentoffset.toString() << std::endl;
+					_stream << "Fragmentpayload: " << aborted.getBundleID().getPayloadLength().toString() << std::endl;
 				}
 
 				// close the event
