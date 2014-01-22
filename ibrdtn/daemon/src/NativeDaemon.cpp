@@ -260,7 +260,7 @@ namespace dtn
 			{
 				// add fragmentation values
 				data.push_back("Fragmentoffset: " + b.fragmentoffset.toString());
-				data.push_back("Fragmentpayload: " + b.getPayloadLength().toString());
+				data.push_back("Fragmentpayload: " + b.getPayloadLength());
 			}
 		}
 

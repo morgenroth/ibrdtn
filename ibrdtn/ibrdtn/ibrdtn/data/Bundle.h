@@ -135,7 +135,7 @@ namespace dtn
 
 			bool allEIDsInCBHE() const;
 
-			dtn::data::Number getPayloadLength() const;
+			dtn::data::Length getPayloadLength() const;
 
 		private:
 			block_list _blocks;

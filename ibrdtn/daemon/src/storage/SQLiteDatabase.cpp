@@ -667,7 +667,7 @@ namespace dtn
 			}
 
 			// set payload length
-			sqlite3_bind_int64(*st, 16, bundle.getPayloadLength().get<uint64_t>());
+			sqlite3_bind_int64(*st, 16, bundle.getPayloadLength());
 
 			// set bundle size
 			sqlite3_bind_int64(*st, 17, size);
@@ -1042,7 +1042,7 @@ namespace dtn
 			if (id.isFragment())
 			{
 				sqlite3_bind_int64(*st, offset + 4, id.fragmentoffset.get<uint64_t>());
-				sqlite3_bind_int64(*st, offset + 5, id.getPayloadLength().get<uint64_t>());
+				sqlite3_bind_int64(*st, offset + 5, id.getPayloadLength());
 			}
 			else
 			{

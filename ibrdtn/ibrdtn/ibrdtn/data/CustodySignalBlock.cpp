@@ -66,7 +66,7 @@ namespace dtn
 
 				dtn::data::Number tmp;
 				(*stream) >> tmp;
-				bundleid.setPayloadLength(tmp);
+				bundleid.setPayloadLength(tmp.get<dtn::data::Length>());
 			}
 
 			(*stream) >> timeofsignal;
@@ -103,7 +103,7 @@ namespace dtn
 			if ( bundleid.isFragment() )
 			{
 				(*stream) << bundleid.fragmentoffset;
-				(*stream) << bundleid.getPayloadLength();
+				(*stream) << dtn::data::Number(bundleid.getPayloadLength());
 			}
 
 			BundleString sourceid(bundleid.source.getString());

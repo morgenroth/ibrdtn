@@ -133,7 +133,7 @@ void TestBundleID::payloadLengthTest(void)
 
 	dtn::data::BundleID id(b);
 
-	CPPUNIT_ASSERT_EQUAL(110, id.getPayloadLength().get<int>());
+	CPPUNIT_ASSERT_EQUAL((dtn::data::Length)110, id.getPayloadLength());
 }
 
 void TestBundleID::copyTest(void)

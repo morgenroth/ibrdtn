@@ -58,7 +58,7 @@ namespace dtn
 			if ( bundleid.isFragment() )
 			{
 				(*stream) << bundleid.fragmentoffset;
-				(*stream) << bundleid.getPayloadLength();
+				(*stream) << dtn::data::Number(bundleid.getPayloadLength());
 			}
 
 			if (status & RECEIPT_OF_BUNDLE)
@@ -103,7 +103,7 @@ namespace dtn
 
 				dtn::data::Number tmp;
 				(*stream) >> tmp;
-				bundleid.setPayloadLength(tmp);
+				bundleid.setPayloadLength(tmp.get<dtn::data::Length>());
 			}
 
 			if (status & RECEIPT_OF_BUNDLE)

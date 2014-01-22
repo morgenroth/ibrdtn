@@ -289,7 +289,7 @@ namespace dtn
 			}
 		}
 
-		dtn::data::Number Bundle::getPayloadLength() const
+		dtn::data::Length Bundle::getPayloadLength() const
 		{
 			try {
 				const dtn::data::PayloadBlock &payload = find<dtn::data::PayloadBlock>();

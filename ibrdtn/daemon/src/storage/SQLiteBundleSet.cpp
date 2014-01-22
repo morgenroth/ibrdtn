@@ -212,7 +212,7 @@ namespace dtn
 
 				if (bundle.isFragment()) {
 					sqlite3_bind_int64(*st, 5, bundle.fragmentoffset.get<uint64_t>());
-					sqlite3_bind_int64(*st, 6, bundle.getPayloadLength().get<uint64_t>());
+					sqlite3_bind_int64(*st, 6, bundle.getPayloadLength());
 				} else {
 					sqlite3_bind_int64(*st, 5, -1);
 					sqlite3_bind_int64(*st, 6, -1);
@@ -266,7 +266,7 @@ namespace dtn
 
 				if (id.isFragment()) {
 					sqlite3_bind_int64(*st, 5, id.fragmentoffset.get<uint64_t>());
-					sqlite3_bind_int64(*st, 6, id.getPayloadLength().get<uint64_t>());
+					sqlite3_bind_int64(*st, 6, id.getPayloadLength());
 				} else {
 					sqlite3_bind_int64(*st, 5, -1);
 					sqlite3_bind_int64(*st, 6, -1);

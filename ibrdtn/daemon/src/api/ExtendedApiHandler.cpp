@@ -940,7 +940,7 @@ namespace dtn
 				_stream << report.bundleid.timestamp.toString() << "." << report.bundleid.sequencenumber.toString();
 
 				if (report.bundleid.isFragment()) {
-					_stream << "." << report.bundleid.fragmentoffset.toString() << ":" << report.bundleid.getPayloadLength().toString() << " ";
+					_stream << "." << report.bundleid.fragmentoffset.toString() << ":" << report.bundleid.getPayloadLength() << " ";
 				} else {
 					_stream << " ";
 				}
@@ -997,7 +997,7 @@ namespace dtn
 				_stream << custody.bundleid.timestamp.toString() << "." << custody.bundleid.sequencenumber.toString();
 
 				if (custody.bundleid.isFragment()) {
-					_stream << "." << custody.bundleid.fragmentoffset.toString() << ":" << custody.bundleid.getPayloadLength().toString() << " ";
+					_stream << "." << custody.bundleid.fragmentoffset.toString() << ":" << custody.bundleid.getPayloadLength() << " ";
 				} else {
 					_stream << " ";
 				}
@@ -1030,7 +1030,7 @@ namespace dtn
 			if (id.isFragment())
 			{
 				stream << id.fragmentoffset.toString() << " ";
-				stream << id.getPayloadLength().toString() << " ";
+				stream << id.getPayloadLength() << " ";
 			}
 
 			stream << id.source.getString();
@@ -1076,7 +1076,9 @@ namespace dtn
 
 				// read sequence number
 				ss.clear(); ss.str(data[start+3]);
-				id.getPayloadLength().read(ss);
+				dtn::data::Length len = 0;
+				ss >> len;
+				id.setPayloadLength(len);
 
 				if(ss.fail())
 				{

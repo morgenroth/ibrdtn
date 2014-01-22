@@ -94,7 +94,7 @@ namespace dtn
 						const dtn::data::MetaBundle &m = (*iter);
 						if (meta.getPayloadLength() > 0)
 						{
-							BundleMerger::Chunk chunk(m.fragmentoffset.get<dtn::data::Length>(), m.getPayloadLength().get<dtn::data::Length>());
+							BundleMerger::Chunk chunk(m.fragmentoffset.get<dtn::data::Length>(), m.getPayloadLength());
 							chunks.insert(chunk);
 						}
 					}

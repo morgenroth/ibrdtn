@@ -109,12 +109,12 @@ namespace dtn
 			return true;
 		}
 
-		dtn::data::Number BundleID::getPayloadLength() const
+		dtn::data::Length BundleID::getPayloadLength() const
 		{
 			return _payloadlength;
 		}
 
-		void BundleID::setPayloadLength(const dtn::data::Number &value)
+		void BundleID::setPayloadLength(const dtn::data::Length &value)
 		{
 			_payloadlength = value;
 		}
@@ -170,7 +170,8 @@ namespace dtn
 			data += sizeof(tmp);
 
 			// add fragment length
-			tmp = isFragment() ? GUINT64_TO_BE(getPayloadLength().get<uint64_t>()) : 0;
+			tmp = isFragment() ? getPayloadLength() : 0;
+			tmp = GUINT64_TO_BE(tmp);
 			::memcpy(data, reinterpret_cast<unsigned char*>(&tmp), sizeof(tmp));
 			data += sizeof(tmp);
 
@@ -195,7 +196,7 @@ namespace dtn
 			if (isFragment())
 			{
 				ss << "." << fragmentoffset.toString();
-				ss << "." << getPayloadLength().toString();
+				ss << "." << getPayloadLength();
 			}
 
 			ss << "] " << source.getString();
@@ -212,7 +213,7 @@ namespace dtn
 			if (obj.isFragment()) {
 				stream.put(1);
 				stream << obj.fragmentoffset;
-				stream << obj.getPayloadLength();
+				stream << dtn::data::Number(obj.getPayloadLength());
 			} else {
 				stream.put(0);
 			}
@@ -235,7 +236,7 @@ namespace dtn
 				stream >> obj.fragmentoffset;
 				dtn::data::Number tmp;
 				stream >> tmp;
-				obj.setPayloadLength(tmp);
+				obj.setPayloadLength(tmp.get<dtn::data::Length>());
 				obj.setFragment(true);
 			} else {
 				obj.setFragment(false);
