@@ -56,7 +56,7 @@ namespace dtn
 
 				Bundle& getBundle();
 
-				friend Container &operator<<(Container &c, dtn::data::Bundle &obj);
+				friend Container &operator<<(Container &c, const dtn::data::Bundle &obj);
 
 			private:
 				bool contains(Length offset, Length length) const;
