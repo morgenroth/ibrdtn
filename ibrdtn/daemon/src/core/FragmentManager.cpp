@@ -314,6 +314,18 @@ namespace dtn
 				if (payloadLength <= maxPayloadLength)
 					throw FragmentationNotNecessaryException("Fragmentation not necessary. The payload block is smaller than the max. payload length.");
 
+				// copy the origin bundle as template for the new fragment
+				Bundle fragment = bundle;
+
+				// clear all the blocks
+				fragment.clear();
+
+				// set bundle is fragment flag
+				fragment.set(dtn::data::Bundle::FRAGMENT, true);
+
+				// set application data length
+				fragment.appdatalength = payloadLength;
+
 				ibrcommon::BLOB::Reference ref = payloadBlock.getBLOB();
 				ibrcommon::BLOB::iostream stream = ref.iostream();
 
@@ -322,17 +334,8 @@ namespace dtn
 
 				while (!(*stream).eof() && (payloadLength > offset))
 				{
-					// copy the origin bundle as template for the new fragment
-					Bundle fragment = bundle;
-
 					// clear all the blocks
 					fragment.clear();
-
-					// set bundle is fragment flag
-					fragment.set(dtn::data::Bundle::FRAGMENT, true);
-
-					// set application data length
-					fragment.appdatalength = payloadLength;
 
 					// set fragment offset
 					fragment.fragmentoffset = offset;
