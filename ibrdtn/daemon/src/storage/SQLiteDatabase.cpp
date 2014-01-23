@@ -419,7 +419,7 @@ namespace dtn
 			}
 			else
 			{
-				bundle.hopcount = 0;
+				bundle.hopcount = dtn::data::Number::max();
 			}
 
 			// restore net priority
