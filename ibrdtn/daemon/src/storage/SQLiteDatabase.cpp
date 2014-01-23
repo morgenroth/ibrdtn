@@ -488,7 +488,7 @@ namespace dtn
 					const SQLBundleQuery &query = dynamic_cast<const SQLBundleQuery&>(cb);
 
 					// custom query string
-					std::string query_string = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset, fragmentlength LIMIT ?,?;";
+					const std::string query_string = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC, timestamp, sequencenumber, fragmentoffset, fragmentlength LIMIT ?,?;";
 
 					// create statement for custom query
 					Statement st(_database, query_string);
