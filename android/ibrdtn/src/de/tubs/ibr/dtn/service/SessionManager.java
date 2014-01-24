@@ -95,9 +95,11 @@ public class SessionManager {
 	}
 	
 	private void apply(Session s, ClientSession client, Registration reg) throws NativeSessionException {
-		// set default session endpoint
-		mDatabase.setDefaultEndpoint(s, reg.getEndpoint());
-		client.setDefaultEndpoint(reg.getEndpoint());
+	    if (reg.getEndpoint() != null) {
+    		// set default session endpoint
+    		mDatabase.setDefaultEndpoint(s, reg.getEndpoint());
+    		client.setDefaultEndpoint(reg.getEndpoint());
+	    }
 		
 		// iterate through new endpoints
 		for (GroupEndpoint group : reg.getGroups()) {
