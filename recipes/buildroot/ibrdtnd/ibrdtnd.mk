@@ -3,7 +3,7 @@
 # ibrdtnd
 #
 #############################################################
-IBRDTND_VERSION:=0.10.2
+IBRDTND_VERSION:=0.12.0
 IBRDTND_SOURCE:=ibrdtnd-$(IBRDTND_VERSION).tar.gz
 IBRDTND_SITE:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 IBRDTND_LIBTOOL_PATCH:=NO
@@ -23,4 +23,3 @@ IBRDTND_CONF_OPT =	\
 		
 
 $(eval $(autotools-package))
-

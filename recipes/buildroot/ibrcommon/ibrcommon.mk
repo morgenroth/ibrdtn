@@ -3,7 +3,7 @@
 # ibrcommon
 #
 #############################################################
-IBRCOMMON_VERSION:=0.10.2
+IBRCOMMON_VERSION:=0.12.0
 IBRCOMMON_SOURCE:=ibrcommon-$(IBRCOMMON_VERSION).tar.gz
 IBRCOMMON_SITE:=http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/releases
 IBRCOMMON_LIBTOOL_PATCH:=NO
@@ -19,4 +19,3 @@ ifeq ($(BR2_PTHREADS_OLD),y)
 endif
 
 $(eval $(autotools-package))
-
