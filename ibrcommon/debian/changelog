@@ -1,8 +1,19 @@
-ibrcommon (0.11.0) UNRELEASED; urgency=low
+ibrcommon (0.10.2) stable; urgency=medium
 
-  * Development revision
+  * Fix timing issue in select method for vsockets
+  * Added support for libnl 3.2.21
 
- -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 22 Jul 2013 11:37:53 +0200
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Tue, 29 Oct 2013 09:25:03 +0100
+
+ibrcommon (0.10.1) stable; urgency=medium
+
+  * Fix "missing bytes" failure in appstreambuf
+  * Fix throw() constrain of clientsocket methods
+  * Fix shutdown of vsocket via vsocket::interrupt()
+  * Fix presentation of vaddress via toString()
+  * Make command parameter of appstreambuf const
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Fri, 13 Sep 2013 10:33:05 +0200
 
 ibrcommon (0.10.0) stable; urgency=low
 

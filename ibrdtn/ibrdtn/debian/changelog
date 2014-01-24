@@ -1,8 +1,19 @@
-ibrdtn (0.11.0) UNRELEASED; urgency=low
+ibrdtn (0.10.2) stable; urgency=medium
 
-  * Development revision
+  * Fix segfault in BundleList caused by bundles with an AgeBlock
+  * Security: Fix misbehavior while checking PIB
+  * Security: Fix wrong serialization of the correlator in MutualSerializer
 
- -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Mon, 22 Jul 2013 11:38:14 +0200
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Tue, 29 Oct 2013 09:25:09 +0100
+
+ibrdtn (0.10.1) stable; urgency=medium
+
+  * Use current timestamp as base for expiretime if local clock is bad
+  * Consider a clock as bad if the rating is zero
+  * Fix testcases for bundle list and bundle set
+  * Implement reference-based comparators for Bundle, BundleID and MetaBundle
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Fri, 13 Sep 2013 10:41:08 +0200
 
 ibrdtn (0.10.0) stable; urgency=low
 
