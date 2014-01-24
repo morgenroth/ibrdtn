@@ -1,3 +1,22 @@
+ibrdtn (0.12.0) stable; urgency=low
+
+  * Windows support (win32)
+  * Persistent bundle-set support
+  * CBHE performance optimizations
+  * Automatic String to CBHE conversion for applications
+  * Bad clock removed in favor to clock rating
+  * Use monotonic clock for uptime
+  * Fix uniqueness of bundle fragments
+  * Add callback to StreamConnection for traffic stats
+  * Improved expiration checking
+  * Hashing of Bundle ID for BloomFilter changed (now faster)
+  * Timezone configuration option removed
+  * Set REPLICATE_IN_EVERY_FRAGMENT bit in every instance of TrackingBlock
+  * Fragment serialization restructured
+  * Fixed possible bundle loss when using reactive fragmentation
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 28 Mar 2014 14:11:11 +0100
+
 ibrdtn (0.10.2) stable; urgency=medium
 
   * Fix segfault in BundleList caused by bundles with an AgeBlock

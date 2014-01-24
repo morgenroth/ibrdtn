@@ -1,3 +1,14 @@
+ibrdtn-tools (0.12.0) stable; urgency=low
+
+  * Add destination is group option to dtntracepath
+  * Windows support (win32)
+  * dtninbox: External dependency to utility 'tar' removed (libarchive)
+  * dtnoutbox: External dependency to utility 'tar' removed (libarchive)
+  * dtnoutbox: Read directly from FAT images using libtffs
+  * Help text make-over of all tools
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 28 Mar 2014 14:38:34 +0100
+
 ibrdtn-tools (0.10.2) stable; urgency=medium
 
   * Updated to new libraries ibrcommon and ibrdtn.

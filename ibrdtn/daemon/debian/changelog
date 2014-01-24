@@ -1,3 +1,35 @@
+ibrdtnd (0.12.0) stable; urgency=low
+
+  * Windows support with NTService (win32)
+  * Persistent bundle-set available with SQLite or disk storage
+  * Mail covergence-layer added (draft-gernert-dtnrg-mailcl-01) requires libvmime
+  * Set DevNull application to CBHE endpoint 1 instead of 0
+  * Use monotonic clock for time measurements
+  * Sliding window support for datagram convergence-layers
+  * NACK support to datagram convergence-layers
+  * Global discovery agent for all convergence-layers
+  * Add API command for add / del route
+  * Reverse Path Epidemic for Non-Singleton Bundles in Prophet Routing
+  * Storage performance tweaks
+  * Performance improvement for routing extensions
+  * Set prophet routing as standard protocol in ibrdtnd.conf
+  * Avoid reselecting bundles of aborted transfers due to deletion
+  * Allow static routes for direct delivery
+  * Limit discovery responses to one each second
+  * Do not forward bundles queued in a TCPConnection if the EID changes during the handshake
+  * Reject connections to peers with the same endpoint
+  * Do not join on loopback addresses with the IPND
+  * Fix compile issues with clang
+  * Fix Ack'set expiration in PRoPHET
+  * Fix expiration of static routes
+  * Fix processing of Prophet Acknowledgement Set
+  * Fix locking in DatagramConvergenceLayer
+  * Fix wrong storage size bug
+  * Fix decreasing delivery predictability values in PRoPHET Routing
+  * Fix segfault on shutdown while TCP-CL is connecting
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 28 Mar 2014 14:23:00 +0100
+
 ibrdtnd (0.10.2) stable; urgency=medium
 
   * Security: Fix misbehavior while checking PIB

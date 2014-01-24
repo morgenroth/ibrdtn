@@ -1,3 +1,19 @@
+ibrcommon (0.12.0) stable; urgency=low
+
+  * Windows supported (win32)
+  * Performance tweaks
+  * Monotonic clock support
+  * Link monitoring without netlink (OSX and win32)
+  * Add support for libnl-2.0
+  * Add utility class for signal handling
+  * Add more thorough check for localhost addresses
+  * Fix "missing bytes" failure in appstreambuf
+  * Fix compile issues on OS X Maveriks
+  * Fix vsocket shutdown
+  * Fix handling of root file
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 28 Mar 2014 14:05:36 +0100
+
 ibrcommon (0.10.2) stable; urgency=medium
 
   * Fix timing issue in select method for vsockets
