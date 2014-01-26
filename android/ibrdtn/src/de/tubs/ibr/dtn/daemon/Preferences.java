@@ -45,6 +45,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.CheckBoxPreference;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -365,7 +366,26 @@ public class Preferences extends PreferenceActivity {
     private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object value) {
+            boolean ret = true;
             String stringValue = value.toString();
+            
+            if ("endpoint_id".equals(preference.getKey())) {
+                // do not allow empty values
+                if (stringValue.length() == 0) {
+                    // reset to default
+                    stringValue = DaemonProcess.getUniqueEndpointID(preference.getContext()).toString();
+                    preference.getEditor().putString("endpoint_id", stringValue).commit();
+                    if (preference instanceof EditTextPreference) {
+                        ((EditTextPreference)preference).setText(stringValue);
+                    }
+                    ret = false;
+                }
+                
+                // check if the EID has a ":" not as first and not as last character
+                if (!stringValue.contains(":")) return false;
+                if (stringValue.indexOf(":") == 0) return false;
+                if (stringValue.lastIndexOf(":") == (stringValue.length() - 1)) return false;
+            }
             
             for (String prefKey : mSummaryPrefs) {
                 if (prefKey.equals(preference.getKey())) {
@@ -386,11 +406,11 @@ public class Preferences extends PreferenceActivity {
                         // simple string representation.
                         preference.setSummary(stringValue);
                     }
-                    return true;
+                    return ret;
                 }
             }
             
-            return true;
+            return ret;
         }
     };
 

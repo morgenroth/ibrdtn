@@ -12,7 +12,8 @@
         <EditTextPreference
             android:key="endpoint_id"
             android:summary="@string/eid_description"
-            android:title="@string/endpoint_id" >
+            android:title="@string/endpoint_id"
+            android:singleLine="true" >
         </EditTextPreference>
 
         <ListPreference
@@ -90,7 +91,8 @@
         <EditTextPreference
             android:key="security_bab_key"
             android:summary="@string/pref_bab_key_desc"
-            android:title="@string/pref_bab_key" />
+            android:title="@string/pref_bab_key"
+            android:singleLine="true" />
     </PreferenceCategory>
     
     <PreferenceCategory
@@ -122,7 +124,8 @@
             android:key="log_debug_verbosity"
             android:summary="@string/pref_log_debug_verbosity_desc"
             android:title="@string/pref_log_debug_verbosity"
-            android:inputType="number" />
+            android:inputType="number"
+            android:singleLine="true" />
 
         <CheckBoxPreference
             android:defaultValue="false"
