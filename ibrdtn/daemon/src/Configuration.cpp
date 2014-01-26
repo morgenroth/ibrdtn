@@ -34,6 +34,8 @@
 
 #ifdef __WIN32__
 #include <ibrcommon/link/Win32LinkManager.h>
+#include <windows.h>
+
 #endif
 
 #include <getopt.h>
@@ -532,11 +534,46 @@ namespace dtn
 			try {
 				return _conf.read<string>("local_uri");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
-				std::vector<char> hostname_array(64);
+				std::vector<char> hostname_array(255);
 				if ( gethostname(&hostname_array[0], hostname_array.size()) != 0 )
 				{
-					// error
-					return "dtn://local";
+#ifdef __WIN32__
+					// read hostname from registry
+					bool success = false;
+					HKEY hKey = 0;
+					DWORD dwType = REG_SZ;
+					DWORD dwBufSize = hostname_array.size();
+
+					const char* subkey = "System\\CurrentControlSet\\Control\\ComputerName\\ActiveComputerName";
+					const char* win9x_subkey = "System\\CurrentControlSet\\Control\\ComputerName\\ComputerName";
+
+					if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, subkey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+					{
+						if ( RegQueryValueEx(hKey, "ComputerName", NULL, &dwType, (BYTE*)&hostname_array[0], &dwBufSize) == ERROR_SUCCESS )
+						{
+							success = true;
+						}
+
+						RegCloseKey(hKey);
+					}
+
+					if (!success) {
+						if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, win9x_subkey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
+						{
+							if ( RegQueryValueEx(hKey, "ComputerName", NULL, &dwType, (BYTE*)&hostname_array[0], &dwBufSize) == ERROR_SUCCESS )
+							{
+								success = true;
+							}
+
+							RegCloseKey(hKey);
+						}
+					}
+
+					if (!success) {
+						// not hostname available
+						return "dtn://local";
+					}
+#endif
 				}
 
 				return "dtn://" + std::string(&hostname_array[0]);
