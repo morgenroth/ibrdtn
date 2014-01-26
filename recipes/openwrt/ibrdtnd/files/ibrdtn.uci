@@ -54,7 +54,7 @@ config 'daemon' 'storage'
 #
 config 'daemon' 'main'
 	# values: none | default | epidemic | flooding | prophet
-	option	routing		default
+	option	routing		prophet
 #	option	forwarding	no
 #	option	fragmentation	yes
 
