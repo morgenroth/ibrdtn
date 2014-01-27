@@ -20,7 +20,7 @@
  *  Created on: Sep 30, 2013
  */
 #include "ObservedNormalFile.h"
-#include <ibrdtn/config.h>
+#include "../config.h"
 #include <sstream>
 
 #ifdef HAVE_OPENSSL
