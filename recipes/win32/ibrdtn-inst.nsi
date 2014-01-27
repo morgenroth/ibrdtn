@@ -184,8 +184,9 @@ Section "Windows service" SecService
   File "dtnserv.exe"
   
   ; register the service
+  ;SimpleSC::InstallService "${SERVICE_NAME}" "16" "2" "$INSTDIR\dtnserv.exe" "" "" ""
   nsExec::ExecToLog 'sc create "${SERVICE_NAME}" binPath= "$INSTDIR\dtnserv.exe" start= auto depend= Tcpip'
-  nsExec::ExecToLog 'sc description "${SERVICE_NAME}" "Delay tolerant networking stack"'
+  SimpleSC::SetServiceDescription "${SERVICE_NAME}" "Delay tolerant networking stack"
   
   ; Write daemon configuration
   WriteRegStr HKLM "Software\${APP_NAME}" "logfile" "$DtnDataDir\ibrdtn.log"
@@ -194,7 +195,7 @@ Section "Windows service" SecService
   WriteRegDWORD HKLM "Software\${APP_NAME}" "logLevel" 2
   
   ; start the service
-  nsExec::ExecToLog 'net start "${SERVICE_NAME}"'
+  SimpleSC::StartService "${SERVICE_NAME}"
   
 SectionEnd
 
@@ -251,8 +252,8 @@ SectionEnd
 Section "Uninstall"
 
   ; stop and remove DTN service
-  nsExec::ExecToLog 'net stop "${SERVICE_NAME}"'
-  nsExec::ExecToLog 'sc delete "${SERVICE_NAME}"'
+  SimpleSC::StopService "${SERVICE_NAME}" 1 60
+  SimpleSC::RemoveService "${SERVICE_NAME}"
   
   ; Delete all installed files
   Delete /REBOOTOK "$INSTDIR\*.*"
@@ -260,44 +261,53 @@ Section "Uninstall"
   
   ; Remove Path entry
   ${un.EnvVarUpdate} $0 "PATH" "R" "HKLM" "$INSTDIR"
+
+  ; Get start menu folder variable
+  !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
+  
+  ; Remove start menu entries
+  Delete "$SMPROGRAMS\$StartMenuFolder\*.*"
+  RMDir "$SMPROGRAMS\$StartMenuFolder"
   
   ; Remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
-  DeleteRegKey HKLM "Software\${APP_NAME}"
-  
-  !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
-  
-  Delete "$SMPROGRAMS\$StartMenuFolder\*.*"
-  RMDir "$SMPROGRAMS\$StartMenuFolder"
+  DeleteRegKey /ifempty HKLM "Software\${APP_NAME}"
 
 SectionEnd
 
-Function .onInit
-; Check previous installation
+Function UninstallPrevious
+
+  ; Check previous installation
   ReadRegStr $R0 HKLM \
-  "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
-  "UninstallString"
+    "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" \
+    "UninstallString"
   StrCmp $R0 "" done
  
   MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
-  "${APP_NAME} is already installed. $\n$\nClick `OK` to remove the \
-  previous version or `Cancel` to cancel this upgrade." \
-  IDOK uninst
-  Abort
+    "${APP_NAME} is already installed. $\n$\nClick `OK` to remove the \
+    previous version or `Cancel` to cancel this upgrade." \
+    IDOK uninst
+    Abort
  
-;Run the uninstaller
+; Run the uninstaller
 uninst:
   ClearErrors
-  ExecWait '$R0 _?=$INSTDIR' ;Do not copy the uninstaller to a temp file
+  ExecWait '$R0' ;Do not copy the uninstaller to a temp file
  
   IfErrors no_remove_uninstaller done
-    ;You can either use Delete /REBOOTOK in the uninstaller or add some code
-    ;here to remove the uninstaller. Use a registry key to check
-    ;whether the user has chosen to uninstall. If you are using an uninstaller
-    ;components page, make sure all sections are uninstalled.
+    ; You can either use Delete /REBOOTOK in the uninstaller or add some code
+    ; here to remove the uninstaller. Use a registry key to check
+    ; whether the user has chosen to uninstall. If you are using an uninstaller
+    ; components page, make sure all sections are uninstalled.
   no_remove_uninstaller:
  
 done:
+
+FunctionEnd
+
+Function .onInit
+  ; uninstall previous installation
+  Call UninstallPrevious
 
   ; define default data directory
   StrCpy $DtnDataDir "C:\dtndata"
