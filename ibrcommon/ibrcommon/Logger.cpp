@@ -204,45 +204,45 @@ namespace ibrcommon
 				if (logger.getLevel() & _syslog_mask)
 				{
 #ifdef ANDROID
-					std::string log_tag = Logger::_default_tag;
-					if (logger._tag.length() > 0) {
-						log_tag = logger._tag;
+					std::string log_tag = LogWriter::getInstance().getDefaultTag();
+					if (logger.getTag().length() > 0) {
+						log_tag = logger.getTag();
 					}
 
 					// add additional prefix for android tags to seperate them from other logcat messages
-					log_tag = Logger::_android_tag_prefix + log_tag;
+					log_tag = _android_tag_prefix + log_tag;
 
-					switch (logger._level)
+					switch (logger.getLevel())
 					{
-					case LOGGER_EMERG:
+					case Logger::LOGGER_EMERG:
 						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_ALERT:
+					case Logger::LOGGER_ALERT:
 						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_CRIT:
+					case Logger::LOGGER_CRIT:
 						__android_log_print(ANDROID_LOG_FATAL, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_ERR:
+					case Logger::LOGGER_ERR:
 						__android_log_print(ANDROID_LOG_ERROR, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_WARNING:
+					case Logger::LOGGER_WARNING:
 						__android_log_print(ANDROID_LOG_WARN, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_NOTICE:
+					case Logger::LOGGER_NOTICE:
 						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_INFO:
+					case Logger::LOGGER_INFO:
 						__android_log_print(ANDROID_LOG_INFO, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
-					case LOGGER_DEBUG:
+					case Logger::LOGGER_DEBUG:
 						__android_log_print(ANDROID_LOG_DEBUG, log_tag.c_str(), "%s", logger.str().c_str());
 						break;
 
