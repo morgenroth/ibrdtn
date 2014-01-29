@@ -412,7 +412,7 @@ namespace dtn
 			try {
 				const dtn::core::BundleGeneratedEvent &generated = dynamic_cast<const dtn::core::BundleGeneratedEvent&>(*evt);
 				
-				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(generated.bundle);
+				const dtn::data::MetaBundle meta = dtn::data::MetaBundle::create(generated.getBundle());
 
 				// set the bundle as known
 				setKnown(meta);
@@ -420,14 +420,14 @@ namespace dtn
 				// Store incoming bundles into the storage
 				try {
 					// store the bundle into a storage module
-					getStorage().store(generated.bundle);
+					getStorage().store(generated.getBundle());
 
 					// raise the queued event to notify all receivers about the new bundle
  					QueueBundleEvent::raise(meta, dtn::core::BundleCore::local);
 				} catch (const ibrcommon::IOException &ex) {
-					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "Unable to store bundle " << generated.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const dtn::storage::BundleStorage::StorageSizeExeededException &ex) {
-					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(BaseRouter::TAG, notice) << "No space left for bundle " << generated.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				// do not pass this event to any extension

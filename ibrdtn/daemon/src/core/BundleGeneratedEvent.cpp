@@ -30,7 +30,7 @@ namespace dtn
 	namespace core
 	{
 		BundleGeneratedEvent::BundleGeneratedEvent(const dtn::data::Bundle &b)
-		 : bundle(b)
+		 : _bundle(b)
 		{
 
 		}
@@ -53,7 +53,12 @@ namespace dtn
 
 		std::string BundleGeneratedEvent::getMessage() const
 		{
-			return "Bundle generated " + bundle.toString();
+			return "Bundle generated " + _bundle.toString();
+		}
+
+		const dtn::data::Bundle& BundleGeneratedEvent::getBundle() const
+		{
+			return _bundle;
 		}
 
 		const string BundleGeneratedEvent::className = "BundleGeneratedEvent";
