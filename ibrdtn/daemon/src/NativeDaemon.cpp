@@ -29,6 +29,7 @@
 #include <ibrcommon/link/LinkManager.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Utils.h>
+#include <ibrdtn/data/MemoryBundleSet.h>
 #include <list>
 
 #include "storage/BundleStorage.h"
@@ -949,12 +950,14 @@ namespace dtn
 
 
 					dtn::storage::SQLiteBundleStorage *sbs;
-					if(conf.getUsePersistentBundleSets() == "yes")
+					if (conf.getUsePersistentBundleSets())
 					{
-						sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage"),true);
-						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using persistent bundlesets" << IBRCOMMON_LOGGER_ENDL;
-					} else {
-						sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage"),false );
+						sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage"), true);
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using persistent bundle-sets" << IBRCOMMON_LOGGER_ENDL;
+					}
+					else
+					{
+						sbs = new dtn::storage::SQLiteBundleStorage(path, conf.getLimit("storage"), false);
 					}
 
 					_components[RUNLEVEL_STORAGE].push_back(sbs);
@@ -976,9 +979,14 @@ namespace dtn
 					ibrcommon::File path = conf.getPath("storage");
 
 					// create workdir if needed
-					if (!path.exists())
+					if (!path.exists()) ibrcommon::File::createDirectory(path);
+
+					if (conf.getUsePersistentBundleSets())
 					{
-						ibrcommon::File::createDirectory(path);
+						ibrcommon::File bundle_set_path = path.get("bundle-set");
+						if (!bundle_set_path.exists()) ibrcommon::File::createDirectory(bundle_set_path);
+						dtn::data::MemoryBundleSet::setPath(bundle_set_path);
+						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using persistent bundle-sets" << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;

@@ -138,7 +138,7 @@ namespace dtn
 			 * returns, whether Persistent BundleSets are used (stored in SQL database)
 			 */
 
-			std::string getUsePersistentBundleSets() const;
+			bool getUsePersistentBundleSets() const;
 
 			enum RoutingExtension
 			{
