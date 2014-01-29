@@ -258,7 +258,7 @@ namespace dtn
 								iter != _routes.end();)
 						{
 							StaticRoute *route = (*iter);
-							if (route->toString() == task.route->toString())
+							if (route->equals(*task.route))
 							{
 								delete route;
 								_routes.erase(iter++);
@@ -323,6 +323,7 @@ namespace dtn
 
 							if ((route->getExpiration() > 0) && (route->getExpiration() < task.timestamp))
 							{
+								route->raiseExpired();
 								delete route;
 								_routes.erase(iter++);
 							}
@@ -513,6 +514,21 @@ namespace dtn
 		const dtn::data::Timestamp& StaticRoutingExtension::EIDRoute::getExpiration() const
 		{
 			return expiretime;
+		}
+
+		void StaticRoutingExtension::EIDRoute::raiseExpired() const
+		{
+			dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_EXPIRED, _nexthop, _match);
+		}
+
+		bool StaticRoutingExtension::EIDRoute::equals(const StaticRoute &route) const
+		{
+			try {
+				const StaticRoutingExtension::EIDRoute &r = dynamic_cast<const StaticRoutingExtension::EIDRoute&>(route);
+				return (_nexthop == r._nexthop) && (_match == r._match);
+			} catch (const std::bad_cast&) {
+				return false;
+			}
 		}
 
 		/****************************************/

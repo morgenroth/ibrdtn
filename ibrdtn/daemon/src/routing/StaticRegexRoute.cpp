@@ -6,7 +6,9 @@
  */
 
 #include "routing/StaticRegexRoute.h"
+#include "routing/StaticRouteChangeEvent.h"
 #include <ibrcommon/Logger.h>
+#include <typeinfo>
 
 namespace dtn
 {
@@ -104,6 +106,21 @@ namespace dtn
 		const dtn::data::Timestamp& StaticRegexRoute::getExpiration() const
 		{
 			return _expire;
+		}
+
+		void StaticRegexRoute::raiseExpired() const
+		{
+			dtn::routing::StaticRouteChangeEvent::raiseEvent(dtn::routing::StaticRouteChangeEvent::ROUTE_EXPIRED, _dest, _regex_str);
+		}
+
+		bool StaticRegexRoute::equals(const StaticRoute &route) const
+		{
+			try {
+				const StaticRegexRoute &r = dynamic_cast<const StaticRegexRoute&>(route);
+				return (_regex_str == r._regex_str) && (_dest == r._dest);
+			} catch (const std::bad_cast&) {
+				return false;
+			}
 		}
 	}
 }

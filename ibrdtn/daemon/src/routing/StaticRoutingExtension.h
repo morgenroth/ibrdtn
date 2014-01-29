@@ -66,6 +66,16 @@ namespace dtn
 
 				const dtn::data::Timestamp& getExpiration() const;
 
+				/**
+				 * Raise the StaticRouteChangeEvent for expiration
+				 */
+				void raiseExpired() const;
+
+				/**
+				 * Compare this static route with another one
+				 */
+				bool equals(const StaticRoute &route) const;
+
 			private:
 				const dtn::data::EID _nexthop;
 				const dtn::data::EID _match;

@@ -87,7 +87,18 @@ namespace dtn
 				ss << " => " << nexthop.getString();
 				break;
 			case ROUTE_EXPIRED:
-				ss << "route expired";
+				ss << "route expired ";
+
+				if (pattern.length() > 0)
+				{
+					ss << pattern;
+				}
+				else
+				{
+					ss << destination.getString();
+				}
+
+				ss << " => " << nexthop.getString();
 				break;
 			case ROUTE_CLEAR:
 				ss << "routes cleared";
