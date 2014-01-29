@@ -30,9 +30,6 @@
     <string name="showlog">Show log</string>
     <string name="clearstorage">Clear storage</string>
     <string name="interfaces">Interfaces</string>
-    <string name="runasbackgroundservice">Activate daemon</string>
-    <string name="runasforegroundservice">Foreground Service</string>
-    <string name="runasforegroundservice_description">Run the service as foreground process.</string>
     <string name="toast_storage_cleared">Storage cleared</string>
     <string name="security">Security</string>
     <string name="timesync">Time-synchronization</string>

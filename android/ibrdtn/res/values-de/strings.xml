@@ -29,9 +29,6 @@
     <string name="showlog">Log anzeigen</string>
     <string name="clearstorage">Speicher leeren</string>
     <string name="interfaces">Schnittstellen</string>
-    <string name="runasbackgroundservice">Daemon aktivieren</string>
-    <string name="runasforegroundservice">Vordergrunddienst</string>
-    <string name="runasforegroundservice_description">Markiert diesen Dienst als Vordergrundprozess.</string>
     <string name="toast_storage_cleared">Speicher geleert</string>
     <string name="security">Sicherheit</string>
     <string name="timesync">Zeitsynchronisierung</string>

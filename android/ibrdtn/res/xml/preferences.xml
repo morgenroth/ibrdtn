@@ -4,7 +4,7 @@
     <PreferenceCategory android:title="@string/service" >
         <CheckBoxPreference
             android:key="enabledSwitch"
-            android:title="@string/runasbackgroundservice" />
+            android:title="@string/launch_daemon" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="prefcat_general"
@@ -33,12 +33,6 @@
             android:summary="@string/pref_storage_description"
             android:title="@string/pref_storage" >
         </ListPreference>
-        
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="RunAsForegroundService"
-            android:title="@string/runasforegroundservice"
-            android:summary="@string/runasforegroundservice_description" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="prefcat_connection"
