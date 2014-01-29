@@ -390,7 +390,7 @@ void BundleStorageTest::testSizeExpiration(dtn::storage::BundleStorage &storage)
 	TestEventListener<dtn::core::TimeEvent> evtl;
 
 	// raise time event to trigger expiration
-	dtn::core::TimeEvent::raise(timestamp + 21, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
+	dtn::core::TimeEvent::raise(timestamp + 21, TIME_SECOND_TICK);
 
 	// wait until the time event has been processed
 	{
@@ -441,7 +441,7 @@ void BundleStorageTest::testRaiseEvent(dtn::storage::BundleStorage &storage)
 
 	storage.store(b);
 	storage.wait();
-	dtn::core::TimeEvent::raise(dtn::utils::Clock::getTime() + 3600, dtn::utils::Clock::getTime() + 3600 - dtn::utils::Clock::TIMEVAL_CONVERSION, dtn::core::TIME_SECOND_TICK);
+	dtn::core::TimeEvent::raise(dtn::utils::Clock::getTime() + 3600, dtn::core::TIME_SECOND_TICK);
 }
 
 void BundleStorageTest::testConcurrentStoreGet()
@@ -589,7 +589,7 @@ void BundleStorageTest::testExpiration(dtn::storage::BundleStorage &storage)
 	TestEventListener<dtn::core::TimeEvent> evtl;
 
 	// raise time event to trigger expiration
-	dtn::core::TimeEvent::raise(b.timestamp + 21, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
+	dtn::core::TimeEvent::raise(b.timestamp + 21, TIME_SECOND_TICK);
 
 	// wait until the time event has been processed
 	{
