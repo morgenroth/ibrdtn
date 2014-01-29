@@ -191,7 +191,7 @@ namespace dtn
 
 		void DeliveryPredictabilityMap::age(const float &p_first_threshold)
 		{
-			const dtn::data::Timestamp current_time = dtn::utils::Clock::getUnixTimestamp();
+			const dtn::data::Timestamp current_time = dtn::utils::Clock::getMonotonicTimestamp();
 
 			// prevent double aging
 			if (current_time <= _lastAgingTime) return;
