@@ -160,7 +160,7 @@ namespace dtn
 			struct timeval now;
 			Clock::getdtntimeofday(&now);
 
-			return dtn::data::Timestamp(now.tv_sec);
+			return now.tv_sec;
 		}
 
 		dtn::data::Timestamp Clock::getMonotonicTimestamp()
