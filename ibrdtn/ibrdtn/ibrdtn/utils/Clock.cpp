@@ -168,14 +168,6 @@ namespace dtn
 			return _monotonic_clock.getSeconds();
 		}
 
-		dtn::data::Timestamp Clock::getUnixTimestamp()
-		{
-			struct timeval now;
-			Clock::gettimeofday(&now);
-
-			return now.tv_sec;
-		}
-
 		const struct timeval& Clock::getOffset()
 		{
 			return Clock::_offset;

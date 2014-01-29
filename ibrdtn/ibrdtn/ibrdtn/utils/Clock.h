@@ -78,11 +78,6 @@ namespace dtn
 			static dtn::data::Timestamp getMonotonicTimestamp();
 
 			/**
-			 * Return the current unix timestamp
-			 */
-			static dtn::data::Timestamp getUnixTimestamp();
-
-			/**
 			 * Return the current DTN timestamp
 			 */
 			static dtn::data::Timestamp getTime();
