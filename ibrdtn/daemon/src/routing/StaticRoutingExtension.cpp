@@ -274,10 +274,13 @@ namespace dtn
 							_routes.push_back(task.route);
 							_taskqueue.push( new SearchNextBundleTask(task.route->getDestination()) );
 
-							ibrcommon::MutexLock l(_expire_lock);
-							if (next_expire > task.route->getExpiration())
+							if (task.route->getExpiration() > 0)
 							{
-								next_expire = task.route->getExpiration();
+								ibrcommon::MutexLock l(_expire_lock);
+								if (next_expire == 0 || next_expire > task.route->getExpiration())
+								{
+									next_expire = task.route->getExpiration();
+								}
 							}
 						}
 						else
@@ -318,7 +321,7 @@ namespace dtn
 						{
 							StaticRoute *route = (*iter);
 
-							if (route->getExpiration() < task.timestamp)
+							if ((route->getExpiration() > 0) && (route->getExpiration() < task.timestamp))
 							{
 								delete route;
 								_routes.erase(iter++);
@@ -395,12 +398,13 @@ namespace dtn
 
 			// each second, look for expired routes
 			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+				dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+				const dtn::data::Timestamp monotonic = dtn::utils::Clock::getMonotonicTimestamp();
 
 				ibrcommon::MutexLock l(_expire_lock);
-				if ((next_expire != 0) && (next_expire < time.getUnixTimestamp()))
+				if ((next_expire != 0) && (next_expire < monotonic))
 				{
-					_taskqueue.push( new ExpireTask( time.getUnixTimestamp() ) );
+					_taskqueue.push( new ExpireTask( monotonic ) );
 				}
 				return;
 			} catch (const bad_cast&) { };
@@ -422,13 +426,13 @@ namespace dtn
 #ifdef HAVE_REGEX_H
 					r = new StaticRegexRoute(route.pattern, route.nexthop);
 #else
-					dtn::data::Timestamp et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
+					dtn::data::Timestamp et = dtn::utils::Clock::getMonotonicTimestamp() + route.timeout;
 					r = new EIDRoute(route.pattern, route.nexthop, et);
 #endif
 				}
 				else
 				{
-					dtn::data::Timestamp et = dtn::utils::Clock::getUnixTimestamp() + route.timeout;
+					dtn::data::Timestamp et = dtn::utils::Clock::getMonotonicTimestamp() + route.timeout;
 					r = new EIDRoute(route.destination, route.nexthop, et);
 				}
 
