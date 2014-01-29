@@ -200,7 +200,7 @@ namespace dtn
 					updateNeighbor(fakeNode);
 
 					// Add route to faked node
-					dtn::core::BundleCore::getInstance().addRoute(node.getEID(), fakeNode.getEID(), 0);
+					dtn::core::BundleCore::getInstance().addRoute(node.getEID(), fakeNode.getEID());
 
 					node.remove((*iter));
 
