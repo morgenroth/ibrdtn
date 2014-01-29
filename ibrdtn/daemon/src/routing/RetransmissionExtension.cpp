@@ -146,7 +146,7 @@ namespace dtn
 				{
 					const RetransmissionData &data = _queue.front();
 
-					if ((dtn::data::BundleID&)data == expired._bundle)
+					if ((dtn::data::BundleID&)data == expired.getBundle())
 					{
 						dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 					}

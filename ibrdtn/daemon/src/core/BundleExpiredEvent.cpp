@@ -66,6 +66,11 @@ namespace dtn
 			return "Bundle has been expired " + _bundle.toString();
 		}
 
+		const dtn::data::BundleID& BundleExpiredEvent::getBundle() const
+		{
+			return _bundle;
+		}
+
 		const string BundleExpiredEvent::className = "BundleExpiredEvent";
 	}
 }
