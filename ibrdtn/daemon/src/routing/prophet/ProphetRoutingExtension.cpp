@@ -206,7 +206,7 @@ namespace dtn
 				// expire bundles in the acknowledgement set
 				{
 					ibrcommon::MutexLock l(_acknowledgementSet);
-					_acknowledgementSet.expire(time.getUnixTimestamp());
+					_acknowledgementSet.expire(time.getTimestamp());
 				}
 
 				ibrcommon::MutexLock l(_next_exchange_mutex);
