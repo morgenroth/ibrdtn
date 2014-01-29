@@ -54,6 +54,16 @@ namespace dtn
 			return "Bundle requeued " + _bundle.toString();
 		}
 
+		const dtn::data::EID& RequeueBundleEvent::getPeer() const
+		{
+			return _peer;
+		}
+
+		const dtn::data::BundleID& RequeueBundleEvent::getBundle() const
+		{
+			return _bundle;
+		}
+
 		const string RequeueBundleEvent::className = "RequeueBundleEvent";
 	}
 }

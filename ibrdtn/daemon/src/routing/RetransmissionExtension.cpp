@@ -100,7 +100,7 @@ namespace dtn
 			try {
 				const dtn::routing::RequeueBundleEvent &requeue = dynamic_cast<const dtn::routing::RequeueBundleEvent&>(*evt);
 
-				const RetransmissionData data(requeue._bundle, requeue._peer);
+				const RetransmissionData data(requeue.getBundle(), requeue.getPeer());
 
 				ibrcommon::MutexLock l(_mutex);
 				std::set<RetransmissionData>::const_iterator iter = _set.find(data);
@@ -122,7 +122,7 @@ namespace dtn
 					}
 					else
 					{
-						dtn::net::TransferAbortedEvent::raise(requeue._peer, requeue._bundle, dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED);
+						dtn::net::TransferAbortedEvent::raise(requeue.getPeer(), requeue.getBundle(), dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED);
 					}
 				}
 				else

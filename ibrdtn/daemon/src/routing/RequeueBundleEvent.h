@@ -39,15 +39,19 @@ namespace dtn
 
 			std::string getMessage() const;
 
+			const dtn::data::EID& getPeer() const;
+
+			const dtn::data::BundleID& getBundle() const;
+
 			static const string className;
 
 			static void raise(const dtn::data::EID peer, const dtn::data::BundleID &id);
 
-			dtn::data::EID _peer;
-			dtn::data::BundleID _bundle;
-
 		private:
 			RequeueBundleEvent(const dtn::data::EID peer, const dtn::data::BundleID &id);
+
+			dtn::data::EID _peer;
+			dtn::data::BundleID _bundle;
 		};
 	}
 }
