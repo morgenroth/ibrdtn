@@ -736,6 +736,7 @@ public class DaemonProcess {
     			File bundlePath = DaemonStorageUtils.getStoragePath("bundles");
     			if (bundlePath != null) {
     				p.println("storage_path = " + bundlePath.getPath());
+    				p.println("use_persistent_bundlesets = yes");
     			}
 			}
 
