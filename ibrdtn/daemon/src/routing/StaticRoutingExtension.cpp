@@ -374,10 +374,10 @@ namespace dtn
 			try {
 				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
 
-				if (ce.state == dtn::net::ConnectionEvent::CONNECTION_UP)
+				if (ce.getState() == dtn::net::ConnectionEvent::CONNECTION_UP)
 				{
 					// send all (multi-hop) bundles in the storage to the neighbor
-					_taskqueue.push( new SearchNextBundleTask(ce.peer) );
+					_taskqueue.push( new SearchNextBundleTask(ce.getNode().getEID()) );
 				}
 				return;
 			} catch (const std::bad_cast&) { };

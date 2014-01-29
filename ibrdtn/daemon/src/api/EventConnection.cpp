@@ -262,7 +262,7 @@ namespace dtn
 				_stream << "Event: " << connection.getName() << std::endl;
 				_stream << "Action: ";
 
-				switch (connection.state)
+				switch (connection.getState())
 				{
 				case dtn::net::ConnectionEvent::CONNECTION_UP:
 					_stream << "up";
@@ -282,7 +282,7 @@ namespace dtn
 				_stream << std::endl;
 
 				// write the peer eid
-				_stream << "Peer: " << connection.peer.getString() << std::endl;
+				_stream << "Peer: " << connection.getNode().getEID().getString() << std::endl;
 
 				// close the event
 				_stream << std::endl;

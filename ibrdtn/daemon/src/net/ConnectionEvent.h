@@ -47,16 +47,19 @@ namespace dtn
 
 			std::string getMessage() const;
 
+			State getState() const;
+
+			const dtn::core::Node& getNode() const;
+
 			static const string className;
 
 			static void raise(State, const dtn::core::Node&);
 
-			const State state;
-			const dtn::data::EID peer;
-			const dtn::core::Node node;
-
 		private:
 			ConnectionEvent(State, const dtn::core::Node&);
+
+			const State _state;
+			const dtn::core::Node _node;
 		};
 	}
 }

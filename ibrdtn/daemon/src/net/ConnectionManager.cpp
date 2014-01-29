@@ -141,17 +141,17 @@ namespace dtn
 			try {
 				const ConnectionEvent &connection = dynamic_cast<const ConnectionEvent&>(*evt);
 
-				switch (connection.state)
+				switch (connection.getState())
 				{
 					case ConnectionEvent::CONNECTION_UP:
 					{
-						add(connection.node);
+						add(connection.getNode());
 						break;
 					}
 
 					case ConnectionEvent::CONNECTION_DOWN:
 					{
-						remove(connection.node);
+						remove(connection.getNode());
 						break;
 					}
 

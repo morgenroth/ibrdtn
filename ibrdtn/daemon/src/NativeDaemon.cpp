@@ -398,7 +398,7 @@ namespace dtn
 				const dtn::net::ConnectionEvent &connection = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
 
 				// set action
-				switch (connection.state)
+				switch (connection.getState())
 				{
 				case dtn::net::ConnectionEvent::CONNECTION_UP:
 					action = "up";
@@ -417,7 +417,7 @@ namespace dtn
 				}
 
 				// write the peer eid
-				data.push_back("Peer: " + connection.peer.getString());
+				data.push_back("Peer: " + connection.getNode().getEID().getString());
 			} catch (const std::bad_cast&) { };
 
 			try {
