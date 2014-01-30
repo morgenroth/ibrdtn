@@ -56,7 +56,7 @@ namespace dtn
 		void TimeEvent::raise(const dtn::data::Timestamp &timestamp, const TimeEventAction action)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<TimeEvent>::queue( new TimeEvent(timestamp, action) );
+			dtn::core::EventDispatcher<TimeEvent>::raise( new TimeEvent(timestamp, action) );
 		}
 
 		std::string TimeEvent::getMessage() const
