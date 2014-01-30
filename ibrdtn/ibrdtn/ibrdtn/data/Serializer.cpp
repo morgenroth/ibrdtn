@@ -663,7 +663,6 @@ namespace dtn
 			obj.lifetime = pb.lifetime;
 			obj.fragmentoffset = pb.fragmentoffset;
 			obj.procflags = pb.procflags;
-			obj.received = dtn::data::DTNTime();
 			obj.reportto = pb.reportto;
 			obj.sequencenumber = pb.sequencenumber;
 			obj.source = pb.source;

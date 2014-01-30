@@ -42,13 +42,13 @@ namespace dtn
 		}
 
 		MetaBundle::MetaBundle()
-		 : BundleID(), received(), lifetime(0), destination(), reportto(),
+		 : BundleID(), lifetime(0), destination(), reportto(),
 		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(Number::max()), net_priority(0)
 		{
 		}
 
 		MetaBundle::MetaBundle(const dtn::data::BundleID &id)
-		 : BundleID(id), received(), lifetime(0), destination(), reportto(),
+		 : BundleID(id), lifetime(0), destination(), reportto(),
 		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(Number::max()), net_priority(0)
 		{
 			// apply fragment bit

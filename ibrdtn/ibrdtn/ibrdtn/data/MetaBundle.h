@@ -56,7 +56,6 @@ namespace dtn
 			int getPriority() const;
 			bool get(dtn::data::PrimaryBlock::FLAGS flag) const;
 
-			dtn::data::DTNTime received;
 			Number lifetime;
 			dtn::data::EID destination;
 			dtn::data::EID reportto;
