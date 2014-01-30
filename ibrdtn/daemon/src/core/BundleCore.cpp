@@ -390,7 +390,7 @@ namespace dtn
 					if (meta.destination.sameHost(peer))
 					{
 						// bundle is not deliverable
-						dtn::core::BundlePurgeEvent::raise(meta, dtn::data::StatusReportBlock::NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE);
+						dtn::core::BundlePurgeEvent::raise(meta, dtn::core::BundlePurgeEvent::NO_ROUTE_KNOWN);
 					}
 				} catch (const dtn::storage::NoBundleFoundException&) { };
 

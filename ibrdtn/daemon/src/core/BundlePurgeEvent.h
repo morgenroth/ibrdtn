@@ -33,19 +33,25 @@ namespace dtn
 		class BundlePurgeEvent : public Event
 		{
 		public:
+			enum REASON_CODE
+			{
+				DELIVERED = 0,
+				NO_ROUTE_KNOWN = 1
+			};
+
 			virtual ~BundlePurgeEvent();
 
 			const std::string getName() const;
 			std::string getMessage() const;
 
 			const dtn::data::MetaBundle bundle;
-			const dtn::data::StatusReportBlock::REASON_CODE reason;
+			const REASON_CODE reason;
 
-			static void raise(const dtn::data::MetaBundle &meta, dtn::data::StatusReportBlock::REASON_CODE reason = dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
+			static void raise(const dtn::data::MetaBundle &meta, REASON_CODE reason = DELIVERED);
 			static const std::string className;
 
 		private:
-			BundlePurgeEvent(const dtn::data::MetaBundle &meta, dtn::data::StatusReportBlock::REASON_CODE reason);
+			BundlePurgeEvent(const dtn::data::MetaBundle &meta, REASON_CODE reason);
 		};
 	} /* namespace core */
 } /* namespace dtn */
