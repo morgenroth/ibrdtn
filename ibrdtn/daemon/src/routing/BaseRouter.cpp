@@ -437,11 +437,11 @@ namespace dtn
 			try {
 				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
 
-				// add the purged bundle to the purge vector
-				setPurged(purge.bundle);
-
-				// since no routing module is interested in purge events yet - we exit here
-				return;
+				if (purge.reason == dtn::core::BundlePurgeEvent::DELIVERED)
+				{
+					// add the purged bundle to the purge vector
+					setPurged(purge.bundle);
+				}
 			} catch (const std::bad_cast&) { }
 
 			try {
