@@ -41,7 +41,7 @@ namespace dtn
 		void TransferCompletedEvent::raise(const dtn::data::EID peer, const dtn::data::MetaBundle &bundle)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<TransferCompletedEvent>::raise( new TransferCompletedEvent(peer, bundle) );
+			dtn::core::EventDispatcher<TransferCompletedEvent>::queue( new TransferCompletedEvent(peer, bundle) );
 		}
 
 		const string TransferCompletedEvent::getName() const

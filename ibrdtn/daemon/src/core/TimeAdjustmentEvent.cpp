@@ -26,7 +26,7 @@ namespace dtn
 
 		void TimeAdjustmentEvent::raise(const timeval &offset, const double &rating)
 		{
-			dtn::core::EventDispatcher<TimeAdjustmentEvent>::raise( new TimeAdjustmentEvent(offset, rating) );
+			dtn::core::EventDispatcher<TimeAdjustmentEvent>::queue( new TimeAdjustmentEvent(offset, rating) );
 		}
 
 		const std::string TimeAdjustmentEvent::getName() const

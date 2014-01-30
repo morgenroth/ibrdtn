@@ -43,7 +43,7 @@ namespace dtn
 		void BundleGeneratedEvent::raise(const dtn::data::Bundle &bundle)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<BundleGeneratedEvent>::raise( new BundleGeneratedEvent(bundle) );
+			dtn::core::EventDispatcher<BundleGeneratedEvent>::queue( new BundleGeneratedEvent(bundle) );
 		}
 
 		const std::string BundleGeneratedEvent::getName() const

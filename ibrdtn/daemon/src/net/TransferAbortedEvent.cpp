@@ -39,7 +39,7 @@ namespace dtn
 		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason r)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<TransferAbortedEvent>::raise( new TransferAbortedEvent(peer, id, r) );
+			dtn::core::EventDispatcher<TransferAbortedEvent>::queue( new TransferAbortedEvent(peer, id, r) );
 		}
 
 		const std::string TransferAbortedEvent::getName() const

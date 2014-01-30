@@ -26,7 +26,7 @@ namespace dtn
 		void P2PDialupEvent::raise(p2p_event_type t, const ibrcommon::vinterface &i)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<P2PDialupEvent>::raise( new P2PDialupEvent(t, i) );
+			dtn::core::EventDispatcher<P2PDialupEvent>::queue( new P2PDialupEvent(t, i) );
 		}
 
 		const std::string P2PDialupEvent::getName() const

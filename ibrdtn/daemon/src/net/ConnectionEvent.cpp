@@ -40,7 +40,7 @@ namespace dtn
 		void ConnectionEvent::raise(State s, const dtn::core::Node &n)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<ConnectionEvent>::raise( new ConnectionEvent(s, n) );
+			dtn::core::EventDispatcher<ConnectionEvent>::queue( new ConnectionEvent(s, n) );
 		}
 
 		const string ConnectionEvent::getName() const

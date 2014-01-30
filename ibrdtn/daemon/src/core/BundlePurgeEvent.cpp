@@ -38,7 +38,7 @@ namespace dtn
 		void BundlePurgeEvent::raise(const dtn::data::MetaBundle &meta, dtn::data::StatusReportBlock::REASON_CODE reason)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<BundlePurgeEvent>::raise( new BundlePurgeEvent(meta, reason) );
+			dtn::core::EventDispatcher<BundlePurgeEvent>::queue( new BundlePurgeEvent(meta, reason) );
 		}
 
 		const std::string BundlePurgeEvent::getName() const

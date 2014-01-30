@@ -78,7 +78,7 @@ namespace dtn
 		void BundleEvent::raise(const dtn::data::MetaBundle &bundle, EventBundleAction action, dtn::data::StatusReportBlock::REASON_CODE reason)
 		{
 			// raise the new event
-			dtn::core::EventDispatcher<BundleEvent>::raise( new BundleEvent(bundle, action, reason) );
+			dtn::core::EventDispatcher<BundleEvent>::queue( new BundleEvent(bundle, action, reason) );
 		}
 
 		const string BundleEvent::className = "BundleEvent";
