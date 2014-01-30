@@ -102,7 +102,10 @@ namespace dtn
 			 */
 			void shutdown();
 
-			//static void raiseEvent(Event *evt);
+			/**
+			 * Queue an event to one of the event queues of the
+			 * event switch.
+			 */
 			static void queue(EventProcessor &proc, Event *evt);
 
 			friend class Worker;
