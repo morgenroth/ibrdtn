@@ -183,7 +183,7 @@ namespace dtn
 
 					if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
 					{
-						dtn::core::BundlePurgeEvent::raise(meta);
+						dtn::core::BundlePurgeEvent::raise(meta, dtn::core::BundlePurgeEvent::ACK_RECIEVED);
 						IBRCOMMON_LOGGER_DEBUG_TAG(ProphetRoutingExtension::TAG, 10) << "Bundle removed due to prophet ack: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 					}
 					else

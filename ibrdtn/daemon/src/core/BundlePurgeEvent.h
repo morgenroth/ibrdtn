@@ -36,7 +36,8 @@ namespace dtn
 			enum REASON_CODE
 			{
 				DELIVERED = 0,
-				NO_ROUTE_KNOWN = 1
+				NO_ROUTE_KNOWN = 1,
+				ACK_RECIEVED = 2
 			};
 
 			virtual ~BundlePurgeEvent();

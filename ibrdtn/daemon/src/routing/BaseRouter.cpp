@@ -437,7 +437,8 @@ namespace dtn
 			try {
 				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
 
-				if (purge.reason == dtn::core::BundlePurgeEvent::DELIVERED)
+				if ((purge.reason == dtn::core::BundlePurgeEvent::DELIVERED) ||
+					(purge.reason == dtn::core::BundlePurgeEvent::ACK_RECIEVED))
 				{
 					// add the purged bundle to the purge vector
 					setPurged(purge.bundle);
