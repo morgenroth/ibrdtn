@@ -312,16 +312,6 @@ namespace dtn
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
 				const dtn::data::MetaBundle &meta = completed.getBundle();
-				const dtn::data::EID &peer = completed.getPeer();
-
-				if (meta.destination.sameHost(peer)
-						/* send prophet ack only for singleton */
-						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
-				{
-					/* the bundle was transferred, mark it as acknowledged */
-					ibrcommon::MutexLock l(_acknowledgementSet);
-					_acknowledgementSet.add(meta);
-				}
 
 				// add forwarded entry to GTMX strategy
 				try {
@@ -333,6 +323,20 @@ namespace dtn
 				_taskqueue.push( new SearchNextBundleTask( completed.getPeer() ) );
 				return;
 			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::core::BundlePurgeEvent &purge = dynamic_cast<const dtn::core::BundlePurgeEvent&>(*evt);
+
+				if (purge.reason == dtn::core::BundlePurgeEvent::DELIVERED)
+				{
+					/* the bundle was finally delivered, mark it as acknowledged */
+					ibrcommon::MutexLock l(_acknowledgementSet);
+					_acknowledgementSet.add(purge.bundle);
+				}
+
+				// since no routing module is interested in purge events yet - we exit here
+				return;
+			} catch (const std::bad_cast&) { }
 		}
 
 		void ProphetRoutingExtension::componentUp() throw ()
