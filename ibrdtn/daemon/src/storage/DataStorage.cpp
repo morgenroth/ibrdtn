@@ -146,7 +146,7 @@ namespace dtn
 
 			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); ++iter)
 			{
-				if (!(*iter).isSystem())
+				if (!(*iter).isSystem() && !(*iter).isDirectory())
 				{
 					DataStorage::Hash hash(*iter);
 					DataStorage::istream stream(_global_mutex, *iter);
