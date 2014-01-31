@@ -1,6 +1,5 @@
 package de.tubs.ibr.dtn.ping;
 
-import de.tubs.ibr.dtn.api.Node;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -11,6 +10,7 @@ import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.v4.view.MenuCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.view.Menu;
@@ -20,6 +20,8 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import de.tubs.ibr.dtn.DtnManager;
+import de.tubs.ibr.dtn.api.Node;
 
 public class PingActivity extends Activity {
     
@@ -31,11 +33,23 @@ public class PingActivity extends Activity {
     private EditText mTextEid = null;
     private TextView mResult = null;
     
+    private DtnManager mManager = null;
+    
     @SuppressWarnings("deprecation")
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         MenuCompat.setShowAsAction(menu.findItem(R.id.itemSelectNeighbor), MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+        
+        if (mManager != null) {
+            MenuItem item = (MenuItem)menu.findItem(R.id.itemDtnService);
+            try {
+                item.setChecked(mManager.isDtnEnabled());
+            } catch (RemoteException e) {
+                // error
+            }
+        }
+        
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -55,6 +69,17 @@ public class PingActivity extends Activity {
                 else if (!item.isChecked()) {
                     item.setChecked(true);
                     start_stream();
+                }
+                return true;
+                
+            case R.id.itemDtnService:
+                try {
+                    if (mManager != null) {
+                        mManager.setDtnEnabled(!item.isChecked());
+                        item.setChecked(!item.isChecked());
+                    }
+                } catch (RemoteException e) {
+                    // error
                 }
                 return true;
                 
@@ -119,6 +144,7 @@ public class PingActivity extends Activity {
         if (mBound) {
             // unbind from the PingService
             unbindService(mConnection);
+            unbindService(mManageServiceConn);
             mBound = false;
         }
         
@@ -140,6 +166,7 @@ public class PingActivity extends Activity {
         if (!mBound) {
             // bind to the PingService
             bindService(new Intent(this, PingService.class), mConnection, Context.BIND_AUTO_CREATE);
+            bindService(new Intent(DtnManager.class.getName()), mManageServiceConn, Context.BIND_AUTO_CREATE);
             mBound = true;
         }
         
@@ -208,5 +235,18 @@ public class PingActivity extends Activity {
                 updateResult();
             }
         }
+    };
+    
+    private ServiceConnection mManageServiceConn = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            mManager = DtnManager.Stub.asInterface(service);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+        }
+        
     };
 }

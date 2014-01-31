@@ -8,6 +8,9 @@
     
     <!-- To communication with the DTN service we need the permission to do so -->
     <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_COMMUNICATION"/>
+    
+    <!-- To control the DTN service we need the permission to do so -->
+    <uses-permission android:name="de.tubs.ibr.dtn.permission.DTN_CONTROL"/>
 
     <application
         android:allowBackup="true"

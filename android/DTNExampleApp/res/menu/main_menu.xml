@@ -3,4 +3,5 @@
     <item android:id="@+id/itemSelectNeighbor" android:title="@string/select_neighbor" android:icon="@drawable/ic_menu_neighbors"></item>
     <item android:id="@+id/itemEnableStreaming" android:title="@string/enable_streaming" android:icon="@drawable/ic_enable_streaming" android:checkable="true"></item>
     <item android:id="@+id/itemSwitchStreaming" android:title="@string/switch_streaming" android:icon="@drawable/ic_switch_streaming"></item>
+    <item android:id="@+id/itemDtnService" android:title="@string/switch_service" android:checkable="true"></item>
 </menu>
