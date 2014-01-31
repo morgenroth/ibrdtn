@@ -11,6 +11,8 @@
     <string name="permdesc_dtnCommunication">Allows the app to register to DTN services and send/receive bundles.</string>
     <string name="permlab_dtnCommunicationServer">DTN Daemon</string>
     <string name="permdesc_dtnCommunicationServer">Allows the app to send notifications to DTN applications.</string>
+    <string name="permlab_dtnControl">DTN Control</string>
+    <string name="permdesc_dtnControl">Allows the app to control the DTN services and switch it on/off without any warning.</string>
     <string name="service_name">DTN Service</string>
     <string name="app_name">IBR-DTN</string>
     <string name="app_name_daemon">IBR-DTN Daemon</string>

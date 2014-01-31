@@ -10,6 +10,13 @@
         android:label="@string/permlab_dtnCommunication"
         android:permissionGroup="android.permission-group.NETWORK"
         android:protectionLevel="normal" />
+    
+    <permission
+        android:name="de.tubs.ibr.dtn.permission.DTN_CONTROL"
+        android:description="@string/permdesc_dtnControl"
+        android:label="@string/permlab_dtnControl"
+        android:permissionGroup="android.permission-group.NETWORK"
+        android:protectionLevel="dangerous" />
 
 	<permission android:name="de.tubs.ibr.dtn.permission.DTN_SERVER"
 	        android:label="@string/permlab_dtnCommunicationServer"
@@ -61,6 +68,15 @@
                 <action android:name="de.tubs.ibr.dtn.intent.REGISTER" />
                 <action android:name="de.tubs.ibr.dtn.intent.UNREGISTER" />
                 <action android:name="de.tubs.ibr.dtn.DTNService" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".service.DaemonManager"
+            android:permission="de.tubs.ibr.dtn.permission.DTN_CONTROL"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="de.tubs.ibr.dtn.DtnManager" />
             </intent-filter>
         </service>
         

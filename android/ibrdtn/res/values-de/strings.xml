@@ -10,6 +10,8 @@
     <string name="permdesc_dtnCommunication">Erlaubt eine Registrierung beim DTN Dienst und das senden/empfangen von Bündeln.</string>
     <string name="permlab_dtnCommunicationServer">DTN Hintergrunddienst</string>
     <string name="permdesc_dtnCommunicationServer">Erlaubt der App Benachrichtigungen an DTN Anwendungen zu senden.</string>
+    <string name="permlab_dtnControl">DTN Steuerung</string>
+    <string name="permdesc_dtnControl">Erlaubt der App die DTN Dienste zu steuern und diese an-/abzuschalten ohne weitere Warnung.</string>
     <string name="service_name">DTN Dienst</string>
     <string name="app_name">IBR-DTN</string>
     <string name="app_name_daemon">IBR-DTN Hintergrunddienst</string>
