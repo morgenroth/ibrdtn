@@ -124,6 +124,11 @@ namespace dtn
              */
             static void setPath(const ibrcommon::File &path);
 
+			/**
+			 * Synchronize the bundle-set with the persistent set on the disk.
+			 */
+			virtual void sync() throw ();
+
 		private:
             /**
              * Store the bundle-set in a file

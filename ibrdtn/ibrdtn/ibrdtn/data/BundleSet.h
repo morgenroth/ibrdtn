@@ -116,6 +116,11 @@ namespace dtn
 			 */
 			std::set<dtn::data::MetaBundle> getNotIn(const ibrcommon::BloomFilter &filter) const throw ();
 
+			/**
+			 * Synchronize the bundle-set with the persistent set on the disk.
+			 */
+			void sync() throw ();
+
 			std::ostream& serialize(std::ostream &stream) const;
 			std::istream& deserialize(std::istream &stream);
 

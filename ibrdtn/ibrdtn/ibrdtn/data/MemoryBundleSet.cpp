@@ -228,6 +228,12 @@ namespace dtn
 			}
 		}
 
+		void MemoryBundleSet::sync() throw ()
+		{
+			// store the bundle set to disk
+			store();
+		}
+
 		void MemoryBundleSet::store()
 		{
 			// abort if the store path is not set
