@@ -983,9 +983,7 @@ namespace dtn
 
 					if (conf.getUsePersistentBundleSets())
 					{
-						ibrcommon::File bundle_set_path = path.get("bundle-set");
-						if (!bundle_set_path.exists()) ibrcommon::File::createDirectory(bundle_set_path);
-						dtn::data::MemoryBundleSet::setPath(bundle_set_path);
+						dtn::data::MemoryBundleSet::setPath(path.get("bundle-set"));
 						IBRCOMMON_LOGGER_TAG(NativeDaemon::TAG, info) << "using persistent bundle-sets" << IBRCOMMON_LOGGER_ENDL;
 					}
 
