@@ -3,6 +3,7 @@
 	<name>ShareBox</name>
 	<comment></comment>
 	<projects>
+		<project>IBR-DTN API for Android</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
