@@ -23,6 +23,7 @@
 #include "routing/RequeueBundleEvent.h"
 #include "core/TimeEvent.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 #include "core/BundleExpiredEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
@@ -44,7 +45,30 @@ namespace dtn
 		{
 		}
 
-		void RetransmissionExtension::notify(const dtn::core::Event *evt) throw ()
+		void RetransmissionExtension::componentUp() throw ()
+		{
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::add(this);
+		}
+
+		void RetransmissionExtension::componentDown() throw ()
+		{
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::net::TransferAbortedEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::RequeueBundleEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::core::BundleExpiredEvent>::remove(this);
+		}
+
+		void RetransmissionExtension::eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			// remove the bundleid in our list
+			RetransmissionData data(meta, peer);
+			_set.erase(data);
+		}
+
+		void RetransmissionExtension::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
@@ -74,16 +98,6 @@ namespace dtn
 						_queue.pop();
 					}
 				}
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-
-				// remove the bundleid in our list
-				RetransmissionData data(completed.getBundle(), completed.getPeer());
-				_set.erase(data);
-
 				return;
 			} catch (const std::bad_cast&) { };
 

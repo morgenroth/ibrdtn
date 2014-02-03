@@ -27,6 +27,7 @@
 #include "net/ConnectionEvent.h"
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
+#include "core/EventDispatcher.h"
 
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
@@ -183,7 +184,17 @@ namespace dtn
 			_endpoint.query(eid);
 		}
 
-		void NodeHandshakeExtension::notify(const dtn::core::Event *evt) throw ()
+		void NodeHandshakeExtension::componentUp() throw ()
+		{
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::add(this);
+		}
+
+		void NodeHandshakeExtension::componentDown() throw ()
+		{
+			dtn::core::EventDispatcher<dtn::core::NodeEvent>::remove(this);
+		}
+
+		void NodeHandshakeExtension::raiseEvent(const dtn::core::Event *evt) throw ()
 		{
 			// If a new neighbor comes available, send him a request for the summary vector
 			// If a neighbor went away we can free the stored summary vector

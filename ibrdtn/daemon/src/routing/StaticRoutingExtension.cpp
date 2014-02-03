@@ -27,6 +27,7 @@
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/ConnectionEvent.h"
+#include "core/EventDispatcher.h"
 #include "core/NodeEvent.h"
 #include "storage/SimpleBundleStorage.h"
 #include "core/TimeEvent.h"
@@ -348,55 +349,18 @@ namespace dtn
 			}
 		}
 
-		void StaticRoutingExtension::notify(const dtn::core::Event *evt) throw ()
+		void StaticRoutingExtension::eventDataChanged(const dtn::data::EID &peer) throw ()
 		{
-			try {
-				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
-				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
-				return;
-			} catch (const std::bad_cast&) { };
+			_taskqueue.push( new SearchNextBundleTask(peer) );
+		}
 
-			try {
-				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-				const dtn::core::Node &n = nodeevent.getNode();
+		void StaticRoutingExtension::eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			_taskqueue.push( new ProcessBundleTask(meta, peer) );
+		}
 
-				if (nodeevent.getAction() == NODE_AVAILABLE)
-				{
-					_taskqueue.push( new SearchNextBundleTask(n.getEID()) );
-				}
-				else if (nodeevent.getAction() == NODE_DATA_ADDED)
-				{
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-				}
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
-
-				if (ce.getState() == dtn::net::ConnectionEvent::CONNECTION_UP)
-				{
-					// send all (multi-hop) bundles in the storage to the neighbor
-					_taskqueue.push( new SearchNextBundleTask(ce.getNode().getEID()) );
-				}
-				return;
-			} catch (const std::bad_cast&) { };
-
-			// The bundle transfer has been aborted
-			try {
-				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-				_taskqueue.push( new SearchNextBundleTask(aborted.getPeer()) );
-				return;
-			} catch (const std::bad_cast&) { };
-
-			// A bundle transfer was successful
-			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-				_taskqueue.push( new SearchNextBundleTask(completed.getPeer()) );
-				return;
-			} catch (const std::bad_cast&) { };
-
+		void StaticRoutingExtension::raiseEvent(const dtn::core::Event *evt) throw ()
+		{
 			// each second, look for expired routes
 			try {
 				dynamic_cast<const dtn::core::TimeEvent&>(*evt);
@@ -457,6 +421,9 @@ namespace dtn
 
 		void StaticRoutingExtension::componentUp() throw ()
 		{
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::add(this);
+			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::add(this);
+
 			// reset the task queue
 			_taskqueue.reset();
 
@@ -471,6 +438,9 @@ namespace dtn
 
 		void StaticRoutingExtension::componentDown() throw ()
 		{
+			dtn::core::EventDispatcher<dtn::core::TimeEvent>::remove(this);
+			dtn::core::EventDispatcher<dtn::routing::StaticRouteChangeEvent>::remove(this);
+
 			// routine checked for throw() on 15.02.2013
 			try {
 				// stop the thread

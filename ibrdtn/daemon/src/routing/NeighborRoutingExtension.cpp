@@ -234,68 +234,26 @@ namespace dtn
 			return true;
 		}
 
-		void NeighborRoutingExtension::notify(const dtn::core::Event *evt) throw ()
+		void NeighborRoutingExtension::eventDataChanged(const dtn::data::EID &peer) throw ()
 		{
-			try {
-				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
+			// transfer the next bundle to this destination
+			_taskqueue.push( new SearchNextBundleTask( peer ) );
+		}
 
-				// try to deliver new bundles to all neighbors
-				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+		void NeighborRoutingExtension::eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			// try to deliver new bundles to all neighbors
+			const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
-				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
-				{
-					const dtn::core::Node &n = (*iter);
+			for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
+			{
+				const dtn::core::Node &n = (*iter);
 
-					if (n.getEID() != queued.origin) {
-						// transfer the next bundle to this destination
-						_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin, n.getEID()) );
-					}
+				if (n.getEID() != peer) {
+					// transfer the next bundle to this destination
+					_taskqueue.push( new ProcessBundleTask(meta, peer, n.getEID()) );
 				}
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-				// transfer the next bundle to this destination
-				_taskqueue.push( new SearchNextBundleTask( completed.getPeer() ) );
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-				// transfer the next bundle to this destination
-				_taskqueue.push( new SearchNextBundleTask( aborted.getPeer() ) );
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-				const dtn::core::Node &n = nodeevent.getNode();
-
-				if (nodeevent.getAction() == NODE_AVAILABLE)
-				{
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-				}
-				else if (nodeevent.getAction() == NODE_DATA_ADDED)
-				{
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-				}
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
-
-				if (ce.getState() == dtn::net::ConnectionEvent::CONNECTION_UP)
-				{
-					// send all (multi-hop) bundles in the storage to the neighbor
-					_taskqueue.push( new SearchNextBundleTask(ce.getNode().getEID()) );
-				}
-				return;
-			} catch (const std::bad_cast&) { };
+			}
 		}
 
 		void NeighborRoutingExtension::componentUp() throw ()

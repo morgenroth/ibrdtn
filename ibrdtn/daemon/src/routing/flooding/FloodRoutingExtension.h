@@ -48,7 +48,10 @@ namespace dtn
 			FloodRoutingExtension();
 			virtual ~FloodRoutingExtension();
 
-			void notify(const dtn::core::Event *evt) throw ();
+			virtual void eventDataChanged(const dtn::data::EID &peer) throw ();
+
+			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
+
 			void componentUp() throw ();
 			void componentDown() throw ();
 

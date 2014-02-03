@@ -31,6 +31,7 @@
 #include "net/ConnectionManager.h"
 #include "Configuration.h"
 #include "core/BundleCore.h"
+#include "core/EventDispatcher.h"
 #include "core/BundleEvent.h"
 
 #include <ibrdtn/data/MetaBundle.h>
@@ -72,68 +73,31 @@ namespace dtn
 			request.addRequest(BloomFilterSummaryVector::identifier);
 		}
 
-		void EpidemicRoutingExtension::notify(const dtn::core::Event *evt) throw ()
+		void EpidemicRoutingExtension::eventDataChanged(const dtn::data::EID &peer) throw ()
 		{
-			// If an incoming bundle is received, forward it to all connected neighbors
-			try {
-				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
+			// transfer the next bundle to this destination
+			_taskqueue.push( new SearchNextBundleTask( peer ) );
+		}
 
-				// new bundles trigger a re-check for all neighbors
-				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
+		void EpidemicRoutingExtension::eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ()
+		{
+			// new bundles trigger a recheck for all neighbors
+			const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
 
-				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
+			for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
+			{
+				const dtn::core::Node &n = (*iter);
+
+				if (n.getEID() != peer)
 				{
-					const dtn::core::Node &n = (*iter);
-
-					if (n.getEID() != queued.origin) {
-						// transfer the next bundle to this destination
-						_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-					}
+					// trigger all routing modules to search for bundles to forward
+					eventDataChanged(n.getEID());
 				}
-				return;
-			} catch (const std::bad_cast&) { };
+			}
+		}
 
-			// If a new neighbor comes available, search for bundles
-			try {
-				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-				const dtn::core::Node &n = nodeevent.getNode();
-
-				if (nodeevent.getAction() == NODE_AVAILABLE)
-				{
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-				}
-				else if (nodeevent.getAction() == NODE_DATA_ADDED)
-				{
-					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-				}
-				else if (nodeevent.getAction() == NODE_UNAVAILABLE)
-				{
-					// new bundles trigger a re-check for all neighbors
-					const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getConnectionManager().getNeighbors();
-
-					for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); ++iter)
-					{
-						const dtn::core::Node &n = (*iter);
-
-						// transfer the next bundle to this destination
-						_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-					}
-				}
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			try {
-				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
-
-				if (ce.getState() == dtn::net::ConnectionEvent::CONNECTION_UP)
-				{
-					// send all (multi-hop) bundles in the storage to the neighbor
-					_taskqueue.push( new SearchNextBundleTask(ce.getNode().getEID()) );
-				}
-				return;
-			} catch (const std::bad_cast&) { };
-
+		void EpidemicRoutingExtension::raiseEvent(const dtn::core::Event *evt) throw ()
+		{
 			try {
 				const NodeHandshakeEvent &handshake = dynamic_cast<const NodeHandshakeEvent&>(*evt);
 
@@ -149,29 +113,12 @@ namespace dtn
 				}
 				return;
 			} catch (const std::bad_cast&) { };
-
-			// The bundle transfer has been aborted
-			try {
-				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-
-				// transfer the next bundle to this destination
-				_taskqueue.push( new SearchNextBundleTask( aborted.getPeer() ) );
-
-				return;
-			} catch (const std::bad_cast&) { };
-
-			// A bundle transfer was successful
-			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-
-				// transfer the next bundle to this destination
-				_taskqueue.push( new SearchNextBundleTask( completed.getPeer() ) );
-				return;
-			} catch (const std::bad_cast&) { };
 		}
 
 		void EpidemicRoutingExtension::componentUp() throw ()
 		{
+			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::add(this);
+
 			// reset the task queue
 			_taskqueue.reset();
 
@@ -186,6 +133,8 @@ namespace dtn
 
 		void EpidemicRoutingExtension::componentDown() throw ()
 		{
+			dtn::core::EventDispatcher<dtn::routing::NodeHandshakeEvent>::remove(this);
+
 			try {
 				// stop the thread
 				stop();

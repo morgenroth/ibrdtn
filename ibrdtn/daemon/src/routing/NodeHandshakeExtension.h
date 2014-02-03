@@ -24,6 +24,7 @@
 
 #include "routing/RoutingExtension.h"
 #include "core/AbstractWorker.h"
+#include "core/EventReceiver.h"
 
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Queue.h>
@@ -33,7 +34,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		class NodeHandshakeExtension : public RoutingExtension
+		class NodeHandshakeExtension : public RoutingExtension, public dtn::core::EventReceiver
 		{
 			static const std::string TAG;
 
@@ -41,9 +42,9 @@ namespace dtn
 			NodeHandshakeExtension();
 			virtual ~NodeHandshakeExtension();
 
-			void notify(const dtn::core::Event *evt) throw ();
-			void componentUp() throw () {}
-			void componentDown() throw () {}
+			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void componentUp() throw ();
+			void componentDown() throw ();
 
 			void doHandshake(const dtn::data::EID &eid);
 

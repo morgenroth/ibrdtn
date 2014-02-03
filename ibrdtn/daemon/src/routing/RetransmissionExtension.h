@@ -23,6 +23,7 @@
 #define RETRANSMISSIONEXTENSION_H_
 
 #include "routing/RoutingExtension.h"
+#include "core/EventReceiver.h"
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -33,15 +34,20 @@ namespace dtn
 {
 	namespace routing
 	{
-		class RetransmissionExtension : public RoutingExtension
+		class RetransmissionExtension : public RoutingExtension, public dtn::core::EventReceiver
 		{
 		public:
 			RetransmissionExtension();
 			virtual ~RetransmissionExtension();
 
-			void notify(const dtn::core::Event *evt) throw ();
-			void componentUp() throw () {};
-			void componentDown() throw () {};
+			/**
+			 * This method is called every time a bundle has been completed successfully
+			 */
+			virtual void eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
+
+			void raiseEvent(const dtn::core::Event *evt) throw ();
+			void componentUp() throw ();
+			void componentDown() throw ();
 
 		private:
 			class RetransmissionData : public dtn::data::BundleID

@@ -24,6 +24,7 @@
 
 #include "routing/StaticRoute.h"
 #include "routing/RoutingExtension.h"
+#include "core/EventReceiver.h"
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -32,7 +33,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		class StaticRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
+		class StaticRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread, public dtn::core::EventReceiver
 		{
 			static const std::string TAG;
 
@@ -40,7 +41,18 @@ namespace dtn
 			StaticRoutingExtension();
 			virtual ~StaticRoutingExtension();
 
-			void notify(const dtn::core::Event *evt) throw ();
+			/**
+			 * This method is called every time something has changed. The module
+			 * should search again for bundles to transfer to the given peer.
+			 */
+			virtual void eventDataChanged(const dtn::data::EID &peer) throw ();
+
+			/**
+			 * This method is called every time a bundle was queued
+			 */
+			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
+
+			void raiseEvent(const dtn::core::Event *evt) throw ();
 			void componentUp() throw ();
 			void componentDown() throw ();
 

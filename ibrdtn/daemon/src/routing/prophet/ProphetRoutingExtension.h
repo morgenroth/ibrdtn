@@ -27,6 +27,8 @@
 #include "routing/prophet/AcknowledgementSet.h"
 
 #include "routing/RoutingExtension.h"
+#include "core/EventReceiver.h"
+
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/ThreadsafeReference.h>
@@ -48,7 +50,7 @@ namespace dtn
 		 * predictabilityMaps with neighbors.
 		 * For a detailed description of the protocol, see draft-irtf-dtnrg-prophet-09
 		 */
-		class ProphetRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread
+		class ProphetRoutingExtension : public RoutingExtension, public ibrcommon::JoinableThread, public dtn::core::EventReceiver
 		{
 			friend class ForwardingStrategy;
 			static const std::string TAG;
@@ -64,9 +66,16 @@ namespace dtn
 			virtual void requestHandshake(const dtn::data::EID&, NodeHandshake&) const; ///< \see BaseRouter::Extension::requestHandshake
 			virtual void responseHandshake(const dtn::data::EID&, const NodeHandshake&, NodeHandshake&); ///< \see BaseRouter::Extension::responseHandshake
 			virtual void processHandshake(const dtn::data::EID&, NodeHandshake&); ///< \see BaseRouter::Extension::processHandshake
-			virtual void notify(const dtn::core::Event *evt) throw ();///< \see BaseRouter::Extension::notify
 			virtual void componentUp() throw ();
 			virtual void componentDown() throw ();
+
+			virtual void raiseEvent(const dtn::core::Event *evt) throw ();
+
+			virtual void eventDataChanged(const dtn::data::EID &peer) throw ();
+
+			virtual void eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
+
+			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw ();
 
 			/*!
 			 * Returns a threadsafe reference to the DeliveryPredictabilityMap. I.e. the corresponding

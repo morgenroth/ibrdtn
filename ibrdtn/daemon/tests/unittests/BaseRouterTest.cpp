@@ -57,7 +57,6 @@ void BaseRouterTest::testGetRouter()
 		ExtensionTest() {};
 		~ExtensionTest() {};
 
-		void notify(const dtn::core::Event*) throw () {};
 		void componentUp() throw () {};
 		void componentDown() throw () {};
 
@@ -84,7 +83,6 @@ void BaseRouterTest::testAddExtension()
 		ExtensionTest() {};
 		~ExtensionTest() {};
 
-		void notify(const dtn::core::Event*) throw () {};
 		void componentUp() throw () {};
 		void componentDown() throw () {};
 
@@ -108,7 +106,6 @@ void BaseRouterTest::testTransferTo()
 		ExtensionTest() {};
 		~ExtensionTest() {};
 
-		void notify(const dtn::core::Event*) throw () {};
 		void componentUp() throw () {};
 		void componentDown() throw () {};
 	};

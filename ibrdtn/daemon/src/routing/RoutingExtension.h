@@ -42,7 +42,23 @@ namespace dtn
 			RoutingExtension();
 			virtual ~RoutingExtension() = 0;
 
-			virtual void notify(const dtn::core::Event *evt) throw () = 0;
+			/**
+			 * This method is called every time something has changed. The module
+			 * should search again for bundles to transfer to the given peer.
+			 */
+			virtual void eventDataChanged(const dtn::data::EID &peer) throw () { };
+
+			/**
+			 * This method is called every time a bundle has been completed successfully
+			 */
+			virtual void eventTransferCompleted(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw () { };
+
+			/**
+			 * This method is called every time a bundle was queued
+			 */
+			virtual void eventBundleQueued(const dtn::data::EID &peer, const dtn::data::MetaBundle &meta) throw () { };
+
+
 			virtual void componentUp() throw () = 0;
 			virtual void componentDown() throw () = 0;
 
