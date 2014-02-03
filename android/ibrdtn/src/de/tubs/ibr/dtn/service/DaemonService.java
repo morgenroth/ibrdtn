@@ -511,7 +511,7 @@ public class DaemonService extends Service {
         @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR1)
         @Override
         public void onStateChanged(DaemonState state) {
-            Log.d(TAG, "mDaemonStateReceiver: DaemonState: " + state);
+            Log.d(TAG, "DaemonState: " + state);
             
             // prepare broadcast intent
             Intent broadcastIntent = new Intent();

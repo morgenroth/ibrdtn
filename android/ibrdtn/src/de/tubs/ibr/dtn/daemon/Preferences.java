@@ -23,7 +23,6 @@
 package de.tubs.ibr.dtn.daemon;
 
 import java.util.Calendar;
-
 import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
@@ -42,6 +41,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -76,7 +76,7 @@ public class Preferences extends PreferenceActivity {
 	};
 
 	private Boolean mBound = false;
-	private DTNService service = null;
+	private DTNService mService = null;
 
 	private Switch actionBarSwitch = null;
 	private CheckBoxPreference checkBoxPreference = null;
@@ -84,13 +84,13 @@ public class Preferences extends PreferenceActivity {
 
 	private ServiceConnection mConnection = new ServiceConnection() {
 		public void onServiceConnected(ComponentName name, IBinder service) {
-			Preferences.this.service = DTNService.Stub.asInterface(service);
+			Preferences.this.mService = DTNService.Stub.asInterface(service);
 			if (Log.isLoggable(TAG, Log.DEBUG))
 				Log.d(TAG, "service connected");
 
 			// get the daemon version
 			try {
-				String version[] = Preferences.this.service.getVersion();
+				String version[] = Preferences.this.mService.getVersion();
 				setVersion("dtnd: " + version[0] + ", build: " + version[1]);
 			} catch (RemoteException e) {
 				Log.e(TAG, "Can not query the daemon version", e);
@@ -100,7 +100,7 @@ public class Preferences extends PreferenceActivity {
 		public void onServiceDisconnected(ComponentName name) {
 			if (Log.isLoggable(TAG, Log.DEBUG))
 				Log.d(TAG, "service disconnected");
-			service = null;
+			mService = null;
 		}
 	};
 
@@ -291,10 +291,16 @@ public class Preferences extends PreferenceActivity {
 		for (String prefKey : mSummaryPrefs) {
 			bindPreferenceSummaryToValue(findPreference(prefKey));
 		}
+		
+		// register to preference changes
+		PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(mOnOffSwitchListener);
 	}
 
 	@Override
 	public void onDestroy() {
+		// unregister to preference changes
+		PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(mOnOffSwitchListener);
+		
 		if (mBound) {
 			// Detach our existing connection.
 			unbindService(mConnection);
@@ -363,6 +369,21 @@ public class Preferences extends PreferenceActivity {
 					mInterfacePreference.updateInterfaceList();
 				}
 			});
+		}
+	};
+	
+	private SharedPreferences.OnSharedPreferenceChangeListener mOnOffSwitchListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+		@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+		@Override
+		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+			if ("enabledSwitch".equals(key)) {
+				// update switch state
+				if (checkBoxPreference == null) {
+					actionBarSwitch.setChecked(sharedPreferences.getBoolean("enabledSwitch", false));
+				} else {
+					checkBoxPreference.setChecked(sharedPreferences.getBoolean("enabledSwitch", false));
+				}
+			}
 		}
 	};
 
