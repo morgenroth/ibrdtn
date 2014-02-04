@@ -1316,7 +1316,7 @@ namespace ibrcommon
 		switch (err)
 		{
 		case EACCES:
-			throw socket_exception("Permission  to create a socket of the specified type and/or protocol is denied.");
+			throw socket_exception("Permission to create a socket of the specified type and/or protocol is denied.");
 
 		case EAFNOSUPPORT:
 			throw socket_exception("The implementation does not support the specified address family.");
@@ -1338,7 +1338,7 @@ namespace ibrcommon
 			throw socket_exception("The protocol type or the specified protocol is not supported within this domain.");
 
 		default:
-			throw socket_exception("cannot create socket");
+			throw socket_exception("Cannot create a socket.");
 		}
 	}
 
@@ -1347,39 +1347,37 @@ namespace ibrcommon
 		switch ( err )
 		{
 		case EBADF:
-			throw socket_exception("sockfd ist kein gueltiger Deskriptor.");
-
-		// Die  folgenden  Fehlermeldungen  sind  spezifisch fr UNIX-Domnensockets (AF_UNIX)
+			throw socket_exception("sockfd is not a valid descriptor.");
 
 		case EINVAL:
-			throw socket_exception("Die addr_len war  falsch  oder  der  Socket  gehrte  nicht  zur AF_UNIX Familie.");
+			throw socket_exception("The socket is already bound to an address.");
 
 		case EROFS:
-			throw socket_exception("Die Socket \"Inode\" sollte auf einem schreibgeschtzten Dateisystem residieren.");
+			throw socket_exception("The socket inode would reside on a read-only filesystem.");
 
 		case EFAULT:
-			throw socket_exception("my_addr  weist  auf  eine  Adresse  auerhalb  des  erreichbaren Adressraumes zu.");
+			throw socket_exception("Given address points outside the user's accessible address space.");
 
 		case ENAMETOOLONG:
-			throw socket_exception("my_addr ist zu lang.");
+			throw socket_exception("Given address is too long.");
 
 		case ENOENT:
-			throw socket_exception("Die Datei existiert nicht.");
+			throw socket_exception("The file does not exist.");
 
 		case ENOMEM:
-			throw socket_exception("Nicht genug Kernelspeicher vorhanden.");
+			throw socket_exception("Insufficient kernel memory was available.");
 
 		case ENOTDIR:
-			throw socket_exception("Eine Komponente des Pfad-Prfixes ist kein Verzeichnis.");
+			throw socket_exception("A component of the path prefix is not a directory.");
 
 		case EACCES:
-			throw socket_exception("Keine  berechtigung  um  eine  Komponente  des Pfad-prefixes zu durchsuchen.");
+			throw socket_exception("Search permission is denied on a component of the path prefix.");
 
 		case ELOOP:
-			throw socket_exception("my_addr enthlt eine Kreis-Referenz (zum  Beispiel  durch  einen symbolischen Link)");
+			throw socket_exception("Too many symbolic links were encountered in resolving the given address.");
 
 		default:
-			throw socket_exception("cannot bind socket " + msg);
+			throw socket_exception("Cannot bind to socket " + msg);
 		}
 	}
 }
