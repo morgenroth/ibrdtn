@@ -71,7 +71,7 @@ public class RecorderService extends Service {
     public static void startRecording(Context context, EID endpoint, boolean indicator, boolean auto_stop) {
         Intent i = new Intent(context, RecorderService.class);
         i.setAction(RecorderService.ACTION_START_RECORDING);
-        Utils.putEndpoint(i, RecorderService.TALKIE_GROUP_EID, RecorderService.EXTRA_DESTINATION_ENDPOINT, RecorderService.EXTRA_DESTINATION_ENDPOINT_IS_SINGLETON);
+        Utils.putEndpoint(i, endpoint, RecorderService.EXTRA_DESTINATION_ENDPOINT, RecorderService.EXTRA_DESTINATION_ENDPOINT_IS_SINGLETON);
         i.putExtra(RecorderService.EXTRA_INDICATOR, indicator);
         i.putExtra(RecorderService.EXTRA_AUTO_STOP, auto_stop);
         context.startService(i);
