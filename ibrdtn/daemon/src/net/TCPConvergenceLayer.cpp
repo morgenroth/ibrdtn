@@ -133,6 +133,8 @@ namespace dtn
 							ibrcommon::tcpserversocket *sock = new ibrcommon::tcpserversocket(addr);
 							if (_vsocket_state) sock->up();
 							_vsocket.add(sock, net);
+
+							IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 25) << "bound to " << net.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << IBRCOMMON_LOGGER_ENDL;
 							break;
 						}
 						default:
@@ -144,8 +146,6 @@ namespace dtn
 						IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
-
-				IBRCOMMON_LOGGER_DEBUG_TAG(TCPConvergenceLayer::TAG, 25) << "bound to " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::vinterface::interface_not_set &ex) {
 				IBRCOMMON_LOGGER_TAG(TCPConvergenceLayer::TAG, warning) << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}

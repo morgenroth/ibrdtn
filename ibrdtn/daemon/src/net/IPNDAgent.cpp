@@ -86,6 +86,8 @@ namespace dtn
 
 		void IPNDAgent::join(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ()
 		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "Join on " << iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << IBRCOMMON_LOGGER_ENDL;
+
 			// create a multicast socket and bind to given addr
 			ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(addr);
 
@@ -102,18 +104,18 @@ namespace dtn
 							msock->join(*it_addr, iface);
 						} catch (const ibrcommon::socket_raw_error &e) {
 							if (e.error() == EADDRINUSE) {
-								// silence error
-							} else if (e.error() == 92) {
-								// silence error - protocol not available
+								// silent error
+							} else if (e.error() == ENOPROTOOPT) {
+								// silent error - protocol not available
 							} else {
-								IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "join failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << "Join to " << (*it_addr).toString() << " failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 							}
 						} catch (const ibrcommon::socket_exception &e) {
-							IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "can not join " << (*it_addr).toString() << " on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG_TAG(IPNDAgent::TAG, 10) << "Join to " << (*it_addr).toString() << " failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				} catch (const ibrcommon::socket_exception &ex) {
-					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "failed to set-up socket on " << iface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, error) << "Join failed on " << iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << "; " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					delete msock;
 					return;
 				}
