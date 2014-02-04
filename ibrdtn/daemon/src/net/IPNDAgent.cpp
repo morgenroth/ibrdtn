@@ -88,6 +88,9 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "Join on " << iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << IBRCOMMON_LOGGER_ENDL;
 
+			// only join IPv6 and IPv4 addresses
+			if ((addr.family() != AF_INET) && (addr.family() != AF_INET6)) return;
+
 			// create a multicast socket and bind to given addr
 			ibrcommon::multicastsocket *msock = new ibrcommon::multicastsocket(addr);
 
