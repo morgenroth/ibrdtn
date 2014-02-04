@@ -108,7 +108,7 @@ namespace dtn
 						} catch (const ibrcommon::socket_raw_error &e) {
 							if (e.error() == EADDRINUSE) {
 								// silent error
-							} else if (e.error() == ENOPROTOOPT) {
+							} else if (e.error() == 92) {
 								// silent error - protocol not available
 							} else {
 								IBRCOMMON_LOGGER_TAG(IPNDAgent::TAG, warning) << "Join to " << (*it_addr).toString() << " failed on " << iface.toString() << "; " << e.what() << IBRCOMMON_LOGGER_ENDL;
