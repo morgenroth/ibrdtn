@@ -130,6 +130,8 @@ namespace dtn
 
 		void IPNDAgent::leave(const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr) throw ()
 		{
+			IBRCOMMON_LOGGER_DEBUG_TAG(TAG, 10) << "Leave " << iface.toString() << " (" << addr.toString() << ", family: " << addr.family() << ")" << IBRCOMMON_LOGGER_ENDL;
+
 			// get all sockets bound to the given interface
 			ibrcommon::socketset ifsocks = _socket.get(iface);
 
