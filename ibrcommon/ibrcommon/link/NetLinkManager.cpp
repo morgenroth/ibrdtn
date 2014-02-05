@@ -30,7 +30,7 @@
 #include <netlink/route/addr.h>
 #include <netlink/route/rtnl.h>
 
-#ifdef HAVE_LIBNL3
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
 #include <netlink/version.h>
 #endif
 
@@ -113,7 +113,7 @@ namespace ibrcommon
 		return vaddress(addrname, "", scopename, sa_addr.ss_family);
 	}
 
-#ifdef HAVE_LIBNL3
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
 	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action, void*)
 #else
 	static void nl_cache_callback(struct nl_cache*, struct nl_object *obj, int action)
@@ -159,7 +159,7 @@ namespace ibrcommon
 			}
 
 			case RTM_NEWADDR: {
-#ifdef HAVE_LIBNL3
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
 				LinkEvent::Action evt_action = LinkEvent::ACTION_UNKOWN;
 
 				if (action == NL_ACT_NEW)
@@ -182,7 +182,7 @@ namespace ibrcommon
 				if (IBRCOMMON_LOGGER_LEVEL > 90) {
 				struct nl_dump_params dp;
 				memset(&dp, 0, sizeof(struct nl_dump_params));
-#ifdef HAVE_LIBNL3
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
 				dp.dp_type = NL_DUMP_LINE;
 #else
 				dp.dp_type = NL_DUMP_BRIEF;
@@ -221,7 +221,7 @@ namespace ibrcommon
 			throw socket_exception("socket is already up");
 
 		// create netlink handle
-#ifdef HAVE_LIBNL3
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
 		int ret = 0;
 		_nl_handle = nl_socket_alloc();
 #else
@@ -229,7 +229,7 @@ namespace ibrcommon
 #endif
 
 		// allocate a cache manager for ROUTE
-#ifdef HAVE_LIBNL3
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
 		ret = nl_cache_mngr_alloc((struct nl_sock*)_nl_handle, _protocol, NL_AUTO_PROVIDE, &_mngr);
 
 		if (ret != 0)
@@ -244,7 +244,7 @@ namespace ibrcommon
 		for (std::map<std::string, struct nl_cache*>::iterator iter = _caches.begin(); iter != _caches.end(); ++iter)
 		{
 			const std::string &cachename = (*iter).first;
-#ifdef HAVE_LIBNL3
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
 			struct nl_cache *c;
 			ret = nl_cache_mngr_add(_mngr, cachename.c_str(), &nl_cache_callback, this, &c);
 
@@ -272,7 +272,7 @@ namespace ibrcommon
 		// delete the cache manager
 		nl_cache_mngr_free(_mngr);
 
-#ifdef HAVE_LIBNL3
+#if defined HAVE_LIBNL2 || HAVE_LIBNL3
 		// delete the socket
 		nl_socket_free((struct nl_sock*)_nl_handle);
 #endif

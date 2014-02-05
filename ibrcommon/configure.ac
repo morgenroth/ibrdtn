@@ -220,12 +220,22 @@ AS_IF([test "x$enable_android" = "xyes"], [
 					])
 				])
 			], [
-				PKG_CHECK_MODULES([NL], [libnl-1], [
-					AC_DEFINE(HAVE_LIBNL, [1], ["netlink library is available"])
-					REQUIRES_LIBS="$REQUIRES_LIBS libnl-1"
+				# check for libnl-2.0
+				PKG_CHECK_MODULES([NL], [libnl-2.0], [
+					AC_DEFINE(HAVE_LIBNL2, [1], ["netlink library is available"])
+					NL_ROUTE_LIBS="-lnl-route"
+					NL_GENL_LIBS="-lnl-genl"
+					REQUIRES_LIBS="$REQUIRES_LIBS libnl-2.0"
 					use_netlink="yes"
 				], [
-					use_netlink="no"
+					# check for legacy libnl
+					PKG_CHECK_MODULES([NL], [libnl-1], [
+						AC_DEFINE(HAVE_LIBNL, [1], ["netlink library is available"])
+						REQUIRES_LIBS="$REQUIRES_LIBS libnl-1"
+						use_netlink="yes"
+					], [
+						use_netlink="no"
+					])
 				])
 			])
 		]
