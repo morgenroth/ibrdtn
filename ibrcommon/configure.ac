@@ -261,50 +261,33 @@ AS_IF([test "x$enable_android" = "xyes"], [
 			PTHREAD_CFLAGS="-I${withval}"
 			AC_MSG_NOTICE([using mingw32-pthread library in ${withval}])
 		], [
-			THREADLIB=error
-
-			AC_CHECK_LIB(pthread, pthread_attr_init,
-				THREADLIB="pthread")
-
-			if test "x$THREADLIB" = xerror; then
-				AC_CHECK_LIB(pthreads, pthread_attr_init,
-					THREADLIB="pthreads")
-			fi
-
-			if test "x$THREADLIB" = xerror; then
-				AC_CHECK_LIB(thread, pthread_attr_init,
-					THREADLIB="thread")
-			fi
-
-			PTHREAD_LIBS="-l$THREADLIB"
+			AC_CHECK_LIB([pthread], [main], [], AC_MSG_ERROR(POSIX threading library not found.))
+			
+			PTHREAD_LIBS="-lpthread"
 			PTHREAD_CFLAGS=""
 
-			AC_CHECK_LIB($THREADLIB,pthread_create, [])
-			AC_CHECK_LIB($THREADLIB,pthread_mutex_init, [])
-			AC_CHECK_LIB($THREADLIB,pthread_cond_init, [])
-
-			AC_CHECK_LIB($THREADLIB,pthread_condattr_setclock,[
+			AC_CHECK_FUNC(pthread_condattr_setclock,[
 				AC_DEFINE(HAVE_PTHREAD_CONDATTR_SETCLOCK, [1], ["pthread clocking"])
 			])
-			AC_CHECK_LIB($THREADLIB,pthread_setconcurrency,[
+			AC_CHECK_FUNC(pthread_setconcurrency,[
 				AC_DEFINE(HAVE_PTHREAD_SETCONCURRENCY, [1], ["pthread concurrency"])
 			])
 
-			AC_CHECK_LIB($THREADLIB,pthread_yield,[
+			AC_CHECK_FUNC(pthread_yield,[
 				AC_DEFINE(HAVE_PTHREAD_YIELD, [1], ["pthread yield"],[
-					AC_CHECK_LIB($tlib,pthread_yield_np,[
+					AC_CHECK_FUNC(pthread_yield_np,[
 						AC_DEFINE(HAVE_PTHREAD_YIELD_NP, [1], ["pthread yield np"])
 					])
 				])
 			])
 
-			AC_CHECK_LIB($THREADLIB,pthread_delay,[
+			AC_CHECK_FUNC(pthread_delay,[
 				AC_DEFINE(HAVE_PTHREAD_DELAY, [1], ["pthread delay"])
 			])
-			AC_CHECK_LIB($THREADLIB,pthread_delay_np,[
+			AC_CHECK_FUNC(pthread_delay_np,[
 				AC_DEFINE(HAVE_PTHREAD_DELAY_NP, [1], ["pthread delay np"])
 			])
-			AC_CHECK_LIB($THREADLIB,pthread_setschedprio,[
+			AC_CHECK_FUNC(pthread_setschedprio,[
 				AC_DEFINE(HAVE_PTHREAD_SETSCHEDPRIO, [1], ["pthread scheduling"])
 			])
 		]
