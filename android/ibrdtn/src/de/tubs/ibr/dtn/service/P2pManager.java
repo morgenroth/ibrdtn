@@ -1,14 +1,13 @@
-package de.tubs.ibr.dtn.p2p;
+package de.tubs.ibr.dtn.service;
 
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -29,10 +28,7 @@ import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.Build;
 import android.util.Log;
-import de.tubs.ibr.dtn.p2p.db.Database;
-import de.tubs.ibr.dtn.p2p.db.Peer;
-import de.tubs.ibr.dtn.p2p.scheduler.SchedulerService;
-import de.tubs.ibr.dtn.service.DaemonService;
+import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.swig.EID;
 import de.tubs.ibr.dtn.swig.NativeP2pManager;
 
@@ -41,8 +37,8 @@ public class P2pManager extends NativeP2pManager {
 
     private final static String TAG = "P2pManager";
     
-    public static final String START_DISCOVERY_ACTION = "de.tubs.ibr.dtn.p2p.action.START_DISCOVERY";
-    public static final String STOP_DISCOVERY_ACTION = "de.tubs.ibr.dtn.p2p.action.STOP_DISCOVERY";
+    public static final String INTENT_P2P_STATE_CHANGED = "de.tubs.ibr.dtn.p2p.action.STATE_CHANGED";
+    public static final String EXTRA_P2P_STATE = "de.tubs.ibr.dtn.p2p.action.EXTRA_STATE";
 
     private DaemonService mService = null;
     
@@ -51,8 +47,28 @@ public class P2pManager extends NativeP2pManager {
     private WifiP2pDnsSdServiceRequest mServiceRequest = null;
     private WifiP2pDnsSdServiceInfo mServiceInfo = null;
     
-    private Calendar mLastDisco = null;
-    private Boolean mDiscoInProgress = null;
+    private boolean mServiceEnabled = false;
+    private boolean mDiscoveryEnabled = false;
+    
+    private HashMap<String, Peer> mKnownPeers = new HashMap<String, Peer>();
+    private HashMap<String, Peer> mPendingPeers = new HashMap<String, Peer>();
+    
+    private class Peer {
+    	public String endpoint = null;
+    	public String address = null;
+    	
+    	public Peer(String address) {
+    		this.address = address;
+    	}
+    	
+    	public void touch() {
+    		// TODO: prevent expiration
+    	}
+    	
+    	public boolean isValid() {
+    		return (endpoint != null);
+    	}
+    }
     
     /**
      * The p2p interfaces are stored in this set. Every time
@@ -108,9 +124,36 @@ public class P2pManager extends NativeP2pManager {
     };
     
     private synchronized void shutdownForever() {
-        onPause();
         onDestroy();
-        mManagerState = ManagerState.NOT_SUPPORTED;
+        setState(ManagerState.NOT_SUPPORTED);
+    }
+    
+    public synchronized boolean isSupported() {
+    	return ManagerState.ENABLED.equals(mManagerState);
+    }
+    
+    public synchronized void setEnabled(boolean enabled) {
+    	// allow P2P scanning
+    	mServiceEnabled = enabled;
+    	
+    	if (enabled && mDiscoveryEnabled) {
+    		// start discovery on enable if discovery is active
+    		startDiscovery();
+    	}
+    	else if (!enabled && mDiscoveryEnabled) {
+    		// stop discovery on disable
+    		stopDiscovery();
+    		mDiscoveryEnabled = true;
+    	}
+    }
+    
+    private void setState(ManagerState state) {
+    	mManagerState = state;
+    	
+        // generate intent
+        Intent i = new Intent(INTENT_P2P_STATE_CHANGED);
+        i.putExtra(EXTRA_P2P_STATE, ManagerState.ENABLED.equals(state));
+        mService.sendBroadcast(i);
     }
     
     public synchronized void create() {
@@ -121,51 +164,13 @@ public class P2pManager extends NativeP2pManager {
     }
     
     public synchronized void destroy() {
-        // allowed transition from INITIALIZED
-        if (ManagerState.INITIALIZED.equals(mManagerState)) {
-            onDestroy();
-        }
-    }
-    
-    public synchronized void pause() {
-        // allowed transition from ENABLED, DISABLED, PENDING
-        if (    ManagerState.ENABLED.equals(mManagerState) ||
-                ManagerState.DISABLED.equals(mManagerState) ||
-                ManagerState.PENDING.equals(mManagerState)
-                ) {
-            if (ManagerState.ENABLED.equals(mManagerState)) {
-                onP2pDisabled();
-            }
-            
-            onPause();
-        }
-    }
-    
-    public synchronized void resume() {
-        // allowed transition from INITIALIZED
-        if (ManagerState.INITIALIZED.equals(mManagerState)) {
-            onResume();
-        }
+        onDestroy();
     }
 
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private synchronized void onCreate() {
         // daemon is up
         Log.d(TAG, "onCreate() state: " + mManagerState.toString());
-        
-        // get the WifiP2pManager
-        mWifiP2pManager = (WifiP2pManager) mService.getSystemService(Context.WIFI_P2P_SERVICE);
-        
-        // set the current state
-        mManagerState = ManagerState.INITIALIZED;
-        mDiscoInProgress = false;
-    }
-    
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    private synchronized void onResume() {
-        Log.d(TAG, "onResume() state: " + mManagerState.toString());
-        
-        // transition only from INITIALIZED state
-        if (!ManagerState.INITIALIZED.equals(mManagerState)) return;
         
         // listen to wifi p2p events
         IntentFilter p2p_filter = new IntentFilter();
@@ -173,19 +178,23 @@ public class P2pManager extends NativeP2pManager {
         p2p_filter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION);
         p2p_filter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         
-        if (Build.VERSION.SDK_INT >= 16) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             p2p_filter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
         }
         
-        p2p_filter.addAction(START_DISCOVERY_ACTION);
-        p2p_filter.addAction(STOP_DISCOVERY_ACTION);
         mService.registerReceiver(mP2pEventReceiver, p2p_filter);
         
+        // get the WifiP2pManager
+        mWifiP2pManager = (WifiP2pManager) mService.getSystemService(Context.WIFI_P2P_SERVICE);
+        
         // set the current state
-        mManagerState = ManagerState.PENDING;
+        setState(ManagerState.INITIALIZED);
         
         // create a new Wi-Fi P2P channel
         mWifiP2pChannel = mWifiP2pManager.initialize(mService, mService.getMainLooper(), mChannelListener);
+        
+        // set the current state
+        setState(ManagerState.PENDING);
     }
     
     /**
@@ -200,11 +209,6 @@ public class P2pManager extends NativeP2pManager {
         // initialize service discovery mechanisms
         initializeServiceDiscovery();
         
-        // start the scheduler
-        Intent i = new Intent(mService, SchedulerService.class);
-        i.setAction(SchedulerService.ACTION_ACTIVATE_SCHEDULER);
-        mService.startService(i);
-        
         // remove all inactive interfaces
         HashSet<String> activeInterfaces = getActiveInterfaces();
         mP2pInterfaces.retainAll(activeInterfaces);
@@ -216,7 +220,7 @@ public class P2pManager extends NativeP2pManager {
         }
         
         // set the current state
-        mManagerState = ManagerState.ENABLED;
+        setState(ManagerState.ENABLED);
     }
     
     private synchronized void onP2pDisabled() {
@@ -228,11 +232,6 @@ public class P2pManager extends NativeP2pManager {
             
             fireInterfaceDown(iface);
         }
-        
-        // stop the scheduler
-        Intent i = new Intent(mService, SchedulerService.class);
-        i.setAction(SchedulerService.ACTION_DEACTIVATE_SCHEDULER);
-        mService.startService(i);
         
         if (ManagerState.ENABLED.equals(mManagerState)) {
             // cancel all connection request
@@ -248,34 +247,26 @@ public class P2pManager extends NativeP2pManager {
                 }
             });
             
-            // terminate service discovery mechanisms
-            terminateServiceDiscovery();
+	        // terminate service discovery mechanisms
+	        terminateServiceDiscovery();
         }
-        
+
         // set the current state
-        mManagerState = ManagerState.DISABLED;
-    }
-    
-    private synchronized void onPause() {
-        Log.d(TAG, "onPause() state: " + mManagerState.toString());
-        
-        // stop listening to wifi p2p events
-        mService.unregisterReceiver(mP2pEventReceiver);
-        
-        // set the current state
-        mManagerState = ManagerState.INITIALIZED;
+        setState(ManagerState.DISABLED);
     }
 
     private synchronized void onDestroy() {
+        // stop listening to wifi p2p events
+        mService.unregisterReceiver(mP2pEventReceiver);
+        
         // daemon goes down
-        mLastDisco = null;
         mServiceInfo = null;
         mServiceRequest = null;
         mWifiP2pChannel = null;
         mWifiP2pManager = null;
         
         // set the current state
-        mManagerState = ManagerState.UNINITIALIZED;
+        setState(ManagerState.UNINITIALIZED);
     }
     
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -288,7 +279,7 @@ public class P2pManager extends NativeP2pManager {
         
         // create local service info
         Map<String, String> record = new HashMap<String, String>();
-        record.put("eid", SettingsUtil.getEid(mService));
+        record.put("eid", Preferences.getEndpoint(mService));
         mServiceInfo = WifiP2pDnsSdServiceInfo.newInstance("DtnNode", "_dtn._tcp", record);
         
         // add local service description
@@ -360,37 +351,22 @@ public class P2pManager extends NativeP2pManager {
         });
         
         // stop all peer discoveries
-        if (mDiscoInProgress) {
-            mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onFailure(int reason) {
-                    Log.e(TAG, "stop peer discovery failed: " + reason);
-                }
-    
-                @Override
-                public void onSuccess() {
-                    Log.d(TAG, "peer discovery stopped");
-                }
-            });
-        }
+        mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onFailure(int reason) {
+                Log.e(TAG, "stop peer discovery failed: " + reason);
+            }
+
+            @Override
+            public void onSuccess() {
+                Log.d(TAG, "peer discovery stopped");
+            }
+        });
     }
 
     @Override
-    public void connect(String data) {
+    public void connect(final String data) {
         if (mWifiP2pChannel == null) return;
-        
-        // get the peer object
-        final Peer p = Database.getInstance(mService).find(data);
-        
-        // stop here, if there is no peer object
-        if (p == null) return;
-        
-        // stop here, if we already tried to connect within the last minute
-        if (p.getConnectState() > 1) return;
-        
-        // set the connection state to 2 (connecting)
-        p.setConnectState(2);
-        Database.getInstance(mService).updateState(p);
         
         // connect to the peer identified by "data"
         WifiP2pConfig config = new WifiP2pConfig();
@@ -398,17 +374,17 @@ public class P2pManager extends NativeP2pManager {
         config.groupOwnerIntent = -1;
         config.wps.setup = WpsInfo.PBC;
         
-        Log.d(TAG, "connect to " + p.toString());
+        Log.d(TAG, "connect to " + data);
         
         mWifiP2pManager.connect(mWifiP2pChannel, config, new WifiP2pManager.ActionListener() {
             @Override
             public void onFailure(int reason) {
-                Log.e(TAG, "connection to " + p.toString() + " failed: " + reason);
+                Log.e(TAG, "connection to " + data + " failed: " + reason);
             }
 
             @Override
             public void onSuccess() {
-                Log.d(TAG, "connection in progress to " + p.toString());
+                Log.d(TAG, "connection in progress to " + data);
             }
         });
     }
@@ -425,28 +401,25 @@ public class P2pManager extends NativeP2pManager {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+        	Log.d(TAG, "P2P action: " + intent);
             // do nothing if the stack isn't initialized
             if (mWifiP2pManager == null) return;
             
             String action = intent.getAction();
 
             if (WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION.equals(action)) {
-                discoveryChanged(context, intent);
+                discoveryChanged(intent);
             } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
-                peersChanged(context, intent);
+                peersChanged();
             } else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
-                connectionChanged(context, intent);
+                connectionChanged(intent);
             } else if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
-                stateChanged(context, intent);
-            } else if (START_DISCOVERY_ACTION.equals(action)) {
-                startDiscovery(context, intent);
-            } else if (STOP_DISCOVERY_ACTION.equals(action)) {
-                stopDiscovery(context, intent);
+                stateChanged(intent);
             }
         }
         
         @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-        private void connectionChanged(Context context, Intent intent) {
+        private void connectionChanged(Intent intent) {
             //WifiP2pInfo p2pInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_INFO);
             NetworkInfo netInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
 
@@ -483,12 +456,12 @@ public class P2pManager extends NativeP2pManager {
             }
         }
 
-        private void peersChanged(Context context, Intent intent) {
+        private void peersChanged() {
             mWifiP2pManager.requestPeers(mWifiP2pChannel, mPeerListListener);
         }
 
         @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-        private void discoveryChanged(Context context, Intent intent) {
+        private void discoveryChanged(Intent intent) {
             // do nothing if the SDK version is too small
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
             
@@ -496,25 +469,13 @@ public class P2pManager extends NativeP2pManager {
             
             if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED) {
                 Log.d(TAG, "Peer discovery has been stopped");
-                
-                // mark disco as stopped
-                mDiscoInProgress = false;
-                
-                // check scheduler state if P2P is enabled
-                if (ManagerState.ENABLED.equals(mManagerState)) {
-                    Intent i = new Intent(context, SchedulerService.class);
-                    i.setAction(SchedulerService.ACTION_CHECK_STATE);
-                    context.startService(i);
-                }
             }
             else if (discoveryState == WifiP2pManager.WIFI_P2P_DISCOVERY_STARTED) {
                 Log.d(TAG, "Peer discovery has been started");
-                mDiscoInProgress = true;
             }
-            
         }
         
-        private void stateChanged(Context context, Intent intent) {
+        private void stateChanged(Intent intent) {
             int p2pState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, WifiP2pManager.WIFI_P2P_STATE_DISABLED);
             
             if (p2pState == WifiP2pManager.WIFI_P2P_STATE_DISABLED) {
@@ -526,109 +487,108 @@ public class P2pManager extends NativeP2pManager {
                 onP2pEnabled();
             }
         }
-        
-        private void startDiscovery(Context context, Intent intent) {
-            if (!ManagerState.ENABLED.equals(mManagerState)) return;
-            if (mDiscoInProgress) return;
-
-            mWifiP2pManager.discoverPeers(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onFailure(int reason) {
-                    Log.e(TAG, "starting peer discovery failed: " + reason);
-                }
-
-                @Override
-                public void onSuccess() {
-                    Log.d(TAG, "peer discovery started");
-                }
-            });
-        }
-        
-        @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-        private void stopDiscovery(Context context, Intent intent) {
-            // do nothing if the SDK version is too small
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
-            
-            if (!mDiscoInProgress) return;
-            
-            mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-                @Override
-                public void onFailure(int reason) {
-                    Log.e(TAG, "stop peer discovery failed: " + reason);
-                }
-
-                @Override
-                public void onSuccess() {
-                    Log.d(TAG, "peer discovery stopped");
-                }
-            });
-        }
     };
+    
+    @SuppressLint("NewApi")
+	public synchronized void startDiscovery() {
+        if (!ManagerState.ENABLED.equals(mManagerState)) return;
+        
+    	// set disco marker
+    	mDiscoveryEnabled = true;
+    	
+    	// check if P2p is enabled
+    	if (!mServiceEnabled) return;
 
-    private void peerDiscovered(Peer peer) {
-        //Log.d(TAG, "discovered peer:" + peer.getEndpoint() + "," + peer.getP2pAddress());
-        fireDiscovered(new EID(peer.getEndpoint()), peer.getP2pAddress(), 90, 10);
+        // do nothing if the SDK version is too small
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+	        mWifiP2pManager.discoverPeers(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+	            @Override
+	            public void onFailure(int reason) {
+	                Log.e(TAG, "starting peer discovery failed: " + reason);
+	            }
+	
+	            @Override
+	            public void onSuccess() {
+	                Log.d(TAG, "peer discovery started");
+	            }
+	        });
+        } else {
+	        // start service discovery
+	        mWifiP2pManager.discoverServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+	            @Override
+	            public void onFailure(int reason) {
+	                Log.e(TAG, "starting service discovery failed: " + reason);
+	            }
+	
+	            @Override
+	            public void onSuccess() {
+	                Log.d(TAG, "service discovery started");
+	            }
+	        });
+        }
+    }
+    
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public synchronized void stopDiscovery() {
+    	if (!ManagerState.ENABLED.equals(mManagerState)) return;
+    	
+        // stop is only available since Jelly Bean
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+        	if (mDiscoveryEnabled) {
+		        mWifiP2pManager.stopPeerDiscovery(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+		            @Override
+		            public void onFailure(int reason) {
+		                Log.e(TAG, "stop peer discovery failed: " + reason);
+		            }
+		
+		            @Override
+		            public void onSuccess() {
+		                Log.d(TAG, "peer discovery stopped");
+		            }
+		        });
+        	}
+        }
+        
+    	// set disco marker
+    	mDiscoveryEnabled = false;
+    }
+
+    private void peerDiscovered(Peer p) {
+        Log.d(TAG, "discovered peer: " + p.endpoint + ", " + p.address);
+        fireDiscovered(new EID(p.endpoint), p.address, 90, 10);
     }
     
     private PeerListListener mPeerListListener = new PeerListListener() {
         @Override
         public void onPeersAvailable(WifiP2pDeviceList peers) {
-            // Log.d(TAG, "Peers available:" + peers.getDeviceList().size());
+            Log.d(TAG, "Peers available: " + peers.getDeviceList().size());
             
-            boolean allEidsValid = true;
             for (WifiP2pDevice device : peers.getDeviceList()) {
-                Database db = Database.getInstance(mService);
-                db.open();
-                Peer peer = db.find(device.deviceAddress);
-                
-                if (peer == null) {
-                    peer = new Peer(device.deviceAddress);
-                } else {
-                    peer.touch();
-                }
-                
-                db.put(peer);
-                
-                if (peer.hasEndpoint() && peer.isEndpointValid()) {
-                    peerDiscovered(peer);
-                } else {
-                    allEidsValid = false;
-                }
-            }
+            	Log.d(TAG, "Peer: " + device.deviceName + " (" + device.deviceAddress + ")");
+            	
+            	synchronized(mKnownPeers) {
+	            	if (mKnownPeers.containsKey(device.deviceAddress)) {
+	            		Peer p = mKnownPeers.get(device.deviceAddress);
+	            		
+    	            	// touch peer to prevent expiration
+    	            	p.touch();
 
-            if (!allEidsValid) {
-                requestServiceDiscovery();
+	            		peerDiscovered(p);
+	            		continue;
+	            	}
+	            	
+	            	// continue, if this peer is in pending state
+            		if (mPendingPeers.containsKey(device.deviceAddress)) {
+            			continue;
+            		}
+            		
+            		Peer p = new Peer(device.deviceAddress);
+            		mPendingPeers.put(device.deviceAddress, p);
+            	}
             }
         }
     };
     
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    private void requestServiceDiscovery() {
-        // do nothing if the SDK version is too small
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
-        
-        if (mLastDisco != null) {
-            if (mLastDisco.after(Calendar.getInstance())) return;
-        }
-        
-        // only once per minute
-        mLastDisco = Calendar.getInstance();
-        mLastDisco.add(Calendar.MINUTE, 1);
-        
-        // start service discovery
-        mWifiP2pManager.discoverServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onFailure(int reason) {
-                Log.e(TAG, "starting service discovery failed: " + reason);
-            }
-
-            @Override
-            public void onSuccess() {
-                Log.d(TAG, "service discovery started");
-            }
-        });
-    }
-
     private DnsSdTxtRecordListener mRecordListener = null;
     private DnsSdServiceResponseListener mServiceResponseListener = null;
     
@@ -642,20 +602,32 @@ public class P2pManager extends NativeP2pManager {
             public void onDnsSdTxtRecordAvailable(String fullDomainName, Map<String, String> txtRecordMap, WifiP2pDevice srcDevice) {
                 Log.d(TAG, "DnsSdTxtRecord discovered: " + fullDomainName + ", " + txtRecordMap.toString());
                 
-                Database db = Database.getInstance(mService);
-                db.open();
-                Peer p = db.find(srcDevice.deviceAddress);
+                Peer p = null;
                 
-                if (p == null) {
-                    p = new Peer(srcDevice.deviceAddress);
-                } else {
-                    p.touch();
+                synchronized(mKnownPeers) {
+	            	if (mKnownPeers.containsKey(srcDevice.deviceAddress)) {
+	            		p = mKnownPeers.get(srcDevice.deviceAddress);
+	            	}
+	            	else if (mPendingPeers.containsKey(srcDevice.deviceAddress)) {
+	            		p = mPendingPeers.get(srcDevice.deviceAddress);
+	            		mPendingPeers.remove(p);
+	            	}
+	            	else {
+	            		return;
+	            	}
+	            	
+	            	// touch peer to prevent expiration
+	            	p.touch();
+	            	
+	            	// set peer endpoint
+	            	p.endpoint = txtRecordMap.get("eid");
+	            	
+	            	// move to known peers
+	            	mKnownPeers.put(p.address, p);
                 }
                 
-                p.setEndpoint(txtRecordMap.get("eid"));
-                db.put(p);
-                
-                peerDiscovered(p);
+            	// announce as discovery
+            	peerDiscovered(p);
             }
         };
         
@@ -664,21 +636,31 @@ public class P2pManager extends NativeP2pManager {
             public void onDnsSdServiceAvailable(String instanceName, String registrationType, WifiP2pDevice srcDevice) {
                 Log.d(TAG, "SdService discovered: " + instanceName + ", " + registrationType);
                 
-                Database db = Database.getInstance(mService);
-                db.open();
-                Peer p = db.find(srcDevice.deviceAddress);
+                Peer p = null;
                 
-                if (p == null) {
-                    p = new Peer(srcDevice.deviceAddress);
-                } else {
-                    p.touch();
+                synchronized(mKnownPeers) {
+	            	if (mKnownPeers.containsKey(srcDevice.deviceAddress)) {
+	            		p = mKnownPeers.get(srcDevice.deviceAddress);
+	            	}
+	            	else if (mPendingPeers.containsKey(srcDevice.deviceAddress)) {
+	            		p = mPendingPeers.get(srcDevice.deviceAddress);
+	            		
+		            	if (p.isValid()) {
+		            		mPendingPeers.remove(p);
+			            	// move to known peers
+			            	mKnownPeers.put(p.address, p);
+		            	}
+	            	}
+	            	else {
+	            		return;
+	            	}
+	            	
+	            	// touch peer to prevent expiration
+	            	p.touch();
                 }
                 
-                db.put(p);
-                
-                if (p.hasEndpoint()) {
-                    peerDiscovered(p);
-                }
+            	// announce as discovery
+                if (p.isValid()) peerDiscovered(p);
             }
         };
     }

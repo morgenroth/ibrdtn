@@ -58,8 +58,6 @@ import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.daemon.api.SelectNeighborActivity;
-import de.tubs.ibr.dtn.p2p.P2pManager;
-import de.tubs.ibr.dtn.p2p.SettingsUtil;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
 import de.tubs.ibr.dtn.stats.StatsDatabase;
 import de.tubs.ibr.dtn.stats.StatsEntry;
@@ -142,8 +140,7 @@ public class DaemonService extends Service {
 
         @Override
         public String getEndpoint() throws RemoteException {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
-            return prefs.getString("endpoint_id", "dtn:none");
+            return Preferences.getEndpoint(DaemonService.this);
         }
         
         public DaemonService getLocal() {
@@ -158,6 +155,11 @@ public class DaemonService extends Service {
             return ret;
         }
     };
+    
+    public boolean isP2pSupported() {
+    	if (mP2pManager == null) return false;
+    	return mP2pManager.isSupported();
+    }
     
     public NativeStats getStats() {
         return mDaemonProcess.getStats();
@@ -281,7 +283,7 @@ public class DaemonService extends Service {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             
             // if discovery is configured as "smart"
-            if ("smart".equals(prefs.getString(SettingsUtil.KEY_DISCOVERY_MODE, "smart"))) {
+            if ("smart".equals(prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"))) {
                 // enable discovery for 2 minutes
                 final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
                 discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
@@ -326,6 +328,9 @@ public class DaemonService extends Service {
             
             // start P2P discovery and enable IPND
             mDaemonProcess.startDiscovery();
+            
+            // start Wi-Fi P2P discovery
+            mP2pManager.startDiscovery();
         } else if (ACTION_STOP_DISCOVERY.equals(action)) {
             // create a new wakeup intent
             Intent stopIntent = new Intent(this, DaemonService.class);
@@ -345,6 +350,9 @@ public class DaemonService extends Service {
             
             // stop P2P discovery and disable IPND
             mDaemonProcess.stopDiscovery();
+            
+            // stop Wi-Fi P2P discovery
+            mP2pManager.stopDiscovery();
         }
         
         // stop the daemon if it should be offline
@@ -529,8 +537,8 @@ public class DaemonService extends Service {
                     break;
                     
                 case OFFLINE:
-                    if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
-                        if (mP2pManager != null) mP2pManager.pause();
+                    if (prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false)) {
+                        if (mP2pManager != null) mP2pManager.setEnabled(false);
                     }
                     
                     // disable foreground service only if the daemon has been switched off
@@ -546,7 +554,7 @@ public class DaemonService extends Service {
                     }
                     
                     // if discovery is configured as some kind of active
-                    if (!"off".equals(prefs.getString(SettingsUtil.KEY_DISCOVERY_MODE, "smart"))) {
+                    if (!"off".equals(prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"))) {
                         // disable discovery
                         final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
                         discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STOP_DISCOVERY);
@@ -565,8 +573,8 @@ public class DaemonService extends Service {
                     // turn this to a foreground service (kill-proof)
                     startForeground(1, n);
                     
-                    if (prefs.getBoolean(SettingsUtil.KEY_P2P_ENABLED, false)) {
-                        if (mP2pManager != null) mP2pManager.resume();
+                    if (prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false)) {
+                        if (mP2pManager != null) mP2pManager.setEnabled(true);
                     }
                     
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
@@ -575,7 +583,7 @@ public class DaemonService extends Service {
                     }
                     
                     // if discovery is configured as "smart"
-                    if ("smart".equals(prefs.getString(SettingsUtil.KEY_DISCOVERY_MODE, "smart"))) {
+                    if ("smart".equals(prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"))) {
                         // enable discovery for 2 minutes
                         final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
                         discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
@@ -583,7 +591,7 @@ public class DaemonService extends Service {
                         startService(discoIntent);
                     }
                     // if discovery is configured as "on"
-                    else if ("on".equals(prefs.getString(SettingsUtil.KEY_DISCOVERY_MODE, "smart"))) {
+                    else if ("on".equals(prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"))) {
                         // enable discovery
                         final Intent discoIntent = new Intent(DaemonService.this, DaemonService.class);
                         discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
@@ -635,8 +643,7 @@ public class DaemonService extends Service {
     @SuppressWarnings("deprecation")
     private Notification buildNotification(int icon) {
         
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonService.this);
-        String content = prefs.getString("endpoint_id", "dtn:none");
+        String content = Preferences.getEndpoint(DaemonService.this);
         String stateText = "";
 
         // check state and display daemon state instead of neighbors
@@ -692,13 +699,13 @@ public class DaemonService extends Service {
 		public void onSharedPreferenceChanged(
 				SharedPreferences sharedPreferences, String key) {
 			
-			if (SettingsUtil.KEY_P2P_ENABLED.equals(key)) {
+			if (Preferences.KEY_P2P_ENABLED.equals(key)) {
                 if (sharedPreferences.getBoolean(key, false) && mDaemonProcess.getState().equals(DaemonState.ONLINE)) {
-                    if (mP2pManager != null) mP2pManager.resume();
+                    if (mP2pManager != null) mP2pManager.setEnabled(true);
                 } else {
-                    if (mP2pManager != null) mP2pManager.pause();
+                    if (mP2pManager != null) mP2pManager.setEnabled(false);
                 }
-			} else if (SettingsUtil.KEY_DISCOVERY_MODE.equals(key)) {
+			} else if (Preferences.KEY_DISCOVERY_MODE.equals(key)) {
 			    final String disco_mode = sharedPreferences.getString(key, "smart");
 			    
                 // if discovery is configured as "on"

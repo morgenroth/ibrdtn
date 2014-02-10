@@ -52,14 +52,15 @@
             android:key="checkIdleTimeout"
             android:summary="@string/autodisconnect_desc"
             android:title="@string/autodisconnect" />
-        <de.tubs.ibr.dtn.p2p.P2pSwitchPreference
+        <SwitchPreference
             android:defaultValue="false"
             android:disableDependentsState="false"
             android:key="p2p_enabled"
             android:summary="@string/pref_p2p_summary"
             android:switchTextOff="@string/pref_p2p_off"
             android:switchTextOn="@string/pref_p2p_on"
-            android:title="@string/pref_p2p" />
+            android:title="@string/pref_p2p"
+            android:enabled="false" />
     </PreferenceCategory>
     <de.tubs.ibr.dtn.daemon.InterfacePreferenceCategory
         android:key="prefcat_interfaces"
