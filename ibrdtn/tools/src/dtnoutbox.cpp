@@ -282,7 +282,7 @@ int main( int argc, char** argv )
 
 	ObservedFile::setConfigRounds(_conf_rounds);
 
-	if(!outbox_file.getType() == DT_DIR)
+	if(outbox_file.getType() != DT_DIR)
 	{
 #ifdef HAVE_LIBTFFS
 		_conf_fat = true;
