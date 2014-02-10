@@ -43,4 +43,6 @@
 	<string name="pref_autorec_desc">Record a message if the devices is on the ear.</string>
 	<string name="pref_ptt">Push-To-Talk</string>
 	<string name="pref_ptt_desc">Record the message while the button is pushed.</string>
+	<string name="pref_notification">Enable notification</string>
+	<string name="pref_notification_desc">Show notification if a message is received.</string>
 </resources>

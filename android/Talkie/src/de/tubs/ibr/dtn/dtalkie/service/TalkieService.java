@@ -489,8 +489,11 @@ public class TalkieService extends IntentService {
             msg.setReceived(received);
             mDatabase.put(Folder.INBOX, msg);
             
-            // create a notification for this message
-            createNotification();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            if (prefs.getBoolean("notification", true)) {
+	            // create a notification for this message
+	            createNotification();
+            }
 
             Intent play_i = new Intent(TalkieService.this, TalkieService.class);
             play_i.setAction(ACTION_PLAY_NEXT);
