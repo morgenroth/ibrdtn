@@ -83,14 +83,17 @@ namespace dtn
 						try {
 							const dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().info(data);
 
-							// retransmit the bundle
-							dtn::net::BundleTransfer transfer(data.destination, meta);
-							dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
-						} catch (const dtn::core::P2PDialupException&) {
-							// do nothing here
-							dtn::routing::RequeueBundleEvent::raise(data.destination, data);
+							try {
+								// create a new bundle transfer
+								dtn::net::BundleTransfer transfer(data.destination, meta);
+
+								// re-queue the bundle
+								dtn::core::BundleCore::getInstance().getConnectionManager().queue(transfer);
+							} catch (const ibrcommon::Exception&) {
+								// do nothing here
+							}
 						} catch (const ibrcommon::Exception&) {
-							// do nothing here
+							// bundle is not available, abort transmission
 							dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 						}
 
