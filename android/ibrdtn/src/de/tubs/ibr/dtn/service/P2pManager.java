@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
@@ -239,7 +240,12 @@ public class P2pManager extends NativeP2pManager {
 		// create local service info
 		Map<String, String> record = new HashMap<String, String>();
 		record.put("eid", Preferences.getEndpoint(mService));
+		
+		// create service info
 		mServiceInfo = WifiP2pDnsSdServiceInfo.newInstance("DtnNode", "_dtn._tcp", record);
+		
+		// create service request
+		mServiceRequest = WifiP2pDnsSdServiceRequest.newInstance("DtnNode", "_dtn._tcp");
 
 		// add local service description
 		mWifiP2pManager.addLocalService(mWifiP2pChannel, mServiceInfo,
@@ -257,26 +263,6 @@ public class P2pManager extends NativeP2pManager {
 					@Override
 					public void onSuccess() {
 						Log.d(TAG, "local service added");
-					}
-				});
-
-		// add service discovery request
-		mServiceRequest = WifiP2pDnsSdServiceRequest.newInstance();
-		mWifiP2pManager.addServiceRequest(mWifiP2pChannel, mServiceRequest,
-				new WifiP2pManager.ActionListener() {
-					@Override
-					public void onFailure(int reason) {
-						if (reason == WifiP2pManager.P2P_UNSUPPORTED) {
-							Log.e(TAG,
-									"failed to add service request: Wi-Fi Direct is not supported by this device!");
-						} else {
-							Log.e(TAG, "failed to add service request: " + reason);
-						}
-					}
-
-					@Override
-					public void onSuccess() {
-						Log.d(TAG, "service request added");
 					}
 				});
 	}
@@ -464,6 +450,42 @@ public class P2pManager extends NativeP2pManager {
 
 		// check if stack is active
 		if (!ManagerState.ACTIVE.equals(mManagerState)) return;
+		
+		// remove previous service request
+		mWifiP2pManager.removeServiceRequest(mWifiP2pChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
+			@Override
+			public void onFailure(int reason) {
+				if (reason == WifiP2pManager.P2P_UNSUPPORTED) {
+					Log.e(TAG,
+							"failed to add service request: Wi-Fi Direct is not supported by this device!");
+				} else {
+					Log.e(TAG, "failed to add service request: " + reason);
+				}
+			}
+
+			@Override
+			public void onSuccess() {
+				Log.d(TAG, "service request removed");
+			}
+		});
+
+		// add service discovery request
+		mWifiP2pManager.addServiceRequest(mWifiP2pChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
+			@Override
+			public void onFailure(int reason) {
+				if (reason == WifiP2pManager.P2P_UNSUPPORTED) {
+					Log.e(TAG,
+							"failed to add service request: Wi-Fi Direct is not supported by this device!");
+				} else {
+					Log.e(TAG, "failed to add service request: " + reason);
+				}
+			}
+
+			@Override
+			public void onSuccess() {
+				Log.d(TAG, "service request added");
+			}
+		});
 
 		// start service discovery
 		mWifiP2pManager.discoverServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
