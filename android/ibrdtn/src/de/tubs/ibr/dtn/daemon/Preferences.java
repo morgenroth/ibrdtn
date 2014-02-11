@@ -116,7 +116,7 @@ public class Preferences extends PreferenceActivity {
 			
 			// enable / disable P2P switch
 			if (mP2pSwitch != null) {
-				mP2pSwitch.setEnabled(mDaemon.isP2pSupported());
+				mP2pSwitch.setEnabled(mDaemon.isP2pActive());
 			}
 		}
 
@@ -391,7 +391,7 @@ public class Preferences extends PreferenceActivity {
 		
 		// enable / disable P2P switch
 		if ((mP2pSwitch != null) && (mDaemon != null)) {
-			mP2pSwitch.setEnabled(mDaemon.isP2pSupported());
+			mP2pSwitch.setEnabled(mDaemon.isP2pActive());
 		}
 
 		mInterfacePreference.updateInterfaceList();
