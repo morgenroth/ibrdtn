@@ -432,7 +432,7 @@ namespace dtn
 			}
 
 			// check if the timestamp is in the future
-			if (BundleCore::max_timestamp_future > 0)
+			if ((BundleCore::max_timestamp_future > 0) && (obj.timestamp != 0))
 			{
 				// first check if the local clock is reliable
 				if (dtn::utils::Clock::getRating() > 0)
@@ -478,7 +478,7 @@ namespace dtn
 			}
 
 			// check if the timestamp is in the future
-			if (BundleCore::max_timestamp_future > 0)
+			if ((BundleCore::max_timestamp_future > 0) && (p.timestamp != 0))
 			{
 				// first check if the local clock is reliable
 				if (dtn::utils::Clock::getRating() > 0)
