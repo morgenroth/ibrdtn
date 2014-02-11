@@ -83,8 +83,6 @@ namespace dtn
 			void setRouter(dtn::routing::BaseRouter *router);
 			dtn::routing::BaseRouter& getRouter() const;
 
-			void transferTo(dtn::net::BundleTransfer &transfer) throw (P2PDialupException);
-
 			/**
 			 * Make the connection manager available to other modules.
 			 * @return The connection manager reference

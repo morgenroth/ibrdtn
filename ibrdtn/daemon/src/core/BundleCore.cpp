@@ -248,21 +248,6 @@ namespace dtn
 			return _clock;
 		}
 
-		void BundleCore::transferTo(dtn::net::BundleTransfer &transfer) throw (P2PDialupException)
-		{
-			try {
-				_connectionmanager.queue(transfer);
-			} catch (const dtn::net::NeighborNotAvailableException &ex) {
-				// signal interruption of the transfer
-				transfer.abort(dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
-			} catch (const dtn::net::ConnectionNotAvailableException &ex) {
-			} catch (const P2PDialupException&) {
-				// re-throw the P2PDialupException
-				throw;
-			} catch (const ibrcommon::Exception&) {
-			}
-		}
-
 		dtn::net::ConnectionManager& BundleCore::getConnectionManager()
 		{
 			return _connectionmanager;
