@@ -308,9 +308,11 @@ public class Preferences extends PreferenceActivity {
 		// set initial version
 		setVersion(null);
 		
-		// hide P2p control
-		mP2pSwitch = (SwitchPreference)findPreference(KEY_P2P_ENABLED);
-		mP2pSwitch.setEnabled(false);
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			// hide P2p control
+			mP2pSwitch = (SwitchPreference)findPreference(KEY_P2P_ENABLED);
+			mP2pSwitch.setEnabled(false);
+		}
 
 		// Bind the summaries of EditText/List/Dialog/Ringtone preferences to
 		// their values. When their values change, their summaries are updated
