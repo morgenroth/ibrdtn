@@ -51,6 +51,7 @@ public class P2pManager extends NativeP2pManager {
 
 	private boolean mServiceEnabled = false;
 	private boolean mDiscoveryEnabled = false;
+	private Boolean mDiscoveryReady = null;
 
 	/**
 	 * The p2p interfaces are stored in this set. Every time the P2pManager goes
@@ -456,54 +457,60 @@ public class P2pManager extends NativeP2pManager {
 		// check if stack is active
 		if (!ManagerState.ACTIVE.equals(mManagerState)) return;
 		
-		// remove previous service request
-		mWifiP2pManager.removeServiceRequest(mWifiP2pChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
-			@Override
-			public void onFailure(int reason) {
-				if (reason == WifiP2pManager.P2P_UNSUPPORTED) {
-					Log.e(TAG,
-							"failed to add service request: Wi-Fi Direct is not supported by this device!");
-				} else {
-					Log.e(TAG, "failed to add service request: " + reason);
+		if (mDiscoveryReady == null) {
+			// set discovery to pending state
+			mDiscoveryReady = false;
+			
+			// add service discovery request
+			mWifiP2pManager.addServiceRequest(mWifiP2pChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
+				@Override
+				public void onFailure(int reason) {
+					if (reason == WifiP2pManager.P2P_UNSUPPORTED) {
+						Log.e(TAG,
+								"failed to add service request: Wi-Fi Direct is not supported by this device!");
+					}
+					else {
+						Log.e(TAG, "failed to add service request: " + reason);
+					}
+					
+					// clear discovery ready state
+					mDiscoveryReady = null;
 				}
-			}
 
-			@Override
-			public void onSuccess() {
-				Log.d(TAG, "service request removed");
-			}
-		});
-
-		// add service discovery request
-		mWifiP2pManager.addServiceRequest(mWifiP2pChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
-			@Override
-			public void onFailure(int reason) {
-				if (reason == WifiP2pManager.P2P_UNSUPPORTED) {
-					Log.e(TAG,
-							"failed to add service request: Wi-Fi Direct is not supported by this device!");
-				} else {
-					Log.e(TAG, "failed to add service request: " + reason);
+				@Override
+				public void onSuccess() {
+					Log.d(TAG, "service request added");
+					
+					// set discovery to ready state
+					mDiscoveryReady = true;
+					
+					// start discovery
+					startDiscovery();
 				}
-			}
-
-			@Override
-			public void onSuccess() {
-				Log.d(TAG, "service request added");
-			}
-		});
-
-		// start service discovery
-		mWifiP2pManager.discoverServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
-			@Override
-			public void onFailure(int reason) {
-				Log.e(TAG, "starting service discovery failed: " + reason);
-			}
-
-			@Override
-			public void onSuccess() {
-				Log.d(TAG, "service discovery started");
-			}
-		});
+			});
+		}
+		else if (mDiscoveryReady) {
+			// start service discovery
+			mWifiP2pManager.discoverServices(mWifiP2pChannel, new WifiP2pManager.ActionListener() {
+				@Override
+				public void onFailure(int reason) {
+					if (reason == WifiP2pManager.P2P_UNSUPPORTED) {
+						Log.e(TAG, "starting service discovery failed: Wi-Fi Direct is not supported by this device!");
+					}
+					else if (reason == WifiP2pManager.NO_SERVICE_REQUESTS) {
+						Log.e(TAG, "starting service discovery failed: No service requests!");
+					}
+					else {
+						Log.e(TAG, "starting service discovery failed: " + reason);
+					}
+				}
+	
+				@Override
+				public void onSuccess() {
+					Log.d(TAG, "service discovery started");
+				}
+			});
+		}
 	}
 
 	public synchronized void stopDiscovery() {
@@ -525,6 +532,28 @@ public class P2pManager extends NativeP2pManager {
 				Log.d(TAG, "peer discovery stopped");
 			}
 		});
+		
+		if (mDiscoveryReady != null) {
+			// remove previous service request
+			mWifiP2pManager.removeServiceRequest(mWifiP2pChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
+				@Override
+				public void onFailure(int reason) {
+					if (reason == WifiP2pManager.P2P_UNSUPPORTED) {
+						Log.e(TAG,
+								"failed to add service request: Wi-Fi Direct is not supported by this device!");
+					} else {
+						Log.e(TAG, "failed to add service request: " + reason);
+					}
+				}
+	
+				@Override
+				public void onSuccess() {
+					Log.d(TAG, "service request removed");
+				}
+			});
+			
+			mDiscoveryReady = null;
+		}
 	}
 
 	private PeerListListener mPeerListListener = new PeerListListener() {
