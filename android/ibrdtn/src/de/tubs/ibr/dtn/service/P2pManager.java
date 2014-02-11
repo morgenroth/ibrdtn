@@ -186,6 +186,11 @@ public class P2pManager extends NativeP2pManager {
 
 		// set the current state
 		setState(ManagerState.ACTIVE);
+		
+		// restart discovery
+		if (mDiscoveryEnabled) {
+			startDiscovery();
+		}
 	}
 
 	private synchronized void onP2pDisabled() {
