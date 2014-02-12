@@ -324,13 +324,18 @@ public class DaemonService extends Service {
 			// initialize the daemon service
 			initialize();
 		} else if (ACTION_START_DISCOVERY.equals(action)) {
-			if (intent.hasExtra(EXTRA_DISCOVERY_DURATION)) {
-				final Long duration = intent.getLongExtra(EXTRA_DISCOVERY_DURATION, 120);
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			String discoMode = prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart");
+			boolean stayOn = "on".equals(discoMode) && mDiscoveryState;
+			
+			// create stop discovery intent
+			Intent stopIntent = new Intent(this, DaemonService.class);
+			stopIntent.setAction(DaemonService.ACTION_STOP_DISCOVERY);
+			
+			if (intent.hasExtra(EXTRA_DISCOVERY_DURATION) && !stayOn) {
+				Long duration = intent.getLongExtra(EXTRA_DISCOVERY_DURATION, 120);
 
-				// stop discovery after the duration
-				Intent stopIntent = new Intent(this, DaemonService.class);
-				stopIntent.setAction(DaemonService.ACTION_STOP_DISCOVERY);
-
+				// create a new pending intent
 				PendingIntent pi = PendingIntent.getService(this, 0, stopIntent,
 						PendingIntent.FLAG_CANCEL_CURRENT);
 
@@ -339,6 +344,17 @@ public class DaemonService extends Service {
 				am.set(AlarmManager.RTC_WAKEUP, new Date().getTime() + (duration * 1000), pi);
 
 				Log.i(TAG, "Discovery stop scheduled in " + duration + " seconds.");
+			}
+			else {
+				// check if there is a pending intent
+				PendingIntent pi = PendingIntent.getService(this,  0, stopIntent,  PendingIntent.FLAG_NO_CREATE);
+				
+				if (pi != null) {
+					// clear pending stop discovery intent
+					AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+					am.cancel(pi);
+					pi.cancel();
+				}
 			}
 
 			// start P2P discovery and enable IPND
