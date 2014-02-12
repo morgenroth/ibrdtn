@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="discovery_modes_names">
-        <item>Off</item>
+        <item>Aus</item>
         <item>Intelligent</item>
         <item>Immer an</item>
     </string-array>
