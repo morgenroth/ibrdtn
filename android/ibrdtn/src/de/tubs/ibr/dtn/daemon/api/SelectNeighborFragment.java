@@ -39,7 +39,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.Toast;
 import de.tubs.ibr.dtn.DTNService;
 import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.Node;
@@ -150,8 +149,6 @@ public class SelectNeighborFragment extends ListFragment implements
                 discoIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
                 discoIntent.putExtra(DaemonService.EXTRA_DISCOVERY_DURATION, 120L);
                 getActivity().startService(discoIntent);
-                
-                Toast.makeText(getActivity(), R.string.toast_discovery_started, Toast.LENGTH_SHORT).show();
             }
 
             default:

@@ -256,8 +256,13 @@ public class DaemonService extends Service {
 			storeStatsIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STORE_STATS);
 			startService(storeStatsIntent);
 		} else if (ACTION_UPDATE_NOTIFICATION.equals(action)) {
-			// update state text in the notification
-			updateNotification();
+			if (intent.hasExtra("text")) {
+				// update state text in the notification
+				updateNotification(intent.getStringExtra("text"));
+			} else {
+				// update state text in the notification
+				updateNotification(null);
+			}
 		} else if (de.tubs.ibr.dtn.Intent.REGISTER.equals(action)) {
 			final Registration reg = (Registration) intent.getParcelableExtra("registration");
 			final PendingIntent pi = (PendingIntent) intent.getParcelableExtra("app");
@@ -338,6 +343,9 @@ public class DaemonService extends Service {
 			// start Wi-Fi P2P discovery
 			if (mP2pManager != null)
 				mP2pManager.startDiscovery();
+			
+			// request notification update
+			requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_started));
 		} else if (ACTION_STOP_DISCOVERY.equals(action)) {
 			// create a new wakeup intent
 			Intent stopIntent = new Intent(this, DaemonService.class);
@@ -362,6 +370,9 @@ public class DaemonService extends Service {
 			// stop Wi-Fi P2P discovery
 			if (mP2pManager != null)
 				mP2pManager.stopDiscovery();
+			
+			// request notification update
+			requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_stopped));
 		}
 
 		// stop the daemon if it should be offline
@@ -540,7 +551,7 @@ public class DaemonService extends Service {
 			broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
 			// request notification update
-			requestNotificationUpdate();
+			requestNotificationUpdate(null);
 
 			SharedPreferences prefs = PreferenceManager
 					.getDefaultSharedPreferences(DaemonService.this);
@@ -585,7 +596,7 @@ public class DaemonService extends Service {
 					mShowNotification = true;
 
 					// create initial notification
-					Notification n = buildNotification(R.drawable.ic_notification);
+					Notification n = buildNotification(null);
 
 					// turn this to a foreground service (kill-proof)
 					startForeground(1, n);
@@ -636,7 +647,7 @@ public class DaemonService extends Service {
 
 		@Override
 		public void onNeighborhoodChanged() {
-			requestNotificationUpdate();
+			requestNotificationUpdate(null);
 		}
 
 		@Override
@@ -646,61 +657,41 @@ public class DaemonService extends Service {
 
 	};
 
-	private void requestNotificationUpdate() {
+	private void requestNotificationUpdate(String text) {
 		// request notification update
-		final Intent neighborIntent = new Intent(DaemonService.this, DaemonService.class);
-		neighborIntent.setAction(ACTION_UPDATE_NOTIFICATION);
-		startService(neighborIntent);
+		final Intent i = new Intent(DaemonService.this, DaemonService.class);
+		i.setAction(ACTION_UPDATE_NOTIFICATION);
+		
+		if (text != null) {
+			i.putExtra("text", text);
+		}
+		
+		startService(i);
 	}
 
-	private void updateNotification() {
+	private void updateNotification(String stateText) {
 		NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
 		// update the notification only if it is visible
 		if (mShowNotification) {
-			nm.notify(1, buildNotification(R.drawable.ic_notification));
+			nm.notify(1, buildNotification(stateText));
 		}
 	}
 
 	@SuppressWarnings("deprecation")
-	private Notification buildNotification(int icon) {
-
+	private Notification buildNotification(String stateText) {
 		String content = Preferences.getEndpoint(DaemonService.this);
-		String stateText = "";
-
-		// check state and display daemon state instead of neighbors
-		switch (this.mDaemonProcess.getState()) {
-			case PENDING:
-				stateText = getResources().getString(R.string.notify_pending) + " ...";
-				break;
-			case ERROR:
-				stateText = getResources().getString(R.string.notify_error);
-				break;
-			case OFFLINE:
-				stateText = getResources().getString(R.string.notify_offline);
-				break;
-			case ONLINE:
-				stateText = getResources().getString(R.string.notify_online);
-				break;
-			case SUSPENDED:
-				stateText = getResources().getString(R.string.notify_suspended);
-				break;
-			case UNKOWN:
-				break;
-			default:
-				break;
-		}
 
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
 		builder.setContentTitle(getResources().getString(R.string.service_name));
 		builder.setContentText(content);
 
-		builder.setSmallIcon(icon);
+		builder.setSmallIcon(R.drawable.ic_notification);
 		builder.setOngoing(true);
 		builder.setOnlyAlertOnce(true);
 		builder.setWhen(0);
-		builder.setTicker(stateText);
+		if (stateText != null) builder.setTicker(stateText);
 
 		List<Node> neighbors = mDaemonProcess.getNeighbors();
 		builder.setNumber(neighbors.size());
