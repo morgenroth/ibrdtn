@@ -39,6 +39,7 @@
             android:excludeFromRecents="true"
             android:exported="true">
             <intent-filter >
+                <action android:name="de.tubs.ibr.dtn.intent.ACTION_NEIGHBOR" />
                 <action android:name="de.tubs.ibr.dtn.dtalkie.RECORD_MESSAGE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
