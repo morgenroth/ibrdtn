@@ -389,6 +389,9 @@ public class RecorderService extends Service {
 	}
 	
 	private void eventRecordingFailed() {
+        // stop amplitude update
+        mHandler.removeCallbacks(mUpdateAmplitude);
+        
         Intent i = new Intent(EVENT_RECORDING_EVENT);
         i.putExtra(EXTRA_RECORDING_ACTION, ACTION_ABORT_RECORDING);
         sendBroadcast(i);
