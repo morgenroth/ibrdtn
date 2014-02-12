@@ -56,6 +56,7 @@ import de.tubs.ibr.dtn.R;
 import de.tubs.ibr.dtn.api.DTNSession;
 import de.tubs.ibr.dtn.api.Node;
 import de.tubs.ibr.dtn.api.Registration;
+import de.tubs.ibr.dtn.daemon.NeighborActivity;
 import de.tubs.ibr.dtn.daemon.Preferences;
 import de.tubs.ibr.dtn.daemon.api.SelectNeighborActivity;
 import de.tubs.ibr.dtn.stats.ConvergenceLayerStatsEntry;
@@ -106,6 +107,9 @@ public class DaemonService extends Service {
 	// statistic database
 	private StatsDatabase mStatsDatabase = null;
 	private Date mStatsLastAction = null;
+	
+	// global discovery state
+	private Boolean mDiscoveryState = false;
 
 	// This is the object that receives interactions from clients. See
 	// RemoteService for a more complete example.
@@ -344,6 +348,9 @@ public class DaemonService extends Service {
 			if (mP2pManager != null)
 				mP2pManager.startDiscovery();
 			
+			// set global discovery state
+			mDiscoveryState = true;
+			
 			// request notification update
 			requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_started));
 		} else if (ACTION_STOP_DISCOVERY.equals(action)) {
@@ -370,6 +377,9 @@ public class DaemonService extends Service {
 			// stop Wi-Fi P2P discovery
 			if (mP2pManager != null)
 				mP2pManager.stopDiscovery();
+			
+			// set global discovery state
+			mDiscoveryState = false;
 			
 			// request notification update
 			requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_stopped));
@@ -696,12 +706,34 @@ public class DaemonService extends Service {
 		List<Node> neighbors = mDaemonProcess.getNeighbors();
 		builder.setNumber(neighbors.size());
 
-		Intent notifyIntent = new Intent(this, Preferences.class);
-		notifyIntent.setAction("android.intent.action.MAIN");
-		notifyIntent.addCategory("android.intent.category.LAUNCHER");
-
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notifyIntent, 0);
+		// create intent for the neighbor list
+		Intent showNeighborsIntent = new Intent(this, NeighborActivity.class);
+		showNeighborsIntent.setAction("android.intent.action.MAIN");
+		showNeighborsIntent.addCategory("android.intent.category.LAUNCHER");
+		
+		if (mDiscoveryState) {
+			// create intent to stop discovery
+			Intent stopDiscoveryIntent = new Intent(this, DaemonService.class);
+			stopDiscoveryIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STOP_DISCOVERY);
+			PendingIntent piDisco = PendingIntent.getService(this, 0, stopDiscoveryIntent, 0);
+			builder.addAction(R.drawable.ic_action_discovery_stop, getString(R.string.stop_discovery), piDisco);
+		} else {
+			// create intent to start discovery
+			Intent startDiscoveryIntent = new Intent(this, DaemonService.class);
+			startDiscoveryIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_START_DISCOVERY);
+			
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			if ("smart".equals(prefs.getString(Preferences.KEY_DISCOVERY_MODE, "smart"))) {
+				startDiscoveryIntent.putExtra(DaemonService.EXTRA_DISCOVERY_DURATION, 120L);
+			}
+			
+			PendingIntent piDisco = PendingIntent.getService(this, 0, startDiscoveryIntent, 0);
+			builder.addAction(R.drawable.ic_action_discovery, getString(R.string.start_discovery), piDisco);
+		}
+		
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, showNeighborsIntent, 0);
 		builder.setContentIntent(contentIntent);
+		
 
 		return builder.getNotification();
 	}

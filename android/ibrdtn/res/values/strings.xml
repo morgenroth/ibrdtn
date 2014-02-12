@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="example_item_title">Example Item Title</string>
     <string name="example_item_text">Example Item Text</string>
     <string name="content_colormark">Colormark of the log entry</string>
@@ -50,11 +49,6 @@
     <string name="general">General</string>
     <string name="autodisconnect">Automatic disconnect</string>
     <string name="autodisconnect_desc">Shutdown idle links automatically.</string>
-    <string name="notify_pending">Initializing</string>
-    <string name="notify_error">Error</string>
-    <string name="notify_suspended">Suspended</string>
-    <string name="notify_offline">Offline</string>
-    <string name="notify_online">Online</string>
     <string name="system_version">Version</string>
     <string name="apps">Apps</string>
     <string name="apps_subtitle">Installed DTN aware applications</string>

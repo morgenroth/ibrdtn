@@ -49,11 +49,6 @@
     <string name="general">Allgemein</string>
     <string name="autodisconnect">Automatische Unterbrechung</string>
     <string name="autodisconnect_desc">Schließe ungenutzte Verbindungen automatisch.</string>
-    <string name="notify_pending">Initialisiere</string>
-    <string name="notify_error">Fehler</string>
-    <string name="notify_suspended">Ruhezustand</string>
-    <string name="notify_offline">Offline</string>
-    <string name="notify_online">Online</string>
     <string name="system_version">Version</string>
     <string name="apps">Apps</string>
     <string name="apps_subtitle">Installierte DTN Anwendungen</string>
@@ -80,7 +75,7 @@
     <string name="showstats">Statistik anzeigen</string>
     <string name="pref_storage">Speicher</string>
     <string name="pref_storage_description">Wie Bündel auf dem Gerät gespeichert werden.</string>
-    <string name="ticker_discovery_started">Discovery gestartet</string>
-    <string name="ticker_discovery_stopped">Discovery beendet</string>
-    <string name="pref_discovery_title">Discover Strategie</string>
+    <string name="ticker_discovery_started">Suche gestartet</string>
+    <string name="ticker_discovery_stopped">Suche beendet</string>
+    <string name="pref_discovery_title">Such-Strategie</string>
 </resources>
