@@ -25,6 +25,7 @@ public class Intent {
     public static final String CATEGORY_SERVICES = "de.tubs.ibr.dtn.intent.category.SERVICES";
     
 	public static final String DTNAPP = "de.tubs.ibr.dtn.intent.DTNAPP";
+	public static final String ACTION_NEIGHBOR = "de.tubs.ibr.dtn.intent.ACTION_NEIGHBOR";
 	
 	public static final String REGISTRATION = "de.tubs.ibr.dtn.intent.REGISTRATION";
 	public static final String REGISTER = "de.tubs.ibr.dtn.intent.REGISTER";
@@ -49,4 +50,7 @@ public class Intent {
 	// required extras for the SENDFILE intent
     public static final String EXTRA_KEY_DESTINATION = "destination";
     public static final String EXTRA_KEY_STREAM = "stream";
+    
+    // required extras for ACTION_NEIGHBOR intent
+    public static final String EXTRA_KEY_ENDPOINT = "endpoint";
 }
