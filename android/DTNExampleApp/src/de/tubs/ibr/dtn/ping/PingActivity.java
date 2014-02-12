@@ -136,6 +136,24 @@ public class PingActivity extends Activity {
                 ping();
             }
         });
+        
+    	if ( de.tubs.ibr.dtn.Intent.ACTION_NEIGHBOR.equals( getIntent().getAction() ) ) {
+    		// check if an endpoint exists
+    		if (getIntent().getExtras().containsKey(de.tubs.ibr.dtn.Intent.EXTRA_KEY_ENDPOINT)) {
+    			// extract endpoint
+    			String endpoint = getIntent().getExtras().getString(de.tubs.ibr.dtn.Intent.EXTRA_KEY_ENDPOINT);
+    			
+    			// add application endpoint to different EID schemes
+    			if (endpoint.startsWith("dtn:")) {
+    				// add dtn application path for 'echo'
+    				mTextEid.setText(endpoint + "/echo");
+    			}
+    			else if (endpoint.startsWith("ipn:")) {
+    				// add ipn application number for 'echo'
+    				mTextEid.setText(endpoint + ".11");
+    			}
+    		}
+    	}
     }
     
 	@Override
@@ -223,7 +241,7 @@ public class PingActivity extends Activity {
     private BroadcastReceiver mDataReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.hasExtra("localeid")) {
+            if (intent.hasExtra("localeid") && mTextEid.getText().length() == 0) {
                 String local_eid = intent.getStringExtra("localeid");
                 if (local_eid.startsWith("ipn:")) {
                     mTextEid.setText( local_eid + ".11" );
