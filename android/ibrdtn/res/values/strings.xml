@@ -78,4 +78,6 @@
     <string name="ticker_discovery_started">Discovery started</string>
     <string name="ticker_discovery_stopped">Discovery stopped</string>
     <string name="pref_discovery_title">Discover Policy</string>
+    <string name="menu_neighbor_connect">Connect</string>
+    <string name="toast_no_application">No application found to handle this endpoint.</string>
 </resources>

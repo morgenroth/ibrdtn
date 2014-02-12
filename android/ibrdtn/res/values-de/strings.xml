@@ -78,4 +78,6 @@
     <string name="ticker_discovery_started">Suche gestartet</string>
     <string name="ticker_discovery_stopped">Suche beendet</string>
     <string name="pref_discovery_title">Suchstrategie</string>
+    <string name="menu_neighbor_connect">Verbinden</string>
+    <string name="toast_no_application">Keine Anwendung gefunden um diesen Endpunkt zu behandeln.</string>
 </resources>
