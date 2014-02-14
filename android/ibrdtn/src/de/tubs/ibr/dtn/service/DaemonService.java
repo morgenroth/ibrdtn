@@ -357,18 +357,21 @@ public class DaemonService extends Service {
 				}
 			}
 
-			// start P2P discovery and enable IPND
-			mDaemonProcess.startDiscovery();
-
-			// start Wi-Fi P2P discovery
-			if (mP2pManager != null)
-				mP2pManager.startDiscovery();
-			
-			// set global discovery state
-			mDiscoveryState = true;
-			
-			// request notification update
-			requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_started));
+			// only start discovery if not active
+			if (!mDiscoveryState) {
+				// start P2P discovery and enable IPND
+				mDaemonProcess.startDiscovery();
+	
+				// start Wi-Fi P2P discovery
+				if (mP2pManager != null)
+					mP2pManager.startDiscovery();
+				
+				// set global discovery state
+				mDiscoveryState = true;
+				
+				// request notification update
+				requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_started));
+			}
 		} else if (ACTION_STOP_DISCOVERY.equals(action)) {
 			// create a new wakeup intent
 			Intent stopIntent = new Intent(this, DaemonService.class);
@@ -387,18 +390,21 @@ public class DaemonService extends Service {
 				Log.i(TAG, "Scheduled discovery stop canceled.");
 			}
 
-			// stop P2P discovery and disable IPND
-			mDaemonProcess.stopDiscovery();
-
-			// stop Wi-Fi P2P discovery
-			if (mP2pManager != null)
-				mP2pManager.stopDiscovery();
-			
-			// set global discovery state
-			mDiscoveryState = false;
-			
-			// request notification update
-			requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_stopped));
+			// only stop discovery if active
+			if (mDiscoveryState) {
+				// stop P2P discovery and disable IPND
+				mDaemonProcess.stopDiscovery();
+	
+				// stop Wi-Fi P2P discovery
+				if (mP2pManager != null)
+					mP2pManager.stopDiscovery();
+				
+				// set global discovery state
+				mDiscoveryState = false;
+				
+				// request notification update
+				requestNotificationUpdate(getResources().getString(R.string.ticker_discovery_stopped));
+			}
 		}
 
 		// stop the daemon if it should be offline
