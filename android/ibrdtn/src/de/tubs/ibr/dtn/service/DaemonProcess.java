@@ -313,7 +313,6 @@ public class DaemonProcess {
         ret.put(Preferences.KEY_ENDPOINT_ID, DaemonRunLevel.RUNLEVEL_CORE);
         ret.put("routing", DaemonRunLevel.RUNLEVEL_ROUTING_EXTENSIONS);
         ret.put("interface_", DaemonRunLevel.RUNLEVEL_NETWORK);
-        ret.put("checkIdleTimeout", DaemonRunLevel.RUNLEVEL_NETWORK);
         ret.put("timesync_mode", DaemonRunLevel.RUNLEVEL_API);
         ret.put("storage_mode", DaemonRunLevel.RUNLEVEL_CORE);
         ret.put("uplink_mode", DaemonRunLevel.RUNLEVEL_NETWORK);
@@ -640,10 +639,6 @@ public class DaemonProcess {
 			    p.println("#time_sigma = 1.001");
 			    p.println("#time_psi = 0.9");
 			    p.println("#time_sync_level = 0.15");
-			}
-
-			if (preferences.getBoolean("checkIdleTimeout", false)) {
-				p.println("tcp_idle_timeout = 30");
 			}
 			
 			// enable fragmentation support

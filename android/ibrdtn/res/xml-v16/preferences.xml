@@ -47,11 +47,6 @@
             android:summary="@string/pref_uplink_summary"
             android:title="@string/pref_uplink_title" >
         </ListPreference>
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="checkIdleTimeout"
-            android:summary="@string/autodisconnect_desc"
-            android:title="@string/autodisconnect" />
         <SwitchPreference
             android:defaultValue="false"
             android:disableDependentsState="false"
