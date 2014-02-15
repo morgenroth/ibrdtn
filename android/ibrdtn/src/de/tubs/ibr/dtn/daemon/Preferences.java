@@ -284,7 +284,7 @@ public class Preferences extends PreferenceActivity {
 					.getDefaultSharedPreferences(Preferences.this);
 
 			// read initial state of the switch
-			actionBarSwitch.setChecked(prefs.getBoolean(KEY_ENABLED, false));
+			actionBarSwitch.setChecked(prefs.getBoolean(KEY_ENABLED, true));
 
 			actionBarSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 				public void onCheckedChanged(CompoundButton arg0, boolean val) {
@@ -431,9 +431,9 @@ public class Preferences extends PreferenceActivity {
 			if (KEY_ENABLED.equals(key)) {
 				// update switch state
 				if (checkBoxPreference == null) {
-					actionBarSwitch.setChecked(sharedPreferences.getBoolean(KEY_ENABLED, false));
+					actionBarSwitch.setChecked(sharedPreferences.getBoolean(KEY_ENABLED, true));
 				} else {
-					checkBoxPreference.setChecked(sharedPreferences.getBoolean(KEY_ENABLED, false));
+					checkBoxPreference.setChecked(sharedPreferences.getBoolean(KEY_ENABLED, true));
 				}
 			}
 		}

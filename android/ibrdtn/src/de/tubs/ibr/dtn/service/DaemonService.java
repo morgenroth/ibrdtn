@@ -218,7 +218,7 @@ public class DaemonService extends Service {
 			// and if the daemon switch is on
 			if ((mDaemonProcess.getState().equals(DaemonState.OFFLINE) || mDaemonProcess.getState()
 					.equals(DaemonState.ERROR))
-					&& prefs.getBoolean(Preferences.KEY_ENABLED, false)) {
+					&& prefs.getBoolean(Preferences.KEY_ENABLED, true)) {
 				// start-up the daemon
 				mDaemonProcess.start();
 
@@ -492,7 +492,7 @@ public class DaemonService extends Service {
 		// listen to preference changes
 		prefs.registerOnSharedPreferenceChangeListener(_pref_listener);
 
-		if (prefs.getBoolean(Preferences.KEY_ENABLED, false)) {
+		if (prefs.getBoolean(Preferences.KEY_ENABLED, true)) {
 			// startup the daemon process
 			final Intent intent = new Intent(this, DaemonService.class);
 			intent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_STARTUP);
@@ -593,14 +593,14 @@ public class DaemonService extends Service {
 					break;
 
 				case OFFLINE:
-					if (prefs.getBoolean(Preferences.KEY_P2P_ENABLED, false)) {
+					if (prefs.getBoolean(Preferences.KEY_P2P_ENABLED, true)) {
 						if (mP2pManager != null)
 							mP2pManager.setEnabled(false);
 					}
 
 					// disable foreground service only if the daemon has been
 					// switched off
-					if (!prefs.getBoolean(Preferences.KEY_ENABLED, false)) {
+					if (!prefs.getBoolean(Preferences.KEY_ENABLED, true)) {
 						// mark the notification as invisible
 						mShowNotification = false;
 

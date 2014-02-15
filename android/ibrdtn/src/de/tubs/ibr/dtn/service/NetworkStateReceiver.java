@@ -23,7 +23,7 @@ public class NetworkStateReceiver extends BroadcastReceiver {
 		
         // forward to the daemon if it is enabled
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        if (prefs.getBoolean(Preferences.KEY_ENABLED, false) && wifi.isAvailable()) {
+        if (prefs.getBoolean(Preferences.KEY_ENABLED, true) && wifi.isAvailable()) {
             // tickle the daemon service
             final Intent wakeUpIntent = new Intent(context, DaemonService.class);
             wakeUpIntent.setAction(de.tubs.ibr.dtn.service.DaemonService.ACTION_NETWORK_CHANGED);

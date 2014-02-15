@@ -41,7 +41,7 @@ public class OnBootReceiver extends BroadcastReceiver {
 		
 		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED"))
 		{
-			if (preferences.getBoolean(Preferences.KEY_ENABLED, false))
+			if (preferences.getBoolean(Preferences.KEY_ENABLED, true))
 			{
 				// start the dtnd service
 				Intent is = new Intent(context, DaemonService.class);

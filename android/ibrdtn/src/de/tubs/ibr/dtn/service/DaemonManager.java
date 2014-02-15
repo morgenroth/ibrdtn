@@ -28,7 +28,7 @@ public class DaemonManager extends Service {
         @Override
         public boolean isDtnEnabled() throws RemoteException {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(DaemonManager.this);
-            return prefs.getBoolean(Preferences.KEY_ENABLED, false);
+            return prefs.getBoolean(Preferences.KEY_ENABLED, true);
         }
     };
 
