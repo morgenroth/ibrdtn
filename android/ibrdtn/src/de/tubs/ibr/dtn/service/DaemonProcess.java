@@ -349,7 +349,7 @@ public class DaemonProcess {
                 intent.putExtra("runlevel", mRestartMap.get(key).swigValue() - 1);
                 DaemonProcess.this.mContext.startService(intent);
             }
-            else if (key.equals("enabledSwitch"))
+            else if (key.equals(Preferences.KEY_ENABLED))
             {
                 Log.d(TAG, "Preference " + key + " has changed to " + String.valueOf( prefs.getBoolean(key, false) ));
                 

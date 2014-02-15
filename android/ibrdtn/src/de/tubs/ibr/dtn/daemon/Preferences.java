@@ -76,6 +76,7 @@ public class Preferences extends PreferenceActivity {
 	
 	private static final String TAG = "Preferences";
 	
+	public static final String KEY_ENABLED = "enabledSwitch";
 	public static final String KEY_ENDPOINT_ID = "endpoint_id";
 	public static final String KEY_DISCOVERY_MODE = "discovery_mode";
 	public static final String KEY_P2P_ENABLED = "p2p_enabled";
@@ -264,7 +265,7 @@ public class Preferences extends PreferenceActivity {
 		mInterfacePreference = (InterfacePreferenceCategory) findPreference("prefcat_interfaces");
 
 		// connect daemon controls
-		checkBoxPreference = (CheckBoxPreference) findPreference("enabledSwitch");
+		checkBoxPreference = (CheckBoxPreference) findPreference(KEY_ENABLED);
 		if (checkBoxPreference == null) {
 			// use custom actionbar switch
 			actionBarSwitch = new Switch(this);
@@ -283,23 +284,23 @@ public class Preferences extends PreferenceActivity {
 					.getDefaultSharedPreferences(Preferences.this);
 
 			// read initial state of the switch
-			actionBarSwitch.setChecked(prefs.getBoolean("enabledSwitch", false));
+			actionBarSwitch.setChecked(prefs.getBoolean(KEY_ENABLED, false));
 
 			actionBarSwitch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 				public void onCheckedChanged(CompoundButton arg0, boolean val) {
 
 					if (val) {
-						// set "enabledSwitch" preference to true
+						// set KEY_ENABLED preference to true
 						SharedPreferences prefs = PreferenceManager
 								.getDefaultSharedPreferences(Preferences.this);
-						prefs.edit().putBoolean("enabledSwitch", true).commit();
+						prefs.edit().putBoolean(KEY_ENABLED, true).commit();
 					}
 					else
 					{
-						// set "enabledSwitch" preference to false
+						// set KEY_ENABLED preference to false
 						SharedPreferences prefs = PreferenceManager
 								.getDefaultSharedPreferences(Preferences.this);
-						prefs.edit().putBoolean("enabledSwitch", false).commit();
+						prefs.edit().putBoolean(KEY_ENABLED, false).commit();
 					}
 				}
 			});
@@ -427,12 +428,12 @@ public class Preferences extends PreferenceActivity {
 		@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 		@Override
 		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-			if ("enabledSwitch".equals(key)) {
+			if (KEY_ENABLED.equals(key)) {
 				// update switch state
 				if (checkBoxPreference == null) {
-					actionBarSwitch.setChecked(sharedPreferences.getBoolean("enabledSwitch", false));
+					actionBarSwitch.setChecked(sharedPreferences.getBoolean(KEY_ENABLED, false));
 				} else {
-					checkBoxPreference.setChecked(sharedPreferences.getBoolean("enabledSwitch", false));
+					checkBoxPreference.setChecked(sharedPreferences.getBoolean(KEY_ENABLED, false));
 				}
 			}
 		}
