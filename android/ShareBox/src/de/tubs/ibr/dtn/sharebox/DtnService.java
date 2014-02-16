@@ -120,7 +120,7 @@ public class DtnService extends IntentService {
             
             // get pending intent for neighbor list
             android.os.Bundle b = mClient.getDTNService().getSelectNeighborIntent();
-            return b.getParcelable(de.tubs.ibr.dtn.Intent.INTENT_KEY);
+            return b.getParcelable(de.tubs.ibr.dtn.Intent.EXTRA_INTENT);
         } catch (SessionDestroyedException e) {
             Log.e(TAG, "can not query for neighbors", e);
         } catch (InterruptedException e) {
@@ -225,19 +225,18 @@ public class DtnService extends IntentService {
                 
                 mNotificationFactory.showDownloadAborted(d);
             }
-        } else if (de.tubs.ibr.dtn.Intent.SENDFILE.equals(action)) {
-        	// external call!
+        } else if (Intent.ACTION_SEND.equals(action)) {
         	// send one or more files as bundle
         	
         	// first check the parameters
         	if (
-        			intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_STREAM) &&
-        			intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION)
+        			intent.hasExtra(Intent.EXTRA_STREAM) &&
+        			intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT)
         		)
         	{
         		// extract destination and files
-        		EID destination = (EID)intent.getSerializableExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION);
-        		Uri uri = intent.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_STREAM);
+        		EID destination = (EID)intent.getSerializableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+        		Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
         		
         		ArrayList<Uri> uris = new ArrayList<Uri>();
         		uris.add(uri);
@@ -248,19 +247,18 @@ public class DtnService extends IntentService {
                 // forward to common send method
                 sendFiles(destination, lifetime, uris);
         	}
-        } else if (de.tubs.ibr.dtn.Intent.SENDFILE_MULTIPLE.equals(action)) {
-            // external call!
+        } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
             // send one or more files as bundle
             
             // first check the parameters
             if (
-                    intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_STREAM) &&
-                    intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION)
+                    intent.hasExtra(Intent.EXTRA_STREAM) &&
+                    intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT)
                 )
             {
                 // extract destination and files
-                EID destination = (EID)intent.getSerializableExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION);
-                ArrayList<Uri> uris = intent.getParcelableArrayListExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_STREAM);
+                EID destination = (EID)intent.getSerializableExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
+                ArrayList<Uri> uris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
                 
                 // default lifetime is one hour
                 Long lifetime = intent.getLongExtra("lifetime", 3600L);
