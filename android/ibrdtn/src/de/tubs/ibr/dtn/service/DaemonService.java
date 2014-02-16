@@ -156,7 +156,7 @@ public class DaemonService extends Service {
 		public Bundle getSelectNeighborIntent() throws RemoteException {
 			Bundle ret = new Bundle();
 			Intent intent = new Intent(DaemonService.this, SelectNeighborActivity.class);
-			ret.putParcelable(de.tubs.ibr.dtn.Intent.INTENT_KEY, intent);
+			ret.putParcelable(de.tubs.ibr.dtn.Intent.EXTRA_INTENT, intent);
 			return ret;
 		}
 	};

@@ -90,9 +90,9 @@ public class NeighborListFragment extends ListFragment implements
 		Node n = (Node) nla.getItem(position);
 
 		// call external apps to handle the endpoint
-		final Intent intent = new Intent(de.tubs.ibr.dtn.Intent.ACTION_NEIGHBOR);
+		final Intent intent = new Intent(de.tubs.ibr.dtn.Intent.ENDPOINT_INTERACT);
 		intent.addCategory(Intent.CATEGORY_DEFAULT);
-		intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_ENDPOINT, n.endpoint.toString());
+		intent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT, n.endpoint.toString());
 		
 		try {
 			getActivity().startActivity(intent);

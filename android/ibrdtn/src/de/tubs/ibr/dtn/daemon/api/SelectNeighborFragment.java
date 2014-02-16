@@ -86,7 +86,7 @@ public class SelectNeighborFragment extends ListFragment implements
         Node n = (Node)nla.getItem(position);
         
         Intent data = new Intent(de.tubs.ibr.dtn.Intent.NEIGHBOR_SELECTED);
-        data.putExtra(de.tubs.ibr.dtn.Intent.NODE_KEY, n);
+        data.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_NODE, n);
         
         // select the item
         getActivity().setResult(0, data);
