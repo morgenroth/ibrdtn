@@ -25,7 +25,14 @@ public class Intent {
     public static final String CATEGORY_SERVICES = "de.tubs.ibr.dtn.intent.category.SERVICES";
     
 	public static final String DTNAPP = "de.tubs.ibr.dtn.intent.DTNAPP";
-	public static final String ACTION_NEIGHBOR = "de.tubs.ibr.dtn.intent.ACTION_NEIGHBOR";
+	
+	/**
+	 * An intent with action ENDPOINT_INTERACT is called if the user has selected
+	 * an endpoint to interact with.
+	 * 
+	 * This intent should always carry an EXTRA_ENDPOINT
+	 */
+	public static final String ENDPOINT_INTERACT = "de.tubs.ibr.dtn.intent.ENDPOINT_INTERACT";
 	
 	public static final String REGISTRATION = "de.tubs.ibr.dtn.intent.REGISTRATION";
 	public static final String REGISTER = "de.tubs.ibr.dtn.intent.REGISTER";
@@ -40,17 +47,8 @@ public class Intent {
 	
 	public static final String NEIGHBOR = "de.tubs.ibr.dtn.intent.NEIGHBOR";
 	public static final String NEIGHBOR_SELECTED = "de.tubs.ibr.dtn.intent.NEIGHBOR_SELECTED";
-	public static final String NODE_KEY = "de.tubs.ibr.dtn.intent.NODE_KEY";
-	
-	public static final String SENDFILE = "de.tubs.ibr.dtn.intent.SENDFILE";
-	public static final String SENDFILE_MULTIPLE = "de.tubs.ibr.dtn.intent.SEND_MULTIPLE";
-	
-	public static final String INTENT_KEY = "de.tubs.ibr.dtn.intent.INTENT_KEY";
-	
-	// required extras for the SENDFILE intent
-    public static final String EXTRA_KEY_DESTINATION = "destination";
-    public static final String EXTRA_KEY_STREAM = "stream";
-    
-    // required extras for ACTION_NEIGHBOR intent
-    public static final String EXTRA_KEY_ENDPOINT = "endpoint";
+
+    public static final String EXTRA_ENDPOINT = "de.tubs.ibr.dtn.ENDPOINT";
+    public static final String EXTRA_NODE = "de.tubs.ibr.dtn.NODE";
+    public static final String EXTRA_INTENT = "de.tubs.ibr.dtn.intent.INTENT";
 }
