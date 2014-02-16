@@ -94,9 +94,23 @@ public class ShareWithActivity extends FragmentActivity {
     public void onResume() {
         super.onResume();
         
-        if (!mBound) {
-            bindService(new Intent(this, DtnService.class), mConnection, Context.BIND_AUTO_CREATE);
-            mBound = true;
+        Intent intent = getIntent();
+        
+        if (intent == null) {
+        	// if there is no intent, quit directly
+        	finish();
+        }
+        else if (intent.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT)) {
+        	// forward intent directly if the destination is already specified
+            intent.setClass(this, DtnService.class);
+            startService(intent);
+            finish();
+        }
+        else {
+	        if (!mBound) {
+	            bindService(new Intent(this, DtnService.class), mConnection, Context.BIND_AUTO_CREATE);
+	            mBound = true;
+	        }
         }
     }
     
