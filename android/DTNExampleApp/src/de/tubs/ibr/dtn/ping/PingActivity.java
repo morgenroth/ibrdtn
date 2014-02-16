@@ -109,8 +109,8 @@ public class PingActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (SELECT_NEIGHBOR == requestCode) {
-            if ((data != null) && data.hasExtra(de.tubs.ibr.dtn.Intent.NODE_KEY)) {
-                Node n = data.getParcelableExtra(de.tubs.ibr.dtn.Intent.NODE_KEY);
+            if ((data != null) && data.hasExtra(de.tubs.ibr.dtn.Intent.EXTRA_NODE)) {
+                Node n = data.getParcelableExtra(de.tubs.ibr.dtn.Intent.EXTRA_NODE);
                 onNeighborSelected(n);
             }
             return;
@@ -137,11 +137,11 @@ public class PingActivity extends Activity {
             }
         });
         
-    	if ( de.tubs.ibr.dtn.Intent.ACTION_NEIGHBOR.equals( getIntent().getAction() ) ) {
+    	if ( de.tubs.ibr.dtn.Intent.ENDPOINT_INTERACT.equals( getIntent().getAction() ) ) {
     		// check if an endpoint exists
-    		if (getIntent().getExtras().containsKey(de.tubs.ibr.dtn.Intent.EXTRA_KEY_ENDPOINT)) {
+    		if (getIntent().getExtras().containsKey(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT)) {
     			// extract endpoint
-    			String endpoint = getIntent().getExtras().getString(de.tubs.ibr.dtn.Intent.EXTRA_KEY_ENDPOINT);
+    			String endpoint = getIntent().getExtras().getString(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
     			
     			// add application endpoint to different EID schemes
     			if (endpoint.startsWith("dtn:")) {

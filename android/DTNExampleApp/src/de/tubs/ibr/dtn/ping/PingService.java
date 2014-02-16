@@ -129,7 +129,7 @@ public class PingService extends IntentService {
             
             // get pending intent for neighbor list
             android.os.Bundle b = mClient.getDTNService().getSelectNeighborIntent();
-            return b.getParcelable(de.tubs.ibr.dtn.Intent.INTENT_KEY);
+            return b.getParcelable(de.tubs.ibr.dtn.Intent.EXTRA_INTENT);
         } catch (SessionDestroyedException e) {
             Log.e(TAG, "can not query for neighbors", e);
         } catch (InterruptedException e) {

@@ -29,7 +29,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <intent-filter >
-                <action android:name="de.tubs.ibr.dtn.intent.ACTION_NEIGHBOR" />
+                <action android:name="de.tubs.ibr.dtn.intent.ENDPOINT_INTERACT" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
