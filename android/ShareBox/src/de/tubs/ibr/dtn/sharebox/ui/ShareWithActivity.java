@@ -53,7 +53,7 @@ public class ShareWithActivity extends FragmentActivity {
         Intent intent = getIntent();
         
         // close the activity is there is no intent
-        if (intent == null) finish();
+        if (intent == null) return;
         
         // extract the action
         String action = intent.getAction();
@@ -76,9 +76,6 @@ public class ShareWithActivity extends FragmentActivity {
             dtnSendIntent.putExtra(de.tubs.ibr.dtn.Intent.EXTRA_KEY_DESTINATION, (Serializable)destination);
             startService(dtnSendIntent);
         }
-        
-        // finish this activity
-        finish();
     }
     
     @Override
@@ -88,10 +85,8 @@ public class ShareWithActivity extends FragmentActivity {
                 Node n = data.getParcelableExtra(de.tubs.ibr.dtn.Intent.NODE_KEY);
                 onNeighborSelected(n);
             }
-            return;
         }
-        
-        super.onActivityResult(requestCode, resultCode, data);
+        finish();
     }
 
     @Override
