@@ -130,11 +130,11 @@ public class TalkieDialog extends Activity {
     	EID destination = null;
     	Bundle extras = getIntent().getExtras();
     	
-    	if ( de.tubs.ibr.dtn.Intent.ACTION_NEIGHBOR.equals( getIntent().getAction() ) ) {
+    	if ( de.tubs.ibr.dtn.Intent.ENDPOINT_INTERACT.equals( getIntent().getAction() ) ) {
     		// check if an endpoint exists
-    		if (extras.containsKey(de.tubs.ibr.dtn.Intent.EXTRA_KEY_ENDPOINT)) {
+    		if (extras.containsKey(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT)) {
     			// extract endpoint
-    			String endpoint = extras.getString(de.tubs.ibr.dtn.Intent.EXTRA_KEY_ENDPOINT);
+    			String endpoint = extras.getString(de.tubs.ibr.dtn.Intent.EXTRA_ENDPOINT);
     			
     			// add application endpoint to different EID schemes
     			if (endpoint.startsWith("dtn:")) {
