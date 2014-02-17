@@ -2,10 +2,12 @@ package de.tubs.ibr.dtn.sharebox.ui;
 
 import java.io.Serializable;
 
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.IntentSender.SendIntentException;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
@@ -26,8 +28,13 @@ public class ShareWithActivity extends FragmentActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             mService = ((DtnService.LocalBinder)service).getService();
             
-            Intent intent = mService.getSelectNeighborIntent();
-            startActivityForResult(intent, SELECT_NEIGHBOR);
+            PendingIntent pi = mService.getSelectNeighborIntent();
+            try {
+				startIntentSenderForResult(pi.getIntentSender(), SELECT_NEIGHBOR, null, 0, 0, 0);
+			} catch (SendIntentException e1) {
+				// error
+				e1.printStackTrace();
+			}
         }
 
         public void onServiceDisconnected(ComponentName name) {

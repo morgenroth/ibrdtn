@@ -11,6 +11,7 @@ import java.util.LinkedList;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -113,14 +114,14 @@ public class DtnService extends IntentService {
         return mDatabase;
     }
     
-    public Intent getSelectNeighborIntent() {
+    public PendingIntent getSelectNeighborIntent() {
         try {
             // wait until the session is available
             mClient.getSession();
             
             // get pending intent for neighbor list
             android.os.Bundle b = mClient.getDTNService().getSelectNeighborIntent();
-            return b.getParcelable(de.tubs.ibr.dtn.Intent.EXTRA_INTENT);
+            return b.getParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT);
         } catch (SessionDestroyedException e) {
             Log.e(TAG, "can not query for neighbors", e);
         } catch (InterruptedException e) {
