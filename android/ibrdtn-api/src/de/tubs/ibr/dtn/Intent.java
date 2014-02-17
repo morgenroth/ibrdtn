@@ -51,4 +51,5 @@ public class Intent {
     public static final String EXTRA_ENDPOINT = "de.tubs.ibr.dtn.ENDPOINT";
     public static final String EXTRA_NODE = "de.tubs.ibr.dtn.NODE";
     public static final String EXTRA_INTENT = "de.tubs.ibr.dtn.intent.INTENT";
+    public static final String EXTRA_PENDING_INTENT = "de.tubs.ibr.dtn.intent.PENDING_INTENT";
 }
