@@ -142,21 +142,19 @@ void read_configuration(int argc, char** argv)
 
 		config.readInto(_conf_workdir, "workdir");
 
-		config.readInto(tmp, "interval");
-		_conf_interval = atoi(tmp.c_str());
+		_conf_interval = config.read<size_t>("interval",_conf_interval);
 
-		config.readInto(tmp, "rounds");
-		_conf_rounds = atoi(tmp.c_str());
+		_conf_rounds = config.read<size_t>("rounds",_conf_rounds);
 
 		config.readInto(_conf_path, "path");
 
 		config.readInto(_conf_regex_str, "regex");
 
-		config.readInto(tmp, "invert");
-		_conf_invert = atoi(tmp.c_str());
+		_conf_invert = config.read<int>("invert",_conf_interval);
 
-		config.readInto(tmp, "quiet");
-		_conf_quiet = atoi(tmp.c_str());
+		_conf_quiet = config.read<int>("quiet",_conf_quiet);
+
+
 
 	}
 	// print help if not enough parameters are set
