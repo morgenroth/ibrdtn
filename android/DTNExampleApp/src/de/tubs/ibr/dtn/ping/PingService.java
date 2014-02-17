@@ -10,6 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import android.app.IntentService;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
@@ -122,14 +123,14 @@ public class PingService extends IntentService {
         return null;
     }
     
-    public Intent getSelectNeighborIntent() {
+    public PendingIntent getSelectNeighborIntent() {
         try {
             // wait until the session is available
             mClient.getSession();
             
             // get pending intent for neighbor list
             android.os.Bundle b = mClient.getDTNService().getSelectNeighborIntent();
-            return b.getParcelable(de.tubs.ibr.dtn.Intent.EXTRA_INTENT);
+            return b.getParcelable(de.tubs.ibr.dtn.Intent.EXTRA_PENDING_INTENT);
         } catch (SessionDestroyedException e) {
             Log.e(TAG, "can not query for neighbors", e);
         } catch (InterruptedException e) {

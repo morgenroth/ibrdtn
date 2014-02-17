@@ -1,11 +1,13 @@
 package de.tubs.ibr.dtn.ping;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender.SendIntentException;
 import android.content.ServiceConnection;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -57,8 +59,13 @@ public class PingActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.itemSelectNeighbor:
-                Intent intent = mService.getSelectNeighborIntent();
-                startActivityForResult(intent, SELECT_NEIGHBOR);
+                PendingIntent pi = mService.getSelectNeighborIntent();
+                try {
+					startIntentSenderForResult(pi.getIntentSender(), SELECT_NEIGHBOR, null, 0, 0, 0);
+				} catch (SendIntentException e1) {
+					// error
+					e1.printStackTrace();
+				}
                 return true;
                 
             case R.id.itemEnableStreaming:
