@@ -20,7 +20,6 @@ dtninbox_SOURCES = dtninbox.cpp \
 		  io/TarUtils.h \
 		  io/TarUtils.cpp
 dtnoutbox_SOURCES = dtnoutbox.cpp \
-		  tffs/tffs.h \
 		  io/FileHash.h \
 		  io/FileHash.cpp \
 		  io/FileHashList.h \
