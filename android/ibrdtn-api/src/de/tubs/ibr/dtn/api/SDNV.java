@@ -105,4 +105,17 @@ public class SDNV extends Object
             }
         }
     }
+    
+    public final static int getEncodedLength(int value)
+    {
+		int val_len = 0;
+		int tmp = value;
+
+		do {
+			tmp = tmp >> 7;
+			val_len++;
+		} while (tmp != 0);
+
+		return val_len;
+    }
 }
