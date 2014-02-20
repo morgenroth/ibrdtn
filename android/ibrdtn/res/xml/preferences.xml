@@ -4,7 +4,8 @@
     <PreferenceCategory android:title="@string/service" >
         <CheckBoxPreference
             android:key="enabledSwitch"
-            android:title="@string/launch_daemon" />
+            android:title="@string/launch_daemon"
+            android:defaultValue="true" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="prefcat_general"
