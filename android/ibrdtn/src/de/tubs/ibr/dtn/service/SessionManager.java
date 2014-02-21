@@ -23,9 +23,12 @@ package de.tubs.ibr.dtn.service;
 
 import java.util.HashMap;
 import java.util.List;
+
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.util.Log;
 import de.tubs.ibr.dtn.api.GroupEndpoint;
@@ -58,14 +61,22 @@ public class SessionManager {
 		List<Session> sessions = mDatabase.getSessions();
 		
 		for (Session s : sessions) {
-			// restore the session instance
-			ClientSession client = new ClientSession(this, s);
-			
-			// restore session registration
-			restore(s, client);
-			
-			// put the client session into the client list
-			mSessions.put(s, client);
+			// check if the application is still installed
+			if (isPackageInstalled(s.getPackageName())) {
+				// restore the session instance
+				ClientSession client = new ClientSession(this, s);
+				
+				// restore session registration
+				restore(s, client);
+				
+				// put the client session into the client list
+				mSessions.put(s, client);
+			} else {
+				Log.i(TAG, "Application " + s.getPackageName() + " is no longer installed.");
+				
+				// delete session if app is not installed
+				mDatabase.removeSession(s);
+			}
 		}
 	}
 	
@@ -248,5 +259,15 @@ public class SessionManager {
 	
 	public Context getContext() {
 		return mContext;
+	}
+	
+	private boolean isPackageInstalled(String packagename) {
+		PackageManager pm = mContext.getPackageManager();
+		try {
+			pm.getPackageInfo(packagename, PackageManager.GET_ACTIVITIES);
+			return true;
+		} catch (NameNotFoundException e) {
+			return false;
+		}
 	}
 }
