@@ -323,7 +323,7 @@ void dtn::dht::DHTNameService::componentRun() throw () {
 				IBRCOMMON_LOGGER_TAG("DHTNameService", error)
 							<< "select of DHT Sockets failed with error: "
 							<< errno << IBRCOMMON_LOGGER_ENDL;
-				sleep(1);
+				ibrcommon::Thread::sleep(1000);
 			}
 		}
 		if (FD_ISSET(_interrupt_pipe[0], &readfds)) {
