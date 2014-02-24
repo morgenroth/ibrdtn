@@ -81,6 +81,7 @@ size_t _conf_rounds = 3;
 string _conf_path = "/";
 string _conf_regex_str = "^\\.";
 regex_t _conf_regex;
+int _conf_bundle_group = false;
 int _conf_invert = false;
 int _conf_quiet = false;
 int _conf_fat = false;
@@ -112,6 +113,7 @@ void print_help()
 	cout << " <destination>              the destination EID for all outgoing files" << endl << endl;
 	cout << "* optional parameters *" << endl;
 	cout << " -h|--help                  display this text" << endl;
+	cout << " -g|--group                 receiver is a destination group" << endl;
 	cout << " -w|--workdir <dir>         temporary work directory" << endl;
 	cout << " -i|--interval <interval>   interval in milliseconds, in which <outbox> is scanned for new/changed files. default: 5000" << endl;
 	cout << " -r|--rounds <number>       number of rounds of intervals, after which a unchanged file is considered as written. default: 3" << endl;
@@ -191,6 +193,9 @@ void read_configuration(int argc, char** argv)
 			case 'h':
 				print_help();
 				exit(EXIT_SUCCESS);
+				break;
+			case 'g':
+				_conf_bundle_group = true;
 				break;
 			case 'w':
 				_conf_workdir = std::string(optarg);
@@ -489,6 +494,11 @@ int main( int argc, char** argv )
 
 					// add payload block using the blob
 					b.push_back(blob);
+
+					// set destination address to non-singleton, if configured
+					if (_conf_bundle_group)
+						b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, false);
+
 
 					// send the bundle
 					client << b;
