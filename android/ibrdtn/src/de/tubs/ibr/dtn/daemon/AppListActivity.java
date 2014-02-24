@@ -102,7 +102,7 @@ public class AppListActivity extends ListActivity {
 				public void onClick(View v) {
 					final Intent marketIntent = new Intent(Intent.ACTION_VIEW);
 					//marketIntent.setData(Uri.parse("market://search?q=de.tubs.ibr.dtn.*"));
-					marketIntent.setData(Uri.parse("market://search?q=IBR-DTN"));
+					marketIntent.setData(Uri.parse("market://search?q=IBR-DTN+services&c=apps"));
 					startActivity(marketIntent);
 				}
 			});
